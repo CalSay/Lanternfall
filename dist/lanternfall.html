@@ -1864,9 +1864,12 @@ span.cf-d { font-weight: 600; }
 .feedback-note { background: var(--well); border: 2px solid var(--line); padding: 8px 10px; color: var(--bone); font: 400 14px var(--body); width: 100%; box-sizing: border-box; font-family: inherit; }
 .feedback-note::placeholder { color: var(--muted); }
 .feedback-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
-.feedback-copy, .feedback-clear { padding: 6px 12px; background: var(--panel); border: 2px solid var(--line); color: var(--bone); font: 600 12px var(--body); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
-.feedback-copy:active, .feedback-clear:active { transform: scale(0.98); }
+.feedback-copy, .feedback-clear, .feedback-send { padding: 6px 12px; background: var(--panel); border: 2px solid var(--line); color: var(--bone); font: 600 12px var(--body); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
+.feedback-copy:active, .feedback-clear:active, .feedback-send:active { transform: scale(0.98); }
 .feedback-copy { background: var(--gold); color: #1A1420; }
+.feedback-send { background: var(--gold); color: #1A1420; }
+.feedback-send:disabled { opacity: .6; }
+.feedback-buttons [hidden], .feedback-panel [hidden] { display: none; }
 .feedback-panel .note { font-size: 12px; color: var(--muted); margin: 0; }
 /* 60-gathering: the Gather tab's skill views (72-ui-gather.js, UX-A GX1; ux-overhaul.md 6.1):
    the Now card, the skill line, Best for you, node rows with a held/cap bar, folds, and the
@@ -40010,6 +40013,7 @@ let deedsUI = null;
     });
   } catch (e) {}
 
+  const INFO_TEXT = 'The report includes your note, the build version, date, screen size, user agent, your progress (level, zone, region, heroes), and any recent errors. Copy it and send it wherever you file bug reports.';
   let feedbackOpen = false;
   const feedbackState = { note: '' };
 
@@ -40054,6 +40058,22 @@ let deedsUI = null;
     if (errs) lines.push(errs);
 
     return lines.join('\n');
+  }
+
+  // The web build (tools/site.mjs) sets window.LF_SITE with a send() that posts to Netlify Forms. The Artifact has none.
+  function siteSend() { try { return window.LF_SITE && typeof window.LF_SITE.send === 'function' ? window.LF_SITE : null; } catch (e) { return null; } }
+
+  // The fields for "Send to the team": the note plus where you are. No name, email or user agent.
+  function teamFields(note) {
+    const f = { note: (note || '').trim(), zone: '', level: '', minutes: '', build: '', screen: window.innerWidth + 'x' + window.innerHeight, errors: '' };
+    try {
+      if (typeof S === 'object' && S) { f.zone = String(S.maxZone || 1); f.level = String(S.L || 1); }
+      // minutes stays blank: the save does not record play time
+      const site = siteSend();
+      f.build = (site && site.build) || (typeof gameVersion === 'string' ? gameVersion : '');
+      f.errors = typeof errorReport === 'function' ? errorReport() : '';
+    } catch (e) {}
+    return f;
   }
 
   // Copy report to clipboard with fallback
@@ -40116,18 +40136,47 @@ let deedsUI = null;
         ui(true);
       });
 
-      buttons.append(copyBtn, clearBtn);
+      // Web build only: send the note to the team.
+      const sendBtn = el('button', 'feedback-send', 'Send to the team');
+      sendBtn.type = 'button'; sendBtn.hidden = true;
+      const sendMsg = el('p', 'note feedback-sent'); sendMsg.hidden = true; sendMsg.setAttribute('role', 'status');
+      const tellHint = el('p', 'note feedback-tell', "Tell us what felt good or bad. Please don't include your name or email."); tellHint.hidden = true;
+      let sending = false;
+      sendBtn.addEventListener('click', () => {
+        const site = siteSend();
+        if (!site || sending) return;
+        if (!(feedbackState.note || '').trim()) { sendMsg.hidden = false; sendMsg.textContent = 'Write a note first.'; try { sendMsg.scrollIntoView({ block: 'center' }); } catch (e) {} return; }
+        sending = true; sendBtn.disabled = true; sendMsg.hidden = false; sendMsg.textContent = 'Sending...';
+        let p;
+        try { p = Promise.resolve(site.send(teamFields(feedbackState.note))); } catch (e) { p = Promise.resolve(false); }
+        p.catch(() => false).then((ok) => {
+          sending = false; sendBtn.disabled = false;
+          sendMsg.textContent = ok ? 'Sent. Thank you.' : "Couldn't send. Copy it instead?";
+          if (ok) { feedbackState.note = ''; noteArea.value = ''; }
+          try { sendMsg.scrollIntoView({ block: 'center' }); } catch (e) {}   // short landscape sheet: keep the answer on screen
+        });
+      });
+
+      buttons.append(sendBtn, copyBtn, clearBtn);
 
       // Info text
-      const info = el('p', 'note', 'The report includes your note, the build version, date, screen size, user agent, your progress (level, zone, region, heroes), and any recent errors. Copy it and send it wherever you file bug reports.');
+      const info = el('p', 'note feedback-info', INFO_TEXT);
 
-      panel.append(noteLabel, noteArea, buttons, info);
+      panel.append(noteLabel, tellHint, noteArea, buttons, sendMsg, info);
       sec.append(panel);
     },
     update() {
       // Keep the note in sync (in case S changes or something resets the field)
       const root = $('sec-feedback'), ta = root && root.querySelector('.feedback-note');   // W1-D: $('log') is null (the Journal is a sheet)
       if (ta && ta.value !== feedbackState.note) ta.value = feedbackState.note;
+      if (root) {   // show the web-only parts when the page has LF_SITE
+        const on = !!siteSend();
+        const sb = root.querySelector('.feedback-send'), th = root.querySelector('.feedback-tell');
+        if (sb) sb.hidden = !on;
+        if (th) th.hidden = !on;
+        const inf = root.querySelector('.feedback-info');
+        if (inf) inf.textContent = on ? 'Send to the team shares your note, build, level, zone, screen size and any recent errors. Copy report also adds the date and your browser, for filing a bug yourself.' : INFO_TEXT;
+      }
     }
   });
 }

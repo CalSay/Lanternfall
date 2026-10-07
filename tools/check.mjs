@@ -11008,6 +11008,63 @@ if (section('hero portraits')) try {
   assert(inGame.length >= 21, 'portraits: the 21 heroes who are in the game and in the 34 have one (found ' + inGame.length + ')');
 } catch (e) { fail('hero portraits crashed: ' + (e.stack || e)); }
 
+// ==== tell-us-form: the Netlify page can take a note; the Artifact stays network-free (tools/site.mjs, 75-feedback-ui.js) ====
+if (section('tell us form')) try {
+  const html0 = fs.readFileSync(distFile, 'utf8');
+  const net = ['fetch(', 'XMLHttpRequest', 'sendBeacon', 'form-name', 'LF_SITE.send(', 'data-netlify'].filter(w => html0.includes(w));
+  assert(!net.length, `tell us: dist/lanternfall.html has no network call or form post (${net.join(', ') || 'none'})`);
+  assert(html0.includes('LF_SITE'), 'tell us: the game checks for window.LF_SITE (the web page sets it)');
+  const { spawnSync } = await import('node:child_process'), osm = await import('node:os');
+  const tmp = fs.mkdtempSync(path.join(osm.tmpdir(), 'lanternfall-tellus-'));
+  try {
+    const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'site.mjs'), tmp], { encoding: 'utf8', timeout: 30000 });
+    const site = r.status === 0 ? fs.readFileSync(path.join(tmp, 'index.html'), 'utf8') : '';
+    const form = (site.match(/<form name="tell-us"[\s\S]*?<\/form>/) || [''])[0];
+    const names = [...form.matchAll(/name="([^"]+)"/g)].map(m => m[1]).filter(n => n !== 'tell-us');
+    assert(/data-netlify="true"/.test(form) && /netlify-honeypot="bot-field"/.test(form) && names.includes('bot-field'), 'tell us: the web page has the hidden tell-us form with the honeypot');
+    assert(['note', 'zone', 'level', 'minutes', 'build', 'screen', 'errors'].every(f => names.includes(f)) && names.length === 8, `tell us: the form holds the 7 fields and the honeypot, nothing else (${names.join(', ')})`);
+    assert(!/name|e-?mail|user-?agent/i.test(names.join(' ')), 'tell us: no name, email or user-agent field');
+    assert(site.includes('window.LF_SITE=') && (site.match(/fetch\(/g) || []).length === 1, 'tell us: the web page, not the game, holds the one network call');
+  } finally { if (path.basename(tmp).startsWith('lanternfall-tellus-')) fs.rmSync(tmp, { recursive: true, force: true }); }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe) { skipBrowser('tell us form (browser): Playwright or Chromium not here, skipped'); }
+  else {
+    const mid = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[360, 740], [740, 360]]) for (const stub of [false, true]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, mid]);
+        if (stub) await ctx.addInitScript(() => { window.__sent = []; window.__ans = true; window.LF_SITE = { build: 'abc1234', send: f => { window.__sent.push(f); return Promise.resolve(window.__ans); } }; });
+        const page = await ctx.newPage(), errs = [], tag = `${w}x${h} ${stub ? 'with' : 'without'} LF_SITE`;
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        await page.evaluate(() => document.getElementById('bellBtn').click()); await page.waitForTimeout(500);
+        await page.evaluate(() => { const b = document.querySelector('button[data-v="settings"]'); if (b) b.click(); }); await page.waitForTimeout(900);
+        const vis = await page.evaluate(() => { const b = document.querySelector('#sec-feedback .feedback-send'); return !!b && !b.hidden && b.offsetParent !== null; });
+        assert(await page.evaluate(() => !!document.querySelector('#sec-feedback .feedback-copy')), `tell us: ${tag}: the Send feedback panel opens from Settings`);
+        assert(vis === stub, `tell us: ${tag}: the Send to the team button is ${stub ? 'shown' : 'not shown'}`);
+        if (stub) {
+          const fit = await page.evaluate(() => { const b = document.querySelector('#sec-feedback .feedback-send'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(), p = document.querySelector('#sec-feedback .feedback-panel').getBoundingClientRect(); return r.right <= innerWidth && p.right <= innerWidth + 1 && p.left >= -1; });
+          assert(fit, `tell us: ${tag}: the panel fits the screen width`);
+          for (const ok of [true, false]) {
+            await page.evaluate(ok => { window.__ans = ok; const t = document.querySelector('#sec-feedback .feedback-note'); t.value = 'The first fight felt slow.'; t.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('#sec-feedback .feedback-send').click(); }, ok);
+            await page.waitForTimeout(300);
+            const msg = await page.evaluate(() => document.querySelector('#sec-feedback .feedback-sent').textContent);
+            assert(ok ? /^Sent\. Thank you\.$/.test(msg) : /Couldn't send\. Copy it instead\?/.test(msg), `tell us: ${tag}: a send that ${ok ? 'works' : 'fails'} says "${msg}"`);
+          }
+          const sent = await page.evaluate(() => window.__sent);
+          assert(sent.length === 2 && sent[0].note === 'The first fight felt slow.' && ['note', 'zone', 'level', 'minutes', 'build', 'screen', 'errors'].every(k => k in sent[0]) && Object.keys(sent[0]).length === 7, `tell us: ${tag}: send gets exactly the 7 fields (${Object.keys(sent[0] || {}).join(', ')})`);
+          assert(sent[0].build === 'abc1234' && +sent[0].level >= 1 && +sent[0].zone >= 1 && /^\d+x\d+$/.test(sent[0].screen), `tell us: ${tag}: the note carries build, level, zone and screen size`);
+        }
+        assert(!errs.length, `tell us: ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tell us form crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
