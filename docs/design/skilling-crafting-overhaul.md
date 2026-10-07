@@ -25,7 +25,7 @@ changes, all applied (section 16). The coordinator's two asks (cadence targets, 
 **What a player notices.** From about minute 20, crafting stops being "press Craft when Next Up says so".
 - **Refining.** The Forge, Workbench and Loom each get a second job: ore and coal become ingots, logs become planks,
   fibre becomes cloth, hide becomes leather. You set a station going once and it keeps working while you fight and while
-  you are away, until its input runs out. From tier 2, gear and every upgrade use refined materials, so mining,
+  you are away, until the order is made or its input runs out. From tier 2, gear and every upgrade use refined materials, so mining,
   chopping, foraging and hunting all get a steady customer for every hero, and coal for every hero whose gear uses ore.
 - **Grades instead of a die.** Your station skill sets the grade of what you make (D, C, B, A, S). Levelling Smithing
   now always means a better craft, and you choose between a top-grade piece of this tier or a low-grade piece of the next.
@@ -251,7 +251,9 @@ the camp. That is accepted, not hidden: Wren works two stations, Tobin and Pip t
   Ingots 40"). Other tiers fold out on tap. Middles get Storehouse caps (group 0.5, as hide); coal gets group 1, like
   ore.
 - Until vetted icons land (art card, section 11), a middle shows its raw family's existing icon with a text label
-  ("Ingot"). No code-drawn or tinted icon. The Coal Seam reuses the Copper Vein's scene with its own name.
+  ("Ingot"). No code-drawn or tinted icon. The Coal Seam reuses the Copper Vein's scene, shown as drawn (no redraw, no tint), with its own name. The art judge
+  rules on this before card 2 merges; if it counts as a stopgap under the art freeze, coal drops from the Copper Vein
+  instead (1 coal for every 2 copper) until the Coal Seam still lands, and no new node shows.
 
 ---
 
@@ -463,8 +465,8 @@ change), so its prediction can be measured.
 | # | Card | What a player gets | Model | After | Owned files (all exist unless marked new) |
 |---|---|---|---|---|---|
 | 1 | `craft-delta` (amended) | the result card shows the fight change; Next Up names the piece and its boss, and offers upgrades; tools go on by themselves; gear moves to the Hero tab; choice and first-use events for the cadence measure | Sonnet medium | `next-up-equip` | `75-craft-ui.js`, `75-moments-ui.js`, `55-goals.js`, new `75-hero-gear-ui.js`, `tools/walk.mjs` (Go words, choice log) |
-| 2 | `refine-queues` (rewritten) | coal, the four middles, order lists on three stations while you fight and while away, recipes and upgrades from tier 2 use middles; exports `refineOffer(cost)` | Sonnet medium lead with 2 builders; Opus high save review | `gold-without-training` | Builder A (data, state, store, save codes, parity): `21-data-craft.js`, `30-state.js` (mats), `41-items.js` (costs), `55-store.js`, `75-store-ui.js`, `55-savecode.js`, `tools/offline-parity.mjs`. Builder B (refining, gathering, away): new `55-refine.js`, new `75-refine-ui.js`, new `60-refine.css`, `55-gathering.js` (coal node), `tools/sim.mjs` personas; may touch `72-ui-gather.js` (Coal Seam row) and `57f-hands.js` (Hands on coal) |
-| 3 | `craft-attribute-grades` (rewritten) | grades D to S replace the die, fixed lines, Reforge as a pick, the Strike, Infuse, the shortfall offer on the craft screen, the station curve pinned to the road, re-craft XP, upgrades as flat numbers | Sonnet medium; Opus high combat and save review | `refine-queues`, `craft-delta` | `55-crafting.js`, `40-rules.js`, `20-data.js` (`SKILL_TUNE`), `41-items.js` (lines), `75-craft-ui.js`, `58-deeds.js`, `55-savecode.js` (`g`), `tools/budget.mjs`, new `skilling-crafting-overhaul/curve.md` |
+| 2 | `refine-queues` (rewritten) | coal, the four middles, order lists on three stations while you fight and while away, recipes and upgrades from tier 2 use middles; exports `refineOffer(cost)` | Sonnet medium lead with 2 builders; Opus high save review | `gold-without-training` | Builder A (data, state, store, save codes, parity): `21-data-craft.js`, `30-state.js` (mats), `41-items.js` (costs), `55-store.js`, `75-store-ui.js`, `55-savecode.js`, `tools/offline-parity.mjs`. Builder B (refining, gathering, away): new `55-refine.js`, new `75-refine-ui.js`, new `60-refine.css`, `55-gathering.js` (coal node), `tools/sim.mjs` (personas, and the choice and first-use timeline); may touch `72-ui-gather.js` (Coal Seam row) and `57f-hands.js` (Hands on coal) |
+| 3 | `craft-attribute-grades` (rewritten) | grades D to S replace the die, fixed lines, Reforge as a pick, the Strike, Infuse, the shortfall offer on the craft screen, the station curve pinned to the road, re-craft XP, upgrades as flat numbers | Sonnet medium; Opus high combat and save review | `refine-queues`, `craft-delta` | `55-crafting.js`, `40-rules.js`, `20-data.js` (`SKILL_TUNE`), `41-items.js` (lines), `75-craft-ui.js`, `58-deeds.js`, `55-savecode.js` (`g`), `tools/budget.mjs`, `tools/sim.mjs` (skills report, after card 2), new `skilling-crafting-overhaul/curve.md` |
 | 4 | `weapon-profiles` (rewritten) | Heavy, Balanced, Swift with attribute scaling, Retune | Sonnet medium; Opus high combat review | `craft-attribute-grades` | `59k-turn.js` (three hooks), `55-crafting.js` (Retune), `75-craft-ui.js`, `55-savecode.js` (`pf`, `rn`), `docs/design/hero-progression-build/arms.mjs` |
 | 5 | `five-attributes` (new, Cal's note #21) | Luck as a fifth attribute, 3 points a level, each weapon grows with two attributes | Opus high; judge gate | `weapon-profiles` | section 17 |
 
@@ -512,7 +514,7 @@ the material side and uses `on('away')` in its own file, not `50-sim.js`. `first
 - `S.mats.coal`, `ingot`, `plank`, `cloth`, `leather`: five-slot arrays in `fresh().mats`; the loader already fills
   missing families (`S.mats = Object.assign(fresh().mats, o.mats)`, `30-state.js:45`). Storehouse caps for each.
 - `registerState('refine', { v: 1, st: { forge: [], bench: [], loom: [] } })`: each station holds an array of up to 3
-  orders `{ prod, t, want, made, all }`, run in turn.
+  orders `{ prod, tier, want, made, all, at }` (`at` is the running unit's progress), run in turn.
 - New item fields: `g` (grade 0 to 4), `pf` (profile), `rn` (retunes). Graded items keep `r` (the rarity twin). An item
   without `g` is an old item and keeps its rarity, lines and power exactly. **Items are never converted.**
 - Station XP bars map once to the new curve behind a version flag (`S.craft.xpv`).
@@ -524,7 +526,8 @@ the material side and uses `on('away')` in its own file, not `50-sim.js`. `first
 - **What changed for you:** one card the first time an old save opens the Craft tab after card 2: "The Forge has a
   second job. Your gear is unchanged." Old gear never loses power (the rising-games scan's top update complaint).
 
-**Switches** (data, default on): `REFINE_TUNE.on` (off: recipes and upgrades take raw again; middles stay stored);
+**Switches** (data, default on in code; card 3's three are held off in the weekly release until the balance pass):
+`CRAFT_TUNE.curve` (off: today's `SKILL_TUNE` craft curve and full re-craft XP); `REFINE_TUNE.on` (off: recipes and upgrades take raw again; middles stay stored);
 `CRAFT_TUNE.grades` (off: new crafts roll rarity again; graded items read their twin); `CRAFT_TUNE.profiles` (off: no
 scaling); `CRAFT_TUNE.strike` (off: every craft at the level's grade); `CRAFT_TUNE.infuse` (off: no Essence lift). No switch loses an item, level or material.
 
@@ -574,7 +577,7 @@ gold split, Infuse's price. The judge recommends Cal upholds all three veto line
 | 4 | Order lists of up to 3 per station; array save shape; the Loom carries Weave and Tan | sections 4, 13 |
 | 5 | Amounts default to the shortfall; All keeps a 20% reserve | section 4 |
 | 6 | Re-craft XP: a tenth below your highest open tier; refining at least half of station XP | sections 3, 12 |
-| 7 | Beat map: Tobin's first upgrade brings Smelt and coal at minute 22 to 28 | section 2 |
+| 7 | Beat map: Tobin's first upgrade brings Smelt and coal at minute 22 to 28. Wren's Bow +1 takes a plank and a leather, so she meets Saw and Tan together; the spec treats that as one idea (an order on a station) set from one Next Up line | section 2 |
 | 8 | Only Tent 5 becomes buildable | sections 1, 4, 7 |
 | 9 | Cards rewritten; `tonic-brew` and `art-refined-materials` written | section 11, card folder |
 | 10 | Card 2 names each builder's files, may touch `72-ui-gather.js` and `57f-hands.js`, exports `refineOffer(cost)`; the offer moves to card 3 | section 11 |
