@@ -74,10 +74,11 @@ One backgrounds pack for M1a: Codex paints each area's palette and light version
 | Batwing Caves (6-10) | `cave` | No | Backgrounds pack (Caves and Bonefield) | yes |
 | The Bonefield (11-15) | `bone` | No | Backgrounds pack (Caves and Bonefield) | no (M1b) |
 
-Open point for the `integrate:` card. `zoneTheme(z)` (`src/js/22-data-regions.js`) returns `forest` for zones 1 to 7
-(`MOSSY_ZONES`, set 2026-10-02), and then follows the 7-zone cycle, not the 5-zone areas. So zones 6 and 7 show the
-Mossy Hollow painting today, and the Caves painting would reach zones 8 and up. Rule on whether to align scenery to the
-areas, or keep `forest` to zone 7, before wiring; that is a design call for the judge, not this card.
+Ruled (DECISIONS, "Scenery for zones 6 to 10", 2026-10-07): the Caves painting covers all of zones 6 to 10, so the
+pack boundary above stands. Today `zoneTheme(z)` (`src/js/22-data-regions.js`) returns `forest` for zones 1 to 7
+(`MOSSY_ZONES`) and then follows the 7-zone cycle, so a `BG_ART.cave` wired as things stand would show in zone 9 only of
+this area. Card `scenery-follows-areas` makes each Hollow zone show its area's painting once that painting is wired, and
+merges before or with the Caves `integrate:` card. Until then zones 6 to 10 keep today's scenery.
 
 If the pack must split for the zones 1-10 cut, the Caves painting alone is the in-scope part.
 
