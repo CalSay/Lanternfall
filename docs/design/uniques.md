@@ -343,7 +343,7 @@ Each silhouette must retain the actual runtime grade's approved main/secondary m
 | bone-tome-32.png | tome-g2-32.png | A grade-matched-bound book with one ivory clasp. |
 | beetle-helm-32.png | greathelm-g1-32.png | A grade-matched helm with a broad beetle shell ridge. |
 | echo-cowl-32.png | hood-g1-32.png | A grade-matched cowl with a pointed bat-ear crown. |
-| spore-circlet-32.png | circlet-g1-32.png | A grade-matched circlet with a small red mushroom boss. |
+| spore-circlet-32.png | circlet-g1-32.png | A pale quartz circlet with a scarlet mushroom cabochon. |
 | bone-mitre-32.png | mitre-g3-32.png | A grade-matched mitre with an ivory rib-shaped front seam. |
 | quarry-plate-32.png | plate-g3-32.png | grade-matched plates with a single cracked jasper shoulder. |
 | marsh-leathers-32.png | leathers-g2-32.png | Grade-matched hide armour with a pale reed collar. |
@@ -356,6 +356,24 @@ Each silhouette must retain the actual runtime grade's approved main/secondary m
 | moss-spear-32.png | spear-g2-32.png | A diagonal grade-matched spear with a single moss frond collar. |
 
 PR 2 contains only `art/uniques/`: README, manifest, source PNGs, prompts, six exports per stable item and `preview.html`. Compare each to its crafted neighbour at native 32/48 and greyscale; inspect 740×360 and 360px layouts, image loading, silhouettes, palette/alpha/padding, material identity and hashes. The README/description must distinguish deterministic export checks from the independent art judge. The owner has authorized this review pack while balance remains held. No runtime wiring is included.
+
+### Legacy icon filenames
+
+| Exact 32px filename | Nearest crafted icon | Proposed name |
+|---|---|---|
+| sproutblade-32.png | warblade-g1-32.png | The Green Promise |
+| echocowl-32.png | greathelm-g1-32.png | Vesper's Shroud |
+| rattlecharm-32.png | charm-g1-32.png | Saint's Last Tooth |
+| carapacepick-32.png | pick-g1-32.png | Mandible of the Barrow |
+| sporeheart-32.png | charm-g1-32.png | Heart of the Sleeping Grove |
+| golemfist-32.png | warblade-g1-32.png | The Quarry's Verdict |
+| wispaxe-32.png | axe-g2-32.png | The Mourning Bough |
+| wyrmscale-32.png | greathelm-g1-32.png | Crown of the Cinder Wyrm |
+| hollowcrown-32.png | greathelm-g2-32.png | The Vacant Throne |
+| colossuspick-32.png | pick-g3-32.png | Worldroot Breaker |
+| hydraglass-32.png | charm-g4-32.png | Prism of the Seven Hungers |
+| eaterfang-32.png | warblade-g5-32.png | Light's Last Refuge |
+| tyrantaxe-32.png | axe-g5-32.png | The King's Silence |
 
 ## Where I'm not sure
 
