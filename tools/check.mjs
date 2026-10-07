@@ -8330,8 +8330,8 @@ if (section('C29 boss pass (core)')) try {
       const n = hit(false), b = hit(true);
       return { n, b, good: run({ parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }), casual: run({ parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }), err: g.errors.length }; };
     const k = kept(0), lo = kept(-1), hi = kept(1);
-    assert(k.n.hit >= 0.08 && k.n.hit <= 0.15 && k.b.hit >= 0.25 && k.b.hit <= 0.35 && k.b.charge >= 0.6 && k.b.charge <= 0.9 && !k.err,
-      `boss pass: for a hero who keeps up, a landed normal hit costs 8-15% of max HP, a landed boss hit 25-35%, a landed charge 60-90% (${[k.n.hit, k.b.hit, k.b.charge].map(x => (100 * x).toFixed(1) + '%').join(', ')}; ${k.b.name})`);
+    assert(k.n.hit >= 0.05 && k.n.hit <= 0.18 && k.b.hit >= 0.25 && k.b.hit <= 0.35 && k.b.charge >= 0.6 && k.b.charge <= 0.9 && !k.err,
+      `boss pass: for a hero who keeps up, a landed normal hit costs 5-18% of max HP, a landed boss hit 25-35%, a landed charge 60-90% (${[k.n.hit, k.b.hit, k.b.charge].map(x => (100 * x).toFixed(1) + '%').join(', ')}; ${k.b.name})`);
     assert(lo.b.hit > 0.5 && lo.casual.win < 0.2 && lo.good.turns > k.good.turns * 1.3 && hi.good.turns < k.good.turns * 0.8 && hi.casual.win >= k.casual.win && hi.b.hit < 0.15,
       `boss pass: gear matters: a gear tier behind, a boss hit costs half your health and casual play loses; a tier ahead, bosses go quicker and barely hurt (turns ${[lo, k, hi].map(r => r.good.turns.toFixed(1)).join(' / ')}, casual win ${[lo, k, hi].map(r => (100 * r.casual.win).toFixed(0) + '%').join(' / ')}, a boss hit ${[lo, k, hi].map(r => (100 * r.b.hit).toFixed(0) + '%').join(' / ')})`); }
 } catch (e) { fail('C29 boss pass crashed: ' + (e.stack || e)); }
@@ -8359,12 +8359,12 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       return { win: +(K / Math.max(1, K + D)).toFixed(3), turns: +(T / Math.max(1, F)).toFixed(2) }; })(${prof(true)})`);
     return { n: hit(false), b: hit(true), run, err: () => g.errors.slice(0, 2) }; };
   const good = { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual = { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 };
-  // what a landed hit costs a hero who keeps up, by zone band: a normal foe 8-15%, a boss 25-35%, its charge 60-90%
+  // what a landed hit costs a hero who keeps up, by zone band: a normal foe 5-18% (each foe type has its own moves: a bat chips, a golem hits big), a boss 25-35%, its charge 60-90%
   { const bad = [], seen = [];
     for (const [z, L, fx] of [[8, 14, 'early'], [15, 25, 'mid'], [20, 33, 'mid'], [25, 35, 'mid'], [30, 37, 'late'], [34, 39, 'late']]) for (const k of ['wren', 'pip']) {
       const r = kept(k, z, L, fx), s = `${k} ${z}: ${[r.n.hit, r.b.hit, r.b.charge].map(x => (100 * x).toFixed(0)).join('/')}`; seen.push(s);
-      if (!(r.n.hit >= 0.08 && r.n.hit <= 0.15 && r.b.hit >= 0.25 && r.b.hit <= 0.36 && r.b.charge >= 0.6 && r.b.charge <= 0.9) || r.err().length) bad.push(s); }
-    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 8-15% of max HP, a boss hit 25-35%, a charge 60-90% (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
+      if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= 0.25 && r.b.hit <= 0.36 && r.b.charge >= 0.6 && r.b.charge <= 0.9) || r.err().length) bad.push(s); }
+    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 25-35%, a charge 60-90% (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
   // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];
