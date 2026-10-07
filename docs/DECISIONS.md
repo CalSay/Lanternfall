@@ -453,8 +453,9 @@ Cal can veto any line. This closes the pr4 "Honest result" gap line.
   `wren-first-hour-parity` gaps (until 2026-11-15) where her first-hour cell has one; Tobin's ride `tobin-safety-margin`
   (until 2026-12-01). E2 still needs both of those cards before it can pass.
 - **Live saves.** A rare +5 Wren at zone 10 drops from about 92% to about 80% casual. It goes in the patch note. No save change.
-- **Switch off.** `TURN_TUNE.boss.footFloor: [[1, 0]]` and `passiveMin: 0` restore today's damage exactly; the gates revert
-  with `gate.captainFrom` past zone 15.
+- **Switch off.** `TURN_TUNE.boss.footFloor: [[1, 0]]` and `passiveMin: 0` remove the new floors; the gates revert
+  with `gate.captainFrom` past zone 15. This is pr4 logic with pr5 numbers: the hitX refit (z7, 9, 11-14), the z13/z14
+  `hpFloor` knots and the z15 `champHitX` 1.25 stay. A full rollback also reverts those three tables.
 - **Tobin** shares the symptom but not the lever (class HP and damage reduction at the footing, not gear); the passive floor
   is the cheap half, the rest stays with `tobin-safety-margin`.
 - **Set bonuses and uniques** (Cal, 2026-10-07). At zones 4-15 the gates absorb burst: all damage x2 or x3 moves kept-up casual

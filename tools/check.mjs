@@ -10131,7 +10131,7 @@ if (section('boss tiers pr5')) try {
     assert(JSON.parse(E(`(() => { soloPick('tobin', { now: true }); S.maxZone = 16; setZone(16); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn(); return JSON.stringify(turnCombatProfile().hitX < 0.55); })()`)), 'boss passive floor: not from zone 16'); }
   // rally gates: zones 4-6 Captains 67/33, zones 7-14 Captains 75/50/25, Champions 75/50/25 (zone 15 too), none from zone 16
   const gates = (z) => prof(z, z).gates;
-  assert(J(gates(5)) === J(gates(5)) && J(gates(4)) === '[0.67,0.33]' && J(gates(6)) === '[0.67,0.33]' && J(gates(7)) === '[0.75,0.5,0.25]' && J(gates(12)) === '[0.75,0.5,0.25]' && J(gates(14)) === '[0.75,0.5,0.25]'
+  assert(J(gates(4)) === '[0.67,0.33]' && J(gates(6)) === '[0.67,0.33]' && J(gates(7)) === '[0.75,0.5,0.25]' && J(gates(12)) === '[0.75,0.5,0.25]' && J(gates(14)) === '[0.75,0.5,0.25]'
     && J(gates(5)) === '[0.75,0.5,0.25]' && J(gates(10)) === '[0.75,0.5,0.25]' && J(gates(15)) === '[0.75,0.5,0.25]' && gates(16) === null && gates(3) === null,
     `boss gates: Captains rally at 67/33 to zone 6 and 75/50/25 from zone 7, Champions (5, 10, 15) at 75/50/25, none outside zones 4-15 (${[4, 5, 6, 7, 10, 15, 16].map(z => J(gates(z))).join(' ')})`);
   // zone 15 is a real Champion: its own hit multiple on the Captain line; zones 14 and 16 do not feel it

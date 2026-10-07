@@ -26538,7 +26538,7 @@ onTick(dt => { BO_CLOCK += dt > 0 ? dt : 0; });
 function bossOddsReset() { BO = { sig: '', zone: 0, chunk: 0, k: 0, d: 0, at: -1e9, atReal: 0, res: null }; BO_DONE = null; }
 const bossOddsNum = x => (Number.isFinite(x) ? +x.toPrecision(3) : 0);
 const BOSS_ODDS_KEYS = ['A', 'U', 'counter', 'heroMaxHp', 'heroSpd', 'critChance', 'critMult', 'parryWindow', 'dodgeWindow', 'hitX', 'healX',
-  'focus', 'spellX', 'dotX', 'ctrlX', 'pierce', 'wardOver', 'blockP', 'foeMaxHp'];
+  'focus', 'spellX', 'dotX', 'ctrlX', 'pierce', 'wardOver', 'blockP', 'foeMaxHp', 'footHp', 'bossFoot'];
 
 // { win, n, zone } for the frontier boss, or null (pending, or no turn fight to judge)
 function bossOdds(o) {

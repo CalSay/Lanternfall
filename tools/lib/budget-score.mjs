@@ -41,7 +41,7 @@ export function gatedValue(T, rows, id, hero, pl) {
 export function cells(T, rep) {
   const rows = Object.fromEntries(rep.rows.map(r => [r.id, r])), out = [];
   for (const r of rep.rows) for (const pl of GATED_PLAYERS) {
-    if (pl === 'none' && !T.kinds[r.kind].none) continue;
+    if (pl === 'none' && !(T.kinds[r.kind] && T.kinds[r.kind].none)) continue;
     const rp = !!T.kinds[r.kind].report;   // a report-only kind: printed against its band, never fails
     const hs = HEROES.map(h => ({ id: r.id, kind: r.kind, hero: h, pl, value: gatedValue(T, rows, r.id, h, pl), band: bandFor(T, r.kind, h, pl), ...(rp ? { report: true } : {}) }));
     out.push(...hs);
