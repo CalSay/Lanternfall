@@ -178,11 +178,11 @@
   // W1-A: a step that waits for materials shows live progress and never pauses the game.
   // "Chop 20 Pine Log for the Workbench (12/20)". When the hero is not at the node that yields the
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
-  const VERB = { wood: 'Chop', ore: 'Mine', ess: 'Win fights for' };
+  const VERB = { wood: 'Chop', ore: 'Mine' };
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
   const stockSpec = (id, what, tail) => {
     const need = onboardNeed(id); if (!need.length) return null;
-    const x = need[0], verb = VERB[x.kind] || 'Gather';
+    const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Win fights for' : 'Gather');
     const text = need.length > 1
       ? `Gather for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
       : `${verb} ${x.n} ${x.name} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;

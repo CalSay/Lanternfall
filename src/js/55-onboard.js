@@ -198,7 +198,7 @@ function needShort(mats) {
   const out = [];
   for (const [fam, t, n] of mats || []) {
     const have = matHave(fam, t);
-    if (have < n) out.push({ fam, t, kind: typeof NODE_NAMES === 'object' && NODE_NAMES[fam] && craftNodeVisible(fam, t) ? fam : null, have, n, name: matName(fam, t) });
+    if (have < n) out.push({ fam, t, kind: typeof NODE_NAMES === 'object' && NODE_NAMES[fam] && craftNodeVisible(fam, t) ? fam : null, have, n, name: costName(fam, t) });
   }
   return out;
 }
