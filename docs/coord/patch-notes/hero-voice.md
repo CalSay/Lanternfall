@@ -1,0 +1,1 @@
+Your hero now speaks at the big moments: the first boss, uniques, new abilities, your first Star and the Great Lantern. Wren, Tobin and Pip each have their own voice. The hero sheet has a new "On the road" record: bosses beaten, uniques found, best parry streak and days on the road.

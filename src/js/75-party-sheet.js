@@ -161,6 +161,7 @@ let openSheet, partySheet;
     refs.heroXp = fill; refs.heroXpTxt = hn;
     if (typeof deedsUI === 'object' && deedsUI) body.append(safe(() => deedsUI.heroRow(), ''));   // Achievements · 2,140 points › (75-deeds-ui)
     hn.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`;
+    if (typeof voiceRecord === 'function') { const ul = el('ul', 'cs-rec'); for (const r of safe(() => voiceRecord(), [])) ul.append(el('li', null, r.txt)); body.append(section('On the road', ul)); }   // hero-voice: what we have done together
     if (c) {
       body.append(el('p', 'cs-bio pitch', '"' + c.pitch + '"'));
       const cu = typeof classUI === 'object' && classUI ? safe(() => classUI.rows(), []) : [];   // S2: passives, the evolution rows (76-create)
@@ -196,7 +197,7 @@ let openSheet, partySheet;
     sheet.foot.textContent = '';
   }
 
-  const sigOf = () => 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle();
+  const sigOf = () => 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (typeof voiceRecord === 'function' ? voiceRecord().map(r => r.txt).join() : '');
   function render(force) {
     if (!sheet) return;
     const s = sigOf();

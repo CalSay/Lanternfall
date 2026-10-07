@@ -42,7 +42,7 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 6 | 1:55 | Fight 3 | Parries a heavy hit | Parry | Hit-stop on a good parry; PARRIED! stamp, sized numbers and a lamp row for clean parries (hit-feel, built) | skill | | built; card `hit-feel` |
 | 7 | 2:25 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
 | 8 | 2:55 | The zone 1 Captain; Hesketh: "Watch the red rings" | Fights the boss | Boss strings | | tension | | today (line: card `guide-voice`) |
-| 9 | 3:45 | **Big moment: first boss win**, and the **first Lantern Cache** reveals the win's drops plus the Ember Red lantern colour; the stage relights | Taps to open | Caches | the win's drops; Ember Red | surprise | The hero's first line | card `moment-layer`, `cache-core`, `hero-voice` |
+| 9 | 3:45 | **Big moment: first boss win**, and the **first Lantern Cache** reveals the win's drops plus the Ember Red lantern colour; the stage relights | Taps to open | Caches | the win's drops; Ember Red | surprise | The hero's first line | `hero-voice` done (boss1 bark on the card); cards `cache-core` |
 | 10 | 5:30 | The Hero tab (spacing governor), with the first attribute point | Spends the point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58; moment `moment-layer` |
 | 11 | 7:15 | The Gather tab; Hesketh: "Wood first." | Chops 8 logs | Gathering | logs | | | `story-unlock-gates`; line `unlock-voice` |
 | 12 | 9:00 | **Medium moment: the camp fire lit**; the Camp tab; Hesketh's talk plays here | Lights the fire, listens | Camp | a home | relief | "Every road needs a place to come back to." | today (fire); cards `intro-and-picker` (talk moves here), `moment-layer` |
@@ -56,7 +56,7 @@ early-game/playtest-coldB.md`). The minutes below are targets for a casual human
 | 17 | 17:45 | **Big moment: the zone 5 Champion's first clear**, its post scene in the card; Tobin joins here unless you picked him | Can switch (if Tobin joined) | Switching, unless you picked Tobin | a hero, at the road's level (unless you picked Tobin) | company | Tobin's meet scene (bible 4.4) | cards `champion-moment`, `starters-join-when-met`; PR #58 for the level |
 | 18 | 20:00 | **Big moment: first Star** (zone 6 Captain); the zone 6 cache opens inside the same card; the Stars tab | Equips the Star | Stars | a Star | power | | today (Star); cards `moment-layer` (Star is big), `cache-core` |
 | 19 | 22:00 | The first Forge weapon (where the walk measures the cold chain ending, est. 20 to 25) | Crafts a weapon | | a weapon, revealed | pride | | today; result card built by `craft-reveal` (craft-reveal PR) |
-| 20 | 25 to 40 | **Big moment: first unique**, by chance (15% on a first clear, with modifiers; no pity); the Uniques tab | Equips it | Uniques | the unique | delight | The hero's unique line | today (drop); cards `moment-layer`, `cache-core`, `hero-voice` |
+| 20 | 25 to 40 | **Big moment: first unique**, by chance (15% on a first clear, with modifiers; no pity); the Uniques tab | Equips it | Uniques | the unique | delight | The hero's unique line | `hero-voice` done (unique bark on the card); card `cache-core` |
 | 20a | 27:30 | **Big moment: the zone 7 Captain's cache**, with lantern colour 4 | | nothing new | the win's drops plus a colour | delight | | card `cache-core` |
 | 21 | 28:00 | The Bestiary | Reads a foe | Foe types; the Foe tab now shows what you've learned | | curiosity | | `story-unlock-gates`; card `foe-weak-resists` |
 | 22 | 31:30 | The Almanac | | | | | | `story-unlock-gates` |

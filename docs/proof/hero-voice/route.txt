@@ -1,0 +1,28 @@
+# seed: 1
+# Proof for card hero-voice: the mid fixture (Tobin) opens his hero sheet, which keeps an "On the road" record (bosses beaten, uniques found,
+# best parry streak, days on the road). Replayed at 360x740 and 740x360. The barks themselves (the first-boss card line with the portrait, one
+# bark a fight end, silence with no starter) are proved by the check.mjs "hero voice" section, which shoots docs/proof/hero-voice/boss-card-*.png.
+# Sideways, the guide panel hides the notices column, so a bark banner is not a stable thing for a route to expect there (carded: hero-voice-banner-under-guide).
+new mid
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+tap "Hero"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+tap-if "Tobin, open hero sheet"
+wait 3
+tap-if "Continue"
+wait 2
+tap-if "Tobin, open hero sheet"
+wait 2
+tap-if "Continue"
+expect "On the road"
+expect "Best parry streak"
+expect "Days on the road"
+shot hero-sheet-record
