@@ -118,6 +118,8 @@ const E2 = (g, src) => g.eval(src);
 // ECON-A: the save key moved to v2 (S.v 3). The fixtures in tests/fixtures are loaded under the new key so the
 // load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
 const KEY = 'lanternfall.save.v5';   // W3-A
+// Every tests/fixtures/*.json, so a new fixture (save-current, a Monday save-release-DATE) joins every save-integrity section with no edit here.
+const FIXTURES = fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(f => f.endsWith('.json')).sort();
 
 // C11: fixture comparisons prove the retired record's conversion before checking every other field.
 function c11SaveSubsetDiff(saved, loaded) {
@@ -227,7 +229,7 @@ if (section('smoke')) try {
 // wait, and that refill would read as a lost field here. A re-snapped fixture needs the same edit (checked below).
 if (section('saves')) try {
   const fx = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const raw = fx(f), old = JSON.parse(raw);
     assert(old.v === 5, `${f}: is a v5 save`);
     const due = ((old.bounties || {}).slots || []).filter(b => b && b.k === null && b.wait < Date.now() + 365 * 864e5);
@@ -258,6 +260,38 @@ if (section('saves')) try {
     assert(g.eval('S.L') === 1 && g.eval('S.maxZone') === 1 && g.eval('S.v') === 5 && !g.errors.length, `${what}: starts a fresh game with no error` + (g.errors[0] ? ': ' + g.errors[0] : ''));
   }
 } catch (e) { fail('saves crashed: ' + (e.stack || e)); }
+
+// ---- 3b. save export after play: Copy save code, Import, compare (save-fixture-current; save-risk-m1 F3) ----
+// A fixture's own code round-trips in 'save codes'. This plays each fixture first (5 minutes of real-time ticks, then the
+// state a player leaves behind: points spent, tips retired, stars lit), exports the code the Journal would copy, imports it
+// into a cold core and diffs the two. A new field the validator refuses shows up here as "Copy save code fails".
+if (section('save export after play')) try {
+  const played = [];
+  for (const f of FIXTURES) {
+    const g = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8') }) });
+    for (let i = 0; i < 3000; i++) g.fn.tick(0.1);
+    played.push([f, g]);
+  }
+  played.push(['a new game', loadCore({ seed: 6 })]);
+  for (const [f, g] of played.slice(-1)) for (let i = 0; i < 3000; i++) g.fn.tick(0.1);
+  for (const [f, g] of played) {
+    g.fn.save();
+    const stored = g.storage.get(KEY), code = g.eval('encodeSave(S)');
+    assert(typeof code === 'string' && code.startsWith('LF1:'), `${f}: after play, Copy save code makes a code`);
+    const res = g.eval(`decodeSave(${JSON.stringify(code)})`);
+    assert(res.ok, `${f}: after play, its code imports (decodeSave.ok)` + (res.ok ? '' : ': ' + res.error));
+    if (!res.ok) continue;
+    const g2 = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(res.data) }) });
+    const d = deepDiff(JSON.parse(stored), JSON.parse(JSON.stringify(g2.eval('S'))));
+    assert(!d, `${f}: after play, the imported save loads the same as the one exported` + (d ? ': ' + d : ''));
+    assert(!g.errors.length && !g2.errors.length, `${f}: after play and import, no handler errors` + ((g.errors[0] || g2.errors[0]) ? ': ' + (g.errors[0] || g2.errors[0]) : ''));
+  }
+  assert(FIXTURES.includes('save-current.json'), 'the current-era fixture save-current.json is in tests/fixtures');
+  const cur = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-current.json'), 'utf8'));
+  const pts = Object.values((cur.attr && cur.attr.pts) || {}).flatMap(r => Object.values(r)).reduce((a, b) => a + b, 0);
+  assert(pts > 0 && Object.values(((cur.stars || {}).lit) || {}).some(l => l.length) && Object.values((cur.onboard || {}).done || {}).some(v => v === 2),
+    'save-current.json holds current-era state: points spent, stars lit, tips retired');
+} catch (e) { fail('save export after play crashed: ' + (e.stack || e)); }
 
 // ---- 4. craft data tables (21-data-craft.js) ----
 if (section('craft data')) try {
@@ -304,7 +338,7 @@ if (section('items')) try {
   // W3-C: the three v5 fixtures (written by the game). Their items, equipment and materials load untouched, the gear maths is finite
   // and stable, every worn item fits its slot, and a save/load round trip loses nothing.
   const gearNum = gs => Object.entries(gs).filter(([, v]) => typeof v === 'number' && !Number.isFinite(v)).map(([k]) => k);
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
     const old = JSON.parse(raw);
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
@@ -417,7 +451,7 @@ if (section('items')) try {
 if (section('retool')) try {
   // W3-C: a class switch re-tools worn gear into the new class's kinds; the v5 fixtures hold class-kind gear, so this walks every
   // fixture through every class and checks nothing is lost.
-  const FIX = ['save-early.json', 'save-mid.json', 'save-late.json'];
+  const FIX = FIXTURES;
   const CLASSES = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const legacyLeft = 'S.items.filter(i => !i.u && (i.slot === "weapon" || i.slot === "helm")).length';
   for (const f of FIX) {
@@ -459,7 +493,7 @@ if (section('retool')) try {
 // ---- 6. Next Up goals (55-goals.js) ----
 if (section('goals')) try {
   // built-in goals evaluate on every fixture without errors
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
     for (let i = 0; i < 300; i++) g.fn.tick(0.1);
@@ -704,7 +738,7 @@ if (section('crafting')) try {
   assert(E('tonicActive()') === null && E('mod("dmg")') === dm, 'the Tonic timer runs offline');
   assert(!g.errors.length, 'no crafting errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   // old saves: defaults only, nothing else touched
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8')); delete old.craft;
     const go = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
     const ok = go.eval('JSON.stringify(S.craft)') === JSON.stringify({ v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {} })
@@ -948,7 +982,7 @@ if (section('camp')) try {
   assert(!bad.length, 'no NaN in the camp state' + (bad.length ? ': ' + bad[0] : ''));
   assert(!g.errors.length, 'no camp errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   // old saves get the defaults; dps unchanged; round trip keeps S.camp
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
     const go = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: raw }) });
     const def = go.eval('S.camp.open === true && Array.isArray(S.camp.builds) && ["forge","bench","loom","ench","tavern"].every(k => S.camp.b[k] >= 1)');
@@ -1059,7 +1093,7 @@ if (section('gathering')) try {
   assert(cz.eval('trophies()') > 0 && cz.eval('S.craft.champ') > 0 && r2.extra.some(l => / (Heart|Fang|Knuckle|Horn|Crown|Core|Veil)$/.test(l.txt)), `offline champions credit Trophies with an away line (${cz.eval('trophies()')})`);
 
   // the v5 fixtures: every family is there, the piles load untouched, and the node maths is finite
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
     const go = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
     const defaults = go.eval('S.skills.forage.lv >= 1 && ["crystal", "fibre", "herb", "hide"].every(k => S.mats[k].length === 5) && S.craft.troph.length === 7');
@@ -1133,7 +1167,7 @@ if (section('tools')) try {
     assert(!g.errors.length, 'no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
   // old saves: mats and dps exact, every tool recipe open at the same tiers, S.tools defaults in, round trip
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8')); delete old.tools;
     const g = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E = s => g.eval(s);
     const same = Object.keys(old.mats).every(k => JSON.stringify(E(`S.mats.${k}`)) === JSON.stringify(old.mats[k]));
@@ -1161,7 +1195,7 @@ if (section('tools')) try {
 
 // ---- codex and Lantern Light (57c-codex.js) ----
 if (section('codex')) try {
-  const FIX = ['save-early.json', 'save-mid.json', 'save-late.json'];
+  const FIX = FIXTURES;
   const ticks = (g, n) => { for (let i = 0; i < n; i++) g.fn.tick(0.1); };
   
   // new game: defaults, nothing earned, no toast
@@ -1239,7 +1273,7 @@ if (section('codex')) try {
 
 // ---- the Deepwell (57d-deepwell.js) ----
 if (section('deepwell')) try {
-  const FIX = ['save-early.json', 'save-mid.json', 'save-late.json'];
+  const FIX = FIXTURES;
   const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
   const ticks = (g, n, dt = 0.1) => { for (let i = 0; i < n; i++) g.fn.tick(dt); };
   const errs = [];
@@ -1353,7 +1387,7 @@ if (section('deepwell')) try {
 if (section('onboarding')) try {
   const errs = [];
   // the v5 fixtures keep the guide state they were saved with
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'));
     const g = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
     const d = subsetDiff(old.onboard, JSON.parse(g.eval('JSON.stringify(S.onboard)')));
@@ -1761,10 +1795,15 @@ if (section('stars')) try {
   errs.push(...g.errors);
 
   // old saves: the fixtures load, find the stars of the zone bosses behind them, and set nothing
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const raw = JSON.parse(rawOf(f));
     const o = loadCore({ seed: 43, storage: memoryStorage({ [KEY]: rawOf(f) }) });
     o.fn.tick(0.1);
+    if (raw.stars && raw.stars.v === 3) {   // a current-era save (save-current, a release snapshot): its stars load as saved
+      const d = subsetDiff({ own: raw.stars.own, learned: raw.stars.learned, lit: raw.stars.lit }, JSON.parse(o.eval('JSON.stringify(S.stars)')));
+      assert(!d && !o.errors.length, `${f}: current-era stars load as saved (owned, learned, lit)` + (d ? ': ' + d : o.errors[0] ? ': ' + o.errors[0] : ''));
+      continue;
+    }
     const want = JSON.parse(o.eval('JSON.stringify(STAR_ORDER.filter(id => STARS[id].from.zone && STARS[id].from.zone < S.maxZone))'));
     assert(o.eval('S.stars.v') === 3 && JSON.stringify(Object.keys(o.eval('S.stars.own'))) === JSON.stringify(want) && o.eval('starsActive().length') === 0
       && o.eval('starPoints()') === 2 + Math.floor(o.eval('(soloLevels()[soloHero()] || { L: S.L }).L') / 10) + Math.floor((raw.maxZone - 1) / 35) && !o.errors.length,
@@ -1921,7 +1960,7 @@ if (section('zone area names')) try {
 
 // ---- regions and the Great Lantern (22-data-regions.js, 40-rules.js, 55-lantern.js; plan-2 task R0) ----
 if (section('regions and the Great Lantern')) try {
-  const FIX = ['save-early.json', 'save-mid.json', 'save-late.json'];
+  const FIX = FIXTURES;
   const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
   const ticks = (g, n) => { for (let i = 0; i < n; i++) g.fn.tick(0.1); };
   const watch = g => { const ev = { gl: [], news: [] }; g.fn.on('greatLantern', e => ev.gl.push(JSON.parse(JSON.stringify(e)))); g.fn.on('whatsNew', w => ev.news.push(w.msg)); return ev; };
@@ -2144,7 +2183,7 @@ if (section('cold hearth')) try {
   errs.push(...g.errors, ...g2.errors, ...g3.errors, ...g4.errors, ...w.errors);
 
   // the v5 fixtures keep their Hearth state through a load, a minute of play and a reload
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const old = JSON.parse(rawOf(f));
     const h = loadCore({ seed: 26, storage: memoryStorage({ [KEY]: rawOf(f) }) });
     for (let i = 0; i < 20; i++) h.fn.tick(0.1);
@@ -2690,7 +2729,7 @@ if (section('story')) try {
   assert(!c.errors.length, 'story: no handler errors' + (c.errors.length ? ': ' + c.errors[0] : ''));
 
   // ---- a save past slots gets them quietly; a reload plays nothing; old keys are kept ----
-  for (const f of ['save-early.json', 'save-mid.json', 'save-late.json']) {
+  for (const f of FIXTURES) {
     const raw = JSON.parse(rawOf(f)); delete raw.story;
     const h = loadCore({ seed: 76, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }); h.eval(DATA);
     const hv = watch(h);
@@ -6332,7 +6371,7 @@ if (section('save codec validation (C5)')) try {
   assert(E('(()=>{const s=fresh();s.extra=s;return !validateSave(s).ok;})()')&&E('(()=>{const s=fresh();s.extra=Array(2);return !validateSave(s).ok;})()'),'C5: cycles and sparse non-JSON lists are rejected');
   { // every bounty the board really draws (from each fixture's state) passes; malformed slots of each shape are refused
     const seen=new Set(), refused=[];
-    for (const f of ['save-early.json','save-mid.json','save-late.json']) {
+    for (const f of FIXTURES) {
       const h=loadCore({seed:77,storage:memoryStorage({[KEY]:fs.readFileSync(path.join(ROOT,'tests','fixtures',f),'utf8')})});
       const out=JSON.parse(h.eval(`JSON.stringify((()=>{const out=[];for(let i=0;i<80;i++){S.bounties.slots=S.bounties.slots.map(b=>({k:null,wait:0,rr:b&&b.rr||0}));BOUNTY_API.refresh();const r=validateSave(S);out.push([S.bounties.slots.map(b=>b.k),r.ok?'':r.error]);}return out;})())`));
       for (const [ks,err] of out) { ks.forEach(k=>seen.add(k)); if (err) refused.push(f+': '+ks.join('/')+': '+err); }
