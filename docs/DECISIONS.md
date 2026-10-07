@@ -637,3 +637,28 @@ change over existing fields.
    tags every currency in `tools/systems-map.mjs` with a Kind (the check fails on an untagged currency or a core set that
    is not these eight), registers Attribute points, and shows Mirrors of Embers beside Trophies as "Rare finds" in the
    Storehouse. The top bar already shows only Gold and Embers; no screen needed a cut.
+
+## Milestone 1 (2026-10-07)
+
+Card `m1-define`; Sonnet red team and Opus judge in `docs/design/milestone-records/`. Page: `docs/design/milestones.md`. Claude
+decided; Cal can veto any line.
+
+- **M1 is "The Hollow, finished", split in two.** M1a is zones 1 to 15 (three areas, three Champions); M1b is zones 16 to 35 and
+  the Fenmother. M1a contains the first hour (M0) and has eight exit criteria with named checks. Earliest close 2026-10-19.
+  The split lets a paused art lane stall the art, not every planner. Re-plan trigger: if the Codex lane is still paused on
+  2026-10-21, or fewer than 2 vetted packs land in the first 4 weeks after it resumes, M1a's art criterion is cut to zones 1 to 10.
+- **Monsters may share a body within their area (Claude decided; Cal can veto).** Each zone keeps its own named monster, moves and
+  look. Codex may draw it as kin of another monster in the same area: the same body with its own palette, marking or prop, and any
+  pose its moves need. Champions stay their own creatures. Only Codex draws kin, Captains, Champions and background versions,
+  inside whole vetted packs, and Claude only wires them. No agent recolours or tints art in code; the Deepwell cold palette stays
+  the only runtime recolour. This narrows "Each zone has its own monster" (2026-10-01) to "its own named foe, not a new species".
+  "Poses follow the moves" and the art freeze are unchanged. The Hollow costs 17 packs; 1.0 is estimated at about 100 packs
+  instead of 215 species (an estimate, not a commitment).
+- **Bare heroes lose to bosses (Cal's 2026-10-07 direction, made a gate).** Judge numbers at Champions 10 and 15: bare casual 5 to
+  25%, good play at most 70%; gear opens a gap of at least 40 points, first crafts at least 25. Zone 5 bare casual 20 to 50%.
+  `boss-tiers-pr2` may tune them with a DECISIONS line.
+- **A slice passes only with zero open budget gaps** at or below its last zone; renewing a dated gap does not pass.
+- **Heroes without a kit are not offered in a slice** (Bram, from zone 10, today). Saves keep anyone already joined.
+- **Cards:** deepwell-turns, provings-turns (already built), budget-extras (folded into pr2), bossodds-chunk-seeds (#93),
+  hero-training-policy and moments-feel-spec closed; ui-gather-ledger, ap-collection-counts, menu-polish, bag-slot-and-steady-charges,
+  omen-dares-and-contracts, story-choices, story-scripts-2-5, story-stills and the two hero-voice proposals are OUT of M1.
