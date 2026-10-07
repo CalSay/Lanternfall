@@ -43,7 +43,7 @@ page says what was picked.
     Attack, Parry and Dodge. Each row shows the tile, name, kind and cooldown, and a badge:
     - In Q / W / E, Learned, or Learn (a Scroll can teach it now).
     - If it is locked, the reason: "Level 16" or "Needs a Barrow Scroll".
-    - For a learned ability, its talent ("Talent A") or "Pick a talent" when you have the points.
+    - For a learned ability, its talent ("Talent A") or "Pick a talent".
   - **The detail** opens when you tap a row. It has the full text, the numbers at your power now, and the Perfect text of a
     timed ability. It has one action: Learn, Slot Q / W / E (tap the lit slot to take it out), or what it still needs. Its
     two talents show as an A / B choice. Where it sits:
@@ -78,8 +78,8 @@ page says what was picked.
 ## Talents (owner, 2026-10-02: "Sure let's do it")
 
 Codex's C19 forks, built as **talents** (24e-data-talents.js, 56e-abilities.js). Each learned ability has two talents,
-and so do the hero's Attack, Parry and Dodge: pick one of the two for 2 talent points. A hero earns 1 point a level after
-level 1, so a level 35 hero has 34: enough for 17 of the 17 picks. Choices can be changed or given back any time; a fight
+and so do the hero's Attack, Parry and Dodge: pick one of the two, free (counters-and-layers: there are no talent points). Choices
+can be switched any time; a fight
 takes them as it starts. They show as an A / B choice in each ability's detail on Hero > Abilities, and Attack, Parry and
 Dodge have their own rows at the bottom of the list. They are named talents, not stars, so they do not clash with the Stars view (below).
 

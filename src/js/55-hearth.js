@@ -96,18 +96,18 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   };
 
   // ---- the fire ----
-  const short = cost => cost.filter(([f, t, n]) => (S.mats[f][t - 1] || 0) < n);
+  const short = cost => cost.filter(([f, t, n]) => matOwn(f, t) < n);
   hearthCan = () => {
     const cost = HEARTH_TUNE.light;
     if (!hearthCold()) return { ok: false, why: 'The fire is already lit.', cost };
     if (Hs().lit) return { ok: false, why: 'The fire is already lit.', cost, lit: true };
     const miss = short(cost);
-    if (miss.length) return { ok: false, why: miss.map(([f, t, n]) => `${n - (S.mats[f][t - 1] || 0)} more ${matName(f, t)}`).join(', '), cost, miss };
+    if (miss.length) return { ok: false, why: miss.map(([f, t, n]) => `${n - matOwn(f, t)} more ${costName(f, t)}`).join(', '), cost, miss };
     return { ok: true, why: '', cost };
   };
   hearthLight = () => {
     const c = hearthCan(); if (!c.ok) return false;
-    for (const [f, t, n] of c.cost) S.mats[f][t - 1] -= n;
+    for (const [f, t, n] of c.cost) { if (f === 'ess') essPay(n); else S.mats[f][t - 1] -= n; }
     Hs().lit = Date.now();
     S.camp.b.hearth = Math.max(1, lv('hearth'));
     S.camp.open = true;

@@ -600,7 +600,7 @@ if (section('crafting')) try {
   const mats = () => E('JSON.stringify(S.mats)');
   // gates and player-facing reasons
   const why0 = E('canCraft("robe", 1).why');
-  assert(why0 === '7 more Hemp Fibre, 1 more Quartz, 1 more Sage Sprig, 2 more Dim Essence', `canCraft names what is missing (${why0})`);
+  assert(why0 === '7 more Hemp Fibre, 1 more Quartz, 1 more Sage Sprig, 2 more Essence', `canCraft names what is missing (${why0})`);
   const RQ = t => E(`CRAFT_STATION_REQ[${t - 1}]`);   // GP1: the gates are SKILL_TUNE.stationReq
   assert(E('canCraft("robe", 2).why') === `Needs Tailoring ${RQ(2)}` && E('craftItem("robe", 2)') === null, `station tier gate: Needs Tailoring ${RQ(2)}`);
   assert(E('canCraft("charm", 3).why') === `Needs Enchanting ${RQ(3)}`, "Charm gates on the Enchanter's Table...");
@@ -2924,9 +2924,10 @@ if (section('store')) try {
     assert(E('S.camp.b.store') === 8 && JSON.stringify(E('storeOverAt(S.mats, 8)')) === '[["ess",1]]' && E('S.mats.ess[0]') === ESS && E('S.mats.wood[2]') === WOOD, 'more Dim Essence than Lv 8 holds: one over cell, all of it kept');
     ticks(g, 2);
     assert(E('S.mats.ess[0]') === ESS, 'the over pile is still whole after two seconds');
-    assert(E("stashAdd('ess', 1, 5, 'flow')") === 0 && E('S.mats.ess[0]') === ESS && E('stashOver("ess", 1)'), 'an over cell gains nothing from a flow');
+    const e1 = E('S.mats.ess[1]');
+    assert(E("stashAdd('ess', 1, 5, 'flow')") === 5 && E('S.mats.ess[0]') === ESS && E('S.mats.ess[1]') === e1 + 5 && E('stashOver("ess", 1)'), 'an over Essence grade gains nothing itself; the drop spills into the next grade with room (counters-and-layers)');
     E(`S.mats.ess[0] = ${fTop - 10}`);
-    assert(E("stashAdd('ess', 1, 50, 'flow')") === 10 && E('S.mats.ess[0]') === fTop, 'spent below the cap: it gains up to the cap again');
+    assert(E("stashAdd('ess', 1, 50, 'flow')") === 50 && E('S.mats.ess[0]') === fTop && E('S.mats.ess[1]') === e1 + 45, 'spent below the cap: the grade fills to the cap, the rest spills');
     errs.push(...g.errors, ...q.errors);
   }
   assert(FIX.length >= 3, `${FIX.length} fixtures checked`);
@@ -7637,6 +7638,9 @@ if (section('C25 enemy profiles')) try {
   const a = hit(49), b = hit(50);
   assert(a > 0 && Math.abs(b / a - 1.05) < 1e-6, `C25: at 50 kills hits on that kind deal +5% (${a} -> ${b})`);
   assert(E('typeRel("slime", "holy") === 0 && typeRel("slime", "fire") === 1'), 'C25: the bonus leaves weak / resist labels alone');
+  // foe-weak-resists: the Foe tab reads the same tiers (75-turn-ui turnFoeInfo adds weakness at 5 kills, the tell at 15, never earlier)
+  const foeUi = fs.readFileSync(path.join(ROOT, 'src/js/75-turn-ui.js'), 'utf8');
+  assert(/pr\.weak\)\s*learn\.push/.test(foeUi) && /pr\.tell && pr\.tellTxt\)\s*learn\.push/.test(foeUi), 'foe-weak-resists: the Foe tab shows weakness only once learned (5 kills) and the tell only at 15');
   assert(!g.errors.length, 'C25: no core errors');
 } catch (e) { fail('C25 crashed: ' + (e.stack || e)); }
 
@@ -7822,16 +7826,15 @@ if (section('turn UI (browser)')) try {
           await page.click(learn); await page.waitForTimeout(250);
           out.learned = await X(`abilityOwned('wren', 'powershot') && soloEquipped().includes('powershot') && scrollCount('moss') === 0 && !!document.querySelector('#sec-abilities .ab-row[data-ab="powershot"].owned')
             && document.querySelectorAll('#sec-abilities .ab-det[data-ab="powershot"] .ab-slotb').length === 3 && !!document.querySelector('#sec-abilities .ab-det .ab-slotb.on')`);
-          // the A / B talent choice: take A, switch to B (no more points), give it back
-          const tal = c => `#sec-abilities .ab-det[data-ab="powershot"] .ab-talb[data-c="${c}"]`, pts = `talentPoints('wren').free`;
-          const free0 = await X(pts);
+          // the A / B talent choice: take A, switch to B, tap B again (it stays; talents are free)
+          const tal = c => `#sec-abilities .ab-det[data-ab="powershot"] .ab-talb[data-c="${c}"]`;
           await page.click(tal('a')); await page.waitForTimeout(150);
-          out.talA = await X(`talentsOf('wren').powershot === 'a' && ${pts} === ${free0} - TALENT_TUNE.cost && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'true'
+          out.talA = await X(`talentsOf('wren').powershot === 'a' && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'true'
             && JSON.parse(localStorage.getItem('lanternfall.save.v5')).abil.tal.wren.powershot === 'a' && /Talent A/.test(document.querySelector('#sec-abilities .ab-row[data-ab="powershot"]').textContent)`);
           await page.click(tal('b')); await page.waitForTimeout(150);
-          out.talB = await X(`talentsOf('wren').powershot === 'b' && ${pts} === ${free0} - TALENT_TUNE.cost && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'false' && document.querySelector('${tal('b')}').classList.contains('on')`);
+          out.talB = await X(`talentsOf('wren').powershot === 'b' && document.querySelector('${tal('a')}').getAttribute('aria-pressed') === 'false' && document.querySelector('${tal('b')}').classList.contains('on')`);
           await page.click(tal('b')); await page.waitForTimeout(150);
-          out.talOff = await X(`!talentsOf('wren').powershot && ${pts} === ${free0}`);
+          out.talOff = await X(`talentsOf('wren').powershot === 'b' && document.querySelector('${tal('b')}').classList.contains('on')`);
           // Attack, Parry and Dodge: their own rows, and their talents in the detail
           await page.click('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(150);
           out.closed = await X(`!document.querySelector('#sec-abilities .ab-det')`);
@@ -7874,7 +7877,7 @@ if (section('turn UI (browser)')) try {
       assert(on.det && on.det.ab === 'powershot' && on.det.vis && /180% power/.test(on.det.desc) && /Perfect: a sure crit/.test(on.det.perfect) && /Hits for about/.test(on.det.nums) && on.det.tal === 2,
         `turn UI: a tap on a row opens its detail: the full text, its numbers, the Perfect text, and its two talents (shut until learned) (${JSON.stringify(on.det)})`);
       assert(/Tap again/.test(on.armed) && on.armedSafe && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot; the detail then offers Q, W and E (${JSON.stringify(on.armed)}, ${on.armedSafe}, ${on.learned})`);
-      assert(on.talA && on.talB && on.talOff, `turn UI: the detail's A / B talents: A takes 2 points and saves, B swaps for no more, a second tap gives it back (${on.talA}, ${on.talB}, ${on.talOff})`);
+      assert(on.talA && on.talB && on.talOff, `turn UI: the detail's A / B talents: A saves, B swaps, a second tap on B leaves it picked, and none of it costs points (${on.talA}, ${on.talB}, ${on.talOff})`);
       assert(on.closed && on.parryTal, `turn UI: the detail closes; Parry has its own row and its talents in the detail (${on.closed}, ${on.parryTal})`);
       assert(on.fLearned && on.fCan && on.fAll === 17, `turn UI: the filters show the learned abilities, the ones a Scroll can teach now, and all again (${on.fLearned}, ${on.fCan}, ${on.fAll})`);
       assert(on.proving && on.proving.slot && !on.proving.chip && /Foe 1\/5, \d+ turns/.test(on.proving.time) && on.proving.turn && on.provingEnd,
@@ -7926,14 +7929,14 @@ if (section('turn UI (browser)')) try {
           return ok || [!!document.querySelector('#sec-abilities .ab-det'), document.getElementById('panels').scrollTop, ${before}].join(); })()`);
         await page.click('#sec-abilities .ab-infob'); await page.waitForTimeout(150);
         r.info = await X(`(() => { const t = (document.querySelector('#sec-abilities .ab-info .ab-tp') || {}).textContent || '';
-          return document.querySelectorAll('#sec-abilities .ab-info .ab-scroll').length === 5 && /Talents: \\d+ of 29 points free/.test(t) || t || 'no drawer'; })()`);
+          return document.querySelectorAll('#sec-abilities .ab-info .ab-scroll').length === 5 && /Talents are free/.test(t) || t || 'no drawer'; })()`);
         r.infoFit = await X(fit);
         const port = h > w;
         assert(!r.list.length && !r.detFit.length && !r.infoFit.length, `abilities UI ${w}x${h}: no sideways scroll, every button at least 44 px (${JSON.stringify([r.list, r.detFit, r.infoFit])})`);
-        assert(r.sticky, `abilities UI ${w}x${h}: the loadout bar (Q, W, E, Scrolls, talent points) stays at the top while the list scrolls`);
+        assert(r.sticky, `abilities UI ${w}x${h}: the loadout bar (Q, W, E, Scrolls) stays at the top while the list scrolls`);
         assert(r.det && r.det.inView && r.det.list === port && r.det.slots === 3 && r.det.onW && r.det.talOn && r.moved,
           `abilities UI ${w}x${h}: a row's detail opens in view (${port ? 'a sheet over the list' : 'in the list\'s place'}), shows the slot it is in, and E moves it there (${JSON.stringify(r.det)}, ${r.moved})`);
-        assert(r.back === true && r.info === true, `abilities UI ${w}x${h}: closing the detail brings the list back where it was; the Scrolls button shows each Scroll and the talent points (${r.back}, ${r.info})`);
+        assert(r.back === true && r.info === true, `abilities UI ${w}x${h}: closing the detail brings the list back where it was; the Scrolls button shows each Scroll and says talents are free (${r.back}, ${r.info})`);
         assert(!errors.length, `abilities UI ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
         await ctx.close();
       }
@@ -8289,13 +8292,11 @@ if (section('C29 turn fights (core)')) try {
     }
     assert(Object.entries(out).every(([k, r]) => r.trait === k && r.kills > 0 && !r.err && !/fff/.test(r.seq)),
       `C29: each elite trait (Shielded, Leeching, Enraged, Ice-Clad, Cursed) works in turn fights, and an Enraged elite never takes 3 turns in a row (${JSON.stringify(Object.values(out).map(r => r.name + ' ' + r.kills + ' ' + r.seq))})`); }
-  // talents (24e): points from levels, two choices each, every choice works in fights
+  // talents (24e): free, two choices each, every choice works in fights
   { const { E } = fresh('pip', 14);
-    assert(E('talentPoints("pip").total === 0 && !talentSet("pip", "fire", "a")'), 'C29: a level 1 hero has no talent points');
-    E('S.L = 5; soloLevels');
-    assert(E('talentPoints("pip").total === 4 && talentSet("pip", "fire", "a") && talentSet("pip", "pip:parry", "b") && !talentSet("pip", "pip:dodge", "a") && talentSet("pip", "fire", "b") && talentPoints("pip").free === 0'),
-      'C29: a talent costs 2 points from 1 a level; switching between its two choices is free');
-    assert(E('!talentSet("pip", "spark", "a") && talentSet("pip", "fire", null) && talentPoints("pip").free === 2'), 'C29: only a learned ability takes a talent, and one can be given back');
+    assert(E('!talentSet("pip", "pip:parry", "c") && talentSet("pip", "fire", "a") && talentSet("pip", "pip:parry", "b") && talentSet("pip", "pip:dodge", "a") && talentSet("pip", "fire", "b")'),
+      'C29: talents are free (counters-and-layers): any owned ability, Attack, Parry or Dodge takes A or B at once, at any level, and switching is free');
+    assert(E('!talentSet("pip", "spark", "a") && talentSet("pip", "fire", null) && !talentsOf("pip").fire && typeof talentPoints === "undefined"'), 'C29: only a learned ability takes a talent, one can still be cleared, and talent points are gone');
     const bad = [];
     for (const hero of ['wren', 'tobin', 'pip']) for (const c of ['a', 'b']) {
       const g = loadCore({ seed: 31, turns: true }), H = x => g.eval(x);
@@ -9814,6 +9815,26 @@ if (section('boss tiers first hour')) try {
   const mx = JSON.parse(E(`(() => { const p = turnCombatProfile(); let m = 0; for (const mv of p.script) for (const h of mv.hits) { const raw = (h.x || 0.2) * p.refHp * p.bossHitX * (mv.charge ? p.bossChargeX : 1); m = Math.max(m, Math.min(raw, p.bossHitCap * 1000)); } return m; })()`)) ;
   assert(mx <= 400 + 1e-6, `boss cap: the biggest zone-10 hit stays at 400 of a 1000 HP hero (${mx})`);
 } catch (e) { fail('boss tiers first hour crashed: ' + (e.stack || e)); }
+
+// ==== counters-and-layers: Essence is one pile (any grade pays any Essence cost, lowest grade first) ====
+if (section('essence fungible')) try {
+  const g = loadCore({ seed: 41 }), E = x => g.eval(x);
+  E('S.mats.ess = [3, 0, 4, 0, 2]');
+  assert(E('essHave()') === 9 && E('hasMats({ ess: 9 }, 5)') && !E('hasMats({ ess: 10 }, 1)'), 'essence: every grade counts toward any Essence cost');
+  E('payMats({ ess: 5 }, 5)');
+  assert(JSON.stringify(E('S.mats.ess')) === '[0,0,2,0,2]', 'essence: payment takes the lowest grade first');
+  assert(E("costName('ess', 3)") === 'Essence', 'essence: a cost line never names a grade');
+  assert(E("canTransmute('ess', 1, 'up').ok") === false, 'essence: Transmute is retired for Essence');
+  assert(E("canTransmute('ore', 1, 'up').why") !== undefined, 'essence: other materials keep Transmute');
+  // a full grade spills into the next grade with room
+  const cap = E('storeCap("ess", 1)');
+  E(`S.mats.ess = [${cap}, 0, 0, 0, 0]`);
+  assert(E("stashAdd('ess', 1, 7, 'flow', true)") === 7 && E('S.mats.ess[0]') === cap && E('S.mats.ess[1]') === 7, 'essence: a drop into a full grade spills into the next grade with room');
+  // class change pays from any grade, and names no grade
+  E('S.party.mirrors = 5; S.mats.ess = [0, 0, 0, 0, 0]; S.mats.ess[4] = 1e6');
+  assert(E("respecCost('evo').have.ess") === 1e6 && !/Dim|Glowing|Radiant|Tidelit|Stormlit/.test(E("respecCost('base').why")), 'essence: class change counts every grade and names none');
+  assert(!g.errors.length, 'essence fungible: no core errors');
+} catch (e) { fail('essence fungible crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

@@ -13,8 +13,10 @@ export const LINT = `(() => {
   if (tip) for (const k of ['hero', 'foe', 'boss', 'heroHp', 'foeHp']) { const b = R[k]; if (!b) continue; const o = ov(tip, { x: b.x - 6, y: b.y - 6, w: b.w + 12, h: b.h + 12 }); if (o.w > 4 && o.h > 4) out.push({ what: 'tip covers or crowds the ' + ({ heroHp: 'hero HP box', foeHp: 'foe HP box' }[k] || k), detail: 'tip ' + r1(tip) + ' on ' + k + ' ' + r1(b) + ' by ' + Math.round(o.w) + 'x' + Math.round(o.h) + ' px: "' + ((LF_EYES.tip() || {}).text || '').slice(0, 60) + '"' }); }
   // 1b. page boxes
   const SEL = ['.hero-plate', '.mob', '.hud-zone', '#soloBar .sbtn', '.tabs .tab', '#toasts .toast', '.ob-bub', '.tv-card', '.tv-banner', '.cb-banner', '#modeSeg', '#nuChip', '.sfx-btn', '.bell', '#bellBtn', '.stage-btns button'];
-  const boxes = [];
-  for (const s of SEL) for (const n of document.querySelectorAll(s)) if (vis(n)) { const b = bx(n); if (b.w > 2 && b.h > 2) boxes.push({ s, n, b, id: s + ':' + (n.className && n.className.toString().split(' ').slice(0, 2).join('.') || n.id || n.tagName) }); }
+  const boxes = [], menuEl = document.getElementById('menu'), menuB = menuEl && vis(menuEl) && document.querySelector('.app.menu-open') ? bx(menuEl) : null;
+  // an open menu panel covers the page behind it (the Attack button under the Hero tab): those boxes are not on screen
+  const hidden = (n, b) => !!menuB && !menuEl.contains(n) && !n.closest('.ob-bub, #toasts') && holds(menuB, b);
+  for (const s of SEL) for (const n of document.querySelectorAll(s)) if (vis(n)) { const b = bx(n); if (b.w > 2 && b.h > 2 && !hidden(n, b)) boxes.push({ s, n, b, id: s + ':' + (n.className && n.className.toString().split(' ').slice(0, 2).join('.') || n.id || n.tagName) }); }
   for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
     const A = boxes[i], B = boxes[j]; if (A.n === B.n || A.n.contains(B.n) || B.n.contains(A.n)) continue;
     const o = ov(A.b, B.b); if (o.w <= 4 || o.h <= 4 || holds(A.b, B.b) || holds(B.b, A.b)) continue;

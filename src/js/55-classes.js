@@ -239,12 +239,12 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     const k = kind === 'base' ? 'base' : 'evo', row = CLS_TUNE.respec[k], c = C();
     const esc = Math.min(CLS_TUNE.respec.escMax, 1 + CLS_TUNE.respec.esc * (c.respec || 0));
     const e = essFor(row.essHours * esc), mirrors = row.mirrors;
-    const haveM = (S.party && S.party.mirrors) || 0, haveE = (S.mats && S.mats.ess && S.mats.ess[e.t - 1]) || 0;
+    const haveM = (S.party && S.party.mirrors) || 0, haveE = essHave();
     const needM = Math.max(0, mirrors - haveM), needE = Math.max(0, e.n - haveE);
-    const why = needM ? `You need ${needM} more Mirror${needM > 1 ? 's' : ''} of Embers.` : needE ? `You need ${fmt(needE)} more ${MAT.ess.short[e.t - 1]} Essence.` : '';
+    const why = needM ? `You need ${needM} more Mirror${needM > 1 ? 's' : ''} of Embers.` : needE ? `You need ${fmt(needE)} more Essence.` : '';
     return { kind: k, mirrors, ess: e, esc, have: { mirrors: haveM, ess: haveE }, needM, needE, ok: !why, why };
   };
-  const pay = cost => { S.party.mirrors -= cost.mirrors; S.mats.ess[cost.ess.t - 1] -= cost.ess.n; C().respec = (C().respec || 0) + 1; };
+  const pay = cost => { S.party.mirrors -= cost.mirrors; essPay(cost.ess.n); C().respec = (C().respec || 0) + 1; };
   respecPay = kind => { const c = respecCost(kind); if (!c.ok) return false; pay(c); return true; };
   // Switch to the other evolution of the same base: the free change inside its window, else 1 Mirror + Essence.
   respecEvo = (evo, opts) => {

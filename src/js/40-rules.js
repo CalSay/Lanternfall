@@ -22,8 +22,15 @@ const gearDirty = () => { gsCache = null; emit('gear'); };
 function gear() { return gsCache || (gsCache = gearCalc()); }
 const craftCost = (slot, t) => kindCost(slot, t);
 function upgradeCost(it) { return kindUpgradeCost(it); }
-const hasMats = (m, t) => Object.entries(m).every(([k, n]) => S.mats[k][t - 1] >= n);
-const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) S.mats[k][t - 1] -= n; };
+// Essence is fungible (counters-and-layers): any grade pays any Essence cost, lowest grade first. Every other family
+// is still held and paid by grade. matOwn/matPay are the one read and write for a cost line.
+const essHave = () => (S.mats.ess || []).reduce((a, n) => a + Math.max(0, n || 0), 0);
+const essPay = n => { const a = S.mats.ess; for (let i = 0; i < a.length && n > 0; i++) { const take = Math.min(n, Math.max(0, a[i] || 0)); a[i] -= take; n -= take; } };
+const matOwn = (k, t) => (k === 'ess' ? essHave() : (S.mats[k] && S.mats[k][t - 1]) || 0);
+const matPay = (k, t, n) => { if (k === 'ess') essPay(n); else S.mats[k][t - 1] -= n; };
+const costName = (k, t) => (k === 'ess' ? 'Essence' : matName(k, t));   // a cost line never names an Essence grade
+const hasMats = (m, t) => Object.entries(m).every(([k, n]) => matOwn(k, t) >= n);
+const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) matPay(k, t, n); };
 // sm: the crafting station's level (55-crafting passes it); Smithing by default.
 function rarityWeights(sm = S.skills.smith.lv) {
   return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: (10 + sm * 0.5) * mod('rareW'), epic: (2 + sm * 0.25) * mod('rareW') };

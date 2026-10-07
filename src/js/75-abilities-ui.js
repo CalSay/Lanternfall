@@ -33,7 +33,7 @@
   const persist = () => { try { save(); } catch (e) {} ui(true); };
   const redraw = () => { sig = ''; refresh(); };
   const cdTxt = id => { const a = ABILITIES[id]; return a.kind === 'passive' ? 'Always on' : `${typeof turnCdFor === 'function' ? turnCdFor(id) : a.cd} turns`; };
-  const talOn = () => typeof TALENTS === 'object' && typeof talentPoints === 'function';
+  const talOn = () => typeof TALENTS === 'object' && typeof talentsOf === 'function';
   const panels = () => document.getElementById('panels');
   // open or close the detail; in the small landscape panel it takes the list's place, so keep the list's scroll for Back
   function openDet(id) {
@@ -57,7 +57,7 @@
     const k = soloHero(); if (!root) return;
     root.textContent = '';
     if (!k || typeof HERO_PATHS !== 'object' || !HERO_PATHS[k]) { root.append(el('p', 'note', 'Choose a hero first.')); return; }
-    const eq = soloEquipped(), tp = talOn() ? talentPoints(k) : null;
+    const eq = soloEquipped();
     root.classList.toggle('has-det', !!selId);
     // ---- the loadout bar: Q W E and the Scrolls / talent points button ----
     const bar = el('div', 'ab-bar'), qwe = el('div', 'ab-qwe');
@@ -79,7 +79,6 @@
     let nScroll = 0; for (const id of SCROLL_ORDER) nScroll += scrollCount(id);
     const ib = btn('ab-infob' + (infoOpen ? ' on' : '')); ib.setAttribute('aria-expanded', String(infoOpen));
     ib.append(el('b', null, `${nScroll} Scroll${nScroll === 1 ? '' : 's'}`));
-    if (tp) ib.append(el('small', null, `${tp.free} talent pt${tp.free === 1 ? '' : 's'}`));
     ib.addEventListener('click', () => { infoOpen = !infoOpen; redraw(); });
     bar.append(qwe, ib);
     root.append(bar);
@@ -94,7 +93,7 @@
       }
       info.append(scrolls, el('p', 'note ab-src', 'Zone bosses drop Scrolls. Use one to learn an ability.'));
       info.append(el('p', 'note ab-note', `${heroNm(k)} takes three abilities into a fight (Q, W, E).`));
-      if (tp) info.append(el('p', 'note ab-tp', `Talents: ${tp.free} of ${tp.total} points free. Pick one of two for ${TALENT_TUNE.cost} points. Change them between fights.`));
+      if (talOn()) info.append(el('p', 'note ab-tp', 'Talents are free. Pick A or B on any ability, Attack, Parry or Dodge, and change it between fights.'));
       root.append(info);
     }
     // ---- the resource line ----
@@ -134,7 +133,7 @@
     if (!talOn() || !TALENTS[id]) return null;
     const cur = (talentsOf(k) || {})[id];
     if (cur) return el('small', 'ab-tm', `Talent ${cur.toUpperCase()}`);
-    return talentPoints(k).free >= TALENT_TUNE.cost ? el('small', 'ab-tm pick', 'Pick a talent') : null;
+    return el('small', 'ab-tm pick', 'Pick a talent');
   }
   function rowFor(k, id, i, eq) {
     const a = ABILITIES[id], where = eq.indexOf(id);
@@ -162,23 +161,22 @@
   // the two talents of an ability (or of '<hero>:attack' etc.) as an A / B choice: tap one to take it, tap it again to give it back
   function talentBlock(k, id, owned) {
     if (!talOn() || !TALENTS[id]) return null;
-    const T = TALENTS[id], cur = (talentsOf(k) || {})[id] || '', tp = talentPoints(k);
+    const T = TALENTS[id], cur = (talentsOf(k) || {})[id] || '';
     const wrap = el('div', 'ab-tals'), hd = el('div', 'ab-th');
-    hd.append(el('h4', null, 'Talents'), el('small', null, owned ? `Pick A or B · ${TALENT_TUNE.cost} points · ${tp.free} free` : 'Learn it to pick one'));
+    hd.append(el('h4', null, 'Talents'), el('small', null, owned ? 'Pick A or B · free' : 'Learn it to pick one'));
     const row = el('div', 'ab-tal');
     for (const c of ['a', 'b']) {
-      const on = cur === c, can = owned && (on || !!cur || tp.free >= TALENT_TUNE.cost);
+      const on = cur === c, can = owned;
       const b = btn('ab-talb' + (on ? ' on' : '')); b.disabled = !can; b.dataset.c = c;
       b.setAttribute('aria-pressed', String(on));
       const top = el('span', 'ab-tl'); top.append(el('i', 'ab-ab', c.toUpperCase()), el('b', null, T[c].name));
       b.append(top, el('small', null, T[c].text));
-      if (on) b.append(el('em', null, 'Taken · tap to give back'));
-      b.title = !owned ? 'Learn this ability first' : on ? 'Tap to give this talent back' : can ? `Take this talent (${TALENT_TUNE.cost} points)` : 'Not enough talent points';
-      b.addEventListener('click', () => { if (talentSet(k, id, on ? null : c)) persist(); redraw(); });
+      if (on) b.append(el('em', null, 'Picked'));
+      b.title = !owned ? 'Learn this ability first' : on ? 'Your pick' : 'Pick this talent';
+      b.addEventListener('click', () => { if (!on && talentSet(k, id, c)) { persist(); redraw(); } });
       row.append(b);
     }
     wrap.append(hd, row);
-    if (owned && !cur && tp.free < TALENT_TUNE.cost) wrap.append(el('p', 'note ab-tnote', `You need ${TALENT_TUNE.cost} free points. You earn one a level.`));
     return wrap;
   }
   function detHead(name, sub, tl, onX) {

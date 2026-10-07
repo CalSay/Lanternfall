@@ -444,7 +444,7 @@ let craftUI = null;
   // Everything recipeRow(k, t) shows that can change while the list stays the same.
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
-    const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = S.mats[f][t - 1]; return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
+    const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
     return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k)]);
   }
 
@@ -462,7 +462,7 @@ let craftUI = null;
       const card = el('div', 'card cf-tm');
       card.append(el('h3', null, 'Transmute'), el('p', 'note', 'Trade within one material. 4 of a tier make 1 of the next. 1 makes 2 of the tier below, once: what you break down cannot be broken down again.'));
       const fams = el('div', 'cf-fams'); fams.setAttribute('aria-label', 'Material');
-      for (const f of CRAFT_FAMILIES) {
+      for (const f of CRAFT_FAMILIES.filter(x => x !== 'ess')) {   // Essence pays at any grade: no Transmute
         const b = el('button', 'cf-fam'); b.type = 'button'; b.dataset.f = f; b.setAttribute('aria-label', MAT[f].n);
         b.append(img(matIcon(f, 1)), el('span', null, MAT[f].n));
         b.addEventListener('click', () => { st8.tm.fam = f; ui(true); });

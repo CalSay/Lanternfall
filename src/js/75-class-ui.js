@@ -243,7 +243,7 @@ var classEvoUI;
   on('evoProven', ({ evo }) => ceremony(evo));
 
   // ---------------- the Mirror of Embers (3.4) ----------------
-  const costTxt = c => `${c.mirrors} Mirror${c.mirrors > 1 ? 's' : ''} of Embers and ${fmt(c.ess.n)} ${MAT.ess.short[c.ess.t - 1]} Essence`;
+  const costTxt = c => `${c.mirrors} Mirror${c.mirrors > 1 ? 's' : ''} of Embers and ${fmt(c.ess.n)} Essence`;
   function mirrorRow() {
     const n = (S.party && S.party.mirrors) || 0, c = typeof lbClass === 'function' ? lbClass() : null;
     const box = el('div', 'cs-mirror cl-mirror');

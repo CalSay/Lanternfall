@@ -93,8 +93,8 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   const unbuilt = st => typeof hearthStationWhy === 'function' ? hearthStationWhy(st) : '';
 
   // ---- materials ----
-  const missing = (mats, t) => Object.entries(mats).map(([k, n]) => [k, n - S.mats[k][t - 1]]).filter(([, n]) => n > 0);
-  const missWhy = (miss, t) => miss.map(([k, n]) => `${fmt(n)} more ${matName(k, t)}`).join(', ');
+  const missing = (mats, t) => Object.entries(mats).map(([k, n]) => [k, n - matOwn(k, t)]).filter(([, n]) => n > 0);
+  const missWhy = (miss, t) => miss.map(([k, n]) => `${fmt(n)} more ${costName(k, t)}`).join(', ');
   const splitCost = rec => { const m = {}; let gold = 0; for (const [k, n] of Object.entries(rec)) { if (k === 'gold') gold += n; else m[k] = n; } return { mats: m, gold }; };
 
   // ---- crafting ----
@@ -211,6 +211,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     return toT != null ? toT : fromT + 1;
   };
   canTransmute = (fam, fromT, to, toT) => {
+    if (fam === 'ess') return no('Essence pays any cost at any grade, so it needs no Transmute.');
     if (!S.mats[fam] || !CRAFT_FAMILIES.includes(fam)) return no(typeof to === 'string' && to !== fam && to !== 'up' && to !== 'down' ? 'Transmute stays within one family.' : 'Unknown material.');
     const tt = resolveT(fam, fromT, to, toT);
     if (tt == null) return no('Transmute stays within one family.');

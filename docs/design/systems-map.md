@@ -21,7 +21,7 @@ A source or sink line names the player-facing system and the file that does it. 
 | Skill XP | 4 | 2 |  |
 | Ore | 9 | 6 |  |
 | Wood | 8 | 6 |  |
-| Essence | 7 | 8 |  |
+| Essence | 6 | 7 |  |
 | Crystal | 5 | 5 |  |
 | Fibre | 4 | 4 |  |
 | Herb | 4 | 5 |  |
@@ -33,7 +33,6 @@ A source or sink line names the player-facing system and the file that does it. 
 | Renown | 2 | 0 | No sink: A pure gate: routes check the balance and none sets spendRenown. Keep it a gate or give it a use. |
 | Boss tokens | 1 | 1 |  |
 | Star points | 1 | 1 |  |
-| Talent points | 1 | 1 |  |
 | Achievement points | 1 | 1 |  |
 | Mirrors of Embers | 2 | 1 |  |
 | Gatherer XP | 1 | 1 |  |
@@ -189,10 +188,8 @@ Sources:
 - Almanac board crates (`55-almanac.js`)
 - Salvaging a Unique (+10) (`51-actions.js`)
 - Salvaging affixed gear (+1 sometimes) (`55-crafting.js`)
-- Transmute (Enchanting): down a grade gives 2 for 1 (`55-crafting.js`)
 
 Sinks:
-- Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts (1 to 2 an item, charm 5) (`55-crafting.js`)
 - Reforging (rises 50% a reroll) (`55-crafting.js`)
 - Star Chart (`55-crafting.js`)
@@ -372,20 +369,6 @@ Sources:
 
 Sinks:
 - Lighting a star (2 lit a hero) (`57e-stars.js`)
-
-### Talent points
-
-A budget for talent choices on abilities, Attack, Parry and Dodge.
-
-Save: `derived from hero level (not saved); choices in S.abil`
-
-Sources:
-- Hero levels (`56e-abilities.js`)
-
-Sinks:
-- Setting a talent (a switch between a and b is free) (`56e-abilities.js`)
-
-Note: A budget like star points: spent points come back when a talent is cleared.
 
 ### Achievement points
 

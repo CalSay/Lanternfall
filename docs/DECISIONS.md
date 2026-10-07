@@ -576,3 +576,25 @@ Each Hollow foe type has its own moves (`TURN_FOE_TYPES`, `docs/design/foe-moves
 type signature and keep the type's pace; every foe type names an answer for each starter (`FOE_COUNTERS`). Elite scaling is
 `eliteHitX` 1.4 and `eliteHpX` 2.5 (the Cave Bat's elite has 0.4 of that HP). Zone 15 and 20 elites remain easy for casual
 Wren and Pip: that is zone 5-15 hero power, owned by boss-tiers. No save state changes.
+
+## Counters and layers: judge rulings (2026-10-07)
+
+Opus judge, card `counters-and-layers`. No save field changes, no save key bump: every merge is display-only or a rule
+change over existing fields.
+
+1. **Eight core counters** the player sees as points or money: Gold, Essence, Materials, Level (XP), Attribute points,
+   Star points, Scrolls, Embers (online, untouched). Ore, wood, crystal, fibre, herb and hide read as Materials (grades
+   stay: they are item tiers). Trophies and Mirrors of Embers sit in a "Rare finds" row. Talent points are dropped. The
+   rest are not money: meters (Skill XP, Gatherer XP, Tool mastery, Renown), scores (Achievement points, Lantern Light,
+   Stamps), flags (boss tokens), a timer (Oil), gear (Relics, Uniques) and Depth Marks (a Deepwell-only token, a 9th
+   currency inside the Deepwell; folding it in needs a save step, so it waits).
+2. **Essence is one pile.** Any grade pays any Essence cost, lowest grade first (`essHave`, `essPay`, `matOwn`, `matPay`
+   in `40-rules.js`). Grade gates nothing; costs keep their unit counts. A drop into a full grade spills into the next
+   grade with room. Transmute is retired for Essence only. Cost lines say "Essence", never a grade.
+3. **Talents are a free A | B toggle** (no talent points). `S.abil.tal` is kept as is; no default pick is written.
+   `budget.mjs` now fights with talent A on every owned slot (`--talents none` is the old talentless hero). Measured
+   (240 fights a row, PR 2): casual means move 0 to +4 points (z30 Captain Wren 65 to 68, z38 Captain 78 to 82), turns a
+   won fight fall 3 to 10%, no row changes band, so no boss was retuned.
+4. **Star points are a per-hero budget and the only limit on lit stars** (PR 3). The 2-lit cap goes and income is
+   re-curved. Old saves keep every lit star; one the points cannot pay for shows as dim with a Put out button.
+5. Build order: Essence fungible, free talents, star budget, layer and display cleanup.
