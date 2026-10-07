@@ -276,11 +276,12 @@ if (section('save export after play')) try {
   for (const [f, g] of played.slice(-1)) for (let i = 0; i < 3000; i++) g.fn.tick(0.1);
   for (const [f, g] of played) {
     g.fn.save();
-    const stored = g.storage.get(KEY), code = g.eval('encodeSave(S)');
-    assert(typeof code === 'string' && code.startsWith('LF1:'), `${f}: after play, Copy save code makes a code`);
+    const stored = g.storage.get(KEY);
+    let code; try { code = g.eval('encodeSave(S)'); } catch (e) { code = String(e && e.message || e); }   // a validator refusal throws: report it per fixture
+    assert(typeof code === 'string' && code.startsWith('LF1:'), `${f}: after play, Copy save code makes a code` + (typeof code === 'string' && code.startsWith('LF1:') ? '' : ': ' + code));
     const res = g.eval(`decodeSave(${JSON.stringify(code)})`);
     assert(res.ok, `${f}: after play, its code imports (decodeSave.ok)` + (res.ok ? '' : ': ' + res.error));
-    if (!res.ok) continue;
+    if (!code.startsWith || !code.startsWith('LF1:') || !res.ok) continue;
     const g2 = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(res.data) }) });
     const d = deepDiff(JSON.parse(stored), JSON.parse(JSON.stringify(g2.eval('S'))));
     assert(!d, `${f}: after play, the imported save loads the same as the one exported` + (d ? ': ' + d : ''));
