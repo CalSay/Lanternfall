@@ -14,7 +14,8 @@ How this was made: today's code mapped with file:line references
 pulled from Steam and the App Store (`/mnt/project-files/research/overhaul/`); W4, W7, the 6 October why review and the
 rising-games scan (`research/rising/2026-10-07.md`) read. Cal's answers file
 (`autopilot/reports/why-review-2026-10-06-answers.md`) wins where sources differ. A red team ran budget sims on the
-draft and found four blockers; all are fixed below (section 15). An Opus judge ruled on the result (section 14).
+draft and found four blockers; all are fixed below (section 15). An Opus judge accepted the result with twelve required
+changes, all applied (section 16). The coordinator's two asks (cadence targets, an Essence use) are sections 2 and 7b.
 
 ---
 
@@ -29,7 +30,8 @@ draft and found four blockers; all are fixed below (section 15). An Opus judge r
   now always means a better craft, and you choose between a top-grade piece of this tier or a low-grade piece of the next.
 - **Weapons that fit your build.** A weapon's profile (Heavy, Balanced or Swift) decides which attribute it grows with,
   so your weapon and your attribute points are one build. Might finally has a weapon.
-- **The Strike.** One tap on the timing bar while you craft lifts the piece one grade. Skip it and nothing is lost.
+- **The Strike, or Essence.** One tap on the timing bar while you craft lifts the piece one grade, up to A. Skip it and
+  nothing is lost. Or spend Essence to lift it the same way (Infuse): Essence finally has a steady use.
 - **You see why you made it.** Every craft says what it changes in the fight, and Next Up names the piece and the boss
   it is for.
 
@@ -37,8 +39,11 @@ draft and found four blockers; all are fixed below (section 15). An Opus judge r
 level, your timing and your build decide how good the gear is.
 
 **What skilling gives a player in minutes 20 to 60** (section 2): a named piece to chase for the next boss; the first time
-the camp works while you fight; a real choice every zone or two (grade or tier, then profile); and a visible rise in the
-fight when the piece lands.
+the camp works while you fight; a real choice at least every 8 minutes (grade or tier, Strike or Infuse, then profile);
+a new thing at each beat; and a visible rise in the fight when the piece lands.
+
+**Cadence targets** (section 2): a choice at least every 8 minutes of play in minutes 20 to 60, and at least 4 an hour
+through hour 10; a new mechanic at each first-hour beat, then no gap longer than 3 hours of play through hour 10.
 
 **Inside the ceiling:** 8 skills (max 10), one refine step each for ore, wood, hide and fibre, coal as a mining node, no
 new buildings, no new currency, at most 8 cells on the Storehouse's first view (section 9).
@@ -62,8 +67,11 @@ new buildings, no new currency, at most 8 cells on the Storehouse's first view (
 5. **Might is in no winning build** (hero-progression judge ruling 4): it waits for weapons that scale with attributes.
 6. **Crafted gear left in the bag** is the worst first-hour wall (W4: 3% boss wins bare, 63% in tier 1 gear).
    `next-up-equip` fixes the prompt; this spec makes the craft say what it does in the fight.
-7. **Half-built pieces this closes:** Tents 5 to 10 are priced in plank, cloth and leather that do not exist
-   (`21w-data-econ.js:50-55`); tonics are coded but cannot be brewed (code map 7).
+7. **Half-built pieces this closes:** Tent 5 is priced in tier 4 plank, cloth and leather that do not exist
+   (`21w-data-econ.js:50`); tonics are coded but cannot be brewed (code map 7). Tents 6 to 10 cite tiers 6 to 12, which
+   do not exist either; they wait for later regions.
+8. **Essence piles up.** After the gold build (#180), about half of all Essence earned sits unspent at hour 10 (its
+   judge; 25% before). The systems map and the rising-games gap report both name "Essence has nowhere to go".
 
 ### What other games' players say (`research/overhaul/`)
 
@@ -101,20 +109,44 @@ player acts still pass through the 90 s unlock gap where the governor applies.
 |---|---|---|---|
 | ~12:30 | Workbench and first tool (today) | crafts from raw | none: tier 1 needs no refining |
 | ~16 to 22 | First class weapon (today) | crafts it; it is Balanced; the result card says, for example, "Gloomjaw now takes 6 hits, not 9" | **the fight change on the result card** (card `craft-delta`) |
-| ~22 to 28 | The first upgrade (gold's first big use) asks for 2 Pine Planks | sets the Workbench to Saw planks, goes back to the road | **refining**: the camp works while you fight |
+| ~22 to 28 | The first upgrade (gold's first big use). Tobin's Copper Warblade +1 takes 2 Copper Ingots and 1 Pine Plank; Wren's Pine Bow +1 takes 2 Pine Planks and 1 leather; Pip's Pine Staff +1 takes 2 Pine Planks | sets the station going from Next Up, goes back to the road | **refining**: the camp works while you fight. Tobin also meets **coal** here: the Coal Seam shows the first time an order needs an ingot. Two stations at once is one idea (an order on a station), set from one Next Up line |
 | ~28 to 35 | Second craft at a station | taps the bar while it crafts | **the Strike** |
 | ~30 to 45 | Woodcraft or Smithing reaches gate + 3 | Next Up: "Pine Bow at grade C is ready to make" | **grades**: a level means a better craft |
-| ~40 to 60, or after the first time away | Tier 2 opens (zone 7, Woodcraft 10); Next Up names it for the zone 10 Champion: "Birch Bow for the zone 10 Champion: 5 Birch Planks, 2 Duskfang Leather" | chops, hunts, refines, crafts | **the second refine** (Wren: leather at the Loom; Tobin and Pip: **coal**, as the Coal Seam shows the first time a recipe needs an ingot) |
+| ~40 to 50 | A craft the Strike cannot be trusted on (the player missed one) | "Infuse to grade B: 6 Essence" on the recipe row | **Infuse**: Essence lifts the grade (section 7b) |
+| ~45 to 60, or after the first time away | Tier 2 opens (zone 7, Woodcraft 10); Next Up names it for the zone 10 Champion: "Birch Bow for the zone 10 Champion: 5 Birch Planks, 2 Duskfang Leather" | chops, hunts, refines, crafts; picks grade A Pine or grade D Birch | **the second refine** where a hero has not met it (Pip: cloth; Tobin: leather for the Plate; Pip's ingots and coal with the Lantern) |
 | at the first tier 2 weapon | the weapon screen offers Heavy, Balanced or Swift | picks one | **profiles** (Retune comes later) |
 | after Hands open (Hearth 2, Tavern) | a Hand works the Coal Seam while the Forge smelts | plans what runs while away | the IdleOn-style away plan Cal asked for (no new system) |
 
-**After the first hour, one new mechanic every few hours to hour 10** (the rising-games point): Retune at the first
-re-make of a weapon (hour 1 to 2); grade A and its medium moment (hour 1 to 3); tier 3 and the first leather piece with
-Transmute for hide (hour 3 to 5); Reforge as "pick the line" (hour 3 to 5); station levels that speed refining (hour 4
-to 8); tier 4 (zone 19, hour 6 to 10). Tonics come with the balance pass (section 8).
+### Cadence targets
 
-What this fills, against W7's table: a named item to chase, crafting that changes the fight visibly, a choice every zone
-or two, and a reason to come back (stations work while you are away).
+The rising-games gap report names two places we trail: **a choice every few minutes** and **a new mechanic every few
+hours** (`research/rising/new-mechanic-gaps.md`, section 4). This spec sets a number for each.
+
+**A choice** is a moment where the player picks between two or more things they can afford, and the pick changes what
+they fight with or what the camp makes. In this spec: grade-or-tier (Copper A or Iron D), Strike or Infuse or neither,
+the profile, which order to put on a station, and where the gold goes (upgrade, Retune, Reforge pick, crew, station
+level). Pressing a button that has one sensible answer is not a choice. Every craft names its choice on the recipe row.
+
+| Window | Choice target | New-mechanic target |
+|---|---|---|
+| Minutes 20 to 60 | at least one choice every 8 minutes of play (5 or more in the 40 minutes) | one new thing at each beat in the table above (6 beats in 40 minutes), never two at once |
+| Hours 1 to 3 | at least 4 choices an hour | Retune (first re-make of a weapon); grade A and its medium moment |
+| Hours 3 to 10 | at least 4 choices an hour | no gap longer than 3 hours of play between new mechanics (schedule below) |
+
+**After the first hour, one new mechanic every few hours to hour 10:** Retune at the first re-make of a weapon (hour 1
+to 2); grade A and its medium moment (hour 1 to 3); tier 3, the first piece needing leather from Transmuted hide, and
+the third order on a station (hour 3 to 5); Reforge as "pick the line" (hour 3 to 5); station levels that speed refining
+(hour 4 to 7); tier 4 (zone 19, hour 6 to 10). Tonics come with the balance pass (section 8), which fills the hour 7 to
+10 stretch if tier 4 arrives late. Other threads add their own (the Deepwell, `night-road`); this spec only counts its
+own.
+
+**How we measure it.** Card `craft-delta` makes the craft screen and Next Up emit `emit('choice', kind)` when a choice is
+shown and taken, and `emit('firstUse', kind)` at each mechanic's first use (no save field); the walk log and `sim.mjs`
+timeline report the gaps. Missed if the walk shows a gap of more than 15 minutes with no choice in minutes 20 to 60, or a gap of more than 4
+hours of sim play with no new mechanic before hour 10 (section 12).
+
+What this fills, against W7's table: a named item to chase, crafting that changes the fight visibly, a choice at least
+every 8 minutes, and a reason to come back (stations work while you are away).
 
 ---
 
@@ -134,12 +166,17 @@ region 2 material.
 - **Gate by the road.** A kept-up player reaches each tier's gate no later than the zone that opens that tier
   (`PACE.essTier`: tier 2 at zone 7, tier 3 at 13, tier 4 at 19, tier 5 at 42). Otherwise every player is a tier
   behind, which the budget's `behind` row shows is a wall (z20 casual 4/11/4).
-- **Grades between gates take time.** Grade A on a tier (gate + 10) arrives about two to four zones after the gate for a
-  kept-up player; grade S (gate + 15) is the long tail.
-- **XP comes mostly from refining** (2 x tier per unit), so the old exploit (re-crafting cheap items) stops paying and a
-  station that works while you are away levels too.
+- **Grades between gates take time.** A kept-up casual player reaches grade A on a tier (gate + 10) by the tier's zone
+  + 3: zone 10 for tier 2, zone 16 for tier 3, zone 22 for tier 4. Grade S (gate + 15) is the long tail: tier 4 S
+  (Smithing 51) no earlier than zone 35.
+- **XP comes mostly from refining** (2 x tier per unit), so a station that works while you are away levels too. Card 3
+  shows refining gives at least half of a kept-up player's station XP.
+- **Re-crafting cheap items stops paying.** Today a Copper Warblade gives 20 XP for 9 raw materials, about twice what
+  smelting the same ore gives. Rule (provisional): a craft below your highest open tier pays a tenth of its XP. Re-making
+  a piece at a better grade on your current tier pays in full.
 
-Card `craft-attribute-grades` fits `SKILL_TUNE` to these rules with `node tools/sim.mjs --report skills` and records the
+The curve may need a different fit per tier (a jump at each opening, a crawl from zone 22 to 42); the card may fit it in
+pieces. Card `craft-attribute-grades` fits `SKILL_TUNE` to these rules with `node tools/sim.mjs --report skills` and records the
 table (level reached by zone, for the casual and good personas). No level cap: today's saves have none, and the station
 Deeds ask for 150. Past S on tier 5 (level 69), levels add nothing new; that is the long tail.
 
@@ -179,13 +216,17 @@ the camp. That is accepted, not hidden: Wren works two stations, Tobin and Pip t
 - **Upgrades.** The material part of `kindUpgradeCost` converts the same way. The gold part belongs to the
   `gold-without-training` build (provisional prices). So the upgrade, gold's biggest sink, also pulls raw materials
   through the stations.
-- **Tents 5 to 10** become buildable when their zones arrive (50 and later): their plank, cloth and leather costs now
-  exist.
+- **Tent 5** becomes buildable when its zone arrives (zone 50): its tier 4 plank, cloth and leather now exist. Tents 6
+  to 10 cite tiers 6 to 12 (`21w-data-econ.js:51-55`) and wait for later regions.
 
 ### How a station works
-- Each of the Forge, Workbench and Loom has one refine row: product, amount (a number or All), Start. **It runs until
-  the amount is made, the input runs out, or the Storehouse pile is full**, and says which. No length cap and no Refill
-  needed: set it once and it keeps going (Cal's rule, answer 5).
+- Each of the Forge, Workbench and Loom has a short **order list: up to 3 orders, run in turn.** An order is a product
+  at a tier and an amount. The Loom needs this most (Weave and Tan); it also covers two tiers at once. Each order **runs
+  until its amount is made, the input runs out, or the Storehouse pile is full**, says which, and the next order starts.
+  No length cap and no Refill needed: set it once and it keeps going (Cal's rule, answer 5).
+- **Amounts never drain your piles by surprise.** An order started from a shortfall (Next Up, or a recipe row's offer)
+  defaults to the shortfall: "Smelt 3". An order set to All keeps a reserve of each input, shown on the row ("keeps 24
+  Iron Ore"); provisional 20% of each input pile. Camp builds, tools and Trade runs still find ore and logs.
 - It runs on the wall clock **while you fight and while you are away**, under the same away cap as gathering (4 to
   24 h). Nothing to collect: output goes to the Storehouse.
 - **Station levels buy speed:** +10% refining speed a level (Lv 2 to 5). Station builds become a skilling sink.
@@ -193,15 +234,16 @@ the camp. That is accepted, not hidden: Wren works two stations, Tobin and Pip t
   weapon's batch is done within about four fights, while you play them.
 - No fail chance, no quality grade on refined goods, no alloys (Cal's ceiling).
 - The away report gains one line per station: "The Forge smelted 24 Iron Ingots (stopped: out of coal)."
-- A recipe or upgrade short of a middle says so in its row and offers the refine in one tap: "Short 3 Iron Ingots.
-  Smelt 3 (6 Iron Ore, 6 coal)?"
+- A recipe or upgrade short of a middle says so in its row and offers the order in one tap: "Short 3 Iron Ingots.
+  Smelt 3 (6 Iron Ore, 6 coal)?" Card 2 exports `refineOffer(cost)`; card 3 puts the offer on the craft screen.
 - **Never sold.** Refining time, speed and amount are never for money (Lantern Rule 4: never build friction to sell its
   removal).
 
 ### Where it shows
-- The Storehouse's first view shows **one cell per family at your current tier: 6 raw families, Essence, coal = 8
-  cells.** A refined family's count sits in the same cell as its raw one ("Iron Ore 120 · Ingots 40"). Other tiers fold
-  out on tap. Middles get Storehouse caps (group 0.5, as hide).
+- The Storehouse's first view shows **one cell per family at your current tier (`zoneTier(S.maxZone)`): 6 raw
+  families, Essence, coal = 8 cells.** A refined family's count sits in the same cell as its raw one ("Iron Ore 120 ·
+  Ingots 40"). Other tiers fold out on tap. Middles get Storehouse caps (group 0.5, as hide); coal gets group 1, like
+  ore.
 - Until vetted icons land (art card, section 11), a middle shows its raw family's existing icon with a text label
   ("Ingot"). No code-drawn or tinted icon. The Coal Seam reuses the Copper Vein's scene with its own name.
 
@@ -211,7 +253,7 @@ the camp. That is accepted, not hidden: Wren works two stations, Tobin and Pip t
 
 ### Words (fixes the three meanings of "grade" the uniques review found)
 - **Tier**: the material step (Copper, Iron, Silver, Cobalt, Mithril). Players read the material name.
-- **Grade**: the letter D, C, B, A or S on a crafted piece, set by skill, lifted by the Strike.
+- **Grade**: the letter D, C, B, A or S on a crafted piece, set by skill, lifted by the Strike or by Essence.
 - **Rarity** words stay on items made before this change and on uniques. A graded item also carries a rarity twin in
   its existing `r` field (below), so old code paths and save codes keep working.
 - Sets (uniques thread) key on **tier**: four pieces of the same material step.
@@ -229,8 +271,8 @@ row shows the grade before you craft.
 | A | 1.8 | rare | 3 | 0.42 | medium |
 | S | 2.5 | epic | 4 | 0.55 | medium |
 
-The multipliers reuse today's rarity values (B is new, between), so the difficulty budget's fixtures map straight
-across: the kept-up footing "rare +5" becomes "grade A +5". **No item a player owns changes**: old items keep their
+The multipliers reuse today's rarity values (B is new, between) and are fixed: they must equal the rarity values, or old
+items move against new ones. Balance moves through the curve and the lift, never these. **No item a player owns changes**: old items keep their
 rarity, lines and power exactly, and an old Epic stays as good as a new S. Copper S (2.5 x 10 = 25) against Iron D
 (1.0 x 22 = 22) is a real choice, and so is Iron A against Silver D.
 
@@ -242,24 +284,40 @@ On a graded item, bonus lines come in the class pool's fixed order (each class's
 middle roll. **Reforge becomes a choice on graded items:** swap one line for a pool stat you pick, at today's Reforge
 price. Old items keep the random Reforge. Masterwork still adds a line for a Trophy.
 
+### The kept-up footing (what the budget assumes)
+The judge's budget runs (`skilling-crafting-overhaul/judge.md`, top table) show one grade step is wider than the casual
+Captain band: an S weapon puts casual Captains 10 to 20 points over, and a just-opened tier puts them 15 to 45 under.
+So the old fixture "rare +5" does not map to one grade. **Card 3's budget fixture wears, at each row, the grade
+`sim.mjs --report skills` gives a kept-up casual at that zone, at +5.** The casual lifts the weapon only; the good player
+lifts every piece; both capped at A. The fixture also runs a casual who lifts every piece with Infuse; both casual rows
+are checked.
+
+**The opening dip, zones 19 to 21.** When tier 4 opens, a kept-up player wears tier 4 at C or B, or tier 3 at S: 19 to 59
+casual against a band of 60 to 80, and a missed lift at tier 4 D is a wall (3 to 16). Tier 3's opening (zones 13 to 15)
+has a first-time footing; tier 4's has none. The balance pass owns new budget gaps here and closes them through the
+curve or the boss knots. **Card 3 does not reach the live artifact before the balance pass.**
+
 ### The Strike
 Crafting a piece shows the parry timing bar once, holding the game for that second (`holdGame`). Tap in the window and
-the piece comes out **one grade higher** (never above S, never more than one step above your level's grade). No tap, or a
-miss, and it comes out at your level's grade. Materials are never lost. It uses the parry bar's look and sound (no new
+the piece comes out **one grade higher, never above A**. Grade S comes only from your level. When the bar cannot lift
+(your level's grade is already A or S, or you Infused), it does not show. No tap, or a miss, and the piece comes out at
+your level's grade. Materials are never lost. It uses the parry bar's look and sound (no new
 art), widens with Assist (`turnAssistX`) and follows reduced motion as the parry bar does. Each station names it
 (Strike, Carve, Stitch, Etch). Refining has no Strike: bulk work stays idle. A routine craft is still three taps
-(recipe, Craft, Equip); the Strike is a tap you may add.
+(recipe, Craft, Equip); the Strike is a tap you may add. The first class weapon has no Strike; it arrives at the second
+craft at a station.
 
 Why: our core verb (timing) at the moment of making, which both OSRS's and Fantasy Life's players ask for ("one short
 foreground moment"; "the faster you do it the better the equipment"). Crafts are few (one per slot per tier, plus
-re-makes), so it cannot become Fantasy Life's tedium. A good player gets +1 grade nearly always; the budget's good
-persona assumes it, the casual persona half the time. Switch: `CRAFT_TUNE.strike`.
+re-makes), so it cannot become Fantasy Life's tedium. The cap at A keeps one tap from beating the band: the A to S step
+alone is 10 to 20 points of casual win rate. Switch: `CRAFT_TUNE.strike`.
 
 ---
 
 ## 6. Weapon profiles: your weapon is part of your build
 
-When you craft a tier 2 or higher weapon you pick a profile; tier 1 weapons are Balanced. The noun follows the hero's
+When you craft a tier 2 or higher weapon you pick a profile; tier 1 weapons are Balanced. Unique weapons take no profile:
+they keep their own effects and read as Balanced with no lift. The noun follows the hero's
 weapon family, the art is the hero's own weapon, and **no profile changes Speed** (the red team's sims showed Speed moves
 win rates in steps, 65 to 48 for z20 Wren at -10%).
 
@@ -267,7 +325,7 @@ win rates in steps, 65 to 48 for z20 Wren at -10%).
 |---|---|---|---|---|---|---|
 | **Heavy** | **Might** | Attack and counters | full | Warbow | Greatsword | Greatstaff |
 | **Balanced** | **Focus** | abilities | half (Focus already leads) | Bow | Warblade | Staff |
-| **Swift** | **Guard** | counters, and +10 ms parry window at grade A and S | full | Shortbow | Sabre | Wand |
+| **Swift** | **Guard** | counters, and +10 ms parry window at grade A and S (inside Guard's 60 ms cap, `HERO_TUNE.guardMs`) | full | Shortbow | Sabre | Wand |
 
 **Scaling:** each lifted channel is multiplied by `1 + scaling(grade) x strength x share`, where `share` is that
 attribute's points after the soft cap over all the hero's spent points. Hooks: the `attrRel` lines in `turnMakeProfile`
@@ -296,15 +354,43 @@ gold's main sink with provisional prices; this spec adds the materials side and 
 |---|---|---|---|
 | **A. The Forge** | upgrades (gold plus middles), Retune, Reforge | yes, by tier | the main sink; the upgrade build found upgrades stall at +7 on gold today; with middles the stall becomes materials, which the stations feed. About half of gold spent. |
 | **B. The crew** | Hands (hire, shifts) | yes, by region | Hands on coal and logs feed the stations while away. About a quarter. |
-| **C. Supplies and buildings** | station levels (refine speed), Storehouse, Tents, later tonics | yes, by region | station levels gain a skilling job; Tents 5 to 10 only from zone 50. A quarter or less in Chapter 1. |
+| **C. Supplies and buildings** | station levels (refine speed), Storehouse, Tents, later tonics | yes, by region | station levels gain a skilling job; Tent 5 only from zone 50. A quarter or less in Chapter 1. |
 
 **Pick: all three in Cal's split, Forge 50, crew 25, supplies and buildings 25.** The `gold-without-training` card owns
 that split and its sim; the balance pass after this build retunes it once, with middles in place. Target for that pass:
 at minute 60 and at each wall, unspent gold under 60% of earned (W6 today: 96%), and no sink always the right buy.
 Crafting itself stays free of gold, so the first craft never waits on gold.
 
-Spare materials late game: every refined family feeds upgrades at every step, and Tents 5 to 10 take middles in bulk.
+Spare materials late game: every refined family feeds upgrades at every step, and Tent 5 takes middles in bulk.
 A lever the balance pass may pull but this spec does not: Trade runs carrying middles for a little more than raw.
+
+---
+
+## 7b. Essence: Infuse
+
+**The problem.** Essence drops from every fight and goes into recipes, upgrades and Reforge. After the gold build (#180)
+about half of it sits unspent at hour 10 (its judge; 25% before). A pile that only grows makes crafting look empty.
+
+**The use: Infuse.** On the recipe row of any piece (not tools, not refining), the player may spend Essence of the
+piece's tier to lift it one grade, never above A: the same lift as the Strike. One lift a craft: the Strike or Infuse,
+not both. So the timing bar is the free way to a better piece and Essence is the steady way, for a player who misses
+taps, plays with reduced motion, or wants a sure result on a costly piece. Each craft gains a named choice (Strike,
+Infuse, or neither), and Essence has a use that grows with the road: every re-make at a better grade, every slot, every
+tier.
+
+- **Price** (provisional, balance pass): 3 x the recipe's Essence count, at the piece's tier, from tier 1 (Copper
+  Warblade: 6 Essence). Recipes with no Essence (Plate, Mitre, Quiver) use 3.
+- **Never sold** (Lantern Rule 4), and Essence itself is never sold.
+- **Budget:** the lift is the same as the Strike's and capped at A, so the casual who Infuses every piece wears the
+  good player's grades; card 3's fixture checks that row (section 5).
+- **Target:** unspent Essence at hour 10 back to 30% or under (`health.mjs`, 10-hour sim), with no Essence-only power:
+  Infuse buys what timing also buys.
+- Retune also takes a little Essence (provisional: the Reforge base Essence), so the profile change uses both gold and
+  Essence.
+
+Alternatives weighed for Essence: a refining flux (Essence per ingot) adds a second input to every order and a tier
+mismatch; a separate Essence shop of stat boosts is "gold buys stats" by another name; converting Essence to gold makes
+it a second gold. Infuse uses an existing lift and adds no screen.
 
 ---
 
@@ -327,9 +413,9 @@ keeps every boss in band. Herb keeps its gear uses until then. The bag slot stay
 | Coal as a mining node | yes, one grade |
 | No new buildings | none: refining is a second job on the Forge, Workbench and Loom |
 | Camp visit in 3 taps | unchanged: a station keeps refining until its input runs out, so a visit needs no new tap; changing a product is Camp, station, product |
-| Routine craft in 3 taps | recipe, Craft, Equip; the Strike is an optional tap; the profile pick is remembered |
+| Routine craft in 3 taps | recipe, Craft, Equip; the Strike or Infuse is an optional tap; the profile pick is remembered |
 | At most 12 piles on screen | 8 cells on the Storehouse's first view (refined counts share their raw family's cell) |
-| At most 8 named currencies | no new currency; coal is a pile |
+| At most 8 named currencies | no new currency; coal is a pile; Essence gains a use, not a twin |
 | Weapons scale with attributes | yes, by profile |
 | No idle combat | none: refining is idle, fighting and the Strike are hand-played |
 
@@ -348,6 +434,9 @@ keeps every boss in band. Herb keeps its gear uses until then. The bag slot stay
 | A new Smelter or Tannery building | no | ceiling: no new buildings |
 | Refining only the main material | no | red team: then coal serves only Tobin |
 | A queue length cap (20 to 100) | no | red team: empties in 5 to 13 minutes; runs until input runs out instead |
+| One refine row per station | no | judge: the Loom makes two middles; a short order list (up to 3) instead |
+| The Strike lifting to S | no | judge's budget runs: the A to S step alone puts casual Captains 10 to 20 points over |
+| Essence as a refining flux, a stat shop, or gold | no | section 7b: a second input on every order; "gold buys stats" again; a second gold |
 | Hands staffing a station | later | stations already run on their own; staffing adds a screen. Cal's answer 5 allowed it; deferred (veto line) |
 | Level 50 specialisations | no | over the ceiling for M1 |
 | Master Orders (an order board) | no | Tavern Contracts make the active gold earner |
@@ -367,15 +456,17 @@ change), so its prediction can be measured.
 
 | # | Card | What a player gets | Model | After | Owned files (all exist unless marked new) |
 |---|---|---|---|---|---|
-| 1 | `craft-delta` (amended) | the result card shows the fight change; Next Up names the piece and its boss, and offers upgrades | Sonnet medium | `next-up-equip` | `75-craft-ui.js`, `55-goals.js`, `tools/walk.mjs` (Go words) |
-| 2 | `refine-queues` (rewritten) | coal, the four middles, station refining while you fight and while away, recipes and upgrades from tier 2 use middles | Sonnet medium lead with 2 builders; Opus high save review | `gold-without-training` | `21-data-craft.js`, `30-state.js` (mats), `41-items.js` (costs), `55-store.js`, `75-store-ui.js`, `55-savecode.js`, `55-gathering.js` (coal node), new `55-refine.js`, new `75-refine-ui.js`, `tools/offline-parity.mjs`, `tools/sim.mjs` personas |
-| 3 | `craft-attribute-grades` (rewritten) | grades D to S replace the die, fixed lines, Reforge as a pick, the Strike, the station curve pinned to the road | Sonnet medium; Opus high combat review | `refine-queues`, `craft-delta` | `55-crafting.js`, `40-rules.js`, `20-data.js` (`SKILL_TUNE`), `75-craft-ui.js`, `58-deeds.js`, `tools/budget.mjs` |
-| 4 | `weapon-profiles` (rewritten) | Heavy, Balanced, Swift with attribute scaling, Retune | Sonnet medium; Opus high combat review | `craft-attribute-grades` | `59k-turn.js` (three hooks), `55-crafting.js` (Retune), `75-craft-ui.js`, `docs/design/hero-progression-build/arms.mjs` |
+| 1 | `craft-delta` (amended) | the result card shows the fight change; Next Up names the piece and its boss, and offers upgrades; choice and first-use events for the cadence measure | Sonnet medium | `next-up-equip` | `75-craft-ui.js`, `55-goals.js`, `tools/walk.mjs` (Go words, choice log) |
+| 2 | `refine-queues` (rewritten) | coal, the four middles, order lists on three stations while you fight and while away, recipes and upgrades from tier 2 use middles; exports `refineOffer(cost)` | Sonnet medium lead with 2 builders; Opus high save review | `gold-without-training` | Builder A (data, state, store, save codes, parity): `21-data-craft.js`, `30-state.js` (mats), `41-items.js` (costs), `55-store.js`, `75-store-ui.js`, `55-savecode.js`, `tools/offline-parity.mjs`. Builder B (refining, gathering, away): new `55-refine.js`, new `75-refine-ui.js`, new `60-refine.css`, `55-gathering.js` (coal node), `tools/sim.mjs` personas; may touch `72-ui-gather.js` (Coal Seam row) and `57f-hands.js` (Hands on coal) |
+| 3 | `craft-attribute-grades` (rewritten) | grades D to S replace the die, fixed lines, Reforge as a pick, the Strike, Infuse, the shortfall offer on the craft screen, the station curve pinned to the road, re-craft XP | Sonnet medium; Opus high combat and save review | `refine-queues`, `craft-delta` | `55-crafting.js`, `40-rules.js`, `20-data.js` (`SKILL_TUNE`), `41-items.js` (lines), `75-craft-ui.js`, `58-deeds.js`, `55-savecode.js` (`g`), `tools/budget.mjs`, new `skilling-crafting-overhaul/curve.md` |
+| 4 | `weapon-profiles` (rewritten) | Heavy, Balanced, Swift with attribute scaling, Retune | Sonnet medium; Opus high combat review | `craft-attribute-grades` | `59k-turn.js` (three hooks), `55-crafting.js` (Retune), `75-craft-ui.js`, `55-savecode.js` (`pf`, `rn`), `docs/design/hero-progression-build/arms.mjs` |
 
 Also written: `art-refined-materials` (icons for coal and the four middles, and the Coal Seam; whichever art lane the
 14 Oct art decision opens; not blocking: text labels until then) and `tonic-brew` (after the balance pass).
 
-Order: 1 and 2 at the same time (no shared files). 3 after both. 4 after 3. Shared files are handed on, never edited by
+Order: 1 and 2 at the same time (no shared files; card 2's two builders hold separate files). 3 after both. 4 after 3.
+Card 3 merges behind its switches and does not reach the live artifact until the balance pass closes the zone 19 to 21
+dip (section 5). Shared files are handed on, never edited by
 two cards at once. `gold-without-training` (running) owns the upgrade gold price and `50-sim.js`; card 2 changes only
 the material side and uses `on('away')` in its own file, not `50-sim.js`. `first-gold-and-camp-strip` and
 `set-bonus-build` read their dependency as `craft-attribute-grades`, which keeps its id.
@@ -389,11 +480,16 @@ the material side and uses `on('away')` in its own file, not `50-sim.js`. `first
 | Measure | Now | After the four cards | Missed if | How |
 |---|---|---|---|---|
 | Craft, upgrade and refine actions in the walk's first 60 bot minutes (seed 1) | 2 crafts, 0 upgrades | at least 6, the first refine by bot minute 25 | fewer than 4 | nightly walk (card 1 adds the Go words and upgrade goal) |
+| Choice cadence, minutes 20 to 60 (walk seed 1, `choice` events) | not measured; W7: reveals but few decisions | a choice at least every 8 minutes, 5 or more in the window | any gap over 15 minutes | walk log (card 1) |
+| Choice cadence, hours 1 to 10 (sim casual) | not measured | at least 4 an hour | any hour with fewer than 2 | `sim.mjs` timeline (card 1 events) |
+| New-mechanic cadence to hour 10 (sim casual, `firstUse` events) | not measured | one at each first-hour beat; no gap over 3 hours | a gap over 4 hours | `sim.mjs` timeline |
 | Unspent gold at minute 60 (W6 measure) | 96% | under 60% after the balance pass | over 75% | `health.mjs --compare` |
+| Unspent Essence at hour 10 | about 50% after #180 | 30% or under after the balance pass | over 40% | `health.mjs`, 10-hour sim |
+| Refining's share of station XP (kept-up casual) | 0 | at least half | under a third | `sim.mjs --report skills` (card 3) |
 | Might in a winning build | in none | Heavy Might wins at least one arm per starter | in none | `arms.mjs` with profiles (card 4) |
 | No build or profile best everywhere | holds | still holds | one profile wins every arm | same |
-| Boss bands after cards 2 to 4, before the balance pass | in band | every row within 5 points of its band | any row 10 or more out | `budget.mjs` on grades (card 3) |
-| Tier gate reached by its zone (kept-up casual) | not measured | gate level by the zone that opens the tier | any tier gate later than its zone + 2 | `sim.mjs --report skills` (card 3) |
+| Boss bands after cards 2 to 4, before the balance pass | in band | every row within 5 points of its band, except zones 19 to 21 (the opening dip, owned by the balance pass) | any other row 10 or more out | `budget.mjs` on the skills-report footing (card 3) |
+| Tier gate reached by its zone (kept-up casual) | not measured | gate level by the zone that opens the tier; grade A by that zone + 3; tier 4 S not before zone 35 | any tier gate later than its zone + 2 | `sim.mjs --report skills` (card 3) |
 | First class weapon crafted, walk seed 1 | measured on card 2's base | no later than +1 min | later than +3 min | nightly walk |
 | Saturday panel: can name the piece they craft for and why | not asked | 3 of 4 | 1 of 4 or fewer | panel notes |
 | Storehouse first view at 360 px | 31 cells | 8 cells | more than 12 | eyes shot |
@@ -405,10 +501,14 @@ the material side and uses `on('away')` in its own file, not `50-sim.js`. `first
 **No key bump** (stays `lanternfall.save.v5`). All additions are new, optional fields:
 - `S.mats.coal`, `ingot`, `plank`, `cloth`, `leather`: five-slot arrays in `fresh().mats`; the loader already fills
   missing families (`S.mats = Object.assign(fresh().mats, o.mats)`, `30-state.js:45`). Storehouse caps for each.
-- `registerState('refine', { v: 1, st: { forge, bench, loom: { prod, t, want, made } } })`.
+- `registerState('refine', { v: 1, st: { forge: [], bench: [], loom: [] } })`: each station holds an array of up to 3
+  orders `{ prod, t, want, made, all }`, run in turn.
 - New item fields: `g` (grade 0 to 4), `pf` (profile), `rn` (retunes). Graded items keep `r` (the rarity twin). An item
   without `g` is an old item and keeps its rarity, lines and power exactly. **Items are never converted.**
 - Station XP bars map once to the new curve behind a version flag (`S.craft.xpv`).
+- **Old saves past gate + 15 craft S at once.** Live saves keep fast-curve levels, so a player at Smithing 51 or more
+  makes tier 4 S on day one. Good for them; it raises their raid gear Might. Shapes are unchanged (the raid doc's `gear`
+  stays `gear().score` on the same scale). The balance pass checks the world raid's time to kill.
 - Save codes accept the new families and fields and still refuse bad values. The parity tool gets a refining fixture.
 - An Opus high save-risk review signs off card 2 before merge, and card 3 for the item fields.
 - **What changed for you:** one card the first time an old save opens the Craft tab after card 2: "The Forge has a
@@ -416,7 +516,7 @@ the material side and uses `on('away')` in its own file, not `50-sim.js`. `first
 
 **Switches** (data, default on): `REFINE_TUNE.on` (off: recipes and upgrades take raw again; middles stay stored);
 `CRAFT_TUNE.grades` (off: new crafts roll rarity again; graded items read their twin); `CRAFT_TUNE.profiles` (off: no
-scaling); `CRAFT_TUNE.strike` (off: every craft at the level's grade). No switch loses an item, level or material.
+scaling); `CRAFT_TUNE.strike` (off: every craft at the level's grade); `CRAFT_TUNE.infuse` (off: no Essence lift). No switch loses an item, level or material.
 
 **Veto lines for Cal** (deviations from his answers file): armour gets no secondary-stat choice yet (answer 7); Hands
 do not staff stations yet (answer 5); Reforge stays on graded items as a line pick rather than becoming Retune (answer 7
@@ -427,7 +527,11 @@ named Retune for the profile change, which this spec has).
 ## 14. Red team and judge
 
 Red team: `docs/design/skilling-crafting-overhaul/red-team.md` (4 blockers, 11 majors, 10 minors, with budget sims).
-Judge: `docs/design/skilling-crafting-overhaul/judge.md`.
+Judge: `docs/design/skilling-crafting-overhaul/judge.md`: **accept with required changes.** Rubric: evidence 5, problem
+fit 4, alternatives 5, buildable 3, prediction 4, reversibility 4; all hard checks pass. Fixed: the grade multipliers.
+Accepted: no level cap, Reforge as a pick, tier 1 raw and the rest refined, the profile channel rule. Provisional for
+the balance pass: refine ratios, coal per ingot, unit times, grade thresholds, weapon scaling, profile strengths, the
+gold split, Infuse's price. The judge recommends Cal upholds all three veto lines (section 13).
 
 ## 15. What changed after the red team
 
@@ -450,6 +554,25 @@ Judge: `docs/design/skilling-crafting-overhaul/judge.md`.
 | M11 the die is still there | fixed line order and roll on graded items; Reforge becomes a pick |
 | Minors | Copper grade levels fixed; Strike holds the game; per-station skill names; veto lines; raid score noted; Tents from zone 50; Cal's split restored; timer rule restated |
 
+## 16. What changed after the judge
+
+| # | Required change | Where |
+|---|---|---|
+| 1 | The Strike lifts one grade, never above A; S only from level; no bar when it cannot lift | section 5 |
+| 2 | Budget footing is the skills report's grade at each zone (casual lifts the weapon, good every piece, both capped at A); A by the tier's zone + 3; tier 4 S not before zone 35 | sections 3, 5 |
+| 3 | The zone 19 to 21 opening dip named; balance pass owns the gaps; card 3 not live before it; z19 to 21 exempt from "within 5" | sections 5, 11, 12 |
+| 4 | Order lists of up to 3 per station; array save shape; the Loom carries Weave and Tan | sections 4, 13 |
+| 5 | Amounts default to the shortfall; All keeps a 20% reserve | section 4 |
+| 6 | Re-craft XP: a tenth below your highest open tier; refining at least half of station XP | sections 3, 12 |
+| 7 | Beat map: Tobin's first upgrade brings Smelt and coal at minute 22 to 28 | section 2 |
+| 8 | Only Tent 5 becomes buildable | sections 1, 4, 7 |
+| 9 | Cards rewritten; `tonic-brew` and `art-refined-materials` written | section 11, card folder |
+| 10 | Card 2 names each builder's files, may touch `72-ui-gather.js` and `57f-hands.js`, exports `refineOffer(cost)`; the offer moves to card 3 | section 11 |
+| 11 | Old saves past gate + 15 craft S at once; the balance pass checks raid time to kill | section 13 |
+| 12 | Coal's store group 1; current tier is `zoneTier(S.maxZone)`; Swift's 10 ms inside Guard's cap | sections 4, 6 |
+
+Also added at the coordinator's ask: cadence targets (section 2) and Infuse, Essence's use (section 7b).
+
 ## Sources
 
 - Code map: `/mnt/project-files/research/overhaul/code-map-2026-10-07.md`.
@@ -460,5 +583,6 @@ Judge: `docs/design/skilling-crafting-overhaul/judge.md`.
   `why-review-2026-10-06-answers.md`.
 - Inputs: `/mnt/project-files/ideas/crafting-overhaul-proposal.md`, `runescape-levelling-research.md`,
   `skilling-processing-brainstorm.md`, `skills-resources-combat-link.md`.
+- `/mnt/project-files/research/rising/new-mechanic-gaps.md` (cadence gaps, Essence).
 - `docs/design/hero-progression-build.md`, `docs/design/difficulty-budget.md`, `docs/design/first-hour.md`,
   `docs/design/compass.md`, `docs/DECISIONS.md`, `/mnt/project-files/monetisation/plan.md` (Lantern Rule 4).
