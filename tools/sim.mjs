@@ -1631,7 +1631,7 @@ async function runTurnReport() {
       const r = e(`turnCombatSample({ profile: turnCombatProfile(), seconds: ${seconds}, seed: ${sd}, skill: ${JSON.stringify(skill)} })`);
       // what one landed hit costs, undefended (no Guard, Grit or Ward), as a share of max HP: the biggest single hit of
       // its plain moves, and a charged move's whole string
-      const k = p.refHp * p.hitX * (p.bossHitX || 1) / p.heroMaxHp, plain = p.script.filter(mv => !mv.charge), ch = p.script.find(mv => mv.charge);
+      const k = p.refHp * p.hitX * (p.bossHeroX || 1) * (p.bossHitX || 1) / p.heroMaxHp, plain = p.script.filter(mv => !mv.charge), ch = p.script.find(mv => mv.charge);
       r.hitShare = k * Math.max(...plain.flatMap(mv => mv.hits.map(h => h.x)));
       r.chargeShare = ch ? k * (p.bossChargeX || 1) * ch.hits.reduce((a, h) => a + h.x, 0) : 0;
       r.lostShare = r.damageTaken / p.heroMaxHp;
@@ -1794,7 +1794,7 @@ async function runHeroReport() {
             const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(set)}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
               p.A *= ${fa}; p.U *= ${fa}; p.counter *= ${fa}; p.heroMaxHp *= ${fh};
               const r = turnCombatSample({ profile: p, seconds: ${seconds}, seed: ${i + 1}, skill: ${J(skill)} }); r.lost = r.damageTaken / p.heroMaxHp;
-              const k = p.refHp * p.hitX * (p.bossHitX || 1) / p.heroMaxHp, ch = p.script.find(m => m.charge);
+              const k = p.refHp * p.hitX * (p.bossHeroX || 1) * (p.bossHitX || 1) / p.heroMaxHp, ch = p.script.find(m => m.charge);
               r.hit = k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x)));
               r.charge = ch ? k * (p.bossChargeX || 1) * ch.hits.reduce((a, h) => a + h.x, 0) : 0; return r; })()`);
             K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; L += r.lost; H = r.hit; C = r.charge;
