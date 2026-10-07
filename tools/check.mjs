@@ -10652,6 +10652,19 @@ if (section('foe moves by type')) try {
   assert(!g.errors.length, 'foe moves: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('foe moves by type crashed: ' + (e.stack || e)); }
 
+// ==== hero portraits (tools/portraits.mjs -> 21yc-data-portraits.js, 64k-portraits.js) ====
+if (section('hero portraits')) try {
+  const PT = await import('./portraits.mjs');
+  const { src, ids } = PT.pack();
+  assert(src === fs.readFileSync(path.join(ROOT, 'src', 'js', '21yc-data-portraits.js'), 'utf8'), 'portraits: src/js/21yc-data-portraits.js is up to date with art/portraits (node tools/portraits.mjs)');
+  assert(['wren', 'tobin', 'pip'].every(id => ids.includes(id)), 'portraits: Wren, Tobin and Pip have one');
+  const bad = ids.filter(id => { const b = fs.readFileSync(path.join(ROOT, 'art', 'portraits', id + '.png')); return b.readUInt32BE(16) !== 64 || b.readUInt32BE(20) !== 64 || b.length > 8000; });
+  assert(!bad.length, 'portraits: every portrait is 64x64 and under 8 KB' + (bad.length ? ' (' + bad.join(', ') + ')' : ''));
+  const roster = fs.readFileSync(path.join(ROOT, 'src', 'js', '56-roster.js'), 'utf8');
+  const inGame = ids.filter(id => new RegExp('^\\s+' + id + ': \\{', 'm').test(roster));
+  assert(inGame.length >= 21, 'portraits: the 21 heroes who are in the game and in the 34 have one (found ' + inGame.length + ')');
+} catch (e) { fail('hero portraits crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);

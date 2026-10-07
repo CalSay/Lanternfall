@@ -1,0 +1,6 @@
+/* Concept-board portraits (64k-portraits.js): 64 px art shown at whole-number scales (32 = half, 64 = native). Their URLs end
+   in #cp; the old baked faces (16 or 28 px) keep their own sizes. */
+.portrait img[src$="#cp"], .sp-cfig[src$="#cp"], .mm-say-pt[src$="#cp"] { width: 32px; height: 32px; }
+.pcard .pt.big:has(img[src$="#cp"]) { width: 68px; height: 68px; }
+.pcard .pt.big img[src$="#cp"] { width: 64px; height: 64px; }
+.pcard .pt.big img { position: absolute; inset: 0; margin: auto; }

@@ -403,6 +403,9 @@ const ART = (() => {
     return c;
   }
   function portraitURL(key) {
+    if (typeof key === 'string' && typeof conceptPortraitURL === 'function') {   // 64k: the concept-board portrait ('hero' = the hero you play)
+      const u = conceptPortraitURL(key === 'hero' ? (typeof soloHero === 'function' && soloHero()) || '' : key); if (u) return u;
+    }
     const spec = key && typeof key === 'object' ? key : key === 'hero' ? heroSpec() : companionSpec(key);
     const k = hashOf(spec); if (portraitCache.has(k)) return portraitCache.get(k);
     const c = portraitCanvas(spec); if (!c) return '';
