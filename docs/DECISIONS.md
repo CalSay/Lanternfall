@@ -200,7 +200,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Design the full roster and its moves first;** poses follow the moves, and existing art never limits a monster.
   (2026-10-01)
 - **Zone 1 is the Thorn Imp, zone 2 Gloomjaw;** zones 1 and 2 send only their own monster. Zones 1-7 use the Mossy
-  Hollow scenery. (2026-10-01 to 2026-10-02)
+  Hollow scenery. (2026-10-01 to 2026-10-02) Amended 2026-10-07: zones 6 and 7 move to the Batwing Caves painting once it
+  is wired; until then they keep the Mossy Hollow painting ("Scenery for zones 6 to 10" below).
 - **Region bosses are agents of the darkness** (the Voice's Shrouds). They are never tied to lanterns or lamps.
   (2026-09-28)
 - **Region 5 is its own place** with its own look, not the Deepwell continued. The Deepwell must still tie into the
@@ -693,3 +694,65 @@ change over existing fields.
    tags every currency in `tools/systems-map.mjs` with a Kind (the check fails on an untagged currency or a core set that
    is not these eight), registers Attribute points, and shows Mirrors of Embers beside Trophies as "Rare finds" in the
    Storehouse. The top bar already shows only Gold and Embers; no screen needed a cut.
+
+## Milestone 1 (2026-10-07)
+
+Card `m1-define`; Sonnet red team and Opus judge in `docs/design/milestone-records/`. Page: `docs/design/milestones.md`. Claude
+decided; Cal can veto any line.
+
+- **M1 is "The Hollow, finished", split in two.** M1a is zones 1 to 15 (three areas, three Champions); M1b is zones 16 to 35 and
+  the Fenmother. M1a contains the first hour (M0) and has eight exit criteria with named checks. Earliest close 2026-10-19.
+  The split lets a paused art lane stall the art, not every planner. Re-plan trigger: if the Codex lane is still paused on
+  2026-10-21, or fewer than 2 vetted packs land in the first 4 weeks after it resumes, M1a's art criterion is cut to zones 1 to 10.
+- **Monsters may share a body within their area (Claude decided; Cal can veto).** Each zone keeps its own named monster, moves and
+  look. Codex may draw it as kin of another monster in the same area: the same body with its own palette, marking or prop, and any
+  pose its moves need. Champions stay their own creatures. Only Codex draws kin, Captains, Champions and background versions,
+  inside whole vetted packs, and Claude only wires them. No agent recolours or tints art in code; the Deepwell cold palette stays
+  the only runtime recolour. This narrows "Each zone has its own monster" (2026-10-01) to "its own named foe, not a new species".
+  "Poses follow the moves" and the art freeze are unchanged. This also relaxes "one pack per monster" in `art-backlog.md`: a pack may be an area sheet. `CLAUDE.md` is unchanged. The Hollow costs 17 packs; 1.0 is estimated at about 110 packs
+  instead of 215 species (an estimate, not a commitment).
+- **Bare heroes lose to bosses (Cal's 2026-10-07 direction, made a gate).** Judge numbers at Champions 10 and 15: bare casual 5 to
+  25%, good play at most 70%; gear opens a gap of at least 40 points, first crafts at least 25. Zone 5 bare casual 20 to 50%.
+  `boss-tiers-pr2` may tune them with a DECISIONS line.
+- **A slice passes only with zero open budget gaps** at or below its last zone; renewing a dated gap does not pass.
+- **Heroes without a kit are not offered in a slice** (Bram, from zone 10, today). Saves keep anyone already joined.
+- **Cards:** deepwell-turns, provings-turns (already built), budget-extras (folded into pr2), bossodds-chunk-seeds (#93),
+  hero-training-policy (Training was removed) and moments-feel-spec (moment-layer replaced it) closed; ui-gather-ledger, ap-collection-counts, menu-polish, bag-slot-and-steady-charges,
+  omen-dares-and-contracts, story-choices, story-scripts-2-5, story-stills and the two hero-voice proposals are OUT of M1.
+
+## Moment cap: judge ruling (2026-10-07, Opus high; Cal can veto any line)
+
+The check "big and medium moments in a fresh game's first 10 minutes (at most 8)" passed on some runs and failed (9) on others.
+
+- **Cause.** Three things, none a pacing fault. (1) A Champion card could show before its cache opened, so one clear made two big cards (the fix of PR #121, now in). (2) The check drew from one seeded random stream that the page's own frame loop also drew from, and ran on the machine's clock, so drops (a unique makes a cache a big card) changed from run to run. (3) The banner window (`midRoom`) ran on `Date.now()` while the rest of the layer ran on game seconds, so on a fake clock no banner could ever show and the check could not see banners at all.
+- **Ruling: the cap stays at 8; no moment is trimmed or merged.** A unique already joins its cache card, zone 1's boss and the first Star already join their cache card, and the zone 1 to 3 look caches are F3's "big every 5 minutes". Merging them would break F3.
+- **The bot is not a person.** It reaches zone 14 in 10 minutes; a person is at zone 5 near minute 18, so cards a person sees apart fold into one on the bot's walk. The check now judges the shape: at most 8 big cards, at most 3 banners in any 3 minutes, at most one big card per zone clear, no Champion card while its cache is still pending, and at most one moment per zone cleared. Each of these fails on real card spam.
+- **Code.** `midRoom` and its entries use game seconds. `momentShow` carries the card's zone. The check seeds drops only while the bot steps and runs the page on the bot's own clock.
+- **If the banner assert ever fails,** that is real spam for a person: tighten the medium list (for example level banners only at 2, 10 and 20), not the cap.
+
+## Scenery for zones 6 to 10 (2026-10-07, Opus high judge; Cal can veto any line)
+
+Card `scenery-z6-10-judge`, from the `slice-art-manifest` open point. Record and options:
+`docs/design/milestone-records/scenery-z6-10-judge.md`; red team: `scenery-z6-10-redteam.md` beside it.
+
+- **Scenery follows the area.** Zones 6 to 10 show the Batwing Caves painting, all five, once it is vetted and wired. In
+  the Hollow, a zone whose area has its own painting shows that painting; the 7-zone cycle no longer decides it. The area
+  title and the scenery change together at zone 6, where the first Star lands. Splitting the area (6-7 forest, 8-10 caves),
+  keeping forest to zone 7, and hard-coding zones 6-10 to `cave` were rejected.
+- **This overrides Cal's 2026-10-02 call for zones 6 and 7** ("Zones 1-7 use the Mossy Hollow scenery", above), from the day
+  the Caves painting is wired. His reason is inferred (the painting was the only approved background); it still holds,
+  because no zone drops from a painting to procedural scenery.
+- **Until an area's painting is wired, its zones keep today's scenery:** zones 6-8 the Mossy Hollow painting, zone 9 the
+  procedural cave, zone 10 the procedural bone. Areas without their own painting keep the cycle, the Coast included; a
+  theme with a painting draws it there, as the Mossy Hollow painting does today at zones 15, 22, 29 and the Coast's 36,
+  43, 50, 57 and 64. So once wired, the Caves painting also replaces the procedural cave at zones 16, 23, 30 and the
+  Coast's cave places (37, 44, ...): the same theme with approved art, outside M1a.
+- **No recolour:** `zoneHue` never tints a painting. **The pack boundary is unchanged:** the Caves painting covers zones 6
+  to 10 and stays in scope after the 2026-10-21 cut.
+- **Code:** card `scenery-follows-areas` (S, Sonnet medium) adds `SCENERY_BY_AREA` (default on; off gives today's rule
+  exactly) and moves the theme checks to a per-zone table. It merges before or with the Caves `integrate:` card; the
+  painting is not wired without it. No save impact.
+- **Prediction:** zones 1-15 showing their area's scenery go from 6 to 10 when the Caves painting is wired, and no zone
+  1-70 changes before then. Measured by the `slice-art-manifest` check (E4, to be built) and a zones 1-70 theme assertion that
+  `scenery-follows-areas` adds. Coverage area 15,
+  Compass pillar 4.

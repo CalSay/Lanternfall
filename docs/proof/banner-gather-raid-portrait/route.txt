@@ -1,0 +1,5 @@
+# Proof for card banner-gather-raid-portrait. Shots from a script (waits for the banner, a stand-in guide tip 96 px tall docked under the stage):
+# Gather and Raid in portrait keep the banner at the top of the stage (the hero stands at the foot there), so it cannot reach the hero.
+# Measured banner bottom vs hero top: gather 360x640 275/333, 360x740 275/413, 390x844 260/492; raid 360x640 249/290, 360x740 249/391, 390x844 234/469.
+# Fight at 360x640 with a tip: a long banner title used to wrap to two rows (53 px) and reach the hero's feet; it is now one row (28 px) with an ellipsis.
+# Landscape is unchanged (the new rule sits inside the portrait media query).
