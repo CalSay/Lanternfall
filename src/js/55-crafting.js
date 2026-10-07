@@ -20,13 +20,16 @@
 //   craftXpFor(skill, n) -> n with the catch-up multiplier applied (x2 while behind)
 //   upgradeItem(id, trophIdx?) -> bool           +1 (max +10); +8..+10 each pay 1 Trophy
 //   canUpgrade(id) -> { ok, why, cost }          (the most plentiful Trophy unless trophIdx)
+//   craftUpgradeRefund(it) -> gold               what salvaging it pays back: ECON.upRefund of the gold its +N cost
+//                                                at today's prices (gold-without-training; no save field)
 //   reforgeItem(id, lineIdx) -> bool             reroll one affix line (Enchanting gate)
 //   canReforge(id, lineIdx) -> { ok, why, cost } cost includes the Almanac's 'reforge' modifier
 //   transmute(fam, fromT, to, toT?) -> bool      within one family: `to` is the target tier (number),
 //                                                'up' / 'down', or the family name (then toT, default up)
 //   canTransmute(fam, fromT, to, toT?) -> { ok, why, take, give, toT }
 //   salvageItem(id) (51-actions) is generic; salvageGive calls craftSalvageBonus(it): affixed items
-//                                                have a 20% chance per line of 1 essence of their tier
+//                                                have a 20% chance per line of 1 essence of their tier, and an
+//                                                upgraded item pays back craftUpgradeRefund(it) gold (ledger 'craft', negative)
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
 //   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
 //                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
@@ -51,7 +54,7 @@
 
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus;
+  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund;
 
 {
   registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {} });
@@ -164,7 +167,11 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     gearDirty();
     gainStation(stationOf(it.slot).skill, CRAFT_XP.upgrade(it.t));
     toast(`${itemName(it)} upgraded.`, 'good', { item: it }, 'low');
-    emit('upgraded', { item: it });
+    // gold-without-training: the two steps worth a word. +7 is the last gold-only step; +10 is the top.
+    const nm = kindName(it.slot, it.t, it.u);
+    if (it.plus === CRAFT_TROPHY_GATE.from - 1) emit('toast', { key: 'upgrade:mark', msg: `${nm} is now +${it.plus}. The next three upgrades each need a Trophy from a champion.`, kind: 'good', prio: 'normal', icon: { item: it } });
+    else if (it.plus === CRAFT_TROPHY_GATE.max) emit('toast', { key: 'upgrade:mark', msg: `${nm} is now +${it.plus}, fully upgraded.`, kind: 'good', prio: 'normal', icon: { item: it } });
+    emit('upgraded', { item: it, gold: c.cost.gold });
     save();
     return true;
   };
@@ -240,9 +247,16 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   };
 
   // ---- salvage: a chance of an essence for affixed items (51-actions salvageGive calls this) ----
+  craftUpgradeRefund = it => {
+    if (!it || !CRAFT_KINDS[it.slot]) return 0;
+    let g = 0; for (let p = 0; p < Math.min(CRAFT_TROPHY_GATE.max, it.plus | 0); p++) g += econUpgradeGold(it.t, p);
+    return Math.floor(g * ECON.upRefund);
+  };
   craftSalvageBonus = it => {
     const n = Array.isArray(it.a) ? it.a.length : 0;
     if (n && Math.random() < Math.min(1, SALVAGE_ESS * n)) stashAdd('ess', it.t, 1, 'preview');
+    const g = craftUpgradeRefund(it);
+    if (g > 0) { S.gold += g; econSpend('craft', -g); }
   };
 
   // ---- class change: retool to the new class's kinds; anything that still does not fit goes back to the bag ----

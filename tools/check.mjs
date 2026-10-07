@@ -704,6 +704,25 @@ if (section('crafting')) try {
   assert(!E('upgradeEquipped("weapon")') && E(`itemById(${up}).plus`) === 9, 'upgradeEquipped honours the gate too');
   E(`itemById(${up}).plus = 3`);
   assert(E('upgradeEquipped("weapon")') && E(`itemById(${up}).plus`) === 4, 'below +8 no Trophy is needed');
+  // gold-without-training: gold leads the upgrade (every step dearer than the last), the materials are a token of the main one,
+  // salvage pays half the gold back. The mechanism only: the prices are provisional (the crafting overhaul sets them).
+  assert(E('[...Array(10).keys()].every(p => p === 0 || econUpgradeGold(1, p) > econUpgradeGold(1, p - 1))') && E('econUpgradeGold(1, 9) > 10 * econUpgradeGold(1, 0)'),
+    'each upgrade step costs more gold than the last, and +10 costs over ten times +1');
+  assert(E('Object.keys(kindUpgradeCost({ slot: "bow", t: 1, r: "common", plus: 0 }).mats).join()') === 'wood' && E('Object.keys(kindUpgradeCost({ slot: "hood", t: 1, r: "common", plus: 9 }).mats).join()') === 'fibre'
+    && E('kindUpgradeCost({ slot: "weapon", t: 1, r: "legendary", plus: 2, u: "golemfist" }).mats.ess') > 0,
+    'an upgrade takes only the main material (never essence or Hide when there is another); a Unique still takes essence');
+  {
+    const it = E('(() => { const it = newItem("bow", 1, "common"); it.plus = 4; S.items.push(it); return it.id; })()'), g0 = E('S.gold'), c0 = E('S.econ.spent.craft');
+    const back = E(`craftUpgradeRefund(itemById(${it}))`);
+    const paid = E('[0, 1, 2, 3].reduce((a, p) => a + econUpgradeGold(1, p), 0)');
+    assert(back === Math.floor(paid / 2) && E(`salvageItem(${it})`) && E('S.gold') === g0 + back && E('S.econ.spent.craft') === Math.max(0, c0 - back),
+      `salvaging a +4 grade-1 item pays back half its upgrades' gold (${back}) and the Forge ledger nets it out`);
+    const msgs = []; const off = g.fn.on('toast', e => { if (e && e.key === 'upgrade:mark') msgs.push(e.msg); });
+    E(`itemById(${up}).plus = 6`); E(`upgradeItem(${up})`);
+    assert(msgs.length === 1 && /is now \+7\. The next three upgrades each need a Trophy from a champion\.$/.test(msgs[0]), `reaching +7 says the next three need a Trophy (${msgs[0]})`);
+    if (typeof off === 'function') off();
+    E(`itemById(${up}).plus = 4`);   // the class-change check below expects the +4 it had
+  }
   assert(E('bagCount()') === E('S.items.length') - E('equippedIds().size'), 'bagCount counts the items not worn');
   const bow = E('(() => { const it = newItem("bow", 1, "common"); S.items.push(it); return it.id; })()');
   // class change (Mirror of Embers): the hero's class gear is retooled, never unequipped or deleted
@@ -4041,7 +4060,7 @@ if (section('econ (ECON-A)')) try {
     ['Hearth 2 in the camp', 'campCost("hearth", 2).gold', 110], ['Tent 3', 'econTentGold(3)', 23000], ['Tent 10', 'econTentGold(10)', 2300000],
     ['hire Common, Region 1', 'econHireFee("common", 1)', 1500], ['hire Legendary, Region 1', 'econHireFee("legendary", 1)', 20000], ['hire Common, Region 2', 'econHireFee("common", 40)', 5100], ['hire Legendary, Region 5', 'econHireFee(4, 150)', 2900000],
     ['shift grade 1 Lv 1', 'econShiftFee(1, 1)', 2000], ['shift grade 4 Lv 1', 'econShiftFee(4, 1)', 4100], ['shift grade 15 Lv 1', 'econShiftFee(15, 1)', 110000], ['shift grade 1 Lv 20', 'econShiftFee(1, 20)', 2800],
-    ['upgrade grade 1 +0', 'econUpgradeGold(1, 0)', 100], ['upgrade grade 5 +9', 'econUpgradeGold(5, 9)', 4400], ['upgrade grade 15 +9', 'econUpgradeGold(15, 9)', 320000],
+    ['upgrade grade 1 +0', 'econUpgradeGold(1, 0)', 100], ['upgrade grade 5 +9', 'econUpgradeGold(5, 9)', 17000], ['upgrade grade 15 +9', 'econUpgradeGold(15, 9)', 1200000],
     ['reforge grade 5 first', 'econReforgeGold(5, 0)', 330]];
   const exBad = ex.filter(([, x, v]) => P(x) !== v);
   assert(!exBad.length, `prices as economy-2 lists them (${ex.length}: Hearth, rows, Shrine, Storehouse, Tents, hires, shifts, upgrades, reforge)` + (exBad.length ? ': ' + exBad.map(([n, x, v]) => `${n} ${P(x)} != ${v}`).join('; ') : ''));
