@@ -55,10 +55,6 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
   it in the digest; Cal may veto later. A "wire" verdict becomes a build card that converts and embeds the pack as
   drawn (no redrawing). An icon goes in only if it fits the live ability's or item's meaning, not just its name.
   Anything doubtful stays out of the Monday build.
-- Trial pack (Cal, 2026-10-07 19:28, "Trial one pack"): **Claude may draw ONE whole area pack, area 1 Mossy Hollow** (its background and
-  five zone monsters), in code (`art/area-1`, packed by `tools/embed-area-1.mjs`), as an exception to the lines above. The Opus art
-  judge must pass it within 2 rounds, `@codex review` must find no style mismatch, and it ships behind the Classic art switch. No
-  second pack is allowed under this ruling; everything else stays Codex's.
 - Character art (portraits, hero sprites, stills, the guide) ships **on**, with a "Classic art" switch in Settings for
   one release.
 
