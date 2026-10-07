@@ -8390,6 +8390,30 @@ if (section('C29 turn fights (core)')) try {
     E('TURN_LIVE.p.A = TURN_LIVE.p.foeMaxHp * 0.07');
     for (let t = 0; t < 20 && !E('__ev.includes("chargeBroken")'); t += 0.05) { E('if (turnCombatSnapshot().phase === "hero") turnCombatAction("attack")'); g.fn.tick(0.05); }
     assert(E('__ev.join()').startsWith('foeCharge') && E('__ev.includes("chargeBroken")') && !g.errors.length, `C29: a charged move takes a turn to gather and a hit of 6% of the boss's HP breaks it (${E('__ev.join()')})`); }
+  // boss tricks (boss-tiers-pr4): delayed hits and feints in the Captain and Champion sets
+  { const { E } = fresh('wren', 8);
+    const rows = E(`(() => { const out = []; for (const id of Object.keys(TURN_BOSS_TRICKS)) for (const z of [4, 5, 6, 7, 10, 15]) { const s = turnTrickScript(TURN_BOSS_TRICKS[id], z);
+      out.push({ id, z, n: s.length, champ: bossTierOf(z) === 'champion', feints: s.reduce((a, m) => a + m.hits.filter(h => h.feint).length, 0),
+        real: s.map(m => turnRealHits(m)), charged: s.filter(m => m.charge).length, short: s.some(m => m.hits.some(h => h.wind < 0.6 && !h.feint)),
+        feintDmg: s.some(m => m.hits.some(h => h.feint && h.x > 0)) }); } return out; })()`);
+    assert(rows.length > 0 && rows.every(r => r.n === (r.champ ? 5 : 4) && r.charged === 1), 'C29b: a Captain has four moves and a Champion five, one of them charged');
+    assert(rows.every(r => (r.z < 7 ? r.feints === 0 : true) && r.real.every(n => n >= 1) && !r.feintDmg), 'C29b: no feints below zone 7, every move keeps a real hit, a feint never carries damage');
+    assert(rows.some(r => r.z >= 7 && r.feints > 0), 'C29b: from zone 7 the sets carry feints');
+    const a = E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 60, seed: 11, skill: { parry: 0.4, dodge: 0.6 } }))');
+    const b = E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 60, seed: 11, skill: { parry: 0.4, dodge: 0.6 } }))');
+    assert(a === b, 'C29b: the combat sampler is deterministic for a seed with tricks on'); }
+  // a feint never damages and fools a pressing hero; a held hit lands after its hold
+  { const { g, E } = fresh('tobin', 8);
+    E('S.zone = 8; S.maxZone = 8; S.kills = ZONE_FIGHTS; spawn(); globalThis.__ev = []; for (const k of ["foeContact", "foeMove"]) on(k, x => __ev.push([k, x])); const u = cbUnitByKey("hero"); u.hp = u.maxHp = 1e12');
+    assert(E('combatFoes()[0].boss && combatFoes()[0].tk.script.some(m => m.hits.some(h => h.hold > 0))'), 'C29b: a zone 8 boss has a delayed hit');
+    let feintSeen = 0, bad = 0;
+    for (let t = 0; t < 400 && feintSeen < 1; t += 0.05) {
+      if (E('turnCombatSnapshot().phase') === 'hero') E('turnCombatAction("attack")');
+      const hp0 = E('cbUnitByKey("hero").hp');
+      g.fn.tick(0.05);
+      const evs = E('__ev.splice(0)');
+      for (const [k, x] of evs) if (k === 'foeContact' && x.res === 'feint') { feintSeen++; if (E('cbUnitByKey("hero").hp') < hp0) bad++; } }
+    assert(!g.errors.length && bad === 0, `C29b: a feint contact never deals damage (${feintSeen} seen)`); }
   // every ability of every hero resolves in a fight: no errors, no bad numbers, damage where it should
   for (const hero of ['wren', 'tobin', 'pip']) {
     const { g, E } = fresh(hero, 31);
@@ -8537,16 +8561,16 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.9, 15: 16 * 3.4, 20: 16 * 2.8, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.725 * 1.25, 15: 16 * 1.7, 20: 16 * 2.8, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07); zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
     assert(n20.a > 4.7 && n20.a < 5.3 && Math.abs(n20.hx - 0.7) < 1e-9 && n3.hx === 1 && n38.hx === 1 && n20.cx === 1 && !n20.full,
       `boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), as written in zones 1-3 and 35+ (${JSON.stringify([n3, n20, n38].map(r => [+r.a.toFixed(2), r.hx]))})`);
-    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.5) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
-      `boss pass: boss hits x1.5 at zone 8 (charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
+    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.055) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
+      `boss pass: boss hits x1.055 at zone 8 (the pr4 refit; charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
     assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 1.4 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
     // the Deepwell's Elders and the Provings' bosses keep their own numbers (they pass a move set and their HP in Attacks)
     const deep = E(`(() => { const f = { boss: true, type: 'bones', name: 'Elder' }; turnFoeSetup(f, 30, { set: 'bones', hpA: TURN_TUNE.deep.hpA.boss }); return { a: f.max / turnRefAtk(30), hx: f.tk.hx, cx: f.tk.cx }; })()`);
@@ -8599,9 +8623,10 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       // zones 25-34 (mid-zone-wall, 2026-10-07): the hero who keeps up there has only 0.2-0.4 of the reference HP (budget.mjs), and this
       // hero is scaled to the reference, so a boss hit that costs them 25-45% reads 8-16% here and a charge 20-45%
       // zones 15 and 20 (boss-tiers PR 3, 2026-10-07): the knots there are fitted to the budget's casual band, a boss hit reads 15-45% here
-      const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : z === 15 || z === 20 ? [0.15, 0.42, 0.4, 0.92] : [0.25, 0.36, 0.6, 0.9];
+      // zones 8 and 15 (boss-tiers-pr4, 2026-10-07): the tricks carry the difficulty there, so the refit hit scales are 0.46-0.9 of the old ones: a boss hit reads 22% at zone 8 and 10% at zone 15, a charge 52% and 24%
+      const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.15, 0.42, 0.4, 0.92] : [0.18, 0.36, 0.45, 0.9];
       if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
-    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 25-35% (15-42% at zones 15 and 20), a charge 60-90% (40-92% there) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
+    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 18-36% (7-42% at zone 15, 15-42% at zone 20), a charge 45-90% (20-92% at zone 15, 40-92% at zone 20) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
   // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];
@@ -10792,7 +10817,7 @@ if (section('foe moves by type')) try {
   }
   // unlisted types (the Coast's) keep the old pair; bosses and zone monsters keep theirs
   assert(J('(() => { const f = { type: "crab", name: "Crab" }; turnFoeSetup(f, 40, { elite: false }); return f.tk.script.map(m => m.id); })()').join() === 'strike,flurry', 'foe moves: a Coast foe still plays Strike and Flurry');
-  assert(J('(() => { const f = { type: "slime", name: "Imp", boss: true }; turnFoeSetup(f, 5, {}); return f.tk.script.map(m => m.id); })()').join() === 'engulf,lash,swell,slap', 'foe moves: a slime boss keeps its boss set');
+  assert(J('(() => { const f = { type: "slime", name: "Imp", boss: true }; turnFoeSetup(f, 3, {}); return f.tk.script.map(m => m.id); })()').join() === 'engulf,lash,swell,slap', 'foe moves: a slime boss keeps its boss set');
   // counters: every id is a real ability of that hero, each foe type has an answer from every starter, and each starter's
   // answers show up on 2+ types
   const heroes = ['wren', 'tobin', 'pip'];

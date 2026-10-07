@@ -41,7 +41,7 @@ const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[
   if (bad.length) { console.error('walk: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 const num = (n, d) => { const v = Number(opt(n, d)); if (!Number.isFinite(v) || v < 0) { console.error(`walk: --${n} needs a number of zero or more`); process.exit(2); } return v; };
 const SEED = num('seed', 1) | 0 || 1, MINUTES = num('minutes', 60), BUDGET_MS = num('clock-budget', 30) * 60e3;
-const PARRY = num('parry', 0.55), DODGE = num('dodge', 0.5);
+const PARRY = num('parry', 0.55), DODGE = num('dodge', 0.5), READ = num('read', 0.77);   // READ: how often the bot reads a boss trick (a feint, or a held swing); 0.77 is the sampler's bot (0.3 + 0.6 x its 77.5% avoidance)
 const HEROES = ['wren', 'tobin', 'pip'], HERO = opt('hero', HEROES[(SEED - 1) % 3]);
 if (!HEROES.includes(HERO)) { console.error('walk: --hero is wren, tobin or pip'); process.exit(2); }
 const SIZE = opt('size', 'p') === 'l' ? { id: 'landscape', w: 740, h: 360 } : { id: 'portrait', w: 360, h: 740 };
@@ -162,7 +162,7 @@ const DISMISS = '.mm-ov .mm-go, .bsheet-ov .sty-done, .bsheet-ov .sty-skip, .bsh
 // ---------------- the player ----------------
 const st = { tipKey: '', tipSince: 0, defKey: '', defDo: '', defDone: false, ringKey: '', stuckSince: 0, lastAct: 0, nuAt: -99, panelAt: -99, cardSeen: new Map(), toastSeen: new Set(), got: {}, prev: null, calls: {} };
 const BTN_OK = n => `(() => { const n = document.querySelector(${JSON.stringify(n)}); return !!n && !n.hidden && n.getClientRects().length > 0 && !n.disabled && !['off', 'cd', 'cool', 'nope', 'empty'].some(c => n.classList.contains(c)); })()`;
-const turnSnap = () => X('(() => { const q = turnCombatSnapshot(); return { now: q.now, phase: q.phase, canDefend: q.canDefend, open: Math.min(q.parryOpensAt || 1e9, q.dodgeOpensAt || 1e9), po: q.parryOpensAt, dopen: q.dodgeOpensAt, close: q.closesAt, hit: q.move ? q.move.hit : -1, mv: q.move ? q.move.id : "", timing: q.timing }; })()');
+const turnSnap = () => X('(() => { const q = turnCombatSnapshot(); return { now: q.now, phase: q.phase, canDefend: q.canDefend, open: Math.min(q.parryOpensAt || 1e9, q.dodgeOpensAt || 1e9), po: q.parryOpensAt, dopen: q.dodgeOpensAt, close: q.closesAt, feint: q.feint, hf: q.holdFrom, hit: q.move ? q.move.hit : -1, mv: q.move ? q.move.id : "", timing: q.timing }; })()');
 
 // One look at the fight and one press. Returns true when it pressed something.
 async function fight(o) {
@@ -188,8 +188,13 @@ async function fight(o) {
     const q = await turnSnap();
     if (!q.canDefend) return false;
     const key = q.mv + ':' + q.hit + ':' + q.close;
-    if (key !== st.defKey) { st.defKey = key; const r = rnd(); st.defDo = r < PARRY ? 'parry' : rnd() < DODGE ? 'dodge' : ''; st.defAt = 0.35 + 0.4 * rnd(); }
+    if (key !== st.defKey) {
+      st.defKey = key; const r = rnd(); st.defDo = r < PARRY ? 'parry' : rnd() < DODGE ? 'dodge' : ''; st.defAt = 0.35 + 0.4 * rnd(); st.defEarly = false;
+      // a boss trick (59k TURN_TUNE.tricks): a bot that means to defend reads it with chance READ; else a feint fools it and a held swing meets its press too early
+      if (st.defDo && (q.feint || q.hf > 0)) { if (rnd() >= READ) st.defEarly = true; else if (q.feint) st.defDo = ''; }
+    }
     if (!st.defDo) return false;
+    if (st.defEarly) { if (q.now >= (q.hf || 0)) { const b = st.defDo === 'parry' ? '#soloBar .sb-parry' : '#soloBar .sb-dodge'; st.defDo = ''; return await click(b, 200); } return false; }
     const open = st.defDo === 'parry' ? q.po : q.dopen, w = q.close - open;
     if (q.now >= open + w * st.defAt) { const b = st.defDo === 'parry' ? '#soloBar .sb-parry' : '#soloBar .sb-dodge'; st.defDo = ''; return await click(b, 200); }
   }

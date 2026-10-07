@@ -392,6 +392,35 @@ Cal's card at 07:19, "Harder without gear", is the direction: bosses tougher acr
   tightened z35-elder Pip to 0.53 (it read 52-53; the Fenmother pass owns it), z5-boss Pip to 0.98 and z38-boss-behind Pip to 0.80.
 - **Tools.** The wide run adds a `bot` player (the walk bot's parry 55%, dodge 50%) and a good-player close-to-death column; `hpr` per row.
 
+### Boss tiers, move sets (PR 4) (2026-10-07)
+
+PR 4 of `boss-tiers`. Opus judge after measuring (`/mnt/project-files/early-game/boss-tiers-pr4/judge.md`, data beside it); Cal can veto any line.
+The aim was tempo: a kept-up hero kills a boss in 2.5-4 hero turns, so wins sat at 99-100%. Cal's "Harder without gear" and the E33 curve are the direction.
+
+- **Tricks.** Zone 4-15 Captains and Champions play new move sets (`TURN_BOSS_TRICKS`, `TURN_TUNE.tricks`; `tricks.on = 0` brings back the old move sets only; with `gate.on = 0` and `hpFloor` `[[1, 0]]` it also drops the
+  gates and floor, and the refit z4-15 knots come back only by reverting them). A **delayed hit** (`hold`) winds up, stalls 0.4-0.6 s, then runs the last dodge window plus 0.25 s; the bar stalls so a player who
+  waits is safe and one who presses at the first sign wastes the press. A **feint** (zone 7+) shows a wind-up that breaks at the tell and deals
+  nothing; pressing on it fools the hero, and the next hit of that move cannot be defended. The Champion has a fifth move (a long string).
+  Move ids and names stay stable (`bossTry.rev`); total damage per move is about the old total.
+- **Windows keep their size.** Base parry 0.18 s, dodge 0.35 s and Wider are untouched. Fallback if a playtest finds the tricks unfair: windows
+  about 10% narrower on Champion and Captain hits only, never zones 1-3.
+- **Rally gates (tempo floor).** `TURN_TUNE.boss.gate`: a boss cannot be burst below 67/33% (Captain) or 75/50/25% (Champion) in one move; it
+  rallies and finishes its next move first. Cost on first-hour fights is 7-10 turns, kept-up 4.5-5.9. Off with `gate.on = 0`.
+- **Own-HP hit floor.** `boss.hpFloor` makes a boss hit cost at least a share of the hero's own max HP. It is set to the non-binding floors
+  (it binds nothing on first-hour heroes) and is the lever to pull if kept-up stays too easy. Off with `[[1, 0]]`.
+- **Refit knots.** Zone 4-15 `hpX` and `hitX` were refit so Wren and Pip casual on the first-hour set match the old sets (z5 73/100/92,
+  z10 59/100/54, nothing worn z5 28/100/49, z10 17/100/12). Hit scales are 0.46-0.9 of the old values; effective z10-15 `hitX` (0.3-0.5) sits
+  under the judge's 0.8 rule of thumb because the tricks carry the difficulty now. Zones 1-3 and 16+ are unchanged.
+- **Honest result.** Kept-up heroes still win 92-100% at z8-15 (good play 100%, casualHigh 100%). The tricks and gates move the
+  first-hour bosses' length and shape but the 96% defender cannot be made to lose without breaking the hit cap. The kept-up gap stays, owner
+  `boss-tiers-pr5` (zones 16-34 tricks, hit-floor and gate retune) until 2026-11-15; the first-hour bands and gear-helps gate hold.
+- **Known limit: gated charges.** While a boss sits at a gate and gathers a charge, hits deal 0 and do not count toward breaking it (the review
+  pass found it). Counting the clipped damage raised first-hour casual by 6-24 points (z10 59 to 67 Wren, 54 to 78 Pip), so the fit
+  keeps the current rule. Follow-up card: `boss-tiers-pr5` re-fits with clipped damage counted.
+- **Report columns.** Boss Ready (59m) skips held and flinched hits in its tally. The Foe tab and move chips show "delayed" and "feints".
+- **Milestone E2.** The z5-15 Champion bands are met on the first-hour set; the kept-up row stays report-only and is a dated gap, not a pass.
+- **Captain moves** (z4-14 outside every fifth zone) arrive through `bossTierOf`; the slice-turn-check card sees them.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)

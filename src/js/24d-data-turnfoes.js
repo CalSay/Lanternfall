@@ -118,6 +118,58 @@ const TURN_BOSS_BASIC = {
   charge: { id: 'smash', name: 'Gathered Smash', charge: true, hits: [{ wind: 1.5, x: 0.27 }, { wind: 0.6, x: 0.27 }] },
   c: { id: 'jab', name: 'Quick Jab', hits: [{ wind: 0.7, x: 0.16 }] }
 };
+// Boss tricks (card boss-tiers-pr4; docs/design/foe-moves.md "Boss tricks"): the zone bosses from zone 4 (TURN_TUNE.tricks) play these
+// sets in place of TURN_BOSS_SETS, so a hero in good gear has to read the fight and not only press on the beat. Same move ids, names and
+// (about) the same damage a move as the sets above; what changes is the shape:
+//   hold   a delayed hit: it winds up, hangs for `hold` s, then comes. The bar stalls, then runs; press as it runs, not as it stalls.
+//   feint  a fake: it winds up like a hit, then the bar breaks and nothing lands. A press at it fools you: the next hit cannot be defended.
+//   longer strings and an uneven rhythm (the winds differ along a string)
+// A hold is 0.4 s or more (a press on the beat is then always too early) and no hit winds up in under 0.6 s. A Champion (every fifth
+// zone, 40-rules bossTierOf) plays its Captain's four moves and a fifth, `d`, its signature string, third in its order.
+// Order: Captain a, b, charge, c. Champion a, b, d, charge, c. Zones 4-6 hold only; feints start at TURN_TUNE.tricks.feintFrom.
+const TBH = (wind, x, o) => Object.assign({ wind, x }, o);
+const TBF = wind => ({ wind, x: 0, feint: true });
+const TURN_BOSS_TRICKS = {};
+{
+  const sets = {
+    slime: { a: { id: 'engulf', name: 'Engulf', hits: [TBH(1.0, 0.28, { dt: 'poison', hold: 0.5 })] },
+      b: { id: 'lash', name: 'Ooze Lash', hits: [TBH(0.9, 0.075, { dt: 'poison' }), TBH(0.6, 0.075, { dt: 'poison' }), TBF(0.7), TBH(1.0, 0.075, { dt: 'poison' }), TBH(0.6, 0.075, { dt: 'poison', ride: 'venom' })] },
+      charge: { id: 'swell', name: 'Great Engulf', charge: true, hits: [TBH(1.4, 0.17, { dt: 'poison', hold: 0.45 }), TBH(0.6, 0.17, { dt: 'poison' }), TBH(0.6, 0.17, { dt: 'poison', ride: 'venom' })] },
+      c: { id: 'slap', name: 'Split Slap', hits: [TBH(0.6, 0.09), TBH(0.6, 0.09), TBH(1.1, 0.1, { hold: 0.4 })] },
+      d: { id: 'rush', name: 'Smothering Rush', hits: [TBH(0.9, 0.07, { dt: 'poison' }), TBH(0.6, 0.07, { dt: 'poison' }), TBH(0.6, 0.07, { dt: 'poison' }), TBF(0.8), TBH(0.6, 0.07, { dt: 'poison' }), TBH(1.0, 0.07, { dt: 'poison', hold: 0.5 }), TBH(0.6, 0.07, { dt: 'poison', ride: 'venom' })] } },
+    bat: { a: { id: 'bite', name: 'Rending Bite', hits: [TBH(1.15, 0.26, { ride: 'bleed', hold: 0.5 })] },
+      b: { id: 'flurry', name: 'Wing Flurry', hits: [TBH(0.7, 0.08), TBH(0.6, 0.08), TBF(0.6), TBH(0.6, 0.08), TBH(0.9, 0.08, { hold: 0.4 })] },
+      charge: { id: 'storm', name: 'Dive Storm', charge: true, hits: [TBH(1.2, 0.18, { hold: 0.5 }), TBH(0.6, 0.18), TBF(0.6), TBH(0.8, 0.18)] },
+      c: { id: 'shriek', name: 'Shriek', hits: [TBH(0.8, 0.1), TBH(1.0, 0.1, { ride: 'blind', hold: 0.45 })] },
+      d: { id: 'swarm', name: 'Screech Swarm', hits: [TBH(0.7, 0.07), TBH(0.6, 0.07), TBH(0.6, 0.07), TBF(0.6), TBH(0.6, 0.07), TBH(1.0, 0.07, { hold: 0.5 }), TBH(0.6, 0.07, { ride: 'bleed' })] } },
+    bones: { a: { id: 'graveblow', name: 'Grave Blow', hits: [TBH(1.4, 0.3, { hold: 0.55 })] },
+      b: { id: 'volley', name: 'Bone Volley', ranged: true, hits: [TBH(0.9, 0.07), TBH(0.6, 0.07), TBF(0.6), TBH(0.6, 0.07), TBH(0.9, 0.07, { hold: 0.4 })] },
+      charge: { id: 'crush', name: 'Ossuary Crush', charge: true, hits: [TBH(1.5, 0.18, { hold: 0.5 }), TBH(0.7, 0.18), TBH(0.7, 0.18)] },
+      c: { id: 'rattle', name: 'Rattle', hits: [TBH(0.8, 0.08), TBH(0.6, 0.08), TBH(0.8, 0.08, { ride: 'weaken' })] },
+      d: { id: 'rain', name: 'Bone Rain', ranged: true, hits: [TBH(0.9, 0.07), TBH(0.6, 0.07), TBH(0.6, 0.07), TBF(0.6), TBH(0.6, 0.07), TBH(1.0, 0.07, { hold: 0.5 }), TBH(0.6, 0.07)] } },
+    beetle: { a: { id: 'mandibles', name: 'Mandibles', hits: [TBH(1.0, 0.1), TBH(0.6, 0.09), TBH(0.9, 0.09, { hold: 0.4 })] },
+      b: { id: 'shellbash', name: 'Shell Bash', hits: [TBH(1.25, 0.28, { hold: 0.55 })] },
+      charge: { id: 'erupt', name: 'Erupt', charge: true, hits: [TBH(1.7, 0.25, { hold: 0.5 }), TBH(0.7, 0.25)] },
+      c: { id: 'thorns', name: 'Thorn Spray', ranged: true, hits: [TBH(0.8, 0.07), TBH(0.6, 0.07), TBF(0.6), TBH(0.6, 0.07), TBH(0.9, 0.06, { ride: 'bleed' })] },
+      d: { id: 'stampede', name: 'Stampede', hits: [TBH(1.0, 0.07), TBH(0.6, 0.07), TBH(0.6, 0.07), TBF(0.7), TBH(0.6, 0.07), TBH(1.1, 0.07, { hold: 0.5 }), TBH(0.6, 0.07)] } },
+    spore: { a: { id: 'burst', name: 'Spore Burst', hits: [TBH(0.95, 0.08, { dt: 'poison' }), TBH(0.6, 0.08, { dt: 'poison' }), TBH(0.9, 0.08, { dt: 'poison', ride: 'venom', hold: 0.4 })] },
+      b: { id: 'capslam', name: 'Cap Slam', hits: [TBH(1.3, 0.27, { hold: 0.5 })] },
+      charge: { id: 'bloom', name: 'Spore Storm', charge: true, hits: [TBH(1.2, 0.11, { dt: 'poison' }), TBH(0.65, 0.11, { dt: 'poison' }), TBF(0.65), TBH(0.65, 0.11, { dt: 'poison' }), TBH(0.9, 0.11, { dt: 'poison', ride: 'venom', hold: 0.45 })] },
+      c: { id: 'choke', name: 'Choking Cloud', ranged: true, hits: [TBH(0.9, 0.08, { dt: 'poison' }), TBH(1.0, 0.08, { dt: 'poison', ride: 'weaken', hold: 0.4 })] },
+      d: { id: 'sporebloom', name: 'Deathcap Bloom', ranged: true, hits: [TBH(0.9, 0.07, { dt: 'poison' }), TBH(0.6, 0.07, { dt: 'poison' }), TBF(0.6), TBH(0.6, 0.07, { dt: 'poison' }), TBH(0.6, 0.07, { dt: 'poison' }), TBH(1.0, 0.07, { dt: 'poison', hold: 0.5 }), TBH(0.6, 0.07, { dt: 'poison', ride: 'venom' })] } },
+    golem: { a: { id: 'fist', name: 'Stone Fist', hits: [TBH(1.35, 0.3, { hold: 0.55 })] },
+      b: { id: 'combo', name: 'Quarry Combo', hits: [TBH(1.0, 0.08), TBH(0.6, 0.08), TBF(0.6), TBH(1.2, 0.08), TBH(0.6, 0.08)] },
+      charge: { id: 'shatter', name: 'Shatter', charge: true, hits: [TBH(1.6, 0.17, { hold: 0.5 }), TBH(0.7, 0.17), TBH(0.7, 0.17)] },
+      c: { id: 'hail', name: 'Pebble Hail', ranged: true, hits: [TBH(0.8, 0.05), TBH(0.6, 0.05), TBH(0.6, 0.05), TBF(0.6), TBH(0.7, 0.05), TBH(0.6, 0.05)] },
+      d: { id: 'avalanche', name: 'Avalanche', hits: [TBH(1.0, 0.07), TBH(0.6, 0.07), TBH(0.6, 0.07), TBF(0.7), TBH(0.6, 0.07), TBH(1.2, 0.07, { hold: 0.5 }), TBH(0.6, 0.07)] } },
+    wraith: { a: { id: 'touch', name: 'Chill Touch', hits: [TBH(1.1, 0.22, { dt: 'frost', ride: 'chill', hold: 0.5 })] },
+      b: { id: 'wail', name: 'Wail', ranged: true, hits: [TBH(0.9, 0.08, { dt: 'frost' }), TBH(0.7, 0.08, { dt: 'frost' }), TBF(0.8), TBH(0.9, 0.08, { dt: 'frost', hold: 0.4 })] },
+      charge: { id: 'drown', name: 'Drown', charge: true, hits: [TBH(1.3, 0.13, { dt: 'frost', hold: 0.45 }), TBH(0.65, 0.13, { dt: 'frost' }), TBH(0.65, 0.13, { dt: 'frost' }), TBH(0.9, 0.13, { dt: 'frost', ride: 'chill' })] },
+      c: { id: 'fade', name: 'Fade Strike', hits: [TBH(1.2, 0.25, { dt: 'frost', hold: 0.6 })] },
+      d: { id: 'banshee', name: 'Banshee Wail', ranged: true, hits: [TBH(0.9, 0.07, { dt: 'frost' }), TBH(0.6, 0.07, { dt: 'frost' }), TBH(0.6, 0.07, { dt: 'frost' }), TBF(0.7), TBH(0.6, 0.07, { dt: 'frost' }), TBH(1.0, 0.07, { dt: 'frost', hold: 0.5 }), TBH(0.6, 0.07, { dt: 'frost', ride: 'chill' })] } }
+  };
+  for (const k in sets) { const { d, ...cap } = sets[k]; TURN_BOSS_TRICKS[k] = { captain: cap, champion: { ...cap, d } }; }
+}
 // Speed relative to the reference hero (1.0 = Speed 10): foes without their own
 const TURN_FOE_SPEED = { normal: 0.9, ranged: 0.95, elite: 1.0, boss: 1.05, region: 1.1 };
 // Fight length in the hero's ordinary Attack actions at zone-ready power (the C22 contract's HP budgets)
