@@ -830,7 +830,7 @@ let craftUI = null;
       const c = kindUpgradeCost(it), chips = el('div', 'costs');
       costChips(chips, c.mats, it.t, c.gold);
       if (c.troph) chips.append(trophChip(c.troph));
-      const nextP = TIER_POW[it.t] * RAR[it.r].m * (1 + 0.15 * (it.plus + 1));
+      const nextP = itemPower(Object.assign({}, it, { plus: it.plus + 1 }));   // playtester-code-bugs: uniques use UNIQ_TUNE.pow, as itemPower does
       upBox.append(el('p', 'note', `+${it.plus + 1}: power ${fmt(itemPower(it))} → ${fmt(nextP)}. Every line grows.`), chips);
       const f = K6.upgrade(), heroPos = wr && wr.who === 'hero' ? wr.pos : null;
       const okMats = hasMats(c.mats, it.t) && S.gold >= c.gold && (!c.troph || (f && trophTotal() >= c.troph));

@@ -17,6 +17,21 @@ chance at a new look, and the next stretch of road.
   to 10 (F3, as amended in DECISIONS "Early game"). Moments: see the plan, section 1. Every zone
   Captain's first clear opens a Lantern Cache (`cache-core`), so those wins count as moments too.
 - New things are announced between fights, never during a parry window (F5).
+- **Never** (from Cal's play notes, 2026-10-07; every card that changes minutes 0 to 60 inherits these, and a card's own
+  Never list adds to them):
+  - Never a prompt for something the player cannot do: swap an ability with only one, "Tap to add" with nothing to add,
+    spend points before the tab that spends them is open.
+  - Never a line that does not match what happens next ("Wood first", then a fight).
+  - Never let a foe act while a tip or a Hesketh line is on screen in a fight.
+  - Never a popup or sheet with no way back to the fight.
+  - Never a held line with no way on: it ends with the press it teaches or a Got it.
+  - Never move the player somewhere they did not choose while Hesketh talks or right after (lighting the fire, then the
+    fight).
+  - Never a new tab, the first attribute points, the first Scroll or a second ability in the first hour without a line
+    from Hesketh that names it.
+  - Never a sentence fragment or a stage direction as Hesketh's speech ("Materials in, gear out", "Go on, press it").
+  - The build breaks some of these today. `cal-0107-hesketh-voice` fixes the last one; `cal-0107-staged-guide` fixes
+    the rest it names (Cal's notes 2, 3, 4, 10 and 12).
 - Times are for the casual walk (follows Next Up, parries and dodges at a set rate). **est** = estimated, **meas** =
   measured by the walk.
 
@@ -43,7 +58,7 @@ passes. At gap 90 the walk opens Hero 0:32, Gather 2:52, fire 3:19, Workbench 4:
 | 7 | 2:25 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
 | 8 | 2:55 | The zone 1 Captain; Hesketh: "Watch the bar" (turn fight) or "Watch the red rings" (legacy) | Fights the boss | Boss strings | | tension | | built: `guide-voice` (the boss tip in Hesketh's voice; one paused step a fight) |
 | 9 | 3:45 | **Big moment: first boss win**, and the **first Lantern Cache** reveals the win's drops plus the Ember Red lantern colour; the stage relights | Taps to open | Caches | the win's drops; Ember Red | surprise | The hero's first line | built: card `cache-core` (card "First boss down" lists the win's drops and Ember Red; the stage shift is faint, see `cache-lantern-read`); card `moment-layer`; `hero-voice` done (boss1 bark on the card) |
-| 9a | when it happens | **Only if a zone boss beats you for the first time**: the Try again card shows what beat you; once it closes and the road is quiet, Hesketh adds one line: "That card showed what beat you. Each try shows one more of its moves." | Reads it; Try again or keeps fighting | Try again card | | understanding | Once per save. It waits behind any guide step and never pauses the game. | card `defeat-card-guide-tip` (`defeat` line in 75-onboard-ui SAY_MORE) |
+| 9a | when it happens | **Only if a zone boss beats you for the first time**: the Try again card shows what beat you; once it closes and the road is quiet, Hesketh adds one line: "No shame in that. The card showed what beat you, and each try shows one more of its moves." | Reads it; Try again or keeps fighting | Try again card | | understanding | Once per save. It waits behind any guide step and never pauses the game. | card `defeat-card-guide-tip` (`defeat` line in 75-onboard-ui SAY_MORE) |
 | 10 | 5:30 | The Hero tab (spacing governor), with the first attribute point | Spends the point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58; moment `moment-layer`; built: `unlock-voice` (Hesketh announces the Hero tab after the next fight, in the guide panel) |
 | 11 | 7:15 | The Gather tab; Hesketh: "Wood first." | Chops 8 logs | Gathering | logs | | | `story-unlock-gates`; line `unlock-voice`; built: `unlock-voice` ("Wood first. Gather's open, and the hero works even while you're away.") |
 | 12 | 9:00 | **Medium moment: the camp fire lit**; the Camp tab; Hesketh's talk plays here | Lights the fire, listens | Camp | a home | relief | "Every road needs a place to come back to." | today (fire); cards `intro-and-picker` (talk moves here), `moment-layer` |

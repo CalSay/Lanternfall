@@ -65,7 +65,7 @@ let cachePending, cacheAuto, cacheSetAuto, cacheLookZone;
     // the bell list keeps a line (the card or banner is the moment itself)
     const bits = [];
     if (p.gold) bits.push(`${fmt(p.gold)} gold`);
-    if (look) bits.push(`${look.n} lantern`);
+    if (look) bits.push(/lantern$/i.test(look.n) ? look.n : `${look.n} lantern`);   // the look's name already says lantern
     if (un) bits.push(un.name);
     emit('toast', { key: 'cache', msg: `Lantern Cache opened${bits.length ? ': ' + bits.join(', ') : ''}.`, kind: 'good', prio: 'low' });
     save();

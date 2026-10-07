@@ -8498,9 +8498,10 @@ if (section('C22 Thorn Imp (zone 1)')) try {
     assert(H('(S.mastery.types.slime||0)>0 && !S.mastery.types.imp'), 'C22: beating the Thorn Imp counts for zone 1\'s foe slot in mastery and the profile'); }
   for (const hero of ['wren', 'tobin', 'pip']) {
     const { H } = imp(hero);
-    const r = H(`(()=>{const p=turnCombatProfile();return {hp:p.foeMaxHp/turnRefAtk(1),jab:ZONE_FOES[1].moves[0].hits[0].x,ref:p.refHp/mobHp(1)}})()`);
-    assert(r.hp > 3.7 && r.hp < 4.3 && r.jab === 0.2 && r.ref === 1.2,
-      `C22: against ${hero} the Thorn Imp has 4 reference Attacks of HP, and its Briar Jab is 20% of the zone's reference HP (${JSON.stringify(r)})`);
+    // early-foes-three-hits: its HP is 4 reference Attacks, or TURN_EARLY_FOE_HITS[0] of this hero's plain Attacks when that is more
+    const r = H(`(()=>{const p=turnCombatProfile(),f=combatFoes()[0],fl=TURN_EARLY_FOE_HITS[0]*p.A*(1-p.foeArm)*Math.max(1,typeXKey(f.txRow||f.type,p.heroType));return {hp:p.foeMaxHp/turnRefAtk(1),fl:fl/turnRefAtk(1),jab:ZONE_FOES[1].moves[0].hits[0].x,ref:p.refHp/mobHp(1)}})()`);
+    assert((Math.abs(r.hp - r.fl) < 1e-6 * r.fl || (r.hp > 3.7 && r.hp < 4.3 && r.hp >= r.fl)) && r.jab === 0.2 && r.ref === 1.2,
+      `C22: against ${hero} the Thorn Imp has 4 reference Attacks of HP (or the early floor of plain Attacks), and its Briar Jab is 20% of the zone's reference HP (${JSON.stringify(r)})`);
   }
   { const { h, H } = imp('pip');
     H('globalThis.__mv=[];on("foeMove",x=>__mv.push(x.id+x.hits));combatFoes()[0].hp=combatFoes()[0].max=1e9;const u=cbUnitByKey("hero");u.hp=u.maxHp=1e9');
@@ -8633,9 +8634,14 @@ if (section('C29 turn fights (core)')) try {
     const d = E('__d'); assert(d >= 10 && d <= 25, `C29: replayed bosses drop a Scroll about 1 in 5 wins, never 5 dry in a row (${d} in 50)`); }
   // the foe numbers follow the zone's reference hero
   { const { E } = fresh('wren', 11);
-    const r = E('(() => { setZone(1); spawn(); const f = combatFoes()[0], p = turnCombatProfile(); return { name: f.name, hpA: f.max / turnRefAtk(1), jab: ZONE_FOES[1].moves[0].hits[0].x, ref: turnRefHp(1) / mobHp(1), spd: p.foeSpd, hero: p.heroSpd }; })()');
-    assert(r.name === 'Thorn Imp' && r.hpA > 3.7 && r.hpA < 4.3 && r.jab === 0.2 && r.ref === 1.2 && r.spd === 9 && r.hero === 10,
-      `C29: zone 1's Thorn Imp has 4 reference Attacks of HP, its Briar Jab is 20% of the reference HP, Speed 9 against Wren's 10 (${JSON.stringify(r)})`); }
+    const r = E('(() => { setZone(1); spawn(); const f = combatFoes()[0], p = turnCombatProfile(), fl = TURN_EARLY_FOE_HITS[0] * p.A * (1 - p.foeArm) * Math.max(1, typeXKey(f.txRow || f.type, p.heroType)); return { name: f.name, hpA: f.max / turnRefAtk(1), fl: fl / turnRefAtk(1), jab: ZONE_FOES[1].moves[0].hits[0].x, ref: turnRefHp(1) / mobHp(1), spd: p.foeSpd, hero: p.heroSpd }; })()');
+    assert(r.name === 'Thorn Imp' && (Math.abs(r.hpA - r.fl) < 1e-6 * r.fl || (r.hpA > 3.7 && r.hpA < 4.3 && r.hpA >= r.fl)) && r.jab === 0.2 && r.ref === 1.2 && r.spd === 9 && r.hero === 10,
+      `C29: zone 1's Thorn Imp has 4 reference Attacks of HP (or the early floor of plain Attacks), its Briar Jab is 20% of the reference HP, Speed 9 against Wren's 10 (${JSON.stringify(r)})`); }
+  // early-foes-three-hits (Cal's note #18): a hero far over the road still needs at least 3 plain Attacks for a normal foe in zones 1-6,
+  // and the floor stops at zone 7
+  { const { E } = fresh('wren', 12);
+    const r = E('(() => { S.L = 20; gearDirty(); const out = []; for (let z = 1; z <= 7; z++) { setZone(z); fightBoss = false; spawn(); const f = combatFoes()[0], p = turnCombatProfile(); out.push(Math.round(100 * f.max / (p.A * (1 - p.foeArm) * Math.max(1, typeXKey(f.txRow || f.type, p.heroType)))) / 100); } return out; })()');
+    assert(r.slice(0, 6).every(h => h >= 3) && r[6] < 3, `C29: at level 20 a zone 1-6 foe takes at least 3 plain Attacks, and a zone 7 foe has no floor (${JSON.stringify(r)})`); }
   // timed abilities: a ring per hit; Perfect adds the bonus, Good is as written, a Miss (or no press) hits for 70%
   { const ring = (grades, id, hero) => { const { g, E } = fresh(hero || 'tobin', 12);
       E(`S.L = 40; S.abil.unl.${hero || 'tobin'} = HERO_ABILITIES.${hero || 'tobin'}.filter(x => ABILITIES[x].tier); soloEquip(0, ${JSON.stringify(id)}); S.zone = 1; spawn(); combatFoes()[0].hp = combatFoes()[0].max = 1e12;
@@ -10726,6 +10732,24 @@ if (section('lantern caches')) try {
   const ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8');
   assert(/on\('cacheOpen'/.test(ui) && /moment\(big \? 'cache' : 'cacheAuto'/.test(ui), 'caches: the card goes through the moment layer');
 } catch (e) { fail('lantern caches: ' + e.message); }
+
+// ---- playtester-code-bugs: the unique upgrade preview shows the real gain; the cache toast says "lantern" once ----
+if (section('playtester code bugs')) try {
+  const g = loadCore({ seed: 7 }), E = s => g.eval(s);
+  E('soloPick("wren")');
+  const m = /const nextP = ([^;]+);/.exec(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-craft-ui.js'), 'utf8'));
+  assert(!!m, 'playtester code bugs: the upgrade preview line (const nextP) is in 75-craft-ui.js');
+  if (m) for (const u of [false, true]) for (const plus of [0, 5]) {
+    const r = E(`(() => { const it = { id: -1, slot: 'weapon', t: 3, r: '${u ? 'legendary' : 'rare'}', plus: ${plus}${u ? ', u: Object.keys(UNIQ)[0]' : ''} };
+      const nextP = (it => ${m[1]})(it); return { nextP, real: itemPower(Object.assign({}, it, { plus: it.plus + 1 })) }; })()`);
+    assert(Math.abs(r.nextP - r.real) < 1e-9, `playtester code bugs: a ${u ? 'unique' : 'non-unique'} item at +${plus} previews the power it gets at +${plus + 1} (${r.nextP} vs ${r.real})`);
+  }
+  const toasts = []; g.fn.on('toast', t => toasts.push(t));
+  E('S.zone = S.maxZone = 1; killPack({ boss: true, xp: 1, hp: 0 }, 40)'); g.fn.tick(0.1);
+  const msg = (toasts.find(t => t && t.key === 'cache') || {}).msg || '';
+  assert(/Ember Red lantern/.test(msg) && (msg.match(/lantern/g) || []).length === 1,
+    `playtester code bugs: the cache toast names the look with "lantern" once (${JSON.stringify(msg)})`);
+} catch (e) { fail('playtester code bugs: ' + e.message); }
 
 // ---- Champion clear moment (card champion-moment; 55-story.js champWin, 75-moments-ui.js) ----
 if (section('champion moment')) try {
