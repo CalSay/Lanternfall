@@ -3,9 +3,10 @@
 // lines shown on the item, Reforge one line at the Enchanter's Table).
 //
 // Sections of the 'forge' tab (registerSection), top to bottom:
-//   Stations   Forge, Workbench, Loom, Enchanter with skill level and XP bar (tap = filter)
+//   Stations   a link to Hero, Gear; Forge, Workbench, Loom, Enchanter with skill level and XP bar (tap = filter)
 //   Recipes    tier picker, For you / For your party / All, Masterwork trophy, one row per kind
 //   Enchanter  (Enchanter's Table only) Transmute, and the Star Chart when K6 defines it
+// Sections of the 'party' tab's Gear view (cal-0107-gear-and-rates):
 //   Your gear  the hero's 8 positions (tap = item sheet, or a picker when empty)
 //   Bag        every item, equipped ones badged with the wearer's portrait; sort and filter
 // The item sheet (bottom sheet from 75-party-sheet's openSheet) shows lines, compare, and
@@ -167,10 +168,14 @@ let craftUI = null;
         row.append(b); stEls[s] = { b, lv, fill };
       }
       const info = el('p', 'note cf-st-info');
-      sec.append(row, info); stEls.info = info;
+      // Gear moved to the Hero tab: one tap there from Make.
+      const gl = el('button', 'mini cf-gearlink', 'Your gear is on the Hero tab'); gl.type = 'button';
+      gl.addEventListener('click', () => setTab('gear'));
+      sec.append(gl, row, info); stEls.info = info; stEls.gl = gl;
     },
     update() {
       initState(); syncGoalPick();
+      putHidden(stEls.gl, !featOk('party'));
       for (const s of STATION_KEYS) {
         const e = stEls[s], sk = S.skills[skillOfSt(s)] || { lv: 1, xp: 0 };
         putAttr(e.b, 'aria-pressed', String(st8.st === s));
@@ -530,7 +535,8 @@ let craftUI = null;
 
   // ================= Your gear =================
   let gearEls = null;
-  registerSection('forge', {
+  // Gear and the bag show on the Hero tab's Gear view (cal-0107-gear-and-rates); Craft is for making.
+  registerSection('party', {
     id: 'craft-gear', title: 'Your gear', view: 'gear',
     mount(sec) {
       const g = el('div', 'cf-gear');
@@ -643,7 +649,7 @@ let craftUI = null;
     controls.append(yes, no); bag.bulk.append(controls);
   }
   const SORTS = { power: (a, b) => itemPower(b) - itemPower(a) || b.id - a.id, new: (a, b) => b.id - a.id, kind: (a, b) => (kindOrder(a.slot) - kindOrder(b.slot)) || itemPower(b) - itemPower(a) };
-  registerSection('forge', {
+  registerSection('party', {
     id: 'craft-bag', title: 'Bag', view: 'gear',
     mount(sec) {
       const head = sec.querySelector('.sec-title');
@@ -933,7 +939,10 @@ let craftUI = null;
         const kinds = Object.keys(CRAFT_KINDS).filter(k => craftKindVisible(k) && !CRAFT_KINDS[k].legacy && fits(k, pos, 'hero'));
         const k = kinds[0];
         body.append(el('p', 'note', k ? `Nothing in your bag fits. Craft a ${CRAFT_KINDS[k].noun} at the ${CRAFT_STATIONS[CRAFT_KINDS[k].st].n}.` : 'Nothing in your bag fits here.'));
-        if (k) {
+        // Gear opens before the Workbench on a cold Hearth: no Go to a station that is not built yet.
+        const notYet = k && (safe(() => hearthStationWhy(CRAFT_KINDS[k].st), '') || (!featOk('craft') && 'Crafting opens soon.'));
+        if (notYet) body.append(el('p', 'note', notYet));
+        if (k && !notYet) {
           const b = el('button', 'big forge', `Go to the ${STATION_SHORT[CRAFT_KINDS[k].st]}`); b.type = 'button';
           b.addEventListener('click', () => { st8.st = CRAFT_KINDS[k].st; st8.filt = 'you'; st8.focus = k; sheet.back = null; switching = true; api.close(true); switching = false; setTab('make'); const t = $('forgeBtn'); if (t) t.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); });
           body.append(b);

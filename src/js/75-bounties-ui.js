@@ -13,7 +13,7 @@
   };
   // Go: where each kind's work happens
   const GO = { mine: ['gat', 'mine'], gems: ['gat', 'mine'], chop: ['gat', 'wood'], forage: ['gat', 'forage'],
-    make: ['forge', 'make'], forge: ['forge', 'make'], upgrade: ['forge', 'gear'], reforge: ['forge', 'gear'],
+    make: ['forge', 'make'], forge: ['forge', 'make'], upgrade: ['party', 'gear'], reforge: ['party', 'gear'],
     hands: ['world', 'tav'], deep: ['adv', 'deep'] };
   const goTo = b => {
     const g = GO[b.k];

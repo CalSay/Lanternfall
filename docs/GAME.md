@@ -17,9 +17,9 @@ Five tabs, each a full-screen menu over the stage ([layout.md](design/layout.md)
 | Tab | Views |
 |---|---|
 | Fight (`adv`) | Boss, Bounties, Bestiary, Deepwell |
-| Hero (`party`) | Hero, Abilities, Build (attributes; Training while `HERO_TUNE.training` is 1), Stars |
+| Hero (`party`) | Hero, Gear (worn gear and the bag), Abilities, Build (attributes; Training while `HERO_TUNE.training` is 1), Stars |
 | Gather (`gat`) | Mining, Wood, Forage, Hunting, Store |
-| Craft (`forge`) | Make, Gear, Uniques |
+| Craft (`forge`) | Make, Uniques |
 | Camp (`world`) | Camp, Tavern, Almanac, Raid |
 
 The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the Codex open from the Journal. Landscape
@@ -140,7 +140,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 
 - **Crafting** (`55-crafting.js`, `41-items.js`, `21-data-craft.js`, `75-craft-ui.js`): class gear at the camp's
   stations, grades 1-5. Items roll affix lines by rarity. Upgrades go to +10 (Trophies gate +8 to +10). Reforge,
-  Masterwork and salvage are in the Craft tab. Every combat line works in a turn fight (59k `turnMakeProfile`; the audit
+  Masterwork is in the Craft tab; worn gear, the bag, upgrades, reforge and salvage are on the Hero tab's Gear view. Every combat line works in a turn fight (59k `turnMakeProfile`; the audit
   is [combat-turn-build.md](design/combat-turn-build.md) "Gear stats in turn fights"): Spell power is fire, frost and
   holy damage, Damage over time (the old Area) Burn and Bleed, Control boss Stagger, Counter (the old Threat) counter
   damage, Speed (the old Attack speed) how often you act, Focus a steady cooldown refund.
