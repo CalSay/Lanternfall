@@ -22,16 +22,16 @@ chance at a new look, and the next stretch of road.
   - Never a prompt for something the player cannot do: swap an ability with only one, "Tap to add" with nothing to add,
     spend points before the tab that spends them is open.
   - Never a line that does not match what happens next ("Wood first", then a fight).
-  - Never let a foe act while a tip or a Hesketh line is on screen.
+  - Never let a foe act while a tip or a Hesketh line is on screen in a fight.
   - Never a popup or sheet with no way back to the fight.
   - Never a held line with no way on: it ends with the press it teaches or a Got it.
   - Never move the player somewhere they did not choose while Hesketh talks or right after (lighting the fire, then the
     fight).
-  - Never a new tab, view, slot or move in the first hour without a line from Hesketh.
+  - Never a new tab, the first attribute points, the first Scroll or a second ability in the first hour without a line
+    from Hesketh that names it.
   - Never a sentence fragment or a stage direction as Hesketh's speech ("Materials in, gear out", "Go on, press it").
-
-  The build breaks some of these today. `cal-0107-hesketh-voice` fixes the last one; `cal-0107-staged-guide` fixes the
-  rest it names (Cal's notes 2, 3, 4, 10 and 12).
+  - The build breaks some of these today. `cal-0107-hesketh-voice` fixes the last one; `cal-0107-staged-guide` fixes
+    the rest it names (Cal's notes 2, 3, 4, 10 and 12).
 - Times are for the casual walk (follows Next Up, parries and dodges at a set rate). **est** = estimated, **meas** =
   measured by the walk.
 
