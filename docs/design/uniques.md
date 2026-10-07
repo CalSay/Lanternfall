@@ -83,7 +83,7 @@ No real-time cooldown, daily limit or resource cost. The cost is weaker raw gear
 
 ## Numbers and working
 
-For grade t and upgrade n, let `B = TIER_POW[t] × (1 + 0.15n)`. Today G1–G5 are 10, 22, 42, 75, 130 at +0. Crafted common base power is B; rare is 1.8B; epic 2.5B. Proposed unique base power is **0.8B** (20% below common, 55.56% below rare). It has no rolled affixes or Masterwork bonus; an implementation must prevent accidental legendary affix rolls. No 3.2× legendary multiplier. Reforge is unavailable because it has no random line. Normal upgrade costs and Trophy gates stay; effects do not grow with upgrades. A new drop is +0.
+For grade t and upgrade n, let `B = TIER_POW[t] × (1 + 0.15n)`. Today G1–G5 are 10, 22, 42, 75, 130 at +0. Crafted common base power is B; rare is 1.8B; epic 2.5B. Proposed unique base power is **0.8B** (20% below common, 55.56% below rare). It has no rolled affixes or Masterwork bonus; an implementation must prevent accidental legendary affix rolls. Use per-definition base-power metadata for new IDs; do not change UNIQ_TUNE.pow globally, which would weaken earned legacy items. This is definition data, not a new saved item field. No 3.2× legendary multiplier. Reforge is unavailable because it has no random line. Normal upgrade costs and Trophy gates stay; effects do not grow with upgrades. A new drop is +0.
 
 The comparison below is at +0 with no affixes. Weapon Might is a percentage input to `heroAtk`, not flat Attack. Head/body/off-hand quantities are the actual `craftBaseLines` stat units. The same grade alone is not enough for a comparison: rare affixes and upgrades make the crafted alternative stronger still.
 
