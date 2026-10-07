@@ -246,9 +246,9 @@ STORY_BEATS.npc.tobin = { at: 'champPost:regent', not: 'tobin', who: 'Tobin, min
 // Batwing Caves
 STORY_BEATS.npc.wren = { at: 'champPost:cantor', not: 'wren', who: 'Wren, who grew up in these caves', lines: [
   'A girl with a bow steps out of the dark without a sound.',
-  '"Wren. I grew up here, aiming at anything that made noise."',
+  '"I\'m Wren. I grew up here, aiming at any noise."',
   '"One night the caves sang my name. I never answered."',
-  '"Quiet now. I\'ll miss it. Don\'t tell anyone. Got a fire?"'
+  '"Quiet now. I\'ll miss these caves. Room at your camp?"'
 ] };
 // The Bonefield
 STORY_BEATS.npc.anselm = { at: 'champPost:marshal', who: 'Anselm, the bellringer', lines: [
@@ -258,10 +258,10 @@ STORY_BEATS.npc.anselm = { at: 'champPost:marshal', who: 'Anselm, the bellringer
   "Not the last toll. That one's for later."
 ] };
 STORY_BEATS.npc.pip = { at: 'champPost:marshal', not: 'pip', who: 'Pip, checking the graves', lines: [
-  'A scorched girl sets a grave on fire, a book under her arm.',
+  'A girl in a scorched coat is setting a grave alight.',
   '"Pip. The book says the dead stay down. I like to check."',
   '"Nobody got up. Good. That\'s a relief, honestly."',
-  '"Out of graves. Can I come to your camp? I bring matches."'
+  '"All checked. Can I come to your camp? I\'ll bring matches."'
 ] };
 // Beetle Barrows
 STORY_BEATS.npc.maren = { at: 'champPost:engine', who: 'Maren, keeper of the Barrow Lamp', lines: [
