@@ -1,0 +1,33 @@
+# seed: 1
+# Proof for card guide-voice: Old Hesketh teaches one thing a fight, each tip only in its own phase. Fight 1 teaches Attack
+# (the ability follows), a later fight Dodge, then Parry. The phase, one-paused-step, one-thing-a-fight, quiet-minute and
+# retire rules are held by tools/check.mjs ("guide-voice"); `node tools/eyes.mjs --only tipphase` finds no tip in the wrong phase.
+# Shots: tip1-attack, tip2-ability, tip3-dodge at 360x740 and 740x360 (this folder).
+new fresh
+tap-if "Skip this"
+tap "Begin as Wren"
+tap-if "Skip"
+tap-if "Continue"
+wait 4
+tap-if "Skip"
+wait 4
+expect "Something's in the road"
+shot tip1-attack
+tap "Attack"
+wait 6
+expect "Echo Shot is ready"
+shot tip2-ability
+tap "Echo"
+wait 6
+tap-if "Attack"
+wait 6
+tap-if "Attack"
+wait 6
+tap-if "Attack"
+wait 6
+tap-if "Attack"
+wait 6
+tap-if "Attack"
+wait 6
+expect "Press Dodge"
+shot tip3-dodge

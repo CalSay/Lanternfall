@@ -1377,9 +1377,10 @@ if (section('onboarding')) try {
   E('ONBOARD.gate = true');
   const shown = () => E('topGoals(60, { sticky: false }).map(x => x.sys)');
   assert(!shown().some(s => ['bounty', 'bestiary', 'skill', 'forge', 'camp', 'roster'].includes(s)), 'Next Up hides goals of hidden systems: ' + shown().join(','));
+  for (let i = 0; i < 40; i++) g.fn.tick(0.1);   // (guide-voice: the Attack tip waits for a foe on the field)
   assert(E('onboardStep().id') === 'attack', 'the guide starts with "Attack" (solo)');
-  for (let i = 0; i < 5; i++) g.fn.tick(0.1);
   E('soloAttack()');
+  for (let i = 0; i < 300 && !(E('onboardStep()') && E('onboardStep().id') === 'ability'); i++) g.fn.tick(0.1);   // guide-voice: the ability tip waits for your turn
   assert(E('onboardStep().id') === 'ability', 'one Attack -> "your ability"');
   E('soloAbility()');
   // play like a new player: fight, buy the cheapest upgrade, gather now and then, craft what Next Up offers
@@ -1455,7 +1456,7 @@ if (section('first-use lines (ap-first-use-hints)')) try {
   let steps = 0; g.fn.on('onboardStep', () => steps++);
   E('onboardUseDone("use:bounties")');
   assert(use('adv', 'bounties') === null && steps === 0, 'read once: it does not show again, and no guide-step event fires');
-  assert(E('onboardStep().id') === 'attack' && E('!GUIDE_STEPS.some(s => /^use:/.test(s.id))'), 'the guide steps are unchanged: a line is never one of them');
+  assert(E('GUIDE_STEPS[0].id') === 'attack' && E('!GUIDE_STEPS.some(s => /^use:/.test(s.id))'), 'the guide steps are unchanged: a line is never one of them');
   E('onboardTips(false)');
   assert(use('gather', 'mine') === null, 'Skip tips silences the lines');
   E('onboardTips(true); S.onboard.got.party = Math.round(S.onboard.t) - 7300');
@@ -4355,11 +4356,14 @@ if (section('solo hero')) try {
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');   // SOLO2: a hand Attack and Echo Shot would clear the pack before the heavy steps
     assert(E('onboardStep().id') === 'attack', 'after choosing a hero: "Press Attack"');
     E('soloAttack()');
+    for (let i = 0; i < 300 && !(E('onboardStep()') && E('onboardStep().id') === 'ability'); i++) run(g, 0.1);   // guide-voice: it waits for your turn
     assert(E('onboardStep().id') === 'ability', 'then the ability');
     E('soloAbility()');
+    E('onboardStep(); GUIDE_RT.fight++; true');   // guide-voice: Dodge is taught in a later fight than the ability
     E(`actWarn({ kind: 'heavy', id: 't', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
     assert(E('onboardStep().id') === 'dodge' && E('soloDodge(true)') === 'dodge', 'a heavy hit: "Press Dodge" (the guide\'s first press always counts)');
     run(g, 2.5);
+    E('onboardStep(); GUIDE_RT.fight++; true');   // ...and Parry in a later one than Dodge
     E(`actWarn({ kind: 'heavy', id: 't2', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
     assert(E('onboardStep().id') === 'parry' && E('soloParry(true)') === 'parry', 'the next heavy hit: "Press Parry" and counter');
     errs.push(...g.errors);
@@ -4380,16 +4384,61 @@ if (section('solo hero')) try {
     E('turnCombatOn = globalThis.__tc0; turnCombatSnapshot = globalThis.__ts0; true');
     errs.push(...g.errors);
   }
+  // guide-voice: every step names the phases it may start in; one paused step a fight; one thing a fight; a quiet minute; retiring
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("wren"); soloSetAuto(false)'); run(g, 0.5);
+    const named = JSON.parse(E('JSON.stringify(GUIDE_STEPS.map(s => ({ id: s.id, ph: s.ph || null })))'));
+    const bad = named.filter(s => !Array.isArray(s.ph) || !s.ph.length || s.ph.some(p => !['hero', 'windup', 'foe', 'between'].includes(p)));
+    assert(!bad.length, `every guide step names the phases it may show in${bad.length ? ': ' + bad.map(b => b.id).join(', ') : ''}`);
+    const fightSteps = named.filter(s => s.ph.some(p => p !== 'between')).map(s => s.id).join();
+    assert(fightSteps === 'attack,ability,dodge,parry,boss', `only the combat steps start in a fight phase (${fightSteps})`);
+    // Attack: its phase is "hero" only
+    for (const [ph, want] of [['foe', false], ['windup', false], ['between', false], ['hero', true]]) {
+      E(`globalThis.__gp = guidePhase; guidePhase = () => ${JSON.stringify(ph)}; true`);
+      assert((E('(() => { const s = onboardStep(); return !!s && s.id === "attack"; })()')) === want, `the Attack tip ${want ? 'shows' : 'waits'} in the "${ph}" phase`);
+      E('guidePhase = globalThis.__gp; true');
+    }
+    // Dodge and Parry: only with a hit on its way, and each in a later fight than the step before
+    E('O().done.attack = 1; O().done.ability = 1; true');
+    E('GUIDE_RT.fight = 3; GUIDE_RT.doneIn.ability = 3; true');
+    E(`actWarn({ kind: 'heavy', id: 'v1', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
+    assert(E('onboardStep()') === null || E('onboardStep().id') !== 'dodge', 'the Dodge tip waits for a later fight than the ability tip');
+    E('GUIDE_RT.fight = 4; true');
+    assert(E('onboardStep() && onboardStep().id') === 'dodge', 'in the next fight the Dodge tip shows');
+    E('O().done.dodge = 1; GUIDE_RT.doneIn.dodge = 4; true');
+    assert(E('onboardStep() === null || onboardStep().id !== "parry"'), 'the Parry tip waits for a later fight than Dodge');
+    E('GUIDE_RT.fight = 5; true');
+    assert(E('onboardStep() && onboardStep().id') === 'parry', 'in the next fight the Parry tip shows');
+    // one paused step a fight
+    E('GUIDE_RT.pauseFight = -1; GUIDE_RT.pauseId = ""; true');
+    const p1 = E('onboardPaused({ id: "x1", pause: 1 })'), p2 = E('onboardPaused({ id: "x2", pause: 1 })'), p1b = E('onboardPaused({ id: "x1", pause: 1 })');
+    assert(p1 === true && p2 === false && p1b === true, `one paused step a fight: the first keeps its pause, a second tip does not pause (${p1}, ${p2}, ${p1b})`);
+    E('GUIDE_RT.fight = 6; true');
+    assert(E('onboardPaused({ id: "x2", pause: 1 })') === true, 'the next fight gives the pause back');
+    // between-fights steps wait for a break, a quiet minute, and retire after 60 s
+    E('O().done.parry = 1; O().got.party = 1; S.maxZone = 3; S.activity = "fight"; S.tab = ""; true');
+    assert(E('onboardStep() === null || onboardStep().id !== "tab:party"'), 'the Hero tab tip does not start mid-fight');
+    E('S.activity = "gather"; GUIDE_RT.lastEnd = GUIDE_RT.t; true');
+    assert(E('onboardStep() === null || onboardStep().id !== "tab:party"'), 'no new line within a minute of the last one');
+    E('GUIDE_RT.t += 61; true');
+    assert(E('onboardStep() && onboardStep().id') === 'tab:party', 'a minute on, the Hero tab tip shows');
+    assert(E('guideRetire("tab:party")') === true && E('O().done["tab:party"]') === 2 && E('onboardStep() === null || onboardStep().id !== "tab:party"'), 'a tip left alone retires (done 2) and stops showing');
+    errs.push(...g.errors);
+  }
   // W1-D (playtest-2 P0): a combat step never pauses a game that cannot give it what it waits for
   {
     const g = T(), E = s => g.eval(s);
     E('soloPick("wren"); soloSetAuto(false)'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');
     E('soloAttack()');
+    for (let i = 0; i < 300 && !(E('onboardStep()') && E('onboardStep().id') === 'ability'); i++) run(g, 0.1);   // guide-voice: it waits for your turn
+    E('GUIDE_RT.pauseFight = -1; true');
     assert(E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === true, 'W1-D: the ability step pauses while a foe is alive');
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = 1; })'); run(g, 0.8); E('soloAttack()'); run(g, 0.1);   // Wren's Attack clears the pack (the 44% lock)
-    assert(!E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === false, 'W1-D: ...and does not pause once the pack is dead, so the respawn can happen');
+    assert(!E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardPaused(GUIDE_STEPS.find(s => s.id === "ability"))') === false, 'W1-D: ...and does not pause once the pack is dead, so the respawn can happen');
     run(g, 3);   // (a zone monster's death plays 2.31 s first)
+    for (let i = 0; i < 300 && !(E('onboardStep()') && E('onboardStep().id') === 'ability'); i++) run(g, 0.1);
     assert(E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardPaused(onboardStep())') === true && E('soloAbility()') === true, 'W1-D: a foe respawns, the step pauses again and the ability casts (Echo Shot needs a target)');
   }
   {
@@ -4398,6 +4447,7 @@ if (section('solo hero')) try {
     E('soloPick("wren"); soloSetAuto(false)'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');
     E('soloAttack()'); E('soloAbility()');
+    E('onboardStep(); GUIDE_RT.fight++; true');   // guide-voice: Dodge is taught in a later fight
     E('soloDodge()');
     E(`actWarn({ kind: 'heavy', id: 't', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
     assert(E('onboardStep().id') === 'dodge' && E('soloButtons().dodge.left') > 0 && E('soloDodge(true)') === 'dodge', 'W1-D: the guide\'s Dodge counts even when an earlier press left the button on cooldown (the paused game could never clear it)');
@@ -4656,7 +4706,7 @@ if (section('solo hero (browser)')) try {
         await page.waitForTimeout(300);
         if (!(await X('ONBOARD.paused'))) await X('for (let k = 0; k < 10; k++) tick(0.1); true');
         // the Dodge and Parry steps wait for a heavy hit: start one on a pack foe
-        await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && actWarn({ kind: "heavy", id: "t", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true');
+        await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && (GUIDE_RT.fight++, actWarn({ kind: "heavy", id: "t", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} })); true');
         if (await X('S.tab && !["upgrade"].includes((onboardStep() || {}).id) ? (closeMenu(), true) : false')) await page.waitForTimeout(200);
       }
       await X('soloPickerOpen = __spo; true');
@@ -5596,8 +5646,8 @@ if (section('training (W2-A, browser)')) try {
         if (w === 360) {
           // the guide's upgrade step points at Train on Attack (Hero > Training)
           await X('for (const id of ["attack", "ability", "dodge", "parry", "boss"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.L = 3; S.gold = 50; true');
-          await page.waitForTimeout(1500);
-          const step = await X('(s => s ? s.id : "")(onboardStep())');
+          let step = '';
+          for (let i = 0; i < 40 && step !== 'upgrade'; i++) { await page.waitForTimeout(400); step = await X('(s => s ? s.id : "")(onboardStep())'); }   // guide-voice: the tip starts in a break between fights
           await X('setTab("training"); true'); await page.waitForTimeout(1200);
           const bub = await X('(b => b && !b.hidden ? b.textContent : "")(document.querySelector(".ob-bub"))');
           assert(step === 'upgrade' && /Train Attack/.test(bub), `${at}: the guide's upgrade step says "${bub.slice(0, 60)}" on Hero > Training`);
@@ -9392,8 +9442,8 @@ if (section('hero attributes (browser)')) try {
         if (w === 360) {
           // the guide's upgrade step points at Attributes, then at Might +1 (a point to spend, no gold needed)
           await X('for (const id of ["attack", "ability", "dodge", "parry", "boss"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.L = 3; S.gold = 0; true');
-          await page.waitForTimeout(1500);
-          const step = await X('(s => s ? s.id : "")(onboardStep())');
+          let step = '';
+          for (let i = 0; i < 40 && step !== 'upgrade'; i++) { await page.waitForTimeout(400); step = await X('(s => s ? s.id : "")(onboardStep())'); }   // guide-voice: the tip starts in a break between fights
           await X('setTab("attributes"); true'); await page.waitForTimeout(1200);
           const bub = await X('(b => b && !b.hidden ? b.textContent : "")(document.querySelector(".ob-bub"))');
           assert(step === 'upgrade' && /Might/.test(bub) && !/Train/.test(bub), `${at}: the guide's upgrade step says "${bub.slice(0, 70)}" on Hero > Attributes`);
@@ -9961,7 +10011,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             // the Dodge and Parry steps wait for a heavy hit: start one on a pack foe
             // (a wind-up whose foe fell in the meantime is let go first: it can never be answered)
             await X('(w => { if (w && w.foe && (w.foe.dead || !(w.foe.hp > 0))) { w.left = 0.01; tick(0.1); } })(actWarning()); true');
-            await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && actWarn({ kind: "heavy", id: "l" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true');
+            await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && (GUIDE_RT.fight++, actWarn({ kind: "heavy", id: "l" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} })); true');
             if (st === 'nextup') await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true');
           }
           const why = want.every(x => trail.includes(x)) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) + ' last passes ' + passes.slice(-8).join(' ; ') 
