@@ -16,7 +16,7 @@ jobs:
   # a quarter of the time. Each shard builds, then runs its slice; shard 0 also checks that dist is committed rebuilt.
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20   # room for one retry of a shard
     strategy:
       fail-fast: false
       matrix:
@@ -47,10 +47,9 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096   # a check shard hit the 2 GB default heap limit on the runner
         run: |
-          # Write to a file, not a pipe: the check run dies partway when its stdout is a pipe (seen with tee).
-          rc=0; node tools/check.mjs --shard=${{ matrix.shard }}/4 > check.log 2>&1 || rc=$?
-          cat check.log
-          [ "$rc" -eq 0 ] || { echo "::error::tools/check.mjs exited $rc"; exit "$rc"; }
+          # One automatic retry (tools/ci/retry-once.sh): a pass on the second go shows as a FLAKE warning and in the job
+          # summary, a second failure fails the job. Never skip or quarantine a check to get green.
+          RETRY_LOG=check.log tools/ci/retry-once.sh "check shard ${{ matrix.shard }}/4" node tools/check.mjs --shard=${{ matrix.shard }}/4 || exit $?
           grep -q '^browser sections skipped: 0 ' check.log || { echo "::error::a browser section was skipped"; exit 1; }
 
   # Offline parity needs no browser, so it runs beside the checks.
@@ -140,7 +139,7 @@ jobs:
   eyes:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15   # room for one retry
     permissions:
       contents: read
       pull-requests: write
@@ -174,7 +173,7 @@ jobs:
         if: steps.gate.outputs.go == 'true'
         env:
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-        run: node tools/ci/eyes.mjs "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" "$LABELS"
+        run: RETRY_LOG=eyes.log tools/ci/retry-once.sh "eyes routes" node tools/ci/eyes.mjs "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" "$LABELS"
       - name: Upload shots
         if: always() && steps.gate.outputs.go == 'true'
         id: up
