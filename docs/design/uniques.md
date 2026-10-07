@@ -35,6 +35,28 @@ These are all 13 entries of `UNIQ` in `src/js/20-data.js`. The current drop item
 | eaterfang | Might +30%, counters +100% | Keep untouched, online source excluded. Not certified balanced. |
 | tyrantaxe | 30% extra logs, all gathering +20% | Keep untouched, online source excluded. Not certified balanced. |
 
+### Current legacy numbers (unchanged)
+
+Current base power is `1.8 × TIER_POW[t] × (1 + 0.15plus)`: 18 / 39.6 / 75.6 / 135 / 234 at G1–G5 +0, equal to rare base and 180% of common. Legacy drops have no rolled affixes; the effect lines below are fixed while base lines scale with grade/upgrades. The table shows exact current G1+0 stats including effects, not proposed new-item stats. Head/weapon legacy kinds must not be compared as if their class-specific successor had the same base lines.
+
+| Existing ID | Kind | Source | Actual G1+0 lines, effect included | Existing base drop chance |
+|---|---|---|---|---|
+| sproutblade | weapon | Zone boss · Mossy Hollow | might 18; essExtra 0.1 | first 15%, repeat 4%, owned ×0.5; existing modifiers |
+| echocowl | helm | Zone boss · Batwing Caves | crit 2.16; critMult 0.09; armour 1.8; echo 0.5 | first 15%, repeat 4%, owned ×0.5; existing modifiers |
+| rattlecharm | charm | Zone boss · The Bonefield | gold 0.72; ess 5.4; abil 20 | first 15%, repeat 4%, owned ×0.5; existing modifiers |
+| carapacepick | pick | Zone boss · Beetle Barrows | mineSpd 10.8; oreDbl 1.8; oreFind 0.216; oreExtra 0.25 | first 15%, repeat 4%, owned ×0.5; existing modifiers |
+| sporeheart | charm | Zone boss · Fungal Deep | gold 0.72; ess 5.4; offline 50 | first 15%, repeat 4%, owned ×0.5; existing modifiers |
+| golemfist | weapon | Zone boss · Quarry Ruins | might 18; tap 2 | first 15%, repeat 4%, owned ×0.5; existing modifiers |
+| wispaxe | axe | Zone boss · Wraithmarsh | woodSpd 40.8; woodDbl 1.8; woodFind 0.216; woodExtra 0.2 | first 15%, repeat 4%, owned ×0.5; existing modifiers |
+| wyrmscale | helm | World raid · The Ashen Wyrm | crit 2.16; critMult 0.09; armour 1.8; raid 25 | share ≥25%: 100%; otherwise 35% + 2×share; no owned scaling |
+| hollowcrown | helm | World raid · The Hollow King | crit 2.16; critMult 0.09; armour 1.8; gold 10 | share ≥25%: 100%; otherwise 35% + 2×share; no owned scaling |
+| colossuspick | pick | World raid · The Mire Colossus | mineSpd 10.8; oreDbl 1.8; oreFind 0.216; gather 40 | share ≥25%: 100%; otherwise 35% + 2×share; no owned scaling |
+| hydraglass | charm | World raid · The Glass Hydra | gold 0.72; ess 5.4; crit 10 | share ≥25%: 100%; otherwise 35% + 2×share; no owned scaling |
+| eaterfang | weapon | World raid · The Lantern Eater | might 48; counter 100 | share ≥25%: 100%; otherwise 35% + 2×share; no owned scaling |
+| tyrantaxe | axe | World raid · The Pale Tyrant | woodSpd 10.8; woodDbl 1.8; woodFind 0.216; woodExtra 0.3; gather 20 | share ≥25%: 100%; otherwise 35% + 2×share; no owned scaling |
+
+World raid items are paid on generation rollover after contributing damage, not per road boss clear. Their grade is min(5, generation); the six bosses cycle by generation. The share formula is 1 at 25%+ contribution, otherwise min(1, 0.35 + 2share); ordinary owned scaling does not apply. This is a read-only audit of 52-raid.js, not an online change or a proposal to import that generous chance into road drops. Ordinary road grades come from zoneTier. No cooldown or resource cost is attached to the legacy effects. Their flat effects and broad gathering bonuses are not certified sidegrades by this draft.
+
 Legacy raid uniques are not omitted from the inventory audit, but do not get new icons or claimed solo budget results. Redesigning earned legacy items is a separate review question; this PR changes none of them.
 
 ## Proposed item list
