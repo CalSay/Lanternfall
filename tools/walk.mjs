@@ -262,6 +262,7 @@ async function followTip(o) {
   }
   return false;
 }
+let toolFault = false;
 const checks = new Map();
 function addCheck(check, what, detail) { const k = check + '|' + what; const c = checks.get(k); if (c) { c.n++; return; } checks.set(k, { check, what, detail, n: 1, t: Math.round(gt), shot: '' }); }
 
@@ -308,7 +309,7 @@ async function followNextUp(o) {
   if (!(await click('#nuChip', 300))) return false;
   await advance(300, 16);
   const rows = await page.evaluate(() => [...document.querySelectorAll('.nu-row.ready')].filter(r => r.getClientRects().length).map(r => (r.querySelector('.nu-lbl') || r).textContent.trim()));
-  const holdFight = st.gear.sess && !st.gear.sess.gaveUp;   // gathering for a gear goal: the boss row waits
+  const holdFight = st.gear.owns && st.gear.sess && !st.gear.sess.gaveUp;   // gathering for a gear goal: the boss row waits
   const label = rows.find(l => (st.calls[goalKey(l)] || 0) < 4 && !(holdFight && /^boss ready|boss is next|^the zone \d+ boss/i.test(l)));   // a goal the casual player cannot finish is a finding, not a loop
   const closeList = () => click('.bsheet-ov .bsheet-x', 200);
   if (label === undefined) { await closeList(); return false; }
@@ -573,7 +574,8 @@ async function run() {
     }
   
   } catch (e) {   // the browser or page went away (a crash, the container's memory): report the run so far instead of a stack trace
-    if (!/closed|crash|disconnected|Target page/i.test(String(e && e.message))) throw e;
+    if (!(page.isClosed() || /has been closed|Target crashed|Target page, context or browser|Browser closed|disconnected/i.test(String(e && e.message)))) throw e;
+    toolFault = true;
     stop = `the browser closed at game minute ${(gt / 60).toFixed(1)} (${String(e.message).split('\n')[0].slice(0, 80)}); this is a tool fault, not a game error`;
   }
   if (!stop && gt < END) stop = 'ended early';
@@ -745,4 +747,4 @@ if (opt('reports', '')) {
 console.log(rep.md.split('\n').slice(0, rep.md.split('\n').indexOf('## Beats against the map')).join('\n'));
 console.log(`walk: wrote ${path.relative(ROOT, base)}.md`);
 const missed = Object.entries(rep.sc).filter(([, v]) => !v.pass && !v.unmeasured).map(([k]) => k);
-process.exit(flag('strict') && missed.length ? 1 : 0);
+process.exit(toolFault ? 3 : flag('strict') && missed.length ? 1 : 0);   // a browser that closed mid-run is a tool fault: the report is written, the exit is not 0
