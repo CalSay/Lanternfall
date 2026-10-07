@@ -3,7 +3,7 @@
 Draft for Claude and the economy/balance judge. **Do not merge. No items or effects are wired.**
 Checkpoint: integration branch `claude/elegant-johnson-m6k00u`, `601a37a8`, 7 October 2026.
 
-**The list is not stable for art.** This draft contains 21 proposals. Four have no legal starter fixture, one has a new measured below-band regression, and the remaining results inherit substantial above-band baseline gaps. Every good-persona result is above the requested 85–95% first-clear aim. None is claimed approved or ready to ship. Do not start PR 2 from this version. Changing the boss curve to make these pass is outside this docs-only task.
+**The list is not stable for art.** This draft contains 21 proposals. Four have no legal starter fixture, and the remaining results inherit substantial above-band baseline gaps. Every good-persona result is above the requested 85–95% first-clear aim. None is claimed approved or ready to ship. Do not start PR 2 from this version. Changing the boss curve to make these pass is outside this docs-only task.
 
 ## Card test
 
@@ -56,7 +56,7 @@ Zones use today's actual road area and region; boss type still cycles every seve
 | spore-circlet / Spore Circlet | circlet / helm | Mage / lanternmage | 5 / Mossy Hollow / the Hollow | Spore Cap | G1 |
 | bone-mitre / Bone Mitre | mitre / helm | Mage / lightkeeper (held) | 17 / Beetle Barrows / the Hollow | Rattlebones | G3 |
 | quarry-plate / Quarry Plate | plate / body | Warrior / warden | 13 / The Bonefield / the Hollow | Quarry Golem | G3 |
-| marsh-leathers / Marsh Leathers | leathers / body | Ranger | 21 / Fungal Deep / the Hollow | Marsh Wraith | G4 |
+| marsh-leathers / Marsh Leathers | leathers / body | Ranger | 7 / Batwing Caves / the Hollow | Marsh Wraith | G2 |
 | spore-robe / Spore Robe | robe / body | Mage / lanternmage | 12 / The Bonefield / the Hollow | Spore Cap | G2 |
 | bone-vestments / Bone Vestments | vestments / body | Mage / lightkeeper (held) | 24 / Fungal Deep / the Hollow | Rattlebones | G4 |
 | rattlebone-charm / Rattlebone Charm | charm / charm | All hero classes | 3 / Mossy Hollow / the Hollow | Rattlebones | G1 |
@@ -102,7 +102,7 @@ The comparison below is at +0 with no affixes. Weapon Might is a percentage inpu
 | Spore Circlet | hp 5 | hp 9 | hp 4 | T: +8% / −6% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
 | Bone Mitre | hp 21 | hp 37.8 | hp 16.8 | T: +12% / −10% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
 | Quarry Plate | hp 42 | hp 75.6 | hp 33.6 | P: +20% / −16% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Marsh Leathers | hp 75 | hp 135 | hp 60 | D: +20% / −16% | Might (Attack); Focus (ability cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Marsh Leathers | hp 22 | hp 39.6 | hp 17.6 | D: +20% / −16% | Might (Attack); Focus (ability cost) | 15% / 4% pool; ×0.5 selected-owned |
 | Spore Robe | hp 22 | hp 39.6 | hp 17.6 | T: +16% / −12% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
 | Bone Vestments | hp 75 | hp 135 | hp 60 | T: +16% / −12% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
 | Rattlebone Charm | gold 0.4; ess 3 | gold 0.72; ess 5.4 | gold 0.32; ess 2.4 | P: +8% / −6% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
@@ -204,9 +204,9 @@ The table shows baseline and unique win rates with exact bands from the checked-
 | Quarry Plate | 13 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 95.0%–100.0% | casual above |
 | Quarry Plate | 14 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 95.0%–100.0% | casual above |
 | Quarry Plate | 15 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 95.0%–100.0% | casual above |
-| Marsh Leathers | 21 / wren | 55.4% / 99.6% | 32.5% / 98.3% | 60.0%–80.0% / 95.0%–100.0% | casual below |
-| Marsh Leathers | 22 / wren | 56.3% / 100.0% | 32.9% / 99.6% | 60.0%–80.0% / 95.0%–100.0% | casual below |
-| Marsh Leathers | 23 / wren | 63.8% / 99.6% | 37.9% / 99.2% | 60.0%–80.0% / 95.0%–100.0% | casual below |
+| Marsh Leathers | 7 / wren | 75.4% / 100.0% | 71.7% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Marsh Leathers | 8 / wren | 87.5% / 100.0% | 86.7% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Marsh Leathers | 9 / wren | 72.5% / 100.0% | 70.4% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
 | Spore Robe | 12 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
 | Spore Robe | 13 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
 | Spore Robe | 14 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
@@ -259,7 +259,7 @@ The table shows baseline and unique win rates with exact bands from the checked-
 | Moss Spear | 10 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 50.0%–70.0% / 90.0%–100.0% | casual above |
 | Moss Spear | 10 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 40.0%–60.0% / 90.0%–100.0% | casual above |
 
-Items with at least one measured cell outside its JSON band: **Bat Bow, Wisp Staff, Bat Quiver, Wisp Lantern, Beetle Helm, Echo Cowl, Spore Circlet, Quarry Plate, Marsh Leathers, Spore Robe, Rattlebone Charm, Carapace Pick, Wisp Axe, Spore Sickle, Moss Spear**. The below-band Marsh Leathers rows are a new regression from removing the rare+5 body's HP and affix at the drop grade. **Reject that version**; fallback is a smaller stat sacrifice with its effect reduced in proportion, followed by fresh full validation. Do not add health immunity or patch the boss floor to rescue it.
+Items with at least one measured cell outside its JSON band: **Bat Bow, Wisp Staff, Bat Quiver, Wisp Lantern, Beetle Helm, Echo Cowl, Spore Circlet, Quarry Plate, Spore Robe, Rattlebone Charm, Carapace Pick, Wisp Axe, Spore Sickle, Moss Spear**. These are above-band cells, with their baseline comparisons printed alongside. Marsh Leathers is an early G2 drop, compared with the player's common +0 body; its three measured casual cells are within their bands. No extra health, immunity or boss floor change was used. A fixed-grade +0 unique must not replace a later rare+5 body as a supposed direct upgrade; the crafted piece is deliberately stronger in that situation.
 
 Good-persona rates across the remaining proposals still sit around 100%, often matching their paired baseline. No evidence supports the user's 85–95% first-clear aim on these fixtures. The current JSON permits 97–100% on early bosses and 95–100% on Captains: that is a real conflict with the new target, recorded here instead of silently changing the bands. Bare-hero floor loosening is requested but is not incorporated by this design experiment. A rare drop cannot serve as an excuse to restore that floor. The fallback is hold the effects and art until the integration balance checkpoint and judge have settled the target.
 
@@ -284,7 +284,7 @@ Every row: no new currency, expiring reward, mandatory login, fee, camp tap, men
 | Spore Circlet | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Hold: dominance / target not certified |
 | Bone Mitre | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Held: legal fixture needed |
 | Quarry Plate | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Marsh Leathers | Not intended: mixed defences earn nothing, and abilities lose damage; crafted gear wins for ability-heavy play. | No | No; no expiring benefit | Reject current numbers |
+| Marsh Leathers | Not intended: mixed defences earn nothing, and abilities lose damage; crafted gear wins for ability-heavy play. | No | No; no expiring benefit | Hold: dominance / target not certified |
 | Spore Robe | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Hold: dominance / target not certified |
 | Bone Vestments | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Held: legal fixture needed |
 | Rattlebone Charm | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
@@ -297,7 +297,7 @@ Raw-stat and action tradeoffs are the reason a specialist preference is acceptab
 
 ## First hour
 
-At the first-hour zone-10 target a player can encounter Moss Sword, Bat Bow, Bone Censer (eligible class only), Quarry Shield, Bat Quiver, Bone Tome (held), Beetle Helm, Echo Cowl, Spore Circlet, Rattlebone Charm, Carapace Pick, Wisp Axe, Spore Sickle and Moss Spear, plus Wisp Staff. Availability does not promise a drop. The Uniques view and item reveal use the existing unlock/moment flow; no second tutorial or crafting dependency is added. No unique is required to beat a Captain or obtain a material. The first-hour “first unique by chance at 25–40 minutes” remains a target, not a guaranteed result. Preserve the existing early reveal rate unless the judge changes it. **The balance and dominant-choice holds mean this draft cannot yet confirm the first-hour contract.**
+At the first-hour zone-10 target a player can encounter Moss Sword, Bat Bow, Bone Censer (eligible class only), Quarry Shield, Bat Quiver, Bone Tome (held), Beetle Helm, Echo Cowl, Spore Circlet, Rattlebone Charm, Carapace Pick, Wisp Axe, Spore Sickle and Moss Spear, plus Wisp Staff and Marsh Leathers. Availability does not promise a drop. The Uniques view and item reveal use the existing unlock/moment flow; no second tutorial or crafting dependency is added. No unique is required to beat a Captain or obtain a material. The first-hour “first unique by chance at 25–40 minutes” remains a target, not a guaranteed result. Preserve the existing early reveal rate unless the judge changes it. **The balance and dominant-choice holds mean this draft cannot yet confirm the first-hour contract.**
 
 ## Money check
 
@@ -324,7 +324,7 @@ Each silhouette must retain the actual runtime grade's approved main/secondary m
 | spore-circlet-32.png | circlet-g1-32.png | A grade-matched circlet with a small red mushroom boss. |
 | bone-mitre-32.png | mitre-g3-32.png | A grade-matched mitre with an ivory rib-shaped front seam. |
 | quarry-plate-32.png | plate-g3-32.png | grade-matched plates with a single cracked jasper shoulder. |
-| marsh-leathers-32.png | leathers-g4-32.png | grade-matched armour with a pale reed collar. |
+| marsh-leathers-32.png | leathers-g2-32.png | Grade-matched hide armour with a pale reed collar. |
 | spore-robe-32.png | robe-g2-32.png | A grade-matched robe with one red spore-cap shoulder. |
 | bone-vestments-32.png | vestments-g4-32.png | grade-matched vestments with one ivory rib clasp. |
 | rattlebone-charm-32.png | charm-g1-32.png | An ivory jaw suspended below a dim essence bead. |
@@ -338,7 +338,7 @@ PR 2 contains only `art/uniques/`: README, manifest, source PNGs, prompts, six e
 ## Where I'm not sure
 
 1. **85–95% good first clears versus JSON allowing 97–100% early / 95–100% Captains.** Both are visible; no unilateral band relaxation. Fallback: wait for the integration/judge checkpoint and rerun.
-2. **Raw 0.8× common may be too severe.** It is deliberately weaker even than a common craft; Marsh Leathers fails. Fallback: reduce the sacrifice and payoff together; never use a flat immunity/floor bonus.
+2. **Raw 0.8× common may be too severe.** It is deliberately weaker even than a common craft; a fixed-grade drop becomes a poor replacement for later crafted gear. Fallback: reduce the sacrifice and payoff together; never use a flat immunity/floor bonus.
 3. **Timing reward numbers 8–20%, costs 6–16%.** Proposed, not derived from a proven economy. The measured outcomes do not establish fun or dominance. Fallback: zero effect / no release until persona and combination sweeps agree.
 4. **Four lightkeeper fittings.** No legal starter proxy. Fallback: omit from stable art list until a real eligible hero fixture is supplied; do not broaden fittings.
 5. **Stacking several named items.** Not measured; each item is tested alone, with liabilities not stacked within itself. Fallback: hold rather than introduce an unreviewed equip restriction or claim combinations are safe.
@@ -397,4 +397,4 @@ Checkpoint recipe: `['z'+z+'-boss', z, 'boss', {st:'kept', gear:z<=12?'common':u
 
 ## Checks and handoff
 
-Budget experiment: executed, results above; **balance not passed**. Art: not generated; gate pending. Required build/check results are recorded in the draft PR description after the actual commands finish. No source, online file, save key, hosting config or canonical art changed. This document is the only intended tracked change. Claude reviews the numbers, the Opus judge rules on economy/balance, and a later stable pack goes to the art judge. Neither PR may be merged by Codex.
+Budget experiment: executed, results above; **balance not passed**. Art: not generated; gate pending. Build passed (7658.8 KB). The default check run passed with 40 browser sections skipped. With bundled Playwright and Chrome, the full run executed all browser sections and failed one existing first-ten-minutes moment check: 10 big/medium moments against a limit of 8. Runtime, tools and tests have zero diff from integration checkpoint 601a37a8. This failure is not waived, and the PR remains a draft. No source, online file, save key, hosting config or canonical art changed. This document is the only intended tracked change. Claude reviews the numbers, the Opus judge rules on economy/balance, and a later stable pack goes to the art judge. Neither PR may be merged by Codex.
