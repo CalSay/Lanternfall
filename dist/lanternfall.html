@@ -13760,10 +13760,34 @@ var forgeGoalPicks = 0;
     const list = own.length ? own : row.any || [];
     return list.filter(k => !CRAFT_KINDS[k].legacy && fits(k, pos, "hero"));
   };
+  // Equip: a bag piece that beats what the hero wears in that position. It comes before the next
+  // craft, so a freshly made piece is worn instead of crafted again.
+  const equipNext = () => {
+    let best = null;
+    for (const pos of CRAFT_HERO_POS) {
+      const cur = equipped(pos), base = cur ? itemPower(cur) : 0;
+      for (const it of S.items) {
+        if (cur && cur.id === it.id) continue;
+        if (!fits(it, pos, 'hero') || !kindsFor(pos).includes(it.slot)) continue;
+        const gain = itemPower(it) - base;
+        if (gain > 0 && (!best || gain > best.gain)) best = { it, pos, gain };
+      }
+    }
+    return best;
+  };
+  registerGoal({
+    id: 'equip', sys: 'forge', prio: 1,
+    pct: () => equipNext() ? 1 : null,
+    label: () => { const b = equipNext(); return b ? `Equip your ${itemName(b.it)}` : ''; },
+    icon: () => { const b = equipNext(); return b ? { item: b.it } : null; },
+    go: () => { const b = equipNext(); if (b) equipItem(b.it.id, b.pos); }
+  });
   const forgeNext = () => {
     let best = null;
     const zt = zoneTier(S.maxZone);
+    const eq = equipNext();
     for (const pos of CRAFT_HERO_POS) {
+      if (eq && eq.pos === pos) continue;   // a better piece waits in the bag: equip it, don't craft again
       const cur = equipped(pos);
       for (const kind of kindsFor(pos)) {
         const have = cur && (cur.slot === kind || cur.u) ? cur.t : 0;
