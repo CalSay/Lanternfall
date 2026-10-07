@@ -48,9 +48,9 @@ if (srcChanged && !routes.length && !labels.includes('no-visible-change')) {
 const VIEWS = [['portrait', []], ['landscape', ['--landscape']]];
 // Every (route, view) run is its own browser, so they run side by side (up to 4 at once); the report keeps route order.
 const run = (cmd, args, opts) => new Promise(res => {
-  const c = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'pipe'] }); let out = '', err = '', done = false;
-  const fin = status => { if (!done) { done = true; clearTimeout(t); res({ status, stdout: out, stderr: err }); } };
-  const t = setTimeout(() => { c.kill('SIGKILL'); fin(null); }, opts.timeout);
+  const c = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'pipe'] }); let out = '', err = '', done = false, timedOut = false;
+  const fin = status => { if (!done) { done = true; clearTimeout(t); res({ status, stdout: out, stderr: err, timedOut }); } };
+  const t = setTimeout(() => { timedOut = true; c.kill('SIGKILL'); fin(null); }, opts.timeout);
   c.stdout.on('data', d => (out += d)); c.stderr.on('data', d => (err += d));
   c.on('close', code => fin(code)); c.on('error', () => fin(1));
   c.stdin.on('error', () => {}); c.stdin.end(opts.input || '');
@@ -80,8 +80,8 @@ for (const { card, seed, views } of jobs) {
     lines.push(`| ${view} | shots | ${shots.length} (${shots.slice(0, 8).map(s => s.replace('.png', '')).join(', ')}${shots.length > 8 ? ', ...' : ''}) |`);
     if (res.status !== 0 && !ex.some(e => !e.ok)) {
       const tail = (res.stdout + res.stderr).trim().split('\n').slice(-2).join(' ');
-      if (res.status === null) fail('timeout-under-load', `${card} ${view}`, 'the route run hit its time limit and was killed');
-      else if (/could not|no button|not found|not visible/i.test(tail)) fail('expect-false', `${card} ${view}`, tail);   // a tap that could not be made
+      if (res.timedOut) fail('timeout-under-load', `${card} ${view}`, 'the route run hit its time limit and was killed');
+      else if (/no button labelled/.test(res.stdout + res.stderr)) fail('expect-false', `${card} ${view}`, tail);   // a tap that could not be made
       else fail('run-error', `${card} ${view}`, `exit ${res.status}: ${tail}`);
       lines.push(`| ${view} | run | **FAIL** exit ${res.status}: ${((res.stdout + res.stderr).trim().split('\n').slice(-2).join(' ') || '').slice(0, 160).replace(/\|/g, '/')} |`); }
   }
