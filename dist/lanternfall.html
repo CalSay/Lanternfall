@@ -962,6 +962,17 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .hd-full .note { flex: 1 1 200px; margin: 0; }
 .hd-more { margin-top: 6px; }
 .hd-extra[hidden] { display: none; }
+
+/* first-gold-and-camp-strip: the card a building tap opens under the camp scene */
+.camp-bld-card { display: grid; gap: 4px; padding: 10px 12px; }
+.camp-bld-card .cbc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.camp-bld-card .cbc-t { font: 600 calc(16px * var(--display-k))/1.2 var(--display); overflow-wrap: anywhere; }
+.camp-bld-card p { margin: 0; overflow-wrap: anywhere; }
+.camp-bld-card .cbc-f { font-size: 14px; color: var(--bone); }
+.camp-bld-card .cbc-c { font-size: 13.5px; font-variant-numeric: tabular-nums; color: var(--gold); }
+.camp-bld-card .mini { min-height: 44px; justify-self: start; }
+.camp-bld-card .cbc-x { justify-self: end; }
+.camp-bld:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* 60-classes: Classes 2.0 S2 (76-create.js): the picker's weight line, the free-change button and the
    class card rows on the hero sheet (evolution, second path, what changed). No motion. */
 .ccard .cl-wt { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
@@ -14372,13 +14383,24 @@ const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen
 // so no step can freeze the clock it needs. tools/check.mjs holds all three rules.
 //   attack, ability, dodge, parry, gather, light, upgrade   pause (press this now)
 //   boss                                                     pause (Got it)
-//   chop, stock:bench, stock:tool, stock:forge, stock:store  no pause (needs materials: live progress)
-//   bench, tool, forge, store                                pause only once the materials are in hand (pauseUnless)
+//   chop, stock:bench, stock:tool, stock:forge, stock:weapon, stock:store  no pause (needs materials: live progress)
+//   bench, tool, forge, weapon, store                        pause only once the materials are in hand (pauseUnless)
 //   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them)
 const stockOf = (fam, t, n) => [fam, t, n];
 const matsOfBuild = id => (typeof hearthFirst === 'function' && hearthFirst(id) ? hearthFirst(id).mats : []);
 const toolMats = () => { try { const c = canCraft('pick', 1); return Object.entries((c.cost && c.cost.mats) || {}).map(([f, n]) => stockOf(f, 1, n)); } catch (e) { return []; } };
 const fireMats = () => (typeof HEARTH_TUNE === 'object' ? HEARTH_TUNE.light : []);
+// first-gold-and-camp-strip: the hero's class weapon at the Forge (the same pick as the Next Up craft goal), its tier 1 materials, and whether the hero has made or found one.
+const weaponKind = () => {
+  try {
+    const who = heroWho(), row = CRAFT_FITS.weapon || {}, own = who !== 'any' ? row[who] || [] : [];
+    return (own.length ? own : row.any || []).find(k => !CRAFT_KINDS[k].legacy && fits(k, 'weapon', 'hero')) || null;
+  } catch (e) { return null; }
+};
+const weaponMats = () => { const k = weaponKind(); try { return k ? Object.entries(craftRecipe(k, 1)).filter(([f]) => f !== 'gold').map(([f, n]) => stockOf(f, 1, n)) : []; } catch (e) { return []; } };
+const weaponStation = () => { const k = weaponKind(); return k ? CRAFT_KINDS[k].st : null; };
+const weaponNow = () => coldH() && stepDone('forge') && !!weaponKind() && !weaponMade() && campLv(weaponStation()) >= 1 && !stepDone('store');
+const weaponMade = () => { try { return !!equipped('weapon') || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos === 'weapon'); } catch (e) { return false; } };
 // W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
 // never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
 // extra condition for the pause. Attack and the ability need a live foe; Dodge and Parry need a wind-up still on its
@@ -14420,6 +14442,10 @@ const GUIDE_STEPS = [
   { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  // first-gold-and-camp-strip: with the weapon's own station built (the Forge, or the Workbench for a bow or staff; it comes after the Forge step) the next job is the first weapon:
+  // gather what it needs; then Craft opens on it. Over once the Storehouse step is done (a finished cold save never sees it).
+  { id: 'stock:weapon', ph: ['between'], needs: weaponMats, when: () => weaponNow() && !!needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || stepDone('store') },
+  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft'), done: () => !coldH() || weaponMade() || stepDone('store') },
   { id: 'stock:store', ph: ['between'], needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
@@ -14547,7 +14573,7 @@ function craftReady() {
   onboardUseDone = id => { O().done[id] = 1; };
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
-  const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', codex: 'codex', deep: 'deep' };
+  const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', 'camp-look': 'camp', codex: 'codex', deep: 'deep' };
   onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----
@@ -17411,6 +17437,13 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     label: () => { const x = bb(); return x ? `${nm(x.id, x.c.to)}: ${x.ok ? 'ready to build' : 'gathering the cost'}` : ''; },
     pct: () => { const x = bb(); return x ? Math.min(1, x.ok ? 1 : 0.95 * x.p) : 0; },
     go: () => { const x = bb(); return goB(x ? x.id : 'hearth'); }
+  });
+  // first-gold-and-camp-strip: the camp tutorial goal. Tap any building in the panorama (75-camp-ui) and it ticks off for good.
+  registerGoal({
+    id: 'camp-tap', sys: 'camp-look', prio: -1, icon: icFor,
+    label: () => 'Tap a building in your camp',
+    pct: () => campOpen() && S.onboard && S.onboard.tips && S.onboard.done && !S.onboard.done['use:camp-tap'] && CAMP_IDS.some(id => id !== 'hearth' && id !== 'tent' && lv(id) > 0) ? 0.4 : 0,
+    go: { tab: 'world', view: 'camp', sel: '#camp-scene-scroll' }
   });
   // menu audit: an empty Blessing slot is free power (a Lv 40 save had none picked)
   registerGoal({
@@ -31724,7 +31757,7 @@ let campSceneLayout, campPaintScene;
       rect(g, x - 3, y - 33, 6, 11, '#E4CC89');
     }
     g.font = '10px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#E8DDC5';
-    const label = { tavern: 'Tavern', watch: 'Watchtower', bench: 'Woodpile', forge: 'Forge', store: 'Storehouse',
+    const label = { tavern: 'Tavern', watch: 'Watchtower', bench: 'Workbench', forge: 'Forge', store: 'Storehouse',
       loom: 'Loom', ench: 'Enchanter', library: 'Library', shrine: 'Shrine' }[b.id];
     g.fillText(label, x, y + 15);
   }
@@ -36454,7 +36487,70 @@ on('cacheOpen', v => {
 
   // ---------------- the camp part ----------------
   let lightBtn, head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '', sceneBox;
-  let scenePort, sceneCanvas, sceneButtons, sceneCtx, sceneSig = '', sceneCentered = false, crewStrip, crewCounts;
+  let scenePort, sceneCanvas, sceneButtons, sceneBlds, sceneCtx, sceneSig = '', sceneCentered = false, crewStrip, crewCounts;
+  // first-gold-and-camp-strip: the buildings in the panorama are buttons. A tap opens a small card under the scene: what the
+  // building does, one tip, what you hold toward the first thing it makes (live), and a button to its screen. The first tap
+  // also ticks the "Tap a building" Next Up goal (S.onboard.done['use:camp-tap'], the same map as the first-use lines).
+  const BLD = {
+    forge: { fn: 'Makes weapons and armour.', tip: 'Higher Forge levels open better tiers.', go: { tab: 'forge', view: 'make', sel: '#sec-craft-recipes' }, goT: 'Open Craft' },
+    bench: { fn: 'Makes tools and wooden gear.', tip: 'Tools make gathering faster.', go: { tab: 'forge', view: 'make', sel: '#sec-craft-recipes' }, goT: 'Open Craft' },
+    loom: { fn: 'Weaves cloth gear and robes.', tip: 'Cloth comes from fibre and hide.', go: { tab: 'forge', view: 'make', sel: '#sec-craft-recipes' }, goT: 'Open Craft' },
+    ench: { fn: 'Adds and rerolls lines on your gear.', tip: 'Bring Essence and crystal.', go: { tab: 'forge', view: 'make', sel: '#sec-craft-recipes' }, goT: 'Open Craft' },
+    tavern: { fn: 'Where you hire gatherers.', tip: 'They work shifts while you are away.', go: { tab: 'world', view: 'tav', sel: '#sec-hands' }, goT: 'Open the Tavern', gate: () => typeof handsOpen === 'function' && handsOpen() },
+    watch: { fn: 'Raises how long you can be away.', tip: 'Level 2 also names the zone you could hold.' },
+    store: { fn: 'Holds the packs your gatherers fill.', tip: 'Build it up when packs are full.' },
+    library: { fn: 'Gives the camp a lasting bonus.', tip: 'Each level adds more.' },
+    shrine: { fn: 'Holds your Blessings.', tip: 'Pick a free Blessing here.', go: { tab: 'world', view: 'camp', sel: '#sec-camp-bless' }, goT: 'Open Blessings' }
+  };
+  let bldBox, bldId = '';
+  const bldName = id => CAMP_B[id] ? CAMP_B[id].n : id;
+  // What the player holds toward the first thing a station makes, as "Pine Log 4/6, Hide 0/2", or "Ready to make: Bow".
+  function bldCount(id) {
+    if (!CAMP_B[id] || !CAMP_B[id].skill || id === 'hearth') return id === 'tavern' && typeof handsList === 'function' ? `Gatherers: ${handsList().length}` : '';
+    let best = null;
+    for (const k of Object.keys(CRAFT_KINDS)) {
+      const d = CRAFT_KINDS[k]; if (d.st !== id || d.legacy || !craftKindVisible(k)) continue;
+      if (!d.tool && typeof fits === 'function' && d.pos && !fits(k, d.pos, 'hero')) continue;   // the hero's own kinds first
+      const rec = Object.entries(craftRecipe(k, 1)).filter(([f]) => f !== 'gold');
+      const short = rec.filter(([f, n]) => matOwn(f, 1) < n);
+      const miss = short.reduce((a, [f, n]) => a + (n - matOwn(f, 1)) / n, 0);
+      if (!best || miss < best.miss) best = { k, rec, short, miss };
+    }
+    if (!best) return '';
+    const nm = CRAFT_KINDS[best.k].noun;
+    if (!best.short.length) return `Ready to make: ${nm}`;
+    return `First ${nm}: ` + best.short.map(([f, n]) => `${costName(f, 1)} ${fmt(Math.min(matOwn(f, 1), n))}/${fmt(n)}`).join(', ');
+  }
+  function bldUpdate() {
+    if (!bldBox) return;
+    const open = !!bldId && campLevel(bldId) > 0;
+    putHidden(bldBox, !open); if (!open) return;
+    const d = BLD[bldId] || {}, lv = campLevel(bldId);
+    setTxt(bldBox._t, `${bldName(bldId)} · Lv ${lv}`);
+    setTxt(bldBox._f, d.fn || '');
+    setTxt(bldBox._tip, d.tip || '');
+    const fx = campEffects(bldId, lv).slice(0, 2).join(' · ');
+    setTxt(bldBox._now, fx ? 'Now: ' + fx : '');
+    const c = bldCount(bldId);
+    setTxt(bldBox._c, c); putHidden(bldBox._c, !c);
+    putHidden(bldBox._go, !d.go || (d.gate && !d.gate())); if (d.go) setTxt(bldBox._go, d.goT || 'Open');
+  }
+  function bldShow(id) {
+    bldId = id; bldUpdate();
+    if (bldBox && !bldBox.hidden && bldBox.scrollIntoView) bldBox.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+    if (typeof onboardUseDone === 'function' && !(S.onboard && S.onboard.done && S.onboard.done['use:camp-tap'])) { onboardUseDone('use:camp-tap'); save(); }
+  }
+  function bldMount(host) {
+    bldBox = el('div', 'card camp-bld-card'); bldBox.id = 'camp-bld-card'; bldBox.hidden = true;
+    const top = el('div', 'cbc-top'); bldBox._t = el('b', 'cbc-t'); const x = btn('mini cbc-x', 'Close'); x.setAttribute('aria-label', 'Close this card');
+    x.addEventListener('click', () => { const was = bldId; bldId = ''; bldUpdate(); const b = was && sceneBlds.querySelector(`[data-bld-id="${was}"]`); if (b) b.focus(); });
+    top.append(bldBox._t, x);
+    bldBox._f = el('p', 'cbc-f'); bldBox._tip = el('p', 'note cbc-tip'); bldBox._now = el('p', 'note cbc-now'); bldBox._c = el('p', 'cbc-c'); bldBox._c.setAttribute('role', 'status');
+    bldBox._go = btn('mini cbc-go', 'Open');
+    bldBox._go.addEventListener('click', () => { const g = (BLD[bldId] || {}).go; if (g) emit('campGoto', g); });
+    bldBox.append(top, bldBox._f, bldBox._tip, bldBox._now, bldBox._c, bldBox._go);
+    host.append(bldBox);
+  }
   function drawCampScene() {
     if (!scenePort || typeof campSceneLayout !== 'function' || typeof campPaintScene !== 'function') return;
     const layout = campSceneLayout();
@@ -36463,11 +36559,28 @@ on('cacheOpen', v => {
       scenePort.scrollLeft = Math.max(0, layout.homeX - scenePort.clientWidth / 2);
       sceneCentered = true;
     }
-    const actors = layout.actors || [];
-    const sig = JSON.stringify(actors.map(a => [a.id, a.name, a.x, a.y, a.status && a.status.st]));
+    const actors = layout.actors || [], blds = layout.buildings || [];
+    const sig = JSON.stringify([blds.map(b => [b.id, b.x, b.lv]), actors.map(a => [a.id, a.name, a.x, a.y, a.status && a.status.st])]);
     if (sig !== sceneSig) {
-      const focusedId = sceneButtons.contains(document.activeElement) ? document.activeElement.dataset.handId : null;
-      sceneSig = sig; sceneButtons.textContent = '';
+      const focusedId = sceneButtons.contains(document.activeElement) ? document.activeElement.dataset.handId : (sceneBlds.contains(document.activeElement) ? document.activeElement.dataset.bldId : null);
+      sceneSig = sig; sceneButtons.textContent = ''; sceneBlds.textContent = '';
+      // buildings sit in their own layer under the gatherers, so a gatherer standing in front of one stays the closer target
+      for (const bd of blds) {
+        const b = btn('camp-bld', ''); b.dataset.bldId = bd.id;
+        b.style.cssText = `position:absolute;left:${bd.x - 32}px;top:52px;width:64px;height:90px;background:transparent;border:0;cursor:pointer;pointer-events:auto;touch-action:auto`;
+        b.setAttribute('aria-label', `${bldName(bd.id)}, level ${bd.lv}. Tap to see what it does.`);
+        b.title = bldName(bd.id);
+        let down = null, dragged = false;
+        b.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; dragged = false; });
+        b.addEventListener('pointermove', e => { if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 8) dragged = true; });
+        b.addEventListener('pointercancel', () => { down = null; dragged = true; });
+        b.addEventListener('click', e => {
+          down = null;
+          if (dragged) { dragged = false; e.preventDefault(); return; }
+          bldShow(bd.id);
+        });
+        sceneBlds.append(b);
+      }
       for (const actor of actors) {
         const b = btn('camp-person', ''); b.dataset.handId = actor.id;
         b.style.cssText = `position:absolute;left:${actor.x - 28}px;top:${actor.y - 84}px;width:56px;height:96px;background:transparent;border:0;cursor:pointer;pointer-events:auto;touch-action:auto`;
@@ -36491,7 +36604,7 @@ on('cacheOpen', v => {
         sceneButtons.append(b);
       }
       if (focusedId) {
-        const next = [...sceneButtons.children].find(b => b.dataset.handId === focusedId);
+        const next = [...sceneButtons.children, ...sceneBlds.children].find(b => b.dataset.handId === focusedId || b.dataset.bldId === focusedId);
         (next || scenePort).focus();
       }
     }
@@ -36516,9 +36629,11 @@ on('cacheOpen', v => {
       sceneCanvas = el('canvas'); sceneCanvas.id = 'camp-scene-world'; sceneCanvas.width = size.width; sceneCanvas.height = size.height;
       sceneCanvas.style.cssText = `position:absolute;left:0;top:0;width:${size.width}px;height:${size.height}px;image-rendering:pixelated;pointer-events:none`;
       sceneCtx = sceneCanvas.getContext('2d'); sceneCtx.imageSmoothingEnabled = false;
+      sceneBlds = el('div'); sceneBlds.id = 'camp-scene-blds';
+      sceneBlds.style.cssText = 'position:absolute;inset:0;pointer-events:none';
       sceneButtons = el('div'); sceneButtons.id = 'camp-scene-hands';
       sceneButtons.style.cssText = 'position:absolute;inset:0;pointer-events:none';
-      track.append(sceneCanvas, sceneButtons); scenePort.append(track);
+      track.append(sceneCanvas, sceneBlds, sceneButtons); scenePort.append(track);
       crewStrip = el('div'); crewStrip.id = 'camp-crew-status';
       crewStrip.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;padding:5px 8px;background:var(--well);border:1px solid var(--line)';
       crewCounts = el('span', 'note'); crewCounts.setAttribute('role', 'status');
@@ -36544,7 +36659,7 @@ on('cacheOpen', v => {
       buildersBox = el('div', 'camp-builders');
       // Menu audit 2026-10-01 (owner: "the camp screen is cluttered"): what you act on first (Hearth, builders, the crew
       // line), then Blessings and Buildings; the scene and the Trophy Wall, which have no buttons, go last (camp-bless mount)
-      sceneBox = el('div', 'camp-scene-box'); sceneBox.append(el('h2', 'sec-title', 'Your camp'), scenePort, talkHost);
+      sceneBox = el('div', 'camp-scene-box'); sceneBox.append(el('h2', 'sec-title', 'Your camp'), scenePort); bldMount(sceneBox); sceneBox.append(talkHost);
       sec.append(head, closed, hearthCard, buildersBox, crewStrip, sceneBox);
     },
     update() {
@@ -36567,7 +36682,7 @@ on('cacheOpen', v => {
         putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
       }
-      drawCampScene();
+      drawCampScene(); bldUpdate();
       if (!crewStrip.hidden) {
         const n = { ready: 0, out: 0, rest: 0, pack: 0 };
         for (const h of handsList()) {
@@ -41045,7 +41160,8 @@ let navUI = null;
   // W1-A: a step that waits for materials shows live progress and never pauses the game.
   // "Chop 20 Pine Log for the Workbench (12/20)". When the hero is not at the node that yields the
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
-  const VERB = { wood: 'Chop', ore: 'Mine' };
+  const VERB = { wood: 'Chop', ore: 'Mine', ess: 'Win fights for' };
+  let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
   const stockSpec = (id, what, tail) => {
     const need = onboardNeed(id); if (!need.length) return null;
     const x = need[0], verb = VERB[x.kind] || 'Gather';
@@ -41089,6 +41205,7 @@ let navUI = null;
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
     'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
+    'stock:weapon': () => stockSpec('stock:weapon', 'your first weapon'),
     light: () => {
       if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire. Light it.' } : null;
       const f = $('hearthFire');
@@ -41109,6 +41226,15 @@ let navUI = null;
       return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll want it." };
     },
     forge: () => campPath('forge', ['Open Camp. The Forge makes weapons.', 'Open Camp.', 'Build the Forge. Then you can make a weapon.']),
+    // first-gold-and-camp-strip: the materials are in hand; tick() has opened Craft on the weapon (once a visit), and this tip rings the button
+    weapon: () => {
+      const k = weaponKind(); if (!k) return null;
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'Your first weapon is ready to make. Open Craft.' };
+      if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
+      const st = q('.cf-st[data-st="' + CRAFT_KINDS[k].st + '"]');
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
+      return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon. Then put it on.' };
+    },
     store: () => campPath('store', ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.']),
     // Training: Hero tab, Training view, Train on Attack.
     // hero-progression-rework: with attributes on, the first point goes into Might.
@@ -41147,6 +41273,8 @@ let navUI = null;
     if (!step && S.tab) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
     const use = /^(use|say):/.test(step.id);
+    // first-gold-and-camp-strip: the first weapon is ready to make, so Craft opens on it once (only from the game screen, never out of another menu)
+    if (step.id === 'weapon' && !weaponOpened && !S.tab) { const k = weaponKind(); if (k) { weaponOpened = true; S.fSlot = k; S.fTier = 1; forgeGoalPicks++; setTab('forge'); } }
     let spec = null;
     const table = SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
     // a first-use line has no target: it docks over the open menu with no ring, and never pauses the game

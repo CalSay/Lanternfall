@@ -144,7 +144,70 @@
 
   // ---------------- the camp part ----------------
   let lightBtn, head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '', sceneBox;
-  let scenePort, sceneCanvas, sceneButtons, sceneCtx, sceneSig = '', sceneCentered = false, crewStrip, crewCounts;
+  let scenePort, sceneCanvas, sceneButtons, sceneBlds, sceneCtx, sceneSig = '', sceneCentered = false, crewStrip, crewCounts;
+  // first-gold-and-camp-strip: the buildings in the panorama are buttons. A tap opens a small card under the scene: what the
+  // building does, one tip, what you hold toward the first thing it makes (live), and a button to its screen. The first tap
+  // also ticks the "Tap a building" Next Up goal (S.onboard.done['use:camp-tap'], the same map as the first-use lines).
+  const BLD = {
+    forge: { fn: 'Makes weapons and armour.', tip: 'Higher Forge levels open better tiers.', go: { tab: 'forge', view: 'make', sel: '#sec-craft-recipes' }, goT: 'Open Craft' },
+    bench: { fn: 'Makes tools and wooden gear.', tip: 'Tools make gathering faster.', go: { tab: 'forge', view: 'make', sel: '#sec-craft-recipes' }, goT: 'Open Craft' },
+    loom: { fn: 'Weaves cloth gear and robes.', tip: 'Cloth comes from fibre and hide.', go: { tab: 'forge', view: 'make', sel: '#sec-craft-recipes' }, goT: 'Open Craft' },
+    ench: { fn: 'Adds and rerolls lines on your gear.', tip: 'Bring Essence and crystal.', go: { tab: 'forge', view: 'make', sel: '#sec-craft-recipes' }, goT: 'Open Craft' },
+    tavern: { fn: 'Where you hire gatherers.', tip: 'They work shifts while you are away.', go: { tab: 'world', view: 'tav', sel: '#sec-hands' }, goT: 'Open the Tavern', gate: () => typeof handsOpen === 'function' && handsOpen() },
+    watch: { fn: 'Raises how long you can be away.', tip: 'Level 2 also names the zone you could hold.' },
+    store: { fn: 'Holds the packs your gatherers fill.', tip: 'Build it up when packs are full.' },
+    library: { fn: 'Gives the camp a lasting bonus.', tip: 'Each level adds more.' },
+    shrine: { fn: 'Holds your Blessings.', tip: 'Pick a free Blessing here.', go: { tab: 'world', view: 'camp', sel: '#sec-camp-bless' }, goT: 'Open Blessings' }
+  };
+  let bldBox, bldId = '';
+  const bldName = id => CAMP_B[id] ? CAMP_B[id].n : id;
+  // What the player holds toward the first thing a station makes, as "Pine Log 4/6, Hide 0/2", or "Ready to make: Bow".
+  function bldCount(id) {
+    if (!CAMP_B[id] || !CAMP_B[id].skill || id === 'hearth') return id === 'tavern' && typeof handsList === 'function' ? `Gatherers: ${handsList().length}` : '';
+    let best = null;
+    for (const k of Object.keys(CRAFT_KINDS)) {
+      const d = CRAFT_KINDS[k]; if (d.st !== id || d.legacy || !craftKindVisible(k)) continue;
+      if (!d.tool && typeof fits === 'function' && d.pos && !fits(k, d.pos, 'hero')) continue;   // the hero's own kinds first
+      const rec = Object.entries(craftRecipe(k, 1)).filter(([f]) => f !== 'gold');
+      const short = rec.filter(([f, n]) => matOwn(f, 1) < n);
+      const miss = short.reduce((a, [f, n]) => a + (n - matOwn(f, 1)) / n, 0);
+      if (!best || miss < best.miss) best = { k, rec, short, miss };
+    }
+    if (!best) return '';
+    const nm = CRAFT_KINDS[best.k].noun;
+    if (!best.short.length) return `Ready to make: ${nm}`;
+    return `First ${nm}: ` + best.short.map(([f, n]) => `${costName(f, 1)} ${fmt(Math.min(matOwn(f, 1), n))}/${fmt(n)}`).join(', ');
+  }
+  function bldUpdate() {
+    if (!bldBox) return;
+    const open = !!bldId && campLevel(bldId) > 0;
+    putHidden(bldBox, !open); if (!open) return;
+    const d = BLD[bldId] || {}, lv = campLevel(bldId);
+    setTxt(bldBox._t, `${bldName(bldId)} · Lv ${lv}`);
+    setTxt(bldBox._f, d.fn || '');
+    setTxt(bldBox._tip, d.tip || '');
+    const fx = campEffects(bldId, lv).slice(0, 2).join(' · ');
+    setTxt(bldBox._now, fx ? 'Now: ' + fx : '');
+    const c = bldCount(bldId);
+    setTxt(bldBox._c, c); putHidden(bldBox._c, !c);
+    putHidden(bldBox._go, !d.go || (d.gate && !d.gate())); if (d.go) setTxt(bldBox._go, d.goT || 'Open');
+  }
+  function bldShow(id) {
+    bldId = id; bldUpdate();
+    if (bldBox && !bldBox.hidden && bldBox.scrollIntoView) bldBox.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+    if (typeof onboardUseDone === 'function' && !(S.onboard && S.onboard.done && S.onboard.done['use:camp-tap'])) { onboardUseDone('use:camp-tap'); save(); }
+  }
+  function bldMount(host) {
+    bldBox = el('div', 'card camp-bld-card'); bldBox.id = 'camp-bld-card'; bldBox.hidden = true;
+    const top = el('div', 'cbc-top'); bldBox._t = el('b', 'cbc-t'); const x = btn('mini cbc-x', 'Close'); x.setAttribute('aria-label', 'Close this card');
+    x.addEventListener('click', () => { const was = bldId; bldId = ''; bldUpdate(); const b = was && sceneBlds.querySelector(`[data-bld-id="${was}"]`); if (b) b.focus(); });
+    top.append(bldBox._t, x);
+    bldBox._f = el('p', 'cbc-f'); bldBox._tip = el('p', 'note cbc-tip'); bldBox._now = el('p', 'note cbc-now'); bldBox._c = el('p', 'cbc-c'); bldBox._c.setAttribute('role', 'status');
+    bldBox._go = btn('mini cbc-go', 'Open');
+    bldBox._go.addEventListener('click', () => { const g = (BLD[bldId] || {}).go; if (g) emit('campGoto', g); });
+    bldBox.append(top, bldBox._f, bldBox._tip, bldBox._now, bldBox._c, bldBox._go);
+    host.append(bldBox);
+  }
   function drawCampScene() {
     if (!scenePort || typeof campSceneLayout !== 'function' || typeof campPaintScene !== 'function') return;
     const layout = campSceneLayout();
@@ -153,11 +216,28 @@
       scenePort.scrollLeft = Math.max(0, layout.homeX - scenePort.clientWidth / 2);
       sceneCentered = true;
     }
-    const actors = layout.actors || [];
-    const sig = JSON.stringify(actors.map(a => [a.id, a.name, a.x, a.y, a.status && a.status.st]));
+    const actors = layout.actors || [], blds = layout.buildings || [];
+    const sig = JSON.stringify([blds.map(b => [b.id, b.x, b.lv]), actors.map(a => [a.id, a.name, a.x, a.y, a.status && a.status.st])]);
     if (sig !== sceneSig) {
-      const focusedId = sceneButtons.contains(document.activeElement) ? document.activeElement.dataset.handId : null;
-      sceneSig = sig; sceneButtons.textContent = '';
+      const focusedId = sceneButtons.contains(document.activeElement) ? document.activeElement.dataset.handId : (sceneBlds.contains(document.activeElement) ? document.activeElement.dataset.bldId : null);
+      sceneSig = sig; sceneButtons.textContent = ''; sceneBlds.textContent = '';
+      // buildings sit in their own layer under the gatherers, so a gatherer standing in front of one stays the closer target
+      for (const bd of blds) {
+        const b = btn('camp-bld', ''); b.dataset.bldId = bd.id;
+        b.style.cssText = `position:absolute;left:${bd.x - 32}px;top:52px;width:64px;height:90px;background:transparent;border:0;cursor:pointer;pointer-events:auto;touch-action:auto`;
+        b.setAttribute('aria-label', `${bldName(bd.id)}, level ${bd.lv}. Tap to see what it does.`);
+        b.title = bldName(bd.id);
+        let down = null, dragged = false;
+        b.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; dragged = false; });
+        b.addEventListener('pointermove', e => { if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 8) dragged = true; });
+        b.addEventListener('pointercancel', () => { down = null; dragged = true; });
+        b.addEventListener('click', e => {
+          down = null;
+          if (dragged) { dragged = false; e.preventDefault(); return; }
+          bldShow(bd.id);
+        });
+        sceneBlds.append(b);
+      }
       for (const actor of actors) {
         const b = btn('camp-person', ''); b.dataset.handId = actor.id;
         b.style.cssText = `position:absolute;left:${actor.x - 28}px;top:${actor.y - 84}px;width:56px;height:96px;background:transparent;border:0;cursor:pointer;pointer-events:auto;touch-action:auto`;
@@ -181,7 +261,7 @@
         sceneButtons.append(b);
       }
       if (focusedId) {
-        const next = [...sceneButtons.children].find(b => b.dataset.handId === focusedId);
+        const next = [...sceneButtons.children, ...sceneBlds.children].find(b => b.dataset.handId === focusedId || b.dataset.bldId === focusedId);
         (next || scenePort).focus();
       }
     }
@@ -206,9 +286,11 @@
       sceneCanvas = el('canvas'); sceneCanvas.id = 'camp-scene-world'; sceneCanvas.width = size.width; sceneCanvas.height = size.height;
       sceneCanvas.style.cssText = `position:absolute;left:0;top:0;width:${size.width}px;height:${size.height}px;image-rendering:pixelated;pointer-events:none`;
       sceneCtx = sceneCanvas.getContext('2d'); sceneCtx.imageSmoothingEnabled = false;
+      sceneBlds = el('div'); sceneBlds.id = 'camp-scene-blds';
+      sceneBlds.style.cssText = 'position:absolute;inset:0;pointer-events:none';
       sceneButtons = el('div'); sceneButtons.id = 'camp-scene-hands';
       sceneButtons.style.cssText = 'position:absolute;inset:0;pointer-events:none';
-      track.append(sceneCanvas, sceneButtons); scenePort.append(track);
+      track.append(sceneCanvas, sceneBlds, sceneButtons); scenePort.append(track);
       crewStrip = el('div'); crewStrip.id = 'camp-crew-status';
       crewStrip.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;padding:5px 8px;background:var(--well);border:1px solid var(--line)';
       crewCounts = el('span', 'note'); crewCounts.setAttribute('role', 'status');
@@ -234,7 +316,7 @@
       buildersBox = el('div', 'camp-builders');
       // Menu audit 2026-10-01 (owner: "the camp screen is cluttered"): what you act on first (Hearth, builders, the crew
       // line), then Blessings and Buildings; the scene and the Trophy Wall, which have no buttons, go last (camp-bless mount)
-      sceneBox = el('div', 'camp-scene-box'); sceneBox.append(el('h2', 'sec-title', 'Your camp'), scenePort, talkHost);
+      sceneBox = el('div', 'camp-scene-box'); sceneBox.append(el('h2', 'sec-title', 'Your camp'), scenePort); bldMount(sceneBox); sceneBox.append(talkHost);
       sec.append(head, closed, hearthCard, buildersBox, crewStrip, sceneBox);
     },
     update() {
@@ -257,7 +339,7 @@
         putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
       }
-      drawCampScene();
+      drawCampScene(); bldUpdate();
       if (!crewStrip.hidden) {
         const n = { ready: 0, out: 0, rest: 0, pack: 0 };
         for (const h of handsList()) {

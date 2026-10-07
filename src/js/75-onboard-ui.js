@@ -178,7 +178,8 @@
   // W1-A: a step that waits for materials shows live progress and never pauses the game.
   // "Chop 20 Pine Log for the Workbench (12/20)". When the hero is not at the node that yields the
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
-  const VERB = { wood: 'Chop', ore: 'Mine' };
+  const VERB = { wood: 'Chop', ore: 'Mine', ess: 'Win fights for' };
+  let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
   const stockSpec = (id, what, tail) => {
     const need = onboardNeed(id); if (!need.length) return null;
     const x = need[0], verb = VERB[x.kind] || 'Gather';
@@ -222,6 +223,7 @@
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
     'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
+    'stock:weapon': () => stockSpec('stock:weapon', 'your first weapon'),
     light: () => {
       if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire. Light it.' } : null;
       const f = $('hearthFire');
@@ -242,6 +244,15 @@
       return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll want it." };
     },
     forge: () => campPath('forge', ['Open Camp. The Forge makes weapons.', 'Open Camp.', 'Build the Forge. Then you can make a weapon.']),
+    // first-gold-and-camp-strip: the materials are in hand; tick() has opened Craft on the weapon (once a visit), and this tip rings the button
+    weapon: () => {
+      const k = weaponKind(); if (!k) return null;
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'Your first weapon is ready to make. Open Craft.' };
+      if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
+      const st = q('.cf-st[data-st="' + CRAFT_KINDS[k].st + '"]');
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
+      return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon. Then put it on.' };
+    },
     store: () => campPath('store', ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.']),
     // Training: Hero tab, Training view, Train on Attack.
     // hero-progression-rework: with attributes on, the first point goes into Might.
@@ -280,6 +291,8 @@
     if (!step && S.tab) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
     const use = /^(use|say):/.test(step.id);
+    // first-gold-and-camp-strip: the first weapon is ready to make, so Craft opens on it once (only from the game screen, never out of another menu)
+    if (step.id === 'weapon' && !weaponOpened && !S.tab) { const k = weaponKind(); if (k) { weaponOpened = true; S.fSlot = k; S.fTier = 1; forgeGoalPicks++; setTab('forge'); } }
     let spec = null;
     const table = SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
     // a first-use line has no target: it docks over the open menu with no ring, and never pauses the game

@@ -119,13 +119,24 @@ const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen
 // so no step can freeze the clock it needs. tools/check.mjs holds all three rules.
 //   attack, ability, dodge, parry, gather, light, upgrade   pause (press this now)
 //   boss                                                     pause (Got it)
-//   chop, stock:bench, stock:tool, stock:forge, stock:store  no pause (needs materials: live progress)
-//   bench, tool, forge, store                                pause only once the materials are in hand (pauseUnless)
+//   chop, stock:bench, stock:tool, stock:forge, stock:weapon, stock:store  no pause (needs materials: live progress)
+//   bench, tool, forge, weapon, store                        pause only once the materials are in hand (pauseUnless)
 //   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them)
 const stockOf = (fam, t, n) => [fam, t, n];
 const matsOfBuild = id => (typeof hearthFirst === 'function' && hearthFirst(id) ? hearthFirst(id).mats : []);
 const toolMats = () => { try { const c = canCraft('pick', 1); return Object.entries((c.cost && c.cost.mats) || {}).map(([f, n]) => stockOf(f, 1, n)); } catch (e) { return []; } };
 const fireMats = () => (typeof HEARTH_TUNE === 'object' ? HEARTH_TUNE.light : []);
+// first-gold-and-camp-strip: the hero's class weapon at the Forge (the same pick as the Next Up craft goal), its tier 1 materials, and whether the hero has made or found one.
+const weaponKind = () => {
+  try {
+    const who = heroWho(), row = CRAFT_FITS.weapon || {}, own = who !== 'any' ? row[who] || [] : [];
+    return (own.length ? own : row.any || []).find(k => !CRAFT_KINDS[k].legacy && fits(k, 'weapon', 'hero')) || null;
+  } catch (e) { return null; }
+};
+const weaponMats = () => { const k = weaponKind(); try { return k ? Object.entries(craftRecipe(k, 1)).filter(([f]) => f !== 'gold').map(([f, n]) => stockOf(f, 1, n)) : []; } catch (e) { return []; } };
+const weaponStation = () => { const k = weaponKind(); return k ? CRAFT_KINDS[k].st : null; };
+const weaponNow = () => coldH() && stepDone('forge') && !!weaponKind() && !weaponMade() && campLv(weaponStation()) >= 1 && !stepDone('store');
+const weaponMade = () => { try { return !!equipped('weapon') || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos === 'weapon'); } catch (e) { return false; } };
 // W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
 // never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
 // extra condition for the pause. Attack and the ability need a live foe; Dodge and Parry need a wind-up still on its
@@ -167,6 +178,10 @@ const GUIDE_STEPS = [
   { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  // first-gold-and-camp-strip: with the weapon's own station built (the Forge, or the Workbench for a bow or staff; it comes after the Forge step) the next job is the first weapon:
+  // gather what it needs; then Craft opens on it. Over once the Storehouse step is done (a finished cold save never sees it).
+  { id: 'stock:weapon', ph: ['between'], needs: weaponMats, when: () => weaponNow() && !!needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || stepDone('store') },
+  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft'), done: () => !coldH() || weaponMade() || stepDone('store') },
   { id: 'stock:store', ph: ['between'], needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
@@ -294,7 +309,7 @@ function craftReady() {
   onboardUseDone = id => { O().done[id] = 1; };
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
-  const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', codex: 'codex', deep: 'deep' };
+  const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', 'camp-look': 'camp', codex: 'codex', deep: 'deep' };
   onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----
