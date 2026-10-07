@@ -96,13 +96,12 @@ the card that asks for it and a line in the change log below. A routine re-basel
 `node tools/health.mjs --compare`. If a cell you meant to move lands in band, re-baseline; the ratchet tightens its gap.
 If a cell leaves its band and you think the band is wrong, that is a judge decision, not a re-baseline.
 
-## Where the game stands (2026-10-06, 57 known gaps)
+## Where the game stands (2026-10-07)
 
 - **Zones 1-15 and the elites are too easy** (boss-tiers, foe-moves-by-type). Every hero wins 100% of bosses at zones
   5-15 casually, in 2-6 turns; elites never threaten. The first bosses (zones 1-3) are in band.
-- **Zones 25-34 are walls at the road's level** (mid-zone-wall). Wren and Pip win 0-1% of Captains casually; at zones 27
-  and 34 a good player wins 20-37%. Tobin wins 56% at zone 25 and 0% at 27. PR #58 (hero progression) helps (zone 34
-  good 34-37% -> 58-60%, Tobin casual 1% -> 36%) but does not close it.
+- **Zones 25-34 Captains are in band for Wren and Pip** (mid-zone-wall, 2026-10-07: casual 56-80, good 100%; z34 Wren sits 4 under, inside the seed noise). Tobin wins
+  all of them casually (boss-tiers owns the +10 gap).
 - **The Fenmother is easier than the Captains around her** (boss-tiers): 67-100% casual against a 20-40 band; zone 36
   is 98-100%.
 - **Gear a tier behind costs Wren and Pip 61-92 points of casual wins and Tobin 6-10** (gear-weight).
@@ -119,3 +118,4 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 | 2026-10-06 | difficulty-budget | Bands, gate and 55 gaps set; the per-fight seed | judge ruling 2026-10-06 (`autopilot/reports/difficulty-budget/judge.md`), after a red team |
 | 2026-10-06 | difficulty-budget | Report-only joined and build rows with proposed bands (coordinator relay of PR #58's findings); sd floored at binomial noise (Opus review) | not gated until a judge sets the bands |
 | 2026-10-06 | hero-progression-rework | Gaps z20-boss Wren and Pip casual (boss-tiers); z20-boss-behind limits Wren 0.75, Pip 0.88, Tobin 0 (gear-weight); re-baseline | judge ruling 2026-10-06 (`design-reviews/hero-progression-budget-ruling-2026-10-06.md`) |
+| 2026-10-07 | mid-zone-wall | Boss hpX/hitX knots at 25, 27, 30, 34 and lateBoss 0.2; 15 mid-zone-wall gaps removed, Tobin casual +10 gaps owned by boss-tiers at 25, 27, 30, 34 | judge ruling 2026-10-07 (`docs/DECISIONS.md`, Mid-zone wall) |

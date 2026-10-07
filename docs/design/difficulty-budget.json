@@ -362,106 +362,6 @@
       "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
     },
     {
-      "row": "z25-boss",
-      "hero": "wren",
-      "player": "casual",
-      "side": "below",
-      "limit": 0.01,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z25-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "below",
-      "limit": 0.66,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z25-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "below",
-      "limit": 0,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z25-boss",
-      "hero": "wren",
-      "player": "good",
-      "side": "below",
-      "limit": 0.89,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z25-boss",
-      "hero": "pip",
-      "player": "good",
-      "side": "below",
-      "limit": 0.83,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z27-boss",
-      "hero": "wren",
-      "player": "casual",
-      "side": "below",
-      "limit": 0,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z27-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "below",
-      "limit": 0,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z27-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "below",
-      "limit": 0,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z27-boss",
-      "hero": "wren",
-      "player": "good",
-      "side": "below",
-      "limit": 0.34,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z27-boss",
-      "hero": "pip",
-      "player": "good",
-      "side": "below",
-      "limit": 0.42,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
       "row": "z30-elite",
       "hero": "tobin",
       "player": "casual",
@@ -473,93 +373,13 @@
     },
     {
       "row": "z30-boss",
-      "hero": "wren",
-      "player": "casual",
-      "side": "below",
-      "limit": 0.01,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z30-boss",
       "hero": "tobin",
       "player": "casual",
       "side": "above",
-      "limit": 0.9,
+      "limit": 1,
       "owner": "boss-tiers",
       "until": "2026-11-15",
       "why": "this boss is too easy for a hero who keeps up"
-    },
-    {
-      "row": "z30-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "below",
-      "limit": 0,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z30-boss",
-      "hero": "pip",
-      "player": "good",
-      "side": "below",
-      "limit": 0.94,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z34-boss",
-      "hero": "wren",
-      "player": "casual",
-      "side": "below",
-      "limit": 0,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z34-boss",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "below",
-      "limit": 0.35,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z34-boss",
-      "hero": "pip",
-      "player": "casual",
-      "side": "below",
-      "limit": 0,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z34-boss",
-      "hero": "wren",
-      "player": "good",
-      "side": "below",
-      "limit": 0.55,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
-    },
-    {
-      "row": "z34-boss",
-      "hero": "pip",
-      "player": "good",
-      "side": "below",
-      "limit": 0.59,
-      "owner": "mid-zone-wall",
-      "until": "2026-11-15",
-      "why": "at the road's level this boss is a wall"
     },
     {
       "row": "z35-elder",
@@ -690,6 +510,36 @@
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
+    },
+    {
+      "row": "z25-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "boss-tiers",
+      "until": "2026-11-15",
+      "why": "Tobin's Guard and counters win every Captain from 25 to 34 casually; boss-tiers sets how Captains pressure a tank"
+    },
+    {
+      "row": "z27-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "boss-tiers",
+      "until": "2026-11-15",
+      "why": "Tobin's Guard and counters win every Captain from 25 to 34 casually; boss-tiers sets how Captains pressure a tank"
+    },
+    {
+      "row": "z34-boss",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "boss-tiers",
+      "until": "2026-11-15",
+      "why": "Tobin's Guard and counters win every Captain from 25 to 34 casually; boss-tiers sets how Captains pressure a tank"
     }
   ]
 }
