@@ -1,74 +1,26 @@
-# Uniques v3: crafted sets and build rules
+# Uniques v4: Release B rules and pr5b budgets
 
-Draft revision of PR #138, 7 October 2026. **Docs only. Do not merge. No gameplay or art is changed.** Rebased on integration `2e8af8d5` (PRs #164/#165). Measurements ran on `53c58d333550e494108f8347eeafae57e4a044a1`; runtime, budget/core tools, target JSON and fixture files are byte-identical at the rebased checkpoint. Intervening changes are the updated owner rulings and a CI retry helper/workflow. V2 rows reproduced, but their multiplicative set units and default-build Stars comparator are superseded. This revision measures both HP options and the requested retunes/replacements on the same official footing.
+Revision of PR #138, 7 October 2026. **Docs only. Do not merge.** Rebased on `f9126bf137f05160667cc4abe93fff0d34feae05` (`claude/elegant-johnson-m6k00u`, boss-tiers-pr5b merged). Measurements ran at `bf411e67633b505868e046c7dc9741f7f22b6eee`; loaded runtime, budget/core tools, targets and save fixtures are byte-identical at the final rebase. Intervening changes are docs, an independent walk tool and unwired art generators. No runtime, budget target, art, online or save change is proposed by this PR. Numbers are provisional until the crafting balance pass.
 
-**Release decision: hold.** G1–G3 sets remain off. G4 stays held for `boss-tiers-pr5b`. All new combat items remain review candidates until the whole contract, legal eligibility, kept-up rows, acquisition, retool and implementation tests pass. Tools are excluded from the initial pool regardless of their measured outcome. Option (a), a fixed median HP line, is now adopted by the coordinator in PR #164 / DECISIONS (“Gear, resources and economy”); Cal can veto it. Option (b) remains measured comparison evidence, not a pending choice.
+The judge fixes **The Divided Vow at 60%, The Twice-Sworn Oath at 85%, Gate of the Deep with counters −10%, and Vesper’s Reach as is: accepted, Release B**. They are not retuned here. The 80% Twice-Sworn trial is retired. Release acceptance is the judge’s ruling; a measured budget failure is still reported, not erased by that status. Other combat definitions remain candidates. Tools and unmeasured support fittings remain outside the initial drop pool.
 
-## Compass and scope
+## Gear and footing
 
-Serves the fight loop’s choose/defend steps, the five-minute visit’s equip step and the week’s build chase: crafting supplies stats, a unique changes a rule with a cost. No currency, camp chore, timer, paid power, keys, extra scheduled turn, online change, publication, art edit or save-format change. Do not weaken boss bands, tolerance, caps or gates to pass an item.
+New bases remain Rare-level: `1.8 × TIER_POW[t] × (1 + 0.15N)`, with the class-native kind and ordinary per-line caps. Upgrades scale base lines, never the rule. Add the definition-derived median health affix, `craftAffixValue("hp", itemPower(item), 0.5)`, **only to weapon, off-hand, head and body**. No health line on charms or tools. No rolled/saved/re-forgeable extra affix. Legacy items are unchanged.
 
-Correction rule: add set lines in the same units as ordinary gear, pair every Stars comparison with the same swapped build, preserve costs in the active rule, and throw on every missing or ambiguous prototype anchor. This lesson is recorded here because the owner restricts the tracked PR to this document.
+| Grade | Fixed health +0 | Fixed health +5 |
+|---|---:|---:|
+| G1 | 3.06 | 5.355 |
+| G2 | 6.732 | 11.781 |
+| G3 | 12.852 | 22.491 |
+| G4 | 22.95 | 40.1625 |
+| G5 | 39.78 | 69.615 |
 
-## Craftable four-piece set: gear lines
+The four-piece crafted set requires fitted weapon/off-hand/head/body, all crafted and the same grade. Rarity and +N do not matter; uniques do not count. A charm/tool does not break the set. G1–G3 bonuses remain off. G4 no longer waits for pr5b: its boss refit has merged; production set implementation still needs its own checks. G5 remains unmeasured. For `P = TIER_POW[t]`, add `0.15P` health in `gearCalc`, and apply the Might-equivalent ratio `(100 + might + 0.10P) / (100 + might)` to A/U/counter in `turnMakeProfile`. Newly stored DoT inherits it once. No raid DPS change.
 
-Weapon, off-hand, head and body must all be crafted, fit the current class and share a grade. Any rarity counts; +N is irrelevant. A unique never counts. Charm and tools do not break a qualifying set. Derive eligibility from equipped items; no saved set counter.
+**Required set-PR regression: `set-footing-over-neutrality`.** For the same hero, zone and explicit gear override, `gearCalc(over)` must return the identical stats with set off/on; no set health or Might line enters the override. Test the real override constructed by `turnFootHp` at z16/20/25/30 for Wren/Pip/Tobin, as well as `{}` and an incomplete override. `gearCalc()` may gain the live set line; the profile may gain its damage ratio. Compare all stat keys and the resulting `footHp`, not just the displayed health total. Do not drop `over` in a wrapper. The scratch adapter uses `gearCalc = over => { ... __gear0(over); if (!over) ... }`.
 
-For grade t, P = TIER_POW[t]. Add **0.15P HP** in `gearCalc`. Apply **0.10P Might-equivalent damage** only in `turnMakeProfile`: `x = (100 + might + 0.10P) / (100 + might)`, then multiply A, U and counter by x. DoT newly stored from U inherits it once; stored damage is not multiplied again. Do not add Might to `gearCalc`: raid DPS and `heroDps` stay untouched. HP ratio is `(100 + hp + 0.15P) / (100 + hp)`, not `1 + 0.0015P`. Boss reference HP/damage remains unchanged.
-
-| Grade | P | Might-equivalent line | HP line | Policy |
-|---|---:|---:|---:|---|
-| G1 | 10 | 1 | 1.5 | Off |
-| G2 | 22 | 2.2 | 3.3 | Off |
-| G3 | 42 | 4.2 | 6.3 | Off |
-| G4 | 75 | 7.5 | 11.25 | Held for pr5b |
-| G5 | 130 | 13 | 19.5 | Proposed, set unmeasured |
-
-G4 starts at z19, G5 at z42. About +2% damage/+2% health at a geared G4 is a description, not a fixed multiplier. Actual ratios are recorded below. Set units no longer imply +7.5%/+11.25% actual power.
-
-Current boss hit caps remain 0.4 through z15, 0.75 at z16–24, and zero from z25 in today’s table. No rule skips/shortens a rally or allows more than two consecutive hero actions. Burn remains one duration-based bank, normally at most four turns; no Burn stacks.
-
-### Target 1: corrected set results
-
-240 independent fights per persona per cell. Casual gain is S–N in percentage points. Tobin reports good turns only. Ratio columns are actual damage and health gains over N at this footing.
-
-| Zone / hero | Casual N → S (gain) | Good turns N → S | Damage / HP gain |
-|---|---|---|---|
-| 20 / wren | 65.4 → 66.7 (+1.3) | 6.2 → 6 | 2.2% / 1.9% |
-| 20 / tobin | Good turns only | 6.4 → 6.2 | 2.2% / 1.4% |
-| 20 / pip | 79.2 → 81.3 (+2.1) | 5.5 → 5.4 | 2.2% / 1.9% |
-| 25 / wren | 79.6 → 82.5 (+2.9) | 5.3 → 5.1 | 2.2% / 1.9% |
-| 25 / tobin | Good turns only | 5.5 → 5.4 | 2.2% / 1.4% |
-| 25 / pip | 70.8 → 75.0 (+4.2) | 5.9 → 5.9 | 2.2% / 1.9% |
-| 30 / wren | 69.2 → 69.2 (+0.0) | 5.3 → 5.2 | 2.2% / 1.9% |
-| 30 / tobin | Good turns only | 5.5 → 5.4 | 2.2% / 1.4% |
-| 30 / pip | 70.8 → 71.3 (+0.5) | 6.1 → 5.9 | 2.2% / 1.9% |
-| 34 / wren | 60.0 → 72.5 (+12.5) | 6.3 → 6.2 | 2.2% / 1.9% |
-| 34 / tobin | Good turns only | 5.5 → 5.3 | 2.2% / 1.4% |
-| 34 / pip | 85.8 → 88.3 (+2.5) | 5.7 → 5.6 | 2.2% / 1.9% |
-
-**Target 1 still fails:** Wren gains +12.5 points at z34; other non-Tobin cells range from +0.0 to +4.2. A small gear-line change can cross a discrete fight threshold. Pip’s z20 and z34 set rows exceed the Captain casual band’s raw 80% upper bound; these raw values are not a health-baseline pass. Keep the prescribed units and the pr5b hold; do not tune the official fixture to force +2–4.
-
-## Unique base, parity, drops and ownership
-
-All new bases use `1.8 × TIER_POW[t] × (1 + 0.15N)` with the current class-native kind and per-line caps. Upgrades scale base lines, not rule magnitude. No random affixes or effect reforge.
-
-Measure both parity options, separately:
-
-- **(a), owner preference:** add one fixed HP line equal to `craftAffixValue("hp", itemPower(item), 0.5)`, i.e. 0.17 × Rare power. It is definition-derived, not rolled/saved/reforgeable. B has the same fixed line. Target 2 remains R–S = +4–12 points in a matching build.
-- **(b):** no HP line. Read the minimum as R–B ≥ 4 + (S–N) points, using that same build/persona’s measured set gain. Keep the +12 upper bound against S. This is distinct from R–S: neither comparison is hidden.
-
-| Grade | Fixed HP at +0 (a) | Fixed HP at +5 (a) | (b) |
-|---|---:|---:|---:|
-| G1 | 3.06 | 5.355 | 0 |
-| G2 | 6.732 | 11.781 | 0 |
-| G3 | 12.852 | 22.491 | 0 |
-| G4 | 22.95 | 40.1625 | 0 |
-| G5 | 39.78 | 69.615 | 0 |
-
-This restores a median HP affix, not every crafted Rare’s roll or other affixes. A crafted Charm/tool normally has no HP affix: (a) grants the proposed fixed line there too to honor “each unique”, so it is an additional line for those slots, not literal crafted-Charm parity. The coordinator must confirm that exception. Gathering fixtures measure yield only; their fixed HP line has no gathering effect. Legacy items receive neither new HP lines nor costs.
-
-Drop grade is `zoneTier(z)`. Keep first-clear 15%, repeat 4%, owned ×0.5 when `S.found[id] >= t`, and earned modifiers/caps. Select one legal released candidate, then roll once at that candidate’s odds. Empty pool means no new drop. Cache, killPack and boss prompt share one pure pool/odds function; differing owned multipliers require the selection-weighted aggregate chance. No extra independent rolls, pity, guarantee, raid pool or acquisition certification. The first-hour chance beat remains 25–40 minutes.
+At z≤15, Target 2 R–S is read on **pr5 kept-up Rare +5** rows, never on common +0. First-hour common rows answer Target 4 only. The old v3 early R–S spikes mixed base rarity with rule power and are historical evidence, not round-4 acceptance evidence.
 
 ### Exact Rare-level base lines
 
@@ -98,452 +50,494 @@ All values below are +0, before the unique rule/cost. Keys are runtime stat keys
 | sickle | forageSpd 10.8; forageDbl 1.8; forageFind 0.216 | forageSpd 23.76; forageDbl 3.96; forageFind 0.4752 | forageSpd 45.36; forageDbl 7.56; forageFind 0.9072 | forageSpd 81; forageDbl 13.5; forageFind 1.62 | forageSpd 140.4; forageDbl 23.4; forageFind 2.808 |
 | spear | huntSpd 10.8; huntDbl 1.8; huntFind 0.216 | huntSpd 23.76; huntDbl 3.96; huntFind 0.4752 | huntSpd 45.36; huntDbl 7.56; huntFind 0.9072 | huntSpd 81; huntDbl 13.5; huntFind 1.62 | huntSpd 140.4; huntDbl 23.4; huntFind 2.808 |
 
-The base table excludes the separately defined fixed HP line in (a); add it once after ordinary base lines.
+The base table excludes the fixed median health affix. Add it once only on weapon/off-hand/head/body; never on charm or tools. The spear’s G4/G5 columns are formula reference only: Rising spear is capped at G3.
 
-## Proposed unique rules and costs
 
-Stable new IDs and original source types/grade bands remain. The player-facing rule and cost are one or two lines each. The following table includes the **incremental passive boss-damage cut** from the new rule plus set, excluding the hero’s existing class mitigation. HP increases are shown separately; they are not a raw damage cut. Every row is held, including rows with promising results.
+## Current rules
 
-| ID / name | Position / class; source and band | Rule and cost | Passive cut with set | Kept-up budget row to add |
-|---|---|---|---|---|
-| twinned-vow / The Divided Vow | weapon / all; slime z1, G1–2 | Attack strikes twice, **60% a hit**. Twin Shot fires three arrows at 60% of its normal arrow power. | 0% | z16-boss-u-twinned-vow-held-grade |
-| twice-sworn / The Twice-Sworn Oath | weapon / all; slime z15, G3+ | Attack strikes twice, **80% a hit** or **85% a hit** (both tested). Twin Shot fires three arrows at that cut. No ability damage cost. | 0% | z16-boss-u-twice-sworn-attack |
-| quarry-shield / Gate of the Deep | off / Warrior; golem z6, G1+ | Counter after parrying all but one real hit of a move (at least one). Counters deal 10% less damage. | 0% | z16-boss-u-quarry-shield-parry |
-| quarry-plate / Mountain’s Covenant | body / Warrior; golem z13, G3+ | Grit holds up to 15. A hit you fail to avoid costs 3 Grit. | 0% before earning Grit; ≤5.6% extra at a full bank; see boundary note | z16-boss-u-quarry-plate-attack |
-| moss-sword / Oath of the Hollow | weapon / Warrior; slime z1, G1+ | A counter makes your next ability deal 30% more damage. Attack deals 15% less damage. | 0% | z16-boss-u-moss-sword-ability |
-| bat-bow / The Crimson Thread | weapon / Ranger; bat z2, G1+; requires a Bleed source | Bleed can hold 8 stacks instead of 5. Bleed lasts one fewer turn. | 0% | z16-boss-u-bat-bow-bleed |
-| bat-quiver / Vesper’s Reach | off / Ranger; bat z9, G2+ | Dodging a hit takes 1 turn off every cooldown. Parries no longer refund cooldowns. | 0%; defence remains earned | z16-boss-u-bat-quiver-dodge |
-| echo-cowl / Veil of the Unheard | head / Ranger; bat z2, G1+ | Aim holds up to 5, at 5% crit chance each. A hit you fail to avoid costs 2 Aim. | 0% | z16-boss-u-echo-cowl-attack |
-| marsh-leathers / The Drowned Huntsman | body / Ranger; wraith z7, G2+ | Spending a Mark adds 2 Bleed. Bleed ticks deal 20% less damage. | 0% | z16-boss-u-marsh-leathers-mark |
-| spore-circlet / The Scarlet Vigil | head / Mage; spore z5, G1+ | Attack on a burning foe makes its Burn 25% hotter, up to +75%, until it ends. Fire’s hit deals 15% less damage. | 0% | z16-boss-u-spore-circlet-attack |
-| spore-robe / Mantle of the Red Moon | body / Mage; spore z12, G2+ | Fire spends half your Cinders, rounded up. Held Cinders heat fire 25% less. | 0% | z16-boss-u-spore-robe-fire |
-| bone-tome / The Unfinished Prayer | off / Lightkeeper fitting; bones z10, G2+ | Ward reflects half the amount soaked as holy damage, scaled once by Healing. Wards are 25% smaller. | 0% positive passive cut; active Ward shrinks; unmeasured | z16-boss-u-bone-tome-ward (held fitting) |
-| rattlebone-charm / The Final Answer | charm / all; bones z3, G1+ | A parry, or a dodge in the last half of its window, takes 1 turn off your longest cooldown. Attack deals 10% less damage. | 0%; defence remains earned | z16-boss-u-rattlebone-charm-clean |
-| beetle-helm / Crown of the Burrow | head / all; beetle z4, G1+ | When a boss starts a rally, gain 2 of your class resource. Attack deals 10% less damage. | 0%; rally resource is earned, not an opener | z16-boss-u-beetle-helm-rally |
-| carapace-pick / Burrower’s Promise | pick / all; beetle z4, G1+ | A rare Mining find brings 3 units. Mining speed is 10% lower. | 0% | g3-u-carapace-pick-hour (report only) |
-| wisp-axe / Reed of Remembrance | axe / all; wraith z7, G2+ | A rare Woodcutting find brings 3 units. Woodcutting speed is 10% lower. | 0% | g3-u-wisp-axe-hour (report only) |
-| spore-sickle / Harvest of Whispers | sickle / all; spore z5, G1+ | A rare Foraging find brings 3 units. Foraging speed is 10% lower. | 0% | g3-u-spore-sickle-hour (report only) |
-| moss-spear / Thorn of the First Grove | spear / all; slime z8, G2+ | A rare Hunting find brings 3 units. Hunting speed is 10% lower. | 0% | g3-u-moss-spear-hour (report only) |
-| bone-censer / Requiem Bell | weapon / Lightkeeper; bones z3, G1+ | Held: no rule/cost approved, no drop. | No proposed cut; unmeasured | z16-boss-u-bone-censer-held |
-| bone-mitre / Last Rites | head / Lightkeeper; bones z17, G3+ | Held: no rule/cost approved, no drop. | No proposed cut; unmeasured | z16-boss-u-bone-mitre-held |
-| bone-vestments / Vestments of the Last Dawn | body / Lightkeeper; bones z24, G4+ | Held: no rule/cost approved, no drop. | No proposed cut; unmeasured | z20-boss-u-bone-vestments-held |
+Original IDs, source types and grade bands remain. Costs always apply while worn, including when another unique wins the one-active-rule priority. No new health cost.
 
-The proposed row IDs are **not added to tools/budget.mjs or its target JSON in this docs PR**. Class-native definitions get per-hero legal fitting rows; attach `-a`/`-b` and the explicit build/persona suffix. z16 is Rare +5 kept-up footing. Divided Vow is G1–2 only: its listed z16 slot is a deliberate held-grade exclusion, not permission to drop a G3 Vow. Its active kept-up row must use `z9-boss-keptup-u-twinned-vow-attack`; this latter footing remains unmeasured and therefore held. Tools’ rows stay report-only; held support placeholders are not fictitious measured heroes.
+| ID / item | Fitting; source / band | Rule and cost | Status |
+|---|---|---|---|
+| twinned-vow / The Divided Vow | weapon / all; slime z1, G1–2 | Attack strikes twice, 60% a hit. Twin Shot fires three arrows at 60% of normal arrow power. | **accepted, Release B** |
+| twice-sworn / The Twice-Sworn Oath | weapon / all; slime z15, G3+ | Attack strikes twice, 85% a hit. Twin Shot fires three arrows at that cut. | **accepted, Release B** |
+| quarry-shield / Gate of the Deep | off-hand / Warrior; golem z6, G1+ | Counter after parrying all but one real hit of a move, at least one. Counters −10%. | **accepted, Release B** |
+| bat-quiver / Vesper’s Reach | off-hand / Ranger; bat z9, G2+ | Dodging a hit takes 1 turn off every cooldown. Parries no longer refund cooldowns. | **accepted, Release B** |
+| quarry-plate / Mountain’s Covenant | body / Warrior; golem z13, G3+ | Grit also adds 8% a point to abilities; an unavoided hit costs 3 Grit. | candidate |
+| moss-sword / Oath of the Hollow | weapon / Warrior; slime z1, G1+ | A move you parry at least once makes your next ability +25%; Attack −15%. | candidate |
+| bat-bow / The Crimson Thread | weapon / Ranger; bat z2, G1+; earned Bleed source required | Double Bleed stacks gained, cap 8; Bleed lasts 1 fewer turn. | candidate |
+| echo-cowl / Veil of the Unheard | head / Ranger; bat z2, G1+ | A dodge makes your next ability Keen (+50% crit damage); Attack −10%. | candidate |
+| marsh-leathers / The Drowned Huntsman | body / Ranger; wraith z7, G2+ | 3 Bleed a Mark spend; ticks −10%. | candidate |
+| spore-circlet / The Scarlet Vigil | head / Mage; spore z5, G1+ | Once per enemy move, a parry or dodge makes the Burn tick at once; Fire’s hit −15%. | candidate |
+| spore-robe / Mantle of the Red Moon | body / Mage; spore z12, G2+ | Fire keeps all your Cinders; held Cinders heat ×0.75. | candidate |
+| rattlebone-charm / The Final Answer | charm / all; bones z3, G1+ | Once per enemy move, a parry or a dodge in the last half of its window takes 1 turn off your longest cooldown. Attack −10%. | candidate; **no health line** |
+| beetle-helm / Crown of the Burrow | head / all; beetle z4, G1+ | The first time each boss rally gate closes, gain 2 of your class resource. Attack −10%. | candidate; **fires at z16–34** |
+| bone-tome / The Unfinished Prayer | off-hand / Lightkeeper; bones z10, G2+ | Ward reflects half the amount soaked as holy damage, scaled once by Healing. Wards −25%. | held: legal fitting unmeasured |
+| bone-censer / Requiem Bell | weapon / Lightkeeper; bones z3, G1+ | No rule/cost approved, no drop. | held |
+| bone-mitre / Last Rites | head / Lightkeeper; bones z17, G3+ | No rule/cost approved, no drop. | held |
+| bone-vestments / Vestments of the Last Dawn | body / Lightkeeper; bones z24, G4+ | No rule/cost approved, no drop. | held |
 
-### Exact trigger boundaries
+### Trigger boundaries
 
-- Twins alter the hits inside one Attack, never the turn schedule. Action-level resource gains trigger once; hit/crit effects trigger per strike. A normal Attack gets two hits at the named cut; Twin Shot gets three total arrows, each `0.55 × cut × A`. The cut is the cost. Divided Vow remains 60%; Twice-Sworn has separate 80%/85% trials, one final ID and no −10% abilities cost. Do not combine the trials.
-- Gate excludes feints, requires at least one parry and weakens all counters while worn. Oath’s boost is armed by an actual counter and consumed by the next usable non-passive ability, never Attack. It scales that ability’s direct hit and newly stored DoT once; it cannot compound an already stored bank. No extra Grit/Guard remains from v2.
-- Mountain raises every Grit gain/recovery cap, including Hammerfall recovery. In this prototype the 3-Grit loss occurs as an unavoided real hit enters `turnLand`, before that hit’s mitigation, even if Ward absorbs it. Veil loses 2 Aim at that same boundary; feints, misses, parries and dodges lose none. Aim retains 5% per point; crit caps still bind. At 15 Grit, Mountain’s cost leaves 12 for the hit: relative to the old full 10-Grit bank, raw damage cuts an extra `1 − .88/.90 = 2.2%`; the conservative after-hit bound is `1 − .85/.90 = 5.6%`. Both are ≤10%, and the set adds no raw cut. Existing class/Grit/Star mitigation is not counted as a new set/unique cut. If the judge counts all earned resource mitigation absolutely, 12–15% Grit itself exceeds 10%; that interpretation must be resolved before release.
-- Crimson Thread raises the base Bleed cap by 3 (5→8), retaining the one-turn-shorter duration cost, minimum 1. It replaces the doubled-stack benefit in this measured reading; no source is secretly doubled. An eligible pool requires an earned Bleed source (ability/talent/Star); wearing the bow does not conjure one. A build can intentionally leave that source unequipped, giving the other-build comparison. All source callers share the live helper; a Star-supplied cap receives the same +3.
-- Huntsman adds 2 Bleed when an existing Mark is actually spent by the normal spender path, once per spend. Expiry/refresh is not a spend; a Perfect keep spends nothing. The −20% applies to all Bleed ticks while worn, not direct hits or its application damage. No shorter Mark remains.
-- Vigil adds +0.25 to one existing Burn’s heat multiplier per Attack, capped at +0.75. It never starts/extends a Burn or creates stacks. Heat survives refresh while the bank remains active, resets on expiry/consumption, and applies once to Burn ticks or Ignite’s consumption. Fire’s direct hit alone gets ×0.85, including its three talent-A hits; the stored Burn payload is not reduced twice. Mantle retains floor(Cinders/2) after Fire and uses `0.75 × cinderX` on held-Cinder heat; Fire’s spent-Cinder payload keeps its existing formula.
-- Final Answer refunds after a successful real parry or a successful dodge whose press was in the final half of the existing window. No 0.10-second sub-cap and no clean-parry half-window restriction remain. Normal parry refund happens first, then the longest positive ability cooldown loses one (ties by stable ability ID). Attack is excluded. Vesper exchanges the parry refund for the dodge refund. Failed/early/fake presses do not refund.
-- Crown gains two current-class resource units once when a new boss rally starts (the 0→1 rally transition), clamped by the normal resource cap. The existing gate/move still completes. It has no initial Exposed/Pin and no maximum-health cost. The resource mapping is Warrior/warden→Grit, Ranger→Aim, Mage/lanternmage→Cinders; class kind, never production hero ID. Today z16/z20 have no rally gate, so the cost can make Crown a trap there; this is measured, not patched away.
-- Prayer remains unmeasured: no legal starter can wear a tome. Reflect actual absorbed Ward damage ×0.5×Healing, apply holy modifiers once, and forbid crit/counter/Ward/self-reflection loops. Smaller Ward is a cost, not passive defence. No Pip/tome proxy is used. Tools use three credited units total per successful find, final affected-skill speed ×0.90 and the existing find chance capped at 8%; quantity is separate from chance. Credit respects storage; there is no extra timer or chore.
+- Mountain retains the ordinary Grit cap 10, including Hammerfall recovery; the old cap 15 is removed. Its ability multiplier reads the bank at the start of a usable non-passive ability and scales direct damage/newly stored DoT once. An unavoided real hit removes 3 Grit before that hit’s mitigation, even through a Ward. Misses, feints and successful defences do not pay. It adds **0% passive damage reduction** above normal Grit.
+- Oath arms on the first successful real parry of a move, without requiring an all-parry counter. Repeated parries do not stack it; a fresh move can refresh the one pending boost. The next usable non-passive ability consumes it; Attack does not. The +25% does not re-multiply an already stored Burn/Bleed bank.
+- Veil arms one pending Keen after a successful real dodge. Repeated dodges refresh, never stack. The next usable ability consumes it, including all that ability’s hits under the ordinary crit cap. It adds crit damage, not crit chance or guaranteed crits. Attack does not consume the pending unique Keen.
+- Vigil applies one extra tick from the current stored Burn bank on the first successful parry/dodge of a move, without consuming or extending its duration. It does not run Burn-growth or Emberheart turn-start hooks twice. No Burn means no damage. Its damage uses the ordinary gate-clamped path; Fire’s direct hits pay ×0.85, not the stored bank.
+- Crimson doubles every application through the shared Bleed helper, including talent/Star applications; the final stack cap is **8**, not old cap +3. Duration loses one turn, minimum one. No earned Bleed source means no legal drop. Huntsman adds 3 only on a real Mark spend, never refresh/expiry/Perfect retention; all Bleed ticks pay ×0.90.
+- Mantle keeps the whole pre-Fire Cinder bank. Only the held-Cinder heat coefficient pays ×0.75; Fire’s ordinary spent-Cinder payload formula remains unchanged. No Burn stacks are introduced.
+- Final Answer requires a successful defence press in the last half of that defence’s existing window, for both parry and dodge. Once-per-move state resets when a new real move starts, not per hit. Ordinary parry refunds happen first; then the longest positive ability cooldown loses one, ties by stable ability ID. Attack is excluded. Fake/failed/early presses do not qualify. Its B/R/Rnc charm has no health line.
+- Crown keys its trigger to the gate index in the 0→1 rally transition. The same gate cannot grant again from another hit, tick or defence; fight reset clears the gate ledger. Warrior/warden gets Grit, Ranger gets Aim, Mage/lanternmage gets Cinders, under ordinary resource caps. It never starts a rally, grants an opener, alters a gate or carries overflow damage through one.
 
 ### One active rule, all costs
 
-Compute one active rule from a cached definition summary; all worn unique costs apply even when their rule is dormant. Proposed ordering: twin > counter-window > resource-spender > defence-refund > status-application > rally-resource > gathering, then explicit rank, grade band and stable ID. This is an unmeasured selection proposal, not a dominance ranking. Display “Active rule” or “Rule inactive; cost still applies”. No camp tap to choose a rule. Multiple-cost interactions and legacy coexistence still need certification.
+The proposed cached priority remains twin > counter-window > resource-spender > defence-refund > status-application > rally-resource > gathering, then explicit rank, grade band and stable ID. It is an unmeasured selection proposal, not a dominance ranking. Show “Active rule” or “Rule inactive; cost still applies”; no camp tap selects a rule. New definitions are explicitly retoolable: preserve id/u/t/r/plus/found and rt semantics, resolve the new class-native base at the same position, and certify a typed bank/spender adapter before treating that class fitting as supported. Never invent Grit/Fire for a class lacking them.
 
-## Measurement contract and footing
+### Zones 16–34: mandatory envelope
 
-1. Set target: +2–4 casual points versus identical N at z20/25/30/34, with no new band violation. Still fails; hold for pr5b.
-2. Unique target: matching-build advantage and tie/loss in another common build. Report R–B, R–S and Rnc–B separately; (a) keeps R–S = +4–12, (b) uses R–B ≥ 4 plus the same-build measured set gain, with R–S ≤12. R–S remains the direct crafted-set opportunity cost.
-3. Ability/parry/dodge rules: 10–15% fewer good-player turns in a matching build from z16; ≥16% requires a cut/review. Attack-led rules use wins/build dependence, with turns shown for diagnosis. Tobin reports only good turns, never a ceiling win-rate success.
-4. G1–G2 early rule uplift: ≤5 casual points over B. This v3 samples z9, not every z5–9 row; it cannot re-certify the whole first hour after a changed rule.
-5. Stars: unique + swap versus **set + the same swap, in the same attribute and ability build/persona**, ≤+12 casual points. Tobin reports turns. No default-build comparator remains.
+No unique skips, ignores or shortens a rally. All direct/status/proc damage uses `turnHitFoe`, so the gate clips it and loses the excess. No unique changes turn scheduling; at most two hero actions in a row against the boss. A multi-strike Attack is one action.
 
-S = crafted four-piece set plus crafted charm (bonuses enabled only G4+); N = identical crafted gear, set off. B = same unique base/HP option, rule and cost off; R = rule and cost; Rnc = same base/HP option, rule with its stated cost removed. For twins Rnc restores full per-hit power; it is an intentionally unsafe doubled-hit diagnostic. For all other rules Rnc removes the cooldown/hit/resource/heat/duration cost while retaining the benefit. B/R/Rnc in the charm position retain the crafted four-piece bonus.
+Boss-fight damage gain is **+50% at most**. The two-Attack pattern is **75% a hit** in this band. This is the band-wide boss envelope, not a retune of the judge’s fixed 60%/85% definitions: the 60% Vow remains lower; Twice-Sworn is limited to 75% on those boss fights. Twin Shot retains three arrows inside one Attack, under the same boss gain ceiling. Cost-free twins are diagnostic only and cannot ship.
 
-Every combat cell uses the unchanged official `CHECKPOINTS` and `measure`: 240 independently hashed boss seeds, offset 0, paired by zone/hero/persona; common +0 through z15, Rare +5 from z16. Boss stats/scripts, gates, caps, free talent A, typical earned Stars, road level and attribute point income are unchanged. Good turns are rounded means **on won fights**, so losing more fights can skew them. Raw JSON retains both personas’ wins/turns/close/attempts, including Tobin’s diagnostic wins; the document reports only Tobin’s good turns. Prototype files are ignored scratch adapters, not live code.
+Mountain’s 8%-per-Grit ability addition meets the same band ceiling: `min(0.08 × Grit, 0.50)` against z16–34 bosses, retaining the ordinary bank for spending/earned mitigation. Outside the band its stated 8% per point remains. This is the requested boss envelope, not a new flat defence or a change to the bank cap. Whole-fight status/resource interactions still need a separate damage-gain audit; budget win rates alone cannot certify it.
 
-Standard casual parry/dodge = .25/.50, good = .60/.90; rings stay .10/.40 and .40/.45. Dodge-first uses casual .05/.55 and good .05/.93, with the same rings, and is additionally measured for Vesper and Final Answer. No other persona was softened. Stars swap is the earned subset of `huntstep/serrated/coldsteel` in three set slots, preserving the existing learned/lit budget on both sides; no unfound Star is granted.
+Set plus unique passive cuts to zone-boss damage must total **≤10%**. The proposed set and these new rules add 0% flat reduction; existing timed defences/resource mitigation remain earned. The runtime’s 0.55 passive floor applies at z4–15 and **does not cover z16–34**. No max-health cost at z16+, and no health gain is counted as safety: the frontier footing cancels it. A baseline or rule failing this envelope stays a measured failure; never relax the boss rules or fixture.
 
-| Build | Attributes | Abilities |
-|---|---|---|
-| Default | Official even spread | Official stage loadout |
-| Attack-led | All Might | Wren echo/twinshot/powershot; Tobin bash/momentum/heavystrike; Pip fire/afterglow/spark |
-| Bleed | All Focus | Wren echo/barbed/powershot |
-| Matching / other | Fixed before measuring | Twins, Mountain, Veil, Vigil and Crown: Attack-led / official abilities with Focus. Gate, Oath, Vesper, Answer: official abilities with Focus / Attack-led. Crimson: Bleed / Attack-led. Huntsman: echo/deadeye/powershot with Focus / Attack-led. Mantle: fire/kindle/spark with Focus / Attack-led. |
+## Measurement contract
 
-Attack and Bleed are measured for every applicable item even when they duplicate a matching/other row. Full tuples are in JSON; they are cached only when input settings are identical. Default at z20 uses the official stage20 abilities. These are class fixtures, not hero-key effect dispatch.
+N: identical plain crafted gear, set off. S: qualifying crafted set plus charm, bonuses on only G4+. B: the unique’s Rare-level base and allowed fixed health, rule/cost off. R: rule and cost. Rnc: same base, benefit with stated cost removed. Replacing a set piece breaks the four-piece bonus; a charm keeps it. Thus “set worn” means the control and retained crafted pieces use the current set policy, not a fictitious bonus on a broken set.
 
-**Eligibility limits:** z9 road level is 15 and has no Barrow Scroll footing: Wren Twin Shot and Pip Afterglow are unavailable there. Requested rows using them are marked † and are stress evidence only. † also marks wrong-grade twin/Mountain rows and pre-source Mantle z9. z13 tier3 tests assume the Barrow source has been earned (repeat/kept-up build), not guaranteed first-clear equipment. A daggered row cannot pass a live drop/build gate. No level or Scroll is granted to disguise this. Crown’s later zero-proc rows remain ordinary valid rows.
+Use `tools/budget.mjs`’s unchanged fixture, setup, player personas and independently hashed fight seeds, **240 fights per persona per row and seed offsets 0 and 1**. Keep the two seeds visible. Win deltas are percentage points. Good turns are means on won fights and may be selection-biased. Tobin’s turns are shown alongside his diagnostic budget wins; high wins do not establish a turn benefit.
 
-### Per-item summary tables
+Target 1 remains +2–4 casual points for S−N at z20/25/30/34 with no band violation. This revision shows the new z20/25/30 controls; z34 remains unmeasured after pr5b, so the whole set target is not certified.
 
-Each non-Tobin cell reads **R–B / R–S / Rnc–B**, in casual percentage points, then **good turns S→R**. Tobin cells list good turns **S / B / R / Rnc** only. Tables cover default/matching/other at z9/z13/z16/z20. Extra Attack/Bleed rows and every individual result remain in `tools/.health/uniques-v3-{combat,stars}-<rule>.json`; same-build N/S controls are in `uniques-v3-controls.json`; derived deltas/eligibility are in `uniques-v3-summary.json`. No raw per-row tables are pasted into this document.
+Target 2 is R–S +4–12 in a matching build, with a tie/loss in another common build. Show R–B and Rnc–B separately. Timing rules seek 10–15% fewer good turns; ≥16% needs review. First-hour other builds for Wren/Pip request Twin Shot/Afterglow before their tier-3 level/Barrow Scroll footing, so they are labelled stress rows and excluded from eligible conclusions. No Scroll or level is granted to disguise that. Target 4 is ≤5 casual points over B at first-hour z5–9. Same-build, same-swap Stars comparison stays ≤+12; use only the earned subset of huntstep/serrated/coldsteel. Standard casual/good parry/dodge and rings remain official. Dodge-first keeps casual .05/.55 and good .05/.93, rings unchanged.
 
-#### The Divided Vow (`twinned-vow`)
+Budget rows at z16/20/25/30 must meet **R casual ≤ S casual +8 and ≤85% (Tobin ≤95%)**, with never-defends **≤10% (Tobin ≤15%)**, on each seed separately. These are additional constraints, not substitutes for build dependence, damage gain or the Stars ceiling. No health-ratio credit establishes safety.
 
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
+### Fixed build tuples
+
+| Build | Attributes | Wren | Tobin | Pip |
 |---|---|---|---|---|
-| wren / a / default / standard | -2.9 / +12.1 / +5.5; 5.2→4.7 | +1.3 / +29.6 / +4.2; 6.9→6.1 † | -3.3 / -3.3 / -1.7; 5.4→5.4 † | -4.2 / -5.9 / +3.8; 6.0→6.1 † |
-| wren / a / matching / standard | -2.1 / +13.3 / +2.5; 4.6→4.5 † | -7.9 / +33.4 / -0.4; 8.0→6.8 † | +3.0 / +1.7 / +10.9; 6.5→6.6 † | +4.5 / +2.0 / +15.8; 7.5→7.8 † |
-| wren / a / other / standard | -2.1 / +17.9 / +0.0; 4.5→4.4 | +0.0 / +33.3 / +3.0; 6.4→5.4 † | -2.5 / -4.6 / -1.7; 5.0→4.9 † | -2.1 / -5.4 / +1.7; 5.6→5.7 † |
-| wren / b / default / standard | -2.9 / +8.8 / +4.2; 5.2→4.7 | +1.2 / +27.9 / +4.1; 6.9→6.1 † | -3.3 / -7.9 / -2.1; 5.4→5.4 † | -1.3 / -11.7 / +7.5; 6.0→6.1 † |
-| wren / b / matching / standard | -0.4 / +10.8 / +3.3; 4.6→4.5 † | -6.3 / +25.4 / +2.9; 8.0→6.8 † | +2.5 / -1.7 / +10.0; 6.5→6.6 † | +3.3 / -1.7 / +11.6; 7.5→7.8 † |
-| wren / b / other / standard | -1.3 / +14.1 / +0.4; 4.5→4.4 | +2.9 / +25.8 / +5.4; 6.4→5.4 † | -1.3 / -6.3 / -0.4; 5.0→4.9 † | -2.1 / -11.2 / +1.2; 5.6→5.7 † |
-| tobin / a / default / standard | 5.3 / 5.3 / 5.2 / 4.9 | 8.4 / 7.0 / 6.9 / 6.8 † | 6.9 / 6.9 / 6.9 / 6.7 † | 6.2 / 6.4 / 6.4 / 6.4 † |
-| tobin / a / matching / standard | 5.1 / 5.0 / 4.9 / 4.9 | 9.7 / 8.7 / 8.7 / 8.6 † | 8.3 / 8.3 / 8.2 / 7.5 † | 9.5 / 9.7 / 9.6 / 8.6 † |
-| tobin / a / other / standard | 5.1 / 4.9 / 4.9 / 4.9 | 9.0 / 7.8 / 7.8 / 7.7 † | 7.4 / 7.4 / 7.3 / 7.1 † | 5.8 / 5.9 / 5.9 / 5.9 † |
-| tobin / b / default / standard | 5.3 / 5.3 / 5.2 / 4.9 | 8.4 / 7.0 / 6.9 / 6.8 † | 6.9 / 6.9 / 6.9 / 6.7 † | 6.2 / 6.4 / 6.4 / 6.4 † |
-| tobin / b / matching / standard | 5.1 / 5.0 / 4.9 / 4.9 | 9.7 / 8.7 / 8.7 / 8.6 † | 8.3 / 8.3 / 8.2 / 7.5 † | 9.5 / 9.7 / 9.6 / 8.6 † |
-| tobin / b / other / standard | 5.1 / 4.9 / 4.9 / 4.9 | 9.0 / 7.8 / 7.8 / 7.7 † | 7.4 / 7.4 / 7.3 / 7.1 † | 5.8 / 5.9 / 5.9 / 5.9 † |
-| pip / a / default / standard | -0.8 / +1.7 / -1.3; 4.8→4.5 | +0.0 / +10.0 / +0.0; 5.7→5.4 † | +0.0 / -0.8 / +0.0; 6.5→6.5 † | +1.7 / -1.7 / +10.0; 5.4→5.5 † |
-| pip / a / matching / standard | +0.0 / +11.2 / +0.0; 4.9→4.0 † | -2.1 / +27.5 / +0.8; 7.2→5.7 † | +3.3 / +3.3 / +6.6; 7.2→7.0 † | +2.5 / -2.5 / +7.9; 6.0→6.0 † |
-| pip / a / other / standard | +0.0 / +6.2 / +0.0; 4.0→3.8 | +0.0 / +29.2 / +0.0; 5.5→5.2 † | +0.0 / +0.0 / +0.0; 6.0→6.0 † | +0.0 / -3.8 / +0.9; 4.8→4.9 † |
-| pip / b / default / standard | -0.8 / +1.7 / -1.3; 4.8→4.5 | +0.0 / +10.0 / +0.0; 5.7→5.4 † | +0.0 / -6.2 / +0.0; 6.5→6.5 † | +3.0 / -5.0 / +12.1; 5.4→5.5 † |
-| pip / b / matching / standard | +0.8 / +10.0 / +0.8; 4.9→4.0 † | -1.7 / +26.6 / +1.7; 7.2→5.7 † | +4.6 / +1.6 / +8.8; 7.2→7.0 † | +3.4 / -6.2 / +10.9; 6.0→6.0 † |
-| pip / b / other / standard | +0.0 / +5.4 / +0.0; 4.0→3.8 | +0.0 / +28.3 / +0.0; 5.5→5.2 † | +0.0 / -3.3 / +0.0; 6.0→6.0 † | +0.0 / -9.6 / +0.4; 4.8→4.9 † |
+| Default | Official even spread | Official stage loadout | Official stage loadout | Official stage loadout |
+| Attack-led | All Might | echo / twinshot / powershot | bash / momentum / heavystrike | fire / afterglow / spark |
+| Ability-led at z16 | All Focus | echo / powershot / deadeye | bash / heavystrike / riposte | fire / spark / kindle |
+| Ability-led at z20+ | All Focus | echo / deadeye / powershot | bash / heavystrike / hammerfall | fire / ignite / spark |
+| Crimson matching | All Focus | echo / barbed / powershot | — | — |
+| Mantle matching | All Focus | — | — | fire / kindle / spark |
 
-Legal matching range R–B not a reported win-rate row; R–S not a reported win-rate row. Legal other-build R–S +5.4…+17.9. Matching good-turn cuts at z16/z20 unmeasured in its eligible grade band. Same-swap maximum Tobin good turns only / no eligible later-grade row. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
+Crown uses Attack-led as matching and Ability-led as other. The remaining changed rules use Ability-led as matching and Attack-led as other, except Crimson/Mantle use their named tuples. “Default” does not mean the same ability order as matching. Standard personas retain casual parry/dodge .25/.50, good .60/.90; their rings remain .10/.40 and .40/.45. Dodge-first changes only the defence probabilities specified above.
 
-Option a: Tobin good-turn evidence only / no eligible z16/z20 matching win row; no reported non-Tobin swap cell. This is a local-cell result, not release approval.
+### Row identity and legal coverage
 
-Option b: Tobin good-turn evidence only / no eligible z16/z20 matching win row; no reported non-Tobin swap cell. This is a local-cell result, not release approval.
+For each applicable fitting, use `u4-<rule>-z16-boss-<hero>-default-standard-seed<0|1>-R`, and the corresponding z20/25/30 IDs. Paired N/S/B/Rnc rows share the remaining inputs. Early IDs use `z8-boss-keptup`, `z10-boss-keptup`, `z12-boss-keptup` verbatim. Add these for every item whose source is before z16, but exclude a checkpoint before its actual source or grade. Vesper is pre-source at z8; Mountain is pre-source at z8/10/12; Mantle is pre-source at z8/10. Twice-Sworn is pre-source before z15. These rows can be stress evidence, never eligible passes.
 
-#### The Twice-Sworn Oath — 80% (`twice-sworn`)
+Divided Vow is G1–2 only, so every z16/20/25/30 current-grade row is an **ineligible grade stress row**, not permission to drop a later-grade Vow. An older held-grade Vow needs an explicit held-grade run. Gate/Mountain/Oath use Tobin; Crimson/Vesper/Veil/Huntsman use Wren; Vigil/Mantle use Pip; twins/Answer/Crown use all three. Other hero columns need independently specified legal retool adapters. Prayer has no legal starter/tome fitting; the three other support holds have no approved rule. Those missing cells are **unmeasured**, not fabricated zeroes or renamed Pip proxies. All four tools additionally have N/S/R combat-fitting rows for Wren/Pip/Tobin at all four late checkpoints and both seeds. Their rule has no combat hook; those measured rows still cannot certify acquisition or save/retool behavior.
 
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| wren / a / default / standard | +1.3 / +16.3 / +5.5; 5.2→4.6 † | +2.5 / +30.8 / +4.2; 6.9→6.1 | -2.1 / -2.1 / -1.7; 5.4→5.3 | +1.7 / +0.0 / +3.8; 6.0→6.1 |
-| wren / a / matching / standard | +2.1 / +17.5 / +2.5; 4.6→4.4 † | -1.7 / +39.6 / -0.4; 8.0→6.7 | +7.5 / +6.2 / +10.9; 6.5→6.4 | +10.8 / +8.3 / +15.8; 7.5→7.5 |
-| wren / a / other / standard | -1.7 / +18.3 / +0.0; 4.5→4.4 † | +1.7 / +35.0 / +3.0; 6.4→5.4 | -1.7 / -3.8 / -1.7; 5.0→4.9 | +0.0 / -3.3 / +1.7; 5.6→5.7 |
-| wren / b / default / standard | +0.8 / +12.5 / +4.2; 5.2→4.6 † | +2.5 / +29.2 / +4.1; 6.9→6.1 | -2.5 / -7.1 / -2.1; 5.4→5.3 | +5.4 / -5.0 / +7.5; 6.0→6.1 |
-| wren / b / matching / standard | +2.9 / +14.1 / +3.3; 4.6→4.4 † | +1.2 / +32.9 / +2.9; 8.0→6.7 | +6.3 / +2.1 / +10.0; 6.5→6.4 | +7.9 / +2.9 / +11.6; 7.5→7.5 |
-| wren / b / other / standard | -0.8 / +14.6 / +0.4; 4.5→4.4 † | +4.2 / +27.1 / +5.4; 6.4→5.4 | -0.8 / -5.8 / -0.4; 5.0→4.9 | +0.0 / -9.1 / +1.2; 5.6→5.7 |
-| tobin / a / default / standard | 5.3 / 5.3 / 4.9 / 4.9 † | 8.4 / 7.0 / 6.8 / 6.8 | 6.9 / 6.9 / 6.8 / 6.7 | 6.2 / 6.4 / 6.4 / 6.4 |
-| tobin / a / matching / standard | 5.1 / 5.0 / 4.9 / 4.9 † | 9.7 / 8.7 / 8.7 / 8.6 | 8.3 / 8.3 / 7.8 / 7.5 | 9.5 / 9.7 / 9.0 / 8.6 |
-| tobin / a / other / standard | 5.1 / 4.9 / 4.9 / 4.9 † | 9.0 / 7.8 / 7.7 / 7.7 | 7.4 / 7.4 / 7.2 / 7.1 | 5.8 / 5.9 / 5.9 / 5.9 |
-| tobin / b / default / standard | 5.3 / 5.3 / 4.9 / 4.9 † | 8.4 / 7.0 / 6.8 / 6.8 | 6.9 / 6.9 / 6.8 / 6.7 | 6.2 / 6.4 / 6.4 / 6.4 |
-| tobin / b / matching / standard | 5.1 / 5.0 / 4.9 / 4.9 † | 9.7 / 8.7 / 8.7 / 8.6 | 8.3 / 8.3 / 7.8 / 7.5 | 9.5 / 9.7 / 9.0 / 8.6 |
-| tobin / b / other / standard | 5.1 / 4.9 / 4.9 / 4.9 † | 9.0 / 7.8 / 7.7 / 7.7 | 7.4 / 7.4 / 7.2 / 7.1 | 5.8 / 5.9 / 5.9 / 5.9 |
-| pip / a / default / standard | -1.3 / +1.2 / -1.3; 4.8→3.9 † | +0.0 / +10.0 / +0.0; 5.7→5.4 | +0.0 / -0.8 / +0.0; 6.5→6.5 | +9.6 / +6.2 / +10.0; 5.4→5.5 |
-| pip / a / matching / standard | +0.0 / +11.2 / +0.0; 4.9→4.0 † | -2.1 / +27.5 / +0.8; 7.2→5.7 | +5.8 / +5.8 / +6.6; 7.2→6.8 | +6.3 / +1.3 / +7.9; 6.0→5.7 |
-| pip / a / other / standard | +0.0 / +6.2 / +0.0; 4.0→3.8 † | +0.0 / +29.2 / +0.0; 5.5→5.2 | +0.0 / +0.0 / +0.0; 6.0→6.0 | -0.4 / -4.2 / +0.9; 4.8→4.8 |
-| pip / b / default / standard | -1.3 / +1.2 / -1.3; 4.8→3.9 † | +0.0 / +10.0 / +0.0; 5.7→5.4 | +0.0 / -6.2 / +0.0; 6.5→6.5 | +11.7 / +3.7 / +12.1; 5.4→5.5 |
-| pip / b / matching / standard | +0.8 / +10.0 / +0.8; 4.9→4.0 † | -1.7 / +26.6 / +1.7; 7.2→5.7 | +7.1 / +4.1 / +8.8; 7.2→6.8 | +8.0 / -1.6 / +10.9; 6.0→5.7 |
-| pip / b / other / standard | +0.0 / +5.4 / +0.0; 4.0→3.8 † | +0.0 / +28.3 / +0.0; 5.5→5.2 | +0.0 / -3.3 / +0.0; 6.0→6.0 | -0.4 / -10.0 / +0.4; 4.8→4.8 |
+### Current set controls, without health safety credit
 
-Legal matching range R–B -2.1…+10.8; R–S -1.6…+39.6. Legal other-build R–S -10.0…+35.0. Matching good-turn cuts at z16/z20 0.0…6.0%. Same-swap maximum +7.5 points at z16/z20; +38.3 including legal early rows. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
+Each pair uses the same seed and official default build. The proposed live HP line is allowed, but `footHp` is unchanged; the frontier cancels any safety claim. These rows cover z16/20/25/30, not the still-missing z34 Target 1 cell.
 
-Option a: 3/4 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +7.5 points (within +12). This is a local-cell result, not release approval.
-
-Option b: 4/4 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +4.1 points (within +12). This is a local-cell result, not release approval.
-
-Wren with option (a) is a useful late Attack-led candidate: matching wins improve and the Focus other build loses at both z16/z20. Keep the 80% trial distinct; the G3 z13 base-over-common spike and other fitting rows still prevent a whole-band verdict.
-
-#### The Twice-Sworn Oath — 85% (`twice-sworn`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| wren / a / default / standard | +5.5 / +20.5 / +5.5; 5.2→4.5 † | +2.5 / +30.8 / +4.2; 6.9→6.1 | -2.5 / -2.5 / -1.7; 5.4→5.3 | +2.5 / +0.8 / +3.8; 6.0→6.1 |
-| wren / a / matching / standard | +2.1 / +17.5 / +2.5; 4.6→4.4 † | -1.3 / +40.0 / -0.4; 8.0→6.7 | +8.4 / +7.1 / +10.9; 6.5→6.3 | +11.2 / +8.7 / +15.8; 7.5→7.4 |
-| wren / a / other / standard | -0.9 / +19.1 / +0.0; 4.5→4.4 † | +1.7 / +35.0 / +3.0; 6.4→5.4 | -1.7 / -3.8 / -1.7; 5.0→4.9 | +0.0 / -3.3 / +1.7; 5.6→5.7 |
-| wren / b / default / standard | +4.2 / +15.9 / +4.2; 5.2→4.5 † | +2.5 / +29.2 / +4.1; 6.9→6.1 | -2.5 / -7.1 / -2.1; 5.4→5.3 | +5.8 / -4.6 / +7.5; 6.0→6.1 |
-| wren / b / matching / standard | +2.9 / +14.1 / +3.3; 4.6→4.4 † | +1.2 / +32.9 / +2.9; 8.0→6.7 | +7.5 / +3.3 / +10.0; 6.5→6.3 | +7.9 / +2.9 / +11.6; 7.5→7.4 |
-| wren / b / other / standard | -0.4 / +15.0 / +0.4; 4.5→4.4 † | +4.2 / +27.1 / +5.4; 6.4→5.4 | -0.8 / -5.8 / -0.4; 5.0→4.9 | +0.0 / -9.1 / +1.2; 5.6→5.7 |
-| tobin / a / default / standard | 5.3 / 5.3 / 4.9 / 4.9 † | 8.4 / 7.0 / 6.8 / 6.8 | 6.9 / 6.9 / 6.8 / 6.7 | 6.2 / 6.4 / 6.4 / 6.4 |
-| tobin / a / matching / standard | 5.1 / 5.0 / 4.9 / 4.9 † | 9.7 / 8.7 / 8.7 / 8.6 | 8.3 / 8.3 / 7.7 / 7.5 | 9.5 / 9.7 / 8.9 / 8.6 |
-| tobin / a / other / standard | 5.1 / 4.9 / 4.9 / 4.9 † | 9.0 / 7.8 / 7.7 / 7.7 | 7.4 / 7.4 / 7.2 / 7.1 | 5.8 / 5.9 / 5.9 / 5.9 |
-| tobin / b / default / standard | 5.3 / 5.3 / 4.9 / 4.9 † | 8.4 / 7.0 / 6.8 / 6.8 | 6.9 / 6.9 / 6.8 / 6.7 | 6.2 / 6.4 / 6.4 / 6.4 |
-| tobin / b / matching / standard | 5.1 / 5.0 / 4.9 / 4.9 † | 9.7 / 8.7 / 8.7 / 8.6 | 8.3 / 8.3 / 7.7 / 7.5 | 9.5 / 9.7 / 8.9 / 8.6 |
-| tobin / b / other / standard | 5.1 / 4.9 / 4.9 / 4.9 † | 9.0 / 7.8 / 7.7 / 7.7 | 7.4 / 7.4 / 7.2 / 7.1 | 5.8 / 5.9 / 5.9 / 5.9 |
-| pip / a / default / standard | -1.3 / +1.2 / -1.3; 4.8→3.8 † | +0.0 / +10.0 / +0.0; 5.7→5.4 | +0.0 / -0.8 / +0.0; 6.5→6.5 | +9.6 / +6.2 / +10.0; 5.4→5.5 |
-| pip / a / matching / standard | +0.0 / +11.2 / +0.0; 4.9→4.0 † | -1.3 / +28.3 / +0.8; 7.2→5.7 | +5.4 / +5.4 / +6.6; 7.2→6.7 | +7.1 / +2.1 / +7.9; 6.0→5.6 |
-| pip / a / other / standard | +0.0 / +6.2 / +0.0; 4.0→3.8 † | +0.0 / +29.2 / +0.0; 5.5→5.2 | +0.0 / +0.0 / +0.0; 6.0→6.0 | +0.0 / -3.8 / +0.9; 4.8→4.8 |
-| pip / b / default / standard | -1.3 / +1.2 / -1.3; 4.8→3.8 † | +0.0 / +10.0 / +0.0; 5.7→5.4 | +0.0 / -6.2 / +0.0; 6.5→6.5 | +12.1 / +4.1 / +12.1; 5.4→5.5 |
-| pip / b / matching / standard | +0.8 / +10.0 / +0.8; 4.9→4.0 † | -0.8 / +27.5 / +1.7; 7.2→5.7 | +6.7 / +3.7 / +8.8; 7.2→6.7 | +8.8 / -0.8 / +10.9; 6.0→5.6 |
-| pip / b / other / standard | +0.0 / +5.4 / +0.0; 4.0→3.8 † | +0.0 / +28.3 / +0.0; 5.5→5.2 | +0.0 / -3.3 / +0.0; 6.0→6.0 | +0.4 / -9.2 / +0.4; 4.8→4.8 |
-
-Legal matching range R–B -1.3…+11.2; R–S -0.8…+40.0. Legal other-build R–S -9.2…+35.0. Matching good-turn cuts at z16/z20 1.3…7.2%. Same-swap maximum +7.9 points at z16/z20; +38.7 including legal early rows. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: 3/4 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +7.9 points (within +12). This is a local-cell result, not release approval.
-
-Option b: 4/4 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +4.1 points (within +12). This is a local-cell result, not release approval.
-
-Wren with option (a) is a useful late Attack-led candidate: matching wins improve and the Focus other build loses at both z16/z20. Keep the 85% trial distinct; the G3 z13 base-over-common spike and other fitting rows still prevent a whole-band verdict.
-
-#### Gate of the Deep (`quarry-shield`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| tobin / a / default / standard | 5.3 / 5.3 / 4.5 / 4.5 | 8.4 / 8.4 / 7.1 / 6.9 | 6.9 / 6.9 / 6.2 / 6.0 | 6.2 / 6.4 / 5.5 / 5.3 |
-| tobin / a / matching / standard | 5.1 / 5.1 / 4.3 / 4.3 | 9.0 / 9.0 / 7.8 / 7.7 | 7.4 / 7.4 / 6.9 / 6.6 | 5.8 / 5.9 / 5.6 / 5.5 |
-| tobin / a / other / standard | 5.1 / 5.1 / 4.4 / 4.4 | 9.7 / 9.7 / 8.5 / 8.2 | 8.3 / 8.3 / 7.8 / 7.5 | 9.5 / 9.7 / 8.4 / 8.0 |
-| tobin / b / default / standard | 5.3 / 5.3 / 4.5 / 4.5 | 8.4 / 8.4 / 7.1 / 6.9 | 6.9 / 6.9 / 6.2 / 6.0 | 6.2 / 6.4 / 5.5 / 5.3 |
-| tobin / b / matching / standard | 5.1 / 5.1 / 4.3 / 4.3 | 9.0 / 9.0 / 7.8 / 7.7 | 7.4 / 7.4 / 6.9 / 6.6 | 5.8 / 5.9 / 5.6 / 5.5 |
-| tobin / b / other / standard | 5.1 / 5.1 / 4.4 / 4.4 | 9.7 / 9.7 / 8.5 / 8.2 | 8.3 / 8.3 / 7.8 / 7.5 | 9.5 / 9.7 / 8.4 / 8.0 |
-
-Legal matching range R–B not a reported win-rate row; R–S not a reported win-rate row. Legal other-build R–S not a reported win-rate row. Matching good-turn cuts at z16/z20 3.4…6.8%. Same-swap maximum Tobin good turns only / no eligible later-grade row. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: Tobin good-turn evidence only / no eligible z16/z20 matching win row; no reported non-Tobin swap cell. This is a local-cell result, not release approval.
-
-Option b: Tobin good-turn evidence only / no eligible z16/z20 matching win row; no reported non-Tobin swap cell. This is a local-cell result, not release approval.
-
-#### Mountain’s Covenant (`quarry-plate`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| tobin / a / default / standard | 5.3 / 5.3 / 5.3 / 5.3 † | 8.4 / 8.4 / 8.4 / 8.4 | 6.9 / 6.9 / 6.9 / 6.8 | 6.2 / 6.4 / 6.2 / 6.1 |
-| tobin / a / matching / standard | 5.1 / 5.1 / 5.1 / 5.0 † | 9.7 / 9.7 / 9.8 / 9.7 | 8.3 / 8.3 / 8.1 / 8.1 | 9.5 / 9.7 / 9.5 / 9.5 |
-| tobin / a / other / standard | 5.1 / 5.1 / 5.1 / 5.0 † | 9.0 / 9.0 / 8.9 / 8.9 | 7.4 / 7.4 / 7.3 / 7.3 | 5.8 / 5.9 / 5.8 / 5.7 |
-| tobin / b / default / standard | 5.3 / 5.3 / 5.3 / 5.3 † | 8.4 / 8.4 / 8.4 / 8.4 | 6.9 / 6.9 / 6.9 / 6.8 | 6.2 / 6.4 / 6.2 / 6.1 |
-| tobin / b / matching / standard | 5.1 / 5.1 / 5.1 / 5.0 † | 9.7 / 9.7 / 9.8 / 9.7 | 8.3 / 8.3 / 8.1 / 8.1 | 9.5 / 9.7 / 9.5 / 9.5 |
-| tobin / b / other / standard | 5.1 / 5.1 / 5.1 / 5.0 † | 9.0 / 9.0 / 8.9 / 8.9 | 7.4 / 7.4 / 7.3 / 7.3 | 5.8 / 5.9 / 5.8 / 5.7 |
-
-Legal matching range R–B not a reported win-rate row; R–S not a reported win-rate row. Legal other-build R–S not a reported win-rate row. Matching good-turn cuts at z16/z20 0.0…2.4%. Same-swap maximum Tobin good turns only / no eligible later-grade row. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: Tobin good-turn evidence only / no eligible z16/z20 matching win row; no reported non-Tobin swap cell. This is a local-cell result, not release approval.
-
-Option b: Tobin good-turn evidence only / no eligible z16/z20 matching win row; no reported non-Tobin swap cell. This is a local-cell result, not release approval.
-
-#### Oath of the Hollow (`moss-sword`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| tobin / a / default / standard | 5.3 / 5.3 / 5.2 / 5.2 | 8.4 / 7.0 / 6.8 / 6.7 | 6.9 / 6.9 / 6.6 / 6.5 | 6.2 / 6.4 / 6.2 / 6.2 |
-| tobin / a / matching / standard | 5.1 / 4.9 / 4.9 / 4.9 | 9.0 / 7.8 / 7.5 / 7.5 | 7.4 / 7.4 / 7.0 / 7.0 | 5.8 / 5.9 / 5.8 / 5.8 |
-| tobin / a / other / standard | 5.1 / 5.0 / 5.1 / 5.0 | 9.7 / 8.7 / 8.7 / 8.7 | 8.3 / 8.3 / 8.0 / 7.8 | 9.5 / 9.7 / 9.3 / 9.3 |
-| tobin / b / default / standard | 5.3 / 5.3 / 5.2 / 5.2 | 8.4 / 7.0 / 6.8 / 6.7 | 6.9 / 6.9 / 6.6 / 6.5 | 6.2 / 6.4 / 6.2 / 6.2 |
-| tobin / b / matching / standard | 5.1 / 4.9 / 4.9 / 4.9 | 9.0 / 7.8 / 7.5 / 7.5 | 7.4 / 7.4 / 7.0 / 7.0 | 5.8 / 5.9 / 5.8 / 5.8 |
-| tobin / b / other / standard | 5.1 / 5.0 / 5.1 / 5.0 | 9.7 / 8.7 / 8.7 / 8.7 | 8.3 / 8.3 / 8.0 / 7.8 | 9.5 / 9.7 / 9.3 / 9.3 |
-
-Legal matching range R–B not a reported win-rate row; R–S not a reported win-rate row. Legal other-build R–S not a reported win-rate row. Matching good-turn cuts at z16/z20 0.0…5.4%. Same-swap maximum Tobin good turns only / no eligible later-grade row. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: Tobin good-turn evidence only / no eligible z16/z20 matching win row; no reported non-Tobin swap cell. This is a local-cell result, not release approval.
-
-Option b: Tobin good-turn evidence only / no eligible z16/z20 matching win row; no reported non-Tobin swap cell. This is a local-cell result, not release approval.
-
-#### The Crimson Thread (`bat-bow`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| wren / a / default / standard | +0.0 / +15.0 / +0.0; 5.2→5.0 | +0.0 / +28.3 / +0.0; 6.9→6.1 | -3.3 / -3.3 / +0.4; 5.4→5.4 | -1.7 / -3.4 / +1.3; 6.0→6.2 |
-| wren / a / matching / standard | -1.7 / +16.7 / +0.4; 4.8→4.8 | -2.1 / +27.5 / +0.0; 6.9→6.0 | -0.8 / -2.9 / +2.5; 5.6→5.6 | +3.4 / +0.0 / +4.2; 6.1→6.1 |
-| wren / a / other / standard | +0.0 / +15.4 / +0.0; 4.6→4.4 † | +0.0 / +41.3 / +0.0; 8.0→6.8 | -1.2 / -2.5 / +1.3; 6.5→6.5 | +0.0 / -2.5 / +2.5; 7.5→7.5 |
-| wren / b / default / standard | +0.0 / +11.7 / +0.0; 5.2→5.0 | +0.0 / +26.7 / +0.0; 6.9→6.1 | -2.5 / -7.1 / +0.0; 5.4→5.4 | -1.3 / -11.7 / +1.2; 6.0→6.2 |
-| wren / b / matching / standard | -1.6 / +10.9 / +0.9; 4.8→4.8 | -1.3 / +20.0 / +0.0; 6.9→6.0 | -0.4 / -3.8 / +3.0; 5.6→5.6 | +0.0 / -7.5 / +2.1; 6.1→6.1 |
-| wren / b / other / standard | +0.0 / +11.2 / +0.0; 4.6→4.4 † | +0.0 / +31.7 / +0.0; 8.0→6.8 | -0.4 / -4.6 / +1.3; 6.5→6.5 | -0.9 / -5.9 / +2.0; 7.5→7.5 |
-
-Legal matching range R–B -2.1…+3.4; R–S -7.5…+27.5. Legal other-build R–S -5.9…+41.3. Matching good-turn cuts at z16/z20 0.0…0.0%. Same-swap maximum -2.9 points at z16/z20; +31.2 including legal early rows. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: 0/2 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S -2.9 points (within +12). This is a local-cell result, not release approval.
-
-Option b: 0/2 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S -5.0 points (within +12). This is a local-cell result, not release approval.
-
-#### Vesper’s Reach (`bat-quiver`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| wren / a / default / standard | -2.1 / +2.1 / -1.7; 5.2→5.1 | +4.1 / +10.8 / +7.9; 6.9→7.0 | +4.6 / +4.6 / +3.8; 5.4→5.5 | +3.8 / +2.9 / +3.4; 6.0→6.3 |
-| wren / a / matching / standard | -2.5 / +3.7 / +0.0; 4.5→4.6 | +3.3 / +9.6 / +10.4; 6.4→6.4 | -0.4 / +0.0 / +0.0; 5.0→5.2 | +1.2 / -0.4 / +4.6; 5.6→5.9 |
-| wren / a / other / standard | +0.4 / +4.1 / +0.4; 4.6→4.6 † | +0.9 / +10.9 / +3.4; 8.0→7.9 | +2.5 / +2.5 / +5.0; 6.5→6.7 | +0.8 / -1.3 / +7.5; 7.5→7.8 |
-| wren / a / default / dodge | +1.7 / +7.5 / +2.5; 6.8→6.0 | +10.9 / +19.2 / +13.4; 9.3→8.0 | +2.9 / +2.9 / +3.3; 7.6→6.5 | +13.8 / +10.9 / +14.6; 8.7→7.4 |
-| wren / a / matching / dodge | +15.0 / +20.8 / +14.6; 5.9→5.1 | +10.8 / +14.5 / +11.7; 8.3→6.7 | -0.4 / -0.4 / -0.4; 6.3→5.5 | +7.1 / +4.6 / +8.3; 7.4→6.0 |
-| wren / a / other / dodge | +5.8 / +12.5 / +5.0; 5.8→5.1 † | -1.3 / +5.0 / +0.0; 9.7→8.5 | +3.7 / +3.7 / +4.6; 8.5→7.7 | +3.8 / +0.4 / +5.4; 9.1→8.4 |
-| wren / b / default / standard | -2.9 / -2.0 / -1.7; 5.2→5.1 | +3.7 / +5.4 / +6.6; 6.9→7.0 | +2.9 / -0.8 / +2.5; 5.4→5.5 | +5.0 / -2.1 / +5.0; 6.0→6.3 |
-| wren / b / matching / standard | +1.2 / +1.6 / +1.7; 4.5→4.6 | +3.3 / +4.6 / +7.0; 6.4→6.4 | +0.5 / -3.3 / +3.0; 5.0→5.2 | +1.7 / -6.2 / +6.3; 5.6→5.9 |
-| wren / b / other / standard | +0.8 / +0.8 / +0.8; 4.6→4.6 † | +0.8 / +5.0 / +4.2; 8.0→7.9 | +1.7 / -0.8 / +4.2; 6.5→6.7 | +0.4 / -3.8 / +6.7; 7.5→7.8 |
-| wren / b / default / dodge | +1.7 / +2.5 / +2.5; 6.8→6.0 | +10.4 / +12.1 / +13.3; 9.3→8.0 | +2.1 / -1.7 / +2.9; 7.6→6.5 | +15.4 / +4.6 / +16.2; 8.7→7.4 |
-| wren / b / matching / dodge | +13.7 / +14.1 / +13.3; 5.9→5.1 | +9.6 / +10.0 / +10.0; 8.3→6.7 | +1.7 / -0.8 / +1.7; 6.3→5.5 | +3.7 / -1.7 / +4.6; 7.4→6.0 |
-| wren / b / other / dodge | +7.5 / +7.5 / +7.1; 5.8→5.1 † | -0.8 / +1.7 / -0.4; 9.7→8.5 | +5.0 / +1.2 / +5.4; 8.5→7.7 | +6.2 / -3.4 / +9.1; 9.1→8.4 |
-
-Legal matching range R–B -2.5…+15.0; R–S -6.2…+20.8. Legal other-build R–S -3.8…+10.9. Matching good-turn cuts at z16/z20 -5.4…18.9%. Same-swap maximum +13.4 points at z16/z20; +20.8 including legal early rows. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: 0/4 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +13.4 points (above +12). This is a local-cell result, not release approval.
-
-Option b: 0/4 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +7.0 points (within +12). This is a local-cell result, not release approval.
-
-Dodge-first exposes the intended effect: Wren’s z16 good turns fall 6.3→5.5 (12.7%), but z20 falls 7.4→6.0 (18.9%), above the 16% cut/review threshold. The sampled late same-swap maximum is +13.4 points. The normal persona does not show the same benefit; retune/hold rather than dismissing the dodge build.
-
-#### Veil of the Unheard (`echo-cowl`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| wren / a / default / standard | -3.8 / +2.5 / +0.4; 5.2→5.2 | -2.5 / +5.4 / +5.9; 6.9→6.8 | -2.5 / -2.5 / +1.3; 5.4→5.3 | -3.3 / -5.0 / +0.0; 6.0→6.1 |
-| wren / a / matching / standard | -2.9 / +3.3 / +2.5; 4.6→4.5 † | -1.7 / +9.6 / +7.5; 8.0→7.8 | -2.0 / -3.3 / +5.0; 6.5→6.4 | -3.0 / -5.5 / +2.0; 7.5→7.6 |
-| wren / a / other / standard | -4.1 / +7.5 / +0.9; 4.5→4.5 | -2.9 / +6.7 / +2.9; 6.4→6.4 | -0.4 / -2.5 / +2.1; 5.0→4.9 | -2.1 / -5.4 / +0.8; 5.6→5.7 |
-| wren / b / default / standard | -3.8 / -0.4 / +0.8; 5.2→5.2 | -2.1 / +2.9 / +5.0; 6.9→6.8 | -1.6 / -6.2 / +1.7; 5.4→5.3 | -3.0 / -13.4 / +0.8; 6.0→6.1 |
-| wren / b / matching / standard | -3.3 / +0.0 / +2.1; 4.6→4.5 † | -2.9 / +1.3 / +7.1; 8.0→7.8 | -1.6 / -5.8 / +4.2; 6.5→6.4 | -3.0 / -8.0 / +2.0; 7.5→7.6 |
-| wren / b / other / standard | -2.0 / +2.1 / +1.3; 4.5→4.5 | -2.9 / +2.1 / +1.7; 6.4→6.4 | -0.4 / -5.4 / +2.9; 5.0→4.9 | -2.1 / -11.2 / +0.8; 5.6→5.7 |
-
-Legal matching range R–B -3.0…-1.6; R–S -8.0…+9.6. Legal other-build R–S -11.2…+7.5. Matching good-turn cuts at z16/z20 -1.3…1.5%. Same-swap maximum -2.1 points at z16/z20; +9.6 including legal early rows. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: 0/2 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S -2.1 points (within +12). This is a local-cell result, not release approval.
-
-Option b: 0/2 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S -5.0 points (within +12). This is a local-cell result, not release approval.
-
-#### The Drowned Huntsman (`marsh-leathers`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| wren / a / default / standard | +0.0 / +10.0 / +0.0; 5.2→5.2 | +1.2 / +20.0 / +2.0; 6.9→6.8 | -0.8 / +1.3 / +2.1; 5.4→5.4 | -7.0 / -2.9 / +2.1; 6.0→6.2 |
-| wren / a / matching / standard | +0.0 / +15.4 / +0.0; 4.5→4.4 | +4.6 / +26.6 / +6.3; 6.3→6.2 | +5.0 / +9.2 / +5.8; 5.2→5.2 | +0.4 / +1.7 / +4.6; 5.6→5.8 |
-| wren / a / other / standard | +0.0 / +11.2 / +0.0; 4.6→4.6 † | +0.0 / +23.4 / +0.0; 8.0→8.0 | -0.9 / +1.2 / +0.0; 6.5→6.7 | -1.7 / +0.8 / +0.0; 7.5→7.8 |
-| wren / b / default / standard | +0.0 / +6.7 / +0.0; 5.2→5.2 | +2.1 / +14.2 / +3.3; 6.9→6.8 | -1.2 / -1.2 / +2.1; 5.4→5.4 | -7.1 / -8.4 / +2.5; 6.0→6.2 |
-| wren / b / matching / standard | +0.0 / +10.8 / +0.0; 4.5→4.4 | +5.0 / +19.5 / +6.7; 6.3→6.2 | +4.6 / +4.6 / +5.9; 5.2→5.2 | -0.4 / -2.9 / +4.2; 5.6→5.8 |
-| wren / b / other / standard | +0.0 / +6.6 / +0.0; 4.6→4.6 † | +0.0 / +17.1 / +0.0; 8.0→8.0 | -0.8 / -0.8 / +0.0; 6.5→6.6 | -2.1 / -4.6 / +0.0; 7.5→7.8 |
-
-Legal matching range R–B -0.4…+5.0; R–S -2.9…+26.6. Legal other-build R–S -4.6…+23.4. Matching good-turn cuts at z16/z20 -3.6…0.0%. Same-swap maximum +6.7 points at z16/z20; +24.6 including legal early rows. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: 0/2 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +6.7 points (within +12). This is a local-cell result, not release approval.
-
-Option b: 1/2 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +1.7 points (within +12). This is a local-cell result, not release approval.
-
-#### The Scarlet Vigil (`spore-circlet`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| pip / a / default / standard | -5.8 / -4.6 / +0.5; 4.8→4.8 | -3.8 / +1.2 / +0.0; 5.7→6.4 | -3.7 / -4.5 / +0.0; 6.5→6.7 | -2.5 / -5.9 / +0.0; 5.4→5.8 |
-| pip / a / matching / standard | -9.5 / -5.8 / +0.0; 4.9→5.0 † | -2.1 / +14.1 / +1.7; 7.2→7.5 | +0.8 / +0.8 / +1.2; 7.2→7.5 | -1.2 / -6.2 / +0.9; 6.0→6.3 |
-| pip / a / other / standard | +0.0 / +3.3 / +0.0; 4.0→4.0 | -1.3 / +12.5 / +0.0; 5.5→5.7 | -3.3 / -3.3 / +0.0; 6.0→6.4 | -5.4 / -9.2 / +0.0; 4.8→5.1 |
-| pip / b / default / standard | -5.8 / -5.4 / +0.4; 4.8→4.8 | -3.8 / +1.2 / +0.0; 5.7→6.4 | -3.4 / -10.4 / +0.0; 6.5→6.7 | -3.7 / -11.7 / +0.0; 5.4→5.8 |
-| pip / b / matching / standard | -10.4 / -7.5 / +0.0; 4.9→5.0 † | +0.4 / +7.9 / +2.9; 7.2→7.5 | +0.9 / -2.1 / +1.3; 7.2→7.5 | -1.6 / -11.2 / +1.7; 6.0→6.3 |
-| pip / b / other / standard | +0.0 / +3.3 / +0.0; 4.0→4.0 | -1.7 / +5.4 / +0.0; 5.5→5.7 | -2.5 / -5.8 / +0.0; 6.0→6.4 | -4.6 / -14.2 / +0.0; 4.8→5.1 |
-
-Legal matching range R–B -2.1…+0.9; R–S -11.2…+14.1. Legal other-build R–S -14.2…+12.5. Matching good-turn cuts at z16/z20 -5.0…-4.2%. Same-swap maximum -0.9 points at z16/z20; +15.0 including legal early rows. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: 0/2 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S -0.9 points (within +12). This is a local-cell result, not release approval.
-
-Option b: 0/2 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S -3.8 points (within +12). This is a local-cell result, not release approval.
-
-#### Mantle of the Red Moon (`spore-robe`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| pip / a / default / standard | +0.0 / +0.8 / +0.0; 4.8→4.8 † | +5.8 / +8.7 / +5.4; 5.7→5.7 | +2.5 / +8.0 / +2.9; 6.5→6.4 | +2.9 / +5.8 / +4.1; 5.4→5.4 |
-| pip / a / matching / standard | +0.0 / +2.9 / +0.0; 5.0→5.0 † | -0.4 / +23.7 / +0.0; 5.9→5.9 | +0.0 / +5.0 / +1.6; 6.6→6.6 | +0.4 / +2.9 / +1.3; 5.3→5.5 |
-| pip / a / other / standard | +0.0 / +4.6 / +0.0; 4.9→4.7 † | -0.8 / +23.3 / +1.7; 7.2→7.3 | +0.4 / +6.2 / +1.2; 7.2→7.1 | +0.8 / +2.5 / +1.2; 6.0→6.1 |
-| pip / b / default / standard | +0.0 / +0.8 / +0.0; 4.8→4.8 † | +5.8 / +8.7 / +5.4; 5.7→5.7 | +3.4 / +3.4 / +4.2; 6.5→6.4 | +3.7 / +1.6 / +5.8; 5.4→5.4 |
-| pip / b / matching / standard | +0.8 / +2.9 / +0.8; 5.0→5.0 † | -0.4 / +19.1 / +0.0; 5.9→5.9 | +0.0 / +0.0 / +1.6; 6.6→6.6 | +0.0 / -1.2 / +1.2; 5.3→5.5 |
-| pip / b / other / standard | +0.0 / +4.6 / +0.0; 4.9→4.7 † | -1.3 / +19.1 / +2.1; 7.2→7.3 | +0.4 / +0.4 / +2.0; 7.2→7.1 | +0.0 / -2.1 / +1.3; 6.0→6.1 |
-
-Legal matching range R–B -0.4…+0.4; R–S -1.2…+23.7. Legal other-build R–S -2.1…+23.3. Matching good-turn cuts at z16/z20 -3.8…0.0%. Same-swap maximum +5.4 points at z16/z20; +26.7 including legal early rows. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: 0/2 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +5.4 points (within +12). This is a local-cell result, not release approval.
-
-Option b: 0/2 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +0.4 points (within +12). This is a local-cell result, not release approval.
-
-#### The Final Answer (`rattlebone-charm`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| wren / a / default / standard | -0.4 / +3.0 / -0.9; 5.2→4.3 | +4.6 / +9.6 / +4.6; 6.9→6.9 | +2.9 / +5.0 / +2.9; 5.4→5.3 | +1.6 / +6.2 / +4.1; 6.0→5.7 |
-| wren / a / matching / standard | +2.1 / +7.9 / +2.1; 4.5→4.1 | +6.7 / +11.7 / +6.7; 6.4→6.1 | -2.1 / +2.1 / -2.1; 5.0→4.9 | +5.4 / +10.0 / +5.9; 5.6→5.2 |
-| wren / a / other / standard | +0.0 / +3.7 / +1.3; 4.6→4.3 † | +4.2 / +8.8 / +5.4; 8.0→7.7 | +2.5 / +4.6 / +2.5; 6.5→6.3 | +10.0 / +16.6 / +10.4; 7.5→7.1 |
-| wren / a / default / dodge | +5.0 / +10.8 / +2.5; 6.8→5.9 | +3.3 / +10.4 / +5.4; 9.3→8.1 | +1.7 / +5.8 / +1.7; 7.6→7.0 | +2.5 / +10.4 / +5.5; 8.7→7.8 |
-| wren / a / matching / dodge | +8.3 / +13.7 / +9.2; 5.9→4.9 | +1.7 / +5.0 / +1.7; 8.3→6.9 | -2.1 / +4.6 / -2.5; 6.3→6.0 | +7.5 / +12.1 / +7.9; 7.4→6.5 |
-| wren / a / other / dodge | +2.9 / +9.6 / +5.4; 5.8→5.6 † | -3.8 / +0.8 / -1.7; 9.7→8.9 | +3.8 / +7.5 / +4.6; 8.5→7.9 | +2.5 / +7.9 / +4.6; 9.1→8.4 |
-| wren / b / default / standard | -1.2 / -1.2 / -1.2; 5.2→4.3 | +3.3 / +3.3 / +3.3; 6.9→6.9 | +2.9 / +2.9 / +2.9; 5.4→5.3 | +0.8 / +0.8 / +3.3; 6.0→5.7 |
-| wren / b / matching / standard | +4.6 / +4.6 / +4.6; 4.5→4.1 | +5.4 / +5.4 / +5.4; 6.4→6.1 | -0.8 / -0.8 / -0.8; 5.0→4.9 | +6.7 / +6.7 / +7.1; 5.6→5.2 |
-| wren / b / other / standard | +0.0 / +0.0 / +1.2; 4.6→4.3 † | +1.3 / +1.3 / +2.5; 8.0→7.7 | +0.8 / +0.8 / +0.8; 6.5→6.3 | +7.9 / +7.9 / +9.1; 7.5→7.1 |
-| wren / b / default / dodge | +5.0 / +5.0 / +2.5; 6.8→5.9 | +3.7 / +3.7 / +4.6; 9.3→8.1 | +2.1 / +2.1 / +2.1; 7.6→7.0 | +5.4 / +5.4 / +8.8; 8.7→7.8 |
-| wren / b / matching / dodge | +9.6 / +9.6 / +10.4; 5.9→4.9 | +1.2 / +1.2 / +1.6; 8.3→6.9 | -0.4 / -0.4 / -0.8; 6.3→6.0 | +6.7 / +6.7 / +7.1; 7.4→6.5 |
-| wren / b / other / dodge | +5.0 / +5.0 / +7.9; 5.8→5.6 † | -1.2 / -1.2 / +1.3; 9.7→8.9 | +2.9 / +2.9 / +4.1; 8.5→7.9 | +0.0 / +0.0 / +1.2; 9.1→8.4 |
-| tobin / a / default / standard | 5.3 / 5.3 / 5.3 / 5.3 | 8.4 / 8.4 / 8.5 / 8.5 | 6.9 / 6.9 / 7.1 / 7.1 | 6.2 / 6.2 / 6.7 / 6.7 |
-| tobin / a / matching / standard | 5.1 / 5.1 / 5.3 / 5.3 | 9.0 / 9.0 / 8.9 / 8.9 | 7.4 / 7.4 / 7.6 / 7.5 | 5.8 / 5.8 / 6.3 / 6.3 |
-| tobin / a / other / standard | 5.1 / 5.1 / 5.3 / 5.3 | 9.7 / 9.7 / 9.9 / 9.9 | 8.3 / 8.3 / 8.8 / 8.7 | 9.5 / 9.5 / 9.9 / 10.0 |
-| tobin / a / default / dodge | 6.8 / 6.8 / 7.1 / 7.1 | 10.2 / 10.2 / 11.1 / 11.1 | 11.8 / 11.8 / 11.6 / 11.5 | 10.3 / 10.3 / 10.1 / 10.1 |
-| tobin / a / matching / dodge | 6.6 / 6.6 / 7.1 / 7.1 | 10.0 / 10.0 / 10.3 / 10.3 | 10.9 / 10.9 / 10.3 / 10.3 | 9.1 / 9.1 / 8.0 / 8.0 |
-| tobin / a / other / dodge | 6.3 / 6.3 / 7.1 / 7.1 | 10.0 / 10.0 / 11.4 / 11.3 | 10.8 / 10.8 / 12.3 / 12.1 | 12.7 / 12.7 / 14.2 / 13.8 |
-| tobin / b / default / standard | 5.3 / 5.3 / 5.3 / 5.3 | 8.4 / 8.4 / 8.5 / 8.5 | 6.9 / 6.9 / 7.1 / 7.1 | 6.2 / 6.2 / 6.7 / 6.7 |
-| tobin / b / matching / standard | 5.1 / 5.1 / 5.3 / 5.3 | 9.0 / 9.0 / 8.9 / 8.9 | 7.4 / 7.4 / 7.6 / 7.5 | 5.8 / 5.8 / 6.3 / 6.3 |
-| tobin / b / other / standard | 5.1 / 5.1 / 5.3 / 5.3 | 9.7 / 9.7 / 9.9 / 9.9 | 8.3 / 8.3 / 8.8 / 8.7 | 9.5 / 9.5 / 9.9 / 10.0 |
-| tobin / b / default / dodge | 6.8 / 6.8 / 7.1 / 7.1 | 10.2 / 10.2 / 11.1 / 11.1 | 11.8 / 11.8 / 11.6 / 11.5 | 10.3 / 10.3 / 10.1 / 10.1 |
-| tobin / b / matching / dodge | 6.6 / 6.6 / 7.1 / 7.1 | 10.0 / 10.0 / 10.3 / 10.3 | 10.9 / 10.9 / 10.3 / 10.3 | 9.1 / 9.1 / 8.0 / 8.0 |
-| tobin / b / other / dodge | 6.3 / 6.3 / 7.1 / 7.1 | 10.0 / 10.0 / 11.4 / 11.3 | 10.8 / 10.8 / 12.3 / 12.1 | 12.7 / 12.7 / 14.2 / 13.8 |
-| pip / a / default / standard | -3.3 / -2.9 / -2.9; 4.8→3.9 | +1.3 / +4.2 / +1.3; 5.7→5.6 | +11.2 / +16.7 / +11.2; 6.5→6.4 | +5.9 / +10.0 / +5.9; 5.4→5.3 |
-| pip / a / matching / standard | -3.3 / +0.0 / -3.3; 4.0→4.0 | -1.7 / +5.4 / -1.7; 5.5→5.4 | +3.3 / +8.3 / +3.3; 6.0→5.9 | +0.9 / +1.7 / +0.9; 4.8→4.6 |
-| pip / a / other / standard | -4.6 / -1.7 / -2.1; 4.9→4.1 † | -5.4 / +2.1 / -4.6; 7.2→6.7 | -3.3 / +2.5 / -2.9; 7.2→7.3 | -1.3 / +2.1 / +0.0; 6.0→6.0 |
-| pip / a / default / dodge | -1.3 / +0.0 / -1.3; 5.6→4.9 | +2.1 / +7.1 / +2.1; 7.6→7.1 | +25.0 / +30.4 / +25.0; 10.0→9.5 | +0.8 / +4.6 / +1.2; 7.5→6.9 |
-| pip / a / matching / dodge | -1.3 / +3.7 / -1.3; 4.0→4.4 | +5.0 / +11.7 / +5.0; 7.3→6.9 | +5.8 / +10.0 / +5.8; 8.4→7.4 | +4.6 / +8.3 / +4.6; 6.3→5.3 |
-| pip / a / other / dodge | +2.1 / +7.1 / +3.8; 5.1→5.0 † | -24.2 / -15.4 / -22.5; 8.1→8.3 | -12.5 / -5.9 / -10.0; 9.3→9.9 | -4.6 / +2.0 / -3.3; 7.1→7.8 |
-| pip / b / default / standard | -3.8 / -3.8 / -3.3; 4.8→3.9 | +0.8 / +0.8 / +0.8; 5.7→5.6 | +13.0 / +13.0 / +13.0; 6.5→6.4 | +6.6 / +6.6 / +6.6; 5.4→5.3 |
-| pip / b / matching / standard | -5.0 / -5.0 / -5.0; 4.0→4.0 | -3.3 / -3.3 / -3.3; 5.5→5.4 | +2.5 / +2.5 / +2.5; 6.0→5.9 | +0.8 / +0.8 / +0.8; 4.8→4.6 |
-| pip / b / other / standard | -4.2 / -4.2 / -1.7; 4.9→4.1 † | -5.0 / -5.0 / -3.8; 7.2→6.7 | -3.0 / -3.0 / -1.7; 7.2→7.3 | -4.6 / -4.6 / -2.5; 6.0→6.0 |
-| pip / b / default / dodge | -2.5 / -2.5 / -2.1; 5.6→4.9 | +0.4 / +0.4 / +0.4; 7.6→7.1 | +23.7 / +23.7 / +23.7; 10.0→9.5 | +0.0 / +0.0 / +0.5; 7.5→6.9 |
-| pip / b / matching / dodge | -1.3 / -1.3 / -1.3; 4.0→4.4 | +0.4 / +0.4 / +0.4; 7.3→6.9 | +4.6 / +4.6 / +4.6; 8.4→7.4 | +4.6 / +4.6 / +4.2; 6.3→5.3 |
-| pip / b / other / dodge | +3.8 / +3.8 / +5.9; 5.1→5.0 † | -21.2 / -21.2 / -19.6; 8.1→8.3 | -12.9 / -12.9 / -10.9; 9.3→9.9 | -6.3 / -6.3 / -5.0; 7.1→7.8 |
-
-Legal matching range R–B -5.0…+9.6; R–S -5.0…+13.7. Legal other-build R–S -21.2…+16.6. Matching good-turn cuts at z16/z20 -8.6…15.9%. Same-swap maximum +22.5 points at z16/z20; +22.5 including legal early rows. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: 1/8 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +22.5 points (above +12). This is a local-cell result, not release approval.
-
-Option b: 2/8 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +18.7 points (above +12). This is a local-cell result, not release approval.
-
-Pip’s option-(a) z16 dodge-first matching row gains +10.0 over S and +5.8 over B, loses −5.9 in the other build, and cuts good turns 8.4→7.4 (11.9%). That local target-2/3 result is promising. At z20 its matching good-turn cut is 15.9%, while the sampled late same-swap maximum reaches +22.5 points: the whole rule remains held.
-
-#### Crown of the Burrow (`beetle-helm`)
-
-| Hero / HP option / build / persona | z9 | z13 | z16 | z20 |
-|---|---|---|---|---|
-| wren / a / default / standard | -1.3 / +5.0 / +0.0; 5.2→5.5 | -0.8 / +7.1 / +0.0; 6.9→6.9 | +0.0 / +0.0 / +0.0; 5.4→5.4 | -7.1 / -8.8 / +0.0; 6.0→6.2 |
-| wren / a / matching / standard | -0.8 / +5.4 / +0.0; 4.6→4.6 † | -5.4 / +5.9 / +0.0; 8.0→8.0 | -1.2 / -2.5 / +0.0; 6.5→6.6 | -2.1 / -4.6 / +0.0; 7.5→7.8 |
-| wren / a / other / standard | -1.6 / +10.0 / +0.0; 4.5→4.5 | +0.4 / +10.0 / +0.0; 6.4→6.4 | -0.4 / -2.5 / +0.0; 5.0→5.0 | -0.4 / -3.7 / +0.0; 5.6→5.7 |
-| wren / b / default / standard | -1.3 / +2.1 / +0.0; 5.2→5.5 | -0.4 / +4.6 / +0.0; 6.9→6.9 | +0.0 / -4.6 / +0.0; 5.4→5.4 | -7.1 / -17.5 / +0.0; 6.0→6.2 |
-| wren / b / matching / standard | -0.4 / +2.9 / +0.0; 4.6→4.6 † | -4.6 / -0.4 / +0.0; 8.0→8.0 | -1.6 / -5.8 / +0.0; 6.5→6.6 | -2.5 / -7.5 / +0.0; 7.5→7.8 |
-| wren / b / other / standard | -1.2 / +2.9 / +0.0; 4.5→4.5 | +0.4 / +5.4 / +0.0; 6.4→6.4 | -0.4 / -5.4 / +0.0; 5.0→5.0 | -0.4 / -9.5 / +0.0; 5.6→5.7 |
-| tobin / a / default / standard | 5.3 / 5.3 / 5.3 / 5.3 | 8.4 / 8.4 / 8.4 / 8.4 | 6.9 / 6.9 / 6.9 / 6.9 | 6.2 / 6.4 / 6.4 / 6.4 |
-| tobin / a / matching / standard | 5.1 / 5.1 / 5.1 / 5.1 | 9.7 / 9.7 / 9.8 / 9.7 | 8.3 / 8.3 / 8.3 / 8.3 | 9.5 / 9.7 / 9.7 / 9.7 |
-| tobin / a / other / standard | 5.1 / 5.1 / 5.1 / 5.1 | 9.0 / 9.0 / 9.0 / 9.0 | 7.4 / 7.4 / 7.4 / 7.4 | 5.8 / 5.9 / 5.9 / 5.9 |
-| tobin / b / default / standard | 5.3 / 5.3 / 5.3 / 5.3 | 8.4 / 8.4 / 8.4 / 8.4 | 6.9 / 6.9 / 6.9 / 6.9 | 6.2 / 6.4 / 6.4 / 6.4 |
-| tobin / b / matching / standard | 5.1 / 5.1 / 5.1 / 5.1 | 9.7 / 9.7 / 9.8 / 9.7 | 8.3 / 8.3 / 8.3 / 8.3 | 9.5 / 9.7 / 9.7 / 9.7 |
-| tobin / b / other / standard | 5.1 / 5.1 / 5.1 / 5.1 | 9.0 / 9.0 / 9.0 / 9.0 | 7.4 / 7.4 / 7.4 / 7.4 | 5.8 / 5.9 / 5.9 / 5.9 |
-| pip / a / default / standard | +0.0 / +1.2 / +0.0; 4.8→4.8 | +5.0 / +10.0 / +5.0; 5.7→5.7 | +0.0 / -0.8 / +0.0; 6.5→6.5 | +0.4 / -3.0 / +0.0; 5.4→5.5 |
-| pip / a / matching / standard | -0.4 / +3.3 / -0.4; 4.9→4.7 † | +0.4 / +16.6 / +0.4; 7.2→7.2 | -2.5 / -2.5 / +0.0; 7.2→7.2 | -2.1 / -7.1 / +0.0; 6.0→6.2 |
-| pip / a / other / standard | +0.0 / +3.3 / +0.0; 4.0→4.0 | +0.4 / +14.2 / +0.4; 5.5→5.5 | +0.0 / +0.0 / +0.0; 6.0→6.0 | +0.0 / -3.8 / +0.0; 4.8→4.9 |
-| pip / b / default / standard | +0.0 / +0.4 / +0.0; 4.8→4.8 | +5.0 / +10.0 / +5.0; 5.7→5.7 | +0.0 / -7.0 / +0.0; 6.5→6.5 | +0.5 / -7.5 / +0.0; 5.4→5.5 |
-| pip / b / matching / standard | -0.4 / +2.5 / -0.4; 4.9→4.7 † | +0.8 / +8.3 / +0.8; 7.2→7.2 | -2.5 / -5.5 / +0.0; 7.2→7.2 | -2.0 / -11.6 / +0.0; 6.0→6.2 |
-| pip / b / other / standard | +0.0 / +3.3 / +0.0; 4.0→4.0 | +0.0 / +7.1 / +0.0; 5.5→5.5 | +0.0 / -3.3 / +0.0; 6.0→6.0 | +0.0 / -9.6 / +0.0; 4.8→4.9 |
-
-Legal matching range R–B -5.4…+0.8; R–S -11.6…+16.6. Legal other-build R–S -9.6…+14.2. Matching good-turn cuts at z16/z20 -4.0…0.0%. Same-swap maximum +0.0 points at z16/z20; +16.7 including legal early rows. Early R–S/swap gains include the Rare-over-common base advantage; R–B isolates the rule. **Held**: these ranges do not replace the whole acceptance contract.
-
-Option a: 0/4 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S +0.0 points (within +12). This is a local-cell result, not release approval.
-
-Option b: 0/4 sampled legal z16/z20 matching cells meet the stated target-2 floor/ceiling **and** lose/tie in that same hero/persona’s other build; largest same-swap R–S -2.9 points (within +12). This is a local-cell result, not release approval.
-
-### Held fitting rows
-
-| Item | z9 / z13 / z16 / z20 | Reason |
-|---|---|---|
-| The Unfinished Prayer | Unmeasured | Tome is Lightkeeper-only; no playable starter fitting. No illegal Mage proxy. |
-| Requiem Bell | Unmeasured | No approved rule/cost or playable fitting. |
-| Last Rites | Unmeasured | Same hold. |
-| Vestments of the Last Dawn | Unmeasured | Same hold. |
-
-## Gathering: three-unit trial, outside initial pool
-
-Run one hour per seed at 0.1-second ticks, G1/G2/**G3**/G4/G5 tools, Rare +0 with no affixes and mastery starting at 1. Three paired seeds: 31415, 27182, 16180. Live mastery, Glints, credited finds and storage limits remain enabled; set a legal high progress fixture (maxZone/zone42 and the tool-grade skill gate). No infinite-storage or frozen-mastery result is implied.
-
-The spear fixture now uses `nodeTier = min(toolTier, 3)`: there are only three legal Hunting beasts/nodes. G4/G5 spears are tested on the real G3 ground, not a fabricated G4/G5 beast. Mining/Woodcutting/Foraging use their matching-grade nodes. The G4/G5 **Hunting node** result remains impossible/unmeasured on this checkpoint.
-
-| Tool grade / node grade | Bulk Rare → unique (three-seed mean) | Rare finds Rare → unique | Full-pile runs Rare / unique |
+| Zone / hero | Casual N→S (s0; s1) | S−N points (s0; s1) | Good turns N→S (s0; s1) |
 |---|---|---|---|
-| pick G1 / node G1 | 2502.3 → 2241.7 | 11.0 → 25.0 | 0/3 / 0/3 |
-| pick G2 / node G2 | 2334.7 → 2098.7 | 16.7 → 33.0 | 0/3 / 0/3 |
-| pick G3 / node G3 | 2878.7 → 2591.3 | 29.0 → 86.0 | 0/3 / 0/3 |
-| pick G4 / node G4 | 4499.0 → 4047.3 | 83.3 → 207.0 | 0/3 / 0/3 |
-| pick G5 / node G5 | 4736.0 → 4591.0 | 264.0 → 409.0 | 3/3 / 3/3 |
-| axe G1 / node G1 | 2502.3 → 2241.7 | 11.0 → 25.0 | 0/3 / 0/3 |
-| axe G2 / node G2 | 2334.7 → 2098.7 | 16.7 → 33.0 | 0/3 / 0/3 |
-| axe G3 / node G3 | 2878.7 → 2591.3 | 29.0 → 86.0 | 0/3 / 0/3 |
-| axe G4 / node G4 | 4499.0 → 4047.3 | 83.3 → 207.0 | 0/3 / 0/3 |
-| axe G5 / node G5 | 4736.0 → 4591.0 | 264.0 → 409.0 | 3/3 / 3/3 |
-| sickle G1 / node G1 | 2502.3 → 2241.7 | 11.0 → 25.0 | 0/3 / 0/3 |
-| sickle G2 / node G2 | 2334.7 → 2098.7 | 16.7 → 33.0 | 0/3 / 0/3 |
-| sickle G3 / node G3 | 2788.3 → 2510.7 | 28.7 → 94.0 | 0/3 / 0/3 |
-| sickle G4 / node G4 | 4377.7 → 3914.7 | 81.3 → 223.0 | 0/3 / 0/3 |
-| sickle G5 / node G5 | 4743.3 → 4604.0 | 256.7 → 396.0 | 3/3 / 3/3 |
-| spear G1 / node G1 | 2500.0 → 2500.0 | 7.0 → 30.0 | 3/3 / 3/3 |
-| spear G2 / node G2 | 2500.0 → 2341.7 | 15.3 → 49.0 | 3/3 / 0/3 |
-| spear G3 / node G3 | 2500.0 → 2500.0 | 21.3 → 68.0 | 3/3 / 3/3 |
-| spear G4 / node G3 | 2500.0 → 2500.0 | 45.0 → 137.0 | 3/3 / 3/3 |
-| spear G5 / node G3 | 2500.0 → 2500.0 | 75.3 → 213.0 | 3/3 / 3/3 |
+| 16 / wren | 76.3→76.3; 73.8→73.8 | +0.0; +0.0 | 8.4→8.4; 8.6→8.6 |
+| 16 / tobin | 80.0→80.0; 80.4→80.4 | +0.0; +0.0 | 11.1→11.1; 11.1→11.1 |
+| 16 / pip | 63.8→63.8; 61.3→61.3 | +0.0; +0.0 | 9.4→9.4; 9.4→9.4 |
+| 20 / wren | 60.4→60.4; 63.3→64.2 | +0.0; +0.9 | 8.2→8.1; 8.3→8.2 |
+| 20 / tobin | 75.8→80.0; 76.7→78.3 | +4.2; +1.6 | 11.5→11.2; 11.5→11.2 |
+| 20 / pip | 75.0→79.6; 73.3→77.1 | +4.6; +3.8 | 7→6.8; 7.1→6.9 |
+| 25 / wren | 83.8→82.1; 81.7→82.5 | -1.7; +0.8 | 7.3→7.3; 7.3→7.2 |
+| 25 / tobin | 80.8→80.0; 76.3→77.1 | -0.8; +0.8 | 9.5→9.4; 9.5→9.5 |
+| 25 / pip | 55.8→57.9; 53.8→55.4 | +2.1; +1.6 | 8.1→7.8; 8.2→7.9 |
+| 30 / wren | 73.8→76.7; 73.8→74.6 | +2.9; +0.8 | 7.8→7.7; 7.9→7.8 |
+| 30 / tobin | 79.2→79.2; 77.5→78.8 | +0.0; +1.3 | 9.5→9.5; 9.3→9.3 |
+| 30 / pip | 59.2→62.5; 55.4→61.3 | +3.3; +5.9 | 8.8→8.7; 9.1→9 |
 
-The trial is three total units per find even at G5 (normal G5 is already two). Storage may clip some/all extra units; filled-pile means are not uncapped production. No active/away parity, long-run collection, opportunity-cost or multi-tool acceptance is claimed. All four tools stay out of the initial drop pool. Exact 120 rows are in `tools/.health/uniques-v3-gather.json`.
+### Two-seed late kept-up budget
+
+1128 stored rows, including grade exclusions; 240 eligible R/seed cells. **13 eligible cells fail at least one of the new budget limits.** Seeds are shown in order **0; 1**; no averaged pass. S/R means casual percentage; Δ is R−S points; none is R’s never-defends percentage. Turn pairs are good-player S→R. “cap” means raw casual cap, “+8” uplift limit, “none” never-defends limit. Excluded rows cannot pass release.
+
+| Zone / hero / item | Casual S→R (s0; s1) | Δ (s0; s1) | R none (s0; s1) | Good turns S→R (s0; s1) | Budget |
+|---|---|---|---|---|---|
+| 16 / wren / Divided Vow | 76.3→75.8; 73.8→80.8 | -0.5; +7.0 | 0.0; 0.0 | 8.4→8.3; 8.6→8.6 | excluded |
+| 16 / wren / Twice-Sworn | 76.3→78.8; 73.8→82.1 | +2.5; +8.3 | 0.0; 0.0 | 8.4→8.3; 8.6→8.6 | +8 |
+| 16 / wren / Crimson | 76.3→75.0; 73.8→72.9 | -1.3; -0.9 | 0.0; 0.0 | 8.4→8.2; 8.6→8.4 | within |
+| 16 / wren / Vesper | 76.3→78.8; 73.8→77.1 | +2.5; +3.3 | 0.0; 0.0 | 8.4→8.5; 8.6→8.7 | within |
+| 16 / wren / Veil | 76.3→78.3; 73.8→75.0 | +2.0; +1.2 | 0.0; 0.0 | 8.4→7.6; 8.6→7.7 | within |
+| 16 / wren / Huntsman | 76.3→78.8; 73.8→77.1 | +2.5; +3.3 | 0.0; 0.0 | 8.4→8.4; 8.6→8.6 | within |
+| 16 / wren / Final Answer | 76.3→79.6; 73.8→77.9 | +3.3; +4.1 | 0.0; 0.0 | 8.4→8.1; 8.6→8.3 | within |
+| 16 / wren / Crown | 76.3→75.8; 73.8→72.9 | -0.5; -0.9 | 0.0; 0.0 | 8.4→8.4; 8.6→8.6 | within |
+| 16 / tobin / Divided Vow | 80.0→86.3; 80.4→88.3 | +6.3; +7.9 | 2.1; 0.0 | 11.1→11.0; 11.1→11.0 | excluded |
+| 16 / tobin / Twice-Sworn | 80.0→93.3; 80.4→96.3 | +13.3; +15.9 | 7.5; 5.0 | 11.1→10.7; 11.1→10.7 | +8, cap |
+| 16 / tobin / Gate | 80.0→86.3; 80.4→88.8 | +6.3; +8.4 | 0.0; 0.4 | 11.1→9.0; 11.1→8.9 | +8 |
+| 16 / tobin / Mountain | 80.0→76.7; 80.4→80.8 | -3.3; +0.4 | 0.0; 0.0 | 11.1→8.8; 11.1→8.8 | within |
+| 16 / tobin / Oath | 80.0→80.4; 80.4→85.4 | +0.4; +5.0 | 0.0; 0.4 | 11.1→10.5; 11.1→10.6 | within |
+| 16 / tobin / Final Answer | 80.0→76.7; 80.4→82.5 | -3.3; +2.1 | 0.0; 0.4 | 11.1→11.5; 11.1→11.1 | within |
+| 16 / tobin / Crown | 80.0→77.9; 80.4→78.8 | -2.1; -1.6 | 0.0; 0.4 | 11.1→11.2; 11.1→11.2 | within |
+| 16 / pip / Divided Vow | 63.8→63.8; 61.3→61.3 | +0.0; +0.0 | 0.0; 0.0 | 9.4→9.4; 9.4→9.4 | excluded |
+| 16 / pip / Twice-Sworn | 63.8→63.8; 61.3→61.3 | +0.0; +0.0 | 0.0; 0.0 | 9.4→9.4; 9.4→9.4 | within |
+| 16 / pip / Vigil | 63.8→61.3; 61.3→64.2 | -2.5; +2.9 | 0.0; 0.0 | 9.4→9.4; 9.4→9.5 | within |
+| 16 / pip / Mantle | 63.8→65.4; 61.3→64.2 | +1.6; +2.9 | 0.0; 0.0 | 9.4→9.2; 9.4→9.2 | within |
+| 16 / pip / Final Answer | 63.8→62.5; 61.3→63.8 | -1.3; +2.5 | 0.0; 0.0 | 9.4→8.9; 9.4→9.1 | within |
+| 16 / pip / Crown | 63.8→64.6; 61.3→62.5 | +0.8; +1.2 | 0.0; 0.0 | 9.4→9.3; 9.4→9.4 | within |
+| 20 / wren / Divided Vow | 60.4→62.9; 64.2→65.4 | +2.5; +1.2 | 0.0; 0.0 | 8.1→8.2; 8.2→8.3 | excluded |
+| 20 / wren / Twice-Sworn | 60.4→65.0; 64.2→66.3 | +4.6; +2.1 | 0.0; 0.0 | 8.1→8.2; 8.2→8.3 | within |
+| 20 / wren / Crimson | 60.4→65.4; 64.2→70.8 | +5.0; +6.6 | 0.0; 0.0 | 8.1→8.1; 8.2→8.3 | within |
+| 20 / wren / Vesper | 60.4→63.3; 64.2→73.3 | +2.9; +9.1 | 0.0; 0.0 | 8.1→8.4; 8.2→8.6 | +8 |
+| 20 / wren / Veil | 60.4→62.1; 64.2→65.8 | +1.7; +1.6 | 0.0; 0.0 | 8.1→8.0; 8.2→8.1 | within |
+| 20 / wren / Huntsman | 60.4→60.0; 64.2→64.6 | -0.4; +0.4 | 0.0; 0.0 | 8.1→8.2; 8.2→8.3 | within |
+| 20 / wren / Final Answer | 60.4→67.9; 64.2→70.0 | +7.5; +5.8 | 0.0; 0.0 | 8.1→8.1; 8.2→8.2 | within |
+| 20 / wren / Crown | 60.4→59.6; 64.2→63.8 | -0.8; -0.4 | 0.0; 0.0 | 8.1→8.2; 8.2→8.3 | within |
+| 20 / tobin / Divided Vow | 80.0→81.3; 78.3→80.0 | +1.3; +1.7 | 0.0; 0.0 | 11.2→11.5; 11.2→11.5 | excluded |
+| 20 / tobin / Twice-Sworn | 80.0→81.7; 78.3→80.0 | +1.7; +1.7 | 0.0; 0.0 | 11.2→11.5; 11.2→11.5 | within |
+| 20 / tobin / Gate | 80.0→76.3; 78.3→78.8 | -3.7; +0.5 | 0.0; 0.0 | 11.2→9.4; 11.2→9.7 | within |
+| 20 / tobin / Mountain | 80.0→67.1; 78.3→70.0 | -12.9; -8.3 | 0.0; 0.0 | 11.2→9.5; 11.2→9.5 | within |
+| 20 / tobin / Oath | 80.0→80.0; 78.3→77.9 | +0.0; -0.4 | 0.0; 0.0 | 11.2→10.4; 11.2→10.5 | within |
+| 20 / tobin / Final Answer | 80.0→82.9; 78.3→83.3 | +2.9; +5.0 | 0.0; 0.0 | 11.2→12.0; 11.2→11.9 | within |
+| 20 / tobin / Crown | 80.0→77.1; 78.3→76.7 | -2.9; -1.6 | 0.0; 0.0 | 11.2→11.5; 11.2→11.5 | within |
+| 20 / pip / Divided Vow | 79.6→75.4; 77.1→74.2 | -4.2; -2.9 | 0.0; 0.0 | 6.8→7.0; 6.9→7.1 | excluded |
+| 20 / pip / Twice-Sworn | 79.6→79.2; 77.1→80.0 | -0.4; +2.9 | 0.0; 0.0 | 6.8→7.0; 6.9→7.1 | within |
+| 20 / pip / Vigil | 79.6→80.4; 77.1→73.8 | +0.8; -3.3 | 0.0; 0.0 | 6.8→7.8; 6.9→7.8 | within |
+| 20 / pip / Mantle | 79.6→84.2; 77.1→80.4 | +4.6; +3.3 | 0.0; 0.0 | 6.8→6.6; 6.9→6.7 | within |
+| 20 / pip / Final Answer | 79.6→81.7; 77.1→81.3 | +2.1; +4.2 | 0.4; 0.0 | 6.8→6.9; 6.9→7.1 | within |
+| 20 / pip / Crown | 79.6→75.4; 77.1→73.8 | -4.2; -3.3 | 0.0; 0.0 | 6.8→6.8; 6.9→6.9 | within |
+| 25 / wren / Divided Vow | 82.1→89.6; 82.5→88.3 | +7.5; +5.8 | 0.0; 0.0 | 7.3→7.3; 7.2→7.3 | excluded |
+| 25 / wren / Twice-Sworn | 82.1→89.2; 82.5→88.3 | +7.1; +5.8 | 0.0; 0.0 | 7.3→7.3; 7.2→7.3 | cap |
+| 25 / wren / Crimson | 82.1→80.4; 82.5→80.0 | -1.7; -2.5 | 0.0; 0.0 | 7.3→7.4; 7.2→7.3 | within |
+| 25 / wren / Vesper | 82.1→87.5; 82.5→88.3 | +5.4; +5.8 | 0.0; 0.0 | 7.3→7.6; 7.2→7.5 | cap |
+| 25 / wren / Veil | 82.1→80.8; 82.5→81.3 | -1.3; -1.2 | 0.0; 0.0 | 7.3→6.9; 7.2→6.9 | within |
+| 25 / wren / Huntsman | 82.1→81.7; 82.5→82.5 | -0.4; +0.0 | 0.0; 0.0 | 7.3→7.3; 7.2→7.3 | within |
+| 25 / wren / Final Answer | 82.1→84.6; 82.5→85.0 | +2.5; +2.5 | 0.0; 0.0 | 7.3→7.3; 7.2→7.2 | within |
+| 25 / wren / Crown | 82.1→83.8; 82.5→81.7 | +1.7; -0.8 | 0.0; 0.0 | 7.3→7.3; 7.2→7.3 | within |
+| 25 / tobin / Divided Vow | 80.0→78.3; 77.1→76.3 | -1.7; -0.8 | 0.0; 0.0 | 9.4→9.5; 9.5→9.5 | excluded |
+| 25 / tobin / Twice-Sworn | 80.0→78.8; 77.1→75.8 | -1.2; -1.3 | 0.4; 0.0 | 9.4→9.5; 9.5→9.5 | within |
+| 25 / tobin / Gate | 80.0→87.5; 77.1→85.4 | +7.5; +8.3 | 0.0; 0.0 | 9.4→7.9; 9.5→8.0 | +8 |
+| 25 / tobin / Mountain | 80.0→79.2; 77.1→67.5 | -0.8; -9.6 | 0.0; 0.0 | 9.4→7.8; 9.5→8.1 | within |
+| 25 / tobin / Oath | 80.0→79.6; 77.1→77.9 | -0.4; +0.8 | 0.0; 0.0 | 9.4→9.3; 9.5→9.3 | within |
+| 25 / tobin / Final Answer | 80.0→87.5; 77.1→76.3 | +7.5; -0.8 | 0.0; 0.0 | 9.4→9.6; 9.5→9.7 | within |
+| 25 / tobin / Crown | 80.0→80.8; 77.1→75.8 | +0.8; -1.3 | 0.0; 0.0 | 9.4→9.5; 9.5→9.5 | within |
+| 25 / pip / Divided Vow | 57.9→59.6; 55.4→58.3 | +1.7; +2.9 | 0.0; 0.0 | 7.8→8.1; 7.9→8.2 | excluded |
+| 25 / pip / Twice-Sworn | 57.9→61.3; 55.4→58.3 | +3.4; +2.9 | 0.0; 0.0 | 7.8→8.1; 7.9→8.2 | within |
+| 25 / pip / Vigil | 57.9→50.8; 55.4→50.8 | -7.1; -4.6 | 0.0; 0.0 | 7.8→8.3; 7.9→8.3 | within |
+| 25 / pip / Mantle | 57.9→69.2; 55.4→62.5 | +11.3; +7.1 | 0.0; 0.0 | 7.8→7.9; 7.9→7.9 | +8 |
+| 25 / pip / Final Answer | 57.9→69.6; 55.4→70.0 | +11.7; +14.6 | 0.0; 0.0 | 7.8→7.5; 7.9→7.6 | +8 |
+| 25 / pip / Crown | 57.9→62.9; 55.4→58.8 | +5.0; +3.4 | 0.0; 0.0 | 7.8→7.9; 7.9→8.0 | within |
+| 30 / wren / Divided Vow | 76.7→71.7; 74.6→75.4 | -5.0; +0.8 | 0.0; 0.0 | 7.7→7.8; 7.8→7.8 | excluded |
+| 30 / wren / Twice-Sworn | 76.7→74.6; 74.6→77.1 | -2.1; +2.5 | 0.0; 0.0 | 7.7→7.8; 7.8→7.8 | within |
+| 30 / wren / Crimson | 76.7→77.5; 74.6→75.4 | +0.8; +0.8 | 0.0; 0.0 | 7.7→7.7; 7.8→7.7 | within |
+| 30 / wren / Vesper | 76.7→78.8; 74.6→73.3 | +2.1; -1.3 | 0.0; 0.0 | 7.7→8.0; 7.8→8.1 | within |
+| 30 / wren / Veil | 76.7→75.0; 74.6→74.2 | -1.7; -0.4 | 0.0; 0.0 | 7.7→7.6; 7.8→7.6 | within |
+| 30 / wren / Huntsman | 76.7→74.2; 74.6→74.6 | -2.5; +0.0 | 0.0; 0.0 | 7.7→7.8; 7.8→7.9 | within |
+| 30 / wren / Final Answer | 76.7→78.8; 74.6→75.4 | +2.1; +0.8 | 0.0; 0.0 | 7.7→7.7; 7.8→7.7 | within |
+| 30 / wren / Crown | 76.7→70.8; 74.6→71.3 | -5.9; -3.3 | 0.0; 0.0 | 7.7→7.8; 7.8→7.9 | within |
+| 30 / tobin / Divided Vow | 79.2→80.0; 78.8→80.0 | +0.8; +1.2 | 0.0; 0.0 | 9.5→9.5; 9.3→9.2 | excluded |
+| 30 / tobin / Twice-Sworn | 79.2→81.3; 78.8→80.0 | +2.1; +1.2 | 0.0; 0.0 | 9.5→9.5; 9.3→9.2 | within |
+| 30 / tobin / Gate | 79.2→84.6; 78.8→85.0 | +5.4; +6.2 | 0.0; 0.0 | 9.5→8.1; 9.3→8.1 | within |
+| 30 / tobin / Mountain | 79.2→65.4; 78.8→60.0 | -13.8; -18.8 | 0.0; 0.0 | 9.5→9.1; 9.3→8.9 | within |
+| 30 / tobin / Oath | 79.2→82.9; 78.8→82.5 | +3.7; +3.7 | 0.0; 0.0 | 9.5→9.3; 9.3→9.1 | within |
+| 30 / tobin / Final Answer | 79.2→85.8; 78.8→80.0 | +6.6; +1.2 | 0.0; 0.0 | 9.5→10.1; 9.3→9.9 | within |
+| 30 / tobin / Crown | 79.2→80.4; 78.8→80.4 | +1.2; +1.6 | 0.0; 0.0 | 9.5→9.5; 9.3→9.3 | within |
+| 30 / pip / Divided Vow | 62.5→57.9; 61.3→55.0 | -4.6; -6.3 | 0.0; 0.0 | 8.7→8.8; 9.0→9.1 | excluded |
+| 30 / pip / Twice-Sworn | 62.5→58.8; 61.3→55.4 | -3.7; -5.9 | 0.0; 0.0 | 8.7→8.8; 9.0→9.1 | within |
+| 30 / pip / Vigil | 62.5→55.8; 61.3→54.6 | -6.7; -6.7 | 0.0; 0.0 | 8.7→9.2; 9.0→9.3 | within |
+| 30 / pip / Mantle | 62.5→59.6; 61.3→60.0 | -2.9; -1.3 | 0.0; 0.0 | 8.7→8.6; 9.0→8.8 | within |
+| 30 / pip / Final Answer | 62.5→57.5; 61.3→58.3 | -5.0; -3.0 | 0.0; 0.0 | 8.7→8.4; 9.0→8.6 | within |
+| 30 / pip / Crown | 62.5→61.7; 61.3→58.8 | -0.8; -2.5 | 0.0; 0.0 | 8.7→8.8; 9.0→9.0 | within |
+| 16 / wren / Burrower’s Promise | 76.3→76.3; 73.8→73.8 | +0.0; +0.0 | 0.0; 0.0 | 8.4→8.4; 8.6→8.6 | within |
+| 16 / wren / Reed | 76.3→76.3; 73.8→73.8 | +0.0; +0.0 | 0.0; 0.0 | 8.4→8.4; 8.6→8.6 | within |
+| 16 / wren / Harvest | 76.3→76.3; 73.8→73.8 | +0.0; +0.0 | 0.0; 0.0 | 8.4→8.4; 8.6→8.6 | within |
+| 16 / wren / Thorn | 76.3→76.3; 73.8→73.8 | +0.0; +0.0 | 0.0; 0.0 | 8.4→8.4; 8.6→8.6 | within |
+| 16 / tobin / Burrower’s Promise | 80.0→80.0; 80.4→80.4 | +0.0; +0.0 | 0.0; 0.4 | 11.1→11.1; 11.1→11.1 | within |
+| 16 / tobin / Reed | 80.0→80.0; 80.4→80.4 | +0.0; +0.0 | 0.0; 0.4 | 11.1→11.1; 11.1→11.1 | within |
+| 16 / tobin / Harvest | 80.0→80.0; 80.4→80.4 | +0.0; +0.0 | 0.0; 0.4 | 11.1→11.1; 11.1→11.1 | within |
+| 16 / tobin / Thorn | 80.0→80.0; 80.4→80.4 | +0.0; +0.0 | 0.0; 0.4 | 11.1→11.1; 11.1→11.1 | within |
+| 16 / pip / Burrower’s Promise | 63.8→63.8; 61.3→61.3 | +0.0; +0.0 | 0.0; 0.0 | 9.4→9.4; 9.4→9.4 | within |
+| 16 / pip / Reed | 63.8→63.8; 61.3→61.3 | +0.0; +0.0 | 0.0; 0.0 | 9.4→9.4; 9.4→9.4 | within |
+| 16 / pip / Harvest | 63.8→63.8; 61.3→61.3 | +0.0; +0.0 | 0.0; 0.0 | 9.4→9.4; 9.4→9.4 | within |
+| 16 / pip / Thorn | 63.8→63.8; 61.3→61.3 | +0.0; +0.0 | 0.0; 0.0 | 9.4→9.4; 9.4→9.4 | within |
+| 20 / wren / Burrower’s Promise | 60.4→60.4; 64.2→64.2 | +0.0; +0.0 | 0.0; 0.0 | 8.1→8.1; 8.2→8.2 | within |
+| 20 / wren / Reed | 60.4→60.4; 64.2→64.2 | +0.0; +0.0 | 0.0; 0.0 | 8.1→8.1; 8.2→8.2 | within |
+| 20 / wren / Harvest | 60.4→60.4; 64.2→64.2 | +0.0; +0.0 | 0.0; 0.0 | 8.1→8.1; 8.2→8.2 | within |
+| 20 / wren / Thorn | 60.4→60.4; 64.2→64.2 | +0.0; +0.0 | 0.0; 0.0 | 8.1→8.1; 8.2→8.2 | within |
+| 20 / tobin / Burrower’s Promise | 80.0→80.0; 78.3→78.3 | +0.0; +0.0 | 0.0; 0.0 | 11.2→11.2; 11.2→11.2 | within |
+| 20 / tobin / Reed | 80.0→80.0; 78.3→78.3 | +0.0; +0.0 | 0.0; 0.0 | 11.2→11.2; 11.2→11.2 | within |
+| 20 / tobin / Harvest | 80.0→80.0; 78.3→78.3 | +0.0; +0.0 | 0.0; 0.0 | 11.2→11.2; 11.2→11.2 | within |
+| 20 / tobin / Thorn | 80.0→80.0; 78.3→78.3 | +0.0; +0.0 | 0.0; 0.0 | 11.2→11.2; 11.2→11.2 | within |
+| 20 / pip / Burrower’s Promise | 79.6→79.6; 77.1→77.1 | +0.0; +0.0 | 0.4; 0.0 | 6.8→6.8; 6.9→6.9 | within |
+| 20 / pip / Reed | 79.6→79.6; 77.1→77.1 | +0.0; +0.0 | 0.4; 0.0 | 6.8→6.8; 6.9→6.9 | within |
+| 20 / pip / Harvest | 79.6→79.6; 77.1→77.1 | +0.0; +0.0 | 0.4; 0.0 | 6.8→6.8; 6.9→6.9 | within |
+| 20 / pip / Thorn | 79.6→79.6; 77.1→77.1 | +0.0; +0.0 | 0.4; 0.0 | 6.8→6.8; 6.9→6.9 | within |
+| 25 / wren / Burrower’s Promise | 82.1→82.1; 82.5→82.5 | +0.0; +0.0 | 0.0; 0.0 | 7.3→7.3; 7.2→7.2 | within |
+| 25 / wren / Reed | 82.1→82.1; 82.5→82.5 | +0.0; +0.0 | 0.0; 0.0 | 7.3→7.3; 7.2→7.2 | within |
+| 25 / wren / Harvest | 82.1→82.1; 82.5→82.5 | +0.0; +0.0 | 0.0; 0.0 | 7.3→7.3; 7.2→7.2 | within |
+| 25 / wren / Thorn | 82.1→82.1; 82.5→82.5 | +0.0; +0.0 | 0.0; 0.0 | 7.3→7.3; 7.2→7.2 | within |
+| 25 / tobin / Burrower’s Promise | 80.0→80.0; 77.1→77.1 | +0.0; +0.0 | 0.0; 0.0 | 9.4→9.4; 9.5→9.5 | within |
+| 25 / tobin / Reed | 80.0→80.0; 77.1→77.1 | +0.0; +0.0 | 0.0; 0.0 | 9.4→9.4; 9.5→9.5 | within |
+| 25 / tobin / Harvest | 80.0→80.0; 77.1→77.1 | +0.0; +0.0 | 0.0; 0.0 | 9.4→9.4; 9.5→9.5 | within |
+| 25 / tobin / Thorn | 80.0→80.0; 77.1→77.1 | +0.0; +0.0 | 0.0; 0.0 | 9.4→9.4; 9.5→9.5 | within |
+| 25 / pip / Burrower’s Promise | 57.9→57.9; 55.4→55.4 | +0.0; +0.0 | 0.0; 0.0 | 7.8→7.8; 7.9→7.9 | within |
+| 25 / pip / Reed | 57.9→57.9; 55.4→55.4 | +0.0; +0.0 | 0.0; 0.0 | 7.8→7.8; 7.9→7.9 | within |
+| 25 / pip / Harvest | 57.9→57.9; 55.4→55.4 | +0.0; +0.0 | 0.0; 0.0 | 7.8→7.8; 7.9→7.9 | within |
+| 25 / pip / Thorn | 57.9→57.9; 55.4→55.4 | +0.0; +0.0 | 0.0; 0.0 | 7.8→7.8; 7.9→7.9 | within |
+| 30 / wren / Burrower’s Promise | 76.7→76.7; 74.6→74.6 | +0.0; +0.0 | 0.0; 0.0 | 7.7→7.7; 7.8→7.8 | within |
+| 30 / wren / Reed | 76.7→76.7; 74.6→74.6 | +0.0; +0.0 | 0.0; 0.0 | 7.7→7.7; 7.8→7.8 | within |
+| 30 / wren / Harvest | 76.7→76.7; 74.6→74.6 | +0.0; +0.0 | 0.0; 0.0 | 7.7→7.7; 7.8→7.8 | within |
+| 30 / wren / Thorn | 76.7→76.7; 74.6→74.6 | +0.0; +0.0 | 0.0; 0.0 | 7.7→7.7; 7.8→7.8 | within |
+| 30 / tobin / Burrower’s Promise | 79.2→79.2; 78.8→78.8 | +0.0; +0.0 | 0.0; 0.0 | 9.5→9.5; 9.3→9.3 | within |
+| 30 / tobin / Reed | 79.2→79.2; 78.8→78.8 | +0.0; +0.0 | 0.0; 0.0 | 9.5→9.5; 9.3→9.3 | within |
+| 30 / tobin / Harvest | 79.2→79.2; 78.8→78.8 | +0.0; +0.0 | 0.0; 0.0 | 9.5→9.5; 9.3→9.3 | within |
+| 30 / tobin / Thorn | 79.2→79.2; 78.8→78.8 | +0.0; +0.0 | 0.0; 0.0 | 9.5→9.5; 9.3→9.3 | within |
+| 30 / pip / Burrower’s Promise | 62.5→62.5; 61.3→61.3 | +0.0; +0.0 | 0.0; 0.0 | 8.7→8.7; 9.0→9.0 | within |
+| 30 / pip / Reed | 62.5→62.5; 61.3→61.3 | +0.0; +0.0 | 0.0; 0.0 | 8.7→8.7; 9.0→9.0 | within |
+| 30 / pip / Harvest | 62.5→62.5; 61.3→61.3 | +0.0; +0.0 | 0.0; 0.0 | 8.7→8.7; 9.0→9.0 | within |
+| 30 / pip / Thorn | 62.5→62.5; 61.3→61.3 | +0.0; +0.0 | 0.0; 0.0 | 8.7→8.7; 9.0→9.0 | within |
+
+### Early Target 2 footing: pr5 kept-up rows
+
+Default official build, Rare +5, two seeds. Entries are **R−S / R−B / Rnc−B casual points; good turns S→R**, seed 0 then seed 1. Tobin’s casual deltas are diagnostic budget data; his turns carry the pacing evidence. These early rows are not build-dependence certification. A dagger marks a source/grade exclusion.
+
+| Item / hero | z8-boss-keptup | z10-boss-keptup | z12-boss-keptup |
+|---|---|---|---|
+| Divided Vow / wren | -4.6/-4.6/+2.5; 5.6→4.9<br>-3.7/-3.7/-0.4; 5.5→4.9 | +3.8/+3.8/+4.2; 5.5→5.5<br>+0.0/+0.0/+1.3; 5.4→5.4 | +1.3/+1.3/+6.3; 5.6→5.6<br>+4.1/+4.1/+9.5; 5.7→5.7 |
+| Twice-Sworn / wren | +2.5/+2.5/+2.5; 5.6→4.8 †<br>-0.4/-0.4/-0.4; 5.5→4.8 † | +4.2/+4.2/+4.2; 5.5→5.5 †<br>+1.3/+1.3/+1.3; 5.4→5.4 † | +5.5/+5.5/+6.3; 5.6→5.6 †<br>+6.2/+6.2/+9.5; 5.7→5.7 † |
+| Crimson / wren | +0.0/+0.0/+0.0; 5.6→5.6<br>+0.0/+0.0/+0.0; 5.5→5.5 | +0.0/+0.0/+0.0; 5.5→5.5<br>+0.0/+0.0/+0.0; 5.4→5.4 | +0.0/+0.0/+0.0; 5.6→5.6<br>+0.0/+0.0/+0.0; 5.7→5.7 |
+| Vesper / wren | -0.4/-0.4/-0.8; 5.6→5.4 †<br>+0.4/+0.4/+0.0; 5.5→5.4 † | +3.8/+3.8/+3.8; 5.5→5.5<br>+1.7/+1.7/+1.7; 5.4→5.4 | +5.9/+5.9/+8.8; 5.6→5.6<br>+6.2/+6.2/+10.0; 5.7→5.7 |
+| Veil / wren | +0.0/+0.0/+0.0; 5.6→5.6<br>+0.0/+0.0/+0.0; 5.5→5.5 | +0.0/+0.0/+0.0; 5.5→5.5<br>+0.0/+0.0/+0.0; 5.4→5.4 | +0.5/+0.5/+0.0; 5.6→5.6<br>+0.0/+0.0/+0.0; 5.7→5.7 |
+| Huntsman / wren | +0.4/+0.0/+0.0; 5.6→5.6<br>+0.0/+0.0/+0.0; 5.5→5.5 | +0.9/+0.9/+0.9; 5.5→5.5<br>+0.5/+0.5/+0.5; 5.4→5.4 | +0.9/+0.4/+0.4; 5.6→5.6<br>+1.2/+1.2/+1.2; 5.7→5.7 |
+| Final Answer / wren | -1.7/-1.7/-1.7; 5.6→5.4<br>-0.4/-0.4/-0.4; 5.5→5.2 | +5.0/+5.0/+5.0; 5.5→5.3<br>-0.8/-0.8/-0.8; 5.4→5.2 | +4.6/+4.6/+4.2; 5.6→5.5<br>+4.1/+4.1/+4.1; 5.7→5.7 |
+| Crown / wren | -0.4/-0.4/-0.4; 5.6→5.6<br>-0.8/-0.8/-0.8; 5.5→5.4 | +0.0/+0.0/+0.0; 5.5→5.5<br>+0.0/+0.0/+0.0; 5.4→5.4 | +0.5/+0.5/+0.0; 5.6→5.6<br>+0.0/+0.0/+0.0; 5.7→5.7 |
+| Divided Vow / tobin | +0.0/+0.0/+0.0; 5.1→5.1<br>-1.3/-1.3/-1.3; 5.0→5.1 | +2.5/+2.5/+2.9; 6.3→6.3<br>+0.4/+0.4/+1.7; 6.4→6.4 | +2.5/+2.5/+3.3; 7.1→7.1<br>+2.9/+2.9/+4.1; 7.1→7.0 |
+| Twice-Sworn / tobin | +0.0/+0.0/+0.0; 5.1→5.1 †<br>-1.3/-1.3/-1.3; 5.0→5.1 † | +3.3/+3.3/+2.9; 6.3→6.3 †<br>+4.2/+4.2/+1.7; 6.4→6.4 † | +2.9/+2.9/+3.3; 7.1→7.1 †<br>+3.7/+3.7/+4.1; 7.1→7.0 † |
+| Gate / tobin | +0.4/+0.4/+0.4; 5.1→4.6<br>+0.8/+0.8/+0.8; 5.0→4.5 | +0.4/+0.4/+0.4; 6.3→5.0<br>+1.2/+1.2/+1.2; 6.4→5.1 | +1.7/+1.7/+1.7; 7.1→4.8<br>+2.9/+2.9/+2.9; 7.1→4.8 |
+| Mountain / tobin | -4.2/-4.2/+3.3; 5.1→4.9 †<br>-5.8/-5.8/+2.5; 5.0→4.8 † | -11.2/-11.2/+2.5; 6.3→5.1 †<br>-9.2/-9.2/+2.5; 6.4→5.3 † | -5.0/-5.0/+2.5; 7.1→5.2 †<br>-5.5/-5.5/+3.7; 7.1→5.1 † |
+| Oath / tobin | -0.9/-0.9/+2.0; 5.1→5.2<br>-1.7/-1.7/+2.1; 5.0→5.1 | +0.0/+0.0/+3.3; 6.3→5.7<br>-0.4/-0.4/+1.2; 6.4→5.8 | -1.7/-1.7/+0.0; 7.1→7.0<br>-0.5/-0.5/+0.4; 7.1→7.0 |
+| Final Answer / tobin | +0.4/+0.4/+0.4; 5.1→4.9<br>+1.7/+1.7/+1.7; 5.0→5.0 | +1.7/+1.7/+2.1; 6.3→6.6<br>+0.8/+0.8/+1.7; 6.4→6.7 | +3.8/+3.8/+3.8; 7.1→8.0<br>+5.0/+5.0/+5.4; 7.1→8.2 |
+| Crown / tobin | +0.0/+0.0/+0.0; 5.1→5.1<br>+0.0/+0.0/+0.0; 5.0→5.0 | -3.3/-3.3/+0.4; 6.3→6.3<br>-1.3/-1.3/+0.0; 6.4→6.4 | +0.4/+0.4/+0.4; 7.1→7.1<br>+0.0/+0.0/+0.0; 7.1→7.1 |
+| Divided Vow / pip | +2.1/+2.1/+2.1; 4.8→4.8<br>+0.0/+0.0/+0.0; 4.8→4.8 | +0.0/+0.0/+0.0; 4.9→4.9<br>+0.0/+0.0/+0.0; 4.9→4.9 | +0.0/+0.0/+0.0; 4.7→4.7<br>+0.0/+0.0/+0.0; 4.7→4.7 |
+| Twice-Sworn / pip | +2.1/+2.1/+2.1; 4.8→4.8 †<br>+0.0/+0.0/+0.0; 4.8→4.8 † | +0.0/+0.0/+0.0; 4.9→4.9 †<br>+0.0/+0.0/+0.0; 4.9→4.9 † | +0.0/+0.0/+0.0; 4.7→4.7 †<br>+0.0/+0.0/+0.0; 4.7→4.7 † |
+| Vigil / pip | +0.0/+0.0/+0.0; 4.8→4.8<br>+0.0/+0.0/+0.0; 4.8→4.8 | +0.8/+0.8/+0.8; 4.9→4.8<br>+2.1/+2.1/+2.1; 4.9→4.8 | +0.0/+0.0/+0.0; 4.7→4.7<br>+0.0/+0.0/+0.0; 4.7→4.7 |
+| Mantle / pip | +0.0/+0.0/+0.0; 4.8→4.8 †<br>+0.0/+0.0/+0.0; 4.8→4.8 † | +0.0/+0.0/+0.0; 4.9→4.9 †<br>+0.0/+0.0/+0.0; 4.9→4.9 † | +0.0/+0.0/+0.0; 4.7→4.7<br>+0.0/+0.0/+0.0; 4.7→4.7 |
+| Final Answer / pip | -0.4/-0.4/-0.4; 4.8→4.9<br>+0.0/+0.0/+0.0; 4.8→4.8 | -3.3/-3.3/-3.3; 4.9→4.8<br>-7.9/-7.9/-7.9; 4.9→4.9 | +0.0/+0.0/+0.0; 4.7→4.7<br>+0.0/+0.0/+0.0; 4.7→4.6 |
+| Crown / pip | +0.0/+0.0/+0.0; 4.8→4.8<br>+0.0/+0.0/+0.0; 4.8→4.8 | +0.0/+0.0/+0.0; 4.9→4.9<br>+0.0/+0.0/+0.0; 4.9→4.9 | +0.0/+0.0/+0.0; 4.7→4.7<br>+0.0/+0.0/+0.0; 4.7→4.7 |
+
+### Final Answer: first-hour Target 4, no health line
+
+900 rows. **Largest eligible R−B casual uplift +35.8 points**, tobin, z7, matching/dodge, seed 0. Target 4 fails the ≤5-point bound in these samples. Each entry: **R−B points; good turns S→R**, seed 0 then 1. These common +0 S rows are **not** the early Target 2 comparator. Tobin turns are included for every build/persona.
+
+| Hero / build / persona | z5 | z6 | z7 | z8 | z9 |
+|---|---|---|---|---|---|
+| wren / default / standard | -7.5; 6.2→6.2<br>-5.0; 6.2→6.1 | +2.9; 5.1→5.0<br>-1.3; 5.2→4.9 | +1.3; 6.1→5.8<br>+2.9; 6.2→5.9 | -2.1; 6.4→6.0<br>-4.6; 6.1→6.0 | -1.7; 6.5→6.1<br>+2.1; 6.3→5.9 |
+| wren / default / dodge | -15.0; 8.2→8.6<br>-8.7; 8.0→8.5 | +0.0; 6.9→6.5<br>+0.0; 6.9→6.6 | +12.5; 8.5→7.6<br>+9.6; 8.5→7.7 | +0.0; 7.8→7.6<br>-1.7; 7.6→7.5 | +0.0; 8.0→7.7<br>-2.9; 7.8→7.6 |
+| wren / matching / standard | -0.4; 5.7→5.5<br>+2.1; 5.7→5.6 | +2.5; 4.7→4.5<br>+1.6; 4.7→4.5 | +7.1; 5.3→5.0<br>+7.1; 5.4→5.2 | +4.6; 4.9→4.9<br>+1.3; 4.8→4.8 | +2.9; 4.7→4.8<br>+5.0; 4.8→4.8 |
+| wren / matching / dodge | +6.2; 6.8→6.9<br>+2.5; 6.7→6.9 | -0.4; 6.2→6.1<br>+1.3; 6.2→6.1 | +6.2; 7.7→6.9<br>+11.7; 7.6→6.8 | -4.6; 5.9→5.8<br>+2.0; 5.9→5.8 | -0.4; 6.0→5.8<br>+0.0; 6.0→5.8 |
+| wren / other / standard † stress | -2.5; 5.8→5.6<br>+2.1; 5.8→5.7 | +0.9; 4.8→4.6<br>-4.2; 4.8→4.7 | +1.3; 5.5→5.3<br>+0.8; 5.6→5.4 | +2.1; 5.5→5.3<br>-1.3; 5.5→5.2 | +5.8; 5.6→5.3<br>-2.1; 5.5→5.3 |
+| wren / other / dodge † stress | -7.9; 7.1→7.2<br>+0.5; 6.9→7.1 | +2.5; 5.8→5.9<br>+0.0; 5.9→5.8 | -2.5; 6.7→6.8<br>-2.9; 6.6→6.8 | -3.3; 6.6→6.8<br>+0.8; 6.6→6.7 | +1.7; 6.8→6.9<br>-0.4; 6.6→6.7 |
+| tobin / default / standard | -10.4; 7.1→7.2<br>-6.7; 7.1→7.2 | +5.4; 5.4→5.3<br>+6.2; 5.5→5.6 | +2.9; 6.6→6.7<br>+9.2; 6.2→6.5 | +5.5; 7.2→7.3<br>+5.5; 6.8→7.5 | +6.2; 7.0→7.1<br>+1.7; 6.7→7.1 |
+| tobin / default / dodge | -4.2; 8.6→8.9<br>-5.8; 8.7→9.1 | +10.0; 6.8→7.0<br>+8.8; 6.9→6.9 | +28.7; 8.8→9.0<br>+32.9; 8.7→9.0 | +20.0; 8.5→9.1<br>+13.4; 8.5→9.1 | +14.5; 8.9→9.3<br>+10.4; 8.9→9.4 |
+| tobin / matching / standard | +2.5; 6.3→6.6<br>+5.0; 6.3→6.6 | +5.8; 5.2→5.2<br>+7.9; 5.2→5.4 | +3.3; 6.3→6.5<br>+8.4; 5.9→6.3 | +3.0; 5.2→4.9<br>+1.2; 5.0→5.0 | +2.5; 5.2→5.1<br>+1.2; 4.9→5.0 |
+| tobin / matching / dodge | -1.3; 7.6→8.0<br>+2.9; 7.7→8.1 | +12.1; 6.4→6.7<br>+10.4; 6.5→6.7 | +35.8; 8.4→8.5<br>+35.8; 8.4→8.4 | +6.3; 6.1→5.6<br>+5.4; 6.0→5.6 | +6.2; 6.3→5.8<br>+9.1; 6.2→5.8 |
+| tobin / other / standard | +3.8; 7.0→7.1<br>+5.0; 6.9→7.0 | +3.7; 5.3→5.3<br>+3.0; 5.4→5.6 | +9.6; 6.3→6.5<br>+11.3; 5.9→6.4 | +5.4; 6.8→7.1<br>+5.0; 6.6→7.3 | +3.7; 6.5→6.8<br>+0.4; 6.4→6.8 |
+| tobin / other / dodge | +9.6; 7.9→8.1<br>+15.8; 8.0→8.3 | -1.2; 6.1→6.7<br>-2.1; 6.1→6.7 | +27.5; 7.8→8.2<br>+30.0; 7.6→8.0 | +11.2; 7.9→8.2<br>+12.9; 7.9→8.1 | +7.0; 7.9→8.3<br>+5.4; 7.9→8.4 |
+| pip / default / standard | -11.2; 5.7→5.6<br>-14.6; 5.6→5.6 | +0.0; 4.9→4.6<br>+0.0; 4.9→4.4 | -7.5; 4.8→4.9<br>-8.4; 4.8→4.9 | +0.0; 4.8→4.9<br>-1.6; 4.8→4.8 | +7.5; 5.3→5.5<br>+7.5; 5.3→5.3 |
+| pip / default / dodge | -13.4; 6.0→7.2<br>-11.6; 5.9→7.1 | +0.0; 5.5→5.1<br>+0.0; 5.5→5.1 | -20.0; 5.0→5.7<br>-19.1; 5.0→5.8 | +0.0; 5.0→5.0<br>-0.4; 5.0→5.0 | +23.0; 6.2→6.6<br>+23.3; 6.2→6.7 |
+| pip / matching / standard | -0.4; 5.0→5.0<br>-1.2; 5.0→5.0 | -1.7; 4.0→4.0<br>+0.0; 4.0→4.0 | +1.2; 4.5→4.5<br>+2.9; 4.5→4.5 | +2.1; 4.8→4.9<br>+0.4; 4.8→4.8 | +0.4; 4.7→4.7<br>+2.5; 4.7→4.7 |
+| pip / matching / dodge | +7.1; 5.6→5.2<br>+3.7; 5.5→5.2 | +0.0; 4.0→4.0<br>+0.0; 4.0→4.0 | +11.6; 5.6→4.9<br>+8.4; 5.5→5.0 | -0.4; 5.0→5.0<br>-0.4; 5.0→5.0 | +10.4; 5.6→5.0<br>+8.3; 5.6→5.1 |
+| pip / other / standard † stress | +0.0; 5.0→5.0<br>-1.3; 5.0→5.0 | -1.3; 4.0→4.0<br>-0.4; 4.0→4.0 | +1.3; 4.5→4.5<br>+1.7; 4.4→4.5 | +2.1; 4.8→4.9<br>+0.0; 4.8→4.8 | -0.9; 4.7→4.7<br>+0.9; 4.7→4.7 |
+| pip / other / dodge † stress | +0.0; 5.0→5.0<br>-0.9; 5.0→5.0 | -0.5; 4.0→4.0<br>+0.0; 4.0→4.0 | -1.2; 5.0→4.9<br>-2.9; 5.0→5.0 | -1.2; 5.0→5.0<br>-0.8; 5.0→5.0 | -1.2; 5.0→5.0<br>-2.1; 5.0→5.1 |
+
+### Changed candidates: matching / other / same-swap evidence
+
+Ranges below keep both seed offsets and the standard/dodge-first personas separate in the raw rows. Matching/other loadouts were fixed before measuring. All rows use z16/20/25/30 kept-up footing. Stars maximum is R minus S **with the same earned swap and the same build/persona**, not a default-build subtraction. No damage-envelope certification is inferred from a win gain.
+
+| Item / hero | Matching R−B / R−S / Rnc−B ranges | Other R−S range | Matching good-turn cut range | Largest same-swap R−S |
+|---|---|---|---|---|
+| Final Answer / wren | -2.1…+14.1 / -2.1…+14.1 / -1.3…+14.1 | -6.7…+5.4 | +0.0…+8.1% | +17.5 (z30, default/dodge, s0) |
+| Final Answer / tobin | -1.3…+30.4 / -1.3…+30.4 / -1.3…+31.2 | -33.3…+7.9 | -14.0…+15.8% | +28.4 (z16, matching/dodge, s0) |
+| Final Answer / pip | -1.2…+16.6 / -1.2…+16.6 / -1.2…+16.6 | -10.4…+2.5 | -2.7…+7.4% | +11.7 (z20, default/dodge, s1) |
+| Crown / wren | -2.5…-0.4 / -9.6…-1.7 / +0.0…+0.0 | -4.2…+0.0 | -2.5…+0.0% | +0.5 (z20, other/standard, s0) |
+| Crown / tobin | -9.5…-2.1 / -10.4…-2.9 / +0.0…+0.0 | -4.6…+0.0 | -5.0…-1.4% | +1.7 (z30, default/standard, s1) |
+| Crown / pip | -1.2…+0.9 / -5.4…+0.0 / -1.2…+2.1 | -2.9…+5.4 | -1.2…+0.0% | +2.5 (z20, other/standard, s0) |
+| Mountain / tobin | -7.5…-2.1 / -11.3…-2.5 / +10.0…+22.5 | -20.0…-1.7 | +10.6…+15.7% | +1.3 (z16, default/standard, s1) |
+| Oath / tobin | +0.8…+9.1 / +0.8…+7.0 / +2.1…+8.3 | -12.5…+1.7 | +5.5…+7.6% | +4.6 (z16, default/standard, s1) |
+| Crimson / wren | -0.8…+7.1 / -2.5…+6.6 / +1.7…+9.2 | -2.5…+3.3 | +0.0…+3.4% | +10.0 (z25, matching/standard, s0) |
+| Veil / wren | -0.4…+9.2 / -2.0…+7.9 / -0.4…+9.2 | -2.9…+8.0 | +0.0…+11.7% | +10.0 (z20, matching/dodge, s0) |
+| Huntsman / wren | -3.7…+2.1 / -4.2…+2.0 / -0.4…+2.0 | -5.8…-0.9 | -2.6…+1.3% | +5.0 (z30, matching/standard, s1) |
+| Vigil / pip | -6.2…+2.5 / -8.4…+2.1 / -3.7…+6.7 | -10.4…+8.3 | -13.7…+3.7% | +3.4 (z30, default/dodge, s1) |
+| Mantle / pip | -2.5…+2.5 / -6.3…+1.2 / -3.8…+12.1 | -1.3…+8.3 | -1.3…+2.1% | +6.7 (z25, default/standard, s1) |
+
+Stored expanded late rows: 3024. Negative turn cuts mean longer fights. A range spanning the target band is not a whole-band pass. Default-only early rows, partial files or an excluded grade never establish a release claim.
+
+### Tobin turns for the changed Warrior/all-class rules
+
+Each cell is good-player **S / B / R / Rnc**, seed 0 then seed 1. Means are on won fights. The matching/other tuples are the same ones used above; no win ceiling is treated as Tobin pacing success.
+
+| Item / build / persona | z16 | z20 | z25 | z30 |
+|---|---|---|---|---|
+| Mountain / default / standard | 11.1 / 11.1 / 8.8 / 8.6<br>11.1 / 11.1 / 8.8 / 8.6 | 11.2 / 11.5 / 9.5 / 9.4<br>11.2 / 11.5 / 9.5 / 9.4 | 9.4 / 9.5 / 7.8 / 7.7<br>9.5 / 9.5 / 8.1 / 7.9 | 9.5 / 9.5 / 9.1 / 8.8<br>9.3 / 9.3 / 8.9 / 8.7 |
+| Mountain / matching / standard | 10.8 / 10.8 / 9.3 / 9.2<br>11.0 / 11.0 / 9.6 / 9.5 | 10.9 / 11.2 / 9.2 / 9.0<br>10.8 / 11.0 / 9.1 / 9.0 | 9.2 / 9.4 / 8.1 / 8.1<br>9.4 / 9.5 / 8.4 / 8.3 | 10.7 / 10.7 / 9.3 / 9.3<br>10.6 / 10.7 / 9.2 / 9.0 |
+| Mountain / other / standard | 11.9 / 11.9 / 10.7 / 10.6<br>11.9 / 11.9 / 10.7 / 10.6 | 14.0 / 14.1 / 11.8 / 11.7<br>14.0 / 14.2 / 11.5 / 11.5 | 12.1 / 12.3 / 10.3 / 10.2<br>12.1 / 12.3 / 10.5 / 10.3 | 14.2 / 14.4 / 12.0 / 11.7<br>13.9 / 14.1 / 11.7 / 11.6 |
+| Oath / default / standard | 11.1 / 11.1 / 10.5 / 10.5<br>11.1 / 11.1 / 10.6 / 10.6 | 11.2 / 11.5 / 10.4 / 10.4<br>11.2 / 11.5 / 10.5 / 10.5 | 9.4 / 9.5 / 9.3 / 9.3<br>9.5 / 9.5 / 9.3 / 9.3 | 9.5 / 9.5 / 9.3 / 9.3<br>9.3 / 9.3 / 9.1 / 9.1 |
+| Oath / matching / standard | 10.8 / 10.8 / 10.2 / 10.2<br>11.0 / 11.0 / 10.3 / 10.3 | 10.9 / 11.2 / 10.3 / 10.3<br>10.8 / 11.0 / 10.1 / 10.1 | 9.2 / 9.4 / 8.5 / 8.5<br>9.4 / 9.5 / 8.7 / 8.7 | 10.7 / 10.7 / 10.0 / 10.0<br>10.6 / 10.7 / 10.0 / 10.0 |
+| Oath / other / standard | 11.9 / 11.9 / 11.5 / 11.3<br>11.9 / 11.9 / 11.6 / 11.4 | 14.0 / 14.1 / 13.5 / 13.3<br>14.0 / 14.2 / 13.3 / 13.3 | 12.1 / 12.3 / 11.6 / 11.2<br>12.1 / 12.3 / 11.6 / 11.3 | 14.2 / 14.4 / 13.6 / 13.4<br>13.9 / 14.1 / 13.2 / 13.1 |
+| Final Answer / default / standard | 11.1 / 11.1 / 11.5 / 11.4<br>11.1 / 11.1 / 11.1 / 11.1 | 11.2 / 11.2 / 12.0 / 12.0<br>11.2 / 11.2 / 11.9 / 11.9 | 9.4 / 9.4 / 9.6 / 9.6<br>9.5 / 9.5 / 9.7 / 9.7 | 9.5 / 9.5 / 10.1 / 10.1<br>9.3 / 9.3 / 9.9 / 9.9 |
+| Final Answer / default / dodge | 15.9 / 15.9 / 15.8 / 15.5<br>15.8 / 15.8 / 15.6 / 15.5 | 15.3 / 15.3 / 15.4 / 15.4<br>15.3 / 15.3 / 15.1 / 15.0 | 13.7 / 13.7 / 14.6 / 14.5<br>13.8 / 13.8 / 14.6 / 14.5 | 14.0 / 14.0 / 13.7 / 13.6<br>13.6 / 13.6 / 13.2 / 13.2 |
+| Final Answer / matching / standard | 10.8 / 10.8 / 11.4 / 11.4<br>11.0 / 11.0 / 11.3 / 11.3 | 10.9 / 10.9 / 11.2 / 11.2<br>10.8 / 10.8 / 11.0 / 11.0 | 9.2 / 9.2 / 9.6 / 9.6<br>9.4 / 9.4 / 9.6 / 9.6 | 10.7 / 10.7 / 11.5 / 11.5<br>10.6 / 10.6 / 11.2 / 11.2 |
+| Final Answer / matching / dodge | 15.3 / 15.3 / 13.0 / 13.0<br>15.2 / 15.2 / 12.8 / 12.8 | 14.3 / 14.3 / 14.5 / 14.5<br>14.2 / 14.2 / 14.2 / 14.2 | 10.9 / 10.9 / 12.0 / 12.0<br>10.7 / 10.7 / 12.2 / 12.3 | 14.8 / 14.8 / 14.7 / 14.7<br>14.6 / 14.6 / 14.2 / 14.2 |
+| Final Answer / other / standard | 11.9 / 11.9 / 12.5 / 12.4<br>11.9 / 11.9 / 12.4 / 12.2 | 14.0 / 14.0 / 14.6 / 14.6<br>14.0 / 14.0 / 14.4 / 14.4 | 12.1 / 12.1 / 12.4 / 12.3<br>12.1 / 12.1 / 12.6 / 12.6 | 14.2 / 14.2 / 15.0 / 14.9<br>13.9 / 13.9 / 14.7 / 14.6 |
+| Final Answer / other / dodge | 14.2 / 14.2 / 15.5 / 14.8<br>13.9 / 13.9 / 15.3 / 14.5 | 16.2 / 16.2 / 17.2 / 17.1<br>15.9 / 15.9 / 16.7 / 16.5 | 13.4 / 13.4 / 15.2 / 14.7<br>13.6 / 13.6 / 15.3 / 14.6 | 16.4 / 16.4 / 17.8 / 17.6<br>16.2 / 16.2 / 17.2 / 17.1 |
+| Crown / default / standard | 11.1 / 11.1 / 11.2 / 11.1<br>11.1 / 11.1 / 11.2 / 11.1 | 11.2 / 11.5 / 11.5 / 11.5<br>11.2 / 11.5 / 11.5 / 11.5 | 9.4 / 9.5 / 9.5 / 9.5<br>9.5 / 9.5 / 9.5 / 9.5 | 9.5 / 9.5 / 9.5 / 9.5<br>9.3 / 9.3 / 9.3 / 9.3 |
+| Crown / matching / standard | 11.9 / 11.9 / 12.1 / 11.9<br>11.9 / 11.9 / 12.2 / 11.9 | 14.0 / 14.1 / 14.2 / 14.1<br>14.0 / 14.2 / 14.2 / 14.2 | 12.1 / 12.3 / 12.7 / 12.3<br>12.1 / 12.3 / 12.5 / 12.3 | 14.2 / 14.4 / 14.5 / 14.4<br>13.9 / 14.1 / 14.3 / 14.1 |
+| Crown / other / standard | 10.8 / 10.8 / 10.8 / 10.8<br>11.0 / 11.0 / 11.0 / 11.0 | 10.9 / 11.2 / 11.2 / 11.2<br>10.8 / 11.0 / 11.0 / 11.0 | 9.2 / 9.4 / 9.4 / 9.4<br>9.4 / 9.5 / 9.5 / 9.5 | 10.7 / 10.7 / 10.7 / 10.7<br>10.6 / 10.7 / 10.7 / 10.7 |
+
+
+## Tools: Rising plus a partner yield
+
+Replace the three-unit rare-find trial entirely. **Rising** derives the tool’s grade from the best currently open ground of its own skill (`skillTopTier` and actual enabled nodes), not zone/drop grade or the tool-crafting station. Spear tops out at **G3**, because only three Hunting grounds exist. Derive grade on equip/load/skill unlock; preserve item ID, definition, upgrade and found ownership. No saved grade escalation or new rolled affix is needed. Use ordinary Rare-level capped tool lines at that derived grade. No health line.
+
+| ID / tool | Source / band | Partner rule and cost |
+|---|---|---|
+| carapace-pick / Burrower’s Promise | beetle z4, G1+ | Rising. 1 Crystal per 3 Ore, and 1 Ore per 3 Crystal. Mining speed −10%. |
+| wisp-axe / Reed of Remembrance | wraith z7, G2+ | Rising. 1 Fibre per 2 Wood. Woodcutting speed −10%. |
+| spore-sickle / Harvest of Whispers | spore z5, G1+ | Rising. 1 Herb per 2 Fibre, or 1 Fibre per 2 Herb. Foraging speed −10%. |
+| moss-spear / Thorn of the First Grove | slime z8, G2+ | Rising, ≤G3. 1 Fibre per 2 Hide. Hunting speed −10%. |
+
+Partner grade is the grade of the harvested ground. Credit from **actually credited primary units**, so a full primary cell cannot generate a free partner farm. Use whole-unit stochastic rounding of fractional yields, with the same expectation live/away. Partner credit goes through `stashAdd(..., 'flow', true)`; do not recursively emit another harvest or rare-find roll. Existing rare-find quantity/chance rules remain unchanged. No independently multiplied find chance, three-unit find rule or tool-health exception remains. Partner choice is fixed by the node family; no extra tap or timer.
+
+Keep the earlier unique-tool final find-chance ceiling **8%**, after mastery and bonuses; apply the same ceiling to the scratch comparison variants. The quantity formula remains the live one. Other rolled tool affixes are stripped in all three variants to isolate the base, grade and rule; this does not certify every crafted affix combination.
+
+Use `STORE_TUNE.pace[L]`: the Storehouse level L, its Hearth, skill level, mastery, and upgrade from `q.tool[2]`. Compare ordinary pace gear (“plain”), a Rare base at Rising’s grade with no rule/cost (“rising”), and Rising + partner + speed cost (“unique”). Plain uses the pace fixture’s rarity/grade; Rising bases are Rare as defined. Work the best open legal ground, record the actual grade, and project one hour at the starting fixture’s rate, plus **8 hours through `awayGains`** with an actual 8-hour away allowance. The hourly rate is not a full live-play simulation; the away run includes skill/mastery progression and storage caps. No artificial unlimited stash.
+
+| Storehouse | Pace grade | Skill / mastery | Plain tool | Hearth |
+|---|---|---|---|---|
+| 1 | G1 | 25 / 3 | G1 Rare +3 | 1 |
+| 2 | G2 | 40 / 10 | G2 Rare +3 | 2 |
+| 3 | G3 | 50 / 15 | G3 Rare +6 | 3 |
+| 4 | G3 | 74 / 19 | G3 Epic +10 | 4 |
+| 5 | G4 | 90 / 20 | G4 Rare +10 | 5 |
+| 6 | G4 | 110 / 20 | G5 Rare +10 | 6 |
+| 7 | G5 | 135 / 20 | G5 Epic +10 | 7 |
+| 8 | G5 | 210 / 20 | G5 Epic +10 | 8 |
+
+Clamp the plain spear grade to G3 too; the generic pace tool is not permission to craft a G4/G5 spear. All three variants use the same upgrade and mastery. Rising grade refreshes on skill unlocks during the away resolver and is restored after stat calculation, leaving saved grade/ownership unchanged. The selected ground stays the one chosen before departure; it does not move itself. Watchtower 2 is the controlled eight-hour allowance fixture, not an acquisition/unlock proof for Hearth 1.
+
+**H3 check:** every family/grade cell must remain ≤`storeCapAt`; partner and rare-find credits must stop at their own cap. Include a filled-primary/filled-partner boundary probe, and state whether Spillover is enabled. Compare credited yields, not attempted output. H3 is a Storehouse flow rule, not Storehouse level 3 only.
+
+### Pace fixture and credited output
+
+**2304 cells**: four class paths × 8 Storehouse levels × 6 node families × 3 gear variants × 2 seeds × hourly rate/8-hour away. Hourly values are starting-fixture expected-rate batches, rounded to credited units; **not a simulated live hour**. Away uses the real resolver, including skill/mastery progression, with Spillover off and Watchtower 2 supplying an 8-hour allowance. All 1152 away cells processed 28800 seconds.
+
+H3: **0 overflowing cells**. Separate full-primary/full-partner boundary probes are recorded in u4-probes.json. The totals below are means of seeds 31415/27182 for the Warden path; all four paths remain in raw JSON. “Rare/h” is the next-grade primary rare find, and at G5 is the extra G5 find.
+
+| Storehouse / node | Ground / plain→Rising grade | Primary/h plain→unique | Partner/h unique | Rare/h plain→unique | 8h primary plain→unique | 8h partner unique | 8h rare plain→unique | Capacity primary / partner |
+|---|---|---|---|---|---|---|---|---|
+| 1 / ore | G2 / G1→G2 | 1926→2596 | 865 | 6→18 | 18451→31603 | 10534 | 243→732 | 40000 / 40000 |
+| 1 / crystal | G2 / G1→G2 | 1541→2077 | 692 | 5→15 | 14761→25282 | 8427 | 194→586 | 40000 / 40000 |
+| 1 / wood | G2 / G1→G2 | 2408→3246 | 1623 | 8→23 | 23064→39504 | 19752 | 303→915 | 40000 / 40000 |
+| 1 / fibre | G2 / G1→G2 | 2140→2885 | 1443 | 7→20 | 20658→35658 | 17829 | 272→826 | 40000 / 40000 |
+| 1 / herb | G2 / G1→G2 | 1926→2596 | 1298 | 6→18 | 18451→31603 | 15802 | 243→732 | 40000 / 40000 |
+| 1 / hide | G2 / G1→G2 | 2140→2885 | 1443 | 7→20 | 20000→20000 | 10000 | 263→463 | 20000 / 40000 |
+| 2 / ore | G3 / G2→G3 | 2408→3506 | 1169 | 41→81 | 22703→33680 | 11227 | 384→780 | 50000 / 50000 |
+| 2 / crystal | G3 / G2→G3 | 1927→2805 | 935 | 33→65 | 18162→26944 | 8981 | 307→624 | 50000 / 50000 |
+| 2 / wood | G3 / G2→G3 | 3011→4382 | 2191 | 51→102 | 28379→42100 | 21050 | 480→975 | 50000 / 50000 |
+| 2 / fibre | G3 / G2→G3 | 2676→3895 | 1948 | 45→90 | 25368→37688 | 18844 | 429→873 | 50000 / 50000 |
+| 2 / herb | G3 / G2→G3 | 2408→3506 | 1753 | 41→81 | 22703→33680 | 16840 | 384→780 | 50000 / 50000 |
+| 2 / hide | G3 / G2→G3 | 2676→3895 | 1948 | 45→90 | 25000→25000 | 12500 | 423→579 | 25000 / 50000 |
+| 3 / ore | G3 / G3→G3 | 5506→4956 | 1652 | 150→135 | 52207→46715 | 15572 | 1422→1273 | 100000 / 100000 |
+| 3 / crystal | G3 / G3→G3 | 4405→3964 | 1321 | 120→108 | 41766→37372 | 12457 | 1138→1018 | 100000 / 100000 |
+| 3 / wood | G3 / G3→G3 | 6883→6195 | 3098 | 188→169 | 65259→58394 | 29197 | 1778→1591 | 100000 / 100000 |
+| 3 / fibre | G3 / G3→G3 | 6118→5506 | 2753 | 167→150 | 58376→52207 | 26104 | 1590→1422 | 100000 / 100000 |
+| 3 / herb | G3 / G3→G3 | 5506→4956 | 2478 | 150→135 | 52207→46715 | 23358 | 1422→1273 | 100000 / 100000 |
+| 3 / hide | G3 / G3→G3 | 6118→5506 | 2753 | 167→150 | 50000→50000 | 25000 | 1362→1362 | 50000 / 100000 |
+| 4 / ore | G4 / G3→G4 | 7282→10195 | 3398 | 302→515 | 68119→96490 | 32163 | 2827→4873 | 200000 / 200000 |
+| 4 / crystal | G4 / G3→G4 | 5825→8156 | 2719 | 242→412 | 54495→77192 | 25731 | 2262→3898 | 200000 / 200000 |
+| 4 / wood | G4 / G3→G4 | 9102→12744 | 6372 | 378→644 | 85149→120613 | 60307 | 3534→6091 | 200000 / 200000 |
+| 4 / fibre | G4 / G3→G4 | 8091→11328 | 5664 | 336→572 | 75997→107759 | 53880 | 3154→5442 | 200000 / 200000 |
+| 4 / herb | G4 / G3→G4 | 7282→10195 | 5098 | 302→515 | 68119→96490 | 48245 | 2827→4873 | 200000 / 200000 |
+| 4 / hide | G3 / G3→G3 | 12010→8436 | 4218 | 499→276 | 100000→78688 | 39344 | 4150→2572 | 100000 / 200000 |
+| 5 / ore | G4 / G4→G4 | 12909→11618 | 3873 | 652→587 | 123154→110429 | 36810 | 6220→5577 | 300000 / 300000 |
+| 5 / crystal | G4 / G4→G4 | 10327→9295 | 3098 | 522→470 | 98523→88343 | 29448 | 4976→4462 | 300000 / 300000 |
+| 5 / wood | G4 / G4→G4 | 16137→14523 | 7262 | 815→734 | 153942→138036 | 69018 | 7774→6971 | 300000 / 300000 |
+| 5 / fibre | G4 / G4→G4 | 14344→12909 | 6455 | 725→652 | 137393→123154 | 61577 | 6939→6220 | 300000 / 300000 |
+| 5 / herb | G4 / G4→G4 | 12909→11618 | 5809 | 652→587 | 123154→110429 | 55215 | 6220→5577 | 300000 / 300000 |
+| 5 / hide | G3 / G3→G3 | 10682→9614 | 4807 | 349→314 | 100758→90435 | 45218 | 3293→2956 | 150000 / 300000 |
+| 6 / ore | G4 / G5→G4 | 26090→13290 | 4430 | 2087→671 | 255395→203818 | 67939 | 20432→16306 | 750000 / 750000 |
+| 6 / crystal | G4 / G5→G4 | 20872→10632 | 3544 | 1670→537 | 204316→163054 | 54351 | 16346→13045 | 750000 / 750000 |
+| 6 / wood | G4 / G5→G4 | 32613→16613 | 8307 | 2609→839 | 319243→254772 | 127386 | 25540→20382 | 750000 / 750000 |
+| 6 / fibre | G4 / G5→G4 | 28989→14767 | 7384 | 2319→746 | 284916→230068 | 115034 | 22794→18406 | 750000 / 750000 |
+| 6 / herb | G4 / G5→G4 | 26090→13290 | 6645 | 2087→671 | 255395→203818 | 101909 | 20432→16306 | 750000 / 750000 |
+| 6 / hide | G3 / G3→G3 | 12219→10997 | 5499 | 400→360 | 117215→105311 | 52656 | 3831→3442 | 375000 / 750000 |
+| 7 / ore | G5 / G5→G5 | 39775→27224 | 7823 | 5486→3756 | 398263→269663 | 77489 | 54934→37196 | 1250000 / 1250000 |
+| 7 / crystal | G5 / G5→G5 | 31821→21778 | 6258 | 4390→3004 | 318609→215730 | 61991 | 43946→29756 | 1250000 / 1250000 |
+| 7 / wood | G5 / G5→G5 | 49720→34029 | 14668 | 6858→4694 | 497827→337078 | 145292 | 68666→46494 | 1250000 / 1250000 |
+| 7 / fibre | G5 / G5→G5 | 44195→30247 | 13038 | 6096→4172 | 444185→300437 | 129499 | 61268→41440 | 1250000 / 1250000 |
+| 7 / herb | G5 / G5→G5 | 39775→27224 | 11734 | 5486→3756 | 398263→269663 | 116234 | 54934→37196 | 1250000 / 1250000 |
+| 7 / hide | G3 / G3→G3 | 18117→12726 | 6363 | 752→416 | 177607→124284 | 62142 | 7371→4062 | 625000 / 1250000 |
+| 8 / ore | G5 / G5→G5 | 55989→38320 | 11011 | 7723→5286 | 562584→383330 | 110152 | 77598→52874 | 2500000 / 2500000 |
+| 8 / crystal | G5 / G5→G5 | 44791→30655 | 8809 | 6178→4228 | 450067→306663 | 88122 | 62078→42298 | 2500000 / 2500000 |
+| 8 / wood | G5 / G5→G5 | 69986→47900 | 20646 | 9654→6608 | 703231→479162 | 206535 | 96998→66092 | 2500000 / 2500000 |
+| 8 / fibre | G5 / G5→G5 | 62211→42578 | 18352 | 8582→5874 | 626087→426382 | 183785 | 86358→58812 | 2500000 / 2500000 |
+| 8 / herb | G5 / G5→G5 | 55989→38320 | 16517 | 7723→5286 | 562584→383330 | 165228 | 77598→52874 | 2500000 / 2500000 |
+| 8 / hide | G3 / G3→G3 | 25502→17914 | 8957 | 1059→586 | 254029→178193 | 89097 | 10542→5824 | 1250000 / 2500000 |
+### Projected hours to the next-grade four-piece set
+
+Four +0 native crafts, any rarity, with gold, Essence and station unlocks already held. These are **gathering-work projections at the starting fixture’s credited rates**, not calendar progression, a real live-hour run, Rare +5 replacement time or a chance to roll four Rares. The six-node linear model minimises serial gathering time and credits partner materials in the same haul; it does not double-count them as separate work. Two seed estimates are shown as a range. Supplies must exist at the required grade; G5 Hide is unavailable from these gathering paths. No G4/G5 Hunting ground is invented.
+
+**One grade above the pace fixture’s current grade (`STORE_TUNE.pace[L].t + 1`).**
+
+| Storehouse / next grade | Warrior plain→unique h | Ranger plain→unique h | Mage plain→unique h | Lightkeeper path plain→unique h |
+|---|---|---|---|---|
+| 1 / G2 | 0.03–0.03→0.02–0.02 | 0.02–0.02→0.01–0.01 | 0.03–0.03→0.02–0.02 | 0.02–0.02→0.01–0.01 |
+| 2 / G3 | 0.03–0.03→0.02–0.02 | 0.02–0.02→0.01–0.01 | 0.03–0.03→0.01–0.01 | 0.02–0.02→0.01–0.01 |
+| 3 / G4 | 0.59–0.59→0.65–0.65 | 0.46–0.46→0.51–0.51 | 0.54–0.54→0.60–0.60 | 0.50–0.50→0.56–0.56 |
+| 4 / G4 | 0.05–0.05→0.07–0.07 | 0.08–0.08→0.14–0.14 | 0.01–0.01→0.01–0.01 | 0.02–0.02→0.02–0.02 |
+| 5 / G5 | unavailable→unavailable | unavailable→unavailable | 0.14–0.14→0.16–0.16 | unavailable→unavailable |
+| 6 / G5 | unavailable→unavailable | unavailable→unavailable | 0.05–0.05→0.14–0.14 | unavailable→unavailable |
+| 7 / — | terminal G5 | terminal G5 | terminal G5 | terminal G5 |
+| 8 / — | terminal G5 | terminal G5 | terminal G5 | terminal G5 |
+
+**One grade beyond the best already open Mining ground (frontier stress projection).**
+
+| Storehouse / next grade | Warrior plain→unique h | Ranger plain→unique h | Mage plain→unique h | Lightkeeper path plain→unique h |
+|---|---|---|---|---|
+| 1 / G3 | 11.20–11.20→3.79–3.79 | 8.54–8.54→2.98–2.98 | 10.02–10.02→3.40–3.40 | 9.64–9.64→3.29–3.29 |
+| 2 / G4 | 2.16–2.16→1.09–1.09 | 1.70–1.70→0.85–0.85 | 1.99–1.99→1.00–1.00 | 1.86–1.86→0.93–0.93 |
+| 3 / G4 | 0.59–0.59→0.65–0.65 | 0.46–0.46→0.51–0.51 | 0.54–0.54→0.60–0.60 | 0.50–0.50→0.56–0.56 |
+| 4 / G5 | unavailable→unavailable | unavailable→unavailable | 0.31–0.31→0.18–0.18 | unavailable→unavailable |
+| 5 / G5 | unavailable→unavailable | unavailable→unavailable | 0.14–0.14→0.16–0.16 | unavailable→unavailable |
+| 6 / G5 | unavailable→unavailable | unavailable→unavailable | 0.05–0.05→0.14–0.14 | unavailable→unavailable |
+| 7 / — | terminal G5 | terminal G5 | terminal G5 | terminal G5 |
+| 8 / — | terminal G5 | terminal G5 | terminal G5 | terminal G5 |
+
+Exact four-piece recipes from craftRecipe; missing families are zero. Essence is shown even though its farming time is excluded from this conditional projection.
+
+| Grade / class | Recipe |
+|---|---|
+| G2 / warden | ore 36, wood 8, ess 7, hide 11, fibre 2 |
+| G2 / ranger | wood 14, hide 23, ess 7, fibre 11 |
+| G2 / lanternmage | wood 8, crystal 21, ess 11, ore 3, fibre 14, herb 2 |
+| G2 / lightkeeper | ore 6, herb 15, ess 8, fibre 22, hide 3, crystal 2 |
+| G3 / warden | ore 46, wood 10, ess 8, hide 14, fibre 2 |
+| G3 / ranger | wood 18, hide 30, ess 8, fibre 14 |
+| G3 / lanternmage | wood 10, crystal 26, ess 14, ore 4, fibre 18, herb 2 |
+| G3 / lightkeeper | ore 8, herb 20, ess 10, fibre 28, hide 4, crystal 2 |
+| G4 / warden | ore 59, wood 13, ess 11, hide 18, fibre 3 |
+| G4 / ranger | wood 23, hide 38, ess 11, fibre 18 |
+| G4 / lanternmage | wood 13, crystal 34, ess 18, ore 5, fibre 23, herb 3 |
+| G4 / lightkeeper | ore 10, herb 25, ess 13, fibre 36, hide 5, crystal 3 |
+| G5 / warden | ore 69, wood 15, ess 12, hide 21, fibre 3 |
+| G5 / ranger | wood 27, hide 45, ess 12, fibre 21 |
+| G5 / lanternmage | wood 15, crystal 39, ess 21, ore 6, fibre 27, herb 3 |
+| G5 / lightkeeper | ore 12, herb 30, ess 15, fibre 42, hide 6, crystal 3 |
+
+
+Hours to the next grade’s four-piece class set must name the material recipe and production assumption. A sum of required material / sampled rate is gathering work only, conditional on station unlock, gold and Essence already held; it does not measure a whole account’s calendar progression. Grade-4/5 Hide from G3 Hunting requires its legal rare-find path; never invent G4/5 grounds. If a required grade/family has no measurable supply, report unavailable, not zero hours.
+
+## Release, drops and implementation gates
+
+Release A is inspection/definition compatibility one release before new drops. Release B includes the four judge-accepted combat definitions above, behind the remaining acquisition/save/retool/stack/performance gates. Other combat candidates, tools and support holds are not silently promoted by a passing single row. Separate switches govern set/rules/pool/road-legacy retirement; rollback turns off new drops then rules, preserving earned items and ownership. No merge, publication or save-key change.
+
+Keep first-clear 15%, repeat 4%, owned ×0.5 when `S.found[id] >= t`, earned modifiers and caps. Select one legal released candidate and roll once at its candidate-specific odds. Cache/killPack/boss prompt share one pure pool function; empty pool has no new drop, and the prompt uses selection-weighted aggregate odds. The first-hour chance beat stays 25–40 minutes. No pity, guarantee, independent per-item rolls or new raid pool. Legacy metadata and retirement cannot erase inspectable old items or duplicate Curator/Deeds credit.
+
+Production `m.uf` must be built once per fight from cached gear/definitions. One active rule, all worn costs; deterministic priority remains a proposal until combinations are measured. Hot helpers do not scan inventory or create a scheduler. Test every talent/Star caller, refresh/expiry, defended/unavoided multi-hit move, gate boundary, fight reset, class retool, old-save/save-code round trip, dormant costs and legacy coexistence. Transient fight flags are not saved. Scratch adapters are evidence, not performance-certified runtime implementation.
 
 ## Legacy uniques: keep all 13 unchanged
 
@@ -573,175 +567,121 @@ World raid items are paid on generation rollover after contributing damage, not 
 
 Legacy raid icons and their separate art draft are outside this docs revision. No solo budget result or online-source change is claimed.
 
-## Implementation inventory (proposal only)
 
-| Work item | Required contract / review point |
-|---|---|
-| Definition power / HP | Per-definition pow 1.8, grade/+N/caps; adopted fixedHp median line (a), subject to Cal’s veto and Charm/tool sizing. Keep new IDs distinct and legacy bases/effects unchanged. Derive the fixed line from definition and power, no new saved field or reforge roll. |
-| Find-line multiplier | Multiplier 1 for the three-unit trial; quantity 3 independent of chance. Final chance cap 8%; final affected-skill speed ×.90. Keep tools out of initial pool. |
-| Set eligibility and units | Four fitted crafted same-grade pieces, exclude u, ignore rarity/+N and charm/tools. HP in gearCalc; Might-equivalent A/U/counter ratio in turnMakeProfile only, no raid DPS change. G1–3 off, G4 pr5b hold. |
-| m.uf | Build once in turnNew from cached gear/definitions, one active rule plus all worn costs. Hot helpers use one null check, no inventory scans/new scheduler or saved fight fields. Scratch __U wrappers are not a performance implementation. |
-| Hooks | Attack hit sequence; resource caps/recovery/unavoided-contact losses; counter eligibility and next-ability boost; defence timestamp/refund; Bleed cap/duration and actual Mark spending; one Burn bank/heat reset/consumption; Fire spending/held heat; Ward absorption/reflection; rally-start resource. Include every talent/Star caller and fight reset. |
-| Pool / cache / boss prompt | One shared legal-candidate/odds function, one candidate roll, candidate-owned scaling. Exclude holds/tools; require Crimson’s earned Bleed source. Cache joins actual drop; prompt shows aggregate odds and readable cost, no duplicate roll. |
-| Legacy metadata | legacy:true is definition metadata; hidden on Codex until found, then inspectable forever. Test old ownership/Curator/Deeds/acquisition before retiring seven road IDs from new pools. Keep six raid sources untouched. |
-| Retool | New definitions explicitly retoolable, legacy u still skipped. Preserve id/u/t/r/plus/found and rt semantics; resolve class-native base kind by new class and same position. Crown maps resource by class kind. Typed bank/spender rules need separately measured class adapters; do not invent Grit/Fire on a class lacking them. No cross-class adapter is certified here. |
-| Saves / performance | Existing item schema and found[u] only; transient rule state is per-fight, not saved. Test old-save/save-code round trips, handoffs, dormant-cost accumulation, neutral/rule-heavy perf and cached summary invalidation. Keep m.sf/m.uf split and all budgets. |
+## Reproduce: one guarded scratch installer
 
-### Rollback and release order
+Save the following as `tools/.health/u4-install.mjs` at the pinned integration commit. It reads runtime sources and writes **only ignored tools/.health files**. Every prototype replacement must match exactly once; missing/ambiguous anchors throw. No source, target, fixture or difficulty budget is edited. The installer also writes the runners and summary. The long serialized runner lines are literal file contents, not shell commands.
 
-Release A: definitions and safe inspection compatibility **one release before drops**, with new rules/pool off. Old IDs stay loadable/readable; no new earnable power, duplicate catalogue credit or art dependency. Test save codes and found ownership. Release B: only individually accepted combat definitions after pr5b, legal kept-up rows, acquisition, retool, save, combination and performance gates. Tools and support holds remain excluded.
-
-Separate switches for set, new rules, pool and road-legacy retirement. Rollback disables new drops, then rule/set switches; retain definitions and earned items/found entries. Never erase an item or silently downgrade it. No save-key change, netlify.toml change, online work, merge or publication.
-
-## Reproduce with one guarded patch script
-
-Save the **single complete script below** as `tools/.health/uniques-v3-patch.mjs`, then run from the repo root. It creates ignored scratch core/budget/runner modules, never edits live src or the official budget. It throws on a missing **or ambiguous** anchor, including required runtime hooks. Input SHA256 hashes are written to `uniques-v3-sources.json`. Do not silently adapt anchors to a changed head; inspect/rebase and rerun.
+Run in PowerShell:
 
 ```powershell
-node tools/.health/uniques-v3-patch.mjs
-node tools/.uniques-v3-run.mjs set
-node tools/.uniques-v3-run.mjs controls
-foreach ($taskRule in @('twin60','twin80','twin85','gate','mountain','oath','barbed','vesper','veil','huntsman','vigil','mantle','answer','burrow')) {
-  node tools/.uniques-v3-run.mjs combat $taskRule
-  if ($LASTEXITCODE -ne 0) { throw "Combat failed: $taskRule" }
-  node tools/.uniques-v3-run.mjs stars $taskRule
-  if ($LASTEXITCODE -ne 0) { throw "Stars failed: $taskRule" }
-}
-node tools/.uniques-v3-gather.mjs
+node tools/.health/u4-install.mjs
+node tools/.health/u4-run.mjs budget
+node tools/.health/u4-run.mjs earlybudget
+node tools/.health/u4-run.mjs first answer
+node tools/.health/u4-run.mjs toolbudget
+foreach ($rule in @('answer','burrow','mountain','oath','barbed','veil','huntsman','vigil','mantle')) { node tools/.health/u4-run.mjs late $rule }
+node tools/.health/u4-gather.mjs
+node tools/.health/u4-hours.mjs
+node tools/.health/u4-probes.mjs
+node tools/.health/u4-summary.mjs
 ```
 
-No-argument `combat`/`stars` runs all rules in one JSON; the above per-rule commands match the files used here. Identical cells are cached within each command only. Total stored combat rows: 3936; same-swap rows: 1968; controls: 984; set: 24; gather: 120. Duplicate named builds/control repeats remain recorded as rows rather than masquerading as independent samples. All final numerical measurements use the same guarded rule code; optional footing metadata was added during the run and does not change any formula.
+Each process retains **one active core per hero/checkpoint**, restoring original functions, loading the official fixture and resetting the rule before each measurement. Identical controls are reused only for identical inputs. Default/matching/other labels remain separate stored rows. The largest observed scratch combat RSS was about 350 MiB; the Answer runner did not require a 5-GB core-per-row heap. This is measurement memory evidence, not production performance certification.
 
-```js
+Seed correction: the original tool captures `OFFSET` at module import. Changing argv alone after import repeats seed 0. The guarded scratch replacement reads the requested offset at the actual `seedOf` call, records it in every result, and the summary asserts it equals the row’s offset. Both offsets were rerun/validated; an old repeated “seed 1” is not counted. This correction and core reuse are recorded here because the tracked scope is this document only.
+
+Raw files contain wins, good turns, never-defends, fixture/profile metadata and row IDs. The summary checks row counts, unique IDs, 240 fights per persona, offsets, and footing neutrality. Main combat rows total **2,658** (1,128 late budget, 630 early, 900 first-hour); expanded changed-candidate rows total **3,024**. Gathering has 2,304 cells; set-time projections have 192 entries. The source manifest records SHA-256 for all loaded inputs. Main tool hashes: `tools/budget.mjs 73283111667712e7870ddda62f8127d9c0e1cc28136c9015bc47cb18c5d67121`; `tools/lib/core.mjs e1f43cc1dc7231fb7dadd86a66cc2fee1cb3137329f0314e1cbbaedcd6788131`.
+
+```javascript
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-// Save this complete script at tools/.health/uniques-v3-patch.mjs. Run from the repo root.
-const must = (s,a,b,n=1) => {
-  const count=s.split(a).length-1;
-  if(count!==n)throw Error(`Missing/ambiguous anchor (${count}, expected ${n}): ${a}`);
-  return s.split(a).join(b);
-};
-function patchTurn(s) {
-  const put=(a,b,n=1)=>{s=must(s,a,b,n);};
-  put("const cap = k === 'aim' ? 3 : k === 'grit' ? 10 : 5;", "const cap = k === 'aim' ? (__U?.active && __U.rule==='veil'?5:3) : k === 'grit' ? (__U?.active && __U.rule==='mountain'?15:10) : 5;");
-  put('h.grit = Math.min(10, keep + back);', "h.grit = Math.min(__U?.active && __U.rule==='mountain'?15:10, keep + back);");
-  put('e.bleedMax || T.bleedMax', "(__U?.active && __U.rule==='barbed'?(e.bleedMax || T.bleedMax)+3:(e.bleedMax || T.bleedMax))");
-  put('e.bleedT = T.bleedT + (e.bleedPlus || 0);', "e.bleedT = Math.max(1,T.bleedT + (e.bleedPlus || 0)-(__U?.active && __U.cost && __U.rule==='barbed'?1:0));");
-  put("const a1 = hit(p.A * 0.55 * x, { ...more }), a2 = hit(p.A * 0.55 * x, { ...more });", "const cut=__U?.active && __U.rule.startsWith('twin')?(__U.cost?__U.cut:1):1; const a1 = hit(p.A * 0.55 * x*cut, { ...more }), a2 = hit(p.A * 0.55 * x*cut, { ...more }); if(__U?.active && __U.rule.startsWith('twin'))hit(p.A*0.55*x*cut,{...more});");
-  put('else hit(p.A * x, more);', "else if(__U?.active && __U.rule.startsWith('twin')){const cut=__U.cost?__U.cut:1;hit(p.A*x*cut,{...more});hit(p.A*x*cut,{...more});} else hit(p.A * x, more);");
-  put("const spendMark = () => { e.mark = 0;", "const spendMark = () => { if(__U?.active && __U.rule==='huntsman' && e.mark>0)turnBleedAdd(m,2); e.mark = 0;");
-  put('const first = !h.attacked; h.attacked = 1;', "if(__U?.active && __U.rule==='vigil' && burning){e.uHeat=Math.min(0.75,(e.uHeat||0)+0.25);} const first = !h.attacked; h.attacked = 1;");
-  put('h.embers = 0; spell = true;', "h.embers = __U?.active && __U.rule==='mantle'?Math.floor(em/2):0; spell = true;");
-  put('let d = pow, crit = false;', "let d = pow, crit = false; if(__U?.active && __U.cost && __U.rule==='vigil' && o.kind==='fire')d*=0.85; if(__U?.active && __U.rule==='vigil' && (o.kind==='burn'||o.kind==='ignite'))d*=1+(e.uHeat||0); if(__U?.active && __U.cost && __U.rule==='huntsman' && o.kind==='bleed')d*=0.8;");
-  put('T.cinderX * h.embers', "T.cinderX * h.embers*(__U?.active && __U.cost && __U.rule==='mantle'?0.75:1)");
-  put("io.emit('foeRally', { name: p.foeName, gate: m.gi });", "if(__U?.active && __U.rule==='burrow')turnGain(h, __U.resource, 2); io.emit('foeRally', { name: p.foeName, gate: m.gi });");
-  put('h.grit = Math.min', 'h.grit = Math.min'); // also proves recovery is still present
-  put('const cx = m.move && m.move.charge ?', "if(__U?.active && __U.cost && __U.rule==='mountain')h.grit=Math.max(0,h.grit-3); if(__U?.active && __U.cost && __U.rule==='veil')h.aim=Math.max(0,h.aim-2); const cx = m.move && m.move.charge ?");
-  put("res = 'dodge'; h.postDodge", "if(__U?.active && __U.rule==='vesper')for(const k in m.cds)m.cds[k]=Math.max(0,m.cds[k]-1); res = 'dodge'; h.postDodge");
-  put("else if (m.defense === 'parry') {\n    for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);", "else if (m.defense === 'parry') {\n    if(!(__U?.active && __U.cost && __U.rule==='vesper'))for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);");
-  put("io.emit('foeContact',", "if(__U?.active && __U.rule==='answer' && (res==='parry'||res==='dodge'&&m.uCleanDodge)){const ids=Object.keys(m.cds).filter(k=>k!=='attack'&&m.cds[k]>0).sort((a,b)=>m.cds[b]-m.cds[a]||a.localeCompare(b));if(ids[0])m.cds[ids[0]]=Math.max(0,m.cds[ids[0]]-1);}m.uCleanDodge=false; io.emit('foeContact',");
-  put('if (m.parried === turnRealHits(m.move)) {', "if (m.parried === turnRealHits(m.move) || __U?.active && __U.rule==='gate' && m.parried>=Math.max(1,turnRealHits(m.move)-1)) {");
-  put("io.emit('soloCounter',", "if(__U?.active && __U.rule==='oath')h.uNextAbility=true; io.emit('soloCounter',");
-  put('const a = turnAb(id); h.mom = 0;', "const a = turnAb(id); h.mom = 0;");
-  // Oath scales the whole next non-passive ability's U once, including its newly stored DoT.
-  put('const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, U = p.U, k = p.heroKey;', 'const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, U = p.U, k = p.heroKey;');
-  // Wrapping turnHeroAct below avoids scaling p.U more than once per ability.
-  put('e.burnDmg = 0; e.growN = 0;', 'e.burnDmg = 0; e.growN = 0; e.uHeat=0;',3);
-  return s;
+const must=(s,a,b,n=1)=>{const c=s.split(a).length-1;if(c!==n)throw Error(`Anchor ${c}/${n}: ${a}`);return s.split(a).join(b);};
+function patchTurn(s){const put=(a,b,n=1)=>s=must(s,a,b,n);
+ put('(h.keen && o.keenOk ? T.keenX : 0)','((h.keen || m.uVeilAct) && o.keenOk ? T.keenX : 0)');
+ put('e.bleedMax || T.bleedMax',"(__U?.active&&__U.rule==='barbed'?8:e.bleedMax||T.bleedMax)");
+ put('e.bleed + n',"e.bleed+n*(__U?.active&&__U.rule==='barbed'?2:1)");
+ put('e.bleedT = T.bleedT + (e.bleedPlus || 0);',"e.bleedT=Math.max(1,T.bleedT+(e.bleedPlus||0)-(__U?.active&&__U.cost&&__U.rule==='barbed'?1:0));");
+ put('const a1 = hit(p.A * 0.55 * x, { ...more }), a2 = hit(p.A * 0.55 * x, { ...more });',"const cut=__U?.active&&__U.rule.startsWith('twin')?(__U.cost?(m.p.boss&&S.zone>=16&&S.zone<=34?Math.min(.75,__U.cut):__U.cut):1):1; const a1=hit(p.A*.55*x*cut,{...more}),a2=hit(p.A*.55*x*cut,{...more});if(__U?.active&&__U.rule.startsWith('twin'))hit(p.A*.55*x*cut,{...more});");
+ put('else hit(p.A * x, more);',"else if(__U?.active&&__U.rule.startsWith('twin')){const cut=__U.cost?(m.p.boss&&S.zone>=16&&S.zone<=34?Math.min(.75,__U.cut):__U.cut):1;hit(p.A*x*cut,more);hit(p.A*x*cut,more);}else hit(p.A*x,more);");
+ put('const spendMark = () => { e.mark = 0;',"const spendMark=()=>{if(__U?.active&&__U.rule==='huntsman'&&e.mark>0)turnBleedAdd(m,3);e.mark=0;");
+ put('h.embers = 0; spell = true;',"h.embers=__U?.active&&__U.rule==='mantle'?em:0;spell=true;");
+ put('let d = pow, crit = false;',"let d=pow,crit=false;if(__U?.active&&__U.cost&&__U.rule==='vigil'&&o.kind==='fire')d*=.85;if(__U?.active&&__U.cost&&__U.rule==='huntsman'&&o.kind==='bleed')d*=.9;");
+ put('T.cinderX * h.embers',"T.cinderX*h.embers*(__U?.active&&__U.cost&&__U.rule==='mantle'?.75:1)");
+ put("io.emit('foeRally', { name: p.foeName, gate: m.gi });", "if(__U?.active&&__U.rule==='burrow'&&m.uCrownGate!==m.gi){m.uCrownGate=m.gi;turnGain(h,__U.resource,2);}io.emit('foeRally',{name:p.foeName,gate:m.gi});");
+ put('const cx = m.move && m.move.charge ?',"if(__U?.active&&__U.cost&&__U.rule==='mountain')h.grit=Math.max(0,h.grit-3);const cx=m.move&&m.move.charge ?");
+ put("res = 'dodge'; h.postDodge", "if(__U?.active&&__U.rule==='vesper')for(const k in m.cds)m.cds[k]=Math.max(0,m.cds[k]-1);if(__U?.active&&__U.rule==='veil')h.uVeil=true;res='dodge';h.postDodge");
+ put("else if (m.defense === 'parry') {\n    for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);", "else if(m.defense==='parry'){\n    if(!(__U?.active&&__U.cost&&__U.rule==='vesper'))for(const k in m.cds)m.cds[k]=Math.max(0,m.cds[k]-1);");
+ put('m.move = mv; m.hitI = 0;', 'm.uAnswer=false;m.uVigil=false;m.move=mv;m.hitI=0;');
+ put("io.emit('foeContact',", "if(__U?.active&&__U.rule==='oath'&&res==='parry')h.uNextAbility=true;if(__U?.active&&__U.rule==='answer'&&!m.uAnswer&&m.uLateDefense&&(res==='parry'||res==='dodge')){m.uAnswer=true;const ids=Object.keys(m.cds).filter(k=>k!=='attack'&&m.cds[k]>0).sort((a,b)=>m.cds[b]-m.cds[a]||a.localeCompare(b));if(ids[0])m.cds[ids[0]]=Math.max(0,m.cds[ids[0]]-1);}m.uLateDefense=false;if(__U?.active&&__U.rule==='vigil'&&!m.uVigil&&(res==='parry'||res==='dodge')&&e.burn>0){m.uVigil=true;turnHitFoe(m,io,e.burnDmg,{dt:'fire',dot:true,kind:'burn',n:e.burn,dotCrit:!!e.burnCrit});}io.emit('foeContact',");
+ put('if (m.parried === turnRealHits(m.move)) {',"if(m.parried===turnRealHits(m.move)||__U?.active&&__U.rule==='gate'&&m.parried>=Math.max(1,turnRealHits(m.move)-1)){");
+ return s;
 }
 fs.mkdirSync('tools/.health',{recursive:true});
 let core=fs.readFileSync('tools/lib/core.mjs','utf8');
-const helper='const must='+must.toString()+';\n'+patchTurn.toString()+'\n';
-core=must(core,"import fs from 'node:fs';", "import fs from 'node:fs';\n"+helper);
-core=must(core,"if (prelude) pushPart('<prelude>', prelude);", "pushPart('<uniques v3 binding>', 'let __U=null;'); if (prelude) pushPart('<prelude>', prelude);");
-core=must(core,"pushPart('src/js/' + f, fs.readFileSync(path.join(JS_DIR, f), 'utf8'));", "let text=fs.readFileSync(path.join(JS_DIR,f),'utf8'); if(f==='59k-turn.js')text=patchTurn(text); if(f==='55-tools.js')text=must(text,'finds * (t < 5 ? 1 : TOOL_TUNE.top)', 'finds * (__U?.toolUnits || (t < 5 ? 1 : TOOL_TUNE.top))'); pushPart('src/js/' + f,text);");
-fs.writeFileSync('tools/lib/.uniques-v3-core.mjs',core);
+core=must(core,"import fs from 'node:fs';","import fs from 'node:fs';\nconst must="+must.toString()+";\n"+patchTurn.toString()+"\n");
+core=must(core,"if (prelude) pushPart('<prelude>', prelude);","pushPart('<u4 binding>','let __U=null;');if(prelude)pushPart('<prelude>',prelude);");
+core=must(core,"pushPart('src/js/' + f, fs.readFileSync(path.join(JS_DIR, f), 'utf8'));","let txt=fs.readFileSync(path.join(JS_DIR,f),'utf8');if(f==='59k-turn.js')txt=patchTurn(txt);pushPart('src/js/'+f,txt);");
+core=must(core,"pushPart('<exports>',", "pushPart('<u4 originals>','const __gear0=gearCalc,__profile0=turnMakeProfile,__new0=turnNew,__act0=turnHeroAct,__resolve0=turnResolve;');pushPart('<exports>',");
+fs.writeFileSync('tools/.health/u4-core.mjs',core);
 let budget=fs.readFileSync('tools/budget.mjs','utf8');
-budget=must(budget,"from './lib/core.mjs'", "from './lib/.uniques-v3-core.mjs'");
-budget=must(budget,'function measure(c, k,', 'export function measure(c, k,');
-budget=must(budget,'return { L: S.L, hpr:', 'return { footing: {set:p.uSet,gearHp:gear().hp,gearMight:gear().might,fixedHp:__U.slot && __U.parity==="a"?craftAffixValue("hp",itemPower(itemById(S.equip[__U.slot])),0.5)[0][1]:0}, L: S.L, hpr:');
-budget=must(budget,'return { ...out, L: p0.L,', 'return { ...out, footing:p0.footing, L: p0.L,');
-budget+='\nexport function configure(js){argv.splice(0,argv.length,"--eval",js);}\n';
-fs.writeFileSync('tools/.uniques-v3-budget.mjs',budget);
+budget=must(budget,"from './lib/core.mjs'","from './u4-core.mjs'");
+budget=must(budget,"from './lib/budget-score.mjs'","from '../lib/budget-score.mjs'");
+budget=must(budget,'function measure(c, k,','export function measure(c, k,');
+budget=must(budget,'seedOf(OFFSET, id, k, pl, i)',"seedOf(Number(opt('seed-offset',0)), id, k, pl, i)");
+budget=must(budget,"const core = loadCore({ seed: 1, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);", "const ck=c[0]+'|'+k;if(currentKey!==ck){currentKey=ck;currentCore=loadCore({seed:1,prelude:'Date.now=()=>1791187200000;'});cores++;}const core=currentCore,e=s=>core.eval(s);e('__U=null;gearCalc=__gear0;turnMakeProfile=__profile0;turnNew=__new0;turnHeroAct=__act0;turnResolve=__resolve0;');");
+budget=must(budget,"const fixtures = {};","let currentCore=null,currentKey=null,cores=0;const fixtures={};");
+budget=must(budget,'return { L: S.L, hpr:', 'return { footHp:p.footHp, hp:p.heroMaxHp, A:p.A, U:p.U, set:p.uSet, L: S.L, hpr:');
+budget=must(budget,'return { ...out, L: p0.L,',"return { ...out, seedOffset:Number(opt('seed-offset',0)),footHp:p0.footHp,hp:p0.hp,A:p0.A,U:p0.U,set:p0.set,L: p0.L,");
+budget+='\nexport function configure(js,offset=0){argv.splice(0,argv.length,"--eval",js,"--seed-offset",String(offset),"--set","none","--none");}\nexport function coreCount(){return cores;}\n';
+fs.writeFileSync('tools/.health/u4-budget.mjs',budget);
 const prototype=String.raw`(() => {
-const q=__CONFIG__, active=['R','Rnc'].includes(q.mode), cost=q.mode==='R';
-const cls=heroWho(), resources={ranger:'aim',warden:'grit',lanternmage:'embers'};
-__U={...q,active,cost,resource:resources[cls]};
-if(!__U.resource)throw Error('Unmeasured class: '+cls);
-if(q.attr && attrOn()){S.attr.pts[soloHero()]=ATTR0();attrAdd(q.attr,1e9,soloHero());}
-if(q.stars){S.stars.set[soloHero()]=q.stars.filter(id=>S.stars.own[id]).concat([null,null,null]).slice(0,3);}
-if(q.slot){const old=itemById(S.equip[q.slot]);const it=newItem(old.slot,old.t,'rare',{rnd:()=>0.5});it.plus=old.plus;it.a=q.parity==='a'?[['hp',0.5]]:[];if(!fits(it,q.slot,heroWho()))throw Error('Illegal fitting');S.items.push(it);S.equip[q.slot]=it.id;}
-const setTier=()=>{if(q.mode==='N'||q.slot&&q.slot!=='charm')return 0;const its=['weapon','off','helm','body'].map(pos=>{const it=itemById(S.equip[pos]);return it&&!it.u&&fits(it,pos,heroWho())?it:null;});return its.every(it=>it&&it.t===its[0].t)&&its[0].t>=4?its[0].t:0;};
-const calc=gearCalc;gearCalc=()=>{const g=calc(),t=setTier();if(t)g.hp+=0.15*TIER_POW[t];return g;};
-const make=turnMakeProfile;turnMakeProfile=function(f,u){const p=make(f,u);if(!p)return p;const t=setTier(),g=gear(),x=t?(100+g.might+0.10*TIER_POW[t])/(100+g.might):1;p.A*=x;p.U*=x;p.counter*=x;
- if(active&&cost){if(q.rule==='gate')p.counter*=0.9;if(['oath','answer','burrow'].includes(q.rule))p.A*=q.rule==='oath'?0.85:0.9;}
- p.uSet={tier:t,damageX:x,hpLine:t?0.15*TIER_POW[t]:0,hpTotal:g.hp,might:g.might};return p;};
-const new0=turnNew;turnNew=function(p,io){if(q.eq){p.eq=q.eq;p.cds={attack:1};for(const id of p.eq){if(!turnAb(id))throw Error('Unknown ability '+id);p.cds[id]=turnCdFor(id);}}const m=new0(p,io);m.uf=active?q.rule:null;return m;};
-const act=turnHeroAct;turnHeroAct=function(m,io,id,slot,grades){const boost=active&&q.rule==='oath'&&m.h.uNextAbility&&id!=='attack'&&turnAb(id)?.kind!=='passive';const u=m.p.U;if(boost){m.h.uNextAbility=false;m.p.U*=1.3;}try{return act(m,io,id,slot,grades);}finally{m.p.U=u;}};
-const resolve=turnResolve;turnResolve=function(m,cmd,dt,io){if(active&&q.rule==='answer'&&m.phase==='foeWindup'&&!m.usedDefense&&cmd.kind==='dodge'){const left=m.until-m.now;m.uCleanDodge=left>=0&&left<=turnWindows(m).dodge/2;}return resolve(m,cmd,dt,io);};
-gearDirty();
+ const q=__CONFIG__,active=['R','Rnc'].includes(q.mode),cost=q.mode==='R';
+ __U={...q,active,cost,resource:{ranger:'aim',warden:'grit',lanternmage:'embers'}[heroWho()]};
+ if(q.attr&&attrOn()){S.attr.pts[soloHero()]=ATTR0();attrAdd(q.attr,1e9,soloHero());}
+ if(q.stars)S.stars.set[soloHero()]=q.stars.filter(id=>S.stars.own[id]).concat([null,null,null]).slice(0,3);
+ if(q.slot){const old=itemById(S.equip[q.slot]),tool=TOOL_KINDS[q.slot],kind=old?.slot||q.slot,t=tool?Math.min(skillTopTier(tool.skill),q.slot==='spear'?3:5):old.t,it=newItem(kind,t,'rare',{rnd:()=>.5});it.plus=old?.plus||0;it.a=['weapon','off','helm','body'].includes(q.slot)?[['hp',.5]]:[];if(!fits(it,q.slot,heroWho()))throw Error('Illegal fitting');S.items.push(it);S.equip[q.slot]=it.id;}
+ const setTier=()=>{if(q.mode==='N'||['weapon','off','helm','body'].includes(q.slot))return 0;const its=['weapon','off','helm','body'].map(pos=>itemById(S.equip[pos]));return its.every(it=>it&&!it.u&&it.t===its[0].t)&&its[0].t>=4?its[0].t:0;};
+ gearCalc=over=>{const g=__gear0(over),t=over?0:setTier();if(t)g.hp+=.15*TIER_POW[t];return g;};
+ turnMakeProfile=function(f,u){const p=__profile0(f,u);if(!p)return p;const t=setTier(),g=gear(),x=t?(100+g.might+.1*TIER_POW[t])/(100+g.might):1;p.A*=x;p.U*=x;p.counter*=x;if(active&&cost){if(q.rule==='gate')p.counter*=.9;if(['oath','answer','burrow','veil'].includes(q.rule))p.A*=q.rule==='oath'?.85:.9;}p.uSet=t;return p;};
+ turnNew=function(p,io){if(q.eq){p.eq=q.eq;p.cds={attack:1};for(const id of p.eq)p.cds[id]=turnCdFor(id);}return __new0(p,io);};
+ turnHeroAct=function(m,io,id,slot,grades){const ability=id!=='attack'&&turnAb(id)?.kind!=='passive',usable=!turnUsable(m,id),u=m.p.U;if(active&&ability&&usable){if(q.rule==='oath'&&m.h.uNextAbility){m.h.uNextAbility=false;m.p.U*=1.25;}if(q.rule==='mountain')m.p.U*=1+Math.min(m.p.boss&&S.zone>=16&&S.zone<=34?.5:Infinity,.08*m.h.grit);if(q.rule==='veil'&&m.h.uVeil){m.h.uVeil=false;m.uVeilAct=true;}}try{return __act0(m,io,id,slot,grades);}finally{m.p.U=u;m.uVeilAct=false;}};
+ turnResolve=function(m,cmd,dt,io){if(active&&q.rule==='answer'&&m.phase==='foeWindup'&&!m.usedDefense&&['parry','dodge'].includes(cmd.kind)){const left=m.until-m.now;m.uLateDefense=left>=0&&left<=turnWindows(m)[cmd.kind]/2;}return __resolve0(m,cmd,dt,io);};
+ gearDirty();
 })()`;
-fs.writeFileSync('tools/.health/uniques-v3-prototype.js',prototype);
-const runner=String.raw`import fs from 'node:fs';
-import {configure,measure,CHECKPOINTS,PLAYERS} from './.uniques-v3-budget.mjs';
-const template=fs.readFileSync('tools/.health/uniques-v3-prototype.js','utf8');
-const mode=process.argv[2]||'combat',filter=process.argv[3],out=[],cache=new Map();
-const base={wren:['echo','powershot','deadeye'],tobin:['bash','heavystrike','riposte'],pip:['fire','spark','kindle']};
-const atk={wren:['echo','twinshot','powershot'],tobin:['bash','momentum','heavystrike'],pip:['fire','afterglow','spark']};
-const bleed=['echo','barbed','powershot'];
-const definitions={twin60:{heroes:['wren','tobin','pip'],slot:'weapon',cut:0.6},twin80:{heroes:['wren','tobin','pip'],slot:'weapon',cut:0.8},twin85:{heroes:['wren','tobin','pip'],slot:'weapon',cut:0.85},gate:{heroes:['tobin'],slot:'off'},mountain:{heroes:['tobin'],slot:'body'},oath:{heroes:['tobin'],slot:'weapon'},barbed:{heroes:['wren'],slot:'weapon'},vesper:{heroes:['wren'],slot:'off'},veil:{heroes:['wren'],slot:'helm'},huntsman:{heroes:['wren'],slot:'body'},vigil:{heroes:['pip'],slot:'helm'},mantle:{heroes:['pip'],slot:'body'},answer:{heroes:['wren','tobin','pip'],slot:'charm'},burrow:{heroes:['wren','tobin','pip'],slot:'helm'}};
-const dodge={casual:{...PLAYERS.casual,parry:0.05,dodge:0.55},good:{...PLAYERS.good,parry:0.05,dodge:0.93}};
-function builds(rule,h,z){const natural=z<20?base[h]:{wren:['echo','deadeye','powershot'],tobin:['bash','heavystrike','hammerfall'],pip:['fire','ignite','spark']}[h];const attack={eq:atk[h],attr:'might'};const caster={eq:natural,attr:'focus'};
- let matching=caster,other=attack;
- if(rule.startsWith('twin')||['mountain','veil','vigil','burrow'].includes(rule)){matching=attack;other=caster;}
- if(rule==='barbed')matching={eq:bleed,attr:'focus'};
- if(rule==='huntsman')matching={eq:['echo','deadeye','powershot'],attr:'focus'};
- if(rule==='mantle')matching={eq:['fire','kindle','spark'],attr:'focus'};
- return {default:{eq:null,attr:null},matching,other,attack, ...(h==='wren'?{bleed:{eq:bleed,attr:'focus'}}:{})};}
-function run(rule,z,hero,build,settings,variant,parity,persona='standard',stars=false){const cp=CHECKPOINTS.find(c=>c[0]==='z'+z+'-boss');if(!cp)throw Error('Missing official checkpoint '+z);const d=definitions[rule]||{},q={rule,mode:variant,slot:['B','R','Rnc'].includes(variant)?d.slot:null,parity,cut:d.cut,eq:settings.eq,attr:settings.attr,stars:stars?['huntstep','serrated','coldsteel']:null};
- const key=JSON.stringify([z,hero,persona,{...q,rule:['N','S','B'].includes(variant)?'control':rule,cut:['N','S','B'].includes(variant)?null:q.cut,parity:['N','S'].includes(variant)?'none':parity}]);let result=cache.get(key);
- if(!result){configure(template.replace('__CONFIG__',JSON.stringify(q)));result=measure(cp,hero,0,persona==='dodge'?dodge:PLAYERS);cache.set(key,result);}
- out.push({id:'u3-'+rule+'-'+parity+'-z'+z+'-'+hero+'-'+build+'-'+persona+(stars?'-swap':'')+'-'+variant,rule,z,hero,build,settings,variant,parity,persona,stars,result});
- fs.writeFileSync('tools/.health/uniques-v3-'+mode+(filter?'-'+filter:'')+'.json',JSON.stringify(out,null,2)+'\n');console.log(out.at(-1).id,result.casual.win,result.good.win,result.good.turns);
-}
-if(mode==='set'){for(const z of [20,25,30,34])for(const h of ['wren','tobin','pip'])for(const v of ['N','S'])run('set',z,h,'default',{eq:null,attr:null},v,'none');}
-else {for(const [rule,d] of Object.entries(definitions)){if(filter&&rule!==filter)continue;for(const z of [9,13,16,20])for(const hero of d.heroes)for(const [build,settings] of Object.entries(builds(rule,hero,z)))for(const persona of ['standard',...(['vesper','answer'].includes(rule)?['dodge']:[])])for(const parity of (mode==='controls'?['none']:['a','b']))for(const v of (mode==='controls'?['N','S']:mode==='stars'?['S','R']:['S','B','R','Rnc']))run(rule,z,hero,build,settings,v,parity,persona,mode==='stars');}}
-console.log('rows',out.length,'unique measured cells',cache.size);
-`;
-fs.writeFileSync('tools/.uniques-v3-run.mjs',runner);
-const gather=String.raw`import fs from 'node:fs';
-import {loadCore} from './lib/.uniques-v3-core.mjs';
-const out=[];
-for(const [tool,kind,skill] of [['pick','ore','mine'],['axe','wood','wood'],['sickle','herb','forage'],['spear','hide','hunt']])for(const tier of [1,2,3,4,5])for(const variant of ['rare','unique'])for(const seed of [31415,27182,16180]){ const nodeTier=tool==='spear'?Math.min(tier,3):tier;
- const c=loadCore({seed,prelude:'Date.now=()=>1791187200000;'});
- const result=c.eval('(() => {'+JSON.stringify(null)+'; soloPick("tobin",{now:true}); S.maxZone=42; S.zone=42; S.skills.'+skill+'.lv=NODE_REQ['+(tier-1)+'];S.tools.m.'+tool+'=[1,0];'+
- 'const it=newItem('+JSON.stringify(tool)+','+tier+',"rare",{rnd:()=>0.5});it.plus=0;it.a=[];S.items.push(it);S.equip.'+tool+'=it.id;'+
- (variant==='unique'?'__U={toolUnits:3};addModifier("gatherSpeed:'+skill+'",()=>0.9);':'')+
- 'gearDirty();const chance=toolFind;toolFind=s=>Math.min(0.08,chance(s));if(!setNode('+JSON.stringify(kind)+','+nodeTier+'))throw Error("Node unavailable '+tool+' '+nodeTier+'");S.activity="gather";let harvests=0,bulk=0,rare=0;on("harvest",e=>{if(!e.glint){harvests++;bulk+=e.n;}});on("rareFind",e=>rare+=e.n);for(let t=0;t<36000;t++)tick(0.1);return {harvests,bulk,rare,findChance:toolFind('+JSON.stringify(skill)+'),mastery:toolMastery('+JSON.stringify(tool)+').lv,full:stashFull('+JSON.stringify(kind)+','+nodeTier+'),nodeSeconds:nodeTime('+JSON.stringify(kind)+','+nodeTier+')};})()');
- if(c.errors.length)throw Error(c.errors.join('; '));out.push({tool,kind,skill,tier,nodeTier,variant,seed,...result});fs.writeFileSync('tools/.health/uniques-v3-gather.json',JSON.stringify(out,null,2)+'\n');console.log(tool,tier,nodeTier,variant,seed,JSON.stringify(result));
-}
-`;
-fs.writeFileSync('tools/.uniques-v3-gather.mjs',gather);
-// Validate *all* anchors before measuring any cell.
+fs.writeFileSync('tools/.health/u4-prototype.js',prototype);
 patchTurn(fs.readFileSync('src/js/59k-turn.js','utf8'));
-must(fs.readFileSync('src/js/55-tools.js','utf8'),'finds * (t < 5 ? 1 : TOOL_TUNE.top)','finds * (t < 5 ? 1 : TOOL_TUNE.top)');
-const names=['tools/budget.mjs','tools/lib/core.mjs',...fs.readdirSync('src/js').filter(n=>n.endsWith('.js')&&parseInt(n)<60&&n!=='05-platform.js').map(n=>'src/js/'+n)];
-fs.writeFileSync('tools/.health/uniques-v3-sources.json',JSON.stringify(names.map(path=>({path,sha256:crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex')})),null,2)+'\n');
-console.log('Installed review-only v3 adapters; all anchors matched. No tracked runtime edits.');
+const names=['tools/budget.mjs','tools/lib/core.mjs','tools/lib/budget-score.mjs','docs/design/difficulty-budget.json',...['early','mid','late','current'].map(n=>'tests/fixtures/save-'+n+'.json'),...fs.readdirSync('src/js').filter(n=>n.endsWith('.js')&&parseInt(n)<60&&n!=='05-platform.js').map(n=>'src/js/'+n)];
+fs.writeFileSync('tools/.health/u4-sources.json',JSON.stringify(names.map(path=>({path,sha256:crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex')})),null,2));
+console.log('u4 installed; all anchors matched');
+
+fs.writeFileSync("tools/.health/u4-run.mjs","import fs from 'node:fs';\nimport {configure,measure,CHECKPOINTS,PLAYERS,coreCount} from './u4-budget.mjs';\nconst template=fs.readFileSync('tools/.health/u4-prototype.js','utf8');\nconst defs={twin60:{slot:'weapon',heroes:['wren','tobin','pip'],cut:.6,min:1,max:2},twin85:{slot:'weapon',heroes:['wren','tobin','pip'],cut:.85,min:3},gate:{slot:'off',heroes:['tobin']},mountain:{slot:'body',heroes:['tobin'],min:3},oath:{slot:'weapon',heroes:['tobin']},barbed:{slot:'weapon',heroes:['wren']},vesper:{slot:'off',heroes:['wren'],min:2},veil:{slot:'helm',heroes:['wren']},huntsman:{slot:'body',heroes:['wren'],min:2},vigil:{slot:'helm',heroes:['pip']},mantle:{slot:'body',heroes:['pip'],min:2,source:12},answer:{slot:'charm',heroes:['wren','tobin','pip']},burrow:{slot:'helm',heroes:['wren','tobin','pip']}};\nconst base={wren:['echo','powershot','deadeye'],tobin:['bash','heavystrike','riposte'],pip:['fire','spark','kindle']};\nconst atk={wren:['echo','twinshot','powershot'],tobin:['bash','momentum','heavystrike'],pip:['fire','afterglow','spark']};\nfunction builds(rule,h,z){const nat=z<20?base[h]:{wren:['echo','deadeye','powershot'],tobin:['bash','heavystrike','hammerfall'],pip:['fire','ignite','spark']}[h];let matching={eq:nat,attr:'focus'},other={eq:atk[h],attr:'might'};if(rule.startsWith('twin')||rule==='burrow'){[matching,other]=[other,matching];}if(rule==='barbed')matching={eq:['echo','barbed','powershot'],attr:'focus'};if(rule==='mantle')matching={eq:['fire','kindle','spark'],attr:'focus'};return {default:{eq:null,attr:null},matching,other};}\nconst mode=process.argv[2]||'late',filter=process.argv[3]==='all'?null:process.argv[3],seedOne=process.argv[4]==='seed1';\nfor(const [rule,source,min] of [['pick',4,1],['axe',7,2],['sickle',5,1],['spear',8,2]])defs[rule]={slot:rule,heroes:['wren','tobin','pip'],tool:true,source,min};\nconst output='tools/.health/u4-'+mode+(filter?'-'+filter:'')+'.json';\nconst out=seedOne?JSON.parse(fs.readFileSync(output)).filter(r=>r.offset===0).map(r=>({...r,result:{...r.result,seedOffset:0}})):[];\nconst ids=['early','earlybudget'].includes(mode)?['z8-boss-keptup','z10-boss-keptup','z12-boss-keptup']:mode==='first'?['z5-boss','z6-boss','z7-boss','z8-boss','z9-boss']:['z16-boss','z20-boss','z25-boss','z30-boss'];\nconst dodge={...PLAYERS,casual:{...PLAYERS.casual,parry:.05,dodge:.55},good:{...PLAYERS.good,parry:.05,dodge:.93}};\nfor(const id of ids){const cp=CHECKPOINTS.find(c=>c[0]===id);if(!cp)throw Error('Checkpoint '+id);const z=cp[1],tier=[1,7,13,19,42].filter(x=>z>=x).length;\n for(const hero of ['wren','tobin','pip']){const cache=new Map();for(const [rule,d] of Object.entries(defs)){if((!!d.tool)!==(mode==='toolbudget')||filter&&rule!==filter||!d.heroes.includes(hero))continue;\n  const source={twin60:1,twin85:15,gate:6,mountain:13,oath:1,barbed:2,vesper:9,veil:2,huntsman:7,vigil:5,mantle:12,answer:3,burrow:4};\n  const legal=tier>=(d.min||1)&&tier<=(d.max||5)&&z>=(source[rule]||d.source);\n  for(const [build,settings] of Object.entries(['budget','earlybudget','toolbudget'].includes(mode)?{default:{eq:null,attr:null}}:builds(rule,hero,z)))for(const persona of ['standard',...(['budget','earlybudget','toolbudget'].includes(mode)?[]:['vesper','answer','veil','vigil'].includes(rule)?['dodge']:[])])for(const offset of (seedOne?[1]:[0,1]))for(const stars of (['first','budget','earlybudget','toolbudget'].includes(mode)?[false]:[false,true]))for(const variant of (stars?['S','R']:mode==='toolbudget'?['N','S','R']:['N','S','B','R','Rnc'])){\n    const q={rule,mode:variant,slot:['B','R','Rnc'].includes(variant)?d.slot:null,cut:d.cut,...settings,stars:stars?['huntstep','serrated','coldsteel']:null};\n    const key=JSON.stringify([offset,persona,{...q,rule:['N','S','B'].includes(variant)?'control':rule,cut:['N','S','B'].includes(variant)?null:q.cut}]);let result=cache.get(key);\n    if(!result){configure(template.replace('__CONFIG__',JSON.stringify(q)),offset);result=measure(cp,hero,0,persona==='dodge'?dodge:PLAYERS);cache.set(key,result);}\n    out.push({id:'u4-'+rule+'-'+id+'-'+hero+'-'+build+'-'+persona+'-seed'+offset+(stars?'-swap':'')+'-'+variant,rule,checkpoint:id,z,hero,build,settings,variant,persona,offset,stars,legal,result});\n   }\n  fs.writeFileSync(output,JSON.stringify(out,null,2));console.log(id,hero,rule,'rows',out.length,'cores',coreCount(),'rssMB',Math.round(process.memoryUsage().rss/1048576));\n }}\n}\nconsole.log('complete',out.length,output);\n");
+
+fs.writeFileSync("tools/.health/u4-gather.mjs","import fs from 'node:fs';\nimport {loadCore} from '../lib/core.mjs';\nconst out=[];\nfor(const hero of ['warden','ranger','lanternmage','lightkeeper']){\n const c=loadCore({seed:31415,prelude:'Date.now=()=>1791187200000;',extraSource:`let __G=null;const u4Gear0=gearCalc;gearCalc=over=>{if(over||!__G?.rising)return u4Gear0(over);const it=itemById(S.equip[__G.tool]),saved=it.t;it.t=Math.min(skillTopTier(__G.skill),__G.tool==='spear'?3:5);try{return u4Gear0();}finally{it.t=saved;}};on('skillUp',e=>{if(__G?.rising&&e.k===__G.skill)gearDirty();});const u4Find0=toolFind;toolFind=sk=>Math.min(.08,u4Find0(sk));\n for(const sk of ['mine','wood','forage','hunt'])addModifier('gatherSpeed:'+sk,()=>__G?.active&&__G.skill===sk?.9:1);\n on('harvest',e=>{if(!__G?.active||e.kind!==__G.kind||!(e.n>0))return;const fam=e.kind==='ore'?'crystal':e.kind==='crystal'?'ore':__G.partner;const div=['ore','crystal'].includes(e.kind)?3:2;const x=e.n/div,n=Math.floor(x)+(Math.random()<x%1?1:0);__G.partnerGot+=stashAdd(fam,e.t,n,'flow',true);});`});\n for(const L of [1,2,3,4,5,6,7,8])for(const kind of ['ore','crystal','wood','fibre','herb','hide'])for(const variant of ['plain','rising','unique'])for(const seed of [31415,27182])for(const run of ['rate','away']){\n  const result=c.eval(`(()=>{S=fresh();chooseClass(${JSON.stringify(hero)});Math.random=rng(${seed});const q=STORE_TUNE.pace[${L}],kind=${JSON.stringify(kind)},sk=skillOf(kind),tk=CRAFT_NODES[kind].tool;S.camp.open=true;S.camp.b.store=${L};S.camp.b.hearth=q.hl;S.camp.b.watch=2;S.maxZone=42;S.zone=1;for(const s of ['mine','wood','forage','hunt']){S.skills[s].lv=q.lv;S.skills[s].xp=0;}const top=Math.min(skillTopTier(sk),kind==='hide'?3:5),tier=${JSON.stringify(variant)}==='plain'?Math.min(q.tool[0],tk==='spear'?3:5):top,it=newItem(tk,tier,${JSON.stringify(variant)}==='plain'?q.tool[1]:'rare',{rnd:()=>.5});it.plus=q.tool[2];it.a=[];S.items.push(it);S.equip[tk]=it.id;S.tools.m[tk]=[q.m,0];__G={active:${variant==='unique'},rising:${variant!=='plain'},tool:tk,kind,skill:sk,partner:kind==='fibre'?'herb':'fibre',partnerGot:0};gearDirty();if(!setNode(kind,top))throw Error('Unavailable '+kind+top);S.activity='gather';const start={grade:top,toolGrade:tier,skill:q.lv,mastery:q.m,seconds:nodeTime(kind,top),cap:storeCapAt(kind,top,${L}),find:toolFind(sk)};let seconds=3600;if(${JSON.stringify(run)}==='away'){const r=awayGains(28800);seconds=r.t;}else {const n=stashAdd(kind,top,Math.floor(3600/nodeTime(kind,top)*nodeYieldAvg(kind)*mod('yield:'+kind)),'flow',true);emit('harvest',{kind,t:top,n,away:true});}const mats=JSON.parse(JSON.stringify(S.mats));const overflow=Object.entries(mats).flatMap(([f,a])=>a.map((n,i)=>({f,t:i+1,n,cap:storeCapAt(f,i+1,${L})}))).filter(x=>x.n>x.cap);return {...start,seconds,mats,toolGradeEnd:__G.rising?Math.min(skillTopTier(sk),tk==='spear'?3:5):tier,savedToolGrade:it.t,findUnits:S.tools.finds,partner:__G.partnerGot,overflow,skillEnd:S.skills[sk].lv,masteryEnd:toolMastery(tk).lv};})()`);\n  if(c.errors.length)throw Error(c.errors.slice(0,3).join(';'));out.push({hero,L,kind,variant,seed,run,...result});if(out.length%72===0){fs.writeFileSync('tools/.health/u4-gather.json',JSON.stringify(out,null,2));console.log(hero,L,out.length);}\n }\n fs.writeFileSync('tools/.health/u4-gather.json',JSON.stringify(out,null,2));console.log(hero,out.length,'rssMB',Math.round(process.memoryUsage().rss/1048576));\n}\n");
+
+fs.writeFileSync("tools/.health/u4-hours.mjs","import fs from 'node:fs';\nimport {loadCore} from '../lib/core.mjs';\nconst rows=JSON.parse(fs.readFileSync('tools/.health/u4-gather.json')),c=loadCore({seed:1});\nconst sets={warden:['warblade','shield','greathelm','plate'],ranger:['bow','quiver','hood','leathers'],lanternmage:['staff','lantern','circlet','robe'],lightkeeper:['censer','tome','mitre','vestments']};\nfunction choose(n,k){const out=[];function go(a,start){if(a.length===k){out.push(a);return;}for(let i=start;i<n;i++)go([...a,i],i+1);}go([],0);return out;}\nfunction solve(A,b){const a=A.map((r,i)=>[...r,b[i]]),n=b.length;for(let j=0;j<n;j++){let p=j;for(let i=j+1;i<n;i++)if(Math.abs(a[i][j])>Math.abs(a[p][j]))p=i;if(Math.abs(a[p][j])<1e-10)return null;[a[p],a[j]]=[a[j],a[p]];const d=a[j][j];for(let k=j;k<=n;k++)a[j][k]/=d;for(let i=0;i<n;i++)if(i!==j){const x=a[i][j];for(let k=j;k<=n;k++)a[i][k]-=x*a[j][k];}}return a.map(r=>r[n]);}\n// Minimise serial gathering hours, Ax >= recipe, x >= 0. Enumerate feasible vertices\n// of the six-node linear model; partner materials are credited in the same node column.\nfunction hours(recipe,rates){const fams=Object.keys(recipe).filter(f=>f!=='ess'),b=fams.map(f=>recipe[f]),A=fams.map(f=>rates.map(r=>r[f]||0));if(A.some(r=>r.every(x=>x<=0)))return {h:Infinity,schedule:null};let best={h:Infinity,schedule:null};for(let n=1;n<=Math.min(fams.length,rates.length);n++)for(const cols of choose(rates.length,n))for(const bind of choose(fams.length,n)){const x=solve(bind.map(i=>cols.map(j=>A[i][j])),bind.map(i=>b[i]));if(!x||x.some(v=>v< -1e-9))continue;const all=Array(rates.length).fill(0);cols.forEach((j,i)=>all[j]=Math.max(0,x[i]));if(A.some((r,i)=>r.reduce((s,v,j)=>s+v*all[j],0)<b[i]-1e-6))continue;const h=all.reduce((a,b)=>a+b,0);if(h<best.h)best={h,schedule:all};}return best;}\n// Meaningful coproduct probe: 10 wood + 5 fibre at 10 wood/5 fibre per hour takes one hour.\nif(Math.abs(hours({wood:10,fibre:5},[{wood:10,fibre:5},{fibre:5}]).h-1)>1e-9)throw Error('Coproduct solver');\nlet md='### Projected hours to the next-grade four-piece set\\n\\nFour +0 native crafts, any rarity, with gold, Essence and station unlocks already held. These are **gathering-work projections at the starting fixture’s credited rates**, not calendar progression, a real live-hour run, Rare +5 replacement time or a chance to roll four Rares. The six-node linear model minimises serial gathering time and credits partner materials in the same haul; it does not double-count them as separate work. Two seed estimates are shown as a range. Supplies must exist at the required grade; G5 Hide is unavailable from these gathering paths. No G4/G5 Hunting ground is invented.\\n\\n';\nconst out=[],recipes=[];\nfor(const frontier of [false,true]){md+=frontier?'**One grade beyond the best already open Mining ground (frontier stress projection).**\\n\\n':'**One grade above the pace fixture’s current grade (`STORE_TUNE.pace[L].t + 1`).**\\n\\n';md+='| Storehouse / next grade | Warrior plain→unique h | Ranger plain→unique h | Mage plain→unique h | Lightkeeper path plain→unique h |\\n|---|---|---|---|---|\\n';for(const L of [1,2,3,4,5,6,7,8]){const current=frontier?rows.find(r=>r.L===L&&r.kind==='ore').grade:c.eval(`STORE_TUNE.pace[${L}].t`),next=current+1,cells=[];for(const [hero,kinds]of Object.entries(sets)){if(next>5){cells.push('terminal G5');continue;}const recipe=c.eval(`(()=>{const out={};for(const kind of ${JSON.stringify(kinds)})for(const [f,n]of Object.entries(craftRecipe(kind,${next})))out[f]=(out[f]||0)+n;return out;})()`);recipes.push({next,hero,recipe});const result=variant=>[31415,27182].map(seed=>{const group=rows.filter(r=>r.hero===hero&&r.L===L&&r.variant===variant&&r.seed===seed&&r.run==='rate'),rates=group.map(r=>Object.fromEntries(Object.entries(r.mats).map(([fam,a])=>[fam,a[next-1]])));const sol=hours(recipe,rates);out.push({frontier,L,next,hero,variant,seed,h:Number.isFinite(sol.h)?sol.h:null,schedule:sol.schedule?.map((h,i)=>({kind:group[i].kind,h})),recipe});return sol.h;});const format=xs=>xs.some(x=>!Number.isFinite(x))?'unavailable':Math.min(...xs).toFixed(2)+'–'+Math.max(...xs).toFixed(2);cells.push(format(result('plain'))+'→'+format(result('unique')));}md+=`| ${L} / ${next>5?'—':'G'+next} | ${cells.join(' | ')} |\\n`;}md+='\\n';}\nmd+='Exact four-piece recipes from craftRecipe; missing families are zero. Essence is shown even though its farming time is excluded from this conditional projection.\\n\\n| Grade / class | Recipe |\\n|---|---|\\n';for(const r of recipes.filter((r,i,a)=>a.findIndex(x=>x.hero===r.hero&&x.next===r.next)===i))md+=`| G${r.next} / ${r.hero} | ${Object.entries(r.recipe).map(([f,n])=>f+' '+n).join(', ')} |\\n`;\nfs.writeFileSync('tools/.health/u4-hours.json',JSON.stringify(out,null,2));fs.writeFileSync('tools/.health/u4-hours.md',md);console.log('hours projections',out.length);\n");
+
+fs.writeFileSync("tools/.health/u4-probes.mjs","import fs from 'node:fs';\nimport assert from 'node:assert/strict';\nimport {loadCore} from './u4-core.mjs';\nconst template=fs.readFileSync('tools/.health/u4-prototype.js','utf8');\nconst c=loadCore({seed:1,prelude:'Date.now=()=>1791187200000;'}),E=s=>c.eval(s),out=[];\nconst kinds={wren:['bow','quiver','hood','leathers'],tobin:['warblade','shield','greathelm','plate'],pip:['staff','lantern','circlet','robe']};\nfunction prepare(hero,z,rule,mode='R',slot=null){E('__U=null;gearCalc=__gear0;turnMakeProfile=__profile0;turnNew=__new0;turnHeroAct=__act0;turnResolve=__resolve0;S=fresh();');E(`soloPick(${JSON.stringify(hero)},{now:true});S.L=40;S.maxZone=${z};S.zone=${z};${JSON.stringify(kinds[hero])}.concat('charm').forEach((kind,i)=>{const it=newItem(kind,zoneTier(${z}),'rare',{rnd:()=>.5});it.plus=5;it.a=kind==='charm'?[]:[['hp',.5]];S.items.push(it);S.equip[['weapon','off','helm','body','charm'][i]]=it.id;});gearDirty();`);E(template.replace('__CONFIG__',JSON.stringify({rule,mode,slot,cut:.85,eq:null,attr:null,stars:null})));}\nfor(const z of [16,20,25,30])for(const hero of ['wren','tobin','pip']){prepare(hero,z,'set','S');const r=E(`(()=>{const overrides=[{}, {body:null},Object.fromEntries(['weapon','off','helm','body'].map(pos=>[pos,itemById(S.equip[pos])]))];let neutral=overrides.every(over=>JSON.stringify(gearCalc(over))===JSON.stringify(__gear0(over)));const wrapped=gearCalc;let saw=false;gearCalc=over=>{if(over){saw=true;neutral=neutral&&JSON.stringify(wrapped(over))===JSON.stringify(__gear0(over));}return wrapped(over);};try{turnFootHp(${z},1000);}finally{gearCalc=wrapped;}return neutral&&saw;})()`);assert.equal(r,true);out.push({check:'set-footing-over-neutrality',z,hero,pass:r});}\nprepare('wren',16,'barbed','R','weapon');const bleed=E(`(()=>{const m={e:turnFoeFx(),p:{U:100}};m.e.bleedMax=12;turnBleedAdd(m,3);const first=m.e.bleed;turnBleedAdd(m,3);return {first,cap:m.e.bleed,t:m.e.bleedT,expectedT:Math.max(1,TURN_TUNE.bleedT-1)};})()`);assert.equal(bleed.first,6);assert.equal(bleed.cap,8);assert.equal(bleed.t,bleed.expectedT);out.push({check:'Crimson doubles and caps at eight',...bleed});\nprepare('tobin',20,'burrow','R','helm');const crown=E(`(()=>{const p={heroKey:'tobin',A:100,U:100,counter:100,heroMaxHp:1000,foeMaxHp:1000,foeArm:0,critChance:0,critMult:1,nonCrit:1,echo:0,boss:true,gates:[.75,.5,.25],eq:[],cds:{attack:1},script:[]};let hp=1000;const io={random:()=>.99,alive:()=>({foe:hp>0,hero:true}),foeHp:()=>hp,heroHp:()=>1000,damageFoe:d=>(hp-=d,d),damageHero:()=>0,emit:()=>{}};const m=turnNew(p,io);m.sf=null;turnHitFoe(m,io,1000,{noCrit:true});const first=[hp,m.h.grit];turnHitFoe(m,io,1000,{noCrit:true});m.rally=0;turnHitFoe(m,io,1000,{noCrit:true});const repeat=[hp,m.h.grit];m.gi=1;m.rally=0;turnHitFoe(m,io,1000,{noCrit:true});return {first,repeat,next:[hp,m.h.grit]};})()`);assert.equal(JSON.stringify(crown.first),'[750,2]');assert.equal(JSON.stringify(crown.repeat),'[750,2]');assert.equal(JSON.stringify(crown.next),'[500,4]');out.push({check:'Crown once per gate and no overflow',...crown});\nfunction contact(rule,hero,slot){prepare(hero,16,rule,'R',slot);return E(`(()=>{const p={heroKey:${JSON.stringify(hero)},A:100,U:100,counter:100,heroMaxHp:1000,foeMaxHp:10000,foeArm:0,critChance:0,critMult:1,nonCrit:1,echo:0,boss:true,eq:[],cds:{attack:1,fire:8,spark:6},script:[]};let hp=10000,damage=0;const io={random:()=>.99,alive:()=>({foe:true,hero:true}),foeHp:()=>hp,heroHp:()=>1000,damageFoe:d=>(hp-=d,damage+=d,d),damageHero:()=>0,emit:()=>{}};const m=turnNew(p,io);m.sf=null;m.cds={attack:1,fire:8,spark:6};m.move={id:'probe',hits:[{wind:1},{wind:1},{wind:1}]};m.e.burn=2;m.e.burnDmg=100;m.defense='parry';m.uLateDefense=true;turnContact(m,io);const first={fire:m.cds.fire,spark:m.cds.spark,damage,burn:m.e.burn,armed:m.h.uNextAbility};m.defense='parry';m.uLateDefense=true;turnContact(m,io);return {first,second:{fire:m.cds.fire,spark:m.cds.spark,damage,burn:m.e.burn,armed:m.h.uNextAbility}};})()`);}\nconst answer=contact('answer','pip','charm');assert.equal(answer.first.fire,6);assert.equal(answer.second.fire,5);assert.equal(answer.second.spark,4);out.push({check:'Answer one extra refund per move',...answer});\nconst oath=contact('oath','tobin','weapon');assert.equal(oath.first.armed,true);assert.equal(oath.second.armed,true);out.push({check:'Oath arms without an all-parry counter',...oath});\nconst vigil=contact('vigil','pip','helm');assert.equal(vigil.first.damage,100);assert.equal(vigil.second.damage,100);assert.equal(vigil.second.burn,2);out.push({check:'Vigil one extra tick, bank duration unchanged',...vigil});\nconst g=loadCore({seed:1,prelude:'Date.now=()=>1791187200000;',extraSource:`let u4Partner=0;on('harvest',e=>{if(e.kind!=='ore'||e.n<=0)return;u4Partner+=stashAdd('crystal',e.t,Math.floor(e.n/3),'flow',true);});`});const boundary=g.eval(`(()=>{S=fresh();chooseClass('warden');S.camp.b.store=3;S.mats.ore[0]=storeCapAt('ore',1,3);emit('harvest',{kind:'ore',t:1,n:stashAdd('ore',1,12,'flow',true)});const fullPrimary=u4Partner;S.mats.crystal[0]=storeCapAt('crystal',1,3);emit('harvest',{kind:'ore',t:1,n:12});return {fullPrimary,fullPartner:u4Partner,overflow:S.mats.crystal[0]>storeCapAt('crystal',1,3)};})()`);assert.equal(boundary.fullPrimary,0);assert.equal(boundary.fullPartner,0);assert.equal(boundary.overflow,false);out.push({check:'H3 primary/partner full-cell boundaries',...boundary});\nassert.equal(c.errors.length,0);assert.equal(g.errors.length,0);fs.writeFileSync('tools/.health/u4-probes.json',JSON.stringify(out,null,2));console.log(JSON.stringify(out));\n");
+
+fs.writeFileSync("tools/.health/u4-summary.mjs","import fs from 'node:fs';\nimport {loadCore} from '../lib/core.mjs';\nconst read=n=>JSON.parse(fs.readFileSync('tools/.health/'+n,'utf8'));\nconst pc=n=>(100*n).toFixed(1),num=n=>n==null?'—':n.toFixed(1),signed=n=>(n>=0?'+':'')+n.toFixed(1);\nconst names={twin60:'Divided Vow',twin85:'Twice-Sworn',gate:'Gate',mountain:'Mountain',oath:'Oath',barbed:'Crimson',vesper:'Vesper',veil:'Veil',huntsman:'Huntsman',vigil:'Vigil',mantle:'Mantle',answer:'Final Answer',burrow:'Crown',pick:'Burrower’s Promise',axe:'Reed',sickle:'Harvest',spear:'Thorn'};\nconst source={twin60:1,twin85:15,gate:6,mountain:13,oath:1,barbed:2,vesper:9,veil:2,huntsman:7,vigil:5,mantle:12,answer:3,burrow:4,pick:4,axe:7,sickle:5,spear:8};\nconst grade={twin60:[1,2],twin85:[3,5],mountain:[3,5],vesper:[2,5],huntsman:[2,5],mantle:[2,5]};\nconst legal=r=>r.z>=source[r.rule]&&([1,7,13,19,42].filter(z=>r.z>=z).length>=(grade[r.rule]?.[0]||1))&&([1,7,13,19,42].filter(z=>r.z>=z).length<=(grade[r.rule]?.[1]||5));\nfunction merged(prefix){const m=new Map(read(prefix+'.json').map(r=>[r.id,r]));for(const rule of ['vigil','veil','mountain']){const p='tools/.health/'+prefix+'-'+rule+'.json';if(fs.existsSync(p))for(const r of JSON.parse(fs.readFileSync(p)))m.set(r.id,r);}return [...m.values()].map(r=>({...r,legal:legal(r)}));}\nconst budget=merged('u4-budget').concat(fs.existsSync('tools/.health/u4-toolbudget.json')?read('u4-toolbudget.json'):[]),early=merged('u4-earlybudget'),first=read('u4-first-answer.json'),gather=read('u4-gather.json');\nfunction pick(rows,r,variant){return rows.find(x=>x.rule===r.rule&&x.checkpoint===r.checkpoint&&x.hero===r.hero&&x.build===r.build&&x.persona===r.persona&&x.offset===r.offset&&x.stars===r.stars&&x.variant===variant);}\nfunction check(rows){const ids=new Set();for(const r of rows){if(r.result.seedOffset!==r.offset)throw Error('Wrong seed '+r.id);if(ids.has(r.id))throw Error('Duplicate '+r.id);ids.add(r.id);for(const pl of ['casual','good','none'])if(r.result[pl]?.fights!==240)throw Error('Fight count '+r.id+' '+pl);const footing=pick(rows,r,'N')||pick(rows,r,'S');if(r.result.set>0&&Math.abs(r.result.footHp-footing.result.footHp)>1e-12*Math.max(1,r.result.footHp))throw Error('Footing changed '+r.id);}}\nfor(const r of gather){if(!Number.isFinite(r.findUnits)||r.savedToolGrade!==r.toolGrade||r.kind==='hide'&&r.toolGradeEnd>3)throw Error('Gather metadata');if(r.run==='away'&&r.seconds!==28800)throw Error('Away allowance');}\nif(budget.length!==1128||early.length!==630||first.length!==900||gather.length!==2304)throw Error('Incomplete main rows');check(budget);check(early);check(first);\nconst failures=budget.filter(r=>r.variant==='R'&&r.legal&&((r.result.casual.win-pick(budget,r,'S').result.casual.win)>.080001||r.result.casual.win>(r.hero==='tobin'?.950001:.850001)||r.result.none.win>(r.hero==='tobin'?.150001:.100001)));\nlet combat=`### Two-seed late kept-up budget\\n\\n${budget.length} stored rows, including grade exclusions; ${budget.filter(r=>r.variant==='R'&&r.legal).length} eligible R/seed cells. **${failures.length} eligible cells fail at least one of the new budget limits.** Seeds are shown in order **0; 1**; no averaged pass. S/R means casual percentage; Δ is R−S points; none is R’s never-defends percentage. Turn pairs are good-player S→R. “cap” means raw casual cap, “+8” uplift limit, “none” never-defends limit. Excluded rows cannot pass release.\\n\\n| Zone / hero / item | Casual S→R (s0; s1) | Δ (s0; s1) | R none (s0; s1) | Good turns S→R (s0; s1) | Budget |\\n|---|---|---|---|---|---|\\n`;\nfor(const r of budget.filter(r=>r.variant==='R'&&r.offset===0)){const rr=[r,budget.find(x=>x.id===r.id.replace('seed0','seed1'))],ss=rr.map(x=>pick(budget,x,'S'));const flags=rr.flatMap((x,i)=>{if(!x.legal)return ['excluded'];return [x.result.casual.win-ss[i].result.casual.win>.080001?'+8':null,x.result.casual.win>(x.hero==='tobin'?.950001:.850001)?'cap':null,x.result.none.win>(x.hero==='tobin'?.150001:.100001)?'none':null].filter(Boolean);});combat+=`| ${r.z} / ${r.hero} / ${names[r.rule]} | ${rr.map((x,i)=>pc(ss[i].result.casual.win)+'→'+pc(x.result.casual.win)).join('; ')} | ${rr.map((x,i)=>signed(100*(x.result.casual.win-ss[i].result.casual.win))).join('; ')} | ${rr.map(x=>pc(x.result.none.win)).join('; ')} | ${rr.map((x,i)=>num(ss[i].result.good.turns)+'→'+num(x.result.good.turns)).join('; ')} | ${[...new Set(flags)].join(', ')||'within'} |\\n`;}\ncombat+='\\n### Early Target 2 footing: pr5 kept-up rows\\n\\nDefault official build, Rare +5, two seeds. Entries are **R−S / R−B / Rnc−B casual points; good turns S→R**, seed 0 then seed 1. Tobin’s casual deltas are diagnostic budget data; his turns carry the pacing evidence. These early rows are not build-dependence certification. A dagger marks a source/grade exclusion.\\n\\n| Item / hero | z8-boss-keptup | z10-boss-keptup | z12-boss-keptup |\\n|---|---|---|---|\\n';\nfor(const r of early.filter(r=>r.z===8&&r.variant==='R'&&r.offset===0)){const cells=[8,10,12].map(z=>[0,1].map(offset=>{const x=early.find(t=>t.rule===r.rule&&t.hero===r.hero&&t.z===z&&t.offset===offset&&t.variant==='R'),s=pick(early,x,'S'),b=pick(early,x,'B'),nc=pick(early,x,'Rnc');return `${signed(100*(x.result.casual.win-s.result.casual.win))}/${signed(100*(x.result.casual.win-b.result.casual.win))}/${signed(100*(nc.result.casual.win-b.result.casual.win))}; ${num(s.result.good.turns)}→${num(x.result.good.turns)}${x.legal?'':' †'}`;}).join('<br>'));combat+=`| ${names[r.rule]} / ${r.hero} | ${cells.join(' | ')} |\\n`;}\nconst fRs=first.filter(r=>r.variant==='R'&&!(r.build==='other'&&['wren','pip'].includes(r.hero))),fMax=fRs.reduce((a,b)=>100*(b.result.casual.win-pick(first,b,'B').result.casual.win)>a.delta?{r:b,delta:100*(b.result.casual.win-pick(first,b,'B').result.casual.win)}:a,{delta:-Infinity});\ncombat+=`\\n### Final Answer: first-hour Target 4, no health line\\n\\n${first.length} rows. **Largest eligible R−B casual uplift ${signed(fMax.delta)} points**, ${fMax.r.hero}, z${fMax.r.z}, ${fMax.r.build}/${fMax.r.persona}, seed ${fMax.r.offset}. Target 4 ${fMax.delta<=5?'stays within':'fails'} the ≤5-point bound in these samples. Each entry: **R−B points; good turns S→R**, seed 0 then 1. These common +0 S rows are **not** the early Target 2 comparator. Tobin turns are included for every build/persona.\\n\\n| Hero / build / persona | z5 | z6 | z7 | z8 | z9 |\\n|---|---|---|---|---|---|\\n`;\nfor(const r of first.filter(r=>r.variant==='R'&&r.offset===0&&r.z===5)){const cells=[5,6,7,8,9].map(z=>[0,1].map(offset=>{const x=first.find(t=>t.hero===r.hero&&t.build===r.build&&t.persona===r.persona&&t.z===z&&t.offset===offset&&t.variant==='R'),b=pick(first,x,'B'),s=pick(first,x,'S');return `${signed(100*(x.result.casual.win-b.result.casual.win))}; ${num(s.result.good.turns)}→${num(x.result.good.turns)}`;}).join('<br>'));combat+=`| ${r.hero} / ${r.build} / ${r.persona}${r.build==='other'&&['wren','pip'].includes(r.hero)?' † stress':''} | ${cells.join(' | ')} |\\n`;}\ncombat+='\\n### Changed candidates: matching / other / same-swap evidence\\n\\nRanges below keep both seed offsets and the standard/dodge-first personas separate in the raw rows. Matching/other loadouts were fixed before measuring. All rows use z16/20/25/30 kept-up footing. Stars maximum is R minus S **with the same earned swap and the same build/persona**, not a default-build subtraction. No damage-envelope certification is inferred from a win gain.\\n\\n| Item / hero | Matching R−B / R−S / Rnc−B ranges | Other R−S range | Matching good-turn cut range | Largest same-swap R−S |\\n|---|---|---|---|---|\\n';\nconst range=xs=>xs.length?`${signed(Math.min(...xs))}…${signed(Math.max(...xs))}`:'unmeasured';\nlet lateCount=0;\nfor(const rule of ['answer','burrow','mountain','oath','barbed','veil','huntsman','vigil','mantle']){const path='tools/.health/u4-late-'+rule+'.json';if(!fs.existsSync(path))throw Error('Missing '+rule);const rows=JSON.parse(fs.readFileSync(path));const expected={answer:1008,burrow:504,mountain:168,oath:168,barbed:168,veil:336,huntsman:168,vigil:336,mantle:168}[rule];if(rows.length!==expected)throw Error('Incomplete '+rule+' '+rows.length+'/'+expected);check(rows);const R=rows.filter(r=>r.variant==='R'&&!r.stars);lateCount+=rows.length;\nfor(const hero of [...new Set(rows.map(r=>r.hero))]){const m=R.filter(r=>r.hero===hero&&r.build==='matching'),o=R.filter(r=>r.hero===hero&&r.build==='other'),sw=rows.filter(r=>r.hero===hero&&r.variant==='R'&&r.stars);const delta=(a,v)=>a.map(r=>100*(r.result.casual.win-pick(rows,r,v).result.casual.win));const cuts=m.filter(r=>r.result.good.turns>0&&pick(rows,r,'S').result.good.turns>0).map(r=>100*(1-r.result.good.turns/pick(rows,r,'S').result.good.turns));const ds=sw.map(r=>({r,d:100*(r.result.casual.win-pick(rows,r,'S').result.casual.win)})).sort((a,b)=>b.d-a.d);const max=ds[0];combat+=`| ${names[rule]} / ${hero} | ${range(delta(m,'B'))} / ${range(delta(m,'S'))} / ${range(m.map(r=>100*(pick(rows,r,'Rnc').result.casual.win-pick(rows,r,'B').result.casual.win)))} | ${range(delta(o,'S'))} | ${range(cuts)}% | ${max?signed(max.d)+` (z${max.r.z}, ${max.r.build}/${max.r.persona}, s${max.r.offset})`:'unmeasured'} |\\n`;}}\ncombat+=`\\nStored expanded late rows: ${lateCount}. Negative turn cuts mean longer fights. A range spanning the target band is not a whole-band pass. Default-only early rows, partial files or an excluded grade never establish a release claim.\\n`;\ncombat+='\\n### Tobin turns for the changed Warrior/all-class rules\\n\\nEach cell is good-player **S / B / R / Rnc**, seed 0 then seed 1. Means are on won fights. The matching/other tuples are the same ones used above; no win ceiling is treated as Tobin pacing success.\\n\\n| Item / build / persona | z16 | z20 | z25 | z30 |\\n|---|---|---|---|---|\\n';\nfor(const rule of ['mountain','oath','answer','burrow']){const rows=read('u4-late-'+rule+'.json');for(const r of rows.filter(r=>r.hero==='tobin'&&r.z===16&&r.offset===0&&r.variant==='R'&&!r.stars)){const cells=[16,20,25,30].map(z=>[0,1].map(offset=>{const x=rows.find(t=>t.hero==='tobin'&&t.z===z&&t.build===r.build&&t.persona===r.persona&&t.offset===offset&&t.variant==='R'&&!t.stars);return ['S','B','R','Rnc'].map(v=>num(pick(rows,x,v).result.good.turns)).join(' / ');}).join('<br>'));combat+='| '+names[rule]+' / '+r.build+' / '+r.persona+' | '+cells.join(' | ')+' |\\n';}}\nlet gs=`### Pace fixture and credited output\\n\\n**${gather.length} cells**: four class paths × 8 Storehouse levels × 6 node families × 3 gear variants × 2 seeds × hourly rate/8-hour away. Hourly values are starting-fixture expected-rate batches, rounded to credited units; **not a simulated live hour**. Away uses the real resolver, including skill/mastery progression, with Spillover off and Watchtower 2 supplying an 8-hour allowance. All ${gather.filter(r=>r.run==='away').length} away cells processed ${[...new Set(gather.filter(r=>r.run==='away').map(r=>r.seconds))].join('/')} seconds.\\n\\n`;\nconst overflow=gather.filter(r=>r.overflow.length);gs+=`H3: **${overflow.length} overflowing cells**. Separate full-primary/full-partner boundary probes are recorded in u4-probes.json. The totals below are means of seeds 31415/27182 for the Warden path; all four paths remain in raw JSON. “Rare/h” is the next-grade primary rare find, and at G5 is the extra G5 find.\\n\\n| Storehouse / node | Ground / plain→Rising grade | Primary/h plain→unique | Partner/h unique | Rare/h plain→unique | 8h primary plain→unique | 8h partner unique | 8h rare plain→unique | Capacity primary / partner |\\n|---|---|---|---|---|---|---|---|---|\\n`;\nconst mean=xs=>xs.reduce((a,b)=>a+b,0)/xs.length,round=xs=>Math.round(mean(xs));\nfor(const L of [1,2,3,4,5,6,7,8])for(const kind of ['ore','crystal','wood','fibre','herb','hide']){const get=(variant,run)=>gather.filter(r=>r.hero==='warden'&&r.L===L&&r.kind===kind&&r.variant===variant&&r.run===run),p=get('plain','rate'),u=get('unique','rate'),pa=get('plain','away'),ua=get('unique','away'),t=u[0].grade,next=Math.min(5,t+1),fam=kind==='ore'?'crystal':kind==='crystal'?'ore':kind==='fibre'?'herb':'fibre';gs+=`| ${L} / ${kind} | G${t} / G${p[0].toolGrade}→G${u[0].toolGrade} | ${round(p.map(r=>r.mats[kind][t-1]))}→${round(u.map(r=>r.mats[kind][t-1]))} | ${round(u.map(r=>r.partner))} | ${round(p.map(r=>r.findUnits))}→${round(u.map(r=>r.findUnits))} | ${round(pa.map(r=>r.mats[kind][t-1]))}→${round(ua.map(r=>r.mats[kind][t-1]))} | ${round(ua.map(r=>r.partner))} | ${round(pa.map(r=>r.findUnits))}→${round(ua.map(r=>r.findUnits))} | ${u[0].cap} / ${kind==='hide'?u[0].cap*2:u[0].cap} |\\n`;}\ngs+=fs.readFileSync('tools/.health/u4-hours.md','utf8');\r\nconst counts={budget:budget.length,early:early.length,first:first.length,gather:gather.length,late:lateCount,budgetFailures:failures.map(r=>r.id),firstMax:fMax};\nfs.writeFileSync('tools/.health/u4-summary.json',JSON.stringify(counts,null,2));fs.writeFileSync('tools/.health/u4-combat-results.md',combat);fs.writeFileSync('tools/.health/u4-gather-results.md',gs);console.log(JSON.stringify({counts:{...counts,budgetFailures:failures.length,firstMax:{delta:fMax.delta,id:fMax.r.id}},overflow:overflow.length}));\n");
 ```
 
-## Repository checks and handoff
 
-`node tools/build.mjs`: passed, 7804.5 KB. `node tools/check.mjs`: passed; **40 browser sections skipped** because Playwright was not found (log `tools/.health/uniques-v3-check.log`). The document’s script matches the installed script exactly; missing and ambiguous anchors were verified to throw; every non-swap S control matches the independent controls JSON exactly. Live helper probes verify Bleed cap 8/duration cost, Grit cap 15 and Aim cap 5 at 5% each (`uniques-v3-verification.json`). Only this document is tracked; all JSON and the single patch script remain in ignored `tools/.health`. Art PR #142 is unchanged. PR #138 remains draft, not merged.
 
-## Where I’m not sure
+## Repository checks and measured limits
 
-1. **Base ruling:** (a) is adopted by the coordinator, subject to Cal’s veto; (b) was measured as requested. Charm/tools normally have no HP affix, so their fixed-line exception needs explicit sizing. Median parity does not promise exact parity with every crafted roll.
-2. **Set threshold:** the corrected units still yield Wren z34 +12.5 points. G4 remains held for pr5b; G5 set and other gated normal/elite/elder rows are unmeasured. No budget tolerance was relaxed.
-3. **Eligibility:** z9 Wren/Pip Attack-led tier3 passives are inaccessible; wrong-grade twins/Mountain and pre-source Mantle are stress rows. Divided Vow needs its actual kept-up G2 row, not a G3 proxy. Only z9 rechecks early headroom; changed rules need z5–8 again before release.
-4. **Crimson interpretation:** measured cap 8 replaces doubled stacks, with the old one-turn duration cost retained. If doubled stacks should also remain, rerun that different rule rather than relabelling these rows.
-5. **Tobin and conditional turns:** report good turns only at the saturated win footing. Won-fight means and one seed offset cannot establish small differences or a complete contract. Matching/other builds were chosen before measuring; some ability orders waste procs.
-6. **Passive-cut boundary:** the table counts incremental raw damage cuts. Whether the judge also counts ordinary class mitigation, resource-earned DR or HP-relative damage needs confirmation; no proposed extra cut silently exceeds 10%. Mountain’s before-hit loss is an explicit measurement boundary.
-7. **Lightkeeper/retool:** Prayer reflection, all held support items and typed cross-class resource adapters remain unmeasured. No illegal Pip/tome fitting was used.
-8. **Stars/stacking:** same-swap comparisons fix v2’s comparator. Only one earned subset swap was tested; every Star pair, talent branch, dormant-cost combination, priority ranking and legacy coexistence remain open.
-9. **Gathering/acquisition/implementation:** live capped one-hour trials do not certify away parity or long-run economy. G4/G5 Hunting nodes do not exist; high-grade spear tests use G3. New pools/legacy retirement, Curator/Deeds, cache odds, save compatibility, UI and m.uf performance remain implementation gates. Tools stay out of the initial pool.
+`node tools/build.mjs` passed (7,815.9 KB); the generated tracked distribution is byte-identical to the rebased distribution. `NODE_OPTIONS=--max-old-space-size=4096 node tools/check.mjs` passed after restoring required sparse-checkout art inputs. **41 browser sections skipped because Playwright/Chromium was unavailable.** The heap setting is for the existing Hunting check shard; no test target, simulation budget or runtime was relaxed. No browser certification is claimed.
+
+The scratch probes pass all 12 hero/zone override-neutrality cells plus Crimson’s double/cap/duration, Crown’s once-per-gate clamp, Answer’s once-per-move refund, Oath’s partial-parry arming, Vigil’s single immediate tick without duration loss, and full-primary/full-partner Storehouse boundaries. They do not replace production tests.
+
+**13 eligible default late budget cells fail** at least one limit; the table names them. Judge-accepted items keep their accepted Release B status and exact rules even when that conflicts with a provisional budget row. The Final Answer’s eligible first-hour maximum is **+35.8 points over B**, failing Target 4. No failed candidate is promoted by an average, a cost-free row or a health gain.
+
+Could not certify or measure in this round:
+
+- Every class-specific item on every other starter hero: only the legal native fittings listed above are measured. Legal retool adapters for the missing Wren/Pip/Tobin cells and Lightkeeper/support fittings remain unmeasured. Held support definitions have no approved rule to measure. An older held G1/G2 Divided Vow at late bosses is also unmeasured; current-grade stress cells are excluded.
+- Whole-fight **+50% damage gain**, every status/resource/talent/Stars combination, multiple uniques with dormant costs, legacy coexistence and production scheduling/performance. The capped hit rules and gate probes are not that audit. The earned three-Star subset is sampled; all possible swaps are not certified.
+- Full early Target 2 matching/other dependence for every changed item; the supplied z8/z10/z12 default Rare +5 rows repair footing but do not supply all builds. Target 1 at z34 after pr5b and the G5 set are unmeasured. Wren/Pip tier-3 first-hour other builds are stress evidence only.
+- Real live-hour play, actual time to four Rare +5 items, gold/Essence farming, station unlocks and whole-account next-grade calendar progression. The hourly model is a rate projection; the 8-hour rows use the actual away resolver. G5 Hide has no supply on these measured paths, so the dependent class-set times are unavailable.
+- Acquisition probabilities/first-hour drop timing, cache/killPack/prompt pool parity, release switches, class retooling, old-save/save-code round trips, ownership/retirement, UI/tooltips/art, and the 41 skipped browser sections. Runtime implementation is outside this docs-only PR.
+
+Crafting balance may change the control rows; rerun from the pinned source manifest before treating these provisional results as a release budget. PR #138 remains draft and must not be merged by this round.
