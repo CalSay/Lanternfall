@@ -29,9 +29,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Store launch possible; the money model is set** (see [Money](#money)). Original art only, no restrictive
   third-party assets, nothing pay-to-win. (2026-10-06)
 - **Owner role: player.** The coordinator drives the roadmap and brings playable builds and decisions at milestones.
-  Decisions that belong to the owner (art direction; anything that takes real money: store accounts, payment code,
-  live prices, business and legal set-up; anything irreversible) are asked, not guessed. Money design is Claude's,
-  within the Lantern Rules. (2026-09-27, narrowed 2026-10-06)
+  Decisions that belong to the owner (anything that takes real money: store accounts, payment code, live prices,
+  business and legal set-up; anything irreversible) are asked, not guessed. Money design and art direction are
+  Claude's judge calls, within the Lantern Rules. (2026-09-27, narrowed 2026-10-06, 2026-10-07)
 - **Combat is active only.** No Auto, no idle fighting, no away combat earnings. Gathering stays idle. (2026-10-01)
 - **Version 1.0 is a complete Season 1:** five regions, the story to the first fight with the Voice, 32 heroes, two
   named gatherers per resource job. The story continues in Season 2. (2026-09-28)
@@ -200,7 +200,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Design the full roster and its moves first;** poses follow the moves, and existing art never limits a monster.
   (2026-10-01)
 - **Zone 1 is the Thorn Imp, zone 2 Gloomjaw;** zones 1 and 2 send only their own monster. Zones 1-7 use the Mossy
-  Hollow scenery. (2026-10-01 to 2026-10-02)
+  Hollow scenery. (2026-10-01 to 2026-10-02) Amended 2026-10-07: zones 6 and 7 move to the Batwing Caves painting once it
+  is wired; until then they keep the Mossy Hollow painting ("Scenery for zones 6 to 10" below).
 - **Region bosses are agents of the darkness** (the Voice's Shrouds). They are never tied to lanterns or lamps.
   (2026-09-28)
 - **Region 5 is its own place** with its own look, not the Deepwell continued. The Deepwell must still tie into the
@@ -334,6 +335,33 @@ stat multiplier, labels, pay), zones 13-24 for a kept-up hero, move sets by tier
 - **Zone 11 hitX is 0.95, not the ruling's 0.8** (a Wren at 87% casual read above the 60-80 band). Boss gold and XP in zones 4-12 pay on the old fight length, so the longer first-hour fights do not move first-hour income. Zones 13 and 14 interpolate between the zone 12 and 15 knots (hitX 1.1, 1.35): unmeasured, zones 13-24 are PR 3.
 - **The walk bot is not the yardstick yet.** It wears nothing and has one ability. Its numbers are reported; the walk's
   "zone 10 in an hour, no boss over 5 losses" becomes the gate once walk-bot-follow-up equips and trains it.
+
+### Boss tiers, zones 13-24: judge rulings (2026-10-07)
+
+PR 3 of `boss-tiers`. Opus judge after measuring (the cap question) and a tuning pass; Cal can veto any line.
+
+- **Cap 0.4 to zone 15, 0.75 for zones 16-24.** `TURN_TUNE.boss.hitCap` `[[1,0.4],[15,0.4],[16,0.75],[24,0.75],[25,0]]`. A Captain is a
+  test: one missed parry costs most of a full-health hero's HP and never kills them. Cap off (the old rule from zone 16) let
+  the zone 18 boss take 96% of Wren's health in one hit before armour. Holding 0.4 to zone 24 only reached the band by raising every
+  light hit (hitX 2.35 against 1.78 at zone 17), which made the telegraphed heavy blow cost the same as a jab. At 0.75 the cap bites
+  only at zone 18 (about 22% off Wren's heaviest hit). Elders, the Deepwell, Provings, normal foes and elites stay uncapped.
+  No Captain (zones 11-34) may take more than 75% of max HP with one hit before armour; the budget's `big` JSON field shows each
+  boss's heaviest hit against that. Switch off: `hitCap: [[1, 0]]`.
+- **Zone 25 breaks that rule today** (the Barrow Beetle hits for 1.23 of Wren's health, 1.0 of Pip's). Not fixed here: mid-zone-wall
+  ruled zone 25. Judge's preferred fix: extend 0.75 through zone 34 and re-measure zone 25. Carded as a follow-up.
+- **Footing.** Zones 13-15 stay on the first-hour footing (tier at common +0, mid fixture), gated; `z13` and `z15` kept-up rows are
+  report-only. Zones 16-24 are gated on the kept-up hero (rare +5), as the card said. At common +0 zones 16-24 are walls (casual
+  0-20%): gear is the lever there and `gear-weight` owns it.
+- **Knots** (hitX / hpX per zone, 13 to 24): hitX 1.1/0.77/0.84/2.1/1.78/1.2/3.15/1.85/1.17/0.84/0.7/0.63, hpX 2.4/2.4/3.4/4.0/3.0/3.0/4.8/2.8/1.9/2.1/1.5/1.1.
+  Fitted so Wren and Pip casual sit near 70-80% and a good player wins in about 6 hero turns (was 3-6, with z13-16 and z19 at 100%).
+  The wide hitX swings follow each zone's boss kit (a golem's many small hits against a beetle's one big one).
+- **Geared heroes are still threatened in zones 16-24** (power-curve-reference.md, 2026-10-07): at the kept-up footing a weaker casual
+  (parry 15%, dodge 40%) wins 20-58% and a stronger one (35%, 70%) 95-97%, so defence decides it. Zones 13 and 15 kept-up (rare +5)
+  still win 100% (report-only rows): gear trivialises them. Fixing that needs the gear-curve card or looser bare floors, as
+  `boss-tiers-pr2-proposal.md` says; not done here.
+- **Pay is unchanged.** Boss gold and XP in zones 4-24 use the old length curve; the longer fights do not move income.
+- **Gaps.** The z15 and z20 "too easy" gaps for Wren and Pip are closed. Tobin sits above his band at every new row under
+  `tobin-safety-margin` gaps (until 2026-12-01).
 
 ### The Lantern Rules
 
@@ -511,9 +539,12 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   free to slate Claude's work where it needs to; it reviews from PR #1
   (`docs/handoff/claude-to-codex/reviewer/README.md`). Codex still draws new raster art when a card needs it.
   (2026-10-05)
-- **Autopilot:** Claude plans, builds and merges into the integration branch on its own from an approved backlog,
-  with a daily digest. Cal approves batches, taps gated items (new systems, economy targets, saves,
-  story canon; art packs moved to the judge 2026-10-06) and says "ship it" before anything reaches `main` or the live artifact. (2026-10-05)
+- **Cal delegates design calls to Claude** (an Opus judge after a red team); Cal keeps shipping, the online layer, money
+  and outside contact, and can veto any recorded call later. (2026-10-05)
+- **Autopilot:** Claude plans, builds and merges into the integration branch on its own from the backlog, with a daily
+  digest. No batch waits for Cal. Only these wait for him: "ship it" (merge to `main`, publish the live artifact), the
+  online layer, Netlify beyond the weekly deploy, money or legal, network settings and contacting anyone outside.
+  (2026-10-05, updated 2026-10-07)
 - **Speed and smoothness are checked constantly:** run `node tools/perf.mjs --quick` after each merge wave and fix any
   budget failure before new features. (2026-09-27)
 - **Pace:** steady on weekdays (2 build threads at once), full at weekends (4). On "pause", launch nothing new.
@@ -528,6 +559,10 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
 ## Replaced decisions
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
+
+- Autopilot: "Cal approves batches and taps gated items" (2026-10-05) -> no batch waits for Cal; design calls go to the Opus judge
+  (2026-10-05, Cal's autonomy request; recorded 2026-10-07).
+- Owner role: art direction asked of Cal (2026-09-27) -> art direction is a judge call (2026-10-06).
 
 - Hero gates at the first zone of the scene's area, only once the scene is in the game (2026-10-06, story-opening) -> from the
   zone the scene can have played, built or not (2026-10-06, story-unlock-gates).
@@ -585,6 +620,25 @@ type signature and keep the type's pace; every foe type names an answer for each
 `eliteHitX` 1.4 and `eliteHpX` 2.5 (the Cave Bat's elite has 0.4 of that HP). Zone 15 and 20 elites remain easy for casual
 Wren and Pip: that is zone 5-15 hero power, owned by boss-tiers. No save state changes.
 
+## Compass: judge rulings (2026-10-07)
+
+Claude decided (card f-compass; Cal can veto any line). Page: `docs/design/compass.md`. Records:
+`docs/design/compass-records/redteam.md` (21 attacks) and `judge.md` (Opus judge, four rulings).
+
+- **The hook** is the first-hour hook with its second sentence made true at every first boss clear: a Lantern Cache opens
+  with what you won, a chance at a new look, and the next stretch of road. No text may promise a relight or new gear at
+  every boss. The camp line is the promise behind the hook, not part of it. `first-hour.md` points to the Compass.
+- **The core loop** has four timescales (a fight, a 5-minute visit, a day, a week), four player steps each, each step naming
+  its systems. Steps match the standing rules: no telegraph, Assist only widens windows, a loss keeps your place. The week's
+  last step is going deeper (Deepwell, later challenge modes), not a weekly-build visit.
+- **The test every card passes:** it names its loop step and pillar; it hits no anti-goal; its score has Compass fit at
+  least 3, Value (Impact + Evidence + Fit) at least 9 and Total at least 14. A save change counts once, under
+  Reversibility. Bug fixes and broken promises skip scoring.
+- **Anti-goals** add the settled no's, the currency and camp-tour ceilings (no new named currency, no added camp tap; the game is
+  already over both), and "chore" means an expiring reward, not a fee the player chooses.
+- **Pillar 3** does not ban per-hero content (heroes ship complete); a design that needs it says it costs 32 times over.
+- **Rejected:** an "early game first" tie-breaker double-counts nothing, so it stays.
+
 ## Counters and layers: judge rulings (2026-10-07)
 
 Opus judge, card `counters-and-layers`. No save field changes, no save key bump: every merge is display-only or a rule
@@ -611,3 +665,65 @@ change over existing fields.
    tags every currency in `tools/systems-map.mjs` with a Kind (the check fails on an untagged currency or a core set that
    is not these eight), registers Attribute points, and shows Mirrors of Embers beside Trophies as "Rare finds" in the
    Storehouse. The top bar already shows only Gold and Embers; no screen needed a cut.
+
+## Milestone 1 (2026-10-07)
+
+Card `m1-define`; Sonnet red team and Opus judge in `docs/design/milestone-records/`. Page: `docs/design/milestones.md`. Claude
+decided; Cal can veto any line.
+
+- **M1 is "The Hollow, finished", split in two.** M1a is zones 1 to 15 (three areas, three Champions); M1b is zones 16 to 35 and
+  the Fenmother. M1a contains the first hour (M0) and has eight exit criteria with named checks. Earliest close 2026-10-19.
+  The split lets a paused art lane stall the art, not every planner. Re-plan trigger: if the Codex lane is still paused on
+  2026-10-21, or fewer than 2 vetted packs land in the first 4 weeks after it resumes, M1a's art criterion is cut to zones 1 to 10.
+- **Monsters may share a body within their area (Claude decided; Cal can veto).** Each zone keeps its own named monster, moves and
+  look. Codex may draw it as kin of another monster in the same area: the same body with its own palette, marking or prop, and any
+  pose its moves need. Champions stay their own creatures. Only Codex draws kin, Captains, Champions and background versions,
+  inside whole vetted packs, and Claude only wires them. No agent recolours or tints art in code; the Deepwell cold palette stays
+  the only runtime recolour. This narrows "Each zone has its own monster" (2026-10-01) to "its own named foe, not a new species".
+  "Poses follow the moves" and the art freeze are unchanged. This also relaxes "one pack per monster" in `art-backlog.md`: a pack may be an area sheet. `CLAUDE.md` is unchanged. The Hollow costs 17 packs; 1.0 is estimated at about 110 packs
+  instead of 215 species (an estimate, not a commitment).
+- **Bare heroes lose to bosses (Cal's 2026-10-07 direction, made a gate).** Judge numbers at Champions 10 and 15: bare casual 5 to
+  25%, good play at most 70%; gear opens a gap of at least 40 points, first crafts at least 25. Zone 5 bare casual 20 to 50%.
+  `boss-tiers-pr2` may tune them with a DECISIONS line.
+- **A slice passes only with zero open budget gaps** at or below its last zone; renewing a dated gap does not pass.
+- **Heroes without a kit are not offered in a slice** (Bram, from zone 10, today). Saves keep anyone already joined.
+- **Cards:** deepwell-turns, provings-turns (already built), budget-extras (folded into pr2), bossodds-chunk-seeds (#93),
+  hero-training-policy (Training was removed) and moments-feel-spec (moment-layer replaced it) closed; ui-gather-ledger, ap-collection-counts, menu-polish, bag-slot-and-steady-charges,
+  omen-dares-and-contracts, story-choices, story-scripts-2-5, story-stills and the two hero-voice proposals are OUT of M1.
+
+## Moment cap: judge ruling (2026-10-07, Opus high; Cal can veto any line)
+
+The check "big and medium moments in a fresh game's first 10 minutes (at most 8)" passed on some runs and failed (9) on others.
+
+- **Cause.** Three things, none a pacing fault. (1) A Champion card could show before its cache opened, so one clear made two big cards (the fix of PR #121, now in). (2) The check drew from one seeded random stream that the page's own frame loop also drew from, and ran on the machine's clock, so drops (a unique makes a cache a big card) changed from run to run. (3) The banner window (`midRoom`) ran on `Date.now()` while the rest of the layer ran on game seconds, so on a fake clock no banner could ever show and the check could not see banners at all.
+- **Ruling: the cap stays at 8; no moment is trimmed or merged.** A unique already joins its cache card, zone 1's boss and the first Star already join their cache card, and the zone 1 to 3 look caches are F3's "big every 5 minutes". Merging them would break F3.
+- **The bot is not a person.** It reaches zone 14 in 10 minutes; a person is at zone 5 near minute 18, so cards a person sees apart fold into one on the bot's walk. The check now judges the shape: at most 8 big cards, at most 3 banners in any 3 minutes, at most one big card per zone clear, no Champion card while its cache is still pending, and at most one moment per zone cleared. Each of these fails on real card spam.
+- **Code.** `midRoom` and its entries use game seconds. `momentShow` carries the card's zone. The check seeds drops only while the bot steps and runs the page on the bot's own clock.
+- **If the banner assert ever fails,** that is real spam for a person: tighten the medium list (for example level banners only at 2, 10 and 20), not the cap.
+
+## Scenery for zones 6 to 10 (2026-10-07, Opus high judge; Cal can veto any line)
+
+Card `scenery-z6-10-judge`, from the `slice-art-manifest` open point. Record and options:
+`docs/design/milestone-records/scenery-z6-10-judge.md`; red team: `scenery-z6-10-redteam.md` beside it.
+
+- **Scenery follows the area.** Zones 6 to 10 show the Batwing Caves painting, all five, once it is vetted and wired. In
+  the Hollow, a zone whose area has its own painting shows that painting; the 7-zone cycle no longer decides it. The area
+  title and the scenery change together at zone 6, where the first Star lands. Splitting the area (6-7 forest, 8-10 caves),
+  keeping forest to zone 7, and hard-coding zones 6-10 to `cave` were rejected.
+- **This overrides Cal's 2026-10-02 call for zones 6 and 7** ("Zones 1-7 use the Mossy Hollow scenery", above), from the day
+  the Caves painting is wired. His reason is inferred (the painting was the only approved background); it still holds,
+  because no zone drops from a painting to procedural scenery.
+- **Until an area's painting is wired, its zones keep today's scenery:** zones 6-8 the Mossy Hollow painting, zone 9 the
+  procedural cave, zone 10 the procedural bone. Areas without their own painting keep the cycle, the Coast included; a
+  theme with a painting draws it there, as the Mossy Hollow painting does today at zones 15, 22, 29 and the Coast's 36,
+  43, 50, 57 and 64. So once wired, the Caves painting also replaces the procedural cave at zones 16, 23, 30 and the
+  Coast's cave places (37, 44, ...): the same theme with approved art, outside M1a.
+- **No recolour:** `zoneHue` never tints a painting. **The pack boundary is unchanged:** the Caves painting covers zones 6
+  to 10 and stays in scope after the 2026-10-21 cut.
+- **Code:** card `scenery-follows-areas` (S, Sonnet medium) adds `SCENERY_BY_AREA` (default on; off gives today's rule
+  exactly) and moves the theme checks to a per-zone table. It merges before or with the Caves `integrate:` card; the
+  painting is not wired without it. No save impact.
+- **Prediction:** zones 1-15 showing their area's scenery go from 6 to 10 when the Caves painting is wired, and no zone
+  1-70 changes before then. Measured by the `slice-art-manifest` check (E4, to be built) and a zones 1-70 theme assertion that
+  `scenery-follows-areas` adds. Coverage area 15,
+  Compass pillar 4.

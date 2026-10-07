@@ -103,12 +103,26 @@ export const CHECKPOINTS = [
   // floors (report only): nothing worn at all; skill must carry (a bare hero is a bot or a player who skipped the Forge)
   ['z5-boss-bare', 5, 'boss', { st: 'kept', fx: 'early', gear: 'none', kind: 'floor5' }],
   ['z10-boss-bare', 10, 'boss', { st: 'kept', fx: 'early', gear: 'none', kind: 'floor' }],
+  // zones 13-15 stay on the first-hour footing (boss-tiers PR 3): the zone's tier at common +0 on the mid fixture. The kept-up
+  // rows are report-only; from zone 16 the gated hero is the kept-up one (rare +5), where gear is the road's own lever.
+  ['z13-boss', 13, 'boss', { st: 'kept', fx: 'mid', gear: 'common' }],
+  ['z14-boss', 14, 'boss', { st: 'kept', fx: 'mid', gear: 'common' }],
   ['z15-elite', 15, 'elite', { st: 'kept', fx: 'mid' }],
-  ['z15-boss', 15, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z15-boss', 15, 'boss', { st: 'kept', fx: 'mid', gear: 'common' }],
+  ['z13-boss-keptup', 13, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z13-boss' }],
+  ['z15-boss-keptup', 15, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z15-boss' }],
+  ['z16-boss', 16, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z17-boss', 17, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z18-boss', 18, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z19-boss', 19, 'boss', { st: 'kept', fx: 'mid' }],
   ['z20-normal', 20, 'normal', { st: 'kept', fx: 'mid' }],
   ['z20-elite', 20, 'elite', { st: 'kept', fx: 'mid' }],
   ['z20-boss', 20, 'boss', { st: 'kept', fx: 'mid' }],
   ['z20-boss-behind', 20, 'boss', { st: 'kept', fx: 'mid', tier: -1, kind: 'behind', ref: 'z20-boss' }],
+  ['z21-boss', 21, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z22-boss', 22, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z23-boss', 23, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z24-boss', 24, 'boss', { st: 'kept', fx: 'mid' }],
   ['z25-boss', 25, 'boss', { st: 'kept', fx: 'mid' }],
   ['z27-boss', 27, 'boss', { st: 'kept', fx: 'mid' }],
   ['z30-elite', 30, 'elite', { st: 'kept', fx: 'late' }],
@@ -193,10 +207,12 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
   e(setup(c, k, lvShift));
   if (STARS && !o.zone1 && o.st !== 'joined') e(starsTypical(z));
   if (TALS) e(talentsTypical);
+  if (opt('eval')) e(String(opt('eval')));   // before the foe spawns, so a TURN_TUNE.boss change reaches its setup
   e(`TURN_TUNE.on = 1; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = ${foe === 'boss'}; spawn();`);
   if (foe === 'elite') e(`(() => { const f = combatFoes().find(x => x && !x.dead); turnFoeSetup(f, S.zone, { elite: true }); })()`);
-  if (opt('eval')) e(String(opt('eval')));
-  const p0 = e(`(() => { const p = turnCombatProfile(); return { L: S.L, boss: p.boss, elite: !!p.trait, foe: p.foeName, kind: ${foe === 'boss' ? KIND_FOR(z) : J(foe)} } })()`);
+  // big: the boss's heaviest single hit as a share of the hero's max HP before the hit cap (a charged move's hits on their own)
+  const p0 = e(`(() => { const p = turnCombatProfile(); let big = 0; for (const mv of p.script || []) for (const h of mv.hits || []) big = Math.max(big, (h.x || 0.2) * (mv.charge ? p.bossChargeX || 1 : 1));
+    return { L: S.L, boss: p.boss, elite: !!p.trait, foe: p.foeName, kind: ${foe === 'boss' ? KIND_FOR(z) : J(foe)}, big: p.boss ? Math.round(1000 * big * p.refHp * (p.bossHitX || 1) / p.heroMaxHp) / 1000 : null } })()`);
   if (foe === 'boss' && !p0.boss) throw new Error(`${id} ${k}: no boss to fight`);
   if (foe === 'elite' && !p0.elite) throw new Error(`${id} ${k}: no elite to fight`);
   const chain = foe === 'boss' ? 1 : 5, n = Math.ceil(FIGHTS / chain);
@@ -212,7 +228,7 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
     out[pl] = { win: Math.round(win * 1000) / 1000, turns: r.F ? Math.round(10 * r.T / r.F) / 10 : null, fights: r.K + r.D, attempts: win > 0 ? Math.min(20, Math.round(10 / win) / 10) : 20 };
   }
   if (core.errors.length) throw new Error(`${id} ${k}: ${core.errors.slice(0, 3).join('; ')}`);
-  return { ...out, L: p0.L, foe: p0.foe, kind: p0.kind };
+  return { ...out, L: p0.L, foe: p0.foe, kind: p0.kind, ...(p0.big != null ? { big: p0.big } : {}) };
 }
 
 export function runBudget({ only, heroes = RUN_HEROES } = {}) {

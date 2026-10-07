@@ -82,7 +82,7 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same window as a view's "new" mark)
 const FIRST_USE = {
   party: { text: 'Your Hero: gear, level and abilities.' },
-  nextup: { text: 'Next Up shows your best next goal. Tap it.', via: 'guide' },
+  nextup: { text: 'That chip is Next Up. It names your best next goal. Tap it.', via: 'guide' },
   awaynote: { text: 'While away, gathering continues and fighting stops.', via: 'strip' },   // the strip is its own line (71-ui-fight)
   gather: { text: 'Pick a node and your hero mines or chops it, even while you are away.' },
   bounties: { text: 'Bounties are three short goals. They pay gold, materials and Renown.' },

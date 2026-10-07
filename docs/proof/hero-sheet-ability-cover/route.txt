@@ -1,0 +1,16 @@
+# seed: 1
+# Proof for card hero-sheet-ability-cover: (1) the Hero sheet does not reproduce a covered ability button: it is a dimmed modal at 360x740,
+# 740x360 and 844x390, nothing is half covered, so no change was made for it. (2) Sideways, a docked medium banner covered the hero's legs
+# while a guide tip was up (25 px at 740x360, 19 px at 844x390). The banner now puts its eyebrow and title on one row (64 px to 46 px tall).
+# A route cannot force a banner while a tip shows, so after-*.png here were shot at 740x360 and 844x390 by waiting for the guide tip, then
+# adding a banner; the portrait overlap (banner over the hero's upper half) is not fixed and is carded as a follow-up.
+# This route plays the mid fixture through its opening cards and checks the fight screen still draws.
+new mid
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+expect "Zone"
+shot hero-sheet-fight

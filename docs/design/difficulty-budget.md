@@ -99,16 +99,14 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 ## Where the game stands (2026-10-07)
 
 - **Zones 5-12 are measured on the first-hour set** (boss-tiers PR 1, 2026-10-07): Wren sits in band; Pip and Tobin above it under
-  gaps. A kept-up hero (report-only rows) still wins them 100%. Zones 13-15 and the elites are too easy for a kept-up hero
-  (boss-tiers PR 3, foe-moves-by-type).
+  gaps. A kept-up hero (report-only rows) still wins them 100%. Zones 13-15 are now on the same footing (boss-tiers PR 3); the elites are too easy for a kept-up hero
+  (foe-moves-by-type). Zones 16-24 Captains are gated on the kept-up hero: Wren and Pip casual 54-85, Tobin 100 under gaps.
 - **Zones 25-34 Captains are in band for Wren and Pip** (mid-zone-wall, 2026-10-07: casual 56-80, good 100%; z34 Wren sits 4 under, inside the seed noise). Tobin wins
   all of them casually (boss-tiers owns the +10 gap).
 - **The Fenmother is easier than the Captains around her** (boss-tiers): 67-100% casual against a 20-40 band; zone 36
   is 98-100%.
 - **Gear a tier behind costs Wren and Pip 61-92 points of casual wins and Tobin 6-10** (gear-weight).
 - **Tobin** wins every zone 20 boss casually where Wren wins 63% (tobin-safety-margin).
-- The zone 20 Captain is too easy for a hero who keeps up (84/100/94 casual): the smooth Attack curve puts Lv 29 15% over
-  the old step (boss-tiers).
 - **A hero who just took the lamp** loses most bosses a hero who stayed wins (report-only rows): the gap is abilities, Stars
   and gear, not level.
 
@@ -121,3 +119,4 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 | 2026-10-06 | hero-progression-rework | Gaps z20-boss Wren and Pip casual (boss-tiers); z20-boss-behind limits Wren 0.75, Pip 0.88, Tobin 0 (gear-weight); re-baseline | judge ruling 2026-10-06 (`design-reviews/hero-progression-budget-ruling-2026-10-06.md`) |
 | 2026-10-07 | mid-zone-wall | Boss hpX/hitX knots at 25, 27, 30, 34 and lateBoss 0.2; 15 mid-zone-wall gaps removed, Tobin casual +10 gaps owned by boss-tiers at 25, 27, 30, 34 | judge ruling 2026-10-07 (`docs/DECISIONS.md`, Mid-zone wall) |
 | 2026-10-07 | boss-tiers | First-hour footing for zones 5-12; kept-up z8/z10/z12 and bare-hero rows report-only; `firstChampion` kind; z5/z8/z10/z12 gaps removed, Pip first-hour gaps (wren-first-hour-parity) and Tobin gaps (tobin-safety-margin) added; hitCap and boss knots; re-baseline | judge ruling 2026-10-07 (`docs/DECISIONS.md`, Boss tiers) |
+| 2026-10-07 | boss-tiers-pr3 | Rows z13-z24 (z13-15 first-hour footing, z16-24 kept-up), report-only z13/z15 kept-up rows, `big` field (heaviest hit share); z15 and z20 Wren and Pip gaps removed, Tobin gaps added; hitCap 0.75 for z16-24; knots; re-baseline | judge ruling 2026-10-07 (`docs/DECISIONS.md`, Boss tiers zones 13-24) |
