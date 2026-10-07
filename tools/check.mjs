@@ -479,6 +479,13 @@ if (section('goals')) try {
   assert(ids() === 'a1,a2,b1', 'a second goal from the same system fills a gap: ' + ids());
   g.eval('gv.r2 = 1.2; gv.r1 = 1');
   assert(ids() === 'r1,a1,b1', 'ready goals first, then by pct; prio breaks ready ties: ' + ids());
+  // a reserve row never displaces a ready goal (three ready goals keep their rows; with an unfinished pick, that one makes room)
+  g.eval("registerGoal({ id: 'rs', sys: 'rs', reserve: 1, label: () => 'rs', pct: () => gv.rs })");
+  g.eval('gv.r1 = 0; gv.r2 = 0; gv.a1 = 1; gv.b1 = 1; gv.c1 = 1; gv.rs = 0.5');
+  assert(ids() === 'a1,b1,c1', 'a reserve row never displaces a ready goal: ' + ids());
+  g.eval('gv.c1 = 0.4');
+  assert(ids().split(',').includes('rs') && ids().split(',').slice(0, 2).join() === 'a1,b1', 'a reserve row takes the place of an unfinished pick: ' + ids());
+  g.eval("GOALS.splice(GOALS.findIndex(x => x.id === 'rs'), 1); gv.r1 = 1; gv.r2 = 1.2; gv.a1 = 0.9; gv.b1 = 0.3; gv.c1 = 0");
   const rd = g.eval('topGoals(3, { sticky: false })[0]');
   assert(rd.ready && rd.pct === 1, 'ready goal pct clamps to 1');
   g.eval('gv.r1 = 0; gv.r2 = 0; gv.a2 = 0; gv.a3 = 0; gv.a1 = 0.5; gv.b1 = 0.4; gv.c1 = 0.3');

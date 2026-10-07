@@ -82,7 +82,7 @@ var forgeGoalPicks = 0;
       const r = all.find(e => e.reserve && !pick.includes(e));
       if (r) {
         if (pick.length < n) pick.push(r);
-        else { let lo = -1; pick.forEach((e, i) => { if (lo < 0 || e.score < pick[lo].score) lo = i; }); pick[lo] = r; }
+        else { let lo = -1; pick.forEach((e, i) => { if (!e.ready && (lo < 0 || e.score < pick[lo].score)) lo = i; }); if (lo >= 0) pick[lo] = r; }   // a ready goal is never displaced
       }
     }
     // order: ready first, then by score; shown goals keep their old order unless clearly passed
