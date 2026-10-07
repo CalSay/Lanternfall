@@ -9158,6 +9158,7 @@ const NOTICES = [
   { id: 'gear-reforged', re: /^Your .* reforged into .* gear\.$/, ch: 'bell' },
   { id: 'gear-back', re: /(does not fit your new path|do not fit your new path)/, ch: 'bell' },
   { id: 'champion', re: /^A champion .* appears\./, ch: 'pop', wait: 15, why: 'something to fight now' },
+  { id: 'cache', key: 'cache', ch: 'log', why: 'the cache card or banner shows it (75-caches-ui); the bell list keeps the line' },
   { id: 'trophy', re: /^(Champion defeated|The boss leaves a trophy|The raid spoils include)/, ch: 'log' },
   { id: 'stash-wait', re: /^(Storehouse full\. Needs room|The team is back\. )/, site: /toast\((stashNeed\(|`The team is back\. \$\{stashNeed)/, ch: 'bell' },
   { id: 'store-full', re: /^Storehouse full: /, ch: 'log', merge: ms => `Storehouse full: ${ms.map(m => m.slice(16, -1)).join(', ')}.` },
@@ -9913,6 +9914,55 @@ const TURN_FOE_RANGED = [
   { id: 'twin', name: 'Twin Shot', ranged: true, hits: [{ wind: 0.9, x: 0.1 }, { wind: 0.75, x: 0.1 }] }
 ];
 const TURN_FOE_ELITE = { id: 'crush', name: 'Crushing Blow', hits: [{ wind: 1.35, x: 0.27 }] };
+
+// Each ordinary foe type's own moves (card foe-moves-by-type, docs/design/foe-moves.md). Zone monsters with their own art
+// (59l ZONE_FOES) and bosses keep theirs; a type with no row here (the Coast's, for now) uses the basic pair above.
+//   moves   what it does, in turn (it alternates them)        speed  relative to the reference hero (TURN_FOE_SPEED.normal is 0.9)
+//   sig     an elite's signature move, in place of TURN_FOE_ELITE        eliteHp  scales the elite's HP (a glass cannon lasts less)
+//   ranged  its moves are shots (the type's FOE_BEH.ranged says the same)
+// Threat a second matches the basic pair (about 0.18 of the reference HP): slow foes hit big and rarely, fast foes chip.
+const TURN_FOE_TYPES = {
+  slime: { speed: 0.8,
+    moves: [{ id: 'engulf', name: 'Engulf', hits: [{ wind: 1.5, x: 0.24, dt: 'poison' }] },
+      { id: 'lash', name: 'Ooze Lash', hits: [{ wind: 1.1, x: 0.11, dt: 'poison' }, { wind: 0.8, x: 0.11, dt: 'poison', ride: 'venom' }] }],
+    sig: { id: 'gengulf', name: 'Great Engulf', hits: [{ wind: 1.6, x: 0.34, dt: 'poison', ride: 'venom' }] } },
+  bat: { speed: 1.0, eliteHp: 0.4,
+    moves: [{ id: 'nip', name: 'Nip', hits: [{ wind: 0.8, x: 0.11 }] },
+      { id: 'wingflurry', name: 'Wing Flurry', hits: [{ wind: 0.75, x: 0.07 }, { wind: 0.6, x: 0.07 }, { wind: 0.6, x: 0.07 }] },
+      { id: 'dive', name: 'Dive', hits: [{ wind: 0.7, x: 0.11 }, { wind: 0.6, x: 0.11 }] }],
+    sig: { id: 'divestorm', name: 'Dive Storm', hits: [{ wind: 0.7, x: 0.08 }, { wind: 0.55, x: 0.08 }, { wind: 0.55, x: 0.08 }, { wind: 0.55, x: 0.08, ride: 'bleed' }] } },
+  bones: { speed: 0.95, ranged: true,
+    moves: [{ id: 'boneshot', name: 'Bone Shot', ranged: true, hits: [{ wind: 1.1, x: 0.2 }] },
+      { id: 'bonevolley', name: 'Bone Volley', ranged: true, hits: [{ wind: 0.9, x: 0.065 }, { wind: 0.65, x: 0.065 }, { wind: 0.65, x: 0.065 }] }],
+    sig: { id: 'barrage', name: 'Bone Barrage', ranged: true, hits: [{ wind: 0.9, x: 0.075 }, { wind: 0.6, x: 0.075 }, { wind: 0.6, x: 0.075 }, { wind: 0.6, x: 0.075 }] } },
+  beetle: { speed: 0.7,
+    moves: [{ id: 'shellbash', name: 'Shell Bash', hits: [{ wind: 1.4, x: 0.27 }] },
+      { id: 'mandibles', name: 'Mandibles', hits: [{ wind: 1.1, x: 0.13 }, { wind: 0.8, x: 0.13 }] }],
+    sig: { id: 'rollcharge', name: 'Rolling Charge', hits: [{ wind: 1.8, x: 0.42 }] } },
+  spore: { speed: 0.9, ranged: true,
+    moves: [{ id: 'puff', name: 'Spore Puff', ranged: true, hits: [{ wind: 1.1, x: 0.15, dt: 'poison', ride: 'weaken' }] },
+      { id: 'cloud', name: 'Poison Cloud', ranged: true, hits: [{ wind: 1.0, x: 0.1, dt: 'poison' }, { wind: 0.8, x: 0.1, dt: 'poison', ride: 'venom' }] }],
+    sig: { id: 'sporestorm', name: 'Spore Storm', ranged: true, hits: [{ wind: 1.0, x: 0.1, dt: 'poison' }, { wind: 0.7, x: 0.1, dt: 'poison' }, { wind: 0.7, x: 0.1, dt: 'poison', ride: 'venom' }] } },
+  golem: { speed: 0.6,
+    moves: [{ id: 'stonefist', name: 'Stone Fist', hits: [{ wind: 1.5, x: 0.32 }] },
+      { id: 'quarryslam', name: 'Quarry Slam', hits: [{ wind: 1.8, x: 0.26 }] }],
+    sig: { id: 'quarrysmash', name: 'Quarry Smash', hits: [{ wind: 2.0, x: 0.5 }] } },
+  wraith: { speed: 1.0, ranged: true,
+    moves: [{ id: 'wail', name: 'Wail', ranged: true, hits: [{ wind: 0.9, x: 0.08, dt: 'frost' }, { wind: 0.7, x: 0.08, dt: 'frost' }] },
+      { id: 'chilltouch', name: 'Chill Touch', hits: [{ wind: 1.2, x: 0.17, dt: 'frost', ride: 'chill' }] }],
+    sig: { id: 'drownwail', name: 'Drowning Wail', ranged: true, hits: [{ wind: 0.9, x: 0.08, dt: 'frost' }, { wind: 0.65, x: 0.08, dt: 'frost' }, { wind: 0.65, x: 0.08, dt: 'frost', ride: 'chill' }] } }
+};
+// What answers each type, from the abilities the starters already have (Codex tip; check.mjs holds every id real and every
+// starter good against two types or more). `by` lists the abilities of each hero that help against it, and why in `tip`.
+const FOE_COUNTERS = {
+  slime: { tip: 'Slow and heavy. Burn it: fire hurts a Moss Slime most.', by: { wren: ['pinning'], tobin: ['brace'], pip: ['fire', 'spark'] } },
+  bat: { tip: 'Fast chip hits. Guard or Ward soaks them, and parry the last one.', by: { wren: ['shadowstep'], tobin: ['brace', 'ironwill'], pip: ['arcaneward'] } },
+  bones: { tip: 'It shoots from afar and has armour. Holy light hurts it most.', by: { wren: ['pinning'], tobin: ['sundering'], pip: ['nova', 'flare'] } },
+  beetle: { tip: 'One slow, heavy bash. Stun it, or Chill it twice to Freeze it, before the swing.', by: { wren: ['pinning', 'sonic'], tobin: ['bash'], pip: ['frostshard'] } },
+  spore: { tip: 'Poison clouds from afar that Weaken you. Burn it, and Ward off the venom.', by: { wren: ['shadowstep'], tobin: ['ironwill'], pip: ['fire', 'arcaneward'] } },
+  golem: { tip: 'The slowest and the hardest hit. Break its armour, or Freeze it.', by: { wren: ['pinning'], tobin: ['sundering'], pip: ['frostshard'] } },
+  wraith: { tip: 'Low damage, but it chills. Holy light hurts it most.', by: { wren: ['batswarm'], tobin: ['riposte'], pip: ['nova', 'flare'] } }
+};
 
 const TURN_BOSS_SETS = {
   slime: { a: { id: 'engulf', name: 'Engulf', hits: [{ wind: 1.3, x: 0.28, dt: 'poison' }] },
@@ -12214,6 +12264,83 @@ function bossTryWays(L) {
   var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward, shape: btyShape, kinds: Object.keys(BTY_KINDS).concat('tap') };
 }
 
+// ---- src/js/55-caches.js ----
+// 55-caches: Lantern Caches, the core (card cache-core; early-game plan-judge R1, R2, R12; DECISIONS "Lantern Caches").
+// CORE FILE: no DOM. UI: 75-caches-ui.js (the card, through the moment layer).
+//
+// A zone boss's FIRST clear opens a cache. It is a container: it lists what that win already paid (gold, Essence, a Scroll, a Star, a
+// trophy, a unique), and nothing else. Replays pay as today and open no cache. The only thing a cache adds is a lantern colour from
+// the Deepwell shop that the save does not own yet (zones 1 to 3 and 7 to 9, Ember Red first). That is a certain look, never a roll.
+// No relics, no extra Essence, no unique pity, no time skips. Nothing here is sold.
+//
+// Events: cacheOpen { n, zone, tier, gold, ess, scroll, star, starFirst, unique, trophy, look, chance, essFull, auto }
+//   n: this save's cache number (1 for the first).  scroll { id, name, col }  star { id, name }  unique { item, name }
+//   trophy { name, n }  look { id, n, col, worn }  chance: the unique's chance on this win, in percent (null when one dropped)
+//   essFull: the Essence store was full when the win paid  auto: this cache opens as a banner unless it holds a look or a unique.
+//
+// State S.cache: { opened, lookPity, auto, first }
+//   opened  caches opened.  lookPity  reserved for cache-looks (nothing reads it yet).  auto  null = the default (on from the
+//   autoFrom-th cache), true or false once the player chooses.  first  the zone of the first cache (0 = none yet).
+// An old save has opened = 0 and gets no retroactive cache: its first one is its next first clear.
+//
+// CACHE_TUNE.on = false switches caches and their lantern colours off; wins then pay as before.
+//
+// API: cachePending() -> bool (a clear is waiting to open), cacheAuto() -> bool, cacheSetAuto(on), cacheLookZone(z) -> bool
+
+const CACHE_TUNE = { on: true, autoFrom: 3, lookZones: [1, 2, 3, 7, 8, 9] };
+let cachePending, cacheAuto, cacheSetAuto, cacheLookZone;
+{
+  registerState('cache', { opened: 0, lookPity: 0, auto: null, first: 0 });
+  const C = () => S.cache;
+  let tickN = 0, pend = null, lootTick = -1, lootItem = null;
+  cacheLookZone = z => CACHE_TUNE.lookZones.includes(z);
+  cacheAuto = (n = C().opened) => (typeof C().auto === 'boolean' ? C().auto : n >= CACHE_TUNE.autoFrom);
+  cacheSetAuto = on => { C().auto = !!on; save(); };
+  cachePending = () => !!pend;
+
+  // 50-sim drops a unique before it emits zoneClear (same tick); everything else comes after.
+  on('loot', e => { if (e && e.item && e.item.u) { lootTick = tickN; lootItem = e.item; } });
+  on('zoneClear', e => {
+    if (!CACHE_TUNE.on || !e || !(e.zone >= 1)) return;
+    pend = { zone: e.zone, tier: zoneTier(e.zone), gold: 0, ess: 0, scroll: null, star: null, trophy: null,
+      unique: lootTick === tickN && lootItem ? lootItem : null };
+  });
+  on('kill', p => { if (pend && p && p.mob && p.mob.boss && p.zone === pend.zone) { pend.gold = p.gold || 0; pend.ess = p.ess || 0; pend.tier = p.tier || pend.tier; } });
+  on('scrollDrop', p => { if (pend && p && SCROLLS[p.id]) pend.scroll = { id: p.id, name: SCROLLS[p.id].name, col: SCROLLS[p.id].col }; });
+  on('starFound', p => { if (pend && p && !p.quiet && typeof STARS === 'object' && STARS[p.id]) pend.star = { id: p.id, name: STARS[p.id].name }; });
+  on('trophy', p => { if (pend && p && (p.source === 'boss' || p.source === 'champion') && CRAFT_TROPHIES[p.i]) pend.trophy = { name: CRAFT_TROPHIES[p.i].n, n: p.n }; });
+
+  // the chance this win gave its zone's unique (50-sim killPack): a first clear, halved when the save already has it at this tier
+  const uniqueChance = (z, tier) => {
+    const uq = zoneUnique(z), owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
+    return Math.round(Math.min(1, UNIQ_TUNE.first * owned * mod('uniqueChance')) * 1000) / 10;
+  };
+
+  function open() {
+    const p = pend; pend = null;
+    const c = C();
+    let look = null;
+    try { if (cacheLookZone(p.zone) && typeof DW === 'object' && DW && typeof DW.grantLantern === 'function') look = DW.grantLantern(); } catch (e) { look = null; }
+    if (!c.opened) c.first = p.zone;
+    c.opened++;
+    const un = p.unique && UNIQ[p.unique.u] ? { item: p.unique, name: UNIQ[p.unique.u].name } : null;
+    const starFirst = !!p.star && Object.keys((S.stars && S.stars.own) || {}).length <= 1;
+    const essFull = p.ess > 0 && typeof stashFull === 'function' && stashFull('ess', p.tier);
+    const view = { n: c.opened, zone: p.zone, tier: p.tier, gold: p.gold, ess: p.ess, scroll: p.scroll, star: p.star, starFirst, unique: un, trophy: p.trophy, look,
+      chance: un ? null : uniqueChance(p.zone, p.tier), essFull, auto: cacheAuto(c.opened) };
+    emit('cacheOpen', view);
+    // the bell list keeps a line (the card or banner is the moment itself)
+    const bits = [];
+    if (p.gold) bits.push(`${fmt(p.gold)} gold`);
+    if (look) bits.push(`${look.n} lantern`);
+    if (un) bits.push(un.name);
+    emit('toast', { key: 'cache', msg: `Lantern Cache opened${bits.length ? ': ' + bits.join(', ') : ''}.`, kind: 'good', prio: 'low' });
+    save();
+  }
+  // the clear's events all fire inside one tick; the cache opens at the end of it
+  onTick(() => { tickN++; if (pend) open(); });
+}
+
 // ---- src/js/55-classes.js ----
 // 55-classes: Classes 2.0, slice S2 (docs/design/classes-2.md 3.4-3.5, 7, 8.3). The class state S.cls,
 // the class accessors, the base-class choice and the
@@ -13743,16 +13870,9 @@ const BESTIARY_PERKS = {
 //   15       its tell (what to watch for)                    50 +5% damage against it, for good (stFoeHit)
 const PROFILE_TIERS = [1, 5, 15, 50];
 const PROFILE_BONUS = 0.05;
-// What to watch for, from each foe's real behaviour (59b-enemies)
-const FOE_TELL = {
-  slime: 'Plain blows. Its heavy hit comes after a red "!".',
-  bat: 'Dives at you for a few seconds, every 10 s.',
-  bones: 'Shoots from range through armour. Gets back up once at 20% HP, unless magic or a burn finishes it.',
-  beetle: 'Slow, but each hit lands at nearly double strength.',
-  spore: 'Every 6 s a spore cloud hits you and poisons.',
-  golem: 'Armoured. Hits very hard and slowly; every third hit slams down.',
-  wraith: 'Every 5 s it channels a heal. A stun stops it.'
-};
+// What to watch for, from each foe's own moves and what answers them (24d TURN_FOE_TYPES, FOE_COUNTERS)
+const FOE_TELL = {};
+for (const k in FOE_COUNTERS) FOE_TELL[k] = `Moves: ${TURN_FOE_TYPES[k].moves.map(m => m.name).join(', ')}. ${FOE_COUNTERS[k].tip}`;
 
 // Helpers for the UI (75-mastery-ui.js) and tools; filled in below.
 const masteryApi = {};
@@ -18453,6 +18573,18 @@ let DEEP_ARENA = null;
   }
   const favChoices = () => { const lv = D().lore.fav || 0; if (!lv) return []; return DEEP_BOON_IDS.filter(id => { const b = DEEP_BOONS[id]; return !b.c && (b.r === 'c' || (lv >= 2 && b.r === 'r')) && (!b.cls || b.cls === 'any' || b.cls === cls()); }); };
   const setFav = id => { if (id !== null && !favChoices().includes(id)) return false; D().fav = id; save(); return true; };
+  // cache-core: a first-clear cache gives the first lantern colour this save does not own, in the shop's order (Ember Red first).
+  // It is a gift, not a buy: no Marks, no `deepBuy`. It wears the colour only when no lantern is worn yet.
+  const LANTERN_GIFTS = ['l_ember', 'l_blue', 'l_ghost', 'l_moon', 'l_violet', 'l_gold'];
+  function grantLantern() {
+    const id = LANTERN_GIFTS.find(x => DEEP_SHOP[x] && !D().cos[x]);
+    if (!id) return null;
+    D().cos[id] = 1;
+    if (!D().eq.lantern && !(S.deeds && S.deeds.wear && S.deeds.wear.flame)) D().eq.lantern = id;
+    const worn = typeof wearGet === 'function' ? wearGet('flame') === id : D().eq.lantern === id;
+    if (typeof codexRefresh === 'function') codexRefresh(true);
+    return { id, n: DEEP_SHOP[id].n, col: DEEP_SHOP[id].col, worn };
+  }
   const equip = (slot, id) => { if (id !== null && (!D().cos[id] || DEEP_SHOP[id].kind !== slot)) return false; D().eq[slot] = id; save(); return true; };
 
   // ---------------- the Codex: Deepwell, Seals and Wardrobe pages, bought titles ----------------
@@ -18524,7 +18656,7 @@ let DEEP_ARENA = null;
     run: R, live: deepActive, unlockInfo: () => ({ open: deepUnlocked(), zone: T.unlockZone, hearth: hearthLv() === null ? 0 : T.hearth, hearthNow: hearthLv(), maxZone: S.maxZone }),
     floorKind: (f, r) => floorKind(f, r), oilMax: r => oilMax(r), oil: () => { const r = R(); return r ? r.oil : 0; }, drainRate, refundFor: k => refundFor(k), marksNow,
     offerView, card, owned, setProgress, trialRule, trialInfo, shop, shopRow, nextLore, favChoices,
-    start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip,
+    start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip, grantLantern,
     fall: () => deepActive() && R().phase === 'fight' ? end('wipe') : null,   // the party wiped (59c-deepwell-combat)
     foeHp: (f, mul) => R() ? foeHp(R(), f, mul || 1) : 0, floorFoes: f => R() ? floorFoes(R(), f) : [],
     _init: () => { initFor = null; ensureInit(); }
@@ -24819,6 +24951,9 @@ const TURN_TUNE = {
   // a normal foe's (and an elite's) hits x this, so a landed hit costs a hero who keeps up about 8-15% of their health
   // against the higher reference HP above (zone fights and the Deepwell; a Proving's foes hit for shares of your health)
   normHitX: [[3, 1], [8, 0.7], [34, 0.7], [35, 1]],
+  // an elite hits this much harder than a normal foe of its zone (foe-moves-by-type: elites are a threat, not a pat on the head)
+  eliteHitX: 1.4,
+  eliteHpX: 2.5,   // ... and lasts this much longer
   // the hero's max HP in turn fights x this. Wren's HP grows with her Attack, which carries the real-time fight's damage
   // parity (SOLO_TUNE.heroX 0.76, against Pip's 1.15), while turn fights give that back to her damage only (heroX below)
   heroHpX: { wren: 1.2, tobin: 1, pip: 1 },
@@ -24955,15 +25090,15 @@ function turnFoeSetup(f, z, o) {
   } else if (Z) {
     moves = Z.moves; script = Z.moves; spd = Z.speed || TURN_FOE_SPEED.normal; hpA = Z.hp || TURN_FOE_HP.zoneFoe;
   } else {
-    const ranged = !!f.ranged;
-    moves = ranged ? TURN_FOE_RANGED : TURN_FOE_BASIC; script = moves.slice();
-    spd = ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
+    const ranged = !!f.ranged, TY = TURN_FOE_TYPES[f.type];   // its type's own moves (24d TURN_FOE_TYPES), else the basic pair
+    moves = TY ? TY.moves : ranged ? TURN_FOE_RANGED : TURN_FOE_BASIC; script = moves.slice();
+    spd = TY ? TY.speed : ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
     const C = COMBAT_TUNE;
     if (o.elite === true || (o.elite !== false && z >= C.eliteFrom && Math.random() < C.eliteP)) {
-      f.elite = true; script = script.concat([TURN_FOE_ELITE]);
+      f.elite = true; script = script.concat([TY ? TY.sig : TURN_FOE_ELITE]);
       const ids = Object.keys(TURN_TRAITS), tr = o.trait || ids[(Math.random() * ids.length) | 0];   // one trait (24d TURN_TRAITS)
       f.tr = [tr]; f.name = ((typeof ELITE_TRAITS === 'object' && ELITE_TRAITS[tr] && ELITE_TRAITS[tr].name) || 'Elite') + ' ' + f.name;
-      spd = TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite;
+      spd = TY ? TY.speed * TURN_FOE_SPEED.elite / TURN_FOE_SPEED.normal : TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite * T.eliteHpX * (TY && TY.eliteHp || 1);   // an elite keeps its type's pace
     }
   }
   // the first zone bosses come in easier while you learn to parry and dodge (bossEase: their HP share in zones 1, 2, 3)
@@ -24975,7 +25110,7 @@ function turnFoeSetup(f, z, o) {
   const hp = hpA * ease * len * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
-    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
+    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
   const pay = 1 + (len - 1) * B.payX;
@@ -35921,6 +36056,49 @@ let showAwayReport;
   });
   // The Classic achievements grid moved to the Achievements menu (75-deeds-ui.js, Tracks > Classic).
 }
+
+// ---- src/js/75-caches-ui.js ----
+// 75-caches-ui: the Lantern Cache card (card cache-core). Browser-only; the rules are in 55-caches.js.
+// A cache shows through the moment layer (75-moments-ui): a big card, or, once the player is on auto-open, a medium banner unless it
+// holds a look or a unique (or is the first Star, or zone 1's first boss). The card lists what the win paid, in the colour of the best
+// thing inside. The drops this clear already queued as moments (the unique, the first Star, zone 1's boss card) fold into the cache card.
+// This file loads before 75-moments-ui, so the moment layer's names are read inside the handler, never at load.
+on('cacheOpen', v => {
+  if (typeof moment !== 'function') return;
+  if (!MOMENT_KINDS.cacheAuto) MOMENT_KINDS.cacheAuto = { tier: 'medium', eye: 'Lantern Cache', col: '#F2C14E', snd: 'mid' };
+  const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1;
+  const lines = [];
+  if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
+  if (v.unique) lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
+  if (v.star) lines.push({ txt: `Star: ${v.star.name}` });
+  if (v.trophy) lines.push({ txt: `${v.trophy.n} ${v.trophy.name}` });
+  const pay = [];
+  if (v.scroll) pay.push(v.scroll.name);
+  if (v.gold) pay.push(`${fmt(v.gold)} gold`);
+  if (v.ess && !v.essFull) pay.push(`${v.ess} ${MAT.ess.short[v.tier - 1]} Essence`);
+  if (pay.length) lines.push({ txt: pay.join(', ') });
+  if (v.essFull) lines.push({ txt: 'Your Essence store is full, so some or all of this win\'s Essence may be lost. Build more room at the Camp.' });
+  // the colour: a unique first, then the lantern colour, then a Star, then a Scroll
+  const col = v.unique ? '#FF8A3D' : v.look ? v.look.col : v.star ? '#F2C14E' : v.scroll ? v.scroll.col : '#F2C14E';
+  const icon = v.unique ? { item: v.unique.item } : { ic: ['banner', col] };
+  const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
+  // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
+  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
+  const o = { title, sub, col, icon, lines };
+  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions = [{ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) }];
+  const barks = v.zone === 1 ? ['boss1'] : [];
+  if (big) {
+    // fold in what this clear already queued: zone 1's boss card, the unique, the Star
+    for (let i = MOMENT_Q.length - 1; i >= 0; i--) {
+      const q = MOMENT_Q[i];
+      if (q.kind === 'boss' || (q.kind === 'unique' && v.unique && q.title === v.unique.name)
+        || ((q.kind === 'starFirst' || q.kind === 'star') && v.star && q.title === v.star.name)) { if (q.bark) barks.push(q.bark); MOMENT_Q.splice(i, 1); }
+    }
+    // the hero's line for what the card now carries (55-voice): the strongest of the folded moments' barks
+    if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
+  }
+  moment(big ? 'cache' : 'cacheAuto', o);
+});
 
 // ---- src/js/75-camp-ui.js ----
 // 75-camp-ui: the Camp part of the Camp tab (tab id 'world'): the Hearth card, the builders,

@@ -23,16 +23,9 @@ const BESTIARY_PERKS = {
 //   15       its tell (what to watch for)                    50 +5% damage against it, for good (stFoeHit)
 const PROFILE_TIERS = [1, 5, 15, 50];
 const PROFILE_BONUS = 0.05;
-// What to watch for, from each foe's real behaviour (59b-enemies)
-const FOE_TELL = {
-  slime: 'Plain blows. Its heavy hit comes after a red "!".',
-  bat: 'Dives at you for a few seconds, every 10 s.',
-  bones: 'Shoots from range through armour. Gets back up once at 20% HP, unless magic or a burn finishes it.',
-  beetle: 'Slow, but each hit lands at nearly double strength.',
-  spore: 'Every 6 s a spore cloud hits you and poisons.',
-  golem: 'Armoured. Hits very hard and slowly; every third hit slams down.',
-  wraith: 'Every 5 s it channels a heal. A stun stops it.'
-};
+// What to watch for, from each foe's own moves and what answers them (24d TURN_FOE_TYPES, FOE_COUNTERS)
+const FOE_TELL = {};
+for (const k in FOE_COUNTERS) FOE_TELL[k] = `Moves: ${TURN_FOE_TYPES[k].moves.map(m => m.name).join(', ')}. ${FOE_COUNTERS[k].tip}`;
 
 // Helpers for the UI (75-mastery-ui.js) and tools; filled in below.
 const masteryApi = {};

@@ -528,3 +528,10 @@ Kept only to explain current rules. Each line: the old decision, then what repla
   on a sign-off nobody owned; Cal 2026-10-06 18:30 "I don't want to be involved" and 18:41 any repo rule may change if
   it serves the goals.
 - Weekday and weekend usage rules (2026-09-28) -> steady mode (2026-09-28 evening).
+
+## Foe moves by type: judge rulings (2026-10-07)
+
+Each Hollow foe type has its own moves (`TURN_FOE_TYPES`, `docs/design/foe-moves.md`); elites swap the Crushing Blow for a
+type signature and keep the type's pace; every foe type names an answer for each starter (`FOE_COUNTERS`). Elite scaling is
+`eliteHitX` 1.4 and `eliteHpX` 2.5 (the Cave Bat's elite has 0.4 of that HP). Zone 15 and 20 elites remain easy for casual
+Wren and Pip: that is zone 5-15 hero power, owned by boss-tiers. No save state changes.
