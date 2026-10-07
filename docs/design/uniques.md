@@ -465,4 +465,3 @@ These are proposed display names. Existing saved IDs, effects and ownership rema
 | hydraglass | Hydra Glass | Prism of the Seven Hungers | Legacy | cobalt framed pale glass prism with three serpentine neck silhouettes and pearl core |
 | eaterfang | Lantern Eater's Fang | Light's Last Refuge | Legacy | mithril fang sword with lantern shaped guard, dark beast tooth edge and pale blue trapped light |
 | tyrantaxe | Pale Tyrant's Axe | The King's Silence | Legacy | mithril double crescent axe, tideash handle and ivory crowned skull socket |
-
