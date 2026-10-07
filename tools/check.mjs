@@ -4854,7 +4854,12 @@ if (section('W1-D (browser)')) try {
           // W2-B: a fresh Level 1 hero (Training made it weaker) meets its first natural heavy hit late (25 s in, the next 40 s after), which made
           // each start run its whole 28 s. From the 2nd second the check starts a heavy wind-up itself when none is showing, as the solo walk does.
           if (i >= 3 && await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) ? (actWarn({ kind: "heavy", id: "w1d" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }), true) : false')) await page.waitForTimeout(100);
-          if (i - since > 22 && await X('ONBOARD.paused')) { stuck = true; break; }   // paused for 9 s of presses on the same step
+          // paused for 9 s of presses on the same step (guide-voice: a null step is read again after the UI tick, since the first Attack tip
+          // now waits for your turn and the pause can start between the two reads)
+          if (i - since > 22 && await X('ONBOARD.paused')) {
+            if (!st) { await page.waitForTimeout(600); if (await X('!onboardStep() && ONBOARD.paused')) { stuck = true; break; } }
+            else { stuck = true; break; }
+          }
           await page.waitForTimeout(400);
         }
         if (stuck) locks.push(`${hero}@${last}`);
