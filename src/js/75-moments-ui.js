@@ -12,7 +12,7 @@
 // wait for the guide step on screen, the Away and What's-new cards, and the first seconds after boot.
 // Several at fight end fold into one card with a list. Reduced motion: the same card, no burst.
 // API for later cards:  moment(kind, { title, sub, rarity, icon, still, lines, actions })
-//   kind     'boss' | 'unique' | 'cache' | 'hero' | 'starFirst' (big; a cache with a look is big too); 'level' | 'ability' | 'star' | 'look' | 'craft' (medium)
+//   kind     'boss' | 'unique' | 'cache' | 'hero' | 'champion' | 'starFirst' (big; a cache with a look is big too); 'level' | 'ability' | 'star' | 'look' | 'craft' (medium)
 //   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
 //   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
@@ -26,6 +26,7 @@ const MOMENT_KINDS = {
   unique: { tier: 'big', eye: 'Unique loot', col: '#FF8A3D', snd: 'big' },
   cache: { tier: 'big', eye: 'Lantern Cache', col: '#F2C14E', snd: 'big' },
   hero: { tier: 'big', eye: 'New hero', col: '#B58CFF', snd: 'big' },
+  champion: { tier: 'big', eye: 'Champion down', col: '#F2C14E', snd: 'big' },
   starFirst: { tier: 'big', eye: 'Your first Star', col: '#F2C14E', snd: 'big' },
   level: { tier: 'medium', eye: 'Level up', col: '#6FCB6A', snd: 'mid' },
   ability: { tier: 'medium', eye: 'New ability', col: '#5FA8FF', snd: 'mid' },
@@ -59,7 +60,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   // a card up, the guide's step, the What's-new window or the first seconds after boot hold a moment back
   // (the guide's step gets guideWaitS seconds to finish, then the moment shows over it: a step left on screen must not hide a unique)
   const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov, .gl-ov, .dd-fc-ov') || document.hidden || NEWS.open || performance.now() - bootT < MOMENT_TUNE.bootS * 1000
-    || (guideBusy() && MOMENT_UI.guideT < MOMENT_TUNE.guideWaitS);
+    || (guideBusy() && MOMENT_UI.guideT < MOMENT_TUNE.guideWaitS)
+    || (typeof storyBusy === 'function' && MOMENT_Q.some(q => q.kind === 'champion' && q.scene && storyBusy(q.scene)));   // a Champion's scene plays first, then its card
   // medium moments in the first half hour: at most midMax in any midWindowS seconds
   const midRoom = () => {
     const u = MOMENT_UI, now = Date.now();
@@ -221,6 +223,16 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     // later zone bosses have their own toast and scroll; a region's last boss has the Great Lantern card, which carries the hero's line
     if (e.zone !== 1) { if (typeof REGIONS === 'object' && !REGIONS.some(r => r.z1 === e.zone)) moment('bark', { bark: 'boss' }); return; }
     moment('boss', { title: 'The first boss falls', sub: `${zoneName(e.zone)} is cleared. The road goes on.`, icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss1' });
+  });
+  // champion-moment: a Champion's first clear is one big card. Its post scene plays as the story sheet first (the card waits for it, above);
+  // the card is the zone's cache (already queued by zoneClear) turned into a Champion card, or its own card when no cache came
+  on('champWin', e => {
+    if (!e) return;
+    const title = e.name ? `${e.name} falls` : 'Champion down', eye = `Zone ${e.zone} Champion down`;
+    const q = MOMENT_Q.find(x => (x.kind === 'cache' || x.kind === 'cacheAuto') && x.zone === e.zone);   // the cache may already be queued; else it folds in when it opens (75-caches-ui)
+    if (!q) { moment('champion', { title, eye, sub: 'The road goes on.', icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss', zone: e.zone, scene: e.scene }); return; }
+    const k = MOMENT_KINDS.champion;
+    Object.assign(q, { kind: 'champion', tier: k.tier, eye, snd: k.snd, title, scene: e.scene });
   });
   on('heroUnlocked', e => { if (e && e.id) moment('hero', { title: heroName(e.id), sub: 'A new hero will take up the lamp.', icon: { ic: ['banner', '#B58CFF'] } }); });
   // level up is medium only on the first level and every 5th (a banner a level would be a flood); otherwise the toast rules decide
