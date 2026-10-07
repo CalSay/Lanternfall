@@ -1961,7 +1961,7 @@ if (section('zone area names')) try {
     'area names: no zone in the Hollow is named "... II" any more (zone 8 is Batwing Caves)');
   assert(E('zoneName(176)') === 'The Heart of the Gloamvale II' && E('zoneName(0)') === 'Mossy Hollow', 'area names: past zone 175 the last area repeats, numbered; zone 0 reads as zone 1');
   // names only: the 7-zone cycle still drives foes, scenery and rewards
-  assert(E('zoneType(8)') === 0 && E('zonePlace(8)') === 0 && E('zoneCycle(8)') === 1 && E('zoneTheme(8)') === 'forest' && E('zoneType(35)') === 6,
+  assert(E('zoneType(8)') === 0 && E('zonePlace(8)') === 0 && E('zoneCycle(8)') === 1 && E('zoneType(35)') === 6,
     'area names: foe type, place and cycle for a zone are unchanged');
 } catch (e) { fail('area names crashed: ' + (e.stack || e)); }
 
@@ -1975,9 +1975,28 @@ if (section('regions and the Great Lantern')) try {
   const OLD = `(() => { const out = []; const T = z => (z - 1) % 7, C = z => Math.floor((z - 1) / 7);
     for (let z = 1; z <= 35; z++) {
       if (zoneType(z) !== T(z) || zonePlace(z) !== T(z) || zoneCycle(z) !== C(z) || zoneNextType(z) !== (T(z) + 1) % 7
-        || zoneTheme(z) !== (z <= MOSSY_ZONES ? 'forest' : ZONE_THEME[T(z)]) || zoneHue(z) !== (C(z) * 70) % 360 || zoneUnique(z) !== ZONE_UNIQ[T(z)] || zoneHome(z) !== CRAFT_HOME[T(z)]) out.push(z);
+        || zoneHue(z) !== (C(z) * 70) % 360 || zoneUnique(z) !== ZONE_UNIQ[T(z)] || zoneHome(z) !== CRAFT_HOME[T(z)]) out.push(z);
     }
     return out; })()`;
+  // scenery follows areas (scenery-follows-areas): the theme of every zone 1-70, without and with a stub Caves painting
+  {
+    const cyc = z => ['forest', 'cave', 'bone', 'barrow', 'fungal', 'quarry', 'marsh'][(z - 1) % 7];
+    // today's table: zones 1-7 Mossy Hollow, then the 7-zone cycle (zones 6-8 show the Mossy Hollow painting, 9 the cave, 10 the bone scene)
+    const NOW = Array.from({ length: 70 }, (_, i) => (i + 1 <= 7 ? 'forest' : cyc(i + 1)));
+    // with a Caves painting wired: the five Batwing Caves zones (6-10) show it; everything else is unchanged
+    const CAVE = NOW.map((t, i) => (i + 1 >= 6 && i + 1 <= 10 ? 'cave' : t));
+    const themes = g => g.eval('(() => { const o = []; for (let z = 1; z <= 70; z++) o.push(zoneTheme(z)); return o; })()');
+    const g = loadCore({ seed: 61 });
+    const row = a => a.map((t, i) => (i + 1) + ':' + t).join(' ');
+    const diff = (a, b) => a.map((t, i) => t === b[i] ? '' : (i + 1) + ' got ' + t + ' want ' + b[i]).filter(Boolean).join('; ');
+    assert(g.eval("typeof BG_ART === 'object' && !BG_ART.cave && SCENERY_BY_AREA === true"), 'scenery: no Caves painting is wired yet and SCENERY_BY_AREA is on (update this check when the Caves painting is wired)');
+    assert(!diff(themes(g), NOW), 'scenery: with no Caves painting, zones 1-70 keep their scenery exactly (' + diff(themes(g), NOW) + ')');
+    g.eval("BG_ART.cave = { id: 'stub' }");
+    assert(!diff(themes(g), CAVE), 'scenery: with a Caves painting wired, zones 6-10 show it and no other zone changes (' + diff(themes(g), CAVE) + ')');
+    g.eval('SCENERY_BY_AREA = false');
+    assert(!diff(themes(g), NOW), 'scenery: with SCENERY_BY_AREA off, zones 1-70 follow the old rule even with a Caves painting (' + diff(themes(g), NOW) + ')');
+    g.eval('SCENERY_BY_AREA = true; delete BG_ART.cave');
+  }
   for (const f of FIX) {
     const raw = JSON.parse(rawOf(f));
     const g = loadCore({ seed: 61, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });

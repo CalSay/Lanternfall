@@ -8888,7 +8888,13 @@ const regionById = id => REGIONS.find(r => r.id === id) || null;
 const zoneNextType = z => { const r = regionOf(z); return r.types[(zonePlace(z) + 1) % 7]; };
 // Owner (2026-10-02): zones 1-7 are all Mossy Hollow scenery (its painted night background, 21zb) ahead of the world rebuild.
 const MOSSY_ZONES = 7;
-const zoneTheme = z => z >= 1 && z <= MOSSY_ZONES ? 'forest' : regionOf(z).themes[zonePlace(z)];
+// Scenery follows areas (DECISIONS, 2026-10-07): in the Hollow, a zone shows its own area's painting once that painting is wired into
+// BG_ART (21zb). Until then every zone keeps the rule below. Off, zoneTheme is exactly the old rule.
+let SCENERY_BY_AREA = true;
+const zoneTheme = z => {
+  if (SCENERY_BY_AREA && z >= 1 && regionIdx(z) === 0) { const t = ZONE_THEME[zoneAreaIdx(z)]; if (t && typeof BG_ART === 'object' && BG_ART[t]) return t; }
+  return z >= 1 && z <= MOSSY_ZONES ? 'forest' : regionOf(z).themes[zonePlace(z)];
+};
 const zoneHue = z => { if (!(z >= 1)) return 0; const r = regionOf(z); return (r.hue0 + zoneCycle(z) * r.hueStep) % 360; };
 const zoneUnique = z => regionOf(z).uniq[zonePlace(z)];
 const zoneHome = z => regionOf(z).home[zonePlace(z)];
