@@ -626,6 +626,10 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   pack brings back the lettered tiles (the existing `noIcon` path); gather scenes go back to the code-drawn ones by
   reverting their wiring commit; portraits have the Classic art switch. Saves: unaffected (art only; the Classic art
   switch adds one settings flag with a default).
+- **Claude may draw one art pack (Trial one pack approved 2026-10-07 19:28 via decision card).** Card `claude-art-pilot`:
+  Claude draws one whole pixel-art pack, matching the style of Wren, Tobin and Pip (strict pixel art, 1-pixel dark outline,
+  flat shading clusters, same scale). Opus art judge vets the whole set before it ships behind the Classic art switch; Codex
+  reviews for style mismatch. Pixel packs that pass the judge count as drawn art per the clarification in `CLAUDE.md`. Gate: auto.
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
