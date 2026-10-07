@@ -9877,10 +9877,22 @@ if (section('boss tiers first hour')) try {
   assert(prof(35).cap === 0, 'boss cap: not on a region boss');
   assert(E('turnZoneLine(TURN_TUNE.boss.hitX, 9)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 8)') && E('turnZoneLine(TURN_TUNE.boss.hitX, 12)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 16)'),
     'boss knots: hits fall after zone 8 to follow a first-hour hero\'s health, and rise again by zone 16');
-  // a hero with 1000 HP: no one hit of a zone-10 boss reaches more than 400 before armour
-  prof(10);
-  const mx = JSON.parse(E(`(() => { const p = turnCombatProfile(); let m = 0; for (const mv of p.script) for (const h of mv.hits) { const raw = (h.x || 0.2) * p.refHp * p.bossHitX * (mv.charge ? p.bossChargeX : 1); m = Math.max(m, Math.min(raw, p.bossHitCap * 1000)); } return m; })()`)) ;
-  assert(mx <= 400 + 1e-6, `boss cap: the biggest zone-10 hit stays at 400 of a 1000 HP hero (${mx})`);
+  // a hero with 1000 HP and no armour: the biggest hit turnLand deals from any move of the zone's boss (every hit of every move, a charge's
+  // hits on their own) stays at the cap, so a change to turnLand's order or a new multiplier cannot slip past it
+  const worst = z => { prof(z); return JSON.parse(E(`(() => { const p = turnCombatProfile(); p.heroMaxHp = 1000; p.hitX = 1; p.blockP = 0; p.blockC = 0; let worst = 0;
+    for (const mv of p.script) for (const hit of mv.hits) { let dealt = 0;
+      const io = { random: () => 0.5, emit() {}, alive: () => ({ hero: true, foe: true }), foeHp: () => 1e9, heroHp: () => 1e9, slotId: () => null, damageFoe: d => d, damageHero: d => { dealt += d; return d; }, healHero() {}, healFoe() {}, defense() {} };
+      const m = turnNew(p, io); m.move = mv; turnLand(m, io, hit); worst = Math.max(worst, dealt); }
+    return worst; })()`)); };
+  const w10 = worst(10), w15 = worst(15), w20 = worst(20);
+  assert(w10 <= 400 + 1e-6 && w15 <= 400 + 1e-6, `boss cap: turnLand deals at most 400 of a 1000 HP hero from a zone 10 or 15 boss (${w10}, ${w15})`);
+  assert(w20 <= 750 + 1e-6, `boss cap: turnLand deals at most 750 of a 1000 HP hero from a zone 20 boss (${w20})`);
+  // tiers: every fifth zone a Champion, zone 35 an Elder; only zones 5 and 10 carry a Champion multiplier, and the others do not feel it
+  assert(E('[4, 5, 10, 15, 34, 35, 70].map(bossTierOf).join()') === 'captain,champion,champion,champion,captain,elder,elder', 'boss tiers: Captain, Champion every fifth zone, Elder at the region boss');
+  const hpOf = z => { E(`S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; spawn();`); return E('(() => { const p = turnCombatProfile(); return p.foeMaxHp / turnRefAtk(S.zone); })()'); };
+  assert(E('turnZoneLine(TURN_TUNE.boss.champHpX, 5)') > 1 && E('turnZoneLine(TURN_TUNE.boss.champHitX, 10)') > 1 && E('turnZoneLine(TURN_TUNE.boss.champHpX, 15)') === 1 && E('turnZoneLine(TURN_TUNE.boss.champHpX, 6)') > 0,
+    'boss tiers: the Champion multiplier sits on zones 5 and 10 and is off from zone 11');
+  assert(hpOf(5) > hpOf(4) * 1.5 && hpOf(5) > hpOf(6) * 0.9 && hpOf(10) > hpOf(9) && hpOf(10) > hpOf(11), 'boss tiers: the zone 5 and 10 Champions are the peaks of their areas');
 } catch (e) { fail('boss tiers first hour crashed: ' + (e.stack || e)); }
 
 // ==== counters-and-layers: Essence is one pile (any grade pays any Essence cost, lowest grade first) ====
