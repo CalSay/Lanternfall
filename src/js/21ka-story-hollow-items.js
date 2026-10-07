@@ -6,6 +6,7 @@
 
 Object.assign(STORY_BEATS.item, {
   sproutblade: { area: 0, line: 'From the Briar Regent, in Mossy Hollow. It still puts out shoots.' },
+  briarsprig: { area: 0, line: "Cut from the Briar Regent's throne. Still putting out shoots." },
   echocowl: { area: 1, line: 'From the Hollow Cantor, in the Batwing Caves. It hums the song.' },
   rattlecharm: { area: 2, line: 'From the Ossuary Marshal\'s lance, in the Bonefield. It rattles.' },
   carapacepick: { area: 3, line: 'From the Sepulchre Engine, in the Beetle Barrows. The door held.' },
