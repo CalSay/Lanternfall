@@ -8,6 +8,14 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## The game
 
+- **Claude decided: the guide teaches one thing a fight, in Hesketh's voice (card guide-voice, 2026-10-07; Cal can veto).** Every guide
+  step names the phases it may start in (your turn, a wind-up, the foe's turn, between fights); a step in the wrong phase waits.
+  Camp and menu tips start in a break and then stay up. One paused step a fight; Dodge waits for a later fight than the ability, Parry
+  for a later fight than Dodge (runtime counter, nothing saved). Hero tab and Next Up notes wait a minute after the last guide line.
+  A tip nobody answers for 60 s of play retires: `onboard.done[id]` becomes 2 (it was always 1; every reader treats it as truthy),
+  and the Journal's Tips lists it as "Tips you missed". Opus judge and a Sonnet red team: the turn-fight boss line says "Watch the
+  bar" because only the legacy fight draws red rings; "stretch" and "strings" cut as jargon; the legacy Parry line no longer claims a
+  stagger it cannot show. Save risk read (Opus): safe, no new field. Camp and gather tips stay plain until `unlock-voice`.
 - **Claude decided: hero barks (card hero-voice, 2026-10-06; Cal can veto).** Only the three starters speak, one line each
   at nine moments (first boss, later boss, boss loss, unique, level, ability, first Star, first craft, Hollow Great Lantern);
   no class lines and no lines for the other 31 heroes; at most one bark a fight end, strongest first. Opus judge (red team,
