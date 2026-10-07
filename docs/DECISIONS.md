@@ -200,7 +200,8 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Design the full roster and its moves first;** poses follow the moves, and existing art never limits a monster.
   (2026-10-01)
 - **Zone 1 is the Thorn Imp, zone 2 Gloomjaw;** zones 1 and 2 send only their own monster. Zones 1-7 use the Mossy
-  Hollow scenery. (2026-10-01 to 2026-10-02)
+  Hollow scenery. (2026-10-01 to 2026-10-02) Amended 2026-10-07: zones 6 and 7 move to the Batwing Caves painting once it
+  is wired; until then they keep the Mossy Hollow painting ("Scenery for zones 6 to 10" below).
 - **Region bosses are agents of the darkness** (the Voice's Shrouds). They are never tied to lanterns or lamps.
   (2026-09-28)
 - **Region 5 is its own place** with its own look, not the Deepwell continued. The Deepwell must still tie into the
@@ -699,3 +700,30 @@ The check "big and medium moments in a fresh game's first 10 minutes (at most 8)
 - **The bot is not a person.** It reaches zone 14 in 10 minutes; a person is at zone 5 near minute 18, so cards a person sees apart fold into one on the bot's walk. The check now judges the shape: at most 8 big cards, at most 3 banners in any 3 minutes, at most one big card per zone clear, no Champion card while its cache is still pending, and at most one moment per zone cleared. Each of these fails on real card spam.
 - **Code.** `midRoom` and its entries use game seconds. `momentShow` carries the card's zone. The check seeds drops only while the bot steps and runs the page on the bot's own clock.
 - **If the banner assert ever fails,** that is real spam for a person: tighten the medium list (for example level banners only at 2, 10 and 20), not the cap.
+
+## Scenery for zones 6 to 10 (2026-10-07, Opus high judge; Cal can veto any line)
+
+Card `scenery-z6-10-judge`, from the `slice-art-manifest` open point. Record and options:
+`docs/design/milestone-records/scenery-z6-10-judge.md`; red team: `scenery-z6-10-redteam.md` beside it.
+
+- **Scenery follows the area.** Zones 6 to 10 show the Batwing Caves painting, all five, once it is vetted and wired. In
+  the Hollow, a zone whose area has its own painting shows that painting; the 7-zone cycle no longer decides it. The area
+  title and the scenery change together at zone 6, where the first Star lands. Splitting the area (6-7 forest, 8-10 caves),
+  keeping forest to zone 7, and hard-coding zones 6-10 to `cave` were rejected.
+- **This overrides Cal's 2026-10-02 call for zones 6 and 7** ("Zones 1-7 use the Mossy Hollow scenery", above), from the day
+  the Caves painting is wired. His reason is inferred (the painting was the only approved background); it still holds,
+  because no zone drops from a painting to procedural scenery.
+- **Until an area's painting is wired, its zones keep today's scenery:** zones 6-8 the Mossy Hollow painting, zone 9 the
+  procedural cave, zone 10 the procedural bone. Areas without their own painting keep the cycle, the Coast included; a
+  theme with a painting draws it there, as the Mossy Hollow painting does today at zones 15, 22, 29 and the Coast's 36,
+  43, 50, 57 and 64. So once wired, the Caves painting also replaces the procedural cave at zones 16, 23, 30 and the
+  Coast's cave places (37, 44, ...): the same theme with approved art, outside M1a.
+- **No recolour:** `zoneHue` never tints a painting. **The pack boundary is unchanged:** the Caves painting covers zones 6
+  to 10 and stays in scope after the 2026-10-21 cut.
+- **Code:** card `scenery-follows-areas` (S, Sonnet medium) adds `SCENERY_BY_AREA` (default on; off gives today's rule
+  exactly) and moves the theme checks to a per-zone table. It merges before or with the Caves `integrate:` card; the
+  painting is not wired without it. No save impact.
+- **Prediction:** zones 1-15 showing their area's scenery go from 6 to 10 when the Caves painting is wired, and no zone
+  1-70 changes before then. Measured by the `slice-art-manifest` check (E4, to be built) and a zones 1-70 theme assertion that
+  `scenery-follows-areas` adds. Coverage area 15,
+  Compass pillar 4.
