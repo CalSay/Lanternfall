@@ -167,6 +167,7 @@ const turnSnap = () => X('(() => { const q = turnCombatSnapshot(); return { now:
 // One look at the fight and one press. Returns true when it pressed something.
 async function fight(o) {
   const ph = o.phase;
+  if (ph !== 'parry or dodge window' && ph !== 'foe wind-up') st.defKey = '';   // each try restarts the fight clock, so the same move can carry the same key: roll for every new foe hit
   if (ph === 'player turn') {
     // the timed ring first (press the lit ability again), then an ability that is ready, else Attack
     const live = await page.evaluate(() => !!document.querySelector('#soloBar .sb-abslot.live'));
