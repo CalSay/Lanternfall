@@ -233,8 +233,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## Gear, resources and economy
 
-- **Uniques are weaker on stats and rarer;** their effect is the draw. Uniques are boss drops themed to the boss type.
-  (2026-09-27, 2026-09-28)
+- **Uniques are rarer, boss drops themed to the boss type, and their rule is the draw.** (2026-09-27, 2026-09-28) Replaced
+  2026-10-07 (Cal: uniques must be exciting, powerful and rare): a unique keeps the Rare-level base (1.8x), drops at the
+  zone's tier, and carries one fixed health line at the median Rare roll for its slot, so it is as strong as a crafted Rare
+  (without it a unique starts 4-7 casual points behind at zone 16). Its rule changes how a build plays and has a stated cost.
+  A unique never counts toward a set. Crafted sets add stats; uniques add rules. The health line is a coordinator call and
+  Cal can veto it. Nothing is sold. Design and sizing: `docs/design/uniques.md` (PR 138), reviews in project files
+  `codex-uniques-review/`.
 - **Crafting:** random affix lines by rarity, Reforge one line at the Enchanter's Table, Trophies gate +8 to +10.
   Essence stays fight-only. (2026-09-27)
 - **15 material tiers, 3 per region; resources are gated by region.** (2026-09-28)
@@ -460,8 +465,12 @@ Cal can veto any line. This closes the pr4 "Honest result" gap line.
 - **Set bonuses and uniques** (Cal, 2026-10-07). At zones 4-15 the gates absorb burst: all damage x2 or x3 moves kept-up casual
   at most +15 and the no-defence player stays at 0. Uniques may not skip or shorten a rally, and a boss still faces at most two
   hero actions in a row. Passive cuts to boss damage from a set plus a unique stay at 10% or less against zone bosses. At
-  16-34 there is no floor or gate yet: the grade 4 set lifts Captain rows +7 to +15, so it ships with or after
-  `boss-tiers-pr5b`, which refits those zones with the set worn.
+  16-34 there is no floor or gate yet: kept-up players will wear the set, so it ships with or after
+  `boss-tiers-pr5b`, which refits those zones with the set worn. **The grade 4 set** is the same as wearing +0.10 x TIER_POW[t] Might and
+  +0.15 x TIER_POW[t] health gear lines (about +2% damage and +2% health at grade 4). Measured on the official rows it adds
+  +1 to +4 casual on 7 of 8 cells (z20, z25, z30, z34); the z34 Wren +13 cliff belongs to pr5b. An earlier note read it as
+  +7.5% damage and +11% health and quoted "+7 to +15"; that was a units error (corrected 2026-10-07, uniques judge).
+  Grades 1-3 have no set bonus until pr5b.
 - **Zones 16-34** get tricks in `boss-tiers-pr5b` (M1b; moved here from the pr4 "Honest result" owner line), with the zone 25
   cap fix and the set-worn refit.
 
