@@ -14392,7 +14392,7 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
 // story-unlock-gates (judge): at most one new row per ONBOARD_TUNE.gap seconds of play, the first ready row in table order; a row's
 // now() skips the wait when the player's own act or a drop opened it (raid: the online layer's timing stays as it was). 0: off.
-const ONBOARD_TUNE = { gap: 60 };
+const ONBOARD_TUNE = { gap: 90 };
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Hero', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
   { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'after the first boss (zone 2), or once the hero walks to the grove', when: () => S.maxZone >= 2 || S.activity === 'gather', now: () => S.activity === 'gather' },
