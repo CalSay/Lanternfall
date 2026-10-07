@@ -387,8 +387,8 @@ Cal's card at 07:19, "Harder without gear", is the direction: bosses tougher acr
   than the tolerance, for any hero. The absolute kept-up band stays report-only.
 - **Closest to death is a report column, not a gate.** The share of a good player's wins that dip under half HP reads 0-7% at every
   setting (a good player avoids about 96% of hits under a 40% cap); the 20-35% aim is not reachable without breaking the cap. Move sets set a target.
-- **Gaps.** Removed: z10-boss Pip (in band at 60; if a re-seed puts Pip above 66%, restore it at 0.70), z20-elite, z35-elder and z38-elite Wren.
-  z35-elder Pip limit 0.45 to 0.55 (it read 52-53 with noise; the Fenmother pass owns it).
+- **Gaps.** Removed: z20-elite, z35-elder and z38-elite Wren. z10-boss Pip is kept at 0.70 (the 5-seed baseline reads 68). The re-baseline ratchet
+  tightened z35-elder Pip to 0.53 (it read 52-53; the Fenmother pass owns it), z5-boss Pip to 0.98 and z38-boss-behind Pip to 0.80.
 - **Tools.** The wide run adds a `bot` player (the walk bot's parry 55%, dodge 50%) and a good-player close-to-death column; `hpr` per row.
 
 ### The Lantern Rules

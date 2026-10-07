@@ -639,6 +639,16 @@
       "owner": "tobin-safety-margin",
       "until": "2026-12-01",
       "why": "Tobin wins far more than Wren and Pip here"
+    },
+    {
+      "row": "z10-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.7,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
     }
   ]
 }
