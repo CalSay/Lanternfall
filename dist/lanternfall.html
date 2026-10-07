@@ -8497,7 +8497,13 @@ const ECON = {
   share: [0.10, 0.11, 0.12, 0.13, 0.14], sharePerLv: 0.03,   // share of the Lanternbearer's rate by rarity (N3a reads it)
   // ---- crafting and gear (3.4): k foes of the grade's first zone ----
   gradeZ: [1, 7, 13, 36, 42, 56, 71, 82, 94, 106, 117, 129, 141, 152, 164],   // gear-2 1.4 GRADE_Z
-  upFoes: 20,                    // upgrade: 20 x foeGold(gradeZ) x (plus + 1)
+  // gold-without-training (PROVISIONAL, 2026-10-07: the skilling and crafting overhaul spec, due 16 Oct, sets the real
+  // numbers; the mechanism stays): gold is the upgrade's main cost and each step costs upGrow times the last, so +1 to +4 are
+  // quick buys and +8 to +10 (a Trophy each) are goals. Steps at grade 1: 100, 150, 230, 340, 510, 760, 1.1K, 1.7K,
+  // 2.6K, 3.8K (11K to +10; was 100 x (plus + 1), 5.5K). Materials shrink to the item's main material (upMat x its
+  // recipe count x (plus + 1)), so gold, not essence or hide, is what an upgrade waits on. Salvage pays back upRefund
+  // of the gold an item's upgrades cost (55-crafting craftUpgradeRefund), so a +7 you outgrow is never wasted.
+  upFoes: 20, upGrow: 1.5, upMat: 0.25, upRefund: 0.5,   // upgrade +plus -> +plus+1: 20 x foeGold(gradeZ) x 1.5^plus
   reforgeFoes: 15, reforgeGrow: 1.5,   // reforge: 15 x foeGold(gradeZ) x 1.5^n
   // ---- trade (3.5, TR1 reads it): a unit's price = foeGold(grade's first zone) x famW ----
   famW: { gathered: 0.06, gem: 0.075, herb: 0.075, hide: 0.09, ess: 0.18, secondary: 0.03, refined: 0.15 },
@@ -9297,6 +9303,7 @@ const NOTICES = [
   // things the player just did, and sees happen
   { id: 'did', ch: 'none', why: 'the player just did it and sees the result',
     re: /^(Equipped |Salvaged |.* upgraded\.$|Reforged: |Transmuted |.* took the |Brewed a |.*: .* for 20 minutes\.$|You took the Dare|You dropped the Dare|Weekly goal claimed|The trader sells you|.* set out: |.* rises to rank |.*: bought\.$|Every star is dark again|.* is lit\.$|.* now carries |.* carries the .* mark\.$|You walk on as a |Your hero is now known as |You walk the path of the |The Mirror of Embers shows you)/ },
+  { id: 'upgrade-mark', key: 'upgrade:mark', ch: 'pop', reply: true, held: 'log', why: 'gold-without-training: an item reached +7 (Trophies from here) or +10 (the top); the player just pressed Upgrade' },
   { id: 'build', re: /^(Work starts on the |.* Lv .* is next in line\.$)/, ch: 'none', why: 'the camp shows the timer' },
 
   // ---- the camp, gathering and Hands ----
@@ -10981,10 +10988,13 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   kindColor = (slot, t, u) => u ? UNIQ[u].col : MAT[(CRAFT_KINDS[slot] || { pre: 'ore' }).pre].col[t - 1];
   kindCost = (kind, t) => craftRecipe(kind, t);
   kindUpgradeCost = it => {
-    const m = {};
-    for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) m[k] = Math.ceil(n * 0.6 * (it.plus + 1));
+    // gold-without-training (provisional numbers, see ECON.upMat): only the recipe's main material (its biggest count, never essence or the slow Hide when it has
+    // another), ECON.upMat x n x (plus + 1); was every recipe material at 0.6 x n x (plus + 1). Uniques still take essence.
+    const rec = Object.entries(CRAFT_KINDS[it.slot].rec).sort((a, b) => b[1] - a[1]);
+    const m = {}, main = rec.find(([k]) => k !== 'ess' && k !== 'hide') || rec.find(([k]) => k !== 'ess');
+    if (main) m[main[0]] = Math.ceil(main[1] * ECON.upMat * (it.plus + 1));
     if (it.u) m.ess = (m.ess || 0) + 2 * (it.plus + 1);
-    const c = { mats: m, gold: econUpgradeGold(it.t, it.plus) };   // ECON-A: 20 foes of the grade's first zone x (plus + 1); was 40 x 5^t x (plus + 1)
+    const c = { mats: m, gold: econUpgradeGold(it.t, it.plus) };   // 20 foes of the grade's first zone x 1.5^plus (21w ECON.upGrow)
     // +8, +9 and +10 each need a Trophy of any type (owner decision); K6 enforces it.
     const tr = craftUpgradeTrophies(it.plus); if (tr) c.troph = tr;
     return c;
@@ -11400,9 +11410,10 @@ function equipItem(id, pos) {
 }
 function salvageItem(id) {
   const it = itemById(id); if (!it || isEquipped(id)) return false;
+  const g = craftUpgradeRefund(it);   // gold-without-training: half the gold its upgrades cost comes back (55-crafting)
   salvageGive(it);
   S.items = S.items.filter(i => i.id !== id);
-  toast(`Salvaged ${itemName(it)} for materials.`, 'good', null, 'low'); save();
+  toast(`Salvaged ${itemName(it)} for materials${g ? ` and ${fmt(g)} gold` : ''}.`, 'good', null, 'low'); save();
   return true;
 }
 // C23: batch salvage rechecks protection at commit time. Duplicate input IDs pay only once;
@@ -11414,10 +11425,11 @@ function salvageItems(ids) {
   const batch = [];
   for (const it of S.items) if (requested.has(it.id) && counts.get(it.id) === 1 && !it.u && !worn.has(it.id)) batch.push(it);
   if (!batch.length) return 0;
+  const g = batch.reduce((a, it) => a + craftUpgradeRefund(it), 0);
   for (const it of batch) salvageGive(it);
   const removed = new Set(batch.map(it => it.id));
   S.items = S.items.filter(it => !removed.has(it.id));
-  toast(`Salvaged ${batch.length} items for materials.`, 'good', null, 'low'); save();
+  toast(`Salvaged ${batch.length} items for materials${g ? ` and ${fmt(g)} gold` : ''}.`, 'good', null, 'low'); save();
   return batch.length;
 }
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.
@@ -12869,13 +12881,16 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //   craftXpFor(skill, n) -> n with the catch-up multiplier applied (x2 while behind)
 //   upgradeItem(id, trophIdx?) -> bool           +1 (max +10); +8..+10 each pay 1 Trophy
 //   canUpgrade(id) -> { ok, why, cost }          (the most plentiful Trophy unless trophIdx)
+//   craftUpgradeRefund(it) -> gold               what salvaging it pays back: ECON.upRefund of the gold its +N cost
+//                                                at today's prices (gold-without-training; no save field)
 //   reforgeItem(id, lineIdx) -> bool             reroll one affix line (Enchanting gate)
 //   canReforge(id, lineIdx) -> { ok, why, cost } cost includes the Almanac's 'reforge' modifier
 //   transmute(fam, fromT, to, toT?) -> bool      within one family: `to` is the target tier (number),
 //                                                'up' / 'down', or the family name (then toT, default up)
 //   canTransmute(fam, fromT, to, toT?) -> { ok, why, take, give, toT }
 //   salvageItem(id) (51-actions) is generic; salvageGive calls craftSalvageBonus(it): affixed items
-//                                                have a 20% chance per line of 1 essence of their tier
+//                                                have a 20% chance per line of 1 essence of their tier, and an
+//                                                upgraded item pays back craftUpgradeRefund(it) gold (ledger 'craft', negative)
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
 //   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
 //                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
@@ -12900,7 +12915,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus;
+  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund;
 
 {
   registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {} });
@@ -13013,7 +13028,11 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     gearDirty();
     gainStation(stationOf(it.slot).skill, CRAFT_XP.upgrade(it.t));
     toast(`${itemName(it)} upgraded.`, 'good', { item: it }, 'low');
-    emit('upgraded', { item: it });
+    // gold-without-training: the two steps worth a word. +7 is the last gold-only step; +10 is the top.
+    const nm = kindName(it.slot, it.t, it.u);
+    if (it.plus === CRAFT_TROPHY_GATE.from - 1) emit('toast', { key: 'upgrade:mark', msg: `${nm} is now +${it.plus}. The next three upgrades each need a Trophy from a champion.`, kind: 'good', prio: 'normal', icon: { item: it } });
+    else if (it.plus === CRAFT_TROPHY_GATE.max) emit('toast', { key: 'upgrade:mark', msg: `${nm} is now +${it.plus}, fully upgraded.`, kind: 'good', prio: 'normal', icon: { item: it } });
+    emit('upgraded', { item: it, gold: c.cost.gold });
     save();
     return true;
   };
@@ -13089,9 +13108,16 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   };
 
   // ---- salvage: a chance of an essence for affixed items (51-actions salvageGive calls this) ----
+  craftUpgradeRefund = it => {
+    if (!it || !CRAFT_KINDS[it.slot]) return 0;
+    let g = 0; for (let p = 0; p < Math.min(CRAFT_TROPHY_GATE.max, it.plus | 0); p++) g += econUpgradeGold(it.t, p);
+    return Math.floor(g * ECON.upRefund);
+  };
   craftSalvageBonus = it => {
     const n = Array.isArray(it.a) ? it.a.length : 0;
     if (n && Math.random() < Math.min(1, SALVAGE_ESS * n)) stashAdd('ess', it.t, 1, 'preview');
+    const g = craftUpgradeRefund(it);
+    if (g > 0) { S.gold += g; econSpend('craft', -g); }
   };
 
   // ---- class change: retool to the new class's kinds; anything that still does not fit goes back to the bag ----
@@ -13211,7 +13237,7 @@ let goldPerFoe, econRegionReached, econHearthGold, econRowGold, econShrineGold, 
     const gi = Math.max(1, Math.floor(g) || 1) - 1, r = Math.min(ECON.base.length - 1, Math.floor(gi / ECON.gradesPer)), pos = gi % ECON.gradesPer;
     return econSig(ECON.feeFoes[r] * ECON.base[r] * ECON.feeStep[pos] * (1 + ECON.feeLv * (Math.max(1, lv) - 1)));
   };
-  econUpgradeGold = (t, plus) => econSig(ECON.upFoes * foeGoldBase(econGradeZ(t)) * ((plus || 0) + 1));
+  econUpgradeGold = (t, plus) => econSig(ECON.upFoes * foeGoldBase(econGradeZ(t)) * Math.pow(ECON.upGrow, plus || 0));
   econReforgeGold = (t, n) => econSig(ECON.reforgeFoes * foeGoldBase(econGradeZ(t)) * Math.pow(ECON.reforgeGrow, n || 0));
 
   // ---------------- crit damage (the pool) ----------------
@@ -38475,6 +38501,8 @@ let craftUI = null;
       }
       bag.bulk.append(chips);
     }
+    const gold = q.list.reduce((a, it) => a + craftUpgradeRefund(it), 0);
+    if (gold) bag.bulk.append(el('p', 'note', `Their upgrades pay back ${fmt(gold)} gold.`));
     if (Object.keys(q.possible).length) bag.bulk.append(el('p', 'note', 'Affixed items may also return extra essence.'));
     if (q.full) bag.bulk.append(el('p', 'note warn', 'Your Storehouse is full for some of this. The rest is lost.'));
     const controls = el('div', 'cf-bulk-actions');
@@ -38687,7 +38715,9 @@ let craftUI = null;
       upBox.append(b);
       if (!f && !heroPos) upBox.append(el('p', 'note', 'Equip it to upgrade it.'));
       else if (c.troph && !f) upBox.append(el('p', 'note', 'Trophy upgrades open with the next crafting update.'));
+      else if (c.troph) upBox.append(el('p', 'note', 'From +8, each upgrade also takes a Trophy. Champions drop them.'));   // gold-without-training
     }
+    if (it.plus > 0) upBox.append(el('p', 'note', `Salvage it to get back ${fmt(craftUpgradeRefund(it))} gold, half what its upgrades cost.`));   // gold-without-training
     body.append(secBox('Upgrade', upBox));
 
     // ---- reforge ----
@@ -38697,9 +38727,10 @@ let craftUI = null;
     const sv = el('div', 'cf-sv');
     if (wr) sv.append(el('p', 'note', 'You wear this. Equip something else before you salvage it.'));
     else if (sheet.arm === 'salvage') {
-      const chips = el('div', 'costs'); costChips(chips, salvagePreview(it), it.t);
-      chips.querySelectorAll('.cost').forEach(c => { c.classList.remove('short'); const s = c.querySelector('span'); s.textContent = s.textContent.replace(/^[^/]*\//, '+'); });
+      const chips = el('div', 'costs'); costChips(chips, salvagePreview(it), it.t, craftUpgradeRefund(it));   // gold: half its upgrades' gold
+      chips.querySelectorAll('.cost').forEach(c => { c.classList.remove('short'); const s = c.querySelector('span'); s.textContent = '+' + s.textContent.replace(/^[^/]*\//, ''); });
       sv.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good. You get back about:`), chips);
+      if (it.plus >= CRAFT_TROPHY_GATE.from) sv.append(el('p', 'note warn', 'The Trophies its upgrades took do not come back.'));
       const room = storeSalvageNote(salvagePreview(it), it.t); if (room) sv.append(el('p', 'note warn', room));   // H3: the Storehouse cap
       const r = el('div', 'cf-wear');
       const yes = el('button', 'big cf-act', 'Salvage it'); yes.type = 'button';
@@ -43034,6 +43065,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
   const n = k => (D ? +D.n[k] || 0 : null);
   const since = k => (D && D.since[k]) || 0;
   const late = () => (ST().late && ST().since ? ST().since : 0);
+  const spentOn = (...ks) => { const sp = S.econ && S.econ.spent; return sp ? Math.round(ks.reduce((a, k) => a + (+sp[k] || 0), 0)) : null; };
   const fineTxt = () => { const r = D ? D.rec.fine : 0; const st = (DEED_TRACKS.find(t => t.id === 'fine') || {}).steps || []; return r ? st[r - 1] : 'None yet'; };
   // Hours fielded together, and the top pair (F2's Bond time per pair), when F2 is in.
   const topPair = () => {
@@ -43074,6 +43106,10 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     ]],
     ['Loot', [
       ['Gold earned', () => S.totalGold],
+      // gold-without-training: where the gold went (the 55-econ ledger; upgrades and crafts are the Forge)
+      ['Gold spent at the Forge', () => spentOn('craft')],
+      ['Gold spent on Hands', () => spentOn('hire', 'shift')],
+      ['Gold spent on the camp', () => spentOn('camp', 'tent')],
       ['Essence gained', () => n('ess'), { since: () => since('ess') }],
       ['Trophies earned', () => n('troph'), { since: () => since('troph') }],
       ['Uniques found', () => ST().uniques, { sub: () => `${statsApi.uniqueKinds()} of ${statsApi.uniqueTotal()} kinds` }]

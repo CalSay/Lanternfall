@@ -42,9 +42,10 @@ function equipItem(id, pos) {
 }
 function salvageItem(id) {
   const it = itemById(id); if (!it || isEquipped(id)) return false;
+  const g = craftUpgradeRefund(it);   // gold-without-training: half the gold its upgrades cost comes back (55-crafting)
   salvageGive(it);
   S.items = S.items.filter(i => i.id !== id);
-  toast(`Salvaged ${itemName(it)} for materials.`, 'good', null, 'low'); save();
+  toast(`Salvaged ${itemName(it)} for materials${g ? ` and ${fmt(g)} gold` : ''}.`, 'good', null, 'low'); save();
   return true;
 }
 // C23: batch salvage rechecks protection at commit time. Duplicate input IDs pay only once;
@@ -56,10 +57,11 @@ function salvageItems(ids) {
   const batch = [];
   for (const it of S.items) if (requested.has(it.id) && counts.get(it.id) === 1 && !it.u && !worn.has(it.id)) batch.push(it);
   if (!batch.length) return 0;
+  const g = batch.reduce((a, it) => a + craftUpgradeRefund(it), 0);
   for (const it of batch) salvageGive(it);
   const removed = new Set(batch.map(it => it.id));
   S.items = S.items.filter(it => !removed.has(it.id));
-  toast(`Salvaged ${batch.length} items for materials.`, 'good', null, 'low'); save();
+  toast(`Salvaged ${batch.length} items for materials${g ? ` and ${fmt(g)} gold` : ''}.`, 'good', null, 'low'); save();
   return batch.length;
 }
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.

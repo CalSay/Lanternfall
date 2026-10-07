@@ -1,0 +1,47 @@
+# Proof for card gold-without-training. The mid save (Tobin, zone 20, 34K gold) with 200 Silver Ore added and a spare
+# Iron Greathelm +4 in the bag (tests/proof-fixtures/save-gold-upgrades.json), at 360x740 and 740x360:
+#   upgrade-sheet-*.png  the Silver Warblade +6 sheet: +7 costs 1.8K gold and 11 Silver Ore (gold is the main cost; no
+#                        essence or Hide), and "Salvage it to get back 1.66K gold, half what its upgrades cost." (portrait).
+#   upgrade-plus7-*.png  after Upgrade to +7: gold 34.1K -> 32.3K, and the next step says "From +8, each upgrade also
+#                        takes a Trophy. Champions drop them." with its Trophy chip (3/1 Trophy (any)). The game also
+#                        raises "Silver Warblade is now +7. The next three upgrades each need a Trophy from a champion."
+#                        (the bell holds it while the sheet covers the toast).
+#   salvage-refund-*.png the spare Iron Greathelm +4's salvage preview; its sheet says "Salvage it to get back 530 gold".
+#   salvage-done-*.png   after Salvage it: gold 32.3K -> 32.8K (the 530 gold back; materials pay no gold).
+# Prices are provisional: the crafting overhaul spec sets the real numbers. The rules are held by tools/check.mjs
+# ("each upgrade step costs more gold", "only the main material", "salvaging a +4 ... pays back half").
+# seed: 1
+new gold-upgrades
+wait 1
+tap-if "Close"
+wait 2
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 1
+tap "Craft"
+wait 1
+tap "Gear"
+wait 1
+tap "Weapon: Silver Warblade +6"
+wait 1
+shot upgrade-sheet
+tap "Upgrade to +7"
+wait 0.5
+expect "Silver Warblade +7"
+expect "half what its upgrades cost"
+expect "From +8, each upgrade also takes a Trophy. Champions drop them."
+expect "Upgrade to +8"
+shot upgrade-plus7
+tap "Close"
+wait 1
+tap "Iron Greathelm +4"
+wait 1
+tap "Salvage"
+wait 0.5
+expect "You get back about"
+shot salvage-refund
+tap "Salvage it"
+wait 1
+expect "32.8K"
+shot salvage-done

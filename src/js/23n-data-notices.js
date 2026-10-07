@@ -71,6 +71,7 @@ const NOTICES = [
   // things the player just did, and sees happen
   { id: 'did', ch: 'none', why: 'the player just did it and sees the result',
     re: /^(Equipped |Salvaged |.* upgraded\.$|Reforged: |Transmuted |.* took the |Brewed a |.*: .* for 20 minutes\.$|You took the Dare|You dropped the Dare|Weekly goal claimed|The trader sells you|.* set out: |.* rises to rank |.*: bought\.$|Every star is dark again|.* is lit\.$|.* now carries |.* carries the .* mark\.$|You walk on as a |Your hero is now known as |You walk the path of the |The Mirror of Embers shows you)/ },
+  { id: 'upgrade-mark', key: 'upgrade:mark', ch: 'pop', reply: true, held: 'log', why: 'gold-without-training: an item reached +7 (Trophies from here) or +10 (the top); the player just pressed Upgrade' },
   { id: 'build', re: /^(Work starts on the |.* Lv .* is next in line\.$)/, ch: 'none', why: 'the camp shows the timer' },
 
   // ---- the camp, gathering and Hands ----
