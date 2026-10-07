@@ -9,7 +9,10 @@ on('cacheOpen', v => {
   const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1;
   const lines = [];
   if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
-  if (v.unique) lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
+  if (v.unique) {
+    lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
+    const wn = typeof momentWearNote === 'function' ? momentWearNote(v.unique.item) : null; if (wn) lines.push(wn);   // Cal's play note 9: say where a unique you cannot wear went
+  }
   if (v.star) lines.push({ txt: `Star: ${v.star.name}` });
   if (v.trophy) lines.push({ txt: `${v.trophy.n} ${v.trophy.name}` });
   const pay = [];
@@ -25,7 +28,9 @@ on('cacheOpen', v => {
   // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
   const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
-  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions = [{ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) }];
+  o.actions = [];
+  if (v.unique && typeof momentEquipAction === 'function') { const eq = momentEquipAction(v.unique.item); if (eq) o.actions.push(eq); }   // Cal's play note 9: the unique is one tap from being worn
+  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });
   const barks = v.zone === 1 ? ['boss1'] : [];
   const ci = MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone);   // champion-moment: a Champion's first clear queued its own card (75-moments-ui)
   if (big || ci >= 0) {

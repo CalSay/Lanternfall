@@ -2342,6 +2342,9 @@ if (section('cold hearth')) try {
     assert(order.includes('bench') && order.includes('tool') && order.includes('forge'), 'guide: bench, tool and forge steps done');
     errs.push(...p.errors);
   }
+  // cal-0107-flow-bugs (note 15): 30 of the packs' 5,000 is not near full; the Storehouse tip may only say so when a pile is at 80%
+  E('for (const f of Object.keys(S.mats)) S.mats[f] = S.mats[f].map(() => 30)');
+  assert(E('hearthNearFull() === false') && E('S.mats.wood[0] = storeCap("wood", 1) * 0.8; hearthNearFull() === true'), 'the Storehouse tip says the packs are near full only when a pile is at 80% of what they hold');
   assert(!errs.length, 'no cold hearth errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('cold hearth crashed: ' + (e.stack || e)); }
 // ---- skill pace (GP1): slower levels, wider tier gates; no save loses a tier, recipe or item ----
@@ -4477,7 +4480,7 @@ if (section('solo hero')) try {
   {
     const g = T(), E = s => g.eval(s);
     const ids = E('GUIDE_STEPS.map(x => x.id).join()');
-    assert(/^attack,ability,dodge,parry,boss,upgrade,gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
+    assert(/^attack,ability,dodge,parry,boss,upgrade,(back,)?(wear:weapon,)?gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
     assert(E('GUIDE_STEPS.every(x => x.pause || x.needs || x.id === "tab:party" || x.id === "nextup")'), 'every step pauses the game while it shows, except the ones that wait for materials (live progress) and two notes (W1-A: see "solo guide pause rules")');
     E('soloPick("wren")'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');   // SOLO2: a hand Attack and Echo Shot would clear the pack before the heavy steps
@@ -4701,7 +4704,10 @@ if (section('solo guide pause rules')) try {
   E('soloPick("tobin"); S.camp.b.forge = 1; onboardReveal("craft"); onboardDone("forge")');
   assert(E('!!weaponKind() && weaponMats().length > 0 && !weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").when() && !GUIDE_STEPS.find(s => s.id === "weapon").done()'), 'the weapon step shows once the Forge is built and no weapon is made');
   E('addItem(newItem(weaponKind(), 1, 0))');
-  assert(E('weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").done() && GUIDE_STEPS.find(s => s.id === "stock:weapon").done()'), 'making a weapon ends the weapon steps');
+  // cal-0107-flow-bugs (note 13): a weapon in the bag is not "made" until it is worn; the guide says to put it on instead of making another
+  assert(E('!weaponMade() && !GUIDE_STEPS.find(s => s.id === "weapon").when() && !!wearPiece("weapon") && GUIDE_STEPS.find(s => s.id === "wear:weapon").when()'), 'a weapon waiting in the bag is put on, not made again');
+  E('equipItem(S.items[S.items.length - 1].id)');
+  assert(E('weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").done() && GUIDE_STEPS.find(s => s.id === "stock:weapon").done() && GUIDE_STEPS.find(s => s.id === "wear:weapon").done()'), 'wearing a weapon ends the weapon steps');
   // no player-facing copy calls the first wood Oak
   const srcs = ['75-onboard-ui', '75-camp-ui', '56-roster', '63d-scenery-camp', '55-onboard'];
   const oak = srcs.filter(f => fs.readFileSync(path.join(ROOT, 'src', 'js', f + '.js'), 'utf8').split('\n').some(l => /\bOak\b/.test(l) && !/^\s*\/\//.test(l)));
@@ -8435,6 +8441,12 @@ if (section('C29 turn fights (core)')) try {
       const s = { gH: 0, gF: 0, last: '', run: 0, hold: false }, out = []; for (let i = 0; i < 6; i++) out.push(turnAdvance(m, s)[0]); return out.join(''); })()`);
     const eq = order([10, 10]), fast = order([20, 10]), slow = order([10, 30]);
     assert(eq === 'hfhfhf' && fast === 'hhfhhf' && slow === 'ffhffh', `C29: Speed sets turn frequency, ties go to the hero, two turns in a row at most (equal ${eq}, hero x2 ${fast}, foe x3 ${slow})`); }
+  // cal-0107-flow-bugs (note 20): an ability equipped in the middle of a fight can be pressed at once (it showed ready and did nothing until the next foe)
+  { const { g, E } = fresh('tobin', 8);
+    E('S.zone = 1; spawn()');
+    for (let i = 0; i < 400 && E('turnCombatSnapshot().phase') !== 'hero'; i++) g.fn.tick(0.05);
+    E('for (const k of Object.keys(SCROLLS)) S.abil.scrolls[k] = 5; S.L = 40; abilityLearn("tobin", "heavystrike"); soloEquip(1, "heavystrike")');
+    assert(E('turnCombatAction("ability", 1)') === true && !g.errors.length, `C29: an ability equipped mid-fight (Heavy Strike in slot 2) works in that fight (${E('turnCombatSnapshot().phase')}, errors ${g.errors.length})`); }
   // parries refund every cooldown per hit, a full parry counters, a dodge only avoids
   { const run = defs => { const { g, E } = fresh('wren', 7);
       E('S.zone = 1; spawn(); combatFoes()[0].hp = combatFoes()[0].max = 1e12; globalThis.__c = 0; globalThis.__r = []; on("soloCounter", () => __c++); on("foeContact", x => __r.push(x.res))');
@@ -10102,6 +10114,10 @@ if (section('craft reveal')) try {
         assert(made[made.length - 1].strip === Math.min(5, made.length), `${at}: the strip keeps the last five results (${made[made.length - 1].strip})`);
         assert(await X(`document.querySelectorAll('.cf-recent').length === 1 && !/Craft 5/.test(document.body.textContent)`), `${at}: one strip, no Craft 5 button`);
         assert(await X(`(() => { const r = document.querySelector('.cf-resbox').getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()`) , `${at}: the new card is on screen after a craft`);
+        // cal-0107-flow-bugs (note 17): Equip wears the piece and closes its card; Keep and Salvage are for a piece that is not worn
+        { const eq = await page.$('.cf-res .cf-resact button:text-is("Equip")');
+          if (eq) { const id = await X(`document.querySelector('.cf-res').dataset.itemId`); await eq.click(); await page.waitForTimeout(250);
+            assert(await X(`!document.querySelector('.cf-res') && Object.values(S.equip).includes(${JSON.stringify(+id)})`), `${at}: Equip wears the piece and closes its card`); } }
         await page.click('button:text-is("Gear")'); await page.waitForTimeout(400);
         assert(await X(`(() => { const b = document.querySelector('.cf-bag .cf-tile .cf-gr'); return !!b && /^(Com|Unc|Rare|Epic|Uniq)$/.test(b.textContent); })()`), `${at}: a bag tile names its grade in text`);
         assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
@@ -10417,6 +10433,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             } else if (!c.ok) await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
             else if (['attack', 'ability', 'dodge', 'parry'].includes(st)) await tapAt(page, c.px, c.py);
             else if (st === 'boss') await page.click('.ob-ok');
+            else if (st.startsWith('wear:') || st === 'back') await page.click('.ob-ok');   // cal-0107-flow-bugs: these steps carry their own button (Equip <piece>, Back to the fight)
             else await page.mouse.click(c.px, c.py);
             await page.waitForTimeout(160);
             if (!(await X('ONBOARD.paused'))) await X('for (let k = 0; k < 10; k++) tick(0.1); true');
