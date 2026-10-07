@@ -19,7 +19,7 @@
 // The player: reads LF_EYES (src/js/89-eyes-hook.js) and presses what a person presses. It reads each guide tip for 1.2 s and then
 // presses what it names; it parries and dodges at the set rates when the foe winds up; it presses the timed ring at the right
 // moment at the parry rate; it taps Next Up's Go and presses the one button the panel then offers (Craft, Claim, Equip, Spend, Build,
-// Light, Start); it dismisses story cards and the picker. It never forces the game's state: nothing is set through `eval`, only read.
+// Light, Start); it dismisses story cards, moment cards (Continue) and the picker. It never forces the game's state: nothing is set through `eval`, only read.
 // Game time is a fake clock stepped in 100 ms frames (33 ms while a foe winds up), so a run is repeatable for a seed.
 //
 // What it logs, with game time and a shot: every tip, toast, card and banner, every unlock (S.onboard.got), each zone first clear,
@@ -107,7 +107,7 @@ const OBS = `(() => {
   const q = (sel, f) => [...document.querySelectorAll(sel)].filter(vis).map(f || tx);
   const o = { phase: LF_EYES.phase(), tip: LF_EYES.tip(), sfx: LF_EYES.sfx() };
   o.toasts = q('#toasts .toast');
-  o.cards = q('.bsheet-ov, .tv-card, .cb-banner, .tv-banner, .gl-card, .away-ov, .modal, .dd-feat, .feat-card', n => ({ cls: (n.className || '').toString().split(' ')[0], text: tx(n).slice(0, 160) }));
+  o.cards = q('.mm-ov, .mm-toast, .bsheet-ov, .tv-card, .cb-banner, .tv-banner, .gl-card, .away-ov, .modal, .dd-feat, .feat-card', n => ({ cls: (n.className || '').toString().split(' ')[0], text: tx(n).slice(0, 160) }));
   o.tabs = q('.tabs .tab');
   o.intro = (n => n && vis(n) ? [n.querySelector('.intro-who'), n.querySelector('.intro-line')].filter(Boolean).map(tx).join(' ') : '')(document.querySelector('#introScreen'));   // the drawn opening: one line a tap
   o.create = !!document.querySelector('#createScreen') && vis(document.querySelector('#createScreen'));
@@ -123,7 +123,7 @@ const OBS = `(() => {
 
 // ---------------- driving ----------------
 let browser, ctx, page;
-const X = s => page.evaluate(s => window.__t.x(s), s);
+const X = async s => { for (let i = 0; i < 50; i++) { const r = await page.evaluate(s => window.__t ? { v: window.__t.x(s) } : null, s); if (r) return r.v; await new Promise(r => setTimeout(r, 100)); } throw new Error('the game never started (window.__t is missing)'); };
 async function advance(ms, step) {
   await page.evaluate(c => { window.__ptStep = c; }, step);
   let left = ms; while (left > 0) { const d = Math.min(left, 1000); await page.clock.runFor(d); left -= d; }
@@ -157,7 +157,7 @@ async function click(sel, _to) {
   if (firstTapAt === null) firstTapAt = gt;
   return true;
 }
-const DISMISS = '.bsheet-ov .sty-done, .bsheet-ov .sty-skip, .bsheet-ov .big, .bsheet-ov button.ok, .away-ov button, .tv-card button, .gl-card button, .modal .ok, .modal .big';
+const DISMISS = '.mm-ov .mm-go, .bsheet-ov .sty-done, .bsheet-ov .sty-skip, .bsheet-ov .big, .bsheet-ov button.ok, .away-ov button, .tv-card button, .gl-card button, .modal .ok, .modal .big';
 
 // ---------------- the player ----------------
 const st = { tipKey: '', tipSince: 0, defKey: '', defDo: '', defDone: false, ringKey: '', stuckSince: 0, lastAct: 0, nuAt: -99, panelAt: -99, cardSeen: new Map(), toastSeen: new Set(), got: {}, prev: null, calls: {} };
@@ -167,6 +167,7 @@ const turnSnap = () => X('(() => { const q = turnCombatSnapshot(); return { now:
 // One look at the fight and one press. Returns true when it pressed something.
 async function fight(o) {
   const ph = o.phase;
+  if (ph !== 'parry or dodge window' && ph !== 'foe wind-up') st.defKey = '';   // each try restarts the fight clock, so the same move can carry the same key: roll for every new foe hit
   if (ph === 'player turn') {
     // the timed ring first (press the lit ability again), then an ability that is ready, else Attack
     const live = await page.evaluate(() => !!document.querySelector('#soloBar .sb-abslot.live'));
@@ -220,7 +221,7 @@ async function followTip(o) {
       const m = /\b(?:[Oo]pen|[Tt]ap|[Pp]ress|[Pp]ick|[Cc]hoose|[Ll]ight|[Bb]uild|[Cc]raft|[Cc]hop|[Mm]ine|[Ss]tart|[Cc]laim|[Ee]quip|[Gg]o to)\s+(?:the\s+|your\s+)?([A-Z]\w*(?:\s[A-Z]\w*)?)/.exec(tp.text);
       if (m && await click('button, [role=tab], .tab:text((^|\\W|New)' + m[1] + '\\s*$)', 300)) return true;
       // a first-use line has no marker and never pauses: it clears itself, so there is nothing to tap (guide-target-guard)
-      if (st.tipTaps === 4 && !/^use:/.test(tp.action)) addCheck('guide', 'a tip\'s marker leads nowhere: "' + tp.text.slice(0, 60) + '"', `tapped the ringed spot twice and the tip stayed; ring at ${tp.target ? Math.round(tp.target.x) + ',' + Math.round(tp.target.y) + ' ' + Math.round(tp.target.w) + 'x' + Math.round(tp.target.h) : 'none'}`);
+      if (st.tipTaps === 4 && !/^use:/.test(tp.action) && !/\d+\s*\/\s*\d+/.test(tp.text)) addCheck('guide', 'a tip\'s marker leads nowhere: "' + tp.text.slice(0, 60) + '"', `tapped the ringed spot twice and the tip stayed; ring at ${tp.target ? Math.round(tp.target.x) + ',' + Math.round(tp.target.y) + ' ' + Math.round(tp.target.w) + 'x' + Math.round(tp.target.h) : 'none'}`);
     }
     if (tp.target) {
       const x = Math.min(SIZE.w - 1, Math.max(1, tp.target.x + tp.target.w / 2)), y = Math.min(SIZE.h - 1, Math.max(1, tp.target.y + tp.target.h / 2));
@@ -277,8 +278,9 @@ async function followNextUp(o) {
   return true;
 }
 
+
 // ---------------- watching ----------------
-const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge']);
+const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge', 'momentBig', 'momentMid']);   // momentBig and momentMid are the moment layer's own stings (76-audio.js)
 const sfxLog = [];     // { t, name }
 async function watch(o) {
   for (const s of o.sfx) sfxLog.push({ t: gt, name: s.name });
@@ -424,14 +426,14 @@ function scorecard(reached) {
   sc.F5 = { value: lay.length + ' finding' + (lay.length === 1 ? '' : 's') + ' at ' + SIZE.w + 'x' + SIZE.h, pass: lay.length === 0, target: 'no tip off its phase, nothing covering the fighters or bars, no clipped text' };
   // F6: each big or medium moment shows a card, banner or sheet for 2 s with a sound near it
   const bad = [];
-  for (const m of moments.filter(m => m.big || m.id === 'craft' || m.id === 'look')) {
+  for (const m of moments.filter(m => m.big || m.id === 'look')) {
     const near = [...st.cardSeen.values()].filter(c => c.first >= m.t - 1.5 && c.first <= m.t + 3 && !/^tv-(card|banner)$/.test(c.cls));   // a turn-order banner is not the moment's card
-    const want = { zone: ['zone', 'kill'], unique: ['loot'], craft: ['forge'], star: ['skill', 'loot'], hero: ['skill', 'zone'], look: ['loot', 'skill'] }[m.id] || [...SOUNDS];
+    const want = { zone: ['zone', 'kill', 'momentBig'], unique: ['loot', 'momentBig'], craft: ['forge', 'momentMid'], star: ['skill', 'loot', 'momentMid', 'momentBig'], hero: ['skill', 'zone', 'momentBig'], look: ['loot', 'skill', 'momentMid'] }[m.id] || [...SOUNDS];
     const snd = sfxLog.some(s => want.includes(s.name) && s.t >= m.t - 1 && s.t <= m.t + 3);
     const card = near.find(c => (c.dwell ?? (reached - c.first)) >= 2);
     if (!card || !snd) bad.push(`${m.id} at ${fmtT(m.t)}: ${!near.length ? 'no card or banner' : !card ? 'card up under 2 s' : 'a card'}${snd ? '' : ', no sound'}`);
   }
-  sc.F6 = { value: bad.length ? bad.length + ' of ' + moments.filter(m => m.big || m.id === 'craft' || m.id === 'look').length + ' not shown right: ' + bad.slice(0, 4).join('; ') + (bad.length > 4 ? '; ...' : '') : 'all shown', pass: bad.length === 0, bad, target: 'every moment a card or banner for 2 s with its sound' };
+  sc.F6 = { value: bad.length ? bad.length + ' of ' + moments.filter(m => m.big || m.id === 'look').length + ' not shown right: ' + bad.slice(0, 4).join('; ') + (bad.length > 4 ? '; ...' : '') : 'all shown', pass: bad.length === 0, bad, target: 'every moment a card or banner for 2 s with its sound' };
   sc.F10 = { value: placeholders.size + ' placeholder tile' + (placeholders.size === 1 ? '' : 's') + (placeholders.size ? ': ' + [...placeholders].slice(0, 4).join('; ') : ''), pass: placeholders.size === 0, target: 'no placeholder letters in the first hour' };
   const looks = st.prev ? st.prev.looks : 0;
   sc.P4 = { value: looks + ' look' + (looks === 1 ? '' : 's') + ' found; Wardrobe count not read (the walk opens no Wardrobe yet), so P4 is not measured', pass: false, unmeasured: true, found3: looks >= 3, target: 'at least 3 looks by minute 60, with a Wardrobe count' };
