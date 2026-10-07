@@ -132,7 +132,12 @@
   .ob-bub.side.btn { grid-row: 2 / -1; max-height: calc(100% - 10px); }
   .ob-bub.side.nu.btn { grid-row: 3 / -1; align-self: start; margin-bottom: 0; }
   .app.guide-btn .sbar { visibility: hidden; }
-  .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .toasts.side-dock, .app.guide-side .gate-rule { visibility: hidden; }
+  .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .gate-rule { visibility: hidden; }
+  /* the notices column is the guide's while it speaks, so a banner (a level, an ability, a craft, the hero's bark) moves to the foot of the
+     stage, under the hero and foe, and the guide's marker and panel stay clear of it (hero-voice-banner-under-guide) */
+  .app.guide-side .toasts.side-dock { grid-column: 2 / 4; grid-row: 3 / -1; left: 8px; right: 8px; bottom: 24px; z-index: 6; align-items: center; }
+  .app.guide-side .toasts.side-dock .toast { width: min(100%, 320px); }
+  .app.guide-side .toasts.side-dock .mm-t-sub { display: none; }   /* a short banner: the stage is short sideways */
 
   /* ---- sheets fit a short screen ---- */
   .sp-ov { align-items: center; }
