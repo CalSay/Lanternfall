@@ -20,6 +20,10 @@
 // presses what it names; it parries and dodges at the set rates when the foe winds up; it presses the timed ring at the right
 // moment at the parry rate; it taps Next Up's Go and presses the one button the panel then offers (Craft, Claim, Equip, Spend, Build,
 // Light, Start); it dismisses story cards, moment cards (Continue) and the picker. It never forces the game's state: nothing is set through `eval`, only read.
+// Gear (walk-bot-gear): it wears what a casual player wears. It puts on any better bag piece (Craft > Gear > the piece > Equip), crafts the
+// weapon, off-hand, head or body piece it is one tier short of (Craft > Make > station > tier > Craft), gathers the missing materials in the
+// Gather view for up to 5 minutes (Hunting for hide), builds the station a recipe needs (Camp > Build, two taps), and goes back to the fight.
+// It closes a sheet it left over the bar with the X. The report's "Gear and boss tries" table says what it wore in each zone and the boss tries lost there.
 // Game time is a fake clock stepped in 100 ms frames (33 ms while a foe winds up), so a run is repeatable for a seed.
 //
 // What it logs, with game time and a shot: every tip, toast, card and banner, every unlock (S.onboard.got), each zone first clear,
@@ -150,23 +154,28 @@ const TAP = ([sel, re]) => {
   return null;
 };
 // The text selector `a:text(Fight)` is `a` whose text matches /Fight/.
+// Is a sheet up with its X in view and still? (a sheet slides in and out: its X is off screen or moving for a moment)
+const SHEET_STATE = () => { const ov = document.querySelector('.bsheet-ov'); if (!ov) return 'none'; const x = ov.querySelector('.bsheet-x'), r = x && x.getBoundingClientRect();
+  return ov.getAnimations({ subtree: true }).some(a => a.playState === 'running') || !r || r.top < 0 || r.bottom > innerHeight || r.width < 2 ? 'moving' : 'still'; };
 async function click(sel, _to) {
   const [css, re] = sel.split(':text(').map((v, i) => i ? v.replace(/\)$/, '') : v);
   let r = await page.evaluate(TAP, [css, re || '']);
   if (!r) return false;
   if (process.env.WALK_DEBUG) console.error('  tap', css, re || '', JSON.stringify(r));
-  // a sheet the bot left open (a Next Up list, a Craft sheet) sits over the button: a player closes it with its X and presses again.
-  // That is the bot's own mess, not a game finding.
-  if (r.covered && r.sheet && !css.includes('bsheet-x')) {
-    let x = await page.evaluate(TAP, ['.bsheet-ov .bsheet-x', '']);
-    for (let i = 0; !x && i < 3; i++) { await advance(300, 16); x = await page.evaluate(TAP, ['.bsheet-ov .bsheet-x', '']); }   // a sheet still fading in has no visible X yet
-    if (process.env.WALK_DEBUG) console.error('  close-sheet', css, JSON.stringify(x));
-    if (x && !x.covered) {
-      await page.mouse.click(x.x, x.y); st.sheetsClosed = (st.sheetsClosed || 0) + 1;
-      await advance(350, 16);
-      r = await page.evaluate(TAP, [css, re || '']);
-      if (!r) return false;
+  // Something sits on the button. A player waits a beat for a toast or a sliding sheet to clear, closes a sheet the bot left open with its
+  // X, and presses again. Only a cover that stays after that is a finding.
+  for (let i = 0; r.covered && (r.sheet || /toast|bsheet|mm-/.test(r.covered)) && i < 5; i++) {
+    if (r.sheet && !css.includes('bsheet-x')) {
+      const ss = await page.evaluate(SHEET_STATE);
+      if (ss === 'still') {
+        const x = await page.evaluate(TAP, ['.bsheet-ov .bsheet-x', '']);
+        if (process.env.WALK_DEBUG) console.error('  close-sheet', css, JSON.stringify(x));
+        if (x && !x.covered) { await page.mouse.click(x.x, x.y); st.sheetsClosed = (st.sheetsClosed || 0) + 1; }
+      }
     }
+    await advance(300, 16);
+    r = await page.evaluate(TAP, [css, re || '']);
+    if (!r) return false;
   }
   if (r.covered) { addCheck('covered', `a button the player needs is covered (${css})`, `a tap at ${Math.round(r.x)},${Math.round(r.y)} would land on ${r.covered}${r.sheet ? ' (a sheet: "' + r.what + '")' : ''}`); return false; }
   await page.mouse.click(r.x, r.y);
@@ -305,6 +314,7 @@ async function followNextUp(o) {
   if (label === undefined) { await closeList(); return false; }
   st.calls[goalKey(label)] = (st.calls[goalKey(label)] || 0) + 1;
   const marked = await page.evaluate(l => { for (const r of document.querySelectorAll('.nu-row.ready')) if ((r.querySelector('.nu-lbl') || r).textContent.trim() === l) { const g = r.querySelector('.nu-go'); if (g) { g.setAttribute('data-walk', '1'); return true; } } return false; }, label);
+  const eqBefore = await X('JSON.stringify(S.equip)');
   const went = marked && await click('[data-walk="1"]', 300);
   await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
   if (!went) { await closeList(); return false; }
@@ -315,6 +325,8 @@ async function followNextUp(o) {
       if (!(await click('.ab-learn', 300))) break;
       await advance(250, 16); did = i ? 'Learn (twice)' : 'Learn';
     }
+  } else if (/^Equip\b/i.test(label)) {   // next-up-equip: Go puts the piece on at once, with no panel to press
+    did = (await X('JSON.stringify(S.equip)')) !== eqBefore ? 'Go put it on' : '';
   } else if (/attribute point/i.test(label)) {   // a casual player taps Spread evenly
     if (await click('.at-spread', 300)) { did = 'Spread evenly'; await advance(250, 16); }
     for (let i = 0; i < 6 && await page.evaluate(() => [...document.querySelectorAll('.at-add[data-n="1"]')].some(b => !b.disabled && b.getClientRects().length)); i++) { if (!(await click('.at-add[data-n="1"]', 200))) break; await advance(150, 16); did = 'Spread evenly, +1'; }
