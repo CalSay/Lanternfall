@@ -50,6 +50,16 @@ export function cells(T, rep) {
   }
   return out;
 }
+// Gear must help (boss-tiers PR 2): a kept-up row's casual win rate may not sit below its ref row's (the same boss on the first-hour
+// set) by more than the tolerance, for any hero. Returns the heroes that break it: [{ id, hero, value, ref, refValue }].
+export function gearHelpFails(T, rep) {
+  const rows = Object.fromEntries(rep.rows.map(r => [r.id, r])), out = [];
+  for (const r of rep.rows) if (r.kind === 'keptUp' && rows[r.ref]) for (const h of HEROES) {
+    const v = gatedValue(T, rows, r.id, h, 'casual'), w = gatedValue(T, rows, r.ref, h, 'casual');
+    if (num(v) && num(w) && v < w - T.tolerance) out.push({ id: r.id, hero: h, value: v, ref: r.ref, refValue: w });
+  }
+  return out;
+}
 // the binomial noise of one run of a cell (fights a row, hero and player): sqrt(p(1-p)/n); a drop adds its ref row's
 export function binomialSd(T, rows, id, hero, pl, fights) {
   const r = rows[id]; if (!r || !r.perHero[hero]) return 0;
