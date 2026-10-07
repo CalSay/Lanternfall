@@ -873,3 +873,19 @@ Card `scenery-z6-10-judge`, from the `slice-art-manifest` open point. Record and
   1-70 changes before then. Measured by the `slice-art-manifest` check (E4, to be built) and a zones 1-70 theme assertion that
   `scenery-follows-areas` adds. Coverage area 15,
   Compass pillar 4.
+
+## Autopilot and process (2026-10-07, adopted from Anthropic guidance)
+
+Cal confirmed that Anthropic's guidance takes precedence over his own preferences. The adoption list at `research/better-ways/2026-10-07-adopt.md` records the rationale and sources for each change.
+
+- **Slot cap: 5 Claude build threads at once,** down from 6. Threads waiting on Cal do not count toward the cap. (Anthropic: "start with 3-5 teammates"; Claude Code: "three focused teammates often outperform five scattered ones".)
+- **Planner model: Opus 5.5 high** writes specs by default (Outcome, Acceptance, player steps, Never lines on first-hour cards). Fable is not used for planning. (Anthropic: Opus for work you supervise; Fable for long unsupervised runs, no-pattern problems, large many-subagent changes, at 2.5x cost.)
+- **Card readiness check:** every card names files and interfaces, what is out of scope, and ends with a check the builder can run. First-hour cards must include Outcome, Acceptance, and Never lines before they go ready. The Foreman's start gate validates this, not only Goal/Origin/Prediction/Check.
+- **Judge passes:** kept only for save, economy, and adoption decisions. Routine cards rely on CI and the Bar. (Anthropic: evaluator worth its cost only past what the model does alone.)
+- **Foreman role:** board keeper and card scribe on a cheap model; no longer writes player steps or Never lines (those are the planner's), and start decisions come from `plan.mjs next` and can-start, not the Foreman's picks.
+- **Tester role:** a separate skeptical tester with its own context, tuned from Cal's play notes. The builder never grades its own route. (Anthropic: untuned Claude is "a poor QA agent".)
+- **Haiku 5.5:** used for mechanical jobs only, not planning or judging. (Anthropic task guidance.)
+- **Usage telemetry:** queued behind the first-hour gate, to measure whether slot cap and model choice changes should be tuned on data. (Anthropic: teams cost ~7x tokens.)
+- **Release check routine (unified, 2026-10-07):** The Saturday panel, Sunday outside review and Sunday go/hold are now one Sunday 18:00 "release check" routine. An independent tester (fresh Opus high, no repo) plays the release candidate, writes its findings and verdict (GO/HOLD), and sends the verdict to the Foreman which arms or skips the Monday deploy.
+- **Coordinator quality sweep:** disabled as of 2026-10-07 to reduce standing routines under the process freeze.
+- **Daily digest routine disabled (2026-10-07):** the Monday board now lives in the Monday retro, which posts it to Cal. The `state.md` file stays; stop writing digest.md blocks.
