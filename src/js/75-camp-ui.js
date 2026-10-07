@@ -335,7 +335,7 @@
           putDisabled(lightBtn, !hc.ok);
           return;
         }
-        setTxt(closedTxt, `Old Hesketh is looking for a place to rest. Reach zone ${CAMP_TUNE.openZone} and he makes camp. You are at zone ${S.maxZone}.`);
+        setTxt(closedTxt, `Old Hesketh is looking for a place to rest. He makes camp when you reach zone ${CAMP_TUNE.openZone}. You are at zone ${S.maxZone}.`);
         putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
       }

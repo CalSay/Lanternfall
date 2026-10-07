@@ -57,10 +57,10 @@ STORY_BEATS.npc.heskethFire = { at: 'intro', who: 'Old Hesketh', lines: [
 ] };
 STORY_BEATS.npc.heskethHearth = { at: 'hearth', who: 'Old Hesketh', lines: ['"Every road needs a place to come back to."'] };
 STORY_BEATS.npc.heskethTalk = { at: 'hearth', who: 'Old Hesketh', lines: [
-  '"Ten years I\'ve lit dead lamps. Not one took my fire."',
+  '"Ten years I\'ve lit dead lamps. None of them took my fire."',
   '"I could have lit them from hers. I couldn\'t go up."',
   '"Those things aren\'t animals. They climb out of the ground."',
-  '"Your village is down there. Go back and shut the holes."'
+  '"Your village is down there. Go home and shut the holes."'
 ] };
 
 // Hero barks (card hero-voice; bible 4.4 and 4.6; judged in DECISIONS.md). The starting hero speaks at the big moments: a line each for Wren, Tobin and Pip,

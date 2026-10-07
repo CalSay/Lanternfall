@@ -8091,10 +8091,10 @@ STORY_BEATS.npc.heskethFire = { at: 'intro', who: 'Old Hesketh', lines: [
 ] };
 STORY_BEATS.npc.heskethHearth = { at: 'hearth', who: 'Old Hesketh', lines: ['"Every road needs a place to come back to."'] };
 STORY_BEATS.npc.heskethTalk = { at: 'hearth', who: 'Old Hesketh', lines: [
-  '"Ten years I\'ve lit dead lamps. Not one took my fire."',
+  '"Ten years I\'ve lit dead lamps. None of them took my fire."',
   '"I could have lit them from hers. I couldn\'t go up."',
   '"Those things aren\'t animals. They climb out of the ground."',
-  '"Your village is down there. Go back and shut the holes."'
+  '"Your village is down there. Go home and shut the holes."'
 ] };
 
 // Hero barks (card hero-voice; bible 4.4 and 4.6; judged in DECISIONS.md). The starting hero speaks at the big moments: a line each for Wren, Tobin and Pip,
@@ -14512,23 +14512,23 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 // (75-onboard-ui OPEN_TXT), so one unlock gives one notice and one line. The guide NPC can voice these later.
 const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same window as a view's "new" mark)
 const FIRST_USE = {
-  party: { text: 'Your Hero: gear, level and abilities.' },
-  nextup: { text: 'That chip is Next Up. It names your best next goal. Tap it.', via: 'guide' },
-  awaynote: { text: 'While away, gathering continues and fighting stops.', via: 'strip' },   // the strip is its own line (71-ui-fight)
-  gather: { text: 'Pick a node and your hero mines or chops it, even while you are away.' },
-  bounties: { text: 'Bounties are three short goals. They pay gold, materials and Renown.' },
-  camp: { text: 'Build stations here. Each one opens a new way to make things.' },
-  forage: { text: 'Foraging finds fibre and herbs.' },
-  craft: { text: 'Craft turns materials into gear. Pick a station, then a recipe.' },
-  bestiary: { text: 'The Bestiary lists the foes you have met. Kills earn perks against them.' },
-  almanac: { text: "The Almanac shows today's Omen, plus Dares and a weekly board." },
-  uniques: { text: 'Uniques are rare gear that bosses drop. Each has a strong effect.' },
-  tavern: { text: 'The Tavern shows who is online and the hall of heroes.' },
+  party: { text: 'This is where you grow. Your level, build and abilities are all here.' },
+  nextup: { text: 'That chip is Next Up. It shows the best thing to do next, so tap it.', via: 'guide' },
+  awaynote: { text: "While you're away, gathering goes on but fighting stops.", via: 'strip' },   // the strip is its own line (71-ui-fight)
+  gather: { text: "Pick a place to work and you'll keep chopping or mining it, even while you're away." },
+  bounties: { text: 'Folk post three short jobs here. They pay in gold, materials and Renown.' },
+  camp: { text: 'This is your camp. Each thing you build here opens a new way to make things.' },
+  forage: { text: 'Out here you can forage for fibre and herbs.' },
+  craft: { text: 'This is where you make gear. Pick a station first, then a recipe.' },
+  bestiary: { text: "Every foe you've met is written here. Kill enough of one and you earn a perk against it." },
+  almanac: { text: "The Almanac tells you today's Omen. It has Dares and a weekly board too." },
+  uniques: { text: 'Bosses sometimes drop rare gear. Each piece here has a strong trick of its own.' },
+  tavern: { text: "This is the Tavern. You can see who's online, and the hall of heroes." },
   codex: { text: 'The Codex is open. It tracks what you have found. Find it in the Journal.', via: 'notice' },
-  raid: { text: 'One boss, shared by every player. Your hits add to the same total.' },
+  raid: { text: 'Every player fights this one boss together. Your hits add to the same total.' },
   stars: { text: 'Each star changes how your fights play.', via: 'notice' },
-  deep: { text: 'The Deepwell is a run of fight floors. Pick a boon between floors and earn Marks.' },
-  hands: { text: 'Hire gatherers on the Tavern board. They work shifts while you are away.' }
+  deep: { text: 'The Deepwell goes down floor by floor. Pick a boon between floors and earn Marks.' },
+  hands: { text: "You can hire gatherers on the Tavern board. They work shifts while you're away." }
 };
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
@@ -14614,11 +14614,11 @@ const GUIDE_STEPS = [
   { id: 'parry', ph: ['windup'], pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && laterFight('dodge') && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', ph: ['hero'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
-  { id: 'upgrade', ph: ['between'], tip: 'Open Hero and make your hero stronger.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
+  { id: 'upgrade', ph: ['between'], tip: 'You can grow stronger now. Open Hero.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
   // Cal's play note 7: after the points are spent, say how to get back to the fight (the Hero menu otherwise just sits there)
-  { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu to get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
+  { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu and get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
   // Cal's play notes 9 and 13: a weapon found or made sits in the bag until it is worn. The tip names it and wears it in one tap.
-  { id: 'wear:weapon', ph: ['between'], pause: 1, tip: 'Put on the weapon in your bag.', when: () => coldH() && !!wearPiece('weapon'), done: () => weaponMade() },
+  { id: 'wear:weapon', ph: ['between'], pause: 1, tip: 'Your new weapon is in your bag. Put it on.', when: () => coldH() && !!wearPiece('weapon'), done: () => weaponMade() },
   { id: 'gather', ph: ['between'], tip: 'Tap Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
@@ -14628,7 +14628,7 @@ const GUIDE_STEPS = [
   // only once Craft is unlocked: this step pauses the game, and the unlock pass runs on the game clock, so a pause that
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
   { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
-  { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
+  { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made. It only works when you wear it.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
   // first-gold-and-camp-strip: with the weapon's own station built (the Forge, or the Workbench for a bow or staff; it comes after the Forge step) the next job is the first weapon:
@@ -14639,7 +14639,7 @@ const GUIDE_STEPS = [
   { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
   // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
-  { id: 'nextup', ph: ['between'], quiet: 1, ok: 1, tip: 'Next Up names the one thing worth doing now.', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
+  { id: 'nextup', ph: ['between'], quiet: 1, ok: 1, tip: 'Next Up shows the one thing most worth doing now.', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
 ];
 const toolMade = () => S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool);
 
@@ -31911,7 +31911,7 @@ let campPaintFire = null;
   // ---- words: the opening card (the stage hint is 70-ui's: 'Tap to work faster') ----
   const opening = () => {
     if (!cold() || lit()) return;
-    toast('Old Hesketh\'s fire is cold. Bring 8 pine logs and light it.', 'good', { mat: ['wood', 1] }, 'high');
+    toast('Old Hesketh\'s fire is cold. Chop 8 Pine Log and light it for him.', 'good', { mat: ['wood', 1] }, 'high');
   };
   // The hero starts on the road; Hesketh speaks when it first walks to the grove (after the first boss)
   on('activity', ({ activity } = {}) => { if (activity === 'gather') opening(); });
@@ -36979,7 +36979,7 @@ on('cacheOpen', v => {
           putDisabled(lightBtn, !hc.ok);
           return;
         }
-        setTxt(closedTxt, `Old Hesketh is looking for a place to rest. Reach zone ${CAMP_TUNE.openZone} and he makes camp. You are at zone ${S.maxZone}.`);
+        setTxt(closedTxt, `Old Hesketh is looking for a place to rest. He makes camp when you reach zone ${CAMP_TUNE.openZone}. You are at zone ${S.maxZone}.`);
         putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
       }
@@ -41413,23 +41413,23 @@ let navUI = null;
   // The toast above still goes to the bell list. One line per row; Next Up (its guide step), the away strip (its own line) and
   // Hands (Tam's notice) say it elsewhere. Runtime queue only: an old save never replays one, and what a save already had stays quiet.
   const SAY_TXT = {
-    party: "The Hero tab's open. Your gear, level and build live there.",
+    party: "The Hero tab is open now. Your level, points and moves are kept there.",
     gather: "Wood first. Gather's open, and the hero works even while you're away.",
-    bounties: 'Bounties are posted on the Fight tab. Three goals, and they pay well.',
-    camp: "That's a camp. The Camp tab is open. Build here.",
-    forage: "Foraging's open under Gather. Fibre and herbs, mostly.",
-    craft: "Craft's open. Materials in, gear out.",
-    bestiary: "The Bestiary's open. It remembers every foe you've met.",
-    almanac: "The Almanac's open in Camp. It knows today's omen.",
-    uniques: "Uniques are open in Craft. Rare gear, strong tricks.",
-    tavern: "The Tavern's open in Camp. Other heroes drink there.",
-    codex: "The Codex is open in the Journal. It keeps what you've found.",
-    raid: "The World raid's open in Camp. One boss, every player.",
-    stars: "Stars are open on the Hero tab. Each one changes how you fight.",
-    deep: "The Deepwell's open on the Fight tab. Pick a boon between floors."
+    bounties: "Folk have posted bounties on the Fight tab. They pay well for small jobs.",
+    camp: "There. That's a camp. Build on it from the Camp tab.",
+    forage: "You can forage now, under Gather. You'll mostly find fibre and herbs.",
+    craft: 'You can make your own gear now. Craft is open.',
+    bestiary: "The Bestiary is open on the Fight tab. It remembers every foe you've met.",
+    almanac: "There's an Almanac at camp now. It tells you today's Omen.",
+    uniques: 'Bosses sometimes drop rare gear. Craft keeps it, under Uniques.',
+    tavern: "There's a Tavern at camp now. Folk on the road stop in there.",
+    codex: "You've a Codex now, in the Journal. It keeps track of what you've found.",
+    raid: 'The World raid is open at camp. Every player fights the same boss there.',
+    stars: "You've earned Stars. They're on the Hero tab, and each one changes how you fight.",
+    deep: 'The Deepwell is open on the Fight tab. You pick a boon between its floors.'
   };
   // defeat-card-guide-tip: a line that is not an unlock (check.mjs keeps SAY_TXT to systems). The first time a boss beats you, once the card is shut and the road is quiet.
-  const SAY_MORE = { defeat: 'That card showed what beat you. Each try shows one more of its moves.' };
+  const SAY_MORE = { defeat: 'No shame in that. The card showed what beat you, and each try shows one more of its moves.' };
   const sayText = id => SAY_TXT[id] || SAY_MORE[id];
   const sayQ = []; let sayCur = '';
   function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) sayQ.push(id); }
@@ -41537,11 +41537,11 @@ let navUI = null;
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
   const stockSpec = (id, what, tail) => {
     const need = onboardNeed(id); if (!need.length) return null;
-    const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Win fights for' : 'Gather');
+    const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Fight for' : 'Gather');
     // workbench-cost: a build row's gold ("Win 200 more gold for the Workbench (100/300)."); fights pay it, so the hint points at the fight
     const text = need.length > 1
-      ? `${need.some(m => m.fam === 'gold') ? 'Get ready' : 'Gather'} for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
-      : x.fam === 'gold' ? `Win ${x.n - x.have} more gold for ${what} (${x.have}/${x.n}).`
+      ? `You still need these for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      : x.fam === 'gold' ? `Win ${x.n - x.have} more gold in fights for ${what} (${x.have}/${x.n}).`
       : `${verb} ${x.n} ${x.name} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
     if (x.fam === 'gold') return { text, live: 1, node: onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: onGame() ? [0.74, 0.62] : null, side: 'up' };
     const there = S.activity === 'gather' && x.kind && S.node.kind === x.kind && S.node.t === x.t;
@@ -41584,25 +41584,25 @@ let navUI = null;
   };
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
-    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree. It goes faster.') : null,
-    back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: 'Done here? Close the menu and the fight goes on.', go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
-    'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is in your bag. A tool only works when you wear it.`),
-    'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is in your bag. Put it on to fight with it.`),
+    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree yourself and it goes faster.') : null,
+    back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: "When you're done here, close the menu and the fight goes on.", go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
+    'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is still in your bag. A tool only helps once you wear it.`),
+    'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is still in your bag. Put it on and fight with it.`),
     'stock:bench': () => stockSpec('stock:bench', 'the Workbench'),
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
     'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
     'stock:weapon': () => stockSpec('stock:weapon', 'your first weapon'),
     light: () => {
-      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire. Light it.' } : null;
+      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire to light it.' } : null;
       const f = $('hearthFire');
-      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Tap the fire. Let's have some light." };
-      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather. Pine Log burns well.' };
+      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Tap the fire and light it. I've missed the warmth." };
+      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, and then you can light the fire.' : 'Tap Gather and chop some Pine Log. It burns well.' };
       return null;
     },
-    bench: () => campPath('bench', ["The fire's burning. Open Camp and build.", 'Open Camp.', 'Build a Workbench. Tools start there.']),
+    bench: () => campPath('bench', ["The fire's burning now. Open Camp and we'll build.", 'Open Camp.', "Build a Workbench. That's where your tools are made."]),
     tool: () => {
-      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: "The Workbench is up. Open Craft." };
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is up. Open Craft and make your first tool.' };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="bench"]');
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
@@ -41610,27 +41610,27 @@ let navUI = null;
       const t1 = q('#sec-craft-recipes .cf-tiers button[data-t="1"]');
       if (t1 && t1.getAttribute('aria-pressed') !== 'true') return { node: t1, text: 'Tap Tier 1.' };
       // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
-      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll want it." };
+      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll need one for the ore." };
     },
-    forge: () => campPath('forge', ['Open Camp. The Forge makes weapons.', 'Open Camp.', 'Build the Forge. Then you can make a weapon.']),
+    forge: () => campPath('forge', ["You'll want a weapon of your own. Open Camp.", 'Open Camp.', "Build the Forge. That's where weapons are made."]),
     // first-gold-and-camp-strip: the materials are in hand; tick() has opened Craft on the weapon (once a visit), and this tip rings the button
     weapon: () => {
       const k = weaponKind(); if (!k) return null;
-      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'Your first weapon is ready to make. Open Craft.' };
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'You have enough for your first weapon. Open Craft.' };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="' + CRAFT_KINDS[k].st + '"]');
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
-      return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon. Then put it on.' };
+      return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon, then put it on.' };
     },
     // Cal's play note 15: only say the packs are near full when they are (the Storehouse plot also opens once the Forge is built)
-    store: () => { const full = typeof hearthNearFull === 'function' && hearthNearFull(); return campPath('store', full ? ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.'] : ['The Forge is up. Open Camp.', 'Open Camp.', 'Build a Storehouse. It holds more.']); },
+    store: () => { const full = typeof hearthNearFull === 'function' && hearthNearFull(); return campPath('store', full ? ['Your packs are nearly full. Open Camp.', 'Open Camp.', 'Your packs are nearly full. Build a Storehouse to hold the rest.'] : ["The Forge is up. Open Camp. There's one more to build.", 'Open Camp.', "Build a Storehouse. It holds what your packs can't."]); },
     // Training: Hero tab, Training view, Train on Attack.
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
       ? path('party', 'attributes', '#attrRows .at-row[data-at="might"] .at-add[data-n="1"]',
-        ["You've a point to spend. Open Hero.", 'Open Build.', "Put it in Might. You'll hit harder."])
+        ["You've earned a point to spend. Open Hero.", 'Open Build.', 'Put your point in Might. It makes you hit harder.'])
       : path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
-        ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' }),
+        ["You've gold to spend. Open Hero and train.", 'Open Training.', 'Train Attack. Each level makes you hit harder.']), { side: S.tab === 'party' ? 'up' : '' }),
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Tap it and see what you can mine." },
     'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Tap Camp and build." },
     'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Tap it and make gear." },

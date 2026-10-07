@@ -81,23 +81,23 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 // (75-onboard-ui OPEN_TXT), so one unlock gives one notice and one line. The guide NPC can voice these later.
 const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same window as a view's "new" mark)
 const FIRST_USE = {
-  party: { text: 'Your Hero: gear, level and abilities.' },
-  nextup: { text: 'That chip is Next Up. It names your best next goal. Tap it.', via: 'guide' },
-  awaynote: { text: 'While away, gathering continues and fighting stops.', via: 'strip' },   // the strip is its own line (71-ui-fight)
-  gather: { text: 'Pick a node and your hero mines or chops it, even while you are away.' },
-  bounties: { text: 'Bounties are three short goals. They pay gold, materials and Renown.' },
-  camp: { text: 'Build stations here. Each one opens a new way to make things.' },
-  forage: { text: 'Foraging finds fibre and herbs.' },
-  craft: { text: 'Craft turns materials into gear. Pick a station, then a recipe.' },
-  bestiary: { text: 'The Bestiary lists the foes you have met. Kills earn perks against them.' },
-  almanac: { text: "The Almanac shows today's Omen, plus Dares and a weekly board." },
-  uniques: { text: 'Uniques are rare gear that bosses drop. Each has a strong effect.' },
-  tavern: { text: 'The Tavern shows who is online and the hall of heroes.' },
+  party: { text: 'This is where you grow. Your level, build and abilities are all here.' },
+  nextup: { text: 'That chip is Next Up. It shows the best thing to do next, so tap it.', via: 'guide' },
+  awaynote: { text: "While you're away, gathering goes on but fighting stops.", via: 'strip' },   // the strip is its own line (71-ui-fight)
+  gather: { text: "Pick a place to work and you'll keep chopping or mining it, even while you're away." },
+  bounties: { text: 'Folk post three short jobs here. They pay in gold, materials and Renown.' },
+  camp: { text: 'This is your camp. Each thing you build here opens a new way to make things.' },
+  forage: { text: 'Out here you can forage for fibre and herbs.' },
+  craft: { text: 'This is where you make gear. Pick a station first, then a recipe.' },
+  bestiary: { text: "Every foe you've met is written here. Kill enough of one and you earn a perk against it." },
+  almanac: { text: "The Almanac tells you today's Omen. It has Dares and a weekly board too." },
+  uniques: { text: 'Bosses sometimes drop rare gear. Each piece here has a strong trick of its own.' },
+  tavern: { text: "This is the Tavern. You can see who's online, and the hall of heroes." },
   codex: { text: 'The Codex is open. It tracks what you have found. Find it in the Journal.', via: 'notice' },
-  raid: { text: 'One boss, shared by every player. Your hits add to the same total.' },
+  raid: { text: 'Every player fights this one boss together. Your hits add to the same total.' },
   stars: { text: 'Each star changes how your fights play.', via: 'notice' },
-  deep: { text: 'The Deepwell is a run of fight floors. Pick a boon between floors and earn Marks.' },
-  hands: { text: 'Hire gatherers on the Tavern board. They work shifts while you are away.' }
+  deep: { text: 'The Deepwell goes down floor by floor. Pick a boon between floors and earn Marks.' },
+  hands: { text: "You can hire gatherers on the Tavern board. They work shifts while you're away." }
 };
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
@@ -183,11 +183,11 @@ const GUIDE_STEPS = [
   { id: 'parry', ph: ['windup'], pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && laterFight('dodge') && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', ph: ['hero'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
-  { id: 'upgrade', ph: ['between'], tip: 'Open Hero and make your hero stronger.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
+  { id: 'upgrade', ph: ['between'], tip: 'You can grow stronger now. Open Hero.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
   // Cal's play note 7: after the points are spent, say how to get back to the fight (the Hero menu otherwise just sits there)
-  { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu to get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
+  { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu and get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
   // Cal's play notes 9 and 13: a weapon found or made sits in the bag until it is worn. The tip names it and wears it in one tap.
-  { id: 'wear:weapon', ph: ['between'], pause: 1, tip: 'Put on the weapon in your bag.', when: () => coldH() && !!wearPiece('weapon'), done: () => weaponMade() },
+  { id: 'wear:weapon', ph: ['between'], pause: 1, tip: 'Your new weapon is in your bag. Put it on.', when: () => coldH() && !!wearPiece('weapon'), done: () => weaponMade() },
   { id: 'gather', ph: ['between'], tip: 'Tap Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
@@ -197,7 +197,7 @@ const GUIDE_STEPS = [
   // only once Craft is unlocked: this step pauses the game, and the unlock pass runs on the game clock, so a pause that
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
   { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
-  { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
+  { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made. It only works when you wear it.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
   // first-gold-and-camp-strip: with the weapon's own station built (the Forge, or the Workbench for a bow or staff; it comes after the Forge step) the next job is the first weapon:
@@ -208,7 +208,7 @@ const GUIDE_STEPS = [
   { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
   // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
-  { id: 'nextup', ph: ['between'], quiet: 1, ok: 1, tip: 'Next Up names the one thing worth doing now.', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
+  { id: 'nextup', ph: ['between'], quiet: 1, ok: 1, tip: 'Next Up shows the one thing most worth doing now.', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
 ];
 const toolMade = () => S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool);
 
