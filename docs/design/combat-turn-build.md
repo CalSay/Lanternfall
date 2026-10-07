@@ -369,6 +369,14 @@ the real-time fight.
 - **Crits:** base x2.5. Aim adds 5% crit chance a point. Keen adds +0.5 to one cast (cap x3).
 - **Resources pay as they build:** each Aim adds 5% crit chance, each Grit 8% to Tobin's Attack (and 1% less damage
   taken), each Cinder 4% to Pip's fire damage (the gear pass, below).
+- **Tobin's boss hits (tobin-safety-margin, 2026-10-07):** a zone boss's hits on Tobin are multiplied by `TURN_TUNE.boss.heroHitX.tobin`,
+  a zone line (x1 to zone 4; x1.3-2.6 in zones 5-15, x4-7 from zone 16). Why: his class (Warden plus tank reduction), armour,
+  block and gear Health give him 3-4 times Wren's and Pip's pool, so the same boss hit cost him a third of the share of his health
+  and he won 100% of casual boss fights where they won 60-80%. The line puts him at the boss band +10 (casual 70-90 on a Captain),
+  with a hit still costing him about what it costs them. Zone bosses only: the Fenmother, the Deepwell and the Provings are
+  untouched. Wren and Pip stay at x1. `lateBoss` fell from 0.2 to 0: his late-pass damage no longer lifts his boss fights, which
+  ran 8-12% short of Wren and Pip from zone 30 (Tobin boss turns, played well, x0.92 and x0.88 at zones 30 and 34, now x1.02 and x1.00).
+  The hit cap still holds after the multiplier (a landed hit never costs more than the zone's cap of his max HP). Switch off: set every `heroHitX.tobin` point to 1.
 - **Gear lines:** every combat line a player can roll works in a turn fight ("Gear stats in turn fights", below).
 - **Statuses on the foe:** Burn (40% power a turn, 3 turns), Bleed (12% a stack a turn, up to 5), Chill (3 stacks
   Freeze it), Stun and Freeze (it loses its next turn, then no new control for 3 of its turns; a boss Staggers instead,

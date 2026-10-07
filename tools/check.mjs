@@ -1443,8 +1443,8 @@ if (section('onboarding')) try {
   // (base 2:03, 4:56). Owner: coordinator; expiry 2026-11-15, re-measure then or when onboarding or the early road changes.
   const beforeB = Object.values(got).filter(t => t <= at('bounties')).sort((a, b) => a - b);
   const stall = beforeB.slice(1).reduce((m, t, i) => Math.max(m, t - beforeB[i]), beforeB[0] || 0);
-  assert(at('gather') < 330 && at('bounties') < 450 && stall <= E('ONBOARD_TUNE.gap') + 3, `Gather and Bounties open by 5:30 and 7:30, and nothing waits longer than the unlock gap until then (${mmss(at('gather'))}, ${mmss(at('bounties'))}, longest wait ${stall}s)`);
-  assert(['camp', 'forage', 'craft', 'bestiary', 'almanac'].every(k => at(k) <= 660) && at('roster') === Infinity, 'Camp, Foraging, Craft, Bestiary and Almanac open by 11 minutes; the Roster never opens (solo)');
+  assert(at('gather') < 330 && at('bounties') < 510 && stall <= E('ONBOARD_TUNE.gap') + 3, `Gather and Bounties open by 5:30 and 8:30, and nothing waits longer than the unlock gap until then (${mmss(at('gather'))}, ${mmss(at('bounties'))}, longest wait ${stall}s)`);
+  assert(['camp', 'forage', 'craft'].every(k => at(k) <= 660) && ['bestiary', 'almanac'].every(k => at(k) <= 780) && at('roster') === Infinity, 'Camp, Foraging, Craft open by 11 minutes, Bestiary and Almanac by 13; the Roster never opens (solo)');
   const early = Object.values(got).filter(t => t <= 600).sort((a, b) => a - b);
   let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
   // W2-B: solo has no Roster unlock, so the 5-8 minute stretch is quiet (the old target was 180 s): a pacing note for the coordinator
@@ -2328,8 +2328,8 @@ if (section('cold hearth')) try {
     const z2 = at('zone2');
     assert(at('lit') - z2 <= 150, `the fire lit within 2:30 of the first boss: Gather opens, the hero chops 8 Pine Log (${mmss(at('lit'))}, boss at ${mmss(z2)}; solo, W2-B)`);
     assert(firstUp !== null && firstUp < 90, `first upgrade affordable under 1:30 (${mmss(firstUp)})`);
-    assert(at('nextup') - z2 <= 180, `Next Up within 3:00 of the first boss (${mmss(at('nextup'))})`);
-    assert(at('gather') - at('zone2') <= 64 && at('party') <= at('gather') && at('camp') - at('lit') <= 1 && at('craft') >= at('bench1') && at('craft') <= at('bench1') + 1, `Gather within a minute of the first boss and after Hero, Camp with the fire, Craft with the Workbench (${mmss(at('gather'))}, ${mmss(at('camp'))}, ${mmss(at('craft'))})`);
+    assert(at('nextup') - z2 <= 360, `Next Up within 6:00 of the first boss (${mmss(at('nextup'))})`);
+    assert(at('gather') - at('zone2') <= P('ONBOARD_TUNE.gap') + 4 && at('party') <= at('gather') && at('camp') - at('lit') <= 1 && at('craft') >= at('bench1') && at('craft') <= at('bench1') + 1, `Gather within the unlock gap of the first boss and after Hero, Camp with the fire, Craft with the Workbench (${mmss(at('gather'))}, ${mmss(at('camp'))}, ${mmss(at('craft'))})`);
     assert(at('tool') - z2 <= 240, `a tool within 4:00 of the first boss (${mmss(at('tool'))})`);
     assert(at('bench1') - z2 <= 180 && at('forge1') <= 600, `Workbench within 3:00 of the first boss, Forge by 10:00 (${mmss(at('bench1'))}, ${mmss(at('forge1'))})`);
     const early = tl.map(x => x[1]).filter(t => t <= 600);
@@ -3594,7 +3594,7 @@ if (section('nav')) try {
   // 3. a new game (cold Hearth): only Woodcutting until the fire is lit; the switcher hides locked skills
   {
     const g = loadCore({ seed: 8, cold: true }), E = s => g.eval(s);
-    E('soloPick("wren"); S.maxZone = 2'); secs(g, 64);   // W2-B: solo, Gather opens a minute after the first boss (Hero first; story-unlock-gates)
+    E('soloPick("wren"); S.maxZone = 2'); secs(g, E('ONBOARD_TUNE.gap') + 4);   // W2-B: solo, Gather opens a minute after the first boss (Hero first; story-unlock-gates)
     assert(E('hearthCold() && !hearthLit()') && E('navSkills().join()') === 'wood' && E('navSkillOpen("mine")') === false && E('navSkillOpen("forage")') === false,
       `cold Hearth: the switcher and Gather show only Woodcutting (${E('navSkills().join()')}), Gather opens on the Oak Grove`);
     E('S.mats.wood[0] = 50; hearthLight()'); secs(g, 2);
@@ -8644,7 +8644,7 @@ if (section('C29 boss pass (core)')) try {
       E(`loadSave(); S.L = 41; S.solo.asc.pip = 1; S.solo.tr.pip.atk = 41; attrSpread();
         for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10; it.t += ${d}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }
         S.abil.unl.pip = ['spark', 'nova']; S.solo.eq.pip = ['fire', 'spark', 'nova']; S.maxZone = 38; setZone(38); S.activity = 'fight'; arena = null; gearDirty()`);
-      const hit = boss => E(`(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(), k = p.refHp * p.hitX * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
+      const hit = boss => E(`(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(), k = p.refHp * p.hitX * (p.bossHeroX || 1) * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
         return { name: p.foeName + ' ' + p.script.map(m => m.id).join('+'), hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })()`);
       const run = skill => E(`(r => ({ win: r.kills / Math.max(1, r.kills + r.deaths), turns: r.totalHeroTurns / Math.max(1, r.completedFights) }))(turnCombatSample({ profile: turnCombatProfile(), seconds: 1800, seed: 3, skill: ${JSON.stringify(skill)} }))`);
       const n = hit(false), b = hit(true);
@@ -8670,7 +8670,7 @@ if (section('C29 mid-game HP and Wren (core)')) try {
         ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();
       S.activity = 'fight'; arena = null; gearDirty(); fightBoss = false; spawn(); globalThis.__f = 1 / (turnCombatProfile().A / turnRefAtk(${z}));`);
     const prof = boss => `(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(); p.A *= __f; p.U *= __f; p.counter *= __f; p.heroMaxHp *= __f; return p; })()`;
-    const hit = boss => E(`(p => { const k = p.refHp * p.hitX * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
+    const hit = boss => E(`(p => { const k = p.refHp * p.hitX * (p.bossHeroX || 1) * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
       return { hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })(${prof(boss)})`);
     // the mean over ability sets and seeds 1-3 (one sample swings a lot)
     const run = (skill, sets) => E(`(p => { let K = 0, D = 0, T = 0, F = 0; for (const eq of ${J(sets)}) for (let sd = 1; sd <= 3; sd++) {
@@ -8690,16 +8690,25 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.15, 0.42, 0.4, 0.92] : [0.18, 0.36, 0.45, 0.9];
       if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
     assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 18-36% (7-42% at zone 15, 15-42% at zone 20), a charge 45-90% (20-92% at zone 15, 40-92% at zone 20) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
-  // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
+  // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest, not a sure win (tobin-safety-margin)
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];
     const wg = w.run(good, WS), wc = w.run(casual, WS), pg = p.run(good, PS), pc = p.run(casual, PS), tc = t.run(casual, [['bash', 'heavystrike', 'hammerfall'], ['bash', 'riposte', 'hammerfall']]);
     assert(wg.win >= 0.95 && pg.win >= 0.95 && wg.turns >= 6 && wg.turns <= 12 && pg.turns >= 6 && pg.turns <= 12 && wc.win >= 0.2 && wc.win <= 0.85 && pc.win >= 0.2 && pc.win <= 0.85
-      && tc.win >= 0.95 && t.b.hit < p.b.hit / 3 && !w.err().length,
-      `mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 20-85% played casually (this hero is scaled to the reference; budget.mjs gates the real one); Tobin wins nearly all, a hit costs him under a third of Pip's (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
+      && tc.win >= 0.3 && tc.win <= 0.95 && t.b.hit >= p.b.hit * 0.6 && !w.err().length,
+      `mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 20-85% played casually (this hero is scaled to the reference; budget.mjs gates the real one); Tobin wins more than they do but not all, and a boss hit costs him at least 60% of what it costs Pip (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
   // gear matters: a tier behind, a zone-20 boss hit takes most of your health; a tier ahead, it barely hurts
   { const lo = kept('pip', 20, 33, 'mid', -1), hi = kept('pip', 20, 33, 'mid', 1);
     assert(lo.b.hit > 0.5 && lo.b.charge > 1 && hi.b.hit < 0.25, `mid-game HP: a gear tier behind, a zone-20 boss hit costs over half your health and its charge kills; a tier ahead, under a quarter (${[lo, hi].map(r => (100 * r.b.hit).toFixed(0) + '% / ' + (100 * r.b.charge).toFixed(0) + '%').join(', ')})`); }
+  // tobin-safety-margin: Tobin's own boss-hit share (boss.heroHitX) never lifts a landed hit past the zone's hit cap, so a hero a gear tier behind survives a full-health landed hit
+  { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: FX('mid') }) }), E = s => g.eval(s);
+    const r = E(`(() => { soloPick('tobin', { now: true }); S.maxZone = 20; setZone(20); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn();
+      const d = [], io = { random: () => 0.99, emit() {}, alive: () => ({ hero: true, foe: true }), heroHp: () => 1e15, foeHp: () => 1e15, foe: () => null, foeX: () => 1,
+        damageHero: a => { d.push(a); return a; }, healFoe() {}, healHero() {} };
+      const p = turnCombatProfile(); p.blockP = 0; p.blockC = 0; p.heroMaxHp = 1000; const m = turnNew(p, io);
+      m.move = { id: 't', name: 'T', hits: [{ x: 5 }] }; m.hitI = 0; m.defense = ''; turnContact(m, io);
+      return { hero: p.bossHeroX, cap: p.bossHitCap, share: d[0] / p.heroMaxHp }; })()`);
+    assert(r.hero > 1 && r.cap > 0 && r.share <= r.cap + 1e-9, `tobin-safety-margin: a landed zone-20 boss hit on Tobin never costs more than the hit cap of his max HP (${JSON.stringify(r)})`); }
   // Wren: her max HP in turn fights is x1.2 (TURN_TUNE.heroHpX; the real-time fight is unchanged), and Out of Reach: after
   // she dodges a hit, the rest of that move hits her for 70%
   { const g = loadCore({ seed: 8, turns: true }), E = s => g.eval(s);
@@ -9921,13 +9930,13 @@ if (section('story-unlock-gates')) try {
   og2.fn.on('unlock', e => arr.push([e.id, O2('Math.round(S.onboard.t)'), byNow(O2, e.id)]));
   O2('soloPick("tobin"); S.maxZone = 12; S.L = 12; onboardCheck()');
   const first = arr.map(x => x[0]);
-  assert(first[0] === 'party' && arr.slice(1).every(x => x[2]) && O2('!isUnlocked("gather") && !isUnlocked("awaynote")'), 'story-unlock-gates: with gap 60 one queued row opens (Hero first); only rows the player or a drop opened join it (' + first.join(',') + ')');
+  assert(first[0] === 'party' && arr.slice(1).every(x => x[2]) && O2('!isUnlocked("gather") && !isUnlocked("awaynote")'), 'story-unlock-gates: with the unlock gap one queued row opens (Hero first); only rows the player or a drop opened join it (' + first.join(',') + ')');
   for (let i = 0; i < 600 * 10; i++) og2.fn.tick(0.1);
   const q = arr.filter(x => !x[2]);
-  assert(q.length >= 6 && q.every((x, i) => i === 0 || x[1] - q[i - 1][1] >= 60) && q.map(x => x[0]).slice(0, 4).join() === 'party,gather,nextup,awaynote', 'story-unlock-gates: queued rows open a minute of play apart, in table order (' + q.map(x => x[0] + ' ' + x[1]).join(', ') + ')');
+  assert(q.length >= 6 && q.every((x, i) => i === 0 || x[1] - q[i - 1][1] >= O2('ONBOARD_TUNE.gap')) && q.map(x => x[0]).slice(0, 4).join() === 'party,gather,nextup,awaynote', 'story-unlock-gates: queued rows open one unlock gap of play apart, in table order (' + q.map(x => x[0] + ' ' + x[1]).join(', ') + ')');
   // an old save never re-locks, and a stray got value cannot stall the queue
   const og3 = loadCore({ seed: 920 }), O3 = s => og3.eval(s);
-  O3('soloPick("tobin"); S.onboard.t = 100; S.onboard.got = { party: 30, gather: "x", nextup: 99999 }; S.maxZone = 12');
+  O3('soloPick("tobin"); S.onboard.t = 100; S.onboard.got = { party: 100 - ONBOARD_TUNE.gap - 1, gather: "x", nextup: 99999 }; S.maxZone = 12');
   assert(O3('isUnlocked("party") && isUnlocked("gather") && isUnlocked("nextup")') && JSON.parse(O3('JSON.stringify(onboardCheck())')).includes('awaynote'), 'story-unlock-gates: a saved unlock stays open, and a got value that is not a number or lies ahead does not block the next row');
   O3('S.onboard.got = {}; S.onboard.all = true');
   assert(O3('isUnlocked("awaynote")'), 'story-unlock-gates: a save past the guide ("Show every tab") shows the away strip at once');
@@ -9963,10 +9972,10 @@ if (section('story-unlock-gates')) try {
     C('Date.__t += 1000');
   }
   const ga = got.find(x => x[0] === 'gather'), pa = got.find(x => x[0] === 'party'), z2 = got.find(x => x[2] >= 2) || [0, Infinity];
-  const close = got.filter((x, i) => i > 0 && !x[3] && got.slice(0, i).some(y => y[1] > x[1] - 60));
+  const close = got.filter((x, i) => i > 0 && !x[3] && got.slice(0, i).some(y => y[1] > x[1] - C('ONBOARD_TUNE.gap')));
   console.log('       cold walk: ' + got.map(x => `${x[0]} ${Math.floor(x[1] / 60)}:${String(x[1] % 60).padStart(2, '0')} (z${x[2]})`).join(', ') + ` | fire lit ${lit}s | zone ${C('S.maxZone')} at 30:00`);
   assert(!close.length, 'story-unlock-gates: a cold walk with guide pauses never gets a queued arrival within a minute of another' + (close.length ? ': ' + close.map(x => x[0]).join(',') : ''));
-  assert(pa && ga && pa[1] <= ga[1] && lit !== null && ga[1] <= z2[1] + 64 && lit - ga[1] <= 150, `story-unlock-gates: Hero opens before Gather, Gather within a minute of the first boss, the fire within 2:30 of Gather (Hero ${pa && pa[1]}s, Gather ${ga && ga[1]}s, fire ${lit}s)`);
+  assert(pa && ga && pa[1] <= ga[1] && lit !== null && ga[1] <= z2[1] + C('ONBOARD_TUNE.gap') + 4 && lit - ga[1] <= 150, `story-unlock-gates: Hero opens before Gather, Gather within the unlock gap of the first boss, the fire within 2:30 of Gather (Hero ${pa && pa[1]}s, Gather ${ga && ga[1]}s, fire ${lit}s)`);
   assert(['attack', 'ability', 'boss', 'upgrade', 'gather', 'light', 'bench', 'tool', 'forge'].every(id => doneSteps.has(id)), 'story-unlock-gates: every guide step of the cold walk still completes (' + [...doneSteps].join(',') + ')');
   assert(!g.errors.length && !og.errors.length && !og2.errors.length && !og3.errors.length && !cw.errors.length, 'story-unlock-gates: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('story-unlock-gates crashed: ' + (e.stack || e)); }
@@ -11007,6 +11016,63 @@ if (section('hero portraits')) try {
   const inGame = ids.filter(id => new RegExp('^\\s+' + id + ': \\{', 'm').test(roster));
   assert(inGame.length >= 21, 'portraits: the 21 heroes who are in the game and in the 34 have one (found ' + inGame.length + ')');
 } catch (e) { fail('hero portraits crashed: ' + (e.stack || e)); }
+
+// ==== tell-us-form: the Netlify page can take a note; the Artifact stays network-free (tools/site.mjs, 75-feedback-ui.js) ====
+if (section('tell us form')) try {
+  const html0 = fs.readFileSync(distFile, 'utf8');
+  const net = ['fetch(', 'XMLHttpRequest', 'sendBeacon', 'form-name', 'LF_SITE.send(', 'data-netlify'].filter(w => html0.includes(w));
+  assert(!net.length, `tell us: dist/lanternfall.html has no network call or form post (${net.join(', ') || 'none'})`);
+  assert(html0.includes('LF_SITE'), 'tell us: the game checks for window.LF_SITE (the web page sets it)');
+  const { spawnSync } = await import('node:child_process'), osm = await import('node:os');
+  const tmp = fs.mkdtempSync(path.join(osm.tmpdir(), 'lanternfall-tellus-'));
+  try {
+    const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'site.mjs'), tmp], { encoding: 'utf8', timeout: 30000 });
+    const site = r.status === 0 ? fs.readFileSync(path.join(tmp, 'index.html'), 'utf8') : '';
+    const form = (site.match(/<form name="tell-us"[\s\S]*?<\/form>/) || [''])[0];
+    const names = [...form.matchAll(/name="([^"]+)"/g)].map(m => m[1]).filter(n => n !== 'tell-us');
+    assert(/data-netlify="true"/.test(form) && /netlify-honeypot="bot-field"/.test(form) && names.includes('bot-field'), 'tell us: the web page has the hidden tell-us form with the honeypot');
+    assert(['note', 'zone', 'level', 'minutes', 'build', 'screen', 'errors'].every(f => names.includes(f)) && names.length === 8, `tell us: the form holds the 7 fields and the honeypot, nothing else (${names.join(', ')})`);
+    assert(!/name|e-?mail|user-?agent/i.test(names.join(' ')), 'tell us: no name, email or user-agent field');
+    assert(site.includes('window.LF_SITE=') && (site.match(/fetch\(/g) || []).length === 1, 'tell us: the web page, not the game, holds the one network call');
+  } finally { if (path.basename(tmp).startsWith('lanternfall-tellus-')) fs.rmSync(tmp, { recursive: true, force: true }); }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe) { skipBrowser('tell us form (browser): Playwright or Chromium not here, skipped'); }
+  else {
+    const mid = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[360, 740], [740, 360]]) for (const stub of [false, true]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, mid]);
+        if (stub) await ctx.addInitScript(() => { window.__sent = []; window.__ans = true; window.LF_SITE = { build: 'abc1234', send: f => { window.__sent.push(f); return Promise.resolve(window.__ans); } }; });
+        const page = await ctx.newPage(), errs = [], tag = `${w}x${h} ${stub ? 'with' : 'without'} LF_SITE`;
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        await page.evaluate(() => document.getElementById('bellBtn').click()); await page.waitForTimeout(500);
+        await page.evaluate(() => { const b = document.querySelector('button[data-v="settings"]'); if (b) b.click(); }); await page.waitForTimeout(900);
+        const vis = await page.evaluate(() => { const b = document.querySelector('#sec-feedback .feedback-send'); return !!b && !b.hidden && b.offsetParent !== null; });
+        assert(await page.evaluate(() => !!document.querySelector('#sec-feedback .feedback-copy')), `tell us: ${tag}: the Send feedback panel opens from Settings`);
+        assert(vis === stub, `tell us: ${tag}: the Send to the team button is ${stub ? 'shown' : 'not shown'}`);
+        if (stub) {
+          const fit = await page.evaluate(() => { const b = document.querySelector('#sec-feedback .feedback-send'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(), p = document.querySelector('#sec-feedback .feedback-panel').getBoundingClientRect(); return r.right <= innerWidth && p.right <= innerWidth + 1 && p.left >= -1; });
+          assert(fit, `tell us: ${tag}: the panel fits the screen width`);
+          for (const ok of [true, false]) {
+            await page.evaluate(ok => { window.__ans = ok; const t = document.querySelector('#sec-feedback .feedback-note'); t.value = 'The first fight felt slow.'; t.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('#sec-feedback .feedback-send').click(); }, ok);
+            await page.waitForTimeout(300);
+            const msg = await page.evaluate(() => document.querySelector('#sec-feedback .feedback-sent').textContent);
+            assert(ok ? /^Sent\. Thank you\.$/.test(msg) : /Couldn't send\. Copy it instead\?/.test(msg), `tell us: ${tag}: a send that ${ok ? 'works' : 'fails'} says "${msg}"`);
+          }
+          const sent = await page.evaluate(() => window.__sent);
+          assert(sent.length === 2 && sent[0].note === 'The first fight felt slow.' && ['note', 'zone', 'level', 'minutes', 'build', 'screen', 'errors'].every(k => k in sent[0]) && Object.keys(sent[0]).length === 7, `tell us: ${tag}: send gets exactly the 7 fields (${Object.keys(sent[0] || {}).join(', ')})`);
+          assert(sent[0].build === 'abc1234' && +sent[0].level >= 1 && +sent[0].zone >= 1 && /^\d+x\d+$/.test(sent[0].screen), `tell us: ${tag}: the note carries build, level, zone and screen size`);
+        }
+        assert(!errs.length, `tell us: ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tell us form crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

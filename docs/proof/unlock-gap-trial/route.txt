@@ -1,0 +1,14 @@
+# seed: 1
+# Proof for card unlock-gap-trial: ONBOARD_TUNE.gap is 90 s. A fresh game opens, and the first minute still plays as before.
+# The unlock times themselves (Hero, Gather, fire, Workbench; gap 60 against gap 90) come from the seeded walk's F4 line,
+# printed in the PR: a route cannot reach the first boss and wait out 90 s without a person tapping each fight.
+new fresh
+tap-if "Skip this"
+tap "Begin as Wren"
+tap-if "Skip"
+tap-if "Continue"
+wait 4
+tap-if "Skip"
+wait 4
+expect "Something's in the road"
+shot first-minute

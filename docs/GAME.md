@@ -170,8 +170,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   reaches them: Hero at hero level 3, Gather after the first boss, Bounties at zone 4, Camp at zone 5, Craft and the
   Bestiary around zone 6, the Almanac at 7 minutes, Uniques, the Tavern, the Codex (zone 10), the Raid (zone 12),
   Stars (hero level 10), the Deepwell (zone 20 and Hearth 3) and Hands (Hearth 2 and a Tavern). Once open, a feature stays open.
-  One new thing a minute (`ONBOARD_TUNE.gap`, 60 s of play): ready rows queue and open in table order, so after the first
-  boss Hero comes first, then Gather, Next Up and the away strip (row `awaynote`), a minute apart. A row the player's own act
+  One new thing every 90 s (`ONBOARD_TUNE.gap`, 90 s of play): ready rows queue and open in table order, so after the first
+  boss Hero comes first, then Gather, Next Up and the away strip (row `awaynote`), 90 s apart. A row the player's own act
   or a drop opened skips the queue: walking to gather, the fire lit (Camp), the Workbench (Craft), the Tavern built, the first
   star (Stars), the first unique (Uniques); the raid opens as before.
 - **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, spoken by Old Hesketh (his face on the left) from a panel that never covers the stage: in landscape the side column's notices slot (it stands in for Next Up while it speaks), in portrait a slot above the Act / Skills / Foe bar, and over an open menu the bottom of the menu panel. The Got it / Go button has its own row. After the first ability the guide asks you to add a point to Might on Hero > Build.

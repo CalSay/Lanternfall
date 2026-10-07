@@ -22,15 +22,15 @@ chance at a new look, and the next stretch of road.
 
 **Status column.** `today` = the integration build already does this. `card` = the named card builds it.
 
-**The unlock clock** belongs to `story-unlock-gates`. Every FEATURES rule stays, and `onboardCheck` opens at most one
-queued feature per 60 s of un-paused play (`ONBOARD_TUNE.gap`, `55-onboard.js`). A feature skips the queue when the
-player's own act or a drop opened it: walking to gather, the fire lit (Camp), the Workbench built (Craft), the Tavern
-built, the first Star, the first unique, the raid. Its seeded cold walk opened, after the first boss: Hero 0:32,
-Gather 1:32, fire 1:54, Next Up 2:55, away strip 3:55, Bounties 4:56, Almanac 7:00, Forage 8:11, Bestiary 9:11, Stars
-10:06, Uniques 12:01. That bot walk breaks F4 (Hero, Gather and the fire inside 1:22): a 60 s gap lets 3 new things
-land in 2 minutes, and F4 needs about 90 s between them, so the times below space new things at least 1:30 apart and
-card `unlock-gap-trial` takes the gap to a judge (the fire's 150 s bound and "a player's act never waits" stand). A cold human player was far slower: player B reached zone 5 at minute 25 (`/mnt/project-files/
-early-game/playtest-coldB.md`). The minutes below are targets for a casual human; the nightly walk replaces them.
+**The unlock clock** belongs to `story-unlock-gates` and `unlock-gap-trial`. Every FEATURES rule stays, and `onboardCheck` opens at
+most one queued feature per 90 s of un-paused play (`ONBOARD_TUNE.gap`, `55-onboard.js`; it was 60 s). A feature skips the queue
+when the player's own act or a drop opened it: walking to gather, the fire lit (Camp), the Workbench built (Craft), the Tavern
+built, the first Star, the first unique, the raid. Judge ruling (2026-10-07): F4 counts only what the governor releases; a thing a
+player act or a drop opened is listed, not counted, because the game cannot space what the player does. The seeded walk (seed 1, 20 minutes, `walk.mjs`):
+gap 60 releases 3 unlocks in 3 minutes (from 5:24: Next Up, away strip, Bounties) and fails F4; gap 90 releases at most 2 and
+passes. At gap 90 the walk opens Hero 0:32, Gather 2:52, fire 3:19, Workbench 4:20, Next Up 6:07, away strip 7:45, Bounties
+9:25 (Gather, the fire, the Workbench and the first Star and unique are the player's own acts). A cold human player was far slower: player B reached zone 5 at minute 25
+(`/mnt/project-files/early-game/playtest-coldB.md`). The minutes below are targets for a casual human; the nightly walk replaces them.
 
 | # | Min | On screen | Player does | Learns (one thing) | Earns, and how it lands | Should feel | Story or hero beat | Status |
 |---|---|---|---|---|---|---|---|---|
