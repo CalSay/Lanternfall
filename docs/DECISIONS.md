@@ -302,6 +302,30 @@ payment code, live prices and business and legal set-up stay with Cal.
   never reaches 21, the same on the base build. Wipes come at zones 17 to 20, in the fights before the Captain. The
   level-gap acceptance (zones 20-30) cannot be tested until that is fixed; follow-up card `tobin-z17-20-stall`.
 
+### Boss tiers, first hour: judge rulings (2026-10-07)
+
+PR 1 of `boss-tiers` (zones 1-12). Opus judge after measuring; Cal can veto any line. Later PRs: tiers (`bossTierOf`, a Champion
+stat multiplier, labels, pay), zones 13-24 for a kept-up hero, move sets by tier.
+
+- **One missed parry never kills a full-health hero in zones 1-15.** `TURN_TUNE.boss.hitCap` 0.4: one zone-boss hit (each hit
+  of a charged move on its own) takes at most 40% of the hero's max HP, capped on the boss's side before armour, Guard, Ward
+  and the Stars. Off from zone 16, and off for Elders, the Deepwell, Provings, normal foes and elites. It sits in `turnLand`, so
+  Boss ready and the budget see it. Switch off: `hitCap: [[1, 0]]`.
+- **Why the wall.** Boss hits scale with the reference hero's HP, which grows about 1.9x a zone from zone 8 to 11; a first-hour
+  hero (the zone's tier at common +0) grows 1.3-1.5x. HP against the reference: 2.2 at zone 5, 0.6 at zone 10, 0.4 at zones 11-12.
+  One table made for a kept-up hero made zones 3-6 a pat on the head and zones 9-11 a wall. Speed and move order are not the cause.
+- **Footing.** Zones 5-12 are gated on the first-hour set (zone tier, common +0, five pieces, early fixture, typical abilities and
+  Stars). The kept-up rows at 8, 10 and 12 are report-only ("gear never makes a boss harder"), and their "too easy" gaps are gone.
+  Floors (report only): nothing worn at zone 5 (casual 40%+) and zone 10 (casual 15%+, good 95%+). 10-30% casual at the first gear
+  check is a wall and not acceptable.
+- **Bands.** New `firstChampion` (zone 5): casual 60-85, good 97-100. Zone 10 uses `champion` (40-60). Tune the weaker of Wren and
+  Pip into the band. The stronger may sit above it under `wren-first-hour-parity` gaps (until 2026-11-15); Tobin sits above under
+  `tobin-safety-margin` gaps.
+- **Knots** (zones up to 12 only): hitX 1.6/3.4/2.4/1.5/1.0/1.05/0.95/0.85 at zones 4/5/6/8/9/10/11/12; hpX 1.5/3.7/2.2/1.9/1.5/1.9/1.4/1.8
+  at 4/5/6/8/9/10/11/12. The zone 5 and 10 peaks are interim: the Champion multiplier replaces them in PR 2.
+- **The walk bot is not the yardstick yet.** It wears nothing and has one ability. Its numbers are reported; the walk's
+  "zone 10 in an hour, no boss over 5 losses" becomes the gate once walk-bot-follow-up equips and trains it.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)

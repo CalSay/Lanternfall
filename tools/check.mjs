@@ -8374,16 +8374,16 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.8, 15: 16 * 2.5, 20: 16 * 2.4, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.9, 15: 16 * 2.5, 20: 16 * 2.4, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall (2026-10-07); zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 by boss-tiers (2026-10-07); zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
     assert(n20.a > 4.7 && n20.a < 5.3 && Math.abs(n20.hx - 0.7) < 1e-9 && n3.hx === 1 && n38.hx === 1 && n20.cx === 1 && !n20.full,
       `boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), as written in zones 1-3 and 35+ (${JSON.stringify([n3, n20, n38].map(r => [+r.a.toFixed(2), r.hx]))})`);
-    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.6) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
-      `boss pass: boss hits x1.6 at zone 8 (charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
+    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.5) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
+      `boss pass: boss hits x1.5 at zone 8 (charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
     assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 1.4 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
     // the Deepwell's Elders and the Provings' bosses keep their own numbers (they pass a move set and their HP in Attacks)
     const deep = E(`(() => { const f = { boss: true, type: 'bones', name: 'Elder' }; turnFoeSetup(f, 30, { set: 'bones', hpA: TURN_TUNE.deep.hpA.boss }); return { a: f.max / turnRefAtk(30), hx: f.tk.hx, cx: f.tk.cx }; })()`);
@@ -8751,7 +8751,7 @@ if (section('wall-try-again (boss loss, Try again)')) try {
   let fails = 0; g.fn.on('bossFail', () => fails++);
   const shown = [];
   for (let i = 1; i <= 4; i++) {
-    E('challenge(); mob.tk.hx = 30');   // a boss this hard beats the hero at once
+    E('challenge(); mob.tk.hx = 30; mob.tk.hcap = 0');   // a boss this hard beats the hero at once (no hit cap)
     run(40);
     const L = JSON.parse(E('JSON.stringify(S.bossTry.last)'));
     assert(fails === i && E('S.bossTry.hold') === 1 && !E('fightBoss') && E('S.kills') === E('ZONE_FIGHTS'), `try again: loss ${i} holds the boss, no auto-retry, the zone stays at "boss ready" (fails ${fails}, hold ${E('S.bossTry.hold')})`);
@@ -9797,6 +9797,23 @@ if (section('craft reveal')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('craft reveal crashed: ' + (e.stack || e)); }
+
+// ---- boss tiers, first hour (card boss-tiers PR 1, judge 2026-10-07): the zone-boss hit cap and the first-hour knots ----
+if (section('boss tiers first hour')) try {
+  const g = loadCore({ seed: 5, turns: true }), E = s => g.eval(s);
+  E(`soloPick('wren', { now: true }); TURN_TUNE.on = 1`);
+  const prof = z => JSON.parse(E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; spawn(); const p = turnCombatProfile(); return JSON.stringify({ cap: p.bossHitCap, hit: p.bossHitX, boss: p.boss, region: p.region }); })()`));
+  const a = prof(10), b = prof(15), c = prof(16), d = prof(34);
+  assert(a.boss && a.cap === 0.4 && b.cap === 0.4, `boss cap: a zone boss's hit is capped at 40% of max HP in zones 1-15 (${a.cap}, ${b.cap})`);
+  assert(c.cap === 0 && d.cap === 0, `boss cap: off from zone 16 (${c.cap}, ${d.cap})`);
+  assert(prof(35).cap === 0, 'boss cap: not on a region boss');
+  assert(E('turnZoneLine(TURN_TUNE.boss.hitX, 9)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 8)') && E('turnZoneLine(TURN_TUNE.boss.hitX, 12)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 15)'),
+    'boss knots: hits fall after zone 8 to follow a first-hour hero\'s health, and rise again by zone 15');
+  // a hero with 1000 HP: no one hit of a zone-10 boss reaches more than 400 before armour
+  prof(10);
+  const mx = JSON.parse(E(`(() => { const p = turnCombatProfile(); let m = 0; for (const mv of p.script) for (const h of mv.hits) { const raw = (h.x || 0.2) * p.refHp * p.bossHitX * (mv.charge ? p.bossChargeX : 1); m = Math.max(m, Math.min(raw, p.bossHitCap * 1000)); } return m; })()`)) ;
+  assert(mx <= 400 + 1e-6, `boss cap: the biggest zone-10 hit stays at 400 of a 1000 HP hero (${mx})`);
+} catch (e) { fail('boss tiers first hour crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

@@ -85,10 +85,24 @@ export const CHECKPOINTS = [
   ['z1-boss', 1, 'boss', { st: 'fresh', zone1: true }],
   ['z3-boss', 3, 'boss', { st: 'fresh' }],
   ['z5-boss', 5, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  // first-hour footing (boss-tiers judge ruling 2026-10-07): the hero a player has when they first reach zones 6-12 wears the zone's
+  // tier at common +0, five pieces, the early fixture, typical abilities and Stars. These rows are gated; the kept-up rows
+  // (rare +5) at zones 8, 10 and 12 are report-only (gear must help: kept-up casual >= first-hour casual).
+  ['z4-boss', 4, 'boss', { st: 'kept', fx: 'early', gear: 'common', kind: 'reportCaptain' }],
+  ['z6-boss', 6, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z7-boss', 7, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
   ['z8-normal', 8, 'normal', { st: 'kept', fx: 'early' }],
-  ['z8-boss', 8, 'boss', { st: 'kept', fx: 'early' }],
-  ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early' }],
-  ['z12-boss', 12, 'boss', { st: 'kept', fx: 'mid' }],
+  ['z8-boss', 8, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z9-boss', 9, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z11-boss', 11, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z12-boss', 12, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z8-boss-keptup', 8, 'boss', { st: 'kept', fx: 'early', kind: 'keptUp', ref: 'z8-boss' }],
+  ['z10-boss-keptup', 10, 'boss', { st: 'kept', fx: 'early', kind: 'keptUp', ref: 'z10-boss' }],
+  ['z12-boss-keptup', 12, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z12-boss' }],
+  // floors (report only): nothing worn at all; skill must carry (a bare hero is a bot or a player who skipped the Forge)
+  ['z5-boss-bare', 5, 'boss', { st: 'kept', fx: 'early', gear: 'none', kind: 'floor5' }],
+  ['z10-boss-bare', 10, 'boss', { st: 'kept', fx: 'early', gear: 'none', kind: 'floor' }],
   ['z15-elite', 15, 'elite', { st: 'kept', fx: 'mid' }],
   ['z15-boss', 15, 'boss', { st: 'kept', fx: 'mid' }],
   ['z20-normal', 20, 'normal', { st: 'kept', fx: 'mid' }],
@@ -119,7 +133,7 @@ export const CHECKPOINTS = [
 const setFor = (z, k) => SETS[[38, 30, 20, 10, 1].find(s => z >= s)][k];
 // a boss's kind: the game's own boss tier once it has one (boss-tiers: bossTierOf(z) -> 'captain' | 'champion' | 'elder'),
 // else by zone: a region boss is an Elder, zones 1-3 the first bosses, 4-10 the learning Captains, then Captains
-const KIND_FOR = z => `(typeof bossTierOf === 'function' ? bossTierOf(${z}) : isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' : ${z} <= 10 ? 'earlyCaptain' : 'captain')`;
+const KIND_FOR = z => `(typeof bossTierOf === 'function' ? bossTierOf(${z}) : isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' : ${z} === 5 ? 'firstChampion' : ${z} === 10 ? 'champion' : ${z} <= 9 ? 'earlyCaptain' : 'captain')`;
 
 // the setup code for hero k at checkpoint c (run inside a fresh core after the fixture loads)
 function setup(c, k, lvShift) {
@@ -130,7 +144,8 @@ function setup(c, k, lvShift) {
     S.solo.asc[${J(k)}] = ${o.asc ? 1 : 0};`;
   if (o.st === 'late') s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10;
       const own = { weapon: 0, off: 1, helm: 2, body: 3 }[sl]; if (own != null) { it.slot = ${J(KINDS[k])}[own]; delete it.rt; } if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }`;
-  else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = ${o.gear === 'common' ? 1 : `zoneTier(${z})`};
+  else if (o.st === 'kept' && o.gear === 'none') s += `for (const sl of ['weapon', 'off', 'helm', 'body', 'charm']) S.equip[sl] = null;`;
+  else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z});
       ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, ${J(o.gear === 'common' ? 'common' : 'rare')}, { rnd }); it.plus = ${o.gear === 'common' ? 0 : 5}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
         S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   if (o.tier) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
