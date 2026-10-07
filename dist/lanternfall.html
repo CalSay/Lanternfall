@@ -25266,29 +25266,29 @@ const TURN_TUNE = {
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
   boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 1.075], [8, 0.95], [9, 0.75], [10, 0.725], [11, 0.882], [12, 1.008], [13, 1.848], [14, 1.656], [15, 1.7], [16, 4], [17, 3], [18, 3], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
     // heroHitX: a zone boss's hits x this on the hero (tobin-safety-margin: the safest hero still feels a boss; 1 = the zone table's hit)
-    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.7], [9, 1.25], [10, 2], [11, 1.25], [12, 1.75], [13, 1.6], [14, 1.7], [15, 2.55], [16, 5.3], [17, 5], [18, 5.1], [19, 4], [20, 6], [21, 6.2], [22, 6.1], [23, 6.6], [24, 6.2], [25, 6.2], [27, 6.4], [30, 5.8], [34, 5.8], [36, 7], [38, 7]], pip: 1 },
-    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.5], [8, 1.055], [9, 0.632], [10, 0.45], [11, 0.407], [12, 0.403], [13, 0.539], [14, 0.461], [15, 0.491], [16, 2.1], [17, 1.78], [18, 1.2], [19, 3.15], [20, 1.85], [21, 1.17], [22, 0.84], [23, 0.7], [24, 0.63], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.7], [9, 1.25], [10, 2], [11, 1.25], [12, 1.75], [13, 1.6], [14, 1.7], [15, 2.55], [16, 6.36], [17, 5.48], [18, 5.51], [19, 4.99], [20, 6.32], [21, 7.14], [22, 7.45], [23, 8.39], [24, 7.06], [25, 6.81], [27, 7.45], [30, 8.32], [34, 6.85], [36, 7], [38, 7]], pip: 1 },
+    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.5], [8, 1.055], [9, 0.632], [10, 0.45], [11, 0.407], [12, 0.403], [13, 0.539], [14, 0.461], [15, 0.491], [16, 0.738], [17, 0.7], [18, 0.481], [19, 1.04], [20, 0.751], [21, 0.424], [22, 0.314], [23, 0.238], [24, 0.255], [25, 0.215], [27, 0.131], [30, 0.165], [34, 0.203], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
     // hitCap: one boss hit never takes more than this share of the hero's max HP, so a missed parry cannot kill a full-health hero
-    // (zone bosses: 0.4 to zone 15, 0.75 for zones 16-24; judge 2026-10-07, docs/DECISIONS.md "Boss tiers"). Taken before armour, Guard and the rest; each hit of a charged move on its own.
-    hitCap: [[1, 0.4], [15, 0.4], [16, 0.75], [24, 0.75], [25, 0]],
+    // (zone bosses: 0.4 to zone 15, 0.75 for zones 16-34; judge 2026-10-07, docs/DECISIONS.md "Boss tiers"). Taken before armour, Guard and the rest; each hit of a charged move on its own.
+    hitCap: [[1, 0.4], [15, 0.4], [16, 0.75], [34, 0.75], [35, 0]],
     // the Champion tier (bossTierOf, 40-rules): a Champion's HP and hits x these on top of the zone line above (zones 5 and 10 only; later
     // Champions keep their own knots), so the first-hour peaks sit here and not in the Captain line (judge 2026-10-07, DECISIONS.md)
     // Zone 15 is a real Champion (boss-tiers-pr5, judge 2026-10-07 point 9): its own hit multiple on top of the Captain line
     champHpX: [[1, 1], [4, 1], [5, 2.4], [10, 1.25], [11, 1]], champHitX: [[1, 1], [4, 1], [5, 1.6], [10, 1.6], [11, 1], [14, 1], [15, 1.25], [16, 1]],
     // footFloor (boss-tiers-pr5, judge 2026-10-07 point 4): on a zone boss the hero has not beaten (its zone at or past S.maxZone), a hit costs
     // at least base x r x (max HP / footing HP), where the footing is the same hero in the zone's tier at common +0 (turnFootHp). Health
-    // above the first-hour set stops shrinking the hit; armour, Guard, Ward and good timing still do. Zones 4-15; r by zone (zone table; [[1, 0]] is off).
+    // above the first-hour set stops shrinking the hit; armour, Guard, Ward and good timing still do. Zones 4-34; r by zone (zone table; [[1, 0]] is off).
     // passiveMin: armour x class reduction cuts a zone boss's hit (zones passiveZones) to no less than this share of itself (0 off).
-    footFloor: [[1, 0], [3, 0], [4, 1], [15, 1], [16, 0]], passiveMin: 0.55, passiveZones: [4, 15],
+    footFloor: [[1, 0], [3, 0], [4, 1], [34, 1], [35, 0]], footRare: 16, passiveMin: 0.55, passiveZones: [4, 15],
     // hpFloor: see turnLand (zone table of multiples; 0 off). gate: rally gates (see TURN_TUNE.gateNote)
-    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 0.84], [9, 0.92], [10, 0.95], [11, 0.94], [12, 0.82], [13, 0.81], [14, 0.84], [15, 0.76], [16, 0]], gate: { on: 1, from: 4, to: 15, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
+    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 0.84], [9, 0.92], [10, 0.95], [11, 0.94], [12, 0.82], [13, 0.81], [14, 0.84], [15, 0.76], [16, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
   // Boss move tricks (card boss-tiers-pr4; docs/design/foe-moves.md "Boss tricks"): zone bosses from `from` play the Captain and
   // Champion sets in TURN_BOSS_TRICKS (24d): hits that hold their swing (`hold`), fakes (`feint`: no damage, and a press at one
   // fools you: the next hit cannot be defended), longer strings and an uneven rhythm. `on` 0 plays the old sets. `feintFrom`: the
   // first zone whose bosses feint (the learning Captains only delay). `tell` is the warning the bar gives after a stall or a
   // fake's tell: the last (dodge window + tell) seconds of the hit run on the bar. `read`: the scratch player's chance to read a
   // trick is read[0] + read[1] x how often they avoid a plain hit (parry or dodge); a caller may pass skill.read.
-  tricks: { on: 1, from: 4, to: 15, feintFrom: 7, tell: 0.25, read: [0.3, 0.6] },
+  tricks: { on: 1, from: 4, to: 34, feintFrom: 7, tell: 0.25, read: [0.3, 0.6] },
   // Rally gates (boss-tiers-pr4, judge 2026-10-07): the tempo floor. A Captain's HP has gates at these shares, a Champion's at its own;
   // damage cannot take the boss below the next gate until it has finished one move after reaching it. Zones from..to only.
   // The first-hour footing hero deals about a sixth of the boss a turn, so the gates rarely bind there; a hero who kills in 3 turns meets them.
@@ -25460,13 +25460,15 @@ const turnFocus = () => { const h = Math.min(0.3, Math.max(0, gear().haste || 0)
 // and Charm swapped for the zone's tier at common +0, base lines only; level, attributes, Training, Stars, trinkets and tools as they are.
 // maxHp is the hero's max HP as worn now. Max HP is base x heroAtk() x ... x (1 + gear.hp / 100), and heroAtk() carries the gear's Might and
 // Attack, so the footing is maxHp scaled by the change in those three gear lines. Pure: no change to S, no gearDirty, no spawn.
+// From zone 16 (TURN_TUNE.boss.footRare, boss-tiers-pr5b) the footing is the kept-up set, rare +5 base lines, with no crafted set bonus
+// (a set's lines must never be added when gearCalc is given `over`): gear above the road's own set does not shrink a boss hit. Before 16 it is common +0.
 // 0 when the hero has no class set to swap (the check in 59k's tests fails if a new gear term reaches max HP and this misses it).
 function turnFootHp(z, maxHp) {
-  const who = heroWho(), tier = zoneTier(z); if (who === 'any' || !(maxHp > 0)) return 0;
+  const who = heroWho(), tier = zoneTier(z), kept = z >= TURN_TUNE.boss.footRare; if (who === 'any' || !(maxHp > 0)) return 0;
   const over = {};
   for (const pos of CRAFT_HERO_POS) {
     const row = CRAFT_FITS[pos] || {}, kind = (row[who] || (pos === 'charm' ? row.any : null) || [])[0], d = kind && CRAFT_KINDS[kind];
-    if (d && !d.tool) over[pos] = { id: -1, slot: kind, t: tier, r: 'common', plus: 0 };
+    if (d && !d.tool) over[pos] = { id: -1, slot: kind, t: tier, r: kept ? 'rare' : 'common', plus: kept ? 5 : 0 };
   }
   const g = gear(), f = gearCalc(over), k = x => 1 + (x || 0) / 100;
   return maxHp * (k(f.might) * k(f.attack) * k(f.hp)) / (k(g.might) * k(g.attack) * k(g.hp));

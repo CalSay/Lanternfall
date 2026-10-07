@@ -242,6 +242,21 @@
       ],
       "report": true,
       "note": "report only (boss-tiers-pr5): z10 at uncommon +2 (no cliff between common and rare gear) and z12 on the first-hour set with the mid save (how much progression outside gear is worth). Read the numbers against the ref row"
+    },
+    "captainMid": {
+      "casual": [
+        0.6,
+        0.8
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "none": [
+        0,
+        0.1
+      ],
+      "note": "a zone boss at zones 16-34 (Captains and the Champion-tier fifths), boss-tiers-pr5b: the kept-up hero (the zone's tier at rare +5, with the crafted set from grade 4 up) on a boss they have not beaten, with move tricks, rally gates and the footing floor on. Gear buys room to miss, not immunity: a player who never defends wins at most 10%"
     }
   },
   "gaps": [
@@ -524,6 +539,26 @@
       "owner": "gear-weight",
       "until": "2026-12-01",
       "why": "a tier behind costs this hero more than 60 points of casual wins now that bosses hit him for a real share (tobin-safety-margin)"
+    },
+    {
+      "row": "z25-boss",
+      "hero": "wren",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.82,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "the zone 25 Champion-tier fifth move plus the gates split Wren and Pip by about 27 points; a level nudge moves both (boss-tiers-pr5b judge); provisional until the skilling and crafting balance pass"
+    },
+    {
+      "row": "z25-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.55,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "the zone 25 Champion-tier fifth move plus the gates split Wren and Pip by about 27 points; a level nudge moves both (boss-tiers-pr5b judge); provisional until the skilling and crafting balance pass"
     }
   ]
 }
