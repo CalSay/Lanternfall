@@ -120,6 +120,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## CI and tooling
 
+- CI retries a failed check shard or eyes run once on its own (`tools/ci/retry-once.sh`); a pass on the retry is a FLAKE warning and a line in the job summary. Fix the check named there; never skip it. Why: 9 of 16 reruns on 6-7 Oct passed on the same commit, and an outage of 80 minutes (billing) once made 172 jobs die in 2 s. (ci-review, 2026-10-07)
 - Check the memory limit and piped-output crashes before judging a first red CI run. Why: run 3 of f-ci failed on infrastructure causes. (f-ci, 2026-10-05)
 - Make UI checks follow the real owned count, not an assumed one. Why: an elite could drop a Star while the page loaded and the Stars UI check failed at random. (f-ci)
 - Keep wall-clock perf checks report-only on shared runners. Why: first frame was 2.5 s against a 1.5 s budget. (f-ci)
@@ -131,6 +132,10 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Run `node tools/build.mjs` after the last src edit and commit `dist/` with it. Why: the dist-rebuilt check failed on PR #58 after small copy edits went in without a rebuild. (hero-progression-rework, 2026-10-06)
 - Write guide-walk and pacing checks to wait until every expected step has come, not to stop at the first late step. Why: faster early levels on PR #58 reached the Next Up note before the Workbench, and the walk stopped early only under a loaded full run. (hero-progression-rework, 2026-10-06)
 - Close story sheets in any scripted browser run before clicking game UI, and test "a tap restarts a wait" by tapping repeatedly past the original deadline, not at one timed moment. Why: the opening card blocked perf's clicks and the single-tap timing flaked on a loaded runner. (perf-story-click-fix, 2026-10-06)
+- Wait on what the page shows in a browser check, never on a fixed pause: for a menu or toast, wait until none of its `getAnimations()` is still running and its state matches; for a guide target, look again until it is right and report what it still is after a bound. Why: a slide of 160 ms or a hint that places itself every 250 ms took seconds on a shared CPU, so the menu-close, step-target and guide-walk checks failed 1 run in 4 under load (3 of 16 on the base branch). (flaky-checks-cpu-shared, 2026-10-07)
+- Press an action slot from the check in one task (dispatch the pointer down and up together), not with a real mouse down and up. Why: a slot reads a 550 ms hold on the wall clock as a long press and opens the ability picker, and two round trips to a busy browser can take longer, so a sheet then covered the next guide target. (flaky-checks-cpu-shared, 2026-10-07)
+- A guide walk must accept a step the game itself calls done. Why: the Tool step is done by any tool made, and a zone 4 boss can drop a Carapace Pick before the Workbench when the walk's idle passes run the game ahead of a slow screen; the walk then failed on "tool never shown". (flaky-checks-cpu-shared, 2026-10-07)
+- Bound a real-time check by wall deadline (60 to 90 s), not by a count of 100 ms polls. Why: the turn UI fight sample gave up after 12 s, and on a shared CPU the frame loop gives the game fewer game seconds per second. To reproduce load locally, pin `node tools/check.mjs --only=... --jobs=1` and a few busy loops to one core with `taskset -c 0`. (flaky-checks-cpu-shared, 2026-10-07)
 - Run the `--long` health run only on 3 or more cores (about 2.5 min, 7 min CPU). It ignores `--only`, known P2. (f-health-long, 2026-10-06)
 
 - Story cards stack in the first minute (three before the first fight on a fresh save) and their count varies by timing: a proof route uses `tap-if "Skip"`, never a fixed number of taps. Predicted: routes replay stable; measured: one fixed-skip route failed 1 run in 3 locally, `tap-if` passed 5 of 5. (sys-proof-ci, 2026-10-06)
@@ -153,6 +158,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Do not read the "dominant build" number as a game finding while the bot's training split is identical per hero. (f-health-long)
 - Count Stars found, lit Stars and repeat trophy drops correctly in health metrics. Why: three Codex P1s on these. (f-health-long)
 - Data fetchers must fail loudly per source. Why: a quiet empty page overwrote good data twice; 623 duplicate Steam reviews and truncated Apple pulls got through. Re-run the idea gate whenever the counts change. (f-fun-library, 2026-10-05)
+- Before tuning a boss on walk losses, check the walk learned its abilities and spent its points. Why: the bot gave up on Next Up's Learn (the detail sheet, outside `.nu-flash`) and fought zone 10 with one ability, 58 tries; with them it takes 0 to 2 and the wall moves to zone 13. A walk that hangs usually has a card or a Next Up sheet covering the bar, so close the sheet by its `.bsheet-x` and read the newest moment card. (walk-bot-learns-abilities, 2026-10-07)
 
 ## Process and Autopilot
 

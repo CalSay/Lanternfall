@@ -194,6 +194,9 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
   .app .game > .sbar { grid-column: 1 / -1; grid-row: 5; }
   .app .game > .ob-bub.dock { grid-column: 1 / -1; grid-row: 4; }
   .app .game .ctrl-switch { display: none; }
+  .hud-zone { flex-wrap: wrap; column-gap: 8px; row-gap: 0; }   /* the place name keeps its full width; the line after it drops under it */
+  .hud-zone .zname { flex: none; max-width: 100%; }
+  .hud-zone .zsub { flex: 0 1 auto; }
   .app .game .modeseg button { min-width: 0; padding: 0 7px; min-height: 36px; font-size: calc(12px * var(--display-k)); }
   .app .game .modeseg .mode-ic { display: none; }
   .top .zstep { display: contents; }
@@ -207,11 +210,12 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
   .top.nav-pill .act-pill .ap-chev { display: none; }
   .top #zPrev { order: -1; }
   .top #zNext { order: 2; }
-  .app .game .nu-chip { min-height: 44px; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 2px 6px; padding: 4px 6px 6px 6px; }
+  .app .game .nu-chip { min-height: 44px; grid-template-columns: max-content minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 2px 6px; padding: 4px 6px 6px 6px; }
   .app .game .nu-chip .nu-ic { display: none; }   /* the width goes to the goal's words */
   .app .game .nu-chip .nu-cbody { display: contents; }
-  .app .game .nu-chip .nu-eye { grid-column: 1; grid-row: 1; align-self: center; white-space: nowrap; min-width: 0; overflow: hidden; font-size: 9px; letter-spacing: .08em; }
-  .app .game .nu-chip .nu-cst { grid-column: 2; grid-row: 1; }
+  .app .game .nu-chip .nu-eye { grid-column: 1; grid-row: 1; align-self: center; white-space: nowrap; min-width: 0; overflow: visible; font-size: 12px; letter-spacing: .04em; }
+  .app .game .nu-chip .nu-eye .menu-nav-ic { display: none; }
+  .app .game .nu-chip .nu-cst { grid-column: 2; grid-row: 1; justify-self: start; min-width: 0; }
   .app .game .nu-chip .nu-more { grid-column: 3; grid-row: 1; }
   .app .game .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; font-size: 12.5px; }
   .app .game .nu-chip .nu-chev { display: none; }
@@ -894,6 +898,10 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .cb-mid { min-width: 0; }
 .cb-nm { display: flex; gap: 6px; align-items: baseline; font: 600 calc(15px * var(--display-k))/1.15 var(--display); white-space: nowrap; min-width: 0; }
 .cb-nm > span:first-child { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {   /* portrait: a long station name wraps, the level drops under it */
+  .cb-nm { flex-wrap: wrap; white-space: normal; column-gap: 6px; row-gap: 0; }
+  .cb-nm > span:first-child { overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+}
 .cb-lv { font: 500 12px var(--body); color: var(--muted); letter-spacing: .04em; flex: none; }
 .cb-line { font-size: 12.5px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb.busy .cb-line { color: var(--ember); }
@@ -2358,7 +2366,7 @@ span.cf-d { font-weight: 600; }
   padding: 8px 0 8px 8px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810;
   font: 600 14px/1.3 var(--body); color: var(--bone); }
 .ob-bub[hidden] { display: none; }
-.ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
+.ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 12px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
 .ob-bub.ok-row:not(.side) { grid-template-columns: 48px minmax(0, 1fr) auto; padding-right: 8px; }
 .ob-bub.ok-row:not(.side) .ob-x { display: none; }
 .ob-bub.ok-row:not(.side) .ob-txt { grid-row: 1 / span 2; }
@@ -8253,17 +8261,17 @@ STORY_BEATS.npc.tam = { at: 'champPost:regent', who: "Tam, Hesketh's nephew", li
   "Thank you. I'll tell the others you came."
 ] };
 STORY_BEATS.npc.tobin = { at: 'champPost:regent', not: 'tobin', who: 'Tobin, minding the cellar door', lines: [
-  'A boy in a pot helm stands guard at a cellar door.',
-  "Somebody has to mind the door. I'm good at doors.",
-  "I kept your spare sword. It's heavier than it looks.",
-  "Go on. I'll mind this one till everyone's out."
+  'A boy in a pot helm guards a cellar door, sword on his knee.',
+  '"Tobin. Somebody has to mind the door. I\'m good at doors."',
+  '"You ran so it would follow. We hid so it would miss us."',
+  '"That\'s everyone out. Room at your fire? I bring my helm."'
 ] };
 // Batwing Caves
 STORY_BEATS.npc.wren = { at: 'champPost:cantor', not: 'wren', who: 'Wren, who grew up in these caves', lines: [
-  'A girl with a bow comes out of the dark without a sound.',
-  'I grew up here. I learned to aim at whatever made a noise.',
-  'Then one night the caves sang my name.',
-  "It's quiet now. I'll miss it a little. Don't tell anyone."
+  'A girl with a bow steps out of the dark without a sound.',
+  '"I\'m Wren. I grew up here, aiming at any noise."',
+  '"One night the caves sang my name. I never answered."',
+  '"Quiet now. I\'ll miss these caves. Room at your camp?"'
 ] };
 // The Bonefield
 STORY_BEATS.npc.anselm = { at: 'champPost:marshal', who: 'Anselm, the bellringer', lines: [
@@ -8273,10 +8281,10 @@ STORY_BEATS.npc.anselm = { at: 'champPost:marshal', who: 'Anselm, the bellringer
   "Not the last toll. That one's for later."
 ] };
 STORY_BEATS.npc.pip = { at: 'champPost:marshal', not: 'pip', who: 'Pip, checking the graves', lines: [
-  'A girl in a scorched coat is setting a grave on fire.',
-  'The book says the dead stay down. I like to check.',
-  'Nobody got up. Not one.',
-  "Good. That's a relief, honestly."
+  'A girl in a scorched coat is setting a grave alight.',
+  '"Pip. The book says the dead stay down. I like to check."',
+  '"Nobody got up. Good. That\'s a relief, honestly."',
+  '"All checked. Can I come to your camp? I\'ll bring matches."'
 ] };
 // Beetle Barrows
 STORY_BEATS.npc.maren = { at: 'champPost:engine', who: 'Maren, keeper of the Barrow Lamp', lines: [
