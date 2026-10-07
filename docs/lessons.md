@@ -80,6 +80,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## UI and menus
 
+- Keep a banner docked under the hero short: in the guide-side layout put the eye and title on one row so the banner is about 46 px tall and clears the hero's legs at 740x360 and 844x390. Why: the 64 px banner covered the hero's lower body for the 2.6 s it was up while a guide tip showed. Measure a banner against the hero box with a tip up, not against an empty stage. (hero-sheet-ability-cover, 2026-10-07)
 - Fit every sub-tab label with all views unlocked at 360px, using native-size icons above the text when a row has five views. Keep status badges outside ability art and hot files. (wire-menu-icons, 2026-10-06)
 
 - Away card: lead with "While away, gathering continues and fighting stops", show it even when nothing was earned, put the work-limit bar below results. Why: the same 8 hours felt opposite depending on what the hero was doing; Codex P1 for the missing idle-fighter card. (away-clarity, 2026-10-06)
