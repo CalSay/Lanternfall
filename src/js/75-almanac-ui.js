@@ -220,7 +220,7 @@
         setTxt(r.desc, g.claimed ? 'Reward collected.' : room || 'Reward: ' + almanac.rewardText(rw));
         setIc(r.ic, iconOf({ ic: almanac.goalIcon(g) }));
         const ready = g.done && !g.claimed;
-        if (ready && !r.ready) r.dz.set(true);   // a finished goal opens, so its reward shows before you claim it
+        if (ready !== !!r.ready) r.dz.set(ready);   // a finished goal opens, so its reward shows before you claim it
         r.ready = ready;
         r.row.classList.toggle('active', g.done && !g.claimed);
         r.row.classList.toggle('claimed', g.claimed);
