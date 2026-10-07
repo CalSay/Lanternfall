@@ -3124,6 +3124,12 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-bot { position: absolute; left: 8px; right: 8px; bottom: 30px; z-index: 5; display: grid; justify-items: center; gap: 4px; pointer-events: none; }
 .tv-bot[hidden] { display: none; }
 .tv-bot .tv-time { width: min(300px, 100%); }
+/* hit feel: the clean-streak lamps in the hero row (visual only) */
+.tv-lamps { display: flex; gap: 1px; align-items: center; min-height: 14px; }
+.tv-lamps[hidden] { display: none; }
+.tv-lamp { width: 14px; height: 14px; image-rendering: pixelated; opacity: .55; }
+.tv-lamp.on { opacity: 1; filter: drop-shadow(0 0 3px rgba(255, 210, 122, .8)); }
+@media (prefers-reduced-motion: reduce) { .tv-lamp.on { filter: none; } }
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
 .tw-scene { display: flex; justify-content: center; width: 100%; min-height: 144px; margin: 0; padding: 0; overflow: hidden; background: #0E0B1E; border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
 .tw-scene:hover, .tw-scene:focus-visible { border-color: var(--gold); }
@@ -21220,15 +21226,16 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   const DOT_KIND = { burn: 1, bleed: 1, swarm: 1, curse: 1 };
   // what a turn hit was, on its number: a Burn tick in orange with the Burn icon, Bleed in red with its stacks, ...
   const TURN_SRC = { burn: ['#FF9E3D', 'burn'], ignite: ['#FF9E3D', 'burn'], bleed: ['#E0524F', 'bleed'], swarm: ['#C9A6FF', 'blind'], curse: ['#D7B8FF', 'curse'] };
-  cbTurnDamageFoe = (f, amount, kind, crit, dt, n) => {
+  cbTurnDamageFoe = (f, amount, kind, crit, dt, n, tier) => {
     if (!alive(f) || !(amount > 0)) return 0;
     const a = Math.max(0, amount), src = TURN_SRC[kind];
     f.hp -= a; if (!DOT_KIND[kind]) f.hit = 0.08; ST.heroDmg += a; if (!DOT_KIND[kind]) ST.heroHits++;
     FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (n > 1 ? ` x${n}` : '') + (crit ? '!' : '');
     FLOAT_EV.color = src ? src[0] : kind === 'counter' || crit ? '#FF9E3D' : '#FFFFFF';
     FLOAT_EV.big = !!crit || kind === 'counter' || kind === 'ignite' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
-    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = !src && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit;
+    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = !src && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit; FLOAT_EV.tier = tier || '';
     emit('float', FLOAT_EV);
+    FLOAT_EV.tier = '';
     if (crit) emit('crit', { tap: true });
     if (f.hp <= 0) foeDies(f, 0, kind || 'turn');
     return a;
@@ -21282,7 +21289,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
 
   // Hero hits (50-sim strike -> here). src 'hero' or 'party' (the Lightkeeper's lost damage).
   let heroCrit = false;
-  const FLOAT_EV = { txt: '', color: '', big: false, x: undefined, y: undefined, dt: '', rel: 0, crit: false };   // reused: the stage copies it
+  const FLOAT_EV = { txt: '', color: '', big: false, x: undefined, y: undefined, dt: '', rel: 0, crit: false, tier: '' };   // reused: the stage copies it (tier: hit-feel, 'big' | 'counter' on a turn hit)
   cbStrike = (amount, src, at, label, color, big) => {
     if (src !== 'party') ST.heroHits++;   // AC2: hero strikes (the Hot Streak secret)
     if (!anyFoe()) return;
@@ -21308,7 +21315,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     }
     // S1 (core-2 2.1): the number carries its type icon and a weak / resisted mark; a crit ends in "!"
     FLOAT_EV.txt = label || fmt(d || amount) + (big ? '!' : ''); FLOAT_EV.color = color; FLOAT_EV.big = big;
-    FLOAT_EV.x = at ? at.x : undefined; FLOAT_EV.y = at ? at.y : undefined; FLOAT_EV.dt = ty; FLOAT_EV.rel = rel; FLOAT_EV.crit = !!strikeCrit;   // SOLO2: the crit number's look
+    FLOAT_EV.x = at ? at.x : undefined; FLOAT_EV.y = at ? at.y : undefined; FLOAT_EV.dt = ty; FLOAT_EV.rel = rel; FLOAT_EV.crit = !!strikeCrit; FLOAT_EV.tier = '';   // SOLO2: the crit number's look
     emit('float', FLOAT_EV);
     burst(0.66, 0.6, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5);
   };
@@ -25642,7 +25649,10 @@ const TURN_LIVE_IO = {
   healFoe: d => { const f = TURN_LIVE && TURN_LIVE.foe; if (f && !f.dead && f.hp > 0) { f.hp = Math.min(f.max, f.hp + d); emit('float', { txt: '+' + fmt(d), color: '#6FCB6A', big: false }); } },
   slotId: slot => soloEquipped()[slot] || null,
   damageFoe: (d, kind, crit, dt, n) => {
-    const f = TURN_LIVE.foe, got = cbTurnDamageFoe(f, d, kind, crit, dt, n), H = TURN_TUNE.hitstop;
+    const f = TURN_LIVE.foe, H = TURN_TUNE.hitstop, dot = /^(burn|bleed|swarm|curse)$/.test(kind);
+    // hit feel: the number's tier, for its size and sting (display only: nothing below reads it)
+    const bigHit = !dot && !!f && d >= 0.2 * f.max, tier = kind === 'counter' ? 'counter' : crit ? 'crit' : bigHit ? 'big' : '';
+    const got = cbTurnDamageFoe(f, d, kind, crit, dt, n, tier);
     // hit feel: a crit or a hit for a fifth of the foe's HP stops the clock for a beat and shakes the stage
     if (got > 0 && kind !== 'counter' && !/^(burn|bleed|swarm|curse)$/.test(kind)) {
       const big = f && got >= 0.2 * f.max;
@@ -26990,9 +27000,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // SOLO2 (owner): a crit's number pops (up to x1.35 fast, settling to x1 by CRIT_POP s), rises a little higher and
   // slower (it lives CRIT_LIFE s), with three pixel sparks behind it. Reduced motion: no pop, no rise, static sparks.
   const CRIT_POP = 0.18, CRIT_LIFE = 1.2;
+  // hit feel: a turn hit's tier scales its number (normal 1; the counter is the biggest, then a crit's pop and sparks, then a big hit)
+  const TIER_SIZE = { big: 1.15, crit: 1.25, counter: 1.3 };
   let critFloats = 0;   // crit numbers raised (stageStats: the check reads it)
   // S1 (core-2 2.1): dt, rel: a hit's damage type (its icon goes in front) and 1 weak / -1 resisted (a mark after)
-  function pushFloat(txt, color, big, x, y, dt, rel, crit) {
+  function pushFloat(txt, color, big, x, y, dt, rel, crit, tier) {
     const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
     // Each new text takes the first free row (0-3) near its spot, one line below the texts still
     // rising there; when all rows are busy the oldest text there fades out and gives up its row.
@@ -27007,7 +27019,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const f = free || last;
     f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.crit = !!crit; f.max = crit ? CRIT_LIFE : 0.95; f.life = f.max; f.x = fx;
     if (crit) critFloats++;
-    f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0;
+    f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0; f.tier = tier || '';
     f.ax = foe && foe.fr ? foe.x : SW * 0.7;
   }
   // Party numbers (C4): hits, heals and shields over each member, from unitHit / unitHeal. Each member
@@ -27920,7 +27932,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // ================= events =================
   // W1-D (playtest-2 P2-5): leaving a fight for a gather scene drops the combat numbers still rising (a COUNTER floated over the woodcutting)
   on('sceneReset', () => { if (S.activity !== 'fight') { for (const f of floats) f.on = false; for (const n of nums) n.on = false; } });
-  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel, f.crit); if (f.color === '#B58CFF') partyPulse(); });
+  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel, f.crit, f.tier); if (f.color === '#B58CFF') partyPulse(); });
   on('burst', b => {
     // Core bursts use the old stage fractions; the ones aimed at the foe are re-centred on it (on a
     // pack: the foe that died this instant, its dead timer just set, else the shown foe).
@@ -28503,7 +28515,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     for (const f of floats) {
       if (!f.on) continue;
       const age = f.max - f.life, pop = reduced ? 1 : f.crit ? critPop(age) : age < 0.08 ? 1.35 - age * 4 : 1;
-      const base = (f.big ? 21 : 15) * tz * TXT_K;
+      const base = (f.big ? 21 : 15) * (TIER_SIZE[f.tier] || 1) * tz * TXT_K;
       const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
       // one start line per side (just over the foe's head, or half way down the band), then each
       // row one line higher; a row that would start above the band starts at its top and fades sooner
@@ -28517,7 +28529,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       const fx = onFoe && (packN > 1 || gath) ? f.ax + (f.x - 0.7) * SW * 0.5 : f.x * SW;
       const hw = f.bw * pop / 2, x = Math.max(hw, Math.min(xr - hw, fx));
       ctx.globalAlpha = al;
-      if (f.crit) critSparks(x, y - f.by * 0.45, f.bw, age);
+      if (f.crit || f.tier === 'counter') critSparks(x, y - f.by * 0.45, f.bw, age);
       drawText(f, x, y, pop);
     }
     // party numbers: over each member's head, stacked upward, rising a little and fading
@@ -43154,10 +43166,44 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   resBtn.addEventListener('pointerdown', e => e.stopPropagation());
   resBtn.addEventListener('click', e => { e.stopPropagation(); if (!resTip.hidden) { resTip.hidden = true; return; } showRes(5); });
   heroRow.append(resBtn, chips);
+  // hit feel: a row of five lamps counts clean defences in a row (a parry or dodge pressed close to the hit). Just for show:
+  // it gives no power and is never saved. Any landed hit, early or late press, or loose defence puts the lamps out.
+  const lamps = el('span', 'tv-lamps'); lamps.setAttribute('role', 'img'); lamps.title = 'Clean streak. Just for show.'; lamps.hidden = true;
+  const lampLit = typeof ICON === 'object' && ICON.dc_wlamp ? iconURL('dc_wlamp', '#FFD27A', { 2: '#3A3444', 6: '#9A8260', 5: '#FFF3C4' }) : '';
+  const lampOff = typeof ICON === 'object' && ICON.dc_wlamp ? iconURL('dc_wlamp', '#4E4060', { 2: '#241C2C', 6: '#4E4060', 5: '#6B5E7C' }) : '';
+  const LAMPS = 5; let streak = 0, shownStreak = -1, pendClean = null;
+  const lampDraw = () => {
+    if (streak === shownStreak) return; shownStreak = streak;
+    lamps.hidden = false; lamps.setAttribute('aria-label', `Clean streak ${streak} of ${LAMPS}`);
+    lamps.replaceChildren(...Array.from({ length: LAMPS }, (_, i) => img('tv-lamp' + (i < streak ? ' on' : ''), i < streak ? lampLit : lampOff)));
+  };
+  const lampSet = n => { streak = n; lampDraw(); };
+  // what has shown since the page opened (data-seen: 'clean', and each number tier). Display only: the proof route reads it
+  const seen = new Set(), seenAdd = k => { if (!seen.has(k)) { seen.add(k); lamps.dataset.seen = document.body.dataset.hitSeen = [...seen].join(' '); } };   // on body too, so a route can read it after the fight has ended
+  on('float', f => { if (f && f.tier) seenAdd(f.tier); });
+  // grade at the press, from the snapshot (the windows in force, how far from the hit); the stamp shows when the hit meets or misses
+  const defPress = kind => {
+    const q = typeof turnCombatSnapshot === 'function' ? turnCombatSnapshot() : null; if (!q || !q.closesAt) { pendClean = null; return; }
+    const left = q.closesAt - q.now, w = q.closesAt - (kind === 'parry' ? q.parryOpensAt : q.dodgeOpensAt);
+    pendClean = left >= 0 && left <= Math.min(0.5 * w, 0.1) ? kind : '';
+  };
+  on('soloParry', p => { if (!p) return; if (p.res === 'parry') defPress('parry'); else { pendClean = null; lampSet(0); } });
+  on('soloDodge', p => { if (!p) return; if (p.res === 'dodge') defPress('dodge'); else { pendClean = null; lampSet(0); } });
+  on('foeContact', p => {
+    if (!p) return;
+    if (p.res === 'hit') { pendClean = null; lampSet(0); return; }
+    if (p.res !== 'parry' && p.res !== 'dodge') return;   // a blind miss holds the streak
+    const clean = pendClean === p.res; pendClean = null;
+    if (!clean) { lampSet(0); return; }
+    lampSet(Math.min(LAMPS, streak + 1)); seenAdd('clean');
+    emit('float', { txt: p.res === 'parry' ? 'PARRIED!' : 'DODGED!', color: '#F2C14E', big: true, x: 0.27, y: 0.34 });
+    emit('defGrade', { kind: p.res, clean: true, streak });
+  });
+  on('fightStart', () => { pendClean = null; lampSet(0); });
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
   const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
   // along the stage's bottom edge: the timing bar (while the foe winds up)
-  const bot = el('div', 'tv-bot'); bot.append(bar);
+  const bot = el('div', 'tv-bot'); bot.append(lamps, bar);   // hit feel: the lamps sit just above the timing bar, clear of the place caption and the resource row
   if (box) box.append(wrap, bot);
   // a timed ability's ring: it closes on the foe; press the ability (or Attack) again as it meets the inner circle
   const ring = el('div', 'tv-ring'), ringO = el('i', 'tv-ring-o'), ringI = el('i', 'tv-ring-i'), ringT = el('b', 'tv-ring-t', 'Now!');
@@ -43329,6 +43375,10 @@ const SFX = (() => {
     hit: () => { noise(0.05, 1800, 0.25); tone(220, 110, 0.06, 'square', 0.12); },
     party: () => tone(330 + Math.random() * 60, 200, 0.04, 'triangle', 0.08),
     crit: () => { noise(0.09, 2600, 0.4); tone(660, 180, 0.12, 'square', 0.25); },
+    // hit feel (card hit-feel): one sting per number tier beyond hit and crit, and a chime for a clean parry or dodge
+    big: () => { noise(0.07, 1400, 0.4); tone(180, 70, 0.16, 'square', 0.28); tone(90, 60, 0.2, 'sine', 0.3, 0.02); },
+    counter: () => { noise(0.1, 2200, 0.4); tone(523, 523, 0.07, 'square', 0.22); tone(784, 392, 0.2, 'square', 0.26, 0.06); },
+    cleanDef: () => { tone(1568, 1568, 0.05, 'triangle', 0.22); tone(2093, 2093, 0.14, 'triangle', 0.2, 0.05); },
     kill: () => { tone(988, 988, 0.05, 'square', 0.18); tone(1319, 1319, 0.1, 'square', 0.18, 0.05); },
     ore: () => { tone(1800, 1500, 0.07, 'triangle', 0.35); tone(2700, 2400, 0.05, 'sine', 0.15, 0.01); },
     wood: () => { noise(0.08, 400, 0.5); tone(140, 70, 0.1, 'sine', 0.4); },
@@ -43350,8 +43400,9 @@ const SFX = (() => {
 window.addEventListener('pointerdown', SFX.start, true);
 
 // ================= event wiring =================
-on('float', ({ color }) => {
-  if (color === '#FFFFFF') SFX.play('hit');
+on('float', ({ color, tier }) => {
+  if (tier === 'big' || tier === 'counter') SFX.play(tier);
+  else if (color === '#FFFFFF') SFX.play('hit');
   else if (color === '#FF9E3D') SFX.play('crit');
   else if (color === '#B58CFF' && Math.random() < 0.35) SFX.play('party');
 });
@@ -43392,6 +43443,7 @@ document.addEventListener('click', e => {
   b.addEventListener('click', e => { e.stopPropagation(); S.settings.sound = !S.settings.sound; draw(); save(); SFX.play('buy'); });
   draw(); st.append(b);
 })();
+on('defGrade', p => { if (p && p.clean) SFX.play('cleanDef'); });
 
 // ---- src/js/76-create.js ----
 // 76-create: character creation (new games), the one-time "Choose your path" screen (existing saves,
