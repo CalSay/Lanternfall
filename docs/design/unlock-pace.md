@@ -35,7 +35,7 @@ arrived in the same second. Zone numbers are a bad clock for spreading them (the
 player at minute 25), and pushing Hero to zone 3 would strand the first gold. So every unlock rule stays, and a governor
 spaces what arrives:
 
-- At most one new row per 60 s of play (`ONBOARD_TUNE.gap`; paused time does not count), the first ready one in `FEATURES`
+- At most one new row per 90 s of play (60 s until unlock-gap-trial) (`ONBOARD_TUNE.gap`; paused time does not count), the first ready one in `FEATURES`
   order: Hero, Gather, Next Up, then the away strip (`awaynote`, silent).
 - A row opens at once when the player's own act or a drop opened it: walking to gather, the fire (Camp), the Workbench
   (Craft), the Tavern built, the first star (Stars), the first unique (Uniques). The raid opens as before (online layer).

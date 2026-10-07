@@ -621,6 +621,18 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   they own (an all-met default). `STORY_TUNE.joinOnMeet = false` switches back to all three at the start. A join counts as a new thing for the
   spacing governor, so the next queued unlock (the Codex at zone 10) waits at least 1:30. Coverage
   areas 1, 4, 14 and 15.
+- **Unlock gap 90 s, F4 counts released unlocks (unlock-gap-trial, Opus judge 2026-10-07; Cal can veto).**
+  `ONBOARD_TUNE.gap` goes from 60 to 90. F4 (at most 2 new things in any 3 minutes of the first 30, 4 in any 10 after)
+  now counts only what the spacing governor releases; a thing a player act or a drop opened (its row's `now()` true) is
+  listed, not counted. Player acts and drops never wait. Why: no gap spaces the player's own acts, so the old F4 stayed
+  red whatever the gap (gap 120 still showed 4 in 3 minutes, a found Star). 60 s allowed 3 released unlocks in 3 minutes;
+  90 s is the smallest gap that allows at most 2. Check bounds: Gather within gap + 4 s of the first boss (94 s), the fire
+  stays within 150 s (measured 93 s), Next Up within 6:00 (was 3:00; measured 5:32), warm Bounties by 8:30, Bestiary and
+  Almanac by 13:00. Cost: Next Up arrives about 2 minutes later and the first ten minutes hold fewer tabs. Outside
+  evidence (inference only; the wikis could not be fetched): idle games such as Cookie Clicker, Melvor and IdleOn gate
+  unlocks on player action or thresholds, never a wall clock, and show about 4 to 6 new things in 10 minutes (90 s gives
+  8, one silent; 60 s gave 11). It supports keeping acts off the clock and decided nothing else. Replaces the 60 s gap
+  of story-unlock-gates. Files: `docs/design/unlock-pace/judge.md` (prior), walk data in the PR.
 - **F3, the big-moment pace** (amends the self-improving plan's scorecard). Minutes 0 to 20: a big moment at least every
   5 minutes, no gap over 8. From minute 20 to the zone 10 Champion (or minute 60, if that comes first): a big moment at
   every zone's first clear from 5 to 10, no gap over 8 on the casual walk. The 2026-11-02 review sets the pace after
