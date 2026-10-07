@@ -100,7 +100,7 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 
 - **Zones 5-12 are measured on the first-hour set** (boss-tiers PR 1, 2026-10-07): Wren sits in band; Pip and Tobin above it under
   gaps. A kept-up hero (report-only rows) still wins them 100%. Zones 13-15 are now on the same footing (boss-tiers PR 3); the elites are too easy for a kept-up hero
-  (foe-moves-by-type). Zones 16-24 Captains are gated on the kept-up hero: Wren and Pip casual 57-85, Tobin 100 under gaps.
+  (foe-moves-by-type). Zones 16-24 Captains are gated on the kept-up hero: Wren and Pip casual 54-85, Tobin 100 under gaps.
 - **Zones 25-34 Captains are in band for Wren and Pip** (mid-zone-wall, 2026-10-07: casual 56-80, good 100%; z34 Wren sits 4 under, inside the seed noise). Tobin wins
   all of them casually (boss-tiers owns the +10 gap).
 - **The Fenmother is easier than the Captains around her** (boss-tiers): 67-100% casual against a 20-40 band; zone 36

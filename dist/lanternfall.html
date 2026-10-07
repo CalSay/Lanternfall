@@ -25178,7 +25178,7 @@ function turnFoeSetup(f, z, o) {
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
   // zones 4-24 pay on the old length (boss-tiers PRs 1 and 3 lengthened those fights; gold and XP stay as they were)
-  const payLen = zb && !region && z <= 24 ? turnZoneLine([[3, 1], [10, 1.8], [15, 2.5], [20, 2.4], [25, 1.0]], z) : len;
+  const payLen = zb && !region && z <= 24 ? turnZoneLine(z <= 12 ? [[3, 1], [10, 1.8], [15, 2.5]] : [[12, 1.8], [15, 2.5], [20, 2.4], [25, 1.0]], z) : len;
   const pay = 1 + (payLen - 1) * B.payX;
   f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 * pay : f.elite ? C.eliteGold : 1);
   f.xp = Math.ceil(Math.ceil(1.5 * z) * T.xpX * (f.boss ? 5 * pay : f.elite ? 2 : 1));
