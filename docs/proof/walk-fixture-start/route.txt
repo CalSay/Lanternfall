@@ -1,0 +1,48 @@
+# seed: 1
+# Proof for card walk-fixture-start: fixture pre-champion (tests/proof-fixtures/save-pre-champion.json) is Wren on zone 5 with the Briar Regent
+# next, so the route reaches the first Champion clear and the Tobin meet scene (#159) without playing zones 1 to 4.
+new pre-champion
+wait 2
+tap-if "Got it"
+expect "The Briar Regent"
+shot champion-walk-in
+tap-if "Continue"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+expect "1 of 3"
+shot regent-falls
+tap "Next"
+wait 1
+expect "Tam"
+tap "Next"
+wait 1
+expect "Tobin"
+expect "I bring my helm"
+shot tobin-meet-scene
+tap "Continue"
+wait 1
+expect "The Briar Regent falls"
+shot champion-cache

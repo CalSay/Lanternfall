@@ -1,0 +1,14 @@
+# seed: 1
+# Proof for card first-gold-and-camp-strip: the buildings in the camp picture are tap targets. A tap opens a card with what the building
+# does, one tip, a live count toward its first item, and a button to its screen. Plays the mid fixture (camp open, Forge and Tavern built).
+new mid
+wait 2
+tap-if "Continue"
+tap "Camp"
+shot camp-strip
+tap "Forge, level"
+expect "Makes weapons and armour."
+shot forge-card
+tap "Tavern, level"
+expect "Where you hire gatherers."
+shot tavern-card

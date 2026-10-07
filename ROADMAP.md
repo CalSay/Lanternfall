@@ -1,54 +1,52 @@
 # Lanternfall roadmap
 
-Owner decisions (2026-09-27):
+Owner decisions (2026-09-27), still standing:
 
 - **No prestige or resets.** Progress is permanent. Freshness comes from mastery, collections, build variety and new regions.
 - **Single-player first.** World raid and tavern stay optional, light extras.
-- **Active + idle mix.** Idle most of the time, with active moments that reward attention.
 - **Store launch possible, monetisation undecided.** Keep doors open: original art only, no restrictive third-party assets, nothing pay-to-win designed in.
 - **Owner role: player.** The coordinator drives the roadmap and brings playable builds and decisions at milestones.
 
-## Phase 0: modular sprint (in progress)
+The 2026-09-27 "active + idle mix" now applies to gathering only: combat is active only (owner, 2026-10-01).
+Every other owner decision is in [docs/DECISIONS.md](docs/DECISIONS.md). What the game has today is in
+[docs/GAME.md](docs/GAME.md).
 
-- Split the code into modules with extension hooks, a build script, save checks and a headless balance simulator
-- Zone mastery and bestiary (permanent, no resets)
-- Bounty board and achievements
-- Sound effects and an early-game balance pass
+## The target: 1.0 is Season 1
 
-## Phase 1: depth and active play
+Five regions (the Hollow, the Sunken Coast, the Emberwaste, the Pale Reach, the Gloamvale), each 7 areas x 5 zones,
+ending with the first fight against the Voice. 32 heroes, two named gatherers per resource job, and the 1.0 extras in
+[DECISIONS.md](docs/DECISIONS.md) ("The game").
 
-Spec: [docs/design/party-and-classes.md](docs/design/party-and-classes.md) covers hero classes and
-abilities, companions as recruits, party combat with boss telegraphs, companion gear and the
-save migration, in three build stages (A: classes and visible party, B: recruits and gear,
-C: enemy attacks and telegraphs).
+## Now: the combat overhaul (owner order, 2026-10-01)
 
-Active moments first, because they define the feel:
+Each step finishes before the next starts ([balance-roadmap.md](docs/design/balance-roadmap.md)):
 
-- **Hero abilities:** 2 to 3 tap skills on cooldowns, such as Lantern Flare (a burst of damage) and Rally (a party speed boost), unlocked through play
-- **Boss mechanics:** zone and raid bosses telegraph attacks you can tap to parry or dodge. Missing one costs time, not progress.
-- **Expeditions:** short runs with modifiers (monsters heal, no party, double essence) that bring rewards back without resetting anything
+1. **Hero abilities:** built (C29, 2026-10-02): 42 abilities, Scrolls, talents.
+2. **Enemy overhaul:** the 215-enemy roster is designed ([enemies-c22-final-contract.md](docs/design/enemies-c22-final-contract.md));
+   zones 1 and 2 have their monsters in the game. The rest wait for art packs.
+3. **Number squish and balance:** first numbers are in the turn build; the full pass is proposed in
+   [balance-c27-power-curve.md](docs/design/balance-c27-power-curve.md). Progression gaps: [progression-stalls.md](docs/design/progression-stalls.md).
 
-Then build depth:
+## Next
 
-- **Gear:** affixes, set bonuses and more uniques with real trade-offs
-- **Talent tree:** points from levels, with free respecs
-- **Region 2:** from about zone 35, bringing new materials, monsters and mechanics plus light story beats
-- **Onboarding:** a guided first ten minutes
+- The turn fight for the Deepwell and the Provings (they still use the real-time fight).
+- Ascension and subclasses, Hallowed, hero quests, more playable heroes.
+- The story rewrite proposed in [story-c28.md](docs/design/story-c28.md).
+- Region 2 content, then Regions 3-5.
+- Gear and resources: grades 6-15, production chains, sockets and enchanting, the Armoury.
+- Equipment art on the heroes ([equipment-art.md](docs/design/equipment-art.md)).
 
-## Phase 2: app-ready foundation
+## Open polish (from the 2026-10-01 menu audit)
 
-- **Codebase:** TypeScript, a Vite build and automated tests, with the simulator guarding balance
-- **Online interface:** the online layer sits behind an interface, so claude.ai capabilities and the app's own backend can be swapped. Cloud saves come with this.
-- **Settings and performance:** a settings screen (sound, reduced motion, number format) and a performance pass on low-end Android
-- **Android test build:** a Capacitor build installed on the owner's phone
+- Camp > Raid is a dead screen when offline (online layer: needs a task that allows it).
+- Hero > Team repeats Craft > Gear; merge it into Training or give it hero switching.
+- Stars: a dot on the Hero tab while points are unspent.
+- The bell badge can count a notice the sheet does not show.
 
-## Phase 3: launch prep (if we go for it)
+## Later
 
-- **Art and audio polish:** refine the procedural style or commission an artist
-- **Store basics:** accessibility, a privacy policy, the store listing and a monetisation decision
-- **Closed testing:** Google Play needs roughly 12 testers for 14 days for new personal accounts. Confirm the current rules before relying on this.
-
-## Phase 4: live game
-
-- Seasons and events
-- The world raid on our own backend
+- **App-ready foundation** (2026-09-27 plan): TypeScript and a Vite build, the online layer behind an interface (cloud
+  saves), a settings screen, an Android test build.
+- **Launch prep:** an installable web app, accessibility, sound and music, store basics, closed testing (Google Play
+  needs about 12 testers for 14 days for new personal accounts; check the current rules first).
+- **After 1.0:** Season 2, the Lantern Festival, online titles, a second evolution tier, monetisation.

@@ -1,0 +1,20 @@
+# seed: 1
+# Proof for card portrait-labels-fit: on a 360 px phone held upright, long Camp station names and the Gather place name read in full.
+# Shots: the Camp list (Enchanter's Table, Watchtower wrap instead of "Enchante..."), then Gather (Pine Grove / Mossy Hollow in full).
+new mid
+tap-if "Collect"
+wait 1
+tap-if "Skip this story"
+tap-if "Close"
+wait 1
+tap "Camp"
+wait 1
+tap-if "Continue"
+tap-if "Enchanter"
+wait 1
+tap-if "Continue"
+wait 1
+shot camp-station-names
+tap "Gather"
+wait 1
+shot gather-place-name

@@ -1,0 +1,576 @@
+# seed: 1
+# Proof for card hit-feel: the mid fixture (Tobin, Zone 20) fights on. The route attacks and presses Parry in 0.05 s steps, so some presses
+# land close to the hit. Acceptance: a clean parry stamps PARRIED! and lights a lamp, and the lamp row
+# is on screen. The row records what it has shown (clean, and each number tier) in data-seen, copied to body[data-hit-seen], so the expect
+# does not depend on one frame or on the fight still running.
+# Number tiers (counter, crit, big), sizes, stings and parity (windows, hit-stop, seeded sample) are checked in tools/check.mjs (hit-feel).
+new mid
+wait 2
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Continue"
+wait 1
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.03
+tap-if "Parry"
+wait 0.07
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.07
+tap-if "Parry"
+wait 0.03
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.05
+tap-if "Parry"
+wait 0.05
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.04
+tap-if "Parry"
+wait 0.06
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+tap-if "Attack"
+wait 0.06
+tap-if "Parry"
+wait 0.04
+tap-if "Dismiss this tip"
+tap-if "Continue"
+expect "#modeSeg"
+expect "body[data-hit-seen~=clean]"
+shot hit-feel-lamps
+burst hit-feel-burst

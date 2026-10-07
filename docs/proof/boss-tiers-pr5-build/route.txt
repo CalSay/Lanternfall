@@ -1,0 +1,13 @@
+# seed: 1
+# Proof for card boss-tiers-pr5-build: boss hit numbers and rally gates for zones 4-15, plus one rally line ("Rally! Only a Stun breaks its charge.")
+# and a Vigour tooltip line. The numbers are checked by `node tools/check.mjs` (section "boss tiers pr5") and `node tools/budget.mjs`.
+# The route plays the early fixture into a fight and checks the fight screen still draws whole.
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+expect ".hud.vs .mob"
+shot boss-tiers-pr5-build

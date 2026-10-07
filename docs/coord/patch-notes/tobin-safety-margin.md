@@ -1,0 +1,1 @@
+Zone bosses now hit Tobin harder. A casual Tobin wins most boss fights, not every one. He still wins about as often as Wren and Pip, and at a few bosses he trails them. Best shot: tobin-safety-margin.

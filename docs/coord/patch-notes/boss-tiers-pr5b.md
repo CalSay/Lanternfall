@@ -1,0 +1,1 @@
+Zone bosses from 16 to 34 now play the held swings and feints you learned earlier, rally three times, and hit for a share of your health that a big pool of health no longer shrinks. Best shot: boss-tiers-pr5b.

@@ -1,0 +1,27 @@
+# seed: 1
+# Proof for card bounties-anywhere: a Zone 8 fight with one finished bounty and one a kill from done.
+# Next Up says Claim and claims in place (no Fight menu); the board is also at Camp.
+new bty-ready
+wait 3
+expect ".nu-chip"
+tap "Next up"
+wait 1
+expect ".nu-row.ready"
+expect "Claim"
+shot next-up-list
+tap "Claim"
+expect "Bounty complete"
+shot claimed-in-place
+wait 20
+tap "Camp"
+expect "Hesketh's board"
+shot camp-board
+
+# Proof for card bounties-anywhere, part 2: chopping finishes a bounty; the ready notice shows; tapping it claims in place.
+new bty-gather
+wait 12
+expect "Bounty ready"
+shot ready-notice
+tap "Bounty ready"
+expect "Bounty complete"
+shot claimed-from-notice
