@@ -459,7 +459,7 @@ These are proposed display names. Existing saved IDs, effects and ownership rema
 | bone-tome | Bone Tome | The Unfinished Prayer | Proposed | iron bound dark tome with broad ivory jaw clasp and parchment page edges |
 | beetle-helm | Beetle Helm | Crown of the Burrow | Proposed | copper closed helmet with oversized beetle shell crest and short mandible cheek guards |
 | echo-cowl | Echo Cowl | Veil of the Unheard | Proposed | dark hide hood with swept bat ear crown and copper crescent brow |
-| spore-circlet | Spore Circlet | The Scarlet Vigil | Proposed | copper circlet with one scarlet mushroom jewel and branching fungal prongs |
+| spore-circlet | Spore Circlet | The Scarlet Vigil | Proposed | pale quartz circlet with scarlet mushroom cabochon and branching crystal prongs |
 | bone-mitre | Bone Mitre | Last Rites | Proposed | tall silver trimmed ceremonial mitre, ivory rib seam and dark amethyst inset |
 | quarry-plate | Quarry Plate | Mountain's Covenant | Proposed | silver plate torso with broad layered shoulders and one cracked stone shoulder inset |
 | marsh-leathers | Marsh Leathers | The Drowned Huntsman | Proposed | dark leather torso armour, iron clasps and asymmetric pale reed collar |
