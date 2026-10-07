@@ -139,6 +139,10 @@
   .app.guide-side .toasts.side-dock { grid-column: 2 / 4; grid-row: 3 / -1; left: 8px; right: 8px; bottom: 24px; z-index: 6; align-items: center; }
   .app.guide-side .toasts.side-dock .toast { width: min(100%, 320px); }
   .app.guide-side .toasts.side-dock .mm-t-sub { display: none; }   /* a short banner: the stage is short sideways */
+  /* eye and title share a row, so the banner clears the hero's legs (it overlapped them by 25 px at 740x360) */
+  .app.guide-side .toasts.side-dock .mm-toast { padding-top: 3px; padding-bottom: 3px; min-height: 0; }
+  .app.guide-side .toasts.side-dock .mm-t-tx { grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0 8px; }
+  .app.guide-side .toasts.side-dock .mm-t-say, .app.guide-side .toasts.side-dock .mm-t-line { grid-column: 1 / -1; }
 
   /* ---- sheets fit a short screen ---- */
   .sp-ov { align-items: center; }

@@ -5,9 +5,9 @@ player sees in minutes 0 to 60 updates this map in the same PR, or names the bea
 (`tools/walk.mjs`, card `qa-first-hour-walk`) plays a fresh save against it; in week 1 its measured times replace the
 estimated ones, and a beat more than 50% off its time becomes a finding.
 
-**The hook.** You carry the last lamp down a dark road, and every fight is yours to win with a well-timed parry. The
-first time you beat each boss, a Lantern Cache opens, lights the next stretch of road, and gives your hero something
-new to wear or wield.
+**The hook** (the Compass, `docs/design/compass.md`, owns it). You carry the last lamp down a dark road, and every fight
+is yours to win with a well-timed parry. Beat a boss for the first time and a Lantern Cache opens: what you won, a
+chance at a new look, and the next stretch of road.
 
 **Rules for every beat.**
 - At most one new thing (a tab, a system, a currency) per beat, and at most 2 in any 3 minutes of the first 30
