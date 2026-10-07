@@ -50,6 +50,9 @@ const TURN_TUNE = {
   // a normal foe's (and an elite's) hits x this, so a landed hit costs a hero who keeps up about 8-15% of their health
   // against the higher reference HP above (zone fights and the Deepwell; a Proving's foes hit for shares of your health)
   normHitX: [[3, 1], [8, 0.7], [34, 0.7], [35, 1]],
+  // an elite hits this much harder than a normal foe of its zone (foe-moves-by-type: elites are a threat, not a pat on the head)
+  eliteHitX: 1.4,
+  eliteHpX: 2.5,   // ... and lasts this much longer
   // the hero's max HP in turn fights x this. Wren's HP grows with her Attack, which carries the real-time fight's damage
   // parity (SOLO_TUNE.heroX 0.76, against Pip's 1.15), while turn fights give that back to her damage only (heroX below)
   heroHpX: { wren: 1.2, tobin: 1, pip: 1 },
@@ -186,15 +189,15 @@ function turnFoeSetup(f, z, o) {
   } else if (Z) {
     moves = Z.moves; script = Z.moves; spd = Z.speed || TURN_FOE_SPEED.normal; hpA = Z.hp || TURN_FOE_HP.zoneFoe;
   } else {
-    const ranged = !!f.ranged;
-    moves = ranged ? TURN_FOE_RANGED : TURN_FOE_BASIC; script = moves.slice();
-    spd = ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
+    const ranged = !!f.ranged, TY = TURN_FOE_TYPES[f.type];   // its type's own moves (24d TURN_FOE_TYPES), else the basic pair
+    moves = TY ? TY.moves : ranged ? TURN_FOE_RANGED : TURN_FOE_BASIC; script = moves.slice();
+    spd = TY ? TY.speed : ranged ? TURN_FOE_SPEED.ranged : TURN_FOE_SPEED.normal; hpA = TURN_FOE_HP.normal;
     const C = COMBAT_TUNE;
     if (o.elite === true || (o.elite !== false && z >= C.eliteFrom && Math.random() < C.eliteP)) {
-      f.elite = true; script = script.concat([TURN_FOE_ELITE]);
+      f.elite = true; script = script.concat([TY ? TY.sig : TURN_FOE_ELITE]);
       const ids = Object.keys(TURN_TRAITS), tr = o.trait || ids[(Math.random() * ids.length) | 0];   // one trait (24d TURN_TRAITS)
       f.tr = [tr]; f.name = ((typeof ELITE_TRAITS === 'object' && ELITE_TRAITS[tr] && ELITE_TRAITS[tr].name) || 'Elite') + ' ' + f.name;
-      spd = TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite;
+      spd = TY ? TY.speed * TURN_FOE_SPEED.elite / TURN_FOE_SPEED.normal : TURN_FOE_SPEED.elite; hpA = TURN_FOE_HP.elite * T.eliteHpX * (TY && TY.eliteHp || 1);   // an elite keeps its type's pace
     }
   }
   // the first zone bosses come in easier while you learn to parry and dodge (bossEase: their HP share in zones 1, 2, 3)
@@ -206,7 +209,7 @@ function turnFoeSetup(f, z, o) {
   const hp = hpA * ease * len * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
-    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
+    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
   const pay = 1 + (len - 1) * B.payX;

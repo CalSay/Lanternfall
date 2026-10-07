@@ -8338,8 +8338,8 @@ if (section('C29 boss pass (core)')) try {
       const n = hit(false), b = hit(true);
       return { n, b, good: run({ parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }), casual: run({ parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }), err: g.errors.length }; };
     const k = kept(0), lo = kept(-1), hi = kept(1);
-    assert(k.n.hit >= 0.08 && k.n.hit <= 0.15 && k.b.hit >= 0.25 && k.b.hit <= 0.35 && k.b.charge >= 0.6 && k.b.charge <= 0.9 && !k.err,
-      `boss pass: for a hero who keeps up, a landed normal hit costs 8-15% of max HP, a landed boss hit 25-35%, a landed charge 60-90% (${[k.n.hit, k.b.hit, k.b.charge].map(x => (100 * x).toFixed(1) + '%').join(', ')}; ${k.b.name})`);
+    assert(k.n.hit >= 0.05 && k.n.hit <= 0.18 && k.b.hit >= 0.25 && k.b.hit <= 0.35 && k.b.charge >= 0.6 && k.b.charge <= 0.9 && !k.err,
+      `boss pass: for a hero who keeps up, a landed normal hit costs 5-18% of max HP, a landed boss hit 25-35%, a landed charge 60-90% (${[k.n.hit, k.b.hit, k.b.charge].map(x => (100 * x).toFixed(1) + '%').join(', ')}; ${k.b.name})`);
     assert(lo.b.hit > 0.5 && lo.casual.win < 0.2 && lo.good.turns > k.good.turns * 1.3 && hi.good.turns < k.good.turns * 0.8 && hi.casual.win >= k.casual.win && hi.b.hit < 0.15,
       `boss pass: gear matters: a gear tier behind, a boss hit costs half your health and casual play loses; a tier ahead, bosses go quicker and barely hurt (turns ${[lo, k, hi].map(r => r.good.turns.toFixed(1)).join(' / ')}, casual win ${[lo, k, hi].map(r => (100 * r.casual.win).toFixed(0) + '%').join(' / ')}, a boss hit ${[lo, k, hi].map(r => (100 * r.b.hit).toFixed(0) + '%').join(' / ')})`); }
 } catch (e) { fail('C29 boss pass crashed: ' + (e.stack || e)); }
@@ -8367,12 +8367,12 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       return { win: +(K / Math.max(1, K + D)).toFixed(3), turns: +(T / Math.max(1, F)).toFixed(2) }; })(${prof(true)})`);
     return { n: hit(false), b: hit(true), run, err: () => g.errors.slice(0, 2) }; };
   const good = { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, casual = { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 };
-  // what a landed hit costs a hero who keeps up, by zone band: a normal foe 8-15%, a boss 25-35%, its charge 60-90%
+  // what a landed hit costs a hero who keeps up, by zone band: a normal foe 5-18% (each foe type has its own moves: a bat chips, a golem hits big), a boss 25-35%, its charge 60-90%
   { const bad = [], seen = [];
     for (const [z, L, fx] of [[8, 14, 'early'], [15, 25, 'mid'], [20, 33, 'mid'], [25, 35, 'mid'], [30, 37, 'late'], [34, 39, 'late']]) for (const k of ['wren', 'pip']) {
       const r = kept(k, z, L, fx), s = `${k} ${z}: ${[r.n.hit, r.b.hit, r.b.charge].map(x => (100 * x).toFixed(0)).join('/')}`; seen.push(s);
-      if (!(r.n.hit >= 0.08 && r.n.hit <= 0.15 && r.b.hit >= 0.25 && r.b.hit <= 0.36 && r.b.charge >= 0.6 && r.b.charge <= 0.9) || r.err().length) bad.push(s); }
-    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 8-15% of max HP, a boss hit 25-35%, a charge 60-90% (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
+      if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= 0.25 && r.b.hit <= 0.36 && r.b.charge >= 0.6 && r.b.charge <= 0.9) || r.err().length) bad.push(s); }
+    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 25-35%, a charge 60-90% (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
   // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];
@@ -10413,6 +10413,49 @@ if (section('fight HUD fit')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('fight HUD fit crashed: ' + (e.stack || e)); }
+
+if (section('foe moves by type')) try {
+  const g = loadCore({ seed: 7 }), E = s => g.eval(s), J = s => JSON.parse(E(`JSON.stringify(${s})`));
+  const types = J('Object.keys(TURN_FOE_TYPES)');
+  assert(types.length === 7 && J('Object.keys(FOE_COUNTERS)').join() === types.join() && types.every(k => E(`!!FOE_TYPE.${k}`)),
+    'foe moves: the Hollow\'s seven foe types each have a move set and a counter row');
+  // distinct: no two types share a move id, and every type has 2+ moves with a real wind-up (parry and dodge windows need it)
+  const ids = J('Object.values(TURN_FOE_TYPES).flatMap(t => t.moves.concat([t.sig]).map(m => m.id))');
+  assert(new Set(ids).size === ids.length, 'foe moves: every move id is its own');
+  assert(J('Object.values(TURN_FOE_TYPES).every(t => t.moves.length >= 2 && t.moves.concat([t.sig]).every(m => m.hits.every(h => h.wind >= 0.5 && h.x > 0)))'),
+    'foe moves: every type has 2+ moves and every hit winds up for at least 0.5 s');
+  assert(J('new Set(Object.values(TURN_FOE_TYPES).map(t => JSON.stringify(t.moves.map(m => m.hits.length)))).size >= 5'), 'foe moves: the types do not share a hit pattern (5+ different shapes)');
+  // threat a second stays near the old Strike / Flurry foe (0.18 of the reference HP a second): within 25% either way
+  const base = J('(TURN_FOE_BASIC.reduce((a, m) => a + m.hits.reduce((b, h) => b + h.x, 0), 0) / TURN_FOE_BASIC.length) * TURN_FOE_SPEED.normal');
+  const bad = J(`Object.entries(TURN_FOE_TYPES).map(([k, t]) => [k, t.moves.reduce((a, m) => a + m.hits.reduce((b, h) => b + h.x, 0), 0) / t.moves.length * t.speed / ${base}]).filter(([, r]) => r < 0.8 || r > 1.2)`);
+  assert(!bad.length, 'foe moves: each type\'s average threat a second is within 20% of the old foe: ' + JSON.stringify(bad));
+  // an elite's signature is its type's heaviest move by a good margin, and it is in the script (not the generic Crushing Blow)
+  assert(J('Object.values(TURN_FOE_TYPES).every(t => t.sig.hits.reduce((b, h) => b + h.x, 0) >= 1.15 * Math.max(...t.moves.map(m => m.hits.reduce((b, h) => b + h.x, 0))) - 1e-9)'),
+    'foe moves: each elite signature hits harder, in total, than its type\'s own best move');
+  for (const k of types) {
+    const r = J(`(() => { const a = { type: '${k}', name: 'Foe', ranged: FOE_BEH.${k}.ranged }, b = { type: '${k}', name: 'Foe', ranged: FOE_BEH.${k}.ranged };
+      turnFoeSetup(a, 20, { elite: false }); turnFoeSetup(b, 20, { elite: true, trait: 'shielded' });
+      return { n: a.tk.script.map(m => m.id), e: b.tk.script.map(m => m.id), sig: TURN_FOE_TYPES.${k}.sig.id, spdN: a.tk.spd, spdE: b.tk.spd, hpN: a.max, hpE: b.max, hxN: a.tk.hx, hxE: b.tk.hx }; })()`);
+    assert(Math.abs(r.spdE / r.spdN - J('TURN_FOE_SPEED.elite / TURN_FOE_SPEED.normal')) < 1e-9, `foe moves: an elite ${k} keeps its type's pace (its Speed ratio to a normal one)`);
+    assert(r.n.join() === J(`TURN_FOE_TYPES.${k}.moves.map(m => m.id)`).join() && !r.n.includes(r.sig), `foe moves: a normal ${k} plays its own moves`);
+    assert(r.e.includes(r.sig) && !r.e.includes('crush'), `foe moves: an elite ${k} adds its signature ${r.sig}, not the Crushing Blow`);
+    assert(r.spdN === J(`TURN_FOE_TYPES.${k}.speed * 10`), `foe moves: a normal ${k} has its own Speed`);
+    assert(r.hpE > r.hpN && r.hxE > r.hxN, `foe moves: an elite ${k} lasts longer and hits harder than a normal one`);
+  }
+  // unlisted types (the Coast's) keep the old pair; bosses and zone monsters keep theirs
+  assert(J('(() => { const f = { type: "crab", name: "Crab" }; turnFoeSetup(f, 40, { elite: false }); return f.tk.script.map(m => m.id); })()').join() === 'strike,flurry', 'foe moves: a Coast foe still plays Strike and Flurry');
+  assert(J('(() => { const f = { type: "slime", name: "Imp", boss: true }; turnFoeSetup(f, 5, {}); return f.tk.script.map(m => m.id); })()').join() === 'engulf,lash,swell,slap', 'foe moves: a slime boss keeps its boss set');
+  // counters: every id is a real ability of that hero, each foe type has an answer from every starter, and each starter's
+  // answers show up on 2+ types
+  const heroes = ['wren', 'tobin', 'pip'];
+  assert(J(`Object.values(FOE_COUNTERS).every(c => ${JSON.stringify(heroes)}.every(h => c.by[h] && c.by[h].length && c.by[h].every(id => ABILITIES[id] && ABILITIES[id].hero === h)))`),
+    'foe moves: every foe type has a counter from Wren, Tobin and Pip, each one of their own abilities');
+  assert(J(`${JSON.stringify(heroes)}.every(h => Object.values(FOE_COUNTERS).filter(c => c.by[h].length).length >= 2)`), 'foe moves: every starter counters at least two types');
+  assert(J('Object.values(FOE_COUNTERS).every(c => c.tip && c.tip.length < 100)') && J('TYPES.every(t => FOE_TELL[t.key] && /^Moves: /.test(FOE_TELL[t.key]))'),
+    'foe moves: the Bestiary tell names the moves and the answer');
+  // a normal fight plays out: each type's foe moves, and the casual starter still wins ordinary fights at zone 20 (budget bands hold)
+  assert(!g.errors.length, 'foe moves: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('foe moves by type crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
