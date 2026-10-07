@@ -12,26 +12,30 @@
 //   node tools/playtest.mjs expect "<text|css>"   exit 1 if that text (or CSS selector) is not visible on screen right now
 //   node tools/playtest.mjs shot <name>           screenshot named <name>.png in the shots folder
 //   node tools/playtest.mjs burst <name>          6 frames over 1.5 s of game time: <name>-1.png .. <name>-6.png
+//   node tools/playtest.mjs scroll [down|up]      scroll the biggest scrolling panel on screen (or the page) by most of a screen
 //   node tools/playtest.mjs batch                 read one command per line from stdin and run them in one browser launch
-//                                                 (a route file is a batch: `new fresh` may open it, and `expect` keeps going after a miss)
+//                                                 (a route file is a batch: `new fresh` may open it, and `expect` keeps going after a miss;
+//                                                 lines are read as they arrive, so a caller can drive one open game: tools/playtest-human.mjs)
 //
 // options: --session <dir> (default .playtest: the save, the game clock and the screenshots live there, so one
 //          command per call carries on where the last one stopped)   --landscape (740x360 instead of 360x740 portrait)
 //          --seed <n> (seed the game's random numbers for the whole run)   --shots <dir> (where shots go; default <session>/shots)
 //          --json (machine-readable output)   --html <file> (play another build)   --quiet (tap and wait print one line, not a look)
+//          --frozen (the game clock stands still between commands; without it, real time also moves it)
 //
 // Runs dist/lanternfall.html as built: node tools/build.mjs first. Game time is a fake clock: `wait` and `away` cost
 // real seconds in proportion to the frames drawn (about 15 real seconds per game minute at the default step).
 // Browser discovery is shared with check.mjs (LF_PLAYWRIGHT / LF_CHROMIUM overrides).
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
 
 const KEY = 'lanternfall.save.v5';
 const ORIGIN = 'http://lanternfall.playtest/';
 const raw = process.argv.slice(2);
-const flags = { json: false, landscape: false, quiet: false };
+const flags = { json: false, landscape: false, quiet: false, frozen: false };
 let sessionDir = '.playtest', htmlFile = null, shotsOpt = null, seed = null, ranSecs = 0;   // ranSecs: game seconds this call has run (away hours are not play)
 const pos = [];
 for (let i = 0; i < raw.length; i++) {
@@ -39,6 +43,7 @@ for (let i = 0; i < raw.length; i++) {
   if (a === '--json') flags.json = true;
   else if (a === '--landscape') flags.landscape = true;
   else if (a === '--quiet') flags.quiet = true;
+  else if (a === '--frozen') flags.frozen = true;
   else if (a === '--session') sessionDir = raw[++i];
   else if (a === '--html') htmlFile = raw[++i];
   else if (a === '--seed') seed = num(raw[++i], '--seed');
@@ -118,6 +123,9 @@ async function openPage(browser, session, afterAway = false) {
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   await page.clock.install({ time: session.time });
+  // Playwright's installed clock also runs on with real time. --frozen stops that, so game time moves only on wait, tap and the
+  // like: a caller that thinks for a while between commands (tools/playtest-human.mjs) does not lose game seconds it never saw.
+  if (flags.frozen) await page.clock.pauseAt(session.time + 1);
   await page.addInitScript(INIT, [KEY, session.save, seed]);
   // The page is served from a fake origin (so localStorage works); every other request is refused, so nothing leaves the machine.
   const html = pageHtml();
@@ -347,6 +355,20 @@ async function exec(cmd, args, ctx) {
       await box.fill(args.join(' ')); await run(page, 0.5);
       return { text: 'typed ' + args.join(' '), data: { ok: true } };
     }
+    case 'scroll': {   // scroll the biggest scrolled panel on screen (or the page) by most of a screen, as a thumb would
+      const dir = args[0] === 'up' ? -1 : 1;
+      const moved = await page.evaluate(d => {
+        const vh = innerHeight;
+        const panes = [...document.querySelectorAll('*')].filter(e => { const cs = getComputedStyle(e), r = e.getBoundingClientRect();
+          return /(auto|scroll)/.test(cs.overflowY) && e.scrollHeight > e.clientHeight + 4 && r.height > 80 && r.bottom > 0 && r.top < vh; })
+          .sort((a, b) => b.clientHeight - a.clientHeight);
+        const el = panes[0] || document.scrollingElement, before = el.scrollTop;
+        el.scrollTop += d * Math.round((el === document.scrollingElement ? vh : el.clientHeight) * 0.8);
+        return el.scrollTop - before;
+      }, dir);
+      await run(page, 0.3);
+      return { text: moved ? `scrolled ${dir > 0 ? 'down' : 'up'}` : `nothing to scroll ${dir > 0 ? 'down' : 'up'}`, data: { scrolled: moved } };
+    }
     case 'shot': {
       if (!args.length) die('shot needs a name: shot first-fight');
       const f = await namedShot(page, args[0]);
@@ -358,7 +380,7 @@ async function exec(cmd, args, ctx) {
       for (let i = 1; i <= 6; i++) { fs6.push(await namedShot(page, `${args[0]}-${i}`)); if (i < 6) await run(page, 0.3); }
       return { text: `burst ${fs6.length} frames: ${fs6[0]} .. ${fs6[5]}`, data: { burst: fs6 } };
     }
-    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, wait, away, state, new, expect, shot, burst, stub-site, type, batch`);
+    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, wait, away, state, new, expect, scroll, shot, burst, stub-site, type, batch`);
   }
 }
 
@@ -397,11 +419,16 @@ async function main() {
       return exec(c, a, ctx);
     };
     if (cmd === 'batch') {
-      const lines = fs.readFileSync(0, 'utf8').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-      for (const line of lines) {
+      // Lines are read as they arrive, so a caller can keep one browser open and send the next command after reading
+      // the last screen (tools/playtest-human.mjs does). A piped route file reads the same as before.
+      for await (const rawLine of readline.createInterface({ input: process.stdin, crlfDelay: Infinity })) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith('#')) continue;
         const m = line.match(/"[^"]*"|\S+/g).map(t => t.replace(/^"|"$/g, ''));
         console.log(`> ${line}`);
+        const was = ctx, seen = ctx.errors.length;
         const r = await step(m[0], m.slice(1)); results.push(r);
+        if (flags.json && ctx === was && ctx.errors.length > seen) r.data = { ...r.data, pageErrors: ctx.errors.slice(seen) };   // say which command threw, not only at the end
         console.log(flags.json ? JSON.stringify(r.data) : r.text);
       }
     } else {
