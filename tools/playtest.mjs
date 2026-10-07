@@ -12,6 +12,7 @@
 //   node tools/playtest.mjs expect "<text|css>"   exit 1 if that text (or CSS selector) is not visible on screen right now
 //   node tools/playtest.mjs shot <name>           screenshot named <name>.png in the shots folder
 //   node tools/playtest.mjs burst <name>          6 frames over 1.5 s of game time: <name>-1.png .. <name>-6.png
+//   node tools/playtest.mjs scroll [down|up]      scroll the biggest scrolling panel on screen (or the page) by most of a screen
 //   node tools/playtest.mjs expect-no "<text|css>"   exit 1 if that text (or CSS selector) IS visible on screen right now
 //   node tools/playtest.mjs expect-save <f><op><n>   exit 1 unless the stored save's field compares true, e.g. gold>=12345 (ops >= <= > < =)
 //   tab new [field=n]   (batch only) open the game in a second tab of the same browser (same storage); the open tab goes to the
@@ -20,25 +21,29 @@
 //   tab close [n]       (batch only) close the tab in front (it goes to the background, then pagehide; the last other tab comes to the
 //                       front), or tab n while it stays in the background (pagehide only)
 //   node tools/playtest.mjs batch                 read one command per line from stdin and run them in one browser launch
-//                                                 (a route file is a batch: `new fresh` may open it, and `expect` keeps going after a miss)
+//                                                 (a route file is a batch: `new fresh` may open it, and `expect` keeps going after a miss;
+//                                                 lines are read as they arrive, so a caller can drive one open game: tools/playtest-human.mjs)
 //
 // options: --session <dir> (default .playtest: the save, the game clock and the screenshots live there, so one
 //          command per call carries on where the last one stopped)   --landscape (740x360 instead of 360x740 portrait)
 //          --seed <n> (seed the game's random numbers for the whole run)   --shots <dir> (where shots go; default <session>/shots)
 //          --json (machine-readable output)   --html <file> (play another build)   --quiet (tap and wait print one line, not a look)
+//          --frozen (the game clock stands still between commands; without it, real time also moves it)
+//          --thumb (tap scrolls only what a player can scroll; a button out of reach fails instead of scrolling the page)
 //
 // Runs dist/lanternfall.html as built: node tools/build.mjs first. Game time is a fake clock: `wait` and `away` cost
 // real seconds in proportion to the frames drawn (about 15 real seconds per game minute at the default step).
 // Browser discovery is shared with check.mjs (LF_PLAYWRIGHT / LF_CHROMIUM overrides).
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
 
 const KEY = 'lanternfall.save.v5';
 const ORIGIN = 'http://lanternfall.playtest/';
 const raw = process.argv.slice(2);
-const flags = { json: false, landscape: false, quiet: false };
+const flags = { json: false, landscape: false, quiet: false, frozen: false, thumb: false };
 let sessionDir = '.playtest', htmlFile = null, shotsOpt = null, seed = null, ranSecs = 0;   // ranSecs: game seconds this call has run (away hours are not play)
 const pos = [];
 for (let i = 0; i < raw.length; i++) {
@@ -46,6 +51,8 @@ for (let i = 0; i < raw.length; i++) {
   if (a === '--json') flags.json = true;
   else if (a === '--landscape') flags.landscape = true;
   else if (a === '--quiet') flags.quiet = true;
+  else if (a === '--frozen') flags.frozen = true;
+  else if (a === '--thumb') flags.thumb = true;
   else if (a === '--session') sessionDir = raw[++i];
   else if (a === '--html') htmlFile = raw[++i];
   else if (a === '--seed') seed = num(raw[++i], '--seed');
@@ -126,7 +133,11 @@ async function openPage(browser, session, afterAway = false, tab = null) {
   const errors = tab ? tab.errors : [];
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
-  await page.clock.install({ time: tab ? tab.time : session.time });
+  const t0 = tab ? tab.time : session.time;
+  await page.clock.install({ time: t0 });
+  // Playwright's installed clock also runs on with real time. --frozen stops that, so game time moves only on wait, tap and the
+  // like: a caller that thinks for a while between commands (tools/playtest-human.mjs) does not lose game seconds it never saw.
+  if (flags.frozen) await page.clock.pauseAt(t0 + 1);
   await page.addInitScript(INIT, [KEY, session.save, seed, !!tab]);
   // The page is served from a fake origin (so localStorage works); every other request is refused, so nothing leaves the machine.
   const html = pageHtml();
@@ -300,7 +311,21 @@ async function tap(page, wanted) {
   if (!hit.length) return { ok: false, msg: `no button labelled "${wanted}". Buttons on screen: ${s.buttons.map(b => `[${b.label}]`).join(' ') || '(none)'}. (Each separate call reopens the game: an open menu or sheet closes. Use batch to tap through a menu in one go.)` };
   const b = hit[0];
   const handle = await page.$(`[data-pt="${b.i}"]`);
-  if (!inV.has(b.i)) { await handle.evaluate(e => e.scrollIntoView({ block: 'center' })); await page.clock.runFor(50); }
+  if (!inV.has(b.i)) {
+    // --thumb: scroll only what a thumb can scroll. scrollIntoView also moves overflow:hidden boxes (the page itself), which
+    // leaves the screen stuck half off where no player could put it; those are put back, and a button still out of reach fails.
+    const reach = await handle.evaluate((e, thumb) => {
+      const fixed = [];
+      if (thumb) for (let a = e.parentElement; a; a = a.parentElement) { const o = getComputedStyle(a).overflowY; if ((o === 'hidden' || o === 'clip' || a === document.body || a === document.documentElement) && !/(auto|scroll)/.test(o)) fixed.push([a, a.scrollTop]); }
+      if (thumb && document.scrollingElement && !fixed.some(f => f[0] === document.scrollingElement)) fixed.push([document.scrollingElement, document.scrollingElement.scrollTop]);
+      e.scrollIntoView({ block: 'center' });
+      for (const [a, top] of fixed) a.scrollTop = top;
+      const r = e.getBoundingClientRect();
+      return r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+    }, flags.thumb);
+    await page.clock.runFor(50);
+    if (!reach) return { ok: false, msg: `"${b.label}" is off screen where a player cannot scroll to it` };
+  }
   const box = await handle.boundingBox();
   if (!box) return { ok: false, msg: `"${b.label}" is not on screen` };
   // A real tap at the centre of the visible part: if something covers it, the tap lands on that instead, as it would for a player.
@@ -392,6 +417,22 @@ async function exec(cmd, args, ctx) {
       await box.fill(args.join(' ')); await run(page, 0.5);
       return { text: 'typed ' + args.join(' '), data: { ok: true } };
     }
+    case 'scroll': {   // scroll the biggest scrolled panel on screen (or the page) by most of a screen, as a thumb would
+      const dir = args[0] === 'up' ? -1 : 1;
+      const moved = await page.evaluate(([d, thumb]) => {
+        const vh = innerHeight;
+        const panes = [...document.querySelectorAll('*')].filter(e => { const cs = getComputedStyle(e), r = e.getBoundingClientRect();
+          return /(auto|scroll)/.test(cs.overflowY) && e.scrollHeight > e.clientHeight + 4 && r.height > 80 && r.bottom > 0 && r.top < vh; })
+          .sort((a, b) => b.clientHeight - a.clientHeight);
+        const page = document.scrollingElement, el = panes[0] || (thumb && /hidden|clip/.test(getComputedStyle(document.body).overflowY) ? null : page);
+        if (!el) return 0;   // --thumb: the page itself does not scroll for a player
+        const before = el.scrollTop;
+        el.scrollTop += d * Math.round((el === page ? vh : el.clientHeight) * 0.8);
+        return el.scrollTop - before;
+      }, [dir, flags.thumb]);
+      await run(page, 0.3);
+      return { text: moved ? `scrolled ${dir > 0 ? 'down' : 'up'}` : `nothing to scroll ${dir > 0 ? 'down' : 'up'}`, data: { scrolled: moved } };
+    }
     case 'shot': {
       if (!args.length) die('shot needs a name: shot first-fight');
       const f = await namedShot(page, args[0]);
@@ -403,7 +444,7 @@ async function exec(cmd, args, ctx) {
       for (let i = 1; i <= 6; i++) { fs6.push(await namedShot(page, `${args[0]}-${i}`)); if (i < 6) await run(page, 0.3); }
       return { text: `burst ${fs6.length} frames: ${fs6[0]} .. ${fs6[5]}`, data: { burst: fs6 } };
     }
-    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, wait, away, state, new, expect, expect-no, expect-save, shot, burst, stub-site, type, tab, batch`);
+    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, wait, away, state, new, expect, expect-no, expect-save, scroll, shot, burst, stub-site, type, tab, batch`);
   }
 }
 
@@ -467,11 +508,16 @@ async function main() {
       return exec(c, a, ctx);
     };
     if (cmd === 'batch') {
-      const lines = fs.readFileSync(0, 'utf8').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-      for (const line of lines) {
+      // Lines are read as they arrive, so a caller can keep one browser open and send the next command after reading
+      // the last screen (tools/playtest-human.mjs does). A piped route file reads the same as before.
+      for await (const rawLine of readline.createInterface({ input: process.stdin, crlfDelay: Infinity })) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith('#')) continue;
         const m = line.match(/"[^"]*"|\S+/g).map(t => t.replace(/^"|"$/g, ''));
         console.log(`> ${line}`);
+        const was = ctx, seen = ctx.errors.length;
         const r = await step(m[0], m.slice(1)); results.push(r);
+        if (flags.json && ctx === was && ctx.errors.length > seen) r.data = { ...r.data, pageErrors: ctx.errors.slice(seen) };   // say which command threw, not only at the end
         console.log(flags.json ? JSON.stringify(r.data) : r.text);
       }
     } else {
