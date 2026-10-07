@@ -3,31 +3,13 @@
   "patched": false,
   "findings": [
     {
-      "check": "layout",
-      "scenario": "first fight",
-      "size": "portrait",
-      "what": "tip covers or crowds the hero",
-      "detail": "tip 12,357 336x111 on hero 29,287 103x101 by 115x37 px: \"Parry is harder: press it just before the hit lands. It bloc\"",
-      "n": 1,
-      "shot": "01-layout-first fight-portrait.png"
-    },
-    {
-      "check": "layout",
-      "scenario": "first fight",
-      "size": "portrait",
-      "what": "tip covers or crowds the foe",
-      "detail": "tip 12,357 336x111 on foe 111,323 69x65 by 81x37 px: \"Parry is harder: press it just before the hit lands. It bloc\"",
-      "n": 1,
-      "shot": "02-layout-first fight-portrait.png"
-    },
-    {
       "check": "moments",
       "scenario": "rare craft",
       "size": "portrait",
       "what": "shown without its rarity (rare / epic / legendary)",
       "detail": "name \"Copper Warblade\", rarity \"rare|epic|legendary\"; surface: mm-card (\"Well made: Copper Warblade\")",
       "n": 1,
-      "shot": "03-moments-rare craft-portrait.png"
+      "shot": "01-moments-rare craft-portrait.png"
     },
     {
       "check": "moments",
@@ -36,79 +18,7 @@
       "what": "shown without its rarity (Epic)",
       "detail": "name \"Copper Warblade\", rarity \"Epic\"; surface: mm-card (\"Well made: Copper Warblade\")",
       "n": 1,
-      "shot": "04-moments-craft grade (a plain craft)-portrait.png"
-    },
-    {
-      "check": "layout",
-      "scenario": "first fight",
-      "size": "landscape",
-      "what": "clipped text: sb-lb",
-      "detail": "\"Attack\" cut off (39 px of text in 35)",
-      "n": 363,
-      "shot": "05-layout-first fight-landscape.png"
-    },
-    {
-      "check": "layout",
-      "scenario": "foe opens the first fight",
-      "size": "landscape",
-      "what": "clipped text: sb-lb",
-      "detail": "\"Attack\" cut off (39 px of text in 35)",
-      "n": 82,
-      "shot": "06-layout-foe opens the first fight-landscape.png"
-    },
-    {
-      "check": "layout",
-      "scenario": "first boss",
-      "size": "landscape",
-      "what": "clipped text: sb-lb",
-      "detail": "\"Attack\" cut off (39 px of text in 35)",
-      "n": 2,
-      "shot": "07-layout-first boss-landscape.png"
-    },
-    {
-      "check": "layout",
-      "scenario": "first boss",
-      "size": "landscape",
-      "what": "page boxes overlap: .hud-zone + .mob",
-      "detail": ".mob:mob 296,50 228x57 and .hud-zone:hud-zone 234,93 116x29 overlap 54x14 px",
-      "n": 8,
-      "shot": "08-layout-first boss-landscape.png"
-    },
-    {
-      "check": "layout",
-      "scenario": "first unique",
-      "size": "landscape",
-      "what": "clipped text: sb-lb",
-      "detail": "\"Attack\" cut off (39 px of text in 35)",
-      "n": 74,
-      "shot": "09-layout-first unique-landscape.png"
-    },
-    {
-      "check": "layout",
-      "scenario": "first craft",
-      "size": "landscape",
-      "what": "clipped text: sb-lb",
-      "detail": "\"Attack\" cut off (39 px of text in 35)",
-      "n": 56,
-      "shot": "10-layout-first craft-landscape.png"
-    },
-    {
-      "check": "moments",
-      "scenario": "rare craft",
-      "size": "landscape",
-      "what": "shown without its rarity (rare / epic / legendary)",
-      "detail": "name \"Copper Warblade\", rarity \"rare|epic|legendary\"; surface: mm-card (\"Well made: Copper Warblade\")",
-      "n": 1,
-      "shot": "11-moments-rare craft-landscape.png"
-    },
-    {
-      "check": "moments",
-      "scenario": "craft grade (a plain craft)",
-      "size": "landscape",
-      "what": "shown without its rarity (Epic)",
-      "detail": "name \"Copper Warblade\", rarity \"Epic\"; surface: mm-card (\"Well made: Copper Warblade\")",
-      "n": 1,
-      "shot": "12-moments-craft grade (a plain craft)-landscape.png"
+      "shot": "02-moments-craft grade (a plain craft)-portrait.png"
     }
   ]
 }

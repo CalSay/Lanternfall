@@ -90,11 +90,14 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [4, 1.5], [5, 3.7], [6, 2.2], [7, 2.15], [8, 1.9], [9, 1.5], [10, 1.9], [11, 1.4], [12, 1.8], [13, 2.4], [14, 2.4], [15, 3.4], [16, 4.0], [17, 3.0], [18, 3.0], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
-    hitX: [[3, 1], [4, 1.6], [5, 3.4], [6, 2.4], [8, 1.5], [9, 1.0], [10, 1.05], [11, 0.95], [12, 0.85], [13, 1.1], [14, 0.77], [15, 0.84], [16, 2.1], [17, 1.78], [18, 1.2], [19, 3.15], [20, 1.85], [21, 1.17], [22, 0.84], [23, 0.7], [24, 0.63], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+  boss: { hpX: [[3, 1], [4, 1.5], [5, 1.85], [6, 2.2], [7, 2.15], [8, 1.9], [9, 1.5], [10, 1.45], [11, 1.4], [12, 1.8], [13, 2.4], [14, 2.4], [15, 3.4], [16, 4.0], [17, 3.0], [18, 3.0], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+    hitX: [[3, 1], [4, 1.6], [5, 2.0], [6, 2.4], [8, 1.5], [9, 1.0], [10, 0.98], [11, 0.95], [12, 0.85], [13, 1.1], [14, 0.77], [15, 0.84], [16, 2.1], [17, 1.78], [18, 1.2], [19, 3.15], [20, 1.85], [21, 1.17], [22, 0.84], [23, 0.7], [24, 0.63], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
     // hitCap: one boss hit never takes more than this share of the hero's max HP, so a missed parry cannot kill a full-health hero
     // (zone bosses: 0.4 to zone 15, 0.75 for zones 16-24; judge 2026-10-07, docs/DECISIONS.md "Boss tiers"). Taken before armour, Guard and the rest; each hit of a charged move on its own.
-    hitCap: [[1, 0.4], [15, 0.4], [16, 0.75], [24, 0.75], [25, 0]] },
+    hitCap: [[1, 0.4], [15, 0.4], [16, 0.75], [24, 0.75], [25, 0]],
+    // the Champion tier (bossTierOf, 40-rules): a Champion's HP and hits x these on top of the zone line above (zones 5 and 10 only; later
+    // Champions keep their own knots), so the first-hour peaks sit here and not in the Captain line (judge 2026-10-07, DECISIONS.md)
+    champHpX: [[1, 1], [4, 1], [5, 2.4], [10, 1.25], [11, 1]], champHitX: [[1, 1], [4, 1], [5, 1.6], [10, 1.6], [11, 1]] },
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
   windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
@@ -208,12 +211,13 @@ function turnFoeSetup(f, z, o) {
   if (o.hpA > 0) hpA = o.hpA;
   // the boss pass: a zone or region boss lasts longer and hits harder (TURN_TUNE.boss; not the Deepwell's or a Proving's)
   const B = T.boss, zb = !!(f.boss && !o.set);
-  const len = zb ? (region ? B.regionHpX : turnZoneLine(B.hpX, z)) : 1;
+  const champ = zb && !region && bossTierOf(z) === 'champion';   // a Champion's HP and hits sit on the Captain line x its own table
+  const len = zb ? (region ? B.regionHpX : turnZoneLine(B.hpX, z) * (champ ? turnZoneLine(B.champHpX, z) : 1)) : 1;
   const roll = 0.95 + Math.random() * 0.1;   // drawn for every foe so seeded sims keep their sequence
   const hp = hpA * ease * len * turnRefAtk(z) * (f.boss ? 1 : roll);   // a boss keeps one HP across tries; the roll is for packs
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
-    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
+    hx: zb ? turnZoneLine(B.hitX, z) * (champ ? turnZoneLine(B.champHitX, z) : 1) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
     hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0 };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
@@ -1078,14 +1082,14 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
   const reseed = () => { if (!fightN++) { x = (seed | 0) || 1; return; } let h = Math.imul((seed | 0) ^ Math.imul(fightN, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; x = h | 0 || 1; };
   const roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
   const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0, foeHits: 0, parries: 0, dodges: 0,
-    completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0 };
-  let heroHp = p.heroMaxHp, foeHp = p.foeMaxHp, m, downtime = 0, plan = '', tplan = null;
+    completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0, closeWins: 0 };   // closeWins: kills where the hero fell under half health
+  let low = 1, heroHp = p.heroMaxHp, foeHp = p.foeMaxHp, m, downtime = 0, plan = '', tplan = null;
   const io = { random: roll, emit: () => {}, alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), foeHp: () => Math.max(0, foeHp),
     heroHp: () => heroHp, slotId: i => p.eq[i] || null,
     damageFoe: d => { foeHp -= d; out.damageDone += d; return d; },
-    damageHero: d => { heroHp -= d; out.damageTaken += d; if (d > 0) out.foeHits++; return d; },
+    damageHero: d => { heroHp -= d; out.damageTaken += d; if (d > 0) out.foeHits++; low = Math.min(low, heroHp / p.heroMaxHp); return d; },
     healHero: d => { heroHp = Math.min(p.heroMaxHp, heroHp + d); }, healFoe: d => { foeHp = Math.min(p.foeMaxHp, foeHp + d); }, defense: (k, ok) => { if (ok) out[k === 'parry' ? 'parries' : 'dodges']++; } };
-  const start = () => { reseed(); tplan = null; foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; };   // a zone boss is met at full health, as in play
+  const start = () => { reseed(); tplan = null; foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; low = Math.max(0, heroHp) / p.heroMaxHp; };   // a zone boss is met at full health, as in play
   start();
   const step = 0.05;
   for (let t = 0; t < seconds; t += step) {
@@ -1105,7 +1109,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
     if (m.hitI !== hitBefore) plan = '';
     if (m.ended) {
       if (foeHp <= 0) {
-        out.kills++; out.completedFights++; out.totalHeroTurns += m.heroOps; out.totalFightSeconds += m.now;
+        out.kills++; out.completedFights++; if (low < 0.5) out.closeWins++; out.totalHeroTurns += m.heroOps; out.totalFightSeconds += m.now;
         const ess = p.essChance; out.generatedEss += Math.floor(ess) + (roll() < ess % 1 ? 1 : 0) + (roll() < p.essExtra ? 1 : 0);
         heroHp = Math.min(p.heroMaxHp, heroHp + p.heroMaxHp * p.healOnKill);
         downtime = p.respawn;

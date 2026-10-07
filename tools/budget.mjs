@@ -55,7 +55,8 @@ const J = JSON.stringify;
 
 // Players (as sim.mjs --report turns). wide: a weaker and a stronger casual (report only).
 export const PLAYERS = { casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }, good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 } };
-const WIDE = { casualLow: { parry: 0.15, dodge: 0.4, perfect: 0.1, good: 0.4 }, casualHigh: { parry: 0.35, dodge: 0.7, perfect: 0.1, good: 0.4 } };
+// bot: the walk bot's defence (tools/walk.mjs PARRY 0.55, DODGE 0.5), as casual on the rings
+const WIDE = { casualLow: { parry: 0.15, dodge: 0.4, perfect: 0.1, good: 0.4 }, casualHigh: { parry: 0.35, dodge: 0.7, perfect: 0.1, good: 0.4 }, bot: { parry: 0.55, dodge: 0.5, perfect: 0.1, good: 0.4 } };
 const RUN_PLAYERS = opt('players') === 'wide' ? { ...PLAYERS, ...WIDE } : PLAYERS;
 const SIG = { wren: 'echo', tobin: 'bash', pip: 'fire' };
 const KINDS = { wren: ['bow', 'quiver', 'hood', 'leathers'], tobin: ['warblade', 'shield', 'greathelm', 'plate'], pip: ['staff', 'lantern', 'circlet', 'robe'] };
@@ -97,6 +98,7 @@ export const CHECKPOINTS = [
   ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
   ['z11-boss', 11, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
   ['z12-boss', 12, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z5-boss-keptup', 5, 'boss', { st: 'kept', fx: 'early', kind: 'keptUp', ref: 'z5-boss' }],
   ['z8-boss-keptup', 8, 'boss', { st: 'kept', fx: 'early', kind: 'keptUp', ref: 'z8-boss' }],
   ['z10-boss-keptup', 10, 'boss', { st: 'kept', fx: 'early', kind: 'keptUp', ref: 'z10-boss' }],
   ['z12-boss-keptup', 12, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z12-boss' }],
@@ -110,6 +112,7 @@ export const CHECKPOINTS = [
   ['z15-elite', 15, 'elite', { st: 'kept', fx: 'mid' }],
   ['z15-boss', 15, 'boss', { st: 'kept', fx: 'mid', gear: 'common' }],
   ['z13-boss-keptup', 13, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z13-boss' }],
+  ['z14-boss-keptup', 14, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z14-boss' }],
   ['z15-boss-keptup', 15, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUp', ref: 'z15-boss' }],
   ['z16-boss', 16, 'boss', { st: 'kept', fx: 'mid' }],
   ['z17-boss', 17, 'boss', { st: 'kept', fx: 'mid' }],
@@ -145,9 +148,10 @@ export const CHECKPOINTS = [
   ['z20-boss-vigour', 20, 'boss', { st: 'kept', fx: 'mid', build: 'vigour', kind: 'build', ref: 'z20-boss' }]
 ];
 const setFor = (z, k) => SETS[[38, 30, 20, 10, 1].find(s => z >= s)][k];
-// a boss's kind: the game's own boss tier once it has one (boss-tiers: bossTierOf(z) -> 'captain' | 'champion' | 'elder'),
-// else by zone: a region boss is an Elder, zones 1-3 the first bosses, 4-10 the learning Captains, then Captains
-const KIND_FOR = z => `(typeof bossTierOf === 'function' ? bossTierOf(${z}) : isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' : ${z} === 5 ? 'firstChampion' : ${z} === 10 ? 'champion' : ${z} <= 9 ? 'earlyCaptain' : 'captain')`;
+// a boss's kind (its band): a region boss is an Elder, zones 1-3 the first bosses, zone 5 the first Champion, zone 10 the Champion,
+// the other zones to 9 the learning Captains, then Captains. The game's own tier (bossTierOf) calls zones 15, 20, 25 and 30
+// Champions too, but their bands stay the Captain band until a pass measures them as Champions.
+const KIND_FOR = z => `(isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' : ${z} === 5 ? 'firstChampion' : ${z} === 10 ? 'champion' : ${z} <= 9 ? 'earlyCaptain' : 'captain')`;
 
 // the setup code for hero k at checkpoint c (run inside a fresh core after the fixture loads)
 function setup(c, k, lvShift) {
@@ -212,23 +216,23 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
   if (foe === 'elite') e(`(() => { const f = combatFoes().find(x => x && !x.dead); turnFoeSetup(f, S.zone, { elite: true }); })()`);
   // big: the boss's heaviest single hit as a share of the hero's max HP before the hit cap (a charged move's hits on their own)
   const p0 = e(`(() => { const p = turnCombatProfile(); let big = 0; for (const mv of p.script || []) for (const h of mv.hits || []) big = Math.max(big, (h.x || 0.2) * (mv.charge ? p.bossChargeX || 1 : 1));
-    return { L: S.L, boss: p.boss, elite: !!p.trait, foe: p.foeName, kind: ${foe === 'boss' ? KIND_FOR(z) : J(foe)}, big: p.boss ? Math.round(1000 * big * p.refHp * (p.bossHitX || 1) / p.heroMaxHp) / 1000 : null } })()`);
+    return { L: S.L, hpr: Math.round(100 * p.heroMaxHp / p.refHp) / 100, boss: p.boss, elite: !!p.trait, foe: p.foeName, kind: ${foe === 'boss' ? KIND_FOR(z) : J(foe)}, big: p.boss ? Math.round(1000 * big * p.refHp * (p.bossHitX || 1) / p.heroMaxHp) / 1000 : null } })()`);
   if (foe === 'boss' && !p0.boss) throw new Error(`${id} ${k}: no boss to fight`);
   if (foe === 'elite' && !p0.elite) throw new Error(`${id} ${k}: no elite to fight`);
   const chain = foe === 'boss' ? 1 : 5, n = Math.ceil(FIGHTS / chain);
   for (const [pl, skill] of Object.entries(players)) {
     const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl, i));
     const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(o.st === 'joined' ? [SIG[k]] : setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
-      let K = 0, D = 0, T = 0, F = 0;
+      let K = 0, D = 0, T = 0, F = 0, C = 0;
       for (const sd of ${J(seeds)}) { const r = turnCombatSample({ profile: p, seconds: 36000, fights: ${chain}, seed: sd, skill: ${J(skill)} });
-        K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; }
-      return { K, D, T, F }; })()`);
+        K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; C += r.closeWins; }
+      return { K, D, T, F, C }; })()`);
     if (r.K + r.D < n * chain) throw new Error(`${id} ${k} ${pl}: ${n * chain - r.K - r.D} fight(s) never ended (a stalemate the win rate would hide)`);
     const win = r.K / Math.max(1, r.K + r.D);
-    out[pl] = { win: Math.round(win * 1000) / 1000, turns: r.F ? Math.round(10 * r.T / r.F) / 10 : null, fights: r.K + r.D, attempts: win > 0 ? Math.min(20, Math.round(10 / win) / 10) : 20 };
+    out[pl] = { win: Math.round(win * 1000) / 1000, turns: r.F ? Math.round(10 * r.T / r.F) / 10 : null, fights: r.K + r.D, close: r.K ? Math.round(1000 * r.C / r.K) / 1000 : null, attempts: win > 0 ? Math.min(20, Math.round(10 / win) / 10) : 20 };
   }
   if (core.errors.length) throw new Error(`${id} ${k}: ${core.errors.slice(0, 3).join('; ')}`);
-  return { ...out, L: p0.L, foe: p0.foe, kind: p0.kind, ...(p0.big != null ? { big: p0.big } : {}) };
+  return { ...out, L: p0.L, hpr: p0.hpr, foe: p0.foe, kind: p0.kind, ...(p0.big != null ? { big: p0.big } : {}) };
 }
 
 export function runBudget({ only, heroes = RUN_HEROES } = {}) {
@@ -262,6 +266,8 @@ export function printBudget(rep) {
     const ref = r.kind === 'build' && rep.rows.find(x => x.id === r.ref);   // a build row: its turns against the even spread
     if (ref) console.log('  turns played well against the even spread (w/t/p): ' + hs.map(h => r.perHero[h].good.turns && ref.perHero[h].good.turns ? 'x' + (r.perHero[h].good.turns / ref.perHero[h].good.turns).toFixed(2) : '-').join('/'));
     for (const pl of Object.keys(WIDE)) if (r.perHero[hs[0]][pl]) console.log('  ' + pl.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
+    // closest to death: the share of won boss fights where the hero fell under half health (a good player; aim 20-35% at Champions)
+    if (r.foe === 'boss' && r.perHero[hs[0]].good.close != null) console.log('  ' + 'good wins under half HP %'.padEnd(28) + hs.map(h => pc(r.perHero[h].good.close)).join('/'));
   }
   const tob = rep.rows.filter(r => r.foe === 'boss' && r.perHero.tobin && r.perHero.wren && r.perHero.pip && r.perHero.tobin.good.turns);
   if (tob.length) console.log(`\nTobin's boss turns against the Wren and Pip mean (played well; aim 1.15-1.30): ` + tob.map(r => `${r.id} x${(2 * r.perHero.tobin.good.turns / (r.perHero.wren.good.turns + r.perHero.pip.good.turns)).toFixed(2)}`).join(', '));
