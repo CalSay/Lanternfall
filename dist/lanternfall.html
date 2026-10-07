@@ -36504,8 +36504,9 @@ on('cacheOpen', v => {
     if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
   }
   // the cache folds into that card, so the win is one card
-  if (ci >= 0) {
-    const c = MOMENT_Q.splice(ci, 1)[0];
+  const cj = ci >= 0 ? MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone) : -1;   // the fold loop above spliced, so ci may be stale
+  if (cj >= 0) {
+    const c = MOMENT_Q.splice(cj, 1)[0];
     if (c.bark) barks.push(c.bark);
     if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
     moment('champion', Object.assign(o, { title: c.title, eye: c.eye, scene: c.scene }));

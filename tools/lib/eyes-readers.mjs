@@ -15,7 +15,11 @@ export const LINT = `(() => {
   // the sprite boxes are cut to the stage before they are judged (parry-tip-covers-hero).
   const cut = b => { const s = R.stage; if (!s || !b || !(k0 === 'hero' || k0 === 'foe' || k0 === 'boss')) return b; const x = Math.max(b.x, s.x), y = Math.max(b.y, s.y), x2 = Math.min(b.x + b.w, s.x + s.w), y2 = Math.min(b.y + b.h, s.y + s.h); return x2 > x && y2 > y ? { x, y, w: x2 - x, h: y2 - y } : null; };
   let k0 = '';
-  if (tip) for (const k of ['hero', 'foe', 'boss', 'heroHp', 'foeHp']) { k0 = k; const b = cut(R[k]); if (!b) continue; const o = ov(tip, { x: b.x - 6, y: b.y - 6, w: b.w + 12, h: b.h + 12 }); if (o.w > 4 && o.h > 4) out.push({ what: 'tip covers or crowds the ' + ({ heroHp: 'hero HP box', foeHp: 'foe HP box' }[k] || k), detail: 'tip ' + r1(tip) + ' on ' + k + ' ' + r1(b) + ' by ' + Math.round(o.w) + 'x' + Math.round(o.h) + ' px: "' + ((LF_EYES.tip() || {}).text || '').slice(0, 60) + '"' }); }
+  // An open menu covers the stage in portrait, and its guide tip sits at the foot of the menu: a sprite box behind the panel is not on screen
+  // (tip-crowds-hero-gather: the walk's "tip crowds the hero" at the Craft and Camp tabs was the hero hidden behind the menu).
+  const menuEl0 = document.getElementById('menu'), menuOpen = !!(menuEl0 && vis(menuEl0) && document.querySelector('.app.menu-open')), mb0 = menuOpen ? bx(menuEl0) : null;
+  const behindMenu = b => !!mb0 && holds(mb0, b, 0);
+  if (tip) for (const k of ['hero', 'foe', 'boss', 'heroHp', 'foeHp']) { k0 = k; const b = cut(R[k]); if (!b || behindMenu(b)) continue; const o = ov(tip, { x: b.x - 6, y: b.y - 6, w: b.w + 12, h: b.h + 12 }); if (o.w > 4 && o.h > 4) out.push({ what: 'tip covers or crowds the ' + ({ heroHp: 'hero HP box', foeHp: 'foe HP box' }[k] || k), detail: 'tip ' + r1(tip) + ' on ' + k + ' ' + r1(b) + ' by ' + Math.round(o.w) + 'x' + Math.round(o.h) + ' px: "' + ((LF_EYES.tip() || {}).text || '').slice(0, 60) + '"' }); }
   // 1b. page boxes
   const SEL = ['.hero-plate', '.mob', '.hud-zone', '#soloBar .sbtn', '.tabs .tab', '#toasts .toast', '.ob-bub', '.tv-card', '.tv-banner', '.cb-banner', '#modeSeg', '#nuChip', '.sfx-btn', '.bell', '#bellBtn', '.stage-btns button'];
   const boxes = [], menuEl = document.getElementById('menu'), menuB = menuEl && vis(menuEl) && document.querySelector('.app.menu-open') ? bx(menuEl) : null;
