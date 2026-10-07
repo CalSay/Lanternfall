@@ -1,7 +1,35 @@
 # workbench-cost: the cold chain runs over 10 minutes; should the Workbench cost fewer logs?
 
-Status: proposed. Source: unlock-voice acceptance. Needs the economy judge (Opus high) before any edit to `55-hearth.js`.
+Status: **built** by card `workbench-cost` (2026-10-07). The Workbench's Lv 1 on a cold Hearth costs **300 gold and 12 Pine
+Log** (was 20 Pine Log and no gold). Knob: `HEARTH_TUNE.first.bench` in `src/js/55-hearth.js`; `57-camp` campCost reads the
+row's gold; the guide's Workbench steps count the gold too (`55-onboard` matsOfBuild/needShort), so a player short of gold
+is told "Win 200 more gold for the Workbench (100/300)." and the game never pauses on a step it cannot finish.
 
-A careful player (`tools/playtest.mjs`, seed 1, Wren) cleared zone 1 at about 8.8 minutes of play, started chopping at about 10.5, lit the fire (8 Pine Log, `55-hearth.js:46`) about 2 minutes later, and stood the Workbench (20 logs, `55-hearth.js:50`) at about 21. The tool and the Forge come after that, so the chain (chop, fire, Workbench, tool, Forge) runs well over the card's 10 minute bound. Part of that time was idle waiting in the route, so the true figure sits somewhere between 8 and 10 minutes to the Workbench alone.
+## What the walk measured (tools/walk.mjs, seeds 1-3: Wren, Tobin, Pip; integration build 09d50d65)
 
-Options for the judge: keep 20 logs and accept the chain; cut the Workbench to 12 to 14 logs; or keep the cost and make wood faster at wood level 1. The walk bot cannot measure this yet (it stalls at 2:16 on the base build), so `walk-bot-follow-up` should land first and re-measure.
+| | Wren | Tobin | Pip |
+|---|---|---|---|
+| gold when zone 1 clears (all three, every run) | 360 | 360 | 360 |
+| before: fire lit / Workbench up (gold in hand) | 2:00 / 2:45 (1,341) | 2:15 / 3:00 (936) | 2:15 / 3:00 (1,216) |
+| after: fire lit / Workbench up (gold in hand) | 2:00 / 2:45 (1,303) | 2:15 / 2:45 (958) | 2:30 / 3:45 (1,761) |
+| before / after: first tool, Forge up | 3:30, 5:00 / 3:15, 5:00 | 3:30, 5:15 / 3:15, 4:45 | 3:30, 5:15 / 4:15, 5:45 |
+| gold spent by 13:45, before / after | 0 / 300 | 0 / 300 | 0 / 300 |
+
+Before this card no gold was spent at all in the first hour: the 60 minute walk of 2026-10-07 ended on 8,138 unspent gold.
+The chain is not log-bound any more (20 logs are under a minute of chopping for the walk); Pip's later Workbench in the
+after run is the bot fighting longer between steps (the fire was also later), not the price: Pip held 1,761 gold and the
+12 logs. Workbench crafts in the first 14 minutes: Wren 2 (pickaxe, bow), Tobin 1 (pickaxe), Pip 2 (pickaxe, staff).
+
+## Why 300 gold
+
+Gold is the camp's budget (DECISIONS, Gold economy), and the Workbench is the first building a player puts up. Every hero
+holds exactly 360 gold when the zone 1 boss falls, and the Workbench plot opens only with the fire (which needs Gather, which
+opens after that boss). A player who follows the guide spends nothing before it. So 300 is most of a new player's purse,
+felt as a real purchase, and still never a wait. A player who spends first (a second attribute reset costs about 160 gold at
+zone 2) sees "Win N more gold for the Workbench" and the guide never pauses on it. Cutting the logs from 20 to 12 keeps the chop short (fire 8 + Workbench 12 + pickaxe 4).
+
+## Left for other cards
+
+- The first hour still has no repeat gold sink: gear upgrades (100-500 gold at grade 1) have no Next Up goal, and station
+  Lv 2 needs Hearth 2 (zone 10). That is `gold-without-training`'s scope (upgrade pricing, sinks).
+- The Forge, Storehouse, Loom, Enchanter's Table and Tavern Lv 1 rows stay materials only.
