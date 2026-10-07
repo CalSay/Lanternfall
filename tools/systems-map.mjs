@@ -133,7 +133,7 @@ const REG = [
   { id: 'tokens', name: 'Boss tokens', field: 'S.party.unlock.tokens', what: 'Stonebreaker\'s Token, Kiln Tally, Lichen Bundle, Dusk Contract. A flag that unlocks one hero.',
     src: [['Boss kills roll a token, with pity', '56c-unlocks.js', 'U\\(\\)\\.tokens\\[id\\]']], snk: [['Winning one unlocks the hero (the flag is kept)', '56c-unlocks.js', 'for \\(const id in T\\.tokens\\)']] },
   { id: 'stars', name: 'Star points', field: 'derived from level, Great Lanterns and constellations (not saved)', what: 'A budget for lighting stars. Not consumed.',
-    src: [['One per 3 hero levels (plus 4 a Great Lantern, 1 a constellation)', '57e-stars.js', 'starPoints = \\(\\) =>']], snk: [['Lighting a star (2 lit a hero)', '57e-stars.js', 'starFree = k =>']] },
+    src: [['2 to start, 1 per 10 hero levels, 1 a Great Lantern, 1 a constellation (a budget per hero)', '57e-stars.js', 'starPoints = k =>']], snk: [['Lighting a star (the points are the only limit)', '57e-stars.js', 'starFree = k =>']] },
   { id: 'deedpts', name: 'Achievement points', field: 'S.deeds.pts (derived from tiers and Feats)', what: 'Deed tiers, Feats and chapters add points. The ladder gives titles, looks and Trophy Wall stages.',
     src: [['Deed tiers, Feats, secrets and chapters', '58-deeds.js', 'function pointsNow\\(\\)']], snk: [['Ladder milestones unlock at thresholds; never spent', '58-deeds.js', 'd\\.mil\\[m\\.at\\] = 1']] },
   { id: 'mirrors', ids: ['mirrors'], name: 'Mirrors of Embers', field: 'S.party.mirrors', what: 'Needed with Essence to change class or evolution path.',

@@ -365,10 +365,10 @@ A budget for lighting stars. Not consumed.
 Save: `derived from level, Great Lanterns and constellations (not saved)`
 
 Sources:
-- One per 3 hero levels (plus 4 a Great Lantern, 1 a constellation) (`57e-stars.js`)
+- 2 to start, 1 per 10 hero levels, 1 a Great Lantern, 1 a constellation (a budget per hero) (`57e-stars.js`)
 
 Sinks:
-- Lighting a star (2 lit a hero) (`57e-stars.js`)
+- Lighting a star (the points are the only limit) (`57e-stars.js`)
 
 ### Achievement points
 
