@@ -63,6 +63,18 @@ STORY_BEATS.npc.heskethTalk = { at: 'hearth', who: 'Old Hesketh', lines: [
   '"Your village is down there. Go back and shut the holes."'
 ] };
 
+// Hero barks (card hero-voice; bible 4.4 and 4.6; judged in DECISIONS.md). The starting hero speaks at the big moments: a line each for Wren, Tobin and Pip,
+// shown by 75-moments-ui.js and the Great Lantern card (55-voice.js picks one a fight end). No `_`: a story hero who is not a starter stays silent. Under 60 characters.
+STORY_BEATS.hero.v_boss1 = { wren: "One down. The lamp's still lit.", tobin: 'One down. Rest of you, form a queue.', pip: 'First one! Somebody write that down.' };
+STORY_BEATS.hero.v_boss = { wren: 'Down. Keep moving.', tobin: "That one's not getting up.", pip: "Ha! I'll remember that one." };
+STORY_BEATS.hero.v_loss = { wren: 'Again. Slower this time.', tobin: 'Fine. Round two.', pip: 'Right. So that was the wrong plan.' };
+STORY_BEATS.hero.v_unique = { wren: 'Found you. Come on, then.', tobin: 'Heavy. Good heavy.', pip: "Oh! I've read about these!" };
+STORY_BEATS.hero.v_level = { wren: 'Steadier.', tobin: 'Getting the hang of it. Slowly.', pip: 'Stronger. I checked.' };
+STORY_BEATS.hero.v_ability = { wren: 'I know that one now.', tobin: "That's new. I'll try not to break it.", pip: "So that's how it works!" };
+STORY_BEATS.hero.v_star1 = { wren: "A star. Let's see what it does.", tobin: 'A star. Fits in a pocket, too.', pip: "Stars! I'm not going to be calm about this." };
+STORY_BEATS.hero.v_craft1 = { wren: "First try. It'll do.", tobin: 'Crooked, but it holds.', pip: 'Not in any book. Still works.' };
+STORY_BEATS.hero.v_lantern = { wren: 'There. Now it knows where I am.', tobin: 'Keep it lit for them. Please.', pip: "There. Now it's everyone's problem." };
+
 // ---- Chapter 1 (bible 8.1 and 5): 7 areas of 5 zones, a Champion at each area's end, the Fenmother at zone 35 ----
 // Area titles: the area's stake in player words. Zone lines name the roster monster and say what it copied and what light it hunts.
 // Captain lines name one harm (they never speak); each area's fifth points at its Champion. Zone 31 never says its monster's name

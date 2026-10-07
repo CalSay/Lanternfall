@@ -479,6 +479,13 @@ if (section('goals')) try {
   assert(ids() === 'a1,a2,b1', 'a second goal from the same system fills a gap: ' + ids());
   g.eval('gv.r2 = 1.2; gv.r1 = 1');
   assert(ids() === 'r1,a1,b1', 'ready goals first, then by pct; prio breaks ready ties: ' + ids());
+  // a reserve row never displaces a ready goal (three ready goals keep their rows; with an unfinished pick, that one makes room)
+  g.eval("registerGoal({ id: 'rs', sys: 'rs', reserve: 1, label: () => 'rs', pct: () => gv.rs })");
+  g.eval('gv.r1 = 0; gv.r2 = 0; gv.a1 = 1; gv.b1 = 1; gv.c1 = 1; gv.rs = 0.5');
+  assert(ids() === 'a1,b1,c1', 'a reserve row never displaces a ready goal: ' + ids());
+  g.eval('gv.c1 = 0.4');
+  assert(ids().split(',').includes('rs') && ids().split(',').slice(0, 2).join() === 'a1,b1', 'a reserve row takes the place of an unfinished pick: ' + ids());
+  g.eval("GOALS.splice(GOALS.findIndex(x => x.id === 'rs'), 1); gv.r1 = 1; gv.r2 = 1.2; gv.a1 = 0.9; gv.b1 = 0.3; gv.c1 = 0");
   const rd = g.eval('topGoals(3, { sticky: false })[0]');
   assert(rd.ready && rd.pct === 1, 'ready goal pct clamps to 1');
   g.eval('gv.r1 = 0; gv.r2 = 0; gv.a2 = 0; gv.a3 = 0; gv.a1 = 0.5; gv.b1 = 0.4; gv.c1 = 0.3');
@@ -2458,7 +2465,8 @@ function storyProblems(B, ctx) {
     lines(`npc ${id}`, n.lines, 1, 4, L.speech);
   }
   for (const [id, v] of Object.entries(B.voice)) { if (!(v.zone >= 1)) P.push(`voice ${id}: a zone`); lines(`voice ${id}`, v.lines, 1, 6, L.line); }
-  for (const [id, h] of Object.entries(B.hero)) for (const k of ['wren', 'tobin', 'pip', '_']) if (!str(h[k], L.line)) P.push(`hero line ${id}: a ${k === '_' ? 'shared (_)' : k} line under ${L.line} characters`);
+  // hero-voice barks (v_*) have no shared line: a hero with none stays silent
+  for (const [id, h] of Object.entries(B.hero)) for (const k of ['wren', 'tobin', 'pip', '_']) if (!(k === '_' && id.startsWith('v_') && h._ === undefined) && !str(h[k], L.line)) P.push(`hero line ${id}: a ${k === '_' ? 'shared (_)' : k} line under ${L.line} characters`);
   for (const [id, c] of Object.entries(B.choice)) {
     const ids = (c.options || []).map(o => o.id);
     if (!str(c.prompt, L.line) || ids.length < 2 || ids.length > 4 || !(c.options || []).every(o => str(o.label, L.title) && (!o.line || str(o.line, L.speech)))) P.push(`choice ${id}: a prompt and 2 to 4 named options`);
@@ -8658,6 +8666,15 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
   // the sampler's new fights option stops after that many fights, and the old call still runs its seconds
   { const { g, E } = boot('wren'), r = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 2, fights: 5 }))')), r0 = JSON.parse(E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 600, seed: 2 }))'));
     assert(r.kills + r.deaths === 5 && r0.kills + r0.deaths > 5, `boss odds: turnCombatSample({ fights }) stops at that many fights (${r.kills + r.deaths}); without it the seconds run out (${r0.kills + r0.deaths} fights)`); }
+  // hit-feel: the number tiers, stings, stamp and lamps are display only. The windows, hit-stops and a seeded sample stay as they were.
+  { const { E } = boot('wren');
+    assert(E('JSON.stringify(TURN_TUNE.hitstop)') === '{"crit":0.06,"counter":0.14,"perfect":0.1,"broken":0.18,"big":0.08}' && E('JSON.stringify(TURN_TUNE.windowCaps)') === '{"parry":0.35,"dodge":0.5}', 'hit-feel: hit-stop values and window caps are unchanged');
+    const s1 = E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 300, seed: 3 }))'), s2 = E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 300, seed: 3 }))');
+    assert(s1 === s2, 'hit-feel: a seeded sample is the same twice (display code draws no random numbers in it)');
+    const tiers = JSON.parse(E(`(() => { spawn(); const f = combatFoes()[0], got = []; on('float', p => got.push(p.tier || '')); f.hp = f.max = 1e9;
+      cbTurnDamageFoe(f, 10, 'counter', false, 'phys', 1, 'counter'); cbTurnDamageFoe(f, 10, 'attack', true, 'phys', 1, 'crit'); cbTurnDamageFoe(f, 10, 'attack', false, 'phys', 1, 'big'); cbTurnDamageFoe(f, 10, 'attack', false, 'phys', 1);
+      return JSON.stringify(got); })()`));
+    assert(tiers.join() === 'counter,crit,big,', 'hit-feel: a turn hit\'s tier rides its float, and none leaks to the next (' + tiers.join() + ')'); }
 } catch (e) { fail('boss odds crashed: ' + (e.stack || e)); }
 
 // ==== wall-try-again: after a zone boss beats you, the boss waits behind Try again, the zone keeps paying, the defeat card
@@ -10079,6 +10096,81 @@ if (section('moment layer')) try {
 } catch (e) { fail('moment layer crashed: ' + (e.stack || e)); }
 
 
+// ---- hero-voice (card hero-voice; 55-voice.js, STORY_BEATS.hero v_*, the moment card's .mm-say, the hero sheet's On the road record) ----
+if (section('hero voice')) try {
+  const story = fs.readFileSync(path.join(ROOT, 'src', 'js', '21k-story-hollow.js'), 'utf8');
+  const IDS = ['boss1', 'boss', 'loss', 'unique', 'level', 'ability', 'star1', 'craft1', 'lantern'];
+  for (const id of IDS) {
+    const m = story.match(new RegExp(`STORY_BEATS\\.hero\\.v_${id} = \\{([^}]*)\\}`));
+    assert(!!m, `hero voice: a line set v_${id} exists`);
+    const lines = m ? [...m[1].matchAll(/(wren|tobin|pip): (?:'([^']*)'|"([^"]*)")/g)] : [];
+    assert(lines.length === 3 && !/\b_:/.test(m ? m[1] : ''), `hero voice: v_${id} has exactly Wren, Tobin and Pip lines and no shared fallback (other heroes stay silent)`);
+    for (const l of lines) assert((l[2] || l[3]).length < 60 && !/\b(soaked|corrupted|twisted|party|drawn to)\b/i.test(l[2] || l[3]), `hero voice: v_${id} ${l[1]} is under 60 characters with no retired word`);
+  }
+  assert(IDS.length === 9 && !/fire/.test(IDS.join()), 'hero voice: nine moments; the fire-lit moment stays Hesketh\'s (one bark or talk a moment)');
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('hero voice (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[740, 360], [360, 740]]) {
+        const at = `hero voice ${w}x${h}`;
+        try {
+          const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, turns: true });
+          await ctx.addInitScript(([key, rw]) => {
+            try { localStorage.setItem('lanternfall.test.nostory', '1'); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {}
+            if (sessionStorage.getItem('hv-seeded')) return; sessionStorage.setItem('hv-seeded', '1');
+            const o = JSON.parse(rw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+          }, [KEY, raw]);
+          const page = await ctx.newPage(); const errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+          for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          const until = async (expr, ms = 6000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 100 }); } catch (e) { /* the assert says what is missing */ } };
+          await page.waitForTimeout(4600);
+          await X(`S.activity = 'gather'; S.tab = ''; S.onboard.tips = false; emit('sceneReset'); true`);
+          await page.waitForTimeout(600);
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } S.story.starter = 'tobin'; true`);
+          const who = await X(`storyHeroKey()`);
+          assert(who === 'tobin' || who === 'wren' || who === 'pip', `${at}: the fixture's hero is a starter (${who})`);
+          // the first boss, a unique and a level-up at one fight end: one bark, the strongest (boss1)
+          await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1); emit('zoneClear', { zone: 1 }); true`);
+          await until(`!!document.querySelector('.mm-ov')`);
+          const card = await X(`(() => { const o = document.querySelector('.mm-ov'), c = o && o.querySelector('.mm-card'), r = c && c.getBoundingClientRect(), s = o && o.querySelectorAll('.mm-say');
+            return { n: s ? s.length : 0, text: s && s[0] ? s[0].textContent : '', pt: !!(s && s[0] && s[0].querySelector('img') && s[0].querySelector('img').src.startsWith('data:')),
+              fits: !!r && r.top >= 0 && r.bottom <= innerHeight + 1, go: o && o.querySelector('.mm-go').getBoundingClientRect().bottom <= innerHeight + 1 }; })()`);
+          const want = await X(`voiceSay('boss1').line`);
+          assert(card.n === 1 && card.text.includes(want) && card.pt, `${at}: one bark shows on the card with the hero's portrait (${JSON.stringify(card).slice(0, 160)})`);
+          assert(card.fits && card.go, `${at}: the card with its bark fits the screen and Continue is in view`);
+          await page.waitForTimeout(700);
+          await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'hero-voice', `boss-card-${w}x${h}.png`) });
+          await page.waitForTimeout(800); await page.click('.mm-go'); await page.waitForTimeout(300);
+          // the parry run and the record
+          await X(`S.voice.best = 0; for (let i = 0; i < 3; i++) emit('soloParry', { res: 'parry' }); emit('soloParry', { res: 'miss' }); emit('soloParry', { res: 'parry' }); S.voice.best`);
+          assert(await X(`S.voice.best`) === 3, `${at}: the best parry streak counts a run with no miss`);
+          await X(`partySheet.openHero(); true`); await page.waitForTimeout(300);
+          const rec = await X(`(document.querySelector('.cs-rec') || { textContent: '' }).textContent`);
+          assert(/Bosses beaten/.test(rec) && /Uniques found/.test(rec) && /Best parry streak: 3/.test(rec) && /Days on the road/.test(rec), `${at}: the hero sheet shows the On the road record (${rec.slice(0, 120)})`);
+          await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'hero-voice', `hero-sheet-${w}x${h}.png`) });
+          await X(`partySheet.close(); true`);
+          // a hero with no line stays silent, and a bark-only moment drops
+          await X(`S.story.starter = ''; true`);
+          const silent = await X(`soloHero() && ['wren','tobin','pip'].includes(soloHero()) ? 'starter' : (voiceSay('boss1') === null && moment('bark', { bark: 'boss' }) === false)`);
+          assert(silent === true || silent === 'starter', `${at}: with no starter as the story hero a bark is silent`);
+          assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        } catch (e) { fail(`${at} crashed: ` + (e.stack || e)); }
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('hero voice crashed: ' + (e.stack || e)); }
+
+
 // ==== qa-player-eyes: LF_EYES (src/js/89-eyes-hook.js), what tools/eyes.mjs reads. Read only: it changes no state and starts no timer.
 if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
   const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '89-eyes-hook.js'), 'utf8').replace(/\/\/.*$/gm, '');
@@ -10166,6 +10258,48 @@ if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 } catch (e) { fail('first-hour walk crashed: ' + (e.stack || e)); }
+// ---- Next Up always goes (nextup-always-goes): every goal's Go lands on a visible, enabled target ----
+if (section('Next Up Go targets (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('Next Up Go targets (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const fx of ['save-early.json', 'save-mid.json']) {
+        const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', fx), 'utf8');
+        const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true }), page = await ctx.newPage(), errs = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // a Scroll in hand for an ability the hero can learn: the rarest goal, and the one that once had nothing to press
+        await X(`(() => { const k = soloHero(); if (!k) return 0; S.L = Math.max(S.L, 20); S.abil = S.abil || {}; S.abil.scrolls = Object.assign({}, S.abil.scrolls, { moss: 2, hollow: 2, roadlight: 2 }); return 1; })()`);
+        await page.waitForTimeout(300);
+        const ids = await X(`topGoals(60, { sticky: false }).map(g => g.id)`);
+        const bad = [];
+        for (const id of ids) {
+          const r = await X(`(() => { const g = topGoals(60, { sticky: false }).find(x => x.id === ${JSON.stringify(id)}); if (!g) return 'gone';
+            let spec = g.go; if (typeof spec === 'function') spec = spec(); if (!spec) return 'no go';
+            if (spec.fn) spec.fn(); if (!spec.tab) return spec.fn || spec.act ? '' : 'nothing to do';
+            setTab(spec.view || spec.tab, spec.sel); ui(true); if (!spec.sel) return '';
+            const el = document.querySelector(spec.sel); return !el ? 'no target ' + spec.sel : el.offsetParent === null ? 'hidden ' + spec.sel : el.disabled && g.ready && !(g.id === 'zone-boss' && fightBoss) ? 'disabled ' + spec.sel : ''; })()`);   // a goal still in progress may point at a button that waits
+          if (r && r !== 'gone') bad.push(id + ': ' + r);
+          await page.waitForTimeout(80);
+        }
+        assert(ids.length >= 1 && !bad.length && !errs.length, `${fx}: every Next Up goal's Go lands on a visible target, enabled when the goal is ready (${ids.join()})` + (bad.length ? ' bad: ' + bad.join('; ') : '') + (errs.length ? ' errors: ' + errs[0] : ''));
+        if (ids.includes('learn-ability')) {
+          const r = await X(`(() => { const g = topGoals(60, { sticky: false }).find(x => x.id === 'learn-ability'); const s = g.go(); if (s.fn) s.fn(); setTab(s.view || s.tab, s.sel);
+            const b = document.querySelector('#sec-abilities .ab-det .ab-learn'); return !!b && b.offsetParent !== null && !b.disabled && b.matches(s.sel); })()`);
+          assert(r, `${fx}: Learn ability goes to the open detail with the Learn button`);
+        }
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('Next Up Go targets crashed: ' + (e.stack || e)); }
 // ==== end qa-first-hour-walk ====
 // ---- fight HUD fit (fight-hud-fit): names whole, banner and toasts never on top of each other ----
 if (section('fight HUD fit')) try {

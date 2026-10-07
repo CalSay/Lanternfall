@@ -8,6 +8,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## The game
 
+- **Claude decided: hero barks (card hero-voice, 2026-10-06; Cal can veto).** Only the three starters speak, one line each
+  at nine moments (first boss, later boss, boss loss, unique, level, ability, first Star, first craft, Hollow Great Lantern);
+  no class lines and no lines for the other 31 heroes; at most one bark a fight end, strongest first. Opus judge (red team,
+  then judge) rewrote "hole" out of the first-boss lines (the player may not have heard Hesketh say it yet), kept bible 4.6's
+  lantern lines verbatim, and approved cutting the fire-lit bark: Hesketh's talk owns that moment. The hero sheet's record
+  is headed "On the road" ("With you" read like companion language). Scores: Hero arc 3, Fit 4, Clarity 4.
+
 - **No prestige or resets.** Progress is permanent. Freshness comes from mastery, collections, build variety and new
   regions. (2026-09-27)
 - **Single-player first.** The world raid and Tavern stay optional, light extras. (2026-09-27)
@@ -442,6 +449,12 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   (story bible 4.4).
 - **First-hour art.** Two packs, `first-hour-art` and `cache-art`. Star icons are parked. Approved assets (the Mossy
   Hollow background, roster portraits, Deepwell colours) may be reused as they are.
+- **Hit feel (card hit-feel, Opus judge 2026-10-06).** Number tiers by priority counter, crit, big (a hit of a fifth of the
+  foe's HP, the hit-stop's own test), normal; each has its size and sting. A *clean* parry or dodge is one pressed in the
+  last `min(half the window, 0.10 s)` before the hit; it stamps PARRIED! or DODGED! in gold. Never "Perfect" on a defence:
+  that word means a real bonus on timed abilities. Five lamps count clean defences in a row and go out on a landed hit, a
+  failed press or a loose defence. All of it is display only: no window, hit-stop, pace or save change, and no telegraph
+  of the foe's next move.
 
 ## Working process
 

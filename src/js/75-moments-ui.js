@@ -16,6 +16,8 @@
 //   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
 //   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
+//   bark     a hero-voice moment id (55-voice.js): the story hero's line shows on the card or banner with their portrait. At most one bark a
+//            flush (the strongest, VOICE_PRIO). kind 'bark' is a banner of just the line, dropped after 20 s if the banner budget has no room.
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
 // is dropped (a unique already sits in the trophy wall).
 const MOMENT_TUNE = { bannerS: 2.6, bannerExtraS: 0.7, settleS: 0.3, tapLockMs: 700, maxLines: 5, maxBanner: 3, bootS: 4, guideWaitS: 1, midMax: 2, midWindowS: 180, midFirstS: 1800 };
@@ -29,7 +31,8 @@ const MOMENT_KINDS = {
   ability: { tier: 'medium', eye: 'New ability', col: '#5FA8FF', snd: 'mid' },
   star: { tier: 'medium', eye: 'New Star', col: '#F2C14E', snd: 'mid' },
   look: { tier: 'medium', eye: 'Look found', col: '#B58CFF', snd: 'mid' },
-  craft: { tier: 'medium', eye: 'Well made', col: '#5FA8FF', snd: 'mid' }
+  craft: { tier: 'medium', eye: 'Well made', col: '#5FA8FF', snd: 'mid' },
+  bark: { tier: 'medium', eye: '', col: '#F2C14E', snd: 'mid' }
 };
 const MOMENT_RARITY = { common: '#CFC6D8', uncommon: '#6FCB6A', rare: '#5FA8FF', epic: '#B58CFF', legendary: '#FF8A3D' };
 const MOMENT_Q = [];
@@ -40,8 +43,10 @@ const MOMENT_OFF = (() => { try { return localStorage.getItem('lanternfall.test.
 function moment(kind, o) {
   if (MOMENT_OFF) return false;
   o = o || {};
+  const say = o.bark && typeof voiceSay === 'function' ? voiceSay(o.bark) : null;
+  if (kind === 'bark' && !say) return false;   // a hero with no line stays silent
   const k = MOMENT_KINDS[kind] || { tier: 'medium', eye: '', col: '#F2C14E', snd: 'mid' };
-  MOMENT_Q.push(Object.assign({}, o, { kind, tier: k.tier, eye: o.eye || k.eye, col: (o.rarity && MOMENT_RARITY[o.rarity]) || o.col || k.col, snd: k.snd }));
+  MOMENT_Q.push(Object.assign({}, o, { kind, tier: k.tier, eye: o.eye || k.eye, col: (o.rarity && MOMENT_RARITY[o.rarity]) || o.col || k.col, snd: k.snd, say, at: Date.now() }));
   MOMENT_UI.wait = 0;
   return true;
 }
@@ -76,6 +81,23 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     li.append(el('span', null, l.txt));
     return li;
   }
+  // hero-voice: the story hero's line and portrait
+  const portraitOf = key => { try { return portraitURL(key === (typeof soloHero === 'function' && soloHero()) ? 'hero' : key) || ''; } catch (e) { return ''; } };
+  function sayBox(say) {
+    const b = el('div', 'mm-say'), u = portraitOf(say.key);
+    if (u) b.append(img(u, 'mm-say-pt'));
+    const t = el('div', 'mm-say-tx'); t.append(el('p', null, '\u201C' + say.line + '\u201D'), el('small', null, say.who));
+    b.append(t);
+    return b;
+  }
+  // one bark a flush: the strongest says it, on the first item; a bark-only moment is dropped when something else carries the line
+  function withSay(list) {
+    const src = list.find(x => x.say && x.bark === voicePick(list.filter(y => y.say).map(y => y.bark)));
+    const rest = list.filter(x => x.kind !== 'bark').map(x => (x.say ? Object.assign({}, x, { say: null }) : x));
+    if (!src) return rest.length ? rest : list;
+    if (rest.length) { rest[0] = Object.assign({}, rest[0], { say: src.say }); return rest; }
+    return [Object.assign({}, src, { eye: src.say.who, title: '\u201C' + src.say.line + '\u201D', say: null, pic: portraitOf(src.say.key) })];
+  }
   function showCard(list) {
     const u = MOMENT_UI, first = list[0];
     u.lastFocus = document.activeElement;
@@ -87,12 +109,13 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     card.append(el('div', 'mm-eye', first.eye));
     const art = el('div', 'mm-art'), burst = el('div', 'mm-burst');
     art.append(burst);
-    let pic = null; try { pic = first.still || (first.icon && iconOf(first.icon)); } catch (e) {}
+    let pic = null; try { pic = first.still || first.pic || (first.icon && iconOf(first.icon)); } catch (e) {}
     if (pic) { const im = img(pic, 'mm-img'); art.append(im); }
     card.append(art);
     const h = el('h2', 'mm-head', first.title || first.eye); h.id = 'mmHead';
     card.append(h);
     if (first.sub) card.append(el('p', 'mm-sub', first.sub));
+    if (first.say) card.append(sayBox(first.say));
     // the rest of the queue (and any lines of the first) fold into one list
     const rows = (first.lines || []).slice();
     for (const x of list.slice(1)) rows.push({ txt: [x.eye, x.title].filter(Boolean).join(': '), icon: x.icon });
@@ -124,7 +147,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const u = MOMENT_UI, box = $('toasts'); if (!box) return;
     if (u.banner) { dropToast(u.banner); u.banner = null; }
     const shown = list.slice(0, MOMENT_TUNE.maxBanner), first = shown[0];
-    let pic = null; try { pic = first.icon && iconOf(first.icon); } catch (e) {}
+    let pic = null; try { pic = first.pic || (first.icon && iconOf(first.icon)); } catch (e) {}
     // built here, not by makeToast: a moment sits outside the pop budget and the toast counters (tools/check.mjs counts makeToast calls)
     const t = el('div', 'toast good hi mm-toast');
     t._p = 2; t._kind = 'good'; t._more = 0;
@@ -135,6 +158,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const tx = el('div', 'mm-t-tx');
     tx.append(el('div', 'mm-t-eye', first.eye), el('div', 'mm-t-title', first.title || ''));
     if (first.sub && shown.length === 1) tx.append(el('div', 'mm-t-sub', first.sub));
+    if (first.say) tx.append(el('div', 'mm-t-say', '\u201C' + first.say.line + '\u201D'));
     for (const x of shown.slice(1)) tx.append(el('div', 'mm-t-line', [x.eye, x.title].filter(Boolean).join(': ')));
     if (list.length > shown.length) tx.append(el('div', 'mm-t-line', `And ${list.length - shown.length} more.`));
     t.append(tx);
@@ -157,16 +181,17 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     return [last].concat(list.filter(x => x.kind !== 'level'));
   }
   function flush() {
-    const u = MOMENT_UI;
+    const u = MOMENT_UI, now = Date.now();
+    for (let i = MOMENT_Q.length - 1; i >= 0; i--) if (MOMENT_Q[i].kind === 'bark' && now - MOMENT_Q[i].at > 20000) MOMENT_Q.splice(i, 1);   // a bark that missed its moment
     const big = MOMENT_Q.filter(x => x.tier === 'big'), mid = MOMENT_Q.filter(x => x.tier !== 'big');
     if (big.length && !u.ov) {
-      const all = big.concat(fold(mid)); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
+      const all = withSay(big.concat(fold(mid))); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
       for (const x of mid) MOMENT_UI.midAt.push(Date.now());   // each folded medium counts against the cap
       showCard(all); return;
     }
     if (big.length) return;   // a big card is up: wait for it
     if (u.ov || (u.banner && u.banner._hold > Date.now())) return;   // a banner keeps its minimum time; a banner under a big card would play unseen
-    if (mid.length && midRoom()) { const all = fold(mid); MOMENT_Q.length = 0; showBanner(all); }
+    if (mid.length && midRoom()) { const all = withSay(fold(mid)); MOMENT_Q.length = 0; showBanner(all); }
   }
   // a timer, not onTick: a guide step or a card that holds the game must not hold a moment back
   setInterval(() => {
@@ -188,26 +213,31 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const it = e && e.item; if (!it || !it.u || !UNIQ[it.u]) return;
     const u = UNIQ[it.u];
     moment('unique', { title: u.name, sub: e.first ? 'A new unique. It joins your trophy wall.' : 'Another copy of a unique you have.',
-      rarity: 'legendary', icon: { item: it },
+      rarity: 'legendary', icon: { item: it }, bark: 'unique',
       lines: e.kept ? [] : [{ txt: 'Your bag was full, so it was salvaged.' }] });
   });
   on('zoneClear', e => {
-    if (!e || e.zone !== 1) return;   // the first boss: later zone bosses have their own toast, scroll and (every region) Great Lantern
-    moment('boss', { title: 'The first boss falls', sub: `${zoneName(e.zone)} is cleared. The road goes on.`, icon: { ic: ['banner', '#F2C14E'] } });
+    if (!e) return;
+    // later zone bosses have their own toast and scroll; a region's last boss has the Great Lantern card, which carries the hero's line
+    if (e.zone !== 1) { if (typeof REGIONS === 'object' && !REGIONS.some(r => r.z1 === e.zone)) moment('bark', { bark: 'boss' }); return; }
+    moment('boss', { title: 'The first boss falls', sub: `${zoneName(e.zone)} is cleared. The road goes on.`, icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss1' });
   });
   on('heroUnlocked', e => { if (e && e.id) moment('hero', { title: heroName(e.id), sub: 'A new hero will take up the lamp.', icon: { ic: ['banner', '#B58CFF'] } }); });
   // level up is medium only on the first level and every 5th (a banner a level would be a flood); otherwise the toast rules decide
   const MOMENT_LEVEL = L => L === 2 || L % 5 === 0;
-  on('levelup', e => { if (e && !e.quiet && MOMENT_LEVEL(e.L)) moment('level', { title: `Level ${e.L}`, sub: `Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, L: e.L, icon: { ic: ['banner', '#6FCB6A'] } }); });
+  on('levelup', e => { if (e && !e.quiet && MOMENT_LEVEL(e.L)) moment('level', { title: `Level ${e.L}`, sub: `Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, L: e.L, bark: 'level', icon: { ic: ['banner', '#6FCB6A'] } }); });
   on('abilityLearned', e => {
     const a = e && typeof ABILITIES === 'object' && ABILITIES[e.id]; if (!a) return;
-    moment('ability', { title: a.name, sub: heroName(e.hero) + ' learns a new ability.' });
+    moment('ability', { title: a.name, sub: heroName(e.hero) + ' learns a new ability.', bark: 'ability' });
   });
   on('starFound', e => {
     if (!e || e.quiet || typeof STARS !== 'object' || !STARS[e.id]) return;
     const first = Object.keys((S.stars && S.stars.own) || {}).length <= 1;   // the first Star is a big card (DECISIONS, Early game); later ones are a banner
-    moment(first ? 'starFirst' : 'star', { title: STARS[e.id].name, sub: STARS[e.id].text });
+    moment(first ? 'starFirst' : 'star', { title: STARS[e.id].name, sub: STARS[e.id].text, bark: first ? 'star1' : '' });
   });
+  // hero-voice: a boss that beats you (once for each new furthest zone) and the first thing you craft
+  on('bossFail', e => { if (e && e.zone >= 1 && typeof voiceLoss === 'function' && voiceSay('loss') && voiceLoss(e.zone)) moment('bark', { bark: 'loss' }); });
+  on('crafted', e => { if (e && e.item && typeof voiceOnce === 'function' && voiceSay('craft1') && voiceOnce('craft1')) moment('bark', { bark: 'craft1' }); });
   // a look found: the Deeds grant looks with a Feat, a Group level or a Chapter; compare what is owned
   let ownedLooks = null;
   const lookSet = () => { try { return new Set(deeds.looks().filter(l => l.got).map(l => l.id)); } catch (e) { return null; } };
