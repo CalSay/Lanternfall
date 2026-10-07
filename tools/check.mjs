@@ -8312,9 +8312,9 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.8, 15: 16 * 2.5, 20: 16 * 2.4, 30: 16 * 3.6, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.8, 15: 16 * 2.5, 20: 16 * 2.4, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-34 x1.1; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall (2026-10-07); zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
@@ -8371,7 +8371,10 @@ if (section('C29 mid-game HP and Wren (core)')) try {
   { const bad = [], seen = [];
     for (const [z, L, fx] of [[8, 14, 'early'], [15, 25, 'mid'], [20, 33, 'mid'], [25, 35, 'mid'], [30, 37, 'late'], [34, 39, 'late']]) for (const k of ['wren', 'pip']) {
       const r = kept(k, z, L, fx), s = `${k} ${z}: ${[r.n.hit, r.b.hit, r.b.charge].map(x => (100 * x).toFixed(0)).join('/')}`; seen.push(s);
-      if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= 0.25 && r.b.hit <= 0.36 && r.b.charge >= 0.6 && r.b.charge <= 0.9) || r.err().length) bad.push(s); }
+      // zones 25-34 (mid-zone-wall, 2026-10-07): the hero who keeps up there has only 0.2-0.4 of the reference HP (budget.mjs), and this
+      // hero is scaled to the reference, so a boss hit that costs them 25-45% reads 8-16% here and a charge 20-45%
+      const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : [0.25, 0.36, 0.6, 0.9];
+      if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
     assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 25-35%, a charge 60-90% (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
   // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
