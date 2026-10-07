@@ -363,6 +363,35 @@ PR 3 of `boss-tiers`. Opus judge after measuring (the cap question) and a tuning
 - **Gaps.** The z15 and z20 "too easy" gaps for Wren and Pip are closed. Tobin sits above his band at every new row under
   `tobin-safety-margin` gaps (until 2026-12-01).
 
+### Boss tiers, Champions: judge rulings (2026-10-07)
+
+PR 2 of `boss-tiers`. Opus judge after measuring (`/mnt/project-files/early-game/boss-tiers-pr2/data.md`); Cal can veto any line.
+Cal's card at 07:19, "Harder without gear", is the direction: bosses tougher across the board, crafting matters more, no gear-curve card.
+
+- **Tier.** `bossTierOf(z)` (40-rules): zone 35 and its multiples Elder, every fifth zone Champion, the rest Captain. Only the zone 5 and
+  zone 10 Champions get a stat multiplier now (`TURN_TUNE.boss.champHpX`, `champHitX`); Champions from zone 15 keep their PR 3 knots and sit
+  on the Captain band. Boss names, loot and pay by tier are not changed here: boss names are still "Elder <type>", pay stays on the old
+  length curve (the Champion HP does not feed gold or XP), and the story cards own Champion scenes.
+- **Smoothed Captain line, Champion on top.** Zone 5 hpX 1.85 / hitX 2.0 (was 3.7 / 3.4), zone 10 hpX 1.45 / hitX 0.98 (was 1.9 / 1.05).
+  Champion x: zone 5 hp 2.4 / hit 1.6 (effective 4.4 / 3.2), zone 10 hp 1.25 / hit 1.6 (effective 1.8 / 1.57). Hits past about 2.0 saturate
+  against the 40% cap; more HP is longer, not harder (z5 3.0/1.25 matches 2.4/1.6 in wins and takes 8 turns against 6.4).
+  Fallbacks if the nightly walk loses more than 5 times: zone 10 hp 1.0 (hit stays 1.6), zone 5 hit 1.25.
+- **Bands.** `firstChampion` casual 60-80 (the old top, 85, would pass the easy build). Zone 10 `champion` stays 40-60 and speaks for the
+  casual player on the first-hour set; `casualLow` at 19% is a wall on purpose, gear is the way through. This supersedes the PR 1 line
+  "10-30% casual at the first gear check is not acceptable" for nothing-worn and weaker-defender rows only.
+- **Floors (report-only, nothing worn).** Zone 5 casual 35%+ (was 40; not 30, because the first-hour map has the first Forge weapon after zone 5),
+  zone 10 casual 10%+ (was 15). Good stays 95%+.
+- **Kept-up heroes still win 100% at zones 8-15; accepted, report-only, no knot retune.** A global x1.25 on Captain HP and hits drops
+  the first-hour hero (z13 35/36, z15 Pip 30) and leaves the kept-up hero at 99-100. Sizing hits to the hero's own HP moved it 0-1 points.
+  The cause is tempo: a kept-up hero kills a boss in 2.5-4 hero turns. Owner: move sets (pr4: chains, delayed hits, feints), until 2026-12-01.
+- **Gear must help is gated** (`gearHelps`, health --compare): a kept-up row's casual wins may not sit below its first-hour row's by more
+  than the tolerance, for any hero. The absolute kept-up band stays report-only.
+- **Closest to death is a report column, not a gate.** The share of a good player's wins that dip under half HP reads 0-7% at every
+  setting (a good player avoids about 96% of hits under a 40% cap); the 20-35% aim is not reachable without breaking the cap. Move sets set a target.
+- **Gaps.** Removed: z20-elite, z35-elder and z38-elite Wren. z10-boss Pip is kept at 0.70 (the 5-seed baseline reads 68). The re-baseline ratchet
+  tightened z35-elder Pip to 0.53 (it read 52-53; the Fenmother pass owns it), z5-boss Pip to 0.98 and z38-boss-behind Pip to 0.80.
+- **Tools.** The wide run adds a `bot` player (the walk bot's parry 55%, dodge 50%) and a good-player close-to-death column; `hpr` per row.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
