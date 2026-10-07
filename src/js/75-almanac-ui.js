@@ -182,7 +182,7 @@
         r.tier = el('span', 'om-tier'); meta.append(r.tier, r.own);
         const bar = el('div', 'bar om-gbar'); bar.append(el('i')); r.bar = bar.firstChild;
         r.desc.before(meta, bar);
-        const d = disclose(r.row, r.desc.parentElement, null, [r.ic]); meta.append(d.chev);
+        const d = disclose(r.row, r.desc.parentElement, null, [r.ic]); meta.append(d.chev); r.dz = d;
         const sw = el('button', 'om-swap', 'Swap'); sw.type = 'button'; r.row.append(sw); r.sw = sw;
         r.btn.addEventListener('click', () => { if (almanac.claim(i)) ui(true); });
         sw.addEventListener('click', () => { if (almanac.swap(i)) ui(true); });
@@ -219,6 +219,9 @@
         const rw = almanac.reward(g), room = g.done && !g.claimed ? stashNeed(rw.mats.map(m => [m.k, m.t, m.n])) : '';   // H3: waits until it fits
         setTxt(r.desc, g.claimed ? 'Reward collected.' : room || 'Reward: ' + almanac.rewardText(rw));
         setIc(r.ic, iconOf({ ic: almanac.goalIcon(g) }));
+        const ready = g.done && !g.claimed;
+        if (ready && !r.ready) r.dz.set(true);   // a finished goal opens, so its reward shows before you claim it
+        r.ready = ready;
         r.row.classList.toggle('active', g.done && !g.claimed);
         r.row.classList.toggle('claimed', g.claimed);
         r.sw.hidden = g.done || A.swaps <= 0;

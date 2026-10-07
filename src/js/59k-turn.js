@@ -209,7 +209,8 @@ function turnFoeSetup(f, z, o) {
   // the boss pass: a zone or region boss lasts longer and hits harder (TURN_TUNE.boss; not the Deepwell's or a Proving's)
   const B = T.boss, zb = !!(f.boss && !o.set);
   const len = zb ? (region ? B.regionHpX : turnZoneLine(B.hpX, z)) : 1;
-  const hp = hpA * ease * len * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
+  const roll = 0.95 + Math.random() * 0.1;   // drawn for every foe so seeded sims keep their sequence
+  const hp = hpA * ease * len * turnRefAtk(z) * (f.boss ? 1 : roll);   // a boss keeps one HP across tries; the roll is for packs
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
     hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
