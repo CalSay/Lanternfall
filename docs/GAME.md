@@ -86,7 +86,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   packs only); `check.mjs` lists the complete heroes.
 - **Stars** change the rules of a fight on top: up to 3 set and 2 lit a hero (see The hero).
 - **Zones:** 5 won fights, then the zone boss, then the next zone (`ZONE_FIGHTS` in `40-rules.js`). Losing never moves
-  you. Bosses have no timer.
+  you. Bosses have no timer. In zones 1 to 15 no single boss hit takes more than 40% of your max HP, so one missed parry never
+  ends a fight from full health. Zone bosses from 4 to 12 are tuned to a hero in the zone's first gear (common, +0).
 - **After a boss beats you** (`55-boss-try.js`, `75-boss-try-ui.js`): the game stops on a Try again card. It names the hit
   that won and why (a charged move, a hit you did not parry or dodge, a try with bad timing, damage over time, or "so
   close"), the boss's weakness and resists, the moves you now know, and the ways forward that exist today. **Try again**

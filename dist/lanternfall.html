@@ -2337,6 +2337,10 @@ span.cf-d { font-weight: 600; }
   font: 600 14px/1.3 var(--body); color: var(--bone); }
 .ob-bub[hidden] { display: none; }
 .ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
+.ob-bub.ok-row:not(.side) { grid-template-columns: 48px minmax(0, 1fr) auto; padding-right: 8px; }
+.ob-bub.ok-row:not(.side) .ob-x { display: none; }
+.ob-bub.ok-row:not(.side) .ob-txt { grid-row: 1 / span 2; }
+.ob-bub.ok-row:not(.side) .ob-ok { grid-column: 3; grid-row: 1 / span 2; align-self: center; margin-top: 0; padding: 0 12px; }
 .ob-bub.pop { animation: obIn .22s ease-out; }
 @keyframes obIn { from { opacity: 0; transform: translateY(6px); } }
 .ob-facebox { grid-column: 1; grid-row: 1 / span 2; width: 48px; height: 48px; display: grid; place-items: center; background: #0E0B12; border: 2px solid #0B0810; outline: 1px solid var(--line-hi); }
@@ -2729,9 +2733,11 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sr-pts small { color: var(--muted); font-size: 11px; text-align: center; line-height: 1.1; }
 .sr-row3, .sr-row2 { display: grid; gap: 4px; min-width: 0; }
 .sr-row3 { grid-area: set; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.sr-row2 { grid-area: lit; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sr-row2 { grid-area: lit; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; max-height: 92px; overflow-y: auto; overscroll-behavior: contain; }   /* two rows; more lit stars scroll inside, so the strip stays short */
 .sr-chip { position: relative; min-width: 0; display: flex; background: #231A30; box-shadow: inset 0 0 0 1px #6B5320; }
 .sr-chip.lit { background: #2A2238; box-shadow: inset 0 0 0 1px #8C7AD8; }
+.sr-chip.lit.dim { opacity: .6; box-shadow: inset 0 0 0 1px #B4553C; }
+.sr-chip.lit.dim .sr-chip-b small { color: #E8A090; }
 .sr-chip.empty { background: transparent; box-shadow: inset 0 0 0 1px #4E4060; }
 .sr-chip.sel { box-shadow: inset 0 0 0 2px var(--gold); }
 .sr-chip-b { flex: 1; min-width: 0; min-height: 40px; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center;
@@ -10054,10 +10060,9 @@ const TURN_TRAITS = {
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
 // A talent is a choice of two (A or B) for one ability, or for the hero's Attack, Parry or Dodge. It costs
-// TALENT_TUNE.cost talent points; the hero earns TALENT_TUNE.perLevel a level after level 1. You can change a choice
+// nothing: talents are free (counters-and-layers). You can change a choice
 // between fights for free. The rules live in 59k-turn.js (turnTal); the text here is what the player reads.
 //   TALENTS[id] = { a: { name, text }, b: { name, text } }   id: an ability id, or '<hero>:attack' / ':parry' / ':dodge'
-const TALENT_TUNE = { cost: 2, perLevel: 1 };
 const TALENTS = {
   // ---------------- Wren ----------------
   powershot: { a: { name: 'Piercing Head', text: 'Ignores half of the foe\'s armour.' }, b: { name: 'Measured Draw', text: 'Spends 1 Aim, if you have it, for 30% more power. It no longer gains Aim.' } },
@@ -10126,7 +10131,7 @@ for (const k of ['wren', 'tobin', 'pip']) HERO_TALENTS[k] = (typeof HERO_ABILITI
 //
 // A star is found once (it belongs to the lamp, shared by every hero), then set in one of a hero's 3 star slots. Win
 // STARS_TUNE.learnWins fights with a star set and it is learned: from then on any hero can also light it for its cost
-// in star points (starPoints(): a point every 3 hero levels, 4 for each Great Lantern), up to STARS_TUNE.litMax lit.
+// in star points, a per-hero budget (starPoints(hero): STARS_TUNE.budget) that is the only limit on lit stars.
 // Owner, 2026-10-02 (second pass): "Might need more of them though. We also need much better menus for abilities and
 // stars. I kinda miss the star map too": 18 more stars (43), and the Stars view is a star map again (STAR_SKY).
 //   STARS[id] = { id, name, short, text, cost, from, kit, sky, fold? }
@@ -10145,7 +10150,10 @@ for (const k of ['wren', 'tobin', 'pip']) HERO_TALENTS[k] = (typeof HERO_ABILITI
 //     first two complete constellations each cut the wins to learn a star by 1 (4, 3, then 2).
 
 const STARS_TUNE = {
-  slots: 3, litMax: 2, learnWins: 4, learnMin: 2, skyPoints: 1,
+  slots: 3, learnWins: 4, learnMin: 2, skyPoints: 1,
+  // star points a hero has: base + 1 a perLevels hero levels + lantern for each Great Lantern + skyPoints for each complete
+  // constellation (counters-and-layers: the budget binds, there is no separate cap on lit stars)
+  budget: { base: 2, perLevels: 10, lantern: 1 },
   eliteFrom: 15, eliteP: 0.125, elitePity: 12,
   // the numbers each star uses (57e-stars.js reads them; the text on the star says the same)
   fx: {
@@ -16774,12 +16782,12 @@ function heroUnlockStateValid(u) {
 //   scrollCount(id) -> n; scrollFor(zone) -> the Scroll id a zone's boss drops
 // Events: scrollDrop { id, n, first }, abilityLearned { hero, id }.
 // Save: registerState('abil', { unl: { hero: [ids] }, scrolls: { id: n }, dry: { id: n }, got: { id: n } }).
-// Talents (24e): each learned ability, and Attack, Parry and Dodge, has two talents; pick one for TALENT_TUNE.cost points.
-// A hero earns TALENT_TUNE.perLevel points a level after level 1. Choices change freely; a fight takes them as it starts.
-//   talentsOf(hero) -> { id: 'a' | 'b' } (only abilities the hero owns), talentPoints(hero) -> { total, spent, free }
+// Talents (24e): each learned ability, and Attack, Parry and Dodge, has two talents, a free A | B toggle (no points).
+// Choices change freely; a fight takes them as it starts. An unpicked slot has no talent: no default is written.
+//   talentsOf(hero) -> { id: 'a' | 'b' } (only abilities the hero owns)
 //   talentSet(hero, id, 'a' | 'b' | null) -> bool (null clears it; emits talentSet)
 // Save: S.abil.tal = { hero: { id: 'a' | 'b' } }; S.abil.resTip = { hero: 1 } (the resource line has shown on its own, 75-turn-ui).
-var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, talentPoints, talentSet;
+var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, talentSet;
 {
   const SCROLL_TUNE = { replay: 0.2, pity: 5 };
   const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {}, tal: { wren: {}, tobin: {}, pip: {} }, resTip: {} });
@@ -16813,15 +16821,10 @@ var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, 
   const talOk = (k, id) => typeof TALENTS === 'object' && !!TALENTS[id] && (id.includes(':') ? id.startsWith(k + ':') : abilityOwned(k, id));
   const talRec = k => { const s = A(); if (!s.tal || typeof s.tal !== 'object') s.tal = {}; if (!s.tal[k] || typeof s.tal[k] !== 'object') s.tal[k] = {}; return s.tal[k]; };
   talentsOf = k => { const out = {}, r = talRec(k); for (const id in r) if ((r[id] === 'a' || r[id] === 'b') && talOk(k, id)) out[id] = r[id]; return out; };
-  talentPoints = k => {
-    const total = Math.max(0, (lvOf(k) - 1) * TALENT_TUNE.perLevel), spent = Object.keys(talentsOf(k)).length * TALENT_TUNE.cost;
-    return { total, spent, free: total - spent };
-  };
   talentSet = (k, id, c) => {
     if (!talOk(k, id) || (c != null && c !== 'a' && c !== 'b')) return false;
     const r = talRec(k);
     if (c == null) { delete r[id]; emit('talentSet', { hero: k, id, choice: null }); return true; }
-    if (!r[id] && talentPoints(k).free < TALENT_TUNE.cost) return false;   // a switch between a and b costs nothing more
     r[id] = c; emit('talentSet', { hero: k, id, choice: c });
     return true;
   };
@@ -18756,17 +18759,17 @@ let DEEP_ARENA = null;
 //
 // A star is one small rule change in a turn fight ("A parried hit adds 1 Chill"). Players find them (zone bosses' first
 // wins, elites, the Deepwell's floors, the Provings), set up to 3 on a hero, and learn a star by winning starNeed()
-// fights with it set. A learned star can also be lit by any hero for its cost in star points, up to STARS_TUNE.litMax
-// lit. Found and learned stars belong to the lamp (every hero); each hero keeps its own 3 slots and lit stars. A fight
+// fights with it set. A learned star can also be lit by any hero for its cost in star points (a per-hero budget, starPoints(hero)); the points are the only limit.
+// Found and learned stars belong to the lamp (every hero); each hero keeps its own 3 slots and lit stars. A fight
 // takes them as it starts.
 //
-// Points: starPoints() = floor(S.L / 3) + 4 x greatLanternsLit() (region bosses beaten) + 1 for each complete
+// Points: starPoints(hero) = 2 + floor(hero level / 10) + greatLanternsLit() (region bosses beaten) + 1 for each complete
 // constellation (STARS_TUNE.skyPoints). Derived, never stored.
 // The star map (STAR_SKY, 24f): learn every star of a constellation and it is complete (starSkyDone). The first two
 // complete constellations each cut the wins to learn a star by 1 (starNeed(): 4, 3, then 2; STARS_TUNE.learnMin).
 //
 // API: greatLanternsLit, starPoints, starOwned(id), starLearned(id), starWins(id), starSlots(hero), starLit(hero),
-//   starFree(hero), starSet(slot, id | null, hero) -> bool, starLight(id, hero) -> bool, starUnlight(id, hero) -> bool,
+//   starFree(hero), starUsed(hero), starDim(hero) -> lit ids the points cannot pay for, starSet(slot, id | null, hero) -> bool, starLight(id, hero) -> bool, starUnlight(id, hero) -> bool,
 //   starWhy(id, hero) -> '' | why it cannot be lit, starGrant(id, quiet) -> bool, starsActive(hero) -> [ids],
 //   starsSetIds(hero) -> [ids], starsFound() -> n, starsLearnedN() -> n, starNeed() -> wins to learn a star,
 //   starSkyDone(skyId) -> bool, starSkiesDone() -> n, starSkyCount(skyId) -> { n, found, learned }.
@@ -18790,7 +18793,7 @@ let DEEP_ARENA = null;
 //   star comes on the second) }. A save from the old star map (v 2) keeps its maps field untouched; it does nothing now,
 //   and every star point is free again (the points were always derived).
 
-var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, starLit, starFree, starSet, starLight, starUnlight,
+var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, starLit, starFree, starUsed, starDim, starSet, starLight, starUnlight,
   starWhy, starGrant, starsActive, starsSetIds, starsFound, starsLearnedN, starNeed, starSkyDone, starSkiesDone, starSkyCount;
 
 {
@@ -18865,7 +18868,8 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
 
   // ---- points ----
   greatLanternsLit = () => lanternsLitAt(S.maxZone);
-  starPoints = () => Math.floor((S.L || 1) / 3) + 4 * greatLanternsLit() + TU.skyPoints * starSkiesDone();
+  const heroL = k => { try { const l = typeof soloLevels === 'function' && k ? soloLevels()[k] : null; if (l && l.L) return l.L; } catch (e) { /* the main hero's level */ } return S.L || 1; };
+  starPoints = k => TU.budget.base + Math.floor(heroL(hk(k)) / TU.budget.perLevels) + TU.budget.lantern * greatLanternsLit() + TU.skyPoints * starSkiesDone();
 
   // ---- reads ----
   starOwned = id => !!ST().own[id];
@@ -18889,13 +18893,15 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
     const r = s[k], set = Array.isArray(S.stars.set[k]) ? S.stars.set[k] : [], seen = new Set();
     for (let i = r.length - 1; i >= 0; i--) if (!(ok(r[i]) && S.stars.learned[r[i]] && !set.includes(r[i]))) r.splice(i, 1);
     for (let i = 0; i < r.length; i++) if (seen.has(r[i])) r.splice(i--, 1); else seen.add(r[i]);
-    if (r.length > TU.litMax) r.length = TU.litMax;
     return r;
   }
   starSlots = k => { k = hk(k); return k ? slotsRec((ST(), k)).slice() : [null, null, null]; };
   starLit = k => { k = hk(k); return k ? litRec((ST(), k)).slice() : []; };
   const litCost = k => starLit(k).reduce((a, id) => a + STARS[id].cost, 0);
-  starFree = k => starPoints() - litCost(k);
+  // star points the lit stars in play cost, and the lit stars the points cannot pay for (shown dim; none is removed)
+  starUsed = k => starsActive(k).filter(id => litRec(hk(k)).includes(id)).reduce((a, id) => a + STARS[id].cost, 0);
+  starDim = k => { k = hk(k); if (!k) return []; const on = starsActive(k); return litRec(k).filter(id => !on.includes(id)); };
+  starFree = k => starPoints(k) - litCost(k);
 
   // ---- changes (between fights: a fight takes its stars as it starts) ----
   const changed = k => emit('starsChange', { hero: k });
@@ -18920,7 +18926,6 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
     if (slotsRec(k).includes(id)) return 'It is set in a slot.';
     const lit = litRec(k);
     if (lit.includes(id)) return '';
-    if (lit.length >= TU.litMax) return `You can light ${TU.litMax} stars. Put one out first.`;
     const free = starFree(k), c = STARS[id].cost;
     return free < c ? `Needs ${c} star point${c > 1 ? 's' : ''} (you have ${Math.max(0, free)}).` : '';
   };
@@ -18939,7 +18944,7 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
   starsActive = k => {
     k = hk(k); if (!k) return [];
     const out = starsSetIds(k);
-    let left = starPoints();
+    let left = starPoints(k);
     for (const id of litRec(k)) { const c = STARS[id].cost; if (c <= left && !out.includes(id)) { out.push(id); left -= c; } }
     return out;
   };
@@ -19004,15 +19009,16 @@ var greatLanternsLit, starPoints, starOwned, starLearned, starWins, starSlots, s
 
   // ---- news: a new star point, while there is a learned star to light ----
   on('levelup', ({ L, quiet }) => {
-    if (quiet || L % 3 !== 0 || typeof isUnlocked !== 'function' || !isUnlocked('stars') || !starsLearnedN()) return;
+    if (quiet || L % TU.budget.perLevels !== 0 || typeof isUnlocked !== 'function' || !isUnlocked('stars') || !starsLearnedN()) return;
     toast(`+1 star point. You have ${Math.max(0, starFree())} to light stars with in Hero, Stars.`, 'good', { ic: ['constel', '#F2C14E'] }, 'normal');
   });
-  on('greatLantern', e => { if (e && e.rewards && !e.quiet) e.rewards.push({ txt: '+4 star points', ic: ['constel', '#F2C14E'] }); });
+  on('greatLantern', e => { if (e && e.rewards && !e.quiet) e.rewards.push({ txt: `+${TU.budget.lantern} star point${TU.budget.lantern === 1 ? '' : 's'}`, ic: ['constel', '#F2C14E'] }); });
 
   // ---- Next Up: a found star waiting for a free slot, or a learned star the points can light ----
   const nextUp = () => {
     const k = hk(); if (!k || (typeof isUnlocked === 'function' && !isUnlocked('stars'))) return null;
-    const r = slotsRec((ST(), k)), lit = litRec(k);
+    const r = slotsRec((ST(), k)), lit = litRec(k), dim = starDim(k);
+    if (dim.length) return { id: dim[0], txt: `${STARS[dim[0]].name} is dim: put a star out or earn star points` };
     if (r.includes(null)) { const id = STAR_ORDER.find(x => S.stars.own[x] && !r.includes(x) && !lit.includes(x)); if (id) return { id, txt: `Set ${STARS[id].name} in a star slot` }; }
     const id = STAR_ORDER.find(x => S.stars.learned[x] && !starWhy(x, k) && !lit.includes(x));
     return id ? { id, txt: `Light ${STARS[id].name} with your star points` } : null;
@@ -25076,8 +25082,11 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [10, 1.8], [15, 2.5], [20, 2.4], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
-    hitX: [[3, 1], [6, 1.4], [8, 1.6], [15, 1.6], [20, 1.5], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5 },
+  boss: { hpX: [[3, 1], [4, 1.5], [5, 3.7], [6, 2.2], [7, 2.15], [8, 1.9], [9, 1.5], [10, 1.9], [11, 1.4], [12, 1.8], [15, 2.5], [20, 2.4], [25, 1.0], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+    hitX: [[3, 1], [4, 1.6], [5, 3.4], [6, 2.4], [8, 1.5], [9, 1.0], [10, 1.05], [11, 0.95], [12, 0.85], [15, 1.6], [20, 1.5], [25, 0.55], [27, 0.34], [30, 0.72], [34, 0.52], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+    // hitCap: one boss hit never takes more than this share of the hero's max HP, so a missed parry cannot kill a full-health hero
+    // (zone bosses 1-15; judge 2026-10-07, docs/DECISIONS.md "Boss tiers"). Taken before armour, Guard and the rest; each hit of a charged move on its own.
+    hitCap: [[1, 0.4], [15, 0.4], [16, 0]] },
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
   windowCaps: { parry: 0.35, dodge: 0.5 }, dodgeTrain: 0.004,   // Dodge Training: +4 ms of dodge window a level
@@ -25195,10 +25204,13 @@ function turnFoeSetup(f, z, o) {
   const hp = hpA * ease * len * turnRefAtk(z) * (0.95 + Math.random() * 0.1);
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
-    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1 };
+    hx: zb ? turnZoneLine(B.hitX, z) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
+    hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0 };
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
-  const pay = 1 + (len - 1) * B.payX;
+  // zones 4-12 pay on the old length (boss-tiers PR 1 lengthened those fights; first-hour gold and XP stay as they were)
+  const payLen = zb && !region && z <= 12 ? turnZoneLine([[3, 1], [10, 1.8], [15, 2.5]], z) : len;
+  const pay = 1 + (payLen - 1) * B.payX;
   f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 * pay : f.elite ? C.eliteGold : 1);
   f.xp = Math.ceil(Math.ceil(1.5 * z) * T.xpX * (f.boss ? 5 * pay : f.elite ? 2 : 1));
   return f;
@@ -25247,7 +25259,7 @@ function turnMakeProfile(f, u) {
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: T.foeAtkX * (1 - armRed) * classDr, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
-    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
+    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
@@ -25736,8 +25748,10 @@ function turnHitStart(m, io) {
 // a landed hit on the hero
 function turnLand(m, io, hit) {
   const T = TURN_TUNE, p = m.p, h = m.h, e = m.e;
-  let amt = (hit.x || 0.2) * p.refHp * p.hitX * (p.bossHitX || 1) * (m.move && m.move.charge ? p.bossChargeX || 1 : 1) *
+  let amt = (hit.x || 0.2) * p.refHp * (p.bossHitX || 1) * (m.move && m.move.charge ? p.bossChargeX || 1 : 1) *
     (e.weaken > 0 ? T.weakenX : 1) * (m.enraged ? TURN_TRAITS.enraged.dmg : 1);
+  if (p.bossHitCap > 0) amt = Math.min(amt, p.bossHitCap * p.heroMaxHp);   // the boss's side of the hit, before the hero's armour and defences
+  amt *= p.hitX;
   let red = 1;
   if (h.guard > 0) red *= T.guardX;
   if (h.grit > 0) red *= 1 - T.gritDr * h.grit;
@@ -35172,7 +35186,7 @@ var handsTradeOpenPicker;
   const persist = () => { try { save(); } catch (e) {} ui(true); };
   const redraw = () => { sig = ''; refresh(); };
   const cdTxt = id => { const a = ABILITIES[id]; return a.kind === 'passive' ? 'Always on' : `${typeof turnCdFor === 'function' ? turnCdFor(id) : a.cd} turns`; };
-  const talOn = () => typeof TALENTS === 'object' && typeof talentPoints === 'function';
+  const talOn = () => typeof TALENTS === 'object' && typeof talentsOf === 'function';
   const panels = () => document.getElementById('panels');
   // open or close the detail; in the small landscape panel it takes the list's place, so keep the list's scroll for Back
   function openDet(id) {
@@ -35196,7 +35210,7 @@ var handsTradeOpenPicker;
     const k = soloHero(); if (!root) return;
     root.textContent = '';
     if (!k || typeof HERO_PATHS !== 'object' || !HERO_PATHS[k]) { root.append(el('p', 'note', 'Choose a hero first.')); return; }
-    const eq = soloEquipped(), tp = talOn() ? talentPoints(k) : null;
+    const eq = soloEquipped();
     root.classList.toggle('has-det', !!selId);
     // ---- the loadout bar: Q W E and the Scrolls / talent points button ----
     const bar = el('div', 'ab-bar'), qwe = el('div', 'ab-qwe');
@@ -35218,7 +35232,6 @@ var handsTradeOpenPicker;
     let nScroll = 0; for (const id of SCROLL_ORDER) nScroll += scrollCount(id);
     const ib = btn('ab-infob' + (infoOpen ? ' on' : '')); ib.setAttribute('aria-expanded', String(infoOpen));
     ib.append(el('b', null, `${nScroll} Scroll${nScroll === 1 ? '' : 's'}`));
-    if (tp) ib.append(el('small', null, `${tp.free} talent pt${tp.free === 1 ? '' : 's'}`));
     ib.addEventListener('click', () => { infoOpen = !infoOpen; redraw(); });
     bar.append(qwe, ib);
     root.append(bar);
@@ -35233,7 +35246,7 @@ var handsTradeOpenPicker;
       }
       info.append(scrolls, el('p', 'note ab-src', 'Zone bosses drop Scrolls. Use one to learn an ability.'));
       info.append(el('p', 'note ab-note', `${heroNm(k)} takes three abilities into a fight (Q, W, E).`));
-      if (tp) info.append(el('p', 'note ab-tp', `Talents: ${tp.free} of ${tp.total} points free. Pick one of two for ${TALENT_TUNE.cost} points. Change them between fights.`));
+      if (talOn()) info.append(el('p', 'note ab-tp', 'Talents are free. Pick A or B on any ability, Attack, Parry or Dodge, and change it between fights.'));
       root.append(info);
     }
     // ---- the resource line ----
@@ -35273,7 +35286,7 @@ var handsTradeOpenPicker;
     if (!talOn() || !TALENTS[id]) return null;
     const cur = (talentsOf(k) || {})[id];
     if (cur) return el('small', 'ab-tm', `Talent ${cur.toUpperCase()}`);
-    return talentPoints(k).free >= TALENT_TUNE.cost ? el('small', 'ab-tm pick', 'Pick a talent') : null;
+    return el('small', 'ab-tm pick', 'Pick a talent');
   }
   function rowFor(k, id, i, eq) {
     const a = ABILITIES[id], where = eq.indexOf(id);
@@ -35301,23 +35314,22 @@ var handsTradeOpenPicker;
   // the two talents of an ability (or of '<hero>:attack' etc.) as an A / B choice: tap one to take it, tap it again to give it back
   function talentBlock(k, id, owned) {
     if (!talOn() || !TALENTS[id]) return null;
-    const T = TALENTS[id], cur = (talentsOf(k) || {})[id] || '', tp = talentPoints(k);
+    const T = TALENTS[id], cur = (talentsOf(k) || {})[id] || '';
     const wrap = el('div', 'ab-tals'), hd = el('div', 'ab-th');
-    hd.append(el('h4', null, 'Talents'), el('small', null, owned ? `Pick A or B · ${TALENT_TUNE.cost} points · ${tp.free} free` : 'Learn it to pick one'));
+    hd.append(el('h4', null, 'Talents'), el('small', null, owned ? 'Pick A or B · free' : 'Learn it to pick one'));
     const row = el('div', 'ab-tal');
     for (const c of ['a', 'b']) {
-      const on = cur === c, can = owned && (on || !!cur || tp.free >= TALENT_TUNE.cost);
+      const on = cur === c, can = owned;
       const b = btn('ab-talb' + (on ? ' on' : '')); b.disabled = !can; b.dataset.c = c;
       b.setAttribute('aria-pressed', String(on));
       const top = el('span', 'ab-tl'); top.append(el('i', 'ab-ab', c.toUpperCase()), el('b', null, T[c].name));
       b.append(top, el('small', null, T[c].text));
-      if (on) b.append(el('em', null, 'Taken · tap to give back'));
-      b.title = !owned ? 'Learn this ability first' : on ? 'Tap to give this talent back' : can ? `Take this talent (${TALENT_TUNE.cost} points)` : 'Not enough talent points';
-      b.addEventListener('click', () => { if (talentSet(k, id, on ? null : c)) persist(); redraw(); });
+      if (on) b.append(el('em', null, 'Picked'));
+      b.title = !owned ? 'Learn this ability first' : on ? 'Your pick' : 'Pick this talent';
+      b.addEventListener('click', () => { if (!on && talentSet(k, id, c)) { persist(); redraw(); } });
       row.append(b);
     }
     wrap.append(hd, row);
-    if (owned && !cur && tp.free < TALENT_TUNE.cost) wrap.append(el('p', 'note ab-tnote', `You need ${TALENT_TUNE.cost} free points. You earn one a level.`));
     return wrap;
   }
   function detHead(name, sub, tl, onX) {
@@ -41021,6 +41033,7 @@ let navUI = null;
     cur = step; curGo = spec.go || null;
     putHidden(okb, !(step.ok || curGo));
     putText(okb, curGo ? curGo.label : 'Got it');
+    putToggle(bub, 'ok-row', !!step.ok && !curGo);   // a plain Got it sits beside the tip, so a short portrait stage keeps its height
     place(spec);
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
     // never for a step that needs materials or time, and never while a press step is still short of what it costs.
@@ -42053,6 +42066,7 @@ var soloIconURL = () => '';
     if (!f) { paneFoe.replaceChildren(el('p', 'sb-fnote', 'Foes show here in a turn fight.')); return; }
     const rows = [foeRow('Foe', el('b', 'sb-fname', f.name), ...f.tags.map(x => el('span', 'sb-chip', x)))];
     if (f.trait) rows.push(foeRow('Trait', el('span', 'sb-ftxt', f.trait)));
+    (f.learn || []).forEach(l => rows.push(foeRow(l[0], el('span', 'sb-ftxt', l[1]))));
     rows.push(foeRow('Moves', ...(f.known ? f.moves.map(m => el('span', 'sb-chip' + (m.charged ? ' charged' : ''), `${m.name} · ${m.hits} hit${m.hits > 1 ? 's' : ''}${m.charged ? ' · charged' : ''}`)) : [el('span', 'sb-ftxt', 'Beat one of these to learn its moves.')]),
       ...(f.hidden > 0 ? [el('span', 'sb-ftxt', `${f.hidden} unknown. Each try you lose shows one more.`)] : [])));
     paneFoe.replaceChildren(...rows);
@@ -42275,14 +42289,14 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     toast('New on the Hero tab: Stars. Each star changes how your fights play.', 'good', { ic: ['constel', '#F2C14E'] }, 'high');
   });
 
-  // ---- the loadout strip: points, 3 set, 2 lit ----
-  function chip(k, label, id, kind, i) {
-    const c = el('div', 'sr-chip' + (id ? '' : ' empty') + (id && id === pick ? ' sel' : '') + ' ' + kind);
+  // ---- the loadout strip: points, 3 set, lit stars (as many as the points pay for) ----
+  function chip(k, label, id, kind, i, isDim) {
+    const c = el('div', 'sr-chip' + (id ? '' : ' empty') + (id && id === pick ? ' sel' : '') + (isDim ? ' dim' : '') + ' ' + kind);
     c.dataset.slot = String(i);
     const b = btn('sr-chip-b');
     if (id) {
       // a tap opens its card (Slot N there clears it; Put out puts a lit star out)
-      const s = STARS[id], sub = kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
+      const s = STARS[id], sub = isDim ? 'Dim: needs more points' : kind === 'lit' ? plural(s.cost, 'point') : starLearned(id) ? 'Learned' : `${starWins(id)}/${starNeed()} wins`;
       // a long one-word name takes a smaller face so it is not cut in a narrow chip
       b.append(el('span', 'sr-chip-t' + (s.name.split(' ').some(w => w.length > 8) ? ' long' : ''), s.name), el('small', null, sub));
       b.setAttribute('aria-label', `${label}: ${s.name}, ${sub}. Open its card.`);
@@ -42301,13 +42315,13 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     return c;
   }
   function strip(k) {
-    const top = el('div', 'sr-top'), pts = starPoints(), free = Math.max(0, starFree(k)), set = starSlots(k), lit = starLit(k);
+    const top = el('div', 'sr-top'), pts = starPoints(k), free = Math.max(0, starFree(k)), used = starUsed(k), set = starSlots(k), lit = starLit(k), dim = starDim(k);
     const p = el('div', 'sr-pts');
-    p.setAttribute('aria-label', `Star points: ${free} free of ${pts}`); p.title = 'Star points pay for lit stars: a point every 3 levels, 4 for each Great Lantern, 1 for each complete constellation.';
-    p.append(el('b', null, String(free)), el('small', null, `of ${pts} points`));
+    p.setAttribute('aria-label', `Star points: ${used} used of ${pts}`); p.title = 'Star points pay for lit stars, and they are the only limit: 2 to start, 1 every 10 hero levels, 1 for each Great Lantern, 1 for each complete constellation. A star the points cannot pay for shows dim.';
+    p.append(el('b', null, `${used}/${pts}`), el('small', null, 'points used'));
     const sl = el('div', 'sr-row3'), ll = el('div', 'sr-row2');
     set.forEach((id, i) => sl.append(chip(k, `Set ${i + 1}`, id, 'set', i)));
-    for (let i = 0; i < STARS_TUNE.litMax; i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i));
+    for (let i = 0; i <= lit.length - (dim.length ? 1 : 0); i++) ll.append(chip(k, `Lit ${i + 1}`, lit[i] || null, 'lit', i, dim.includes(lit[i])));
     top.append(p, sl, ll);
     return top;
   }
@@ -42395,8 +42409,8 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     }
     box.append(foot);
     if (learned) {
-      const can = on || (lit.length < STARS_TUNE.litMax && starFree(k) >= s.cost);
-      const why = on || can ? '' : where >= 0 ? (lit.length >= STARS_TUNE.litMax ? `You can light ${STARS_TUNE.litMax} stars. Put one out first.` : `Needs ${plural(s.cost, 'star point')}.`) : starWhy(id, k);
+      const can = on || starFree(k) >= s.cost;
+      const why = on || can ? '' : where >= 0 ? `Needs ${plural(s.cost, 'star point')}.` : starWhy(id, k);
       const b = btn('sr-light' + (on ? ' on' : ''), on ? 'Put out' : where >= 0 ? `Light instead (${plural(s.cost, 'point')})` : `Light (${plural(s.cost, 'point')})`);
       b.setAttribute('aria-pressed', String(on));
       b.disabled = !can;
@@ -42458,7 +42472,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     const how = el('details', 'sr-how');
     how.append(el('summary', null, 'How stars work'),
       el('p', 'note', `Each star changes how a fight plays. ${heroNm(k)} can set ${STARS_TUNE.slots}. Win ${starNeed()} fights with a star set to learn it.`),
-      el('p', 'note', `Any hero can light a learned star with star points, up to ${STARS_TUNE.litMax}. Changes count from your next fight.`),
+      el('p', 'note', `Any hero can light a learned star with star points. Your points are the only limit: a star they cannot pay for shows dim until you put one out or earn more. Changes count from your next fight.`),
       el('p', 'note', 'Learn every star in a constellation to complete it: +1 star point, and the first two make every star quicker to learn.'),
       el('p', 'note', 'Stars come from zone bosses the first time they fall, elites now and then, Deepwell floors and the Provings. They belong to the lamp: every hero can use them.'));
     root.append(how);
@@ -43728,7 +43742,13 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const zb = f.boss && !f.deep && !f.trial && typeof bossTryShown === 'function';
     const sh = zb ? bossTryShown(f.tk.script, f.tz || S.zone) : null;
     const moves = (sh ? sh.moves : bossTryMoves(f.tk.script)).map(m => ({ name: m.name, hits: m.hits, charged: m.charged }));
-    return { name: f.name, tags, trait, known: sh ? true : known, moves: known || sh ? moves : [], hidden: sh ? sh.hidden : 0 };
+    // what the Bestiary has taught: weakness at 5 kills, what to watch for at 15, then how many more kills teach the rest
+    const pr = typeof masteryApi === 'object' && masteryApi.profile ? masteryApi.profile(f.type) : null, dtn = d => (typeof DT_INFO === 'object' && DT_INFO[d] ? DT_INFO[d].n : d), learn = [];
+    if (pr && pr.weak) learn.push(['Weak', (pr.weakTo ? `Weak to ${dtn(pr.weakTo)}.` : 'No weakness.') + (pr.resists.length ? ` Resists ${pr.resists.map(dtn).join(' and ')}.` : '')]);
+    if (pr && pr.tell && pr.tellTxt) learn.push(['Tell', 'Watch for: ' + pr.tellTxt.replace(/^Moves:[^.]*\.\s*/, '')]);
+    const nx = pr ? (pr.n < 5 ? 5 : pr.n < 15 ? 15 : 0) : 0;
+    if (nx) learn.push(['Learn', `${nx - pr.n} more kill${nx - pr.n > 1 ? 's' : ''} to learn ${nx === 5 ? 'its weakness' : 'what to watch for'}.`]);
+    return { name: f.name, tags, trait, known: sh ? true : known, moves: known || sh ? moves : [], hidden: sh ? sh.hidden : 0, learn };
   };
   turnBarInfo = () => {
     if (!(typeof turnCombatOn === 'function' && turnCombatOn())) return null;

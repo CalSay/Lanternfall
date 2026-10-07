@@ -33,7 +33,6 @@ A source or sink line names the player-facing system and the file that does it. 
 | Renown | 2 | 0 | No sink: A pure gate: routes check the balance and none sets spendRenown. Keep it a gate or give it a use. |
 | Boss tokens | 1 | 1 |  |
 | Star points | 1 | 1 |  |
-| Talent points | 1 | 1 |  |
 | Achievement points | 1 | 1 |  |
 | Mirrors of Embers | 2 | 1 |  |
 | Gatherer XP | 1 | 1 |  |
@@ -366,24 +365,10 @@ A budget for lighting stars. Not consumed.
 Save: `derived from level, Great Lanterns and constellations (not saved)`
 
 Sources:
-- One per 3 hero levels (plus 4 a Great Lantern, 1 a constellation) (`57e-stars.js`)
+- 2 to start, 1 per 10 hero levels, 1 a Great Lantern, 1 a constellation (a budget per hero) (`57e-stars.js`)
 
 Sinks:
-- Lighting a star (2 lit a hero) (`57e-stars.js`)
-
-### Talent points
-
-A budget for talent choices on abilities, Attack, Parry and Dodge.
-
-Save: `derived from hero level (not saved); choices in S.abil`
-
-Sources:
-- Hero levels (`56e-abilities.js`)
-
-Sinks:
-- Setting a talent (a switch between a and b is free) (`56e-abilities.js`)
-
-Note: A budget like star points: spent points come back when a talent is cleared.
+- Lighting a star (the points are the only limit) (`57e-stars.js`)
 
 ### Achievement points
 

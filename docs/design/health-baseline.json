@@ -6,22 +6,6 @@
     "active": 21,
     "optimiser": 31
   },
-  "caps": {
-    "about": "Absolute caps beside the tolerances (self-improving plan F4). Report only: node tools/health.mjs prints runs over a cap and never fails on one. Each cap names a per-run metric and its maximum.",
-    "newThingsPer3min": {
-      "metric": "mechanicsBurst3minFirst30",
-      "max": 2,
-      "note": "new unlocks and camp builds in any 3 minutes of the first 30 active minutes"
-    },
-    "newThingsPer10min": {
-      "metric": "mechanicsBurst10min",
-      "max": 4,
-      "note": "new unlocks and camp builds in any 10 minutes",
-      "personas": [
-        "active"
-      ]
-    }
-  },
   "metrics": {
     "casual.firstGoalSec": {
       "value": 58.47,
@@ -420,6 +404,22 @@
       }
     }
   },
+  "caps": {
+    "about": "Absolute caps beside the tolerances (self-improving plan F4). Report only: node tools/health.mjs prints runs over a cap and never fails on one. Each cap names a per-run metric and its maximum.",
+    "newThingsPer3min": {
+      "metric": "mechanicsBurst3minFirst30",
+      "max": 2,
+      "note": "new unlocks and camp builds in any 3 minutes of the first 30 active minutes"
+    },
+    "newThingsPer10min": {
+      "metric": "mechanicsBurst10min",
+      "max": 4,
+      "note": "new unlocks and camp builds in any 10 minutes",
+      "personas": [
+        "active"
+      ]
+    }
+  },
   "budget": {
     "about": "The accepted difficulty budget (tools/budget.mjs): each cell \"row|hero|player\" is the mean and sd of 5 seed offsets. Bands, gaps and tolerances: docs/design/difficulty-budget.json. Regenerate with: node tools/health.mjs --write-baseline (or --only budget --write-baseline).",
     "fights": 240,
@@ -427,7 +427,7 @@
     "cells": {
       "z1-normal|wren|casual": {
         "value": 1,
-        "sd": 0.004
+        "sd": 0.002
       },
       "z1-normal|tobin|casual": {
         "value": 1,
@@ -439,7 +439,7 @@
       },
       "z1-normal|mean|casual": {
         "value": 1,
-        "sd": 0.001
+        "sd": 0
       },
       "z1-normal|wren|good": {
         "value": 1,
@@ -522,20 +522,20 @@
         "sd": 0
       },
       "z5-boss|wren|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.85,
+        "sd": 0.025
       },
       "z5-boss|tobin|casual": {
         "value": 1,
         "sd": 0
       },
       "z5-boss|pip|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.99,
+        "sd": 0.006
       },
       "z5-boss|mean|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.95,
+        "sd": 0.01
       },
       "z5-boss|wren|good": {
         "value": 1,
@@ -550,6 +550,102 @@
         "sd": 0
       },
       "z5-boss|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z4-boss|wren|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z4-boss|tobin|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z4-boss|pip|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z4-boss|mean|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z4-boss|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z4-boss|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z4-boss|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z4-boss|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z6-boss|wren|casual": {
+        "value": 0.83,
+        "sd": 0.024
+      },
+      "z6-boss|tobin|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z6-boss|pip|casual": {
+        "value": 0.96,
+        "sd": 0.014
+      },
+      "z6-boss|mean|casual": {
+        "value": 0.93,
+        "sd": 0.009
+      },
+      "z6-boss|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z6-boss|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z6-boss|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z6-boss|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z7-boss|wren|casual": {
+        "value": 0.77,
+        "sd": 0.028
+      },
+      "z7-boss|tobin|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z7-boss|pip|casual": {
+        "value": 0.97,
+        "sd": 0.011
+      },
+      "z7-boss|mean|casual": {
+        "value": 0.92,
+        "sd": 0.01
+      },
+      "z7-boss|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z7-boss|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z7-boss|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z7-boss|mean|good": {
         "value": 1,
         "sd": 0
       },
@@ -586,20 +682,20 @@
         "sd": 0
       },
       "z8-boss|wren|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.86,
+        "sd": 0.024
       },
       "z8-boss|tobin|casual": {
         "value": 1,
         "sd": 0
       },
       "z8-boss|pip|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.98,
+        "sd": 0.009
       },
       "z8-boss|mean|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.95,
+        "sd": 0.009
       },
       "z8-boss|wren|good": {
         "value": 1,
@@ -617,21 +713,53 @@
         "value": 1,
         "sd": 0
       },
+      "z9-boss|wren|casual": {
+        "value": 0.84,
+        "sd": 0.033
+      },
+      "z9-boss|tobin|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z9-boss|pip|casual": {
+        "value": 0.94,
+        "sd": 0.014
+      },
+      "z9-boss|mean|casual": {
+        "value": 0.93,
+        "sd": 0.009
+      },
+      "z9-boss|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z9-boss|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z9-boss|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z9-boss|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
       "z10-boss|wren|casual": {
-        "value": 0.99,
-        "sd": 0.008
+        "value": 0.63,
+        "sd": 0.047
       },
       "z10-boss|tobin|casual": {
         "value": 1,
         "sd": 0
       },
       "z10-boss|pip|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.8,
+        "sd": 0.027
       },
       "z10-boss|mean|casual": {
-        "value": 1,
-        "sd": 0.004
+        "value": 0.81,
+        "sd": 0.019
       },
       "z10-boss|wren|good": {
         "value": 1,
@@ -649,21 +777,53 @@
         "value": 1,
         "sd": 0
       },
-      "z12-boss|wren|casual": {
+      "z11-boss|wren|casual": {
+        "value": 0.73,
+        "sd": 0.037
+      },
+      "z11-boss|tobin|casual": {
         "value": 1,
-        "sd": 0.002
+        "sd": 0
+      },
+      "z11-boss|pip|casual": {
+        "value": 0.74,
+        "sd": 0.028
+      },
+      "z11-boss|mean|casual": {
+        "value": 0.82,
+        "sd": 0.018
+      },
+      "z11-boss|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z11-boss|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z11-boss|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z11-boss|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z12-boss|wren|casual": {
+        "value": 0.77,
+        "sd": 0.029
       },
       "z12-boss|tobin|casual": {
         "value": 1,
         "sd": 0
       },
       "z12-boss|pip|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.89,
+        "sd": 0.018
       },
       "z12-boss|mean|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.89,
+        "sd": 0.011
       },
       "z12-boss|wren|good": {
         "value": 1,
@@ -680,6 +840,166 @@
       "z12-boss|mean|good": {
         "value": 1,
         "sd": 0
+      },
+      "z8-boss-keptup|wren|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z8-boss-keptup|tobin|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z8-boss-keptup|pip|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z8-boss-keptup|mean|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z8-boss-keptup|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z8-boss-keptup|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z8-boss-keptup|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z8-boss-keptup|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z10-boss-keptup|wren|casual": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z10-boss-keptup|tobin|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z10-boss-keptup|pip|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z10-boss-keptup|mean|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z10-boss-keptup|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z10-boss-keptup|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z10-boss-keptup|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z10-boss-keptup|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z12-boss-keptup|wren|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z12-boss-keptup|tobin|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z12-boss-keptup|pip|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z12-boss-keptup|mean|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z12-boss-keptup|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z12-boss-keptup|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z12-boss-keptup|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z12-boss-keptup|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z5-boss-bare|wren|casual": {
+        "value": 0.48,
+        "sd": 0.041
+      },
+      "z5-boss-bare|tobin|casual": {
+        "value": 1,
+        "sd": 0
+      },
+      "z5-boss-bare|pip|casual": {
+        "value": 0.92,
+        "sd": 0.017
+      },
+      "z5-boss-bare|mean|casual": {
+        "value": 0.8,
+        "sd": 0.016
+      },
+      "z5-boss-bare|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z5-boss-bare|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z5-boss-bare|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z5-boss-bare|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z10-boss-bare|wren|casual": {
+        "value": 0.2,
+        "sd": 0.026
+      },
+      "z10-boss-bare|tobin|casual": {
+        "value": 0.96,
+        "sd": 0.016
+      },
+      "z10-boss-bare|pip|casual": {
+        "value": 0.22,
+        "sd": 0.027
+      },
+      "z10-boss-bare|mean|casual": {
+        "value": 0.46,
+        "sd": 0.013
+      },
+      "z10-boss-bare|wren|good": {
+        "value": 1,
+        "sd": 0.002
+      },
+      "z10-boss-bare|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z10-boss-bare|pip|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z10-boss-bare|mean|good": {
+        "value": 1,
+        "sd": 0.001
       },
       "z15-elite|wren|casual": {
         "value": 1,
@@ -778,20 +1098,20 @@
         "sd": 0
       },
       "z20-elite|wren|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.88,
+        "sd": 0.024
       },
       "z20-elite|tobin|casual": {
         "value": 1,
         "sd": 0
       },
       "z20-elite|pip|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.97,
+        "sd": 0.012
       },
       "z20-elite|mean|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.95,
+        "sd": 0.012
       },
       "z20-elite|wren|good": {
         "value": 1,
@@ -874,84 +1194,84 @@
         "sd": 0.005
       },
       "z25-boss|wren|casual": {
-        "value": 0.01,
-        "sd": 0.004
+        "value": 0.75,
+        "sd": 0.032
       },
       "z25-boss|tobin|casual": {
-        "value": 0.66,
-        "sd": 0.03
+        "value": 1,
+        "sd": 0
       },
       "z25-boss|pip|casual": {
-        "value": 0,
-        "sd": 0.002
+        "value": 0.62,
+        "sd": 0.031
       },
       "z25-boss|mean|casual": {
-        "value": 0.22,
-        "sd": 0.01
+        "value": 0.79,
+        "sd": 0.014
       },
       "z25-boss|wren|good": {
-        "value": 0.89,
-        "sd": 0.022
+        "value": 1,
+        "sd": 0
       },
       "z25-boss|tobin|good": {
         "value": 1,
         "sd": 0
       },
       "z25-boss|pip|good": {
-        "value": 0.83,
-        "sd": 0.026
-      },
-      "z25-boss|mean|good": {
-        "value": 0.91,
-        "sd": 0.011
-      },
-      "z27-boss|wren|casual": {
-        "value": 0,
+        "value": 1,
         "sd": 0
       },
+      "z25-boss|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z27-boss|wren|casual": {
+        "value": 0.68,
+        "sd": 0.031
+      },
       "z27-boss|tobin|casual": {
-        "value": 0,
+        "value": 1,
         "sd": 0
       },
       "z27-boss|pip|casual": {
-        "value": 0,
-        "sd": 0
+        "value": 0.79,
+        "sd": 0.026
       },
       "z27-boss|mean|casual": {
-        "value": 0,
-        "sd": 0
+        "value": 0.83,
+        "sd": 0.013
       },
       "z27-boss|wren|good": {
-        "value": 0.34,
-        "sd": 0.031
+        "value": 1,
+        "sd": 0
       },
       "z27-boss|tobin|good": {
         "value": 1,
-        "sd": 0.002
+        "sd": 0
       },
       "z27-boss|pip|good": {
-        "value": 0.42,
-        "sd": 0.041
+        "value": 1,
+        "sd": 0
       },
       "z27-boss|mean|good": {
-        "value": 0.59,
-        "sd": 0.015
+        "value": 1,
+        "sd": 0
       },
       "z30-elite|wren|casual": {
-        "value": 0.84,
-        "sd": 0.025
+        "value": 0.83,
+        "sd": 0.026
       },
       "z30-elite|tobin|casual": {
         "value": 1,
         "sd": 0
       },
       "z30-elite|pip|casual": {
-        "value": 0.84,
-        "sd": 0.022
+        "value": 0.75,
+        "sd": 0.027
       },
       "z30-elite|mean|casual": {
-        "value": 0.9,
-        "sd": 0.011
+        "value": 0.86,
+        "sd": 0.013
       },
       "z30-elite|wren|good": {
         "value": 1,
@@ -970,68 +1290,68 @@
         "sd": 0
       },
       "z30-boss|wren|casual": {
-        "value": 0.01,
-        "sd": 0.006
+        "value": 0.66,
+        "sd": 0.031
       },
       "z30-boss|tobin|casual": {
-        "value": 0.88,
-        "sd": 0.02
-      },
-      "z30-boss|pip|casual": {
-        "value": 0,
+        "value": 1,
         "sd": 0
       },
+      "z30-boss|pip|casual": {
+        "value": 0.64,
+        "sd": 0.031
+      },
       "z30-boss|mean|casual": {
-        "value": 0.29,
-        "sd": 0.009
+        "value": 0.77,
+        "sd": 0.015
       },
       "z30-boss|wren|good": {
-        "value": 0.94,
-        "sd": 0.014
+        "value": 1,
+        "sd": 0.002
       },
       "z30-boss|tobin|good": {
         "value": 1,
         "sd": 0
       },
       "z30-boss|pip|good": {
-        "value": 0.91,
-        "sd": 0.022
+        "value": 1,
+        "sd": 0
       },
       "z30-boss|mean|good": {
-        "value": 0.95,
-        "sd": 0.011
+        "value": 1,
+        "sd": 0
       },
       "z34-boss|wren|casual": {
-        "value": 0,
-        "sd": 0
+        "value": 0.62,
+        "sd": 0.047
       },
       "z34-boss|tobin|casual": {
-        "value": 0.35,
-        "sd": 0.031
-      },
-      "z34-boss|pip|casual": {
-        "value": 0,
+        "value": 1,
         "sd": 0
       },
+      "z34-boss|pip|casual": {
+        "value": 0.85,
+        "sd": 0.024
+      },
       "z34-boss|mean|casual": {
-        "value": 0.12,
-        "sd": 0.011
+        "value": 0.82,
+        "sd": 0.016
       },
       "z34-boss|wren|good": {
-        "value": 0.55,
-        "sd": 0.036
+        "value": 1,
+        "sd": 0
       },
       "z34-boss|tobin|good": {
         "value": 1,
         "sd": 0
       },
       "z34-boss|pip|good": {
-        "value": 0.59,
-        "sd": 0.032
+        "value": 1,
+        "sd": 0
       },
       "z34-boss|mean|good": {
-        "value": 0.71,
-        "sd": 0.016
+        "value": 1,
+        "sd": 0
       },
       "z35-normal|wren|casual": {
         "value": 1,
@@ -1162,20 +1482,20 @@
         "sd": 0
       },
       "z38-elite|wren|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.85,
+        "sd": 0.032
       },
       "z38-elite|tobin|casual": {
         "value": 1,
         "sd": 0
       },
       "z38-elite|pip|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.95,
+        "sd": 0.014
       },
       "z38-elite|mean|casual": {
-        "value": 1,
-        "sd": 0
+        "value": 0.93,
+        "sd": 0.009
       },
       "z38-elite|wren|good": {
         "value": 1,
@@ -1230,15 +1550,15 @@
         "sd": 0.03
       },
       "z38-boss-behind|tobin|casual": {
-        "value": 0.07,
-        "sd": 0.017
+        "value": 0.12,
+        "sd": 0.022
       },
       "z38-boss-behind|pip|casual": {
         "value": 0.88,
         "sd": 0.022
       },
       "z38-boss-behind|mean|casual": {
-        "value": 0.57,
+        "value": 0.58,
         "sd": 0.014
       },
       "z38-boss-behind|wren|good": {
@@ -1294,16 +1614,16 @@
         "sd": 0.027
       },
       "z38-boss-joined|tobin|casual": {
-        "value": 0.62,
-        "sd": 0.031
+        "value": 0.75,
+        "sd": 0.038
       },
       "z38-boss-joined|pip|casual": {
         "value": 0.97,
         "sd": 0.013
       },
       "z38-boss-joined|mean|casual": {
-        "value": 0.79,
-        "sd": 0.014
+        "value": 0.84,
+        "sd": 0.013
       },
       "z38-boss-joined|wren|good": {
         "value": 0.76,

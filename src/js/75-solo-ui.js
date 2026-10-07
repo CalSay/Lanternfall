@@ -311,6 +311,7 @@ var soloIconURL = () => '';
     if (!f) { paneFoe.replaceChildren(el('p', 'sb-fnote', 'Foes show here in a turn fight.')); return; }
     const rows = [foeRow('Foe', el('b', 'sb-fname', f.name), ...f.tags.map(x => el('span', 'sb-chip', x)))];
     if (f.trait) rows.push(foeRow('Trait', el('span', 'sb-ftxt', f.trait)));
+    (f.learn || []).forEach(l => rows.push(foeRow(l[0], el('span', 'sb-ftxt', l[1]))));
     rows.push(foeRow('Moves', ...(f.known ? f.moves.map(m => el('span', 'sb-chip' + (m.charged ? ' charged' : ''), `${m.name} · ${m.hits} hit${m.hits > 1 ? 's' : ''}${m.charged ? ' · charged' : ''}`)) : [el('span', 'sb-ftxt', 'Beat one of these to learn its moves.')]),
       ...(f.hidden > 0 ? [el('span', 'sb-ftxt', `${f.hidden} unknown. Each try you lose shows one more.`)] : [])));
     paneFoe.replaceChildren(...rows);

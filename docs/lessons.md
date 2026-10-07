@@ -27,6 +27,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Most hero XP comes from away time. A level curve with no exponential wall needs a brake past the road, or heroes run 20+ levels ahead; brake only far past it, or levels stop at walls, where they help most. (hero-progression-rework, 2026-10-06)
 - Cap any level lift for a joining hero at the level of the hero who leaves, with the road's own level as the floor. Why: the judge found a join lead could put a joiner above the hero they replace, rewarding switching for its own sake. (hero-progression-rework, 2026-10-06)
 - When a build or other per-player choice must stay out of a system, list every caller of the shared power function in the neutrality test. Why: PR #58 kept away, raid and farm build-neutral, but the Deepwell's depth anchor read turnPowerNow, which carried the Might multiplier (Opus review). (hero-progression-rework, 2026-10-06)
+- Measure a boss on the gear the player has when they first meet it, not the gear a kept-up hero could have: the same boss was a 100% pat on the head at rare +5 and a 15% wall at common +0. Why: boss hits scale with the reference hero's HP, which grew 1.9x a zone from zone 8 while a first-hour hero's grew 1.3-1.5x. (boss-tiers, 2026-10-07)
+- `budget.mjs --eval` runs after the boss is spawned, so a TURN_TUNE table change must end with `fightBoss = true; spawn();`. Why: a flat hitX of 0.1 first showed no effect. (boss-tiers, 2026-10-07)
 
 ## Economy and skilling
 
@@ -34,6 +36,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Register any new currency-like counter in the systems map with a source and a sink. Why: the check fails on a currency with no source or sink, and on an unregistered counter. (systems-map, 2026-10-06)
 - Check any reward or shop design against the standing reward lines in `DECISIONS.md` (enemies never drop crafting materials; gold is the flat camp budget; the Armoury owns bag room and loadouts) before proposing what it pays. Why: the monetisation red team found caches paying materials and a paid Armoury room that the Armoury building already sells. (monetisation plan, 2026-10-06)
 - Read and pay an Essence cost with `matOwn`/`matPay`/`essPay`, never `S.mats.ess[t - 1]`, and name it with `costName`. Why: Essence is one pile across grades, so a grade-indexed read shows "not enough" while the total covers it. (counters-and-layers, 2026-10-07)
+- Give a budget one limit, not two. Why: star points never bound while a 2-lit cap held cost to 6 and income passed 6 by Lv 18; the cap went and the points became the only limit. (counters-and-layers, 2026-10-07)
 - No hard progress walls. Why: walls are the top long-play quit reason in the research set (99 mentions); the 50h run shows 9 to 10 stalls of an hour or more per hero and a 12h wall near zones 24 to 25. (f-fun-library, f-health-long)
 
 ## Story and lore
