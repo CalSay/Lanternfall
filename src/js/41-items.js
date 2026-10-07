@@ -155,10 +155,11 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   // their caps (combat: true); the old live stats stay uncapped here.
   for (const k of ['hp', 'armour', 'threat', 'block', 'ward', 'heal', 'area', 'control', 'pierce', 'haste', 'spell', 'aspd']) if (CRAFT_STATS[k]) { CRAFT_STATS[k].live = true; CRAFT_STATS[k].combat = true; }
   const capNonLive = s => { for (const k of NEW_KEYS) { const c = CRAFT_STATS[k]; if ((!c.live || c.combat) && c.cap != null && s[k] > c.cap) s[k] = c.cap; } return s; };
-  gearCalc = () => {
+  // over: an optional { pos: item | null } that stands in for what is worn there (the boss footing, 59k turnFootHp); none = what is worn
+  gearCalc = over => {
     const s = blank(), who = heroWho();
     for (const pos of CRAFT_HERO_POS) {
-      const it = itemById(S.equip[pos]); if (!it || !(fits(it, pos, who) || (pendingLegacy(it) && kindPos(it.slot) === pos))) continue;
+      const it = over && pos in over ? over[pos] : itemById(S.equip[pos]); if (!it || !(fits(it, pos, who) || (pendingLegacy(it) && kindPos(it.slot) === pos))) continue;
       s.score += itemPower(it);
       addLines(s, itemLines(it));
     }

@@ -220,7 +220,8 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const seen = S.turn && (S.turn.seen || (S.turn.seen = {})); if (!seen) return;
     if (seen[key]) say(txt.split('.')[0] + '.', 'charge', 1.0); else { seen[key] = 1; say(txt, 'charge', 3.2); }
   }
-  on('foeRally', p => { if (p) say(`${p.name} rallies! It will not fall yet.`, 'charge', 2.2); });
+  // the narrow stage line (about 18 characters wide): three short lines, as the trick tips are; the boss's name is on its bar
+  on('foeRally', p => { if (p) say('Rally! Only a Stun breaks its charge.', 'charge', 2.4); });
   on('foeContact', p => {
     if (!p || p.res !== 'feint') return;
     if (p.fooled) { emit('float', { txt: 'FOOLED', color: '#FF9B8A', big: true, x: 0.27, y: 0.34 }); emit('shake', 0.1); pendClean = null; lampSet(0); }

@@ -7,7 +7,7 @@ import { ROOT } from './core.mjs';
 
 export const BUDGET_FILE = path.join(ROOT, 'docs', 'design', 'difficulty-budget.json');
 export const HEROES = ['wren', 'tobin', 'pip'];
-export const GATED_PLAYERS = ['casual', 'good'];
+export const GATED_PLAYERS = ['casual', 'good', 'none'];   // none (boss-tiers-pr5): only the kinds that carry a `none` band
 export const BOSS_KINDS = ['firstBoss', 'firstChampion', 'earlyCaptain', 'captain', 'champion', 'elder'];
 export const loadTargets = () => JSON.parse(fs.readFileSync(BUDGET_FILE, 'utf8'));
 const r2 = x => Math.round(x * 100) / 100;
@@ -41,11 +41,12 @@ export function gatedValue(T, rows, id, hero, pl) {
 export function cells(T, rep) {
   const rows = Object.fromEntries(rep.rows.map(r => [r.id, r])), out = [];
   for (const r of rep.rows) for (const pl of GATED_PLAYERS) {
+    if (pl === 'none' && !T.kinds[r.kind].none) continue;
     const rp = !!T.kinds[r.kind].report;   // a report-only kind: printed against its band, never fails
     const hs = HEROES.map(h => ({ id: r.id, kind: r.kind, hero: h, pl, value: gatedValue(T, rows, r.id, h, pl), band: bandFor(T, r.kind, h, pl), ...(rp ? { report: true } : {}) }));
     out.push(...hs);
     const ok = hs.filter(c => num(c.value));
-    if (ok.length === HEROES.length) out.push({ id: r.id, kind: r.kind, hero: 'mean', pl, value: r2(mean(ok.map(c => c.value))),
+    if (pl !== 'none' && ok.length === HEROES.length) out.push({ id: r.id, kind: r.kind, hero: 'mean', pl, value: r2(mean(ok.map(c => c.value))),
       band: [r2(mean(hs.map(c => c.band[0]))), r2(mean(hs.map(c => c.band[1])))], ...(rp ? { report: true } : {}) });
   }
   return out;
@@ -54,7 +55,7 @@ export function cells(T, rep) {
 // set) by more than the tolerance, for any hero. Returns the heroes that break it: [{ id, hero, value, ref, refValue }].
 export function gearHelpFails(T, rep) {
   const rows = Object.fromEntries(rep.rows.map(r => [r.id, r])), out = [];
-  for (const r of rep.rows) if (r.kind === 'keptUp' && rows[r.ref]) for (const h of HEROES) {
+  for (const r of rep.rows) if (T.kinds[r.kind] && T.kinds[r.kind].gearHelps && rows[r.ref]) for (const h of HEROES) {
     const v = gatedValue(T, rows, r.id, h, 'casual'), w = gatedValue(T, rows, r.ref, h, 'casual');
     if (num(v) && num(w) && v < w - T.tolerance) out.push({ id: r.id, hero: h, value: v, ref: r.ref, refValue: w });
   }

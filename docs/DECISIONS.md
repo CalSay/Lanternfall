@@ -413,7 +413,7 @@ The aim was tempo: a kept-up hero kills a boss in 2.5-4 hero turns, so wins sat 
   under the judge's 0.8 rule of thumb because the tricks carry the difficulty now. Zones 1-3 and 16+ are unchanged.
 - **Honest result.** Kept-up heroes still win 92-100% at z8-15 (good play 100%, casualHigh 100%). The tricks and gates move the
   first-hour bosses' length and shape but the 96% defender cannot be made to lose without breaking the hit cap. The kept-up gap stays, owner
-  `boss-tiers-pr5` (zones 16-34 tricks, hit-floor and gate retune) until 2026-11-15; the first-hour bands and gear-helps gate hold.
+  `boss-tiers-pr5` (zones 16-34 tricks, hit-floor and gate retune) until 2026-11-15; the first-hour bands and gear-helps gate hold. **Closed for zones 4-15 by the pr5 build (below).**
 - **Known limit: gated charges.** While a boss sits at a gate and gathers a charge, hits deal 0 and do not count toward breaking it (the review
   pass found it). Counting the clipped damage raised first-hour casual by 6-24 points (z10 59 to 67 Wren, 54 to 78 Pip), so the fit
   keeps the current rule. Follow-up card: `boss-tiers-pr5` re-fits with clipped damage counted.
@@ -464,6 +464,40 @@ Cal can veto any line. This closes the pr4 "Honest result" gap line.
   `boss-tiers-pr5b`, which refits those zones with the set worn.
 - **Zones 16-34** get tricks in `boss-tiers-pr5b` (M1b; moved here from the pr4 "Honest result" owner line), with the zone 25
   cap fix and the set-worn refit.
+
+### Boss tiers, kept-up heroes: the build (boss-tiers-pr5-build) (2026-10-07)
+
+Built to the ruling above; the fit is on the budget's own rows, 3 seeds a cell for the search and 5 seeds (1,200 fights a cell) for the table.
+
+- **Fit.** `footFloor` r is 1.0 on every zone 4-15 (the top of the 0.85-1.0 range; at 0.9 Wren at z10 kept-up read 75 and Pip 95, at 1.0 64
+  and 88). First-hour `hitX` moved to z7 1.5, z9 0.632, z11 0.407, z12 0.403, z13 0.539, z14 0.461 (the rest as they were);
+  `champHitX` at z15 is 1.25 (first-hour z15 Wren 44, Pip 48). The pr4 `hpFloor` knots at z13 and z14 fell to 0.81 and 0.84: they bound
+  Pip's first hour there (she sat at 40-46 against 60-80) and are class-neutral. `passiveMin` 0.55, Captain gates 75/50/25 from z7.
+- **Result** (5-seed means, casual / never defends, Wren then Pip):
+
+| row | first-hour | kept-up |
+|---|---|---|
+| z5 Champion | 71, 89 | 75/0, 99/0 |
+| z8 learning Captain | 71, 97 | 95/0, 99/0 |
+| z10 Champion | 53, 52 | 64/0, 88/0 |
+| z12 Captain | 70, 99 | 88/0, 100/100 |
+| z13 Captain | 64, 58 | 92/7, 99/0 |
+| z15 Champion | 44, 48 | 76/0, 88/0 |
+
+  Wren is in band on every gated row. z8 holds (first-hour Wren 71, kept-up 95) with no `hpX` change. First-hour z4-15 rows are in
+  their bands for the weaker of Wren and Pip (z13 Pip reads 58, 2 under). Good players win 99-100% everywhere; casualHigh 92-100.
+- **Honest gaps.** Pip kept-up sits above band at z5, z8 and z12 (her first-hour cell is in a `wren-first-hour-parity` gap) and just over
+  at z10, z13, z15 (88-99 against 85-95); Pip who never defends wins the z12 kept-up boss 100%, as the ruling allowed. Tobin's kept-up
+  cells (casual 100, never defends 55-100 at z5, z8, z10, z12, z15) ride `tobin-safety-margin`. E2 still needs both cards.
+- **First hour holds.** z4-z15 first-hour rows moved by hitX only where the table above shows; the personas' pacing metrics
+  (`health.mjs --compare`) are all inside tolerance and boss pay stays on the old length curve.
+- **Footing key.** The floor needs the boss to be new: the budget's boss rows set `S.maxZone` to the zone, and the fixture saves'
+  higher `maxZone` had been reading z5 and z15 kept-up as beaten bosses.
+- **Copy.** The rally line reads "Rally! Only a Stun breaks its charge." (the judge's longer line wrapped to five lines on the 360 px stage; the boss's name is on its bar); the Vigour line reads "More
+  health. Bosses you have not beaten hit for a share of it." Guide or defeat-card tip (copy owner): "Boss hits grow with your health.
+  Armour, Guard and good timing keep you standing." Patch note (Foreman): "Bosses now hit for a share of your health, so a big health
+  pool no longer makes them harmless. Armour, Guard and good timing still cut their hits." A rare +5 Wren at zone 10 drops from about
+  92% to about 64% casual on a first meeting (about 80% was the sketch; the fit lands lower because z10's first-hour row sits at 53).
 
 ### The Lantern Rules
 
