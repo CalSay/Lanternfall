@@ -24,10 +24,11 @@ on('cacheOpen', v => {
   const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
   // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
   const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
-  const o = { title, sub, col, icon, lines };
+  const o = { title, sub, col, icon, lines, zone: v.zone };
   if (big && v.n >= CACHE_TUNE.autoFrom) o.actions = [{ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) }];
   const barks = v.zone === 1 ? ['boss1'] : [];
-  if (big) {
+  const ci = MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone);   // champion-moment: a Champion's first clear queued its own card (75-moments-ui)
+  if (big || ci >= 0) {
     // fold in what this clear already queued: zone 1's boss card, the unique, the Star
     for (let i = MOMENT_Q.length - 1; i >= 0; i--) {
       const q = MOMENT_Q[i];
@@ -36,6 +37,14 @@ on('cacheOpen', v => {
     }
     // the hero's line for what the card now carries (55-voice): the strongest of the folded moments' barks
     if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
+  }
+  // the cache folds into that card, so the win is one card
+  if (ci >= 0) {
+    const c = MOMENT_Q.splice(ci, 1)[0];
+    if (c.bark) barks.push(c.bark);
+    if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
+    moment('champion', Object.assign(o, { title: c.title, eye: c.eye, scene: c.scene }));
+    return;
   }
   moment(big ? 'cache' : 'cacheAuto', o);
 });

@@ -1,0 +1,12 @@
+# seed: 1
+# Smoke route for card guide-target-guard: the Hero sheet opens and its Build tab is on screen with no stray ring.
+# The guide's own steps (ring on Build, busy-builder Forge) are held by the "guide target guard" section of tools/check.mjs,
+# because no saved fixture sits on those steps.
+new early
+wait 2
+tap-if "Collect"
+wait 2
+tap "Hero"
+wait 2
+expect "Build"
+shot guide-open-build

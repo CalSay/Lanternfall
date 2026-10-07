@@ -2641,6 +2641,7 @@ if (section('story')) try {
 
   // ---- Champion and Elder scenes need their encounter ----
   const c = fresh(75), cv = watch(c), C = s => c.eval(s);
+  C('STORY_TUNE.champMoment = false');   // champion-moment wires the Champions itself; off, the encounter card (here the test) does
   C('S.activity = "fight"; S.zone = 5; S.maxZone = 5; S.story.seen["r:hollow"] = 1'); C('fightBoss = true; spawn(); mob.encounter = { kind: "champ", id: "regent" }'); ticks(c, 3);
   assert(!cv.scene.some(s => s.ch === 'P'), 'story: a Champion scene does not play while its encounter is not in the game');
   C('storyEncounter("champ", "regent"); fightBoss = true; spawn(); mob.encounter = { kind: "champ", id: "regent" }'); ticks(c, 3);
@@ -6409,6 +6410,67 @@ if (section('camp guide tracking (C2, browser)')) try {
   }
 } catch (e) { fail('C2 guide tracking crashed: ' + (e.stack || e)); }
 
+// ---- guide-target-guard: a guide marker rings something the player can press, or the tip waits ----
+if (section('guide target guard (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('guide target guard: Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8').replace('setInterval(tick, 250);', 'window.__gtgTick = tick;');
+    const end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [width, height] of [[360, 740], [740, 360]]) {
+        const at = `${width}x${height}`, ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+        try {
+          const page = await ctx.newPage(), errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/');
+          await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          await X(`soloPickerOpen = () => true; S.mats.wood[0] = 100; hearthLight(); onboardUnlockAll(); S.mats.ore[0] = 99; S.mats.wood[0] = 99; S.camp.b.hearth = 2; S.camp.b.bench = 1; true`);
+          const probe = () => X(`(() => { const ring = document.querySelector('.ob-ring'), r = ring.getBoundingClientRect(), shown = !ring.parentNode.hidden && !ring.hidden;
+            const sp = onboardSpec(__gtgStep), b = sp && sp.node && sp.node.getBoundingClientRect();
+            const hit = shown ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
+            return { shown, paused: ONBOARD.paused, hit: !!(hit && sp && sp.node && (sp.node === hit || sp.node.contains(hit))),
+              error: shown && b ? Math.max(Math.abs(r.left - (b.left - 4)), Math.abs(r.top - (b.top - 4))) : -1 }; })()`);
+          const step = async (id, tab, view) => {
+            await X(`globalThis.__gtgStep = ${JSON.stringify(id)}; onboardStep = () => GUIDE_STEPS.find(s => s.id === __gtgStep); setTab(${JSON.stringify(tab)}); ${view ? `setView(${JSON.stringify(tab)}, ${JSON.stringify(view)});` : ''} ui(true); true`);
+            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            await page.evaluate(() => window.__gtgTick());
+          };
+          // 1. "Open Build.": the ring sits on the Build button, follows it when the row moves, and the game waits
+          await step('upgrade', 'party', 'team');
+          const a = await probe();
+          assert(a.shown && a.paused && a.hit && a.error <= 2, `guard ${at}: "Open Build." rings the Build button (${JSON.stringify(a)})`);
+          await X(`$('viewSeg').style.transform = 'translateY(17px)'; window.__gtgTick(); true`);
+          const a2 = await probe();
+          assert(a2.shown && a2.error <= 2, `guard ${at}: the ring follows a moved menu button (${JSON.stringify(a2)})`);
+          await X(`$('viewSeg').style.transform = ''; true`);
+          // 2. the Forge step with the builder busy: no ring, no pause. Free the builder and it comes back
+          await X(`globalThis.__gtgBuilds = S.camp.builds; S.camp.b.forge = 0; delete S.onboard.done.forge;
+            const n = Date.now(), c = { gold: 0, mats: [], troph: [] };
+            S.camp.builds = [{ id: 'watch', to: 2, b: 0, dur: 6e5, start: n, end: n + 6e5, cost: c }, { id: 'library', to: 1, b: 0, dur: 1e3, start: 0, end: 0, cost: c }]; true`);
+          await step('forge', 'world', 'camp');
+          const f1 = await probe();
+          assert(!f1.shown && !f1.paused, `guard ${at}: a disabled Build button shows no ring and does not pause (${JSON.stringify(f1)})`);
+          await X(`S.camp.builds = []; ui(true); true`);
+          await step('forge', 'world', 'camp');
+          const f2 = Object.assign(await probe(), await X(`({ can: campCan('forge').ok, why: campCan('forge').why, btn: !!document.querySelector('#camp-b-forge .cb-quick'), hidden: !!(document.querySelector('#camp-b-forge .cb-quick') || {}).hidden, dis: !!(document.querySelector('#camp-b-forge .cb-quick') || {}).disabled })`));
+          assert(f2.shown && f2.paused && f2.hit && f2.error <= 2, `guard ${at}: a free builder brings the Forge ring back on a tappable button (${JSON.stringify(f2)})`);
+          // 3. a first-use line has no ring and never pauses
+          await X(`onboardStep = () => null; onboardUse = () => ({ id: 'use:camp', text: 'Build stations here.' }); setTab('world'); ui(true); true`);
+          await page.evaluate(() => window.__gtgTick());
+          const u = await X(`({ ring: !document.querySelector('.ob-ring').parentNode.hidden && !document.querySelector('.ob-ring').hidden, paused: ONBOARD.paused, text: document.querySelector('.ob-txt').textContent })`);
+          assert(!u.ring && !u.paused && u.text === 'Build stations here.', `guard ${at}: a first-use line has no ring and never pauses (${JSON.stringify(u)})`);
+          assert(!errs.length, `guard ${at}: no browser errors` + (errs.length ? ': ' + errs[0] : ''));
+        } finally { await ctx.close(); }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('guide target guard crashed: ' + (e.stack || e)); }
+
 // ---- C4: a gatherer's two-hour trade run reserves raw cargo and settles exactly once ----
 if (section('gatherer trade runs (C4)')) try {
   const HOUR = 3600e3, T0 = Date.UTC(2026, 8, 28, 12), games = [];
@@ -8312,9 +8374,9 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.8, 15: 16 * 2.5, 20: 16 * 2.4, 30: 16 * 3.6, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.8, 15: 16 * 2.5, 20: 16 * 2.4, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-34 x1.1; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall (2026-10-07); zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
@@ -8371,7 +8433,10 @@ if (section('C29 mid-game HP and Wren (core)')) try {
   { const bad = [], seen = [];
     for (const [z, L, fx] of [[8, 14, 'early'], [15, 25, 'mid'], [20, 33, 'mid'], [25, 35, 'mid'], [30, 37, 'late'], [34, 39, 'late']]) for (const k of ['wren', 'pip']) {
       const r = kept(k, z, L, fx), s = `${k} ${z}: ${[r.n.hit, r.b.hit, r.b.charge].map(x => (100 * x).toFixed(0)).join('/')}`; seen.push(s);
-      if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= 0.25 && r.b.hit <= 0.36 && r.b.charge >= 0.6 && r.b.charge <= 0.9) || r.err().length) bad.push(s); }
+      // zones 25-34 (mid-zone-wall, 2026-10-07): the hero who keeps up there has only 0.2-0.4 of the reference HP (budget.mjs), and this
+      // hero is scaled to the reference, so a boss hit that costs them 25-45% reads 8-16% here and a charge 20-45%
+      const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : [0.25, 0.36, 0.6, 0.9];
+      if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
     assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 25-35%, a charge 60-90% (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
   // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
@@ -8903,6 +8968,7 @@ if (section('story-hollow-script')) try {
   assert(cs && cs.head === RB.captain[1].title && cs.lines[0] === RB.captain[1].line, 'story-hollow-script: with the Captain on screen the zone 1 boss plays its real Captain line');
   // (c) no encounters registered: a zone 5 boss kill plays no Champion scene, and the zone 35 boss no Elder scene
   const wc = loadCore({ seed: 92 }), wcv = watch(wc);
+  wc.eval('STORY_TUNE.champMoment = false');   // champion-moment wires the Champions itself; off, no encounters are in the game
   quiet(wc, 'S.zone = 5; S.maxZone = 5; fightBoss = true; spawn(); mob.encounter = { kind: "champ", id: "regent" }'); ticks(wc, 5);
   wc.eval(`emit('kill', { mob: mob, zone: 5, gold: 0, ess: 0, tier: 1 })`); ticks(wc, 5);
   wc.eval('S.zone = 35; S.maxZone = 35; fightBoss = true; spawn(); mob.encounter = { kind: "elder", id: "fenmother" }'); ticks(wc, 5);
@@ -10049,6 +10115,31 @@ if (section('lantern caches')) try {
   const ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8');
   assert(/on\('cacheOpen'/.test(ui) && /moment\(big \? 'cache' : 'cacheAuto'/.test(ui), 'caches: the card goes through the moment layer');
 } catch (e) { fail('lantern caches: ' + e.message); }
+
+// ---- Champion clear moment (card champion-moment; 55-story.js champWin, 75-moments-ui.js) ----
+if (section('champion moment')) try {
+  const mk = opts => { const g = loadCore(Object.assign({ seed: 7 }, opts)); const wins = [], caches = []; g.fn.on('champWin', e => wins.push(e)); g.fn.on('cacheOpen', v => caches.push(v)); return { g, wins, caches, E: s => g.eval(s) }; };
+  // a zone's boss: spawn it as the fight does, then kill it as the fight does
+  const win = (a, z) => { a.E(`S.activity = 'fight'; S.zone = ${z}; S.maxZone = Math.max(S.maxZone, ${z}); fightBoss = true; spawn(); killPack(mob, 40)`); a.g.fn.tick(0.1); };
+  const a = mk(); a.E('soloPick("wren")');
+  win(a, 5);
+  assert(a.wins.length === 1 && a.wins[0].id === 'regent' && a.wins[0].zone === 5 && a.wins[0].name === 'The Briar Regent', `champion moment: the zone 5 Champion's first clear says so once (${JSON.stringify(a.wins)})`);
+  assert(a.caches.length === 1 && a.caches[0].zone === 5, 'champion moment: the first clear opened its cache too (the card carries it)');
+  a.E('S.zone = 5'); win(a, 5);
+  assert(a.wins.length === 1, 'champion moment: a replay of a cleared Champion shows nothing new');
+  win(a, 10);
+  assert(a.wins.length === 2 && a.wins[1].id === 'cantor', 'champion moment: the zone 10 Champion is one too');
+  win(a, 6);
+  assert(a.wins.length === 2, 'champion moment: a zone with no Champion (a Captain) is not one');
+  const past = mk(); past.E('soloPick("wren"); S.maxZone = 12'); win(past, 5);
+  assert(past.wins.length === 0 && !past.E('S.story.seen["p:regent:pre"] || S.story.seen["p:regent:post"]'), 'champion moment: a save past a Champion gets no scene or moment from replaying it');
+  const off = mk(); off.E('soloPick("wren"); STORY_TUNE.champMoment = false');
+  win(off, 5);
+  assert(off.wins.length === 0 && off.caches.length === 1, 'champion moment: with STORY_TUNE.champMoment off no Champion card is asked for and the cache opens on its own');
+  const ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-moments-ui.js'), 'utf8');
+  assert(/champion: \{ tier: 'big'/.test(ui) && /on\('champWin'/.test(ui) && /storyBusy\(q\.scene\)/.test(ui), 'champion moment: a big MOMENT_KINDS row, the champWin listener, and the card waits for the scene');
+  assert(/q\.kind === 'champion' && q\.zone === v\.zone/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8')), 'champion moment: the cache folds into the Champion card (one card for the win)');
+} catch (e) { fail('champion moment: ' + e.message); }
 
 // ---- moment layer (card moment-layer; 75-moments-ui.js; docs/design/first-hour.md; scorecard F6) ----
 // Each big and medium moment is forced while the guide, a level-up and the toast flood compete, and must be on screen for at
