@@ -637,3 +637,13 @@ change over existing fields.
    tags every currency in `tools/systems-map.mjs` with a Kind (the check fails on an untagged currency or a core set that
    is not these eight), registers Attribute points, and shows Mirrors of Embers beside Trophies as "Rare finds" in the
    Storehouse. The top bar already shows only Gold and Embers; no screen needed a cut.
+
+## Moment cap: judge ruling (2026-10-07, Opus high; Cal can veto any line)
+
+The check "big and medium moments in a fresh game's first 10 minutes (at most 8)" passed on some runs and failed (9) on others.
+
+- **Cause.** Three things, none a pacing fault. (1) A Champion card could show before its cache opened, so one clear made two big cards (the fix of PR #121, now in). (2) The check drew from one seeded random stream that the page's own frame loop also drew from, and ran on the machine's clock, so drops (a unique makes a cache a big card) changed from run to run. (3) The banner window (`midRoom`) ran on `Date.now()` while the rest of the layer ran on game seconds, so on a fake clock no banner could ever show and the check could not see banners at all.
+- **Ruling: the cap stays at 8; no moment is trimmed or merged.** A unique already joins its cache card, zone 1's boss and the first Star already join their cache card, and the zone 1 to 3 look caches are F3's "big every 5 minutes". Merging them would break F3.
+- **The bot is not a person.** It reaches zone 14 in 10 minutes; a person is at zone 5 near minute 18, so cards a person sees apart fold into one on the bot's walk. The check now judges the shape: at most 8 big cards, at most 3 banners in any 3 minutes, at most one big card per zone clear, no Champion card while its cache is still pending, and at most one moment per zone cleared. Each of these fails on real card spam.
+- **Code.** `midRoom` and its entries use game seconds. `momentShow` carries the card's zone. The check seeds drops only while the bot steps and runs the page on the bot's own clock.
+- **If the banner assert ever fails,** that is real spam for a person: tighten the medium list (for example level banners only at 2, 10 and 20), not the cap.
