@@ -2,7 +2,8 @@
 
 Design spec, 2026-10-07. Card `skilling-crafting-overhaul-spec` (P0, Opus high lead, judge gate). It takes in W7's
 `craft-delta` and rewrites three held cards (`refine-queues`, `craft-attribute-grades`, `weapon-profiles`) so their ids
-stay stable for the build plan; `crafting-levelling-spec` closes into this doc. Four build cards (section 11), target
+stay stable for the build plan; `crafting-levelling-spec` closes into this doc. Five build cards (section 11; the fifth
+from Cal's 7 October preview notes, section 17), target
 Fri 13 Nov, then one balance pass.
 
 Rubric: design-doc. Coverage-map areas 10 (skills), 5 (meaningful choices), 8 (economy), 4 (overwhelm). Compass loop
@@ -34,6 +35,11 @@ changes, all applied (section 16). The coordinator's two asks (cadence targets, 
   nothing is lost. Or spend Essence to lift it the same way (Infuse): Essence finally has a steady use.
 - **You see why you made it.** Every craft says what it changes in the fight, and Next Up names the piece and the boss
   it is for.
+
+**Cal's preview notes (7 Oct)** that land here (section 17): upgrades add flat numbers, not percentages (#6); five
+attributes at 3 points a level, and each weapon grows with two of them, as in Expedition 33 (#21); a crafted tool goes on
+by itself (#13); your gear lives on the Hero tab (#14); refine orders show "an hour" like gathering (#16); early foes
+take at least three hits (#18).
 
 **In one line (the 6 October test):** raw materials become refined ones at the station that uses them, and your skill
 level, your timing and your build decide how good the gear is.
@@ -337,7 +343,7 @@ away and raid damage do not move. One online number does: the `raiders` doc's `g
 starters. Might plus Heavy wins at least one arm per starter, Focus plus Balanced is not best on both foe types, and no
 profile is best everywhere. If it fails, the coefficients move; the rule stays.
 
-Vigour has no weapon: survival comes from armour and Vigour points. **Armour has grades but no profile** in this
+Vigour gets a weapon through card 5 (Heavy's second attribute, section 17); survival still comes mostly from armour and Vigour points. **Armour has grades but no profile** in this
 overhaul. Cal's answer 7 asked for an armour secondary stat; it is deferred for scope (veto line in section 13).
 
 **Retune:** change a weapon's profile at the Forge for gold, 1.5x more each time, from the Reforge base price. Counter
@@ -450,21 +456,23 @@ refining idle, crafting active; **fail chance** none; **specialisations** no; **
 
 ## 11. Build cards
 
-Written to `/mnt/project-files/autopilot/cards/`. Target: all four merged by Fri 13 Nov, then one balance pass.
+Written to `/mnt/project-files/autopilot/cards/`. Target: all five merged by Fri 13 Nov, then one balance pass.
 Each card carries its own tool changes (the red team found the budget, arms, sim personas and walk bot blind to this
 change), so its prediction can be measured.
 
 | # | Card | What a player gets | Model | After | Owned files (all exist unless marked new) |
 |---|---|---|---|---|---|
-| 1 | `craft-delta` (amended) | the result card shows the fight change; Next Up names the piece and its boss, and offers upgrades; choice and first-use events for the cadence measure | Sonnet medium | `next-up-equip` | `75-craft-ui.js`, `55-goals.js`, `tools/walk.mjs` (Go words, choice log) |
+| 1 | `craft-delta` (amended) | the result card shows the fight change; Next Up names the piece and its boss, and offers upgrades; tools go on by themselves; gear moves to the Hero tab; choice and first-use events for the cadence measure | Sonnet medium | `next-up-equip` | `75-craft-ui.js`, `75-moments-ui.js`, `55-goals.js`, new `75-hero-gear-ui.js`, `tools/walk.mjs` (Go words, choice log) |
 | 2 | `refine-queues` (rewritten) | coal, the four middles, order lists on three stations while you fight and while away, recipes and upgrades from tier 2 use middles; exports `refineOffer(cost)` | Sonnet medium lead with 2 builders; Opus high save review | `gold-without-training` | Builder A (data, state, store, save codes, parity): `21-data-craft.js`, `30-state.js` (mats), `41-items.js` (costs), `55-store.js`, `75-store-ui.js`, `55-savecode.js`, `tools/offline-parity.mjs`. Builder B (refining, gathering, away): new `55-refine.js`, new `75-refine-ui.js`, new `60-refine.css`, `55-gathering.js` (coal node), `tools/sim.mjs` personas; may touch `72-ui-gather.js` (Coal Seam row) and `57f-hands.js` (Hands on coal) |
-| 3 | `craft-attribute-grades` (rewritten) | grades D to S replace the die, fixed lines, Reforge as a pick, the Strike, Infuse, the shortfall offer on the craft screen, the station curve pinned to the road, re-craft XP | Sonnet medium; Opus high combat and save review | `refine-queues`, `craft-delta` | `55-crafting.js`, `40-rules.js`, `20-data.js` (`SKILL_TUNE`), `41-items.js` (lines), `75-craft-ui.js`, `58-deeds.js`, `55-savecode.js` (`g`), `tools/budget.mjs`, new `skilling-crafting-overhaul/curve.md` |
+| 3 | `craft-attribute-grades` (rewritten) | grades D to S replace the die, fixed lines, Reforge as a pick, the Strike, Infuse, the shortfall offer on the craft screen, the station curve pinned to the road, re-craft XP, upgrades as flat numbers | Sonnet medium; Opus high combat and save review | `refine-queues`, `craft-delta` | `55-crafting.js`, `40-rules.js`, `20-data.js` (`SKILL_TUNE`), `41-items.js` (lines), `75-craft-ui.js`, `58-deeds.js`, `55-savecode.js` (`g`), `tools/budget.mjs`, new `skilling-crafting-overhaul/curve.md` |
 | 4 | `weapon-profiles` (rewritten) | Heavy, Balanced, Swift with attribute scaling, Retune | Sonnet medium; Opus high combat review | `craft-attribute-grades` | `59k-turn.js` (three hooks), `55-crafting.js` (Retune), `75-craft-ui.js`, `55-savecode.js` (`pf`, `rn`), `docs/design/hero-progression-build/arms.mjs` |
+| 5 | `five-attributes` (new, Cal's note #21) | Luck as a fifth attribute, 3 points a level, each weapon grows with two attributes | Opus high; judge gate | `weapon-profiles` | section 17 |
 
 Also written: `art-refined-materials` (icons for coal and the four middles, and the Coal Seam; whichever art lane the
 14 Oct art decision opens; not blocking: text labels until then) and `tonic-brew` (after the balance pass).
 
 Order: 1 and 2 at the same time (no shared files; card 2's two builders hold separate files). 3 after both. 4 after 3.
+5 after 4, then the balance pass.
 Card 3 merges behind its switches and does not reach the live artifact until the balance pass closes the zone 19 to 21
 dip (section 5). Shared files are handed on, never edited by
 two cards at once. `gold-without-training` (running) owns the upgrade gold price and `50-sim.js`; card 2 changes only
@@ -477,7 +485,7 @@ the material side and uses `on('away')` in its own file, not `50-sim.js`. `first
 
 ## 12. Predictions and how we check them
 
-| Measure | Now | After the four cards | Missed if | How |
+| Measure | Now | After the five cards | Missed if | How |
 |---|---|---|---|---|
 | Craft, upgrade and refine actions in the walk's first 60 bot minutes (seed 1) | 2 crafts, 0 upgrades | at least 6, the first refine by bot minute 25 | fewer than 4 | nightly walk (card 1 adds the Go words and upgrade goal) |
 | Choice cadence, minutes 20 to 60 (walk seed 1, `choice` events) | not measured; W7: reveals but few decisions | a choice at least every 8 minutes, 5 or more in the window | any gap over 15 minutes | walk log (card 1) |
@@ -493,6 +501,8 @@ the material side and uses `on('away')` in its own file, not `50-sim.js`. `first
 | First class weapon crafted, walk seed 1 | measured on card 2's base | no later than +1 min | later than +3 min | nightly walk |
 | Saturday panel: can name the piece they craft for and why | not asked | 3 of 4 | 1 of 4 or fewer | panel notes |
 | Storehouse first view at 360 px | 31 cells | 8 cells | more than 12 | eyes shot |
+| Hits a kept-up hero needs on a normal foe, zones 1 to 6 (Cal's note #18) | 1 (Cal, preview) | at least 3 | any zone at 1 | `budget.mjs` early rows (player-notes fix, kept by card 3) |
+| Attributes in a winning build (card 5) | Might in none | all five in at least one | any in none | `arms.mjs` with five attributes |
 
 ---
 
@@ -572,6 +582,37 @@ gold split, Infuse's price. The judge recommends Cal upholds all three veto line
 | 12 | Coal's store group 1; current tier is `zoneTier(S.maxZone)`; Swift's 10 ms inside Guard's cap | sections 4, 6 |
 
 Also added at the coordinator's ask: cadence targets (section 2) and Infuse, Essence's use (section 7b).
+
+## 17. Cal's preview notes, 7 October
+
+Cal played the preview and sent 21 notes. Six bear on this spec. The rest go to build cards through the preview thread.
+
+| Note | What Cal said | What this spec does | Card |
+|---|---|---|---|
+| #6 | "I don't like that upgrades give %. I would rather flat numbers. Other things can increase by %." | **Upgrades add a flat number.** Each +1 adds a fixed amount to the piece's main stat, set when the piece is made from its tier and grade ("+1: +3 Attack"). The total at each + equals today's 15% a step, so the budget does not move; the player reads numbers, not percentages. Grades, profiles and attributes stay as multipliers (the "other things" Cal allowed). Old items show the same total as a flat number. No save change. | `craft-attribute-grades` |
+| #21 | "I'm getting infinity attribute points. Is it set to 3 a level? We need more attributes to make this a better choice. Again refer to E33." | Today it is 4 points a level on 4 attributes (`HERO_TUNE.perLevel`, `24g-data-hero.js:34`), and only the hero grows with them. **Expedition 33's model, adapted:** a fifth attribute, **Luck** (crit chance in turn fights, under `TURN_TUNE.critChanceCap`), **3 points a level**, and **each weapon grows with two attributes**: Heavy with Might and Vigour, Balanced with Focus and Luck, Swift with Guard and Luck (the second at half strength). Vigour gains a weapon. Every point now moves the hero and a weapon, and there are more ways to spend it. Old saves keep their spent points while they fit; a hero who has spent more than the new total gets a free reset with a card that says why. If "infinity" was a literal number on screen, that is a bug and goes to the preview thread. | new `five-attributes` |
+| #18 | "I'm one shotting everything in the early game." | The overhaul does not change tier 1 power, so it will not fix this alone. Target added (section 12): a normal foe in zones 1 to 6 takes at least 3 hits from a kept-up hero. Fewer points a level (3, not 4) takes a little off. The fix itself is first-hour tuning now, not after 13 November; it goes to the Foreman as a player-notes fix card, and card 3's budget run keeps the check. | player-notes fix; `craft-attribute-grades` keeps the check |
+| #13 | "It tells me to make a pickaxe ... It doesn't tell me I need to equip it." | **A crafted tool that beats the worn one goes on by itself**, and the result card says so ("Bronze Pickaxe on: mining 20% faster"). Tools are one per slot with no build choice, so an Equip tap is only friction. Gear still asks, because gear is a choice. | `craft-delta` |
+| #14 | "I think gear should be on the hero tab rather than the crafting tab." | **Worn gear and the bag move to the Hero tab** (the `party` view), next to Attributes and Abilities, where the build is made. The Craft tab makes things and links to the hero's gear. With weapons growing from attributes, the two belong on one screen. | `craft-delta` |
+| #16 | "I liked the amount / minute and / hour that we had on the display." | The gathering Now card still has the rate line (`72-ui-gather.js:228`), so why it did not show goes to the preview thread. Refine orders use the same line: "Smelting: 2.4 a minute · 144 an hour". | `refine-queues` |
+
+Note #17 (equipping from the result card still asks "keep it?") is in `75-moments-ui.js`, which `craft-delta` owns, so
+that card closes the card on Equip.
+
+### `five-attributes` (card 5)
+- **Luck:** crit chance in turn fights, with `per` set so an even spread across five attributes gives today's power a
+  level. Outside turn fights power stays build-neutral, as now.
+- **3 points a level** (`HERO_TUNE.perLevel`).
+- **Second attribute on each profile** at half strength, on the same channels (Heavy: Vigour; Balanced and Swift: Luck).
+  The weapon card says it in words: "Grows with Might (strong) and Vigour (some)". No letters, because grades already use
+  letters.
+- **Gate:** `arms.mjs` with five attributes and the profiles. Every attribute is in at least one winning build, and no
+  build is best everywhere.
+- **Saves:** each hero's record in `S.attr.pts` reads a missing `luck` as 0 (`attrRec`, `55-attributes.js`, fills it). A hero whose spent points exceed the new
+  total is reset once for free, with a card. No key bump.
+- After `weapon-profiles`, before the balance pass. Opus high lead, because it is combat and hero progression; judge gate.
+- Owned files: `24g-data-hero.js`, `55-attributes.js`, `75-attributes-ui.js`, `59k-turn.js` (crit hook; after
+  `weapon-profiles`), `docs/design/hero-progression-build/arms.mjs` (after `weapon-profiles`).
 
 ## Sources
 
