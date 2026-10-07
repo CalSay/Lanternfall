@@ -13886,7 +13886,7 @@ const HEARTH_COLD_B = ['forge', 'bench', 'loom', 'ench', 'tavern'];
 // Decor plots on the camp panorama (hearth-and-hands.md 6.4; N2 draws them): no cost, no timer, no perk.
 // The panorama is 1,024 art px wide with p13, the Trophy Wall, at x 990 where the road enters camp.
 const HEARTH_PLOT_AT = { wall: { plot: 'p13', x: 990, decor: 1, n: 'Trophy Wall' } }, HEARTH_PANO_W = 1024;
-let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthStationWhy, hearthNext,
+let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthNearFull, hearthStationWhy, hearthNext,
   hearthApply, hearthWarm, HEARTH_PLOT;
 
 {
@@ -13948,6 +13948,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     for (const f of CAPPED) { const row = S.mats[f]; if (!row) continue; for (let t = 1; t <= row.length; t++) { const c = packCap(f, t); if (c > 0 && Number.isFinite(c) && row[t - 1] >= HEARTH_TUNE.near * c) return true; } }
     return false;
   };
+  hearthNearFull = nearFull;
   HEARTH_PLOT = {
     bench: () => hearthLit(),
     forge: () => lv('bench') >= 1,
@@ -14510,8 +14511,24 @@ const weaponKind = () => {
 };
 const weaponMats = () => { const k = weaponKind(); try { return k ? Object.entries(craftRecipe(k, 1)).filter(([f]) => f !== 'gold').map(([f, n]) => stockOf(f, 1, n)) : []; } catch (e) { return []; } };
 const weaponStation = () => { const k = weaponKind(); return k ? CRAFT_KINDS[k].st : null; };
-const weaponNow = () => coldH() && stepDone('forge') && !!weaponKind() && !weaponMade() && campLv(weaponStation()) >= 1 && !stepDone('store');
-const weaponMade = () => { try { return !!equipped('weapon') || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos === 'weapon'); } catch (e) { return false; } };
+const weaponNow = () => coldH() && stepDone('forge') && !!weaponKind() && !weaponMade() && !wearPiece('weapon') && campLv(weaponStation()) >= 1 && !stepDone('store');
+// Worn, not owned (Cal's play note 13): a weapon in the bag does nothing, so it is not "made" until it is on.
+const weaponMade = () => { try { return !!equipped('weapon'); } catch (e) { return false; } };
+const TOOL_POS = ['pick', 'axe', 'sickle', 'spear'];
+// A bag piece the hero could put on now in a position that is empty (kind 'tool': a pickaxe, woodaxe, sickle or spear; 'weapon': the weapon). -> { it, pos } | null
+const wearPiece = kind => {
+  try {
+    for (const pos of kind === 'tool' ? TOOL_POS : ['weapon']) {
+      if (equipped(pos)) continue;
+      const it = S.items.find(i => CRAFT_KINDS[i.slot] && kindPos(i.slot) === pos && fits(i, pos, 'hero'));
+      if (it) return { it, pos };
+    }
+  } catch (e) {}
+  return null;
+};
+// the points are spent (or the player has sat on the Hero menu a while with some left): time to point back at the fight
+const backReady = () => { try { const k = soloHero(); if (obAttrOn() && k && attrPoints(k).free > 0) return GUIDE_RT.lastEnd !== null && GUIDE_RT.t - GUIDE_RT.lastEnd >= 20; } catch (e) {} return true; };
+const toolWorn = () => { try { return TOOL_POS.some(pos => !!equipped(pos)); } catch (e) { return false; } };
 // W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
 // never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
 // extra condition for the pause. Attack and the ability need a live foe; Dodge and Parry need a wind-up still on its
@@ -14542,6 +14559,10 @@ const GUIDE_STEPS = [
   { id: 'boss', ph: ['hero'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
   { id: 'upgrade', ph: ['between'], tip: 'Open Hero and make your hero stronger.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
+  // Cal's play note 7: after the points are spent, say how to get back to the fight (the Hero menu otherwise just sits there)
+  { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu to get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
+  // Cal's play notes 9 and 13: a weapon found or made sits in the bag until it is worn. The tip names it and wears it in one tap.
+  { id: 'wear:weapon', ph: ['between'], pause: 1, tip: 'Put on the weapon in your bag.', when: () => coldH() && !!wearPiece('weapon'), done: () => weaponMade() },
   { id: 'gather', ph: ['between'], tip: 'Tap Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
@@ -14551,6 +14572,7 @@ const GUIDE_STEPS = [
   // only once Craft is unlocked: this step pauses the game, and the unlock pass runs on the game clock, so a pause that
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
   { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
+  { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
   // first-gold-and-camp-strip: with the weapon's own station built (the Forge, or the Workbench for a bow or staff; it comes after the Forge step) the next job is the first weapon:
@@ -26284,6 +26306,13 @@ function turnCombatAction(kind, slot) {
     return turnResolve(TURN_LIVE, { kind, slot }, 0, TURN_LIVE_IO);
   return false;
 }
+// Equipping an ability in the middle of a fight: it joins the live fight at once, ready to press (a fight took the slots as it
+// started, so the new one showed ready and did nothing until the next foe: Cal's play note 20). Its cooldown is kept once it has one.
+function turnSyncEquip() {
+  const m = TURN_LIVE; if (!m || m.ended) return;
+  for (const id of soloEquipped()) if (id && !(id in m.cds)) { m.cds[id] = 0; m.p.cds[id] = turnCdFor(id); if (!m.p.eq.includes(id)) m.p.eq.push(id); }
+}
+on('soloEquip', turnSyncEquip);
 function turnCombatTick(dt) {
   if (!turnCombatScope()) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
@@ -36509,7 +36538,10 @@ on('cacheOpen', v => {
   const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1;
   const lines = [];
   if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
-  if (v.unique) lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
+  if (v.unique) {
+    lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
+    const wn = typeof momentWearNote === 'function' ? momentWearNote(v.unique.item) : null; if (wn) lines.push(wn);   // Cal's play note 9: say where a unique you cannot wear went
+  }
   if (v.star) lines.push({ txt: `Star: ${v.star.name}` });
   if (v.trophy) lines.push({ txt: `${v.trophy.n} ${v.trophy.name}` });
   const pay = [];
@@ -36525,7 +36557,9 @@ on('cacheOpen', v => {
   // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
   const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
-  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions = [{ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) }];
+  o.actions = [];
+  if (v.unique && typeof momentEquipAction === 'function') { const eq = momentEquipAction(v.unique.item); if (eq) o.actions.push(eq); }   // Cal's play note 9: the unique is one tap from being worn
+  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });
   const barks = v.zone === 1 ? ['boss1'] : [];
   const ci = MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone);   // champion-moment: a Champion's first clear queued its own card (75-moments-ui)
   if (big || ci >= 0) {
@@ -38148,7 +38182,7 @@ let craftUI = null;
     } else {
       if (d && d.pos && heroFitsIt(it) && !wr) {
         const eq = el('button', 'big forge cf-act', 'Equip'); eq.type = 'button';
-        eq.addEventListener('click', () => { equipHero(it.id, d.pos); ui(true); });
+        eq.addEventListener('click', () => { equipHero(it.id, d.pos); if (wornBy(it.id)) { st8.result = null; st8.resArm = false; } ui(true); });   // Cal's play note 17: worn, so the card closes (Keep and Salvage are for a piece that is not worn)
         acts.append(eq);
       }
       const keep = el('button', 'big cf-act cf-keep', 'Keep'); keep.type = 'button';
@@ -40752,6 +40786,23 @@ function moment(kind, o) {
   MOMENT_UI.wait = 0;
   return true;
 }
+// Cal's play note 9: a unique that lands in the bag is one tap from being worn. -> an action for the card, or null when it is not in the
+// bag, the hero cannot use it, or the hero already wears something at least as strong in that spot.
+function momentEquipAction(it) {
+  try {
+    const pos = it && itemById(it.id) ? kindPos(it.slot) : null;
+    if (!pos || !(pos in S.equip) || !fits(it, pos, 'hero')) return null;
+    const cur = equipped(pos); if (cur && (cur.id === it.id || itemPower(cur) >= itemPower(it))) return null;
+    return { txt: `Equip ${itemName(it)}`, fn: () => { equipItem(it.id, pos); } };
+  } catch (e) { return null; }
+}
+// ... and when the hero cannot wear it, say where it went, so the card never looks like loot that vanished.
+function momentWearNote(it) {
+  try {
+    const pos = it && itemById(it.id) ? kindPos(it.slot) : null;
+    return pos && (pos in S.equip) && !fits(it, pos, 'hero') ? { txt: 'You cannot wear it. It waits in your bag for a hero who can.' } : null;
+  } catch (e) { return null; }
+}
 function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner, queued: MOMENT_Q.length }; }
 {
   // a turn is in motion (a hit, a windup, a parry window). The waiting phases (the next foe's intro, the hero's turn, the handoff: the game's own
@@ -40918,7 +40969,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const u = UNIQ[it.u];
     moment('unique', { title: u.name, sub: e.first ? 'A new unique. It joins your trophy wall.' : 'Another copy of a unique you have.',
       rarity: 'legendary', icon: { item: it }, bark: 'unique',
-      lines: e.kept ? [] : [{ txt: 'Your bag was full, so it was salvaged.' }] });
+      lines: e.kept ? [momentWearNote(it)].filter(Boolean) : [{ txt: 'Your bag was full, so it was salvaged.' }], actions: e.kept ? [momentEquipAction(it)].filter(Boolean) : [] });
   });
   on('zoneClear', e => {
     if (!e) return;
@@ -41461,9 +41512,20 @@ let navUI = null;
     },
     'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: "The Hero tab's open. Tap it." }
   };
+  // Cal's play notes 9 and 13: a piece in the bag does nothing until it is on. The tip names it and the Equip button wears it in one tap;
+  // the ring sits on the craft card's own Equip button when that card is up.
+  const wearSpec = (kind, text) => {
+    const w = wearPiece(kind); if (!w) return null;
+    const nm = itemName(w.it), btn = q('#sec-craft-recipes .cf-resact .forge'), card = !!S.tab && vis(btn);
+    return { text: text(nm), node: card ? btn : onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: !card && onGame() ? [0.74, 0.62] : null, side: 'up',
+      go: { label: `Equip ${nm}`, fn: () => { equipItem(w.it.id, w.pos); } } };
+  };
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
     chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree. It goes faster.') : null,
+    back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: 'Done here? Close the menu and the fight goes on.', go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
+    'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is in your bag. A tool only works when you wear it.`),
+    'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is in your bag. Put it on to fight with it.`),
     'stock:bench': () => stockSpec('stock:bench', 'the Workbench'),
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
@@ -41498,7 +41560,8 @@ let navUI = null;
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
       return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon. Then put it on.' };
     },
-    store: () => campPath('store', ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.']),
+    // Cal's play note 15: only say the packs are near full when they are (the Storehouse plot also opens once the Forge is built)
+    store: () => { const full = typeof hearthNearFull === 'function' && hearthNearFull(); return campPath('store', full ? ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.'] : ['The Forge is up. Open Camp.', 'Open Camp.', 'Build a Storehouse. It holds more.']); },
     // Training: Hero tab, Training view, Train on Attack.
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
