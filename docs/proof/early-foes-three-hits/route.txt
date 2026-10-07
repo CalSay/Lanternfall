@@ -1,0 +1,28 @@
+# seed: 1
+# Proof for card early-foes-three-hits (Cal's play note #18: zone 1-6 foes fell to one hit). The early fixture's hero is well
+# over zone 6's road level once it steps back from zone 8, the case where foes died to one hit. One Attack lands and the foe is still standing, its HP plate
+# on screen. The rule (a zone 1-6 normal foe's HP is at least 6-8 of the hero's plain Attacks, so 3+ turns with an ability and a
+# counter) is checked at level 20 in tools/check.mjs (C29), and on the walk (`node tools/walk.mjs --seed 1`: 28 zone 1-6 kills,
+# mean 3.6 hero turns, before 1.0-1.8).
+new early
+wait 6
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Continue"
+tap "Previous zone"
+wait 1
+tap "Previous zone"
+wait 3
+tap-if "Dismiss this tip"
+expect "Zone 6"
+tap-if "Attack"
+wait 1.5
+tap-if "Dismiss this tip"
+expect ".hud.vs .mob"
+shot early-foes-after-one-hit
+tap-if "Attack"
+wait 1.5
+tap-if "Dismiss this tip"
+expect ".hud.vs .hero-plate"
+shot early-foes-fight
