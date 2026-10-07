@@ -19,10 +19,12 @@ const bossTryKey = (hero, zone) => (hero || 'hero') + ':' + zone;
 function bossTryHeld() { const b = S.bossTry; return !!(b && b.hold > 0 && b.hold === S.zone); }
 function bossTryRelease(zone) { const b = S.bossTry; if (b && b.hold && b.hold === zone) { b.hold = 0; b.fail = 0; } }   // only the held zone's boss releases it
 
+// what a move does besides hit (59k TURN_TUNE.tricks): 'delayed', 'feints', both, or ''
+function bossTryTricks(mv) { const a = []; if (mv.hits.some(h => h.hold > 0)) a.push('delayed'); if (mv.hits.some(h => h.feint)) a.push('feints'); return a.join(' + '); }
 // the foe's moves in the order they are told, one row per move id: { id, name, hits, charged }
 function bossTryMoves(script) {
   const seen = new Set(), out = [];
-  for (const m of script || []) { if (!m || seen.has(m.id)) continue; seen.add(m.id); out.push({ id: m.id, name: m.name, hits: m.hits.length, charged: !!m.charge }); }
+  for (const m of script || []) { if (!m || seen.has(m.id)) continue; seen.add(m.id); out.push({ id: m.id, name: m.name, hits: turnRealHits(m), charged: !!m.charge, tricks: bossTryTricks(m) }); }
   return out;
 }
 // what the Foe tab shows of a boss: { moves: [shown], hidden: how many are still unknown }

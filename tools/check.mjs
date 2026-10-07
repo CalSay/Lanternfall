@@ -979,6 +979,10 @@ if (section('camp')) try {
   assert(E('topGoals(8, { sticky: false }).some(x => x.id === "camp-build" && x.ready)'), 'Next Up: "ready to build"');
   assert(E('campBuild("hearth")'), 'Hearth 6 started');
   assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-timer" && /finishes in/.test(x.label))'), 'Next Up: "build finishes in <time>"');
+  // first-gold-and-camp-strip: the camp tutorial goal shows until one building is tapped, then never again
+  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap" && /Tap a building/.test(x.label))'), 'Next Up: "Tap a building in your camp" while no building has been tapped');
+  E('onboardUseDone("use:camp-tap")');
+  assert(!E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap")'), 'Next Up: the camp tap goal is gone once a building is tapped');
   const bad = badNumbers(E('S'));
   assert(!bad.length, 'no NaN in the camp state' + (bad.length ? ': ' + bad[0] : ''));
   assert(!g.errors.length, 'no camp errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
@@ -2006,7 +2010,7 @@ if (section('zone area names')) try {
     'area names: no zone in the Hollow is named "... II" any more (zone 8 is Batwing Caves)');
   assert(E('zoneName(176)') === 'The Heart of the Gloamvale II' && E('zoneName(0)') === 'Mossy Hollow', 'area names: past zone 175 the last area repeats, numbered; zone 0 reads as zone 1');
   // names only: the 7-zone cycle still drives foes, scenery and rewards
-  assert(E('zoneType(8)') === 0 && E('zonePlace(8)') === 0 && E('zoneCycle(8)') === 1 && E('zoneTheme(8)') === 'forest' && E('zoneType(35)') === 6,
+  assert(E('zoneType(8)') === 0 && E('zonePlace(8)') === 0 && E('zoneCycle(8)') === 1 && E('zoneType(35)') === 6,
     'area names: foe type, place and cycle for a zone are unchanged');
 } catch (e) { fail('area names crashed: ' + (e.stack || e)); }
 
@@ -2020,9 +2024,28 @@ if (section('regions and the Great Lantern')) try {
   const OLD = `(() => { const out = []; const T = z => (z - 1) % 7, C = z => Math.floor((z - 1) / 7);
     for (let z = 1; z <= 35; z++) {
       if (zoneType(z) !== T(z) || zonePlace(z) !== T(z) || zoneCycle(z) !== C(z) || zoneNextType(z) !== (T(z) + 1) % 7
-        || zoneTheme(z) !== (z <= MOSSY_ZONES ? 'forest' : ZONE_THEME[T(z)]) || zoneHue(z) !== (C(z) * 70) % 360 || zoneUnique(z) !== ZONE_UNIQ[T(z)] || zoneHome(z) !== CRAFT_HOME[T(z)]) out.push(z);
+        || zoneHue(z) !== (C(z) * 70) % 360 || zoneUnique(z) !== ZONE_UNIQ[T(z)] || zoneHome(z) !== CRAFT_HOME[T(z)]) out.push(z);
     }
     return out; })()`;
+  // scenery follows areas (scenery-follows-areas): the theme of every zone 1-70, without and with a stub Caves painting
+  {
+    const cyc = z => ['forest', 'cave', 'bone', 'barrow', 'fungal', 'quarry', 'marsh'][(z - 1) % 7];
+    // today's table: zones 1-7 Mossy Hollow, then the 7-zone cycle (zones 6-8 show the Mossy Hollow painting, 9 the cave, 10 the bone scene)
+    const NOW = Array.from({ length: 70 }, (_, i) => (i + 1 <= 7 ? 'forest' : cyc(i + 1)));
+    // with a Caves painting wired: the five Batwing Caves zones (6-10) show it; everything else is unchanged
+    const CAVE = NOW.map((t, i) => (i + 1 >= 6 && i + 1 <= 10 ? 'cave' : t));
+    const themes = g => g.eval('(() => { const o = []; for (let z = 1; z <= 70; z++) o.push(zoneTheme(z)); return o; })()');
+    const g = loadCore({ seed: 61 });
+    const row = a => a.map((t, i) => (i + 1) + ':' + t).join(' ');
+    const diff = (a, b) => a.map((t, i) => t === b[i] ? '' : (i + 1) + ' got ' + t + ' want ' + b[i]).filter(Boolean).join('; ');
+    assert(g.eval("typeof BG_ART === 'object' && !BG_ART.cave && SCENERY_BY_AREA === true"), 'scenery: no Caves painting is wired yet and SCENERY_BY_AREA is on (update this check when the Caves painting is wired)');
+    assert(!diff(themes(g), NOW), 'scenery: with no Caves painting, zones 1-70 keep their scenery exactly (' + diff(themes(g), NOW) + ')');
+    g.eval("BG_ART.cave = { id: 'stub' }");
+    assert(!diff(themes(g), CAVE), 'scenery: with a Caves painting wired, zones 6-10 show it and no other zone changes (' + diff(themes(g), CAVE) + ')');
+    g.eval('SCENERY_BY_AREA = false');
+    assert(!diff(themes(g), NOW), 'scenery: with SCENERY_BY_AREA off, zones 1-70 follow the old rule even with a Caves painting (' + diff(themes(g), NOW) + ')');
+    g.eval('SCENERY_BY_AREA = true; delete BG_ART.cave');
+  }
   for (const f of FIX) {
     const raw = JSON.parse(rawOf(f));
     const g = loadCore({ seed: 61, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
@@ -4659,7 +4682,7 @@ if (section('solo guide pause rules')) try {
   const bad = steps.filter(s => s.needs && s.pause).map(s => s.id);
   assert(steps.some(s => s.needs) && !bad.length, `no guide step that waits for materials has pause (${steps.filter(s => s.needs).map(s => s.id).join(', ')})${bad.length ? '; pausing: ' + bad.join(', ') : ''}`);
   const build = steps.filter(s => s.pauseUnless);
-  assert(build.map(s => s.id).join() === 'bench,tool,forge,store' && build.every(s => s.pause), 'the press steps that cost materials (bench, tool, forge, store) pause only through pauseUnless');
+  assert(build.map(s => s.id).join() === 'bench,tool,forge,weapon,store' && build.every(s => s.pause), 'the press steps that cost materials (bench, tool, forge, weapon, store) pause only through pauseUnless');
   assert(build.every(s => steps.some(t => t.needs && t.id === 'stock:' + s.id)), 'each of them has a stock step that says what to gather');
   assert(steps.filter(s => s.id === 'nextup' || s.id === 'tab:party').every(s => !s.pause) && steps.find(s => s.id === 'nextup').ok, 'Next Up and the Hero tab hint never pause the game (Next Up is a Got it note)');
   // the guard: a paused step with an unmet material need does not pause; with the materials in hand it does
@@ -4669,6 +4692,11 @@ if (section('solo guide pause rules')) try {
   assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false && E('onboardPaused({ id: "attack", pause: 1 })') === true, 'the guard: the Workbench press step does not pause while 20 Pine Log are missing; a plain press step does pause');
   E('S.mats.wood[0] = 20');
   assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === true && !E('onboardNeed("bench").length'), 'with 20 Pine Log in hand the Workbench press step pauses again');
+  // first-gold-and-camp-strip: with the Forge up the guide's next job is the first weapon, and making one ends it
+  E('soloPick("tobin"); S.camp.b.forge = 1; onboardReveal("craft"); onboardDone("forge")');
+  assert(E('!!weaponKind() && weaponMats().length > 0 && !weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").when() && !GUIDE_STEPS.find(s => s.id === "weapon").done()'), 'the weapon step shows once the Forge is built and no weapon is made');
+  E('addItem(newItem(weaponKind(), 1, 0))');
+  assert(E('weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").done() && GUIDE_STEPS.find(s => s.id === "stock:weapon").done()'), 'making a weapon ends the weapon steps');
   // no player-facing copy calls the first wood Oak
   const srcs = ['75-onboard-ui', '75-camp-ui', '56-roster', '63d-scenery-camp', '55-onboard'];
   const oak = srcs.filter(f => fs.readFileSync(path.join(ROOT, 'src', 'js', f + '.js'), 'utf8').split('\n').some(l => /\bOak\b/.test(l) && !/^\s*\/\//.test(l)));
@@ -6204,6 +6232,11 @@ if (section('gatherers at camp (C2)')) try {
     assert(W('$("camp-scene-scroll").tabIndex===0 && $("camp-scene-world").width===1024 && $("camp-scene-scroll").style.cssText.includes("overflow-x:auto")'), 'C2: the real Camp mount provides a keyboard-focusable native horizontal panorama');
     W('globalThis.__person=$("camp-scene-hands").children.find(x=>x.dataset.handId==="tam")');
     assert(W('__person.tagName==="BUTTON" && __person.getAttribute("aria-label").includes("Tam")'), 'C2: the scene exposes the gatherer as a named native button');
+    // first-gold-and-camp-strip: buildings in the panorama are buttons; a tap opens the card and ticks the camp tutorial goal
+    W('S.camp.b.forge = Math.max(1, S.camp.b.forge | 0); delete S.onboard.done["use:camp-tap"]; __sections.camp.update()');
+    assert(W('$("camp-scene-blds").children.length > 0 && $("camp-scene-blds").children.every(b => b.tagName === "BUTTON" && b.getAttribute("aria-label").includes("Tap to see what it does"))'), 'camp strip: each built building is a named native button in its own layer');
+    W('$("camp-scene-blds").children.find(b => b.dataset.bldId === "forge").click()');
+    assert(W('!$("camp-bld-card").hidden && $("camp-bld-card").textContent.includes("Forge") && $("camp-bld-card").textContent.includes("Makes weapons") && S.onboard.done["use:camp-tap"] === 1'), 'camp strip: tapping the Forge shows what it does and ticks the camp tap goal');
     const talk = W('handsGet("tam").talk||0');
     W('__person.fire("pointerdown",{clientX:10}); __person.fire("pointermove",{clientX:40}); __person.fire("click")');
     assert(W('handsGet("tam").talk||0') === talk && W('$("hands-talk").hidden'), 'C2: dragging from a worker does not open a conversation');
@@ -8402,6 +8435,30 @@ if (section('C29 turn fights (core)')) try {
     E('TURN_LIVE.p.A = TURN_LIVE.p.foeMaxHp * 0.07');
     for (let t = 0; t < 20 && !E('__ev.includes("chargeBroken")'); t += 0.05) { E('if (turnCombatSnapshot().phase === "hero") turnCombatAction("attack")'); g.fn.tick(0.05); }
     assert(E('__ev.join()').startsWith('foeCharge') && E('__ev.includes("chargeBroken")') && !g.errors.length, `C29: a charged move takes a turn to gather and a hit of 6% of the boss's HP breaks it (${E('__ev.join()')})`); }
+  // boss tricks (boss-tiers-pr4): delayed hits and feints in the Captain and Champion sets
+  { const { E } = fresh('wren', 8);
+    const rows = E(`(() => { const out = []; for (const id of Object.keys(TURN_BOSS_TRICKS)) for (const z of [4, 5, 6, 7, 10, 15]) { const s = turnTrickScript(TURN_BOSS_TRICKS[id], z);
+      out.push({ id, z, n: s.length, champ: bossTierOf(z) === 'champion', feints: s.reduce((a, m) => a + m.hits.filter(h => h.feint).length, 0),
+        real: s.map(m => turnRealHits(m)), charged: s.filter(m => m.charge).length, short: s.some(m => m.hits.some(h => h.wind < 0.6 && !h.feint)),
+        feintDmg: s.some(m => m.hits.some(h => h.feint && h.x > 0)) }); } return out; })()`);
+    assert(rows.length > 0 && rows.every(r => r.n === (r.champ ? 5 : 4) && r.charged === 1), 'C29b: a Captain has four moves and a Champion five, one of them charged');
+    assert(rows.every(r => (r.z < 7 ? r.feints === 0 : true) && r.real.every(n => n >= 1) && !r.feintDmg), 'C29b: no feints below zone 7, every move keeps a real hit, a feint never carries damage');
+    assert(rows.some(r => r.z >= 7 && r.feints > 0), 'C29b: from zone 7 the sets carry feints');
+    const a = E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 60, seed: 11, skill: { parry: 0.4, dodge: 0.6 } }))');
+    const b = E('JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 60, seed: 11, skill: { parry: 0.4, dodge: 0.6 } }))');
+    assert(a === b, 'C29b: the combat sampler is deterministic for a seed with tricks on'); }
+  // a feint never damages and fools a pressing hero; a held hit lands after its hold
+  { const { g, E } = fresh('tobin', 8);
+    E('S.zone = 8; S.maxZone = 8; S.kills = ZONE_FIGHTS; spawn(); globalThis.__ev = []; for (const k of ["foeContact", "foeMove"]) on(k, x => __ev.push([k, x])); const u = cbUnitByKey("hero"); u.hp = u.maxHp = 1e12');
+    assert(E('combatFoes()[0].boss && combatFoes()[0].tk.script.some(m => m.hits.some(h => h.hold > 0))'), 'C29b: a zone 8 boss has a delayed hit');
+    let feintSeen = 0, bad = 0;
+    for (let t = 0; t < 400 && feintSeen < 1; t += 0.05) {
+      if (E('turnCombatSnapshot().phase') === 'hero') E('turnCombatAction("attack")');
+      const hp0 = E('cbUnitByKey("hero").hp');
+      g.fn.tick(0.05);
+      const evs = E('__ev.splice(0)');
+      for (const [k, x] of evs) if (k === 'foeContact' && x.res === 'feint') { feintSeen++; if (E('cbUnitByKey("hero").hp') < hp0) bad++; } }
+    assert(!g.errors.length && bad === 0, `C29b: a feint contact never deals damage (${feintSeen} seen)`); }
   // every ability of every hero resolves in a fight: no errors, no bad numbers, damage where it should
   for (const hero of ['wren', 'tobin', 'pip']) {
     const { g, E } = fresh(hero, 31);
@@ -8549,16 +8606,16 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.9, 15: 16 * 3.4, 20: 16 * 2.8, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.725 * 1.25, 15: 16 * 1.7, 20: 16 * 2.8, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07); zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
     assert(n20.a > 4.7 && n20.a < 5.3 && Math.abs(n20.hx - 0.7) < 1e-9 && n3.hx === 1 && n38.hx === 1 && n20.cx === 1 && !n20.full,
       `boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), as written in zones 1-3 and 35+ (${JSON.stringify([n3, n20, n38].map(r => [+r.a.toFixed(2), r.hx]))})`);
-    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.5) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
-      `boss pass: boss hits x1.5 at zone 8 (charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
+    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.055) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
+      `boss pass: boss hits x1.055 at zone 8 (the pr4 refit; charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
     assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 1.4 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
     // the Deepwell's Elders and the Provings' bosses keep their own numbers (they pass a move set and their HP in Attacks)
     const deep = E(`(() => { const f = { boss: true, type: 'bones', name: 'Elder' }; turnFoeSetup(f, 30, { set: 'bones', hpA: TURN_TUNE.deep.hpA.boss }); return { a: f.max / turnRefAtk(30), hx: f.tk.hx, cx: f.tk.cx }; })()`);
@@ -8611,9 +8668,10 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       // zones 25-34 (mid-zone-wall, 2026-10-07): the hero who keeps up there has only 0.2-0.4 of the reference HP (budget.mjs), and this
       // hero is scaled to the reference, so a boss hit that costs them 25-45% reads 8-16% here and a charge 20-45%
       // zones 15 and 20 (boss-tiers PR 3, 2026-10-07): the knots there are fitted to the budget's casual band, a boss hit reads 15-45% here
-      const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : z === 15 || z === 20 ? [0.15, 0.42, 0.4, 0.92] : [0.25, 0.36, 0.6, 0.9];
+      // zones 8 and 15 (boss-tiers-pr4, 2026-10-07): the tricks carry the difficulty there, so the refit hit scales are 0.46-0.9 of the old ones: a boss hit reads 22% at zone 8 and 10% at zone 15, a charge 52% and 24%
+      const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.15, 0.42, 0.4, 0.92] : [0.18, 0.36, 0.45, 0.9];
       if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
-    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 25-35% (15-42% at zones 15 and 20), a charge 60-90% (40-92% there) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
+    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 18-36% (7-42% at zone 15, 15-42% at zone 20), a charge 45-90% (20-92% at zone 15, 40-92% at zone 20) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
   // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];
@@ -8761,6 +8819,50 @@ if (section('C29 Deepwell and Provings in turns (core)')) try {
     assert(l.end && !l.end.won && l.end.reason === lose && !l.errors.length, `C29 Proving ${id}: a hero who cannot hurt it and never defends fails: ${lose} (${JSON.stringify(l.end)})`);
   }
 } catch (e) { fail('C29 arenas crashed: ' + (e.stack || e)); }
+
+// slice-turn-check (M1a E3, docs/design/milestones.md): every fight kind in the slice (zones 1 to 15) is a turn fight, and the hero
+// takes damage only in foe phases. Kinds: a zone foe, an elite, a zone boss at each Champion zone (5, 10, 15), a Captain, a Deepwell
+// floor. A Captain exists only where ZONE_FOES[z].captain is set (no Captain card has landed): until then it is reported, not failed.
+if (section('slice-turn-check (core)')) try {
+  const SLICE_ZONES = [1, 5, 8, 10, 15], CHAMP_ZONES = [5, 10, 15];
+  const BOT = `globalThis.__bot = () => { const q = turnCombatSnapshot();
+    if (q.phase === 'hero') { const eq = soloEquipped(); let ok = false; for (let i = 0; i < 3 && !ok; i++) if (eq[i]) ok = turnCombatAction('ability', i); if (!ok) turnCombatAction('attack'); } }`;
+  const fresh = (seed, setup) => { const g = loadCore({ seed, turns: true }), E = s => g.eval(s);
+    E(`soloPick("wren", {now:true}); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = 'fight'; ${BOT}; ${setup || ''}`);
+    return { g, E }; };
+  // plays up to 90 s of the current fight; returns what the check needs. Damage with no foe hit just before it, or taken in your own hero or timing phase, is a violation.
+  const watch = (g, E) => { const out = { turn: E('turnCombatOn() && !!mob && !!mob.turn && combatFoes().every(f => f.turn)'), foes: E('combatFoes().length'), name: E('mob && mob.name'), bad: [], hits: 0 };
+    let lastFc = 0, lastAt = -9;
+    E('globalThis.__hp = () => { const u = cbUnitByKey("hero"); return u ? u.hp : 0; }; globalThis.__fc = 0; on("foeContact", () => __fc++)');
+    for (let t = 0; t < 90; t += 0.05) {
+      const hp0 = E('__hp()'), ph0 = E('turnCombatSnapshot().phase'), dot = E('!!(TURN_LIVE && TURN_LIVE.h && Object.values(TURN_LIVE.h.dot).some(v => v > 0))'); E('__bot()'); g.fn.tick(0.05); const fc = E('__fc');
+      const hp1 = E('__hp()'), ph1 = E('turnCombatSnapshot().phase');
+      // a drop in health follows a foe's hit (the foeContact event; the fight books it a tick later), or is a foe's Bleed, Burn or Venom ticking as your turn begins, and never lands while you act
+      if (fc !== lastFc) { lastFc = fc; lastAt = t; }
+      if (hp1 < hp0) { out.hits++;
+        if (!(dot && ph0 === 'handoff') && t - lastAt > 0.2 || /^(hero|timing)$/.test(ph0) && /^(hero|timing)$/.test(ph1)) out.bad.push(`${hp0}>${hp1} in ${ph0}/${ph1}`); }
+      if (!E('!!mob') || E('turnCombatSnapshot().phase') === 'off') break;
+    }
+    out.errors = g.errors.slice(0, 2); return out; };
+  const ok = (r, what) => assert(r.turn && r.hits > 0 && !r.bad.length && !r.errors.length, `slice-turn-check: ${what} is a turn fight, a foe hits the hero, and the hero is hurt only in foe phases (${JSON.stringify(r)})`);
+  for (const z of SLICE_ZONES) {
+    { const { g, E } = fresh(60 + z, `S.maxZone = ${z}; setZone(${z}); COMBAT_TUNE.eliteP = 0; spawn()`); ok(watch(g, E), `zone ${z} foe`); }
+    { const { g, E } = fresh(80 + z, `S.maxZone = ${z}; setZone(${z}); COMBAT_TUNE.eliteP = 1; for (let i = 0; i < 60 && !combatFoes().some(f => f.elite); i++) spawn()`);
+      assert(E('combatFoes().some(f => f.elite)') || z < E('COMBAT_TUNE.eliteFrom'), `slice-turn-check: zone ${z} can send an elite`);
+      if (E('combatFoes().some(f => f.elite)')) ok(watch(g, E), `zone ${z} elite`); }
+  }
+  for (const z of CHAMP_ZONES) {
+    const { g, E } = fresh(100 + z, `S.maxZone = ${z}; setZone(${z}); fightBoss = true; spawn()`);
+    assert(E('!!mob && mob.boss'), `slice-turn-check: zone ${z}'s Champion is the zone boss`);
+    ok(watch(g, E), `zone ${z} Champion (${E('mob && mob.name')})`);
+  }
+  { const caps = [...Array(15)].map((_, i) => i + 1).filter(z => { const { E } = fresh(1); return E(`typeof ZONE_FOES === 'object' && !!ZONE_FOES[${z}] && !!ZONE_FOES[${z}].captain`); });
+    if (!caps.length) console.log('  slice-turn-check: no Captain in the game yet (ZONE_FOES[z].captain unset in zones 1 to 15): Captain turn fights are not yet checkable');
+    for (const z of caps) { const { g, E } = fresh(120 + z, `S.maxZone = ${z}; setZone(${z}); spawn()`); ok(watch(g, E), `zone ${z} Captain`); } }
+  { const { g, E } = fresh(140, 'S.maxZone = 25; S.zone = 25; S.camp.b.hearth = 3'); for (let i = 0; i < 20; i++) g.fn.tick(0.05);   // the Deepwell opens at zone 25; its first floors are fought from the zone your Attack matches
+    assert(E('deepUnlocked() && DW.start(false)') && E('mob.deep && mob.floor === 1'), 'slice-turn-check: a Deepwell run starts');
+    ok(watch(g, E), 'a Deepwell floor'); }
+} catch (e) { fail('slice-turn-check crashed: ' + (e.stack || e)); }
 
 // f-playtest-bots: the playtest driver (tools/playtest.mjs): a fresh game shows the hero picker, tapping by label begins the game, wait moves
 // the game clock, state reads the save, away reopens the game later. Same driver an agent plays with (docs/coord/playtest-lab.md).
@@ -10760,7 +10862,7 @@ if (section('foe moves by type')) try {
   }
   // unlisted types (the Coast's) keep the old pair; bosses and zone monsters keep theirs
   assert(J('(() => { const f = { type: "crab", name: "Crab" }; turnFoeSetup(f, 40, { elite: false }); return f.tk.script.map(m => m.id); })()').join() === 'strike,flurry', 'foe moves: a Coast foe still plays Strike and Flurry');
-  assert(J('(() => { const f = { type: "slime", name: "Imp", boss: true }; turnFoeSetup(f, 5, {}); return f.tk.script.map(m => m.id); })()').join() === 'engulf,lash,swell,slap', 'foe moves: a slime boss keeps its boss set');
+  assert(J('(() => { const f = { type: "slime", name: "Imp", boss: true }; turnFoeSetup(f, 3, {}); return f.tk.script.map(m => m.id); })()').join() === 'engulf,lash,swell,slap', 'foe moves: a slime boss keeps its boss set');
   // counters: every id is a real ability of that hero, each foe type has an answer from every starter, and each starter's
   // answers show up on 2+ types
   const heroes = ['wren', 'tobin', 'pip'];

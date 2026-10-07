@@ -32,7 +32,7 @@ registerState('bossOdds', { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, g
   const bump = (o, keys) => { for (const k of keys) { o[k] = (+o[k] || 0) * BOSS_ODDS.decay; if (!Number.isFinite(o[k])) o[k] = 0; } };
   on('foeContact', p => {
     const r = p && p.res, B = S && S.bossOdds;
-    if (!B || (r !== 'parry' && r !== 'dodge' && r !== 'hit')) return;   // 'miss': the foe missed from Blind, not the player's doing
+    if (!B || p.flinch || p.hold || (r !== 'parry' && r !== 'dodge' && r !== 'hit')) return;   // a held hit or the hit after a feint is a trick, not a plain defence (the sampler rolls tricks itself)   // 'miss': the foe missed from Blind, not the player's doing
     bump(B, ['hits', 'parry', 'dodge']);
     B.hits += 1; if (r === 'parry') B.parry += 1; else if (r === 'dodge') B.dodge += 1;
   });

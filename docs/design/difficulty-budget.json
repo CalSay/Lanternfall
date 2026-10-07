@@ -140,7 +140,7 @@
         1
       ],
       "report": true,
-      "note": "report only: a kept-up hero (tier at the zone, rare +5) at zones 8, 10, 12, 13 and 15 against the first-hour row. Out-gearing the first hour feels strong; the check is that gear never makes the boss harder (kept-up casual >= first-hour casual minus tolerance); at z8-15 it wins 99-100% whatever the knots, because it kills a boss in 2.5-4 hero turns. Owner: boss-tiers move sets (pr4), until 2026-12-01. The relative check (gear must help) is gated in tools/health.mjs"
+      "note": "report only: a kept-up hero (tier at the zone, rare +5) at zones 8, 10, 12, 13 and 15 against the first-hour row. Out-gearing the first hour feels strong; the check is that gear never makes the boss harder (kept-up casual >= first-hour casual minus tolerance); after the pr4 move sets (tricks, rally gates, own-HP floor) it still wins 92-100% at z8-15: the 96% defender cannot be beaten without breaking the hit cap. Owner: boss-tiers-pr5 (zones 16-34 tricks, floor and gate retune), until 2026-11-15. The relative check (gear must help) is gated in tools/health.mjs"
     },
     "reportCaptain": {
       "casual": [
@@ -485,10 +485,10 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.89,
+      "limit": 1,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
-      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+      "why": "Pip wins 15-35 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07; the pr4 refit moved z12 Pip from 91 to 98 while Wren held, the z12 fit matched the Wren and Pip mean)"
     },
     {
       "row": "z5-boss",

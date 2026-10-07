@@ -213,7 +213,19 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   on('scrollDrop', p => { if (p && SCROLLS[p.id]) emit('float', { txt: SCROLLS[p.id].name, color: SCROLLS[p.id].col, big: true, x: 0.66, y: 0.24 }); });
 
   let lastSig = '', winT0 = 0, chipSig = '';
-  on('parryWindow', () => { winT0 = 0; });
+  on('parryWindow', () => { winT0 = 0; said.hold = said.feint = said.flinch = 0; });
+  // boss tricks (59k TURN_TUNE.tricks): the first time each shows, a line says what to do (S.turn.seen: additive keys in an existing object)
+  const said = { hold: 0, feint: 0, flinch: 0 };
+  function trickTip(key, txt) {
+    const seen = S.turn && (S.turn.seen || (S.turn.seen = {})); if (!seen) return;
+    if (seen[key]) say(txt.split('.')[0] + '.', 'charge', 1.0); else { seen[key] = 1; say(txt, 'charge', 3.2); }
+  }
+  on('foeRally', p => { if (p) say(`${p.name} rallies! It will not fall yet.`, 'charge', 2.2); });
+  on('foeContact', p => {
+    if (!p || p.res !== 'feint') return;
+    if (p.fooled) { emit('float', { txt: 'FOOLED', color: '#FF9B8A', big: true, x: 0.27, y: 0.34 }); emit('shake', 0.1); pendClean = null; lampSet(0); }
+    else emit('float', { txt: 'Read it', color: '#F2C14E', big: false, x: 0.27, y: 0.34 });
+  });
   function drawHero() {
     const c = typeof turnHeroChips === 'function' ? turnHeroChips() : null;
     if (!c) { if (!heroRow.hidden) heroRow.hidden = true; return; }
@@ -257,13 +269,20 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     if (box && box.classList.contains('tv-winding') !== winding) box.classList.toggle('tv-winding', winding);   // a place caption fades under the bar
     if (winding) {
       if (!winT0 || winT0 > s.now) winT0 = s.now;
-      const span = Math.max(0.1, s.closesAt - winT0), pct = x => Math.max(0, Math.min(100, x * 100)) + '%';
-      fill.style.width = pct((s.now - winT0) / span); head.style.left = pct((s.now - winT0) / span);
-      const inP = s.now >= s.parryOpensAt, inD = s.now >= s.dodgeOpensAt;
+      // a delayed hit (boss tricks, 59k): the head stalls from holdFrom to holdTo, then runs to the windows; a feint's bar breaks at tellAt
+      const hf = s.holdFrom, ht = s.holdTo, stall = hf > 0 && s.now >= hf && s.now < ht, broke = !!s.feint && s.now >= s.tellAt;
+      const vt = t => !hf ? t : t <= hf ? t : t <= ht ? hf : t - (ht - hf);
+      const v0 = vt(winT0), span = Math.max(0.1, vt(s.closesAt) - v0), at = t => (vt(t) - v0) / span, pct = x => Math.max(0, Math.min(100, x * 100)) + '%';
+      fill.style.width = pct(at(s.now)); head.style.left = pct(at(s.now));
+      const inP = s.now >= s.parryOpensAt && !broke, inD = s.now >= s.dodgeOpensAt && !broke;
       bar.classList.toggle('in-parry', inP); bar.classList.toggle('in-dodge', inD && !inP);
-      dz.style.left = pct((s.dodgeOpensAt - winT0) / span); dz.style.width = pct((s.closesAt - s.dodgeOpensAt) / span);
-      pz.style.left = pct((s.parryOpensAt - winT0) / span); pz.style.width = pct((s.closesAt - s.parryOpensAt) / span);
-    } else winT0 = 0;
+      bar.classList.toggle('stall', stall); bar.classList.toggle('feint', broke); bar.classList.toggle('flinch', !!s.flinch);
+      if (stall && !said.hold) { said.hold = 1; trickTip('tdelay', 'It holds the swing. Wait for the bar.'); }
+      if (broke && !said.feint) { said.feint = 1; trickTip('tfeint', 'A feint! Do not press.'); }
+      if (s.flinch && !said.flinch) { said.flinch = 1; say('Off balance. You cannot defend this one.', 'charge', 1.2); }
+      dz.style.left = pct(at(s.dodgeOpensAt)); dz.style.width = pct(at(s.closesAt) - at(s.dodgeOpensAt));
+      pz.style.left = pct(at(s.parryOpensAt)); pz.style.width = pct(at(s.closesAt) - at(s.parryOpensAt));
+    } else { winT0 = 0; if (bar.classList.contains('stall') || bar.classList.contains('feint') || bar.classList.contains('flinch')) bar.classList.remove('stall', 'feint', 'flinch'); }
     drawHero();
   }
   (function loop() { try { draw(); } catch (e) {} requestAnimationFrame(loop); })();
@@ -280,7 +299,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     // a zone boss shows the moves your lost tries taught you (55-boss-try: a loss shows one more); every other foe as before
     const zb = f.boss && !f.deep && !f.trial && typeof bossTryShown === 'function';
     const sh = zb ? bossTryShown(f.tk.script, f.tz || S.zone) : null;
-    const moves = (sh ? sh.moves : bossTryMoves(f.tk.script)).map(m => ({ name: m.name, hits: m.hits, charged: m.charged }));
+    const moves = (sh ? sh.moves : bossTryMoves(f.tk.script)).map(m => ({ name: m.name, hits: m.hits, charged: m.charged, tricks: m.tricks }));
     // what the Bestiary has taught: weakness at 5 kills, what to watch for at 15, then how many more kills teach the rest
     const pr = typeof masteryApi === 'object' && masteryApi.profile ? masteryApi.profile(f.type) : null, dtn = d => (typeof DT_INFO === 'object' && DT_INFO[d] ? DT_INFO[d].n : d), learn = [];
     if (pr && pr.weak) learn.push(['Weak', (pr.weakTo ? `Weak to ${dtn(pr.weakTo)}.` : 'No weakness.') + (pr.resists.length ? ` Resists ${pr.resists.map(dtn).join(' and ')}.` : '')]);

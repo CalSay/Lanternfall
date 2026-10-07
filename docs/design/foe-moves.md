@@ -45,3 +45,14 @@ they are (boss-tiers owns them). Zone 1 and 2's art monsters (Thorn Imp, Gloomja
 
 Follow-ups: a move-name label on the stage (the warn banner covers the foe, so it was left out); Coast foe move sets;
 show the player's own hero's counters in the Bestiary.
+
+## Boss tricks (boss-tiers-pr4, 2026-10-07)
+
+Zone bosses from zone 4 to 15 play `TURN_BOSS_TRICKS` sets (24d): Captain four moves (a, b, charge, c), Champion five (an extra long string `d`).
+
+- `hold` (s) on a hit: the wind-up stalls for `hold`, then runs the last (dodge window + `tricks.tell`). Holds are 0.4-0.6 s; winds at least 0.6 s.
+- `feint: true` on a hit: it winds up like a hit, breaks at the tell and deals nothing. A press on it fools the hero (`m.fooled`); the next hit
+  starts with `usedDefense` set and `flinch`, so it cannot be defended. Feints start at zone 7.
+- The sampler reads a feint or a hold with `read` (default 0.3 + 0.6 x avoid rate); a misread presses early and wastes the press.
+- Switch off: `TURN_TUNE.tricks.on = 0` (old move sets only; the refit knots stay, revert them to restore the old fight). Gates: `TURN_TUNE.boss.gate`. Own-HP floor: `TURN_TUNE.boss.hpFloor`.
+
