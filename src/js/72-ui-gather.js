@@ -34,6 +34,8 @@ const gxNum = n => n < 1000 ? String(Math.floor(Math.max(0, n))) : fmt(n).replac
 const gxHeld = (k, t) => { const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t); return Number.isFinite(cap) ? `${gxNum(h)} / ${gxNum(cap)}` : `${gxNum(h)} held`; };
 const gxFill = (k, t) => { const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t); return Number.isFinite(cap) && cap > 0 ? Math.min(1, h / cap) : 0; };
 const gxPerMin = r => r >= 100 ? gxNum(r) : r >= 10 ? String(Math.round(r)) : r.toFixed(1);
+const gxPerHour = r => r * 60 < 1e5 ? storeNum(Math.round(r * 60)) : gxNum(r * 60);   // r: a minute
+const gxRates = r => `${gxPerMin(r)} a min · ${gxPerHour(r)} an hour`;
 const GX_ROW_NOTES = [];
 function registerGatherRowNote(fn) { GX_ROW_NOTES.push(fn); return () => { const i = GX_ROW_NOTES.indexOf(fn); if (i >= 0) GX_ROW_NOTES.splice(i, 1); }; }
 
@@ -117,8 +119,9 @@ function gxRowUpdate(r, opts) {
   for (const f of GX_ROW_NOTES) { try { const n = f(kind, t); if (n) { note = String(n); break; } } catch (e) {} }
   putHidden(r.note, !note); if (note) putText(r.note, note);
   if (open) {
-    const rate = gxPerMin(navRate(kind, t));
-    putText(r.meta, opts && opts.why && !/^Home/.test(opts.why) ? `${rate} a min · ${opts.why}` : `${rate} a min · ${gxHeld(kind, t)}`);   // Home: the chip says it
+    // Every open row: a minute, an hour and held of the cap (cal-0107-gear-and-rates); a Best row adds why (Home: the chip says it).
+    const why = opts && opts.why && !/^Home/.test(opts.why) ? ` · ${opts.why}` : '';
+    putText(r.meta, `${gxRates(navRate(kind, t))} · ${gxHeld(kind, t)}${why}`);
   } else putText(r.meta, `Needs ${SKILL[sk]} ${req}`);
   putHidden(r.fill.parentNode, !open);
   if (open) putStyle(r.fill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
@@ -217,7 +220,7 @@ function gxNow(R) {
     const last = navLast(sk);
     putAttr(R.nimg, 'src', matIcon(last.kind, last.t));
     putText(R.nname, deep ? 'You are in the Deepwell.' : act === 'raid' ? 'You are at the raid.' : `You are fighting in Zone ${S.zone}.`);
-    putText(R.nrate, deep ? 'Climb out to gather again.' : `Gather here: the ${NODE_NAMES[last.kind][last.t - 1]}, ${gxPerMin(navRate(last.kind, last.t))} a min.`);
+    putText(R.nrate, deep ? 'Climb out to gather again.' : `Gather here: the ${NODE_NAMES[last.kind][last.t - 1]}, ${gxPerMin(navRate(last.kind, last.t))} a minute · ${gxPerHour(navRate(last.kind, last.t))} an hour.`);
     putText(R.nact, 'Gather here');
     putClass(R.nact, 'gx-go gather');
     return;
@@ -225,7 +228,7 @@ function gxNow(R) {
   const { kind, t } = S.node, rate = navRate(kind, t);
   putAttr(R.nimg, 'src', matIcon(kind, t));
   putText(R.nname, NODE_NAMES[kind][t - 1]);
-  putText(R.nrate, `${gxPerMin(rate)} a minute · ${rate * 60 < 1e5 ? storeNum(Math.round(rate * 60)) : gxNum(rate * 60)} an hour`);
+  putText(R.nrate, `${gxPerMin(rate)} a minute · ${gxPerHour(rate)} an hour`);
   const cap = storeCap(kind, t), fin = Number.isFinite(cap), h = S.mats[kind][t - 1] || 0;
   putText(R.nhl, `${MAT[kind].short[t - 1]} ${gxHeld(kind, t)}`);
   const left = navFullIn(kind, t), full = fin && h >= cap;

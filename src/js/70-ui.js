@@ -437,12 +437,15 @@ registerView('adv', { id: 'bounties', label: 'Bounties', order: 20, feature: 'bo
   dot: () => ((S.bounties && S.bounties.slots) || []).some(b => b && b.k && b.have >= b.need) });
 registerView('adv', { id: 'bestiary', label: 'Bestiary', order: 30, feature: 'bestiary' });
 registerView('party', { id: 'team', label: 'Hero', order: 10, feature: 'party' });
+// Gear lives on the Hero tab (cal-0107-gear-and-rates): worn slots and the bag (75-craft-ui.js). The dot
+// marks a new item since the Gear view was last open, unless it is already worn (the result card's Equip).
+let gearNew = new Set();
+registerView('party', { id: 'gear', label: 'Gear', order: 12, feature: 'party', dot: () => [...gearNew].some(id => itemById(id) && !isEquipped(id)) });
 registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather' });
 registerView('gat', { id: 'wood', label: 'Wood', order: 20, feature: 'gather' });
 registerView('gat', { id: 'forage', label: 'Forage', order: 30, feature: 'forage' });
 registerView('gat', { id: 'pack', label: 'Store', order: 40, feature: 'gather' });   // UX-A: the Pack is the Storehouse (id kept)
 registerView('forge', { id: 'make', label: 'Make', order: 10, feature: 'craft' });
-registerView('forge', { id: 'gear', label: 'Gear', order: 20, feature: 'craft' });
 registerView('forge', { id: 'uniques', label: 'Uniques', order: 30, feature: 'uniques' });
 registerView('world', { id: 'camp', label: 'Camp', order: 10, feature: 'camp', dot: () => !!(S.camp && S.camp.news && S.camp.news.length) });
 registerView('world', { id: 'tav', label: 'Tavern', order: 20, feature: 'tavern' });
@@ -570,7 +573,6 @@ function setTab(t, sel) {
   saveUiPrefs();
   if (was !== t) buildViewSeg(t);
   renderMenu(t); applyView(t);
-  if (t === 'forge') $('forgeDot').hidden = true;
   if (t === 'world') $('raidDot').hidden = true;
   const top = was !== t || curView(t) !== wasView;
   ui(true); viewDots();
@@ -806,7 +808,7 @@ function warmSections() {
 }
 
 // ================= feature UI registries =================
-// registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', view: 'gear', mount(sec) {...}, update(force) {...} })
+// registerSection('party', { id: 'salvage-all', title: 'Bulk salvage', view: 'gear', mount(sec) {...}, update(force) {...} })
 // tabId: adv | party | gat | forge | world, or camp | raid | tav (the Camp tab's parts, each its own view),
 // or log (the bell sheet's Journal view).
 // Appends <div class="sec" id="sec-<id>"><h2 class="sec-title">title</h2>...</div> to the tab's panel.
@@ -910,8 +912,9 @@ function registerTab({ id, label, icon, mount, update, hidden }) {
 
 // ================= core event wiring =================
 on('toast', t => notify(t));
-on('gear', () => updatePortrait());
+on('gear', () => { updatePortrait(); viewDots(); });
 on('activity', () => ui(true));
 on('raidUnavailable', () => setTab('raid'));
-on('itemAdded', () => { $('forgeDot').hidden = S.tab === 'forge'; });
+on('itemAdded', e => { if (!(S.tab === 'party' && curView('party') === 'gear') && e && e.item) gearNew.add(e.item.id); viewDots(); });
+on('menuView', e => { if (e.tab === 'party' && e.view === 'gear' && gearNew.size) { gearNew.clear(); viewDots(); } });
 on('raidReward', () => { $('raidDot').hidden = S.tab === 'world'; });
