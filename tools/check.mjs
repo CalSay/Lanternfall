@@ -8441,9 +8441,9 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.9, 15: 16 * 2.5, 20: 16 * 2.4, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 1.9, 15: 16 * 3.4, 20: 16 * 2.8, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 by boss-tiers (2026-10-07); zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07); zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
@@ -8502,19 +8502,20 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       const r = kept(k, z, L, fx), s = `${k} ${z}: ${[r.n.hit, r.b.hit, r.b.charge].map(x => (100 * x).toFixed(0)).join('/')}`; seen.push(s);
       // zones 25-34 (mid-zone-wall, 2026-10-07): the hero who keeps up there has only 0.2-0.4 of the reference HP (budget.mjs), and this
       // hero is scaled to the reference, so a boss hit that costs them 25-45% reads 8-16% here and a charge 20-45%
-      const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : [0.25, 0.36, 0.6, 0.9];
+      // zones 15 and 20 (boss-tiers PR 3, 2026-10-07): the knots there are fitted to the budget's casual band, a boss hit reads 15-45% here
+      const mid = z >= 25, b = mid ? [0.08, 0.16, 0.2, 0.45] : z === 15 || z === 20 ? [0.15, 0.42, 0.4, 0.92] : [0.25, 0.36, 0.6, 0.9];
       if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
-    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 25-35%, a charge 60-90% (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
+    assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 25-35% (15-42% at zones 15 and 20), a charge 60-90% (40-92% there) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
   // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest
   { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];
     const wg = w.run(good, WS), wc = w.run(casual, WS), pg = p.run(good, PS), pc = p.run(casual, PS), tc = t.run(casual, [['bash', 'heavystrike', 'hammerfall'], ['bash', 'riposte', 'hammerfall']]);
-    assert(wg.win >= 0.95 && pg.win >= 0.95 && wg.turns >= 6 && wg.turns <= 12 && pg.turns >= 6 && pg.turns <= 12 && wc.win >= 0.35 && wc.win <= 0.85 && pc.win >= 0.35 && pc.win <= 0.85
+    assert(wg.win >= 0.95 && pg.win >= 0.95 && wg.turns >= 6 && wg.turns <= 12 && pg.turns >= 6 && pg.turns <= 12 && wc.win >= 0.2 && wc.win <= 0.85 && pc.win >= 0.2 && pc.win <= 0.85
       && tc.win >= 0.95 && t.b.hit < p.b.hit / 3 && !w.err().length,
-      `mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 35-85% played casually; Tobin wins nearly all, a hit costs him under a third of Pip's (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
+      `mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 20-85% played casually (this hero is scaled to the reference; budget.mjs gates the real one); Tobin wins nearly all, a hit costs him under a third of Pip's (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
   // gear matters: a tier behind, a zone-20 boss hit takes most of your health; a tier ahead, it barely hurts
   { const lo = kept('pip', 20, 33, 'mid', -1), hi = kept('pip', 20, 33, 'mid', 1);
-    assert(lo.b.hit > 0.5 && lo.b.charge > 1 && hi.b.hit < 0.2, `mid-game HP: a gear tier behind, a zone-20 boss hit costs over half your health and its charge kills; a tier ahead, under a fifth (${[lo, hi].map(r => (100 * r.b.hit).toFixed(0) + '% / ' + (100 * r.b.charge).toFixed(0) + '%').join(', ')})`); }
+    assert(lo.b.hit > 0.5 && lo.b.charge > 1 && hi.b.hit < 0.25, `mid-game HP: a gear tier behind, a zone-20 boss hit costs over half your health and its charge kills; a tier ahead, under a quarter (${[lo, hi].map(r => (100 * r.b.hit).toFixed(0) + '% / ' + (100 * r.b.charge).toFixed(0) + '%').join(', ')})`); }
   // Wren: her max HP in turn fights is x1.2 (TURN_TUNE.heroHpX; the real-time fight is unchanged), and Out of Reach: after
   // she dodges a hit, the rest of that move hits her for 70%
   { const g = loadCore({ seed: 8, turns: true }), E = s => g.eval(s);
@@ -9872,10 +9873,10 @@ if (section('boss tiers first hour')) try {
   const prof = z => JSON.parse(E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; spawn(); const p = turnCombatProfile(); return JSON.stringify({ cap: p.bossHitCap, hit: p.bossHitX, boss: p.boss, region: p.region }); })()`));
   const a = prof(10), b = prof(15), c = prof(16), d = prof(34);
   assert(a.boss && a.cap === 0.4 && b.cap === 0.4, `boss cap: a zone boss's hit is capped at 40% of max HP in zones 1-15 (${a.cap}, ${b.cap})`);
-  assert(c.cap === 0 && d.cap === 0, `boss cap: off from zone 16 (${c.cap}, ${d.cap})`);
+  assert(c.cap === 0.75 && prof(24).cap === 0.75 && prof(25).cap === 0 && d.cap === 0, `boss cap: 0.75 in zones 16-24, off from zone 25 (${c.cap}, ${prof(24).cap}, ${prof(25).cap}, ${d.cap})`);
   assert(prof(35).cap === 0, 'boss cap: not on a region boss');
-  assert(E('turnZoneLine(TURN_TUNE.boss.hitX, 9)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 8)') && E('turnZoneLine(TURN_TUNE.boss.hitX, 12)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 15)'),
-    'boss knots: hits fall after zone 8 to follow a first-hour hero\'s health, and rise again by zone 15');
+  assert(E('turnZoneLine(TURN_TUNE.boss.hitX, 9)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 8)') && E('turnZoneLine(TURN_TUNE.boss.hitX, 12)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 16)'),
+    'boss knots: hits fall after zone 8 to follow a first-hour hero\'s health, and rise again by zone 16');
   // a hero with 1000 HP: no one hit of a zone-10 boss reaches more than 400 before armour
   prof(10);
   const mx = JSON.parse(E(`(() => { const p = turnCombatProfile(); let m = 0; for (const mv of p.script) for (const h of mv.hits) { const raw = (h.x || 0.2) * p.refHp * p.bossHitX * (mv.charge ? p.bossChargeX : 1); m = Math.max(m, Math.min(raw, p.bossHitCap * 1000)); } return m; })()`)) ;

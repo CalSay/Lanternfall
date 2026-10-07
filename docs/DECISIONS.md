@@ -335,6 +335,33 @@ stat multiplier, labels, pay), zones 13-24 for a kept-up hero, move sets by tier
 - **The walk bot is not the yardstick yet.** It wears nothing and has one ability. Its numbers are reported; the walk's
   "zone 10 in an hour, no boss over 5 losses" becomes the gate once walk-bot-follow-up equips and trains it.
 
+### Boss tiers, zones 13-24: judge rulings (2026-10-07)
+
+PR 3 of `boss-tiers`. Opus judge after measuring (the cap question) and a tuning pass; Cal can veto any line.
+
+- **Cap 0.4 to zone 15, 0.75 for zones 16-24.** `TURN_TUNE.boss.hitCap` `[[1,0.4],[15,0.4],[16,0.75],[24,0.75],[25,0]]`. A Captain is a
+  test: one missed parry costs most of a full-health hero's HP and never kills them. Cap off (the old rule from zone 16) let
+  the zone 18 boss take 96% of Wren's health in one hit before armour. Holding 0.4 to zone 24 only reached the band by raising every
+  light hit (hitX 2.35 against 1.78 at zone 17), which made the telegraphed heavy blow cost the same as a jab. At 0.75 the cap bites
+  only at zone 18 (about 22% off Wren's heaviest hit). Elders, the Deepwell, Provings, normal foes and elites stay uncapped.
+  No Captain (zones 11-34) may take more than 75% of max HP with one hit before armour; the budget's `big` JSON field shows each
+  boss's heaviest hit against that. Switch off: `hitCap: [[1, 0]]`.
+- **Zone 25 breaks that rule today** (the Barrow Beetle hits for 1.23 of Wren's health, 1.0 of Pip's). Not fixed here: mid-zone-wall
+  ruled zone 25. Judge's preferred fix: extend 0.75 through zone 34 and re-measure zone 25. Carded as a follow-up.
+- **Footing.** Zones 13-15 stay on the first-hour footing (tier at common +0, mid fixture), gated; `z13` and `z15` kept-up rows are
+  report-only. Zones 16-24 are gated on the kept-up hero (rare +5), as the card said. At common +0 zones 16-24 are walls (casual
+  0-20%): gear is the lever there and `gear-weight` owns it.
+- **Knots** (hitX / hpX per zone, 13 to 24): hitX 1.1/0.77/0.84/2.1/1.78/1.2/3.15/1.85/1.17/0.84/0.7/0.63, hpX 2.4/2.4/3.4/4.0/3.0/3.0/4.8/2.8/1.9/2.1/1.5/1.1.
+  Fitted so Wren and Pip casual sit near 70-80% and a good player wins in about 6 hero turns (was 3-6, with z13-16 and z19 at 100%).
+  The wide hitX swings follow each zone's boss kit (a golem's many small hits against a beetle's one big one).
+- **Geared heroes are still threatened in zones 16-24** (power-curve-reference.md, 2026-10-07): at the kept-up footing a weaker casual
+  (parry 15%, dodge 40%) wins 20-58% and a stronger one (35%, 70%) 95-97%, so defence decides it. Zones 13 and 15 kept-up (rare +5)
+  still win 100% (report-only rows): gear trivialises them. Fixing that needs the gear-curve card or looser bare floors, as
+  `boss-tiers-pr2-proposal.md` says; not done here.
+- **Pay is unchanged.** Boss gold and XP in zones 4-24 use the old length curve; the longer fights do not move income.
+- **Gaps.** The z15 and z20 "too easy" gaps for Wren and Pip are closed. Tobin sits above his band at every new row under
+  `tobin-safety-margin` gaps (until 2026-12-01).
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
