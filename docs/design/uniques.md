@@ -21,13 +21,13 @@ These are all 13 entries of `UNIQ` in `src/js/20-data.js`. The current drop item
 
 | Existing key | Current effect | Proposed disposition and reason |
 |---|---|---|
-| sproutblade | 10% extra Essence on a kill | Replace future single-player drops with Moss Sword after review; retain earned Sproutblade and its old key. An always-on farm bonus is outside the skill-reward direction. |
-| echocowl | Crits echo for 50% | Replace future drops with new Echo Cowl ID; earned legacy version retained. An unconditional extra hit has no timing tradeoff. |
-| rattlecharm | Ability damage +20% | Replace future drops with new Rattlebone Charm ID; legacy retained. Flat ability power is too broad. |
-| carapacepick | 25% extra ore per swing | Rework future drops as new Carapace Pick ID, rare-find tradeoff; legacy retained. Do not silently remove earned ore yield. |
-| sporeheart | Away gains +50% | Replace future drops with Spore Sickle; legacy retained. An away-only advantage encourages loadout maintenance and obscures the cap. |
-| golemfist | Attack damage doubled | Replace future drops with Quarry Shield; legacy retained. Double Attack can carry a fight without defence. |
-| wispaxe | Chopping speed +30%, 20% extra log | Rework future drops as new Wisp Axe ID, rare-find tradeoff; legacy retained. |
+| sproutblade | 10% extra Essence on a kill | Replace future single-player drops with Oath of the Hollow after review; retain earned Sproutblade and its old key. An always-on farm bonus is outside the skill-reward direction. |
+| echocowl | Crits echo for 50% | Replace future drops with new Veil of the Unheard ID; earned legacy version retained. An unconditional extra hit has no timing tradeoff. |
+| rattlecharm | Ability damage +20% | Replace future drops with new The Final Answer ID; legacy retained. Flat ability power is too broad. |
+| carapacepick | 25% extra ore per swing | Rework future drops as new Burrower's Promise ID, rare-find tradeoff; legacy retained. Do not silently remove earned ore yield. |
+| sporeheart | Away gains +50% | Replace future drops with Harvest of Whispers; legacy retained. An away-only advantage encourages loadout maintenance and obscures the cap. |
+| golemfist | Attack damage doubled | Replace future drops with Gate of the Deep; legacy retained. Double Attack can carry a fight without defence. |
+| wispaxe | Chopping speed +30%, 20% extra log | Rework future drops as new Reed of Remembrance ID, rare-find tradeoff; legacy retained. |
 | wyrmscale | Raid damage +25% | Keep untouched, online source excluded. Not certified balanced by this draft. |
 | hollowcrown | Gold +10% | Keep untouched, online source excluded. Not certified balanced. |
 | colossuspick | All gathering +40% speed | Keep untouched, online source excluded. Not certified balanced. |
@@ -57,7 +57,7 @@ Current base power is `1.8 × TIER_POW[t] × (1 + 0.15plus)`: 18 / 39.6 / 75.6 /
 
 World raid items are paid on generation rollover after contributing damage, not per road boss clear. Their grade is min(5, generation); the six bosses cycle by generation. The share formula is 1 at 25%+ contribution, otherwise min(1, 0.35 + 2share); ordinary owned scaling does not apply. This is a read-only audit of 52-raid.js, not an online change or a proposal to import that generous chance into road drops. Ordinary road grades come from zoneTier. No cooldown or resource cost is attached to the legacy effects. Their flat effects and broad gathering bonuses are not certified sidegrades by this draft.
 
-Legacy raid uniques are not omitted from the inventory audit, but do not get new icons or claimed solo budget results. Redesigning earned legacy items is a separate review question; this PR changes none of them.
+Legacy raid uniques receive owner-authorized visual concepts and proposed display names in the registry below. No solo budget results are claimed for them. This PR changes no earned effects or runtime definitions.
 
 ## Proposed item list
 
@@ -65,27 +65,27 @@ Zones use today's actual road area and region; boss type still cycles every seve
 
 | ID / name | Kind / position | Fits | First zone / area / region | Boss type | Fixed grade |
 |---|---|---|---|---|---|
-| moss-sword / Moss Sword | warblade / weapon | Warrior / warden | 1 / Mossy Hollow / the Hollow | Moss Slime | G1 |
-| bat-bow / Bat Bow | bow / weapon | Ranger | 2 / Mossy Hollow / the Hollow | Cave Bat | G1 |
-| wisp-staff / Wisp Staff | staff / weapon | Mage / lanternmage | 7 / Batwing Caves / the Hollow | Marsh Wraith | G2 |
-| bone-censer / Bone Censer | censer / weapon | Mage / lightkeeper (held) | 3 / Mossy Hollow / the Hollow | Rattlebones | G1 |
-| quarry-shield / Quarry Shield | shield / off | Warrior / warden | 6 / Batwing Caves / the Hollow | Quarry Golem | G1 |
-| bat-quiver / Bat Quiver | quiver / off | Ranger | 9 / Batwing Caves / the Hollow | Cave Bat | G2 |
-| wisp-lantern / Wisp Lantern | lantern / off | Mage / lanternmage | 14 / The Bonefield / the Hollow | Marsh Wraith | G3 |
-| bone-tome / Bone Tome | tome / off | Mage / lightkeeper (held) | 10 / Batwing Caves / the Hollow | Rattlebones | G2 |
-| beetle-helm / Beetle Helm | greathelm / helm | Warrior / warden | 4 / Mossy Hollow / the Hollow | Barrow Beetle | G1 |
-| echo-cowl / Echo Cowl | hood / helm | Ranger | 2 / Mossy Hollow / the Hollow | Cave Bat | G1 |
-| spore-circlet / Spore Circlet | circlet / helm | Mage / lanternmage | 5 / Mossy Hollow / the Hollow | Spore Cap | G1 |
-| bone-mitre / Bone Mitre | mitre / helm | Mage / lightkeeper (held) | 17 / Beetle Barrows / the Hollow | Rattlebones | G3 |
-| quarry-plate / Quarry Plate | plate / body | Warrior / warden | 13 / The Bonefield / the Hollow | Quarry Golem | G3 |
-| marsh-leathers / Marsh Leathers | leathers / body | Ranger | 7 / Batwing Caves / the Hollow | Marsh Wraith | G2 |
-| spore-robe / Spore Robe | robe / body | Mage / lanternmage | 12 / The Bonefield / the Hollow | Spore Cap | G2 |
-| bone-vestments / Bone Vestments | vestments / body | Mage / lightkeeper (held) | 24 / Fungal Deep / the Hollow | Rattlebones | G4 |
-| rattlebone-charm / Rattlebone Charm | charm / charm | All hero classes | 3 / Mossy Hollow / the Hollow | Rattlebones | G1 |
-| carapace-pick / Carapace Pick | pick / pick | All hero classes | 4 / Mossy Hollow / the Hollow | Barrow Beetle | G1 |
-| wisp-axe / Wisp Axe | axe / axe | All hero classes | 7 / Batwing Caves / the Hollow | Marsh Wraith | G2 |
-| spore-sickle / Spore Sickle | sickle / sickle | All hero classes | 5 / Mossy Hollow / the Hollow | Spore Cap | G1 |
-| moss-spear / Moss Spear | spear / spear | All hero classes | 8 / Batwing Caves / the Hollow | Moss Slime | G2 |
+| moss-sword / Oath of the Hollow | warblade / weapon | Warrior / warden | 1 / Mossy Hollow / the Hollow | Moss Slime | G1 |
+| bat-bow / Vesper's Reach | bow / weapon | Ranger | 2 / Mossy Hollow / the Hollow | Cave Bat | G1 |
+| wisp-staff / The Wandering Light | staff / weapon | Mage / lanternmage | 7 / Batwing Caves / the Hollow | Marsh Wraith | G2 |
+| bone-censer / Requiem Bell | censer / weapon | Mage / lightkeeper (held) | 3 / Mossy Hollow / the Hollow | Rattlebones | G1 |
+| quarry-shield / Gate of the Deep | shield / off | Warrior / warden | 6 / Batwing Caves / the Hollow | Quarry Golem | G1 |
+| bat-quiver / Night's Reserve | quiver / off | Ranger | 9 / Batwing Caves / the Hollow | Cave Bat | G2 |
+| wisp-lantern / Mercy of the Fen | lantern / off | Mage / lanternmage | 14 / The Bonefield / the Hollow | Marsh Wraith | G3 |
+| bone-tome / The Unfinished Prayer | tome / off | Mage / lightkeeper (held) | 10 / Batwing Caves / the Hollow | Rattlebones | G2 |
+| beetle-helm / Crown of the Burrow | greathelm / helm | Warrior / warden | 4 / Mossy Hollow / the Hollow | Barrow Beetle | G1 |
+| echo-cowl / Veil of the Unheard | hood / helm | Ranger | 2 / Mossy Hollow / the Hollow | Cave Bat | G1 |
+| spore-circlet / The Scarlet Vigil | circlet / helm | Mage / lanternmage | 5 / Mossy Hollow / the Hollow | Spore Cap | G1 |
+| bone-mitre / Last Rites | mitre / helm | Mage / lightkeeper (held) | 17 / Beetle Barrows / the Hollow | Rattlebones | G3 |
+| quarry-plate / Mountain's Covenant | plate / body | Warrior / warden | 13 / The Bonefield / the Hollow | Quarry Golem | G3 |
+| marsh-leathers / The Drowned Huntsman | leathers / body | Ranger | 7 / Batwing Caves / the Hollow | Marsh Wraith | G2 |
+| spore-robe / Mantle of the Red Moon | robe / body | Mage / lanternmage | 12 / The Bonefield / the Hollow | Spore Cap | G2 |
+| bone-vestments / Vestments of the Last Dawn | vestments / body | Mage / lightkeeper (held) | 24 / Fungal Deep / the Hollow | Rattlebones | G4 |
+| rattlebone-charm / The Final Answer | charm / charm | All hero classes | 3 / Mossy Hollow / the Hollow | Rattlebones | G1 |
+| carapace-pick / Burrower's Promise | pick / pick | All hero classes | 4 / Mossy Hollow / the Hollow | Barrow Beetle | G1 |
+| wisp-axe / Reed of Remembrance | axe / axe | All hero classes | 7 / Batwing Caves / the Hollow | Marsh Wraith | G2 |
+| spore-sickle / Harvest of Whispers | sickle / sickle | All hero classes | 5 / Mossy Hollow / the Hollow | Spore Cap | G1 |
+| moss-spear / Thorn of the First Grove | spear / spear | All hero classes | 8 / Batwing Caves / the Hollow | Moss Slime | G2 |
 
 The four lightkeeper proposals are **held**. The three starter fixtures cannot legally equip their kinds, so Pip is not used as a fake proxy. Trinity-style support gear remains part of the catalogue proposal, pending a real hero fitting and budget fixture. Trinket is not added: it has companion position `trk`, not a solo hero slot. Heroes only equip the kind they can wear; no universal unique weapon or per-hero authored effect is proposed.
 
@@ -111,27 +111,27 @@ The comparison below is at +0 with no affixes. Weapon Might is a percentage inpu
 
 | Unique | Common crafted base lines | Rare crafted base lines | Unique base lines | B / C payoff | Scaling | Base first / repeat odds; owned |
 |---|---|---|---|---|---|---|
-| Moss Sword | might 10 | might 18 | might 8 | P: +16% / −12% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Bat Bow | might 10 | might 18 | might 8 | D: +16% / −12% | Might (Attack); Focus (ability cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Wisp Staff | might 22 | might 39.6 | might 17.6 | T: +12% / −10% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Bone Censer | might 10 | might 18 | might 8 | T: +10% / −8% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Quarry Shield | hp 10 | hp 18 | hp 8 | P: +12% / −8% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Bat Quiver | crit 2.64 | crit 4.752 | crit 2.112 | D: +12% / −10% | Might (Attack); Focus (ability cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Wisp Lantern | spell 8.4 | spell 15.12 | spell 6.72 | T: +10% / −8% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Bone Tome | heal 22 | heal 39.6 | heal 17.6 | T: +8% / −6% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Beetle Helm | hp 5 | hp 9 | hp 4 | P: +10% / −8% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Echo Cowl | hp 5 | hp 9 | hp 4 | D: +10% / −8% | Might (Attack); Focus (ability cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Spore Circlet | hp 5 | hp 9 | hp 4 | T: +8% / −6% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Bone Mitre | hp 21 | hp 37.8 | hp 16.8 | T: +12% / −10% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Quarry Plate | hp 42 | hp 75.6 | hp 33.6 | P: +20% / −16% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Marsh Leathers | hp 22 | hp 39.6 | hp 17.6 | D: +20% / −16% | Might (Attack); Focus (ability cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Spore Robe | hp 22 | hp 39.6 | hp 17.6 | T: +16% / −12% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Bone Vestments | hp 75 | hp 135 | hp 60 | T: +16% / −12% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Rattlebone Charm | gold 0.4; ess 3 | gold 0.72; ess 5.4 | gold 0.32; ess 2.4 | P: +8% / −6% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
-| Carapace Pick | mineSpd 6; oreDbl 1; oreFind 0.12 | mineSpd 10.8; oreDbl 1.8; oreFind 0.216 | mineSpd 4.8; oreDbl 0.8; oreFind 0.144 | G: find 120% of common | Find line grows with B; cap 8% | 15% / 4% pool; ×0.5 selected-owned |
-| Wisp Axe | woodSpd 13.2; woodDbl 2.2; woodFind 0.264 | woodSpd 23.76; woodDbl 3.96; woodFind 0.4752 | woodSpd 10.56; woodDbl 1.76; woodFind 0.3168 | G: find 120% of common | Find line grows with B; cap 8% | 15% / 4% pool; ×0.5 selected-owned |
-| Spore Sickle | forageSpd 6; forageDbl 1; forageFind 0.12 | forageSpd 10.8; forageDbl 1.8; forageFind 0.216 | forageSpd 4.8; forageDbl 0.8; forageFind 0.144 | G: find 120% of common | Find line grows with B; cap 8% | 15% / 4% pool; ×0.5 selected-owned |
-| Moss Spear | huntSpd 13.2; huntDbl 2.2; huntFind 0.264 | huntSpd 23.76; huntDbl 3.96; huntFind 0.4752 | huntSpd 10.56; huntDbl 1.76; huntFind 0.3168 | G: find 120% of common | Find line grows with B; cap 8% | 15% / 4% pool; ×0.5 selected-owned |
+| Oath of the Hollow | might 10 | might 18 | might 8 | P: +16% / −12% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Vesper's Reach | might 10 | might 18 | might 8 | D: +16% / −12% | Might (Attack); Focus (ability cost) | 15% / 4% pool; ×0.5 selected-owned |
+| The Wandering Light | might 22 | might 39.6 | might 17.6 | T: +12% / −10% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Requiem Bell | might 10 | might 18 | might 8 | T: +10% / −8% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Gate of the Deep | hp 10 | hp 18 | hp 8 | P: +12% / −8% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Night's Reserve | crit 2.64 | crit 4.752 | crit 2.112 | D: +12% / −10% | Might (Attack); Focus (ability cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Mercy of the Fen | spell 8.4 | spell 15.12 | spell 6.72 | T: +10% / −8% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| The Unfinished Prayer | heal 22 | heal 39.6 | heal 17.6 | T: +8% / −6% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Crown of the Burrow | hp 5 | hp 9 | hp 4 | P: +10% / −8% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Veil of the Unheard | hp 5 | hp 9 | hp 4 | D: +10% / −8% | Might (Attack); Focus (ability cost) | 15% / 4% pool; ×0.5 selected-owned |
+| The Scarlet Vigil | hp 5 | hp 9 | hp 4 | T: +8% / −6% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Last Rites | hp 21 | hp 37.8 | hp 16.8 | T: +12% / −10% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Mountain's Covenant | hp 42 | hp 75.6 | hp 33.6 | P: +20% / −16% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| The Drowned Huntsman | hp 22 | hp 39.6 | hp 17.6 | D: +20% / −16% | Might (Attack); Focus (ability cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Mantle of the Red Moon | hp 22 | hp 39.6 | hp 17.6 | T: +16% / −12% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Vestments of the Last Dawn | hp 75 | hp 135 | hp 60 | T: +16% / −12% | Focus (ability); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| The Final Answer | gold 0.4; ess 3 | gold 0.72; ess 5.4 | gold 0.32; ess 2.4 | P: +8% / −6% | Guard (counter); Might (Attack cost) | 15% / 4% pool; ×0.5 selected-owned |
+| Burrower's Promise | mineSpd 6; oreDbl 1; oreFind 0.12 | mineSpd 10.8; oreDbl 1.8; oreFind 0.216 | mineSpd 4.8; oreDbl 0.8; oreFind 0.144 | G: find 120% of common | Find line grows with B; cap 8% | 15% / 4% pool; ×0.5 selected-owned |
+| Reed of Remembrance | woodSpd 13.2; woodDbl 2.2; woodFind 0.264 | woodSpd 23.76; woodDbl 3.96; woodFind 0.4752 | woodSpd 10.56; woodDbl 1.76; woodFind 0.3168 | G: find 120% of common | Find line grows with B; cap 8% | 15% / 4% pool; ×0.5 selected-owned |
+| Harvest of Whispers | forageSpd 6; forageDbl 1; forageFind 0.12 | forageSpd 10.8; forageDbl 1.8; forageFind 0.216 | forageSpd 4.8; forageDbl 0.8; forageFind 0.144 | G: find 120% of common | Find line grows with B; cap 8% | 15% / 4% pool; ×0.5 selected-owned |
+| Thorn of the First Grove | huntSpd 13.2; huntDbl 2.2; huntFind 0.264 | huntSpd 23.76; huntDbl 3.96; huntFind 0.4752 | huntSpd 10.56; huntDbl 1.76; huntFind 0.3168 | G: find 120% of common | Find line grows with B; cap 8% | 15% / 4% pool; ×0.5 selected-owned |
 
 Example: G2 weapon: common Might 22%, rare 39.6%, unique 17.6%. At +5 these are 38.5%, 69.3%, 30.8%. A P16/C12 effect multiplies the ordinary Guard-scaled counter by 1.16 and a later Might-scaled Attack by 0.88; it does not add 16 points of Might. Attribute coefficients and soft caps remain those of `55-attributes.js`; never multiply Attack, ability and counter by the same new global factor.
 
@@ -151,27 +151,27 @@ The entries below show unmodified odds for the relevant legal class at the item'
 
 | Item | Eligible N at first source | Unowned first / repeat | Owned first / repeat |
 |---|---|---|---|
-| Moss Sword | 1 | 15.0% / 4.0% | 7.5% / 2.0% |
-| Bat Bow | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
-| Wisp Staff | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
-| Bone Censer | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
-| Quarry Shield | 1 | 15.0% / 4.0% | 7.5% / 2.0% |
-| Bat Quiver | 3 | 5.0% / 1.3% | 2.5% / 0.7% |
-| Wisp Lantern | 3 | 5.0% / 1.3% | 2.5% / 0.7% |
-| Bone Tome | 3 | 5.0% / 1.3% | 2.5% / 0.7% |
-| Beetle Helm | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
-| Echo Cowl | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
-| Spore Circlet | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
-| Bone Mitre | 4 | 3.8% / 1.0% | 1.9% / 0.5% |
-| Quarry Plate | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
-| Marsh Leathers | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
-| Spore Robe | 3 | 5.0% / 1.3% | 2.5% / 0.7% |
-| Bone Vestments | 5 | 3.0% / 0.8% | 1.5% / 0.4% |
-| Rattlebone Charm | 1–2 | 7.5%–15.0% / 2.0%–4.0% | 3.8%–7.5% / 1.0%–2.0% |
-| Carapace Pick | 1–2 | 7.5%–15.0% / 2.0%–4.0% | 3.8%–7.5% / 1.0%–2.0% |
-| Wisp Axe | 1–2 | 7.5%–15.0% / 2.0%–4.0% | 3.8%–7.5% / 1.0%–2.0% |
-| Spore Sickle | 1–2 | 7.5%–15.0% / 2.0%–4.0% | 3.8%–7.5% / 1.0%–2.0% |
-| Moss Spear | 1–2 | 7.5%–15.0% / 2.0%–4.0% | 3.8%–7.5% / 1.0%–2.0% |
+| Oath of the Hollow | 1 | 15.0% / 4.0% | 7.5% / 2.0% |
+| Vesper's Reach | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
+| The Wandering Light | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
+| Requiem Bell | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
+| Gate of the Deep | 1 | 15.0% / 4.0% | 7.5% / 2.0% |
+| Night's Reserve | 3 | 5.0% / 1.3% | 2.5% / 0.7% |
+| Mercy of the Fen | 3 | 5.0% / 1.3% | 2.5% / 0.7% |
+| The Unfinished Prayer | 3 | 5.0% / 1.3% | 2.5% / 0.7% |
+| Crown of the Burrow | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
+| Veil of the Unheard | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
+| The Scarlet Vigil | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
+| Last Rites | 4 | 3.8% / 1.0% | 1.9% / 0.5% |
+| Mountain's Covenant | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
+| The Drowned Huntsman | 2 | 7.5% / 2.0% | 3.8% / 1.0% |
+| Mantle of the Red Moon | 3 | 5.0% / 1.3% | 2.5% / 0.7% |
+| Vestments of the Last Dawn | 5 | 3.0% / 0.8% | 1.5% / 0.4% |
+| The Final Answer | 1–2 | 7.5%–15.0% / 2.0%–4.0% | 3.8%–7.5% / 1.0%–2.0% |
+| Burrower's Promise | 1–2 | 7.5%–15.0% / 2.0%–4.0% | 3.8%–7.5% / 1.0%–2.0% |
+| Reed of Remembrance | 1–2 | 7.5%–15.0% / 2.0%–4.0% | 3.8%–7.5% / 1.0%–2.0% |
+| Harvest of Whispers | 1–2 | 7.5%–15.0% / 2.0%–4.0% | 3.8%–7.5% / 1.0%–2.0% |
+| Thorn of the First Grove | 1–2 | 7.5%–15.0% / 2.0%–4.0% | 3.8%–7.5% / 1.0%–2.0% |
 
 ### Gathering tradeoff, not a universal upgrade
 
@@ -187,101 +187,101 @@ The table shows baseline and unique win rates with exact bands from the checked-
 
 | Item | Zone / hero | Baseline casual / good | Unique casual / good | Casual / good band | Result |
 |---|---|---|---|---|---|
-| Moss Sword | 1 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 95.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Moss Sword | 2 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 95.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Moss Sword | 3 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 95.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Bat Bow | 2 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Bat Bow | 3 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Bat Bow | 4 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Wisp Staff | 7 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Wisp Staff | 8 / pip | 99.6% / 100.0% | 99.6% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Wisp Staff | 9 / pip | 94.6% / 100.0% | 93.8% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Bone Censer | 3 / pip | 100.0% / 100.0% | Not measured | 85.0%–100.0% / 97.0%–100.0% | HELD: illegal starter fixture |
-| Bone Censer | 4 / pip | 100.0% / 100.0% | Not measured | 70.0%–90.0% / 97.0%–100.0% | HELD: illegal starter fixture |
-| Bone Censer | 5 / pip | 99.2% / 100.0% | Not measured | 60.0%–85.0% / 97.0%–100.0% | HELD: illegal starter fixture |
-| Quarry Shield | 6 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Quarry Shield | 7 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Quarry Shield | 8 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Bat Quiver | 9 / wren | 72.5% / 100.0% | 71.3% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Bat Quiver | 10 / wren | 99.6% / 100.0% | 99.6% / 100.0% | 40.0%–60.0% / 90.0%–100.0% | casual above |
-| Bat Quiver | 11 / wren | 97.9% / 100.0% | 97.9% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
-| Wisp Lantern | 14 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
-| Wisp Lantern | 15 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
-| Wisp Lantern | 16 / pip | 99.2% / 100.0% | 96.3% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
-| Bone Tome | 10 / pip | 100.0% / 100.0% | Not measured | 40.0%–60.0% / 90.0%–100.0% | HELD: illegal starter fixture |
-| Bone Tome | 11 / pip | 97.5% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
-| Bone Tome | 12 / pip | 100.0% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
-| Beetle Helm | 4 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Beetle Helm | 5 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–95.0% / 97.0%–100.0% | casual above |
-| Beetle Helm | 6 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Echo Cowl | 2 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Echo Cowl | 3 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Echo Cowl | 4 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Spore Circlet | 5 / pip | 99.2% / 100.0% | 99.2% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | casual above |
-| Spore Circlet | 6 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Spore Circlet | 7 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Bone Mitre | 17 / pip | 96.3% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
-| Bone Mitre | 18 / pip | 77.9% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
-| Bone Mitre | 19 / pip | 100.0% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
-| Quarry Plate | 13 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 95.0%–100.0% | casual above |
-| Quarry Plate | 14 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 95.0%–100.0% | casual above |
-| Quarry Plate | 15 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 95.0%–100.0% | casual above |
-| Marsh Leathers | 7 / wren | 75.4% / 100.0% | 71.7% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Marsh Leathers | 8 / wren | 87.5% / 100.0% | 86.7% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Marsh Leathers | 9 / wren | 72.5% / 100.0% | 70.4% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Spore Robe | 12 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
-| Spore Robe | 13 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
-| Spore Robe | 14 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
-| Bone Vestments | 24 / pip | 37.9% / 99.6% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
-| Bone Vestments | 25 / pip | 66.7% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
-| Bone Vestments | 26 / pip | 84.2% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
-| Rattlebone Charm | 3 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Rattlebone Charm | 3 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 95.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Rattlebone Charm | 3 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Rattlebone Charm | 4 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Rattlebone Charm | 4 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Rattlebone Charm | 4 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Rattlebone Charm | 5 / wren | 70.0% / 100.0% | 70.0% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Rattlebone Charm | 5 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–95.0% / 97.0%–100.0% | casual above |
-| Rattlebone Charm | 5 / pip | 99.2% / 100.0% | 99.2% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | casual above |
-| Carapace Pick | 4 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Carapace Pick | 4 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Carapace Pick | 4 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Carapace Pick | 5 / wren | 70.0% / 100.0% | 70.0% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Carapace Pick | 5 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–95.0% / 97.0%–100.0% | casual above |
-| Carapace Pick | 5 / pip | 99.2% / 100.0% | 99.2% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | casual above |
-| Carapace Pick | 6 / wren | 81.7% / 100.0% | 81.7% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Carapace Pick | 6 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Carapace Pick | 6 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Wisp Axe | 7 / wren | 75.4% / 100.0% | 75.4% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Wisp Axe | 7 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Wisp Axe | 7 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Wisp Axe | 8 / wren | 87.5% / 100.0% | 87.5% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Wisp Axe | 8 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Wisp Axe | 8 / pip | 99.6% / 100.0% | 99.6% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Wisp Axe | 9 / wren | 72.5% / 100.0% | 72.5% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Wisp Axe | 9 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Wisp Axe | 9 / pip | 94.6% / 100.0% | 94.6% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Spore Sickle | 5 / wren | 70.0% / 100.0% | 70.0% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Spore Sickle | 5 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–95.0% / 97.0%–100.0% | casual above |
-| Spore Sickle | 5 / pip | 99.2% / 100.0% | 99.2% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | casual above |
-| Spore Sickle | 6 / wren | 81.7% / 100.0% | 81.7% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Spore Sickle | 6 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Spore Sickle | 6 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Spore Sickle | 7 / wren | 75.4% / 100.0% | 75.4% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Spore Sickle | 7 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Spore Sickle | 7 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Moss Spear | 8 / wren | 87.5% / 100.0% | 87.5% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Moss Spear | 8 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Moss Spear | 8 / pip | 99.6% / 100.0% | 99.6% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Moss Spear | 9 / wren | 72.5% / 100.0% | 72.5% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Moss Spear | 9 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
-| Moss Spear | 9 / pip | 94.6% / 100.0% | 94.6% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
-| Moss Spear | 10 / wren | 99.6% / 100.0% | 99.6% / 100.0% | 40.0%–60.0% / 90.0%–100.0% | casual above |
-| Moss Spear | 10 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 50.0%–70.0% / 90.0%–100.0% | casual above |
-| Moss Spear | 10 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 40.0%–60.0% / 90.0%–100.0% | casual above |
+| Oath of the Hollow | 1 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 95.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Oath of the Hollow | 2 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 95.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Oath of the Hollow | 3 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 95.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Vesper's Reach | 2 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Vesper's Reach | 3 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Vesper's Reach | 4 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| The Wandering Light | 7 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| The Wandering Light | 8 / pip | 99.6% / 100.0% | 99.6% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| The Wandering Light | 9 / pip | 94.6% / 100.0% | 93.8% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Requiem Bell | 3 / pip | 100.0% / 100.0% | Not measured | 85.0%–100.0% / 97.0%–100.0% | HELD: illegal starter fixture |
+| Requiem Bell | 4 / pip | 100.0% / 100.0% | Not measured | 70.0%–90.0% / 97.0%–100.0% | HELD: illegal starter fixture |
+| Requiem Bell | 5 / pip | 99.2% / 100.0% | Not measured | 60.0%–85.0% / 97.0%–100.0% | HELD: illegal starter fixture |
+| Gate of the Deep | 6 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Gate of the Deep | 7 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Gate of the Deep | 8 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Night's Reserve | 9 / wren | 72.5% / 100.0% | 71.3% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Night's Reserve | 10 / wren | 99.6% / 100.0% | 99.6% / 100.0% | 40.0%–60.0% / 90.0%–100.0% | casual above |
+| Night's Reserve | 11 / wren | 97.9% / 100.0% | 97.9% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
+| Mercy of the Fen | 14 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
+| Mercy of the Fen | 15 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
+| Mercy of the Fen | 16 / pip | 99.2% / 100.0% | 96.3% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
+| The Unfinished Prayer | 10 / pip | 100.0% / 100.0% | Not measured | 40.0%–60.0% / 90.0%–100.0% | HELD: illegal starter fixture |
+| The Unfinished Prayer | 11 / pip | 97.5% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
+| The Unfinished Prayer | 12 / pip | 100.0% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
+| Crown of the Burrow | 4 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Crown of the Burrow | 5 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–95.0% / 97.0%–100.0% | casual above |
+| Crown of the Burrow | 6 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Veil of the Unheard | 2 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Veil of the Unheard | 3 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Veil of the Unheard | 4 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| The Scarlet Vigil | 5 / pip | 99.2% / 100.0% | 99.2% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | casual above |
+| The Scarlet Vigil | 6 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| The Scarlet Vigil | 7 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Last Rites | 17 / pip | 96.3% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
+| Last Rites | 18 / pip | 77.9% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
+| Last Rites | 19 / pip | 100.0% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
+| Mountain's Covenant | 13 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 95.0%–100.0% | casual above |
+| Mountain's Covenant | 14 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 95.0%–100.0% | casual above |
+| Mountain's Covenant | 15 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 95.0%–100.0% | casual above |
+| The Drowned Huntsman | 7 / wren | 75.4% / 100.0% | 71.7% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| The Drowned Huntsman | 8 / wren | 87.5% / 100.0% | 86.7% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| The Drowned Huntsman | 9 / wren | 72.5% / 100.0% | 70.4% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Mantle of the Red Moon | 12 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
+| Mantle of the Red Moon | 13 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
+| Mantle of the Red Moon | 14 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 60.0%–80.0% / 95.0%–100.0% | casual above |
+| Vestments of the Last Dawn | 24 / pip | 37.9% / 99.6% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
+| Vestments of the Last Dawn | 25 / pip | 66.7% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
+| Vestments of the Last Dawn | 26 / pip | 84.2% / 100.0% | Not measured | 60.0%–80.0% / 95.0%–100.0% | HELD: illegal starter fixture |
+| The Final Answer | 3 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| The Final Answer | 3 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 95.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| The Final Answer | 3 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 85.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| The Final Answer | 4 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| The Final Answer | 4 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| The Final Answer | 4 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| The Final Answer | 5 / wren | 70.0% / 100.0% | 70.0% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| The Final Answer | 5 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–95.0% / 97.0%–100.0% | casual above |
+| The Final Answer | 5 / pip | 99.2% / 100.0% | 99.2% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | casual above |
+| Burrower's Promise | 4 / wren | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Burrower's Promise | 4 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Burrower's Promise | 4 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Burrower's Promise | 5 / wren | 70.0% / 100.0% | 70.0% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Burrower's Promise | 5 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–95.0% / 97.0%–100.0% | casual above |
+| Burrower's Promise | 5 / pip | 99.2% / 100.0% | 99.2% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | casual above |
+| Burrower's Promise | 6 / wren | 81.7% / 100.0% | 81.7% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Burrower's Promise | 6 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Burrower's Promise | 6 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Reed of Remembrance | 7 / wren | 75.4% / 100.0% | 75.4% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Reed of Remembrance | 7 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Reed of Remembrance | 7 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Reed of Remembrance | 8 / wren | 87.5% / 100.0% | 87.5% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Reed of Remembrance | 8 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Reed of Remembrance | 8 / pip | 99.6% / 100.0% | 99.6% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Reed of Remembrance | 9 / wren | 72.5% / 100.0% | 72.5% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Reed of Remembrance | 9 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Reed of Remembrance | 9 / pip | 94.6% / 100.0% | 94.6% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Harvest of Whispers | 5 / wren | 70.0% / 100.0% | 70.0% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Harvest of Whispers | 5 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 70.0%–95.0% / 97.0%–100.0% | casual above |
+| Harvest of Whispers | 5 / pip | 99.2% / 100.0% | 99.2% / 100.0% | 60.0%–85.0% / 97.0%–100.0% | casual above |
+| Harvest of Whispers | 6 / wren | 81.7% / 100.0% | 81.7% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Harvest of Whispers | 6 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Harvest of Whispers | 6 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Harvest of Whispers | 7 / wren | 75.4% / 100.0% | 75.4% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Harvest of Whispers | 7 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Harvest of Whispers | 7 / pip | 97.9% / 100.0% | 97.9% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Thorn of the First Grove | 8 / wren | 87.5% / 100.0% | 87.5% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Thorn of the First Grove | 8 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Thorn of the First Grove | 8 / pip | 99.6% / 100.0% | 99.6% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Thorn of the First Grove | 9 / wren | 72.5% / 100.0% | 72.5% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Thorn of the First Grove | 9 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 80.0%–100.0% / 97.0%–100.0% | Within JSON bands; first-clear aim unresolved |
+| Thorn of the First Grove | 9 / pip | 94.6% / 100.0% | 94.6% / 100.0% | 70.0%–90.0% / 97.0%–100.0% | casual above |
+| Thorn of the First Grove | 10 / wren | 99.6% / 100.0% | 99.6% / 100.0% | 40.0%–60.0% / 90.0%–100.0% | casual above |
+| Thorn of the First Grove | 10 / tobin | 100.0% / 100.0% | 100.0% / 100.0% | 50.0%–70.0% / 90.0%–100.0% | casual above |
+| Thorn of the First Grove | 10 / pip | 100.0% / 100.0% | 100.0% / 100.0% | 40.0%–60.0% / 90.0%–100.0% | casual above |
 
-Items with at least one measured cell outside its JSON band: **Bat Bow, Wisp Staff, Bat Quiver, Wisp Lantern, Beetle Helm, Echo Cowl, Spore Circlet, Quarry Plate, Spore Robe, Rattlebone Charm, Carapace Pick, Wisp Axe, Spore Sickle, Moss Spear**. These are above-band cells, with their baseline comparisons printed alongside. Marsh Leathers is an early G2 drop, compared with the player's common +0 body; its three measured casual cells are within their bands. No extra health, immunity or boss floor change was used. A fixed-grade +0 unique must not replace a later rare+5 body as a supposed direct upgrade; the crafted piece is deliberately stronger in that situation.
+Items with at least one measured cell outside its JSON band: **Vesper's Reach, The Wandering Light, Night's Reserve, Mercy of the Fen, Crown of the Burrow, Veil of the Unheard, The Scarlet Vigil, Mountain's Covenant, Mantle of the Red Moon, The Final Answer, Burrower's Promise, Reed of Remembrance, Harvest of Whispers, Thorn of the First Grove**. These are above-band cells, with their baseline comparisons printed alongside. The Drowned Huntsman is an early G2 drop, compared with the player's common +0 body; its three measured casual cells are within their bands. No extra health, immunity or boss floor change was used. A fixed-grade +0 unique must not replace a later rare+5 body as a supposed direct upgrade; the crafted piece is deliberately stronger in that situation.
 
 Good-persona rates across the remaining proposals still sit around 100%, often matching their paired baseline. No evidence supports the user's 85–95% first-clear aim on these fixtures. The current JSON permits 97–100% on early bosses and 95–100% on Captains: that is a real conflict with the new target, recorded here instead of silently changing the bands. Bare-hero floor loosening is requested but is not incorporated by this design experiment. A rare drop cannot serve as an excuse to restore that floor. The fallback is hold the effects and art until the integration balance checkpoint and judge have settled the target.
 
@@ -293,41 +293,41 @@ Every row: no new currency, expiring reward, mandatory login, fee, camp tap, men
 
 | Item | Dominant choice? / crafted alternative | Currency? | Chore? | Disposition |
 |---|---|---|---|---|
-| Moss Sword | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Bat Bow | Not intended: mixed defences earn nothing, and abilities lose damage; crafted gear wins for ability-heavy play. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Wisp Staff | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Bone Censer | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Held: legal fixture needed |
-| Quarry Shield | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Bat Quiver | Not intended: mixed defences earn nothing, and abilities lose damage; crafted gear wins for ability-heavy play. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Wisp Lantern | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Bone Tome | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Held: legal fixture needed |
-| Beetle Helm | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Echo Cowl | Not intended: mixed defences earn nothing, and abilities lose damage; crafted gear wins for ability-heavy play. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Spore Circlet | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Bone Mitre | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Held: legal fixture needed |
-| Quarry Plate | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Marsh Leathers | Not intended: mixed defences earn nothing, and abilities lose damage; crafted gear wins for ability-heavy play. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Spore Robe | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Bone Vestments | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Held: legal fixture needed |
-| Rattlebone Charm | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Carapace Pick | Not intended: bulk speed/double yield are lower; crafted gear wins for bulk resources and XP. A rare-find specialist may prefer this deliberately. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Wisp Axe | Not intended: bulk speed/double yield are lower; crafted gear wins for bulk resources and XP. A rare-find specialist may prefer this deliberately. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Spore Sickle | Not intended: bulk speed/double yield are lower; crafted gear wins for bulk resources and XP. A rare-find specialist may prefer this deliberately. | No | No; no expiring benefit | Hold: dominance / target not certified |
-| Moss Spear | Not intended: bulk speed/double yield are lower; crafted gear wins for bulk resources and XP. A rare-find specialist may prefer this deliberately. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Oath of the Hollow | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Vesper's Reach | Not intended: mixed defences earn nothing, and abilities lose damage; crafted gear wins for ability-heavy play. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| The Wandering Light | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Requiem Bell | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Held: legal fixture needed |
+| Gate of the Deep | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Night's Reserve | Not intended: mixed defences earn nothing, and abilities lose damage; crafted gear wins for ability-heavy play. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Mercy of the Fen | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| The Unfinished Prayer | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Held: legal fixture needed |
+| Crown of the Burrow | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Veil of the Unheard | Not intended: mixed defences earn nothing, and abilities lose damage; crafted gear wins for ability-heavy play. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| The Scarlet Vigil | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Last Rites | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Held: legal fixture needed |
+| Mountain's Covenant | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| The Drowned Huntsman | Not intended: mixed defences earn nothing, and abilities lose damage; crafted gear wins for ability-heavy play. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Mantle of the Red Moon | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Vestments of the Last Dawn | Not intended: Good/missed/untimed casts earn nothing and Attacks lose damage; crafted gear wins without all-Perfect casts. | No | No; no expiring benefit | Held: legal fixture needed |
+| The Final Answer | Not intended: partial parries earn nothing and later Attacks lose damage; crafted gear wins for Attack-heavy / inconsistent defence. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Burrower's Promise | Not intended: bulk speed/double yield are lower; crafted gear wins for bulk resources and XP. A rare-find specialist may prefer this deliberately. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Reed of Remembrance | Not intended: bulk speed/double yield are lower; crafted gear wins for bulk resources and XP. A rare-find specialist may prefer this deliberately. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Harvest of Whispers | Not intended: bulk speed/double yield are lower; crafted gear wins for bulk resources and XP. A rare-find specialist may prefer this deliberately. | No | No; no expiring benefit | Hold: dominance / target not certified |
+| Thorn of the First Grove | Not intended: bulk speed/double yield are lower; crafted gear wins for bulk resources and XP. A rare-find specialist may prefer this deliberately. | No | No; no expiring benefit | Hold: dominance / target not certified |
 
 Raw-stat and action tradeoffs are the reason a specialist preference is acceptable; rarity alone does not justify being strictly better for everyone. If a combination removes both liabilities, reduce its reward or reject it. Do not add a named resource or a “visit camp before leaving” trigger as a workaround.
 
 ## First hour
 
-At the first-hour zone-10 target a player can encounter Moss Sword, Bat Bow, Bone Censer (eligible class only), Quarry Shield, Bat Quiver, Bone Tome (held), Beetle Helm, Echo Cowl, Spore Circlet, Rattlebone Charm, Carapace Pick, Wisp Axe, Spore Sickle and Moss Spear, plus Wisp Staff and Marsh Leathers. Availability does not promise a drop. The Uniques view and item reveal use the existing unlock/moment flow; no second tutorial or crafting dependency is added. No unique is required to beat a Captain or obtain a material. The first-hour “first unique by chance at 25–40 minutes” remains a target, not a guaranteed result. Preserve the existing early reveal rate unless the judge changes it. **The balance and dominant-choice holds mean this draft cannot yet confirm the first-hour contract.**
+At the first-hour zone-10 target a player can encounter Oath of the Hollow, Vesper's Reach, Requiem Bell (eligible class only), Gate of the Deep, Night's Reserve, The Unfinished Prayer (held), Crown of the Burrow, Veil of the Unheard, The Scarlet Vigil, The Final Answer, Burrower's Promise, Reed of Remembrance, Harvest of Whispers and Thorn of the First Grove, plus The Wandering Light and The Drowned Huntsman. Availability does not promise a drop. The Uniques view and item reveal use the existing unlock/moment flow; no second tutorial or crafting dependency is added. No unique is required to beat a Captain or obtain a material. The first-hour “first unique by chance at 25–40 minutes” remains a target, not a guaranteed result. Preserve the existing early reveal rate unless the judge changes it. **The balance and dominant-choice holds mean this draft cannot yet confirm the first-hour contract.**
 
 ## Money check
 
 None of the proposed items, effects, chance rolls or upgrade power is sold, bundled, obtainable through a paid cache/key or converted from a cosmetic purchase. There is no player gold-sale system proposed, no trading and no buyback. Existing salvage returns earned materials/Essence under current rules; it is not a sale and adds no new source in this docs PR. Do not introduce a gold resale price. A separately sold cosmetic can only change pixels and carries **zero** effect. All effects here are earned gameplay power, never disguised as looks. Legacy paid/raid systems are untouched, not endorsed.
 
-## Art list for PR 2, after stability
+## Art list for PR 2, review concepts
 
-No art approved by this document. Proposed filenames: `art/uniques/<id>-<size>.png` for size 16, 18, 20, 24, 32, 48. Table gives the exact 32px filename; all other sizes use the same ID. Keep `sources/<id>.png`, exact per-item prompt, generation provenance, measured crop rectangle and source/export SHA-256 in the manifest. No hero overlays, motion or animated effects.
+The owner authorized visual design on 7 October 2026, including legacy items. These are review concepts; art does not approve the held mechanics. Proposed filenames: `art/uniques/<id>-<size>.png` for size 16, 18, 20, 24, 32, 48. Table gives the exact 32px filename; all other sizes use the same ID. Keep `sources/<id>.png`, exact per-item prompt, generation provenance, measured crop rectangle and source/export SHA-256 in the manifest. No hero overlays, motion or animated effects.
 
 Each silhouette must retain the actual runtime grade's approved main/secondary materials; the note's boss detail is one accent, not a replacement material. Grade is an equipment tier, not the boss zone or current road area. Use the richer game-v2 finish, upper-left highlight, cooler shadows, hard alpha, ≤24 visible colours, existing export padding. Long weapons/tools lie lower-left to upper-right. Do not draw generic purple gear unless the grade's material calls for it. Export through the shared authored-art crop/bake/isolation routines used by `gear15icons.py`; do not procedurally draw substitute art or modify canonical gear tooling.
 
@@ -355,14 +355,14 @@ Each silhouette must retain the actual runtime grade's approved main/secondary m
 | spore-sickle-32.png | sickle-g1-32.png | A diagonal grade-matched sickle with a mushroom-cap pommel. |
 | moss-spear-32.png | spear-g2-32.png | A diagonal grade-matched spear with a single moss frond collar. |
 
-PR 2 contains only `art/uniques/`: README, manifest, source PNGs, prompts, six exports per stable item and `preview.html`. Compare each to its crafted neighbour at native 32/48 and greyscale; inspect 740×360 and 360px layouts, image loading, silhouettes, palette/alpha/padding, material identity and hashes. The README/description must distinguish deterministic export checks from the independent art judge. Art is held because the item list and balance are not stable, not because the art tool is unavailable.
+PR 2 contains only `art/uniques/`: README, manifest, source PNGs, prompts, six exports per stable item and `preview.html`. Compare each to its crafted neighbour at native 32/48 and greyscale; inspect 740×360 and 360px layouts, image loading, silhouettes, palette/alpha/padding, material identity and hashes. The README/description must distinguish deterministic export checks from the independent art judge. The owner has authorized this review pack while balance remains held. No runtime wiring is included.
 
 ## Where I'm not sure
 
 1. **85–95% good first clears versus JSON allowing 97–100% early / 95–100% Captains.** Both are visible; no unilateral band relaxation. Fallback: wait for the integration/judge checkpoint and rerun.
 2. **Raw 0.8× common may be too severe.** It is deliberately weaker even than a common craft; a fixed-grade drop becomes a poor replacement for later crafted gear. Fallback: reduce the sacrifice and payoff together; never use a flat immunity/floor bonus.
 3. **Timing reward numbers 8–20%, costs 6–16%.** Proposed, not derived from a proven economy. The measured outcomes do not establish fun or dominance. Fallback: zero effect / no release until persona and combination sweeps agree.
-4. **Four lightkeeper fittings.** No legal starter proxy. Fallback: omit from stable art list until a real eligible hero fixture is supplied; do not broaden fittings.
+4. **Four lightkeeper fittings.** No legal starter proxy. Fallback: hold gameplay approval until a real eligible hero fixture is supplied; visual concepts remain review-only and do not broaden fittings.
 5. **Stacking several named items.** Not measured; each item is tested alone, with liabilities not stacked within itself. Fallback: hold rather than introduce an unreviewed equip restriction or claim combinations are safe.
 6. **Rare-find tradeoff.** The expectation formula omits mastery, caps, Hands/offline and depletion effects. Fallback: no new tool effect until gathering economy tests confirm the 120% find line is safe; caps do not move.
 7. **Drop-pool dilution.** Uniform legal selection preserves the aggregate roll but changes acquisition times for any one item. Fallback: retain old single-item pool until class-weighting and expected attempts are judged. Base odds are not a guarantee.
@@ -423,4 +423,46 @@ Checkpoint recipe: `['z'+z+'-boss', z, 'boss', {st:'kept', gear:z<=12?'common':u
 
 ## Checks and handoff
 
-Budget experiment: executed, results above; **balance not passed**. Art: not generated; gate pending. Build passed (7658.8 KB). The default check run passed with 40 browser sections skipped. With bundled Playwright and Chrome, the first full run executed every browser section and failed the first-ten-minutes moment check (10 big/medium moments, limit 8); that section then passed in isolation (7 moments). The final two-worker full run failed only a Windows UNKNOWN file-open error writing docs/proof/moment-layer/level-banner-740x360.png; the entire moment-layer section then passed in isolation. All browser-enabled runs reported zero skipped sections. A clean complete browser-suite pass has not been achieved. Runtime, tools and tests have zero diff from integration checkpoint 601a37a8. No failure is waived; the PR remains a draft. No source, online file, save key, hosting config or canonical art changed. This document is the only intended tracked change. Claude reviews the numbers, the Opus judge rules on economy/balance, and a later stable pack goes to the art judge. Neither PR may be merged by Codex.
+Budget experiment: executed, results above; **balance not passed**. Art: owner-authorized review pack in a separate art-only draft PR. Build passed (7658.8 KB). The default check run passed with 40 browser sections skipped. With bundled Playwright and Chrome, the first full run executed every browser section and failed the first-ten-minutes moment check (10 big/medium moments, limit 8); that section then passed in isolation (7 moments). The final two-worker full run failed only a Windows UNKNOWN file-open error writing docs/proof/moment-layer/level-banner-740x360.png; the entire moment-layer section then passed in isolation. All browser-enabled runs reported zero skipped sections. A clean complete browser-suite pass has not been achieved. Runtime, tools and tests have zero diff from integration checkpoint 601a37a8. No failure is waived; the PR remains a draft. No source, online file, save key, hosting config or canonical art changed. This document is the only intended tracked change. Claude reviews the numbers, the Opus judge rules on economy/balance, and a later stable pack goes to the art judge. Neither PR may be merged by Codex.
+
+## Unique display names and visual identity
+
+These are proposed display names. Existing saved IDs, effects and ownership remain unchanged. Legacy audit names above describe the currently shipped items; this registry supplies their new display names. All 34 items receive separate icons; legacy grade is a representative first-source grade.
+
+| Stable ID | Existing / working name | Proposed display name | Set | Visual identity |
+|---|---|---|---|---|
+| moss-sword | Moss Sword | Oath of the Hollow | Proposed | broad copper sword, leaf-shaped blade and moss wrapped antler guard |
+| bat-bow | Bat Bow | Vesper's Reach | Proposed | pine recurve bow, swept bat wing tips and amber string fittings |
+| wisp-staff | Wisp Staff | The Wandering Light | Proposed | birch staff curled around a sealed pale green spirit bead |
+| bone-censer | Bone Censer | Requiem Bell | Proposed | copper hanging censer inside an ivory rib cage with a heavy bell silhouette |
+| quarry-shield | Quarry Shield | Gate of the Deep | Proposed | massive angular copper shield, dark stone central boss with a glowing fault line |
+| bat-quiver | Bat Quiver | Night's Reserve | Proposed | iron trimmed leather quiver with scalloped bat wing mouth and three broad arrow heads |
+| wisp-lantern | Wisp Lantern | Mercy of the Fen | Proposed | silver lantern, amethyst glass, bent marsh reed handle and trapped pale spirit flame |
+| bone-tome | Bone Tome | The Unfinished Prayer | Proposed | iron bound dark tome with broad ivory jaw clasp and parchment page edges |
+| beetle-helm | Beetle Helm | Crown of the Burrow | Proposed | copper closed helmet with oversized beetle shell crest and short mandible cheek guards |
+| echo-cowl | Echo Cowl | Veil of the Unheard | Proposed | dark hide hood with swept bat ear crown and copper crescent brow |
+| spore-circlet | Spore Circlet | The Scarlet Vigil | Proposed | copper circlet with one scarlet mushroom jewel and branching fungal prongs |
+| bone-mitre | Bone Mitre | Last Rites | Proposed | tall silver trimmed ceremonial mitre, ivory rib seam and dark amethyst inset |
+| quarry-plate | Quarry Plate | Mountain's Covenant | Proposed | silver plate torso with broad layered shoulders and one cracked stone shoulder inset |
+| marsh-leathers | Marsh Leathers | The Drowned Huntsman | Proposed | dark leather torso armour, iron clasps and asymmetric pale reed collar |
+| spore-robe | Spore Robe | Mantle of the Red Moon | Proposed | dark woven robe with iron trim, broad scarlet mushroom cap shoulder and pale hem |
+| bone-vestments | Bone Vestments | Vestments of the Last Dawn | Proposed | blue cobalt trimmed ceremonial vestments with ivory rib clasp and pale pearl centre |
+| rattlebone-charm | Rattlebone Charm | The Final Answer | Proposed | ivory jaw pendant cradling a dim amber soul bead, copper chain |
+| carapace-pick | Carapace Pick | Burrower's Promise | Proposed | copper pickaxe with a beetle shell socket and hooked mandible pick ends |
+| wisp-axe | Wisp Axe | Reed of Remembrance | Proposed | iron wood axe, birch handle, broad crescent blade with reed shaped eye and pale spirit inset |
+| spore-sickle | Spore Sickle | Harvest of Whispers | Proposed | copper crescent sickle, pine handle, scarlet mushroom cap pommel |
+| moss-spear | Moss Spear | Thorn of the First Grove | Proposed | iron spear with broad leaf head, birch shaft and moss frond collar |
+| sproutblade | Sproutblade | The Green Promise | Legacy | copper short sword with living green shoot curled around the blade base |
+| echocowl | Echo Cowl | Vesper's Shroud | Legacy | copper helmet with shadowed face and broad bat wing cheek flares |
+| rattlecharm | Rattlebone Charm | Saint's Last Tooth | Legacy | single large ivory fang relic in a copper cage, amber bead at crown |
+| carapacepick | Carapace Pick | Mandible of the Barrow | Legacy | copper pickaxe with asymmetrical beetle mandible head and dark shell binding |
+| sporeheart | Sporeheart | Heart of the Sleeping Grove | Legacy | scarlet heart shaped mushroom relic nested in copper roots and pale gills |
+| golemfist | Golemfist | The Quarry's Verdict | Legacy | heavy copper stone edged cleaver sword with blocky golem fist guard |
+| wispaxe | Wisp Axe | The Mourning Bough | Legacy | iron axe on twisted birch branch, broad pale spirit shaped blade inset |
+| wyrmscale | Wyrmscale Helm | Crown of the Cinder Wyrm | Legacy | copper helm with dark dragon scale crown, swept horns and ember inset |
+| hollowcrown | Crown of Hollows | The Vacant Throne | Legacy | iron royal helmet crowned by tall broken prongs, hollow black centre and amber eye slit |
+| colossuspick | Colossus Pick | Worldroot Breaker | Legacy | huge silver pickaxe with gnarled oak handle and mossy stone root socket |
+| hydraglass | Hydra Glass | Prism of the Seven Hungers | Legacy | cobalt framed pale glass prism with three serpentine neck silhouettes and pearl core |
+| eaterfang | Lantern Eater's Fang | Light's Last Refuge | Legacy | mithril fang sword with lantern shaped guard, dark beast tooth edge and pale blue trapped light |
+| tyrantaxe | Pale Tyrant's Axe | The King's Silence | Legacy | mithril double crescent axe, tideash handle and ivory crowned skull socket |
+
