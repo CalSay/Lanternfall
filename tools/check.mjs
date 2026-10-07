@@ -2421,7 +2421,7 @@ if (section('deeds')) try {
     const lines = []; a.fn.on('whatsNew', w => lines.push(w.msg)); a.fn.on('toast', t => lines.push(t.msg));
     for (let i = 0; i < 15; i++) { a.fn.tick(0.1); }
     const sums = {};
-    for (const [id, need, key, v] of ACH0) if (atLoadB.achievements.got[id]) sums[key] = (sums[key] || 0) + v;
+    for (const [id, need, key, v] of ACH0) if (atLoadB.achievements && atLoadB.achievements.got[id]) sums[key] = (sums[key] || 0) + v;
     assert(Object.entries(sums).every(([k, v]) => Math.abs(a.eval(`deeds.milestoneBonus(${JSON.stringify(k)})`) - v) < 1e-12), `AD2 ${f}: converted rewards retain the saved milestone sums`);
     for (let i = 0; i < 15; i++) a.fn.tick(0.1);
     const A = s => a.eval(s);
