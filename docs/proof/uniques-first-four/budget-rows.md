@@ -18,6 +18,9 @@ second hit without Grit's bonus brings it down). dodgeGood wins 100 -> 100 with 
 
 ## Rows (seed offsets 0 and 1000)
 
+Measured before the code review's three clamps (Oath with Mountain capped at +50% on a z16-34 zone boss, a stored Bleed
+not boosted by Oath or Mountain, Final Echo counting at most 5 Crimson stacks). Each only lowers a gain, so these rows are an upper bound.
+
 ### twinned-vow, seed offset 0
 ```
 z16-boss    wren   casual 76->76 (-0.5) turns 10.8->10.8 (+0.0)  good 100->100 (+0.0) turns 8.4->8.3 (-1.2)  none 0->0 (+0.0)

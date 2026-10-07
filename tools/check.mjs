@@ -4579,7 +4579,7 @@ if (section('solo hero')) try {
       'a new save counts 13 uniques and shows no Sproutblade tile it can never earn');
     assert(f.eval('codexPage("uniques").tiles[0].key') === 'briarsprig', 'with the Sproutblade hidden, Briar Sprig takes its place first in the Codex, so the seen string read by position does not shift');
     const late = loadCore({ solo: true, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8') }) }), L = s => late.eval(s);
-    assert(L('S.found.sproutblade') === 3 && L('S.items.some(it => it.u === "sproutblade" && it.slot === "weapon")') && L('statsApi.uniqueTotal()') === 14 && L('codexPage("uniques").tiles.find(t => t.key === "sproutblade").got') === 1 && L('codexPage("uniques").tiles.map(t => t.key).join()') === L('Object.keys(UNIQ).join()'),
+    assert(L('S.found.sproutblade') === 3 && L('S.items.some(it => it.u === "sproutblade" && it.slot === "weapon")') && L('statsApi.uniqueTotal()') === 14 && L('codexPage("uniques").tiles.find(t => t.key === "sproutblade").got') === 1 && L('codexPage("uniques").tiles.map(t => t.key).join()') === L('Object.keys(UNIQ).filter(k => UNIQ[k].legacy !== false).join()'),
       'an old save keeps its Sproutblade; the trophy total and the Codex still count it');
     for (const [u, slot] of [['sproutblade', 'weapon'], ['briarsprig', 'charm']]) {
       const r = L(`(() => { const o = JSON.parse(JSON.stringify(S)); o.items.push({ id: o.nextId, slot: "${slot}", t: 1, r: "legendary", plus: 0, u: "${u}" }); o.nextId++; o.found.${u} = 1; return decodeSave(encodeSave(o)); })()`);
@@ -11047,7 +11047,6 @@ if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 } catch (e) { fail('first-hour walk crashed: ' + (e.stack || e)); }
-// ---- Next Up always goes (nextup-always-goes): every goal's Go lands on a visible, enabled target ----
 // uniques-first-four: the 11 uniques the Opus judge marked WIRE (codex-uniques-review/pool-judge.md), built behind UNIQ_TUNE.on.
 // Off they change nothing a player sees; on, each rule pays its cost, rally gates hold and the Stars are untouched.
 if (section('uniques first pool (uniques-first-four)')) try {
@@ -11172,6 +11171,17 @@ if (section('uniques first pool (uniques-first-four)')) try {
     return JSON.stringify({ b3: go(null, 3), m3: go(${U('quarry-plate')}, 3), b10: go(null, 10), m10: go(${U('quarry-plate')}, 10), max: TURN_TUNE.gritMax || 0 });`);
   assert(near(mt.m3.d, 1.12 * mt.b3.d) && near(mt.m10.d, 1.4 * mt.b10.d), `uniques: Mountain's Covenant adds 4% a Grit to abilities, capped at 40% (${J(mt)})`);
   assert(mt.m3.left === mt.b3.left - 1, `uniques: under Mountain's Covenant a hit that lands costs 1 Grit (${mt.b3.left} -> ${mt.m3.left})`);
+  // review: Oath and Mountain together stay within +50% on a zone boss in zones 16-34; a stored Bleed is not boosted; the Crimson Thread's extra stacks do not feed Final Echo
+  const st = R(`const go = (rules, o) => { const a = __uqk('tobin', rules, Object.assign({ eq: ['bash', 'cleave', null] }, o)); a.m.h.grit = 10; a.m.h.oath = 1; a.m.cds.bash = 0; turnHeroAct(a.m, a.io, 'bash'); return a.t.dmg.reduce((s, x) => s + x.d, 0); };
+    const both = [${U('moss-sword')}, ${U('quarry-plate')}];
+    const bl = rules => { const a = __uqk('tobin', rules, { eq: ['cleave', null, null] }); a.m.h.grit = 10; a.m.h.oath = 1; a.m.cds.cleave = 0; turnHeroAct(a.m, a.io, 'cleave'); return a.m.e.bleedDmg; };
+    const fe = rules => { const a = __uqk('wren', rules, { eq: ['finalecho', null, null] }); a.m.e.bleed = 10; a.m.e.bleedDmg = 1; a.m.e.bleedT = 3; a.m.h.aim = 0; a.m.heroOps = 3; a.m.cds.finalecho = 0; turnHeroAct(a.m, a.io, 'finalecho'); return [a.t.dmg.reduce((s, x) => s + x.d, 0), a.m.e.bleed]; };
+    const fe5 = () => { const a = __uqk('wren', [], { eq: ['finalecho', null, null] }); a.m.e.bleed = 5; a.m.e.bleedDmg = 1; a.m.e.bleedT = 3; a.m.h.aim = 0; a.m.heroOps = 3; a.m.cds.finalecho = 0; turnHeroAct(a.m, a.io, 'finalecho'); return a.t.dmg.reduce((s, x) => s + x.d, 0); };
+    return JSON.stringify({ base: go([], { zb: true, zone: 20 }), band: go(both, { zb: true, zone: 20 }), out: go(both, { zb: false, zone: 20 }), outBase: go([], { zb: false, zone: 20 }),
+      bl0: bl([]), bl1: bl(both), fe: fe([${U('bat-bow')}]), fe5: fe5() });`);
+  assert(near(st.band, 1.5 * st.base) && near(st.out, 1.3 * 1.4 * st.outBase), `uniques: Oath and Mountain together give at most +50% on a zone boss in zones 16-34, and stack in full elsewhere (${J(st)})`);
+  assert(st.bl0 > 0 && near(st.bl1, st.bl0), `uniques: a Bleed an Oath- or Mountain-boosted ability stores is not boosted (${st.bl0} vs ${st.bl1})`);
+  assert(near(st.fe[0], st.fe5) && st.fe[1] === 0, `uniques: with the Crimson Thread, Final Echo spends all 10 stacks but counts only 5 (${J(st.fe)} vs ${st.fe5})`);
   // gate: every hit of a move but one parried still counters, at 80%; Riposte still opens on any parry
   const gt = R(`const go = (rule, defs) => { const a = __uqk('tobin', rule ? [rule] : []); __uqMove(a.m, a.io, defs); const c = a.t.dmg.filter(x => x.kind === 'counter'); return { n: c.length, d: c.length ? c[0].d : 0, ripo: a.m.h.ripo || 0 }; };
     const r = ${U('quarry-shield')};
@@ -11210,18 +11220,19 @@ if (section('uniques first pool (uniques-first-four)')) try {
   // tools: Rising grade (the spear stops at 3), partner yield, gathering 10% slower, the rare find line still under its cap
   const tl = R(`const out = {}; soloPick('wren', { now: true }); UNIQ_TUNE.on = 1;
     for (const [k, skill] of [['carapace-pick', 'mine'], ['moss-spear', 'hunt']]) { const u = UNIQ[k]; const it = newItem(u.slot, 1, 'rare'); it.u = k; it.a = []; it.plus = 0; S.items.push(it); S.equip[u.pos] = it.id;
-      const lv0 = S.skills[skill].lv; S.skills[skill].lv = 999; gearDirty(); out[k] = { tier: equippedTool(skill).tier, top: skillTopTier(skill), spd: mod('gatherSpeed:' + skill), find: toolFind(skill) };
+      const lv0 = S.skills[skill].lv; S.skills[skill].lv = 999; gearDirty(); out[k] = { tier: equippedTool(skill).tier, top: skillTopTier(skill), spd: mod('gatherSpeed:' + skill), find: toolFind(skill) }; (out.cap = out.cap || {})[k] = (TOOL_TUNE.findCap + bonus('find:' + skill)) / 100;
       S.skills[skill].lv = lv0; gearDirty(); out[k].low = equippedTool(skill).tier; }
     const before = S.mats.crystal[1] || 0; emit('harvest', { kind: 'ore', t: 2, n: 3, away: true }); out.partner = (S.mats.crystal[1] || 0) - before;
     UNIQ_TUNE.on = 0; gearDirty(); out.offSpd = mod('gatherSpeed:mine'); out.offTier = equippedTool('mine').tier; const b2 = S.mats.crystal[1] || 0; emit('harvest', { kind: 'ore', t: 2, n: 3, away: true }); out.offPartner = (S.mats.crystal[1] || 0) - b2;
-    out.cap = (TOOL_TUNE.findCap + TOOL_TUNE.findPts) / 100; return JSON.stringify(out);`);
+    return JSON.stringify(out);`);
   assert(tl['carapace-pick'].tier === tl['carapace-pick'].top && tl['carapace-pick'].top === 5 && tl['moss-spear'].tier === 3 && tl['carapace-pick'].low === 1, `uniques: a Rising tool is the grade of the best open ground (the spear stops at 3) (${J(tl)})`);
   assert(Math.abs(tl['carapace-pick'].spd / tl.offSpd - 0.9) < 1e-9 && tl.offTier === 1, `uniques: a tool unique gathers 10% slower; off, it is a plain tool of its own grade (${J(tl)})`);
   assert(tl.partner === 1 && tl.offPartner === 0, `uniques: Burrower's Promise turns up 1 Crystal for every 3 Ore, only while the switch is on (${tl.partner}, off ${tl.offPartner})`);
-  assert(tl['carapace-pick'].find <= tl.cap && tl['moss-spear'].find <= tl.cap, `uniques: the rare find chance stays under its 8% cap with a tool unique (${tl['carapace-pick'].find})`);
+  assert(tl['carapace-pick'].find <= tl.cap['carapace-pick'] && tl['moss-spear'].find <= tl.cap['moss-spear'], `uniques: the rare find chance stays under its 8% cap with a tool unique (${tl['carapace-pick'].find})`);
   assert(!g.errors.length, 'uniques: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('uniques first pool crashed: ' + (e.stack || e)); }
 
+// ---- Next Up always goes (nextup-always-goes): every goal's Go lands on a visible, enabled target ----
 if (section('Next Up Go targets (browser)')) try {
   const { pw, exe } = browserTools;
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('Next Up Go targets (browser): Playwright or Chromium not here, skipped');
