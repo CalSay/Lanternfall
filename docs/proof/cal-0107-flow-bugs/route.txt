@@ -1,0 +1,41 @@
+# seed: 1
+# Proof for card cal-0107-flow-bugs (Cal's play notes 7, 13, 15, 17). Each part starts from a proof fixture (tests/proof-fixtures/save-flow-*.json):
+#   points     Wren, level 4, zone 2, four points a level to spend, the guide at its upgrade step
+#   cold-camp  a cold new game: fire lit, Workbench built, the Copper Pickaxe is the next job
+#   cold-forge the Forge built and a weapon worn, the packs nearly empty (30 of 5,000): the Storehouse step is next
+# Notes 9 and 20 have no screen to replay here: 9 is held by the tools/check.mjs unique-card checks, 20 by its Heavy Strike check.
+
+# note 7: spend the points, then the guide points back at the fight
+new flow-points
+wait 2
+tap-if "Continue"
+tap "Hero"
+wait 1
+tap "Build"
+wait 1
+tap "Spread evenly"
+wait 30
+expect "Back to the fight"
+shot points-back-to-fight
+
+# notes 13 and 17: make the pickaxe, the guide says to put it on, Equip closes the card
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap "Craft"
+wait 1
+tap "Craft Copper Pickaxe"
+wait 1
+expect "Equip Copper Pickaxe"
+shot pickaxe-equip-tip
+tap "Equip"
+wait 1
+expect "Craft Pine Bow"
+shot card-closed-after-equip
+
+# note 15: 30 of 5,000 is not "near full"; the Storehouse tip says why it is there instead
+new flow-cold-forge
+wait 2
+tap-if "Continue"
+expect "The Forge is up. Open Camp."
+shot storehouse-honest-tip

@@ -1,0 +1,14 @@
+# seed: 1
+# Proof for card save-code-validation: Pip (fixture tests/proof-fixtures/save-pip-abilities, slots Fireball, Spark, Kindle)
+# copies a save code from Notices > Settings > Save code. Before the fix this said "Couldn't build a save code."
+# Replayed at 360x740 and 740x360.
+new pip-abilities
+wait 3
+expect "Attack"
+tap "Notices"
+wait 1
+tap "Settings"
+wait 1
+tap "Copy save code"
+expect "Copied!"
+shot save-code-copied

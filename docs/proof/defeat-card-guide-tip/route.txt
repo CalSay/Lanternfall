@@ -1,0 +1,43 @@
+# seed: 1
+# Proof for card defeat-card-guide-tip: the first time a zone boss beats you, the Try again card opens; after you close it and the road
+# is quiet, Hesketh says one line about the card. The early fixture is at the zone 8 boss. The hero attacks and never defends, so the boss wins.
+new early
+wait 5
+tap-if "Continue"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+tap-if "Attack"
+wait 4
+expect "beat you"
+expect "Try again"
+shot defeat-card
+tap "Keep fighting here"
+tap-if "Dismiss this tip"
+wait 6
+expect "That card showed what beat you"
+shot defeat-tip

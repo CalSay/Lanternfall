@@ -1,0 +1,21 @@
+# seed: 1
+# Proof for card tell-us-form: on the web build the Send feedback panel has a "Send to the team" button.
+# LF_SITE is stubbed here (the Netlify page sets the real one), first answering ok, then failing.
+# Replayed at 360x740 and 740x360.
+new early
+wait 3
+expect "Attack"
+stub-site ok
+tap "Notices"
+wait 1
+tap "Settings"
+wait 1
+type "The first fight felt slow."
+tap "Send to the team"
+expect "Sent. Thank you."
+shot sent
+stub-site fail
+type "The wall at zone 13 felt unfair."
+tap "Send to the team"
+expect "Couldn't send"
+shot not-sent

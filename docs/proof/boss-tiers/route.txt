@@ -1,0 +1,13 @@
+# seed: 1
+# Proof for card boss-tiers (PR 1): a numbers-only change (boss hit cap and zone 4-12 hit and HP knots). Nothing on screen is new.
+# The route plays the early fixture into a fight and checks the fight screen still draws whole; the boss numbers themselves
+# are checked by `node tools/check.mjs` (section "boss tiers first hour") and `node tools/budget.mjs`.
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+expect ".hud.vs .mob"
+shot boss-tiers

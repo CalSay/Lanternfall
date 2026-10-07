@@ -1,0 +1,1 @@
+Old Hesketh now announces each new tab himself, once a fight is over, one at a time ("Wood first. Gather's open, and the hero works even while you're away."). The camp, Workbench, Forge and Gather tips speak in his voice too.

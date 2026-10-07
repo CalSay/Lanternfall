@@ -1,0 +1,564 @@
+{
+  "about": "The difficulty budget (docs/design/difficulty-budget.md): win-rate bands for each fight kind, for a hero who keeps up with the road, played by the casual and the good player of tools/budget.mjs. tools/health.mjs --compare gates each hero (Wren, Tobin, Pip) on these bands. Loosening anything here (a band, a gap's limit or until) needs a judge and a change-log line in the doc; a routine re-baseline does not.",
+  "tolerance": 0.06,
+  "toleranceNote": "a hero cell's tolerance is max(tolerance, 2.5 x its sd over the baseline's seed offsets)",
+  "meanTol": 0.04,
+  "meanTolNote": "the three-hero mean may not move further from its band than max(meanTol, 2.5 x its sd)",
+  "tobinBoss": 0.1,
+  "tobinBossNote": "Tobin's casual band on boss kinds sits this much higher (capped at 1): he is the safest hero (DECISIONS.md)",
+  "kinds": {
+    "normal": {
+      "casual": [
+        0.9,
+        1
+      ],
+      "good": [
+        0.98,
+        1
+      ],
+      "note": "a foe between bosses (a chain of 5, HP carried)"
+    },
+    "elite": {
+      "casual": [
+        0.75,
+        0.97
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "note": "an elite foe (a trait and an extra move), from zone 15"
+    },
+    "firstBoss": {
+      "casual": [
+        0.85,
+        1
+      ],
+      "good": [
+        0.97,
+        1
+      ],
+      "note": "zone bosses 1-3, while the player learns to parry and dodge"
+    },
+    "earlyCaptain": {
+      "casual": [
+        0.7,
+        0.9
+      ],
+      "good": [
+        0.97,
+        1
+      ],
+      "note": "zone bosses 4-10: a learning boss"
+    },
+    "captain": {
+      "casual": [
+        0.6,
+        0.8
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "note": "a zone boss from zone 11 (the Captain tier)"
+    },
+    "champion": {
+      "casual": [
+        0.4,
+        0.6
+      ],
+      "good": [
+        0.9,
+        1
+      ],
+      "note": "an area boss (the Champion tier; once boss-tiers builds it)"
+    },
+    "elder": {
+      "casual": [
+        0.2,
+        0.4
+      ],
+      "good": [
+        0.8,
+        1
+      ],
+      "note": "a region boss (the Elder tier: the Fenmother at zone 35)"
+    },
+    "behind": {
+      "casualDrop": [
+        0.1,
+        0.6
+      ],
+      "good": [
+        0.6,
+        1
+      ],
+      "note": "its ref boss with every worn piece a gear tier behind: casual wins drop 10-60 points against the ref row (gear matters), and a good player still wins 60%+ (skill carries, no hard walls)"
+    },
+    "joined": {
+      "casualDrop": [
+        0,
+        0.3
+      ],
+      "good": [
+        0.9,
+        1
+      ],
+      "report": true,
+      "note": "report only (proposed band, gate once a judge sets it): a hero who just took the lamp (road level, the lamp's gear, signature only, no Stars) against the hero who kept it, at the same boss: casual wins drop at most 30 points, and a good player still wins 90%+ (rotating never stalls the road)"
+    },
+    "build": {
+      "casualDrop": [
+        -0.15,
+        0.15
+      ],
+      "good": [
+        0.9,
+        1
+      ],
+      "report": true,
+      "note": "report only (proposed band): every attribute point in one attribute against the even spread, at the same fight: within 15 points of casual wins either way (shape, not power); budget.mjs also prints the turns ratio"
+    },
+    "firstChampion": {
+      "casual": [
+        0.6,
+        0.8
+      ],
+      "good": [
+        0.97,
+        1
+      ],
+      "note": "the zone 5 Champion, the first real test of the first hour (boss-tiers judge 2026-10-07); firstChampion sits on the first-hour set"
+    },
+    "reportCaptain": {
+      "casual": [
+        0.7,
+        0.9
+      ],
+      "good": [
+        0.97,
+        1
+      ],
+      "report": true,
+      "note": "report only: zone 4 (its boss knot rises; unmeasured before 2026-10-07)"
+    },
+    "floor": {
+      "casual": [
+        0.1,
+        1
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "report": true,
+      "note": "report only: nothing worn at the zone 10 Champion; skill must carry (casual 10%+, good 95%+)"
+    },
+    "floor5": {
+      "casual": [
+        0.35,
+        1
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "report": true,
+      "note": "report only: nothing worn at the zone 5 Champion (casual 35%+; do not re-create the 983e9f5 zone 5 stall)"
+    },
+    "keptUpEarly": {
+      "casual": [
+        0.8,
+        0.97
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "none": [
+        0,
+        0.1
+      ],
+      "gearHelps": true,
+      "note": "the learning Captain at zone 8, kept up. boss-tiers-pr5 (judge 2026-10-07 point 8): a kept-up hero (the zone's tier at rare +5, same save as its first-hour row) on a boss they have not beaten. Gear buys room to miss, not immunity: a player who never parries or dodges wins 10% at most, and kept-up casual is never below the first-hour row (gearHelps, gated in tools/lib/budget-score.mjs). Tobin's cells ride tobin-safety-margin gaps; Pip's ride wren-first-hour-parity where her first-hour cell has one."
+    },
+    "keptUpCaptain": {
+      "casual": [
+        0.75,
+        0.95
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "none": [
+        0,
+        0.1
+      ],
+      "gearHelps": true,
+      "note": "a Captain at zones 12 and 13, kept up. boss-tiers-pr5 (judge 2026-10-07 point 8): a kept-up hero (the zone's tier at rare +5, same save as its first-hour row) on a boss they have not beaten. Gear buys room to miss, not immunity: a player who never parries or dodges wins 10% at most, and kept-up casual is never below the first-hour row (gearHelps, gated in tools/lib/budget-score.mjs). Tobin's cells ride tobin-safety-margin gaps; Pip's ride wren-first-hour-parity where her first-hour cell has one."
+    },
+    "keptUpChampion": {
+      "casual": [
+        0.6,
+        0.85
+      ],
+      "good": [
+        0.9,
+        1
+      ],
+      "none": [
+        0,
+        0.1
+      ],
+      "gearHelps": true,
+      "note": "a Champion at zones 5, 10 and 15, kept up. boss-tiers-pr5 (judge 2026-10-07 point 8): a kept-up hero (the zone's tier at rare +5, same save as its first-hour row) on a boss they have not beaten. Gear buys room to miss, not immunity: a player who never parries or dodges wins 10% at most, and kept-up casual is never below the first-hour row (gearHelps, gated in tools/lib/budget-score.mjs). Tobin's cells ride tobin-safety-margin gaps; Pip's ride wren-first-hour-parity where her first-hour cell has one."
+    },
+    "keptUpReport": {
+      "casual": [
+        0.4,
+        1
+      ],
+      "good": [
+        0.9,
+        1
+      ],
+      "none": [
+        0,
+        1
+      ],
+      "report": true,
+      "gearHelps": true,
+      "note": "report only: zone 14, kept up (not in the judge's gated list); gear must still help"
+    },
+    "reportGear": {
+      "casual": [
+        0,
+        1
+      ],
+      "good": [
+        0,
+        1
+      ],
+      "report": true,
+      "note": "report only (boss-tiers-pr5): z10 at uncommon +2 (no cliff between common and rare gear) and z12 on the first-hour set with the mid save (how much progression outside gear is worth). Read the numbers against the ref row"
+    },
+    "captainMid": {
+      "casual": [
+        0.6,
+        0.8
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "none": [
+        0,
+        0.1
+      ],
+      "note": "a zone boss at zones 16-34 (Captains and the Champion-tier fifths), boss-tiers-pr5b: the kept-up hero (the zone's tier at rare +5, with the crafted set from grade 4 up) on a boss they have not beaten, with move tricks, rally gates and the footing floor on. Gear buys room to miss, not immunity: a player who never defends wins at most 10%"
+    }
+  },
+  "gaps": [
+    {
+      "row": "z15-elite",
+      "hero": "wren",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "foe-moves-by-type",
+      "until": "2026-12-01",
+      "why": "elites are no threat yet (one trait, one extra move)"
+    },
+    {
+      "row": "z15-elite",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "foe-moves-by-type",
+      "until": "2026-12-01",
+      "why": "elites are no threat yet (one trait, one extra move)"
+    },
+    {
+      "row": "z15-elite",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "foe-moves-by-type",
+      "until": "2026-12-01",
+      "why": "elites are no threat yet (one trait, one extra move)"
+    },
+    {
+      "row": "z20-elite",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "foe-moves-by-type",
+      "until": "2026-12-01",
+      "why": "elites are no threat yet (one trait, one extra move)"
+    },
+    {
+      "row": "z20-elite",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.97,
+      "owner": "foe-moves-by-type",
+      "until": "2026-12-01",
+      "why": "elites are no threat yet (one trait, one extra move)"
+    },
+    {
+      "row": "z20-boss-behind",
+      "hero": "wren",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.6,
+      "owner": "gear-weight",
+      "until": "2026-12-01",
+      "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
+    },
+    {
+      "row": "z20-boss-behind",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.69,
+      "owner": "gear-weight",
+      "until": "2026-12-01",
+      "why": "a tier behind costs this hero more than 60 points of casual wins now that bosses hit him for a real share (tobin-safety-margin)"
+    },
+    {
+      "row": "z20-boss-behind",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.76,
+      "owner": "gear-weight",
+      "until": "2026-12-01",
+      "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
+    },
+    {
+      "row": "z30-elite",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "foe-moves-by-type",
+      "until": "2026-12-01",
+      "why": "elites are no threat yet (one trait, one extra move)"
+    },
+    {
+      "row": "z35-elder",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "boss-tiers",
+      "until": "2026-11-15",
+      "why": "the Fenmother is easier than the Captains around her"
+    },
+    {
+      "row": "z35-elder",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.53,
+      "owner": "boss-tiers",
+      "until": "2026-11-15",
+      "why": "the Fenmother is easier than the Captains around her"
+    },
+    {
+      "row": "z36-boss",
+      "hero": "wren",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.86,
+      "owner": "boss-tiers",
+      "until": "2026-11-15",
+      "why": "this boss is too easy for a hero who keeps up"
+    },
+    {
+      "row": "z36-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.97,
+      "owner": "boss-tiers",
+      "until": "2026-11-15",
+      "why": "this boss is too easy for a hero who keeps up"
+    },
+    {
+      "row": "z38-elite",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "foe-moves-by-type",
+      "until": "2026-12-01",
+      "why": "elites are no threat yet (one trait, one extra move)"
+    },
+    {
+      "row": "z38-elite",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.97,
+      "owner": "foe-moves-by-type",
+      "until": "2026-12-01",
+      "why": "elites are no threat yet (one trait, one extra move)"
+    },
+    {
+      "row": "z38-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.99,
+      "owner": "boss-tiers",
+      "until": "2026-11-15",
+      "why": "this boss is too easy for a hero who keeps up"
+    },
+    {
+      "row": "z38-boss-behind",
+      "hero": "wren",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.74,
+      "owner": "gear-weight",
+      "until": "2026-12-01",
+      "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
+    },
+    {
+      "row": "z38-boss-behind",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.8,
+      "owner": "gear-weight",
+      "until": "2026-12-01",
+      "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
+    },
+    {
+      "row": "z5-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.89,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z6-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.96,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z7-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.94,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z8-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.97,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
+    },
+    {
+      "row": "z12-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.99,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip wins 15-35 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07; the pr4 refit moved z12 Pip from 91 to 98 while Wren held, the z12 fit matched the Wren and Pip mean)"
+    },
+    {
+      "row": "z5-boss-keptup",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.99,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip's first-hour cell here is already in a wren-first-hour-parity gap (Pip wins far more than Wren at the same set, so her kept-up cell rides it)"
+    },
+    {
+      "row": "z8-boss-keptup",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.99,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip's first-hour cell here is already in a wren-first-hour-parity gap (Pip wins far more than Wren at the same set, so her kept-up cell rides it)"
+    },
+    {
+      "row": "z12-boss-keptup",
+      "hero": "pip",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip's first-hour cell here is already in a wren-first-hour-parity gap (Pip wins far more than Wren at the same set, so her kept-up cell rides it)"
+    },
+    {
+      "row": "z12-boss-keptup",
+      "hero": "pip",
+      "player": "none",
+      "side": "above",
+      "limit": 1,
+      "owner": "wren-first-hour-parity",
+      "until": "2026-11-15",
+      "why": "Pip who never defends still wins the z12 kept-up boss (judge 2026-10-07 point 8): Pip wins far more than Wren at the same set, so her kept-up cell rides it)"
+    },
+    {
+      "row": "z38-boss-behind",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.72,
+      "owner": "gear-weight",
+      "until": "2026-12-01",
+      "why": "a tier behind costs this hero more than 60 points of casual wins now that bosses hit him for a real share (tobin-safety-margin)"
+    },
+    {
+      "row": "z25-boss",
+      "hero": "wren",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.82,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "the zone 25 Champion-tier fifth move plus the gates split Wren and Pip by about 27 points; a level nudge moves both (boss-tiers-pr5b judge); provisional until the skilling and crafting balance pass"
+    },
+    {
+      "row": "z25-boss",
+      "hero": "pip",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.55,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "the zone 25 Champion-tier fifth move plus the gates split Wren and Pip by about 27 points; a level nudge moves both (boss-tiers-pr5b judge); provisional until the skilling and crafting balance pass"
+    }
+  ]
+}

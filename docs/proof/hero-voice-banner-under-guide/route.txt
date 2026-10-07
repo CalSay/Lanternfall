@@ -1,0 +1,14 @@
+# seed: 1
+# Proof for card hero-voice-banner-under-guide: sideways, a medium banner (level, ability, craft, hero bark) docks at the foot of the stage
+# while a guide tip is up. A route cannot force a banner while a tip shows, so the proof is scripted: before-/after-*.png here were shot at
+# 740x360 and 360x740 by waiting for the guide tip, then queueing a level-up and a hero-bark moment. This route plays the mid fixture
+# through its opening cards and checks the fight screen still draws (the banner CSS touches only .app.guide-side).
+new mid
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+expect "Zone"
+shot guide-banner-fight

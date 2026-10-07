@@ -1,0 +1,19 @@
+# seed: 1
+# Proof for card story-unlock-gates: a held hero says when they join; an old save's unlocks stay open.
+# The early fixture: zone 8 in the Hollow, mid-guide. Replayed by CI (`eyes` job) at 360x740 and 740x360.
+new early
+wait 2
+tap-if "Skip"
+wait 1
+tap-if "Got it"
+expect "Fight"
+shot early-save-fight
+tap "Hero"
+wait 1
+tap-if "Got it"
+tap "All heroes"
+wait 1
+tap-if "Kestrel Thane"
+expect "You meet Bram when the Hollow is won, at zone 36."
+expect "You meet Kestrel in Chapter 4."
+shot all-heroes-when
