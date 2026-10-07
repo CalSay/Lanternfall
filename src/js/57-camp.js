@@ -171,9 +171,9 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       c.secs = h.secs;
       return c;
     }
-    // H1: Lv 1 of a station has its own row (materials and a short timer, no gold).
+    // H1: Lv 1 of a station has its own row (materials and a short timer; gold only where the row names it: the Workbench).
     const f = to === 1 && typeof hearthFirst === 'function' ? hearthFirst(id) : null;
-    if (f) { const c = liveCost(0, f.mats, d.tro, 0, 1); c.secs = f.secs; return c; }
+    if (f) { const c = liveCost(f.gold || 0, f.mats, d.tro, 0, 1); c.secs = f.secs; return c; }
     if (d.cost) return d.cost(to, campGold);
     const r = row(id, to), zRef = CAMP_HZ[Math.min(9, hearthNeed(id, to)) - 1];
     const mats = Object.entries(d.fam).map(([f, m]) => [f, r, Math.ceil(m * T.mult[r - 1])]);

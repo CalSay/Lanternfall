@@ -2223,10 +2223,12 @@ if (section('cold hearth')) try {
   assert(ev.join() === 'campOpen:false,lit' && !E('hearthLight()'), 'campOpen { quiet: false } and hearthLit, once');
   assert(E('campList().includes("bench") && !campList().includes("forge") && !campList().includes("loom")'), 'the Workbench plot opens with the fire (the Forge and Loom wait)');
   const c1 = E('campCost("bench", 1)');
-  assert(c1.gold === 0 && JSON.stringify(c1.mats) === '[["wood",1,20]]' && c1.secs === 10, `Workbench Lv 1: 20 Oak, no gold, 10 s (playtest-1 note 8: was 30 s) (${JSON.stringify(c1.mats)}, ${c1.gold} gold, ${c1.secs} s)`);
+  assert(c1.gold === 300 && JSON.stringify(c1.mats) === '[["wood",1,12]]' && c1.secs === 10, `Workbench Lv 1: 12 Pine Log, 300 gold, 10 s (workbench-cost: was 20 logs, no gold; playtest-1 note 8: was 30 s) (${JSON.stringify(c1.mats)}, ${c1.gold} gold, ${c1.secs} s)`);
   assert(E('JSON.stringify(campCost("bench", 2))') === E('(() => { const f = hearthFirst; hearthFirst = () => null; try { return JSON.stringify(campCost("bench", 2)); } finally { hearthFirst = f; } })()'), 'Lv 2 keeps the old row');
-  E('S.mats.wood[0] = 20');
-  assert(E('campBuild("bench")') && E('S.mats.wood[0]') === 0, 'Workbench building');
+  E('S.mats.wood[0] = 12; S.gold = 299');
+  assert(!E('campBuild("bench")') && E('campCan("bench").why') === '1 more gold', 'the Workbench waits for its gold: ' + E('campCan("bench").why'));
+  E('S.gold = 300');
+  assert(E('campBuild("bench")') && E('S.mats.wood[0]') === 0 && E('S.gold') === 0 && E('S.econ.spent.camp') === 300, 'Workbench building (12 Pine Log and 300 gold paid, booked as camp spend)');
   tickS(g, 31);
   assert(E('campLevel("bench") === 1 && campList().includes("forge")'), 'Workbench built after 30 s; the Forge plot opens');
   E('S.mats.ore[0] = 4; S.mats.wood[0] = 4');
@@ -4686,12 +4688,15 @@ if (section('solo guide pause rules')) try {
   assert(build.every(s => steps.some(t => t.needs && t.id === 'stock:' + s.id)), 'each of them has a stock step that says what to gather');
   assert(steps.filter(s => s.id === 'nextup' || s.id === 'tab:party').every(s => !s.pause) && steps.find(s => s.id === 'nextup').ok, 'Next Up and the Hero tab hint never pause the game (Next Up is a Got it note)');
   // the guard: a paused step with an unmet material need does not pause; with the materials in hand it does
-  E('S.mats.wood[0] = 0; S.mats.ore[0] = 0');
+  E('S.mats.wood[0] = 0; S.mats.ore[0] = 0; S.gold = 360');
   const need0 = JSON.parse(E('JSON.stringify(onboardNeed("stock:bench"))'));
-  assert(need0.length === 1 && need0[0].name === 'Pine Log' && need0[0].n === 20 && need0[0].have === 0 && need0[0].kind === 'wood', `the Workbench step needs 20 Pine Log (${JSON.stringify(need0)})`);
-  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false && E('onboardPaused({ id: "attack", pause: 1 })') === true, 'the guard: the Workbench press step does not pause while 20 Pine Log are missing; a plain press step does pause');
-  E('S.mats.wood[0] = 20');
-  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === true && !E('onboardNeed("bench").length'), 'with 20 Pine Log in hand the Workbench press step pauses again');
+  assert(need0.length === 1 && need0[0].name === 'Pine Log' && need0[0].n === 12 && need0[0].have === 0 && need0[0].kind === 'wood', `the Workbench step needs 12 Pine Log (${JSON.stringify(need0)})`);
+  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false && E('onboardPaused({ id: "attack", pause: 1 })') === true, 'the guard: the Workbench press step does not pause while 12 Pine Log are missing; a plain press step does pause');
+  E('S.mats.wood[0] = 12; S.gold = 100');
+  const needG = JSON.parse(E('JSON.stringify(onboardNeed("stock:bench"))'));
+  assert(needG.length === 1 && needG[0].fam === 'gold' && needG[0].name === 'gold' && needG[0].n === 300 && needG[0].have === 100 && E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false, `short of the Workbench's gold the step says so and does not pause (${JSON.stringify(needG)})`);
+  E('S.gold = 360');
+  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === true && !E('onboardNeed("bench").length'), 'with 12 Pine Log and the gold in hand the Workbench press step pauses again');
   // first-gold-and-camp-strip: with the Forge up the guide's next job is the first weapon, and making one ends it
   E('soloPick("tobin"); S.camp.b.forge = 1; onboardReveal("craft"); onboardDone("forge")');
   assert(E('!!weaponKind() && weaponMats().length > 0 && !weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").when() && !GUIDE_STEPS.find(s => s.id === "weapon").done()'), 'the weapon step shows once the Forge is built and no weapon is made');
@@ -4720,8 +4725,8 @@ if (section('solo guide: gathering never freezes (browser)')) try {
       await page.goto('http://lf.test/'); await page.waitForTimeout(700);
       const X = s => page.evaluate(s => window.__t.x(s), s);
       await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
-      // the fight steps (Attack ... the first boss) are walked by the check above; here the first boss is down
-      await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.blade = 1; true');
+      // the fight steps (Attack ... the first boss) are walked by the check above; here the first boss is down (with the 360 gold zone 1 pays: the Workbench costs 300)
+      await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.blade = 1; S.gold = 360; true');
       await page.waitForTimeout(1300);
       const trail = [], waited = [];
       let built = false, frozen = '';
@@ -6551,7 +6556,7 @@ if (section('camp guide tracking (C2, browser)')) try {
           await page.goto('http://lf.test/');
           await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
           const X = s => page.evaluate(s => window.__t.x(s), s);
-          await X(`soloPickerOpen = () => true; S.mats.wood[0] = 100; hearthLight();
+          await X(`soloPickerOpen = () => true; S.mats.wood[0] = 100; S.gold = 1000; hearthLight();
             onboardUnlockAll(); onboardStep = () => GUIDE_STEPS.find(s => s.id === 'bench'); setTab('camp'); ui(true); true`);
           await page.waitForFunction(() => !!document.querySelector('#camp-b-bench .cb-quick'));
           // Native scroll, with enough space around the existing target to test both directions.
@@ -10407,8 +10412,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             // do the step through its own target
             const live = await X(`!!(onboardSpec(${JSON.stringify(st)}) || {}).live`);
             if (live) {
-              // a step that waits for materials: they come in (the gathering itself is checked at 360 px)
-              await X(`for (const m of onboardNeed(${JSON.stringify(st)})) S.mats[m.fam][m.t - 1] = Math.max(S.mats[m.fam][m.t - 1] || 0, m.n); true`);
+              // a step that waits for materials: they come in (the gathering itself is checked at 360 px); a build's gold row (the Workbench) comes from fights
+              await X(`for (const m of onboardNeed(${JSON.stringify(st)})) { if (m.fam === 'gold') S.gold = Math.max(S.gold, m.n); else S.mats[m.fam][m.t - 1] = Math.max(S.mats[m.fam][m.t - 1] || 0, m.n); } true`);
             } else if (!c.ok) await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
             else if (['attack', 'ability', 'dodge', 'parry'].includes(st)) await tapAt(page, c.px, c.py);
             else if (st === 'boss') await page.click('.ob-ok');

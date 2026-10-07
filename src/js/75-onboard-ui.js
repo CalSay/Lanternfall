@@ -77,8 +77,11 @@
     stars: "Stars are open on the Hero tab. Each one changes how you fight.",
     deep: "The Deepwell's open on the Fight tab. Pick a boon between floors."
   };
+  // defeat-card-guide-tip: a line that is not an unlock (check.mjs keeps SAY_TXT to systems). The first time a boss beats you, once the card is shut and the road is quiet.
+  const SAY_MORE = { defeat: 'That card showed what beat you. Each try shows one more of its moves.' };
+  const sayText = id => SAY_TXT[id] || SAY_MORE[id];
   const sayQ = []; let sayCur = '';
-  function sayQueue(id) { if (SAY_TXT[id] && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) sayQ.push(id); }
+  function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) sayQ.push(id); }
   const sayDone = id => { sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); };
   const TAB_FEATURE = { party: 'party', gather: 'gat', camp: 'world', craft: 'forge' };
   on('unlock', ({ id, quiet }) => {
@@ -90,6 +93,7 @@
     const ic = tab ? document.querySelector(`.tab[data-tab="${tab}"] img`) : null;
     toast(OPEN_TXT[id], 'good', ic ? ic.src : { ic: ['banner', '#F2C14E'] }, tab || id === 'nextup' ? 'high' : 'normal');
   });
+  on('wipe', e => { if (e && e.boss && !e.arena) sayQueue('defeat'); });
   on('menuView', ({ tab, view }) => {
     const o = O();
     if (!o.seen[tab]) o.seen[tab] = 1;
@@ -176,16 +180,19 @@
   const atGrove = () => target() === 'node' && S.node.kind === 'wood';
   const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
   // W1-A: a step that waits for materials shows live progress and never pauses the game.
-  // "Chop 20 Pine Log for the Workbench (12/20)". When the hero is not at the node that yields the
+  // "Chop 12 Pine Log for the Workbench (5/12)". When the hero is not at the node that yields the
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
   const VERB = { wood: 'Chop', ore: 'Mine' };
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
   const stockSpec = (id, what, tail) => {
     const need = onboardNeed(id); if (!need.length) return null;
     const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Win fights for' : 'Gather');
+    // workbench-cost: a build row's gold ("Win 200 more gold for the Workbench (100/300)."); fights pay it, so the hint points at the fight
     const text = need.length > 1
-      ? `Gather for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      ? `${need.some(m => m.fam === 'gold') ? 'Get ready' : 'Gather'} for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      : x.fam === 'gold' ? `Win ${x.n - x.have} more gold for ${what} (${x.have}/${x.n}).`
       : `${verb} ${x.n} ${x.name} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
+    if (x.fam === 'gold') return { text, live: 1, node: onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: onGame() ? [0.74, 0.62] : null, side: 'up' };
     const there = S.activity === 'gather' && x.kind && S.node.kind === x.kind && S.node.t === x.t;
     const spec = { text, live: 1 };
     if (there) {
@@ -286,7 +293,7 @@
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
     // unlock-voice: a new thing is announced when no fight is in view, and only when no tip is up
     // (it starts between fights and then stays up until read, so a quick next foe does not cut it short)
-    if (!step && sayQ.length && O().tips && !document.hidden && (sayCur === sayQ[0] || guidePhase(!guideMenuCovers()) === 'between')) { sayCur = sayQ[0]; step = { id: 'say:' + sayCur, text: SAY_TXT[sayCur] }; }
+    if (!step && sayQ.length && O().tips && !document.hidden && (sayCur === sayQ[0] || guidePhase(!guideMenuCovers()) === 'between')) { sayCur = sayQ[0]; step = { id: 'say:' + sayCur, text: sayText(sayCur) }; }
     // no guide step: the system on screen may still owe its first-use line (never alongside a guide step)
     if (!step && S.tab) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
