@@ -2458,7 +2458,8 @@ function storyProblems(B, ctx) {
     lines(`npc ${id}`, n.lines, 1, 4, L.speech);
   }
   for (const [id, v] of Object.entries(B.voice)) { if (!(v.zone >= 1)) P.push(`voice ${id}: a zone`); lines(`voice ${id}`, v.lines, 1, 6, L.line); }
-  for (const [id, h] of Object.entries(B.hero)) for (const k of ['wren', 'tobin', 'pip', '_']) if (!str(h[k], L.line)) P.push(`hero line ${id}: a ${k === '_' ? 'shared (_)' : k} line under ${L.line} characters`);
+  // hero-voice barks (v_*) have no shared line: a hero with none stays silent
+  for (const [id, h] of Object.entries(B.hero)) for (const k of ['wren', 'tobin', 'pip', '_']) if (!(k === '_' && id.startsWith('v_') && h._ === undefined) && !str(h[k], L.line)) P.push(`hero line ${id}: a ${k === '_' ? 'shared (_)' : k} line under ${L.line} characters`);
   for (const [id, c] of Object.entries(B.choice)) {
     const ids = (c.options || []).map(o => o.id);
     if (!str(c.prompt, L.line) || ids.length < 2 || ids.length > 4 || !(c.options || []).every(o => str(o.label, L.title) && (!o.line || str(o.line, L.speech)))) P.push(`choice ${id}: a prompt and 2 to 4 named options`);
