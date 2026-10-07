@@ -8,15 +8,15 @@
   },
   "metrics": {
     "casual.firstGoalSec": {
-      "value": 58.47,
+      "value": 72.67,
       "bad": "up",
       "abs": 10,
       "rel": 0.2,
       "note": "seconds of play to the first zone boss win",
       "perHero": {
-        "wren": 56,
-        "tobin": 65,
-        "pip": 54.4
+        "wren": 68,
+        "tobin": 76,
+        "pip": 74
       }
     },
     "casual.longestDrySec": {
@@ -68,15 +68,15 @@
       }
     },
     "active.firstGoalSec": {
-      "value": 55.4,
+      "value": 71.67,
       "bad": "up",
       "abs": 18,
       "rel": 0,
       "note": "seconds to the first zone boss win",
       "perHero": {
-        "wren": 51.8,
-        "tobin": 63.6,
-        "pip": 50.8
+        "wren": 71,
+        "tobin": 72,
+        "pip": 72
       }
     },
     "active.firstRewardSec": {
@@ -224,15 +224,15 @@
       }
     },
     "optimiser.zoneAt1h": {
-      "value": 14.07,
+      "value": 12,
       "bad": "both",
       "abs": 1.8,
       "rel": 0,
       "note": "zone after the first hour",
       "perHero": {
-        "wren": 14,
-        "tobin": 14,
-        "pip": 14.2
+        "wren": 13,
+        "tobin": 10,
+        "pip": 13
       }
     },
     "optimiser.zonePerHour": {
