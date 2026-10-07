@@ -149,7 +149,7 @@ let campPaintFire = null;
   // ---- words: the opening card (the stage hint is 70-ui's: 'Tap to work faster') ----
   const opening = () => {
     if (!cold() || lit()) return;
-    toast('Old Hesketh\'s fire is cold. Bring 8 pine logs and light it.', 'good', { mat: ['wood', 1] }, 'high');
+    toast('Old Hesketh\'s fire is cold. Chop 8 Pine Log and light it for him.', 'good', { mat: ['wood', 1] }, 'high');
   };
   // The hero starts on the road; Hesketh speaks when it first walks to the grove (after the first boss)
   on('activity', ({ activity } = {}) => { if (activity === 'gather') opening(); });

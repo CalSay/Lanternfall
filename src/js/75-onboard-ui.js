@@ -62,23 +62,23 @@
   // The toast above still goes to the bell list. One line per row; Next Up (its guide step), the away strip (its own line) and
   // Hands (Tam's notice) say it elsewhere. Runtime queue only: an old save never replays one, and what a save already had stays quiet.
   const SAY_TXT = {
-    party: "The Hero tab's open. Your gear, level and build live there.",
+    party: "The Hero tab is open now. Your level, points and moves are kept there.",
     gather: "Wood first. Gather's open, and the hero works even while you're away.",
-    bounties: 'Bounties are posted on the Fight tab. Three goals, and they pay well.',
-    camp: "That's a camp. The Camp tab is open. Build here.",
-    forage: "Foraging's open under Gather. Fibre and herbs, mostly.",
-    craft: "Craft's open. Materials in, gear out.",
-    bestiary: "The Bestiary's open. It remembers every foe you've met.",
-    almanac: "The Almanac's open in Camp. It knows today's omen.",
-    uniques: "Uniques are open in Craft. Rare gear, strong tricks.",
-    tavern: "The Tavern's open in Camp. Other heroes drink there.",
-    codex: "The Codex is open in the Journal. It keeps what you've found.",
-    raid: "The World raid's open in Camp. One boss, every player.",
-    stars: "Stars are open on the Hero tab. Each one changes how you fight.",
-    deep: "The Deepwell's open on the Fight tab. Pick a boon between floors."
+    bounties: "Folk have posted bounties on the Fight tab. They pay well for small jobs.",
+    camp: "There. That's a camp. Build on it from the Camp tab.",
+    forage: "You can forage now, under Gather. You'll mostly find fibre and herbs.",
+    craft: 'You can make your own gear now. Craft is open.',
+    bestiary: "The Bestiary is open on the Fight tab. It remembers every foe you've met.",
+    almanac: "There's an Almanac at camp now. It tells you today's Omen.",
+    uniques: 'Bosses sometimes drop rare gear. Craft keeps it, under Uniques.',
+    tavern: "There's a Tavern at camp now. Folk on the road stop in there.",
+    codex: "You've a Codex now, in the Journal. It keeps track of what you've found.",
+    raid: 'The World raid is open at camp. Every player fights the same boss there.',
+    stars: "You've earned Stars. They're on the Hero tab, and each one changes how you fight.",
+    deep: 'The Deepwell is open on the Fight tab. You pick a boon between its floors.'
   };
   // defeat-card-guide-tip: a line that is not an unlock (check.mjs keeps SAY_TXT to systems). The first time a boss beats you, once the card is shut and the road is quiet.
-  const SAY_MORE = { defeat: 'That card showed what beat you. Each try shows one more of its moves.' };
+  const SAY_MORE = { defeat: 'No shame in that. The card showed what beat you, and each try shows one more of its moves.' };
   const sayText = id => SAY_TXT[id] || SAY_MORE[id];
   const sayQ = []; let sayCur = '';
   function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) sayQ.push(id); }
@@ -186,11 +186,11 @@
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
   const stockSpec = (id, what, tail) => {
     const need = onboardNeed(id); if (!need.length) return null;
-    const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Win fights for' : 'Gather');
+    const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Fight for' : 'Gather');
     // workbench-cost: a build row's gold ("Win 200 more gold for the Workbench (100/300)."); fights pay it, so the hint points at the fight
     const text = need.length > 1
-      ? `${need.some(m => m.fam === 'gold') ? 'Get ready' : 'Gather'} for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
-      : x.fam === 'gold' ? `Win ${x.n - x.have} more gold for ${what} (${x.have}/${x.n}).`
+      ? `You still need these for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      : x.fam === 'gold' ? `Win ${x.n - x.have} more gold in fights for ${what} (${x.have}/${x.n}).`
       : `${verb} ${x.n} ${x.name} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
     if (x.fam === 'gold') return { text, live: 1, node: onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: onGame() ? [0.74, 0.62] : null, side: 'up' };
     const there = S.activity === 'gather' && x.kind && S.node.kind === x.kind && S.node.t === x.t;
@@ -233,25 +233,25 @@
   };
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
-    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree. It goes faster.') : null,
-    back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: 'Done here? Close the menu and the fight goes on.', go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
-    'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is in your bag. A tool only works when you wear it.`),
-    'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is in your bag. Put it on to fight with it.`),
+    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree yourself and it goes faster.') : null,
+    back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: "When you're done here, close the menu and the fight goes on.", go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
+    'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is still in your bag. A tool only helps once you wear it.`),
+    'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is still in your bag. Put it on and fight with it.`),
     'stock:bench': () => stockSpec('stock:bench', 'the Workbench'),
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
     'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
     'stock:weapon': () => stockSpec('stock:weapon', 'your first weapon'),
     light: () => {
-      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire. Light it.' } : null;
+      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire to light it.' } : null;
       const f = $('hearthFire');
-      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Tap the fire. Let's have some light." };
-      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather. Pine Log burns well.' };
+      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Tap the fire and light it. I've missed the warmth." };
+      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, and then you can light the fire.' : 'Tap Gather and chop some Pine Log. It burns well.' };
       return null;
     },
-    bench: () => campPath('bench', ["The fire's burning. Open Camp and build.", 'Open Camp.', 'Build a Workbench. Tools start there.']),
+    bench: () => campPath('bench', ["The fire's burning now. Open Camp and we'll build.", 'Open Camp.', "Build a Workbench. That's where your tools are made."]),
     tool: () => {
-      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: "The Workbench is up. Open Craft." };
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is up. Open Craft and make your first tool.' };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="bench"]');
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
@@ -259,27 +259,27 @@
       const t1 = q('#sec-craft-recipes .cf-tiers button[data-t="1"]');
       if (t1 && t1.getAttribute('aria-pressed') !== 'true') return { node: t1, text: 'Tap Tier 1.' };
       // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
-      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll want it." };
+      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll need one for the ore." };
     },
-    forge: () => campPath('forge', ['Open Camp. The Forge makes weapons.', 'Open Camp.', 'Build the Forge. Then you can make a weapon.']),
+    forge: () => campPath('forge', ["You'll want a weapon of your own. Open Camp.", 'Open Camp.', "Build the Forge. That's where weapons are made."]),
     // first-gold-and-camp-strip: the materials are in hand; tick() has opened Craft on the weapon (once a visit), and this tip rings the button
     weapon: () => {
       const k = weaponKind(); if (!k) return null;
-      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'Your first weapon is ready to make. Open Craft.' };
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'You have enough for your first weapon. Open Craft.' };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="' + CRAFT_KINDS[k].st + '"]');
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
-      return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon. Then put it on.' };
+      return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon, then put it on.' };
     },
     // Cal's play note 15: only say the packs are near full when they are (the Storehouse plot also opens once the Forge is built)
-    store: () => { const full = typeof hearthNearFull === 'function' && hearthNearFull(); return campPath('store', full ? ['Packs are near full. Open Camp.', 'Open Camp.', 'Packs are near full. Build a Storehouse.'] : ['The Forge is up. Open Camp.', 'Open Camp.', 'Build a Storehouse. It holds more.']); },
+    store: () => { const full = typeof hearthNearFull === 'function' && hearthNearFull(); return campPath('store', full ? ['Your packs are nearly full. Open Camp.', 'Open Camp.', 'Your packs are nearly full. Build a Storehouse to hold the rest.'] : ["The Forge is up. Open Camp. There's one more to build.", 'Open Camp.', "Build a Storehouse. It holds what your packs can't."]); },
     // Training: Hero tab, Training view, Train on Attack.
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
       ? path('party', 'attributes', '#attrRows .at-row[data-at="might"] .at-add[data-n="1"]',
-        ["You've a point to spend. Open Hero.", 'Open Build.', "Put it in Might. You'll hit harder."])
+        ["You've earned a point to spend. Open Hero.", 'Open Build.', 'Put your point in Might. It makes you hit harder.'])
       : path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
-        ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' }),
+        ["You've gold to spend. Open Hero and train.", 'Open Training.', 'Train Attack. Each level makes you hit harder.']), { side: S.tab === 'party' ? 'up' : '' }),
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Tap it and see what you can mine." },
     'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Tap Camp and build." },
     'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Tap it and make gear." },
