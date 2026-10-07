@@ -27,6 +27,7 @@ import http from 'node:http';
 import path from 'node:path';
 import readline from 'node:readline';
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { ROOT } from './lib/core.mjs';
 
 const argv = process.argv.slice(2);
@@ -82,6 +83,7 @@ class Game {
   }
   async open() {
     this.p = spawn(process.execPath, this.args, { stdio: ['pipe', 'pipe', 'inherit'] });
+    this.p.stdin.on('error', () => {});   // a write after the driver died must not crash the tool: send() reports it
     this.lines = readline.createInterface({ input: this.p.stdout })[Symbol.asyncIterator]();
     await this.send('new fresh'); this.secs += 1.5;   // the driver boots the page for 1.5 s
   }
@@ -99,7 +101,12 @@ class Game {
   async look() { return this.send('look'); }
   async tap(label) { const r = await this.send(`tap "${label.replace(/"/g, '')}"`); if (r.ok) this.secs += 0.5; return r; }
   async scroll(dir) { this.secs += 0.3; return this.send(`scroll ${dir}`); }
-  async close() { try { this.p.stdin.end(); await new Promise(r => this.p.once('exit', r)); } catch (e) { /* already gone */ } }
+  async close() {
+    if (!this.p || this.p.exitCode !== null || this.p.signalCode) return;   // already gone: 'exit' will not fire again
+    const gone = new Promise(r => this.p.once('exit', r)); this.p.stdin.end();
+    await Promise.race([gone, new Promise(r => setTimeout(r, 20000))]);
+    if (this.p.exitCode === null && !this.p.signalCode) this.p.kill();
+  }
 }
 
 // ---------------- what the player is told each turn ----------------
@@ -172,7 +179,7 @@ class Run {
       let now = await g.look();
       const gone = before.lines.filter(l => sentence(l) && !now.lines.includes(l)), came = now.lines.filter(l => sentence(l) && !before.lines.includes(l));
       if (gone.length || came.length) { told.push(`While you read (${rs.toFixed(1)} s), the screen changed.${gone.length ? ' Gone: ' + gone.slice(0, 6).map(l => `"${l}"`).join(' ') : ''}${came.length ? ' New: ' + came.slice(0, 6).map(l => `"${l}"`).join(' ') : ''}`); rec.changedWhileReading = { gone, came }; }
-      if (!hasButton(now, a.label)) { told.push(`[${a.label}] is not there any more, so you did not tap.`); rec.tap = 'gone'; }
+      if (!hasButton(now, a.label)) { const was = hasButton(before, a.label); told.push(was ? `[${a.label}] is not there any more, so you did not tap.` : `There is no [${a.label}] button, so you did not tap.`); rec.tap = was ? 'gone' : 'no such button'; }
       else for (let i = 0; i < a.times; i++) {
         const r = await g.tap(a.label); gather(r);
         rec.tap = (rec.tap ? rec.tap + '; ' : '') + (r.msg || ''); if (!r.ok) { told.push(r.msg); break; }
@@ -185,7 +192,7 @@ class Run {
     const after = await g.look(); gather(after);
     // Stuck detector: the same action on the same screen 3 times running, with the screen not changing, is a confusion note.
     const key = action.trim().toLowerCase() + '|' + before.lines.join('\n');
-    this.same = key === this.lastKey ? this.same + 1 : 1; this.lastKey = key;
+    this.same = (a.kind === 'tap' || a.kind === 'scroll') && key === this.lastKey ? this.same + 1 : 1; this.lastKey = key;   // waiting on a still screen is not being stuck
     if (a.kind === 'tap' && after.lines.join('\n') === before.lines.join('\n')) told.push('Nothing on screen seemed to change.');
     if (this.same === 3) { const n = this.note(`Stuck (noted by the tester tool): "${action}" three times on the same screen and nothing changed.`); rec.stuckNote = n; }
     if (this.errors.length > errorsBefore) rec.pageErrors = this.errors.slice(errorsBefore);
@@ -198,7 +205,7 @@ class Run {
   finish(extra) {
     const run = {
       ...this.meta, endedAt: new Date().toISOString(), steps: this.step, gameMinutes: +(this.game.secs / 60).toFixed(1),
-      notes: this.noteN, stopReason: this.stopped || extra.stopReason || 'stopped by the player', caps: CAPS, pageErrors: this.errors.slice(0, 20), ...extra, prompt: BRIEF
+      notes: this.noteN, caps: CAPS, pageErrors: this.errors.slice(0, 20), ...extra, stopReason: this.stopped || extra.stopReason || 'stopped by the player', prompt: BRIEF
     };
     fs.writeFileSync(F.run, JSON.stringify(run, null, 1));
     return run;
@@ -215,15 +222,23 @@ const TOOL = {
   } }
 };
 async function callModel(model, effort, messages) {
-  const res = await fetch((process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com') + '/v1/messages', {
+  // Rate limits, overloads and network drops are retried with backoff; a 4xx other than 429 is a real error.
+  for (let tryN = 1; ; tryN++) {
+    let res, body;
+    try { res = await post(model, effort, messages); body = await res.json().catch(() => ({ error: 'not JSON' })); }
+    catch (e) { if (tryN < 4) { await new Promise(r => setTimeout(r, 2000 * 2 ** tryN)); continue; } throw e; }
+    if (res.ok) return body;
+    if ((res.status === 429 || res.status >= 500) && tryN < 4) { await new Promise(r => setTimeout(r, 2000 * 2 ** tryN)); continue; }
+    throw new Error(`Messages API ${res.status}: ${JSON.stringify(body).slice(0, 300)}`);
+  }
+}
+function post(model, effort, messages) {
+  return fetch((process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com') + '/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model, max_tokens: 16000, system: BRIEF, tools: [TOOL], tool_choice: { type: 'auto' },
+    body: JSON.stringify({ model, max_tokens: 16000, system: BRIEF, tools: [TOOL], tool_choice: { type: 'auto', disable_parallel_tool_use: true },
       thinking: { type: 'adaptive' }, output_config: { effort }, cache_control: { type: 'ephemeral' }, messages })
   });
-  const body = await res.json();
-  if (!res.ok) throw new Error(`Messages API ${res.status}: ${JSON.stringify(body).slice(0, 300)}`);
-  return body;
 }
 function userTurn(text, shot) {
   const content = [];
@@ -231,43 +246,59 @@ function userTurn(text, shot) {
   content.push({ type: 'text', text });
   return content;
 }
+// The API caps images per request, so every TURNS_PER_CHAT actions the player goes on in a fresh conversation that carries
+// its notes so far and its last actions (each conversation only grows, so its cache and thinking stay valid).
+const TURNS_PER_CHAT = 40;
+function carryOver(run) {
+  const notes = fs.readFileSync(F.notes, 'utf8').split('\n').filter(l => /^\d+\. /.test(l)).map(l => l.replace(/ _\(after step.*\)_$/, ''));
+  const recent = fs.readFileSync(F.steps, 'utf8').trim().split('\n').slice(-12).map(l => { const r = JSON.parse(l); return `- ${r.action}${r.why ? ` (${r.why})` : ''}`; });
+  return `You are part way through playing (${run.status()}). Your notes so far:\n${notes.join('\n') || '(none)'}\n\nYour last actions:\n${recent.join('\n')}\n\nCarry on playing and noting. The screen now:`;
+}
 async function runMode() {
   const dry = flag('dry'), model = opt('model', 'claude-opus-5-5'), effort = opt('effort', 'high');
   if (!dry && !process.env.ANTHROPIC_API_KEY) die('no ANTHROPIC_API_KEY: use start / act / stop with a Claude Code worker as the player (see the top of this file)');
+  if (!dry && !PRICES[model]) die(`no price for ${model}, so the cost cap cannot work: add it to PRICES`);
   const meta = { mode: dry ? 'dry' : 'api', model: dry ? null : model, effort: dry ? null : effort, seed: numOpt('seed', 1), html: opt('html', 'dist/lanternfall.html'), startedAt: new Date().toISOString() };
   const run = new Run(meta), game = new Game({ html: opt('html'), seed: meta.seed, landscape: flag('landscape') });
   const tokens = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
-  let screen = await run.begin(game), stopReason = null;
-  const messages = [{ role: 'user', content: userTurn('The game has just opened.\n\n' + screenText(screen, { withShot: false }) + '\n\n' + run.status(), screen.screenshot) }];
+  let stopReason = null, error = null, wasted = 0;
   try {
+    let screen = await run.begin(game);
+    let messages = [{ role: 'user', content: userTurn('The game has just opened.\n\n' + screenText(screen, { withShot: false }) + '\n\n' + run.status(), screen.screenshot) }], turns = 0;
     for (;;) {
-      let action, why, notes;
-      if (dry) { const b = screen.buttons.find(x => !x.disabled); action = b ? `tap ${b.label}` : 'wait 5'; why = 'dry run'; notes = []; }
-      else {
-        const r = await callModel(model, effort, messages);
-        const u = r.usage || {}; tokens.input += u.input_tokens || 0; tokens.output += u.output_tokens || 0;
-        tokens.cacheRead += u.cache_read_input_tokens || 0; tokens.cacheWrite += u.cache_creation_input_tokens || 0;
-        messages.push({ role: 'assistant', content: r.content });
-        if (r.stop_reason === 'refusal') { stopReason = 'model refused'; break; }
-        const use = r.content.find(b => b.type === 'tool_use');
-        if (!use) { messages.push({ role: 'user', content: [{ type: 'text', text: 'Use the act tool to do one thing.' }] }); continue; }
-        ({ action, why, notes } = use.input);
-        const out = await run.act(action, why, notes || []);
-        messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: use.id, content: userTurn(out.text, out.screen && out.screen.screenshot) }] });
-        const usd = usdOf(model, tokens);
-        if (usd !== null && usd >= CAPS.usd) { stopReason = `cost cap ($${CAPS.usd})`; break; }
+      if (wasted >= 5) { stopReason = 'five turns in a row with no usable action'; break; }
+      if (dry) {
+        const b = screen.buttons.find(x => !x.disabled);
+        const out = await run.act(b ? `tap ${b.label}` : 'wait 5', 'dry run', []); screen = out.screen || screen;
         if (out.over) { stopReason = run.stopped; break; }
-        screen = out.screen || screen;
-        if (run.step % 10 === 0) console.log(`step ${run.step}, ${run.clock()} played, ${run.noteN} notes, $${usd}`);
         continue;
       }
-      const out = await run.act(action, why, notes); screen = out.screen || screen;
-      if (out.over) { stopReason = run.stopped; break; }
+      const r = await callModel(model, effort, messages);
+      const u = r.usage || {}; tokens.input += u.input_tokens || 0; tokens.output += u.output_tokens || 0;
+      tokens.cacheRead += u.cache_read_input_tokens || 0; tokens.cacheWrite += u.cache_creation_input_tokens || 0;
+      const usd = usdOf(model, tokens);
+      messages.push({ role: 'assistant', content: r.content });
+      if (r.stop_reason === 'refusal') { stopReason = 'model refused'; break; }
+      const use = r.content.find(b => b.type === 'tool_use');
+      if (!use) { wasted++; messages.push({ role: 'user', content: [{ type: 'text', text: 'Use the act tool to do one thing.' }] }); }
+      else {
+        const { action, why, notes } = use.input;
+        const out = await run.act(action, why, notes || []);
+        wasted = out.screen ? 0 : wasted + 1;   // an action the tool could not read leaves the screen as it was
+        screen = out.screen || screen;
+        if (out.over) { stopReason = run.stopped; break; }
+        if (++turns >= TURNS_PER_CHAT) { messages = [{ role: 'user', content: userTurn(carryOver(run) + '\n\n' + screenText(screen, { withShot: false }), screen.screenshot) }]; turns = 0; }
+        else messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: use.id, content: userTurn(out.text, out.screen && out.screen.screenshot) }] });
+        if (run.step % 10 === 0) console.log(`step ${run.step}, ${run.clock()} played, ${run.noteN} notes, $${usd}`);
+      }
+      if (usd >= CAPS.usd) { stopReason = `cost cap ($${CAPS.usd})`; break; }
     }
-  } finally {
-    const r = run.finish({ stopReason, tokens, usd: dry ? 0 : usdOf(model, tokens) });
+  } catch (e) { error = String(e && e.message || e); stopReason = 'error'; }
+  finally {
+    const r = run.finish({ stopReason, error, tokens, usd: dry ? 0 : usdOf(model, tokens) });
     await game.close();
-    console.log(`done: ${r.steps} steps, ${r.gameMinutes} game minutes, ${r.notes} notes, ${r.stopReason}. tokens in ${tokens.input} (+${tokens.cacheRead} cached, ${tokens.cacheWrite} cache writes), out ${tokens.output}; $${r.usd}. ${OUT}`);
+    console.log(`done: ${r.steps} steps, ${r.gameMinutes} game minutes, ${r.notes} notes, ${r.stopReason}${error ? ': ' + error : ''}. tokens in ${tokens.input} (+${tokens.cacheRead} cached, ${tokens.cacheWrite} cache writes), out ${tokens.output}; $${r.usd}. ${OUT}`);
+    if (error) process.exitCode = 1;
   }
 }
 
@@ -276,19 +307,27 @@ async function serve() {
   const meta = { mode: 'agent', seed: numOpt('seed', 1), html: opt('html', 'dist/lanternfall.html'), startedAt: new Date().toISOString() };
   const run = new Run(meta), game = new Game({ html: opt('html'), seed: meta.seed, landscape: flag('landscape') });
   const first = await run.begin(game);
-  let queue = Promise.resolve();   // one action at a time
+  let queue = Promise.resolve(), idle = null;   // one action at a time
+  // A worker that never calls stop would leave Chromium running: 45 idle minutes end the run as if it had.
+  const touch = () => { clearTimeout(idle); idle = setTimeout(() => { queue = queue.then(() => shutDown({ stopReason: 'no command for 45 minutes' })).then(() => process.exit(0)); }, 45 * 60e3); };
+  async function shutDown(q) {
+    clearTimeout(idle);
+    const t = q.tokens || null, r = run.finish({ model: q.model || null, tokens: t, usd: q.usd ?? (t && q.model ? usdOf(q.model, t) : null), stopReason: run.stopped || q.stopReason || 'stopped by the player' });
+    await game.close(); srv.close(); fs.rmSync(F.server, { force: true });
+    return `done: ${r.steps} steps, ${r.gameMinutes} game minutes, ${r.notes} notes, ${r.stopReason}; $${r.usd}. ${OUT}`;
+  }
+  touch();
   const srv = http.createServer((req, res) => {
-    let body = ''; req.on('data', d => { body += d; });
+    let body = ''; req.on('data', d => { body += d; }); touch();
     req.on('end', () => { queue = queue.then(async () => {
-      const q = body ? JSON.parse(body) : {}; let out;
+      let out;
       try {
+        const q = body ? JSON.parse(body) : {};
         if (req.url === '/first') out = { text: 'The game has just opened.\n\n' + screenText(first, { withShot: true }) + '\n\n' + run.status() };
         else if (req.url === '/act') out = await run.act(q.action, q.why, q.notes || []);
         else if (req.url === '/note') out = { text: `note ${run.note(q.note)} written.` };
         else if (req.url === '/stop') {
-          const t = q.tokens || null, r = run.finish({ model: q.model || null, tokens: t, usd: q.usd ?? (t && q.model ? usdOf(q.model, t) : null), stopReason: run.stopped || 'stopped by the player' });
-          out = { text: `done: ${r.steps} steps, ${r.gameMinutes} game minutes, ${r.notes} notes, ${r.stopReason}; $${r.usd}. ${OUT}` };
-          res.end(JSON.stringify(out)); await game.close(); srv.close(); fs.rmSync(F.server, { force: true }); return;
+          out = { text: await shutDown(q) }; res.end(JSON.stringify(out), () => process.exit(0)); return;
         } else out = { text: 'unknown request' };
       } catch (e) { out = { text: 'error: ' + (e && e.message || e) }; }
       res.end(JSON.stringify(out));
@@ -303,12 +342,17 @@ async function ask(url, body) {
   return (await r.json()).text;
 }
 async function start() {
-  if (fs.existsSync(F.server)) die(`a game is already running for ${OUT} (stop it first)`);
+  if (fs.existsSync(F.server)) {
+    const { pid } = JSON.parse(fs.readFileSync(F.server, 'utf8'));
+    let alive = true; try { process.kill(pid, 0); } catch (e) { alive = false; }
+    if (alive) die(`a game is already running for ${OUT} (stop it first)`);
+    fs.rmSync(F.server, { force: true });   // left by a game that crashed
+  }
   fs.mkdirSync(OUT, { recursive: true });
   const log = fs.openSync(path.join(OUT, 'server.log'), 'a');
-  const child = spawn(process.execPath, [new URL(import.meta.url).pathname, '__serve', ...argv.slice(1)], { detached: true, stdio: ['ignore', log, log] });
-  child.unref();
-  for (let i = 0; i < 240 && !fs.existsSync(F.server); i++) await new Promise(r => setTimeout(r, 250));
+  const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '__serve', ...argv.slice(1)], { detached: true, stdio: ['ignore', log, log] });
+  let died = false; child.on('exit', () => { died = true; }); child.unref();
+  for (let i = 0; i < 240 && !died && !fs.existsSync(F.server); i++) await new Promise(r => setTimeout(r, 250));
   if (!fs.existsSync(F.server)) die(`the game did not open; see ${path.join(OUT, 'server.log')}`);
   console.log(BRIEF + '\n\n----\n' + await ask('/first'));
 }
