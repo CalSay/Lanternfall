@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   plan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     outputs:
       go: ${{ steps.p.outputs.go }}
@@ -57,7 +57,7 @@ jobs:
   walk:
     needs: plan
     if: needs.plan.outputs.go == 'true' && needs.plan.outputs.seeds != '[]' && needs.plan.outputs.sizes != '[]'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -73,11 +73,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Runner image (part of the Playwright cache key)
+        id: image
+        run: echo "os=$ImageOS" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browser
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ steps.image.outputs.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
       - run: node tools/build.mjs
       # The report, the shots and a minute-N save snapshot (for the panel's second leg) go in the artifact.
