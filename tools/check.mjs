@@ -44,6 +44,9 @@ function loadCore(opts) {
 }
 
 let failed = 0;
+// forge-line-while-fighting: the browser guide walks answer a held line with its button, and a held materials line (say:stock:*) with ×: its
+// button is a Go that would send the hero gathering
+const SAY_ANSWER = 'String(soloGuideWants() || "").startsWith("say:stock:") ? ".ob-x" : ".ob-ok"';
 const browserTools = findBrowser();
 // C29: the shipped page fights in turns. Browser sections written for the real-time fight get it back through a test key the
 // page reads at boot (75-turn-ui); a section that wants the shipped turn fight asks with newContext({ turns: true, ... }).
@@ -5175,7 +5178,7 @@ if (section('solo guide: gathering never freezes (browser)')) try {
       for (let i = 0; i < 400 && !built; i++) {
         const info = JSON.parse(await X('(() => { const s = onboardStep(), b = document.querySelector(".ob-bub"); return JSON.stringify({ id: s ? s.id : "", paused: ONBOARD.paused, need: s ? onboardNeed(s.id).length : 0, hasNeeds: !!(s && s.needs), t: S.onboard.t }); })()'));
         // cal-0107-staged-guide: an unlock line from Hesketh holds the game with a Got it; read it and press Got it, as a player does
-        if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click('.ob-ok'); await page.waitForTimeout(300); continue; }
+        if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click(await X(SAY_ANSWER)); await page.waitForTimeout(300); continue; }
         if (!info.id) { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); await page.waitForTimeout(280); built = await isBuilt(); continue; }
         if (!trail.includes(info.id)) trail.push(info.id);
         if (info.hasNeeds || info.need) {
@@ -5268,7 +5271,7 @@ if (section('solo hero (browser)')) try {
       const seen = [];
       for (let i = 0; i < 80 && (seen.length < 6 || !['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x))); i++) {
         // a Hesketh line (the boss's scroll) holds the game with a Got it ahead of the step: read it and press Got it, as a player does
-        if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click('.ob-ok'); await page.waitForTimeout(300); continue; }
+        if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click(await X(SAY_ANSWER)); await page.waitForTimeout(300); continue; }
         const st = await X('(s => s ? s.id : "")(onboardStep())');
         if (!st) { await X('for (let k = 0; k < 20; k++) tick(0.1); true'); await page.waitForTimeout(300); continue; }
         await page.waitForTimeout(400);
@@ -5782,7 +5785,7 @@ if (section('notices (browser, W1-B)')) try {
           try {
             if (st === 'attack') soloAttack(); else if (st === 'ability') soloAbility({ slot: 0 });
             else if (st === 'dodge') soloDodge(true); else if (st === 'parry') soloParry(true);
-            else if (st && document.querySelector('.ob-ok') && !document.querySelector('.ob-ok').hidden) document.querySelector('.ob-ok').click();
+            else if (st && document.querySelector('.ob-ok') && !document.querySelector('.ob-ok').hidden) document.querySelector(String(soloGuideWants() || '').startsWith('say:stock:') ? '.ob-x' : '.ob-ok').click();   // forge-line-while-fighting: × on a held materials line
             else if (st && !/^stock:|^chop$/.test(st)) { const sp = onboardSpec(st); if (sp && sp.node) sp.node.click(); }
           } catch (e) {}
           if (S.tab && !st) closeMenu();
@@ -11893,7 +11896,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           for (let i = 0; i < 320 && !want.every(walked); i++) {
             iters = i + 1;
             // cal-0107-staged-guide: an unlock line from Hesketh holds the game with a Got it (no ring); the walk reads it and presses Got it
-            if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click('.ob-ok'); await page.waitForTimeout(200); continue; }
+            if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click(await X(SAY_ANSWER)); await page.waitForTimeout(200); continue; }
             const st = await X('(s => s ? s.id : "")(onboardStep())');
             if (!toolGiven && !trail.includes('tool')) toolGiven = await X('!!S.onboard.done.tool && S.items.some(it => it.u && CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool)');
             if (!st) {
@@ -11924,7 +11927,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             // places itself every 250 ms: look again until it is right, and report what it still is after 3 s (a real miss never gets there)
             for (let w8 = 0, max = seen.has(key) ? 2 : 15; !c.ok && w8 < max; w8++) {
               // an unlock line that arrived meanwhile (Craft opens with the Workbench) holds the game with a Got it: press it, then look again
-              if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) await page.click('.ob-ok');
+              if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) await page.click(await X(SAY_ANSWER));
               await page.waitForTimeout(200); c = await X(TARGET(st));
             }
             // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk
@@ -13478,6 +13481,136 @@ if (section('forge-tip-goes-stale')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('forge-tip-goes-stale crashed: ' + (e.stack || e)); }
+
+// ==== forge-line-while-fighting: a fighter is told what the Forge needs (judge ruling 2026-10-08, DECISIONS.md) ====
+// save-forge-short (see forge-tip-goes-stale): Wren fighting at zone 3, step stock:forge, Copper Ore 0, Pine Log 2. Part 1: on a wide view the live line
+// shows on Camp and Gather beside the fight, steady, with no button and no pause. Part 2: a fighter with no menu open hears one held line for the
+// step in a kill gap (never in the first minute after boot), answered by × or its Go, never twice, never over a menu.
+if (section('forge-line-while-fighting')) try {
+  const at = 'forge-line-while-fighting', raw0 = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-forge-short.json'), 'utf8');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, edit) => {
+      const mobile = !(w === 1280 && h === 720), o = JSON.parse(raw0); if (edit) edit(o);
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce' });
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: JSON.stringify(o), key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // (each kill puts the zone back to its first fight, so no zone boss, its Scroll or its line cuts in)
+      await X('S.activity = "fight"; window.__kills = 0; on("kill", () => { window.__kills++; S.kills = 0; }); true');
+      return { ctx, page, errs, X };
+    };
+    // what is on screen now: the step the panel shows, its text and box, its buttons, the hold, the fight buttons, a live foe
+    const LOOK = `JSON.stringify((() => { const b = document.querySelector('.ob-bub'), up = !!b && !b.hidden, ok = document.querySelector('.ob-ok'), r = up ? b.getBoundingClientRect() : null, bar = document.querySelector('#soloBar');
+      return { want: soloGuideWants(), up, txt: up ? b.querySelector('.ob-txt').textContent : '', box: r ? [r.left, r.top, r.width, r.height].map(Math.round).join(',') : '', side: up && b.classList.contains('side'),
+        ok: up && !!ok && !ok.hidden ? ok.textContent : '', paused: ONBOARD.paused, bar: !!bar && bar.offsetParent !== null && getComputedStyle(bar).visibility !== 'hidden' && [...bar.querySelectorAll('button')].some(n => getComputedStyle(n).visibility !== 'hidden'),
+        foe: liveFoe(), hero: cbHeroUp(), kills: window.__kills, t: GUIDE_RT.t, saidKey: !!S.onboard.done['say:stock:forge'], tab: S.tab }; })())`;
+    const look = async X => JSON.parse(await X(LOOK));
+    const until = async (X, page, f, ms) => { let s = await look(X); for (const t0 = Date.now(); !f(s) && Date.now() - t0 < ms;) { await page.waitForTimeout(150); s = await look(X); } return s; };
+    // a line that must not come: watch through at least one more kill gap (the gap is where it would come)
+    const none = async (X, page) => { const k0 = (await look(X)).kills; return until(X, page, s => s.want === SAY || s.kills >= k0 + 1, 30000).then(async s => (s.want === SAY ? s : until(X, page, s => s.want === SAY, 1200))); };
+    const SAY = 'say:stock:forge', named = t => /Copper Ore \d+\/\d+ from the Copper Vein/.test(t) && /Pine Log \d+\/\d+ from the Pine Grove/.test(t);
+    try {
+      // part 1: Camp (and Gather) beside the fight on a wide view
+      for (const [w, h] of [[1280, 720], [740, 360]]) {
+        const v = `${at} (browser ${w}x${h})`, { ctx, page, errs, X } = await open(w, h);
+        await X('setTab("world"); true');
+        let s = await until(X, page, s => s.want === 'stock:forge', 20000);
+        assert(s.want === 'stock:forge' && s.side && /for the Forge/.test(s.txt) && /Copper Vein/.test(s.txt) && !s.ok && !s.paused && s.bar && s.saidKey,
+          `${v}: fighting with Camp open, Hesketh's Forge line docks in the side column, no button, no hold, the fight buttons in view, and it counts as seen (${JSON.stringify(s)})`);
+        const k0 = s.kills, txt0 = s.txt, box0 = s.box, moved = [];
+        let fs_ = 0;
+        for (const t0 = Date.now(); Date.now() - t0 < 40000;) {
+          s = await look(X); if (s.foe) fs_++;
+          if (s.want !== 'stock:forge' || s.txt !== txt0 || s.box !== box0 || s.paused || !s.bar) moved.push(JSON.stringify(s));
+          if (s.kills >= k0 + 3) break;
+          await page.waitForTimeout(120);
+        }
+        assert(s.kills >= k0 + 3 && fs_ > 0 && !moved.length, `${v}: across 3 foe gaps the line keeps its text and box, never holds the fight and never hides the fight buttons (${s.kills - k0} kills${moved.length ? '; ' + moved[0] : ''})`);
+        await X('setTab("gat"); true'); s = await until(X, page, s => s.tab === 'gat' && s.want === 'stock:forge', 5000);
+        assert(s.want === 'stock:forge' && s.side && !s.ok && !s.paused && s.bar, `${v}: on Gather the same line, no button (${JSON.stringify(s)})`);
+        for (const tab of ['party', 'forge']) {
+          await X(`setTab(${JSON.stringify(tab)}); true`); await page.waitForTimeout(800);
+          s = await look(X);
+          assert(!/for the Forge|Forge needs/.test(s.txt) && !String(s.want).includes('stock:'), `${v}: on ${tab} no materials line (${JSON.stringify(s)})`);
+        }
+        // seen on Camp: back on the game screen a minute on, the held line never comes
+        await X('closeMenu(); GUIDE_RT.t += 120; true');
+        s = await none(X, page);
+        assert(s.want !== SAY, `${v}: a fighter who saw the line on Camp never gets the held line (${JSON.stringify(s)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // part 2: no menu, fighting on the game screen
+      for (const [w, h] of [[1280, 720], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`;
+        {
+          const { ctx, page, errs, X } = await open(w, h);
+          let s = await until(X, page, s => s.want === SAY || s.kills >= 2, 15000);
+          assert(s.want !== SAY && s.t < 60 && s.kills >= 1, `${v}: no held line in the boot minute, kill gaps and all (${JSON.stringify(s)})`);
+          await X('GUIDE_RT.t += 60; true');
+          s = await until(X, page, s => s.want === SAY, 20000);
+          assert(s.want === SAY && named(s.txt) && /^The Forge needs/.test(s.txt) && s.paused && !s.foe && s.hero && s.ok === 'Mine at the Copper Vein' && await X('!document.querySelector(".ob-x").hidden'),
+            `${v}: after the boot minute one held Forge line comes in a kill gap (the hero up, no live foe), names Copper Ore at the Copper Vein and Pine Log at the Pine Grove, with Go and × (${JSON.stringify(s)})`);
+          await page.click('.ob-x'); await page.waitForTimeout(300);
+          s = await look(X);
+          assert(s.want !== SAY && s.saidKey && !s.paused && await X('S.activity === "fight"'), `${v}: × ends it and the fight goes on (${JSON.stringify(s)})`);
+          await X('GUIDE_RT.t += 120; true');
+          s = await none(X, page);
+          assert(s.want !== SAY, `${v}: it never comes back for that save (${JSON.stringify(s)})`);
+          // the spacing: another materials line (stood in for by clearing the mark) waits a minute after one was answered
+          await X('delete S.onboard.done["say:stock:forge"]; true');
+          s = await until(X, page, s => s.want === SAY, 20000);
+          const again = s.want === SAY;
+          await page.click('.ob-x'); await page.waitForTimeout(300);
+          await X('delete S.onboard.done["say:stock:forge"]; true');
+          s = await none(X, page);
+          const early = s.want === SAY;
+          await X('GUIDE_RT.t += 60; true');
+          s = await until(X, page, s => s.want === SAY, 20000);
+          assert(again && !early && s.want === SAY, `${v}: a second held line waits 60 s after the first was answered, then comes (${again}, ${early}, ${JSON.stringify(s)})`);
+          await page.click('.ob-x');
+          // tips off, or short only on gold: none
+          await X('delete S.onboard.done["say:stock:forge"]; onboardTips(false); GUIDE_RT.t += 120; true');
+          s = await none(X, page);
+          assert(s.want !== SAY, `${v}: tips off, no held line (${JSON.stringify(s)})`);
+          // (the Forge costs no gold, so its short list is stood in for by one gold row; the step itself stays current, short as before)
+          await X('onboardTips(true); window.__need = onboardNeed; onboardNeed = id => id === "stock:forge" ? [{ fam: "gold", t: 1, kind: null, have: 0, n: 100, name: "gold" }] : window.__need(id); GUIDE_RT.t += 120; true');
+          s = await none(X, page);
+          const cur = await X('onboardWants("stock:forge") && onboardNeed("stock:forge").every(m => !m.kind)');
+          assert(cur && s.want !== SAY, `${v}: a step short only on gold or essence gets no held line (step still due, short on gold only: ${cur}; ${JSON.stringify(s)})`);
+          await X('onboardNeed = window.__need; true');
+          assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        {
+          // a boot with the line queued and unanswered: after the boot minute it comes back; while Hero is open nothing shows; Go mines at the Copper Vein
+          const { ctx, page, errs, X } = await open(w, h, o => { o.onboard.sayQ = [{ id: 'stock:forge' }]; });
+          let s = await until(X, page, s => s.want === SAY || s.kills >= 1, 12000);
+          assert(s.want !== SAY && await X('S.onboard.sayQ.some(e => e.id === "stock:forge")'), `${v}: a queued Forge line waits out the boot minute (${JSON.stringify(s)})`);
+          await X('setTab("party"); GUIDE_RT.t += 60; true');
+          s = await none(X, page);
+          assert(s.want !== SAY && !/Forge needs/.test(s.txt), `${v}: with Hero open the queued line shows nothing (${JSON.stringify(s)})`);
+          // (closing Hero can end a guide step, and a held line waits a minute after one ends)
+          await X('closeMenu(); true'); await page.waitForTimeout(800); await X('GUIDE_RT.t += 60; true');
+          s = await until(X, page, s => s.want === SAY, 20000);
+          assert(s.want === SAY && named(s.txt) && s.paused && !s.foe, `${v}: with the menu closed the queued line comes back in a kill gap (${JSON.stringify(s)})`);
+          await page.click('.ob-ok'); await page.waitForTimeout(300);
+          const g = JSON.parse(await X('JSON.stringify({ act: S.activity, node: S.node, done: !!S.onboard.done["say:stock:forge"], want: soloGuideWants() })'));
+          assert(g.act === 'gather' && g.node.kind === 'ore' && g.node.t === 1 && g.done && g.want !== SAY, `${v}: Go starts mining at the Copper Vein and marks it done (${JSON.stringify(g)})`);
+          assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('forge-line-while-fighting crashed: ' + (e.stack || e)); }
 
 // ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Tap again" for 6 s; Cancel always asks twice ====
 if (section('camp-build-tap-again')) try {

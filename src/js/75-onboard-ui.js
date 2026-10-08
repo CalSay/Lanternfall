@@ -78,6 +78,16 @@
     stars: "You've earned Stars. They're on the Hero tab, and each one changes how you fight.",
     deep: 'The Deepwell is open on the Fight tab. You pick a boon between its floors.'
   };
+  // forge-line-while-fighting: what each materials step is for. A fighter who never opens Camp or Gather hears the step's short gathered
+  // materials once, held in the gap after a kill ("The Forge needs Copper Ore 0/25 from the Copper Vein and Pine Log 2/10 from the Pine Grove.").
+  const STOCK_WHAT = { 'stock:bench': 'the Workbench', 'stock:tool': 'a Copper Pickaxe', 'stock:forge': 'the Forge', 'stock:store': 'the Storehouse', 'stock:weapon': 'your first weapon' };
+  const stockGathered = id => { try { return onboardNeed(id).filter(m => m.kind); } catch (e) { return []; } };   // gold and essence come from fights
+  const nodeName = m => NODE_NAMES[m.kind][m.t - 1];
+  function stockSay(id) {
+    const g = stockGathered(id), w = STOCK_WHAT[id]; if (!g.length || !w) return '';
+    const list = g.map(m => `${m.name} ${m.have}/${m.n} from the ${nodeName(m)}`);
+    return `${w[0].toUpperCase() + w.slice(1)} needs ${list.length > 1 ? list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1] : list[0]}.`;
+  }
   // defeat-card-guide-tip: a line that is not an unlock (check.mjs keeps SAY_TXT to systems). The first time a boss beats you, once the card is shut and the road is quiet.
   // cal-0107-staged-guide: the first Scroll (its toast hands over to him), and the slot for a second ability once it is learned.
   const SAY_MORE = {
@@ -91,7 +101,8 @@
       const left = at > 0 ? eq[at - 1] : null, leftNm = at === 0 ? 'Attack' : left ? (SOLO_ABILITIES[left] || {}).short || (ABILITIES[left] || {}).name : '';
       if (at >= 0) return leftNm ? `${nm} is next to ${leftNm} now. Press it there when it's ready.` : `${nm} is in slot ${'QWE'[at]} now. Press it there when it's ready.`;
       return eq.includes(null) ? `${nm} needs a slot. Tap an empty slot next to Attack and pick it.` : `${nm} needs a slot. Hold one of your moves next to Attack to swap it in.`;
-    }
+    },
+    ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => stockSay(id)]))
   };
   let slotAb = '', scrollId = 'moss';   // the move just learned (the slot line); the first Scroll found (the Scroll line)
   const sayText = id => { const t = SAY_TXT[id] || SAY_MORE[id]; try { return typeof t === 'function' ? t() : t; } catch (e) { return ''; } };
@@ -99,15 +110,24 @@
   const SAY_STILL = {
     gather: () => typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit(),   // his promise is for the cold fire only
     scroll: () => { try { return SCROLL_ORDER.some(id => scrollCount(id) > 0); } catch (e) { return false; } },
-    slot: () => { try { return !!slotAb && soloAbilities().includes(slotAb); } catch (e) { return false; } }
+    slot: () => { try { return !!slotAb && soloAbilities().includes(slotAb); } catch (e) { return false; } },
+    // forge-line-while-fighting: dropped once the live line was seen (it marks the say key), the step is over, nothing gathered is short, or the hero gathers
+    ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => !O().done['say:' + id] && onboardWants(id) && stockGathered(id).length > 0 && fightingNow()]))
   };
+  // forge-line-while-fighting: a line that waits (stays queued, not shown, not dropped): a materials line waits while any menu is open and for
+  // a quiet minute (60 s of play since the last guide step ended and since the last held line was answered; from boot when either has not happened)
+  let sayEnd = null;
+  const since = t => t === null ? GUIDE_RT.t : GUIDE_RT.t - t;
+  const stockQuiet = () => since(GUIDE_RT.lastEnd) >= GUIDE_QUIET && since(sayEnd) >= GUIDE_QUIET;
+  const heroUp = () => { try { return typeof cbHeroUp !== 'function' || cbHeroUp(); } catch (e) { return true; } };   // the gap after a kill, not after you fell
+  const SAY_WAIT = Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => !!S.tab || (sayCur !== id && (!stockQuiet() || !heroUp()))]));
   // reload-keeps-tips: the queue is also kept in the save (S.onboard.sayQ, [{ id, arg }]; arg: the Scroll for `scroll`, the move for `slot`), so
   // a reload before a line is read brings it back. The boss-loss line belongs to that loss and is never kept.
   const sayQ = []; let sayCur = '';
   const SAY_ARG = { scroll: () => scrollId, slot: () => slotAb };
   const sayKeep = () => { O().sayQ = sayQ.filter(id => id !== 'defeat').map(id => SAY_ARG[id] ? { id, arg: SAY_ARG[id]() } : { id }); };
   function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) { sayQ.push(id); sayKeep(); } }
-  const sayDone = id => { sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); sayKeep(); };
+  const sayDone = (id, said = true) => { if (said) sayEnd = GUIDE_RT.t; sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); sayKeep(); };
   // an unlock line held while up: a Got it, the game waits, and only between fights (never two lines at once)
   const sayStep = id => ({ id: 'say:' + id, text: sayText(id), ok: 1, pause: 1, ph: ['between'] });
   // cal-0107-staged-guide: a guide step already says some unlocks, so his unlock line would say it twice. The Hero tab at the first level-up is
@@ -180,7 +200,8 @@
   let curGo = null;
   const finish = s => s.id.startsWith('say:') ? sayDone(s.id) : s.id.startsWith('use:') ? onboardUseDone(s.id) : guideHide(s.id) || onboardDone(s.id);   // a first-use line is read, not a guide step; a wear tip or the fire tip hides for this session (reload-keeps-tips)
   // Got it is an answer: a guide step it ends is done for good (only × and the retire hide a tip for the session, reload-keeps-tips)
-  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) { if (/^(say|use):/.test(cur.id)) finish(cur); else onboardDone(cur.id); } tick(); });
+  // forge-line-while-fighting: a held line's Go answers it too
+  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) { curGo.fn(); if (cur && cur.id.startsWith('say:')) finish(cur); } else if (cur) { if (/^(say|use):/.test(cur.id)) finish(cur); else onboardDone(cur.id); } tick(); });
   let cur = null;   // the step on screen
   x.addEventListener('click', e => { e.stopPropagation(); if (cur) finish(cur); tick(); });
   const chip = $('nuChip');
@@ -252,6 +273,8 @@
     }
     return spec;
   };
+  // forge-line-while-fighting: the held line's Go, to the node of its first short gathered material ("Mine at the Copper Vein")
+  const stockGo = id => { const m = stockGathered(id)[0]; return m ? { label: `${VERB[m.kind] || 'Gather'} at the ${nodeName(m)}`, fn: () => { if (setNode(m.kind, m.t)) setActivity('gather'); } } : null; };
   // SOLO1: the button row under the stage (75-solo-ui)
   const sbtn = id => q(`#soloBar .sb-${id}`);
   const turnTxt = () => typeof turnCombatOn === 'function' && turnCombatOn();
@@ -287,11 +310,11 @@
     back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: "When you're done here, close the menu and the fight goes on.", go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
     'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is still in your bag. A tool only helps once you wear it.`),
     'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is still in your bag. Put it on and fight with it.`),
-    'stock:bench': () => stockSpec('stock:bench', 'the Workbench'),
-    'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
-    'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
-    'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
-    'stock:weapon': () => stockSpec('stock:weapon', 'your first weapon', '', true),
+    'stock:bench': () => stockSpec('stock:bench', STOCK_WHAT['stock:bench']),
+    'stock:tool': () => stockSpec('stock:tool', STOCK_WHAT['stock:tool']),
+    'stock:forge': () => stockSpec('stock:forge', STOCK_WHAT['stock:forge']),
+    'stock:store': () => stockSpec('stock:store', STOCK_WHAT['stock:store']),
+    'stock:weapon': () => stockSpec('stock:weapon', STOCK_WHAT['stock:weapon'], '', true),
     light: () => {
       if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire to light it.' } : null;
       const f = $('hearthFire');
@@ -367,12 +390,20 @@
     if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
+    // forge-line-while-fighting: a materials step in the gap after a kill, fight in view and no menu, is hidden (below); a fighter who has not seen
+    // its live line gets one held line for it instead, after a quiet minute, if something gathered is short
+    if (step && STOCK_WHAT[step.id] && !S.tab && fightInView() && heroUp() && stockGathered(step.id).length && stockQuiet()) sayQueue(step.id);
     // unlock-voice: a new thing is announced only when no fight is in view, and the game waits on its Got it (cal-0107-staged-guide).
     // It goes before a between step that is not already up and holding (the news, then what to do), never over a fight lesson.
     // staged-guide-followups: nor while a big card is up or on its way (the first boss's card came 1 s after the Scroll line and covered it)
     if (sayQ.length && O().tips && !document.hidden && guidePhase(!guideMenuCovers()) === 'between') {
-      const id = sayQ[0];
-      if (SAY_STILL[id] && !SAY_STILL[id]()) sayDone('say:' + id);
+      // forge-line-while-fighting: a materials line that waits (SAY_WAIT) lets the lines behind it go first; a stale one is dropped at once
+      for (const i of sayQ.slice()) if (STOCK_WHAT[i] && !SAY_STILL[i]()) { const c = sayCur; sayDone('say:' + i, false); if (c !== i) sayCur = c; }
+      const ready = i => !(SAY_WAIT[i] && SAY_WAIT[i]());
+      const id = sayCur && sayQ.includes(sayCur) && ready(sayCur) ? sayCur : sayQ.find(ready) || '';
+      if (sayCur && sayCur !== id) sayCur = '';
+      if (!id) {}
+      else if (SAY_STILL[id] && !SAY_STILL[id]()) sayDone('say:' + id, false);
       else if (sayCur === id || !step || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && ONBOARD.paused))) {
         // the card first: he waits, and the gap after the kill waits with him (the card holds the game too), so after Continue he speaks before the next foe
         if (!sayCur && cardComing()) { hide(); ONBOARD.paused = fightInView() && cardUp() && !cachePending_(); return; }
@@ -387,7 +418,9 @@
     // staged-guide-followups: a line that starts in the gap after a kill, with the fight in view, would show for under half a second before the
     // next foe walks in and hides it. A line you read (a Got it note, a first-use line) holds that gap until you tap it; a live-progress line
     // (materials, gold) waits for a calm screen instead (no fight, or a menu over it)
-    const gap = fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:')) && !onboardPaused(step) && !(cur && cur.id === step.id && gapHeld);
+    // forge-line-while-fighting: on a wide view a materials line on Camp or Gather stays beside the fight, steady, holding nothing (keyed on the menu only)
+    const stockSide = !!STOCK_WHAT[step.id] && isWide() && STOCK_TABS.includes(S.tab);
+    const gap = !stockSide && fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:')) && !onboardPaused(step) && !(cur && cur.id === step.id && gapHeld);
     if (gap && !(step.ok || step.id.startsWith('use:'))) return hide();
     gapHeld = gap || (gapHeld && !!cur && cur.id === step.id);
     // first-gold-and-camp-strip: the first weapon is ready to make, so Craft opens on it once (only from the game screen, never out of another menu)
@@ -396,6 +429,10 @@
     const table = SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
     // a first-use line has no target: it docks over the open menu with no ring, and pauses only to hold a gap between foes (gapHeld)
     try { spec = use ? { node: S.tab || step.id.startsWith('use:') ? panels : stageBox, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
+    // forge-line-while-fighting: the held materials line carries the live line's Go; beside a running fight the live line has none (a side
+    // button hides the fight buttons, 80-landscape.css .guide-btn)
+    if (spec && use && STOCK_WHAT[step.id.slice(4)]) spec.go = stockGo(step.id.slice(4));
+    if (spec && stockSide && fightingNow()) spec.go = null;
     if (!spec || !vis(spec.node)) return hide();
     // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
     if (table === STEP_UI && !use && !spec.noRing && !pressable(spec.node)) return hide();
@@ -410,6 +447,7 @@
     putText(okb, curGo ? curGo.label : 'Got it');
     putToggle(bub, 'ok-row', !!(step.ok || gapHeld) && !curGo);   // a plain Got it sits beside the tip, so a short portrait stage keeps its height
     place(spec);
+    if (STOCK_WHAT[step.id]) onboardUseDone('say:' + step.id);   // forge-line-while-fighting: the live line was seen, so its held line never comes
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
     // never for a step that needs materials or time, and never while a press step is still short of what it costs.
     // A menu marker that cannot be tapped where it sits (scrolled out of reach, under another element) shows no ring
