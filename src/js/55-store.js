@@ -47,7 +47,8 @@
 const STORE_TUNE = {
   on: 1,                   // 0: no caps at all (tools/sim.mjs --store 0)
   caps: [5000, 40000, 50000, 100000, 200000, 300000, 750000, 1250000, 2500000],   // gathered cap by level 0..8
-  group: { ore: 1, wood: 1, crystal: 1, fibre: 1, herb: 1, hide: 0.5, ess: 0.5, pearl: 0.5, fish: 0.5 },
+  group: { ore: 1, wood: 1, crystal: 1, fibre: 1, herb: 1, hide: 0.5, ess: 0.5, pearl: 0.5, fish: 0.5,
+    ingot: 0.5, plank: 0.5, cloth: 0.5, leather: 0.5, coal: 1 },   // refine-queues: refined goods hold half; coal (one grade) as ore
   tierMult: [1, 1, 1, 1, 1],
   // h: the away cap the player can have at Hearth L (4 h + Watchtower 2 h a level, Watchtower Lv w
   // needs Hearth 1/2/4/6/8, plus Hourglass relics; 24 h at most), rounded up. The rest is the upper
@@ -181,7 +182,7 @@ let essCap, storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, s
   // ---------------- Spillover and switching nodes ----------------
   storeSpillOn = () => !!ST().spill && storeLevel() >= T.spill;
   storeSpill = on => { if (storeLevel() < T.spill) return false; ST().spill = on ? 1 : 0; save(); return true; };
-  // The next unlocked node of the same skill whose pile is not full, highest tier first.
+  // The next unlocked node of the same skill whose pile is not full, highest tier first. Only GATHER_KINDS: never coal or a middle.
   storeNextNode = (kind = S.node.kind) => {
     const sk = skillOf(kind);
     const kinds = (typeof GATHER_KINDS !== 'undefined' ? GATHER_KINDS : ['ore', 'wood']).filter(k => skillOf(k) === sk);

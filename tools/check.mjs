@@ -508,7 +508,7 @@ if (section('items')) try {
     assert(E(`bagCount() === 1 && isEquipped(${bow})`), 'equipped items do not count towards the bag');
     assert(E(`fits("shield", "wpn", "tank") && fits("shield", "off", "warden") && !fits("shield", "off", "ranger") && !fits("weapon", "weapon", "lightkeeper") && !fits("helm", "helm", "ranger") && fits("weapon", "weapon", "any") && fits("helm", "helm", "any") && fits({ slot: "weapon", t: 1, r: "legendary", plus: 0, u: "sproutblade" }, "weapon", "ranger") && fits({ slot: "helm", t: 1, r: "legendary", plus: 0, u: "echocowl" }, "helm", "warden") && fits("trinket", "trk", "tobin") && !fits("trinket", "weapon", "any")`), 'fits(): class, role, character rules; legacy Sword/Helm only without a class; uniques fit every class');
     assert(E('upgradeCost({ slot: "bow", t: 1, r: "common", plus: 7 }).troph === 1 && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 6 })) && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 10 }))'), 'upgrades to +8, +9 and +10 name a Trophy');
-    assert(E('itemName(newItem("bow", 2, "rare")) === "Birch Bow" && itemColor("bow", 2) === MAT.wood.col[1] && craftCost("bow", 2).wood === 9'), 'names, colours and costs for new kinds');
+    assert(E('itemName(newItem("bow", 2, "rare")) === "Birch Bow" && itemColor("bow", 2) === MAT.wood.col[1] && craftCost("bow", 2).plank === 5 && craftRecipeRaw("bow", 2).wood === 9'), 'names, colours and costs for new kinds (tier 2 in middles: 9 Birch Log -> 5 Birch Plank, refine-queues)');
     assert(Object.keys(E('newItem("weapon", 1, "common")')).join() === 'id,slot,t,r,plus', 'legacy forge items carry no new fields');
     assert(!g.errors.length, 'no items handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
@@ -762,7 +762,7 @@ if (section('crafting')) try {
   assert(!E('transmute("ore", 1, "wood")') && !E('transmute("hide", 5, 6)') && E('JSON.stringify(S.mats.ore)') === '[6,0,0,0,0]', 'Transmute never crosses families or goes past tier 5');
   // Upgrades: trophies gate +8..+10
   const up = E('S.items.find(i => i.slot === "staff").id');
-  E(`itemById(${up}).plus = 7; for (const k of CRAFT_FAMILIES) S.mats[k] = [500, 500, 500, 500, 500]; S.gold = 1e9; S.craft.troph = [0, 0, 0, 0, 0, 0, 0]`);
+  E(`itemById(${up}).plus = 7; for (const k of STOCK_FAMILIES) S.mats[k] = [500, 500, 500, 500, 500]; S.gold = 1e9; S.craft.troph = [0, 0, 0, 0, 0, 0, 0]`);
   assert(E(`canUpgrade(${up}).why`) === 'Needs 1 Trophy of any kind' && !E(`upgradeItem(${up})`), '+8 needs a Trophy');
   E('S.craft.troph[3] = 1');
   assert(E(`upgradeItem(${up})`) && E(`itemById(${up}).plus`) === 8 && E('S.craft.troph[3]') === 0, '+8 spends one Trophy');
@@ -774,7 +774,8 @@ if (section('crafting')) try {
   // salvage pays half the gold back. The mechanism only: the prices are provisional (the crafting overhaul sets them).
   assert(E('[...Array(10).keys()].every(p => p === 0 || econUpgradeGold(1, p) > econUpgradeGold(1, p - 1))') && E('econUpgradeGold(1, 9) > 10 * econUpgradeGold(1, 0)'),
     'each upgrade step costs more gold than the last, and +10 costs over ten times +1');
-  assert(E('Object.keys(kindUpgradeCost({ slot: "bow", t: 1, r: "common", plus: 0 }).mats).join()') === 'wood' && E('Object.keys(kindUpgradeCost({ slot: "hood", t: 1, r: "common", plus: 9 }).mats).join()') === 'fibre'
+  // refine-queues: the main material is its middle (Plank for wood, Cloth for fibre), converted at half, rounded up
+  assert(E('Object.keys(kindUpgradeCost({ slot: "bow", t: 1, r: "common", plus: 0 }).mats).join()') === 'plank' && E('Object.keys(kindUpgradeCost({ slot: "hood", t: 1, r: "common", plus: 9 }).mats).join()') === 'cloth'
     && E('kindUpgradeCost({ slot: "weapon", t: 1, r: "legendary", plus: 2, u: "golemfist" }).mats.ess') > 0,
     'an upgrade takes only the main material (never essence or Hide when there is another); a Unique still takes essence');
   {
@@ -3366,7 +3367,7 @@ if (section('store shelf')) try {
     `early (zone 8, Mining 5): the ore stack is ${early.eval('matName("ore", storeShelfGrade("ore"))')}, not an empty tier-2 cell`);
   for (const f of ['early', 'mid', 'late', 'current']) {
     const g = at(f), bad = g.eval('CRAFT_FAMILIES.filter(k => k !== "ess" && (S.mats[k] || []).some(n => n > 0) && !((S.mats[k][storeShelfGrade(k) - 1] || 0) > 0))');
-    const shown = g.eval('CRAFT_FAMILIES.filter(storeShelfShows).length');
+    const shown = g.eval('STORE_SHELF.filter(storeShelfShows).length');
     assert(!bad.length && shown <= 8, `${f}: no empty stack while its family holds stock (${JSON.stringify(bad)}); ${shown} stacks on the first view (at most 8)`);
   }
   const g = at('early');
@@ -3378,6 +3379,208 @@ if (section('store shelf')) try {
   assert(g.eval('storeShelfCap("hide")') === 3, `hide's cap is at most Hunting's 3 grounds (${g.eval('storeShelfCap("hide")')})`);
   assert(/registerSection\('gat', \{\n    id: 'store', view: 'pack'/.test(ui) && /Show all grades/.test(ui) && /\['full', 'Fullest'\], \['name', 'Name'\]/.test(ui), '75-store-ui: the Store view keeps its section, has Show all grades and the Fullest / Name sort');
 } catch (e) { fail('store shelf crashed: ' + (e.stack || e)); }
+// ---- refine-queues: the stations' orders, coal, the converted costs (55-refine.js, 21-data-craft.js; card refine-queues,
+// overhaul spec 2, 4, 12, 13; the art ruling 2026-10-08: coal is a drop once the Forge is built, coal and the middles are text only) ----
+if (section('refine-queues')) try {
+  const g = loadCore({ seed: 11 }), E = s => g.eval(s), J = s => JSON.stringify(E(s));
+  // costs: tier 1 raw, tier 2 and up in middles (half, rounded up); tools, charms and trinkets stay raw
+  assert(J('craftRecipe("warblade", 2)') === '{"ingot":5,"plank":3,"ess":3}' && J('craftRecipe("warblade", 1)') === '{"ore":6,"wood":3,"ess":2}',
+    `a tier 2 Warblade costs 5 Iron Ingot, 3 Birch Plank, 3 Essence; tier 1 is unchanged (${J('craftRecipe("warblade", 2)')}, ${J('craftRecipe("warblade", 1)')})`);
+  assert(E('costName("ingot", 2)') === 'Iron Ingot' && E('costName("plank", 2)') === 'Birch Plank', 'the cost names read Iron Ingot and Birch Plank');
+  assert(J('kindUpgradeCost({ slot: "warblade", t: 1, r: "common", plus: 0 }).mats') === '{"ingot":1}' && E('matName("ingot", 1)') === 'Copper Ingot'
+    && J('kindUpgradeCost({ slot: "bow", t: 1, r: "common", plus: 0 }).mats') === '{"plank":1}',
+    `Copper Warblade +1 costs 1 Copper Ingot, the bow's +1 a Pine Plank (${J('kindUpgradeCost({ slot: "warblade", t: 1, r: "common", plus: 0 }).mats')})`);
+  assert(['pick', 'axe', 'sickle', 'charm', 'trinket'].every(k => !Object.keys(E(`Object.assign({}, craftRecipe("${k}", 2), kindUpgradeCost({ slot: "${k}", t: 2, plus: 0 }).mats)`)).some(f => E(`!!REFINE_RAW.${f}`))),
+    'tools, charms and trinkets keep raw costs at every grade');
+  assert(E('MAT.coal.short.every(n => n === "Coal") && MAT.coal.short.length === 5') && E('["ingot", "plank", "cloth", "leather"].every(f => MAT[f].short.length === 5 && MAT[f].short.every(Boolean))'),
+    'coal has one name on all five slots; each middle has five grade names');
+  assert(E('fresh().mats.coal.length === 5 && ["ingot", "plank", "cloth", "leather", "coal"].every(f => fresh().mats[f].every(n => n === 0))'), 'fresh() holds empty coal and middle piles');
+  // Tents: 5 is priced in tier 4 middles, which now exist; 6-10 cite grades 6-12 and still refuse
+  assert(E('CAMP_B.tent.available(5)') === true && [6, 7, 8, 9, 10].every(n => E(`CAMP_B.tent.available(${n})`) === false), 'Tent 5 becomes available with the middles; Tents 6-10 still refuse');
+  // an order runs until its amount, input or the pile cap; the next one starts by itself
+  E('S.camp.open = true; S.camp.b.forge = 1; S.camp.b.store = 8; S.mats.ore = [10, 20, 0, 0, 0]; S.mats.coal = [10, 0, 0, 0, 0]');
+  assert(E('refineAdd("ingot", 2, 3).ok') && E('refineAdd("ingot", 1, "all").ok'), 'two orders on the Forge: 3 Iron Ingots, then All Copper Ingots');
+  assert(J('refineOrders("forge")[1].keep') === '[2,2]', `All keeps ${E('REFINE_TUNE.reserve') * 100}% of each input held when it was set (${J('refineOrders("forge")[1].keep')})`);
+  assert(/^Smelt · Smelting [\d.]+ a minute$/.test(E('refineLabel("forge")')), `the camp button carries the rate ("${E('refineLabel("forge")')}")`);
+  E('refineTick(3 * 25 + 0.5)');
+  assert(E('refineOrders("forge")[0].made') === 3 && E('refineState("forge", refineOrders("forge")[0]).k') === 'done' && E('S.mats.ingot[1]') === 3 && E('S.mats.ore[1]') === 14,
+    `the Iron order stops at its amount: 3 made from 6 Iron Ore and 6 coal (made ${E('refineOrders("forge")[0].made')}, Iron Ore ${E('S.mats.ore[1]')})`);
+  E('refineTick(600)');
+  const all = E('refineOrders("forge")[1]'), st1 = E('refineState("forge", refineOrders("forge")[1])');
+  assert(all.made > 0 && st1.k === 'input' && E('S.mats.ore[0]') >= 2 && E('S.mats.coal[0]') >= 2 && st1.why === 'Out of coal',
+    `the next order starts by itself and the All order stops at its reserve: ${all.made} Copper Ingots, keeps ${E('S.mats.ore[0]')} Copper Ore and ${E('S.mats.coal[0]')} coal ("${st1.why}")`);
+  E('S.camp.b.store = 1; S.mats.coal[0] = 50; S.mats.ore[1] = 50; S.mats.ingot[1] = storeCap("ingot", 2) - 1; refineRemove("forge", 1); refineRemove("forge", 0); refineAdd("ingot", 2, 5); refineTick(120)');
+  assert(E('refineState("forge", refineOrders("forge")[0]).k') === 'full' && E('refineState("forge", refineOrders("forge")[0]).why') === 'Storehouse full' && E('S.mats.ingot[1]') === E('storeCap("ingot", 2)'),
+    `an order stops at the pile cap and says "Storehouse full" (${E('S.mats.ingot[1]')} of ${E('storeCap("ingot", 2)')})`);
+  // station level: 10% faster a level
+  E('S.camp.b.forge = 3');
+  assert(Math.abs(E('refineSpeed("forge")') - 1.2) < 1e-9 && Math.abs(E('refineUnitSecs("forge", 1)') - 12.5) < 1e-9 && E('campEffects("forge", 3).some(l => l === "Refining +20% faster")'),
+    `Forge Lv 3 refines 20% faster (speed ${E('refineSpeed("forge")')}, a Copper Ingot in ${E('refineUnitSecs("forge", 1)')} s) and its card says so`);
+  // the offer: the frozen shape, a shortfall order asks for exactly the shortfall, add() adds it
+  E('S.camp.b.store = 8; refineRemove("forge", 0); S.mats.ingot = [0, 2, 0, 0, 0]; S.mats.ore[1] = 40; S.mats.coal[0] = 40');
+  const off = E('(() => { const o = refineOffer({ mats: { ingot: 5, plank: 3, ess: 3 } }, 2); return { keys: Object.keys(o).join(), short: o.short, orders: o.orders, add: typeof o.add }; })()');
+  assert(off.keys === 'short,orders,add' && off.add === 'function' && JSON.stringify(off.short.ingot) === '[0,3,0,0,0]'
+    && off.orders.length === 2 && off.orders[0].st === 'forge' && off.orders[0].prod === 'ingot' && off.orders[0].tier === 2 && off.orders[0].want === 3 && off.orders[0].ok && off.orders[0].full
+    && off.orders[1].prod === "plank" && !off.orders[1].ok && off.orders[1].why === "Out of Birch Log" && Object.keys(off.orders[0]).join() === 'st,prod,tier,want,ok,full,why',
+    'refineOffer returns { short, orders: [{ st, prod, tier, want, ok, full, why }], add } and asks for the shortfall only: ' + JSON.stringify(off));
+  assert(E('refineOffer({ mats: { ingot: 5 } }, 2).add()') === 1 && E('refineOrders("forge").length') === 1 && E('refineOrders("forge")[0].want') === 3 && E('refineOffer({ mats: { ingot: 5 } }, 2).orders.length') === 0,
+    'add() adds the order for the shortfall; a second offer counts it and offers nothing more');
+  // Next Up: ready says what and why; the coal gap says where to get it
+  const n = loadCore({ seed: 5 }), N = s => n.eval(s);
+  N('chooseClass("warden"); S.camp.open = true; S.camp.b.forge = 1; S.camp.b.store = 8; S.gold = 1e6; S.maxZone = 4; S.mats.ore = [20, 0, 0, 0, 0]; S.mats.coal = [5, 0, 0, 0, 0]');
+  N('const it = newItem("warblade", 1); S.items.push(it); S.equip.weapon = it.id; gearDirty()');
+  const goal = () => N('(() => { const x = GOALS.find(x => x.id === "refine"); const p = x.pct(); return p === null ? null : { pct: p, label: x.label() }; })()');
+  assert(goal() && goal().label === 'Smelt 1 Copper Ingot for your Warblade +1' && goal().pct === 1, `Next Up: "Smelt 1 Copper Ingot for your Warblade +1" (${JSON.stringify(goal())})`);
+  N('S.mats.coal[0] = 0');
+  assert(goal() && goal().label === 'Mine Copper Ore to get coal' && goal().pct < 1, `no coal: Next Up says where to get it, never an order that stops at once (${JSON.stringify(goal())})`);
+  assert(n.eval('(() => { const go = GOALS.find(x => x.id === "refine").go(); return go && go.act === "gather" && go.node.kind === "ore" && go.node.t === 1; })()'), 'its Go walks to the Copper Vein');
+  N('S.mats.coal[0] = 5; S.mats.ore[0] = 0');
+  assert(goal() && goal().label === 'Mine Copper Ore to smelt Copper Ingots', `no ore: Next Up says mine it (${JSON.stringify(goal())})`);
+  N('S.camp.b.forge = 0');
+  assert(goal() === null, 'no Forge: no refine line in Next Up');
+  // coal: about 1 for every 2 Copper Ore mined once the Forge is built, none before
+  const c = loadCore({ seed: 23 }), C = s => c.eval(s);
+  C('almanac.force("none"); S.camp.open = true; S.camp.b.forge = 0; S.camp.b.store = 8; S.skills.mine.lv = 1; setNode("ore", 1); setActivity("gather")');
+  C('for (let i = 0; i < 60; i++) harvest()');
+  assert(C('S.mats.coal[0]') === 0, `no coal before the Forge is built (${C('S.mats.coal[0]')} after ${C('S.mats.ore[0]')} Copper Ore)`);
+  C('S.camp.b.forge = 1; S.mats.ore[0] = 0'); let i = 0;
+  while (C('S.mats.ore[0]') < 100 && i++ < 400) C('harvest()');
+  const ore = C('S.mats.ore[0]'), coal = C('S.mats.coal[0]');
+  assert(ore >= 100 && Math.abs(coal - ore * C('REFINE_TUNE.coalDrop')) <= 1 && coal >= 45 && coal <= 60, `mining ${ore} Copper Ore with the Forge built brings ${coal} coal (about half, the fraction carried)`);
+  C('S.skills.mine.lv = 99; setNode("ore", 2); const k0 = S.mats.coal[0]; for (let i = 0; i < 20; i++) harvest(); globalThis.__k = S.mats.coal[0] - k0');
+  assert(C('__k') === 0, 'Iron Ore brings no coal (Copper Ore only)');
+  // save codes: orders and the new families round-trip; a bad order is refused
+  E('S.mats.coal[0] = 12; S.mats.cloth = [3, 0, 0, 0, 0]; S.mats.leather = [0, 1, 0, 0, 0]; refineAdd("ingot", 2, "all")');
+  const code = E('encodeSave(S)'), dec = E(`decodeSave(${JSON.stringify(code)})`);
+  assert(dec.ok && !deepDiff(E('S.refine'), dec.data.refine) && !deepDiff(E('S.mats'), dec.data.mats), 'a save code holding orders, coal and middles round-trips' + (dec.ok ? '' : ': ' + dec.error));
+  const bad = (what, fn) => { const r = E(`(() => { const d = JSON.parse(JSON.stringify(S)); (${fn})(d); return validateSave(d); })()`); assert(!r.ok, `a save code with ${what} is refused` + (r.ok ? '' : ` ("${r.error}")`)); };
+  bad('a tier 6 order', 'd => { d.refine.st.forge = [{ prod: "ingot", tier: 6, want: 1, made: 0, all: 0, at: 0 }]; }');
+  bad('4 orders on one station', 'd => { d.refine.st.forge = [1, 2, 3, 4].map(() => ({ prod: "ingot", tier: 1, want: 1, made: 0, all: 0, at: 0 })); }');
+  bad('an unknown product', 'd => { d.refine.st.forge = [{ prod: "steel", tier: 1, want: 1, made: 0, all: 0, at: 0 }]; }');
+  bad('a product on the wrong station', 'd => { d.refine.st.bench = [{ prod: "ingot", tier: 1, want: 1, made: 0, all: 0, at: 0 }]; }');
+  // the old save: items and materials unchanged, the card once; a new game never sees it
+  const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8'), fx = JSON.parse(raw);
+  const o = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }) }), O = s => o.eval(s);
+  const di = subsetDiff(fx.items, O('S.items')), dm = Object.keys(fx.mats).map(f => deepDiff(fx.mats[f], O(`S.mats[${JSON.stringify(f)}]`), 'mats.' + f)).find(Boolean);
+  assert(!di && !dm && O('S.mats.ingot.every(n => n === 0) && S.mats.coal[0] === 0'), 'save-mid loads with every old item and material unchanged and empty middles' + (di || dm ? ': ' + (di || dm) : ''));
+  assert(O('S.refine.said') === 0 && O('refineOldCard()') === true && O('refineOldCard()') === false, 'save-mid (Forge 2, from before refining) sees the "The Forge can smelt now" card once');
+  const o2 = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: o.storage.get(KEY) }) });
+  assert(o2.eval('refineOldCard()') === false, '...and not again after a reload');
+  const nw = loadCore({ seed: 4 });
+  nw.eval('S.camp.open = true; S.camp.b.forge = 1');
+  assert(nw.eval('S.refine.said') === 1 && nw.eval('refineOldCard()') === false, 'a new game never sees the old-save card');
+  // the switch: off, costs are raw again and stored middles stay
+  E('REFINE_TUNE.on = false');
+  assert(J('craftRecipe("warblade", 2)') === '{"ore":9,"wood":5,"ess":3}' && J('kindUpgradeCost({ slot: "warblade", t: 1, plus: 0 }).mats') === '{"ore":2}' && E('S.mats.cloth[0]') === 3 && E('S.mats.coal[0]') === 12,
+    `REFINE_TUNE.on = false: recipes and upgrades take raw again, stored middles and coal stay (${J('craftRecipe("warblade", 2)')})`);
+  const k1 = E('S.mats.ingot[1]'); E('refineTick(600)');
+  assert(E('S.mats.ingot[1]') === k1 && E('refineAdd("ingot", 1, 1).ok') === false, 'switched off: no order runs and none can be added');
+  E('REFINE_TUNE.on = true');
+  for (const x of [g, n, c, o, o2, nw]) assert(!x.errors.length, 'no refine errors' + (x.errors.length ? ': ' + x.errors[0] : ''));
+} catch (e) { fail('refine-queues crashed: ' + (e.stack || e)); }
+// ---- refine-queues on the Storehouse shelf: coal is the 8th stack, middles share their raw family's stack ----
+if (section('refine-queues store shelf')) try {
+  const ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-store-ui.js'), 'utf8'), m = ui.match(/\/\/ ---- the shelf rule[\s\S]*?\/\/ ---- end of the shelf rule ----/);
+  const fix = { mid: path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), late: path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), refine: path.join(ROOT, 'tests', 'proof-fixtures', 'save-refine.json') };
+  const at = f => loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(fix[f], 'utf8') }), extraSource: m[0] });
+  for (const f of Object.keys(fix)) {
+    const g = at(f);
+    g.eval('S.mats.ingot = [3, 40, 2, 0, 0]; S.mats.plank = [0, 0, 6, 0, 0]; S.mats.cloth = [0, 0, 0, 5, 0]; S.mats.coal[0] = Math.max(1, S.mats.coal[0])');
+    const shown = g.eval('STORE_SHELF.filter(storeShelfShows)');
+    const empty = g.eval('STORE_SHELF.filter(k => k !== "ess" && storeShelfShows(k) && ((S.mats[k] || []).some(n => n > 0) || (REFINE_MID[k] && S.mats[REFINE_MID[k]].some(n => n > 0))) && !((S.mats[k][storeShelfPick(k) - 1] || 0) > 0 || (REFINE_MID[k] && (S.mats[REFINE_MID[k]][storeShelfPick(k) - 1] || 0) > 0)))');
+    assert(shown.length <= 8 && shown.includes('coal') && !empty.length, `${f}: ${shown.length} stacks on the first view (at most 8, coal one of them), no empty stack (${JSON.stringify(empty)})`);
+  }
+  const g = at('mid');
+  // a few middles at a higher grade never hide the raw stack
+  g.eval('S.mats.fibre = [15094, 3, 0, 378, 0]; S.mats.cloth = [0, 0, 2, 0, 0]');
+  assert(g.eval('storeShelfPick("fibre")') === g.eval('storeShelfGrade("fibre")') && g.eval('storeShelfPick("fibre")') === 1, `2 Briar Cloth never hide 15,094 Hemp Fibre (grade ${g.eval('storeShelfPick("fibre")')})`);
+  // a family holding only a middle shows that middle's grade, never an empty stack
+  g.eval('S.mats.ore = [0, 0, 0, 0, 0]; S.mats.ingot = [0, 7, 0, 0, 0]');
+  assert(g.eval('storeShelfPick("ore")') === 2, `ore holding only 7 Iron Ingots shows grade 2 (${g.eval('storeShelfPick("ore")')})`);
+  const nw = loadCore({ seed: 7, extraSource: m[0] });
+  nw.eval('S.camp.b.forge = 0');
+  assert(nw.eval('storeShelfShows("coal")') === false, 'a new game: no coal stack before the Forge is built');
+  nw.eval('S.camp.open = true; S.camp.b.forge = 1');
+  assert(nw.eval('storeShelfShows("coal")') === true, '...and a coal stack once it is built');
+} catch (e) { fail('refine-queues store shelf crashed: ' + (e.stack || e)); }
+// ---- refine-queues: coal and the middles are text only (the art ruling 2026-10-08). Every matIcon caller that can name them
+// (Storehouse stacks and rows, cost chips, toasts, the away report, the stations' sheets, the craft screen) shows the name
+// alone: no img with an empty or missing src shows, and no Essence orb (the old fallback) stands in. ----
+if (section('refine icons (browser)')) try {
+  const callers = [];
+  for (const f of fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js'))) {
+    fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').split('\n').forEach((l, i) => { if (/matIcon\(/.test(l) && !/^const matIcon/.test(l)) callers.push(`${f}:${i + 1}`); });
+  }
+  const gfx = fs.readFileSync(path.join(ROOT, 'src', 'js', '60-gfx.js'), 'utf8');
+  assert(/const matIcon = \(k, t\) => k === 'coal' \|\| REFINE_RAW\[k\] \? ''/.test(gfx) && /const img = \(url, cls\) => \{[^\n]*if \(!url\) \{ i\.hidden = true; i\.style\.display = 'none'; return i; \}/.test(gfx),
+    '60-gfx: matIcon gives "" for coal and the middles, and img("") is a hidden element with no src');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('refine icons (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+      await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
+      await X('S.maxZone = 20; S.zone = 20; S.camp.open = true; S.camp.b.hearth = 3; S.camp.b.forge = 2; S.camp.b.bench = 1; S.camp.b.loom = 1; S.camp.b.store = 3; S.gold = 1e7; for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.mats.ore = [400, 300, 0, 0, 0]; S.mats.coal = [90, 0, 0, 0, 0]; S.mats.ingot = [4, 12, 0, 0, 0]; S.mats.plank = [0, 3, 0, 0, 0]; S.mats.cloth = [2, 0, 0, 0, 0]; S.mats.leather = [0, 1, 0, 0, 0]; refineAdd("ingot", 2, "all"); true');
+      // the bad image: a shown img with no src, or an Essence orb (matIcon's old fallback) beside a coal or middle name
+      const essUrls = await X('[1, 2, 3, 4, 5].map(t => matIcon("ess", t)).concat([1, 2, 3, 4, 5].map(t => iconURL("orb", MAT.ess.col[t - 1], { 7: "#6E6878" })))');
+      const midNames = await X('["Coal"].concat(...["ingot", "plank", "cloth", "leather"].map(f => MAT[f].short))');
+      const scan = where => page.evaluate(({ where, ess, names }) => {
+        const orb = new Set(ess), out = [];
+        for (const i of document.querySelectorAll('img')) {
+          if (i.hidden || getComputedStyle(i).display === 'none' || !i.getClientRects().length) continue;
+          const src = i.getAttribute('src'), box = i.parentElement, txt = box ? box.textContent.trim().slice(0, 80) : '';
+          if (!src && !i._nicReq) out.push(`${where}: an empty img beside "${txt}"`);
+          else if (src && orb.has(src) && names.some(n => txt.includes(n)) && !/Essence/.test(txt)) out.push(`${where}: an Essence orb beside "${txt}"`);
+        }
+        return out;
+      }, { where, ess: essUrls, names: midNames });
+      const bad = [];
+      // the Storehouse: first view, then every grade
+      await X('setTab("gat"); setView("gat", "pack"); ui(true); true'); await page.waitForTimeout(400);
+      const storeTxt = await X('document.querySelector(".sh-stack[data-fam=coal]") ? document.querySelector(".sh-stack[data-fam=coal]").textContent : ""');
+      const midTxt = await X('[...document.querySelectorAll(".sh-stack-mid")].map(e => e.textContent).join(" | ")');
+      assert(/Coal/.test(storeTxt) && /90/.test(storeTxt) && /Copper Ingot 4/.test(midTxt), `the Storehouse's first view has a Coal stack ("${storeTxt}") and the ingot beside its ore ("${midTxt}")`);
+      bad.push(...await scan('Storehouse first view'));
+      await X('document.querySelector(".sh-all").click(); true'); await page.waitForTimeout(300);
+      bad.push(...await scan('Storehouse, all grades'));
+      await X('document.querySelector(".sh-all").click(); true');
+      // cost chips (the upgrade and craft rows use costChips) and a coal toast
+      await X('const b = document.createElement("div"); b.id = "__rfc"; document.body.append(b); const b2 = document.createElement("div"); b.append(b2); costChips(b, { ingot: 5, plank: 3, ess: 3 }, 2, 100); b.append(b2); costChips(b2, { coal: 4 }, 1, 0); true');
+      const chipTxt = await X('document.getElementById("__rfc").textContent');
+      assert(/Iron Ingot/.test(chipTxt) && /Birch Plank/.test(chipTxt) && /Coal/.test(chipTxt), `cost chips name Iron Ingot, Birch Plank and Coal ("${chipTxt}")`);
+      await X('S.camp.b.store = 1; S.mats.coal[0] = storeCap("coal", 1); stashAdd("coal", 1, 5, "flow"); toast("Smelted 3 Iron Ingots.", "good", { mat: ["ingot", 2] }, "high"); S.camp.b.store = 3; true'); await page.waitForTimeout(300);
+      bad.push(...await scan('cost chips and toasts'));
+      await X('document.getElementById("__rfc").remove(); true');
+      // the station sheets and the where-to-get sheets
+      for (const st of ['forge', 'bench', 'loom']) { await X(`refineUI.open("${st}"); true`); await page.waitForTimeout(250); bad.push(...await scan(st + ' orders')); await page.keyboard.press('Escape'); await page.waitForTimeout(250); }
+      await X('refineUI.where("coal", 1); true'); await page.waitForTimeout(250); bad.push(...await scan('where to get coal')); await page.keyboard.press('Escape'); await page.waitForTimeout(150);
+      await X('refineUI.where("ingot", 2); true'); await page.waitForTimeout(250); bad.push(...await scan('where to get Iron Ingot')); await page.keyboard.press('Escape'); await page.waitForTimeout(150);
+      // the away report: the materials grid and the Forge's line
+      await X(`showAwayReport({ secs: 3600, t: 3600, cap: 14400, capped: false, activity: 'fight', note: '', gold: 0, xp: 0, kills: 0,
+        mats: [{ k: 'ingot', t: 2, n: 30 }, { k: 'coal', t: 1, n: 12 }, { k: 'cloth', t: 1, n: 2 }], items: [], skills: [], lines: [{ icon: { mat: ['coal', 1] }, txt: '+12 Coal' }],
+        extra: [{ group: 'Camp', txt: 'The Forge smelted 30 Iron Ingots from 60 Iron Ore and 60 Coal.' }] }); true`);
+      await page.waitForTimeout(400);
+      const awayTxt = await X('(document.querySelector(".away-ov") || {}).textContent || ""');
+      assert(/Iron Ingot/.test(awayTxt) && /Coal/.test(awayTxt), 'the away report names Iron Ingot and Coal');
+      bad.push(...await scan('away report'));
+      await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true'); await page.waitForTimeout(300);
+      // the craft screen (tier 2 recipes cost middles)
+      await X('setTab("forge"); ui(true); true'); await page.waitForTimeout(500);
+      bad.push(...await scan('craft screen'));
+      assert(!bad.length, `no empty image box and no Essence orb for coal or a middle (${callers.length} matIcon callers: ${callers.join(', ')})` + (bad.length ? ': ' + bad.slice(0, 4).join('; ') : ''));
+      assert(!errs.length, 'no refine icon errors' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('refine icons (browser) crashed: ' + (e.stack || e)); }
 // ---- wall: the Trophy Wall at camp (63e-scenery-wall.js; achievements.md 6, AC5) ----
 if (section('wall')) try {
   const { coreFiles } = await import('./lib/core.mjs');

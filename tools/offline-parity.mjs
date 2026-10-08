@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // C14: reproducible live/away audit. Runs the real core with a pinned wall clock and seed.
 // node tools/offline-parity.mjs --json=/tmp/lanternfall-offline-parity.json
+// node tools/offline-parity.mjs --refine   the station orders (refine-queues): Forge and Loom orders, no Hands, inputs that run out
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { loadCore, memoryStorage } from './lib/core.mjs';
@@ -22,6 +23,9 @@ export function offlineFixture(mode = 'gather') {
     S.hands.list.push({...JSON.parse(JSON.stringify(handsGet('tam'))),id:'nan-probe',n:'Nan Tarrow',key:'nan',tr:[],job:null,pack:[]});
     tavernHearRumour('rook');handsSend('tam','wood',1,{shifts:2});handsTradeSend('trade-worker',[['wood',1,1000]]);
     campBuild('bench');campBuild('forge');S.mats.ore.fill(0);setNode('ore',2);setActivity('gather');`);
+  else if (mode === 'refine') g.eval(`S.maxZone=12;S.camp.open=true;S.camp.b.forge=2;S.camp.b.loom=1;S.camp.b.bench=1;
+    for(const a of Object.values(S.mats))a.fill(0);S.mats.ore[0]=4000;S.mats.ore[1]=600;S.mats.coal[0]=1200;S.mats.fibre[0]=600;
+    S.skills.mine.lv=20;refineAdd('ingot',2,30);refineAdd('ingot',1,'all');refineAdd('cloth',1,'all');setNode('crystal',1);setActivity('gather');`);
   else {
     if (mode === 'fight-fixed') g.eval('S.L=100;S.xp=0;gearDirty()');
     g.eval("setActivity('fight');spawn()");
@@ -38,7 +42,10 @@ export function offlineSnapshot(g) {
     applicants:S.hands.board.apps.map(a=>({id:a.id,key:a.key,at:a.at})),
     hands:S.hands.list.map(h=>({id:h.id,n:h.n,role:h.job&&h.job.role,jobEnd:h.job&&h.job.end,hrs:h.hrs,got:h.got})),rook:S.tavernLeads.rookSecs,
     cap:(4+2*S.relic.glass+bonus('awayHours'))*3600,boost:mod('offline')*(1+gear().offline/100),
-    hold:S.activity==='fight'?partyHoldEstimate(S.zone):null})`));
+    hold:S.activity==='fight'?partyHoldEstimate(S.zone):null,
+    refined:STOCK_FAMILIES.filter(f=>REFINE_RAW[f]).reduce((a,f)=>a+S.mats[f].reduce((x,y)=>x+y,0),0),
+    middles:Object.fromEntries(REFINED_FAMILIES.map(f=>[f,S.mats[f].slice()])),coal:S.mats.coal[0],
+    refine:JSON.parse(JSON.stringify(S.refine.st))})`));
 }
 export function offlineLiveUntil(g, from, until) {
   g.eval(`for(let i=${Math.round(from * 10)};i<${Math.round(until * 10)};i++){Date.__t=${AUDIT_START}+(i+1)*100;tick(.1)}
@@ -98,6 +105,9 @@ export function offlineAuditTable(audit) {
       return `${hours}h, ${units} units; ${jobs} gathering jobs, ${s.builds.length} build queues`;
     };
     add(r, 'Workers / queues', handLine(l, a), handLine(o, a));
+    // refine-queues: station orders, live (at the credited away time) against away; the absence runs them up to the away limit
+    const refinedL = m ? delta(m, a, 'refined') : null, refinedA = delta(o, a, 'refined');
+    add(r, 'Refined units', m ? num(refinedL) : 'missing matched snapshot', num(refinedA), refinedL ? `${num((refinedA / refinedL - 1) * 100)}%` : '—');
     add(r, 'Trade', `${l.trade.trips - a.trade.trips} trips, ${num(l.trade.gold - a.trade.gold)} gold`,
       `${o.trade.trips - a.trade.trips} trips, ${num(o.trade.gold - a.trade.gold)} gold`);
     const camp = s => `Bench ${s.camp.bench}, Forge ${s.camp.forge}; ${s.builds.length} pending`;
@@ -117,7 +127,7 @@ export function offlineAuditTable(audit) {
   return rows.join('\n');
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const audit = offlineAudit((mode, secs) => console.error(`${mode}: ${secs / 3600} hours`), process.argv.includes('--mastered') ? ['gather-mastered'] : undefined);
+  const audit = offlineAudit((mode, secs) => console.error(`${mode}: ${secs / 3600} hours`), process.argv.includes('--mastered') ? ['gather-mastered'] : process.argv.includes('--refine') ? ['refine'] : undefined);
   const arg = process.argv.find(a => a.startsWith('--json='));
   if (arg) fs.writeFileSync(arg.slice(7), JSON.stringify(audit, null, 2) + '\n');
   console.log(offlineAuditTable(audit));

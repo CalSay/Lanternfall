@@ -137,6 +137,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A new UNIQ entry on a class kind (warblade, bow, shield) must work on every screen that reads `UNIQ[k].slot` as a SLOT key (the trophy wall did `SLOT[u.slot].n` and would crash), and save codes must check it sits on the kind it was made as. Check with a scratch save holding every new id: encode, decode, cold-load. (uniques-first-four, 2026-10-07)
 - `soloPick(k, { now: true })` in a scratch game stamps `S.cls.at = true`, which `encodeSave` refuses; set it to 0 before a save-code check. A real pick stamps a time. (uniques-first-four, 2026-10-07)
 - Update `docs/GAME.md` in every PR that changes what a player sees. Why: the rubrics require it and GAME.md had gone stale. (systems-map, 2026-10-06)
+- A core file loaded before `55-stats.js` cannot call `registerAwayLine` at load (`AWAY_LINES` is still in its temporal dead zone and the whole core fails to load); register on the first `awayBegin`. (refine-queues, 2026-10-08)
 
 ## CI and tooling
 
@@ -171,6 +172,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A proof route closes cards that arrive on a timer (moment cards, tips) with `wait` plus `tap-if`, never a bare `tap`, and is replayed a few times in both views before pushing. Why: after the moment layer merged, the mid save's new-hero card covered PR #58's switch at a varying moment, so eyes failed with no error shown (playtest exits 1 on a covered tap). (hero-progression-rework, 2026-10-06)
 - Sweep a new game to zone 15 with the clock moving to prove an unlock chain; set the hero level with the zone. Why: Stars opens at hero level 10 or a first star, so a sweep with a level 1 hero called it unreachable. (unlock-tip-coverage, 2026-10-07)
 - Keep the word "landscape" out of a new check.mjs section name: the C5 check runs `--only=gatherers UI|landscape` with Playwright missing and expects exactly 4 skipped sections, so a fifth match fails it. Why: the first full run of story-card-landscape-fit failed C5 until the section was renamed "story cards fit at 740x360". (story-card-landscape-fit, 2026-10-08)
+- A proof-route tap on a row at a sheet's bottom edge can hit the sheet's edge and do nothing: `scroll` first, then tap. A selector `expect` takes an unquoted attribute value (`expect ".sh-stack[data-fam=coal]"`); quotes inside it break the batch parser. (refine-queues, 2026-10-08)
+- check.mjs's `loadCore` runs `hearthWarm()`, which builds the Workbench and the Forge: a check that needs a game without them sets `S.camp.b.forge = 0` (or the station) itself. Why: the "no coal before the Forge" check saw coal. (refine-queues, 2026-10-08)
 
 ## Reviews and Codex
 

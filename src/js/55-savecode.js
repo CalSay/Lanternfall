@@ -223,6 +223,25 @@ function validateSave(data) {
     if (data.camp && data.camp.b) for (const [k, n] of Object.entries(data.camp.b)) { known(CAMP_B, k, 'camp.building'); int(n, 'camp.' + k, 0, CAMP_B[k].max); }
     rows(data.camp, 'news'); rows(data.craft, 'jobs'); rows(data.almanac, 'goals'); rows(data.errors, 'list');
     rows(data.bounties, 'slots', b => { if (b.k == null) return; if (!BOUNTY_API.kinds.includes(b.k)) fail('bounty.kind'); const bad = BOUNTY_API.shape(b); if (bad) fail('bounty.' + bad); });
+    // refine-queues: the stations' orders (55-refine). Each station holds at most REFINE_TUNE.max orders of its own products.
+    if (data.refine !== undefined) {
+      const rf = data.refine; record(rf, 'refine');
+      for (const k of ['v', 'said', 'seen', 'coal']) if (rf[k] !== undefined) int(rf[k], 'refine.' + k, 0, k === 'seen' ? 864e13 : k === 'v' ? 1000 : 1);
+      if (rf.st !== undefined) {
+        record(rf.st, 'refine.st');
+        for (const [st, list] of Object.entries(rf.st)) {
+          if (!REFINE_STATIONS.includes(st)) fail('refine.st.' + st, 'is not supported by this version');
+          array(list, 'refine.st.' + st); if (list.length > REFINE_TUNE.max) fail('refine.st.' + st, 'holds too many orders');
+          for (const o of list) {
+            const p = 'refine.st.' + st + '[]'; record(o, p);
+            known(REFINE_PRODUCTS, o.prod, p + '.prod'); if (REFINE_PRODUCTS[o.prod].st !== st) fail(p + '.prod', 'is made at another station');
+            int(o.tier, p + '.tier', 1, 5); int(o.want, p + '.want'); int(o.made, p + '.made'); int(o.all, p + '.all', 0, 1); num(o.at, p + '.at', 0, REFINE_TUNE.secs[o.tier - 1]);
+            if (!o.all && !(o.want >= 1)) fail(p + '.want');
+            if (o.keep !== undefined) { array(o.keep, p + '.keep'); if (o.keep.length !== REFINE_PRODUCTS[o.prod].inputs(o.tier).length) fail(p + '.keep'); for (const n of o.keep) int(n, p + '.keep[]'); }
+          }
+        }
+      }
+    }
     if (data.craft && data.craft.tonic != null) { record(data.craft.tonic, 'craft.tonic'); known(CRAFT_TONICS, data.craft.tonic.k, 'craft.tonic.kind'); tier(data.craft.tonic.t, 'craft.tonic.tier'); num(data.craft.tonic.left, 'craft.tonic.left'); }
     return { ok: true, data };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'This save has invalid data.' }; }
