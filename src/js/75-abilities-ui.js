@@ -88,10 +88,10 @@
       for (const id of SCROLL_ORDER) {
         const n = scrollCount(id), s = SCROLLS[id];
         const c = el('div', 'ab-scroll' + (n ? ' has' : '')); c.style.setProperty('--scroll', s.col);
-        c.append(el('i', 'ab-gem'), el('b', null, s.name), el('span', 'ab-sn', '× ' + n), el('small', null, `Tier ${ROMAN[s.tier]}, level ${ABILITY_TIERS[s.tier].lv}. From ${s.from}.`));
+        c.append(el('i', 'ab-gem'), el('b', null, s.name), el('span', 'ab-sn', '× ' + n), el('small', null, `Tier ${ROMAN[s.tier]}, level ${ABILITY_TIERS[s.tier].lv}. From ${s.from}.${s.tier === 1 ? ' One move per hero.' : ''}`));
         scrolls.append(c);
       }
-      info.append(scrolls, el('p', 'note ab-src', 'Zone bosses drop Scrolls. Use one to learn an ability.'));
+      info.append(scrolls, el('p', 'note ab-tierln', 'A Scroll teaches its own tier or a lower one.'), el('p', 'note ab-src', 'Zone bosses drop Scrolls. Use one to learn an ability.'));
       info.append(el('p', 'note ab-note', `${heroNm(k)} takes three abilities into a fight (Q, W, E).`));
       if (talOn()) info.append(el('p', 'note ab-tp', 'Talents are free. Pick A or B on any ability, Attack, Parry or Dodge, and change it between fights.'));
       root.append(info);
@@ -118,7 +118,7 @@
       for (const id of ids) rows.append(rowFor(k, id, infos[id], eq));
       g.append(rows); list.append(g); shown += ids.length;
     }
-    if (filt === 'can' && !shown) list.append(el('p', 'note ab-empty', nScroll ? 'Nothing to learn yet. Your Scrolls need a higher level.' : 'Nothing to learn yet. Beat a zone boss for a Scroll.'));
+    if (filt === 'can' && !shown) list.append(el('p', 'note ab-empty', nScroll ? spareLine(k) : 'Nothing to learn yet. Beat a zone boss for a Scroll.'));
     if (filt !== 'can' && talOn()) {   // Attack, Parry and Dodge: talents only
       const g = el('div', 'ab-path ab-basics'), rows = el('div', 'ab-rows'); g.append(el('h3', 'ab-pname', 'Attack, Parry and Dodge'));
       for (const [mv, nm] of BASIC) rows.append(basicRow(k, mv, nm));
@@ -127,6 +127,20 @@
     main.append(list);
     if (selId) { const d = detFor(k, selId, eq, infos); if (d) main.append(d); else { selId = ''; root.classList.remove('has-det'); } }
     root.append(main);
+  }
+  // scroll-spares: why Scrolls in hand teach this hero nothing. The level that opens a move first, then who a spare is for, then a
+  // Scroll no starter needs. It never blames the level alone.
+  function spareLine(k) {
+    const sp = scrollSpares(k), out = [], and = ks => ks.map(heroNm).join(' and ').replace(/ and (?=.* and )/g, ', ');
+    for (const x of sp.short) out.push(`${SCROLLS[x.id].name} moves open at level ${x.lv}.`);
+    for (const x of sp.spare) {
+      const nm = SCROLLS[x.id].name, what = SCROLLS[x.id].tier === 1 ? 'their first move' : 'a move', head = x.n === 1 ? `A spare ${nm} teaches` : `Spare ${nm}s teach`;
+      if (x.play.length && x.join.length) out.push(`${head} ${and(x.play)} ${what} when you play them, and ${and(x.join)} when they join.`);
+      else out.push(`${head} ${and(x.play.length ? x.play : x.join)} ${what} when ${x.play.length ? 'you play them' : 'they join'}.`);
+    }
+    for (const id of sp.idle) { const nm = SCROLLS[id].name;
+      out.push(SCROLLS[id].tier === 1 ? `Every hero has their Moss move. ${nm}s have no use now.` : `Every hero has learned all a ${nm} teaches. ${nm}s have no use now.`); }
+    return out.join(' ') || 'Nothing to learn yet.';
   }
   // the talent state of an ability or move, for its row: 'Talent A' / 'Pick a talent' / ''
   function talMark(k, id) {
@@ -212,7 +226,7 @@
     // the one action
     const act = el('div', 'ab-act');
     if (i.owned) {
-      act.append(el('small', 'ab-al', where >= 0 ? `In slot ${KEYS[where]}. Tap it to take it out.` : 'Put it in a slot:'));
+      act.append(el('small', 'ab-al', where >= 0 ? `In slot ${KEYS[where]}. Tap it to take it out.` : eq.slice(0, 3).every(x => x) ? 'Swap it in for:' : 'Put it in a slot:'));
       const row = el('div', 'ab-sl');
       for (let s = 0; s < 3; s++) {
         const cur = eq[s], b = btn('ab-slotb' + (where === s ? ' on' : ''));
