@@ -1,0 +1,36 @@
+# seed: 1
+# Proof for card unique-weapons-fit-all: a unique weapon fits every hero as that hero's own weapon.
+# Save: tests/proof-fixtures/save-golemfist-wren.json, the early fixture (Wren the Ranger, zone 6) holding a Golemfist from
+# before this change (made as a Sword). On load it retools to Wren's Bow: same name, colour and rule ("Your Attack deals
+# double damage"), and its upgrade now takes Pine Log like any Bow. Wren equips it with no refusal. A route cannot force
+# the zone 6 boss drop, so the drop, Pip's Staff, Tobin's Warblade, the Lantern Eater's Fang, a class change, old-save
+# load and save codes are held by tools/check.mjs (solo hero 9).
+new golemfist-wren
+wait 6
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap "Hero"
+wait 2
+tap-if "Continue"
+tap-if "Dismiss this tip"
+tap "Gear"
+wait 1
+expect "Weapon: Pine Bow +3"
+tap "Golemfist"
+wait 1
+expect "Weapon for you"
+expect "Your Attack deals double damage."
+expect "Pine Log"
+shot golemfist-sheet
+tap "Equip"
+wait 1
+tap-if "Close"
+wait 1
+expect "Weapon: Golemfist"
+expect-no "can't"
+expect-no "cannot"
+shot golemfist-worn
