@@ -7813,7 +7813,7 @@ if (section('almanac gear days (almanac-forge-points-to-gear)')) try {
           const day=await X(`(() => { for (let d = deviceDay(Date.now()); d < deviceDay(Date.now()) + 3000; d++) if (almanac.omenFor(d).id === ${JSON.stringify(id)}) return d; return -1; })()`);
           assert(day>=0,`${at}: a day that plays ${id} exists`);
           await X(`(() => { const t = new Date(2026, 0, 1 + ${day}, 12).getTime(); Date.now = () => t; return true; })()`);
-          await X(`almanac.force(${JSON.stringify(id)});typeof closeStory==="function"&&closeStory();document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());setTab("world");setView("world","almanac");ui(true);true`);
+          await X(`typeof closeStory==="function"&&closeStory();document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());setTab("world");setView("world","almanac");ui(true);true`);
           await page.waitForFunction(()=>{const b=document.querySelector('#p-world .om-go');return !!b&&b.offsetParent!==null;},null,{timeout:15000});
           const line=await X('document.querySelector("#p-world .om-hint-tx").textContent');
           await X('document.querySelector("#p-world .om-go").click();true');
