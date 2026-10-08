@@ -741,6 +741,11 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   Prediction: the nightly walk shows no gap over 8 minutes between big moments up to the zone 10 Champion, for every
   starter pick; missed if any seed shows one. Coverage areas 2 and 3. No save change; the colour grants switch off
   with `CACHE_TUNE.on` (card `cache-core`).
+- **F1 after the staged lesson** (coordinator, 2026-10-08, on the planner's recommendation; Cal may veto). Cal's staged first fight
+  (#197) holds fight 1 for its lessons, so the first gold lands at about 0:19. Keep the lesson. F1 now reads: "the first press gets a
+  hit with its sound within 10 s of the first tap, and the first loot (gold, loot or XP) within 30 s". Why: F1 exists so something
+  good happens fast, and a hit with its sound inside 10 s does that; the lesson was Cal's own ask. Measured by `tools/walk.mjs`
+  (`first-hour-map-two-clocks`).
 - **The guide is Old Hesketh, with a face.** Landscape: the side column's notices slot. Portrait: docked above the
   action bar. Never over the fighters or the HP bars.
 - **Bounties.** A finished bounty can be claimed from Next Up and from its ready notice, and the board also shows at
