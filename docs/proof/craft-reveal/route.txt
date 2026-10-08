@@ -2,8 +2,15 @@
 # Proof for card craft-reveal: the mid fixture (Tobin, Zone 20) crafts at the Forge. Each recipe shows a computed odds line; each craft opens a
 # result card (icon, grade in words and colour, stats, arrows against what Tobin wears, Equip / Keep / Salvage); the last five show as a strip.
 # The bag tile names its grade in text. Replayed at 360x740 and 740x360. The "For you" fallback is in route-for-you.txt.
+# Updated 2026-10-08 (proof-routes-rot): close the zone 20 story card and the Refining tip; Iron gear now takes Iron Ingot and
+# Birch Plank (refining, #209) the mid save does not hold, so the three crafts are the Copper ones (raw goods), same card and strip.
 new mid
 wait 3
+tap-if "Skip this story"
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Continue"
 tap-if "Got it"
 tap-if "Dismiss this tip"
 tap "Craft"
@@ -11,7 +18,7 @@ wait 1
 tap-if "Got it"
 expect ".cf-odds"
 shot craft-odds
-tap "Craft Iron Warblade"
+tap "Craft Copper Warblade"
 wait 1
 expect ".cf-res"
 expect "Equip"
@@ -19,9 +26,9 @@ expect "Keep"
 expect "Salvage"
 expect ".cf-res .cf-dl"
 shot craft-card
-tap "Craft Iron Shield"
+tap "Craft Copper Shield"
 wait 1
-tap "Craft Iron Greathelm"
+tap "Craft Copper Greathelm"
 wait 1
 expect ".cf-recent"
 shot craft-strip

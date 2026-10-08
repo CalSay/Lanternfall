@@ -2,6 +2,8 @@
 # Proof for card craft-delta: a crafted tool that beats the worn one goes on by itself and the card says how much faster you
 # gather; a crafted weapon's card says what it changes against the boss at your furthest zone; Next Up offers an upgrade
 # when you can pay for one and no craft is ready. Core and timing cases are in tools/check.mjs (section "craft delta").
+# Updated 2026-10-08 (proof-routes-rot): the Pine Bow upgrade now takes a Pine Plank (refining, #209), so Next Up first offers
+# the saw order; the route takes it, waits for the plank, and then Next Up offers the upgrade it can now pay for.
 new flow-cold-camp
 wait 2
 tap-if "Continue"
@@ -25,6 +27,12 @@ wait 2
 tap-if "Continue"
 tap-if "Skip"
 tap-if "Dismiss this tip"
+wait 1
+tap "Next up"
+tap "Go: Saw 1 Pine Plank"
+wait 20
+tap-if "Dismiss this tip"
+tap "Fight menu"
 wait 1
 tap "Next up"
 expect "Upgrade your Pine Bow"

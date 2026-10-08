@@ -2,13 +2,22 @@
 # Proof for card top-bar-compact: the mid fixture (Tobin, Zone 20) in a fight at 360x740. Under the header's zone bar there is
 # ONE line: Fight / Wood and Next Up side by side. The zone arrows sit in the header beside the zone pill. No "While away" sentence.
 # The row, ellipsis and sentence checks run in `node tools/check.mjs --only="fight HUD"`.
+# Updated 2026-10-08 (proof-routes-rot): the mid save now opens on the Sepulchre Engine story card, which covered the fight and the Gather switch; the route skips it (tap-if "Skip") first. At 740x360 Hesketh's Hero-tab tip now holds the side column's notices slot where the away chip sits, so the route dismisses it (tap-if) before the chip expect.
 new mid
 wait 4
+tap-if "Skip"
+wait 2
+tap-if "Skip"
+wait 2
+tap-if "Continue"
+wait 1
 expect "#zPrev"
 expect "#modeSeg"
 expect "#nuChip"
 shot top-bar-fight
 tap "Gather: Woodcutting"
 wait 3
+tap-if "Dismiss this tip"
+wait 1
 expect ".away-chip"
 shot top-bar-gather

@@ -1,6 +1,8 @@
 # seed: 1
 # Proof for card upgrade-goal-chip-order: Next Up never offers an upgrade to the piece the craft goal replaces, or one that
 # leaves you short of a material the craft needs. Core cases are in tools/check.mjs (section "upgrade goal chip order").
+# Updated 2026-10-08 (proof-routes-rot): the Pine Bow upgrade now takes a Pine Plank (refining, #209); leg 1 saws one first
+# so the upgrade can be paid for again.
 # Leg 1: the craft goal is a Bristlehide Quiver (off hand), so the Pine Bow upgrade still shows: rule (a) does not over-hide.
 new flow-upgrade
 wait 2
@@ -9,9 +11,16 @@ tap-if "Skip"
 tap-if "Dismiss this tip"
 wait 1
 tap "Next up"
+tap "Go: Saw 1 Pine Plank"
+wait 20
+tap-if "Dismiss this tip"
+tap "Fight menu"
+wait 1
+tap "Next up"
 expect "Upgrade your Pine Bow"
 shot nextup-kept
-# Leg 2: saving up for a Birch Bow (save-upgrade-skip.json = save-flow-upgrade.json with maxZone 7, Woodcraft 10, 3 Birch Log):
+# Leg 2: saving up for a Birch Bow (save-upgrade-skip.json = save-flow-upgrade.json with maxZone 7, Woodcraft 10, 3 Birch Log,
+# and since proof-routes-rot 1 Pine Plank + 5 Birch Plank, as the Birch Bow now takes planks):
 # the craft goal shows and the Pine Bow upgrade does not.
 new upgrade-skip
 wait 2

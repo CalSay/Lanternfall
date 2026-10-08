@@ -4,6 +4,9 @@
 #   cold-camp  a cold new game: fire lit, Workbench built, the Copper Pickaxe is the next job
 #   cold-forge the Forge built and a weapon worn, the packs nearly empty (30 of 5,000): the Storehouse step is next
 # Notes 9 and 20 have no screen to replay here: 9 is held by the tools/check.mjs unique-card checks, 20 by its Heavy Strike check.
+# Updated 2026-10-08 (proof-routes-rot): tips now wait for the gap between fights (cal-0107-staged-guide), so parts 1 and 3 finish
+# the foe first; a crafted tool now goes on by itself (craft-delta), so part 2 checks "Copper Pickaxe on." and proves Equip closes
+# the card on the Pine Bow (the next craft) instead.
 
 # note 7: spend the points, then the guide points back at the fight
 new flow-points
@@ -14,11 +17,36 @@ wait 1
 tap "Build"
 wait 1
 tap "Spread evenly"
+# in landscape the fight stays beside the menu and waits on your turn; the line comes in the gap after the foe falls
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
 wait 30
 expect "Back to the fight"
 shot points-back-to-fight
 
-# notes 13 and 17: make the pickaxe, the guide says to put it on, Equip closes the card
+# notes 13 and 17: make the pickaxe; it goes on by itself (craft-delta) and the card says so. Then make the bow: Equip closes its card.
 new flow-cold-camp
 wait 2
 tap-if "Continue"
@@ -26,10 +54,15 @@ tap "Craft"
 wait 1
 tap "Craft Copper Pickaxe"
 wait 1
-expect "Equip Copper Pickaxe"
+expect "Copper Pickaxe on."
+expect-no "Equip Copper Pickaxe"
 shot pickaxe-equip-tip
+tap "Craft Pine Bow"
+wait 3
+expect "Salvage"
 tap "Equip"
 wait 1
+expect-no "Salvage"
 expect "Craft Pine Bow"
 shot card-closed-after-equip
 
@@ -37,5 +70,30 @@ shot card-closed-after-equip
 new flow-cold-forge
 wait 2
 tap-if "Continue"
+# the tip waits for the gap between fights (cal-0107-staged-guide): finish the foe on the field first
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
 expect "The Forge is up. Open Camp."
 shot storehouse-honest-tip
