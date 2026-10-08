@@ -204,6 +204,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Any inventory-style card (systems map, coverage): run a mutation test early. Why: Codex found 4 coverage-gap P1s per round for 3 rounds on systems-map. (f-systems-map, 2026-10-06)
 - Reviewer canary: Codex and Opus each caught 4 of 4 planted problems, but the Codex canary review did not run or report the rubric's hard checks and missed 2 failing ones. Run the checks yourself; do not treat a Codex pass as a green check. (f-canary, 2026-10-05)
 
+- A goal whose bar can sit near 0 for a long time (a weak boss chance after a loss) never reaches Next Up's three rows on a real save: give it a `reserve` row. A Ready goal is never pushed out, so a proof route on a busy save (the walk's minute 23: points, a scroll, a weapon, deeds) cannot show it; prove the row in check.mjs with `topGoals(3, { sticky: false })`. Why: the boss-retry-reads-odds card's bar (chance / `BOSS_ODDS.close`) hid the line it was meant to show. Also: `playtest.mjs new` empties the shots folder, so a route with two `new` lines keeps only the last one's shots (run the parts with separate `--shots`). (boss-retry-reads-odds)
+- Never fix float drift in a shared timer to tighten a new check's window: the auto-challenge check runs every 1.1 s at 0.1 s ticks (1 - 10 x 0.1 is a hair above 0), and making it exactly 1 s moved the first boss try by about 0.5 s on every seed, which the card's Never forbids. Widen the check's window instead. Why: the reviewer measured it on boss-retry-reads-odds. (boss-retry-reads-odds)
+
 ## Research and playtests
 
 - Run a new playtest persona yourself once before trusting its first reports, and treat "the game is broken" as a driver suspect first. After a driver fix, re-run every persona. Why: 4 driver bugs made 2 of 3 first reports partly wrong. (f-playtest-bots, 2026-10-06)
