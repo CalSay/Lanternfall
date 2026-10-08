@@ -10394,6 +10394,96 @@ if (section('craft reveal')) try {
   })();
 } catch (e) { fail('craft reveal crashed: ' + (e.stack || e)); }
 
+// ==== craft-delta: a better tool goes on by itself, the result card's fight line, Next Up's boss and upgrade goals ====
+if (section('craft delta')) try {
+  const pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+  const coreOn = (f, turns = true) => loadCore({ seed: 7, turns, storage: memoryStorage({ [KEY]: pfx(f) }) });
+  { const g = coreOn('save-flow-cold-camp.json'), E = s => g.eval(s);
+    E('globalThis.__cdEv = []; on("crafted", e => globalThis.__cdEv.push({ on: e.on, was: e.was, speed: e.speed }))');
+    const a = E('(craftItem("pick", 1, { wear: true }) || {}).id'), ev = E('globalThis.__cdEv[0]');
+    assert(a != null && E('S.equip.pick') === a && ev && ev.on === 'pick' && ev.was === null && ev.speed && ev.speed[1] < ev.speed[0], `craft delta: a crafted pickaxe goes on by itself and the crafted event says so (${JSON.stringify(ev)})`);
+    E(`itemById(${a}).plus = 5`);   // the worn one is now better than any fresh tier 1 pickaxe
+    const b = E('(craftItem("pick", 1, { wear: true }) || {}).id');
+    assert(b != null && E('S.equip.pick') === a && !E('globalThis.__cdEv[1].on'), 'craft delta: a worse pickaxe stays in the bag and the first stays worn');
+    E('S.equip.pick = null; gearDirty()');
+    const c = E('(craftItem("pick", 1) || {}).id');
+    assert(c != null && E('S.equip.pick') === null, 'craft delta: without opts.wear (forgeItem, sim.mjs) nothing goes on');
+    const sk = E('(forgeItem("sickle", 1) || {}).id');
+    assert(sk != null && E('S.equip.sickle') == null, 'craft delta: forgeItem("sickle") wears nothing');
+    const bow = E('(craftItem("bow", 1, { wear: true }) || {}).id');
+    assert(bow != null && E('S.equip.weapon') == null, 'craft delta: a weapon never goes on by itself');
+    E(`Object.assign(itemById(${bow}), { r: 'common', a: [] })`);   // a plain common Pine Bow, whatever the roll
+    const fd = E(`fightDelta(itemById(${bow}))`);
+    assert(fd && fd.kind === 'wins' && fd.zone === 2 && fd.after > fd.before, `craft delta: the Pine Bow raises the zone 2 boss wins in 10 (${JSON.stringify(fd)})`);
+    E(`itemById(${bow}).r = 'epic'`);
+    const fdE = E(`fightDelta(itemById(${bow}))`);
+    assert(fdE && fdE.after >= fd.after, `craft delta: a better bow never reads worse than a plain one (${JSON.stringify(fdE)})`);
+    const label = E('(topGoals(20, { sticky: false }).find(x => x.id === "forge") || {}).label || ""');
+    assert(/ for the zone 2 boss/.test(label) || !/Bow|Quiver|Hood|Leathers|Charm/.test(label), `craft delta: a weapon or armour craft goal names the zone boss (${label})`);
+    assert(E('S.equip.weapon == null') && !E('globalThis.__cdEv.some(e => e.on === "weapon")'), 'craft delta: the sample never wears the piece');
+  }
+  { // review: 40 fights a side read a tier 4 Warblade into an empty slot as "7 in 10, not 8 in 10"; 80 fights a side and a change under half a step in 10 show no line instead
+    const g = coreOn('save-z10-cantor.json'), E = s => g.eval(s);
+    const k = E(`Object.keys(CRAFT_KINDS).find(k => kindPos(k) === 'weapon' && !CRAFT_KINDS[k].legacy && fits(k, 'weapon', 'hero'))`);
+    const res = E(`['common', 'uncommon', 'rare'].map(r => fightDelta(newItem(${JSON.stringify(k)}, 4, r, {})))`);
+    assert(res.every(r => !r || (r.after > r.before)), `craft delta: a weapon into an empty slot never reads as fewer wins (${k}: ${JSON.stringify(res)})`);
+  }
+  { const g = coreOn('save-flow-cold-camp.json', false), E = s => g.eval(s);
+    const bow = E('(craftItem("bow", 1, { wear: true }) || {}).id');
+    assert(bow != null && E(`fightDelta(itemById(${bow}))`) === null, 'craft delta: with the turn fight off there is no fight line');
+  }
+  { const g = coreOn('save-flow-upgrade.json'), E = s => g.eval(s);
+    const goals = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))'), up = goals.find(x => x.id === 'upgrade');
+    assert(up && up.label === 'Upgrade your Pine Bow to +1' && up.ready && !goals.some(x => x.id === 'forge' && x.ready), `craft delta: with no craft ready, Next Up offers "Upgrade your Pine Bow to +1" (${JSON.stringify(goals)})`);
+    E('S.gold = 0');
+    assert(!E('topGoals(20, { sticky: false }).some(x => x.id === "upgrade")'), 'craft delta: no upgrade goal you cannot pay for');
+  }
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('craft delta (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const open = async fx => {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([key, raw]) => { if (sessionStorage.getItem('cd-seeded')) return; sessionStorage.setItem('cd-seeded', '1'); const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, [KEY, pfx(fx)]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard.tips = false; true`);
+        return { ctx, page, errs, X };
+      };
+      { const { ctx, page, errs, X } = await open('save-flow-cold-camp.json');
+        await X(`setTab('forge'); ui(true); true`); await page.waitForTimeout(400);
+        await X(`(() => { const b = document.querySelector('.cf-st[data-st="bench"]'); if (b) b.click(); return true; })()`); await page.waitForTimeout(300);
+        await page.click('[aria-label="Craft Copper Pickaxe"]'); await page.waitForTimeout(300);
+        const card = await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { text: c.textContent, eq: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent) } : null; })()`);
+        assert(card && /Copper Pickaxe on\. Mining is \d+% faster\./.test(card.text) && !card.eq.includes('Equip') && !/It is in your bag/.test(card.text), `craft delta (browser): the pickaxe card says it is on, with no Equip button (${card && card.text.slice(0, 160)})`);
+        const t0 = Date.now();
+        await page.click('[aria-label="Craft Pine Bow"]');
+        const first = await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { name: c.querySelector('.cf-in').textContent, fight: !!c.querySelector('.cf-fight') } : null; })()`);
+        assert(first && /Pine Bow/.test(first.name) && !first.fight, `craft delta (browser): the bow's card opens at once, before the sample is done (${JSON.stringify(first)})`);
+        let line = '';
+        while (Date.now() - t0 < 60000 && !line) { await page.waitForTimeout(200); line = await X(`(() => { const f = document.querySelector('.cf-res .cf-fight'); return f ? f.textContent : ''; })()`); }
+        assert(/^Zone 2 boss: you'd win about \d+ in 10, not \d+ in 10\.$/.test(line), `craft delta (browser): the fight line joins the card when the sample is done (${line || 'none after 60 s'})`);
+        assert(!errs.length, 'craft delta (browser): no page errors on the camp save' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      { const { ctx, page, errs, X } = await open('save-flow-upgrade.json');
+        const go = await X(`(() => { const g = topGoals(20, { sticky: false }).find(x => x.id === 'upgrade'); if (!g) return 'no goal'; const s = g.go(); s.fn(); setTab(s.view || s.tab, s.sel); ui(true); return ''; })()`);
+        await page.waitForTimeout(400);
+        const sheet = await X(`(() => { const h = document.querySelector('.bsheet-ov .cf-isheet, .cf-isheet'); const b = h && [...h.querySelectorAll('button')].find(x => /^Upgrade to \\+1$/.test(x.textContent.trim())); return { tab: S.tab, view: curView('party'), up: !!b && b.getClientRects().length > 0 && !b.disabled }; })()`);
+        assert(!go && sheet.tab === 'party' && sheet.view === 'gear' && sheet.up, `craft delta (browser): Upgrade's Go lands on Hero, Gear with "Upgrade to +1" showing (${go || JSON.stringify(sheet)})`);
+        assert(!errs.length, 'craft delta (browser): no page errors on the upgrade save' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('craft delta crashed: ' + (e.stack || e)); }
+
 // ---- boss tiers, first hour (card boss-tiers PR 1, judge 2026-10-07): the zone-boss hit cap and the first-hour knots ----
 if (section('boss tiers first hour')) try {
   const g = loadCore({ seed: 5, turns: true }), E = s => g.eval(s);

@@ -37,6 +37,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Any change to zone 1 trash fight length moves `health` firstGoalSec (the first boss win): run `node tools/health.mjs --compare` before pushing, not only check and budget. Why: early-foes-three-hits passed check and budget, then CI health failed at 107 s against 58 s; a 6-Attack zone 1 floor was cut to 3, and Cal accepted the rest (73 s, optimiser zone 12 at 1 h). (early-foes-three-hits, 2026-10-07)
 - Check a boss-gain cap against every pair of rules one hero can wear together and against abilities that read the changed count (Oath x Mountain reached x1.82; Crimson's 10 stacks fed Final Echo +62%), and never let a one-action boost ride a stored Bleed that `Math.max` keeps all fight. Why: the code review of uniques-first-four found all three after each rule passed alone. (uniques-first-four, 2026-10-07)
 
+- Sample a "with this piece" fight change with at least 80 scratch fights a side on the same seeds, and show no line when the shares move less than half a step or the rounding points against the raw numbers; swap the piece into both `gsCache` and `S.equip[pos]` for the sample (59-combat reads the helm from `S.equip`). Why: 40 a side read a tier 4 Warblade into an empty slot as "7 in 10, not 8 in 10", and a gsCache-only swap left the new helm's armour out (review, craft-delta, 2026-10-08)
+
 ## Economy and skilling
 
 - Ask Cal before `node tools/health.mjs --write-baseline`, naming each moved metric, which way it moved and the judge's ruling. Why: rewriting the bar CI scores against was blocked as a CI bypass until Cal said yes (gold-without-training, 2026-10-07).

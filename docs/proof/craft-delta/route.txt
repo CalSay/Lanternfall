@@ -1,0 +1,31 @@
+# seed: 1
+# Proof for card craft-delta: a crafted tool that beats the worn one goes on by itself and the card says how much faster you
+# gather; a crafted weapon's card says what it changes against the boss at your furthest zone; Next Up offers an upgrade
+# when you can pay for one and no craft is ready. Core and timing cases are in tools/check.mjs (section "craft delta").
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap "Craft"
+wait 1
+tap "Craft Copper Pickaxe"
+wait 1
+expect "Copper Pickaxe on"
+expect-no "Equip Copper Pickaxe"
+shot tool-on
+tap "Craft Pine Bow"
+wait 3
+expect "Zone 2 boss"
+shot bow-fight-line
+tap "Equip"
+wait 1
+shot after-equip
+new flow-upgrade
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+tap "Next up"
+expect "Upgrade your Pine Bow"
+shot nextup-upgrade

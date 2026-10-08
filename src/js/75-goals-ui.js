@@ -76,7 +76,7 @@
     go.append(gq, gl);
     r.append(ic, body, go);
     const x = { r, im, lbl, fill, go, gq, gol: gl, goal: null, url: '' };
-    go.addEventListener('click', () => { const g = x.goal; if (!g) return; api.close(true); goTo(g); });
+    go.addEventListener('click', () => { const g = x.goal; if (!g) return; if (api.body.querySelectorAll('.nu-row:not([hidden])').length >= 2) emit('choice', 'nextup'); api.close(true); goTo(g); });   // craft-delta: a pick from two or more goals is a choice
     return x;
   }
   function openList() {
