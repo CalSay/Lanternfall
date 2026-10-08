@@ -1,0 +1,1 @@
+Golemfist and the Lantern Eater's Fang now show as your hero's own weapon everywhere: a Bow for Wren, a Staff for Pip and a Warblade for Tobin, on the Unique loot wall and in the Codex. Best shot: uniques-wall (Craft, Uniques: "Golemfist · Bow · best Copper tier").
