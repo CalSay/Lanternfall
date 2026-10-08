@@ -17,7 +17,9 @@ wait 3
 tap "Hero"
 wait 2
 tap-if "Continue"
+wait 1
 tap-if "Dismiss this tip"
+wait 1
 tap "Gear"
 wait 1
 expect "Weapon: Pine Bow +3"
