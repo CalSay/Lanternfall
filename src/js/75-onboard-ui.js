@@ -82,12 +82,16 @@
   // cal-0107-staged-guide: the first Scroll (its toast hands over to him), and the slot for a second ability once it is learned.
   const SAY_MORE = {
     defeat: 'No shame in that. The card showed what beat you, and each try shows one more of its moves.',
-    scroll: 'That boss dropped a Moss Scroll. Open Hero, then Abilities, and learn a new move with it.',
+    scroll: () => `That boss dropped a ${(SCROLLS[scrollId] || SCROLLS.moss || { name: 'Scroll' }).name}. Open Hero, then Abilities, and learn a new move with it.`,
     // learning a move from the Abilities view drops it into the first empty slot (75-abilities-ui), so he says where it went
-    slot: () => slotAb && soloEquipped().includes(slotAb) ? `${(ABILITIES[slotAb] || {}).name || 'Your new move'} is in a slot under the fight now. Press it there when it's ready.`
-      : 'Your new move needs a slot. Tap an empty slot under the fight and pick it there.'
+    // ("next to Attack": the moves' row sits under the stage in portrait and beside it in landscape)
+    slot: () => {
+      const eq = soloEquipped(), nm = (ABILITIES[slotAb] || {}).name || 'Your new move';
+      if (eq.includes(slotAb)) return `${nm} is next to Attack now. Press it there when it's ready.`;
+      return eq.includes(null) ? `${nm} needs a slot. Tap an empty slot next to Attack and pick it.` : `${nm} needs a slot. Hold one of your moves next to Attack to swap it in.`;
+    }
   };
-  let slotAb = '';   // the move just learned (the slot line)
+  let slotAb = '', scrollId = 'moss';   // the move just learned (the slot line); the first Scroll found (the Scroll line)
   const sayText = id => { const t = SAY_TXT[id] || SAY_MORE[id]; try { return typeof t === 'function' ? t() : t; } catch (e) { return ''; } };
   // a line that no longer matches the game when its turn comes is dropped, never said (the Scroll already spent)
   const SAY_STILL = {
@@ -114,7 +118,7 @@
     toast(OPEN_TXT[id], 'good', ic ? ic.src : { ic: ['banner', '#F2C14E'] }, tab || id === 'nextup' ? 'high' : 'normal');
   });
   on('wipe', e => { if (e && e.boss && !e.arena) sayQueue('defeat'); });
-  on('scrollDrop', e => { if (e && e.firstEver) sayQueue('scroll'); });
+  on('scrollDrop', e => { if (e && e.firstEver) { scrollId = e.id || 'moss'; sayQueue('scroll'); } });
   on('abilityLearned', e => { if (e && e.hero === soloHero() && soloAbilities().length > 1) { slotAb = e.id; sayQueue('slot'); } });
   // the upgrade step already brought you to the Hero tab and said what it is for: its first-use line would introduce it a second time
   on('onboardStep', e => { if (e && e.id === 'upgrade') onboardUseDone('use:party'); });

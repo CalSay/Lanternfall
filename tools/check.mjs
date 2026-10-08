@@ -2307,8 +2307,10 @@ if (section('cold hearth')) try {
   E('S.mats.ore = [0, 0, 0, 0, 0]; S.mats.wood[0] = 5');
   assert(!E('hearthLight()') && E('hearthCan().why') === '3 more Pine Log', 'the fire needs 8 Pine Log: ' + E('hearthCan().why'));
   const ev = []; g.fn.on('campOpen', e => ev.push('campOpen:' + e.quiet)); g.fn.on('hearthLit', () => ev.push('lit'));
-  E('S.mats.wood[0] = 8');
-  assert(E('hearthLight()') && E('S.mats.wood[0]') === 0 && E('S.hearth.lit > 0 && campOpen() && campLevel("hearth") === 1 && S.activity === "fight"'), 'hearthLight(): pays 8 Oak, Hearth 1, the camp opens, the hero walks out to fight');
+  E('S.mats.wood[0] = 8; setActivity("gather")');
+  // cal-0107-staged-guide (Cal's play note 10): lighting the fire at the grove keeps the hero there for Hesketh's talk
+  assert(E('hearthLight()') && E('S.mats.wood[0]') === 0 && E('S.hearth.lit > 0 && campOpen() && campLevel("hearth") === 1 && S.activity === "gather"'), 'hearthLight(): pays 8 Pine Log, Hearth 1, the camp opens, the hero stays gathering at the grove');
+  E('setActivity("fight")');
   assert(ev.join() === 'campOpen:false,lit' && !E('hearthLight()'), 'campOpen { quiet: false } and hearthLit, once');
   assert(E('campList().includes("bench") && !campList().includes("forge") && !campList().includes("loom")'), 'the Workbench plot opens with the fire (the Forge and Loom wait)');
   const c1 = E('campCost("bench", 1)');
@@ -4701,7 +4703,6 @@ if (section('solo hero')) try {
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');
     E('soloAttack()');
     for (let i = 0; i < 300 && !(E('onboardStep()') && E('onboardStep().id') === 'ability'); i++) run(g, 0.1);   // guide-voice: it waits for your turn
-    E('GUIDE_RT.pauseFight = -1; true');
     assert(E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === true, 'W1-D: the ability step pauses while a foe is alive');
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = 1; })'); run(g, 0.8); E('soloAttack()'); run(g, 0.1);   // Wren's Attack clears the pack (the 44% lock)
     assert(!E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardPaused(GUIDE_STEPS.find(s => s.id === "ability"))') === false, 'W1-D: ...and does not pause once the pack is dead, so the respawn can happen');
@@ -10671,7 +10672,7 @@ if (section('staged guide (browser)')) try {
         let sl2 = null;
         for (let k = 0; k < 20 && !(sl2 && sl2.id === 'say:slot'); k++) { await page.waitForTimeout(200); sl2 = JSON.parse(await X(LOOK)); if (sl2.id && sl2.id !== 'say:slot' && sl2.id.startsWith('use:')) await X('document.querySelector(".ob-ok") && !document.querySelector(".ob-ok").hidden && document.querySelector(".ob-ok").click(); true'); }
         const slotted = await X(`soloEquipped().includes(${JSON.stringify(id)})`);
-        assert(slotted && sl2 && sl2.id === 'say:slot' && /is in a slot under the fight now/.test(sl2.txt), `staged guide: a move learned into an empty slot gets his line saying where it went ("${sl2 && sl2.txt}", slotted ${slotted}, learned and slotted as the Learn button does)`);
+        assert(slotted && sl2 && sl2.id === 'say:slot' && /is next to Attack now/.test(sl2.txt), `staged guide: a move learned into an empty slot gets his line saying where it went ("${sl2 && sl2.txt}", slotted ${slotted}, learned and slotted as the Learn button does)`);
         assert(!errs.length, 'staged guide (Scroll, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }

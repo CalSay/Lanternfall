@@ -186,15 +186,18 @@ const GUIDE_QUIET = 60;    // seconds of play between two unprompted lines outsi
 // cal-0107-staged-guide (Cal's play notes 3 and 12): the fight lessons. In a turn fight each press is taught the first time it comes up, with
 // the fight held: Attack on your first turn, Dodge on the foe's first swing, the ability on your next turn, Parry on the next swing (or the
 // next foe's first). Dodge and Parry show only once their window is open (inWindow), and guideLessonHold stops the foe's clock right there.
-// The legacy real-time fight keeps its old order (attack, ability, dodge, parry), with no fight-by-fight wait.
+// The legacy real-time fight keeps its old steps with no fight-by-fight wait (Dodge may come before the ability there).
+// A save at zone 8 or past never gets these lessons (a mid or late save whose marks predate them): they are marked done unseen.
+// The boss tip may also start while the boss opens (its intro or its own turn), so it comes before the boss's first move.
+const LESSON_IDS = ['attack', 'ability', 'dodge', 'parry'];
 const turnLesson = () => { try { return typeof turnCombatOn === 'function' && !!turnCombatOn(); } catch (e) { return false; } };
 const GUIDE_STEPS = [
   { id: 'attack', ph: ['hero'], pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => fightingNow() && heroTurnNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
   { id: 'ability', ph: ['hero'], tip: 'Press your ability button when it is ready.', pause: 1, pauseWhen: () => liveFoe() && heroTurnNow(), when: () => stepDone('attack') && (stepDone('dodge') || !turnLesson()) && fightingNow() && heroTurnNow() && abilityOk(), done: () => O().casts >= 1 },
   { id: 'dodge', ph: ['windup'], pause: 1, pauseWhen: () => liveFoe() && inWindow('dodge'), when: () => stepDone('attack') && fightingNow() && hitComing() && (!turnLesson() || inWindow('dodge')), done: () => (O().dodges || 0) >= 1 },
   { id: 'parry', ph: ['windup'], pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && (!turnLesson() || stepDone('ability') && inWindow('parry')) && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
-  { id: 'boss', ph: ['hero'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
-  // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
+  { id: 'boss', ph: ['hero', 'foe'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
+  // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, the first level-up or zone 2)
   { id: 'upgrade', ph: ['between'], tip: 'You can grow stronger now. Open Hero.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
   // Cal's play note 7: after the points are spent, say how to get back to the fight (the Hero menu otherwise just sits there)
   { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu and get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
@@ -313,6 +316,7 @@ function craftReady() {
     if (!O().tips) return null;
     for (const s of GUIDE_STEPS) {
       if (O().done[s.id]) continue;
+      if (S.maxZone >= 8 && LESSON_IDS.includes(s.id)) { onboardDone(s.id); continue; }
       let d = false; try { d = !!s.done(); } catch (e) {}
       if (d) { onboardDone(s.id); continue; }
       let w = false; try { w = !!s.when(); } catch (e) {}

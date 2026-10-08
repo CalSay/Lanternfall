@@ -284,7 +284,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   let cur = null, claimed = false, heldAt = 0;
   const queue = [];
   holdGame(() => storyHeld());   // 00-util's pause registry: the frame loop does not tick while a scene is up
-  storyInGap = () => inGap() || grove();   // the grove has no fight to interrupt
+  storyInGap = () => inGap() || (grove() && !!cur && atHearth(cur));   // the grove has no fight to interrupt (only Hesketh's hearth scenes play there)
   storyHeld = () => !!cur && (claimed || (!!cur.chain && Date.now() - heldAt < 3000));   // only a scene the player can see holds the game (and, for 3 s, the next one of
   // the same stop while the last sheet closes); one waiting behind another overlay does not
   storyClaim = id => { if (cur && cur.id === id) claimed = true; };
