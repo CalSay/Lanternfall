@@ -14252,7 +14252,7 @@ var forgeGoalPicks = 0;
       return { kind, t: 1, pos: 'weapon', cost: m, p, score: p + 0.02, first: true, short, closed: short.find(k => !matPlace(k, 1).open) || null };
     } catch (e) { return null; }
   };
-  // nextup-guards-forge-mats: once a tool is worn and until the Forge is built, no tool craft or upgrade that leaves less of a
+  // nextup-guards-forge-mats: once a tool is worn and until the Forge is built, no craft (tool, charm) or upgrade that leaves less of a
   // Forge material (25 Copper Ore, 10 Pine Log) than its first build needs. Seed 1's Copper tools spent 22 of 25 ore and pushed
   // the Forge from 6:35 to 14:17. The first weapon (firstWeapon) and weapon crafts are never held.
   const forgeHold = (t, mats) => {

@@ -10945,7 +10945,7 @@ if (section('craft delta')) try {
     // the first weapon is never held: with no weapon worn, its row shows at 22/25 ore with the Forge unbuilt
     E('S.camp.b.forge = 0; S.equip.weapon = null; S.items = S.items.filter(i => i.slot !== "bow" && i.slot !== "staff" && i.slot !== "sword"); S.onboard.done.tool = 1; gearDirty()');
     l = goals();
-    assert(l.some(x => x.id === 'forge' && /for the zone \d+ boss|first weapon/.test(x.label)), `next up guards forge mats: the first weapon row still shows with the Forge unbuilt (${JSON.stringify(l)})`);
+    assert(l.some(x => x.id === 'forge' && /^Craft a Pine Bow/.test(x.label)), `next up guards forge mats: the first weapon row still shows with the Forge unbuilt (${JSON.stringify(l)})`);
   }
   await (async () => {
     const { pw, exe } = browserTools;
