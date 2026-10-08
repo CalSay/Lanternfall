@@ -1,0 +1,22 @@
+# seed: 1
+# Proof for card fight-input-during-banner. A turn fight on the early save: while the turn banner or the VS card plays, Attack and
+# the ability tiles dim, the gold frame goes dull and an ability's line says "Wait" instead of "Ready"; when "Your turn" ends they
+# light together and the next press plays. A press made early gets a short red outline (kept with reduced motion). Nothing is queued.
+#   foe-turn-dim.png      after an Attack: the foe's turn, the tiles dim
+#   your-turn-banner-*.png frames through the 0.9 s banner
+#   hero-turn-lit.png     the hero's turn: the tiles lit, "Ready" back
+# At 740x360 the line under a tile is hidden (60-solo.css), so the dim and the dull frame carry the cue there; the route has no
+# expect "Wait" for that reason (it plays at 740x360 in CI). tools/check.mjs section fight-input-during-banner asserts "Wait", the dim,
+# the red outline on a refused press (with reduced motion too) and that nothing is queued, phase by phase.
+# Run: grep -v '^#' route.txt | node tools/playtest.mjs batch --seed 1
+new early
+wait 2
+tap-if "Skip"
+tap-if "Continue"
+tap-if "Got it"
+tap "Attack"
+wait 1
+shot foe-turn-dim
+burst your-turn-banner
+wait 1
+shot hero-turn-lit

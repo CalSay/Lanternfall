@@ -175,6 +175,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   (its bar sits near 0), unless the craft goal holds that row for a tier gate.
 - **Fight feel:** a pause between turns with a whose-turn banner, a bigger labelled timing bar, hit-stop and shake on
   big hits, damage numbers that say their source, ability numbers shown only outside a fight. (2026-10-02)
+- **The banner pause is shown, not buffered (fight-input-during-banner, planner 2026-10-08; Cal can veto
+  with "queue presses during the banner").** While the turn banner or VS card plays, Attack and ability tiles dim and say "Wait"; a press
+  is refused with a visible answer that reduced motion keeps. Presses are not queued; Parry and Dodge are never queued.
 - **Versus header:** fighting-game HP bars across the top, hero left, foe right. (2026-10-01)
 - **A zone foe resets after every attack** (hop in, attack, hop home, rest), so approved animations play in full.
   (2026-10-02)
