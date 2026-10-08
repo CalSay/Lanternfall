@@ -112,6 +112,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 - When a tab gains a fifth view, let a long label take its room (`grid-auto-columns: minmax(min-content, 1fr)`) instead of shrinking the font: at 11 px Abilities still clipped by 5 px at 360x740 and 11 px in the 740x360 header. And a check that opened a view on one tab and then calls `setView` on another must `setTab` first. Why: wire-menu-icons failed and C24 timed out when Gear moved to the Hero tab. (cal-0107-gear-and-rates, 2026-10-07)
 - Before writing a guide line that asks for the next step, check what the UI already does on its own, and test the line through the real button's path. Why: the Learn button drops a move into the first empty slot, so the staged guide's "put it in a slot" line was always dropped as stale; the builder's check called `abilityLearn()` directly and passed, and the independent player caught it. (cal-0107-staged-guide, 2026-10-08)
+- In a proof route, tap a Gather view by its whole label (`tap "Mining"`, `tap "Wood"`), never by a verb: `tap` falls back to a partial match, so `tap "Mine"` hit the first row's "Mine at the Iron Vein", started mining and closed the menu. Why: the first storage-and-gather route failed 7 expects that way. (cal-0107-storage-and-gather-ui, 2026-10-07)
 
 ## Saves and offline parity
 

@@ -116,10 +116,18 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Skills:** Mining (ore, gems), Woodcutting, Foraging (fibre, herbs) and Hunting (hide) (`55-gathering.js`,
   `72-ui-gather.js`, scenes in `63c-scenery-gather.js`). Node tiers open at skill levels (`SKILL_TUNE`). Hunting uses
   Codex's interim art (`HUNT_TUNE` in `21-data-craft.js`; numbers in [hunting-c24.md](design/hunting-c24.md)).
+- **The Gather menu** (`72-ui-gather.js`) is Gather A, the Command ledger Cal picked: per skill a head ("Mining Lv
+  12", your tool and what it adds, the XP bar), a Now card that always says what you do (gathering here, at another
+  skill's node, or fighting) with a minute, an hour, held of the cap and when it fills, then one row per node (held of
+  the cap with a bar, a minute and an hour, Working on the node you work). Lower tiers fold into one tap; the next
+  locked tier says what it needs and further locked tiers are one line.
 - **Tools** (`55-tools.js`): pickaxe, axe, sickle and spear, made at the Workbench. The right tool is a speed bonus,
   never a gate. Each tool kind has its own mastery.
 - **The Storehouse** (`55-store.js`): a cap per material and grade, from every source. Skill XP keeps counting at the
-  cap.
+  cap. Its view (Gather > Store, `75-store-ui.js`) opens on a shelf: one stack per family at the grade you use (the
+  lower of your zone's grade and your skill's top node; the largest stack at or below it when that grade is empty;
+  Essence one pile; hide once Hunting shows), sorted Fullest or by Name, filtered by family. "Show all grades" or a
+  family filter shows every grade.
 - **Gatherers (Hands)** (`57f-hands.js`, `21f-data-hands.js`, `74-ui-hands.js`): open at Hearth 2 with a Tavern.
   Applicants appear on the Tavern board with a rarity and traits; named gatherers arrive by their routes. Tents cap the
   crew (2 to start). A send prepays one or two 4-hour shifts. Gatherers stand in the camp scene; tap one to talk and
