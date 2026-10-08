@@ -127,7 +127,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   cap. Its view (Gather > Store, `75-store-ui.js`) opens on a shelf: one stack per family at the grade you use (the
   lower of your zone's grade and your skill's top node; the largest stack at or below it when that grade is empty;
   Essence one pile; hide once Hunting shows), sorted Fullest or by Name, filtered by family. "Show all grades" or a
-  family filter shows every grade.
+  family filter shows every grade. A refined good shares its raw family's stack ("Iron Ore 120" with "Iron Ingot 40"
+  under it) and coal is its own stack once the Forge is built (at most 8 stacks). Coal and the refined goods show their
+  names only, no icon, until their art pack passes.
 - **Gatherers (Hands)** (`57f-hands.js`, `21f-data-hands.js`, `74-ui-hands.js`): open at Hearth 2 with a Tavern.
   Applicants appear on the Tavern board with a rarity and traits; named gatherers arrive by their routes. Tents cap the
   crew (2 to start). A send prepays one or two 4-hour shifts. Gatherers stand in the camp scene; tap one to talk and
@@ -157,6 +159,21 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   line on how often you'd beat the boss at your furthest zone with it (or, when you win nearly every time, how many turns a
   win takes); head and body pieces say how much of your health a boss hit takes. The line comes from 80 scratch turn
   fights a side (`55-fight-delta.js`, as the boss-odds readout samples) and is left out when the numbers barely change.
+- **Refining** (`55-refine.js`, `75-refine-ui.js`, `REFINE_TUNE` in `21-data-craft.js`; card refine-queues): the Forge
+  smelts ore and coal into Ingots (Copper, Iron, Silver, Cobalt, Mithril Ingot), the Workbench saws logs into Planks
+  (Pine, Birch, Oak, Mangrove, Tideash Plank), and the Loom weaves fibre into Cloth (Hemp Cloth, Linen, Briar Cloth,
+  Kelp Cloth, Stormgrass Cloth) and tans 2 hide and 1 log of the same grade into Leather (Bristle, Duskfang, Fenscale,
+  Riptide, Kelpie Leather). Each takes 2 of its raw input; an Ingot also takes 1 to 4 coal by grade. From grade 2, crafts
+  take the middles (every ore, wood, fibre and hide count becomes the middle at half, rounded up); every upgrade's
+  material does too (a Copper Warblade +1 takes 1 Copper Ingot). Tools, charms and trinkets, crystal, herbs and Essence
+  stay raw. Each station's card in Camp has a button (Smelt, Saw, Weave and Tan) that opens its order list: up to 3
+  orders, run in turn, each 10 units or All (All keeps 20% of each input). A running order shows its rate; a stopped one
+  says why (done, out of an input, Storehouse full). Orders run while you fight and while you are away (the away report
+  has a line per station). Station levels refine 10% faster a level. Next Up offers "Smelt 1 Copper Ingot for your
+  Warblade +1" when a worn piece's upgrade or next craft waits only on a middle, or says where to get the missing coal or
+  ore. **Coal** comes with Copper Ore once the Forge is built: about 1 for every 2 ore the hero mines (live, away, the
+  Glint, Spillover); gatherers bring none until the Coal Seam (card coal-seam-integrate). A save from before refining
+  sees one card the first time it opens Craft with the Forge built. Tent 5's tier 4 plank, cloth and leather now exist.
 - **Uniques** (`UNIQ` in `20-data.js`): rare zone-boss drops with a strong effect and modest stats. The zone 1 unique (and every 7th zone after it) is Briar Sprig, a charm any hero can wear; the Sproutblade it replaced is retired (`retired: 1`): it no longer drops, old saves keep theirs, and the trophy wall, Codex and totals show it only to a player who found one (`uniqKeys()`). Each Hollow unique carries one flavour line naming the Champion and place it came from (`21ka-story-hollow-items.js`); it shows on the Codex tile and the item card once that area's Champion is in the game.
 - **Economy** (`55-econ.js`, `21w-data-econ.js`): gold per foe steps up by region; every price follows that curve.
   Gold-gain beyond gear became crit damage, capped.
