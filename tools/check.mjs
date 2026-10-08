@@ -1657,7 +1657,7 @@ if (section('onboarding hint placement (HINT1)')) try {
   assert(/if \(!changed\) return;/.test(src), 'place() skips the reposition when nothing real changed (no per-frame follow)');
   assert(!/setInterval\(place/.test(src), 'place() itself is never put on its own interval');
   const css = fs.readFileSync(path.join(ROOT, 'src', 'styles', '60-onboard.css'), 'utf8');
-  assert(/\.ob-bub\.over-menu\s*\{[^}]*position:\s*absolute/.test(css) && /\.ob-bub\s*\{[^}]*position:\s*relative/.test(css), 'the guide panel is docked (a slot in its parent, or a fixed offset over a menu), not translated to the target every tick');
+  assert(/\.ob-bub\.over-menu\s*\{[^}]*grid-area:\s*guide/.test(css) && /\.ob-bub\s*\{[^}]*position:\s*relative/.test(css), 'the guide panel is docked (a slot in its parent, or its own row under a menu), not translated to the target every tick');
   assert(/--toast-h/.test(css) && /--toast-h/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '70-ui.js'), 'utf8')), 'the hint band and placeToasts share --toast-h so they cannot collide');
   ok('source: tick only recomputes on a real change, the bubble is CSS-docked, toasts and hints share one band variable');
   // in Chromium: the band does not move while the game runs (ticks, an ability firing) under it
@@ -1696,13 +1696,12 @@ if (section('onboarding hint placement (HINT1)')) try {
       assert(dock.dock && dock.gapAboveBar >= 0 && dock.gapAboveBar <= 12 && dock.belowStage >= 0, `browser: the guide panel docks just above the Act / Skills / Foe bar, never over the stage (${JSON.stringify(dock)})`);
       const tabsH = await page.$eval('.tabs', t => t.getBoundingClientRect().height);
       const boxes = await page.$eval('.ob-bub', b => {
-        const before = getComputedStyle(b).position;
-        b.classList.add('over-menu');
-        const cs = getComputedStyle(b), after = { position: cs.position, bottom: parseFloat(cs.bottom) };
-        b.classList.remove('over-menu');
-        return { before, after };
+        b.classList.replace('dock', 'over-menu');
+        const cs = getComputedStyle(b), after = { area: cs.gridRowStart, mb: parseFloat(cs.marginBottom) };
+        b.classList.replace('over-menu', 'dock');
+        return { after };
       });
-      assert(boxes.after.position === 'absolute' && boxes.after.bottom >= tabsH, `browser: the over-menu panel sits above the tab bar (bottom ${boxes.after.bottom}px, tabs ${tabsH}px)`);
+      assert(boxes.after.area === 'guide' && boxes.after.mb >= 8 && tabsH > 0, `browser: the over-menu panel takes its own row above the tab bar (${JSON.stringify(boxes.after)}, tabs ${tabsH}px)`);
       // menu audit #19: "New" lasts 2 hours of play after an unlock, so an old save's long-past unlocks never show it
       const nb = await X(`(() => { const o = S.onboard, v = { id: 'zz-test', feature: 'party' }, was = o.got.party;
         o.got.party = Math.round(o.t); const a = onboardIsNew(v); o.got.party = Math.round(o.t) - 7300; const b = onboardIsNew(v);
@@ -10475,6 +10474,40 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits below or beside the text (never over it) at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
         }
         await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+        // guide-bubble-clear-of-controls: the panel's box (at its pop-in's lowest frame) never meets the tab bar, and over a menu it
+        // never meets a Gather row's button (the nightly walk: 5 px on the tabs, its X on a Hunting row's button, Got it on Spread
+        // evenly). Over a portrait menu it takes its own row, so the menu's scroll area ends above it and no menu button can sit under it.
+        {
+          const CLEAR = `(() => { const b = document.querySelector('.ob-bub'); if (!b || b.hidden) return null;
+            const R = e => e.getBoundingClientRect(), meet = (a, c) => a.left < c.right - .5 && a.right > c.left + .5 && a.top < c.bottom - .5 && a.bottom > c.top + .5;
+            b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');   // obIn's first frame sits 6 px low
+            const br = R(b), pan = document.getElementById('panels'), hit = [], mode = ['side', 'dock', 'over-menu'].find(m => b.classList.contains(m)); let n = 0;
+            for (const t of document.querySelectorAll('.tabs .tab')) if (t.getClientRects().length && meet(br, R(t))) hit.push('.tabs .tab');
+            const menu = !!document.querySelector('.app.menu-open') && !!pan.getClientRects().length;
+            for (const top of menu ? [0, 1e6] : []) { pan.scrollTop = top; const pr = R(pan);
+              for (const x of pan.querySelectorAll('.gx-act, .at-spread')) { if (!x.getClientRects().length) continue; const r = R(x), v = { left: r.left, right: r.right, top: Math.max(r.top, pr.top), bottom: Math.min(r.bottom, pr.bottom) };
+                if (v.bottom - v.top < 1) continue; n++; if (meet(br, v)) hit.push('.' + x.className.split(' ')[0]); } }
+            if (menu && mode === 'over-menu' && R(pan).bottom > br.top + .5) hit.push('#panels (the menu runs ' + Math.round(R(pan).bottom - br.top) + ' px under it)');
+            pan.scrollTop = 0;
+            return { mode, menu, hit: [...new Set(hit)], n, box: [br.left, br.top, br.right, br.bottom].map(Math.round) }; })()`;
+          await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; ONBOARD.paused = false; true`);
+          await page.waitForTimeout(700);
+          const fight = await X(CLEAR);
+          // a long Go label in the short landscape column wraps inside the panel, never cut off ("Mine at…" in the walk)
+          const longGo = vw > vh ? await X(`(() => { const b = document.querySelector('.ob-bub'), k = b.querySelector('.ob-ok'); if (b.hidden || !k || k.hidden) return 'no button';
+            const was = k.textContent; k.textContent = 'Gather at the Enraged Boar'; const r = k.getBoundingClientRect(), br = b.getBoundingClientRect(), out = k.scrollWidth > k.clientWidth + 1 || k.scrollHeight > k.clientHeight + 2 || r.bottom > br.bottom + .5 || r.right > br.right + .5;
+            k.textContent = was; return out ? 'cut off (' + k.scrollWidth + ' in ' + k.clientWidth + ', bottom ' + Math.round(r.bottom) + ' of ' + Math.round(br.bottom) + ')' : ''; })()`) : '';
+          assert(!longGo, `guide panel ${at}: a long Go label wraps inside the side panel (${longGo || 'fits'})`);
+          await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+          // the grove: gathering hides the Act bar, so the dock sits straight on the tab bar (the walk's 5 px at 2:48)
+          const grove = vw < vh ? await X('(() => { const a0 = S.activity; setActivity("gather"); ui(true); return a0; })()') : null;
+          const groveBox = vw < vh ? (await page.waitForTimeout(700), await X(CLEAR)) : null;
+          if (vw < vh) { await X(`setActivity(${JSON.stringify(grove)}); ui(true); true`); await page.waitForTimeout(300); }
+          let gat = null;   // a menu's first-use line docks over the menu in portrait (in landscape it keeps the side column)
+          if (vw < vh) { await X('onboardTips(true); S.onboard.all = false; onboardReveal("gather"); setTab("gat"); true'); await page.waitForTimeout(900); gat = await X(CLEAR); await X('closeMenu(); true'); await page.waitForTimeout(300); }
+          const say = c => c ? c.mode + ' ' + c.box.join(',') + ', ' + c.n + ' buttons checked' + (c.hit.length ? ', meets ' + c.hit.join(' ') : '') : 'no panel';
+          assert(fight && !fight.hit.length && (vw > vh || (groveBox && groveBox.mode === 'dock' && !groveBox.hit.length)) && (vw > vh || (gat && gat.menu && gat.mode === 'over-menu' && !gat.hit.length && gat.n > 0)), `guide panel ${at}: its box meets none of .tabs, .gx-act, .at-spread or the menu under it (fight: ${say(fight)}${vw < vh ? '; grove: ' + say(groveBox) + '; Gather menu: ' + say(gat) : ''})`);
+        }
         assert(seen.length === 5, `guide panel ${at}: the check measured all five steps (${seen.join(', ')})`);
         // a paused tip that is not a step (a first-use line) docks too; and a step shown over an open menu sits at the menu's bottom
         if (vw < vh) {   // portrait with a menu open: the panel moves to the bottom of the menu, above the tab bar
@@ -12485,6 +12518,38 @@ if (section('hero join shown once')) try {
   run(late, 5);
   assert(lateSeen() === '' && !late.errors.length, `hero join: the late fixture already has its heroes, so loading it shows no "New hero" card (got "${lateSeen()}")`);
 } catch (e) { fail('hero join shown once crashed: ' + (e.stack || e)); }
+
+// ---- small-text-clips: the Loom's "Hemp Fibre" tier label and a "Secret found" toast show in full (the walk's clipped-text reader) ----
+if (section('small text clips')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('small text clips: Playwright or Chromium not here, skipped');
+  else {
+    const fixture = loadCore({ seed: 1108 }); fixture.eval('soloPick("wren");hearthWarm();S.maxZone=12;S.camp.open=true;onboardUnlockAll();onboardTips(false);save()');
+    const raw = fixture.storage.get(KEY), html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const cut = 'n => ({ t: n.textContent, cut: n.scrollWidth > n.clientWidth + 1 || n.scrollHeight > n.clientHeight + 2 })';
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try { for (const [width, height] of [[360, 740], [740, 360]]) {
+      const at = `small text clips ${width}x${height}`, ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      try {
+        await ctx.addInitScript(({ raw, key }) => { localStorage.setItem(key, raw); }, { raw, key: KEY });
+        const page = await ctx.newPage(); await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('setTab("forge");ui(true);true'); await page.waitForTimeout(200);
+        await page.evaluate(() => document.querySelector('.cf-st[data-st="loom"]').click()); await page.waitForTimeout(200);
+        const tier = await X(`(${cut})(document.querySelector('.cf-tiers button[data-t="1"] small'))`);
+        assert(tier.t === 'Hemp Fibre' && !tier.cut, `${at}: the Loom's Tier 1 label shows "Hemp Fibre" in full (${JSON.stringify(tier)})`);
+        await X('NEWS.open=false;notify({msg:"Secret found: First Try. New title: Clutch.",kind:"good",icon:{ic:["orb","#B89CFF"]},prio:"normal"},"now");true');
+        const sec = await X(`(${cut})([...document.querySelectorAll('#toasts .tx')].find(n => /^Secret found/.test(n.textContent)))`);
+        assert(!sec.cut, `${at}: the "Secret found: First Try. New title: Clutch." toast shows in full (${JSON.stringify(sec)})`);
+        // the same toast docked on the stage (menu closed): the narrow portrait dock, 20-stage.css
+        await X('for (const t of $("toasts").children) t.remove();S.tab=null;placeToasts();notify({msg:"Secret found: First Try. New title: Clutch.",kind:"good",icon:{ic:["orb","#B89CFF"]},prio:"normal"},"now");true');
+        const dock = await X(`(${cut})([...document.querySelectorAll('#toasts .tx')].find(n => /^Secret found/.test(n.textContent)))`);
+        assert(!dock.cut, `${at}: on the stage dock the Secret found toast shows in full too (${JSON.stringify(dock)})`);
+      } finally { await ctx.close(); }
+    } } finally { await browser.close(); }
+  }
+} catch (e) { fail('small text clips crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

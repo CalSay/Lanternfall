@@ -395,6 +395,7 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .toast { pointer-events: auto; touch-action: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 30px; background: #0E0B12E8; border: 1px solid var(--line-hi); border-left: 3px solid var(--ember); padding: 4px 8px 4px 6px; font: 500 12.5px/1.25 var(--body); box-shadow: 0 2px 0 #0B0810; animation: tin .2s ease-out; transition: transform .16s ease-out, opacity .16s ease-out; }
 .toast .tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .toast.hi .tx, .toast.loot .tx { -webkit-line-clamp: 2; }
+.toast.good .tx { -webkit-line-clamp: 4; }   /* small-text-clips: a good-news line ("Secret found: First Try. New title: Clutch.") shows in full, even in the narrow landscape dock */
 .toast img { width: 20px; height: 20px; flex: none; image-rendering: pixelated; }
 .toast .more { flex: none; font: 600 calc(11px * var(--display-k))/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--bone); }
 .toast.ember { border-left-color: var(--arcane); }
@@ -1246,7 +1247,8 @@ body.cb-left .stage.tall .abil.abil2 { left: 110px; }
 /* recipes */
 .cf-tiers button { display: grid; justify-items: center; gap: 0; line-height: 1.1; }
 .cf-tiers button b { font: 600 calc(12px * var(--display-k)) var(--display); }
-.cf-tiers button small { font: 500 10.5px var(--body); color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-tiers button { padding-left: 2px; padding-right: 2px; }   /* small-text-clips: the widest material name (Briarthread) fits a fifth of a 360 px panel */
+.cf-tiers button small { font: 500 10.5px var(--body); color: var(--muted); max-width: 100%; text-align: center; }   /* two-word names wrap ("Hemp / Fibre"), never cut */
 .cf-tiers button.locked b { color: var(--muted); }
 .cf-tiers button.locked small { color: #FFB27A; }
 .cf-mw { display: grid; gap: 6px; }
@@ -1280,7 +1282,7 @@ body.cb-left .stage.tall .abil.abil2 { left: 110px; }
 .cf-tmc { min-height: 60px; display: grid; justify-items: center; gap: 1px; padding: 5px 2px 4px; background: var(--well); border: 2px solid var(--line); cursor: pointer; min-width: 0; }
 .cf-tmc img { width: 20px; height: 20px; image-rendering: pixelated; }
 .cf-tmc b { font: 600 calc(14px * var(--display-k)) var(--display); font-variant-numeric: tabular-nums; }
-.cf-tmc small { font-size: 10.5px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-tmc small { font-size: 10.5px; line-height: 1.1; color: var(--muted); max-width: 100%; text-align: center; }   /* small-text-clips: names wrap, never cut */
 .cf-tmc[aria-pressed="true"] { border-color: var(--ember); background: var(--panel-2); }
 .cf-tma { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .cf-tma .mini { min-height: 44px; font-size: 13px; }
@@ -2376,14 +2378,20 @@ span.cf-d { font-weight: 600; }
 /* The guide panel (75-onboard-ui.js place()): Old Hesketh's face, the tip, the button on its own row. It is a notice, so it
    docks where notices dock and never sits over the stage. Three homes, one per mode class:
    .dock      portrait game view: a slot in .game just above the Act / Skills / Foe bar (the stage gives up the height)
-   .over-menu portrait with a menu open: the bottom of the menu panel, above the tab bar (and above any toast)
+   .over-menu portrait with a menu open: its own grid row between the menu and the tab bar (and above any toast), so the menu
+              ends above it and never scrolls a button under it (guide-bubble-clear-of-controls)
    .side      landscape: the side column's notices slot (80-landscape.css) */
 .ob-bub { position: relative; pointer-events: none; order: 2; flex: none; margin: 4px var(--gut) 0; z-index: 8;
   display: grid; grid-template-columns: 48px minmax(0, 1fr) 44px; grid-template-rows: auto auto; column-gap: 8px; align-items: start;
   padding: 8px 0 8px 8px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810;
   font: 600 14px/1.3 var(--body); color: var(--bone); }
 .ob-bub[hidden] { display: none; }
-.ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 12px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
+/* The dock keeps a gap over the tab bar as deep as its pop-in slide (obIn), so it never rests or lands on the tabs. */
+.ob-bub.dock { margin-bottom: 6px; }
+.ob-bub.over-menu { grid-area: guide; margin: 8px var(--gut) calc(8px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
+@media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {
+  .app:has(> .ob-bub.over-menu:not([hidden])) { grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-areas: "top" "main" "guide" "tabs"; }
+}
 .ob-bub.ok-row:not(.side) { grid-template-columns: 48px minmax(0, 1fr) auto; padding-right: 8px; }
 .ob-bub.ok-row:not(.side) .ob-x { display: none; }
 .ob-bub.ok-row:not(.side) .ob-txt { grid-row: 1 / span 2; }
@@ -3492,7 +3500,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .ob-bub.side .ob-facebox { grid-row: 1; }
   .ob-bub.side .ob-x { margin-top: -4px; margin-bottom: -4px; }
   .ob-bub.side .ob-txt { grid-column: 1 / 3; grid-row: 2; align-self: start; padding-right: 6px; min-height: 0; overflow-y: auto; }
-  .ob-bub.side .ob-ok { grid-column: 1 / 3; grid-row: 3; margin-top: 4px; justify-self: start; max-width: calc(100% - 6px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ob-bub.side .ob-ok { grid-column: 1 / 3; grid-row: 3; margin-top: 4px; justify-self: start; max-width: calc(100% - 6px); padding: 4px 12px; line-height: 1.15; text-align: left; overflow-wrap: break-word; }   /* a long Go ("Mine at the Copper Vein") wraps, never cut */
   .ob-bub.side.btn { grid-row: 2 / -1; max-height: calc(100% - 10px); }
   .ob-bub.side.nu.btn { grid-row: 3 / -1; align-self: start; margin-bottom: 0; }
   .app.guide-btn .sbar { visibility: hidden; }

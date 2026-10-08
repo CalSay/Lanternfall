@@ -8,6 +8,7 @@
 .toast { pointer-events: auto; touch-action: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 30px; background: #0E0B12E8; border: 1px solid var(--line-hi); border-left: 3px solid var(--ember); padding: 4px 8px 4px 6px; font: 500 12.5px/1.25 var(--body); box-shadow: 0 2px 0 #0B0810; animation: tin .2s ease-out; transition: transform .16s ease-out, opacity .16s ease-out; }
 .toast .tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .toast.hi .tx, .toast.loot .tx { -webkit-line-clamp: 2; }
+.toast.good .tx { -webkit-line-clamp: 4; }   /* small-text-clips: a good-news line ("Secret found: First Try. New title: Clutch.") shows in full, even in the narrow landscape dock */
 .toast img { width: 20px; height: 20px; flex: none; image-rendering: pixelated; }
 .toast .more { flex: none; font: 600 calc(11px * var(--display-k))/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--bone); }
 .toast.ember { border-left-color: var(--arcane); }

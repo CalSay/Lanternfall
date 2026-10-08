@@ -311,7 +311,12 @@ async function tap(page, wanted) {
   if (!hit.length) return { ok: false, msg: `no button labelled "${wanted}". Buttons on screen: ${s.buttons.map(b => `[${b.label}]`).join(' ') || '(none)'}. (Each separate call reopens the game: an open menu or sheet closes. Use batch to tap through a menu in one go.)` };
   const b = hit[0];
   const handle = await page.$(`[data-pt="${b.i}"]`);
-  if (!inV.has(b.i)) {
+  // a button inside the viewport can still be cut off by its scrolling panel (a menu that ends above the guide's row): a player
+  // scrolls it into view first, so the tap does too
+  const clipped = inV.has(b.i) && await handle.evaluate(e => { const r = e.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) { if (!/(auto|scroll)/.test(getComputedStyle(a).overflowY)) continue; const p = a.getBoundingClientRect(); if (cy < p.top || cy > p.bottom || cx < p.left || cx > p.right) return true; }
+    return false; });
+  if (!inV.has(b.i) || clipped) {
     // --thumb: scroll only what a thumb can scroll. scrollIntoView also moves overflow:hidden boxes (the page itself), which
     // leaves the screen stuck half off where no player could put it; those are put back, and a button still out of reach fails.
     const reach = await handle.evaluate((e, thumb) => {
