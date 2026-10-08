@@ -954,8 +954,8 @@ if (section('balance')) try {
     const goal = E('topGoals(20, { sticky: false }).find(x => x.id === "forge")');
     assert(goal && /Bow|Quiver|Hood|Leathers|Charm|Pickaxe|Axe|Sickle/.test(goal.label) && !/Sword|Helm\b/.test(goal.label), `craft goal names a class item (${goal && goal.label})`);
     const n0 = E('forgeGoalPicks');
-    E('GOALS.find(x => x.id === "forge").go.fn()');
-    assert(E('CRAFT_KINDS[S.fSlot] && !CRAFT_KINDS[S.fSlot].legacy && fits(S.fSlot, kindPos(S.fSlot), "hero")') && E('forgeGoalPicks') === n0 + 1 && E('GOALS.find(x => x.id === "forge").go.sel') === '#forgeBtn', `Go picks ${E('S.fSlot')} tier ${E('S.fTier')} and focuses #forgeBtn in the Craft tab`);
+    E('GOALS.find(x => x.id === "forge").go().fn()');   // next-tier-gate-goal: the craft goal's Go is a function (a gate row goes elsewhere)
+    assert(E('CRAFT_KINDS[S.fSlot] && !CRAFT_KINDS[S.fSlot].legacy && fits(S.fSlot, kindPos(S.fSlot), "hero")') && E('forgeGoalPicks') === n0 + 1 && E('GOALS.find(x => x.id === "forge").go().sel') === '#forgeBtn', `Go picks ${E('S.fSlot')} tier ${E('S.fTier')} and focuses #forgeBtn in the Craft tab`);
     const g2 = loadCore({ seed: 26 }); g2.eval('S.maxZone = 3; S.mats.ore[0] = 99; S.mats.wood[0] = 99; S.mats.ess[0] = 99');
     const lab = g2.eval('(topGoals(20, { sticky: false }).find(x => x.id === "forge") || {}).label || ""');
     assert(!/Sword|Helm\b/.test(lab), `no class: the goal never suggests the legacy Sword or Helm (${lab || 'none'})`);
