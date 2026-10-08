@@ -374,9 +374,11 @@ async function averaged() {
     for (const h of Object.keys(agg[k].perHero)) { const l = aggs.map(a => a[k].perHero[h]).filter(num); ph[h] = l.length ? r2(mean(l)) : null; }
     const l = Object.values(ph).filter(num);
     let value = agg[k].value;
-    if (agg[k].how === 'parity') { const med = median(l); value = r2(Math.max(...l.map(v => Math.abs(v - med) / Math.max(1, med)))); }
-    else if (l.length) value = r2(mean(l));
     const means = aggs.map(a => a[k].value).filter(num), mu = means.length ? mean(means) : 0;
+    // parity is a max gap, so the parity of the per-hero means sits below what any one offset reads: its baseline is the mean of
+    // each offset's own parity, as compare scores one offset (rally-gates-live, judge 2026-10-08; the tolerance is unchanged)
+    if (agg[k].how === 'parity') value = r2(mu);
+    else if (l.length) value = r2(mean(l));
     out[k] = { ...agg[k], value, perHero: ph, sd: r2(Math.sqrt(mean(means.map(v => (v - mu) ** 2)))) };   // spread of the mean over the seed offsets
   }
   return out;

@@ -1,0 +1,57 @@
+# rally-gates-live walks: tools/walk.mjs with a gate log (start: gate index the boss starts at; rallies: rally events), seeds 1-3,
+# --minutes 90 --clock-budget 60, built from this branch. An abandon is the bot leaving a boss fight to gather or craft (seed 1 at zone 5: wood for the Loom), not a loss.
+seed 1 hero wren played 80.8 min
+  z4 gates 2 starts 1 wins 1 losses 0 abandons 0 rallies 2 startGi 0 first 9.2 last 9.6
+  z5 gates 3 starts 7 wins 1 losses 0 abandons 6 rallies 3 startGi 0 first 14.2 last 15.3
+  z6 gates 2 starts 1 wins 1 losses 0 abandons 0 rallies 2 startGi 0 first 17.8 last 18.2
+  z7 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 18.6 last 19.0
+  z8 gates 3 starts 2 wins 1 losses 0 abandons 1 rallies 4 startGi 0 first 19.5 last 20.1
+  z9 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 20.8 last 21.3
+  z10 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 22.5 last 23.2
+  z11 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 23.9 last 24.4
+  z12 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 25.3 last 25.8
+  z13 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 26.7 last 27.4
+  z14 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 28.4 last 29.0
+  z15 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 31.1 last 31.7
+  z16 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 33.8 last 34.2
+  z17 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 42.6 last 43.1
+  z18 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 45.5 last 46.2
+  z19 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 62.0 last 62.6
+  z20 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 73.5 last 74.1
+seed 2 hero tobin played 83.1 min
+  z4 gates 2 starts 1 wins 1 losses 0 abandons 0 rallies 2 startGi 0 first 11.3 last 11.6
+  z5 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 15.9 last 16.5
+  z6 gates 2 starts 1 wins 1 losses 0 abandons 0 rallies 2 startGi 0 first 17.8 last 18.3
+  z7 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 19.0 last 19.6
+  z8 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 20.3 last 21.3
+  z9 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 21.6 last 22.1
+  z10 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 23.6 last 24.6
+  z11 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 25.9 last 26.6
+  z12 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 27.9 last 28.5
+  z13 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 30.3 last 31.5
+  z14 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 32.9 last 33.3
+  z15 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 34.5 last 35.2
+  z16 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 37.4 last 37.9
+  z17 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 40.8 last 41.5
+  z18 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 43.8 last 44.4
+  z19 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 48.4 last 49.3
+  z20 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 53.1 last 53.8
+  z21 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 66.5 last 67.0
+  z22 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 78.3 last 78.9
+seed 3 hero pip played 82.3 min
+  z4 gates 2 starts 1 wins 1 losses 0 abandons 0 rallies 2 startGi 0 first 8.6 last 8.9
+  z5 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 15.8 last 16.4
+  z6 gates 2 starts 3 wins 1 losses 0 abandons 2 rallies 3 startGi 0 first 20.6 last 21.6
+  z7 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 21.9 last 22.4
+  z8 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 22.8 last 23.3
+  z9 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 26.1 last 26.6
+  z10 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 27.9 last 28.5
+  z11 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 29.5 last 30.0
+  z12 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 30.9 last 31.4
+  z13 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 32.8 last 33.6
+  z14 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 35.4 last 36.0
+  z15 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 40.0 last 40.6
+  z16 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 44.6 last 45.1
+  z17 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 49.3 last 49.8
+  z18 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 54.6 last 55.1
+  z19 gates 3 starts 1 wins 1 losses 0 abandons 0 rallies 3 startGi 0 first 65.2 last 65.7

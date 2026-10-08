@@ -365,7 +365,7 @@
   };
 
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
-  const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov, .mm-ov';
+  const BLOCK = '.create, .away-ov, .bsheet-ov:not(.docked), .modal, .dw-ov, .mm-ov';
   guideLineOk = () => !document.hidden && !q(BLOCK);   // core's lesson hold asks this: a line nobody can see must not hold the fight
   let lastKey = '', useT0 = 0, useId = '', lastGT = null, gapHeld = false;
   // the fight is on screen (no menu, or a landscape menu beside it) and you are fighting: a line here sits in the gap between two foes

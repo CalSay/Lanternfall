@@ -396,7 +396,7 @@ let craftUI = null;
     if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null, parts: e.on ? safe(() => toolParts(it, e), null) : null };   // tool-speed-adds-up: the old tool and the parts, read now
     else fdStart(it);
     if ((it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
-      moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });
+      moment('craft', { eye: `Well made · ${RAR[it.r].n}`, title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });
   });
   function recipeRow(k, t) {
     const d = CRAFT_KINDS[k], can = canDo(k, t);
@@ -818,7 +818,7 @@ let craftUI = null;
   let sheet = null, switching = false;
   function open(label, back, small) {
     switching = true;
-    const api = openSheet(() => {}, { label, small, onClose: () => { if (sheet && sheet.api === api) sheet = null; if (!switching && back) setTimeout(() => safe(back), 0); } });
+    const api = openSheet(() => {}, { label, small, dock: true, onClose: quiet => { if (sheet && sheet.api === api) sheet = null; if (!switching && !quiet && back) setTimeout(() => safe(back), 0); } });
     switching = false;
     api.sheet.classList.add('cf-sheet');
     return api;
@@ -980,7 +980,7 @@ let craftUI = null;
     if (cost) { const chips = el('div', 'costs'); costChips(chips, cost.mats, it.t, cost.gold); box.append(chips); }
     const ok = f && cost && sheet.sel >= 0 && skillTierOpen('ench', it.t) && hasMats(cost.mats, it.t) && S.gold >= cost.gold;
     const armed = sheet.arm === 'reforge';
-    const b = el('button', 'big cf-act ' + (armed ? 'cf-arm' : 'forge'), !f ? 'Reforge opens soon' : sheet.sel < 0 ? 'Pick a line to reforge' : armed ? 'Tap again to reforge' : 'Reforge this line'); b.type = 'button';
+    const b = el('button', 'big cf-act ' + (armed ? 'cf-arm' : 'forge'), !f ? 'Reforge opens soon' : sheet.sel < 0 ? 'Pick a line to reforge' : armed ? 'Confirm: reforge' : 'Reforge this line'); b.type = 'button';
     b.disabled = !ok;
     b.addEventListener('click', () => {
       if (!armed) { sheet.arm = 'reforge'; renderItem(); return; }

@@ -483,7 +483,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.94,
+      "limit": 0.9,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
@@ -493,7 +493,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.97,
+      "limit": 0.9,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
@@ -503,7 +503,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.99,
+      "limit": 0.8,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip wins 15-35 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07; the pr4 refit moved z12 Pip from 91 to 98 while Wren held, the z12 fit matched the Wren and Pip mean)"
@@ -523,7 +523,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.99,
+      "limit": 0.97,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip's first-hour cell here is already in a wren-first-hour-parity gap (Pip wins far more than Wren at the same set, so her kept-up cell rides it)"
@@ -533,7 +533,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 1,
+      "limit": 0.95,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip's first-hour cell here is already in a wren-first-hour-parity gap (Pip wins far more than Wren at the same set, so her kept-up cell rides it)"
@@ -543,7 +543,7 @@
       "hero": "pip",
       "player": "none",
       "side": "above",
-      "limit": 1,
+      "limit": 0.1,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip who never defends still wins the z12 kept-up boss (judge 2026-10-07 point 8): Pip wins far more than Wren at the same set, so her kept-up cell rides it)"

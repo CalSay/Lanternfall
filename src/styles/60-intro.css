@@ -43,3 +43,13 @@
   .intro-lamp, .intro-line.in { animation: none; }
 }
 .intro-img.art { image-rendering: pixelated; }
+/* desktop-layout-v1 (desk playtest F10): on a desktop screen the words grow with the picture, not a phone strip at the foot */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .intro-foot { grid-template-columns: minmax(0, 1fr) 220px; align-items: end; column-gap: 24px; padding: 64px max(32px, calc(50% - 520px)) 32px; }
+  .intro-tx { width: auto; margin: 0; gap: 10px; }
+  .intro-line { font-size: 24px; min-height: 2.9em; }
+  .intro-go { width: 100%; margin: 0; min-height: 52px; }
+}
+@media (min-aspect-ratio: 1/1) and (min-width: 1600px) and (min-height: 900px) {
+  .intro-line { font-size: 30px; }
+}
