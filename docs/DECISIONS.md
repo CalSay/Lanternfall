@@ -29,6 +29,16 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   and the Journal's Tips lists it as "Tips you missed". Opus judge and a Sonnet red team: the turn-fight boss line says "Watch the
   bar" because only the legacy fight draws red rings; "stretch" and "strings" cut as jargon; the legacy Parry line no longer claims a
   stagger it cannot show. Save risk read (Opus): safe, no new field. Camp and gather tips stay plain until `unlock-voice`.
+- **Claude decided: materials lines show on Camp, on Gather and while gathering, never over other menus (card forge-tip-goes-stale,
+  2026-10-08; Cal can veto with "keep the Forge tip on every menu").** This narrows "camp and menu tips stay up" above for Hesketh's
+  materials lines only ("You still need these for the Forge: ..."): a fighter saw one on every menu for 15 minutes and it covered the hero
+  list. The step stays current while hidden, so nothing behind it starts and nothing is marked done. A line for two or more materials names
+  each one's place ("Copper Ore 0/25 at the Copper Vein"; essence and gold "from fights"). A press step (Workbench, tool, first weapon,
+  Forge, Storehouse) now waits for its materials in hand, so × on a materials line no longer brings up "Open Camp." while you are short.
+  Missed prediction: "the walk builds the Forge no later" held on seed 2 (5:02, now 5:06) but not seed 1 (6:35, now 14:17). The line
+  no longer sends the line-following bot back from Craft to gather, and Next Up's tool upgrades spent the Forge's copper meanwhile (22/25 ore
+  at 6:27, 2/25 at 12:30). An Opus judge ruled ship anyway: Craft is where the complaint was, and the fix is Next Up guarding the Forge's
+  materials (the camp-build goal), a card of its own.
 - **Claude decided: hero barks (card hero-voice, 2026-10-06; Cal can veto).** Only the three starters speak, one line each
   at nine moments (first boss, later boss, boss loss, unique, level, ability, first Star, first craft, Hollow Great Lantern);
   no class lines and no lines for the other 31 heroes; at most one bark a fight end, strongest first. Opus judge (red team,

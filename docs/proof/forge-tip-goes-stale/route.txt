@@ -1,0 +1,35 @@
+# seed: 1
+# Proof for card forge-tip-goes-stale. Wren is short of Copper Ore and Pine Log for the Forge and keeps fighting. Hesketh's
+# "You still need these for the Forge" line no longer follows her onto Hero or Craft (the hero list is all there); on Gather it
+# names where each material is; after Go she mines and the count moves.
+# In landscape the fight stays in view beside the menu and a materials line waits for a calm screen, so on Gather the route
+# starts gathering first (Gather here), as a player at the menu would. The × and the other menus are held by tools/check.mjs.
+new forge-short
+wait 2
+tap-if "Continue"
+wait 60
+tap-if "Continue"
+tap "Hero"
+wait 2
+expect-no "You still need these"
+expect-no "for the Forge"
+shot hero-no-forge-line
+tap "Craft"
+wait 2
+expect-no "You still need these"
+shot craft-no-forge-line
+tap "Gather"
+wait 1
+tap-if "Gather here"
+wait 2
+expect "at the Copper Vein"
+expect "at the Pine Grove"
+shot gather-line-names-places
+tap "Mine at the Copper Vein"
+wait 30
+tap-if "Continue"
+tap-if "Gather"
+wait 2
+expect "Copper Ore"
+expect-no "Copper Ore 0/"
+shot gather-count-moved
