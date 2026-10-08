@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   plan:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 2
     outputs:
       go: ${{ steps.p.outputs.go }}
@@ -57,7 +57,7 @@ jobs:
   walk:
     needs: plan
     if: needs.plan.outputs.go == 'true' && needs.plan.outputs.seeds != '[]' && needs.plan.outputs.sizes != '[]'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 45
     strategy:
       fail-fast: false
