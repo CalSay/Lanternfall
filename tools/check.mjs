@@ -12977,7 +12977,11 @@ if (section('foe-tricks-say-so')) try {
   const rel = (row, kind, dt) => J(`(() => { const f = TURN_LIVE.foe, t0 = f.txRow; f.txRow = '${row}'; let r = null; const k = p => { if (r === null) r = { rel: p.rel, hdt: p.hdt, hk: p.hk }; }; on('float', k);
     cbTurnDamageFoe(f, 1, '${kind}', false, '${dt}', 1, ''); f.txRow = t0; f.hp = f.max; return r; })()`);
   const rb = rel('deckhand', 'burn', 'fire'), ri = rel('deckhand', 'ignite', 'fire'), rw = rel('wraith', 'attack', 'phys'), rs = rel('slime', 'burn', 'fire');
-  assert(rb.rel === -1 && ri.rel === -1 && rw.rel === -1 && rw.hdt === 'phys' && rs.rel === 1, `foe tricks: Burn and Ignite carry the resist mark on a foe that resists fire, as a physical hit on a Wraith does (${JSON.stringify([rb, ri, rw, rs])})`);
+  assert(rb.rel === -1 && ri.rel === -1 && rw.rel === -1 && rw.hdt === 'phys' && rs.rel === 0, `foe tricks: Burn and Ignite carry the resist mark on a foe that resists fire (never the weak mark), as a physical hit on a Wraith does (${JSON.stringify([rb, ri, rw, rs])})`);
+  // save codes: the learned tricks pass; a junk row or value is refused; a code without them still loads
+  const vs = d => E(`(() => { const d = JSON.parse(JSON.stringify(fresh())); d.mastery = JSON.parse(JSON.stringify(S.mastery)); ${d}; const r = validateSave(d); return r.ok || r.error; })()`) === true;
+  assert(vs('') && vs('delete d.mastery.tricks') && !vs('d.mastery.tricks.wraith = 5') && !vs('d.mastery.tricks.wraith = { chill: "yes" }') && !vs('d.mastery.tricks.wraith = { heal: 1 }'),
+    'foe tricks: a save code keeps learned tricks, loads without them and refuses a junk row');
   assert(!g.errors.length, 'foe tricks: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 
   const { pw, exe } = browserTools;

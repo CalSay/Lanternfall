@@ -14725,7 +14725,9 @@ const masteryApi = {};
   };
   const learnTrick = (k, id) => {
     if (!k || !FOE_TRICK_LINES.any[id]) return false;
-    const t = S.mastery.tricks || (S.mastery.tricks = {}), row = t[k] || (t[k] = {});
+    const t = S.mastery.tricks || (S.mastery.tricks = {});
+    if (!t[k] || typeof t[k] !== 'object') t[k] = {};
+    const row = t[k];
     if (row[id]) return false;
     row[id] = 1; return true;
   };
@@ -16397,6 +16399,11 @@ function validateSave(data) {
       }
       if (a.forged !== undefined) int(a.forged, 'achievements.forged');
       for (const k of ['init', 'epic']) if (a[k] !== undefined && typeof a[k] !== 'boolean') fail('achievements.' + k, 'has the wrong type');
+    }
+    // foe-tricks-say-so: the Foe tab's learned tricks are { [foe type]: { [trick]: 1 } }
+    if (data.mastery && data.mastery.tricks) for (const [k, row] of Object.entries(data.mastery.tricks)) {
+      record(row, 'mastery.tricks.' + k);
+      for (const [id, v] of Object.entries(row)) { if (!FOE_TRICK_ORDER.includes(id)) fail('mastery.tricks.' + k + '.' + id); int(v, 'mastery.tricks.' + k + '.' + id, 0, 1); }
     }
     if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
     // C9: optional route maps are validated before storage or feature load; missing v5 maps use defaults.
@@ -23034,7 +23041,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (n > 1 ? ` x${n}` : '') + (crit ? '!' : '');
     FLOAT_EV.color = src ? src[0] : kind === 'counter' || crit ? '#FF9E3D' : '#FFFFFF';
     FLOAT_EV.big = !!crit || kind === 'counter' || kind === 'ignite' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
-    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = (!src || kind === 'burn' || kind === 'ignite') && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.hdt = dt || 'phys'; FLOAT_EV.hk = kind || ''; FLOAT_EV.crit = !!crit; FLOAT_EV.tier = tier || '';
+    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = !src && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; if ((kind === 'burn' || kind === 'ignite') && dt && typeof typeRel === 'function') FLOAT_EV.rel = Math.min(0, typeRel(f.txRow || f.type, dt)); FLOAT_EV.hdt = dt || 'phys'; FLOAT_EV.hk = kind || ''; FLOAT_EV.crit = !!crit; FLOAT_EV.tier = tier || '';   // foe-tricks-say-so: Burn and Ignite show the resist mark (never the weak one)
     emit('float', FLOAT_EV);
     FLOAT_EV.tier = ''; FLOAT_EV.hdt = ''; FLOAT_EV.hk = '';   // hdt, hk: the hit's damage type and kind (foe-tricks-say-so: 75-turn-ui's Resists and Armoured)
     if (crit) emit('crit', { tap: true });
@@ -46322,7 +46329,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   // foe tricks say what they did (foe-tricks-say-so, judge 2026-10-08): a word when a trick lands, never before. A boss's riders
   // keep their charge and rally lines. body[data-trick-*]: what has been said (the last rider, the get-up, resist, armour), for a proof
   // route that cannot catch the frame (as rally-gates-live's data-rally-seen).
-  const trickSay = (txt, secs, flag, v) => { say(txt, 'charge', secs || 1.8); document.body.dataset.trickSaid = txt; if (flag) document.body.dataset[flag] = v || '1'; };
+  const trickSay = (txt, secs, flag, v) => { if (warnSticky) return false; say(txt, 'charge', secs || 1.8); document.body.dataset.trickSaid = txt; if (flag) document.body.dataset[flag] = v || '1'; return true; };   // a boss's charge line keeps the line
   const RIDER_WORD = { chill: () => "Chilled: you're slower", venom: p => `Venom: you take damage for ${p.stacks > 0 ? p.stacks : 2} turn${p.stacks === 1 ? '' : 's'}`, weaken: () => 'Weakened: your next move hits softer' };
   on('heroRider', p => { if (p && !p.boss && RIDER_WORD[p.id]) trickSay(RIDER_WORD[p.id](p), 0, 'trickRider', p.id); });
   on('turnCard', p => { if (p && p.chill && p.who === 'foe') { const f = foeNow(); trickSay(`Chilled: ${(f && f.name) || 'The foe'} goes again`, 2, 'trickAgain'); } });
@@ -46332,6 +46339,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   on('fightStart', () => { toldRes = toldArm = 0; });
   on('float', p => {
     if (!p || !p.hdt || !(typeof turnCombatOn === 'function' && turnCombatOn())) return;
+    if (warnSticky) return;
     const f = foeNow(), words = [];
     if (p.rel < 0 && !toldRes) { toldRes = 1; words.push(`Resists ${(typeof DT_INFO === 'object' && DT_INFO[p.hdt] ? DT_INFO[p.hdt].n : p.hdt).toLowerCase()}`); }
     if (p.hdt === 'phys' && !toldArm && f && f.tk && f.tk.arm > 0 && !/^(bleed|swarm|curse)$/.test(p.hk)) { toldArm = 1; words.push('Armoured'); }

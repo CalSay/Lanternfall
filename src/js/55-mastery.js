@@ -68,7 +68,9 @@ const masteryApi = {};
   };
   const learnTrick = (k, id) => {
     if (!k || !FOE_TRICK_LINES.any[id]) return false;
-    const t = S.mastery.tricks || (S.mastery.tricks = {}), row = t[k] || (t[k] = {});
+    const t = S.mastery.tricks || (S.mastery.tricks = {});
+    if (!t[k] || typeof t[k] !== 'object') t[k] = {};
+    const row = t[k];
     if (row[id]) return false;
     row[id] = 1; return true;
   };
