@@ -129,7 +129,7 @@
   .ob-bub.side .ob-facebox { grid-row: 1; }
   .ob-bub.side .ob-x { margin-top: -4px; margin-bottom: -4px; }
   .ob-bub.side .ob-txt { grid-column: 1 / 3; grid-row: 2; align-self: start; padding-right: 6px; min-height: 0; overflow-y: auto; }
-  .ob-bub.side .ob-ok { grid-column: 1 / 3; grid-row: 3; margin-top: 4px; justify-self: start; max-width: calc(100% - 6px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ob-bub.side .ob-ok { grid-column: 1 / 3; grid-row: 3; margin-top: 4px; justify-self: start; max-width: calc(100% - 6px); padding: 4px 12px; line-height: 1.15; text-align: left; overflow-wrap: break-word; }   /* a long Go ("Mine at the Copper Vein") wraps, never cut */
   .ob-bub.side.btn { grid-row: 2 / -1; max-height: calc(100% - 10px); }
   .ob-bub.side.nu.btn { grid-row: 3 / -1; align-self: start; margin-bottom: 0; }
   .app.guide-btn .sbar { visibility: hidden; }
