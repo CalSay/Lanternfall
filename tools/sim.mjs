@@ -872,7 +872,9 @@ function turnPlayer() {
     return true;
   }
   if (!s || !['hero', 'foeWindup'].includes(s.phase)) { turnInput = null; return true; }
-  const key = s.phase + ':' + s.n;
+  // one input a hit: a move of several hits stays in turn n, so the key carries the hit (z21-foe-climb: keyed on the turn alone, the bot
+  // defended only a move's first hit and took every later one, the bulk of its wipes at zones 20-24)
+  const key = s.phase + ':' + s.n + (s.phase === 'foeWindup' && s.move ? ':' + s.move.hit : '');
   if (!turnInput || turnInput.key !== key) {
     turnInput = { key, done: false, at: s.now + 0.15 + rnd() * 0.15, kind: 'attack' };
     if (s.phase === 'foeWindup' && SKILL) {
@@ -883,6 +885,14 @@ function turnPlayer() {
       turnInput.kind = rnd() < 0.6 ? 'parry' : 'dodge';
       const opens = turnInput.kind === 'parry' ? s.parryOpensAt : s.dodgeOpensAt;
       turnInput.at = rnd() < 0.8 ? opens + (s.closesAt - opens) * 0.5 : Math.max(s.now, opens - 0.1);
+    }
+    // a boss trick (TURN_TUNE.tricks), read as turnCombatSample reads it: a bot that means to defend reads a feint or a held swing
+    // with chance read (0.3 + 0.6 x its avoidance); else it presses as the swing would have landed (a feint then fools it). A read
+    // feint is left alone. Pressing every hit made the bot meet every feint (z21-foe-climb review).
+    if (s.phase === 'foeWindup' && turnInput.kind !== 'none' && (s.feint || s.holdFrom > 0)) {
+      const R = E('TURN_TUNE.tricks.read'), pr = SKILL ? SKILL.parry : 0.48, dg = SKILL ? SKILL.dodge : 0.62;
+      if (rnd() >= Math.max(0, Math.min(1, R[0] + R[1] * (1 - (1 - pr) * (1 - dg))))) turnInput.at = Math.max(s.now, s.holdFrom || 0);
+      else if (s.feint) { turnInput.kind = 'none'; turnInput.at = Infinity; }
     }
   }
   if (!turnInput.done && s.now >= turnInput.at) {
