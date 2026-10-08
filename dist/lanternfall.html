@@ -3265,6 +3265,18 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-turncard.play:not(.calm) { animation: tv-tc var(--tc-dur, .9s) linear both; }
 .tv-turncard.play.calm { animation: tv-fade var(--tc-dur, .9s) linear both; }
 @keyframes tv-tc { 0% { opacity: 0; transform: translate(-24px, -50%); } 18%, 78% { opacity: 1; transform: translate(0, -50%); } 100% { opacity: 0; transform: translate(12px, -50%); } }
+/* a normal loss says so (75-turn-ui, normal-death-says-so): the banner's spot, two lines, for the gap before the next fight */
+.tv-beat { position: absolute; left: 0; right: 0; top: 42%; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 16px; transform: translateY(-50%); pointer-events: none; text-align: center;
+  background: linear-gradient(90deg, transparent, rgba(10, 7, 14, .94) 14%, rgba(10, 7, 14, .94) 86%, transparent); }
+.tv-beat[hidden] { display: none; }
+.tv-beat-txt { font: 700 calc(19px * var(--display-k, 1))/1.15 var(--display); letter-spacing: .03em; color: #FF9B8A; text-shadow: 2px 2px 0 #0B0810; }
+.tv-beat-help { font: 600 calc(14px * var(--display-k, 1))/1.2 var(--display); color: #EDE3D1; text-shadow: 1px 1px 0 #0B0810; }
+.tv-beat-help[hidden] { display: none; }
+.tv-beat.play:not(.calm) { animation: tv-beat-in .35s ease-out both; }
+.tv-beat.play.calm { animation: tv-beat-fade .35s linear both; }
+@keyframes tv-beat-in { 0% { opacity: 0; transform: translate(-16px, -50%); } 100% { opacity: 1; transform: translate(0, -50%); } }
+@keyframes tv-beat-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
 .tv-winding .sty-cap { opacity: .15; transition: opacity .15s; }
 /* Stage and dock (Combat C): the banner is a framed chip; the timing bar sits along the stage's bottom edge */
 .tv-n { padding: 3px 12px 2px; font: 600 calc(15px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; color: #C9BFD6; background: rgba(10, 7, 14, .88);
@@ -9475,7 +9487,8 @@ const NOTICES = [
   { id: 'skill', key: 'skill', re: /^\S+ level \d+\./, ch: m => /You can now|open to you/.test(m) ? 'bell' : 'none', why: 'only a new tier is news' },
   { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'the Try again card follows and says why you lost' },
   { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
-  { id: 'beaten', re: /Catch your breath and go again/, ch: 'log', why: 'you stay in the zone and the fight starts again on screen' },
+  { id: 'beaten', re: /Catch your breath and go again/, ch: 'log', why: 'you stay in the zone; the stage says so through the gap (75-turn-ui loss beat) and the fight starts again on screen' },
+  { id: 'losing-here', re: /^Losing a lot here\? /, ch: 'bell', why: 'normal-death-says-so: three normal losses in ten fights in one zone; once per zone a session (75-turn-ui counts)' },
   { id: 'scroll', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll! Spend it/, site: /SCROLLS\[id\]\.name\}! Spend it/, ch: 'log', why: 'the stage float shows it and Next Up says what it can teach (the bell stays calm)' },
   { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it; it shows only when the hero in play can learn with it now (scroll-spares)' },
   { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
@@ -9584,6 +9597,8 @@ const NOTICES = [
   { id: 'starter-join', key: 'starterJoin', ch: 'pop', wait: 30, why: 'a starter joined with no Champion card to say it (the card or the story off, or a clear made while away; starters-join-when-met)' },
   // ---- refine-queues: the stations' orders ----
   { id: 'refine-coal', key: 'refine-coal', ch: 'pop', wait: 10, why: 'once a save: where coal comes from (the art ruling: coal drops from Copper Ore once the Forge is built)' },
+  { id: 'refine-done', key: 'refine-done', ch: 'bell', why: 'a set-amount Forge, Workbench or Loom order finished live (smelt-done-says-so): the bell only, never a pop over the fight; the Camp dot says where',
+    merge: ms => `${ms.length} orders done. ${ms[ms.length - 1]}` },
   { id: 'refine-why', key: 'refine-why', ch: 'pop', reply: true, why: 'an order button the player just pressed could not add the order: say why' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
@@ -15766,7 +15781,8 @@ let unitHp, unitCd, bossTelegraph;
 //          cost is { fam: n } or { mats: { fam: n } } at grade t (an upgrade's or a craft's cost). Frozen shape:
 //          craft-attribute-grades reads it. add() adds every order that can start and returns how many it added.
 //   away   refineAwayRun(T, stock, inflow) (the 'awayEnd' pass; the parity tool and the checks call it through awayGains)
-// Events: 'refined' { st, prod, tier, n } after each unit made live.
+// Events: 'refined' { st, prod, tier, n } after each unit made live; 'refineDone' { st, prod, tier, n } when a set-amount
+// order makes its last unit live (one bell line, 'refine-done', and the Camp tab dot; an All order and the away run say nothing).
 // Save: registerState('refine', { v, st: { forge, bench, loom }, said, seen, coal }). said: 1 = no "The Forge can smelt
 // now" card owed (a new game, or shown); an old save (one saved before this change) starts at 0. seen: when the first order
 // was ever added (ms, 0 = never). coal: 1 once the first coal toast has shown.
@@ -15892,6 +15908,10 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
         left -= need; o.at = 0;
         makeOne(st, o, false);
         emit('refined', { st, prod: o.prod, tier: o.tier, n: 1 });
+        if (!o.all && o.made === o.want) {
+          emit('toast', { key: 'refine-done', msg: `The ${CAMP_B[st].n} made ${storeNum(o.want)} ${plural(o.prod, o.tier, o.want)}.`, kind: 'good', icon: null, prio: 'normal' });
+          emit('refineDone', { st, prod: o.prod, tier: o.tier, n: o.want });
+        }
       }
     }
   };
@@ -26484,6 +26504,9 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
 //   soloDodge, soloCounter.
 const TURN_TUNE = {
   on: 1,
+  // normal-death-says-so (judge, 2026-10-08): every zone fight (normal, elite, boss) starts at full HP, win or lose. 0 brings back
+  // the carried HP (a kill heals COMBAT_TUNE.packHealF, 15%). The Deepwell and the Provings carry HP either way.
+  normalFull: 1,
   heroRecovery: 0.35, foeRecovery: 0.4, foeWindup: 0.9, introHand: 1.2, introAuto: 0.6,
   turnPause: 0.9,
   // hit feel (owner, 2026-10-02): the fight clock stops for a beat on a big moment (seconds), with a shake and a flash
@@ -26802,7 +26825,7 @@ function turnMakeProfile(f, u) {
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
     bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0, bossRiderX: f.tk.rx || 1, bossDotCap: f.tk.dcap || 0,
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
-    gates: f.tk.gates || null, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
+    gates: f.tk.gates || null, fullHp: !!((f.boss || TURN_TUNE.normalFull) && !f.deep && !f.trial),   // the boss pass; every zone fight is met at full health (normalFull)
     zb: !!f.tk.zb, uq: typeof uniqRulesWorn === 'function' ? uniqRulesWorn() : [],   // uniques-first-four: a zone boss; the worn uniques' rules (none while UNIQ_TUNE.on is 0)
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
@@ -27610,8 +27633,11 @@ function turnCombatTick(dt) {
   if (!(f.born >= 1)) f.born = (f.born || 0) + dt;   // the legacy tick that grows a new foe in does not run here
   if (!TURN_LIVE || TURN_LIVE.ended || TURN_LIVE.foe !== f) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
-    const u = cbUnitByKey('hero');
-    if (f.boss && !f.deep && !f.trial && u && !u.down) u.hp = u.maxHp;   // a zone boss is met at full health (the Deepwell carries HP)
+    let u = cbUnitByKey('hero');
+    // a zone fight that starts in the gap after a loss (the zone arrow, or gathering and back, cut the gap short): the hero stands
+    // up first, so the fight never starts at 0 HP (normal-death-says-so review). The Deepwell and the Provings end on a loss.
+    if (u && u.down && !f.deep && !f.trial) { cbRestore(false); u = cbUnitByKey('hero'); }
+    if ((f.boss || TURN_TUNE.normalFull) && !f.deep && !f.trial && u && !u.down) u.hp = u.maxHp;   // every zone fight is met at full health (normalFull; the Deepwell carries HP)
     const p = turnMakeProfile(f, u); if (!p) return;
     TURN_LIVE = turnNew(p, TURN_LIVE_IO); TURN_LIVE.foe = f; TURN_LAST_PROFILE = p;
     emit('fightStart', { heroHaste: p.heroSpd, foeHaste: p.foeSpd, first: TURN_LIVE.first });
@@ -29999,7 +30025,10 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   let rtX = 0, rtA = 1, dimA = 0;
   on('wipe', p => {
     rt.on = true; rt.t = 0; rt.arena = !!p.arena; rt.back = 0;
-    pushFloat(p.arena ? 'Party down' : 'Fall back!', '#FF9A8A', true, 0.3, 0.3);
+    // normal-death-says-so: a loss never moves you (DECISIONS.md), so the float says what happened. The body keeps the text for the checks
+    const txt = p.arena ? 'Party down' : 'Beaten';
+    pushFloat(txt, '#FF9A8A', true, 0.3, 0.3);
+    if (document.body) document.body.dataset.wipeFloat = txt;
   });
   function stepRetreat(dt) {
     if (rt.on) {
@@ -38514,6 +38543,7 @@ on('cacheOpen', v => {
   const dot = () => { if (S.tab !== 'world') $('raidDot').hidden = false; };
   on('campOpen', dot);
   on('campBuilt', dot);
+  on('refineDone', dot);
   on('campGoto', ({ tab, sel }) => {
     setTab(tab, sel);
     const t = sel && document.querySelector(sel); if (!t) return;
@@ -46072,7 +46102,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   tcard.append(tcFace, tcTxt);
   if (box) box.append(tcard);
   let tcT = null;
-  const tcHide = () => { tcard.hidden = true; if (box) box.classList.remove('tc-on'); };   // tc-on: toasts wait while the banner shows (20-stage.css)
+  const tcHide = () => { tcard.hidden = true; if (box && beat.hidden) box.classList.remove('tc-on'); };   // tc-on: toasts wait while the banner (or the loss beat) shows (20-stage.css)
   on('turnCard', p => {
     if (!box || !p) return;
     const f = foeNow(), mine = p.who === 'hero', name = mine ? heroName() : (f && f.name) || 'The foe';
@@ -46085,6 +46115,39 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   });
   on('turn', () => { clearTimeout(tcT); tcHide(); });
   on('fightEnd', () => { clearTimeout(tcT); tcHide(); });
+
+  // ---- a normal loss says so (normal-death-says-so): in the banner's spot through the gap before the next fight ----
+  // A loss never moves you and gives full HP for the next fight; the second line names one way out that is true for this save.
+  // No pop and no card (a boss loss has the Try again card). The bell keeps the "beaten" line; losing three of ten fights in one
+  // zone adds one bell line, once per zone a session (runtime only, never saved).
+  const beat = el('div', 'tv-beat'); beat.hidden = true; beat.setAttribute('role', 'status'); beat.setAttribute('aria-live', 'polite');
+  const beatTxt = el('b', 'tv-beat-txt', "Beaten. You're back to full HP for the next fight."), beatHelp = el('span', 'tv-beat-help');
+  beat.append(beatTxt, beatHelp);
+  if (box) box.append(beat);
+  const lossHelp = () => {
+    try { if (attrOn() && attrPoints(soloHero()).free > 0) return 'Spend your attribute points on Hero > Build.'; } catch (e) {}
+    try { const b = craftGoalNext(); if (b && !b.gate && b.p >= 1) return 'Better gear helps: see Craft.'; } catch (e) {}
+    return S.zone > 1 ? 'An easier zone helps too: use the arrow by the zone name.' : '';
+  };
+  let beatT = 0;   // game seconds the line has been up (a fallback; game time, so a paused game or a tip keeps it)
+  const beatHide = () => { beatT = 0; if (beat.hidden) return; beat.hidden = true; beat.classList.remove('play'); if (box && tcard.hidden) box.classList.remove('tc-on'); };
+  const LOSS_N = 3, LOSS_OF = 10, lossAt = {}, lossTold = {};
+  let fightN = 0;
+  on('fightStart', () => { fightN++; beatHide(); });
+  on('unitUp', beatHide);
+  on('activity', beatHide);
+  onTick(dt => { if (!beat.hidden && (beatT += dt) > 8) beatHide(); });   // the next fight, a hero back up or a new activity hides it first
+  on('wipe', p => {
+    if (!box || !p || p.boss || p.arena) return;
+    const help = lossHelp();
+    putText(beatHelp, help); beatHelp.hidden = !help;
+    beat.className = 'tv-beat' + (reduced() ? ' calm' : '');
+    beat.hidden = false; box.classList.add('tc-on'); void beat.offsetWidth; beat.classList.add('play');
+    beatT = 0;
+    const z = p.zone, at = (lossAt[z] || []).filter(n => n > fightN - LOSS_OF);
+    at.push(fightN); lossAt[z] = at;
+    if (at.length >= LOSS_N && !lossTold[z]) { lossTold[z] = 1; toast('Losing a lot here? Gear, attribute points or an easier zone help.', 'raid', null, 'normal'); }
+  });
 
   // ---- the turn strip, the timing bar, the hero row ----
   // the turn order lives on the Versus card only (owner, 2026-10-02)

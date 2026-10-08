@@ -3505,6 +3505,65 @@ if (section('refine-queues store shelf')) try {
   nw.eval('S.camp.open = true; S.camp.b.forge = 1');
   assert(nw.eval('storeShelfShows("coal")') === true, '...and a coal stack once it is built');
 } catch (e) { fail('refine-queues store shelf crashed: ' + (e.stack || e)); }
+// ---- smelt-done-says-so: a set-amount Forge, Workbench or Loom order that finishes live leaves one bell line ('refine-done') and
+// lights the Camp tab dot (as a finished build does). Never a pop over the fight, never per unit, never for an All order or the
+// away run (the away card says it), and no dot while Camp is open. On save-refine (Forge Lv 2). ----
+if (section('smelt-done-says-so')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-refine.js'), 'utf8'), notices = fs.readFileSync(path.join(ROOT, 'src', 'js', '23n-data-notices.js'), 'utf8');
+  assert(/emit\('toast', \{ key: 'refine-done'/.test(src) && /emit\('refineDone'/.test(src) && /id: 'refine-done', key: 'refine-done', ch: 'bell'/.test(notices)
+    && /on\('refineDone', dot\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-camp-ui.js'), 'utf8')),
+    'smelt-done-says-so: refineTick emits the refine-done toast and refineDone, its rule rides the bell, and the Camp dot listens');
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('smelt-done-says-so (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-refine.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true, turns: true });
+      await ctx.addInitScript(([key, raw]) => {
+        if (sessionStorage.getItem('sd-seeded')) return; sessionStorage.setItem('sd-seeded', '1');
+        const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+      }, [KEY, raw]);
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(3200);   // past the What's new window
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // the hero chops wood (a zone 20 fight would end in a hero card); Camp closed; every station's list empty; the bell read
+      const reset = `S.activity = 'gather'; S.tab = ''; for (const st of REFINE_STATIONS) refineOrders(st).length = 0; S.mats.ore[0] = 500; S.mats.coal[0] = 500;
+        notes.unread = 0; notes.seenSeq = notes.seq; $('raidDot').hidden = true; true`;
+      const lines = `notes.log.filter(n => n.rule === 'refine-done' && n.id > notes.seenSeq).map(n => ({ ch: n.ch, msg: n.msg, n: n.n }))`;
+      const run = secs => `(() => { for (let i = 0; i < ${secs * 10}; i++) refineTick(0.1); return true; })()`;
+      // 1. a 10-unit order run to done on the live tick, the sheet closed: one bell line, the Camp dot lit
+      await X(reset); await X(`refineAdd('ingot', 1, 10).ok`); await X(run(150));
+      const one = await X(`({ made: refineOrders('forge')[0].made, l: ${lines}, dot: !$('raidDot').hidden, pops: notes.stats.filter(s => s.id === 'refine-done' && s.ch === 'pop').length })`);
+      assert(one.made === 10 && one.l.length === 1 && one.l[0].ch === 'bell' && one.l[0].msg === 'The Forge made 10 Copper Ingots.' && one.dot && one.pops === 0,
+        `a 10 Copper Ingot order finished live leaves one bell line "The Forge made 10 Copper Ingots." and the Camp dot lit, no pop (${JSON.stringify(one)})`);
+      // 2. three orders finishing back to back: one merged line, not three
+      await X(reset); await X(`refineAdd('ingot', 1, 2).ok && refineAdd('ingot', 1, 3).ok && refineAdd('ingot', 2, 1).ok`); await X(run(120));
+      const three = await X(`({ made: refineOrders('forge').map(o => o.made), l: ${lines}, unread: notes.unread })`);
+      assert(three.made.join() === '2,3,1' && three.l.length === 1 && three.l[0].n === 3 && three.l[0].msg === '3 orders done. The Forge made 1 Iron Ingot.' && three.unread === 1,
+        `three orders finishing back to back leave one merged bell line that counts once (${JSON.stringify(three)})`);
+      // 3. an All order running 10 units adds none
+      await X(reset); await X(`refineAdd('ingot', 1, 'all').ok`); await X(run(150));
+      const all = await X(`({ made: refineOrders('forge')[0].made, l: ${lines}, dot: !$('raidDot').hidden })`);
+      assert(all.made >= 10 && all.l.length === 0 && !all.dot, `an All order that made ${all.made} units adds no bell line and no dot (${JSON.stringify(all)})`);
+      // 4. the away catch-up adds none; the away card still says the order is done
+      await X(reset); await X(`refineAdd('ingot', 1, 10).ok`);
+      const away = await X(`(() => { emit('awayBegin'); emit('awayEnd', { t: 600 }); const out = AWAY_LINES[0]() || [];   // the refine line source goes first
+        return { made: refineOrders('forge')[0].made, l: ${lines}, dot: !$('raidDot').hidden, card: out.map(x => x.txt).filter(t => /^The Forge /.test(t)) }; })()`);
+      assert(away.made === 10 && away.l.length === 0 && !away.dot && away.card.length === 1 && /\(all orders done\)\.$/.test(away.card[0]),
+        `the away catch-up adds no bell line or dot, and the away card reports the order (${JSON.stringify(away)})`);
+      // 5. Camp open: the line still lands, the dot stays hidden
+      await X(reset); await X(`setTab('world'); refineAdd('ingot', 1, 10).ok`); await X(run(150));
+      const open = await X(`({ tab: S.tab, l: ${lines}, dot: !$('raidDot').hidden })`);
+      assert(open.tab === 'world' && open.l.length === 1 && !open.dot, `with Camp open the order's line lands and the dot stays hidden (${JSON.stringify(open)})`);
+      assert(!errs.length, 'smelt-done-says-so: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('smelt-done-says-so crashed: ' + (e.stack || e)); }
 // ---- refine-queues: coal and the middles are text only (the art ruling 2026-10-08). Every matIcon caller that can name them
 // (Storehouse stacks and rows, cost chips, toasts, the away report, the stations' sheets, the craft screen) shows the name
 // alone: no img with an empty or missing src shows, and no Essence orb (the old fallback) stands in. ----
@@ -9267,7 +9326,7 @@ if (section('C29 boss pass (core)')) try {
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
-    assert(n20.a > 4.7 && n20.a < 5.3 && Math.abs(n20.hx - 0.7) < 1e-9 && n3.hx === 1 && n38.hx === 1 && n20.cx === 1 && !n20.full,
+    assert(n20.a > 4.7 && n20.a < 5.3 && Math.abs(n20.hx - 0.7) < 1e-9 && n3.hx === 1 && n38.hx === 1 && n20.cx === 1 && n20.full === !!E('TURN_TUNE.normalFull'),
       `boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), as written in zones 1-3 and 35+ (${JSON.stringify([n3, n20, n38].map(r => [+r.a.toFixed(2), r.hx]))})`);
     assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.055) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
       `boss pass: boss hits x1.055 at zone 8 (the pr4 refit; charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
@@ -12729,6 +12788,106 @@ if (section('fight HUD fit')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('fight HUD fit crashed: ' + (e.stack || e)); }
+
+// ---- normal-death-says-so: a normal loss says so on the stage (75-turn-ui loss beat), the float says Beaten, the bell tells once ----
+if (section('normal-death-says-so')) try {
+  // the judge's rule (DECISIONS.md, 2026-10-08): every zone fight starts at full HP, win or lose; a kill still heals packHealF
+  // where HP carries (the Deepwell, the Provings)
+  { const g = loadCore({ seed: 6, turns: true }), E = s => g.eval(s);
+    E('soloPick("pip", { now: true }); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = "fight"; arena = null; S.maxZone = 10; setZone(10); spawn()');
+    for (let t = 0; t < 3 && !E('!!(TURN_LIVE && !TURN_LIVE.ended)'); t += 0.1) g.fn.tick(0.1);
+    // hurt the hero, end this fight as a win, and read HP as the next normal fight starts
+    E('globalThis.__st = []; on("fightStart", () => { const u = cbUnitByKey("hero"); __st.push(u.hp / u.maxHp) }); cbUnitByKey("hero").hp = cbUnitByKey("hero").maxHp * 0.3; for (const f of combatFoes()) f.hp = 0.001');
+    for (let t = 0; t < 30 && E("__st.length") < 1; t += 0.1) { E('turnCombatAction("attack")'); g.fn.tick(0.1); }
+    // the zone arrow in the gap after a loss: the next fight starts with the hero up at full HP, and no second gap follows
+    E('globalThis.__w = 0; on("wipe", () => __w++)');
+    for (let t = 0; t < 2 && !E('!!(TURN_LIVE && !TURN_LIVE.ended)'); t += 0.1) g.fn.tick(0.1);
+    E('cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; __st.length = 0; setZone(9)');
+    for (let t = 0; t < 3 && E('__st.length') < 1; t += 0.1) g.fn.tick(0.1);
+    assert(E('__st[0]') === 1 && E('__w') === 1 && E('!cbUnitByKey("hero").down'), `the zone arrow in the gap after a loss starts the next fight at full HP, with no second loss (start ${E('__st[0]')}, losses ${E('__w')})`);
+    const deep = E('(() => { const f = combatFoes()[0]; f.deep = true; const p = turnMakeProfile(f, cbUnitByKey("hero")); f.deep = false; return p.fullHp; })()');
+    assert(E('TURN_TUNE.normalFull') === 1 && E('COMBAT_TUNE.packHealF') === 0.15 && E('__st.length') >= 1 && E('__st[0]') === 1 && deep === false && !g.errors.length,
+      `the next normal fight after a win at 30% HP starts at full HP; the Deepwell keeps carried HP (start ${E('__st[0]')}, deep fullHp ${deep})` + (g.errors.length ? ': ' + g.errors[0] : '')); }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('normal-death-says-so (browser): Playwright or Chromium not here, skipped'); }
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const desk = w === 1280, ctx = await browser.newContext(desk ? { turns: true, viewport: { width: w, height: h } } : { turns: true, viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = src => page.evaluate(src => window.__t.x(src), src);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity !== 'fight' && setActivity('fight'); S.maxZone = Math.max(S.maxZone, 10); setZone(10); ui(true);
+          window.__ndToasts = []; on('toast', t => __ndToasts.push(t.msg || t)); window.__ndFS = 0; window.__ndHp = 0; window.__ndZn = 200;
+          on('fightStart', () => { __ndFS++; const u = cbUnitByKey('hero'); __ndHp = u ? u.hp / u.maxHp : 0; }); true`);
+        const live = async () => { for (let i = 0; i < 40 && !(await X('!!(TURN_LIVE && !TURN_LIVE.ended && cbUnitByKey("hero") && !cbUnitByKey("hero").down)')); i++) await page.waitForTimeout(150); };
+        await live();
+        const st = () => page.evaluate(() => {
+          const b = document.querySelector('.tv-beat'), box = document.getElementById('stageBox'), r = b && b.getBoundingClientRect(), sb = box.getBoundingClientRect();
+          const help = b && b.querySelector('.tv-beat-help'), txt = b && b.querySelector('.tv-beat-txt');
+          return { on: !!b && !b.hidden, txt: txt ? txt.textContent : '', help: help && !help.hidden ? help.textContent : '', tc: box.classList.contains('tc-on'),
+            inside: !!r && r.left >= sb.left - 1 && r.right <= sb.right + 1 && r.top >= sb.top - 1 && r.bottom <= sb.bottom + 1,
+            cut: !!b && [...b.querySelectorAll('b, span')].some(e => e.offsetParent && e.scrollWidth > e.clientWidth + 1),
+            float: document.body.dataset.wipeFloat || '', overToasts: (() => { const t = document.querySelector('.toasts'); if (!t || !r || b.hidden) return false; const q = t.getBoundingClientRect();
+              return [...t.children].some(c => c.offsetParent) && +getComputedStyle(t).opacity > 0.05 && r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom; })() };
+        });
+        // a real normal loss at zone 10 (the lethal hit, then the recovery gap turnCombatTick sets): the float says Beaten, the stage line shows with tc-on (toasts wait), inside the stage and whole
+        await X('cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true'); await page.waitForTimeout(400);
+        let s = await st();
+        assert(s.on && s.txt === "Beaten. You're back to full HP for the next fight." && s.tc && s.float === 'Beaten', `${w}x${h}: a normal loss shows "Beaten" on the stage with the full-HP line and holds the toasts (${JSON.stringify(s)})`);
+        assert(s.inside && !s.cut, `${w}x${h}: the loss line sits inside the stage and no text is cut`);
+        await X('notify({ msg: "Test notice for the loss beat check", kind: "hi" }, "now"); true').catch(() => {});
+        await page.waitForTimeout(150);
+        assert(!(await st()).overToasts, `${w}x${h}: the loss line and the toasts are never both on screen on the same spot`);
+        if (!desk) { assert(!errs.length, `${w}x${h}: no page errors` + (errs.length ? ': ' + errs[0] : '')); await ctx.close(); continue; }
+        // it stays through the recovery gap, then the next fight starts with full HP and the line goes
+        await page.waitForTimeout(3000);
+        assert((await st()).on, '1280x720: the loss line stays up through the gap before the next fight');
+        const fs0 = await X('__ndFS');
+        for (let i = 0; i < 60 && (await X('__ndFS')) === fs0; i++) await page.waitForTimeout(150);
+        await page.waitForTimeout(100);
+        s = await st();
+        assert(!s.on && !s.tc && (await X('__ndHp')) === 1, `1280x720: the next fight starts at full HP and the loss line is gone (${JSON.stringify(s)}, HP ${await X('__ndHp')})`);
+        // the helps line names a way out that is true for this save, in order: points, Craft, the zone arrow, nothing at zone 1
+        const helpFor = async (pts, goal, zone) => {
+          await X(`window.__ndA = attrPoints; window.__ndG = craftGoalNext; attrPoints = k => ({ total: 4, spent: 4 - ${pts}, free: ${pts} }); craftGoalNext = () => (${goal}); window.__ndZ = S.zone; S.zone = ${zone};
+            emit('wipe', { zone: ++__ndZn, to: ${zone}, boss: false, arena: false, stall: false }); attrPoints = __ndA; craftGoalNext = __ndG; S.zone = __ndZ; true`);
+          const r = await st(); await X('emit("unitUp", { key: "hero", hp: 1 }); true'); return r;
+        };
+        const hp = await helpFor(2, '{ gate: null, p: 1 }', 10), hc = await helpFor(0, '{ gate: null, p: 1 }', 10), hg = await helpFor(0, '{ gate: { skill: "smith" }, p: 1 }', 10), hz = await helpFor(0, 'null', 10), h1 = await helpFor(0, 'null', 1);
+        assert(hp.help === 'Spend your attribute points on Hero > Build.' && hc.help === 'Better gear helps: see Craft.' && hg.help === 'An easier zone helps too: use the arrow by the zone name.' &&
+          hz.help === 'An easier zone helps too: use the arrow by the zone name.' && h1.on && h1.help === '', `1280x720: the loss line's help matches the save (points, then a craftable goal, then the zone arrow; none at zone 1): ${JSON.stringify([hp.help, hc.help, hg.help, hz.help, h1.help])}`);
+        assert(!(await st()).on, '1280x720: the hero back up hides the loss line');
+        // switching to gathering in the gap hides it
+        await live(); await X('cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true'); await page.waitForTimeout(200);
+        const g0 = (await st()).on; await X('setActivity("gather"); true'); await page.waitForTimeout(150);
+        assert(g0 && !(await st()).on && !(await st()).tc, '1280x720: switching to gathering in the gap hides the loss line');
+        await X('setActivity("fight"); true');
+        // the bell: three normal losses in ten fights in one zone add one badge-raising bell line; a fourth adds none
+        // (zone 10 has two losses so far: the first one and the gathering one)
+        await live(); await X('cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true'); await page.waitForTimeout(200);
+        await X('cbRestore(true); spawn(); true'); await live(); await X('cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true'); await page.waitForTimeout(200);
+        const lose = await X(`JSON.stringify({ n: __ndToasts.filter(m => /^Losing a lot here\?/.test(m)).length, ch: (NOTICES.find(r => r.id === 'losing-here') || {}).ch,
+          beaten: __ndToasts.filter(m => /Catch your breath and go again/.test(m)).length })`).then(JSON.parse);
+        assert(lose.n === 1 && lose.ch === 'bell' && lose.beaten >= 4, `1280x720: three or more normal losses in one zone add exactly one bell line (${JSON.stringify(lose)})`);
+        // a boss loss: the float says Beaten, no loss line (the Try again card owns it)
+        await X('cbRestore(true); spawn(); true'); await live();
+        await X('fightBoss = true; cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true'); await page.waitForTimeout(200);
+        s = await st();
+        assert(!s.on && s.float === 'Beaten', `1280x720: a boss loss floats "Beaten" and shows no loss line (${JSON.stringify(s)})`);
+        assert(!errs.length, `${w}x${h}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('normal-death-says-so crashed: ' + (e.stack || e)); }
 
 if (section('foe moves by type')) try {
   const g = loadCore({ seed: 7 }), E = s => g.eval(s), J = s => JSON.parse(E(`JSON.stringify(${s})`));

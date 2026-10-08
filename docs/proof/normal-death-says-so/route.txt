@@ -1,0 +1,60 @@
+# Proof for card normal-death-says-so. Wren (the early test save, 52 attribute points unspent) at zone 12, fight 1 of 5
+# (tests/proof-fixtures/save-early-z12.json: save-early with zone, maxZone 12 and kills 0), at 1280x720, 740x360 and 360x740.
+# She presses Attack on each turn and never parries, so the Spore Cap beats her on the seventh step.
+#   beaten-beat-*.png  the stage says "Beaten. You're back to full HP for the next fight." and, under it, "Spend your attribute
+#                      points on Hero > Build." (true for this save). Before this card the stage floated a red "Fall back!" and
+#                      then sat empty at 0 HP, so the first expect fails on that build. Hesketh tips share the gap and pause
+#                      the game while up (tips-pause-says-so owns that), so the route answers them.
+# The line lets clicks through to the stage (pointer-events: none), so the text reader skips it: the expects read its two
+# elements by selector and the shot shows the words.
+#   next-fight-*.png   six seconds on, the next fight has started with Wren at full HP and the line is gone.
+# seed: 1
+new early-z12
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+expect ".tv-beat .tv-beat-txt"
+expect ".tv-beat .tv-beat-help"
+expect-no "Fall back!"
+shot beaten-beat
+tap-if "Got it"
+tap-if "Dismiss this tip"
+wait 3
+tap-if "Got it"
+tap-if "Dismiss this tip"
+wait 3
+expect-no ".tv-beat"
+shot next-fight
