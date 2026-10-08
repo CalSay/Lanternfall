@@ -2265,11 +2265,11 @@ span.cf-d { font-weight: 600; }
    screen the card drops its art and the hero's line so the moves and Keep the Scroll fit */
 .mm-card.has-pick { width: min(560px, 100%); }
 .mm-picks { width: 100%; display: grid; gap: 5px; }
-.mm-pick-h { margin: 0; font: 600 12px var(--body); letter-spacing: .06em; color: var(--mc); text-align: left; }
+.mm-pick-h { margin: 0; font: 600 max(var(--tmin, 0px), calc(12px * var(--tk, 1))) var(--body); letter-spacing: .06em; color: var(--mc); text-align: left; }
 .mm-pick-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
 .mm-pick { display: grid; gap: 2px; align-content: start; min-height: 44px; padding: 6px 8px; text-align: left; cursor: pointer; color: var(--bone); background: var(--well); border: 1px solid color-mix(in srgb, var(--mc) 55%, var(--line)); font: inherit; }
-.mm-pick b { font-size: 13.5px; color: #F2E6B0; }
-.mm-pick small { font-size: 11.5px; line-height: 1.3; color: var(--muted); }
+.mm-pick b { font-size: max(var(--tmin, 0px), calc(13.5px * var(--tk, 1))); color: #F2E6B0; }
+.mm-pick small { font-size: max(var(--tmin, 0px), calc(11.5px * var(--tk, 1))); line-height: 1.3; color: var(--muted); }
 .mm-pick:hover, .mm-pick:focus-visible { border-color: var(--mc); background: color-mix(in srgb, var(--mc) 16%, var(--well)); outline: none; }
 
 /* ---- the medium banner: a toast in the notices slot (the toast dock) ---- */
