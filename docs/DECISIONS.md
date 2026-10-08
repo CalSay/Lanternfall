@@ -2,7 +2,7 @@
 
 Every standing owner decision, by topic, with its date. A later decision wins over an earlier one. The last section
 lists decisions that a later owner decision replaced, so the history behind a rule stays readable. Rules that live in
-`CLAUDE.md` (save wipes, landscape, art freeze, online data) are not repeated here.
+`CLAUDE.md` (save wipes, browser first, art freeze, online data) are not repeated here.
 
 Older design specs were retired on 2026-10-02. Read any of them with `git show 1536ffa:docs/design/<file>.md`.
 
@@ -721,8 +721,13 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
 
 ## Screen and menus
 
+- **Browser first** (Cal, 2026-10-08, plan "Go" at 11:59): design for a desktop browser at 1280x720 CSS px with mouse
+  and keyboard; it must look good at 1920x1080 and fit 1366x640. Landscape phones (740x360) and tablets (1024x768) play
+  without clipping; phones held upright (360x740) must not break, but new features need not be designed for them.
+  Why: "Browser will be our primary. It means our art can be more detailed and our menus can be better structured."
+  Rule in `CLAUDE.md` (#234); sizes in `docs/design/layout.md`.
 - **Game-first layout:** the game is the main view; each tab opens a full-screen menu over it. (2026-09-27)
-  Landscape only on mobile: see `CLAUDE.md` and `docs/design/layout.md`.
+  Landscape only on mobile (2026-09-29): replaced by **Browser first** (2026-10-08, above).
 - **Fight view order:** header; everything not combat (Next Up, switches, zone arrows); the stage; the action bar; the
   tabs. The action bar is two rows of square slots: abilities on top, Parry, Dodge and Attack below, Attack
   bottom-right. (2026-09-29)
@@ -990,7 +995,8 @@ Kept only to explain current rules. Each line: the old decision, then what repla
 - Gatherer daily wages, then the Bunkhouse as the bed cap (2026-09-28) -> one-off hire, shift fees, Tents (2026-09-28).
 - Expeditions with heroes and trade caravans (2026-09-28) -> trade runs by gatherers (2026-09-29).
 - The MAT1 name ladder (2026-09-28) -> the C26 ladder (2026-10-01); ore keeps MAT1's names.
-- No forced landscape (2026-09-27) -> landscape only on mobile (2026-09-29).
+- No forced landscape (2026-09-27) -> landscape only on mobile (2026-09-29) -> browser first, phones and tablets still
+  work (2026-10-08).
 - Season 1 ending at the bottom of the Deepwell (2026-09-28) -> the finale is in the Gloamvale, its Region 5, and the
   Voice retreats into the Deepwell (2026-09-28, after the owner's feedback on LORE-R45).
 - Background art paused (2026-09-29) -> the Mossy Hollow background approved (2026-10-02).

@@ -30,8 +30,8 @@ tough outside reviewer: report real problems plainly and don't pass work you don
 - **P1:** a new save field without a `registerState`/`fresh()` default; different rewards for active and away play, or a
   reward paid twice; a check weakened, skipped or deleted, or a performance budget relaxed; a shared file edited outside
   its extension point (`docs/ARCHITECTURE.md`); `dist/lanternfall.html` not rebuilt; a choice that is always best; a
-  menu or layout that breaks at 360px wide or ignores reduced motion; an acceptance line in the PR body that the diff
-  doesn't meet.
+  menu or layout that clips at 1280x720, 1366x640, 740x360 or 1024x768, looks wrong at 1920x1080, breaks at 360x740,
+  or ignores reduced motion; an acceptance line in the PR body that the diff doesn't meet.
 - **P2:** player-facing copy that isn't short, plain and active; names a player wouldn't use; dead code; small UI rough edges that score a 3 or better on the UI rubric. UI
   so unclear that it scores a 1 or 2 is P1.
 - Don't flag formatting or lint; CI covers those.
