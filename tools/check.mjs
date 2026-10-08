@@ -12551,6 +12551,47 @@ if (section('small text clips')) try {
   }
 } catch (e) { fail('small text clips crashed: ' + (e.stack || e)); }
 
+// ---- unique-weapons-wall-icon: the Codex and the Unique loot wall show an every-class unique weapon as the hero's own weapon
+// (icon and kind name), as the bag does; Tobin keeps his Warblade. The raid loot card (74-ui-raid, path-guarded) is a scope cut.
+if (section('unique weapons wall icon')) try {
+  const own = { wren: ['bow', 'Bow'], pip: ['staff', 'Staff'], tobin: ['warblade', 'Warblade'] };
+  const fx = {};
+  for (const h of Object.keys(own)) {
+    const g = loadCore({ seed: 1120 }), E = s => g.eval(s);
+    E(`soloPick("${h}"); S.found = Object.assign({}, S.found, { golemfist: 1, eaterfang: 4 }); codexRefresh(true)`);
+    for (const k of ['golemfist', 'eaterfang']) {
+      const t = JSON.parse(E(`JSON.stringify(codexPage("uniques").tiles.find(t => t.key === "${k}"))`));
+      assert(t && t.item.slot === own[h][0] && t.sub.startsWith(own[h][1] + ' · ') && !/Sword/.test(t.sub), `${h}: the Codex row for ${k} shows a ${own[h][1]} (${t && t.item.slot}, "${t && t.sub}")`);
+    }
+    E('if (S.cls) S.cls.at = 0; onboardUnlockAll(); onboardTips(false); save()'); fx[h] = g.storage.get(KEY);
+    assert(!g.errors.length, `${h}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('unique weapons wall icon (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try { for (const h of ['wren', 'pip']) {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      try {
+        await ctx.addInitScript(({ raw, key }) => { localStorage.setItem(key, raw); }, { raw: fx[h], key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1200);
+        const X = src => page.evaluate(src => window.__t.x(src), src);
+        const r = await X(`(() => { const same = (tile, kind, t, u) => { const p = icTile(''); setIc(p, itemIcon(kind, t, u)); return tile.querySelector('img').src === p.querySelector('img').src; };
+          uiForge(); const out = { hero: soloHero() };
+          for (const k of ['golemfist', 'eaterfang']) { const e = trophyEls[k]; out[k] = { ic: same(e.tile, ${JSON.stringify(own[h][0])}, S.found[k], k), sword: same(e.tile, 'weapon', S.found[k], k), txt: e.ts1.textContent }; }
+          return out; })()`);
+        for (const k of ['golemfist', 'eaterfang'])
+          assert(r.hero === h && r[k].ic && !r[k].sword && r[k].txt.startsWith(own[h][1] + ' · '), `${h}: the Unique loot wall shows ${k} as a ${own[h][1]} (${JSON.stringify(r[k])})`);
+        assert(!errs.length, `${h}: Unique loot wall, no page errors` + (errs.length ? ': ' + errs[0] : ''));
+      } finally { await ctx.close(); }
+    } } finally { await browser.close(); }
+  }
+} catch (e) { fail('unique weapons wall icon crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
