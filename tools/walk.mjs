@@ -459,7 +459,7 @@ async function wearGear(w) {
   return true;
 }
 // Craft > Make > the goal's station > its tier > the recipe's Craft button.
-async function craftGoal(g) {
+async function craftGoal(g, gate) {   // gate: a tier gate's craft (next-tier-gate-goal), logged and counted apart from the gear goal
   await openCraft('make');
   await click(`.cf-st[data-st="${g.st}"]`, 300); await advance(300, 16);
   await click(`.cf-tiers button:text(^Tier ${g.t}\\b)`, 300); await advance(300, 16);
@@ -467,7 +467,8 @@ async function craftGoal(g) {
   const state = await page.evaluate(sel => { const b = document.querySelector(sel); return b ? { dis: b.disabled, vis: b.getClientRects().length > 0 } : null; }, btn);
   const did = state && !state.dis && await click(btn, 300);
   await advance(400, 16);
-  await note(page, 'gear', `craft ${g.nm}${did ? ' -> pressed Craft' : ' -> nothing to press' + (state ? (state.dis ? ' (button greyed)' : '') : ' (no recipe row)')}`, { extra: { kind: g.kind, t: g.t, pressed: !!did }, tag: 'gear-craft' });
+  await note(page, gate ? 'gate' : 'gear', `craft ${g.nm}${did ? ' -> pressed Craft' : ' -> nothing to press' + (state ? (state.dis ? ' (button greyed)' : '') : ' (no recipe row)')}`, { extra: { kind: g.kind, t: g.t, crafted: !!did }, tag: (gate ? 'gate' : 'gear') + '-craft' });
+  if (gate) { if (!did) addCheck('gate', 'a tier gate\'s tier 1 recipe can be paid for and its Craft button cannot be pressed', `${g.nm}: ${state ? (state.dis ? 'button greyed' : 'hidden') : 'no recipe row in Craft > Make'}`); return !!did; }
   if (did) st.gear.crafted++;
   else addCheck('gear', 'a gear goal says "you have the materials" and its Craft button cannot be pressed', `${g.nm}: ${state ? (state.dis ? 'button greyed' : 'hidden') : 'no recipe row in Craft > Make'}`);
   return true;
@@ -573,7 +574,7 @@ async function gateStep(o) {
     let m = null;
     if (s.st) {
       const w = await X(GATE_ST_Q(s.st));
-      if (w.craft) { T.crafts++; await craftGoal({ st: s.st, t: 1, kind: w.craft, nm: w.nm }); return true; }
+      if (w.craft) { if (await craftGoal({ st: s.st, t: 1, kind: w.craft, nm: w.nm }, true)) T.crafts++; return true; }
       if (!w.gather) return await end('stopped: ' + w.why);
       m = w.gather;
     } else {
@@ -596,12 +597,12 @@ async function gateStep(o) {
     if (!g) return ''; g.setAttribute('data-walk', '1'); return (r.querySelector('.nu-lbl') || r).textContent.trim(); }, q.txt);
   const went = pick && await click('[data-walk="1"]', 300);
   await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
-  if (!went) { await click('.bsheet-ov .bsheet-x', 200); return false; }
+  if (!went) { T.cool[q.key] = gt + 30; await click('.bsheet-ov .bsheet-x', 200); return false; }   // a Ready row, or the gate is not in the list: look again in 30 s
   await advance(400, 16);
   const where = await X('S.tab');
   T.pressed.push({ t: gt, label: pick });
   T.sess = { key: q.key, txt: q.txt, st: q.st, mat: q.mat, start: gt, owns: false };
-  await note(page, 'gate', `${pick} -> pressed Go (${where === 'forge' ? 'Craft' : where === q.skill ? 'its Gather view' : 'tab ' + where})`, { extra: { goal: pick, pressed: 'Go', tab: where }, tag: 'gate-go' });
+  await note(page, 'gate', `${pick} -> pressed Go (${where === 'forge' ? 'Craft' : where === 'gat' ? 'its Gather view' : 'tab ' + where})`, { extra: { goal: pick, pressed: 'Go', go: true, tab: where }, tag: 'gate-go' });
   return true;
 }
 
@@ -884,7 +885,7 @@ function report(res) {
   out.push('', med === null ? 'Walk against est: no beat to compare.' : `Walk against est (information, not a finding): the median beat came at ${med.toFixed(2)} of its est time over ${ratios.length} beats, so the bot plays about ${(1 / med).toFixed(1)} times a casual person's guessed pace.`, '');
   out.push('### More than 50% off the map\'s walk, for the lead', '', ...(off.length ? off.map(x => '- ' + x) : ['- none']), '');
   // dead air
-  const marks = [0, ...log.filter(e => ['unlock', 'moment', 'nextup', 'gear', 'gate'].includes(e.kind) && !(e.kind === 'moment' && e.text.startsWith('level'))).map(e => e.t), reached].sort((a, b) => a - b);
+  const marks = [0, ...log.filter(e => (['unlock', 'moment', 'nextup', 'gear'].includes(e.kind) || (e.kind === 'gate' && e.go)) && !(e.kind === 'moment' && e.text.startsWith('level'))).map(e => e.t), reached].sort((a, b) => a - b);
   const quiet = []; for (let i = 1; i < marks.length; i++) if (marks[i] - marks[i - 1] >= 180) quiet.push({ from: marks[i - 1], to: marks[i] });
   out.push('## Where it dragged', '', ...(quiet.length ? quiet.slice(0, 8).map(q => `- ${fmtT(q.from)} to ${fmtT(q.to)}: ${Math.round((q.to - q.from) / 60 * 10) / 10} min with no unlock, boss win, unique, Star, hero or Next Up result`) : ['- no stretch over 3 minutes without a reward or an unlock']), '');
   // findings

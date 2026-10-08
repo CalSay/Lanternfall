@@ -203,7 +203,7 @@ var forgeGoalPicks = 0;
   // gate names (so the two rows agree), and its Go is the gate row's. A crafting skill's Go opens Craft at its station.
   const skillNext = () => {
     const f = forgeNext();
-    if (f && f.gate) { const s = S.skills[f.gate.skill]; if (s) return { k: f.gate.skill, s, p: Math.min(0.99, s.xp / skillNeed(s.lv, f.gate.skill)), f }; }
+    if (f && f.gate) { const s = S.skills[f.gate.skill]; if (s) return { k: f.gate.skill, s, p: Math.max(0.01, Math.min(0.99, s.xp / skillNeed(s.lv, f.gate.skill))), f }; }   // 0 XP still shows (a station sits there after each level)
     let best = null;
     for (const k of Object.keys(SKILL)) {
       if (k === 'hunt' && !huntingVisible()) continue;
@@ -217,11 +217,12 @@ var forgeGoalPicks = 0;
   // the station a crafting skill levels at, and Go to it on Craft (the Forge's level bar is #smithBar, the others their station button)
   const stationFor = k => Object.keys(CRAFT_STATIONS).find(s => CRAFT_STATIONS[s].skill === k);
   const stationSel = s => s === 'forge' ? '#smithBar' : `.cf-st[data-st="${s}"]`;
-  const skillGo = k => {
+  // any: a gate's Go may pick a recipe the hero cannot wear (a tool's Smithing gate for a ranger) so the screen opens at the station
+  const skillGo = (k, any) => {
     const st = stationFor(k); if (!st) return { tab: 'gat', view: k };   // UX-A: a gathering skill's own Gather view
     // pick a recipe at that station so the Craft screen opens there (75-craft-ui syncGoalPick reads S.fSlot / S.fTier)
-    const kind = CRAFT_HERO_POS.map(kindsFor).flat().find(x => CRAFT_KINDS[x].st === st) || Object.keys(CRAFT_KINDS).find(x => CRAFT_KINDS[x].st === st && !CRAFT_KINDS[x].legacy && craftKindVisible(x));
-    return { tab: 'forge', sel: stationSel(st), fn: () => { if (kind) { S.fSlot = kind; S.fTier = 1; forgeGoalPicks++; } } };
+    const kind = CRAFT_HERO_POS.map(kindsFor).flat().find(x => CRAFT_KINDS[x].st === st) || (any ? Object.keys(CRAFT_KINDS).find(x => CRAFT_KINDS[x].st === st && !CRAFT_KINDS[x].legacy && craftKindVisible(x)) : null);
+    return kind ? { tab: 'forge', sel: stationSel(st), fn: () => { S.fSlot = kind; S.fTier = 1; forgeGoalPicks++; } } : { tab: 'forge', sel: stationSel(st) };
   };
   registerGoal({
     id: 'skill', sys: 'skill', prio: -1,
@@ -268,25 +269,30 @@ var forgeGoalPicks = 0;
   // null: nothing gates it; false: only a gate the player cannot raise now (Hunting hidden, Foraging not open yet).
   const GATHER_OPEN = { hide: () => huntingVisible(), fibre: () => isUnlocked('forage'), herb: () => isUnlocked('forage') };
   const nearer = (a, b) => !b || a.lv / a.need > b.lv / b.need;
-  const matGate = (k, t, short) => {
-    const prod = typeof REFINE_PRODUCTS === 'object' ? REFINE_PRODUCTS[k] : null;
-    const raw = prod ? prod.inputs(t).filter(([f]) => f !== 'coal').map(([f, tt, n]) => [f, tt, n * short - matOwn(f, tt)]) : [[k, t, short]];
-    let best = null, shut = false;
-    for (const [f, tt, miss] of raw) {
-      if (miss <= 0 || !CRAFT_NODES[f]) continue;
-      const sk = skillOf(f); if (skillTierOpen(sk, tt)) continue;
-      if (GATHER_OPEN[f] && !GATHER_OPEN[f]()) { shut = true; continue; }
-      const g = { skill: sk, lv: S.skills[sk].lv, need: skillReq(sk, tt), mat: costName(f, tt) };
-      if (nearer(g, best)) best = g;
-    }
-    return shut ? false : best;
+  // a raw cell's gate, or false when its node never opens or its skill is hidden
+  const rawGate = (f, tt) => {
+    const sk = skillOf(f); if (skillTierOpen(sk, tt)) return null;
+    if (!craftNodeEnabled(f, tt) || (GATHER_OPEN[f] && !GATHER_OPEN[f]())) return false;   // hide grades 4-5 are never offered
+    return { skill: sk, lv: S.skills[sk].lv, need: skillReq(sk, tt), mat: costName(f, tt) };
   };
   const recipeGate = (kind, t, c) => {
-    if (c.lv < c.need) return { skill: stationOf(kind).skill, lv: c.lv, need: c.need, station: stationOf(kind).key };
-    let best = null;
+    if (c.lv < c.need) {
+      // tools and pre-K4 kinds use the better of their station and Smithing (stationLevel): name the skill that gives that level
+      const st = stationOf(kind), sk = S.skills[st.skill].lv >= c.lv ? st.skill : 'smith';
+      return { skill: sk, lv: S.skills[sk].lv, need: c.need, station: stationFor(sk) };
+    }
+    // what the recipe takes as raw cells: a raw cost as it is, a refined one you are short of by the raw goods it is made from,
+    // totalled over the recipe (Birch Planks and Duskfang Leather both take Birch Log); a cell gates only when you hold too few
+    const raw = {}, add = (f, tt, n) => { if (f !== 'coal' && CRAFT_NODES[f]) raw[f + ':' + tt] = (raw[f + ':' + tt] || 0) + n; };
     for (const [k, n] of Object.entries(c.cost.mats)) {
-      const short = n - matOwn(k, t); if (short <= 0) continue;
-      const g = matGate(k, t, short);
+      const prod = typeof REFINE_PRODUCTS === 'object' ? REFINE_PRODUCTS[k] : null, short = n - matOwn(k, t);
+      if (!prod) add(k, t, n); else if (short > 0) for (const [f, tt, m] of prod.inputs(t)) add(f, tt, m * short);
+    }
+    let best = null;
+    for (const [key, n] of Object.entries(raw)) {
+      const [f, tt] = [key.split(':')[0], +key.split(':')[1]];
+      if (matOwn(f, tt) >= n) continue;
+      const g = rawGate(f, tt);
       if (g === false) return false;
       if (g && nearer(g, best)) best = g;
     }
@@ -323,9 +329,9 @@ var forgeGoalPicks = 0;
     return best && best.p > 0 ? best : gate || best;   // an open recipe at p = 0 (Next Up drops it) does not hide a gate
   };
   // a gate row's Go: Craft at the station's tier 1 (a craft there levels it), or the gathering skill's Gather view
-  const gateGo = b => b.gate.station
-    ? { tab: 'forge', sel: stationSel(b.gate.station), fn: () => { S.fSlot = b.kind; S.fTier = 1; forgeGoalPicks++; } }
-    : { tab: 'gat', view: b.gate.skill };
+  const gateGo = b => !b.gate.station ? { tab: 'gat', view: b.gate.skill }
+    : CRAFT_KINDS[b.kind].st === b.gate.station ? { tab: 'forge', sel: stationSel(b.gate.station), fn: () => { S.fSlot = b.kind; S.fTier = 1; forgeGoalPicks++; } }
+    : skillGo(b.gate.skill, true);   // a tool's Smithing gate: Craft at the Forge, where a craft levels Smithing
   craftGoalNext = () => forgeNext();
   registerGoal({
     id: 'forge', sys: 'forge',

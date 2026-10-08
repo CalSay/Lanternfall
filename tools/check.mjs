@@ -10902,6 +10902,19 @@ if (section('next tier gate')) try {
   l = goals();
   assert(row(l) && /^Craft a Copper Sickle: /.test(row(l).label) && !l.some(x => / \d+ of \d+/.test(x.label)), `next tier gate: an open recipe hides the gate (${JSON.stringify(row(l))})`);
   reset();
+  // review: a tool's gate names the skill that gives its level (tools use the better of their station and Smithing)
+  E('S.skills.smith.lv = 9; S.skills.bench.lv = 3');
+  l = goals();
+  assert(row(l) && row(l).label === 'Iron Pickaxe: Smithing 9 of 10' && /^Smithing: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('forge') || {}).sel === '#smithBar', `next tier gate: a tool's Smithing gate says Smithing and opens the Forge (${JSON.stringify(l.filter(x => x.id === 'forge' || x.id === 'skill'))})`);
+  reset();
+  // review: a station at 0 XP keeps its skill row while its gate shows
+  E('S.skills.bench.xp = 0');
+  assert(/^Woodcraft: /.test((goals().find(x => x.id === 'skill') || {}).label || ''), 'next tier gate: the skill row stays at 0 XP');
+  reset();
+  // review: Birch Log counts once across the recipe (10 for Birch Planks, 2 for Duskfang Leather): 10 is not enough
+  E('S.skills.bench.lv = 10; S.skills.loom.lv = 10; S.mats.wood[1] = 10');
+  assert(/Woodcutting 7 of 14 opens Birch Log$/.test((row(goals()) || {}).label || ''), `next tier gate: 10 Birch Log still leaves the Woodcutting gate (${JSON.stringify(row(goals()))})`);
+  reset();
   // 8. 8 Pine Log: the Golemfist's +1 is offered (refine-queues: "Saw 1 Pine Plank for your Golemfist +1"), and that Ready row
   // takes the forge slot over the gate row; this is why the fixture holds no Pine Log
   const g2 = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8') }) });
@@ -10913,6 +10926,11 @@ if (section('next tier gate')) try {
   E('S.mats.plank[0] = 1');
   l = goals();
   assert(row(l) && / of 10$/.test(row(l).label) && l.some(x => x.id === 'upgrade' && x.label === 'Upgrade your Golemfist to +1'), `next tier gate: a gate on the weapon does not hide the weapon's upgrade (${JSON.stringify(l)})`);
+  // review: never a gate on a node that is never offered (hide grades 4 and 5)
+  const g3 = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8') }) });
+  g3.eval('tick(0.1); S.maxZone = 60; for (const k in S.skills) S.skills[k].lv = Math.max(S.skills[k].lv, 70); S.skills.hunt.lv = 40; S.items.forEach(i => { i.t = 3; }); gearDirty()');
+  l = g3.eval('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
+  assert(!l.some(x => /Hunting \d+ of 64/.test(x.label)), `next tier gate: no Hunting 64 gate for a hide grade that is never offered (${JSON.stringify(row(l))})`);
 } catch (e) { fail('next tier gate crashed: ' + (e.stack || e)); }
 
 // ---- boss tiers, first hour (card boss-tiers PR 1, judge 2026-10-07): the zone-boss hit cap and the first-hour knots ----
