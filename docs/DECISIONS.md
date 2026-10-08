@@ -175,6 +175,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   (its bar sits near 0), unless the craft goal holds that row for a tier gate.
 - **Fight feel:** a pause between turns with a whose-turn banner, a bigger labelled timing bar, hit-stop and shake on
   big hits, damage numbers that say their source, ability numbers shown only outside a fight. (2026-10-02)
+- **The banner pause is shown, not buffered (fight-input-during-banner, planner 2026-10-08; Cal can veto
+  with "queue presses during the banner").** While the turn banner or VS card plays, Attack and ability tiles dim and say "Wait"; a press
+  is refused with a visible answer that reduced motion keeps. Presses are not queued; Parry and Dodge are never queued.
 - **Versus header:** fighting-game HP bars across the top, hero left, foe right. (2026-10-01)
 - **A zone foe resets after every attack** (hop in, attack, hop home, rest), so approved animations play in full.
   (2026-10-02)
@@ -887,6 +890,45 @@ first-time knots reach zone 20, as the z19 ruling asked.
 
 Veto phrases for Cal: "put the zone 20 bosses back" (undoes the whole pick). "Keep the stall band at 2.4" undoes only the tolerance. "No tick cap" undoes only dotCap: zones 22 and 23 then read
 about 30-36% a try for a first-time player. "No Pip boss knot" sets Pip back to 1: zone 23 then reads about 52-57 for a first-time Pip.
+Follow-up: the card `z21-foe-climb` found the health bot defended only a move's first hit; see "Zone 21 foe climb" below.
+
+### Zone 21 foe climb (z21-foe-climb) (2026-10-08)
+
+Follow-up to "Zone 20 wall" ruling 3, ruled by an Opus high judge (PR for card `z21-foe-climb`); Cal can veto. Evidence:
+`docs/proof/z21-foe-climb/evidence.md` (optimiser and 50-hour runs on five offsets each, before and after).
+
+- **The bot was wrong; the rest of the wall is the gear climb, sent to the balance pass.** The health bot (`tools/sim.mjs`
+  `turnPlayer`) keyed its defence on the turn, so it defended only the first hit of a move of several hits (`59k-turn.js` keeps
+  turn `n` across a move's hits). The walks (`walk.mjs`) and the budget sampler defend every hit and were never affected, so the
+  z13-z20 boss fits stand. The fix keys the defence on the hit too. Pressing every hit then made the bot press every boss feint
+  (fooled every time) and time every held swing perfectly, so it now reads a trick as the sampler and the walks do (read 0.3 +
+  0.6 x avoidance, about 0.78; else it presses early). No game file changes.
+- Optimiser, five offsets: longest stall 15,637 to 12,568 s; runs with a stall over 4 h 7/15 to 3/15 (offset 0 Tobin 241 min z24,
+  offset 2 Wren 267 min z23, offset 3 Pip 315 min z23); zoneEnd 22.67 to 24.67; wipes an hour 79.7 to 51.3. The bot no longer
+  stalls at zones 17-19 (the z20-wall watch items).
+- Health is re-baselined for every persona and the long run (the game did not change; the first-hour game measures held: active
+  first boss 68 s, casual zoneEnd 12.33, active zoneEnd 16.33). `optimiser.stallCount` 7.20, abs 2.9 to 2.1 (three sample sd of
+  the five offsets). 50-hour, three offsets: zoneEnd 30.67, longest stall 50,219 s, stalls over 3 h 5.22.
+- **Missed:** the card's prediction (stallCount back near 4.93): the bot passes more zones, so it meets more stall points. The
+  offset-0 "longest stall under 4 hours" target (offset 0 is 225/241/220 min; 3/15 runs over 4 h, all at zones 23-24). The
+  acceptance "no 3 h+ stall at zones 21-24": 9 of 15 optimiser runs (3.0-5.3 h); the 50-hour run's offset 0 still stalls 3.5-4.4 h
+  at zones 21-24 and 16-17 h at zone 25.
+- A first ruling (same day, before the PR review found the feint problem) had read 0/15 runs over 4 h and the target restored;
+  this ruling replaces it.
+- **Cause of what is left:** ordinary foes from zone 19 scale to a tier 4 rare +5 hero at road level (`refHpX`, `refAtk`). Tier 4
+  needs gathering 64 and a station at 36, and a 10-hour player has 22-24; from level 25 a level takes 390 fights.
+- **Not picked:** a 0.25 cap on an ordinary foe's hit at zones 21-24. It moves the wall to zone 25 (5/15 runs over 4 h, offset-0
+  Wren 4.8 h) and makes gear count for less.
+- Report rows `z20-normal-bot` to `z24-normal-bot` (kind `reportBot`: arrival level + 2, tier 2 rare +5, with the bot's own
+  defence) show the wall.
+- **Owner `boss-balance-pass`** (the overhaul balance pass), until 2026-12-01: refit `refHpX`/`refAtk` for ordinary foes at zones
+  19-24 to the gear a 10-hour player can reach after the crafting overhaul, or open tier 4 sooner, so that every optimiser run's
+  longest stall is under 4 h and none is 3 h+ at zones 21-24. Pull it ahead if players get stuck there first.
+- Watch: Tobin's active hour fell after the trick read (zoneEnd 14.2 to 13, longest active stall 701 to 1007 s). Re-judge if a walk
+  shows a Tobin stall of 15 min or more before zone 14.
+
+Veto phrases for Cal: "cap the zone 21-24 foes" (adds the 0.25 hit cap at zones 21-24 on top of the bot fix). "Bot presses every
+feint" drops the trick read and puts back the earlier numbers (abs 2.0).
 
 ### The Lantern Rules
 

@@ -293,6 +293,18 @@
       ],
       "report": true,
       "note": "report only (z20-wall): the first-time hero at a fitted zone (z20, z24) with nothing worn, tier 2 common or tier 1 rare +5, against the zone's arrival row (a negative drop is a gain). A landed hit sits on the hpFloor there, so gear is worth about 5-20 points; boss-balance-pass owns making it count"
+    },
+    "reportBot": {
+      "casual": [
+        0.9,
+        1
+      ],
+      "good": [
+        0.98,
+        1
+      ],
+      "report": true,
+      "note": "report only (z21-foe-climb): zone 20-24 ordinary foes at the 10-hour bot's footing (arrival level + 2, tier 2 rare +5), held to the normal band; the optimiser line is the health bot's own defence (tools/sim.mjs). The kept-up footing (tier 4 rare +5 from zone 19) is out of a 10-hour player's reach"
     }
   },
   "gaps": [

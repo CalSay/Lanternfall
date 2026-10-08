@@ -13097,6 +13097,124 @@ if (section('guide goal after reload')) try {
   }
 } catch (e) { fail('guide goal after reload crashed: ' + (e.stack || e)); }
 
+// ---- reload-keeps-tips: closing the game mid-way loses no story page and no Hesketh line ----
+// Story scenes are marked seen when queued, so S.story.open (scene id -> page on screen) brings a queued or open card back at its page after a
+// reload (55-story restore, 75-story-ui showCard). His unread lines are kept in S.onboard.sayQ (75-onboard-ui). × or the 60 s retire on the wear
+// tips and the fire tip hide them for this session only (guideHide), and a boot clears an old wear done mark while the piece is in the bag.
+if (section('reload keeps tips')) try {
+  const fx = n => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', `save-${n}.json`), 'utf8');
+  const SC = 'globalThis.__sc = []; on("storyScene", sc => __sc.push({ id: sc.id, at: sc.at || 0, n: sc.cards.length }))';
+  const boot = raw => { const st = memoryStorage({ [KEY]: raw }), g = loadCore({ seed: 1, storage: st }); g.eval(SC); return { g, st, E: s => g.eval(s) }; };
+  const edit = (raw, fn) => { const o = JSON.parse(raw); fn(o); return JSON.stringify(o); };
+  // (1) the Chapter 1 card: a Wren new game at the zone 5 Champion. The post scene is queued on the kill and the UI draws its second page.
+  const a = boot(fx('join-z5'));
+  a.E('S.onboard.tips = false; S.activity = "fight"; tick(0.1); for (const s of __sc) storyClose(s.id, "skipped"); __sc.length = 0');
+  a.E('storyEncounter("champ", "regent"); emit("kill", { mob: { boss: true, encounter: { kind: "champ", id: "regent" } }, zone: 5 }); tick(0.1)');
+  const ID = 'p:regent:post', shown = JSON.parse(a.E('JSON.stringify(__sc)'));
+  assert(shown.length === 1 && shown[0].id === ID && shown[0].n === 3 && a.E(`S.story.open[${JSON.stringify(ID)}]`) === 0, `story: the Champion's post scene (3 pages) is queued with open[id] = 0 (${JSON.stringify(shown)}, ${a.E('JSON.stringify(S.story.open)')})`);
+  a.E(`storyPage(${JSON.stringify(ID)}, 1); save()`);
+  assert(JSON.parse(a.st.get(KEY)).story.open[ID] === 1, 'story: drawing the second page writes open[id] = 1 to the save');
+  const mid = a.st.get(KEY), seen0 = JSON.parse(mid).story.seen;
+  const replays = b => JSON.parse(b.E('JSON.stringify(__sc)')).filter(x => seen0[x.id]);   // scenes the save had already queued (walk-in ones are new)
+  const b = boot(mid); b.E('tick(0.1)');
+  let r = replays(b);
+  assert(r.length === 1 && r[0].id === ID && r[0].at === 1 && r[0].n === 3, `story: a fresh boot from that save opens it at page 2 of 3 at the first gap (${JSON.stringify(r)})`);
+  const t = boot(edit(mid, o => { o.solo.hero = 'tobin'; })); t.E('tick(0.1)');
+  r = replays(t);
+  assert(t.E('soloHero()') === 'tobin' && r.length === 1 && r[0].n === 2 && r[0].at === 1 && !t.g.errors.length, `story: with Tobin as the hero the rebuild has 2 pages and opens on its last, with no error (${JSON.stringify(r)})`);
+  for (const how of ['done', 'skipped', 'auto']) {
+    const c = boot(mid); c.E(`tick(0.1); storyClose(${JSON.stringify(ID)}, ${JSON.stringify(how)})`);
+    const s = JSON.parse(c.E('JSON.stringify(S.story)'));
+    assert(!(ID in s.open) && (how === 'auto' ? !s.ends[ID] && s.seen[ID] < 0 : s.ends[ID] === how), `story: closing it (${how}) removes the id and files it as today (ends ${s.ends[ID] || 'none'}, seen ${s.seen[ID] > 0 ? '+' : '-'})`);
+  }
+  for (const [what, raw] of [['open = {}', edit(mid, o => { o.story.open = {}; })], ['no open field (an old save)', edit(mid, o => { delete o.story.open; })]]) {
+    const c = boot(raw); c.E('tick(0.1)');
+    assert(!replays(c).length && c.E('JSON.stringify(S.story.open)') === '{}', `story: a save with ${what} replays nothing`);
+  }
+  const nb = boot(edit(mid, o => { o.story.open = { 'v:nobody': 0, 'x:what': 2 }; o.story.seen['v:nobody'] = 5; })); nb.E('tick(0.1)');
+  assert(!replays(nb).length && nb.E('JSON.stringify(S.story.open)') === '{}' && nb.E('S.story.seen["v:nobody"]') === -5, 'story: an id with no builder is filed late (seen negative) and removed');
+  const off = boot(edit(mid, o => { o.story.off = 1; })); off.E('tick(0.1)');
+  assert(!replays(off).length && off.E('JSON.stringify(S.story.open)') === '{}' && off.E(`S.story.seen[${JSON.stringify(ID)}]`) < 0, 'story: with Story cards off nothing replays; the scene waits in the Journal (late)');
+  assert(![a, b, t, nb, off].some(x => x.g.errors.length), 'story: no errors');
+  // (2) the wear tips: Wren on a cold Hearth with the Golemfist in the bag and the weapon slot empty
+  const W = fx('wren-unique-bag'), step = c => c.E('(onboardStep() || {}).id || null');
+  const w = boot(W);
+  assert(step(w) === 'wear:weapon' && w.E('GUIDE_RT.latch') === 'wear:weapon', `wear: the fixture shows the weapon tip (${step(w)})`);
+  w.E('GUIDE_RT.t = 30; guideHide("wear:weapon")');
+  const after = step(w);
+  assert(!w.E('S.onboard.done["wear:weapon"]') && after !== 'wear:weapon' && w.E('GUIDE_RT.latch') !== 'wear:weapon' && w.E('GUIDE_RT.lastEnd') === 30, `wear: × leaves no done mark, clears the latch, ends the step for spacing, and the list goes on past it (now ${after})`);
+  w.E('save()');
+  const w2 = boot(w.st.get(KEY));
+  assert(step(w2) === 'wear:weapon', 'wear: a boot shows it again');
+  assert(w2.E('guideRetire("wear:weapon")') && !w2.E('S.onboard.done["wear:weapon"]') && step(w2) !== 'wear:weapon', 'wear: the 60 s retire hides it the same way (no done mark)');
+  const w3 = boot(edit(W, o => { o.onboard.done['wear:weapon'] = 1; }));
+  assert(step(w3) === 'wear:weapon' && !w3.E('S.onboard.done["wear:weapon"]'), 'wear: an old save with done["wear:weapon"] = 1 and the weapon in the bag gets it once more');
+  w3.E('(w => equipItem(w.it.id, w.pos))(wearPiece("weapon"))');
+  assert(w3.E('!!equipped("weapon")') && step(w3) !== 'wear:weapon' && w3.E('S.onboard.done["wear:weapon"]') === 1, 'wear: worn, it never shows (its done rule marks it)');
+  const w4 = boot(w3.st.get(KEY) || (w3.E('save()'), w3.st.get(KEY))); w4.E('S.onboard.done["wear:weapon"] = 1');
+  assert(step(w4) !== 'wear:weapon', 'wear: worn, a boot does not clear it');
+  // (3) the fire tip: a cold game at zone 2, fire unlit
+  const F = fx('cold-z2-unlit'), f = boot(F);
+  assert(step(f) === 'gather', `fire: the fixture shows the Gather tip (${step(f)})`);
+  f.E('GUIDE_RT.t = 12; guideHide("gather")');
+  assert(!f.E('S.onboard.done.gather') && step(f) !== 'gather' && f.E('GUIDE_RT.latch') === '' && f.E('GUIDE_RT.lastEnd') === 12, 'fire: × leaves no done mark and clears the latch');
+  f.E('save()');
+  assert(step(boot(f.st.get(KEY))) === 'gather', 'fire: a boot shows it again at the first gap');
+  assert(step(boot(edit(F, o => { o.onboard.done.gather = 1; }))) !== 'gather', 'fire: a save with done.gather = 1 (the player went gathering) never shows it');
+  const lit = boot(F); lit.E('S.mats.wood[0] = 8; hearthLight()');
+  assert(lit.E('hearthLit()') && step(lit) !== 'gather', 'fire: lit, it never shows');
+  assert(![w, w2, w3, f, lit].some(x => x.g.errors.length), 'wear and fire: no errors');
+  // (4) his unread lines, in a page: queued and unread lines come back after a boot, a read one and the boss-loss line do not
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('reload keeps tips (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const page0 = async save => {
+        const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: save, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+        return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+      };
+      const ids = async p => (await p.X('JSON.stringify(S.onboard.sayQ)')) && JSON.parse(await p.X('JSON.stringify(S.onboard.sayQ)'));
+      // Uniques opens (the Golemfist was found; the weapon tip holds the game, so it is sent here), then the first Scroll drops and a boss wins
+      const p1 = await page0(edit(W, o => { delete o.onboard.done['say:scroll']; }));
+      await p1.X('emit("unlock", { id: "uniques", quiet: false }); S.abil.scrolls.moss = 1; emit("scrollDrop", { firstEver: true, id: "moss" }); emit("wipe", { boss: true }); true');
+      const q1 = await ids(p1);
+      assert(q1.map(e => e.id).join() === 'uniques,scroll' && q1[1].arg === 'moss', `say: the unread lines are saved in order, the Scroll line with its Scroll, the boss-loss line never (${JSON.stringify(q1)})`);
+      await p1.X('save(); true'); const s1 = await p1.X(`localStorage.getItem(${JSON.stringify(KEY)})`);
+      await p1.ctx.close();
+      const p2 = await page0(s1);
+      await p2.page.waitForTimeout(400);
+      const q2 = await ids(p2);
+      assert(q2.map(e => e.id).join() === 'uniques,scroll' && q2[1].arg === 'moss', `say: a boot queues them again (${JSON.stringify(q2)})`);
+      // read the Uniques line (the guide steps are set aside so only his lines speak; gathering is never mid-fight, so his line is due)
+      await p2.X('for (const s of GUIDE_STEPS) if (!S.onboard.done[s.id]) S.onboard.done[s.id] = 1; setActivity("gather"); true');
+      let said = '';
+      for (let i = 0; i < 120 && !said.includes('Bosses sometimes drop rare gear'); i++) {
+        await p2.X('(() => { if (guidePhase(true) === "hero") soloAttack(); return true; })()');
+        await p2.page.waitForTimeout(250);
+        said = await p2.page.evaluate(() => { const b = document.querySelector('.ob-bub'); return b && !b.hidden ? b.textContent : ''; });
+      }
+      assert(said.includes('Bosses sometimes drop rare gear'), 'say: the unread Uniques line is said after the reload');
+      await p2.X('document.querySelector(".ob-ok").click(); true'); await p2.page.waitForTimeout(300);
+      const q3 = await ids(p2);
+      assert(q3.map(e => e.id).join() === 'scroll' && (await p2.X('!!S.onboard.done["say:uniques"]')), `say: Got it marks it read and takes it out of the saved queue (${JSON.stringify(q3)})`);
+      await p2.X('save(); true'); const s2 = await p2.X(`localStorage.getItem(${JSON.stringify(KEY)})`);
+      assert(!p1.errs.length && !p2.errs.length, 'say: no page errors' + (p1.errs.concat(p2.errs)[0] ? ': ' + p1.errs.concat(p2.errs)[0] : ''));
+      await p2.ctx.close();
+      const p3 = await page0(s2); await p3.page.waitForTimeout(400);
+      const q4 = await ids(p3);
+      assert(q4.map(e => e.id).join() === 'scroll' && q4[0].arg === 'moss', `say: the next boot brings back only the unread Scroll line, naming the Moss Scroll (${JSON.stringify(q4)})`);
+      await p3.ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('reload keeps tips crashed: ' + (e.stack || e)); }
+
 // ==== unspent-points-nudge: a pile of two levels' points or more tops Next Up; learn-ability stays in the list ====
 // save-dipper-z4: the cold leg's phone dipper at zone 4 (Wren Lv 9, 28 points free, Power Shot learnable, a bounty ready).
 if (section('unspent points nudge')) try {
@@ -13489,6 +13607,97 @@ if (section('scroll-spares')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('scroll-spares crashed: ' + (e.stack || e)); }
+
+// ---- fight-input-during-banner: while the turn banner or VS card plays, Attack and the abilities dim and say "Wait"; a refused press
+// gets a red outline that reduced motion keeps; nothing is queued (planner 2026-10-08, DECISIONS.md "The banner pause is shown") ----
+if (section('fight-input-during-banner')) try {
+  const at = 'fight-input-during-banner', { pw, exe } = browserTools, distFile = path.join(ROOT, 'dist', 'lanternfall.html');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const rm of ['no-preference', 'reduce']) {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 }, reducedMotion: rm }), page = await ctx.newPage(), errors = [], tag = `${at} 1280x720 ${rm}`;
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // the turn engine waits while __tp is set (59j turnPaused: a hidden page), so each phase can be read and pressed in; the bar keeps updating
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; true`);
+        const ph = () => X(`TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.phase : 'off'`);
+        const reach = async (want, act) => { for (const t0 = Date.now(); Date.now() - t0 < 60000;) {
+          const p = await ph(); if (want.includes(p)) { await X('globalThis.__tp = 1; true'); await page.waitForTimeout(350); return p; }
+          if (act) await X(act); await page.waitForTimeout(40); } return ''; };
+        const R = () => X(`JSON.stringify([...document.querySelectorAll('#soloBar .sbtn')].map(b => { const r = b.getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+          return { act: b.dataset.act, wait: b.classList.contains('wait'), live: b.classList.contains('live'), now: b.classList.contains('ready-now'), refused: b.classList.contains('refused'),
+            empty: b.classList.contains('empty'), passive: b.classList.contains('passive'), sub: (b.querySelector('.sb-sub') || {}).textContent || '', top: !!hit && (hit === b || b.contains(hit)),
+            dis: b.disabled || b.getAttribute('aria-disabled') === 'true', pe: getComputedStyle(b).pointerEvents, op: +getComputedStyle(b.querySelector('.sb-tx')).opacity }; }))`).then(JSON.parse);
+        const hero = t => t.act === 'atk' || (/^ab/.test(t.act) && !t.empty && !t.passive);
+        const dimmed = (L, where) => {
+          const bad = L.filter(t => hero(t) && (!t.wait || t.op > 0.6)).map(t => t.act), ready = L.filter(t => /^ab/.test(t.act) && t.sub === 'Ready').map(t => t.act), now = L.filter(t => t.now).map(t => t.act);
+          assert(!bad.length && !ready.length && !now.length && L.filter(hero).length >= 2, `${tag}: in ${where} Attack and every filled ability tile dim (whole tile) and none says "Ready" or flashes ready (${JSON.stringify(L.map(t => [t.act, t.wait, t.sub, t.op, t.now]))})`);
+          const shut = L.filter(t => hero(t) && (t.dis || t.pe === 'none' || !t.top)).map(t => t.act);
+          assert(!shut.length, `${tag}: in ${where} the tiles stay pressable and topmost at their centre (${shut.join(', ') || 'all'})`);
+        };
+        // the VS card
+        assert(await reach(['intro']) === 'intro', `${tag}: a fight opens on the VS card`);
+        dimmed(await R(), 'the VS card');
+        // the hero's turn: lit, "Ready" back
+        await X('globalThis.__tp = 0; true');
+        assert(await reach(['hero']) === 'hero', `${tag}: the hero's turn comes`);
+        let L = await R();
+        const ab0 = L.find(t => t.act === 'ab0');
+        assert(!L.some(t => t.wait) && ab0 && ab0.sub === 'Ready', `${tag}: on the hero's turn no tile is dimmed and a usable ability says "Ready" (${JSON.stringify(L.map(t => [t.act, t.wait, t.sub]))})`);
+        // the banner before the foe's turn (or the hero's next): hand the turn over with an Attack
+        await X(`globalThis.__tp = 0; turnCombatAction('attack'); true`);
+        assert(await reach(['handoff'], `TURN_LIVE.phase === 'timing' && turnCombatAction('time'); TURN_LIVE.phase === 'hero' && turnCombatAction('attack')`) === 'handoff', `${tag}: the turn banner plays`);
+        dimmed(await R(), 'the turn banner');
+        // a cooldown that comes back mid-banner (a Parry or Dodge refund) does not flash ready
+        const id0 = await X(`soloEquipped()[0] || ''`);
+        await X(`TURN_LIVE.cds[${JSON.stringify(id0)}] = 2; true`); await page.waitForTimeout(300);
+        await X(`TURN_LIVE.cds[${JSON.stringify(id0)}] = 0; true`); await page.waitForTimeout(350);
+        L = await R();
+        assert(id0 && !L.some(t => t.now) && L.find(t => t.act === 'ab0').sub === 'Wait', `${tag}: a cooldown refunded mid-banner does not flash ready and the tile says "Wait" (${JSON.stringify(L.map(t => [t.act, t.now, t.sub]))})`);
+        // presses in the banner: refused (nothing changes), each with the red outline; Parry leaves the defence unused
+        const snap = `JSON.stringify({ ph: TURN_LIVE.phase, cds: TURN_LIVE.cds, fhp: TURN_LIVE.foe && TURN_LIVE.foe.hp, hhp: (cbUnitByKey('hero') || {}).hp, def: !!TURN_LIVE.usedDefense })`;
+        const s0 = await X(snap);
+        const b = await page.$eval('#soloBar .sb-atk', e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+        await tapAt(page, b[0], b[1]);
+        const rAtk = await X(`document.querySelector('#soloBar .sb-atk').classList.contains('refused')`);
+        await page.keyboard.press('q');
+        const rQ = await X(`document.querySelector('#soloBar .sb-ab0').classList.contains('refused')`);
+        await page.keyboard.press('a');
+        const s1 = await X(snap), direct = await X(`turnCombatAction('attack')`);
+        assert(rAtk && rQ, `${tag}: a press of Attack (pointer) and of Q in the banner gets the red outline (${rAtk}, ${rQ})`);
+        assert(s0 === s1 && direct === false && !JSON.parse(s1).def, `${tag}: presses in the banner are refused and not queued: no HP or cooldown change, Parry stays unused (${s0} -> ${s1})`);
+        await page.waitForTimeout(400);
+        assert(!(await X(`document.querySelector('#soloBar .sb-atk').classList.contains('refused')`)), `${tag}: the red outline goes after a moment`);
+        // the foe's wind-up: Parry and Dodge live as before
+        await X('globalThis.__tp = 0; true');
+        if (await reach(['foeWindup'], `TURN_LIVE.phase === 'timing' && turnCombatAction('time'); TURN_LIVE.phase === 'hero' && turnCombatAction('attack')`) === 'foeWindup') {
+          L = await R();
+          const p = L.find(t => t.act === 'parry'), d = L.find(t => t.act === 'dodge');
+          assert(p.live && d.live && !p.wait && !d.wait, `${tag}: on the foe's wind-up Parry and Dodge light as before (${JSON.stringify([p, d])})`);
+        } else assert(false, `${tag}: a foe's wind-up comes`);
+        // the gap after a kill: the fight is over and a press is refused, so the tiles still say Wait
+        await X(`globalThis.__tp = 0; globalThis.__hold = 0; holdGame(() => globalThis.__hold); true`);
+        for (const t0 = Date.now(); Date.now() - t0 < 60000 && !(await X('!!(TURN_LIVE && TURN_LIVE.ended)'));) {
+          await X(`TURN_LIVE.foe && (TURN_LIVE.foe.hp = Math.min(TURN_LIVE.foe.hp, 1)); TURN_LIVE.phase === 'timing' && turnCombatAction('time'); TURN_LIVE.phase === 'hero' && turnCombatAction('attack'); true`);
+          await page.waitForTimeout(30);
+        }
+        await X('globalThis.__hold = 1; true'); await page.waitForTimeout(350);
+        assert(await X('!!(TURN_LIVE && TURN_LIVE.ended)'), `${tag}: the foe falls`);
+        dimmed(await R(), 'the gap after a kill');
+        await X('globalThis.__hold = 0; true');
+        assert(!errors.length, `${tag}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('fight-input-during-banner crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

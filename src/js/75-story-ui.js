@@ -83,7 +83,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   function showCard(sc) {
     if (typeof openSheet !== 'function') { storyClose(sc.id, 'skipped'); return; }
     storyClaim(sc.id);
-    let i = 0, finished = false, idleT = 0;
+    let i = Math.max(0, Math.min(sc.cards.length - 1, sc.at || 0)), finished = false, idleT = 0;   // reload-keeps-tips: a scene rebuilt after a reload opens at its saved page
     // no pointerdown or key anywhere for IDLE_MS: the card files itself (how 'auto'); any input restarts the wait
     const wake = () => { clearTimeout(idleT); idleT = setTimeout(() => end('auto'), IDLE_MS); };
     const stopIdle = () => { clearTimeout(idleT); document.removeEventListener('pointerdown', wake, true); document.removeEventListener('keydown', wake, true); };
@@ -96,6 +96,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
         wake();
         api.body.textContent = ''; api.foot.textContent = '';
         const c = sc.cards[i], last = i === sc.cards.length - 1;
+        storyPage(sc.id, i);   // the save keeps the page on screen (S.story.open)
         const card = el('article', 'sty-card');
         if (i === 0) {
           const where = sc.ch === 'R' ? '' : [chapterOf(sc.region), sc.zone ? `Zone ${sc.zone}` : ''].filter(Boolean).join(' · ');

@@ -53,6 +53,7 @@
 //   mastery every zone's kills capped at ARRIVAL_KILLS (10: a zone's 5 fights and its boss), so no mastery stars; the
 //           fixture's stars came from a hero who played on to zone 20. Bestiary kills a kind capped at ARRIVAL_KIND_KILLS (12:
 //           the walk has 9-14 a kind at zones 13-14, so Bestiary tier 1 and the second foe profile, not the mid save's 124-462)
+// The bot footing (z21-foe-climb, the -bot rows, report only): the arrival footing two levels up, in tier 2 rare +5 (o.lv, gear, tier)
 // Nothing is scaled to the reference hero: the numbers are the game's own, so a change to levels, gear, foes or Training
 // shows up here.
 //
@@ -79,6 +80,10 @@ const J = JSON.stringify;
 // none (boss-tiers-pr5): never parries or dodges, rings as casual; run on the kept-up rows only ("gear buys room to miss, not immunity")
 export const PLAYERS = { casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }, good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, none: { parry: 0, dodge: 0, perfect: 0.1, good: 0.4 } };
 const NONE_KINDS = ['keptUpEarly', 'keptUpCaptain', 'keptUpChampion', 'keptUpReport', 'captainMid'];
+// optimiser (z21-foe-climb): the health optimiser's bot (tools/sim.mjs turnPlayer with no --skill): tries a parry on 60% of hits and a
+// dodge on the rest, on time 4 in 5 (else early, a miss), and never presses a ring. Played on the reportBot rows only (report).
+const BOT = { optimiser: { parry: 0.48, dodge: 0.62, perfect: 0, good: 0 } };
+const BOT_KINDS = ['reportBot'];
 // bot: the walk bot's defence (tools/walk.mjs PARRY 0.55, DODGE 0.5), as casual on the rings
 const WIDE = { casualLow: { parry: 0.15, dodge: 0.4, perfect: 0.1, good: 0.4 }, casualHigh: { parry: 0.35, dodge: 0.7, perfect: 0.1, good: 0.4 }, bot: { parry: 0.55, dodge: 0.5, perfect: 0.1, good: 0.4 } };
 // dodge (uniques-first-four, the uniques judge's dodge-first persona, final-pool-v2.md): parries little, dodges most hits
@@ -219,6 +224,14 @@ export const CHECKPOINTS = [
   // report only (kinds with "report": true): a hero who just took the lamp, and single-attribute builds (PR #58's
   // findings, 2026-10-06: a switched-in hero won 31-35% of zone 20 bosses; all-Focus Wren cleared trash 2-3x faster). The boss rows sit at
   // zone 25 since z20-wall (zone 20 is fitted to the first-time hero, so they would read against a 91-92% ref there, where gear barely moves a fight)
+  // z21-foe-climb: ordinary foes at the 10-hour bot's footing (report only): the arrival footing two levels up (the bot's level 24-26) in
+  // tier 2 rare +5 (its worn tier is 2.4-2.6 all ten hours: tier 3 nodes need gathering 30 and tier 4 needs 64, the bot has 22-24 at hour
+  // 10). The kept-up rows wear the zone's tier 4 rare +5 from zone 19, which no 10-hour player reaches. Where the 10-hour bot meets its wall.
+  ['z20-normal-bot', 20, 'normal', { st: 'kept', fx: 'mid', gear: 'rare', tier: 1, lv: 2, foot: 'arrival', kind: 'reportBot' }],
+  ['z21-normal-bot', 21, 'normal', { st: 'kept', fx: 'mid', gear: 'rare', tier: 1, lv: 2, foot: 'arrival', kind: 'reportBot' }],
+  ['z22-normal-bot', 22, 'normal', { st: 'kept', fx: 'mid', gear: 'rare', tier: 1, lv: 2, foot: 'arrival', kind: 'reportBot' }],
+  ['z23-normal-bot', 23, 'normal', { st: 'kept', fx: 'mid', gear: 'rare', tier: 1, lv: 2, foot: 'arrival', kind: 'reportBot' }],
+  ['z24-normal-bot', 24, 'normal', { st: 'kept', fx: 'mid', gear: 'rare', tier: 1, lv: 2, foot: 'arrival', kind: 'reportBot' }],
   ['z25-boss-joined', 25, 'boss', { st: 'joined', fx: 'mid', kind: 'joined', ref: 'z25-boss' }],
   ['z38-boss-joined', 38, 'boss', { st: 'joined', fx: 'late', kind: 'joined', ref: 'z38-boss' }],
   ['z20-normal-focus', 20, 'normal', { st: 'kept', fx: 'mid', build: 'focus', kind: 'build', ref: 'z20-normal' }],
@@ -236,7 +249,7 @@ const KIND_FOR = z => `(isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' :
 // the setup code for hero k at checkpoint c (run inside a fresh core after the fixture loads)
 function setup(c, k, lvShift, uq) {
   const [, z, , o] = c;
-  const lv = onArrival(o) ? `Math.max(1, ${lvShift} + ${arrivalLv(k, z)})` : `Math.max(1, ${lvShift} + (typeof roadLv === 'function' ? Math.floor(roadLv(${z}) + ((typeof HERO_TUNE === 'object' && HERO_TUNE.joinLead) || 0)) : ${LEGACY_LV[z] || 1}))`;
+  const lv = onArrival(o) ? `Math.max(1, ${lvShift} + ${arrivalLv(k, z) + (o.lv || 0)})` : `Math.max(1, ${lvShift} + (typeof roadLv === 'function' ? Math.floor(roadLv(${z}) + ((typeof HERO_TUNE === 'object' && HERO_TUNE.joinLead) || 0)) : ${LEGACY_LV[z] || 1}))`;
   if (o.st === 'fresh' && o.zone1) return `soloPick(${J(k)}, {now:true}); setZone(1);`;   // zone 1: a brand-new hero, level 1
   let s = `soloPick(${J(k)}, {now:true}); const LV = ${lv}; S.L = LV; if (S.solo.tr && S.solo.tr[${J(k)}]) { S.solo.tr[${J(k)}].atk = LV - 1; S.solo.tr[${J(k)}][${J(SIG[k])}] = LV - 1; }
     S.solo.asc[${J(k)}] = ${o.asc ? 1 : 0};`;
@@ -290,7 +303,7 @@ export function seedOf(...parts) {
 const fixtures = {};
 const fx = n => fixtures[n] || (fixtures[n] = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8'));
 // one hero at one checkpoint: win rate, hero turns a won fight and expected attempts for each player
-function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null) {
+function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null, bot = false) {   // bot: also play BOT (the budget run only)
   const [id, z, foe, o] = c, out = {};
   const core = loadCore({ seed: 1, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
   const save = o.st === 'fresh' ? null : o.st === 'late' ? 'late' : o.fx;
@@ -307,8 +320,9 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null) {
   if (foe === 'boss' && !p0.boss) throw new Error(`${id} ${k}: no boss to fight`);
   if (foe === 'elite' && !p0.elite) throw new Error(`${id} ${k}: no elite to fight`);
   const chain = foe === 'boss' ? 1 : 5, n = Math.ceil(FIGHTS / chain);
-  for (const [pl, skill] of Object.entries(players)) {
+  for (const [pl, skill] of Object.entries(bot ? { ...players, ...BOT } : players)) {
     if (pl === 'none' && !NONE_KINDS.includes(o.kind) && !flag('none') && !UNIQ_ID) continue;
+    if (BOT[pl] && !BOT_KINDS.includes(o.kind)) continue;
     const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl, i));
     const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(o.st === 'joined' ? [SIG[k]] : setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
       let K = 0, D = 0, T = 0, F = 0, C = 0;
@@ -329,7 +343,7 @@ export function runBudget({ only, heroes = RUN_HEROES } = {}) {
     const [id, z, foe, o] = c;
     if (only && !only.includes(id)) continue;
     const perHero = {};
-    for (const k of heroes) perHero[k] = measure(c, k);
+    for (const k of heroes) perHero[k] = measure(c, k, LV_SHIFT, RUN_PLAYERS, null, true);
     rows.push({ id, zone: z, foe, kind: o.kind || perHero[heroes[0]].kind, ...(o.ref ? { ref: o.ref } : {}), perHero });
   }
   return { version: 2, fights: FIGHTS, seedOffset: OFFSET, stars: STARS, talents: TALS, heroes, rows };
@@ -355,6 +369,7 @@ export function printBudget(rep) {
     const ref = r.kind === 'build' && rep.rows.find(x => x.id === r.ref);   // a build row: its turns against the even spread
     if (ref) console.log('  turns played well against the even spread (w/t/p): ' + hs.map(h => r.perHero[h].good.turns && ref.perHero[h].good.turns ? 'x' + (r.perHero[h].good.turns / ref.perHero[h].good.turns).toFixed(2) : '-').join('/'));
     if (r.perHero[hs[0]].none) console.log('  ' + 'none (never defends) w/t/p'.padEnd(28) + hs.map(h => pc(r.perHero[h].none.win)).join('/'));
+    for (const pl of Object.keys(BOT)) if (r.perHero[hs[0]][pl]) console.log('  ' + `${pl} bot w/t/p`.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
     for (const pl of Object.keys(WIDE)) if (r.perHero[hs[0]][pl]) console.log('  ' + pl.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
     // closest to death: the share of won boss fights where the hero fell under half health (a good player; aim 20-35% at Champions)
     if (r.foe === 'boss' && r.perHero[hs[0]].good.close != null) console.log('  ' + 'good wins under half HP %'.padEnd(28) + hs.map(h => pc(r.perHero[h].good.close)).join('/'));
