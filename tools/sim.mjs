@@ -886,6 +886,14 @@ function turnPlayer() {
       const opens = turnInput.kind === 'parry' ? s.parryOpensAt : s.dodgeOpensAt;
       turnInput.at = rnd() < 0.8 ? opens + (s.closesAt - opens) * 0.5 : Math.max(s.now, opens - 0.1);
     }
+    // a boss trick (TURN_TUNE.tricks), read as turnCombatSample reads it: a bot that means to defend reads a feint or a held swing
+    // with chance read (0.3 + 0.6 x its avoidance); else it presses as the swing would have landed (a feint then fools it). A read
+    // feint is left alone. Pressing every hit made the bot meet every feint (z21-foe-climb review).
+    if (s.phase === 'foeWindup' && turnInput.kind !== 'none' && (s.feint || s.holdFrom > 0)) {
+      const R = E('TURN_TUNE.tricks.read'), pr = SKILL ? SKILL.parry : 0.48, dg = SKILL ? SKILL.dodge : 0.62;
+      if (rnd() >= Math.max(0, Math.min(1, R[0] + R[1] * (1 - (1 - pr) * (1 - dg))))) turnInput.at = Math.max(s.now, s.holdFrom || 0);
+      else if (s.feint) { turnInput.kind = 'none'; turnInput.at = Infinity; }
+    }
   }
   if (!turnInput.done && s.now >= turnInput.at) {
     turnInput.done = true;

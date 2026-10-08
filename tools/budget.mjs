@@ -302,7 +302,7 @@ export function seedOf(...parts) {
 const fixtures = {};
 const fx = n => fixtures[n] || (fixtures[n] = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8'));
 // one hero at one checkpoint: win rate, hero turns a won fight and expected attempts for each player
-function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null) {
+function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null, bot = false) {   // bot: also play BOT (the budget run only)
   const [id, z, foe, o] = c, out = {};
   const core = loadCore({ seed: 1, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
   const save = o.st === 'fresh' ? null : o.st === 'late' ? 'late' : o.fx;
@@ -319,7 +319,7 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null) {
   if (foe === 'boss' && !p0.boss) throw new Error(`${id} ${k}: no boss to fight`);
   if (foe === 'elite' && !p0.elite) throw new Error(`${id} ${k}: no elite to fight`);
   const chain = foe === 'boss' ? 1 : 5, n = Math.ceil(FIGHTS / chain);
-  for (const [pl, skill] of Object.entries(players === RUN_PLAYERS ? { ...players, ...BOT } : players)) {
+  for (const [pl, skill] of Object.entries(bot ? { ...players, ...BOT } : players)) {
     if (pl === 'none' && !NONE_KINDS.includes(o.kind) && !flag('none') && !UNIQ_ID) continue;
     if (BOT[pl] && !BOT_KINDS.includes(o.kind)) continue;
     const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl, i));
@@ -342,7 +342,7 @@ export function runBudget({ only, heroes = RUN_HEROES } = {}) {
     const [id, z, foe, o] = c;
     if (only && !only.includes(id)) continue;
     const perHero = {};
-    for (const k of heroes) perHero[k] = measure(c, k);
+    for (const k of heroes) perHero[k] = measure(c, k, LV_SHIFT, RUN_PLAYERS, null, true);
     rows.push({ id, zone: z, foe, kind: o.kind || perHero[heroes[0]].kind, ...(o.ref ? { ref: o.ref } : {}), perHero });
   }
   return { version: 2, fights: FIGHTS, seedOffset: OFFSET, stars: STARS, talents: TALS, heroes, rows };
@@ -368,7 +368,7 @@ export function printBudget(rep) {
     const ref = r.kind === 'build' && rep.rows.find(x => x.id === r.ref);   // a build row: its turns against the even spread
     if (ref) console.log('  turns played well against the even spread (w/t/p): ' + hs.map(h => r.perHero[h].good.turns && ref.perHero[h].good.turns ? 'x' + (r.perHero[h].good.turns / ref.perHero[h].good.turns).toFixed(2) : '-').join('/'));
     if (r.perHero[hs[0]].none) console.log('  ' + 'none (never defends) w/t/p'.padEnd(28) + hs.map(h => pc(r.perHero[h].none.win)).join('/'));
-    for (const pl of Object.keys(BOT)) if (r.perHero[hs[0]][pl]) console.log('  ' + `${pl} (10-hour bot) w/t/p`.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
+    for (const pl of Object.keys(BOT)) if (r.perHero[hs[0]][pl]) console.log('  ' + `${pl} bot w/t/p`.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
     for (const pl of Object.keys(WIDE)) if (r.perHero[hs[0]][pl]) console.log('  ' + pl.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
     // closest to death: the share of won boss fights where the hero fell under half health (a good player; aim 20-35% at Champions)
     if (r.foe === 'boss' && r.perHero[hs[0]].good.close != null) console.log('  ' + 'good wins under half HP %'.padEnd(28) + hs.map(h => pc(r.perHero[h].good.close)).join('/'));
