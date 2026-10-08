@@ -944,7 +944,7 @@ Ruled C by an independent Opus high judge (`autopilot/rulings/2026-10-08-rally-g
   gathers a charged move), and "Rally over. Your hits land again." when it opens. While it holds, the turn label reads "Rally: it
   holds at the mark" unless a charged move's own line needs it.
 - **The refit (zones 7-12 only).** hitX, hpX, hpFloor and Tobin's heroHitX, fitted with the gates on to arrival-footing casual in band;
-  no move, window, gate share or pay change. Landed hits sit on or near the hpFloor, which holds the kept-up never-defends player at 0%.
+  no move, window, gate share or pay change. Landed hits sit on or near the hpFloor, which holds the kept-up never-defends player under 10% (0% measured).
   Tobin's heroHitX moved at 8, 10, 11 and 12 (1.7 to 1.5, 2 to 1.8, 1.25 to 1.5, 1.75 to 1.6) to keep him in his +10 band.
   Knots z7-12: hpX 0.95/0.7/0.4/0.35/0.4/0.2, hitX 0.9/0.5/0.3/0.25/0.2/0.12, hpFloor 1.03/1/1.1/1.3/0.95/1.2 (were hpX
   1.075/0.95/0.75/0.725/0.882/1.008, hitX 1.5/1.055/0.632/0.45/0.407/0.403, hpFloor 1.03/0.84/0.92/0.95/0.94/0.82). The zone 10

@@ -11328,8 +11328,9 @@ if (section('rally gates live (core)')) try {
   const a = JSON.parse(E(`JSON.stringify({ gates: TURN_LIVE.p.gates, gi: TURN_LIVE.gi, full: TURN_LIVE.foe.hp >= TURN_LIVE.foe.max - 1e-6 })`));
   assert(met && dead && boss && a.full && JSON.stringify(a.gates) === '[0.75,0.5,0.25]' && a.gi === 0,
     `rally gates: a zone 11 Captain met in the live fight right after an ordinary kill starts at its first gate (gi ${a.gi}, gates ${JSON.stringify(a.gates)}, ordinary foe met ${met}, killed ${dead}, boss met ${boss}, full ${a.full})`);
-  // the same Captain left at 60% (the fight cut off, as a hero switch does) and met again starts past the 75% gate only
-  E(`TURN_LIVE.foe.hp = 0.6 * TURN_LIVE.foe.max; turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);`);
+  // the same Captain left at 60% and met again starts past the 75% gate only. The fight is cut off as the soloHero hook cuts it
+  // (59k: abandon, then no last fight at all), so the old io, which read the last fight's foe, would find none and skip every gate
+  E(`TURN_LIVE.foe.hp = 0.6 * TURN_LIVE.foe.max; turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null;`);
   const again = until('TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.foe && TURN_LIVE.foe.boss', 40);
   const b = JSON.parse(E(`JSON.stringify({ gi: TURN_LIVE.gi, left: TURN_LIVE.foe.hp / TURN_LIVE.foe.max })`));
   assert(again && b.gi === 1 && Math.abs(b.left - 0.6) < 0.02, `rally gates: the same Captain met again at 60% starts at its second gate (gi ${b.gi}, at ${(100 * b.left).toFixed(0)}%)`);
