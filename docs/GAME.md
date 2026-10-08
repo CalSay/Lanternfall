@@ -49,7 +49,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   count half. Spread evenly, the points give the old +4% a level. Points belong to the
   hero. Adding them is free; Spread evenly places the free ones in one tap; the first Reset points is free and later
   ones cost gold (two taps). A fight takes them as it starts. The build only changes turn fights: away, raid and
-  farm power read the level as if spread evenly. Unspent points do nothing, so Next Up says when there are some. A
+  farm power read the level as if spread evenly. Unspent points do nothing, so Next Up says when there are some, and two levels' points or more unspent puts "Spend N attribute points" first, above every Ready row (the goal has its own system, so Learn never hides it). A
   level costs what the road expects (`xpNeed` follows the road, fights a zone rise by a steady ratio), and a hero more
   than 4 levels past the road's level at the furthest zone earns 0.6x XP a level further. A hero who takes the
   lamp joins at the road's level (2 above the road table, where players stand) at least (keeping their XP short of a level; a hero above it keeps theirs), and every
@@ -146,7 +146,10 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Hollow's Rest** (`57-camp.js`, `75-camp-ui.js`, scene `63d-scenery-camp.js`): the Hearth, Watchtower, Forge,
   Workbench, Loom, Enchanter's Table, Tavern, Storehouse, Tents, Library and Shrine. Builds run on the wall clock.
 - **A new game starts cold** (`55-hearth.js`): the hero lights the fire, then builds the Workbench, the first tool and
-  the Forge.
+  the Forge. Until the fire is lit (and once Gather is open), Next Up keeps a row for it: "Chop Pine Log for Hesketh's
+  fire: 3/8", then "Light Hesketh's fire: ready" with 8 logs in hand. Go sends the hero to the Pine Grove, where the fire is.
+  The row survives a reload and a closed tip. Hesketh's "Bring me Pine Log" line, if you reloaded before reading it,
+  comes back once at the next boot.
 - **Shrine Blessings** open as Codex pages fill.
 
 ## Gear and crafting
