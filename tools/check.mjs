@@ -13279,6 +13279,82 @@ if (section('camp-build-tap-again')) try {
   }
 } catch (e) { fail('camp build tap again crashed: ' + (e.stack || e)); }
 
+// ==== scroll-spares: Scrolls the hero in play can't use say who they are for; "Scroll found." only for a Scroll it can use now ====
+if (section('scroll-spares')) try {
+  const at = 'scroll-spares', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-wren-spare-moss.json'), 'utf8');
+  { // core: the fixture, then the toast rule
+    const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    const sp = E('JSON.stringify(scrollSpares("wren"))');
+    assert(E('soloHero()') === 'wren' && E('scrollCount("moss")') === 3 && E('abilityOwned("wren", "powershot")') && !E('heroCanPlay("tobin")') && !E('heroCanPlay("pip")'),
+      `${at}: the fixture is Wren with 3 Moss and Power Shot, Tobin and Pip not met`);
+    assert(sp === JSON.stringify({ short: [], spare: [{ id: 'moss', n: 3, play: [], join: ['tobin', 'pip'] }], idle: [] }), `${at}: the 3 Moss are spares for Tobin and Pip, who join later (${sp})`);
+    const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
+    const boss = z => E(`S.zone = ${z}; emit('kill', { zone: ${z}, mob: { boss: true } }); scrollCount(scrollFor(${z}))`);
+    E('Math.random = () => 0');   // every replay drops
+    const n1 = boss(3);
+    assert(n1 === 4 && !toasts.some(m => /Scroll found/.test(m)), `${at}: a Moss dropped for Wren with Power Shot learned is quiet (${n1} Moss; ${JSON.stringify(toasts)})`);
+    E('S.abil.unl.wren = []'); boss(3);
+    assert(toasts.filter(m => m === 'Moss Scroll found.').length === 1, `${at}: one dropped for a hero who can use it says "Moss Scroll found." (${JSON.stringify(toasts)})`);
+    E('S.abil.unl.wren = ["powershot"]; S.party.unlock.heroes.tobin = 1; soloPick("tobin")'); toasts.length = 0; boss(3);
+    assert(E('soloHero()') === 'tobin' && toasts.includes('Moss Scroll found.'), `${at}: with Tobin in play (Heavy Strike unlearned) it says so (${E('soloHero()')}, ${JSON.stringify(toasts)})`);
+    assert(!g.errors.length, `${at}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-abilities-ui.js'), 'utf8');
+    assert(!/need a higher level/.test(src), `${at}: "Your Scrolls need a higher level" is gone`);
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { if (!sessionStorage.getItem('ss')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('ss', '1'); } } catch (e) {} }, [KEY, raw]);   // no time away
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        const line = async js => { await X(`${js}; setTab('abilities'); 1`); await menuSettled(page, true);
+          await page.click('#sec-abilities .ab-fb[data-f="all"]'); await page.click('#sec-abilities .ab-fb[data-f="can"]'); await page.waitForTimeout(80);
+          return X(`(document.querySelector('#sec-abilities .ab-empty') || {}).textContent || ''`); };
+        const r = {};
+        r.spare = await line('S.onboard && (S.onboard.tips = false)');
+        r.mixed = await line('S.party.unlock.heroes.tobin = 1');
+        r.idle = await line('S.abil.unl.tobin = ["heavystrike"]; S.abil.unl.pip = ["spark"]');
+        r.short = await line('S.abil.unl.tobin = []; S.abil.unl.pip = []; delete S.party.unlock.heroes.tobin; S.abil.scrolls = { hollow: 1 }; S.L = 7; soloLevels().wren && (soloLevels().wren.L = 7)');
+        r.both = await line('S.abil.scrolls = { hollow: 1, moss: 1 }');
+        r.none = await line('S.abil.scrolls = {}');
+        assert(r.spare === 'Spare Moss Scrolls teach Tobin and Pip their first move when they join.', `${at} ${w}x${h}: Can learn names Tobin and Pip ("${r.spare}")`);
+        assert(r.mixed === 'Spare Moss Scrolls teach Tobin their first move when you play them, and Pip when they join.', `${at} ${w}x${h}: Tobin met, Pip not ("${r.mixed}")`);
+        assert(r.idle === 'Every hero has their Moss move. Moss Scrolls have no use now.', `${at} ${w}x${h}: every Tier I move learned ("${r.idle}")`);
+        assert(r.short === 'Hollow Scroll moves open at level 8.', `${at} ${w}x${h}: a Hollow at level 7 ("${r.short}")`);
+        assert(r.both === 'Hollow Scroll moves open at level 8. A spare Moss Scroll teaches Tobin and Pip their first move when they join.', `${at} ${w}x${h}: the level line first, then the spare line ("${r.both}")`);
+        assert(r.none === 'Nothing to learn yet. Beat a zone boss for a Scroll.', `${at} ${w}x${h}: no Scrolls as before ("${r.none}")`);
+        assert(![r.spare, r.mixed, r.idle, r.short, r.both].some(t => /higher level/.test(t)), `${at} ${w}x${h}: never "need a higher level"`);
+        // the drawer: 5 rows, the Moss row's one move per hero, the tier line, no sideways scroll
+        await X('S.abil.scrolls = { moss: 3 }; 1'); await page.click('#sec-abilities .ab-fb[data-f="all"]');
+        await page.click('#sec-abilities .ab-infob'); await boxSettled(page, '#sec-abilities .ab-info'); await menuSettled(page, true);
+        r.info = await X(`(() => { const i = document.querySelector('#sec-abilities .ab-info'); if (!i) return 'no drawer';
+          const rows = i.querySelectorAll('.ab-scroll'), p = document.getElementById('panels');
+          return [rows.length, /One move per hero\./.test(rows[0].textContent), !/One move per hero/.test(rows[1].textContent), (i.querySelector('.ab-tierln') || {}).textContent, p.scrollWidth <= p.clientWidth + 1].join('|'); })()`);
+        assert(r.info === '5|true|true|A Scroll teaches its own tier or a lower one.|true', `${at} ${w}x${h}: the drawer says Moss teaches one move per hero and a Scroll teaches its tier or lower (${r.info})`);
+        await page.click('#sec-abilities .ab-infob'); await page.waitForTimeout(150);
+        // the learn detail: full slots say "Swap it in for:"; a free slot keeps "Put it in a slot:"
+        await X(`S.L = 20; soloLevels().wren && (soloLevels().wren.L = 20); S.abil.unl.wren = ['powershot', 'huntmark', 'barbed']; soloEquip(1, 'powershot'); soloEquip(2, 'huntmark'); abilityOpenDetail('barbed'); setTab('abilities'); 1`);
+        await boxSettled(page, '#sec-abilities .ab-det'); await page.waitForTimeout(100);
+        r.full = await X(`(document.querySelector('#sec-abilities .ab-det .ab-al') || {}).textContent || ''`);
+        await page.click('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(100);
+        await X(`soloEquip(2, null); abilityOpenDetail('barbed'); setTab('abilities'); 1`); await boxSettled(page, '#sec-abilities .ab-det'); await page.waitForTimeout(100);
+        r.free = await X(`(document.querySelector('#sec-abilities .ab-det .ab-al') || {}).textContent || ''`);
+        assert(r.full === 'Swap it in for:' && r.free === 'Put it in a slot:', `${at} ${w}x${h}: a learned move with all three slots full says "Swap it in for:" ("${r.full}", "${r.free}")`);
+        assert(!errors.length, `${at} ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('scroll-spares crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);

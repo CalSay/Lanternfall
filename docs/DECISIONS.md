@@ -142,6 +142,11 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Scrolls unlock abilities,** dropped by zone bosses by zone band. (2026-10-02, the C29 build)
 - **Talents:** each ability, and Attack, Parry and Dodge, has two talents to pick from. (2026-10-02) **No suggested
   builds:** finding what works should be hard and rewarding. (2026-10-02)
+- **Spare Scrolls are explained, not removed (scroll-spares, Opus judge 2026-10-08; Cal can veto with
+  "Veto spare-Moss copy: change the drops instead (b)").** Zones 1-4 keep their sure Moss drops (4, of which a full game uses 3: one Tier I
+  move per starter, and joining starters arrive without it). The Can-learn list says truthfully why nothing is learnable, the drawer says
+  Moss teaches one move per hero, "Scroll found." toasts only when the hero in play can use it, and a full-slot learn detail says "Swap it
+  in for:". No drop, trade or save change.
 
 ## Combat
 
