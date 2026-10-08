@@ -1656,7 +1656,7 @@ if (section('onboarding hint placement (HINT1)')) try {
   assert(/if \(!changed\) return;/.test(src), 'place() skips the reposition when nothing real changed (no per-frame follow)');
   assert(!/setInterval\(place/.test(src), 'place() itself is never put on its own interval');
   const css = fs.readFileSync(path.join(ROOT, 'src', 'styles', '60-onboard.css'), 'utf8');
-  assert(/\.ob-bub\.over-menu\s*\{[^}]*position:\s*absolute/.test(css) && /\.ob-bub\s*\{[^}]*position:\s*relative/.test(css), 'the guide panel is docked (a slot in its parent, or a fixed offset over a menu), not translated to the target every tick');
+  assert(/\.ob-bub\.over-menu\s*\{[^}]*grid-area:\s*guide/.test(css) && /\.ob-bub\s*\{[^}]*position:\s*relative/.test(css), 'the guide panel is docked (a slot in its parent, or its own row under a menu), not translated to the target every tick');
   assert(/--toast-h/.test(css) && /--toast-h/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '70-ui.js'), 'utf8')), 'the hint band and placeToasts share --toast-h so they cannot collide');
   ok('source: tick only recomputes on a real change, the bubble is CSS-docked, toasts and hints share one band variable');
   // in Chromium: the band does not move while the game runs (ticks, an ability firing) under it
@@ -1695,13 +1695,12 @@ if (section('onboarding hint placement (HINT1)')) try {
       assert(dock.dock && dock.gapAboveBar >= 0 && dock.gapAboveBar <= 12 && dock.belowStage >= 0, `browser: the guide panel docks just above the Act / Skills / Foe bar, never over the stage (${JSON.stringify(dock)})`);
       const tabsH = await page.$eval('.tabs', t => t.getBoundingClientRect().height);
       const boxes = await page.$eval('.ob-bub', b => {
-        const before = getComputedStyle(b).position;
-        b.classList.add('over-menu');
-        const cs = getComputedStyle(b), after = { position: cs.position, bottom: parseFloat(cs.bottom) };
-        b.classList.remove('over-menu');
-        return { before, after };
+        b.classList.replace('dock', 'over-menu');
+        const cs = getComputedStyle(b), after = { area: cs.gridRowStart, mb: parseFloat(cs.marginBottom) };
+        b.classList.replace('over-menu', 'dock');
+        return { after };
       });
-      assert(boxes.after.position === 'absolute' && boxes.after.bottom >= tabsH, `browser: the over-menu panel sits above the tab bar (bottom ${boxes.after.bottom}px, tabs ${tabsH}px)`);
+      assert(boxes.after.area === 'guide' && boxes.after.mb >= 8 && tabsH > 0, `browser: the over-menu panel takes its own row above the tab bar (${JSON.stringify(boxes.after)}, tabs ${tabsH}px)`);
       // menu audit #19: "New" lasts 2 hours of play after an unlock, so an old save's long-past unlocks never show it
       const nb = await X(`(() => { const o = S.onboard, v = { id: 'zz-test', feature: 'party' }, was = o.got.party;
         o.got.party = Math.round(o.t); const a = onboardIsNew(v); o.got.party = Math.round(o.t) - 7300; const b = onboardIsNew(v);
@@ -10249,6 +10248,31 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits below or beside the text (never over it) at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
         }
         await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+        // guide-bubble-clear-of-controls: the panel's box (at its pop-in's lowest frame) never meets the tab bar, and over a menu it
+        // never meets a Gather row's button (the nightly walk: 5 px on the tabs, its X on a Hunting row's button, Got it on Spread
+        // evenly). Over a portrait menu it takes its own row, so the menu's scroll area ends above it and no menu button can sit under it.
+        {
+          const CLEAR = `(() => { const b = document.querySelector('.ob-bub'); if (!b || b.hidden) return null;
+            const R = e => e.getBoundingClientRect(), meet = (a, c) => a.left < c.right - .5 && a.right > c.left + .5 && a.top < c.bottom - .5 && a.bottom > c.top + .5;
+            b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');   // obIn's first frame sits 6 px low
+            const br = R(b), pan = document.getElementById('panels'), hit = [], mode = ['side', 'dock', 'over-menu'].find(m => b.classList.contains(m)); let n = 0;
+            for (const t of document.querySelectorAll('.tabs .tab')) if (t.getClientRects().length && meet(br, R(t))) hit.push('.tabs .tab');
+            const menu = !!document.querySelector('.app.menu-open') && !!pan.getClientRects().length;
+            for (const top of menu ? [0, 1e6] : []) { pan.scrollTop = top; const pr = R(pan);
+              for (const x of pan.querySelectorAll('.gx-act, .at-spread')) { if (!x.getClientRects().length) continue; const r = R(x), v = { left: r.left, right: r.right, top: Math.max(r.top, pr.top), bottom: Math.min(r.bottom, pr.bottom) };
+                if (v.bottom - v.top < 1) continue; n++; if (meet(br, v)) hit.push('.' + x.className.split(' ')[0]); } }
+            if (menu && mode === 'over-menu' && R(pan).bottom > br.top + .5) hit.push('#panels (the menu runs ' + Math.round(R(pan).bottom - br.top) + ' px under it)');
+            pan.scrollTop = 0;
+            return { mode, menu, hit: [...new Set(hit)], n, box: [br.left, br.top, br.right, br.bottom].map(Math.round) }; })()`;
+          await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; ONBOARD.paused = false; true`);
+          await page.waitForTimeout(700);
+          const fight = await X(CLEAR);
+          await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+          let gat = null;   // a menu's first-use line docks over the menu in portrait (in landscape it keeps the side column)
+          if (vw < vh) { await X('onboardTips(true); S.onboard.all = false; onboardReveal("gather"); setTab("gat"); true'); await page.waitForTimeout(900); gat = await X(CLEAR); await X('closeMenu(); true'); await page.waitForTimeout(300); }
+          const say = c => c ? c.mode + ' ' + c.box.join(',') + ', ' + c.n + ' buttons checked' + (c.hit.length ? ', meets ' + c.hit.join(' ') : '') : 'no panel';
+          assert(fight && !fight.hit.length && (vw > vh || (gat && gat.menu && gat.mode === 'over-menu' && !gat.hit.length && gat.n > 0)), `guide panel ${at}: its box meets none of .tabs, .gx-act, .at-spread or the menu under it (fight: ${say(fight)}${vw < vh ? '; Gather menu: ' + say(gat) : ''})`);
+        }
         assert(seen.length === 5, `guide panel ${at}: the check measured all five steps (${seen.join(', ')})`);
         // a paused tip that is not a step (a first-use line) docks too; and a step shown over an open menu sits at the menu's bottom
         if (vw < vh) {   // portrait with a menu open: the panel moves to the bottom of the menu, above the tab bar
