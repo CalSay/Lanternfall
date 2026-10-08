@@ -2,7 +2,7 @@
 
 Every standing owner decision, by topic, with its date. A later decision wins over an earlier one. The last section
 lists decisions that a later owner decision replaced, so the history behind a rule stays readable. Rules that live in
-`CLAUDE.md` (save wipes, landscape, art freeze, online data) are not repeated here.
+`CLAUDE.md` (save wipes, browser first, art freeze, online data) are not repeated here.
 
 Older design specs were retired on 2026-10-02. Read any of them with `git show 1536ffa:docs/design/<file>.md`.
 
@@ -29,6 +29,16 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   and the Journal's Tips lists it as "Tips you missed". Opus judge and a Sonnet red team: the turn-fight boss line says "Watch the
   bar" because only the legacy fight draws red rings; "stretch" and "strings" cut as jargon; the legacy Parry line no longer claims a
   stagger it cannot show. Save risk read (Opus): safe, no new field. Camp and gather tips stay plain until `unlock-voice`.
+- **Claude decided: materials lines show on Camp, on Gather and while gathering, never over other menus (card forge-tip-goes-stale,
+  2026-10-08; Cal can veto with "keep the Forge tip on every menu").** This narrows "camp and menu tips stay up" above for Hesketh's
+  materials lines only ("You still need these for the Forge: ..."): a fighter saw one on every menu for 15 minutes and it covered the hero
+  list. The step stays current while hidden, so nothing behind it starts and nothing is marked done. A line for two or more materials names
+  each one's place ("Copper Ore 0/25 at the Copper Vein"; essence and gold "from fights"). A press step (Workbench, tool, first weapon,
+  Forge, Storehouse) now waits for its materials in hand, so × on a materials line no longer brings up "Open Camp." while you are short.
+  Missed prediction: "the walk builds the Forge no later" held on seed 2 (5:02, now 5:06) but not seed 1 (6:35, now 14:17). The line
+  no longer sends the line-following bot back from Craft to gather, and Next Up's tool upgrades spent the Forge's copper meanwhile (22/25 ore
+  at 6:27, 2/25 at 12:30). An Opus judge ruled ship anyway: Craft is where the complaint was, and the fix is Next Up guarding the Forge's
+  materials (the camp-build goal), a card of its own.
 - **Claude decided: hero barks (card hero-voice, 2026-10-06; Cal can veto).** Only the three starters speak, one line each
   at nine moments (first boss, later boss, boss loss, unique, level, ability, first Star, first craft, Hollow Great Lantern);
   no class lines and no lines for the other 31 heroes; at most one bark a fight end, strongest first. Opus judge (red team,
@@ -702,6 +712,99 @@ at 29:55 and seed 2 Tobin at 47:48, and neither cleared it by 60:00. On the fix,
 Veto phrase for Cal: "put the zone 16 bosses back" (undoes the whole pick). "No rider knot" undoes only riderX: the knots stay and
 zone 16 reads about 31-39% a try for a first-time player.
 
+### Zone 19 wall (z19-wall) (2026-10-08)
+
+Ruled MERGE with option D (B2-style knots plus a rider knot), zone 19 only, by an Opus high judge (PR for card `z19-wall`); Cal can
+veto any line. Data: the builder's runs (240 and 160 fights a row, seed offsets 0-3), re-run by the judge at 160 fights on offsets
+1, 2, 4, 5 and 6. The judge changed two of the builder's zone 19 knots (hpFloor and hpX) and dropped his zone 20 knots.
+
+Walks confirm (the final build, 90 game min, the bot that keeps fighting after a loss): seed 1 Wren reached zone 19 at 47:34 and
+cleared it on the first try at 56:51; seed 2 Tobin reached it at 54:00 and cleared it on the first try at 57:50. Neither lost a try in
+zones 1 to 19. Both then lost a try at the zone 20 boss and were still there at 90:00 (the next wall, as expected). Both reached zone 19
+sooner than the z16-wall walks (55:04 and 59:38) with nothing before zone 19 changed: the walk's later minutes vary between machines.
+
+- **Why it walls.** A first-time hero reaches zone 19 at level 22 on tier 1 common +0 (the z16-wall walks: 55:04 and 59:38, gathering
+  gate still shut). They have 0.02-0.05 of the reference HP (Wren 0.021, Tobin 0.054, Pip 0.025); a kept-up hero has 1.3-4.5, about 65
+  times more. The zone 19 knots were fitted to the kept-up hero, so the boss's biggest hit is 13.5 times Wren's health before the cap.
+  The boss (Elder Spore Cap) also rides Venom, which ticks 0.02 of the reference HP twice (`TURN_TUNE.heroDot`): one tick took 97% of a
+  first-time Wren's health. Casual and good players read 0% a try.
+- **The pick.** In `TURN_TUNE.boss`, zone 19 only: hpX 4.8 to 0.07, hitX 1.04 to 0.015 (dormant: every landed hit sits on the hpFloor,
+  as at zones 13-18), hpFloor 0 to 1.35 (0 again from zone 20), Tobin's heroHitX 4.99 to 2.4, and riderX 1 to 0.07
+  (`[[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 0.07], [20, 1]]`). Moves, timing windows, parry and dodge rules, the hit cap,
+  rally gates and boss pay do not change. As at zone 16, riderX changes only a tick's size: Venom lands on the same hits and ticks twice.
+- **Why hpFloor 1.35 and hpX 0.07, not the builder's 1.25 and 0.09.** At zone 19 the never-defends rule sits on a cliff. A kept-up
+  hero who never defends wins 0% at hpFloor 1.25, but Wren wins 100% at 1.15 and Tobin 47% at 1.2. 1.25 sits 0.05 above the cliff;
+  a little healing or shielding the budget hero lacks (a Ward, a unique) could tip a real player over it. 1.35 with hpX 0.07 keeps
+  0.15 of room. On the same five seed sets it reads the same first-time mean (64 against 65), Tobin 1-8 points up, Pip 4-8 down, and a
+  tighter spread between heroes (5-16 points against 16-30).
+- **Why not A (a gear step).** Tier 2 common, tier 3 rare +5 and even tier 4 rare +5 at level 22 read 0% at zones 19 and 20 on the old
+  knots. Arriving at the road level (28) on tier 1 also reads 0%. Opening the gathering gate would also move zones 7-18.
+- **Why not B (knots only).** Venom caps it. The best knots-only fits read 16-31% a hero (mean 19-24), and the lower ones let a kept-up
+  hero who never defends win 55-100%. The picked knots with riderX 1 read 16/6/16.
+- **Why riderX 0.07.** A Venom tick now costs a first-time Wren about 7% of her health (Pip 6%, Tobin 3%), as z16's Bleed does, twice a
+  Venom. It still hurts. On the builder's knots (offset 5), 0.1 reads 57/42/68, 0.15 reads 41/35/53 and 0.2 reads 33/29/43. On a
+  kept-up hero a tick was already about 0.1% of their health.
+- **Tobin at 2.4.** 2.2 lifts his first-time row about 10 points but lets a kept-up Tobin who never defends win 48% (2.0: 52%). The
+  never-defends rule wins; his arrival cell goes in a gap under `tobin-safety-margin`, as at zones 16-18.
+- **What a first-time player gets** (casual Wren/Tobin/Pip, arrival footing, five seed sets): Wren 63-70, Tobin 53-65, Pip 66-74,
+  mean 61-68. Good players 100. The walk bot's player 84-93. A weaker casual 38-46/24-31/31-40. A player who never defends wins 0%.
+  Expected tries 1.3-1.9. Fights last about 5 turns played well. A landed Cap Slam costs about a quarter of your health (Wren 25%,
+  Pip 27%, Tobin 29%), the charged Bloom over half (54-61%), and each Venom tick about 7% more.
+- **z19-boss-arrival becomes a gated Captain row** (kind `captain`, was `reportArrival`), as z17 and z18 did, so the fix is held.
+- **Zone 20 is not fixed here.** Its arrival row reads 0% and stays a report row (`z20-boss-arrival`, kind `reportArrival`, new in
+  this card). The builder's zone 20 knots (hitX 0.02, hpX 0.065, hpFloor 1.0, Tobin 2.75) read 76-79 for a first-time player, but they
+  cost far more than zones 17 and 18 did in z16-wall:
+  - Two `check.mjs` asserts fail ("C29 mid-game HP"). A kept-up hero should win zone 20 bosses 20-85% casually in 6-12 turns; it wins
+    98-100% in 4.8. A tier behind, a zone 20 hit should cost over a fifth of your health and a tier ahead under 15%; it reads 24% and
+    20%. Neither assert can move to zone 21: the check's hero wins zone 21 100% casually too.
+  - `z20-boss` kept-up reads 99-100 (band 60-80) and `z20-boss-behind` a drop of 0-5 (band 10-60): a tier behind no longer costs wins.
+    `z20-boss` is also the reference row for the joined row and the three build rows, which would then read against 100%.
+  - It buys one zone. The bots then stall at zone 21 for 5-8 hours (z21 on the arrival footing is unmeasured and expected near 0%).
+
+  These are the only instruments that watch whether gear matters in the mid game. The same loss is already true at zones 13-19 (a
+  landed hit sits on the hpFloor whatever you wear), with nothing watching it there. Blinding them for one zone is the wrong trade. A
+  follow-up card (proposed `z20-wall`) fits zone 20 onward in one pass and first decides where the "gear matters" checks live once the
+  arrival knots reach zone 20: a zone still on kept-up knots, or a check that knows the footing. It should also weigh ticking a zone
+  boss's Bleed, Burn and Venom as a share of the hero's own health instead of a `riderX` row per zone. Until carded,
+  `boss-balance-pass` owns zone 20.
+- **Kept-up z19 is too easy for a geared casual:** 94-100 against 60-80 (was 59/78/77). A kept-up hero who never defends wins 0-1%
+  (five seed sets). No knot puts both rows in band: every knot tried that lets a first-time casual win more than 40% reads kept-up
+  98-100, hpX 0.15 included. The first-time player wins; this goes in a gap, as at zones 15-18.
+- **The footing fix in `tools/budget.mjs` is right.** The arrival footing is tier 1 common +0 with no mastery stars. The crafted set is
+  a grade 4 craft the game does not ship, and a first-time player cannot have it. The z16-18 arrival rows are grade 3 and never wore
+  it, so z19 was the only arrival row wearing it, an oversight in #229. It was worth about 9 points to Wren. Kept-up rows keep the set.
+- **Zones 1 to 18 are unchanged.** No knot below zone 19 moved and riderX is the same below 19, so the #223 and #229 rulings stand.
+  z18-boss-arrival reads 81/66/69 and 85/54/61 on two seed sets, inside its noise and gaps. Zones 20 and up keep their knots and gaps.
+- **Gaps (all until 2026-12-01).** z19-boss casual, above, all heroes, limit 1, owner `boss-balance-pass`. z19-boss-arrival Tobin
+  casual, below, limit 0.55, owner `tobin-safety-margin`. The re-baseline ratcheted them to 0.99 and 0.59.
+- **Health: re-baselined, one tolerance change.** The bots pass zone 19 and meet the zone 20 wall inside the 10 hours: every
+  optimiser stall over an hour is at zone 20, the existing wall met one zone later. Passing one more zone adds short stalls, so
+  `optimiser.stallCount` rises from 4 (#229) to 4.93, and its spread over the five seed offsets widens (6, 4.33, 5, 4 and 5.33; sd
+  0.8). CI reads offset 0 one stall higher than the builder's machine (6.33). That is +1.4 against an allowed +1.3, so CI fails by 0.1.
+  - **The ruling: `optimiser.stallCount` abs goes from 1.3 to 2.4.** `docs/design/health.md` asks for at least three standard
+    deviations over the five offsets (3 x 0.8 = 2.4), and 1.3 no longer meets that. Each hero is then held at 4.8 against their own
+    baseline. Nothing else moves, and the baseline stays the 5-offset mean.
+  - **Why not a knot.** The extra stalls are at zone 20, which this card leaves alone. Fixing zone 20 to pass CI is the trade this
+    ruling turned down.
+  - **Why it is safe.** The walls this metric watches still show elsewhere. `longestStallSec` (allowed +5,700 s or 30%),
+    `zoneEnd`, `zonePerHour` and the long run's `stallsOver1h` keep their bands, and a new wall moves them.
+  - **Temporary.** Owner `boss-balance-pass` (the zone 20 follow-up). When the zone 20 wall is fixed, set it back to the larger of 1.3
+    and three standard deviations of the then 5-offset spread.
+  - **Watch items.** `docs/design/health.md` says a seed repeats exactly, but CI and this machine differ by one stall at offset 0. A
+    tooling card should find the source. Pip's optimiser run at offset 0 also stalls 2.97 h at zone 17, which #229 fixed for a
+    first-time hero. Nothing below zone 19 changed here, so it is a reshuffle, but `boss-balance-pass` should check it.
+  - The active and casual personas do not move, and the long run passes. If either persona moves, or a new stall over an hour
+    appears below zone 19, re-judge.
+- **Walks.** Run both walks (seeds 1 and 2, 75 game min) on the final build. Walks run on the builder's first build (zone 20 knots,
+  hpFloor 1.25) do not count. Pass: each walk reaches zone 19 at the z16-wall times (55:04 and 59:38; nothing before zone 19 changed),
+  loses no try in zones 1-18, and clears zone 19 within 4 tries. If a walk needs 5 or more tries at zone 19, or has not cleared it by
+  75:00, do not merge: re-judge. A walk that reaches zone 20 will lose there; record it as the follow-up's evidence, not as a fail.
+- **Switch off.** Put the zone 19 knots back (hpX 4.8, hitX 1.04, hpFloor 0 from zone 19, Tobin heroHitX 4.99, riderX 1 at zone 19),
+  drop the two gaps and make z19-boss-arrival a report row again. No save change.
+
+Veto phrase for Cal: "put the zone 19 boss back" (undoes the whole pick). "No rider knot at zone 19" undoes only riderX: the knots
+stay and zone 19 reads about 13% a try for a first-time player (16/6/16), still a wall.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
@@ -721,8 +824,13 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
 
 ## Screen and menus
 
+- **Browser first** (Cal, 2026-10-08, plan "Go" at 11:59): design for a desktop browser at 1280x720 CSS px with mouse
+  and keyboard; it must look good at 1920x1080 and fit 1366x640. Landscape phones (740x360) and tablets (1024x768) play
+  without clipping; phones held upright (360x740) must not break, but new features need not be designed for them.
+  Why: "Browser will be our primary. It means our art can be more detailed and our menus can be better structured."
+  Rule in `CLAUDE.md` (#234); sizes in `docs/design/layout.md`.
 - **Game-first layout:** the game is the main view; each tab opens a full-screen menu over it. (2026-09-27)
-  Landscape only on mobile: see `CLAUDE.md` and `docs/design/layout.md`.
+  Landscape only on mobile (2026-09-29): replaced by **Browser first** (2026-10-08, above).
 - **Fight view order:** header; everything not combat (Next Up, switches, zone arrows); the stage; the action bar; the
   tabs. The action bar is two rows of square slots: abilities on top, Parry, Dodge and Attack below, Attack
   bottom-right. (2026-09-29)
@@ -734,6 +842,7 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   unchanged. Claude decided (story-unlock-gates, red team and Opus judge, 2026-10-06; `docs/design/unlock-pace.md`).
 - **Fonts:** Handjet (pixel display) with Barlow Semi Condensed (body). (2026-09-28)
 - **Icons:** the approved C26 icon packs (resources, gear, actions, menus, statuses). (2026-10-01)
+- **Desktop layout (desktop-layout-spec, Opus high judge, 2026-10-08; Cal can veto):** On screens 1200 px and wider, text and chrome grow in two tiers. Desktop 1 is landscape at 1200x600 or more: text x1.15, never under 14 px. Desktop 2 is 1600x900 or more: text x1.3, never under 15 px. The rail, top row, side column and action bar grow with each tier; icons stay at their native sizes. Phones (740x360, 360x740) and 1024x768 do not change. Text grows through one build step (`scaleText` in tools/build.mjs), not CSS zoom, so pixel art stays on whole pixels. The menu stays a panel over the stage, two thirds of its width (560 to 1040 px). A sheet opened from Hero > Gear, the bag, the hero card or a gather node docks into the panel's right half next to the list and blocks nothing. Gather and Craft > Make show the list and detail side by side. The bag at 48 px and the gear row at 96 px start at Desktop 2. Keys 1 to 5 open and close Fight, Hero, Gather, Craft and Camp; letters stay fight keys. Every "Tap again" becomes "Confirm: ...". Hover tooltips (next, P1), the upright tablet and the other menus' desktop layouts wait for their own cards; this departs from the approved browser-first plan. Spec: `docs/design/desktop-layout.md`. Veto phrases: "Hand-write the desktop text sizes", "Floor back to 13", "Big icons from 1440", "Split the stage for menus", "Rebuild the menus inline", "Tooltips and tablet in v1", "Tablet gets the landscape menus now", "Letters for tabs", "Keep Tap again".
 
 ## Story
 
@@ -990,7 +1099,8 @@ Kept only to explain current rules. Each line: the old decision, then what repla
 - Gatherer daily wages, then the Bunkhouse as the bed cap (2026-09-28) -> one-off hire, shift fees, Tents (2026-09-28).
 - Expeditions with heroes and trade caravans (2026-09-28) -> trade runs by gatherers (2026-09-29).
 - The MAT1 name ladder (2026-09-28) -> the C26 ladder (2026-10-01); ore keeps MAT1's names.
-- No forced landscape (2026-09-27) -> landscape only on mobile (2026-09-29).
+- No forced landscape (2026-09-27) -> landscape only on mobile (2026-09-29) -> browser first, phones and tablets still
+  work (2026-10-08).
 - Season 1 ending at the bottom of the Deepwell (2026-09-28) -> the finale is in the Gloamvale, its Region 5, and the
   Voice retreats into the Deepwell (2026-09-28, after the owner's feedback on LORE-R45).
 - Background art paused (2026-09-29) -> the Mossy Hollow background approved (2026-10-02).
