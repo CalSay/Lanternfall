@@ -872,7 +872,9 @@ function turnPlayer() {
     return true;
   }
   if (!s || !['hero', 'foeWindup'].includes(s.phase)) { turnInput = null; return true; }
-  const key = s.phase + ':' + s.n;
+  // one input a hit: a move of several hits stays in turn n, so the key carries the hit (z21-foe-climb: keyed on the turn alone, the bot
+  // defended only a move's first hit and took every later one, the bulk of its wipes at zones 20-24)
+  const key = s.phase + ':' + s.n + (s.phase === 'foeWindup' && s.move ? ':' + s.move.hit : '');
   if (!turnInput || turnInput.key !== key) {
     turnInput = { key, done: false, at: s.now + 0.15 + rnd() * 0.15, kind: 'attack' };
     if (s.phase === 'foeWindup' && SKILL) {
