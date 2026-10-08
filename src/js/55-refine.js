@@ -39,13 +39,13 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
 {
   const T = REFINE_TUNE;
   // An old save: a save was loaded (or there is progress) and it has no refine record. Read before registerState fills one.
-  const oldSave = S.refine === undefined && (storedLast() > 0 || (S.totalKills || 0) > 0);
+  const savedBefore = S.refine === undefined && (storedLast() > 0 || (S.totalKills || 0) > 0);
   registerState('refine', { v: 1, st: { forge: [], bench: [], loom: [] }, said: 1, seen: 0, coal: 0 });
-  if (oldSave) S.refine.said = 0;
+  if (savedBefore) S.refine.said = 0;
   const R = () => S.refine;
   const have = (f, t) => Math.max(0, (S.mats[f] && S.mats[f][t - 1]) || 0);
   const name = (f, t) => matName(f, t);
-  const plural = (f, t, n) => { const u = MAT[f].unit; return name(f, t) + (n !== 1 && (u === 'Ingot' || u === 'Plank' || u === 'Log') ? 's' : ''); };
+  const plural = (f, t, n) => name(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || MAT[f].unit === 'Log') ? 's' : '');
   const built = st => typeof campLevel === 'function' && campLevel(st) >= 1;
 
   refineStationOf = prod => (REFINE_PRODUCTS[prod] ? REFINE_PRODUCTS[prod].st : null);
@@ -58,12 +58,20 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
   refineNeed = (prod, tier) => REFINE_PRODUCTS[prod].inputs(tier);
   // A station's list. Once per loaded save, drop any order this version cannot run (a hand-edited or newer save), so a tick
   // never reads an unknown product.
-  const okOrder = (st, o) => o && REFINE_PRODUCTS[o.prod] && REFINE_PRODUCTS[o.prod].st === st && Number.isInteger(o.tier) && o.tier >= 1 && o.tier <= 5
-    && o.want >= 0 && o.made >= 0 && (o.all ? true : o.want >= 1);
+  const okOrder = (st, o) => o && typeof o === 'object' && REFINE_PRODUCTS[o.prod] && REFINE_PRODUCTS[o.prod].st === st && Number.isInteger(o.tier) && o.tier >= 1 && o.tier <= 5
+    && Number.isFinite(o.want) && Number.isFinite(o.made) && o.want >= 0 && o.made >= 0 && (o.all ? true : o.want >= 1);
+  // a kept order's numbers made whole: at within one unit, keep matching the inputs (else the order keeps nothing back)
+  const fixOrder = o => {
+    o.want = Math.floor(o.want); o.made = Math.floor(o.made); o.all = o.all ? 1 : 0;
+    o.at = Number.isFinite(o.at) ? Math.max(0, Math.min(T.secs[o.tier - 1], o.at)) : 0;
+    if ('keep' in o && !(Array.isArray(o.keep) && o.keep.length === refineNeed(o.prod, o.tier).length && o.keep.every(n => Number.isInteger(n) && n >= 0))) delete o.keep;
+    return o;
+  };
   let cleanFor = null;
   const list = st => {
-    const r = R(); if (!r.st || typeof r.st !== 'object') r.st = { forge: [], bench: [], loom: [] };
-    if (cleanFor !== r) { cleanFor = r; for (const k of REFINE_STATIONS) r.st[k] = Array.isArray(r.st[k]) ? r.st[k].filter(o => okOrder(k, o)).slice(0, T.max) : []; }
+    if (!S.refine || typeof S.refine !== 'object' || Array.isArray(S.refine)) S.refine = { v: 1, st: { forge: [], bench: [], loom: [] }, said: 1, seen: 0, coal: 0 };
+    const r = R(); if (!r.st || typeof r.st !== 'object' || Array.isArray(r.st)) r.st = { forge: [], bench: [], loom: [] };
+    if (cleanFor !== r) { cleanFor = r; for (const k of REFINE_STATIONS) r.st[k] = Array.isArray(r.st[k]) ? r.st[k].filter(o => okOrder(k, o)).slice(0, T.max).map(fixOrder) : []; }
     return r.st[st];
   };
   refineOrders = st => list(st);
@@ -76,7 +84,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
     const need = refineNeed(o.prod, o.tier);
     for (let i = 0; i < need.length; i++) {
       const [f, t, n] = need[i];
-      if (free(o, i, f, t) < n) return { k: 'input', miss: [f, t], why: f === 'coal' ? 'Out of coal' : `Out of ${name(f, t)}` };
+      if (free(o, i, f, t) < n) return { k: 'input', miss: [f, t], why: have(f, t) >= n ? `Kept its reserve of ${f === 'coal' ? 'coal' : name(f, t)}` : f === 'coal' ? 'Out of coal' : `Out of ${name(f, t)}` };
     }
     if (typeof stashRoom === 'function' && stashRoom(o.prod, o.tier) < 1) return { k: 'full', why: 'Storehouse full' };
     return { k: 'run', why: '' };
@@ -113,7 +121,9 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
     if (all) o.keep = refineNeed(prod, tier).map(([f, t]) => Math.ceil(have(f, t) * T.reserve));
     const l = list(st), d = l.findIndex(done);
     if (l.length >= T.max && d >= 0) l.splice(d, 1);   // a finished order makes room
-    l.push(o);
+    // a set amount (a shortfall: an upgrade waits on it) goes ahead of the All orders, which may run for hours
+    const j = all ? -1 : l.findIndex(x => x.all && !done(x));
+    if (j < 0) l.push(o); else l.splice(j, 0, o);
     if (!R().seen) R().seen = Date.now();
     emit('refineOrder', { st, prod, tier, want, all: o.all });
     if (typeof save === 'function') save();
@@ -139,7 +149,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
       for (let guard = 0; guard < 1000 && left > 0; guard++) {
         const o = refineCurrent(st); if (!o) break;
         const unit = T.secs[o.tier - 1], need = unit - (o.at || 0);
-        if (left < need) { o.at = (o.at || 0) + left; break; }
+        if (left < need) { o.at = Math.min(unit, (o.at || 0) + left); break; }
         left -= need; o.at = 0;
         makeOne(st, o, false);
         emit('refined', { st, prod: o.prod, tier: o.tier, n: 1 });
@@ -159,7 +169,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
     const got = stashAdd('coal', 1, n, 'flow', !!e.away);
     if (e.away) { awayIn('coal', 1, got); return; }
     if (got > 0 && typeof addFloat === 'function') addFloat(`+${got} Coal`, '#9A97B3', false, 0.7, 0.42);
-    if (got > 0 && !R().coal) { R().coal = 1; toast('Coal! Copper Ore brings coal now the Forge is built. The Forge smelts it with ore into Ingots.', 'good', null, 'normal'); }
+    if (got > 0 && !R().coal) { R().coal = 1; emit('toast', { key: 'refine-coal', msg: 'Coal! Copper Ore brings coal now the Forge is built. The Forge smelts it with ore into Ingots.', kind: 'good', icon: null, prio: 'normal' }); }
   });
 
   // ---------------- away ----------------
@@ -209,7 +219,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
         clock[st] = next > x && next < Tsecs ? next : Tsecs;
         continue;
       }
-      if (fin > Tsecs) { o.at = (o.at || 0) + (Tsecs - x) * sp; clock[st] = Tsecs; continue; }
+      if (fin > Tsecs) { o.at = Math.min(T.secs[o.tier - 1], (o.at || 0) + (Tsecs - x) * sp); clock[st] = Tsecs; continue; }
       for (const [f, t, n] of refineNeed(o.prod, o.tier)) { const k = cellKey(f, t); used[k] = (used[k] || 0) + n; out[st].used[k] = (out[st].used[k] || 0) + n; }
       o.at = 0;
       makeOne(st, o, true);
@@ -226,6 +236,11 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
   on('awayEnd', r => {
     if (!awayStock) return;
     const stock = awayStock, inflow = awayFlow; awayStock = null; awayFlow = null;
+    // stock that came in while away by other paths (Hands' deliveries, trade, a bounty) counts too, spread over the absence
+    for (const f of STOCK_FAMILIES) (S.mats[f] || []).forEach((n, i) => {
+      const k = cellKey(f, i + 1), x = n - Math.max(0, ((stock[f] || [])[i]) || 0) - (inflow[k] || 0);
+      if (x > 0) inflow[k] = (inflow[k] || 0) + x;
+    });
     const res = refineAwayRun(r && r.t || 0, stock, inflow);
     awayLinesOut = [];
     for (const [st, x] of Object.entries(res)) {
@@ -236,7 +251,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
         .map(([k, n]) => { const [f, t] = k.split(':'); return `${storeNum(n)} ${plural(f, +t, n)}`; });
       const usedTxt = used.length > 1 ? used.slice(0, -1).join(', ') + ' and ' + used[used.length - 1] : used[0] || '';
       const verb = parts.length === 1 ? parts[0] : `${DID[st]} ${parts.map(s => s.replace(/^\w+ /, '')).join(' and ')}`;
-      awayLinesOut.push({ icon: null, group: 'Camp', txt: `The ${CAMP_B[st].n} ${verb} from ${usedTxt}` + (x.stop ? ` (stopped: ${x.stop}).` : '.'),
+      awayLinesOut.push({ icon: null, group: 'Camp', txt: `The ${CAMP_B[st].n} ${verb} from ${usedTxt}` + (x.stop === 'done' ? ' (all orders done).' : x.stop ? ` (stopped: ${x.stop}).` : '.'),
         sub: 'Station orders keep running while you are away', goLabel: 'Orders', go: () => { if (typeof refineUI === 'object' && refineUI) refineUI.open(st); } });
     }
   });
@@ -312,12 +327,13 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
   const goalNow = () => {
     const need = refineFor(); if (!need) return null;
     const off = refineOffer(need.mats, need.t), o = off.orders[0]; if (!o) return null;
-    if (off.orders.every(x => x.full)) return { ready: true, off, label: `${REFINE_PRODUCTS[o.prod].verb} ${storeNum(o.want)} ${plural(o.prod, o.tier, o.want)} for ${need.what}`, st: o.st };
+    if (off.orders.every(x => x.full)) return { ready: true, off, st: o.st,
+      label: off.orders.map((x, i) => `${i ? REFINE_PRODUCTS[x.prod].verb.toLowerCase() : REFINE_PRODUCTS[x.prod].verb} ${storeNum(x.want)} ${plural(x.prod, x.tier, x.want)}`).join(' and ') + ` for ${need.what}` };
     // the gap is an input: say where to get it (coal comes with Copper Ore), never offer an order that stops at once
     const g = off.orders.find(x => !x.full);
     if (!built(g.st)) return null;
     // three stopped orders fill the station: say so, and Go opens its card (never a silent dead end)
-    if (!refineSlotFree(g.st)) return { ready: false, pct: 0.5, label: `Clear a stopped ${CAMP_B[g.st].n} order to ${REFINE_PRODUCTS[g.prod].verb.toLowerCase()} ${plural(g.prod, g.tier, 2)}`, go: { tab: 'world', sel: '#camp-b-' + g.st } };
+    if (!refineSlotFree(g.st)) return { ready: false, pct: 0.5, label: (refineCurrent(g.st) ? `The ${CAMP_B[g.st].n} has ${T.max} orders. Clear one to ` : `Clear a stopped ${CAMP_B[g.st].n} order to `) + `${REFINE_PRODUCTS[g.prod].verb.toLowerCase()} ${plural(g.prod, g.tier, 2)}`, go: { tab: 'world', sel: '#camp-b-' + g.st } };
     const miss = refineNeed(g.prod, g.tier).find(([f, t, n]) => have(f, t) < n * g.want); if (!miss) return null;
     const [f, t, n] = miss, pct = Math.max(0.05, Math.min(0.95, have(f, t) / (n * g.want)));
     if (f === 'coal') return { ready: false, pct, label: 'Mine Copper Ore to get coal', go: { act: 'gather', node: { kind: 'ore', t: 1 } } };

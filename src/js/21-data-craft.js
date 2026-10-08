@@ -91,8 +91,8 @@ const CRAFT_FAMILY = {
 // (matIcon returns '' for these), and coal drops from Copper Ore once the Forge is built until the Coal Seam's art lands.
 const REFINED_FAMILIES = ['ingot', 'plank', 'cloth', 'leather'];
 Object.assign(MAT, {
-  ingot: { n: 'Ingots', short: ['Copper', 'Iron', 'Silver', 'Cobalt', 'Mithril'], col: MAT.ore.col, unit: 'Ingot' },
-  plank: { n: 'Planks', short: ['Pine', 'Birch', 'Oak', 'Mangrove', 'Tideash'], col: MAT.wood.col, unit: 'Plank' },
+  ingot: { n: 'Ingots', short: ['Copper Ingot', 'Iron Ingot', 'Silver Ingot', 'Cobalt Ingot', 'Mithril Ingot'], col: MAT.ore.col, unit: '' },
+  plank: { n: 'Planks', short: ['Pine Plank', 'Birch Plank', 'Oak Plank', 'Mangrove Plank', 'Tideash Plank'], col: MAT.wood.col, unit: '' },
   cloth: { n: 'Cloth', short: ['Hemp Cloth', 'Linen', 'Briar Cloth', 'Kelp Cloth', 'Stormgrass Cloth'], col: MAT.fibre.col, unit: '' },
   leather: { n: 'Leather', short: ['Bristle Leather', 'Duskfang Leather', 'Fenscale Leather', 'Riptide Leather', 'Kelpie Leather'], col: MAT.hide.col, unit: '' },
   coal: { n: 'Coal', short: ['Coal', 'Coal', 'Coal', 'Coal', 'Coal'], col: ['#3A3542', '#3A3542', '#3A3542', '#3A3542', '#3A3542'], unit: '', one: true }

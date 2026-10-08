@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // C14: reproducible live/away audit. Runs the real core with a pinned wall clock and seed.
 // node tools/offline-parity.mjs --json=/tmp/lanternfall-offline-parity.json
-// node tools/offline-parity.mjs --refine   the station orders (refine-queues): Forge and Loom orders, no Hands, inputs that run out
+// node tools/offline-parity.mjs --refine   the station orders (refine-queues): Forge and Loom orders, no Hands, the hero mining Copper Ore (ore and coal arrive while away), Iron Ore and fibre that run out
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { loadCore, memoryStorage } from './lib/core.mjs';
@@ -25,7 +25,7 @@ export function offlineFixture(mode = 'gather') {
     campBuild('bench');campBuild('forge');S.mats.ore.fill(0);setNode('ore',2);setActivity('gather');`);
   else if (mode === 'refine') g.eval(`S.maxZone=12;S.camp.open=true;S.camp.b.forge=2;S.camp.b.loom=1;S.camp.b.bench=1;
     for(const a of Object.values(S.mats))a.fill(0);S.mats.ore[0]=4000;S.mats.ore[1]=600;S.mats.coal[0]=1200;S.mats.fibre[0]=600;
-    S.skills.mine.lv=20;refineAdd('ingot',2,30);refineAdd('ingot',1,'all');refineAdd('cloth',1,'all');setNode('crystal',1);setActivity('gather');`);
+    S.skills.mine.lv=20;refineAdd('ingot',2,30);refineAdd('ingot',1,'all');refineAdd('cloth',1,'all');setNode('ore',1);setActivity('gather');`);
   else {
     if (mode === 'fight-fixed') g.eval('S.L=100;S.xp=0;gearDirty()');
     g.eval("setActivity('fight');spawn()");

@@ -3407,7 +3407,7 @@ if (section('refine-queues')) try {
     `the Iron order stops at its amount: 3 made from 6 Iron Ore and 6 coal (made ${E('refineOrders("forge")[0].made')}, Iron Ore ${E('S.mats.ore[1]')})`);
   E('refineTick(600)');
   const all = E('refineOrders("forge")[1]'), st1 = E('refineState("forge", refineOrders("forge")[1])');
-  assert(all.made > 0 && st1.k === 'input' && E('S.mats.ore[0]') >= 2 && E('S.mats.coal[0]') >= 2 && st1.why === 'Out of coal',
+  assert(all.made > 0 && st1.k === 'input' && E('S.mats.ore[0]') >= 2 && E('S.mats.coal[0]') >= 2 && st1.why === 'Kept its reserve of coal',
     `the next order starts by itself and the All order stops at its reserve: ${all.made} Copper Ingots, keeps ${E('S.mats.ore[0]')} Copper Ore and ${E('S.mats.coal[0]')} coal ("${st1.why}")`);
   E('S.camp.b.store = 1; S.mats.coal[0] = 50; S.mats.ore[1] = 50; S.mats.ingot[1] = storeCap("ingot", 2) - 1; refineRemove("forge", 1); refineRemove("forge", 0); refineAdd("ingot", 2, 5); refineTick(120)');
   assert(E('refineState("forge", refineOrders("forge")[0]).k') === 'full' && E('refineState("forge", refineOrders("forge")[0]).why') === 'Storehouse full' && E('S.mats.ingot[1]') === E('storeCap("ingot", 2)'),
@@ -4032,6 +4032,7 @@ if (section('nav')) try {
       await page.goto('http://lf.test/'); await page.waitForTimeout(700);
       for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
       const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X('S.refine.said = 1; true');   // refine-queues: save-mid predates refining, so opening Craft would show the one-time "The Forge can smelt now" card
       await X(`setTab('make')`); await page.waitForTimeout(300);
       const pill0 = await page.getAttribute('#actPill', 'aria-label');   // W1-D: at 360 px the pill shows the short text; the label keeps the whole line
       await page.click('#actPill'); await page.waitForTimeout(250);
@@ -6448,7 +6449,9 @@ if (section('gatherer engine gaps (C1)')) try {
       E(`S.camp.b.tent = ${r.to - 1}; S.maxZone = ${r.zone - 1}`);
       assert(!E('campCan("tent").ok'), `C1: Tent ${r.to} stays closed before zone ${r.zone}`);
       E(`S.maxZone = ${r.zone}`);
-      assert(E(`campCost("tent", ${r.to}).gold`) === r.gold && !E('campCan("tent").ok') && /not available|not yet|unavailable|refin/i.test(E('campCan("tent").why')), `C1: Tent ${r.to} retains its authored price and explains its unavailable materials`);
+      // refine-queues: Tent 5's tier 4 plank, cloth and leather now exist, so at its zone it asks for them like any build
+      if (r.to === 5) assert(E(`campCost("tent", 5).gold`) === r.gold && E('CAMP_B.tent.available(5)') && !/not available/i.test(E('campCan("tent").why') || ''), `C1: Tent 5 keeps its authored price and opens at zone ${r.zone} now its refined materials exist ("${E('campCan("tent").why')}")`);
+      else assert(E(`campCost("tent", ${r.to}).gold`) === r.gold && !E('campCan("tent").ok') && /not available|not yet|unavailable|refin/i.test(E('campCan("tent").why')), `C1: Tent ${r.to} retains its authored price and explains its unavailable materials`);
     }
   }
   // C1's current flat-four-hour instruction overrides the older spec's level duration extensions.
@@ -8079,7 +8082,7 @@ if (section('resource icons (C26)')) try {
     return out;
   })))`));
   assert(!bad.length, 'C26: all 35 materials (7 families x grades 1-5) show the approved icon and name' + (bad.length ? ': ' + bad.slice(0, 5).join('; ') : ''));
-  assert(/const matIcon = \(k, t\) => typeof RES_ICONS === 'object' && RES_ICONS\.icons\[k\]/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '60-gfx.js'), 'utf8')), 'C26: matIcon (60-gfx) shows the approved icon first');
+  assert(/const matIcon = \(k, t\) => (k === 'coal' \|\| REFINE_RAW\[k\] \? '' : )?typeof RES_ICONS === 'object' && RES_ICONS\.icons\[k\]/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '60-gfx.js'), 'utf8')), 'C26: matIcon (60-gfx) shows the approved icon first');
   assert(!g.errors.length, 'C26: no core errors');
 } catch (e) { fail('resource icons crashed: ' + (e.stack || e)); }
 
@@ -8094,6 +8097,26 @@ if (section('future-dated save')) try {
   assert(/Math\.max\(0, \(Date\.now\(\) - S\.last\) \/ 1000\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '90-boot.js'), 'utf8')), 'boot measures time away as at least 0 (90-boot)');
   assert(!g.errors.length, 'a future-dated save loads without core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('future-dated save crashed: ' + (e.stack || e)); }
+// ---- refine-queues: station orders live and away match, by product and grade (offline-parity.mjs --refine has the full table) ----
+if (section('refine parity')) try {
+  const { offlineFixture, offlineGame, offlineRun, offlineLiveUntil, offlineSnapshot } = await import('./offline-parity.mjs');
+  const raw = offlineFixture('refine'), live = offlineGame(raw);
+  let from = 0;
+  for (const secs of [1800, 7200]) {
+    offlineLiveUntil(live, from, secs); from = secs;
+    const l = offlineSnapshot(live), a = offlineRun(raw, secs), o = a.state, bad = [];
+    for (const f of Object.keys(l.middles)) l.middles[f].forEach((n, i) => { const m = o.middles[f][i]; if (Math.abs(m - n) > Math.max(2, n * 0.02)) bad.push(`${f} ${i + 1}: live ${n}, away ${m}`); });
+    const made = Object.values(o.middles).flat().reduce((x, y) => x + y, 0);
+    assert(made > 0 && !bad.length && !a.errors.length && o.coal >= 0, `refine parity ${secs / 3600} h: every product and grade made away matches live within 2% (${made} units away${bad.length ? '; ' + bad.join('; ') : ''})`);
+  }
+  // stock that came in while away by another path (a Hand's delivery, trade) feeds the orders too, as it would live
+  const g = offlineGame(raw);
+  g.eval(`S.refine.st.forge = [{ prod: 'ingot', tier: 1, want: 0, made: 0, all: 1, at: 0, keep: [0, 0] }]; S.mats.ore[0] = 0; S.mats.coal[0] = 600; setActivity('fight');
+    on('away', () => { S.mats.ore[0] += 1000; });`);
+  g.eval(`Date.__t += 3600e3; awayGains(3600)`);
+  assert(g.eval('S.mats.ingot[0]') > 100, `ore delivered while away by another path is smelted too (${g.eval('S.mats.ingot[0]')} Copper Ingots from 1,000 Copper Ore that arrived)`);
+  assert(!live.errors.length && !g.errors.length, 'no refine parity errors' + (live.errors.length || g.errors.length ? ': ' + (live.errors[0] || g.errors[0]) : ''));
+} catch (e) { fail('refine parity crashed: ' + (e.stack || e)); }
 // ---- C14: actual harvest accounting and wall-clock schedules across the hero cap ----
 if (section('offline accounting and schedules (C14)')) try {
   const { AUDIT_START, AUDIT_SPANS, offlineFixture, offlineGame, offlineRun, offlineLiveUntil, offlineSnapshot } = await import('./offline-parity.mjs');
@@ -10726,6 +10749,7 @@ if (section('craft delta')) try {
     assert(bow != null && E(`fightDelta(itemById(${bow}))`) === null, 'craft delta: with the turn fight off there is no fight line');
   }
   { const g = coreOn('save-flow-upgrade.json'), E = s => g.eval(s);
+    E('S.mats.plank[0] = 2');   // refine-queues: the bow's +1 takes a Pine Plank (without one, Next Up says "Saw 1 Pine Plank for your Bow +1")
     const goals = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))'), up = goals.find(x => x.id === 'upgrade');
     assert(up && up.label === 'Upgrade your Pine Bow to +1' && up.ready && !goals.some(x => x.id === 'forge' && x.ready), `craft delta: with no craft ready, Next Up offers "Upgrade your Pine Bow to +1" (${JSON.stringify(goals)})`);
     E('S.gold = 0');
@@ -10766,6 +10790,7 @@ if (section('craft delta')) try {
         await ctx.close();
       }
       { const { ctx, page, errs, X } = await open('save-flow-upgrade.json');
+        await X('S.mats.plank[0] = 2; true');   // refine-queues: the bow's +1 takes a Pine Plank
         const go = await X(`(() => { const g = topGoals(20, { sticky: false }).find(x => x.id === 'upgrade'); if (!g) return 'no goal'; const s = g.go(); s.fn(); setTab(s.view || s.tab, s.sel); ui(true); return ''; })()`);
         await page.waitForTimeout(400);
         const sheet = await X(`(() => { const h = document.querySelector('.bsheet-ov .cf-isheet, .cf-isheet'); const b = h && [...h.querySelectorAll('button')].find(x => /^Upgrade to \\+1$/.test(x.textContent.trim())); return { tab: S.tab, view: curView('party'), up: !!b && b.getClientRects().length > 0 && !b.disabled }; })()`);
