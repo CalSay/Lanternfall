@@ -10493,11 +10493,20 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; ONBOARD.paused = false; true`);
           await page.waitForTimeout(700);
           const fight = await X(CLEAR);
+          // a long Go label in the short landscape column wraps inside the panel, never cut off ("Mine at…" in the walk)
+          const longGo = vw > vh ? await X(`(() => { const b = document.querySelector('.ob-bub'), k = b.querySelector('.ob-ok'); if (b.hidden || !k || k.hidden) return 'no button';
+            const was = k.textContent; k.textContent = 'Gather at the Enraged Boar'; const r = k.getBoundingClientRect(), br = b.getBoundingClientRect(), out = k.scrollWidth > k.clientWidth + 1 || k.scrollHeight > k.clientHeight + 2 || r.bottom > br.bottom + .5 || r.right > br.right + .5;
+            k.textContent = was; return out ? 'cut off (' + k.scrollWidth + ' in ' + k.clientWidth + ', bottom ' + Math.round(r.bottom) + ' of ' + Math.round(br.bottom) + ')' : ''; })()`) : '';
+          assert(!longGo, `guide panel ${at}: a long Go label wraps inside the side panel (${longGo || 'fits'})`);
           await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+          // the grove: gathering hides the Act bar, so the dock sits straight on the tab bar (the walk's 5 px at 2:48)
+          const grove = vw < vh ? await X('(() => { const a0 = S.activity; setActivity("gather"); ui(true); return a0; })()') : null;
+          const groveBox = vw < vh ? (await page.waitForTimeout(700), await X(CLEAR)) : null;
+          if (vw < vh) { await X(`setActivity(${JSON.stringify(grove)}); ui(true); true`); await page.waitForTimeout(300); }
           let gat = null;   // a menu's first-use line docks over the menu in portrait (in landscape it keeps the side column)
           if (vw < vh) { await X('onboardTips(true); S.onboard.all = false; onboardReveal("gather"); setTab("gat"); true'); await page.waitForTimeout(900); gat = await X(CLEAR); await X('closeMenu(); true'); await page.waitForTimeout(300); }
           const say = c => c ? c.mode + ' ' + c.box.join(',') + ', ' + c.n + ' buttons checked' + (c.hit.length ? ', meets ' + c.hit.join(' ') : '') : 'no panel';
-          assert(fight && !fight.hit.length && (vw > vh || (gat && gat.menu && gat.mode === 'over-menu' && !gat.hit.length && gat.n > 0)), `guide panel ${at}: its box meets none of .tabs, .gx-act, .at-spread or the menu under it (fight: ${say(fight)}${vw < vh ? '; Gather menu: ' + say(gat) : ''})`);
+          assert(fight && !fight.hit.length && (vw > vh || (groveBox && groveBox.mode === 'dock' && !groveBox.hit.length)) && (vw > vh || (gat && gat.menu && gat.mode === 'over-menu' && !gat.hit.length && gat.n > 0)), `guide panel ${at}: its box meets none of .tabs, .gx-act, .at-spread or the menu under it (fight: ${say(fight)}${vw < vh ? '; grove: ' + say(groveBox) + '; Gather menu: ' + say(gat) : ''})`);
         }
         assert(seen.length === 5, `guide panel ${at}: the check measured all five steps (${seen.join(', ')})`);
         // a paused tip that is not a step (a first-use line) docks too; and a step shown over an open menu sits at the menu's bottom
