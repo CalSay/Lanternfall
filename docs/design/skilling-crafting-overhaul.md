@@ -246,8 +246,12 @@ the camp. That is accepted, not hidden: Wren works two stations, Tobin and Pip t
   removal).
 
 ### Where it shows
-- The Storehouse's first view shows **one cell per family at your current tier (`zoneTier(S.maxZone)`): 6 raw
-  families, Essence, coal = 8 cells.** A refined family's count sits in the same cell as its raw one ("Iron Ore 120 ·
+- The Storehouse's first view shows **one cell per family at the grade you use: 6 raw families, Essence, coal = 8
+  cells.** The grade (amended 2026-10-07, card cal-0107-storage-and-gather-ui, coordinator sign-off after an Opus judge):
+  the cap is the lower of `zoneTier(S.maxZone)` and the top grade the family's skill gathers now (hide also at most
+  Hunting's 3); the cell shows the cap grade if any is held there, else the largest stack at or below the cap, else the
+  highest grade held. An empty cell shows only when the family holds nothing; hide's cell waits until Hunting shows or
+  hide is held. Essence is one pile (`storeShelfGrade` in `75-store-ui.js`). A refined family's count sits in the same cell as its raw one ("Iron Ore 120 ·
   Ingots 40"). Other tiers fold out on tap. Middles get Storehouse caps (group 0.5, as hide); coal gets group 1, like
   ore.
 - Until vetted icons land (art card, section 11), a middle shows its raw family's existing icon with a text label
@@ -582,7 +586,7 @@ gold split, Infuse's price. The judge recommends Cal upholds all three veto line
 | 9 | Cards rewritten; `tonic-brew` and `art-refined-materials` written | section 11, card folder |
 | 10 | Card 2 names each builder's files, may touch `72-ui-gather.js` and `57f-hands.js`, exports `refineOffer(cost)`; the offer moves to card 3 | section 11 |
 | 11 | Old saves past gate + 15 craft S at once; the balance pass checks raid time to kill | section 13 |
-| 12 | Coal's store group 1; current tier is `zoneTier(S.maxZone)`; Swift's 10 ms inside Guard's cap | sections 4, 6 |
+| 12 | Coal's store group 1; the Storehouse's grade is `zoneTier(S.maxZone)` capped by the skill's top grade (amended 2026-10-07, section 4); Swift's 10 ms inside Guard's cap | sections 4, 6 |
 
 Also added at the coordinator's ask: cadence targets (section 2) and Infuse, Essence's use (section 7b).
 

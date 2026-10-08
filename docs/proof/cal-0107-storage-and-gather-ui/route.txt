@@ -1,0 +1,47 @@
+# seed: 1
+# Proof for card cal-0107-storage-and-gather-ui: each Gather skill reads as Gather A, the Command ledger Cal picked
+# (skill head with the tool, a Now card that always says what you do with a minute and an hour, one row per node with
+# held of the cap, and Working on the node you work), and the Store's first view is a shelf: one stack per family at
+# the grade you use, sorted and filtered, with "Show all grades" for the rest.
+# The grade rule itself (mid fibre shows grade 1, early ore shows Copper Ore, no empty stack while a family holds
+# stock, no hide stack before Hunting) is asserted in tools/check.mjs, section "store shelf".
+new mid
+wait 3
+tap-if "Skip this story"
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+tap "Hero"
+tap "Gather"
+tap "Mining"
+expect "an hour"
+expect "Mining Lv"
+shot gather-mine
+tap "Wood"
+expect "an hour"
+shot gather-wood
+tap "Forage"
+expect "an hour"
+shot gather-forage
+tap "Store"
+expect "Show all grades"
+expect ".sh-shelf .sh-stack"
+shot store-first
+tap "Show all grades"
+expect "Show one grade"
+shot store-all
+new early
+wait 3
+tap-if "Skip this story"
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+tap "Hero"
+tap "Gather"
+expect "an hour"
+shot gather-early
+tap "Store"
+expect "Copper Ore"
+shot store-early

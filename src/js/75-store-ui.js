@@ -1,10 +1,12 @@
 // 75-store-ui: the Storehouse view in the Gather tab (task H3, rebuilt by UX-A GX1:
 // docs/design/ux-overhaul.md 6.2). Browser-only; the rules live in 55-store.js. The Storehouse's
 // building row is the Camp's list (75-camp-ui.js); its icon is registered here.
-//   - The view (id 'pack', label "Storehouse"): a top card (level, what it holds, Upgrade ›),
-//     filter chips (All and each family with something in it, Fought, Trophies), families as rows of
-//     5 cells with a held/cap bar in each, empty families folded into one line, trophies folded.
-//     A cell opens "where to get it" (72-ui-gather whereSheet).
+//   - The view (id 'pack', label "Storehouse"): a top card (level, what it holds, Build or Upgrade ›),
+//     filter chips (All, each family with something in it, Fought, Trophies), sort chips (Fullest, Name) and
+//     "Show all grades". First view: the shelf, one stack per family at the grade you use (storeShelfGrade
+//     below; Essence is one pile), at most 7 stacks (8 once coal lands). "Show all grades" or a family filter:
+//     families as rows of every grade with a held/cap bar, empty families folded into one line. Trophies
+//     fold. A stack or cell opens "where to get it" (72-ui-gather whereSheet).
 //   - The "Storehouse full" warning lives on the Now card and the header pill (72-ui-gather, 75-nav-ui).
 //   - storeStage (the stage's held line), storePackLine (the where-to-get sheet), storeSalvageNote
 //     (the Craft tab's salvage ask), STORE_ICON (the Camp row).
@@ -13,6 +15,31 @@ registerIcons({
   b_store: ['............', '.6666666666.', '.6111111116.', '.6155555516.', '.6111111116.', '.6666666666.', '.6111111116.', '.6111771116.', '.6111771116.', '.6111111116.', '.6666666666.', '............']
 });
 const STORE_ICON = () => iconURL('b_store', '#8C6A43', { 6: '#4A3220', 5: '#B08A5A', 7: '#F2C14E' });
+
+// ---- the shelf rule (no DOM; tools/check.mjs loads this block into the core) ----
+// The grade the Storehouse's first view shows for a family (card cal-0107-storage-and-gather-ui; overhaul spec section 4
+// as amended, coordinator sign-off 2026-10-07 after an Opus judge). The cap: for a gathered family the lower of your zone's
+// grade (zoneTier(S.maxZone)) and the top grade its skill gathers now; hide also at most Hunting's 3 grounds. The grade
+// shown: the cap grade if any is held there; else the largest stack at or below the cap (a leftover handful never hides
+// the main stack); else the highest grade held (drops, caches, old saves); else the cap (an empty stack: nothing held).
+function storeShelfCap(f) {
+  const z = zoneTier(Math.max(1, S.maxZone || 1)), fam = CRAFT_FAMILY[f], sk = fam && fam.skill;
+  if (!sk) return z;
+  const c = Math.min(z, skillTopTier(sk));
+  return f === 'hide' ? Math.min(c, HUNT_BEASTS.length) : c;
+}
+function storeShelfGrade(f) {
+  const a = S.mats[f] || [], n = t => Math.max(0, a[t - 1] || 0), cap = storeShelfCap(f);
+  if (n(cap) > 0) return cap;
+  let best = 0;
+  for (let t = 1; t <= cap; t++) if (n(t) > 0 && (!best || n(t) >= n(best))) best = t;
+  if (best) return best;
+  for (let t = 5; t > cap; t--) if (n(t) > 0) return t;
+  return cap;
+}
+// The hide stack waits until Hunting shows, unless you already hold hide.
+const storeShelfShows = f => f !== 'hide' || huntingVisible() || (S.mats[f] || []).some(n => n > 0);
+// ---- end of the shelf rule ----
 
 // The stage's held line: "640/1,000 stored", "1,000/1,000 · Full".
 function storeStage(k, t) {
@@ -37,14 +64,18 @@ function storeSalvageNote(preview, t) {
 
 {
   const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
-  const FOUGHT = f => !GATHER_KINDS.includes(f);                     // hide, essence (and later fish, pearls)
+  const FOUGHT = f => !(CRAFT_FAMILY[f] && CRAFT_FAMILY[f].skill);   // essence only (hide is Hunting's since C24)
   const famNote = f => {
     if (FOUGHT(f)) return 'from fights';
-    const sk = skillOf(f); return `${SKILL[sk]} ${S.skills[sk].lv}`;
+    const sk = CRAFT_FAMILY[f].skill, s = S.skills[sk]; return s ? `${SKILL[sk]} ${s.lv}` : SKILL[sk];
   };
   const any = f => (S.mats[f] || []).some(n => n > 0);
   const FILTERS = [['all', 'All'], ...CRAFT_FAMILIES.filter(f => !FOUGHT(f)).map(f => [f, MAT[f].n]), ['fought', 'Fought'], ['troph', 'Trophies']];
-  let V = null, filter = 'all', showEmpty = false, showTro = false;
+  const SORTS = [['full', 'Fullest'], ['name', 'Name']];
+  const shelfHas = storeShelfShows;
+  const held = (f, t) => f === 'ess' ? essHave() : Math.max(0, S.mats[f][t - 1] || 0);
+  const capOf = (f, t) => f === 'ess' ? essCap() : storeCap(f, t);
+  let V = null, filter = 'all', sort = 'full', showAll = false, showEmpty = false, showTro = false;
 
   function cell(f, t) {
     const c = btn('mat sh-cell');
@@ -53,6 +84,26 @@ function storeSalvageNote(preview, t) {
     c.append(n, el('div', 'mn', f === 'ess' ? 'Essence' : MAT[f].short[t - 1]), bar);
     c.addEventListener('click', () => whereSheet(f, t));
     return { c, n, cap, fill, f, t };
+  }
+  // A shelf stack: icon, name, held / cap, a bar. Its grade moves with storeShelfGrade, so it is built once per family.
+  function stack(f) {
+    const c = btn('sh-stack');
+    const ic = img(matIcon(f, 1)), tx = el('span', 'sh-stack-tx'), nm = el('span', 'sh-stack-nm'), n = el('span', 'sh-stack-n');
+    const bar = el('i', 'sh-bar'), fill = el('b'); bar.append(fill);
+    tx.append(nm, n, bar); c.append(ic, tx);
+    const x = { c, ic, nm, n, fill, f, t: 1 };
+    c.addEventListener('click', () => whereSheet(f, x.t));
+    return x;
+  }
+  // A cell's held, cap, bar and warn/full/over marks (shelf stacks and grade cells alike).
+  function mark(x, v, cap) {
+    const cf = Number.isFinite(cap);
+    putHidden(x.fill.parentNode, !cf);
+    if (cf) putStyle(x.fill, 'width', Math.min(100, v / Math.max(1, cap) * 100).toFixed(1) + '%');
+    putToggle(x.c, 'none', !v);
+    putToggle(x.c, 'sh-warn', cf && v >= cap * STORE_TUNE.warn && v < cap);
+    putToggle(x.c, 'sh-full', cf && v >= cap && v > 0 && v <= cap);
+    putToggle(x.c, 'sh-over', cf && v > cap);
   }
   function build(sec) {
     V = { fams: {}, chips: {} };
@@ -64,13 +115,27 @@ function storeSalvageNote(preview, t) {
     V.up = btn('mini sh-up', 'Upgrade ›');
     V.up.addEventListener('click', () => setTab('world', '#camp-b-store'));
     card.append(tx, V.up);
-    // filter chips (wrap to a second row when narrow; no view swipe)
+    // filter chips (wrap to a second row when narrow; no view swipe), then sort chips and "Show all grades"
     const chips = el('div', 'sh-chips'); chips.dataset.noswipe = '';
     for (const [id, label] of FILTERS) {
       const b = btn('sh-fchip', label); b.setAttribute('aria-pressed', String(id === filter));
       b.addEventListener('click', () => { filter = id; ui(true); });
       chips.append(b); V.chips[id] = b;
     }
+    const tools = el('div', 'sh-chips sh-tools'); tools.dataset.noswipe = '';
+    V.sortl = el('span', 'sh-sortl', 'Sort'); tools.append(V.sortl);
+    V.sorts = {};
+    for (const [id, label] of SORTS) {
+      const b = btn('sh-fchip sh-sort', label);
+      b.addEventListener('click', () => { sort = id; ui(true); });
+      tools.append(b); V.sorts[id] = b;
+    }
+    V.all = btn('sh-fchip sh-all', 'Show all grades');
+    V.all.addEventListener('click', () => { showAll = !showAll; ui(true); });
+    tools.append(V.all);
+    // the shelf: one stack per family
+    V.shelf = el('div', 'sh-shelf'); V.stacks = {};
+    for (const f of CRAFT_FAMILIES) { const x = stack(f); V.shelf.append(x.c); V.stacks[f] = x; }
     // families
     const fams = el('div', 'sh-fams');
     for (const f of CRAFT_FAMILIES) {
@@ -95,7 +160,7 @@ function storeSalvageNote(preview, t) {
       V.troRow.append(c); V.troCells.push({ c, n });
     });
     const note = el('p', 'note', 'Tap a material to see where it comes from.');
-    sec.append(card, chips, fams, V.empty, V.tro, V.troRow, note);
+    sec.append(card, chips, tools, V.shelf, fams, V.empty, V.tro, V.troRow, note);
     // icons last: 35 cells, only on the view's first show
     for (const f of CRAFT_FAMILIES) for (const x of V.fams[f].cells) x.c.prepend(img(matIcon(f, x.t)));
   }
@@ -116,25 +181,50 @@ function storeSalvageNote(preview, t) {
       putAttr(V.chips[id], 'aria-pressed', String(filter === id));
       putToggle(V.chips[id], 'on', filter === id);
     }
-    // families
+    // sort and "Show all grades". The shelf is the first view; a family filter (or the toggle) shows every grade.
+    for (const [id] of SORTS) { putHidden(V.sorts[id], filter !== 'all'); putAttr(V.sorts[id], 'aria-pressed', String(sort === id)); putToggle(V.sorts[id], 'on', sort === id); }
+    putHidden(V.sortl, filter !== 'all');   // sorting only changes the All view
+    const fam1 = filter !== 'all' && filter !== 'fought' && filter !== 'troph';
+    putHidden(V.all, filter !== 'all');
+    putText(V.all, showAll ? 'Show one grade' : 'Show all grades');
+    putAttr(V.all, 'aria-pressed', String(showAll));
+    putToggle(V.all, 'on', showAll);
+    const grades = filter !== 'troph' && (fam1 || (filter === 'all' && showAll));
+    const shelf = filter !== 'troph' && !grades;
+    // the order: fullest first (by the shelf grade's fill) or by name; empty stacks last; ties keep the family order
+    const fillOf = f => { const t = f === 'ess' ? 1 : storeShelfGrade(f), c = capOf(f, t), v = held(f, t); return Number.isFinite(c) && c > 0 ? v / c : v > 0 ? 1e-9 : -1; };
+    const nameOf = f => f === 'ess' ? 'Essence' : matName(f, storeShelfGrade(f));
+    const order = CRAFT_FAMILIES.slice();
+    if (sort === 'name') order.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+    else { const fl = Object.fromEntries(order.map(f => [f, fillOf(f)])); order.sort((a, b) => fl[b] - fl[a] || CRAFT_FAMILIES.indexOf(a) - CRAFT_FAMILIES.indexOf(b)); }
+    putHidden(V.shelf, !shelf);
+    for (const f of CRAFT_FAMILIES) {
+      const x = V.stacks[f], show = shelf && shelfHas(f) && (filter === 'all' || (filter === 'fought' && FOUGHT(f)));
+      putHidden(x.c, !show);
+      if (!show) continue;
+      putStyle(x.c, 'order', String(order.indexOf(f)));
+      const t = f === 'ess' ? 1 : storeShelfGrade(f), v = held(f, t), cap = capOf(f, t), cf = Number.isFinite(cap);
+      if (x.t !== t || !x.drawn) { x.t = t; x.drawn = true; putAttr(x.ic, 'src', matIcon(f, t)); }
+      putText(x.nm, f === 'ess' ? 'Essence' : matName(f, t));
+      putText(x.n, cf ? `${gxNum(v)} / ${gxNum(cap)}` : `${gxNum(v)} held`);
+      mark(x, v, cap);
+      putAttr(x.c, 'aria-label', `${f === 'ess' ? 'Essence' : matName(f, t)}: ${storeNum(v)}${cf ? ' of ' + storeNum(cap) : ''}. Where to get it`);
+    }
+    // every grade: families as rows
     const empty = [];
     for (const f of CRAFT_FAMILIES) {
       const F = V.fams[f], has = any(f);
       const inFilter = filter === 'all' || filter === f || (filter === 'fought' && FOUGHT(f));
-      if (!has && inFilter && filter === 'all') empty.push(f);
-      const show = inFilter && filter !== 'troph' && (has || showEmpty || filter !== 'all');
+      if (grades && !has && inFilter && filter === 'all' && shelfHas(f)) empty.push(f);
+      const show = grades && inFilter && (has || showEmpty || filter !== 'all') && (filter !== 'all' || shelfHas(f));
       putHidden(F.s, !show);
       if (!show) continue;
+      putStyle(F.s, 'order', String(order.indexOf(f)));
       putText(F.nt, famNote(f));
       for (const x of F.cells) {
-        const v = f === 'ess' ? essHave() : S.mats[f][x.t - 1] || 0, cap = f === 'ess' ? essCap() : storeCap(f, x.t), cf = Number.isFinite(cap);
+        const v = held(f, x.t), cap = capOf(f, x.t), cf = Number.isFinite(cap);
         putText(x.n, gxNum(v));
-        putToggle(x.c, 'none', !v);
-        putHidden(x.fill.parentNode, !cf);
-        if (cf) putStyle(x.fill, 'width', Math.min(100, v / cap * 100).toFixed(1) + '%');
-        putToggle(x.c, 'sh-warn', cf && v >= cap * STORE_TUNE.warn && v < cap);
-        putToggle(x.c, 'sh-full', cf && v >= cap && v > 0 && v <= cap);
-        putToggle(x.c, 'sh-over', cf && v > cap);
+        mark(x, v, cap);
         putAttr(x.c, 'title', cf ? `${costName(f, x.t)}: ${storeNum(v)} / ${storeNum(cap)}` : `${costName(f, x.t)}: ${storeNum(v)}`);
       }
     }
