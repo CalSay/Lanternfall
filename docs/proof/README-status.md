@@ -1,12 +1,12 @@
 # Proof route status
 
-Every `docs/proof/<card>/route.txt` first replayed on the integration branch at f8123154 (after #219), then again after merging a99b11a5 (#221 to #224), seed from the route
+Every `docs/proof/<card>/route.txt` first replayed on the integration branch at f8123154 (after #219), then again after merging 9f190eb7 (#221 to #225), seed from the route
 (default 1), in both views: portrait 360x740 and landscape 740x360
 (`grep -v '^#' <route> | node tools/playtest.mjs batch --seed 1`, and the same with `--landscape`). A run passes when
 playtest exits 0 (every tap made, every `expect` true). Card: proof-routes-rot, 2026-10-08.
 
 Before: 89 of 136 runs passed (24 of 68 routes failed in at least one view).
-After (on a99b11a5): 142 of 142 runs pass (71 kept routes, both views, including 4 added while this card ran); 1 route retired. No route failed because the game is broken.
+After (on 9f190eb7): 144 of 144 runs pass (72 kept routes, both views, including 5 added while this card ran); 1 route retired. No route failed because the game is broken.
 
 Retired routes live in `docs/proof/_retired/<card>/route.txt` with the reason on their first line. CI's eyes job does not
 replay them.
@@ -48,7 +48,7 @@ replay them.
 | hero-sheet-ability-cover | pass/pass | pass | pass | Kept |
 | hero-voice | pass/pass | pass | pass | Kept |
 | hero-voice-banner-under-guide | pass/pass | pass | pass | Kept |
-| hit-feel | pass/pass | pass | pass | Kept |
+| hit-feel | pass/pass | pass | pass | Fixed: since #225 a lost boss waits on its card for fair odds, so each round taps Try again and the boss fights on (passed 5 of 5 replays a view) |
 | intro-and-picker | fail/fail | pass | pass | Fixed: the fire's last line was rewritten on purpose (staged guide); expects the new line |
 | moment-layer | fail/fail | pass | pass | Fixed: presses Dodge; the first-boss moment is now folded into the Lantern Cache card ("First boss down"), so it checks the card, burst and Wren's first-boss line |
 | next-tier-gate-goal | pass/pass | pass | pass | Kept |
@@ -85,3 +85,4 @@ replay them.
 | hero-build-tab-blank | (new) | pass | pass | Kept (merged while this card ran) |
 | unspent-points-nudge | (new) | pass | pass | Kept (merged while this card ran) |
 | z13-unstick | (new) | pass | pass | Kept (merged while this card ran) |
+| boss-retry-reads-odds | (new) | pass | pass | Kept (merged while this card ran) |

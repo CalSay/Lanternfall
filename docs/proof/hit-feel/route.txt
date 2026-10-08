@@ -4,12 +4,16 @@
 # is on screen. The row records what it has shown (clean, and each number tier) in data-seen, copied to body[data-hit-seen], so the expect
 # does not depend on one frame or on the fight still running.
 # Number tiers (counter, crit, big), sizes, stings and parity (windows, hit-stop, seeded sample) are checked in tools/check.mjs (hit-feel).
+# Updated 2026-10-08 (proof-routes-rot): since #225 a lost boss waits on its card until the odds are fair, so the mid save's
+# zone 20 boss loss holds the fight; each round now also taps "Try again" so the boss (whose heavy hits are what a parry answers) fights on.
 new mid
 wait 2
 tap-if "Continue"
+tap-if "Try again"
 tap-if "Got it"
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 wait 1
 tap-if "Attack"
 wait 0.03
@@ -17,6 +21,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -24,6 +29,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -31,6 +37,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -38,6 +45,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -45,6 +53,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -52,6 +61,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -59,6 +69,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -66,6 +77,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -73,6 +85,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -80,6 +93,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -87,6 +101,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -94,6 +109,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -101,6 +117,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -108,6 +125,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -115,6 +133,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -122,6 +141,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -129,6 +149,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -136,6 +157,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -143,6 +165,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -150,6 +173,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -157,6 +181,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -164,6 +189,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -171,6 +197,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -178,6 +205,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -185,6 +213,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -192,6 +221,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -199,6 +229,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -206,6 +237,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -213,6 +245,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -220,6 +253,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -227,6 +261,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -234,6 +269,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -241,6 +277,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -248,6 +285,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -255,6 +293,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -262,6 +301,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -269,6 +309,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -276,6 +317,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -283,6 +325,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -290,6 +333,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -297,6 +341,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -304,6 +349,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -311,6 +357,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -318,6 +365,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -325,6 +373,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -332,6 +381,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -339,6 +389,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -346,6 +397,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -353,6 +405,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -360,6 +413,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -367,6 +421,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -374,6 +429,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -381,6 +437,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -388,6 +445,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -395,6 +453,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -402,6 +461,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -409,6 +469,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -416,6 +477,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -423,6 +485,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -430,6 +493,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -437,6 +501,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -444,6 +509,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -451,6 +517,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -458,6 +525,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -465,6 +533,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -472,6 +541,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -479,6 +549,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -486,6 +557,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -493,6 +565,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -500,6 +573,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -507,6 +581,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -514,6 +589,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -521,6 +597,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -528,6 +605,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -535,6 +613,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.03
@@ -542,6 +621,7 @@ tap-if "Parry"
 wait 0.07
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.07
@@ -549,6 +629,7 @@ tap-if "Parry"
 wait 0.03
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.05
@@ -556,6 +637,7 @@ tap-if "Parry"
 wait 0.05
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.04
@@ -563,6 +645,7 @@ tap-if "Parry"
 wait 0.06
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 tap-if "Attack"
 wait 0.06
@@ -570,6 +653,7 @@ tap-if "Parry"
 wait 0.04
 tap-if "Dismiss this tip"
 tap-if "Continue"
+tap-if "Try again"
 expect "#modeSeg"
 expect "body[data-hit-seen~=clean]"
 shot hit-feel-lamps
