@@ -3323,8 +3323,8 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   padding: 8px 16px; transform: translateY(-50%); pointer-events: none; text-align: center;
   background: linear-gradient(90deg, transparent, rgba(10, 7, 14, .94) 14%, rgba(10, 7, 14, .94) 86%, transparent); }
 .tv-beat[hidden] { display: none; }
-.tv-beat-txt { font: 700 calc(19px * var(--display-k, 1))/1.15 var(--display); letter-spacing: .03em; color: #FF9B8A; text-shadow: 2px 2px 0 #0B0810; }
-.tv-beat-help { font: 600 calc(14px * var(--display-k, 1))/1.2 var(--display); color: #EDE3D1; text-shadow: 1px 1px 0 #0B0810; }
+.tv-beat-txt { font: 700 max(var(--tmin, 0px), calc((19px * var(--display-k, 1)) * var(--tk, 1)))/1.15 var(--display); letter-spacing: .03em; color: #FF9B8A; text-shadow: 2px 2px 0 #0B0810; }
+.tv-beat-help { font: 600 max(var(--tmin, 0px), calc((14px * var(--display-k, 1)) * var(--tk, 1)))/1.2 var(--display); color: #EDE3D1; text-shadow: 1px 1px 0 #0B0810; }
 .tv-beat-help[hidden] { display: none; }
 .tv-beat.play:not(.calm) { animation: tv-beat-in .35s ease-out both; }
 .tv-beat.play.calm { animation: tv-beat-fade .35s linear both; }
