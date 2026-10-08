@@ -215,16 +215,16 @@
   // W1-A: a step that waits for materials shows live progress and never pauses the game.
   // "Chop 12 Pine Log for the Workbench (5/12)". When the hero is not at the node that yields the
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
-  const VERB = { wood: 'Chop', ore: 'Mine' };
+  const VERB = { wood: 'Chop', ore: 'Mine', crystal: 'Mine', hide: 'Hunt' };
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
-  const stockSpec = (id, what, tail) => {
+  const stockSpec = (id, what, tail, at) => {   // at: name the node (gear-in-first-25: "Mine 3 Quartz at the Quartz Geode for your first weapon (0/3).")
     const need = onboardNeed(id); if (!need.length) return null;
     const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Fight for' : 'Gather');
     // workbench-cost: a build row's gold ("Win 200 more gold for the Workbench (100/300)."); fights pay it, so the hint points at the fight
     const text = need.length > 1
       ? `You still need these for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
       : x.fam === 'gold' ? `Win ${x.n - x.have} more gold in fights for ${what} (${x.have}/${x.n}).`
-      : `${verb} ${x.n} ${x.name} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
+      : `${verb} ${x.n} ${x.name}${at && x.kind ? ` at the ${NODE_NAMES[x.kind][x.t - 1]}` : ''} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
     if (x.fam === 'gold') return { text, live: 1, node: onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: onGame() ? [0.74, 0.62] : null, side: 'up' };
     const there = S.activity === 'gather' && x.kind && S.node.kind === x.kind && S.node.t === x.t;
     const spec = { text, live: 1 };
@@ -276,7 +276,7 @@
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
     'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
-    'stock:weapon': () => stockSpec('stock:weapon', 'your first weapon'),
+    'stock:weapon': () => stockSpec('stock:weapon', 'your first weapon', '', true),
     light: () => {
       if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire to light it.' } : null;
       const f = $('hearthFire');
@@ -296,7 +296,9 @@
       // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
       return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll need one for the ore." };
     },
-    forge: () => campPath('forge', ["You'll want a weapon of your own. Open Camp.", 'Open Camp.', "Build the Forge. That's where weapons are made."]),
+    // gear-in-first-25: a bow or staff is made at the Workbench, so for Wren and Pip the Forge is for ingots and metal gear
+    forge: () => weaponAtBench() ? campPath('forge', ['Next, the Forge. Open Camp.', 'Open Camp.', 'Build the Forge. It makes ingots and metal gear.'])
+      : campPath('forge', ["You'll want a weapon of your own. Open Camp.", 'Open Camp.', "Build the Forge. That's where weapons are made."]),
     // first-gold-and-camp-strip: the materials are in hand; tick() has opened Craft on the weapon (once a visit), and this tip rings the button
     weapon: () => {
       const k = weaponKind(); if (!k) return null;
