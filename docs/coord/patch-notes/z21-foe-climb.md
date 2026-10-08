@@ -1,0 +1,1 @@
+No change to the game. Our test bot only blocked the first hit of a combo, so it lost far more than a player would at zones 17-24. It now blocks every hit. With that fixed, the real wall at zones 21-24 shows up: ordinary foes there expect tier 4 gear that takes far longer than ten hours to make. The coming balance pass owns it.
