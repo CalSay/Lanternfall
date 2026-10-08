@@ -250,7 +250,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   let joinPend = null;
   on('starterJoin', e => { joinPend = e && e.ids && e.ids.length ? e : null; });
   const joinLines = z => { const p = joinPend; if (!p || p.zone !== z) return []; joinPend = null; return p.ids.map(id => ({ txt: heroJoinLine(id) })); };
-  on('kill', () => { const p = joinPend; if (!p) return; joinPend = null; for (const id of p.ids) toast(heroJoinLine(id), 'good', null, 'high'); });
+  on('kill', () => { const p = joinPend; if (!p) return; joinPend = null; for (const id of p.ids) emit('toast', { key: 'starterJoin', msg: heroJoinLine(id), kind: 'good', prio: 'high' }); });
   on('champWin', e => {
     if (!e) return;
     const title = e.name ? `${e.name} falls` : 'Champion down', eye = `Zone ${e.zone} Champion down`, joins = MOMENT_OFF ? [] : joinLines(e.zone);   // no cards (a test page): the kill's toast says it

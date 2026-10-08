@@ -9569,6 +9569,7 @@ const NOTICES = [
   // ---- C14: the merged away report owns its source summaries ----
   { id: 'away-report', key: 'away-report', ch: 'card' },
   { id: 'hero-token', key: 'heroToken', ch: 'bell', why: 'a hero token won (56c, story-unlock-gates): when that hero joins; no kit yet, so no pop' },
+  { id: 'starter-join', key: 'starterJoin', ch: 'pop', wait: 30, why: 'a starter joined with no Champion card to say it (the card or the story off, or a clear made while away; starters-join-when-met)' },
   // ---- refine-queues: the stations' orders ----
   { id: 'refine-coal', key: 'refine-coal', ch: 'pop', wait: 10, why: 'once a save: where coal comes from (the art ruling: coal drops from Copper Ore once the Forge is built)' },
   { id: 'refine-why', key: 'refine-why', ch: 'pop', reply: true, why: 'an order button the player just pressed could not add the order: say why' }
@@ -42078,7 +42079,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   let joinPend = null;
   on('starterJoin', e => { joinPend = e && e.ids && e.ids.length ? e : null; });
   const joinLines = z => { const p = joinPend; if (!p || p.zone !== z) return []; joinPend = null; return p.ids.map(id => ({ txt: heroJoinLine(id) })); };
-  on('kill', () => { const p = joinPend; if (!p) return; joinPend = null; for (const id of p.ids) toast(heroJoinLine(id), 'good', null, 'high'); });
+  on('kill', () => { const p = joinPend; if (!p) return; joinPend = null; for (const id of p.ids) emit('toast', { key: 'starterJoin', msg: heroJoinLine(id), kind: 'good', prio: 'high' }); });
   on('champWin', e => {
     if (!e) return;
     const title = e.name ? `${e.name} falls` : 'Champion down', eye = `Zone ${e.zone} Champion down`, joins = MOMENT_OFF ? [] : joinLines(e.zone);   // no cards (a test page): the kill's toast says it
