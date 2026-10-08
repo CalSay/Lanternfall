@@ -1,0 +1,1 @@
+On a new game, Next Up now keeps Hesketh's fire on the list until it is lit ("Chop Pine Log for Hesketh's fire: 3/8", then "Light Hesketh's fire: ready"), even after a reload or a closed tip, and Go takes you to the Pine Grove. Best shot: reload-fight.

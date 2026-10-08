@@ -12743,6 +12743,78 @@ if (section('unique weapons wall icon')) try {
   }
 } catch (e) { fail('unique weapons wall icon crashed: ' + (e.stack || e)); }
 
+// ---- guide-goal-after-reload: Hesketh's fire stays on Next Up until it is lit, through a reload or a closed tip ----
+// The guide's Gather tip and his Pine Log line live in memory and end on ×, so the fire has a Next Up row of its own (55-hearth
+// 'hearth-fire'), and his line is queued again at boot while it is unread (75-onboard-ui). Fixture: a cold seed-11 game at 2:00, zone 2,
+// fire unlit, Gather and Next Up open, no free points.
+if (section('guide goal after reload')) try {
+  const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-cold-z2-unlit.json'), 'utf8');
+  const g = loadCore({ seed: 11, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+  const top = () => JSON.parse(E('JSON.stringify(topGoals(3, { sticky: false }))'));
+  const fire = () => JSON.parse(E('JSON.stringify(topGoals(10, { sticky: false }))')).find(x => x.id === 'hearth-fire') || null;
+  E('S.mats.wood[0] = 3');
+  let l = top(), f = fire();
+  assert(E('hearthCold() && !hearthLit() && isUnlocked("gather")') && l[0] && l[0].id === 'hearth-fire' && f.ready && f.label === "Chop Pine Log for Hesketh's fire: 3/8",
+    `fire goal: on the cold zone 2 fixture the fire is first on Next Up, Ready, "n/8" from the Pine Log held (${l.map(x => x.id + ':' + x.label).join(' | ')})`);
+  assert(f.go && f.go.act === 'gather' && f.go.node && f.go.node.kind === 'wood' && f.go.node.t === 1, `fire goal: Go sends the hero to the Pine Grove (${JSON.stringify(f.go)})`);
+  E('onboardDone("gather")');
+  assert(E('!!S.onboard.done.gather') && top()[0].id === 'hearth-fire', `fire goal: after × on the Gather tip it is still first (${top().map(x => x.id).join()})`);
+  E('S.L += 2');   // 8 free attribute points
+  l = top(); const fi = l.findIndex(x => x.id === 'hearth-fire');
+  assert(E('attrPoints(soloHero()).free') === 8 && fi === 1 && l[0].id === 'hero-up', `fire goal: with 8 free points it is second, right under the points (unspent-points-nudge) (${l.map(x => x.id).join()})`);
+  E('S.L -= 2; S.mats.wood[0] = 0; S.activity = "gather"; S.node = { kind: "wood", t: 1 }');
+  f = fire();
+  assert(f && !f.ready && Math.abs(f.pct - 0.01) < 1e-9 && /: 0\/8$/.test(f.label), `fire goal: while chopping Pine with 0 logs it is listed, not Ready (pct ${f && f.pct}, "${f && f.label}")`);
+  E('S.mats.wood[0] = 8'); f = fire();
+  assert(f && f.ready && f.label === "Light Hesketh's fire: ready" && f.go.act === 'gather', `fire goal: with 8 Pine Log it reads "Light Hesketh's fire: ready" (${f && f.label})`);
+  assert(E('hearthLight()') && !fire() && !E('topGoals(10, { sticky: false }).some(x => x.id === "hearth-fire")'), 'fire goal: once the fire is lit it is gone');
+  assert(!g.errors.length, 'fire goal: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  const w = loadCore({ seed: 11 }); w.eval('soloPick("wren"); hearthWarm(); S.maxZone = S.zone = 2; onboardUnlockAll(); S.mats.wood[0] = 3');
+  assert(!w.eval('hearthCold()') && !w.eval('topGoals(10, { sticky: false }).some(x => x.id === "hearth-fire")'), 'fire goal: a warm save never shows it');
+  // the boot line: a page booted on the fixture queues his Pine Log line once; once read (Got it), the next boot does not queue it
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('guide goal after reload (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const LINE = 'Bring me Pine Log for a proper fire';
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const boot = async save => {
+        const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: save, key: KEY });   // no away card
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+        return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+      };
+      // wait for his line, fighting on and closing an away card on the way (a reload lands in a fresh fight; his line waits for the gap after it)
+      const waitLine = async (page, X, ms) => {
+        for (let t = 0; t < ms; t += 250) {
+          const txt = await page.evaluate(() => { const b = document.querySelector('.ob-bub'); return b && !b.hidden ? b.textContent : ''; });
+          if (txt.includes(LINE)) return true;
+          await X('(() => { const c = [...document.querySelectorAll("button")].find(b => b.offsetParent && /^Continue$/.test(b.textContent.trim())); if (c) c.click(); if (guidePhase(true) === "hero") soloAttack(); return true; })()');   // a turn fight waits for your press
+          await page.waitForTimeout(250);
+        }
+        return false;
+      };
+      const a = await boot(raw);
+      const shown = await waitLine(a.page, a.X, 30000);
+      assert(shown, 'boot line: a boot on the cold fixture with his line unread brings back "Bring me Pine Log for a proper fire"');
+      if (shown) await a.X('document.querySelector(".ob-ok") && !document.querySelector(".ob-ok").hidden && document.querySelector(".ob-ok").click(); true');
+      await a.page.waitForTimeout(300);
+      const read = await a.X('!!S.onboard.done["say:gather"]');
+      await a.X('save(); true'); const after = await a.X(`localStorage.getItem(${JSON.stringify(KEY)})`);
+      assert(read, 'boot line: Got it marks it read (say:gather)');
+      assert(!a.errs.length, 'boot line: no page errors' + (a.errs.length ? ': ' + a.errs[0] : ''));
+      await a.ctx.close();
+      const b = await boot(after);
+      assert(!(await waitLine(b.page, b.X, 30000)), 'boot line: once read, the next boot does not bring it back (fighting on for as long as the first boot was given)');
+      await b.ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('guide goal after reload crashed: ' + (e.stack || e)); }
+
 // ==== unspent-points-nudge: a pile of two levels' points or more tops Next Up; learn-ability stays in the list ====
 // save-dipper-z4: the cold leg's phone dipper at zone 4 (Wren Lv 9, 28 points free, Power Shot learnable, a bounty ready).
 if (section('unspent points nudge')) try {
