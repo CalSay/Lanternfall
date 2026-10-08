@@ -1,0 +1,31 @@
+# seed: 1
+# Proof for card desktop-mouse-playtest, in the desktop view (1280x720, mouse; playtest.mjs's default).
+# The playtest itself is in the project files (autopilot/reports/desktop-playtest-2026-10-08/). This route proves the
+# one-line fixes it led to: the fight's bar and sound buttons and the Grit counter explain themselves to a resting pointer
+# without "Tap", and an ability in a slot says how to take it out with the button it names. It also uses the driver's new
+# `hover` and `key` commands. Run: grep -v '^#' route.txt | node tools/playtest.mjs batch --seed 1
+new mid
+wait 2
+tap-if "Skip"
+tap-if "Continue"
+hover "Fight bars"
+expect "Fight bars on (health and timing). Turn them off."
+expect-no "Tap to hide"
+shot fight-bars-hover
+hover "Sound on"
+expect "Sound on. Turn it off."
+hover "Grit"
+expect "Open it for what it does"
+expect-no "Tap for what it does"
+tap "Hero"
+tap "Abilities"
+tap "Shield Bash"
+# the line sits under the description: at 740x360 a player scrolls the detail to it
+scroll down
+expect "Choose Take out to remove it."
+expect-no "Tap it to take it out"
+shot ability-take-out
+key Escape
+wait 1
+expect-no "Choose Take out to remove it."
+shot escape-closes-menu

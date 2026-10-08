@@ -2003,7 +2003,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     g.fillStyle = on_ ? '#7ED36A' : '#6B6275'; g.fillRect(1, 1, 5, 2);
     g.fillStyle = on_ ? '#8FB8FF' : '#6B6275'; g.fillRect(1, 4, 3, 2);
     hudBtn.classList.toggle('off', !on_);
-    hudBtn.title = on_ ? 'Battle bars on. Tap to hide.' : 'Battle bars off. Tap to show.';
+    hudBtn.title = on_ ? 'Fight bars on (health and timing). Turn them off.' : 'Fight bars off. Turn them on (health and timing).';
     hudBtn.setAttribute('aria-label', hudBtn.title); hudBtn.setAttribute('aria-pressed', on_ ? 'true' : 'false');
   }
   hudBtn.addEventListener('pointerdown', e => e.stopPropagation());
