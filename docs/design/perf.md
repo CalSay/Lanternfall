@@ -129,3 +129,9 @@ The budgets themselves are unchanged: they stay the target for a real phone, and
 
 Two harness fixes landed with it: the run closes the new moment card (`.mm-ov`) like the story sheets, and the tap test waits for a live
 Attack button and retries until it has the wanted number of real taps (the button greys out between packs, so on a new game it often measured 0 or 1 tap).
+
+Moment and story cards (perf-late-save-moment-crash, 2026-10-08): every harness click goes through `safeClick`, which taps away any
+`.mm-ov`, `.join-ov` or story sheet first (waiting out the moment card's 700 ms tap lock, then Continue) and retries fast on an
+interception instead of waiting 30 s. Before each measured window the run waits until no card has shown for 1 s. A card that
+intercepts a click inside a window is closed and the window restarts with a fresh start time, so closing never counts. The cards it
+closed print under the report ("cards tapped away"). The game itself is unchanged: moments stay on, as a player sees them.

@@ -150,11 +150,43 @@ async function runScenario(browser, base, { dev, save }) {
 
   // Character creation (new game) or "Choose your path" (old save): click through like a player.
   // A new game opens on the drawn opening first (intro-and-picker) and plays Hesketh's fire after the pick: tap through those too.
+  // Every harness click goes through safeClick: it taps away any card over the game first, and on an interception closes it
+  // and tries again within a few seconds instead of waiting Playwright's full 30 s on an overlay (perf-late-save-moment-crash).
+  const OVERLAYS = '.mm-ov, .join-ov, .sty-sheet .sty-done, .bsheet-ov .sty-done';
+  out.closed = [];   // the moment cards the harness tapped away (shown under the report)
+  const overlayUp = () => page.$(OVERLAYS).then(h => !!h);
+  // Close what is up now, as a player taps it away. A moment card ignores taps for its first MOMENT_TUNE.tapLockMs (75-moments-ui),
+  // so wait that out, then tap Continue. Returns true if anything was up.
+  const closeOverlays = async () => {
+    let any = false;
+    for (let k = 0; k < 6; k++) {
+      if (await page.$('.mm-ov')) {
+        const m = await page.evaluate(() => { try { return window.__lf.x('JSON.stringify({ left: MOMENT_TUNE.tapLockMs - (Date.now() - MOMENT_UI.shownAt), what: [...document.querySelectorAll(".mm-ov .mm-eye, .mm-ov .mm-head")].map(e => e.textContent).join(": ") })'); } catch (e) { return null; } }).then(j => { try { return JSON.parse(j); } catch (e) { return null; } });
+        const what = (m && m.what) || 'moment card';
+        if (out.closed[out.closed.length - 1] !== what) out.closed.push(what);
+        await page.waitForTimeout(Math.max(0, m && m.left > -1e6 ? m.left + 50 : 750));
+        await page.click('.mm-ov .mm-go', { timeout: 2000 }).catch(() => page.click('.mm-ov', { timeout: 1000, position: { x: 5, y: 5 } }).catch(() => {}));
+      } else if (await page.$('.join-ov')) await page.click('.join-ov', { timeout: 2000, position: { x: 5, y: 5 } }).catch(() => {});
+      else if (await page.$('.sty-sheet .sty-done, .bsheet-ov .sty-done')) await page.click('.sty-sheet .sty-done, .bsheet-ov .sty-done', { timeout: 2000 }).catch(() => {});
+      else break;
+      any = true; await page.waitForTimeout(300);
+    }
+    return any;
+  };
+  const isOverlayHit = e => /intercepts pointer events/.test(String(e && e.message));
+  const safeClick = async (sel, tries = 4) => {
+    for (let k = 1; ; k++) {
+      await closeOverlays();
+      try { return await page.click(sel, { timeout: 4000 }); } catch (e) {
+        if (k >= tries || !(isOverlayHit(e) || await overlayUp())) throw e;
+      }
+    }
+  };
   await page.waitForTimeout(300);
   for (let i = 0; i < 14; i++) {
     const intro = await page.$('#introScreen .intro-go'), go = intro || await page.$('#createScreen .create-go');
     if (!go) break;
-    await go.click(); await page.waitForTimeout(intro ? 400 : 150);
+    await safeClick(intro ? '#introScreen .intro-go' : '#createScreen .create-go'); await page.waitForTimeout(intro ? 400 : 150);
   }
   // A new game starts with no gold; give it some so the upgrade button can be tapped.
   if (save === 'new') await page.evaluate(() => { const S = window.__lf.S(); S.gold = Math.max(S.gold, 1e6); });
@@ -166,22 +198,34 @@ async function runScenario(browser, base, { dev, save }) {
   await page.evaluate(() => window.__lf.setTab('adv'));
 
   const now = () => page.evaluate(() => performance.now());
-  // A new game plays story cards (the opening, a companion's line). A player taps them away, so do the same
-  // before a measured window: the sheet covers the game UI and would intercept the click. Not part of the measure.
+  // A new game plays story cards (the opening, a companion's line) and any save can earn a moment card. A player taps them away,
+  // so do the same before a measured window: a card covers the game UI and would intercept the click. Not part of the measure.
+  // A second card can follow the first, so wait until none has shown for STORY_QUIET ms (capped at STORY_CAP ms a call).
+  const STORY_QUIET = 1000, STORY_CAP = 15000;
   const closeStory = async () => {
-    for (let k = 0; k < 12 && await page.$('.sty-sheet .sty-done, .bsheet-ov .sty-done, .mm-ov'); k++) {
-      // A moment card (.mm-ov, 23n) ignores taps for its first moment (tapLockMs); the retry loop covers that.
-      await page.click('.sty-sheet .sty-done, .bsheet-ov .sty-done, .mm-ov', { timeout: 3000, position: { x: 5, y: 5 } }).catch(() => {}); await page.waitForTimeout(400);
+    const end = Date.now() + STORY_CAP;
+    for (let quiet = Date.now(); Date.now() - quiet < STORY_QUIET && Date.now() < end;) {
+      if (await closeOverlays()) quiet = Date.now(); else await page.waitForTimeout(200);
     }
   };
+  // A measured window. A harness click inside it can still meet a card that showed after closeStory (on the late save a moment card
+  // pops up during the tab loop): the click then fails fast, the card is closed, and the window starts again with a fresh t0, so the
+  // closing never counts and the window keeps its full length.
+  const tapIn = async sel => { if (await overlayUp()) throw new Error('overlay up: intercepts pointer events'); await page.click(sel, { timeout: 4000 }); };
   const window_ = async (ms, fn) => {
-    await closeStory();
-    const t0 = await now(); if (fn) await fn(); await page.waitForTimeout(ms); const t1 = await now();
-    return page.evaluate(([a, b]) => ({ frames: window.__lfp.frames.filter(f => f[0] >= a && f[0] < b), ui: [], lt: window.__lt.filter(l => l[0] >= a && l[0] < b), t0: a, t1: b }), [t0, t1]);
+    for (let k = 1; ; k++) {
+      await closeStory();
+      const ui0 = await page.evaluate(() => window.__lfp.ui.length), t0 = await now();   // ui() calls made while closing a card stay out too
+      try { if (fn) await fn(); } catch (e) {
+        if (k < 4 && isOverlayHit(e)) { out.restarts = (out.restarts || 0) + 1; continue; }
+        throw e;
+      }
+      await page.waitForTimeout(ms); const t1 = await now();
+      return page.evaluate(([a, b, u]) => ({ frames: window.__lfp.frames.filter(f => f[0] >= a && f[0] < b), ui: [], lt: window.__lt.filter(l => l[0] >= a && l[0] < b), t0: a, t1: b, ui0: u }), [t0, t1, ui0]);
+    }
   };
   const summarize = w => ({ ...frameStats(w.frames, w.t0, w.t1), long: w.lt.length, longMax: Math.round(Math.max(0, ...w.lt.map(l => l[1]))) });
   const uiSince = async fromIdx => page.evaluate(i => window.__lfp.ui.slice(i), fromIdx);
-  const uiIdx = () => page.evaluate(() => window.__lfp.ui.length);
 
   await page.waitForTimeout(W.warm);
 
@@ -189,13 +233,12 @@ async function runScenario(browser, base, { dev, save }) {
   out.tabs = {};
   const tabIds = await page.evaluate(() => [...document.querySelectorAll('.tab')].map(b => b.dataset.tab));
   for (const id of tabIds) {
-    const ui0 = await uiIdx();
-    const w = await window_(W.tab, () => page.click(`.tab[data-tab="${id}"]`));
-    const uis = await uiSince(ui0);
+    const w = await window_(W.tab, () => tapIn(`.tab[data-tab="${id}"]`));
+    const uis = await uiSince(w.ui0);
     out.tabs[id] = { ...summarize(w), uiMed: r2(pct(uis, 50)), uiP95: r2(pct(uis, 95)) };
   }
   await closeStory();   // a moment card (.mm-ov) can pop up during the tab loop on the late save and would cover the tab bar
-  await page.click('.tab[data-tab="adv"]'); await page.waitForTimeout(300);
+  await safeClick('.tab[data-tab="adv"]'); await page.waitForTimeout(300);
 
   // ---- toast burst ----
   out.toasts = summarize(await window_(W.toast, () => page.evaluate(() => {
@@ -213,7 +256,6 @@ async function runScenario(browser, base, { dev, save }) {
   await page.waitForTimeout(500);
   const heap = async () => { await cdp.send('HeapProfiler.collectGarbage'); return (await cdp.send('Runtime.getHeapUsage')).usedSize; };
   const h0 = await heap(), tH0 = Date.now();
-  const ui0 = await uiIdx();
   if (TRACE) await cdp.send('Tracing.start', { categories: 'devtools.timeline,disabled-by-default-devtools.timeline,v8.execute,blink,cc,gpu,toplevel', transferMode: 'ReturnAsStream' });
   const wf = await window_(W.fight);
   if (TRACE) {
@@ -222,7 +264,7 @@ async function runScenario(browser, base, { dev, save }) {
     let data = ''; for (;;) { const c = await cdp.send('IO.read', { handle: stream }); data += c.data; if (c.eof) break; }
     fs.mkdirSync(TRACE, { recursive: true }); fs.writeFileSync(path.join(TRACE, `fight-${dev}-${save}.json`), data);
   }
-  const uis = await uiSince(ui0);
+  const uis = await uiSince(wf.ui0);
   out.fight = { ...summarize(wf), uiMed: r2(pct(uis, 50)), uiP95: r2(pct(uis, 95)), uiCalls: uis.length };
   // ---- S6 (combat-2 2.8, 8.5): swarm10 and bossKit ----
   // swarm10: the highest Cave Bat zone the save has, packs of 10, Burns on every foe, an Explosive elite in each pack,
@@ -279,10 +321,10 @@ async function runScenario(browser, base, { dev, save }) {
     await page.waitForTimeout(1200); // let the Attack cooldown end
     await page.waitForSelector('.sbtn.sb-atk:not(.off)', { timeout: 6000 }).catch(() => {});   // a new game's cooldown is longer: a tap on a greyed button measures nothing
     // Close story pop-ups (a companion joins, ...): one tap anywhere continues. Not part of the measure.
-    await closeStory();
-    for (let k = 0; k < 5 && await page.$('.join-ov'); k++) { await page.click('.join-ov', { position: { x: 5, y: 5 } }).catch(() => {}); await page.waitForTimeout(300); }
+    await closeStory();   // also taps away a companion's .join-ov
     await btn.scrollIntoViewIfNeeded();
     await page.waitForTimeout(300); // scrolling can shrink the stage (compact mode, 0.22 s): let the button settle
+    await closeOverlays();   // a card that showed while the button settled would take the tap
     const b = await btn.boundingBox();
     if (phone) await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
     else await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
@@ -394,6 +436,7 @@ function report(all) {
     console.log(`\n${label(o)}: ${bad.length ? 'FAIL' : 'PASS'} (${c.length - bad.length}/${c.length} within budget)`);
     for (const x of bad) console.log(`  FAIL ${x.name}: ${x.val}${x.unit} (budget ${x.lim}${x.unit})`);
     if (o.errors.length) console.log('  page errors: ' + o.errors.slice(0, 3).join(' | '));
+    if (o.closed && o.closed.length) console.log('  cards tapped away (outside the measured windows): ' + o.closed.slice(0, 6).join(' | ') + (o.restarts ? ` (${o.restarts} window(s) restarted)` : ''));
   }
   console.log(`\n${fails ? 'FAIL' : 'PASS'}: ${fails} metric(s) over budget${QUICK ? ' (quick run)' : ''}`);
   return fails;
