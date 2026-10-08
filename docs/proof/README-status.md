@@ -1,12 +1,12 @@
 # Proof route status
 
-Every `docs/proof/<card>/route.txt` replayed on the integration branch at f8123154 (after #219), seed from the route
+Every `docs/proof/<card>/route.txt` first replayed on the integration branch at f8123154 (after #219), then again after merging a99b11a5 (#221 to #224), seed from the route
 (default 1), in both views: portrait 360x740 and landscape 740x360
 (`grep -v '^#' <route> | node tools/playtest.mjs batch --seed 1`, and the same with `--landscape`). A run passes when
 playtest exits 0 (every tap made, every `expect` true). Card: proof-routes-rot, 2026-10-08.
 
 Before: 89 of 136 runs passed (24 of 68 routes failed in at least one view).
-After: 134 of 134 runs pass (67 kept routes, both views); 1 route retired. No route failed because the game is broken.
+After (on a99b11a5): 142 of 142 runs pass (71 kept routes, both views, including 4 added while this card ran); 1 route retired. No route failed because the game is broken.
 
 Retired routes live in `docs/proof/_retired/<card>/route.txt` with the reason on their first line. CI's eyes job does not
 replay them.
@@ -81,3 +81,7 @@ replay them.
 | wire-menu-icons | fail/fail | pass | pass | Fixed: closes the New hero card and the Refining tip; Training is gone (Build in its place); Gear is checked on Hero |
 | workbench-cost | pass/pass | pass | pass | Kept (comment only, no commands; see cards workbench-cost-route and eyes-empty-route) |
 | zone-1-unique-hero-fit | fail/fail | pass | pass | Fixed: closes the Refining tip over Craft |
+| guide-goal-after-reload | (new) | pass | pass | Kept (merged while this card ran) |
+| hero-build-tab-blank | (new) | pass | pass | Kept (merged while this card ran) |
+| unspent-points-nudge | (new) | pass | pass | Kept (merged while this card ran) |
+| z13-unstick | (new) | pass | pass | Kept (merged while this card ran) |
