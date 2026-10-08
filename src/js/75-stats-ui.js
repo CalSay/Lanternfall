@@ -263,7 +263,7 @@
       if (matPick) {
         const [f, t] = matPick, v = Array.isArray(D.g[f]) ? +D.g[f][t - 1] || 0 : 0;
         putText(matCap, `${safe(() => matName(f, t), f + ' ' + t)}: ${exact(v)} gathered.` + (D.since.g ? ` Counted since ${shortDate(D.since.g)}; earlier it counts what you held then.` : ''));
-      } else putText(matCap, 'Lifetime units gathered, by tier. Tap a cell for the exact count.');
+      } else putText(matCap, 'Lifetime units gathered, by tier. Choose a cell for the exact count.');
     }
   }
 }

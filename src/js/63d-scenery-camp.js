@@ -146,7 +146,7 @@ let campPaintFire = null;
   }
   setInterval(place, 200);
 
-  // ---- words: the opening card (the stage hint is 70-ui's: 'Tap to work faster') ----
+  // ---- words: the opening card (the stage hint is 70-ui's: 'Click or tap to work faster') ----
   const opening = () => {
     if (!cold() || lit()) return;
     toast('Old Hesketh\'s fire is cold. Chop 8 Pine Log and light it for him.', 'good', { mat: ['wood', 1] }, 'high');

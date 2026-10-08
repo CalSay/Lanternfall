@@ -246,7 +246,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     putText(pipsLb, r.name);
     pips.replaceChildren(...Array.from({ length: r.max }, (_, i) => el('i', 'tv-pip' + (i < r.n ? ' on' : '') + (r.max > 5 ? ' sm' : ''))));
     pips.setAttribute('aria-label', `${r.name} ${r.n} of ${r.max}`);
-    resBtn.setAttribute('aria-label', `${r.name} ${r.n} of ${r.max}. Tap for what it does.`);
+    resBtn.setAttribute('aria-label', `${r.name} ${r.n} of ${r.max}. Open it for what it does.`);
     // the first time this hero gains its resource, the line shows on its own (once a hero: S.abil.resTip)
     chips.replaceChildren(...list.map(([id, n]) => { const s = el('span', 'tv-chip'); const u = stIcon(id); if (u) s.append(img('tv-chip-ic', u, id)); else s.append(el('b', null, id)); if (n) s.append(el('small', null, String(n))); return s; }),
       ...(c.last > 0 ? [el('span', 'tv-tag', 'Last Stand')] : []), ...(c.shadow > 0 ? [el('span', 'tv-tag', 'Shadow Step')] : []), ...(c.sear ? [el('span', 'tv-tag', 'Searing')] : []));
