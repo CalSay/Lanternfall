@@ -110,6 +110,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Bring a new card that appears above the tapped row into view (`scrollIntoView({ block: 'start' })`) and put its buttons under the title in short landscape. Why: the result card pushed the recipe list down, so the first test run showed no card and the Equip button sat below the fold. (craft-reveal, 2026-10-06)
 - Put a new stage element where it overlaps nothing in both views before the first push: check it in a 360x740 and a 740x360 shot next to the place caption and the resource row. Why: the hit-feel lamps first sat under the Grit row and overlapped the zone caption; the coordinator caught it. (hit-feel, 2026-10-06)
 
+- When a tab gains a fifth view, let a long label take its room (`grid-auto-columns: minmax(min-content, 1fr)`) instead of shrinking the font: at 11 px Abilities still clipped by 5 px at 360x740 and 11 px in the 740x360 header. And a check that opened a view on one tab and then calls `setView` on another must `setTab` first. Why: wire-menu-icons failed and C24 timed out when Gear moved to the Hero tab. (cal-0107-gear-and-rates, 2026-10-07)
+
 ## Saves and offline parity
 
 - Before bumping the save key, load real old saves (fixtures and a sim save) on the branch; add state with registerState defaults and a load-time clamp when that works. Why: PR #58 bumped to v6 for new attribute state, but the old saves loaded fine with one XP clamp, and a bump needs Cal's label. (hero-progression-rework, 2026-10-06)
@@ -145,6 +147,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Stamp a fixture save's `last` to now when a browser check stores it (`o.last = Date.now()` in the init script). Why: the unlit-8log fixture's old timestamp brought an away card over the story sheet and 4461 Pine Log of away gains, so the camp steps jumped past the one under test. (cal-0107-staged-guide, 2026-10-07)
 - A guide walk in a check presses Got it on Hesketh's unlock lines (`say:` steps), as a player does. Why: once unlock lines held the game, three landscape walks and the gathering walk sat behind "You can gather now" and reported frozen clocks and unringed targets. (cal-0107-staged-guide, 2026-10-07)
 - Compare a rounded saved clock with a tolerance, never `<=` against the live clock. Why: `got` holds `Math.round(t)`, up to 0.5 s ahead, so the unlock governor dropped the row just opened while the guide held the clock and Next Up opened 5 s after the Hero tab. (cal-0107-staged-guide, 2026-10-07)
+- Pass `tools/check.mjs --only=` a regex joined with `|` ("--only=solo hero|hero voice"), and confirm your new assertion's line appears in the output. Why: a comma list matched no section and still printed "all checks passed", and a check added to the wrong loop never ran until its section was named. (zone-1-unique-hero-fit, 2026-10-07)
 - Run the `--long` health run only on 3 or more cores (about 2.5 min, 7 min CPU). It ignores `--only`, known P2. (f-health-long, 2026-10-06)
 
 - Story cards stack in the first minute (three before the first fight on a fresh save) and their count varies by timing: a proof route uses `tap-if "Skip"`, never a fixed number of taps. Predicted: routes replay stable; measured: one fixed-skip route failed 1 run in 3 locally, `tap-if` passed 5 of 5. (sys-proof-ci, 2026-10-06)

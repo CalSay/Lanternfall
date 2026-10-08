@@ -76,7 +76,7 @@ const SLOTS = [
 const SLOT = Object.fromEntries(SLOTS.map(s => [s.id, s]));
 const RECIPE = { weapon: { ore: 6, wood: 3, ess: 2 }, helm: { ore: 5, ess: 3 }, charm: { wood: 3, ess: 5 }, pick: { ore: 4, wood: 4 }, axe: { wood: 5, ore: 3 } };
 const UNIQ = {
-  sproutblade: { name: 'Sproutblade', slot: 'weapon', col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' },
+  sproutblade: { name: 'Sproutblade', slot: 'weapon', retired: 1, col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' },
   echocowl: { name: 'Echo Cowl', slot: 'helm', col: '#8A6FC8', src: 'Zone boss · Batwing Caves', fx: { echo: 0.5 }, txt: 'Critical hits strike again for 50%.' },
   rattlecharm: { name: 'Rattlebone Charm', slot: 'charm', col: '#EFE6D6', src: 'Zone boss · The Bonefield', fx: { abil: 20 }, txt: 'Your abilities deal 20% more damage.' },
   carapacepick: { name: 'Carapace Pick', slot: 'pick', col: '#3F8FA8', src: 'Zone boss · Beetle Barrows', fx: { oreExtra: 0.25 }, txt: '25% chance of an extra ore per swing.' },
@@ -88,12 +88,26 @@ const UNIQ = {
   colossuspick: { name: 'Colossus Pick', slot: 'pick', col: '#6E7F4A', src: 'World raid · The Mire Colossus', fx: { gather: 40 }, txt: 'All gathering 40% faster.' },
   hydraglass: { name: 'Hydra Glass', slot: 'charm', col: '#7FD6E0', src: 'World raid · The Glass Hydra', fx: { crit: 10 }, txt: '+10% critical hit chance.' },
   eaterfang: { name: "Lantern Eater's Fang", slot: 'weapon', col: '#FF9E3D', src: 'World raid · The Lantern Eater', fx: { might: 30, counter: 100 }, txt: '+30% damage. Your counters after a parry deal double.' },
-  tyrantaxe: { name: "Pale Tyrant's Axe", slot: 'axe', col: '#E6E1F0', src: 'World raid · The Pale Tyrant', fx: { woodExtra: 0.3, gather: 20 }, txt: '30% chance of an extra log, all gathering 20% faster.' }
+  tyrantaxe: { name: "Pale Tyrant's Axe", slot: 'axe', col: '#E6E1F0', src: 'World raid · The Pale Tyrant', fx: { woodExtra: 0.3, gather: 20 }, txt: '30% chance of an extra log, all gathering 20% faster.' },
+  // zone-1-unique-hero-fit: the zone 1 unique is a charm every hero can wear. The Sproutblade (a sword only the Warden
+  // could wear) is retired: it no longer drops, old saves keep theirs, and its tiles show only to players who found one.
+  briarsprig: { name: 'Briar Sprig', slot: 'charm', was: 'sproutblade', col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' }
+};
+// The uniques a player can see on the trophy wall, the Codex and the totals: every unique that still drops, plus a retired one they found.
+// A hidden retired unique's replacement (`was`) takes its place in the order, because the Codex's seen string is read by position.
+const uniqKeys = () => {
+  const got = k => typeof S !== 'undefined' && S.found && S.found[k], keys = Object.keys(UNIQ), out = [];
+  for (const k of keys) {
+    const u = UNIQ[k];
+    if (u.retired) { if (got(k)) out.push(k); else out.push(...keys.filter(j => UNIQ[j].was === k)); }
+    else if (!u.was || got(u.was)) out.push(k);
+  }
+  return out;
 };
 // Uniques are about their effect, not raw power (owner, 2026-09-27): base power at Rare level (was the
 // Legendary x3.2), and rarer drops. `owned` scales the chance when you already have that unique at this tier or higher.
 const UNIQ_TUNE = { pow: 1.8, first: 0.15, again: 0.04, owned: 0.5 };
-const ZONE_UNIQ = ['sproutblade', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
+const ZONE_UNIQ = ['briarsprig', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
 const RAID_UNIQ = ['wyrmscale', 'hollowcrown', 'colossuspick', 'hydraglass', 'eaterfang', 'tyrantaxe'];
 const BAG_MAX = 40;
 function itemColor(slot, t, u) { return kindColor(slot, t, u); } // 41-items.js

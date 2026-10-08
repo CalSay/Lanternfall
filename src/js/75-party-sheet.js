@@ -175,10 +175,10 @@ let openSheet, partySheet;
       const d = el('div', 'cs-hslot' + (open ? '' : ' soon'));
       d.append(it ? slotTile(it, null, 56) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm', 56));
       d.append(el('small', null, nouns[s.id] || s.n));
-      d.title = it ? itemName(it) : open ? 'Empty. Craft one in the Craft tab.' : 'Coming with crafting.';
+      d.title = it ? itemName(it) : open ? 'Empty. Choose gear in the Gear view, next to Hero.' : 'Coming with crafting.';
       g.append(d);
     }
-    body.append(section('Gear', g, '', el('p', 'note', 'Craft gear in the Craft tab.')));
+    body.append(section('Gear', g, '', el('p', 'note', 'Wear and swap gear in the Gear view, next to Hero. Make new gear in Craft.')));
     const n = (S.party && S.party.mirrors) || 0;
     const mir = el('div', 'cs-mirror');
     const mt = el('div'); mt.append(el('b', null, `Mirror of Embers: ${n}`), el('small', null, n ? 'Use one to choose a new class. Your level and gear stay.' : 'Bosses from zone 36 sometimes drop one. It lets you change class.'));

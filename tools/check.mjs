@@ -4565,6 +4565,32 @@ if (section('solo hero')) try {
     assert(E('HEARTH_TUNE.first.bench.secs <= 15 && HEARTH_TUNE.first.forge.secs <= 20 && CAMP_TUNE.secs[0] <= 60 && CAMP_TUNE.secs[1] <= 1800'), 'Lv 1 buildings build in seconds (Workbench 10 s, Forge 15 s, other rows 45 s; Lv 2 20 min)');
     errs.push(...g.errors);
   }
+  // 9b. zone-1-unique-hero-fit: the zone 1 unique is Briar Sprig, a charm every starter can wear; the Sproutblade is retired, not deleted
+  {
+    const g = loadCore({ solo: true, seed: 104 }), E = s => g.eval(s);
+    assert(E('zoneUnique(1)') === 'briarsprig' && E('UNIQ.briarsprig.slot') === 'charm' && E('UNIQ.briarsprig.fx.essExtra') === 0.1 && E('UNIQ.sproutblade.slot') === 'weapon' && E('!!UNIQ.sproutblade.retired'),
+      'the zone 1 unique is Briar Sprig (a charm, 10% extra essence); the Sproutblade stays in UNIQ as a retired sword');
+    for (const h of ['wren', 'tobin', 'pip']) {
+      E(`soloPick("${h}"); S.items = S.items.filter(it => it.u !== "briarsprig"); dropUnique(zoneUnique(1), 1)`);
+      const id = E('S.items.filter(it => it.u === "briarsprig").pop().id');
+      assert(E('soloHero()') === h && E(`fits(itemById(${id}), "charm", "hero")`) && E(`equipItem(${id}) !== false && equipped("charm") && equipped("charm").id === ${id}`), `${h} can wear Briar Sprig in the charm slot`);
+    }
+    const zs = []; for (let z = 1; z <= 60; z++) if (E(`zoneUnique(${z})`) === 'briarsprig') zs.push(z);
+    assert(zs.join() === '1,8,15,22,29,36,43,50,57' && !E('Array.from({ length: 70 }, (_, i) => zoneUnique(i + 1)).includes("sproutblade")'), `only the Sproutblade's old zones drop Briar Sprig (${zs.join()})`);
+    assert(E('ZONE_UNIQ.slice(1).join()') === 'echocowl,rattlecharm,carapacepick,sporeheart,golemfist,wispaxe', 'every other zone unique keeps its place');
+    const f = loadCore({ solo: true, seed: 105 });
+    assert(f.eval('statsApi.uniqueTotal()') === f.eval('ZONE_UNIQ.length + RAID_UNIQ.length') && f.eval('statsApi.uniqueTotal()') === 13 && !f.eval('codexPage("uniques").tiles.some(t => t.key === "sproutblade")'),
+      'a new save counts 13 uniques and shows no Sproutblade tile it can never earn');
+    assert(f.eval('codexPage("uniques").tiles[0].key') === 'briarsprig', 'with the Sproutblade hidden, Briar Sprig takes its place first in the Codex, so the seen string read by position does not shift');
+    const late = loadCore({ solo: true, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8') }) }), L = s => late.eval(s);
+    assert(L('S.found.sproutblade') === 3 && L('S.items.some(it => it.u === "sproutblade" && it.slot === "weapon")') && L('statsApi.uniqueTotal()') === 14 && L('codexPage("uniques").tiles.find(t => t.key === "sproutblade").got') === 1 && L('codexPage("uniques").tiles.map(t => t.key).join()') === L('Object.keys(UNIQ).join()'),
+      'an old save keeps its Sproutblade; the trophy total and the Codex still count it');
+    for (const [u, slot] of [['sproutblade', 'weapon'], ['briarsprig', 'charm']]) {
+      const r = L(`(() => { const o = JSON.parse(JSON.stringify(S)); o.items.push({ id: o.nextId, slot: "${slot}", t: 1, r: "legendary", plus: 0, u: "${u}" }); o.nextId++; o.found.${u} = 1; return decodeSave(encodeSave(o)); })()`);
+      assert(r.ok, `a save code holding a ${u} imports` + (r.ok ? '' : ': ' + r.error));
+    }
+    errs.push(...g.errors, ...f.errors, ...late.errors);
+  }
   // 10. the guide: the solo first session, one step at a time; it pauses the game while a step waits
   {
     const g = T(), E = s => g.eval(s);
@@ -7575,7 +7601,7 @@ if (section('bulk salvage (C23 browser)')) try {
         const page=await ctx.newPage(),errs=[];page.on('pageerror',e=>errs.push(String(e)));page.on('console',m=>{if(m.type()==='error'&&/lanternfall/.test(m.text()))errs.push(m.text());});
         await page.route('**/*',r=>r.request().url()==='http://lf.test/'?r.fulfill({status:200,body:html,headers:{'content-type':'text/html; charset=utf-8'}}):r.abort());
         await page.goto('http://lf.test/');await page.waitForFunction(()=>!!window.__t);const X=s=>page.evaluate(s=>window.__t.x(s),s);
-        await X('S.items=[];for(const p of Object.keys(S.equip))S.equip[p]=null;S.mats.ore[0]=1000;S.mats.wood[0]=1000;for(let i=0;i<5;i++)forgeItem("pick",1);S.items[0].plus=2;equipItem(S.items[0].id,"pick");dropUnique(Object.keys(UNIQ)[0],1);setTab("forge");setView("forge","gear");ui(true);true');
+        await X('S.items=[];for(const p of Object.keys(S.equip))S.equip[p]=null;S.mats.ore[0]=1000;S.mats.wood[0]=1000;for(let i=0;i<5;i++)forgeItem("pick",1);S.items[0].plus=2;equipItem(S.items[0].id,"pick");dropUnique(Object.keys(UNIQ)[0],1);setTab("party");setView("party","gear");ui(true);true');
         const bag=page.locator('#sec-craft-bag'),worn=await X('S.equip.pick'),unique=await X('S.items.find(i=>i.u).id'),before=await X('JSON.stringify(S.mats)'),eq=await X('JSON.stringify(S.equip)');
         await bag.locator('.cf-bulk-spares').click();
         assert(await bag.locator('.cf-tile[aria-pressed="true"]').count()===4&&await bag.locator(`[data-item-id="${worn}"]`).isDisabled()&&await bag.locator(`[data-item-id="${unique}"]`).isDisabled(),`C23 ${at}: real Salvage spares selects four unworn crafts and protects worn/unique buttons`);
@@ -7613,6 +7639,64 @@ if (section('bulk salvage (C23 browser)')) try {
     }} finally {await browser.close();}
   }
 } catch(e){fail('C23 bulk salvage browser crashed: '+(e.stack||e));}
+
+// ---- cal-0107-gear-and-rates: gear and the bag live on the Hero tab; every open Gather row shows a minute and an hour ----
+if (section('gear on the Hero tab (cal-0107-gear-and-rates)')) try {
+  const uiSrc = fs.readFileSync(path.join(ROOT, 'src/js/70-ui.js'), 'utf8'), crSrc = fs.readFileSync(path.join(ROOT, 'src/js/75-craft-ui.js'), 'utf8');
+  const btSrc = fs.readFileSync(path.join(ROOT, 'src/js/75-bounties-ui.js'), 'utf8'), shSrc = fs.readFileSync(path.join(ROOT, 'src/js/75-party-sheet.js'), 'utf8');
+  assert(/registerView\('party', \{ id: 'gear', label: 'Gear', order: 12, feature: 'party'/.test(uiSrc) && !/registerView\('forge', \{ id: 'gear'/.test(uiSrc), 'gear-and-rates: Gear is a Hero tab view between Hero and Abilities, not a Craft view');
+  assert(/registerSection\('party', \{\s*id: 'craft-gear'/.test(crSrc) && /registerSection\('party', \{\s*id: 'craft-bag'/.test(crSrc), 'gear-and-rates: Your gear and Bag register on the Hero tab');
+  assert(/upgrade: \['party', 'gear'\], reforge: \['party', 'gear'\]/.test(btSrc), 'gear-and-rates: upgrade and reforge bounties go to Hero, Gear');
+  assert(!/Craft gear in the Craft tab|Craft one in the Craft tab/.test(shSrc), 'gear-and-rates: the hero sheet no longer says gear lives on the Craft tab');
+  const {pw,exe}=browserTools;
+  if(!pw||!exe||!fs.existsSync(distFile))skipBrowser('gear-and-rates: Playwright or Chromium not here, skipped');
+  else {
+    const fixture=loadCore({seed:1107});fixture.eval('soloPick("wren");hearthWarm();S.maxZone=12;S.camp.open=true;S.camp.b.hearth=2;S.camp.b.store=8;onboardUnlockAll();onboardTips(false);save()');
+    const raw=fixture.storage.get(KEY),html0=fs.readFileSync(distFile,'utf8'),end=html0.lastIndexOf('})();\n</script>');
+    const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n'+html0.slice(0,end)+'\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n'+html0.slice(end);
+    const browser=await pw.chromium.launch({executablePath:exe,args:['--no-sandbox']});
+    try { for(const [width,height]of[[740,360],[360,740]]) {
+      const at=`gear-and-rates ${width}x${height}`,ctx=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+      try {
+        // an old UI pref that opened Craft on Gear must fall back to Make
+        await ctx.addInitScript(({raw,key})=>{localStorage.setItem(key,raw);localStorage.setItem('lanternfall.ui.v1',JSON.stringify({views:{forge:'gear'}}));},{raw,key:KEY});
+        const page=await ctx.newPage(),errs=[];page.on('pageerror',e=>errs.push(String(e)));page.on('console',m=>{if(m.type()==='error'&&/lanternfall/.test(m.text()))errs.push(m.text());});
+        await page.route('**/*',r=>r.request().url()==='http://lf.test/'?r.fulfill({status:200,body:html,headers:{'content-type':'text/html; charset=utf-8'}}):r.abort());
+        await page.goto('http://lf.test/');await page.waitForFunction(()=>!!window.__t);const X=s=>page.evaluate(s=>window.__t.x(s),s);
+        await X('setTab("forge");ui(true);true');await page.waitForTimeout(200);
+        const craft=await X('({ view: curView("forge"), views: [...document.querySelectorAll("#viewSeg button")].map(b => b.textContent), link: !!document.querySelector(".cf-gearlink") && document.querySelector(".cf-gearlink").offsetParent !== null, gear: !!document.querySelector("#p-forge #sec-craft-gear, #p-forge #sec-craft-bag") })');
+        assert(craft.view==='make'&&!craft.views.includes('Gear')&&craft.link&&!craft.gear,`${at}: Craft opens on Make (an old Gear pref falls back), shows Make and Uniques only, and links to Hero, Gear (${JSON.stringify(craft)})`);
+        await page.click('.cf-gearlink');await page.waitForTimeout(300);
+        const hero=await X('({ tab: S.tab, view: curView("party"), views: [...document.querySelectorAll("#viewSeg button")].map(b => b.textContent), gear: document.getElementById("sec-craft-gear").offsetParent !== null, bag: document.getElementById("sec-craft-bag").offsetParent !== null })');
+        assert(hero.tab==='party'&&hero.view==='gear'&&hero.views.join()==='Hero,Gear,Abilities,Build,Stars'&&hero.gear&&hero.bag,`${at}: the link opens Hero, Gear in one tap: worn slots and the bag (${JSON.stringify(hero)})`);
+        // the new-item dot is on the Hero tab, not on Craft
+        await X('setTab("forge");S.mats.ore[0]=1000;S.mats.wood[0]=1000;forgeItem("pick",1);ui(true);true');await page.waitForTimeout(250);
+        const dot=await X('({ gear: viewsOf("party").find(v => v.id === "gear").dot(), hero: !document.querySelector(".tab[data-tab=party] .dot.vdot").hidden, craft: !document.getElementById("forgeDot").hidden })');
+        assert(dot.gear&&dot.hero&&!dot.craft,`${at}: a new item puts the dot on the Hero tab, not on Craft (${JSON.stringify(dot)})`);
+        await X('setTab("party");setView("party","gear");ui(true);true');await page.waitForTimeout(250);
+        assert(await X('!viewsOf("party").find(v => v.id === "gear").dot() && gearNew.size === 0'),`${at}: opening Hero, Gear clears the dot`);
+        await X('setTab("forge");forgeItem("pick",1);equipItem(S.items[S.items.length-1].id,"pick");ui(true);true');await page.waitForTimeout(250);
+        assert(await X('S.tab === "forge" && !viewsOf("party").find(v => v.id === "gear").dot()'),`${at}: a new piece worn at once (Equip on the result card) leaves no dot`);
+        // an empty slot with nothing that fits: no Go to a station that is not built
+        await X('S.items=S.items.filter(i=>i.slot!=="sickle");S.equip.sickle=null;globalThis.__hsw=hearthStationWhy;hearthStationWhy=st=>st==="bench"?"Build the Workbench first.":"";craftUI.pick("hero","sickle");true');await page.waitForTimeout(200);
+        const cold=await X('(() => { const s = document.querySelector(".cf-sheet"); return { text: s ? s.textContent : "", go: !!s && [...s.querySelectorAll("button")].some(b => /^Go to the/.test(b.textContent)) }; })()');
+        assert(/Build the Workbench first\./.test(cold.text)&&!cold.go,`${at}: an empty slot says where to build the station and offers no Go before it is built (${JSON.stringify(cold)})`);
+        await X('hearthStationWhy=__hsw;document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());craftUI.pick("hero","sickle");true');await page.waitForTimeout(200);
+        assert(await X('[...document.querySelectorAll(".cf-sheet button")].some(b => b.textContent === "Go to the Bench")'),`${at}: with the Workbench built the empty slot offers Go to the Bench`);
+        await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());true');
+        // Gather: every open row shows a minute and an hour; locked rows show no rate; the Now card shows both while fighting
+        await X('S.activity="fight";setTab("gat");setView("gat","mine");ui(true);true');await page.waitForTimeout(300);
+        const gx=await X('(() => { const rows = [...document.querySelectorAll("#p-gat .gx-row")].filter(r => r.offsetParent !== null); const now = document.querySelector("#p-gat .gx-now-rate"); return { open: rows.filter(r => !r.classList.contains("locked")).map(r => r.querySelector(".gx-meta").textContent), locked: rows.filter(r => r.classList.contains("locked")).map(r => r.querySelector(".gx-meta").textContent), now: now ? now.textContent : "" }; })()');
+        assert(gx.open.length>0&&gx.open.every(t=>/ a min · [\d.,KM]+ an hour · /.test(t)),`${at}: every open Gather row says a minute, an hour and held (${JSON.stringify(gx.open)})`);
+        assert(gx.locked.every(t=>!/a min|an hour/.test(t)),`${at}: a locked row shows no rate (${JSON.stringify(gx.locked)})`);
+        assert(/a minute · .* an hour/.test(gx.now),`${at}: fighting, the Gather card says where to gather, a minute and an hour ("${gx.now}")`);
+        const wide=await X('document.documentElement.scrollWidth <= innerWidth + 1');
+        assert(wide,`${at}: no sideways page scroll`);
+        assert(!errs.length,`${at}: no page errors`+(errs.length?': '+errs[0]:''));
+      } finally {await ctx.close();}
+    }} finally {await browser.close();}
+  }
+} catch(e){fail('gear-and-rates crashed: '+(e.stack||e));}
 
 // ---- away time never negative (2026-09-30): a save stamped in the future must not pay negative gains ----
 // ---- C26 resource icons (Claude, 2026-10-01): every family and grade 1-5 has its approved icon and name ----
@@ -7895,12 +7979,12 @@ if (section('hunting hidden (C24 browser)')) try {
       for(const enabled of[false,true]) {
         await X(`HUNT_TUNE.on=${enabled};HUNT_TUNE.borrowArt=false;HUNT_TUNE.interim=false;setTab('fight');setTab('gat');buildViewSeg('gat');ui(true);true`);
         assert(await page.locator('#viewSeg [data-view="hunt"]').count()===0 && !await X('navGo({act:"gather",node:{kind:"hide",t:1}})'),`C24 flag ${enabled}: Gathering and navigation keep Hunting hidden`);
-        await X('if(!S.items.some(i=>i.id===240099))S.items.push({id:240099,slot:"spear",t:1,r:"common",plus:0});setTab("forge");setView("forge","gear");ui(true);true');
+        await X('if(!S.items.some(i=>i.id===240099))S.items.push({id:240099,slot:"spear",t:1,r:"common",plus:0});setTab("party");setView("party","gear");ui(true);true');
         assert(await page.locator('#sec-craft-bag [data-item-id="240099"]').count()===0,`C24 flag ${enabled}: imported spear stays out of the Bag`);
         await X('craftUI.openItem(240099);craftUI.pick("hero","spear");true');
         assert(await page.locator('.cf-sheet').count()===0,`C24 flag ${enabled}: imported item and picker entrypoints cannot open hidden spear sheets`);
         assert(await page.getByRole('button',{name:/Hunting Spear/}).count()===0,`C24 flag ${enabled}: equipment has no empty or selectable spear slot`);
-        await X('setView("forge","make");ui(true);true');
+        await X('setTab("forge");setView("forge","make");ui(true);true');   // gear is on the Hero tab (cal-0107-gear-and-rates): back to Craft
         await page.locator('#sec-craft-stations button').filter({hasText:'Bench'}).click();
         assert(await page.locator("#p-forge").getByText(/Hunting Spear/,{exact:false}).count()===0,`C24 flag ${enabled}: crafting offers no hidden spear recipe`);
         await X('whereSheet("hide",1);true');
@@ -10224,7 +10308,8 @@ if (section('craft reveal')) try {
         { const eq = await page.$('.cf-res .cf-resact button:text-is("Equip")');
           if (eq) { const id = await X(`document.querySelector('.cf-res').dataset.itemId`); await eq.click(); await page.waitForTimeout(250);
             assert(await X(`!document.querySelector('.cf-res') && Object.values(S.equip).includes(${JSON.stringify(+id)})`), `${at}: Equip wears the piece and closes its card`); } }
-        await page.click('button:text-is("Gear")'); await page.waitForTimeout(400);
+        await X(`setTab('party'); true`); await page.waitForTimeout(200);   // cal-0107-gear-and-rates: the bag is on the Hero tab
+        await page.click('#viewSeg button:text-is("Gear")'); await page.waitForTimeout(400);
         assert(await X(`(() => { const b = document.querySelector('.cf-bag .cf-tile .cf-gr'); return !!b && /^(Com|Unc|Rare|Epic|Uniq)$/.test(b.textContent); })()`), `${at}: a bag tile names its grade in text`);
         assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
@@ -10980,14 +11065,14 @@ if (section('moment layer')) try {
           await X(`S.activity = 'gather'; S.tab = ''; S.onboard.tips = false; emit('sceneReset'); true`);   // no turn fight: a moment may show
           await page.waitForTimeout(600);
           await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } true`);   // a catch-up (a hero who joined as the save loaded) is not this check's moment
-          await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1)`);
+          await X(`S.found[zoneUnique(1)] = 0; dropUnique(zoneUnique(1), 1)`);
           // a level-up and a flood of toasts compete with it
           await X(`emit('levelup', { L: 5 }); for (let i = 0; i < 4; i++) toast('Check notice ' + i, 'good', null, 'high'); true`);
           await until(`!!document.querySelector('.mm-ov')`);
           const big = await X(`(() => { const o = document.querySelector('.mm-ov'), c = o && o.querySelector('.mm-card'), r = c && c.getBoundingClientRect(), g = c && c.querySelector('.mm-go').getBoundingClientRect();
             return { up: !!o, text: o ? o.textContent : '', fits: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 && g.bottom <= innerHeight + 1,
               burst: o && getComputedStyle(o.querySelector('.mm-burst')).display, held: GAME_HOLDS.some(f => f()), bell: notes.log.some(n => n.ch === 'bell' && /Unique loot/.test(n.msg)), st: momentState() }; })()`);
-          assert(big.up && /Sproutblade/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
+          assert(big.up && /Briar Sprig/.test(big.text) && /Unique loot/i.test(big.text) && big.fits && big.held && !big.bell,
             `${at}: a unique shows a big card (name, label, Continue in view) and holds the game; it is not a bell line (${JSON.stringify({ up: big.up, fits: big.fits, held: big.held, bell: big.bell, text: String(big.text).slice(0, 120) })})`);
           assert(motion === 'reduce' ? big.burst === 'none' : big.burst !== 'none', `${at}: the burst ${motion === 'reduce' ? 'is off for reduced motion' : 'plays'}`);
           assert(/Level 5/.test(big.text), `${at}: a level-up that competes folds into the card as a line`);
@@ -11088,7 +11173,7 @@ if (section('hero voice')) try {
           const who = await X(`storyHeroKey()`);
           assert(who === 'tobin' || who === 'wren' || who === 'pip', `${at}: the fixture's hero is a starter (${who})`);
           // the first boss, a unique and a level-up at one fight end: one bark, the strongest (boss1)
-          await X(`S.found.sproutblade = 0; dropUnique('sproutblade', 1); emit('zoneClear', { zone: 1 }); true`);
+          await X(`S.found[zoneUnique(1)] = 0; dropUnique(zoneUnique(1), 1); emit('zoneClear', { zone: 1 }); true`);
           await until(`!!document.querySelector('.mm-ov')`);
           const card = await X(`(() => { const o = document.querySelector('.mm-ov'), c = o && o.querySelector('.mm-card'), r = c && c.getBoundingClientRect(), s = o && o.querySelectorAll('.mm-say');
             return { n: s ? s.length : 0, text: s && s[0] ? s[0].textContent : '', pt: !!(s && s[0] && s[0].querySelector('img') && s[0].querySelector('img').src.startsWith('data:')),
@@ -11111,6 +11196,13 @@ if (section('hero voice')) try {
           await X(`S.story.starter = ''; true`);
           const silent = await X(`soloHero() && ['wren','tobin','pip'].includes(soloHero()) ? 'starter' : (voiceSay('boss1') === null && moment('bark', { bark: 'boss' }) === false)`);
           assert(silent === true || silent === 'starter', `${at}: with no starter as the story hero a bark is silent`);
+          if (w === 740) {
+            // zone-1-unique-hero-fit: Wren's first zone 1 unique is Briar Sprig, and the card's Equip puts it in the charm slot
+            await X(`soloPick('wren'); S.activity = 'gather'; S.tab = ''; emit('sceneReset'); MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } S.equip.charm = null; S.found[zoneUnique(1)] = 0; dropUnique(zoneUnique(1), 1); true`);
+            await until(`!!document.querySelector('.mm-ov .mm-act')`);
+            const eq = await X(`(() => { const o = document.querySelector('.mm-ov'), b = o && o.querySelector('.mm-act'), r = { hero: soloHero(), text: o ? o.textContent : '', act: b ? b.textContent : '' }; if (b) b.click(); const c = equipped('charm'); r.worn = c ? c.u : ''; return r; })()`);
+            assert(eq.hero === 'wren' && /Briar Sprig/.test(eq.text) && /Equip Briar Sprig/.test(eq.act) && eq.worn === 'briarsprig', `${at}: Wren's first-unique card names Briar Sprig and its Equip puts it on (${JSON.stringify(eq).slice(0, 160)})`);
+          }
           assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         } catch (e) { fail(`${at} crashed: ` + (e.stack || e)); }
