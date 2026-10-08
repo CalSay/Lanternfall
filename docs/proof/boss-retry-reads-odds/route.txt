@@ -4,8 +4,9 @@
 # section 'boss retry reads the odds', which also proves the Next Up line. On these saves Next Up is full of Ready goals the walk
 # bot left undone (64 points to spend, Hunter's Mark, the Golemfist, two deeds, the Watchtower), and a Ready goal is never pushed
 # out, so the route cannot show the boss row without doing all of them first.
-# Fixture z13-weak: the walk's minute 23 save (Wren, level 18, zone 13, boss next). The boss starts by itself; Wren only attacks.
-new z13-weak
+# Fixture z16-weak: the walk's minute 23 save (Wren, level 18) moved to zone 16 with its boss next: since #223 the zone 13 boss is
+# fair at level 18 and the wall is zone 16. The boss starts by itself; Wren only attacks.
+new z16-weak
 wait 2
 tap-if "Got it"
 tap-if "Continue"
@@ -34,8 +35,9 @@ expect "Your chance to win now"
 expect ".bt-stay.forge"
 shot weak-card
 tap "Keep fighting here"
-# Fixture z13-close: the same save at level 26 with a casual defence record of 300 hits, so the chance after a loss stays fair.
-new z13-close
+# Fixture z15-close: the same save at zone 15 (the Champion), level 20, with a casual defence record of 300 hits, so the chance
+# after a loss stays fair.
+new z15-close
 wait 2
 tap-if "Got it"
 tap-if "Continue"
