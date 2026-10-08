@@ -1,0 +1,156 @@
+# seed: 1
+# Proof for card forge-line-while-fighting: a player who keeps fighting is told what the Forge needs.
+# Fixture save-forge-short: Wren fighting at zone 3, short of Copper Ore (0/25) and Pine Log (2/10) for the Forge, tips on.
+#   held-line-in-gap-*.png        she only fights (Attack, no menu): after the boot minute Hesketh says once, in the gap after a foe,
+#                                 "The Forge needs Copper Ore 0/25 from the Copper Vein and Pine Log 2/10 from the Pine Grove.",
+#                                 with Go ("Mine at the Copper Vein") and ×; the game waits for the answer.
+#   mining-copper-vein-*.png      Go sends her mining at the Copper Vein.
+#   camp-line-beside-fight-*.png  back on Fight, Camp open: on a wide view the materials line sits in the side column beside the menu with
+#                                 no button, so Attack, Parry and Dodge stay in view and the fight goes on; upright, Camp covers the fight
+#                                 and the line shows over the menu as before.
+#   camp-line-unchanged-*.png     ten seconds on, the same line in the same place.
+# The held line comes first: a player who has seen the live line on Camp never gets it. The rest (never in the first minute, never over
+# Hero or Craft, × ends it for good, a reload brings back an unanswered one, one a minute, none for gold alone or with tips off) is
+# held by tools/check.mjs ("forge-line-while-fighting").
+new forge-short
+wait 2
+tap-if "Continue"
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+tap-if "Attack"
+wait 2
+expect "The Forge needs"
+expect "from the Copper Vein"
+expect "from the Pine Grove"
+shot held-line-in-gap
+tap "Mine at the Copper Vein"
+wait 3
+expect "Copper Ore"
+shot mining-copper-vein
+tap "Fight"
+wait 2
+tap "Camp"
+wait 10
+expect "for the Forge"
+expect "at the Copper Vein"
+shot camp-line-beside-fight
+wait 10
+expect "for the Forge"
+shot camp-line-unchanged
+tap-if "Close menu"

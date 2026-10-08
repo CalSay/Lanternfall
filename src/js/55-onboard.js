@@ -13,6 +13,7 @@
 // onboardDone(id)              mark a guide step done (the UI's "x", or a UI-only action).
 // onboardTips(on)              guide on/off ("Skip tips" in the Journal).
 // onboardNeed(id) -> [{ fam, t, kind, have, n, name }]   what step `id` still waits for in materials ([] = nothing).
+// onboardWants(id) -> bool     step `id` is still due (tips on, not done or hidden, its when() true), in any fight phase.
 // onboardPaused(step) -> bool  should the game wait while this step shows (see PAUSE RULES below).
 // goalGate(goal) -> bool       Next Up filter: false while the goal's system is still hidden.
 //                              Only active once the UI turns it on (ONBOARD.gate), so the Node
@@ -27,7 +28,7 @@
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts, sayQ: [{ id, arg }] (Hesketh's unread lines, 75-onboard-ui; reload-keeps-tips) }.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, guideHide, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, guideHide, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardWants, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
 let lessonLast = -1;   // the foe's clock at the last tick (guideLessonHold: a hold starts only on the frame that crosses a window's opening)
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
@@ -351,6 +352,8 @@ function craftReady() {
   // ---- the guide ----
   onboardTips = on => { O().tips = on === undefined ? !O().tips : !!on; return O().tips; };
   const stepById = id => GUIDE_STEPS.find(s => s.id === id) || null;
+  // forge-line-while-fighting: the step is still due (tips on, not done, not hidden this session, its when() true), whatever the fight's phase
+  onboardWants = id => { const s = stepById(id); if (!s || !O().tips || O().done[id] || GUIDE_RT.hid[id]) return false; try { return !s.done() && !!s.when(); } catch (e) { return false; } };
   onboardNeed = id => { const s = stepById(id), f = s && (s.needs || s.pauseUnless); try { return f ? needShort(f()) : []; } catch (e) { return []; } };
   // The pause guard: a step that waits for the player pauses the game, but never while it is also short of
   // the materials the action costs (the player could not press it and the clock they need would be stopped).
