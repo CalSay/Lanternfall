@@ -131,7 +131,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   the cap with a bar, a minute and an hour, Working on the node you work). Lower tiers fold into one tap; the next
   locked tier says what it needs and further locked tiers are one line.
 - **Tools** (`55-tools.js`): pickaxe, axe, sickle and spear, made at the Workbench. The right tool is a speed bonus,
-  never a gate. Each tool kind has its own mastery.
+  never a gate. A tool you make and wear says on its craft card what it is faster than and why: the right-tool
+  bonus (+25% while its tier is at least the node's) and its speed line, multiplying to the total. Each tool kind has its own mastery.
 - **The Storehouse** (`55-store.js`): a cap per material and grade, from every source. Skill XP keeps counting at the
   cap. Its view (Gather > Store, `75-store-ui.js`) opens on a shelf: one stack per family at the grade you use (the
   lower of your zone's grade and your skill's top node; the largest stack at or below it when that grade is empty;
@@ -150,7 +151,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 ## The camp
 
 - **Hollow's Rest** (`57-camp.js`, `75-camp-ui.js`, scene `63d-scenery-camp.js`): the Hearth, Watchtower, Forge,
-  Workbench, Loom, Enchanter's Table, Tavern, Storehouse, Tents, Library and Shrine. Builds run on the wall clock.
+  Workbench, Loom, Enchanter's Table, Tavern, Storehouse, Tents, Library and Shrine. Builds run on the wall clock. A Build
+  button asks twice: the first tap turns it into "Tap again" for 6 seconds. When Hesketh's step asks for the Workbench,
+  the Forge or the Storehouse, one tap on that station's Build button builds it. Cancel always asks twice.
 - **A new game starts cold** (`55-hearth.js`): the hero lights the fire, then builds the Workbench, the first tool and
   the Forge. Until the fire is lit (and once Gather is open), Next Up keeps a row for it: "Chop Pine Log for Hesketh's
   fire: 3/8", then "Light Hesketh's fire: ready" with 8 logs in hand. Go sends the hero to the Pine Grove, where the fire is.

@@ -10950,7 +10950,7 @@ if (section('craft delta')) try {
         await X(`(() => { const b = document.querySelector('.cf-st[data-st="bench"]'); if (b) b.click(); return true; })()`); await page.waitForTimeout(300);
         await page.click('[aria-label="Craft Copper Pickaxe"]'); await page.waitForTimeout(300);
         const card = await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { text: c.textContent, eq: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent) } : null; })()`);
-        assert(card && /Copper Pickaxe on\. Mining is \d+% faster\./.test(card.text) && !card.eq.includes('Equip') && !/It is in your bag/.test(card.text), `craft delta (browser): the pickaxe card says it is on, with no Equip button (${card && card.text.slice(0, 160)})`);
+        assert(card && /Copper Pickaxe on\. Mining is \d+% faster than with your Stone Pick/.test(card.text) && !card.eq.includes('Equip') && !/It is in your bag/.test(card.text), `craft delta (browser): the pickaxe card says it is on, with no Equip button (${card && card.text.slice(0, 160)})`);
         const t0 = Date.now();
         await page.click('[aria-label="Craft Pine Bow"]');
         const first = await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { name: c.querySelector('.cf-in').textContent, fight: !!c.querySelector('.cf-fight') } : null; })()`);
@@ -10973,6 +10973,65 @@ if (section('craft delta')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('craft delta crashed: ' + (e.stack || e)); }
+
+// ==== tool-speed-adds-up: a new tool's line says what it is faster than, and the parts multiply to the total ====
+if (section('tool-speed-adds-up')) try {
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('tool-speed-adds-up (browser): Playwright or Chromium not here, skipped'); return; }
+    const pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ turns: true, viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      await ctx.addInitScript(([key, raw]) => { if (sessionStorage.getItem('ts-seeded')) return; sessionStorage.setItem('ts-seeded', '1'); const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, [KEY, pfx('save-flow-cold-camp.json')]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X(`S.onboard.tips = false; setTab('forge'); ui(true); true`); await page.waitForTimeout(300);
+      // make a tool the way craftItem wears one (craft-delta), with the old tool and rarity fixed so each case is exact
+      const make = async (kind, t, r, was) => {
+        const line = await X(`(() => {
+          const it = newItem(${JSON.stringify(kind)}, ${t}, ${JSON.stringify(r)}, {}); addItem(it);
+          const d = CRAFT_KINDS[${JSON.stringify(kind)}], pos = d.pos, fam = Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === ${JSON.stringify(kind)});
+          const nt = Math.max(1, skillTopTier(skillOf(fam)) || 1), cur = S.equip[pos] != null ? S.equip[pos] : null, before = nodeTime(fam, nt);
+          S.equip[pos] = it.id; gearDirty();
+          emit('crafted', { item: it, kind: ${JSON.stringify(kind)}, t: ${t}, on: pos, was: cur, speed: [before, nodeTime(fam, nt)] });
+          ui(true); const c = document.querySelector('.cf-res'); return { id: it.id, text: c ? c.textContent : '', spd: itemStats(it)[NODE_TOOL_STATS[${JSON.stringify(kind)}][0]] || 0, a: before, b: nodeTime(fam, nt) };
+        })()`);
+        await page.waitForTimeout(150);
+        return line;
+      };
+      const num = s => parseFloat(s);
+      // 1. a Copper Pickaxe over the Stone Pick at Mining 1: Stone Pick, +25% and the item's own line, multiplying to the total
+      const p1 = await make('pick', 1, 'uncommon');
+      const m1 = /Copper Pickaxe on\. Mining is (\d+)% faster than with your Stone Pick: \+25% for a tier 1 tool on a tier 1 vein, and \+([\d.]+)% from its mining speed line\./.exec(p1.text);
+      assert(m1 && Math.abs(num(m1[2]) - p1.spd) < 0.06 && Math.abs(1.25 * (1 + num(m1[2]) / 100) * 100 - 100 - num(m1[1])) <= 1,
+        `tool-speed-adds-up: the first pickaxe names the Stone Pick, +25% and its +${p1.spd}% line, and they multiply to the total (${p1.text.slice(0, 220)})`);
+      // 2. a better tier 1 pickaxe over that one (same name, so "than before"): no right-tool part; the gear part is the change in the summed stat, or the total only
+      const p2 = await make('pick', 1, 'epic', p1.id);
+      const m2 = /Copper Pickaxe on\. Mining is (\d+)% faster than (?:before|with your [\w ]+)(?:: \+([\d.]+)% from its better mining speed line)?\./.exec(p2.text);
+      const want2 = ((1 + p2.spd / 100) / (1 + p1.spd / 100) - 1) * 100;
+      assert(m2 && !/for a tier/.test(p2.text) && (m2[2] == null || Math.abs(num(m2[2]) - want2) < 0.06),
+        `tool-speed-adds-up: a better tier 1 pickaxe names its old one and no right-tool part (want +${want2.toFixed(1)}%: ${p2.text.slice(0, 220)})`);
+      // 3. at Mining 14 (tier 2 open) a tier 1 pickaxe over the Stone Pick names no right-tool part
+      await X(`S.equip.pick = null; S.skills.mine.lv = 14; gearDirty(); true`);
+      const p3 = await make('pick', 1, 'common');
+      assert(/Mining is \d+% faster than with your Stone Pick/.test(p3.text) && !/for a tier/.test(p3.text), `tool-speed-adds-up: at Mining 14 a tier 1 pickaxe names no right-tool part (${p3.text.slice(0, 220)})`);
+      // 4. the first spear: its rough tool shares its name, so "than before"
+      const sp = await X(`'spear' in S.equip`);
+      if (sp) {
+        const p4 = await make('spear', 1, 'common');
+        assert(/Hunting is \d+% faster than before[:.]/.test(p4.text) && !/than with your/.test(p4.text), `tool-speed-adds-up: the first spear says "than before" (${p4.text.slice(0, 220)})`);
+      } else assert(false, 'tool-speed-adds-up: the camp save has no spear slot');
+      assert(!errs.length, 'tool-speed-adds-up: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('tool-speed-adds-up crashed: ' + (e.stack || e)); }
 
 // ==== next-tier-gate-goal: with every tier 1 piece worn and the next tier locked, Next Up names what opens it ====
 // save-tier-gate: the seed 1 walk at minute 23 (zone 13, Woodcraft 8, Tailoring 6, Woodcutting 7, Hunting 4) with every tool worn.
@@ -13103,6 +13162,59 @@ if (section('forge-tip-goes-stale')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('forge-tip-goes-stale crashed: ' + (e.stack || e)); }
+
+// ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Tap again" for 6 s; Cancel always asks twice ====
+if (section('camp-build-tap-again')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-camp-ui.js'), 'utf8');
+  assert(/const CONFIRM_MS = 6000;/.test(src) && !/'Sure\?'/.test(src), 'camp build tap again: the camp confirm window is 6 s and no button says "Sure?"');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('camp build tap again (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-bench-ready.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // open Camp (closing a story card on the way) until Hesketh's Workbench step is on screen
+      let wants = '';
+      for (let t = 0; t < 15000 && wants !== 'bench'; t += 250) {
+        wants = await X(`(() => { const c = [...document.querySelectorAll("button")].find(b => b.offsetParent && /^Continue$/.test(b.textContent.trim())); if (c) c.click();
+          if (S.tab !== "world") { const tb = document.querySelector('.tab[data-tab="world"]'); if (tb) tb.click(); } return soloGuideWants(); })()`);
+        if (wants !== 'bench') await page.waitForTimeout(250);
+      }
+      const st = () => X(`(() => { const q = document.querySelector("#camp-b-bench .cb-quick"), p = q && q.querySelector(".price");
+        return { building: S.camp.builds.some(b => b.id === "bench"), price: p ? p.textContent : "", cancel: (document.querySelector("#camp-b-bench .cb-cancel") || {}).textContent || "", gold: Math.round(S.gold) }; })()`);
+      const tap = sel => X(`(() => { document.querySelector(${JSON.stringify(sel)}).click(); return true; })()`);
+      const QB = '#camp-b-bench .cb-quick', CB = '#camp-b-bench .cb-cancel';
+      assert(wants === 'bench', `camp build tap again: the bench-ready fixture shows Hesketh's Workbench step in Camp (soloGuideWants "${wants}")`);
+      await tap(QB); let s1 = await st();
+      assert(s1.building && s1.gold === 0, `camp build tap again (guide): one tap on the Workbench's Build button starts the build (${JSON.stringify(s1)})`);
+      await tap(CB); const c1 = await st();
+      await tap(CB); const c2 = await st();
+      assert(c1.building && !c2.building, `camp build tap again (guide): Cancel still takes two taps (${JSON.stringify(c1)} -> ${JSON.stringify(c2)})`);
+      // the guide off: the same Build button arms first; a stubbed clock checks the 6 s window
+      await X('onboardTips(false); S.gold = 300; S.mats.wood[0] = 12; window.__now = Date.now(); Date.now = () => window.__now; ui(true); true');
+      await page.waitForTimeout(500); const off = await X('soloGuideWants()');
+      await tap(QB); const a1 = await st();
+      assert(off !== 'bench' && !a1.building && a1.price === 'Tap again', `camp build tap again (guide off): the first tap only arms it, and it reads "Tap again" (guide "${off}", ${JSON.stringify(a1)})`);
+      await X('window.__now += 5000; true'); await tap(QB); const a2 = await st();
+      assert(a2.building, `camp build tap again (guide off): a second tap 5 s later builds (${JSON.stringify(a2)})`);
+      await tap(CB); const c3 = await st(); await tap(CB); const c4 = await st();
+      assert(c3.building && !c4.building, `camp build tap again (guide off): Cancel takes two taps (${JSON.stringify(c3)} -> ${JSON.stringify(c4)})`);
+      await X('S.gold = 300; S.mats.wood[0] = 12; ui(true); true');
+      await tap(QB); await X('window.__now += 7000; true'); await tap(QB); const a3 = await st();
+      assert(!a3.building && a3.price === 'Tap again', `camp build tap again (guide off): a second tap 7 s later only arms it again (${JSON.stringify(a3)})`);
+      assert(!errs.length, 'camp build tap again: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('camp build tap again crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
