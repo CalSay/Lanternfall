@@ -130,6 +130,7 @@ const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen
 // build or recipe is still short of materials has `pauseUnless` (the same list): it does not pause while any is missing,
 // so no step can freeze the clock it needs. tools/check.mjs holds all three rules.
 //   attack, ability, dodge, parry, gather, light, upgrade   pause (press this now)
+//   spend                                                    pause (press this now; spend-points-before-nextup)
 //   boss                                                     pause (Got it)
 // cal-0107-staged-guide: in a fight only the held lessons (attack, dodge, ability, parry, boss) show and pause. Every other step
 // (`ph` 'between') shows only between fights, and its line is hidden while a foe is on the field.
@@ -195,6 +196,11 @@ const wearPiece = kind => {
 // started behind the menu; his line already says "when you're done here", so the rest can still be spent under it): time to point back at the fight
 const BACK_WAIT = 1;   // seconds of play after the first point
 const backReady = () => { try { const k = soloHero(); if (obAttrOn() && k && attrPoints(k).free > 0) return GUIDE_RT.lastEnd !== null && GUIDE_RT.t - GUIDE_RT.lastEnd >= BACK_WAIT; } catch (e) {} return true; };
+const spendPile = () => obAttrOn() && attrPoints(soloHero()).free >= 2 * HERO_TUNE.perLevel;
+const spendTail = () => GUIDE_RT.latch === 'spend' && S.tab === 'party' && fightingNow();
+// answered: the latch is runtime only, so the save keeps a mark beside the step marks (as `use:` lines do) once the pile is spent with the line
+// up, and a reload before the menu closes cannot bring the line back
+const spendAnswered = () => { if (GUIDE_RT.latch === 'spend' && !spendPile()) O().done['spend:spent'] = 1; return !!O().done['spend:spent']; };
 const toolWorn = () => { try { return TOOL_POS.some(pos => !!equipped(pos)); } catch (e) { return false; } };
 // W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
 // never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
@@ -234,6 +240,12 @@ const GUIDE_STEPS = [
   { id: 'boss', ph: ['hero', 'foe'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, the first level-up or zone 2)
   { id: 'upgrade', ph: ['between'], tip: 'You can grow stronger now. Open Hero.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
+  // spend-points-before-nextup: two levels' points or more piled up before Next Up opens (it ranks them once it does). Once a game: the
+  // latch is set when the line shows, and a spend under two levels' worth with it up is kept in the save ('spend:spent'); × ends it too,
+  // and Next Up opening ends it unseen. Spent with the Hero menu still over the fight, it says what `back` says (Cal's play note 7;
+  // `back` was done long before) until the menu closes.
+  { id: 'spend', ph: ['between'], pause: 1, tip: 'Open Hero, then Build, and spend your attribute points.', when: () => stepDone('upgrade') && !isUnlocked('nextup') && (spendPile() || spendTail()),
+    done: () => isUnlocked('nextup') || (spendAnswered() && !spendTail()) },
   // Cal's play note 7: after the points are spent, say how to get back to the fight (the Hero menu otherwise just sits there)
   { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu and get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
   // Cal's play notes 9 and 13: a weapon found or made sits in the bag until it is worn. The tip names it and wears it in one tap.
