@@ -200,7 +200,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   stay raw. Each station's card in Camp has a button (Smelt, Saw, Weave and Tan) that opens its order list: up to 3
   orders, run in turn, each 10 units or All (All keeps 20% of each input). A running order shows its rate; a stopped one
   says why (done, out of an input, Storehouse full). Orders run while you fight and while you are away (the away report
-  has a line per station). Station levels refine 10% faster a level. Next Up offers "Smelt 1 Copper Ingot for your
+  has a line per station). An order of 10 that finishes while you play puts one line in the bell ("The Forge made 10 Copper
+  Ingots."; orders done back to back share one line) and lights the Camp tab's dot; an All order and the away run add none
+  (card smelt-done-says-so). Station levels refine 10% faster a level. Next Up offers "Smelt 1 Copper Ingot for your
   Warblade +1" when a worn piece's upgrade or next craft waits only on a middle, or says where to get the missing coal or
   ore. **Coal** comes with Copper Ore once the Forge is built: about 1 for every 2 ore the hero mines (live, away, the
   Glint, Spillover); gatherers bring none until the Coal Seam (card coal-seam-integrate). A save from before refining

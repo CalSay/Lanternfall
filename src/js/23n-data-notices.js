@@ -156,6 +156,8 @@ const NOTICES = [
   { id: 'starter-join', key: 'starterJoin', ch: 'pop', wait: 30, why: 'a starter joined with no Champion card to say it (the card or the story off, or a clear made while away; starters-join-when-met)' },
   // ---- refine-queues: the stations' orders ----
   { id: 'refine-coal', key: 'refine-coal', ch: 'pop', wait: 10, why: 'once a save: where coal comes from (the art ruling: coal drops from Copper Ore once the Forge is built)' },
+  { id: 'refine-done', key: 'refine-done', ch: 'bell', why: 'a set-amount Forge, Workbench or Loom order finished live (smelt-done-says-so): the bell only, never a pop over the fight; the Camp dot says where',
+    merge: ms => `${ms.length} orders done. ${ms[ms.length - 1]}` },
   { id: 'refine-why', key: 'refine-why', ch: 'pop', reply: true, why: 'an order button the player just pressed could not add the order: say why' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));

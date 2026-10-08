@@ -3505,6 +3505,65 @@ if (section('refine-queues store shelf')) try {
   nw.eval('S.camp.open = true; S.camp.b.forge = 1');
   assert(nw.eval('storeShelfShows("coal")') === true, '...and a coal stack once it is built');
 } catch (e) { fail('refine-queues store shelf crashed: ' + (e.stack || e)); }
+// ---- smelt-done-says-so: a set-amount Forge, Workbench or Loom order that finishes live leaves one bell line ('refine-done') and
+// lights the Camp tab dot (as a finished build does). Never a pop over the fight, never per unit, never for an All order or the
+// away run (the away card says it), and no dot while Camp is open. On save-refine (Forge Lv 2). ----
+if (section('smelt-done-says-so')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-refine.js'), 'utf8'), notices = fs.readFileSync(path.join(ROOT, 'src', 'js', '23n-data-notices.js'), 'utf8');
+  assert(/emit\('toast', \{ key: 'refine-done'/.test(src) && /emit\('refineDone'/.test(src) && /id: 'refine-done', key: 'refine-done', ch: 'bell'/.test(notices)
+    && /on\('refineDone', dot\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-camp-ui.js'), 'utf8')),
+    'smelt-done-says-so: refineTick emits the refine-done toast and refineDone, its rule rides the bell, and the Camp dot listens');
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('smelt-done-says-so (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-refine.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true, turns: true });
+      await ctx.addInitScript(([key, raw]) => {
+        if (sessionStorage.getItem('sd-seeded')) return; sessionStorage.setItem('sd-seeded', '1');
+        const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+      }, [KEY, raw]);
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(3200);   // past the What's new window
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // the hero chops wood (a zone 20 fight would end in a hero card); Camp closed; every station's list empty; the bell read
+      const reset = `S.activity = 'gather'; S.tab = ''; for (const st of REFINE_STATIONS) refineOrders(st).length = 0; S.mats.ore[0] = 500; S.mats.coal[0] = 500;
+        notes.unread = 0; notes.seenSeq = notes.seq; $('raidDot').hidden = true; true`;
+      const lines = `notes.log.filter(n => n.rule === 'refine-done' && n.id > notes.seenSeq).map(n => ({ ch: n.ch, msg: n.msg, n: n.n }))`;
+      const run = secs => `(() => { for (let i = 0; i < ${secs * 10}; i++) refineTick(0.1); return true; })()`;
+      // 1. a 10-unit order run to done on the live tick, the sheet closed: one bell line, the Camp dot lit
+      await X(reset); await X(`refineAdd('ingot', 1, 10).ok`); await X(run(150));
+      const one = await X(`({ made: refineOrders('forge')[0].made, l: ${lines}, dot: !$('raidDot').hidden, pops: notes.stats.filter(s => s.id === 'refine-done' && s.ch === 'pop').length })`);
+      assert(one.made === 10 && one.l.length === 1 && one.l[0].ch === 'bell' && one.l[0].msg === 'The Forge made 10 Copper Ingots.' && one.dot && one.pops === 0,
+        `a 10 Copper Ingot order finished live leaves one bell line "The Forge made 10 Copper Ingots." and the Camp dot lit, no pop (${JSON.stringify(one)})`);
+      // 2. three orders finishing back to back: one merged line, not three
+      await X(reset); await X(`refineAdd('ingot', 1, 2).ok && refineAdd('ingot', 1, 3).ok && refineAdd('ingot', 2, 1).ok`); await X(run(120));
+      const three = await X(`({ made: refineOrders('forge').map(o => o.made), l: ${lines}, unread: notes.unread })`);
+      assert(three.made.join() === '2,3,1' && three.l.length === 1 && three.l[0].n === 3 && three.l[0].msg === '3 orders done. The Forge made 1 Iron Ingot.' && three.unread === 1,
+        `three orders finishing back to back leave one merged bell line that counts once (${JSON.stringify(three)})`);
+      // 3. an All order running 10 units adds none
+      await X(reset); await X(`refineAdd('ingot', 1, 'all').ok`); await X(run(150));
+      const all = await X(`({ made: refineOrders('forge')[0].made, l: ${lines}, dot: !$('raidDot').hidden })`);
+      assert(all.made >= 10 && all.l.length === 0 && !all.dot, `an All order that made ${all.made} units adds no bell line and no dot (${JSON.stringify(all)})`);
+      // 4. the away catch-up adds none; the away card still says the order is done
+      await X(reset); await X(`refineAdd('ingot', 1, 10).ok`);
+      const away = await X(`(() => { emit('awayBegin'); emit('awayEnd', { t: 600 }); const out = AWAY_LINES[0]() || [];   // the refine line source goes first
+        return { made: refineOrders('forge')[0].made, l: ${lines}, dot: !$('raidDot').hidden, card: out.map(x => x.txt).filter(t => /^The Forge /.test(t)) }; })()`);
+      assert(away.made === 10 && away.l.length === 0 && !away.dot && away.card.length === 1 && /\(all orders done\)\.$/.test(away.card[0]),
+        `the away catch-up adds no bell line or dot, and the away card reports the order (${JSON.stringify(away)})`);
+      // 5. Camp open: the line still lands, the dot stays hidden
+      await X(reset); await X(`setTab('world'); refineAdd('ingot', 1, 10).ok`); await X(run(150));
+      const open = await X(`({ tab: S.tab, l: ${lines}, dot: !$('raidDot').hidden })`);
+      assert(open.tab === 'world' && open.l.length === 1 && !open.dot, `with Camp open the order's line lands and the dot stays hidden (${JSON.stringify(open)})`);
+      assert(!errs.length, 'smelt-done-says-so: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('smelt-done-says-so crashed: ' + (e.stack || e)); }
 // ---- refine-queues: coal and the middles are text only (the art ruling 2026-10-08). Every matIcon caller that can name them
 // (Storehouse stacks and rows, cost chips, toasts, the away report, the stations' sheets, the craft screen) shows the name
 // alone: no img with an empty or missing src shows, and no Essence orb (the old fallback) stands in. ----
@@ -12463,7 +12522,12 @@ if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
     const js = fs.existsSync(path.join(dir, 'walk-2000-01-01.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'walk-2000-01-01.json'), 'utf8')) : {};
     assert(['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F10', 'P4'].every(k => js.scorecard && js.scorecard[k] && typeof js.scorecard[k].pass === 'boolean'), 'the json carries F1-F6, F10 and P4');
     assert(js.log && js.log.some(e => e.kind === 'tip' || e.kind === 'card'), 'the walk logged what appeared on screen');
-    run();
+    r = run();
+    // walk-repeatable-whole-hour: game time moves only when the walk steps it, so two runs of one seed and build log the same things at the same times
+    const js2 = fs.existsSync(path.join(dir, 'walk-2000-01-01.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'walk-2000-01-01.json'), 'utf8')) : {};
+    const seen = j => (j.log || []).map(e => e.t + ' ' + e.kind + ' ' + e.text).join('\n');
+    assert(r.status === 0 && seen(js2) && seen(js2) === seen(js), 'two short walks of one seed and build log the same things at the same game times'
+      + (seen(js2) === seen(js) ? '' : ': first split at ' + (a => a.find((l, i) => l !== seen(js2).split('\n')[i]) || '(the second ran on)')(seen(js).split('\n'))));
     const rows = fs.readFileSync(sc, 'utf8').split('\n').filter(l => l.startsWith('| 2000-01-01 |'));
     assert(rows.length === 1, 'the same run twice keeps one scorecard row (' + rows.length + ')');
     fs.rmSync(dir, { recursive: true, force: true });

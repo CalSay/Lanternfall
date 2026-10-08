@@ -366,6 +366,13 @@ payment code, live prices and business and legal set-up stay with Cal.
 - **Prediction:** at least 75% of Steam reviews that mention money are positive in the first 90 days after the store
   opens, tagged the way the plan tagged IdleOn's (IdleOn: 53 of 86, about 62%). Missed below 65%; a miss reopens the
   Keeper's away bonus and the supporter tiers first. (2026-10-06)
+- **Business model: PROPOSED, not decided; the lines above stand until Cal says yes.** Opus judge on card
+  `business-model-judge`, from the W3 money research: Lanternfall sells as a paid Steam game at about £5 to £8 plus one
+  supporter pack of looks, with no store screen; the Lantern Keeper is folded in and never built. The public web build is
+  free and ends the road at the zone 15 Champion from its first public day (the camp keeps running), on its own URL; the
+  friends link keeps the full road. How much of the road stays free for good is ruled on 14 Dec from stranger data. The
+  20 Nov post calls it "a free early build", never "free forever", "free full game", "free to play" or "demo". Veto
+  phrase: "Stay free with looks." Ruling: project files `autopilot/rulings/2026-10-08-business-model.md`. (2026-10-08)
 
 ### Mid-zone wall: judge rulings (2026-10-07)
 
