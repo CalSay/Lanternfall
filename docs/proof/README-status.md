@@ -48,7 +48,7 @@ replay them.
 | hero-sheet-ability-cover | pass/pass | pass | pass | Kept |
 | hero-voice | pass/pass | pass | pass | Kept |
 | hero-voice-banner-under-guide | pass/pass | pass | pass | Kept |
-| hit-feel | pass/pass | fail | fail | Game change, follow-up: since #225 (merged while this card ran) a lost boss waits on its card for fair odds, so the route's fight stops. Tapping Try again fixes that, but a clean parry is a press in the last 0.1 s of a swing, so the route only lands one reliably with 160 rounds (175 s, too close to eyes' 240 s limit). Left unchanged here; draft in the project files (proof-routes-rot/hit-feel-route-draft.txt). |
+| hit-feel | pass/pass | pass | pass | Fixed (route-hit-feel-parry): since #225 a lost boss waits on its card, and a clean parry is a press in the last 0.1 s of a swing, which tapping in 0.05 s steps only hit by chance. The route now taps Try again and uses the new playtest command `parry-clean`, which reads the swing's timing from the fight (a read-only hook) and taps Parry inside that span with the clock held still. 10 of 10 at 360x740 and 740x360, about 12 s each. |
 | intro-and-picker | fail/fail | pass | pass | Fixed: the fire's last line was rewritten on purpose (staged guide); expects the new line |
 | moment-layer | fail/fail | pass | pass | Fixed: presses Dodge; the first-boss moment is now folded into the Lantern Cache card ("First boss down"), so it checks the card, burst and Wren's first-boss line |
 | next-tier-gate-goal | pass/pass | pass | pass | Kept |
