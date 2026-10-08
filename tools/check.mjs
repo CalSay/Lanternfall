@@ -12592,6 +12592,36 @@ if (section('unique weapons wall icon')) try {
   }
 } catch (e) { fail('unique weapons wall icon crashed: ' + (e.stack || e)); }
 
+// ==== unspent-points-nudge: a pile of two levels' points or more tops Next Up; learn-ability stays in the list ====
+// save-dipper-z4: the cold leg's phone dipper at zone 4 (Wren Lv 9, 28 points free, Power Shot learnable, a bounty ready).
+if (section('unspent points nudge')) try {
+  const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-dipper-z4.json'), 'utf8') }) }), E = s => g.eval(s);
+  E('tick(0.1)');
+  const per = E('HERO_TUNE.perLevel'), free = () => E('attrPoints(soloHero()).free');
+  const ids = o => E(`topGoals(3, ${o}).map(x => x.id)`);
+  assert(free() === 28 && E('attrOn()'), `unspent points: the fixture has 28 points free (${free()})`);
+  const off = ids('{ sticky: false }');
+  assert(off[0] === 'hero-up' && off.includes('learn-ability') && E('topGoals(3, { sticky: false })[0].label') === 'Spend 28 attribute points', `unspent points: 28 free tops Next Up, Learn stays in the list (no stickiness: ${off.join(', ')})`);
+  // sticky: the old top three were shown first (the cold leg's chip), then the pile still takes the top
+  E('topGoals(3, { now: 1000 })');
+  const on = ids('{ now: 1e6 }');
+  assert(on[0] === 'hero-up' && on.includes('learn-ability'), `unspent points: with stickiness hero-up is first and Learn stays (${on.join(', ')})`);
+  // against a shown Ready goal at prio 11 (guide-goal-after-reload's fire goal)
+  E('registerGoal({ id: "zz-fire", sys: "zzfire", prio: 11, pct: () => 1, label: "Light the fire" })');
+  E('topGoals(3, { now: 2e6, sticky: false }); topGoals(3, { now: 3e6 })');
+  const fire = ids('{ now: 4e6 }');
+  assert(fire[0] === 'hero-up' && fire.includes('zz-fire'), `unspent points: the pile beats a shown Ready goal at prio 11 (${fire.join(', ')})`);
+  E('GOALS.splice(GOALS.findIndex(x => x.id === "zz-fire"), 1)');
+  // one level's points: in the list, not forced first
+  E(`attrAdd('might', attrPoints().free - ${per})`);
+  const one = ids('{ sticky: false }');
+  assert(free() === per && one.includes('hero-up') && one[0] !== 'hero-up' && E('GOALS.find(x => x.id === "hero-up").prio()') === 3, `unspent points: ${per} free shows the goal at its old rank (${one.join(', ')})`);
+  E(`attrAdd('might', ${per})`);
+  assert(free() === 0 && !ids('{ sticky: false }').includes('hero-up'), 'unspent points: none free, the goal is gone');
+  assert(E('GOALS.find(x => x.id === "hero-up").sys') === 'points' && E('GOALS.find(x => x.id === "learn-ability").sys') === 'hero', 'unspent points: hero-up has its own system');
+  assert(!g.errors.length, 'unspent points: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('unspent points nudge crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
