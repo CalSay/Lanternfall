@@ -26,8 +26,8 @@
 //                              one stamps the clock (got['join:<id>']), so no unlock opens within ONBOARD_TUNE.gap of any join.
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
-//   tips, t (seconds played while the guide runs), taps, casts }.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
+//   tips, t (seconds played while the guide runs), taps, casts, sayQ: [{ id, arg }] (Hesketh's unread lines, 75-onboard-ui; reload-keeps-tips) }.
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, guideHide, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
 let lessonLast = -1;   // the foe's clock at the last tick (guideLessonHold: a hold starts only on the frame that crosses a window's opening)
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
@@ -222,7 +222,10 @@ let guideMenuCovers = () => true;   // 75-onboard-ui.js: a wide screen keeps the
 let guideLineOk = () => true;       // 75-onboard-ui.js: a guide line can show now (the page is visible, no card or sheet over it)
 function guidePhase(seeThroughMenu) { return !fightingNow() || !liveFoe() || (!seeThroughMenu && !!S.tab && S.tab !== 'adv') ? 'between' : hitComing() ? 'windup' : heroTurnNow() ? 'hero' : 'foe'; }
 // A fight is one foe on the field (59k `fightStart`; the legacy fight: a pack). Runtime only, never saved.
-const GUIDE_RT = { t: 0, fight: 0, doneIn: {}, lastEnd: null, latch: '', shown: {} };
+const GUIDE_RT = { t: 0, fight: 0, doneIn: {}, lastEnd: null, latch: '', shown: {}, hid: {} };
+// reload-keeps-tips: tips whose job is still undone (a piece in the bag, the cold fire). × or the 60 s retire hides one for this session only
+// (GUIDE_RT.hid, no done mark), so a reload brings it back once; its own done rule (the piece worn, the hero gathering) still ends it for good.
+const GUIDE_SESSION = ['wear:weapon', 'wear:tool', 'gather'];
 const GUIDE_QUIET = 60;    // seconds of play between two unprompted lines outside fights, and before a live tip retires
 // cal-0107-staged-guide (Cal's play notes 3 and 12): the fight lessons. In a turn fight each press is taught the first time it comes up, with
 // the fight held: Attack on your first turn, Dodge on the foe's first swing, the ability on your next turn, Parry on the next swing (or the
@@ -315,7 +318,7 @@ function craftReady() {
 }
 
 {
-  registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, atk: 0, dodges: 0, parries: 0 });
+  registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, atk: 0, dodges: 0, parries: 0, sayQ: [] });
 
   isUnlocked = id => !id || !FEATURE_OF[id] || O().got[id] != null || (O().all && !FEATURE_OF[id].late);
   function unlock(id, quiet) {
@@ -361,13 +364,22 @@ function craftReady() {
   // done 1: the player did it. done 2: the tip waited 60 s unanswered and retired to the Journal's Tips.
   onboardDone = (id, how) => { if (!O().done[id]) { O().done[id] = how || 1; emit('onboardStep', { id }); } };
   const guideOver = () => GUIDE_STEPS.every(s => O().done[s.id]);
+  // reload-keeps-tips: at boot, a wear tip closed for good by an older build (× or the retire left a done mark) while the piece still sits in
+  // the bag with its slot empty can show once more
+  let wearBooted = false;
+  const wearBoot = () => {
+    if (wearBooted) return; wearBooted = true;
+    try { if (coldH()) for (const k of ['weapon', 'tool']) if (O().done['wear:' + k] && wearPiece(k) && !(k === 'tool' && toolWorn())) delete O().done['wear:' + k]; } catch (e) {}
+  };
   onboardStep = () => {
+    wearBoot();
     if (!O().tips) return null;
     for (const s of GUIDE_STEPS) {
       if (O().done[s.id]) continue;
       if (S.maxZone >= 8 && LESSON_IDS.includes(s.id)) { onboardDone(s.id); continue; }
       let d = false; try { d = !!s.done(); } catch (e) {}
       if (d) { onboardDone(s.id); continue; }
+      if (GUIDE_RT.hid[s.id]) continue;   // hidden this session: the steps after it can show
       let w = false; try { w = !!s.when(); } catch (e) {}
       if (!w) continue;
       const R = GUIDE_RT, held = R.latch === s.id;
@@ -416,7 +428,14 @@ function craftReady() {
   on('levelup', e => { if (e && !e.quiet && !O().all) onboardCheck(); });
   on('onboardStep', e => { if (!e) return; GUIDE_RT.doneIn[e.id] = GUIDE_RT.fight; GUIDE_RT.lastEnd = GUIDE_RT.t; if (GUIDE_RT.latch === e.id) GUIDE_RT.latch = ''; });
   // A live tip nobody answers for 60 s of play retires: it stops showing and waits in the Journal's Tips.
-  guideRetire = id => { const s = stepById(id); if (!s || O().done[id]) return false; onboardDone(id, 2); return true; };
+  guideRetire = id => { const s = stepById(id); if (!s || O().done[id]) return false; if (!guideHide(id)) onboardDone(id, 2); return true; };
+  // reload-keeps-tips: × or the retire on a GUIDE_SESSION tip. It ends the step as a done one would for spacing (latch, lastEnd: the
+  // one-line-a-minute gap and backReady see it end), with no done mark and no onboardStep event. -> false for any other step.
+  guideHide = id => {
+    if (!GUIDE_SESSION.includes(id) || O().done[id]) return false;
+    const R = GUIDE_RT; R.hid[id] = 1; R.doneIn[id] = R.fight; R.lastEnd = R.t; if (R.latch === id) R.latch = '';
+    return true;
+  };
   // ---- the staged lesson hold (cal-0107-staged-guide) ----
   // Decided every frame in core, not on the UI's 250 ms poll (the Parry window is 0.18 s): on the frame the foe's clock crosses the
   // window's opening for the Dodge or Parry lesson, the clock is set back to that opening (plus a hair, so the frozen press is inside

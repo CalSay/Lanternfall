@@ -6,9 +6,31 @@ judge scores its notes. The Sunday release check uses this persona.
 
 Tool: `tools/playtest-human.mjs` (driver: `tools/playtest.mjs`; method: `docs/coord/playtest-lab.md`). The brief the player
 reads is `BRIEF` in that file, plus one line naming the hero when `--hero` is given; the whole prompt is printed into each
-run's `run.json`.
+run's `run.json`. `--view` picks the player as well as the screen (the views of `tools/lib/views.mjs`).
 
-## Persona
+## Personas
+
+### The desk player (primary, from 2026-10-08)
+
+The game is browser-first (CLAUDE.md), so the main tester sits at a desk: a 1280x720 browser window, a mouse and a keyboard,
+no touch screen (`--view desktop`, the tool's default; `laptop` 1366x640 and `hd` 1920x1080 for short size checks). Same
+curiosity, impatience and note style as below, and every v2 habit. What differs:
+- The brief opens with the browser window, mouse and keyboard, and its actions are `click`, `hover <label>` (rest the pointer
+  on a button: the tool says whether it has a title tooltip and the look shows any hover state) and `press <key>` (Escape,
+  Enter, Space, a letter), as well as wait, read and scroll (the wheel). `tap` still works as a synonym for click.
+- One extra habit, about the device, not about any human's notes: say when something seems made for a phone instead
+  (words that say tap, swipe or hold; text too small at a desk; a control that needs a long press; a button that does not
+  answer a click, or does not change when the pointer rests on it).
+
+Scoring under the holdout rule (DECISIONS.md, 8 Oct; research/better-ways/relay/2026-10-08-playtester-holdout.md in the
+project files): the desk player was written from the browser-first rule and the desktop layout spec only. No line of its
+brief comes from Cal's notes or the `escapes.md` "Bot saw" rows, and none may be added from them. It is scored the same way
+as v2: a judge that did not write it compares the union of two seeds' notes with Cal's next play notes made on a desktop
+browser, and the desk habit stays only if it lifts the held-out catch above 7 of 18 (or the same 39% share) by more than one
+note. Until then its first run (`autopilot/reports/desktop-playtest-2026-10-08/` in the project files) is a findings run,
+not a score.
+
+### The phone dipper (`--view landscape` or `--view portrait`)
 
 A normal first-time player on a phone. Curious, a little impatient, follows the game's suggestions when they make sense.
 Knows nothing but the screen: no repo, docs, cards or anyone's notes. Writes one blunt line per problem, the moment it
@@ -30,7 +52,11 @@ Persona v2 (2026-10-07) adds "habits of a careful player", general checks a care
 node tools/build.mjs
 node tools/playtest-human.mjs start --html dist/lanternfall.html --seed 1 --hero Tobin --max-steps 250 --out <run>-s1
 node tools/playtest-human.mjs start --html dist/lanternfall.html --seed 2 --max-steps 250 --out <run>-s2
+node tools/playtest-human.mjs start --html dist/lanternfall.html --seed 3 --view landscape --max-steps 120 --out <run>-phone
 ```
+The first two are the desk player (the default view). The third is the phone dipper's short check. A run to a zone rather
+than to a time raises `--max-minutes` and runs in legs: one player holds about 400 steps, and a hand-played kill costs about
+10, so the 8 Oct desk run to zone 10 took two legs (400 steps to zone 6, then `--resume` and 435 more; 45 game minutes).
 Each run is driven by a worker on Opus (`act` / `note` / `stop`, one action per turn, reading each screenshot), or with an
 API key by `run` (add `--max-usd 12`: the default $10 cap stops a 250-step run early and skips the closing `TOP:` turn). Seed 1 plays the hero Cal plays. 250 steps reach about 30 game minutes. A run costs about $6 to $7 at
 150 steps as a Claude Code worker (most of it is the worker's own prompt), so expect $10 to $11 at 250. The driver runs

@@ -138,7 +138,7 @@
   }
   on('bountyReady', ({ i, away }) => {
     const b = S.bounties.slots[i]; if (away || !b || !b.k) return;   // away catch-up: the away card tells it
-    emit('toast', { key: 'bounty-ready', msg: "Bounty ready. Tap to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { const j = S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need); if (j >= 0) claimBounty(j); } } });   // the first finished one: a merged or stale notice never claims a wrong slot
+    emit('toast', { key: 'bounty-ready', msg: "Bounty ready to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { const j = S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need); if (j >= 0) claimBounty(j); } } });   // the first finished one: a merged or stale notice never claims a wrong slot
   });
   on('kill', ({ mob, zone }) => {
     btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1);

@@ -520,7 +520,7 @@ let craftUI = null;
         if (noFit) rec.list.append(el('p', 'note cf-nofit', `Nothing at the ${CRAFT_STATIONS[st].n} is made for your class, so this shows everything here.`));
         else if (!ks.length) rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} yet.`));
         for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
-        if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes. Tap All to see them.`));
+        if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes. Choose All to see them.`));
       } else {
         for (const k of ks) {
           const r = rec.rows[k], rs = rowSig(k, t);
@@ -785,7 +785,7 @@ let craftUI = null;
       list.sort(SORTS[st8.sort]);
       bag.grid.textContent = '';
       if (!list.length && S.items.length && st8.bfilt !== 'all') {
-        const e = el('p', 'note cf-bagnone', st8.bfilt === 'spare' ? 'No spare gear. Everything you own is worn. Tap All to see it.' : 'Nothing worn yet.');
+        const e = el('p', 'note cf-bagnone', st8.bfilt === 'spare' ? 'No spare gear. Everything you own is worn. Choose All to see it.' : 'Nothing worn yet.');
         bag.grid.append(e);
       }
       for (const it of list) {

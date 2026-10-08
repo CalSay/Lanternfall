@@ -305,7 +305,7 @@ var soloIconURL = () => '';
     skRows.forEach((r, i) => {
       const o = s.abs[i], a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
       r.classList.toggle('empty', !a); r.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
-      if (!a) { putText(r._nm, 'Empty slot ' + (i + 1)); putText(r._ds, 'Tap to choose an ability.'); putText(r._chip, ''); setIc(r._ic, 'empty', 24); return; }
+      if (!a) { putText(r._nm, 'Empty slot ' + (i + 1)); putText(r._ds, 'Choose an ability for it.'); putText(r._chip, ''); setIc(r._ic, 'empty', 24); return; }
       setIc(r._ic, o.id, 24);
       putText(r._nm, a.name); putText(r._ds, a.turnDesc || a.line || a.desc || '');
       const cd = tb ? tb.cds[o.id] || 0 : 0;
@@ -350,14 +350,14 @@ var soloIconURL = () => '';
         b.classList.toggle('empty', !o.id);
         const a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
         b.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
-        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.turnDesc || a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Tap to choose an ability.`);
+        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.turnDesc || a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
       }
       setCd(b, o.left, o.max); setN(b, secs(o.left));
       b.classList.toggle('ready', !!o.id && o.ready);
       const shut = slotShut(i), sk = (o.id || '') + ':' + shut;
       if (b._shut !== sk) {
         b._shut = sk; putStyle(b, 'opacity', shut ? '0.45' : ''); b.setAttribute('aria-disabled', String(shut));
-        if (!o.id) b.setAttribute('aria-label', shut ? `Empty ability slot ${i + 1}. Learn another move to use it.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Tap to choose an ability.`);
+        if (!o.id) b.setAttribute('aria-label', shut ? `Empty ability slot ${i + 1}. Learn another move to use it.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
       }
       putText(b._sub, !o.id ? (shut ? '' : 'Tap to add') : o.left > 0 ? '' : 'Ready');
     }
