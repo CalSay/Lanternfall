@@ -12788,7 +12788,7 @@ if (section('tell us form')) try {
   }
 } catch (e) { fail('tell us form crashed: ' + (e.stack || e)); }
 
-// ---- late-save-hero-card-repeat: a hero who joined is announced once; reloads and the late fixture show no "New hero" card ----
+// ---- late-save-hero-card-repeat: a hero who joined is announced once; reloads and the late and mid fixtures show no "New hero" card ----
 // 75-moments-ui shows the hero moment only on the heroUnlocked event, so counting that event counts the cards.
 if (section('hero join shown once')) try {
   const joins = g => { g.eval('globalThis.__joins = []; on("heroUnlocked", e => __joins.push(e.id))'); return () => g.eval('__joins.join()'); };
@@ -12798,9 +12798,11 @@ if (section('hero join shown once')) try {
   let st = g.storage.dump(); const again = [];
   for (let i = 0; i < 2; i++) { const h = loadCore({ seed: 9402 + i, storage: memoryStorage(st) }), seen = joins(h); run(h, 5); again.push(seen()); h.fn.save(); st = h.storage.dump(); assert(!h.errors.length, `hero join: reload ${i + 1} has no errors`); }
   assert(first() === 'hesketh' && again.join('|') === '|', `hero join: Hesketh joins once at zone 11 and two reloads announce no hero again (first "${first()}", reloads "${again.join('|')}")`);
-  const late = loadCore({ seed: 9404, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8') }) }), lateSeen = joins(late);
-  run(late, 5);
-  assert(lateSeen() === '' && !late.errors.length, `hero join: the late fixture already has its heroes, so loading it shows no "New hero" card (got "${lateSeen()}")`);
+  for (const [n, name] of [[9404, 'late'], [9405, 'mid']]) {
+    const fx = loadCore({ seed: n, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', `save-${name}.json`), 'utf8') }) }), seen = joins(fx);
+    run(fx, 5);
+    assert(seen() === '' && !fx.errors.length, `hero join: the ${name} fixture already has its heroes, so loading it shows no "New hero" card (got "${seen()}")`);
+  }
 } catch (e) { fail('hero join shown once crashed: ' + (e.stack || e)); }
 
 // ---- small-text-clips: the Loom's "Hemp Fibre" tier label and a "Secret found" toast show in full (the walk's clipped-text reader) ----
