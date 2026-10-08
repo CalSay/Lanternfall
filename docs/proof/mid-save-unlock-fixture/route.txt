@@ -1,0 +1,13 @@
+# seed: 1
+# Proof for card mid-save-unlock-fixture: the mid test save now records that Old Hesketh already joined (party.unlock.heroes,
+# copied from what the game itself writes after loading that save), so loading it no longer shows a "New hero" card each time.
+# Before the fix this route shows the "Old Hesketh / A new hero will take up the lamp." card about 4 s after the story card.
+new mid
+wait 3
+tap-if "Skip this story. It stays in the Journal."
+wait 3
+expect-no "A new hero will take up the lamp."
+wait 3
+expect-no "A new hero will take up the lamp."
+expect "Zone 20"
+shot mid-load-no-hero-card
