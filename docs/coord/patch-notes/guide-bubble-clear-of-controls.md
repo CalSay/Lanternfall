@@ -1,0 +1,1 @@
+Hesketh's tips now sit just above the bottom tabs instead of touching them, and when a menu is open his tip gets its own space under the menu, so it never covers a row's button. Best shot: hero-menu-panel-own-row.
