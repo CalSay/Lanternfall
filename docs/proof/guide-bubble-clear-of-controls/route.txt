@@ -1,0 +1,25 @@
+# seed: 1
+# Proof for card guide-bubble-clear-of-controls: Hesketh's docked panel sits clear of the tab bar, and over a menu it takes its
+# own row under the menu, so every row's button can scroll above it and be tapped.
+# Save: the fire is out with 8 Pine Log, so Hesketh asks for the fire in the grove, and the Hero menu opens with his first line
+# for it under the menu in portrait (its own row) and in the side column in landscape.
+# The box rule itself (the panel meets no tab, no .gx-act and no menu under it, at the pop-in's lowest frame) is asserted in
+# tools/check.mjs, section "guide panel rects".
+new unlit-8log
+wait 3
+tap-if "Skip this story"
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 2
+expect ".ob-bub"
+shot grove-panel-above-tabs
+tap "Hero"
+wait 2
+expect ".ob-bub"
+shot hero-menu-panel-own-row
+scroll
+scroll
+scroll
+shot hero-menu-scrolled-clear
