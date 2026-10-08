@@ -280,7 +280,7 @@ var classEvoUI;
             if (!o.cost.ok) d.append(el('p', 'cl-need', o.cost.why));
           }
           const can = o.free || o.cost.ok;
-          const b = btn('mini ' + (armed === o.key ? 'warn' : 'go'), armed === o.key ? 'Tap again to change' : 'Change', () => {
+          const b = btn('mini ' + (armed === o.key ? 'warn' : 'go'), armed === o.key ? 'Confirm: change' : 'Change', () => {
             if (armed !== o.key) { armed = o.key; draw(); return; }
             const okd = safe(o.run, false);
             try { save(); } catch (e) {}

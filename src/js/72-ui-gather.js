@@ -86,7 +86,7 @@ function whereSheet(k, t) {
       b.addEventListener('click', () => { api.close(true); navGo({ act: 'fight', close: true }); });
       api.foot.append(b);
     }
-  }, { label: 'Where to get ' + matName(k, t), small: true });
+  }, { label: 'Where to get ' + matName(k, t), small: true, dock: true });
 }
 
 // ---- building blocks ----

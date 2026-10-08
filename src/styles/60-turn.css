@@ -142,3 +142,14 @@
 .hud.vs .mob .hpbar > i.tv-notch { left: calc((1 - var(--g)) * 100% - 1px); }
 .hpbar > i.tv-notch.past { opacity: .35; }
 .hpbar > i.tv-notch.held { width: 4px; margin-left: -1px; background: var(--gold, #F2C14E); }
+/* desktop-layout-v1 (desk playtest F03, F09, F04). Desktop text is bigger, so the turn line sits under the place line (62-stage sets
+   --vs-zb on the stage box), not on it; the whose-turn banner crosses the stage under the floating numbers ("Miss", damage), which
+   start higher; at 1920x1080 the timing bar moves to the stage's bottom-right corner, next to Parry and Dodge. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .tv-top { top: max(80px, calc(var(--vs-zb, 0px) + 2px)); }
+  .tv-turncard { top: 52%; }
+}
+@media (min-aspect-ratio: 1/1) and (min-width: 1600px) and (min-height: 900px) {
+  .tv-bot { justify-items: end; right: 56px; }
+  .tv-bot .tv-time { width: min(420px, 100%); }
+}

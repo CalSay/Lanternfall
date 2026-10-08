@@ -1,0 +1,31 @@
+# seed: 1
+# Proof for card desktop-layout-v1 (docs/design/desktop-layout.md). Run: grep -v '^#' route.txt | node tools/playtest.mjs batch --seed 1
+# (desktop 1280x720 by default; then --view hd, --landscape and --portrait). Fixture save-current: Tobin at zone 20, worn gear.
+#   fight-*.png        the fight: bigger text, the turn line under the place line, the slot labels whole ("Attack").
+#   gear-docked-*.png  Hero > Gear, the weapon clicked: on a desktop its card docks beside the list; on a phone it is the sheet it was.
+#   gear-swapped-*.png the next tile clicked while the card is open: the card swaps, nothing to close first.
+#   gather-key-*.png   the 3 key opens Gather (and closes the card); 3 again closes it.
+# The rest (text floors, zoom, phones unchanged, keys skipped in text fields, no cut names) is held by tools/check.mjs ("desktop layout").
+new current
+wait 2
+tap-if "Continue"
+shot fight
+tap "Hero"
+tap "Gear"
+wait 1
+tap "Weapon"
+wait 1
+expect "Silver Warblade"
+shot gear-docked
+tap-if "Off-hand"
+wait 1
+shot gear-swapped
+key Escape
+wait 1
+key 3
+wait 1
+expect "Mining"
+shot gather-key
+key 3
+wait 1
+expect-no "Mining"
