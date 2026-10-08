@@ -1,0 +1,26 @@
+# seed: 1
+# Proof for card cal-0107-gear-and-rates: gear and the bag live on the Hero tab (a Gear view next to Hero), Craft
+# points there in one tap, and every open Gather row shows its rate a minute and an hour.
+# The fighting case of the Gather card (a minute and an hour while you fight) is asserted in tools/check.mjs.
+new mid
+wait 3
+tap-if "Skip this story"
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+tap "Hero"
+tap "Gear"
+expect "Your gear"
+expect "#sec-craft-bag"
+shot hero-gear
+tap "Weapon"
+expect "Upgrade"
+shot gear-sheet
+tap "Close"
+tap "Craft"
+expect "Your gear is on the Hero tab"
+shot craft-make
+tap "Gather"
+expect "an hour"
+shot gather-rows

@@ -4,15 +4,16 @@
 // 75-store-ui.js; the tool chip and its sheet are 75-tools-ui.js; the pill and the quick switcher
 // are 75-nav-ui.js.
 //
-// Each skill view (Mining, Wood, Foraging), top to bottom:
-//   1. the Now card: on the skill you work, the node, a minute / an hour, held vs cap, time to full,
-//      the tool chip and Back to fight (full: Switch and Spillover). On another skill's view it is a
-//      one-line strip; while fighting or raiding, one line and "Gather here".
-//   2. the skill line: level and the next tier (every skill's level and XP bar sit on the view
-//      switcher, gxLabels).
-//   3. Best for you: up to 2 rows (bestNodes).
-//   4. one list per family (Veins, Geodes, ...): the top two open tiers and the next locked one;
-//      lower tiers fold into one line. A row is one tap: the whole row moves you there.
+// Each skill view (Mining, Wood, Foraging, Hunting) is Gather A, the Command ledger Cal picked (ui-drafts, 2026-10-05;
+// card cal-0107-storage-and-gather-ui), top to bottom:
+//   1. the skill head: "Mining Lv 12", the tool chip and what the tool adds, the XP bar (the view switcher
+//      carries every skill's level and XP too, gxLabels).
+//   2. the Now card, always the same lines: what the hero does (gathering here, at another skill's node
+//      (the .gx-strip line), or fighting), a minute / an hour, held of the cap, time to full, one button.
+//      Gathering here adds Right tool, the rest line and, when full, Switch and Spillover.
+//   3. one list per family (Veins, Geodes, ...): the top two open tiers (lower ones fold into one tap line),
+//      the next locked tier with what it needs, and further locked tiers as one line. A row is one tap: the
+//      whole row moves you there; the node you work says Working. The best rows (bestNodes) carry a Best chip.
 // Rows and cards are built once per view (on its first show) and updated in place (put* helpers).
 //
 // Hook for other systems (N1's Hands at nodes):
@@ -34,6 +35,21 @@ const gxNum = n => n < 1000 ? String(Math.floor(Math.max(0, n))) : fmt(n).replac
 const gxHeld = (k, t) => { const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t); return Number.isFinite(cap) ? `${gxNum(h)} / ${gxNum(cap)}` : `${gxNum(h)} held`; };
 const gxFill = (k, t) => { const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t); return Number.isFinite(cap) && cap > 0 ? Math.min(1, h / cap) : 0; };
 const gxPerMin = r => r >= 100 ? gxNum(r) : r >= 10 ? String(Math.round(r)) : r.toFixed(1);
+const gxPerHour = r => r * 60 < 1e5 ? storeNum(Math.round(r * 60)) : gxNum(r * 60);   // r: a minute
+const gxRates = r => `${gxPerMin(r)} a min · ${gxPerHour(r)} an hour`;
+// What the tool adds, for the skill head. Rough tool: says so; "Make one" only once the Workbench stands.
+function gxToolLine(sk) {
+  const kind = toolOf(sk); if (!kind) return '';
+  const e = equippedTool(sk), K = TOOL_KINDS[kind];
+  if (!e.item) {
+    const craft = typeof isUnlocked !== 'function' || isUnlocked('craft');
+    const bench = !(typeof hearthStationWhy === 'function' && hearthStationWhy('bench'));
+    return 'Rough tool: base speed.' + (craft && bench ? ` Make a ${K.n.toLowerCase()} at the Workbench.` : '');
+  }
+  if (!TOOL_TUNE.on) return 'Base speed.';
+  const f = Math.round(toolFind(sk) * 100);
+  return `+${Math.round(TOOL_TUNE.right * 100)}% speed on tier ${e.tier > 1 ? '1-' + e.tier : '1'} nodes` + (f ? ` · ${f}% rare finds` : '');
+}
 const GX_ROW_NOTES = [];
 function registerGatherRowNote(fn) { GX_ROW_NOTES.push(fn); return () => { const i = GX_ROW_NOTES.indexOf(fn); if (i >= 0) GX_ROW_NOTES.splice(i, 1); }; }
 
@@ -117,15 +133,18 @@ function gxRowUpdate(r, opts) {
   for (const f of GX_ROW_NOTES) { try { const n = f(kind, t); if (n) { note = String(n); break; } } catch (e) {} }
   putHidden(r.note, !note); if (note) putText(r.note, note);
   if (open) {
-    const rate = gxPerMin(navRate(kind, t));
-    putText(r.meta, opts && opts.why && !/^Home/.test(opts.why) ? `${rate} a min · ${opts.why}` : `${rate} a min · ${gxHeld(kind, t)}`);   // Home: the chip says it
+    // Every open row: a minute, an hour and held of the cap (cal-0107-gear-and-rates); a Best row adds why (Home: the chip says it).
+    const why = opts && opts.why && !/^Home/.test(opts.why) ? ` · ${opts.why}` : '';
+    putText(r.meta, `${gxRates(navRate(kind, t))} · ${gxHeld(kind, t)}${why}`);
   } else putText(r.meta, `Needs ${SKILL[sk]} ${req}`);
   putHidden(r.fill.parentNode, !open);
   if (open) putStyle(r.fill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
-  putText(r.btn, here ? 'Here' : open ? NODE_VERB[kind] : `Lv ${req}`);
+  // a locked row offers no button (its line says what it needs); the node you work says Working
+  putHidden(r.btn, !open);
+  putText(r.btn, here ? 'Working' : NODE_VERB[kind]);
   putClass(r.btn, 'gx-act' + (here ? ' here' : opts && opts.best ? ' best' : ''));
   putDisabled(r.btn, !open || here);
-  putAttr(r.btn, 'aria-label', here ? `You work at the ${NODE_NAMES[kind][t - 1]}` : open ? `${NODE_VERB[kind]} at the ${NODE_NAMES[kind][t - 1]}` : `${NODE_NAMES[kind][t - 1]}: needs ${SKILL[sk]} ${req}`);
+  putAttr(r.btn, 'aria-label', here ? `Working at the ${NODE_NAMES[kind][t - 1]}` : `${NODE_VERB[kind]} at the ${NODE_NAMES[kind][t - 1]}`);
 }
 const gxHead = (title, note) => {
   const h = el('div', 'sec-head gx-head'), t = el('h2', 'sec-title', title), n = el('span', 'note gx-hnote', note || '');
@@ -134,16 +153,27 @@ const gxHead = (title, note) => {
 
 // ---- one skill view ----
 const GX = {};   // skill -> refs, built on the view's first show
+const gxTiers = fam => fam === 'hide' ? HUNT_BEASTS.length : 5;   // Hunting has 3 grounds (grades 4-5 reserved)
 function gxBuild(sk) {
   const panel = $('p-gat'), view = el('div', 'gx-view'); view.dataset.view = GX_VIEW[sk];
   const R = { sk, view, fams: {} };
-  // 1. the Now card (three states share it)
+  // 1. the skill head: "Mining Lv 12" and the next tier, the tool and what it adds, the XP bar
+  const head = el('div', 'sec gx-skill gx-skhead'); head.id = 'gxSkill-' + sk;
+  const sh = gxHead(SKILL[sk]); R.slT = sh.t; R.slN = sh.n;
+  const tl = el('div', 'gx-skhead-tool');
+  R.tool = typeof toolsUI === 'object' && toolsUI ? toolsUI.chip(sk) : el('span');
+  R.tline = el('span', 'gx-tline');
+  tl.append(R.tool, R.tline);
+  R.xbar = el('i', 'gx-xbar'); R.xfill = el('b'); R.xbar.append(R.xfill);
+  head.append(sh.h, tl, R.xbar);
+  // 2. the Now card (three states share its lines; the strip names the node you work on another skill)
   const card = el('div', 'gx-now'), top = el('div', 'gx-now-top');
   R.nic = el('div', 'ic gx-nic'); R.nimg = img(GX_ICON[sk]()); R.nic.append(R.nimg);
   const nb = el('div', 'gx-now-body');
-  const nt = el('div', 'gx-now-name'); R.nname = el('span', 'nm'); R.nchip = el('span', 'gx-chip hi', 'Now'); nt.append(R.nname, R.nchip);
+  R.nt = el('div', 'gx-now-name'); R.nname = el('span', 'nm'); R.nchip = el('span', 'gx-chip hi', 'Working'); R.nt.append(R.nname, R.nchip);
+  R.strip = el('div', 'gx-strip');
   R.nrate = el('div', 'gx-now-rate');
-  nb.append(nt, R.nrate); top.append(R.nic, nb);
+  nb.append(R.nt, R.strip, R.nrate); top.append(R.nic, nb);
   R.nheld = el('div', 'gx-now-held'); R.nhl = el('span'); R.nhr = el('span'); R.nheld.append(R.nhl, R.nhr);
   R.nbar = el('i', 'gx-nbar'); R.nfill = el('b'); R.nbar.append(R.nfill);
   R.nfull = el('div', 'gx-now-full'); R.nfullTx = el('span'); R.nsw = gxBtn('mini', 'Switch'); R.nsp = gxBtn('mini gx-spill', 'Spillover');
@@ -152,86 +182,93 @@ function gxBuild(sk) {
   R.nfull.append(R.nfullTx, R.nsw, R.nsp);
   R.nrest = el('div', 'gx-now-rest');
   const foot = el('div', 'gx-now-foot');
-  R.tool = typeof toolsUI === 'object' && toolsUI ? toolsUI.chip(sk) : el('span');
   R.right = el('span', 'gx-chip');
   R.nact = gxBtn('gx-go', 'Back to fight');
   R.nact.addEventListener('click', () => {
     if (R.state === 'here') navGo({ act: 'fight', close: true });
     else navGo({ act: 'gather', skill: sk, close: true });
   });
-  foot.append(R.tool, R.right, R.nact);
+  foot.append(R.right, R.nact);
   card.append(top, R.nheld, R.nbar, R.nfull, R.nrest, foot);
   R.card = card;
-  // the strip on another skill's view
-  R.strip = el('div', 'gx-strip');
-  // 2. the skill line
-  const sl = el('div', 'sec gx-skill'); sl.id = 'gxSkill-' + sk;
-  const sh = gxHead(SKILL[sk]); R.slT = sh.t; R.slN = sh.n;
-  sl.append(sh.h);   // the XP bar is on the view switcher (gxLabels)
-  // 3. Best for you
-  const bs = el('div', 'sec gx-best'); const bh = gxHead('Best for you');
-  R.bestList = el('div', 'dz-list gx-list'); bs.append(bh.h, R.bestList);
-  R.best = []; R.bestSec = bs;
-  // 4. families
+  // 3. families: rows, the lower-tier fold, the locked line
   const famBox = el('div', 'gx-fams');
   NAV_FAMS[sk].forEach((fam, i) => {
     const s = el('div', 'sec gx-fam'), h = gxHead(CRAFT_NODES[fam].row, i === 0 ? 'held / cap' : '');
     const list = el('div', 'dz-list gx-list');
     const rows = [];
-    for (let t = 1; t <= 5; t++) rows.push(gxRow(list, fam, t));
+    for (let t = 1; t <= gxTiers(fam); t++) rows.push(gxRow(list, fam, t));
     const fold = gxBtn('gx-fold'); fold.setAttribute('aria-expanded', 'false');
     const fl = el('span', 'gx-fold-l'), fr = el('span', 'gx-fold-r'); fold.append(fl, fr);
-    const F = { sec: s, rows, fold, fl, fr, open: false };
+    const lock = el('div', 'gx-lockline');
+    const F = { sec: s, rows, fold, fl, fr, lock, open: false };
     fold.addEventListener('click', () => { F.open = !F.open; putAttr(fold, 'aria-expanded', String(F.open)); gxUpdate(sk); });
-    s.append(h.h, list, fold);
+    s.append(h.h, list, fold, lock);
     famBox.append(s);
     R.fams[fam] = F;
   });
-  view.append(card, R.strip, sl, bs, famBox);
+  view.append(head, card, famBox);
   panel.append(view);
   applyView('gat');
   GX[sk] = R;
   return R;
 }
 
-// The Now card: here / another skill / fighting or raiding.
+// The Now card, the same lines in every state: what the hero does, a minute and an hour, held of the cap, when it is
+// full, one button. here: you gather this skill; other: you gather another skill (the strip names it); away: fighting,
+// raiding or in the Deepwell (the numbers are this skill's last node, where "Gather here" sends you).
 function gxNow(R) {
   const sk = R.sk, act = S.activity, gathering = act === 'gather', nsk = gathering ? skillOf(S.node.kind) : null;
   const deep = typeof deepActive === 'function' && deepActive();
   const state = deep ? 'away' : gathering && nsk === sk ? 'here' : gathering ? 'other' : 'away';
   R.state = state;
-  putHidden(R.card, state === 'other');
+  const here = state === 'here';
+  putToggle(R.card, 'on', here);
+  putToggle(R.card, 'other', state === 'other');
+  putHidden(R.nt, state === 'other');
   putHidden(R.strip, state !== 'other');
-  putToggle(R.card, 'on', state === 'here');
-  if (state === 'other') {
-    putText(R.strip, `You are ${SKILL[nsk].toLowerCase()} at the ${NODE_NAMES[S.node.kind][S.node.t - 1]}. Tap a node to move here.`);
+  putHidden(R.nchip, !here);
+  putHidden(R.nrest, !here);
+  putHidden(R.right, !here || !TOOL_TUNE.on);
+  // which node the numbers are for: the one you work, or this skill's last node
+  const node = gathering && !deep ? { kind: S.node.kind, t: S.node.t } : navLast(sk);
+  const show = !deep && !!node;
+  for (const n of [R.nheld, R.nbar]) putHidden(n, !show);
+  putHidden(R.nact, deep);
+  if (deep) {
+    putHidden(R.nfull, true);
+    putText(R.nname, 'You are in the Deepwell.');
+    putText(R.nrate, 'Climb out to gather again.');
     return;
   }
-  const here = state === 'here';
-  for (const n of [R.nheld, R.nbar, R.tool, R.right]) putHidden(n, !here);
-  if (!here) putHidden(R.nrest, true);
-  putHidden(R.nchip, !here);
-  putHidden(R.nact, deep);
-  if (!here) {
+  if (!node) return;
+  const { kind, t } = node, rate = navRate(kind, t), nname = NODE_NAMES[kind][t - 1];
+  putAttr(R.nimg, 'src', matIcon(kind, t));
+  const cap = storeCap(kind, t), fin = Number.isFinite(cap), h = S.mats[kind][t - 1] || 0, full = fin && h >= cap;
+  const left = navFullIn(kind, t), when = Number.isFinite(left) ? fmtTime(left).replace(/ \d+s$/, '') : '';
+  putText(R.nhl, `${MAT[kind].short[t - 1]} ${gxHeld(kind, t)}`);
+  putStyle(R.nfill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
+  putToggle(R.card, 'full', full && state !== 'away');
+  if (state === 'away') {
     putHidden(R.nfull, true);
-    const last = navLast(sk);
-    putAttr(R.nimg, 'src', matIcon(last.kind, last.t));
-    putText(R.nname, deep ? 'You are in the Deepwell.' : act === 'raid' ? 'You are at the raid.' : `You are fighting in Zone ${S.zone}.`);
-    putText(R.nrate, deep ? 'Climb out to gather again.' : `Gather here: the ${NODE_NAMES[last.kind][last.t - 1]}, ${gxPerMin(navRate(last.kind, last.t))} a min.`);
+    putText(R.nname, act === 'raid' ? 'You are at the raid.' : `You are fighting in Zone ${S.zone}.`);
+    putText(R.nrate, `Gather here: the ${nname}, ${gxPerMin(rate)} a minute · ${gxPerHour(rate)} an hour.`);
+    putText(R.nhr, !fin ? '' : full ? (h > cap ? 'Over the cap' : 'Full') : when ? `Full in ${when} once you gather` : '');
     putText(R.nact, 'Gather here');
     putClass(R.nact, 'gx-go gather');
     return;
   }
-  const { kind, t } = S.node, rate = navRate(kind, t);
-  putAttr(R.nimg, 'src', matIcon(kind, t));
-  putText(R.nname, NODE_NAMES[kind][t - 1]);
-  putText(R.nrate, `${gxPerMin(rate)} a minute · ${rate * 60 < 1e5 ? storeNum(Math.round(rate * 60)) : gxNum(rate * 60)} an hour`);
-  const cap = storeCap(kind, t), fin = Number.isFinite(cap), h = S.mats[kind][t - 1] || 0;
-  putText(R.nhl, `${MAT[kind].short[t - 1]} ${gxHeld(kind, t)}`);
-  const left = navFullIn(kind, t), full = fin && h >= cap;
-  putText(R.nhr, !fin ? '' : full ? (h > cap ? 'Over the cap' : 'Full') : Number.isFinite(left) ? `Full in ${fmtTime(left).replace(/ \d+s$/, '')}` : '');
-  putStyle(R.nfill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
-  putToggle(R.card, 'full', full);
+  putText(R.nhr, !fin ? '' : full ? (h > cap ? 'Over the cap' : 'Full') : when ? `Full in ${when}` : '');
+  putText(R.nrate, `${gxPerMin(rate)} a minute · ${gxPerHour(rate)} an hour`);
+  if (state === 'other') {
+    putHidden(R.nfull, true);
+    putText(R.strip, `You are ${SKILL[nsk].toLowerCase()} at the ${nname}.`);
+    const l = navLast(sk);   // the button says where it sends you: this skill's last node
+    putText(R.nact, l ? `${NODE_VERB[l.kind]} at the ${NODE_NAMES[l.kind][l.t - 1]}` : 'Gather here');
+    putClass(R.nact, 'gx-go gather');
+    return;
+  }
+  putText(R.nname, nname);
   // Storehouse full: Switch (the next node of this skill with room) and Spillover (Storehouse Lv 3).
   putHidden(R.nfull, !full);
   if (full) {
@@ -245,12 +282,9 @@ function gxNow(R) {
   }
   // Gathering rests the hero (G1, 55-rested).
   const rest = typeof restNote === 'function' ? restNote().trim() : '';
-  putHidden(R.nrest, false);
   putText(R.nrest, rest || 'Gathering rests you. Rest turns into extra damage in your next fight.');
-  if (typeof toolsUI === 'object' && toolsUI) toolsUI.chipUpdate(R.tool, sk);
-  const e = equippedTool(sk), on_ = TOOL_TUNE.on, right = e.tier >= t;
-  putHidden(R.right, !on_);
-  if (on_) {
+  const e = equippedTool(sk), right = e.tier >= t;
+  if (TOOL_TUNE.on) {
     putText(R.right, right ? 'Right tool' : `Wrong tool: -${Math.round((1 - 1 / (1 + TOOL_TUNE.right)) * 100)}%`);
     putClass(R.right, 'gx-chip ' + (right ? 'good' : 'warn'));
     putAttr(R.right, 'title', right ? `Tier ${e.tier} tool on a tier ${t} node: +${Math.round(TOOL_TUNE.right * 100)}% speed` : `A tier ${t} tool or better works ${Math.round(TOOL_TUNE.right * 100)}% faster here`);
@@ -261,24 +295,27 @@ function gxNow(R) {
 
 function gxUpdate(sk) {
   const R = GX[sk] || gxBuild(sk);
-  gxNow(R);
-  // skill line
+  // the skill head
   const s = S.skills[sk], next = skillNextReq(sk);
   putText(R.slT, `${SKILL[sk]} Lv ${s.lv}`);
   putText(R.slN, next ? `Next tier: Lv ${next}` : 'Every tier open');
-  // Best for you (menu audit: it listed the same rows the families list again below): the best rows are tagged
-  // Best in their own family list, with the reason, and never fold
+  if (typeof toolsUI === 'object' && toolsUI) toolsUI.chipUpdate(R.tool, sk);
+  putText(R.tline, gxToolLine(sk));
+  putStyle(R.xfill, 'width', Math.min(100, s.xp / skillNeed(s.lv, sk) * 100).toFixed(1) + '%');
+  gxNow(R);
+  // families: the top two open tiers; lower tiers fold into one tap line (the node you work and a Best row never
+  // fold); the next locked tier says what it needs; further locked tiers are one line (Gather A)
   const best = bestNodes(sk);
-  putHidden(R.bestSec, true);
-  // families: the top two open tiers, the next locked one; lower tiers fold (the node you work never does)
   const top = skillTopTier(sk);
   for (const fam of NAV_FAMS[sk]) {
     const F = R.fams[fam], low = [];
+    let locked = 0;
     F.rows.forEach(r => {
       const t = r.t, here = S.activity === 'gather' && S.node.kind === fam && S.node.t === t;
       const bm = best.find(b => b.kind === fam && b.t === t);
       const folded = t < top - 1 && !here && !bm;
       if (folded) low.push(r);
+      if (t > top + 1) locked++;
       const show = t <= top + 1 && (!folded || F.open);
       putHidden(r.row, !show);
       if (show) gxRowUpdate(r, bm ? { best: true, why: bm.why } : undefined);
@@ -289,6 +326,8 @@ function gxUpdate(sk) {
       putText(F.fr, F.open ? 'Hide' : `${low.length} lower tier${low.length > 1 ? 's' : ''}`);
       putToggle(F.fold, 'open', F.open);
     }
+    putHidden(F.lock, !locked);
+    if (locked) putText(F.lock, `${locked} higher tier${locked > 1 ? 's' : ''} locked`);
   }
 }
 

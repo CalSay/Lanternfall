@@ -246,8 +246,12 @@ the camp. That is accepted, not hidden: Wren works two stations, Tobin and Pip t
   removal).
 
 ### Where it shows
-- The Storehouse's first view shows **one cell per family at your current tier (`zoneTier(S.maxZone)`): 6 raw
-  families, Essence, coal = 8 cells.** A refined family's count sits in the same cell as its raw one ("Iron Ore 120 ·
+- The Storehouse's first view shows **one cell per family at the grade you use: 6 raw families, Essence, coal = 8
+  cells.** The grade (amended 2026-10-07, card cal-0107-storage-and-gather-ui, coordinator sign-off after an Opus judge):
+  the cap is the lower of `zoneTier(S.maxZone)` and the top grade the family's skill gathers now (hide also at most
+  Hunting's 3); the cell shows the cap grade if any is held there, else the largest stack at or below the cap, else the
+  highest grade held. An empty cell shows only when the family holds nothing; hide's cell waits until Hunting shows or
+  hide is held. Essence is one pile (`storeShelfGrade` in `75-store-ui.js`). A refined family's count sits in the same cell as its raw one ("Iron Ore 120 ·
   Ingots 40"). Other tiers fold out on tap. Middles get Storehouse caps (group 0.5, as hide); coal gets group 1, like
   ore.
 - Until vetted icons land (art card, section 11), a middle shows its raw family's existing icon with a text label
@@ -464,7 +468,7 @@ change), so its prediction can be measured.
 
 | # | Card | What a player gets | Model | After | Owned files (all exist unless marked new) |
 |---|---|---|---|---|---|
-| 1 | `craft-delta` (amended) | the result card shows the fight change; Next Up names the piece and its boss, and offers upgrades; tools go on by themselves; gear moves to the Hero tab; choice and first-use events for the cadence measure | Sonnet medium | `next-up-equip` | `75-craft-ui.js`, `75-moments-ui.js`, `55-goals.js`, new `75-hero-gear-ui.js`, `tools/walk.mjs` (Go words, choice log) |
+| 1 | `craft-delta` (amended) | the result card shows the fight change; Next Up names the piece and its boss, and offers upgrades; tools go on by themselves; gear moves to the Hero tab (built by `cal-0107-gear-and-rates`); choice and first-use events for the cadence measure | Sonnet medium | `next-up-equip` | `75-craft-ui.js`, `75-moments-ui.js`, `55-goals.js`, new `75-hero-gear-ui.js`, `tools/walk.mjs` (Go words, choice log) |
 | 2 | `refine-queues` (rewritten) | coal, the four middles, order lists on three stations while you fight and while away, recipes and upgrades from tier 2 use middles; exports `refineOffer(cost)` | Sonnet medium lead with 2 builders; Opus high save review | `gold-without-training` | Builder A (data, state, store, save codes, parity): `21-data-craft.js`, `30-state.js` (mats), `41-items.js` (costs), `55-store.js`, `75-store-ui.js`, `55-savecode.js`, `tools/offline-parity.mjs`. Builder B (refining, gathering, away): new `55-refine.js`, new `75-refine-ui.js`, new `60-refine.css`, `55-gathering.js` (coal node), `tools/sim.mjs` (personas, and the choice and first-use timeline); may touch `72-ui-gather.js` (Coal Seam row) and `57f-hands.js` (Hands on coal) |
 | 3 | `craft-attribute-grades` (rewritten) | grades D to S replace the die, fixed lines, Reforge as a pick, the Strike, Infuse, the shortfall offer on the craft screen, the station curve pinned to the road, re-craft XP, upgrades as flat numbers | Sonnet medium; Opus high combat and save review | `refine-queues`, `craft-delta` | `55-crafting.js`, `40-rules.js`, `20-data.js` (`SKILL_TUNE`), `41-items.js` (lines), `75-craft-ui.js`, `58-deeds.js`, `55-savecode.js` (`g`), `tools/budget.mjs`, `tools/sim.mjs` (skills report, after card 2), new `skilling-crafting-overhaul/curve.md` |
 | 4 | `weapon-profiles` (rewritten) | Heavy, Balanced, Swift with attribute scaling, Retune | Sonnet medium; Opus high combat review | `craft-attribute-grades` | `59k-turn.js` (three hooks), `55-crafting.js` (Retune), `75-craft-ui.js`, `55-savecode.js` (`pf`, `rn`), `docs/design/hero-progression-build/arms.mjs` |
@@ -582,7 +586,7 @@ gold split, Infuse's price. The judge recommends Cal upholds all three veto line
 | 9 | Cards rewritten; `tonic-brew` and `art-refined-materials` written | section 11, card folder |
 | 10 | Card 2 names each builder's files, may touch `72-ui-gather.js` and `57f-hands.js`, exports `refineOffer(cost)`; the offer moves to card 3 | section 11 |
 | 11 | Old saves past gate + 15 craft S at once; the balance pass checks raid time to kill | section 13 |
-| 12 | Coal's store group 1; current tier is `zoneTier(S.maxZone)`; Swift's 10 ms inside Guard's cap | sections 4, 6 |
+| 12 | Coal's store group 1; the Storehouse's grade is `zoneTier(S.maxZone)` capped by the skill's top grade (amended 2026-10-07, section 4); Swift's 10 ms inside Guard's cap | sections 4, 6 |
 
 Also added at the coordinator's ask: cadence targets (section 2) and Infuse, Essence's use (section 7b).
 
@@ -596,7 +600,7 @@ Cal played the preview and sent 21 notes. Six bear on this spec. The rest go to 
 | #21 | "I'm getting infinity attribute points. Is it set to 3 a level? We need more attributes to make this a better choice. Again refer to E33." | Today it is 4 points a level on 4 attributes (`HERO_TUNE.perLevel`, `24g-data-hero.js:34`), and only the hero grows with them. **Expedition 33's model, adapted:** a fifth attribute, **Luck** (crit chance in turn fights, under `TURN_TUNE.critChanceCap`), **3 points a level**, and **each weapon grows with two attributes**: Heavy with Might and Vigour, Balanced with Focus and Luck, Swift with Guard and Luck (the second at half strength). Vigour gains a weapon. Every point now moves the hero and a weapon, and there are more ways to spend it. Old saves keep their spent points while they fit; a hero who has spent more than the new total gets a free reset with a card that says why. If "infinity" was a literal number on screen, that is a bug and goes to the preview thread. | new `five-attributes` |
 | #18 | "I'm one shotting everything in the early game." | The overhaul does not change tier 1 power, so it will not fix this alone. Target added (section 12): a normal foe in zones 1 to 6 takes at least 3 hits from a kept-up hero. Fewer points a level (3, not 4) takes a little off. The fix itself is first-hour tuning now, not after 13 November; it goes to the Foreman as a player-notes fix card, and card 3's budget run keeps the check. | player-notes fix; `craft-attribute-grades` keeps the check |
 | #13 | "It tells me to make a pickaxe ... It doesn't tell me I need to equip it." | **A crafted tool that beats the worn one goes on by itself**, and the result card says so ("Bronze Pickaxe on: mining 20% faster"). Tools are one per slot with no build choice, so an Equip tap is only friction. Gear still asks, because gear is a choice. | `craft-delta` |
-| #14 | "I think gear should be on the hero tab rather than the crafting tab." | **Worn gear and the bag move to the Hero tab** (the `party` view), next to Attributes and Abilities, where the build is made. The Craft tab makes things and links to the hero's gear. With weapons growing from attributes, the two belong on one screen. | `craft-delta` |
+| #14 | "I think gear should be on the hero tab rather than the crafting tab." | **Worn gear and the bag move to the Hero tab** (the `party` view), next to Attributes and Abilities, where the build is made. The Craft tab makes things and links to the hero's gear. With weapons growing from attributes, the two belong on one screen. | `craft-delta`; the gear move is built by `cal-0107-gear-and-rates` |
 | #16 | "I liked the amount / minute and / hour that we had on the display." | The gathering Now card still has the rate line (`72-ui-gather.js:228`), so why it did not show goes to the preview thread. Refine orders use the same line: "Smelting: 2.4 a minute · 144 an hour". | `refine-queues` |
 
 Note #17 (equipping from the result card still asks "keep it?") is in `75-moments-ui.js`, which `craft-delta` owns, so

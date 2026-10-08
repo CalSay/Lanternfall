@@ -111,6 +111,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Bring a new card that appears above the tapped row into view (`scrollIntoView({ block: 'start' })`) and put its buttons under the title in short landscape. Why: the result card pushed the recipe list down, so the first test run showed no card and the Equip button sat below the fold. (craft-reveal, 2026-10-06)
 - Put a new stage element where it overlaps nothing in both views before the first push: check it in a 360x740 and a 740x360 shot next to the place caption and the resource row. Why: the hit-feel lamps first sat under the Grit row and overlapped the zone caption; the coordinator caught it. (hit-feel, 2026-10-06)
 
+- When a tab gains a fifth view, let a long label take its room (`grid-auto-columns: minmax(min-content, 1fr)`) instead of shrinking the font: at 11 px Abilities still clipped by 5 px at 360x740 and 11 px in the 740x360 header. And a check that opened a view on one tab and then calls `setView` on another must `setTab` first. Why: wire-menu-icons failed and C24 timed out when Gear moved to the Hero tab. (cal-0107-gear-and-rates, 2026-10-07)
+- In a proof route, tap a Gather view by its whole label (`tap "Mining"`, `tap "Wood"`), never by a verb: `tap` falls back to a partial match, so `tap "Mine"` hit the first row's "Mine at the Iron Vein", started mining and closed the menu. Why: the first storage-and-gather route failed 7 expects that way. (cal-0107-storage-and-gather-ui, 2026-10-07)
+
 ## Saves and offline parity
 
 - Before bumping the save key, load real old saves (fixtures and a sim save) on the branch; add state with registerState defaults and a load-time clamp when that works. Why: PR #58 bumped to v6 for new attribute state, but the old saves loaded fine with one XP clamp, and a bump needs Cal's label. (hero-progression-rework, 2026-10-06)

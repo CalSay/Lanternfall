@@ -1,9 +1,16 @@
 /* 60-gathering: the Gather tab's skill views (72-ui-gather.js, UX-A GX1; ux-overhaul.md 6.1):
-   the Now card, the skill line, Best for you, node rows with a held/cap bar, folds, and the
-   "where to get it" sheet. */
+   the skill head, the Now card, node rows with a held/cap bar, folds, the locked line, and the
+   "where to get it" sheet (Gather A, the Command ledger: card cal-0107-storage-and-gather-ui). */
 .gx-view { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .gx-view .sec { gap: 6px; }
 .gx-head .note { font-size: 12px; }
+
+/* ---- the skill head: "Mining Lv 12", the tool and what it adds, the XP bar ---- */
+.gx-skhead { gap: 6px; }
+.gx-skhead-tool { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.gx-tline { flex: 1 1 160px; min-width: 0; font-size: 12.5px; color: var(--muted); }
+.gx-xbar { display: block; height: 5px; background: var(--well); border: 1px solid #0B0810; overflow: hidden; }
+.gx-xbar b { display: block; height: 100%; width: 0; background: var(--xp); }
 
 /* ---- small chips (not tappable): Now, Home, Full, Right tool ---- */
 .gx-chip { flex: none; display: inline-block; padding: 1px 6px; font: 600 11.5px/1.45 var(--body); color: var(--muted); border: 1px solid var(--line-hi); background: var(--well); white-space: nowrap; }
@@ -48,6 +55,8 @@
 .gx-tool.master { border-color: var(--gold); }
 /* on another skill's view: one line */
 .gx-strip { padding: 8px 10px; background: var(--well); border: 1px solid var(--line); border-left: 3px solid var(--gold); font-size: 13px; color: var(--bone); }
+/* inside the Now card it is the card's first line: you gather another skill's node */
+.gx-now .gx-strip { padding: 0 0 0 8px; background: none; border: 0; border-left: 3px solid var(--gold); font: 600 calc(14px * var(--display-k))/1.2 var(--display); }
 
 /* ---- the view switcher: each skill's level and a thin XP bar (gxLabels) ---- */
 .vseg button.has-xp { padding-bottom: 5px; }
@@ -65,8 +74,8 @@
 .gx-name { display: flex; align-items: center; gap: 6px; min-width: 0; font: 600 calc(14px * var(--display-k))/1.2 var(--display); }
 .gx-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gx-row.here .gx-name .nm { color: var(--gold); }
-.gx-meta { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; font-variant-numeric: tabular-nums; }
-.gx-bar { display: block; height: 4px; margin-top: 4px; background: var(--well); overflow: hidden; }
+.gx-meta { font-size: 12.5px; color: var(--muted); margin-top: 1px; font-variant-numeric: tabular-nums; }
+.gx-bar { display: block; height: 5px; margin-top: 4px; background: var(--well); overflow: hidden; }
 .gx-bar b { display: block; height: 100%; width: 0; background: var(--gold); }
 .gx-row.full .gx-bar b { background: var(--hp); }
 .gx-act { min-width: 64px; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; font: 600 calc(14px * var(--display-k)) var(--display); color: var(--bone); cursor: pointer; }
@@ -80,6 +89,8 @@
 .gx-fold-r { flex: none; font-weight: 600; color: var(--bone); }
 .gx-fold-r::after { content: " ▾"; }
 .gx-fold.open .gx-fold-r::after { content: " ▴"; }
+/* further locked tiers: one plain line (Gather A) */
+.gx-lockline { padding: 0 2px; font-size: 12.5px; color: var(--muted); }
 
 /* ---- where to get it (sheet) ---- */
 .gw-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; }
