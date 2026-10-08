@@ -10601,6 +10601,10 @@ if (section('staged guide (browser)')) try {
           const party = await X('isUnlocked("party")'), sayParty = await X('!!S.onboard.done["say:party"]');
           assert(lv && party && lv.id === 'upgrade' && /Hero tab is open/.test(lv.txt) && /points/.test(lv.txt) && lv.paused && !(await X('combatFoes().some(f => f && !f.dead && f.hp > 0)')), `staged guide: at level 2 the Hero tab is open and Hesketh's next line points at your points while the next foe waits ("${lv && lv.txt}")`);
           assert(sayParty && await X('!S.onboard.done.upgrade'), 'staged guide: the Hero tab is announced once (the unlock line is folded into that step)');
+          // spending a point ends the upgrade step; the Hero tab's first-use line ("This is where you grow") would introduce the tab again
+          await X('attrSpread(); true'); await page.waitForTimeout(700);   // the guide marks the step done on its next pass
+          const intro = await X('!!S.onboard.done.upgrade && !!S.onboard.done["use:party"]');
+          assert(intro, 'staged guide: once a point is spent, the Hero tab is not introduced a second time (its first-use line is folded into the upgrade step)');
         }
         assert(!errs.length, `staged guide ${hero}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
@@ -10617,13 +10621,31 @@ if (section('staged guide (browser)')) try {
         const sc = JSON.parse(await X(LOOK));
         assert(sc.id === 'say:scroll' && /Moss Scroll/.test(sc.txt) && /Abilities/.test(sc.txt) && sc.paused && await X('!document.querySelector(".ob-ok").hidden'), `staged guide: the first Scroll gets Hesketh's line between fights, held with a Got it ("${sc.txt}")`);
         await page.click('.ob-ok'); await page.waitForTimeout(300);
+        // a move learned with nowhere chosen for it yet (an empty slot waits): he says to put it in a slot, and the slot wakes
         await X('abilityLearn("wren", HERO_ABILITIES.wren.find(id => ABILITIES[id].tier === 1)); true');
         await page.waitForTimeout(700);
         const sl = JSON.parse(await X(LOOK));
-        assert(sl.id === 'say:slot' && /slot/.test(sl.txt), `staged guide: once the move is learned he says to put it in a slot under the fight ("${sl.txt}")`);
+        assert(sl.id === 'say:slot' && /needs a slot/.test(sl.txt), `staged guide: once the move is learned he says to put it in a slot under the fight ("${sl.txt}")`);
         await page.click('.ob-ok'); await X('closeMenu(); true'); await page.waitForTimeout(500);
         const shut1 = await slotTxt();
         assert(!/Tap to add/.test(shut0) && /Tap to add/.test(shut1), `staged guide: an empty slot is silent until a learned move waits for it, then says "Tap to add" (${shut0} / ${shut1})`);
+        assert(!errs.length, 'staged guide (Scroll, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the Abilities view's Learn button drops the move into the first empty slot itself: he says where it went (independent play, step 10)
+      {
+        const { ctx, page, errs, X } = await open({ turns: true });
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+        await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade", "back"]) onboardDone(id); onboardReveal("party"); S.abil.scrolls.moss = 1; S.abil.got.moss = 1; onboardUseDone("say:scroll"); setTab("party", "abilities"); true');
+        await page.waitForTimeout(600);
+        const id = await X('HERO_ABILITIES.wren.find(id => ABILITIES[id].tier === 1)');
+        await X(`document.querySelectorAll(".ob-ok").forEach(b => { if (!b.hidden) b.click(); }); true`);
+        // what the Learn button does on its second tap (75-abilities-ui): learn, then the first empty slot
+        await X(`abilityLearn("wren", ${JSON.stringify(id)}) && soloEquip(soloEquipped().indexOf(null), ${JSON.stringify(id)}); true`);
+        let sl2 = null;
+        for (let k = 0; k < 20 && !(sl2 && sl2.id === 'say:slot'); k++) { await page.waitForTimeout(200); sl2 = JSON.parse(await X(LOOK)); if (sl2.id && sl2.id !== 'say:slot' && sl2.id.startsWith('use:')) await X('document.querySelector(".ob-ok") && !document.querySelector(".ob-ok").hidden && document.querySelector(".ob-ok").click(); true'); }
+        const slotted = await X(`soloEquipped().includes(${JSON.stringify(id)})`);
+        assert(slotted && sl2 && sl2.id === 'say:slot' && /is in a slot under the fight now/.test(sl2.txt), `staged guide: a move learned into an empty slot gets his line saying where it went ("${sl2 && sl2.txt}", slotted ${slotted}, learned and slotted as the Learn button does)`);
         assert(!errs.length, 'staged guide (Scroll, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }

@@ -83,15 +83,17 @@
   const SAY_MORE = {
     defeat: 'No shame in that. The card showed what beat you, and each try shows one more of its moves.',
     scroll: 'That boss dropped a Moss Scroll. Open Hero, then Abilities, and learn a new move with it.',
-    slot: 'Your new move needs a slot. Tap an empty slot under the fight and pick it there.'
+    // learning a move from the Abilities view drops it into the first empty slot (75-abilities-ui), so he says where it went
+    slot: () => slotAb && soloEquipped().includes(slotAb) ? `${(ABILITIES[slotAb] || {}).name || 'Your new move'} is in a slot under the fight now. Press it there when it's ready.`
+      : 'Your new move needs a slot. Tap an empty slot under the fight and pick it there.'
   };
-  const sayText = id => SAY_TXT[id] || SAY_MORE[id];
-  // a line that no longer matches the game when its turn comes is dropped, never said (the Scroll already spent, the move already slotted)
-  const spareMove = () => { try { const eq = soloEquipped(); return eq.includes(null) && soloAbilities().some(id => !eq.includes(id)); } catch (e) { return false; } };
+  let slotAb = '';   // the move just learned (the slot line)
+  const sayText = id => { const t = SAY_TXT[id] || SAY_MORE[id]; try { return typeof t === 'function' ? t() : t; } catch (e) { return ''; } };
+  // a line that no longer matches the game when its turn comes is dropped, never said (the Scroll already spent)
   const SAY_STILL = {
     gather: () => typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit(),   // his promise is for the cold fire only
     scroll: () => { try { return SCROLL_ORDER.some(id => scrollCount(id) > 0); } catch (e) { return false; } },
-    slot: spareMove
+    slot: () => { try { return !!slotAb && soloAbilities().includes(slotAb); } catch (e) { return false; } }
   };
   const sayQ = []; let sayCur = '';
   function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) sayQ.push(id); }
@@ -113,7 +115,9 @@
   });
   on('wipe', e => { if (e && e.boss && !e.arena) sayQueue('defeat'); });
   on('scrollDrop', e => { if (e && e.firstEver) sayQueue('scroll'); });
-  on('abilityLearned', e => { if (e && e.hero === soloHero() && spareMove()) sayQueue('slot'); });
+  on('abilityLearned', e => { if (e && e.hero === soloHero() && soloAbilities().length > 1) { slotAb = e.id; sayQueue('slot'); } });
+  // the upgrade step already brought you to the Hero tab and said what it is for: its first-use line would introduce it a second time
+  on('onboardStep', e => { if (e && e.id === 'upgrade') onboardUseDone('use:party'); });
   on('menuView', ({ tab, view }) => {
     const o = O();
     if (!o.seen[tab]) o.seen[tab] = 1;
@@ -299,7 +303,7 @@
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
       ? path('party', 'attributes', '#attrRows .at-row[data-at="might"] .at-add[data-n="1"]',
-        ['The Hero tab is open now. Open Hero and spend your new points.', 'Open Build.', 'Put your point in Might. It makes you hit harder.'])
+        ['The Hero tab is open now. Open Hero and spend your new points.', 'Open Build.', 'Put a point in Might. It makes you hit harder.'])
       : path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
         ['The Hero tab is open now. Open Hero and train with your gold.', 'Open Training.', 'Train Attack. Each level makes you hit harder.']), { side: S.tab === 'party' ? 'up' : '' }),
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Tap it and see what you can mine." },
