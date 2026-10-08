@@ -1872,11 +1872,18 @@ span.cf-d { font-weight: 600; }
 .feedback-buttons [hidden], .feedback-panel [hidden] { display: none; }
 .feedback-panel .note { font-size: 12px; color: var(--muted); margin: 0; }
 /* 60-gathering: the Gather tab's skill views (72-ui-gather.js, UX-A GX1; ux-overhaul.md 6.1):
-   the Now card, the skill line, Best for you, node rows with a held/cap bar, folds, and the
-   "where to get it" sheet. */
+   the skill head, the Now card, node rows with a held/cap bar, folds, the locked line, and the
+   "where to get it" sheet (Gather A, the Command ledger: card cal-0107-storage-and-gather-ui). */
 .gx-view { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .gx-view .sec { gap: 6px; }
 .gx-head .note { font-size: 12px; }
+
+/* ---- the skill head: "Mining Lv 12", the tool and what it adds, the XP bar ---- */
+.gx-skhead { gap: 6px; }
+.gx-skhead-tool { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.gx-tline { flex: 1 1 160px; min-width: 0; font-size: 12.5px; color: var(--muted); }
+.gx-xbar { display: block; height: 5px; background: var(--well); border: 1px solid #0B0810; overflow: hidden; }
+.gx-xbar b { display: block; height: 100%; width: 0; background: var(--xp); }
 
 /* ---- small chips (not tappable): Now, Home, Full, Right tool ---- */
 .gx-chip { flex: none; display: inline-block; padding: 1px 6px; font: 600 11.5px/1.45 var(--body); color: var(--muted); border: 1px solid var(--line-hi); background: var(--well); white-space: nowrap; }
@@ -1921,6 +1928,8 @@ span.cf-d { font-weight: 600; }
 .gx-tool.master { border-color: var(--gold); }
 /* on another skill's view: one line */
 .gx-strip { padding: 8px 10px; background: var(--well); border: 1px solid var(--line); border-left: 3px solid var(--gold); font-size: 13px; color: var(--bone); }
+/* inside the Now card it is the card's first line: you gather another skill's node */
+.gx-now .gx-strip { padding: 0 0 0 8px; background: none; border: 0; border-left: 3px solid var(--gold); font: 600 calc(14px * var(--display-k))/1.2 var(--display); }
 
 /* ---- the view switcher: each skill's level and a thin XP bar (gxLabels) ---- */
 .vseg button.has-xp { padding-bottom: 5px; }
@@ -1939,7 +1948,7 @@ span.cf-d { font-weight: 600; }
 .gx-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gx-row.here .gx-name .nm { color: var(--gold); }
 .gx-meta { font-size: 12.5px; color: var(--muted); margin-top: 1px; font-variant-numeric: tabular-nums; }
-.gx-bar { display: block; height: 4px; margin-top: 4px; background: var(--well); overflow: hidden; }
+.gx-bar { display: block; height: 5px; margin-top: 4px; background: var(--well); overflow: hidden; }
 .gx-bar b { display: block; height: 100%; width: 0; background: var(--gold); }
 .gx-row.full .gx-bar b { background: var(--hp); }
 .gx-act { min-width: 64px; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; font: 600 calc(14px * var(--display-k)) var(--display); color: var(--bone); cursor: pointer; }
@@ -1953,6 +1962,8 @@ span.cf-d { font-weight: 600; }
 .gx-fold-r { flex: none; font-weight: 600; color: var(--bone); }
 .gx-fold-r::after { content: " ▾"; }
 .gx-fold.open .gx-fold-r::after { content: " ▴"; }
+/* further locked tiers: one plain line (Gather A) */
+.gx-lockline { padding: 0 2px; font-size: 12.5px; color: var(--muted); }
 
 /* ---- where to get it (sheet) ---- */
 .gw-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; }
@@ -2906,6 +2917,31 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sh-fchip.on { border-color: var(--gold); color: var(--gold); background: rgba(242,193,78,.08); }
 
 .sh-fams { display: grid; gap: 12px; }
+.sh-fams:not(:has(> .sh-fam:not([hidden]))) { display: none; }
+
+/* sort chips and Show all grades */
+.sh-tools { align-items: center; margin-top: -4px; }
+.sh-sortl { font-size: 12px; color: var(--muted); }
+.sh-all { margin-left: auto; }
+
+/* the shelf: one stack per family at the grade you use (storeShelfGrade) */
+.sh-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.sh-stack { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; align-items: center; min-height: 52px; padding: 6px 8px; background: var(--panel); border: 1px solid var(--line-hi); font: inherit; color: var(--bone); text-align: left; cursor: pointer; }
+.sh-stack:active { transform: translateY(1px); }
+.sh-stack:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px; }
+.sh-stack > img { width: 26px; height: 26px; image-rendering: pixelated; justify-self: center; }
+.sh-stack-tx { display: grid; min-width: 0; }
+.sh-stack-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px/1.25 var(--body); }
+.sh-stack-n { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sh-stack .sh-bar { display: block; height: 4px; background: #0B0810; margin-top: 3px; }
+.sh-stack .sh-bar b { display: block; height: 100%; width: 0; background: var(--gold); }
+.sh-stack.none { opacity: .5; }
+.sh-stack.sh-warn .sh-bar b { background: #F2A93B; }
+.sh-stack.sh-full { border-color: #C0504D; box-shadow: inset 3px 0 0 var(--hp); }
+.sh-stack.sh-full .sh-bar b { background: var(--hp); }
+.sh-stack.sh-full .sh-stack-n { color: #FF8A80; font-weight: 600; }
+.sh-stack.sh-over .sh-stack-n { color: #F2A93B; font-weight: 600; }
+.sh-stack.sh-over .sh-bar b { background: #F2A93B; }
 .sh-fam { gap: 6px; }
 .sh-fam .note { font-size: 12px; }
 
@@ -34515,15 +34551,16 @@ function uiFight() {
 // 75-store-ui.js; the tool chip and its sheet are 75-tools-ui.js; the pill and the quick switcher
 // are 75-nav-ui.js.
 //
-// Each skill view (Mining, Wood, Foraging), top to bottom:
-//   1. the Now card: on the skill you work, the node, a minute / an hour, held vs cap, time to full,
-//      the tool chip and Back to fight (full: Switch and Spillover). On another skill's view it is a
-//      one-line strip; while fighting or raiding, one line and "Gather here".
-//   2. the skill line: level and the next tier (every skill's level and XP bar sit on the view
-//      switcher, gxLabels).
-//   3. Best for you: up to 2 rows (bestNodes).
-//   4. one list per family (Veins, Geodes, ...): the top two open tiers and the next locked one;
-//      lower tiers fold into one line. A row is one tap: the whole row moves you there.
+// Each skill view (Mining, Wood, Foraging, Hunting) is Gather A, the Command ledger Cal picked (ui-drafts, 2026-10-05;
+// card cal-0107-storage-and-gather-ui), top to bottom:
+//   1. the skill head: "Mining Lv 12", the tool chip and what the tool adds, the XP bar (the view switcher
+//      carries every skill's level and XP too, gxLabels).
+//   2. the Now card, always the same lines: what the hero does (gathering here, at another skill's node
+//      (the .gx-strip line), or fighting), a minute / an hour, held of the cap, time to full, one button.
+//      Gathering here adds Right tool, the rest line and, when full, Switch and Spillover.
+//   3. one list per family (Veins, Geodes, ...): the top two open tiers (lower ones fold into one tap line),
+//      the next locked tier with what it needs, and further locked tiers as one line. A row is one tap: the
+//      whole row moves you there; the node you work says Working. The best rows (bestNodes) carry a Best chip.
 // Rows and cards are built once per view (on its first show) and updated in place (put* helpers).
 //
 // Hook for other systems (N1's Hands at nodes):
@@ -34547,6 +34584,19 @@ const gxFill = (k, t) => { const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t)
 const gxPerMin = r => r >= 100 ? gxNum(r) : r >= 10 ? String(Math.round(r)) : r.toFixed(1);
 const gxPerHour = r => r * 60 < 1e5 ? storeNum(Math.round(r * 60)) : gxNum(r * 60);   // r: a minute
 const gxRates = r => `${gxPerMin(r)} a min · ${gxPerHour(r)} an hour`;
+// What the tool adds, for the skill head. Rough tool: says so; "Make one" only once the Workbench stands.
+function gxToolLine(sk) {
+  const kind = toolOf(sk); if (!kind) return '';
+  const e = equippedTool(sk), K = TOOL_KINDS[kind];
+  if (!e.item) {
+    const craft = typeof isUnlocked !== 'function' || isUnlocked('craft');
+    const bench = !(typeof hearthStationWhy === 'function' && hearthStationWhy('bench'));
+    return 'Rough tool: base speed.' + (craft && bench ? ` Make a ${K.n.toLowerCase()} at the Workbench.` : '');
+  }
+  if (!TOOL_TUNE.on) return 'Base speed.';
+  const f = Math.round(toolFind(sk) * 100);
+  return `+${Math.round(TOOL_TUNE.right * 100)}% speed on tier ${e.tier > 1 ? '1-' + e.tier : '1'} nodes` + (f ? ` · ${f}% rare finds` : '');
+}
 const GX_ROW_NOTES = [];
 function registerGatherRowNote(fn) { GX_ROW_NOTES.push(fn); return () => { const i = GX_ROW_NOTES.indexOf(fn); if (i >= 0) GX_ROW_NOTES.splice(i, 1); }; }
 
@@ -34636,10 +34686,12 @@ function gxRowUpdate(r, opts) {
   } else putText(r.meta, `Needs ${SKILL[sk]} ${req}`);
   putHidden(r.fill.parentNode, !open);
   if (open) putStyle(r.fill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
-  putText(r.btn, here ? 'Here' : open ? NODE_VERB[kind] : `Lv ${req}`);
+  // a locked row offers no button (its line says what it needs); the node you work says Working
+  putHidden(r.btn, !open);
+  putText(r.btn, here ? 'Working' : NODE_VERB[kind]);
   putClass(r.btn, 'gx-act' + (here ? ' here' : opts && opts.best ? ' best' : ''));
   putDisabled(r.btn, !open || here);
-  putAttr(r.btn, 'aria-label', here ? `You work at the ${NODE_NAMES[kind][t - 1]}` : open ? `${NODE_VERB[kind]} at the ${NODE_NAMES[kind][t - 1]}` : `${NODE_NAMES[kind][t - 1]}: needs ${SKILL[sk]} ${req}`);
+  putAttr(r.btn, 'aria-label', here ? `Working at the ${NODE_NAMES[kind][t - 1]}` : `${NODE_VERB[kind]} at the ${NODE_NAMES[kind][t - 1]}`);
 }
 const gxHead = (title, note) => {
   const h = el('div', 'sec-head gx-head'), t = el('h2', 'sec-title', title), n = el('span', 'note gx-hnote', note || '');
@@ -34648,16 +34700,27 @@ const gxHead = (title, note) => {
 
 // ---- one skill view ----
 const GX = {};   // skill -> refs, built on the view's first show
+const gxTiers = fam => fam === 'hide' ? HUNT_BEASTS.length : 5;   // Hunting has 3 grounds (grades 4-5 reserved)
 function gxBuild(sk) {
   const panel = $('p-gat'), view = el('div', 'gx-view'); view.dataset.view = GX_VIEW[sk];
   const R = { sk, view, fams: {} };
-  // 1. the Now card (three states share it)
+  // 1. the skill head: "Mining Lv 12" and the next tier, the tool and what it adds, the XP bar
+  const head = el('div', 'sec gx-skill gx-skhead'); head.id = 'gxSkill-' + sk;
+  const sh = gxHead(SKILL[sk]); R.slT = sh.t; R.slN = sh.n;
+  const tl = el('div', 'gx-skhead-tool');
+  R.tool = typeof toolsUI === 'object' && toolsUI ? toolsUI.chip(sk) : el('span');
+  R.tline = el('span', 'gx-tline');
+  tl.append(R.tool, R.tline);
+  R.xbar = el('i', 'gx-xbar'); R.xfill = el('b'); R.xbar.append(R.xfill);
+  head.append(sh.h, tl, R.xbar);
+  // 2. the Now card (three states share its lines; the strip names the node you work on another skill)
   const card = el('div', 'gx-now'), top = el('div', 'gx-now-top');
   R.nic = el('div', 'ic gx-nic'); R.nimg = img(GX_ICON[sk]()); R.nic.append(R.nimg);
   const nb = el('div', 'gx-now-body');
-  const nt = el('div', 'gx-now-name'); R.nname = el('span', 'nm'); R.nchip = el('span', 'gx-chip hi', 'Now'); nt.append(R.nname, R.nchip);
+  R.nt = el('div', 'gx-now-name'); R.nname = el('span', 'nm'); R.nchip = el('span', 'gx-chip hi', 'Working'); R.nt.append(R.nname, R.nchip);
+  R.strip = el('div', 'gx-strip');
   R.nrate = el('div', 'gx-now-rate');
-  nb.append(nt, R.nrate); top.append(R.nic, nb);
+  nb.append(R.nt, R.strip, R.nrate); top.append(R.nic, nb);
   R.nheld = el('div', 'gx-now-held'); R.nhl = el('span'); R.nhr = el('span'); R.nheld.append(R.nhl, R.nhr);
   R.nbar = el('i', 'gx-nbar'); R.nfill = el('b'); R.nbar.append(R.nfill);
   R.nfull = el('div', 'gx-now-full'); R.nfullTx = el('span'); R.nsw = gxBtn('mini', 'Switch'); R.nsp = gxBtn('mini gx-spill', 'Spillover');
@@ -34666,86 +34729,93 @@ function gxBuild(sk) {
   R.nfull.append(R.nfullTx, R.nsw, R.nsp);
   R.nrest = el('div', 'gx-now-rest');
   const foot = el('div', 'gx-now-foot');
-  R.tool = typeof toolsUI === 'object' && toolsUI ? toolsUI.chip(sk) : el('span');
   R.right = el('span', 'gx-chip');
   R.nact = gxBtn('gx-go', 'Back to fight');
   R.nact.addEventListener('click', () => {
     if (R.state === 'here') navGo({ act: 'fight', close: true });
     else navGo({ act: 'gather', skill: sk, close: true });
   });
-  foot.append(R.tool, R.right, R.nact);
+  foot.append(R.right, R.nact);
   card.append(top, R.nheld, R.nbar, R.nfull, R.nrest, foot);
   R.card = card;
-  // the strip on another skill's view
-  R.strip = el('div', 'gx-strip');
-  // 2. the skill line
-  const sl = el('div', 'sec gx-skill'); sl.id = 'gxSkill-' + sk;
-  const sh = gxHead(SKILL[sk]); R.slT = sh.t; R.slN = sh.n;
-  sl.append(sh.h);   // the XP bar is on the view switcher (gxLabels)
-  // 3. Best for you
-  const bs = el('div', 'sec gx-best'); const bh = gxHead('Best for you');
-  R.bestList = el('div', 'dz-list gx-list'); bs.append(bh.h, R.bestList);
-  R.best = []; R.bestSec = bs;
-  // 4. families
+  // 3. families: rows, the lower-tier fold, the locked line
   const famBox = el('div', 'gx-fams');
   NAV_FAMS[sk].forEach((fam, i) => {
     const s = el('div', 'sec gx-fam'), h = gxHead(CRAFT_NODES[fam].row, i === 0 ? 'held / cap' : '');
     const list = el('div', 'dz-list gx-list');
     const rows = [];
-    for (let t = 1; t <= 5; t++) rows.push(gxRow(list, fam, t));
+    for (let t = 1; t <= gxTiers(fam); t++) rows.push(gxRow(list, fam, t));
     const fold = gxBtn('gx-fold'); fold.setAttribute('aria-expanded', 'false');
     const fl = el('span', 'gx-fold-l'), fr = el('span', 'gx-fold-r'); fold.append(fl, fr);
-    const F = { sec: s, rows, fold, fl, fr, open: false };
+    const lock = el('div', 'gx-lockline');
+    const F = { sec: s, rows, fold, fl, fr, lock, open: false };
     fold.addEventListener('click', () => { F.open = !F.open; putAttr(fold, 'aria-expanded', String(F.open)); gxUpdate(sk); });
-    s.append(h.h, list, fold);
+    s.append(h.h, list, fold, lock);
     famBox.append(s);
     R.fams[fam] = F;
   });
-  view.append(card, R.strip, sl, bs, famBox);
+  view.append(head, card, famBox);
   panel.append(view);
   applyView('gat');
   GX[sk] = R;
   return R;
 }
 
-// The Now card: here / another skill / fighting or raiding.
+// The Now card, the same lines in every state: what the hero does, a minute and an hour, held of the cap, when it is
+// full, one button. here: you gather this skill; other: you gather another skill (the strip names it); away: fighting,
+// raiding or in the Deepwell (the numbers are this skill's last node, where "Gather here" sends you).
 function gxNow(R) {
   const sk = R.sk, act = S.activity, gathering = act === 'gather', nsk = gathering ? skillOf(S.node.kind) : null;
   const deep = typeof deepActive === 'function' && deepActive();
   const state = deep ? 'away' : gathering && nsk === sk ? 'here' : gathering ? 'other' : 'away';
   R.state = state;
-  putHidden(R.card, state === 'other');
+  const here = state === 'here';
+  putToggle(R.card, 'on', here);
+  putToggle(R.card, 'other', state === 'other');
+  putHidden(R.nt, state === 'other');
   putHidden(R.strip, state !== 'other');
-  putToggle(R.card, 'on', state === 'here');
-  if (state === 'other') {
-    putText(R.strip, `You are ${SKILL[nsk].toLowerCase()} at the ${NODE_NAMES[S.node.kind][S.node.t - 1]}. Tap a node to move here.`);
+  putHidden(R.nchip, !here);
+  putHidden(R.nrest, !here);
+  putHidden(R.right, !here || !TOOL_TUNE.on);
+  // which node the numbers are for: the one you work, or this skill's last node
+  const node = gathering && !deep ? { kind: S.node.kind, t: S.node.t } : navLast(sk);
+  const show = !deep && !!node;
+  for (const n of [R.nheld, R.nbar]) putHidden(n, !show);
+  putHidden(R.nact, deep);
+  if (deep) {
+    putHidden(R.nfull, true);
+    putText(R.nname, 'You are in the Deepwell.');
+    putText(R.nrate, 'Climb out to gather again.');
     return;
   }
-  const here = state === 'here';
-  for (const n of [R.nheld, R.nbar, R.tool, R.right]) putHidden(n, !here);
-  if (!here) putHidden(R.nrest, true);
-  putHidden(R.nchip, !here);
-  putHidden(R.nact, deep);
-  if (!here) {
+  if (!node) return;
+  const { kind, t } = node, rate = navRate(kind, t), nname = NODE_NAMES[kind][t - 1];
+  putAttr(R.nimg, 'src', matIcon(kind, t));
+  const cap = storeCap(kind, t), fin = Number.isFinite(cap), h = S.mats[kind][t - 1] || 0, full = fin && h >= cap;
+  const left = navFullIn(kind, t), when = Number.isFinite(left) ? fmtTime(left).replace(/ \d+s$/, '') : '';
+  putText(R.nhl, `${MAT[kind].short[t - 1]} ${gxHeld(kind, t)}`);
+  putStyle(R.nfill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
+  putToggle(R.card, 'full', full && state !== 'away');
+  if (state === 'away') {
     putHidden(R.nfull, true);
-    const last = navLast(sk);
-    putAttr(R.nimg, 'src', matIcon(last.kind, last.t));
-    putText(R.nname, deep ? 'You are in the Deepwell.' : act === 'raid' ? 'You are at the raid.' : `You are fighting in Zone ${S.zone}.`);
-    putText(R.nrate, deep ? 'Climb out to gather again.' : `Gather here: the ${NODE_NAMES[last.kind][last.t - 1]}, ${gxPerMin(navRate(last.kind, last.t))} a minute · ${gxPerHour(navRate(last.kind, last.t))} an hour.`);
+    putText(R.nname, act === 'raid' ? 'You are at the raid.' : `You are fighting in Zone ${S.zone}.`);
+    putText(R.nrate, `Gather here: the ${nname}, ${gxPerMin(rate)} a minute · ${gxPerHour(rate)} an hour.`);
+    putText(R.nhr, !fin ? '' : full ? (h > cap ? 'Over the cap' : 'Full') : when ? `Full in ${when} once you gather` : '');
     putText(R.nact, 'Gather here');
     putClass(R.nact, 'gx-go gather');
     return;
   }
-  const { kind, t } = S.node, rate = navRate(kind, t);
-  putAttr(R.nimg, 'src', matIcon(kind, t));
-  putText(R.nname, NODE_NAMES[kind][t - 1]);
+  putText(R.nhr, !fin ? '' : full ? (h > cap ? 'Over the cap' : 'Full') : when ? `Full in ${when}` : '');
   putText(R.nrate, `${gxPerMin(rate)} a minute · ${gxPerHour(rate)} an hour`);
-  const cap = storeCap(kind, t), fin = Number.isFinite(cap), h = S.mats[kind][t - 1] || 0;
-  putText(R.nhl, `${MAT[kind].short[t - 1]} ${gxHeld(kind, t)}`);
-  const left = navFullIn(kind, t), full = fin && h >= cap;
-  putText(R.nhr, !fin ? '' : full ? (h > cap ? 'Over the cap' : 'Full') : Number.isFinite(left) ? `Full in ${fmtTime(left).replace(/ \d+s$/, '')}` : '');
-  putStyle(R.nfill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
-  putToggle(R.card, 'full', full);
+  if (state === 'other') {
+    putHidden(R.nfull, true);
+    putText(R.strip, `You are ${SKILL[nsk].toLowerCase()} at the ${nname}.`);
+    const l = navLast(sk);   // the button says where it sends you: this skill's last node
+    putText(R.nact, l ? `${NODE_VERB[l.kind]} at the ${NODE_NAMES[l.kind][l.t - 1]}` : 'Gather here');
+    putClass(R.nact, 'gx-go gather');
+    return;
+  }
+  putText(R.nname, nname);
   // Storehouse full: Switch (the next node of this skill with room) and Spillover (Storehouse Lv 3).
   putHidden(R.nfull, !full);
   if (full) {
@@ -34759,12 +34829,9 @@ function gxNow(R) {
   }
   // Gathering rests the hero (G1, 55-rested).
   const rest = typeof restNote === 'function' ? restNote().trim() : '';
-  putHidden(R.nrest, false);
   putText(R.nrest, rest || 'Gathering rests you. Rest turns into extra damage in your next fight.');
-  if (typeof toolsUI === 'object' && toolsUI) toolsUI.chipUpdate(R.tool, sk);
-  const e = equippedTool(sk), on_ = TOOL_TUNE.on, right = e.tier >= t;
-  putHidden(R.right, !on_);
-  if (on_) {
+  const e = equippedTool(sk), right = e.tier >= t;
+  if (TOOL_TUNE.on) {
     putText(R.right, right ? 'Right tool' : `Wrong tool: -${Math.round((1 - 1 / (1 + TOOL_TUNE.right)) * 100)}%`);
     putClass(R.right, 'gx-chip ' + (right ? 'good' : 'warn'));
     putAttr(R.right, 'title', right ? `Tier ${e.tier} tool on a tier ${t} node: +${Math.round(TOOL_TUNE.right * 100)}% speed` : `A tier ${t} tool or better works ${Math.round(TOOL_TUNE.right * 100)}% faster here`);
@@ -34775,24 +34842,27 @@ function gxNow(R) {
 
 function gxUpdate(sk) {
   const R = GX[sk] || gxBuild(sk);
-  gxNow(R);
-  // skill line
+  // the skill head
   const s = S.skills[sk], next = skillNextReq(sk);
   putText(R.slT, `${SKILL[sk]} Lv ${s.lv}`);
   putText(R.slN, next ? `Next tier: Lv ${next}` : 'Every tier open');
-  // Best for you (menu audit: it listed the same rows the families list again below): the best rows are tagged
-  // Best in their own family list, with the reason, and never fold
+  if (typeof toolsUI === 'object' && toolsUI) toolsUI.chipUpdate(R.tool, sk);
+  putText(R.tline, gxToolLine(sk));
+  putStyle(R.xfill, 'width', Math.min(100, s.xp / skillNeed(s.lv, sk) * 100).toFixed(1) + '%');
+  gxNow(R);
+  // families: the top two open tiers; lower tiers fold into one tap line (the node you work and a Best row never
+  // fold); the next locked tier says what it needs; further locked tiers are one line (Gather A)
   const best = bestNodes(sk);
-  putHidden(R.bestSec, true);
-  // families: the top two open tiers, the next locked one; lower tiers fold (the node you work never does)
   const top = skillTopTier(sk);
   for (const fam of NAV_FAMS[sk]) {
     const F = R.fams[fam], low = [];
+    let locked = 0;
     F.rows.forEach(r => {
       const t = r.t, here = S.activity === 'gather' && S.node.kind === fam && S.node.t === t;
       const bm = best.find(b => b.kind === fam && b.t === t);
       const folded = t < top - 1 && !here && !bm;
       if (folded) low.push(r);
+      if (t > top + 1) locked++;
       const show = t <= top + 1 && (!folded || F.open);
       putHidden(r.row, !show);
       if (show) gxRowUpdate(r, bm ? { best: true, why: bm.why } : undefined);
@@ -34803,6 +34873,8 @@ function gxUpdate(sk) {
       putText(F.fr, F.open ? 'Hide' : `${low.length} lower tier${low.length > 1 ? 's' : ''}`);
       putToggle(F.fold, 'open', F.open);
     }
+    putHidden(F.lock, !locked);
+    if (locked) putText(F.lock, `${locked} higher tier${locked > 1 ? 's' : ''} locked`);
   }
 }
 
@@ -43485,10 +43557,12 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
 // 75-store-ui: the Storehouse view in the Gather tab (task H3, rebuilt by UX-A GX1:
 // docs/design/ux-overhaul.md 6.2). Browser-only; the rules live in 55-store.js. The Storehouse's
 // building row is the Camp's list (75-camp-ui.js); its icon is registered here.
-//   - The view (id 'pack', label "Storehouse"): a top card (level, what it holds, Upgrade ›),
-//     filter chips (All and each family with something in it, Fought, Trophies), families as rows of
-//     5 cells with a held/cap bar in each, empty families folded into one line, trophies folded.
-//     A cell opens "where to get it" (72-ui-gather whereSheet).
+//   - The view (id 'pack', label "Storehouse"): a top card (level, what it holds, Build or Upgrade ›),
+//     filter chips (All, each family with something in it, Fought, Trophies), sort chips (Fullest, Name) and
+//     "Show all grades". First view: the shelf, one stack per family at the grade you use (storeShelfGrade
+//     below; Essence is one pile), at most 7 stacks (8 once coal lands). "Show all grades" or a family filter:
+//     families as rows of every grade with a held/cap bar, empty families folded into one line. Trophies
+//     fold. A stack or cell opens "where to get it" (72-ui-gather whereSheet).
 //   - The "Storehouse full" warning lives on the Now card and the header pill (72-ui-gather, 75-nav-ui).
 //   - storeStage (the stage's held line), storePackLine (the where-to-get sheet), storeSalvageNote
 //     (the Craft tab's salvage ask), STORE_ICON (the Camp row).
@@ -43497,6 +43571,31 @@ registerIcons({
   b_store: ['............', '.6666666666.', '.6111111116.', '.6155555516.', '.6111111116.', '.6666666666.', '.6111111116.', '.6111771116.', '.6111771116.', '.6111111116.', '.6666666666.', '............']
 });
 const STORE_ICON = () => iconURL('b_store', '#8C6A43', { 6: '#4A3220', 5: '#B08A5A', 7: '#F2C14E' });
+
+// ---- the shelf rule (no DOM; tools/check.mjs loads this block into the core) ----
+// The grade the Storehouse's first view shows for a family (card cal-0107-storage-and-gather-ui; overhaul spec section 4
+// as amended, coordinator sign-off 2026-10-07 after an Opus judge). The cap: for a gathered family the lower of your zone's
+// grade (zoneTier(S.maxZone)) and the top grade its skill gathers now; hide also at most Hunting's 3 grounds. The grade
+// shown: the cap grade if any is held there; else the largest stack at or below the cap (a leftover handful never hides
+// the main stack); else the highest grade held (drops, caches, old saves); else the cap (an empty stack: nothing held).
+function storeShelfCap(f) {
+  const z = zoneTier(Math.max(1, S.maxZone || 1)), fam = CRAFT_FAMILY[f], sk = fam && fam.skill;
+  if (!sk) return z;
+  const c = Math.min(z, skillTopTier(sk));
+  return f === 'hide' ? Math.min(c, HUNT_BEASTS.length) : c;
+}
+function storeShelfGrade(f) {
+  const a = S.mats[f] || [], n = t => Math.max(0, a[t - 1] || 0), cap = storeShelfCap(f);
+  if (n(cap) > 0) return cap;
+  let best = 0;
+  for (let t = 1; t <= cap; t++) if (n(t) > 0 && (!best || n(t) >= n(best))) best = t;
+  if (best) return best;
+  for (let t = 5; t > cap; t--) if (n(t) > 0) return t;
+  return cap;
+}
+// The hide stack waits until Hunting shows, unless you already hold hide.
+const storeShelfShows = f => f !== 'hide' || huntingVisible() || (S.mats[f] || []).some(n => n > 0);
+// ---- end of the shelf rule ----
 
 // The stage's held line: "640/1,000 stored", "1,000/1,000 · Full".
 function storeStage(k, t) {
@@ -43521,14 +43620,18 @@ function storeSalvageNote(preview, t) {
 
 {
   const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
-  const FOUGHT = f => !GATHER_KINDS.includes(f);                     // hide, essence (and later fish, pearls)
+  const FOUGHT = f => !(CRAFT_FAMILY[f] && CRAFT_FAMILY[f].skill);   // essence only (hide is Hunting's since C24)
   const famNote = f => {
     if (FOUGHT(f)) return 'from fights';
-    const sk = skillOf(f); return `${SKILL[sk]} ${S.skills[sk].lv}`;
+    const sk = CRAFT_FAMILY[f].skill, s = S.skills[sk]; return s ? `${SKILL[sk]} ${s.lv}` : SKILL[sk];
   };
   const any = f => (S.mats[f] || []).some(n => n > 0);
   const FILTERS = [['all', 'All'], ...CRAFT_FAMILIES.filter(f => !FOUGHT(f)).map(f => [f, MAT[f].n]), ['fought', 'Fought'], ['troph', 'Trophies']];
-  let V = null, filter = 'all', showEmpty = false, showTro = false;
+  const SORTS = [['full', 'Fullest'], ['name', 'Name']];
+  const shelfHas = storeShelfShows;
+  const held = (f, t) => f === 'ess' ? essHave() : Math.max(0, S.mats[f][t - 1] || 0);
+  const capOf = (f, t) => f === 'ess' ? essCap() : storeCap(f, t);
+  let V = null, filter = 'all', sort = 'full', showAll = false, showEmpty = false, showTro = false;
 
   function cell(f, t) {
     const c = btn('mat sh-cell');
@@ -43537,6 +43640,26 @@ function storeSalvageNote(preview, t) {
     c.append(n, el('div', 'mn', f === 'ess' ? 'Essence' : MAT[f].short[t - 1]), bar);
     c.addEventListener('click', () => whereSheet(f, t));
     return { c, n, cap, fill, f, t };
+  }
+  // A shelf stack: icon, name, held / cap, a bar. Its grade moves with storeShelfGrade, so it is built once per family.
+  function stack(f) {
+    const c = btn('sh-stack');
+    const ic = img(matIcon(f, 1)), tx = el('span', 'sh-stack-tx'), nm = el('span', 'sh-stack-nm'), n = el('span', 'sh-stack-n');
+    const bar = el('i', 'sh-bar'), fill = el('b'); bar.append(fill);
+    tx.append(nm, n, bar); c.append(ic, tx);
+    const x = { c, ic, nm, n, fill, f, t: 1 };
+    c.addEventListener('click', () => whereSheet(f, x.t));
+    return x;
+  }
+  // A cell's held, cap, bar and warn/full/over marks (shelf stacks and grade cells alike).
+  function mark(x, v, cap) {
+    const cf = Number.isFinite(cap);
+    putHidden(x.fill.parentNode, !cf);
+    if (cf) putStyle(x.fill, 'width', Math.min(100, v / Math.max(1, cap) * 100).toFixed(1) + '%');
+    putToggle(x.c, 'none', !v);
+    putToggle(x.c, 'sh-warn', cf && v >= cap * STORE_TUNE.warn && v < cap);
+    putToggle(x.c, 'sh-full', cf && v >= cap && v > 0 && v <= cap);
+    putToggle(x.c, 'sh-over', cf && v > cap);
   }
   function build(sec) {
     V = { fams: {}, chips: {} };
@@ -43548,13 +43671,27 @@ function storeSalvageNote(preview, t) {
     V.up = btn('mini sh-up', 'Upgrade ›');
     V.up.addEventListener('click', () => setTab('world', '#camp-b-store'));
     card.append(tx, V.up);
-    // filter chips (wrap to a second row when narrow; no view swipe)
+    // filter chips (wrap to a second row when narrow; no view swipe), then sort chips and "Show all grades"
     const chips = el('div', 'sh-chips'); chips.dataset.noswipe = '';
     for (const [id, label] of FILTERS) {
       const b = btn('sh-fchip', label); b.setAttribute('aria-pressed', String(id === filter));
       b.addEventListener('click', () => { filter = id; ui(true); });
       chips.append(b); V.chips[id] = b;
     }
+    const tools = el('div', 'sh-chips sh-tools'); tools.dataset.noswipe = '';
+    V.sortl = el('span', 'sh-sortl', 'Sort'); tools.append(V.sortl);
+    V.sorts = {};
+    for (const [id, label] of SORTS) {
+      const b = btn('sh-fchip sh-sort', label);
+      b.addEventListener('click', () => { sort = id; ui(true); });
+      tools.append(b); V.sorts[id] = b;
+    }
+    V.all = btn('sh-fchip sh-all', 'Show all grades');
+    V.all.addEventListener('click', () => { showAll = !showAll; ui(true); });
+    tools.append(V.all);
+    // the shelf: one stack per family
+    V.shelf = el('div', 'sh-shelf'); V.stacks = {};
+    for (const f of CRAFT_FAMILIES) { const x = stack(f); V.shelf.append(x.c); V.stacks[f] = x; }
     // families
     const fams = el('div', 'sh-fams');
     for (const f of CRAFT_FAMILIES) {
@@ -43579,7 +43716,7 @@ function storeSalvageNote(preview, t) {
       V.troRow.append(c); V.troCells.push({ c, n });
     });
     const note = el('p', 'note', 'Tap a material to see where it comes from.');
-    sec.append(card, chips, fams, V.empty, V.tro, V.troRow, note);
+    sec.append(card, chips, tools, V.shelf, fams, V.empty, V.tro, V.troRow, note);
     // icons last: 35 cells, only on the view's first show
     for (const f of CRAFT_FAMILIES) for (const x of V.fams[f].cells) x.c.prepend(img(matIcon(f, x.t)));
   }
@@ -43600,25 +43737,50 @@ function storeSalvageNote(preview, t) {
       putAttr(V.chips[id], 'aria-pressed', String(filter === id));
       putToggle(V.chips[id], 'on', filter === id);
     }
-    // families
+    // sort and "Show all grades". The shelf is the first view; a family filter (or the toggle) shows every grade.
+    for (const [id] of SORTS) { putHidden(V.sorts[id], filter !== 'all'); putAttr(V.sorts[id], 'aria-pressed', String(sort === id)); putToggle(V.sorts[id], 'on', sort === id); }
+    putHidden(V.sortl, filter !== 'all');   // sorting only changes the All view
+    const fam1 = filter !== 'all' && filter !== 'fought' && filter !== 'troph';
+    putHidden(V.all, filter !== 'all');
+    putText(V.all, showAll ? 'Show one grade' : 'Show all grades');
+    putAttr(V.all, 'aria-pressed', String(showAll));
+    putToggle(V.all, 'on', showAll);
+    const grades = filter !== 'troph' && (fam1 || (filter === 'all' && showAll));
+    const shelf = filter !== 'troph' && !grades;
+    // the order: fullest first (by the shelf grade's fill) or by name; empty stacks last; ties keep the family order
+    const fillOf = f => { const t = f === 'ess' ? 1 : storeShelfGrade(f), c = capOf(f, t), v = held(f, t); return Number.isFinite(c) && c > 0 ? v / c : v > 0 ? 1e-9 : -1; };
+    const nameOf = f => f === 'ess' ? 'Essence' : matName(f, storeShelfGrade(f));
+    const order = CRAFT_FAMILIES.slice();
+    if (sort === 'name') order.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+    else { const fl = Object.fromEntries(order.map(f => [f, fillOf(f)])); order.sort((a, b) => fl[b] - fl[a] || CRAFT_FAMILIES.indexOf(a) - CRAFT_FAMILIES.indexOf(b)); }
+    putHidden(V.shelf, !shelf);
+    for (const f of CRAFT_FAMILIES) {
+      const x = V.stacks[f], show = shelf && shelfHas(f) && (filter === 'all' || (filter === 'fought' && FOUGHT(f)));
+      putHidden(x.c, !show);
+      if (!show) continue;
+      putStyle(x.c, 'order', String(order.indexOf(f)));
+      const t = f === 'ess' ? 1 : storeShelfGrade(f), v = held(f, t), cap = capOf(f, t), cf = Number.isFinite(cap);
+      if (x.t !== t || !x.drawn) { x.t = t; x.drawn = true; putAttr(x.ic, 'src', matIcon(f, t)); }
+      putText(x.nm, f === 'ess' ? 'Essence' : matName(f, t));
+      putText(x.n, cf ? `${gxNum(v)} / ${gxNum(cap)}` : `${gxNum(v)} held`);
+      mark(x, v, cap);
+      putAttr(x.c, 'aria-label', `${f === 'ess' ? 'Essence' : matName(f, t)}: ${storeNum(v)}${cf ? ' of ' + storeNum(cap) : ''}. Where to get it`);
+    }
+    // every grade: families as rows
     const empty = [];
     for (const f of CRAFT_FAMILIES) {
       const F = V.fams[f], has = any(f);
       const inFilter = filter === 'all' || filter === f || (filter === 'fought' && FOUGHT(f));
-      if (!has && inFilter && filter === 'all') empty.push(f);
-      const show = inFilter && filter !== 'troph' && (has || showEmpty || filter !== 'all');
+      if (grades && !has && inFilter && filter === 'all' && shelfHas(f)) empty.push(f);
+      const show = grades && inFilter && (has || showEmpty || filter !== 'all') && (filter !== 'all' || shelfHas(f));
       putHidden(F.s, !show);
       if (!show) continue;
+      putStyle(F.s, 'order', String(order.indexOf(f)));
       putText(F.nt, famNote(f));
       for (const x of F.cells) {
-        const v = f === 'ess' ? essHave() : S.mats[f][x.t - 1] || 0, cap = f === 'ess' ? essCap() : storeCap(f, x.t), cf = Number.isFinite(cap);
+        const v = held(f, x.t), cap = capOf(f, x.t), cf = Number.isFinite(cap);
         putText(x.n, gxNum(v));
-        putToggle(x.c, 'none', !v);
-        putHidden(x.fill.parentNode, !cf);
-        if (cf) putStyle(x.fill, 'width', Math.min(100, v / cap * 100).toFixed(1) + '%');
-        putToggle(x.c, 'sh-warn', cf && v >= cap * STORE_TUNE.warn && v < cap);
-        putToggle(x.c, 'sh-full', cf && v >= cap && v > 0 && v <= cap);
-        putToggle(x.c, 'sh-over', cf && v > cap);
+        mark(x, v, cap);
         putAttr(x.c, 'title', cf ? `${costName(f, x.t)}: ${storeNum(v)} / ${storeNum(cap)}` : `${costName(f, x.t)}: ${storeNum(v)}`);
       }
     }

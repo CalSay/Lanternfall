@@ -3281,6 +3281,32 @@ if (section('store')) try {
   errs.push(...g.errors);
   assert(!errs.length, 'no store errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('store crashed: ' + (e.stack || e)); }
+// ---- the Storehouse shelf: one stack per family at the grade you use (75-store-ui.js storeShelfGrade; card
+// cal-0107-storage-and-gather-ui, overhaul spec section 4 as amended 2026-10-07). The rule block has no DOM, so it loads into the core. ----
+if (section('store shelf')) try {
+  const ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-store-ui.js'), 'utf8'), m = ui.match(/\/\/ ---- the shelf rule[\s\S]*?\/\/ ---- end of the shelf rule ----/);
+  assert(!!m, '75-store-ui: the shelf rule block is there');
+  const fixOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', `save-${f}.json`), 'utf8');
+  const at = f => loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fixOf(f) }), extraSource: m[0] });
+  const mid = at('mid'), early = at('early');
+  assert(mid.eval('storeShelfCap("fibre")') === 3 && mid.eval('storeShelfGrade("fibre")') === 1,
+    `mid (zone 20, Foraging 34): fibre [15094, 3, 0, 378] at cap ${mid.eval('storeShelfCap("fibre")')} shows grade ${mid.eval('storeShelfGrade("fibre")')}, not 3 (the main stack, not a leftover handful)`);
+  assert(early.eval('storeShelfGrade("ore")') === 1 && early.eval('matName("ore", storeShelfGrade("ore"))') === 'Copper Ore',
+    `early (zone 8, Mining 5): the ore stack is ${early.eval('matName("ore", storeShelfGrade("ore"))')}, not an empty tier-2 cell`);
+  for (const f of ['early', 'mid', 'late', 'current']) {
+    const g = at(f), bad = g.eval('CRAFT_FAMILIES.filter(k => k !== "ess" && (S.mats[k] || []).some(n => n > 0) && !((S.mats[k][storeShelfGrade(k) - 1] || 0) > 0))');
+    const shown = g.eval('CRAFT_FAMILIES.filter(storeShelfShows).length');
+    assert(!bad.length && shown <= 8, `${f}: no empty stack while its family holds stock (${JSON.stringify(bad)}); ${shown} stacks on the first view (at most 8)`);
+  }
+  const g = at('early');
+  g.eval('HUNT_TUNE.on = false; S.mats.hide = [0, 0, 0, 0, 0]');
+  assert(g.eval('storeShelfShows("hide")') === false && g.eval('storeShelfShows("ore")') === true, 'no hide stack before Hunting shows and no hide is held');
+  g.eval('S.mats.hide[1] = 4');
+  assert(g.eval('storeShelfShows("hide")') === true && g.eval('storeShelfGrade("hide")') === 2, 'held hide shows even before Hunting, at the grade held');
+  g.eval('HUNT_TUNE.on = true; S.skills.hunt.lv = 200; S.maxZone = 60');
+  assert(g.eval('storeShelfCap("hide")') === 3, `hide's cap is at most Hunting's 3 grounds (${g.eval('storeShelfCap("hide")')})`);
+  assert(/registerSection\('gat', \{\n    id: 'store', view: 'pack'/.test(ui) && /Show all grades/.test(ui) && /\['full', 'Fullest'\], \['name', 'Name'\]/.test(ui), '75-store-ui: the Store view keeps its section, has Show all grades and the Fullest / Name sort');
+} catch (e) { fail('store shelf crashed: ' + (e.stack || e)); }
 // ---- wall: the Trophy Wall at camp (63e-scenery-wall.js; achievements.md 6, AC5) ----
 if (section('wall')) try {
   const { coreFiles } = await import('./lib/core.mjs');

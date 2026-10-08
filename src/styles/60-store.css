@@ -13,6 +13,31 @@
 .sh-fchip.on { border-color: var(--gold); color: var(--gold); background: rgba(242,193,78,.08); }
 
 .sh-fams { display: grid; gap: 12px; }
+.sh-fams:not(:has(> .sh-fam:not([hidden]))) { display: none; }
+
+/* sort chips and Show all grades */
+.sh-tools { align-items: center; margin-top: -4px; }
+.sh-sortl { font-size: 12px; color: var(--muted); }
+.sh-all { margin-left: auto; }
+
+/* the shelf: one stack per family at the grade you use (storeShelfGrade) */
+.sh-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.sh-stack { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; align-items: center; min-height: 52px; padding: 6px 8px; background: var(--panel); border: 1px solid var(--line-hi); font: inherit; color: var(--bone); text-align: left; cursor: pointer; }
+.sh-stack:active { transform: translateY(1px); }
+.sh-stack:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px; }
+.sh-stack > img { width: 26px; height: 26px; image-rendering: pixelated; justify-self: center; }
+.sh-stack-tx { display: grid; min-width: 0; }
+.sh-stack-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px/1.25 var(--body); }
+.sh-stack-n { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sh-stack .sh-bar { display: block; height: 4px; background: #0B0810; margin-top: 3px; }
+.sh-stack .sh-bar b { display: block; height: 100%; width: 0; background: var(--gold); }
+.sh-stack.none { opacity: .5; }
+.sh-stack.sh-warn .sh-bar b { background: #F2A93B; }
+.sh-stack.sh-full { border-color: #C0504D; box-shadow: inset 3px 0 0 var(--hp); }
+.sh-stack.sh-full .sh-bar b { background: var(--hp); }
+.sh-stack.sh-full .sh-stack-n { color: #FF8A80; font-weight: 600; }
+.sh-stack.sh-over .sh-stack-n { color: #F2A93B; font-weight: 600; }
+.sh-stack.sh-over .sh-bar b { background: #F2A93B; }
 .sh-fam { gap: 6px; }
 .sh-fam .note { font-size: 12px; }
 
