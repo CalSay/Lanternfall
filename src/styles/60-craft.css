@@ -178,3 +178,14 @@ span.cf-d { font-weight: 600; }
   .cf-res .cf-resact { order: 1; }
   .cf-res .warn { order: 0; }
 }
+
+/* desktop-layout-v1 (docs/design/desktop-layout.md 5): Desktop 2 (1920x1080 and up). Bag tiles 72 px with the 48 px export,
+   the worn gear row 104 px with the 48 px export at x2 (as the item card shows it). nicons scales by whole steps only. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1600px) and (min-height: 900px) {
+  .cf-bag { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
+  .ic.cf-tile { min-height: 72px; }
+  .ic.cf-tile > img:first-child { width: 48px; height: 48px; }
+  .cf-recent .ic.cf-tile { width: 72px; min-height: 72px; }
+  .cf-gs .ic { width: 104px; height: 104px; }
+  .cf-gs .ic img { width: 96px; height: 96px; }
+}

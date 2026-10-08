@@ -25,6 +25,9 @@
   --display: "Handjet", "Arial Narrow", monospace;
   --display-k: 1.2;
   --body: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  /* desktop-layout-v1: tools/build.mjs (scaleText) writes every font size S as max(var(--tmin), S * var(--tk)). These
+     defaults keep every size as written; the desktop tiers in 80-landscape.css raise them. */
+  --tk: 1; --tmin: 0px;
   background: var(--bg);
 }
 html { height: 100%; box-sizing: border-box; }

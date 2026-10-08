@@ -25,7 +25,9 @@ Five tabs, each a full-screen menu over the stage ([layout.md](design/layout.md)
 The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the Codex open from the Journal. Browser first
 (owner, 2026-10-08): the design size is a desktop browser at 1280x720 CSS px with mouse and keyboard; it must look good
 at 1920x1080 and fit 1366x640. Landscape phones (740x360) and tablets (1024x768) still play without clipping; phones held
-upright (360x740) must not break, but new features need not be designed for them.
+upright (360x740) must not break, but new features need not be designed for them. On a desktop screen (1200x600 and up) text and chrome grow, an item's detail opens
+beside the list in its menu, and the number keys 1 to 5 open Fight, Hero, Gather, Craft and Camp (the open tab's number closes it;
+Escape closes the detail, then the menu). Two-press buttons (spend a Scroll, a camp build, a reset) say "Confirm" on the second press.
 
 Menu sub-tabs keep their labels and show the drawn menu icons. Action buttons show small Ready, Cooldown,
 Locked or Unavailable badges; the ability picker marks the selected action. Icons use native pixel sizes.
