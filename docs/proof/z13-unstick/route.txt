@@ -1,0 +1,19 @@
+# Proof for card z13-unstick. Wren arrives at zone 13 the way the seed 1 walk does (level 18, every tier 1 piece and tool worn, no
+# mastery stars; tests/proof-fixtures/save-z13-boss-ready.json is the walk's minute 23 save, tier-gate, with the zone's 5 fights done),
+# at 360x740 and 740x360:
+#   nextup-boss-*.png  Next Up's boss row reads the zone 13 boss's odds from the game's own turn fights: "Boss ready in Zone 13".
+#                      Before this card the same save left the boss row out of Next Up's closest goals: the game judged the boss
+#                      too strong (0-5% a try), and the first expect fails on that build.
+# The win rates behind it are held by tools/budget.mjs (z13-z15 boss rows on the arrival footing) and tools/health.mjs --compare.
+# seed: 1
+new z13-boss-ready
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 4
+tap "Next up"
+wait 1
+expect "Boss ready in Zone 13"
+expect-no "Zone 13 boss is too strong"
+shot nextup-boss

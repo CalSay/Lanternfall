@@ -9223,9 +9223,9 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.725 * 1.25, 15: 16 * 1.7, 20: 16 * 2.8, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.725 * 1.25, 15: 16 * 0.12, 20: 16 * 2.8, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zones 13-15 cut for the hero who first gets there by z13-unstick, zone 15 16 x 0.12, was 1.7; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
@@ -9269,7 +9269,8 @@ if (section('C29 mid-game HP and Wren (core)')) try {
         ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();
       S.activity = 'fight'; arena = null; gearDirty(); fightBoss = false; spawn(); globalThis.__f = 1 / (turnCombatProfile().A / turnRefAtk(${z}));`);
     const prof = boss => `(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(); p.A *= __f; p.U *= __f; p.counter *= __f; p.heroMaxHp *= __f; return p; })()`;
-    const hit = boss => E(`(p => { const k = p.refHp * p.hitX * (p.bossHeroX || 1) * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
+    // a boss hit's share of max HP never reads under its room-to-miss floor (TURN_TUNE.boss.hpFloor, 59k turnLand), as in a live fight
+    const hit = boss => E(`(p => { const k = Math.max(p.refHp * p.bossHitX / p.heroMaxHp, p.bossHitFloor || 0) * p.hitX * (p.bossHeroX || 1), ch = p.script.find(m => m.charge);
       return { hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })(${prof(boss)})`);
     // the mean over ability sets and seeds 1-3 (one sample swings a lot)
     const run = (skill, sets) => E(`(p => { let K = 0, D = 0, T = 0, F = 0; for (const eq of ${J(sets)}) for (let sd = 1; sd <= 3; sd++) {

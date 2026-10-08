@@ -1,0 +1,1 @@
+The zone 13, 14 and 15 bosses no longer wall you off: if you reach them the normal way, fighting the foes in your path and wearing the gear Next Up points at, you now beat them in a try or two instead of losing 30 times. Their hits still hurt, so parry and dodge still matter. Best shot: nextup-boss.
