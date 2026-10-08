@@ -112,6 +112,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 - When a tab gains a fifth view, let a long label take its room (`grid-auto-columns: minmax(min-content, 1fr)`) instead of shrinking the font: at 11 px Abilities still clipped by 5 px at 360x740 and 11 px in the 740x360 header. And a check that opened a view on one tab and then calls `setView` on another must `setTab` first. Why: wire-menu-icons failed and C24 timed out when Gear moved to the Hero tab. (cal-0107-gear-and-rates, 2026-10-07)
 - In a proof route, tap a Gather view by its whole label (`tap "Mining"`, `tap "Wood"`), never by a verb: `tap` falls back to a partial match, so `tap "Mine"` hit the first row's "Mine at the Iron Vein", started mining and closed the menu. Why: the first storage-and-gather route failed 7 expects that way. (cal-0107-storage-and-gather-ui, 2026-10-07)
+- When a landscape fix trims a sheet's 44 px grab row, keep the 44 px close button (`.bsheet-x`, top 0) clear of the body's buttons, and have the check assert no overlap, not only that each button is on screen. Why: the reviewer found the close button over the top 16 px of Continue on short story cards after the grab row went to 28 px; a tap there skipped the scene. (story-card-landscape-fit, 2026-10-08)
 
 ## Saves and offline parity
 

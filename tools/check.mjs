@@ -3053,17 +3053,17 @@ if (section('story cards fit at 740x360 (browser)')) try {
         const B = STORY_BEATS, out = [];
         const text = (l, h) => typeof l === 'string' ? l : l && l.hero ? ((B.hero[l.hero] || {})[h] || (B.hero[l.hero] || {})._ || '') : '';
         const cardsOf = (items, tap, who, h) => { const o = [], ls = [], fl = () => { if (ls.length) o.push({ lines: ls.splice(0), who: who || '' }); };
-          for (const it of items || []) { if (it && it.choice) { fl(); continue; } const t = text(it, h); if (!t) continue; ls.push(t); if (tap) fl(); } fl(); return o; };
+          for (const it of items || []) { if (it && it.choice) { fl(); if (B.choice[it.choice]) o.push({ choice: it.choice, lines: [] }); continue; } const t = text(it, h); if (!t) continue; ls.push(t); if (tap) fl(); } fl(); return o; };
         const npcCards = (id, h) => { const n = B.npc[id]; return n && !(n.not && n.not === h) ? cardsOf(n.lines, false, n.who || '', h) : []; };
         const npcAt = at => Object.keys(B.npc).filter(id => B.npc[id].at === at);
         const regionAt = z => { const r = typeof regionOf === 'function' ? regionOf(z) : null; return r ? r.id : 'hollow'; };
         for (const h of ['wren', 'tobin', 'pip']) {   // the starters (55-story.js STARTERS, private)
           for (const id of npcAt('hearth')) out.push({ id: 'n:' + id, ch: 'N', kind: 'card', title: B.npc[id].who || '', cards: npcCards(id, h), h });
           for (const id in B.champ) { const c = B.champ[id], cards = cardsOf(c.post, false, '', h); for (const n of npcAt('champPost:' + id)) cards.push(...npcCards(n, h));
-            out.push({ id: 'p:' + id + ':post', ch: 'P', kind: 'card', title: c.name || '', cards, zone: c.zone, region: regionAt(c.zone), h }); }
+            out.push({ id: 'p:' + id + ':post', ch: 'P', kind: 'card', title: c.name || (c.page && c.page.title) || '', cards, zone: c.zone, region: regionAt(c.zone), h }); }
           for (const id in B.elder) { const e = B.elder[id], cards = cardsOf(e.post, true, '', h); for (const n of npcAt('elderPost:' + id)) cards.push(...npcCards(n, h));
             cards.push(...cardsOf(e.after, true, '', h)); const hl = e.hero ? text({ hero: e.hero }, h) : ''; if (hl) cards.push({ lines: [hl], who: '' });
-            out.push({ id: 'e:' + id + ':post', ch: 'E', kind: 'card', title: e.name || '', cards, zone: e.zone, region: regionAt(e.zone), h }); }
+            out.push({ id: 'e:' + id + ':post', ch: 'E', kind: 'card', title: e.name || (e.page && e.page.title) || '', cards, zone: e.zone, region: regionAt(e.zone), h }); }
         }
         return out.filter(s => s.cards.length).map(s => Object.assign({ head: '', lines: [], hold: 0, page: '' }, s));
       })()`);
@@ -3076,13 +3076,17 @@ if (section('story cards fit at 740x360 (browser)')) try {
           await page.waitForTimeout(k ? 60 : 300);   // the sheet slides up first
           const m = await page.evaluate(() => { const q = s => document.querySelector(s), c = q('.sty-sheet .sty-card'), sh = q('.sty-sheet'), r = n => n && n.getBoundingClientRect();
             const inView = b => !!b && b.top >= 0 && b.left >= 0 && b.bottom <= innerHeight + 0.5 && b.right <= innerWidth + 0.5;
-            return { over: c.scrollHeight - c.clientHeight, sh: Math.round(r(sh).height), vh: innerHeight, done: inView(r(q('.sty-sheet .sty-done'))), skip: inView(r(q('.sty-sheet .sty-skip'))), x: inView(r(q('.sty-sheet .bsheet-x'))) }; });
+            const xb = r(q('.sty-sheet .bsheet-x')), hit = (a, b) => !!a && !!b && a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+            // the close button must not sit over a button or the text (it paints on top and would take the tap)
+            const under = [...document.querySelectorAll('.sty-sheet .sty-done, .sty-sheet .sty-skip, .sty-sheet .sty-opt, .sty-sheet .sty-card')].filter(n => hit(xb, r(n))).map(n => n.className);
+            const choice = !!q('.sty-sheet .sty-opt');
+            return { over: c.scrollHeight - c.clientHeight, sh: Math.round(r(sh).height), vh: innerHeight, choice, done: choice ? [...document.querySelectorAll('.sty-sheet .sty-opt')].every(n => inView(r(n))) : inView(r(q('.sty-sheet .sty-done'))), skip: inView(r(q('.sty-sheet .sty-skip'))), x: inView(xb), under }; });
           cards++;
-          if (m.over > 1 || m.sh > m.vh * 0.6 + 0.5 || !m.done || !m.skip || !m.x) bad.push(`${sc.h} ${sc.id} card ${k + 1}/${sc.cards.length}: ${JSON.stringify(m)}`);
-          await page.click('.sty-sheet .sty-done');
+          if (m.over > 1 || m.sh > m.vh * 0.6 + 0.5 || !m.done || !m.skip || !m.x || m.under.length) bad.push(`${sc.h} ${sc.id} card ${k + 1}/${sc.cards.length}: ${JSON.stringify(m)}`);
+          await page.click(m.choice ? '.sty-sheet .sty-opt' : '.sty-sheet .sty-done');
         }
       }
-      assert(scenes.length >= 3 * 10 && !bad.length, `story cards fit landscape: every Chapter 1 hearth, Champion and Elder card at 740x360 shows all its lines with no scroll, in a sheet at most 60% high, with Continue, Skip and close on screen (${cards} cards in ${scenes.length} scenes; ${bad.length} bad${bad.length ? ': ' + bad.slice(0, 4).join(' | ') : ''})`);
+      assert(scenes.length >= 3 * 10 && !bad.length, `story cards fit landscape: every Chapter 1 hearth, Champion and Elder card at 740x360 shows all its lines with no scroll, in a sheet at most 60% high, with Continue (or the choices), Skip and close on screen and the close button clear of them (${cards} cards in ${scenes.length} scenes; ${bad.length} bad${bad.length ? ': ' + bad.slice(0, 4).join(' | ') : ''})`);
       assert(!errs.length, 'story cards fit landscape: no page errors' + (errs.length ? ': ' + errs[0] : ''));
       await ctx.close();
     } finally { await browser.close(); }
