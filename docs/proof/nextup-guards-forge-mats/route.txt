@@ -1,0 +1,17 @@
+# seed: 1
+# Proof for card nextup-guards-forge-mats. save-forge-guard.json = save-forge-short.json with 22 Copper Ore, 10 Pine Log and
+# 5,000 gold: Wren wears a Copper Pickaxe she can upgrade, and the Forge (25 Copper Ore, 10 Pine Log) is not built yet.
+# Next Up names the Forge and offers no Copper tool craft or pickaxe upgrade that would eat its ore or logs.
+# The 35-ore case (the upgrade shows again), the built Forge and the first weapon are held by tools/check.mjs.
+new forge-guard
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+tap "Next up"
+expect "Forge Lv 1"
+expect-no "Upgrade your Copper Pickaxe"
+expect-no "Craft a Copper Woodaxe"
+expect-no "Craft a Copper Sickle"
+shot nextup-holds-forge-ore
