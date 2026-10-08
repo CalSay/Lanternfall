@@ -139,8 +139,9 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
     tiles: x => uniqKeys().map(k => {
       const u = UNIQ[k], got = S.found[k] ? 1 : 0, fl = got && typeof storyItemLine === 'function' ? storyItemLine(k) : '';   // story-systems-hollow: the Champion it came from
-      return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: u.slot, t: S.found[k] || 1, u: k },
-        sub: got ? u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
+      const kind = uniqKindFor(k, heroWho()) || u.slot, kn = kind !== u.slot ? CRAFT_KINDS[kind].noun + ' · ' : '';   // unique-weapons-wall-icon: the hero's own weapon, as the bag
+      return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: kind, t: S.found[k] || 1, u: k },
+        sub: got ? kn + u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
     })
   });
   // ---------------- 4. Armoury: 13 affix stats x 5 tiers seen; 7 Masterwork lines ----------------

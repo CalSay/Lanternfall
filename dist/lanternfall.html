@@ -18635,8 +18635,9 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
     tiles: x => uniqKeys().map(k => {
       const u = UNIQ[k], got = S.found[k] ? 1 : 0, fl = got && typeof storyItemLine === 'function' ? storyItemLine(k) : '';   // story-systems-hollow: the Champion it came from
-      return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: u.slot, t: S.found[k] || 1, u: k },
-        sub: got ? u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
+      const kind = uniqKindFor(k, heroWho()) || u.slot, kn = kind !== u.slot ? CRAFT_KINDS[kind].noun + ' · ' : '';   // unique-weapons-wall-icon: the hero's own weapon, as the bag
+      return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: kind, t: S.found[k] || 1, u: k },
+        sub: got ? kn + u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
     })
   });
   // ---------------- 4. Armoury: 13 affix stats x 5 tiers seen; 7 Masterwork lines ----------------
@@ -35722,10 +35723,12 @@ for (const id of ['eqRows', 'bagRows']) { const n = $(id); const sec = n && n.cl
 // "Trophies" now means boss trophies (crafting material), so the uniques wall gets a plainer name.
 { const h = $('trophies').closest('.sec').querySelector('.sec-title'); if (h) h.textContent = 'Unique loot'; }
 
+// unique-weapons-wall-icon: an every-class unique (Golemfist, the Fang) shows as the hero's own weapon, as the bag does
+const trophyKind = key => uniqKindFor(key, heroWho()) || UNIQ[key].slot;
 const trophyEls = {};
 for (const [key, u] of Object.entries(UNIQ)) {
   const c = el('div', 'trophy');
-  const tile = icTile(itemIcon(u.slot, 3, key), null, 'ghost');
+  const tile = icTile(itemIcon(trophyKind(key), 3, key), null, 'ghost');
   const tn = el('span', 'tn'), ts1 = el('span', 'ts'), ts2 = el('span', 'ts');
   c.append(tile, tn, ts1, ts2); $('trophies').append(c);
   trophyEls[key] = { c, tile, tn, ts1, ts2 };
@@ -35735,12 +35738,12 @@ function renderTrophies() {
   let n = 0;
   const shown = uniqKeys();
   for (const [key, u] of Object.entries(UNIQ)) {
-    const f = S.found[key], e = trophyEls[key]; if (f) n++;
+    const f = S.found[key], e = trophyEls[key], k = trophyKind(key); if (f) n++;
     putHidden(e.c, !shown.includes(key)); // a retired unique shows only once found
     putClass(e.c, 'trophy' + (f ? ' found' : ''));
-    setIc(e.tile, itemIcon(u.slot, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
+    setIc(e.tile, itemIcon(k, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
     putText(e.tn, f ? u.name : '???'); putClass(e.tn, 'tn' + (f ? ' rar-legendary' : ''));
-    putText(e.ts1, f ? `${(SLOT[u.slot] || CRAFT_POS[u.pos] || { n: 'Gear' }).n} · best ${MAT.ore.short[f - 1]} tier` : u.src);   // a new unique is a class kind (uniques-first-four)
+    putText(e.ts1, f ? `${(k !== u.slot ? { n: CRAFT_KINDS[k].noun } : SLOT[u.slot] || CRAFT_POS[u.pos] || { n: 'Gear' }).n} · best ${MAT.ore.short[f - 1]} tier` : u.src);   // a new unique is a class kind (uniques-first-four)
     putText(e.ts2, f ? u.txt : 'Not found yet');
   }
   // what is left, by where it drops (menu audit #15); found uniques sort first (.trophy.found, 40-components.css)
@@ -36190,8 +36193,9 @@ function uiRaid() {
     if (w) {
       const key = RAID_UNIQ[(w.gen - 1) % RAID_UNIQ.length], u = UNIQ[key];
       const ch = share >= 0.25 ? 100 : mine > 0 ? Math.min(100, (0.35 + share * 2) * 100) : 0;
-      setIc($('rLootIc'), itemIcon(u.slot, Math.min(5, w.gen), key), 'legendary');
-      putText($('rLoot'), `Drops ${u.name}: ${u.txt} Your chance right now: ${ch.toFixed(0)}%. Deal 25% of the damage to guarantee it.`);
+      const k = uniqKindFor(key, heroWho()) || u.slot, kn = k !== u.slot ? CRAFT_KINDS[k].noun : '';   // unique-weapons-wall-icon: shown as the hero's own weapon (display only)
+      setIc($('rLootIc'), itemIcon(k, Math.min(5, w.gen), key), 'legendary');
+      putText($('rLoot'), `Drops ${u.name}${kn ? `, ${/^[AEIOU]/.test(kn) ? 'an' : 'a'} ${kn}` : ''}: ${u.txt} Your chance right now: ${ch.toFixed(0)}%. Deal 25% of the damage to guarantee it.`);
     }
     putClass($('rNote'), 'note' + (online.canWrite ? '' : ' warn'));
     putText($('rNote'), online.canWrite

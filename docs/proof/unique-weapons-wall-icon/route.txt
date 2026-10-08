@@ -1,0 +1,28 @@
+# seed: 1
+# Proof for card unique-weapons-wall-icon: the Unique loot wall (Craft) shows a unique weapon as the hero's own weapon.
+# Save: tests/proof-fixtures/save-golemfist-wren.json (Wren the Ranger, zone 6, Golemfist found). The wall shows Golemfist
+# with a Bow icon and the line "Bow · best Copper tier"; before this change it showed a Sword and "Weapon". A route cannot
+# open the world raid (online) or pick Pip, so the Codex row, the raid loot card, Pip's Staff and Tobin's Warblade are held
+# by tools/check.mjs (unique weapons wall icon).
+new golemfist-wren
+wait 6
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap "Craft"
+wait 2
+tap-if "Continue"
+wait 1
+tap-if "Dismiss this tip"
+wait 1
+tap-if "Got it"
+wait 1
+tap "Uniques"
+wait 1
+expect "Golemfist"
+expect "Bow · best"
+expect-no "Weapon · best"
+shot uniques-wall
