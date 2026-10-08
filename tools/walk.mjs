@@ -329,6 +329,9 @@ async function followNextUp(o) {
       if (!(await click('.ab-learn', 300))) break;
       await advance(250, 16); did = i ? 'Learn (twice)' : 'Learn';
     }
+  } else if (/^Upgrade your\b/i.test(label)) {   // craft-delta: Go opens the piece's sheet on Hero, Gear; press its Upgrade button, then close it
+    if (await click('.bsheet-ov button:text(^Upgrade to \\+)', 300)) { did = 'Upgrade'; await advance(250, 16); }
+    await click('.bsheet-ov .bsheet-x', 200);
   } else if (/^Equip\b/i.test(label)) {   // next-up-equip: Go puts the piece on at once, with no panel to press
     did = (await X('JSON.stringify(S.equip)')) !== eqBefore ? 'Go put it on' : '';
   } else if (/attribute point/i.test(label)) {   // a casual player taps Spread evenly

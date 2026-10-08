@@ -160,7 +160,7 @@ let craftUI = null;
   // ---- the fight line (craft-delta): what the piece changes against the boss at your furthest zone (55-fight-delta) ----
   // Sampled a chunk at a time after the card opens, so the card never waits; the line joins it when the sample is done, or is
   // left out. Keyed by what the fight depends on now, so a card seen again after a gear change samples again.
-  const fdSig = () => [S.maxZone, S.L, JSON.stringify(S.equip)].join('|');
+  const fdSig = () => [S.maxZone, S.L, JSON.stringify(S.equip), JSON.stringify(S.attr || null), JSON.stringify(S.stars || null), JSON.stringify(S.abil || null), JSON.stringify(S.turn || null)].join('|');   // what the fight reads
   function fdStart(it) {
     if (typeof fightDeltaJob !== 'function' || !it || it.id == null) return;
     const sig = fdSig(), cur = st8.fd[it.id];

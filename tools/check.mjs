@@ -10321,11 +10321,21 @@ if (section('craft delta')) try {
     assert(sk != null && E('S.equip.sickle') == null, 'craft delta: forgeItem("sickle") wears nothing');
     const bow = E('(craftItem("bow", 1, { wear: true }) || {}).id');
     assert(bow != null && E('S.equip.weapon') == null, 'craft delta: a weapon never goes on by itself');
+    E(`Object.assign(itemById(${bow}), { r: 'common', a: [] })`);   // a plain common Pine Bow, whatever the roll
     const fd = E(`fightDelta(itemById(${bow}))`);
     assert(fd && fd.kind === 'wins' && fd.zone === 2 && fd.after > fd.before, `craft delta: the Pine Bow raises the zone 2 boss wins in 10 (${JSON.stringify(fd)})`);
+    E(`itemById(${bow}).r = 'epic'`);
+    const fdE = E(`fightDelta(itemById(${bow}))`);
+    assert(fdE && fdE.after >= fd.after, `craft delta: a better bow never reads worse than a plain one (${JSON.stringify(fdE)})`);
     const label = E('(topGoals(20, { sticky: false }).find(x => x.id === "forge") || {}).label || ""');
     assert(/ for the zone 2 boss/.test(label) || !/Bow|Quiver|Hood|Leathers|Charm/.test(label), `craft delta: a weapon or armour craft goal names the zone boss (${label})`);
     assert(E('S.equip.weapon == null') && !E('globalThis.__cdEv.some(e => e.on === "weapon")'), 'craft delta: the sample never wears the piece');
+  }
+  { // review: 40 fights a side read a tier 4 Warblade into an empty slot as "7 in 10, not 8 in 10"; 80 fights a side and a change under half a step in 10 show no line instead
+    const g = coreOn('save-z10-cantor.json'), E = s => g.eval(s);
+    const k = E(`Object.keys(CRAFT_KINDS).find(k => kindPos(k) === 'weapon' && !CRAFT_KINDS[k].legacy && fits(k, 'weapon', 'hero'))`);
+    const res = E(`['common', 'uncommon', 'rare'].map(r => fightDelta(newItem(${JSON.stringify(k)}, 4, r, {})))`);
+    assert(res.every(r => !r || (r.after > r.before)), `craft delta: a weapon into an empty slot never reads as fewer wins (${k}: ${JSON.stringify(res)})`);
   }
   { const g = coreOn('save-flow-cold-camp.json', false), E = s => g.eval(s);
     const bow = E('(craftItem("bow", 1, { wear: true }) || {}).id');
