@@ -27,7 +27,8 @@
 //          cost is { fam: n } or { mats: { fam: n } } at grade t (an upgrade's or a craft's cost). Frozen shape:
 //          craft-attribute-grades reads it. add() adds every order that can start and returns how many it added.
 //   away   refineAwayRun(T, stock, inflow) (the 'awayEnd' pass; the parity tool and the checks call it through awayGains)
-// Events: 'refined' { st, prod, tier, n } after each unit made live.
+// Events: 'refined' { st, prod, tier, n } after each unit made live; 'refineDone' { st, prod, tier, n } when a set-amount
+// order makes its last unit live (one bell line, 'refine-done', and the Camp tab dot; an All order and the away run say nothing).
 // Save: registerState('refine', { v, st: { forge, bench, loom }, said, seen, coal }). said: 1 = no "The Forge can smelt
 // now" card owed (a new game, or shown); an old save (one saved before this change) starts at 0. seen: when the first order
 // was ever added (ms, 0 = never). coal: 1 once the first coal toast has shown.
@@ -153,6 +154,10 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
         left -= need; o.at = 0;
         makeOne(st, o, false);
         emit('refined', { st, prod: o.prod, tier: o.tier, n: 1 });
+        if (!o.all && o.made === o.want) {
+          emit('toast', { key: 'refine-done', msg: `The ${CAMP_B[st].n} made ${storeNum(o.want)} ${plural(o.prod, o.tier, o.want)}.`, kind: 'good', icon: null, prio: 'normal' });
+          emit('refineDone', { st, prod: o.prod, tier: o.tier, n: o.want });
+        }
       }
     }
   };
