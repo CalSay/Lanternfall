@@ -13990,9 +13990,12 @@ var forgeGoalPicks = 0;
         pick.push(e); count[e.sys] = (count[e.sys] || 0) + 1;
       }
     }
-    // reserve: one row for a reserved goal left out (the lowest-scored other pick makes room)
-    if (n >= 3 && !pick.some(e => e.reserve)) {
-      const r = all.find(e => e.reserve && !pick.includes(e));
+    // reserve: one row for a reserved goal left out (the lowest-scored other pick makes room). gear-in-first-25: a prio 13+ reserved row
+    // (the first weapon) goes first, and takes the one reserved row from a lower one already picked (a near deed)
+    const top = n >= 3 ? all.find(e => e.reserve && e.prio >= 13 && !pick.includes(e)) : null, held = top ? pick.findIndex(e => e.reserve && e.prio < 13) : -1;
+    if (held >= 0) pick[held] = top;
+    else if (n >= 3 && !pick.some(e => e.reserve)) {
+      const r = top || all.find(e => e.reserve && !pick.includes(e));
       if (r) {
         if (pick.length < n) pick.push(r);
         else { let lo = -1; pick.forEach((e, i) => { if (!e.ready && (lo < 0 || e.score < pick[lo].score)) lo = i; });   // a ready goal is never displaced,

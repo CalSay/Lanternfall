@@ -11018,10 +11018,14 @@ if (section('next tier gate')) try {
   E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 5');   // Mining 5: nearer than the Quiver's Hunting 4 of 14
   l = goals();
   assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Mining 5 of 14 opens Iron Ore', `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
-  // 6. with Hunting hidden, no hide gate shows
+  // 6. with Hunting hidden, no hide gate shows. The bow is wood + metal now (gear-in-first-25), so the hide gate is set up with the old hide bow
+  E('globalThis.__bowRec = CRAFT_KINDS.bow.rec; CRAFT_KINDS.bow.rec = { wood: 6, hide: 2, ess: 2 }; S.skills.mine.lv = 3');
+  l = goals();
+  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Hunting 4 of 14 opens Duskfang Pelt', `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
   E('HUNT_TUNE.on = false');
   l = goals();
   assert(!l.some(x => /Hunting \d+ of|Duskfang Pelt$/.test(x.label)), `next tier gate: with Hunting hidden, no hide gate (${JSON.stringify(row(l))})`);
+  E('CRAFT_KINDS.bow.rec = globalThis.__bowRec');
   reset();
   // 7. an open tier 1 recipe beats any gate: an empty sickle slot (and 2 Pine Log, as at minute 23) shows the Copper Sickle craft
   E('(() => { const id = S.equip.sickle; S.equip.sickle = null; S.items = S.items.filter(i => i.id !== id); S.mats.wood[0] = 2; gearDirty(); })()');
@@ -12938,7 +12942,13 @@ if (section('gear-in-first-25')) try {
     l = goals(E); assert(l.some(x => x.id === 'forge'), `${at}: with a reserved deed row live the weapon row stays (${l.map(x => x.id)})`);
     E('for (const k of ["a", "b", "c"]) registerGoal({ id: "zz-r" + k, sys: "zzr" + k, prio: 5, pct: () => 1, label: "Ready " + k })');
     l = goals(E); assert(l.some(x => x.id === 'forge'), `${at}: against three Ready rows the weapon row holds its row (${l.map(x => x.id)})`);
-    E('for (const id of ["zz-res", "zz-ra", "zz-rb", "zz-rc"]) GOALS.splice(GOALS.findIndex(x => x.id === id), 1)');
+    // review: low on Pine Log and essence right after the pickaxe (pct 0.13), a near deed (score 0.88) must not push the weapon out
+    E('S.mats.wood[0] = 2; S.mats.ess[0] = 0; GOALS.splice(GOALS.findIndex(x => x.id === "zz-rc"), 1)');
+    l = goals(E); assert(l.some(x => x.id === 'forge') && !l.some(x => x.id === 'zz-res'), `${at}: a low weapon row takes the reserved row from a near deed, with two Ready rows (${l.map(x => x.id)})`);
+    E('GOALS.splice(GOALS.findIndex(x => x.id === "zz-rb"), 1)');
+    l = goals(E); assert(l.some(x => x.id === 'forge'), `${at}: a low weapon row stays with one other Ready row and a near deed (${l.map(x => x.id)})`);
+    E('S.mats.wood[0] = 10; S.mats.ess[0] = 4');
+    E('for (const id of ["zz-res", "zz-ra"]) GOALS.splice(GOALS.findIndex(x => x.id === id), 1)');
     E('S.mats.crystal[0] = 3; tick(0.1)');
     assert(step(E) === 'weapon', `${at}: with 3 Quartz the step is weapon (${step(E)})`);
     const id = E('(craftItem("staff", 1) || {}).id'); E(`equipItem(${id}, "weapon"); tick(0.1)`);
