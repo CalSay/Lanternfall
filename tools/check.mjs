@@ -10759,35 +10759,43 @@ if (section('craft delta')) try {
     const g = coreOn('save-flow-upgrade.json'), E = s => g.eval(s);
     const goals = () => E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
     const up = l => l.find(x => x.id === 'upgrade'), forge = l => l.find(x => x.id === 'forge');
-    // (a) saving up for a Birch Bow: no upgrade to the Pine Bow it replaces
-    E('S.maxZone = 7; S.skills.bench.lv = 10; S.mats.wood[1] = 3');
+    // (a) saving up for a Birch Bow: no upgrade to the Pine Bow it replaces (refine-queues: the bow takes Birch Planks and
+    // Duskfang Leather, and the Pine Bow's +1 a Pine Plank; nor does Next Up offer to saw that plank)
+    E('S.maxZone = 7; S.skills.bench.lv = 10; S.mats.wood[1] = 3; S.mats.plank[0] = 1; S.mats.plank[1] = 4; S.mats.leather[1] = 2');
     let l = goals();
-    assert(forge(l) && /^Craft a Birch Bow/.test(forge(l).label) && !forge(l).ready && !l.some(x => /Upgrade your Pine Bow/.test(x.label)), `upgrade goal chip order: saving for a Birch Bow, no "Upgrade your Pine Bow" and the craft goal shows (${JSON.stringify(l)})`);
+    assert(forge(l) && /^Craft a Birch Bow/.test(forge(l).label) && !forge(l).ready && !l.some(x => /Upgrade your Pine Bow|for your Bow/.test(x.label)), `upgrade goal chip order: saving for a Birch Bow, no "Upgrade your Pine Bow" (nor a plank for it) and the craft goal shows (${JSON.stringify(l)})`);
+    E('S.mats.plank[0] = 0');
     // (c) an upgrade with no shared material still shows: a worn Pine Hood (fibre, tier 1) next to a tier 2 bow craft
     const hood = E('(it => addItem(it) ? it.id : null)(newItem("hood", 1, "common", {}))');
-    E(`S.equip.helm = ${hood}; gearDirty()`);
+    E(`S.equip.helm = ${hood}; gearDirty(); S.mats.cloth[0] = 1`);   // refine-queues: the Hood's +1 takes a Hemp Cloth
     l = goals();
-    assert(up(l) && /^Upgrade your .* Hood to \+1$/.test(up(l).label) && forge(l) && /^Craft a Birch Bow/.test(forge(l).label), `upgrade goal chip order: a Hood upgrade that shares nothing with the bow craft still shows (${JSON.stringify(l)})`);
+    // (refine-queues: the bow is short only of a Birch Plank, so the refine line "Saw 1 Birch Plank for a Birch Bow" may stand in for the craft line)
+    const bowLine = l.find(x => (x.id === 'forge' && /^Craft a Birch Bow/.test(x.label)) || (x.id === 'refine' && /for a Birch Bow$/.test(x.label)));
+    assert(up(l) && /^Upgrade your .* Hood to \+1$/.test(up(l).label) && bowLine, `upgrade goal chip order: a Hood upgrade that shares nothing with the bow craft still shows (${JSON.stringify(l)})`);
     E(`S.equip.helm = null; S.items = S.items.filter(i => i.id !== ${hood}); gearDirty()`);
     // (d) the craft affordable: it leads the forge goals and no upgrade shows
     E('S.mats.wood[1] = 200');
     l = goals();
     assert(forge(l) && forge(l).ready && /you have the materials/.test(forge(l).label) && !up(l) && l.filter(x => x.id === 'forge' || x.id === 'upgrade' || x.id === 'equip')[0].id === 'forge', `upgrade goal chip order: a Ready craft goal leads the forge goals (${JSON.stringify(l)})`);
     // (e) after crafting and wearing it, with no bow craft above it in reach, "Upgrade your Birch Bow" can show
+    E('S.mats.plank[1] = 200; S.mats.leather[1] = 200');   // refine-queues: a Birch Bow and its +1 take Birch Planks and Duskfang Leather
     const bb = E('(craftItem("bow", 2) || {}).id');
     E(`S.equip.weapon = ${bb}; gearDirty(); S.gold = 1e7; S.mats.ore[1] = 0`);   // no Iron Ore: an Iron Pickaxe craft stays unfinished
     l = goals();
     assert(bb != null && up(l) && up(l).label === 'Upgrade your Birch Bow to +1', `upgrade goal chip order: a worn Birch Bow can be upgraded once no craft replaces it (${JSON.stringify(l)})`);
   }
-  { // (b) a same-tier clash: the Quiver craft needs 3 Pine Log and the Pine Bow upgrade costs 2
+  { // (b) a same-tier clash: the Quiver craft needs 3 Pine Log, and the Pine Bow's +1 takes a Pine Plank sawn from 2 (refine-queues)
     const g = coreOn('save-flow-upgrade.json'), E = s => g.eval(s);
     const goals = () => E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
     E('S.mats.wood[0] = 4');
     let l = goals();
-    assert(l.some(x => /^Craft a Bristlehide Quiver/.test(x.label)) && !l.some(x => x.id === 'upgrade'), `upgrade goal chip order: with 4 Pine Log, no upgrade that leaves fewer than the Quiver's 3 (${JSON.stringify(l)})`);
+    assert(l.some(x => /^Craft a Bristlehide Quiver/.test(x.label)) && !l.some(x => x.id === 'upgrade' || x.id === 'refine'), `upgrade goal chip order: with 4 Pine Log, no upgrade (nor plank for it) that leaves fewer than the Quiver's 3 (${JSON.stringify(l)})`);
     E('S.mats.wood[0] = 5');
     l = goals();
-    assert(l.some(x => x.label === 'Upgrade your Pine Bow to +1'), `upgrade goal chip order: with 5 Pine Log, the Pine Bow upgrade shows (${JSON.stringify(l)})`);
+    assert(l.some(x => x.label === 'Saw 1 Pine Plank for your Bow +1'), `upgrade goal chip order: with 5 Pine Log, Next Up offers the plank for the Pine Bow's +1 (${JSON.stringify(l)})`);
+    E('S.mats.plank[0] = 1');
+    l = goals();
+    assert(l.some(x => x.label === 'Upgrade your Pine Bow to +1'), `upgrade goal chip order: with a Pine Plank, the Pine Bow upgrade shows (${JSON.stringify(l)})`);
   }
   await (async () => {
     const { pw, exe } = browserTools;

@@ -297,16 +297,54 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
     for (const [k, n] of Object.entries(mats)) { if (matOwn(k, t) >= n) continue; if (!REFINE_RAW[k]) return false; mid = true; }
     return mid;
   };
-  let needAt = -1, needVal = null;
-  const refineFor = () => {
-    const now = Date.now(); if (now - needAt < 400 && needAt >= 0) return needVal;
-    needAt = now; needVal = null;
-    if (!refineOn() || !built('forge') && !built('bench') && !built('loom')) return null;
-    const troph = (S.craft && S.craft.troph || []).some(n => n > 0);
+  // The craft Next Up's forge goal works towards (the same pick as 55-goals.js forgeNext: the best-funded open craft, a
+  // weapon first on a tie). upgrade-goal-chip-order's rule holds for refining too: never refine for an upgrade of the piece
+  // that craft replaces, nor one whose inputs leave less of a shared material (same grade, or essence) than it needs.
+  const craftNext = () => {
+    let best = null;
+    const zt = Math.min(5, zoneTier(S.maxZone || 1));
     for (const pos of CRAFT_HERO_POS) {
+      const cur = equipped(pos);
+      for (const kind of kindsAt(pos)) {
+        const t = (cur && (cur.slot === kind || cur.u) ? cur.t : 0) + 1; if (t > zt) continue;
+        const c = canCraft(kind, t);
+        if (!c.cost || c.lv < c.need || c.unbuilt) continue;
+        const ks = Object.keys(c.cost.mats);
+        const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, matOwn(k, t) / Math.max(1, c.cost.mats[k])), 0) / Math.max(1, ks.length));
+        const score = p + (pos === 'weapon' ? 0.02 : 0);
+        if (!best || score > best.score) best = { kind, t, pos, cost: c.cost.mats, p, score };
+      }
+    }
+    return best;
+  };
+  // what refining a cost's missing middles at grade t (and paying the cost) takes from each cell
+  const takes = (mats, t) => {
+    const out = {};
+    for (const [k, n] of Object.entries(mats)) {
+      const miss = REFINE_RAW[k] ? Math.max(0, n - matOwn(k, t)) : 0;
+      if (!REFINE_RAW[k]) out[k + ':' + t] = (out[k + ':' + t] || 0) + n;
+      if (miss) for (const [f, tt, m] of refineNeed(k, t)) out[f + ':' + tt] = (out[f + ':' + tt] || 0) + m * miss;
+    }
+    return out;
+  };
+  // (only what it can take now: while an input is short, the line says to gather it, which serves the craft too)
+  const clash = (f, mats, t) => f && Object.entries(takes(mats, t)).some(([key, n]) => {
+    const [k, tt] = key.split(':'), h = matOwn(k, +tt); return f.cost[k] && (k === 'ess' || +tt === f.t) && h >= n && h - n < f.cost[k];
+  });
+  let needSig = '', needVal = null;
+  const refineFor = () => {
+    if (!refineOn() || !built('forge') && !built('bench') && !built('loom')) return null;
+    const sig = JSON.stringify([S.gold, S.maxZone, S.mats, S.equip, S.camp && S.camp.b, CRAFT_HERO_POS.map(p => { const it = equipped(p); return it ? [it.slot, it.t, it.plus] : 0; }),
+      Object.values(S.skills || {}).map(x => x && x.lv), S.craft && S.craft.troph]);
+    if (sig === needSig) return needVal;
+    needSig = sig; needVal = null;
+    const troph = (S.craft && S.craft.troph || []).some(n => n > 0), f = craftNext();
+    for (const pos of CRAFT_HERO_POS) {
+      if (f && f.p >= 1) break;   // a craft is ready: Next Up says craft it, not refine for an upgrade
+      if (f && f.p > 0 && pos === f.pos) continue;
       const it = equipped(pos); if (!it || !CRAFT_KINDS[it.slot] || !craftKindVisible(it.slot) || it.plus >= CRAFT_TROPHY_GATE.max) continue;
       const c = upgradeCost(it);
-      if (S.gold < c.gold || (c.troph && !troph) || !onlyMiddles(c.mats, it.t)) continue;
+      if (S.gold < c.gold || (c.troph && !troph) || !onlyMiddles(c.mats, it.t) || clash(f, c.mats, it.t)) continue;
       const nm = it.u ? kindName(it.slot, it.t, it.u) : CRAFT_KINDS[it.slot].noun;
       return (needVal = { mats: c.mats, t: it.t, what: `your ${nm} +${it.plus + 1}` });
     }
