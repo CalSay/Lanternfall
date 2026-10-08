@@ -22,8 +22,10 @@ Five tabs, each a full-screen menu over the stage ([layout.md](design/layout.md)
 | Craft (`forge`) | Make, Uniques |
 | Camp (`world`) | Camp, Tavern, Almanac, Raid |
 
-The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the Codex open from the Journal. Landscape
-(740x360 and up) is the main target; portrait still works at 360 px wide.
+The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the Codex open from the Journal. Browser first
+(owner, 2026-10-08): the design size is a desktop browser at 1280x720 CSS px with mouse and keyboard; it must look good
+at 1920x1080 and fit 1366x640. Landscape phones (740x360) and tablets (1024x768) still play without clipping; phones held
+upright (360x740) must not break, but new features need not be designed for them.
 
 Menu sub-tabs keep their labels and show the drawn menu icons. Action buttons show small Ready, Cooldown,
 Locked or Unavailable badges; the ability picker marks the selected action. Icons use native pixel sizes.

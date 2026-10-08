@@ -6,6 +6,19 @@ no forced landscape. This pass makes the game the main view and turns each tab i
 with 2-4 sub-views. The previous pass (bottom tabs, HUD on the stage, quiet toasts with a bell log) stays;
 its compact-stage-on-scroll is gone, because a menu no longer shares the screen with the stage in portrait.
 
+## Target sizes (browser first, owner 2026-10-08)
+
+| Role | Size (CSS px, inside the browser) |
+|---|---|
+| Design size: mockups and checks start here | 1280 x 720, mouse and keyboard |
+| Must look good | 1920 x 1080 |
+| Must fit | 1366 x 640 |
+| Still works: plays without clipping | 740 x 360 (landscape phones), 1024 x 768 (tablets) |
+| Still works, no new polish: must not break | 360 x 740 (phones held upright) |
+
+Mouse and keyboard come first; touch still works everywhere. The sections below describe the layout as built
+(phone-sized chrome around a stage that grows); the desktop layout pass changes it for 1280 x 720 and up.
+
 ## Screens
 
 **Portrait (phones; any viewport taller than wide, or narrower than 600 px).** Max width 560 px, centred.
@@ -26,7 +39,8 @@ scrolling content. It closes on: the close button, tapping the open tab again, E
 The tab bar stays live, so the player hops between menus without closing them.
 
 **Landscape (UX-L1, 2026-09-30; viewport at least as wide as tall and 600 px or wider: phones on their side,
-tablets, desktop).** The main target now (owner: mobile is landscape only). From the approved mock-up (removed 2026-10-02; in git history).
+tablets, desktop).** The layout for the design size (desktop at 1280 x 720) and for landscape phones and tablets (browser first,
+2026-10-08; it replaced "mobile is landscape only", 2026-09-29). From the approved mock-up (removed 2026-10-02; in git history).
 Styles: `src/styles/80-landscape.css`; `isWide()` in 70-ui is this layout.
 
 ```
@@ -41,7 +55,7 @@ Styles: `src/styles/80-landscape.css`; `isWide()` in 70-ui is this layout.
 ```
 
 - **Rail** (52 px; 64 on tall screens): the portrait and level on top, then the five tabs (54 px each, 62 tall).
-  The left thumb navigates, the right thumb fights; the bottom edge stays free, so the stage gets the full height.
+  On a phone the left thumb navigates and the right thumb fights; the bottom edge stays free, so the stage gets the full height.
 - **Top row**: everything not combat: gold and embers, Fight / Gather, Switch, the zone arrows, the bell. The XP
   bar is its 3 px bottom line. The activity pill is hidden (Switch does the same).
 - **Stage**: everything between. Whole-pixel zoom only (62-stage `LAND_ZOOMS`): the largest of x1-x4 that
@@ -85,7 +99,7 @@ centred and capped to the screen height, scrolling inside.
 Screenshots: `docs/coord/uxl1-shots/` (fight, a boss, each menu, Training, the Tavern's gatherer board, the
 picker, the Attack sheet at 740 x 360 and 1280 x 720; the first guide step at 740 x 360; 844 x 390; portrait).
 
-**Portrait (secondary until the owner drops it)** is unchanged:
+**Portrait (still works; new features need not be designed for it, owner 2026-10-08)** is unchanged:
 
 | Viewport | Stage box | Menu content (scroll area) |
 |---|---|---|
@@ -185,7 +199,8 @@ To tune: change a rule's `ch` in NOTICES (or `NOTICE_TUNE` for the budget). A ne
 - Tap targets stay 44 px or larger. No horizontal scroll at 360 px or in a 300 px wide menu column:
   panel and section grids use `minmax(0, 1fr)` and their children `min-width: 0`.
 - Side gutter is `--gut` (12 px). The menu slide and every new motion respect `prefers-reduced-motion`.
-- Checks when you touch layout: landscape 740x360, 844x390 and desktop 1280x720 (tools/check.mjs `landscape ...
-  (browser, UX-L1)`), portrait 360x740 and 412x915 (game view and each tab); no console errors; no horizontal scroll.
+- Checks when you touch layout: desktop 1280x720 first, then 1920x1080 and 1366x640; landscape 740x360, 844x390 and
+  tablet 1024x768 (tools/check.mjs `landscape ... (browser, UX-L1)` covers 740x360, 844x390 and 1280x720 today);
+  portrait 360x740 and 412x915 (game view and each tab, must not break); no console errors; no horizontal scroll.
 - Landscape: new controls never go on the stage or the side column; the side column holds Next Up, notices and
   the bar only.
