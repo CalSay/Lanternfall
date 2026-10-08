@@ -151,7 +151,32 @@ const weaponKind = () => {
 };
 const weaponMats = () => { const k = weaponKind(); try { return k ? Object.entries(craftRecipe(k, 1)).filter(([f]) => f !== 'gold').map(([f, n]) => stockOf(f, 1, n)) : []; } catch (e) { return []; } };
 const weaponStation = () => { const k = weaponKind(); return k ? CRAFT_KINDS[k].st : null; };
-const weaponNow = () => coldH() && stepDone('forge') && !!weaponKind() && !weaponMade() && !wearPiece('weapon') && campLv(weaponStation()) >= 1 && !stepDone('store');
+// gear-in-first-25: where a material comes from, and whether that place is open now. Fights pay essence and gold, so those are always
+// open; a gathered one is open when its Gather view shows (navSkillOpen: Hunting and Foraging from zone 5) and its node's tier is open.
+// -> { open, skill, kind (the node, or null), verb, opens ('zone 5' while the view waits on a zone, else null) }
+const PLACE_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Gather', herb: 'Gather', hide: 'Hunt' };
+const matPlace = (fam, t = 1) => {
+  if (fam === 'ess' || fam === 'gold') return { open: true, skill: null, kind: null, verb: 'Fight for', opens: null };
+  const fm = typeof CRAFT_FAMILY === 'object' ? CRAFT_FAMILY[fam] : null;
+  if (!fm || fm.src !== 'gather' || !CRAFT_NODES[fam]) return { open: false, skill: null, kind: null, verb: 'Gather', opens: null };
+  const sk = fm.skill, seen = typeof navSkillOpen === 'function' && navSkillOpen(sk);
+  const open = seen && craftNodeVisible(fam, t) && skillTierOpen(sk, t);
+  const f = !seen && (sk === 'forage' || sk === 'hunt') && (sk !== 'hunt' || huntingVisible()) && !isUnlocked('forage') ? FEATURES.find(x => x.id === 'forage') : null;
+  return { open, skill: sk, kind: open ? fam : null, verb: PLACE_VERB[fam] || 'Gather', opens: f ? f.why : null };
+};
+// The Craft card's line under a recipe short of a gathered material: "Bristlehide: from Hunting, which opens at zone 5." / "Quartz: from Mining geodes."
+const matSourceLine = (fam, t = 1) => {
+  const fm = typeof CRAFT_FAMILY === 'object' ? CRAFT_FAMILY[fam] : null; if (!fm || fm.src !== 'gather') return '';
+  const pl = matPlace(fam, t), nm = costName(fam, t);
+  return pl.opens ? `${nm}: from ${SKILL[pl.skill]}, which opens at ${pl.opens}.` : `${nm}: from ${fm.from.replace(/ only\.$/, '.')}`;
+};
+const weaponShort = () => needShort(weaponMats());
+// every short material of the first weapon has a place open now (essence and gold count as open)
+const weaponPlacesOpen = () => weaponShort().every(m => matPlace(m.fam, m.t).open);
+// the first weapon is made at the Workbench (a bow or staff): its steps come right after the tool, not after the Forge
+const weaponAtBench = () => weaponStation() === 'bench';
+const weaponNow = () => coldH() && !!weaponKind() && !weaponMade() && !wearPiece('weapon') && campLv(weaponStation()) >= 1
+  && (weaponAtBench() ? stepDone('tool') && weaponPlacesOpen() : stepDone('forge') && !stepDone('store'));
 // Worn, not owned (Cal's play note 13): a weapon in the bag does nothing, so it is not "made" until it is on.
 const weaponMade = () => { try { return !!equipped('weapon'); } catch (e) { return false; } };
 const TOOL_POS = ['pick', 'axe', 'sickle', 'spear'];
@@ -223,12 +248,12 @@ const GUIDE_STEPS = [
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
   { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
   { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made. It only works when you wear it.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
+  // first-gold-and-camp-strip, gear-in-first-25: the first weapon. A Workbench weapon (bow, staff) comes right after the tool, once every
+  // short material has a place open (weaponNow); until then the Forge steps show. Tobin's Forge weapon waits for the Forge step, as before.
+  { id: 'stock:weapon', ph: ['between'], needs: weaponMats, when: () => weaponNow() && !!needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
+  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft'), done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
-  // first-gold-and-camp-strip: with the weapon's own station built (the Forge, or the Workbench for a bow or staff; it comes after the Forge step) the next job is the first weapon:
-  // gather what it needs; then Craft opens on it. Over once the Storehouse step is done (a finished cold save never sees it).
-  { id: 'stock:weapon', ph: ['between'], needs: weaponMats, when: () => weaponNow() && !!needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || stepDone('store') },
-  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft'), done: () => !coldH() || weaponMade() || stepDone('store') },
   { id: 'stock:store', ph: ['between'], needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },

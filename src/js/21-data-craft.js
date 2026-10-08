@@ -254,7 +254,7 @@ const CRAFT_KINDS = {
   plate: { noun: 'Plate', pos: 'body', st: 'forge', rec: { ore: 7, hide: 3, fibre: 1 }, pre: 'ore', base: [['hp', 1]], role: 'tank', cls: 'warden' },
   censer: { noun: 'Censer', pos: 'weapon', st: 'forge', rec: { ore: 4, herb: 4, ess: 2 }, pre: 'ore', base: [['might', 1]], role: 'support', cls: 'lightkeeper' },
   staff: { noun: 'Staff', pos: 'weapon', comp: 'wpn', st: 'bench', rec: { wood: 5, crystal: 3, ess: 2 }, pre: 'wood', base: [['might', 1]], role: 'caster', cls: 'lanternmage' },
-  bow: { noun: 'Bow', pos: 'weapon', comp: 'wpn', st: 'bench', rec: { wood: 6, hide: 2, ess: 2 }, pre: 'wood', base: [['might', 1]], role: 'striker', cls: 'ranger' },
+  bow: { noun: 'Bow', pos: 'weapon', comp: 'wpn', st: 'bench', rec: { wood: 6, ore: 2, ess: 2 }, pre: 'wood', base: [['might', 1]], role: 'striker', cls: 'ranger' },   // gear-in-first-25 Step 0 (2026-10-08): wood + metal, as decided 28 Sep (was hide 2)
   quiver: { noun: 'Quiver', pos: 'off', st: 'bench', rec: { hide: 3, wood: 3, fibre: 2 }, pre: 'hide', base: [['crit', 0.12, 35]], role: 'striker', cls: 'ranger' },
   lantern: { noun: 'Lantern', pos: 'off', st: 'ench', rec: { crystal: 5, ore: 2, ess: 2 }, pre: 'crystal', base: [['spell', 0.2, 45]], role: 'caster', cls: 'lanternmage' },   // gear pass: was spell 1 x p (read by nothing); now like the Quiver's crit line
   circlet: { noun: 'Circlet', pos: 'helm', st: 'loom', rec: { crystal: 4, fibre: 2, ess: 1 }, pre: 'crystal', base: [['hp', 0.5]], role: 'caster', cls: 'lanternmage' },

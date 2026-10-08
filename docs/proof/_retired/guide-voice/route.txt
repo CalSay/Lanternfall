@@ -1,3 +1,4 @@
+# RETIRED 2026-10-08 (proof-routes-rot): "one guide tip a fight" was replaced on purpose by the staged first-fight lesson (bf1fb1c9, cal-0107-staged-guide; DECISIONS.md), which docs/proof/cal-0107-staged-guide proves.
 # seed: 1
 # Proof for card guide-voice: Old Hesketh teaches one thing a fight, each tip only in its own phase. Fight 1 teaches Attack
 # (the ability follows), a later fight Dodge, then Parry. The phase, one-paused-step, one-thing-a-fight, quiet-minute and

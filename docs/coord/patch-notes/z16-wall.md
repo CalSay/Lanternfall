@@ -1,0 +1,1 @@
+The zone 16, 17 and 18 bosses no longer wall you off: if you reach them the normal way, fighting the foes in your path and wearing the gear Next Up points at, you now beat them in a try or two instead of losing again and again. Their Bleed still hurts, just not a third of your health a tick, and parry and dodge still matter. Best shot: nextup-boss.

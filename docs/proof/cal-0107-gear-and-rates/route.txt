@@ -2,6 +2,7 @@
 # Proof for card cal-0107-gear-and-rates: gear and the bag live on the Hero tab (a Gear view next to Hero), Craft
 # points there in one tap, and every open Gather row shows its rate a minute and an hour.
 # The fighting case of the Gather card (a minute and an hour while you fight) is asserted in tools/check.mjs.
+# Updated 2026-10-08 (proof-routes-rot): close the Refining tip (#209) that now opens over Craft on the mid save.
 new mid
 wait 3
 tap-if "Skip this story"
@@ -19,8 +20,13 @@ expect "Upgrade"
 shot gear-sheet
 tap "Close"
 tap "Craft"
+wait 1
+tap-if "Got it"
+wait 1
 expect "Your gear is on the Hero tab"
 shot craft-make
 tap "Gather"
+wait 1
+tap-if "Got it"
 expect "an hour"
 shot gather-rows

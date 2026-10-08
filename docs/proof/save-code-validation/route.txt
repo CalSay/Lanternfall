@@ -2,9 +2,15 @@
 # Proof for card save-code-validation: Pip (fixture tests/proof-fixtures/save-pip-abilities, slots Fireball, Spark, Kindle)
 # copies a save code from Notices > Settings > Save code. Before the fix this said "Couldn't build a save code."
 # Replayed at 360x740 and 740x360.
+# Updated 2026-10-08 (proof-routes-rot): a "New hero" card (Thessaly Gloam, Vesper Lark join) now arrives at the end of the first fight on this save and covers the menus, so the route waits and closes it with tap-if "Continue".
 new pip-abilities
 wait 3
 expect "Attack"
+wait 3
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 1
 tap "Notices"
 wait 1
 tap "Settings"

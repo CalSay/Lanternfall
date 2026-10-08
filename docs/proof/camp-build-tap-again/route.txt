@@ -1,6 +1,7 @@
 # seed: 1
 # Proof for card camp-build-tap-again. Run: grep -v '^#' route.txt | node tools/playtest.mjs batch --seed 1 (then --landscape).
 # `new` empties the shots folder, so the shots here were taken one part at a time and named -portrait / -landscape.
+# The -1280x720 shots are the same route in a 1280x720 mouse window (browser-first; playtest.mjs has no desktop flag yet).
 # Part 1: the fire is lit, 12 Pine Log and 300 gold in hand, Hesketh at "Build a Workbench".
 # One tap on the Workbench card's Build button starts the build (no "Tap again").
 new bench-ready

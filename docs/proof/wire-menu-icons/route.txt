@@ -1,10 +1,16 @@
 # seed: 1
 # wire-menu-icons: replay at 360x740 and 740x360; no new art, hot files or save fields.
 # The checker audits every pack id and the five badge states; this route shows player controls.
+# Updated 2026-10-08 (proof-routes-rot): a "New hero" card (Thessaly Gloam, Vesper Lark join) now arrives at the end of the first fight on this save and covers the menus, so the route waits and closes it with tap-if "Continue". Hero > Training was removed (Build is the Hero view in its place, DECISIONS.md "No Training") and Gear moved from Craft to Hero, so those expects moved to the Hero menu; the Craft menu first shows a one-time Refining sheet (tap-if "Got it").
 new menu-icons
 wait 3
 tap-if "Skip"
 expect "Attack"
+wait 3
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 1
 expect "#soloBar .menu-action-badge"
 shot action-badges
 tap "Skills"
@@ -21,7 +27,8 @@ expect "Bestiary"
 shot menu-fight-icons
 tap "Hero"
 wait 1
-expect "Training"
+expect "Gear"
+expect "Build"
 expect "Stars"
 shot menu-hero-icons
 tap "Gather"
@@ -35,8 +42,9 @@ expect "#viewSeg .menu-nav-ic"
 shot menu-gather-icons
 tap "Craft"
 wait 1
+tap-if "Got it"
+wait 1
 expect "Make"
-expect "Gear"
 expect "Uniques"
 shot menu-craft-icons
 tap "Camp"
