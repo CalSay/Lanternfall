@@ -1,0 +1,23 @@
+# seed: 1
+# Proof for card small-text-clips: the Loom's Tier 1 label reads "Hemp Fibre" in full under "Tier 1" (it was cut to
+# "Hemp Fibr..." in a fifth of a 360 px panel). The "Secret found: First Try. New title: Clutch." toast cannot be
+# raised from a route; tools/check.mjs (small text clips) raises it at 360x740 and 740x360 and measures that it is not cut.
+new mid
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 2
+tap "Craft"
+wait 2
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+wait 1
+tap "Loom"
+wait 1
+expect "Hemp Fibre"
+expect "Tier 1"
+shot loom-tiers
