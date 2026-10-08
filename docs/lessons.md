@@ -117,6 +117,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - In a proof route, tap a Gather view by its whole label (`tap "Mining"`, `tap "Wood"`), never by a verb: `tap` falls back to a partial match, so `tap "Mine"` hit the first row's "Mine at the Iron Vein", started mining and closed the menu. Why: the first storage-and-gather route failed 7 expects that way. (cal-0107-storage-and-gather-ui, 2026-10-07)
 - When a landscape fix trims a sheet's 44 px grab row, keep the 44 px close button (`.bsheet-x`, top 0) clear of the body's buttons, and have the check assert no overlap, not only that each button is on screen. Why: the reviewer found the close button over the top 16 px of Continue on short story cards after the grab row went to 28 px; a tap there skipped the scene. (story-card-landscape-fit, 2026-10-08)
 
+- The Almanac card shows the calendar's Omen (`almanac.today()`), not a forced one: `almanac.force()` changes `active()` and `mod()` only. To show a given Omen in a browser check, find a day where `almanac.omenFor(d)` plays it and set `Date.now` to noon that day. Why: the first almanac-forge-points-to-gear check forced Cheap Reforge and the Go still followed the real day. (almanac-forge-points-to-gear, 2026-10-08)
+
 ## Saves and offline parity
 
 - Before bumping the save key, load real old saves (fixtures and a sim save) on the branch; add state with registerState defaults and a load-time clamp when that works. Why: PR #58 bumped to v6 for new attribute state, but the old saves loaded fine with one XP clamp, and a bump needs Cal's label. (hero-progression-rework, 2026-10-06)

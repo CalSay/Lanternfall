@@ -1,0 +1,12 @@
+# seed: 1
+# Proof for card almanac-forge-points-to-gear: the Almanac on Camp shows today's Omen and its "Best today" line.
+# A route cannot pick the day's Omen, so this shows the Almanac as it is; check.mjs ("almanac gear days") forces
+# Cheap Reforge and Salvager's Luck days and proves Go opens Hero, Gear.
+new mid
+wait 2
+tap-if "Skip"
+tap-if "Continue"
+tap "Camp"
+tap "Almanac"
+expect "Best today"
+shot almanac

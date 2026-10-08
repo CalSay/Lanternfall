@@ -167,7 +167,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   floor is a turn fight. Runs floor by floor on Oil, with boons, Depth Marks and a weekly Trial. A run never changes main progress. Its Deep Lore pages follow the story's rule that the dark copies shapes.
 - **Bounties** (`55-bounties.js`): three short goals that pay gold, materials or Essence, and Renown.
 - **Mastery and the Bestiary** (`55-mastery.js`): zone stars and per-foe perks from kills. The Codex Bestiary also shows one line for each Hollow monster you have reached that is in the game, saying what shape it copied (`LORE_FOES` in `21h-lore-hollow.js`). Foe tells use solo wording.
-- **Almanac** (`55-almanac.js`): a daily Omen, optional Dares and a weekly board. Omen lines name no person or place you have not met; Oriel's line comes after Chapter 4.
+- **Almanac** (`55-almanac.js`): a daily Omen, optional Dares and a weekly board. Each Omen's "Best today" line has a Go button; on Cheap Reforge and Salvager's Luck days it opens Hero, Gear (Craft until the Hero tab opens). Omen lines name no person or place you have not met; Oriel's line comes after Chapter 4.
 - **Codex** (`57c-codex.js`, `75-codex-ui.js`): the collection book. Lantern Light gives titles, cosmetics and small
   capped perks.
 - **Deeds** (`23-data-deeds.js`, `58-deeds.js`, `75-deeds-ui.js`): tracks, Feats, titles and looks drawn on the hero
