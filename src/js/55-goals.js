@@ -139,7 +139,9 @@ var forgeGoalPicks = 0;
   const bossNow = () => S.zone === S.maxZone && bossReady() && !bossHeld() ? bossRead() : null;
   // boss-retry-reads-odds: after a loss at the frontier in a turn fight, the chance decides (not 15% more damage).
   // bossLost() -> null (not this path) or bossRead()'s { s, win }; bossPctTxt rounds to 5% ("under 5%" for 0).
-  const bossLost = () => S.zone === S.maxZone && typeof bossOddsOn === 'function' && bossOddsOn() && bossTryHeld() && S.bossTry.hold === S.maxZone ? bossRead() : null;
+  // (fresh only: while 59m works out a new chance it hands back the one from before the loss, which may read Ready)
+  const bossLost = () => { if (!(S.zone === S.maxZone && typeof bossOddsOn === 'function' && bossOddsOn() && bossTryHeld() && S.bossTry.hold === S.maxZone)) return null;
+    const b = bossRead(); return b && b.s !== 'next' && typeof BO === 'object' && !BO.res ? { s: 'next', win: 0 } : b; };
   const bossPctTxt = w => { const p = Math.round(w * 20) * 5; return p > 0 ? p + '%' : 'under 5%'; };
   registerGoal({
     id: 'zone-boss', sys: 'boss', prio: 2,

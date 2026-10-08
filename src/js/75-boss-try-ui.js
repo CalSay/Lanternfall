@@ -48,8 +48,9 @@
         const c = Math.round(BOSS_ODDS.close * 100) + '%';
         chance.textContent = `Your chance to win now: ${pct(o.win)}.` + (o.win < BOSS_ODDS.close ? ` Fight here to get stronger. Aim for ${c} before you try again.` : o.win < BOSS_ODDS.ready ? ' A close fight.' : '');
       };
+      // the second button takes .bt-stay's clear look (60-bosstry.css), so only the first one is loud
       const place = o => {
-        if (o && o.win < BOSS_ODDS.close) { go.className = 'big bt-go'; stay.className = 'big forge bt-stay'; api.foot.append(stay, go); stay.focus({ preventScroll: true }); }
+        if (o && o.win < BOSS_ODDS.close) { go.className = 'big bt-go'; go.style.background = 'transparent'; stay.className = 'big forge bt-stay'; api.foot.append(stay, go); stay.focus({ preventScroll: true }); }
         else { api.foot.append(go, stay); go.focus({ preventScroll: true }); }
       };
       if (!chance) { place(null); return; }

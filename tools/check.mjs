@@ -9713,7 +9713,7 @@ if (section('wall-try-again (boss loss, Try again)')) try {
   // this: a held frontier boss in a turn fight waits for bossOdds >= BOSS_ODDS.close, then COMBAT_TUNE.bossWait s (Tobin wins zone 2 at level 1)
   E('S.bossTry.hold = 2; S.zone = 2; S.maxZone = 2; S.kills = ZONE_FIGHTS; S.auto = true; fightBoss = false; failDps = 0; spawn()');
   let at = -1; for (let t = 0; t < 300 && at < 0; t += 0.1) { g.fn.tick(0.1); if (E("fightBoss")) at = t; }
-  assert(at >= E('COMBAT_TUNE.bossWait') && at <= E('COMBAT_TUNE.bossWait') + 5 && !E('bossTryHeld()'), `try again: with Auto on, a held boss restarts once the chance is fair, after bossWait (at ${at.toFixed(0)} s)`);
+  assert(at >= E('COMBAT_TUNE.bossWait') && at <= E('COMBAT_TUNE.bossWait') * 1.1 + 5 && !E('bossTryHeld()'), `try again: with Auto on, a held boss restarts once the chance is fair, after bossWait (at ${at.toFixed(0)} s)`);
   E('S.auto = false; S.bossTry.hold = 2; fightBoss = false; failDps = 0; spawn()'); run(60);
   assert(!E('fightBoss') && E('bossTryHeld()'), 'try again: with Auto off, the held boss waits for the button');
   // a reload keeps the strength you failed at, so Auto does not retry an unchanged hero
@@ -9756,14 +9756,15 @@ if (section('boss retry reads the odds')) try {
   const c = goal();
   assert(E('bossOdds().win') >= E('BOSS_ODDS.close') && /^Your chance against the Zone 13 boss: \d+%\. Try again when you are ready$/.test(c.label) && c.pct >= 1 && c.sel === '#gateBtn', `retry odds: a fair chance is Ready and Go is Try again (${JSON.stringify(c)})`);
   const at = runTo(300), wait = E('COMBAT_TUNE.bossWait');
-  assert(at >= wait && at <= wait + 5, `retry odds: with Auto on and a fair chance the boss comes back between ${wait} and ${wait + 5} s (at ${at.toFixed(1)} s)`);
+  // (the check runs once every 1.1 s at 0.1 s ticks: 1 - 10 x 0.1 is a hair above 0, so the window is bossWait x 1.1 + 5)
+  assert(at >= wait && at <= wait * 1.1 + 5, `retry odds: with Auto on and a fair chance the boss comes back after ${wait} s at that chance (at ${at.toFixed(1)} s)`);
   // a return from away keeps a weak held boss held (it used to come back)
   E('S.L = 1; ' + hold + '; bossOdds({ sync: true }); awayGains(600)');
   assert(runTo(150) < 0 && E('bossTryHeld()'), 'retry odds: after a return from away a weak held boss stays held');
   // a replayed boss below the frontier keeps the old rule (15% stronger, then cbBossReady or bossWait)
   E('S.bossTry.hold = S.zone = 5; S.maxZone = 13; S.kills = ZONE_FIGHTS; fightBoss = false; failDps = 0; autoWait = 0; spawn()');
   const r = runTo(300);
-  assert(r >= 0 && r <= wait + 5, `retry odds: a lost replayed boss below the frontier keeps the old rule (at ${r.toFixed(1)} s)`);
+  assert(r >= 0 && r <= wait * 1.1 + 5, `retry odds: a lost replayed boss below the frontier keeps the old rule (at ${r.toFixed(1)} s)`);
   // turn fights off: today's labels
   E('TURN_TUNE.on = 0; S.bossTry.hold = S.zone = S.maxZone = 13; S.kills = ZONE_FIGHTS; fightBoss = false; failDps = totalDps() * 2');
   const o = goal();

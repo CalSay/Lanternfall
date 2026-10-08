@@ -184,7 +184,7 @@ function tick(dt) {
   const tg = target();
   // Auto-challenge (the Fight tab's "Fight frontier bosses when ready"), checked once a second in every fight mode.
   // It used to ride the single-foe respawn timer, which pack fights and turn fights never run, so the switch did nothing.
-  if (tg === 'mob' && S.auto && !fightBoss && !arena && (autoChk -= dt) <= 1e-9) {   // (1e-9: ten 0.1 s ticks make one second, not eleven)
+  if (tg === 'mob' && S.auto && !fightBoss && !arena && (autoChk -= dt) <= 0) {
     autoChk = 1;
     if (autoZone !== S.zone) { autoZone = S.zone; autoWait = 0; }
     // ready and stronger than at the last failed try: go when the estimate says it is winnable, or after
@@ -193,7 +193,7 @@ function tick(dt) {
     // BOSS_ODDS.close), held there for bossWait s, so closing the Try again card is never undone a second later. No chance
     // yet (still working it out): the count waits. 59m loads after this file, hence the typeof guard.
     if (typeof bossOdds === 'function' && bossOddsOn() && bossTryHeld() && S.bossTry.hold === S.maxZone) {
-      const o = bossOdds();
+      let o = bossOdds(); if (o && typeof BO === 'object' && BO.res !== o) o = null;   // fresh only: while 59m works it hands back the estimate from before the loss
       if (o && o.win >= BOSS_ODDS.close) { autoWait++; if (autoWait >= COMBAT_TUNE.bossWait) { autoWait = 0; challenge(); } }
       else if (o) autoWait = 0;
     } else if (bossReady() && totalDps() > failDps * 1.15) { autoWait++; if (autoWait >= COMBAT_TUNE.bossWait || cbBossReady()) { autoWait = 0; challenge(); } }
