@@ -10963,6 +10963,10 @@ if (section('staged guide follow-ups (browser)')) try {
         assert(!over.length && r.last && r.last.up && r.last.paused && r.last.ok && !r.last.live, `staged guide follow-ups: in landscape the Gather menu's first line waits for the gap between foes, then holds it with a Got it (${over.length ? 'over a live fight: ' + over[0].txt : JSON.stringify(r.last)})`);
         await page.click('.ob-ok'); await page.waitForTimeout(400);
         assert(await X('!!S.onboard.done["use:gather"] && !ONBOARD.paused'), 'staged guide follow-ups: Got it reads the line and the fight goes on');
+        // and a between step (the cold fire's Gather line) never starts beside a live fight: it waits for the gap and holds it
+        await X('onboardReveal("party"); S.maxZone = 2; setTab("party"); true');
+        const r2 = await play(X, page, 20000, s => s.up && s.step === 'gather');
+        assert(!r2.shown.some(x => x.overFight) && (!r2.last.up || !r2.last.live), `staged guide follow-ups: in landscape, with the Hero menu open, a between line never starts over a live fight (${r2.shown.filter(x => x.overFight).map(x => x.txt).join('; ') || JSON.stringify(r2.last)})`);
         assert(!errs.length, 'staged guide follow-ups (landscape line): no page errors' + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -10983,20 +10987,27 @@ if (section('staged guide follow-ups (browser)')) try {
         const r2 = await play(X, page, 8000);
         assert(!flash.length && !over.length && !r2.shown.some(x => x.overFight || (!x.open && x.dur < 1000)),
           `staged guide follow-ups: no line flashes up for under 1 s between fights, and none speaks over a live fight (${[...flash, ...over, ...r2.shown].map(x => x.txt + ' ' + x.dur + ' ms').join('; ')})`);
+        // a portrait menu covers the fight, the Fight menu too: its first-use line (Bounties) shows at once and pauses nothing, as before
+        await X('onboardReveal("bounties"); S.onboard.got.bounties = Math.round(S.onboard.t); setTab("adv"); true'); await page.waitForTimeout(300);
+        await page.click('#viewSeg button[data-view="bounties"]'); await page.waitForTimeout(800);
+        const b3 = JSON.parse(await X(LOOK));
+        assert(b3.up && /short jobs/.test(b3.txt) && !b3.paused, `staged guide follow-ups: in portrait the Fight menu's first line (Bounties) shows over the menu and pauses nothing (${JSON.stringify(b3)})`);
         assert(!errs.length, 'staged guide follow-ups (gap): no page errors' + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
-      // items 4 and 5: one point in Might brings the back line within 2 s; Power Shot learned beside Echo is "next to Echo", as the row reads
-      {
-        const { ctx, page, errs, X } = await open(360, 740);
+      // items 4 and 5: one point in Might brings the back line within 2 s (both views); Power Shot learned beside Echo is "next to Echo", as the row reads
+      for (const [w, h] of [[740, 360], [360, 740]]) {
+        const { ctx, page, errs, X } = await open(w, h);
         await X('gainXp(xpNeed()); setTab("party"); true'); await page.waitForTimeout(300);
         await page.click('#viewSeg button[data-view="attributes"]');
-        let s = null; for (let k = 0; k < 40 && !(s && /Put a point in Might/.test(s.txt)); k++) { await page.waitForTimeout(150); s = JSON.parse(await X(LOOK)); }
+        // (a level-up comes with a kill, so the line starts in that gap; here the points came mid-fight, so play on to the gap)
+        const s = (await play(X, page, 60000, s => /Put a point in Might/.test(s.txt))).last;
         assert(s && /Put a point in Might/.test(s.txt), `staged guide follow-ups: the first level-up asks for a point in Might ("${s && s.txt}")`);
         await page.click('#attrRows .at-row[data-at="might"] .at-add[data-n="1"]');
         const t0 = Date.now(); let back = null;
         for (let k = 0; k < 60; k++) { await page.waitForTimeout(100); const b = JSON.parse(await X(LOOK)); if (/close the menu/.test(b.txt)) { back = Date.now() - t0; break; } }
-        assert(back !== null && back <= 2000 && await X('attrPoints(soloHero()).free') > 0, `staged guide follow-ups: with points still left, the back line comes within 2 s of the first one spent (${back} ms)`);
+        assert(back !== null && back <= 2000 && await X('attrPoints(soloHero()).free') > 0, `staged guide follow-ups ${w}x${h}: with points still left, the back line comes within 2 s of the first one spent (${back} ms)`);
+        if (w > h) { await ctx.close(); continue; }
         await X('closeMenu(); for (const id of ["boss", "upgrade", "back"]) onboardDone(id); S.abil.scrolls.moss = 1; S.abil.got.moss = 1; onboardUseDone("say:scroll"); setTab("party", "abilities"); true');
         await page.waitForTimeout(400);
         await X('document.querySelectorAll(".ob-ok").forEach(b => { if (!b.hidden) b.click(); }); true');

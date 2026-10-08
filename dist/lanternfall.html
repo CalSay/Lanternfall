@@ -14686,7 +14686,8 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 //                              tools see every goal.
 // onboardUse({ tab, view, feature }) -> { id, text } | null   the first-use line for the system on screen (FIRST_USE below):
 //                              each system that opens after the first fight explains itself once, in one line. The UI
-//                              asks only while no guide step shows; it never pauses the game.
+//                              asks only while no guide step shows and no fight is in view; it pauses the game only to hold
+//                              the gap between two foes with the fight in view, until Got it (staged-guide-followups).
 // onboardUseDone(id)           the line was read (x, or about 7 s on screen). No event, so guide walks never see it.
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
@@ -14795,7 +14796,8 @@ const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen
 // (`ph` 'between') shows only between fights, and its line is hidden while a foe is on the field.
 //   chop, stock:bench, stock:tool, stock:forge, stock:weapon, stock:store  no pause (needs materials: live progress)
 //   bench, tool, forge, weapon, store                        pause only once the materials are in hand (pauseUnless)
-//   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them)
+//   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them). staged-guide-followups:
+//                                                            a Got it line that starts in the gap between foes holds that gap (75-onboard-ui)
 const stockOf = (fam, t, n) => [fam, t, n];
 // A Lv 1 row's gold rides along as ['gold', 0, n] (the Workbench): needShort reads it from S.gold, so a press step never pauses short of gold either.
 const matsOfBuild = id => { const f = typeof hearthFirst === 'function' ? hearthFirst(id) : null; return f ? f.mats.concat(f.gold > 0 ? [['gold', 0, f.gold]] : []) : []; };
@@ -14991,7 +14993,9 @@ function craftReady() {
       let w = false; try { w = !!s.when(); } catch (e) {}
       if (!w) continue;
       const R = GUIDE_RT, held = R.latch === s.id;
-      if (!held && !s.ph.includes(guidePhase()) && !(!guideMenuCovers() && s.ph.includes(guidePhase(true)))) continue;   // not its phase: it waits (a wide screen still shows the fight beside a menu)
+      // not its phase: it waits. A wide screen still shows the fight beside a menu, so there a step starts only in the phase the fight is really in
+      // (staged-guide-followups: a between step started mid-fight beside a landscape menu and froze it)
+      if (!held && !s.ph.includes(guidePhase(!guideMenuCovers()))) continue;
       if (held && guidePhase() !== 'between') continue;   // cal-0107-staged-guide: a between line started earlier hides while a foe is on the field, and comes back after
       if (!held && s.quiet && R.lastEnd !== null && R.t - R.lastEnd < GUIDE_QUIET) continue;   // one unprompted line a minute
       if (s.ph.includes('between')) R.latch = s.id;
@@ -42165,7 +42169,7 @@ let navUI = null;
     }
     // no guide step: the system on screen may still owe its first-use line (never alongside a guide step), only with no fight in view
     // (staged-guide-followups: a landscape menu leaves the fight beside it, and the line spoke over it)
-    if (!step && S.tab && guidePhase(!guideMenuCovers()) === 'between') { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
+    if (!step && S.tab && (!fightInView() || guidePhase(true) === 'between')) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
     const use = /^(use|say):/.test(step.id);
     // staged-guide-followups: a line that starts in the gap after a kill, with the fight in view, would show for under half a second before the
@@ -42178,7 +42182,7 @@ let navUI = null;
     if (step.id === 'weapon' && !weaponOpened && !S.tab) { const k = weaponKind(); if (k) { weaponOpened = true; S.fSlot = k; S.fTier = 1; forgeGoalPicks++; setTab('forge'); } }
     let spec = null;
     const table = SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
-    // a first-use line has no target: it docks over the open menu with no ring, and never pauses the game
+    // a first-use line has no target: it docks over the open menu with no ring, and pauses only to hold a gap between foes (gapHeld)
     try { spec = use ? { node: S.tab || step.id.startsWith('use:') ? panels : stageBox, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
     // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip

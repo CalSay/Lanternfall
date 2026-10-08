@@ -358,7 +358,7 @@
     }
     // no guide step: the system on screen may still owe its first-use line (never alongside a guide step), only with no fight in view
     // (staged-guide-followups: a landscape menu leaves the fight beside it, and the line spoke over it)
-    if (!step && S.tab && guidePhase(!guideMenuCovers()) === 'between') { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
+    if (!step && S.tab && (!fightInView() || guidePhase(true) === 'between')) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
     const use = /^(use|say):/.test(step.id);
     // staged-guide-followups: a line that starts in the gap after a kill, with the fight in view, would show for under half a second before the
@@ -371,7 +371,7 @@
     if (step.id === 'weapon' && !weaponOpened && !S.tab) { const k = weaponKind(); if (k) { weaponOpened = true; S.fSlot = k; S.fTier = 1; forgeGoalPicks++; setTab('forge'); } }
     let spec = null;
     const table = SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
-    // a first-use line has no target: it docks over the open menu with no ring, and never pauses the game
+    // a first-use line has no target: it docks over the open menu with no ring, and pauses only to hold a gap between foes (gapHeld)
     try { spec = use ? { node: S.tab || step.id.startsWith('use:') ? panels : stageBox, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
     // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
