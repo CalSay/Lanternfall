@@ -698,6 +698,84 @@ at 29:55 and seed 2 Tobin at 47:48, and neither cleared it by 60:00. On the fix,
 Veto phrase for Cal: "put the zone 16 bosses back" (undoes the whole pick). "No rider knot" undoes only riderX: the knots stay and
 zone 16 reads about 31-39% a try for a first-time player.
 
+### Zone 19 wall (z19-wall) (2026-10-08)
+
+Ruled MERGE with option D (B2-style knots plus a rider knot), zone 19 only, by an Opus high judge (PR for card `z19-wall`); Cal can
+veto any line. Data: the builder's runs (240 and 160 fights a row, seed offsets 0-3), re-run by the judge at 160 fights on offsets
+1, 2, 4, 5 and 6. The judge changed two of the builder's zone 19 knots (hpFloor and hpX) and dropped his zone 20 knots.
+
+Walks confirm (the final build, 90 game min, the bot that keeps fighting after a loss): seed 1 Wren reached zone 19 at 47:34 and
+cleared it on the first try at 56:51; seed 2 Tobin reached it at 54:00 and cleared it on the first try at 57:50. Neither lost a try in
+zones 1 to 19. Both then lost a try at the zone 20 boss and were still there at 90:00 (the next wall, as expected). Both reached zone 19
+sooner than the z16-wall walks (55:04 and 59:38) with nothing before zone 19 changed: the walk's later minutes vary between machines.
+
+- **Why it walls.** A first-time hero reaches zone 19 at level 22 on tier 1 common +0 (the z16-wall walks: 55:04 and 59:38, gathering
+  gate still shut). They have 0.02-0.05 of the reference HP (Wren 0.021, Tobin 0.054, Pip 0.025); a kept-up hero has 1.3-4.5, about 65
+  times more. The zone 19 knots were fitted to the kept-up hero, so the boss's biggest hit is 13.5 times Wren's health before the cap.
+  The boss (Elder Spore Cap) also rides Venom, which ticks 0.02 of the reference HP twice (`TURN_TUNE.heroDot`): one tick took 97% of a
+  first-time Wren's health. Casual and good players read 0% a try.
+- **The pick.** In `TURN_TUNE.boss`, zone 19 only: hpX 4.8 to 0.07, hitX 1.04 to 0.015 (dormant: every landed hit sits on the hpFloor,
+  as at zones 13-18), hpFloor 0 to 1.35 (0 again from zone 20), Tobin's heroHitX 4.99 to 2.4, and riderX 1 to 0.07
+  (`[[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 0.07], [20, 1]]`). Moves, timing windows, parry and dodge rules, the hit cap,
+  rally gates and boss pay do not change. As at zone 16, riderX changes only a tick's size: Venom lands on the same hits and ticks twice.
+- **Why hpFloor 1.35 and hpX 0.07, not the builder's 1.25 and 0.09.** At zone 19 the never-defends rule sits on a cliff. A kept-up
+  hero who never defends wins 0% at hpFloor 1.25, but Wren wins 100% at 1.15 and Tobin 47% at 1.2. 1.25 sits 0.05 above the cliff;
+  a little healing or shielding the budget hero lacks (a Ward, a unique) could tip a real player over it. 1.35 with hpX 0.07 keeps
+  0.15 of room. On the same five seed sets it reads the same first-time mean (64 against 65), Tobin 1-8 points up, Pip 4-8 down, and a
+  tighter spread between heroes (5-16 points against 16-30).
+- **Why not A (a gear step).** Tier 2 common, tier 3 rare +5 and even tier 4 rare +5 at level 22 read 0% at zones 19 and 20 on the old
+  knots. Arriving at the road level (28) on tier 1 also reads 0%. Opening the gathering gate would also move zones 7-18.
+- **Why not B (knots only).** Venom caps it. The best knots-only fits read 16-31% a hero (mean 19-24), and the lower ones let a kept-up
+  hero who never defends win 55-100%. The picked knots with riderX 1 read 16/6/16.
+- **Why riderX 0.07.** A Venom tick now costs a first-time Wren about 7% of her health (Pip 6%, Tobin 3%), as z16's Bleed does, twice a
+  Venom. It still hurts. On the builder's knots (offset 5), 0.1 reads 57/42/68, 0.15 reads 41/35/53 and 0.2 reads 33/29/43. On a
+  kept-up hero a tick was already about 0.1% of their health.
+- **Tobin at 2.4.** 2.2 lifts his first-time row about 10 points but lets a kept-up Tobin who never defends win 48% (2.0: 52%). The
+  never-defends rule wins; his arrival cell goes in a gap under `tobin-safety-margin`, as at zones 16-18.
+- **What a first-time player gets** (casual Wren/Tobin/Pip, arrival footing, five seed sets): Wren 63-70, Tobin 53-65, Pip 66-74,
+  mean 61-68. Good players 100. The walk bot's player 84-93. A weaker casual 38-46/24-31/31-40. A player who never defends wins 0%.
+  Expected tries 1.3-1.9. Fights last about 5 turns played well. A landed Cap Slam costs about a quarter of your health (Wren 25%,
+  Pip 27%, Tobin 29%), the charged Bloom over half (54-61%), and each Venom tick about 7% more.
+- **z19-boss-arrival becomes a gated Captain row** (kind `captain`, was `reportArrival`), as z17 and z18 did, so the fix is held.
+- **Zone 20 is not fixed here.** Its arrival row reads 0% and stays a report row (`z20-boss-arrival`, kind `reportArrival`, new in
+  this card). The builder's zone 20 knots (hitX 0.02, hpX 0.065, hpFloor 1.0, Tobin 2.75) read 76-79 for a first-time player, but they
+  cost far more than zones 17 and 18 did in z16-wall:
+  - Two `check.mjs` asserts fail ("C29 mid-game HP"). A kept-up hero should win zone 20 bosses 20-85% casually in 6-12 turns; it wins
+    98-100% in 4.8. A tier behind, a zone 20 hit should cost over a fifth of your health and a tier ahead under 15%; it reads 24% and
+    20%. Neither assert can move to zone 21: the check's hero wins zone 21 100% casually too.
+  - `z20-boss` kept-up reads 99-100 (band 60-80) and `z20-boss-behind` a drop of 0-5 (band 10-60): a tier behind no longer costs wins.
+    `z20-boss` is also the reference row for the joined row and the three build rows, which would then read against 100%.
+  - It buys one zone. The bots then stall at zone 21 for 5-8 hours (z21 on the arrival footing is unmeasured and expected near 0%).
+
+  These are the only instruments that watch whether gear matters in the mid game. The same loss is already true at zones 13-19 (a
+  landed hit sits on the hpFloor whatever you wear), with nothing watching it there. Blinding them for one zone is the wrong trade. A
+  follow-up card (proposed `z20-wall`) fits zone 20 onward in one pass and first decides where the "gear matters" checks live once the
+  arrival knots reach zone 20: a zone still on kept-up knots, or a check that knows the footing. It should also weigh ticking a zone
+  boss's Bleed, Burn and Venom as a share of the hero's own health instead of a `riderX` row per zone. Until carded,
+  `boss-balance-pass` owns zone 20.
+- **Kept-up z19 is too easy for a geared casual:** 94-100 against 60-80 (was 59/78/77). A kept-up hero who never defends wins 0-1%
+  (five seed sets). No knot puts both rows in band: every knot tried that lets a first-time casual win more than 40% reads kept-up
+  98-100, hpX 0.15 included. The first-time player wins; this goes in a gap, as at zones 15-18.
+- **The footing fix in `tools/budget.mjs` is right.** The arrival footing is tier 1 common +0 with no mastery stars. The crafted set is
+  a grade 4 craft the game does not ship, and a first-time player cannot have it. The z16-18 arrival rows are grade 3 and never wore
+  it, so z19 was the only arrival row wearing it, an oversight in #229. It was worth about 9 points to Wren. Kept-up rows keep the set.
+- **Zones 1 to 18 are unchanged.** No knot below zone 19 moved and riderX is the same below 19, so the #223 and #229 rulings stand.
+  z18-boss-arrival reads 81/66/69 and 85/54/61 on two seed sets, inside its noise and gaps. Zones 20 and up keep their knots and gaps.
+- **Gaps (all until 2026-12-01).** z19-boss casual, above, all heroes, limit 1, owner `boss-balance-pass`. z19-boss-arrival Tobin
+  casual, below, limit 0.55, owner `tobin-safety-margin`.
+- **Health: re-baselined, no tolerance change.** Expect the bots to pass zone 19 and meet the zone 20 wall: the optimiser's and the
+  long run's zone 19 stalls move to zone 20. This is an existing wall met one zone later. If the active or casual persona moves, or a
+  new stall appears below zone 19, re-judge.
+- **Walks.** Run both walks (seeds 1 and 2, 75 game min) on the final build. Walks run on the builder's first build (zone 20 knots,
+  hpFloor 1.25) do not count. Pass: each walk reaches zone 19 at the z16-wall times (55:04 and 59:38; nothing before zone 19 changed),
+  loses no try in zones 1-18, and clears zone 19 within 4 tries. If a walk needs 5 or more tries at zone 19, or has not cleared it by
+  75:00, do not merge: re-judge. A walk that reaches zone 20 will lose there; record it as the follow-up's evidence, not as a fail.
+- **Switch off.** Put the zone 19 knots back (hpX 4.8, hitX 1.04, hpFloor 0 from zone 19, Tobin heroHitX 4.99, riderX 1 at zone 19),
+  drop the two gaps and make z19-boss-arrival a report row again. No save change.
+
+Veto phrase for Cal: "put the zone 19 boss back" (undoes the whole pick). "No rider knot at zone 19" undoes only riderX: the knots
+stay and zone 19 reads about 13% a try for a first-time player (16/6/16), still a wall.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)

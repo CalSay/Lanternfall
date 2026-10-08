@@ -26377,10 +26377,10 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 1.075], [8, 0.95], [9, 0.75], [10, 0.725], [11, 0.882], [12, 1.008], [13, 0.36], [14, 0.38], [15, 0.12], [16, 0.15], [17, 0.15], [18, 0.12], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+  boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 1.075], [8, 0.95], [9, 0.75], [10, 0.725], [11, 0.882], [12, 1.008], [13, 0.36], [14, 0.38], [15, 0.12], [16, 0.15], [17, 0.15], [18, 0.12], [19, 0.07], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
     // heroHitX: a zone boss's hits x this on the hero (tobin-safety-margin: the safest hero still feels a boss; 1 = the zone table's hit)
-    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.7], [9, 1.25], [10, 2], [11, 1.25], [12, 1.75], [13, 1.6], [14, 1.7], [15, 2.55], [16, 2.75], [17, 2.75], [18, 2.6], [19, 4.99], [20, 6.32], [21, 7.14], [22, 7.45], [23, 8.39], [24, 7.06], [25, 6.81], [27, 7.45], [30, 8.32], [34, 6.85], [36, 7], [38, 7]], pip: 1 },
-    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.5], [8, 1.055], [9, 0.632], [10, 0.45], [11, 0.407], [12, 0.403], [13, 0.1], [14, 0.085], [15, 0.05], [16, 0.03], [17, 0.03], [18, 0.03], [19, 1.04], [20, 0.751], [21, 0.424], [22, 0.314], [23, 0.238], [24, 0.255], [25, 0.215], [27, 0.131], [30, 0.165], [34, 0.203], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.7], [9, 1.25], [10, 2], [11, 1.25], [12, 1.75], [13, 1.6], [14, 1.7], [15, 2.55], [16, 2.75], [17, 2.75], [18, 2.6], [19, 2.4], [20, 6.32], [21, 7.14], [22, 7.45], [23, 8.39], [24, 7.06], [25, 6.81], [27, 7.45], [30, 8.32], [34, 6.85], [36, 7], [38, 7]], pip: 1 },
+    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.5], [8, 1.055], [9, 0.632], [10, 0.45], [11, 0.407], [12, 0.403], [13, 0.1], [14, 0.085], [15, 0.05], [16, 0.03], [17, 0.03], [18, 0.03], [19, 0.015], [20, 0.751], [21, 0.424], [22, 0.314], [23, 0.238], [24, 0.255], [25, 0.215], [27, 0.131], [30, 0.165], [34, 0.203], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
     // z13-unstick (judge 2026-10-08, docs/DECISIONS.md "Zone 13 unstick"): the zone 13-15 hitX, hpX and hpFloor knots are fitted to the hero who
     // first gets there (level 18-19, tier 1 common +0). hitX there is dormant (every landed hit sits on the hpFloor), and hpX sits under zone 12's
     // in reference Attacks until the balance pass restores the length ramp.
@@ -26399,9 +26399,11 @@ const TURN_TUNE = {
     // z16-wall (judge 2026-10-08, docs/DECISIONS.md "Zone 16 wall"): the zone 16-18 knots are fitted to the hero who first gets there (level 20-22,
     // tier 1 common +0), as z13-unstick did at 13-15. riderX: a zone table of the zone boss's Bleed, Burn and Venom ticks on the hero (heroDot is a
     // share of the reference HP, which a first-time hero at zone 16 has a sixteenth of, so one Bleed tick took a third of their health); 1 elsewhere.
-    riderX: [[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 1]],
+    // z19-wall (judge 2026-10-08, docs/DECISIONS.md "Zone 19 wall"): the zone 19 knots too (level 22, tier 1 common +0, about a fiftieth of the
+    // reference HP), and its Venom ticks x0.07 (about 7% of a first-time hero's health a tick, as z16's Bleed). Zone 20 on keeps the kept-up knots.
+    riderX: [[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 0.07], [20, 1]],
     // hpFloor: see turnLand (zone table of multiples; 0 off). gate: rally gates (see TURN_TUNE.gateNote)
-    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 0.84], [9, 0.92], [10, 0.95], [11, 0.94], [12, 0.82], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
+    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 0.84], [9, 0.92], [10, 0.95], [11, 0.94], [12, 0.82], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 1.35], [20, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
   // Boss move tricks (card boss-tiers-pr4; docs/design/foe-moves.md "Boss tricks"): zone bosses from `from` play the Captain and
   // Champion sets in TURN_BOSS_TRICKS (24d): hits that hold their swing (`hold`), fakes (`feint`: no damage, and a press at one
   // fools you: the next hit cannot be defended), longer strings and an uneven rhythm. `on` 0 plays the old sets. `feintFrom`: the

@@ -11068,15 +11068,15 @@ if (section('boss tiers first hour')) try {
   assert(a.boss && a.cap === 0.4 && b.cap === 0.4, `boss cap: a zone boss's hit is capped at 40% of max HP in zones 1-15 (${a.cap}, ${b.cap})`);
   assert(c.cap === 0.75 && prof(24).cap === 0.75 && prof(25).cap === 0.75 && d.cap === 0.75, `boss cap: 0.75 in zones 16-34 (boss-tiers-pr5b, the pr3 judge's preference) (${c.cap}, ${prof(24).cap}, ${prof(25).cap}, ${d.cap})`);
   assert(prof(35).cap === 0, 'boss cap: not on a region boss');
-  assert(E('turnZoneLine(TURN_TUNE.boss.hitX, 9)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 8)') && E('turnZoneLine(TURN_TUNE.boss.hitX, 12)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 19)'),
-    'boss knots: hits fall after zone 8 to follow a first-hour hero\'s health, and rise again by zone 19 (zones 13-18 are fitted to the hero who first gets there: z13-unstick, z16-wall)');
-  // z16-wall (judge 2026-10-08): the zone 16 and 18 bosses' Bleed ticks on the hero x riderX (they are a share of the reference HP, a third of a
+  assert(E('turnZoneLine(TURN_TUNE.boss.hitX, 9)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 8)') && E('turnZoneLine(TURN_TUNE.boss.hitX, 12)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 20)'),
+    'boss knots: hits fall after zone 8 to follow a first-hour hero\'s health, and rise again by zone 20 (zones 13-19 are fitted to the hero who first gets there: z13-unstick, z16-wall, z19-wall)');
+  // z16-wall and z19-wall (judges 2026-10-08): the zone 16 and 18 bosses' Bleed and the zone 19 boss's Venom ticks on the hero x riderX (they are a share of the reference HP, a third of a
   // first-time hero's health a tick there); every other zone boss and every normal foe ticks as before
   { const rx = z => JSON.parse(E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; spawn(); const b = turnCombatProfile().bossRiderX;
       fightBoss = false; spawn(); return JSON.stringify([b, turnCombatProfile().bossRiderX]); })()`));
-    const r = [15, 16, 17, 18, 19].map(rx);
-    assert(r[1][0] < 1 && r[3][0] < 1 && r[0][0] === 1 && r[2][0] === 1 && r[4][0] === 1 && r.every(x => x[1] === 1),
-      `boss riders: a zone 16 and 18 boss's Bleed ticks are scaled down (riderX), zones 15, 17 and 19 and normal foes tick at 1 (${r.map((x, i) => (15 + i) + ': ' + x.join('/')).join(', ')})`); }
+    const r = [15, 16, 17, 18, 19, 20].map(rx);
+    assert(r[1][0] < 1 && r[3][0] < 1 && r[4][0] < 1 && r[0][0] === 1 && r[2][0] === 1 && r[5][0] === 1 && r.every(x => x[1] === 1),
+      `boss riders: a zone 16 and 18 boss's Bleed and a zone 19 boss's Venom ticks are scaled down (riderX), zones 15, 17 and 20 and normal foes tick at 1 (${r.map((x, i) => (15 + i) + ': ' + x.join('/')).join(', ')})`); }
   // a hero with 1000 HP and no armour: the biggest hit turnLand deals from any move of the zone's boss (every hit of every move, a charge's
   // hits on their own) stays at the cap, so a change to turnLand's order or a new multiplier cannot slip past it
   const worst = z => { prof(z); return JSON.parse(E(`(() => { const p = turnCombatProfile(); p.heroMaxHp = 1000; p.hitX = 1; p.blockP = 0; p.blockC = 0; let worst = 0;
