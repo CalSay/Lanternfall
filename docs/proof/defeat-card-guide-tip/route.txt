@@ -39,5 +39,6 @@ shot defeat-card
 tap "Keep fighting here"
 tap-if "Dismiss this tip"
 wait 6
-expect "That card showed what beat you"
+expect "The card showed what beat you"
+expect "No shame in that"
 shot defeat-tip
