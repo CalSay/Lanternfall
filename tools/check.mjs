@@ -5729,11 +5729,26 @@ if (section('notices (browser, W1-B)')) try {
       // The page's clock is the bot's: Date.now, performance.now, timers and frames advance only when the bot runs the clock (qa-first-hour-walk
       // does the same). On the machine's clock, how fast a card showed and how many ticks fell between two taps changed with the machine.
       await page.clock.install({ time: Date.UTC(2026, 0, 5, 12, 0, 0) });
+      // Installed is not enough: the clock still flows with the wall clock between runFor calls, so a slow runner gave the moment queue's
+      // 100 ms timer and its Date.now() bark expiry and banner hold more time per bot step, and two extra medium barks showed (#214, #216).
+      // Paused, it moves only when the bot runs it (walk.mjs does the same since #210; moment-cap-check-steady).
+      await page.clock.pauseAt(Date.UTC(2026, 0, 5, 12, 0, 1));
+      // Paused was still two games on one machine. Three more things moved with the machine, as in walk.mjs: the clock's frame grid (set by
+      // when the page loaded: frames are now timers 16 ms apart), CSS animations (the fake clock does not move them: stopped, and stepped
+      // by the game time the bot runs) and the page's own Math.random before the bot's first step (the first foe's roll: one Attack press
+      // killed it on some runs and not others). All three are fixed here, so the run depends on game time alone.
+      await page.addInitScript(() => { let a = 99; Math.random = () => (a = (Math.imul(a, 1664525) + 1013904223) >>> 0) / 4294967296;   // the page's own stream
+        const caf = window.cancelAnimationFrame.bind(window), tids = new Set();
+        window.requestAnimationFrame = cb => { const id = window.setTimeout(() => { tids.delete(id); cb(performance.now()); }, 16); tids.add(id); return id; };
+        window.cancelAnimationFrame = id => { if (tids.delete(id)) window.clearTimeout(id); else try { caf(id); } catch (e) {} }; });
+      { const cdp = await ctx.newCDPSession(page); await cdp.send('Animation.enable'); await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 }); }
+      const STEP_ANIM = d => { for (const a of document.getAnimations()) { if (a.playState === 'paused' || a.playState === 'finished') continue; try { a.currentTime = (a.currentTime || 0) + d; } catch (e) {} } };
+      const run = async ms => { await page.clock.runFor(ms); await page.evaluate(STEP_ANIM, ms); };
       page.on('pageerror', e => errs.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
-      await page.goto('http://lf.test/'); await page.clock.runFor(600);
+      await page.goto('http://lf.test/'); await run(600);
       const X = s => page.evaluate(s => window.__t.x(s), s);
-      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.clock.runFor(300);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await run(300);
       // a player who follows the guide, presses Attack, casts, parries heavy hits and buys upgrades; the game runs
       // fast (about 6x): 2 s of play per step, the page's own timers get a moment between steps
       await X(`(() => {
@@ -5777,7 +5792,7 @@ if (section('notices (browser, W1-B)')) try {
           return notes.clock;
         };
         return true; })()`);
-      for (let i = 0; i < 700; i++) { const t = await X('__nbStep()'); await page.clock.runFor(90); if (t >= 600) break; }
+      for (let i = 0; i < 700; i++) { const t = await X('__nbStep()'); await run(90); if (t >= 600) break; }
       const r = JSON.parse(await X('JSON.stringify({ t: notes.clock, st: notes.stats, nb: __nb, zone: S.maxZone, L: S.L, unread: notes.unread })'));
       const pops = r.st.filter(s => s.ch === 'pop' && s.id !== 'reply'), unknown = r.st.filter(s => s.id === '?');
       let close = null; for (let i = 1; i < pops.length; i++) if (pops[i].t - pops[i - 1].t < 20) close = [pops[i - 1], pops[i]];
