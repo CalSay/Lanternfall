@@ -183,7 +183,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 ## Onboarding and notices
 
 - **Unlocks** (`FEATURES` in `55-onboard.js`): a new game shows the Fight tab only. Tabs and views open as the player
-  reaches them: Hero at hero level 3, Gather after the first boss, Bounties at zone 4, Camp at zone 5, Craft and the
+  reaches them: Hero at the first level-up (hero level 2), Gather after the first boss, Bounties at zone 4, Camp at zone 5, Craft and the
   Bestiary around zone 6, the Almanac at 7 minutes, Uniques, the Tavern, the Codex (zone 10), the Raid (zone 12),
   Stars (hero level 10), the Deepwell (zone 20 and Hearth 3) and Hands (Hearth 2 and a Tavern). Once open, a feature stays open.
   One new thing every 90 s (`ONBOARD_TUNE.gap`, 90 s of play): ready rows queue and open in table order, so after the first
@@ -192,6 +192,14 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   star (Stars), the first unique (Uniques); the raid opens as before.
 - **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, spoken by Old Hesketh (his face on the left) from a panel that never covers the stage: in landscape the side column's notices slot (it stands in for Next Up while it speaks), in portrait a slot above the Act / Skills / Foe bar, and over an open menu the bottom of the menu panel. The Got it / Go button has its own row. After the first ability the guide asks you to add a point to Might on Hero > Build, then, once the points are spent, offers Back to the fight (it closes the menu). A tool or first weapon that is in the bag but not worn gets its own step: the tip names it, rings the card's Equip button and carries an Equip button of its own. A weapon you only own does not count as made until it is worn. The Storehouse tip says the packs are near full only when a pile is at 80% of what the packs hold; otherwise it says the Forge is up.
   A step pauses the game only while it waits for a press; a step that needs game time shows live progress instead.
+  The first fight is a lesson (cal-0107-staged-guide): each press is taught the first time it comes up, with the fight held until you
+  press it: Attack on your first turn, Dodge on the foe's first swing (the foe's clock stops as the Dodge window opens, so the press
+  lands), your ability on your next turn, Parry on the next swing (or the next foe's first). While a lesson holds, only the button it
+  names works. After that, in a fight, no line shows: every
+  other tip, and each unlock line from Hesketh, waits for the gap between fights, and an unlock line holds the game with a Got it.
+  The Hero tab opens at the first level-up and the guide's next line says so; the first Scroll and a second ability's slot each get
+  a line. Empty ability slots stay dim and silent until a learned move waits for one. Lighting the camp fire keeps you at the grove,
+  where Hesketh's talk plays.
 - **Notices** (`23n-data-notices.js`, `notify()`): every message goes to a channel (card, pop, bell, log or none),
   with a quiet start and a cap on pops a minute.
 - **Moments** (`75-moments-ui.js`): big moments (the first boss, any unique, a new hero; the cache hook is ready for

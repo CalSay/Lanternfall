@@ -48,12 +48,13 @@ STORY_BEATS.intro = { region: 'hollow', fire: 'heskethFire', fireStill: 'road',
 //   and run. road: the road at night, a dead fire and an old man. All 3 at 960x540 (landscape); the page covers the screen, so keep the middle clear.
 const INTRO_STILLS = { lamp: '', dark: '', road: '' };
 
-// Old Hesketh. Two NPC scenes. The fire is the dead roadside fire, shown over still 3 right after the hero is picked, before the first fight. The talk
-// plays later, when the player lights their own camp fire (8 Pine Log), which pays off "Wood first. Then we talk." (55-story.js, hearthLit).
+// Old Hesketh. Two NPC scenes. The fire is the dead roadside fire, shown over still 3 right after the hero is picked, before the first fight: its
+// last line leads into that fight (cal-0107-staged-guide, Cal's play note 2). The talk plays later, at the grove, when the player lights their own
+// camp fire (8 Pine Log), which pays off his Gather line, "we'll talk once it's lit" (75-onboard-ui SAY_TXT.gather; 55-story.js, hearthLit).
 STORY_BEATS.npc.heskethFire = { at: 'intro', who: 'Old Hesketh', lines: [
   'Your lamp gutters. An old man kneels by a ring of cold ash.',
   'You light his sticks from your lamp. The lamp steadies.',
-  '"Wood first. Then we talk."'
+  '"Something\'s coming up the road. Keep that lamp behind you."'
 ] };
 STORY_BEATS.npc.heskethHearth = { at: 'hearth', who: 'Old Hesketh', lines: ['"Every road needs a place to come back to."'] };
 STORY_BEATS.npc.heskethTalk = { at: 'hearth', who: 'Old Hesketh', lines: [

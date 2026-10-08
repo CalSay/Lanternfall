@@ -9,7 +9,7 @@
 //   abLearnInfo(hero, id) -> { id, a, owned, tier, lv, lvOk, scroll, payWith, why }   why: '' (can learn now) | a reason
 //   abilityLearn(hero, id) -> bool (spends the Scroll; emits abilityLearned { hero, id })
 //   scrollCount(id) -> n; scrollFor(zone) -> the Scroll id a zone's boss drops
-// Events: scrollDrop { id, n, first }, abilityLearned { hero, id }.
+// Events: scrollDrop { id, n, first, firstEver }, abilityLearned { hero, id }.
 // Save: registerState('abil', { unl: { hero: [ids] }, scrolls: { id: n }, dry: { id: n }, got: { id: n } }).
 // Talents (24e): each learned ability, and Attack, Parry and Dodge, has two talents, a free A | B toggle (no points).
 // Choices change freely; a fight takes them as it starts. An unpicked slot has no talent: no default is written.
@@ -80,10 +80,11 @@ var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, 
     if (!drop) { s.dry[id] = (s.dry[id] | 0) + 1; drop = s.dry[id] >= SCROLL_TUNE.pity || Math.random() < SCROLL_TUNE.replay; }
     if (!drop) return;
     s.dry[id] = 0; s.scrolls[id] = scrollCount(id) + 1; s.got[id] = (s.got[id] | 0) + 1;
-    emit('scrollDrop', { id, n: s.scrolls[id], first });
-    // the first Scroll ever teaches what it is for; after that a quiet line (the stage float shows it)
     const ever = SCROLL_ORDER.reduce((n, k) => n + (s.got[k] | 0), 0);
-    if (ever <= 1) toast(`${SCROLLS[id].name}! Spend it on the Hero tab to learn an ability.`, 'good', null, 'high');
+    emit('scrollDrop', { id, n: s.scrolls[id], first, firstEver: ever <= 1 });
+    // the first Scroll ever teaches what it is for: Old Hesketh says it between fights (75-onboard-ui, cal-0107-staged-guide), so with tips on
+    // the toast is only the bell's entry; after that a quiet line (the stage float shows it)
+    if (ever <= 1) toast(`${SCROLLS[id].name}! Spend it on the Hero tab to learn an ability.`, 'good', null, S.onboard && S.onboard.tips ? 'low' : 'high');
     else toast(`${SCROLLS[id].name} found.`, 'good', null, 'low');
   });
 }

@@ -17,5 +17,5 @@ expect "shut the holes"
 shot hearth-talk-end
 tap "Continue"
 wait 2
-expect-no "Old Hesketh"
+expect-no "Ten years I've lit dead lamps"
 shot after-talk

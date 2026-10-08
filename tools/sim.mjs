@@ -732,7 +732,8 @@ function coldStep() {
   if (coldDone) return;
   if (!coldLit) {
     if (!E('typeof hearthLit === "function" && !hearthLit()')) { coldLit = true; if (!E('typeof hearthCold === "function" && hearthCold()')) coldDone = true; return; }
-    if (E('hearthCan().ok') && E('hearthLight()')) { coldLit = true; campStats.lit = t; return; }
+    // (cal-0107-staged-guide: lighting the fire keeps the hero at the grove for Hesketh's talk; this player walks back to the fight, as the game used to)
+    if (E('hearthCan().ok') && E('hearthLight()')) { coldLit = true; campStats.lit = t; fn.setActivity('fight'); return; }
     if (E('S.activity !== "gather" || S.node.kind !== "wood" || S.node.t !== 1')) { fn.setNode('wood', 1); fn.setActivity('gather'); }
     return;
   }

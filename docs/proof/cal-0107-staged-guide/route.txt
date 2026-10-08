@@ -1,0 +1,64 @@
+# seed: 1
+# Proof for card cal-0107-staged-guide: the first fight is a lesson (Cal's play notes 2, 3, 4, 10, 12).
+# Part 1, the unlit-8log fixture (the grove, fire unlit, 8 Pine Log): lighting the fire keeps you at the grove while Hesketh talks, and his
+# next line is the Workbench's wood. Part 2, a fresh save: the fire's last line leads into the fight; the fight stops on Attack, on the foe's
+# first swing for Dodge (its clock stands at the window's opening), on your next turn for the ability (no word about swapping, no "Tap to
+# add"), and on the next swing for Parry. Part 2 runs last because each `new` clears the shots; both parts' shots are in this folder.
+# The hold, the order and the timing are measured by tools/check.mjs "staged guide (browser)" on all three heroes.
+new unlit-8log
+wait 2
+tap-if "Got it"
+tap "Light the fire"
+wait 3
+expect "Every road needs a place to come back to"
+shot fire-talk
+tap "Continue"
+wait 2
+expect "Ten years I've lit dead lamps"
+tap "Continue"
+wait 2
+expect "for the Workbench"
+expect-no "Ten years I've lit dead lamps"
+shot after-talk-at-grove
+new fresh
+tap "Next"
+wait 1
+tap "Next"
+wait 1
+tap "Continue"
+wait 1
+tap "Begin as Wren"
+wait 1
+tap "Next"
+wait 1
+tap "Next"
+wait 1
+expect "Something's coming up the road. Keep that lamp behind you."
+expect-no "Wood first"
+shot fire-line
+tap "Continue"
+wait 5
+expect "Press Attack"
+shot lesson-attack
+tap "Attack"
+wait 3
+expect "Press Dodge"
+shot lesson-dodge
+wait 2
+expect "Press Dodge"
+tap "Dodge"
+wait 3
+expect "is ready now. Press it."
+expect-no "swap"
+expect-no "Tap to add"
+shot lesson-ability
+tap "Echo"
+wait 3
+tap-if "Attack"
+wait 3
+expect "Press Parry"
+shot lesson-parry
+tap "Parry"
+wait 2
+expect-no "Press Parry"
+shot after-lessons

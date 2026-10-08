@@ -1510,6 +1510,8 @@ if (section('onboarding')) try {
   // play like a new player: fight, buy the cheapest upgrade, gather now and then, craft what Next Up offers
   const got = {}, log = [];
   g.fn.on('unlock', e => { got[e.id] = E('Math.round(S.onboard.t)'); log.push(e.id); });
+  // cal-0107-staged-guide: Hero opens at the first level-up, which can come in the opening Attack and ability above
+  for (const id of JSON.parse(E('JSON.stringify(FEATURES.filter(x => isUnlocked(x.id)).map(x => x.id))'))) { got[id] = E('Math.round(S.onboard.t)'); log.push(id); }
   let firstUp = null;
   const buy = () => E(`{ if (attrOn()) { attrSpread(); } else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training; hero-progression-rework: a new player spreads the free points evenly (the guide's upgrade step)
   for (let sec = 0; sec < 12 * 60; sec++) {
@@ -1522,7 +1524,9 @@ if (section('onboarding')) try {
   const mmss = t => t === Infinity ? 'never' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
   console.log('       timeline: ' + Object.entries(got).map(([k, t]) => `${k} ${mmss(t)}`).join(', '));
   assert(firstUp !== null && firstUp < 60, `first upgrade affordable in under a minute (${firstUp}s)`);
-  assert(at('party') < 120 && at('nextup') < 120, `Party and Next Up open in the first 2 minutes (${mmss(at('party'))}, ${mmss(at('nextup'))})`);
+  // cal-0107-staged-guide: Hero opens at the first level-up (the first queued row), so Gather comes next in table order and Next Up
+  // queues behind the rows a drop or the player opens. Next Up within 6:00, as the cold walk's bound (DECISIONS, unlock gap 90 s); was 2:00.
+  assert(at('party') < 120 && at('nextup') < 360, `Hero opens in the first 2 minutes and Next Up within 6 (${mmss(at('party'))}, ${mmss(at('nextup'))})`);
   // hero-progression-rework (judge, 2026-10-06): a warm hero reaches the camp, first star and Tavern sooner; those open at once
   // (now()) and restart the story-unlock-gates clock (ONBOARD_TUNE.gap), so Gather and Bounties queue behind them. Was 240/300 s
   // (base 2:03, 4:56). Owner: coordinator; expiry 2026-11-15, re-measure then or when onboarding or the early road changes.
@@ -2303,8 +2307,10 @@ if (section('cold hearth')) try {
   E('S.mats.ore = [0, 0, 0, 0, 0]; S.mats.wood[0] = 5');
   assert(!E('hearthLight()') && E('hearthCan().why') === '3 more Pine Log', 'the fire needs 8 Pine Log: ' + E('hearthCan().why'));
   const ev = []; g.fn.on('campOpen', e => ev.push('campOpen:' + e.quiet)); g.fn.on('hearthLit', () => ev.push('lit'));
-  E('S.mats.wood[0] = 8');
-  assert(E('hearthLight()') && E('S.mats.wood[0]') === 0 && E('S.hearth.lit > 0 && campOpen() && campLevel("hearth") === 1 && S.activity === "fight"'), 'hearthLight(): pays 8 Oak, Hearth 1, the camp opens, the hero walks out to fight');
+  E('S.mats.wood[0] = 8; setActivity("gather")');
+  // cal-0107-staged-guide (Cal's play note 10): lighting the fire at the grove keeps the hero there for Hesketh's talk
+  assert(E('hearthLight()') && E('S.mats.wood[0]') === 0 && E('S.hearth.lit > 0 && campOpen() && campLevel("hearth") === 1 && S.activity === "gather"'), 'hearthLight(): pays 8 Pine Log, Hearth 1, the camp opens, the hero stays gathering at the grove');
+  E('setActivity("fight")');
   assert(ev.join() === 'campOpen:false,lit' && !E('hearthLight()'), 'campOpen { quiet: false } and hearthLit, once');
   assert(E('campList().includes("bench") && !campList().includes("forge") && !campList().includes("loom")'), 'the Workbench plot opens with the fire (the Forge and Loom wait)');
   const c1 = E('campCost("bench", 1)');
@@ -4716,7 +4722,7 @@ if (section('solo hero')) try {
     E('turnCombatOn = globalThis.__tc0; turnCombatSnapshot = globalThis.__ts0; true');
     errs.push(...g.errors);
   }
-  // guide-voice: every step names the phases it may start in; one paused step a fight; one thing a fight; a quiet minute; retiring
+  // guide-voice: every step names the phases it may start in; a quiet minute; retiring (cal-0107-staged-guide replaced one paused step and one thing a fight)
   {
     const g = T(), E = s => g.eval(s);
     E('soloPick("wren"); soloSetAuto(false)'); run(g, 0.5);
@@ -4731,23 +4737,20 @@ if (section('solo hero')) try {
       assert((E('(() => { const s = onboardStep(); return !!s && s.id === "attack"; })()')) === want, `the Attack tip ${want ? 'shows' : 'waits'} in the "${ph}" phase`);
       E('guidePhase = globalThis.__gp; true');
     }
-    // Dodge and Parry: only with a hit on its way, and each in a later fight than the step before
+    // cal-0107-staged-guide: Dodge and Parry only with a hit on its way, and in the same fight as the step before (no later-fight wait)
     E('O().done.attack = 1; O().done.ability = 1; true');
     E('GUIDE_RT.fight = 3; GUIDE_RT.doneIn.ability = 3; true');
     E(`actWarn({ kind: 'heavy', id: 'v1', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
-    assert(E('onboardStep()') === null || E('onboardStep().id') !== 'dodge', 'the Dodge tip waits for a later fight than the ability tip');
-    E('GUIDE_RT.fight = 4; true');
-    assert(E('onboardStep() && onboardStep().id') === 'dodge', 'in the next fight the Dodge tip shows');
-    E('O().done.dodge = 1; GUIDE_RT.doneIn.dodge = 4; true');
-    assert(E('onboardStep() === null || onboardStep().id !== "parry"'), 'the Parry tip waits for a later fight than Dodge');
-    E('GUIDE_RT.fight = 5; true');
-    assert(E('onboardStep() && onboardStep().id') === 'parry', 'in the next fight the Parry tip shows');
-    // one paused step a fight
-    E('GUIDE_RT.pauseFight = -1; GUIDE_RT.pauseId = ""; true');
-    const p1 = E('onboardPaused({ id: "x1", pause: 1 })'), p2 = E('onboardPaused({ id: "x2", pause: 1 })'), p1b = E('onboardPaused({ id: "x1", pause: 1 })');
-    assert(p1 === true && p2 === false && p1b === true, `one paused step a fight: the first keeps its pause, a second tip does not pause (${p1}, ${p2}, ${p1b})`);
-    E('GUIDE_RT.fight = 6; true');
-    assert(E('onboardPaused({ id: "x2", pause: 1 })') === true, 'the next fight gives the pause back');
+    assert(E('onboardStep() && onboardStep().id') === 'dodge', 'the Dodge tip shows in the same fight as the ability tip (staged guide)');
+    E('O().done.dodge = 1; GUIDE_RT.doneIn.dodge = 3; true');
+    assert(E('onboardStep() && onboardStep().id') === 'parry', 'and the Parry tip in the same fight as Dodge');
+    // in a fight only the fight lessons pause: a between step never freezes it; every pausing lesson keeps its pause (no one-a-fight rule)
+    E('globalThis.__gp2 = guidePhase; guidePhase = () => "windup"; true');
+    const pl = E('onboardPaused({ id: "x1", pause: 1, ph: ["windup"] })'), pl2 = E('onboardPaused({ id: "x2", pause: 1, ph: ["windup"] })'), pb = E('onboardPaused({ id: "x3", pause: 1, ph: ["between"] })');
+    E('guidePhase = () => "between"; true');
+    const pb2 = E('onboardPaused({ id: "x3", pause: 1, ph: ["between"] })');
+    E('guidePhase = globalThis.__gp2; true');
+    assert(pl === true && pl2 === true && pb === false && pb2 === true, `in a fight every held lesson pauses and a between step does not; between fights it does (${pl}, ${pl2}, ${pb}, ${pb2})`);
     // between-fights steps wait for a break, a quiet minute, and retire after 60 s
     E('O().done.parry = 1; O().got.party = 1; S.maxZone = 3; S.activity = "fight"; S.tab = ""; true');
     assert(E('onboardStep() === null || onboardStep().id !== "tab:party"'), 'the Hero tab tip does not start mid-fight');
@@ -4765,7 +4768,6 @@ if (section('solo hero')) try {
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');
     E('soloAttack()');
     for (let i = 0; i < 300 && !(E('onboardStep()') && E('onboardStep().id') === 'ability'); i++) run(g, 0.1);   // guide-voice: it waits for your turn
-    E('GUIDE_RT.pauseFight = -1; true');
     assert(E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === true, 'W1-D: the ability step pauses while a foe is alive');
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = 1; })'); run(g, 0.8); E('soloAttack()'); run(g, 0.1);   // Wren's Attack clears the pack (the 44% lock)
     assert(!E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardPaused(GUIDE_STEPS.find(s => s.id === "ability"))') === false, 'W1-D: ...and does not pause once the pack is dead, so the respawn can happen');
@@ -4942,6 +4944,8 @@ if (section('solo guide: gathering never freezes (browser)')) try {
       const isBuilt = () => X('campLevel("bench") >= 1 || !!campPending("bench")');
       for (let i = 0; i < 400 && !built; i++) {
         const info = JSON.parse(await X('(() => { const s = onboardStep(), b = document.querySelector(".ob-bub"); return JSON.stringify({ id: s ? s.id : "", paused: ONBOARD.paused, need: s ? onboardNeed(s.id).length : 0, hasNeeds: !!(s && s.needs), t: S.onboard.t }); })()'));
+        // cal-0107-staged-guide: an unlock line from Hesketh holds the game with a Got it; read it and press Got it, as a player does
+        if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click('.ob-ok'); await page.waitForTimeout(300); continue; }
         if (!info.id) { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); await page.waitForTimeout(280); built = await isBuilt(); continue; }
         if (!trail.includes(info.id)) trail.push(info.id);
         if (info.hasNeeds || info.need) {
@@ -5080,9 +5084,16 @@ if (section('solo hero (browser)')) try {
       glow = await page.$$eval('#soloBar .sb-parry, #soloBar .sb-dodge', l => l.map(b => b.classList.contains('live')));
       assert(w3 === 't3:heavy' && glow.every(Boolean) && await X('(w => !!(w && w.id === "t3" && w.kind === "heavy"))(actWarning())'), `a heavy hit coming: Parry and Dodge glow (${w3}, ${glow.join()})`);
       await X('(w => { if (w && w.id === "t3") { w.left = 0.05; tick(0.1); } })(actWarning()); soloPickerOpen = __spo; true');
-      const s2 = await page.$('#soloBar .sb-ab1'); const r2 = await s2.boundingBox(); await page.mouse.move(r2.x + r2.width / 2, r2.y + r2.height / 2); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(250);
+      const s2 = await page.$('#soloBar .sb-ab1'); const r2 = await s2.boundingBox();
+      const tapS2 = async () => { await page.mouse.move(r2.x + r2.width / 2, r2.y + r2.height / 2); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(250); };
+      // cal-0107-staged-guide: with one move (and it in a slot) an empty slot is dim and silent; it opens only once there is a move to put in it
+      await tapS2();
+      const shut = await page.$eval('#soloBar .sb-ab1', b => ({ dim: b.style.opacity === '0.45', aria: b.getAttribute('aria-disabled'), add: /Tap to add/.test(b.textContent) }));
+      assert(shut.dim && shut.aria === 'true' && !shut.add && !(await X('soloPickerOpen()')), `with one move, an empty slot is dim, says nothing and opens no picker (${JSON.stringify(shut)})`);
+      await X('scrollCount("x"); S.abil.unl.pip = (S.abil.unl.pip || []).concat("spark"); true'); await page.waitForTimeout(350);
+      await tapS2();
       const pk = await page.$$eval('#abPicker .sp-ab', l => l.map(b => b.dataset.ab));
-      assert(pk.join() === 'fire' && await X('soloPickerOpen()'), `tapping an empty slot opens the picker with the hero's unlocked abilities (${pk.join()})`);
+      assert(pk.join() === 'fire,spark' && await X('soloPickerOpen()'), `with a second move, tapping an empty slot opens the picker with the hero's unlocked abilities (${pk.join()})`);
       await page.click('#abPicker .sp-ab[data-ab="fire"]'); await page.waitForTimeout(250);
       assert(await X('JSON.stringify(soloEquipped())') === '[null,"fire",null]' && !(await X('soloPickerOpen()')), 'picking places it in that slot (swapping it out of slot 1)');
       // SOLO2: active vs idle on the page. Fire sits in slot 2 now (slots 1 and 3 empty).
@@ -9461,7 +9472,7 @@ if (section('systems map')) try {
 if (section('story-opening')) try {
   const g = loadCore(), E = x => g.eval(x), rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
   const real = JSON.parse(E('JSON.stringify(STORY_BEATS)')), hk = [real.npc.heskethFire, real.npc.heskethTalk];   // intro-and-picker: the fire plays over the opening stills, the talk at the camp fire
-  assert(hk[0] && hk[0].at === 'intro' && hk[0].who && hk[0].lines.length <= 3 && hk[0].lines[2].includes('Wood first. Then we talk.') && hk[1] && hk[1].at === 'hearth' && hk[1].lines.length === 4 && real.npc.heskethHearth.lines[0].includes('Every road needs a place to come back to') && hk[1].lines[3].includes('shut the holes'), 'story-opening: Hesketh\'s fire (3 lines, over the opening stills) and talk (at the camp fire) keep bible 8.1\'s words');
+  assert(hk[0] && hk[0].at === 'intro' && hk[0].who && hk[0].lines.length <= 3 && hk[0].lines[2].includes('Keep that lamp behind you.') && hk[1] && hk[1].at === 'hearth' && hk[1].lines.length === 4 && real.npc.heskethHearth.lines[0].includes('Every road needs a place to come back to') && hk[1].lines[3].includes('shut the holes'), 'story-opening: Hesketh\'s fire (3 lines, over the opening stills) and talk (at the camp fire) keep bible 8.1\'s words');
   const rr = real.hero.refuseRest;
   assert(rr && /Not yet\./.test(rr.wren) && /I'll rest when the (village|Hollow) is lit/.test(rr.tobin) && /No\./.test(rr.pip), 'story-opening: the refusal of "Rest" (bible 4.6) has a line for each starter (played at the Veiled Oracle, story-hollow-script)');
   // story gate (story-opening, bible 4.4): no new unlock before the hero's first scene; heroes a save owns are kept
@@ -9504,8 +9515,8 @@ if (section('story-opening (browser)')) try {
         await page.waitForSelector('#introScreen', { timeout: 4000 }); await page.waitForTimeout(500);
         const fire = [];
         for (let k = 0; k < 3; k++) { const f = await fits(); fire.push(f); assert(f.ok, `story-opening ${tag}: Hesketh's fire line ${k + 1} is on screen and clear of Next and Skip`); await page.click('#introScreen .intro-go'); await page.waitForTimeout(450); }
-        assert(fire.map(f => f.text).join('|') === await X('STORY_BEATS.npc.heskethFire.lines.join("|")') && /Wood first\. Then we talk\./.test(fire[2].text), `story-opening ${tag}: Hesketh's fire reads word for word (bible 8.1)`);
-        // the talk waits for the camp fire (8 Pine Log), which pays off "Wood first. Then we talk."
+        assert(fire.map(f => f.text).join('|') === await X('STORY_BEATS.npc.heskethFire.lines.join("|")') && /Keep that lamp behind you\./.test(fire[2].text), `story-opening ${tag}: Hesketh's fire reads word for word (bible 8.1)`);
+        // the talk waits for the camp fire (8 Pine Log), which pays off Hesketh's Gather line (cal-0107-staged-guide)
         assert(await X('S.story.ends["n:heskethFire"]') === 'done' && await X('S.story.seen["n:heskethTalk"]') === undefined, `story-opening ${tag}: the fire scene is done and the talk has not played`);
         await X('onboardTips(false); S.mats.wood[0] = 20; hearthLight()');
         await page.waitForSelector('.sty-sheet .sty-title', { timeout: 15000 }); await page.waitForTimeout(400);
@@ -10289,7 +10300,9 @@ if (section('story-unlock-gates')) try {
     attack: 'soloAttack()', ability: 'soloAbility()', dodge: 'soloDodge()', parry: 'soloParry()', boss: 'onboardDone("boss")', nextup: 'onboardDone("nextup")',
     upgrade: '{ if (attrOn()) attrSpread(); else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, "1"); } }',   // hero-progression-rework: points, not Training
     gather: 'setNode("wood", 1); setActivity("gather")', light: 'hearthLight(); setActivity("fight")', bench: 'campBuild("bench")', forge: 'campBuild("forge")', store: 'campBuild("store")',
-    tool: '{ const it = craftItem("pick", 1); if (it) equipItem(it.id); }'
+    tool: '{ const it = craftItem("pick", 1); if (it) equipItem(it.id); }',
+    // a tool or weapon that dropped (a zone boss unique) waits in the bag: put it on, as the step asks
+    'wear:tool': '(w => w && equipItem(w.it.id))(wearPiece("tool"))', 'wear:weapon': '(w => w && equipItem(w.it.id))(wearPiece("weapon"))'
   };
   const doneSteps = new Set(); cw.fn.on('onboardStep', e => doneSteps.add(e.id));
   let lit = null, trip = 0;
@@ -10311,8 +10324,11 @@ if (section('story-unlock-gates')) try {
   const close = got.filter((x, i) => i > 0 && !x[3] && got.slice(0, i).some(y => y[1] > x[1] - C('ONBOARD_TUNE.gap')));
   console.log('       cold walk: ' + got.map(x => `${x[0]} ${Math.floor(x[1] / 60)}:${String(x[1] % 60).padStart(2, '0')} (z${x[2]})`).join(', ') + ` | fire lit ${lit}s | zone ${C('S.maxZone')} at 30:00`);
   assert(!close.length, 'story-unlock-gates: a cold walk with guide pauses never gets a queued arrival within a minute of another' + (close.length ? ': ' + close.map(x => x[0]).join(',') : ''));
-  assert(pa && ga && pa[1] <= ga[1] && lit !== null && ga[1] <= z2[1] + C('ONBOARD_TUNE.gap') + 4 && lit - ga[1] <= 150, `story-unlock-gates: Hero opens before Gather, Gather within the unlock gap of the first boss, the fire within 2:30 of Gather (Hero ${pa && pa[1]}s, Gather ${ga && ga[1]}s, fire ${lit}s)`);
-  assert(['attack', 'ability', 'boss', 'upgrade', 'gather', 'light', 'bench', 'tool', 'forge'].every(id => doneSteps.has(id)), 'story-unlock-gates: every guide step of the cold walk still completes (' + [...doneSteps].join(',') + ')');
+  // a row the player or a drop opened at once (a unique, the first star) restarts the unlock gap, so Gather counts from the later of the
+  // first boss and the last such row before it (cal-0107-staged-guide: a drop can now land before Gather)
+  const gFrom = ga ? Math.max(z2[1], ...got.filter(x => x[3] && x[1] < ga[1]).map(x => x[1])) : Infinity;
+  assert(pa && ga && pa[1] <= ga[1] && lit !== null && ga[1] <= gFrom + C('ONBOARD_TUNE.gap') + 4 && lit - ga[1] <= 150, `story-unlock-gates: Hero opens before Gather, Gather within the unlock gap of the first boss, the fire within 2:30 of Gather (Hero ${pa && pa[1]}s, Gather ${ga && ga[1]}s, fire ${lit}s)`);
+  assert(['attack', 'ability', 'boss', 'upgrade', 'gather', 'light', 'bench', 'tool', 'forge'].every(id => doneSteps.has(id)), 'story-unlock-gates: every guide step of the cold walk still completes (' + [...doneSteps].join(',') + '; at 30:00 ' + C('JSON.stringify({ step: (s => s && s.id)(onboardStep()), latch: GUIDE_RT.latch, phase: guidePhase() })') + ')');
   assert(!g.errors.length && !og.errors.length && !og2.errors.length && !og3.errors.length && !cw.errors.length, 'story-unlock-gates: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('story-unlock-gates crashed: ' + (e.stack || e)); }
 
@@ -10694,6 +10710,199 @@ if (section('essence fungible')) try {
   assert(!g.errors.length, 'essence fungible: no core errors');
 } catch (e) { fail('essence fungible crashed: ' + (e.stack || e)); }
 
+// ---- cal-0107-staged-guide: the first fight is a lesson (Cal's play notes 2, 3, 4, 10, 12) ----
+// On a fresh save with the real frame loop: the fight stops on each new press (Attack, Dodge, the ability, Parry) while Hesketh's line is up,
+// the Dodge and Parry lines start exactly as their window opens, a held press made from the keyboard lands, and all four are done by the
+// end of fight 2. Then the first level-up's Hero tab, the first Scroll and the second ability's slot each get one line between fights, and
+// lighting the fire keeps the hero at the grove for the talk.
+// The same hold in core, at a slow frame (0.1 s) and a fast one: the clock is set back to the window's opening on the crossing frame, so a
+// press made while held lands; with ONBOARD.lessons off (the Node tools, the sim) nothing ever holds.
+if (section('staged guide (core)')) try {
+  for (const dt of [0.1, 1 / 30]) {
+    const g = loadCore({ seed: 7, turns: true }), E = s => g.eval(s);
+    E('ONBOARD.lessons = true; globalThis.__fights = 0; on("fightStart", () => globalThis.__fights++); soloPick("tobin")');
+    // 90-boot: no tick while held; on your own turn with no lesson up, Attack (a turn fight waits for you)
+    const until = (cond, n = 3000) => { for (let i = 0; i < n; i++) { if (E(cond)) return true; if (E('turnCombatSnapshot().phase') === 'hero') E('soloAttack()'); if (!E('ONBOARD.paused')) g.fn.tick(dt); } return !!E(cond); };
+    const step = () => E('(s => s ? s.id : "")(onboardStep())');
+    const seen = [], at = {};
+    for (let k = 0; k < 12 && E('onboardStep(), ["attack", "dodge", "ability", "parry"].some(id => !S.onboard.done[id])'); k++) {
+      if (!until('ONBOARD.paused || ["attack", "ability"].includes((s => s ? s.id : "")(onboardStep()))')) break;
+      const id = step(); seen.push(id);
+      if (id === 'attack') E('soloAttack()');
+      else if (id === 'ability') E('soloAbility({ slot: 0 })');
+      else if (id === 'dodge' || id === 'parry') {
+        const q = JSON.parse(E('JSON.stringify(turnCombatSnapshot())')), open = id === 'dodge' ? q.dodgeOpensAt : q.parryOpensAt;
+        at[id] = { off: q.now - open, res: E(id === 'dodge' ? 'soloDodge()' : 'soloParry()') };
+      } else break;
+      E('ONBOARD.paused = false');   // the UI lets go once the press is made
+    }
+    const tag = dt === 0.1 ? '0.1 s frames' : '30 fps';
+    assert(seen.filter((x, i) => seen.indexOf(x) === i).join() === 'attack,dodge,ability,parry' && E('__fights') <= 2, `staged guide core (${tag}): attack, dodge, ability, parry, all in the first two fights (${seen.join(', ')}; fights ${E('__fights')})`);
+    assert(at.dodge && at.parry && at.dodge.off >= 0 && at.dodge.off <= 0.002 && at.parry.off >= 0 && at.parry.off <= 0.002 && at.dodge.res === 'dodge' && at.parry.res === 'parry',
+      `staged guide core (${tag}): the hold stops the foe's clock at the window's opening, and the held press lands (${JSON.stringify(at)})`);
+    assert(!g.errors.length, `staged guide core (${tag}): no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  { const g = loadCore({ seed: 7, turns: true }), E = s => g.eval(s);
+    E('soloPick("tobin")'); let held = 0;
+    for (let i = 0; i < 1200; i++) { if (E('turnCombatSnapshot().phase') === 'hero') E('soloAttack()'); g.fn.tick(0.05); if (E('ONBOARD.paused')) held++; }
+    assert(!held && E('ONBOARD.lessons') === false, 'staged guide core: with ONBOARD.lessons off (the Node tools and the sim) the guide never holds a fight');
+  }
+  // Hero opens at the first level-up, while the guide holds the clock for the upgrade step: spending the points then must not open Next Up
+  // at once (got is the rounded clock, up to 0.5 s ahead of it; the governor used to drop that row and skip the gap; the walk saw 0:15 and 0:20)
+  { const g = loadCore({ seed: 1 }), E = s => g.eval(s);
+    E('soloPick("wren")'); for (let i = 0; i < 100; i++) g.fn.tick(0.1);
+    const t = E('S.onboard.t'), first = E('S.L = 2; JSON.stringify(onboardCheck())'), next = E('attrSpread(); JSON.stringify(onboardCheck())');
+    assert(first === '["party"]' && next === '[]' && E('S.onboard.got.party') > t, `staged guide core: Hero opens at level 2 and Next Up still waits the unlock gap behind it (clock ${t}, ${first}, then ${next})`);
+  }
+} catch (e) { fail('staged guide (core) crashed: ' + (e.stack || e)); }
+
+if (section('staged guide (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('staged guide (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (opts, save) => {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, ...opts });
+      // a fixture is stored once, stamped now (no away report or away gains from its old timestamp)
+      if (save) await ctx.addInitScript(s => { try { if (!sessionStorage.getItem('sg')) { sessionStorage.setItem('sg', '1'); const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } } catch (e) {} }, save);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    const LOOK = `JSON.stringify((() => { const q = turnCombatSnapshot(), b = document.querySelector('.ob-bub'), up = !!(b && !b.hidden), u = cbUnitByKey('hero');
+      return { id: up ? soloGuideWants() : '', txt: up ? document.querySelector('.ob-txt').textContent : '', paused: ONBOARD.paused, now: q.now, phase: q.phase,
+        d: q.dodgeOpensAt, p: q.parryOpensAt, ops: TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.foeOps : -1, hp: u ? u.hp : 0, fight: window.__fights || 0, L: S.L,
+        done: ['attack', 'dodge', 'ability', 'parry'].filter(k => S.onboard.done[k]), own: soloAbilities().length,
+        add: [...document.querySelectorAll('#soloBar .sb-abslot')].some(n => /Tap to add/.test(n.textContent)) }; })())`;
+    const KEYS = { attack: 'd', dodge: 's', ability: 'q', parry: 'a' }, WRONG = { attack: 'q', ability: 'd', dodge: 'a', parry: 's' };
+    try {
+      for (const hero of ['wren', 'tobin', 'pip']) {
+        const { ctx, page, errs, X } = await open({ turns: true });
+        await X('window.__fights = 0; on("fightStart", () => window.__fights++); true');   // fights counted from the first one (GUIDE_RT.fight may count a pack at boot)
+        await page.click(`#createScreen .ccard[data-hero="${hero}"]`); await page.click('#createScreen .create-go');
+        const order = [], moved = [], late = [], swap = [], tapAdd = [], trace = [], wrong = [];
+        let doneIn = -1, heroSince = 0;
+        for (const t0 = Date.now(); Date.now() - t0 < 90000;) {
+          const s = JSON.parse(await X(LOOK));
+          { const k = `${s.fight}:${s.phase}:${s.id}`; if (trace[trace.length - 1] !== k) trace.push(k); }
+          if (s.own === 1 && /swap/i.test(s.txt)) swap.push(s.txt);
+          if (s.own === 1 && s.add) tapAdd.push(s.id || s.phase);
+          if (s.done.length === 4) { doneIn = s.fight; break; }
+          if (KEYS[s.id]) {
+            if (!order.includes(s.id)) {
+              order.push(s.id);
+              const open = s.id === 'dodge' ? s.d : s.id === 'parry' ? s.p : null;
+              if (open !== null && !(Math.abs(s.now - open) <= 0.01)) late.push(`${s.id} at ${s.now.toFixed(3)}, window ${open.toFixed(3)}`);
+            }
+            await page.waitForTimeout(350);   // the line stays up and nothing moves under it
+            const s2 = JSON.parse(await X(LOOK));
+            if (s2.id === s.id && (s2.now !== s.now || s2.ops !== s.ops || s2.hp !== s.hp)) moved.push(`${s.id}: now ${s.now} -> ${s2.now}, foe moves ${s.ops} -> ${s2.ops}, HP ${s.hp} -> ${s2.hp}`);
+            // another button does nothing while the lesson holds (the lesson stays up, nothing is marked done, nothing moves)
+            if (s2.id === s.id && order.length && order[order.length - 1] === s.id && !wrong.some(w => w.startsWith(s.id + ':'))) {
+              await page.keyboard.press(WRONG[s.id]); await page.waitForTimeout(200);
+              const s3 = JSON.parse(await X(LOOK));
+              wrong.push(`${s.id}:${s3.id === s.id && s3.done.join() === s2.done.join() && s3.now === s2.now && s3.ops === s2.ops ? 'ok' : `pressing ${WRONG[s.id]} gave ${s3.id || 'no line'}, done ${s3.done.join('/')}`}`);
+            }
+            await page.keyboard.press(KEYS[s.id]); await page.waitForTimeout(120);
+            heroSince = 0; continue;
+          }
+          // no lesson up: on your own turn, after a beat (the guide polls every 250 ms), press Attack and play on
+          if (s.phase === 'hero' && !s.paused && !s.id) { if (!heroSince) heroSince = Date.now(); else if (Date.now() - heroSince > 700) { await page.keyboard.press('d'); heroSince = 0; } }
+          else heroSince = 0;
+          await page.waitForTimeout(70);
+        }
+        assert(order.join() === 'attack,dodge,ability,parry' && doneIn >= 1 && doneIn <= 2, `staged guide ${hero}: the lessons show in the order Attack, Dodge, the ability, Parry, all done by the end of fight 2 (${order.join(', ')}; done in fight ${doneIn})` + (doneIn > 2 ? ' ' + trace.join(' ') : ''));
+        assert(!moved.length, `staged guide ${hero}: while a lesson's line is up, the foe's clock, its moves and your HP stand still${moved.length ? ': ' + moved.join('; ') : ''}`);
+        assert(!late.length, `staged guide ${hero}: the Dodge and Parry lines first show with the foe's clock at the window's opening, so the held key press lands (both were done by a key press)${late.length ? ': ' + late.join('; ') : ''}`);
+        assert(wrong.length === 4 && wrong.every(w => w.endsWith(':ok')), `staged guide ${hero}: while a lesson holds, the other buttons do nothing (${wrong.join(', ')})`);
+        assert(!swap.length && !tapAdd.length, `staged guide ${hero}: with one ability, no line says "swap" and no empty slot says "Tap to add"${swap.length ? ': ' + swap[0] : ''}${tapAdd.length ? '; Tap to add during ' + tapAdd[0] : ''}`);
+        if (hero === 'wren') {
+          // the first level-up (level 2): the Hero tab opens and Hesketh's next line says so and points at your points, while the next foe waits
+          let lv = null;
+          for (const t0 = Date.now(); Date.now() - t0 < 60000;) {
+            const s = JSON.parse(await X(LOOK));
+            if (s.L >= 2 && s.id) { lv = s; break; }
+            if (s.phase === 'hero' && !s.paused && !s.id) await page.keyboard.press('d');
+            if (s.phase === 'foeWindup' || s.phase === 'timing') await page.keyboard.press(s.phase === 'timing' ? 'd' : 'a');
+            await page.waitForTimeout(150);
+          }
+          const party = await X('isUnlocked("party")'), sayParty = await X('!!S.onboard.done["say:party"]');
+          assert(lv && party && lv.id === 'upgrade' && /Hero tab is open/.test(lv.txt) && /points/.test(lv.txt) && lv.paused && !(await X('combatFoes().some(f => f && !f.dead && f.hp > 0)')), `staged guide: at level 2 the Hero tab is open and Hesketh's next line points at your points while the next foe waits ("${lv && lv.txt}")`);
+          assert(sayParty && await X('!S.onboard.done.upgrade'), 'staged guide: the Hero tab is announced once (the unlock line is folded into that step)');
+          // spending a point ends the upgrade step; the Hero tab's first-use line ("This is where you grow") would introduce the tab again
+          await X('attrSpread(); true'); await page.waitForTimeout(700);   // the guide marks the step done on its next pass
+          const intro = await X('!!S.onboard.done.upgrade && !!S.onboard.done["use:party"]');
+          assert(intro, 'staged guide: once a point is spent, the Hero tab is not introduced a second time (its first-use line is folded into the upgrade step)');
+        }
+        assert(!errs.length, `staged guide ${hero}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the first Scroll and the second ability: one line each from Hesketh at a calm moment (a menu over the fight); the empty slot wakes once a move waits for it
+      {
+        const { ctx, page, errs, X } = await open({ turns: true });
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+        await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade", "back"]) onboardDone(id); onboardReveal("party"); true');
+        const slotTxt = () => X('[...document.querySelectorAll("#soloBar .sb-abslot")].map(n => n.textContent).join("|")');
+        const shut0 = await slotTxt();
+        await X('S.abil.scrolls.moss = 1; S.abil.got.moss = 1; emit("scrollDrop", { id: "moss", n: 1, first: true, firstEver: true }); setTab("party"); true');
+        await page.waitForTimeout(700);
+        const sc = JSON.parse(await X(LOOK));
+        assert(sc.id === 'say:scroll' && /Moss Scroll/.test(sc.txt) && /Abilities/.test(sc.txt) && sc.paused && await X('!document.querySelector(".ob-ok").hidden'), `staged guide: the first Scroll gets Hesketh's line between fights, held with a Got it ("${sc.txt}")`);
+        await page.click('.ob-ok'); await page.waitForTimeout(300);
+        // a move learned with nowhere chosen for it yet (an empty slot waits): he says to put it in a slot, and the slot wakes
+        await X('abilityLearn("wren", HERO_ABILITIES.wren.find(id => ABILITIES[id].tier === 1)); true');
+        await page.waitForTimeout(700);
+        const sl = JSON.parse(await X(LOOK));
+        assert(sl.id === 'say:slot' && /needs a slot/.test(sl.txt), `staged guide: once the move is learned he says to put it in a slot under the fight ("${sl.txt}")`);
+        await page.click('.ob-ok'); await X('closeMenu(); true'); await page.waitForTimeout(500);
+        const shut1 = await slotTxt();
+        assert(!/Tap to add/.test(shut0) && /Tap to add/.test(shut1), `staged guide: an empty slot is silent until a learned move waits for it, then says "Tap to add" (${shut0} / ${shut1})`);
+        assert(!errs.length, 'staged guide (Scroll, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the Abilities view's Learn button drops the move into the first empty slot itself: he says where it went (independent play, step 10)
+      {
+        const { ctx, page, errs, X } = await open({ turns: true });
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+        await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade", "back"]) onboardDone(id); onboardReveal("party"); S.abil.scrolls.moss = 1; S.abil.got.moss = 1; onboardUseDone("say:scroll"); setTab("party", "abilities"); true');
+        await page.waitForTimeout(600);
+        const id = await X('HERO_ABILITIES.wren.find(id => ABILITIES[id].tier === 1)');
+        await X(`document.querySelectorAll(".ob-ok").forEach(b => { if (!b.hidden) b.click(); }); true`);
+        // what the Learn button does on its second tap (75-abilities-ui): learn, then the first empty slot
+        await X(`abilityLearn("wren", ${JSON.stringify(id)}) && soloEquip(soloEquipped().indexOf(null), ${JSON.stringify(id)}); true`);
+        let sl2 = null;
+        for (let k = 0; k < 20 && !(sl2 && sl2.id === 'say:slot'); k++) { await page.waitForTimeout(200); sl2 = JSON.parse(await X(LOOK)); if (sl2.id && sl2.id !== 'say:slot' && sl2.id.startsWith('use:')) await X('document.querySelector(".ob-ok") && !document.querySelector(".ob-ok").hidden && document.querySelector(".ob-ok").click(); true'); }
+        const slotted = await X(`soloEquipped().includes(${JSON.stringify(id)})`);
+        assert(slotted && sl2 && sl2.id === 'say:slot' && /is next to Attack now/.test(sl2.txt), `staged guide: a move learned into an empty slot gets his line saying where it went ("${sl2 && sl2.txt}", slotted ${slotted}, learned and slotted as the Learn button does)`);
+        assert(!errs.length, 'staged guide (Scroll, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // lighting the fire from the grove keeps you there: Hesketh's talk plays at the grove, nothing else does, then his next line is the Workbench's wood
+      {
+        const save = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-unlit-8log.json'), 'utf8');
+        const { ctx, page, errs, X } = await open({ turns: true, story: true }, save);
+        await X('window.__sc = []; on("storyScene", sc => window.__sc.push(sc.id)); true');
+        await page.waitForTimeout(500);
+        const lit = await X('hearthLight()');
+        await page.waitForSelector('.sty-sheet .sty-title', { timeout: 8000 }); await page.waitForTimeout(300);
+        const first = await page.$eval('.sty-sheet', n => n.textContent);
+        assert(lit && await X('S.activity') === 'gather' && /Every road needs a place to come back to/.test(first), `staged guide: after lighting the fire at the grove the hero is still gathering and the talk is up (${await X('S.activity')})`);
+        await page.click('.sty-sheet .sty-done'); await page.waitForFunction(() => [...document.querySelectorAll('.sty-sheet .sty-text')].some(x => x.textContent.includes('Ten years')), null, { timeout: 8000 }); await page.waitForTimeout(300);
+        await page.click('.sty-sheet .sty-done'); await page.waitForTimeout(1200);
+        const scenes = JSON.parse(await X('JSON.stringify(window.__sc)')), after = JSON.parse(await X(LOOK));
+        assert(scenes.join() === 'n:heskethHearth,n:heskethTalk', `staged guide: at the grove only Hesketh's two hearth scenes play, no zone caption or other scene (${scenes.join(', ')})`);
+        assert(await X('S.activity') === 'gather' && /for the Workbench/.test(after.txt), `staged guide: when he is done you are still gathering and his next line names the Workbench's wood ("${after.txt}")`);
+        assert(!errs.length, 'staged guide (grove): no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('staged guide (browser) crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
@@ -10804,8 +11013,11 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           const walked = x => trail.includes(x) || (x === 'tool' && toolGiven);
           // hero-progression-rework: a hero who levels fast reaches zone 3 (the Next Up note) before the Workbench is done; the walk
           // goes on past the note until every step has come
-          for (let i = 0; i < 220 && !want.every(walked); i++) {
+          // cal-0107-staged-guide: Hero opens first, so Next Up queues behind more rows (about 5:20 of play): up to 320 passes
+          for (let i = 0; i < 320 && !want.every(walked); i++) {
             iters = i + 1;
+            // cal-0107-staged-guide: an unlock line from Hesketh holds the game with a Got it (no ring); the walk reads it and presses Got it
+            if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click('.ob-ok'); await page.waitForTimeout(200); continue; }
             const st = await X('(s => s ? s.id : "")(onboardStep())');
             if (!toolGiven && !trail.includes('tool')) toolGiven = await X('!!S.onboard.done.tool && S.items.some(it => it.u && CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool)');
             if (!st) {
@@ -10828,7 +11040,11 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             let c = await X(TARGET(st));
             // rows a view builds in its next update (5 a second), a tab that unlocks on the next pass, a panel still sliding in, the hint that
             // places itself every 250 ms: look again until it is right, and report what it still is after 3 s (a real miss never gets there)
-            for (let w8 = 0, max = seen.has(key) ? 2 : 15; !c.ok && w8 < max; w8++) { await page.waitForTimeout(200); c = await X(TARGET(st)); }
+            for (let w8 = 0, max = seen.has(key) ? 2 : 15; !c.ok && w8 < max; w8++) {
+              // an unlock line that arrived meanwhile (Craft opens with the Workbench) holds the game with a Got it: press it, then look again
+              if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) await page.click('.ob-ok');
+              await page.waitForTimeout(200); c = await X(TARGET(st));
+            }
             // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk
             if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
             if (!seen.has(key)) { seen.add(key); if (!c.ok) bad.push(`${key}: ${JSON.stringify(c)}`); }
@@ -10851,7 +11067,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             if (st === 'nextup') await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true');
           }
           const why = want.every(walked) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) + ' last passes ' + passes.slice(-8).join(' ; ') 
-          assert(!stuck && want.every(walked), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${toolGiven && !trail.includes('tool') ? ' [Tool step: a dropped unique tool did it]' : ''}${stuck ? '; stuck on ' + stuck : ''}${why}; ${iters} of 220 passes, ${idle} idle)`);
+          assert(!stuck && want.every(walked), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${toolGiven && !trail.includes('tool') ? ' [Tool step: a dropped unique tool did it]' : ''}${stuck ? '; stuck on ' + stuck : ''}${why}; ${iters} of 320 passes, ${idle} idle)`);
           assert(!bad.length && seen.size >= (toolGiven && !trail.includes('tool') ? 16 : 20), `${at}: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (${seen.size} states${bad.length ? '; ' + bad.slice(0, 3).join(' / ') : ''})`);
           assert(!errs.length, `${at}: no page errors in the guide walk` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();

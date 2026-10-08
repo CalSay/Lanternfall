@@ -284,7 +284,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   let cur = null, claimed = false, heldAt = 0;
   const queue = [];
   holdGame(() => storyHeld());   // 00-util's pause registry: the frame loop does not tick while a scene is up
-  storyInGap = () => inGap();
+  storyInGap = () => inGap() || (grove() && !!cur && atHearth(cur));   // the grove has no fight to interrupt (only Hesketh's hearth scenes play there)
   storyHeld = () => !!cur && (claimed || (!!cur.chain && Date.now() - heldAt < 3000));   // only a scene the player can see holds the game (and, for 3 s, the next one of
   // the same stop while the last sheet closes); one waiting behind another overlay does not
   storyClaim = id => { if (cur && cur.id === id) claimed = true; };
@@ -302,7 +302,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     emit('storyEnd', { id, how });
     // the next scene of the same stop plays now, even while the guide holds the game (no tick runs to pump it), once the UI has closed this one
     // (not tied to the gap: the shown scene held the game, so this is still the same stop)
-    if (shown && queue.length && typeof setTimeout === 'function') setTimeout(() => { if (!cur && storyOn() && live()) pump(true); }, 0);
+    if (shown && queue.length && typeof setTimeout === 'function') setTimeout(() => { if (!cur && storyOn()) { if (live()) pump(true); else if (grove()) pumpHearth(true); } }, 0);
   };
   // a caption for a zone the hero has left is dropped (it belonged to that moment)
   const stale = sc => sc.kind === 'caption' && sc.zone && sc.zone !== S.zone;
@@ -315,12 +315,24 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
       emit('storyScene', sc);
     }
   }
+  // cal-0107-staged-guide (Cal's play note 10): lighting the fire keeps the hero at the grove, so Hesketh's talk (the `at: 'hearth'` scenes that
+  // hearthLit queues) plays there. Only those: zone captions, area people, voices and choices still wait for the fight (walkIn, onSpawn).
+  const atHearth = sc => /^n:/.test(sc.id) && (D('npc')[sc.id.slice(2)] || {}).at === 'hearth';
+  function pumpHearth(chain) {
+    if (cur) return;
+    const i = queue.findIndex(atHearth); if (i < 0) return;
+    const sc = queue.splice(i, 1)[0];
+    if (chain) sc.chain = true;
+    cur = sc; claimed = false; heldAt = Date.now();
+    emit('storyScene', sc);
+  }
   const push = sc => { if (sc) queue.push(sc); };
   storyBusy = id => (!!cur && cur.id === id) || queue.some(sc => sc.id === id);   // that scene is up or waiting (the moment layer holds a Champion card until it has played)
 
   // ---- time and gaps ----
   let clock = 0, spawnT = -99, gapNow = true, inAway = false, swept = 0, last = '', spawned = null;
   const live = () => storyOn() && !inAway && !introUp && S.activity === 'fight' && !(typeof arena !== 'undefined' && arena);
+  const grove = () => storyOn() && !inAway && !introUp && S.activity === 'gather' && !(typeof arena !== 'undefined' && arena);   // pumpHearth only
   const inGap = () => gapNow || clock - spawnT < 1;
 
   // ---- the catch-up: a save past a slot (or one that played it with the story off) files it quietly ----
@@ -345,7 +357,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (mz !== swept) { swept = mz; sweep(mz); }
     if (!has('k:ranks') && storyRanks().length) mark('k:ranks');
     if (!ST().starter && STARTERS.includes(heroKey())) ST().starter = heroKey();   // bible 4.4: the cold-start hero, stored once (an old save: its hero now)
-    if (!live()) { last = ''; return; }
+    if (!live()) { last = ''; if (grove()) pumpHearth(); return; }
     const z = S.zone || 1, gap = inGap();
     if (gap && spawned && !early) { const sp = spawned; spawned = null; if (sp.zone === z) onSpawn(sp.mob, z); }
     const sig = z + '|' + (gap ? 1 : 0);
@@ -406,10 +418,12 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   on('awayBegin', () => { inAway = true; });
   on('awayEnd', () => { inAway = false; last = ''; });
   on('zoneClear', () => { last = ''; });
-  // Hesketh's talk plays when the camp fire is lit (the 8 Pine Log fire), which pays off "Wood first. Then we talk." It waits for a gap like any scene.
+  // Hesketh's talk plays when the camp fire is lit (the 8 Pine Log fire), which pays off his Gather line ("we'll talk once it's lit"). At the
+  // grove it plays now (pumpHearth); in a fight it waits for a gap like any scene.
   on('hearthLit', () => {
     if (!storyOn()) return;
     for (const id of Object.keys(D('npc')).filter(k => D('npc')[k].at === 'hearth')) if (!has('n:' + id) && npcCards(id).length) { mark('n:' + id); push(npcScene(id)); }
+    if (grove()) pumpHearth();
   });
   onTick(dt => { clock += dt; storySync(); });
 }

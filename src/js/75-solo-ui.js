@@ -116,18 +116,29 @@ var soloIconURL = () => '';
   const flash = (b, cls) => { b.classList.remove(cls); void b.offsetWidth; b.classList.add(cls); setTimeout(() => b.classList.remove(cls), 450); };
   // The guide's Dodge and Parry steps pause the game on a heavy hit; the first press there always counts (59j forgive).
   const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
+  // cal-0107-staged-guide (Cal's play note 4): an empty slot with nothing to put in it (every move you own already has a slot) is dim and
+  // silent: no "Tap to add", no picker. It stays in place (the six-slot bar), and wakes once a learned move is waiting for a slot.
+  const slotShut = i => { try { const eq = soloEquipped(); return !eq[i] && !soloAbilities().some(id => !eq.includes(id)); } catch (e) { return false; } };
   const castSlot = i => {
+    if (slotShut(i)) return;
     if (!soloEquipped()[i]) { openPicker(i); return; }
     const pa = typeof ABILITIES === 'object' && ABILITIES[soloEquipped()[i]];
     if (pa && pa.kind === 'passive') { nope(bAbs[i]); return; }   // always on: no button to press
     if (!soloAbility({ slot: i })) nope(bAbs[i]); else flash(bAbs[i], 'good');
   };
-  const act = {
+  // cal-0107-staged-guide: while a fight lesson holds the game, only the button it names acts (the ability lesson: any ability slot), so
+  // a press on another button cannot end the lesson out of order (the walk's bot cast its ability through the Attack lesson)
+  const LESSON_ACT = { attack: /^atk$/, ability: /^ab\d$/, dodge: /^dodge$/, parry: /^parry$/ };
+  const lessonBlocks = id => { try { const w = ONBOARD.paused && soloGuideWants(); return !!(w && LESSON_ACT[w] && !LESSON_ACT[w].test(id)); } catch (e) { return false; } };
+  const act0 = {
     atk: () => { const r = soloAttack(); if (r === 'cd' || !r) nope(bAtk); else flash(bAtk, 'hit'); },
     parry: () => { const r = soloParry(guideWants('parry')); if (r === 'parry') flash(bParry, 'good'); else nope(bParry); },
     dodge: () => { const r = soloDodge(guideWants('dodge')); if (r === 'dodge' || r === 'perfect') flash(bDodge, 'good'); else nope(bDodge); },
     ab0: () => castSlot(0), ab1: () => castSlot(1), ab2: () => castSlot(2)
   };
+  const actBtn = { atk: () => bAtk, parry: () => bParry, dodge: () => bDodge, ab0: () => bAbs[0], ab1: () => bAbs[1], ab2: () => bAbs[2] };
+  const act = {};
+  for (const id in act0) act[id] = () => { if (lessonBlocks(id)) { nope(actBtn[id]()); return; } act0[id](); };
 
   // ---- long press on Attack, Parry, Dodge: what it does, and its Training or level (W2-A) ----
   // A small sheet like the picker (the game waits while it is open; soloPickerOpen covers both).
@@ -158,7 +169,7 @@ var soloIconURL = () => '';
   setInterval(() => { try { if (pick && pick._card) pick._card._up(); } catch (e) {} }, 400);
   function openPicker(slot) {
     closePicker();
-    const k = soloHero(); if (!k) return;
+    const k = soloHero(); if (!k || slotShut(slot)) return;
     const ov = el('div', 'sp-ov'); ov.id = 'abPicker'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', `Ability slot ${slot + 1}`);
     const sh = el('div', 'sp-sheet');
     const head = el('div', 'sp-head'); head.append(el('b', null, `Ability slot ${slot + 1}`), el('small', null, `${ROSTER[k] ? ROSTER[k].name.split(' ')[0] : ''}'s abilities. Pick one for this slot.`));
@@ -343,7 +354,12 @@ var soloIconURL = () => '';
       }
       setCd(b, o.left, o.max); setN(b, secs(o.left));
       b.classList.toggle('ready', !!o.id && o.ready);
-      putText(b._sub, !o.id ? 'Tap to add' : o.left > 0 ? '' : 'Ready');
+      const shut = slotShut(i), sk = (o.id || '') + ':' + shut;
+      if (b._shut !== sk) {
+        b._shut = sk; putStyle(b, 'opacity', shut ? '0.45' : ''); b.setAttribute('aria-disabled', String(shut));
+        if (!o.id) b.setAttribute('aria-label', shut ? `Empty ability slot ${i + 1}. Learn another move to use it.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Tap to choose an ability.`);
+      }
+      putText(b._sub, !o.id ? (shut ? '' : 'Tap to add') : o.left > 0 ? '' : 'Ready');
     }
     putText(bAtk._sub, '');
     setCd(bAtk, s.atk.left, s.atk.max);

@@ -589,9 +589,11 @@ base):
 
 Then "Who are you?" (the hero pick). Then on the road, the lamp starts to gutter (the dark is close and you are
 alone). An old man by a dead roadside fire: Hesketh. Over the third still, in three lines at most, his fire catches from
-your lamp and the lamp steadies. "Wood first. Then we talk." Then the first fight.
+your lamp and the lamp steadies. "Something's coming up the road. Keep that lamp behind you." Then the first fight
+(cal-0107-staged-guide, Cal's play note 2: "Wood first" led straight into a fight). His ask for wood comes when Gather
+opens: "You can gather now. Bring me Pine Log for a proper fire, and we'll talk once it's lit." 
 
-The talk waits for the camp fire, which the player builds from 8 logs. When it is lit: "Every road needs a place to come
+The talk waits for the camp fire, which the player builds from 8 logs, and plays at the grove where it is lit. When it is lit: "Every road needs a place to come
 back to." Then the talk (one card, four lines): "Ten years I've lit dead lamps. Not one took my fire." /
 "I could have lit them from hers. I couldn't go up." (He looks at the hill and doesn't explain; Ch1 end does.) / "Those
 things aren't animals. They climb out of the ground." / "Your village is down there. Go back and shut the holes." The

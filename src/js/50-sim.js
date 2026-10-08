@@ -145,7 +145,9 @@ function gainXp(n, quiet) {
     S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
     if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
-    emit('toast', { key: 'level', msg: attrOn() ? `Level ${S.L}. ${HERO_TUNE.perLevel} attribute points to spend.` : `Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, kind: 'good', prio: 'high', L: S.L });   // W1-B: every 10th level pops
+    // cal-0107-staged-guide: points are named only once the Hero tab's rule holds (the tab itself opens on the next unlock pass, about a second later)
+    const ptsOk = typeof FEATURE_OF !== 'object' || !FEATURE_OF.party || FEATURE_OF.party.when();
+    emit('toast', { key: 'level', msg: attrOn() ? (ptsOk ? `Level ${S.L}. ${HERO_TUNE.perLevel} attribute points to spend.` : `Level ${S.L}.`) : `Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, kind: 'good', prio: 'high', L: S.L });   // W1-B: every 10th level pops
   }
 }
 function gainSkill(k, n, quiet) {

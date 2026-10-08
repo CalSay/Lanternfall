@@ -37,7 +37,6 @@ expect "beat you"
 expect "Try again"
 shot defeat-card
 tap "Keep fighting here"
-tap-if "Dismiss this tip"
 wait 6
 expect "The card showed what beat you"
 expect "No shame in that"

@@ -255,7 +255,9 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   on('heroUnlocked', e => { if (e && e.id) moment('hero', { title: heroName(e.id), sub: 'A new hero will take up the lamp.', icon: { ic: ['banner', '#B58CFF'] } }); });
   // level up is medium only on the first level and every 5th (a banner a level would be a flood); otherwise the toast rules decide
   const MOMENT_LEVEL = L => L === 2 || L % 5 === 0;
-  on('levelup', e => { if (e && !e.quiet && MOMENT_LEVEL(e.L)) moment('level', { title: `Level ${e.L}`, sub: `Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, L: e.L, bark: 'level', icon: { ic: ['banner', '#6FCB6A'] } }); });
+  // cal-0107-staged-guide: the card says what the level gave you (attribute points, once the Hero tab is there to spend them)
+  const levelSub = () => typeof attrOn === 'function' && attrOn() ? (FEATURE_OF.party && FEATURE_OF.party.when() ? `${HERO_TUNE.perLevel} attribute points to spend on the Hero tab.` : 'You grow stronger.') : `Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`;
+  on('levelup', e => { if (e && !e.quiet && MOMENT_LEVEL(e.L)) moment('level', { title: `Level ${e.L}`, sub: levelSub(), L: e.L, bark: 'level', icon: { ic: ['banner', '#6FCB6A'] } }); });
   on('abilityLearned', e => {
     const a = e && typeof ABILITIES === 'object' && ABILITIES[e.id]; if (!a) return;
     moment('ability', { title: a.name, sub: heroName(e.hero) + ' learns a new ability.', bark: 'ability' });
