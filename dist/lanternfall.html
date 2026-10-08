@@ -37907,9 +37907,14 @@ on('cacheOpen', v => {
   }
 
   // ---------------- confirm buttons (in-page, no confirm()) ----------------
-  // First tap arms the button for 4 seconds; the second tap acts.
+  // First tap arms the button for CONFIRM_MS; the second tap acts (cancel too).
+  const CONFIRM_MS = 6000;
   let armed = null, armedAt = 0;
-  const isArmed = key => armed === key && Date.now() - armedAt < 4000;
+  const isArmed = key => armed === key && Date.now() - armedAt < CONFIRM_MS;
+  // Hesketh's own build step (bench / forge / store) is on screen and points at this station's quick button: one tap builds it
+  // (camp-build-tap-again; the step ids match the camp ids). Never anywhere else, and never for Cancel.
+  const GUIDE_BUILDS = { bench: 1, forge: 1, store: 1 };
+  const guideBuilds = id => { try { return !!GUIDE_BUILDS[id] && typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
   function arm(key) { armed = key; armedAt = Date.now(); ui(true); }
   function disarm() { armed = null; }
 
@@ -37935,7 +37940,7 @@ on('cacheOpen', v => {
     if (quick) box.append(why, cancel); else box.append(why, go, cancel);
     go.addEventListener('click', () => {
       const c = campCan(id); if (!c.ok) return;
-      if (!isArmed('b:' + id)) { arm('b:' + id); return; }
+      if (!(quick && guideBuilds(id)) && !isArmed('b:' + id)) { arm('b:' + id); return; }
       disarm(); campBuild(id); ui(true);
     });
     cancel.addEventListener('click', () => {
@@ -37950,7 +37955,7 @@ on('cacheOpen', v => {
         if (!pend && !done) {
           const verb = c.queue ? 'Queue' : 'Build', armd = isArmed('b:' + id);
           const target = id === 'tent' ? `Tent ${c.to}` : `${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to}`;
-          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Sure?' : verb); putAttr(go, 'aria-label', armd ? `Tap again to ${verb.toLowerCase()} ${target}` : `${verb} ${target}, ${dur(c.dur / 1000)}`); }
+          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Tap again' : verb); putAttr(go, 'aria-label', armd ? `Tap again to ${verb.toLowerCase()} ${target}` : `${verb} ${target}, ${dur(c.dur / 1000)}`); }
           else setTxt(go, armd ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${target} · ${dur(c.dur / 1000)}`);
           putDisabled(go, !c.ok); putToggle(go, 'armed', armd);
         }

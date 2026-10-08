@@ -1,0 +1,34 @@
+# seed: 1
+# Proof for card camp-build-tap-again. Run: grep -v '^#' route.txt | node tools/playtest.mjs batch --seed 1 (then --landscape).
+# `new` empties the shots folder, so the shots here were taken one part at a time and named -portrait / -landscape.
+# The -1280x720 shots are the same route in a 1280x720 mouse window (browser-first; playtest.mjs has no desktop flag yet).
+# Part 1: the fire is lit, 12 Pine Log and 300 gold in hand, Hesketh at "Build a Workbench".
+# One tap on the Workbench card's Build button starts the build (no "Tap again").
+new bench-ready
+wait 2
+tap-if "Continue"
+tap "Camp"
+wait 1
+expect "Build a Workbench"
+shot guide-points-at-bench
+tap "Build Lv 1, 10s"
+expect "Building Workbench Lv 1"
+expect-save gold=0
+shot bench-one-tap
+
+# Part 2: the Watchtower is not a guide step (zone 4 Dipper save, 2700 gold, Watchtower affordable). The first tap arms
+# "Tap again" and builds nothing; a second tap 4 s later (past the old 4 s window) still builds.
+new dipper-z4
+wait 2
+tap-if "Continue"
+tap "Camp"
+wait 1
+tap "Build Lv 1, 45s"
+expect "Tap again"
+expect-no "Building Watchtower"
+shot armed-tap-again
+wait 4
+expect "Tap again"
+tap "Tap again to build Lv 1"
+expect "Building Watchtower Lv 1"
+shot built-after-4s
