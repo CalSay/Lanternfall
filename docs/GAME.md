@@ -97,7 +97,12 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   packs only); `check.mjs` lists the complete heroes.
 - **Stars** change the rules of a fight on top: up to 3 set and 2 lit a hero (see The hero).
 - **Zones:** 5 won fights, then the zone boss, then the next zone (`ZONE_FIGHTS` in `40-rules.js`). Losing never moves
-  you. Bosses have no timer. In zones 1 to 15 no single boss hit takes more than 40% of your max HP, so one missed parry never
+  you: a normal loss says so on the stage for the few seconds before the next fight ("Beaten. You're back to full HP for the
+  next fight.", with one line on what helps this save: unspent attribute points, a craft you can make, or an easier zone), and
+  three normal losses in ten fights in one zone add one bell line, once per zone a session; a boss loss opens the Try again
+  card. Every fight in a zone (normal, elite or boss) starts at full HP, whether you won or lost the last one
+  (`TURN_TUNE.normalFull`); in the Deepwell and the Provings your HP carries from foe to foe and each kill heals 15% of max
+  HP (times the Healing gear line; the Deepwell's floor heal is its own). Bosses have no timer. In zones 1 to 15 no single boss hit takes more than 40% of your max HP, so one missed parry never
   ends a fight from full health; in zones 16 to 34 the cap is 75%. Zone bosses from 4 to 12 are tuned to a hero in the zone's first gear (common, +0).
   Zone bosses 4 to 34 play move tricks (held swings, feints) and rally (at two thirds and a third in zones 4 to 6, at three quarters, half and a quarter from zone 7) (only a Stun breaks a
   rallying boss's charge), and on a boss you have not beaten, health above the zone's own gear does not shrink its hits (from zone 16 that gear is rare +5).

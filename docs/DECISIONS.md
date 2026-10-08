@@ -183,7 +183,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   (2026-10-02)
 - **No telegraph of the foe's next move:** it makes combat easier. (2026-10-02)
 - **No suggested builds or combos in the game.** Finding what works should be hard and rewarding. (2026-10-02)
-- **No healing between fights.** (2026-10-02)
+- **Every zone fight starts at full HP:** normal, elite and boss, win or lose; no Rest button and no regen between fights. The Deepwell and the Provings still carry HP from foe to foe (a kill heals 15%, times the Healing gear line). (judge, normal-death-says-so, 2026-10-08; replaces "No healing between fights" (2026-10-02), which the code never matched: each kill healed 15% and a loss gave full HP, so losing was the better heal. Cal can veto with "carry HP between fights again", which sets `TURN_TUNE.normalFull = 0`.)
 - **Elite traits in turn fights,** but Speed never gives a foe endless turns (2 in a row at most, a boss 3). (2026-10-02)
 - **Talents** (Codex's star forks): two picks per ability and for Attack, Parry and Dodge. (2026-10-02)
 - **The Deepwell and the Provings fight in turns** like the zones. (2026-10-02)
