@@ -4,6 +4,8 @@
 # (75-onboard-ui.js: `gap` hides a live-progress line while fightInView()), so Hesketh's "for the Forge" line shows on no screen
 # while she fights: not over the fight, not on Camp, not on the Gather menu. It shows once she starts gathering (activity Wood).
 # A player who keeps fighting is never told what the Forge needs: a real first-hour gap, raised as its own onboard card.
+# Upright (360x740) a menu covers the fight, so there the line does show on Camp and Gather: the two menu checks are shots only
+# (CI replays this route upright, in landscape and at 1920x1080); `tools/playtest.mjs` at its default 1280x720 shows no line on either.
 new forge-short
 wait 2
 tap-if "Continue"
@@ -13,11 +15,9 @@ expect-no "for the Forge"
 shot fight-no-forge-line
 tap "Camp"
 wait 3
-expect-no "for the Forge"
 shot camp-while-fighting-no-forge-line
 tap "Gather"
 wait 3
-expect-no "for the Forge"
 shot gather-menu-while-fighting-no-forge-line
 tap "Gather here"
 wait 3
