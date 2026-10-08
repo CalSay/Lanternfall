@@ -251,6 +251,24 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   // elite traits (59k, 24d TURN_TRAITS): the first of each kind says what it does; breaking one shows
   on('traitSeen', p => { if (p && p.first) say(p.txt, 'charge', 4); });
   on('traitBroken', p => { if (p) { emit('float', { txt: p.txt, color: '#BFE6FF', big: true }); emit('shake', 0.2); } });
+  // foe tricks say what they did (foe-tricks-say-so, judge 2026-10-08): a word when a trick lands, never before. A boss's riders
+  // keep their charge and rally lines. body[data-trick-*]: what has been said (the last rider, the get-up, resist, armour), for a proof
+  // route that cannot catch the frame (as rally-gates-live's data-rally-seen).
+  const trickSay = (txt, secs, flag, v) => { say(txt, 'charge', secs || 1.8); document.body.dataset.trickSaid = txt; if (flag) document.body.dataset[flag] = v || '1'; };
+  const RIDER_WORD = { chill: () => "Chilled: you're slower", venom: p => `Venom: you take damage for ${p.stacks > 0 ? p.stacks : 2} turn${p.stacks === 1 ? '' : 's'}`, weaken: () => 'Weakened: your next move hits softer' };
+  on('heroRider', p => { if (p && !p.boss && RIDER_WORD[p.id]) trickSay(RIDER_WORD[p.id](p), 0, 'trickRider', p.id); });
+  on('turnCard', p => { if (p && p.chill && p.who === 'foe') { const f = foeNow(); trickSay(`Chilled: ${(f && f.name) || 'The foe'} goes again`, 2, 'trickAgain'); } });
+  on('foeGetUp', p => { if (!p) return; emit('float', { txt: 'Back up!', color: '#E8E4DA', big: true }); trickSay(`${p.name || 'It'} gets back up!`, 0, 'trickGetup'); });
+  // resist and armour: once a fight each, on the first hit that meets it (59-combat sets hdt, the hit's damage type, and hk, its kind)
+  let toldRes = 0, toldArm = 0;
+  on('fightStart', () => { toldRes = toldArm = 0; });
+  on('float', p => {
+    if (!p || !p.hdt || !(typeof turnCombatOn === 'function' && turnCombatOn())) return;
+    const f = foeNow(), words = [];
+    if (p.rel < 0 && !toldRes) { toldRes = 1; words.push(`Resists ${(typeof DT_INFO === 'object' && DT_INFO[p.hdt] ? DT_INFO[p.hdt].n : p.hdt).toLowerCase()}`); }
+    if (p.hdt === 'phys' && !toldArm && f && f.tk && f.tk.arm > 0 && !/^(bleed|swarm|curse)$/.test(p.hk)) { toldArm = 1; words.push('Armoured'); }
+    if (words.length) trickSay(words.join('. '), 1.6, toldArm && words[words.length - 1] === 'Armoured' ? 'trickArm' : 'trickRes');
+  });
   on('shieldHit', () => emit('float', { txt: 'Shield', color: '#BFE6FF', big: false }));
   on('heroMiss', () => emit('float', { txt: 'Miss', color: '#A9B1BD', big: false, x: 0.66, y: 0.42 }));
   on('foeContact', p => { if (p && p.res === 'miss') emit('float', { txt: 'Missed you', color: '#8FB8FF', big: false, x: 0.27, y: 0.42 }); });
@@ -354,6 +372,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const pr = typeof masteryApi === 'object' && masteryApi.profile ? masteryApi.profile(f.type) : null, dtn = d => (typeof DT_INFO === 'object' && DT_INFO[d] ? DT_INFO[d].n : d), learn = [];
     if (pr && pr.weak) learn.push(['Weak', (pr.weakTo ? `Weak to ${dtn(pr.weakTo)}.` : 'No weakness.') + (pr.resists.length ? ` Resists ${pr.resists.map(dtn).join(' and ')}.` : '')]);
     if (pr && pr.tell && pr.tellTxt) learn.push(['Tell', 'Watch for: ' + pr.tellTxt.replace(/^Moves:[^.]*\.\s*/, '')]);
+    if (pr && pr.tricks && !f.boss) learn.unshift(...pr.tricks.map(t => ['Trick', t]));   // foe-tricks-say-so: each trick once it has landed on you, first (the dock is short in landscape)
     const nx = pr ? (pr.n < 5 ? 5 : pr.n < 15 ? 15 : 0) : 0;
     if (nx) learn.push(['Learn', `${nx - pr.n} more kill${nx - pr.n > 1 ? 's' : ''} to learn ${nx === 5 ? 'its weakness' : 'what to watch for'}.`]);
     return { name: f.name, tags, trait, known: sh ? true : known, moves: known || sh ? moves : [], hidden: sh ? sh.hidden : 0, learn };

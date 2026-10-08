@@ -462,9 +462,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (n > 1 ? ` x${n}` : '') + (crit ? '!' : '');
     FLOAT_EV.color = src ? src[0] : kind === 'counter' || crit ? '#FF9E3D' : '#FFFFFF';
     FLOAT_EV.big = !!crit || kind === 'counter' || kind === 'ignite' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
-    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = !src && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit; FLOAT_EV.tier = tier || '';
+    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = (!src || kind === 'burn' || kind === 'ignite') && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.hdt = dt || 'phys'; FLOAT_EV.hk = kind || ''; FLOAT_EV.crit = !!crit; FLOAT_EV.tier = tier || '';
     emit('float', FLOAT_EV);
-    FLOAT_EV.tier = '';
+    FLOAT_EV.tier = ''; FLOAT_EV.hdt = ''; FLOAT_EV.hk = '';   // hdt, hk: the hit's damage type and kind (foe-tricks-say-so: 75-turn-ui's Resists and Armoured)
     if (crit) emit('crit', { tap: true });
     if (f.hp <= 0) foeDies(f, 0, kind || 'turn');
     return a;

@@ -38,6 +38,7 @@
     if (p.stats && p.seen) out.push(`Last met in zone ${p.seen.z}: ${fmt(p.seen.hp)} HP, hits for ${fmt(p.seen.atk)}, haste ${typeof TURN_TUNE === 'object' ? TURN_TUNE.foeHaste : '?'}.`);
     if (p.weak) out.push((p.weakTo ? `Weak to ${dtName(p.weakTo)}.` : 'No weakness.') + (p.resists.length ? ` Resists ${p.resists.map(dtName).join(' and ')}.` : ''));
     if (p.tell && p.tellTxt) out.push(`Watch for: ${p.tellTxt}`);
+    for (const t of p.tricks || []) out.push(t);   // foe-tricks-say-so: what its tricks did to you
     if (p.next)   // the +5% for a foe you know well is said once, in the section note (menu audit #14)
       out.push(`${fmt(Math.ceil(p.next - p.n))} more to learn ${p.next === 5 ? 'its weakness' : p.next === 15 ? 'what to watch for' : '+5% damage to it'}.`);
     return out.join('\n');
