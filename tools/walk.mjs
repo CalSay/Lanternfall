@@ -137,7 +137,7 @@ const OBS = `(() => {
   } catch (e) { s = { err: String(e).slice(0, 80) }; }
   o.s = s;
   // craft-delta: the game's 'choice' and 'firstUse' events, kept in a page array the walk drains each frame (it never assigns to S)
-  if (!window.__walkEv) { window.__walkEv = []; try { on('choice', k => window.__walkEv.push(['choice', k])); on('firstUse', k => window.__walkEv.push(['firstUse', k])); } catch (e) {} }
+  if (!window.__walkEv) { window.__walkEv = []; try { on('choice', k => window.__walkEv.push(['choice', k])); on('firstUse', k => window.__walkEv.push(['firstUse', k])); on('starterJoin', e => window.__walkEv.push(['join', e && e.ids || []])); } catch (e) {} }
   o.ev = window.__walkEv.splice(0);
   return o;
 })()`;
@@ -624,7 +624,7 @@ const sfxLog = [];     // { t, name }
 const choices = [], firstUse = {};   // craft-delta: { t, k } for each choice event; the game time of each first use
 async function watch(o) {
   for (const s of o.sfx) sfxLog.push({ t: gt, name: s.name });
-  for (const [kind, k] of o.ev || []) { if (kind === 'choice') choices.push({ t: gt, k }); else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
+  for (const [kind, k] of o.ev || []) { if (kind === 'join') { for (const id of k) st.joinOnCard.add(id); continue; } if (kind === 'choice') choices.push({ t: gt, k }); else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
   for (const t of o.toasts) if (!st.toastSeen.has(t)) { st.toastSeen.add(t); await note(page, 'toast', t, { shot: false }); }
   for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
   const s = o.s, p = st.prev;
@@ -640,7 +640,12 @@ async function watch(o) {
     if (s.L > p.L) await moment('level', 'level ' + s.L, { big: false });
     if (s.found > p.found) await moment('unique', 'unique found', { big: true });
     if (s.stars > p.stars) await moment('star', 'new Star', { big: true });
-    if (s.heroes > p.heroes) { const ks = await X('Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {})'), nw = ks.filter(k => !(st.heroKeys || []).includes(k)); st.heroKeys = ks; await moment('hero', 'a hero joins' + (nw.length ? ' (' + nw.join(', ') + ')' : ''), { big: true }); }
+    if (s.heroes > p.heroes) { const ks = await X('Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {})'), nw = ks.filter(k => !(st.heroKeys || []).includes(k)); st.heroKeys = ks;
+      // walk-join-moment-count: a starter's join is a line on the Champion card it rides on (75-moments-ui, on 56c's starterJoin), or a
+      // toast when it joined while away. Either way it is not a big card of its own: the zone moment is that Champion card.
+      const starters = nw.length ? await X(`${JSON.stringify(nw)}.filter(k => ROSTER[k] && ROSTER[k].route && ROSTER[k].route.type === 'starter')`) : [];
+      const own = !nw.length || starters.length < nw.length, card = starters.length && starters.every(k => st.joinOnCard.has(k));
+      await moment('hero', 'a hero joins' + (nw.length ? ' (' + nw.join(', ') + ')' : '') + (own ? '' : card ? ', a line on the Champion card' : ', a toast'), { big: own, rode: !own }); }
     if (s.looks > p.looks) await moment('look', 'a look found (' + s.looks + ')', { big: false });
     if (s.forged > p.forged) await moment('craft', 'forged (' + s.forged + ')', { big: false });
     if (s.up > p.up) await note(page, 'upgrade', 'upgraded (' + s.up + ')', { shot: false });
@@ -648,10 +653,10 @@ async function watch(o) {
   }
   st.prev = s;
 }
-st.tabSeen = new Set();
-const moments = [];   // { t, id, text, big }
+st.tabSeen = new Set(); st.joinOnCard = new Set();
+const moments = [];   // { t, id, text, big, zone, rode } (rode: a join said on the Champion card or a toast, not a card of its own)
 async function moment(id, text, o) {
-  moments.push({ t: Math.round(gt * 10) / 10, id, text, big: !!o.big, zone: o.zone });
+  moments.push({ t: Math.round(gt * 10) / 10, id, text, big: !!o.big, zone: o.zone, rode: !!o.rode });
   await note(page, 'moment', `${id}: ${text}`, { tag: 'moment-' + id, extra: { big: !!o.big } });
   for (const p of await page.evaluate(PLACEHOLDERS)) placeholders.add(p);
   // eyes layout lint at the moment
@@ -809,10 +814,13 @@ function scorecard(reached) {
     pass: worstEarly.gap <= 300 && worstLate.gap <= 480 && z510.length === 0, target: 'a big moment every 5 min to minute 20; then every zone first clear 5 to 10, no gap over 8 (the 8-minute cap holds in the first 20 too)' };
   // F4: new things = unlocks (S.onboard.got) by the time they landed. unlock-gap-trial (judge): the target counts only what the
   // spacing governor releases; a thing the player's act or a drop opened (its row's now() true) is listed, not counted.
-  const unAll = log.filter(e => e.kind === 'unlock'), un = unAll.filter(e => !e.byAct).map(e => e.t), unEvery = unAll.map(e => e.t);
+  // walk-join-moment-count: the first starter's join opens the Switch hero row, a later one stamps got['join:<id>'] (55-onboard
+  // onboardJoined); both are said in that join's line, so they ride on the join and are not new things of their own.
+  const rides = log.filter(e => e.kind === 'unlock' && (e.text === 'switch' || e.text.startsWith('join:')) && moments.some(m => m.id === 'hero' && m.rode && m.t >= e.t - 1 && m.t <= e.t + 30));
+  const unAll = log.filter(e => e.kind === 'unlock' && !rides.includes(e)), un = unAll.filter(e => !e.byAct).map(e => e.t), unEvery = unAll.map(e => e.t);
   const win = (list, len, from, to) => { let best = 0, at = 0; for (const t of list.filter(t => t >= from && t < to)) { const n = list.filter(u => u >= t && u < t + len).length; if (n > best) { best = n; at = t; } } return { best, at }; };
   const w3 = win(un, 180, 0, 1800), w10 = win(un, 600, 1800, 3600), w3All = win(unEvery, 180, 0, 1800);
-  sc.F4 = { value: `${unAll.length} new things (${un.length} released, ${unAll.length - un.length} by player or drop); most released in 3 min (first 30): ${w3.best}${w3.best ? ' from ' + fmtT(w3.at) : ''}; most released in 10 min after: ${w10.best}; all kinds in 3 min: ${w3All.best}`, pass: w3.best <= 2 && w10.best <= 4, target: 'at most 2 new things the game releases on its own in any 3 min of the first 30, 4 in any 10 after (a thing the player\'s act or a drop opened is listed, not counted)' };
+  sc.F4 = { value: `${unAll.length} new things (${un.length} released, ${unAll.length - un.length} by player or drop${rides.length ? ', ' + rides.length + ' with a hero join, not counted' : ''}); most released in 3 min (first 30): ${w3.best}${w3.best ? ' from ' + fmtT(w3.at) : ''}; most released in 10 min after: ${w10.best}; all kinds in 3 min: ${w3All.best}`, pass: w3.best <= 2 && w10.best <= 4, target: 'at most 2 new things the game releases on its own in any 3 min of the first 30, 4 in any 10 after (a thing the player\'s act or a drop opened is listed, not counted)' };
   const lay = [...checks.values()].filter(c => c.check === 'layout' || c.check === 'tipphase' || c.check === 'covered' || c.check === 'guide');
   sc.F5 = { value: lay.length + ' finding' + (lay.length === 1 ? '' : 's') + ' at ' + SIZE.w + 'x' + SIZE.h, pass: lay.length === 0, target: 'no tip off its phase, nothing covering the fighters or bars, no clipped text' };
   // F6: each big or medium moment shows a card, banner or sheet for 2 s with a sound near it
