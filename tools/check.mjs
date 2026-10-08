@@ -9238,9 +9238,9 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.725 * 1.25, 15: 16 * 1.7, 20: 16 * 2.8, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.725 * 1.25, 15: 16 * 0.12, 20: 16 * 2.8, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zones 13-15 cut for the hero who first gets there by z13-unstick, zone 15 16 x 0.12, was 1.7; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
@@ -9284,7 +9284,8 @@ if (section('C29 mid-game HP and Wren (core)')) try {
         ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();
       S.activity = 'fight'; arena = null; gearDirty(); fightBoss = false; spawn(); globalThis.__f = 1 / (turnCombatProfile().A / turnRefAtk(${z}));`);
     const prof = boss => `(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(); p.A *= __f; p.U *= __f; p.counter *= __f; p.heroMaxHp *= __f; return p; })()`;
-    const hit = boss => E(`(p => { const k = p.refHp * p.hitX * (p.bossHeroX || 1) * p.bossHitX / p.heroMaxHp, ch = p.script.find(m => m.charge);
+    // a boss hit's share of max HP never reads under its room-to-miss floor (TURN_TUNE.boss.hpFloor, 59k turnLand), as in a live fight
+    const hit = boss => E(`(p => { const k = Math.max(p.refHp * p.bossHitX / p.heroMaxHp, p.bossHitFloor || 0) * p.hitX * (p.bossHeroX || 1), ch = p.script.find(m => m.charge);
       return { hit: k * Math.max(...p.script.filter(m => !m.charge).flatMap(m => m.hits.map(h => h.x))), charge: ch ? k * p.bossChargeX * ch.hits.reduce((a, h) => a + h.x, 0) : 0 }; })(${prof(boss)})`);
     // the mean over ability sets and seeds 1-3 (one sample swings a lot)
     const run = (skill, sets) => E(`(p => { let K = 0, D = 0, T = 0, F = 0; for (const eq of ${J(sets)}) for (let sd = 1; sd <= 3; sd++) {
@@ -9300,7 +9301,7 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       // zones 25-34 (mid-zone-wall, 2026-10-07): the hero who keeps up there has only 0.2-0.4 of the reference HP (budget.mjs), and this
       // hero is scaled to the reference, so a boss hit that costs them 25-45% reads 8-16% here and a charge 20-45%
       // zones 15 and 20 (boss-tiers PR 3, 2026-10-07): the knots there are fitted to the budget's casual band, a boss hit reads 15-45% here
-      // zones 8 and 15 (boss-tiers-pr4, 2026-10-07): the tricks carry the difficulty there, so the refit hit scales are 0.46-0.9 of the old ones: a boss hit reads 22% at zone 8 and 10% at zone 15, a charge 52% and 24%
+      // zones 8 and 15 (boss-tiers-pr4, 2026-10-07): the tricks carry the difficulty there, so the refit hit scales are 0.46-0.9 of the old ones: a boss hit reads 22% at zone 8, a charge 52%; zone 15 (z13-unstick, 2026-10-08) reads its hpFloor, about 19-20% a hit and 45-48% a charge
       // zones 20-34 (boss-tiers-pr5b, 2026-10-07): the tricks, rally gates and footing floor carry the difficulty there, so the refit hit scales are 0.2-0.4 of the old ones:
       // a boss hit reads 16% at zone 20 and 4% at zones 25-34 here, a charge 35% and 9-10%
       const mid = z >= 25, b = mid ? [0.025, 0.08, 0.06, 0.2] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.1, 0.42, 0.25, 0.92] : [0.18, 0.36, 0.45, 0.9];
