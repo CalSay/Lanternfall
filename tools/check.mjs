@@ -13641,6 +13641,97 @@ if (section('scroll-spares')) try {
   }
 } catch (e) { fail('scroll-spares crashed: ' + (e.stack || e)); }
 
+// ---- fight-input-during-banner: while the turn banner or VS card plays, Attack and the abilities dim and say "Wait"; a refused press
+// gets a red outline that reduced motion keeps; nothing is queued (planner 2026-10-08, DECISIONS.md "The banner pause is shown") ----
+if (section('fight-input-during-banner')) try {
+  const at = 'fight-input-during-banner', { pw, exe } = browserTools, distFile = path.join(ROOT, 'dist', 'lanternfall.html');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const rm of ['no-preference', 'reduce']) {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 }, reducedMotion: rm }), page = await ctx.newPage(), errors = [], tag = `${at} 1280x720 ${rm}`;
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // the turn engine waits while __tp is set (59j turnPaused: a hidden page), so each phase can be read and pressed in; the bar keeps updating
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; true`);
+        const ph = () => X(`TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.phase : 'off'`);
+        const reach = async (want, act) => { for (const t0 = Date.now(); Date.now() - t0 < 60000;) {
+          const p = await ph(); if (want.includes(p)) { await X('globalThis.__tp = 1; true'); await page.waitForTimeout(350); return p; }
+          if (act) await X(act); await page.waitForTimeout(40); } return ''; };
+        const R = () => X(`JSON.stringify([...document.querySelectorAll('#soloBar .sbtn')].map(b => { const r = b.getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+          return { act: b.dataset.act, wait: b.classList.contains('wait'), live: b.classList.contains('live'), now: b.classList.contains('ready-now'), refused: b.classList.contains('refused'),
+            empty: b.classList.contains('empty'), passive: b.classList.contains('passive'), sub: (b.querySelector('.sb-sub') || {}).textContent || '', top: !!hit && (hit === b || b.contains(hit)),
+            dis: b.disabled || b.getAttribute('aria-disabled') === 'true', pe: getComputedStyle(b).pointerEvents, op: +getComputedStyle(b.querySelector('.sb-tx')).opacity }; }))`).then(JSON.parse);
+        const hero = t => t.act === 'atk' || (/^ab/.test(t.act) && !t.empty && !t.passive);
+        const dimmed = (L, where) => {
+          const bad = L.filter(t => hero(t) && (!t.wait || t.op > 0.6)).map(t => t.act), ready = L.filter(t => /^ab/.test(t.act) && t.sub === 'Ready').map(t => t.act), now = L.filter(t => t.now).map(t => t.act);
+          assert(!bad.length && !ready.length && !now.length && L.filter(hero).length >= 2, `${tag}: in ${where} Attack and every filled ability tile dim (whole tile) and none says "Ready" or flashes ready (${JSON.stringify(L.map(t => [t.act, t.wait, t.sub, t.op, t.now]))})`);
+          const shut = L.filter(t => hero(t) && (t.dis || t.pe === 'none' || !t.top)).map(t => t.act);
+          assert(!shut.length, `${tag}: in ${where} the tiles stay pressable and topmost at their centre (${shut.join(', ') || 'all'})`);
+        };
+        // the VS card
+        assert(await reach(['intro']) === 'intro', `${tag}: a fight opens on the VS card`);
+        dimmed(await R(), 'the VS card');
+        // the hero's turn: lit, "Ready" back
+        await X('globalThis.__tp = 0; true');
+        assert(await reach(['hero']) === 'hero', `${tag}: the hero's turn comes`);
+        let L = await R();
+        const ab0 = L.find(t => t.act === 'ab0');
+        assert(!L.some(t => t.wait) && ab0 && ab0.sub === 'Ready', `${tag}: on the hero's turn no tile is dimmed and a usable ability says "Ready" (${JSON.stringify(L.map(t => [t.act, t.wait, t.sub]))})`);
+        // the banner before the foe's turn (or the hero's next): hand the turn over with an Attack
+        await X(`globalThis.__tp = 0; turnCombatAction('attack'); true`);
+        assert(await reach(['handoff'], `TURN_LIVE.phase === 'timing' && turnCombatAction('time'); TURN_LIVE.phase === 'hero' && turnCombatAction('attack')`) === 'handoff', `${tag}: the turn banner plays`);
+        dimmed(await R(), 'the turn banner');
+        // a cooldown that comes back mid-banner (a Parry or Dodge refund) does not flash ready
+        const id0 = await X(`soloEquipped()[0] || ''`);
+        await X(`TURN_LIVE.cds[${JSON.stringify(id0)}] = 2; true`); await page.waitForTimeout(300);
+        await X(`TURN_LIVE.cds[${JSON.stringify(id0)}] = 0; true`); await page.waitForTimeout(350);
+        L = await R();
+        assert(id0 && !L.some(t => t.now) && L.find(t => t.act === 'ab0').sub === 'Wait', `${tag}: a cooldown refunded mid-banner does not flash ready and the tile says "Wait" (${JSON.stringify(L.map(t => [t.act, t.now, t.sub]))})`);
+        // presses in the banner: refused (nothing changes), each with the red outline; Parry leaves the defence unused
+        const snap = `JSON.stringify({ ph: TURN_LIVE.phase, cds: TURN_LIVE.cds, fhp: TURN_LIVE.foe && TURN_LIVE.foe.hp, hhp: (cbUnitByKey('hero') || {}).hp, def: !!TURN_LIVE.usedDefense })`;
+        const s0 = await X(snap);
+        const b = await page.$eval('#soloBar .sb-atk', e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+        await tapAt(page, b[0], b[1]);
+        const rAtk = await X(`document.querySelector('#soloBar .sb-atk').classList.contains('refused')`);
+        await page.keyboard.press('q');
+        const rQ = await X(`document.querySelector('#soloBar .sb-ab0').classList.contains('refused')`);
+        await page.keyboard.press('a');
+        const s1 = await X(snap), direct = await X(`turnCombatAction('attack')`);
+        assert(rAtk && rQ, `${tag}: a press of Attack (pointer) and of Q in the banner gets the red outline (${rAtk}, ${rQ})`);
+        assert(s0 === s1 && direct === false && !JSON.parse(s1).def, `${tag}: presses in the banner are refused and not queued: no HP or cooldown change, Parry stays unused (${s0} -> ${s1})`);
+        await page.waitForTimeout(400);
+        assert(!(await X(`document.querySelector('#soloBar .sb-atk').classList.contains('refused')`)), `${tag}: the red outline goes after a moment`);
+        // the foe's wind-up: Parry and Dodge live as before
+        await X('globalThis.__tp = 0; true');
+        if (await reach(['foeWindup'], `TURN_LIVE.phase === 'timing' && turnCombatAction('time'); TURN_LIVE.phase === 'hero' && turnCombatAction('attack')`) === 'foeWindup') {
+          L = await R();
+          const p = L.find(t => t.act === 'parry'), d = L.find(t => t.act === 'dodge');
+          assert(p.live && d.live && !p.wait && !d.wait, `${tag}: on the foe's wind-up Parry and Dodge light as before (${JSON.stringify([p, d])})`);
+        } else assert(false, `${tag}: a foe's wind-up comes`);
+        // the gap after a kill: the fight is over and a press is refused, so the tiles still say Wait
+        await X(`globalThis.__tp = 0; globalThis.__hold = 0; holdGame(() => globalThis.__hold); true`);
+        for (const t0 = Date.now(); Date.now() - t0 < 60000 && !(await X('!!(TURN_LIVE && TURN_LIVE.ended)'));) {
+          await X(`TURN_LIVE.foe && (TURN_LIVE.foe.hp = Math.min(TURN_LIVE.foe.hp, 1)); TURN_LIVE.phase === 'timing' && turnCombatAction('time'); TURN_LIVE.phase === 'hero' && turnCombatAction('attack'); true`);
+          await page.waitForTimeout(30);
+        }
+        await X('globalThis.__hold = 1; true'); await page.waitForTimeout(350);
+        assert(await X('!!(TURN_LIVE && TURN_LIVE.ended)'), `${tag}: the foe falls`);
+        dimmed(await R(), 'the gap after a kill');
+        await X('globalThis.__hold = 0; true');
+        assert(!errors.length, `${tag}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('fight-input-during-banner crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);

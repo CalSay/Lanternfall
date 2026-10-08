@@ -80,7 +80,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **The fight screen is Stage and dock** (Cal, 2026-10-05; `75-solo-ui.js`, `75-turn-ui.js`). The stage shows the hero and
   foe, a turn banner and the timing bar along its bottom edge while a hit winds up. Under it, the dock has three tabs.
   **Act**: Attack and the three ability slots as tiles (D, Q, W, E), each with its name and "Ready", turns left or
-  "Passive". **Skills**: each slot's ability and cooldown; tap one to change it. **Foe**: its kind, an elite's trait and
+  "Passive". While the turn banner or the Versus card plays (and on the foe's turn), Attack and the abilities dim, their
+  gold frame goes dull and an ability says "Wait"; a press then is refused with a short red outline (reduced motion keeps
+  it) and is not queued (fight-input-during-banner). **Skills**: each slot's ability and cooldown; tap one to change it. **Foe**: its kind, an elite's trait and
   the moves you have learned (a zone boss shows the ones your lost tries taught you, one more a try; a beaten boss shows all). Parry and Dodge (A, S) sit under the dock on every tab and glow while a
   hit winds up. Short landscape keeps the names under small tiles. The turn order shows on the Versus card only.
 - **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
