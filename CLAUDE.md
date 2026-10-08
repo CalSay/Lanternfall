@@ -2,7 +2,7 @@
 
 A pixel-art idle RPG that runs as a single HTML page, published as a claude.ai Artifact.
 Players fight (gold, essence), gather (ore, wood) or raid (shared world boss), forge gear,
-and hunt unique boss loot. Mobile-first, one-screen layout.
+and hunt unique boss loot. Browser first, still plays on phones and tablets.
 
 Live artifact: https://claude.ai/artifact/GqrXAutCJ6vgdV9TaPxAJH
 
@@ -27,9 +27,10 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
   saves, bump the save key (e.g. `lanternfall.save.v2`) so the game starts fresh instead of loading
   broken state; never ship code that crashes on an old save. New state fields still need defaults in
   `fresh()`. The coordinator sets up late-game test saves on request.
-- Mobile is moving to **landscape only** (owner, 2026-09-29): design for about 740x360 CSS px landscape
-  phones (and desktop). Until the landscape layout lands (task UX-L1), the current portrait layout must
-  keep working at 360px wide. Respects `prefers-reduced-motion`.
+- **Browser first** (owner, 2026-10-08): design for a desktop browser at 1280x720 CSS px, mouse and keyboard, and
+  make it look good at 1920x1080 and fit 1366x640. Mobile and tablet still work: landscape phones (740x360) and
+  tablets (1024x768) must play without clipping; phones held upright (360x740) must not break, but new features
+  need not be designed for them. Respects `prefers-reduced-motion`.
 
 ## Art freeze (standard: owner, 2026-09-30; signer: the Opus art judge, Cal 2026-10-06)
 
