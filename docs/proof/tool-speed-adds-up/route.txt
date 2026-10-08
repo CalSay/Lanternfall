@@ -1,0 +1,23 @@
+# seed: 1
+# Proof for card tool-speed-adds-up: the first Copper Pickaxe's card says what it is faster than and why, e.g. "Mining is 35%
+# faster than with your Stone Pick: +25% for a tier 1 tool on a tier 1 vein, and +8.1% from its mining speed line." A better
+# tier 1 pickaxe over another, Mining 14 and the first spear are held by tools/check.mjs (section "tool-speed-adds-up").
+# At 360x740 the guide's next step (the first weapon, #230) scrolls the menu to Craft Pine Bow and the result card leaves the
+# screen, so the route taps the pickaxe under "Last crafts" to bring its card back, as a player would. Reported to the Foreman.
+# Browser-first (Cal, 8 Oct): pickaxe-adds-up-1280x720.png is the same step at 1280x720 with a mouse, shot by a one-off
+# Playwright script, since playtest.mjs has no desktop view yet.
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap "Craft"
+wait 1
+tap "Craft Copper Pickaxe"
+wait 1
+tap "Copper Pickaxe, Uncommon"
+wait 1
+expect "Copper Pickaxe on"
+expect "faster than with your Stone Pick"
+expect "for a tier 1 tool on a tier 1 vein"
+expect "from its mining speed line"
+shot pickaxe-adds-up
