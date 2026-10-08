@@ -6894,8 +6894,11 @@ if (section('guide target guard (browser)')) try {
           // 3. a first-use line has no ring and never pauses
           await X(`onboardStep = () => null; onboardUse = () => ({ id: 'use:camp', text: 'Build stations here.' }); setTab('world'); ui(true); true`);
           await page.evaluate(() => window.__gtgTick());
-          const u = await X(`({ ring: !document.querySelector('.ob-ring').parentNode.hidden && !document.querySelector('.ob-ring').hidden, paused: ONBOARD.paused, text: document.querySelector('.ob-txt').textContent })`);
-          assert(!u.ring && !u.paused && u.text === 'Build stations here.', `guard ${at}: a first-use line has no ring and never pauses (${JSON.stringify(u)})`);
+          const u = await X(`({ ring: !document.querySelector('.ob-ring').parentNode.hidden && !document.querySelector('.ob-ring').hidden, paused: ONBOARD.paused, text: document.querySelector('.ob-txt').textContent, up: !document.querySelector('.ob-bub').hidden, live: combatFoes().some(f => f && !f.dead && f.hp > 0 && !f.gone) })`);
+          // staged-guide-followups: a landscape menu leaves the live fight beside it, so the line waits for the gap between foes (that gap is timed in
+          // "staged guide follow-ups (browser)")
+          if (width > height && u.live) assert(!u.up && !u.paused, `guard ${at}: a first-use line waits while a live fight shows beside the menu, and pauses nothing (${JSON.stringify(u)})`);
+          else assert(!u.ring && !u.paused && u.text === 'Build stations here.', `guard ${at}: a first-use line has no ring and never pauses (${JSON.stringify(u)})`);
           assert(!errs.length, `guard ${at}: no browser errors` + (errs.length ? ': ' + errs[0] : ''));
         } finally { await ctx.close(); }
       }
@@ -10877,7 +10880,7 @@ if (section('staged guide (browser)')) try {
         let sl2 = null;
         for (let k = 0; k < 20 && !(sl2 && sl2.id === 'say:slot'); k++) { await page.waitForTimeout(200); sl2 = JSON.parse(await X(LOOK)); if (sl2.id && sl2.id !== 'say:slot' && sl2.id.startsWith('use:')) await X('document.querySelector(".ob-ok") && !document.querySelector(".ob-ok").hidden && document.querySelector(".ob-ok").click(); true'); }
         const slotted = await X(`soloEquipped().includes(${JSON.stringify(id)})`);
-        assert(slotted && sl2 && sl2.id === 'say:slot' && /is next to Attack now/.test(sl2.txt), `staged guide: a move learned into an empty slot gets his line saying where it went ("${sl2 && sl2.txt}", slotted ${slotted}, learned and slotted as the Learn button does)`);
+        assert(slotted && sl2 && sl2.id === 'say:slot' && /is next to Echo now/.test(sl2.txt), `staged guide: a move learned into an empty slot gets his line saying where it went ("${sl2 && sl2.txt}", slotted ${slotted}, learned and slotted as the Learn button does)`);
         assert(!errs.length, 'staged guide (Scroll, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
