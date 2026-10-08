@@ -1,0 +1,1 @@
+Your Forge, Workbench and Loom now refine: smelt ore and coal into Ingots, saw logs into Planks, weave Cloth and tan Leather. Each station runs up to 3 orders in turn while you fight and while you are away. From grade 2, crafts and every upgrade take these instead of raw ore, logs, fibre and hide. Coal comes with Copper Ore once the Forge is built. Best shot: forge-orders.

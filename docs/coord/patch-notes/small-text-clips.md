@@ -1,0 +1,1 @@
+Long material names like "Hemp Fibre" now fit on the Craft tier buttons, and good-news toasts such as "Secret found: First Try. New title: Clutch." show in full instead of trailing off. Best shot: loom-tiers.

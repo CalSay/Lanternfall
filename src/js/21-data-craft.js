@@ -43,7 +43,8 @@
 //   CRAFT_TONICS         the 3 tonics; CRAFT_TONIC_RULE duration and tier scaling
 //   CRAFT_BAG_MAX        bag limit, counting unequipped items only
 //   craftScale(n, t)                 tier-1 amount -> tier t amount (as craftCost does)
-//   craftRecipe(kind, t)             scaled recipe {family: n}
+//   craftRecipe(kind, t)             scaled recipe {family: n}; from grade 2 in middles (refineMats)
+//   REFINED_FAMILIES, REFINE_*       refined materials (ingot, plank, cloth, leather) and coal; refineMats(kind, mats)
 //   craftBaseLines(kind, p)          base lines [[stat, value]] from power p
 //   craftAffixPool(kind, role)       affix ids a new item of that kind can roll
 //   craftAffixLines(r, mw)           how many affix lines rarity r gets (+1 with Masterwork)
@@ -80,6 +81,49 @@ const CRAFT_FAMILY = {
   herb: { src: 'gather', skill: 'forage', row: 'Herb beds', from: 'Foraging herb beds.' },
   hide: { src: 'gather', skill: 'hunt', row: 'Hunting Grounds', from: 'Hunting only.' },   // owner: never from fights
   ess: { src: 'fight', skill: null, row: null, from: 'Fighting only. Every foe can drop it, and Marsh Wraiths drop extra.' }
+};
+
+// ================= refined materials (refine-queues; overhaul spec 2, 4, 12, 13) =================
+// The camp stations turn raw into middles: ore + coal -> ingot (Forge), logs -> planks (Workbench), fibre -> cloth and
+// hide + a log -> leather (Loom). Not in CRAFT_FAMILIES on purpose: those are the gathered families (5 named grades each,
+// the Codex Materials page, the Full cells deed, Transmute and the Store filters read it). Coal has one grade (slot 1);
+// its five names repeat so a loop over grades never reads undefined. Art ruling 2026-10-08: text only, no icon at all
+// (matIcon returns '' for these), and coal drops from Copper Ore once the Forge is built until the Coal Seam's art lands.
+const REFINED_FAMILIES = ['ingot', 'plank', 'cloth', 'leather'];
+Object.assign(MAT, {
+  ingot: { n: 'Ingots', short: ['Copper Ingot', 'Iron Ingot', 'Silver Ingot', 'Cobalt Ingot', 'Mithril Ingot'], col: MAT.ore.col, unit: '' },
+  plank: { n: 'Planks', short: ['Pine Plank', 'Birch Plank', 'Oak Plank', 'Mangrove Plank', 'Tideash Plank'], col: MAT.wood.col, unit: '' },
+  cloth: { n: 'Cloth', short: ['Hemp Cloth', 'Linen', 'Briar Cloth', 'Kelp Cloth', 'Stormgrass Cloth'], col: MAT.fibre.col, unit: '' },
+  leather: { n: 'Leather', short: ['Bristle Leather', 'Duskfang Leather', 'Fenscale Leather', 'Riptide Leather', 'Kelpie Leather'], col: MAT.hide.col, unit: '' },
+  coal: { n: 'Coal', short: ['Coal', 'Coal', 'Coal', 'Coal', 'Coal'], col: ['#3A3542', '#3A3542', '#3A3542', '#3A3542', '#3A3542'], unit: '', one: true }
+});
+// Every stored family in pouch order: the gathered ones, then the middles, then coal (the away report and its diff walk this).
+const STOCK_FAMILIES = CRAFT_FAMILIES.concat(REFINED_FAMILIES, ['coal']);
+// The raw family each middle is made from, and back.
+const REFINE_RAW = { ingot: 'ore', plank: 'wood', cloth: 'fibre', leather: 'hide' };
+const REFINE_MID = { ore: 'ingot', wood: 'plank', fibre: 'cloth', hide: 'leather' };
+// Numbers are provisional until the one balance pass (overhaul spec 13).
+//   secs     seconds per unit by grade at a Lv 1 station;  perLevel  +10% speed a station level above 1
+//   xp       station XP a unit = xp x grade;  coal  coal per Ingot by grade;  coalDrop  coal per Copper Ore mined (Forge built)
+//   reserve  an "All" order keeps this share of each input, counted when it is set;  max  orders a station holds
+const REFINE_TUNE = { on: true, reserve: 0.2, secs: [15, 25, 40, 60, 90], perLevel: 0.1, xp: 2, coal: [1, 2, 3, 4, 4], coalDrop: 0.5, max: 3 };
+// Products: station, skill, the verbs a station row uses, and the inputs of one unit at grade t ([family, grade, n]).
+const REFINE_PRODUCTS = {
+  ingot: { st: 'forge', skill: 'smith', verb: 'Smelt', ing: 'Smelting', did: 'smelted', inputs: t => [['ore', t, 2], ['coal', 1, REFINE_TUNE.coal[t - 1]]] },
+  plank: { st: 'bench', skill: 'bench', verb: 'Saw', ing: 'Sawing', did: 'sawed', inputs: t => [['wood', t, 2]] },
+  cloth: { st: 'loom', skill: 'loom', verb: 'Weave', ing: 'Weaving', did: 'wove', inputs: t => [['fibre', t, 2]] },
+  leather: { st: 'loom', skill: 'loom', verb: 'Tan', ing: 'Tanning', did: 'tanned', inputs: t => [['hide', t, 2], ['wood', t, 1]] }
+};
+const REFINE_STATIONS = ['forge', 'bench', 'loom'];
+const refineOn = () => REFINE_TUNE.on === true;
+// A cost in middles: every ore, wood, fibre and hide count becomes the matching middle at half, rounded up. Crystal,
+// herb, essence and gold stay. Tools, Charms and Trinkets always stay raw.
+const refineKindRaw = kind => { const d = CRAFT_KINDS[kind]; return !d || !!d.tool || kind === 'charm' || kind === 'trinket'; };
+const refineMats = (kind, mats) => {
+  if (!refineOn() || refineKindRaw(kind)) return mats;
+  const out = {};
+  for (const [k, n] of Object.entries(mats)) { const m = REFINE_MID[k]; if (m) out[m] = (out[m] || 0) + Math.ceil(n / 2); else out[k] = (out[k] || 0) + n; }
+  return out;
 };
 
 // C24: Hunting. Owner (2026-10-01): switch it on now, before its art pack is done, and wire Codex's drafts in (interim):
@@ -233,7 +277,9 @@ const CRAFT_KINDS = {
 };
 for (const [k, d] of Object.entries(CRAFT_KINDS)) if (!d.ic) d.ic = k;
 const craftScale = (n, t) => Math.ceil(n * (1 + 0.5 * (t - 1)));
-const craftRecipe = (kind, t) => Object.fromEntries(Object.entries(CRAFT_KINDS[kind].rec).map(([k, n]) => [k, craftScale(n, t)]));
+const craftRecipeRaw = (kind, t) => Object.fromEntries(Object.entries(CRAFT_KINDS[kind].rec).map(([k, n]) => [k, craftScale(n, t)]));
+// refine-queues: from grade 2 a craft takes middles (refineMats); grade 1 crafts keep raw materials.
+const craftRecipe = (kind, t) => t >= 2 ? refineMats(kind, craftRecipeRaw(kind, t)) : craftRecipeRaw(kind, t);
 const craftBaseLines = (kind, p) => CRAFT_KINDS[kind].base.map(([s, k, cap]) => [s, cap == null ? p * k : Math.min(cap, p * k)]);
 
 // Position -> kinds that fit, keyed by hero class (hero positions), companion role

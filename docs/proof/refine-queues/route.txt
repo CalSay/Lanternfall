@@ -1,0 +1,63 @@
+# Proof for card refine-queues. The gold-upgrades save (Tobin, zone 20, Forge Lv 2, 23,168 Iron Ore, 200 Silver Ore) with
+# 60 coal added (tests/proof-fixtures/save-refine.json), at 360x740 and 740x360:
+#   forge-orders-*.png  Camp, the Forge's card: Smelt opens its order sheet. Two orders, run in turn: 10 Silver Ingots, then
+#                       Iron Ingots set to All. The running one shows its rate ("Smelting: 1.7 a minute · 99 an hour"); the
+#                       All order says what it keeps ("keeps 4,634 Iron Ore and 12 Coal"). The add list names each grade's
+#                       inputs (2 Iron Ore and 2 Coal each). No icon for coal or the Ingots (text only, art ruling 2026-10-08).
+#   away-report-*.png   after 4 hours away: the Camp block says what the Forge made and used and why it stopped
+#                       ("The Forge smelted 10 Silver Ingots and 9 Iron Ingots from 20 Silver Ore, 18 Iron Ore and 48 Coal
+#                       (stopped: kept its reserve of coal)."). Ingots
+#                       show in the Materials block by name.
+#   store-first-*.png   Gather, Store: the first view has the Coal stack (the 8th) and "Silver Ingot 10" beside Silver Ore in
+#                       the ore stack (the grade comes from the raw stacks; at most 8 stacks).
+# The rules are held by tools/check.mjs ("refine-queues" sections). Numbers are provisional for the balance pass.
+# seed: 1
+new refine
+wait 3
+tap-if "Skip this story"
+tap-if "Close"
+wait 2
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 1
+tap "Camp"
+wait 1
+tap "Forge: show details"
+wait 1
+tap "Smelt"
+wait 1
+scroll
+wait 0.5
+tap "Smelt 10 Silver Ingot"
+wait 1
+tap "Smelt all Iron Ingot"
+wait 1
+scroll up
+wait 1
+expect "a minute"
+expect "an hour"
+expect "keeps"
+expect "Waits its turn"
+shot forge-orders
+away 4
+wait 3
+expect "The Forge smelted"
+expect "stopped: kept its reserve of coal"
+shot away-report
+tap-if "Collect"
+wait 1
+tap-if "Continue"
+wait 1
+tap "Hero"
+wait 1
+tap "Gather"
+wait 1
+tap "Store"
+wait 1
+expect ".sh-stack[data-fam=coal]"
+expect ".sh-stack[data-fam=ore] .sh-stack-mid"
+scroll
+wait 0.5
+expect "Silver Ingot"
+shot store-first

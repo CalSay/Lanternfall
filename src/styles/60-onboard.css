@@ -9,17 +9,20 @@
 /* The guide panel (75-onboard-ui.js place()): Old Hesketh's face, the tip, the button on its own row. It is a notice, so it
    docks where notices dock and never sits over the stage. Three homes, one per mode class:
    .dock      portrait game view: a slot in .game just above the Act / Skills / Foe bar (the stage gives up the height)
-   .over-menu portrait with a menu open: the bottom of the menu panel, above the tab bar (and above any toast)
+   .over-menu portrait with a menu open: its own grid row between the menu and the tab bar (and above any toast), so the menu
+              ends above it and never scrolls a button under it (guide-bubble-clear-of-controls)
    .side      landscape: the side column's notices slot (80-landscape.css) */
 .ob-bub { position: relative; pointer-events: none; order: 2; flex: none; margin: 4px var(--gut) 0; z-index: 8;
   display: grid; grid-template-columns: 48px minmax(0, 1fr) 44px; grid-template-rows: auto auto; column-gap: 8px; align-items: start;
   padding: 8px 0 8px 8px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 3px 0 #0B0810;
   font: 600 14px/1.3 var(--body); color: var(--bone); }
 .ob-bub[hidden] { display: none; }
-.ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 12px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
-/* hero-build-tab-blank: over a menu the panel hides the menu's foot, so the menu gets that room at its end (its last buttons, Build's
-   Spread evenly, can scroll clear) and a button scrolled into view stops above the panel, not under it */
-.app:has(> .ob-bub.over-menu:not([hidden])) .panels { padding-bottom: calc(150px + var(--toast-h, 0px)); scroll-padding-bottom: calc(150px + var(--toast-h, 0px)); }
+/* The dock keeps a gap over the tab bar as deep as its pop-in slide (obIn), so it never rests or lands on the tabs. */
+.ob-bub.dock { margin-bottom: 6px; }
+.ob-bub.over-menu { grid-area: guide; margin: 8px var(--gut) calc(8px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
+@media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {
+  .app:has(> .ob-bub.over-menu:not([hidden])) { grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-areas: "top" "main" "guide" "tabs"; }
+}
 .ob-bub.ok-row:not(.side) { grid-template-columns: 48px minmax(0, 1fr) auto; padding-right: 8px; }
 .ob-bub.ok-row:not(.side) .ob-x { display: none; }
 .ob-bub.ok-row:not(.side) .ob-txt { grid-row: 1 / span 2; }

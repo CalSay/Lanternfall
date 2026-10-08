@@ -277,6 +277,25 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   expected result, not regressions. Cal approved accepting both in the health baseline (2026-10-07). Open asks for
   the overhaul: give essence a sink so it is not dead stock; crew and supplies take little gold (Hands 0 in the first
   10 hours, about 10% by hour 50).
+- **Refining (refine-queues, 2026-10-08; numbers provisional until the one balance pass):** the Forge smelts ore and coal
+  into Ingots, the Workbench saws logs into Planks, the Loom weaves fibre into Cloth and tans hide into Leather. Each
+  station runs up to 3 orders in turn (a shortfall amount or All, which keeps 20% of each input), while you fight and
+  while you are away. From grade 2 every craft's ore, wood, fibre and hide count becomes the middle at half, rounded up,
+  and every upgrade's material converts the same way at every grade (Copper Warblade +1 = 1 Copper Ingot). Tools,
+  charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
+  is never for sale (Lantern Rule 4).
+  - **Names** (planner's, kept by the build): Ingot: Copper, Iron, Silver, Cobalt, Mithril Ingot. Plank: Pine, Birch,
+    Oak, Mangrove, Tideash Plank. Cloth: Hemp Cloth, Linen, Briar Cloth, Kelp Cloth, Stormgrass Cloth. Leather: Bristle,
+    Duskfang, Fenscale, Riptide, Kelpie Leather. Coal: Coal (one grade).
+  - **The leather rule (a change from the overhaul spec):** Leather takes 2 hide and 1 log **of the same grade** (the
+    spec said a log of any grade, lowest first). One grade keeps the All reserve and the order row honest.
+  - **Coal is a drop until the Coal Seam (Opus high judge, coordinator sign-off 2026-10-08 00:27):** once the Forge is
+    built, Copper Ore brings about 1 coal for every 2 ore the hero mines (live, away, the Glint, Spillover), with the
+    fraction carried, never floored away. It stands in for Cal's chosen Coal Seam node until Codex's art is vetted; the
+    Seam is deferred, not dropped (card `coal-seam-integrate`). Gatherers bring no coal until then. Cal can veto with
+    "wait for the Seam".
+  - **Text only (the same ruling):** coal and the four middles show their names, never a borrowed icon, an Essence orb
+    or an empty image box, until the art pack `art-refined-materials` passes the art judge.
 
 ## Achievements
 
@@ -722,6 +741,11 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   Prediction: the nightly walk shows no gap over 8 minutes between big moments up to the zone 10 Champion, for every
   starter pick; missed if any seed shows one. Coverage areas 2 and 3. No save change; the colour grants switch off
   with `CACHE_TUNE.on` (card `cache-core`).
+- **F1 after the staged lesson** (coordinator, 2026-10-08, on the planner's recommendation; Cal may veto). Cal's staged first fight
+  (#197) holds fight 1 for its lessons, so the first gold lands at about 0:19. Keep the lesson. F1 now reads: "the first press gets a
+  hit with its sound within 10 s of the first tap, and the first loot (gold, loot or XP) within 30 s". Why: F1 exists so something
+  good happens fast, and a hit with its sound inside 10 s does that; the lesson was Cal's own ask. Measured by `tools/walk.mjs`
+  (`first-hour-map-two-clocks`).
 - **The guide is Old Hesketh, with a face.** Landscape: the side column's notices slot. Portrait: docked above the
   action bar. Never over the fighters or the HP bars.
 - **Bounties.** A finished bounty can be claimed from Next Up and from its ready notice, and the board also shows at

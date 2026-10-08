@@ -115,13 +115,13 @@ player acts still pass through the 90 s unlock gap where the governor applies.
 |---|---|---|---|
 | ~12:30 | Workbench and first tool (today) | crafts from raw | none: tier 1 needs no refining |
 | ~16 to 22 | First class weapon (today) | crafts it; it is Balanced; the result card says what it changes against the boss at the furthest zone, for example "Zone 2 boss: you'd win about 3 in 10, not 2 in 10" (normal foes in zones 1-6 take the same hits whatever you wear, so the line names the zone boss) | **the fight change on the result card** (card `craft-delta`) |
-| ~22 to 28 | The first upgrade (gold's first big use). Tobin's Copper Warblade +1 takes 2 Copper Ingots and 1 Pine Plank; Wren's Pine Bow +1 takes 2 Pine Planks and 1 leather; Pip's Pine Staff +1 takes 2 Pine Planks | sets the station going from Next Up, goes back to the road | **refining**: the camp works while you fight. Tobin also meets **coal** here: the Coal Seam shows the first time an order needs an ingot. Two stations at once is one idea (an order on a station), set from one Next Up line |
+| ~22 to 28 | The first upgrade (gold's first big use). As built (refine-queues, 2026-10-08): the upgrade takes only the main material's middle, so Tobin's Copper Warblade +1 takes 1 Copper Ingot and Wren's and Pip's +1 a Pine Plank | sets the station going from Next Up ("Smelt 1 Copper Ingot for your Warblade +1"), goes back to the road | **refining**: the camp works while you fight. Tobin also meets **coal** here: as built, coal comes with Copper Ore once the Forge is built (about 1 for every 2 ore; Next Up says "Mine Copper Ore to get coal" when it is the gap). The Coal Seam node waits for Codex's art (card `coal-seam-integrate`). Two stations at once is one idea (an order on a station), set from one Next Up line |
 | ~28 to 35 | Second craft at a station | taps the bar while it crafts | **the Strike** |
 | ~30 to 45 | Woodcraft or Smithing reaches gate + 3 | Next Up: "Pine Bow at grade C is ready to make" | **grades**: a level means a better craft |
 | ~40 to 50 | A craft the Strike cannot be trusted on (the player missed one) | "Infuse to grade B: 6 Essence" on the recipe row | **Infuse**: Essence lifts the grade (section 7b) |
 | ~45 to 60, or after the first time away | Tier 2 opens (zone 7, Woodcraft 10); Next Up names it for the zone 10 Champion: "Birch Bow for the zone 10 Champion: 5 Birch Planks, 2 Duskfang Leather" | chops, hunts, refines, crafts; picks grade A Pine or grade D Birch | **the second refine** where a hero has not met it (Pip: cloth; Tobin: leather for the Plate; Pip's ingots and coal with the Lantern) |
 | at the first tier 2 weapon | the weapon screen offers Heavy, Balanced or Swift | picks one | **profiles** (Retune comes later) |
-| after Hands open (Hearth 2, Tavern) | a Hand works the Coal Seam while the Forge smelts | plans what runs while away | the IdleOn-style away plan Cal asked for (no new system) |
+| after Hands open (Hearth 2, Tavern) | a Hand works the Coal Seam while the Forge smelts (only after `coal-seam-integrate`; until then Hands bring no coal and the hero's own Copper Ore feeds the Forge, away too) | plans what runs while away | the IdleOn-style away plan Cal asked for (no new system) |
 
 ### Cadence targets
 
@@ -251,13 +251,15 @@ the camp. That is accepted, not hidden: Wren works two stations, Tobin and Pip t
   the cap is the lower of `zoneTier(S.maxZone)` and the top grade the family's skill gathers now (hide also at most
   Hunting's 3); the cell shows the cap grade if any is held there, else the largest stack at or below the cap, else the
   highest grade held. An empty cell shows only when the family holds nothing; hide's cell waits until Hunting shows or
-  hide is held. Essence is one pile (`storeShelfGrade` in `75-store-ui.js`). A refined family's count sits in the same cell as its raw one ("Iron Ore 120 ·
-  Ingots 40"). Other tiers fold out on tap. Middles get Storehouse caps (group 0.5, as hide); coal gets group 1, like
-  ore.
-- Until vetted icons land (art card, section 11), a middle shows its raw family's existing icon with a text label
-  ("Ingot"). No code-drawn or tinted icon. The Coal Seam reuses the Copper Vein's scene, shown as drawn (no redraw, no tint), with its own name. The art judge
-  rules on this before card 2 merges; if it counts as a stopgap under the art freeze, coal drops from the Copper Vein
-  instead (1 coal for every 2 copper) until the Coal Seam still lands, and no new node shows.
+  hide is held. Essence is one pile (`storeShelfGrade` in `75-store-ui.js`). A refined family's count sits in the same cell as its raw one ("Iron Ore 120"
+  with "Iron Ingot 40" under it, refine-queues): the grade comes from the raw stacks by the rule above and the middle of
+  that grade shows beside it; only when the family holds no raw at or below its cap does the middle's own grade pick the
+  cell. Coal is the 8th cell, once the Forge is built or coal is held. Other tiers fold out on tap. Middles get
+  Storehouse caps (group 0.5, as hide); coal gets group 1, like ore.
+- **As ruled (art judge, 2026-10-08 00:27):** coal and the middles are **text only** until their vetted icons land (art
+  card `art-refined-materials`): the name alone, never a raw family's icon, an Essence orb or an empty image box. No
+  code-drawn or tinted icon. Coal **drops from the Copper Vein** (1 coal for every 2 copper, once the Forge is built) and
+  no new node shows; the Coal Seam is deferred to `coal-seam-integrate`, after Codex's art passes.
 
 ---
 
