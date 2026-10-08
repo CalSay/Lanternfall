@@ -1,0 +1,200 @@
+# seed: 1
+# Proof for card staged-guide-followups: Hesketh's first-hour lines land at the right moment, one at a time.
+# Part 1, fixture flow-points (Wren, level 4, zone 2, points to spend, the guide at its upgrade step): one point in Might, and his line about
+# closing the menu (with its Back to the fight button) comes straight away, not after a 15-20 s silence.
+# Part 2, fixture boss1 (Wren on zone 1, the boss next): the boss falls, the "First boss down" card shows on a clean screen with no Scroll line
+# under it; after Continue he tells you about the Moss Scroll, before the next foe walks in.
+# Item 1 (the landscape fire talk) no longer reproduces after #198. Item 2 (no line beside a live landscape fight), item 3 (no line flashes
+# up after a kill) and item 4 (Power Shot learned: "next to Echo", as the row reads) are timed and read by tools/check.mjs
+# "staged guide follow-ups (browser)"; the slot line shows over the Hero menu in portrait, where this tool's text reader misses the panel.
+new flow-points
+wait 2
+tap-if "Continue"
+tap "Hero"
+wait 1
+tap "Build"
+wait 1
+tap "Add 1 point to Might"
+wait 2
+expect "Back to the fight"
+shot one-point-back-line
+new boss1
+wait 2
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+tap-if "Got it"
+tap-if "Attack"
+tap-if "Echo Shot"
+tap-if "Dodge"
+tap-if "Parry"
+wait 1
+wait 3
+expect .mm-card
+expect .mm-head
+expect-no "Open Hero, then Abilities"
+shot boss-card-clean
+wait 3
+tap "Continue"
+wait 1
+expect "That boss dropped a Moss Scroll"
+shot scroll-line

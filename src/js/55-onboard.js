@@ -158,8 +158,10 @@ const wearPiece = kind => {
   } catch (e) {}
   return null;
 };
-// the points are spent (or the player has sat on the Hero menu a while with some left): time to point back at the fight
-const backReady = () => { try { const k = soloHero(); if (obAttrOn() && k && attrPoints(k).free > 0) return GUIDE_RT.lastEnd !== null && GUIDE_RT.t - GUIDE_RT.lastEnd >= 20; } catch (e) {} return true; };
+// the points are spent, or a beat after the first one with some left (staged-guide-followups: it waited 20 s, a long silence while the next fight
+// started behind the menu; his line already says "when you're done here", so the rest can still be spent under it): time to point back at the fight
+const BACK_WAIT = 1;   // seconds of play after the first point
+const backReady = () => { try { const k = soloHero(); if (obAttrOn() && k && attrPoints(k).free > 0) return GUIDE_RT.lastEnd !== null && GUIDE_RT.t - GUIDE_RT.lastEnd >= BACK_WAIT; } catch (e) {} return true; };
 const toolWorn = () => { try { return TOOL_POS.some(pos => !!equipped(pos)); } catch (e) { return false; } };
 // W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
 // never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
