@@ -358,6 +358,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (id === 'hearth') return [`+${3 * l}% away gains`].concat(l >= 5 ? ['2 builders'] : []);
     if (d.skill) {
       const out = l === 1 ? [`${SKILL[d.skill]} station`] : [`${SKILL[d.skill]} XP +${Math.round(STN_XP[l] * 100)}%`];
+      if (l >= 2 && typeof REFINE_STATIONS === 'object' && REFINE_STATIONS.includes(id)) out.push(`Refining +${Math.round(REFINE_TUNE.perLevel * 100 * (l - 1))}% faster`);   // refine-queues: +10% a level
       if (l >= 5) out.push(STN_FIVE[id].txt);
       return out;
     }

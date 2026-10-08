@@ -56,8 +56,9 @@ const REG = [
       ['Bounty parcels', '55-bounties.js', "stashAdd\\(r\\.kind, r\\.t, r\\.n, 'parcel'\\)"], ['Almanac board crates', '55-almanac.js', 'stashAdd\\(m\\.k, m\\.t, m\\.n'],
       ['Salvaging gear (about 40% back)', '51-actions.js', 'CRAFT_KINDS\\[it\\.slot\\]\\.rec'], ['Tool rare finds (one grade up)', '55-tools.js', 'credit\\(kind, up, finds']],
     snk: [
+      ['Smelting at the Forge: 2 Ore and coal an Ingot', '55-refine.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
       ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
-      ['Gear crafts and upgrades', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Hearth, Forge, Storehouse, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
+      ['Gear crafts at grade 1 (later grades and upgrades take Ingots)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Hearth, Forge, Storehouse, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
       ['Trade runs', '57k-trade.js', 'job\\.cargo'], ['Hero unlock routes', '56c-unlocks.js', 'S\\.mats\\[k\\]\\[i\\] -= take'], ['Light the fire (wood only)', '55-hearth.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n']] },
   { id: 'wood', name: 'Wood', field: 'S.mats.wood[0..4]', what: 'Pine, Birch, Oak, Mangrove, Tideash. Woodcutting.', mat: 'wood',
     src: [
@@ -68,8 +69,9 @@ const REG = [
       ['Glint taps', '55-gathering.js', 'stashAdd\\(kind, t, Math\\.max\\(1, roll\\(CRAFT_GLINT'], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"],
       ['Bounty parcels', '55-bounties.js', "stashAdd\\(r\\.kind, r\\.t, r\\.n, 'parcel'\\)"], ['Salvaging gear (about 40% back)', '51-actions.js', 'CRAFT_KINDS\\[it\\.slot\\]\\.rec']],
     snk: [
+      ['Sawing at the Workbench: 2 logs a Plank; tanning takes 1 log a Leather', '55-refine.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
       ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
-      ['Gear crafts and upgrades (staff, bow, warblade, tools)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds: Hearth rows are the big one', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
+      ['Gear crafts at grade 1 and tools (later grades and upgrades take Planks)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds: Hearth rows are the big one', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
       ['Light the fire', '55-hearth.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'], ['Trade runs', '57k-trade.js', 'job\\.cargo'], ['Hero unlock route (Bram, 80 Pine)', '56c-unlocks.js', 'S\\.mats\\[k\\]\\[i\\] -= take']] },
   { id: 'ess', name: 'Essence', field: 'S.mats.ess[0..4]', what: 'Dim, Glowing, Radiant, Tidelit, Stormlit. Fight drops; grade is set by zone.', mat: 'ess',
     src: [['Fight drops (0.25 a foe, +3 a boss)', '50-sim.js', "stashAdd\\('ess', tier, ess, 'flow', true\\)"], ['Away fighting (dormant)', '50-sim.js', "stashAdd\\('ess', tier, Math\\.floor\\(kills"],
@@ -96,6 +98,7 @@ const REG = [
       ['Transmute (Enchanting): 4 of a grade make 1 of the next', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give'],
       ['Foraging swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"]],
     snk: [
+      ['Weaving at the Loom: 2 Fibre a Cloth', '55-refine.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
       ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
       ['Gear crafts (robes, leathers, vestments)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Loom, Library, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'], ['Trade runs', '57k-trade.js', 'job\\.cargo']] },
   { id: 'herb', name: 'Herb', field: 'S.mats.herb[0..4]', what: 'Foraging.', mat: 'herb',
@@ -114,8 +117,27 @@ const REG = [
       ['Transmute (Enchanting): 4 of a grade make 1 of the next', '55-crafting.js', 'stashAdd\\(fam, c\\.toT, c\\.give'],
       ['Hunting swings', '50-sim.js', "stashAdd\\(kind, t, Math\\.max\\(1, Math\\.floor\\(y\\)"], ['Gatherers (Hands)', '57f-hands.js', "stashAdd\\(f, t, n, 'parcel'\\)"]],
     snk: [
+      ['Tanning at the Loom: 2 Hide a Leather', '55-refine.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n'],
       ['Transmute (Enchanting): spends 4 to go up a grade, 1 to go down', '55-crafting.js', 'S\\.mats\\[fam\\]\\[fromT - 1\\] -= c\\.take'],
       ['Gear crafts (shield, plate, bow, hood, leathers)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Camp builds (Loom, tents)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n']] },
+  { id: 'ingot', name: 'Ingots', field: 'S.mats.ingot[0..4]', what: 'Copper, Iron, Silver, Cobalt, Mithril Ingot. The Forge smelts 2 Ore and coal into one.', mat: 'ingot',
+    src: [['Forge orders (smelting)', '55-refine.js', "stashAdd\\(o\\.prod, o\\.tier, 1, 'flow', true\\)"]],
+    snk: [['Gear crafts from grade 2 (in place of ore)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Gear upgrades at every grade (in place of ore)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, it\\.t\\)']] },
+  { id: 'plank', name: 'Planks', field: 'S.mats.plank[0..4]', what: 'Pine, Birch, Oak, Mangrove, Tideash Plank. The Workbench saws 2 logs into one.', mat: 'plank',
+    src: [['Workbench orders (sawing)', '55-refine.js', "stashAdd\\(o\\.prod, o\\.tier, 1, 'flow', true\\)"]],
+    snk: [['Gear crafts from grade 2 (in place of wood)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Gear upgrades at every grade (in place of wood)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, it\\.t\\)'],
+      ['Camp builds (Tent 5)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n']] },
+  { id: 'cloth', name: 'Cloth', field: 'S.mats.cloth[0..4]', what: 'Hemp Cloth, Linen, Briar Cloth, Kelp Cloth, Stormgrass Cloth. The Loom weaves 2 Fibre into one.', mat: 'cloth',
+    src: [['Loom orders (weaving)', '55-refine.js', "stashAdd\\(o\\.prod, o\\.tier, 1, 'flow', true\\)"]],
+    snk: [['Gear crafts from grade 2 (in place of fibre)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Gear upgrades at every grade (in place of fibre)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, it\\.t\\)'],
+      ['Camp builds (Tent 5)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n']] },
+  { id: 'leather', name: 'Leather', field: 'S.mats.leather[0..4]', what: 'Bristle, Duskfang, Fenscale, Riptide, Kelpie Leather. The Loom tans 2 Hide and 1 log of the same grade into one.', mat: 'leather',
+    src: [['Loom orders (tanning)', '55-refine.js', "stashAdd\\(o\\.prod, o\\.tier, 1, 'flow', true\\)"]],
+    snk: [['Gear crafts from grade 2 (in place of hide)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, t\\)'], ['Gear upgrades at every grade (in place of hide)', '55-crafting.js', 'payMats\\(c\\.cost\\.mats, it\\.t\\)'],
+      ['Camp builds (Tent 5)', '57-camp.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n']] },
+  { id: 'coal', name: 'Coal', field: 'S.mats.coal[0]', what: 'One grade. Comes with Copper Ore once the Forge is built (about 1 for every 2 Copper Ore); the Forge burns it to smelt Ingots.', mat: 'coal',
+    src: [['Mining Copper Ore, live or away, once the Forge is built', '55-refine.js', "stashAdd\\('coal', 1, n, 'flow'"]],
+    snk: [['Smelting at the Forge: 1 to 4 an Ingot by grade', '55-refine.js', 'S\\.mats\\[f\\]\\[t - 1\\] -= n']] },
   { id: 'embers', ids: ['embers'], name: 'Embers', field: 'S.embers', what: 'Raid currency. Buys relics. Online only.',
     src: [['A world raid boss falls', '52-raid.js', 'S\\.embers \\+= e'], ], snk: [['Buying relics', '51-actions.js', 'S\\.embers -= cost']] },
   { id: 'relics', ids: ['relic'], name: 'Relics', field: 'S.relic.{banner,heart,glass,edge}', what: 'Warbanner, Ember Heart, Hourglass (away cap) and Loaded Die (crit damage).',
@@ -169,12 +191,13 @@ const ALLOW = {
 
 // What each currency is to the player (counters-and-layers, docs/DECISIONS.md): the eight CORE counters are the only points
 // or money shown as such outside their own screen. Materials (ore, wood, crystal, fibre, herb, hide, plus Trophies and
-// Mirrors of Embers as Rare finds) read as one Materials counter; the rest are meters, scores, flags, a timer, gear or a
-// Deepwell-only token.
+// Mirrors of Embers as Rare finds, and the stations' refined goods and coal) read as one Materials counter; the rest are
+// meters, scores, flags, a timer, gear or a Deepwell-only token.
 const KIND = {
   gold: 'core', xp: 'core (Level)', ess: 'core', scrolls: 'core', stars: 'core', attr: 'core', embers: 'core (online)',
   ore: 'core (Materials)', wood: 'core (Materials)', crystal: 'core (Materials)', fibre: 'core (Materials)', herb: 'core (Materials)', hide: 'core (Materials)',
   trophies: 'Materials (rare finds)', mirrors: 'Materials (rare finds)',
+  ingot: 'Materials (refined)', plank: 'Materials (refined)', cloth: 'Materials (refined)', leather: 'Materials (refined)', coal: 'Materials (fuel)',
   skillxp: 'meter', handxp: 'meter', toolxp: 'meter', renown: 'meter (gate)', deedpts: 'score', light: 'score', stamps: 'score',
   tokens: 'flag', oil: 'timer', marks: 'mode (Deepwell only)', relics: 'gear', uniques: 'gear'
 };
@@ -253,12 +276,12 @@ const FLAGS = [
   ['Wood piles up', 'Wood has the most sinks of any material (Hearth rows, crafts, tools, tents), yet the 50-hour health run ends with wood hoarded. Sinks are lumpy: camp rows are rare big buys, crafts are small. A steady wood sink is missing. Sinks for crafting-levelling-spec to add: smelting and plank fuel, upgrade and tool repair costs.'],
   ['Essence piles up', 'Fights drop Essence (about 0.25 a foe) and little spends it steadily. Grade is set by zone, so low grades sit unused while crafts want grade 3 and up. Transmute trades 4 of a grade for 1 of the next, or 1 for 2 one grade down, so low grades can be melted up slowly. Vigor Tonics and reforging are the only other steady sinks, and reforge is the one open-ended sink.'],
   ['Gold is the mid-game choke', 'Gold has the most sinks and is spent as it comes in (93% in the 50-hour run). Training at about 29,000 gold against about 75 a kill is the wall in the optimiser playtest. Handoff for xp-gold-pacing-report: gold sources are fights, Bounties and trade only; nothing converts a hoard (ore, wood, Essence) into gold except trade runs, which carry ore, wood, crystal, fibre and herb.'],
-  ['Iron Ore sits idle', 'Mining fills the Iron pile from Mining 14 but gear needs Smithing too. The playtest left 23,000 Iron Ore unspent. The only way to turn ore into a better material is Transmute (4 Iron make 1 Silver), which is lossy and gated by Enchanting; there is no smelting step, so every other ore sink is a craft or a camp row. Candidate: the Smithing processing step in crafting-levelling-spec.'],
+  ['Iron Ore sits idle', 'Mining fills the Iron pile from Mining 14 but gear needs Smithing too. The playtest left 23,000 Iron Ore unspent. The only way to turn ore into a better material is Transmute (4 Iron make 1 Silver), which is lossy and gated by Enchanting; until refine-queues there was no smelting step. Now the Forge smelts ore and coal into Ingots, which gear from grade 2 and every upgrade take; watch the next long health run for whether Iron Ore still piles up.'],
   ['Cobalt has no hint', 'Cobalt Ore needs Mining 64 (nodeReq). The Gather screen gives no "where do I get this" hint for a grade the player cannot reach yet. Candidate for a hint in the skilling cards.'],
   ['Smithing past level 54 is unused', 'Smithing opens item tiers at levels 1, 10, 22, 36, 54 (stationReq). A hero past 54 gains nothing from more Smithing, because grades 6 to 15 are not built. Levels past the last tier gate need a use (processing, Masterwork, a repair or refine step).'],
   ['Stamps and renown have no sink', 'Almanac Stamps are only counted. Renown only gates hero routes and is never spent. Boss tokens and Lantern Light are flags and scores, not money. These are fine as gates; do not add more of them.'],
   ['Embers need the online raid', 'Embers come only from the world raid, so an offline player has no relic income. Online layer is out of scope here; noted for the planner.'],
-  ['Dead or unplugged values', 'The Renown Day omen sets a renown modifier that nothing reads (55-almanac.js). Several Codex milestone rewards are stored but not wired (57c-codex.js "later:" lines). Plank, cloth and leather are named in tent costs (21w-data-econ.js) but no source exists, so tents 6 to 10 cannot be built. The Coin relic is always 0.']
+  ['Dead or unplugged values', 'The Renown Day omen sets a renown modifier that nothing reads (55-almanac.js). Several Codex milestone rewards are stored but not wired (57c-codex.js "later:" lines). Plank, cloth and leather now come from station orders, so Tent 5 can be built; tents 6 to 10 name grades 6 to 12, which no material has yet, so they still cannot. The Coin relic is always 0.']
 ];
 
 function render() {
@@ -297,7 +320,8 @@ function render() {
   L.push('## How the systems link', '',
     '- Fight: gold, XP, Essence, Scrolls (boss), Trophies (boss, champion), Uniques (boss), stars (boss, elite), boss tokens.',
     '- Gather: ore, wood, crystal, fibre, herb, hide and skill XP, by hand, by gatherers or while away. The Storehouse caps every pile.',
-    '- Craft: materials plus gold (plus Trophies at the top) become gear. Salvage returns about 40% of the materials.',
+    '- Refine: the Forge, Workbench and Loom turn ore and coal, logs, fibre and hide into Ingots, Planks, Cloth and Leather, while you play and while you are away. Coal comes with Copper Ore once the Forge is built.',
+    '- Craft: materials plus gold (plus Trophies at the top) become gear; from grade 2, and for every upgrade, the refined goods replace ore, wood, fibre and hide. Salvage returns about 40% of the raw materials.',
     '- Camp: gold, materials and Trophies build stations, which gate crafting tiers, the Storehouse, the crew and the Tavern.',
     '- Deepwell: Oil is the clock, Depth Marks are the prize. A run changes nothing in the main game except through the shop.',
     '- Lantern Cache (`55-caches.js`): a boss\'s first clear opens one. It lists what that win already paid (no new gold, Essence, relics or time) and gives one Deepwell lantern colour the save does not own, on zones 1 to 3 and 7 to 9. It is a container, not a currency: nothing buys, skips or rerolls it.',

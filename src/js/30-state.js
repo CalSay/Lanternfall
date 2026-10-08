@@ -26,7 +26,8 @@ const fresh = () => Object.assign({
   skills: { mine: { lv: 1, xp: 0 }, wood: { lv: 1, xp: 0 }, smith: { lv: 1, xp: 0 },
     forage: { lv: 1, xp: 0 }, hunt: { lv: 1, xp: 0 }, bench: { lv: 1, xp: 0 }, loom: { lv: 1, xp: 0 }, ench: { lv: 1, xp: 0 } },
   mats: { ore: [0, 0, 0, 0, 0], wood: [0, 0, 0, 0, 0], ess: [0, 0, 0, 0, 0],
-    crystal: [0, 0, 0, 0, 0], fibre: [0, 0, 0, 0, 0], herb: [0, 0, 0, 0, 0], hide: [0, 0, 0, 0, 0] },
+    crystal: [0, 0, 0, 0, 0], fibre: [0, 0, 0, 0, 0], herb: [0, 0, 0, 0, 0], hide: [0, 0, 0, 0, 0],
+    ingot: [0, 0, 0, 0, 0], plank: [0, 0, 0, 0, 0], cloth: [0, 0, 0, 0, 0], leather: [0, 0, 0, 0, 0], coal: [0, 0, 0, 0, 0] },   // refine-queues: middles; coal uses slot 1
   node: { kind: 'ore', t: 1 }, gProg: 0,
   items: [], equip: { weapon: null, off: null, helm: null, body: null, charm: null, pick: null, axe: null, sickle: null, spear: null }, nextId: 1,
   found: {}, fSlot: 'weapon', fTier: 1

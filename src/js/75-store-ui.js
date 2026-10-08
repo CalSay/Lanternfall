@@ -28,8 +28,9 @@ function storeShelfCap(f) {
   const c = Math.min(z, skillTopTier(sk));
   return f === 'hide' ? Math.min(c, HUNT_BEASTS.length) : c;
 }
-function storeShelfGrade(f) {
-  const a = S.mats[f] || [], n = t => Math.max(0, a[t - 1] || 0), cap = storeShelfCap(f);
+function storeShelfGrade(f) { return storeShelfGradeOf(S.mats[f] || [], storeShelfCap(f)); }
+function storeShelfGradeOf(a, cap) {
+  const n = t => Math.max(0, a[t - 1] || 0);
   if (n(cap) > 0) return cap;
   let best = 0;
   for (let t = 1; t <= cap; t++) if (n(t) > 0 && (!best || n(t) >= n(best))) best = t;
@@ -37,8 +38,21 @@ function storeShelfGrade(f) {
   for (let t = 5; t > cap; t--) if (n(t) > 0) return t;
   return cap;
 }
-// The hide stack waits until Hunting shows, unless you already hold hide.
-const storeShelfShows = f => f !== 'hide' || huntingVisible() || (S.mats[f] || []).some(n => n > 0);
+// refine-queues: a middle (Ingot, Plank, Cloth, Leather) shares its raw family's stack ("Iron Ore 120 · Iron Ingot 40").
+// The grade comes from the raw stacks by the rule above, and the middle of that grade shows beside it; only when the family
+// holds no raw at or below its cap does the middle's own grade pick the stack (a few Briar Cloth never hide 15,000 Hemp
+// Fibre, and a family holding only middles never shows an empty stack). Coal is the 8th stack, at grade 1 only.
+const storeShelfMid = f => (typeof REFINE_MID === 'object' && REFINE_MID[f]) || null;
+function storeShelfPick(f) {
+  const m = storeShelfMid(f), a = S.mats[f] || [], cap = storeShelfCap(f);
+  if (m && !a.slice(0, cap).some(n => n > 0) && (S.mats[m] || []).some(n => n > 0)) return storeShelfGradeOf(S.mats[m], cap);
+  return storeShelfGrade(f);
+}
+// The stacks of the first view, in family order: the gathered families, then coal.
+const STORE_SHELF = CRAFT_FAMILIES.concat(['coal']);
+// The hide stack waits until Hunting shows, unless you already hold hide. Coal shows once the Forge is built or coal is held.
+const storeShelfShows = f => f === 'coal' ? ((S.mats.coal || [])[0] || 0) > 0 || (typeof refineOn === 'function' && refineOn() && typeof campLevel === 'function' && campLevel('forge') >= 1)
+  : f !== 'hide' || huntingVisible() || (S.mats[f] || []).some(n => n > 0);
 // ---- end of the shelf rule ----
 
 // The stage's held line: "640/1,000 stored", "1,000/1,000 · Full".
@@ -64,8 +78,12 @@ function storeSalvageNote(preview, t) {
 
 {
   const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
-  const FOUGHT = f => !(CRAFT_FAMILY[f] && CRAFT_FAMILY[f].skill);   // essence only (hide is Hunting's since C24)
+  const FOUGHT = f => f !== 'coal' && !REFINE_RAW[f] && !(CRAFT_FAMILY[f] && CRAFT_FAMILY[f].skill);   // essence only (hide is Hunting's since C24); never coal or a middle
+  // refine-queues: middles and coal open their own "where to get it" (75-refine-ui), not the gathering one
+  const where = (f, t) => (f === 'coal' || REFINE_RAW[f]) && typeof refineUI === 'object' && refineUI ? refineUI.where(f, t) : whereSheet(f, t);
   const famNote = f => {
+    if (f === 'coal') return 'from Copper Ore';
+    if (REFINE_RAW[f]) return `made at the ${CAMP_B[REFINE_PRODUCTS[f].st].n}`;
     if (FOUGHT(f)) return 'from fights';
     const sk = CRAFT_FAMILY[f].skill, s = S.skills[sk]; return s ? `${SKILL[sk]} ${s.lv}` : SKILL[sk];
   };
@@ -82,17 +100,20 @@ function storeSalvageNote(preview, t) {
     c.setAttribute('aria-label', `${matName(f, t)}: where to get it`);
     const n = el('span', 'mc', '0'), cap = el('span', 'sh-cap'), bar = el('i', 'sh-bar'), fill = el('b'); bar.append(fill);
     c.append(n, el('div', 'mn', f === 'ess' ? 'Essence' : MAT[f].short[t - 1]), bar);
-    c.addEventListener('click', () => whereSheet(f, t));
+    c.addEventListener('click', () => where(f, t));
     return { c, n, cap, fill, f, t };
   }
-  // A shelf stack: icon, name, held / cap, a bar. Its grade moves with storeShelfGrade, so it is built once per family.
+  // A shelf stack: icon, name, held / cap, a bar, and the middle of the same grade beside it (refine-queues). Its grade moves
+  // with storeShelfPick, so it is built once per family. Coal has no icon (text only until its art passes).
   function stack(f) {
     const c = btn('sh-stack');
     const ic = img(matIcon(f, 1)), tx = el('span', 'sh-stack-tx'), nm = el('span', 'sh-stack-nm'), n = el('span', 'sh-stack-n');
+    const mid = el('span', 'sh-stack-mid'); mid.hidden = true;
     const bar = el('i', 'sh-bar'), fill = el('b'); bar.append(fill);
-    tx.append(nm, n, bar); c.append(ic, tx);
-    const x = { c, ic, nm, n, fill, f, t: 1 };
-    c.addEventListener('click', () => whereSheet(f, x.t));
+    tx.append(nm, n, mid, bar); c.append(ic, tx);
+    c.dataset.fam = f;
+    const x = { c, ic, nm, n, mid, fill, f, t: 1 };
+    c.addEventListener('click', () => where(f, x.t));
     return x;
   }
   // A cell's held, cap, bar and warn/full/over marks (shelf stacks and grade cells alike).
@@ -135,14 +156,14 @@ function storeSalvageNote(preview, t) {
     tools.append(V.all);
     // the shelf: one stack per family
     V.shelf = el('div', 'sh-shelf'); V.stacks = {};
-    for (const f of CRAFT_FAMILIES) { const x = stack(f); V.shelf.append(x.c); V.stacks[f] = x; }
-    // families
+    for (const f of STORE_SHELF) { const x = stack(f); V.shelf.append(x.c); V.stacks[f] = x; }
+    // families (then the middles and coal, shown once held)
     const fams = el('div', 'sh-fams');
-    for (const f of CRAFT_FAMILIES) {
+    for (const f of STOCK_FAMILIES) {
       const s = el('div', 'sec sh-fam'), h = el('div', 'sec-head'), tt = el('h2', 'sec-title', MAT[f].n), nt = el('span', 'note');
       h.append(tt, nt);
       const row = el('div', 'mat-row sh-row'), cells = [];
-      for (let t = 1; t <= (f === 'ess' ? 1 : 5); t++) { const x = cell(f, t); row.append(x.c); cells.push(x); }   // Essence is one pile
+      for (let t = 1; t <= (f === 'ess' || f === 'coal' ? 1 : 5); t++) { const x = cell(f, t); row.append(x.c); cells.push(x); }   // Essence is one pile; coal one grade
       s.append(h, row); fams.append(s);
       V.fams[f] = { s, nt, cells };
     }
@@ -161,7 +182,7 @@ function storeSalvageNote(preview, t) {
     });
     const note = el('p', 'note', 'Tap a material to see where it comes from.');
     sec.append(card, chips, tools, V.shelf, fams, V.empty, V.tro, V.troRow, note);
-    // icons last: 35 cells, only on the view's first show
+    // icons last: 35 cells, only on the view's first show (coal and the middles have none: their names show alone)
     for (const f of CRAFT_FAMILIES) for (const x of V.fams[f].cells) x.c.prepend(img(matIcon(f, x.t)));
   }
   function update() {
@@ -169,7 +190,7 @@ function storeSalvageNote(preview, t) {
     const lv = storeLevel(), g = storeCapAt('ore', 1, lv), h = storeCapAt('hide', 1, lv), fin = Number.isFinite(g);
     putText(V.title, lv ? `Storehouse Lv ${lv}` : 'Storehouse');
     const nFull = fin ? storeFullCells().length : 0;
-    putText(V.sub, !fin ? 'No limits on materials.' : (lv ? '' : 'Not built yet. ') + `Holds ${gxNum(g)} of each. Hide and essence ${gxNum(h)}.` + (nFull ? ` ${nFull === 1 ? '1 pile is' : nFull + ' piles are'} full.` : ''));
+    putText(V.sub, !fin ? 'No limits on materials.' : (lv ? '' : 'Not built yet. ') + `Holds ${gxNum(g)} of each. Hide, essence and refined goods ${gxNum(h)}.` + (nFull ? ` ${nFull === 1 ? '1 pile is' : nFull + ' piles are'} full.` : ''));
     const camp = typeof campOpen === 'function' && campOpen();
     putHidden(V.up, !fin || !camp);
     putText(V.up, lv ? 'Upgrade ›' : 'Build ›');
@@ -192,31 +213,36 @@ function storeSalvageNote(preview, t) {
     const grades = filter !== 'troph' && (fam1 || (filter === 'all' && showAll));
     const shelf = filter !== 'troph' && !grades;
     // the order: fullest first (by the shelf grade's fill) or by name; empty stacks last; ties keep the family order
-    const fillOf = f => { const t = f === 'ess' ? 1 : storeShelfGrade(f), c = capOf(f, t), v = held(f, t); return Number.isFinite(c) && c > 0 ? v / c : v > 0 ? 1e-9 : -1; };
-    const nameOf = f => f === 'ess' ? 'Essence' : matName(f, storeShelfGrade(f));
-    const order = CRAFT_FAMILIES.slice();
+    const gradeOf = f => f === 'ess' || f === 'coal' ? 1 : storeShelfPick(f);
+    const fillOf = f => { const t = gradeOf(f), c = capOf(f, t), v = held(f, t); return Number.isFinite(c) && c > 0 ? v / c : v > 0 ? 1e-9 : -1; };
+    const nameOf = f => f === 'ess' ? 'Essence' : matName(f, gradeOf(f));
+    const order = STOCK_FAMILIES.slice();
     if (sort === 'name') order.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
-    else { const fl = Object.fromEntries(order.map(f => [f, fillOf(f)])); order.sort((a, b) => fl[b] - fl[a] || CRAFT_FAMILIES.indexOf(a) - CRAFT_FAMILIES.indexOf(b)); }
+    else { const fl = Object.fromEntries(order.map(f => [f, fillOf(f)])); order.sort((a, b) => fl[b] - fl[a] || STOCK_FAMILIES.indexOf(a) - STOCK_FAMILIES.indexOf(b)); }
     putHidden(V.shelf, !shelf);
-    for (const f of CRAFT_FAMILIES) {
+    for (const f of STORE_SHELF) {
       const x = V.stacks[f], show = shelf && shelfHas(f) && (filter === 'all' || (filter === 'fought' && FOUGHT(f)));
       putHidden(x.c, !show);
       if (!show) continue;
       putStyle(x.c, 'order', String(order.indexOf(f)));
-      const t = f === 'ess' ? 1 : storeShelfGrade(f), v = held(f, t), cap = capOf(f, t), cf = Number.isFinite(cap);
-      if (x.t !== t || !x.drawn) { x.t = t; x.drawn = true; putAttr(x.ic, 'src', matIcon(f, t)); }
+      const t = gradeOf(f), v = held(f, t), cap = capOf(f, t), cf = Number.isFinite(cap);
+      if (x.t !== t || !x.drawn) { x.t = t; x.drawn = true; const u = matIcon(f, t); putHidden(x.ic, !u); if (u) putAttr(x.ic, 'src', u); }
       putText(x.nm, f === 'ess' ? 'Essence' : matName(f, t));
       putText(x.n, cf ? `${gxNum(v)} / ${gxNum(cap)}` : `${gxNum(v)} held`);
       mark(x, v, cap);
-      putAttr(x.c, 'aria-label', `${f === 'ess' ? 'Essence' : matName(f, t)}: ${storeNum(v)}${cf ? ' of ' + storeNum(cap) : ''}. Where to get it`);
+      // the middle of the same grade, beside the raw stack ("Iron Ingot 40")
+      const m = storeShelfMid(f), mv = m ? held(m, t) : 0;
+      putHidden(x.mid, !(mv > 0)); putText(x.mid, mv > 0 ? `${matName(m, t)} ${gxNum(mv)}` : '');
+      if (mv > 0) putToggle(x.c, 'none', false);
+      putAttr(x.c, 'aria-label', `${f === 'ess' ? 'Essence' : matName(f, t)}: ${storeNum(v)}${cf ? ' of ' + storeNum(cap) : ''}${mv > 0 ? `, ${matName(m, t)} ${storeNum(mv)}` : ''}. Where to get it`);
     }
-    // every grade: families as rows
+    // every grade: families as rows (a middle or coal row only once held; a family filter shows its middle and ore shows coal)
     const empty = [];
-    for (const f of CRAFT_FAMILIES) {
-      const F = V.fams[f], has = any(f);
-      const inFilter = filter === 'all' || filter === f || (filter === 'fought' && FOUGHT(f));
-      if (grades && !has && inFilter && filter === 'all' && shelfHas(f)) empty.push(f);
-      const show = grades && inFilter && (has || showEmpty || filter !== 'all') && (filter !== 'all' || shelfHas(f));
+    for (const f of STOCK_FAMILIES) {
+      const F = V.fams[f], has = any(f), extra = f === 'coal' || !!REFINE_RAW[f], home = f === 'coal' ? 'ore' : REFINE_RAW[f];
+      const inFilter = filter === 'all' || filter === f || (extra && filter === home) || (filter === 'fought' && FOUGHT(f));
+      if (grades && !has && inFilter && filter === 'all' && !extra && shelfHas(f)) empty.push(f);
+      const show = grades && inFilter && (extra ? has : (has || showEmpty || filter !== 'all') && (filter !== 'all' || shelfHas(f)));
       putHidden(F.s, !show);
       if (!show) continue;
       putStyle(F.s, 'order', String(order.indexOf(f)));

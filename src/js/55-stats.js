@@ -60,7 +60,7 @@ const statsApi = {};
   Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => uniqKeys().length });
 
   // ---- away report ----
-  const MAT_KINDS = CRAFT_FAMILIES; // every family (K5), in pouch order
+  const MAT_KINDS = STOCK_FAMILIES; // every family (K5), then the middles and coal (refine-queues), in pouch order
   let snap = null;
   on('awayBegin', r => {
     r.cap = (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600;

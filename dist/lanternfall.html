@@ -2582,6 +2582,30 @@ span.cf-d { font-weight: 600; }
 .pcard .pt.big:has(img[src$="#cp"]) { width: 68px; height: 68px; }
 .pcard .pt.big img[src$="#cp"] { width: 64px; height: 64px; }
 .pcard .pt.big img { position: absolute; inset: 0; margin: auto; }
+/* 60-refine: the stations' order sheets (75-refine-ui.js, card refine-queues) and the middle line on a Storehouse stack. */
+.rf-title { margin: 0 0 6px; font: 600 calc(18px * var(--display-k))/1.2 var(--display); }
+.rf-intro { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); }
+.rf-orders { display: grid; gap: 6px; margin-bottom: 12px; }
+.rf-order { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line-hi); }
+.rf-order.run { border-color: var(--gold); box-shadow: inset 3px 0 0 var(--gold); }
+.rf-order.done { opacity: .75; }
+.rf-otx, .rf-ptx { display: grid; min-width: 0; gap: 1px; }
+.rf-oname { font: 600 13.5px/1.25 var(--body); }
+.rf-oline, .rf-okeep, .rf-pmeta { font-size: 12px; color: var(--muted); }
+.rf-order.run .rf-oline { color: var(--bone); }
+.rf-order.stop .rf-oline, .rf-pwhy { color: #F2A93B; font-size: 12px; }
+.rf-rm, .rf-make { min-height: 44px; min-width: 44px; }
+.rf-add { display: grid; gap: 6px; }
+.rf-prow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--line-hi); }
+.rf-pbtns { display: flex; gap: 6px; }
+.rf-oldtx { font-size: 14px; line-height: 1.4; }
+.rf-old .bsheet-foot { display: flex; gap: 8px; }
+.rf-old .bsheet-foot .big { flex: 1; }
+/* the Storehouse stack's middle of the same grade ("Iron Ingot 40") */
+.sh-stack-mid { font-size: 11.5px; color: var(--bone); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 380px) { .rf-prow { grid-template-columns: 1fr; } .rf-pbtns { justify-content: flex-end; } }
+/* coal has no icon (text only): its stack's text takes the whole width */
+.sh-stack[data-fam="coal"] { grid-template-columns: minmax(0, 1fr); }
 /* 60-savecode: Save code panel (export/import) */
 .savecode-panel { display: grid; gap: 10px; }
 .savecode-sep { height: 2px; background: var(--line); margin: 2px 0; }
@@ -6963,7 +6987,8 @@ const RELICS = [
 //   CRAFT_TONICS         the 3 tonics; CRAFT_TONIC_RULE duration and tier scaling
 //   CRAFT_BAG_MAX        bag limit, counting unequipped items only
 //   craftScale(n, t)                 tier-1 amount -> tier t amount (as craftCost does)
-//   craftRecipe(kind, t)             scaled recipe {family: n}
+//   craftRecipe(kind, t)             scaled recipe {family: n}; from grade 2 in middles (refineMats)
+//   REFINED_FAMILIES, REFINE_*       refined materials (ingot, plank, cloth, leather) and coal; refineMats(kind, mats)
 //   craftBaseLines(kind, p)          base lines [[stat, value]] from power p
 //   craftAffixPool(kind, role)       affix ids a new item of that kind can roll
 //   craftAffixLines(r, mw)           how many affix lines rarity r gets (+1 with Masterwork)
@@ -7000,6 +7025,49 @@ const CRAFT_FAMILY = {
   herb: { src: 'gather', skill: 'forage', row: 'Herb beds', from: 'Foraging herb beds.' },
   hide: { src: 'gather', skill: 'hunt', row: 'Hunting Grounds', from: 'Hunting only.' },   // owner: never from fights
   ess: { src: 'fight', skill: null, row: null, from: 'Fighting only. Every foe can drop it, and Marsh Wraiths drop extra.' }
+};
+
+// ================= refined materials (refine-queues; overhaul spec 2, 4, 12, 13) =================
+// The camp stations turn raw into middles: ore + coal -> ingot (Forge), logs -> planks (Workbench), fibre -> cloth and
+// hide + a log -> leather (Loom). Not in CRAFT_FAMILIES on purpose: those are the gathered families (5 named grades each,
+// the Codex Materials page, the Full cells deed, Transmute and the Store filters read it). Coal has one grade (slot 1);
+// its five names repeat so a loop over grades never reads undefined. Art ruling 2026-10-08: text only, no icon at all
+// (matIcon returns '' for these), and coal drops from Copper Ore once the Forge is built until the Coal Seam's art lands.
+const REFINED_FAMILIES = ['ingot', 'plank', 'cloth', 'leather'];
+Object.assign(MAT, {
+  ingot: { n: 'Ingots', short: ['Copper Ingot', 'Iron Ingot', 'Silver Ingot', 'Cobalt Ingot', 'Mithril Ingot'], col: MAT.ore.col, unit: '' },
+  plank: { n: 'Planks', short: ['Pine Plank', 'Birch Plank', 'Oak Plank', 'Mangrove Plank', 'Tideash Plank'], col: MAT.wood.col, unit: '' },
+  cloth: { n: 'Cloth', short: ['Hemp Cloth', 'Linen', 'Briar Cloth', 'Kelp Cloth', 'Stormgrass Cloth'], col: MAT.fibre.col, unit: '' },
+  leather: { n: 'Leather', short: ['Bristle Leather', 'Duskfang Leather', 'Fenscale Leather', 'Riptide Leather', 'Kelpie Leather'], col: MAT.hide.col, unit: '' },
+  coal: { n: 'Coal', short: ['Coal', 'Coal', 'Coal', 'Coal', 'Coal'], col: ['#3A3542', '#3A3542', '#3A3542', '#3A3542', '#3A3542'], unit: '', one: true }
+});
+// Every stored family in pouch order: the gathered ones, then the middles, then coal (the away report and its diff walk this).
+const STOCK_FAMILIES = CRAFT_FAMILIES.concat(REFINED_FAMILIES, ['coal']);
+// The raw family each middle is made from, and back.
+const REFINE_RAW = { ingot: 'ore', plank: 'wood', cloth: 'fibre', leather: 'hide' };
+const REFINE_MID = { ore: 'ingot', wood: 'plank', fibre: 'cloth', hide: 'leather' };
+// Numbers are provisional until the one balance pass (overhaul spec 13).
+//   secs     seconds per unit by grade at a Lv 1 station;  perLevel  +10% speed a station level above 1
+//   xp       station XP a unit = xp x grade;  coal  coal per Ingot by grade;  coalDrop  coal per Copper Ore mined (Forge built)
+//   reserve  an "All" order keeps this share of each input, counted when it is set;  max  orders a station holds
+const REFINE_TUNE = { on: true, reserve: 0.2, secs: [15, 25, 40, 60, 90], perLevel: 0.1, xp: 2, coal: [1, 2, 3, 4, 4], coalDrop: 0.5, max: 3 };
+// Products: station, skill, the verbs a station row uses, and the inputs of one unit at grade t ([family, grade, n]).
+const REFINE_PRODUCTS = {
+  ingot: { st: 'forge', skill: 'smith', verb: 'Smelt', ing: 'Smelting', did: 'smelted', inputs: t => [['ore', t, 2], ['coal', 1, REFINE_TUNE.coal[t - 1]]] },
+  plank: { st: 'bench', skill: 'bench', verb: 'Saw', ing: 'Sawing', did: 'sawed', inputs: t => [['wood', t, 2]] },
+  cloth: { st: 'loom', skill: 'loom', verb: 'Weave', ing: 'Weaving', did: 'wove', inputs: t => [['fibre', t, 2]] },
+  leather: { st: 'loom', skill: 'loom', verb: 'Tan', ing: 'Tanning', did: 'tanned', inputs: t => [['hide', t, 2], ['wood', t, 1]] }
+};
+const REFINE_STATIONS = ['forge', 'bench', 'loom'];
+const refineOn = () => REFINE_TUNE.on === true;
+// A cost in middles: every ore, wood, fibre and hide count becomes the matching middle at half, rounded up. Crystal,
+// herb, essence and gold stay. Tools, Charms and Trinkets always stay raw.
+const refineKindRaw = kind => { const d = CRAFT_KINDS[kind]; return !d || !!d.tool || kind === 'charm' || kind === 'trinket'; };
+const refineMats = (kind, mats) => {
+  if (!refineOn() || refineKindRaw(kind)) return mats;
+  const out = {};
+  for (const [k, n] of Object.entries(mats)) { const m = REFINE_MID[k]; if (m) out[m] = (out[m] || 0) + Math.ceil(n / 2); else out[k] = (out[k] || 0) + n; }
+  return out;
 };
 
 // C24: Hunting. Owner (2026-10-01): switch it on now, before its art pack is done, and wire Codex's drafts in (interim):
@@ -7153,7 +7221,9 @@ const CRAFT_KINDS = {
 };
 for (const [k, d] of Object.entries(CRAFT_KINDS)) if (!d.ic) d.ic = k;
 const craftScale = (n, t) => Math.ceil(n * (1 + 0.5 * (t - 1)));
-const craftRecipe = (kind, t) => Object.fromEntries(Object.entries(CRAFT_KINDS[kind].rec).map(([k, n]) => [k, craftScale(n, t)]));
+const craftRecipeRaw = (kind, t) => Object.fromEntries(Object.entries(CRAFT_KINDS[kind].rec).map(([k, n]) => [k, craftScale(n, t)]));
+// refine-queues: from grade 2 a craft takes middles (refineMats); grade 1 crafts keep raw materials.
+const craftRecipe = (kind, t) => t >= 2 ? refineMats(kind, craftRecipeRaw(kind, t)) : craftRecipeRaw(kind, t);
 const craftBaseLines = (kind, p) => CRAFT_KINDS[kind].base.map(([s, k, cap]) => [s, cap == null ? p * k : Math.min(cap, p * k)]);
 
 // Position -> kinds that fit, keyed by hero class (hero positions), companion role
@@ -9490,7 +9560,10 @@ const NOTICES = [
   { id: 'deed-milestone', key: 'deed-milestone', ch: 'log' },
   // ---- C14: the merged away report owns its source summaries ----
   { id: 'away-report', key: 'away-report', ch: 'card' },
-  { id: 'hero-token', key: 'heroToken', ch: 'bell', why: 'a hero token won (56c, story-unlock-gates): when that hero joins; no kit yet, so no pop' }
+  { id: 'hero-token', key: 'heroToken', ch: 'bell', why: 'a hero token won (56c, story-unlock-gates): when that hero joins; no kit yet, so no pop' },
+  // ---- refine-queues: the stations' orders ----
+  { id: 'refine-coal', key: 'refine-coal', ch: 'pop', wait: 10, why: 'once a save: where coal comes from (the art ruling: coal drops from Copper Ore once the Forge is built)' },
+  { id: 'refine-why', key: 'refine-why', ch: 'pop', reply: true, why: 'an order button the player just pressed could not add the order: say why' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
 // The rule for a message (or its key), or null.
@@ -10620,7 +10693,8 @@ const fresh = () => Object.assign({
   skills: { mine: { lv: 1, xp: 0 }, wood: { lv: 1, xp: 0 }, smith: { lv: 1, xp: 0 },
     forage: { lv: 1, xp: 0 }, hunt: { lv: 1, xp: 0 }, bench: { lv: 1, xp: 0 }, loom: { lv: 1, xp: 0 }, ench: { lv: 1, xp: 0 } },
   mats: { ore: [0, 0, 0, 0, 0], wood: [0, 0, 0, 0, 0], ess: [0, 0, 0, 0, 0],
-    crystal: [0, 0, 0, 0, 0], fibre: [0, 0, 0, 0, 0], herb: [0, 0, 0, 0, 0], hide: [0, 0, 0, 0, 0] },
+    crystal: [0, 0, 0, 0, 0], fibre: [0, 0, 0, 0, 0], herb: [0, 0, 0, 0, 0], hide: [0, 0, 0, 0, 0],
+    ingot: [0, 0, 0, 0, 0], plank: [0, 0, 0, 0, 0], cloth: [0, 0, 0, 0, 0], leather: [0, 0, 0, 0, 0], coal: [0, 0, 0, 0, 0] },   // refine-queues: middles; coal uses slot 1
   node: { kind: 'ore', t: 1 }, gProg: 0,
   items: [], equip: { weapon: null, off: null, helm: null, body: null, charm: null, pick: null, axe: null, sickle: null, spear: null }, nextId: 1,
   found: {}, fSlot: 'weapon', fTier: 1
@@ -11168,7 +11242,8 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     const m = {}, main = rec.find(([k]) => k !== 'ess' && k !== 'hide') || rec.find(([k]) => k !== 'ess');
     if (main) m[main[0]] = Math.ceil(main[1] * ECON.upMat * (it.plus + 1));
     if (it.u) m.ess = (m.ess || 0) + 2 * (it.plus + 1);
-    const c = { mats: m, gold: econUpgradeGold(it.t, it.plus) };   // 20 foes of the grade's first zone x 1.5^plus (21w ECON.upGrow)
+    const c = { mats: refineMats(it.slot, m),   // refine-queues: in middles at every grade (Copper Warblade +1 = 1 Copper Ingot)
+      gold: econUpgradeGold(it.t, it.plus) };   // 20 foes of the grade's first zone x 1.5^plus (21w ECON.upGrow)
     // +8, +9 and +10 each need a Trophy of any type (owner decision); K6 enforces it.
     const tr = craftUpgradeTrophies(it.plus); if (tr) c.troph = tr;
     return c;
@@ -15411,6 +15486,401 @@ let unitHp, unitCd, bossTelegraph;
   ensureInit();
 }
 
+// ---- src/js/55-refine.js ----
+// 55-refine: the stations' order lists (card refine-queues; overhaul spec 2, 4, 12, 13) and coal.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// The Forge smelts ore and coal into Ingots, the Workbench saws logs into Planks, the Loom weaves fibre into Cloth and
+// tans hide (and a log of the same grade) into Leather. Each station holds up to REFINE_TUNE.max orders and runs them in
+// turn: the first order that can make a unit runs; a stopped one (out of input, Storehouse full) lets the next run. An
+// order is { prod, tier, want, made, all, at, keep }:
+//   prod   'ingot' | 'plank' | 'cloth' | 'leather' (REFINE_PRODUCTS, 21-data-craft.js), made at that product's station
+//   tier   grade 1-5 of the product and of its inputs (coal has one grade)
+//   want   units to make (a shortfall order); 0 for an "All" order
+//   made   units made so far;  at  seconds of work on the current unit (station-speed seconds)
+//   all    1: make as many as the inputs allow, keeping `keep` of each input
+//   keep   [n per input] for an All order: REFINE_TUNE.reserve of each input held when it was set ("keeps 24 Iron Ore")
+// Orders keep running while you fight or gather (onTick) and while you are away ('awayEnd', below, after camp builds and
+// Hands caught up; the hero's away gathering arrives evenly over the absence, as it would live).
+// Coal (the art ruling 2026-10-08): once the Forge is built, every Copper Ore the hero mines (live, away, the Glint,
+// Spillover: the 'harvest' event) brings REFINE_TUNE.coalDrop coal, with the fraction carried, never floored away. Hands
+// fire no harvest, so they bring no coal until the Coal Seam (card coal-seam-integrate).
+//
+// Exposed names:
+//   read   refineStationOf(prod), refineProducts(st), refineBuilt(st), refineSpeed(st), refineUnitSecs(st, tier),
+//          refinePerMin(st, tier), refineOrders(st), refineState(st, o) -> { k: 'run'|'done'|'input'|'full'|'wait', why, miss },
+//          refineCurrent(st), refineNeed(prod, tier) -> inputs [[fam, t, n]] of one unit, refineMaxUnits(prod, tier, all),
+//          refineSlotFree(st), refineLabel(st)
+//   act    refineAdd(prod, tier, n | 'all') -> { ok, why }, refineRemove(st, i), refineTick(dt)
+//   offer  refineOffer(cost, t) -> { short: { <family>: [per tier] }, orders: [{ st, prod, tier, want, ok, full, why }], add() }
+//          cost is { fam: n } or { mats: { fam: n } } at grade t (an upgrade's or a craft's cost). Frozen shape:
+//          craft-attribute-grades reads it. add() adds every order that can start and returns how many it added.
+//   away   refineAwayRun(T, stock, inflow) (the 'awayEnd' pass; the parity tool and the checks call it through awayGains)
+// Events: 'refined' { st, prod, tier, n } after each unit made live.
+// Save: registerState('refine', { v, st: { forge, bench, loom }, said, seen, coal }). said: 1 = no "The Forge can smelt
+// now" card owed (a new game, or shown); an old save (one saved before this change) starts at 0. seen: when the first order
+// was ever added (ms, 0 = never). coal: 1 once the first coal toast has shown.
+
+let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, refinePerMin, refineOrders, refineState,
+  refineCurrent, refineNeed, refineMaxUnits, refineSlotFree, refineLabel, refineAdd, refineRemove, refineTick, refineOffer,
+  refineAwayRun, refineOldCard;
+
+{
+  const T = REFINE_TUNE;
+  // An old save: a save was loaded (or there is progress) and it has no refine record. Read before registerState fills one.
+  const savedBefore = S.refine === undefined && (storedLast() > 0 || (S.totalKills || 0) > 0);
+  registerState('refine', { v: 1, st: { forge: [], bench: [], loom: [] }, said: 1, seen: 0, coal: 0 });
+  if (savedBefore) S.refine.said = 0;
+  const R = () => S.refine;
+  const have = (f, t) => Math.max(0, (S.mats[f] && S.mats[f][t - 1]) || 0);
+  const name = (f, t) => matName(f, t);
+  const plural = (f, t, n) => name(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || MAT[f].unit === 'Log') ? 's' : '');
+  const built = st => typeof campLevel === 'function' && campLevel(st) >= 1;
+
+  refineStationOf = prod => (REFINE_PRODUCTS[prod] ? REFINE_PRODUCTS[prod].st : null);
+  refineProducts = st => Object.keys(REFINE_PRODUCTS).filter(p => REFINE_PRODUCTS[p].st === st);
+  refineBuilt = st => refineOn() && REFINE_STATIONS.includes(st) && built(st);
+  for (const st of REFINE_STATIONS) addModifier('refineSpeed:' + st, () => 1 + T.perLevel * Math.max(0, (typeof campLevel === 'function' ? campLevel(st) : 1) - 1));
+  refineSpeed = st => mod('refineSpeed:' + st);
+  refineUnitSecs = (st, tier) => T.secs[tier - 1] / Math.max(1e-9, refineSpeed(st));
+  refinePerMin = (st, tier) => 60 / refineUnitSecs(st, tier);
+  refineNeed = (prod, tier) => REFINE_PRODUCTS[prod].inputs(tier);
+  // A station's list. Once per loaded save, drop any order this version cannot run (a hand-edited or newer save), so a tick
+  // never reads an unknown product.
+  const okOrder = (st, o) => o && typeof o === 'object' && REFINE_PRODUCTS[o.prod] && REFINE_PRODUCTS[o.prod].st === st && Number.isInteger(o.tier) && o.tier >= 1 && o.tier <= 5
+    && Number.isFinite(o.want) && Number.isFinite(o.made) && o.want >= 0 && o.made >= 0 && (o.all ? true : o.want >= 1);
+  // a kept order's numbers made whole: at within one unit, keep matching the inputs (else the order keeps nothing back)
+  const fixOrder = o => {
+    o.want = Math.floor(o.want); o.made = Math.floor(o.made); o.all = o.all ? 1 : 0;
+    o.at = Number.isFinite(o.at) ? Math.max(0, Math.min(T.secs[o.tier - 1], o.at)) : 0;
+    if ('keep' in o && !(Array.isArray(o.keep) && o.keep.length === refineNeed(o.prod, o.tier).length && o.keep.every(n => Number.isInteger(n) && n >= 0))) delete o.keep;
+    return o;
+  };
+  let cleanFor = null;
+  const list = st => {
+    if (!S.refine || typeof S.refine !== 'object' || Array.isArray(S.refine)) S.refine = { v: 1, st: { forge: [], bench: [], loom: [] }, said: 1, seen: 0, coal: 0 };
+    const r = R(); if (!r.st || typeof r.st !== 'object' || Array.isArray(r.st)) r.st = { forge: [], bench: [], loom: [] };
+    if (cleanFor !== r) { cleanFor = r; for (const k of REFINE_STATIONS) r.st[k] = Array.isArray(r.st[k]) ? r.st[k].filter(o => okOrder(k, o)).slice(0, T.max).map(fixOrder) : []; }
+    return r.st[st];
+  };
+  refineOrders = st => list(st);
+  const done = o => !o.all && o.made >= o.want;
+  // Input units this order may still take from cell i (an All order keeps its reserve).
+  const free = (o, i, f, t) => have(f, t) - (o.all && Array.isArray(o.keep) ? o.keep[i] || 0 : 0);
+  // What stops this order now: done, an input short of one unit (miss names it), the product's pile full, or nothing (run).
+  refineState = (st, o) => {
+    if (done(o)) return { k: 'done', why: 'Done' };
+    const need = refineNeed(o.prod, o.tier);
+    for (let i = 0; i < need.length; i++) {
+      const [f, t, n] = need[i];
+      if (free(o, i, f, t) < n) return { k: 'input', miss: [f, t], why: have(f, t) >= n ? `Kept its reserve of ${f === 'coal' ? 'coal' : name(f, t)}` : f === 'coal' ? 'Out of coal' : `Out of ${name(f, t)}` };
+    }
+    if (typeof stashRoom === 'function' && stashRoom(o.prod, o.tier) < 1) return { k: 'full', why: 'Storehouse full' };
+    return { k: 'run', why: '' };
+  };
+  refineCurrent = st => { if (!refineBuilt(st)) return null; for (const o of list(st)) if (refineState(st, o).k === 'run') return o; return null; };
+  // Units an order of this product and grade could make from what you hold now (all: after the reserve it would keep).
+  refineMaxUnits = (prod, tier, all) => {
+    let m = Infinity;
+    for (const [f, t, n] of refineNeed(prod, tier)) { const h = have(f, t), k = all ? Math.ceil(h * T.reserve) : 0; m = Math.min(m, Math.floor(Math.max(0, h - k) / n)); }
+    const room = typeof stashRoom === 'function' ? stashRoom(prod, tier) : Infinity;
+    return Math.max(0, Math.min(m, room));
+  };
+  refineSlotFree = st => list(st).length < T.max || list(st).some(done);
+  // The camp card's button: "Smelt", or "Smelt · Smelting 4 a minute" while an order runs.
+  refineLabel = st => {
+    const v = [...new Set(refineProducts(st).map(p => REFINE_PRODUCTS[p].verb))].join(' and '), o = refineCurrent(st);
+    if (!o) return v;
+    const r = refinePerMin(st, o.tier);
+    return `${v} · ${REFINE_PRODUCTS[o.prod].ing} ${r >= 10 ? Math.round(r) : +r.toFixed(1)} a minute`;
+  };
+
+  // ---------------- orders ----------------
+  refineAdd = (prod, tier, n) => {
+    const p = REFINE_PRODUCTS[prod];
+    if (!p || !refineOn()) return { ok: false, why: 'Unknown product.' };
+    if (!(Number.isInteger(tier) && tier >= 1 && tier <= 5)) return { ok: false, why: 'Unknown grade.' };
+    const st = p.st, all = n === 'all';
+    if (!built(st)) return { ok: false, why: `Build the ${CAMP_B[st].n} first.` };
+    if (!refineSlotFree(st)) return { ok: false, why: `The ${CAMP_B[st].n} holds ${T.max} orders. Remove one first.` };
+    const want = all ? 0 : Math.floor(+n);
+    if (!all && !(want >= 1)) return { ok: false, why: 'Pick how many.' };
+    if (refineMaxUnits(prod, tier, all) < 1) { const s = refineState(st, { prod, tier, want: 1, made: 0, all: 0, at: 0 }); return { ok: false, why: s.k === 'full' ? `Storehouse full: ${name(prod, tier)}.` : s.why || 'Not enough to make one.' }; }
+    const o = { prod, tier, want, made: 0, all: all ? 1 : 0, at: 0 };
+    if (all) o.keep = refineNeed(prod, tier).map(([f, t]) => Math.ceil(have(f, t) * T.reserve));
+    const l = list(st), d = l.findIndex(done);
+    if (l.length >= T.max && d >= 0) l.splice(d, 1);   // a finished order makes room
+    // a set amount (a shortfall: an upgrade waits on it) goes ahead of the All orders, which may run for hours
+    const j = all ? -1 : l.findIndex(x => x.all && !done(x));
+    if (j < 0) l.push(o); else l.splice(j, 0, o);
+    if (!R().seen) R().seen = Date.now();
+    emit('refineOrder', { st, prod, tier, want, all: o.all });
+    if (typeof save === 'function') save();
+    return { ok: true, o };
+  };
+  refineRemove = (st, i) => { const l = list(st); if (!(i >= 0 && i < l.length)) return false; l.splice(i, 1); save(); return true; };
+
+  // One unit made: pay its inputs, add the product, train the station's skill.
+  const makeOne = (st, o, quiet) => {
+    for (const [f, t, n] of refineNeed(o.prod, o.tier)) S.mats[f][t - 1] -= n;
+    const got = stashAdd(o.prod, o.tier, 1, 'flow', true);
+    o.made += 1;
+    gainSkill(REFINE_PRODUCTS[o.prod].skill, T.xp * o.tier, quiet);
+    return got;
+  };
+
+  // ---------------- live ----------------
+  refineTick = dt => {
+    if (!refineOn() || !(dt > 0)) return;
+    for (const st of REFINE_STATIONS) {
+      if (!built(st)) continue;
+      let left = dt * refineSpeed(st);
+      for (let guard = 0; guard < 1000 && left > 0; guard++) {
+        const o = refineCurrent(st); if (!o) break;
+        const unit = T.secs[o.tier - 1], need = unit - (o.at || 0);
+        if (left < need) { o.at = Math.min(unit, (o.at || 0) + left); break; }
+        left -= need; o.at = 0;
+        makeOne(st, o, false);
+        emit('refined', { st, prod: o.prod, tier: o.tier, n: 1 });
+      }
+    }
+  };
+  onTick(dt => refineTick(dt));
+
+  // ---------------- coal ----------------
+  let coalCarry = 0, coalFor = null;
+  on('harvest', e => {
+    if (!e || e.kind !== 'ore' || e.t !== 1 || !(e.n > 0) || !refineOn() || !built('forge')) return;
+    if (coalFor !== S) { coalFor = S; coalCarry = 0; }
+    const x = e.n * T.coalDrop + coalCarry, n = Math.floor(x + 1e-9);
+    coalCarry = x - n;
+    if (!(n > 0)) return;
+    const got = stashAdd('coal', 1, n, 'flow', !!e.away);
+    if (e.away) { awayIn('coal', 1, got); return; }
+    if (got > 0 && typeof addFloat === 'function') addFloat(`+${got} Coal`, '#9A97B3', false, 0.7, 0.42);
+    if (got > 0 && !R().coal) { R().coal = 1; emit('toast', { key: 'refine-coal', msg: 'Coal! Copper Ore brings coal now the Forge is built. The Forge smelts it with ore into Ingots.', kind: 'good', icon: null, prio: 'normal' }); }
+  });
+
+  // ---------------- away ----------------
+  // Inflow while away: the 'harvest' events marked away (the hero's away gathering, Spillover) and the coal they brought.
+  let awayStock = null, awayFlow = null, awayLinesOut = [];
+  const cellKey = (f, t) => f + ':' + t;
+  function awayIn(f, t, n) { if (awayFlow && n > 0) awayFlow[cellKey(f, t)] = (awayFlow[cellKey(f, t)] || 0) + n; }
+  on('awayBegin', () => { awayStock = JSON.parse(JSON.stringify(S.mats)); awayFlow = {}; awayLinesOut = []; });
+  on('harvest', e => { if (e && e.away && awayFlow && e.n > 0) awayIn(e.kind, e.t, e.n); });
+  // Runs every built station's orders over T seconds. stock: S.mats at the start; inflow: { 'fam:t': units } arriving
+  // evenly. Never takes more than S.mats holds now (Hands, builds and trade may have moved it). Returns per-station tallies.
+  refineAwayRun = (Tsecs, stock, inflow) => {
+    const out = {};
+    if (!refineOn() || !(Tsecs > 0)) return out;
+    const used = {}, made = {};
+    const base = (f, t) => Math.max(0, ((stock && stock[f]) || [])[t - 1] || 0);
+    const flow = (f, t) => (inflow && inflow[cellKey(f, t)]) || 0;
+    // what the cell holds at time x, minus what this pass already took (never more than S.mats holds now)
+    const at = (f, t, x) => Math.min(have(f, t) + (used[cellKey(f, t)] || 0), base(f, t) + flow(f, t) * Math.min(1, x / Tsecs)) - (used[cellKey(f, t)] || 0);
+    const room = (p, t) => (typeof stashRoom === 'function' ? stashRoom(p, t) : Infinity);
+    // can o make its next unit at time x? (the live rule: every input, net of its reserve, and room for one)
+    const can = (o, x) => !done(o) && refineNeed(o.prod, o.tier).every(([f, t, n], i) => at(f, t, x) - (o.all && o.keep ? o.keep[i] || 0 : 0) >= n) && room(o.prod, o.tier) >= 1;
+    // the earliest time after x that o could run, from inflow alone (Infinity: never in this absence)
+    const when = (o, x) => {
+      if (done(o) || room(o.prod, o.tier) < 1) return Infinity;
+      let w = x;
+      refineNeed(o.prod, o.tier).forEach(([f, t, n], i) => {
+        const k = o.all && o.keep ? o.keep[i] || 0 : 0, u = used[cellKey(f, t)] || 0;
+        if (have(f, t) - k < n) { w = Infinity; return; }   // even everything held now is short
+        const v = flow(f, t);
+        if (base(f, t) - u - k >= n) return;
+        w = v > 0 ? Math.max(w, (u + k + n - base(f, t)) * Tsecs / v) : Infinity;
+      });
+      return w;
+    };
+    const clock = {};
+    for (const st of REFINE_STATIONS) if (built(st) && list(st).length) { clock[st] = 0; out[st] = { made: {}, used: {}, stop: null }; }
+    for (let guard = 0; guard < 200000; guard++) {
+      let st = null; for (const s of Object.keys(clock)) if (clock[s] < Tsecs && (st === null || clock[s] < clock[st])) st = s;
+      if (st === null) break;
+      const x = clock[st], sp = refineSpeed(st), l = list(st);
+      // the first order that can finish its unit, checked at the moment the unit would finish
+      let o = null, fin = 0;
+      for (const c of l) { if (done(c)) continue; const f = x + (T.secs[c.tier - 1] - (c.at || 0)) / sp; if (can(c, Math.min(f, Tsecs))) { o = c; fin = f; break; } }
+      if (!o) {
+        const next = Math.min(...l.map(c => when(c, x)));
+        clock[st] = next > x && next < Tsecs ? next : Tsecs;
+        continue;
+      }
+      if (fin > Tsecs) { o.at = Math.min(T.secs[o.tier - 1], (o.at || 0) + (Tsecs - x) * sp); clock[st] = Tsecs; continue; }
+      for (const [f, t, n] of refineNeed(o.prod, o.tier)) { const k = cellKey(f, t); used[k] = (used[k] || 0) + n; out[st].used[k] = (out[st].used[k] || 0) + n; }
+      o.at = 0;
+      makeOne(st, o, true);
+      const mk = cellKey(o.prod, o.tier); made[mk] = (made[mk] || 0) + 1; out[st].made[mk] = (out[st].made[mk] || 0) + 1;
+      clock[st] = fin;
+    }
+    for (const st of Object.keys(out)) {
+      const first = list(st).find(c => !done(c));
+      out[st].stop = !first ? (list(st).length ? 'done' : null) : refineCurrent(st) ? null : (w => w.charAt(0).toLowerCase() + w.slice(1))(refineState(st, first).why);
+    }
+    return out;
+  };
+  const DID = { forge: 'smelted', bench: 'sawed', loom: 'made' };
+  on('awayEnd', r => {
+    if (!awayStock) return;
+    const stock = awayStock, inflow = awayFlow; awayStock = null; awayFlow = null;
+    // stock that came in while away by other paths (Hands' deliveries, trade, a bounty) counts too, spread over the absence
+    for (const f of STOCK_FAMILIES) (S.mats[f] || []).forEach((n, i) => {
+      const k = cellKey(f, i + 1), x = n - Math.max(0, ((stock[f] || [])[i]) || 0) - (inflow[k] || 0);
+      if (x > 0) inflow[k] = (inflow[k] || 0) + x;
+    });
+    const res = refineAwayRun(r && r.t || 0, stock, inflow);
+    awayLinesOut = [];
+    for (const [st, x] of Object.entries(res)) {
+      const mk = Object.entries(x.made); if (!mk.length) continue;
+      const parts = mk.map(([k, n]) => { const [p, t] = k.split(':'); return `${REFINE_PRODUCTS[p].did} ${storeNum(n)} ${plural(p, +t, n)}`; });
+      // what it used: the raw inputs, then coal ("from 20 Silver Ore, 18 Iron Ore and 48 Coal")
+      const used = Object.entries(x.used).sort((a, b) => (a[0].startsWith('coal') ? 1 : 0) - (b[0].startsWith('coal') ? 1 : 0))
+        .map(([k, n]) => { const [f, t] = k.split(':'); return `${storeNum(n)} ${plural(f, +t, n)}`; });
+      const usedTxt = used.length > 1 ? used.slice(0, -1).join(', ') + ' and ' + used[used.length - 1] : used[0] || '';
+      const verb = parts.length === 1 ? parts[0] : `${DID[st]} ${parts.map(s => s.replace(/^\w+ /, '')).join(' and ')}`;
+      awayLinesOut.push({ icon: null, group: 'Camp', txt: `The ${CAMP_B[st].n} ${verb} from ${usedTxt}` + (x.stop === 'done' ? ' (all orders done).' : x.stop ? ` (stopped: ${x.stop}).` : '.'),
+        sub: 'Station orders keep running while you are away', goLabel: 'Orders', go: () => { if (typeof refineUI === 'object' && refineUI) refineUI.open(st); } });
+    }
+  });
+  // 55-stats loads after this file, so the line source registers on the first absence (AWAY_LINES exists by then). It goes
+  // first, so the Camp block (what the stations made) leads the other systems' lines, right under Materials.
+  let lineOn = false;
+  on('awayBegin', () => {
+    if (lineOn) return; lineOn = true;
+    const fn = () => { const l = awayLinesOut; awayLinesOut = []; return l.length ? l : null; };
+    registerAwayLine(fn); AWAY_LINES.splice(AWAY_LINES.indexOf(fn), 1); AWAY_LINES.unshift(fn);
+  });
+
+  // ---------------- the old-save card ----------------
+  // refineOldCard() -> true once: a save from before refining, the Forge built (the UI shows the card on opening Craft).
+  refineOldCard = () => {
+    if (!refineOn() || R().said || !built('forge')) return false;
+    R().said = 1; save(); return true;
+  };
+
+  // ---------------- Next Up ----------------
+  // offer: the orders that would cover a cost's shortfall in middles at grade t, net of orders already making them.
+  refineOffer = (cost, t) => {
+    const mats = cost && cost.mats ? cost.mats : cost || {}, short = {}, orders = [];
+    if (refineOn()) for (const [k, n] of Object.entries(mats)) {
+      const raw = REFINE_RAW[k]; if (!raw) continue;
+      const st = REFINE_PRODUCTS[k].st, l = built(st) ? list(st) : [];
+      if (l.some(o => o.prod === k && o.tier === t && o.all && refineState(st, o).k === 'run')) continue;   // an All order covers it
+      const pending = l.filter(o => o.prod === k && o.tier === t && !o.all).reduce((a, o) => a + Math.max(0, o.want - o.made), 0);
+      const miss = n - have(k, t) - pending; if (!(miss > 0)) continue;
+      (short[k] = [0, 0, 0, 0, 0])[t - 1] = miss;
+      const can = built(st) ? refineMaxUnits(k, t, false) : 0;
+      const why = !built(st) ? `Build the ${CAMP_B[st].n} first.` : !refineSlotFree(st) ? `The ${CAMP_B[st].n} holds ${T.max} orders.` : can < 1 ? refineState(st, { prod: k, tier: t, want: 1, made: 0, all: 0, at: 0 }).why : '';
+      orders.push({ st, prod: k, tier: t, want: miss, ok: !why, full: !why && can >= miss, why });
+    }
+    const add = () => { let n = 0; for (const o of orders) if (o.ok && refineAdd(o.prod, o.tier, o.want).ok) n++; return n; };
+    return { short, orders, add };
+  };
+  // The piece the next refine is for: a worn piece's next upgrade, else the next craft of a worn position, short only of
+  // middles (gold and Trophies in hand).
+  const kindsAt = pos => { const row = CRAFT_FITS[pos] || {}, who = heroWho(); return ((who !== 'any' && row[who]) || row.any || []).filter(k => !CRAFT_KINDS[k].legacy && craftKindVisible(k)); };
+  const onlyMiddles = (mats, t) => {
+    let mid = false;
+    for (const [k, n] of Object.entries(mats)) { if (matOwn(k, t) >= n) continue; if (!REFINE_RAW[k]) return false; mid = true; }
+    return mid;
+  };
+  // The craft Next Up's forge goal works towards (the same pick as 55-goals.js forgeNext: the best-funded open craft, a
+  // weapon first on a tie). upgrade-goal-chip-order's rule holds for refining too: never refine for an upgrade of the piece
+  // that craft replaces, nor one whose inputs leave less of a shared material (same grade, or essence) than it needs.
+  const craftNext = () => {
+    let best = null;
+    const zt = Math.min(5, zoneTier(S.maxZone || 1));
+    for (const pos of CRAFT_HERO_POS) {
+      const cur = equipped(pos);
+      for (const kind of kindsAt(pos)) {
+        const t = (cur && (cur.slot === kind || cur.u) ? cur.t : 0) + 1; if (t > zt) continue;
+        const c = canCraft(kind, t);
+        if (!c.cost || c.lv < c.need || c.unbuilt) continue;
+        const ks = Object.keys(c.cost.mats);
+        const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, matOwn(k, t) / Math.max(1, c.cost.mats[k])), 0) / Math.max(1, ks.length));
+        const score = p + (pos === 'weapon' ? 0.02 : 0);
+        if (!best || score > best.score) best = { kind, t, pos, cost: c.cost.mats, p, score };
+      }
+    }
+    return best;
+  };
+  // what refining a cost's missing middles at grade t (and paying the cost) takes from each cell
+  const takes = (mats, t) => {
+    const out = {};
+    for (const [k, n] of Object.entries(mats)) {
+      const miss = REFINE_RAW[k] ? Math.max(0, n - matOwn(k, t)) : 0;
+      if (!REFINE_RAW[k]) out[k + ':' + t] = (out[k + ':' + t] || 0) + n;
+      if (miss) for (const [f, tt, m] of refineNeed(k, t)) out[f + ':' + tt] = (out[f + ':' + tt] || 0) + m * miss;
+    }
+    return out;
+  };
+  // (only what it can take now: while an input is short, the line says to gather it, which serves the craft too)
+  const clash = (f, mats, t) => f && Object.entries(takes(mats, t)).some(([key, n]) => {
+    const [k, tt] = key.split(':'), h = matOwn(k, +tt); return f.cost[k] && (k === 'ess' || +tt === f.t) && h >= n && h - n < f.cost[k];
+  });
+  let needSig = '', needVal = null;
+  const refineFor = () => {
+    if (!refineOn() || !built('forge') && !built('bench') && !built('loom')) return null;
+    const sig = JSON.stringify([S.gold, S.maxZone, S.mats, S.equip, S.camp && S.camp.b, CRAFT_HERO_POS.map(p => { const it = equipped(p); return it ? [it.slot, it.t, it.plus] : 0; }),
+      Object.values(S.skills || {}).map(x => x && x.lv), S.craft && S.craft.troph]);
+    if (sig === needSig) return needVal;
+    needSig = sig; needVal = null;
+    const troph = (S.craft && S.craft.troph || []).some(n => n > 0), f = craftNext();
+    for (const pos of CRAFT_HERO_POS) {
+      if (f && f.p >= 1) break;   // a craft is ready: Next Up says craft it, not refine for an upgrade
+      if (f && f.p > 0 && pos === f.pos) continue;
+      const it = equipped(pos); if (!it || !CRAFT_KINDS[it.slot] || !craftKindVisible(it.slot) || it.plus >= CRAFT_TROPHY_GATE.max) continue;
+      const c = upgradeCost(it);
+      if (S.gold < c.gold || (c.troph && !troph) || !onlyMiddles(c.mats, it.t) || clash(f, c.mats, it.t)) continue;
+      const nm = it.u ? kindName(it.slot, it.t, it.u) : CRAFT_KINDS[it.slot].noun;
+      return (needVal = { mats: c.mats, t: it.t, what: `your ${nm} +${it.plus + 1}` });
+    }
+    const zt = Math.min(5, zoneTier(S.maxZone || 1));
+    for (const pos of CRAFT_HERO_POS) {
+      const cur = equipped(pos);
+      for (const kind of kindsAt(pos)) {
+        const t = (cur && cur.slot === kind ? cur.t : 0) + 1; if (t > zt) continue;
+        const c = canCraft(kind, t);
+        if (c.ok || !c.cost || c.unbuilt || c.lv < c.need || S.gold < (c.cost.gold || 0) || !onlyMiddles(c.cost.mats, t)) continue;
+        const nm = kindName(kind, t), a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
+        return (needVal = { mats: c.cost.mats, t, what: `${a} ${nm}` });
+      }
+    }
+    return null;
+  };
+  // goalNow() -> { ready, off, label, st } | { ready: false, label, pct, go } | null
+  const goalNow = () => {
+    const need = refineFor(); if (!need) return null;
+    const off = refineOffer(need.mats, need.t), o = off.orders[0]; if (!o) return null;
+    if (off.orders.every(x => x.full)) return { ready: true, off, st: o.st,
+      label: off.orders.map((x, i) => `${i ? REFINE_PRODUCTS[x.prod].verb.toLowerCase() : REFINE_PRODUCTS[x.prod].verb} ${storeNum(x.want)} ${plural(x.prod, x.tier, x.want)}`).join(' and ') + ` for ${need.what}` };
+    // the gap is an input: say where to get it (coal comes with Copper Ore), never offer an order that stops at once
+    const g = off.orders.find(x => !x.full);
+    if (!built(g.st)) return null;
+    // three stopped orders fill the station: say so, and Go opens its card (never a silent dead end)
+    if (!refineSlotFree(g.st)) return { ready: false, pct: 0.5, label: (refineCurrent(g.st) ? `The ${CAMP_B[g.st].n} has ${T.max} orders. Clear one to ` : `Clear a stopped ${CAMP_B[g.st].n} order to `) + `${REFINE_PRODUCTS[g.prod].verb.toLowerCase()} ${plural(g.prod, g.tier, 2)}`, go: { tab: 'world', sel: '#camp-b-' + g.st } };
+    const miss = refineNeed(g.prod, g.tier).find(([f, t, n]) => have(f, t) < n * g.want); if (!miss) return null;
+    const [f, t, n] = miss, pct = Math.max(0.05, Math.min(0.95, have(f, t) / (n * g.want)));
+    if (f === 'coal') return { ready: false, pct, label: 'Mine Copper Ore to get coal', go: { act: 'gather', node: { kind: 'ore', t: 1 } } };
+    const open = GATHER_KINDS.includes(f) && craftNodeVisible(f, t) && skillTierOpen(skillOf(f), t);
+    return { ready: false, pct, label: `${NAV_VERB[f] || 'Gather'} ${name(f, t)} to ${REFINE_PRODUCTS[g.prod].verb.toLowerCase()} ${plural(g.prod, g.tier, 2)}`,
+      go: open ? { act: 'gather', node: { kind: f, t } } : { tab: 'gat', view: { ore: 'mine', wood: 'wood', fibre: 'forage', hide: 'hunt' }[f] } };
+  };
+  registerGoal({
+    id: 'refine', sys: 'forge', prio: 0.5,
+    pct: () => { const g = goalNow(); return g ? (g.ready ? 1 : g.pct) : null; },
+    label: () => { const g = goalNow(); return g ? g.label : ''; },
+    icon: () => ({ ic: ['anvil', '#B08A5A'] }),
+    go: () => {
+      const g = goalNow(); if (!g) return null;
+      if (g.ready) { const st = g.st; return { tab: 'world', sel: '#camp-b-' + st, fn: () => { const x = goalNow(); if (x && x.ready) x.off.add(); } }; }
+      return g.go;
+    }
+  });
+}
+
 // ---- src/js/55-rested.js ----
 // 55-rested: Well Rested (plan-3 ask 2, task G1). The hero gathers alone: while you gather, the
 // fielded companions rest at the Hearth and bank Well Rested, a damage bonus for the first minutes
@@ -15712,6 +16182,25 @@ function validateSave(data) {
     if (data.camp && data.camp.b) for (const [k, n] of Object.entries(data.camp.b)) { known(CAMP_B, k, 'camp.building'); int(n, 'camp.' + k, 0, CAMP_B[k].max); }
     rows(data.camp, 'news'); rows(data.craft, 'jobs'); rows(data.almanac, 'goals'); rows(data.errors, 'list');
     rows(data.bounties, 'slots', b => { if (b.k == null) return; if (!BOUNTY_API.kinds.includes(b.k)) fail('bounty.kind'); const bad = BOUNTY_API.shape(b); if (bad) fail('bounty.' + bad); });
+    // refine-queues: the stations' orders (55-refine). Each station holds at most REFINE_TUNE.max orders of its own products.
+    if (data.refine !== undefined) {
+      const rf = data.refine; record(rf, 'refine');
+      for (const k of ['v', 'said', 'seen', 'coal']) if (rf[k] !== undefined) int(rf[k], 'refine.' + k, 0, k === 'seen' ? 864e13 : k === 'v' ? 1000 : 1);
+      if (rf.st !== undefined) {
+        record(rf.st, 'refine.st');
+        for (const [st, list] of Object.entries(rf.st)) {
+          if (!REFINE_STATIONS.includes(st)) fail('refine.st.' + st, 'is not supported by this version');
+          array(list, 'refine.st.' + st); if (list.length > REFINE_TUNE.max) fail('refine.st.' + st, 'holds too many orders');
+          for (const o of list) {
+            const p = 'refine.st.' + st + '[]'; record(o, p);
+            known(REFINE_PRODUCTS, o.prod, p + '.prod'); if (REFINE_PRODUCTS[o.prod].st !== st) fail(p + '.prod', 'is made at another station');
+            int(o.tier, p + '.tier', 1, 5); int(o.want, p + '.want'); int(o.made, p + '.made'); int(o.all, p + '.all', 0, 1); num(o.at, p + '.at', 0, REFINE_TUNE.secs[o.tier - 1]);
+            if (!o.all && !(o.want >= 1)) fail(p + '.want');
+            if (o.keep !== undefined) { array(o.keep, p + '.keep'); if (o.keep.length !== REFINE_PRODUCTS[o.prod].inputs(o.tier).length) fail(p + '.keep'); for (const n of o.keep) int(n, p + '.keep[]'); }
+          }
+        }
+      }
+    }
     if (data.craft && data.craft.tonic != null) { record(data.craft.tonic, 'craft.tonic'); known(CRAFT_TONICS, data.craft.tonic.k, 'craft.tonic.kind'); tier(data.craft.tonic.t, 'craft.tonic.tier'); num(data.craft.tonic.left, 'craft.tonic.left'); }
     return { ok: true, data };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'This save has invalid data.' }; }
@@ -15817,7 +16306,7 @@ const statsApi = {};
   Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => uniqKeys().length });
 
   // ---- away report ----
-  const MAT_KINDS = CRAFT_FAMILIES; // every family (K5), in pouch order
+  const MAT_KINDS = STOCK_FAMILIES; // every family (K5), then the middles and coal (refine-queues), in pouch order
   let snap = null;
   on('awayBegin', r => {
     r.cap = (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600;
@@ -15913,7 +16402,8 @@ const statsApi = {};
 const STORE_TUNE = {
   on: 1,                   // 0: no caps at all (tools/sim.mjs --store 0)
   caps: [5000, 40000, 50000, 100000, 200000, 300000, 750000, 1250000, 2500000],   // gathered cap by level 0..8
-  group: { ore: 1, wood: 1, crystal: 1, fibre: 1, herb: 1, hide: 0.5, ess: 0.5, pearl: 0.5, fish: 0.5 },
+  group: { ore: 1, wood: 1, crystal: 1, fibre: 1, herb: 1, hide: 0.5, ess: 0.5, pearl: 0.5, fish: 0.5,
+    ingot: 0.5, plank: 0.5, cloth: 0.5, leather: 0.5, coal: 1 },   // refine-queues: refined goods hold half; coal (one grade) as ore
   tierMult: [1, 1, 1, 1, 1],
   // h: the away cap the player can have at Hearth L (4 h + Watchtower 2 h a level, Watchtower Lv w
   // needs Hearth 1/2/4/6/8, plus Hourglass relics; 24 h at most), rounded up. The rest is the upper
@@ -16047,7 +16537,7 @@ let essCap, storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, s
   // ---------------- Spillover and switching nodes ----------------
   storeSpillOn = () => !!ST().spill && storeLevel() >= T.spill;
   storeSpill = on => { if (storeLevel() < T.spill) return false; ST().spill = on ? 1 : 0; save(); return true; };
-  // The next unlocked node of the same skill whose pile is not full, highest tier first.
+  // The next unlocked node of the same skill whose pile is not full, highest tier first. Only GATHER_KINDS: never coal or a middle.
   storeNextNode = (kind = S.node.kind) => {
     const sk = skillOf(kind);
     const kinds = (typeof GATHER_KINDS !== 'undefined' ? GATHER_KINDS : ['ore', 'wood']).filter(k => skillOf(k) === sk);
@@ -17832,6 +18322,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (id === 'hearth') return [`+${3 * l}% away gains`].concat(l >= 5 ? ['2 builders'] : []);
     if (d.skill) {
       const out = l === 1 ? [`${SKILL[d.skill]} station`] : [`${SKILL[d.skill]} XP +${Math.round(STN_XP[l] * 100)}%`];
+      if (l >= 2 && typeof REFINE_STATIONS === 'object' && REFINE_STATIONS.includes(id)) out.push(`Refining +${Math.round(REFINE_TUNE.perLevel * 100 * (l - 1))}% faster`);   // refine-queues: +10% a level
       if (l >= 5) out.push(STN_FIVE[id].txt);
       return out;
     }
@@ -27107,10 +27598,13 @@ function spriteURL(key, rows, pal) {
 }
 const icPal = (main, extra) => ({ 1: main, 2: darken(main, 0.35), 5: '#FFFFFF', 6: '#6B4A2E', 7: '#F2C14E', ...(extra || {}) });
 const iconURL = (name, main, extra) => spriteURL('ic:' + name + main + JSON.stringify(extra || {}), ICON[name], icPal(main, extra));
-const img = (url, cls) => { const i = el('img', cls || 'px'); if (typeof nicPut === 'function') nicPut(i, url); else i.src = url; i.alt = ''; return i; };
+// refine-queues (art ruling 2026-10-08): an empty URL makes an empty, hidden element with no src, never a broken image box
+// (coal and the middles have no icon yet, so callers show the name alone).
+const img = (url, cls) => { const i = el('img', cls || 'px'); i.alt = ''; if (!url) { i.hidden = true; i.style.display = 'none'; return i; } if (typeof nicPut === 'function') nicPut(i, url); else i.src = url; return i; };
 // Crafting families (crystal, fibre, herb, hide) use K2's mat_* icons (11-art-craft.js).
 // C26: the approved resource icons first (48x48, 21r-data-resicons.js). '#res' marks them for smooth scaling in CSS.
-const matIcon = (k, t) => typeof RES_ICONS === 'object' && RES_ICONS.icons[k] && RES_ICONS.icons[k][t - 1] ? RES_ICONS.icons[k][t - 1] + '#res' : ICON['mat_' + k] && typeof craftIcon === 'function' ? iconURL(...craftIcon('mat_' + k, t)) : k === 'ore' ? iconURL('ore', MAT.ore.col[t - 1], { 2: '#3A3542', 1: MAT.ore.col[t - 1] }) : k === 'wood' ? iconURL('log', MAT.wood.col[t - 1], { 6: '#4A3220', 7: '#8C6A43', 1: MAT.wood.col[t - 1] }) : iconURL('orb', MAT.ess.col[t - 1], { 7: '#6E6878' });
+// Coal and the middles (refine-queues) have no icon until their art pack passes: '' (text only, never a borrowed icon).
+const matIcon = (k, t) => k === 'coal' || REFINE_RAW[k] ? '' : typeof RES_ICONS === 'object' && RES_ICONS.icons[k] && RES_ICONS.icons[k][t - 1] ? RES_ICONS.icons[k][t - 1] + '#res' : ICON['mat_' + k] && typeof craftIcon === 'function' ? iconURL(...craftIcon('mat_' + k, t)) : k === 'ore' ? iconURL('ore', MAT.ore.col[t - 1], { 2: '#3A3542', 1: MAT.ore.col[t - 1] }) : k === 'wood' ? iconURL('log', MAT.wood.col[t - 1], { 6: '#4A3220', 7: '#8C6A43', 1: MAT.wood.col[t - 1] }) : iconURL('orb', MAT.ess.col[t - 1], { 7: '#6E6878' });
 // C26: the approved gear icons first (GEAR_ICONS, grades 1-5 of every crafted kind; the old Sword and Helm show as the
 // Warblade and Greathelm). Uniques keep their own art. Then: legacy kinds use SLOT icons, crafted kinds K2's craftIcon.
 const GEAR_IC_ALIAS = { weapon: 'warblade', helm: 'greathelm' };
@@ -36747,7 +37241,7 @@ let showAwayReport;
     // ---- materials by family and tier ----
     if (r.mats && r.mats.length) {
       const b = block('Materials');
-      for (const k of CRAFT_FAMILIES) {
+      for (const k of STOCK_FAMILIES) {   // the same list as the away diff (55-stats MAT_KINDS)
         const list = r.mats.filter(m => m.k === k); if (!list.length) continue;
         const row = el('div', 'away-mrow');
         row.append(el('span', 'away-fam', MAT[k].n));
@@ -42657,6 +43151,140 @@ if (typeof registerSection === 'function' && typeof portraitsClassic === 'functi
   update() {}
 });
 
+// ---- src/js/75-refine-ui.js ----
+// 75-refine-ui: the stations' order sheets (card refine-queues). Browser-only; the rules live in 55-refine.js.
+//   - A button on the Forge, Workbench and Loom cards in Camp (registerCampAction, no 75-camp-ui edit): "Smelt", "Saw",
+//     "Weave and Tan", with the running order's rate ("Smelt · Smelting 4 a minute"). It opens that station's sheet:
+//     its orders (up to 3, run in turn), each with its rate or why it stopped, and a list to add one (10 or All).
+//   - refineUI.where(fam, t): the "where to get it" sheet for coal and the middles (the Storehouse opens it for those).
+//   - The old-save card: the first time a save from before refining opens Craft with the Forge built.
+// Coal and the middles show their names only (art ruling 2026-10-08): no icon, never a borrowed one.
+
+const refineUI = {};
+{
+  const btn = (cls, txt, aria) => { const b = el('button', cls, txt); b.type = 'button'; if (aria) b.setAttribute('aria-label', aria); return b; };
+  const stName = st => CAMP_B[st].n;
+  const verbs = st => [...new Set(refineProducts(st).map(p => REFINE_PRODUCTS[p].verb))];
+  const plural = (f, t, n) => matName(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || MAT[f].unit === 'Log') ? 's' : '');
+  const rateLine = (prod, t) => { const r = refinePerMin(REFINE_PRODUCTS[prod].st, t); return `${REFINE_PRODUCTS[prod].ing}: ${gxPerMin(r)} a minute · ${gxPerHour(r)} an hour`; };
+  const inputsTxt = (prod, t) => refineNeed(prod, t).map(([f, tt, n]) => `${n} ${f === 'coal' ? 'Coal' : plural(f, tt, n)}`).join(' and ');
+  const keepTxt = o => !o.all || !o.keep ? '' : 'keeps ' + refineNeed(o.prod, o.tier).map(([f, t], i) => `${storeNum(o.keep[i] || 0)} ${f === 'coal' ? 'Coal' : plural(f, t, o.keep[i] || 0)}`).join(' and ');
+
+  // ---- the station sheet ----
+  let open = null;   // { st, api, sig, box }
+  function orderRow(st, o, i, cur) {
+    const s = refineState(st, o), row = el('div', 'rf-order' + (s.k === 'run' && o === cur ? ' run' : s.k === 'done' ? ' done' : ' stop'));
+    const tx = el('div', 'rf-otx');
+    const amt = o.all ? `All · ${storeNum(o.made)} made` : `${storeNum(Math.min(o.made, o.want))} of ${storeNum(o.want)}`;
+    tx.append(el('b', 'rf-oname', `${matName(o.prod, o.tier)} · ${amt}`));
+    const line = s.k === 'run' ? (o === cur ? rateLine(o.prod, o.tier) : 'Waits its turn') : s.why;
+    tx.append(el('span', 'rf-oline', line));
+    if (o.all) tx.append(el('span', 'rf-okeep', keepTxt(o)));
+    const rm = btn('mini rf-rm', s.k === 'done' ? 'Clear' : 'Remove', `${s.k === 'done' ? 'Clear' : 'Remove'} the ${matName(o.prod, o.tier)} order`);
+    rm.addEventListener('click', () => { refineRemove(st, i); render(true); });
+    row.append(tx, rm);
+    return row;
+  }
+  function addRows(st) {
+    const box = el('div', 'rf-add'), free = refineSlotFree(st);
+    box.append(el('h3', 'cs-h', 'New order'));
+    if (!free) { box.append(el('p', 'note', `The ${stName(st)} holds ${REFINE_TUNE.max} orders. Remove one to add another.`)); return box; }
+    let rows = 0;
+    for (const prod of refineProducts(st)) for (let t = 1; t <= 5; t++) {
+      const main = refineNeed(prod, t)[0], held = (S.mats[main[0]] || [])[t - 1] || 0;
+      if (held < main[2]) continue;   // a row only for a grade whose main input you hold
+      rows++;
+      const can = refineMaxUnits(prod, t, false), canAll = refineMaxUnits(prod, t, true), v = REFINE_PRODUCTS[prod].verb;
+      const row = el('div', 'rf-prow');
+      const tx = el('div', 'rf-ptx');
+      tx.append(el('b', null, matName(prod, t)), el('span', 'rf-pmeta', `${inputsTxt(prod, t)} each · ${rateLine(prod, t).split(': ')[1]}`));
+      const why = can < 1 ? refineState(st, { prod, tier: t, want: 1, made: 0, all: 0, at: 0 }).why : '';
+      if (why) tx.append(el('span', 'rf-pwhy', why));
+      const n10 = Math.min(10, can);
+      const b1 = btn('mini rf-make', `Make ${n10 || 10}`, `${v} ${n10 || 10} ${matName(prod, t)}`), b2 = btn('mini go rf-make', 'All', `${v} all ${matName(prod, t)}`);
+      b1.disabled = can < 1; b2.disabled = canAll < 1;
+      b1.addEventListener('click', () => { const r = refineAdd(prod, t, n10); if (!r.ok) emit('toast', { key: 'refine-why', msg: r.why, kind: 'bad', icon: null, prio: 'low' }); render(true); });
+      b2.addEventListener('click', () => { const r = refineAdd(prod, t, 'all'); if (!r.ok) emit('toast', { key: 'refine-why', msg: r.why, kind: 'bad', icon: null, prio: 'low' }); render(true); });
+      const bs = el('div', 'rf-pbtns'); bs.append(b1, b2);
+      row.append(tx, bs); box.append(row);
+    }
+    if (!rows) box.append(el('p', 'note', refineProducts(st).map(p => `${REFINE_PRODUCTS[p].verb} needs ${inputsTxt(p, 1)} a unit.`).join(' ') + (st === 'forge' ? ' Coal comes with Copper Ore.' : '')));
+    return box;
+  }
+  function render(force) {
+    if (!open || open.api.closed) { open = null; return; }
+    const st = open.st, l = refineOrders(st), cur = refineCurrent(st);
+    // redraw only when something a row shows changed (made counts, states, held stock moves the add list)
+    const sig = JSON.stringify([l.map(o => [o.prod, o.tier, o.made, o.want, o.all, refineState(st, o).k]), cur && cur.prod, refineSlotFree(st),
+      refineProducts(st).map(p => [1, 2, 3, 4, 5].map(t => refineMaxUnits(p, t, false) > 0 ? 1 : 0).join('')).join(), campLevel(st)]);
+    if (!force && sig === open.sig) return;
+    open.sig = sig;
+    const b = open.box, sc = open.api.body, top = sc.scrollTop; b.textContent = '';
+    const lv = campLevel(st);
+    b.append(el('p', 'rf-intro', `Orders run in turn while you fight and while you are away. Up to ${REFINE_TUNE.max}.` + (lv > 1 ? ` Lv ${lv}: ${Math.round((refineSpeed(st) - 1) * 100)}% faster.` : '')));
+    const list = el('div', 'rf-orders');
+    if (!l.length) list.append(el('p', 'note', 'No orders yet.'));
+    l.forEach((o, i) => list.append(orderRow(st, o, i, cur)));
+    b.append(list, addRows(st));
+    sc.scrollTop = top;   // a redraw keeps the player's place in the list
+  }
+  refineUI.open = st => {
+    if (!refineBuilt(st) || typeof openSheet !== 'function') return;
+    const api = openSheet(a => {
+      a.sheet.classList.add('rf-sheet');
+      a.body.append(el('h2', 'rf-title', `${stName(st)}: ${verbs(st).join(' and ')}`));
+      const box = el('div', 'rf-box'); a.body.append(box);
+      open = { st, api: a, sig: '', box };
+      render(true);
+    }, { label: `${stName(st)} orders`, onClose() { open = null; } });
+    return api;
+  };
+  let acc = 0;
+  onTick(dt => { if (!open) return; acc += dt; if (acc < 0.5) return; acc = 0; render(false); });
+  for (const st of REFINE_STATIONS) registerCampAction(st, { label: () => refineLabel(st), show: () => refineBuilt(st), fn: () => refineUI.open(st) });
+
+  // ---- where to get coal and the middles ----
+  refineUI.where = (f, t) => {
+    if (typeof openSheet !== 'function') return;
+    openSheet(api => {
+      api.sheet.classList.add('gw-sheet');
+      const h = (S.mats[f] || [])[t - 1] || 0, cap = storeCap(f, t);
+      const head = el('div', 'gw-head'), tx = el('div');
+      tx.append(el('h2', 'gw-name', matName(f, t)), el('small', 'gw-have', Number.isFinite(cap) ? `${storeNum(h)} / ${storeNum(cap)} in the Storehouse` : `${storeNum(h)} in the Storehouse`));
+      head.append(tx);
+      let where, b;
+      if (f === 'coal') {
+        where = `Comes with Copper Ore once the Forge is built: about 1 coal for every ${Math.round(1 / REFINE_TUNE.coalDrop)} ore you mine. The Forge smelts it with ore into Ingots.`;
+        b = btn('big horn gw-go', 'Mine at the Copper Vein');
+        b.addEventListener('click', () => { api.close(true); navGo({ act: 'gather', node: { kind: 'ore', t: 1 }, close: true }); });
+      } else {
+        const st = REFINE_PRODUCTS[f].st, ok = refineBuilt(st);
+        where = `Made at the ${stName(st)} from ${inputsTxt(f, t)} each. Set an order on the ${stName(st)}'s card in Camp.`;
+        b = btn('big forge gw-go', ok ? `Open the ${stName(st)}'s orders` : `Build the ${stName(st)} in Camp`);
+        b.addEventListener('click', () => { api.close(true); if (ok) refineUI.open(st); else setTab('world', '#camp-b-' + st); });
+      }
+      api.body.append(head, el('h3', 'cs-h', 'Where to get it'), el('p', 'gw-where', where));
+      api.foot.append(b);
+    }, { label: 'Where to get ' + matName(f, t), small: true });
+  };
+
+  // ---- the old-save card: once, on opening Craft with the Forge built ----
+  on('menuView', ({ tab }) => {
+    if (tab !== 'forge' || !refineOldCard()) return;
+    setTimeout(() => {
+      if (typeof openSheet !== 'function') return;
+      openSheet(api => {
+        api.sheet.classList.add('rf-old');
+        api.body.append(el('h2', 'rf-title', 'Refining'), el('p', 'rf-oldtx', "The Forge can smelt now. Find Smelt on the Forge's card in Camp. Your gear is unchanged."));
+        const go = btn('big forge', 'Show me'), ok = btn('big sty-done', 'Got it');   // sty-done: the sheet's done button (tools/perf.mjs taps it away like a story sheet)
+        go.addEventListener('click', () => { api.close(true); setTab('world', '#camp-b-forge'); });
+        ok.addEventListener('click', () => api.close());
+        api.foot.append(ok, go);
+      }, { label: 'Refining', small: true });
+    }, 0);
+  });
+}
+
 // ---- src/js/75-savecode-ui.js ----
 // 75-savecode-ui: "Save code" panel in the Journal, next to Send feedback (SAVE1).
 // Export: a compact text code of the current save, to copy or download.
@@ -44019,8 +44647,9 @@ function storeShelfCap(f) {
   const c = Math.min(z, skillTopTier(sk));
   return f === 'hide' ? Math.min(c, HUNT_BEASTS.length) : c;
 }
-function storeShelfGrade(f) {
-  const a = S.mats[f] || [], n = t => Math.max(0, a[t - 1] || 0), cap = storeShelfCap(f);
+function storeShelfGrade(f) { return storeShelfGradeOf(S.mats[f] || [], storeShelfCap(f)); }
+function storeShelfGradeOf(a, cap) {
+  const n = t => Math.max(0, a[t - 1] || 0);
   if (n(cap) > 0) return cap;
   let best = 0;
   for (let t = 1; t <= cap; t++) if (n(t) > 0 && (!best || n(t) >= n(best))) best = t;
@@ -44028,8 +44657,21 @@ function storeShelfGrade(f) {
   for (let t = 5; t > cap; t--) if (n(t) > 0) return t;
   return cap;
 }
-// The hide stack waits until Hunting shows, unless you already hold hide.
-const storeShelfShows = f => f !== 'hide' || huntingVisible() || (S.mats[f] || []).some(n => n > 0);
+// refine-queues: a middle (Ingot, Plank, Cloth, Leather) shares its raw family's stack ("Iron Ore 120 · Iron Ingot 40").
+// The grade comes from the raw stacks by the rule above, and the middle of that grade shows beside it; only when the family
+// holds no raw at or below its cap does the middle's own grade pick the stack (a few Briar Cloth never hide 15,000 Hemp
+// Fibre, and a family holding only middles never shows an empty stack). Coal is the 8th stack, at grade 1 only.
+const storeShelfMid = f => (typeof REFINE_MID === 'object' && REFINE_MID[f]) || null;
+function storeShelfPick(f) {
+  const m = storeShelfMid(f), a = S.mats[f] || [], cap = storeShelfCap(f);
+  if (m && !a.slice(0, cap).some(n => n > 0) && (S.mats[m] || []).some(n => n > 0)) return storeShelfGradeOf(S.mats[m], cap);
+  return storeShelfGrade(f);
+}
+// The stacks of the first view, in family order: the gathered families, then coal.
+const STORE_SHELF = CRAFT_FAMILIES.concat(['coal']);
+// The hide stack waits until Hunting shows, unless you already hold hide. Coal shows once the Forge is built or coal is held.
+const storeShelfShows = f => f === 'coal' ? ((S.mats.coal || [])[0] || 0) > 0 || (typeof refineOn === 'function' && refineOn() && typeof campLevel === 'function' && campLevel('forge') >= 1)
+  : f !== 'hide' || huntingVisible() || (S.mats[f] || []).some(n => n > 0);
 // ---- end of the shelf rule ----
 
 // The stage's held line: "640/1,000 stored", "1,000/1,000 · Full".
@@ -44055,8 +44697,12 @@ function storeSalvageNote(preview, t) {
 
 {
   const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
-  const FOUGHT = f => !(CRAFT_FAMILY[f] && CRAFT_FAMILY[f].skill);   // essence only (hide is Hunting's since C24)
+  const FOUGHT = f => f !== 'coal' && !REFINE_RAW[f] && !(CRAFT_FAMILY[f] && CRAFT_FAMILY[f].skill);   // essence only (hide is Hunting's since C24); never coal or a middle
+  // refine-queues: middles and coal open their own "where to get it" (75-refine-ui), not the gathering one
+  const where = (f, t) => (f === 'coal' || REFINE_RAW[f]) && typeof refineUI === 'object' && refineUI ? refineUI.where(f, t) : whereSheet(f, t);
   const famNote = f => {
+    if (f === 'coal') return 'from Copper Ore';
+    if (REFINE_RAW[f]) return `made at the ${CAMP_B[REFINE_PRODUCTS[f].st].n}`;
     if (FOUGHT(f)) return 'from fights';
     const sk = CRAFT_FAMILY[f].skill, s = S.skills[sk]; return s ? `${SKILL[sk]} ${s.lv}` : SKILL[sk];
   };
@@ -44073,17 +44719,20 @@ function storeSalvageNote(preview, t) {
     c.setAttribute('aria-label', `${matName(f, t)}: where to get it`);
     const n = el('span', 'mc', '0'), cap = el('span', 'sh-cap'), bar = el('i', 'sh-bar'), fill = el('b'); bar.append(fill);
     c.append(n, el('div', 'mn', f === 'ess' ? 'Essence' : MAT[f].short[t - 1]), bar);
-    c.addEventListener('click', () => whereSheet(f, t));
+    c.addEventListener('click', () => where(f, t));
     return { c, n, cap, fill, f, t };
   }
-  // A shelf stack: icon, name, held / cap, a bar. Its grade moves with storeShelfGrade, so it is built once per family.
+  // A shelf stack: icon, name, held / cap, a bar, and the middle of the same grade beside it (refine-queues). Its grade moves
+  // with storeShelfPick, so it is built once per family. Coal has no icon (text only until its art passes).
   function stack(f) {
     const c = btn('sh-stack');
     const ic = img(matIcon(f, 1)), tx = el('span', 'sh-stack-tx'), nm = el('span', 'sh-stack-nm'), n = el('span', 'sh-stack-n');
+    const mid = el('span', 'sh-stack-mid'); mid.hidden = true;
     const bar = el('i', 'sh-bar'), fill = el('b'); bar.append(fill);
-    tx.append(nm, n, bar); c.append(ic, tx);
-    const x = { c, ic, nm, n, fill, f, t: 1 };
-    c.addEventListener('click', () => whereSheet(f, x.t));
+    tx.append(nm, n, mid, bar); c.append(ic, tx);
+    c.dataset.fam = f;
+    const x = { c, ic, nm, n, mid, fill, f, t: 1 };
+    c.addEventListener('click', () => where(f, x.t));
     return x;
   }
   // A cell's held, cap, bar and warn/full/over marks (shelf stacks and grade cells alike).
@@ -44126,14 +44775,14 @@ function storeSalvageNote(preview, t) {
     tools.append(V.all);
     // the shelf: one stack per family
     V.shelf = el('div', 'sh-shelf'); V.stacks = {};
-    for (const f of CRAFT_FAMILIES) { const x = stack(f); V.shelf.append(x.c); V.stacks[f] = x; }
-    // families
+    for (const f of STORE_SHELF) { const x = stack(f); V.shelf.append(x.c); V.stacks[f] = x; }
+    // families (then the middles and coal, shown once held)
     const fams = el('div', 'sh-fams');
-    for (const f of CRAFT_FAMILIES) {
+    for (const f of STOCK_FAMILIES) {
       const s = el('div', 'sec sh-fam'), h = el('div', 'sec-head'), tt = el('h2', 'sec-title', MAT[f].n), nt = el('span', 'note');
       h.append(tt, nt);
       const row = el('div', 'mat-row sh-row'), cells = [];
-      for (let t = 1; t <= (f === 'ess' ? 1 : 5); t++) { const x = cell(f, t); row.append(x.c); cells.push(x); }   // Essence is one pile
+      for (let t = 1; t <= (f === 'ess' || f === 'coal' ? 1 : 5); t++) { const x = cell(f, t); row.append(x.c); cells.push(x); }   // Essence is one pile; coal one grade
       s.append(h, row); fams.append(s);
       V.fams[f] = { s, nt, cells };
     }
@@ -44152,7 +44801,7 @@ function storeSalvageNote(preview, t) {
     });
     const note = el('p', 'note', 'Tap a material to see where it comes from.');
     sec.append(card, chips, tools, V.shelf, fams, V.empty, V.tro, V.troRow, note);
-    // icons last: 35 cells, only on the view's first show
+    // icons last: 35 cells, only on the view's first show (coal and the middles have none: their names show alone)
     for (const f of CRAFT_FAMILIES) for (const x of V.fams[f].cells) x.c.prepend(img(matIcon(f, x.t)));
   }
   function update() {
@@ -44160,7 +44809,7 @@ function storeSalvageNote(preview, t) {
     const lv = storeLevel(), g = storeCapAt('ore', 1, lv), h = storeCapAt('hide', 1, lv), fin = Number.isFinite(g);
     putText(V.title, lv ? `Storehouse Lv ${lv}` : 'Storehouse');
     const nFull = fin ? storeFullCells().length : 0;
-    putText(V.sub, !fin ? 'No limits on materials.' : (lv ? '' : 'Not built yet. ') + `Holds ${gxNum(g)} of each. Hide and essence ${gxNum(h)}.` + (nFull ? ` ${nFull === 1 ? '1 pile is' : nFull + ' piles are'} full.` : ''));
+    putText(V.sub, !fin ? 'No limits on materials.' : (lv ? '' : 'Not built yet. ') + `Holds ${gxNum(g)} of each. Hide, essence and refined goods ${gxNum(h)}.` + (nFull ? ` ${nFull === 1 ? '1 pile is' : nFull + ' piles are'} full.` : ''));
     const camp = typeof campOpen === 'function' && campOpen();
     putHidden(V.up, !fin || !camp);
     putText(V.up, lv ? 'Upgrade ›' : 'Build ›');
@@ -44183,31 +44832,36 @@ function storeSalvageNote(preview, t) {
     const grades = filter !== 'troph' && (fam1 || (filter === 'all' && showAll));
     const shelf = filter !== 'troph' && !grades;
     // the order: fullest first (by the shelf grade's fill) or by name; empty stacks last; ties keep the family order
-    const fillOf = f => { const t = f === 'ess' ? 1 : storeShelfGrade(f), c = capOf(f, t), v = held(f, t); return Number.isFinite(c) && c > 0 ? v / c : v > 0 ? 1e-9 : -1; };
-    const nameOf = f => f === 'ess' ? 'Essence' : matName(f, storeShelfGrade(f));
-    const order = CRAFT_FAMILIES.slice();
+    const gradeOf = f => f === 'ess' || f === 'coal' ? 1 : storeShelfPick(f);
+    const fillOf = f => { const t = gradeOf(f), c = capOf(f, t), v = held(f, t); return Number.isFinite(c) && c > 0 ? v / c : v > 0 ? 1e-9 : -1; };
+    const nameOf = f => f === 'ess' ? 'Essence' : matName(f, gradeOf(f));
+    const order = STOCK_FAMILIES.slice();
     if (sort === 'name') order.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
-    else { const fl = Object.fromEntries(order.map(f => [f, fillOf(f)])); order.sort((a, b) => fl[b] - fl[a] || CRAFT_FAMILIES.indexOf(a) - CRAFT_FAMILIES.indexOf(b)); }
+    else { const fl = Object.fromEntries(order.map(f => [f, fillOf(f)])); order.sort((a, b) => fl[b] - fl[a] || STOCK_FAMILIES.indexOf(a) - STOCK_FAMILIES.indexOf(b)); }
     putHidden(V.shelf, !shelf);
-    for (const f of CRAFT_FAMILIES) {
+    for (const f of STORE_SHELF) {
       const x = V.stacks[f], show = shelf && shelfHas(f) && (filter === 'all' || (filter === 'fought' && FOUGHT(f)));
       putHidden(x.c, !show);
       if (!show) continue;
       putStyle(x.c, 'order', String(order.indexOf(f)));
-      const t = f === 'ess' ? 1 : storeShelfGrade(f), v = held(f, t), cap = capOf(f, t), cf = Number.isFinite(cap);
-      if (x.t !== t || !x.drawn) { x.t = t; x.drawn = true; putAttr(x.ic, 'src', matIcon(f, t)); }
+      const t = gradeOf(f), v = held(f, t), cap = capOf(f, t), cf = Number.isFinite(cap);
+      if (x.t !== t || !x.drawn) { x.t = t; x.drawn = true; const u = matIcon(f, t); putHidden(x.ic, !u); if (u) putAttr(x.ic, 'src', u); }
       putText(x.nm, f === 'ess' ? 'Essence' : matName(f, t));
       putText(x.n, cf ? `${gxNum(v)} / ${gxNum(cap)}` : `${gxNum(v)} held`);
       mark(x, v, cap);
-      putAttr(x.c, 'aria-label', `${f === 'ess' ? 'Essence' : matName(f, t)}: ${storeNum(v)}${cf ? ' of ' + storeNum(cap) : ''}. Where to get it`);
+      // the middle of the same grade, beside the raw stack ("Iron Ingot 40")
+      const m = storeShelfMid(f), mv = m ? held(m, t) : 0;
+      putHidden(x.mid, !(mv > 0)); putText(x.mid, mv > 0 ? `${matName(m, t)} ${gxNum(mv)}` : '');
+      if (mv > 0) putToggle(x.c, 'none', false);
+      putAttr(x.c, 'aria-label', `${f === 'ess' ? 'Essence' : matName(f, t)}: ${storeNum(v)}${cf ? ' of ' + storeNum(cap) : ''}${mv > 0 ? `, ${matName(m, t)} ${storeNum(mv)}` : ''}. Where to get it`);
     }
-    // every grade: families as rows
+    // every grade: families as rows (a middle or coal row only once held; a family filter shows its middle and ore shows coal)
     const empty = [];
-    for (const f of CRAFT_FAMILIES) {
-      const F = V.fams[f], has = any(f);
-      const inFilter = filter === 'all' || filter === f || (filter === 'fought' && FOUGHT(f));
-      if (grades && !has && inFilter && filter === 'all' && shelfHas(f)) empty.push(f);
-      const show = grades && inFilter && (has || showEmpty || filter !== 'all') && (filter !== 'all' || shelfHas(f));
+    for (const f of STOCK_FAMILIES) {
+      const F = V.fams[f], has = any(f), extra = f === 'coal' || !!REFINE_RAW[f], home = f === 'coal' ? 'ore' : REFINE_RAW[f];
+      const inFilter = filter === 'all' || filter === f || (extra && filter === home) || (filter === 'fought' && FOUGHT(f));
+      if (grades && !has && inFilter && filter === 'all' && !extra && shelfHas(f)) empty.push(f);
+      const show = grades && inFilter && (extra ? has : (has || showEmpty || filter !== 'all') && (filter !== 'all' || shelfHas(f)));
       putHidden(F.s, !show);
       if (!show) continue;
       putStyle(F.s, 'order', String(order.indexOf(f)));

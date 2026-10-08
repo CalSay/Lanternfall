@@ -19,13 +19,18 @@ A source or sink line names the player-facing system and the file that does it. 
 | Gold | core | 6 | 6 |  |
 | Hero XP | core (Level) | 2 | 0 | No sink: Hero levels are permanent by design. |
 | Skill XP | meter | 4 | 2 |  |
-| Ore | core (Materials) | 9 | 6 |  |
-| Wood | core (Materials) | 8 | 6 |  |
+| Ore | core (Materials) | 9 | 7 |  |
+| Wood | core (Materials) | 8 | 7 |  |
 | Essence | core | 6 | 7 |  |
 | Crystal | core (Materials) | 5 | 5 |  |
-| Fibre | core (Materials) | 4 | 4 |  |
+| Fibre | core (Materials) | 4 | 5 |  |
 | Herb | core (Materials) | 4 | 5 |  |
-| Hide | core (Materials) | 4 | 3 |  |
+| Hide | core (Materials) | 4 | 4 |  |
+| Ingots | Materials (refined) | 1 | 2 |  |
+| Planks | Materials (refined) | 1 | 3 |  |
+| Cloth | Materials (refined) | 1 | 3 |  |
+| Leather | Materials (refined) | 1 | 3 |  |
+| Coal | Materials (fuel) | 1 | 1 |  |
 | Embers | core (online) | 1 | 1 |  |
 | Relics | gear | 1 | 4 |  |
 | Scrolls | core | 1 | 1 |  |
@@ -61,12 +66,12 @@ Hoards, gaps and chokes found while mapping. `crafting-levelling-spec` and `xp-g
 - **Wood piles up.** Wood has the most sinks of any material (Hearth rows, crafts, tools, tents), yet the 50-hour health run ends with wood hoarded. Sinks are lumpy: camp rows are rare big buys, crafts are small. A steady wood sink is missing. Sinks for crafting-levelling-spec to add: smelting and plank fuel, upgrade and tool repair costs.
 - **Essence piles up.** Fights drop Essence (about 0.25 a foe) and little spends it steadily. Grade is set by zone, so low grades sit unused while crafts want grade 3 and up. Transmute trades 4 of a grade for 1 of the next, or 1 for 2 one grade down, so low grades can be melted up slowly. Vigor Tonics and reforging are the only other steady sinks, and reforge is the one open-ended sink.
 - **Gold is the mid-game choke.** Gold has the most sinks and is spent as it comes in (93% in the 50-hour run). Training at about 29,000 gold against about 75 a kill is the wall in the optimiser playtest. Handoff for xp-gold-pacing-report: gold sources are fights, Bounties and trade only; nothing converts a hoard (ore, wood, Essence) into gold except trade runs, which carry ore, wood, crystal, fibre and herb.
-- **Iron Ore sits idle.** Mining fills the Iron pile from Mining 14 but gear needs Smithing too. The playtest left 23,000 Iron Ore unspent. The only way to turn ore into a better material is Transmute (4 Iron make 1 Silver), which is lossy and gated by Enchanting; there is no smelting step, so every other ore sink is a craft or a camp row. Candidate: the Smithing processing step in crafting-levelling-spec.
+- **Iron Ore sits idle.** Mining fills the Iron pile from Mining 14 but gear needs Smithing too. The playtest left 23,000 Iron Ore unspent. The only way to turn ore into a better material is Transmute (4 Iron make 1 Silver), which is lossy and gated by Enchanting; until refine-queues there was no smelting step. Now the Forge smelts ore and coal into Ingots, which gear from grade 2 and every upgrade take; watch the next long health run for whether Iron Ore still piles up.
 - **Cobalt has no hint.** Cobalt Ore needs Mining 64 (nodeReq). The Gather screen gives no "where do I get this" hint for a grade the player cannot reach yet. Candidate for a hint in the skilling cards.
 - **Smithing past level 54 is unused.** Smithing opens item tiers at levels 1, 10, 22, 36, 54 (stationReq). A hero past 54 gains nothing from more Smithing, because grades 6 to 15 are not built. Levels past the last tier gate need a use (processing, Masterwork, a repair or refine step).
 - **Stamps and renown have no sink.** Almanac Stamps are only counted. Renown only gates hero routes and is never spent. Boss tokens and Lantern Light are flags and scores, not money. These are fine as gates; do not add more of them.
 - **Embers need the online raid.** Embers come only from the world raid, so an offline player has no relic income. Online layer is out of scope here; noted for the planner.
-- **Dead or unplugged values.** The Renown Day omen sets a renown modifier that nothing reads (55-almanac.js). Several Codex milestone rewards are stored but not wired (57c-codex.js "later:" lines). Plank, cloth and leather are named in tent costs (21w-data-econ.js) but no source exists, so tents 6 to 10 cannot be built. The Coin relic is always 0.
+- **Dead or unplugged values.** The Renown Day omen sets a renown modifier that nothing reads (55-almanac.js). Several Codex milestone rewards are stored but not wired (57c-codex.js "later:" lines). Plank, cloth and leather now come from station orders, so Tent 5 can be built; tents 6 to 10 name grades 6 to 12, which no material has yet, so they still cannot. The Coin relic is always 0.
 
 ## Currencies
 
@@ -147,8 +152,9 @@ Sources:
 - Tool rare finds (one grade up) (`55-tools.js`)
 
 Sinks:
+- Smelting at the Forge: 2 Ore and coal an Ingot (`55-refine.js`)
 - Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
-- Gear crafts and upgrades (`55-crafting.js`)
+- Gear crafts at grade 1 (later grades and upgrades take Ingots) (`55-crafting.js`)
 - Camp builds (Hearth, Forge, Storehouse, tents) (`57-camp.js`)
 - Trade runs (`57k-trade.js`)
 - Hero unlock routes (`56c-unlocks.js`)
@@ -171,8 +177,9 @@ Sources:
 - Salvaging gear (about 40% back) (`51-actions.js`)
 
 Sinks:
+- Sawing at the Workbench: 2 logs a Plank; tanning takes 1 log a Leather (`55-refine.js`)
 - Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
-- Gear crafts and upgrades (staff, bow, warblade, tools) (`55-crafting.js`)
+- Gear crafts at grade 1 and tools (later grades and upgrades take Planks) (`55-crafting.js`)
 - Camp builds: Hearth rows are the big one (`57-camp.js`)
 - Light the fire (`55-hearth.js`)
 - Trade runs (`57k-trade.js`)
@@ -234,6 +241,7 @@ Sources:
 - Gatherers (Hands) (`57f-hands.js`)
 
 Sinks:
+- Weaving at the Loom: 2 Fibre a Cloth (`55-refine.js`)
 - Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts (robes, leathers, vestments) (`55-crafting.js`)
 - Camp builds (Loom, Library, tents) (`57-camp.js`)
@@ -271,9 +279,77 @@ Sources:
 - Gatherers (Hands) (`57f-hands.js`)
 
 Sinks:
+- Tanning at the Loom: 2 Hide a Leather (`55-refine.js`)
 - Transmute (Enchanting): spends 4 to go up a grade, 1 to go down (`55-crafting.js`)
 - Gear crafts (shield, plate, bow, hood, leathers) (`55-crafting.js`)
 - Camp builds (Loom, tents) (`57-camp.js`)
+
+### Ingots
+
+Copper, Iron, Silver, Cobalt, Mithril Ingot. The Forge smelts 2 Ore and coal into one.
+
+Save: `S.mats.ingot[0..4]`
+
+Sources:
+- Forge orders (smelting) (`55-refine.js`)
+
+Sinks:
+- Gear crafts from grade 2 (in place of ore) (`55-crafting.js`)
+- Gear upgrades at every grade (in place of ore) (`55-crafting.js`)
+
+### Planks
+
+Pine, Birch, Oak, Mangrove, Tideash Plank. The Workbench saws 2 logs into one.
+
+Save: `S.mats.plank[0..4]`
+
+Sources:
+- Workbench orders (sawing) (`55-refine.js`)
+
+Sinks:
+- Gear crafts from grade 2 (in place of wood) (`55-crafting.js`)
+- Gear upgrades at every grade (in place of wood) (`55-crafting.js`)
+- Camp builds (Tent 5) (`57-camp.js`)
+
+### Cloth
+
+Hemp Cloth, Linen, Briar Cloth, Kelp Cloth, Stormgrass Cloth. The Loom weaves 2 Fibre into one.
+
+Save: `S.mats.cloth[0..4]`
+
+Sources:
+- Loom orders (weaving) (`55-refine.js`)
+
+Sinks:
+- Gear crafts from grade 2 (in place of fibre) (`55-crafting.js`)
+- Gear upgrades at every grade (in place of fibre) (`55-crafting.js`)
+- Camp builds (Tent 5) (`57-camp.js`)
+
+### Leather
+
+Bristle, Duskfang, Fenscale, Riptide, Kelpie Leather. The Loom tans 2 Hide and 1 log of the same grade into one.
+
+Save: `S.mats.leather[0..4]`
+
+Sources:
+- Loom orders (tanning) (`55-refine.js`)
+
+Sinks:
+- Gear crafts from grade 2 (in place of hide) (`55-crafting.js`)
+- Gear upgrades at every grade (in place of hide) (`55-crafting.js`)
+- Camp builds (Tent 5) (`57-camp.js`)
+
+### Coal
+
+One grade. Comes with Copper Ore once the Forge is built (about 1 for every 2 Copper Ore); the Forge burns it to smelt Ingots.
+
+Save: `S.mats.coal[0]`
+
+Sources:
+- Mining Copper Ore, live or away, once the Forge is built (`55-refine.js`)
+
+Sinks:
+- Smelting at the Forge: 1 to 4 an Ingot by grade (`55-refine.js`)
 
 ### Embers
 
@@ -501,7 +577,8 @@ Sinks:
 
 - Fight: gold, XP, Essence, Scrolls (boss), Trophies (boss, champion), Uniques (boss), stars (boss, elite), boss tokens.
 - Gather: ore, wood, crystal, fibre, herb, hide and skill XP, by hand, by gatherers or while away. The Storehouse caps every pile.
-- Craft: materials plus gold (plus Trophies at the top) become gear. Salvage returns about 40% of the materials.
+- Refine: the Forge, Workbench and Loom turn ore and coal, logs, fibre and hide into Ingots, Planks, Cloth and Leather, while you play and while you are away. Coal comes with Copper Ore once the Forge is built.
+- Craft: materials plus gold (plus Trophies at the top) become gear; from grade 2, and for every upgrade, the refined goods replace ore, wood, fibre and hide. Salvage returns about 40% of the raw materials.
 - Camp: gold, materials and Trophies build stations, which gate crafting tiers, the Storehouse, the crew and the Tavern.
 - Deepwell: Oil is the clock, Depth Marks are the prize. A run changes nothing in the main game except through the shop.
 - Lantern Cache (`55-caches.js`): a boss's first clear opens one. It lists what that win already paid (no new gold, Essence, relics or time) and gives one Deepwell lantern colour the save does not own, on zones 1 to 3 and 7 to 9. It is a container, not a currency: nothing buys, skips or rerolls it.
