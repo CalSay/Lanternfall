@@ -10873,6 +10873,11 @@ if (section('next tier gate')) try {
   // the skill row names the gate's skill and its Go opens Craft too (never a Gather view)
   const sk = l.find(x => x.id === 'skill'), skGo = goOf('skill');
   assert(sk && /^Woodcraft: /.test(sk.label) && skGo && skGo.tab === 'forge' && skGo.sel === '.cf-st[data-st="bench"]', `next tier gate: the skill row names Woodcraft and opens Craft (${JSON.stringify(sk)}, ${JSON.stringify(skGo)})`);
+  // once the zone 13 boss has beaten you, the gate keeps a row of its own in the top three (it sat 4th in the seed 1 walk)
+  E('S.mastery.types.golem = 8; S.bossTry.tries[bossTryKey(soloHero(), 13)] = 2; S.skills.bench.lv = 5; S.skills.loom.lv = 5');   // the nearest gate 50%, under the bestiary's 80%
+  const top3b = E('topGoals(3, { sticky: false }).map(x => x.label)');
+  assert(top3b.some(x => / for the zone 13 boss: \w+ \d of 10$/.test(x)), `next tier gate: after a lost boss try the gate row keeps a place in the top three (${JSON.stringify(top3b)})`);
+  E('S.mastery.types.golem = 4; S.bossTry.tries = {}'); reset();
   // 2. Woodcraft 10: the next station gate is the hood's or the leathers' Tailoring
   E('S.skills.bench.lv = 10');
   l = goals();

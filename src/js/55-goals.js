@@ -16,7 +16,7 @@
 //          { item }, a URL); the UI also takes { mob: typeKey } and { char: rosterId }
 //   prio   optional number or fn() -> number (default 0); breaks ties and orders ready goals (higher first)
 //   cap    optional 1: the diversity pass never takes a second goal from this sys (deeds, story)
-//   reserve optional 1: when the goal has something to show it keeps one row of its own (n >= 3), taking
+//   reserve optional 1 (or fn() -> 1/0): when the goal has something to show it keeps one row of its own (n >= 3), taking
 //          the place of the lowest other pick, so Ready goals cannot crowd it out (the deeds nudge, AP6)
 // topGoals(n = 3, { now, sticky = true }) -> [{ id, sys, label, pct, ready, go, icon }]
 //   Ready goals first, then the highest pct. Cached for 450 ms. Sticky: goals already shown
@@ -54,7 +54,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, goLabel: typeof g.goLabel === 'function' ? g.goLabel() : g.goLabel || '', icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, goLabel: typeof g.goLabel === 'function' ? g.goLabel() : g.goLabel || '', icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +val(g.reserve) || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -335,6 +335,9 @@ var forgeGoalPicks = 0;
   craftGoalNext = () => forgeNext();
   registerGoal({
     id: 'forge', sys: 'forge',
+    // a tier gate keeps a row of its own once the frontier boss has beaten you: it is the way forward ("gear up"), and in the seed 1
+    // walk it otherwise sat 4th behind the boss, refine and contract rows
+    reserve: () => { const b = forgeNext(), bt = S.bossTry; return b && b.gate && bt && bt.tries && typeof bossTryKey === 'function' && bt.tries[bossTryKey(soloHero(), S.maxZone)] > 0 ? 1 : 0; },
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
     label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
       if (b.gate) return `${nm}: ${SKILL[b.gate.skill]} ${b.gate.lv} of ${b.gate.need}` + (b.gate.mat ? ` opens ${b.gate.mat}` : '');
