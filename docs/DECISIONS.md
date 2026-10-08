@@ -961,6 +961,10 @@ Ruled C by an independent Opus high judge (`autopilot/rulings/2026-10-08-rally-g
   every boss from zone 4 to the last one reached (zone 20, 22 and 19) started at gate 0, played all its rallies and fell on the
   first try. Zones 7-12 took minutes 18-31. Zone 20 at 62:38 (Wren), 49:18 (Tobin) and 65:40 (Pip), against the z20-wall walks'
   56:53 (Wren) and 72:18 (Tobin). Movement at zones 13 and up goes to the balance-pass row "Rally gates were off on live bosses".
+- **Health parity baselines are the mean of each offset's parity, not the parity of the mean** (rally-gates-live, judge 2026-10-08;
+  the tolerance is unchanged; the 50h section keeps the old value until its Pip goldSpentShare fail is fixed). This raises the
+  active parity reference from 0.21 to the offsets' mean. The 50h section is not rewritten here: it did not move, and a rewrite would bake in
+  Pip's goldSpentShare 0.87 (a real fail, already on the base build). Rewrite it when that fail is fixed. Veto: "Put the old parity baseline back".
 
 Veto phrase for Cal: **"Turn the rally gates off"**: set `gate.on = 0` and refit every boss from z4 to z34 in the balance pass.
 
