@@ -12398,6 +12398,38 @@ if (section('hero join shown once')) try {
   assert(lateSeen() === '' && !late.errors.length, `hero join: the late fixture already has its heroes, so loading it shows no "New hero" card (got "${lateSeen()}")`);
 } catch (e) { fail('hero join shown once crashed: ' + (e.stack || e)); }
 
+// ---- small-text-clips: the Loom's "Hemp Fibre" tier label and a "Secret found" toast show in full (the walk's clipped-text reader) ----
+if (section('small text clips')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('small text clips: Playwright or Chromium not here, skipped');
+  else {
+    const fixture = loadCore({ seed: 1108 }); fixture.eval('soloPick("wren");hearthWarm();S.maxZone=12;S.camp.open=true;onboardUnlockAll();onboardTips(false);save()');
+    const raw = fixture.storage.get(KEY), html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const cut = 'n => ({ t: n.textContent, cut: n.scrollWidth > n.clientWidth + 1 || n.scrollHeight > n.clientHeight + 2 })';
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try { for (const [width, height] of [[360, 740], [740, 360]]) {
+      const at = `small text clips ${width}x${height}`, ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      try {
+        await ctx.addInitScript(({ raw, key }) => { localStorage.setItem(key, raw); }, { raw, key: KEY });
+        const page = await ctx.newPage(); await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('setTab("forge");ui(true);true'); await page.waitForTimeout(200);
+        await page.evaluate(() => document.querySelector('.cf-st[data-st="loom"]').click()); await page.waitForTimeout(200);
+        const tier = await X(`(${cut})(document.querySelector('.cf-tiers button[data-t="1"] small'))`);
+        assert(tier.t === 'Hemp Fibre' && !tier.cut, `${at}: the Loom's Tier 1 label shows "Hemp Fibre" in full (${JSON.stringify(tier)})`);
+        await X('NEWS.open=false;notify({msg:"Secret found: First Try. New title: Clutch.",kind:"good",icon:{ic:["orb","#B89CFF"]},prio:"normal"},"now");true');
+        const sec = await X(`(${cut})([...document.querySelectorAll('#toasts .tx')].find(n => /^Secret found/.test(n.textContent)))`);
+        assert(!sec.cut, `${at}: the "Secret found: First Try. New title: Clutch." toast shows in full (${JSON.stringify(sec)})`);
+        // the same toast docked on the stage (menu closed): the narrow portrait dock, 20-stage.css
+        await X('for (const t of $("toasts").children) t.remove();S.tab=null;placeToasts();notify({msg:"Secret found: First Try. New title: Clutch.",kind:"good",icon:{ic:["orb","#B89CFF"]},prio:"normal"},"now");true');
+        const dock = await X(`(${cut})([...document.querySelectorAll('#toasts .tx')].find(n => /^Secret found/.test(n.textContent)))`);
+        assert(!dock.cut, `${at}: on the stage dock the Secret found toast shows in full too (${JSON.stringify(dock)})`);
+      } finally { await ctx.close(); }
+    } } finally { await browser.close(); }
+  }
+} catch (e) { fail('small text clips crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
