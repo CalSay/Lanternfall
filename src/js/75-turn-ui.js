@@ -268,8 +268,9 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   // the narrow stage line (about 18 characters wide): three short lines, as the trick tips are; the boss's name is on its bar
   // rally gates (rally-gates-live): the boss holds at the mark on its bar until it has made its next move; while it gathers a
   // charged move, hits cannot break the charge there, so only a Stun does
-  on('foeRally', p => { if (p) say(p.charging ? 'Rally! It holds at the mark. Only a Stun breaks its charge.' : 'Rally! It holds at the mark until its next move ends.', 'charge', 3); });
-  on('foeRallied', p => { if (p) say('Rally over. Your hits land again.', 'good', 1.6); });
+  // body[data-rally-seen] / [data-rally-over]: what has shown, for a proof route that cannot catch the frame (as hit-feel's data-hit-seen)
+  on('foeRally', p => { if (!p) return; say(p.charging ? 'Rally! It holds at the mark. Only a Stun breaks its charge.' : 'Rally! It holds at the mark until its next move ends.', 'charge', 3); document.body.dataset.rallySeen = '1'; });
+  on('foeRallied', p => { if (!p) return; say('Rally over. Your hits land again.', 'good', 1.6); document.body.dataset.rallyOver = '1'; });
   on('foeContact', p => {
     if (!p || p.res !== 'feint') return;
     if (p.fooled) { emit('float', { txt: 'FOOLED', color: '#FF9B8A', big: true, x: 0.27, y: 0.34 }); emit('shake', 0.1); pendClean = null; lampSet(0); }
@@ -306,9 +307,9 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     if (!card.hidden && (!s || s.phase !== 'intro') && performance.now() - cardAt > 250) { card.hidden = true; card.classList.remove('play'); }
     if (wrap.hidden === live) { wrap.hidden = !live; bot.hidden = !live; }
     if (!warn.hidden && performance.now() > warnT) warn.hidden = true;
-    drawRing(live ? s : null); drawNotches(live ? s : null);
+    drawRing(live ? s : null); drawNotches(live ? s : null);   // a rally holds the turn label too (below): the boss's own move lines take the banner
     if (!live) { if (!bar.hidden) bar.hidden = true; return; }
-    putText(turnN, s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.phase === 'foeWindup' && s.foe ? `${s.foe.name}'s turn` : s.n ? `Turn ${s.n}` : '');
+    putText(turnN, s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.rally && s.foe ? 'Rally: it holds at the mark' : s.phase === 'foeWindup' && s.foe ? `${s.foe.name}'s turn` : s.n ? `Turn ${s.n}` : '');
     turnN.classList.toggle('mine', s.phase === 'hero' || !!s.timing);
     turnN.classList.toggle('foe', s.phase === 'foeWindup');
     // the foe winds up: the bar fills to the hit; the dodge and parry windows sit at its end
