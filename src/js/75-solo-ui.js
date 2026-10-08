@@ -112,7 +112,11 @@ var soloIconURL = () => '';
   let heroK = '';
 
   // ---- feedback ----
-  const nope = b => { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); };
+  // fight-input-during-banner: beside the shake, a short red-brown outline that is not an animation, so reduced motion keeps it
+  const nope = b => {
+    b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope');
+    b.classList.add('refused'); clearTimeout(b._refT); b._refT = setTimeout(() => b.classList.remove('refused'), 250);
+  };
   const flash = (b, cls) => { b.classList.remove(cls); void b.offsetWidth; b.classList.add(cls); setTimeout(() => b.classList.remove(cls), 450); };
   // The guide's Dodge and Parry steps pause the game on a heavy hit; the first press there always counts (59j forgive).
   const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
@@ -232,12 +236,13 @@ var soloIconURL = () => '';
 
   // ---- update (about 10 times a second) ----
   // LoL-style: the dark part sweeps clockwise off the icon as the slot comes back (--cd 1 -> 0); a flash when ready.
-  const setCd = (b, left, max) => {
+  // quiet: the hero cannot act yet (the turn banner, the VS card), so no ready flash; it is not replayed later
+  const setCd = (b, left, max, quiet) => {
     const f = max > 0 ? Math.max(0, Math.min(1, left / max)) : 0, v = f.toFixed(2);
     if (b._cd === v) return;
     const was = b._cd != null && +b._cd > 0;
     b._cd = v; b.style.setProperty('--cd', v); b.classList.toggle('cool', f > 0);
-    if (was && f === 0) flash(b, 'ready-now');
+    if (was && f === 0 && !quiet) flash(b, 'ready-now');
   };
   const setN = (b, s) => { if (b._nv !== s) { b._nv = s; b._n.textContent = s; } };
   const secs = x => (x > 0 ? (x < 1 ? x.toFixed(1).replace(/^0/, '') : String(Math.ceil(x))) : '');
@@ -343,6 +348,11 @@ var soloIconURL = () => '';
     // the guide points at Act's buttons: keep that pane open until it is done
     if (dockTab !== 'act' && typeof onboardStep === 'function' && onboardStep()) setTab('act');
     if (k !== heroK) { heroK = k; setIc(bAtk._ic, 'atk', 48); }
+    // C20 turn fights (75-turn-ui): cooldowns count in turns; hero actions only on the hero's turn, defence on the foe's wind-up
+    const tb = typeof turnBarInfo === 'function' ? turnBarInfo() : null;
+    // fight-input-during-banner: the banner, the VS card, recovery, the foe's turn and the gap after a kill refuse a hero press, so
+    // Attack and the abilities say so (dim, a dull frame, "Wait"); the engine still decides (59k turnResolve)
+    const wait = typeof turnCombatOn === 'function' && !!turnCombatOn() && (!tb || (!tb.heroTurn && !tb.timing));
     for (let i = 0; i < 3; i++) {
       const o = s.abs[i], b = bAbs[i];
       if (o.id !== abIds[i]) {
@@ -352,17 +362,17 @@ var soloIconURL = () => '';
         b.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
         b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.turnDesc || a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
       }
-      setCd(b, o.left, o.max); setN(b, secs(o.left));
+      setCd(b, o.left, o.max, wait); setN(b, secs(o.left));
       b.classList.toggle('ready', !!o.id && o.ready);
       const shut = slotShut(i), sk = (o.id || '') + ':' + shut;
       if (b._shut !== sk) {
         b._shut = sk; putStyle(b, 'opacity', shut ? '0.45' : ''); b.setAttribute('aria-disabled', String(shut));
         if (!o.id) b.setAttribute('aria-label', shut ? `Empty ability slot ${i + 1}. Learn another move to use it.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
       }
-      putText(b._sub, !o.id ? (shut ? '' : 'Tap to add') : o.left > 0 ? '' : 'Ready');
+      putText(b._sub, !o.id ? (shut ? '' : 'Tap to add') : o.left > 0 ? '' : wait ? 'Wait' : 'Ready');
     }
     putText(bAtk._sub, '');
-    setCd(bAtk, s.atk.left, s.atk.max);
+    setCd(bAtk, s.atk.left, s.atk.max, wait);
     setCd(bParry, s.parry.left, s.parry.max);
     setCd(bDodge, s.dodge.left, s.dodge.max);
     setN(bDodge, secs(s.dodge.left)); setN(bParry, s.parry.open > 0 ? '!' : '');
@@ -373,28 +383,29 @@ var soloIconURL = () => '';
     // a telegraphed hit is coming: Parry and Dodge glow (the stage ring shows when)
     bParry.classList.toggle('live', s.tele === 'heavy');
     bDodge.classList.toggle('live', s.tele === 'heavy' || s.tele === 'zone' || s.tele === 'slam');
-    // C20 turn fights (75-turn-ui): cooldowns count in turns; hero actions only on the hero's turn, defence on the foe's wind-up
-    const tb = typeof turnBarInfo === 'function' ? turnBarInfo() : null;
     if (tb) {
       for (let i = 0; i < 3; i++) {
         const o = s.abs[i], b = bAbs[i]; if (!o.id) continue;
         const cd = tb.cds[o.id] || 0, why = tb.why(o.id), pas = why === 'passive';
-        setCd(b, pas ? 0 : cd, tb.max(o.id));
+        setCd(b, pas ? 0 : cd, tb.max(o.id), wait);
         // why it cannot be used: its cooldown (turns), the finisher's third turn, or what it needs (a Burn, Grit, ...)
         setN(b, pas ? '' : cd ? String(cd) : why === 'gate' ? 'T3' : why && why !== 'cd' && why !== 'turn' ? '!' : '');
         putAttr(b, 'title', why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '');
         b.classList.toggle('ready', !why && tb.heroTurn);
         b.classList.toggle('blocked', !!why && why !== 'cd' && !pas);
-        putText(b._sub, pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? 'Needs ' + why.slice(5) : 'Ready');
+        putText(b._sub, pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? 'Needs ' + why.slice(5) : wait ? 'Wait' : 'Ready');
       }
       const acd = tb.cds.attack || 0, res = typeof HERO_RESOURCE === 'object' && HERO_RESOURCE[k];
       putText(bAtk._sub, acd ? turnsTxt(acd) : res ? '+1 ' + res.name : '');
-      setCd(bAtk, tb.cds.attack || 0, tb.max('attack'));
+      setCd(bAtk, tb.cds.attack || 0, tb.max('attack'), wait);
       for (const b of [bAtk, ...bAbs]) b.classList.toggle('off', !tb.heroTurn && !b.classList.contains('passive') && !(tb.timing && (b === bAtk || abIds[+b.dataset.slot] === tb.timing)));
       for (let i = 0; i < 3; i++) bAbs[i].classList.toggle('live', !!tb.timing && abIds[i] === tb.timing);   // the ring: press it again
       for (const b of [bParry, bDodge]) { b.classList.toggle('off', !tb.windup); b.classList.toggle('live', tb.windup); }
       setN(bDodge, ''); setN(bParry, '');
     }
+    bAtk.classList.toggle('wait', wait);
+    for (let i = 0; i < 3; i++) bAbs[i].classList.toggle('wait', wait && !!abIds[i] && abIds[i] !== '?' && !bAbs[i].classList.contains('passive'));
+    if (wait) for (const b of [bAtk, ...bAbs]) b.classList.remove('ready-now');   // a flash from the turn just played ends with it
     fillSkills(); fillFoe();
   }
   bAtk.setAttribute('aria-label', 'Attack (D). ' + INFO.atk.desc);

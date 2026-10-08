@@ -60,6 +60,13 @@
 .sb-def .sb-key { top: 3px; left: auto; right: 6px; }
 /* disabled: nothing to hit right now */
 .sbtn.off .sb-ic { opacity: .45; }
+/* fight-input-during-banner: the turn banner or VS card plays, so the hero cannot act yet: the whole tile dims and the frame goes dull */
+.sbtn.wait .sb-ic, .sbtn.wait .sb-tx, .sbtn.wait .sb-n { opacity: .5; }
+.sbtn.wait.off .sb-ic { opacity: .5; }
+.sbtn.wait { outline-color: #3A3046; box-shadow: inset 0 0 0 4px #1E1826, 0 3px 0 #0B0810; }
+.sb-abslot.wait .sb-lb { color: #A89A7A; }
+/* a refused press: a short red-brown outline, not an animation, so reduced motion keeps it */
+.sbtn.refused, .sbtn.wait.refused { outline-color: #A0442E; box-shadow: inset 0 0 0 4px #3A1A20, 0 3px 0 #0B0810; }
 /* a telegraphed hit is coming: Parry and Dodge glow */
 .sb-parry.live { outline-color: #E0524F; box-shadow: inset 0 0 0 4px #3A1A20, 0 0 10px rgba(224, 82, 79, .75), 0 3px 0 #0B0810; }
 .sb-dodge.live { outline-color: #8FB8FF; box-shadow: inset 0 0 0 4px #1A2640, 0 0 10px rgba(143, 184, 255, .75), 0 3px 0 #0B0810; }
