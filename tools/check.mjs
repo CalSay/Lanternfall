@@ -4915,7 +4915,7 @@ if (section('solo hero')) try {
   {
     const g = T(), E = s => g.eval(s);
     const ids = E('GUIDE_STEPS.map(x => x.id).join()');
-    assert(/^attack,ability,dodge,parry,boss,upgrade,(back,)?(wear:weapon,)?gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
+    assert(/^attack,ability,dodge,parry,boss,upgrade,spend,(back,)?(wear:weapon,)?gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
     assert(E('GUIDE_STEPS.every(x => x.pause || x.needs || x.id === "tab:party" || x.id === "nextup")'), 'every step pauses the game while it shows, except the ones that wait for materials (live progress) and two notes (W1-A: see "solo guide pause rules")');
     E('soloPick("wren")'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');   // SOLO2: a hand Attack and Echo Shot would clear the pack before the heavy steps
@@ -5267,6 +5267,8 @@ if (section('solo hero (browser)')) try {
       await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
       const seen = [];
       for (let i = 0; i < 80 && (seen.length < 6 || !['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x))); i++) {
+        // a Hesketh line (the boss's scroll) holds the game with a Got it ahead of the step: read it and press Got it, as a player does
+        if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click('.ob-ok'); await page.waitForTimeout(300); continue; }
         const st = await X('(s => s ? s.id : "")(onboardStep())');
         if (!st) { await X('for (let k = 0; k < 20; k++) tick(0.1); true'); await page.waitForTimeout(300); continue; }
         await page.waitForTimeout(400);
@@ -5284,7 +5286,7 @@ if (section('solo hero (browser)')) try {
         if (!(await X('ONBOARD.paused'))) await X('for (let k = 0; k < 10; k++) tick(0.1); true');
         // the Dodge and Parry steps wait for a heavy hit: start one on a pack foe
         await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && (GUIDE_RT.fight++, actWarn({ kind: "heavy", id: "t", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} })); true');
-        if (await X('S.tab && !["upgrade"].includes((onboardStep() || {}).id) ? (closeMenu(), true) : false')) await page.waitForTimeout(200);
+        if (await X('S.tab && !["upgrade", "spend"].includes((onboardStep() || {}).id) ? (closeMenu(), true) : false')) await page.waitForTimeout(200);   // spend-points-before-nextup: its tail closes the menu itself
       }
       await X('soloPickerOpen = __spo; true');
       assert(['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x)), `the first session walks Attack, the ability, Dodge and Parry (${seen.join(', ')})`);
@@ -10678,6 +10680,7 @@ if (section('story-unlock-gates')) try {
   cw.fn.on('unlock', e => got.push([e.id, C('Math.round(S.onboard.t)'), C('S.maxZone'), byNow(C, e.id)]));
   const act = {
     attack: 'soloAttack()', ability: 'soloAbility()', dodge: 'soloDodge()', parry: 'soloParry()', boss: 'onboardDone("boss")', nextup: 'onboardDone("nextup")',
+    spend: 'attrSpread()',   // spend-points-before-nextup: Spread evenly, as the line asks
     upgrade: '{ if (attrOn()) attrSpread(); else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, "1"); } }',   // hero-progression-rework: points, not Training
     gather: 'setNode("wood", 1); setActivity("gather")', light: 'hearthLight(); setActivity("fight")', bench: 'campBuild("bench")', forge: 'campBuild("forge")', store: 'campBuild("store")',
     tool: '{ const it = craftItem("pick", 1); if (it) equipItem(it.id); }',
@@ -10926,6 +10929,26 @@ if (section('craft delta')) try {
     E('S.mats.plank[0] = 1');
     l = goals();
     assert(l.some(x => x.label === 'Upgrade your Pine Bow to +1'), `upgrade goal chip order: with a Pine Plank, the Pine Bow upgrade shows (${JSON.stringify(l)})`);
+  }
+  { // nextup-guards-forge-mats: with the Forge unbuilt and 22/25 Copper Ore, Next Up offers no tool craft or upgrade that eats the
+    // Forge's ore; with 35 ore the pickaxe +1 (1 ore) shows again, and once the Forge is up nothing is held
+    const g = coreOn('save-forge-short.json'), E = s => g.eval(s);
+    const goals = () => E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))');
+    E('S.mats.ore[0] = 22; S.mats.wood[0] = 10; S.gold = 5000');
+    const pick = E('equipped("pick").id');
+    assert(E(`campLevel('forge') === 0 && canUpgrade(${pick}).ok`), 'next up guards forge mats: the save has the Forge unbuilt and an affordable pickaxe upgrade');
+    let l = goals();
+    assert(!l.some(x => x.id === 'upgrade' || (x.id === 'forge' && /Pickaxe|Woodaxe|Sickle|Spear/.test(x.label))) && l.some(x => x.id === 'camp-build' && /^Forge Lv 1/.test(x.label)), `next up guards forge mats: at 22/25 Copper Ore no tool craft or upgrade, and the Forge row shows (${JSON.stringify(l)})`);
+    E('S.mats.ore[0] = 35');
+    l = goals();
+    assert(l.some(x => x.label === 'Upgrade your Copper Pickaxe to +1'), `next up guards forge mats: with ore to spare the pickaxe upgrade shows (${JSON.stringify(l)})`);
+    E('S.mats.ore[0] = 22; S.mats.wood[0] = 10; S.camp.b = Object.assign(S.camp.b || {}, { forge: 1 })');
+    l = goals();
+    assert(E("campLevel('forge')") === 1 && l.some(x => x.id === 'upgrade' || (x.id === 'forge' && /Woodaxe|Sickle|Spear/.test(x.label))), `next up guards forge mats: once the Forge is built a tool row can show again (${JSON.stringify(l)})`);
+    // the first weapon is never held: with no weapon worn, its row shows at 22/25 ore with the Forge unbuilt
+    E('S.camp.b.forge = 0; S.equip.weapon = null; S.items = S.items.filter(i => i.slot !== "bow" && i.slot !== "staff" && i.slot !== "sword"); S.onboard.done.tool = 1; gearDirty()');
+    l = goals();
+    assert(l.some(x => x.id === 'forge' && /^Craft a Pine Bow/.test(x.label)), `next up guards forge mats: the first weapon row still shows with the Forge unbuilt (${JSON.stringify(l)})`);
   }
   await (async () => {
     const { pw, exe } = browserTools;
@@ -11893,6 +11916,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             }
             // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk
             if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
+            // a step that ended while the walk looked (Next Up opening ends spend-points-before-nextup's line unseen) is not a miss
+            if (!c.ok && await X('(s => s ? s.id : "")(onboardStep())') !== st) continue;
             if (!seen.has(key)) { seen.add(key); if (!c.ok) bad.push(`${key}: ${JSON.stringify(c)}`); }
             // do the step through its own target
             const live = await X(`!!(onboardSpec(${JSON.stringify(st)}) || {}).live`);
@@ -12993,6 +13018,64 @@ if (section('unspent points nudge')) try {
   assert(!g.errors.length, 'unspent points: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('unspent points nudge crashed: ' + (e.stack || e)); }
 
+// ==== spend-points-before-nextup: two levels' points or more unspent before Next Up opens: Hesketh says so once, between fights ====
+if (section('spend-points-before-nextup')) try {
+  const at = 'spend-points-before-nextup';
+  // a fresh game past the first Might point, between fights (the Hero menu open), Next Up still locked (a recent unlock holds the gap)
+  const mk = lv => {
+    const g = loadCore({ seed: 7 }), E = s => g.eval(s);
+    E(`soloPick("wren"); for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) S.onboard.done[id] = 1;
+      S.onboard.got.party = Math.round(S.onboard.t); S.maxZone = 2; S.zone = 2; S.tab = "party"; S.L = ${lv}`);
+    return [g, E];
+  };
+  const step = E => E('(s => s ? s.id : "")(onboardStep())');
+  const per = loadCore().eval('HERO_TUNE.perLevel');
+  assert(per === 4, `${at}: a level gives 4 points (${per})`);
+  { // 8 free: the line shows; a spend under 8 ends it for good
+    const [g, E] = mk(3);
+    assert(E('attrOn() && !isUnlocked("nextup") && attrPoints(soloHero()).free') === 8 && E('guidePhase()') === 'between', `${at}: the fixture has 8 free, Next Up locked, between fights`);
+    assert(step(E) === 'spend' && E('onboardPaused(GUIDE_STEPS.find(x => x.id === "spend"))'), `${at}: with 8 free Hesketh says it, and the game waits (${step(E)})`);
+    E('attrAdd("might", 1)');
+    assert(E('fightingNow()') && step(E) === 'spend' && !E('S.onboard.done.spend'), `${at}: spent to 7 with the Hero menu over the fight, it says to close the menu (back's line) (${step(E)})`);
+    E('S.tab = null');
+    assert(step(E) !== 'spend' && E('S.onboard.done.spend') === 1, `${at}: the menu closed, the step is done (${step(E)})`);
+    E('S.L = 6');
+    assert(E('attrPoints(soloHero()).free') >= 8 && step(E) !== 'spend', `${at}: more levels later, it never shows again (${step(E)})`);
+    assert(E('attrPoints(soloHero()).free') === 19, `${at}: it never spends a point for the player (${E('attrPoints(soloHero()).free')})`);
+    assert(!g.errors.length, `${at}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  { // × answers it too
+    const [, E] = mk(3); step(E); E('onboardDone("spend")'); E('S.L = 4');
+    assert(step(E) !== 'spend', `${at}: dismissed, it does not come back`);
+  }
+  { // spent with the menu still open, then a reload (the latch is runtime only): it never comes back
+    const [, E] = mk(3); step(E); E('attrAdd("might", 1)'); assert(step(E) === 'spend', `${at}: the close-the-menu tail is up`);
+    E('GUIDE_RT.latch = ""; S.tab = null; S.L = 5');
+    assert(E('attrPoints(soloHero()).free') >= 8 && step(E) !== 'spend' && E('S.onboard.done.spend') === 1, `${at}: after a reload mid-tail, more levels never bring the line back (${step(E)})`);
+  }
+  { // 4 free: one level's points are not a pile
+    const [, E] = mk(2);
+    assert(E('attrPoints(soloHero()).free') === 4 && step(E) !== 'spend' && !E('S.onboard.done.spend'), `${at}: with 4 free it waits (${step(E)})`);
+    E('S.L = 3'); assert(step(E) === 'spend', `${at}: a level later, with 8 free, it shows`);
+  }
+  { // Next Up open: never
+    const [, E] = mk(5); E('S.onboard.got.nextup = Math.round(S.onboard.t)');
+    assert(E('isUnlocked("nextup")') && step(E) !== 'spend' && E('S.onboard.done.spend') === 1, `${at}: with Next Up open it never shows (Next Up ranks the points) (${step(E)})`);
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
+    assert(/You have \$\{n\} attribute points waiting\. Open Hero and spend them\./.test(src) && !/Tap Spread evenly/.test(src), `${at}: the line names the points from the save, in neutral words`);
+  }
+  { // attributes off: never
+    const [, E] = mk(5); E('HERO_TUNE.training = 1');
+    assert(!E('attrOn()') && step(E) !== 'spend', `${at}: with attributes off it never shows (${step(E)})`);
+  }
+  { // in a fight it waits for the gap between foes (a 'between' step)
+    const [, E] = mk(3); E('S.tab = null; setActivity("fight"); for (let i = 0; i < 50 && !liveFoe(); i++) tick(0.1)');
+    const ph = E('guidePhase()'), mid = step(E);
+    E('combatFoes().forEach(f => { f.hp = 0; f.dead = true; })');
+    assert(ph !== 'between' && mid !== 'spend' && E('guidePhase()') === 'between' && step(E) === 'spend', `${at}: a foe on the field holds it; with none left it starts (${ph} ${mid}, ${E('guidePhase()')} ${step(E)})`);
+  }
+} catch (e) { fail('spend-points-before-nextup crashed: ' + (e.stack || e)); }
+
 // ==== gear-in-first-25: Wren and Pip make their first weapon at the Workbench right after the tool, and are told where its materials are ====
 // save-pip-tool-made: Pip, cold, Workbench built, a Copper Pickaxe worn, no Forge, Pine Log 10, essence 4, Quartz 0, zone 3.
 // save-wren-hunt-open: the same for Wren at zone 5 with Foraging (and Hunting) open, Copper Ore 0 (Step 0: the bow is wood + metal).
@@ -13217,6 +13300,82 @@ if (section('camp-build-tap-again')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('camp build tap again crashed: ' + (e.stack || e)); }
+
+// ==== scroll-spares: Scrolls the hero in play can't use say who they are for; "Scroll found." only for a Scroll it can use now ====
+if (section('scroll-spares')) try {
+  const at = 'scroll-spares', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-wren-spare-moss.json'), 'utf8');
+  { // core: the fixture, then the toast rule
+    const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    const sp = E('JSON.stringify(scrollSpares("wren"))');
+    assert(E('soloHero()') === 'wren' && E('scrollCount("moss")') === 3 && E('abilityOwned("wren", "powershot")') && !E('heroCanPlay("tobin")') && !E('heroCanPlay("pip")'),
+      `${at}: the fixture is Wren with 3 Moss and Power Shot, Tobin and Pip not met`);
+    assert(sp === JSON.stringify({ short: [], spare: [{ id: 'moss', n: 3, play: [], join: ['tobin', 'pip'] }], idle: [] }), `${at}: the 3 Moss are spares for Tobin and Pip, who join later (${sp})`);
+    const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
+    const boss = z => E(`S.zone = ${z}; emit('kill', { zone: ${z}, mob: { boss: true } }); scrollCount(scrollFor(${z}))`);
+    E('Math.random = () => 0');   // every replay drops
+    const n1 = boss(3);
+    assert(n1 === 4 && !toasts.some(m => /Scroll found/.test(m)), `${at}: a Moss dropped for Wren with Power Shot learned is quiet (${n1} Moss; ${JSON.stringify(toasts)})`);
+    E('S.abil.unl.wren = []'); boss(3);
+    assert(toasts.filter(m => m === 'Moss Scroll found.').length === 1, `${at}: one dropped for a hero who can use it says "Moss Scroll found." (${JSON.stringify(toasts)})`);
+    E('S.abil.unl.wren = ["powershot"]; S.party.unlock.heroes.tobin = 1; soloPick("tobin")'); toasts.length = 0; boss(3);
+    assert(E('soloHero()') === 'tobin' && toasts.includes('Moss Scroll found.'), `${at}: with Tobin in play (Heavy Strike unlearned) it says so (${E('soloHero()')}, ${JSON.stringify(toasts)})`);
+    assert(!g.errors.length, `${at}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-abilities-ui.js'), 'utf8');
+    assert(!/need a higher level/.test(src), `${at}: "Your Scrolls need a higher level" is gone`);
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { if (!sessionStorage.getItem('ss')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('ss', '1'); } } catch (e) {} }, [KEY, raw]);   // no time away
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        const line = async js => { await X(`${js}; setTab('abilities'); 1`); await menuSettled(page, true);
+          await page.click('#sec-abilities .ab-fb[data-f="all"]'); await page.click('#sec-abilities .ab-fb[data-f="can"]'); await page.waitForTimeout(80);
+          return X(`(document.querySelector('#sec-abilities .ab-empty') || {}).textContent || ''`); };
+        const r = {};
+        r.spare = await line('S.onboard && (S.onboard.tips = false)');
+        r.mixed = await line('S.party.unlock.heroes.tobin = 1');
+        r.idle = await line('S.abil.unl.tobin = ["heavystrike"]; S.abil.unl.pip = ["spark"]');
+        r.short = await line('S.abil.unl.tobin = []; S.abil.unl.pip = []; delete S.party.unlock.heroes.tobin; S.abil.scrolls = { hollow: 1 }; S.L = 7; soloLevels().wren && (soloLevels().wren.L = 7)');
+        r.both = await line('S.abil.scrolls = { hollow: 1, moss: 1 }');
+        r.none = await line('S.abil.scrolls = {}');
+        assert(r.spare === 'Spare Moss Scrolls teach Tobin and Pip their first move when they join.', `${at} ${w}x${h}: Can learn names Tobin and Pip ("${r.spare}")`);
+        assert(r.mixed === 'Spare Moss Scrolls teach Tobin their first move when you play them, and Pip when they join.', `${at} ${w}x${h}: Tobin met, Pip not ("${r.mixed}")`);
+        assert(r.idle === 'Every hero has their Moss move. Moss Scrolls have no use now.', `${at} ${w}x${h}: every Tier I move learned ("${r.idle}")`);
+        assert(r.short === 'Hollow Scroll moves open at level 8.', `${at} ${w}x${h}: a Hollow at level 7 ("${r.short}")`);
+        assert(r.both === 'Hollow Scroll moves open at level 8. A spare Moss Scroll teaches Tobin and Pip their first move when they join.', `${at} ${w}x${h}: the level line first, then the spare line ("${r.both}")`);
+        assert(r.none === 'Nothing to learn yet. Beat a zone boss for a Scroll.', `${at} ${w}x${h}: no Scrolls as before ("${r.none}")`);
+        assert(![r.spare, r.mixed, r.idle, r.short, r.both].some(t => /higher level/.test(t)), `${at} ${w}x${h}: never "need a higher level"`);
+        // the drawer: 5 rows, the Moss row's one move per hero, the tier line, no sideways scroll
+        await X('S.abil.scrolls = { moss: 3 }; 1'); await page.click('#sec-abilities .ab-fb[data-f="all"]');
+        await page.click('#sec-abilities .ab-infob'); await boxSettled(page, '#sec-abilities .ab-info'); await menuSettled(page, true);
+        r.info = await X(`(() => { const i = document.querySelector('#sec-abilities .ab-info'); if (!i) return 'no drawer';
+          const rows = i.querySelectorAll('.ab-scroll'), p = document.getElementById('panels');
+          return [rows.length, /One move per hero\./.test(rows[0].textContent), !/One move per hero/.test(rows[1].textContent), (i.querySelector('.ab-tierln') || {}).textContent, p.scrollWidth <= p.clientWidth + 1].join('|'); })()`);
+        assert(r.info === '5|true|true|A Scroll teaches its own tier or a lower one.|true', `${at} ${w}x${h}: the drawer says Moss teaches one move per hero and a Scroll teaches its tier or lower (${r.info})`);
+        await page.click('#sec-abilities .ab-infob'); await page.waitForTimeout(150);
+        // the learn detail: full slots say "Swap it in for:"; a free slot keeps "Put it in a slot:"
+        await X(`S.L = 20; soloLevels().wren && (soloLevels().wren.L = 20); S.abil.unl.wren = ['powershot', 'huntmark', 'barbed']; soloEquip(1, 'powershot'); soloEquip(2, 'huntmark'); abilityOpenDetail('barbed'); setTab('abilities'); 1`);
+        await boxSettled(page, '#sec-abilities .ab-det'); await page.waitForTimeout(100);
+        r.full = await X(`(document.querySelector('#sec-abilities .ab-det .ab-al') || {}).textContent || ''`);
+        await page.click('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(100);
+        await X(`soloEquip(2, null); abilityOpenDetail('barbed'); setTab('abilities'); 1`); await boxSettled(page, '#sec-abilities .ab-det'); await page.waitForTimeout(100);
+        r.free = await X(`(document.querySelector('#sec-abilities .ab-det .ab-al') || {}).textContent || ''`);
+        assert(r.full === 'Swap it in for:' && r.free === 'Put it in a slot:', `${at} ${w}x${h}: a learned move with all three slots full says "Swap it in for:" ("${r.full}", "${r.free}")`);
+        assert(!errors.length, `${at} ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('scroll-spares crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

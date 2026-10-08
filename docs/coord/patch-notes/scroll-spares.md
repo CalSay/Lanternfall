@@ -1,0 +1,1 @@
+Abilities now says what spare Scrolls are for: extra Moss Scrolls teach Tobin and Pip their first move when they join. "Scroll found." shows only for a Scroll your hero can use now, and learning a move with all three slots full says "Swap it in for:". Best shot: can-learn.

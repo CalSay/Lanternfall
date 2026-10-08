@@ -1,0 +1,180 @@
+# seed: 1
+# Proof for card spend-points-before-nextup. The fixture: Wren, level 4, zone 2, the lessons done, 12 points free, Next Up still
+# locked: the state a fresh game reaches at about 0:47 when nothing past the first point has been spent. The guide's upgrade step
+# asks for one point in Might; with 11 still free Hesketh's spend line follows at once on Build when the menu covers the fight (upright;
+# landscape and desktop keep the fight beside the menu, so his line waits for the gap after the foe, as every 'between' line does). Closing the menu with points
+# still free hides his line while a foe is on the field (a 'between' line); the route drops to zone 1 and fights the Thorn Imp
+# down (Echo when ready, else Attack), and in the gap after it his full line shows, naming the pile and pointing at Hero. Hero,
+# Build and Spread evenly then spend it all; with the Hero menu still over the fight he says to close it (the line `back` uses),
+# and once it is closed the line never comes back.
+# The once-a-game rule, the 4-free case, Next Up open and attributes off are held by tools/check.mjs "spend-points-before-nextup".
+new flow-points
+wait 2
+tap-if "Continue"
+tap "Hero"
+wait 1
+tap "Build"
+wait 1
+tap "Add 1 point to Might"
+wait 1
+shot spend-on-build
+tap "Close menu"
+wait 1
+expect-no "attribute points waiting"
+tap "Previous zone"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+tap-if "Echo"
+tap-if "Attack"
+wait 2
+expect "You have 11 attribute points waiting. Open Hero and spend them."
+shot spend-line
+tap "Hero"
+wait 1
+tap-if "Build"
+wait 1
+expect "Spread evenly to spend them all at once"
+tap "Spread evenly"
+wait 1
+expect ".at-spread:disabled"
+expect-no "attribute points waiting"
+expect-no "Spread evenly to spend them all at once"
+expect "close the menu and the fight goes on"
+shot spent
+tap "Close menu"
+wait 1
+expect-no "close the menu and the fight goes on"
+wait 30
+expect-no "attribute points waiting"
+shot after

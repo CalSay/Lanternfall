@@ -1,0 +1,27 @@
+# Proof for card scroll-spares. Wren at zone 4 with 3 Moss Scrolls and Power Shot learned, Tobin and Pip not met yet
+# (tests/proof-fixtures/save-wren-spare-moss.json), at 1280x720, 740x360 and 360x740:
+#   can-learn-*.png  Hero > Abilities > Can learn says the spare Moss Scrolls teach Tobin and Pip their first move when they
+#                    join. Before this card it read "Nothing to learn yet. Your Scrolls need a higher level.", so the
+#                    first expect fails on that build.
+#   scrolls-*.png    the Scrolls drawer: the Moss row says one move per hero, and a line says a Scroll teaches its own tier
+#                    or a lower one (under the rows: the check reads it, a landscape shot may not reach it).
+# seed: 1
+new wren-spare-moss
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+tap "Hero"
+wait 1
+tap "Abilities"
+wait 1
+tap "Can learn 0"
+wait 1
+expect "Spare Moss Scrolls teach Tobin and Pip their first move when they join."
+shot can-learn
+tap "3 Scrolls"
+wait 1
+expect "One move per hero."
+shot scrolls

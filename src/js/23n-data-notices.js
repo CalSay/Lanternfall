@@ -48,7 +48,7 @@ const NOTICES = [
   { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
   { id: 'beaten', re: /Catch your breath and go again/, ch: 'log', why: 'you stay in the zone and the fight starts again on screen' },
   { id: 'scroll', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll! Spend it/, site: /SCROLLS\[id\]\.name\}! Spend it/, ch: 'log', why: 'the stage float shows it and Next Up says what it can teach (the bell stays calm)' },
-  { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it, and Next Up offers what it teaches' },
+  { id: 'scroll-more', re: /^(Moss|Hollow|Barrow|Roadlight|Mother) Scroll found\.$/, site: /SCROLLS\[id\]\.name\} found/, ch: 'log', why: 'the stage float shows it; it shows only when the hero in play can learn with it now (scroll-spares)' },
   { id: 'learned', re: /^\w+ learned [A-Z][\w' ]+\.$/, site: /learned \$\{a\.name\}/, ch: 'log', why: 'you just pressed Learn and see the card change' },
   { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
   { id: 'attr-join', key: 'attr-join', ch: 'pop', wait: 30 },   // hero-progression-rework: a hero arrives with points to spend (Go: Build)
