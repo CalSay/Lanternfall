@@ -3,9 +3,31 @@
 # Fixture boss1: Wren on zone 1 with the boss next (a fresh save, levelled so the fight is won in both views).
 # Follow-up: a moment now shows at the hero's turn too (only a turn in motion holds it), so an idle player still sees the card.
 # Level-up banners, uniques and the other moments are forced in tools/check.mjs, section 'moment layer'.
+# Updated 2026-10-08 (proof-routes-rot): the staged-guide lesson holds the boss's first swing until Dodge is pressed (tap-if "Dodge"); the first-boss card is now the Lantern Cache card titled "First boss down" (cache-core folds zone 1's boss moment into it, src/js/75-caches-ui.js), so the route expects the card's title (#mmHead), its burst and Wren's first-boss line; the burst glow sits over the title's centre at 740x360, so the title is a selector expect.
 new boss1
 wait 2
 tap-if "Got it"
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
@@ -51,26 +73,14 @@ wait 1
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
-wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
-wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
-wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
-wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
-wait 1
-expect "The first boss falls"
 expect .mm-card
+expect #mmHead
+expect .mm-burst
+expect "One down. The lamp"
 shot first-boss-card
 burst first-boss-burst
 wait 3
-expect "The first boss falls"
+expect #mmHead
+expect "One down. The lamp"
 tap "Continue"
 shot after-continue

@@ -1,6 +1,6 @@
 # Proof for card gold-without-training. The mid save (Tobin, zone 20, 34K gold) with 200 Silver Ore added and a spare
 # Iron Greathelm +4 in the bag (tests/proof-fixtures/save-gold-upgrades.json), at 360x740 and 740x360:
-#   upgrade-sheet-*.png  the Silver Warblade +6 sheet: +7 costs 1.8K gold and 11 Silver Ore (gold is the main cost; no
+#   upgrade-sheet-*.png  the Silver Warblade +6 sheet: +7 costs 1.8K gold and 6 Silver Ingot (11 Silver Ore before refining; gold is the main cost; no
 #                        essence or Hide), and "Salvage it to get back 1.66K gold, half what its upgrades cost." (portrait).
 #   upgrade-plus7-*.png  after Upgrade to +7: gold 34.1K -> 32.3K, and the next step says "From +8, each upgrade also
 #                        takes a Trophy. Champions drop them." with its Trophy chip (3/1 Trophy (any)). The game also
@@ -10,6 +10,11 @@
 #   salvage-done-*.png   after Salvage it: gold 32.3K -> 32.8K (the 530 gold back; materials pay no gold).
 # Prices are provisional: the crafting overhaul spec sets the real numbers. The rules are held by tools/check.mjs
 # ("each upgrade step costs more gold", "only the main material", "salvaging a +4 ... pays back half").
+# Updated 2026-10-08 (proof-routes-rot): the +7 step now takes 6 Silver Ingot, not Silver Ore (refining, #209), and the save
+# holds no coal or ingots, so the route mines Copper Ore for coal and smelts Silver Ingot at the Forge first (no gold spent),
+# (3 minutes away mining for coal, then 6 minutes away while the order runs), then clears the order and goes back to the fight
+# so the sheets hold still;
+# the Refining tip over Craft is closed. Gold, Trophy and salvage lines are unchanged.
 # seed: 1
 new gold-upgrades
 wait 1
@@ -19,7 +24,41 @@ tap-if "Continue"
 wait 2
 tap-if "Continue"
 wait 1
+tap "Gather"
+wait 1
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap "Copper Vein"
+tap "Mine at the Copper Vein"
+wait 1
+away 0.05
+wait 1
+tap-if "Collect"
+wait 1
+tap "Camp"
+wait 1
+tap-if "Dismiss this tip"
+wait 1
+tap "Forge: show details"
+tap "Smelt"
+wait 1
+tap "Smelt 10 Silver Ingot"
+away 0.1
+wait 1
+tap-if "Collect"
+wait 1
+tap-if "Remove the Silver Ingot order"
+tap-if "Clear the Silver Ingot order"
+wait 1
+tap-if "Close"
+wait 1
+tap "Gather"
+wait 1
+tap "Back to fight"
+wait 1
 tap "Craft"
+wait 1
+tap-if "Got it"
 wait 1
 tap "Gear"
 wait 1

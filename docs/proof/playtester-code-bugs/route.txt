@@ -1,31 +1,40 @@
 # seed: 1
 # Proof for card playtester-code-bugs. Two lines the new-player tester caught saying the wrong thing:
 #   unique-upgrade-*.png  the spare Echo Cowl (a Unique helm, power 18) on the gold-upgrades save
-#                         (tests/proof-fixtures/save-gold-upgrades.json): its upgrade line now reads "+1: power 18 → 20",
+#                         (tests/proof-fixtures/save-gold-upgrades.json; since proof-routes-rot save-refine.json, the same save plus coal): its upgrade line now reads "+1: power 18 → 20",
 #                         the power it really has at +1 (it used to promise 36).
 #   unique-upgraded-*.png after Upgrade to +1 the sheet says Power 20, as promised, and the next line reads "+2: power 20 → 23".
 #   cache-toast-*.png     the first boss on the boss1 save opens a Lantern Cache; the bell's line names the look once:
 #                         "Ember Red lantern", not "Ember Red lantern lantern".
 # Both are also held by tools/check.mjs, section 'playtester code bugs' (unique and non-unique at +0 and +5; the toast text).
+# Updated 2026-10-08 (proof-routes-rot): the boss's first swing waits for Dodge (staged-guide lesson), so the route taps Dodge;
+#   gear moved from Craft to Hero > Gear; a Unique's +1 now costs 1 Copper Ingot (refine-queues, #209), so the route loads
+#   tests/proof-fixtures/save-refine.json (the same gold-upgrades save with 60 coal) and smelts Copper Ingots at the Forge first.
 # The cache part runs first because a second `new` clears the shots taken before it.
 new boss1
 wait 2
 tap-if "Got it"
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
@@ -85,7 +94,7 @@ wait 1
 expect "Ember Red lantern"
 expect-no "lantern lantern"
 shot cache-toast
-new gold-upgrades
+new refine
 wait 1
 tap-if "Close"
 wait 2
@@ -97,7 +106,17 @@ tap-if "Continue"
 wait 2
 tap-if "Continue"
 wait 1
-tap "Craft"
+tap "Camp"
+wait 1
+tap "Forge: show details"
+wait 1
+tap "Smelt"
+wait 1
+tap "Smelt 10 Copper Ingot"
+wait 30
+tap "Close"
+wait 1
+tap "Hero"
 wait 1
 tap "Gear"
 wait 1

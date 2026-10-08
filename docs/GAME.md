@@ -131,7 +131,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   the cap with a bar, a minute and an hour, Working on the node you work). Lower tiers fold into one tap; the next
   locked tier says what it needs and further locked tiers are one line.
 - **Tools** (`55-tools.js`): pickaxe, axe, sickle and spear, made at the Workbench. The right tool is a speed bonus,
-  never a gate. Each tool kind has its own mastery.
+  never a gate. A tool you make and wear says on its craft card what it is faster than and why: the right-tool
+  bonus (+25% while its tier is at least the node's) and its speed line, multiplying to the total. Each tool kind has its own mastery.
 - **The Storehouse** (`55-store.js`): a cap per material and grade, from every source. Skill XP keeps counting at the
   cap. Its view (Gather > Store, `75-store-ui.js`) opens on a shelf: one stack per family at the grade you use (the
   lower of your zone's grade and your skill's top node; the largest stack at or below it when that grade is empty;
@@ -150,7 +151,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 ## The camp
 
 - **Hollow's Rest** (`57-camp.js`, `75-camp-ui.js`, scene `63d-scenery-camp.js`): the Hearth, Watchtower, Forge,
-  Workbench, Loom, Enchanter's Table, Tavern, Storehouse, Tents, Library and Shrine. Builds run on the wall clock.
+  Workbench, Loom, Enchanter's Table, Tavern, Storehouse, Tents, Library and Shrine. Builds run on the wall clock. A Build
+  button asks twice: the first tap turns it into "Tap again" for 6 seconds. When Hesketh's step asks for the Workbench,
+  the Forge or the Storehouse, one tap on that station's Build button builds it. Cancel always asks twice.
 - **A new game starts cold** (`55-hearth.js`): the hero lights the fire, then builds the Workbench, the first tool and
   the Forge. Until the fire is lit (and once Gather is open), Next Up keeps a row for it: "Chop Pine Log for Hesketh's
   fire: 3/8", then "Light Hesketh's fire: ready" with 8 logs in hand. Go sends the hero to the Pine Grove, where the fire is.
@@ -201,7 +204,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   capped perks.
 - **Deeds** (`23-data-deeds.js`, `58-deeds.js`, `75-deeds-ui.js`): tracks, Feats, titles and looks drawn on the hero
   (`12g-art-accessories.js`, `64-looks.js`), and the Trophy Wall at camp (`63e-scenery-wall.js`).
-- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons. A weapon or armour craft goal names the boss it is for ("Craft a Pine Bow for the zone 2 boss"); when you can pay for an upgrade to a worn piece and no craft is ready, it offers "Upgrade your Pine Bow to +1", and Go opens the piece on Hero, Gear.
+- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons. A weapon or armour craft goal names the boss it is for ("Craft a Pine Bow for the zone 2 boss"); when you can pay for an upgrade to a worn piece and no craft is ready, it offers "Upgrade your Pine Bow to +1", and Go opens the piece on Hero, Gear. From the first tool made until a weapon is worn, the weapon holds a row of its own above every unfinished row, names where its short material comes from ("Pine Staff for the zone 4 boss: mine 3 Quartz at the Quartz Geode"; Go opens that Gather view), and no upgrade is offered.
   **"Boss ready"** means you would usually win the zone boss. The game tries 30 scratch fights of that boss with your
   hero as they stand now, judged from your own Parry and Dodge record (a new player counts as casual), and says "Boss
   ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong", and Go opens
@@ -219,7 +222,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   boss Hero comes first, then Gather, Next Up and the away strip (row `awaynote`), 90 s apart. A row the player's own act
   or a drop opened skips the queue: walking to gather, the fire lit (Camp), the Workbench (Craft), the Tavern built, the first
   star (Stars), the first unique (Uniques); the raid opens as before.
-- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, spoken by Old Hesketh (his face on the left) from a panel that never covers the stage: in landscape the side column's notices slot (it stands in for Next Up while it speaks), in portrait a slot above the Act / Skills / Foe bar, and over an open menu the bottom of the menu panel. The Got it / Go button has its own row. After the first ability the guide asks you to add a point to Might on Hero > Build, then, once the points are spent, offers Back to the fight (it closes the menu). A tool or first weapon that is in the bag but not worn gets its own step: the tip names it, rings the card's Equip button and carries an Equip button of its own. A weapon you only own does not count as made until it is worn. The Storehouse tip says the packs are near full only when a pile is at 80% of what the packs hold; otherwise it says the Forge is up.
+- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, spoken by Old Hesketh (his face on the left) from a panel that never covers the stage: in landscape the side column's notices slot (it stands in for Next Up while it speaks), in portrait a slot above the Act / Skills / Foe bar, and over an open menu the bottom of the menu panel. The Got it / Go button has its own row. After the first ability the guide asks you to add a point to Might on Hero > Build, then, once the points are spent, offers Back to the fight (it closes the menu). A tool or first weapon that is in the bag but not worn gets its own step: the tip names it, rings the card's Equip button and carries an Equip button of its own. A weapon you only own does not count as made until it is worn. Wren and Pip make their first weapon at the Workbench, so its steps come right after the tool and before the Forge, and the materials line names the place ("Mine 2 Copper Ore at the Copper Vein for your first weapon (0/2)."); Tobin's Warblade still waits for the Forge. Under a recipe short of a gathered material, the Craft card says where it comes from ("Bristlehide: from Hunting, which opens at zone 5."). The Storehouse tip says the packs are near full only when a pile is at 80% of what the packs hold; otherwise it says the Forge is up.
   A step pauses the game only while it waits for a press; a step that needs game time shows live progress instead.
   The first fight is a lesson (cal-0107-staged-guide): each press is taught the first time it comes up, with the fight held until you
   press it: Attack on your first turn, Dodge on the foe's first swing (the foe's clock stops as the Dodge window opens, so the press

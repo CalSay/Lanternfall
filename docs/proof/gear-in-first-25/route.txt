@@ -1,0 +1,69 @@
+# seed: 1
+# Proof for card gear-in-first-25. Pip has made the Copper Pickaxe and has no Forge: Hesketh sends her to mine Quartz
+# at the Quartz Geode for her first weapon, and she wears a Pine Staff before the Forge. Then Wren at zone 5: the bow is
+# wood + metal (Step 0), so Hesketh sends her to the Copper Vein (she then mines the 2 Copper Ore), and the Quiver's card
+# says where Bristlehide and Hemp Fibre come from.
+# In landscape the fight stays in view beside the menu and a materials line waits for a calm screen, so the route starts
+# gathering first (Gather here), as a player at the menu would.
+# The Done button on a tool that goes on by itself, Tobin's order and the Wren-below-zone-5 case are held by tools/check.mjs.
+new pip-tool-made
+wait 2
+tap-if "Continue"
+wait 1
+tap "Hero"
+wait 1
+tap "Gather"
+wait 1
+tap-if "Gather here"
+wait 2
+expect "Quartz Geode"
+expect "for your first weapon"
+shot pip-hesketh-quartz
+tap "Mine at the Quartz Geode"
+wait 60
+wait 60
+wait 60
+tap-if "Continue"
+expect "first weapon"
+shot pip-weapon-ready
+tap "Hero"
+wait 1
+tap "Craft"
+wait 1
+tap-if "Make"
+wait 1
+tap "Craft Pine Staff"
+wait 2
+tap-if "Equip"
+wait 1
+tap-if "Close"
+tap "Hero"
+wait 1
+tap-if "Gear"
+wait 1
+expect "Pine Staff"
+shot pip-staff-worn
+new wren-hunt-open
+wait 2
+tap-if "Continue"
+wait 1
+tap "Hero"
+wait 1
+tap "Gather"
+wait 1
+tap-if "Gather here"
+wait 2
+expect "Copper Vein"
+expect "for your first weapon"
+shot wren-hesketh-copper
+tap "Craft"
+wait 1
+tap-if "Bench"
+wait 1
+tap-if "Make"
+wait 1
+expect "Craft Pine Bow"
+scroll
+expect "Bristlehide: from Hunting."
+expect "Hemp Fibre: from Foraging fibre patches."
+shot wren-craft-quiver-source

@@ -1,6 +1,7 @@
 # seed: 1
 # Proof for card walk-fixture-start: fixture pre-champion (tests/proof-fixtures/save-pre-champion.json) is Wren on zone 5 with the Briar Regent
 # next, so the route reaches the first Champion clear and the Tobin meet scene (#159) without playing zones 1 to 4.
+# Updated 2026-10-08 (proof-routes-rot): the staged-guide lesson holds the Regent's first swing until Dodge is pressed, so each attack round taps Dodge (tap-if) first.
 new pre-champion
 wait 2
 tap-if "Got it"
@@ -8,27 +9,35 @@ expect "The Briar Regent"
 shot champion-walk-in
 tap-if "Continue"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1

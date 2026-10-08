@@ -5118,7 +5118,7 @@ if (section('solo guide pause rules')) try {
   const bad = steps.filter(s => s.needs && s.pause).map(s => s.id);
   assert(steps.some(s => s.needs) && !bad.length, `no guide step that waits for materials has pause (${steps.filter(s => s.needs).map(s => s.id).join(', ')})${bad.length ? '; pausing: ' + bad.join(', ') : ''}`);
   const build = steps.filter(s => s.pauseUnless);
-  assert(build.map(s => s.id).join() === 'bench,tool,forge,weapon,store' && build.every(s => s.pause), 'the press steps that cost materials (bench, tool, forge, weapon, store) pause only through pauseUnless');
+  assert(build.map(s => s.id).join() === 'bench,tool,weapon,forge,store' && build.every(s => s.pause), 'the press steps that cost materials (bench, tool, weapon, forge, store) pause only through pauseUnless');   // gear-in-first-25: the weapon steps come before the Forge's
   assert(build.every(s => steps.some(t => t.needs && t.id === 'stock:' + s.id)), 'each of them has a stock step that says what to gather');
   assert(steps.filter(s => s.id === 'nextup' || s.id === 'tab:party').every(s => !s.pause) && steps.find(s => s.id === 'nextup').ok, 'Next Up and the Hero tab hint never pause the game (Next Up is a Got it note)');
   // the guard: a paused step with an unmet material need does not pause; with the materials in hand it does
@@ -10887,8 +10887,8 @@ if (section('craft delta')) try {
     const goals = () => E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
     const up = l => l.find(x => x.id === 'upgrade'), forge = l => l.find(x => x.id === 'forge');
     // (a) saving up for a Birch Bow: no upgrade to the Pine Bow it replaces (refine-queues: the bow takes Birch Planks and
-    // Duskfang Leather, and the Pine Bow's +1 a Pine Plank; nor does Next Up offer to saw that plank)
-    E('S.maxZone = 7; S.skills.bench.lv = 10; S.mats.wood[1] = 3; S.mats.plank[0] = 1; S.mats.plank[1] = 4; S.mats.leather[1] = 2');
+    // Iron Ingots (gear-in-first-25 Step 0: wood + metal), and the Pine Bow's +1 a Pine Plank; nor does Next Up offer to saw that plank)
+    E('S.maxZone = 7; S.skills.bench.lv = 10; S.mats.wood[1] = 3; S.mats.plank[0] = 1; S.mats.plank[1] = 4; S.mats.ingot[1] = 2');
     let l = goals();
     assert(forge(l) && /^Craft a Birch Bow/.test(forge(l).label) && !forge(l).ready && !l.some(x => /Upgrade your Pine Bow|for your Bow/.test(x.label)), `upgrade goal chip order: saving for a Birch Bow, no "Upgrade your Pine Bow" (nor a plank for it) and the craft goal shows (${JSON.stringify(l)})`);
     E('S.mats.plank[0] = 0');
@@ -10905,7 +10905,7 @@ if (section('craft delta')) try {
     l = goals();
     assert(forge(l) && forge(l).ready && /you have the materials/.test(forge(l).label) && !up(l) && l.filter(x => x.id === 'forge' || x.id === 'upgrade' || x.id === 'equip')[0].id === 'forge', `upgrade goal chip order: a Ready craft goal leads the forge goals (${JSON.stringify(l)})`);
     // (e) after crafting and wearing it, with no bow craft above it in reach, "Upgrade your Birch Bow" can show
-    E('S.mats.plank[1] = 200; S.mats.leather[1] = 200');   // refine-queues: a Birch Bow and its +1 take Birch Planks and Duskfang Leather
+    E('S.mats.plank[1] = 200; S.mats.ingot[1] = 200');   // refine-queues: a Birch Bow and its +1 take Birch Planks and Iron Ingots (gear-in-first-25)
     const bb = E('(craftItem("bow", 2) || {}).id');
     E(`S.equip.weapon = ${bb}; gearDirty(); S.gold = 1e7; S.mats.ore[1] = 0`);   // no Iron Ore: an Iron Pickaxe craft stays unfinished
     l = goals();
@@ -10947,7 +10947,7 @@ if (section('craft delta')) try {
         await X(`(() => { const b = document.querySelector('.cf-st[data-st="bench"]'); if (b) b.click(); return true; })()`); await page.waitForTimeout(300);
         await page.click('[aria-label="Craft Copper Pickaxe"]'); await page.waitForTimeout(300);
         const card = await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { text: c.textContent, eq: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent) } : null; })()`);
-        assert(card && /Copper Pickaxe on\. Mining is \d+% faster\./.test(card.text) && !card.eq.includes('Equip') && !/It is in your bag/.test(card.text), `craft delta (browser): the pickaxe card says it is on, with no Equip button (${card && card.text.slice(0, 160)})`);
+        assert(card && /Copper Pickaxe on\. Mining is \d+% faster than with your Stone Pick/.test(card.text) && !card.eq.includes('Equip') && !/It is in your bag/.test(card.text), `craft delta (browser): the pickaxe card says it is on, with no Equip button (${card && card.text.slice(0, 160)})`);
         const t0 = Date.now();
         await page.click('[aria-label="Craft Pine Bow"]');
         const first = await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { name: c.querySelector('.cf-in').textContent, fight: !!c.querySelector('.cf-fight') } : null; })()`);
@@ -10970,6 +10970,65 @@ if (section('craft delta')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('craft delta crashed: ' + (e.stack || e)); }
+
+// ==== tool-speed-adds-up: a new tool's line says what it is faster than, and the parts multiply to the total ====
+if (section('tool-speed-adds-up')) try {
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('tool-speed-adds-up (browser): Playwright or Chromium not here, skipped'); return; }
+    const pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ turns: true, viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      await ctx.addInitScript(([key, raw]) => { if (sessionStorage.getItem('ts-seeded')) return; sessionStorage.setItem('ts-seeded', '1'); const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, [KEY, pfx('save-flow-cold-camp.json')]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X(`S.onboard.tips = false; setTab('forge'); ui(true); true`); await page.waitForTimeout(300);
+      // make a tool the way craftItem wears one (craft-delta), with the old tool and rarity fixed so each case is exact
+      const make = async (kind, t, r, was) => {
+        const line = await X(`(() => {
+          const it = newItem(${JSON.stringify(kind)}, ${t}, ${JSON.stringify(r)}, {}); addItem(it);
+          const d = CRAFT_KINDS[${JSON.stringify(kind)}], pos = d.pos, fam = Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === ${JSON.stringify(kind)});
+          const nt = Math.max(1, skillTopTier(skillOf(fam)) || 1), cur = S.equip[pos] != null ? S.equip[pos] : null, before = nodeTime(fam, nt);
+          S.equip[pos] = it.id; gearDirty();
+          emit('crafted', { item: it, kind: ${JSON.stringify(kind)}, t: ${t}, on: pos, was: cur, speed: [before, nodeTime(fam, nt)] });
+          ui(true); const c = document.querySelector('.cf-res'); return { id: it.id, text: c ? c.textContent : '', spd: itemStats(it)[NODE_TOOL_STATS[${JSON.stringify(kind)}][0]] || 0, a: before, b: nodeTime(fam, nt) };
+        })()`);
+        await page.waitForTimeout(150);
+        return line;
+      };
+      const num = s => parseFloat(s);
+      // 1. a Copper Pickaxe over the Stone Pick at Mining 1: Stone Pick, +25% and the item's own line, multiplying to the total
+      const p1 = await make('pick', 1, 'uncommon');
+      const m1 = /Copper Pickaxe on\. Mining is (\d+)% faster than with your Stone Pick: \+25% for a tier 1 tool on a tier 1 vein, and \+([\d.]+)% from its mining speed line\./.exec(p1.text);
+      assert(m1 && Math.abs(num(m1[2]) - p1.spd) < 0.06 && Math.abs(1.25 * (1 + num(m1[2]) / 100) * 100 - 100 - num(m1[1])) <= 1,
+        `tool-speed-adds-up: the first pickaxe names the Stone Pick, +25% and its +${p1.spd}% line, and they multiply to the total (${p1.text.slice(0, 220)})`);
+      // 2. a better tier 1 pickaxe over that one (same name, so "than before"): no right-tool part; the gear part is the change in the summed stat, or the total only
+      const p2 = await make('pick', 1, 'epic', p1.id);
+      const m2 = /Copper Pickaxe on\. Mining is (\d+)% faster than (?:before|with your [\w ]+)(?:: \+([\d.]+)% from its better mining speed line)?\./.exec(p2.text);
+      const want2 = ((1 + p2.spd / 100) / (1 + p1.spd / 100) - 1) * 100;
+      assert(m2 && !/for a tier/.test(p2.text) && (m2[2] == null || Math.abs(num(m2[2]) - want2) < 0.06),
+        `tool-speed-adds-up: a better tier 1 pickaxe names its old one and no right-tool part (want +${want2.toFixed(1)}%: ${p2.text.slice(0, 220)})`);
+      // 3. at Mining 14 (tier 2 open) a tier 1 pickaxe over the Stone Pick names no right-tool part
+      await X(`S.equip.pick = null; S.skills.mine.lv = 14; gearDirty(); true`);
+      const p3 = await make('pick', 1, 'common');
+      assert(/Mining is \d+% faster than with your Stone Pick/.test(p3.text) && !/for a tier/.test(p3.text), `tool-speed-adds-up: at Mining 14 a tier 1 pickaxe names no right-tool part (${p3.text.slice(0, 220)})`);
+      // 4. the first spear: its rough tool shares its name, so "than before"
+      const sp = await X(`'spear' in S.equip`);
+      if (sp) {
+        const p4 = await make('spear', 1, 'common');
+        assert(/Hunting is \d+% faster than before[:.]/.test(p4.text) && !/than with your/.test(p4.text), `tool-speed-adds-up: the first spear says "than before" (${p4.text.slice(0, 220)})`);
+      } else assert(false, 'tool-speed-adds-up: the camp save has no spear slot');
+      assert(!errs.length, 'tool-speed-adds-up: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('tool-speed-adds-up crashed: ' + (e.stack || e)); }
 
 // ==== next-tier-gate-goal: with every tier 1 piece worn and the next tier locked, Next Up names what opens it ====
 // save-tier-gate: the seed 1 walk at minute 23 (zone 13, Woodcraft 8, Tailoring 6, Woodcutting 7, Hunting 4) with every tool worn.
@@ -11010,18 +11069,22 @@ if (section('next tier gate')) try {
   go = goOf('forge');
   assert(go && go.tab === 'gat' && go.view === 'wood', `next tier gate: the material gate's Go opens the Woodcutting view (${JSON.stringify(go)})`);
   assert(/^Woodcutting: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('skill') || {}).view === 'wood', `next tier gate: the skill row follows the gate to Woodcutting (${JSON.stringify(l.find(x => x.id === 'skill'))})`);
-  // 4. the Birch Bow's middles in the bag (refine-queues: 5 Birch Plank and 2 Duskfang Leather): the craft, Ready
-  E('S.mats.plank[1] = 5; S.mats.leather[1] = 2');
+  // 4. the Birch Bow's middles in the bag (refine-queues: 5 Birch Plank and 2 Iron Ingot; gear-in-first-25 Step 0, wood + metal): the craft, Ready
+  E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2');
   l = goals();
   assert(row(l) && /^Craft a Birch Bow for the zone 13 boss: you have the materials$/.test(row(l).label) && row(l).ready, `next tier gate: with its materials the Birch Bow craft is Ready, no gate (${JSON.stringify(row(l))})`);
-  // 5. Birch Log enough for its planks and leather: the bow's gate is Hunting for the Duskfang Pelt (Foraging 2 and Mining 3, so no fibre or ore gate is nearer)
-  E('S.mats.plank[1] = 0; S.mats.leather[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 3');
+  // 5. Birch Log enough for its planks: the bow's gate is Mining for the Iron Ore its Iron Ingots are smelted from (gear-in-first-25: was Hunting for Duskfang Pelt)
+  E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 5');   // Mining 5: nearer than the Quiver's Hunting 4 of 14
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Hunting 4 of 14 opens Duskfang Pelt', `next tier gate: with the Birch Log in hand, Hunting 4 of 14 opens Duskfang Pelt (${JSON.stringify(row(l))})`);
-  // 6. with Hunting hidden, no hide gate shows
+  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Mining 5 of 14 opens Iron Ore', `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
+  // 6. with Hunting hidden, no hide gate shows. The bow is wood + metal now (gear-in-first-25), so the hide gate is set up with the old hide bow
+  E('globalThis.__bowRec = CRAFT_KINDS.bow.rec; CRAFT_KINDS.bow.rec = { wood: 6, hide: 2, ess: 2 }; S.skills.mine.lv = 3');
+  l = goals();
+  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Hunting 4 of 14 opens Duskfang Pelt', `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
   E('HUNT_TUNE.on = false');
   l = goals();
   assert(!l.some(x => /Hunting \d+ of|Duskfang Pelt$/.test(x.label)), `next tier gate: with Hunting hidden, no hide gate (${JSON.stringify(row(l))})`);
+  E('CRAFT_KINDS.bow.rec = globalThis.__bowRec');
   reset();
   // 7. an open tier 1 recipe beats any gate: an empty sickle slot (and 2 Pine Log, as at minute 23) shows the Copper Sickle craft
   E('(() => { const id = S.equip.sickle; S.equip.sickle = null; S.items = S.items.filter(i => i.id !== id); S.mats.wood[0] = 2; gearDirty(); })()');
@@ -11037,9 +11100,9 @@ if (section('next tier gate')) try {
   E('S.skills.bench.xp = 0');
   assert(/^Woodcraft: /.test((goals().find(x => x.id === 'skill') || {}).label || ''), 'next tier gate: the skill row stays at 0 XP');
   reset();
-  // review: Birch Log counts once across the recipe (10 for Birch Planks, 2 for Duskfang Leather): 10 is not enough
-  E('S.skills.bench.lv = 10; S.skills.loom.lv = 10; S.mats.wood[1] = 10');
-  assert(/Woodcutting 7 of 14 opens Birch Log$/.test((row(goals()) || {}).label || ''), `next tier gate: 10 Birch Log still leaves the Woodcutting gate (${JSON.stringify(row(goals()))})`);
+  // review: Birch Log for the recipe's middles (10 for 5 Birch Planks): 9 is not enough (gear-in-first-25: the bow no longer takes Duskfang Leather)
+  E('S.skills.bench.lv = 10; S.skills.loom.lv = 10; S.mats.wood[1] = 9');
+  assert(/Woodcutting 7 of 14 opens Birch Log$/.test((row(goals()) || {}).label || ''), `next tier gate: 9 Birch Log still leaves the Woodcutting gate (${JSON.stringify(row(goals()))})`);
   reset();
   // 8. 8 Pine Log: the Golemfist's +1 is offered (refine-queues: "Saw 1 Pine Plank for your Golemfist +1"), and that Ready row
   // takes the forge slot over the gate row; this is why the fixture holds no Pine Log
@@ -12903,8 +12966,10 @@ if (section('unspent points nudge')) try {
   assert(was[0] !== 'hero-up' && free() === 28 && on[0] === 'hero-up' && on.includes('learn-ability'), `unspent points: with stickiness the pile passes the shown list (${was.join(', ')} -> ${on.join(', ')})`);
   // against a shown Ready goal at prio 11 (guide-goal-after-reload's fire goal): it was on top, the pile still passes it
   E('registerGoal({ id: "zz-fire", sys: "zzfire", prio: 11, pct: () => 1, label: "Light the fire" })');
+  const tool0 = E('S.onboard.done.tool'); E('S.onboard.done.tool = 0');   // gear-in-first-25: the fixture's Ready first weapon (prio 13) would sit above the fire
   down(); ids('{ now: 2e6 }'); const fw = ids('{ now: 3e6 }'); up();
   const fire = ids('{ now: 4e6 }');
+  E(`S.onboard.done.tool = ${JSON.stringify(tool0)}`);
   assert(fw[0] === 'zz-fire' && fire[0] === 'hero-up' && fire.includes('zz-fire'), `unspent points: the pile beats a shown Ready goal at prio 11 (${fw.join(', ')} -> ${fire.join(', ')})`);
   E('GOALS.splice(GOALS.findIndex(x => x.id === "zz-fire"), 1)');
   // one level's points: in the list, not forced first
@@ -12916,6 +12981,168 @@ if (section('unspent points nudge')) try {
   assert(E('GOALS.find(x => x.id === "hero-up").sys') === 'points' && E('GOALS.find(x => x.id === "learn-ability").sys') === 'hero', 'unspent points: hero-up has its own system');
   assert(!g.errors.length, 'unspent points: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('unspent points nudge crashed: ' + (e.stack || e)); }
+
+// ==== gear-in-first-25: Wren and Pip make their first weapon at the Workbench right after the tool, and are told where its materials are ====
+// save-pip-tool-made: Pip, cold, Workbench built, a Copper Pickaxe worn, no Forge, Pine Log 10, essence 4, Quartz 0, zone 3.
+// save-wren-hunt-open: the same for Wren at zone 5 with Foraging (and Hunting) open, Copper Ore 0 (Step 0: the bow is wood + metal).
+if (section('gear-in-first-25')) try {
+  const pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+  const coldOn = f => { const g = loadCore({ seed: 7, cold: true, storage: memoryStorage({ [KEY]: pfx(f) }) }); g.eval('tick(0.1); S.tab = "gat"'); return g; };
+  const at = 'gear-in-first-25';
+  const step = E => E('(soloGuideWants() || onboardStep() || {}).id');
+  const goals = E => JSON.parse(E('JSON.stringify(topGoals(3, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready })))'));
+  const forgeRow = E => goals(E).find(x => x.id === 'forge') || null;
+  assert(JSON.stringify(Object.keys(JSON.parse(coldOn('save-pip-tool-made.json').eval('JSON.stringify(CRAFT_KINDS.bow.rec)')))) === '["wood","ore","ess"]', `${at}: Step 0, the bow is wood + metal`);
+  { // Pip: the weapon comes before the Forge, and Hesketh and Next Up name the Quartz Geode
+    const g = coldOn('save-pip-tool-made.json'), E = s => g.eval(s);
+    assert(E('coldH() && weaponKind() === "staff" && stepDone("tool") && !campLv("forge")'), `${at}: the Pip fixture is cold, tool made, no Forge`);
+    const need = JSON.parse(E('JSON.stringify(onboardNeed("stock:weapon"))'));
+    assert(step(E) === 'stock:weapon' && need.length === 1 && need[0].kind === 'crystal' && E('NODE_NAMES.crystal[0]') === 'Quartz Geode', `${at}: Pip's step is stock:weapon (not stock:forge), short Quartz at the Quartz Geode (${step(E)}, ${JSON.stringify(need)})`);
+    let l = goals(E), f = forgeRow(E);
+    assert(f && f.label === 'Pine Staff for the zone 3 boss: mine 3 Quartz at the Quartz Geode' && !l.some(x => x.id === 'upgrade'), `${at}: Next Up holds the Pine Staff row naming the Quartz Geode and no upgrade (${JSON.stringify(l)})`);
+    const go = JSON.parse(E('JSON.stringify(GOALS.find(x => x.id === "forge").go())'));
+    assert(go.tab === 'gat' && go.view === 'mine' && /data-kind="crystal"/.test(go.sel), `${at}: its Go opens Mining on the Quartz Geode (${JSON.stringify(go)})`);
+    assert(!JSON.parse(E('JSON.stringify(topGoals(10, { sticky: false }).map(x => x.id))')).includes('upgrade'), `${at}: no upgrade row anywhere in the list`);
+    // against a live reserved row (deeds-near reserves) and three Ready rows, it keeps its row
+    E('registerGoal({ id: "zz-res", sys: "zzres", reserve: 1, prio: -1, pct: () => 0.9, label: "A deed" })');
+    l = goals(E); assert(l.some(x => x.id === 'forge'), `${at}: with a reserved deed row live the weapon row stays (${l.map(x => x.id)})`);
+    E('for (const k of ["a", "b", "c"]) registerGoal({ id: "zz-r" + k, sys: "zzr" + k, prio: 5, pct: () => 1, label: "Ready " + k })');
+    l = goals(E); assert(l.some(x => x.id === 'forge'), `${at}: against three Ready rows the weapon row holds its row (${l.map(x => x.id)})`);
+    // review: low on Pine Log and essence right after the pickaxe (pct 0.13), a near deed (score 0.88) must not push the weapon out
+    E('S.mats.wood[0] = 2; S.mats.ess[0] = 0; GOALS.splice(GOALS.findIndex(x => x.id === "zz-rc"), 1)');
+    l = goals(E); assert(l.some(x => x.id === 'forge') && !l.some(x => x.id === 'zz-res'), `${at}: a low weapon row takes the reserved row from a near deed, with two Ready rows (${l.map(x => x.id)})`);
+    E('GOALS.splice(GOALS.findIndex(x => x.id === "zz-rb"), 1)');
+    l = goals(E); assert(l.some(x => x.id === 'forge'), `${at}: a low weapon row stays with one other Ready row and a near deed (${l.map(x => x.id)})`);
+    E('S.mats.wood[0] = 10; S.mats.ess[0] = 4');
+    E('for (const id of ["zz-res", "zz-ra"]) GOALS.splice(GOALS.findIndex(x => x.id === id), 1)');
+    E('S.mats.crystal[0] = 3; tick(0.1)');
+    assert(step(E) === 'weapon', `${at}: with 3 Quartz the step is weapon (${step(E)})`);
+    const id = E('(craftItem("staff", 1) || {}).id'); E(`equipItem(${id}, "weapon"); tick(0.1)`);
+    assert(E('!!equipped("weapon")') && step(E) === 'stock:forge', `${at}: once the staff is worn the guide goes on to stock:forge (${step(E)})`);
+    f = forgeRow(E); assert(!f || !/Pine Staff/.test(f.label), `${at}: once the staff is worn Next Up has no weapon row (${f && f.label})`);
+    assert(!g.errors.length, `${at}: Pip, no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  { // before the tool is made, Next Up is as before (no weapon pick, no reserved weapon row)
+    const g = coldOn('save-pip-tool-made.json'), E = s => g.eval(s);
+    E('delete S.onboard.done.tool; delete S.onboard.done["wear:tool"]; delete S.onboard.done["stock:tool"]');
+    assert(!E('(() => { const b = craftGoalNext(); return !!(b && b.first); })()') && E('GOALS.find(x => x.id === "forge").prio()') === 0, `${at}: before the tool, the craft goal picks as before`);
+  }
+  { // the Craft card's source lines
+    const g = coldOn('save-pip-tool-made.json'), E = s => g.eval(s);
+    assert(E('matSourceLine("crystal", 1)') === 'Quartz: from Mining geodes.' && E('matSourceLine("hide", 1)') === 'Bristlehide: from Hunting, which opens at zone 5.' && E('matSourceLine("ess", 1)') === '' && E('matSourceLine("plank", 2)') === '',
+      `${at}: source lines for Quartz and Bristlehide at zone 3, none for essence or a middle (${E('matSourceLine("hide", 1)')})`);
+  }
+  { // Wren below zone 5 with a hide bow (the recipe before Step 0): no weapon steps, the Forge steps show, the row says when Hunting opens
+    const g = coldOn('save-wren-hunt-open.json'), E = s => g.eval(s);
+    E('CRAFT_KINDS.bow.rec = { wood: 6, hide: 2, ess: 2 }; S.maxZone = S.zone = 3; delete S.onboard.got.forage; S.mats.ore[0] = 30; tick(0.1)');
+    assert(E('!navSkillOpen("hunt")') && ['stock:forge', 'forge'].includes(step(E)), `${at}: Wren at zone 3 short of Bristlehide: no weapon step, the Forge steps (${step(E)})`);
+    const f = JSON.parse(E('JSON.stringify(topGoals(10, { sticky: false }).find(x => x.id === "forge") || null)'));   // not reserved, so it can sit below the third row
+    assert(f && f.label === 'Pine Bow for the zone 3 boss: Bristlehide comes from Hunting, which opens at zone 5' && E('GOALS.find(x => x.id === "forge").reserve()') === 0 && E('GOALS.find(x => x.id === "forge").prio()') === 0, `${at}: the bow row says when Hunting opens, with no reserve (${f && f.label})`);
+    const go = JSON.parse(E('JSON.stringify(GOALS.find(x => x.id === "forge").go())'));
+    assert(go.tab === 'forge', `${at}: its Go opens Craft on the bow (${JSON.stringify(go)})`);
+  }
+  { // Wren at zone 5: the bow's Copper Ore from the Copper Vein; the Storehouse step does not end it
+    const g = coldOn('save-wren-hunt-open.json'), E = s => g.eval(s);
+    const need = JSON.parse(E('JSON.stringify(onboardNeed("stock:weapon"))'));
+    assert(E('weaponKind()') === 'bow' && step(E) === 'stock:weapon' && need.length === 1 && need[0].fam === 'ore' && need[0].kind === 'ore', `${at}: Wren's step is stock:weapon, short Copper Ore (${step(E)}, ${JSON.stringify(need)})`);
+    const f = forgeRow(E);
+    assert(f && f.label === 'Pine Bow for the zone 5 boss: mine 2 Copper Ore at the Copper Vein', `${at}: Wren's Next Up row names the Copper Vein (${f && f.label})`);
+    E('S.onboard.done.store = 1; S.onboard.done["stock:store"] = 1; tick(0.1)');
+    assert(step(E) === 'stock:weapon', `${at}: with the Storehouse step done it still is (${step(E)})`);
+  }
+  { // Tobin: the Forge steps first, as today
+    const g = coldOn('save-pip-tool-made.json'), E = s => g.eval(s);
+    E('S.party.cls = "warden"; S.cls.base = "warrior"; S.story.starter = "tobin"; S.attr.pts = { tobin: { might: 0, focus: 0, guard: 0, vigour: 0 } }; tick(0.1)');
+    assert(E('weaponKind()') === 'warblade' && ['stock:forge', 'forge'].includes(step(E)), `${at}: Tobin goes to the Forge first (${E('weaponKind()')}, ${step(E)})`);
+  }
+  // the page: Hesketh's line over the Gather menu, the Craft card's source line, and Done on a tool that went on by itself
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: pfx('save-pip-tool-made.json'), key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X('setTab("gat"); true');
+      let line = '';
+      for (let t = 0; t < 8000 && !line.includes('Quartz Geode'); t += 250) { await page.waitForTimeout(250); line = await page.evaluate(() => { const b = document.querySelector('.ob-bub'); return b && !b.hidden ? b.textContent : ''; }); }
+      assert(line.includes('Mine 3 Quartz at the Quartz Geode for your first weapon (0/3).'), `${at} (browser): over Gather, Hesketh says "Mine 3 Quartz at the Quartz Geode for your first weapon (0/3)." (${line})`);
+      await X('S.fSlot = "staff"; S.fTier = 1; setTab("forge"); setView("forge", "make"); true'); await page.waitForTimeout(300);
+      await X('(() => { const b = document.querySelector(\'.cf-st[data-st="bench"]\'); if (b) b.click(); return true; })()'); await page.waitForTimeout(300);
+      const src = await X('[...document.querySelectorAll(\'.cf-rec[data-kind="staff"] .cf-src\')].map(x => x.textContent)');
+      assert(src.length === 1 && src[0] === 'Quartz: from Mining geodes.', `${at} (browser): the staff's card says where Quartz comes from, and nothing for essence or Pine Log in hand (${JSON.stringify(src)})`);
+      // a tool that goes on by itself: Done, no Keep or Salvage; a weapon left in the bag: Keep and Salvage
+      await X('S.equip.pick = null; gearDirty(); S.mats.ore[0] = 20; S.mats.wood[0] = 20; S.mats.crystal[0] = 3; S.mats.ess[0] = 10; ui(true); true'); await page.waitForTimeout(300);
+      await X('(() => { const b = document.querySelector(\'.cf-rec[data-kind="pick"] .cf-go\'); if (b) b.click(); return true; })()'); await page.waitForTimeout(400);
+      const tb = await X('(() => { const c = document.querySelector(".cf-res"); return c ? [...c.querySelectorAll(".cf-resact button")].map(b => b.textContent) : null; })()');
+      assert(tb && tb.includes('Done') && !tb.includes('Keep') && !tb.includes('Salvage') && await X('!!S.equip.pick'), `${at} (browser): a pickaxe that went on by itself shows Done, not Keep or Salvage (${JSON.stringify(tb)})`);
+      await X('(() => { const b = document.querySelector(\'.cf-rec[data-kind="staff"] .cf-go\'); if (b) b.click(); return true; })()'); await page.waitForTimeout(400);
+      const wb = await X('(() => { const c = document.querySelector(".cf-res"); return c ? [...c.querySelectorAll(".cf-resact button")].map(b => b.textContent) : null; })()');
+      assert(wb && wb.includes('Keep') && wb.includes('Salvage') && !wb.includes('Done'), `${at} (browser): a staff left in the bag shows Keep and Salvage (${JSON.stringify(wb)})`);
+      assert(!errs.length, `${at} (browser): no page errors` + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('gear-in-first-25 crashed: ' + (e.stack || e)); }
+
+// ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Tap again" for 6 s; Cancel always asks twice ====
+if (section('camp-build-tap-again')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-camp-ui.js'), 'utf8');
+  assert(/const CONFIRM_MS = 6000;/.test(src) && !/'Sure\?'/.test(src), 'camp build tap again: the camp confirm window is 6 s and no button says "Sure?"');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('camp build tap again (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-bench-ready.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // open Camp (closing a story card on the way) until Hesketh's Workbench step is on screen
+      let wants = '';
+      for (let t = 0; t < 15000 && wants !== 'bench'; t += 250) {
+        wants = await X(`(() => { const c = [...document.querySelectorAll("button")].find(b => b.offsetParent && /^Continue$/.test(b.textContent.trim())); if (c) c.click();
+          if (S.tab !== "world") { const tb = document.querySelector('.tab[data-tab="world"]'); if (tb) tb.click(); } return soloGuideWants(); })()`);
+        if (wants !== 'bench') await page.waitForTimeout(250);
+      }
+      const st = () => X(`(() => { const q = document.querySelector("#camp-b-bench .cb-quick"), p = q && q.querySelector(".price");
+        return { building: S.camp.builds.some(b => b.id === "bench"), price: p ? p.textContent : "", cancel: (document.querySelector("#camp-b-bench .cb-cancel") || {}).textContent || "", gold: Math.round(S.gold) }; })()`);
+      const tap = sel => X(`(() => { document.querySelector(${JSON.stringify(sel)}).click(); return true; })()`);
+      const QB = '#camp-b-bench .cb-quick', CB = '#camp-b-bench .cb-cancel';
+      assert(wants === 'bench', `camp build tap again: the bench-ready fixture shows Hesketh's Workbench step in Camp (soloGuideWants "${wants}")`);
+      await tap(QB); let s1 = await st();
+      assert(s1.building && s1.gold === 0, `camp build tap again (guide): one tap on the Workbench's Build button starts the build (${JSON.stringify(s1)})`);
+      await tap(CB); const c1 = await st();
+      await tap(CB); const c2 = await st();
+      assert(c1.building && !c2.building, `camp build tap again (guide): Cancel still takes two taps (${JSON.stringify(c1)} -> ${JSON.stringify(c2)})`);
+      // the guide off: the same Build button arms first; a stubbed clock checks the 6 s window
+      await X('onboardTips(false); S.gold = 300; S.mats.wood[0] = 12; window.__now = Date.now(); Date.now = () => window.__now; ui(true); true');
+      await page.waitForTimeout(500); const off = await X('soloGuideWants()');
+      await tap(QB); const a1 = await st();
+      assert(off !== 'bench' && !a1.building && a1.price === 'Tap again', `camp build tap again (guide off): the first tap only arms it, and it reads "Tap again" (guide "${off}", ${JSON.stringify(a1)})`);
+      await X('window.__now += 5000; true'); await tap(QB); const a2 = await st();
+      assert(a2.building, `camp build tap again (guide off): a second tap 5 s later builds (${JSON.stringify(a2)})`);
+      await tap(CB); const c3 = await st(); await tap(CB); const c4 = await st();
+      assert(c3.building && !c4.building, `camp build tap again (guide off): Cancel takes two taps (${JSON.stringify(c3)} -> ${JSON.stringify(c4)})`);
+      await X('S.gold = 300; S.mats.wood[0] = 12; ui(true); true');
+      await tap(QB); await X('window.__now += 7000; true'); await tap(QB); const a3 = await st();
+      assert(!a3.building && a3.price === 'Tap again', `camp build tap again (guide off): a second tap 7 s later only arms it again (${JSON.stringify(a3)})`);
+      assert(!errs.length, 'camp build tap again: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('camp build tap again crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

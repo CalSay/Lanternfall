@@ -265,6 +265,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   names for all seven families are in `art/resources/regional-audit/complete-ladder.json`. (2026-10-01)
 - **Gear by class:** two materials per item, about 70/30: Warrior armour metal + leather, weapon metal + wood; Ranger
   armour leather + cloth, weapon wood + metal; Mage armour cloth + leather, weapon wood + gem. (2026-09-28)
+- **The Bow is wood + metal, as decided 28 Sep (gear-in-first-25 Step 0, Opus high judge, 2026-10-08):** the bow's
+  recipe changes from wood 6 + hide 2 to wood 6 + ore 2 (essence 2 unchanged), so Wren makes her first weapon from the
+  Copper Vein right after her first tool, not after Hunting opens at zone 5. From tier 2 it takes Iron Ingots at the
+  Forge, which gives Wren's Forge a job; hide stays her Quiver, Hood and Leathers material. Economy sim read before merge.
 - **Production chains** run in the background at stations (for example ore + coal to ingots). A Tannery: yes. The
   Still is benched until after 1.0. (2026-09-28)
 - **Sockets and enchanting:** gear sockets are class-specific, and every gathering skill feeds a socket family, not

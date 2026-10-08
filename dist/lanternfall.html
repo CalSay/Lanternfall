@@ -1267,9 +1267,10 @@ body.cb-left .stage.tall .abil.abil2 { left: 110px; }
 .cf-go { min-width: 76px; min-height: 44px; padding: 6px 12px; border: 2px solid #0B0810; cursor: pointer; font: 600 calc(15px * var(--display-k)) var(--display); background: var(--ember); color: #1A1420; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
 .cf-go:disabled { background: var(--panel-2); color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; cursor: default; }
 .cf-go:active:not(:disabled) { transform: translateY(2px); }
-.cf-rec-c, .cf-roles, .cf-why { grid-column: 1 / -1; }
+.cf-rec-c, .cf-roles, .cf-why, .cf-src { grid-column: 1 / -1; }
 .cf-roles { display: grid; gap: 4px; }
 .cf-why { font-size: 12.5px; color: #FFB27A; }
+.cf-src { font-size: 12.5px; color: var(--muted); }
 .cost.mw { border-color: rgba(242,193,78,.5); }
 
 /* enchanter */
@@ -7208,7 +7209,7 @@ const CRAFT_KINDS = {
   plate: { noun: 'Plate', pos: 'body', st: 'forge', rec: { ore: 7, hide: 3, fibre: 1 }, pre: 'ore', base: [['hp', 1]], role: 'tank', cls: 'warden' },
   censer: { noun: 'Censer', pos: 'weapon', st: 'forge', rec: { ore: 4, herb: 4, ess: 2 }, pre: 'ore', base: [['might', 1]], role: 'support', cls: 'lightkeeper' },
   staff: { noun: 'Staff', pos: 'weapon', comp: 'wpn', st: 'bench', rec: { wood: 5, crystal: 3, ess: 2 }, pre: 'wood', base: [['might', 1]], role: 'caster', cls: 'lanternmage' },
-  bow: { noun: 'Bow', pos: 'weapon', comp: 'wpn', st: 'bench', rec: { wood: 6, hide: 2, ess: 2 }, pre: 'wood', base: [['might', 1]], role: 'striker', cls: 'ranger' },
+  bow: { noun: 'Bow', pos: 'weapon', comp: 'wpn', st: 'bench', rec: { wood: 6, ore: 2, ess: 2 }, pre: 'wood', base: [['might', 1]], role: 'striker', cls: 'ranger' },   // gear-in-first-25 Step 0 (2026-10-08): wood + metal, as decided 28 Sep (was hide 2)
   quiver: { noun: 'Quiver', pos: 'off', st: 'bench', rec: { hide: 3, wood: 3, fibre: 2 }, pre: 'hide', base: [['crit', 0.12, 35]], role: 'striker', cls: 'ranger' },
   lantern: { noun: 'Lantern', pos: 'off', st: 'ench', rec: { crystal: 5, ore: 2, ess: 2 }, pre: 'crystal', base: [['spell', 0.2, 45]], role: 'caster', cls: 'lanternmage' },   // gear pass: was spell 1 x p (read by nothing); now like the Quiver's crit line
   circlet: { noun: 'Circlet', pos: 'helm', st: 'loom', rec: { crystal: 4, fibre: 2, ess: 1 }, pre: 'crystal', base: [['hp', 0.5]], role: 'caster', cls: 'lanternmage' },
@@ -13989,12 +13990,17 @@ var forgeGoalPicks = 0;
         pick.push(e); count[e.sys] = (count[e.sys] || 0) + 1;
       }
     }
-    // reserve: one row for a reserved goal left out (the lowest-scored other pick makes room)
-    if (n >= 3 && !pick.some(e => e.reserve)) {
-      const r = all.find(e => e.reserve && !pick.includes(e));
+    // reserve: one row for a reserved goal left out (the lowest-scored other pick makes room). gear-in-first-25: a prio 13+ reserved row
+    // (the first weapon) goes first, and takes the one reserved row from a lower one already picked (a near deed)
+    const top = n >= 3 ? all.find(e => e.reserve && e.prio >= 13 && !pick.includes(e)) : null, held = top ? pick.findIndex(e => e.reserve && e.prio < 13) : -1;
+    if (held >= 0) pick[held] = top;
+    else if (n >= 3 && !pick.some(e => e.reserve)) {
+      const r = top || all.find(e => e.reserve && !pick.includes(e));
       if (r) {
         if (pick.length < n) pick.push(r);
-        else { let lo = -1; pick.forEach((e, i) => { if (!e.ready && (lo < 0 || e.score < pick[lo].score)) lo = i; }); if (lo >= 0) pick[lo] = r; }   // a ready goal is never displaced
+        else { let lo = -1; pick.forEach((e, i) => { if (!e.ready && (lo < 0 || e.score < pick[lo].score)) lo = i; });   // a ready goal is never displaced,
+          if (lo < 0 && r.prio >= 13) pick.forEach((e, i) => { if (e.prio < 13 && (lo < 0 || e.score < pick[lo].score)) lo = i; });   // except by a prio 13+ row (gear-in-first-25: the first weapon)
+          if (lo >= 0) pick[lo] = r; }
       }
     }
     // order: ready first, then by score; shown goals keep their old order unless clearly passed
@@ -14233,7 +14239,21 @@ var forgeGoalPicks = 0;
   const gateScore = e => (e.gate.station ? 2 : 0) + e.gate.lv / e.gate.need + (e.pos === 'weapon' ? 1e-6 : 0);
   // forgeNext() -> { kind, t, pos, cost, p } the open recipe closest to done, or, when none with p > 0 is open,
   // { kind, t, pos, gate: { skill, lv, need, mat?, station? }, p } the nearest gate (p = lv / need, at most 0.99, never Ready)
+  // gear-in-first-25: from the first tool made (the guide's `tool` step) until a weapon is worn, with none in the bag, the hero's own
+  // weapon is the pick, ahead of any tool or armour ("closest to done" let a ready Woodaxe hide a weapon short of Quartz). `closed`: the
+  // first short material whose place is not open yet (matPlace, 55-onboard); the row then says when it opens.
+  const firstWeapon = () => {
+    try {
+      if (typeof stepDone !== 'function' || !stepDone('tool') || equipped('weapon') || wearPiece('weapon')) return null;
+      const kind = weaponKind(); if (!kind) return null;
+      const c = canCraft(kind, 1); if (!c.cost || c.unbuilt) return null;
+      const m = c.cost.mats, ks = Object.keys(m), short = ks.filter(k => matOwn(k, 1) < m[k]);
+      const p = c.ok ? 1 : Math.max(0.01, Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(matOwn(k, 1), m[k])), 0) / Math.max(1, ks.length)));
+      return { kind, t: 1, pos: 'weapon', cost: m, p, score: p + 0.02, first: true, short, closed: short.find(k => !matPlace(k, 1).open) || null };
+    } catch (e) { return null; }
+  };
   const forgeNext = () => {
+    const fw = firstWeapon(); if (fw) return fw;
     let best = null, gate = null;
     const zt = zoneTier(S.maxZone);
     const eq = equipNext();
@@ -14259,6 +14279,15 @@ var forgeGoalPicks = 0;
     }
     return best && best.p > 0 ? best : gate || best;   // an open recipe at p = 0 (Next Up drops it) does not hide a gate
   };
+  // the first weapon's short material a Go can send you to gather (the first gathered one), or null (only essence is short)
+  const firstWeaponGather = b => b.short.find(k => CRAFT_FAMILY[k] && CRAFT_FAMILY[k].src === 'gather') || null;
+  const firstWeaponWhere = b => {
+    if (b.closed) { const pl = matPlace(b.closed, 1), nm = costName(b.closed, 1);
+      return pl.opens ? `${nm} comes from ${SKILL[pl.skill]}, which opens at ${pl.opens}` : `${nm} comes from ${CRAFT_FAMILY[b.closed].from.replace(/ only\.$/, '').replace(/\.$/, '')}`; }
+    const k = firstWeaponGather(b) || b.short[0], n = fmt(b.cost[k] - matOwn(k, 1)), nm = costName(k, 1);
+    if (k === 'ess' || k === 'gold') return `win ${n} more ${nm} in fights`;
+    return `${matPlace(k, 1).verb.toLowerCase()} ${n} ${nm} at the ${NODE_NAMES[k][0]}`;
+  };
   // a gate row's Go: Craft at the station's tier 1 (a craft there levels it), or the gathering skill's Gather view
   const gateGo = b => !b.gate.station ? { tab: 'gat', view: b.gate.skill }
     : CRAFT_KINDS[b.kind].st === b.gate.station ? { tab: 'forge', sel: stationSel(b.gate.station), fn: () => { S.fSlot = b.kind; S.fTier = 1; forgeGoalPicks++; } }
@@ -14268,16 +14297,21 @@ var forgeGoalPicks = 0;
     id: 'forge', sys: 'forge',
     // a tier gate keeps a row of its own once the frontier boss has beaten you: it is the way forward ("gear up"), and in the seed 1
     // walk it otherwise sat 4th behind the boss, refine and contract rows
-    reserve: () => { const b = forgeNext(), bt = S.bossTry; return b && b.gate && bt && bt.tries && typeof bossTryKey === 'function' && bt.tries[bossTryKey(soloHero(), S.maxZone)] > 0 ? 1 : 0; },
+    reserve: () => { const b = forgeNext(), bt = S.bossTry; if (b && b.first) return b.closed ? 0 : 1; return b && b.gate && bt && bt.tries && typeof bossTryKey === 'function' && bt.tries[bossTryKey(soloHero(), S.maxZone)] > 0 ? 1 : 0; },
+    // gear-in-first-25: the first weapon, its places open, ranks above every unfinished row (20); once Ready, above other Ready rows
+    // (13) but under a pile of unspent points (hero-up's 20, even with this row shown first: 2.13 + STICK < 2.2)
+    prio: () => { const b = forgeNext(); return b && b.first && !b.closed ? (b.p >= 1 ? 13 : 20) : 0; },
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
     label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
       if (b.gate) return `${nm}: ${SKILL[b.gate.skill]} ${b.gate.lv} of ${b.gate.need}` + (b.gate.mat ? ` opens ${b.gate.mat}` : '');
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
+      if (b.first) return `${nm}: ${firstWeaponWhere(b)}`;   // "Pine Staff for the zone 4 boss: mine 3 Quartz at the Quartz Geode"
       const k = Object.keys(b.cost).find(k => matOwn(k, b.t) < b.cost[k]);
       return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - matOwn(k, b.t))} more ${costName(k, b.t)}` : `Craft ${a} ${nm}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
-    go: () => { const b = forgeNext(); return b && b.gate ? gateGo(b) : { tab: 'forge', sel: '#forgeBtn', fn: () => { const x = forgeNext(); if (x && !x.gate) { S.fSlot = x.kind; S.fTier = x.t; forgeGoalPicks++; } } }; }
+    go: () => { const b = forgeNext(), w = b && b.first && !b.closed && b.p < 1 ? firstWeaponGather(b) : null; if (w) return { tab: 'gat', view: CRAFT_FAMILY[w].skill, sel: `.gx-row[data-kind="${w}"][data-t="1"]` };
+      return b && b.gate ? gateGo(b) : { tab: 'forge', sel: '#forgeBtn', fn: () => { const x = forgeNext(); if (x && !x.gate) { S.fSlot = x.kind; S.fTier = x.t; forgeGoalPicks++; } } }; }
   });
   // Upgrade (craft-delta): a worn piece whose next upgrade you can pay for now, offered only while no craft is ready
   // (the craft goal is not Ready). Weapon first, then the slot order. Go opens the piece's sheet on Hero, Gear.
@@ -14285,7 +14319,7 @@ var forgeGoalPicks = 0;
   // shared material (same tier, or essence) than the craft needs; when nothing is left, the craft goal leads.
   const upgradeNext = () => {
     const f0 = forgeNext(), f = f0 && !f0.gate ? f0 : null;   // next-tier-gate-goal: a gate row replaces no piece
-    if (f && f.p >= 1) return null;
+    if (f && (f.p >= 1 || f.first)) return null;   // gear-in-first-25: no upgrade while the first weapon is still to make
     for (const pos of CRAFT_HERO_POS) {
       if (f && f.p > 0 && pos === f.pos) continue;
       const it = equipped(pos);
@@ -15036,7 +15070,32 @@ const weaponKind = () => {
 };
 const weaponMats = () => { const k = weaponKind(); try { return k ? Object.entries(craftRecipe(k, 1)).filter(([f]) => f !== 'gold').map(([f, n]) => stockOf(f, 1, n)) : []; } catch (e) { return []; } };
 const weaponStation = () => { const k = weaponKind(); return k ? CRAFT_KINDS[k].st : null; };
-const weaponNow = () => coldH() && stepDone('forge') && !!weaponKind() && !weaponMade() && !wearPiece('weapon') && campLv(weaponStation()) >= 1 && !stepDone('store');
+// gear-in-first-25: where a material comes from, and whether that place is open now. Fights pay essence and gold, so those are always
+// open; a gathered one is open when its Gather view shows (navSkillOpen: Hunting and Foraging from zone 5) and its node's tier is open.
+// -> { open, skill, kind (the node, or null), verb, opens ('zone 5' while the view waits on a zone, else null) }
+const PLACE_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Gather', herb: 'Gather', hide: 'Hunt' };
+const matPlace = (fam, t = 1) => {
+  if (fam === 'ess' || fam === 'gold') return { open: true, skill: null, kind: null, verb: 'Fight for', opens: null };
+  const fm = typeof CRAFT_FAMILY === 'object' ? CRAFT_FAMILY[fam] : null;
+  if (!fm || fm.src !== 'gather' || !CRAFT_NODES[fam]) return { open: false, skill: null, kind: null, verb: 'Gather', opens: null };
+  const sk = fm.skill, seen = typeof navSkillOpen === 'function' && navSkillOpen(sk);
+  const open = seen && craftNodeVisible(fam, t) && skillTierOpen(sk, t);
+  const f = !seen && (sk === 'forage' || sk === 'hunt') && (sk !== 'hunt' || huntingVisible()) && !isUnlocked('forage') ? FEATURES.find(x => x.id === 'forage') : null;
+  return { open, skill: sk, kind: open ? fam : null, verb: PLACE_VERB[fam] || 'Gather', opens: f ? f.why : null };
+};
+// The Craft card's line under a recipe short of a gathered material: "Bristlehide: from Hunting, which opens at zone 5." / "Quartz: from Mining geodes."
+const matSourceLine = (fam, t = 1) => {
+  const fm = typeof CRAFT_FAMILY === 'object' ? CRAFT_FAMILY[fam] : null; if (!fm || fm.src !== 'gather') return '';
+  const pl = matPlace(fam, t), nm = costName(fam, t);
+  return pl.opens ? `${nm}: from ${SKILL[pl.skill]}, which opens at ${pl.opens}.` : `${nm}: from ${fm.from.replace(/ only\.$/, '.')}`;
+};
+const weaponShort = () => needShort(weaponMats());
+// every short material of the first weapon has a place open now (essence and gold count as open)
+const weaponPlacesOpen = () => weaponShort().every(m => matPlace(m.fam, m.t).open);
+// the first weapon is made at the Workbench (a bow or staff): its steps come right after the tool, not after the Forge
+const weaponAtBench = () => weaponStation() === 'bench';
+const weaponNow = () => coldH() && !!weaponKind() && !weaponMade() && !wearPiece('weapon') && campLv(weaponStation()) >= 1
+  && (weaponAtBench() ? stepDone('tool') && weaponPlacesOpen() : stepDone('forge') && !stepDone('store'));
 // Worn, not owned (Cal's play note 13): a weapon in the bag does nothing, so it is not "made" until it is on.
 const weaponMade = () => { try { return !!equipped('weapon'); } catch (e) { return false; } };
 const TOOL_POS = ['pick', 'axe', 'sickle', 'spear'];
@@ -15108,12 +15167,12 @@ const GUIDE_STEPS = [
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
   { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
   { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made. It only works when you wear it.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
+  // first-gold-and-camp-strip, gear-in-first-25: the first weapon. A Workbench weapon (bow, staff) comes right after the tool, once every
+  // short material has a place open (weaponNow); until then the Forge steps show. Tobin's Forge weapon waits for the Forge step, as before.
+  { id: 'stock:weapon', ph: ['between'], needs: weaponMats, when: () => weaponNow() && !!needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
+  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft'), done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
-  // first-gold-and-camp-strip: with the weapon's own station built (the Forge, or the Workbench for a bow or staff; it comes after the Forge step) the next job is the first weapon:
-  // gather what it needs; then Craft opens on it. Over once the Storehouse step is done (a finished cold save never sees it).
-  { id: 'stock:weapon', ph: ['between'], needs: weaponMats, when: () => weaponNow() && !!needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || stepDone('store') },
-  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft'), done: () => !coldH() || weaponMade() || stepDone('store') },
   { id: 'stock:store', ph: ['between'], needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
@@ -37850,9 +37909,14 @@ on('cacheOpen', v => {
   }
 
   // ---------------- confirm buttons (in-page, no confirm()) ----------------
-  // First tap arms the button for 4 seconds; the second tap acts.
+  // First tap arms the button for CONFIRM_MS; the second tap acts (cancel too).
+  const CONFIRM_MS = 6000;
   let armed = null, armedAt = 0;
-  const isArmed = key => armed === key && Date.now() - armedAt < 4000;
+  const isArmed = key => armed === key && Date.now() - armedAt < CONFIRM_MS;
+  // Hesketh's own build step (bench / forge / store) is on screen and points at this station's quick button: one tap builds it
+  // (camp-build-tap-again; the step ids match the camp ids). Never anywhere else, and never for Cancel.
+  const GUIDE_BUILDS = { bench: 1, forge: 1, store: 1 };
+  const guideBuilds = id => { try { return !!GUIDE_BUILDS[id] && typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
   function arm(key) { armed = key; armedAt = Date.now(); ui(true); }
   function disarm() { armed = null; }
 
@@ -37878,7 +37942,7 @@ on('cacheOpen', v => {
     if (quick) box.append(why, cancel); else box.append(why, go, cancel);
     go.addEventListener('click', () => {
       const c = campCan(id); if (!c.ok) return;
-      if (!isArmed('b:' + id)) { arm('b:' + id); return; }
+      if (!(quick && guideBuilds(id)) && !isArmed('b:' + id)) { arm('b:' + id); return; }
       disarm(); campBuild(id); ui(true);
     });
     cancel.addEventListener('click', () => {
@@ -37893,7 +37957,7 @@ on('cacheOpen', v => {
         if (!pend && !done) {
           const verb = c.queue ? 'Queue' : 'Build', armd = isArmed('b:' + id);
           const target = id === 'tent' ? `Tent ${c.to}` : `${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to}`;
-          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Sure?' : verb); putAttr(go, 'aria-label', armd ? `Tap again to ${verb.toLowerCase()} ${target}` : `${verb} ${target}, ${dur(c.dur / 1000)}`); }
+          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Tap again' : verb); putAttr(go, 'aria-label', armd ? `Tap again to ${verb.toLowerCase()} ${target}` : `${verb} ${target}, ${dur(c.dur / 1000)}`); }
           else setTxt(go, armd ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${target} · ${dur(c.dur / 1000)}`);
           putDisabled(go, !c.ok); putToggle(go, 'armed', armd);
         }
@@ -39279,14 +39343,48 @@ let craftUI = null;
     if (r.kind === 'turns') return `Zone ${r.zone} boss: about ${r.after} turns a win, not ${r.before}.`;
     return `Zone ${r.zone} boss: a hit takes about ${r.after}% of your health, not ${r.before}%.`;
   }
-  // the tool line: "Copper Pickaxe on. Mining is 25% faster." (or why it went in the bag)
+  // the tool line: "Copper Pickaxe on. Mining is 35% faster than with your Stone Pick: +25% for a tier 1 tool on a tier 1 vein,
+  // and +8.1% from its mining speed line." (or why it went in the bag). tool-speed-adds-up: the parts come from the crafted record
+  // (toolParts); when they do not multiply to the total within 1 point, or one rounds to 0, only the total and the old tool show.
+  const TOOL_NODE = { mine: 'vein', wood: 'tree', forage: 'patch', hunt: 'hunting ground' };
+  const pctTxt = x => { const v = Math.round(x * 10) / 10; return (v % 1 ? v.toFixed(1) : String(v)); };
+  const spdSum = (st, s) => (s[st] || 0) + (s.gather || 0);
+  // At craft time (the 'crafted' listener): what the new tool is faster than, the measured tier, the right-tool bonus before and
+  // after, and the summed speed stat (the tool's own line plus Gathering speed) before and after. Mastery and the skill level are
+  // read at the same instant on both sides, so they are not parts.
+  function toolParts(it, e) {
+    const d = itemKind(it), kind = Object.keys(TOOL_KINDS).find(k => TOOL_KINDS[k].pos === d.pos), tk = TOOL_KINDS[kind];
+    const fam = Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === it.slot); if (!tk || !fam) return null;
+    const skill = tk.skill, st = NODE_TOOL_STATS[it.slot][0], nt = Math.max(1, skillTopTier(skill) || 1);
+    const old = e.was != null ? itemById(e.was) : null, oldT = old ? itemTier(old) : 0, nm = kindName(it.slot, it.t, it.u);
+    const oldNm = old ? itemName(old) : tk.rough, oldSum = old ? spdSum(st, itemStats(old)) : 0;
+    const g = gear(), after = spdSum(st, g), before = after - spdSum(st, itemStats(it)) + oldSum;
+    return { skill, nt, oldNm, same: oldNm === nm || (!old && tk.rough === d.noun), st,
+      rightWas: !!(TOOL_TUNE.on && oldT > 0 && oldT >= nt), rightNow: toolRight(skill, nt) > 1, t: itemTier(it), before, after, rough: !old,
+      lines: !!itemStats(it).gather || (!old && before > 0) };   // more than the tool's own speed line moved the gear part
+  }
   function toolLine(it) {
     const tl = st8.tool[it.id], d = itemKind(it);
     if (!d || !d.tool) return '';
     if (tl && tl.on && wornBy(it.id)) {
       const [a, b] = tl.speed || [0, 0], pct = a > 0 && b > 0 ? Math.round((a / b - 1) * 100) : 0, sk = CRAFT_NODES[Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === it.slot)];
-      const nm = sk && SKILL[sk.skill] ? SKILL[sk.skill] : 'Gathering';
-      return `${kindName(it.slot, it.t, it.u)} on.` + (pct > 0 ? ` ${nm} is ${pct}% faster.` : '');
+      const nm = sk && SKILL[sk.skill] ? SKILL[sk.skill] : 'Gathering', head = `${kindName(it.slot, it.t, it.u)} on.`;
+      if (pct <= 0) return head;
+      const p = tl.parts, than = !p ? '' : p.same ? ' than before' : ` than with your ${p.oldNm}`;
+      const total = `${head} ${nm} is ${pct}% faster${than}`;
+      if (!p) return total + '.';
+      const parts = [], mult = [];
+      if (p.rightNow && !p.rightWas) {
+        parts.push(`+${Math.round(TOOL_TUNE.right * 100)}% for a tier ${p.t} tool on a tier ${p.nt} ${TOOL_NODE[p.skill] || 'node'}`);
+        mult.push(1 + TOOL_TUNE.right);
+      }
+      const gp = ((1 + p.after / 100) / (1 + p.before / 100) - 1) * 100, sName = CRAFT_STATS[p.st] ? CRAFT_STATS[p.st].n.toLowerCase() : 'speed';
+      if (gp < -1e-9) return total + '.';   // more item power but a slower speed line: the total says it all
+      if (gp > 1e-9) { parts.push(`+${pctTxt(gp)}% from ${p.lines ? `your gear's ${sName}` : `its ${p.rough ? '' : 'better '}${sName} line`}`); mult.push(1 + gp / 100); }
+      const prod = mult.reduce((x, y) => x * y, 1);
+      if (!parts.length || parts.some((s, i) => Math.round(Math.abs(mult[i] - 1) * 1000) === 0) || Math.abs((prod - 1) * 100 - (a / b - 1) * 100) > 1)
+        return total + '.';
+      return `${total}: ${parts.join(', and ')}.`;
     }
     if (tl && !tl.on && !wornBy(it.id)) { const cur = itemById(S.equip[d.pos]); if (cur && cur.id !== it.id) return `It is in your bag. Your ${itemName(cur)} is better.`; }
     return '';
@@ -39425,7 +39523,7 @@ let craftUI = null;
         eq.addEventListener('click', () => { equipHero(it.id, d.pos); if (wornBy(it.id)) { st8.result = null; st8.resArm = false; } ui(true); });   // Cal's play note 17: worn, so the card closes (Keep and Salvage are for a piece that is not worn)
         acts.append(eq);
       }
-      const keep = el('button', 'big cf-act cf-keep', 'Keep'); keep.type = 'button';
+      const keep = el('button', 'big cf-act cf-keep', wr ? 'Done' : 'Keep'); keep.type = 'button';   // gear-in-first-25: a piece that went on by itself is done, not kept
       keep.addEventListener('click', () => { st8.result = null; ui(true); });
       acts.append(keep);
       if (!wr) {
@@ -39457,7 +39555,7 @@ let craftUI = null;
     const it = e && e.item; if (!it || it.id == null) return;
     st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
     st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
-    if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null };
+    if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null, parts: e.on ? safe(() => toolParts(it, e), null) : null };   // tool-speed-adds-up: the old tool and the parts, read now
     else fdStart(it);
     if ((it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
       moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });
@@ -39485,6 +39583,9 @@ let craftUI = null;
       c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
+    // gear-in-first-25: where each short gathered material comes from ("Bristlehide: from Hunting, which opens at zone 5."); none for
+    // essence, gold, a middle (Planks, Ingots) or a material in hand
+    for (const [f, n] of Object.entries(kindCost(k, t))) { if (matOwn(f, t) >= n) continue; const ln = matSourceLine(f, t); if (ln) row.append(el('div', 'cf-src', ln)); }
     const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds));
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
@@ -42765,16 +42866,16 @@ let navUI = null;
   // W1-A: a step that waits for materials shows live progress and never pauses the game.
   // "Chop 12 Pine Log for the Workbench (5/12)". When the hero is not at the node that yields the
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
-  const VERB = { wood: 'Chop', ore: 'Mine' };
+  const VERB = { wood: 'Chop', ore: 'Mine', crystal: 'Mine', hide: 'Hunt' };
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
-  const stockSpec = (id, what, tail) => {
+  const stockSpec = (id, what, tail, at) => {   // at: name the node (gear-in-first-25: "Mine 3 Quartz at the Quartz Geode for your first weapon (0/3).")
     const need = onboardNeed(id); if (!need.length) return null;
     const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Fight for' : 'Gather');
     // workbench-cost: a build row's gold ("Win 200 more gold for the Workbench (100/300)."); fights pay it, so the hint points at the fight
     const text = need.length > 1
       ? `You still need these for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
       : x.fam === 'gold' ? `Win ${x.n - x.have} more gold in fights for ${what} (${x.have}/${x.n}).`
-      : `${verb} ${x.n} ${x.name} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
+      : `${verb} ${x.n} ${x.name}${at && x.kind ? ` at the ${NODE_NAMES[x.kind][x.t - 1]}` : ''} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
     if (x.fam === 'gold') return { text, live: 1, node: onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: onGame() ? [0.74, 0.62] : null, side: 'up' };
     const there = S.activity === 'gather' && x.kind && S.node.kind === x.kind && S.node.t === x.t;
     const spec = { text, live: 1 };
@@ -42826,7 +42927,7 @@ let navUI = null;
     'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
     'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
     'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
-    'stock:weapon': () => stockSpec('stock:weapon', 'your first weapon'),
+    'stock:weapon': () => stockSpec('stock:weapon', 'your first weapon', '', true),
     light: () => {
       if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire to light it.' } : null;
       const f = $('hearthFire');
@@ -42846,7 +42947,9 @@ let navUI = null;
       // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
       return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll need one for the ore." };
     },
-    forge: () => campPath('forge', ["You'll want a weapon of your own. Open Camp.", 'Open Camp.', "Build the Forge. That's where weapons are made."]),
+    // gear-in-first-25: a bow or staff is made at the Workbench, so for Wren and Pip the Forge is for ingots and metal gear
+    forge: () => weaponAtBench() ? campPath('forge', ['Next, the Forge. Open Camp.', 'Open Camp.', 'Build the Forge. It makes ingots and metal gear.'])
+      : campPath('forge', ["You'll want a weapon of your own. Open Camp.", 'Open Camp.', "Build the Forge. That's where weapons are made."]),
     // first-gold-and-camp-strip: the materials are in hand; tick() has opened Craft on the weapon (once a visit), and this tip rings the button
     weapon: () => {
       const k = weaponKind(); if (!k) return null;

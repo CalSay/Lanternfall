@@ -3,6 +3,7 @@
 # UNIQ_TUNE.on, which is off. Nothing a player sees changes: the trophy wall on the late save still counts 3 / 14 (the same as
 # before this change) and names none of the new uniques. Their rules, costs, the retool path, the save codes and the switch-off
 # parity are held by tools/check.mjs (uniques first pool); the kept-up budget rows are in budget-rows.md next to this file.
+# Updated 2026-10-08 (proof-routes-rot): close the Refining tip (#209) that now opens over Craft on the late save.
 new late
 wait 6
 tap-if "Continue"
@@ -15,6 +16,7 @@ tap-if "Continue"
 wait 3
 tap "Craft"
 wait 2
+tap-if "Got it"
 tap-if "Continue"
 wait 2
 tap "Uniques"

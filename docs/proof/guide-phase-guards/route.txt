@@ -2,7 +2,9 @@
 # Proof for card guide-phase-guards: the guide's Attack and ability tips wait for your turn, and the Hero tab tip waits for
 # a break between fights. The phase rules are held by tools/check.mjs ("guide-phase-guards") and
 # `node tools/eyes.mjs --only tipphase` (no finding at 360x740 or 740x360).
+# Updated 2026-10-08 (proof-routes-rot): a fresh game now opens on the intro story; skip it before the picker.
 new fresh
+tap-if "Skip this"
 tap "Begin as Wren"
 tap-if "Skip"
 tap-if "Continue"
