@@ -9258,9 +9258,9 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.725 * 1.25, 15: 16 * 0.12, 20: 16 * 2.8, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.725 * 1.25, 15: 16 * 0.12, 20: 16 * 0.01625, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zones 13-15 cut for the hero who first gets there by z13-unstick, zone 15 16 x 0.12, was 1.7; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zones 13-15 cut for the hero who first gets there by z13-unstick, zone 15 16 x 0.12, was 1.7; zones 20-24 by z20-wall, zone 20 16 x 0.01625, was 2.8; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
@@ -9297,12 +9297,13 @@ if (section('C29 mid-game HP and Wren (core)')) try {
   const KINDS = { wren: ['bow', 'quiver', 'hood', 'leathers'], tobin: ['warblade', 'shield', 'greathelm', 'plate'], pip: ['staff', 'lantern', 'circlet', 'robe'] };
   // a hero who keeps up (as sim --report heroes): their class set and a Charm at the zone's tier, rare +5, the shared HP
   // affix line only, Training at their level, and Attack and HP scaled together so their Attack is the zone's reference
-  const kept = (k, z, L, fx, d) => { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: FX(fx) }) }), E = s => g.eval(s), J = JSON.stringify;
+  // asBuilt (z20-wall): the hero as built, not scaled to the reference Attack (the played and gear asserts at zone 26)
+  const kept = (k, z, L, fx, d, asBuilt) => { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: FX(fx) }) }), E = s => g.eval(s), J = JSON.stringify;
     E(`loadSave(); soloPick(${J(k)}, {now:true}); S.L = ${L}; S.solo.tr[${J(k)}].atk = ${L}; S.solo.tr[${J(k)}][${J({ wren: 'echo', tobin: 'bash', pip: 'fire' }[k])}] = ${L}; S.solo.asc[${J(k)}] = 0; attrSpread();
       S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z});
       (() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z}) + (${d || 0});
         ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'rare', { rnd }); it.plus = 5; if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();
-      S.activity = 'fight'; arena = null; gearDirty(); fightBoss = false; spawn(); globalThis.__f = 1 / (turnCombatProfile().A / turnRefAtk(${z}));`);
+      S.activity = 'fight'; arena = null; gearDirty(); fightBoss = false; spawn(); globalThis.__f = ${asBuilt ? 1 : `1 / (turnCombatProfile().A / turnRefAtk(${z}))`};`);
     const prof = boss => `(() => { fightBoss = ${boss}; spawn(); const p = turnCombatProfile(); p.A *= __f; p.U *= __f; p.counter *= __f; p.heroMaxHp *= __f; return p; })()`;
     // a boss hit's share of max HP never reads under its room-to-miss floor (TURN_TUNE.boss.hpFloor, 59k turnLand), as in a live fight
     const hit = boss => E(`(p => { const k = Math.max(p.refHp * p.bossHitX / p.heroMaxHp, p.bossHitFloor || 0) * p.hitX * (p.bossHeroX || 1), ch = p.script.find(m => m.charge);
@@ -9323,21 +9324,26 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       // zones 15 and 20 (boss-tiers PR 3, 2026-10-07): the knots there are fitted to the budget's casual band, a boss hit reads 15-45% here
       // zones 8 and 15 (boss-tiers-pr4, 2026-10-07): the tricks carry the difficulty there, so the refit hit scales are 0.46-0.9 of the old ones: a boss hit reads 22% at zone 8, a charge 52%; zone 15 (z13-unstick, 2026-10-08) reads its hpFloor, about 19-20% a hit and 45-48% a charge
       // zones 20-34 (boss-tiers-pr5b, 2026-10-07): the tricks, rally gates and footing floor carry the difficulty there, so the refit hit scales are 0.2-0.4 of the old ones:
-      // a boss hit reads 16% at zone 20 and 4% at zones 25-34 here, a charge 35% and 9-10%
+      // a boss hit reads 4% at zones 25-34 here, a charge 9-10%; zone 20 (z20-wall, 2026-10-08) is fitted to the hero who first gets there and reads
+      // its hpFloor 1.3 on this scaled hero: 27-29% a hit, 60-65% a charge
       const mid = z >= 25, b = mid ? [0.025, 0.08, 0.06, 0.2] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.1, 0.42, 0.25, 0.92] : [0.18, 0.36, 0.45, 0.9];
       if (!(r.n.hit >= 0.05 && r.n.hit <= 0.18 && r.b.hit >= b[0] && r.b.hit <= b[1] && r.b.charge >= b[2] && r.b.charge <= b[3]) || r.err().length) bad.push(s); }
     assert(!bad.length, `mid-game HP: for a hero who keeps up (zones 8-34), a landed normal hit costs 5-18% of max HP, a boss hit 18-36% (7-42% at zone 15, 10-42% at zone 20), a charge 45-90% (20-92% at zone 15, 25-92% at zone 20, 6-20% from zone 25; 2.5-8% boss hits from zone 25) (${bad.length ? 'off: ' + bad.join('; ') : seen.join('; ')})`); }
-  // played: good players win zone-20 bosses in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest, not a sure win (tobin-safety-margin)
-  { const w = kept('wren', 20, 33, 'mid'), p = kept('pip', 20, 33, 'mid'), t = kept('tobin', 20, 33, 'mid');
+  // played: good players win a mid-game boss in 8-10 turns or so, casual players win some and lose some; Tobin stays the safest, not a sure win (tobin-safety-margin)
+  // z20-wall (judge 2026-10-08): zones 20-24 are fitted to the hero who first gets there (every landed hit sits on the hpFloor and the rally gates
+  // hold the fight to about 5 turns), so this and the gear assert below sit at zone 26, the first kept-up Captain past the fitted span, on the
+  // hero as built (the scaled hero wins every boss from zone 21 on). A card that fits zone 26 re-judges where they live.
+  const MZ = 26, ML = 35;   // level 35 at zone 26: this check's own ladder (zone 25 at 35 in the assert above), not the budget's road level
+  { const w = kept('wren', MZ, ML, 'mid', 0, true), p = kept('pip', MZ, ML, 'mid', 0, true), t = kept('tobin', MZ, ML, 'mid', 0, true);
     const WS = [['echo', 'deadeye', 'powershot'], ['twinshot', 'echo', 'deadeye'], ['echo', 'barbed', 'sonic']], PS = [['fire', 'ignite', 'spark'], ['kindle', 'fire', 'ignite'], ['fire', 'wildfire', 'spark']];
     const wg = w.run(good, WS), wc = w.run(casual, WS), pg = p.run(good, PS), pc = p.run(casual, PS), tc = t.run(casual, [['bash', 'heavystrike', 'hammerfall'], ['bash', 'riposte', 'hammerfall']]);
     assert(wg.win >= 0.95 && pg.win >= 0.95 && wg.turns >= 6 && wg.turns <= 12 && pg.turns >= 6 && pg.turns <= 12 && wc.win >= 0.2 && wc.win <= 0.85 && pc.win >= 0.2 && pc.win <= 0.85
       && tc.win >= 0.3 && tc.win <= 0.95 && t.b.hit >= p.b.hit * 0.6 && !w.err().length,
-      `mid-game HP: at zone 20 a hero who keeps up wins bosses played well in 6-12 turns and 20-85% played casually (this hero is scaled to the reference; budget.mjs gates the real one); Tobin wins more than they do but not all, and a boss hit costs him at least 60% of what it costs Pip (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
-  // gear matters: a tier behind, a zone-20 boss hit takes most of your health; a tier ahead, it barely hurts
-  { const lo = kept('pip', 20, 33, 'mid', -1), hi = kept('pip', 20, 33, 'mid', 1);
-    // boss-tiers-pr5b: the zone-20 hit scale is 0.4 of its old size (tricks, gates and the footing carry the difficulty), so behind reads about a quarter and a tier ahead under a seventh
-    assert(lo.b.hit > 0.2 && lo.b.charge > 0.5 && hi.b.hit < 0.15 && lo.b.hit > 2 * hi.b.hit, `mid-game HP: a gear tier behind, a zone-20 boss hit costs over a fifth of your health and its charge half; a tier ahead, under 15% and under half as much (${[lo, hi].map(r => (100 * r.b.hit).toFixed(0) + '% / ' + (100 * r.b.charge).toFixed(0) + '%').join(', ')})`); }
+      `mid-game HP: at zone ${MZ} (the first kept-up Captain past the z20-24 fit) a hero who keeps up wins bosses played well in 6-12 turns and 20-85% played casually (the hero as built; budget.mjs gates the budget's own); Tobin wins more than they do but not all, and a boss hit costs him at least 60% of what it costs Pip (${JSON.stringify({ wg, wc, pg, pc, tc, tobinHit: +t.b.hit.toFixed(3), pipHit: +p.b.hit.toFixed(3) })})`); }
+  // gear matters: a tier behind, a mid-game boss hit takes most of your health; a tier ahead, it barely hurts (zone 26 since z20-wall, as above)
+  { const lo = kept('pip', MZ, ML, 'mid', -1, true), hi = kept('pip', MZ, ML, 'mid', 1, true);
+    // the hero as built at zone 26 (z20-wall): a tier behind reads about a quarter a hit and half a charge, a tier ahead 3-4% (the thresholds as set at zone 20 by boss-tiers-pr5b)
+    assert(lo.b.hit > 0.2 && lo.b.charge > 0.5 && hi.b.hit < 0.15 && lo.b.hit > 2 * hi.b.hit, `mid-game HP: a gear tier behind, a zone-${MZ} boss hit costs over a fifth of your health and its charge half; a tier ahead, under 15% and under half as much (${[lo, hi].map(r => (100 * r.b.hit).toFixed(0) + '% / ' + (100 * r.b.charge).toFixed(0) + '%').join(', ')})`); }
   // tobin-safety-margin: Tobin's own boss-hit share (boss.heroHitX) never lifts a landed hit past the zone's hit cap, so a hero a gear tier behind survives a full-health landed hit
   { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: FX('mid') }) }), E = s => g.eval(s);
     const r = E(`(() => { soloPick('tobin', { now: true }); S.maxZone = 20; setZone(20); S.activity = 'fight'; arena = null; fightBoss = true; gearDirty(); spawn();
@@ -11157,8 +11163,8 @@ if (section('boss tiers first hour')) try {
   assert(a.boss && a.cap === 0.4 && b.cap === 0.4, `boss cap: a zone boss's hit is capped at 40% of max HP in zones 1-15 (${a.cap}, ${b.cap})`);
   assert(c.cap === 0.75 && prof(24).cap === 0.75 && prof(25).cap === 0.75 && d.cap === 0.75, `boss cap: 0.75 in zones 16-34 (boss-tiers-pr5b, the pr3 judge's preference) (${c.cap}, ${prof(24).cap}, ${prof(25).cap}, ${d.cap})`);
   assert(prof(35).cap === 0, 'boss cap: not on a region boss');
-  assert(E('turnZoneLine(TURN_TUNE.boss.hitX, 9)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 8)') && E('turnZoneLine(TURN_TUNE.boss.hitX, 12)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 20)'),
-    'boss knots: hits fall after zone 8 to follow a first-hour hero\'s health, and rise again by zone 20 (zones 13-19 are fitted to the hero who first gets there: z13-unstick, z16-wall, z19-wall)');
+  assert(E('turnZoneLine(TURN_TUNE.boss.hitX, 9)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 8)') && E('turnZoneLine(TURN_TUNE.boss.hitX, 24)') < E('turnZoneLine(TURN_TUNE.boss.hitX, 25)'),
+    'boss knots: hits fall after zone 8 to follow a first-hour hero\'s health, and rise again at zone 25 (zones 13-24 are fitted to the hero who first gets there: z13-unstick, z16-wall, z19-wall, z20-wall)');
   // z16-wall and z19-wall (judges 2026-10-08): the zone 16 and 18 bosses' Bleed and the zone 19 boss's Venom ticks on the hero x riderX (they are a share of the reference HP, a third of a
   // first-time hero's health a tick there); every other zone boss and every normal foe ticks as before
   { const rx = z => JSON.parse(E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; spawn(); const b = turnCombatProfile().bossRiderX;
@@ -11166,6 +11172,13 @@ if (section('boss tiers first hour')) try {
     const r = [15, 16, 17, 18, 19, 20].map(rx);
     assert(r[1][0] < 1 && r[3][0] < 1 && r[4][0] < 1 && r[0][0] === 1 && r[2][0] === 1 && r[5][0] === 1 && r.every(x => x[1] === 1),
       `boss riders: a zone 16 and 18 boss's Bleed and a zone 19 boss's Venom ticks are scaled down (riderX), zones 15, 17 and 20 and normal foes tick at 1 (${r.map((x, i) => (15 + i) + ': ' + x.join('/')).join(', ')})`); }
+  // z20-wall (judge 2026-10-08): from zone 20 to 24 a zone boss's Bleed, Burn or Venom tick costs at most dotCap (7%) of the hero's own max HP
+  // (turnDotTick); riderX stays 1 there, zone 19 keeps its riderX and no cap, and zone 25 on ticks as before
+  { const tk = z => JSON.parse(E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = true; spawn(); const p = turnCombatProfile();
+      const raw = TURN_TUNE.heroDot.venom * p.refHp * (p.bossRiderX || 1); return JSON.stringify({ cap: p.bossDotCap, share: turnDotTick(p, 'venom') / p.heroMaxHp, raw: raw / p.heroMaxHp }); })()`));
+    const t = [19, 20, 22, 24, 25].map(tk), nf = JSON.parse(E(`(() => { setZone(22); S.activity = 'fight'; arena = null; fightBoss = false; spawn(); return JSON.stringify(turnCombatProfile().bossDotCap); })()`));
+    assert(nf === 0 && t[0].cap === 0 && t[4].cap === 0 && [t[1], t[2], t[3]].every(x => x.cap === 0.07 && x.raw > 0.07 && Math.abs(x.share - 0.07) < 1e-9) && t[4].share === t[4].raw,
+      `boss riders: a zone 20-24 boss's tick costs at most 7% of the hero's max HP (dotCap), none at zones 19 and 25 or on a normal foe (normal z22 cap ${nf}; ${t.map((x, i) => [19, 20, 22, 24, 25][i] + ': ' + (100 * x.share).toFixed(1) + '%').join(', ')})`); }
   // a hero with 1000 HP and no armour: the biggest hit turnLand deals from any move of the zone's boss (every hit of every move, a charge's
   // hits on their own) stays at the cap, so a change to turnLand's order or a new multiplier cannot slip past it
   const worst = z => { prof(z); return JSON.parse(E(`(() => { const p = turnCombatProfile(); p.heroMaxHp = 1000; p.hitX = 1; p.blockP = 0; p.blockC = 0; let worst = 0;
