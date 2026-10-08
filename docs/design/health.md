@@ -22,7 +22,7 @@ Time below is active time: game ticks the player was there for. Away gaps do not
 | Persona | Plays | Policy |
 |---|---|---|
 | casual | three 5-minute visits a day (08, 13, 19h) for 3 in-game days; the game's own away gains run between visits | the sim's mixed policy; fights by hand, the morning gap gathers |
-| active | one 60-minute session | parries about 60% of heavy hits and dodges most of the rest, casts every off-cooldown ability, learns Scrolls and fills the ability slots, builds the camp |
+| active | one 60-minute session | parries about 60% of hits and dodges most of the rest (every hit of a move, z21-foe-climb), casts every off-cooldown ability, learns Scrolls and fills the ability slots, builds the camp |
 | optimiser | 10 hours | the same bot: always buys the best gain per gold, crafts the next class piece |
 | long (`--long`) | 50 hours, one run per starter, seed 41 | the optimiser's bot, kept going |
 

@@ -887,6 +887,35 @@ first-time knots reach zone 20, as the z19 ruling asked.
 
 Veto phrases for Cal: "put the zone 20 bosses back" (undoes the whole pick). "Keep the stall band at 2.4" undoes only the tolerance. "No tick cap" undoes only dotCap: zones 22 and 23 then read
 about 30-36% a try for a first-time player. "No Pip boss knot" sets Pip back to 1: zone 23 then reads about 52-57 for a first-time Pip.
+Follow-up: the card `z21-foe-climb` found the health bot defended only a move's first hit; see "Zone 21 foe climb" below.
+
+### Zone 21 foe climb (z21-foe-climb) (2026-10-08)
+
+Follow-up to "Zone 20 wall" ruling 3, ruled by an Opus high judge (PR for card `z21-foe-climb`); Cal can veto. Evidence:
+`docs/proof/z21-foe-climb/evidence.md` (optimiser and 50-hour runs on five offsets each, before and after).
+
+- **The bot was wrong; the rest of the wall is the gear climb, sent to the balance pass.** The health bot (`tools/sim.mjs`
+  `turnPlayer`) keyed its defence on the turn, so it defended only the first hit of a move of several hits (`59k-turn.js` keeps
+  turn `n` across a move's hits). The walks (`walk.mjs`) and the budget sampler defend every hit and were never affected, so the
+  z13-z20 boss fits stand. The fix keys the defence on the hit too. No game file changes.
+- Optimiser, five offsets: longest stall 15,637 to 11,619 s; runs with a stall over 4 h 7/15 to 0/15; zoneEnd 22.67 to 24.67;
+  wipes an hour 79.7 to 49.7. The bot no longer stalls at zones 17-19 (the z20-wall watch items).
+- Health is re-baselined for every persona and the long run (the game did not change; the first-hour game measures held: active
+  first boss 68 s, casual zoneEnd 13.0 against 12.67). `optimiser.stallCount` 8.00, abs 2.9 to 2.0 (three sample sd of the five
+  offsets). The offset-0 "longest stall under 4 hours" target is restored (210/181/204 min).
+- **Missed:** the card's prediction (stallCount back near 4.93): the bot passes more zones, so it meets more stall points. The
+  acceptance "no 3 h+ stall at zones 21-24": 9 of 15 optimiser runs (3.0-3.8 h); 13 stalls of 3.2-6.1 h in the 50-hour run.
+- **Cause of what is left:** ordinary foes from zone 19 scale to a tier 4 rare +5 hero at road level (`refHpX`, `refAtk`). Tier 4
+  needs gathering 64 and a station at 36, and a 10-hour player has 22-24; from level 25 a level takes 390 fights.
+- **Not picked:** a 0.25 cap on an ordinary foe's hit at zones 21-24. It moves the wall to zone 25 (5/15 runs over 4 h, offset-0
+  Wren 4.8 h) and makes gear count for less.
+- Report rows `z20-normal-bot` to `z24-normal-bot` (kind `reportBot`: arrival level + 2, tier 2 rare +5, with the bot's own
+  defence) show the wall.
+- **Owner `boss-balance-pass`** (the overhaul balance pass), until 2026-12-01: refit `refHpX`/`refAtk` for ordinary foes at zones
+  19-24 to the gear a 10-hour player can reach after the crafting overhaul, or open tier 4 sooner. Pull it ahead if players get
+  stuck there first.
+
+Veto phrase for Cal: "cap the zone 21-24 foes" (adds the 0.25 hit cap at zones 21-24 on top of the bot fix).
 
 ### The Lantern Rules
 

@@ -167,6 +167,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## CI and tooling
 
+- Key a bot's defence on the foe's hit, not the turn (`phase:n:hit`): a move of several hits stays in one turn, and before you blame the game for a wall, compare the live bot's wins on its own save with `turnCombatSample` at the bot's defence. Why: the health bot defended only a move's first hit, so it won about 1% of zone 22 foes where the sampler read 43%, and stalls of 4-7 h at zones 17-24 were half the bot's. (z21-foe-climb, 2026-10-08)
 - After `health.mjs --write-baseline`, run `--compare` per seed offset (`--only optimiser --seed-offset 0..4`) and check offset 0, the one CI runs, sits inside each tolerance; a count metric's band must be at least three sd of the five offsets (docs/design/health.md). Why: z19-wall's re-baseline put optimiser.stallCount at the 5-offset mean 4.93 with abs 1.3, offset 0 read 6 here and 6.33 on CI (one stall more than this machine), and CI failed; the judge widened it to 2.4. (z19-wall, 2026-10-08)
 - CI retries a failed check shard or eyes run once on its own (`tools/ci/retry-once.sh`); a pass on the retry is a FLAKE warning and a line in the job summary. Fix the check named there; never skip it. Why: 9 of 16 reruns on 6-7 Oct passed on the same commit, and an outage of 80 minutes (billing) once made 172 jobs die in 2 s. (ci-review, 2026-10-07)
 - Check the memory limit and piped-output crashes before judging a first red CI run. Why: run 3 of f-ci failed on infrastructure causes. (f-ci, 2026-10-05)
