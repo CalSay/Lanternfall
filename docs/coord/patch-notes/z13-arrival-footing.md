@@ -1,0 +1,1 @@
+Tooling only: the difficulty report now measures the zone 13, 14 and 15 bosses against the hero a new player has when they get there (level 18 or 19, starter-tier gear, no mastery stars), so it shows the wall players hit there instead of 1 to 2 tries. (no shot)
