@@ -13,9 +13,17 @@ chance at a new look, and the next stretch of road.
   (scorecard F4). The fight verbs (Attack, Dodge, the ability, Parry) are each taught the first time they come up, with
   the fight held until the player presses them (`cal-0107-staged-guide`), and are not counted as new things; a beat's
   "Learns" column still names one.
-- A big moment at least every 5 minutes in the first 20, never a gap over 8; then one at every zone first clear from 5
-  to 10 (F3, as amended in DECISIONS "Early game"). Moments: see the plan, section 1. Every zone
-  Captain's first clear opens a Lantern Cache (`cache-core`), so those wins count as moments too.
+- **F3, the shape of the first hour** (DECISIONS "Early game", f3-restate 2026-10-08; zones 1 to 10): "(a) **No dead
+  stretch.** On the casual walk, never more than 8 minutes without a progress moment, up to the zone 10 Champion (or
+  minute 60, if that comes first). A progress moment is a zone's first clear, a new ability, a Star, a hero joining or a
+  unique. Level cards, hero lines, looks and crafts do not count: a grind or a wall makes those on its own. (b) **Three
+  peaks, rising.** The first boss win and its cache (F2), the zone 5 Champion with the first companion, and the zone 10
+  Champion closing the chapter. Each has its own big card that says what it gave. A casual person reaches the zone 5
+  Champion by minute 30 and the zone 10 Champion by minute 60. Later is a miss; earlier is never a miss and never a reason
+  to slow the game. (c) **Every big card says what it gave.** A tester can name what each big card gave them. F3 sets
+  nothing past zone 10 (the 2026-11-02 review does). '5 to 10' in older cards means zones, never minutes. F3 alone is never
+  a reason to keep, add or fold a card." Moments: see the plan, section 1. Every zone Captain's first clear opens a
+  Lantern Cache (`cache-core`).
 - New things are announced between fights, never during a parry window (F5).
 - **Never** (from Cal's play notes, 2026-10-07; every card that changes minutes 0 to 60 inherits these, and a card's own
   Never list adds to them):
