@@ -463,6 +463,7 @@ async function craftGoal(g, gate) {   // gate: a tier gate's craft (next-tier-ga
   await openCraft('make');
   await click(`.cf-st[data-st="${g.st}"]`, 300); await advance(300, 16);
   await click(`.cf-tiers button:text(^Tier ${g.t}\\b)`, 300); await advance(300, 16);
+  if (gate && !(await page.evaluate(k => !!document.querySelector(`.cf-rec[data-kind="${k}"]`), g.kind))) { await click('.cf-filt button[data-f="all"]', 300); await advance(300, 16); }   // a piece another hero wears is under All
   const btn = `.cf-rec[data-kind="${g.kind}"] .cf-go`;
   const state = await page.evaluate(sel => { const b = document.querySelector(sel); return b ? { dis: b.disabled, vis: b.getClientRects().length > 0 } : null; }, btn);
   const did = state && !state.dis && await click(btn, 300);
@@ -548,7 +549,7 @@ const GATE_Q = `(() => { const b = craftGoalNext(); if (!b || !b.gate) return nu
 // a station gate: the cheapest tier 1 piece there the bot can pay for, else the missing material of the cheapest one it can gather for
 const GATE_ST_Q = st => `(() => { const t = 1, can = k => k !== 'ess' && !!CRAFT_NODES[k] && craftNodeVisible(k, t) && (k !== 'fibre' && k !== 'herb' || isUnlocked('forage'));
   const all = Object.keys(CRAFT_KINDS).filter(k => CRAFT_KINDS[k].st === ${JSON.stringify(st)} && !CRAFT_KINDS[k].legacy && craftKindVisible(k))
-    .map(k => ({ k, c: canCraft(k, t), n: Object.values(craftRecipe(k, t)).reduce((a, n) => a + n, 0) })).filter(x => x.c.cost && !x.c.unbuilt).sort((a, b) => a.n - b.n);
+    .map(k => ({ k, c: canCraft(k, t), n: Object.values(craftRecipe(k, t)).reduce((a, n) => a + n, 0) + (CRAFT_KINDS[k].pos && fits(k, CRAFT_KINDS[k].pos, 'hero') ? 0 : 1e6) })).filter(x => x.c.cost && !x.c.unbuilt).sort((a, b) => a.n - b.n);   // a piece the hero wears first (the For you list)
   const ok = all.find(x => x.c.ok); if (ok) return { craft: ok.k, nm: kindName(ok.k, t) };
   for (const x of all) { const m = (x.c.miss || []).filter(([k]) => can(k)).sort((a, b) => b[1] - a[1])[0]; if (m && S.gold >= (x.c.cost.gold || 0)) return { gather: { k: m[0], t, n: m[1] }, nm: kindName(x.k, t) }; }
   return { why: bagFull() ? 'the bag is full' : 'nothing at that station it can pay for or gather for' }; })()`;
@@ -574,7 +575,7 @@ async function gateStep(o) {
     let m = null;
     if (s.st) {
       const w = await X(GATE_ST_Q(s.st));
-      if (w.craft) { if (await craftGoal({ st: s.st, t: 1, kind: w.craft, nm: w.nm }, true)) T.crafts++; return true; }
+      if (w.craft) { if (await craftGoal({ st: s.st, t: 1, kind: w.craft, nm: w.nm }, true)) { T.crafts++; return true; } return await end('stopped: could not craft ' + w.nm); }
       if (!w.gather) return await end('stopped: ' + w.why);
       m = w.gather;
     } else {
