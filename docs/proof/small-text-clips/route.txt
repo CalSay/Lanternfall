@@ -18,6 +18,8 @@ tap-if "Got it"
 wait 1
 tap "Loom"
 wait 1
+tap "Tier 1"
+wait 1
 expect "Hemp Fibre"
 expect "Tier 1"
 shot loom-tiers

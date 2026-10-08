@@ -12421,6 +12421,10 @@ if (section('small text clips')) try {
         await X('NEWS.open=false;notify({msg:"Secret found: First Try. New title: Clutch.",kind:"good",icon:{ic:["orb","#B89CFF"]},prio:"normal"},"now");true');
         const sec = await X(`(${cut})([...document.querySelectorAll('#toasts .tx')].find(n => /^Secret found/.test(n.textContent)))`);
         assert(!sec.cut, `${at}: the "Secret found: First Try. New title: Clutch." toast shows in full (${JSON.stringify(sec)})`);
+        // the same toast docked on the stage (menu closed): the narrow portrait dock, 20-stage.css
+        await X('for (const t of $("toasts").children) t.remove();S.tab=null;placeToasts();notify({msg:"Secret found: First Try. New title: Clutch.",kind:"good",icon:{ic:["orb","#B89CFF"]},prio:"normal"},"now");true');
+        const dock = await X(`(${cut})([...document.querySelectorAll('#toasts .tx')].find(n => /^Secret found/.test(n.textContent)))`);
+        assert(!dock.cut, `${at}: on the stage dock the Secret found toast shows in full too (${JSON.stringify(dock)})`);
       } finally { await ctx.close(); }
     } } finally { await browser.close(); }
   }
