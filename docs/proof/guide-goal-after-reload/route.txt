@@ -1,14 +1,54 @@
 # Proof for card guide-goal-after-reload: Hesketh's fire stays on Next Up until it is lit, through a reload or a closed tip.
-# Fixture tests/proof-fixtures/save-cold-z2-unlit.json: a cold seed-11 game at 2:00 (the cold leg's snapshot), zone 2, level 5, fire unlit,
-# no Pine Log, Gather and Next Up open, no free points. `away 0.01` closes the game and opens it again on the stored save (a reload).
-#   closed-tip-*.png   (b) × on the Gather tip at boot, then a reload: the chip still says "Chop Pine Log for Hesketh's fire: 0/8".
+# Fixture tests/proof-fixtures/save-cold-z2-unlit.json: a cold seed-11 game at 2:00 (the cold leg's snapshot), zone 2 reached, level 5, fire
+# unlit, no Pine Log, Gather and Next Up open, no free points. It stands in zone 1 so a few Attacks end a fight: guide lines wait for that gap. `away 0.01` closes the game and opens it again on the stored save (a reload).
+#   boot-line-*.png    his "Bring me Pine Log" line, never read before this load, is said again in the first gap after boot.
+#   closed-tip-*.png   (b) × on the Gather tip (the next gap), then a reload: the chip still says "Chop Pine Log for Hesketh's fire: 0/8".
 #   reload-fight-*.png (a) a reload in the middle of a fight: the chip still names the fire.
 #   go-grove-*.png     (c) Next up, then Go on the fire row: the hero is chopping at the Pine Grove and the guide counts the logs.
 # The goal's rules (n/8, Ready unless chopping Pine, "Light Hesketh's fire: ready" at 8 logs, gone once lit, never on a warm save, under the
 # points pile) and his Pine Log line coming back once at boot are held by tools/check.mjs ("guide goal after reload").
 # seed: 11
 new cold-z2-unlit
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+expect "Bring me Pine Log for a proper fire"
+shot boot-line
+tap "Got it"
 wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+expect "Tap Gather and chop some Pine Log for the fire"
 tap "Dismiss this tip"
 wait 2
 away 0.01
