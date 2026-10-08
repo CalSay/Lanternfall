@@ -1,0 +1,16 @@
+# seed: 1
+# Proof for card story-card-landscape-fit: on a landscape phone Hesketh's fire talk shows all four lines at once (CSS only). The unlit-8log
+# fixture stands at the grove with the fire unlit and 8 Pine Log in the pack. Tapping the fire lights it; Hesketh says "Every road needs a
+# place to come back to." and then his four lines on the next card. Look at hearth-talk-end at 740x360: all four lines, the last one about
+# shutting the holes, with Continue and Skip beside them and the stage above. At 360x740 the card looks as before.
+new unlit-8log
+wait 2
+tap-if "Got it"
+tap "Light the fire"
+wait 3
+expect "Every road needs a place to come back to"
+shot hearth-talk
+tap "Continue"
+wait 2
+expect "shut the holes"
+shot hearth-talk-end

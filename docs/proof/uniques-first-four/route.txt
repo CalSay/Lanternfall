@@ -1,0 +1,26 @@
+# seed: 1
+# Proof for card uniques-first-four: the 11 uniques the Opus judge marked WIRE are in the game's data and fight code, behind
+# UNIQ_TUNE.on, which is off. Nothing a player sees changes: the trophy wall on the late save still counts 3 / 14 (the same as
+# before this change) and names none of the new uniques. Their rules, costs, the retool path, the save codes and the switch-off
+# parity are held by tools/check.mjs (uniques first pool); the kept-up budget rows are in budget-rows.md next to this file.
+new late
+wait 6
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap-if "Continue"
+wait 3
+tap "Craft"
+wait 2
+tap-if "Continue"
+wait 2
+tap "Uniques"
+wait 1
+expect "3 / 14 uniques"
+expect-no "The Divided Vow"
+expect-no "Gate of the Deep"
+expect-no "Burrower's Promise"
+shot trophies-unchanged

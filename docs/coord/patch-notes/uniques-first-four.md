@@ -1,0 +1,1 @@
+No change you can see yet. Eleven new uniques with their own rules (The Divided Vow, Gate of the Deep, Vesper's Reach and eight more) are built but switched off; bosses start dropping them in a later update, once their icons are done. Best shot: trophies-unchanged.

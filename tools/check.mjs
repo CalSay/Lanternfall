@@ -3033,6 +3033,71 @@ if (section('story UI (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('story UI (browser) crashed: ' + (e.stack || e)); }
+// ---- story cards fit at 740x360 (card story-card-landscape-fit): every Chapter 1 story card that plays as a bottom sheet (the hearth scenes, each Champion and
+// Elder post scene with the meetings that ride in it) shows its name and every line without scrolling, the sheet stays at most 60% of the
+// screen high, and Continue (or Next) and Skip are on screen. Scenes are built the way 55-story.js builds them (npcScene, champScene,
+// elderScene: those are private, so the test rebuilds them from STORY_BEATS), once per starter so each hero's own lines are measured. ----
+if (section('story cards fit at 740x360 (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('story cards fit landscape (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const save = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-unlit-8log.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true, story: true });
+      await ctx.addInitScript(s => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } catch (e) {} }, save);
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(900);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // run() waits while another overlay is up: clear any away card or sheet first
+      await page.evaluate(() => document.querySelectorAll('.away-ov, .bsheet-ov').forEach(n => n.remove()));
+      const scenes = await X(`(() => {
+        const B = STORY_BEATS, out = [];
+        const text = (l, h) => typeof l === 'string' ? l : l && l.hero ? ((B.hero[l.hero] || {})[h] || (B.hero[l.hero] || {})._ || '') : '';
+        const cardsOf = (items, tap, who, h) => { const o = [], ls = [], fl = () => { if (ls.length) o.push({ lines: ls.splice(0), who: who || '' }); };
+          for (const it of items || []) { if (it && it.choice) { fl(); if (B.choice[it.choice]) o.push({ choice: it.choice, lines: [] }); continue; } const t = text(it, h); if (!t) continue; ls.push(t); if (tap) fl(); } fl(); return o; };
+        const npcCards = (id, h) => { const n = B.npc[id]; return n && !(n.not && n.not === h) ? cardsOf(n.lines, false, n.who || '', h) : []; };
+        const npcAt = at => Object.keys(B.npc).filter(id => B.npc[id].at === at);
+        const regionAt = z => { const r = typeof regionOf === 'function' ? regionOf(z) : null; return r ? r.id : 'hollow'; };
+        for (const h of ['wren', 'tobin', 'pip']) {   // the starters (55-story.js STARTERS, private)
+          for (const id of npcAt('hearth')) out.push({ id: 'n:' + id, ch: 'N', kind: 'card', title: B.npc[id].who || '', cards: npcCards(id, h), h });
+          for (const id in B.champ) { const c = B.champ[id], cards = cardsOf(c.post, false, '', h); for (const n of npcAt('champPost:' + id)) cards.push(...npcCards(n, h));
+            out.push({ id: 'p:' + id + ':post', ch: 'P', kind: 'card', title: c.name || (c.page && c.page.title) || '', cards, zone: c.zone, region: regionAt(c.zone), h }); }
+          for (const id in B.elder) { const e = B.elder[id], cards = cardsOf(e.post, true, '', h); for (const n of npcAt('elderPost:' + id)) cards.push(...npcCards(n, h));
+            cards.push(...cardsOf(e.after, true, '', h)); const hl = e.hero ? text({ hero: e.hero }, h) : ''; if (hl) cards.push({ lines: [hl], who: '' });
+            out.push({ id: 'e:' + id + ':post', ch: 'E', kind: 'card', title: e.name || (e.page && e.page.title) || '', cards, zone: e.zone, region: regionAt(e.zone), h }); }
+        }
+        return out.filter(s => s.cards.length).map(s => Object.assign({ head: '', lines: [], hold: 0, page: '' }, s));
+      })()`);
+      let cards = 0; const bad = [];
+      for (const sc of scenes) {
+        await page.waitForFunction(() => !document.querySelector('.bsheet-ov'), null, { timeout: 4000 });
+        await X(`emit('storyScene', ${JSON.stringify(sc)})`);
+        await page.waitForSelector('.sty-sheet.sty-scene .sty-card', { timeout: 4000 });
+        for (let k = 0; k < sc.cards.length; k++) {
+          await page.waitForTimeout(k ? 60 : 300);   // the sheet slides up first
+          const m = await page.evaluate(() => { const q = s => document.querySelector(s), c = q('.sty-sheet .sty-card'), sh = q('.sty-sheet'), r = n => n && n.getBoundingClientRect();
+            const inView = b => !!b && b.top >= 0 && b.left >= 0 && b.bottom <= innerHeight + 0.5 && b.right <= innerWidth + 0.5;
+            const xb = r(q('.sty-sheet .bsheet-x')), hit = (a, b) => !!a && !!b && a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+            // the close button must not sit over a button or the text (it paints on top and would take the tap)
+            const under = [...document.querySelectorAll('.sty-sheet .sty-done, .sty-sheet .sty-skip, .sty-sheet .sty-opt, .sty-sheet .sty-card')].filter(n => hit(xb, r(n))).map(n => n.className);
+            const choice = !!q('.sty-sheet .sty-opt');
+            return { over: c.scrollHeight - c.clientHeight, sh: Math.round(r(sh).height), vh: innerHeight, choice, done: choice ? [...document.querySelectorAll('.sty-sheet .sty-opt')].every(n => inView(r(n))) : inView(r(q('.sty-sheet .sty-done'))), skip: inView(r(q('.sty-sheet .sty-skip'))), x: inView(xb), under }; });
+          cards++;
+          if (m.over > 1 || m.sh > m.vh * 0.6 + 0.5 || !m.done || !m.skip || !m.x || m.under.length) bad.push(`${sc.h} ${sc.id} card ${k + 1}/${sc.cards.length}: ${JSON.stringify(m)}`);
+          await page.click(m.choice ? '.sty-sheet .sty-opt' : '.sty-sheet .sty-done');
+        }
+      }
+      assert(scenes.length >= 3 * 10 && !bad.length, `story cards fit landscape: every Chapter 1 hearth, Champion and Elder card at 740x360 shows all its lines with no scroll, in a sheet at most 60% high, with Continue (or the choices), Skip and close on screen and the close button clear of them (${cards} cards in ${scenes.length} scenes; ${bad.length} bad${bad.length ? ': ' + bad.slice(0, 4).join(' | ') : ''})`);
+      assert(!errs.length, 'story cards fit landscape: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('story cards fit landscape (browser) crashed: ' + (e.stack || e)); }
 // ---- looks: achievement accessories on the hero (12g, 13b, 64-looks; achievements.md 4.3, AC4) ----
 if (section('looks')) try {
   const g = loadCore({ seed: 7 }), E = s => g.eval(s);
@@ -4611,7 +4676,7 @@ if (section('solo hero')) try {
       'a new save counts 13 uniques and shows no Sproutblade tile it can never earn');
     assert(f.eval('codexPage("uniques").tiles[0].key') === 'briarsprig', 'with the Sproutblade hidden, Briar Sprig takes its place first in the Codex, so the seen string read by position does not shift');
     const late = loadCore({ solo: true, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8') }) }), L = s => late.eval(s);
-    assert(L('S.found.sproutblade') === 3 && L('S.items.some(it => it.u === "sproutblade" && it.slot === "weapon")') && L('statsApi.uniqueTotal()') === 14 && L('codexPage("uniques").tiles.find(t => t.key === "sproutblade").got') === 1 && L('codexPage("uniques").tiles.map(t => t.key).join()') === L('Object.keys(UNIQ).join()'),
+    assert(L('S.found.sproutblade') === 3 && L('S.items.some(it => it.u === "sproutblade" && it.slot === "weapon")') && L('statsApi.uniqueTotal()') === 14 && L('codexPage("uniques").tiles.find(t => t.key === "sproutblade").got') === 1 && L('codexPage("uniques").tiles.map(t => t.key).join()') === L('Object.keys(UNIQ).filter(k => UNIQ[k].legacy !== false).join()'),
       'an old save keeps its Sproutblade; the trophy total and the Codex still count it');
     for (const [u, slot] of [['sproutblade', 'weapon'], ['briarsprig', 'charm']]) {
       const r = L(`(() => { const o = JSON.parse(JSON.stringify(S)); o.items.push({ id: o.nextId, slot: "${slot}", t: 1, r: "legendary", plus: 0, u: "${u}" }); o.nextId++; o.found.${u} = 1; return decodeSave(encodeSave(o)); })()`);
@@ -11348,6 +11413,191 @@ if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 } catch (e) { fail('first-hour walk crashed: ' + (e.stack || e)); }
+// uniques-first-four: the 11 uniques the Opus judge marked WIRE (codex-uniques-review/pool-judge.md), built behind UNIQ_TUNE.on.
+// Off they change nothing a player sees; on, each rule pays its cost, rally gates hold and the Stars are untouched.
+if (section('uniques first pool (uniques-first-four)')) try {
+  const g = loadCore({ seed: 19, turns: true }), E = s => g.eval(s), J = JSON.stringify;
+  const NEW = ['twinned-vow', 'twice-sworn', 'quarry-shield', 'bat-quiver', 'quarry-plate', 'moss-sword', 'bat-bow', 'carapace-pick', 'wisp-axe', 'spore-sickle', 'moss-spear'];
+  const COMBAT = { weapon: 1, off: 1, helm: 1, body: 1 };
+  // data: each is a real kind at its position, hp only on combat positions, none in the old drop tables, none in the drop pool (no art yet)
+  const rows = JSON.parse(E(`JSON.stringify(${J(NEW)}.map(k => { const u = UNIQ[k]; return u ? { k, legacy: u.legacy, kind: !!CRAFT_KINDS[u.slot], pos: kindPos(u.slot), want: u.pos,
+    cls: u.cls, kcls: CRAFT_KINDS[u.slot] && CRAFT_KINDS[u.slot].cls || null, hp: !!u.hp, pow: u.pow, art: u.art, rule: u.rule && u.rule.id, txt: typeof u.txt === 'string' && u.txt.length > 20,
+    old: ZONE_UNIQ.includes(k) || RAID_UNIQ.includes(k) } : { k, missing: 1 }; }))`));
+  for (const r of rows) {
+    assert(!r.missing && r.legacy === false && r.kind && r.pos === r.want && (r.cls === 'any' || r.cls === r.kcls) && r.pow === 1.8 && r.art === 0 && r.rule && r.txt && !r.old,
+      `uniques: ${r.k} is a ${r.want} kind of its class, Rare level (1.8), no art yet, a rule and a line of text, outside the old drop tables (${J(r)})`);
+    assert(r.hp === !!COMBAT[r.want], `uniques: ${r.k} has the fixed health line only on weapon, off-hand, head or body (${r.want}: ${r.hp})`);
+  }
+  assert(/^Built for parrying:/.test(E('UNIQ["quarry-plate"].txt')) && /needs something that makes Bleed/i.test(E('UNIQ["bat-bow"].txt')), "uniques: Mountain's text starts \"Built for parrying:\" and the Crimson Thread's says it needs a Bleed source");
+  const poolOff = JSON.parse(E('JSON.stringify(Array.from({ length: 60 }, (_, i) => uniqPool(i + 1)).flat())'));
+  assert(!poolOff.length, `uniques: no unique without an art-judged icon is in the drop pool at any zone (${poolOff.slice(0, 3).join()})`);
+  const poolArt = JSON.parse(E(`(() => { const keep = {}; for (const k of ${J(NEW)}) { keep[k] = UNIQ[k].art; UNIQ[k].art = 1; }
+    const r = { z1: uniqPool(1), z8: uniqPool(8), z15: uniqPool(15) }; for (const k in keep) UNIQ[k].art = keep[k]; return JSON.stringify(r); })()`));
+  assert(poolArt.z1.includes('twinned-vow') && poolArt.z1.includes('moss-sword') && !poolArt.z1.includes('twice-sworn') && !poolArt.z1.includes('bat-bow'),
+    `uniques: with art passed, a zone 1 boss's pool is its foe type's grade-1 uniques (${poolArt.z1.join()})`);
+  assert(poolArt.z15.every(k => E(`UNIQ[${J(k)}].from[1]`) <= 15) && !poolArt.z8.includes('twice-sworn'), 'uniques: a unique never pools before its first zone');
+
+  // the switch: off by default; the trophy wall, Codex and totals do not list a new unique the player has not found
+  assert(E('UNIQ_TUNE.on') === 0, 'uniques: UNIQ_TUNE.on is 0 (off) by default');
+  const keysOff = JSON.parse(E('JSON.stringify(uniqKeys())')), keysOn = JSON.parse(E('UNIQ_TUNE.on = 1; const r = JSON.stringify(uniqKeys()); UNIQ_TUNE.on = 0; r'));
+  assert(NEW.every(k => !keysOff.includes(k)) && NEW.every(k => keysOn.includes(k)), 'uniques: uniqKeys leaves the new uniques out while the switch is off, and lists them once it is on');
+  const tiles = JSON.parse(E('JSON.stringify(codexPage("uniques").tiles.map(t => t.key))'));
+  assert(NEW.every(k => !tiles.includes(k)), 'uniques: no Codex tile for a new unique while the switch is off');
+
+  // wearing one: a helper that puts unique `k` on the hero in its position (the kind for the hero's class) and fights a zone `z` foe
+  const wear = (hero, k, z = 10, boss = false) => E(`(() => { soloPick(${J(hero)}, { now: true }); const u = UNIQ[${J(k)}], cls = heroWho();
+    const it = newItem(uniqKindFor(${J(k)}, cls), 3, 'rare'); it.u = ${J(k)}; it.a = []; it.plus = 0; S.items.push(it); S.equip[u.pos] = it.id;
+    S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); S.activity = 'fight'; arena = null; fightBoss = ${boss}; gearDirty(); spawn(); return it.id; })()`);
+  const id = wear('tobin', 'twinned-vow');
+  const off = JSON.parse(E('(() => { const p = turnCombatProfile(), m = turnNew(p, { random: () => 0.5, emit() {}, alive: () => ({ hero: true, foe: true }), foeHp: () => 1e9, heroHp: () => 1e9, slotId: () => null, damageFoe: x => x, damageHero: x => x, healHero() {}, healFoe() {}, defense() {} }); return JSON.stringify({ uq: p.uq, uf: m.uf }); })()'));
+  assert(Array.isArray(off.uq) && !off.uq.length && off.uf === null, `uniques: switch off, a worn new unique gives the fight no rule (p.uq ${J(off.uq)}, m.uf ${J(off.uf)})`);
+  const onUq = JSON.parse(E('UNIQ_TUNE.on = 1; gearDirty(); const r = JSON.stringify(turnCombatProfile().uq); UNIQ_TUNE.on = 0; gearDirty(); r'));
+  assert(onUq.length === 1 && onUq[0].id === 'twin' && onUq[0].hit === 0.6, `uniques: switch on, the worn Divided Vow's rule reaches the fight (${J(onUq)})`);
+
+  // power and lines: Rare level (1.8x) from its own pow; the health line is the HP affix at half quality; tools have none
+  const pw = JSON.parse(E(`(() => { const it = itemById(${id}), r = newItem(it.slot, it.t, 'rare'); r.a = []; r.plus = 0;
+    const p = itemPower(it), hp = itemLines(it).filter(l => l[0] === 'hp'), want = craftAffixValue('hp', p, 0.5);
+    const tool = newItem('pick', 3, 'rare'); tool.u = 'carapace-pick'; tool.a = []; tool.plus = 0;
+    return JSON.stringify({ x: p / itemPower(r), hp, want, toolHp: itemLines(tool).filter(l => l[0] === 'hp').length }); })()`));
+  assert(Math.abs(pw.x - 1) < 1e-9, `uniques: a unique's power is a Rare's of its tier (x${pw.x})`);
+  assert(J(pw.hp) === J(pw.want) && pw.hp.length === 1, `uniques: the fixed health line is the HP affix at half quality (${J(pw.hp)} vs ${J(pw.want)})`);
+  assert(pw.toolHp === 0, 'uniques: a tool unique has no health line');
+
+  // fits and the retool path: an every-class unique becomes the wearer's class kind and keeps id, u, t, r and +N (and its rule);
+  // a class unique stays the kind it was made as and does not fit another class
+  const rt = JSON.parse(E(`(() => { const it = itemById(${id}); it.t = 4; it.plus = 3; const before = { id: it.id, u: it.u, t: it.t, r: it.r, plus: it.plus, slot: it.slot };
+    const cls = newItem('warblade', 2, 'rare'); cls.u = 'moss-sword'; cls.a = []; S.items.push(cls);
+    soloPick('wren', { now: true }); const after = { id: it.id, u: it.u, t: it.t, r: it.r, plus: it.plus, slot: it.slot };
+    S.equip.weapon = it.id; UNIQ_TUNE.on = 1; gearDirty(); const rules = uniqRulesWorn(); UNIQ_TUNE.on = 0; gearDirty();
+    return JSON.stringify({ before, after, rules, cls: cls.slot, fitsW: fits(cls, 'weapon'), fitsT: fits(cls, 'weapon', 'warden') }); })()`));
+  assert(rt.before.slot === 'warblade' && rt.after.slot === E('uniqKindFor("twinned-vow", "ranger")') && rt.after.slot !== "warblade" && ['id', 'u', 't', 'r', 'plus'].every(f => rt.before[f] === rt.after[f]),
+    `uniques: on Wren the Divided Vow retools to her weapon kind, keeping id, u, t, r and +N (${J(rt.before)} -> ${J(rt.after)})`);
+  assert(rt.rules.length === 1 && rt.rules[0].id === 'twin', `uniques: the retooled Divided Vow keeps its rule (${J(rt.rules)})`);
+  assert(rt.cls === 'warblade' && !rt.fitsW, `uniques: Oath of the Hollow (warden) is not retooled and does not fit Wren (${rt.cls}, fits ${rt.fitsW})`);
+
+  // save: a save holding the new ids round-trips through a save code and through storage, switch off; a unique on the wrong kind is rejected
+  const sv = JSON.parse(E(`(() => { for (const k of ${J(NEW)}) { const it = newItem(uniqKindFor(k, heroWho()), UNIQ[k].g[0], 'rare'); it.u = k; it.a = []; S.items.push(it); }
+    if (S.cls && typeof S.cls.at !== 'number') S.cls.at = 0;   // soloPick(k, { now: true }) in a scratch game stamps true here; a real pick stamps a time
+    const before = JSON.parse(JSON.stringify(S)), code = encodeSave(S), res = decodeSave(code);
+    const bad = JSON.parse(JSON.stringify(S)); const b = bad.items.find(i => i.u === 'bat-bow'); b.slot = 'warblade';
+    const wrong = validateSave(bad);
+    return JSON.stringify({ ok: res.ok, err: res.error || '', d: res.ok ? deepDiffIn(before, res.data) : 'x', wrong: wrong && wrong.ok === false ? wrong.error : JSON.stringify(wrong) });
+    function deepDiffIn(a, b, p = '') { if (typeof a !== typeof b) return p; if (a && typeof a === 'object') { for (const k of new Set([...Object.keys(a), ...Object.keys(b || {})])) { const d = deepDiffIn(a[k], (b || {})[k], p + '.' + k); if (d) return d; } return ''; } return a === b ? '' : p; } })()`));
+  assert(sv.ok && !sv.d, `uniques: a save holding all 11 new uniques round-trips its save code (${sv.err || sv.d})`);
+  assert(/wrong kind/.test(sv.wrong), `uniques: a save with the Crimson Thread made as a sword is rejected (${sv.wrong})`);
+  E('save()');
+  const g2 = loadCore({ seed: 19, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }), turns: true });
+  const kept = JSON.parse(g2.eval(`JSON.stringify([...new Set(S.items.filter(i => ${J(NEW)}.includes(i.u)).map(i => i.u))].sort())`));
+  assert(J(kept) === J([...NEW].sort()), `uniques: the new uniques survive save and load with the switch off (${kept.length} of ${NEW.length})`);
+  assert(!g2.errors.length, 'uniques: loading that save has no errors' + (g2.errors.length ? ': ' + g2.errors[0] : ''));
+
+  // each rule and its cost, in a scratch turn fight (no crits, foe armour 0; numbers from the hero's profile)
+  E(`globalThis.__uqk = (hero, rules, o = {}) => {
+    if (soloHero() !== hero) soloPick(hero, { now: true });
+    S.activity = 'fight'; arena = null; fightBoss = false; spawn();
+    const p0 = turnCombatProfile(), eq = o.eq || p0.eq;
+    const p = Object.assign({}, p0, { stars: [], starSet: [], eq, cds: { attack: 1 }, foeMaxHp: 1e6, foeHp: 1e6, heroMaxHp: 1000, refHp: 1000, gates: o.gates || null,
+      critChance: 0, foeArm: 0, trait: '', tal: {}, echo: 0, nonCrit: 1, critMult: 2.5, uq: rules, zb: !!o.zb, zone: o.zone || p0.zone, A: o.A || p0.A });
+    for (const id of eq) if (id) p.cds[id] = turnCdFor(id);
+    const t = { fhp: 1e6, hp: 1e9, dmg: [], ev: [] };
+    const io = { random: () => 0.99, emit: (n, x) => t.ev.push([n, x]), alive: () => ({ hero: t.hp > 0, foe: t.fhp > 0 }), foeHp: () => t.fhp, heroHp: () => t.hp,
+      slotId: i => p.eq[i] || null, damageFoe: (d, kind) => { t.fhp -= d; t.dmg.push({ d, kind }); return d; }, damageHero: d => { t.hp -= d; return d; },
+      healHero: d => { t.hp += d; }, healFoe: () => {}, defense: () => {} };
+    const m = turnNew(p, io); m.phase = 'hero';
+    return { m, io, t, p };
+  };
+  globalThis.__uqMove = (m, io, defs) => { m.move = { id: 't', name: 't', hits: defs.map(() => ({ x: 0.01 })) }; m.hitI = 0; m.parried = 0; m.landed = 0;
+    for (const d of defs) { m.defense = d; turnContact(m, io); } }; 1`);
+  const R = s => JSON.parse(E(`(() => { ${s} })()`));
+  const U = k => J(E(`UNIQ[${J(k)}].rule`) || null);
+  // twin: Attack strikes twice at 60%; Twice-Sworn at 85% (75% at a zone boss in zones 16-34) and its second hit has no Grit bonus
+  const tw = R(`const go = (rule, o) => { const a = __uqk('tobin', rule ? [rule] : [], o); a.m.h.grit = 3; turnHeroAct(a.m, a.io, 'attack'); return a.t.dmg.map(x => x.d); };
+    const gx = 1 + TURN_TUNE.gritDmg * 3;
+    return JSON.stringify({ base: go(null), vow: go(${U('twinned-vow')}), oath: go(${U('twice-sworn')}), band: go(${U('twice-sworn')}, { zb: true, zone: 20 }), out: go(${U('twice-sworn')}, { zb: true, zone: 36 }), gx });`);
+  const near = (a, b) => Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b));
+  assert(tw.base.length === 1 && tw.vow.length === 2 && tw.vow.every(d => near(d, 0.6 * tw.base[0])), `uniques: the Divided Vow's Attack is two hits of 60% (${J(tw)})`);
+  assert(tw.oath.length === 2 && near(tw.oath[0], 0.85 * tw.base[0]) && near(tw.oath[1], 0.85 * tw.base[0] / tw.gx), `uniques: Twice-Sworn hits 85% twice, the second without Grit's bonus (${J(tw.oath)})`);
+  assert(near(tw.band[0], 0.75 * tw.base[0]) && near(tw.out[0], 0.85 * tw.base[0]), `uniques: Twice-Sworn is 75% against a zone boss in zones 16-34 and 85% outside them (${J([tw.band, tw.out])})`);
+  const ts = R(`const go = rule => { const a = __uqk('wren', rule ? [rule] : [], { eq: ['twinshot', null, null] }); turnHeroAct(a.m, a.io, 'attack'); return a.t.dmg.map(x => x.d); };
+    return JSON.stringify({ base: go(null), vow: go(${U('twinned-vow')}) });`);
+  assert(ts.base.length === 2 && ts.vow.length === 3 && ts.vow.every(d => near(d, 0.6 * ts.base[0])), `uniques: with Twin Shot the Divided Vow looses three arrows of 60% each (${J(ts)})`);
+  // rally gates: a huge Attack, twice, never takes the boss past its gate before a move ends
+  const gate = R(`const a = __uqk('tobin', [${U('twinned-vow')}], { gates: [0.6], A: 1e9 }); turnHeroAct(a.m, a.io, 'attack'); a.m.cds.attack = 0; turnHeroAct(a.m, a.io, 'attack');
+    return JSON.stringify({ hp: a.t.fhp, gi: a.m.gi });`);
+  assert(gate.hp >= 0.6e6 - 1e-6 && gate.gi === 0, `uniques: a twin Attack cannot pass a rally gate (${J(gate)})`);
+  // oath: Attack x0.9; a parried move makes the next ability x1.3, once
+  const oa = R(`const go = rule => { const a = __uqk('tobin', rule ? [rule] : [], { eq: ['bash', null, null] }); turnHeroAct(a.m, a.io, 'attack'); const atk = a.t.dmg[0].d;
+      __uqMove(a.m, a.io, ['parry']); const pend = a.m.h.oath || 0; let n = a.t.dmg.length; a.m.cds.bash = 0; turnHeroAct(a.m, a.io, 'bash'); const b1 = a.t.dmg.slice(n).reduce((s, x) => s + x.d, 0);
+      n = a.t.dmg.length; a.m.cds.bash = 0; turnHeroAct(a.m, a.io, 'bash'); const b2 = a.t.dmg.slice(n).reduce((s, x) => s + x.d, 0); return { atk, b1, b2, pend }; };
+    return JSON.stringify({ base: go(null), on: go(${U('moss-sword')}) });`);
+  assert(near(oa.on.atk, 0.9 * oa.base.atk) && oa.on.pend === 1 && near(oa.on.b1, 1.3 * oa.base.b1) && near(oa.on.b2, oa.base.b2), `uniques: Oath of the Hollow: Attack 90%, the ability after a parry 130%, the next one back to normal (${J(oa)})`);
+  // mountain: +4% to abilities per Grit, up to 40%; a landed hit costs 1 Grit
+  const mt = R(`const go = (rule, grit) => { const a = __uqk('tobin', rule ? [rule] : [], { eq: ['bash', null, null] }); a.m.h.grit = grit; a.m.cds.bash = 0; turnHeroAct(a.m, a.io, 'bash');
+      const d = a.t.dmg.reduce((s, x) => s + x.d, 0); const b = __uqk('tobin', rule ? [rule] : []); b.m.h.grit = 5; __uqMove(b.m, b.io, ['hit']); return { d, left: b.m.h.grit }; };
+    return JSON.stringify({ b3: go(null, 3), m3: go(${U('quarry-plate')}, 3), b10: go(null, 10), m10: go(${U('quarry-plate')}, 10), max: TURN_TUNE.gritMax || 0 });`);
+  assert(near(mt.m3.d, 1.12 * mt.b3.d) && near(mt.m10.d, 1.4 * mt.b10.d), `uniques: Mountain's Covenant adds 4% a Grit to abilities, capped at 40% (${J(mt)})`);
+  assert(mt.m3.left === mt.b3.left - 1, `uniques: under Mountain's Covenant a hit that lands costs 1 Grit (${mt.b3.left} -> ${mt.m3.left})`);
+  // review: Oath and Mountain together stay within +50% on a zone boss in zones 16-34; a stored Bleed is not boosted; the Crimson Thread's extra stacks do not feed Final Echo
+  const st = R(`const go = (rules, o) => { const a = __uqk('tobin', rules, Object.assign({ eq: ['bash', 'cleave', null] }, o)); a.m.h.grit = 10; a.m.h.oath = 1; a.m.cds.bash = 0; turnHeroAct(a.m, a.io, 'bash'); return a.t.dmg.reduce((s, x) => s + x.d, 0); };
+    const both = [${U('moss-sword')}, ${U('quarry-plate')}];
+    const bl = rules => { const a = __uqk('tobin', rules, { eq: ['cleave', null, null] }); a.m.h.grit = 10; a.m.h.oath = 1; a.m.cds.cleave = 0; turnHeroAct(a.m, a.io, 'cleave'); return a.m.e.bleedDmg; };
+    const fe = rules => { const a = __uqk('wren', rules, { eq: ['finalecho', null, null] }); a.m.e.bleed = 10; a.m.e.bleedDmg = 1; a.m.e.bleedT = 3; a.m.h.aim = 0; a.m.heroOps = 3; a.m.cds.finalecho = 0; turnHeroAct(a.m, a.io, 'finalecho'); return [a.t.dmg.reduce((s, x) => s + x.d, 0), a.m.e.bleed]; };
+    const fe5 = () => { const a = __uqk('wren', [], { eq: ['finalecho', null, null] }); a.m.e.bleed = 5; a.m.e.bleedDmg = 1; a.m.e.bleedT = 3; a.m.h.aim = 0; a.m.heroOps = 3; a.m.cds.finalecho = 0; turnHeroAct(a.m, a.io, 'finalecho'); return a.t.dmg.reduce((s, x) => s + x.d, 0); };
+    return JSON.stringify({ base: go([], { zb: true, zone: 20 }), band: go(both, { zb: true, zone: 20 }), out: go(both, { zb: false, zone: 20 }), outBase: go([], { zb: false, zone: 20 }),
+      bl0: bl([]), bl1: bl(both), fe: fe([${U('bat-bow')}]), fe5: fe5() });`);
+  assert(near(st.band, 1.5 * st.base) && near(st.out, 1.3 * 1.4 * st.outBase), `uniques: Oath and Mountain together give at most +50% on a zone boss in zones 16-34, and stack in full elsewhere (${J(st)})`);
+  assert(st.bl0 > 0 && near(st.bl1, st.bl0), `uniques: a Bleed an Oath- or Mountain-boosted ability stores is not boosted (${st.bl0} vs ${st.bl1})`);
+  assert(near(st.fe[0], st.fe5) && st.fe[1] === 0, `uniques: with the Crimson Thread, Final Echo spends all 10 stacks but counts only 5 (${J(st.fe)} vs ${st.fe5})`);
+  // gate: every hit of a move but one parried still counters, at 80%; Riposte still opens on any parry
+  const gt = R(`const go = (rule, defs) => { const a = __uqk('tobin', rule ? [rule] : []); __uqMove(a.m, a.io, defs); const c = a.t.dmg.filter(x => x.kind === 'counter'); return { n: c.length, d: c.length ? c[0].d : 0, ripo: a.m.h.ripo || 0 }; };
+    const r = ${U('quarry-shield')};
+    return JSON.stringify({ all: go(null, ['parry', 'parry', 'parry']), allG: go(r, ['parry', 'parry', 'parry']), two: go(null, ['parry', 'parry', 'hit']), twoG: go(r, ['parry', 'parry', 'hit']), oneG: go(r, ['parry', 'hit', 'hit']), noneG: go(r, ['hit']), singleG: go(r, ['parry']) });`);
+  assert(gt.all.n === 1 && gt.allG.n === 1 && near(gt.allG.d, 0.8 * gt.all.d), `uniques: Gate of the Deep's counters deal 80% (${J([gt.all, gt.allG])})`);
+  assert(gt.two.n === 0 && gt.twoG.n === 1 && gt.oneG.n === 0 && gt.noneG.n === 0 && gt.singleG.n === 1, `uniques: Gate of the Deep counters with all hits but one parried, not with two missed or none parried (${J(gt)})`);
+  assert(gt.twoG.ripo === 1 && gt.two.ripo === 1, 'uniques: Riposte still opens after any parry with Gate of the Deep worn');
+  const lb = R(`const go = rule => { const a = __uqk('tobin', rule ? [rule] : [], { eq: ['bulwark', null, null] }); a.m.h.last = 1; const g0 = a.m.h.grit; __uqMove(a.m, a.io, ['parry', 'parry']);
+      const c = a.t.dmg.filter(x => x.kind === 'counter'); return { d: c.length ? c[0].d : 0, grit: a.m.h.grit - g0 }; };
+    const plain = __uqk('tobin', []); __uqMove(plain.m, plain.io, ['parry', 'parry']); const c0 = plain.t.dmg.filter(x => x.kind === 'counter')[0].d;
+    return JSON.stringify({ base: go(null), gate: go(${U('quarry-shield')}), c0 });`);
+  assert(near(lb.base.d, 2.5 * lb.c0) && near(lb.gate.d, 0.8 * lb.base.d) && lb.gate.grit === lb.base.grit, `uniques: Last Stand (x2) and Bulwark (x1.25, its Grit) still apply to Gate of the Deep's counter, which then deals 80% (${J(lb)})`);
+  const fx = JSON.parse(E(`JSON.stringify(${J(NEW)}.filter(k => Object.keys(UNIQ[k].fx).length))`));
+  assert(!fx.length, `uniques: no new unique carries a stat effect (tap, crit or the like) outside its rule, so tapMult and the Stars read the same (${fx.join()})`);
+  // vesper: a dodged hit takes a turn off every cooldown; a parry no longer does
+  const vs = R(`const go = (rule, def) => { const a = __uqk('wren', rule ? [rule] : [], { eq: ['echo', 'powershot', null] }); a.m.cds.echo = 3; a.m.cds.powershot = 3; __uqMove(a.m, a.io, [def]); return [a.m.cds.echo, a.m.cds.powershot]; };
+    const r = ${U('bat-quiver')}; return JSON.stringify({ dodge: go(null, 'dodge'), dodgeV: go(r, 'dodge'), parry: go(null, 'parry'), parryV: go(r, 'parry') });`);
+  assert(J(vs.dodgeV) === J([2, 2]) && J(vs.dodge) === J([3, 3]) && J(vs.parry) === J([2, 2]) && J(vs.parryV) === J([3, 3]), `uniques: Vesper's Reach moves the cooldown refund from parries to dodges (${J(vs)})`);
+  // crimson: Bleed stacks twice as fast, up to 10; each tick deals 10% less
+  const cr = R(`const go = rule => { const a = __uqk('wren', rule ? [rule] : []); turnBleedAdd(a.m, 1); const one = a.m.e.bleed; for (let i = 0; i < 9; i++) turnBleedAdd(a.m, 1); const cap = a.m.e.bleed;
+      a.m.e.bleed = 4; a.m.e.bleedDmg = 100; a.m.e.bleedT = 3; a.t.dmg = []; turnBegin(a.m, 'foe', a.io); const tick = a.t.dmg.filter(x => x.kind === 'bleed').reduce((s, x) => s + x.d, 0); return { one, cap, tick }; };
+    return JSON.stringify({ base: go(null), on: go(${U('bat-bow')}) });`);
+  assert(cr.on.one === 2 * cr.base.one && cr.on.cap === 10 && cr.base.cap === E('TURN_TUNE.bleedMax') && cr.base.tick > 0 && near(cr.on.tick, 0.9 * cr.base.tick), `uniques: the Crimson Thread doubles Bleed stacks, holds up to 10, and ticks for 90% (${J(cr)})`);
+  // the boss-tier rules: no rule passes a gate (above), a twin Attack is still one action, and the boss gains stay inside +50%
+  const caps = R(`const rs = ${J(NEW)}.map(k => UNIQ[k].rule).filter(r => r.id !== 'tool');
+    return JSON.stringify({ twin: rs.filter(r => r.id === 'twin').map(r => Math.min(r.hit, r.boss || r.hit) * 2), mount: rs.filter(r => r.id === 'mountain').map(r => Math.min(r.max, r.boss)), oath: rs.filter(r => r.id === 'oath').map(r => r.abX), cut: rs.filter(r => r.id === 'crimson').map(r => r.tickX) });`);
+  assert(caps.twin.every(x => x <= 1.5) && caps.mount.every(x => x <= 0.5) && caps.oath.every(x => x <= 1.5) && caps.cut.every(x => x >= 0.9), `uniques: boss-damage gains stay within +50% and cuts within 10% (${J(caps)})`);
+  const acts = R(`const a = __uqk('tobin', [${U('twinned-vow')}]); const n0 = a.m.n; turnHeroAct(a.m, a.io, 'attack'); return JSON.stringify({ ev: a.t.ev.filter(e => e[0] === 'soloAttack').length });`);
+  assert(acts.ev === 1, `uniques: a twin Attack is one hero action (${acts.ev} Attack events)`);
+  // parity: with the switch on and nothing new worn, a fight sample is the same as with it off
+  const par = R(`soloPick('tobin', { now: true }); S.equip.weapon = null; S.equip.off = null; S.equip.body = null; S.activity = 'fight'; arena = null; fightBoss = false; gearDirty(); spawn();
+    const run = on => { UNIQ_TUNE.on = on; gearDirty(); const p = turnCombatProfile(); return JSON.stringify([p, turnCombatSample({ profile: p, seconds: 120, seed: 7, skill: { parry: 0.5, dodge: 0.7 } })]); };
+    const a = run(1), b = run(0); return JSON.stringify({ same: a === b, a: a.length, b: b.length });`);
+  assert(par.same, `uniques: with the switch on and no new unique worn, the fight profile and a fight sample match the switch off exactly (${J(par)})`);
+
+  // tools: Rising grade (the spear stops at 3), partner yield, gathering 10% slower, the rare find line still under its cap
+  const tl = R(`const out = {}; soloPick('wren', { now: true }); UNIQ_TUNE.on = 1;
+    for (const [k, skill] of [['carapace-pick', 'mine'], ['moss-spear', 'hunt']]) { const u = UNIQ[k]; const it = newItem(u.slot, 1, 'rare'); it.u = k; it.a = []; it.plus = 0; S.items.push(it); S.equip[u.pos] = it.id;
+      const lv0 = S.skills[skill].lv; S.skills[skill].lv = 999; gearDirty(); out[k] = { tier: equippedTool(skill).tier, top: skillTopTier(skill), spd: mod('gatherSpeed:' + skill), find: toolFind(skill) }; (out.cap = out.cap || {})[k] = (TOOL_TUNE.findCap + bonus('find:' + skill)) / 100;
+      S.skills[skill].lv = lv0; gearDirty(); out[k].low = equippedTool(skill).tier; }
+    const before = S.mats.crystal[1] || 0; emit('harvest', { kind: 'ore', t: 2, n: 3, away: true }); out.partner = (S.mats.crystal[1] || 0) - before;
+    UNIQ_TUNE.on = 0; gearDirty(); out.offSpd = mod('gatherSpeed:mine'); out.offTier = equippedTool('mine').tier; const b2 = S.mats.crystal[1] || 0; emit('harvest', { kind: 'ore', t: 2, n: 3, away: true }); out.offPartner = (S.mats.crystal[1] || 0) - b2;
+    return JSON.stringify(out);`);
+  assert(tl['carapace-pick'].tier === tl['carapace-pick'].top && tl['carapace-pick'].top === 5 && tl['moss-spear'].tier === 3 && tl['carapace-pick'].low === 1, `uniques: a Rising tool is the grade of the best open ground (the spear stops at 3) (${J(tl)})`);
+  assert(Math.abs(tl['carapace-pick'].spd / tl.offSpd - 0.9) < 1e-9 && tl.offTier === 1, `uniques: a tool unique gathers 10% slower; off, it is a plain tool of its own grade (${J(tl)})`);
+  assert(tl.partner === 1 && tl.offPartner === 0, `uniques: Burrower's Promise turns up 1 Crystal for every 3 Ore, only while the switch is on (${tl.partner}, off ${tl.offPartner})`);
+  assert(tl['carapace-pick'].find <= tl.cap['carapace-pick'] && tl['moss-spear'].find <= tl.cap['moss-spear'], `uniques: the rare find chance stays under its 8% cap with a tool unique (${tl['carapace-pick'].find})`);
+  assert(!g.errors.length, 'uniques: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('uniques first pool crashed: ' + (e.stack || e)); }
+
 // ---- Next Up always goes (nextup-always-goes): every goal's Go lands on a visible, enabled target ----
 if (section('Next Up Go targets (browser)')) try {
   const { pw, exe } = browserTools;

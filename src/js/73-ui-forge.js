@@ -26,7 +26,7 @@ function renderTrophies() {
     putClass(e.c, 'trophy' + (f ? ' found' : ''));
     setIc(e.tile, itemIcon(u.slot, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
     putText(e.tn, f ? u.name : '???'); putClass(e.tn, 'tn' + (f ? ' rar-legendary' : ''));
-    putText(e.ts1, f ? `${SLOT[u.slot].n} · best ${MAT.ore.short[f - 1]} tier` : u.src);
+    putText(e.ts1, f ? `${(SLOT[u.slot] || CRAFT_POS[u.pos] || { n: 'Gear' }).n} · best ${MAT.ore.short[f - 1]} tier` : u.src);   // a new unique is a class kind (uniques-first-four)
     putText(e.ts2, f ? u.txt : 'Not found yet');
   }
   // what is left, by where it drops (menu audit #15); found uniques sort first (.trophy.found, 40-components.css)
