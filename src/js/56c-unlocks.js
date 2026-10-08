@@ -126,7 +126,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     return free(false, ROSTER[id].how || 'More of this route comes later.');
   };
   // ---- starters-join-when-met ----
-  const isStarter = id => !!(ROSTER[id] && ROSTER[id].route.type === 'starter');
+  const isStarter = id => typeof id === 'string' && Object.prototype.hasOwnProperty.call(ROSTER, id) && ROSTER[id].route.type === 'starter';   // own keys only: a saved "constructor" is not a hero
   const startedAs = () => { const s = U().startedAs; return typeof s === 'string' && isStarter(s) ? s : ''; };
   const joinOn = () => !(typeof STORY_TUNE === 'object' && STORY_TUNE && STORY_TUNE.joinOnMeet === false);
   const gateOn = () => joinOn() && !!startedAs();
@@ -226,7 +226,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   };
   heroJoins = () => gateOn() ? ROSTER_KEYS.filter(id => isStarter(id) && id !== startedAs() && got(id)) : [];
   heroJoinLine = (id, away) => `${ROSTER[id].name.split(' ')[0]} ${away ? 'joined your camp while you were away' : 'joins your camp'}. ${FIRST_USE.switch.text}`;
-  heroJoinsAhead = () => joinOn() && (newGame() || (gateOn() && ROSTER_KEYS.some(id => isStarter(id) && !starterOwn(id))));
+  heroJoinsAhead = () => joinOn() && (newGame() || (gateOn() && ROSTER_KEYS.filter(id => isStarter(id) && !starterOwn(id)).length >= 2));   // the picker's "the other two" line
   // the join: on the first clear of the Champion's zone (zoneClear comes before the kill, so the Champion card can carry it). A clear
   // made while away has no zoneClear: the return catches it and says it in a toast.
   on('zoneClear', e => { const ids = e ? joinNow(e.zone) : []; if (ids.length) emit('starterJoin', { ids, zone: e.zone }); });
@@ -269,7 +269,7 @@ function heroUnlockStateValid(u) {
   const obj = x => !!x && typeof x === 'object' && !Array.isArray(x);
   const num = x => typeof x === 'number' && Number.isFinite(x) && x >= 0;
   if (!obj(u) || (u.renown !== undefined && !num(u.renown))) return false;
-  if (u.startedAs !== undefined && (typeof u.startedAs !== 'string' || u.startedAs.length > 32)) return false;   // starters-join-when-met: any other text reads as '' (all three yours)
+  if (u.startedAs !== undefined && typeof u.startedAs !== 'string') return false;   // starters-join-when-met: any text that is not a starter reads as '' (all three yours)
   for (const key of ['heroes', 'quests', 'tokens', 'milestones']) {
     if (u[key] === undefined) continue;
     if (!obj(u[key])) return false;

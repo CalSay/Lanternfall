@@ -11404,7 +11404,7 @@ if (section('starters join when met')) try {
   a.E('S.maxZone = 5; S.zone = 5'); settle(a);
   win(a, 5);
   assert(a.E('S.party.unlock.heroes.tobin') === 1 && a.E('heroCanPlay("tobin")') && !a.E('heroCanPlay("pip")') && a.E('heroJoins().join()') === 'tobin', 'starters join: the zone 5 Champion\'s first clear makes Tobin playable and writes heroes.tobin; Pip stays locked');
-  assert(a.wins.length === 1 && !a.toasts.some(t => /joins your camp/.test(t || '')), 'starters join: the join rides the Champion card (no core toast)');
+  assert(a.wins.length === 1, 'starters join: the zone 5 clear asks for the Champion card, which carries the join (the browser part below proves the card and that no toast comes)');
   const sw = a.E('S.onboard.got.switch'), t0 = a.E('S.onboard.t');
   assert(Number.isFinite(sw) && Math.abs(sw - t0) <= 1, `starters join: the join opens the switch row at once (${sw} at ${t0})`);
   const early = JSON.parse(a.E(`(() => { S.onboard.t += ONBOARD_TUNE.gap - 2; return JSON.stringify(onboardCheck()); })()`)), late = JSON.parse(a.E(`(() => { S.onboard.t += 3; return JSON.stringify(onboardCheck()); })()`));
@@ -11435,7 +11435,13 @@ if (section('starters join when met')) try {
   assert(play(e, ['wren', 'tobin', 'pip']) === 'true,true,true' && !e.E('heroJoinsAhead()'), 'starters join: STORY_TUNE.joinOnMeet = false gives all three on a fresh pick');
   e.E('STORY_TUNE.joinOnMeet = true; S.party.unlock.startedAs = "xyz"; S.cls.at = 0');
   const code = e.E('encodeSave(S)'), dec = JSON.parse(e.E(`JSON.stringify(decodeSave(${JSON.stringify(code)}))`));
-  assert(dec.ok && play(e, ['wren', 'tobin', 'pip']) === 'true,true,true' && e.E('heroUnlockStateValid({ startedAs: "xyz" })') && !e.E('heroUnlockStateValid({ startedAs: 5 })'), `starters join: a save code with startedAs "xyz" loads with all three; a non-text startedAs is refused (${dec.error || 'ok'})`);
+  const xyz = dec.ok ? loadCore({ seed: 7, storage: memoryStorage({ [KEY]: JSON.stringify(dec.data) }) }) : null;
+  assert(dec.ok && xyz.eval('S.party.unlock.startedAs') === 'xyz' && ['wren', 'tobin', 'pip'].every(k => xyz.eval(`heroCanPlay(${JSON.stringify(k)})`)) && e.E('heroUnlockStateValid({ startedAs: "xyz" })') && !e.E('heroUnlockStateValid({ startedAs: 5 })'),
+    `starters join: a save code with startedAs "xyz" decodes and a game loaded from it has all three; a non-text startedAs is refused (${dec.error || 'ok'})`);
+  // a built-in name is not a hero (save-risk review): it reads as '' and nothing throws
+  const proto = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: pfx('save-pre-champion.json').replace('"milestones":{}}', '"milestones":{},"startedAs":"constructor"}') }) }), pE = s => proto.eval(s);
+  assert(pE('S.party.unlock.startedAs') === 'constructor' && pE('["wren","tobin","pip"].every(heroCanPlay) && !!heroRouteInfo("tobin") && soloPick("tobin")') && (() => { pE('soloPick("wren"); S.activity = "fight"; S.zone = 5; fightBoss = true; spawn(); killPack(mob, 40)'); return pE('S.maxZone') === 6; })() && !proto.errors.length,
+    `starters join: startedAs "constructor" loads with all three, switching and the Champion's clear work (${proto.errors[0] || 'ok'})`);
   // the Champion card carries the join, on both card paths (75-moments-ui champWin, 75-caches-ui fold), and a toast says it only with no card
   const mui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-moments-ui.js'), 'utf8'), cui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8');
   assert(/lines: joins \}\)/.test(mui) && /lines: joins\.concat\(q\.lines/.test(mui) && /lines: \(c\.lines \|\| \[\]\)\.concat\(o\.lines\)/.test(cui), 'starters join: the join line rides the Champion card on its own card, the queued cache and the cache that folds in later');
