@@ -90,10 +90,10 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 1.075], [8, 0.95], [9, 0.75], [10, 0.725], [11, 0.882], [12, 1.008], [13, 0.36], [14, 0.38], [15, 0.12], [16, 4], [17, 3], [18, 3], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+  boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 1.075], [8, 0.95], [9, 0.75], [10, 0.725], [11, 0.882], [12, 1.008], [13, 0.36], [14, 0.38], [15, 0.12], [16, 0.15], [17, 0.15], [18, 0.12], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
     // heroHitX: a zone boss's hits x this on the hero (tobin-safety-margin: the safest hero still feels a boss; 1 = the zone table's hit)
-    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.7], [9, 1.25], [10, 2], [11, 1.25], [12, 1.75], [13, 1.6], [14, 1.7], [15, 2.55], [16, 6.36], [17, 5.48], [18, 5.51], [19, 4.99], [20, 6.32], [21, 7.14], [22, 7.45], [23, 8.39], [24, 7.06], [25, 6.81], [27, 7.45], [30, 8.32], [34, 6.85], [36, 7], [38, 7]], pip: 1 },
-    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.5], [8, 1.055], [9, 0.632], [10, 0.45], [11, 0.407], [12, 0.403], [13, 0.1], [14, 0.085], [15, 0.05], [16, 0.738], [17, 0.7], [18, 0.481], [19, 1.04], [20, 0.751], [21, 0.424], [22, 0.314], [23, 0.238], [24, 0.255], [25, 0.215], [27, 0.131], [30, 0.165], [34, 0.203], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.7], [9, 1.25], [10, 2], [11, 1.25], [12, 1.75], [13, 1.6], [14, 1.7], [15, 2.55], [16, 2.75], [17, 2.75], [18, 2.6], [19, 4.99], [20, 6.32], [21, 7.14], [22, 7.45], [23, 8.39], [24, 7.06], [25, 6.81], [27, 7.45], [30, 8.32], [34, 6.85], [36, 7], [38, 7]], pip: 1 },
+    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.5], [8, 1.055], [9, 0.632], [10, 0.45], [11, 0.407], [12, 0.403], [13, 0.1], [14, 0.085], [15, 0.05], [16, 0.03], [17, 0.03], [18, 0.03], [19, 1.04], [20, 0.751], [21, 0.424], [22, 0.314], [23, 0.238], [24, 0.255], [25, 0.215], [27, 0.131], [30, 0.165], [34, 0.203], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
     // z13-unstick (judge 2026-10-08, docs/DECISIONS.md "Zone 13 unstick"): the zone 13-15 hitX, hpX and hpFloor knots are fitted to the hero who
     // first gets there (level 18-19, tier 1 common +0). hitX there is dormant (every landed hit sits on the hpFloor), and hpX sits under zone 12's
     // in reference Attacks until the balance pass restores the length ramp.
@@ -109,8 +109,12 @@ const TURN_TUNE = {
     // above the first-hour set stops shrinking the hit; armour, Guard, Ward and good timing still do. Zones 4-34; r by zone (zone table; [[1, 0]] is off).
     // passiveMin: armour x class reduction cuts a zone boss's hit (zones passiveZones) to no less than this share of itself (0 off).
     footFloor: [[1, 0], [3, 0], [4, 1], [34, 1], [35, 0]], footRare: 16, passiveMin: 0.55, passiveZones: [4, 15],
+    // z16-wall (judge 2026-10-08, docs/DECISIONS.md "Zone 16 wall"): the zone 16-18 knots are fitted to the hero who first gets there (level 20-22,
+    // tier 1 common +0), as z13-unstick did at 13-15. riderX: a zone table of the zone boss's Bleed, Burn and Venom ticks on the hero (heroDot is a
+    // share of the reference HP, which a first-time hero at zone 16 has a sixteenth of, so one Bleed tick took a third of their health); 1 elsewhere.
+    riderX: [[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 1]],
     // hpFloor: see turnLand (zone table of multiples; 0 off). gate: rally gates (see TURN_TUNE.gateNote)
-    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 0.84], [9, 0.92], [10, 0.95], [11, 0.94], [12, 0.82], [13, 1], [14, 1], [15, 0.9], [16, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
+    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 0.84], [9, 0.92], [10, 0.95], [11, 0.94], [12, 0.82], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
   // Boss move tricks (card boss-tiers-pr4; docs/design/foe-moves.md "Boss tricks"): zone bosses from `from` play the Captain and
   // Champion sets in TURN_BOSS_TRICKS (24d): hits that hold their swing (`hold`), fakes (`feint`: no damage, and a press at one
   // fools you: the next hit cannot be defended), longer strings and an uneven rhythm. `on` 0 plays the old sets. `feintFrom`: the
@@ -257,7 +261,7 @@ function turnFoeSetup(f, z, o) {
   f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
     hx: zb ? turnZoneLine(B.hitX, z) * (champ ? turnZoneLine(B.champHitX, z) : 1) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
     zb: zb && !region,   // a zone boss (not a region boss, the Deepwell or a Proving): the hero's own boss-hit share (boss.heroHitX) applies
-    hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0, hfl: zb && !region && B.hpFloor ? turnZoneLine(B.hpFloor, z) : 0,
+    hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0, rx: zb && !region && B.riderX ? turnZoneLine(B.riderX, z) : 1, hfl: zb && !region && B.hpFloor ? turnZoneLine(B.hpFloor, z) : 0,
     ff: zb && !region && B.footFloor ? turnZoneLine(B.footFloor, z) : 0, pmin: zb && !region && z >= B.passiveZones[0] && z <= B.passiveZones[1] ? B.passiveMin : 0,
     gates: zb && !region && B.gate.on && z >= B.gate.from && z <= B.gate.to ? (champ ? B.gate.champ : z >= B.gate.captainFrom ? B.gate.captain : B.gate.captainEarly) : null };
   // early foes (zones 1-6) never fall in under TURN_EARLY_FOE_HITS[z - 1] plain Attacks of the hero who meets them (24d)
@@ -334,7 +338,7 @@ function turnMakeProfile(f, u) {
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: Math.max(T.foeAtkX * (1 - armRed) * classDr, f.tk.pmin || 0), bossHeroX: f.tk.zb ? turnHeroHitX(key, z) : 1, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
-    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0,
+    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0, bossRiderX: f.tk.rx || 1,
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
     gates: f.tk.gates || null, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
     zb: !!f.tk.zb, uq: typeof uniqRulesWorn === 'function' ? uniqRulesWorn() : [],   // uniques-first-four: a zone boss; the worn uniques' rules (none while UNIQ_TUNE.on is 0)
@@ -797,7 +801,7 @@ function turnBegin(m, who, io) {
     if (h.lunge > 0) h.lunge--;
     if (h.glow > 0) h.glow--;   // Afterglow: the next two hero turns
     // the boss riders on the hero tick at its turn start
-    for (const k of ['bleed', 'burn', 'venom']) if (h.dot[k] > 0) { h.dot[k]--; m.fin = { dot: true }; io.damageHero(T.heroDot[k] * m.p.refHp, false, 'dot'); }
+    for (const k of ['bleed', 'burn', 'venom']) if (h.dot[k] > 0) { h.dot[k]--; m.fin = { dot: true }; io.damageHero(T.heroDot[k] * m.p.refHp * (m.p.bossRiderX || 1), false, 'dot'); }
     if (h.chillT > 0 && --h.chillT === 0) h.chill = 0;
     if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
     m.phase = 'hero';
