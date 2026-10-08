@@ -1,0 +1,1 @@
+Golemfist and the Lantern Eater's Fang now fit every hero: Wren wears them as a Bow, Pip as a Staff and Tobin as a Warblade, with the same name, colour and power. One you already found turns into your hero's weapon the next time you play. Best shot: golemfist-worn.

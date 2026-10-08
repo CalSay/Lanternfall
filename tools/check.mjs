@@ -4647,14 +4647,38 @@ if (section('solo hero')) try {
     const g = loadCore({ solo: true, storage: memoryStorage({ 'lanternfall.save.v2': fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8') }) });
     assert(g.eval('S.maxZone === 1 && soloHero() === null && !S.party.chosen') && !g.errors.length, 'a v2 save is not read: a new game starts (v3)');
   }
-  // 9. playtest-1 notes 5 and 8: a unique sword fits only a sword hand; Lv 1 buildings build fast
+  // 9. unique-weapons-fit-all (was playtest-1 note 5, a unique sword fits only a sword hand): every hero wears a unique
+  // weapon as their own class's weapon, keeping its name, colour, rule and power; playtest-1 note 8: Lv 1 buildings build fast
   {
     const g = loadCore({ solo: true, seed: 103 }), E = s => g.eval(s);
-    E('soloPick("wren"); dropUnique("sproutblade", 1)');
-    const id = E('S.items.find(it => it.u === "sproutblade").id');
-    assert(!E(`fits(itemById(${id}), "weapon", "hero")`) && !E(`equipItem(${id})`), 'Wren (a bow) cannot equip the Sproutblade (a sword)');
-    E('soloPick("tobin")');
-    assert(E(`fits(itemById(${id}), "weapon", "hero")`), 'Tobin (sword and shield) can');
+    const own = { wren: 'bow', pip: 'staff', tobin: 'warblade' };
+    for (const h of ['wren', 'pip', 'tobin']) for (const k of ['golemfist', 'eaterfang']) {
+      const r = JSON.parse(E(`(() => { soloPick("${h}"); S.items = S.items.filter(it => it.u !== "${k}"); const plain = { id: -1, slot: "weapon", t: 3, r: "legendary", plus: 2, u: "${k}" };
+        const p0 = itemPower(plain), l0 = JSON.stringify(itemLines(plain)); dropUnique("${k}", 3); const it = S.items.filter(i => i.u === "${k}").pop(); it.plus = 2;
+        const ok = equipItem(it.id) !== false; gearDirty();
+        return JSON.stringify({ ok, slot: it.slot, rt: it.rt, u: it.u, name: itemName(it), col: kindColor(it.slot, it.t, it.u), p: itemPower(it) === p0, lines: JSON.stringify(itemLines(it)) === l0,
+          worn: equipped("weapon") && equipped("weapon").id === it.id, tap: gear().tap, might: gear().might }); })()`));
+      assert(r.ok && r.worn && r.slot === own[h] && r.rt === 'weapon' && r.u === k && r.name === E(`UNIQ.${k}.name + " +2"`) && r.col === E(`UNIQ.${k}.col`) && r.p && r.lines,
+        `${h} wears ${k} as their own weapon (${r.slot}, rt ${r.rt}), same name, colour, power and lines: ${JSON.stringify(r)}`);
+      if (k === 'golemfist') assert(r.tap === 2, `${h}'s Golemfist keeps its rule: Attack x${r.tap}`);
+    }
+    // a class change carries the retooled unique over to the new class's weapon; an old save's unique Sword retools on load
+    E('soloPick("wren"); S.items = S.items.filter(it => !it.u); dropUnique("golemfist", 2)');
+    const gid = E('S.items.find(it => it.u === "golemfist").id');
+    E('soloPick("pip")');
+    assert(E(`itemById(${gid}).slot`) === 'staff' && E(`itemById(${gid}).rt`) === 'weapon' && E(`fits(itemById(${gid}), "weapon", "hero")`), 'a class change retools the Golemfist to the new class weapon (Staff), rt kept');
+    {
+      const v = loadCore({ solo: true, seed: 106 }), V = s => v.eval(s);
+      const save = JSON.parse(V(`(() => { soloPick("wren"); S.items.push({ id: S.nextId++, slot: "weapon", t: 2, r: "legendary", plus: 1, u: "golemfist" }, { id: S.nextId++, slot: "weapon", t: 4, r: "legendary", plus: 0, u: "eaterfang" }); save(); return JSON.stringify(S); })()`));
+      const w = loadCore({ solo: true, storage: memoryStorage({ [KEY]: JSON.stringify(save) }) }), W = s => w.eval(s);
+      W('tick(0.1)');
+      const r = JSON.parse(W(`JSON.stringify(S.items.filter(i => i.u).map(i => ({ u: i.u, slot: i.slot, rt: i.rt, t: i.t, plus: i.plus, fits: fits(i, "weapon", "hero") })))`));
+      assert(r.length === 2 && r.every(i => i.slot === 'bow' && i.rt === 'weapon' && i.fits) && r[0].t === 2 && r[0].plus === 1 && r[1].t === 4,
+        `an old save's Golemfist and Fang load, retool to Wren's Bow and fit: ${JSON.stringify(r)}`);
+      const code = W('(() => { const o = JSON.parse(JSON.stringify(S)); if (o.cls) o.cls.at = 0; return decodeSave(encodeSave(o)); })()');
+      assert(code.ok, 'a save code holding retooled unique weapons imports' + (code.ok ? '' : ': ' + code.error));
+      errs.push(...v.errors, ...w.errors);
+    }
     assert(E('HEARTH_TUNE.first.bench.secs <= 15 && HEARTH_TUNE.first.forge.secs <= 20 && CAMP_TUNE.secs[0] <= 60 && CAMP_TUNE.secs[1] <= 1800'), 'Lv 1 buildings build in seconds (Workbench 10 s, Forge 15 s, other rows 45 s; Lv 2 20 min)');
     errs.push(...g.errors);
   }

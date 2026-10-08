@@ -10977,7 +10977,8 @@ const nodeColor = () => (MAT[S.node.kind] || MAT.wood).col[S.node.t - 1];
 //   bag      equippedIds() -> Set of item ids worn by the hero
 //            isEquipped(id), bagCount() (unequipped items), bagFull() (>= CRAFT_BAG_MAX)
 //   uniques  (uniques-first-four, the new table in 20-data UNIQ: legacy false)
-//            uniqAnyCls(item) every class wears it (it retools to the wearer's class kind, keeping id, u, t, r and +N)
+//            uniqAnyCls(item) every class wears it (it retools to the wearer's class kind, keeping id, u, t, r and +N);
+//            also an old unique Sword (unique-weapons-fit-all: rt 'weapon' keeps its Sword lines, so its power never drops)
 //            uniqKindFor(key, cls) the kind a unique is made as for a class (a drop: uniques-drops-live wires it)
 //            uniqRulesWorn(over) -> [rule, ...] the rules of the uniques the hero wears that fit, while UNIQ_TUNE.on ([] off)
 //            uniqPool(z) -> [key, ...] the new uniques a zone z boss could drop (its foe type, from its zone, the zone's
@@ -11034,14 +11035,14 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   RETOOL = { on: 1 };
   const RT_KINDS = { weapon: 1, helm: 1 }; // legacy kinds that retool into class kinds
   const pendingLegacy = it => !!it && typeof it === 'object' && !it.u && !!RT_KINDS[it.slot];
-  uniqAnyCls = it => !!(it && it.u && UNIQ[it.u] && UNIQ[it.u].legacy === false && UNIQ[it.u].cls === 'any');
+  // unique-weapons-fit-all: an old unique weapon (Golemfist, Lantern Eater's Fang, the Sproutblade) fits every class too
+  const uniqAll = u => !!u && (u.legacy === false ? u.cls === 'any' : u.slot === 'weapon');
+  uniqAnyCls = it => !!(it && it.u && uniqAll(UNIQ[it.u]));
   fits = (it, pos, who = 'hero') => {
     const kind = typeof it === 'string' ? it : it && it.slot;
     if (!CRAFT_KINDS[kind] || !CRAFT_FITS[pos] || !craftKindVisible(kind)) return false;
     const w = resolveWho(pos, who);
     if (RETOOL.on && RT_KINDS[kind] && w !== 'any' && !(it && typeof it === 'object' && it.u)) return false;
-    // playtest-1 note 5 (SOLO1): a unique sword (the zone bosses' weapons) is a sword: only a sword hand holds it
-    if (kind === 'weapon' && it && typeof it === 'object' && it.u && (who == null || who === 'hero') && w !== 'any' && w !== 'warden') return false;
     return craftFits(kind, pos, w);
   };
 
@@ -11056,7 +11057,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
       if (!it || (it.u && !uniqAnyCls(it))) continue;
       const d = CRAFT_KINDS[it.slot]; if (!d || !d.pos) continue;
       let why = null;
-      if (it.u) why = d.cls && d.cls !== cls ? 'uniq' : null;   // uniques-first-four: an every-class unique is always the wearer's class kind (worn or not; no notice)
+      if (it.u) why = (d.cls ? d.cls !== cls : !!RT_KINDS[it.slot]) ? 'uniq' : null;   // uniques-first-four: an every-class unique is always the wearer's class kind (worn or not; no notice); an old unique Sword too
       else if (RT_KINDS[it.slot]) why = 'legacy';
       else if (swap && d.cls && d.cls !== cls && (hero.has(it.id) || !d.comp)) why = 'swap';
       if (!why) continue;
@@ -11083,6 +11084,13 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   // gearCalc still counts a worn legacy Sword/Helm, so no number moves before the retool.
   let rtFor = null;
   onTick(() => { if (rtFor === S || !RETOOL.on) return; rtFor = S; retoolItems(); });
+  // unique-weapons-fit-all: a unique Sword that drops now (Golemfist) arrives as the hero's own class weapon
+  on('itemAdded', ({ item: it }) => {
+    const cls = heroWho(), to = classKindAt('weapon', cls);
+    if (!RETOOL.on || !uniqAnyCls(it) || it.slot !== 'weapon' || !to || to === it.slot) return;
+    if (it.rt == null) it.rt = it.slot;
+    it.slot = to;
+  });
 
   // ---- stat lines ----
   // Legacy kinds use the exact pre-K4 expressions so old items give byte-identical numbers.
@@ -11128,7 +11136,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   // ---- the new uniques (uniques-first-four) ----
   uniqKindFor = (key, cls) => {
     const u = UNIQ[key]; if (!u) return null;
-    return u.cls === 'any' && cls && cls !== 'any' ? classKindAt(u.pos, cls) || u.slot : u.slot;
+    return uniqAll(u) && cls && cls !== 'any' ? classKindAt(u.pos || kindPos(u.slot), cls) || u.slot : u.slot;
   };
   // what is worn (or `over`, as gearCalc), fitting, with a rule: one entry per piece
   uniqRulesWorn = over => {
