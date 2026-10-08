@@ -608,6 +608,7 @@ Ruled MERGE by an Opus high judge (PR for card `z13-arrival-footing`); Cal can v
   at 10 (no mastery stars), Bestiary kills a kind at 12. Casual reads 0% a try there, as the walk does. The kept-up rows stay the report rows (1-2 tries).
 - **Zones 10-12 stay on their footing.** They read the walk within 15 points as they are; at the arrival footing the sampler reads Wren and
   Pip 54-78 under the walk (33-56 on Wren's own walk save), a sampler gap, not a footing one. They move once that gap is fixed.
+  (Superseded by "Rally gates are live": the gap was the live fight skipping the rally gates; zones 7-12 moved to the arrival footing there.)
 - **Gaps:** z13-15 casual and good, low side, owner `boss-balance-pass`, until 2026-12-01; Tobin's in-band z13 good cell stays gated.
   The boss refit (`TURN_TUNE.boss` hitX/hpX to casual 60-80 at this footing) is a balance-pass row; until it lands the `gearHelps` gate on
   the z13 and z15 kept-up rows passes trivially (first-hour casual is 0).
@@ -936,6 +937,36 @@ Follow-up to "Zone 20 wall" ruling 3, ruled by an Opus high judge (PR for card `
 
 Veto phrases for Cal: "cap the zone 21-24 foes" (adds the 0.25 hit cap at zones 21-24 on top of the bot fix). "Bot presses every
 feint" drops the trick read and puts back the earlier numbers (abs 2.0).
+
+### Rally gates are live (rally-gates-live) (2026-10-08)
+
+Ruled C by an independent Opus high judge (`autopilot/rulings/2026-10-08-rally-gates-live.md`); Cal can veto.
+
+- **Rally gates are live (rally-gates-live, judge 2026-10-08; Cal can veto).** Since #160 the live fight skipped every gate
+  (59k:1164 read the previous foe's HP). The gates stay, the order is fixed, the rally shows on the boss bar, and z7-12 are
+  refit on the arrival footing with gates on. z13-34 keep their sampler-fitted knots, are re-measured, and wait for the balance
+  pass. This supersedes "a sampler gap, not a footing one" (z13-arrival-footing). Veto: "Turn the rally gates off".
+- **The rally on screen.** The boss bar marks each gate from the start of the fight; the mark it holds at turns gold and a passed one
+  fades. The line says "Rally! It holds at the mark until its next move ends." (with "Only a Stun breaks its charge." only while it
+  gathers a charged move), and "Rally over. Your hits land again." when it opens. While it holds, the turn label reads "Rally: it
+  holds at the mark" unless a charged move's own line needs it.
+- **The refit (zones 7-12 only).** hitX, hpX, hpFloor and Tobin's heroHitX, fitted with the gates on to arrival-footing casual in band;
+  no move, window, gate share or pay change. Landed hits sit on or near the hpFloor, which holds the kept-up never-defends player under 10% (0% measured).
+  Tobin's heroHitX moved at 8, 10, 11 and 12 (1.7 to 1.5, 2 to 1.8, 1.25 to 1.5, 1.75 to 1.6) to keep him in his +10 band.
+  Knots z7-12: hpX 0.95/0.7/0.4/0.35/0.4/0.2, hitX 0.9/0.5/0.3/0.25/0.2/0.12, hpFloor 1.03/1/1.1/1.3/0.95/1.2 (were hpX
+  1.075/0.95/0.75/0.725/0.882/1.008, hitX 1.5/1.055/0.632/0.45/0.407/0.403, hpFloor 1.03/0.84/0.92/0.95/0.94/0.82). The zone 10
+  Champion keeps the most HP of zones 7-12 (the Champion peak check). Arrival-footing casual Wren/Tobin/Pip, 240 fights a row: z7
+  82/88/85, z8 80/81/90, z9 82/88/76, z10 53/52/48, z11 65/80/74, z12 62/75/66; good 100 on every row. Numbers: `docs/design/difficulty-budget.md`.
+- **Walks** (seeds 1-3, Wren, Tobin and Pip, 90 game minutes; each stopped on the 60-minute clock budget at game minute 81-83):
+  every boss from zone 4 to the last one reached (zone 20, 22 and 19) started at gate 0, played all its rallies and fell on the
+  first try. Zones 7-12 took minutes 18-31. Zone 20 at 62:38 (Wren), 49:18 (Tobin) and 65:40 (Pip), against the z20-wall walks'
+  56:53 (Wren) and 72:18 (Tobin). Movement at zones 13 and up goes to the balance-pass row "Rally gates were off on live bosses".
+- **Health parity baselines are the mean of each offset's parity, not the parity of the mean** (rally-gates-live, judge 2026-10-08;
+  the tolerance is unchanged; the 50h section keeps the old value until its Pip goldSpentShare fail is fixed). This raises the
+  active parity reference from 0.21 to the offsets' mean. The 50h section is not rewritten here: it did not move, and a rewrite would bake in
+  Pip's goldSpentShare 0.87 (a real fail, already on the base build). Rewrite it when that fail is fixed. Veto: "Put the old parity baseline back".
+
+Veto phrase for Cal: **"Turn the rally gates off"**: set `gate.on = 0` and refit every boss from z4 to z34 in the balance pass.
 
 ### The Lantern Rules
 

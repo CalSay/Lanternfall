@@ -31,8 +31,9 @@ who keeps up with the road** at 26 gated checkpoints from zone 1 to zone 38, plu
 | Stars | Everything found behind the checkpoint's zone, learned, 3 set (zone 1: none). |
 | Build | Attribute points spread evenly, once the game has attributes. |
 
-**The arrival footing (zones 13-15, card `z13-arrival-footing`, 2026-10-08).** The z13, z14 and z15 boss rows are the hero a
-first-time player has when they first get there, not the hero who kept up (`docs/design/z13-bot-sim-gap.md`):
+**The arrival footing (zones 7-15, cards `z13-arrival-footing` and `rally-gates-live`, 2026-10-08).** The z7 to z15 boss rows are the hero a
+first-time player has when they first get there, not the hero who kept up (`docs/design/z13-bot-sim-gap.md`). Zones 7-12 moved in
+`rally-gates-live`, where the walk passes them between minutes 8 and 31:
 
 | Part | The arrival footing |
 |---|---|
@@ -41,7 +42,7 @@ first-time player has when they first get there, not the hero who kept up (`docs
 | Mastery | Every zone's kills capped at 10 (a zone's fights and its boss): no mastery stars. The mid fixture's 23 stars (x1.35) came from a hero who played on to zone 20. Bestiary kills a kind capped at 12 (the walk has 9-14 a kind at zones 13-14). |
 
 Skills, Stars, talents and the build are as above. The kept-up rows (`z13-boss-keptup` and on) stay the report rows for a player
-who stayed, fought and crafted. `--foot arrival` puts every first-hour row on this footing (the zone 10-12 check).
+who stayed, fought and crafted. `--foot arrival` puts every first-hour row on this footing (the zone 4-6 check).
 
 | Player | Parry | Dodge (of the rest) | Ability rings |
 |---|---|---|---|
@@ -124,13 +125,22 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 
 ## Where the game stands (2026-10-08)
 
+- **Live bosses rally again, and zones 7-12 are fitted with the gates on** (rally-gates-live, 2026-10-08). From #160 to 8 Oct the live
+  fight skipped every rally gate (it read the last foe's HP), while every boss knot was fitted on the sampler with the gates on. The z7-z12
+  boss rows are on the arrival footing (level 12-17, tier 1 common +0, no mastery stars) and refit with hitX, hpX, hpFloor and Tobin's
+  heroHitX: casual Wren, Tobin and Pip win about 82/88/85 at zone 7, 80/81/90 at zone 8, 82/88/76 at zone 9, 53/52/48 at the zone 10
+  Champion, 65/80/74 at zone 11 and 62/75/66 at zone 12 (240 fights; the baseline holds the 5-offset means); good players 100. A landed
+  hit there sits on or near the hpFloor, which keeps a kept-up hero who never defends at 0% (z8, z10, z12). The kept-up z8 and z12 rows read
+  95-99 for a casual (a few points over 97 and 95, inside the tolerance). Zones 4-6 stay on the first-hour footing and did not move.
+  The live fight now reads the same as the sampler (`autopilot/reports/sampler-reads-walk-z10-12/live-vs-sampler.mjs`, z10-12).
+
 - **Kept-up heroes (boss-tiers-pr5, zones 4-15)** are gated: on a boss they have not beaten, a hit costs at least its first-hour share of
   the hero's health (the footing floor), Captains rally three times from zone 7, and zone 15 is a Champion. 5-seed means, casual / never
   defends (Wren, Pip): z5 75/0, 99/0; z8 95/0, 99/0; z10 64/0, 88/0; z12 88/0, 100/100; z13 92/7, 99/0; z15 76/0, 88/0. Wren is in band on
   every gated row; Pip sits above where her first-hour cell has a `wren-first-hour-parity` gap (z5, z8, z12), and edges over 85-95 at z10,
   z13 and z15. Tobin's kept-up cells (casual 100, never-defends 1-100) ride `tobin-safety-margin` gaps.
 
-- **Zones 5-12 are measured on the first-hour set** (boss-tiers PR 1, 2026-10-07): Wren sits in band; Pip and Tobin above it under
+- **Zones 5-6 are measured on the first-hour set** (boss-tiers PR 1, 2026-10-07; zones 7-12 until rally-gates-live): Wren sits in band; Pip and Tobin above it under
   gaps. A kept-up hero (report-only rows) still wins them 100%. The elites are too easy for a kept-up hero (foe-moves-by-type).
 - **Zones 13-15 no longer wall a first-time player** (z13-unstick, 2026-10-08; the rows went on the arrival footing in
   z13-arrival-footing). On the arrival footing (level 18-19, tier 1 common +0, no mastery stars) casual Wren, Tobin and Pip win
@@ -160,8 +170,8 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
   checks moved to the first kept-up zones: `z25-boss-behind` (gated), the joined and build rows at z25, and check.mjs C29's played and
   gear asserts at zone 26 on the hero as built. On the arrival footing gear is worth little (nothing worn costs 4-29 points, better gear
   adds up to 12, nothing for Tobin), as at zones 13-19. The next wall is the zone 25 Champion (`z25-boss-arrival`, a report row, 0%).
-  The zone 10-12 rows stay on their footing: at the arrival footing the sampler reads Wren's bot 22-46 where the walk never loses
-  (Tobin's 78-98 matches), and on Wren's own walk save it reads 33-56, so that gap is the sampler's, not the footing's. Zones 16-24 Captains are gated on the kept-up hero too (casual above band under gaps; good and never-defends gated).
+  (Superseded by rally-gates-live: the zone 10-12 gap between the sampler and the walk was the live fight skipping the rally gates, not the
+  sampler; zones 7-12 are now on the arrival footing.) Zones 16-24 Captains are gated on the kept-up hero too (casual above band under gaps; good and never-defends gated).
 - **Zones 25-34 Captains are in band for Wren and Pip** (mid-zone-wall, 2026-10-07: casual 56-80, good 100%; z34 Wren sits 4 under, inside the seed noise). Tobin wins
   all of them casually (boss-tiers owns the +10 gap).
 - **The Fenmother is easier than the Captains around her** (boss-tiers): 67-100% casual against a 20-40 band; zone 36
@@ -189,3 +199,4 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 | 2026-10-08 | z19-wall | z19 boss hpX, hitX, hpFloor and Tobin heroHitX knots, `riderX` 0.07 at z19 (Venom ticks); z19-boss-arrival gated (`captain`), new report row z20-boss-arrival (`reportArrival`); the arrival footing no longer wears the crafted set; gaps z19-boss casual above (all heroes, boss-balance-pass) and z19-boss-arrival Tobin casual below (tobin-safety-margin), until 2026-12-01; re-baseline; optimiser.stallCount abs 1.3 -> 2.4 (three sd of the new 5-offset spread, 0.8; the zone 20 wall inside the 10 h; boss-balance-pass, back to max(1.3, 3 sd) when zone 20 is fixed) | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 19 wall) |
 | 2026-10-08 | z20-wall | z20-24 boss hpX, hitX, hpFloor 1.3 and Tobin heroHitX knots, Pip heroHitX 0.9 at z20/22/23, new `dotCap` 0.07 at z20-24 (a boss tick costs at most 7% of the hero's own max HP); z20-z24-boss-arrival gated (`captain`), z25/z26-boss-arrival report rows; gear checks moved to the first kept-up zones: z20-boss-behind report (`reportBehind`, its gear-weight gaps dropped), new gated z25-boss-behind (gaps Wren and Tobin above, gear-weight), joined and build rows z20 -> z25 boss, C29 played and gear asserts at zone 26 on the hero as built; new report rows z20/z24-arrival-bare, -t2, -rare (`arrivalGear`); gaps z20-z24-boss casual above (all heroes, boss-balance-pass) and z22-z24-boss-arrival Tobin casual below (tobin-safety-margin), until 2026-12-01; re-baseline; optimiser.stallCount abs 2.4 -> 2.9 (three sd of the new 5-offset spread, 0.97; the bots' next wall is ordinary foes at zones 21-23; owner z21-foe-climb) | Opus high judge 2026-10-08, three rulings (`docs/DECISIONS.md`, Zone 20 wall) |
 | 2026-10-08 | z21-foe-climb | New report kind `reportBot` and rows z20-z24-normal-bot (the 10-hour bot's footing: arrival level + 2 via `o.lv`, tier 2 rare +5), with an `optimiser` player (the health bot's own defence) on those rows only; no budget cell moved. The health bot (`tools/sim.mjs`) defends every hit of a move and reads boss feints and held swings as the sampler does; re-baseline of the personas and the long run; optimiser.stallCount abs 2.9 -> 2.1 (three sample sd, 0.69). The zone 21-24 ordinary-foe wall left after the fix goes to boss-balance-pass (until 2026-12-01) | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 21 foe climb) |
+| 2026-10-08 | rally-gates-live | The live fight checks a boss's rally gates against its own HP (it read the last foe's, so every live boss from #160 skipped them); z7-z12 boss rows on the arrival footing; z7-12 boss hitX, hpX, hpFloor and Tobin heroHitX knots refit with the gates on; the z7, z8 and z12 Pip gaps ratchet; re-baseline of the budget and the personas (they played gateless bosses; the 50-hour run did not move and is not rewritten) | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Rally gates are live; `autopilot/rulings/2026-10-08-rally-gates-live.md`) |
