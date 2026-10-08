@@ -264,7 +264,7 @@ var forgeGoalPicks = 0;
         const ks = Object.keys(c.cost.mats);
         const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(matOwn(k, t), c.cost.mats[k])), 0) / Math.max(1, ks.length));
         const score = p + (pos === 'weapon' ? 0.02 : 0);
-        if (!best || score > best.score) best = { kind, t, cost: c.cost.mats, p, score };
+        if (!best || score > best.score) best = { kind, t, pos, cost: c.cost.mats, p, score };
       }
     }
     return best;
@@ -282,11 +282,18 @@ var forgeGoalPicks = 0;
   });
   // Upgrade (craft-delta): a worn piece whose next upgrade you can pay for now, offered only while no craft is ready
   // (the craft goal is not Ready). Weapon first, then the slot order. Go opens the piece's sheet on Hero, Gear.
+  // upgrade-goal-chip-order: never the piece the shown craft goal replaces, and never an upgrade that leaves less of a
+  // shared material (same tier, or essence) than the craft needs; when nothing is left, the craft goal leads.
   const upgradeNext = () => {
     const f = forgeNext(); if (f && f.p >= 1) return null;
     for (const pos of CRAFT_HERO_POS) {
+      if (f && f.p > 0 && pos === f.pos) continue;
       const it = equipped(pos);
-      if (it && CRAFT_KINDS[it.slot] && craftKindVisible(it.slot) && canUpgrade(it.id).ok) return it;
+      if (!it || !CRAFT_KINDS[it.slot] || !craftKindVisible(it.slot)) continue;
+      const c = canUpgrade(it.id); if (!c.ok) continue;
+      const um = (c.cost && c.cost.mats) || {};
+      if (f && Object.keys(um).some(k => f.cost[k] && (k === 'ess' || it.t === f.t) && matOwn(k, f.t) - um[k] < f.cost[k])) continue;
+      return it;
     }
     return null;
   };
