@@ -4915,7 +4915,7 @@ if (section('solo hero')) try {
   {
     const g = T(), E = s => g.eval(s);
     const ids = E('GUIDE_STEPS.map(x => x.id).join()');
-    assert(/^attack,ability,dodge,parry,boss,upgrade,(back,)?(wear:weapon,)?gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
+    assert(/^attack,ability,dodge,parry,boss,upgrade,spend,(back,)?(wear:weapon,)?gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
     assert(E('GUIDE_STEPS.every(x => x.pause || x.needs || x.id === "tab:party" || x.id === "nextup")'), 'every step pauses the game while it shows, except the ones that wait for materials (live progress) and two notes (W1-A: see "solo guide pause rules")');
     E('soloPick("wren")'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');   // SOLO2: a hand Attack and Echo Shot would clear the pack before the heavy steps
@@ -10683,6 +10683,7 @@ if (section('story-unlock-gates')) try {
   cw.fn.on('unlock', e => got.push([e.id, C('Math.round(S.onboard.t)'), C('S.maxZone'), byNow(C, e.id)]));
   const act = {
     attack: 'soloAttack()', ability: 'soloAbility()', dodge: 'soloDodge()', parry: 'soloParry()', boss: 'onboardDone("boss")', nextup: 'onboardDone("nextup")',
+    spend: 'attrSpread()',   // spend-points-before-nextup: Spread evenly, as the line asks
     upgrade: '{ if (attrOn()) attrSpread(); else for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, "1"); } }',   // hero-progression-rework: points, not Training
     gather: 'setNode("wood", 1); setActivity("gather")', light: 'hearthLight(); setActivity("fight")', bench: 'campBuild("bench")', forge: 'campBuild("forge")', store: 'campBuild("store")',
     tool: '{ const it = craftItem("pick", 1); if (it) equipItem(it.id); }',
@@ -11905,6 +11906,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             }
             // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk
             if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
+            // a step that ended while the walk looked (Next Up opening ends spend-points-before-nextup's line unseen) is not a miss
+            if (!c.ok && await X('(s => s ? s.id : "")(onboardStep())') !== st) continue;
             if (!seen.has(key)) { seen.add(key); if (!c.ok) bad.push(`${key}: ${JSON.stringify(c)}`); }
             // do the step through its own target
             const live = await X(`!!(onboardSpec(${JSON.stringify(st)}) || {}).live`);
@@ -13004,6 +13007,64 @@ if (section('unspent points nudge')) try {
   assert(E('GOALS.find(x => x.id === "hero-up").sys') === 'points' && E('GOALS.find(x => x.id === "learn-ability").sys') === 'hero', 'unspent points: hero-up has its own system');
   assert(!g.errors.length, 'unspent points: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('unspent points nudge crashed: ' + (e.stack || e)); }
+
+// ==== spend-points-before-nextup: two levels' points or more unspent before Next Up opens: Hesketh says so once, between fights ====
+if (section('spend-points-before-nextup')) try {
+  const at = 'spend-points-before-nextup';
+  // a fresh game past the first Might point, between fights (the Hero menu open), Next Up still locked (a recent unlock holds the gap)
+  const mk = lv => {
+    const g = loadCore({ seed: 7 }), E = s => g.eval(s);
+    E(`soloPick("wren"); for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) S.onboard.done[id] = 1;
+      S.onboard.got.party = Math.round(S.onboard.t); S.maxZone = 2; S.zone = 2; S.tab = "party"; S.L = ${lv}`);
+    return [g, E];
+  };
+  const step = E => E('(s => s ? s.id : "")(onboardStep())');
+  const per = loadCore().eval('HERO_TUNE.perLevel');
+  assert(per === 4, `${at}: a level gives 4 points (${per})`);
+  { // 8 free: the line shows; a spend under 8 ends it for good
+    const [g, E] = mk(3);
+    assert(E('attrOn() && !isUnlocked("nextup") && attrPoints(soloHero()).free') === 8 && E('guidePhase()') === 'between', `${at}: the fixture has 8 free, Next Up locked, between fights`);
+    assert(step(E) === 'spend' && E('onboardPaused(GUIDE_STEPS.find(x => x.id === "spend"))'), `${at}: with 8 free Hesketh says it, and the game waits (${step(E)})`);
+    E('attrAdd("might", 1)');
+    assert(E('fightingNow()') && step(E) === 'spend' && !E('S.onboard.done.spend'), `${at}: spent to 7 with the Hero menu over the fight, it says to close the menu (back's line) (${step(E)})`);
+    E('S.tab = null');
+    assert(step(E) !== 'spend' && E('S.onboard.done.spend') === 1, `${at}: the menu closed, the step is done (${step(E)})`);
+    E('S.L = 6');
+    assert(E('attrPoints(soloHero()).free') >= 8 && step(E) !== 'spend', `${at}: more levels later, it never shows again (${step(E)})`);
+    assert(E('attrPoints(soloHero()).free') === 19, `${at}: it never spends a point for the player (${E('attrPoints(soloHero()).free')})`);
+    assert(!g.errors.length, `${at}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  { // × answers it too
+    const [, E] = mk(3); step(E); E('onboardDone("spend")'); E('S.L = 4');
+    assert(step(E) !== 'spend', `${at}: dismissed, it does not come back`);
+  }
+  { // spent with the menu still open, then a reload (the latch is runtime only): it never comes back
+    const [, E] = mk(3); step(E); E('attrAdd("might", 1)'); assert(step(E) === 'spend', `${at}: the close-the-menu tail is up`);
+    E('GUIDE_RT.latch = ""; S.tab = null; S.L = 5');
+    assert(E('attrPoints(soloHero()).free') >= 8 && step(E) !== 'spend' && E('S.onboard.done.spend') === 1, `${at}: after a reload mid-tail, more levels never bring the line back (${step(E)})`);
+  }
+  { // 4 free: one level's points are not a pile
+    const [, E] = mk(2);
+    assert(E('attrPoints(soloHero()).free') === 4 && step(E) !== 'spend' && !E('S.onboard.done.spend'), `${at}: with 4 free it waits (${step(E)})`);
+    E('S.L = 3'); assert(step(E) === 'spend', `${at}: a level later, with 8 free, it shows`);
+  }
+  { // Next Up open: never
+    const [, E] = mk(5); E('S.onboard.got.nextup = Math.round(S.onboard.t)');
+    assert(E('isUnlocked("nextup")') && step(E) !== 'spend' && E('S.onboard.done.spend') === 1, `${at}: with Next Up open it never shows (Next Up ranks the points) (${step(E)})`);
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
+    assert(/You have \$\{n\} attribute points waiting\. Open Hero and spend them\./.test(src) && !/Tap Spread evenly/.test(src), `${at}: the line names the points from the save, in neutral words`);
+  }
+  { // attributes off: never
+    const [, E] = mk(5); E('HERO_TUNE.training = 1');
+    assert(!E('attrOn()') && step(E) !== 'spend', `${at}: with attributes off it never shows (${step(E)})`);
+  }
+  { // in a fight it waits for the gap between foes (a 'between' step)
+    const [, E] = mk(3); E('S.tab = null; setActivity("fight"); for (let i = 0; i < 50 && !liveFoe(); i++) tick(0.1)');
+    const ph = E('guidePhase()'), mid = step(E);
+    E('combatFoes().forEach(f => { f.hp = 0; f.dead = true; })');
+    assert(ph !== 'between' && mid !== 'spend' && E('guidePhase()') === 'between' && step(E) === 'spend', `${at}: a foe on the field holds it; with none left it starts (${ph} ${mid}, ${E('guidePhase()')} ${step(E)})`);
+  }
+} catch (e) { fail('spend-points-before-nextup crashed: ' + (e.stack || e)); }
 
 // ==== gear-in-first-25: Wren and Pip make their first weapon at the Workbench right after the tool, and are told where its materials are ====
 // save-pip-tool-made: Pip, cold, Workbench built, a Copper Pickaxe worn, no Forge, Pine Log 10, essence 4, Quartz 0, zone 3.
