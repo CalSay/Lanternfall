@@ -13,7 +13,7 @@
 //   --set none      kept-up heroes at grade 4 and up do not wear the crafted set (default: they do, see "The set" below)
 //   --stars none    no Stars (default: the typical Stars a player carries at that zone, as sim.mjs --stars typical)
 //   --lv N          every kept-up hero N levels off the road (-1: a level behind)
-//   --foot arrival  every first-hour row (tier common +0) on the arrival footing (below), not only z13-z15   (manual: the z10-z12 check)
+//   --foot arrival  every first-hour row (tier common +0) on the arrival footing (below), not only z7-z15   (manual: the z4-z6 check)
 //   --sweep         print casual and good wins at L-1, L and L+1 (how much one level matters)   (manual)
 //   --players wide  also play a weaker and a stronger casual (parry 15% / 35%, dodge 40% / 70%)      (manual)
 //   --read casual=0.5,good=0.7   set how often a player reads a boss trick (a feint or a held swing; 59k TURN_TUNE.tricks.read)   (manual)
@@ -45,7 +45,8 @@
 //           Not on the arrival footing either (z19-wall): a first-time player at zone 19 has tier 1 common +0 and no crafted set.
 //   build   attribute points spread evenly (hero-progression-rework's attrSpread), once the game has attributes
 // The arrival footing (z13-arrival-footing, docs/design/z13-bot-sim-gap.md): the hero a first-time player has when they
-// first reach zone z, on the z13-z15 first-hour rows and the z16-z26 -arrival rows, z20-wall's arrival gear rows (and every first-hour row with --foot arrival):
+// first reach zone z, on the z7-z15 first-hour rows (z7-z12 since rally-gates-live) and the z16-z26 -arrival rows, z20-wall's arrival gear rows
+// (and every first-hour row with --foot arrival):
 //   level   arrivalLv(z): the game's own XP for ZONE_FIGHTS normal foes and the boss in each zone before z (gainXp,
 //           so xpAheadX applies). Zones 10-13 give 15, 16, 17, 18, the levels the walk arrives at (seeds 1 and 2).
 //   gear    tier 1 common +0, whatever the zone's tier: tier 2 needs gathering 14 (skillReqs) and the walk reaches zone 13 at 4-7
@@ -141,13 +142,15 @@ export const CHECKPOINTS = [
   // (rare +5) at zones 8, 10 and 12 are report-only (gear must help: kept-up casual >= first-hour casual).
   ['z4-boss', 4, 'boss', { st: 'kept', fx: 'early', gear: 'common', kind: 'reportCaptain' }],
   ['z6-boss', 6, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z7-boss', 7, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  // rally-gates-live (judge 2026-10-08): zones 7-12 on the arrival footing (arrival level, tier 1 common +0, kills capped), the hero the
+  // walk brings there at minutes 8-31; their knots are fitted here with the rally gates on. Zones 4-6 stay on the first-hour footing.
+  ['z7-boss', 7, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
   ['z8-normal', 8, 'normal', { st: 'kept', fx: 'early' }],
-  ['z8-boss', 8, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z9-boss', 9, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z11-boss', 11, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z12-boss', 12, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  ['z8-boss', 8, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
+  ['z9-boss', 9, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
+  ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
+  ['z11-boss', 11, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
+  ['z12-boss', 12, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
   // kept-up rows (boss-tiers-pr5, judge 2026-10-07 point 8): the zone's tier at rare +5 on the same save as the first-hour row, gated, with the
   // never-defends player held under 10%. z12 moved to the early save (the mid save's effect is the report row z12-boss-midsave).
   ['z5-boss-keptup', 5, 'boss', { st: 'kept', fx: 'early', kind: 'keptUpChampion', ref: 'z5-boss' }],
@@ -301,9 +304,9 @@ export function seedOf(...parts) {
 
 const fixtures = {};
 const fx = n => fixtures[n] || (fixtures[n] = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8'));
-// one hero at one checkpoint: win rate, hero turns a won fight and expected attempts for each player
-function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null, bot = false) {   // bot: also play BOT (the budget run only)
-  const [id, z, foe, o] = c, out = {};
+// a fresh core with hero k built for checkpoint c and its foe on the stage (the fight not begun)
+export function buildCore(c, k, lvShift = LV_SHIFT, uq = null) {
+  const [, z, foe, o] = c;
   const core = loadCore({ seed: 1, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
   const save = o.st === 'fresh' ? null : o.st === 'late' ? 'late' : o.fx;
   if (save) { core.storage.set(e('KEY'), fx(save)); e('loadSave()'); }
@@ -312,6 +315,12 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null, bot
   if (TALS) e(talentsTypical);
   if (opt('eval')) e(String(opt('eval')));   // before the foe spawns, so a TURN_TUNE.boss change reaches its setup
   e(`TURN_TUNE.on = 1; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = ${foe === 'boss'}; spawn();`);
+  return core;
+}
+// one hero at one checkpoint: win rate, hero turns a won fight and expected attempts for each player
+function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null, bot = false) {   // bot: also play BOT (the budget run only)
+  const [id, z, foe, o] = c, out = {};
+  const core = buildCore(c, k, lvShift, uq), e = s => core.eval(s);
   if (foe === 'elite') e(`(() => { const f = combatFoes().find(x => x && !x.dead); turnFoeSetup(f, S.zone, { elite: true }); })()`);
   // big: the boss's heaviest single hit as a share of the hero's max HP before the hit cap (a charged move's hits on their own)
   const p0 = e(`(() => { const p = turnCombatProfile(); let big = 0; for (const mv of p.script || []) for (const h of mv.hits || []) big = Math.max(big, (h.x || 0.2) * (mv.charge ? p.bossChargeX || 1 : 1));
@@ -352,7 +361,7 @@ const pc = x => x == null ? 'n/a' : (100 * x).toFixed(0);
 export function printBudget(rep) {
   const T = loadTargets(), all = cells(T, rep);
   console.log(`Difficulty budget: ${rep.fights} scratch turn fights a row, hero and player (each boss fight on its own seed; trash in chains of 5);`);
-  console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z13-z15 bosses and the z16-z26 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
+  console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z7-z15 bosses and the z16-z26 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
   console.log(`Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +${T.tobinBoss}).`);
   console.log('A "behind" row\'s casual number is the drop in casual wins against its ref row.');
   console.log('row'.padEnd(17) + 'kind'.padEnd(13) + 'casual w/t/p'.padEnd(14) + 'mean sprd'.padEnd(10) + 'band'.padEnd(16) + 'good w/t/p'.padEnd(13) + 'band'.padEnd(9) + 'tries w/t/p'.padEnd(16) + 'turns w/t/p'.padEnd(17) + 'level  out of band');

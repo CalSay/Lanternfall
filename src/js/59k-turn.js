@@ -131,7 +131,8 @@ const TURN_TUNE = {
   tricks: { on: 1, from: 4, to: 34, feintFrom: 7, tell: 0.25, read: [0.3, 0.6] },
   // Rally gates (boss-tiers-pr4, judge 2026-10-07): the tempo floor. A Captain's HP has gates at these shares, a Champion's at its own;
   // damage cannot take the boss below the next gate until it has finished one move after reaching it. Zones from..to only.
-  // The first-hour footing hero deals about a sixth of the boss a turn, so the gates rarely bind there; a hero who kills in 3 turns meets them.
+  // They bind on every boss row from zone 4: z8 Wren on the first-hour footing takes 6.4 turns with them, 2.5 without (rally-gates-live, judge
+  // 2026-10-08). The z7-12 knots are fitted with them on, on the arrival footing; the fight bar marks each gate (75-turn-ui).
   gateNote: 0,
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
@@ -522,7 +523,7 @@ function turnHitFoe(m, io, pow, o) {
   // after reaching it; the excess is lost. Burn and Bleed count too, so no build skips it.
   if (p.gates && m.gi < p.gates.length) {
     const lvl = p.gates[m.gi] * p.foeMaxHp, hp = io.foeHp();
-    if (hp - d < lvl) { d = Math.max(0, hp - lvl); if (!m.rally) { m.rally = 1; io.emit('foeRally', { name: p.foeName, gate: m.gi }); } }
+    if (hp - d < lvl) { d = Math.max(0, hp - lvl); if (!m.rally) { m.rally = 1; io.emit('foeRally', { name: p.foeName, gate: m.gi, charging: !!m.charge }); } }
     if (!(d > 0)) return 0;
   }
   const got = io.damageFoe(d, o.kind || 'hit', crit, o.dt || 'phys', o.n || 0);
@@ -1084,7 +1085,8 @@ function turnCombatSnapshot() {
     hero: { aim: m.h.aim, grit: m.h.grit, embers: m.h.embers }, charge: m.charge ? m.charge.mv.name : '', heroOps: m.heroOps,
     canDefend: m.phase === 'foeWindup' && !m.usedDefense,
     timing: m.phase === 'timing' && m.tm ? { id: m.tm.id, i: m.tm.i, n: m.tm.n, closesAt: m.until } : null,
-    shadow: m.h.shadow > 0 };
+    shadow: m.h.shadow > 0,
+    gates: m.p.gates || null, gi: m.gi, rally: m.rally };   // rally gates (rally-gates-live): the boss bar marks each one, and the one it holds at
 }
 function turnCombatProfile() {
   if (TURN_LIVE && !TURN_LIVE.ended) return { ...TURN_LIVE.p, cds: { ...TURN_LIVE.p.cds } };
@@ -1161,7 +1163,9 @@ function turnCombatTick(dt) {
     const u = cbUnitByKey('hero');
     if (f.boss && !f.deep && !f.trial && u && !u.down) u.hp = u.maxHp;   // a zone boss is met at full health (the Deepwell carries HP)
     const p = turnMakeProfile(f, u); if (!p) return;
-    TURN_LIVE = turnNew(p, TURN_LIVE_IO); TURN_LIVE.foe = f; TURN_LAST_PROFILE = p;
+    // turnNew's gate skip reads the foe's HP, and TURN_LIVE is still the last fight here, so it reads f's own (rally-gates-live:
+    // reading the last foe, dead at 0 HP, skipped every gate on every live boss from #160 to 8 Oct)
+    TURN_LIVE = turnNew(p, { ...TURN_LIVE_IO, foeHp: () => Math.max(0, f.hp) }); TURN_LIVE.foe = f; TURN_LAST_PROFILE = p;
     emit('fightStart', { heroHaste: p.heroSpd, foeHaste: p.foeSpd, first: TURN_LIVE.first });
     if (p.trait) {   // an elite's trait: the first of each kind explains itself
       const seen = S.turn.seen || (S.turn.seen = {});
