@@ -5133,6 +5133,9 @@ if (section('solo guide pause rules')) try {
   assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === true && !E('onboardNeed("bench").length'), 'with 12 Pine Log and the gold in hand the Workbench press step pauses again');
   // first-gold-and-camp-strip: with the Forge up the guide's next job is the first weapon, and making one ends it
   E('soloPick("tobin"); S.camp.b.forge = 1; onboardReveal("craft"); onboardDone("forge")');
+  // forge-tip-goes-stale: the press step waits for its materials in hand (its stock: step speaks while short)
+  assert(E('!!weaponKind() && !!needShort(weaponMats()).length && !GUIDE_STEPS.find(s => s.id === "weapon").when()'), 'short of the weapon\'s materials the weapon press step waits');
+  E('for (const [f, t, n] of weaponMats()) { if (f === "gold") S.gold = Math.max(S.gold, n); else S.mats[f][t - 1] = Math.max(S.mats[f][t - 1] || 0, n); }');
   assert(E('!!weaponKind() && weaponMats().length > 0 && !weaponMade() && GUIDE_STEPS.find(s => s.id === "weapon").when() && !GUIDE_STEPS.find(s => s.id === "weapon").done()'), 'the weapon step shows once the Forge is built and no weapon is made');
   E('addItem(newItem(weaponKind(), 1, 0))');
   // cal-0107-flow-bugs (note 13): a weapon in the bag is not "made" until it is worn; the guide says to put it on instead of making another
@@ -11867,6 +11870,12 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
               await page.waitForTimeout(120); continue;
             }
             if (!trail.includes(st)) trail.push(st);
+            // forge-tip-goes-stale: a materials line is hidden over a menu other than Camp or Gather, but its step is still current; the walk reads
+            // it as live from onboardNeed (the materials come in) instead of looking for a line that is not drawn there
+            if (await X(`(id => /^stock:|^chop$/.test(id) && !onboardSpec(id) && !!S.tab && !['world', 'gat'].includes(S.tab) && onboardNeed(id).length > 0)(${JSON.stringify(st)})`)) {
+              await X(`for (const m of onboardNeed(${JSON.stringify(st)})) { if (m.fam === 'gold') S.gold = Math.max(S.gold, m.n); else S.mats[m.fam][m.t - 1] = Math.max(S.mats[m.fam][m.t - 1] || 0, m.n); } for (let k = 0; k < 10; k++) tick(0.1); true`);
+              continue;
+            }
             const key = st + '|' + await X('S.tab + "|" + (S.tab ? curView(S.tab) : "")');
             passes.push(key);
             if (key === lastKey) { if (++same > 30) { stuck = key + ' ' + await X('JSON.stringify({ w: (w => w && { k: w.kind, left: w.left, res: w.res })(actWarning()), paused: ONBOARD.paused, act: S.activity, foes: combatFoes().filter(f => f && !f.dead && f.hp > 0).length, par: S.onboard.parries, hp: S.party && S.party.hp, want: soloGuideWants(), r: soloParry(true) })'); break; } } else { same = 0; lastKey = key; }
@@ -13090,6 +13099,69 @@ if (section('gear-in-first-25')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('gear-in-first-25 crashed: ' + (e.stack || e)); }
+
+// ==== forge-tip-goes-stale: Hesketh's materials lines show on Camp, on Gather and on the game screen, never over another menu ====
+// save-forge-short: Wren, cold, the Workbench built, a Copper Pickaxe and a bow worn, the guide past wear:tool, the Forge plot open and
+// unbuilt, Copper Ore 0, Pine Log 2, zone 3. The step stays stock:forge on every menu (nothing behind it starts, nothing is done).
+if (section('forge-tip-goes-stale')) try {
+  const at = 'forge-tip-goes-stale', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-forge-short.json'), 'utf8');
+  { // the core: × on stock:forge does not bring up the forge step while short; with the materials in hand it does
+    const g = loadCore({ seed: 7, cold: true, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    E('tick(0.1); S.tab = "gat"');   // (a menu: no fight in view, so a between step can start)
+    const sid = () => E('(onboardStep() || {}).id');
+    assert(E('coldH() && stepDone("wear:tool") && !campLv("forge") && plotOpen("forge") && !!equipped("weapon")') && sid() === 'stock:forge', `${at}: the fixture is cold, the Forge plot open, the step stock:forge (${sid()})`);
+    const need = JSON.parse(E('JSON.stringify(onboardNeed("stock:forge").map(m => m.fam + ":" + m.kind))'));
+    assert(need.includes('ore:ore') && need.includes('wood:wood'), `${at}: short Copper Ore and Pine Log, both from a node (${need.join(', ')})`);
+    E('onboardDone("stock:forge"); tick(0.1)');
+    assert(sid() !== 'forge', `${at}: after × on stock:forge, no forge step while short (${sid()})`);
+    E('for (const [f, t, n] of matsOfBuild("forge")) { if (f === "gold") S.gold = Math.max(S.gold, n); else S.mats[f][t - 1] = Math.max(S.mats[f][t - 1] || 0, n); } tick(0.1)');
+    assert(sid() === 'forge', `${at}: with the materials in hand the forge step shows (${sid()})`);
+    assert(!g.errors.length, `${at}: core, no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[360, 740], [740, 360]]) {
+        const v = `${at} (browser ${w}x${h})`;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.activity = "fight"; true');
+        const bubText = () => page.evaluate(() => { const b = document.querySelector('.ob-bub'); return b && !b.hidden ? b.textContent : ''; });
+        // other menus: the step is still stock:forge, and no line is drawn (Act keeps the fight in view, so there the step waits as before)
+        for (const tab of ['party', 'forge', 'adv']) {
+          await X(`S.tab = ${JSON.stringify(tab)}; ui(true); true`); await page.waitForTimeout(600);
+          const r = JSON.parse(await X('JSON.stringify({ st: (onboardStep() || {}).id, spec: !!onboardSpec("stock:forge"), want: soloGuideWants(), done: !!S.onboard.done["stock:forge"] })'));
+          const line = await bubText();
+          assert((r.st === 'stock:forge' || (tab === 'adv' && !r.st)) && !r.done && !r.spec && r.want !== 'stock:forge' && !/still need|for the Forge/.test(line), `${v}: on ${tab} no materials line, the step still stock:forge (${JSON.stringify(r)}, "${line}")`);
+        }
+        // Camp and Gather: the line names each material's place
+        for (const tab of ['world', 'gat']) {
+          await X(`S.tab = ${JSON.stringify(tab)}; S.activity = "gather"; S.node = { kind: "wood", t: 1 }; ui(true); true`);
+          const sp = JSON.parse(await X('JSON.stringify((sp => sp && { text: sp.text })(onboardSpec("stock:forge")))'));
+          assert(sp && /Copper Ore 0\/\d+ at the Copper Vein/.test(sp.text) && /Pine Log \d+\/\d+ at the Pine Grove/.test(sp.text), `${v}: on ${tab} the line names the Copper Vein and the Pine Grove (${sp && sp.text})`);
+        }
+        let line = '';
+        for (let t = 0; t < 4000 && !line.includes('Copper Vein'); t += 250) { await page.waitForTimeout(250); line = await bubText(); }
+        assert(line.includes('at the Copper Vein') && line.includes('at the Pine Grove'), `${v}: over Gather Hesketh says where each material is ("${line}")`);
+        // × on it: no "Open Camp." in its place while short
+        await page.click('.ob-x'); await page.waitForTimeout(400);
+        const after = JSON.parse(await X('JSON.stringify({ st: (onboardStep() || {}).id, want: soloGuideWants(), done: !!S.onboard.done["stock:forge"] })'));
+        line = await bubText();
+        assert(after.done && after.st !== 'forge' && after.want !== 'forge' && !/Open Camp|Build the Forge/.test(line), `${v}: × on the line shows no forge pointer while short (${JSON.stringify(after)}, "${line}")`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('forge-tip-goes-stale crashed: ' + (e.stack || e)); }
 
 // ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Tap again" for 6 s; Cancel always asks twice ====
 if (section('camp-build-tap-again')) try {
