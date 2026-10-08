@@ -91,7 +91,43 @@ const UNIQ = {
   tyrantaxe: { name: "Pale Tyrant's Axe", slot: 'axe', col: '#E6E1F0', src: 'World raid · The Pale Tyrant', fx: { woodExtra: 0.3, gather: 20 }, txt: '30% chance of an extra log, all gathering 20% faster.' },
   // zone-1-unique-hero-fit: the zone 1 unique is a charm every hero can wear. The Sproutblade (a sword only the Warden
   // could wear) is retired: it no longer drops, old saves keep theirs, and its tiles show only to players who found one.
-  briarsprig: { name: 'Briar Sprig', slot: 'charm', was: 'sproutblade', col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' }
+  briarsprig: { name: 'Briar Sprig', slot: 'charm', was: 'sproutblade', col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' },
+  // uniques-first-four (the 11 the Opus judge marked WIRE, codex-uniques-review/pool-judge.md; numbers final-pool-v2.md): a unique is a
+  // rule with a cost, on a Rare-level base (DECISIONS "Gear"). legacy: false marks the new table. Fields the legacy uniques do not have:
+  //   pos    the position it goes in; slot is the kind it is made as (cls 'any': it retools to the wearer's class kind, 41-items)
+  //   cls    the class that wears it ('any', 'warden', 'ranger')     pow  its base power x (itemPower, 40-rules)
+  //   hp     the fixed health line (weapon, off-hand, head and body only): craftAffixValue('hp', power, 0.5)
+  //   g      the grades it drops at [from, to]; from: [foe type, first zone] (the drop pool, 41-items uniqPool; not wired)
+  //   art    1 once its icon has passed the art judge: no unique without it enters the drop pool
+  //   rule   what it does in a turn fight (59k) or at a gathering ground (55-tools), only while UNIQ_TUNE.on; the cost is part of the rule
+  //   rise   a tool that is always the grade of the best open ground of its skill (up to riseMax)
+  // None of them drops yet and none shows on the trophy wall or in the Codex until UNIQ_TUNE.on (uniques-drops-live).
+  'twinned-vow': { name: 'The Divided Vow', slot: 'warblade', pos: 'weapon', cls: 'any', legacy: false, pow: 1.8, hp: 1, g: [1, 2], from: ['slime', 1], art: 0, col: '#B6F09A', src: 'Zone boss · Mossy Hollow', fx: {},
+    rule: { id: 'twin', hit: 0.6 }, txt: 'Your Attack strikes twice, each hit for 60%. With Twin Shot you loose three arrows, each for 60%.' },
+  'twice-sworn': { name: 'The Twice-Sworn Oath', slot: 'warblade', pos: 'weapon', cls: 'any', legacy: false, pow: 1.8, hp: 1, g: [3, 5], from: ['slime', 15], art: 0, col: '#F2E27A', src: 'Zone boss · Mossy Hollow', fx: {},
+    rule: { id: 'twin', hit: 0.85, boss: 0.75, bossZ: [16, 34], noGrit: 1 }, txt: 'Your Attack strikes twice, each hit for 85% (75% against bosses in zones 16 to 34). The second hit gets no Grit bonus.' },
+  'quarry-shield': { name: 'Gate of the Deep', slot: 'shield', pos: 'off', cls: 'warden', legacy: false, pow: 1.8, hp: 1, g: [1, 5], from: ['golem', 6], art: 0, col: '#9C8F7A', src: 'Zone boss · Quarry Ruins', fx: {},
+    rule: { id: 'gate', counterX: 0.8 }, txt: 'Parry every hit of a move but one and you still counter. Counters deal 20% less damage.' },
+  'bat-quiver': { name: "Vesper's Reach", slot: 'quiver', pos: 'off', cls: 'ranger', legacy: false, pow: 1.8, hp: 1, g: [2, 5], from: ['bat', 9], art: 0, col: '#8A6FC8', src: 'Zone boss · Batwing Caves', fx: {},
+    rule: { id: 'vesper' }, txt: 'Each hit you dodge takes 1 turn off every cooldown. Parries no longer do.' },
+  'quarry-plate': { name: "Mountain's Covenant", slot: 'plate', pos: 'body', cls: 'warden', legacy: false, pow: 1.8, hp: 1, g: [3, 5], from: ['golem', 13], art: 0, col: '#C98A5B', src: 'Zone boss · Quarry Ruins', fx: {},
+    rule: { id: 'mountain', per: 0.04, max: 0.4, boss: 0.5, bossZ: [16, 34], cost: 1 }, txt: 'Built for parrying: each Grit you hold adds 4% to your abilities (up to 40%). Each hit you fail to parry or dodge costs 1 Grit.' },
+  'moss-sword': { name: 'Oath of the Hollow', slot: 'warblade', pos: 'weapon', cls: 'warden', legacy: false, pow: 1.8, hp: 1, g: [1, 5], from: ['slime', 1], art: 0, col: '#3E8A4E', src: 'Zone boss · Mossy Hollow', fx: {},
+    rule: { id: 'oath', abX: 1.3, atkX: 0.9 }, txt: 'Parry any hit of a move and your next ability deals 30% more. Your Attack deals 10% less.' },
+  'bat-bow': { name: 'The Crimson Thread', slot: 'bow', pos: 'weapon', cls: 'ranger', legacy: false, pow: 1.8, hp: 1, g: [1, 5], from: ['bat', 2], art: 0, col: '#C9463E', src: 'Zone boss · Batwing Caves', fx: {},
+    rule: { id: 'crimson', stacks: 2, cap: 10, tickX: 0.9 }, txt: 'Needs something that makes Bleed. Your Bleed stacks twice as fast and holds up to 10. Bleed deals 10% less a turn.' },
+  'carapace-pick': { name: "Burrower's Promise", slot: 'pick', pos: 'pick', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['beetle', 4], art: 0, col: '#9BE3F0', src: 'Zone boss · Beetle Barrows', fx: {},
+    rise: 'mine', riseMax: 5, rule: { id: 'tool', skill: 'mine', spd: 0.9, partner: { ore: ['crystal', 3], crystal: ['ore', 3] } },
+    txt: 'Always the grade of your best open Mining ground. Every 3 Ore or Crystal you mine also turns up 1 of the other. Mining is 10% slower.' },
+  'wisp-axe': { name: 'Reed of Remembrance', slot: 'axe', pos: 'axe', cls: 'any', legacy: false, pow: 1.8, g: [2, 5], from: ['wraith', 7], art: 0, col: '#35524C', src: 'Zone boss · Wraithmarsh', fx: {},
+    rise: 'wood', riseMax: 5, rule: { id: 'tool', skill: 'wood', spd: 0.9, partner: { wood: ['fibre', 2] } },
+    txt: 'Always the grade of your best open Woodcutting ground. Every 2 Wood you cut also bring 1 Fibre. Woodcutting is 10% slower.' },
+  'spore-sickle': { name: 'Harvest of Whispers', slot: 'sickle', pos: 'sickle', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['spore', 5], art: 0, col: '#F3E6CF', src: 'Zone boss · Fungal Deep', fx: {},
+    rise: 'forage', riseMax: 5, rule: { id: 'tool', skill: 'forage', spd: 0.9, partner: { herb: ['fibre', 2], fibre: ['herb', 2] } },
+    txt: 'Always the grade of your best open Foraging ground. Every 2 Herbs bring 1 Fibre, and every 2 Fibre bring 1 Herb. Foraging is 10% slower.' },
+  'moss-spear': { name: 'Thorn of the First Grove', slot: 'spear', pos: 'spear', cls: 'any', legacy: false, pow: 1.8, g: [2, 3], from: ['slime', 8], art: 0, col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: {},
+    rise: 'hunt', riseMax: 3, rule: { id: 'tool', skill: 'hunt', spd: 0.9, partner: { hide: ['fibre', 2] } },
+    txt: 'Always the grade of your best open Hunting ground, up to grade 3. Every 2 Hide bring 1 Fibre. Hunting is 10% slower.' }
 };
 // The uniques a player can see on the trophy wall, the Codex and the totals: every unique that still drops, plus a retired one they found.
 // A hidden retired unique's replacement (`was`) takes its place in the order, because the Codex's seen string is read by position.
@@ -100,13 +136,16 @@ const uniqKeys = () => {
   for (const k of keys) {
     const u = UNIQ[k];
     if (u.retired) { if (got(k)) out.push(k); else out.push(...keys.filter(j => UNIQ[j].was === k)); }
+    else if (u.legacy === false) { if (UNIQ_TUNE.on || got(k)) out.push(k); }   // uniques-first-four: the new table shows once the switch is on (or one was found)
     else if (!u.was || got(u.was)) out.push(k);
   }
   return out;
 };
 // Uniques are about their effect, not raw power (owner, 2026-09-27): base power at Rare level (was the
 // Legendary x3.2), and rarer drops. `owned` scales the chance when you already have that unique at this tier or higher.
-const UNIQ_TUNE = { pow: 1.8, first: 0.15, again: 0.04, owned: 0.5 };
+// on (uniques-first-four): the new uniques' rules and costs (59k, 55-tools) and their tiles. Off until uniques-drops-live; with it
+// off a new unique is its Rare-level base and health line only, so a save from a later build still loads and plays.
+const UNIQ_TUNE = { pow: 1.8, first: 0.15, again: 0.04, owned: 0.5, on: 0 };
 const ZONE_UNIQ = ['briarsprig', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
 const RAID_UNIQ = ['wyrmscale', 'hollowcrown', 'colossuspick', 'hydraglass', 'eaterfang', 'tyrantaxe'];
 const BAG_MAX = 40;

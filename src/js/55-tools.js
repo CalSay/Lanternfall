@@ -33,8 +33,8 @@
 //   toolHandsMult(skill) -> 1.1 at mastery 20, else 1 (for N1's Hands)
 //   toolBest(skill) -> { kind, t, cur, ok, why }  the best tool tier worth making now (sim policy)
 //
-// Events: listens 'harvest' (rare finds), 'awayBegin' (the away mastery line).
-// Emits 'rareFind' { kind, t, n, away } and 'toolMastery' { kind, lv, quiet }.
+// Events: listens 'harvest' (rare finds, a tool unique's partner yield), 'skillUp' (a Rising tool's grade), 'awayBegin' (the away mastery line).
+// Emits 'rareFind' { kind, t, n, away }, 'partnerFind' { kind, t, n, away } and 'toolMastery' { kind, lv, quiet }.
 // Rare finds credit through stashAdd (55-store, H3) in `credit` below: a flow, like gathering.
 // Save: registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 }).
 //   m[kind] = [level, seconds into the level]. finds: rare finds made (lifetime units).
@@ -89,7 +89,7 @@ function toolRight(skill, t) {
   equippedTool = skill => {
     const kind = toolOf(skill); if (!kind) return { kind: null, tier: 0, item: null };
     const it = itemById(S.equip[TOOL_KINDS[kind].pos]);
-    return it && fits(it, TOOL_KINDS[kind].pos) ? { kind, tier: it.t, item: it } : { kind, tier: 0, item: null };
+    return it && fits(it, TOOL_KINDS[kind].pos) ? { kind, tier: itemTier(it), item: it } : { kind, tier: 0, item: null };   // itemTier: a Rising unique's grade
   };
   toolLook = skill => {
     const e = equippedTool(skill), it = e.item;
@@ -175,6 +175,25 @@ function toolRight(skill, t) {
     T().finds = (T().finds || 0) + got;
     if (!away) addFloat(`Rare find! +${got} ${matName(kind, up)}`, MAT[kind].col[up - 1], true, 0.66, 0.22);
     emit('rareFind', { kind, t: up, n: got, away: !!away });
+  });
+
+  // ---------------- the tool uniques (uniques-first-four; 20-data UNIQ rule id 'tool', only while UNIQ_TUNE.on) ----------------
+  // Rising: the tool is the grade of the best open ground of its skill (itemTier, 40-rules); a new level can open a grade, so the gear
+  // cache is redone then. Partner yield: every `per` units credited at a ground of that family also bring 1 of the partner family at
+  // the same grade (a flow, up to the Storehouse cap; no harvest event, so no rare find on it). The cost: that skill gathers x spd.
+  const uniqTool = skill => {
+    if (!UNIQ_TUNE.on || !toolOf(skill)) return null;
+    const it = equippedTool(skill).item, u = it && it.u && UNIQ[it.u];
+    return u && u.legacy === false && u.rule && u.rule.id === 'tool' && u.rule.skill === skill ? u : null;
+  };
+  for (const skill of Object.keys(TOOL_OF_SKILL)) addModifier('gatherSpeed:' + skill, () => { const u = uniqTool(skill); return u ? u.rule.spd : 1; });
+  on('skillUp', ({ k }) => { const u = uniqTool(k); if (u && u.rise === k) gearDirty(); });
+  on('harvest', ({ kind, t, n, away }) => {
+    if (!CRAFT_NODES[kind] || !(n > 0) || !(t >= 1 && t <= 5)) return;
+    const u = uniqTool(skillOf(kind)), pr = u && u.rule.partner && u.rule.partner[kind]; if (!pr) return;
+    const got = credit(pr[0], t, roll(n / pr[1]));
+    if (got && !away) addFloat(`+${got} ${matName(pr[0], t)}`, MAT[pr[0]].col[t - 1], false, 0.66, 0.18);
+    if (got) emit('partnerFind', { kind: pr[0], t, n: got, away: !!away });
   });
 
   // ---------------- away ----------------

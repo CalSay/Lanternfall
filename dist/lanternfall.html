@@ -3052,6 +3052,11 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .sty-sheet:not(.sty-scene) .sty-actions { position: sticky; bottom: 0; background: var(--panel); padding-top: 4px; }
   /* the buttons sit beside the card, not over its last lines (a wide screen has room; a short one does not) */
   .sty-sheet.sty-scene .bsheet-body { display: flex; flex-direction: row; align-items: stretch; overflow: hidden; }
+  /* a scene card takes the screen's width (not the portrait 520 px), so each line sits on one row and a four-line card fits without
+     scrolling; the grab row is trimmed to the close button's height (story-card-landscape-fit) */
+  .bsheet.small.sty-sheet.sty-scene { width: min(700px, calc(100% - 24px)); }
+  .sty-sheet.sty-scene .bsheet-grab { height: 28px; }
+  .sty-sheet.sty-scene .sty-actions { padding-top: 16px; }   /* the 44 px close button hangs 16 px below the grab row: keep Continue clear of it */
   .sty-sheet.sty-scene .sty-card { flex: 1 1 auto; min-width: 0; overflow-y: auto; }
   .sty-sheet.sty-scene .sty-card { padding: 8px 12px; gap: 4px; }
   .sty-sheet.sty-scene .sty-title { font-size: 17px; line-height: 1.15; }
@@ -6843,7 +6848,43 @@ const UNIQ = {
   tyrantaxe: { name: "Pale Tyrant's Axe", slot: 'axe', col: '#E6E1F0', src: 'World raid · The Pale Tyrant', fx: { woodExtra: 0.3, gather: 20 }, txt: '30% chance of an extra log, all gathering 20% faster.' },
   // zone-1-unique-hero-fit: the zone 1 unique is a charm every hero can wear. The Sproutblade (a sword only the Warden
   // could wear) is retired: it no longer drops, old saves keep theirs, and its tiles show only to players who found one.
-  briarsprig: { name: 'Briar Sprig', slot: 'charm', was: 'sproutblade', col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' }
+  briarsprig: { name: 'Briar Sprig', slot: 'charm', was: 'sproutblade', col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' },
+  // uniques-first-four (the 11 the Opus judge marked WIRE, codex-uniques-review/pool-judge.md; numbers final-pool-v2.md): a unique is a
+  // rule with a cost, on a Rare-level base (DECISIONS "Gear"). legacy: false marks the new table. Fields the legacy uniques do not have:
+  //   pos    the position it goes in; slot is the kind it is made as (cls 'any': it retools to the wearer's class kind, 41-items)
+  //   cls    the class that wears it ('any', 'warden', 'ranger')     pow  its base power x (itemPower, 40-rules)
+  //   hp     the fixed health line (weapon, off-hand, head and body only): craftAffixValue('hp', power, 0.5)
+  //   g      the grades it drops at [from, to]; from: [foe type, first zone] (the drop pool, 41-items uniqPool; not wired)
+  //   art    1 once its icon has passed the art judge: no unique without it enters the drop pool
+  //   rule   what it does in a turn fight (59k) or at a gathering ground (55-tools), only while UNIQ_TUNE.on; the cost is part of the rule
+  //   rise   a tool that is always the grade of the best open ground of its skill (up to riseMax)
+  // None of them drops yet and none shows on the trophy wall or in the Codex until UNIQ_TUNE.on (uniques-drops-live).
+  'twinned-vow': { name: 'The Divided Vow', slot: 'warblade', pos: 'weapon', cls: 'any', legacy: false, pow: 1.8, hp: 1, g: [1, 2], from: ['slime', 1], art: 0, col: '#B6F09A', src: 'Zone boss · Mossy Hollow', fx: {},
+    rule: { id: 'twin', hit: 0.6 }, txt: 'Your Attack strikes twice, each hit for 60%. With Twin Shot you loose three arrows, each for 60%.' },
+  'twice-sworn': { name: 'The Twice-Sworn Oath', slot: 'warblade', pos: 'weapon', cls: 'any', legacy: false, pow: 1.8, hp: 1, g: [3, 5], from: ['slime', 15], art: 0, col: '#F2E27A', src: 'Zone boss · Mossy Hollow', fx: {},
+    rule: { id: 'twin', hit: 0.85, boss: 0.75, bossZ: [16, 34], noGrit: 1 }, txt: 'Your Attack strikes twice, each hit for 85% (75% against bosses in zones 16 to 34). The second hit gets no Grit bonus.' },
+  'quarry-shield': { name: 'Gate of the Deep', slot: 'shield', pos: 'off', cls: 'warden', legacy: false, pow: 1.8, hp: 1, g: [1, 5], from: ['golem', 6], art: 0, col: '#9C8F7A', src: 'Zone boss · Quarry Ruins', fx: {},
+    rule: { id: 'gate', counterX: 0.8 }, txt: 'Parry every hit of a move but one and you still counter. Counters deal 20% less damage.' },
+  'bat-quiver': { name: "Vesper's Reach", slot: 'quiver', pos: 'off', cls: 'ranger', legacy: false, pow: 1.8, hp: 1, g: [2, 5], from: ['bat', 9], art: 0, col: '#8A6FC8', src: 'Zone boss · Batwing Caves', fx: {},
+    rule: { id: 'vesper' }, txt: 'Each hit you dodge takes 1 turn off every cooldown. Parries no longer do.' },
+  'quarry-plate': { name: "Mountain's Covenant", slot: 'plate', pos: 'body', cls: 'warden', legacy: false, pow: 1.8, hp: 1, g: [3, 5], from: ['golem', 13], art: 0, col: '#C98A5B', src: 'Zone boss · Quarry Ruins', fx: {},
+    rule: { id: 'mountain', per: 0.04, max: 0.4, boss: 0.5, bossZ: [16, 34], cost: 1 }, txt: 'Built for parrying: each Grit you hold adds 4% to your abilities (up to 40%). Each hit you fail to parry or dodge costs 1 Grit.' },
+  'moss-sword': { name: 'Oath of the Hollow', slot: 'warblade', pos: 'weapon', cls: 'warden', legacy: false, pow: 1.8, hp: 1, g: [1, 5], from: ['slime', 1], art: 0, col: '#3E8A4E', src: 'Zone boss · Mossy Hollow', fx: {},
+    rule: { id: 'oath', abX: 1.3, atkX: 0.9 }, txt: 'Parry any hit of a move and your next ability deals 30% more. Your Attack deals 10% less.' },
+  'bat-bow': { name: 'The Crimson Thread', slot: 'bow', pos: 'weapon', cls: 'ranger', legacy: false, pow: 1.8, hp: 1, g: [1, 5], from: ['bat', 2], art: 0, col: '#C9463E', src: 'Zone boss · Batwing Caves', fx: {},
+    rule: { id: 'crimson', stacks: 2, cap: 10, tickX: 0.9 }, txt: 'Needs something that makes Bleed. Your Bleed stacks twice as fast and holds up to 10. Bleed deals 10% less a turn.' },
+  'carapace-pick': { name: "Burrower's Promise", slot: 'pick', pos: 'pick', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['beetle', 4], art: 0, col: '#9BE3F0', src: 'Zone boss · Beetle Barrows', fx: {},
+    rise: 'mine', riseMax: 5, rule: { id: 'tool', skill: 'mine', spd: 0.9, partner: { ore: ['crystal', 3], crystal: ['ore', 3] } },
+    txt: 'Always the grade of your best open Mining ground. Every 3 Ore or Crystal you mine also turns up 1 of the other. Mining is 10% slower.' },
+  'wisp-axe': { name: 'Reed of Remembrance', slot: 'axe', pos: 'axe', cls: 'any', legacy: false, pow: 1.8, g: [2, 5], from: ['wraith', 7], art: 0, col: '#35524C', src: 'Zone boss · Wraithmarsh', fx: {},
+    rise: 'wood', riseMax: 5, rule: { id: 'tool', skill: 'wood', spd: 0.9, partner: { wood: ['fibre', 2] } },
+    txt: 'Always the grade of your best open Woodcutting ground. Every 2 Wood you cut also bring 1 Fibre. Woodcutting is 10% slower.' },
+  'spore-sickle': { name: 'Harvest of Whispers', slot: 'sickle', pos: 'sickle', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['spore', 5], art: 0, col: '#F3E6CF', src: 'Zone boss · Fungal Deep', fx: {},
+    rise: 'forage', riseMax: 5, rule: { id: 'tool', skill: 'forage', spd: 0.9, partner: { herb: ['fibre', 2], fibre: ['herb', 2] } },
+    txt: 'Always the grade of your best open Foraging ground. Every 2 Herbs bring 1 Fibre, and every 2 Fibre bring 1 Herb. Foraging is 10% slower.' },
+  'moss-spear': { name: 'Thorn of the First Grove', slot: 'spear', pos: 'spear', cls: 'any', legacy: false, pow: 1.8, g: [2, 3], from: ['slime', 8], art: 0, col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: {},
+    rise: 'hunt', riseMax: 3, rule: { id: 'tool', skill: 'hunt', spd: 0.9, partner: { hide: ['fibre', 2] } },
+    txt: 'Always the grade of your best open Hunting ground, up to grade 3. Every 2 Hide bring 1 Fibre. Hunting is 10% slower.' }
 };
 // The uniques a player can see on the trophy wall, the Codex and the totals: every unique that still drops, plus a retired one they found.
 // A hidden retired unique's replacement (`was`) takes its place in the order, because the Codex's seen string is read by position.
@@ -6852,13 +6893,16 @@ const uniqKeys = () => {
   for (const k of keys) {
     const u = UNIQ[k];
     if (u.retired) { if (got(k)) out.push(k); else out.push(...keys.filter(j => UNIQ[j].was === k)); }
+    else if (u.legacy === false) { if (UNIQ_TUNE.on || got(k)) out.push(k); }   // uniques-first-four: the new table shows once the switch is on (or one was found)
     else if (!u.was || got(u.was)) out.push(k);
   }
   return out;
 };
 // Uniques are about their effect, not raw power (owner, 2026-09-27): base power at Rare level (was the
 // Legendary x3.2), and rarer drops. `owned` scales the chance when you already have that unique at this tier or higher.
-const UNIQ_TUNE = { pow: 1.8, first: 0.15, again: 0.04, owned: 0.5 };
+// on (uniques-first-four): the new uniques' rules and costs (59k, 55-tools) and their tiles. Off until uniques-drops-live; with it
+// off a new unique is its Rare-level base and health line only, so a save from a later build still loads and plays.
+const UNIQ_TUNE = { pow: 1.8, first: 0.15, again: 0.04, owned: 0.5, on: 0 };
 const ZONE_UNIQ = ['briarsprig', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
 const RAID_UNIQ = ['wyrmscale', 'hollowcrown', 'colossuspick', 'hydraglass', 'eaterfang', 'tyrantaxe'];
 const BAG_MAX = 40;
@@ -10647,7 +10691,10 @@ let rallyUntil = 0;
 // ================= gear math =================
 const itemById = id => S.items.find(i => i.id === id) || null;
 const equipped = slot => itemById(S.equip[slot]);
-const itemPower = it => TIER_POW[it.t] * (it.u ? UNIQ_TUNE.pow : RAR[it.r].m) * (1 + 0.15 * it.plus);
+// uniques-first-four: a unique's power x is its own (pow, Rare level), else UNIQ_TUNE.pow. A Rising tool (UNIQ rise) is the grade of the
+// best open ground of its skill while UNIQ_TUNE.on (nothing saved: the item keeps its own t for upgrades and salvage).
+const itemTier = it => { const d = it.u && UNIQ[it.u]; return d && d.rise && UNIQ_TUNE.on && S.skills && S.skills[d.rise] ? Math.min(d.riseMax || 5, skillTopTier(d.rise)) : it.t; };
+const itemPower = it => TIER_POW[itemTier(it)] * (it.u ? (UNIQ[it.u] && UNIQ[it.u].pow) || UNIQ_TUNE.pow : RAR[it.r].m) * (1 + 0.15 * it.plus);
 // Item kinds, stat lines and the 8 hero positions live in 41-items.js (K4).
 function itemName(it) { return kindName(it.slot, it.t, it.u) + (it.plus ? ` +${it.plus}` : ''); }
 function slotStats(slot, p) {
@@ -10928,6 +10975,12 @@ const nodeColor = () => (MAT[S.node.kind] || MAT.wood).col[S.node.t - 1];
 //            the caller pays and applies). Never duplicates an affix stat, never touches mw.
 //   bag      equippedIds() -> Set of item ids worn by the hero
 //            isEquipped(id), bagCount() (unequipped items), bagFull() (>= CRAFT_BAG_MAX)
+//   uniques  (uniques-first-four, the new table in 20-data UNIQ: legacy false)
+//            uniqAnyCls(item) every class wears it (it retools to the wearer's class kind, keeping id, u, t, r and +N)
+//            uniqKindFor(key, cls) the kind a unique is made as for a class (a drop: uniques-drops-live wires it)
+//            uniqRulesWorn(over) -> [rule, ...] the rules of the uniques the hero wears that fit, while UNIQ_TUNE.on ([] off)
+//            uniqPool(z) -> [key, ...] the new uniques a zone z boss could drop (its foe type, from its zone, the zone's
+//            grade in the item's band, art passed). Exported, not wired: drops are uniques-drops-live
 //
 // Item fields (S.items entries). Old items have only the first five and keep their stats:
 //   id, slot (= kind), t, r, plus, u (unique key)
@@ -10959,7 +11012,7 @@ const nodeColor = () => (MAT[S.node.kind] || MAT.wood).col[S.node.t - 1];
 
 let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats, gearCalc, spellMult,
   kindName, kindColor, kindCost, kindUpgradeCost, newItem, rollAffixes, reforgeCost, reforgeLine,
-  equippedIds, isEquipped, bagCount, bagFull;
+  equippedIds, isEquipped, bagCount, bagFull, uniqAnyCls, uniqKindFor, uniqRulesWorn, uniqPool;
 
 {
   const LEGACY = RECIPE; // weapon, helm, charm, pick, axe: the pre-K4 kinds (and every unique)
@@ -10980,6 +11033,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   RETOOL = { on: 1 };
   const RT_KINDS = { weapon: 1, helm: 1 }; // legacy kinds that retool into class kinds
   const pendingLegacy = it => !!it && typeof it === 'object' && !it.u && !!RT_KINDS[it.slot];
+  uniqAnyCls = it => !!(it && it.u && UNIQ[it.u] && UNIQ[it.u].legacy === false && UNIQ[it.u].cls === 'any');
   fits = (it, pos, who = 'hero') => {
     const kind = typeof it === 'string' ? it : it && it.slot;
     if (!CRAFT_KINDS[kind] || !CRAFT_FITS[pos] || !craftKindVisible(kind)) return false;
@@ -10998,20 +11052,22 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     const cls = heroWho(); if (!RETOOL.on || cls === 'any' || !Array.isArray(S.items)) return out;
     const hero = new Set(CRAFT_HERO_POS.map(p => S.equip[p]).filter(v => v != null));
     for (const it of S.items) {
-      if (!it || it.u) continue;
+      if (!it || (it.u && !uniqAnyCls(it))) continue;
       const d = CRAFT_KINDS[it.slot]; if (!d || !d.pos) continue;
       let why = null;
-      if (RT_KINDS[it.slot]) why = 'legacy';
+      if (it.u) why = d.cls && d.cls !== cls ? 'uniq' : null;   // uniques-first-four: an every-class unique is always the wearer's class kind (worn or not; no notice)
+      else if (RT_KINDS[it.slot]) why = 'legacy';
       else if (swap && d.cls && d.cls !== cls && (hero.has(it.id) || !d.comp)) why = 'swap';
       if (!why) continue;
       const to = classKindAt(d.pos, cls); if (!to || to === it.slot) continue;
       if (it.rt == null) it.rt = it.slot;
       if (why === 'legacy') out.legacy[it.slot]++;
+      else if (why === 'uniq') out.uniq = (out.uniq || 0) + 1;
       else { out.swap++; if (!out.from.includes(d.cls)) out.from.push(d.cls); }
       it.slot = to;
     }
     const nl = out.legacy.weapon + out.legacy.helm;
-    if (!nl && !out.swap) return out;
+    if (!nl && !out.swap && !out.uniq) return out;
     if (nl) {
       const w = out.legacy.weapon, h = out.legacy.helm, word = (n, one, many) => n === 1 ? one : many;
       const what = w && h ? `${word(w, 'sword', 'swords')} and ${word(h, 'helm', 'helms')}` : w ? word(w, 'sword', 'swords') : word(h, 'helm', 'helms');
@@ -11047,7 +11103,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     const out = LEGACY[bk] ? legacyLines(bk, p) : craftBaseLines(bk, p);
     if (Array.isArray(it.a)) for (const [id, q] of it.a) if (CRAFT_AFFIXES[id]) out.push(...craftAffixValue(id, p, q));
     if (it.mw != null) { const l = craftTrophyLine(it.mw, it.slot, p); if (l) out.push(l); }
-    if (it.u && UNIQ[it.u]) for (const [k, v] of Object.entries(UNIQ[it.u].fx)) out.push([k, v]);
+    if (it.u && UNIQ[it.u]) { const u = UNIQ[it.u]; if (u.hp) out.push(...craftAffixValue('hp', p, 0.5)); for (const [k, v] of Object.entries(u.fx)) out.push([k, v]); }   // uniques-first-four: the fixed health line
     return out;
   };
   const addLines = (s, lines) => { for (const [k, v] of lines) { if (k === 'tap') s.tap *= v; else s[k] = (s[k] || 0) + v; } };
@@ -11067,6 +11123,26 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     return capNonLive(s);
   };
   spellMult = () => 1 + gear().spell / 100;
+
+  // ---- the new uniques (uniques-first-four) ----
+  uniqKindFor = (key, cls) => {
+    const u = UNIQ[key]; if (!u) return null;
+    return u.cls === 'any' && cls && cls !== 'any' ? classKindAt(u.pos, cls) || u.slot : u.slot;
+  };
+  // what is worn (or `over`, as gearCalc), fitting, with a rule: one entry per piece
+  uniqRulesWorn = over => {
+    if (!UNIQ_TUNE.on || !S.equip) return [];
+    const out = [], who = heroWho();
+    for (const pos of CRAFT_HERO_POS) {
+      const it = over && pos in over ? over[pos] : itemById(S.equip[pos]), u = it && it.u && UNIQ[it.u];
+      if (u && u.legacy === false && u.rule && fits(it, pos, who)) out.push(u.rule);
+    }
+    return out;
+  };
+  uniqPool = z => {
+    const type = TYPES[zoneType(z)] && TYPES[zoneType(z)].key, g = zoneTier(z);
+    return Object.keys(UNIQ).filter(k => { const u = UNIQ[k]; return u.legacy === false && u.art && u.from && u.from[0] === type && z >= u.from[1] && g >= u.g[0] && g <= u.g[1]; });
+  };
 
   // ---- names, colours, costs ----
   kindName = (slot, t, u) => {
@@ -15500,7 +15576,8 @@ function validateSave(data) {
     for (const it of data.items) {
       record(it, 'items[]'); int(it.id, 'item.id', 1); if (ids.has(it.id)) fail('item.id', 'is duplicated'); ids.add(it.id);
       known(CRAFT_KINDS, it.slot, 'item.slot'); known(RAR, it.r, 'item.r'); tier(it.t, 'item.t'); int(it.plus, 'item.plus', 0, 1000);
-      if (it.u != null) known(UNIQ, it.u, 'item.u');
+      if (it.u != null) { known(UNIQ, it.u, 'item.u'); const u = UNIQ[it.u];   // uniques-first-four: a new unique is the kind it was made as (an every-class one: any kind of its position)
+        if (u.legacy === false && (u.cls === 'any' ? kindPos(it.slot) !== u.pos : it.slot !== u.slot)) fail('item.u', 'is on the wrong kind of item'); }
       if (it.a !== undefined) { array(it.a, 'item.a'); for (const a of it.a) { array(a, 'item.a[]'); if (a.length !== 2) fail('item.a[]'); known(CRAFT_AFFIXES, a[0], 'item.a[].stat'); num(a[1], 'item.a[].value', 0, 1); } }
       if (it.mw != null) int(it.mw, 'item.mw', 0, CRAFT_TROPHIES.length - 1);
       if (it.rf !== undefined) int(it.rf, 'item.rf', 0, 1000);
@@ -16463,8 +16540,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
 //   toolHandsMult(skill) -> 1.1 at mastery 20, else 1 (for N1's Hands)
 //   toolBest(skill) -> { kind, t, cur, ok, why }  the best tool tier worth making now (sim policy)
 //
-// Events: listens 'harvest' (rare finds), 'awayBegin' (the away mastery line).
-// Emits 'rareFind' { kind, t, n, away } and 'toolMastery' { kind, lv, quiet }.
+// Events: listens 'harvest' (rare finds, a tool unique's partner yield), 'skillUp' (a Rising tool's grade), 'awayBegin' (the away mastery line).
+// Emits 'rareFind' { kind, t, n, away }, 'partnerFind' { kind, t, n, away } and 'toolMastery' { kind, lv, quiet }.
 // Rare finds credit through stashAdd (55-store, H3) in `credit` below: a flow, like gathering.
 // Save: registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 }).
 //   m[kind] = [level, seconds into the level]. finds: rare finds made (lifetime units).
@@ -16519,7 +16596,7 @@ function toolRight(skill, t) {
   equippedTool = skill => {
     const kind = toolOf(skill); if (!kind) return { kind: null, tier: 0, item: null };
     const it = itemById(S.equip[TOOL_KINDS[kind].pos]);
-    return it && fits(it, TOOL_KINDS[kind].pos) ? { kind, tier: it.t, item: it } : { kind, tier: 0, item: null };
+    return it && fits(it, TOOL_KINDS[kind].pos) ? { kind, tier: itemTier(it), item: it } : { kind, tier: 0, item: null };   // itemTier: a Rising unique's grade
   };
   toolLook = skill => {
     const e = equippedTool(skill), it = e.item;
@@ -16605,6 +16682,25 @@ function toolRight(skill, t) {
     T().finds = (T().finds || 0) + got;
     if (!away) addFloat(`Rare find! +${got} ${matName(kind, up)}`, MAT[kind].col[up - 1], true, 0.66, 0.22);
     emit('rareFind', { kind, t: up, n: got, away: !!away });
+  });
+
+  // ---------------- the tool uniques (uniques-first-four; 20-data UNIQ rule id 'tool', only while UNIQ_TUNE.on) ----------------
+  // Rising: the tool is the grade of the best open ground of its skill (itemTier, 40-rules); a new level can open a grade, so the gear
+  // cache is redone then. Partner yield: every `per` units credited at a ground of that family also bring 1 of the partner family at
+  // the same grade (a flow, up to the Storehouse cap; no harvest event, so no rare find on it). The cost: that skill gathers x spd.
+  const uniqTool = skill => {
+    if (!UNIQ_TUNE.on || !toolOf(skill)) return null;
+    const it = equippedTool(skill).item, u = it && it.u && UNIQ[it.u];
+    return u && u.legacy === false && u.rule && u.rule.id === 'tool' && u.rule.skill === skill ? u : null;
+  };
+  for (const skill of Object.keys(TOOL_OF_SKILL)) addModifier('gatherSpeed:' + skill, () => { const u = uniqTool(skill); return u ? u.rule.spd : 1; });
+  on('skillUp', ({ k }) => { const u = uniqTool(k); if (u && u.rise === k) gearDirty(); });
+  on('harvest', ({ kind, t, n, away }) => {
+    if (!CRAFT_NODES[kind] || !(n > 0) || !(t >= 1 && t <= 5)) return;
+    const u = uniqTool(skillOf(kind)), pr = u && u.rule.partner && u.rule.partner[kind]; if (!pr) return;
+    const got = credit(pr[0], t, roll(n / pr[1]));
+    if (got && !away) addFloat(`+${got} ${matName(pr[0], t)}`, MAT[pr[0]].col[t - 1], false, 0.66, 0.18);
+    if (got) emit('partnerFind', { kind: pr[0], t, n: got, away: !!away });
   });
 
   // ---------------- away ----------------
@@ -25769,6 +25865,7 @@ function turnMakeProfile(f, u) {
     bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0,
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
     gates: f.tk.gates || null, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
+    zb: !!f.tk.zb, uq: typeof uniqRulesWorn === 'function' ? uniqRulesWorn() : [],   // uniques-first-four: a zone boss; the worn uniques' rules (none while UNIQ_TUNE.on is 0)
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
@@ -25825,9 +25922,24 @@ function turnNew(p, io) {
   if (p.trait === 'shielded') m.e.shield = TURN_TRAITS.shielded.share * p.foeMaxHp;
   if (p.trait === 'frozen') m.e.ice = 1;
   m.sf = null; if (p.stars && p.stars.length) turnStarsStart(m, io);   // the Stars (57e): flags and openers
+  m.uf = turnUniqFlags(p);   // the worn uniques' rules (uniques-first-four), null when none
   m.first = turnPick(m).who;
   return m;
 }
+// The worn uniques' rules for one fight (uniques-first-four; 20-data UNIQ rule): { twin, gate, vesper, mountain, oath, crimson }, or null.
+// Each is keyed on a kind of action or a class resource, never on a hero. One piece a position, so a rule id comes once.
+// A rule holds its cost: twin (Attack strikes twice at hit, boss in bossZ on a zone boss, noGrit: the second hit without Grit's bonus),
+// gate (a counter for every real hit of a move parried but one, at least one; counters x counterX), vesper (a dodged hit takes a turn
+// off every cooldown, a parry no longer does), mountain (each Grit adds per to abilities up to max, boss on a zone boss in bossZ; a
+// landed hit costs `cost` Grit), oath (a parried move makes the next ability x abX; Attack x atkX), crimson (Bleed stacks x stacks, cap
+// `cap`, ticks x tickX). Tool rules act at the gathering grounds (55-tools).
+function turnUniqFlags(p) {
+  if (!p.uq || !p.uq.length) return null;
+  let f = null;
+  for (const r of p.uq) if (r && r.id && r.id !== 'tool') (f || (f = {}))[r.id] = r;
+  return f;
+}
+const turnUniqBand = (m, r) => !!(r && r.boss && m.p.zb && r.bossZ && m.p.zone >= r.bossZ[0] && m.p.zone <= r.bossZ[1]);   // a zone boss in the rule's boss band
 // Speed now (temporary changes clamp to TURN_TUNE.speedMin..Max of the base; a boss takes slows at half)
 function turnRate(m, who) {
   const T = TURN_TUNE, p = m.p;
@@ -25961,7 +26073,8 @@ function turnControl(m, io, kind) {
   return true;
 }
 const turnBurnSet = (e, dmg, t) => { if (dmg >= e.burnDmg || !(e.burn > 0)) e.burnDmg = dmg; e.burn = Math.min(TURN_TUNE.burnMaxT, Math.max(e.burn, t)); if (e.brand) turnMark(e, e.brand); };   // e.brand: the Stars' Brand
-const turnBleedAdd = (m, n) => { const T = TURN_TUNE, e = m.e; e.bleed = Math.min(e.bleedMax || T.bleedMax, e.bleed + n); e.bleedT = T.bleedT + (e.bleedPlus || 0); e.bleedDmg = Math.max(e.bleedDmg, T.bleedP * m.p.U); };
+const turnBleedAdd = (m, n) => { const T = TURN_TUNE, e = m.e, cr = m.uf && m.uf.crimson; if (cr) n *= cr.stacks;   // the Crimson Thread: twice the stacks, up to its cap
+  e.bleed = Math.min(cr ? Math.max(cr.cap, e.bleedMax || 0) : e.bleedMax || T.bleedMax, e.bleed + n); e.bleedT = T.bleedT + (e.bleedPlus || 0); e.bleedDmg = Math.max(e.bleedDmg, T.bleedP * m.p.U); };
 function turnChillAdd(m, io, n) {
   const T = TURN_TUNE, e = m.e;
   e.chill = Math.min(T.chillMax, e.chill + n); e.chillT = T.chillT;
@@ -26001,7 +26114,8 @@ const has = (m, id) => m.p.eq.includes(id);
 const turnTal = (m, id) => (m.p.tal && m.p.tal[id]) || '';
 // the hero acts: 'attack' or an ability id. -> true when it happened
 function turnHeroAct(m, io, id, slot, grades) {
-  const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, U = p.U, k = p.heroKey;
+  const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, k = p.heroKey, uf = m.uf;
+  let U = p.U;
   if (turnUsable(m, id)) return false;
   if (m.sf) turnStarsAct(m, io, id, 'pre');
   // a timed ability's rings, one per direct hit in order: 'perfect' | 'good' | 'miss' (none: not timed, as written)
@@ -26022,13 +26136,18 @@ function turnHeroAct(m, io, id, slot, grades) {
   const spendMark = () => { e.mark = 0; e.markV = 0; if (has(m, 'huntmark') && t('huntmark') === 'b') turnMark(e, 1); };   // Lasting Trail
   let spell = false;
   if (id === 'attack') {
-    let dt = p.heroType, x = 1 + (k === 'tobin' ? T.gritDmg * h.grit : 0);
+    const gx = 1 + (k === 'tobin' ? T.gritDmg * h.grit : 0);
+    let dt = p.heroType, x = gx;
     if (has(m, 'momentum')) { h.mom++; x *= 1 + Math.min(0.5, 0.1 * h.mom + (t('momentum') === 'a' ? 0.1 : 0)); }
     let glowed = false;
     if (has(m, 'afterglow') && h.glow > 0) { x *= 1.5; dt = h.glowDt || dt; h.glow = 0; glowed = true; }
+    if (uf && uf.oath) x *= uf.oath.atkX;   // Oath of the Hollow's cost
     const more = { dt, kind: 'attack', armX: h.pierce ? 0 : 1, payoff: k === 'tobin' }; h.pierce = 0;   // Read the Blow: this Attack ignores armour; Tobin's Attack takes an opening (Exposed)
-    if (k === 'wren' && has(m, 'twinshot')) { const a1 = hit(p.A * 0.55 * x, { ...more }), a2 = hit(p.A * 0.55 * x, { ...more });
+    // the twin uniques: the Attack strikes twice at `cut` a hit (one action); with Twin Shot, three arrows at that cut
+    const tw = uf && uf.twin, cut = tw ? (turnUniqBand(m, tw) ? Math.min(tw.hit, tw.boss) : tw.hit) : 1;
+    if (k === 'wren' && has(m, 'twinshot')) { const a1 = hit(p.A * 0.55 * cut * x, { ...more }), a2 = hit(p.A * 0.55 * cut * x, { ...more }); if (tw) hit(p.A * 0.55 * cut * x, { ...more });
       if (t('twinshot') === 'a' && a1 > 0 && a2 > 0) turnGain(h, 'aim', 1); if (t('twinshot') === 'b') h.escape = 1; }
+    else if (tw) { hit(p.A * cut * x, { ...more }); hit(p.A * cut * (tw.noGrit ? x / gx : x), { ...more }); }   // Twice-Sworn: the second hit gets no Grit bonus
     else hit(p.A * x, more);
     const first = !h.attacked; h.attacked = 1;
     const dodged = h.postDodge; h.postDodge = 0;
@@ -26058,6 +26177,13 @@ function turnHeroAct(m, io, id, slot, grades) {
   } else {
     const a = turnAb(id); h.mom = 0;
     const dt = a.dt;
+    // the ability uniques: Oath of the Hollow's pending boost (a parried move) and Mountain's Covenant (Grit held as it starts) scale its
+    // direct hits (and a Burn it sets), once; a Bleed it stores is not boosted, since a kept-up Bleed would hold the boost all fight
+    if (uf) { let abX = 1;
+      if (uf.oath && h.oath) { abX *= uf.oath.abX; h.oath = 0; }
+      if (uf.mountain && h.grit > 0) { const r = uf.mountain; abX *= 1 + Math.min(turnUniqBand(m, r) ? Math.min(r.max, r.boss) : r.max, r.per * h.grit); }
+      if (uf.mountain && turnUniqBand(m, uf.mountain)) abX = Math.min(abX, 1 + uf.mountain.boss);   // Oath and Mountain together: still +50% at most on a zone boss in zones 16-34
+      U *= abX; }
     switch (id) {
       // Wren
       case 'echo': hit(U * a.pow, { dt }); if (marked) { hit(U * 0.6, { dt, kind: 'echo2', untimed: true }); if (t('echo') === 'a') { e.pin = 1; e.pinSlow = Math.max(e.pinSlow, 2); } else if (t('echo') === 'b') turnBleedAdd(m, 2); } turnMark(e, 3); break;
@@ -26098,7 +26224,8 @@ function turnHeroAct(m, io, id, slot, grades) {
         if (marked || pf) turnBleedAdd(m, marked && pf ? 2 : 1); } break;
       case 'finalecho': {
         const keepB = t('finalecho') === 'a' ? Math.min(2, e.bleed) : 0, keepA = t('finalecho') === 'b' ? Math.min(1, h.aim) : 0;
-        hit(U * (a.pow + 0.5 * (e.bleed - keepB) + 0.5 * (h.aim - keepA)), { dt });
+        const nb = m.uf && m.uf.crimson ? Math.min(e.bleed, e.bleedMax || T.bleedMax) : e.bleed;   // the Crimson Thread's extra stacks tick, they do not feed Final Echo (boss gains stay within +50%)
+        hit(U * (a.pow + 0.5 * Math.max(0, nb - keepB) + 0.5 * (h.aim - keepA)), { dt });
         e.bleed = keepB; if (!keepB) e.bleedT = 0; h.aim = keepA; break;
       }
       // Tobin
@@ -26213,7 +26340,7 @@ function turnBegin(m, who, io) {
     turnHitFoe(m, io, e.burnDmg, { dt: 'fire', dot: true, kind: 'burn', n: e.burn, dotCrit: !!e.burnCrit }); e.burn--; emberTick = true;   // e.burnCrit: the Stars' Kindling
     if (!e.burn) { e.burnDmg = 0; e.growN = 0; }
   }
-  if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg, { dt: 'phys', dot: true, kind: 'bleed', n: e.bleed, dotCrit: !!e.bleedCrit }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }
+  if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg * (m.uf && m.uf.crimson ? m.uf.crimson.tickX : 1), { dt: 'phys', dot: true, kind: 'bleed', n: e.bleed, dotCrit: !!e.bleedCrit }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }   // the Crimson Thread's cost
   if (e.swarm > 0) { if (e.swarmDmg > 0) turnHitFoe(m, io, e.swarmDmg, { dt: 'phys', dot: true, kind: 'swarm' }); if (e.swarmBite && e.bleed > 0) { e.swarmBite = 0; turnBleedAdd(m, 1); } e.swarm--; }
   if (emberTick && has(m, 'emberheart')) {
     const first = !h.ehFirst, et = turnTal(m, 'emberheart'); h.ehFirst = 1;
@@ -26284,6 +26411,7 @@ function turnLand(m, io, hit) {
   if (p.bossHitCap > 0) amt = Math.min(amt, p.bossHitCap * p.heroMaxHp);   // the boss's side of the hit, before the hero's armour and defences
   amt *= p.hitX * (p.bossHeroX || 1);   // the hero's own share of a zone boss's hit (boss.heroHitX), after the passive floor's armour and class reduction
   if (p.bossHitCap > 0 && (p.bossHeroX || 1) > 1) amt = Math.min(amt, p.bossHitCap * p.heroMaxHp);   // heroHitX never lifts a hit past the hit cap
+  if (m.uf && m.uf.mountain && h.grit > 0) h.grit = Math.max(0, h.grit - m.uf.mountain.cost);   // Mountain's Covenant: a landed hit costs Grit, before the hit's own cuts (a Ward too)
   let red = 1;
   if (h.guard > 0) red *= T.guardX;
   if (h.grit > 0) red *= 1 - T.gritDr * h.grit;
@@ -26317,14 +26445,16 @@ function turnContact(m, io) {
   let res = 'hit';
   if (hit.feint) { res = 'feint'; if (m.usedDefense && !m.flinch) m.fooled = 1; }   // a press at a fake costs the next hit's defence
   else if (m.defense === 'parry') {
-    for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);
+    if (!(m.uf && m.uf.vesper)) for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);   // Vesper's Reach: parries no longer refund
     m.parried++; res = 'parry';
+    if (m.uf && m.uf.oath) h.oath = 1;   // Oath of the Hollow: the next ability is boosted (one pending boost)
     if (m.p.heroKey === 'tobin') turnGain(h, 'grit', 1 + (has(m, 'bulwark') ? 1 : 0) + (h.answer ? 2 : 0));
     h.answer = 0;   // Taunting Roar: Answer Me, once
     if (h.brace > 0 && h.braceT === 'b') h.pierce = 1;   // Brace: Read the Blow
     if (m.sf) turnStarsDef(m, io, 'parry');
   } else if (m.defense === 'dodge') {
     res = 'dodge'; h.postDodge = 1; if (T.reach[m.p.heroKey]) m.reach = 1;   // Wren's Out of Reach: the rest of this move hits softer
+    if (m.uf && m.uf.vesper) for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);   // Vesper's Reach: a dodged hit takes a turn off every cooldown
     if (m.sf) turnStarsDef(m, io, 'dodge');
     if (m.shadowUsed) { m.shadowUsed = 0; h.shadow = 0; h.keen = 1; if (turnTal(m, 'shadowstep') === 'b') turnGain(h, 'aim', 1); }
   } else if (e.blind > 0 && io.random() < (m.p.boss ? T.blindBossP : T.blindP)) res = 'miss';
@@ -26342,9 +26472,10 @@ function turnContact(m, io) {
   if (m.parried > 0) h.ripo = 1;
   m.fooled = 0;   // a feint at the end of a move fools nothing after it
   if (m.rally === 2) { m.rally = 0; m.gi++; io.emit('foeRallied', { name: m.p.foeName }); }   // the gate is open
-  if (m.parried === turnRealHits(m.move)) {
+  const gate = m.uf && m.uf.gate;   // Gate of the Deep: every real hit but one parried (at least one) counters; counters deal less
+  if (gate ? m.parried >= Math.max(1, turnRealHits(m.move) - 1) : m.parried === turnRealHits(m.move)) {
     const shelter = has(m, 'bulwark') && turnTal(m, 'bulwark') === 'b';
-    let d = m.p.counter * (has(m, 'bulwark') && !shelter ? 1.25 : 1) * (h.last > 0 ? 2 : 1);
+    let d = m.p.counter * (has(m, 'bulwark') && !shelter ? 1.25 : 1) * (h.last > 0 ? 2 : 1) * (gate ? gate.counterX : 1);
     const got = turnHitFoe(m, io, d, { dt: 'phys', noCrit: true, kind: 'counter' });
     if (shelter) turnWard(m, 0.05);
     if (h.last > 0 && turnTal(m, 'laststand') === 'a') e.sunder = Math.max(e.sunder, 2);
@@ -35033,7 +35164,7 @@ function renderTrophies() {
     putClass(e.c, 'trophy' + (f ? ' found' : ''));
     setIc(e.tile, itemIcon(u.slot, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
     putText(e.tn, f ? u.name : '???'); putClass(e.tn, 'tn' + (f ? ' rar-legendary' : ''));
-    putText(e.ts1, f ? `${SLOT[u.slot].n} · best ${MAT.ore.short[f - 1]} tier` : u.src);
+    putText(e.ts1, f ? `${(SLOT[u.slot] || CRAFT_POS[u.pos] || { n: 'Gear' }).n} · best ${MAT.ore.short[f - 1]} tier` : u.src);   // a new unique is a class kind (uniques-first-four)
     putText(e.ts2, f ? u.txt : 'Not found yet');
   }
   // what is left, by where it drops (menu audit #15); found uniques sort first (.trophy.found, 40-components.css)

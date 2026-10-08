@@ -27,6 +27,12 @@
 //            the caller pays and applies). Never duplicates an affix stat, never touches mw.
 //   bag      equippedIds() -> Set of item ids worn by the hero
 //            isEquipped(id), bagCount() (unequipped items), bagFull() (>= CRAFT_BAG_MAX)
+//   uniques  (uniques-first-four, the new table in 20-data UNIQ: legacy false)
+//            uniqAnyCls(item) every class wears it (it retools to the wearer's class kind, keeping id, u, t, r and +N)
+//            uniqKindFor(key, cls) the kind a unique is made as for a class (a drop: uniques-drops-live wires it)
+//            uniqRulesWorn(over) -> [rule, ...] the rules of the uniques the hero wears that fit, while UNIQ_TUNE.on ([] off)
+//            uniqPool(z) -> [key, ...] the new uniques a zone z boss could drop (its foe type, from its zone, the zone's
+//            grade in the item's band, art passed). Exported, not wired: drops are uniques-drops-live
 //
 // Item fields (S.items entries). Old items have only the first five and keep their stats:
 //   id, slot (= kind), t, r, plus, u (unique key)
@@ -58,7 +64,7 @@
 
 let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats, gearCalc, spellMult,
   kindName, kindColor, kindCost, kindUpgradeCost, newItem, rollAffixes, reforgeCost, reforgeLine,
-  equippedIds, isEquipped, bagCount, bagFull;
+  equippedIds, isEquipped, bagCount, bagFull, uniqAnyCls, uniqKindFor, uniqRulesWorn, uniqPool;
 
 {
   const LEGACY = RECIPE; // weapon, helm, charm, pick, axe: the pre-K4 kinds (and every unique)
@@ -79,6 +85,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   RETOOL = { on: 1 };
   const RT_KINDS = { weapon: 1, helm: 1 }; // legacy kinds that retool into class kinds
   const pendingLegacy = it => !!it && typeof it === 'object' && !it.u && !!RT_KINDS[it.slot];
+  uniqAnyCls = it => !!(it && it.u && UNIQ[it.u] && UNIQ[it.u].legacy === false && UNIQ[it.u].cls === 'any');
   fits = (it, pos, who = 'hero') => {
     const kind = typeof it === 'string' ? it : it && it.slot;
     if (!CRAFT_KINDS[kind] || !CRAFT_FITS[pos] || !craftKindVisible(kind)) return false;
@@ -97,20 +104,22 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     const cls = heroWho(); if (!RETOOL.on || cls === 'any' || !Array.isArray(S.items)) return out;
     const hero = new Set(CRAFT_HERO_POS.map(p => S.equip[p]).filter(v => v != null));
     for (const it of S.items) {
-      if (!it || it.u) continue;
+      if (!it || (it.u && !uniqAnyCls(it))) continue;
       const d = CRAFT_KINDS[it.slot]; if (!d || !d.pos) continue;
       let why = null;
-      if (RT_KINDS[it.slot]) why = 'legacy';
+      if (it.u) why = d.cls && d.cls !== cls ? 'uniq' : null;   // uniques-first-four: an every-class unique is always the wearer's class kind (worn or not; no notice)
+      else if (RT_KINDS[it.slot]) why = 'legacy';
       else if (swap && d.cls && d.cls !== cls && (hero.has(it.id) || !d.comp)) why = 'swap';
       if (!why) continue;
       const to = classKindAt(d.pos, cls); if (!to || to === it.slot) continue;
       if (it.rt == null) it.rt = it.slot;
       if (why === 'legacy') out.legacy[it.slot]++;
+      else if (why === 'uniq') out.uniq = (out.uniq || 0) + 1;
       else { out.swap++; if (!out.from.includes(d.cls)) out.from.push(d.cls); }
       it.slot = to;
     }
     const nl = out.legacy.weapon + out.legacy.helm;
-    if (!nl && !out.swap) return out;
+    if (!nl && !out.swap && !out.uniq) return out;
     if (nl) {
       const w = out.legacy.weapon, h = out.legacy.helm, word = (n, one, many) => n === 1 ? one : many;
       const what = w && h ? `${word(w, 'sword', 'swords')} and ${word(h, 'helm', 'helms')}` : w ? word(w, 'sword', 'swords') : word(h, 'helm', 'helms');
@@ -146,7 +155,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     const out = LEGACY[bk] ? legacyLines(bk, p) : craftBaseLines(bk, p);
     if (Array.isArray(it.a)) for (const [id, q] of it.a) if (CRAFT_AFFIXES[id]) out.push(...craftAffixValue(id, p, q));
     if (it.mw != null) { const l = craftTrophyLine(it.mw, it.slot, p); if (l) out.push(l); }
-    if (it.u && UNIQ[it.u]) for (const [k, v] of Object.entries(UNIQ[it.u].fx)) out.push([k, v]);
+    if (it.u && UNIQ[it.u]) { const u = UNIQ[it.u]; if (u.hp) out.push(...craftAffixValue('hp', p, 0.5)); for (const [k, v] of Object.entries(u.fx)) out.push([k, v]); }   // uniques-first-four: the fixed health line
     return out;
   };
   const addLines = (s, lines) => { for (const [k, v] of lines) { if (k === 'tap') s.tap *= v; else s[k] = (s[k] || 0) + v; } };
@@ -166,6 +175,26 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     return capNonLive(s);
   };
   spellMult = () => 1 + gear().spell / 100;
+
+  // ---- the new uniques (uniques-first-four) ----
+  uniqKindFor = (key, cls) => {
+    const u = UNIQ[key]; if (!u) return null;
+    return u.cls === 'any' && cls && cls !== 'any' ? classKindAt(u.pos, cls) || u.slot : u.slot;
+  };
+  // what is worn (or `over`, as gearCalc), fitting, with a rule: one entry per piece
+  uniqRulesWorn = over => {
+    if (!UNIQ_TUNE.on || !S.equip) return [];
+    const out = [], who = heroWho();
+    for (const pos of CRAFT_HERO_POS) {
+      const it = over && pos in over ? over[pos] : itemById(S.equip[pos]), u = it && it.u && UNIQ[it.u];
+      if (u && u.legacy === false && u.rule && fits(it, pos, who)) out.push(u.rule);
+    }
+    return out;
+  };
+  uniqPool = z => {
+    const type = TYPES[zoneType(z)] && TYPES[zoneType(z)].key, g = zoneTier(z);
+    return Object.keys(UNIQ).filter(k => { const u = UNIQ[k]; return u.legacy === false && u.art && u.from && u.from[0] === type && z >= u.from[1] && g >= u.g[0] && g <= u.g[1]; });
+  };
 
   // ---- names, colours, costs ----
   kindName = (slot, t, u) => {
