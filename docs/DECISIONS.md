@@ -870,7 +870,9 @@ first-time knots reach zone 20, as the z19 ruling asked.
     or the ordinary-foe knots are wrong, then sets the band back to max(1.3, 3 sd) and holds every hero's longest optimiser stall under 4 h.
   - **Watch items, carried forward.** Stalls of 1.0-1.5 h at zone 19 (Wren offsets 0 and 5, Pip offset 4) and Pip's 2.2-3 h at zones
     17-18 predate this card (nothing below zone 20 changed); if the old code had no zone 19 stall over an hour at those offsets, re-judge.
-WALKS_PLACEHOLDER
+- **Walks** (90 game min, the bot that keeps fighting after a loss; this card's knots on the integration branch at b79b3f65): seed 1 Wren
+  reached zone 19 at 47:30 and zone 20 at 56:53 and cleared it on the first try at 68:44; seed 2 Tobin reached zone 20 at 72:18 and
+  cleared it on the first try at 87:49. Neither lost a try in zones 1 to 20. Both end in zone 21 at level 23.
 - **Switch off.** Put the zone 20-24 knots back (the old hpX, hitX and Tobin heroHitX above, hpFloor 0 from zone 20, Pip's heroHitX 1,
   dotCap off), make z20-z24-boss-arrival report rows and z20-boss-behind gated again with its old gaps, move the joined and build rows and
   C29's two asserts back to zone 20. No save change.
