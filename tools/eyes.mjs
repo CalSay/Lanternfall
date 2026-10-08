@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // Eyes: plays the built game in headless Chromium and checks what a player SEES (card qa-player-eyes).
 //
-//   node tools/build.mjs && node tools/eyes.mjs            both screen sizes, all four checks, report only (exit 0)
+//   node tools/build.mjs && node tools/eyes.mjs            desktop, then both phone sizes, all four checks, report only (exit 0)
 //
-//   --strict            exit 1 when anything is found       --quick   portrait only, shorter sampling
+//   --strict            exit 1 when anything is found       --quick   desktop only, shorter sampling
 //   --html <file>       check another build (a build without LF_EYES gets the hook patched in, so an old commit can be checked)
-//   --sizes p,l         p = 360x740 portrait, l = 740x360 landscape (default both); or any WxH, e.g. 360x640,390x844
+//   --sizes d,l,p       d = 1280x720 desktop with a mouse, l = 740x360 landscape, p = 360x740 portrait (default all three, desktop
+//                       first); also laptop (1366x640), tablet (1024x768), hd (1920x1080) or any WxH, e.g. 360x640 (tools/lib/views.mjs)
 //   --only a,b          checks to run: layout, tipphase, moments, placeholders (default all)
 //   --out <file>        where the findings go (default tools/.eyes/latest.md, plus a .json next to it and screenshots)
 //   --json              print the findings as JSON
@@ -26,6 +27,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
+import { view, contextOptions, VIEW_HELP } from './lib/views.mjs';
 
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
@@ -33,7 +35,7 @@ const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[
 { const known = ['strict', 'quick', 'html', 'sizes', 'only', 'out', 'json'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('eyes: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 const QUICK = flag('quick'), STRICT = flag('strict');
-const SIZES = (opt('sizes', QUICK ? 'p' : 'p,l')).split(',').map(s => s.trim()).filter(Boolean).map(s => { const m = /^(\d+)x(\d+)$/.exec(s); return m ? { id: s, w: +m[1], h: +m[2] } : s === 'l' ? { id: 'landscape', w: 740, h: 360 } : { id: 'portrait', w: 360, h: 740 }; });
+const SIZES = (opt('sizes', QUICK ? 'd' : 'd,l,p')).split(',').map(s => s.trim()).filter(Boolean).map(s => view(s) || (console.error(`eyes: --sizes "${s}" is not a view: ${VIEW_HELP}`), process.exit(2)));
 const ONLY = new Set((opt('only', 'layout,tipphase,moments,placeholders')).split(','));
 const OUT = path.resolve(ROOT, opt('out', 'tools/.eyes/latest.md'));
 const SHOTS = path.join(path.dirname(OUT), 'shots');
@@ -83,7 +85,7 @@ import { LINT, TIPPHASE, PLACEHOLDERS, ALLOW } from './lib/eyes-readers.mjs';   
 
 // ---------------- driving ----------------
 async function openGame(size, { save } = {}) {
-  const ctx = await browser.newContext({ viewport: { width: size.w, height: size.h }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  const ctx = await browser.newContext(contextOptions(size));
   const page = await ctx.newPage(); const errs = [];
   page.on('pageerror', e => errs.push(String(e)));
   if (save) { const raw = JSON.stringify({ ...save, last: Date.now() }); await page.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, raw]); }

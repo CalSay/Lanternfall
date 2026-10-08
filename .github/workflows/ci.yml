@@ -140,7 +140,8 @@ jobs:
         run: tools/ci/path-guard.sh "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" "$LABELS"
 
   # EYES: the robot plays the change like a player. Replays every docs/proof/<card>/route.txt this PR changed on the built
-  # game (portrait and landscape), uploads shots and bursts, posts one PR comment. A failed `expect` fails the job. A PR
+  # game (portrait and landscape, plus a report-only 1920x1080 shot), reads it with player eyes at 1280x720 (mouse) first,
+  # then 740x360 and 360x740, uploads shots and bursts, posts one PR comment. A failed `expect` fails the job. A PR
   # that changes src/ with no changed route.txt fails unless it has the `no-visible-change` label.
   eyes:
     if: github.event_name == 'pull_request'

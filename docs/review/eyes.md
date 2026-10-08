@@ -1,12 +1,12 @@
 # Eyes: checks that see the screen like a player
 
-`node tools/build.mjs && node tools/eyes.mjs` plays the built game in headless Chromium at 360x740 and 740x360 and reports what a
+`node tools/build.mjs && node tools/eyes.mjs` plays the built game in headless Chromium at 1280x720 with a mouse (the design size), then 740x360 and 360x740, and reports what a
 player would notice. It reads the screen through `window.LF_EYES` (`src/js/89-eyes-hook.js`). Report only: it prints
-findings and exits 0 unless `--strict`. One command, no CI needed. About 3 minutes for both sizes, 1 minute with `--quick`.
+findings and exits 0 unless `--strict`. One command, no CI needed. About 4 minutes for all three sizes, 1 minute with `--quick`.
 
 ```
-node tools/eyes.mjs                       both sizes, all four checks, findings in tools/.eyes/latest.md (+ .json, shots/)
-node tools/eyes.mjs --quick               portrait only, shorter
+node tools/eyes.mjs                       all three sizes, all four checks, findings in tools/.eyes/latest.md (+ .json, shots/)
+node tools/eyes.mjs --quick               desktop (1280x720) only, shorter
 node tools/eyes.mjs --html <file>         another build (a build from before the hook gets stageRects and the hook patched in)
 node tools/eyes.mjs --only moments        layout, tipphase, moments, placeholders
 node tools/eyes.mjs --strict              exit 1 when anything is found

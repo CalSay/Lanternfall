@@ -25,7 +25,9 @@
 //                                                 lines are read as they arrive, so a caller can drive one open game: tools/playtest-human.mjs)
 //
 // options: --session <dir> (default .playtest: the save, the game clock and the screenshots live there, so one
-//          command per call carries on where the last one stopped)   --landscape (740x360 instead of 360x740 portrait)
+//          command per call carries on where the last one stopped)
+//          --view <v> the screen: desktop (1280x720, mouse, no touch; the default), landscape (740x360), portrait (360x740), laptop
+//          (1366x640), tablet (1024x768), hd (1920x1080) or WxH (tools/lib/views.mjs). --landscape and --portrait are short for those views.
 //          --seed <n> (seed the game's random numbers for the whole run)   --shots <dir> (where shots go; default <session>/shots)
 //          --json (machine-readable output)   --html <file> (play another build)   --quiet (tap and wait print one line, not a look)
 //          --frozen (the game clock stands still between commands; without it, real time also moves it)
@@ -39,17 +41,19 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
+import { view, contextOptions, VIEW_HELP } from './lib/views.mjs';
 
 const KEY = 'lanternfall.save.v5';
 const ORIGIN = 'http://lanternfall.playtest/';
 const raw = process.argv.slice(2);
-const flags = { json: false, landscape: false, quiet: false, frozen: false, thumb: false };
+const flags = { json: false, view: 'desktop', quiet: false, frozen: false, thumb: false };
 let sessionDir = '.playtest', htmlFile = null, shotsOpt = null, seed = null, ranSecs = 0;   // ranSecs: game seconds this call has run (away hours are not play)
 const pos = [];
 for (let i = 0; i < raw.length; i++) {
   const a = raw[i];
   if (a === '--json') flags.json = true;
-  else if (a === '--landscape') flags.landscape = true;
+  else if (a === '--landscape' || a === '--portrait') flags.view = a.slice(2);
+  else if (a === '--view') flags.view = raw[++i];
   else if (a === '--quiet') flags.quiet = true;
   else if (a === '--frozen') flags.frozen = true;
   else if (a === '--thumb') flags.thumb = true;
@@ -64,6 +68,7 @@ const sessionFile = path.join(sessionDir, 'session.json');
 const shotDir = shotsOpt ? path.resolve(shotsOpt) : path.join(sessionDir, 'shots');
 
 const die = msg => { console.error('playtest: ' + msg); process.exit(1); };
+const VIEW = view(flags.view) || die(`--view "${flags.view}" is not a view: ${VIEW_HELP}`);
 function num(v, name) { const n = Number(v); if (!Number.isFinite(n) || n < 0) die(`${name} needs a number of zero or more (got "${v}")`); return n; }
 
 // ---------------- session ----------------
@@ -126,9 +131,7 @@ const INIT = ([key, rawSave, seedN, keep]) => {
 
 async function openPage(browser, session, afterAway = false, tab = null) {
   // tab: { ctx, errors, time } opens another tab in that browser context (`tab new`), on the stored save, at that time
-  const ctx = tab ? tab.ctx : await browser.newContext(flags.landscape
-    ? { viewport: { width: 740, height: 360 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true }
-    : { viewport: { width: 360, height: 740 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  const ctx = tab ? tab.ctx : await browser.newContext(contextOptions(VIEW));
   const page = await ctx.newPage();
   const errors = tab ? tab.errors : [];
   page.on('pageerror', e => errors.push(String(e)));
