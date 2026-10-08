@@ -103,9 +103,14 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   card. Every fight in a zone (normal, elite or boss) starts at full HP, whether you won or lost the last one
   (`TURN_TUNE.normalFull`); in the Deepwell and the Provings your HP carries from foe to foe and each kill heals 15% of max
   HP (times the Healing gear line; the Deepwell's floor heal is its own). Bosses have no timer. In zones 1 to 15 no single boss hit takes more than 40% of your max HP, so one missed parry never
-  ends a fight from full health; in zones 16 to 34 the cap is 75%. Zone bosses from 4 to 12 are tuned to a hero in the zone's first gear (common, +0).
-  Zone bosses 4 to 34 play move tricks (held swings, feints) and rally (at two thirds and a third in zones 4 to 6, at three quarters, half and a quarter from zone 7) (only a Stun breaks a
-  rallying boss's charge), and on a boss you have not beaten, health above the zone's own gear does not shrink its hits (from zone 16 that gear is rare +5).
+  ends a fight from full health; in zones 16 to 34 the cap is 75%. Zone bosses from 4 to 6 are tuned to a hero in the zone's first gear (common, +0),
+  and from 7 to 24 to the hero a first-time player arrives with (the arrival footing: tier 1 common +0, the level the zones before give).
+  Zone bosses 4 to 34 play move tricks (held swings, feints) and rally: at two thirds and a third of their HP in zones 4 to 6, and at three
+  quarters, half and a quarter from zone 7. The boss's HP bar marks each rally point from the start of the fight. When your damage reaches
+  a mark, the boss holds there until it has finished its next move (the mark turns gold and a line says so; damage past the mark is lost),
+  then a line says the rally is over and the bar fades that mark. A rally that comes while the boss gathers a charged move means only a
+  Stun breaks that charge. A boss you left part-way and meet again keeps the rallies it has already passed. On a boss you have not beaten,
+  health above the zone's own gear does not shrink its hits (from zone 16 that gear is rare +5).
   Zone 16 to 34 numbers are provisional until the skilling and crafting balance pass.
 - **After a boss beats you** (`55-boss-try.js`, `75-boss-try-ui.js`): the game stops on a Try again card. It names the hit
   that won and why (a charged move, a hit you did not parry or dodge, a try with bad timing, damage over time, or "so

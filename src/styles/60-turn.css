@@ -136,6 +136,12 @@
 .tv-time.flinch .tv-track { box-shadow: inset 0 0 0 1px #3A3046, 0 0 0 2px #FF9B8A; opacity: .6; }
 @keyframes tv-stall { 50% { opacity: .4; } }
 @media (prefers-reduced-motion: reduce) { .tv-time.stall .tv-head { animation: none !important; } }
+/* rally gates (rally-gates-live): a plain mark on the boss's bar at each gate. The versus header drains the foe's bar toward the
+   middle (80-landscape: origin at the right), so there a gate at share g sits g from the bar's right end */
+.hpbar > i.tv-notch { left: calc(var(--g) * 100% - 1px); top: -2px; bottom: -2px; width: 2px; transform: none; background: #F6ECDD; box-shadow: 0 0 0 1px #0B0810; z-index: 1; pointer-events: none; }
+.hud.vs .mob .hpbar > i.tv-notch { left: calc((1 - var(--g)) * 100% - 1px); }
+.hpbar > i.tv-notch.past { opacity: .35; }
+.hpbar > i.tv-notch.held { width: 4px; margin-left: -1px; background: var(--gold, #F2C14E); }
 /* desktop-layout-v1 (desk playtest F03, F09, F04). Desktop text is bigger, so the turn line sits under the place line (62-stage sets
    --vs-zb on the stage box), not on it; the whose-turn banner crosses the stage under the floating numbers ("Miss", damage), which
    start higher; at 1920x1080 the timing bar moves to the stage's bottom-right corner, next to Parry and Dodge. */
