@@ -217,12 +217,19 @@
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
   const VERB = { wood: 'Chop', ore: 'Mine', crystal: 'Mine', hide: 'Hunt' };
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
+  // forge-tip-goes-stale: a materials line shows on Camp, on Gather and on the game screen, never over another menu (it followed a fighter
+  // onto every menu for 15 minutes and never moved). The step itself stays current (onboardStep), so nothing behind it starts and nothing is done.
+  const STOCK_TABS = ['world', 'gat'];
+  const stockHere = () => !S.tab || STOCK_TABS.includes(S.tab);
+  // where a material comes from: its node, or "from fights" for essence and gold
+  const matWhere = m => m.kind ? ` at the ${NODE_NAMES[m.kind][m.t - 1]}` : m.fam === 'ess' || m.fam === 'gold' ? ' from fights' : '';
   const stockSpec = (id, what, tail, at) => {   // at: name the node (gear-in-first-25: "Mine 3 Quartz at the Quartz Geode for your first weapon (0/3).")
+    if (!stockHere()) return null;
     const need = onboardNeed(id); if (!need.length) return null;
     const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Fight for' : 'Gather');
     // workbench-cost: a build row's gold ("Win 200 more gold for the Workbench (100/300)."); fights pay it, so the hint points at the fight
     const text = need.length > 1
-      ? `You still need these for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      ? `You still need these for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}${matWhere(m)}`).join(', ')}.`
       : x.fam === 'gold' ? `Win ${x.n - x.have} more gold in fights for ${what} (${x.have}/${x.n}).`
       : `${verb} ${x.n} ${x.name}${at && x.kind ? ` at the ${NODE_NAMES[x.kind][x.t - 1]}` : ''} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
     if (x.fam === 'gold') return { text, live: 1, node: onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: onGame() ? [0.74, 0.62] : null, side: 'up' };
@@ -267,7 +274,8 @@
       go: { label: `Equip ${nm}`, fn: () => { equipItem(w.it.id, w.pos); } } };
   };
   const STEP_UI = {
-    // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
+    // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays over Camp and Gather and points at the lit tab
+    // (forge-tip-goes-stale: stockSpec draws no materials line over any other menu)
     chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree yourself and it goes faster.') : null,
     back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: "When you're done here, close the menu and the fight goes on.", go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
     'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is still in your bag. A tool only helps once you wear it.`),

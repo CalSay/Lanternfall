@@ -1,0 +1,20 @@
+# Proof for card z19-wall. Wren at zone 19 with its 5 fights done and the boss next (tests/proof-fixtures/save-z19-weak.json: the
+# zone 16 proof save moved to zone 19 at level 22, the level a first-time player reaches it at, tier 1 pieces, no mastery stars; its
+# attribute points spent, its scrolls used, the Golemfist and its done Almanac goals cleared so Next Up has room for the boss row),
+# at 360x740 and 740x360:
+#   nextup-boss-*.png  Next Up's boss row reads the zone 19 boss's odds from the game's own turn fights: "Boss ready in Zone 19".
+#                      Before this card the game judged the boss at 0% a try on the same save and left the row out of Next Up, so
+#                      the first expect fails on that build.
+# The win rates behind it are held by tools/budget.mjs (the z19-boss-arrival row) and tools/health.mjs --compare.
+# seed: 1
+new z19-weak
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+tap "Next up"
+wait 1
+expect "Boss ready in Zone 19"
+shot nextup-boss

@@ -268,7 +268,7 @@
         1
       ],
       "report": true,
-      "note": "report only (z16-wall): the zone 19 Captain on the arrival footing (arrival level, tier 1 common +0, no mastery stars), the next wall past the z16-18 fix; a follow-up card fits it"
+      "note": "report only (z16-wall; z19-wall moved it on): the zone 20 Captain on the arrival footing (arrival level, tier 1 common +0, no mastery stars), the next wall past the z19 fix; a follow-up card (z20-wall) fits it"
     }
   },
   "gaps": [
@@ -641,6 +641,26 @@
       "owner": "tobin-safety-margin",
       "until": "2026-12-01",
       "why": "z16-wall (judge 2026-10-08): a lower heroHitX lifts his arrival row but lets a kept-up Tobin who never defends win 34-48%"
+    },
+    {
+      "row": "z19-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.99,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "z19-wall (judge 2026-10-08): z19 knots fitted to the hero who first gets there; kept-up casual 94-100, never-defends 0-1%. No knot puts both rows in band: every knot that lets a first-time casual win over 40% reads kept-up 98-100 (hpX 0.15 included). Balance-pass refit"
+    },
+    {
+      "row": "z19-boss-arrival",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.59,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "z19-wall (judge 2026-10-08): a lower heroHitX lifts his arrival row but lets a kept-up Tobin who never defends win 48-52% (2.2-2.0)"
     }
   ]
 }

@@ -250,20 +250,22 @@ const GUIDE_STEPS = [
   { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
   { id: 'stock:bench', ph: ['between'], needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
-  { id: 'bench', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
+  // forge-tip-goes-stale: a press step (bench, tool, weapon, forge, store) waits for its materials in hand, so × on its stock: line never swaps in an
+  // "Open Camp." or "Open Craft." that follows you around while you are still short
+  { id: 'bench', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
   { id: 'stock:tool', ph: ['between'], needs: toolMats, when: () => coldH() && campLv('bench') >= 1 && !!needShort(toolMats()).length, done: () => !coldH() || toolMade() },
   // only once Craft is unlocked: this step pauses the game, and the unlock pass runs on the game clock, so a pause that
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
-  { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
+  { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft') && !needShort(toolMats()).length, done: () => !coldH() || toolMade() },
   { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made. It only works when you wear it.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
   // first-gold-and-camp-strip, gear-in-first-25: the first weapon. A Workbench weapon (bow, staff) comes right after the tool, once every
   // short material has a place open (weaponNow); until then the Forge steps show. Tobin's Forge weapon waits for the Forge step, as before.
   { id: 'stock:weapon', ph: ['between'], needs: weaponMats, when: () => weaponNow() && !!needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
-  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft'), done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
+  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft') && !needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
-  { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'stock:store', ph: ['between'], needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
   // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
   { id: 'nextup', ph: ['between'], quiet: 1, ok: 1, tip: 'Next Up shows the one thing most worth doing now.', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }

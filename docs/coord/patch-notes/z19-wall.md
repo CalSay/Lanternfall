@@ -1,0 +1,1 @@
+The zone 19 boss no longer walls you off: if you reach it the normal way, you now beat it in a try or two instead of losing again and again. Its Venom still stings, just not nearly all your health a tick, and parry and dodge still matter. Best shot: nextup-boss.

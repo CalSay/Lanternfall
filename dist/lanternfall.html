@@ -15049,6 +15049,7 @@ const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen
 // build or recipe is still short of materials has `pauseUnless` (the same list): it does not pause while any is missing,
 // so no step can freeze the clock it needs. tools/check.mjs holds all three rules.
 //   attack, ability, dodge, parry, gather, light, upgrade   pause (press this now)
+//   spend                                                    pause (press this now; spend-points-before-nextup)
 //   boss                                                     pause (Got it)
 // cal-0107-staged-guide: in a fight only the held lessons (attack, dodge, ability, parry, boss) show and pause. Every other step
 // (`ph` 'between') shows only between fights, and its line is hidden while a foe is on the field.
@@ -15114,6 +15115,8 @@ const wearPiece = kind => {
 // started behind the menu; his line already says "when you're done here", so the rest can still be spent under it): time to point back at the fight
 const BACK_WAIT = 1;   // seconds of play after the first point
 const backReady = () => { try { const k = soloHero(); if (obAttrOn() && k && attrPoints(k).free > 0) return GUIDE_RT.lastEnd !== null && GUIDE_RT.t - GUIDE_RT.lastEnd >= BACK_WAIT; } catch (e) {} return true; };
+const spendPile = () => obAttrOn() && attrPoints(soloHero()).free >= 2 * HERO_TUNE.perLevel;
+const spendTail = () => GUIDE_RT.latch === 'spend' && S.tab === 'party' && fightingNow();
 const toolWorn = () => { try { return TOOL_POS.some(pos => !!equipped(pos)); } catch (e) { return false; } };
 // W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
 // never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
@@ -15153,6 +15156,11 @@ const GUIDE_STEPS = [
   { id: 'boss', ph: ['hero', 'foe'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, the first level-up or zone 2)
   { id: 'upgrade', ph: ['between'], tip: 'You can grow stronger now. Open Hero.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
+  // spend-points-before-nextup: two levels' points or more piled up before Next Up opens (it ranks them once it does). Once a game: the
+  // latch is set when the line shows, so spending under two levels' worth (or ×) ends it, and Next Up opening ends it unseen. Spent with
+  // the Hero menu still over the fight, it says what `back` says (Cal's play note 7; `back` was done long before) until the menu closes.
+  { id: 'spend', ph: ['between'], pause: 1, tip: 'Open Hero, then Build, and spend your attribute points.', when: () => stepDone('upgrade') && !isUnlocked('nextup') && (spendPile() || spendTail()),
+    done: () => isUnlocked('nextup') || (GUIDE_RT.latch === 'spend' && !spendPile() && !spendTail()) },
   // Cal's play note 7: after the points are spent, say how to get back to the fight (the Hero menu otherwise just sits there)
   { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu and get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
   // Cal's play notes 9 and 13: a weapon found or made sits in the bag until it is worn. The tip names it and wears it in one tap.
@@ -15161,20 +15169,22 @@ const GUIDE_STEPS = [
   { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
   { id: 'stock:bench', ph: ['between'], needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
-  { id: 'bench', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
+  // forge-tip-goes-stale: a press step (bench, tool, weapon, forge, store) waits for its materials in hand, so × on its stock: line never swaps in an
+  // "Open Camp." or "Open Craft." that follows you around while you are still short
+  { id: 'bench', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
   { id: 'stock:tool', ph: ['between'], needs: toolMats, when: () => coldH() && campLv('bench') >= 1 && !!needShort(toolMats()).length, done: () => !coldH() || toolMade() },
   // only once Craft is unlocked: this step pauses the game, and the unlock pass runs on the game clock, so a pause that
   // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
-  { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft'), done: () => !coldH() || toolMade() },
+  { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft') && !needShort(toolMats()).length, done: () => !coldH() || toolMade() },
   { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made. It only works when you wear it.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
   // first-gold-and-camp-strip, gear-in-first-25: the first weapon. A Workbench weapon (bow, staff) comes right after the tool, once every
   // short material has a place open (weaponNow); until then the Forge steps show. Tobin's Forge weapon waits for the Forge step, as before.
   { id: 'stock:weapon', ph: ['between'], needs: weaponMats, when: () => weaponNow() && !!needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
-  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft'), done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
+  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft') && !needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
-  { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'stock:store', ph: ['between'], needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
   // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
   { id: 'nextup', ph: ['between'], quiet: 1, ok: 1, tip: 'Next Up shows the one thing most worth doing now.', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
@@ -26436,10 +26446,10 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 1.075], [8, 0.95], [9, 0.75], [10, 0.725], [11, 0.882], [12, 1.008], [13, 0.36], [14, 0.38], [15, 0.12], [16, 0.15], [17, 0.15], [18, 0.12], [19, 4.8], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+  boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 1.075], [8, 0.95], [9, 0.75], [10, 0.725], [11, 0.882], [12, 1.008], [13, 0.36], [14, 0.38], [15, 0.12], [16, 0.15], [17, 0.15], [18, 0.12], [19, 0.07], [20, 2.8], [21, 1.9], [22, 2.1], [23, 1.5], [24, 1.1], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
     // heroHitX: a zone boss's hits x this on the hero (tobin-safety-margin: the safest hero still feels a boss; 1 = the zone table's hit)
-    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.7], [9, 1.25], [10, 2], [11, 1.25], [12, 1.75], [13, 1.6], [14, 1.7], [15, 2.55], [16, 2.75], [17, 2.75], [18, 2.6], [19, 4.99], [20, 6.32], [21, 7.14], [22, 7.45], [23, 8.39], [24, 7.06], [25, 6.81], [27, 7.45], [30, 8.32], [34, 6.85], [36, 7], [38, 7]], pip: 1 },
-    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.5], [8, 1.055], [9, 0.632], [10, 0.45], [11, 0.407], [12, 0.403], [13, 0.1], [14, 0.085], [15, 0.05], [16, 0.03], [17, 0.03], [18, 0.03], [19, 1.04], [20, 0.751], [21, 0.424], [22, 0.314], [23, 0.238], [24, 0.255], [25, 0.215], [27, 0.131], [30, 0.165], [34, 0.203], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.7], [9, 1.25], [10, 2], [11, 1.25], [12, 1.75], [13, 1.6], [14, 1.7], [15, 2.55], [16, 2.75], [17, 2.75], [18, 2.6], [19, 2.4], [20, 6.32], [21, 7.14], [22, 7.45], [23, 8.39], [24, 7.06], [25, 6.81], [27, 7.45], [30, 8.32], [34, 6.85], [36, 7], [38, 7]], pip: 1 },
+    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.5], [8, 1.055], [9, 0.632], [10, 0.45], [11, 0.407], [12, 0.403], [13, 0.1], [14, 0.085], [15, 0.05], [16, 0.03], [17, 0.03], [18, 0.03], [19, 0.015], [20, 0.751], [21, 0.424], [22, 0.314], [23, 0.238], [24, 0.255], [25, 0.215], [27, 0.131], [30, 0.165], [34, 0.203], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
     // z13-unstick (judge 2026-10-08, docs/DECISIONS.md "Zone 13 unstick"): the zone 13-15 hitX, hpX and hpFloor knots are fitted to the hero who
     // first gets there (level 18-19, tier 1 common +0). hitX there is dormant (every landed hit sits on the hpFloor), and hpX sits under zone 12's
     // in reference Attacks until the balance pass restores the length ramp.
@@ -26458,9 +26468,11 @@ const TURN_TUNE = {
     // z16-wall (judge 2026-10-08, docs/DECISIONS.md "Zone 16 wall"): the zone 16-18 knots are fitted to the hero who first gets there (level 20-22,
     // tier 1 common +0), as z13-unstick did at 13-15. riderX: a zone table of the zone boss's Bleed, Burn and Venom ticks on the hero (heroDot is a
     // share of the reference HP, which a first-time hero at zone 16 has a sixteenth of, so one Bleed tick took a third of their health); 1 elsewhere.
-    riderX: [[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 1]],
+    // z19-wall (judge 2026-10-08, docs/DECISIONS.md "Zone 19 wall"): the zone 19 knots too (level 22, tier 1 common +0, about a fiftieth of the
+    // reference HP), and its Venom ticks x0.07 (about 7% of a first-time hero's health a tick, as z16's Bleed). Zone 20 on keeps the kept-up knots.
+    riderX: [[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 0.07], [20, 1]],
     // hpFloor: see turnLand (zone table of multiples; 0 off). gate: rally gates (see TURN_TUNE.gateNote)
-    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 0.84], [9, 0.92], [10, 0.95], [11, 0.94], [12, 0.82], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
+    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 0.84], [9, 0.92], [10, 0.95], [11, 0.94], [12, 0.82], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 1.35], [20, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
   // Boss move tricks (card boss-tiers-pr4; docs/design/foe-moves.md "Boss tricks"): zone bosses from `from` play the Captain and
   // Champion sets in TURN_BOSS_TRICKS (24d): hits that hold their swing (`hold`), fakes (`feint`: no damage, and a press at one
   // fools you: the next hit cannot be defended), longer strings and an uneven rhythm. `on` 0 plays the old sets. `feintFrom`: the
@@ -42866,12 +42878,19 @@ let navUI = null;
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
   const VERB = { wood: 'Chop', ore: 'Mine', crystal: 'Mine', hide: 'Hunt' };
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
+  // forge-tip-goes-stale: a materials line shows on Camp, on Gather and on the game screen, never over another menu (it followed a fighter
+  // onto every menu for 15 minutes and never moved). The step itself stays current (onboardStep), so nothing behind it starts and nothing is done.
+  const STOCK_TABS = ['world', 'gat'];
+  const stockHere = () => !S.tab || STOCK_TABS.includes(S.tab);
+  // where a material comes from: its node, or "from fights" for essence and gold
+  const matWhere = m => m.kind ? ` at the ${NODE_NAMES[m.kind][m.t - 1]}` : m.fam === 'ess' || m.fam === 'gold' ? ' from fights' : '';
   const stockSpec = (id, what, tail, at) => {   // at: name the node (gear-in-first-25: "Mine 3 Quartz at the Quartz Geode for your first weapon (0/3).")
+    if (!stockHere()) return null;
     const need = onboardNeed(id); if (!need.length) return null;
     const x = need[0], verb = VERB[x.kind] || (x.fam === 'ess' ? 'Fight for' : 'Gather');
     // workbench-cost: a build row's gold ("Win 200 more gold for the Workbench (100/300)."); fights pay it, so the hint points at the fight
     const text = need.length > 1
-      ? `You still need these for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      ? `You still need these for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}${matWhere(m)}`).join(', ')}.`
       : x.fam === 'gold' ? `Win ${x.n - x.have} more gold in fights for ${what} (${x.have}/${x.n}).`
       : `${verb} ${x.n} ${x.name}${at && x.kind ? ` at the ${NODE_NAMES[x.kind][x.t - 1]}` : ''} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
     if (x.fam === 'gold') return { text, live: 1, node: onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: onGame() ? [0.74, 0.62] : null, side: 'up' };
@@ -42916,7 +42935,8 @@ let navUI = null;
       go: { label: `Equip ${nm}`, fn: () => { equipItem(w.it.id, w.pos); } } };
   };
   const STEP_UI = {
-    // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays and points at the lit tab (close the menu)
+    // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays over Camp and Gather and points at the lit tab
+    // (forge-tip-goes-stale: stockSpec draws no materials line over any other menu)
     chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree yourself and it goes faster.') : null,
     back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: "When you're done here, close the menu and the fight goes on.", go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
     'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is still in your bag. A tool only helps once you wear it.`),
@@ -42966,6 +42986,9 @@ let navUI = null;
         ['The Hero tab is open now. Open Hero and spend your new points.', 'Open Build.', 'Put a point in Might. It makes you hit harder.'])
       : path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
         ['The Hero tab is open now. Open Hero and train with your gold.', 'Open Training.', 'Train Attack. Each level makes you hit harder.']), { side: S.tab === 'party' ? 'up' : '' }),
+    // spend-points-before-nextup: the pile, named from the data, then Spread evenly spends it all at once (spent: back's line, the menu still open)
+    spend: () => { const n = attrPoints(soloHero()).free; if (n < 2 * HERO_TUNE.perLevel) return STEP_UI.back(); return Object.assign(path('party', 'attributes', '#attrRows ~ .at-acts .at-spread',
+      [`You have ${n} attribute points waiting. Open Hero and spend them.`, 'Open Build.', 'Press Spread evenly to spend them all at once.']), { side: S.tab === 'party' ? 'up' : '' }); },
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Tap it and see what you can mine." },
     'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Tap Camp and build." },
     'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Tap it and make gear." },
