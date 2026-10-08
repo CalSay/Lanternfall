@@ -950,6 +950,10 @@ Ruled C by an independent Opus high judge (`autopilot/rulings/2026-10-08-rally-g
   1.075/0.95/0.75/0.725/0.882/1.008, hitX 1.5/1.055/0.632/0.45/0.407/0.403, hpFloor 1.03/0.84/0.92/0.95/0.94/0.82). The zone 10
   Champion keeps the most HP of zones 7-12 (the Champion peak check). Arrival-footing casual Wren/Tobin/Pip, 240 fights a row: z7
   82/88/85, z8 80/81/90, z9 82/88/76, z10 53/52/48, z11 65/80/74, z12 62/75/66; good 100 on every row. Numbers: `docs/design/difficulty-budget.md`.
+- **Walks** (seeds 1-3, Wren, Tobin and Pip, 90 game minutes; each stopped on the 60-minute clock budget at game minute 81-83):
+  every boss from zone 4 to the last one reached (zone 20, 22 and 19) started at gate 0, played all its rallies and fell on the
+  first try. Zones 7-12 took minutes 18-31. Zone 20 at 62:38 (Wren), 49:18 (Tobin) and 65:40 (Pip), against the z20-wall walks'
+  56:53 (Wren) and 72:18 (Tobin). Movement at zones 13 and up goes to the balance-pass row "Rally gates were off on live bosses".
 
 Veto phrase for Cal: **"Turn the rally gates off"**: set `gate.on = 0` and refit every boss from z4 to z34 in the balance pass.
 
