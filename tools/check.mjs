@@ -5560,9 +5560,12 @@ if (section('notices (browser, W1-B)')) try {
       assert(pops.length <= 8 && pops.length >= 1, `a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): ${pops.length} (${list})`);
       // The bot plays about four times a person's pace (zone 14 in 10 minutes; a person is at zone 5 near minute 18), so cards that a person
       // sees apart queue and fold into one, and a raw count over 10 bot minutes says little about a person's first 20. What the bot can
-      // prove is the shape (DECISIONS "Early game", moment cap): big cards stay few, banners keep the midMax budget, nothing doubles.
-      const big = (r.nb.mlist || []).filter(m => / big /.test(m)).length, med = r.nb.medT || [];
-      assert(big <= 8, `moment layer: big moments in a fresh game's first 10 minutes: ${big}; at most 8 (${(r.nb.mlist || []).join(', ')})`);
+      // prove is the shape (DECISIONS "Moment cap", 2026-10-08): F3 puts a big card at each first clear up to the zone 10 Champion (today
+      // zones 1-3 and 5-10, nine; zone 4's cache is a banner). Past zone 10 a cache is a banner unless it carries a unique, and a Feat card
+      // has no zone: at most 2 of those. Banners keep the midMax budget, and nothing doubles (the one-per-zone-clear assert below).
+      const bigs = (r.nb.mlist || []).filter(m => / big /.test(m)), med = r.nb.medT || [];
+      const bigPast = bigs.filter(m => { const z = / z(\d+)$/.exec(m); return !z || +z[1] > 10; });
+      assert(bigPast.length <= 2, `moment layer: big cards past the zone 10 Champion or with no zone (a unique's cache, a Feat): ${bigPast.length}; at most 2 in a fresh game's first 10 minutes (${bigs.length} big: ${(r.nb.mlist || []).join(', ')})`);
       assert(!med.some(t => med.filter(u => u >= t && u < t + 180).length > 3), `moment layer: at most 3 medium banners in any 3 minutes (${(r.nb.mlist || []).join(', ')})`);
       assert(new Set(r.nb.bigZones || []).size === (r.nb.bigZones || []).length && !r.nb.champEarly, 'moment layer: one big card for each zone clear, and a Champion card never shows before its cache opens' + (r.nb.champEarly ? ` (zone ${r.nb.champEarly})` : ` (big cards by zone: ${(r.nb.bigZones || []).join(', ')})`));
       assert((r.nb.moments || 0) <= r.zone, `moment layer: at most one big or medium moment for each zone cleared: ${r.nb.moments || 0} moments, zone ${r.zone} (${(r.nb.mlist || []).join(', ')})`);

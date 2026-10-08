@@ -911,6 +911,7 @@ The check "big and medium moments in a fresh game's first 10 minutes (at most 8)
 - **The bot is not a person.** It reaches zone 14 in 10 minutes; a person is at zone 5 near minute 18, so cards a person sees apart fold into one on the bot's walk. The check now judges the shape: at most 8 big cards, at most 3 banners in any 3 minutes, at most one big card per zone clear, no Champion card while its cache is still pending, and at most one moment per zone cleared. Each of these fails on real card spam.
 - **Code.** `midRoom` and its entries use game seconds. `momentShow` carries the card's zone. The check seeds drops only while the bot steps and runs the page on the bot's own clock.
 - **If the banner assert ever fails,** that is real spam for a person: tighten the medium list (for example level banners only at 2, 10 and 20), not the cap.
+- **Moment cap, revised (2026-10-08, Opus high judge, card staged-guide-followups; Cal can veto).** The fixed cap of 8 big cards is dropped: it held only because a 20 s guide wait folded the zone 2 and 3 look caches into zone 1's card. Without the wait the walk shows F3's nine (zones 1-3 and 5-10), one per clear. The check now judges the shape: one big card per zone clear, never a Champion before its cache, and at most 2 big cards past the zone 10 Champion or with no zone (a unique's cache, a Feat). If that fails, look for a cache or kind that turned big; do not fold first-hour cards.
 
 ## Scenery for zones 6 to 10 (2026-10-07, Opus high judge; Cal can veto any line)
 
