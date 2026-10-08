@@ -5,6 +5,8 @@
 //   node tools/playtest.mjs look                  what is on screen: visible text, tappable buttons, notices, a screenshot path
 //   node tools/playtest.mjs tap "<label>"         tap the button with that label (exact, then partial match; scrolls it into view)
 //   node tools/playtest.mjs tap-if "<label>"      tap it when it is on screen; carry on without failing when it is not
+//   node tools/playtest.mjs hover "<label>"       (mouse views; skipped in touch views) rest the pointer on that button, then look; names its title tooltip
+//   node tools/playtest.mjs key <name>            press a key: Escape, Enter, Space, a letter (Playwright key names)
 //   node tools/playtest.mjs wait <seconds>        let the game run that many seconds of game time (fast-forwards the clock)
 //   node tools/playtest.mjs away <hours>          close the game for that long, then open it again (the away report appears)
 //   node tools/playtest.mjs state                 short save summary: hero, level, zone, gold, skills, play time
@@ -214,7 +216,8 @@ const SCREEN = () => {
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
     const dis = el.disabled || el.getAttribute('aria-disabled') === 'true' || el.classList.contains('off') || el.classList.contains('disabled');
     el.setAttribute('data-pt', String(n));
-    const rec = { i: n++, label: lab.slice(0, 80), x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), disabled: !!dis };
+    const all = clean((el.innerText || '').replace(/\n+/g, ' '));   // every line: a "Done" over "Claim" button is labelled Done but reads Claim too
+    const rec = { i: n++, label: lab.slice(0, 80), ...(all && all !== lab ? { text: all.slice(0, 80) } : {}), x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), disabled: !!dis };
     if (inView(r) && shown(el, r)) buttons.push(rec); else off.push(rec);
   }
   // visible text, in reading order, one line per row of the screen
@@ -296,7 +299,7 @@ const fmtDur = s => s >= 3600 ? `${(s / 3600).toFixed(1)} h` : s >= 60 ? `${(s /
 const fmtState = o => Object.entries(o).map(([k, v]) => `${k}: ${typeof v === 'object' ? Object.entries(v).map(([a, b]) => `${a} ${b}`).join(', ') : v}`).join('\n');
 
 // ---------------- tapping ----------------
-async function tap(page, wanted) {
+async function tap(page, wanted, how = 'click') {
   const s = await page.evaluate(SCREEN);
   const all = [...s.buttons, ...s.offAll];
   const labels = {};
@@ -309,6 +312,7 @@ async function tap(page, wanted) {
   if (!hit.length) hit = cand.filter(b => b.label.toLowerCase().startsWith(lc));
   if (!hit.length) hit = cand.filter(b => new RegExp('\\b' + lc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(b.label.toLowerCase()));
   if (!hit.length) hit = cand.filter(b => b.label.toLowerCase().includes(lc));
+  if (!hit.length) hit = cand.filter(b => b.text && new RegExp('\\b' + lc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(b.text.toLowerCase()));   // a word on the button's other lines
   // on screen first, then the ones a scroll away
   hit.sort((a, b) => (inV.has(b.i) ? 1 : 0) - (inV.has(a.i) ? 1 : 0));
   if (!hit.length) return { ok: false, msg: `no button labelled "${wanted}". Buttons on screen: ${s.buttons.map(b => `[${b.label}]`).join(' ') || '(none)'}. (Each separate call reopens the game: an open menu or sheet closes. Use batch to tap through a menu in one go.)` };
@@ -340,6 +344,11 @@ async function tap(page, wanted) {
   const x = Math.min(innerW(page), box.x + box.width / 2), y = box.y + box.height / 2;
   const cover = await handle.evaluate((e, [px, py]) => { const t = document.elementFromPoint(px, py); return !t || t === e || e.contains(t) || t.contains(e) ? '' : (t.id ? '#' + t.id : '.' + String(t.className).split(' ')[0]); }, [x, y]);
   if (cover) return { ok: false, msg: `"${b.label}" is covered by something else (${cover}): a menu, dialog or tip is in front of it. Close that first.` };
+  if (how === 'hover') {   // a mouse view only: rest the pointer on it, as a desktop player does before clicking
+    await page.mouse.move(x, y);
+    const tip = await handle.evaluate(e => { for (let a = e; a; a = a.parentElement) if (a.title) return a.title; return ''; });
+    return { ok: true, msg: `hovered [${b.label}]${tip ? `; its title (the browser's own tooltip) reads "${tip}"` : '; it has no title tooltip'}` };
+  }
   await page.mouse.click(x, y);
   const extra = hit.length > 1 ? ` (${hit.length} buttons matched; took the first${inV.has(b.i) ? '' : ', after scrolling'})` : '';
   return { ok: true, msg: `tapped [${b.label}]${b.disabled ? ' (it was greyed out)' : ''}${extra}` };
@@ -363,6 +372,21 @@ async function exec(cmd, args, ctx) {
       const r = await tap(page, args.join(' '));
       if (r.ok) await run(page, 0.5);
       return { text: r.ok ? r.msg : `tap-if: no [${args.join(' ')}] on screen, carried on`, data: r };
+    }
+    case 'hover': {   // mouse views: move the pointer onto a button and look (hover styles, tooltips)
+      if (!args.length) die('hover needs a button label: hover "Forge"');
+      if (VIEW.touch) return { text: `hover: the ${VIEW.id} view has no mouse, carried on`, data: { ok: false } };   // a route plays every view: skip, do not fail
+      const r = await tap(page, args.join(' '), 'hover');
+      if (!r.ok) process.exitCode = 1; else await run(page, 0.6);
+      if (flags.quiet || !r.ok) return { text: r.msg, data: r };
+      const l = await look(session, page, 'hover'); return { text: r.msg + '\n' + l.text, data: { ...r, look: l.data } };
+    }
+    case 'key': {   // press a key on the keyboard (Escape, Enter, Space, a letter), as a desktop player does
+      if (!args.length) die('key needs a key name: key Escape');
+      const k = args[0] === 'Space' ? ' ' : args[0];
+      try { await page.keyboard.press(k); } catch (e) { process.exitCode = 1; return { text: `key: "${args[0]}" is not a key name`, data: { ok: false } }; }
+      await run(page, 0.3);
+      return { text: `pressed ${args[0]}`, data: { ok: true, key: args[0] } };
     }
     case 'wait': {
       const secs = num(args[0], 'wait'); await run(page, secs);
@@ -452,7 +476,7 @@ async function exec(cmd, args, ctx) {
       for (let i = 1; i <= 6; i++) { fs6.push(await namedShot(page, `${args[0]}-${i}`)); if (i < 6) await run(page, 0.3); }
       return { text: `burst ${fs6.length} frames: ${fs6[0]} .. ${fs6[5]}`, data: { burst: fs6 } };
     }
-    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, wait, away, state, new, expect, expect-no, expect-save, scroll, shot, burst, stub-site, type, tab, batch`);
+    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, hover, key, wait, away, state, new, expect, expect-no, expect-save, scroll, shot, burst, stub-site, type, tab, batch`);
   }
 }
 

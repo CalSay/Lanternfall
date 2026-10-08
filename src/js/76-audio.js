@@ -112,7 +112,7 @@ document.addEventListener('click', e => {
     const on_ = S.settings.sound;
     b.textContent = on_ ? '♪' : '×';
     b.classList.toggle('off', !on_);
-    b.title = on_ ? 'Sound on. Tap to mute.' : 'Sound off. Tap to unmute.';
+    b.title = on_ ? 'Sound on. Turn it off.' : 'Sound off. Turn it on.';
     b.setAttribute('aria-label', b.title);
   };
   b.addEventListener('pointerdown', e => e.stopPropagation());

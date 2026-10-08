@@ -7,6 +7,12 @@
 //   node tools/playtest-human.mjs run   --html <build> --seed <n> --out <dir>   play with the Messages API (needs ANTHROPIC_API_KEY)
 //        [--model claude-opus-5-5] [--effort high] [--dry]                      --dry: no model, taps the first button (plumbing test)
 //        [--hero <name>]                                                        tell the player which hero to pick (any mode)
+//        [--resume <dir>]   carry on from where an earlier run in <dir> stopped (its save and game clock; a new --out), for a
+//                       run that needs more steps than one player's context holds, e.g. a run to zone 10. The step cap is
+//                       per leg; --max-minutes counts the whole game clock, so raise it past the earlier leg's minutes
+//        [--view <v>]   the screen and the player (tools/lib/views.mjs): desktop (default: 1280x720, a desk player with a mouse
+//                       and keyboard), laptop, hd, or a phone view (landscape, portrait: the phone dipper). --landscape and
+//                       --portrait are short for those.
 //
 // No API key? A Claude Code worker can be the player instead, one command per turn, with the same brief, caps and logs:
 //   node tools/playtest-human.mjs start --html <build> --seed <n> --out <dir>   open the game in a background process; prints
@@ -17,7 +23,8 @@
 //
 // Actions: tap <label> | tap <label> x<2-5> (tap it again and again, as when mashing Attack) | wait <seconds> |
 //          read (take a moment; the game keeps running) | scroll down | scroll up
-// Caps (all modes): --max-steps 150, --max-minutes 30 (game minutes), --max-usd 10 (run mode). Also --landscape.
+//          mouse views also: click <label> (the same as tap) | hover <label> | press <key> (Escape, Enter, Space, a letter)
+// Caps (all modes): --max-steps 150, --max-minutes 30 (game minutes), --max-usd 10 (run mode).
 // Output in <dir>: notes.md (numbered notes, written as noticed), steps.jsonl (action, reason, what changed, per step),
 // shots/ (a screenshot per look), run.json (steps, game minutes, tokens, USD, stop reason, and the full player prompt, so
 // anyone can check the player saw nothing but the game). The player never sees repo files, docs or anyone's notes.
@@ -30,6 +37,7 @@ import readline from 'node:readline';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { ROOT } from './lib/core.mjs';
+import { view, VIEW_HELP } from './lib/views.mjs';
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
@@ -39,6 +47,7 @@ const opts = n => argv.flatMap((a, i) => (a === '--' + n && argv[i + 1] !== unde
 const flag = n => argv.includes('--' + n);
 const numOpt = (n, d) => { const v = Number(opt(n, d)); if (!Number.isFinite(v) || v < 0) die(`--${n} needs a number`); return v; };
 
+const VIEW = view(opt('view', flag('landscape') ? 'landscape' : flag('portrait') ? 'portrait' : 'desktop')) || die(`--view is not a view: ${VIEW_HELP}`);
 const OUT = path.resolve(opt('out', '') || die('give --out <dir>'));
 const CAPS = { steps: numOpt('max-steps', 150), minutes: numOpt('max-minutes', 30), usd: numOpt('max-usd', 10) };
 const F = { notes: path.join(OUT, 'notes.md'), steps: path.join(OUT, 'steps.jsonl'), run: path.join(OUT, 'run.json'), server: path.join(OUT, 'server.json') };
@@ -51,7 +60,25 @@ const usdOf = (model, t) => { const p = PRICES[model]; if (!p) return null;
   return +((t.input * p[0] + t.output * p[1] + t.cacheRead * p[2] + t.cacheWrite * p[3]) / 1e6).toFixed(4); };
 
 // ---------------- the player's brief: the game's screen and nothing else (persona v2: docs/coord/playtester-persona.md) ----------------
-export const BRIEF = `You are playing a mobile game for the first time. You have never seen it and know nothing about it except what is on the screen. You are a normal player on a phone: curious, a little impatient, happy to follow the game's suggestions when they make sense. Play for up to 30 minutes and try to get into the game: do what it asks, try what it offers, and keep moving toward whatever goal it seems to set.
+// Two players read it: the desk player (mouse views, the primary persona) and the phone dipper (touch views). Only the
+// opening, one habit and the action list differ.
+const DESK = !VIEW.touch;
+const OPENING = DESK
+  ? `You are playing a browser game for the first time, on a computer: a ${VIEW.w}x${VIEW.h} browser window, a mouse and a keyboard, no touch screen. You have never seen the game and know nothing about it except what is on the screen. You are a normal player at a desk: curious, a little impatient, happy to follow the game's suggestions when they make sense.`
+  : `You are playing a mobile game for the first time. You have never seen it and know nothing about it except what is on the screen. You are a normal player on a phone: curious, a little impatient, happy to follow the game's suggestions when they make sense.`;
+const DESK_HABIT = `\n- You play with a mouse. Say when something seems made for a phone instead: words that tell you to tap, swipe or hold; text too small to read comfortably at a desk; a control that needs a long press; a button that does not answer a click, or does not change when the pointer rests on it while you wonder whether it is a button.`;
+const ACTIONS = DESK
+  ? `- click <button label> (copy the label; for repeated clicks of the same button, e.g. attacking, add x2 to x5: click Attack x3)
+- hover <button label> (rest the pointer on it without clicking, to see whether it explains itself)
+- press <key> (a key on the keyboard: Escape, Enter, Space, or a letter)
+- wait <seconds> (let the game run, e.g. wait 30 while something works; up to 300)
+- read (take a moment; the game keeps running while you do)
+- scroll down / scroll up (the mouse wheel)`
+  : `- tap <button label> (copy the label; for repeated taps of the same button, e.g. attacking, add x2 to x5: tap Attack x3)
+- wait <seconds> (let the game run, e.g. wait 30 while something works; up to 300)
+- read (take a moment; the game keeps running while you do)
+- scroll down / scroll up`;
+export const BRIEF = `${OPENING} Play for up to ${Math.round(CAPS.minutes)} minutes and try to get into the game: do what it asks, try what it offers, and keep moving toward whatever goal it seems to set.
 
 While you play, keep a running list of notes, as a friend testing the game would text the developer. Write a note the moment you notice something, not at the end. One blunt line each, in your own words. Note anything that:
 - is confusing, illogical or contradicts itself (a line of dialogue that does not fit what happens next, a warning that does not match what you can see);
@@ -72,32 +99,39 @@ Habits of a careful player:
 - When you finish a task in a menu (spending points, crafting, equipping), note whether the game shows you the way back to the action and how many taps it took.
 - When you look for something (gear, stats, abilities), note where you looked first and where it actually was.
 - When the game shows a number (a stat, an upgrade, a cost), say whether it tells you what you actually get. When you spend points, say whether the choice felt like a real decision or you just dumped them.
-- If a slot, button or item shows letters, a blank or a stand-in where a picture should be, say so.
+- If a slot, button or item shows letters, a blank or a stand-in where a picture should be, say so.${DESK ? DESK_HABIT : ''}
 When something confuses you, quote the exact words on screen that confused you, and say what you expected instead. Do not repeat a note. If the same problem gets worse, write a new note saying so. Notes are about the game as you feel it, not about how you are being shown it.
 
-Each turn you see the screen: a screenshot plus the text on it, the buttons you can tap (greyed ones marked) and other buttons on the page (further down, or behind what is showing). Pick ONE action:
-- tap <button label> (copy the label; for repeated taps of the same button, e.g. attacking, add x2 to x5: tap Attack x3)
-- wait <seconds> (let the game run, e.g. wait 30 while something works; up to 300)
-- read (take a moment; the game keeps running while you do)
-- scroll down / scroll up
-The game keeps running in real time while you read. Before each tap you take as long as a person needs to read what just appeared, so if something changes or attacks while you read, you will be told.
+Each turn you see the screen: a screenshot plus the text on it, the buttons you can ${DESK ? 'click' : 'tap'} (greyed ones marked) and other buttons on the page (further down, or behind what is showing). Pick ONE action:
+${ACTIONS}
+The game keeps running in real time while you read. Before each ${DESK ? 'click' : 'tap'} you take as long as a person needs to read what just appeared, so if something changes or attacks while you read, you will be told.
 When time is up, add one last note that starts "TOP:" and names the 3 to 5 problems that would most make you stop playing, each with what you expected instead.`;
 // --hero <name>: the one cue a run may add, so a run can play the hero a human tester played (a pick, not a hint).
 const PROMPT = BRIEF + (opt('hero') ? `\n\nWhen the game asks who you are, pick ${opt('hero')}.` : '');
 
 // ---------------- the game: one open browser, driven through the playtest driver ----------------
 class Game {
-  constructor({ html, seed, landscape }) {
+  constructor({ html, seed }) {
     this.args = [path.join(ROOT, 'tools', 'playtest.mjs'), 'batch', '--json', '--quiet', '--frozen', '--thumb', '--session', path.join(OUT, 'session'), '--shots', path.join(OUT, 'shots')];
     if (html) this.args.push('--html', path.resolve(html));
     if (seed !== undefined) this.args.push('--seed', String(seed));
-    this.args.push(landscape ? '--landscape' : '--portrait');   // a phone player: playtest.mjs's own default is now the desktop view (desktop-mouse-playtest moves this persona)
+    this.args.push('--view', VIEW.id);   // the desk player by default; --landscape / --portrait for the phone dipper
     this.secs = 0;   // game seconds played, by this tool's count
   }
   async open() {
+    const from = opt('resume');
+    if (from) {   // a second leg: the earlier run's save and clock, so the game opens where that player left it
+      const prev = path.resolve(from);
+      if (prev === OUT) die('--resume needs a new --out, not the earlier run\'s folder');
+      if (!fs.existsSync(path.join(prev, 'run.json')) || !fs.existsSync(path.join(prev, 'session'))) die(`--resume: ${prev} has no finished run (run.json and session/); stop that run first`);
+      const run = JSON.parse(fs.readFileSync(path.join(prev, 'run.json'), 'utf8'));
+      fs.cpSync(path.join(prev, 'session'), path.join(OUT, 'session'), { recursive: true });
+      this.secs = Math.round(run.gameSecs ?? (run.gameMinutes || 0) * 60);
+    }
     this.p = spawn(process.execPath, this.args, { stdio: ['pipe', 'pipe', 'inherit'] });
     this.p.stdin.on('error', () => {});   // a write after the driver died must not crash the tool: send() reports it
     this.lines = readline.createInterface({ input: this.p.stdout })[Symbol.asyncIterator]();
+    if (from) { await this.send('look'); return; }
     await this.send('new fresh'); this.secs += 1.5;   // the driver boots the page for 1.5 s
   }
   // One command in, one JSON result out. The driver echoes "> cmd" first.
@@ -113,6 +147,8 @@ class Game {
   async wait(s) { s = Math.round(s * 10) / 10; if (s <= 0) return null; this.secs += s; return this.send(`wait ${s}`); }
   async look() { return this.send('look'); }
   async tap(label) { const r = await this.send(`tap "${label.replace(/"/g, '')}"`); if (r.ok) this.secs += 0.5; return r; }
+  async hover(label) { return this.send(`hover "${label.replace(/"/g, '')}"`); }
+  async press(key) { this.secs += 0.3; return this.send(`key ${key}`); }
   async scroll(dir) { this.secs += 0.3; return this.send(`scroll ${dir}`); }
   async close() {
     if (!this.p || this.p.exitCode !== null || this.p.signalCode) return;   // already gone: 'exit' will not fire again
@@ -140,15 +176,17 @@ function screenText(s, { withShot }) {
   if (s.bell && s.bell !== '0') out.push(`Notice bell: ${s.bell}`);
   return out.join('\n');
 }
-const hasButton = (s, label) => { const l = label.toLowerCase(); return [...s.buttons, ...s.offAll].some(b => b.label.toLowerCase().includes(l)); };
+const hasButton = (s, label) => { const l = label.toLowerCase(); return [...s.buttons, ...s.offAll].some(b => b.label.toLowerCase().includes(l) || (b.text || '').toLowerCase().includes(l)); };
 
 function parseAction(a) {
   a = String(a || '').trim();
   let m;
-  if ((m = a.match(/^tap\s+(.+?)(?:\s+x([1-9]))?$/i))) return { kind: 'tap', label: m[1].replace(/^\[|\]$/g, '').replace(/^"|"$/g, '').trim(), times: Math.min(5, +(m[2] || 1)) };
+  if ((m = a.match(/^(?:tap|click)\s+(.+?)(?:\s+x([1-9]))?$/i))) return { kind: 'tap', label: m[1].replace(/^\[|\]$/g, '').replace(/^"|"$/g, '').trim(), times: Math.min(5, +(m[2] || 1)) };
   if ((m = a.match(/^wait\s+(\d+(?:\.\d+)?)/i))) return { kind: 'wait', secs: Math.min(300, Math.max(1, +m[1])) };
   if (/^read\b/i.test(a)) return { kind: 'read' };
   if ((m = a.match(/^scroll\s+(up|down)/i))) return { kind: 'scroll', dir: m[1].toLowerCase() };
+  if (DESK && (m = a.match(/^hover\s+(.+)$/i))) return { kind: 'hover', label: m[1].replace(/^\[|\]$/g, '').replace(/^"|"$/g, '').trim() };
+  if (DESK && (m = a.match(/^press\s+([A-Za-z0-9]+)$/i))) return { kind: 'press', key: m[1].length === 1 ? m[1].toLowerCase() : m[1][0].toUpperCase() + m[1].slice(1) };
   return null;
 }
 
@@ -180,7 +218,7 @@ class Run {
     if (this.stopped) { for (const n of notes) this.note(n); return { text: `The session is over (${this.stopped}).`, over: true }; }   // last notes still count
     for (const n of notes) this.note(n);
     const a = parseAction(action);
-    if (!a) return { text: `"${action}" is not an action. Use: tap <label>, tap <label> x3, wait <seconds>, read, scroll down, scroll up.\n${this.status()}`, over: false };
+    if (!a) return { text: `"${action}" is not an action. Use: ${DESK ? 'click <label>, click <label> x3, hover <label>, press <key>' : 'tap <label>, tap <label> x3'}, wait <seconds>, read, scroll down, scroll up.\n${this.status()}`, over: false };
     this.step++;
     const g = this.game, before = this.screen, errorsBefore = this.errors.length, rec = { step: this.step, t: +g.secs.toFixed(1), action, why: why || '', notes, before: before.screenshot };
     const told = [];
@@ -200,13 +238,18 @@ class Run {
       }
       gather(await g.wait(0.5));
     } else if (a.kind === 'wait') { gather(await g.wait(a.secs)); told.push(`You waited ${a.secs} s.`); }
+    else if (a.kind === 'hover') {
+      if (!hasButton(before, a.label)) told.push(`There is no [${a.label}] button to rest the pointer on.`);
+      else { const r = await g.hover(a.label); gather(r); told.push(r.msg ? r.msg.replace(/^hovered/, 'You rested the pointer on') : `You rested the pointer on [${a.label}].`); }
+    }
+    else if (a.kind === 'press') { const r = await g.press(a.key); gather(r); told.push(r.ok === false ? `"${a.key}" is not a key.` : `You pressed ${a.key}.`); gather(await g.wait(0.3)); }
     else if (a.kind === 'read') { const rs = Math.max(3, readSecs(null, before)); gather(await g.wait(rs)); told.push(`You took ${rs.toFixed(1)} s to read.`); }
     else { const r = await g.scroll(a.dir); gather(r); told.push(r.text || (r.scrolled ? `Scrolled ${a.dir}.` : `Nothing to scroll ${a.dir}.`)); }
     const after = await g.look(); gather(after);
     // Stuck detector: the same action on the same screen 3 times running, with the screen not changing, is a confusion note.
     const key = action.trim().toLowerCase() + '|' + before.lines.join('\n');
-    this.same = (a.kind === 'tap' || a.kind === 'scroll') && key === this.lastKey ? this.same + 1 : 1; this.lastKey = key;   // waiting on a still screen is not being stuck
-    if (a.kind === 'tap' && after.lines.join('\n') === before.lines.join('\n')) told.push('Nothing on screen seemed to change.');
+    this.same = (a.kind === 'tap' || a.kind === 'scroll' || a.kind === 'press') && key === this.lastKey ? this.same + 1 : 1; this.lastKey = key;   // waiting on a still screen is not being stuck
+    if ((a.kind === 'tap' || a.kind === 'press') && after.lines.join('\n') === before.lines.join('\n')) told.push('Nothing on screen seemed to change.');
     if (this.same === 3) { const n = this.note(`Stuck (noted by the tester tool): "${action}" three times on the same screen and nothing changed.`); rec.stuckNote = n; }
     if (this.errors.length > errorsBefore) rec.pageErrors = this.errors.slice(errorsBefore);
     this.prevSeen = before; this.screen = after;
@@ -217,7 +260,7 @@ class Run {
   }
   finish(extra) {
     const run = {
-      ...this.meta, endedAt: new Date().toISOString(), steps: this.step, gameMinutes: +(this.game.secs / 60).toFixed(1),
+      ...this.meta, endedAt: new Date().toISOString(), steps: this.step, gameMinutes: +(this.game.secs / 60).toFixed(1), gameSecs: Math.round(this.game.secs), resumedFrom: opt('resume') || undefined,
       notes: this.noteN, caps: CAPS, pageErrors: this.errors.slice(0, 20), ...extra, stopReason: this.stopped || extra.stopReason || 'stopped by the player', prompt: PROMPT
     };
     fs.writeFileSync(F.run, JSON.stringify(run, null, 1));
@@ -230,7 +273,7 @@ const TOOL = {
   name: 'act', description: 'Do one thing in the game, and add any notes you have right now.', strict: true,
   input_schema: { type: 'object', additionalProperties: false, required: ['notes', 'action', 'why'], properties: {
     notes: { type: 'array', items: { type: 'string' }, description: 'New one-line notes about what you just noticed (empty if none).' },
-    action: { type: 'string', description: 'tap <label> | tap <label> x3 | wait <seconds> | read | scroll down | scroll up' },
+    action: { type: 'string', description: DESK ? 'click <label> | click <label> x3 | hover <label> | press <key> | wait <seconds> | read | scroll down | scroll up' : 'tap <label> | tap <label> x3 | wait <seconds> | read | scroll down | scroll up' },
     why: { type: 'string', description: 'A few words: why this action.' }
   } }
 };
@@ -271,8 +314,8 @@ async function runMode() {
   const dry = flag('dry'), model = opt('model', 'claude-opus-5-5'), effort = opt('effort', 'high');
   if (!dry && !process.env.ANTHROPIC_API_KEY) die('no ANTHROPIC_API_KEY: use start / act / stop with a Claude Code worker as the player (see the top of this file)');
   if (!dry && !PRICES[model]) die(`no price for ${model}, so the cost cap cannot work: add it to PRICES`);
-  const meta = { mode: dry ? 'dry' : 'api', model: dry ? null : model, effort: dry ? null : effort, seed: numOpt('seed', 1), html: opt('html', 'dist/lanternfall.html'), startedAt: new Date().toISOString() };
-  const run = new Run(meta), game = new Game({ html: opt('html'), seed: meta.seed, landscape: flag('landscape') });
+  const meta = { view: VIEW.id, mode: dry ? 'dry' : 'api', model: dry ? null : model, effort: dry ? null : effort, seed: numOpt('seed', 1), html: opt('html', 'dist/lanternfall.html'), startedAt: new Date().toISOString() };
+  const run = new Run(meta), game = new Game({ html: opt('html'), seed: meta.seed });
   const tokens = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   let stopReason = null, error = null, wasted = 0;
   try {
@@ -327,8 +370,8 @@ async function runMode() {
 
 // ---------------- agent mode: a background game a worker drives one command at a time ----------------
 async function serve() {
-  const meta = { mode: 'agent', seed: numOpt('seed', 1), html: opt('html', 'dist/lanternfall.html'), startedAt: new Date().toISOString() };
-  const run = new Run(meta), game = new Game({ html: opt('html'), seed: meta.seed, landscape: flag('landscape') });
+  const meta = { view: VIEW.id, mode: 'agent', seed: numOpt('seed', 1), html: opt('html', 'dist/lanternfall.html'), startedAt: new Date().toISOString() };
+  const run = new Run(meta), game = new Game({ html: opt('html'), seed: meta.seed });
   const first = await run.begin(game);
   let queue = Promise.resolve(), idle = null;   // one action at a time
   // A worker that never calls stop would leave Chromium running: 45 idle minutes end the run as if it had.

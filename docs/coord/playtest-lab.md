@@ -15,6 +15,8 @@ session folder (`--session <dir>`, default `.playtest/`, ignored by git), so eac
 | `new [fresh\|early\|mid\|late]` | Start a session: a fresh save, or a fixture from `tests/fixtures/` (`save-<name>.json`). |
 | `look` | The screen as text: visible text in reading order, the buttons you can tap (greyed ones marked), buttons a scroll away, notices, and a screenshot path. Open the screenshot to see the stage, bars and icons, which are not text. |
 | `tap "<label>"` | Tap the button with that label (a label that matches exactly, else starts with it, else has it as a whole word, else contains it). If several match it takes the first on screen and says so. Prints the new screen. |
+| `hover "<label>"` | Mouse views only: rest the pointer on that button, then look (hover styles show in the shot). Says whether it has a title tooltip. |
+| `key <name>` | Press a key: `Escape`, `Enter`, `Space` or a letter (Playwright key names). |
 | `wait <seconds>` | Let the game run that many seconds of game time. Prints the new screen. |
 | `away <hours>` | Close the game, come back that many hours later. The away report and the "welcome back" state appear. |
 | `state` | A short save summary: hero, level, zone, gold, skill levels, game time played. |
