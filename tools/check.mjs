@@ -4915,7 +4915,7 @@ if (section('solo hero')) try {
   {
     const g = T(), E = s => g.eval(s);
     const ids = E('GUIDE_STEPS.map(x => x.id).join()');
-    assert(/^attack,ability,dodge,parry,boss,upgrade,(spend,)?(back,)?(wear:weapon,)?gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
+    assert(/^attack,ability,dodge,parry,boss,upgrade,spend,(back,)?(wear:weapon,)?gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
     assert(E('GUIDE_STEPS.every(x => x.pause || x.needs || x.id === "tab:party" || x.id === "nextup")'), 'every step pauses the game while it shows, except the ones that wait for materials (live progress) and two notes (W1-A: see "solo guide pause rules")');
     E('soloPick("wren")'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');   // SOLO2: a hand Attack and Echo Shot would clear the pack before the heavy steps
@@ -11894,6 +11894,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
             }
             // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk
             if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
+            // a step that ended while the walk looked (Next Up opening ends spend-points-before-nextup's line unseen) is not a miss
+            if (!c.ok && await X('(s => s ? s.id : "")(onboardStep())') !== st) continue;
             if (!seen.has(key)) { seen.add(key); if (!c.ok) bad.push(`${key}: ${JSON.stringify(c)}`); }
             // do the step through its own target
             const live = await X(`!!(onboardSpec(${JSON.stringify(st)}) || {}).live`);
@@ -13021,6 +13023,11 @@ if (section('spend-points-before-nextup')) try {
   { // × answers it too
     const [, E] = mk(3); step(E); E('onboardDone("spend")'); E('S.L = 4');
     assert(step(E) !== 'spend', `${at}: dismissed, it does not come back`);
+  }
+  { // spent with the menu still open, then a reload (the latch is runtime only): it never comes back
+    const [, E] = mk(3); step(E); E('attrAdd("might", 1)'); assert(step(E) === 'spend', `${at}: the close-the-menu tail is up`);
+    E('GUIDE_RT.latch = ""; S.tab = null; S.L = 5');
+    assert(E('attrPoints(soloHero()).free') >= 8 && step(E) !== 'spend' && E('S.onboard.done.spend') === 1, `${at}: after a reload mid-tail, more levels never bring the line back (${step(E)})`);
   }
   { // 4 free: one level's points are not a pile
     const [, E] = mk(2);
