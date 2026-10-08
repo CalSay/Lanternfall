@@ -18,11 +18,11 @@ const PACKS = [
     extra: { src: 'art/abilities/game-v1/ability-icons.js', name: 'ABILITY_ICONS', heroes: ['pip'], sizes: [24, 36, 48] } },
   { src: 'art/navigation/game-v1/navigation-icons.js', name: 'NAV_ICONS', out: 'src/js/21t-data-navicons.js', sizes: [12, 16, 18, 20, 22] },
   // Gear (C26, all 330 owner-approved): item tiles show them at 22-48 px (.ic img 28, craft 32, hero sheet 24/48,
-  // gathering 26/40; 48 is 24 at x2, 60n-nicons). Only grades 1-5 exist in the game today; add 6-15 here when those tiers do.
+  // gathering 26/40; 48 native in the hero gear rows and 96 = 48 at x2 on the item card, gear-icons-48). Only grades 1-5 exist in the game today; add 6-15 here when those tiers do.
   // Status icons (C26, all 15 owner-approved, 2026-10-01): the stage's status chips (62-stage chip/badge) draw them at the
   // native size nearest the HUD pixel (U): about 6U device px, so 16-48.
   { src: 'art/status/game-v1/status-icons.js', name: 'STATUS_ICONS', out: 'src/js/21v-data-statusicons.js', sizes: [16, 24, 36, 48] },
-  { src: 'art/gear/game-v2/gear-icons.js', name: 'GEAR_ICONS', out: 'src/js/21u-data-gearicons.js', sizes: [24, 32], keep: id => +id.split('-g')[1] <= 5 }
+  { src: 'art/gear/game-v2/gear-icons.js', name: 'GEAR_ICONS', out: 'src/js/21u-data-gearicons.js', sizes: [24, 32, 48], keep: id => +id.split('-g')[1] <= 5 }
 ];
 
 for (const p of PACKS) {

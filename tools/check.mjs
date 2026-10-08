@@ -8514,8 +8514,8 @@ if (section('action and menu icons (C26)')) try {
   const gear = JSON.parse(g.eval(`JSON.stringify(typeof GEAR_ICONS === 'object' ? { ids: Object.keys(GEAR_ICONS), sizes: [...new Set(Object.values(GEAR_ICONS).map(v => Object.keys(v).join()))],
     want: Object.keys(CRAFT_KINDS).filter(k => !CRAFT_KINDS[k].legacy).flatMap(k => [1, 2, 3, 4, 5].map(t => k + '-g' + t)) } : null)`));
   const missing = gear ? gear.want.filter(id => !gear.ids.includes(id)) : ['GEAR_ICONS'];
-  assert(gear && !missing.length && gear.ids.length === gear.want.length && gear.sizes.join('|') === '24,32',
-    `C26: every crafted kind has its approved gear icon at grades 1-5, at 24 and 32 px (${gear ? gear.ids.length : 0} icons${missing.length ? '; missing ' + missing.slice(0, 4).join(', ') : ''})`);
+  assert(gear && !missing.length && gear.ids.length === gear.want.length && gear.sizes.join('|') === '24,32,48',
+    `C26: every crafted kind has its approved gear icon at grades 1-5, at 24, 32 and 48 px (gear-icons-48) (${gear ? gear.ids.length : 0} icons${missing.length ? '; missing ' + missing.slice(0, 4).join(', ') : ''})`);
   assert(!g.errors.length, 'C26 icons: no core errors');
 } catch (e) { fail('action and menu icons crashed: ' + (e.stack || e)); }
 
@@ -8527,7 +8527,7 @@ if (section('action and menu icons (C26, browser)')) try {
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe });
     try {
-      for (const [w, h] of [[390, 844], [740, 360], [1280, 800]]) {
+      for (const [w, h] of [[390, 844], [360, 740], [740, 360], [1280, 800], [1920, 1080]]) {
         const ctx = await browser.newContext({ viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
         page.on('pageerror', e => errors.push(String(e)));
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
@@ -8564,7 +8564,22 @@ if (section('action and menu icons (C26, browser)')) try {
             w48: i48.offsetWidth, n48: i48.naturalWidth, id48: i48._nic && i48._nic.id, tf48: i48.style.transform, uniq: !iu._nic }; })())`));
         assert(gr.id28 === 'bow-g3' && gr.fit === 'none' && gr.id48 === 'warblade-g2' && gr.uniq,
           `C26 at ${w}x${h}: item tiles show the approved gear icons (old Sword -> Warblade), uniques keep theirs (${JSON.stringify(gr)})`);
-        assert(gr.n28 === 24 && (gr.w48 !== 48 || (gr.n48 === 24 && gr.tf48 === 'scale(2)')), `C26 at ${w}x${h}: a 28 px gear tile shows the 24 px icon unscaled, a 48 px one at x2 (${gr.n28}; ${gr.w48} px: ${gr.n48} ${gr.tf48 || 'no scale'})`);
+        assert(gr.n28 === 24 && (gr.w48 !== 48 || (gr.n48 === 48 && !gr.tf48)), `C26 at ${w}x${h}: a 28 px gear tile shows the 24 px icon unscaled, a 48 px one the native 48 (${gr.n28}; ${gr.w48} px: ${gr.n48} ${gr.tf48 || 'no scale'})`);
+        // gear-icons-48: worn gear shows at native 48 px (Hero card row and the Gear view) with no sideways overflow, and the item card at 96 (48 x2).
+        await page.evaluate(s => window.__t.x(s), `(() => { const it = newItem('staff', 3, 'rare'); S.items.push(it); equipItem(it.id, 'weapon'); window.__g48 = it.id;
+          setTab('party'); setView('party', 'team'); ui(true); return 1; })()`);
+        // waits for the tile's own image to settle at the size its box asks for (ResizeObserver), not for a time
+        const g48 = async (sel, row, want) => { await page.waitForFunction(([sel, want]) => { const i = document.querySelector(sel); return !!i && i.offsetWidth === want && i.naturalWidth === 48; }, [sel, want], { polling: 'raf', timeout: 10000 }).catch(() => {});
+          return JSON.parse(await page.evaluate(s => window.__t.x(s), `JSON.stringify((() => { const i = document.querySelector(${JSON.stringify(sel)}), r = i && i.closest(${JSON.stringify(row)});
+          return i && r ? { box: i.offsetWidth, nat: i.naturalWidth, tf: i.style.transform || '', id: i._nic && i._nic.id, rowOver: r.scrollWidth - r.clientWidth, pageOver: document.documentElement.scrollWidth - innerWidth } : null; })())`)); };
+        const pc = await g48('.pc-gear .pc-slot img', '.pc-gear', 48);
+        await page.evaluate(s => window.__t.x(s), `(() => { setView('party', 'gear'); ui(true); return 1; })()`);
+        const gs = await g48('#sec-craft-gear .cf-gs img', '.cf-gear', 48);
+        await page.evaluate(s => window.__t.x(s), `(() => { craftUI.openItem(window.__g48); return 1; })()`);
+        const ih = await g48('.cf-ihbig .ic img', '.cf-ih', 96);
+        const ok48 = g => g && g.box === 48 && g.nat === 48 && !g.tf && g.id === 'staff-g3' && g.rowOver <= 1 && g.pageOver <= 1;
+        assert(ok48(pc) && ok48(gs), `gear-icons-48 at ${w}x${h}: the Hero card row and the Gear view show the worn staff at native 48 px, no sideways overflow (${JSON.stringify({ pc, gs })})`);
+        assert(ih && ih.box === 96 && ih.nat === 48 && ih.tf === 'scale(2)' && ih.pageOver <= 1, `gear-icons-48 at ${w}x${h}: the item card shows it at 96 px, the 48 px icon at x2 (${JSON.stringify(ih)})`);
         assert(r.seen >= 4 && !r.bad.length, `C26 at ${w}x${h}: tabs, bell and action bar show the approved icons at native size (${r.seen} seen${r.bad.length ? '; ' + r.bad.join('; ') : ''})`);
         assert(!errors.length, `C26 at ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
         await ctx.close();

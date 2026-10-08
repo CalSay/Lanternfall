@@ -762,6 +762,14 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   pack brings back the lettered tiles (the existing `noIcon` path); gather scenes go back to the code-drawn ones by
   reverting their wiring commit; portraits have the Classic art switch. Saves: unaffected (art only; the Classic art
   switch adds one settings flag with a default).
+- **gear-icons-48 (Opus art judge, 2026-10-08): wire.** Cal said the 24 px gear icons lose the epic feel. Codex already exported
+  every gear icon at 48 px with the owner-approved game-v2 pack, so 48 joins the GEAR_ICONS sizes for grades 1-5 (110 icons), bytes
+  as exported, nothing redrawn. Worn gear shows at native 48 px in a 56 px tile (Hero card row and the Gear view); the item card
+  shows 96 px (48 at x2, hard pixels); the bag stays at 32. The judge checked all 110 at 48: sharper and easier to read than 24 or
+  32, and they match the rest of the pack. Flag: staff-g4 (the red staff) has stray specks at every size; Codex should re-export
+  it, and it ships as is until then. The page grows about 365 KB (to about 8.3 MB of 16 MB). The 32 px fallback was turned down
+  because it keeps the blur Cal complained about. Switch off: take 48 out of the sizes list in `tools/art/embed-icons.mjs` and
+  the tiles fall back to 24 at x2.
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
