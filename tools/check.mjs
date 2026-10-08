@@ -12743,15 +12743,17 @@ if (section('unspent points nudge')) try {
   assert(free() === 28 && E('attrOn()'), `unspent points: the fixture has 28 points free (${free()})`);
   const off = ids('{ sticky: false }');
   assert(off[0] === 'hero-up' && off.includes('learn-ability') && E('topGoals(3, { sticky: false })[0].label') === 'Spend 28 attribute points', `unspent points: 28 free tops Next Up, Learn stays in the list (no stickiness: ${off.join(', ')})`);
-  // sticky: the old top three were shown first (the cold leg's chip), then the pile still takes the top
-  E('topGoals(3, { now: 1000 })');
+  // sticky: the list a one-level hero sees is shown first (Learn on top), then the pile comes back and must take the top
+  const k0 = E('soloHero()'), m0 = E('attrOf(null, "might")');
+  const down = () => E(`attrAdd('might', attrPoints().free - ${per})`), up = () => E(`S.attr.pts[${JSON.stringify(k0)}].might = ${m0}`);
+  down(); const was = ids('{ now: 1000 }'); up();
   const on = ids('{ now: 1e6 }');
-  assert(on[0] === 'hero-up' && on.includes('learn-ability'), `unspent points: with stickiness hero-up is first and Learn stays (${on.join(', ')})`);
-  // against a shown Ready goal at prio 11 (guide-goal-after-reload's fire goal)
+  assert(was[0] !== 'hero-up' && free() === 28 && on[0] === 'hero-up' && on.includes('learn-ability'), `unspent points: with stickiness the pile passes the shown list (${was.join(', ')} -> ${on.join(', ')})`);
+  // against a shown Ready goal at prio 11 (guide-goal-after-reload's fire goal): it was on top, the pile still passes it
   E('registerGoal({ id: "zz-fire", sys: "zzfire", prio: 11, pct: () => 1, label: "Light the fire" })');
-  E('topGoals(3, { now: 2e6, sticky: false }); topGoals(3, { now: 3e6 })');
+  down(); ids('{ now: 2e6 }'); const fw = ids('{ now: 3e6 }'); up();
   const fire = ids('{ now: 4e6 }');
-  assert(fire[0] === 'hero-up' && fire.includes('zz-fire'), `unspent points: the pile beats a shown Ready goal at prio 11 (${fire.join(', ')})`);
+  assert(fw[0] === 'zz-fire' && fire[0] === 'hero-up' && fire.includes('zz-fire'), `unspent points: the pile beats a shown Ready goal at prio 11 (${fw.join(', ')} -> ${fire.join(', ')})`);
   E('GOALS.splice(GOALS.findIndex(x => x.id === "zz-fire"), 1)');
   // one level's points: in the list, not forced first
   E(`attrAdd('might', attrPoints().free - ${per})`);

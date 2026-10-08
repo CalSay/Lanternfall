@@ -24,4 +24,5 @@ tap-if "Back to the fight"
 tap-if "Close"
 wait 3
 expect-no "Spend 28 attribute points"
+expect "Learn Power Shot"
 shot chip-after-spend
