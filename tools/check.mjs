@@ -7779,6 +7779,56 @@ if (section('gear on the Hero tab (cal-0107-gear-and-rates)')) try {
   }
 } catch(e){fail('gear-and-rates crashed: '+(e.stack||e));}
 
+// ---- almanac-forge-points-to-gear (2026-10-08): on Cheap Reforge and Salvager's Luck days the Almanac sends you to Hero, Gear ----
+if (section('almanac gear days (almanac-forge-points-to-gear)')) try {
+  const g = loadCore({ seed: 1108 }); const E = s => g.eval(s);
+  const hint = id => JSON.parse(E(`JSON.stringify(almanac.hint(OMENS.find(o => o.id === ${JSON.stringify(id)})))`));
+  assert(!E('isUnlocked("party")') && ['cheapReforge', 'salvagersLuck'].every(id => { const h = hint(id); return h.txt === 'Best today: the Forge.' && h.go.tab === 'forge' && !h.go.view; }), 'almanac gear days: with the Hero tab shut, reforge and salvage days fall back to "Best today: the Forge." and Craft');
+  E('onboardUnlockAll()');
+  for (const id of ['cheapReforge', 'salvagersLuck']) {
+    const h = hint(id);
+    assert(/\bHero\b/.test(h.txt) && /\bGear\b/.test(h.txt) && h.txt.length < 70 && h.go.tab === 'party' && h.go.view === 'gear', `almanac gear days: ${id} names Hero and Gear and goes to Hero, Gear (${JSON.stringify(h)})`);
+  }
+  assert(/reforge/.test(hint('cheapReforge').txt) && /salvage/.test(hint('salvagersLuck').txt), 'almanac gear days: each line says what to do');
+  for (const id of ['hotForge', 'steadyHands', 'transmuter']) { const h = hint(id); assert(h.txt === 'Best today: the Forge.' && h.go.tab === 'forge' && !h.go.view, `almanac gear days: ${id} still says "Best today: the Forge." and opens Craft`); }
+  E('almanac.force("cheapReforge")');
+  assert(E('almanac.go(OMENS.find(o => o.id === "cheapReforge"))') === 'party' && E('mod("reforge")') === 0.5, 'almanac gear days: Go returns the Hero tab; the Omen still halves reforges');
+  E('almanac.force("none")');
+  const {pw,exe}=browserTools;
+  if(!pw||!exe||!fs.existsSync(distFile))skipBrowser('almanac gear days: Playwright or Chromium not here, skipped');
+  else {
+    const fixture=loadCore({seed:1108});fixture.eval('soloPick("wren");hearthWarm();S.maxZone=12;S.camp.open=true;S.camp.b.hearth=2;S.camp.b.store=8;S.camp.b.forge=1;onboardUnlockAll();onboardTips(false);save()');
+    const raw=fixture.storage.get(KEY),html0=fs.readFileSync(distFile,'utf8'),end=html0.lastIndexOf('})();\n</script>');
+    const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n'+html0.slice(0,end)+'\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n'+html0.slice(end);
+    const browser=await pw.chromium.launch({executablePath:exe,args:['--no-sandbox']});
+    try { for(const [width,height]of[[740,360],[360,740]]) {
+      const at=`almanac gear days ${width}x${height}`,ctx=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+      try {
+        await ctx.addInitScript(({raw,key})=>{localStorage.setItem(key,raw);},{raw,key:KEY});
+        const page=await ctx.newPage(),errs=[];page.on('pageerror',e=>errs.push(String(e)));page.on('console',m=>{if(m.type()==='error'&&/lanternfall/.test(m.text()))errs.push(m.text());});
+        await page.route('**/*',r=>r.request().url()==='http://lf.test/'?r.fulfill({status:200,body:html,headers:{'content-type':'text/html; charset=utf-8'}}):r.abort());
+        await page.goto('http://lf.test/');await page.waitForFunction(()=>!!window.__t);const X=s=>page.evaluate(s=>window.__t.x(s),s);
+        for (const [id, back] of [['cheapReforge', 'party'], ['salvagersLuck', 'party'], ['hotForge', 'forge']]) {
+          // the Almanac card shows the calendar's Omen, so move the clock to the next day that plays this one
+          const day=await X(`(() => { for (let d = deviceDay(Date.now()); d < deviceDay(Date.now()) + 3000; d++) if (almanac.omenFor(d).id === ${JSON.stringify(id)}) return d; return -1; })()`);
+          assert(day>=0,`${at}: a day that plays ${id} exists`);
+          await X(`(() => { const t = new Date(2026, 0, 1 + ${day}, 12).getTime(); Date.now = () => t; return true; })()`);
+          await X(`almanac.force(${JSON.stringify(id)});typeof closeStory==="function"&&closeStory();document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());setTab("world");setView("world","almanac");ui(true);true`);
+          await page.waitForFunction(()=>{const b=document.querySelector('#p-world .om-go');return !!b&&b.offsetParent!==null;},null,{timeout:15000});
+          const line=await X('document.querySelector("#p-world .om-hint-tx").textContent');
+          await X('document.querySelector("#p-world .om-go").click();true');
+          await page.waitForFunction(t=>window.__t.x('S.tab')===t,back,{timeout:15000});
+          const where=await X('({ tab: S.tab, view: curView(S.tab), gear: S.tab === "party" && document.getElementById("sec-craft-gear").offsetParent !== null })');
+          if (back==='party') assert(where.tab==='party'&&where.view==='gear'&&where.gear&&/Hero/.test(line)&&/Gear/.test(line),`${at}: on ${id} the Almanac says "${line}" and Go opens Hero, Gear with your gear (${JSON.stringify(where)})`);
+          else assert(where.tab==='forge'&&line==='Best today: the Forge.',`${at}: on ${id} the Almanac still says the Forge and Go opens Craft (${JSON.stringify(where)}, "${line}")`);
+        }
+        await X('almanac.force("none");true');
+        assert(!errs.length,`${at}: no page errors`+(errs.length?': '+errs[0]:''));
+      } finally {await ctx.close();}
+    }} finally {await browser.close();}
+  }
+} catch(e){fail('almanac gear days crashed: '+(e.stack||e));}
+
 // ---- away time never negative (2026-09-30): a save stamped in the future must not pay negative gains ----
 // ---- C26 resource icons (Claude, 2026-10-01): every family and grade 1-5 has its approved icon and name ----
 if (section('resource icons (C26)')) try {

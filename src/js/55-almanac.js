@@ -78,8 +78,8 @@ let OMENS, WEEKLY_GOALS;
 
     { id: 'hotForge', n: 'Hot Forge', cat: 'craft', fx: 'Crafting skills earn +50% XP', mod: { 'skillXp:smith': 1.5, 'skillXp:bench': 1.5, 'skillXp:loom': 1.5, 'skillXp:ench': 1.5 }, ic: ['anvil', '#FF9E3D'], go: { tab: 'forge' } },
     { id: 'steadyHands', n: 'Steady Hands', cat: 'craft', fx: 'Rare and Epic forge odds +50%', mod: { rareW: 1.5 }, ic: ['anvil', '#5FA8FF'], go: { tab: 'forge' } },
-    { id: 'cheapReforge', n: 'Cheap Reforge', cat: 'craft', fx: 'Reforges cost half', mod: { reforge: 0.5 }, needs: 'K6', ic: ['anvil', '#B58CFF'], go: { tab: 'forge' } },
-    { id: 'salvagersLuck', n: "Salvager's Luck", cat: 'craft', fx: 'Salvage returns double', mod: { salvage: 2 }, ic: ['ore', '#F2C14E'], go: { tab: 'forge' } },
+    { id: 'cheapReforge', n: 'Cheap Reforge', cat: 'craft', fx: 'Reforges cost half', mod: { reforge: 0.5 }, needs: 'K6', ic: ['anvil', '#B58CFF'], go: { tab: 'forge', gear: 'reforge' } },
+    { id: 'salvagersLuck', n: "Salvager's Luck", cat: 'craft', fx: 'Salvage returns double', mod: { salvage: 2 }, ic: ['ore', '#F2C14E'], go: { tab: 'forge', gear: 'salvage' } },
     { id: 'transmuter', n: "Transmuter's Day", cat: 'craft', fx: 'Transmutes cost one less', bonus: { transmuteSave: 1 }, needs: 'K6', ic: ['orb', '#B58CFF'], go: { tab: 'forge' } },
 
     { id: 'buildersMoon', n: "Builder's Moon", cat: 'road', fx: 'Builds started today are 25% faster', mod: { buildTime: 0.75 }, needs: 'Camp', ic: ['anvil', '#D08A4E'], go: { tab: 'world' } },
@@ -247,6 +247,8 @@ let OMENS, WEEKLY_GOALS;
     if (g.fight === 'boss') return { txt: 'Best today: zone bosses. Beaten bosses can be fought again.', go: { zone: S.maxZone, tab: 'adv' } };
     if (g.fight === 'here') return { txt: 'Best today: fighting in any zone you like.', go: { zone: S.zone } };
     if (g.fight) return { txt: `Best today: fighting at your frontier, ${zoneName(S.maxZone)}.`, go: { zone: S.maxZone } };
+    // reforge and salvage live on Hero, Gear (#195); with the Hero tab shut, fall back to the Forge
+    if (g.gear && typeof isUnlocked === 'function' && isUnlocked('party')) return { txt: g.gear === 'reforge' ? "Best today: reforge your gear. It's on the Hero tab, under Gear." : "Best today: salvage old gear. It's on the Hero tab, under Gear.", go: { tab: 'party', view: 'gear' } };
     if (g.tab === 'forge') return { txt: 'Best today: the Forge.', go: { tab: 'forge' } };
     if (g.tab === 'adv') return { txt: 'Best today: bounties on the Fight tab.', go: { tab: 'adv' } };
     if (o.id === 'wyrmStirs') return { txt: 'Best today: the world raid.', go: { tab: 'world' } };

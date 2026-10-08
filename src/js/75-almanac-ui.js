@@ -21,7 +21,8 @@
       e.stopPropagation();
       const h = almanac.hint(almanac.today()), tab = almanac.go(almanac.today());
       if (h.go && h.go.zone && typeof goFight === 'function') goFight();   // a fight: straight to it (active combat)
-      else if (tab) setTab(tab); else ui(true);
+      else if (tab) { setTab(tab); if (h.go && h.go.view) try { setView(tab, h.go.view); } catch (e) {} }   // a view too (Hero, Gear), like the bounty Go
+      else ui(true);
     });
 
     const dare = el('button', 'om-dare');
