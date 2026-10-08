@@ -1,0 +1,1 @@
+The top bar no longer shows an orange diamond stuck at 0 beside your gold in the first hour. That diamond is Embers, the world raid's coin: it now appears when the World raid opens (or once you hold Embers), and hovering it says "Embers, from the world raid". Best shot: fresh-topbar-1280x720.

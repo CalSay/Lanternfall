@@ -677,7 +677,7 @@ let uiTimer = 0, slowTick = 0, lastPct = 100, trailRaf = 0;
 const uiHooks = [];
 // Static HUD nodes, looked up once.
 const hudEl = {};
-for (const id of ['hName', 'hLvl', 'xpFill', 'gold', 'embers', 'zName', 'zSub', 'mName', 'mHp', 'mBar', 'mTrail', 'tWrap', 'tBar', 'zStep', 'zNum', 'zPrev', 'zNext', 'statNums', 'sDps', 'sTap', 'hint', 'hPlate', 'hpName', 'hpNum', 'hpFill', 'hpTrail']) hudEl[id] = $(id);
+for (const id of ['hName', 'hLvl', 'xpFill', 'gold', 'embers', 'emberCoin', 'zName', 'zSub', 'mName', 'mHp', 'mBar', 'mTrail', 'tWrap', 'tBar', 'zStep', 'zNum', 'zPrev', 'zNext', 'statNums', 'sDps', 'sTap', 'hint', 'hPlate', 'hpName', 'hpNum', 'hpFill', 'hpTrail']) hudEl[id] = $(id);
 const modeBtns = [...document.querySelectorAll('#modeSeg button')];
 // The foe's HP bar and its white damage trail scale on the compositor (transform: no relayout per
 // hit). A new foe refills both at once: the trail's transition is off for two frames (instead of
@@ -720,6 +720,8 @@ function ui(force) {
   putStyle(H.xpFill, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%');
   putText(H.gold, fmt(S.gold));
   putText(H.embers, fmt(S.embers));
+  // Embers are the world raid's coin: keep the diamond out of the top bar until the raid opens or the player holds some
+  putHidden(H.emberCoin, !((typeof isUnlocked === 'function' && isUnlocked('raid')) || S.embers > 0 || S.wyrms > 0));
   for (const b of modeBtns) {
     putAttr(b, 'aria-pressed', String(b.dataset.act === S.activity));
     if (b.dataset.act === 'raid') putDisabled(b, !(online.ready && online.canWrite));
