@@ -608,6 +608,7 @@ Ruled MERGE by an Opus high judge (PR for card `z13-arrival-footing`); Cal can v
   at 10 (no mastery stars), Bestiary kills a kind at 12. Casual reads 0% a try there, as the walk does. The kept-up rows stay the report rows (1-2 tries).
 - **Zones 10-12 stay on their footing.** They read the walk within 15 points as they are; at the arrival footing the sampler reads Wren and
   Pip 54-78 under the walk (33-56 on Wren's own walk save), a sampler gap, not a footing one. They move once that gap is fixed.
+  (Superseded by "Rally gates are live": the gap was the live fight skipping the rally gates; zones 7-12 moved to the arrival footing there.)
 - **Gaps:** z13-15 casual and good, low side, owner `boss-balance-pass`, until 2026-12-01; Tobin's in-band z13 good cell stays gated.
   The boss refit (`TURN_TUNE.boss` hitX/hpX to casual 60-80 at this footing) is a balance-pass row; until it lands the `gearHelps` gate on
   the z13 and z15 kept-up rows passes trivially (first-hour casual is 0).
@@ -937,6 +938,36 @@ Follow-up to "Zone 20 wall" ruling 3, ruled by an Opus high judge (PR for card `
 Veto phrases for Cal: "cap the zone 21-24 foes" (adds the 0.25 hit cap at zones 21-24 on top of the bot fix). "Bot presses every
 feint" drops the trick read and puts back the earlier numbers (abs 2.0).
 
+### Rally gates are live (rally-gates-live) (2026-10-08)
+
+Ruled C by an independent Opus high judge (`autopilot/rulings/2026-10-08-rally-gates-live.md`); Cal can veto.
+
+- **Rally gates are live (rally-gates-live, judge 2026-10-08; Cal can veto).** Since #160 the live fight skipped every gate
+  (59k:1164 read the previous foe's HP). The gates stay, the order is fixed, the rally shows on the boss bar, and z7-12 are
+  refit on the arrival footing with gates on. z13-34 keep their sampler-fitted knots, are re-measured, and wait for the balance
+  pass. This supersedes "a sampler gap, not a footing one" (z13-arrival-footing). Veto: "Turn the rally gates off".
+- **The rally on screen.** The boss bar marks each gate from the start of the fight; the mark it holds at turns gold and a passed one
+  fades. The line says "Rally! It holds at the mark until its next move ends." (with "Only a Stun breaks its charge." only while it
+  gathers a charged move), and "Rally over. Your hits land again." when it opens. While it holds, the turn label reads "Rally: it
+  holds at the mark" unless a charged move's own line needs it.
+- **The refit (zones 7-12 only).** hitX, hpX, hpFloor and Tobin's heroHitX, fitted with the gates on to arrival-footing casual in band;
+  no move, window, gate share or pay change. Landed hits sit on or near the hpFloor, which holds the kept-up never-defends player under 10% (0% measured).
+  Tobin's heroHitX moved at 8, 10, 11 and 12 (1.7 to 1.5, 2 to 1.8, 1.25 to 1.5, 1.75 to 1.6) to keep him in his +10 band.
+  Knots z7-12: hpX 0.95/0.7/0.4/0.35/0.4/0.2, hitX 0.9/0.5/0.3/0.25/0.2/0.12, hpFloor 1.03/1/1.1/1.3/0.95/1.2 (were hpX
+  1.075/0.95/0.75/0.725/0.882/1.008, hitX 1.5/1.055/0.632/0.45/0.407/0.403, hpFloor 1.03/0.84/0.92/0.95/0.94/0.82). The zone 10
+  Champion keeps the most HP of zones 7-12 (the Champion peak check). Arrival-footing casual Wren/Tobin/Pip, 240 fights a row: z7
+  82/88/85, z8 80/81/90, z9 82/88/76, z10 53/52/48, z11 65/80/74, z12 62/75/66; good 100 on every row. Numbers: `docs/design/difficulty-budget.md`.
+- **Walks** (seeds 1-3, Wren, Tobin and Pip, 90 game minutes; each stopped on the 60-minute clock budget at game minute 81-83):
+  every boss from zone 4 to the last one reached (zone 20, 22 and 19) started at gate 0, played all its rallies and fell on the
+  first try. Zones 7-12 took minutes 18-31. Zone 20 at 62:38 (Wren), 49:18 (Tobin) and 65:40 (Pip), against the z20-wall walks'
+  56:53 (Wren) and 72:18 (Tobin). Movement at zones 13 and up goes to the balance-pass row "Rally gates were off on live bosses".
+- **Health parity baselines are the mean of each offset's parity, not the parity of the mean** (rally-gates-live, judge 2026-10-08;
+  the tolerance is unchanged; the 50h section keeps the old value until its Pip goldSpentShare fail is fixed). This raises the
+  active parity reference from 0.21 to the offsets' mean. The 50h section is not rewritten here: it did not move, and a rewrite would bake in
+  Pip's goldSpentShare 0.87 (a real fail, already on the base build). Rewrite it when that fail is fixed. Veto: "Put the old parity baseline back".
+
+Veto phrase for Cal: **"Turn the rally gates off"**: set `gate.on = 0` and refit every boss from z4 to z34 in the balance pass.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
@@ -1138,13 +1169,23 @@ nothing; no economy or save change. A cache with a pick is a big card.
   unlocks on player action or thresholds, never a wall clock, and show about 4 to 6 new things in 10 minutes (90 s gives
   8, one silent; 60 s gave 11). It supports keeping acts off the clock and decided nothing else. Replaces the 60 s gap
   of story-unlock-gates. Files: `docs/design/unlock-pace/judge.md` (prior), walk data in the PR.
-- **F3, the big-moment pace** (amends the self-improving plan's scorecard). Minutes 0 to 20: a big moment at least every
-  5 minutes, no gap over 8. From minute 20 to the zone 10 Champion (or minute 60, if that comes first): a big moment at
-  every zone's first clear from 5 to 10, no gap over 8 on the casual walk. The 2026-11-02 review sets the pace after
-  zone 10. Why: big moments are tied to bosses, so their minutes follow play speed, and zone 10 closes the first hour.
-  Prediction: the nightly walk shows no gap over 8 minutes between big moments up to the zone 10 Champion, for every
-  starter pick; missed if any seed shows one. Coverage areas 2 and 3. No save change; the colour grants switch off
-  with `CACHE_TUNE.on` (card `cache-core`).
+- **F3, the shape of the first hour** (f3-restate, Opus high judge 2026-10-08; Cal can veto: "put the five-minute moments
+  back"). Zones 1 to 10; replaces the 2026-10-06 wording. (a) **No dead stretch.** On the casual walk, never more than 8
+  minutes without a progress moment, up to the zone 10 Champion (or minute 60, if that comes first). A progress moment is a
+  zone's first clear, a new ability, a Star, a hero joining or a unique. Level cards, hero lines, looks and crafts do not
+  count: a grind or a wall makes those on its own. (b) **Three peaks, rising.** The first boss win and its cache (F2), the
+  zone 5 Champion with the first companion, and the zone 10 Champion closing the chapter. Each has its own big card that says
+  what it gave. A casual person reaches the zone 5 Champion by minute 30 and the zone 10 Champion by minute 60. Later is a
+  miss; earlier is never a miss and never a reason to slow the game. (c) **Every big card says what it gave.** A tester can
+  name what each big card gave them. F3 sets nothing past zone 10 (the 2026-11-02 review does). "5 to 10" in older cards means
+  zones, never minutes. F3 alone is never a reason to keep, add or fold a card. Why: no source gives a big-moment interval,
+  and the 8-minute cap is well supported; every gap the old floor flagged was a stall with its own fix, and the floor was being
+  used to defend cards. Level cards and hero lines fire during grinds and losses, so they cannot reset the cap. Until the
+  walk scores (a), the Sunday hold reads F3 by the longest gap to the zone 10 clear and the 5:00 floor is report-only.
+  Prediction: on the walk after `rally-gates-live`, seeds 1 to 3 show no gap over 8 minutes between progress moments up to the
+  zone 10 Champion; the next desk, panel or human run clears zone 10 by minute 60 and asks what a big card gave 0 times (desk
+  run: 2). Coverage areas 2 and 3. Docs only, no save change. Ruling and red team:
+  `docs/design/first-hour-records/2026-10-08-f3-restate.md`.
 - **F1 after the staged lesson** (coordinator, 2026-10-08, on the planner's recommendation; Cal may veto). Cal's staged first fight
   (#197) holds fight 1 for its lessons, so the first gold lands at about 0:19. Keep the lesson. F1 now reads: "the first press gets a
   hit with its sound within 10 s of the first tap, and the first loot (gold, loot or XP) within 30 s". Why: F1 exists so something
@@ -1199,6 +1240,9 @@ Kept only to explain current rules. Each line: the old decision, then what repla
 - Opening: Hesketh's fire ends "Wood first. Then we talk." (intro-and-picker, 2026-10-06) -> it ends on the foe coming up the road;
   the wood-then-talk promise is his Gather line (cal-0107-staged-guide, 2026-10-07, Cal's play note 2).
 
+- F3: "Minutes 0 to 20: a big moment at least every 5 minutes, no gap over 8. From minute 20 to the zone 10 Champion (or minute
+  60): a big moment at every zone's first clear from 5 to 10" (early-game judge, 2026-10-06) -> F3, the shape of the first hour:
+  an 8-minute cap on progress moments, three peaks, every big card says what it gave (f3-restate, 2026-10-08).
 - Autopilot: "Cal approves batches and taps gated items" (2026-10-05) -> no batch waits for Cal; design calls go to the Opus judge
   (2026-10-05, Cal's autonomy request; recorded 2026-10-07).
 - Owner role: art direction asked of Cal (2026-09-27) -> art direction is a judge call (2026-10-06).
