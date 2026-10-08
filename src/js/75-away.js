@@ -108,7 +108,7 @@ let showAwayReport;
     // ---- materials by family and tier ----
     if (r.mats && r.mats.length) {
       const b = block('Materials');
-      for (const k of CRAFT_FAMILIES) {
+      for (const k of STOCK_FAMILIES) {   // the same list as the away diff (55-stats MAT_KINDS)
         const list = r.mats.filter(m => m.k === k); if (!list.length) continue;
         const row = el('div', 'away-mrow');
         row.append(el('span', 'away-fam', MAT[k].n));

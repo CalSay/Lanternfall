@@ -19,7 +19,8 @@
 //                              tools see every goal.
 // onboardUse({ tab, view, feature }) -> { id, text } | null   the first-use line for the system on screen (FIRST_USE below):
 //                              each system that opens after the first fight explains itself once, in one line. The UI
-//                              asks only while no guide step shows; it never pauses the game.
+//                              asks only while no guide step shows and no fight is in view; it pauses the game only to hold
+//                              the gap between two foes with the fight in view, until Got it (staged-guide-followups).
 // onboardUseDone(id)           the line was read (x, or about 7 s on screen). No event, so guide walks never see it.
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
@@ -128,7 +129,8 @@ const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen
 // (`ph` 'between') shows only between fights, and its line is hidden while a foe is on the field.
 //   chop, stock:bench, stock:tool, stock:forge, stock:weapon, stock:store  no pause (needs materials: live progress)
 //   bench, tool, forge, weapon, store                        pause only once the materials are in hand (pauseUnless)
-//   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them)
+//   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them). staged-guide-followups:
+//                                                            a Got it line that starts in the gap between foes holds that gap (75-onboard-ui)
 const stockOf = (fam, t, n) => [fam, t, n];
 // A Lv 1 row's gold rides along as ['gold', 0, n] (the Workbench): needShort reads it from S.gold, so a press step never pauses short of gold either.
 const matsOfBuild = id => { const f = typeof hearthFirst === 'function' ? hearthFirst(id) : null; return f ? f.mats.concat(f.gold > 0 ? [['gold', 0, f.gold]] : []) : []; };
@@ -158,8 +160,10 @@ const wearPiece = kind => {
   } catch (e) {}
   return null;
 };
-// the points are spent (or the player has sat on the Hero menu a while with some left): time to point back at the fight
-const backReady = () => { try { const k = soloHero(); if (obAttrOn() && k && attrPoints(k).free > 0) return GUIDE_RT.lastEnd !== null && GUIDE_RT.t - GUIDE_RT.lastEnd >= 20; } catch (e) {} return true; };
+// the points are spent, or a beat after the first one with some left (staged-guide-followups: it waited 20 s, a long silence while the next fight
+// started behind the menu; his line already says "when you're done here", so the rest can still be spent under it): time to point back at the fight
+const BACK_WAIT = 1;   // seconds of play after the first point
+const backReady = () => { try { const k = soloHero(); if (obAttrOn() && k && attrPoints(k).free > 0) return GUIDE_RT.lastEnd !== null && GUIDE_RT.t - GUIDE_RT.lastEnd >= BACK_WAIT; } catch (e) {} return true; };
 const toolWorn = () => { try { return TOOL_POS.some(pos => !!equipped(pos)); } catch (e) { return false; } };
 // W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
 // never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
@@ -322,7 +326,9 @@ function craftReady() {
       let w = false; try { w = !!s.when(); } catch (e) {}
       if (!w) continue;
       const R = GUIDE_RT, held = R.latch === s.id;
-      if (!held && !s.ph.includes(guidePhase()) && !(!guideMenuCovers() && s.ph.includes(guidePhase(true)))) continue;   // not its phase: it waits (a wide screen still shows the fight beside a menu)
+      // not its phase: it waits. A wide screen still shows the fight beside a menu, so there a step starts only in the phase the fight is really in
+      // (staged-guide-followups: a between step started mid-fight beside a landscape menu and froze it)
+      if (!held && !s.ph.includes(guidePhase(!guideMenuCovers()))) continue;
       if (held && guidePhase() !== 'between') continue;   // cal-0107-staged-guide: a between line started earlier hides while a foe is on the field, and comes back after
       if (!held && s.quiet && R.lastEnd !== null && R.t - R.lastEnd < GUIDE_QUIET) continue;   // one unprompted line a minute
       if (s.ph.includes('between')) R.latch = s.id;

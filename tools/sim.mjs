@@ -215,6 +215,7 @@ if (args.health) {
     if (k === 'unlock' && (!e || e.id === '*')) return;
     stamp(k, { id: e && (e.id || e.kind || e.k || (e.zone !== undefined ? e.zone : undefined)) });
   });
+  fn.on('refineOrder', e => stamp('refineOrder', { id: e.prod + e.tier, n: e.all ? 'all' : e.want }));   // refine-queues: the choice timeline
   fn.on('kill', e => { H.kills++; if (e.mob && e.mob.boss) H.bossKills++; H.killGold += e.gold || 0; H.killEss += e.ess || 0; });
   fn.on('ability', e => { if (e && e.cls === 'solo') H.casts[e.id] = (H.casts[e.id] || 0) + 1; });
   fn.on('wipe', w => { if (!w.arena) H.wipes.push({ a: Math.round(H.act), zone: E('S.zone') }); });
@@ -461,6 +462,27 @@ function forgeWeapon() {
     if (it) { keepBest('weapon', it); return; }
   }
 }
+// refine-queues (55-refine.js): from grade 2 a craft, and every upgrade, takes refined goods (Ingots, Planks, Cloth,
+// Leather) in place of ore, wood, fibre and hide. The bot sets station orders for the shortfall (refineStep, from
+// forgeRest; orders tick with the game clock) and gathers their raw input: a middle short by s needs its inputs x s
+// (2 raw a unit; Leather also 1 log), and coal, which comes with Copper Ore once the Forge is built, is Copper Ore.
+const refineSim = E('typeof refineOffer === "function" && refineOn()');
+const REFINE_RAW = refineSim ? E('JSON.parse(JSON.stringify(REFINE_RAW))') : {};
+const matHave = (f, tt) => E(`(S.mats[${JSON.stringify(f)}] || [])[${tt - 1}] || 0`);
+// The raw side of a shortfall: [[family, tier, short], ...] for mats { fam: n } at grade t; a middle's shortfall becomes its
+// inputs (net of the raw held), coal becomes Copper Ore. Raw families pass through as they are.
+function rawShort(miss, t) {
+  const out = [];
+  for (const [m, n] of miss) {
+    if (!REFINE_RAW[m]) { out.push([m, t, n]); continue; }
+    for (const [f, tt, k] of E(`refineNeed(${JSON.stringify(m)}, ${t})`)) {
+      const s = k * n - matHave(f, tt); if (s <= 0) continue;
+      if (f === 'coal') { if (E('campLevel("forge") >= 1')) out.push(['ore', 1, s]); }
+      else out.push([f, tt, s]);
+    }
+  }
+  return out;
+}
 // Gather what the next class weapon is short of (its gatherable families, the scarcest first).
 function weaponNode() {
   const k = weaponKind(); if (!k) return false;
@@ -468,9 +490,15 @@ function weaponNode() {
   for (let t = fn.zoneTier(E('S.maxZone')); t > have; t--) {
     const c = fn.canCraft(k, t);
     if (c.lv < c.need || E(`S.mats.ess[${t - 1}]`) < (c.cost.mats.ess || 0)) continue;
-    const cost = c.cost.mats, short = m => E(`S.mats.${m}[${t - 1}]`) / cost[m];
-    const order = Object.keys(cost).filter(m => E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => short(a) - short(b));
-    for (const m of order) if (short(m) < 1 && !(storeOn && E(`stashFull(${JSON.stringify(m)}, ${t})`)) && fn.setNode(m, t)) return true;   // H3: skip a full pile
+    // [family, tier, held, need]: a raw family against the cost, a middle through its inputs (refine-queues)
+    const cost = c.cost.mats, need = [];
+    for (const [m, n] of Object.entries(cost)) {
+      if (!REFINE_RAW[m]) { need.push([m, t, matHave(m, t), n]); continue; }
+      for (const [f, tt, s] of rawShort([[m, Math.max(0, n - matHave(m, t))]], t)) need.push([f, tt, 0, s]);
+    }
+    const short = x => x[2] / x[3];
+    const order = need.filter(([m]) => E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => short(a) - short(b));
+    for (const [m, tt] of order.filter(x => short(x) < 1)) if (!(storeOn && E(`stashFull(${JSON.stringify(m)}, ${tt})`)) && fn.setNode(m, tt)) return true;   // H3: skip a full pile
   }
   return false;
 }
@@ -533,7 +561,71 @@ function forgeRest() {
       break done;
     }
   }
+  refineStep();
 }
+// refine-queues: like a player, set station orders for the refined goods the next class crafts (the lowest unfinished
+// tier of each class piece, up to the zone's tier, station level permitting) and the next upgrade of each worn piece (gold
+// in hand) are short of, summed by grade: refineOffer(cost, t).add() adds every order that can start. A station whose 3
+// slots hold only stopped orders is cleared first, as a player would.
+function refineStep() {
+  if (!refineSim) return;
+  const want = {}, put = (mats, t) => { for (const [m, n] of Object.entries(mats)) if (REFINE_RAW[m]) { const w = want[t] || (want[t] = {}); w[m] = (w[m] || 0) + n; } };
+  const zt = fn.zoneTier(E('S.maxZone'));
+  for (const pos of cls ? CLASS_POS : []) {
+    const kind = classKind(pos), cur = fn.equipped(pos);
+    for (let t = 1; t <= zt; t++) {
+      if (cur && cur.t >= t && (isClassItem(cur, pos) || cur.u || cur.t > t)) continue;
+      const c = fn.canCraft(kind, t);
+      if (!c.ok && c.cost && !c.unbuilt && c.lv >= c.need) put(c.cost.mats, t);
+      break;
+    }
+  }
+  for (const pos of HERO_POS) {
+    const u = E(`(it => it && CRAFT_KINDS[it.slot] && it.plus < CRAFT_TROPHY_GATE.max ? { t: it.t, c: upgradeCost(it) } : null)(equipped(${JSON.stringify(pos)}))`);
+    if (u && E('S.gold') >= u.c.gold && (!u.c.troph || E('trophies()') > 0)) put(u.c.mats, u.t);
+  }
+  // forgeRest re-rolls a worn piece while 3 of its cost are held. From grade 2 that cost is in middles, which are made to
+  // order, so like a player with full piles: order the middles for 3 when the raw (and coal) for them is held.
+  for (const pos of HERO_POS) {
+    const cur = fn.equipped(pos); if (!cur || cur.u || cur.t < 2) continue;
+    const mats = {}; let ok = true;
+    for (const [m, n] of Object.entries(fn.craftCost(cur.slot, cur.t))) { if (REFINE_RAW[m]) mats[m] = 3 * n; else if (matHave(m, cur.t) < 3 * n) ok = false; }
+    if (ok && Object.keys(mats).length && !rawShort(Object.entries(mats).map(([m, n]) => [m, Math.max(0, n - matHave(m, cur.t))]), cur.t).length) put(mats, cur.t);
+  }
+  for (const [t, mats] of Object.entries(want)) {
+    for (let k = 0; k < 2; k++) {
+      const r = E(`(o => ({ n: o.add(), full: o.orders.some(x => !x.ok && / holds /.test(x.why)) }))(refineOffer(${JSON.stringify(mats)}, ${+t}))`);
+      if (!r.full) break;
+      E('for (const st of REFINE_STATIONS) { const l = refineOrders(st); if (l.length >= REFINE_TUNE.max && !refineCurrent(st)) for (let i = l.length - 1; i >= 0; i--) refineRemove(st, i); }');
+    }
+  }
+}
+// The refine timeline (printed with the craft and day reports): the first order, unit and use, orders by
+// station, units by product, and the craft, upgrade and refine actions of the first 60 minutes (card refine-queues).
+const refineStats = { first: null, firstUnit: null, firstUse: null, orders: 0, st: {}, units: {}, acts60: 0, log: [] };
+{
+  const midTot = () => E('REFINED_FAMILIES.reduce((a, f) => a + S.mats[f].reduce((x, y) => x + y, 0), 0)');
+  let midLast = 0;
+  const sync = () => { midLast = midTot(); };
+  const act = () => { if (t < 3600) refineStats.acts60++; };
+  const use = what => e => { act(); if (!refineSim) return; const n = midTot(); if (n < midLast && refineStats.firstUse === null) refineStats.firstUse = { t, what: what + ' ' + (e && e.item ? E(`itemName(itemById(${JSON.stringify(e.item.id)}) || ${JSON.stringify(e.item)})`) : '') }; midLast = n; };
+  fn.on('crafted', use('craft')); fn.on('upgraded', use('upgrade'));
+  fn.on('refineOrder', e => {
+    act(); refineStats.orders++; refineStats.st[e.st] = (refineStats.st[e.st] || 0) + 1;
+    const what = `${e.all ? 'All' : e.want} ${E(`matName(${JSON.stringify(e.prod)}, ${e.tier})`)}`;
+    if (refineStats.first === null) refineStats.first = { t, what };
+    if (refineStats.log.length < 5) refineStats.log.push(`${(t / 60).toFixed(0)}m ${what}`);
+    sync();
+  });
+  fn.on('refined', e => { const k = E(`matName(${JSON.stringify(e.prod)}, ${e.tier})`); refineStats.units[k] = (refineStats.units[k] || 0) + e.n; if (refineStats.firstUnit === null) refineStats.firstUnit = t; sync(); });
+  fn.on('awayEnd', () => { if (refineSim) sync(); });
+}
+const refineLine = () => {
+  if (!refineSim) return;
+  const R = refineStats, m = x => x == null ? '-' : (x / 60).toFixed(0) + 'm';
+  console.log(`refine: first order ${R.first ? `${m(R.first.t)} (${R.first.what})` : '-'}, first unit ${m(R.firstUnit)}, first use ${R.firstUse ? `${m(R.firstUse.t)} (${R.firstUse.what.trim()})` : '-'} | orders ${R.orders} ${JSON.stringify(R.st)} | units ${JSON.stringify(R.units)} | craft + upgrade + refine actions in the first 60 min ${R.acts60}`);
+  if (R.log.length) console.log(`refine: first orders ${R.log.join(', ')} | coal ${E('S.mats.coal[0]')}`);
+};
 // The family (and tier) that most blocks the next class craft (lowest unfinished tier of the set
 // first, the largest shortfall), if it can be gathered.
 function blockingNode() {
@@ -547,11 +639,12 @@ function blockingNode() {
       // (forgeGear crafts it when nextBlock() says 'station'), as a player would.
       let u = t;
       if (c.lv < c.need) { if (t < 2) continue; u = t - 1; c = fn.canCraft(kind, u); if (c.lv < c.need || c.ok) continue; }
-      // Gatherable shortfalls only (Hide and Essence come from fighting, K5).
-      const miss = (c.miss || []).filter(([m]) => E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => b[1] - a[1]);
-      for (const [m] of miss) {
-        if (storeOn && E(`stashFull(${JSON.stringify(m)}, ${u})`)) continue;   // H3: a full pile cannot grow (the cost waits for a bigger Storehouse)
-        if (E(`skillTierOpen(skillOf(${JSON.stringify(m)}), ${u})`)) return [m, u];
+      // Gatherable shortfalls only (Hide and Essence come from fighting, K5). refine-queues: a middle's shortfall is its raw
+      // input (2 a unit), coal is Copper Ore (rawShort).
+      const miss = rawShort(c.miss || [], u).filter(([m]) => E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => b[2] - a[2]);
+      for (const [m, uu] of miss) {
+        if (storeOn && E(`stashFull(${JSON.stringify(m)}, ${uu})`)) continue;   // H3: a full pile cannot grow (the cost waits for a bigger Storehouse)
+        if (E(`skillTierOpen(skillOf(${JSON.stringify(m)}), ${uu})`)) return [m, uu];
         // Skill too low for this tier (e.g. Foraging on an old save): train it on the best open node.
         const top = E(`skillTopTier(skillOf(${JSON.stringify(m)}))`);
         if (top >= 1) return [m, top];
@@ -572,7 +665,7 @@ function farmZone() {
       // Station too low: farm for the training craft one tier down instead (see forgeGear).
       if (!c.ok && c.lv < c.need && t > 1) { t--; c = fn.canCraft(kind, t); }
       if (c.ok || c.lv < c.need || t >= fn.zoneTier(E('S.maxZone'))) return null;
-      const fam = (c.miss || []).filter(([m]) => !E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => b[1] - a[1]).map(x => x[0])[0];
+      const fam = (c.miss || []).filter(([m]) => !REFINE_RAW[m] && !E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => b[1] - a[1]).map(x => x[0])[0];   // a middle is refined, not farmed
       if (!fam) return null;
       let best = null, bestV = -1;
       for (let z = (t - 1) * 6 + 1; z <= Math.min(t * 6, E('S.maxZone') - 1); z++) {
@@ -853,7 +946,10 @@ function hearthTrip(sec) {
     if (E('S.activity !== "gather"') || E('S.node.kind') !== want[0] || E('S.node.t') !== want[1]) { fn.setNode(want[0], want[1]); fn.setActivity('gather'); }
   } else if (hTrip) {
     campStep(E);
-    if (hTrip.back !== 'gather') fn.setActivity(hTrip.back);
+    // A trip that began in a fight phase and ran into the mixed schedule's gather window stays gathering: going back to
+    // fight there skipped the window (a Warden fought out a whole window with no Copper Ore while its smelts waited).
+    const gatherWindow = policy === 'mixed' && (Math.floor(sec / 60) + (cls ? 5 : 0)) % 15 >= 10;
+    if (hTrip.back !== 'gather' && !gatherWindow) fn.setActivity(hTrip.back);
     hTrip = null;
   }
 }
@@ -920,7 +1016,8 @@ if (cls && policy === "mixed") {
   const bl = Object.entries(craftStats.blocks).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${Math.round(100 * n / craftStats.blockMin)}%`).join(', ');
   console.log(`craft: G4 gather share ${Math.round(100 * share)}% (want 25-45%) / G6 top blocker ${worst ? `${worst[0]} ${Math.round(100 * worst[1] / craftStats.blockMin)}%` : '-'} of ${craftStats.blockMin} blocked min (want <= 50%) [${bl}]`);
   console.log(`craft: G9 first Trophy ${m(craftStats.troph)} (want 20-60m) | farm-back ${craftStats.farm} min | trophies ${E('trophies()')} ${E('JSON.stringify(S.craft.troph)')}, champions ${E('S.craft.champ')} | skills mine ${E('S.skills.mine.lv')} wood ${E('S.skills.wood.lv')} forage ${E('S.skills.forage.lv')}`);
-  console.log(`craft: pack ${['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'].map(k => k + ' ' + E(`JSON.stringify(S.mats.${k})`)).join(' ')}`);
+  console.log(`craft: pack ${['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'].concat(refineSim ? ['ingot', 'plank', 'cloth', 'leather', 'coal'] : []).map(k => k + ' ' + E(`JSON.stringify(S.mats.${k})`)).join(' ')}`);
+  refineLine();
 }
 if (handsOn && !days) { const u = handsSim.cur, sum = o => Object.values(o).reduce((a, b) => a + b, 0), hs = sum(u.hands), all = sum(u.live) + sum(u.away) + sum(u.finds) + hs; console.log(`hands: HS11 first hire ${handsSim.firstHire === null ? '-' : (handsSim.firstHire / 60).toFixed(0) + 'm'} | hired ${JSON.stringify(handsSim.hired)} | Bunkhouse Lv ${E('campLevel("bunk")')} (${E('handsBeds()')} beds) | Hands' share of gathered units ${all ? Math.round(100 * hs / all) : 0}% (${Math.round(hs)} of ${Math.round(all)})`); }
 if (storeOn) { const st = E('STORE_STATS'); console.log(`store: HS4 Lv 1 built ${storeStats.lv1 === null ? '-' : (storeStats.lv1 / 60).toFixed(1) + 'm'} | level ${E('storeLevel()')} | HS7 live time at cap ${st.gatherSecs ? Math.round(100 * st.fullSecs / st.gatherSecs) : 0}% of ${Math.round(st.gatherSecs / 60)} gather min | lost ${JSON.stringify(Object.fromEntries(Object.entries(st.lost).map(([k, v]) => [k, Math.round(v)])))}`); }
@@ -1097,6 +1194,7 @@ function runDays() {
   if (args.debug && cls) console.log('   end craft', CLASS_POS.concat('charm').map(p => { const k = setKind(p); return p + ':' + [1, 2, 3, 4, 5].map(t => fn.canCraft(k, t).why || 'ok').join('/'); }).join(' | '), E('JSON.stringify(S.equip)'), E('JSON.stringify(S.mats)'), 'bag', E('bagCount()'), 'skills', E('JSON.stringify(Object.fromEntries(Object.entries(S.skills).map(([k, v]) => [k, v.lv])))'));
   // The Camp.
   const campFirst = campStats.first ? { min: (campStats.first.t) / 60, id: campStats.first.id } : null;
+  refineLine();
   console.log(`camp: first build ${campFirst ? campFirst.min.toFixed(0) + ' min after install (' + campFirst.id + ')' : '-'}, full camp ${campStats.full ? 'day ' + campStats.full : '-'}, levels by day ${rows.filter(r => [1, 3, 7, 14, 21, 30, 45].includes(r.day)).map(r => `d${r.day} ${r.camp}/${r.campMax}`).join(' ')}`);
   // HS7: share of gathering time (live and away) on a full pile, over a range of days (1-based, inclusive).
   const atCap = (a, b) => { const x = storeDays[Math.min(b, storeDays.length) - 1], w = a > 1 ? storeDays[a - 2] : [0, 0, 0, 0]; if (!x || !w) return null; const g = x[0] - w[0] + x[2] - w[2], f = x[1] - w[1] + x[3] - w[3]; return g > 0 ? f / g : 0; };

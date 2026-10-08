@@ -219,7 +219,8 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     const m = {}, main = rec.find(([k]) => k !== 'ess' && k !== 'hide') || rec.find(([k]) => k !== 'ess');
     if (main) m[main[0]] = Math.ceil(main[1] * ECON.upMat * (it.plus + 1));
     if (it.u) m.ess = (m.ess || 0) + 2 * (it.plus + 1);
-    const c = { mats: m, gold: econUpgradeGold(it.t, it.plus) };   // 20 foes of the grade's first zone x 1.5^plus (21w ECON.upGrow)
+    const c = { mats: refineMats(it.slot, m),   // refine-queues: in middles at every grade (Copper Warblade +1 = 1 Copper Ingot)
+      gold: econUpgradeGold(it.t, it.plus) };   // 20 foes of the grade's first zone x 1.5^plus (21w ECON.upGrow)
     // +8, +9 and +10 each need a Trophy of any type (owner decision); K6 enforces it.
     const tr = craftUpgradeTrophies(it.plus); if (tr) c.troph = tr;
     return c;
