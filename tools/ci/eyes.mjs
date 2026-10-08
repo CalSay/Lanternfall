@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // CI `eyes` job: replays each docs/proof/<card>/route.txt that this PR changed, on the built game, at phone portrait and
-// landscape, and writes eyes-out/ (shots, bursts, output) plus eyes-out/summary.md (the PR comment body).
+// landscape, and writes eyes-out/ (shots, bursts, output) plus eyes-out/summary.md (the PR comment body). Each route also plays
+// at 1920x1080 with a mouse for the Bar's big shot (report only: a miss there is listed, never failed; desktop routes are a later
+// card). Player eyes (tools/eyes.mjs --quick) reads the desktop view (1280x720, mouse) first, then 740x360 and 360x740.
 //   node tools/ci/eyes.mjs <base-sha> <head-sha> "<comma-separated PR labels>"
 //   node tools/ci/eyes.mjs --local [labels]     the same check on your branch against origin/claude/elegant-johnson-m6k00u
 //                                               (build first: node tools/build.mjs). Works with no CI. Paste eyes-out/summary.md in the PR.
@@ -45,7 +47,8 @@ if (srcChanged && !routes.length && !labels.includes('no-visible-change')) {
 } else if (!routes.length) {
   lines.push(srcChanged ? 'No route changed. Label `no-visible-change` is set.' : 'No `src/` change and no route changed. Nothing to play.', '');
 }
-const VIEWS = [['portrait', []], ['landscape', ['--landscape']]];
+// The routes' gating views stay today's two phone views (desktop-view-in-checks); hd is the Bar's 1920x1080 shot, report only.
+const VIEWS = [['portrait', ['--view', 'portrait'], true], ['landscape', ['--view', 'landscape'], true], ['hd', ['--view', 'hd'], false]];
 // Every (route, view) run is its own browser, so they run side by side (up to 4 at once); the report keeps route order.
 const run = (cmd, args, opts) => new Promise(res => {
   const c = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'pipe'] }); let out = '', err = '', done = false, timedOut = false;
@@ -60,23 +63,30 @@ const limited = fn => new Promise((ok, no) => { const go = () => { slots--; fn()
 const jobs = routes.map(r => {
   const card = r.split('/')[2], text = fs.readFileSync(r, 'utf8');
   const seed = (text.match(/^#\s*seed:\s*(\d+)/m) || [])[1] || '1';
-  return { card, seed, views: VIEWS.map(([view, extra]) => {
+  return { card, seed, views: VIEWS.map(([view, extra, gates]) => {
     const dir = path.join(out, card, view);
     fs.mkdirSync(dir, { recursive: true });
-    return { view, dir, run: limited(() => run('node', ['tools/playtest.mjs', 'batch', '--seed', seed, '--session', path.join('.proof-session', card, view), '--shots', dir, '--quiet', ...extra], { input: text, timeout: 240000 })) };
+    return { view, dir, gates, run: limited(() => run('node', ['tools/playtest.mjs', 'batch', '--seed', seed, '--session', path.join('.proof-session', card, view), '--shots', dir, '--quiet', ...extra], { input: text, timeout: 240000 })) };
   }) };
 });
-// qa-player-eyes: the wider read of what a player sees (tools/eyes.mjs --quick, portrait). Report only: it never fails this job.
-const peOut = path.join(out, 'player-eyes', 'latest.md');
-const peRun = srcChanged ? limited(() => run('node', ['tools/eyes.mjs', '--quick', '--out', peOut], { timeout: 240000 })) : null;
+// qa-player-eyes: the wider read of what a player sees (tools/eyes.mjs --quick), one run per view side by side, desktop first.
+// Report only: it never fails this job.
+const PE_VIEWS = [['desktop', 'd'], ['landscape', 'l'], ['portrait', 'p']];
+const peRuns = srcChanged ? PE_VIEWS.map(([view, code]) => { const md = path.join(out, 'player-eyes', view + '.md');
+  return { view, md, run: limited(() => run('node', ['tools/eyes.mjs', '--quick', '--sizes', code, '--out', md], { timeout: 240000 })) }; }) : [];
 for (const { card, seed, views } of jobs) {
   lines.push(`**${card}** (seed ${seed})`, '', '| View | Step | Result |', '|---|---|---|');
-  for (const { view, dir, run: p } of views) {
+  for (const { view, dir, gates, run: p } of views) {
     const res = await p;
     fs.writeFileSync(path.join(dir, 'output.txt'), (res.stdout || '') + (res.stderr || ''));
     const ex = fs.existsSync(path.join(dir, 'expects.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'expects.json'), 'utf8')) : [];
-    for (const e of ex) { lines.push(`| ${view} | expect "${e.want}" | ${e.ok ? 'pass' : '**FAIL**'} |`); if (!e.ok) fail('expect-false', `${card} ${view}`, `expect "${e.want}"`); }
     const shots = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.png')) : [];
+    if (!gates) {   // the 1920x1080 shot: listed, never failed
+      const miss = ex.filter(e => !e.ok).length, ran = res.status === 0 || (miss > 0 && !/no button labelled/.test(res.stdout + res.stderr));   // a missed expect still plays on; a failed tap stops the route
+      lines.push(`| ${view} 1920x1080 | shots (report only) | ${shots.length} (${shots.slice(0, 8).map(s => s.replace('.png', '')).join(', ')}${shots.length > 8 ? ', ...' : ''})${miss ? `; ${miss} expect(s) missed here` : ''}${ran ? '' : `; did not finish: ${((res.stdout + res.stderr).trim().split('\n').pop() || '').slice(0, 120).replace(/\|/g, '/')}`} |`);
+      continue;
+    }
+    for (const e of ex) { lines.push(`| ${view} | expect "${e.want}" | ${e.ok ? 'pass' : '**FAIL**'} |`); if (!e.ok) fail('expect-false', `${card} ${view}`, `expect "${e.want}"`); }
     lines.push(`| ${view} | shots | ${shots.length} (${shots.slice(0, 8).map(s => s.replace('.png', '')).join(', ')}${shots.length > 8 ? ', ...' : ''}) |`);
     if (res.status !== 0 && !ex.some(e => !e.ok)) {
       const tail = (res.stdout + res.stderr).trim().split('\n').slice(-2).join(' ');
@@ -88,16 +98,18 @@ for (const { card, seed, views } of jobs) {
   lines.push('');
 }
 if (srcChanged) {
-  const pe = peOut, res = await peRun;
   lines.push('**Player eyes** (report only; `node tools/eyes.mjs` runs it on your machine)', '');
-  try {
-    const f = JSON.parse(fs.readFileSync(pe.replace(/\.md$/, '') + '.json', 'utf8')).findings;
-    const by = {}; for (const x of f) by[x.check] = (by[x.check] || 0) + 1;
-    lines.push(f.length ? `${f.length} finding(s): ${Object.entries(by).map(([k, n]) => `${k} ${n}`).join(', ')}.` : 'Nothing found.', '');
-    for (const x of f.slice(0, 8)) lines.push(`- ${x.scenario}: ${x.what}`);
-    if (f.length > 8) lines.push(`- ... ${f.length - 8} more in \`player-eyes/latest.md\` in the \`eyes-out\` artifact`);
-    lines.push('');
-  } catch (e) { lines.push(`Did not run (${((res.stderr || res.stdout || '').trim().split('\n').pop() || 'no output').slice(0, 120)}).`, ''); }
+  for (const { view, md, run: p } of peRuns) {
+    const res = await p;
+    try {
+      const f = JSON.parse(fs.readFileSync(md.replace(/\.md$/, '') + '.json', 'utf8')).findings;
+      const by = {}; for (const x of f) by[x.check] = (by[x.check] || 0) + 1;
+      lines.push(`*${view}*: ` + (f.length ? `${f.length} finding(s): ${Object.entries(by).map(([k, n]) => `${k} ${n}`).join(', ')}.` : 'nothing found.'), '');
+      for (const x of f.slice(0, 8)) lines.push(`- ${x.scenario}: ${x.what}`);
+      if (f.length > 8) lines.push(`- ... ${f.length - 8} more in \`player-eyes/${view}.md\` in the \`eyes-out\` artifact`);
+      lines.push('');
+    } catch (e) { lines.push(`*${view}*: did not run (${((res.stderr || res.stdout || '').trim().split('\n').pop() || 'no output').slice(0, 120)}).`, ''); }
+  }
 }
 if (causes.length) {
   lines.push('**Why it failed**', '', '| Cause | Where | Detail |', '|---|---|---|', ...causes.map(c => `| ${c.cause} | ${c.where} | ${c.detail.replace(/\|/g, '/')} |`), '');

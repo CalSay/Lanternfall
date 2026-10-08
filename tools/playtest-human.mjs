@@ -91,7 +91,7 @@ class Game {
     this.args = [path.join(ROOT, 'tools', 'playtest.mjs'), 'batch', '--json', '--quiet', '--frozen', '--thumb', '--session', path.join(OUT, 'session'), '--shots', path.join(OUT, 'shots')];
     if (html) this.args.push('--html', path.resolve(html));
     if (seed !== undefined) this.args.push('--seed', String(seed));
-    if (landscape) this.args.push('--landscape');
+    this.args.push(landscape ? '--landscape' : '--portrait');   // a phone player: playtest.mjs's own default is now the desktop view (desktop-mouse-playtest moves this persona)
     this.secs = 0;   // game seconds played, by this tool's count
   }
   async open() {

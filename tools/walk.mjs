@@ -2,11 +2,12 @@
 // Walk: a casual player plays the first hour of the built game, and the report says what a new player would hit
 // (card qa-first-hour-walk; self-improving plan part 4). Report only until milestone M0 closes: exit 0 unless --strict.
 //
-//   node tools/build.mjs && node tools/walk.mjs --seed 1         one hero, 60 game minutes, 360x740, report in tools/.walk/
+//   node tools/build.mjs && node tools/walk.mjs --seed 1         one hero, 60 game minutes, 1280x720 with a mouse, report in tools/.walk/
 //
 //   --seed <n>          seeds the game's random numbers and the bot's choices (default 1). The hero follows the seed
 //                       (1 Wren, 2 Tobin, 3 Pip, then round again) unless --hero says otherwise.
-//   --hero wren|tobin|pip       --size p|l         360x740 portrait (default) or 740x360 landscape
+//   --hero wren|tobin|pip       --size <view>      desktop (d, 1280x720 mouse, the default), landscape (l, 740x360), portrait (p,
+//                       360x740), laptop (1366x640), tablet (1024x768), hd (1920x1080) or WxH (tools/lib/views.mjs)
 //   --minutes <n>       game minutes to play (default 60)      --html <file>   walk another build (default dist/lanternfall.html)
 //   --clock-budget <n>  clock minutes the walk may take (default 30). If the game minutes would not fit it plays on until the
 //                       budget is spent, writes the minute reached as the stop, and saves its save as snapshot-min<N>.json.
@@ -41,6 +42,7 @@ import { execSync } from 'node:child_process';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
 import { LINT, TIPPHASE, PLACEHOLDERS, ALLOW } from './lib/eyes-readers.mjs';
+import { view, contextOptions, VIEW_HELP } from './lib/views.mjs';
 
 // ---------------- options ----------------
 const argv = process.argv.slice(2);
@@ -54,7 +56,8 @@ const SEED = num('seed', 1) | 0 || 1, MINUTES = num('minutes', 60), BUDGET_MS = 
 const PARRY = num('parry', 0.55), DODGE = num('dodge', 0.5), READ = num('read', 0.77);   // READ: how often the bot reads a boss trick (a feint, or a held swing); 0.77 is the sampler's bot (0.3 + 0.6 x its 77.5% avoidance)
 const HEROES = ['wren', 'tobin', 'pip'], HERO = opt('hero', HEROES[(SEED - 1) % 3]);
 if (!HEROES.includes(HERO)) { console.error('walk: --hero is wren, tobin or pip'); process.exit(2); }
-const SIZE = opt('size', 'p') === 'l' ? { id: 'landscape', w: 740, h: 360 } : { id: 'portrait', w: 360, h: 740 };
+const SIZE = view(opt('size', 'desktop'));
+if (!SIZE) { console.error('walk: --size is ' + VIEW_HELP); process.exit(2); }
 const DATE = opt('date', new Date().toISOString().slice(0, 10));
 const OUT = path.resolve(ROOT, opt('out', 'tools/.walk'));
 const SHOTS = path.join(OUT, 'shots');
@@ -650,7 +653,7 @@ async function moment(id, text, o) {
 // ---------------- the run ----------------
 async function run() {
   browser = await bt.pw.chromium.launch({ executablePath: bt.exe, args: ['--no-sandbox'] });
-  ctx = await browser.newContext({ viewport: { width: SIZE.w, height: SIZE.h }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  ctx = await browser.newContext(contextOptions(SIZE));
   page = await ctx.newPage();
   { const cdp = await ctx.newCDPSession(page); await cdp.send('Animation.enable'); await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 }); }   // animations follow game time (STEP_ANIM)
   const errs = []; page.on('pageerror', e => errs.push(String(e)));
@@ -702,7 +705,7 @@ async function run() {
       // (75-onboard-ui), so a press on a turn's first frame ended the Attack and ability lessons before they were on screen.
       if (o.phase !== st.phName) { st.phName = o.phase; st.phStart = gt; }
       const waitGuide = (o.tip && gt - st.tipFirst < 1.2) || (o.phase === 'player turn' && gt - st.phStart < 0.3);
-      if (!did && !waitGuide && (!o.s.tab || (o.s.tab === 'adv' && SIZE.id === 'landscape'))) did = await fight(o);   // a menu that covers the action bar is not a fight the player can press
+      if (!did && !waitGuide && (!o.s.tab || (o.s.tab === 'adv' && SIZE.wide))) did = await fight(o);   // a menu that covers the action bar is not a fight the player can press
       // back to the fight once a tip or Next Up has been served: a menu that stays open leaves the foe waiting
       if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('.tabs .tab[data-tab="adv"]', 300); }
       if (!did && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
