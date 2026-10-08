@@ -1,0 +1,19 @@
+# seed: 1
+# Proof for card gear-icons-48: worn gear shows at native 48 px on the Hero card and the Gear view, and at 96 px (48 x2) on the
+# item card. Sizes and overflow at 360x740, 390x844, 740x360, 1280x800 and 1920x1080 are asserted in tools/check.mjs (C26, browser).
+new mid
+wait 3
+tap-if "Skip this story"
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+tap "Hero"
+expect ".pc-gear"
+shot hero-card
+tap "Gear"
+expect "Your gear"
+shot hero-gear
+tap "Weapon"
+expect ".cf-ih"
+shot item-card

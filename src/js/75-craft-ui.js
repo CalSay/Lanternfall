@@ -813,8 +813,8 @@ let craftUI = null;
     body.textContent = ''; foot.textContent = '';
     const wr = wornBy(it.id);
     // ---- head ----
-    const head = el('div', 'cf-ih');
-    const tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s56');
+    const head = el('div', 'cf-ih cf-ihbig');
+    const tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s104');
     const who = el('div', 'cf-ihw');
     who.append(el('h3', 'cf-in rar-' + it.r, itemName(it)));
     const meta = [RAR[it.r].n, `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun + (d.legacy ? ' (old style)' : '')) : ''].filter(Boolean).join(' · ');

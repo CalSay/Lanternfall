@@ -62,8 +62,8 @@
 /* your gear */
 .cf-gear { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .cf-gs { display: grid; justify-items: center; gap: 3px; padding: 4px 0 2px; background: none; border: 0; cursor: pointer; min-width: 0; }
-.cf-gs .ic { width: 48px; height: 48px; }
-.cf-gs .ic img { width: 32px; height: 32px; }
+.cf-gs .ic { width: 56px; height: 56px; }   /* gear-icons-48: worn gear at native 48 px */
+.cf-gs .ic img { width: 48px; height: 48px; }
 .cf-gs small { font-size: 11.5px; color: var(--muted); }
 .cf-plus { position: absolute; right: 1px; bottom: 0; font: 600 calc(11px * var(--display-k))/1 var(--display); color: var(--gold); text-shadow: 0 1px 0 #0B0810, 1px 0 0 #0B0810, -1px 0 0 #0B0810; }
 
@@ -98,6 +98,8 @@
 
 /* item sheet */
 .cf-ih { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; }
+.cf-ih.cf-ihbig { grid-template-columns: 104px minmax(0, 1fr); }
+.cf-ih .ic.s104 { width: 104px; height: 104px; } .cf-ih .ic.s104 img { width: 96px; height: 96px; }   /* gear-icons-48: the 48 px icon at x2 */
 .cf-ihw { display: grid; gap: 3px; min-width: 0; }
 .cf-in { margin: 0; font: 600 calc(20px * var(--display-k))/1.1 var(--display); text-shadow: 0 2px 0 #0B0810; overflow-wrap: anywhere; }
 .cf-im { font-size: 13px; color: var(--muted); }
