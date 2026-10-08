@@ -1,0 +1,19 @@
+# Proof for card z20-wall. Wren at zone 20 with its 5 fights done and the Champion next (tests/proof-fixtures/save-z20-weak.json: the
+# z19-wall proof save moved to zone 20 at level 23, the level a first-time player reaches it at, tier 1 pieces, no mastery stars),
+# at 360x740 and 740x360:
+#   nextup-boss-*.png  Next Up's boss row reads the zone 20 boss's odds from the game's own turn fights: "Boss ready in Zone 20".
+#                      Before this card the game judged the boss at 0% a try on the same save and left the row out of Next Up, so
+#                      the first expect fails on that build.
+# The win rates behind it (zones 20-24) are held by tools/budget.mjs (the z20-z24-boss-arrival rows) and tools/health.mjs --compare.
+# seed: 1
+new z20-weak
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+tap "Next up"
+wait 1
+expect "Boss ready in Zone 20"
+shot nextup-boss

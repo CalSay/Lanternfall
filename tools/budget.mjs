@@ -45,7 +45,7 @@
 //           Not on the arrival footing either (z19-wall): a first-time player at zone 19 has tier 1 common +0 and no crafted set.
 //   build   attribute points spread evenly (hero-progression-rework's attrSpread), once the game has attributes
 // The arrival footing (z13-arrival-footing, docs/design/z13-bot-sim-gap.md): the hero a first-time player has when they
-// first reach zone z, on the z13-z15 first-hour rows and the z16-z20 -arrival rows (and every first-hour row with --foot arrival):
+// first reach zone z, on the z13-z15 first-hour rows and the z16-z26 -arrival rows, z20-wall's arrival gear rows (and every first-hour row with --foot arrival):
 //   level   arrivalLv(z): the game's own XP for ZONE_FIGHTS normal foes and the boss in each zone before z (gainXp,
 //           so xpAheadX applies). Zones 10-13 give 15, 16, 17, 18, the levels the walk arrives at (seeds 1 and 2).
 //   gear    tier 1 common +0, whatever the zone's tier: tier 2 needs gathering 14 (skillReqs) and the walk reaches zone 13 at 4-7
@@ -170,22 +170,40 @@ export const CHECKPOINTS = [
   ['z17-boss', 17, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z18-boss', 18, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   // z16-wall (judge 2026-10-08): the zone 16-18 bosses on the arrival footing (as z13-z15 above), the bosses a walk reaches in its hour;
-  // gated as Captains; z19 too (z19-wall). z20 on the same footing is a report row (the next wall, a follow-up card), so a change shows where the wall moves.
+  // gated as Captains; z19 too (z19-wall), and z20-z24 (z20-wall, the z20 Champion held to the same band). z25 and z26 on the same footing are
+  // report rows (the next wall, left to the balance pass), so a change shows where the wall moves.
   ['z16-boss-arrival', 16, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
   ['z17-boss-arrival', 17, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
   ['z18-boss-arrival', 18, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
   ['z19-boss-arrival', 19, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
-  ['z20-boss-arrival', 20, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'reportArrival' }],
+  ['z20-boss-arrival', 20, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
+  ['z21-boss-arrival', 21, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
+  ['z22-boss-arrival', 22, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
+  ['z23-boss-arrival', 23, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
+  ['z24-boss-arrival', 24, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
+  ['z25-boss-arrival', 25, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'reportArrival' }],
+  ['z26-boss-arrival', 26, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'reportArrival' }],
+  // z20-wall: what gear is worth on the arrival footing where the knots fit the first-time hero (report only): nothing worn, tier 2 common
+  // and tier 1 rare +5 against the zone's arrival row. A landed hit sits on the hpFloor there, so gear is worth about 5-20 points.
+  ['z20-arrival-bare', 20, 'boss', { st: 'kept', fx: 'mid', gear: 'none', foot: 'arrival', kind: 'arrivalGear', ref: 'z20-boss-arrival' }],
+  ['z20-arrival-t2', 20, 'boss', { st: 'kept', fx: 'mid', gear: 'common', tier: 1, foot: 'arrival', kind: 'arrivalGear', ref: 'z20-boss-arrival' }],
+  ['z20-arrival-rare', 20, 'boss', { st: 'kept', fx: 'mid', gear: 'rare', foot: 'arrival', kind: 'arrivalGear', ref: 'z20-boss-arrival' }],
+  ['z24-arrival-bare', 24, 'boss', { st: 'kept', fx: 'mid', gear: 'none', foot: 'arrival', kind: 'arrivalGear', ref: 'z24-boss-arrival' }],
+  ['z24-arrival-t2', 24, 'boss', { st: 'kept', fx: 'mid', gear: 'common', tier: 1, foot: 'arrival', kind: 'arrivalGear', ref: 'z24-boss-arrival' }],
+  ['z24-arrival-rare', 24, 'boss', { st: 'kept', fx: 'mid', gear: 'rare', foot: 'arrival', kind: 'arrivalGear', ref: 'z24-boss-arrival' }],
   ['z19-boss', 19, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z20-normal', 20, 'normal', { st: 'kept', fx: 'mid' }],
   ['z20-elite', 20, 'elite', { st: 'kept', fx: 'mid' }],
   ['z20-boss', 20, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
-  ['z20-boss-behind', 20, 'boss', { st: 'kept', fx: 'mid', tier: -1, kind: 'behind', ref: 'z20-boss' }],
+  // z20-wall: z20 is fitted to the first-time hero, where a tier behind costs a kept-up hero almost nothing (every hit sits on the hpFloor);
+  // report only. The gated gear-matters row is z25-boss-behind, the first kept-up zone past the fitted span.
+  ['z20-boss-behind', 20, 'boss', { st: 'kept', fx: 'mid', tier: -1, kind: 'reportBehind', ref: 'z20-boss' }],
   ['z21-boss', 21, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z22-boss', 22, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z23-boss', 23, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z24-boss', 24, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z25-boss', 25, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
+  ['z25-boss-behind', 25, 'boss', { st: 'kept', fx: 'mid', tier: -1, kind: 'behind', ref: 'z25-boss' }],
   ['z27-boss', 27, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z30-elite', 30, 'elite', { st: 'kept', fx: 'late' }],
   ['z30-boss', 30, 'boss', { st: 'kept', fx: 'late', kind: 'captainMid' }],
@@ -198,13 +216,14 @@ export const CHECKPOINTS = [
   ['z38-boss', 38, 'boss', { st: 'late', asc: 1 }],
   ['z38-boss-behind', 38, 'boss', { st: 'late', asc: 1, tier: -1, kind: 'behind', ref: 'z38-boss' }],
   // report only (kinds with "report": true): a hero who just took the lamp, and single-attribute builds (PR #58's
-  // findings, 2026-10-06: a switched-in hero won 31-35% of zone 20 bosses; all-Focus Wren cleared trash 2-3x faster)
-  ['z20-boss-joined', 20, 'boss', { st: 'joined', fx: 'mid', kind: 'joined', ref: 'z20-boss' }],
+  // findings, 2026-10-06: a switched-in hero won 31-35% of zone 20 bosses; all-Focus Wren cleared trash 2-3x faster). The boss rows sit at
+  // zone 25 since z20-wall (zone 20 is fitted to the first-time hero, so they would read against a 99% ref there)
+  ['z25-boss-joined', 25, 'boss', { st: 'joined', fx: 'mid', kind: 'joined', ref: 'z25-boss' }],
   ['z38-boss-joined', 38, 'boss', { st: 'joined', fx: 'late', kind: 'joined', ref: 'z38-boss' }],
   ['z20-normal-focus', 20, 'normal', { st: 'kept', fx: 'mid', build: 'focus', kind: 'build', ref: 'z20-normal' }],
-  ['z20-boss-focus', 20, 'boss', { st: 'kept', fx: 'mid', build: 'focus', kind: 'build', ref: 'z20-boss' }],
-  ['z20-boss-might', 20, 'boss', { st: 'kept', fx: 'mid', build: 'might', kind: 'build', ref: 'z20-boss' }],
-  ['z20-boss-vigour', 20, 'boss', { st: 'kept', fx: 'mid', build: 'vigour', kind: 'build', ref: 'z20-boss' }]
+  ['z25-boss-focus', 25, 'boss', { st: 'kept', fx: 'mid', build: 'focus', kind: 'build', ref: 'z25-boss' }],
+  ['z25-boss-might', 25, 'boss', { st: 'kept', fx: 'mid', build: 'might', kind: 'build', ref: 'z25-boss' }],
+  ['z25-boss-vigour', 25, 'boss', { st: 'kept', fx: 'mid', build: 'vigour', kind: 'build', ref: 'z25-boss' }]
 ];
 const zoneTierOf = z => [1, 7, 13, 19, 42].filter(x => z >= x).length;   // PACE.essTier (40-rules)
 const setFor = (z, k) => SETS[[38, 30, 20, 10, 1].find(s => z >= s)][k];
@@ -319,7 +338,7 @@ const pc = x => x == null ? 'n/a' : (100 * x).toFixed(0);
 export function printBudget(rep) {
   const T = loadTargets(), all = cells(T, rep);
   console.log(`Difficulty budget: ${rep.fights} scratch turn fights a row, hero and player (each boss fight on its own seed; trash in chains of 5);`);
-  console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z13-z15 bosses and the z16-z20 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
+  console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z13-z15 bosses and the z16-z26 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
   console.log(`Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +${T.tobinBoss}).`);
   console.log('A "behind" row\'s casual number is the drop in casual wins against its ref row.');
   console.log('row'.padEnd(17) + 'kind'.padEnd(13) + 'casual w/t/p'.padEnd(14) + 'mean sprd'.padEnd(10) + 'band'.padEnd(16) + 'good w/t/p'.padEnd(13) + 'band'.padEnd(9) + 'tries w/t/p'.padEnd(16) + 'turns w/t/p'.padEnd(17) + 'level  out of band');

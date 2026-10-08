@@ -20,49 +20,49 @@
       }
     },
     "casual.longestDrySec": {
-      "value": 144.6,
+      "value": 190.2,
       "bad": "up",
       "abs": 140,
       "rel": 0.3,
       "note": "longest active stretch without a reward",
       "perHero": {
-        "wren": 77.8,
+        "wren": 214.6,
         "tobin": 191.2,
         "pip": 164.8
       }
     },
     "casual.visitsWithRewardShare": {
-      "value": 1,
+      "value": 0.99,
       "bad": "down",
       "abs": 0.12,
       "rel": 0,
       "note": "share of 5-minute visits that gave something",
       "perHero": {
-        "wren": 1,
+        "wren": 0.96,
         "tobin": 1,
         "pip": 1
       }
     },
     "casual.zoneEnd": {
-      "value": 12.8,
+      "value": 12.67,
       "bad": "both",
       "abs": 2,
       "rel": 0,
       "note": "zone after 3 days of 3 short visits",
       "perHero": {
-        "wren": 13.4,
+        "wren": 13,
         "tobin": 10.2,
         "pip": 14.8
       }
     },
     "casual.mechanicsPerHour": {
-      "value": 32.09,
+      "value": 32.53,
       "bad": "both",
       "abs": 4,
       "rel": 0.2,
       "note": "new unlocks and camp builds per active hour",
       "perHero": {
-        "wren": 31.2,
+        "wren": 32.53,
         "tobin": 30.67,
         "pip": 34.4
       }
@@ -92,242 +92,242 @@
       }
     },
     "active.longestDrySec": {
-      "value": 284.33,
+      "value": 265.4,
       "bad": "up",
       "abs": 130,
       "rel": 0.3,
       "note": "longest active stretch without a reward",
       "perHero": {
-        "wren": 249.8,
+        "wren": 193,
         "tobin": 226.4,
         "pip": 376.8
       }
     },
     "active.zoneEnd": {
-      "value": 14.73,
+      "value": 15.2,
       "bad": "both",
       "abs": 1.8,
       "rel": 0,
       "note": "zone after one 60-minute session",
       "perHero": {
-        "wren": 15.8,
+        "wren": 17.2,
         "tobin": 12,
         "pip": 16.4
       }
     },
     "active.stallCount": {
-      "value": 1.33,
+      "value": 1.27,
       "bad": "up",
       "abs": 1.1,
       "rel": 0,
       "note": "stalls (10 active minutes without a new zone)",
       "perHero": {
-        "wren": 1,
+        "wren": 0.8,
         "tobin": 2,
         "pip": 1
       }
     },
     "active.longestStallSec": {
-      "value": 851.93,
+      "value": 808.53,
       "bad": "up",
       "abs": 550,
       "rel": 0.3,
       "note": "longest stretch without a new zone",
       "perHero": {
-        "wren": 768.8,
+        "wren": 638.6,
         "tobin": 973.2,
         "pip": 813.8
       }
     },
     "active.wipesPerHour": {
-      "value": 29.8,
+      "value": 28.87,
       "bad": "up",
       "abs": 10,
       "rel": 0.35,
       "note": "times the hero fell, per hour",
       "perHero": {
-        "wren": 32.8,
+        "wren": 30,
         "tobin": 5.2,
         "pip": 51.4
       }
     },
     "active.goldSpentShare": {
-      "value": 0.91,
+      "value": 0.9,
       "bad": "down",
       "abs": 0.16,
       "rel": 0,
       "note": "share of gold earned that was spent",
       "perHero": {
-        "wren": 0.95,
+        "wren": 0.92,
         "tobin": 0.89,
         "pip": 0.89
       }
     },
     "active.abilityTopShare": {
-      "value": 0.5,
+      "value": 0.51,
       "bad": "up",
       "abs": 0.1,
       "rel": 0,
       "note": "dominance: the most-cast ability, share of casts",
       "perHero": {
-        "wren": 0.51,
+        "wren": 0.52,
         "tobin": 0.48,
         "pip": 0.52
       }
     },
     "active.mechanicsPerHour": {
-      "value": 24.2,
+      "value": 24.27,
       "bad": "both",
       "abs": 6,
       "rel": 0.2,
       "note": "new unlocks and camp builds per active hour",
       "perHero": {
-        "wren": 24,
+        "wren": 24.2,
         "tobin": 23.8,
         "pip": 24.8
       }
     },
     "active.mechanicsBurst10min": {
-      "value": 10.47,
+      "value": 10.67,
       "bad": "up",
       "abs": 2,
       "rel": 0,
       "note": "most unlocks and camp builds inside any 10 minutes",
       "perHero": {
-        "wren": 10.2,
+        "wren": 10.8,
         "tobin": 10.2,
         "pip": 11
       }
     },
     "active.heroParity": {
-      "value": 0.24,
+      "value": 0.27,
       "bad": "up",
       "abs": 0.15,
       "rel": 0,
       "note": "widest gap of a starter from the median zone (share)",
       "perHero": {
-        "wren": 15.8,
+        "wren": 17.2,
         "tobin": 12,
         "pip": 16.4
       }
     },
     "optimiser.zoneEnd": {
-      "value": 20,
+      "value": 22.67,
       "bad": "both",
       "abs": 2,
       "rel": 0,
       "note": "zone after 10 hours of best-value play",
       "perHero": {
-        "wren": 20,
-        "tobin": 20,
-        "pip": 20
+        "wren": 22.8,
+        "tobin": 23.2,
+        "pip": 22
       }
     },
     "optimiser.zoneAt1h": {
-      "value": 15.07,
+      "value": 14.87,
       "bad": "both",
       "abs": 1.8,
       "rel": 0,
       "note": "zone after the first hour",
       "perHero": {
-        "wren": 16.8,
+        "wren": 16.2,
         "tobin": 12.2,
         "pip": 16.2
       }
     },
     "optimiser.zonePerHour": {
-      "value": 2,
+      "value": 2.27,
       "bad": "both",
       "abs": 0.2,
       "rel": 0,
       "note": "zones gained per active hour",
       "perHero": {
-        "wren": 2,
-        "tobin": 2,
-        "pip": 2
+        "wren": 2.28,
+        "tobin": 2.32,
+        "pip": 2.2
       }
     },
     "optimiser.longestDrySec": {
-      "value": 833.93,
+      "value": 831.53,
       "bad": "up",
       "abs": 900,
       "rel": 0.3,
       "note": "longest active stretch without a reward",
       "perHero": {
-        "wren": 740,
-        "tobin": 764.2,
-        "pip": 997.6
+        "wren": 778.8,
+        "tobin": 924.4,
+        "pip": 791.4
       }
     },
     "optimiser.stallCount": {
-      "value": 4.93,
+      "value": 7.33,
       "bad": "up",
-      "abs": 2.4,
+      "abs": 2.9,
       "rel": 0,
       "note": "stalls (10 active minutes without a new zone)",
       "perHero": {
-        "wren": 4.4,
-        "tobin": 5.8,
-        "pip": 4.6
+        "wren": 7,
+        "tobin": 9,
+        "pip": 6
       }
     },
     "optimiser.longestStallSec": {
-      "value": 25136.53,
+      "value": 15636.67,
       "bad": "up",
       "abs": 5700,
       "rel": 0.3,
       "note": "longest stretch without a new zone",
       "perHero": {
-        "wren": 29601.6,
-        "tobin": 27405,
-        "pip": 18403
+        "wren": 19559.6,
+        "tobin": 13419,
+        "pip": 13931.4
       }
     },
     "optimiser.wipesPerHour": {
-      "value": 49.43,
+      "value": 79.67,
       "bad": "up",
       "abs": 8,
       "rel": 0,
       "note": "times the hero fell, per hour",
       "perHero": {
-        "wren": 63.32,
-        "tobin": 16.4,
-        "pip": 68.58
+        "wren": 110.16,
+        "tobin": 27.6,
+        "pip": 101.24
       }
     },
     "optimiser.goldSpentShare": {
-      "value": 0.92,
+      "value": 0.96,
       "bad": "down",
       "abs": 0.1,
       "rel": 0,
       "note": "share of gold earned that was spent (a sink gap if it falls)",
       "perHero": {
-        "wren": 0.92,
-        "tobin": 0.95,
-        "pip": 0.89
+        "wren": 0.97,
+        "tobin": 0.98,
+        "pip": 0.92
       }
     },
     "optimiser.essHeldShare": {
-      "value": 0.49,
+      "value": 0.34,
       "bad": "up",
       "abs": 0.18,
       "rel": 0,
       "note": "essence made but still unspent at the end",
       "perHero": {
-        "wren": 0.54,
-        "tobin": 0.57,
-        "pip": 0.35
+        "wren": 0.43,
+        "tobin": 0.41,
+        "pip": 0.18
       }
     },
     "optimiser.deadFamilies": {
-      "value": 1.2,
+      "value": 1.73,
       "bad": "up",
       "abs": 1,
       "rel": 0,
       "note": "dead stock: material families with 90% or more of what was gathered still unspent",
       "perHero": {
-        "wren": 0.2,
-        "tobin": 1.2,
+        "wren": 1.4,
+        "tobin": 1.6,
         "pip": 2.2
       }
     },
@@ -338,9 +338,9 @@
       "rel": 0,
       "note": "dominance: the most-cast ability, share of casts",
       "perHero": {
-        "wren": 0.55,
-        "tobin": 0.45,
-        "pip": 0.52
+        "wren": 0.53,
+        "tobin": 0.43,
+        "pip": 0.57
       }
     },
     "optimiser.trainTopShare": {
@@ -356,51 +356,51 @@
       }
     },
     "optimiser.gearTierMean": {
-      "value": 2.44,
+      "value": 2.47,
       "bad": "both",
       "abs": 0.75,
       "rel": 0,
       "note": "average tier of worn class gear",
       "perHero": {
-        "wren": 2.28,
+        "wren": 2.4,
         "tobin": 2.4,
-        "pip": 2.64
+        "pip": 2.6
       }
     },
     "optimiser.mechanicsPerHour": {
-      "value": 2.98,
+      "value": 2.83,
       "bad": "both",
       "abs": 2,
       "rel": 0.2,
       "note": "new unlocks and camp builds per active hour",
       "perHero": {
-        "wren": 2.88,
-        "tobin": 2.74,
-        "pip": 3.32
+        "wren": 2.64,
+        "tobin": 2.68,
+        "pip": 3.18
       }
     },
     "optimiser.mechanicsBurst10min": {
-      "value": 10.47,
+      "value": 10.4,
       "bad": "up",
       "abs": 2,
       "rel": 0,
       "note": "most unlocks and camp builds inside any 10 minutes",
       "perHero": {
-        "wren": 10.8,
+        "wren": 10.6,
         "tobin": 10.2,
         "pip": 10.4
       }
     },
     "optimiser.heroParity": {
-      "value": 0,
+      "value": 0.04,
       "bad": "up",
       "abs": 0.15,
       "rel": 0,
       "note": "widest gap of a starter from the median zone (share)",
       "perHero": {
-        "wren": 20,
-        "tobin": 20,
-        "pip": 20
+        "wren": 22.8,
+        "tobin": 23.2,
+        "pip": 22
       }
     }
   },
@@ -1666,36 +1666,420 @@
         "sd": 0
       },
       "z20-boss-arrival|wren|casual": {
-        "value": 0,
-        "sd": 0
+        "value": 0.7,
+        "sd": 0.029
       },
       "z20-boss-arrival|tobin|casual": {
-        "value": 0,
-        "sd": 0
+        "value": 0.81,
+        "sd": 0.026
       },
       "z20-boss-arrival|pip|casual": {
-        "value": 0,
-        "sd": 0
+        "value": 0.69,
+        "sd": 0.036
       },
       "z20-boss-arrival|mean|casual": {
-        "value": 0,
-        "sd": 0
+        "value": 0.73,
+        "sd": 0.017
       },
       "z20-boss-arrival|wren|good": {
-        "value": 0,
+        "value": 1,
         "sd": 0
       },
       "z20-boss-arrival|tobin|good": {
-        "value": 0,
+        "value": 1,
         "sd": 0
       },
       "z20-boss-arrival|pip|good": {
-        "value": 0,
+        "value": 1,
         "sd": 0
       },
       "z20-boss-arrival|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z21-boss-arrival|wren|casual": {
+        "value": 0.78,
+        "sd": 0.026
+      },
+      "z21-boss-arrival|tobin|casual": {
+        "value": 0.72,
+        "sd": 0.028
+      },
+      "z21-boss-arrival|pip|casual": {
+        "value": 0.74,
+        "sd": 0.032
+      },
+      "z21-boss-arrival|mean|casual": {
+        "value": 0.75,
+        "sd": 0.016
+      },
+      "z21-boss-arrival|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z21-boss-arrival|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z21-boss-arrival|pip|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z21-boss-arrival|mean|good": {
+        "value": 1,
+        "sd": 0.001
+      },
+      "z22-boss-arrival|wren|casual": {
+        "value": 0.68,
+        "sd": 0.03
+      },
+      "z22-boss-arrival|tobin|casual": {
+        "value": 0.68,
+        "sd": 0.029
+      },
+      "z22-boss-arrival|pip|casual": {
+        "value": 0.69,
+        "sd": 0.031
+      },
+      "z22-boss-arrival|mean|casual": {
+        "value": 0.68,
+        "sd": 0.02
+      },
+      "z22-boss-arrival|wren|good": {
+        "value": 1,
+        "sd": 0.002
+      },
+      "z22-boss-arrival|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z22-boss-arrival|pip|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z22-boss-arrival|mean|good": {
+        "value": 1,
+        "sd": 0.001
+      },
+      "z23-boss-arrival|wren|casual": {
+        "value": 0.71,
+        "sd": 0.033
+      },
+      "z23-boss-arrival|tobin|casual": {
+        "value": 0.6,
+        "sd": 0.031
+      },
+      "z23-boss-arrival|pip|casual": {
+        "value": 0.64,
+        "sd": 0.031
+      },
+      "z23-boss-arrival|mean|casual": {
+        "value": 0.65,
+        "sd": 0.018
+      },
+      "z23-boss-arrival|wren|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z23-boss-arrival|tobin|good": {
+        "value": 1,
+        "sd": 0.002
+      },
+      "z23-boss-arrival|pip|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z23-boss-arrival|mean|good": {
+        "value": 1,
+        "sd": 0.002
+      },
+      "z24-boss-arrival|wren|casual": {
+        "value": 0.8,
+        "sd": 0.028
+      },
+      "z24-boss-arrival|tobin|casual": {
+        "value": 0.67,
+        "sd": 0.031
+      },
+      "z24-boss-arrival|pip|casual": {
+        "value": 0.71,
+        "sd": 0.03
+      },
+      "z24-boss-arrival|mean|casual": {
+        "value": 0.73,
+        "sd": 0.017
+      },
+      "z24-boss-arrival|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z24-boss-arrival|tobin|good": {
+        "value": 1,
+        "sd": 0.002
+      },
+      "z24-boss-arrival|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z24-boss-arrival|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z25-boss-arrival|wren|casual": {
         "value": 0,
         "sd": 0
+      },
+      "z25-boss-arrival|tobin|casual": {
+        "value": 0,
+        "sd": 0
+      },
+      "z25-boss-arrival|pip|casual": {
+        "value": 0,
+        "sd": 0
+      },
+      "z25-boss-arrival|mean|casual": {
+        "value": 0,
+        "sd": 0
+      },
+      "z25-boss-arrival|wren|good": {
+        "value": 0,
+        "sd": 0
+      },
+      "z25-boss-arrival|tobin|good": {
+        "value": 0,
+        "sd": 0
+      },
+      "z25-boss-arrival|pip|good": {
+        "value": 0,
+        "sd": 0
+      },
+      "z25-boss-arrival|mean|good": {
+        "value": 0,
+        "sd": 0
+      },
+      "z26-boss-arrival|wren|casual": {
+        "value": 0,
+        "sd": 0
+      },
+      "z26-boss-arrival|tobin|casual": {
+        "value": 0,
+        "sd": 0
+      },
+      "z26-boss-arrival|pip|casual": {
+        "value": 0,
+        "sd": 0
+      },
+      "z26-boss-arrival|mean|casual": {
+        "value": 0,
+        "sd": 0
+      },
+      "z26-boss-arrival|wren|good": {
+        "value": 0,
+        "sd": 0
+      },
+      "z26-boss-arrival|tobin|good": {
+        "value": 0,
+        "sd": 0
+      },
+      "z26-boss-arrival|pip|good": {
+        "value": 0,
+        "sd": 0
+      },
+      "z26-boss-arrival|mean|good": {
+        "value": 0,
+        "sd": 0
+      },
+      "z20-arrival-bare|wren|casual": {
+        "value": 0.29,
+        "sd": 0.043
+      },
+      "z20-arrival-bare|tobin|casual": {
+        "value": 0.04,
+        "sd": 0.038
+      },
+      "z20-arrival-bare|pip|casual": {
+        "value": 0.2,
+        "sd": 0.045
+      },
+      "z20-arrival-bare|mean|casual": {
+        "value": 0.18,
+        "sd": 0.029
+      },
+      "z20-arrival-bare|wren|good": {
+        "value": 1,
+        "sd": 0.002
+      },
+      "z20-arrival-bare|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z20-arrival-bare|pip|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z20-arrival-bare|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z20-arrival-t2|wren|casual": {
+        "value": -0.11,
+        "sd": 0.038
+      },
+      "z20-arrival-t2|tobin|casual": {
+        "value": 0.01,
+        "sd": 0.036
+      },
+      "z20-arrival-t2|pip|casual": {
+        "value": -0.04,
+        "sd": 0.059
+      },
+      "z20-arrival-t2|mean|casual": {
+        "value": -0.05,
+        "sd": 0.029
+      },
+      "z20-arrival-t2|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z20-arrival-t2|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z20-arrival-t2|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z20-arrival-t2|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z20-arrival-rare|wren|casual": {
+        "value": -0.12,
+        "sd": 0.037
+      },
+      "z20-arrival-rare|tobin|casual": {
+        "value": 0.01,
+        "sd": 0.036
+      },
+      "z20-arrival-rare|pip|casual": {
+        "value": -0.07,
+        "sd": 0.041
+      },
+      "z20-arrival-rare|mean|casual": {
+        "value": -0.06,
+        "sd": 0.023
+      },
+      "z20-arrival-rare|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z20-arrival-rare|tobin|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z20-arrival-rare|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z20-arrival-rare|mean|good": {
+        "value": 1,
+        "sd": 0.001
+      },
+      "z24-arrival-bare|wren|casual": {
+        "value": 0.29,
+        "sd": 0.05
+      },
+      "z24-arrival-bare|tobin|casual": {
+        "value": 0.05,
+        "sd": 0.044
+      },
+      "z24-arrival-bare|pip|casual": {
+        "value": 0.18,
+        "sd": 0.044
+      },
+      "z24-arrival-bare|mean|casual": {
+        "value": 0.17,
+        "sd": 0.028
+      },
+      "z24-arrival-bare|wren|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z24-arrival-bare|tobin|good": {
+        "value": 1,
+        "sd": 0.002
+      },
+      "z24-arrival-bare|pip|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z24-arrival-bare|mean|good": {
+        "value": 1,
+        "sd": 0.002
+      },
+      "z24-arrival-t2|wren|casual": {
+        "value": -0.05,
+        "sd": 0.065
+      },
+      "z24-arrival-t2|tobin|casual": {
+        "value": 0.04,
+        "sd": 0.043
+      },
+      "z24-arrival-t2|pip|casual": {
+        "value": -0.02,
+        "sd": 0.043
+      },
+      "z24-arrival-t2|mean|casual": {
+        "value": -0.01,
+        "sd": 0.026
+      },
+      "z24-arrival-t2|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z24-arrival-t2|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z24-arrival-t2|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z24-arrival-t2|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z24-arrival-rare|wren|casual": {
+        "value": -0.06,
+        "sd": 0.036
+      },
+      "z24-arrival-rare|tobin|casual": {
+        "value": 0.03,
+        "sd": 0.043
+      },
+      "z24-arrival-rare|pip|casual": {
+        "value": -0.03,
+        "sd": 0.042
+      },
+      "z24-arrival-rare|mean|casual": {
+        "value": -0.02,
+        "sd": 0.023
+      },
+      "z24-arrival-rare|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z24-arrival-rare|tobin|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z24-arrival-rare|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z24-arrival-rare|mean|good": {
+        "value": 1,
+        "sd": 0.001
       },
       "z19-boss|wren|casual": {
         "value": 0.99,
@@ -1806,20 +2190,20 @@
         "sd": 0
       },
       "z20-boss|wren|casual": {
-        "value": 0.61,
-        "sd": 0.032
+        "value": 0.91,
+        "sd": 0.02
       },
       "z20-boss|tobin|casual": {
-        "value": 0.79,
-        "sd": 0.033
+        "value": 0.92,
+        "sd": 0.02
       },
       "z20-boss|pip|casual": {
-        "value": 0.79,
-        "sd": 0.026
+        "value": 0.92,
+        "sd": 0.025
       },
       "z20-boss|mean|casual": {
-        "value": 0.73,
-        "sd": 0.016
+        "value": 0.92,
+        "sd": 0.011
       },
       "z20-boss|wren|good": {
         "value": 1,
@@ -1847,55 +2231,55 @@
       },
       "z20-boss|pip|none": {
         "value": 0,
-        "sd": 0.004
+        "sd": 0
       },
       "z20-boss-behind|wren|casual": {
-        "value": 0.59,
-        "sd": 0.033
+        "value": 0.03,
+        "sd": 0.031
       },
       "z20-boss-behind|tobin|casual": {
-        "value": 0.74,
-        "sd": 0.035
+        "value": 0.03,
+        "sd": 0.027
       },
       "z20-boss-behind|pip|casual": {
-        "value": 0.78,
+        "value": 0.07,
         "sd": 0.028
       },
       "z20-boss-behind|mean|casual": {
-        "value": 0.7,
-        "sd": 0.018
+        "value": 0.04,
+        "sd": 0.017
       },
       "z20-boss-behind|wren|good": {
-        "value": 0.97,
-        "sd": 0.013
+        "value": 1,
+        "sd": 0
       },
       "z20-boss-behind|tobin|good": {
         "value": 1,
-        "sd": 0.004
+        "sd": 0
       },
       "z20-boss-behind|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z20-boss-behind|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z21-boss|wren|casual": {
         "value": 0.98,
         "sd": 0.01
       },
-      "z20-boss-behind|mean|good": {
-        "value": 0.98,
-        "sd": 0.005
-      },
-      "z21-boss|wren|casual": {
-        "value": 0.71,
-        "sd": 0.029
-      },
       "z21-boss|tobin|casual": {
-        "value": 0.78,
-        "sd": 0.026
+        "value": 0.85,
+        "sd": 0.023
       },
       "z21-boss|pip|casual": {
-        "value": 0.73,
-        "sd": 0.041
+        "value": 0.94,
+        "sd": 0.018
       },
       "z21-boss|mean|casual": {
-        "value": 0.74,
-        "sd": 0.016
+        "value": 0.92,
+        "sd": 0.011
       },
       "z21-boss|wren|good": {
         "value": 1,
@@ -1923,23 +2307,23 @@
       },
       "z21-boss|pip|none": {
         "value": 0,
-        "sd": 0.002
+        "sd": 0
       },
       "z22-boss|wren|casual": {
-        "value": 0.68,
-        "sd": 0.03
+        "value": 0.9,
+        "sd": 0.032
       },
       "z22-boss|tobin|casual": {
-        "value": 0.79,
-        "sd": 0.026
+        "value": 0.9,
+        "sd": 0.022
       },
       "z22-boss|pip|casual": {
-        "value": 0.73,
-        "sd": 0.029
+        "value": 0.91,
+        "sd": 0.018
       },
       "z22-boss|mean|casual": {
-        "value": 0.73,
-        "sd": 0.016
+        "value": 0.91,
+        "sd": 0.015
       },
       "z22-boss|wren|good": {
         "value": 1,
@@ -1967,23 +2351,23 @@
       },
       "z22-boss|pip|none": {
         "value": 0,
-        "sd": 0.002
+        "sd": 0
       },
       "z23-boss|wren|casual": {
-        "value": 0.7,
-        "sd": 0.029
+        "value": 0.87,
+        "sd": 0.02
       },
       "z23-boss|tobin|casual": {
-        "value": 0.82,
-        "sd": 0.029
+        "value": 0.87,
+        "sd": 0.024
       },
       "z23-boss|pip|casual": {
-        "value": 0.65,
-        "sd": 0.03
+        "value": 0.89,
+        "sd": 0.026
       },
       "z23-boss|mean|casual": {
-        "value": 0.72,
-        "sd": 0.016
+        "value": 0.87,
+        "sd": 0.012
       },
       "z23-boss|wren|good": {
         "value": 1,
@@ -2014,20 +2398,20 @@
         "sd": 0
       },
       "z24-boss|wren|casual": {
-        "value": 0.68,
-        "sd": 0.029
+        "value": 0.95,
+        "sd": 0.02
       },
       "z24-boss|tobin|casual": {
         "value": 0.79,
-        "sd": 0.034
+        "sd": 0.029
       },
       "z24-boss|pip|casual": {
-        "value": 0.67,
-        "sd": 0.03
+        "value": 0.86,
+        "sd": 0.033
       },
       "z24-boss|mean|casual": {
-        "value": 0.71,
-        "sd": 0.021
+        "value": 0.87,
+        "sd": 0.012
       },
       "z24-boss|wren|good": {
         "value": 1,
@@ -2100,6 +2484,38 @@
       "z25-boss|pip|none": {
         "value": 0,
         "sd": 0
+      },
+      "z25-boss-behind|wren|casual": {
+        "value": 0.72,
+        "sd": 0.032
+      },
+      "z25-boss-behind|tobin|casual": {
+        "value": 0.72,
+        "sd": 0.03
+      },
+      "z25-boss-behind|pip|casual": {
+        "value": 0.54,
+        "sd": 0.032
+      },
+      "z25-boss-behind|mean|casual": {
+        "value": 0.66,
+        "sd": 0.018
+      },
+      "z25-boss-behind|wren|good": {
+        "value": 0.99,
+        "sd": 0.013
+      },
+      "z25-boss-behind|tobin|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z25-boss-behind|pip|good": {
+        "value": 0.97,
+        "sd": 0.014
+      },
+      "z25-boss-behind|mean|good": {
+        "value": 0.98,
+        "sd": 0.005
       },
       "z27-boss|wren|casual": {
         "value": 0.7,
@@ -2489,37 +2905,37 @@
         "value": 0.97,
         "sd": 0.007
       },
-      "z20-boss-joined|wren|casual": {
-        "value": 0.61,
-        "sd": 0.032
+      "z25-boss-joined|wren|casual": {
+        "value": 0.82,
+        "sd": 0.025
       },
-      "z20-boss-joined|tobin|casual": {
-        "value": 0.79,
-        "sd": 0.034
-      },
-      "z20-boss-joined|pip|casual": {
-        "value": 0.79,
+      "z25-boss-joined|tobin|casual": {
+        "value": 0.78,
         "sd": 0.026
       },
-      "z20-boss-joined|mean|casual": {
-        "value": 0.73,
+      "z25-boss-joined|pip|casual": {
+        "value": 0.54,
+        "sd": 0.032
+      },
+      "z25-boss-joined|mean|casual": {
+        "value": 0.71,
         "sd": 0.016
       },
-      "z20-boss-joined|wren|good": {
-        "value": 0.84,
+      "z25-boss-joined|wren|good": {
+        "value": 0.87,
         "sd": 0.024
       },
-      "z20-boss-joined|tobin|good": {
-        "value": 0.89,
-        "sd": 0.02
+      "z25-boss-joined|tobin|good": {
+        "value": 0.94,
+        "sd": 0.031
       },
-      "z20-boss-joined|pip|good": {
-        "value": 0.95,
-        "sd": 0.017
+      "z25-boss-joined|pip|good": {
+        "value": 0.91,
+        "sd": 0.019
       },
-      "z20-boss-joined|mean|good": {
-        "value": 0.89,
-        "sd": 0.012
+      "z25-boss-joined|mean|good": {
+        "value": 0.91,
+        "sd": 0.022
       },
       "z38-boss-joined|wren|casual": {
         "value": 0.83,
@@ -2585,99 +3001,99 @@
         "value": 1,
         "sd": 0
       },
-      "z20-boss-focus|wren|casual": {
-        "value": 0.05,
-        "sd": 0.046
+      "z25-boss-focus|wren|casual": {
+        "value": 0.17,
+        "sd": 0.04
       },
-      "z20-boss-focus|tobin|casual": {
-        "value": 0.14,
-        "sd": 0.058
+      "z25-boss-focus|tobin|casual": {
+        "value": 0.12,
+        "sd": 0.04
       },
-      "z20-boss-focus|pip|casual": {
-        "value": 0.08,
-        "sd": 0.039
-      },
-      "z20-boss-focus|mean|casual": {
-        "value": 0.09,
-        "sd": 0.024
-      },
-      "z20-boss-focus|wren|good": {
-        "value": 1,
-        "sd": 0
-      },
-      "z20-boss-focus|tobin|good": {
-        "value": 1,
-        "sd": 0
-      },
-      "z20-boss-focus|pip|good": {
-        "value": 1,
-        "sd": 0
-      },
-      "z20-boss-focus|mean|good": {
-        "value": 1,
-        "sd": 0
-      },
-      "z20-boss-might|wren|casual": {
-        "value": 0.27,
+      "z25-boss-focus|pip|casual": {
+        "value": 0.03,
         "sd": 0.045
       },
-      "z20-boss-might|tobin|casual": {
-        "value": 0.33,
+      "z25-boss-focus|mean|casual": {
+        "value": 0.11,
+        "sd": 0.024
+      },
+      "z25-boss-focus|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z25-boss-focus|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z25-boss-focus|pip|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z25-boss-focus|mean|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z25-boss-might|wren|casual": {
+        "value": 0.27,
+        "sd": 0.051
+      },
+      "z25-boss-might|tobin|casual": {
+        "value": 0.36,
         "sd": 0.041
       },
-      "z20-boss-might|pip|casual": {
-        "value": 0.3,
-        "sd": 0.041
+      "z25-boss-might|pip|casual": {
+        "value": 0.25,
+        "sd": 0.043
       },
-      "z20-boss-might|mean|casual": {
+      "z25-boss-might|mean|casual": {
         "value": 0.3,
         "sd": 0.024
       },
-      "z20-boss-might|wren|good": {
+      "z25-boss-might|wren|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z25-boss-might|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z25-boss-might|pip|good": {
         "value": 1,
         "sd": 0.002
       },
-      "z20-boss-might|tobin|good": {
+      "z25-boss-might|mean|good": {
         "value": 1,
         "sd": 0
       },
-      "z20-boss-might|pip|good": {
-        "value": 1,
-        "sd": 0
+      "z25-boss-vigour|wren|casual": {
+        "value": -0.09,
+        "sd": 0.031
       },
-      "z20-boss-might|mean|good": {
-        "value": 1,
-        "sd": 0
-      },
-      "z20-boss-vigour|wren|casual": {
+      "z25-boss-vigour|tobin|casual": {
         "value": -0.17,
+        "sd": 0.03
+      },
+      "z25-boss-vigour|pip|casual": {
+        "value": -0.24,
         "sd": 0.042
       },
-      "z20-boss-vigour|tobin|casual": {
-        "value": -0.18,
-        "sd": 0.035
+      "z25-boss-vigour|mean|casual": {
+        "value": -0.17,
+        "sd": 0.024
       },
-      "z20-boss-vigour|pip|casual": {
-        "value": -0.09,
-        "sd": 0.036
-      },
-      "z20-boss-vigour|mean|casual": {
-        "value": -0.15,
-        "sd": 0.02
-      },
-      "z20-boss-vigour|wren|good": {
+      "z25-boss-vigour|wren|good": {
         "value": 1,
         "sd": 0
       },
-      "z20-boss-vigour|tobin|good": {
+      "z25-boss-vigour|tobin|good": {
         "value": 1,
         "sd": 0
       },
-      "z20-boss-vigour|pip|good": {
+      "z25-boss-vigour|pip|good": {
         "value": 1,
         "sd": 0
       },
-      "z20-boss-vigour|mean|good": {
+      "z25-boss-vigour|mean|good": {
         "value": 1,
         "sd": 0
       }
