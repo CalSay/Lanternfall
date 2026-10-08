@@ -152,6 +152,7 @@ const NOTICES = [
   // ---- C14: the merged away report owns its source summaries ----
   { id: 'away-report', key: 'away-report', ch: 'card' },
   { id: 'hero-token', key: 'heroToken', ch: 'bell', why: 'a hero token won (56c, story-unlock-gates): when that hero joins; no kit yet, so no pop' },
+  { id: 'starter-join', key: 'starterJoin', ch: 'pop', wait: 30, why: 'a starter joined with no Champion card to say it (the card or the story off, or a clear made while away; starters-join-when-met)' },
   // ---- refine-queues: the stations' orders ----
   { id: 'refine-coal', key: 'refine-coal', ch: 'pop', wait: 10, why: 'once a save: where coal comes from (the art ruling: coal drops from Copper Ore once the Forge is built)' },
   { id: 'refine-why', key: 'refine-why', ch: 'pop', reply: true, why: 'an order button the player just pressed could not add the order: say why' }

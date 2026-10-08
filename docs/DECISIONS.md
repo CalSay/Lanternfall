@@ -735,6 +735,15 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   they own (an all-met default). `STORY_TUNE.joinOnMeet = false` switches back to all three at the start. A join counts as a new thing for the
   spacing governor, so the next queued unlock (the Codex at zone 10) waits at least 1:30. Coverage
   areas 1, 4, 14 and 15.
+  Built (starters-join-when-met, 2026-10-08): the save field is `S.party.unlock.startedAs`, default `''`. Only the picker's Begin on a
+  real new game writes it (`heroBegin`: no hero chosen, no kills, zone 1, nothing recorded), so every old save and every Mirror of Embers
+  keeps `''` and all three starters. Any other value reads as `''`. A starter is yours when `startedAs` is `''`, you began as them,
+  `S.party.unlock.heroes[id]` is set, their Champion's zone is cleared (`S.maxZone` above it), `joinOnMeet` is false, or they carry the
+  lamp now. The Champion's zone comes from the meet scene's data (`STORY_BEATS.npc[id].at`), so the join sits where the scene plays.
+  The join line rides the Champion card. Exception: with the Champion card or the story off, or for a Champion cleared while away, a
+  toast says it instead ("Tobin joined your camp while you were away."). The meet scene of the starter you began as never plays.
+  Each join holds the spacing governor for `ONBOARD_TUNE.gap` (the first opens a `switch` row, later ones stamp the clock). The Codex
+  opens on arriving at zone 10, before the Cantor falls, so the zone 10 join holds the unlock after it, not the Codex.
 - **Unlock gap 90 s, F4 counts released unlocks (unlock-gap-trial, Opus judge 2026-10-07; Cal can veto).**
   `ONBOARD_TUNE.gap` goes from 60 to 90. F4 (at most 2 new things in any 3 minutes of the first 30, 4 in any 10 after)
   now counts only what the spacing governor releases; a thing a player act or a drop opened (its row's `now()` true) is
