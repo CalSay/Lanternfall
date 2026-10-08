@@ -250,6 +250,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## Process and Autopilot
 
+- A pacing rule that counts moments must count only moments a stall cannot make: level cards and hero lines fire during grinds and losses, so they hide the stall the rule is for. And never put a "person-minute" in a rule until a human run measures it; model players run on stepped clocks. Why: the red team on f3-restate (2026-10-08).
 - A design-doc PR (decisions or a spec) runs the `docs/review/design-doc.md` hard checks before opening: coverage-map area, a numeric prediction with its measure and miss threshold, how to switch it off, and a check of each new rule against standing lines in `DECISIONS.md`. Why: Codex P1s on PR #55 (no area, no prediction, no rollback, bench XP clashed with the hero fatigue rule). (hero-progression review, 2026-10-06)
 - A beat map is a contract: before opening it, check each rule it states (one new thing per 3 minutes, big-moment gaps) against every row, for every hero pick. Why: Codex found four rule breaks across PRs #73 to #83 that a row-by-row pass would have caught. (early-game lead, 2026-10-06)
 - Every decision line that adds behaviour names its own switch-off flag and what the game does with it off, and a beat that adds a hero join counts the join as a new thing for every pick. Why: Codex P1s on PR #86 (no Champion-card rollback; a Tobin pick met Switching and the Codex in one beat). (early-game lead, 2026-10-06)
