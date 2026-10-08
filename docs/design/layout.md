@@ -24,6 +24,8 @@ tiers grow it (desktop-layout-v1, spec `docs/design/desktop-layout.md`):
 | Desktop 1 | `min-width: 1200px` and `min-height: 600px` (1280x720, 1366x640, 1440x900) | x1.15, 14 px | 76 / 56 / clamp(300px, 23.5vw, 340px) | 116 |
 | Desktop 2 | `min-width: 1600px` and `min-height: 900px` (1920x1080 and up) | x1.3, 15 px | 92 / 64 / clamp(300px, 20vw, 380px) | 132 |
 
+Tall landscape below Desktop 1 (1024x768 tablets) keeps the text as written but takes a side column of clamp(256px, 25vw, 300px), so the fight slots' labels fit.
+
 - **Text:** `tools/build.mjs` (`scaleText`) writes every CSS font size S as `max(var(--tmin, 0px), calc(S * var(--tk, 1)))`.
   `:root` sets `--tk: 1; --tmin: 0px`, so phones, 1024x768 tablets and 360x740 compute exactly as written. A line carrying
   `/* tk:off */` is left alone (the slot labels and key letters). A check compares every font size and the layout at 740x360,

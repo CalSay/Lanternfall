@@ -156,7 +156,8 @@
 }
 /* tall landscape (tablets, desktop): the mock-up's desktop sizes, a wider rail and a taller top row; key labels on the slots */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (min-height: 600px) {
-  .app { --rail: 64px; --toprow: 48px; }
+  /* side 25vw (256 px at 1024x768): at 20vw the slot labels ("Attack", "Hard · counters") were cut off (desktop-layout-v1) */
+  .app { --rail: 64px; --toprow: 48px; --side: clamp(256px, 25vw, 300px); }
   .tab { min-height: 62px; font-size: calc(12px * var(--display-k)); }
   .tab img { width: 22px; height: 22px; }
   .portrait { width: 44px; height: 44px; }

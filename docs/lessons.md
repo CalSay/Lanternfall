@@ -150,6 +150,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 - A desktop override inside a media block loses to a later rule of the same specificity outside it (80-landscape's `.stagebox.vs-on .cb-strip` sits after the tiers), and `scaleText` skips only a line whose comment is exactly `/* tk:off */`. Read the computed value in a browser after each desktop rule, not the CSS. Why: the boss strip and the slot label kept their old sizes until measured (desktop-layout-v1, 2026-10-08)
 - `playtest.mjs look` lists covered buttons under OFF SCREEN (the opening story covers the whole game), so "off screen on a fresh game" can mean "behind the intro". Check `elementFromPoint` before moving a control. Why: #239 carded Notices, zone and Sound as off screen at 1280x720; they were under the opening card (desktop-layout-v1, 2026-10-08)
+- A non-modal sheet needs its own slot: when one shared `cur` holds every sheet, any sheet that pops up on its own (a story card, Next up) closes the docked one and fires its back chain, and a docked sheet's Escape listener must yield to overlays above it. Why: the reviewer caught a story card closing the docked item the player was reading (desktop-layout-v1, 2026-10-08)
 
 ## Saves and offline parity
 

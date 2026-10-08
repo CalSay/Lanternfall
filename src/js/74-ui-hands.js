@@ -206,7 +206,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     card.append(el('p', 'note hd-line', named ? (a.ret ? 'They remember you. Hiring them again is free.' : legendAbout(a)) : handsLitFor(a)));
     const price = b.cost ? `Hire for ${gold(b.cost)}` : 'Hire for free';
     const k = 'hire:' + a.id, act = el('div', 'hd-act');
-    const hire = btn('mini go', isArmed(k) ? `Confirm: ${price}` : price);
+    const hire = btn('mini go', isArmed(k) ? `Confirm: ${b.cost ? 'hire for ' + gold(b.cost) : 'hire for free'}` : price);
     hire.disabled = !b.can.ok;
     hire.addEventListener('click', () => {
       if (!isArmed(k)) { arm(k); return; }

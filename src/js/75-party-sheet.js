@@ -51,14 +51,17 @@ let openSheet, partySheet;
 
 
   // ================= generic bottom sheet =================
-  let cur = null;
+  // cur: the open modal sheet. curDock: the docked detail, kept in its own slot so a modal (a story card, Next up) opens over it
+  // without closing it.
+  let cur = null, curDock = null;
   openSheet = function (build, opts) {
-    if (cur) cur.close(true);
     opts = opts || {};
-    const last = document.activeElement;
     // desktop-layout-v1: a sheet opened from inside an open menu on a desktop screen docks into the menu's right half, below its head,
     // beside the list (docs/design/desktop-layout.md 3). It is not modal: no focus trap, no grab drag; × and Escape still close it.
     const dock = !!(opts.dock && typeof isDesk === 'function' && isDesk() && S.tab);
+    if (cur) cur.close(true);
+    if (dock && curDock) curDock.close(true);
+    const last = document.activeElement;
     const ov = el('div', 'bsheet-ov' + (dock ? ' docked' : ''));
     const sh = el('div', 'bsheet' + (opts.small ? ' small' : ''));
     sh.setAttribute('role', 'dialog'); if (!dock) sh.setAttribute('aria-modal', 'true');
@@ -81,15 +84,26 @@ let openSheet, partySheet;
         if (api.closed) return; api.closed = true;
         document.removeEventListener('keydown', onKey, true);
         if (cur === api) cur = null;
+        if (curDock === api) curDock = null;
         if (dock) document.getElementById('app').classList.remove('detail-docked');
-        const done = () => { ov.remove(); if (opts.onClose) safe(() => opts.onClose(!!quiet)); if (!quiet && last && last.focus && document.contains(last)) try { last.focus({ preventScroll: true }); } catch (e) {} };
+        // A quiet close (tab switch) does not go back to the opener; if focus was in the sheet, it moves to the open tab instead of the page body.
+        const held = sh.contains(document.activeElement);
+        const done = () => {
+          ov.remove(); if (opts.onClose) safe(() => opts.onClose(!!quiet));
+          const to = !quiet ? last : held ? document.querySelector('.tabs .tab.on, .tabs .tab[aria-selected="true"]') : null;
+          if (to && to.focus && document.contains(to)) try { to.focus({ preventScroll: true }); } catch (e) {}
+        };
         if (instant || reduced || dock) done();
         else { ov.classList.add('out'); setTimeout(done, 180); }
       }
     };
     ov.sheetApi = api;
     function onKey(e) {
-      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); api.close(); return; }
+      if (e.key === 'Escape') {
+        // A docked sheet sits under the game's overlays; Escape belongs to whatever is on top of it.
+        if (dock && document.querySelector(MODAL_UP + ', #abPicker, #moveSheet, .gl-ov, .mm-ov, .dw-ov, .dd-fc-ov, .tabs-ov, #introScreen')) return;
+        e.preventDefault(); e.stopPropagation(); api.close(); return;
+      }
       if (dock || e.key !== 'Tab') return;
       const f = [...sh.querySelectorAll('button:not(:disabled), [href], input, summary, [tabindex]:not([tabindex="-1"])')].filter(n => n.offsetParent !== null);
       if (!f.length) return;
@@ -123,7 +137,7 @@ let openSheet, partySheet;
       body.addEventListener('touchmove', move, { passive: false });
       body.addEventListener('touchend', up); body.addEventListener('touchcancel', up);
     }
-    cur = api;
+    if (dock) curDock = api; else cur = api;
     build(api);
     requestAnimationFrame(() => { try { x.focus({ preventScroll: true }); } catch (e) {} });
     return api;

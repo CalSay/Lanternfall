@@ -12151,6 +12151,13 @@ if (section('desktop layout (browser, desktop-layout-v1)')) try {
         const d2 = await page.evaluate(() => [document.querySelectorAll('.bsheet-ov').length, (document.querySelector('#menu .bsheet') || {}).getAttribute && document.querySelector('#menu .bsheet').getAttribute('aria-label')]);
         assert(d2[0] === 1 && d && d2[1] && d2[1] !== d.label, `1280x720: clicking the next item swaps the docked sheet (${JSON.stringify([d && d.label, d2])})`);
         assert(await X('guideLineOk()'), '1280x720: a docked sheet does not hold Hesketh\'s lines (guideLineOk)');
+        // a sheet that pops up on its own (a story card, Next up) opens over the dock without closing it, and Escape closes the top one first
+        const SH = '[document.querySelectorAll(".bsheet-ov.docked").length, document.querySelectorAll(".bsheet-ov:not(.docked)").length].join()';
+        await X('openSheet(a => a.body.append("over the dock")); true'); await page.waitForTimeout(150);
+        const m1 = await X(SH);
+        await page.keyboard.press('Escape'); await page.waitForTimeout(250);
+        const m2 = await X(SH);
+        assert(m1 === '1,1' && m2 === '1,0', `1280x720: a modal sheet opens over the docked sheet and keeps it; Escape closes the modal first (${JSON.stringify([m1, m2])})`);
         await page.keyboard.press('Escape'); await page.waitForTimeout(200);
         const e1 = await X('[!!document.querySelector(".bsheet-ov"), S.tab].join()');
         await tiles[0].click(); await page.waitForTimeout(250);
@@ -12207,6 +12214,11 @@ if (section('desktop layout (browser, desktop-layout-v1)')) try {
           const { ctx, page, X } = await open(w, h, { touch, html });
           const desk = await X('isDesk()');
           const s = { desk, fight: await X(SNAP) };
+          if (w === 1024 && html === htmlNew) {
+            // the walk at 1024x768 found "Attack" and "Hard · counters" cut off on the fight slots when the side column was 208 px
+            const clip = (await X(CLIPPED)).filter(c => /^sb-/.test(c));
+            assert(!clip.length, `1024x768: no fight slot label ends in "..." (${clip.slice(0, 3).join(' / ') || 'none'})`);
+          }
           await view(X, page, 'gear');
           await X('(t => t && t.click())(document.querySelector("#sec-craft-gear .cf-gs")); true'); await page.waitForTimeout(400);
           s.gear = await X(SNAP); snaps.push(s); await ctx.close();
