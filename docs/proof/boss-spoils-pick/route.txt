@@ -1,0 +1,100 @@
+# seed: 1
+# Proof for card boss-spoils-pick: a zone 6 to 10 boss's first clear that drops a Scroll asks which move it teaches now.
+# Rules (two or more moves, the Scroll that win dropped, keep, full slots, zones, replays) are in tools/check.mjs, section
+# 'boss-spoils-pick'. Run at the default view (1280x720), then with --landscape and --portrait; shots are named by view.
+# Fixture pre-z7-boss: Wren, level 13, Power Shot and Barbed Arrow learned (the Moss Scroll and zone 5's Hollow Scroll spent), no
+# Scroll held, one ability slot free, zone 7's boss next and tips off. The boss starts by itself; Wren only attacks.
+new pre-z7-boss
+wait 2
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+expect "Learn one now:"
+expect "Keep the Scroll"
+expect "Hunter's Mark"
+expect "Deadeye"
+expect "Bat Swarm"
+expect-no "best"
+shot spoils-card
+tap "Deadeye"
+wait 1
+expect-no "Keep the Scroll"
+expect "Deadeye"
+shot spoils-learned

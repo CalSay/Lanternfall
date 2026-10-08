@@ -16,6 +16,9 @@
 //   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
 //   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
+//   picks    [{ txt, sub, fn }] a compact row of choices under the list (.mm-pick; boss-spoils-pick), headed by pickHead; a pick closes the
+//            card, then runs its fn. goTxt renames Continue; onKeep runs when the card closes any other way (Continue, an action, a tap
+//            outside, Escape). The first item in a folded card that has picks owns them.
 //   bark     a hero-voice moment id (55-voice.js): the story hero's line shows on the card or banner with their portrait. At most one bark a
 //            flush (the strongest, VOICE_PRIO). kind 'bark' is a banner of just the line, dropped after 20 s if the banner budget has no room.
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
@@ -92,6 +95,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     u.ov.remove(); u.ov = null;
     if (u.lastFocus && u.lastFocus.focus && document.contains(u.lastFocus)) try { u.lastFocus.focus({ preventScroll: true }); } catch (e) {}
     u.wait = 0;
+    const keep = u.onKeep; u.onKeep = null;   // a card with picks closed without one (boss-spoils-pick)
+    if (keep) try { keep(); } catch (e) { console.error('[lanternfall] moment keep', e); }
     try { ui(true); } catch (e) {}
   }
   function lineRow(l) {
@@ -145,19 +150,35 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
       if (rows.length > MOMENT_TUNE.maxLines) ul.append(el('li', 'mm-more', `And ${rows.length - MOMENT_TUNE.maxLines} more.`));
       card.append(ul);
     }
+    // boss-spoils-pick: a compact row of choices; a pick closes the card first, then runs
+    const pk = list.find(x => x.picks && x.picks.length);
+    u.onKeep = pk && pk.onKeep || null;
+    if (pk) {
+      card.classList.add('has-pick');
+      const box = el('div', 'mm-picks');
+      if (pk.pickHead) box.append(el('p', 'mm-pick-h', pk.pickHead));
+      const row = el('div', 'mm-pick-row');
+      for (const p of pk.picks) {
+        const b = el('button', 'mm-pick'); b.type = 'button';
+        b.append(el('b', null, p.txt)); if (p.sub) b.append(el('small', null, p.sub));
+        b.addEventListener('click', e => { e.stopPropagation(); if (Date.now() - u.shownAt < MOMENT_TUNE.tapLockMs) return; u.onKeep = null; closeCard(); try { p.fn && p.fn(); } catch (err) { console.error('[lanternfall] moment pick', err); } });
+        row.append(b);
+      }
+      box.append(row); card.append(box);
+    }
     const acts = el('div', 'mm-acts');
     for (const a of (first.actions || [])) {
       const b = el('button', 'big mm-act', a.txt); b.type = 'button';
       b.addEventListener('click', e => { e.stopPropagation(); closeCard(); try { a.fn && a.fn(); } catch (err) { console.error('[lanternfall] moment action', err); } });
       acts.append(b);
     }
-    const go = el('button', 'big forge mm-go', 'Continue'); go.type = 'button';
+    const go = el('button', 'big forge mm-go', (pk && pk.goTxt) || 'Continue'); go.type = 'button';
     acts.append(go); card.append(acts);
     ov.append(card);
     u.shownAt = Date.now();
     const tryClose = () => { if (Date.now() - u.shownAt >= MOMENT_TUNE.tapLockMs) closeCard(); };   // a fight tap must not skip the card
     ov.addEventListener('click', tryClose);
-    ov.addEventListener('keydown', ev => { if (ev.key === 'Escape') tryClose(); if (ev.key === 'Tab') { ev.preventDefault(); go.focus(); } });
+    ov.addEventListener('keydown', ev => { if (ev.key === 'Escape') tryClose(); if (ev.key === 'Tab') { ev.preventDefault(); const bs = [...card.querySelectorAll('button')], i = bs.indexOf(document.activeElement); (i < 0 ? go : bs[(i + (ev.shiftKey ? bs.length - 1 : 1)) % bs.length]).focus(); } });   // Tab stays on the card's buttons
     document.body.append(ov); u.ov = ov;
     go.focus({ preventScroll: true });
     emit('momentShow', { tier: 'big', kind: first.kind, n: list.length, zone: first.zone });

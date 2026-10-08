@@ -1100,6 +1100,10 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   first-clear caches of zones 1 to 3 and 7 to 9 each give a Deepwell lantern colour the save does not own yet (Ember Red
   first), print it as a certain look, and relight the stage. This is the cache's look, not an extra reward; a save that
   owns all six gets none. The Wardrobe tags each look Deed, Cache or (later) Store, and counts earned looks only.
+- **Captain spoils are a move pick, not a reward pick (boss-spoils-pick, Opus judge 2026-10-08;
+Cal can veto with "No move pick at Captains").** A zone boss's first clear in zones 6 to 10 that drops a Scroll lets you learn one of up to
+three moves it can teach now, or keep it; there is no pick when fewer than two can be learned. Caches still pay no materials and add
+nothing; no economy or save change. A cache with a pick is a big card.
 - **Moments.** Big moments (the first boss win, a Champion's first clear with its post scene in the card and the join
   when an unpicked starter is met there, a cache with a look or unique, a unique, a new hero, the first Star, a Great
   Lantern) and medium moments (the first and every 5th level, a new ability, a look, a Rare-or-better craft) sit
