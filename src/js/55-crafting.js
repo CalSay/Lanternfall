@@ -134,8 +134,20 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t));
+    // craft-delta: opts.wear (the Craft button only) puts on a tool that beats the worn one, or fills an empty slot. Gear always asks.
+    // Straight into S.equip, not equipItem (its "Equipped" toast would be a second toast for one craft; the result card is the receipt).
+    const ev = { item: it, kind, t }, d = CRAFT_KINDS[kind], pos = d && d.tool ? kindPos(kind) : null;
+    if (opts.wear && pos && pos in S.equip && fits(it, pos, 'hero')) {
+      const cur = equipped(pos);
+      if (!cur || itemPower(it) > itemPower(cur)) {
+        const fam = Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === kind), nt = fam ? Math.max(1, skillTopTier(skillOf(fam)) || 1) : 1;
+        const before = fam ? nodeTime(fam, nt) : 0;
+        S.equip[pos] = it.id; gearDirty();
+        ev.on = pos; ev.was = cur ? cur.id : null; ev.speed = [before, fam ? nodeTime(fam, nt) : 0];
+      }
+    }
     toast(`Made a ${RAR[r].n} ${itemName(it)}.`, 'good', { item: it }, 'low');   // craft-reveal: the result card (75-craft-ui) shows it; no bell line
-    emit('crafted', { item: it, kind, t });
+    emit('crafted', ev);
     save();
     return it;
   };

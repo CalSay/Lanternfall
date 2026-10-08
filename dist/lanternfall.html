@@ -13163,8 +13163,20 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t));
+    // craft-delta: opts.wear (the Craft button only) puts on a tool that beats the worn one, or fills an empty slot. Gear always asks.
+    // Straight into S.equip, not equipItem (its "Equipped" toast would be a second toast for one craft; the result card is the receipt).
+    const ev = { item: it, kind, t }, d = CRAFT_KINDS[kind], pos = d && d.tool ? kindPos(kind) : null;
+    if (opts.wear && pos && pos in S.equip && fits(it, pos, 'hero')) {
+      const cur = equipped(pos);
+      if (!cur || itemPower(it) > itemPower(cur)) {
+        const fam = Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === kind), nt = fam ? Math.max(1, skillTopTier(skillOf(fam)) || 1) : 1;
+        const before = fam ? nodeTime(fam, nt) : 0;
+        S.equip[pos] = it.id; gearDirty();
+        ev.on = pos; ev.was = cur ? cur.id : null; ev.speed = [before, fam ? nodeTime(fam, nt) : 0];
+      }
+    }
     toast(`Made a ${RAR[r].n} ${itemName(it)}.`, 'good', { item: it }, 'low');   // craft-reveal: the result card (75-craft-ui) shows it; no bell line
-    emit('crafted', { item: it, kind, t });
+    emit('crafted', ev);
     save();
     return it;
   };
@@ -13513,6 +13525,73 @@ function errorReport() {
   } catch (e) {
     return '';
   }
+}
+
+// ---- src/js/55-fight-delta.js ----
+// 55-fight-delta: what a crafted weapon or piece of armour changes against the boss at the furthest zone (craft-delta),
+// judged by the game's own turn fight, exactly as the boss-odds readout judges it (59m bossOdds).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Two sides of FIGHT_DELTA.fights scratch fights each, through turnCombatSample against bossOddsFoe(S.maxZone) with
+// bossOddsSkill(): "now" (the gear worn) and "with it" (the piece in its slot). Both sides draw the same seeds, so the
+// difference is the piece, not the dice. The gear swap goes through gearCalc({ [pos]: item }) into gsCache, and the piece
+// sits in S.equip[pos] (59-combat reads the helm's power from S.equip), both held only while a profile is made or a chunk runs
+// and put back at once, with no gearDirty and no 'gear' event (the step is synchronous, so nothing else sees them).
+//
+// Exposed names:
+//   FIGHT_DELTA (the tune table)
+//   fightDeltaJob(item) -> { zone, step() -> done, res } | null   one chunk of fights a step, so a card never waits
+//   fightDelta(item) -> { zone, kind, before, after } | null       every chunk now (checks)
+//   kind 'wins': wins in 10 (rounded); 'turns': hero turns a win, when both sides win at least turnsFrom (a share) of the fights;
+//   'hit': the average landed boss hit as a share (%) of max health, for head and body pieces. null: no turn fight, no hero
+//   fit, the piece is worn already, the rounded numbers are equal, the rounding points the other way from the raw counts, or
+//   (wins) the raw win shares differ by less than minStep (half a step in 10). No line is better than a line the fight would not show:
+//   40 fights a side was too noisy (a one-fight difference flipped a rounded "in 10" on save-z10-cantor's Warblade), so 80.
+const FIGHT_DELTA = { fights: 80, chunk: 10, turnsFrom: 0.9, minWins: 16, minStep: 0.05 };
+let fightDeltaJob, fightDelta;
+{
+  const ARMOUR = { helm: 1, body: 1 };
+  const withGear = (s, fn) => {
+    const keep = gsCache, had = s.pos ? S.equip[s.pos] : null;
+    gsCache = s.g; if (s.pos) S.equip[s.pos] = s.id;
+    try { return fn(); } finally { gsCache = keep; if (s.pos) S.equip[s.pos] = had; }
+  };
+  fightDeltaJob = it => {
+    if (!it || typeof bossOddsOn !== 'function' || !bossOddsOn()) return null;
+    if (typeof deepActive === 'function' && deepActive()) return null;   // a Deepwell run's boons would count (59m)
+    const d = CRAFT_KINDS[it.slot], pos = d && kindPos(it.slot);
+    if (!d || d.tool || !pos || !fits(it, pos, 'hero') || S.equip[pos] === it.id) return null;
+    const z = S.maxZone, skill = bossOddsSkill(), F = FIGHT_DELTA, chunks = Math.ceil(F.fights / F.chunk);
+    const side = (g, on) => {
+      const s = { g, pos: on ? pos : null, id: on ? it.id : null, p: null, k: 0, d: 0, turns: 0, won: 0, dmg: 0, hits: 0 };
+      s.p = withGear(s, () => { const u = typeof cbEstHero === 'function' ? cbEstHero() : null; return u ? turnMakeProfile(bossOddsFoe(z), u) : null; });
+      return s;
+    };
+    let sides;
+    try { sides = [side(gearCalc(), false), side(gearCalc({ [pos]: it }), true)]; } catch (e) { return null; }
+    if (!sides[0].p || !sides[1].p) return null;
+    const finish = () => {
+      const [a, b] = sides, kind = ARMOUR[pos] ? 'hit' : a.k >= F.turnsFrom * F.fights && b.k >= F.turnsFrom * F.fights ? 'turns' : 'wins';
+      let x0, x1;   // the raw numbers
+      if (kind === 'wins') { const n0 = Math.max(1, a.k + a.d), n1 = Math.max(1, b.k + b.d); if (Math.abs(b.k / n1 - a.k / n0) < F.minStep) return null; x0 = 10 * a.k / n0; x1 = 10 * b.k / n1; }
+      else if (kind === 'turns') { if (a.won < F.minWins || b.won < F.minWins) return null; x0 = a.turns / a.won; x1 = b.turns / b.won; }
+      else { if (!a.hits || !b.hits) return null; x0 = 100 * a.dmg / a.hits / a.p.heroMaxHp; x1 = 100 * b.dmg / b.hits / b.p.heroMaxHp; }
+      const before = Math.round(x0), after = Math.round(x1);
+      if (!Number.isFinite(before) || !Number.isFinite(after) || before === after || Math.sign(after - before) !== Math.sign(x1 - x0)) return null;
+      return { zone: z, kind, before, after };
+    };
+    let i = 0;
+    const job = { zone: z, done: false, res: null, step() {
+      if (job.done) return true;
+      const s = sides[i % 2], c = i >> 1;
+      const r = withGear(s, () => turnCombatSample({ profile: s.p, seconds: F.chunk * 600, seed: 1 + c * 7919 + z * 104729, skill, fights: F.chunk }));
+      if (r) { s.k += r.kills; s.d += r.deaths; s.turns += r.totalHeroTurns; s.won += r.completedFights; s.dmg += r.damageTaken; s.hits += r.foeHits; }
+      if (++i >= chunks * 2) { job.done = true; try { job.res = finish(); } catch (e) { job.res = null; } }
+      return job.done;
+    } };
+    return job;
+  };
+  fightDelta = it => { const j = fightDeltaJob(it); if (!j) return null; while (!j.step()); return j.res; };
 }
 
 // ---- src/js/55-gathering.js ----
@@ -14000,13 +14079,30 @@ var forgeGoalPicks = 0;
   registerGoal({
     id: 'forge', sys: 'forge',
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
-    label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t);
+    label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
       const k = Object.keys(b.cost).find(k => matOwn(k, b.t) < b.cost[k]);
       return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - matOwn(k, b.t))} more ${costName(k, b.t)}` : `Craft ${a} ${nm}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
     go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
+  });
+  // Upgrade (craft-delta): a worn piece whose next upgrade you can pay for now, offered only while no craft is ready
+  // (the craft goal is not Ready). Weapon first, then the slot order. Go opens the piece's sheet on Hero, Gear.
+  const upgradeNext = () => {
+    const f = forgeNext(); if (f && f.p >= 1) return null;
+    for (const pos of CRAFT_HERO_POS) {
+      const it = equipped(pos);
+      if (it && CRAFT_KINDS[it.slot] && craftKindVisible(it.slot) && canUpgrade(it.id).ok) return it;
+    }
+    return null;
+  };
+  registerGoal({
+    id: 'upgrade', sys: 'forge', prio: -0.5,
+    pct: () => upgradeNext() ? 1 : null,
+    label: () => { const it = upgradeNext(); return it ? `Upgrade your ${kindName(it.slot, it.t, it.u)} to +${it.plus + 1}` : ''; },
+    icon: () => { const it = upgradeNext(); return it ? { item: it } : null; },
+    go: () => { const it = upgradeNext(), id = it ? it.id : null; return { tab: 'party', view: 'gear', fn: () => { if (id != null && typeof craftUI === 'object' && craftUI) craftUI.openItem(id); } }; }
   });
 }
 
@@ -38300,6 +38396,7 @@ let craftUI = null;
   document.addEventListener('pointerdown', () => { touchAt = Date.now(); }, true);
   const busy = () => Date.now() - touchAt < 1200;
   const act = (fn) => { const r = safe(fn, false); if (r) { save(); ui(true); } return r; };
+  const upCount = () => (S.deeds && S.deeds.n && +S.deeds.n.up) || 0;
 
   // ---------------- lookups ----------------
   const STATION_KEYS = Object.keys(CRAFT_STATIONS);
@@ -38359,7 +38456,8 @@ let craftUI = null;
   }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false };
+  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
+    tool: {}, fd: {}, crafted: false };   // craft-delta: tool: id -> { on, speed } from the crafted event; fd: id -> { sig, job, res } the fight line
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
   };
@@ -38401,14 +38499,56 @@ let craftUI = null;
     return r;
   }
   const roleFor = k => st8.role[k] || 'striker';
+  // craft-delta: how many recipes you could make right now (a craft made with two or more on offer is a choice)
+  const affordable = () => { let n = 0; for (const s of STATION_KEYS) for (const k of listFor(s, 'you')) for (let t = 1; t <= 5 && n < 2; t++) if (skillTierOpen(skillOfSt(s), t) && safe(() => canDo(k, t).ok, false)) n++; return n; };
   function doCraft(k, t) {
     if (!canDo(k, t).ok) return;
-    const d = CRAFT_KINDS[k], opts = {};
+    const d = CRAFT_KINDS[k], opts = { wear: true };   // craft-delta: a better tool goes on by itself (55-crafting craftItem)
     if (d.role === 'any') opts.role = roleFor(k);
     const mw = mwFor(k); if (mw != null) opts.mw = mw;
-    const f = K6.craft();
+    const f = K6.craft(), choice = affordable() >= 2;
     const it = safe(() => (f ? f(k, t, opts) : forgeItem(k, t)), null);
-    if (it) { if (it.id != null) st8.fresh.add(it.id); save(); ui(true); }
+    if (it) {
+      if (choice) emit('choice', 'craft');
+      if (!st8.crafted) { st8.crafted = true; emit('firstUse', 'craft'); }   // the first craft this visit (the walk plays one fresh game)
+      if (it.id != null) st8.fresh.add(it.id); save(); ui(true);
+    }
+  }
+  // ---- the fight line (craft-delta): what the piece changes against the boss at your furthest zone (55-fight-delta) ----
+  // Sampled a chunk at a time after the card opens, so the card never waits; the line joins it when the sample is done, or is
+  // left out. Keyed by what the fight depends on now, so a card seen again after a gear change samples again.
+  const fdSig = () => [S.maxZone, S.L, JSON.stringify(S.equip), JSON.stringify(S.attr || null), JSON.stringify(S.stars || null), JSON.stringify(S.abil || null), JSON.stringify(S.turn || null)].join('|');   // what the fight reads
+  function fdStart(it) {
+    if (typeof fightDeltaJob !== 'function' || !it || it.id == null) return;
+    const sig = fdSig(), cur = st8.fd[it.id];
+    if (cur && cur.sig === sig) return;
+    const job = safe(() => fightDeltaJob(it), null), rec = st8.fd[it.id] = { sig, job, res: null };
+    if (!job) return;
+    const run = () => {
+      if (st8.fd[it.id] !== rec) return;
+      if (safe(() => job.step(), true)) { rec.res = job.res; rec.job = null; if (st8.result === it.id) ui(true); return; }
+      setTimeout(run, 30);
+    };
+    setTimeout(run, 30);
+  }
+  function fightLine(it) {
+    const f = st8.fd[it.id], r = f && f.sig === fdSig() ? f.res : null;
+    if (!r) return '';
+    if (r.kind === 'wins') return `Zone ${r.zone} boss: you'd win about ${r.after} in 10, not ${r.before} in 10.`;
+    if (r.kind === 'turns') return `Zone ${r.zone} boss: about ${r.after} turns a win, not ${r.before}.`;
+    return `Zone ${r.zone} boss: a hit takes about ${r.after}% of your health, not ${r.before}%.`;
+  }
+  // the tool line: "Copper Pickaxe on. Mining is 25% faster." (or why it went in the bag)
+  function toolLine(it) {
+    const tl = st8.tool[it.id], d = itemKind(it);
+    if (!d || !d.tool) return '';
+    if (tl && tl.on && wornBy(it.id)) {
+      const [a, b] = tl.speed || [0, 0], pct = a > 0 && b > 0 ? Math.round((a / b - 1) * 100) : 0, sk = CRAFT_NODES[Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === it.slot)];
+      const nm = sk && SKILL[sk.skill] ? SKILL[sk.skill] : 'Gathering';
+      return `${kindName(it.slot, it.t, it.u)} on.` + (pct > 0 ? ` ${nm} is ${pct}% faster.` : '');
+    }
+    if (tl && !tl.on && !wornBy(it.id)) { const cur = itemById(S.equip[d.pos]); if (cur && cur.id !== it.id) return `It is in your bag. Your ${itemName(cur)} is better.`; }
+    return '';
   }
 
   // ================= Stations =================
@@ -38518,8 +38658,10 @@ let craftUI = null;
       lines.append(r);
     }
     if (lines.children.length) left.append(lines);
-    const df = diffRows(it);
-    if (wr) right.append(el('p', 'note cf-cmpn', `You wear it (${posName(wr.pos)}).`));
+    const df = diffRows(it), tl = toolLine(it), fl = !wr ? fightLine(it) : '';
+    if (tl) right.append(el('p', 'note cf-cmpn cf-toolon', tl));
+    if (fl) right.append(el('p', 'note cf-cmpn cf-fight', fl));
+    if (wr) { if (!tl) right.append(el('p', 'note cf-cmpn', `You wear it (${posName(wr.pos)}).`)); }
     else if (df) {
       right.append(el('p', 'note cf-cmpn', `Against your ${itemName(df.cur)}:`));
       const rows = el('div', 'cf-dl');
@@ -38574,8 +38716,10 @@ let craftUI = null;
     const it = e && e.item; if (!it || it.id == null) return;
     st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
     st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null };
+    else fdStart(it);
     if ((it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
-      moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. It is in your bag.`, rarity: it.r, icon: { item: it } });
+      moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });
   });
   function recipeRow(k, t) {
     const d = CRAFT_KINDS[k], can = canDo(k, t);
@@ -38652,7 +38796,8 @@ let craftUI = null;
       // craft-reveal: the result card and the last-five strip
       if (st8.result != null && !itemById(st8.result)) st8.result = null;
       st8.recent = st8.recent.filter(id => itemById(id));
-      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos]]; })() : 0]);
+      { const it = st8.result != null ? itemById(st8.result) : null; if (it && !(itemKind(it) || {}).tool && !wornBy(it.id)) fdStart(it); }   // craft-delta: a card seen again after a gear change samples again
+      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos], fightLine(it)]; })() : 0]);
       if (resSig !== rec.resSig) {
         rec.resSig = resSig; rec.resBox.textContent = '';
         const rit = st8.result != null ? itemById(st8.result) : null;
@@ -39103,7 +39248,7 @@ let craftUI = null;
       const okMats = hasMats(c.mats, it.t) && S.gold >= c.gold && (!c.troph || (f && trophTotal() >= c.troph));
       const b = el('button', 'big forge cf-act', `Upgrade to +${it.plus + 1}`); b.type = 'button';
       b.disabled = !okMats || (!f && !heroPos);
-      b.addEventListener('click', () => { act(() => (f ? f(it.id) : upgradeEquipped(heroPos))); renderItem(); });
+      b.addEventListener('click', () => { const n0 = upCount(); if (act(() => (f ? f(it.id) : upgradeEquipped(heroPos))) && n0 === 0 && upCount() === 1) emit('firstUse', 'upgrade'); renderItem(); });   // craft-delta: the first upgrade ever (S.deeds.n.up)
       upBox.append(b);
       if (!f && !heroPos) upBox.append(el('p', 'note', 'Equip it to upgrade it.'));
       else if (c.troph && !f) upBox.append(el('p', 'note', 'Trophy upgrades open with the next crafting update.'));
@@ -40695,7 +40840,7 @@ let deedsUI = null;
     go.append(gq, gl);
     r.append(ic, body, go);
     const x = { r, im, lbl, fill, go, gq, gol: gl, goal: null, url: '' };
-    go.addEventListener('click', () => { const g = x.goal; if (!g) return; api.close(true); goTo(g); });
+    go.addEventListener('click', () => { const g = x.goal; if (!g) return; if (api.body.querySelectorAll('.nu-row:not([hidden])').length >= 2) emit('choice', 'nextup'); api.close(true); goTo(g); });   // craft-delta: a pick from two or more goals is a choice
     return x;
   }
   function openList() {

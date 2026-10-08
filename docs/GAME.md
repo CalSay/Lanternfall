@@ -152,6 +152,11 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   is [combat-turn-build.md](design/combat-turn-build.md) "Gear stats in turn fights"): Spell power is fire, frost and
   holy damage, Damage over time (the old Area) Burn and Bleed, Control boss Stagger, Counter (the old Threat) counter
   damage, Speed (the old Attack speed) how often you act, Focus a steady cooldown refund.
+  The result card after a craft (`craft-delta`): a tool that beats the worn one (or fills an empty slot) goes on by itself
+  and the card says how much faster you gather; gear always asks. A weapon, off-hand or charm the hero can wear gets one
+  line on how often you'd beat the boss at your furthest zone with it (or, when you win nearly every time, how many turns a
+  win takes); head and body pieces say how much of your health a boss hit takes. The line comes from 80 scratch turn
+  fights a side (`55-fight-delta.js`, as the boss-odds readout samples) and is left out when the numbers barely change.
 - **Uniques** (`UNIQ` in `20-data.js`): rare zone-boss drops with a strong effect and modest stats. The zone 1 unique (and every 7th zone after it) is Briar Sprig, a charm any hero can wear; the Sproutblade it replaced is retired (`retired: 1`): it no longer drops, old saves keep theirs, and the trophy wall, Codex and totals show it only to a player who found one (`uniqKeys()`). Each Hollow unique carries one flavour line naming the Champion and place it came from (`21ka-story-hollow-items.js`); it shows on the Codex tile and the item card once that area's Champion is in the game.
 - **Economy** (`55-econ.js`, `21w-data-econ.js`): gold per foe steps up by region; every price follows that curve.
   Gold-gain beyond gear became crit damage, capped.
@@ -167,7 +172,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   capped perks.
 - **Deeds** (`23-data-deeds.js`, `58-deeds.js`, `75-deeds-ui.js`): tracks, Feats, titles and looks drawn on the hero
   (`12g-art-accessories.js`, `64-looks.js`), and the Trophy Wall at camp (`63e-scenery-wall.js`).
-- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons.
+- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons. A weapon or armour craft goal names the boss it is for ("Craft a Pine Bow for the zone 2 boss"); when you can pay for an upgrade to a worn piece and no craft is ready, it offers "Upgrade your Pine Bow to +1", and Go opens the piece on Hero, Gear.
   **"Boss ready"** means you would usually win the zone boss. The game tries 30 scratch fights of that boss with your
   hero as they stand now, judged from your own Parry and Dodge record (a new player counts as casual), and says "Boss
   ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong", and Go opens
