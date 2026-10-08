@@ -118,12 +118,12 @@
       el: box, set(c, pend) {
         const done = c.max;
         putHidden(go, !!pend || done || !!c.need); putHidden(cancel, !pend);
-        if (pend) setTxt(cancel, isArmed('c:' + id) ? `Tap again: refund ${pend.start ? 'half' : 'all'} of the cost` : 'Cancel build');
+        if (pend) setTxt(cancel, isArmed('c:' + id) ? `Confirm: refund ${pend.start ? 'half' : 'all'} of the cost` : 'Cancel build');
         if (!pend && !done) {
           const verb = c.queue ? 'Queue' : 'Build', armd = isArmed('b:' + id);
           const target = id === 'tent' ? `Tent ${c.to}` : `${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to}`;
-          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Tap again' : verb); putAttr(go, 'aria-label', armd ? `Tap again to ${verb.toLowerCase()} ${target}` : `${verb} ${target}, ${dur(c.dur / 1000)}`); }
-          else setTxt(go, armd ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${target} · ${dur(c.dur / 1000)}`);
+          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Confirm' : verb); putAttr(go, 'aria-label', armd ? `Confirm: ${verb.toLowerCase()} ${target}` : `${verb} ${target}, ${dur(c.dur / 1000)}`); }
+          else setTxt(go, armd ? `Confirm: ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${target} · ${dur(c.dur / 1000)}`);
           putDisabled(go, !c.ok); putToggle(go, 'armed', armd);
         }
         const w = pend || done ? '' : c.ok ? (c.queue ? 'Your builder is busy. This starts when the current build ends.' : '') : (c.miss ? '' : c.why);

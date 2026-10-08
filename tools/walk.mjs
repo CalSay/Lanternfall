@@ -488,7 +488,7 @@ async function pressBuild(id) {
   const before = await X(lvq);
   const a = await click(`#camp-b-${id} button:text(Build)`, 300); await advance(400, 16);   // the first tap arms the button ("Sure?")
   if (a && (await X(lvq)) !== before) return true;
-  const b = a && await click(`#camp-b-${id} button:text(Sure|Tap again)`, 300); await advance(500, 16);
+  const b = a && await click(`#camp-b-${id} button:text(Sure|Confirm)`, 300); await advance(500, 16);
   return !!b;
 }
 async function buildStation(g) {

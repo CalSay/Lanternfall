@@ -114,7 +114,7 @@
     const cost = attrResetCost(k), short = S.gold < cost;
     putDisabled(resetBtn, !P.spent || short);
     if ((!P.spent || short) && armed) disarm();
-    const label = armed ? (cost ? `Tap again to pay ${fmt(cost)} gold and reset.` : 'Tap again to reset all points.') : cost ? `Reset points: ${fmt(cost)} gold` : 'Reset points (free)';
+    const label = armed ? (cost ? `Confirm: pay ${fmt(cost)} gold and reset.` : 'Confirm: reset all points.') : cost ? `Reset points: ${fmt(cost)} gold` : 'Reset points (free)';
     putText(resetBtn, label);
     putToggle(resetBtn, 'armed', armed);
     putAttr(resetBtn, 'aria-label', label);

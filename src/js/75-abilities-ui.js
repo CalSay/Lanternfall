@@ -239,7 +239,7 @@
       act.append(row);
     } else if (!i.why) {
       const pay = SCROLLS[i.payWith], b = btn('big ab-learn');
-      putText(b, armed === id ? `Tap again to spend a ${pay.name}` : `Learn · ${pay.name}`);
+      putText(b, armed === id ? `Confirm: spend a ${pay.name}` : `Learn · ${pay.name}`);
       if (armed === id) b.classList.add('armed');
       b.addEventListener('click', () => {
         if (armed !== id) { armed = id; redraw(); return; }

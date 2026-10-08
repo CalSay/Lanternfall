@@ -124,3 +124,14 @@
 .tv-time.flinch .tv-track { box-shadow: inset 0 0 0 1px #3A3046, 0 0 0 2px #FF9B8A; opacity: .6; }
 @keyframes tv-stall { 50% { opacity: .4; } }
 @media (prefers-reduced-motion: reduce) { .tv-time.stall .tv-head { animation: none !important; } }
+/* desktop-layout-v1 (desk playtest F03, F09, F04). Desktop text is bigger, so the turn line sits under the place line (62-stage sets
+   --vs-zb on the stage box), not on it; the whose-turn banner crosses the stage under the floating numbers ("Miss", damage), which
+   start higher; at 1920x1080 the timing bar moves to the stage's bottom-right corner, next to Parry and Dodge. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .tv-top { top: max(80px, calc(var(--vs-zb, 0px) + 2px)); }
+  .tv-turncard { top: 52%; }
+}
+@media (min-aspect-ratio: 1/1) and (min-width: 1600px) and (min-height: 900px) {
+  .tv-bot { justify-items: end; right: 56px; }
+  .tv-bot .tv-time { width: min(420px, 100%); }
+}

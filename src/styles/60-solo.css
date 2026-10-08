@@ -33,7 +33,7 @@
 .sb-tx { position: relative; z-index: 1; display: grid; justify-items: center; gap: 1px; max-width: 100%; padding: 0 3px; }
 .sb-lb { max-width: 100%; font: 600 calc(14px * var(--display-k, 1))/1 var(--display); letter-spacing: .01em; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
 .sb-sub { max-width: 100%; min-height: 1em; font: calc(11px * var(--display-k, 1))/1 var(--body, inherit); color: #8A8195; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sb-key { position: absolute; z-index: 3; top: 5px; left: 6px; font: 600 10px/1 var(--display); color: #8E80A0; }
+.sb-key { position: absolute; z-index: 3; top: 5px; left: 6px; font: 600 10px/1 var(--display); color: #8E80A0; }   /* tk:off */
 @media (hover: none) and (pointer: coarse) { .sb-key { display: none; } }
 /* the cooldown: a dark sweep, clockwise from the top, that leaves the tile as the slot comes back (--cd 1 -> 0) */
 .sb-ring { position: absolute; inset: 4px; z-index: 2; pointer-events: none;
@@ -180,3 +180,9 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
   font: 700 calc(16px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }
 /* Skills and Foe scroll inside the pane: the bottom edge fades to say there is more */
 .sb-p-sk, .sb-p-foe { -webkit-mask-image: linear-gradient(#000 calc(100% - 16px), transparent); mask-image: linear-gradient(#000 calc(100% - 16px), transparent); padding-bottom: 12px; box-sizing: border-box; }
+/* desktop-layout-v1 (desk playtest F08): on a desktop screen the Foe tab opens above the buttons (75-solo-ui setTab), not in their place */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .sb-pane.with-foe { height: auto; display: flex; flex-direction: column; gap: 6px; }
+  .sb-pane.with-foe > .sb-p-act { height: var(--sb-tile); flex: none; }
+  .sb-pane.with-foe > .sb-p-foe { order: -1; height: auto; max-height: min(240px, 34vh); }
+}

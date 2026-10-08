@@ -206,7 +206,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     card.append(el('p', 'note hd-line', named ? (a.ret ? 'They remember you. Hiring them again is free.' : legendAbout(a)) : handsLitFor(a)));
     const price = b.cost ? `Hire for ${gold(b.cost)}` : 'Hire for free';
     const k = 'hire:' + a.id, act = el('div', 'hd-act');
-    const hire = btn('mini go', isArmed(k) ? `Tap again: ${price}` : price);
+    const hire = btn('mini go', isArmed(k) ? `Confirm: ${price}` : price);
     hire.disabled = !b.can.ok;
     hire.addEventListener('click', () => {
       if (!isArmed(k)) { arm(k); return; }
@@ -218,7 +218,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     act.append(hire);
     if (!named) {
       const k2 = 'away:' + a.id;
-      const away = btn('mini', isArmed(k2) ? 'Tap again: send them off' : 'Turn away');
+      const away = btn('mini', isArmed(k2) ? 'Confirm: send them off' : 'Turn away');
       away.addEventListener('click', () => {
         if (!isArmed(k2)) { arm(k2); return; }
         armed = null; handsTurnAway(b.i); say(`${a.n} leaves the Tavern.`); ui(true);
@@ -311,7 +311,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     }
     if (x.job) {
       const k = 'recall:' + x.id, tradeRun = x.job.role === 'trade';
-      const recall = btn('mini warn', isArmed(k) ? (tradeRun ? 'Tap again: recall trade' : 'Tap again: recall') : 'Recall');
+      const recall = btn('mini warn', isArmed(k) ? (tradeRun ? 'Confirm: recall trade' : 'Confirm: recall') : 'Recall');
       recall.addEventListener('click', () => {
         if (!isArmed(k)) { arm(k); return; }
         armed = null;
@@ -327,7 +327,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
         : 'Recall brings home the haul so far. This shift is paid; later shifts are refunded.'));
     }
     if (x.pack.length) {
-      const k = 'empty:' + x.id, empty = btn('mini warn', isArmed(k) ? `Tap again: throw away ${packText(x)}` : 'Empty pack');
+      const k = 'empty:' + x.id, empty = btn('mini warn', isArmed(k) ? `Confirm: throw away ${packText(x)}` : 'Empty pack');
       empty.addEventListener('click', () => {
         if (!isArmed(k)) { arm(k); return; }
         armed = null;
@@ -337,7 +337,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       act.append(empty);
     }
     const kg = 'go:' + x.id;
-    const go = btn('mini warn', isArmed(kg) ? (x.key ? 'Tap again: back to the Tavern' : 'Tap again: they leave for good') : 'Let go');
+    const go = btn('mini warn', isArmed(kg) ? (x.key ? 'Confirm: back to the Tavern' : 'Confirm: they leave for good') : 'Let go');
     go.disabled = busy;
     go.addEventListener('click', () => {
       if (!isArmed(kg)) { arm(kg); return; }
