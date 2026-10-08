@@ -151,8 +151,9 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
       card.append(ul);
     }
     // boss-spoils-pick: a compact row of choices; a pick closes the card first, then runs
-    const pk = list.find(x => x.picks && x.picks.length);
-    u.onKeep = pk && pk.onKeep || null;
+    const pk = list.find(x => x.picks && x.picks.length), keeps = list.filter(x => x.picks && x.picks.length && x !== pk && x.onKeep).map(x => x.onKeep);   // a second pick folded in keeps its Scroll
+    const keepRest = () => { for (const f of keeps) try { f(); } catch (e) { console.error('[lanternfall] moment keep', e); } };
+    u.onKeep = pk ? () => { if (pk.onKeep) pk.onKeep(); keepRest(); } : null;
     if (pk) {
       card.classList.add('has-pick');
       const box = el('div', 'mm-picks');
@@ -161,7 +162,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
       for (const p of pk.picks) {
         const b = el('button', 'mm-pick'); b.type = 'button';
         b.append(el('b', null, p.txt)); if (p.sub) b.append(el('small', null, p.sub));
-        b.addEventListener('click', e => { e.stopPropagation(); if (Date.now() - u.shownAt < MOMENT_TUNE.tapLockMs) return; u.onKeep = null; closeCard(); try { p.fn && p.fn(); } catch (err) { console.error('[lanternfall] moment pick', err); } });
+        b.addEventListener('click', e => { e.stopPropagation(); if (Date.now() - u.shownAt < MOMENT_TUNE.tapLockMs) return; u.onKeep = keeps.length ? keepRest : null; closeCard(); try { p.fn && p.fn(); } catch (err) { console.error('[lanternfall] moment pick', err); } });
         row.append(b);
       }
       box.append(row); card.append(box);

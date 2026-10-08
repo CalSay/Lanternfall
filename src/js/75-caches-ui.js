@@ -25,6 +25,7 @@ function spoilsPicks(v, sp) {
     if (free >= 0) soloEquip(free, id);
     else { if (typeof abilityOpenDetail === 'function') abilityOpenDetail(id); setTab('abilities', '#sec-abilities'); }   // all slots full: Abilities, on the move, has "Swap it in for:"
     try { save(); } catch (e) {}
+    try { ui(true); } catch (e) {}   // the fight bar shows the slotted move now
     done(id);
   };
   return { pickHead: 'Learn one now:', goTxt: 'Keep the Scroll', onKeep: () => done('keep'),
