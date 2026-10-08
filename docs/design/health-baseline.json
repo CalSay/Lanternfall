@@ -20,13 +20,13 @@
       }
     },
     "casual.longestDrySec": {
-      "value": 195.6,
+      "value": 203.07,
       "bad": "up",
       "abs": 140,
       "rel": 0.3,
       "note": "longest active stretch without a reward",
       "perHero": {
-        "wren": 255,
+        "wren": 277.4,
         "tobin": 181.2,
         "pip": 150.6
       }
@@ -38,31 +38,31 @@
       "rel": 0,
       "note": "share of 5-minute visits that gave something",
       "perHero": {
-        "wren": 0.98,
+        "wren": 0.96,
         "tobin": 1,
         "pip": 1
       }
     },
     "casual.zoneEnd": {
-      "value": 12.33,
+      "value": 13.07,
       "bad": "both",
       "abs": 2,
       "rel": 0,
       "note": "zone after 3 days of 3 short visits",
       "perHero": {
-        "wren": 12.4,
+        "wren": 14.2,
         "tobin": 10.4,
-        "pip": 14.2
+        "pip": 14.6
       }
     },
     "casual.mechanicsPerHour": {
-      "value": 32.18,
+      "value": 32.36,
       "bad": "both",
       "abs": 4,
       "rel": 0.2,
       "note": "new unlocks and camp builds per active hour",
       "perHero": {
-        "wren": 31.73,
+        "wren": 32.27,
         "tobin": 30.94,
         "pip": 33.87
       }
@@ -92,27 +92,27 @@
       }
     },
     "active.longestDrySec": {
-      "value": 261.73,
+      "value": 266.13,
       "bad": "up",
       "abs": 130,
       "rel": 0.3,
       "note": "longest active stretch without a reward",
       "perHero": {
-        "wren": 245.8,
+        "wren": 245.6,
         "tobin": 259.6,
-        "pip": 279.8
+        "pip": 293.2
       }
     },
     "active.zoneEnd": {
-      "value": 16.33,
+      "value": 16.2,
       "bad": "both",
       "abs": 1.8,
       "rel": 0,
       "note": "zone after one 60-minute session",
       "perHero": {
-        "wren": 18.2,
+        "wren": 17.4,
         "tobin": 13,
-        "pip": 17.8
+        "pip": 18.2
       }
     },
     "active.stallCount": {
@@ -122,45 +122,45 @@
       "rel": 0,
       "note": "stalls (10 active minutes without a new zone)",
       "perHero": {
-        "wren": 0.6,
+        "wren": 0.8,
         "tobin": 1.6,
-        "pip": 0.8
+        "pip": 0.6
       }
     },
     "active.longestStallSec": {
-      "value": 785.33,
+      "value": 771.07,
       "bad": "up",
       "abs": 550,
       "rel": 0.3,
       "note": "longest stretch without a new zone",
       "perHero": {
-        "wren": 613.8,
+        "wren": 638.4,
         "tobin": 1007,
-        "pip": 735.2
+        "pip": 667.8
       }
     },
     "active.wipesPerHour": {
-      "value": 17.47,
+      "value": 17.87,
       "bad": "up",
       "abs": 10,
       "rel": 0.35,
       "note": "times the hero fell, per hour",
       "perHero": {
-        "wren": 25.6,
+        "wren": 26.4,
         "tobin": 2.2,
-        "pip": 24.6
+        "pip": 25
       }
     },
     "active.goldSpentShare": {
-      "value": 0.92,
+      "value": 0.93,
       "bad": "down",
       "abs": 0.16,
       "rel": 0,
       "note": "share of gold earned that was spent",
       "perHero": {
-        "wren": 0.96,
+        "wren": 0.98,
         "tobin": 0.95,
-        "pip": 0.85
+        "pip": 0.86
       }
     },
     "active.abilityTopShare": {
@@ -172,19 +172,19 @@
       "perHero": {
         "wren": 0.53,
         "tobin": 0.5,
-        "pip": 0.51
+        "pip": 0.5
       }
     },
     "active.mechanicsPerHour": {
-      "value": 24.6,
+      "value": 24.53,
       "bad": "both",
       "abs": 6,
       "rel": 0.2,
       "note": "new unlocks and camp builds per active hour",
       "perHero": {
-        "wren": 24.8,
+        "wren": 24.4,
         "tobin": 23.8,
-        "pip": 25.2
+        "pip": 25.4
       }
     },
     "active.mechanicsBurst10min": {
@@ -200,19 +200,19 @@
       }
     },
     "active.heroParity": {
-      "value": 0.27,
+      "value": 0.25,
       "bad": "up",
       "abs": 0.15,
       "rel": 0,
       "note": "widest gap of a starter from the median zone (share)",
       "perHero": {
-        "wren": 18.2,
+        "wren": 17.4,
         "tobin": 13,
-        "pip": 17.8
+        "pip": 18.2
       }
     },
     "optimiser.zoneEnd": {
-      "value": 24.67,
+      "value": 24.6,
       "bad": "both",
       "abs": 2,
       "rel": 0,
@@ -220,23 +220,23 @@
       "perHero": {
         "wren": 25,
         "tobin": 24.8,
-        "pip": 24.2
+        "pip": 24
       }
     },
     "optimiser.zoneAt1h": {
-      "value": 16.33,
+      "value": 16.47,
       "bad": "both",
       "abs": 1.8,
       "rel": 0,
       "note": "zone after the first hour",
       "perHero": {
-        "wren": 17.2,
+        "wren": 17.4,
         "tobin": 13.6,
-        "pip": 18.2
+        "pip": 18.4
       }
     },
     "optimiser.zonePerHour": {
-      "value": 2.47,
+      "value": 2.46,
       "bad": "both",
       "abs": 0.2,
       "rel": 0,
@@ -244,91 +244,91 @@
       "perHero": {
         "wren": 2.5,
         "tobin": 2.48,
-        "pip": 2.42
+        "pip": 2.4
       }
     },
     "optimiser.longestDrySec": {
-      "value": 929.47,
+      "value": 891.33,
       "bad": "up",
       "abs": 900,
       "rel": 0.3,
       "note": "longest active stretch without a reward",
       "perHero": {
-        "wren": 870.6,
-        "tobin": 896.2,
-        "pip": 1021.6
+        "wren": 746.8,
+        "tobin": 975,
+        "pip": 952.2
       }
     },
     "optimiser.stallCount": {
-      "value": 7.2,
+      "value": 7.73,
       "bad": "up",
       "abs": 2.1,
       "rel": 0,
       "note": "stalls (10 active minutes without a new zone)",
       "perHero": {
-        "wren": 7,
-        "tobin": 8.2,
-        "pip": 6.4
+        "wren": 7.2,
+        "tobin": 9.4,
+        "pip": 6.6
       }
     },
     "optimiser.longestStallSec": {
-      "value": 12568.2,
+      "value": 11940.87,
       "bad": "up",
       "abs": 5700,
       "rel": 0.3,
       "note": "longest stretch without a new zone",
       "perHero": {
-        "wren": 12490.8,
-        "tobin": 11799.6,
-        "pip": 13414.2
+        "wren": 12393.8,
+        "tobin": 10398.6,
+        "pip": 13030.2
       }
     },
     "optimiser.wipesPerHour": {
-      "value": 51.28,
+      "value": 52.97,
       "bad": "up",
       "abs": 8,
       "rel": 0,
       "note": "times the hero fell, per hour",
       "perHero": {
-        "wren": 71,
-        "tobin": 14.86,
-        "pip": 67.98
+        "wren": 74.28,
+        "tobin": 11.64,
+        "pip": 73
       }
     },
     "optimiser.goldSpentShare": {
-      "value": 0.96,
+      "value": 0.94,
       "bad": "down",
       "abs": 0.1,
       "rel": 0,
       "note": "share of gold earned that was spent (a sink gap if it falls)",
       "perHero": {
         "wren": 0.95,
-        "tobin": 0.98,
-        "pip": 0.95
+        "tobin": 0.96,
+        "pip": 0.92
       }
     },
     "optimiser.essHeldShare": {
-      "value": 0.37,
+      "value": 0.43,
       "bad": "up",
       "abs": 0.18,
       "rel": 0,
       "note": "essence made but still unspent at the end",
       "perHero": {
-        "wren": 0.43,
-        "tobin": 0.48,
-        "pip": 0.21
+        "wren": 0.57,
+        "tobin": 0.49,
+        "pip": 0.24
       }
     },
     "optimiser.deadFamilies": {
-      "value": 1.8,
+      "value": 1.67,
       "bad": "up",
       "abs": 1,
       "rel": 0,
       "note": "dead stock: material families with 90% or more of what was gathered still unspent",
       "perHero": {
-        "wren": 1.2,
-        "tobin": 1.8,
-        "pip": 2.4
+        "wren": 1.4,
+        "tobin": 1.6,
+        "pip": 2
       }
     },
     "optimiser.abilityTopShare": {
@@ -356,7 +356,7 @@
       }
     },
     "optimiser.gearTierMean": {
-      "value": 2.49,
+      "value": 2.51,
       "bad": "both",
       "abs": 0.75,
       "rel": 0,
@@ -364,19 +364,19 @@
       "perHero": {
         "wren": 2.4,
         "tobin": 2.4,
-        "pip": 2.68
+        "pip": 2.72
       }
     },
     "optimiser.mechanicsPerHour": {
-      "value": 2.81,
+      "value": 2.79,
       "bad": "both",
       "abs": 2,
       "rel": 0.2,
       "note": "new unlocks and camp builds per active hour",
       "perHero": {
-        "wren": 2.64,
-        "tobin": 2.68,
-        "pip": 3.12
+        "wren": 2.66,
+        "tobin": 2.64,
+        "pip": 3.06
       }
     },
     "optimiser.mechanicsBurst10min": {
@@ -392,7 +392,7 @@
       }
     },
     "optimiser.heroParity": {
-      "value": 0.02,
+      "value": 0.03,
       "bad": "up",
       "abs": 0.15,
       "rel": 0,
@@ -400,7 +400,7 @@
       "perHero": {
         "wren": 25,
         "tobin": 24.8,
-        "pip": 24.2
+        "pip": 24
       }
     }
   },
@@ -427,7 +427,7 @@
     "cells": {
       "z1-normal|wren|casual": {
         "value": 1,
-        "sd": 0.002
+        "sd": 0
       },
       "z1-normal|tobin|casual": {
         "value": 1,
@@ -2158,20 +2158,20 @@
         "sd": 0
       },
       "z20-elite|wren|casual": {
-        "value": 0.9,
-        "sd": 0.021
+        "value": 0.98,
+        "sd": 0.01
       },
       "z20-elite|tobin|casual": {
         "value": 1,
         "sd": 0
       },
       "z20-elite|pip|casual": {
-        "value": 0.98,
-        "sd": 0.013
+        "value": 1,
+        "sd": 0
       },
       "z20-elite|mean|casual": {
-        "value": 0.96,
-        "sd": 0.007
+        "value": 0.99,
+        "sd": 0.005
       },
       "z20-elite|wren|good": {
         "value": 1,
@@ -2562,20 +2562,20 @@
         "sd": 0.006
       },
       "z30-elite|wren|casual": {
-        "value": 0.86,
-        "sd": 0.024
+        "value": 0.98,
+        "sd": 0.01
       },
       "z30-elite|tobin|casual": {
         "value": 1,
         "sd": 0
       },
       "z30-elite|pip|casual": {
-        "value": 0.79,
-        "sd": 0.026
+        "value": 0.96,
+        "sd": 0.011
       },
       "z30-elite|mean|casual": {
-        "value": 0.88,
-        "sd": 0.012
+        "value": 0.98,
+        "sd": 0.008
       },
       "z30-elite|wren|good": {
         "value": 1,
@@ -2810,8 +2810,8 @@
         "sd": 0
       },
       "z38-elite|wren|casual": {
-        "value": 0.86,
-        "sd": 0.03
+        "value": 1,
+        "sd": 0.004
       },
       "z38-elite|tobin|casual": {
         "value": 1,
@@ -2819,11 +2819,11 @@
       },
       "z38-elite|pip|casual": {
         "value": 1,
-        "sd": 0.004
+        "sd": 0
       },
       "z38-elite|mean|casual": {
-        "value": 0.95,
-        "sd": 0.011
+        "value": 1,
+        "sd": 0.001
       },
       "z38-elite|wren|good": {
         "value": 1,
@@ -2904,6 +2904,166 @@
       "z38-boss-behind|mean|good": {
         "value": 0.97,
         "sd": 0.007
+      },
+      "z20-normal-bot|wren|casual": {
+        "value": 0.24,
+        "sd": 0.029
+      },
+      "z20-normal-bot|tobin|casual": {
+        "value": 0.99,
+        "sd": 0.007
+      },
+      "z20-normal-bot|pip|casual": {
+        "value": 0.21,
+        "sd": 0.026
+      },
+      "z20-normal-bot|mean|casual": {
+        "value": 0.48,
+        "sd": 0.013
+      },
+      "z20-normal-bot|wren|good": {
+        "value": 0.88,
+        "sd": 0.02
+      },
+      "z20-normal-bot|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z20-normal-bot|pip|good": {
+        "value": 0.91,
+        "sd": 0.021
+      },
+      "z20-normal-bot|mean|good": {
+        "value": 0.93,
+        "sd": 0.011
+      },
+      "z21-normal-bot|wren|casual": {
+        "value": 0.07,
+        "sd": 0.021
+      },
+      "z21-normal-bot|tobin|casual": {
+        "value": 0.91,
+        "sd": 0.021
+      },
+      "z21-normal-bot|pip|casual": {
+        "value": 0.04,
+        "sd": 0.014
+      },
+      "z21-normal-bot|mean|casual": {
+        "value": 0.34,
+        "sd": 0.01
+      },
+      "z21-normal-bot|wren|good": {
+        "value": 0.91,
+        "sd": 0.018
+      },
+      "z21-normal-bot|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z21-normal-bot|pip|good": {
+        "value": 0.91,
+        "sd": 0.019
+      },
+      "z21-normal-bot|mean|good": {
+        "value": 0.94,
+        "sd": 0.008
+      },
+      "z22-normal-bot|wren|casual": {
+        "value": 0.02,
+        "sd": 0.012
+      },
+      "z22-normal-bot|tobin|casual": {
+        "value": 0.47,
+        "sd": 0.042
+      },
+      "z22-normal-bot|pip|casual": {
+        "value": 0.02,
+        "sd": 0.008
+      },
+      "z22-normal-bot|mean|casual": {
+        "value": 0.17,
+        "sd": 0.013
+      },
+      "z22-normal-bot|wren|good": {
+        "value": 0.77,
+        "sd": 0.027
+      },
+      "z22-normal-bot|tobin|good": {
+        "value": 1,
+        "sd": 0.004
+      },
+      "z22-normal-bot|pip|good": {
+        "value": 0.78,
+        "sd": 0.027
+      },
+      "z22-normal-bot|mean|good": {
+        "value": 0.85,
+        "sd": 0.013
+      },
+      "z23-normal-bot|wren|casual": {
+        "value": 0,
+        "sd": 0.005
+      },
+      "z23-normal-bot|tobin|casual": {
+        "value": 0.34,
+        "sd": 0.031
+      },
+      "z23-normal-bot|pip|casual": {
+        "value": 0,
+        "sd": 0
+      },
+      "z23-normal-bot|mean|casual": {
+        "value": 0.11,
+        "sd": 0.01
+      },
+      "z23-normal-bot|wren|good": {
+        "value": 0.63,
+        "sd": 0.066
+      },
+      "z23-normal-bot|tobin|good": {
+        "value": 1,
+        "sd": 0
+      },
+      "z23-normal-bot|pip|good": {
+        "value": 0.52,
+        "sd": 0.033
+      },
+      "z23-normal-bot|mean|good": {
+        "value": 0.72,
+        "sd": 0.029
+      },
+      "z24-normal-bot|wren|casual": {
+        "value": 0,
+        "sd": 0
+      },
+      "z24-normal-bot|tobin|casual": {
+        "value": 0.02,
+        "sd": 0.01
+      },
+      "z24-normal-bot|pip|casual": {
+        "value": 0,
+        "sd": 0
+      },
+      "z24-normal-bot|mean|casual": {
+        "value": 0.01,
+        "sd": 0.003
+      },
+      "z24-normal-bot|wren|good": {
+        "value": 0.39,
+        "sd": 0.037
+      },
+      "z24-normal-bot|tobin|good": {
+        "value": 0.98,
+        "sd": 0.011
+      },
+      "z24-normal-bot|pip|good": {
+        "value": 0.36,
+        "sd": 0.031
+      },
+      "z24-normal-bot|mean|good": {
+        "value": 0.57,
+        "sd": 0.017
       },
       "z25-boss-joined|wren|casual": {
         "value": 0.82,
