@@ -1,0 +1,314 @@
+{
+  "count": 21,
+  "families": {
+    "coal": 1,
+    "ingot": 5,
+    "plank": 5,
+    "cloth": 5,
+    "leather": 5
+  },
+  "framesInBounds": true,
+  "allNonempty": true,
+  "transparentPNGDelivery": true,
+  "browser": {
+    "count": 21,
+    "canvases": 63,
+    "errors": [],
+    "overflow": false
+  },
+  "manualReviewSizes": [
+    16,
+    22,
+    24,
+    64
+  ],
+  "icons": [
+    {
+      "name": "Coal",
+      "family": "coal",
+      "grade": 1,
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 383,
+        "h": 349
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Copper Ingot",
+      "family": "ingot",
+      "grade": 1,
+      "frame": {
+        "x": 74,
+        "y": 120,
+        "w": 394,
+        "h": 330
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Iron Ingot",
+      "family": "ingot",
+      "grade": 2,
+      "frame": {
+        "x": 558,
+        "y": 120,
+        "w": 394,
+        "h": 330
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Silver Ingot",
+      "family": "ingot",
+      "grade": 3,
+      "frame": {
+        "x": 74,
+        "y": 584,
+        "w": 394,
+        "h": 334
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Cobalt Ingot",
+      "family": "ingot",
+      "grade": 4,
+      "frame": {
+        "x": 558,
+        "y": 584,
+        "w": 394,
+        "h": 334
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Mithril Ingot",
+      "family": "ingot",
+      "grade": 5,
+      "frame": {
+        "x": 74,
+        "y": 1052,
+        "w": 394,
+        "h": 329
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Pine Plank",
+      "family": "plank",
+      "grade": 1,
+      "frame": {
+        "x": 63,
+        "y": 85,
+        "w": 409,
+        "h": 374
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Birch Plank",
+      "family": "plank",
+      "grade": 2,
+      "frame": {
+        "x": 564,
+        "y": 85,
+        "w": 408,
+        "h": 374
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Oak Plank",
+      "family": "plank",
+      "grade": 3,
+      "frame": {
+        "x": 63,
+        "y": 561,
+        "w": 411,
+        "h": 378
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Mangrove Plank",
+      "family": "plank",
+      "grade": 4,
+      "frame": {
+        "x": 564,
+        "y": 561,
+        "w": 408,
+        "h": 378
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Tideash Plank",
+      "family": "plank",
+      "grade": 5,
+      "frame": {
+        "x": 63,
+        "y": 1040,
+        "w": 411,
+        "h": 380
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Hemp Cloth",
+      "family": "cloth",
+      "grade": 1,
+      "frame": {
+        "x": 36,
+        "y": 85,
+        "w": 439,
+        "h": 369
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Linen",
+      "family": "cloth",
+      "grade": 2,
+      "frame": {
+        "x": 551,
+        "y": 85,
+        "w": 436,
+        "h": 374
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Briar Cloth",
+      "family": "cloth",
+      "grade": 3,
+      "frame": {
+        "x": 39,
+        "y": 567,
+        "w": 436,
+        "h": 378
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Kelp Cloth",
+      "family": "cloth",
+      "grade": 4,
+      "frame": {
+        "x": 551,
+        "y": 567,
+        "w": 436,
+        "h": 381
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Stormgrass Cloth",
+      "family": "cloth",
+      "grade": 5,
+      "frame": {
+        "x": 39,
+        "y": 1052,
+        "w": 443,
+        "h": 383
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Bristle Leather",
+      "family": "leather",
+      "grade": 1,
+      "frame": {
+        "x": 36,
+        "y": 50,
+        "w": 451,
+        "h": 435
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Duskfang Leather",
+      "family": "leather",
+      "grade": 2,
+      "frame": {
+        "x": 537,
+        "y": 47,
+        "w": 457,
+        "h": 440
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Fenscale Leather",
+      "family": "leather",
+      "grade": 3,
+      "frame": {
+        "x": 26,
+        "y": 538,
+        "w": 467,
+        "h": 447
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Riptide Leather",
+      "family": "leather",
+      "grade": 4,
+      "frame": {
+        "x": 537,
+        "y": 533,
+        "w": 465,
+        "h": 452
+      },
+      "alpha": "binary",
+      "nonempty": true
+    },
+    {
+      "name": "Kelpie Leather",
+      "family": "leather",
+      "grade": 5,
+      "frame": {
+        "x": 30,
+        "y": 1038,
+        "w": 466,
+        "h": 455
+      },
+      "alpha": "binary",
+      "nonempty": true
+    }
+  ],
+  "sha256": {
+    "cloth.png": "a70687221f28c6530729ba36daa80bb36bc722b43b4577c998db425a3890e85f",
+    "coal.png": "f3e234888e6ee5f02f86dca1735a1f68354fc6a5532358bc36a441b058008c27",
+    "ingot.png": "0dcaf8fae82dc973bbd00aa33b5bd9480610de2106652835d0854fb55bfb5341",
+    "leather.png": "013e175648f59af144f551eff1778b81bf7f4b872bec573fe7ec65e42e1ae514",
+    "plank.png": "87ca04c5588971f1e33b3d042285b7ca6daf3828612ebfa29501b39c814b4447",
+    "preview-desktop.png": "908e178ff03c6d218fc375f51d312ed2986a1823b5aea65258151d85605fc699",
+    "preview-mobile.png": "295a9ad10f03e7d22165068d75f3d072d3706285e7436482fce406ceca89c55f",
+    "raw-refined-review.png": "f29eb0fa033395a6368a04c5c2295275ada9eec74f7976a70e82ece46d5c4759",
+    "sources/cloth-generated.png": "ab87a81c725e4b6927a3f3a47559b124c45f4043e7c113880b5d8d737b5b130b",
+    "sources/ingots-generated.png": "e6aec0aef2a6cb59b0117c8c48185443c1c382d0dd6b649930457cb15f9b7ca1",
+    "sources/leather-generated.png": "3d0a357a03d18e21102262caec9c5ac5d92de0b1a31feb60330d8295a3fff996",
+    "sources/planks-generated.png": "1c8d71e488a3475f04aef4427c9b48af20409d4c0ed4bf29d17a61130829221c"
+  }
+}

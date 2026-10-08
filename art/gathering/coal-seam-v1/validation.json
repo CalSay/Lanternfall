@@ -1,0 +1,118 @@
+{
+  "frames": [
+    {
+      "name": "idle",
+      "bbox": [
+        6,
+        23,
+        54,
+        48
+      ],
+      "anchor": {
+        "x": 30,
+        "y": 48
+      },
+      "edgeTouch": false,
+      "floorY": 48
+    },
+    {
+      "name": "struck-1",
+      "bbox": [
+        6,
+        20,
+        54,
+        48
+      ],
+      "anchor": {
+        "x": 30,
+        "y": 48
+      },
+      "edgeTouch": false,
+      "floorY": 48
+    },
+    {
+      "name": "struck-2",
+      "bbox": [
+        3,
+        23,
+        54,
+        48
+      ],
+      "anchor": {
+        "x": 30,
+        "y": 48
+      },
+      "edgeTouch": false,
+      "floorY": 48
+    },
+    {
+      "name": "worked-out",
+      "bbox": [
+        6,
+        23,
+        54,
+        48
+      ],
+      "anchor": {
+        "x": 30,
+        "y": 48
+      },
+      "edgeTouch": false,
+      "floorY": 48
+    }
+  ],
+  "sharedOpaqueColorCount": 16,
+  "sharedPalette": true,
+  "alpha": "binary",
+  "emptyFrames": [],
+  "outputEdgeTouch": [],
+  "baselineDriftPixels": 0,
+  "sceneSize": [
+    448,
+    224
+  ],
+  "sceneMaxColors": 48,
+  "viewportSizes": [
+    [
+      360,
+      740
+    ],
+    [
+      740,
+      360
+    ]
+  ],
+  "skillProcessor": {
+    "strictQC": true,
+    "qcSummary": {
+      "frame_count": 4,
+      "valid_frame_count": 4,
+      "empty_count": 0,
+      "edge_touch_count": 0,
+      "paste_clamped_count": 0,
+      "body_scale_mean": 0.4346273589898825,
+      "output_subject_height_mean": 26.75,
+      "body_scale_cv": 0.0006048043465528104,
+      "anchor_x_std": 0.011542341811343487,
+      "anchor_y_std": 0.011192573877666421,
+      "anchor_y_mean": 0.5856219709208401
+    },
+    "deliveryNote": "Skill processor validated the raw sequence. Final native atlas preserves fixed 60x60 source cells, shared 16-colour palette and explicit (30,48) contact anchor."
+  },
+  "sha256": {
+    "coal-quarry-source.png": "02ac1814600b262fc790c16e5632504df49b51aa71cac7fad475db0063b6b7d5",
+    "coal-quarry.png": "06be63fef7cdfb846a349151d0584ef2675dc6242cf3fb635afac5ad31475c5d",
+    "coal-seam-source-clean.png": "27d7085c9488ae61a4da8961d95352a50825ef1836781244b0e5a27fe1f87579",
+    "coal-seam-source.png": "0e0c0ae93e04bb36ff06d1e750e161f4aed272b1c39e78f5e444d7eebcf2d02b",
+    "coal-seam.png": "75705626e64414119bfc5a016119b1d5b8441b2b5ff5c569450d066fb7d9ff66",
+    "copper-vein-live-reference.png": "9650dae68cc9f4e3adb2479618748059441ed618046e2e36a39fc532d8564d78",
+    "copper-vein-reference.png": "8ad318b7925b3c66c02173b910463368a2050ee0b121492fda935d59a11aaa1b",
+    "idle.png": "bc500c2dcc32511c1edfa58ccd4b837fb7375b2dc5060a025cd3ab8b032233f2",
+    "node-review.png": "7170c13a5c1d703cc01f3031878d0b655f12f8daf9cbdc9e5db09532d0152969",
+    "scene-review-landscape.png": "6fe97195b79070ed42f94363fd1867836270998c7ae9a4d312fe76df9971a6a2",
+    "scene-review-portrait.png": "7b7cbaa2239f8f74f6e1b5b6c9bea6ce0ad232697fea7d785e50051536067348",
+    "struck-1.png": "6339994f151b17e31f54006aa006ab1d9aab356c5a74867adf0cea0f4c337fdf",
+    "struck-2.png": "f2d19ec67d0a955a7e715bfdda975d01bdab62bddce351dbba282de0fe57f6d1",
+    "worked-out.png": "00772209eb361f9dd3fdba9faa5f1c71a4196f08b7e0a5b5abd93ba9c3090e19"
+  }
+}
