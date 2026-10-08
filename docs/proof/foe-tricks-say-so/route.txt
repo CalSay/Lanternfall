@@ -1,0 +1,384 @@
+# Proof for card foe-tricks-say-so, seed 1, at 1280x720, 740x360 and 360x740. CI replays it in real time (no --frozen), so the
+# moments land at different steps run to run: the route plays enough steps that they always happen, and the expects read the body
+# flags the handlers set once a word has shown (data-trick-getup, data-trick-rider), which stay set. The exact frames (the float,
+# the line, the Foe tab row) are in the committed shots, taken with --frozen --seed 1 by the same steps cut where each moment
+# landed (part 1 on step 3, part 2 on step 6). The words and the Foe tab rows are asserted at all three sizes in check.mjs
+# (section foe-tricks-say-so), as is "nothing before it lands".
+# Part 1: Tobin (tests/proof-fixtures/save-z10-tobin-k0.json: z10-cantor with kills 0, so zone 10's ordinary foes come first,
+# Rattlebones and Beetles) presses Attack each turn. His hits kill Rattlebones, and each one gets back up at 20% HP.
+#   getup-*.png      the stage floats "Back up!" over Rattlebones and the line says "Rattlebones gets back up!". Before this card
+#                    the bar just jumped back to 20% with nothing on screen, so the expect fails on that build.
+#                    At 740x360 and 360x740 the one-time Grit tip (Tobin's first Grit) covers the float; the line shows below it.
+#   getup-foe-*.png  the Foe tab, with Rattlebones still up: a "Trick" row, "Gets back up once. A Burn that finishes it keeps it down."
+# Part 2: Wren (save-early-z7-k0.json: save-early-z10-boss at zone 7 with kills 0, tier 1 gear) fights zone 7's ordinary foes
+# (Marsh Wraith and Moss Slime), pressing Attack each turn, never parrying or dodging, until a foe's rider lands.
+#   rider-*.png      the line says "Chilled: Marsh Wraith goes again" (the snowflake chip is on Wren's row): Chill Touch landed
+#                    and, chilled, Wren lost the race for the next turn. Before this card only the "goes again" banner showed.
+#   rider-foe-*.png  the Foe tab: "Chill Touch chills you: you're slower, so it can act twice."
+# "Back up!" is a stage float drawn on the canvas, so no expect can read it. A `new` empties the shots folder, so CI keeps only
+# part 2's shots, taken after its loop.
+# seed: 1
+new z10-tobin-k0
+wait 1
+tap-if "Continue"
+expect-no "body[data-trick-getup]"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+expect "body[data-trick-getup]"
+new early-z7-k0
+wait 1
+tap-if "Continue"
+tap-if "Dismiss this tip"
+expect-no "body[data-trick-rider]"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+expect "body[data-trick-rider]"
+shot rider
+tap "Foe"
+shot rider-foe

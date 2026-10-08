@@ -136,6 +136,11 @@ function validateSave(data) {
       if (a.forged !== undefined) int(a.forged, 'achievements.forged');
       for (const k of ['init', 'epic']) if (a[k] !== undefined && typeof a[k] !== 'boolean') fail('achievements.' + k, 'has the wrong type');
     }
+    // foe-tricks-say-so: the Foe tab's learned tricks are { [foe type]: { [trick]: 1 } }
+    if (data.mastery && data.mastery.tricks) for (const [k, row] of Object.entries(data.mastery.tricks)) {
+      record(row, 'mastery.tricks.' + k);
+      for (const [id, v] of Object.entries(row)) { if (!FOE_TRICK_ORDER.includes(id)) fail('mastery.tricks.' + k + '.' + id); int(v, 'mastery.tricks.' + k + '.' + id, 0, 1); }
+    }
     if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
     // C9: optional route maps are validated before storage or feature load; missing v5 maps use defaults.
     if (data.party && data.party.unlock !== undefined && !heroUnlockStateValid(data.party.unlock)) fail('party.unlock');
