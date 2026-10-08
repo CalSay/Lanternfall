@@ -144,8 +144,8 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
   `boss-balance-pass`); a kept-up hero who never defends still wins 0%. The next wall is the zone 19 boss (`z19-boss-arrival`, a
   report row, 0%).
 - **Zone 19 no longer walls a first-time player** (z19-wall, 2026-10-08). `z19-boss-arrival` is now a gated Captain row (level 22,
-  tier 1 common +0, no mastery stars, and no crafted set: the arrival footing never wears it): casual Wren, Tobin and Pip win 65/61/73
-  (63-70, 53-65 and 66-74 on five seed sets); good players 100; a player who never defends 0. The boss's Venom ticks were cut to 0.07
+  tier 1 common +0, no mastery stars, and no crafted set: the arrival footing never wears it): casual Wren, Tobin and Pip win 67/59/69
+  (the 5-offset baseline; 63-70, 53-65 and 66-74 on the judge's five seed sets); good players 100; a player who never defends 0. The boss's Venom ticks were cut to 0.07
   (`riderX`): one tick took 97% of a first-time Wren's health, now about 7%. The kept-up z19 row reads 94-100 (gap, `boss-balance-pass`);
   Tobin's arrival cell sits under his band (gap, `tobin-safety-margin`). The next wall is the zone 20 boss (`z20-boss-arrival`, a report
   row, 0%), left to a follow-up card so the zone 20 "gear matters" rows and checks keep working.

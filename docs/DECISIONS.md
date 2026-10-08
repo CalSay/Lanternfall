@@ -762,7 +762,7 @@ sooner than the z16-wall walks (55:04 and 59:38) with nothing before zone 19 cha
 - **Zones 1 to 18 are unchanged.** No knot below zone 19 moved and riderX is the same below 19, so the #223 and #229 rulings stand.
   z18-boss-arrival reads 81/66/69 and 85/54/61 on two seed sets, inside its noise and gaps. Zones 20 and up keep their knots and gaps.
 - **Gaps (all until 2026-12-01).** z19-boss casual, above, all heroes, limit 1, owner `boss-balance-pass`. z19-boss-arrival Tobin
-  casual, below, limit 0.55, owner `tobin-safety-margin`.
+  casual, below, limit 0.55, owner `tobin-safety-margin`. The re-baseline ratcheted them to 0.99 and 0.59.
 - **Health: re-baselined, one tolerance change.** The bots pass zone 19 and meet the zone 20 wall inside the 10 hours: every
   optimiser stall over an hour is at zone 20, the existing wall met one zone later. Passing one more zone adds short stalls, so
   `optimiser.stallCount` rises from 4 (#229) to 4.93, and its spread over the five seed offsets widens (6, 4.33, 5, 4 and 5.33; sd
