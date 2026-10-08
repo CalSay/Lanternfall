@@ -3,24 +3,31 @@
 # Fixture boss1: Wren on zone 1 with the boss next (a fresh save, levelled so the fight is won in both views).
 # A unique may drop on the win (the odds line then gives way to the unique), so the route does not expect the odds line.
 # Old-save and replay rules are in tools/check.mjs, section 'lantern caches'.
+# Updated 2026-10-08 (proof-routes-rot): the staged-guide lesson holds the boss's first swing until Dodge is pressed, so the route taps Dodge (tap-if) before attacking.
 new boss1
 wait 2
 tap-if "Got it"
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
+tap-if "Dodge"
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1

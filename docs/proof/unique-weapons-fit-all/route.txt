@@ -6,6 +6,8 @@
 # upgrade only after Equip in landscape, so the Pine Log line is read there in both views). A route cannot force
 # the zone 6 boss drop, so the drop, Pip's Staff, Tobin's Warblade, the Lantern Eater's Fang, a class change, old-save
 # load and save codes are held by tools/check.mjs (solo hero 9).
+# Updated 2026-10-08 (proof-routes-rot): a Bow's upgrade now takes Pine Plank, sawn from Pine Log (refining, #209), so the
+# worn sheet's Bow material line is read as Pine Plank.
 new golemfist-wren
 wait 6
 tap-if "Continue"
@@ -31,7 +33,7 @@ shot golemfist-sheet
 tap "Equip"
 wait 1
 expect "You wear it"
-expect "Pine Log"
+expect "Pine Plank"
 expect-no "can't"
 expect-no "cannot"
 shot golemfist-worn

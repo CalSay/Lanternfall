@@ -4,6 +4,7 @@
 # and adds Briar Sprig as an unfound Mossy Hollow unique ("???" until found, so the route looks for its place, not its
 # name); the total is 14 here and 13 on a new save, which never shows the retired Sproutblade. A route cannot force a drop, so the Equip on Wren's first-unique
 # card, the fit for all three starters, the zones and the save codes are held by tools/check.mjs (solo hero 9b, hero voice).
+# Updated 2026-10-08 (proof-routes-rot): close the Refining tip (#209) that now opens over Craft on the late save.
 new late
 wait 6
 tap-if "Continue"
@@ -16,6 +17,7 @@ tap-if "Continue"
 wait 3
 tap "Craft"
 wait 2
+tap-if "Got it"
 tap-if "Continue"
 wait 2
 tap "Uniques"

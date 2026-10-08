@@ -1,6 +1,7 @@
 # seed: 1
 # Proof for card intro-and-picker: a fresh save opens on three pictures, asks "Who are you?", plays Hesketh's fire, then the first fight.
 # Acceptance: three stills, one line a tap, Skip always there; "Who are you?" in second person; Hesketh's fire in 3 lines; the first Attack comes fast.
+# Updated 2026-10-08 (proof-routes-rot): the fire's third line is now "Something's coming up the road. Keep that lamp behind you." (cal-0107-staged-guide replaced "Wood first. Then we talk."; Cal's play note 2).
 new fresh
 expect "Ten years ago every lamp went out. The one over your door never did."
 expect "Skip"
@@ -31,7 +32,7 @@ expect "You light his sticks from your lamp. The lamp steadies."
 shot fire2
 tap "Next"
 wait 1
-expect "Wood first. Then we talk."
+expect "Something's coming up the road. Keep that lamp behind you."
 shot fire3
 tap "Continue"
 wait 2
