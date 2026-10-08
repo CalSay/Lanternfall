@@ -13440,7 +13440,7 @@ if (section('fight-input-during-banner')) try {
         // a cooldown that comes back mid-banner (a Parry or Dodge refund) does not flash ready
         const id0 = await X(`soloEquipped()[0] || ''`);
         await X(`TURN_LIVE.cds[${JSON.stringify(id0)}] = 2; true`); await page.waitForTimeout(300);
-        await X(`TURN_LIVE.cds[${JSON.stringify(id0)}] = 0; true`); await page.waitForTimeout(150);
+        await X(`TURN_LIVE.cds[${JSON.stringify(id0)}] = 0; true`); await page.waitForTimeout(350);
         L = await R();
         assert(id0 && !L.some(t => t.now) && L.find(t => t.act === 'ab0').sub === 'Wait', `${tag}: a cooldown refunded mid-banner does not flash ready and the tile says "Wait" (${JSON.stringify(L.map(t => [t.act, t.now, t.sub]))})`);
         // presses in the banner: refused (nothing changes), each with the red outline; Parry leaves the defence unused

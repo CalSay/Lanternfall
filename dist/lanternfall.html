@@ -2694,12 +2694,13 @@ span.cf-d { font-weight: 600; }
 .sbtn.wait.off .sb-ic { opacity: .5; }
 .sbtn.wait { outline-color: #3A3046; box-shadow: inset 0 0 0 4px #1E1826, 0 3px 0 #0B0810; }
 .sb-abslot.wait .sb-lb { color: #A89A7A; }
-/* a refused press: a short red-brown outline, not an animation, so reduced motion keeps it */
-.sbtn.refused, .sbtn.wait.refused { outline-color: #A0442E; box-shadow: inset 0 0 0 4px #3A1A20, 0 3px 0 #0B0810; }
+.sbtn.wait:active, .sbtn.wait.hit { box-shadow: inset 0 0 0 4px #1E1826, 0 1px 0 #0B0810; }
 /* a telegraphed hit is coming: Parry and Dodge glow */
 .sb-parry.live { outline-color: #E0524F; box-shadow: inset 0 0 0 4px #3A1A20, 0 0 10px rgba(224, 82, 79, .75), 0 3px 0 #0B0810; }
 .sb-dodge.live { outline-color: #8FB8FF; box-shadow: inset 0 0 0 4px #1A2640, 0 0 10px rgba(143, 184, 255, .75), 0 3px 0 #0B0810; }
 .sb-parry.open { background: #4A1E22; }   /* a missed parry: open for a moment */
+/* a refused press: a short red-brown outline, not an animation, so reduced motion keeps it */
+.sbtn.refused, .sbtn.wait.refused, .sb-parry.live.refused, .sb-dodge.live.refused { outline-color: #A0442E; box-shadow: inset 0 0 0 4px #3A1A20, 0 3px 0 #0B0810; }
 .sbtn.nope { animation: sb-nope .25s steps(3); }
 .sbtn.good { animation: sb-good .45s ease-out; }
 .sbtn.ready-now { animation: sb-ready .45s ease-out; }
@@ -2803,6 +2804,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sb-abslot.passive { background: #1C2430; box-shadow: inset 0 0 0 4px #26303E, inset 0 0 0 5px #4E6A8A, 0 3px 0 #0B0810; }
 .sb-abslot.passive .sb-lb { color: #8FB8FF; }
 .sb-abslot.blocked .sb-ic, .sb-abslot.blocked::before { opacity: .45; }
+.sbtn.wait::before { opacity: .5; }   /* fight-input-during-banner: a lettered tile dims with the rest */
 .sp-ab .sp-mono { width: 36px; height: 36px; margin-left: 6px; display: grid; place-items: center; background: #33283E; color: #FFE7A8;
   font: 700 calc(16px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }
 /* Skills and Foe scroll inside the pane: the bottom edge fades to say there is more */
