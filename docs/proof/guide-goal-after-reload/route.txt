@@ -1,0 +1,35 @@
+# Proof for card guide-goal-after-reload: Hesketh's fire stays on Next Up until it is lit, through a reload or a closed tip.
+# Fixture tests/proof-fixtures/save-cold-z2-unlit.json: a cold seed-11 game at 2:00 (the cold leg's snapshot), zone 2, level 5, fire unlit,
+# no Pine Log, Gather and Next Up open, no free points. `away 0.01` closes the game and opens it again on the stored save (a reload).
+#   closed-tip-*.png   (b) × on the Gather tip at boot, then a reload: the chip still says "Chop Pine Log for Hesketh's fire: 0/8".
+#   reload-fight-*.png (a) a reload in the middle of a fight: the chip still names the fire.
+#   go-grove-*.png     (c) Next up, then Go on the fire row: the hero is chopping at the Pine Grove and the guide counts the logs.
+# The goal's rules (n/8, Ready unless chopping Pine, "Light Hesketh's fire: ready" at 8 logs, gone once lit, never on a warm save, under the
+# points pile) and his Pine Log line coming back once at boot are held by tools/check.mjs ("guide goal after reload").
+# seed: 11
+new cold-z2-unlit
+wait 1
+tap "Dismiss this tip"
+wait 2
+away 0.01
+tap-if "Continue"
+tap-if "Collect"
+wait 1
+expect "Chop Pine Log for Hesketh's fire"
+shot closed-tip
+wait 3
+expect "Attack"
+away 0.01
+tap-if "Continue"
+tap-if "Collect"
+wait 1
+expect "Chop Pine Log for Hesketh's fire"
+shot reload-fight
+tap "Next up"
+wait 1
+tap "Go: Chop Pine Log for Hesketh's fire"
+wait 2
+tap-if "Got it"
+expect "Chop 8 Pine Log for the camp fire"
+expect-no "Fighting · Zone 2"
+shot go-grove
