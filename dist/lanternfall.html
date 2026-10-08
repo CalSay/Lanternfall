@@ -14956,8 +14956,8 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 //                              one stamps the clock (got['join:<id>']), so no unlock opens within ONBOARD_TUNE.gap of any join.
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
-//   tips, t (seconds played while the guide runs), taps, casts }.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
+//   tips, t (seconds played while the guide runs), taps, casts, sayQ: [{ id, arg }] (Hesketh's unread lines, 75-onboard-ui; reload-keeps-tips) }.
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, guideHide, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
 let lessonLast = -1;   // the foe's clock at the last tick (guideLessonHold: a hold starts only on the frame that crosses a window's opening)
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
@@ -15152,7 +15152,10 @@ let guideMenuCovers = () => true;   // 75-onboard-ui.js: a wide screen keeps the
 let guideLineOk = () => true;       // 75-onboard-ui.js: a guide line can show now (the page is visible, no card or sheet over it)
 function guidePhase(seeThroughMenu) { return !fightingNow() || !liveFoe() || (!seeThroughMenu && !!S.tab && S.tab !== 'adv') ? 'between' : hitComing() ? 'windup' : heroTurnNow() ? 'hero' : 'foe'; }
 // A fight is one foe on the field (59k `fightStart`; the legacy fight: a pack). Runtime only, never saved.
-const GUIDE_RT = { t: 0, fight: 0, doneIn: {}, lastEnd: null, latch: '', shown: {} };
+const GUIDE_RT = { t: 0, fight: 0, doneIn: {}, lastEnd: null, latch: '', shown: {}, hid: {} };
+// reload-keeps-tips: tips whose job is still undone (a piece in the bag, the cold fire). × or the 60 s retire hides one for this session only
+// (GUIDE_RT.hid, no done mark), so a reload brings it back once; its own done rule (the piece worn, the hero gathering) still ends it for good.
+const GUIDE_SESSION = ['wear:weapon', 'wear:tool', 'gather'];
 const GUIDE_QUIET = 60;    // seconds of play between two unprompted lines outside fights, and before a live tip retires
 // cal-0107-staged-guide (Cal's play notes 3 and 12): the fight lessons. In a turn fight each press is taught the first time it comes up, with
 // the fight held: Attack on your first turn, Dodge on the foe's first swing, the ability on your next turn, Parry on the next swing (or the
@@ -15245,7 +15248,7 @@ function craftReady() {
 }
 
 {
-  registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, atk: 0, dodges: 0, parries: 0 });
+  registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, atk: 0, dodges: 0, parries: 0, sayQ: [] });
 
   isUnlocked = id => !id || !FEATURE_OF[id] || O().got[id] != null || (O().all && !FEATURE_OF[id].late);
   function unlock(id, quiet) {
@@ -15291,13 +15294,22 @@ function craftReady() {
   // done 1: the player did it. done 2: the tip waited 60 s unanswered and retired to the Journal's Tips.
   onboardDone = (id, how) => { if (!O().done[id]) { O().done[id] = how || 1; emit('onboardStep', { id }); } };
   const guideOver = () => GUIDE_STEPS.every(s => O().done[s.id]);
+  // reload-keeps-tips: at boot, a wear tip closed for good by an older build (× or the retire left a done mark) while the piece still sits in
+  // the bag with its slot empty can show once more
+  let wearBooted = false;
+  const wearBoot = () => {
+    if (wearBooted) return; wearBooted = true;
+    try { if (coldH()) for (const k of ['weapon', 'tool']) if (O().done['wear:' + k] && wearPiece(k) && !(k === 'tool' && toolWorn())) delete O().done['wear:' + k]; } catch (e) {}
+  };
   onboardStep = () => {
+    wearBoot();
     if (!O().tips) return null;
     for (const s of GUIDE_STEPS) {
       if (O().done[s.id]) continue;
       if (S.maxZone >= 8 && LESSON_IDS.includes(s.id)) { onboardDone(s.id); continue; }
       let d = false; try { d = !!s.done(); } catch (e) {}
       if (d) { onboardDone(s.id); continue; }
+      if (GUIDE_RT.hid[s.id]) continue;   // hidden this session: the steps after it can show
       let w = false; try { w = !!s.when(); } catch (e) {}
       if (!w) continue;
       const R = GUIDE_RT, held = R.latch === s.id;
@@ -15346,7 +15358,14 @@ function craftReady() {
   on('levelup', e => { if (e && !e.quiet && !O().all) onboardCheck(); });
   on('onboardStep', e => { if (!e) return; GUIDE_RT.doneIn[e.id] = GUIDE_RT.fight; GUIDE_RT.lastEnd = GUIDE_RT.t; if (GUIDE_RT.latch === e.id) GUIDE_RT.latch = ''; });
   // A live tip nobody answers for 60 s of play retires: it stops showing and waits in the Journal's Tips.
-  guideRetire = id => { const s = stepById(id); if (!s || O().done[id]) return false; onboardDone(id, 2); return true; };
+  guideRetire = id => { const s = stepById(id); if (!s || O().done[id]) return false; if (!guideHide(id)) onboardDone(id, 2); return true; };
+  // reload-keeps-tips: × or the retire on a GUIDE_SESSION tip. It ends the step as a done one would for spacing (latch, lastEnd: the
+  // one-line-a-minute gap and backReady see it end), with no done mark and no onboardStep event. -> false for any other step.
+  guideHide = id => {
+    if (!GUIDE_SESSION.includes(id) || O().done[id]) return false;
+    const R = GUIDE_RT; R.hid[id] = 1; R.doneIn[id] = R.fight; R.lastEnd = R.t; if (R.latch === id) R.latch = '';
+    return true;
+  };
   // ---- the staged lesson hold (cal-0107-staged-guide) ----
   // Decided every frame in core, not on the UI's 250 ms poll (the Parry window is 0.18 s): on the frame the foe's clock crosses the
   // window's opening for the Dodge or Parry lesson, the clock is set back to that opening (plus a hair, so the frozen press is inside
@@ -16926,10 +16945,13 @@ let essCap, storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, s
 // starter is the story hero (the active hero if it is a starter, else S.story.starter).
 //
 // Save: registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {},
-//   journalOpens: 0 }). v, seen, read, init are the old fields, kept. `seen` keys: 'r:<region>' (R), 'a:<areaIdx>' and 'z:<zone>'
+//   journalOpens: 0, open: {} }). v, seen, read, init are the old fields, kept. `seen` keys: 'r:<region>' (R), 'a:<areaIdx>' and 'z:<zone>'
 //   (A, Z), 'c:<zone>' (C), 'p:<id>:pre|post' (P), 'e:<id>:pre|post' (E), 'n:<id>' (N), 'v:<id>' (V), 'ch:<id>' (choice),
 //   'j:<id>' (page), 'l:<id>' and 'o:<id>' (letter, note); value = ms played (negative = filed by the catch-up). The old
 //   keys ('a:<region>:<place>', 'b:', 'ei:', 'ef:') are kept and ignored. `read`: Journal entry id -> 1.
+//   open (reload-keeps-tips): scene id -> the page on screen (0-based), from the moment a card scene is queued until it closes, so a
+//   reload brings it back at that page at the first gap (restore, below). Every scene is marked seen when queued, so without it a reload
+//   lost the scene. An id with no builder (or none for this hero) is filed late, as an 'auto' close is.
 //   off: 1 = Story cards off. ends: scene key -> 'done' | 'skipped' (12a; never 'auto'). journalOpens: Journal opens (12a).
 //   starter, litFor (Great Lantern -> name), coldhearth: for story-opening and story-choices.
 //   'i:open' (the drawn opening was shown or skipped), 'n:<id>' for the opening's NPC scenes (heskethFire, over the stills; heskethTalk, at the camp fire).
@@ -16942,12 +16964,12 @@ const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all
 const STORY_TUNE = { champMoment: true,   // champion-moment: a Champion's first clear is one big card (its scene, then the cache). false: the scene plays as a story card and the cache opens on its own, as before
   joinOnMeet: true };   // starters-join-when-met (56c): a new game's other two starters join at their meet scenes' Champions. false: all three from the start
 
-let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
+let storyOn, storyPage, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
   storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey, storyBusy;
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
-  registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
+  registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0, open: {} });
   const ST = () => S.story;
   const D = k => (typeof STORY_BEATS === 'object' && STORY_BEATS && STORY_BEATS[k]) || {};
   const foeIn = z => typeof ZONE_FOES === 'object' && !!ZONE_FOES[z];
@@ -17158,6 +17180,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (!cur || cur.id !== id) return;
     const sc = cur, shown = claimed; cur = null; claimed = false;
     const st = ST();
+    delete st.open[id];
     const auto = how === 'auto';   // nobody touched it: filed as a page to catch up on, and no `ends` entry (bible 12a)
     // skipped: the default. Left alone in a Champion's or Elder's scene, a choice stays open: its Journal entry offers it to catch up on
     if (!(auto && /^[pe]:/.test(sc.id))) for (const c of sc.cards) if (c.choice) storyChoose(c.choice);
@@ -17175,7 +17198,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   function pump(chain) {
     while (!cur && queue.length) {
       const sc = queue.shift();
-      if (stale(sc)) continue;
+      if (stale(sc)) { delete ST().open[sc.id]; continue; }
       if (chain) sc.chain = true;   // follows a shown scene: the UI plays it once the last sheet has closed, gap or not
       cur = sc; claimed = false; heldAt = Date.now();
       emit('storyScene', sc);
@@ -17192,7 +17215,29 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     cur = sc; claimed = false; heldAt = Date.now();
     emit('storyScene', sc);
   }
-  const push = sc => { if (sc) queue.push(sc); };
+  const push = sc => { if (!sc) return; queue.push(sc); if (sc.kind === 'card') ST().open[sc.id] = 0; };
+  storyPage = (id, i) => { if (ST().open[id] !== undefined) ST().open[id] = i; };   // the UI draws page i of that scene
+
+  // ---- a reload mid-scene (reload-keeps-tips): what was queued or on screen comes back at its page, at the first gap ----
+  // Every card scene's builder takes its id, so all of them can be rebuilt (the Champion and Elder scenes, region cards, NPCs, Hesketh's camp
+  // fire talk, voices, choices). A rebuilt scene can be shorter (a starter met as a person drops out when he is the hero): the page is clamped.
+  // One that builds nothing, or Story cards off, files it late (its Journal entry offers it), as an untouched card does.
+  let restored = false;
+  const REBUILD = { r: id => regionScene(id), p: (id, ph) => /^(pre|post)$/.test(ph) ? champScene(id, ph) : null, e: (id, ph) => /^(pre|post)$/.test(ph) ? elderScene(id, ph) : null, n: id => npcScene(id), v: id => voiceScene(id), ch: id => choiceScene(id) };
+  function restore() {
+    restored = true;
+    const st = ST();
+    if (!st.open || typeof st.open !== 'object' || Array.isArray(st.open)) { st.open = {}; return; }
+    for (const id of Object.keys(st.open)) {
+      const [k, a, b] = id.split(':');
+      let sc = null;
+      if (storyOn() && REBUILD[k]) try { sc = REBUILD[k](a, b); } catch (e) { sc = null; }
+      if (sc && sc.id === id && sc.cards.length) { sc.at = Math.max(0, Math.min(sc.cards.length - 1, Math.floor(+st.open[id]) || 0)); st.open[id] = sc.at; queue.push(sc); continue; }
+      delete st.open[id];
+      if (st.seen[id] > 0) st.seen[id] = -st.seen[id];   // late, unread: "Catch up on the story"
+      const post = /^([pe]:[^:]+):post$/.exec(id); if (post) delete st.read[post[1]];
+    }
+  }
   storyBusy = id => (!!cur && cur.id === id) || queue.some(sc => sc.id === id);   // that scene is up or waiting (the moment layer holds a Champion card until it has played)
 
   // ---- time and gaps ----
@@ -17219,7 +17264,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // ---- each tick: what is due where the hero stands ----
   storySync = early => {
     const mz = S.maxZone || 1;
-    if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); return; }   // off: nothing plays and nothing is filed or defaulted; the catch-up runs when it is turned back on
+    if (!restored) restore();
+    if (!storyOn()) { for (const sc of queue) delete ST().open[sc.id]; queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); return; }   // off: nothing plays and nothing is filed or defaulted; the catch-up runs when it is turned back on
     if (mz !== swept) { swept = mz; sweep(mz); }
     if (!has('k:ranks') && storyRanks().length) mark('k:ranks');
     if (!ST().starter && STARTERS.includes(heroKey())) ST().starter = heroKey();   // bible 4.4: the cold-start hero, stored once (an old save: its hero now)
@@ -42822,9 +42868,13 @@ let navUI = null;
     scroll: () => { try { return SCROLL_ORDER.some(id => scrollCount(id) > 0); } catch (e) { return false; } },
     slot: () => { try { return !!slotAb && soloAbilities().includes(slotAb); } catch (e) { return false; } }
   };
+  // reload-keeps-tips: the queue is also kept in the save (S.onboard.sayQ, [{ id, arg }]; arg: the Scroll for `scroll`, the move for `slot`), so
+  // a reload before a line is read brings it back. The boss-loss line belongs to that loss and is never kept.
   const sayQ = []; let sayCur = '';
-  function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) sayQ.push(id); }
-  const sayDone = id => { sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); };
+  const SAY_ARG = { scroll: () => scrollId, slot: () => slotAb };
+  const sayKeep = () => { O().sayQ = sayQ.filter(id => id !== 'defeat').map(id => SAY_ARG[id] ? { id, arg: SAY_ARG[id]() } : { id }); };
+  function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) { sayQ.push(id); sayKeep(); } }
+  const sayDone = id => { sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); sayKeep(); };
   // an unlock line held while up: a Got it, the game waits, and only between fights (never two lines at once)
   const sayStep = id => ({ id: 'say:' + id, text: sayText(id), ok: 1, pause: 1, ph: ['between'] });
   // cal-0107-staged-guide: a guide step already says some unlocks, so his unlock line would say it twice. The Hero tab at the first level-up is
@@ -42842,9 +42892,11 @@ let navUI = null;
   });
   on('wipe', e => { if (e && e.boss && !e.arena) sayQueue('defeat'); });
   on('scrollDrop', e => { if (e && e.firstEver) { scrollId = e.id || 'moss'; sayQueue('scroll'); } });
-  on('abilityLearned', e => { if (e && e.hero === soloHero() && soloAbilities().length > 1) { slotAb = e.id; sayQueue('slot'); } });
+  on('abilityLearned', e => { if (e && e.hero === soloHero() && soloAbilities().length > 1) { slotAb = e.id; sayQueue('slot'); sayKeep(); } });
   // guide-goal-after-reload: his Pine Log line carries the first job, and the queue lives in memory only, so a reload before it was read
   // (Got it or ×) would lose it. Queue it again once a boot while the fire is still cold. Not an unlock, so the unlock spacing is untouched.
+  // reload-keeps-tips: the lines queued and unread when the game closed, in order (each still checked by SAY_STILL when its turn comes)
+  try { for (const e of Array.isArray(O().sayQ) ? O().sayQ.slice() : []) { if (!e || typeof e.id !== 'string' || e.id === 'defeat' || !(Object.hasOwn(SAY_TXT, e.id) || Object.hasOwn(SAY_MORE, e.id))) continue; if (e.id === 'scroll' && e.arg) scrollId = e.arg; if (e.id === 'slot' && e.arg) slotAb = e.arg; sayQueue(e.id); } } catch (e) {}
   try { if (isUnlocked('gather') && SAY_STILL.gather() && !O().done['say:gather']) sayQueue('gather'); } catch (e) {}
   // the upgrade step already brought you to the Hero tab and said what it is for: its first-use line would introduce it a second time
   on('onboardStep', e => { if (e && e.id === 'upgrade') onboardUseDone('use:party'); });
@@ -42893,8 +42945,9 @@ let navUI = null;
   bub.append(faceBox, nm, txt, x, okb);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
-  const finish = s => s.id.startsWith('say:') ? sayDone(s.id) : s.id.startsWith('use:') ? onboardUseDone(s.id) : onboardDone(s.id);   // a first-use line is read, not a guide step
-  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) finish(cur); tick(); });
+  const finish = s => s.id.startsWith('say:') ? sayDone(s.id) : s.id.startsWith('use:') ? onboardUseDone(s.id) : guideHide(s.id) || onboardDone(s.id);   // a first-use line is read, not a guide step; a wear tip or the fire tip hides for this session (reload-keeps-tips)
+  // Got it is an answer: a guide step it ends is done for good (only × and the retire hide a tip for the session, reload-keeps-tips)
+  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) { if (/^(say|use):/.test(cur.id)) finish(cur); else onboardDone(cur.id); } tick(); });
   let cur = null;   // the step on screen
   x.addEventListener('click', e => { e.stopPropagation(); if (cur) finish(cur); tick(); });
   const chip = $('nuChip');
@@ -45402,7 +45455,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   function showCard(sc) {
     if (typeof openSheet !== 'function') { storyClose(sc.id, 'skipped'); return; }
     storyClaim(sc.id);
-    let i = 0, finished = false, idleT = 0;
+    let i = Math.max(0, Math.min(sc.cards.length - 1, sc.at || 0)), finished = false, idleT = 0;   // reload-keeps-tips: a scene rebuilt after a reload opens at its saved page
     // no pointerdown or key anywhere for IDLE_MS: the card files itself (how 'auto'); any input restarts the wait
     const wake = () => { clearTimeout(idleT); idleT = setTimeout(() => end('auto'), IDLE_MS); };
     const stopIdle = () => { clearTimeout(idleT); document.removeEventListener('pointerdown', wake, true); document.removeEventListener('keydown', wake, true); };
@@ -45415,6 +45468,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
         wake();
         api.body.textContent = ''; api.foot.textContent = '';
         const c = sc.cards[i], last = i === sc.cards.length - 1;
+        storyPage(sc.id, i);   // the save keeps the page on screen (S.story.open)
         const card = el('article', 'sty-card');
         if (i === 0) {
           const where = sc.ch === 'R' ? '' : [chapterOf(sc.region), sc.zone ? `Zone ${sc.zone}` : ''].filter(Boolean).join(' · ');
