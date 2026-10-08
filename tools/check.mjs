@@ -10927,6 +10927,26 @@ if (section('craft delta')) try {
     l = goals();
     assert(l.some(x => x.label === 'Upgrade your Pine Bow to +1'), `upgrade goal chip order: with a Pine Plank, the Pine Bow upgrade shows (${JSON.stringify(l)})`);
   }
+  { // nextup-guards-forge-mats: with the Forge unbuilt and 22/25 Copper Ore, Next Up offers no tool craft or upgrade that eats the
+    // Forge's ore; with 35 ore the pickaxe +1 (1 ore) shows again, and once the Forge is up nothing is held
+    const g = coreOn('save-forge-short.json'), E = s => g.eval(s);
+    const goals = () => E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))');
+    E('S.mats.ore[0] = 22; S.mats.wood[0] = 10; S.gold = 5000');
+    const pick = E('equipped("pick").id');
+    assert(E(`campLevel('forge') === 0 && canUpgrade(${pick}).ok`), 'next up guards forge mats: the save has the Forge unbuilt and an affordable pickaxe upgrade');
+    let l = goals();
+    assert(!l.some(x => x.id === 'upgrade' || (x.id === 'forge' && /Pickaxe|Woodaxe|Sickle|Spear/.test(x.label))) && l.some(x => x.id === 'camp-build' && /^Forge Lv 1/.test(x.label)), `next up guards forge mats: at 22/25 Copper Ore no tool craft or upgrade, and the Forge row shows (${JSON.stringify(l)})`);
+    E('S.mats.ore[0] = 35');
+    l = goals();
+    assert(l.some(x => x.label === 'Upgrade your Copper Pickaxe to +1'), `next up guards forge mats: with ore to spare the pickaxe upgrade shows (${JSON.stringify(l)})`);
+    E('S.mats.ore[0] = 22; S.mats.wood[0] = 10; S.camp.b = Object.assign(S.camp.b || {}, { forge: 1 })');
+    l = goals();
+    assert(E("campLevel('forge')") === 1 && l.some(x => x.id === 'upgrade' || (x.id === 'forge' && /Woodaxe|Sickle|Spear/.test(x.label))), `next up guards forge mats: once the Forge is built a tool row can show again (${JSON.stringify(l)})`);
+    // the first weapon is never held: with no weapon worn, its row shows at 22/25 ore with the Forge unbuilt
+    E('S.camp.b.forge = 0; S.equip.weapon = null; S.items = S.items.filter(i => i.slot !== "bow" && i.slot !== "staff" && i.slot !== "sword"); S.onboard.done.tool = 1; gearDirty()');
+    l = goals();
+    assert(l.some(x => x.id === 'forge' && /for the zone \d+ boss|first weapon/.test(x.label)), `next up guards forge mats: the first weapon row still shows with the Forge unbuilt (${JSON.stringify(l)})`);
+  }
   await (async () => {
     const { pw, exe } = browserTools;
     if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('craft delta (browser): Playwright or Chromium not here, skipped'); return; }

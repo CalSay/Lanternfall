@@ -341,6 +341,15 @@ var forgeGoalPicks = 0;
       return { kind, t: 1, pos: 'weapon', cost: m, p, score: p + 0.02, first: true, short, closed: short.find(k => !matPlace(k, 1).open) || null };
     } catch (e) { return null; }
   };
+  // nextup-guards-forge-mats: once a tool is worn and until the Forge is built, no tool craft or upgrade that leaves less of a
+  // Forge material (25 Copper Ore, 10 Pine Log) than its first build needs. Seed 1's Copper tools spent 22 of 25 ore and pushed
+  // the Forge from 6:35 to 14:17. The first weapon (firstWeapon) and weapon crafts are never held.
+  const forgeHold = (t, mats) => {
+    if (typeof hearthFirst !== 'function' || typeof campLevel !== 'function' || campLevel('forge') >= 1 || (typeof campPending === 'function' && campPending('forge'))) return false;
+    const fb = hearthFirst('forge');
+    if (!fb || !CRAFT_HERO_POS.some(p => { const it = equipped(p); return it && CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool; })) return false;
+    return fb.mats.some(([k, tt, n]) => mats[k] && t === tt && matOwn(k, tt) - mats[k] < n);
+  };
   const forgeNext = () => {
     const fw = firstWeapon(); if (fw) return fw;
     let best = null, gate = null;
@@ -360,6 +369,7 @@ var forgeGoalPicks = 0;
           if (g) { const e = { kind, t, pos, gate: g, p: Math.min(0.99, g.lv / g.need) }; if (!gate || gateScore(e) > gateScore(gate)) gate = e; }
           continue;
         }
+        if (pos !== 'weapon' && forgeHold(t, c.cost.mats)) continue;
         const ks = Object.keys(c.cost.mats);
         const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(matOwn(k, t), c.cost.mats[k])), 0) / Math.max(1, ks.length));
         const score = p + (pos === 'weapon' ? 0.02 : 0);
@@ -416,6 +426,7 @@ var forgeGoalPicks = 0;
       const c = canUpgrade(it.id); if (!c.ok) continue;
       const um = (c.cost && c.cost.mats) || {};
       if (f && Object.keys(um).some(k => f.cost[k] && (k === 'ess' || it.t === f.t) && matOwn(k, f.t) - um[k] < f.cost[k])) continue;
+      if (forgeHold(it.t, um)) continue;
       return it;
     }
     return null;
