@@ -24,7 +24,7 @@ session folder (`--session <dir>`, default `.playtest/`, ignored by git), so eac
 | `shot <name>` | Screenshot named `<name>.png` in the shots folder. |
 | `burst <name>` | Six frames over 1.5 s of game time: `<name>-1.png` to `<name>-6.png`. For motion, parry rings and flashes. |
 
-Options: `--seed <n>` (seeds the game's random numbers for the whole run, so a route plays the same each time), `--shots <dir>` (where shots go; default `<session>/shots`), `--landscape` (740x360; default is portrait 360x740), `--quiet` (tap and wait print one line, not a screen),
+Options: `--seed <n>` (seeds the game's random numbers for the whole run, so a route plays the same each time), `--shots <dir>` (where shots go; default `<session>/shots`), `--view <v>` (the screen: `desktop` 1280x720 with a mouse and no touch is the default; `landscape` 740x360, `portrait` 360x740, `laptop` 1366x640, `tablet` 1024x768, `hd` 1920x1080 or WxH; `--landscape` and `--portrait` are short for those two), `--quiet` (tap and wait print one line, not a screen),
 `--json`, `--html <file>` (another build).
 
 Each call reopens the game from the saved state, so an open menu, sheet or dialog is closed again between calls (the save, the tab and the game clock carry over). To tap through a menu, use `batch` (several commands in one launch), e.g. `printf 'tap "Gather"\ntap "Mine at the Copper Vein"\nstate\n' | node tools/playtest.mjs batch`.
@@ -55,11 +55,12 @@ expect "Old Hesketh"
 shot hesketh-fire
 ```
 
-One command on your own branch, no CI needed: `node tools/build.mjs && node tools/ci/eyes.mjs --local` (add the PR labels as the next argument, e.g. `no-visible-change`); it writes `eyes-out/summary.md` for the PR comment. Single route: `grep -v '^#' docs/proof/<card-id>/route.txt | node tools/playtest.mjs batch --seed 1 --shots /tmp/shots`.
+One command on your own branch, no CI needed: `node tools/build.mjs && node tools/ci/eyes.mjs --local` (add the PR labels as the next argument, e.g. `no-visible-change`); it writes `eyes-out/summary.md` for the PR comment. Single route: `grep -v '^#' docs/proof/<card-id>/route.txt | node tools/playtest.mjs batch --seed 1 --shots /tmp/shots --portrait` (or `--landscape`, as CI plays it; with no view it plays at 1280x720).
 Beware the first minute: a new game opens on three pictures (Skip is always there), then the hero picker, then Hesketh's fire before the first fight; use `tap-if "Skip"` to get past them (it does not fail when one did not come up). Each playtest call reopens the game, and an opening already shown is not shown again.
 
 On every PR, CI's `eyes` job (`tools/ci/eyes.mjs`) replays each changed `route.txt` on the merge build at 360x740 and
-740x360, uploads the shots as the `eyes-out` artifact, and posts or updates one PR comment listing each `expect` as
+740x360, plus once at 1920x1080 with a mouse for the big shot (report only: a miss there is listed, never failed). Player eyes
+reads the desktop view (1280x720, mouse) first, then 740x360 and 360x740. It uploads the shots as the `eyes-out` artifact, and posts or updates one PR comment listing each `expect` as
 pass or fail. A failed `expect` fails the job. A PR that changes `src/` with no changed `route.txt` fails, unless it has
 the `no-visible-change` label (pure refactors only). The reviewer and Codex open the artifact and score Feel.
 
