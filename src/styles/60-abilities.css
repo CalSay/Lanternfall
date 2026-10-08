@@ -174,3 +174,10 @@
   .ab-det { animation: ab-in .14s ease-out; }
   @keyframes ab-in { from { opacity: 0; transform: translateY(8px); } }
 }
+/* desktop-layout-v1 (docs/design/desktop-layout.md 4; desk playtest F06): at the desktop tiers the text is bigger, so the card grid
+   shows no more columns than keeps every ability name whole, and the filter buttons wrap instead of cutting "Learned" and "Can learn". */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .ab-rows { grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr)); }
+  .ab-filt { grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr)); }
+  .ab-rt b { white-space: normal; overflow-wrap: anywhere; }   /* beside the open detail a name wraps to two lines, never "Heavy Str..." */
+}

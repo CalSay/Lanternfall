@@ -73,7 +73,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+const WEIGHT = { 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'landscape 1920x1080 (browser, UX-L1)': 40, 'desktop layout (browser, desktop-layout-v1)': 30, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -3952,7 +3952,7 @@ if (section('gatherers UI (browser)')) try {
       assert(await X('!!document.querySelector("#online") && !!document.querySelector("#board") && !!document.querySelector("#renameForm")'), 'the online parts of the Tavern are still there');
       const list0 = await X('handsList().length'), gold0 = await X('S.gold'), cost = await X('handsBoard()[0].cost');
       await page.click('#sec-hands .hd-card .hd-act .mini.go'); await page.waitForTimeout(150);
-      assert(await X('handsList().length') === list0 && /Tap again/.test(await page.textContent('#sec-hands .hd-card .hd-act .mini.go')), 'Hire asks once first (in the page, no dialog)');
+      assert(await X('handsList().length') === list0 && /^Confirm/.test(await page.textContent('#sec-hands .hd-card .hd-act .mini.go')), 'Hire asks once first (in the page, no dialog)');
       await page.click('#sec-hands .hd-card .hd-act .mini.go'); await page.waitForTimeout(200);
       assert(await X('handsList().length') === list0 + 1 && await X('S.gold') === gold0 - cost && /Tents 2\/2/.test(await page.textContent('#sec-hands .hd-top')), 'the second tap hires: gold spent, Tents 2/2');
       await X('S.hands.board.apps.push(handsRollApp()); ui(true); true'); await page.waitForTimeout(300);
@@ -6839,7 +6839,7 @@ if (section('browser tooling portability (C5)')) try {
   assert(shards.status===0 && /craft tables consistent/.test(shards.stdout) && (shards.stdout.match(/^browser sections skipped: 0 \(none\)$/gm)||[]).length===1, 'C5: the real sharded runner resolves its file URL correctly and prints one final browser summary');
   const missing = path.join(os.tmpdir(), 'lanternfall-c5-no-such-playwright-module');
   const skipped = spawnSync(process.execPath, [entry, '--jobs=3', '--only=gatherers UI|landscape'], { encoding: 'utf8', timeout: 30000, env: { ...process.env, LF_PLAYWRIGHT: missing } });
-  assert(skipped.status===0 && (skipped.stdout.match(/^browser sections skipped:/gm)||[]).length===1 && /^browser sections skipped: 4 \(LF_PLAYWRIGHT/m.test(skipped.stdout), 'C5: the parent totals four intentionally skipped browser sections across shards and retains the reason');
+  assert(skipped.status===0 && (skipped.stdout.match(/^browser sections skipped:/gm)||[]).length===1 && /^browser sections skipped: 5 \(LF_PLAYWRIGHT/m.test(skipped.stdout), 'C5: the parent totals five intentionally skipped browser sections across shards and retains the reason');
   const tempRoot = path.resolve(os.tmpdir()), fixture = fs.mkdtempSync(path.join(tempRoot, 'lanternfall-c5-site-'));
   try {
     const dir = path.join(fixture, 'space # café'), tool = path.join(dir, 'tools', 'site.mjs');
@@ -7422,7 +7422,7 @@ if (section('gatherer trade runs (C4)')) try {
     assert(E('__crew.querySelectorAll("button").find(b=>b.textContent==="Trade run").disabled && __crew.querySelectorAll("button").find(b=>b.textContent==="Send on a job").disabled'), 'C4: the crew card blocks trade and gathering while the run is active');
     E('__crew.querySelectorAll("button").find(b=>b.textContent==="Recall").click()');
     assert(E('!!handsGet("tam").job'), 'C4: the first Recall press only arms the in-page confirmation');
-    E('__crew.querySelectorAll("button").find(b=>b.textContent==="Tap again: recall trade").click()');
+    E('__crew.querySelectorAll("button").find(b=>b.textContent==="Confirm: recall trade").click()');
     assert(E('!handsGet("tam").job && S.mats.wood[0]===4999 && S.gold===1e6 && !__trade.querySelectorAll("button").some(b=>b.textContent==="Send trade run")'), 'C4: confirmed UI Recall returns cargo with no reward and repeating requires a new quote review');
   }
   assert(!games.some(g=>g.errors.length), 'C4: trade validation, settlement and recall produce no handler errors');
@@ -8641,11 +8641,13 @@ if (section('action and menu icons (C26, browser)')) try {
           return i && r ? { box: i.offsetWidth, nat: i.naturalWidth, tf: i.style.transform || '', id: i._nic && i._nic.id, rowOver: r.scrollWidth - r.clientWidth, pageOver: document.documentElement.scrollWidth - innerWidth } : null; })())`)); };
         const pc = await g48('.pc-gear .pc-slot img', '.pc-gear', 48);
         await page.evaluate(s => window.__t.x(s), `(() => { setView('party', 'gear'); ui(true); return 1; })()`);
-        const gs = await g48('#sec-craft-gear .cf-gs img', '.cf-gear', 48);
+        // desktop-layout-v1: Desktop 2 (1600x900 and up) shows the Gear view's worn row at 96 px (the 48 px icon at x2)
+        const d2 = w >= 1600 && h >= 900, gs = await g48('#sec-craft-gear .cf-gs img', '.cf-gear', d2 ? 96 : 48);
         await page.evaluate(s => window.__t.x(s), `(() => { craftUI.openItem(window.__g48); return 1; })()`);
         const ih = await g48('.cf-ihbig .ic img', '.cf-ih', 96);
         const ok48 = g => g && g.box === 48 && g.nat === 48 && !g.tf && g.id === 'staff-g3' && g.rowOver <= 1 && g.pageOver <= 1;
-        assert(ok48(pc) && ok48(gs), `gear-icons-48 at ${w}x${h}: the Hero card row and the Gear view show the worn staff at native 48 px, no sideways overflow (${JSON.stringify({ pc, gs })})`);
+        const ok96 = g => g && g.box === 96 && g.nat === 48 && g.tf === 'scale(2)' && g.id === 'staff-g3' && g.rowOver <= 1 && g.pageOver <= 1;
+        assert(ok48(pc) && (d2 ? ok96(gs) : ok48(gs)), `gear-icons-48 at ${w}x${h}: the Hero card row shows the worn staff at native 48 px and the Gear view at ${d2 ? '96 px (x2, Desktop 2)' : 'native 48 px'}, no sideways overflow (${JSON.stringify({ pc, gs })})`);
         assert(ih && ih.box === 96 && ih.nat === 48 && ih.tf === 'scale(2)' && ih.pageOver <= 1, `gear-icons-48 at ${w}x${h}: the item card shows it at 96 px, the 48 px icon at x2 (${JSON.stringify(ih)})`);
         assert(r.seen >= 4 && !r.bad.length, `C26 at ${w}x${h}: tabs, bell and action bar show the approved icons at native size (${r.seen} seen${r.bad.length ? '; ' + r.bad.join('; ') : ''})`);
         assert(!errors.length, `C26 at ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
@@ -8785,7 +8787,7 @@ if (section('turn UI (browser)')) try {
       assert(on.rowBadge === 'Learn' && on.lockBadge === 'Level 16', `turn UI: each row says whether it can be learned now, or why not (${JSON.stringify([on.rowBadge, on.lockBadge])})`);
       assert(on.det && on.det.ab === 'powershot' && on.det.vis && /180% power/.test(on.det.desc) && /Perfect: a sure crit/.test(on.det.perfect) && /Hits for about/.test(on.det.nums) && on.det.tal === 2,
         `turn UI: a tap on a row opens its detail: the full text, its numbers, the Perfect text, and its two talents (shut until learned) (${JSON.stringify(on.det)})`);
-      assert(/Tap again/.test(on.armed) && on.armedSafe && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot; the detail then offers Q, W and E (${JSON.stringify(on.armed)}, ${on.armedSafe}, ${on.learned})`);
+      assert(/^Confirm/.test(on.armed) && on.armedSafe && on.learned, `turn UI: Learn takes two taps, spends the Scroll, and puts the ability in a free slot; the detail then offers Q, W and E (${JSON.stringify(on.armed)}, ${on.armedSafe}, ${on.learned})`);
       assert(on.talA && on.talB && on.talOff, `turn UI: the detail's A / B talents: A saves, B swaps, a second tap on B leaves it picked, and none of it costs points (${on.talA}, ${on.talB}, ${on.talOff})`);
       assert(on.closed && on.parryTal, `turn UI: the detail closes; Parry has its own row and its talents in the detail (${on.closed}, ${on.parryTal})`);
       assert(on.fLearned && on.fCan && on.fAll === 17, `turn UI: the filters show the learned abilities, the ones a Scroll can teach now, and all again (${on.fLearned}, ${on.fCan}, ${on.fAll})`);
@@ -10486,7 +10488,7 @@ if (section('hero attributes (browser)')) try {
         const rl0 = await X('document.querySelector(".at-reset").textContent');
         await page.click('.at-reset'); await page.waitForTimeout(150);
         const armed = await X('document.querySelector(".at-reset").textContent');
-        assert(/free/.test(rl0) && /^Tap again/.test(armed) && await X('attrPoints().spent === ' + free0), `${at}: the first reset is free ("${rl0}") and asks for a second tap ("${armed}") without resetting`);
+        assert(/free/.test(rl0) && /^Confirm/.test(armed) && await X('attrPoints().spent === ' + free0), `${at}: the first reset is free ("${rl0}") and asks for a second tap ("${armed}") without resetting`);
         await page.click('.at-reset'); await page.waitForTimeout(200);
         assert(await X('attrPoints().spent === 0 && attrPoints().free === ' + free0 + ' && S.attr.resets.wren === 1'), `${at}: the second tap resets every point`);
         // later resets cost gold: the price is on the button, and it stays grey without the gold
@@ -11936,7 +11938,9 @@ if (section('removed systems (W2-C)')) try {
 // bar are on screen and unclipped, Attack is the bottom-right slot, the stage zoom is a whole number, each tab's menu opens and
 // closes and the bar stays usable meanwhile, notices dock in the side column, the picker, the Attack sheet (Training), the
 // Training view and the gatherer board fit, and nothing scrolls sideways.
-for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landscape ${w}x${h} (browser, UX-L1)`)) try {
+// desktop-layout-v1: the desktop tiers (1200x600 and up; 1600x900 and up) grow the rail to 76 / 92 px and the top row to 56 / 64 px, and
+// 1920x1080 draws the stage at x3.
+for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (section(`landscape ${w}x${h} (browser, UX-L1)`)) try {
   const { pw, exe } = browserTools;
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('landscape (browser): Playwright or Chromium not here, skipped');
   else {
@@ -12065,12 +12069,13 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
               nu: R(q('#nuSlot')), scrollX: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - W, appX: q('#app').scrollWidth - q('#app').clientWidth };
           });
           const st = await X('stageStats()');
-          const railOk = L.rail.l >= 0 && L.rail.t === 0 && L.rail.b >= L.H - 1 && L.rail.w >= 44 && L.rail.w <= 80 && L.tabs.length === 5 && L.tabs.every(t => t.l >= L.rail.l && t.r <= L.rail.r + 1 && t.b <= L.H && t.h >= 44) && L.tabsTop;
+          const desk = w >= 1200 && h >= 600;
+          const railOk = L.rail.l >= 0 && L.rail.t === 0 && L.rail.b >= L.H - 1 && L.rail.w >= 44 && L.rail.w <= (desk ? 96 : 80) && L.tabs.length === 5 && L.tabs.every(t => t.l >= L.rail.l && t.r <= L.rail.r + 1 && t.b <= L.H && t.h >= 44) && L.tabsTop;
           assert(railOk, `${at}: the rail runs down the left edge with the five tabs, each 44 px or taller, on screen (rail ${JSON.stringify(L.rail)}, tabs ${L.tabs.map(t => t.t + '-' + t.b).join(' ')})`);
-          const topH = L.stage.t, topOk = L.top.length === 5 && L.top.every(x => x.t >= 0 && x.b <= topH + 1 && x.l >= L.rail.r - 1 && x.r <= L.W && x.top) && topH >= 40 && topH <= 52;
+          const topH = L.stage.t, topOk = L.top.length === 5 && L.top.every(x => x.t >= 0 && x.b <= topH + 1 && x.l >= L.rail.r - 1 && x.r <= L.W && x.top) && topH >= 40 && topH <= (desk ? 68 : 52);
           assert(topOk, `${at}: one top row (${topH} px) holds gold, Fight / Gather, Switch, the zone arrows and the bell, all on screen (${L.top.map(x => x.id + ' ' + x.l + '-' + x.r + '/' + x.t + '-' + x.b).join(', ')})`);
           const side = Math.min(...L.slots.map(s => s.l));
-          const stageOk = L.stage.l >= L.rail.r - 1 && L.stage.r <= side && L.stage.b <= L.H && L.stage.w >= 360 && L.stage.h >= 280 && Number.isInteger(st.ZM) && st.ZM === (w >= 1200 ? 2 : 1) && st.SW >= 360 && st.SH >= 280;
+          const stageOk = L.stage.l >= L.rail.r - 1 && L.stage.r <= side && L.stage.b <= L.H && L.stage.w >= 360 && L.stage.h >= 280 && Number.isInteger(st.ZM) && st.ZM === (w >= 1600 && h >= 900 ? 3 : w >= 1200 ? 2 : 1) && st.SW >= 360 && st.SH >= 280;
           assert(stageOk, `${at}: the stage fills the middle (${L.stage.w}x${L.stage.h}) at a whole-pixel zoom (x${st.ZM}: ${st.SW}x${st.SH} logical px, the heroes drawn at their ~96 art px)`);
           const maxR = Math.max(...L.slots.map(s => s.r)), maxB = Math.max(...L.slots.map(s => s.b));
           const rows = [L.slots.slice(0, 4).map(s => s.act).join(), L.slots.slice(4).map(s => s.act).join()].join('|');
@@ -12157,6 +12162,161 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
     } finally { await browser.close(); }
   }
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
+
+// ==== desktop-layout-v1 (docs/design/desktop-layout.md, "How v1 proves itself"): text and chrome grow on desktop screens, a sheet opened
+// in a menu docks beside the list, 1 to 5 press the tabs, and phones (740x360, 360x740) and 1024x768 tablets compute exactly what the
+// untransformed styles give. Mouse contexts (no touch), on tests/fixtures/save-current.json.
+if (section('scaleText (desktop-layout-v1)')) try {
+  const { scaleText } = await import('./build.mjs');
+  const g = v => `max(var(--tmin, 0px), calc(${v} * var(--tk, 1)))`;
+  const cases = [
+    ['.a { font-size: 12px; }', `.a { font-size: ${g('12px')}; }`],
+    ['.a { font-size: calc(12px * var(--display-k)); }', `.a { font-size: ${g('(12px * var(--display-k))')}; }`],
+    ['.a { font: 600 calc(11px * var(--display-k, 1))/1.1 var(--display); }', `.a { font: 600 ${g('(11px * var(--display-k, 1))')}/1.1 var(--display); }`],
+    ['.a { font-size: 12.5px !important; }', `.a { font-size: ${g('12.5px')} !important; }`],
+    ['button { font: inherit; }', 'button { font: inherit; }'],
+    ['.n { font-size: 0; }', '.n { font-size: 0; }'],
+    ['/* Reading font: switch it */ .b { color: red; }', '/* Reading font: switch it */ .b { color: red; }'],
+    ['.sb-lb { font-size: 9px; }   /* tk:off */', '.sb-lb { font-size: 9px; }   /* tk:off */'],
+    ['.a { font-size: smaller; } .b { font: 500 clamp(17px, 4.8vw, 21px)/1.45 var(--body); }', '.a { font-size: smaller; } .b { font: 500 clamp(17px, 4.8vw, 21px)/1.45 var(--body); }'],
+    ['body { font: 15px/1.4 var(--body); }', `body { font: ${g('15px')}/1.4 var(--body); }`],
+  ];
+  const bad = cases.filter(([i, o]) => scaleText(i) !== o).map(([i]) => `${i} -> ${scaleText(i)}`);
+  assert(!bad.length, 'scaleText: plain, calc and shorthand sizes grow; !important stays outside; inherit, 0, keywords, comments, tk:off lines and unparseable values stay' + (bad.length ? ': ' + bad.join(' / ') : ''));
+  const dist = fs.existsSync(distFile) ? fs.readFileSync(distFile, 'utf8') : '';
+  assert(/max\(var\(--tmin, 0px\), calc\(/.test(dist) && /--tk: 1; --tmin: 0px;/.test(dist), 'the built page carries the scaled sizes and the :root defaults (--tk 1, --tmin 0px)');
+} catch (e) { fail('scaleText crashed: ' + (e.stack || e)); }
+
+if (section('desktop layout (browser, desktop-layout-v1)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('desktop layout (browser): Playwright or Chromium not here, skipped');
+  else {
+    const { scaleText, rawCss } = await import('./build.mjs');
+    const html0 = fs.readFileSync(distFile, 'utf8'), raw = rawCss(), scaled = scaleText(raw);
+    const wrap = h => { const end = h.lastIndexOf('})();\n</script>'); return '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + h.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + h.slice(end); };
+    const htmlNew = wrap(html0), htmlRaw = html0.includes(scaled) ? wrap(html0.replace(scaled, () => raw)) : null;
+    assert(!!htmlRaw, 'desktop layout: the built page\'s styles are scaleText(the joined src/styles) (so the phone comparison below can swap them back)');
+    const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-current.json'), 'utf8')); save.last = Date.now();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, { touch = false, html = htmlNew } = {}) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
+      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // the check drives the game itself: no ticks race the measurements, no guide line covers a click
+      await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; S.onboard.tips = false; for (const x of document.querySelectorAll(".bsheet-ov .bsheet-x")) x.click(); true');
+      return { ctx, page, errs, X };
+    };
+    // the smallest visible text in #panels (the tk:off slot labels and the inline-sized text the transform cannot reach are outside it)
+    const SMALLEST = `(() => { let min = 99, at = ''; for (const e of document.querySelectorAll('#panels *')) {
+      if (![...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) continue;
+      const r = e.getBoundingClientRect(), cs = getComputedStyle(e); if (!r.width || !r.height || cs.visibility === 'hidden' || r.bottom < 0 || r.top > innerHeight) continue;
+      const f = parseFloat(cs.fontSize); if (f < min) { min = f; at = (e.className || e.tagName) + ': ' + e.textContent.trim().slice(0, 20); } }
+      return { min, at, body: parseFloat(getComputedStyle(document.body).fontSize), menu: Math.round(document.getElementById('menu').getBoundingClientRect().width),
+        scrollX: document.documentElement.scrollWidth - innerWidth }; })()`;
+    const CLIPPED = `(() => [...document.querySelectorAll('body *')].filter(e => { const cs = getComputedStyle(e); if (cs.textOverflow !== 'ellipsis' || !e.textContent.trim()) return false;
+      const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight && e.scrollWidth > e.clientWidth + 1; })
+      .map(e => (e.className || e.tagName) + ': ' + e.textContent.trim().slice(0, 24)))()`;
+    const view = async (X, page, v) => { await X(v ? `setTab(${JSON.stringify(v)}); ui(true); true` : 'closeMenu(); ui(true); true'); await menuSettled(page, !!v); await page.waitForTimeout(250); };
+    try {
+      // ---- 1280x720: text, the panel, the dock, the keys ----
+      {
+        const { ctx, page, errs, X } = await open(1280, 720);
+        assert(await X('isDesk() && matchMedia(DESK_Q).matches'), '1280x720: the Desktop 1 tier is on (isDesk)');
+        await view(X, page, 'gear');
+        const t = await X(SMALLEST);
+        assert(t.min >= 14 && t.body >= 17 && t.menu >= 590 && t.scrollX <= 0, `1280x720 Hero > Gear: the smallest text is 14 px or more, body text 17 px or more, the menu 590 px or wider, no sideways scroll (${JSON.stringify(t)})`);
+        const tiles = await page.$$('#sec-craft-gear .cf-gs');
+        await tiles[0].click(); await page.waitForTimeout(300);
+        const d = await page.evaluate(() => { const ov = document.querySelector('#menu > .bsheet-ov.docked'); if (!ov) return null;
+          const r = ov.getBoundingClientRect(), seg = document.getElementById('viewSeg').getBoundingClientRect(), list = document.getElementById('sec-craft-gear').getBoundingClientRect(), t = document.querySelector('#sec-craft-gear .cf-gs:nth-child(2)'), tr = t.getBoundingClientRect(), hit = document.elementFromPoint(tr.left + tr.width / 2, tr.top + tr.height / 2);
+          return { top: Math.round(r.top), segB: Math.round(seg.bottom), left: Math.round(r.left), listR: Math.round(list.right), tileHit: !!hit && t.contains(hit), modal: document.querySelector('#menu .bsheet').getAttribute('aria-modal'), label: document.querySelector('#menu .bsheet').getAttribute('aria-label'), docked: document.getElementById('app').classList.contains('detail-docked') }; });
+        assert(d && d.top >= d.segB - 1 && d.left >= d.listR - 1 && d.tileHit && d.modal == null && d.docked, `1280x720: a gear tile's sheet docks beside the list, under the view switcher, not modal, and the list's next tile is still on top (${JSON.stringify(d)})`);
+        await tiles[1].click(); await page.waitForTimeout(300);
+        const d2 = await page.evaluate(() => [document.querySelectorAll('.bsheet-ov').length, (document.querySelector('#menu .bsheet') || {}).getAttribute && document.querySelector('#menu .bsheet').getAttribute('aria-label')]);
+        assert(d2[0] === 1 && d && d2[1] && d2[1] !== d.label, `1280x720: clicking the next item swaps the docked sheet (${JSON.stringify([d && d.label, d2])})`);
+        assert(await X('guideLineOk()'), '1280x720: a docked sheet does not hold Hesketh\'s lines (guideLineOk)');
+        // a sheet that pops up on its own (a story card, Next up) opens over the dock without closing it, and Escape closes the top one first
+        const SH = '[document.querySelectorAll(".bsheet-ov.docked").length, document.querySelectorAll(".bsheet-ov:not(.docked)").length].join()';
+        await X('openSheet(a => a.body.append("over the dock")); true'); await page.waitForTimeout(150);
+        const m1 = await X(SH);
+        await page.keyboard.press('Escape'); await page.waitForTimeout(250);
+        const m2 = await X(SH);
+        assert(m1 === '1,1' && m2 === '1,0', `1280x720: a modal sheet opens over the docked sheet and keeps it; Escape closes the modal first (${JSON.stringify([m1, m2])})`);
+        await page.keyboard.press('Escape'); await page.waitForTimeout(200);
+        const e1 = await X('[!!document.querySelector(".bsheet-ov"), S.tab].join()');
+        await tiles[0].click(); await page.waitForTimeout(250);
+        await page.keyboard.press('3'); await menuSettled(page, true); await page.waitForTimeout(200);
+        const k3 = await X('[S.tab, !!document.querySelector(".bsheet-ov"), document.getElementById("app").classList.contains("detail-docked")].join()');
+        await page.keyboard.press('3'); await menuSettled(page, false);
+        const k3b = await X('S.tab');
+        assert(e1 === 'false,party' && k3 === 'gat,false,false' && k3b === '', `1280x720: Escape closes the docked sheet and keeps the menu; 3 opens Gather (closing the dock), 3 again closes it (${JSON.stringify([e1, k3, k3b])})`);
+        await page.keyboard.press('2'); await menuSettled(page, true);
+        await page.keyboard.press('1'); await menuSettled(page, false);
+        const k1 = await X('[S.tab, S.activity].join()');
+        await X('(() => { const i = document.createElement("input"), s = document.createElement("select"); i.id = "__dkI"; s.id = "__dkS"; s.append(new Option("a")); document.body.append(i, s); return true; })()');
+        const typed = [];
+        for (const sel of ['#__dkI', '#__dkS']) { await page.focus(sel); await page.keyboard.press('2'); await page.waitForTimeout(80); typed.push(await X('S.tab')); }
+        await X('document.activeElement.blur(); true');
+        await page.keyboard.press('Control+2'); await page.waitForTimeout(80); typed.push(await X('S.tab'));
+        assert(k1 === ',fight' && typed.every(x => x === ''), `1280x720: 2 opens Hero and 1 goes back to the fight; 2 in a text field, in a select or with Ctrl held does nothing (${JSON.stringify([k1, typed])})`);
+        const hint = await page.evaluate(() => getComputedStyle(document.querySelector('.tabs .tab[data-tab="gat"]'), '::before').content);
+        assert(hint === '"3"', `1280x720 with a mouse: the rail's Gather tab shows its key, 3 (${hint})`);
+        const clip = [];
+        for (const v of ['', 'gear', 'abilities', 'wood', 'make']) { await view(X, page, v); clip.push(...(await X(CLIPPED)).map(c => (v || 'fight') + ' ' + c)); }
+        assert(!clip.length, `1280x720: no name ends in "..." in the fight, Hero > Gear, Hero > Abilities, Gather > Wood or Craft > Make (${clip.slice(0, 4).join(' / ') || 'none'})`);
+        assert(!errs.length, '1280x720: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // ---- 1366x640, 1920x1080, 1440x900, 1600x900: text, zoom, big gear ----
+      for (const [w, h, floor, zm] of [[1366, 640, 14, 2], [1920, 1080, 15, 3], [1440, 900, 14, 2], [1600, 900, 14, 2]]) {
+        const { ctx, page, errs, X } = await open(w, h);
+        const z = await X('stageStats().ZM');
+        if (w === 1440 || w === 1600) { assert(z === zm, `${w}x${h}: the stage draws at x${zm} (pinned; got x${z})`); await ctx.close(); continue; }
+        await view(X, page, 'gear');
+        const t = await X(SMALLEST);
+        assert(t.min >= floor && t.scrollX <= 0 && z === zm, `${w}x${h} Hero > Gear: the smallest text is ${floor} px or more, no sideways scroll, the stage at x${zm} (${JSON.stringify({ ...t, z })})`);
+        if (w === 1920) {
+          await page.waitForTimeout(300);
+          const ic = await page.evaluate(() => { const g = document.querySelector('#sec-craft-gear .cf-gs .ic img'), b = document.querySelector('.cf-bag .cf-tile > img:first-child'); return { gear: g && g.offsetWidth, bag: b && b.offsetWidth }; });
+          assert(ic.gear === 96 && (ic.bag == null || ic.bag === 48), `1920x1080: the worn gear row shows 96 px icons and a bag tile 48 px (${JSON.stringify(ic)})`);
+          const clip = [];
+          for (const v of ['', 'gear', 'abilities', 'wood', 'make']) { await view(X, page, v); clip.push(...(await X(CLIPPED)).map(c => (v || 'fight') + ' ' + c)); }
+          assert(!clip.length, `1920x1080: no name ends in "..." in the five views (${clip.slice(0, 4).join(' / ') || 'none'})`);
+        }
+        assert(!errs.length, `${w}x${h}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // ---- phones and tablets: not a desktop tier, and every size and box is what the untransformed styles give ----
+      const SNAP = `(() => { const out = {}, all = [...document.querySelectorAll('#app *, .bsheet-ov *')];
+        out.fonts = all.map(e => getComputedStyle(e).fontSize).join(',');
+        const r = e => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.width, b.height].map(v => Math.round(v * 2) / 2).join(' '); };
+        out.boxes = [...document.querySelectorAll('.tabs, .tab, #stageBox, #menu, #menuHead, #panels, #soloBar, #soloBar .sbtn, .nu-slot, .purse, #zStep, #bellBtn, .cf-gs, .cf-bag .cf-tile, .bsheet, .bsheet-x')].map(r).join('|');
+        out.n = all.length; return out; })()`;
+      for (const [w, h, touch] of [[740, 360, true], [360, 740, true], [1024, 768, true]]) {
+        const snaps = [];
+        for (const html of [htmlNew, htmlRaw]) {
+          const { ctx, page, X } = await open(w, h, { touch, html });
+          const desk = await X('isDesk()');
+          const s = { desk, fight: await X(SNAP) };
+          if (w === 1024 && html === htmlNew) {
+            // the walk at 1024x768 found "Attack" and "Hard · counters" cut off on the fight slots when the side column was 208 px
+            const clip = (await X(CLIPPED)).filter(c => /^sb-/.test(c));
+            assert(!clip.length, `1024x768: no fight slot label ends in "..." (${clip.slice(0, 3).join(' / ') || 'none'})`);
+          }
+          await view(X, page, 'gear');
+          await X('(t => t && t.click())(document.querySelector("#sec-craft-gear .cf-gs")); true'); await page.waitForTimeout(400);
+          s.gear = await X(SNAP); snaps.push(s); await ctx.close();
+        }
+        const [a, b] = snaps, same = k => a[k].n === b[k].n && a[k].fonts === b[k].fonts && a[k].boxes === b[k].boxes;
+        assert(!a.desk && same('fight') && same('gear'), `${w}x${h}: not a desktop tier, and every font size and the layout boxes match the untransformed styles in the fight and in Hero > Gear with an item sheet open (${JSON.stringify({ desk: a.desk, fight: same('fight'), gear: same('gear') })})`);
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('desktop layout (browser) crashed: ' + (e.stack || e)); }
 
 // ---- Lantern Caches (card cache-core; 55-caches.js, 75-caches-ui.js) ----
 if (section('lantern caches')) try {
@@ -13705,7 +13865,7 @@ if (section('forge-line-while-fighting')) try {
   }
 } catch (e) { fail('forge-line-while-fighting crashed: ' + (e.stack || e)); }
 
-// ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Tap again" for 6 s; Cancel always asks twice ====
+// ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Confirm" for 6 s; Cancel always asks twice ====
 if (section('camp-build-tap-again')) try {
   const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-camp-ui.js'), 'utf8');
   assert(/const CONFIRM_MS = 6000;/.test(src) && !/'Sure\?'/.test(src), 'camp build tap again: the camp confirm window is 6 s and no button says "Sure?"');
@@ -13744,14 +13904,14 @@ if (section('camp-build-tap-again')) try {
       await X('onboardTips(false); S.gold = 300; S.mats.wood[0] = 12; window.__now = Date.now(); Date.now = () => window.__now; ui(true); true');
       await page.waitForTimeout(500); const off = await X('soloGuideWants()');
       await tap(QB); const a1 = await st();
-      assert(off !== 'bench' && !a1.building && a1.price === 'Tap again', `camp build tap again (guide off): the first tap only arms it, and it reads "Tap again" (guide "${off}", ${JSON.stringify(a1)})`);
+      assert(off !== 'bench' && !a1.building && a1.price === 'Confirm', `camp build tap again (guide off): the first tap only arms it, and it reads "Confirm" (guide "${off}", ${JSON.stringify(a1)})`);
       await X('window.__now += 5000; true'); await tap(QB); const a2 = await st();
       assert(a2.building, `camp build tap again (guide off): a second tap 5 s later builds (${JSON.stringify(a2)})`);
       await tap(CB); const c3 = await st(); await tap(CB); const c4 = await st();
       assert(c3.building && !c4.building, `camp build tap again (guide off): Cancel takes two taps (${JSON.stringify(c3)} -> ${JSON.stringify(c4)})`);
       await X('S.gold = 300; S.mats.wood[0] = 12; ui(true); true');
       await tap(QB); await X('window.__now += 7000; true'); await tap(QB); const a3 = await st();
-      assert(!a3.building && a3.price === 'Tap again', `camp build tap again (guide off): a second tap 7 s later only arms it again (${JSON.stringify(a3)})`);
+      assert(!a3.building && a3.price === 'Confirm', `camp build tap again (guide off): a second tap 7 s later only arms it again (${JSON.stringify(a3)})`);
       assert(!errs.length, 'camp build tap again: no page errors' + (errs.length ? ': ' + errs[0] : ''));
       await ctx.close();
     } finally { await browser.close(); }

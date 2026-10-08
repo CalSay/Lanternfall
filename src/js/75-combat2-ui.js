@@ -103,8 +103,10 @@
         const w = el('div', 'cb-set'); w.append(b, el('p', 'note', note));
         return w;
       };
-      sec.append(row('Haptics', 'haptic', 'A short buzz when a warning starts, and when you answer it.'),
-        row('Buttons on the left', 'left', 'Moves the ability buttons to the left side, for your left thumb.'),
+      // Haptics and the left-thumb buttons are for touch screens: hidden with no touch pointer (60-combat2.css; desk playtest F14)
+      const touch = w => { w.classList.add('touch-only'); return w; };
+      sec.append(touch(row('Haptics', 'haptic', 'A short buzz when a warning starts, and when you answer it.')),
+        touch(row('Buttons on the left', 'left', 'Moves the ability buttons to the left side, for your left thumb.')),
         row('Wider timing windows', 'assist', 'Gives you more time to parry and dodge, from your next fight. Rewards stay the same.', () => S.turn));
     },
     update() {}

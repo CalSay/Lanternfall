@@ -226,7 +226,7 @@ var soloIconURL = () => '';
   const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'dodge' };   // SOLO2: Space dodges
   addEventListener('keydown', e => {
     if (bar.hidden || pick || gameHeld() || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
+    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
     if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
     if (e.key.toLowerCase() === 'f') { if (typeof turnCombatOn === 'function' && turnCombatOn()) return; e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle (no Auto in turn fights)
     const id = KEYS[e.key.toLowerCase()]; if (!id) return;
@@ -286,7 +286,10 @@ var soloIconURL = () => '';
   function setTab(id) {
     if (!tabBtn[id] || tabBtn[id].hidden) id = 'act';
     dockTab = id;
-    for (const [k, , p] of TABS) { tabBtn[k].setAttribute('aria-selected', String(k === id)); p.hidden = k !== id; }
+    // desktop-layout-v1 (desk playtest F08): on a desktop screen Foe opens above the buttons, so you still see your moves land
+    const both = id === 'foe' && typeof isDesk === 'function' && isDesk();
+    for (const [k, , p] of TABS) { tabBtn[k].setAttribute('aria-selected', String(k === id)); p.hidden = k !== id && !(both && k === 'act'); }
+    pane.classList.toggle('with-foe', both);
     skSig = foeSig = ''; if (!bar.hidden) { try { fillSkills(); fillFoe(); } catch (e) {} }
   }
   // Skills: one row per slot (tap one to change what it holds, as a long press does)
@@ -333,6 +336,7 @@ var soloIconURL = () => '';
     paneFoe.replaceChildren(...rows);
   }
   setTab('act');
+  if (typeof deskMQ === 'object') deskMQ.addEventListener('change', () => setTab(dockTab));
 
   let t = 0;
   function update() {
@@ -441,7 +445,7 @@ var soloIconURL = () => '';
         if (ok) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
         sec._up();
       };
-      const lvText = (k, info, lv, on_) => armedK === k ? (armedA === 'unlock' ? 'Tap again to unlock' : 'Tap again')
+      const lvText = (k, info, lv, on_) => armedK === k ? (armedA === 'unlock' ? 'Confirm: unlock' : 'Confirm')
         : info.state === 'coming-soon' ? 'Coming soon' : info.playable ? `Lv ${(lv[k] || { L: 1 }).L}` + (on_ ? ' · Playing' : '') : info.ready ? 'Locked · Unlock' : 'Locked';
       const fig = (k, cv) => { try { if (heroHasKit(k) && typeof heroArtPreview === 'function') heroArtPreview(cv, k); } catch (e) {} };
 

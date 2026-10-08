@@ -18,7 +18,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
   const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] story ui', e); return d; } };
   const PAGE_IC = () => iconURL('charm', '#F2E27A');
-  const BLOCK = '.away-ov, #createScreen, .join-ov, .gl-ov, .mm-ov, .bsheet-ov, .dd-fc-ov, .dw-ov';
+  const BLOCK = '.away-ov, #createScreen, .join-ov, .gl-ov, .mm-ov, .bsheet-ov:not(.docked), .dd-fc-ov, .dw-ov';
   const blocked = () => !!document.querySelector(BLOCK);
   const menuOpen = () => !!S.tab;   // a landscape menu covers most of the stage
   const stageBox = () => document.getElementById('stageBox');
