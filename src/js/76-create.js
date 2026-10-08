@@ -23,7 +23,10 @@ var classUI;
     const inner = el('div', 'create-in');
     const h = el('h1', null, 'Who are you?'); h.id = 'createTitle';
     const lede = el('p', 'create-lede', 'You carry the lamp. Pick who you are.');
-    const warn = el('p', 'create-warn', 'At camp you can hand the lamp to a friend, for free. Gold, gear and camp are shared.');
+    // starters-join-when-met: in a new game the other two join on the road (56c); a save that has all three keeps the old line
+    const warn = el('p', 'create-warn', typeof heroJoinsAhead === 'function' && heroJoinsAhead()
+      ? 'You meet the other two on the road. Once they join, hand them the lamp on the Hero tab, for free. Gold, gear and camp are shared.'
+      : 'At camp you can hand the lamp to a friend, for free. Gold, gear and camp are shared.');
     const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero');
     const keys = HERO_ORDER;
     if (!keys.includes(pick) || !heroCanPlay(pick)) pick = keys.find(heroCanPlay);
@@ -87,7 +90,7 @@ var classUI;
       const info = heroRouteInfo(pick);
       if (!info.playable) { if (info.ready && !info.unlocked && heroUnlock(pick)) { try { save(); } catch (e) {} select(pick); } return; }
       let okd = false;
-      try { okd = heroPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }
+      try { okd = typeof heroBegin === 'function' ? heroBegin(pick) : heroPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }   // heroBegin: a new game records who it began as
       if (!okd) return;
       try { save(); } catch (e) {}
       if (typeof updatePortrait === 'function') updatePortrait();

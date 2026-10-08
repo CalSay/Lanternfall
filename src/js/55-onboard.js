@@ -22,10 +22,12 @@
 //                              asks only while no guide step shows and no fight is in view; it pauses the game only to hold
 //                              the gap between two foes with the fight in view, until Got it (staged-guide-followups).
 // onboardUseDone(id)           the line was read (x, or about 7 s on screen). No event, so guide walks never see it.
+// onboardJoined(id)            a starter joined on the road (56c, starters-join-when-met): the first opens the `switch` row, a later
+//                              one stamps the clock (got['join:<id>']), so no unlock opens within ONBOARD_TUNE.gap of any join.
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts }.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire, guideLessonHold;
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
 let lessonLast = -1;   // the foe's clock at the last tick (guideLessonHold: a hold starts only on the frame that crosses a window's opening)
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
@@ -75,7 +77,10 @@ const FEATURES = [
   // "Show every tab" until its own rule holds, so nobody sees an empty view.
   // Hands (N1, 57f-hands.js): Hearth 2 and the Tavern built. The probe is safe before 57f has loaded.
   { id: 'hands', tab: 'world', view: 'tav', name: 'Hands', why: 'Hearth 2 and the Tavern built', late: true,
-    when: () => { try { return handsOpen(); } catch (e) { return false; } } }
+    when: () => { try { return handsOpen(); } catch (e) { return false; } } },
+  // starters-join-when-met: switching heroes opens when the first starter joins a new game (56c). Never on a save that began with all three.
+  { id: 'switch', name: 'Switch hero', why: 'a starter joins you at a Champion (a new game)', late: true,
+    when: () => typeof heroJoins === 'function' && heroJoins().length > 0, now: () => true }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 
@@ -102,7 +107,8 @@ const FIRST_USE = {
   raid: { text: 'Every player fights this one boss together. Your hits add to the same total.' },
   stars: { text: 'Each star changes how your fights play.', via: 'notice' },
   deep: { text: 'The Deepwell goes down floor by floor. Pick a boon between floors and earn Marks.' },
-  hands: { text: "You can hire gatherers on the Tavern board. They work shifts while you're away." }
+  hands: { text: "You can hire gatherers on the Tavern board. They work shifts while you're away." },
+  switch: { text: 'Switch heroes on the Hero tab, for free.', via: 'notice' }   // the join line on the Champion card (56c heroJoinLine)
 };
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
@@ -350,6 +356,7 @@ function craftReady() {
     return null;
   };
   onboardUseDone = id => { O().done[id] = 1; };
+  onboardJoined = id => { if (!unlock('switch', true) && !O().all) O().got['join:' + id] = Math.round(O().t); };
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
   const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', 'camp-look': 'camp', codex: 'codex', deep: 'deep' };
