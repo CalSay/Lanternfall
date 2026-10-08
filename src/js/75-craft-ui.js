@@ -327,7 +327,7 @@ let craftUI = null;
         eq.addEventListener('click', () => { equipHero(it.id, d.pos); if (wornBy(it.id)) { st8.result = null; st8.resArm = false; } ui(true); });   // Cal's play note 17: worn, so the card closes (Keep and Salvage are for a piece that is not worn)
         acts.append(eq);
       }
-      const keep = el('button', 'big cf-act cf-keep', 'Keep'); keep.type = 'button';
+      const keep = el('button', 'big cf-act cf-keep', wr ? 'Done' : 'Keep'); keep.type = 'button';   // gear-in-first-25: a piece that went on by itself is done, not kept
       keep.addEventListener('click', () => { st8.result = null; ui(true); });
       acts.append(keep);
       if (!wr) {
@@ -387,6 +387,9 @@ let craftUI = null;
       c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
+    // gear-in-first-25: where each short gathered material comes from ("Bristlehide: from Hunting, which opens at zone 5."); none for
+    // essence, gold, a middle (Planks, Ingots) or a material in hand
+    for (const [f, n] of Object.entries(kindCost(k, t))) { if (matOwn(f, t) >= n) continue; const ln = matSourceLine(f, t); if (ln) row.append(el('div', 'cf-src', ln)); }
     const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds));
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));

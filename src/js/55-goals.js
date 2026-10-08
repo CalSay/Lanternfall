@@ -84,7 +84,9 @@ var forgeGoalPicks = 0;
       const r = all.find(e => e.reserve && !pick.includes(e));
       if (r) {
         if (pick.length < n) pick.push(r);
-        else { let lo = -1; pick.forEach((e, i) => { if (!e.ready && (lo < 0 || e.score < pick[lo].score)) lo = i; }); if (lo >= 0) pick[lo] = r; }   // a ready goal is never displaced
+        else { let lo = -1; pick.forEach((e, i) => { if (!e.ready && (lo < 0 || e.score < pick[lo].score)) lo = i; });   // a ready goal is never displaced,
+          if (lo < 0 && r.prio >= 13) pick.forEach((e, i) => { if (e.prio < 13 && (lo < 0 || e.score < pick[lo].score)) lo = i; });   // except by a prio 13+ row (gear-in-first-25: the first weapon)
+          if (lo >= 0) pick[lo] = r; }
       }
     }
     // order: ready first, then by score; shown goals keep their old order unless clearly passed
@@ -323,7 +325,21 @@ var forgeGoalPicks = 0;
   const gateScore = e => (e.gate.station ? 2 : 0) + e.gate.lv / e.gate.need + (e.pos === 'weapon' ? 1e-6 : 0);
   // forgeNext() -> { kind, t, pos, cost, p } the open recipe closest to done, or, when none with p > 0 is open,
   // { kind, t, pos, gate: { skill, lv, need, mat?, station? }, p } the nearest gate (p = lv / need, at most 0.99, never Ready)
+  // gear-in-first-25: from the first tool made (the guide's `tool` step) until a weapon is worn, with none in the bag, the hero's own
+  // weapon is the pick, ahead of any tool or armour ("closest to done" let a ready Woodaxe hide a weapon short of Quartz). `closed`: the
+  // first short material whose place is not open yet (matPlace, 55-onboard); the row then says when it opens.
+  const firstWeapon = () => {
+    try {
+      if (typeof stepDone !== 'function' || !stepDone('tool') || equipped('weapon') || wearPiece('weapon')) return null;
+      const kind = weaponKind(); if (!kind) return null;
+      const c = canCraft(kind, 1); if (!c.cost || c.unbuilt) return null;
+      const m = c.cost.mats, ks = Object.keys(m), short = ks.filter(k => matOwn(k, 1) < m[k]);
+      const p = c.ok ? 1 : Math.max(0.01, Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(matOwn(k, 1), m[k])), 0) / Math.max(1, ks.length)));
+      return { kind, t: 1, pos: 'weapon', cost: m, p, score: p + 0.02, first: true, short, closed: short.find(k => !matPlace(k, 1).open) || null };
+    } catch (e) { return null; }
+  };
   const forgeNext = () => {
+    const fw = firstWeapon(); if (fw) return fw;
     let best = null, gate = null;
     const zt = zoneTier(S.maxZone);
     const eq = equipNext();
@@ -349,6 +365,15 @@ var forgeGoalPicks = 0;
     }
     return best && best.p > 0 ? best : gate || best;   // an open recipe at p = 0 (Next Up drops it) does not hide a gate
   };
+  // the first weapon's short material a Go can send you to gather (the first gathered one), or null (only essence is short)
+  const firstWeaponGather = b => b.short.find(k => CRAFT_FAMILY[k] && CRAFT_FAMILY[k].src === 'gather') || null;
+  const firstWeaponWhere = b => {
+    if (b.closed) { const pl = matPlace(b.closed, 1), nm = costName(b.closed, 1);
+      return pl.opens ? `${nm} comes from ${SKILL[pl.skill]}, which opens at ${pl.opens}` : `${nm} comes from ${CRAFT_FAMILY[b.closed].from.replace(/ only\.$/, '').replace(/\.$/, '')}`; }
+    const k = firstWeaponGather(b) || b.short[0], n = fmt(b.cost[k] - matOwn(k, 1)), nm = costName(k, 1);
+    if (k === 'ess' || k === 'gold') return `win ${n} more ${nm} in fights`;
+    return `${matPlace(k, 1).verb.toLowerCase()} ${n} ${nm} at the ${NODE_NAMES[k][0]}`;
+  };
   // a gate row's Go: Craft at the station's tier 1 (a craft there levels it), or the gathering skill's Gather view
   const gateGo = b => !b.gate.station ? { tab: 'gat', view: b.gate.skill }
     : CRAFT_KINDS[b.kind].st === b.gate.station ? { tab: 'forge', sel: stationSel(b.gate.station), fn: () => { S.fSlot = b.kind; S.fTier = 1; forgeGoalPicks++; } }
@@ -358,16 +383,21 @@ var forgeGoalPicks = 0;
     id: 'forge', sys: 'forge',
     // a tier gate keeps a row of its own once the frontier boss has beaten you: it is the way forward ("gear up"), and in the seed 1
     // walk it otherwise sat 4th behind the boss, refine and contract rows
-    reserve: () => { const b = forgeNext(), bt = S.bossTry; return b && b.gate && bt && bt.tries && typeof bossTryKey === 'function' && bt.tries[bossTryKey(soloHero(), S.maxZone)] > 0 ? 1 : 0; },
+    reserve: () => { const b = forgeNext(), bt = S.bossTry; if (b && b.first) return b.closed ? 0 : 1; return b && b.gate && bt && bt.tries && typeof bossTryKey === 'function' && bt.tries[bossTryKey(soloHero(), S.maxZone)] > 0 ? 1 : 0; },
+    // gear-in-first-25: the first weapon, its places open, ranks above every unfinished row (20); once Ready, above other Ready rows
+    // (13) but under a pile of unspent points (hero-up's 20, even with this row shown first: 2.13 + STICK < 2.2)
+    prio: () => { const b = forgeNext(); return b && b.first && !b.closed ? (b.p >= 1 ? 13 : 20) : 0; },
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
     label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
       if (b.gate) return `${nm}: ${SKILL[b.gate.skill]} ${b.gate.lv} of ${b.gate.need}` + (b.gate.mat ? ` opens ${b.gate.mat}` : '');
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
+      if (b.first) return `${nm}: ${firstWeaponWhere(b)}`;   // "Pine Staff for the zone 4 boss: mine 3 Quartz at the Quartz Geode"
       const k = Object.keys(b.cost).find(k => matOwn(k, b.t) < b.cost[k]);
       return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - matOwn(k, b.t))} more ${costName(k, b.t)}` : `Craft ${a} ${nm}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
-    go: () => { const b = forgeNext(); return b && b.gate ? gateGo(b) : { tab: 'forge', sel: '#forgeBtn', fn: () => { const x = forgeNext(); if (x && !x.gate) { S.fSlot = x.kind; S.fTier = x.t; forgeGoalPicks++; } } }; }
+    go: () => { const b = forgeNext(), w = b && b.first && !b.closed && b.p < 1 ? firstWeaponGather(b) : null; if (w) return { tab: 'gat', view: CRAFT_FAMILY[w].skill, sel: `.gx-row[data-kind="${w}"][data-t="1"]` };
+      return b && b.gate ? gateGo(b) : { tab: 'forge', sel: '#forgeBtn', fn: () => { const x = forgeNext(); if (x && !x.gate) { S.fSlot = x.kind; S.fTier = x.t; forgeGoalPicks++; } } }; }
   });
   // Upgrade (craft-delta): a worn piece whose next upgrade you can pay for now, offered only while no craft is ready
   // (the craft goal is not Ready). Weapon first, then the slot order. Go opens the piece's sheet on Hero, Gear.
@@ -375,7 +405,7 @@ var forgeGoalPicks = 0;
   // shared material (same tier, or essence) than the craft needs; when nothing is left, the craft goal leads.
   const upgradeNext = () => {
     const f0 = forgeNext(), f = f0 && !f0.gate ? f0 : null;   // next-tier-gate-goal: a gate row replaces no piece
-    if (f && f.p >= 1) return null;
+    if (f && (f.p >= 1 || f.first)) return null;   // gear-in-first-25: no upgrade while the first weapon is still to make
     for (const pos of CRAFT_HERO_POS) {
       if (f && f.p > 0 && pos === f.pos) continue;
       const it = equipped(pos);
