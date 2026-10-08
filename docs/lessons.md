@@ -112,6 +112,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 - When a tab gains a fifth view, let a long label take its room (`grid-auto-columns: minmax(min-content, 1fr)`) instead of shrinking the font: at 11 px Abilities still clipped by 5 px at 360x740 and 11 px in the 740x360 header. And a check that opened a view on one tab and then calls `setView` on another must `setTab` first. Why: wire-menu-icons failed and C24 timed out when Gear moved to the Hero tab. (cal-0107-gear-and-rates, 2026-10-07)
 - In a proof route, tap a Gather view by its whole label (`tap "Mining"`, `tap "Wood"`), never by a verb: `tap` falls back to a partial match, so `tap "Mine"` hit the first row's "Mine at the Iron Vein", started mining and closed the menu. Why: the first storage-and-gather route failed 7 expects that way. (cal-0107-storage-and-gather-ui, 2026-10-07)
+- When a landscape fix trims a sheet's 44 px grab row, keep the 44 px close button (`.bsheet-x`, top 0) clear of the body's buttons, and have the check assert no overlap, not only that each button is on screen. Why: the reviewer found the close button over the top 16 px of Continue on short story cards after the grab row went to 28 px; a tap there skipped the scene. (story-card-landscape-fit, 2026-10-08)
 
 ## Saves and offline parity
 
@@ -153,6 +154,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A pacing check written before the unlock governor (story-unlock-gates) asserts the governor's spacing, not fixed minute marks. Why: PR #58's faster warm game opened earned rows first, which queued Gather and Bounties past the old 4/5-minute marks (judge ruling). (hero-progression-rework, 2026-10-06)
 - A proof route closes cards that arrive on a timer (moment cards, tips) with `wait` plus `tap-if`, never a bare `tap`, and is replayed a few times in both views before pushing. Why: after the moment layer merged, the mid save's new-hero card covered PR #58's switch at a varying moment, so eyes failed with no error shown (playtest exits 1 on a covered tap). (hero-progression-rework, 2026-10-06)
 - Sweep a new game to zone 15 with the clock moving to prove an unlock chain; set the hero level with the zone. Why: Stars opens at hero level 10 or a first star, so a sweep with a level 1 hero called it unreachable. (unlock-tip-coverage, 2026-10-07)
+- Keep the word "landscape" out of a new check.mjs section name: the C5 check runs `--only=gatherers UI|landscape` with Playwright missing and expects exactly 4 skipped sections, so a fifth match fails it. Why: the first full run of story-card-landscape-fit failed C5 until the section was renamed "story cards fit at 740x360". (story-card-landscape-fit, 2026-10-08)
+
 ## Reviews and Codex
 
 - "@codex review" must be commented by hand after opening the PR; auto review does not fire. Why: seen on fix-bounty-kind. Codex drips one P1 per round, so close the whole class of a finding at once. (fix-bounty-kind, 2026-10-05)
