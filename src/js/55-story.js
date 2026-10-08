@@ -75,7 +75,8 @@
 // NPC scene at an area's door); a Champion's or Elder's NPCs ride that scene and are not filed on their own.
 
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
-const STORY_TUNE = { champMoment: true };   // champion-moment: a Champion's first clear is one big card (its scene, then the cache). false: the scene plays as a story card and the cache opens on its own, as before
+const STORY_TUNE = { champMoment: true,   // champion-moment: a Champion's first clear is one big card (its scene, then the cache). false: the scene plays as a story card and the cache opens on its own, as before
+  joinOnMeet: true };   // starters-join-when-met (56c): a new game's other two starters join at their meet scenes' Champions. false: all three from the start
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
@@ -152,7 +153,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     flush();
     return out;
   }
-  const npcCards = id => { const n = D('npc')[id]; return n && !(n.not && n.not === storyHero()) ? cardsOf(n.lines, false, n.who || '') : []; };   // `not`: a starter met as a person is not in his own story
+  const startedAs = () => (S.party && S.party.unlock && S.party.unlock.startedAs) || '';   // starters-join-when-met: the starter a new game began as (56c)
+  const npcCards = id => { const n = D('npc')[id]; return n && !(n.not && (n.not === storyHero() || n.not === startedAs())) ? cardsOf(n.lines, false, n.who || '') : []; };   // `not`: a starter met as a person is not in his own story, nor met by the game that began as him
   const npcAt = at => Object.keys(D('npc')).filter(id => D('npc')[id].at === at);
 
   // ---- scenes: what a trigger builds ----

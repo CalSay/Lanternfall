@@ -1146,68 +1146,68 @@
         "sd": 0.004
       },
       "z13-boss|wren|casual": {
-        "value": 0.64,
-        "sd": 0.031
+        "value": 0,
+        "sd": 0
       },
       "z13-boss|tobin|casual": {
-        "value": 0.76,
-        "sd": 0.027
+        "value": 0,
+        "sd": 0
       },
       "z13-boss|pip|casual": {
-        "value": 0.58,
-        "sd": 0.04
+        "value": 0,
+        "sd": 0
       },
       "z13-boss|mean|casual": {
-        "value": 0.66,
-        "sd": 0.019
+        "value": 0,
+        "sd": 0
       },
       "z13-boss|wren|good": {
-        "value": 1,
-        "sd": 0
+        "value": 0.71,
+        "sd": 0.028
       },
       "z13-boss|tobin|good": {
-        "value": 1,
-        "sd": 0
+        "value": 0.94,
+        "sd": 0.014
       },
       "z13-boss|pip|good": {
-        "value": 1,
-        "sd": 0
+        "value": 0.63,
+        "sd": 0.03
       },
       "z13-boss|mean|good": {
-        "value": 1,
-        "sd": 0
+        "value": 0.76,
+        "sd": 0.019
       },
       "z14-boss|wren|casual": {
-        "value": 0.63,
-        "sd": 0.041
+        "value": 0,
+        "sd": 0
       },
       "z14-boss|tobin|casual": {
-        "value": 0.79,
-        "sd": 0.027
+        "value": 0,
+        "sd": 0
       },
       "z14-boss|pip|casual": {
-        "value": 0.63,
-        "sd": 0.035
+        "value": 0,
+        "sd": 0
       },
       "z14-boss|mean|casual": {
-        "value": 0.68,
-        "sd": 0.029
+        "value": 0,
+        "sd": 0
       },
       "z14-boss|wren|good": {
-        "value": 1,
-        "sd": 0
+        "value": 0.72,
+        "sd": 0.038
       },
       "z14-boss|tobin|good": {
-        "value": 1,
-        "sd": 0
+        "value": 0.89,
+        "sd": 0.02
       },
       "z14-boss|pip|good": {
-        "value": 1,
-        "sd": 0
+        "value": 0.53,
+        "sd": 0.034
       },
       "z14-boss|mean|good": {
-        "value": 1,
-        "sd": 0
+        "value": 0.72,
+        "sd": 0.017
       },
       "z15-elite|wren|casual": {
         "value": 1,
@@ -1242,36 +1242,36 @@
         "sd": 0
       },
       "z15-boss|wren|casual": {
-        "value": 0.44,
-        "sd": 0.032
+        "value": 0,
+        "sd": 0
       },
       "z15-boss|tobin|casual": {
-        "value": 0.5,
-        "sd": 0.032
+        "value": 0,
+        "sd": 0
       },
       "z15-boss|pip|casual": {
-        "value": 0.48,
-        "sd": 0.038
+        "value": 0,
+        "sd": 0
       },
       "z15-boss|mean|casual": {
-        "value": 0.47,
-        "sd": 0.019
+        "value": 0,
+        "sd": 0
       },
       "z15-boss|wren|good": {
-        "value": 1,
-        "sd": 0.002
+        "value": 0.37,
+        "sd": 0.031
       },
       "z15-boss|tobin|good": {
-        "value": 1,
-        "sd": 0
+        "value": 0.3,
+        "sd": 0.041
       },
       "z15-boss|pip|good": {
-        "value": 1,
-        "sd": 0.003
+        "value": 0.18,
+        "sd": 0.025
       },
       "z15-boss|mean|good": {
-        "value": 1,
-        "sd": 0
+        "value": 0.28,
+        "sd": 0.017
       },
       "z13-boss-keptup|wren|casual": {
         "value": 0.92,

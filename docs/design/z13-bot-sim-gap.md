@@ -4,6 +4,9 @@ Status: analysis only, 2026-10-08, card `z13-bot-sim-gap`, integration head 13b3
 number, tool or test changed. Every footing change below was a `--eval` on `tools/budget.mjs` or a scratch script that
 is not committed; the commands are at the end.
 
+Result (2026-10-08, card `z13-arrival-footing`): the budget's z13-z15 boss rows now use the arrival footing; see
+`docs/design/difficulty-budget.md`, "Where the game stands".
+
 ## The answer
 
 A casual player with a tier 1 set meets a wall of far more than 1 to 2 tries at the zone 13 boss (the Elder Quarry

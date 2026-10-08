@@ -1563,11 +1563,11 @@ if (section('first-use lines (ap-first-use-hints)')) try {
   const long = Object.entries(lines).filter(([, u]) => u.text.length > 90 || /\n/.test(u.text) || (u.text.match(/[.!?](\s|$)/g) || []).length > 3).map(([id]) => id);
   assert(!zero.length && !stray.length && !long.length, `every system that opens after the first fight has exactly one first-use line (one table row each; short, plain)${zero.length ? '; 0 lines: ' + zero.join(', ') : ''}${stray.length ? '; for no system: ' + stray.join(', ') : ''}${long.length ? '; too long: ' + long.join(', ') : ''}`);
   // 'notice' and 'guide' lines live in their own source; the unlock notice of a 'hint' system only says where it is (never repeats the line)
-  const ob = rd('75-onboard-ui.js'), src = { notice: { codex: ob, stars: rd('75-stars-ui.js') } };
+  const ob = rd('75-onboard-ui.js'), src = { notice: { codex: ob, stars: rd('75-stars-ui.js'), switch: rd('56c-unlocks.js') } };   // switch: the join line on the Champion card (starters-join-when-met)
   const dup = [], twice = [];
   for (const id of ids) {
     const u = lines[id], via = u && u.via || 'hint';
-    if (via === 'notice' && !(src.notice[id] || '').includes(u.text)) dup.push(`${id}: its notice does not carry the line`);
+    if (via === 'notice' && !(src.notice[id] || '').includes(u.text) && !(src.notice[id] || '').includes(`FIRST_USE.${id}.text`)) dup.push(`${id}: its notice does not carry the line`);
     if (via === 'guide' && !/text: FIRST_USE\.nextup\.text/.test(ob)) dup.push(`${id}: the guide step does not read the line`);
     if (via === 'hint') { const m = new RegExp(`^\\s*${id}:\\s*(.*)$`, 'm').exec(ob.slice(ob.indexOf('const OPEN_TXT = {'), ob.indexOf('const TAB_FEATURE'))); if (m && m[1].includes(u.text)) twice.push(id); }
   }
@@ -1613,7 +1613,7 @@ if (section('unlock tip coverage (E5)')) try {
   const lines = JSON.parse(E('JSON.stringify(FIRST_USE)')), gap = E('ONBOARD_TUNE.gap');
   const si = ob.indexOf('const SAY_TXT = {'), say = new Set([...ob.slice(si, ob.indexOf('};', si)).matchAll(/^\s*(\w+): ["']/gm)].map(m => m[1]));
   // a system said somewhere other than the Hesketh queue: its own guide step, the away strip, the hired-hand notice
-  const elsewhere = { nextup: 'guide step', awaynote: 'away strip', hands: 'Tam notice' };
+  const elsewhere = { nextup: 'guide step', awaynote: 'away strip', hands: 'Tam notice', switch: 'Champion card join line' };
   // walk a new game to zone 15: sweep zone 1 to 15 with the clock moving, then let the spacing governor drain
   const got = {};
   E('S.onboard.tips = true');
@@ -5729,11 +5729,26 @@ if (section('notices (browser, W1-B)')) try {
       // The page's clock is the bot's: Date.now, performance.now, timers and frames advance only when the bot runs the clock (qa-first-hour-walk
       // does the same). On the machine's clock, how fast a card showed and how many ticks fell between two taps changed with the machine.
       await page.clock.install({ time: Date.UTC(2026, 0, 5, 12, 0, 0) });
+      // Installed is not enough: the clock still flows with the wall clock between runFor calls, so a slow runner gave the moment queue's
+      // 100 ms timer and its Date.now() bark expiry and banner hold more time per bot step, and two extra medium barks showed (#214, #216).
+      // Paused, it moves only when the bot runs it (walk.mjs does the same since #210; moment-cap-check-steady).
+      await page.clock.pauseAt(Date.UTC(2026, 0, 5, 12, 0, 1));
+      // Paused was still two games on one machine. Three more things moved with the machine, as in walk.mjs: the clock's frame grid (set by
+      // when the page loaded: frames are now timers 16 ms apart), CSS animations (the fake clock does not move them: stopped, and stepped
+      // by the game time the bot runs) and the page's own Math.random before the bot's first step (the first foe's roll: one Attack press
+      // killed it on some runs and not others). All three are fixed here, so the run depends on game time alone.
+      await page.addInitScript(() => { let a = 99; Math.random = () => (a = (Math.imul(a, 1664525) + 1013904223) >>> 0) / 4294967296;   // the page's own stream
+        const caf = window.cancelAnimationFrame.bind(window), tids = new Set();
+        window.requestAnimationFrame = cb => { const id = window.setTimeout(() => { tids.delete(id); cb(performance.now()); }, 16); tids.add(id); return id; };
+        window.cancelAnimationFrame = id => { if (tids.delete(id)) window.clearTimeout(id); else try { caf(id); } catch (e) {} }; });
+      { const cdp = await ctx.newCDPSession(page); await cdp.send('Animation.enable'); await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 }); }
+      const STEP_ANIM = d => { for (const a of document.getAnimations()) { if (a.playState === 'paused' || a.playState === 'finished') continue; try { a.currentTime = (a.currentTime || 0) + d; } catch (e) {} } };
+      const run = async ms => { await page.clock.runFor(ms); await page.evaluate(STEP_ANIM, ms); };
       page.on('pageerror', e => errs.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
-      await page.goto('http://lf.test/'); await page.clock.runFor(600);
+      await page.goto('http://lf.test/'); await run(600);
       const X = s => page.evaluate(s => window.__t.x(s), s);
-      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.clock.runFor(300);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await run(300);
       // a player who follows the guide, presses Attack, casts, parries heavy hits and buys upgrades; the game runs
       // fast (about 6x): 2 s of play per step, the page's own timers get a moment between steps
       await X(`(() => {
@@ -5777,7 +5792,7 @@ if (section('notices (browser, W1-B)')) try {
           return notes.clock;
         };
         return true; })()`);
-      for (let i = 0; i < 700; i++) { const t = await X('__nbStep()'); await page.clock.runFor(90); if (t >= 600) break; }
+      for (let i = 0; i < 700; i++) { const t = await X('__nbStep()'); await run(90); if (t >= 600) break; }
       const r = JSON.parse(await X('JSON.stringify({ t: notes.clock, st: notes.stats, nb: __nb, zone: S.maxZone, L: S.L, unread: notes.unread })'));
       const pops = r.st.filter(s => s.ch === 'pop' && s.id !== 'reply'), unknown = r.st.filter(s => s.id === '?');
       let close = null; for (let i = 1; i < pops.length; i++) if (pops[i].t - pops[i - 1].t < 20) close = [pops[i - 1], pops[i]];
@@ -7858,7 +7873,7 @@ if (section('C9 hero registry (browser)')) try {
           await page.click('#createScreen .ccard[data-hero="wren"]');
           await page.click('#createScreen .create-go');
           await page.waitForSelector('#createScreen',{state:'detached'});
-          await X('delete S.party.unlock.heroes.bram; S.maxZone=36; S.zone=1; S.L=60; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
+          await X('delete S.party.unlock.heroes.bram; S.party.unlock.heroes.tobin=1; S.party.unlock.heroes.pip=1; S.maxZone=36; S.zone=1; S.L=60; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
           // owner 2026-10-01: the Camp view shows chips for the heroes you can play or unlock; All heroes opens the full roster
           await page.waitForSelector('#sec-solo-hero .sp-all');
           const chipHeroes = await page.$$eval('#sec-solo-hero .sp-chip', cs => cs.map(c => c.dataset.hero));
@@ -11455,6 +11470,132 @@ if (section('staged guide follow-ups (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('staged guide follow-ups (browser) crashed: ' + (e.stack || e)); }
+
+// ==== starters-join-when-met: a new game keeps the starter it picked; the other two join at their Champions (56c, DECISIONS "Starters join
+// on the road"). Old saves keep all three (S.party.unlock.startedAs '' is the gate off). ====
+if (section('starters join when met')) try {
+  const pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+  const mk = f => { const g = loadCore(Object.assign({ seed: 7 }, f ? { storage: memoryStorage({ [KEY]: pfx(f) }) } : {})), toasts = [], wins = [];
+    g.fn.on('toast', t => toasts.push(t && t.msg)); g.fn.on('champWin', e => wins.push(e)); return { g, toasts, wins, E: s => g.eval(s) }; };
+  // a zone's boss, spawned and killed as the fight does (the champion moment section's way)
+  const win = (a, z) => { a.E(`S.activity = 'fight'; S.zone = ${z}; S.maxZone = Math.max(S.maxZone, ${z}); fightBoss = true; spawn(); killPack(mob, 40)`); a.g.fn.tick(0.1); };
+  const play = (a, ids) => ids.map(k => a.E(`heroCanPlay(${JSON.stringify(k)})`)).join();
+  // an old save (no field) keeps all three, and the picker copy stays as it was
+  const old = mk('save-pre-champion.json');
+  assert(old.E('S.party.unlock.startedAs') === '' && play(old, ['wren', 'tobin', 'pip']) === 'true,true,true' && !old.E('heroJoinsAhead()'), 'starters join: an old save (no startedAs) loads with Wren, Tobin and Pip playable');
+  // a Mirror of Embers reopens the picker on any save (55-party.js useMirror sets chosen false): its Begin never starts the gate
+  old.E('S.party.chosen = false');
+  assert(old.E('heroBegin("tobin")') && old.E('soloHero()') === 'tobin' && old.E('S.party.unlock.startedAs') === '' && play(old, ['wren', 'tobin', 'pip']) === 'true,true,true', 'starters join: a Mirror on an old save (zone 5, newGame set) and Begin leave startedAs at \'\'');
+  win(old, 5);
+  assert(!old.E('Object.keys(S.party.unlock.heroes).length') && !old.E('heroJoins().length') && !old.E('S.onboard.got.switch'), 'starters join: an old save\'s Champion clear joins nobody and opens no switch row');
+  // a new game: the picker offers all three; Begin as Wren records her, and Tobin and Pip wait for their Champions
+  const a = mk();
+  assert(play(a, ['wren', 'tobin', 'pip']) === 'true,true,true' && a.E('heroJoinsAhead()') && a.E('S.party.unlock.startedAs') === '', 'starters join: a fresh game offers all three in the picker, and the picker knows the others will join on the road');
+  assert(a.E('heroBegin("wren")') && a.E('S.party.unlock.startedAs') === 'wren' && play(a, ['wren', 'tobin', 'pip']) === 'true,false,false', 'starters join: after Begin as Wren, startedAs is wren and Tobin and Pip are not playable');
+  assert(!a.E('heroPick("tobin")') && !a.E('soloPick("tobin")') && !a.E('heroUnlock("pip")') && a.E('soloHero()') === 'wren', 'starters join: heroPick, soloPick and heroUnlock cannot make a locked starter the hero');
+  a.E('emit("classChosen", { base: "warrior" })');
+  assert(a.E('soloHero()') === 'wren', 'starters join: a class choice for a starter not yet yours keeps the hero (59j classChosen)');
+  const tob = JSON.parse(a.E('JSON.stringify(heroRouteInfo("tobin"))')), pip = JSON.parse(a.E('JSON.stringify(heroRouteInfo("pip"))'));
+  assert(tob.state === 'locked' && /^You meet Tobin at the zone 5 Champion\.$/.test(tob.how) && tob.meet === tob.how && /zone 15 Champion/.test(pip.how), `starters join: All heroes and the Mirror's picker say where you meet them (${tob.how} / ${pip.how})`);
+  // the save keeps it
+  a.E('save()');
+  const re = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: a.g.storage.get(KEY) }) });
+  assert(re.eval('S.party.unlock.startedAs') === 'wren' && !re.eval('heroCanPlay("tobin")') && re.eval('soloHero()') === 'wren', 'starters join: startedAs survives a save and reload');
+  // the spacing governor: the rows a player's own act opens (now) skip the gap by design, so open those first and let the clock settle;
+  // then clear the Champion: Bestiary (zone 6, no `now`) must wait the gap after the join
+  const settle = x => x.E('S.onboard.tips = true; FEATURES.filter(f => f.now && f.id !== "switch").forEach(f => onboardReveal(f.id)); for (let i = 0; i < 30; i++) { S.onboard.t += ONBOARD_TUNE.gap + 1; onboardCheck(); } true');
+  a.E('S.maxZone = 5; S.zone = 5'); settle(a);
+  win(a, 5);
+  assert(a.E('S.party.unlock.heroes.tobin') === 1 && a.E('heroCanPlay("tobin")') && !a.E('heroCanPlay("pip")') && a.E('heroJoins().join()') === 'tobin', 'starters join: the zone 5 Champion\'s first clear makes Tobin playable and writes heroes.tobin; Pip stays locked');
+  assert(a.wins.length === 1, 'starters join: the zone 5 clear asks for the Champion card, which carries the join (the browser part below proves the card and that no toast comes)');
+  const sw = a.E('S.onboard.got.switch'), t0 = a.E('S.onboard.t');
+  assert(Number.isFinite(sw) && Math.abs(sw - t0) <= 1, `starters join: the join opens the switch row at once (${sw} at ${t0})`);
+  const early = JSON.parse(a.E(`(() => { S.onboard.t += ONBOARD_TUNE.gap - 2; return JSON.stringify(onboardCheck()); })()`)), late = JSON.parse(a.E(`(() => { S.onboard.t += 3; return JSON.stringify(onboardCheck()); })()`));
+  assert(!early.length && late.includes('bestiary'), `starters join: no unlock opens within the gap after the join, Bestiary does after it (${early.join()} / ${late.join()})`);
+  assert(a.E('soloPick("tobin")') && a.E('S.L') >= 1, 'starters join: Tobin can take the lamp once he joined');
+  // a Wren start playing Tobin at the zone 10 Champion: Wren does not meet herself, and zone 10 adds nobody
+  const wrenWho = a.E('STORY_BEATS.npc.wren.who');
+  win(a, 10);
+  const cant = JSON.parse(a.E('JSON.stringify((storyEntry("p:cantor") || { cards: [] }).cards.map(c => c.who))'));
+  assert(!cant.includes(wrenWho) && a.E('heroJoins().join()') === 'tobin' && a.E('S.onboard.got["join:wren"]') === undefined, `starters join: a Wren start playing Tobin gets no Wren meet scene at the Cantor, and zone 10 adds nobody (${cant.join(' / ')})`);
+  // a Tobin start: nobody at zone 5, Wren at zone 10 (a second join: it stamps the clock)
+  const b = mk(); b.E('heroBegin("tobin"); S.onboard.tips = true');
+  win(b, 5);
+  assert(!b.E('heroJoins().length') && !b.E('heroCanPlay("wren")') && !b.E('S.onboard.got.switch'), 'starters join: a Tobin start gets nobody at zone 5');
+  win(b, 10);
+  assert(b.E('heroJoins().join()') === 'wren' && b.E('heroCanPlay("wren")') && !b.E('heroCanPlay("pip")'), 'starters join: a Tobin start gets Wren at zone 10');
+  const c = mk(); c.E('heroBegin("pip")');
+  win(c, 5); c.E('S.maxZone = 10; S.zone = 10'); settle(c);
+  win(c, 10);
+  const j2 = c.E('S.onboard.got["join:wren"]'), t2 = c.E('S.onboard.t');
+  const hold = JSON.parse(c.E(`(() => { delete S.onboard.got.codex; S.onboard.t += ONBOARD_TUNE.gap - 2; return JSON.stringify(onboardCheck()); })()`)), go = JSON.parse(c.E(`(() => { S.onboard.t += 3; return JSON.stringify(onboardCheck()); })()`));
+  assert(c.E('heroJoins().join()') === 'tobin,wren' && Number.isFinite(j2) && Math.abs(j2 - t2) <= 1 && !hold.includes('codex') && go.includes('codex'), `starters join: a second join (a Pip start's Wren) holds the next unlock for the gap too (${hold.join()} / ${go.join()})`);
+  // a clear made while away: the return writes the join and says it in a toast
+  const d = mk(); d.E('heroBegin("wren"); S.maxZone = 7; S.zone = 7; emit("awayEnd", {})');
+  assert(d.E('S.party.unlock.heroes.tobin') === 1 && d.toasts.some(t => /^Tobin joined your camp while you were away\./.test(t || '')) && !d.E('heroCanPlay("pip")'), `starters join: a Champion cleared while away joins on the return, with a toast (${d.toasts.filter(Boolean).slice(-1)})`);
+  // the rollback, and a bad value
+  const e = mk(); e.E('STORY_TUNE.joinOnMeet = false; heroBegin("wren")');
+  assert(play(e, ['wren', 'tobin', 'pip']) === 'true,true,true' && !e.E('heroJoinsAhead()'), 'starters join: STORY_TUNE.joinOnMeet = false gives all three on a fresh pick');
+  e.E('STORY_TUNE.joinOnMeet = true; S.party.unlock.startedAs = "xyz"; S.cls.at = 0');
+  const code = e.E('encodeSave(S)'), dec = JSON.parse(e.E(`JSON.stringify(decodeSave(${JSON.stringify(code)}))`));
+  const xyz = dec.ok ? loadCore({ seed: 7, storage: memoryStorage({ [KEY]: JSON.stringify(dec.data) }) }) : null;
+  assert(dec.ok && xyz.eval('S.party.unlock.startedAs') === 'xyz' && ['wren', 'tobin', 'pip'].every(k => xyz.eval(`heroCanPlay(${JSON.stringify(k)})`)) && e.E('heroUnlockStateValid({ startedAs: "xyz" })') && !e.E('heroUnlockStateValid({ startedAs: 5 })'),
+    `starters join: a save code with startedAs "xyz" decodes and a game loaded from it has all three; a non-text startedAs is refused (${dec.error || 'ok'})`);
+  // a built-in name is not a hero (save-risk review): it reads as '' and nothing throws
+  const proto = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: pfx('save-pre-champion.json').replace('"milestones":{}}', '"milestones":{},"startedAs":"constructor"}') }) }), pE = s => proto.eval(s);
+  assert(pE('S.party.unlock.startedAs') === 'constructor' && pE('["wren","tobin","pip"].every(heroCanPlay) && !!heroRouteInfo("tobin") && soloPick("tobin")') && (() => { pE('soloPick("wren"); S.activity = "fight"; S.zone = 5; fightBoss = true; spawn(); killPack(mob, 40)'); return pE('S.maxZone') === 6; })() && !proto.errors.length,
+    `starters join: startedAs "constructor" loads with all three, switching and the Champion's clear work (${proto.errors[0] || 'ok'})`);
+  // the Champion card carries the join, on both card paths (75-moments-ui champWin, 75-caches-ui fold), and a toast says it only with no card
+  const mui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-moments-ui.js'), 'utf8'), cui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8');
+  assert(/lines: joins \}\)/.test(mui) && /lines: joins\.concat\(q\.lines/.test(mui) && /lines: \(c\.lines \|\| \[\]\)\.concat\(o\.lines\)/.test(cui), 'starters join: the join line rides the Champion card on its own card, the queued cache and the cache that folds in later');
+  for (const x of [old, a, b, c, d, e]) assert(!x.g.errors.length, 'starters join: no core errors' + (x.g.errors.length ? ': ' + x.g.errors[0] : ''));
+  // browser: the card, one big moment, the toast when the card is off, the Hero tab's note and All heroes
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('starters join (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true });
+      await ctx.addInitScript(([key, raw]) => {
+        try { localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {}
+        if (sessionStorage.getItem('sj-seeded')) return; sessionStorage.setItem('sj-seeded', '1');
+        const o = JSON.parse(raw); o.last = Date.now(); o.auto = false; o.solo.auto = false; localStorage.setItem(key, JSON.stringify(o));   // Auto off: the Champion waits for the check
+      }, [KEY, pfx('save-join-z5.json')]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', x => errs.push(String(x)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(4800);   // no moment opens at boot (MOMENT_TUNE.bootS)
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const until = async (expr, ms = 8000) => { try { await page.waitForFunction(x => window.__t.x(x), expr, { timeout: ms, polling: 100 }); } catch (x) { /* the assert says what is missing */ } };
+      await X(`S.onboard.tips = false; MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } window.__ts = []; on('toast', t => window.__ts.push(t && t.msg)); setTab('party'); setView('party', 'team'); ui(true); true`);
+      await page.waitForTimeout(300);
+      const before = await X(`(() => { const s = document.getElementById('sec-solo-hero'); return { note: s ? s.querySelector('.note').textContent : '', chips: s ? [...s.querySelectorAll('.sp-chip')].map(c => c.dataset.hero).join() : '' }; })()`);
+      assert(before.chips === 'wren' && /^Others join you on the road\./.test(before.note), `starters join (browser): before the Champion the Switch hero list shows Wren only and says the others join on the road (${JSON.stringify(before)})`);
+      // the real clear: the post scene, then one big card with the join line on top; no bare toast
+      await X(`setTab('fight'); S.activity = 'fight'; S.zone = 5; fightBoss = true; spawn(); killPack(mob, 40); true`);
+      await until(`!!document.querySelector('.mm-ov')`);
+      const card = await X(`(() => { const o = document.querySelector('.mm-ov'); return { n: document.querySelectorAll('.mm-ov').length, text: o ? o.textContent : '', q: MOMENT_Q.filter(x => x.tier === 'big').length, toasts: window.__ts.filter(t => /joins your camp/.test(t || '')).length }; })()`);
+      assert(card.n === 1 && /The Briar Regent falls/.test(card.text) && /Tobin joins your camp\. Switch heroes on the Hero tab, for free\./.test(card.text) && !card.q && !card.toasts, `starters join (browser): one Champion card names the join, nothing else queued as big, no bare toast (${JSON.stringify(card).slice(0, 240)})`);
+      await page.waitForTimeout(2200); await page.click('.mm-go'); await page.waitForTimeout(300);
+      // the other path: the cache already queued when the Champion card is asked for
+      const q = await X(`(() => { MOMENT_Q.length = 0; MOMENT_UI.wait = -99; moment('cache', { title: 'Zone 5 cleared', zone: 5, lines: [{ txt: '9 gold' }] }); emit('starterJoin', { ids: ['tobin'], zone: 5 }); emit('champWin', { id: 'regent', zone: 5, name: 'The Briar Regent', scene: 'p:regent:post' }); const r = MOMENT_Q.map(x => ({ k: x.kind, t: x.title, l: (x.lines || []).map(l => l.txt) })); MOMENT_Q.length = 0; return r; })()`);
+      assert(q.length === 1 && q[0].k === 'champion' && /^Tobin joins your camp\./.test(q[0].l[0]) && q[0].l[1] === '9 gold', `starters join (browser): with the cache queued first, the Champion card keeps the cache and puts the join on top (${JSON.stringify(q)})`);
+      // the Champion card off: the same clear says it in a toast
+      await X(`STORY_TUNE.champMoment = false; S.party.unlock.heroes = {}; S.maxZone = 5; S.zone = 5; window.__ts = []; S.activity = 'fight'; fightBoss = true; spawn(); killPack(mob, 40); true`);
+      await page.waitForTimeout(400);
+      const off = await X(`({ toasts: window.__ts.filter(t => /^Tobin joins your camp\\./.test(t || '')).length, champ: MOMENT_Q.some(x => x.kind === 'champion') })`);
+      assert(off.toasts === 1 && !off.champ, `starters join (browser): with the Champion card off, a toast says the join (${JSON.stringify(off)})`);
+      await X(`STORY_TUNE.champMoment = true; MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } setTab('party'); setView('party', 'team'); ui(true); true`);
+      await page.waitForTimeout(400);
+      const after = await X(`(() => { const s = document.getElementById('sec-solo-hero'); return { note: s ? s.querySelector('.note').textContent : '', chips: s ? [...s.querySelectorAll('.sp-chip')].map(c => c.dataset.hero).join() : '' }; })()`);
+      assert(after.chips === 'wren,tobin' && /^Switch any time/.test(after.note), `starters join (browser): after the join the Switch hero list has Tobin and the note says switch any time (${JSON.stringify(after)})`);
+      assert(!errs.length, 'starters join (browser): no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('starters join when met crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
