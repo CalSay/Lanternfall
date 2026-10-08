@@ -584,6 +584,14 @@ function refineStep() {
     const u = E(`(it => it && CRAFT_KINDS[it.slot] && it.plus < CRAFT_TROPHY_GATE.max ? { t: it.t, c: upgradeCost(it) } : null)(equipped(${JSON.stringify(pos)}))`);
     if (u && E('S.gold') >= u.c.gold && (!u.c.troph || E('trophies()') > 0)) put(u.c.mats, u.t);
   }
+  // forgeRest re-rolls a worn piece while 3 of its cost are held. From grade 2 that cost is in middles, which are made to
+  // order, so like a player with full piles: order the middles for 3 when the raw (and coal) for them is held.
+  for (const pos of HERO_POS) {
+    const cur = fn.equipped(pos); if (!cur || cur.u || cur.t < 2) continue;
+    const mats = {}; let ok = true;
+    for (const [m, n] of Object.entries(fn.craftCost(cur.slot, cur.t))) { if (REFINE_RAW[m]) mats[m] = 3 * n; else if (matHave(m, cur.t) < 3 * n) ok = false; }
+    if (ok && Object.keys(mats).length && !rawShort(Object.entries(mats).map(([m, n]) => [m, Math.max(0, n - matHave(m, cur.t))]), cur.t).length) put(mats, cur.t);
+  }
   for (const [t, mats] of Object.entries(want)) {
     for (let k = 0; k < 2; k++) {
       const r = E(`(o => ({ n: o.add(), full: o.orders.some(x => !x.ok && / holds /.test(x.why)) }))(refineOffer(${JSON.stringify(mats)}, ${+t}))`);
@@ -938,7 +946,10 @@ function hearthTrip(sec) {
     if (E('S.activity !== "gather"') || E('S.node.kind') !== want[0] || E('S.node.t') !== want[1]) { fn.setNode(want[0], want[1]); fn.setActivity('gather'); }
   } else if (hTrip) {
     campStep(E);
-    if (hTrip.back !== 'gather') fn.setActivity(hTrip.back);
+    // A trip that began in a fight phase and ran into the mixed schedule's gather window stays gathering: going back to
+    // fight there skipped the window (a Warden fought out a whole window with no Copper Ore while its smelts waited).
+    const gatherWindow = policy === 'mixed' && (Math.floor(sec / 60) + (cls ? 5 : 0)) % 15 >= 10;
+    if (hTrip.back !== 'gather' && !gatherWindow) fn.setActivity(hTrip.back);
     hTrip = null;
   }
 }
