@@ -53,7 +53,7 @@ for (let i = 0; i < raw.length; i++) {
   const a = raw[i];
   if (a === '--json') flags.json = true;
   else if (a === '--landscape' || a === '--portrait') flags.view = a.slice(2);
-  else if (a === '--view') flags.view = raw[++i];
+  else if (a === '--view') { flags.view = raw[++i]; if (!flags.view || flags.view.startsWith('--')) { console.error('playtest: --view needs a view, e.g. desktop, landscape or portrait'); process.exit(1); } }
   else if (a === '--quiet') flags.quiet = true;
   else if (a === '--frozen') flags.frozen = true;
   else if (a === '--thumb') flags.thumb = true;

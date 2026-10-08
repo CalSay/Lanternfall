@@ -82,7 +82,7 @@ for (const { card, seed, views } of jobs) {
     const ex = fs.existsSync(path.join(dir, 'expects.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'expects.json'), 'utf8')) : [];
     const shots = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.png')) : [];
     if (!gates) {   // the 1920x1080 shot: listed, never failed
-      const miss = ex.filter(e => !e.ok).length, ran = res.status === 0 || ex.length > 0;
+      const miss = ex.filter(e => !e.ok).length, ran = res.status === 0 || (miss > 0 && !/no button labelled/.test(res.stdout + res.stderr));   // a missed expect still plays on; a failed tap stops the route
       lines.push(`| ${view} 1920x1080 | shots (report only) | ${shots.length} (${shots.slice(0, 8).map(s => s.replace('.png', '')).join(', ')}${shots.length > 8 ? ', ...' : ''})${miss ? `; ${miss} expect(s) missed here` : ''}${ran ? '' : `; did not finish: ${((res.stdout + res.stderr).trim().split('\n').pop() || '').slice(0, 120).replace(/\|/g, '/')}`} |`);
       continue;
     }
