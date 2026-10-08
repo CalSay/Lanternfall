@@ -1106,7 +1106,10 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   let rtX = 0, rtA = 1, dimA = 0;
   on('wipe', p => {
     rt.on = true; rt.t = 0; rt.arena = !!p.arena; rt.back = 0;
-    pushFloat(p.arena ? 'Party down' : 'Fall back!', '#FF9A8A', true, 0.3, 0.3);
+    // normal-death-says-so: a loss never moves you (DECISIONS.md), so the float says what happened. The body keeps the text for the checks
+    const txt = p.arena ? 'Party down' : 'Beaten';
+    pushFloat(txt, '#FF9A8A', true, 0.3, 0.3);
+    if (document.body) document.body.dataset.wipeFloat = txt;
   });
   function stepRetreat(dt) {
     if (rt.on) {

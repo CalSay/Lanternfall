@@ -16,7 +16,7 @@
         0.98,
         1
       ],
-      "note": "a foe between bosses (a chain of 5, HP carried)"
+      "note": "a foe between bosses (a chain of 5, each from full HP: TURN_TUNE.normalFull)"
     },
     "elite": {
       "casual": [
