@@ -44,7 +44,7 @@
 //           kept-up rows are fitted with it on, and the set lands on a tuned floor. Not on the footing swap (gearCalc with `over`): the footing wears no set, as fitted.
 //   build   attribute points spread evenly (hero-progression-rework's attrSpread), once the game has attributes
 // The arrival footing (z13-arrival-footing, docs/design/z13-bot-sim-gap.md): the hero a first-time player has when they
-// first reach zone z, on the z13-z15 first-hour rows (and every first-hour row with --foot arrival):
+// first reach zone z, on the z13-z15 first-hour rows and the z16-z19 -arrival rows (and every first-hour row with --foot arrival):
 //   level   arrivalLv(z): the game's own XP for ZONE_FIGHTS normal foes and the boss in each zone before z (gainXp,
 //           so xpAheadX applies). Zones 10-13 give 15, 16, 17, 18, the levels the walk arrives at (seeds 1 and 2).
 //   gear    tier 1 common +0, whatever the zone's tier: tier 2 needs gathering 14 (skillReqs) and the walk reaches zone 13 at 4-7
@@ -168,6 +168,12 @@ export const CHECKPOINTS = [
   ['z16-boss', 16, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z17-boss', 17, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z18-boss', 18, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
+  // z16-wall (judge 2026-10-08): the zone 16-18 bosses on the arrival footing (as z13-z15 above), the bosses a walk reaches in its hour;
+  // gated as Captains. z19 on the same footing is a report row (the next wall, a follow-up card), so a change shows where the wall moves.
+  ['z16-boss-arrival', 16, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
+  ['z17-boss-arrival', 17, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
+  ['z18-boss-arrival', 18, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'captain' }],
+  ['z19-boss-arrival', 19, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival', kind: 'reportArrival' }],
   ['z19-boss', 19, 'boss', { st: 'kept', fx: 'mid', kind: 'captainMid' }],
   ['z20-normal', 20, 'normal', { st: 'kept', fx: 'mid' }],
   ['z20-elite', 20, 'elite', { st: 'kept', fx: 'mid' }],
@@ -311,7 +317,7 @@ const pc = x => x == null ? 'n/a' : (100 * x).toFixed(0);
 export function printBudget(rep) {
   const T = loadTargets(), all = cells(T, rep);
   console.log(`Difficulty budget: ${rep.fights} scratch turn fights a row, hero and player (each boss fight on its own seed; trash in chains of 5);`);
-  console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z13-z15 bosses on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
+  console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z13-z15 bosses and the z16-z19 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
   console.log(`Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +${T.tobinBoss}).`);
   console.log('A "behind" row\'s casual number is the drop in casual wins against its ref row.');
   console.log('row'.padEnd(17) + 'kind'.padEnd(13) + 'casual w/t/p'.padEnd(14) + 'mean sprd'.padEnd(10) + 'band'.padEnd(16) + 'good w/t/p'.padEnd(13) + 'band'.padEnd(9) + 'tries w/t/p'.padEnd(16) + 'turns w/t/p'.padEnd(17) + 'level  out of band');

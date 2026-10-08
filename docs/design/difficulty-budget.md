@@ -135,7 +135,14 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
   Both seed walks clear zones 13-15 on the first try (zone 13 at 31:04 and 36:38). Every landed hit there sits on the hpFloor
   (about a fifth of max HP). The kept-up z15 Champion is too easy for a geared casual (91-100, a `boss-balance-pass` gap); a
   kept-up hero who never defends still wins 0%. In reference Attacks the z13-15 bosses carry less HP than zone 12's; the balance
-  pass restores the length ramp. The next wall is the zone 16 boss (walks lose 28-57 tries there).
+  pass restores the length ramp.
+- **Zones 16-18 no longer wall a first-time player** (z16-wall, 2026-10-08). New gated `-arrival` rows (level 20-22, tier 1 common +0,
+  no mastery stars): casual Wren, Tobin and Pip win 70/57/80 at zone 16, 83/52/69 at zone 17 and 83/62/66 at zone 18; good players
+  100; a player who never defends 0. The z16 and z18 bosses' Bleed ticks were cut to a fifth (`riderX`): they were a share of the
+  reference HP, a third of a first-time hero's health a tick. Both seed walks clear zones 16-18 on the first try and reach zone 19
+  at 55-60 min. Tobin's arrival cells sit under his band (gaps, `tobin-safety-margin`); the kept-up z16-18 rows read 97-100 (gaps,
+  `boss-balance-pass`); a kept-up hero who never defends still wins 0%. The next wall is the zone 19 boss (`z19-boss-arrival`, a
+  report row, 0%).
   The zone 10-12 rows stay on their footing: at the arrival footing the sampler reads Wren's bot 22-46 where the walk never loses
   (Tobin's 78-98 matches), and on Wren's own walk save it reads 33-56, so that gap is the sampler's, not the footing's. Zones 16-24 Captains are gated on the kept-up hero: Wren and Pip casual 54-85, Tobin 100 under gaps.
 - **Zones 25-34 Captains are in band for Wren and Pip** (mid-zone-wall, 2026-10-07: casual 56-80, good 100%; z34 Wren sits 4 under, inside the seed noise). Tobin wins
@@ -161,3 +168,4 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 | 2026-10-07 | boss-tiers-pr2 | `firstChampion` casual 60-80 (was 60-85); floors loosened: nothing worn z5 casual 35%+ (was 40), z10 casual 10%+ (was 15); gate `gearHelps` (kept-up casual not under first-hour casual minus tolerance); z20-elite, z35-elder and z38-elite Wren gaps removed, z35-elder Pip limit 0.45 to 0.53 and two others ratcheted by the re-baseline | Opus judge 2026-10-07 (DECISIONS.md, "Boss tiers, Champions"); Cal's "Harder without gear" card, 07:19 |
 | 2026-10-08 | z13-arrival-footing | z13, z14 and z15 boss rows on the arrival footing (`arrivalLv`, tier 1 common +0, zone kills capped at 10 and Bestiary kills at 12); `--foot arrival`; seven gaps on the low side (casual and good, all heroes but Tobin's in-band z13 good cell; owner `boss-balance-pass`, until 2026-12-01; limits ratcheted to the 5-seed means); re-baseline (only those 24 cells moved) | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 13 arrival footing) |
 | 2026-10-08 | z13-unstick | z13-15 boss hitX, hpX and hpFloor knots; the seven z13-15 low-side gaps removed; gap z15-boss-keptup casual above (boss-balance-pass, 2026-12-01); re-baseline of the budget, the personas and the long run (heroes now pass zone 13, wall at zone 16); long.postNewThingShare abs 0.1 -> 0.13 (zone 29 wall, boss-balance-pass) | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 13 unstick) |
+| 2026-10-08 | z16-wall | z16-18 boss hpX, hitX, hpFloor and Tobin heroHitX knots, new `riderX` (z16 and z18 Bleed ticks x0.2); new rows z16, z17, z18-boss-arrival (`captain`, gated) and z19-boss-arrival (new report kind `reportArrival`); gaps z16-18-boss casual above (all heroes, boss-balance-pass) and z16-18-boss-arrival Tobin casual below (tobin-safety-margin), all until 2026-12-01; re-baseline of the budget, the personas and the long run (bots now pass zone 18 and meet the zone 19 wall), no tolerance change | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 16 wall) |

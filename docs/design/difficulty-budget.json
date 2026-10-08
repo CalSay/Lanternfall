@@ -257,6 +257,18 @@
         0.1
       ],
       "note": "a zone boss at zones 16-34 (Captains and the Champion-tier fifths), boss-tiers-pr5b: the kept-up hero (the zone's tier at rare +5, with the crafted set from grade 4 up) on a boss they have not beaten, with move tricks, rally gates and the footing floor on. Gear buys room to miss, not immunity: a player who never defends wins at most 10%"
+    },
+    "reportArrival": {
+      "casual": [
+        0.6,
+        0.8
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "report": true,
+      "note": "report only (z16-wall): the zone 19 Captain on the arrival footing (arrival level, tier 1 common +0, no mastery stars), the next wall past the z16-18 fix; a follow-up card fits it"
     }
   },
   "gaps": [
@@ -569,6 +581,66 @@
       "owner": "boss-balance-pass",
       "until": "2026-12-01",
       "why": "z13-unstick (judge 2026-10-08): the z13-15 knots were cut for the hero who first gets there (level 18-19, tier 1 common +0), so every landed hit sits on the hpFloor and the kept-up footing floor no longer bites; a kept-up casual wins the Champion 91-100. A kept-up hero who never defends still wins 0%. No z15 knot puts both rows in band (hpX 0.2 + hpFloor 0.9: arrival 40, kept-up 95; hpFloor 1.1: arrival 39, kept-up 86). The refit with both footings together is a balance-pass row"
+    },
+    {
+      "row": "z16-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.99,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "z16-wall (judge 2026-10-08): z16-18 knots fitted to the hero who first gets there; kept-up casual 97-100, never-defends 0%. No knot puts both rows in band (hpX 0.3: arrival 53/43/31, kept-up 98; hpFloor 1.1: arrival 62/39/66, kept-up 92). Balance-pass refit"
+    },
+    {
+      "row": "z17-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "z16-wall (judge 2026-10-08): z16-18 knots fitted to the hero who first gets there; kept-up casual 97-100, never-defends 0%. No knot puts both rows in band (hpX 0.3: arrival 53/43/31, kept-up 98; hpFloor 1.1: arrival 62/39/66, kept-up 92). Balance-pass refit"
+    },
+    {
+      "row": "z18-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "above",
+      "limit": 1,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "z16-wall (judge 2026-10-08): z16-18 knots fitted to the hero who first gets there; kept-up casual 97-100, never-defends 0%. No knot puts both rows in band (hpX 0.3: arrival 53/43/31, kept-up 98; hpFloor 1.1: arrival 62/39/66, kept-up 92). Balance-pass refit"
+    },
+    {
+      "row": "z16-boss-arrival",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.55,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "z16-wall (judge 2026-10-08): a lower heroHitX lifts his arrival row but lets a kept-up Tobin who never defends win 34-48%"
+    },
+    {
+      "row": "z17-boss-arrival",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.54,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "z16-wall (judge 2026-10-08): a lower heroHitX lifts his arrival row but lets a kept-up Tobin who never defends win 34-48%"
+    },
+    {
+      "row": "z18-boss-arrival",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.62,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "z16-wall (judge 2026-10-08): a lower heroHitX lifts his arrival row but lets a kept-up Tobin who never defends win 34-48%"
     }
   ]
 }
