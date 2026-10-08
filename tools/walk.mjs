@@ -24,11 +24,14 @@
 // weapon, off-hand, head or body piece it is one tier short of (Craft > Make > station > tier > Craft), gathers the missing materials in the
 // Gather view for up to 5 minutes (Hunting for hide), builds the station a recipe needs (Camp > Build, two taps), and goes back to the fight.
 // It closes a sheet it left over the bar with the X. The report's "Gear and boss tries" table says what it wore in each zone and the boss tries lost there.
-// Game time is a fake clock stepped in 100 ms frames (33 ms while a foe winds up), so a run is repeatable for a seed.
+// Game time is a paused fake clock stepped in 100 ms frames (33 ms while a foe winds up); the page's frames are timers on it and CSS
+// animations are moved by the same steps, so a run is repeatable for a seed and build (two runs give the same timeline).
+// The bot waits for the guide: no fight press while it reads a new tip, nor in a turn's first 0.3 s (the guide polls every 250 ms).
 //
 // What it logs, with game time and a shot: every tip, toast, card and banner, every unlock (S.onboard.got), each zone first clear,
 // level, unique, Star, new hero, look and craft. Each new tip, card and moment runs the eyes layout and tip-phase checks.
-// The report diffs the run against docs/design/first-hour.md (each beat's est. minute against the measured one; over 50% off is listed).
+// The report diffs the run against docs/design/first-hour.md: each beat against the map's walk column (the bot's own time on a named
+// build; over 50% off is listed: the game changed pace), and the median of walk / est once (est is a guess for a casual person).
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
@@ -76,9 +79,10 @@ const INIT = ([key, seedN]) => {
   Math.random = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   try { localStorage.removeItem(key); } catch (e) { /* a private window: the game starts fresh anyway */ }
   window.__ptStep = 16;
-  const raf = window.requestAnimationFrame.bind(window);
   const caf = window.cancelAnimationFrame.bind(window), tids = new Set();
-  window.requestAnimationFrame = cb => { if (!(window.__ptStep > 16)) return raf(cb); const id = window.setTimeout(() => { tids.delete(id); cb(performance.now()); }, window.__ptStep); tids.add(id); return id; };
+  // every frame is a timer on the paused clock, at 16 ms or the walk's step: the clock's own frame grid is set by when the page
+  // happened to load, which moved the game's frames by up to 16 ms between runs (first-hour-map-two-clocks)
+  window.requestAnimationFrame = cb => { const id = window.setTimeout(() => { tids.delete(id); cb(performance.now()); }, window.__ptStep); tids.add(id); return id; };
   window.cancelAnimationFrame = id => { if (tids.delete(id)) window.clearTimeout(id); else try { caf(id); } catch (e) { /* a timer id the fake clock made */ } };   // a mode switch cancels a frame the 100 ms stepping made with a timer   // the game caps a frame at 0.1 s, so 100 ms frames lose nothing
 };
 
@@ -134,9 +138,14 @@ const OBS = `(() => {
 // ---------------- driving ----------------
 let browser, ctx, page;
 const X = async s => { for (let i = 0; i < 50; i++) { const r = await page.evaluate(s => window.__t ? { v: window.__t.x(s) } : null, s); if (r) return r.v; await new Promise(r => setTimeout(r, 100)); } throw new Error('the game never started (window.__t is missing)'); };
+// CSS animations and transitions run on the page's own timeline, which the fake clock does not move: left alone they play in clock
+// time, so what the bot sees (a card fading in, a sheet sliding) depended on how fast the machine ran, and one seed gave three first
+// fights (first-hour-map-two-clocks). The walk stops that timeline (Animation.setPlaybackRate 0) and moves every animation on by the
+// game time it steps (after each runFor chunk of up to 1 s), so a run is the same on any machine. A paused animation stays where the game put it.
+const STEP_ANIM = d => { for (const a of document.getAnimations()) { if (a.playState === 'paused' || a.playState === 'finished') continue; try { a.currentTime = (a.currentTime || 0) + d; } catch (e) { /* an animation with no timeline */ } } };
 async function advance(ms, step) {
   await page.evaluate(c => { window.__ptStep = c; }, step);
-  let left = ms; while (left > 0) { const d = Math.min(left, 1000); await page.clock.runFor(d); left -= d; }
+  let left = ms; while (left > 0) { const d = Math.min(left, 1000); await page.clock.runFor(d); await page.evaluate(STEP_ANIM, d); left -= d; }
   gt += ms / 1000;
 }
 // A real tap at the centre of the first visible match (no actionability waits: they need animation frames, and the clock is fake).
@@ -183,6 +192,7 @@ async function click(sel, _to) {
   if (r.covered) { addCheck('covered', `a button the player needs is covered (${css})`, `a tap at ${Math.round(r.x)},${Math.round(r.y)} would land on ${r.covered}${r.sheet ? ' (a sheet: "' + r.what + '")' : ''}`); return false; }
   await page.mouse.click(r.x, r.y);
   if (firstTapAt === null) firstTapAt = gt;
+  if (st.firstPress === null && css.includes('#soloBar')) st.firstPress = gt;   // F1: the player's first fight press
   return true;
 }
 const DISMISS = '.mm-ov .mm-go, .bsheet-ov .sty-done, .bsheet-ov .sty-skip, .bsheet-ov .big, .bsheet-ov button.ok, .away-ov button, .tv-card button, .gl-card button, .modal .ok, .modal .big';
@@ -234,10 +244,10 @@ async function followTip(o) {
   const tp = o.tip, key = tp ? tp.action + '|' + tp.text.replace(/\d+/g, '#') : '';   // live counts (Ore 3/25) do not make a new tip
   if (key !== st.tipKey) {
     if (!tp || tp.action !== st.tipAct) { st.tipTaps = 0; st.tipAct = tp ? tp.action : ''; }   // the count follows the step, not each sentence it shows
-    st.tipKey = key; st.tipSince = gt;
+    st.tipKey = key; st.tipSince = gt; st.tipFirst = gt;
     if (tp && (key !== st.tipNoted || gt - st.tipNotedAt > 20)) {   // a tip that goes behind a card and comes back is one tip
       st.tipNoted = key; st.tipNotedAt = gt;
-      await note(page, 'tip', `${tp.action || 'read'}: ${tp.text}`, { extra: { phase: o.phase, action: tp.action }, tag: 'tip-' + tp.action });
+      await note(page, 'tip', `${tp.action || 'read'}: ${tp.text}`, { extra: { phase: o.phase, action: tp.action, kills: o.s.kills || 0 }, tag: 'tip-' + tp.action });
       for (const f of await page.evaluate(LINT)) { if (f.pair && ALLOW[f.pair]) continue; addCheck('layout', 'tip "' + tp.text.slice(0, 40) + '": ' + f.what, f.detail); }
       for (const [what, detail] of (await page.evaluate(TIPPHASE)).bad) addCheck('tipphase', what, detail);
     }
@@ -298,7 +308,7 @@ async function dismissCards(o) {
   if (oldest && gt - oldest.first >= 2.4 && gt - st.lastCard >= 0.6) { st.lastCard = gt; for (const d of DISMISS.split(', ')) if (await click(d, 300)) return true; }   // the card on top first: a sheet's own button can sit under it
   return false;
 }
-st.lastCard = -9; st.tabAt = -9; st.phAt = 0;
+st.lastCard = -9; st.tabAt = -9; st.phAt = 0; st.phName = ''; st.phStart = 0; st.tipFirst = 0; st.firstPress = null;
 
 // Next Up: when the chip says Ready, open the list, press Go on the first ready goal the bot has not given up on, and press what
 // the place Go lands on offers. Since #115 that place is not always a flashed row: Learn opens the ability's detail sheet, whose
@@ -523,6 +533,7 @@ async function gearStep(o) {
 }
 
 // ---------------- watching ----------------
+const HIT_SOUNDS = new Set(['hit', 'crit', 'big', 'counter', 'kill']);   // F1: the sound of a hit landing (76-audio plays big or counter for those tiers, else hit or crit)
 const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge', 'momentBig', 'momentMid']);   // momentBig and momentMid are the moment layer's own stings (76-audio.js)
 const sfxLog = [];     // { t, name }
 const choices = [], firstUse = {};   // craft-delta: { t, k } for each choice event; the game time of each first use
@@ -532,6 +543,7 @@ async function watch(o) {
   for (const t of o.toasts) if (!st.toastSeen.has(t)) { st.toastSeen.add(t); await note(page, 'toast', t, { shot: false }); }
   for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
   const s = o.s, p = st.prev;
+  if (!st.heroKeys && s.heroes !== undefined) st.heroKeys = await X('Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {})');
   if (s.zone > (st.enterMax || 0)) {   // the first time the hero stands in a zone: what it wears, before that zone's boss tries
     st.enterMax = s.zone; st.enter = st.enter || {};
     st.enter[s.zone] = { t: Math.round(gt), L: s.L, gear: await X(`Object.entries(S.equip).filter(([, v]) => v != null && itemById(v)).map(([k, v]) => k + ' t' + itemById(v).t + ' ' + RAR[itemById(v).r].n).join(', ') || 'nothing'`), crafts: s.forged };
@@ -543,7 +555,7 @@ async function watch(o) {
     if (s.L > p.L) await moment('level', 'level ' + s.L, { big: false });
     if (s.found > p.found) await moment('unique', 'unique found', { big: true });
     if (s.stars > p.stars) await moment('star', 'new Star', { big: true });
-    if (s.heroes > p.heroes) await moment('hero', 'a hero joins', { big: true });
+    if (s.heroes > p.heroes) { const ks = await X('Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {})'), nw = ks.filter(k => !(st.heroKeys || []).includes(k)); st.heroKeys = ks; await moment('hero', 'a hero joins' + (nw.length ? ' (' + nw.join(', ') + ')' : ''), { big: true }); }
     if (s.looks > p.looks) await moment('look', 'a look found (' + s.looks + ')', { big: false });
     if (s.forged > p.forged) await moment('craft', 'forged (' + s.forged + ')', { big: false });
     if (s.up > p.up) await note(page, 'upgrade', 'upgraded (' + s.up + ')', { shot: false });
@@ -565,10 +577,15 @@ async function run() {
   browser = await bt.pw.chromium.launch({ executablePath: bt.exe, args: ['--no-sandbox'] });
   ctx = await browser.newContext({ viewport: { width: SIZE.w, height: SIZE.h }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   page = await ctx.newPage();
+  { const cdp = await ctx.newCDPSession(page); await cdp.send('Animation.enable'); await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 }); }   // animations follow game time (STEP_ANIM)
   const errs = []; page.on('pageerror', e => errs.push(String(e)));
   page.on('crash', () => errs.push('the page crashed'));
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
   await page.clock.install({ time: Date.UTC(2026, 0, 5, 12, 0, 0) });   // a fixed Monday noon: the game's day-keyed content does not move between nights
+  // An installed clock still flows with the wall clock between runFor calls, so game time ran ahead of the walk's steps by however long
+  // the machine took (1.8 s of steps read 3.2 s on the game's clock): the same seed gave three first fights. Paused, it moves only
+  // when the walk steps it (first-hour-map-two-clocks).
+  await page.clock.pauseAt(Date.UTC(2026, 0, 5, 12, 0, 1));
   await page.addInitScript(INIT, [KEY, SEED]);
   const HTML = pageHtml();
   await page.route('**/*', r => (r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML }) : r.abort()));
@@ -604,7 +621,12 @@ async function run() {
       if (!did && o.create) did = await pickHero();
       if (!did) did = await dismissCards(o);
       if (!did) did = await followTip(o);
-      if (!did && (!o.s.tab || (o.s.tab === 'adv' && SIZE.id === 'landscape'))) did = await fight(o);   // a menu that covers the action bar is not a fight the player can press
+      // first-hour-map-two-clocks: the bot waits for the guide. No fight press while it reads a new tip (1.2 s from when the tip showed;
+      // followTip then presses what the tip names), nor in the first 0.3 s of a turn: the guide shows its line on a 250 ms poll
+      // (75-onboard-ui), so a press on a turn's first frame ended the Attack and ability lessons before they were on screen.
+      if (o.phase !== st.phName) { st.phName = o.phase; st.phStart = gt; }
+      const waitGuide = (o.tip && gt - st.tipFirst < 1.2) || (o.phase === 'player turn' && gt - st.phStart < 0.3);
+      if (!did && !waitGuide && (!o.s.tab || (o.s.tab === 'adv' && SIZE.id === 'landscape'))) did = await fight(o);   // a menu that covers the action bar is not a fight the player can press
       // back to the fight once a tip or Next Up has been served: a menu that stays open leaves the foe waiting
       if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('.tabs .tab[data-tab="adv"]', 300); }
       if (!did && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
@@ -626,17 +648,17 @@ async function run() {
   return { stop, errs, snap, clockMs: Date.now() - t0 };
 }
 // ---------------- the map ----------------
-// docs/design/first-hour.md: one row per beat. `est` is the row's minute cell in seconds (a range takes its middle).
+// docs/design/first-hour.md: one row per beat, `| # | est | walk | On screen | ...`. `est` is a guess for a casual person (a range
+// takes its middle), `walk` the seed 1 bot's time on the build the map names; both in seconds, null when the cell has no time.
+const mapSecs = m => { const r = /^(\d+) to (\d+)$/.exec(m), t = /^(\d+):(\d\d)$/.exec(m); return r ? (+r[1] + +r[2]) / 2 * 60 : t ? +t[1] * 60 + +t[2] : null; };
 function readMap() {
   const rows = [];
   let md = ''; try { md = fs.readFileSync(path.join(ROOT, 'docs/design/first-hour.md'), 'utf8'); } catch (e) { return rows; }
   for (const line of md.split('\n')) {
     const c = line.split('|').map(x => x.trim());
-    if (c.length < 8 || !/^\d+[a-z]?$/.test(c[1])) continue;
-    const m = c[2].replace(/\*/g, ''); let est = null;
-    const r = /^(\d+) to (\d+)$/.exec(m), t = /^(\d+):(\d\d)$/.exec(m);
-    if (r) est = (+r[1] + +r[2]) / 2 * 60; else if (t) est = +t[1] * 60 + +t[2];
-    rows.push({ id: c[1], min: m, est, what: c[3].replace(/\*\*/g, '').slice(0, 70) });
+    if (c.length < 9 || !/^\d+[a-z]?$/.test(c[1])) continue;
+    const m = c[2].replace(/\*/g, ''), w = c[3].replace(/\*/g, '');
+    rows.push({ id: c[1], min: m, est: mapSecs(m), wmin: w, walk: mapSecs(w), what: c[4].replace(/\*\*/g, '').slice(0, 70) });
   }
   return rows;
 }
@@ -649,21 +671,40 @@ function measureBeats() {
   const nth = (id, n) => { const l = moments.filter(x => x.id === id); return l[n - 1] ? l[n - 1].t : null; };
   return {
     '1': at(e => e.kind === 'card' && /Chapter 1|lamp/i.test(e.text)), '2': firstTapAt, '3': at(e => e.kind === 'card' && /Hesketh/.test(e.text)),
-    '4': at(e => e.kind === 'tip' && e.action === 'attack'), '5': tip('ability'), '6': tip('parry'), '8': tip('boss'), '9': zone(1),   // cal-0107-staged-guide: Dodge rides beat 4, the ability is beat 5
+    '4': at(e => e.kind === 'tip' && (e.action === 'attack' || e.action === 'dodge')), '5': tip('ability'), '6': tip('parry'), '8': tip('boss'), '9': zone(1),   // cal-0107-staged-guide: Attack then Dodge are beat 4, the ability 5, Parry 6
     '10': unlock('party'), '11': unlock('gather'), '12': unlock('camp'), '12a': zone(2), '13': unlock('nextup'), '14': unlock('craft') ?? nth('craft', 1),
-    '14a': zone(3), '15': unlock('awaynote'), '16': unlock('bounties'), '16a': zone(4), '17': nth('hero', 1), '18': nth('star', 1),
+    '14a': zone(3), '15': unlock('awaynote'), '16': unlock('bounties'), '16a': zone(4), '17': zone(5), '18': nth('star', 1),   // 17 and 25: the Champion's first clear (beatNotes says whether a hero joined)
     '20': nth('unique', 1), '20a': zone(7), '21': unlock('bestiary'), '22': unlock('almanac'), '22a': zone(8), '23': unlock('tavern'), '23a': zone(9),
-    '24': nth('look', 1), '25': nth('hero', 2)
+    '24': nth('look', 1), '25': zone(10)
   };
+}
+// Beats 17 and 25 name a starter joining at the Champion. Until starters-join-when-met is built all three starters are open from the
+// start, so nobody joins: the report says so next to the clear instead of calling the beat missing.
+function beatNotes() {
+  const out = {};
+  for (const [id, z] of [['17', 5], ['25', 10]]) {
+    const c = moments.find(x => x.id === 'zone' && x.zone === z); if (!c) continue;
+    const j = moments.find(x => x.id === 'hero' && x.t >= c.t - 1 && x.t <= c.t + 30);
+    out[id] = j ? j.text.replace(/^a hero joins/, 'a hero joined') + ' at ' + fmtT(j.t) : 'no hero joined';
+  }
+  return out;
+}
+// The fight lessons (cal-0107-staged-guide): when each tip first showed, and in which fight (kills before it, plus one).
+function lessonLine() {
+  const l = ['attack', 'dodge', 'ability', 'parry'].map(a => { const e = log.find(e => e.kind === 'tip' && e.action === a); return e ? `${a === 'ability' ? 'the ability' : a[0].toUpperCase() + a.slice(1)} ${fmtT(e.t)} (fight ${(e.kills || 0) + 1})` : `${a} not seen`; });
+  return 'Fight lessons: ' + l.join(', ') + '.';
 }
 
 // ---------------- scorecard values ----------------
 function scorecard(reached) {
   const sc = {};
   const rewardAt = (() => { const r = log.find(e => (e.kind === 'toast' && /gold|loot|xp|\+\d/i.test(e.text)) || e.kind === 'reward'); return r ? r.t : null; })();
-  const sound = rewardAt !== null && sfxLog.find(s => SOUNDS.has(s.name) && Math.abs(s.t - rewardAt) <= 1.5);   // its sound, at the reward
-  const first = rewardAt !== null ? rewardAt - (firstTapAt ?? 0) : null;
-  sc.F1 = { value: first === null ? 'no reward seen' : first.toFixed(1) + ' s' + (sound ? '' : ', no sound'), pass: first !== null && first <= 10 && !!sound, target: 'a reward on screen within 10 s of the first tap, with its sound' };
+  // F1 (coordinator ruling 2026-10-08, DECISIONS "Early game"): the first fight press gets a hit with its sound within 10 s of the first
+  // tap, and the first gold, loot or XP shows within 30 s. The staged lesson holds fight 1, so the first gold comes later than the hit.
+  const hit = st.firstPress === null ? null : sfxLog.find(s => s.t >= st.firstPress - 0.05 && HIT_SOUNDS.has(s.name));
+  const hitS = hit ? hit.t - (firstTapAt ?? 0) : null, lootS = rewardAt !== null ? rewardAt - (firstTapAt ?? 0) : null;
+  sc.F1 = { value: `first hit with its sound ${hitS === null ? 'not seen' : hitS.toFixed(1) + ' s'}; first loot ${lootS === null ? 'not seen' : lootS.toFixed(1) + ' s'}`, pass: hitS !== null && hitS <= 10 && lootS !== null && lootS <= 30,
+    target: 'the first press gets a hit with its sound within 10 s of the first tap, and the first gold, loot or XP within 30 s' };
   const z1 = moments.find(m => m.id === 'zone');
   sc.F2 = { value: z1 ? fmtT(z1.t) : 'not reached', pass: !!z1 && z1.t <= 360, target: 'first boss beaten by 6:00' };
   const big = moments.filter(m => m.big).map(m => m.t);
@@ -743,21 +784,27 @@ function report(res) {
     'First uses: ' + (Object.keys(firstUse).length ? Object.entries(firstUse).map(([k, t]) => `${k} at ${fmtT(t)}`).join(', ') : 'none') + '.', '');
   out.push('## Scorecard', '', '| Id | Result | Target | Value |', '|---|---|---|---|');
   for (const [k, v] of Object.entries(sc)) out.push(`| ${k} | ${v.unmeasured ? 'not measured' : v.pass ? 'met' : 'missed'} | ${v.target} | ${v.value} |`);
-  out.push('');
-  // beats
-  out.push('## Beats against the map', '', 'The estimates in `docs/design/first-hour.md` are for a casual human. The walk is a bot that never hesitates, so times that are over 50% off in either direction are worth a look, not proof of a fault.', '',
-    '| Beat | Map says | Walk saw | Off | What |', '|---|---|---|---|---|');
-  const off = [];
+  out.push('', lessonLine(), '');
+  // beats: each against the map's walk column (the bot's own time on the build the map names). More than 50% off (and 10 s, so a
+  // second's jitter in the first minute is not a finding) means the game changed pace. est is a guess for a casual person: its ratio
+  // to the walk is information, printed once, never a finding (first-hour-map-two-clocks).
+  const notes = beatNotes();
+  out.push('## Beats against the map', '', 'Each beat against the map\'s **walk** column, the seed 1 bot\'s time on the build the map names in `docs/design/first-hour.md`. More than 50% off is a finding: the game changed pace. **est** is a guess for a casual person; the bot plays faster than a person, so est is not compared.', '',
+    '| Beat | est | Map walk | Walk saw | Off the map walk | What |', '|---|---|---|---|---|---|');
+  const off = [], ratios = [];
   for (const b of beats) {
-    const m = meas[b.id];
-    if (!(b.id in meas)) { out.push(`| ${b.id} | ${b.min} | not measured | | ${b.what} |`); continue; }
-    if (m === null || m === undefined) { out.push(`| ${b.id} | ${b.min} | not reached in ${fmtT(reached)} | | ${b.what} |`); if (b.est !== null && b.est < reached * 0.8) off.push(`beat ${b.id} (${b.what.slice(0, 40)}) never happened; the map says ${b.min}`); continue; }
-    const pct = b.est ? Math.round((m - b.est) / b.est * 100) : null;
-    const botTimed = ['1', '2', '3', '4'].includes(b.id);   // the bot taps through stills and the picker without reading
-    out.push(`| ${b.id} | ${b.min} | ${fmtT(m)} | ${pct === null ? '' : (pct > 0 ? '+' : '') + pct + '%'}${pct !== null && Math.abs(pct) > 50 && !botTimed ? ' **!**' : ''}${botTimed ? ' (bot)' : ''} | ${b.what} |`);
-    if (pct !== null && Math.abs(pct) > 50 && !botTimed) off.push(`beat ${b.id} (${b.what.slice(0, 40)}): map ${b.min}, walk ${fmtT(m)} (${pct > 0 ? '+' : ''}${pct}%)`);
+    const m = meas[b.id], what = b.what + (notes[b.id] ? ' (' + notes[b.id] + ')' : '');
+    if (!(b.id in meas)) { out.push(`| ${b.id} | ${b.min} | ${b.wmin} | not measured | | ${what} |`); continue; }
+    if (m === null || m === undefined) { out.push(`| ${b.id} | ${b.min} | ${b.wmin} | not reached in ${fmtT(reached)} | | ${what} |`); if (b.walk !== null && b.walk < reached * 0.8) off.push(`beat ${b.id} (${b.what.slice(0, 40)}) never happened; the map's walk saw it at ${b.wmin}`); continue; }
+    if (b.est && !['1', '2', '3'].includes(b.id)) ratios.push(m / b.est);   // the bot taps through the stills and the picker without reading
+    const pct = b.walk ? Math.round((m - b.walk) / b.walk * 100) : null, bad = pct !== null && Math.abs(pct) > 50 && Math.abs(m - b.walk) >= 10;
+    out.push(`| ${b.id} | ${b.min} | ${b.wmin} | ${fmtT(m)} | ${pct === null ? '' : (pct > 0 ? '+' : '') + pct + '%'}${bad ? ' **!**' : ''} | ${what} |`);
+    if (bad) off.push(`beat ${b.id} (${b.what.slice(0, 40)}): map walk ${b.wmin}, this walk ${fmtT(m)} (${pct > 0 ? '+' : ''}${pct}%)`);
   }
-  out.push('', '### More than 50% off, for the lead', '', ...(off.length ? off.map(x => '- ' + x) : ['- none']), '');
+  ratios.sort((a, b) => a - b);
+  const med = ratios.length ? (ratios.length % 2 ? ratios[(ratios.length - 1) / 2] : (ratios[ratios.length / 2 - 1] + ratios[ratios.length / 2]) / 2) : null;
+  out.push('', med === null ? 'Walk against est: no beat to compare.' : `Walk against est (information, not a finding): the median beat came at ${med.toFixed(2)} of its est time over ${ratios.length} beats, so the bot plays about ${(1 / med).toFixed(1)} times a casual person's guessed pace.`, '');
+  out.push('### More than 50% off the map\'s walk, for the lead', '', ...(off.length ? off.map(x => '- ' + x) : ['- none']), '');
   // dead air
   const marks = [0, ...log.filter(e => ['unlock', 'moment', 'nextup', 'gear'].includes(e.kind) && !(e.kind === 'moment' && e.text.startsWith('level'))).map(e => e.t), reached].sort((a, b) => a - b);
   const quiet = []; for (let i = 1; i < marks.length; i++) if (marks[i] - marks[i - 1] >= 180) quiet.push({ from: marks[i - 1], to: marks[i] });
@@ -773,7 +820,7 @@ function report(res) {
   out.push('## Timeline', '', 'Every tip, card, unlock and moment, with the game time it landed and its shot. Toasts and plain cards are in the json.', '', '| Time | Kind | What | Shot |', '|---|---|---|---|');
   for (const e of log.filter(e => ['tip', 'unlock', 'moment', 'nextup', 'gear', 'stall', 'tab'].includes(e.kind) || (e.kind === 'card' && e.shot))) out.push(`| ${fmtT(e.t)} | ${e.kind} | ${e.text.replace(/\|/g, '/').slice(0, 110)} | ${e.shot ? '`' + e.shot + '`' : ''} |`);
   out.push('');
-  return { md: out.join('\n'), sc, beats: beats.map(b => ({ id: b.id, est: b.est, walk: meas[b.id] ?? null, measured: b.id in meas })), off };
+  return { md: out.join('\n'), sc, beats: beats.map(b => ({ id: b.id, est: b.est, mapWalk: b.walk, walk: meas[b.id] ?? null, measured: b.id in meas, note: notes[b.id] || '' })), off, median: med };
 }
 
 // ---------------- scorecard file ----------------
