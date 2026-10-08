@@ -158,6 +158,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## CI and tooling
 
+- After `health.mjs --write-baseline`, run `--compare` per seed offset (`--only optimiser --seed-offset 0..4`) and check offset 0, the one CI runs, sits inside each tolerance; a count metric's band must be at least three sd of the five offsets (docs/design/health.md). Why: z19-wall's re-baseline put optimiser.stallCount at the 5-offset mean 4.93 with abs 1.3, offset 0 read 6 here and 6.33 on CI (one stall more than this machine), and CI failed; the judge widened it to 2.4. (z19-wall, 2026-10-08)
 - CI retries a failed check shard or eyes run once on its own (`tools/ci/retry-once.sh`); a pass on the retry is a FLAKE warning and a line in the job summary. Fix the check named there; never skip it. Why: 9 of 16 reruns on 6-7 Oct passed on the same commit, and an outage of 80 minutes (billing) once made 172 jobs die in 2 s. (ci-review, 2026-10-07)
 - Check the memory limit and piped-output crashes before judging a first red CI run. Why: run 3 of f-ci failed on infrastructure causes. (f-ci, 2026-10-05)
 - Make UI checks follow the real owned count, not an assumed one. Why: an elite could drop a Star while the page loaded and the Stars UI check failed at random. (f-ci)

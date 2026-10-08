@@ -763,9 +763,24 @@ sooner than the z16-wall walks (55:04 and 59:38) with nothing before zone 19 cha
   z18-boss-arrival reads 81/66/69 and 85/54/61 on two seed sets, inside its noise and gaps. Zones 20 and up keep their knots and gaps.
 - **Gaps (all until 2026-12-01).** z19-boss casual, above, all heroes, limit 1, owner `boss-balance-pass`. z19-boss-arrival Tobin
   casual, below, limit 0.55, owner `tobin-safety-margin`.
-- **Health: re-baselined, no tolerance change.** Expect the bots to pass zone 19 and meet the zone 20 wall: the optimiser's and the
-  long run's zone 19 stalls move to zone 20. This is an existing wall met one zone later. If the active or casual persona moves, or a
-  new stall appears below zone 19, re-judge.
+- **Health: re-baselined, one tolerance change.** The bots pass zone 19 and meet the zone 20 wall inside the 10 hours: every
+  optimiser stall over an hour is at zone 20, the existing wall met one zone later. Passing one more zone adds short stalls, so
+  `optimiser.stallCount` rises from 4 (#229) to 4.93, and its spread over the five seed offsets widens (6, 4.33, 5, 4 and 5.33; sd
+  0.8). CI reads offset 0 one stall higher than the builder's machine (6.33). That is +1.4 against an allowed +1.3, so CI fails by 0.1.
+  - **The ruling: `optimiser.stallCount` abs goes from 1.3 to 2.4.** `docs/design/health.md` asks for at least three standard
+    deviations over the five offsets (3 x 0.8 = 2.4), and 1.3 no longer meets that. Each hero is then held at 4.8 against their own
+    baseline. Nothing else moves, and the baseline stays the 5-offset mean.
+  - **Why not a knot.** The extra stalls are at zone 20, which this card leaves alone. Fixing zone 20 to pass CI is the trade this
+    ruling turned down.
+  - **Why it is safe.** The walls this metric watches still show elsewhere. `longestStallSec` (allowed +5,700 s or 30%),
+    `zoneEnd`, `zonePerHour` and the long run's `stallsOver1h` keep their bands, and a new wall moves them.
+  - **Temporary.** Owner `boss-balance-pass` (the zone 20 follow-up). When the zone 20 wall is fixed, set it back to the larger of 1.3
+    and three standard deviations of the then 5-offset spread.
+  - **Watch items.** `docs/design/health.md` says a seed repeats exactly, but CI and this machine differ by one stall at offset 0. A
+    tooling card should find the source. Pip's optimiser run at offset 0 also stalls 2.97 h at zone 17, which #229 fixed for a
+    first-time hero. Nothing below zone 19 changed here, so it is a reshuffle, but `boss-balance-pass` should check it.
+  - The active and casual personas do not move, and the long run passes. If either persona moves, or a new stall over an hour
+    appears below zone 19, re-judge.
 - **Walks.** Run both walks (seeds 1 and 2, 75 game min) on the final build. Walks run on the builder's first build (zone 20 knots,
   hpFloor 1.25) do not count. Pass: each walk reaches zone 19 at the z16-wall times (55:04 and 59:38; nothing before zone 19 changed),
   loses no try in zones 1-18, and clears zone 19 within 4 tries. If a walk needs 5 or more tries at zone 19, or has not cleared it by

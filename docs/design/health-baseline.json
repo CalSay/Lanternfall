@@ -262,7 +262,7 @@
     "optimiser.stallCount": {
       "value": 4.93,
       "bad": "up",
-      "abs": 1.3,
+      "abs": 2.4,
       "rel": 0,
       "note": "stalls (10 active minutes without a new zone)",
       "perHero": {
