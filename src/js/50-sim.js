@@ -184,12 +184,19 @@ function tick(dt) {
   const tg = target();
   // Auto-challenge (the Fight tab's "Fight frontier bosses when ready"), checked once a second in every fight mode.
   // It used to ride the single-foe respawn timer, which pack fights and turn fights never run, so the switch did nothing.
-  if (tg === 'mob' && S.auto && !fightBoss && !arena && (autoChk -= dt) <= 0) {
+  if (tg === 'mob' && S.auto && !fightBoss && !arena && (autoChk -= dt) <= 1e-9) {   // (1e-9: ten 0.1 s ticks make one second, not eleven)
     autoChk = 1;
     if (autoZone !== S.zone) { autoZone = S.zone; autoWait = 0; }
     // ready and stronger than at the last failed try: go when the estimate says it is winnable, or after
     // COMBAT_TUNE.bossWait seconds ready (counted here, so turn fights, which skip the party clock, count too)
-    if (bossReady() && totalDps() > failDps * 1.15) { autoWait++; if (autoWait >= COMBAT_TUNE.bossWait || cbBossReady()) { autoWait = 0; challenge(); } }
+    // boss-retry-reads-odds: after a loss at the frontier in a turn fight, go only at a fair chance (59m bossOdds at least
+    // BOSS_ODDS.close), held there for bossWait s, so closing the Try again card is never undone a second later. No chance
+    // yet (still working it out): the count waits. 59m loads after this file, hence the typeof guard.
+    if (typeof bossOdds === 'function' && bossOddsOn() && bossTryHeld() && S.bossTry.hold === S.maxZone) {
+      const o = bossOdds();
+      if (o && o.win >= BOSS_ODDS.close) { autoWait++; if (autoWait >= COMBAT_TUNE.bossWait) { autoWait = 0; challenge(); } }
+      else if (o) autoWait = 0;
+    } else if (bossReady() && totalDps() > failDps * 1.15) { autoWait++; if (autoWait >= COMBAT_TUNE.bossWait || cbBossReady()) { autoWait = 0; challenge(); } }
     else autoWait = 0;
   }
   // C20: supported prototype fights have one combat driver. Unsupported scopes keep the legacy path below.

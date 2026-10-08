@@ -29,7 +29,7 @@ let gateAutoLb = null;
   g.setAttribute('aria-label', 'Boss gate: show details');
   // One line for the auto-challenge switch (the shell's copy wrapped to two at 360 px).
   const lb = gateAutoLb = $('autoBoss').parentElement, tn = [...lb.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
-  if (tn) tn.textContent = ' Try the boss again on my own when I am stronger';   // shown only while a boss waits for Try again (55-boss-try)
+  if (tn) tn.textContent = ' Try again on my own when I have a fair chance';   // shown only while a boss waits for Try again (55-boss-try)
   lb.classList.add('gate-auto');
   lb.style.display = 'none';   // owner (2026-10-01): the boss always comes after the zone's fights; since a lost boss waits (55-boss-try) the switch shows only then
 }

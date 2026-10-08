@@ -153,6 +153,11 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   (2026-09-28) Elite traits: yes. (2026-09-28)
 - **Zones advance only on a win:** 5 fights, then the zone boss, then the next zone. Losing never moves you. Entering an
   earlier zone starts at fight 1 of 5. (2026-10-01)
+- **After a boss loss, the chance decides** (planner on #213, 2026-10-08; Cal can veto with "retry after every level"). The Try
+  again card and Next Up say the chance to win (`bossOdds`). Under `BOSS_ODDS.close` the card's big button is Keep fighting here,
+  and auto-challenge waits for that chance, not for 15% more damage; a weak held boss no longer comes back after a return from
+  away. Turn fights off and replayed bosses keep the old rule. Builder's addition: a weak chance keeps its own Next Up row
+  (its bar sits near 0), unless the craft goal holds that row for a tier gate.
 - **Fight feel:** a pause between turns with a whose-turn banner, a bigger labelled timing bar, hit-stop and shake on
   big hits, damage numbers that say their source, ability numbers shown only outside a fight. (2026-10-02)
 - **Versus header:** fighting-game HP bars across the top, hero left, foe right. (2026-10-01)

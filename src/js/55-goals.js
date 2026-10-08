@@ -137,21 +137,38 @@ var forgeGoalPicks = 0;
     return { s: o.win >= BOSS_ODDS.ready ? 'ready' : o.win >= BOSS_ODDS.close ? 'close' : 'weak', win: o.win };
   };
   const bossNow = () => S.zone === S.maxZone && bossReady() && !bossHeld() ? bossRead() : null;
+  // boss-retry-reads-odds: after a loss at the frontier in a turn fight, the chance decides (not 15% more damage).
+  // bossLost() -> null (not this path) or bossRead()'s { s, win }; bossPctTxt rounds to 5% ("under 5%" for 0).
+  const bossLost = () => S.zone === S.maxZone && typeof bossOddsOn === 'function' && bossOddsOn() && bossTryHeld() && S.bossTry.hold === S.maxZone ? bossRead() : null;
+  const bossPctTxt = w => { const p = Math.round(w * 20) * 5; return p > 0 ? p + '%' : 'under 5%'; };
   registerGoal({
     id: 'zone-boss', sys: 'boss', prio: 2,
+    // boss-retry-reads-odds: a weak chance after a loss has a bar near 0, so Ready goals would push it out of Next Up; it keeps
+    // a row of its own, unless the craft goal already holds that row for a tier gate (next-tier-gate-goal: the way to get stronger)
+    reserve: () => { const l = bossLost(); if (!l || l.s === 'close' || l.s === 'ready') return 0;
+      const f = GOALS.find(q => q.id === 'forge'); let fr = 0; try { fr = f && typeof f.reserve === 'function' ? +f.reserve() : 0; } catch (e) { fr = 0; } return fr ? 0 : 1; },
     // after a lost try, "ready" waits until you are 15% stronger than then (what auto-challenge waits for too):
     // the bar shows how close you are
-    pct: () => { if (S.zone !== S.maxZone) return 0.5; if (!bossReady()) return Math.min(1, S.kills / ZONE_FIGHTS); if (bossHeld()) return Math.min(0.99, totalDps() / (failDps * 1.15));
+    pct: () => { if (S.zone !== S.maxZone) return 0.5; if (!bossReady()) return Math.min(1, S.kills / ZONE_FIGHTS);
+      const lost = bossLost(); if (lost) return lost.s === 'next' ? 0.5 : lost.s === 'weak' ? Math.max(0.01, Math.min(0.99, lost.win / BOSS_ODDS.close)) : 1;
+      if (bossHeld()) return Math.min(0.99, totalDps() / (failDps * 1.15));
       const b = bossRead(); return !b || b.s === 'ready' ? 1 : b.s === 'next' ? 0.99 : Math.max(0.01, Math.min(0.99, b.win / BOSS_ODDS.ready)); },
     label: () => { if (S.zone !== S.maxZone) return `Go back to Zone ${S.maxZone} and push on`;
       if (!bossReady()) return `${ZONE_FIGHTS - S.kills} more fights to the Zone ${S.maxZone} boss`;
+      const lost = bossLost();
+      if (lost) return lost.s === 'next' ? `The Zone ${S.maxZone} boss beat you. Working out your chance`
+        : lost.s === 'weak' ? `The Zone ${S.maxZone} boss beat you. Your chance: ${bossPctTxt(lost.win)}. Level up and gear up`
+        : `Your chance against the Zone ${S.maxZone} boss: ${bossPctTxt(lost.win)}. Try again when you are ready`;
       if (bossHeld()) return `The Zone ${S.maxZone} boss beat you. Level up or gear up, then try again`;
       const b = bossRead(), z = S.maxZone;
       if (bossTryHeld()) return `You are stronger. Try the Zone ${z} boss again when you are ready`;
       return !b || b.s === 'ready' ? `Boss ready in Zone ${z}` : b.s === 'next' ? `The Zone ${z} boss is next`
         : b.s === 'close' ? `Zone ${z} boss: a close fight. Gear up to be safe` : `Zone ${z} boss is too strong. Level up and gear up first`; },
     icon: { ic: ['banner', '#E0524F', { 7: '#FFB347' }] },
-    go: () => { const b = bossNow();
+    go: () => { const lost = bossLost();
+      // a weak chance after a loss: get stronger (spare points first, else the forge), never Try again
+      if (lost && lost.s !== 'close' && lost.s !== 'ready') return attrLive() && attrFree() > 0 ? { tab: 'party', view: 'attributes', sel: '#attrRows' } : { tab: 'forge' };
+      const b = bossNow();
       // hero-progression-rework: spare attribute points are the one thing to do first; with none, the Fight tab (Training is no longer a way forward)
       return b && (b.s === 'close' || b.s === 'weak') && attrLive() && attrFree() > 0 ? { tab: 'party', view: 'attributes', sel: '#attrRows' }
         : { tab: 'adv', sel: '#gateBtn', fn: () => { if (S.zone !== S.maxZone) setZone(S.maxZone); } }; }

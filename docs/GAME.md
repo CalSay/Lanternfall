@@ -99,8 +99,14 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   close"), the boss's weakness and resists, the moves you now know, and the ways forward that exist today. **Try again**
   starts the boss; closing the card keeps you fighting in the zone. The boss then waits behind the Fight tab's gate
   ("The zone boss is waiting") and does not start by itself, while the zone's fights keep paying as normal. The Auto switch
-  (Fight tab, shown only while a boss waits) lets it come back on its own once you are stronger. Each lost try shows one
+  (Fight tab, shown only while a boss waits) lets it come back on its own once you have a fair chance. Each lost try shows one
   more of the boss's moves in the Foe tab. State: `S.bossTry` (`hold`, `tries`, `rev`, `last`). Adds no power.
+  **The chance decides** (turn fights, a loss at the frontier; boss-retry-reads-odds): the card says your chance to win now
+  (`bossOdds`, worked out as the card opens; its buttons wait up to 1.5 s for it). Under `BOSS_ODDS.close` the big button is
+  **Keep fighting here** and Try again is the small one; Next Up shows the chance as you level and gear up (keeping a row of
+  its own unless the craft goal holds one for a tier gate) and says Try again only once the chance reaches `BOSS_ODDS.close`.
+  Auto waits for that chance for `COMBAT_TUNE.bossWait` s; a weak held boss stays held after a return from away. A replayed
+  boss below the frontier and the old real-time fight keep the old rule (15% more damage than the failed try).
 - **Foes:** zone 1 is the Thorn Imp and zone 2 Gloomjaw, from the C22 roster with approved art (`59l-zone-foes.js`,
   `64j-foe-art.js`). Other zones still use the old foe types with turn move sets (`24d-data-turnfoes.js`). From zone
   15 about one fight in five is an elite with one trait.

@@ -9709,10 +9709,11 @@ if (section('wall-try-again (boss loss, Try again)')) try {
   E('S.bossTry.hold = 5; S.bossTry.fail = 7; failDps = 7; S.zone = 1; S.maxZone = 5; S.kills = ZONE_FIGHTS; fightBoss = false; challenge(); kill()');
   assert(E('S.bossTry.hold') === 5 && E('S.bossTry.fail') === 7 && E('failDps') === 7, 'try again: winning an earlier zone\'s boss does not release the frontier boss');
   E('S.zone = 2; S.maxZone = 2');
-  // Auto: the boss restarts on its own once you are stronger (the Auto switch the card shows)
+  // Auto: the boss restarts on its own once the chance is fair (the Auto switch the card shows). boss-retry-reads-odds retimed
+  // this: a held frontier boss in a turn fight waits for bossOdds >= BOSS_ODDS.close, then COMBAT_TUNE.bossWait s (Tobin wins zone 2 at level 1)
   E('S.bossTry.hold = 2; S.zone = 2; S.maxZone = 2; S.kills = ZONE_FIGHTS; S.auto = true; fightBoss = false; failDps = 0; spawn()');
   let at = -1; for (let t = 0; t < 300 && at < 0; t += 0.1) { g.fn.tick(0.1); if (E("fightBoss")) at = t; }
-  assert(at >= 0 && !E('bossTryHeld()'), `try again: with Auto on, a held boss restarts once you are stronger (at ${at.toFixed(0)} s)`);
+  assert(at >= E('COMBAT_TUNE.bossWait') && at <= E('COMBAT_TUNE.bossWait') + 5 && !E('bossTryHeld()'), `try again: with Auto on, a held boss restarts once the chance is fair, after bossWait (at ${at.toFixed(0)} s)`);
   E('S.auto = false; S.bossTry.hold = 2; fightBoss = false; failDps = 0; spawn()'); run(60);
   assert(!E('fightBoss') && E('bossTryHeld()'), 'try again: with Auto off, the held boss waits for the button');
   // a reload keeps the strength you failed at, so Auto does not retry an unchanged hero
@@ -9727,6 +9728,52 @@ if (section('wall-try-again (boss loss, Try again)')) try {
   assert(g2.eval('S.bossTry && S.bossTry.hold === 0 && typeof S.bossTry.tries === "object" && S.bossTry.last === null'), 'try again: an old save without bossTry loads with its defaults');
   assert(!g.errors.length && !g2.errors.length, 'try again: no core errors');
 } catch (e) { fail('wall-try-again crashed: ' + (e.stack || e)); }
+
+// ==== boss-retry-reads-odds: after a loss at the frontier in a turn fight, the chance (59m bossOdds) decides: Next Up says it,
+// a weak chance never sends you to Try again, and auto-challenge waits for BOSS_ODDS.close, then bossWait s
+if (section('boss retry reads the odds')) try {
+  const g = loadCore({ seed: 3, turns: true }), E = s => g.eval(s);
+  const goal = () => JSON.parse(E('(() => { const x = GOALS.find(q => q.id === "zone-boss"); const go = x.go(); return JSON.stringify({ label: x.label(), pct: +x.pct(), sel: go.sel || "", tab: go.tab }); })()'));
+  const runTo = sec => { let at = -1; for (let t = 0; t < sec && at < 0; t += 0.1) { g.fn.tick(0.1); if (E('fightBoss')) at = Math.round((t + 0.1) * 10) / 10; } return at; };   // seconds run when the boss started
+  E(`soloPick("tobin"); S.auto = true; S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = 'fight'; arena = null;`);
+  assert(E('bossOddsOn()'), 'retry odds: turn fights are on here');
+  // weak: Tobin at level 1 against the zone 13 boss
+  const hold = 'S.bossTry.hold = S.zone = S.maxZone = 13; S.kills = ZONE_FIGHTS; fightBoss = false; failDps = 0; S.bossTry.fail = 0; autoWait = 0';
+  E(hold + '; bossOdds({ sync: true }); spawn()');
+  const w = goal(), win = E('bossOdds().win');
+  assert(win < E('BOSS_ODDS.close') && /^The Zone 13 boss beat you\. Your chance: (under 5%|\d+%)\. Level up and gear up$/.test(w.label) && w.pct < 1 && w.sel !== '#gateBtn', `retry odds: a weak chance is not Ready, names the chance and does not point at Try again (${JSON.stringify(w)}, win ${win})`);
+  assert(!/You are stronger/.test(w.label), 'retry odds: "You are stronger" is gone after a loss in a turn fight');
+  // Ready goals would push a bar near 0 out of Next Up's three rows: the weak chance keeps a row of its own
+  const rows = JSON.parse(E('(() => { const off = [1, 2, 3].map(i => registerGoal({ id: "t-near" + i, sys: "t" + i, pct: () => 0.9, label: "near " + i })); const r = topGoals(3, { sticky: false }).map(x => x.id + ":" + x.ready); off.forEach(f => f()); return JSON.stringify(r); })()'));
+  assert(rows.includes('zone-boss:false'), `retry odds: Next Up keeps a row for a weak chance after a loss (${rows.join(', ')})`);
+  assert(runTo(300) < 0 && E('bossTryHeld()'), 'retry odds: with Auto on and a weak chance, 300 s pass with no boss fight');
+  // still working it out: not Ready, bar at half
+  E('bossOddsReset(); S.bossOdds.hits += 1');
+  const n = goal();
+  assert(/Working out your chance/.test(n.label) && n.pct === 0.5, `retry odds: while the chance is worked out Next Up says so (${JSON.stringify(n)})`);
+  // fair: at level 40 the zone 13 boss falls; Ready, Go is Try again, and Auto waits bossWait s at that chance
+  E('S.L = 40; ' + hold + '; bossOdds({ sync: true })');
+  const c = goal();
+  assert(E('bossOdds().win') >= E('BOSS_ODDS.close') && /^Your chance against the Zone 13 boss: \d+%\. Try again when you are ready$/.test(c.label) && c.pct >= 1 && c.sel === '#gateBtn', `retry odds: a fair chance is Ready and Go is Try again (${JSON.stringify(c)})`);
+  const at = runTo(300), wait = E('COMBAT_TUNE.bossWait');
+  assert(at >= wait && at <= wait + 5, `retry odds: with Auto on and a fair chance the boss comes back between ${wait} and ${wait + 5} s (at ${at.toFixed(1)} s)`);
+  // a return from away keeps a weak held boss held (it used to come back)
+  E('S.L = 1; ' + hold + '; bossOdds({ sync: true }); awayGains(600)');
+  assert(runTo(150) < 0 && E('bossTryHeld()'), 'retry odds: after a return from away a weak held boss stays held');
+  // a replayed boss below the frontier keeps the old rule (15% stronger, then cbBossReady or bossWait)
+  E('S.bossTry.hold = S.zone = 5; S.maxZone = 13; S.kills = ZONE_FIGHTS; fightBoss = false; failDps = 0; autoWait = 0; spawn()');
+  const r = runTo(300);
+  assert(r >= 0 && r <= wait + 5, `retry odds: a lost replayed boss below the frontier keeps the old rule (at ${r.toFixed(1)} s)`);
+  // turn fights off: today's labels
+  E('TURN_TUNE.on = 0; S.bossTry.hold = S.zone = S.maxZone = 13; S.kills = ZONE_FIGHTS; fightBoss = false; failDps = totalDps() * 2');
+  const o = goal();
+  assert(/boss beat you\. Level up or gear up, then try again/.test(o.label), `retry odds: turn fights off keep today's label (${o.label})`);
+  // no loss yet: nothing waits on the chance; the boss comes as soon as the zone's fights are won
+  const g2 = loadCore({ seed: 3, turns: true }), E2 = s => g2.eval(s);
+  E2(`soloPick("tobin"); S.auto = true; S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = 'fight'; arena = null; S.zone = S.maxZone = 13; S.kills = ZONE_FIGHTS; fightBoss = false; spawn()`);
+  assert(E2('fightBoss') && E2('mob && mob.boss'), 'retry odds: with no loss yet the boss starts when the zone is won, weak chance or not');
+  assert(!g.errors.length && !g2.errors.length, 'retry odds: no core errors');
+} catch (e) { fail('boss retry reads the odds crashed: ' + (e.stack || e)); }
 
 // ==== Systems map (f-systems-map): every currency has a source and a sink (or an ALLOW reason), every listed code path still
 // exists, and docs/design/systems-map.md is the current output of tools/systems-map.mjs.

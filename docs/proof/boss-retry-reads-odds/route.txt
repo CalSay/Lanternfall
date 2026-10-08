@@ -1,0 +1,69 @@
+# seed: 1
+# Proof for card boss-retry-reads-odds: after a boss loss the Try again card says your chance to win, and a low chance puts
+# Keep fighting here first. Next Up says the chance too. Rules (auto-challenge waits for a fair chance) are in tools/check.mjs,
+# section 'boss retry reads the odds', which also proves the Next Up line. On these saves Next Up is full of Ready goals the walk
+# bot left undone (64 points to spend, Hunter's Mark, the Golemfist, two deeds, the Watchtower), and a Ready goal is never pushed
+# out, so the route cannot show the boss row without doing all of them first.
+# Fixture z13-weak: the walk's minute 23 save (Wren, level 18, zone 13, boss next). The boss starts by itself; Wren only attacks.
+new z13-weak
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+expect "beat you"
+expect "Your chance to win now"
+expect ".bt-stay.forge"
+shot weak-card
+tap "Keep fighting here"
+# Fixture z13-close: the same save at level 26 with a casual defence record of 300 hits, so the chance after a loss stays fair.
+new z13-close
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+tap-if "Attack"
+wait 3
+expect "beat you"
+expect "Your chance to win now"
+expect ".bt-go.forge"
+shot close-card
