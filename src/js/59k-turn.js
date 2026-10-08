@@ -334,6 +334,7 @@ function turnMakeProfile(f, u) {
     bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0,
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
     gates: f.tk.gates || null, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
+    zb: !!f.tk.zb, uq: typeof uniqRulesWorn === 'function' ? uniqRulesWorn() : [],   // uniques-first-four: a zone boss; the worn uniques' rules (none while UNIQ_TUNE.on is 0)
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
@@ -390,9 +391,24 @@ function turnNew(p, io) {
   if (p.trait === 'shielded') m.e.shield = TURN_TRAITS.shielded.share * p.foeMaxHp;
   if (p.trait === 'frozen') m.e.ice = 1;
   m.sf = null; if (p.stars && p.stars.length) turnStarsStart(m, io);   // the Stars (57e): flags and openers
+  m.uf = turnUniqFlags(p);   // the worn uniques' rules (uniques-first-four), null when none
   m.first = turnPick(m).who;
   return m;
 }
+// The worn uniques' rules for one fight (uniques-first-four; 20-data UNIQ rule): { twin, gate, vesper, mountain, oath, crimson }, or null.
+// Each is keyed on a kind of action or a class resource, never on a hero. One piece a position, so a rule id comes once.
+// A rule holds its cost: twin (Attack strikes twice at hit, boss in bossZ on a zone boss, noGrit: the second hit without Grit's bonus),
+// gate (a counter for every real hit of a move parried but one, at least one; counters x counterX), vesper (a dodged hit takes a turn
+// off every cooldown, a parry no longer does), mountain (each Grit adds per to abilities up to max, boss on a zone boss in bossZ; a
+// landed hit costs `cost` Grit), oath (a parried move makes the next ability x abX; Attack x atkX), crimson (Bleed stacks x stacks, cap
+// `cap`, ticks x tickX). Tool rules act at the gathering grounds (55-tools).
+function turnUniqFlags(p) {
+  if (!p.uq || !p.uq.length) return null;
+  let f = null;
+  for (const r of p.uq) if (r && r.id && r.id !== 'tool') (f || (f = {}))[r.id] = r;
+  return f;
+}
+const turnUniqBand = (m, r) => !!(r && r.boss && m.p.zb && r.bossZ && m.p.zone >= r.bossZ[0] && m.p.zone <= r.bossZ[1]);   // a zone boss in the rule's boss band
 // Speed now (temporary changes clamp to TURN_TUNE.speedMin..Max of the base; a boss takes slows at half)
 function turnRate(m, who) {
   const T = TURN_TUNE, p = m.p;
@@ -526,7 +542,8 @@ function turnControl(m, io, kind) {
   return true;
 }
 const turnBurnSet = (e, dmg, t) => { if (dmg >= e.burnDmg || !(e.burn > 0)) e.burnDmg = dmg; e.burn = Math.min(TURN_TUNE.burnMaxT, Math.max(e.burn, t)); if (e.brand) turnMark(e, e.brand); };   // e.brand: the Stars' Brand
-const turnBleedAdd = (m, n) => { const T = TURN_TUNE, e = m.e; e.bleed = Math.min(e.bleedMax || T.bleedMax, e.bleed + n); e.bleedT = T.bleedT + (e.bleedPlus || 0); e.bleedDmg = Math.max(e.bleedDmg, T.bleedP * m.p.U); };
+const turnBleedAdd = (m, n) => { const T = TURN_TUNE, e = m.e, cr = m.uf && m.uf.crimson; if (cr) n *= cr.stacks;   // the Crimson Thread: twice the stacks, up to its cap
+  e.bleed = Math.min(cr ? Math.max(cr.cap, e.bleedMax || 0) : e.bleedMax || T.bleedMax, e.bleed + n); e.bleedT = T.bleedT + (e.bleedPlus || 0); e.bleedDmg = Math.max(e.bleedDmg, T.bleedP * m.p.U); };
 function turnChillAdd(m, io, n) {
   const T = TURN_TUNE, e = m.e;
   e.chill = Math.min(T.chillMax, e.chill + n); e.chillT = T.chillT;
@@ -566,7 +583,8 @@ const has = (m, id) => m.p.eq.includes(id);
 const turnTal = (m, id) => (m.p.tal && m.p.tal[id]) || '';
 // the hero acts: 'attack' or an ability id. -> true when it happened
 function turnHeroAct(m, io, id, slot, grades) {
-  const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, U = p.U, k = p.heroKey;
+  const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, k = p.heroKey, uf = m.uf;
+  let U = p.U;
   if (turnUsable(m, id)) return false;
   if (m.sf) turnStarsAct(m, io, id, 'pre');
   // a timed ability's rings, one per direct hit in order: 'perfect' | 'good' | 'miss' (none: not timed, as written)
@@ -587,13 +605,18 @@ function turnHeroAct(m, io, id, slot, grades) {
   const spendMark = () => { e.mark = 0; e.markV = 0; if (has(m, 'huntmark') && t('huntmark') === 'b') turnMark(e, 1); };   // Lasting Trail
   let spell = false;
   if (id === 'attack') {
-    let dt = p.heroType, x = 1 + (k === 'tobin' ? T.gritDmg * h.grit : 0);
+    const gx = 1 + (k === 'tobin' ? T.gritDmg * h.grit : 0);
+    let dt = p.heroType, x = gx;
     if (has(m, 'momentum')) { h.mom++; x *= 1 + Math.min(0.5, 0.1 * h.mom + (t('momentum') === 'a' ? 0.1 : 0)); }
     let glowed = false;
     if (has(m, 'afterglow') && h.glow > 0) { x *= 1.5; dt = h.glowDt || dt; h.glow = 0; glowed = true; }
+    if (uf && uf.oath) x *= uf.oath.atkX;   // Oath of the Hollow's cost
     const more = { dt, kind: 'attack', armX: h.pierce ? 0 : 1, payoff: k === 'tobin' }; h.pierce = 0;   // Read the Blow: this Attack ignores armour; Tobin's Attack takes an opening (Exposed)
-    if (k === 'wren' && has(m, 'twinshot')) { const a1 = hit(p.A * 0.55 * x, { ...more }), a2 = hit(p.A * 0.55 * x, { ...more });
+    // the twin uniques: the Attack strikes twice at `cut` a hit (one action); with Twin Shot, three arrows at that cut
+    const tw = uf && uf.twin, cut = tw ? (turnUniqBand(m, tw) ? Math.min(tw.hit, tw.boss) : tw.hit) : 1;
+    if (k === 'wren' && has(m, 'twinshot')) { const a1 = hit(p.A * 0.55 * cut * x, { ...more }), a2 = hit(p.A * 0.55 * cut * x, { ...more }); if (tw) hit(p.A * 0.55 * cut * x, { ...more });
       if (t('twinshot') === 'a' && a1 > 0 && a2 > 0) turnGain(h, 'aim', 1); if (t('twinshot') === 'b') h.escape = 1; }
+    else if (tw) { hit(p.A * cut * x, { ...more }); hit(p.A * cut * (tw.noGrit ? x / gx : x), { ...more }); }   // Twice-Sworn: the second hit gets no Grit bonus
     else hit(p.A * x, more);
     const first = !h.attacked; h.attacked = 1;
     const dodged = h.postDodge; h.postDodge = 0;
@@ -623,6 +646,13 @@ function turnHeroAct(m, io, id, slot, grades) {
   } else {
     const a = turnAb(id); h.mom = 0;
     const dt = a.dt;
+    // the ability uniques: Oath of the Hollow's pending boost (a parried move) and Mountain's Covenant (Grit held as it starts) scale its
+    // direct hits (and a Burn it sets), once; a Bleed it stores is not boosted, since a kept-up Bleed would hold the boost all fight
+    if (uf) { let abX = 1;
+      if (uf.oath && h.oath) { abX *= uf.oath.abX; h.oath = 0; }
+      if (uf.mountain && h.grit > 0) { const r = uf.mountain; abX *= 1 + Math.min(turnUniqBand(m, r) ? Math.min(r.max, r.boss) : r.max, r.per * h.grit); }
+      if (uf.mountain && turnUniqBand(m, uf.mountain)) abX = Math.min(abX, 1 + uf.mountain.boss);   // Oath and Mountain together: still +50% at most on a zone boss in zones 16-34
+      U *= abX; }
     switch (id) {
       // Wren
       case 'echo': hit(U * a.pow, { dt }); if (marked) { hit(U * 0.6, { dt, kind: 'echo2', untimed: true }); if (t('echo') === 'a') { e.pin = 1; e.pinSlow = Math.max(e.pinSlow, 2); } else if (t('echo') === 'b') turnBleedAdd(m, 2); } turnMark(e, 3); break;
@@ -663,7 +693,8 @@ function turnHeroAct(m, io, id, slot, grades) {
         if (marked || pf) turnBleedAdd(m, marked && pf ? 2 : 1); } break;
       case 'finalecho': {
         const keepB = t('finalecho') === 'a' ? Math.min(2, e.bleed) : 0, keepA = t('finalecho') === 'b' ? Math.min(1, h.aim) : 0;
-        hit(U * (a.pow + 0.5 * (e.bleed - keepB) + 0.5 * (h.aim - keepA)), { dt });
+        const nb = m.uf && m.uf.crimson ? Math.min(e.bleed, e.bleedMax || T.bleedMax) : e.bleed;   // the Crimson Thread's extra stacks tick, they do not feed Final Echo (boss gains stay within +50%)
+        hit(U * (a.pow + 0.5 * Math.max(0, nb - keepB) + 0.5 * (h.aim - keepA)), { dt });
         e.bleed = keepB; if (!keepB) e.bleedT = 0; h.aim = keepA; break;
       }
       // Tobin
@@ -778,7 +809,7 @@ function turnBegin(m, who, io) {
     turnHitFoe(m, io, e.burnDmg, { dt: 'fire', dot: true, kind: 'burn', n: e.burn, dotCrit: !!e.burnCrit }); e.burn--; emberTick = true;   // e.burnCrit: the Stars' Kindling
     if (!e.burn) { e.burnDmg = 0; e.growN = 0; }
   }
-  if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg, { dt: 'phys', dot: true, kind: 'bleed', n: e.bleed, dotCrit: !!e.bleedCrit }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }
+  if (e.bleed > 0) { turnHitFoe(m, io, e.bleed * e.bleedDmg * (m.uf && m.uf.crimson ? m.uf.crimson.tickX : 1), { dt: 'phys', dot: true, kind: 'bleed', n: e.bleed, dotCrit: !!e.bleedCrit }); if (--e.bleedT <= 0) { e.bleed = 0; e.bleedDmg = 0; } }   // the Crimson Thread's cost
   if (e.swarm > 0) { if (e.swarmDmg > 0) turnHitFoe(m, io, e.swarmDmg, { dt: 'phys', dot: true, kind: 'swarm' }); if (e.swarmBite && e.bleed > 0) { e.swarmBite = 0; turnBleedAdd(m, 1); } e.swarm--; }
   if (emberTick && has(m, 'emberheart')) {
     const first = !h.ehFirst, et = turnTal(m, 'emberheart'); h.ehFirst = 1;
@@ -849,6 +880,7 @@ function turnLand(m, io, hit) {
   if (p.bossHitCap > 0) amt = Math.min(amt, p.bossHitCap * p.heroMaxHp);   // the boss's side of the hit, before the hero's armour and defences
   amt *= p.hitX * (p.bossHeroX || 1);   // the hero's own share of a zone boss's hit (boss.heroHitX), after the passive floor's armour and class reduction
   if (p.bossHitCap > 0 && (p.bossHeroX || 1) > 1) amt = Math.min(amt, p.bossHitCap * p.heroMaxHp);   // heroHitX never lifts a hit past the hit cap
+  if (m.uf && m.uf.mountain && h.grit > 0) h.grit = Math.max(0, h.grit - m.uf.mountain.cost);   // Mountain's Covenant: a landed hit costs Grit, before the hit's own cuts (a Ward too)
   let red = 1;
   if (h.guard > 0) red *= T.guardX;
   if (h.grit > 0) red *= 1 - T.gritDr * h.grit;
@@ -882,14 +914,16 @@ function turnContact(m, io) {
   let res = 'hit';
   if (hit.feint) { res = 'feint'; if (m.usedDefense && !m.flinch) m.fooled = 1; }   // a press at a fake costs the next hit's defence
   else if (m.defense === 'parry') {
-    for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);
+    if (!(m.uf && m.uf.vesper)) for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);   // Vesper's Reach: parries no longer refund
     m.parried++; res = 'parry';
+    if (m.uf && m.uf.oath) h.oath = 1;   // Oath of the Hollow: the next ability is boosted (one pending boost)
     if (m.p.heroKey === 'tobin') turnGain(h, 'grit', 1 + (has(m, 'bulwark') ? 1 : 0) + (h.answer ? 2 : 0));
     h.answer = 0;   // Taunting Roar: Answer Me, once
     if (h.brace > 0 && h.braceT === 'b') h.pierce = 1;   // Brace: Read the Blow
     if (m.sf) turnStarsDef(m, io, 'parry');
   } else if (m.defense === 'dodge') {
     res = 'dodge'; h.postDodge = 1; if (T.reach[m.p.heroKey]) m.reach = 1;   // Wren's Out of Reach: the rest of this move hits softer
+    if (m.uf && m.uf.vesper) for (const k in m.cds) m.cds[k] = Math.max(0, m.cds[k] - 1);   // Vesper's Reach: a dodged hit takes a turn off every cooldown
     if (m.sf) turnStarsDef(m, io, 'dodge');
     if (m.shadowUsed) { m.shadowUsed = 0; h.shadow = 0; h.keen = 1; if (turnTal(m, 'shadowstep') === 'b') turnGain(h, 'aim', 1); }
   } else if (e.blind > 0 && io.random() < (m.p.boss ? T.blindBossP : T.blindP)) res = 'miss';
@@ -907,9 +941,10 @@ function turnContact(m, io) {
   if (m.parried > 0) h.ripo = 1;
   m.fooled = 0;   // a feint at the end of a move fools nothing after it
   if (m.rally === 2) { m.rally = 0; m.gi++; io.emit('foeRallied', { name: m.p.foeName }); }   // the gate is open
-  if (m.parried === turnRealHits(m.move)) {
+  const gate = m.uf && m.uf.gate;   // Gate of the Deep: every real hit but one parried (at least one) counters; counters deal less
+  if (gate ? m.parried >= Math.max(1, turnRealHits(m.move) - 1) : m.parried === turnRealHits(m.move)) {
     const shelter = has(m, 'bulwark') && turnTal(m, 'bulwark') === 'b';
-    let d = m.p.counter * (has(m, 'bulwark') && !shelter ? 1.25 : 1) * (h.last > 0 ? 2 : 1);
+    let d = m.p.counter * (has(m, 'bulwark') && !shelter ? 1.25 : 1) * (h.last > 0 ? 2 : 1) * (gate ? gate.counterX : 1);
     const got = turnHitFoe(m, io, d, { dt: 'phys', noCrit: true, kind: 'counter' });
     if (shelter) turnWard(m, 0.05);
     if (h.last > 0 && turnTal(m, 'laststand') === 'a') e.sunder = Math.max(e.sunder, 2);

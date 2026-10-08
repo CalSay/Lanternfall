@@ -4,7 +4,10 @@
 // ================= gear math =================
 const itemById = id => S.items.find(i => i.id === id) || null;
 const equipped = slot => itemById(S.equip[slot]);
-const itemPower = it => TIER_POW[it.t] * (it.u ? UNIQ_TUNE.pow : RAR[it.r].m) * (1 + 0.15 * it.plus);
+// uniques-first-four: a unique's power x is its own (pow, Rare level), else UNIQ_TUNE.pow. A Rising tool (UNIQ rise) is the grade of the
+// best open ground of its skill while UNIQ_TUNE.on (nothing saved: the item keeps its own t for upgrades and salvage).
+const itemTier = it => { const d = it.u && UNIQ[it.u]; return d && d.rise && UNIQ_TUNE.on && S.skills && S.skills[d.rise] ? Math.min(d.riseMax || 5, skillTopTier(d.rise)) : it.t; };
+const itemPower = it => TIER_POW[itemTier(it)] * (it.u ? (UNIQ[it.u] && UNIQ[it.u].pow) || UNIQ_TUNE.pow : RAR[it.r].m) * (1 + 0.15 * it.plus);
 // Item kinds, stat lines and the 8 hero positions live in 41-items.js (K4).
 function itemName(it) { return kindName(it.slot, it.t, it.u) + (it.plus ? ` +${it.plus}` : ''); }
 function slotStats(slot, p) {

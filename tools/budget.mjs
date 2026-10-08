@@ -16,6 +16,10 @@
 //   --sweep         print casual and good wins at L-1, L and L+1 (how much one level matters)   (manual)
 //   --players wide  also play a weaker and a stronger casual (parry 15% / 35%, dodge 40% / 70%)      (manual)
 //   --read casual=0.5,good=0.7   set how often a player reads a boss trick (a feint or a held swing; 59k TURN_TUNE.tricks.read)   (manual)
+//   --uniq ID       report only (uniques-first-four): each row twice for the heroes who can wear unique ID (20-data UNIQ, the new table),
+//                   once as is (S) and once with the unique worn in its position (R: zone tier, +5, UNIQ_TUNE.on), on the same fight
+//                   seeds, and print R - S. A unique in a set position breaks the set. Rows default to z16/z20/z25/z30 boss (--only to
+//                   change). --players dodge adds the dodge-first player (parry 5%, dodge 55%; played well 93%)
 //
 // tools/health.mjs runs this and gates on it (--compare): each hero must sit in their band, or inside a known gap that
 // has an owner and an expiry (docs/design/difficulty-budget.json "gaps").
@@ -52,7 +56,7 @@ import { HEROES, loadTargets, cells, offBand } from './lib/budget-score.mjs';
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'seed-offset', 'sweep', 'players', 'read', 'set', 'none'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
+{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'seed-offset', 'sweep', 'players', 'read', 'set', 'none', 'uniq'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('budget: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 const SET_ON = opt('set', 'on') !== 'none';
 const FIGHTS = Number(opt('fights', 240)), OFFSET = Number(opt('seed-offset', 0)), STARS = opt('stars', 'typical') !== 'none', TALS = opt('talents', 'typical') !== 'none';
@@ -66,7 +70,10 @@ export const PLAYERS = { casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 
 const NONE_KINDS = ['keptUpEarly', 'keptUpCaptain', 'keptUpChampion', 'keptUpReport', 'captainMid'];
 // bot: the walk bot's defence (tools/walk.mjs PARRY 0.55, DODGE 0.5), as casual on the rings
 const WIDE = { casualLow: { parry: 0.15, dodge: 0.4, perfect: 0.1, good: 0.4 }, casualHigh: { parry: 0.35, dodge: 0.7, perfect: 0.1, good: 0.4 }, bot: { parry: 0.55, dodge: 0.5, perfect: 0.1, good: 0.4 } };
-const RUN_PLAYERS = opt('players') === 'wide' ? { ...PLAYERS, ...WIDE } : PLAYERS;
+// dodge (uniques-first-four, the uniques judge's dodge-first persona, final-pool-v2.md): parries little, dodges most hits
+const DODGE = { dodgeCasual: { parry: 0.05, dodge: 0.55, perfect: 0.1, good: 0.4 }, dodgeGood: { parry: 0.05, dodge: 0.93, perfect: 0.4, good: 0.45 } };
+const RUN_PLAYERS = opt('players') === 'wide' ? { ...PLAYERS, ...WIDE } : opt('players') === 'dodge' ? { ...PLAYERS, ...DODGE } : PLAYERS;
+const UNIQ_ID = opt('uniq', null);
 for (const kv of (opt('read') || '').split(',').filter(Boolean)) { const [pl, v] = kv.split('='); if (!RUN_PLAYERS[pl] || !(+v >= 0 && +v <= 1)) { console.error('budget: --read player=0..1, with player from ' + Object.keys(RUN_PLAYERS).join(',')); process.exit(2); } RUN_PLAYERS[pl] = { ...RUN_PLAYERS[pl], read: +v }; }
 const SIG = { wren: 'echo', tobin: 'bash', pip: 'fire' };
 const KINDS = { wren: ['bow', 'quiver', 'hood', 'leathers'], tobin: ['warblade', 'shield', 'greathelm', 'plate'], pip: ['staff', 'lantern', 'circlet', 'robe'] };
@@ -172,7 +179,7 @@ const setFor = (z, k) => SETS[[38, 30, 20, 10, 1].find(s => z >= s)][k];
 const KIND_FOR = z => `(isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' : ${z} === 5 ? 'firstChampion' : ${z} === 10 || ${z} === 15 ? 'champion' : ${z} <= 9 ? 'earlyCaptain' : 'captain')`;
 
 // the setup code for hero k at checkpoint c (run inside a fresh core after the fixture loads)
-function setup(c, k, lvShift) {
+function setup(c, k, lvShift, uq) {
   const [, z, , o] = c;
   const lv = `Math.max(1, ${lvShift} + (typeof roadLv === 'function' ? Math.floor(roadLv(${z}) + ((typeof HERO_TUNE === 'object' && HERO_TUNE.joinLead) || 0)) : ${LEGACY_LV[z] || 1}))`;
   if (o.st === 'fresh' && o.zone1) return `soloPick(${J(k)}, {now:true}); setZone(1);`;   // zone 1: a brand-new hero, level 1
@@ -184,13 +191,16 @@ function setup(c, k, lvShift) {
   else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z});
       ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, ${J(o.gear === 'common' ? 'common' : o.gear === 'uncommon2' ? 'uncommon' : 'rare')}, { rnd }); it.plus = ${o.gear === 'common' ? 0 : o.gear === 'uncommon2' ? 2 : 5}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
         S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
+  // --uniq: the unique in its position at the zone's tier, +5 (a unique in a set position breaks the set, below)
+  if (uq) s += `(() => { const key = ${J(uq)}, u = UNIQ[key]; UNIQ_TUNE.on = 1; const it = { id: S.nextId++, slot: uniqKindFor(key, S.party.cls), t: zoneTier(${z}), r: 'legendary', plus: 5, u: key };
+      S.items.push(it); S.equip[u.pos] = it.id; })();`;
   if (o.tier) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
   // hero-progression-rework: attribute points spread evenly (the plain build), or all in one (a build row); no-op before
   // attributes exist
   s += o.build ? `if (typeof attrAdd === 'function' && attrOn()) { S.attr.pts[${J(k)}] = ATTR0(); attrAdd(${J(o.build)}, 1e9, ${J(k)}); }`
     : `if (typeof attrSpread === 'function' && attrOn()) attrSpread(${J(k)});`;
   // a boss row meets its boss for the first time: the zone is the frontier (S.maxZone = z), which is what the footing floor (59k) keys on
-  if (SET_ON && o.st === 'kept' && o.gear !== 'none' && zoneTierOf(z) >= 4) s += `{ const g0 = gearCalc; gearCalc = over => { const g = g0(over); if (!over) { g.might = (g.might || 0) + 0.10 * TIER_POW[${zoneTierOf(z)}]; g.hp = (g.hp || 0) + 0.15 * TIER_POW[${zoneTierOf(z)}]; } return g; }; }`;
+  if (SET_ON && o.st === 'kept' && o.gear !== 'none' && zoneTierOf(z) >= 4) s += `if (!${J(uq || '')} || !['weapon', 'off', 'helm', 'body'].includes(UNIQ[${J(uq || 'x')}] ? UNIQ[${J(uq || 'x')}].pos : '')) { const g0 = gearCalc; gearCalc = over => { const g = g0(over); if (!over) { g.might = (g.might || 0) + 0.10 * TIER_POW[${zoneTierOf(z)}]; g.hp = (g.hp || 0) + 0.15 * TIER_POW[${zoneTierOf(z)}]; } return g; }; }`;
   s += `gearDirty(); S.maxZone = ${c[2] === 'boss' ? z : `Math.max(S.maxZone, ${z})`}; setZone(${z});`;
   return s;
 }
@@ -223,12 +233,12 @@ export function seedOf(...parts) {
 const fixtures = {};
 const fx = n => fixtures[n] || (fixtures[n] = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8'));
 // one hero at one checkpoint: win rate, hero turns a won fight and expected attempts for each player
-function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
+function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null) {
   const [id, z, foe, o] = c, out = {};
   const core = loadCore({ seed: 1, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
   const save = o.st === 'fresh' ? null : o.st === 'late' ? 'late' : o.fx;
   if (save) { core.storage.set(e('KEY'), fx(save)); e('loadSave()'); }
-  e(setup(c, k, lvShift));
+  e(setup(c, k, lvShift, uq));
   if (STARS && !o.zone1 && o.st !== 'joined') e(starsTypical(z));
   if (TALS) e(talentsTypical);
   if (opt('eval')) e(String(opt('eval')));   // before the foe spawns, so a TURN_TUNE.boss change reaches its setup
@@ -241,7 +251,7 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS) {
   if (foe === 'elite' && !p0.elite) throw new Error(`${id} ${k}: no elite to fight`);
   const chain = foe === 'boss' ? 1 : 5, n = Math.ceil(FIGHTS / chain);
   for (const [pl, skill] of Object.entries(players)) {
-    if (pl === 'none' && !NONE_KINDS.includes(o.kind) && !flag('none')) continue;
+    if (pl === 'none' && !NONE_KINDS.includes(o.kind) && !flag('none') && !UNIQ_ID) continue;
     const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl, i));
     const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(o.st === 'joined' ? [SIG[k]] : setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
       let K = 0, D = 0, T = 0, F = 0, C = 0;
@@ -296,6 +306,25 @@ export function printBudget(rep) {
 }
 const GATED = ['casual', 'good', 'none'];
 
+// --uniq ID (report only): R - S for the heroes who can wear it. Casual and never-defends in win points; good-player turns as a change.
+function runUniq(key, only) {
+  const cls = JSON.parse(loadCore({ seed: 1 }).eval(`JSON.stringify(UNIQ[${J(key)}] && UNIQ[${J(key)}].legacy === false ? UNIQ[${J(key)}].cls : null)`));
+  if (!cls) { console.error(`budget: --uniq ${key} is not a new unique (20-data UNIQ, legacy: false)`); process.exit(2); }
+  const heroes = RUN_HEROES.filter(h => cls === 'any' || { warden: 'tobin', ranger: 'wren', lanternmage: 'pip' }[cls] === h);
+  const rows = CHECKPOINTS.filter(c => only ? only.includes(c[0]) : ['z16-boss', 'z20-boss', 'z25-boss', 'z30-boss'].includes(c[0]));
+  const pts = x => (x >= 0 ? '+' : '') + (100 * x).toFixed(1), out = [];
+  console.log(`Unique ${key}: R - S on the same seeds (${FIGHTS} fights a cell, seed offset ${OFFSET}). casual/none: win points; good: turns a won fight.`);
+  for (const c of rows) for (const k of heroes) {
+    const S0 = measure(c, k, LV_SHIFT, RUN_PLAYERS), R = measure(c, k, LV_SHIFT, RUN_PLAYERS, key), line = { row: c[0], hero: k };
+    for (const pl of Object.keys(RUN_PLAYERS)) if (S0[pl] && R[pl]) line[pl] = { S: S0[pl].win, R: R[pl].win, d: R[pl].win - S0[pl].win, turnsS: S0[pl].turns, turnsR: R[pl].turns };
+    out.push(line);
+    console.log(c[0].padEnd(12) + k.padEnd(7) + Object.keys(RUN_PLAYERS).filter(pl => line[pl]).map(pl => `${pl} ${pc(line[pl].S)}->${pc(line[pl].R)} (${pts(line[pl].d)})` + (line[pl].turnsS && line[pl].turnsR ? ` turns ${line[pl].turnsS}->${line[pl].turnsR} (${pts(line[pl].turnsR / line[pl].turnsS - 1)}%)`.replace('%)', ')') : '')).join('  '));
+  }
+  const file = path.resolve(ROOT, opt('json', `tools/.health/budget-uniq-${key}-s${OFFSET}.json`));
+  fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, JSON.stringify({ key, fights: FIGHTS, seedOffset: OFFSET, rows: out }, null, 2) + '\n');
+  console.log(`wrote ${path.relative(ROOT, file)}`);
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {
   const t0 = Date.now(), only = opt('only') ? opt('only').split(',') : null;
   if (flag('sweep')) {
@@ -308,6 +337,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(im
     }
     process.exit(0);
   }
+  if (UNIQ_ID) { runUniq(UNIQ_ID, only); process.exit(0); }
   const rep = runBudget({ only });
   printBudget(rep);
   const out = path.resolve(ROOT, opt('json', 'tools/.health/budget.json'));

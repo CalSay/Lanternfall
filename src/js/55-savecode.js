@@ -152,7 +152,8 @@ function validateSave(data) {
     for (const it of data.items) {
       record(it, 'items[]'); int(it.id, 'item.id', 1); if (ids.has(it.id)) fail('item.id', 'is duplicated'); ids.add(it.id);
       known(CRAFT_KINDS, it.slot, 'item.slot'); known(RAR, it.r, 'item.r'); tier(it.t, 'item.t'); int(it.plus, 'item.plus', 0, 1000);
-      if (it.u != null) known(UNIQ, it.u, 'item.u');
+      if (it.u != null) { known(UNIQ, it.u, 'item.u'); const u = UNIQ[it.u];   // uniques-first-four: a new unique is the kind it was made as (an every-class one: any kind of its position)
+        if (u.legacy === false && (u.cls === 'any' ? kindPos(it.slot) !== u.pos : it.slot !== u.slot)) fail('item.u', 'is on the wrong kind of item'); }
       if (it.a !== undefined) { array(it.a, 'item.a'); for (const a of it.a) { array(a, 'item.a[]'); if (a.length !== 2) fail('item.a[]'); known(CRAFT_AFFIXES, a[0], 'item.a[].stat'); num(a[1], 'item.a[].value', 0, 1); } }
       if (it.mw != null) int(it.mw, 'item.mw', 0, CRAFT_TROPHIES.length - 1);
       if (it.rf !== undefined) int(it.rf, 'item.rf', 0, 1000);
