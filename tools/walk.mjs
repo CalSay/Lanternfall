@@ -814,9 +814,9 @@ function scorecard(reached) {
     pass: worstEarly.gap <= 300 && worstLate.gap <= 480 && z510.length === 0, target: 'a big moment every 5 min to minute 20; then every zone first clear 5 to 10, no gap over 8 (the 8-minute cap holds in the first 20 too)' };
   // F4: new things = unlocks (S.onboard.got) by the time they landed. unlock-gap-trial (judge): the target counts only what the
   // spacing governor releases; a thing the player's act or a drop opened (its row's now() true) is listed, not counted.
-  // walk-join-moment-count: the Switch hero row opens with a starter's join and is said in that join's line, so it rides on the join and is
-  // not a new thing of its own (55-onboard FIRST_USE.switch, via 'notice').
-  const rides = log.filter(e => e.kind === 'unlock' && e.text === 'switch' && moments.some(m => m.id === 'hero' && m.rode && m.t >= e.t - 1 && m.t <= e.t + 30));
+  // walk-join-moment-count: the first starter's join opens the Switch hero row, a later one stamps got['join:<id>'] (55-onboard
+  // onboardJoined); both are said in that join's line, so they ride on the join and are not new things of their own.
+  const rides = log.filter(e => e.kind === 'unlock' && (e.text === 'switch' || e.text.startsWith('join:')) && moments.some(m => m.id === 'hero' && m.rode && m.t >= e.t - 1 && m.t <= e.t + 30));
   const unAll = log.filter(e => e.kind === 'unlock' && !rides.includes(e)), un = unAll.filter(e => !e.byAct).map(e => e.t), unEvery = unAll.map(e => e.t);
   const win = (list, len, from, to) => { let best = 0, at = 0; for (const t of list.filter(t => t >= from && t < to)) { const n = list.filter(u => u >= t && u < t + len).length; if (n > best) { best = n; at = t; } } return { best, at }; };
   const w3 = win(un, 180, 0, 1800), w10 = win(un, 600, 1800, 3600), w3All = win(unEvery, 180, 0, 1800);
