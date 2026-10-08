@@ -150,7 +150,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 ## The camp
 
 - **Hollow's Rest** (`57-camp.js`, `75-camp-ui.js`, scene `63d-scenery-camp.js`): the Hearth, Watchtower, Forge,
-  Workbench, Loom, Enchanter's Table, Tavern, Storehouse, Tents, Library and Shrine. Builds run on the wall clock.
+  Workbench, Loom, Enchanter's Table, Tavern, Storehouse, Tents, Library and Shrine. Builds run on the wall clock. A Build
+  button asks twice: the first tap turns it into "Tap again" for 6 seconds. When Hesketh's step asks for the Workbench,
+  the Forge or the Storehouse, one tap on that station's Build button builds it. Cancel always asks twice.
 - **A new game starts cold** (`55-hearth.js`): the hero lights the fire, then builds the Workbench, the first tool and
   the Forge. Until the fire is lit (and once Gather is open), Next Up keeps a row for it: "Chop Pine Log for Hesketh's
   fire: 3/8", then "Light Hesketh's fire: ready" with 8 logs in hand. Go sends the hero to the Pine Grove, where the fire is.

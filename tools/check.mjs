@@ -12910,6 +12910,59 @@ if (section('unspent points nudge')) try {
   assert(!g.errors.length, 'unspent points: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('unspent points nudge crashed: ' + (e.stack || e)); }
 
+// ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Tap again" for 6 s; Cancel always asks twice ====
+if (section('camp-build-tap-again')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-camp-ui.js'), 'utf8');
+  assert(/const CONFIRM_MS = 6000;/.test(src) && !/'Sure\?'/.test(src), 'camp build tap again: the camp confirm window is 6 s and no button says "Sure?"');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('camp build tap again (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-bench-ready.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // open Camp (closing a story card on the way) until Hesketh's Workbench step is on screen
+      let wants = '';
+      for (let t = 0; t < 15000 && wants !== 'bench'; t += 250) {
+        wants = await X(`(() => { const c = [...document.querySelectorAll("button")].find(b => b.offsetParent && /^Continue$/.test(b.textContent.trim())); if (c) c.click();
+          if (S.tab !== "world") { const tb = document.querySelector('.tab[data-tab="world"]'); if (tb) tb.click(); } return soloGuideWants(); })()`);
+        if (wants !== 'bench') await page.waitForTimeout(250);
+      }
+      const st = () => X(`(() => { const q = document.querySelector("#camp-b-bench .cb-quick"), p = q && q.querySelector(".price");
+        return { building: S.camp.builds.some(b => b.id === "bench"), price: p ? p.textContent : "", cancel: (document.querySelector("#camp-b-bench .cb-cancel") || {}).textContent || "", gold: Math.round(S.gold) }; })()`);
+      const tap = sel => X(`(() => { document.querySelector(${JSON.stringify(sel)}).click(); return true; })()`);
+      const QB = '#camp-b-bench .cb-quick', CB = '#camp-b-bench .cb-cancel';
+      assert(wants === 'bench', `camp build tap again: the bench-ready fixture shows Hesketh's Workbench step in Camp (soloGuideWants "${wants}")`);
+      await tap(QB); let s1 = await st();
+      assert(s1.building && s1.gold === 0, `camp build tap again (guide): one tap on the Workbench's Build button starts the build (${JSON.stringify(s1)})`);
+      await tap(CB); const c1 = await st();
+      await tap(CB); const c2 = await st();
+      assert(c1.building && !c2.building, `camp build tap again (guide): Cancel still takes two taps (${JSON.stringify(c1)} -> ${JSON.stringify(c2)})`);
+      // the guide off: the same Build button arms first; a stubbed clock checks the 6 s window
+      await X('onboardTips(false); S.gold = 300; S.mats.wood[0] = 12; window.__now = Date.now(); Date.now = () => window.__now; ui(true); true');
+      await page.waitForTimeout(500); const off = await X('soloGuideWants()');
+      await tap(QB); const a1 = await st();
+      assert(off !== 'bench' && !a1.building && a1.price === 'Tap again', `camp build tap again (guide off): the first tap only arms it, and it reads "Tap again" (guide "${off}", ${JSON.stringify(a1)})`);
+      await X('window.__now += 5000; true'); await tap(QB); const a2 = await st();
+      assert(a2.building, `camp build tap again (guide off): a second tap 5 s later builds (${JSON.stringify(a2)})`);
+      await tap(CB); const c3 = await st(); await tap(CB); const c4 = await st();
+      assert(c3.building && !c4.building, `camp build tap again (guide off): Cancel takes two taps (${JSON.stringify(c3)} -> ${JSON.stringify(c4)})`);
+      await X('S.gold = 300; S.mats.wood[0] = 12; ui(true); true');
+      await tap(QB); await X('window.__now += 7000; true'); await tap(QB); const a3 = await st();
+      assert(!a3.building && a3.price === 'Tap again', `camp build tap again (guide off): a second tap 7 s later only arms it again (${JSON.stringify(a3)})`);
+      assert(!errs.length, 'camp build tap again: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('camp build tap again crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
