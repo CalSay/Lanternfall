@@ -559,6 +559,66 @@
       "owner": "boss-balance-pass",
       "until": "2026-12-01",
       "why": "the zone 25 Champion-tier fifth move plus the gates split Wren and Pip by about 27 points; a level nudge moves both (boss-tiers-pr5b judge); provisional until the skilling and crafting balance pass"
+    },
+    {
+      "row": "z13-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "below",
+      "limit": 0,
+      "owner": "z13-boss-refit",
+      "until": "2026-12-01",
+      "why": "arrival footing (z13-arrival-footing): level 18-19 from ZONE_FIGHTS fights a zone, tier 1 common +0, no mastery stars. Casual and the walk bot win about 0% a try, as the walk does (docs/design/z13-bot-sim-gap.md). The boss refit (TURN_TUNE.boss hitX/hpX to casual 60-80 at this footing) is a balance-pass row"
+    },
+    {
+      "row": "z13-boss",
+      "hero": "*",
+      "player": "good",
+      "side": "below",
+      "limit": 0.64,
+      "owner": "z13-boss-refit",
+      "until": "2026-12-01",
+      "why": "arrival footing (z13-arrival-footing): level 18-19 from ZONE_FIGHTS fights a zone, tier 1 common +0, no mastery stars. Casual and the walk bot win about 0% a try, as the walk does (docs/design/z13-bot-sim-gap.md). The boss refit (TURN_TUNE.boss hitX/hpX to casual 60-80 at this footing) is a balance-pass row"
+    },
+    {
+      "row": "z14-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "below",
+      "limit": 0,
+      "owner": "z13-boss-refit",
+      "until": "2026-12-01",
+      "why": "arrival footing (z13-arrival-footing): level 18-19 from ZONE_FIGHTS fights a zone, tier 1 common +0, no mastery stars. Casual and the walk bot win about 0% a try, as the walk does (docs/design/z13-bot-sim-gap.md). The boss refit (TURN_TUNE.boss hitX/hpX to casual 60-80 at this footing) is a balance-pass row"
+    },
+    {
+      "row": "z14-boss",
+      "hero": "*",
+      "player": "good",
+      "side": "below",
+      "limit": 0.54,
+      "owner": "z13-boss-refit",
+      "until": "2026-12-01",
+      "why": "arrival footing (z13-arrival-footing): level 18-19 from ZONE_FIGHTS fights a zone, tier 1 common +0, no mastery stars. Casual and the walk bot win about 0% a try, as the walk does (docs/design/z13-bot-sim-gap.md). The boss refit (TURN_TUNE.boss hitX/hpX to casual 60-80 at this footing) is a balance-pass row"
+    },
+    {
+      "row": "z15-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "below",
+      "limit": 0,
+      "owner": "z13-boss-refit",
+      "until": "2026-12-01",
+      "why": "arrival footing (z13-arrival-footing): level 18-19 from ZONE_FIGHTS fights a zone, tier 1 common +0, no mastery stars. Casual and the walk bot win about 0% a try, as the walk does (docs/design/z13-bot-sim-gap.md). The boss refit (TURN_TUNE.boss hitX/hpX to casual 60-80 at this footing) is a balance-pass row"
+    },
+    {
+      "row": "z15-boss",
+      "hero": "*",
+      "player": "good",
+      "side": "below",
+      "limit": 0.18,
+      "owner": "z13-boss-refit",
+      "until": "2026-12-01",
+      "why": "arrival footing (z13-arrival-footing): level 18-19 from ZONE_FIGHTS fights a zone, tier 1 common +0, no mastery stars. Casual and the walk bot win about 0% a try, as the walk does (docs/design/z13-bot-sim-gap.md). The boss refit (TURN_TUNE.boss hitX/hpX to casual 60-80 at this footing) is a balance-pass row"
     }
   ]
 }

@@ -31,6 +31,18 @@ who keeps up with the road** at 26 gated checkpoints from zone 1 to zone 38, plu
 | Stars | Everything found behind the checkpoint's zone, learned, 3 set (zone 1: none). |
 | Build | Attribute points spread evenly, once the game has attributes. |
 
+**The arrival footing (zones 13-15, card `z13-arrival-footing`, 2026-10-08).** The z13, z14 and z15 boss rows are the hero a
+first-time player has when they first get there, not the hero who kept up (`docs/design/z13-bot-sim-gap.md`):
+
+| Part | The arrival footing |
+|---|---|
+| Level | `arrivalLv(z)`: a fresh hero fights `ZONE_FIGHTS` normal foes and the boss in each zone before z, on the game's own XP. Zones 10-15 give 15, 16, 17, 18, 19, 19; the walk arrives at zones 10-13 at 15, 16, 17, 18 (seeds 1 and 2). |
+| Gear | Tier 1 common +0 whatever the zone's tier: tier 2 needs gathering 14 (`skillReqs`), and the walk reaches zone 13 at gathering 4-7. |
+| Mastery | Every zone's kills capped at 10 (a zone's fights and its boss): no mastery stars. The mid fixture's 23 stars (x1.35) came from a hero who played on to zone 20. |
+
+Skills, Stars, talents and the build are as above. The kept-up rows (`z13-boss-keptup` and on) stay the report rows for a player
+who stayed, fought and crafted. `--foot arrival` puts every first-hour row on this footing (the zone 10-12 check).
+
 | Player | Parry | Dodge (of the rest) | Ability rings |
 |---|---|---|---|
 | casual | 25% | 50% | 10% Perfect, 40% Good |
@@ -116,8 +128,13 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
   z13 and z15. Tobin's kept-up cells (casual 100, never-defends 1-100) ride `tobin-safety-margin` gaps.
 
 - **Zones 5-12 are measured on the first-hour set** (boss-tiers PR 1, 2026-10-07): Wren sits in band; Pip and Tobin above it under
-  gaps. A kept-up hero (report-only rows) still wins them 100%. Zones 13-15 are now on the same footing (boss-tiers PR 3); the elites are too easy for a kept-up hero
-  (foe-moves-by-type). Zones 16-24 Captains are gated on the kept-up hero: Wren and Pip casual 54-85, Tobin 100 under gaps.
+  gaps. A kept-up hero (report-only rows) still wins them 100%. The elites are too easy for a kept-up hero (foe-moves-by-type).
+- **Zones 13-15 are a wall for a first-time player** (z13-arrival-footing, 2026-10-08). On the arrival footing (level 18-19, tier 1
+  common +0, no mastery stars) casual Wren, Tobin and Pip win 0% a try at all three bosses; the walk bot's defence wins 1/9/0 at zone 13,
+  as the walk does (Wren 1 try in 49, Tobin 2 in 14). A good player wins 64-94 at zones 13-14 and 18-38 at the zone 15 Champion. The
+  kept-up rows still win in 1-2 tries. Six `*` gaps (owner `z13-boss-refit`, the balance-pass row) hold the cells until the boss refit.
+  The zone 10-12 rows stay on their footing: at the arrival footing the sampler reads Wren's bot 22-46 where the walk never loses
+  (Tobin's 78-98 matches), and on Wren's own walk save it reads 33-56, so that gap is the sampler's, not the footing's. Zones 16-24 Captains are gated on the kept-up hero: Wren and Pip casual 54-85, Tobin 100 under gaps.
 - **Zones 25-34 Captains are in band for Wren and Pip** (mid-zone-wall, 2026-10-07: casual 56-80, good 100%; z34 Wren sits 4 under, inside the seed noise). Tobin wins
   all of them casually (boss-tiers owns the +10 gap).
 - **The Fenmother is easier than the Captains around her** (boss-tiers): 67-100% casual against a 20-40 band; zone 36
@@ -139,3 +156,4 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 | 2026-10-07 | boss-tiers-pr3 | Rows z13-z24 (z13-15 first-hour footing, z16-24 kept-up), report-only z13/z15 kept-up rows, `big` field (heaviest hit share); z15 and z20 Wren and Pip gaps removed, Tobin gaps added; hitCap 0.75 for z16-24; knots; re-baseline | judge ruling 2026-10-07 (`docs/DECISIONS.md`, Boss tiers zones 13-24) |
 | 2026-10-07 | boss-tiers-pr5 | `keptUp` kind retired (report-only 40-100) for gated `keptUpEarly` (z8, casual 80-97), `keptUpCaptain` (z12, z13, 75-95) and `keptUpChampion` (z5, z10, z15, 60-85), each with `gearHelps` and the new `none` player at 10% at most; z12 kept-up on the early save; z15 rows `champion`; `keptUpReport` (z14) and `reportGear` (z10 uncommon +2, z12 mid save) report rows; budget boss rows set `S.maxZone` to the zone (the boss is met for the first time, which the footing floor keys on); Tobin kept-up gaps (tobin-safety-margin, 2026-12-01) and Pip z5, z8, z12 kept-up gaps (wren-first-hour-parity, 2026-11-15) added; stale Pip z9 and z10 first-hour gaps removed; hitX, hpFloor (z13, z14), champHitX (z15) and footFloor refit; re-baseline | judge ruling 2026-10-07 (`docs/DECISIONS.md`, Boss tiers, kept-up heroes) |
 | 2026-10-07 | boss-tiers-pr2 | `firstChampion` casual 60-80 (was 60-85); floors loosened: nothing worn z5 casual 35%+ (was 40), z10 casual 10%+ (was 15); gate `gearHelps` (kept-up casual not under first-hour casual minus tolerance); z20-elite, z35-elder and z38-elite Wren gaps removed, z35-elder Pip limit 0.45 to 0.53 and two others ratcheted by the re-baseline | Opus judge 2026-10-07 (DECISIONS.md, "Boss tiers, Champions"); Cal's "Harder without gear" card, 07:19 |
+| 2026-10-08 | z13-arrival-footing | z13, z14 and z15 boss rows on the arrival footing (`arrivalLv`, tier 1 common +0, kills capped at 10); `--foot arrival`; six `*` gaps on the low side (casual and good, owner `z13-boss-refit`, until 2026-12-01; limits ratcheted to the 5-seed means); re-baseline (only those 24 cells moved) | Opus high judge 2026-10-08 (PR description) |

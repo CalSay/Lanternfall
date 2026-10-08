@@ -13,6 +13,7 @@
 //   --set none      kept-up heroes at grade 4 and up do not wear the crafted set (default: they do, see "The set" below)
 //   --stars none    no Stars (default: the typical Stars a player carries at that zone, as sim.mjs --stars typical)
 //   --lv N          every kept-up hero N levels off the road (-1: a level behind)
+//   --foot arrival  every first-hour row (tier common +0) on the arrival footing (below), not only z13-z15   (manual: the z10-z12 check)
 //   --sweep         print casual and good wins at L-1, L and L+1 (how much one level matters)   (manual)
 //   --players wide  also play a weaker and a stronger casual (parry 15% / 35%, dodge 40% / 70%)      (manual)
 //   --read casual=0.5,good=0.7   set how often a player reads a boss trick (a feint or a held swing; 59k TURN_TUNE.tricks.read)   (manual)
@@ -42,6 +43,13 @@
 //           +0.15 x TIER_POW[t] health (docs/DECISIONS.md "Set bonuses and uniques"). The game does not ship the set yet; the budget wears it so the
 //           kept-up rows are fitted with it on, and the set lands on a tuned floor. Not on the footing swap (gearCalc with `over`): the footing wears no set, as fitted.
 //   build   attribute points spread evenly (hero-progression-rework's attrSpread), once the game has attributes
+// The arrival footing (z13-arrival-footing, docs/design/z13-bot-sim-gap.md): the hero a first-time player has when they
+// first reach zone z, on the z13-z15 first-hour rows (and every first-hour row with --foot arrival):
+//   level   arrivalLv(z): the game's own XP for ZONE_FIGHTS normal foes and the boss in each zone before z (gainXp,
+//           so xpAheadX applies). Zones 10-13 give 15, 16, 17, 18, the levels the walk arrives at (seeds 1 and 2).
+//   gear    tier 1 common +0, whatever the zone's tier: tier 2 needs gathering 14 (skillReqs) and the walk reaches zone 13 at 4-7
+//   mastery every zone's kills capped at ARRIVAL_KILLS (10: a zone's 5 fights and its boss), so no mastery stars; the
+//           fixture's stars came from a hero who played on to zone 20
 // Nothing is scaled to the reference hero: the numbers are the game's own, so a change to levels, gear, foes or Training
 // shows up here.
 //
@@ -56,7 +64,7 @@ import { HEROES, loadTargets, cells, offBand } from './lib/budget-score.mjs';
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'seed-offset', 'sweep', 'players', 'read', 'set', 'none', 'uniq'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
+{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'foot', 'seed-offset', 'sweep', 'players', 'read', 'set', 'none', 'uniq'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('budget: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 const SET_ON = opt('set', 'on') !== 'none';
 const FIGHTS = Number(opt('fights', 240)), OFFSET = Number(opt('seed-offset', 0)), STARS = opt('stars', 'typical') !== 'none', TALS = opt('talents', 'typical') !== 'none';
@@ -88,6 +96,24 @@ const SETS = { 1: { wren: ['echo'], tobin: ['bash'], pip: ['fire'] },
 // above the table), floored, so the footing does not jump when the road lands
 const LEGACY_LV = { 1: 3, 3: 6, 5: 10, 8: 15, 10: 18, 12: 21, 15: 24, 20: 29, 25: 33, 27: 34, 30: 37, 34: 40, 35: 41, 36: 42, 38: 43 };
 const LV_SHIFT = Number(opt('lv', 0));
+const FOOT = opt('foot', null);
+if (FOOT !== null && FOOT !== 'arrival') { console.error('budget: --foot arrival (the only footing it takes)'); process.exit(2); }
+const ARRIVAL_KILLS = 10;
+// the level a first-time player arrives at zone z with (the arrival footing above): a fresh hero fights ZONE_FIGHTS normal
+// foes and the boss in each zone before z, on the game's own XP (one core a hero and zone, kept)
+const arrivalCache = {};
+export function arrivalLv(k, z) {
+  const key = k + '|' + z;
+  if (arrivalCache[key]) return arrivalCache[key];
+  const core = loadCore({ seed: 1, prelude: 'Date.now = () => 1791187200000;' });
+  const L = core.eval(`(() => { soloPick(${J(k)}, {now:true}); TURN_TUNE.on = 1; S.activity = 'fight';
+    const xpOf = boss => { arena = null; fightBoss = boss; spawn(); const f = combatFoes().find(x => x && !x.dead); return f ? f.xp : 0; };
+    for (let zz = 1; zz < ${z}; zz++) { S.maxZone = zz; setZone(zz); gainXp(ZONE_FIGHTS * xpOf(false) + xpOf(true), true); }
+    return S.L; })()`);
+  if (core.errors.length) throw new Error(`arrivalLv(${k}, ${z}): ${core.errors.slice(0, 3).join('; ')}`);
+  return (arrivalCache[key] = L);
+}
+const onArrival = o => o.foot === 'arrival' || (FOOT === 'arrival' && o.st === 'kept' && o.gear === 'common');
 // The checkpoints: [id, zone, foe ('normal' | 'elite' | 'boss'), stage]. A boss row's kind comes from kindFor (the
 // game's boss tier once it has one); stage:
 //   st   'fresh' (a new hero's starter kit at the road's level), 'kept' (their class set at the zone's tier, rare +5,
@@ -129,10 +155,10 @@ export const CHECKPOINTS = [
   ['z10-boss-bare', 10, 'boss', { st: 'kept', fx: 'early', gear: 'none', kind: 'floor' }],
   // zones 13-15 stay on the first-hour footing (boss-tiers PR 3): the zone's tier at common +0 on the mid fixture. The kept-up
   // rows are report-only; from zone 16 the gated hero is the kept-up one (rare +5), where gear is the road's own lever.
-  ['z13-boss', 13, 'boss', { st: 'kept', fx: 'mid', gear: 'common' }],
-  ['z14-boss', 14, 'boss', { st: 'kept', fx: 'mid', gear: 'common' }],
+  ['z13-boss', 13, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival' }],
+  ['z14-boss', 14, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival' }],
   ['z15-elite', 15, 'elite', { st: 'kept', fx: 'mid' }],
-  ['z15-boss', 15, 'boss', { st: 'kept', fx: 'mid', gear: 'common' }],
+  ['z15-boss', 15, 'boss', { st: 'kept', fx: 'mid', gear: 'common', foot: 'arrival' }],
   ['z13-boss-keptup', 13, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUpCaptain', ref: 'z13-boss' }],
   ['z14-boss-keptup', 14, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUpReport', ref: 'z14-boss' }],
   ['z15-boss-keptup', 15, 'boss', { st: 'kept', fx: 'mid', kind: 'keptUpChampion', ref: 'z15-boss' }],
@@ -181,14 +207,14 @@ const KIND_FOR = z => `(isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' :
 // the setup code for hero k at checkpoint c (run inside a fresh core after the fixture loads)
 function setup(c, k, lvShift, uq) {
   const [, z, , o] = c;
-  const lv = `Math.max(1, ${lvShift} + (typeof roadLv === 'function' ? Math.floor(roadLv(${z}) + ((typeof HERO_TUNE === 'object' && HERO_TUNE.joinLead) || 0)) : ${LEGACY_LV[z] || 1}))`;
+  const lv = onArrival(o) ? `Math.max(1, ${lvShift} + ${arrivalLv(k, z)})` : `Math.max(1, ${lvShift} + (typeof roadLv === 'function' ? Math.floor(roadLv(${z}) + ((typeof HERO_TUNE === 'object' && HERO_TUNE.joinLead) || 0)) : ${LEGACY_LV[z] || 1}))`;
   if (o.st === 'fresh' && o.zone1) return `soloPick(${J(k)}, {now:true}); setZone(1);`;   // zone 1: a brand-new hero, level 1
   let s = `soloPick(${J(k)}, {now:true}); const LV = ${lv}; S.L = LV; if (S.solo.tr && S.solo.tr[${J(k)}]) { S.solo.tr[${J(k)}].atk = LV - 1; S.solo.tr[${J(k)}][${J(SIG[k])}] = LV - 1; }
     S.solo.asc[${J(k)}] = ${o.asc ? 1 : 0};`;
   if (o.st === 'late') s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10;
       const own = { weapon: 0, off: 1, helm: 2, body: 3 }[sl]; if (own != null) { it.slot = ${J(KINDS[k])}[own]; delete it.rt; } if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }`;
   else if (o.st === 'kept' && o.gear === 'none') s += `for (const sl of ['weapon', 'off', 'helm', 'body', 'charm']) S.equip[sl] = null;`;
-  else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = zoneTier(${z});
+  else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = ${onArrival(o) ? 1 : `zoneTier(${z})`};
       ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, ${J(o.gear === 'common' ? 'common' : o.gear === 'uncommon2' ? 'uncommon' : 'rare')}, { rnd }); it.plus = ${o.gear === 'common' ? 0 : o.gear === 'uncommon2' ? 2 : 5}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
         S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   // --uniq: the unique in its position at the zone's tier, +5 (a unique in a set position breaks the set, below)
@@ -201,6 +227,7 @@ function setup(c, k, lvShift, uq) {
     : `if (typeof attrSpread === 'function' && attrOn()) attrSpread(${J(k)});`;
   // a boss row meets its boss for the first time: the zone is the frontier (S.maxZone = z), which is what the footing floor (59k) keys on
   if (SET_ON && o.st === 'kept' && o.gear !== 'none' && zoneTierOf(z) >= 4) s += `if (!${J(uq || '')} || !['weapon', 'off', 'helm', 'body'].includes(UNIQ[${J(uq || 'x')}] ? UNIQ[${J(uq || 'x')}].pos : '')) { const g0 = gearCalc; gearCalc = over => { const g = g0(over); if (!over) { g.might = (g.might || 0) + 0.10 * TIER_POW[${zoneTierOf(z)}]; g.hp = (g.hp || 0) + 0.15 * TIER_POW[${zoneTierOf(z)}]; } return g; }; }`;
+  if (onArrival(o)) s += `for (const zz in S.mastery.zones) S.mastery.zones[zz] = Math.min(S.mastery.zones[zz], ${ARRIVAL_KILLS});`;
   s += `gearDirty(); S.maxZone = ${c[2] === 'boss' ? z : `Math.max(S.maxZone, ${z})`}; setZone(${z});`;
   return s;
 }
