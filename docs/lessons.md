@@ -153,6 +153,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A pacing check written before the unlock governor (story-unlock-gates) asserts the governor's spacing, not fixed minute marks. Why: PR #58's faster warm game opened earned rows first, which queued Gather and Bounties past the old 4/5-minute marks (judge ruling). (hero-progression-rework, 2026-10-06)
 - A proof route closes cards that arrive on a timer (moment cards, tips) with `wait` plus `tap-if`, never a bare `tap`, and is replayed a few times in both views before pushing. Why: after the moment layer merged, the mid save's new-hero card covered PR #58's switch at a varying moment, so eyes failed with no error shown (playtest exits 1 on a covered tap). (hero-progression-rework, 2026-10-06)
 - Sweep a new game to zone 15 with the clock moving to prove an unlock chain; set the hero level with the zone. Why: Stars opens at hero level 10 or a first star, so a sweep with a level 1 hero called it unreachable. (unlock-tip-coverage, 2026-10-07)
+- Keep the word "landscape" out of a new check.mjs section name: the C5 check runs `--only=gatherers UI|landscape` with Playwright missing and expects exactly 4 skipped sections, so a fifth match fails it. Why: the first full run of story-card-landscape-fit failed C5 until the section was renamed "story cards fit at 740x360". (story-card-landscape-fit, 2026-10-08)
+
 ## Reviews and Codex
 
 - "@codex review" must be commented by hand after opening the PR; auto review does not fire. Why: seen on fix-bounty-kind. Codex drips one P1 per round, so close the whole class of a finding at once. (fix-bounty-kind, 2026-10-05)

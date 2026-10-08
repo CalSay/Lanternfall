@@ -3027,6 +3027,67 @@ if (section('story UI (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('story UI (browser) crashed: ' + (e.stack || e)); }
+// ---- story cards fit at 740x360 (card story-card-landscape-fit): every Chapter 1 story card that plays as a bottom sheet (the hearth scenes, each Champion and
+// Elder post scene with the meetings that ride in it) shows its name and every line without scrolling, the sheet stays at most 60% of the
+// screen high, and Continue (or Next) and Skip are on screen. Scenes are built the way 55-story.js builds them (npcScene, champScene,
+// elderScene: those are private, so the test rebuilds them from STORY_BEATS), once per starter so each hero's own lines are measured. ----
+if (section('story cards fit at 740x360 (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('story cards fit landscape (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const save = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-unlit-8log.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true, story: true });
+      await ctx.addInitScript(s => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } catch (e) {} }, save);
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(900);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // run() waits while another overlay is up: clear any away card or sheet first
+      await page.evaluate(() => document.querySelectorAll('.away-ov, .bsheet-ov').forEach(n => n.remove()));
+      const scenes = await X(`(() => {
+        const B = STORY_BEATS, out = [];
+        const text = (l, h) => typeof l === 'string' ? l : l && l.hero ? ((B.hero[l.hero] || {})[h] || (B.hero[l.hero] || {})._ || '') : '';
+        const cardsOf = (items, tap, who, h) => { const o = [], ls = [], fl = () => { if (ls.length) o.push({ lines: ls.splice(0), who: who || '' }); };
+          for (const it of items || []) { if (it && it.choice) { fl(); continue; } const t = text(it, h); if (!t) continue; ls.push(t); if (tap) fl(); } fl(); return o; };
+        const npcCards = (id, h) => { const n = B.npc[id]; return n && !(n.not && n.not === h) ? cardsOf(n.lines, false, n.who || '', h) : []; };
+        const npcAt = at => Object.keys(B.npc).filter(id => B.npc[id].at === at);
+        const regionAt = z => { const r = typeof regionOf === 'function' ? regionOf(z) : null; return r ? r.id : 'hollow'; };
+        for (const h of ['wren', 'tobin', 'pip']) {   // the starters (55-story.js STARTERS, private)
+          for (const id of npcAt('hearth')) out.push({ id: 'n:' + id, ch: 'N', kind: 'card', title: B.npc[id].who || '', cards: npcCards(id, h), h });
+          for (const id in B.champ) { const c = B.champ[id], cards = cardsOf(c.post, false, '', h); for (const n of npcAt('champPost:' + id)) cards.push(...npcCards(n, h));
+            out.push({ id: 'p:' + id + ':post', ch: 'P', kind: 'card', title: c.name || '', cards, zone: c.zone, region: regionAt(c.zone), h }); }
+          for (const id in B.elder) { const e = B.elder[id], cards = cardsOf(e.post, true, '', h); for (const n of npcAt('elderPost:' + id)) cards.push(...npcCards(n, h));
+            cards.push(...cardsOf(e.after, true, '', h)); const hl = e.hero ? text({ hero: e.hero }, h) : ''; if (hl) cards.push({ lines: [hl], who: '' });
+            out.push({ id: 'e:' + id + ':post', ch: 'E', kind: 'card', title: e.name || '', cards, zone: e.zone, region: regionAt(e.zone), h }); }
+        }
+        return out.filter(s => s.cards.length).map(s => Object.assign({ head: '', lines: [], hold: 0, page: '' }, s));
+      })()`);
+      let cards = 0; const bad = [];
+      for (const sc of scenes) {
+        await page.waitForFunction(() => !document.querySelector('.bsheet-ov'), null, { timeout: 4000 });
+        await X(`emit('storyScene', ${JSON.stringify(sc)})`);
+        await page.waitForSelector('.sty-sheet.sty-scene .sty-card', { timeout: 4000 });
+        for (let k = 0; k < sc.cards.length; k++) {
+          await page.waitForTimeout(k ? 60 : 300);   // the sheet slides up first
+          const m = await page.evaluate(() => { const q = s => document.querySelector(s), c = q('.sty-sheet .sty-card'), sh = q('.sty-sheet'), r = n => n && n.getBoundingClientRect();
+            const inView = b => !!b && b.top >= 0 && b.left >= 0 && b.bottom <= innerHeight + 0.5 && b.right <= innerWidth + 0.5;
+            return { over: c.scrollHeight - c.clientHeight, sh: Math.round(r(sh).height), vh: innerHeight, done: inView(r(q('.sty-sheet .sty-done'))), skip: inView(r(q('.sty-sheet .sty-skip'))), x: inView(r(q('.sty-sheet .bsheet-x'))) }; });
+          cards++;
+          if (m.over > 1 || m.sh > m.vh * 0.6 + 0.5 || !m.done || !m.skip || !m.x) bad.push(`${sc.h} ${sc.id} card ${k + 1}/${sc.cards.length}: ${JSON.stringify(m)}`);
+          await page.click('.sty-sheet .sty-done');
+        }
+      }
+      assert(scenes.length >= 3 * 10 && !bad.length, `story cards fit landscape: every Chapter 1 hearth, Champion and Elder card at 740x360 shows all its lines with no scroll, in a sheet at most 60% high, with Continue, Skip and close on screen (${cards} cards in ${scenes.length} scenes; ${bad.length} bad${bad.length ? ': ' + bad.slice(0, 4).join(' | ') : ''})`);
+      assert(!errs.length, 'story cards fit landscape: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('story cards fit landscape (browser) crashed: ' + (e.stack || e)); }
 // ---- looks: achievement accessories on the hero (12g, 13b, 64-looks; achievements.md 4.3, AC4) ----
 if (section('looks')) try {
   const g = loadCore({ seed: 7 }), E = s => g.eval(s);

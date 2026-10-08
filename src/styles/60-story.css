@@ -86,6 +86,10 @@
   .sty-sheet:not(.sty-scene) .sty-actions { position: sticky; bottom: 0; background: var(--panel); padding-top: 4px; }
   /* the buttons sit beside the card, not over its last lines (a wide screen has room; a short one does not) */
   .sty-sheet.sty-scene .bsheet-body { display: flex; flex-direction: row; align-items: stretch; overflow: hidden; }
+  /* a scene card takes the screen's width (not the portrait 520 px), so each line sits on one row and a four-line card fits without
+     scrolling; the grab row is trimmed to the close button's height (story-card-landscape-fit) */
+  .bsheet.small.sty-sheet.sty-scene { width: min(700px, calc(100% - 24px)); }
+  .sty-sheet.sty-scene .bsheet-grab { height: 28px; }
   .sty-sheet.sty-scene .sty-card { flex: 1 1 auto; min-width: 0; overflow-y: auto; }
   .sty-sheet.sty-scene .sty-card { padding: 8px 12px; gap: 4px; }
   .sty-sheet.sty-scene .sty-title { font-size: 17px; line-height: 1.15; }
