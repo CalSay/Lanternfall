@@ -49,7 +49,7 @@ on('cacheOpen', v => {
     const c = MOMENT_Q.splice(cj, 1)[0];
     if (c.bark) barks.push(c.bark);
     if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
-    moment('champion', Object.assign(o, { title: c.title, eye: c.eye, scene: c.scene }));
+    moment('champion', Object.assign(o, { title: c.title, eye: c.eye, scene: c.scene, lines: (c.lines || []).concat(o.lines) }));   // the Champion card's own lines (a starter joining) stay on top
     return;
   }
   moment(big ? 'cache' : 'cacheAuto', o);

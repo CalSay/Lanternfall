@@ -32,7 +32,10 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 
 - **Three playable heroes:** Wren (archer, Ranger class), Tobin (tank, Warrior class, Warden kit) and Pip (caster, Mage
   class, Lanternmage kit). Data: `24b-data-solo.js`; runtime: `59j-solo.js`; picker and switch: `76-create.js`,
-  `75-solo-ui.js`.
+  `75-solo-ui.js`. A new game starts with the one you pick; the other two join on the road, at the first clear of the
+  Champion where you meet them (Tobin zone 5, Wren zone 10, Pip zone 15), named on that Champion's card. Until then All
+  heroes shows them locked with where you meet them. Saves from before this (`S.party.unlock.startedAs` `''`) keep all
+  three. Rule and field: `56c-unlocks.js`; rollback `STORY_TUNE.joinOnMeet`.
 - **The road is shared.** Gold, gear, the camp and the furthest zone (`maxZone`) belong to the save. Each hero has its
   own level and remembers its own zone (`S.solo.zn`).
 - **The roster** holds 32 heroes (`56-roster.js`); only the three with complete kits can carry the lamp. Unlock routes,
@@ -46,7 +49,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   count half. Spread evenly, the points give the old +4% a level. Points belong to the
   hero. Adding them is free; Spread evenly places the free ones in one tap; the first Reset points is free and later
   ones cost gold (two taps). A fight takes them as it starts. The build only changes turn fights: away, raid and
-  farm power read the level as if spread evenly. Unspent points do nothing, so Next Up says when there are some. A
+  farm power read the level as if spread evenly. Unspent points do nothing, so Next Up says when there are some, and two levels' points or more unspent puts "Spend N attribute points" first, above every Ready row (the goal has its own system, so Learn never hides it). A
   level costs what the road expects (`xpNeed` follows the road, fights a zone rise by a steady ratio), and a hero more
   than 4 levels past the road's level at the furthest zone earns 0.6x XP a level further. A hero who takes the
   lamp joins at the road's level (2 above the road table, where players stand) at least (keeping their XP short of a level; a hero above it keeps theirs), and every
