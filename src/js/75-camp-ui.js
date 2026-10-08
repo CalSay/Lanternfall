@@ -551,6 +551,7 @@
   const dot = () => { if (S.tab !== 'world') $('raidDot').hidden = false; };
   on('campOpen', dot);
   on('campBuilt', dot);
+  on('refineDone', dot);
   on('campGoto', ({ tab, sel }) => {
     setTab(tab, sel);
     const t = sel && document.querySelector(sel); if (!t) return;

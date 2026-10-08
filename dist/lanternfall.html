@@ -9697,6 +9697,8 @@ const NOTICES = [
   { id: 'starter-join', key: 'starterJoin', ch: 'pop', wait: 30, why: 'a starter joined with no Champion card to say it (the card or the story off, or a clear made while away; starters-join-when-met)' },
   // ---- refine-queues: the stations' orders ----
   { id: 'refine-coal', key: 'refine-coal', ch: 'pop', wait: 10, why: 'once a save: where coal comes from (the art ruling: coal drops from Copper Ore once the Forge is built)' },
+  { id: 'refine-done', key: 'refine-done', ch: 'bell', why: 'a set-amount Forge, Workbench or Loom order finished live (smelt-done-says-so): the bell only, never a pop over the fight; the Camp dot says where',
+    merge: ms => `${ms.length} orders done. ${ms[ms.length - 1]}` },
   { id: 'refine-why', key: 'refine-why', ch: 'pop', reply: true, why: 'an order button the player just pressed could not add the order: say why' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
@@ -15879,7 +15881,8 @@ let unitHp, unitCd, bossTelegraph;
 //          cost is { fam: n } or { mats: { fam: n } } at grade t (an upgrade's or a craft's cost). Frozen shape:
 //          craft-attribute-grades reads it. add() adds every order that can start and returns how many it added.
 //   away   refineAwayRun(T, stock, inflow) (the 'awayEnd' pass; the parity tool and the checks call it through awayGains)
-// Events: 'refined' { st, prod, tier, n } after each unit made live.
+// Events: 'refined' { st, prod, tier, n } after each unit made live; 'refineDone' { st, prod, tier, n } when a set-amount
+// order makes its last unit live (one bell line, 'refine-done', and the Camp tab dot; an All order and the away run say nothing).
 // Save: registerState('refine', { v, st: { forge, bench, loom }, said, seen, coal }). said: 1 = no "The Forge can smelt
 // now" card owed (a new game, or shown); an old save (one saved before this change) starts at 0. seen: when the first order
 // was ever added (ms, 0 = never). coal: 1 once the first coal toast has shown.
@@ -16005,6 +16008,10 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
         left -= need; o.at = 0;
         makeOne(st, o, false);
         emit('refined', { st, prod: o.prod, tier: o.tier, n: 1 });
+        if (!o.all && o.made === o.want) {
+          emit('toast', { key: 'refine-done', msg: `The ${CAMP_B[st].n} made ${storeNum(o.want)} ${plural(o.prod, o.tier, o.want)}.`, kind: 'good', icon: null, prio: 'normal' });
+          emit('refineDone', { st, prod: o.prod, tier: o.tier, n: o.want });
+        }
       }
     }
   };
@@ -38663,6 +38670,7 @@ on('cacheOpen', v => {
   const dot = () => { if (S.tab !== 'world') $('raidDot').hidden = false; };
   on('campOpen', dot);
   on('campBuilt', dot);
+  on('refineDone', dot);
   on('campGoto', ({ tab, sel }) => {
     setTab(tab, sel);
     const t = sel && document.querySelector(sel); if (!t) return;
