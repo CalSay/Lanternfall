@@ -9,6 +9,13 @@
 // API: heroHasKit/heroBio (56-roster), heroRouteInfo -> {state,unlocked,playable,ready,how,bio,cost},
 // heroUnlocked, heroCanPlay, heroUnlock -> bool, heroPick -> bool; tokenChance/unlockTokenRoll for tools.
 // Events: heroUnlocked {id}, heroToken {id,won,chance}, renown {n,total,source}. Toast: heroToken (a bell line, 23n).
+// starters-join-when-met (DECISIONS "Starters join on the road"): a new game keeps the starter it picked, and the other two join at the
+// first clear of the Champion whose post plays their meet scene (STORY_BEATS.npc[id].at = 'champPost:<champ>': Tobin zone 5, Wren 10,
+// Pip 15). S.party.unlock.startedAs: '' (every old save: all three starters are yours) or the starter the picker's Begin chose on a
+// real new game (heroBegin, the only writer). Any other value reads as ''. STORY_TUNE.joinOnMeet = false gives all three at the start.
+// heroBegin(id) -> bool (the picker's Begin), heroJoins() -> [id] (starters who joined on the road), heroJoinLine(id, away),
+// heroJoinsAhead() -> bool (a starter is still to join, or a Begin now would start a game where they do).
+// Event: starterJoin { ids, zone } on the clear that brings them (75-moments-ui puts the line on the Champion card).
 
 const UNLOCK_TUNE = {
   renownBounty: 1, renownElite: 3,
@@ -75,10 +82,10 @@ const STORY_MEET = {
   corvin: [156, 5]
 };
 let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, heroUnlock, heroPick,
-  tokenChance, unlockTokenRoll, heroProbe;
+  tokenChance, unlockTokenRoll, heroProbe, heroBegin, heroJoins, heroJoinLine, heroJoinsAhead;
 {
   const T = UNLOCK_TUNE;
-  const DEF = { renown: 0, heroes: {}, quests: {}, tokens: {}, milestones: {} };
+  const DEF = { renown: 0, heroes: {}, quests: {}, tokens: {}, milestones: {}, startedAs: '' };
   fillDefaults(STATE_DEFAULTS.party, { unlock: DEF });
   fillDefaults(S.party, { unlock: DEF });
   const U = () => S.party.unlock;
@@ -118,6 +125,28 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     if (id === 'asta') return claim(got(q.freeWith) ? { ...q, pendingFee: null } : q, `Reach the Last Descent (zone ${q.from}). Free if Solveig is at camp.`);
     return free(false, ROSTER[id].how || 'More of this route comes later.');
   };
+  // ---- starters-join-when-met ----
+  const isStarter = id => typeof id === 'string' && Object.prototype.hasOwnProperty.call(ROSTER, id) && ROSTER[id].route.type === 'starter';   // own keys only: a saved "constructor" is not a hero
+  const startedAs = () => { const s = U().startedAs; return typeof s === 'string' && isStarter(s) ? s : ''; };
+  const joinOn = () => !(typeof STORY_TUNE === 'object' && STORY_TUNE && STORY_TUNE.joinOnMeet === false);
+  const gateOn = () => joinOn() && !!startedAs();
+  // the zone of the Champion whose post plays this starter's meet scene; 0 (no scene in the data): no gate for that starter
+  const joinZone = id => {
+    const B = typeof STORY_BEATS === 'object' && STORY_BEATS, n = B && B.npc && B.npc[id], m = n && /^champPost:(\w+)$/.exec(n.at || ''), c = m && B.champ && B.champ[m[1]];
+    return c && c.zone > 0 ? c.zone : 0;
+  };
+  // yours: the gate is off, you began as them, they joined, their Champion is cleared, or they carry the lamp now (a backstop)
+  const starterOwn = id => !gateOn() || id === startedAs() || got(id) || !joinZone(id) || (S.maxZone || 1) > joinZone(id)
+    || (typeof soloHero === 'function' && soloHero() === id);
+  const starterLine = id => `You meet ${ROSTER[id].name.split(' ')[0]} at the zone ${joinZone(id)} Champion.`;
+  // a real new game: no hero chosen yet, nothing fought, nothing cleared, and no start recorded (a Mirror of Embers on any save fails this)
+  const newGame = () => !!S.party && !S.party.chosen && !((S.totalKills || 0) > 0) && (S.maxZone || 1) <= 1 && !startedAs();
+  const joinNow = (z, away) => {
+    if (!gateOn()) return [];
+    const ids = ROSTER_KEYS.filter(id => isStarter(id) && id !== startedAs() && !got(id) && joinZone(id) && (away ? (S.maxZone || 1) > joinZone(id) : joinZone(id) === z));
+    for (const id of ids) { U().heroes[id] = 1; if (typeof onboardJoined === 'function') onboardJoined(id); }   // no heroUnlocked: the join rides the Champion card
+    return ids;
+  };
   const metScene = id => !STORY_MEET[id] || (S.maxZone || 1) >= STORY_MEET[id][0];
   const meetLine = id => { const m = STORY_MEET[id]; return id === 'hesketh' ? 'You meet him on the road.' : m && m[1] === 1 && m[0] < 36 ? 'You meet them in the Hollow.' : 'You meet them further down the road.'; };
   // story-unlock-gates: the camp's All heroes sheet says when a held hero joins. In the chapter the player is in: the zone (the
@@ -134,7 +163,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   };
   const route0 = id => {
     const r = heroKnown(id) && ROSTER[id]; if (!r) return free(false, 'Unknown hero.');
-    if (r.route.type === 'starter') return free(true, 'Unlocked. Pick up the lamp.');
+    if (r.route.type === 'starter') return starterOwn(id) ? free(true, 'Unlocked. Pick up the lamp.') : { ...free(false, starterLine(id)), story: true };
     if (T.designed[id]) return designed(id);
     if (T.progress[id]) { const q = T.progress[id]; return claim(q, `Reach zone ${q.zone}.`); }
     if (['bram', 'maren', 'elowen'].includes(id)) { const q = T.quests[id]; return claim(q, `Reach zone ${q.from} and ${id === 'bram' ? 'bring wood to Bram’s camp' : id === 'maren' ? 'relight the Barrow Lamp' : 'relight the chapel'}.`); }
@@ -163,16 +192,17 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     U().renown += n; emit('renown', { n, total: renown(), source: source || 'other' }); return renown();
   };
   on('bountyDone', b => addRenown(b && b.elite ? T.renownElite : T.renownBounty, 'bounty'));
-  heroUnlocked = id => heroKnown(id) && (ROSTER[id].route.type === 'starter' || got(id) || (route(id).ready && !route(id).paid));
+  heroUnlocked = id => heroKnown(id) && (isStarter(id) ? starterOwn(id) : got(id) || (route(id).ready && !route(id).paid));
   heroCanPlay = id => heroUnlocked(id) && heroHasKit(id);
   heroRouteInfo = id => {
     if (!heroKnown(id)) return null;
     const r = route(id), unlocked = heroUnlocked(id), kit = heroHasKit(id);
-    return { id, ...r, unlocked, playable: unlocked && kit, state: unlocked ? (kit ? 'unlocked' : 'coming-soon') : r.pending && r.gated ? 'coming-soon' : 'locked', bio: unlocked ? heroBio(id) : '', meet: ROSTER[id].route.type === 'starter' ? '' : meetLine(id) };
+    return { id, ...r, unlocked, playable: unlocked && kit, state: unlocked ? (kit ? 'unlocked' : 'coming-soon') : r.pending && r.gated ? 'coming-soon' : 'locked', bio: unlocked ? heroBio(id) : '', meet: isStarter(id) ? (unlocked ? '' : starterLine(id)) : meetLine(id) };
   };
   heroUnlock = id => {
     if (!heroKnown(id)) return false;
-    if (ROSTER[id].route.type === 'starter' || got(id)) return true;
+    if (isStarter(id)) return starterOwn(id);   // a starter has no paid route: it is yours or it joins on the road
+    if (got(id)) return true;
     const r = route(id); if (!r.ready) return false;
     // Recheck and pay in one synchronous action. Repeated clicks and probes never pay twice.
     for (const [k, t, count] of r.cost.mats) {
@@ -186,6 +216,21 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     emit('heroUnlocked', { id }); return true;
   };
   heroPick = (id, opts) => heroCanPlay(id) && typeof soloPick === 'function' && soloPick(id, opts);
+  // the picker's Begin: on a real new game the picked starter is recorded first (so the pick is yours), and undone if the pick fails
+  heroBegin = (id, opts) => {
+    const fresh = isStarter(id) && newGame();
+    if (fresh) U().startedAs = id;
+    const ok = !!heroPick(id, opts);
+    if (fresh && !ok) U().startedAs = '';
+    return ok;
+  };
+  heroJoins = () => gateOn() ? ROSTER_KEYS.filter(id => isStarter(id) && id !== startedAs() && got(id)) : [];
+  heroJoinLine = (id, away) => `${ROSTER[id].name.split(' ')[0]} ${away ? 'joined your camp while you were away' : 'joins your camp'}. ${FIRST_USE.switch.text}`;
+  heroJoinsAhead = () => joinOn() && (newGame() || (gateOn() && ROSTER_KEYS.filter(id => isStarter(id) && !starterOwn(id)).length >= 2));   // the picker's "the other two" line
+  // the join: on the first clear of the Champion's zone (zoneClear comes before the kill, so the Champion card can carry it). A clear
+  // made while away has no zoneClear: the return catches it and says it in a toast.
+  on('zoneClear', e => { const ids = e ? joinNow(e.zone) : []; if (ids.length) emit('starterJoin', { ids, zone: e.zone }); });
+  on('awayEnd', () => { for (const id of joinNow(0, true)) emit('toast', { key: 'starterJoin', msg: heroJoinLine(id, true), kind: 'good' }); });
   heroProbe = () => {
     // A late save beyond the Pyre Knight starts the one-day visit clock once.
     if (S.maxZone > T.designed.beatrix.boss && !U().milestones.beatrix) U().milestones.beatrix = Math.max(1, Date.now());
@@ -224,6 +269,7 @@ function heroUnlockStateValid(u) {
   const obj = x => !!x && typeof x === 'object' && !Array.isArray(x);
   const num = x => typeof x === 'number' && Number.isFinite(x) && x >= 0;
   if (!obj(u) || (u.renown !== undefined && !num(u.renown))) return false;
+  if (u.startedAs !== undefined && typeof u.startedAs !== 'string') return false;   // starters-join-when-met: any text that is not a starter reads as '' (all three yours)
   for (const key of ['heroes', 'quests', 'tokens', 'milestones']) {
     if (u[key] === undefined) continue;
     if (!obj(u[key])) return false;

@@ -32,7 +32,10 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 
 - **Three playable heroes:** Wren (archer, Ranger class), Tobin (tank, Warrior class, Warden kit) and Pip (caster, Mage
   class, Lanternmage kit). Data: `24b-data-solo.js`; runtime: `59j-solo.js`; picker and switch: `76-create.js`,
-  `75-solo-ui.js`.
+  `75-solo-ui.js`. A new game starts with the one you pick; the other two join on the road, at the first clear of the
+  Champion where you meet them (Tobin zone 5, Wren zone 10, Pip zone 15), named on that Champion's card. Until then All
+  heroes shows them locked with where you meet them. Saves from before this (`S.party.unlock.startedAs` `''`) keep all
+  three. Rule and field: `56c-unlocks.js`; rollback `STORY_TUNE.joinOnMeet`.
 - **The road is shared.** Gold, gear, the camp and the furthest zone (`maxZone`) belong to the save. Each hero has its
   own level and remembers its own zone (`S.solo.zn`).
 - **The roster** holds 32 heroes (`56-roster.js`); only the three with complete kits can carry the lamp. Unlock routes,

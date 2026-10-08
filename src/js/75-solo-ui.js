@@ -489,6 +489,8 @@ var soloIconURL = () => '';
           putText(c._lv, lvText(k, info, lv, on_));
         }
         putText(all, `All heroes (${HERO_ORDER.length})`);
+        // starters-join-when-met: with one hero of your own, the others are still on the road
+        putText(note, list.filter(k => heroRouteInfo(k).playable).length > 1 ? 'Switch any time, for free. Each hero keeps their own level.' : 'Others join you on the road. Each hero keeps their own level.');
         if (ov.hidden) return;
         for (const b of sec._cards) {
           const k = b.dataset.hero, on_ = k === cur, info = heroRouteInfo(k);

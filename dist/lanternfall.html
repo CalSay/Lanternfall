@@ -9569,6 +9569,7 @@ const NOTICES = [
   // ---- C14: the merged away report owns its source summaries ----
   { id: 'away-report', key: 'away-report', ch: 'card' },
   { id: 'hero-token', key: 'heroToken', ch: 'bell', why: 'a hero token won (56c, story-unlock-gates): when that hero joins; no kit yet, so no pop' },
+  { id: 'starter-join', key: 'starterJoin', ch: 'pop', wait: 30, why: 'a starter joined with no Champion card to say it (the card or the story off, or a clear made while away; starters-join-when-met)' },
   // ---- refine-queues: the stations' orders ----
   { id: 'refine-coal', key: 'refine-coal', ch: 'pop', wait: 10, why: 'once a save: where coal comes from (the art ruling: coal drops from Copper Ore once the Forge is built)' },
   { id: 'refine-why', key: 'refine-why', ch: 'pop', reply: true, why: 'an order button the player just pressed could not add the order: say why' }
@@ -13916,7 +13917,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
 //          { item }, a URL); the UI also takes { mob: typeKey } and { char: rosterId }
 //   prio   optional number or fn() -> number (default 0); breaks ties and orders ready goals (higher first)
 //   cap    optional 1: the diversity pass never takes a second goal from this sys (deeds, story)
-//   reserve optional 1: when the goal has something to show it keeps one row of its own (n >= 3), taking
+//   reserve optional 1 (or fn() -> 1/0): when the goal has something to show it keeps one row of its own (n >= 3), taking
 //          the place of the lowest other pick, so Ready goals cannot crowd it out (the deeds nudge, AP6)
 // topGoals(n = 3, { now, sticky = true }) -> [{ id, sys, label, pct, ready, go, icon }]
 //   Ready goals first, then the highest pct. Cached for 450 ms. Sticky: goals already shown
@@ -13931,6 +13932,8 @@ function registerGoal(g) {
   return () => { const j = GOALS.indexOf(rec); if (j >= 0) GOALS.splice(j, 1); };
 }
 let topGoals;
+// next-tier-gate-goal: the craft goal's pick, read-only (tools/walk.mjs reads it): forgeNext() below.
+let craftGoalNext = () => null;
 // Counts Next Up craft picks, so the Craft tab refocuses the recipe even when it is the same one.
 var forgeGoalPicks = 0;
 
@@ -13952,7 +13955,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, goLabel: typeof g.goLabel === 'function' ? g.goLabel() : g.goLabel || '', icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, goLabel: typeof g.goLabel === 'function' ? g.goLabel() : g.goLabel || '', icon, prio: +(typeof g.prio === 'function' ? g.prio() : g.prio) || 0, cap: +g.cap || 0, reserve: +val(g.reserve) || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -14097,8 +14100,11 @@ var forgeGoalPicks = 0;
     go: { tab: 'adv', sel: '#sec-bestiary' }
   });
 
-  // Skills: the skill closest to its next level.
+  // Skills: the skill closest to its next level. next-tier-gate-goal: while the craft goal shows a tier gate, the skill that
+  // gate names (so the two rows agree), and its Go is the gate row's. A crafting skill's Go opens Craft at its station.
   const skillNext = () => {
+    const f = forgeNext();
+    if (f && f.gate) { const s = S.skills[f.gate.skill]; if (s) return { k: f.gate.skill, s, p: Math.max(0.01, Math.min(0.99, s.xp / skillNeed(s.lv, f.gate.skill))), f }; }   // 0 XP still shows (a station sits there after each level)
     let best = null;
     for (const k of Object.keys(SKILL)) {
       if (k === 'hunt' && !huntingVisible()) continue;
@@ -14108,13 +14114,23 @@ var forgeGoalPicks = 0;
     }
     return best;
   };
-  const SKILL_IC = { mine: ['pick', '#D08A4E'], wood: ['axe', '#5FAE4E'], smith: ['anvil', '#6E6878'] };
+  const SKILL_IC = { mine: ['pick', '#D08A4E'], wood: ['axe', '#5FAE4E'], smith: ['anvil', '#6E6878'], bench: ['anvil', '#C9A56A'], loom: ['anvil', '#8FA868'], ench: ['anvil', '#B58CFF'] };
+  // the station a crafting skill levels at, and Go to it on Craft (the Forge's level bar is #smithBar, the others their station button)
+  const stationFor = k => Object.keys(CRAFT_STATIONS).find(s => CRAFT_STATIONS[s].skill === k);
+  const stationSel = s => s === 'forge' ? '#smithBar' : `.cf-st[data-st="${s}"]`;
+  // any: a gate's Go may pick a recipe the hero cannot wear (a tool's Smithing gate for a ranger) so the screen opens at the station
+  const skillGo = (k, any) => {
+    const st = stationFor(k); if (!st) return { tab: 'gat', view: k };   // UX-A: a gathering skill's own Gather view
+    // pick a recipe at that station so the Craft screen opens there (75-craft-ui syncGoalPick reads S.fSlot / S.fTier)
+    const kind = CRAFT_HERO_POS.map(kindsFor).flat().find(x => CRAFT_KINDS[x].st === st) || (any ? Object.keys(CRAFT_KINDS).find(x => CRAFT_KINDS[x].st === st && !CRAFT_KINDS[x].legacy && craftKindVisible(x)) : null);
+    return kind ? { tab: 'forge', sel: stationSel(st), fn: () => { S.fSlot = kind; S.fTier = 1; forgeGoalPicks++; } } : { tab: 'forge', sel: stationSel(st) };
+  };
   registerGoal({
     id: 'skill', sys: 'skill', prio: -1,
     pct: () => { const b = skillNext(); return b ? b.p : null; },
     label: () => { const b = skillNext(); return b ? `${SKILL[b.k]}: ${fmt(Math.ceil(skillNeed(b.s.lv, b.k) - b.s.xp))} XP to level ${b.s.lv + 1}` + (skillNextReq(b.k) === b.s.lv + 1 ? `, which opens tier ${skillTopTier(b.k) + 1}` : '') : ''; },
     icon: () => { const b = skillNext(); return { ic: SKILL_IC[b ? b.k : 'mine'] || SKILL_IC.mine }; },
-    go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', view: b.k }; }   // UX-A: the skill's own Gather view
+    go: () => { const b = skillNext(); return !b ? { tab: 'gat' } : b.f ? gateGo(b.f) : skillGo(b.k); }
   });
 
   // Craft: the next tier of an item the hero can wear (class kinds via CRAFT_FITS/fits; a
@@ -14148,8 +14164,47 @@ var forgeGoalPicks = 0;
     icon: () => { const b = equipNext(); return b ? { item: b.it } : null; },
     go: () => { const b = equipNext(); if (b) equipItem(b.it.id, b.pos); }
   });
-  const forgeNext = () => {
+  // next-tier-gate-goal: what keeps a piece's next tier shut. The station's skill below the tier's gate is a station gate; else a
+  // material you are short of whose node tier is closed for its gathering skill (a refined one by the raw goods it is made from;
+  // coal comes with Copper Ore and essence has no tier, so neither gates). The nearer one (the higher lv / need) is named.
+  // null: nothing gates it; false: only a gate the player cannot raise now (Hunting hidden, Foraging not open yet).
+  const GATHER_OPEN = { hide: () => huntingVisible(), fibre: () => isUnlocked('forage'), herb: () => isUnlocked('forage') };
+  const nearer = (a, b) => !b || a.lv / a.need > b.lv / b.need;
+  // a raw cell's gate, or false when its node never opens or its skill is hidden
+  const rawGate = (f, tt) => {
+    const sk = skillOf(f); if (skillTierOpen(sk, tt)) return null;
+    if (!craftNodeEnabled(f, tt) || (GATHER_OPEN[f] && !GATHER_OPEN[f]())) return false;   // hide grades 4-5 are never offered
+    return { skill: sk, lv: S.skills[sk].lv, need: skillReq(sk, tt), mat: costName(f, tt) };
+  };
+  const recipeGate = (kind, t, c) => {
+    if (c.lv < c.need) {
+      // tools and pre-K4 kinds use the better of their station and Smithing (stationLevel): name the skill that gives that level
+      const st = stationOf(kind), sk = S.skills[st.skill].lv >= c.lv ? st.skill : 'smith';
+      return { skill: sk, lv: S.skills[sk].lv, need: c.need, station: stationFor(sk) };
+    }
+    // what the recipe takes as raw cells: a raw cost as it is, a refined one you are short of by the raw goods it is made from,
+    // totalled over the recipe (Birch Planks and Duskfang Leather both take Birch Log); a cell gates only when you hold too few
+    const raw = {}, add = (f, tt, n) => { if (f !== 'coal' && CRAFT_NODES[f]) raw[f + ':' + tt] = (raw[f + ':' + tt] || 0) + n; };
+    for (const [k, n] of Object.entries(c.cost.mats)) {
+      const prod = typeof REFINE_PRODUCTS === 'object' ? REFINE_PRODUCTS[k] : null, short = n - matOwn(k, t);
+      if (!prod) add(k, t, n); else if (short > 0) for (const [f, tt, m] of prod.inputs(t)) add(f, tt, m * short);
+    }
     let best = null;
+    for (const [key, n] of Object.entries(raw)) {
+      const [f, tt] = [key.split(':')[0], +key.split(':')[1]];
+      if (matOwn(f, tt) >= n) continue;
+      const g = rawGate(f, tt);
+      if (g === false) return false;
+      if (g && nearer(g, best)) best = g;
+    }
+    return best;
+  };
+  // a station gate beats any material gate (about 50 XP against thousands); then the nearer; on a tie, the weapon
+  const gateScore = e => (e.gate.station ? 2 : 0) + e.gate.lv / e.gate.need + (e.pos === 'weapon' ? 1e-6 : 0);
+  // forgeNext() -> { kind, t, pos, cost, p } the open recipe closest to done, or, when none with p > 0 is open,
+  // { kind, t, pos, gate: { skill, lv, need, mat?, station? }, p } the nearest gate (p = lv / need, at most 0.99, never Ready)
+  const forgeNext = () => {
+    let best = null, gate = null;
     const zt = zoneTier(S.maxZone);
     const eq = equipNext();
     for (const pos of CRAFT_HERO_POS) {
@@ -14160,32 +14215,47 @@ var forgeGoalPicks = 0;
         const t = have + 1;
         if (t > Math.min(5, zt)) continue;
         const c = canCraft(kind, t);
-        if (!c.cost || c.lv < c.need || c.unbuilt) continue;   // unbuilt: a cold save's station (H1)
+        if (!c.cost || c.unbuilt) continue;   // unbuilt: a cold save's station (H1); no gate on a station that is not built
+        const g = recipeGate(kind, t, c);
+        if (g !== null) {
+          if (g) { const e = { kind, t, pos, gate: g, p: Math.min(0.99, g.lv / g.need) }; if (!gate || gateScore(e) > gateScore(gate)) gate = e; }
+          continue;
+        }
         const ks = Object.keys(c.cost.mats);
         const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(matOwn(k, t), c.cost.mats[k])), 0) / Math.max(1, ks.length));
         const score = p + (pos === 'weapon' ? 0.02 : 0);
         if (!best || score > best.score) best = { kind, t, pos, cost: c.cost.mats, p, score };
       }
     }
-    return best;
+    return best && best.p > 0 ? best : gate || best;   // an open recipe at p = 0 (Next Up drops it) does not hide a gate
   };
+  // a gate row's Go: Craft at the station's tier 1 (a craft there levels it), or the gathering skill's Gather view
+  const gateGo = b => !b.gate.station ? { tab: 'gat', view: b.gate.skill }
+    : CRAFT_KINDS[b.kind].st === b.gate.station ? { tab: 'forge', sel: stationSel(b.gate.station), fn: () => { S.fSlot = b.kind; S.fTier = 1; forgeGoalPicks++; } }
+    : skillGo(b.gate.skill, true);   // a tool's Smithing gate: Craft at the Forge, where a craft levels Smithing
+  craftGoalNext = () => forgeNext();
   registerGoal({
     id: 'forge', sys: 'forge',
+    // a tier gate keeps a row of its own once the frontier boss has beaten you: it is the way forward ("gear up"), and in the seed 1
+    // walk it otherwise sat 4th behind the boss, refine and contract rows
+    reserve: () => { const b = forgeNext(), bt = S.bossTry; return b && b.gate && bt && bt.tries && typeof bossTryKey === 'function' && bt.tries[bossTryKey(soloHero(), S.maxZone)] > 0 ? 1 : 0; },
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
     label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
+      if (b.gate) return `${nm}: ${SKILL[b.gate.skill]} ${b.gate.lv} of ${b.gate.need}` + (b.gate.mat ? ` opens ${b.gate.mat}` : '');
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
       const k = Object.keys(b.cost).find(k => matOwn(k, b.t) < b.cost[k]);
       return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - matOwn(k, b.t))} more ${costName(k, b.t)}` : `Craft ${a} ${nm}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
-    go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
+    go: () => { const b = forgeNext(); return b && b.gate ? gateGo(b) : { tab: 'forge', sel: '#forgeBtn', fn: () => { const x = forgeNext(); if (x && !x.gate) { S.fSlot = x.kind; S.fTier = x.t; forgeGoalPicks++; } } }; }
   });
   // Upgrade (craft-delta): a worn piece whose next upgrade you can pay for now, offered only while no craft is ready
   // (the craft goal is not Ready). Weapon first, then the slot order. Go opens the piece's sheet on Hero, Gear.
   // upgrade-goal-chip-order: never the piece the shown craft goal replaces, and never an upgrade that leaves less of a
   // shared material (same tier, or essence) than the craft needs; when nothing is left, the craft goal leads.
   const upgradeNext = () => {
-    const f = forgeNext(); if (f && f.p >= 1) return null;
+    const f0 = forgeNext(), f = f0 && !f0.gate ? f0 : null;   // next-tier-gate-goal: a gate row replaces no piece
+    if (f && f.p >= 1) return null;
     for (const pos of CRAFT_HERO_POS) {
       if (f && f.p > 0 && pos === f.pos) continue;
       const it = equipped(pos);
@@ -14787,10 +14857,12 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 //                              asks only while no guide step shows and no fight is in view; it pauses the game only to hold
 //                              the gap between two foes with the fight in view, until Got it (staged-guide-followups).
 // onboardUseDone(id)           the line was read (x, or about 7 s on screen). No event, so guide walks never see it.
+// onboardJoined(id)            a starter joined on the road (56c, starters-join-when-met): the first opens the `switch` row, a later
+//                              one stamps the clock (got['join:<id>']), so no unlock opens within ONBOARD_TUNE.gap of any join.
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts }.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire, guideLessonHold;
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
 let lessonLast = -1;   // the foe's clock at the last tick (guideLessonHold: a hold starts only on the frame that crosses a window's opening)
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
@@ -14840,7 +14912,10 @@ const FEATURES = [
   // "Show every tab" until its own rule holds, so nobody sees an empty view.
   // Hands (N1, 57f-hands.js): Hearth 2 and the Tavern built. The probe is safe before 57f has loaded.
   { id: 'hands', tab: 'world', view: 'tav', name: 'Hands', why: 'Hearth 2 and the Tavern built', late: true,
-    when: () => { try { return handsOpen(); } catch (e) { return false; } } }
+    when: () => { try { return handsOpen(); } catch (e) { return false; } } },
+  // starters-join-when-met: switching heroes opens when the first starter joins a new game (56c). Never on a save that began with all three.
+  { id: 'switch', name: 'Switch hero', why: 'a starter joins you at a Champion (a new game)', late: true,
+    when: () => typeof heroJoins === 'function' && heroJoins().length > 0, now: () => true }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 
@@ -14867,7 +14942,8 @@ const FIRST_USE = {
   raid: { text: 'Every player fights this one boss together. Your hits add to the same total.' },
   stars: { text: 'Each star changes how your fights play.', via: 'notice' },
   deep: { text: 'The Deepwell goes down floor by floor. Pick a boon between floors and earn Marks.' },
-  hands: { text: "You can hire gatherers on the Tavern board. They work shifts while you're away." }
+  hands: { text: "You can hire gatherers on the Tavern board. They work shifts while you're away." },
+  switch: { text: 'Switch heroes on the Hero tab, for free.', via: 'notice' }   // the join line on the Champion card (56c heroJoinLine)
 };
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
@@ -15115,6 +15191,7 @@ function craftReady() {
     return null;
   };
   onboardUseDone = id => { O().done[id] = 1; };
+  onboardJoined = id => { if (!unlock('switch', true) && !O().all) O().got['join:' + id] = Math.round(O().t); };
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
   const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', 'camp-look': 'camp', codex: 'codex', deep: 'deep' };
@@ -16728,7 +16805,8 @@ let essCap, storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, s
 // NPC scene at an area's door); a Champion's or Elder's NPCs ride that scene and are not filed on their own.
 
 const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all; the data files can also be deleted
-const STORY_TUNE = { champMoment: true };   // champion-moment: a Champion's first clear is one big card (its scene, then the cache). false: the scene plays as a story card and the cache opens on its own, as before
+const STORY_TUNE = { champMoment: true,   // champion-moment: a Champion's first clear is one big card (its scene, then the cache). false: the scene plays as a story card and the cache opens on its own, as before
+  joinOnMeet: true };   // starters-join-when-met (56c): a new game's other two starters join at their meet scenes' Champions. false: all three from the start
 
 let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
@@ -16805,7 +16883,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     flush();
     return out;
   }
-  const npcCards = id => { const n = D('npc')[id]; return n && !(n.not && n.not === storyHero()) ? cardsOf(n.lines, false, n.who || '') : []; };   // `not`: a starter met as a person is not in his own story
+  const startedAs = () => (S.party && S.party.unlock && S.party.unlock.startedAs) || '';   // starters-join-when-met: the starter a new game began as (56c)
+  const npcCards = id => { const n = D('npc')[id]; return n && !(n.not && (n.not === storyHero() || n.not === startedAs())) ? cardsOf(n.lines, false, n.who || '') : []; };   // `not`: a starter met as a person is not in his own story, nor met by the game that began as him
   const npcAt = at => Object.keys(D('npc')).filter(id => D('npc')[id].at === at);
 
   // ---- scenes: what a trigger builds ----
@@ -17649,6 +17728,13 @@ function heroHasKit(id) {
 // API: heroHasKit/heroBio (56-roster), heroRouteInfo -> {state,unlocked,playable,ready,how,bio,cost},
 // heroUnlocked, heroCanPlay, heroUnlock -> bool, heroPick -> bool; tokenChance/unlockTokenRoll for tools.
 // Events: heroUnlocked {id}, heroToken {id,won,chance}, renown {n,total,source}. Toast: heroToken (a bell line, 23n).
+// starters-join-when-met (DECISIONS "Starters join on the road"): a new game keeps the starter it picked, and the other two join at the
+// first clear of the Champion whose post plays their meet scene (STORY_BEATS.npc[id].at = 'champPost:<champ>': Tobin zone 5, Wren 10,
+// Pip 15). S.party.unlock.startedAs: '' (every old save: all three starters are yours) or the starter the picker's Begin chose on a
+// real new game (heroBegin, the only writer). Any other value reads as ''. STORY_TUNE.joinOnMeet = false gives all three at the start.
+// heroBegin(id) -> bool (the picker's Begin), heroJoins() -> [id] (starters who joined on the road), heroJoinLine(id, away),
+// heroJoinsAhead() -> bool (a starter is still to join, or a Begin now would start a game where they do).
+// Event: starterJoin { ids, zone } on the clear that brings them (75-moments-ui puts the line on the Champion card).
 
 const UNLOCK_TUNE = {
   renownBounty: 1, renownElite: 3,
@@ -17715,10 +17801,10 @@ const STORY_MEET = {
   corvin: [156, 5]
 };
 let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, heroUnlock, heroPick,
-  tokenChance, unlockTokenRoll, heroProbe;
+  tokenChance, unlockTokenRoll, heroProbe, heroBegin, heroJoins, heroJoinLine, heroJoinsAhead;
 {
   const T = UNLOCK_TUNE;
-  const DEF = { renown: 0, heroes: {}, quests: {}, tokens: {}, milestones: {} };
+  const DEF = { renown: 0, heroes: {}, quests: {}, tokens: {}, milestones: {}, startedAs: '' };
   fillDefaults(STATE_DEFAULTS.party, { unlock: DEF });
   fillDefaults(S.party, { unlock: DEF });
   const U = () => S.party.unlock;
@@ -17758,6 +17844,28 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     if (id === 'asta') return claim(got(q.freeWith) ? { ...q, pendingFee: null } : q, `Reach the Last Descent (zone ${q.from}). Free if Solveig is at camp.`);
     return free(false, ROSTER[id].how || 'More of this route comes later.');
   };
+  // ---- starters-join-when-met ----
+  const isStarter = id => typeof id === 'string' && Object.prototype.hasOwnProperty.call(ROSTER, id) && ROSTER[id].route.type === 'starter';   // own keys only: a saved "constructor" is not a hero
+  const startedAs = () => { const s = U().startedAs; return typeof s === 'string' && isStarter(s) ? s : ''; };
+  const joinOn = () => !(typeof STORY_TUNE === 'object' && STORY_TUNE && STORY_TUNE.joinOnMeet === false);
+  const gateOn = () => joinOn() && !!startedAs();
+  // the zone of the Champion whose post plays this starter's meet scene; 0 (no scene in the data): no gate for that starter
+  const joinZone = id => {
+    const B = typeof STORY_BEATS === 'object' && STORY_BEATS, n = B && B.npc && B.npc[id], m = n && /^champPost:(\w+)$/.exec(n.at || ''), c = m && B.champ && B.champ[m[1]];
+    return c && c.zone > 0 ? c.zone : 0;
+  };
+  // yours: the gate is off, you began as them, they joined, their Champion is cleared, or they carry the lamp now (a backstop)
+  const starterOwn = id => !gateOn() || id === startedAs() || got(id) || !joinZone(id) || (S.maxZone || 1) > joinZone(id)
+    || (typeof soloHero === 'function' && soloHero() === id);
+  const starterLine = id => `You meet ${ROSTER[id].name.split(' ')[0]} at the zone ${joinZone(id)} Champion.`;
+  // a real new game: no hero chosen yet, nothing fought, nothing cleared, and no start recorded (a Mirror of Embers on any save fails this)
+  const newGame = () => !!S.party && !S.party.chosen && !((S.totalKills || 0) > 0) && (S.maxZone || 1) <= 1 && !startedAs();
+  const joinNow = (z, away) => {
+    if (!gateOn()) return [];
+    const ids = ROSTER_KEYS.filter(id => isStarter(id) && id !== startedAs() && !got(id) && joinZone(id) && (away ? (S.maxZone || 1) > joinZone(id) : joinZone(id) === z));
+    for (const id of ids) { U().heroes[id] = 1; if (typeof onboardJoined === 'function') onboardJoined(id); }   // no heroUnlocked: the join rides the Champion card
+    return ids;
+  };
   const metScene = id => !STORY_MEET[id] || (S.maxZone || 1) >= STORY_MEET[id][0];
   const meetLine = id => { const m = STORY_MEET[id]; return id === 'hesketh' ? 'You meet him on the road.' : m && m[1] === 1 && m[0] < 36 ? 'You meet them in the Hollow.' : 'You meet them further down the road.'; };
   // story-unlock-gates: the camp's All heroes sheet says when a held hero joins. In the chapter the player is in: the zone (the
@@ -17774,7 +17882,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   };
   const route0 = id => {
     const r = heroKnown(id) && ROSTER[id]; if (!r) return free(false, 'Unknown hero.');
-    if (r.route.type === 'starter') return free(true, 'Unlocked. Pick up the lamp.');
+    if (r.route.type === 'starter') return starterOwn(id) ? free(true, 'Unlocked. Pick up the lamp.') : { ...free(false, starterLine(id)), story: true };
     if (T.designed[id]) return designed(id);
     if (T.progress[id]) { const q = T.progress[id]; return claim(q, `Reach zone ${q.zone}.`); }
     if (['bram', 'maren', 'elowen'].includes(id)) { const q = T.quests[id]; return claim(q, `Reach zone ${q.from} and ${id === 'bram' ? 'bring wood to Bram’s camp' : id === 'maren' ? 'relight the Barrow Lamp' : 'relight the chapel'}.`); }
@@ -17803,16 +17911,17 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     U().renown += n; emit('renown', { n, total: renown(), source: source || 'other' }); return renown();
   };
   on('bountyDone', b => addRenown(b && b.elite ? T.renownElite : T.renownBounty, 'bounty'));
-  heroUnlocked = id => heroKnown(id) && (ROSTER[id].route.type === 'starter' || got(id) || (route(id).ready && !route(id).paid));
+  heroUnlocked = id => heroKnown(id) && (isStarter(id) ? starterOwn(id) : got(id) || (route(id).ready && !route(id).paid));
   heroCanPlay = id => heroUnlocked(id) && heroHasKit(id);
   heroRouteInfo = id => {
     if (!heroKnown(id)) return null;
     const r = route(id), unlocked = heroUnlocked(id), kit = heroHasKit(id);
-    return { id, ...r, unlocked, playable: unlocked && kit, state: unlocked ? (kit ? 'unlocked' : 'coming-soon') : r.pending && r.gated ? 'coming-soon' : 'locked', bio: unlocked ? heroBio(id) : '', meet: ROSTER[id].route.type === 'starter' ? '' : meetLine(id) };
+    return { id, ...r, unlocked, playable: unlocked && kit, state: unlocked ? (kit ? 'unlocked' : 'coming-soon') : r.pending && r.gated ? 'coming-soon' : 'locked', bio: unlocked ? heroBio(id) : '', meet: isStarter(id) ? (unlocked ? '' : starterLine(id)) : meetLine(id) };
   };
   heroUnlock = id => {
     if (!heroKnown(id)) return false;
-    if (ROSTER[id].route.type === 'starter' || got(id)) return true;
+    if (isStarter(id)) return starterOwn(id);   // a starter has no paid route: it is yours or it joins on the road
+    if (got(id)) return true;
     const r = route(id); if (!r.ready) return false;
     // Recheck and pay in one synchronous action. Repeated clicks and probes never pay twice.
     for (const [k, t, count] of r.cost.mats) {
@@ -17826,6 +17935,21 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
     emit('heroUnlocked', { id }); return true;
   };
   heroPick = (id, opts) => heroCanPlay(id) && typeof soloPick === 'function' && soloPick(id, opts);
+  // the picker's Begin: on a real new game the picked starter is recorded first (so the pick is yours), and undone if the pick fails
+  heroBegin = (id, opts) => {
+    const fresh = isStarter(id) && newGame();
+    if (fresh) U().startedAs = id;
+    const ok = !!heroPick(id, opts);
+    if (fresh && !ok) U().startedAs = '';
+    return ok;
+  };
+  heroJoins = () => gateOn() ? ROSTER_KEYS.filter(id => isStarter(id) && id !== startedAs() && got(id)) : [];
+  heroJoinLine = (id, away) => `${ROSTER[id].name.split(' ')[0]} ${away ? 'joined your camp while you were away' : 'joins your camp'}. ${FIRST_USE.switch.text}`;
+  heroJoinsAhead = () => joinOn() && (newGame() || (gateOn() && ROSTER_KEYS.filter(id => isStarter(id) && !starterOwn(id)).length >= 2));   // the picker's "the other two" line
+  // the join: on the first clear of the Champion's zone (zoneClear comes before the kill, so the Champion card can carry it). A clear
+  // made while away has no zoneClear: the return catches it and says it in a toast.
+  on('zoneClear', e => { const ids = e ? joinNow(e.zone) : []; if (ids.length) emit('starterJoin', { ids, zone: e.zone }); });
+  on('awayEnd', () => { for (const id of joinNow(0, true)) emit('toast', { key: 'starterJoin', msg: heroJoinLine(id, true), kind: 'good' }); });
   heroProbe = () => {
     // A late save beyond the Pyre Knight starts the one-day visit clock once.
     if (S.maxZone > T.designed.beatrix.boss && !U().milestones.beatrix) U().milestones.beatrix = Math.max(1, Date.now());
@@ -17864,6 +17988,7 @@ function heroUnlockStateValid(u) {
   const obj = x => !!x && typeof x === 'object' && !Array.isArray(x);
   const num = x => typeof x === 'number' && Number.isFinite(x) && x >= 0;
   if (!obj(u) || (u.renown !== undefined && !num(u.renown))) return false;
+  if (u.startedAs !== undefined && typeof u.startedAs !== 'string') return false;   // starters-join-when-met: any text that is not a starter reads as '' (all three yours)
   for (const key of ['heroes', 'quests', 'tokens', 'milestones']) {
     if (u[key] === undefined) continue;
     if (!obj(u[key])) return false;
@@ -18641,8 +18766,9 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
     tiles: x => uniqKeys().map(k => {
       const u = UNIQ[k], got = S.found[k] ? 1 : 0, fl = got && typeof storyItemLine === 'function' ? storyItemLine(k) : '';   // story-systems-hollow: the Champion it came from
-      return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: u.slot, t: S.found[k] || 1, u: k },
-        sub: got ? u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
+      const kind = uniqKindFor(k, heroWho()) || u.slot, kn = kind !== u.slot ? CRAFT_KINDS[kind].noun + ' · ' : '';   // unique-weapons-wall-icon: the hero's own weapon, as the bag
+      return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: kind, t: S.found[k] || 1, u: k },
+        sub: got ? kn + u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
     })
   });
   // ---------------- 4. Armoury: 13 affix stats x 5 tiers seen; 7 Masterwork lines ----------------
@@ -25822,10 +25948,11 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
     if (from && from !== key) toast(attrOn() && lifted ? `${nm} joins at Lv ${S.L}, the road's level.` : `${nm} takes up the lamp.`, 'good', null, 'normal');
     return true;
   };
-  // A tool or an old path that picks a class (chooseBase, chooseClass) plays that class's starter.
+  // A tool or an old path that picks a class (chooseBase, chooseClass) plays that class's starter, if that starter is yours
+  // (starters-join-when-met: one who has not joined yet never takes the lamp this way; the hero stays).
   on('classChosen', ({ base } = {}) => {
     const s = Sx(), want = SOLO_BY_BASE[base];
-    if (want && s.hero !== want && !(s.hero && SOLO_HEROES[s.hero] && SOLO_HEROES[s.hero].base === base)) {
+    if (want && s.hero !== want && !(s.hero && SOLO_HEROES[s.hero] && SOLO_HEROES[s.hero].base === base) && (typeof heroUnlocked !== 'function' || heroUnlocked(want))) {
       if (s.hero && SOLO_HEROES[s.hero]) s.lv[s.hero] = { L: S.L, xp: S.xp };
       s.hero = want;
     }
@@ -35728,10 +35855,12 @@ for (const id of ['eqRows', 'bagRows']) { const n = $(id); const sec = n && n.cl
 // "Trophies" now means boss trophies (crafting material), so the uniques wall gets a plainer name.
 { const h = $('trophies').closest('.sec').querySelector('.sec-title'); if (h) h.textContent = 'Unique loot'; }
 
+// unique-weapons-wall-icon: an every-class unique (Golemfist, the Fang) shows as the hero's own weapon, as the bag does
+const trophyKind = key => uniqKindFor(key, heroWho()) || UNIQ[key].slot;
 const trophyEls = {};
 for (const [key, u] of Object.entries(UNIQ)) {
   const c = el('div', 'trophy');
-  const tile = icTile(itemIcon(u.slot, 3, key), null, 'ghost');
+  const tile = icTile(itemIcon(trophyKind(key), 3, key), null, 'ghost');
   const tn = el('span', 'tn'), ts1 = el('span', 'ts'), ts2 = el('span', 'ts');
   c.append(tile, tn, ts1, ts2); $('trophies').append(c);
   trophyEls[key] = { c, tile, tn, ts1, ts2 };
@@ -35741,12 +35870,12 @@ function renderTrophies() {
   let n = 0;
   const shown = uniqKeys();
   for (const [key, u] of Object.entries(UNIQ)) {
-    const f = S.found[key], e = trophyEls[key]; if (f) n++;
+    const f = S.found[key], e = trophyEls[key], k = trophyKind(key); if (f) n++;
     putHidden(e.c, !shown.includes(key)); // a retired unique shows only once found
     putClass(e.c, 'trophy' + (f ? ' found' : ''));
-    setIc(e.tile, itemIcon(u.slot, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
+    setIc(e.tile, itemIcon(k, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
     putText(e.tn, f ? u.name : '???'); putClass(e.tn, 'tn' + (f ? ' rar-legendary' : ''));
-    putText(e.ts1, f ? `${(SLOT[u.slot] || CRAFT_POS[u.pos] || { n: 'Gear' }).n} · best ${MAT.ore.short[f - 1]} tier` : u.src);   // a new unique is a class kind (uniques-first-four)
+    putText(e.ts1, f ? `${(k !== u.slot ? { n: CRAFT_KINDS[k].noun } : SLOT[u.slot] || CRAFT_POS[u.pos] || { n: 'Gear' }).n} · best ${MAT.ore.short[f - 1]} tier` : u.src);   // a new unique is a class kind (uniques-first-four)
     putText(e.ts2, f ? u.txt : 'Not found yet');
   }
   // what is left, by where it drops (menu audit #15); found uniques sort first (.trophy.found, 40-components.css)
@@ -37552,7 +37681,7 @@ on('cacheOpen', v => {
     const c = MOMENT_Q.splice(cj, 1)[0];
     if (c.bark) barks.push(c.bark);
     if (barks.length && typeof voicePick === 'function') o.bark = voicePick(barks);
-    moment('champion', Object.assign(o, { title: c.title, eye: c.eye, scene: c.scene }));
+    moment('champion', Object.assign(o, { title: c.title, eye: c.eye, scene: c.scene, lines: (c.lines || []).concat(o.lines) }));   // the Champion card's own lines (a starter joining) stay on top
     return;
   }
   moment(big ? 'cache' : 'cacheAuto', o);
@@ -42016,13 +42145,20 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   });
   // champion-moment: a Champion's first clear is one big card. Its post scene plays as the story sheet first (the card waits for it, above);
   // the card is the zone's cache (already queued by zoneClear) turned into a Champion card, or its own card when no cache came
+  // starters-join-when-met: a starter who joins on this clear (56c's starterJoin, on zoneClear) is a line on the Champion card, first in
+  // its list, on every path (its own card, the queued cache, the cache folding in later). With no Champion card (the card or the story
+  // off), the kill that follows says it in a toast instead: zoneClear, then the kill, whose story listener raises champWin first.
+  let joinPend = null;
+  on('starterJoin', e => { joinPend = e && e.ids && e.ids.length ? e : null; });
+  const joinLines = z => { const p = joinPend; if (!p || p.zone !== z) return []; joinPend = null; return p.ids.map(id => ({ txt: heroJoinLine(id) })); };
+  on('kill', () => { const p = joinPend; if (!p) return; joinPend = null; for (const id of p.ids) emit('toast', { key: 'starterJoin', msg: heroJoinLine(id), kind: 'good', prio: 'high' }); });
   on('champWin', e => {
     if (!e) return;
-    const title = e.name ? `${e.name} falls` : 'Champion down', eye = `Zone ${e.zone} Champion down`;
+    const title = e.name ? `${e.name} falls` : 'Champion down', eye = `Zone ${e.zone} Champion down`, joins = MOMENT_OFF ? [] : joinLines(e.zone);   // no cards (a test page): the kill's toast says it
     const q = MOMENT_Q.find(x => (x.kind === 'cache' || x.kind === 'cacheAuto') && x.zone === e.zone);   // the cache may already be queued; else it folds in when it opens (75-caches-ui)
-    if (!q) { moment('champion', { title, eye, sub: 'The road goes on.', icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss', zone: e.zone, scene: e.scene }); return; }
+    if (!q) { moment('champion', { title, eye, sub: 'The road goes on.', icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss', zone: e.zone, scene: e.scene, lines: joins }); return; }
     const k = MOMENT_KINDS.champion;
-    Object.assign(q, { kind: 'champion', tier: k.tier, eye, snd: k.snd, title, scene: e.scene });
+    Object.assign(q, { kind: 'champion', tier: k.tier, eye, snd: k.snd, title, scene: e.scene, lines: joins.concat(q.lines || []) });
   });
   on('heroUnlocked', e => { if (e && e.id) moment('hero', { title: heroName(e.id), sub: 'A new hero will take up the lamp.', icon: { ic: ['banner', '#B58CFF'] } }); });
   // level up is medium only on the first level and every 5th (a banner a level would be a flood); otherwise the toast rules decide
@@ -44078,6 +44214,8 @@ var soloIconURL = () => '';
           putText(c._lv, lvText(k, info, lv, on_));
         }
         putText(all, `All heroes (${HERO_ORDER.length})`);
+        // starters-join-when-met: with one hero of your own, the others are still on the road
+        putText(note, list.filter(k => heroRouteInfo(k).playable).length > 1 ? 'Switch any time, for free. Each hero keeps their own level.' : 'Others join you on the road. Each hero keeps their own level.');
         if (ov.hidden) return;
         for (const b of sec._cards) {
           const k = b.dataset.hero, on_ = k === cur, info = heroRouteInfo(k);
@@ -45929,7 +46067,10 @@ var classUI;
     const inner = el('div', 'create-in');
     const h = el('h1', null, 'Who are you?'); h.id = 'createTitle';
     const lede = el('p', 'create-lede', 'You carry the lamp. Pick who you are.');
-    const warn = el('p', 'create-warn', 'At camp you can hand the lamp to a friend, for free. Gold, gear and camp are shared.');
+    // starters-join-when-met: in a new game the other two join on the road (56c); a save that has all three keeps the old line
+    const warn = el('p', 'create-warn', typeof heroJoinsAhead === 'function' && heroJoinsAhead()
+      ? 'You meet the other two on the road. Once they join, hand them the lamp on the Hero tab, for free. Gold, gear and camp are shared.'
+      : 'At camp you can hand the lamp to a friend, for free. Gold, gear and camp are shared.');
     const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero');
     const keys = HERO_ORDER;
     if (!keys.includes(pick) || !heroCanPlay(pick)) pick = keys.find(heroCanPlay);
@@ -45993,7 +46134,7 @@ var classUI;
       const info = heroRouteInfo(pick);
       if (!info.playable) { if (info.ready && !info.unlocked && heroUnlock(pick)) { try { save(); } catch (e) {} select(pick); } return; }
       let okd = false;
-      try { okd = heroPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }
+      try { okd = typeof heroBegin === 'function' ? heroBegin(pick) : heroPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }   // heroBegin: a new game records who it began as
       if (!okd) return;
       try { save(); } catch (e) {}
       if (typeof updatePortrait === 'function') updatePortrait();

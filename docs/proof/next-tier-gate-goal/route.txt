@@ -1,0 +1,25 @@
+# Proof for card next-tier-gate-goal. The seed 1 walk's minute 23 save (Wren, zone 13, the Golemfist and every tier 1 piece and tool worn,
+# Woodcraft 8, Tailoring 6, Woodcutting 7, Hunting 4; tests/proof-fixtures/save-tier-gate.json), at 360x740 and 740x360:
+#   nextup-gate-*.png  Next Up's list: the craft row says what opens tier 2, "Birch Bow for the zone 13 boss: Woodcraft 8 of
+#                      10" (80%, never Ready), and the skill row names Woodcraft too.
+#   gate-go-*.png      that row's Go: the Craft screen at the Workbench, on tier 1, where a craft levels Woodcraft (the
+#                      one-time Refining note from refine-queues is closed first).
+# The rules (Tailoring next, then "Woodcutting 7 of 14 opens Birch Log", a Ready craft or open recipe beats any gate, no hide
+# gate while Hunting is hidden) are held by tools/check.mjs ("next tier gate").
+# seed: 1
+new tier-gate
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+tap "Next up"
+wait 1
+expect "Woodcraft 8 of 10"
+shot nextup-gate
+tap "Go: Birch Bow for the zone 13 boss: Woodcraft 8 of 10"
+wait 1
+tap-if "Got it"
+wait 1
+expect "For you"
+shot gate-go

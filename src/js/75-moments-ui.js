@@ -244,13 +244,20 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
   });
   // champion-moment: a Champion's first clear is one big card. Its post scene plays as the story sheet first (the card waits for it, above);
   // the card is the zone's cache (already queued by zoneClear) turned into a Champion card, or its own card when no cache came
+  // starters-join-when-met: a starter who joins on this clear (56c's starterJoin, on zoneClear) is a line on the Champion card, first in
+  // its list, on every path (its own card, the queued cache, the cache folding in later). With no Champion card (the card or the story
+  // off), the kill that follows says it in a toast instead: zoneClear, then the kill, whose story listener raises champWin first.
+  let joinPend = null;
+  on('starterJoin', e => { joinPend = e && e.ids && e.ids.length ? e : null; });
+  const joinLines = z => { const p = joinPend; if (!p || p.zone !== z) return []; joinPend = null; return p.ids.map(id => ({ txt: heroJoinLine(id) })); };
+  on('kill', () => { const p = joinPend; if (!p) return; joinPend = null; for (const id of p.ids) emit('toast', { key: 'starterJoin', msg: heroJoinLine(id), kind: 'good', prio: 'high' }); });
   on('champWin', e => {
     if (!e) return;
-    const title = e.name ? `${e.name} falls` : 'Champion down', eye = `Zone ${e.zone} Champion down`;
+    const title = e.name ? `${e.name} falls` : 'Champion down', eye = `Zone ${e.zone} Champion down`, joins = MOMENT_OFF ? [] : joinLines(e.zone);   // no cards (a test page): the kill's toast says it
     const q = MOMENT_Q.find(x => (x.kind === 'cache' || x.kind === 'cacheAuto') && x.zone === e.zone);   // the cache may already be queued; else it folds in when it opens (75-caches-ui)
-    if (!q) { moment('champion', { title, eye, sub: 'The road goes on.', icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss', zone: e.zone, scene: e.scene }); return; }
+    if (!q) { moment('champion', { title, eye, sub: 'The road goes on.', icon: { ic: ['banner', '#F2C14E'] }, bark: 'boss', zone: e.zone, scene: e.scene, lines: joins }); return; }
     const k = MOMENT_KINDS.champion;
-    Object.assign(q, { kind: 'champion', tier: k.tier, eye, snd: k.snd, title, scene: e.scene });
+    Object.assign(q, { kind: 'champion', tier: k.tier, eye, snd: k.snd, title, scene: e.scene, lines: joins.concat(q.lines || []) });
   });
   on('heroUnlocked', e => { if (e && e.id) moment('hero', { title: heroName(e.id), sub: 'A new hero will take up the lamp.', icon: { ic: ['banner', '#B58CFF'] } }); });
   // level up is medium only on the first level and every 5th (a banner a level would be a flood); otherwise the toast rules decide

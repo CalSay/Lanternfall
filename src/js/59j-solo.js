@@ -124,10 +124,11 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
     if (from && from !== key) toast(attrOn() && lifted ? `${nm} joins at Lv ${S.L}, the road's level.` : `${nm} takes up the lamp.`, 'good', null, 'normal');
     return true;
   };
-  // A tool or an old path that picks a class (chooseBase, chooseClass) plays that class's starter.
+  // A tool or an old path that picks a class (chooseBase, chooseClass) plays that class's starter, if that starter is yours
+  // (starters-join-when-met: one who has not joined yet never takes the lamp this way; the hero stays).
   on('classChosen', ({ base } = {}) => {
     const s = Sx(), want = SOLO_BY_BASE[base];
-    if (want && s.hero !== want && !(s.hero && SOLO_HEROES[s.hero] && SOLO_HEROES[s.hero].base === base)) {
+    if (want && s.hero !== want && !(s.hero && SOLO_HEROES[s.hero] && SOLO_HEROES[s.hero].base === base) && (typeof heroUnlocked !== 'function' || heroUnlocked(want))) {
       if (s.hero && SOLO_HEROES[s.hero]) s.lv[s.hero] = { L: S.L, xp: S.xp };
       s.hero = want;
     }

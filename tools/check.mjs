@@ -954,8 +954,8 @@ if (section('balance')) try {
     const goal = E('topGoals(20, { sticky: false }).find(x => x.id === "forge")');
     assert(goal && /Bow|Quiver|Hood|Leathers|Charm|Pickaxe|Axe|Sickle/.test(goal.label) && !/Sword|Helm\b/.test(goal.label), `craft goal names a class item (${goal && goal.label})`);
     const n0 = E('forgeGoalPicks');
-    E('GOALS.find(x => x.id === "forge").go.fn()');
-    assert(E('CRAFT_KINDS[S.fSlot] && !CRAFT_KINDS[S.fSlot].legacy && fits(S.fSlot, kindPos(S.fSlot), "hero")') && E('forgeGoalPicks') === n0 + 1 && E('GOALS.find(x => x.id === "forge").go.sel') === '#forgeBtn', `Go picks ${E('S.fSlot')} tier ${E('S.fTier')} and focuses #forgeBtn in the Craft tab`);
+    E('GOALS.find(x => x.id === "forge").go().fn()');   // next-tier-gate-goal: the craft goal's Go is a function (a gate row goes elsewhere)
+    assert(E('CRAFT_KINDS[S.fSlot] && !CRAFT_KINDS[S.fSlot].legacy && fits(S.fSlot, kindPos(S.fSlot), "hero")') && E('forgeGoalPicks') === n0 + 1 && E('GOALS.find(x => x.id === "forge").go().sel') === '#forgeBtn', `Go picks ${E('S.fSlot')} tier ${E('S.fTier')} and focuses #forgeBtn in the Craft tab`);
     const g2 = loadCore({ seed: 26 }); g2.eval('S.maxZone = 3; S.mats.ore[0] = 99; S.mats.wood[0] = 99; S.mats.ess[0] = 99');
     const lab = g2.eval('(topGoals(20, { sticky: false }).find(x => x.id === "forge") || {}).label || ""');
     assert(!/Sword|Helm\b/.test(lab), `no class: the goal never suggests the legacy Sword or Helm (${lab || 'none'})`);
@@ -1563,11 +1563,11 @@ if (section('first-use lines (ap-first-use-hints)')) try {
   const long = Object.entries(lines).filter(([, u]) => u.text.length > 90 || /\n/.test(u.text) || (u.text.match(/[.!?](\s|$)/g) || []).length > 3).map(([id]) => id);
   assert(!zero.length && !stray.length && !long.length, `every system that opens after the first fight has exactly one first-use line (one table row each; short, plain)${zero.length ? '; 0 lines: ' + zero.join(', ') : ''}${stray.length ? '; for no system: ' + stray.join(', ') : ''}${long.length ? '; too long: ' + long.join(', ') : ''}`);
   // 'notice' and 'guide' lines live in their own source; the unlock notice of a 'hint' system only says where it is (never repeats the line)
-  const ob = rd('75-onboard-ui.js'), src = { notice: { codex: ob, stars: rd('75-stars-ui.js') } };
+  const ob = rd('75-onboard-ui.js'), src = { notice: { codex: ob, stars: rd('75-stars-ui.js'), switch: rd('56c-unlocks.js') } };   // switch: the join line on the Champion card (starters-join-when-met)
   const dup = [], twice = [];
   for (const id of ids) {
     const u = lines[id], via = u && u.via || 'hint';
-    if (via === 'notice' && !(src.notice[id] || '').includes(u.text)) dup.push(`${id}: its notice does not carry the line`);
+    if (via === 'notice' && !(src.notice[id] || '').includes(u.text) && !(src.notice[id] || '').includes(`FIRST_USE.${id}.text`)) dup.push(`${id}: its notice does not carry the line`);
     if (via === 'guide' && !/text: FIRST_USE\.nextup\.text/.test(ob)) dup.push(`${id}: the guide step does not read the line`);
     if (via === 'hint') { const m = new RegExp(`^\\s*${id}:\\s*(.*)$`, 'm').exec(ob.slice(ob.indexOf('const OPEN_TXT = {'), ob.indexOf('const TAB_FEATURE'))); if (m && m[1].includes(u.text)) twice.push(id); }
   }
@@ -1613,7 +1613,7 @@ if (section('unlock tip coverage (E5)')) try {
   const lines = JSON.parse(E('JSON.stringify(FIRST_USE)')), gap = E('ONBOARD_TUNE.gap');
   const si = ob.indexOf('const SAY_TXT = {'), say = new Set([...ob.slice(si, ob.indexOf('};', si)).matchAll(/^\s*(\w+): ["']/gm)].map(m => m[1]));
   // a system said somewhere other than the Hesketh queue: its own guide step, the away strip, the hired-hand notice
-  const elsewhere = { nextup: 'guide step', awaynote: 'away strip', hands: 'Tam notice' };
+  const elsewhere = { nextup: 'guide step', awaynote: 'away strip', hands: 'Tam notice', switch: 'Champion card join line' };
   // walk a new game to zone 15: sweep zone 1 to 15 with the clock moving, then let the spacing governor drain
   const got = {};
   E('S.onboard.tips = true');
@@ -5729,11 +5729,26 @@ if (section('notices (browser, W1-B)')) try {
       // The page's clock is the bot's: Date.now, performance.now, timers and frames advance only when the bot runs the clock (qa-first-hour-walk
       // does the same). On the machine's clock, how fast a card showed and how many ticks fell between two taps changed with the machine.
       await page.clock.install({ time: Date.UTC(2026, 0, 5, 12, 0, 0) });
+      // Installed is not enough: the clock still flows with the wall clock between runFor calls, so a slow runner gave the moment queue's
+      // 100 ms timer and its Date.now() bark expiry and banner hold more time per bot step, and two extra medium barks showed (#214, #216).
+      // Paused, it moves only when the bot runs it (walk.mjs does the same since #210; moment-cap-check-steady).
+      await page.clock.pauseAt(Date.UTC(2026, 0, 5, 12, 0, 1));
+      // Paused was still two games on one machine. Three more things moved with the machine, as in walk.mjs: the clock's frame grid (set by
+      // when the page loaded: frames are now timers 16 ms apart), CSS animations (the fake clock does not move them: stopped, and stepped
+      // by the game time the bot runs) and the page's own Math.random before the bot's first step (the first foe's roll: one Attack press
+      // killed it on some runs and not others). All three are fixed here, so the run depends on game time alone.
+      await page.addInitScript(() => { let a = 99; Math.random = () => (a = (Math.imul(a, 1664525) + 1013904223) >>> 0) / 4294967296;   // the page's own stream
+        const caf = window.cancelAnimationFrame.bind(window), tids = new Set();
+        window.requestAnimationFrame = cb => { const id = window.setTimeout(() => { tids.delete(id); cb(performance.now()); }, 16); tids.add(id); return id; };
+        window.cancelAnimationFrame = id => { if (tids.delete(id)) window.clearTimeout(id); else try { caf(id); } catch (e) {} }; });
+      { const cdp = await ctx.newCDPSession(page); await cdp.send('Animation.enable'); await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 }); }
+      const STEP_ANIM = d => { for (const a of document.getAnimations()) { if (a.playState === 'paused' || a.playState === 'finished') continue; try { a.currentTime = (a.currentTime || 0) + d; } catch (e) {} } };
+      const run = async ms => { await page.clock.runFor(ms); await page.evaluate(STEP_ANIM, ms); };
       page.on('pageerror', e => errs.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
-      await page.goto('http://lf.test/'); await page.clock.runFor(600);
+      await page.goto('http://lf.test/'); await run(600);
       const X = s => page.evaluate(s => window.__t.x(s), s);
-      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.clock.runFor(300);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await run(300);
       // a player who follows the guide, presses Attack, casts, parries heavy hits and buys upgrades; the game runs
       // fast (about 6x): 2 s of play per step, the page's own timers get a moment between steps
       await X(`(() => {
@@ -5777,7 +5792,7 @@ if (section('notices (browser, W1-B)')) try {
           return notes.clock;
         };
         return true; })()`);
-      for (let i = 0; i < 700; i++) { const t = await X('__nbStep()'); await page.clock.runFor(90); if (t >= 600) break; }
+      for (let i = 0; i < 700; i++) { const t = await X('__nbStep()'); await run(90); if (t >= 600) break; }
       const r = JSON.parse(await X('JSON.stringify({ t: notes.clock, st: notes.stats, nb: __nb, zone: S.maxZone, L: S.L, unread: notes.unread })'));
       const pops = r.st.filter(s => s.ch === 'pop' && s.id !== 'reply'), unknown = r.st.filter(s => s.id === '?');
       let close = null; for (let i = 1; i < pops.length; i++) if (pops[i].t - pops[i - 1].t < 20) close = [pops[i - 1], pops[i]];
@@ -7858,7 +7873,7 @@ if (section('C9 hero registry (browser)')) try {
           await page.click('#createScreen .ccard[data-hero="wren"]');
           await page.click('#createScreen .create-go');
           await page.waitForSelector('#createScreen',{state:'detached'});
-          await X('delete S.party.unlock.heroes.bram; S.maxZone=36; S.zone=1; S.L=60; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
+          await X('delete S.party.unlock.heroes.bram; S.party.unlock.heroes.tobin=1; S.party.unlock.heroes.pip=1; S.maxZone=36; S.zone=1; S.L=60; S.xp=3; S.mats.wood=[80,0,0,0,0]; S.gold=42; S.camp.open=true; S.camp.b.hearth=2; setTab("party"); setView("party","team"); ui(true); true');
           // owner 2026-10-01: the Camp view shows chips for the heroes you can play or unlock; All heroes opens the full roster
           await page.waitForSelector('#sec-solo-hero .sp-all');
           const chipHeroes = await page.$$eval('#sec-solo-hero .sp-chip', cs => cs.map(c => c.dataset.hero));
@@ -10813,7 +10828,7 @@ if (section('craft delta')) try {
     let l = goals();
     assert(forge(l) && /^Craft a Birch Bow/.test(forge(l).label) && !forge(l).ready && !l.some(x => /Upgrade your Pine Bow|for your Bow/.test(x.label)), `upgrade goal chip order: saving for a Birch Bow, no "Upgrade your Pine Bow" (nor a plank for it) and the craft goal shows (${JSON.stringify(l)})`);
     E('S.mats.plank[0] = 0');
-    // (c) an upgrade with no shared material still shows: a worn Pine Hood (fibre, tier 1) next to a tier 2 bow craft
+    // (c) an upgrade with no shared material still shows: a worn Bristlehide Hood (fibre, tier 1) next to a tier 2 bow craft
     const hood = E('(it => addItem(it) ? it.id : null)(newItem("hood", 1, "common", {}))');
     E(`S.equip.helm = ${hood}; gearDirty(); S.mats.cloth[0] = 1`);   // refine-queues: the Hood's +1 takes a Hemp Cloth
     l = goals();
@@ -10891,6 +10906,94 @@ if (section('craft delta')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('craft delta crashed: ' + (e.stack || e)); }
+
+// ==== next-tier-gate-goal: with every tier 1 piece worn and the next tier locked, Next Up names what opens it ====
+// save-tier-gate: the seed 1 walk at minute 23 (zone 13, Woodcraft 8, Tailoring 6, Woodcutting 7, Hunting 4) with every tool worn.
+if (section('next tier gate')) try {
+  const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8') }) }), E = s => g.eval(s);
+  E('tick(0.1)');   // one frame, as the page runs on load: it retools the Golemfist (a legacy sword) into a bow
+  const goals = () => E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
+  const row = l => l.find(x => x.id === 'forge');
+  const goOf = id => E(`(() => { const r = topGoals(20, { sticky: false }).find(x => x.id === ${JSON.stringify(id)}); if (!r) return null; const s = typeof r.go === 'function' ? r.go() : r.go; return s ? { tab: s.tab, view: s.view, sel: s.sel, fn: typeof s.fn === 'function' } : null; })()`);
+  const snap = E('JSON.stringify({ skills: S.skills, mats: S.mats })');
+  const reset = () => E(`(() => { const o = JSON.parse(${JSON.stringify(snap)}); Object.assign(S.skills, o.skills); Object.assign(S.mats, o.mats); HUNT_TUNE.on = true; })()`);
+  // 1. the station gate: Woodcraft 8 of 10 for the Birch Bow, never Ready, in the top three
+  let l = goals();
+  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Woodcraft 8 of 10' && !row(l).ready, `next tier gate: the Birch Bow's station gate shows (${JSON.stringify(l)})`);
+  const top3 = E('topGoals(3, { sticky: false }).map(x => x.label)');
+  assert(top3.includes('Birch Bow for the zone 13 boss: Woodcraft 8 of 10'), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
+  // the row's Go opens Craft at the Workbench on tier 1, with the Birch Bow picked
+  let go = goOf('forge');
+  assert(go && go.tab === 'forge' && go.sel === '.cf-st[data-st="bench"]' && go.fn, `next tier gate: the station gate's Go opens Craft at the Workbench (${JSON.stringify(go)})`);
+  E('S.fSlot = "pick"; S.fTier = 3; (() => { const r = topGoals(20, { sticky: false }).find(x => x.id === "forge"); r.go().fn(); })()');
+  assert(E('S.fSlot') === 'bow' && E('S.fTier') === 1, `next tier gate: Go picks the bow at tier 1 (${E('S.fSlot')}, ${E('S.fTier')})`);
+  // the skill row names the gate's skill and its Go opens Craft too (never a Gather view)
+  const sk = l.find(x => x.id === 'skill'), skGo = goOf('skill');
+  assert(sk && /^Woodcraft: /.test(sk.label) && skGo && skGo.tab === 'forge' && skGo.sel === '.cf-st[data-st="bench"]', `next tier gate: the skill row names Woodcraft and opens Craft (${JSON.stringify(sk)}, ${JSON.stringify(skGo)})`);
+  // once the zone 13 boss has beaten you, the gate keeps a row of its own in the top three (it sat 4th in the seed 1 walk)
+  E('S.mastery.types.golem = 8; S.bossTry.tries[bossTryKey(soloHero(), 13)] = 2; S.skills.bench.lv = 5; S.skills.loom.lv = 5');   // the nearest gate 50%, under the bestiary's 80%
+  const top3b = E('topGoals(3, { sticky: false }).map(x => x.label)');
+  assert(top3b.some(x => / for the zone 13 boss: \w+ \d of 10$/.test(x)), `next tier gate: after a lost boss try the gate row keeps a place in the top three (${JSON.stringify(top3b)})`);
+  E('S.mastery.types.golem = 4; S.bossTry.tries = {}'); reset();
+  // 2. Woodcraft 10: the next station gate is the hood's or the leathers' Tailoring
+  E('S.skills.bench.lv = 10');
+  l = goals();
+  assert(row(l) && /^(\w+ )+(Hood|Leathers) for the zone 13 boss: Tailoring 6 of 10$/.test(row(l).label), `next tier gate: at Woodcraft 10 the Tailoring gate shows (${JSON.stringify(row(l))})`);
+  // 3. Tailoring 10 too: the material gate, Woodcutting 7 of 14 (it beats Hunting 4 of 14 for the Duskfang Pelt); Go opens the Woodcutting view
+  E('S.skills.loom.lv = 10');
+  l = goals();
+  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Woodcutting 7 of 14 opens Birch Log' && !row(l).ready, `next tier gate: with the stations open, Woodcutting 7 of 14 opens Birch Log (${JSON.stringify(row(l))})`);
+  go = goOf('forge');
+  assert(go && go.tab === 'gat' && go.view === 'wood', `next tier gate: the material gate's Go opens the Woodcutting view (${JSON.stringify(go)})`);
+  assert(/^Woodcutting: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('skill') || {}).view === 'wood', `next tier gate: the skill row follows the gate to Woodcutting (${JSON.stringify(l.find(x => x.id === 'skill'))})`);
+  // 4. the Birch Bow's middles in the bag (refine-queues: 5 Birch Plank and 2 Duskfang Leather): the craft, Ready
+  E('S.mats.plank[1] = 5; S.mats.leather[1] = 2');
+  l = goals();
+  assert(row(l) && /^Craft a Birch Bow for the zone 13 boss: you have the materials$/.test(row(l).label) && row(l).ready, `next tier gate: with its materials the Birch Bow craft is Ready, no gate (${JSON.stringify(row(l))})`);
+  // 5. Birch Log enough for its planks and leather: the bow's gate is Hunting for the Duskfang Pelt (Foraging 2 and Mining 3, so no fibre or ore gate is nearer)
+  E('S.mats.plank[1] = 0; S.mats.leather[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 3');
+  l = goals();
+  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Hunting 4 of 14 opens Duskfang Pelt', `next tier gate: with the Birch Log in hand, Hunting 4 of 14 opens Duskfang Pelt (${JSON.stringify(row(l))})`);
+  // 6. with Hunting hidden, no hide gate shows
+  E('HUNT_TUNE.on = false');
+  l = goals();
+  assert(!l.some(x => /Hunting \d+ of|Duskfang Pelt$/.test(x.label)), `next tier gate: with Hunting hidden, no hide gate (${JSON.stringify(row(l))})`);
+  reset();
+  // 7. an open tier 1 recipe beats any gate: an empty sickle slot (and 2 Pine Log, as at minute 23) shows the Copper Sickle craft
+  E('(() => { const id = S.equip.sickle; S.equip.sickle = null; S.items = S.items.filter(i => i.id !== id); S.mats.wood[0] = 2; gearDirty(); })()');
+  l = goals();
+  assert(row(l) && /^Craft a Copper Sickle: /.test(row(l).label) && !l.some(x => / \d+ of \d+/.test(x.label)), `next tier gate: an open recipe hides the gate (${JSON.stringify(row(l))})`);
+  reset();
+  // review: a tool's gate names the skill that gives its level (tools use the better of their station and Smithing)
+  E('S.skills.smith.lv = 9; S.skills.bench.lv = 3');
+  l = goals();
+  assert(row(l) && row(l).label === 'Iron Pickaxe: Smithing 9 of 10' && /^Smithing: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('forge') || {}).sel === '#smithBar', `next tier gate: a tool's Smithing gate says Smithing and opens the Forge (${JSON.stringify(l.filter(x => x.id === 'forge' || x.id === 'skill'))})`);
+  reset();
+  // review: a station at 0 XP keeps its skill row while its gate shows
+  E('S.skills.bench.xp = 0');
+  assert(/^Woodcraft: /.test((goals().find(x => x.id === 'skill') || {}).label || ''), 'next tier gate: the skill row stays at 0 XP');
+  reset();
+  // review: Birch Log counts once across the recipe (10 for Birch Planks, 2 for Duskfang Leather): 10 is not enough
+  E('S.skills.bench.lv = 10; S.skills.loom.lv = 10; S.mats.wood[1] = 10');
+  assert(/Woodcutting 7 of 14 opens Birch Log$/.test((row(goals()) || {}).label || ''), `next tier gate: 10 Birch Log still leaves the Woodcutting gate (${JSON.stringify(row(goals()))})`);
+  reset();
+  // 8. 8 Pine Log: the Golemfist's +1 is offered (refine-queues: "Saw 1 Pine Plank for your Golemfist +1"), and that Ready row
+  // takes the forge slot over the gate row; this is why the fixture holds no Pine Log
+  const g2 = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8') }) });
+  g2.eval('tick(0.1); S.mats.wood[0] = 8');
+  l = g2.eval('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
+  assert(l.some(x => /^Upgrade your Golemfist to \+1$|for your Golemfist \+1$/.test(x.label) && x.ready), `next tier gate: with 8 Pine Log the Golemfist upgrade is offered (${JSON.stringify(l)})`);
+  // the upgrade goal never treats a gate row as the piece about to be replaced (upgrade-goal-chip-order rule (a)): the gate is on the
+  // weapon slot, and the Golemfist's upgrade still shows beside it
+  E('S.mats.plank[0] = 1');
+  l = goals();
+  assert(row(l) && / of 10$/.test(row(l).label) && l.some(x => x.id === 'upgrade' && x.label === 'Upgrade your Golemfist to +1'), `next tier gate: a gate on the weapon does not hide the weapon's upgrade (${JSON.stringify(l)})`);
+  // review: never a gate on a node that is never offered (hide grades 4 and 5)
+  const g3 = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8') }) });
+  g3.eval('tick(0.1); S.maxZone = 60; for (const k in S.skills) S.skills[k].lv = Math.max(S.skills[k].lv, 70); S.skills.hunt.lv = 40; S.items.forEach(i => { i.t = 3; }); gearDirty()');
+  l = g3.eval('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))');
+  assert(!l.some(x => /Hunting \d+ of 64/.test(x.label)), `next tier gate: no Hunting 64 gate for a hide grade that is never offered (${JSON.stringify(row(l))})`);
+} catch (e) { fail('next tier gate crashed: ' + (e.stack || e)); }
 
 // ---- boss tiers, first hour (card boss-tiers PR 1, judge 2026-10-07): the zone-boss hit cap and the first-hour knots ----
 if (section('boss tiers first hour')) try {
@@ -11376,6 +11479,132 @@ if (section('staged guide follow-ups (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('staged guide follow-ups (browser) crashed: ' + (e.stack || e)); }
+
+// ==== starters-join-when-met: a new game keeps the starter it picked; the other two join at their Champions (56c, DECISIONS "Starters join
+// on the road"). Old saves keep all three (S.party.unlock.startedAs '' is the gate off). ====
+if (section('starters join when met')) try {
+  const pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+  const mk = f => { const g = loadCore(Object.assign({ seed: 7 }, f ? { storage: memoryStorage({ [KEY]: pfx(f) }) } : {})), toasts = [], wins = [];
+    g.fn.on('toast', t => toasts.push(t && t.msg)); g.fn.on('champWin', e => wins.push(e)); return { g, toasts, wins, E: s => g.eval(s) }; };
+  // a zone's boss, spawned and killed as the fight does (the champion moment section's way)
+  const win = (a, z) => { a.E(`S.activity = 'fight'; S.zone = ${z}; S.maxZone = Math.max(S.maxZone, ${z}); fightBoss = true; spawn(); killPack(mob, 40)`); a.g.fn.tick(0.1); };
+  const play = (a, ids) => ids.map(k => a.E(`heroCanPlay(${JSON.stringify(k)})`)).join();
+  // an old save (no field) keeps all three, and the picker copy stays as it was
+  const old = mk('save-pre-champion.json');
+  assert(old.E('S.party.unlock.startedAs') === '' && play(old, ['wren', 'tobin', 'pip']) === 'true,true,true' && !old.E('heroJoinsAhead()'), 'starters join: an old save (no startedAs) loads with Wren, Tobin and Pip playable');
+  // a Mirror of Embers reopens the picker on any save (55-party.js useMirror sets chosen false): its Begin never starts the gate
+  old.E('S.party.chosen = false');
+  assert(old.E('heroBegin("tobin")') && old.E('soloHero()') === 'tobin' && old.E('S.party.unlock.startedAs') === '' && play(old, ['wren', 'tobin', 'pip']) === 'true,true,true', 'starters join: a Mirror on an old save (zone 5, newGame set) and Begin leave startedAs at \'\'');
+  win(old, 5);
+  assert(!old.E('Object.keys(S.party.unlock.heroes).length') && !old.E('heroJoins().length') && !old.E('S.onboard.got.switch'), 'starters join: an old save\'s Champion clear joins nobody and opens no switch row');
+  // a new game: the picker offers all three; Begin as Wren records her, and Tobin and Pip wait for their Champions
+  const a = mk();
+  assert(play(a, ['wren', 'tobin', 'pip']) === 'true,true,true' && a.E('heroJoinsAhead()') && a.E('S.party.unlock.startedAs') === '', 'starters join: a fresh game offers all three in the picker, and the picker knows the others will join on the road');
+  assert(a.E('heroBegin("wren")') && a.E('S.party.unlock.startedAs') === 'wren' && play(a, ['wren', 'tobin', 'pip']) === 'true,false,false', 'starters join: after Begin as Wren, startedAs is wren and Tobin and Pip are not playable');
+  assert(!a.E('heroPick("tobin")') && !a.E('soloPick("tobin")') && !a.E('heroUnlock("pip")') && a.E('soloHero()') === 'wren', 'starters join: heroPick, soloPick and heroUnlock cannot make a locked starter the hero');
+  a.E('emit("classChosen", { base: "warrior" })');
+  assert(a.E('soloHero()') === 'wren', 'starters join: a class choice for a starter not yet yours keeps the hero (59j classChosen)');
+  const tob = JSON.parse(a.E('JSON.stringify(heroRouteInfo("tobin"))')), pip = JSON.parse(a.E('JSON.stringify(heroRouteInfo("pip"))'));
+  assert(tob.state === 'locked' && /^You meet Tobin at the zone 5 Champion\.$/.test(tob.how) && tob.meet === tob.how && /zone 15 Champion/.test(pip.how), `starters join: All heroes and the Mirror's picker say where you meet them (${tob.how} / ${pip.how})`);
+  // the save keeps it
+  a.E('save()');
+  const re = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: a.g.storage.get(KEY) }) });
+  assert(re.eval('S.party.unlock.startedAs') === 'wren' && !re.eval('heroCanPlay("tobin")') && re.eval('soloHero()') === 'wren', 'starters join: startedAs survives a save and reload');
+  // the spacing governor: the rows a player's own act opens (now) skip the gap by design, so open those first and let the clock settle;
+  // then clear the Champion: Bestiary (zone 6, no `now`) must wait the gap after the join
+  const settle = x => x.E('S.onboard.tips = true; FEATURES.filter(f => f.now && f.id !== "switch").forEach(f => onboardReveal(f.id)); for (let i = 0; i < 30; i++) { S.onboard.t += ONBOARD_TUNE.gap + 1; onboardCheck(); } true');
+  a.E('S.maxZone = 5; S.zone = 5'); settle(a);
+  win(a, 5);
+  assert(a.E('S.party.unlock.heroes.tobin') === 1 && a.E('heroCanPlay("tobin")') && !a.E('heroCanPlay("pip")') && a.E('heroJoins().join()') === 'tobin', 'starters join: the zone 5 Champion\'s first clear makes Tobin playable and writes heroes.tobin; Pip stays locked');
+  assert(a.wins.length === 1, 'starters join: the zone 5 clear asks for the Champion card, which carries the join (the browser part below proves the card and that no toast comes)');
+  const sw = a.E('S.onboard.got.switch'), t0 = a.E('S.onboard.t');
+  assert(Number.isFinite(sw) && Math.abs(sw - t0) <= 1, `starters join: the join opens the switch row at once (${sw} at ${t0})`);
+  const early = JSON.parse(a.E(`(() => { S.onboard.t += ONBOARD_TUNE.gap - 2; return JSON.stringify(onboardCheck()); })()`)), late = JSON.parse(a.E(`(() => { S.onboard.t += 3; return JSON.stringify(onboardCheck()); })()`));
+  assert(!early.length && late.includes('bestiary'), `starters join: no unlock opens within the gap after the join, Bestiary does after it (${early.join()} / ${late.join()})`);
+  assert(a.E('soloPick("tobin")') && a.E('S.L') >= 1, 'starters join: Tobin can take the lamp once he joined');
+  // a Wren start playing Tobin at the zone 10 Champion: Wren does not meet herself, and zone 10 adds nobody
+  const wrenWho = a.E('STORY_BEATS.npc.wren.who');
+  win(a, 10);
+  const cant = JSON.parse(a.E('JSON.stringify((storyEntry("p:cantor") || { cards: [] }).cards.map(c => c.who))'));
+  assert(!cant.includes(wrenWho) && a.E('heroJoins().join()') === 'tobin' && a.E('S.onboard.got["join:wren"]') === undefined, `starters join: a Wren start playing Tobin gets no Wren meet scene at the Cantor, and zone 10 adds nobody (${cant.join(' / ')})`);
+  // a Tobin start: nobody at zone 5, Wren at zone 10 (a second join: it stamps the clock)
+  const b = mk(); b.E('heroBegin("tobin"); S.onboard.tips = true');
+  win(b, 5);
+  assert(!b.E('heroJoins().length') && !b.E('heroCanPlay("wren")') && !b.E('S.onboard.got.switch'), 'starters join: a Tobin start gets nobody at zone 5');
+  win(b, 10);
+  assert(b.E('heroJoins().join()') === 'wren' && b.E('heroCanPlay("wren")') && !b.E('heroCanPlay("pip")'), 'starters join: a Tobin start gets Wren at zone 10');
+  const c = mk(); c.E('heroBegin("pip")');
+  win(c, 5); c.E('S.maxZone = 10; S.zone = 10'); settle(c);
+  win(c, 10);
+  const j2 = c.E('S.onboard.got["join:wren"]'), t2 = c.E('S.onboard.t');
+  const hold = JSON.parse(c.E(`(() => { delete S.onboard.got.codex; S.onboard.t += ONBOARD_TUNE.gap - 2; return JSON.stringify(onboardCheck()); })()`)), go = JSON.parse(c.E(`(() => { S.onboard.t += 3; return JSON.stringify(onboardCheck()); })()`));
+  assert(c.E('heroJoins().join()') === 'tobin,wren' && Number.isFinite(j2) && Math.abs(j2 - t2) <= 1 && !hold.includes('codex') && go.includes('codex'), `starters join: a second join (a Pip start's Wren) holds the next unlock for the gap too (${hold.join()} / ${go.join()})`);
+  // a clear made while away: the return writes the join and says it in a toast
+  const d = mk(); d.E('heroBegin("wren"); S.maxZone = 7; S.zone = 7; emit("awayEnd", {})');
+  assert(d.E('S.party.unlock.heroes.tobin') === 1 && d.toasts.some(t => /^Tobin joined your camp while you were away\./.test(t || '')) && !d.E('heroCanPlay("pip")'), `starters join: a Champion cleared while away joins on the return, with a toast (${d.toasts.filter(Boolean).slice(-1)})`);
+  // the rollback, and a bad value
+  const e = mk(); e.E('STORY_TUNE.joinOnMeet = false; heroBegin("wren")');
+  assert(play(e, ['wren', 'tobin', 'pip']) === 'true,true,true' && !e.E('heroJoinsAhead()'), 'starters join: STORY_TUNE.joinOnMeet = false gives all three on a fresh pick');
+  e.E('STORY_TUNE.joinOnMeet = true; S.party.unlock.startedAs = "xyz"; S.cls.at = 0');
+  const code = e.E('encodeSave(S)'), dec = JSON.parse(e.E(`JSON.stringify(decodeSave(${JSON.stringify(code)}))`));
+  const xyz = dec.ok ? loadCore({ seed: 7, storage: memoryStorage({ [KEY]: JSON.stringify(dec.data) }) }) : null;
+  assert(dec.ok && xyz.eval('S.party.unlock.startedAs') === 'xyz' && ['wren', 'tobin', 'pip'].every(k => xyz.eval(`heroCanPlay(${JSON.stringify(k)})`)) && e.E('heroUnlockStateValid({ startedAs: "xyz" })') && !e.E('heroUnlockStateValid({ startedAs: 5 })'),
+    `starters join: a save code with startedAs "xyz" decodes and a game loaded from it has all three; a non-text startedAs is refused (${dec.error || 'ok'})`);
+  // a built-in name is not a hero (save-risk review): it reads as '' and nothing throws
+  const proto = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: pfx('save-pre-champion.json').replace('"milestones":{}}', '"milestones":{},"startedAs":"constructor"}') }) }), pE = s => proto.eval(s);
+  assert(pE('S.party.unlock.startedAs') === 'constructor' && pE('["wren","tobin","pip"].every(heroCanPlay) && !!heroRouteInfo("tobin") && soloPick("tobin")') && (() => { pE('soloPick("wren"); S.activity = "fight"; S.zone = 5; fightBoss = true; spawn(); killPack(mob, 40)'); return pE('S.maxZone') === 6; })() && !proto.errors.length,
+    `starters join: startedAs "constructor" loads with all three, switching and the Champion's clear work (${proto.errors[0] || 'ok'})`);
+  // the Champion card carries the join, on both card paths (75-moments-ui champWin, 75-caches-ui fold), and a toast says it only with no card
+  const mui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-moments-ui.js'), 'utf8'), cui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8');
+  assert(/lines: joins \}\)/.test(mui) && /lines: joins\.concat\(q\.lines/.test(mui) && /lines: \(c\.lines \|\| \[\]\)\.concat\(o\.lines\)/.test(cui), 'starters join: the join line rides the Champion card on its own card, the queued cache and the cache that folds in later');
+  for (const x of [old, a, b, c, d, e]) assert(!x.g.errors.length, 'starters join: no core errors' + (x.g.errors.length ? ': ' + x.g.errors[0] : ''));
+  // browser: the card, one big moment, the toast when the card is off, the Hero tab's note and All heroes
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('starters join (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true });
+      await ctx.addInitScript(([key, raw]) => {
+        try { localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {}
+        if (sessionStorage.getItem('sj-seeded')) return; sessionStorage.setItem('sj-seeded', '1');
+        const o = JSON.parse(raw); o.last = Date.now(); o.auto = false; o.solo.auto = false; localStorage.setItem(key, JSON.stringify(o));   // Auto off: the Champion waits for the check
+      }, [KEY, pfx('save-join-z5.json')]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', x => errs.push(String(x)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(4800);   // no moment opens at boot (MOMENT_TUNE.bootS)
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const until = async (expr, ms = 8000) => { try { await page.waitForFunction(x => window.__t.x(x), expr, { timeout: ms, polling: 100 }); } catch (x) { /* the assert says what is missing */ } };
+      await X(`S.onboard.tips = false; MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } window.__ts = []; on('toast', t => window.__ts.push(t && t.msg)); setTab('party'); setView('party', 'team'); ui(true); true`);
+      await page.waitForTimeout(300);
+      const before = await X(`(() => { const s = document.getElementById('sec-solo-hero'); return { note: s ? s.querySelector('.note').textContent : '', chips: s ? [...s.querySelectorAll('.sp-chip')].map(c => c.dataset.hero).join() : '' }; })()`);
+      assert(before.chips === 'wren' && /^Others join you on the road\./.test(before.note), `starters join (browser): before the Champion the Switch hero list shows Wren only and says the others join on the road (${JSON.stringify(before)})`);
+      // the real clear: the post scene, then one big card with the join line on top; no bare toast
+      await X(`setTab('fight'); S.activity = 'fight'; S.zone = 5; fightBoss = true; spawn(); killPack(mob, 40); true`);
+      await until(`!!document.querySelector('.mm-ov')`);
+      const card = await X(`(() => { const o = document.querySelector('.mm-ov'); return { n: document.querySelectorAll('.mm-ov').length, text: o ? o.textContent : '', q: MOMENT_Q.filter(x => x.tier === 'big').length, toasts: window.__ts.filter(t => /joins your camp/.test(t || '')).length }; })()`);
+      assert(card.n === 1 && /The Briar Regent falls/.test(card.text) && /Tobin joins your camp\. Switch heroes on the Hero tab, for free\./.test(card.text) && !card.q && !card.toasts, `starters join (browser): one Champion card names the join, nothing else queued as big, no bare toast (${JSON.stringify(card).slice(0, 240)})`);
+      await page.waitForTimeout(2200); await page.click('.mm-go'); await page.waitForTimeout(300);
+      // the other path: the cache already queued when the Champion card is asked for
+      const q = await X(`(() => { MOMENT_Q.length = 0; MOMENT_UI.wait = -99; moment('cache', { title: 'Zone 5 cleared', zone: 5, lines: [{ txt: '9 gold' }] }); emit('starterJoin', { ids: ['tobin'], zone: 5 }); emit('champWin', { id: 'regent', zone: 5, name: 'The Briar Regent', scene: 'p:regent:post' }); const r = MOMENT_Q.map(x => ({ k: x.kind, t: x.title, l: (x.lines || []).map(l => l.txt) })); MOMENT_Q.length = 0; return r; })()`);
+      assert(q.length === 1 && q[0].k === 'champion' && /^Tobin joins your camp\./.test(q[0].l[0]) && q[0].l[1] === '9 gold', `starters join (browser): with the cache queued first, the Champion card keeps the cache and puts the join on top (${JSON.stringify(q)})`);
+      // the Champion card off: the same clear says it in a toast
+      await X(`STORY_TUNE.champMoment = false; S.party.unlock.heroes = {}; S.maxZone = 5; S.zone = 5; window.__ts = []; S.activity = 'fight'; fightBoss = true; spawn(); killPack(mob, 40); true`);
+      await page.waitForTimeout(400);
+      const off = await X(`({ toasts: window.__ts.filter(t => /^Tobin joins your camp\\./.test(t || '')).length, champ: MOMENT_Q.some(x => x.kind === 'champion') })`);
+      assert(off.toasts === 1 && !off.champ, `starters join (browser): with the Champion card off, a toast says the join (${JSON.stringify(off)})`);
+      await X(`STORY_TUNE.champMoment = true; MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } setTab('party'); setView('party', 'team'); ui(true); true`);
+      await page.waitForTimeout(400);
+      const after = await X(`(() => { const s = document.getElementById('sec-solo-hero'); return { note: s ? s.querySelector('.note').textContent : '', chips: s ? [...s.querySelectorAll('.sp-chip')].map(c => c.dataset.hero).join() : '' }; })()`);
+      assert(after.chips === 'wren,tobin' && /^Switch any time/.test(after.note), `starters join (browser): after the join the Switch hero list has Tobin and the note says switch any time (${JSON.stringify(after)})`);
+      assert(!errs.length, 'starters join (browser): no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('starters join when met crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
@@ -12471,6 +12700,47 @@ if (section('small text clips')) try {
     } } finally { await browser.close(); }
   }
 } catch (e) { fail('small text clips crashed: ' + (e.stack || e)); }
+
+// ---- unique-weapons-wall-icon: the Codex and the Unique loot wall show an every-class unique weapon as the hero's own weapon
+// (icon and kind name), as the bag does; Tobin keeps his Warblade. The raid loot card (74-ui-raid, path-guarded) is a scope cut.
+if (section('unique weapons wall icon')) try {
+  const own = { wren: ['bow', 'Bow'], pip: ['staff', 'Staff'], tobin: ['warblade', 'Warblade'] };
+  const fx = {};
+  for (const h of Object.keys(own)) {
+    const g = loadCore({ seed: 1120 }), E = s => g.eval(s);
+    E(`soloPick("${h}"); S.found = Object.assign({}, S.found, { golemfist: 1, eaterfang: 4 }); codexRefresh(true)`);
+    for (const k of ['golemfist', 'eaterfang']) {
+      const t = JSON.parse(E(`JSON.stringify(codexPage("uniques").tiles.find(t => t.key === "${k}"))`));
+      assert(t && t.item.slot === own[h][0] && t.sub.startsWith(own[h][1] + ' · ') && !/Sword/.test(t.sub), `${h}: the Codex row for ${k} shows a ${own[h][1]} (${t && t.item.slot}, "${t && t.sub}")`);
+    }
+    E('if (S.cls) S.cls.at = 0; onboardUnlockAll(); onboardTips(false); save()'); fx[h] = g.storage.get(KEY);
+    assert(!g.errors.length, `${h}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('unique weapons wall icon (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try { for (const h of ['wren', 'pip']) {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      try {
+        await ctx.addInitScript(({ raw, key }) => { localStorage.setItem(key, raw); }, { raw: fx[h], key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1200);
+        const X = src => page.evaluate(src => window.__t.x(src), src);
+        const r = await X(`(() => { const same = (tile, kind, t, u) => { const p = icTile(''); setIc(p, itemIcon(kind, t, u)); return tile.querySelector('img').src === p.querySelector('img').src; };
+          uiForge(); const out = { hero: soloHero() };
+          for (const k of ['golemfist', 'eaterfang']) { const e = trophyEls[k]; out[k] = { ic: same(e.tile, ${JSON.stringify(own[h][0])}, S.found[k], k), sword: same(e.tile, 'weapon', S.found[k], k), txt: e.ts1.textContent }; }
+          return out; })()`);
+        for (const k of ['golemfist', 'eaterfang'])
+          assert(r.hero === h && r[k].ic && !r[k].sword && r[k].txt.startsWith(own[h][1] + ' · '), `${h}: the Unique loot wall shows ${k} as a ${own[h][1]} (${JSON.stringify(r[k])})`);
+        assert(!errs.length, `${h}: Unique loot wall, no page errors` + (errs.length ? ': ' + errs[0] : ''));
+      } finally { await ctx.close(); }
+    } } finally { await browser.close(); }
+  }
+} catch (e) { fail('unique weapons wall icon crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
