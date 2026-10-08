@@ -369,7 +369,7 @@ function craftReady() {
   let wearBooted = false;
   const wearBoot = () => {
     if (wearBooted) return; wearBooted = true;
-    try { if (coldH()) for (const k of ['weapon', 'tool']) if (O().done['wear:' + k] && wearPiece(k)) delete O().done['wear:' + k]; } catch (e) {}
+    try { if (coldH()) for (const k of ['weapon', 'tool']) if (O().done['wear:' + k] && wearPiece(k) && !(k === 'tool' && toolWorn())) delete O().done['wear:' + k]; } catch (e) {}
   };
   onboardStep = () => {
     wearBoot();

@@ -15299,7 +15299,7 @@ function craftReady() {
   let wearBooted = false;
   const wearBoot = () => {
     if (wearBooted) return; wearBooted = true;
-    try { if (coldH()) for (const k of ['weapon', 'tool']) if (O().done['wear:' + k] && wearPiece(k)) delete O().done['wear:' + k]; } catch (e) {}
+    try { if (coldH()) for (const k of ['weapon', 'tool']) if (O().done['wear:' + k] && wearPiece(k) && !(k === 'tool' && toolWorn())) delete O().done['wear:' + k]; } catch (e) {}
   };
   onboardStep = () => {
     wearBoot();
@@ -42884,7 +42884,7 @@ let navUI = null;
   });
   on('wipe', e => { if (e && e.boss && !e.arena) sayQueue('defeat'); });
   on('scrollDrop', e => { if (e && e.firstEver) { scrollId = e.id || 'moss'; sayQueue('scroll'); } });
-  on('abilityLearned', e => { if (e && e.hero === soloHero() && soloAbilities().length > 1) { slotAb = e.id; sayQueue('slot'); } });
+  on('abilityLearned', e => { if (e && e.hero === soloHero() && soloAbilities().length > 1) { slotAb = e.id; sayQueue('slot'); sayKeep(); } });
   // guide-goal-after-reload: his Pine Log line carries the first job, and the queue lives in memory only, so a reload before it was read
   // (Got it or ×) would lose it. Queue it again once a boot while the fire is still cold. Not an unlock, so the unlock spacing is untouched.
   // reload-keeps-tips: the lines queued and unread when the game closed, in order (each still checked by SAY_STILL when its turn comes)
@@ -42938,7 +42938,8 @@ let navUI = null;
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
   const finish = s => s.id.startsWith('say:') ? sayDone(s.id) : s.id.startsWith('use:') ? onboardUseDone(s.id) : guideHide(s.id) || onboardDone(s.id);   // a first-use line is read, not a guide step; a wear tip or the fire tip hides for this session (reload-keeps-tips)
-  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) finish(cur); tick(); });
+  // Got it is an answer: a guide step it ends is done for good (only × and the retire hide a tip for the session, reload-keeps-tips)
+  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) { if (/^(say|use):/.test(cur.id)) finish(cur); else onboardDone(cur.id); } tick(); });
   let cur = null;   // the step on screen
   x.addEventListener('click', e => { e.stopPropagation(); if (cur) finish(cur); tick(); });
   const chip = $('nuChip');
