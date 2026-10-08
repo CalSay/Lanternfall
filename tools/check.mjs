@@ -6780,7 +6780,7 @@ if (section('browser tooling portability (C5)')) try {
   assert(shards.status===0 && /craft tables consistent/.test(shards.stdout) && (shards.stdout.match(/^browser sections skipped: 0 \(none\)$/gm)||[]).length===1, 'C5: the real sharded runner resolves its file URL correctly and prints one final browser summary');
   const missing = path.join(os.tmpdir(), 'lanternfall-c5-no-such-playwright-module');
   const skipped = spawnSync(process.execPath, [entry, '--jobs=3', '--only=gatherers UI|landscape'], { encoding: 'utf8', timeout: 30000, env: { ...process.env, LF_PLAYWRIGHT: missing } });
-  assert(skipped.status===0 && (skipped.stdout.match(/^browser sections skipped:/gm)||[]).length===1 && /^browser sections skipped: 4 \(LF_PLAYWRIGHT/m.test(skipped.stdout), 'C5: the parent totals four intentionally skipped browser sections across shards and retains the reason');
+  assert(skipped.status===0 && (skipped.stdout.match(/^browser sections skipped:/gm)||[]).length===1 && /^browser sections skipped: 5 \(LF_PLAYWRIGHT/m.test(skipped.stdout), 'C5: the parent totals five intentionally skipped browser sections across shards and retains the reason');
   const tempRoot = path.resolve(os.tmpdir()), fixture = fs.mkdtempSync(path.join(tempRoot, 'lanternfall-c5-site-'));
   try {
     const dir = path.join(fixture, 'space # café'), tool = path.join(dir, 'tools', 'site.mjs');
