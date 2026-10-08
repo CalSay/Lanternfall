@@ -1,0 +1,18 @@
+# Proof for card z16-wall. Wren at zone 16 with its 5 fights done and the boss next (tests/proof-fixtures/save-z16-weak.json, the
+# walk's minute 23 save moved to zone 16 by boss-retry-reads-odds: level 18, tier 1 pieces, no mastery stars), at 360x740 and 740x360:
+#   nextup-boss-*.png  Next Up's boss row reads the zone 16 boss's odds from the game's own turn fights: "Boss ready in Zone 16".
+#                      Before this card the game judged the boss at 0% a try on the same save and left the row out of Next Up, so
+#                      the first expect fails on that build.
+# The win rates behind it are held by tools/budget.mjs (the z16-z18 -arrival boss rows) and tools/health.mjs --compare.
+# seed: 1
+new z16-weak
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+tap "Next up"
+wait 1
+expect "Boss ready in Zone 16"
+shot nextup-boss

@@ -635,6 +635,69 @@ measurements, re-run by the judge at 160 fights a row on the same build (same nu
 Veto phrase for Cal: "put the zone 13 bosses back" (undoes the pick; "hold zone 13 for the balance pass" still undoes the timing
 and has the same effect).
 
+### Zone 16 wall (z16-wall) (2026-10-08)
+
+Ruled MERGE with option D (B2-style knots plus a rider knot) by an Opus high judge (PR for card `z16-wall`); Cal can veto any line.
+Data: the builder's runs (240 fights a row), re-run by the judge at 160 fights on other seeds (offsets 1-3; same numbers within a few
+points). Walks confirm (60 game min, with the bot that keeps fighting after a loss): on the base build seed 1 Wren reached zone 16
+at 29:55 and seed 2 Tobin at 47:48, and neither cleared it by 60:00. On the fix, seed 1 Wren cleared zones 16, 17 and 18 at
+35:04, 37:49 and 47:03 and reached zone 19 at 55:04. Seed 2 Tobin cleared them at 45:46, 48:11 and 56:51 and reached zone 19 at
+59:38. Neither lost a try in zones 1 to 19.
+
+- **Why it walls.** A first-time hero reaches zone 16 at level 20 on tier 1 common +0, with about 0.06 of the reference HP (a kept-up
+  hero has 1.22). Casual reads 0% a try at the zone 16, 17 and 18 bosses on that footing; the base walks lost 8 and 17 tries at zone 16
+  and never cleared it. Two things cause it: the hit knots were fitted to the kept-up hero, and the boss's Bleed ticks a share of the
+  reference HP (`TURN_TUNE.heroDot`), which no hit knot, floor or cap touches. One Bleed tick took a third of a first-time hero's health.
+- **The pick: D.** In `TURN_TUNE.boss`, zones 16, 17 and 18 only: hpX 4/3/3 to 0.15/0.15/0.12, hitX 0.738/0.7/0.481 to 0.03/0.03/0.03
+  (dormant: every landed hit sits on the hpFloor, as at zones 13-15), hpFloor 0/0/0 to 0.95/1.0/0.95 (0 again from zone 19), Tobin's
+  heroHitX 6.36/5.48/5.51 to 2.75/2.75/2.6. New zone table `riderX` `[[1,1],[15,1],[16,0.2],[17,1],[18,0.2],[19,1]]`: a zone boss's
+  Bleed, Burn and Venom ticks on the hero x this. Zone 17's boss has no ticking rider. Moves, timing windows, parry and dodge rules,
+  the hit cap, rally gates and boss pay do not change.
+- **riderX is a knot, not a move change.** The Bleed still lands on the same hits, ticks twice and shows the same. Only its size
+  changes, as hitX changes a hit's size. The card's Never line names hitX and hpX; its purpose is that no boss move changes, and #223's
+  judge read hpFloor the same way. This stretches the line further than hpFloor did (it is a new table and one multiply in the tick),
+  so it is named here for Cal's veto.
+- **Why not A.** Tier 2 or even tier 3 rare +5 at level 20 reads 0% at zone 16 with today's knots. Both walks end the hour with the
+  gathering gate still shut (11-12 of 14), so opening it before zone 16 also moves tier 2 into zones 7-15.
+- **Why not B (knots only).** The ticks cap it. The builder's knots with riderX off read 31/31/39 (Wren/Tobin/Pip), good 94-97. The
+  best knots-only fit (hpX 0.06, hpFloor 0.9, Tobin 3.5) reads 37/49/45. hpFloor 0.8 lifts it to 38/53/50 but a kept-up hero who never
+  defends then wins 84% (Wren) and 96% (Pip), which breaks "it should always be very bad for us to get hit by a boss".
+- **Why not C.** Tier 2 common worn plus the knots, riderX off, reads 36/48/53 at zone 16. More change (the gathering gate and the zone
+  7-15 economy) for less result.
+- **Why 0.2.** riderX 0.3 reads 64/52/74, 0.1 reads 78/58/84 and lets a first-time hero who never defends win 5%. At 0.2 a Bleed tick
+  costs a first-time hero about 7% of their health (was about 33%); it still hurts.
+- **What a first-time player gets** (casual Wren/Tobin/Pip, arrival footing): z16 70/57/80 (73/55/79 on other seeds), z17 83/52/69,
+  z18 83/62/66. Good players 100. The walk bot's player 91-97. A weaker casual 45-54 (Tobin 22-24). A player who never defends wins
+  0%. Expected tries 1.2-1.9. Fights last about 5-7 turns played well, as at zones 13-15.
+- **z17 and z18 are fixed here.** The budget leads and both read 0% at the arrival footing on the old knots, so a zone 16 fix alone
+  moves the wall one zone. Their arrival rows become gated Captain rows (kind `captain`, not report rows), so the fix is held.
+- **z19 is out of scope.** Its arrival row reads 0% and stays a report row. It is the next wall: a follow-up card `z19-wall`, same
+  method (arrival knots, riderX for its Venom), for the coordinator to card; until then `boss-balance-pass` owns it.
+- **Kept-up z16-18 are too easy for a geared casual:** 97-100 against 60-80 (was 59-82). A kept-up hero who never defends still
+  wins 0% (four seed sets). No knot puts both rows in band: hpX 0.3 drops arrival to 53/43/31 and kept-up stays 98; hpFloor 1.1 drops
+  arrival to 62/39/66 and kept-up reads 92. The first-time player wins; this goes in gaps, as z15-boss-keptup did.
+- **Tobin sits under his arrival band** (55-62 against 70-90; he still clears in about 2 tries). His heroHitX is the trade: 2.5 lifts
+  z16 arrival to 62 but a kept-up Tobin who never defends wins 34%; 2.2 reads 73 and 46-48%. The never-defends rule wins; his arrival
+  cells go in gaps under `tobin-safety-margin`.
+- **Zones 1 to 15 are unchanged.** No knot below zone 16 moved and riderX is 1 there, so #223's z13-15 ruling stands. The z5-z15 rows,
+  z15 kept-up included, read the same on the old and new knots on the same seeds. Zones 19+ keep their knots (hpFloor and riderX are
+  back to 0 and 1 from zone 19). Normal foes, elites, region bosses, the Deepwell and Provings tick as before.
+- **Cost, accepted for now.** Rally gates hold every zone 13-18 fight to about 5 turns, so the length ramp stays flat from zone 12 to
+  18. Replays of the zone 16-18 bosses get easier. Both belong to the balance pass's full refit.
+- **Gaps (all until 2026-12-01).** z16-boss, z17-boss and z18-boss casual, above, all heroes, limit 1, owner `boss-balance-pass`.
+  z16-boss-arrival, z17-boss-arrival and z18-boss-arrival Tobin casual, below, limits 0.5, 0.45 and 0.55, owner `tobin-safety-margin`.
+- **Health: re-baselined, no tolerance change.** The bots pass zones 16 to 18 and meet the zone 19 wall sooner. The 10 h optimiser's
+  longest stall rises from 18,300 s to 26,429 s and its wipes from 39 to 58.6 an hour; all three heroes end at zone 19 (was 18.87).
+  In the long run Pip now has 8 stalls of 3 hours or more (was 5.67). Her new ones are at zones 19 (5.9 h) and 20 (4.3 h), and she
+  stalls at zones 25 to 30 as before. Tobin's longest stall is now 13 h at zone 19. The z16-18 kept-up budget means (0.98-0.99) are
+  covered by the new gaps, but a hero `*` gap does not cover the three-hero mean cell, so the re-baseline takes them, as #223 did for z15.
+  The active and casual personas do not move. These are existing walls met sooner. The `z19-wall` card should bring the stall counts back down.
+- **Switch off.** Put the zone 16-18 knots back (hpX 4/3/3, hitX 0.738/0.7/0.481, hpFloor 0 from zone 16, Tobin heroHitX
+  6.36/5.48/5.51) and set `riderX: [[1, 1]]`; drop the six gaps and make the z17 and z18 arrival rows report rows. No save change.
+
+Veto phrase for Cal: "put the zone 16 bosses back" (undoes the whole pick). "No rider knot" undoes only riderX: the knots stay and
+zone 16 reads about 31-39% a try for a first-time player.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
