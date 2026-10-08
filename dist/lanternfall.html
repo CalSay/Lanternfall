@@ -39341,14 +39341,48 @@ let craftUI = null;
     if (r.kind === 'turns') return `Zone ${r.zone} boss: about ${r.after} turns a win, not ${r.before}.`;
     return `Zone ${r.zone} boss: a hit takes about ${r.after}% of your health, not ${r.before}%.`;
   }
-  // the tool line: "Copper Pickaxe on. Mining is 25% faster." (or why it went in the bag)
+  // the tool line: "Copper Pickaxe on. Mining is 35% faster than with your Stone Pick: +25% for a tier 1 tool on a tier 1 vein,
+  // and +8.1% from its mining speed line." (or why it went in the bag). tool-speed-adds-up: the parts come from the crafted record
+  // (toolParts); when they do not multiply to the total within 1 point, or one rounds to 0, only the total and the old tool show.
+  const TOOL_NODE = { mine: 'vein', wood: 'tree', forage: 'patch', hunt: 'hunting ground' };
+  const pctTxt = x => { const v = Math.round(x * 10) / 10; return (v % 1 ? v.toFixed(1) : String(v)); };
+  const spdSum = (st, s) => (s[st] || 0) + (s.gather || 0);
+  // At craft time (the 'crafted' listener): what the new tool is faster than, the measured tier, the right-tool bonus before and
+  // after, and the summed speed stat (the tool's own line plus Gathering speed) before and after. Mastery and the skill level are
+  // read at the same instant on both sides, so they are not parts.
+  function toolParts(it, e) {
+    const d = itemKind(it), kind = Object.keys(TOOL_KINDS).find(k => TOOL_KINDS[k].pos === d.pos), tk = TOOL_KINDS[kind];
+    const fam = Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === it.slot); if (!tk || !fam) return null;
+    const skill = tk.skill, st = NODE_TOOL_STATS[it.slot][0], nt = Math.max(1, skillTopTier(skill) || 1);
+    const old = e.was != null ? itemById(e.was) : null, oldT = old ? itemTier(old) : 0, nm = kindName(it.slot, it.t, it.u);
+    const oldNm = old ? itemName(old) : tk.rough, oldSum = old ? spdSum(st, itemStats(old)) : 0;
+    const g = gear(), after = spdSum(st, g), before = after - spdSum(st, itemStats(it)) + oldSum;
+    return { skill, nt, oldNm, same: oldNm === nm || (!old && tk.rough === d.noun), st,
+      rightWas: !!(TOOL_TUNE.on && oldT > 0 && oldT >= nt), rightNow: toolRight(skill, nt) > 1, t: itemTier(it), before, after, rough: !old,
+      lines: !!itemStats(it).gather || (!old && before > 0) };   // more than the tool's own speed line moved the gear part
+  }
   function toolLine(it) {
     const tl = st8.tool[it.id], d = itemKind(it);
     if (!d || !d.tool) return '';
     if (tl && tl.on && wornBy(it.id)) {
       const [a, b] = tl.speed || [0, 0], pct = a > 0 && b > 0 ? Math.round((a / b - 1) * 100) : 0, sk = CRAFT_NODES[Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === it.slot)];
-      const nm = sk && SKILL[sk.skill] ? SKILL[sk.skill] : 'Gathering';
-      return `${kindName(it.slot, it.t, it.u)} on.` + (pct > 0 ? ` ${nm} is ${pct}% faster.` : '');
+      const nm = sk && SKILL[sk.skill] ? SKILL[sk.skill] : 'Gathering', head = `${kindName(it.slot, it.t, it.u)} on.`;
+      if (pct <= 0) return head;
+      const p = tl.parts, than = !p ? '' : p.same ? ' than before' : ` than with your ${p.oldNm}`;
+      const total = `${head} ${nm} is ${pct}% faster${than}`;
+      if (!p) return total + '.';
+      const parts = [], mult = [];
+      if (p.rightNow && !p.rightWas) {
+        parts.push(`+${Math.round(TOOL_TUNE.right * 100)}% for a tier ${p.t} tool on a tier ${p.nt} ${TOOL_NODE[p.skill] || 'node'}`);
+        mult.push(1 + TOOL_TUNE.right);
+      }
+      const gp = ((1 + p.after / 100) / (1 + p.before / 100) - 1) * 100, sName = CRAFT_STATS[p.st] ? CRAFT_STATS[p.st].n.toLowerCase() : 'speed';
+      if (gp < -1e-9) return total + '.';   // more item power but a slower speed line: the total says it all
+      if (gp > 1e-9) { parts.push(`+${pctTxt(gp)}% from ${p.lines ? `your gear's ${sName}` : `its ${p.rough ? '' : 'better '}${sName} line`}`); mult.push(1 + gp / 100); }
+      const prod = mult.reduce((x, y) => x * y, 1);
+      if (!parts.length || parts.some((s, i) => Math.round(Math.abs(mult[i] - 1) * 1000) === 0) || Math.abs((prod - 1) * 100 - (a / b - 1) * 100) > 1)
+        return total + '.';
+      return `${total}: ${parts.join(', and ')}.`;
     }
     if (tl && !tl.on && !wornBy(it.id)) { const cur = itemById(S.equip[d.pos]); if (cur && cur.id !== it.id) return `It is in your bag. Your ${itemName(cur)} is better.`; }
     return '';
@@ -39519,7 +39553,7 @@ let craftUI = null;
     const it = e && e.item; if (!it || it.id == null) return;
     st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
     st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
-    if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null };
+    if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null, parts: e.on ? safe(() => toolParts(it, e), null) : null };   // tool-speed-adds-up: the old tool and the parts, read now
     else fdStart(it);
     if ((it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
       moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });

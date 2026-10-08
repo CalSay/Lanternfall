@@ -10947,7 +10947,7 @@ if (section('craft delta')) try {
         await X(`(() => { const b = document.querySelector('.cf-st[data-st="bench"]'); if (b) b.click(); return true; })()`); await page.waitForTimeout(300);
         await page.click('[aria-label="Craft Copper Pickaxe"]'); await page.waitForTimeout(300);
         const card = await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { text: c.textContent, eq: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent) } : null; })()`);
-        assert(card && /Copper Pickaxe on\. Mining is \d+% faster\./.test(card.text) && !card.eq.includes('Equip') && !/It is in your bag/.test(card.text), `craft delta (browser): the pickaxe card says it is on, with no Equip button (${card && card.text.slice(0, 160)})`);
+        assert(card && /Copper Pickaxe on\. Mining is \d+% faster than with your Stone Pick/.test(card.text) && !card.eq.includes('Equip') && !/It is in your bag/.test(card.text), `craft delta (browser): the pickaxe card says it is on, with no Equip button (${card && card.text.slice(0, 160)})`);
         const t0 = Date.now();
         await page.click('[aria-label="Craft Pine Bow"]');
         const first = await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { name: c.querySelector('.cf-in').textContent, fight: !!c.querySelector('.cf-fight') } : null; })()`);
@@ -10970,6 +10970,65 @@ if (section('craft delta')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('craft delta crashed: ' + (e.stack || e)); }
+
+// ==== tool-speed-adds-up: a new tool's line says what it is faster than, and the parts multiply to the total ====
+if (section('tool-speed-adds-up')) try {
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('tool-speed-adds-up (browser): Playwright or Chromium not here, skipped'); return; }
+    const pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ turns: true, viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      await ctx.addInitScript(([key, raw]) => { if (sessionStorage.getItem('ts-seeded')) return; sessionStorage.setItem('ts-seeded', '1'); const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, [KEY, pfx('save-flow-cold-camp.json')]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X(`S.onboard.tips = false; setTab('forge'); ui(true); true`); await page.waitForTimeout(300);
+      // make a tool the way craftItem wears one (craft-delta), with the old tool and rarity fixed so each case is exact
+      const make = async (kind, t, r, was) => {
+        const line = await X(`(() => {
+          const it = newItem(${JSON.stringify(kind)}, ${t}, ${JSON.stringify(r)}, {}); addItem(it);
+          const d = CRAFT_KINDS[${JSON.stringify(kind)}], pos = d.pos, fam = Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === ${JSON.stringify(kind)});
+          const nt = Math.max(1, skillTopTier(skillOf(fam)) || 1), cur = S.equip[pos] != null ? S.equip[pos] : null, before = nodeTime(fam, nt);
+          S.equip[pos] = it.id; gearDirty();
+          emit('crafted', { item: it, kind: ${JSON.stringify(kind)}, t: ${t}, on: pos, was: cur, speed: [before, nodeTime(fam, nt)] });
+          ui(true); const c = document.querySelector('.cf-res'); return { id: it.id, text: c ? c.textContent : '', spd: itemStats(it)[NODE_TOOL_STATS[${JSON.stringify(kind)}][0]] || 0, a: before, b: nodeTime(fam, nt) };
+        })()`);
+        await page.waitForTimeout(150);
+        return line;
+      };
+      const num = s => parseFloat(s);
+      // 1. a Copper Pickaxe over the Stone Pick at Mining 1: Stone Pick, +25% and the item's own line, multiplying to the total
+      const p1 = await make('pick', 1, 'uncommon');
+      const m1 = /Copper Pickaxe on\. Mining is (\d+)% faster than with your Stone Pick: \+25% for a tier 1 tool on a tier 1 vein, and \+([\d.]+)% from its mining speed line\./.exec(p1.text);
+      assert(m1 && Math.abs(num(m1[2]) - p1.spd) < 0.06 && Math.abs(1.25 * (1 + num(m1[2]) / 100) * 100 - 100 - num(m1[1])) <= 1,
+        `tool-speed-adds-up: the first pickaxe names the Stone Pick, +25% and its +${p1.spd}% line, and they multiply to the total (${p1.text.slice(0, 220)})`);
+      // 2. a better tier 1 pickaxe over that one (same name, so "than before"): no right-tool part; the gear part is the change in the summed stat, or the total only
+      const p2 = await make('pick', 1, 'epic', p1.id);
+      const m2 = /Copper Pickaxe on\. Mining is (\d+)% faster than (?:before|with your [\w ]+)(?:: \+([\d.]+)% from its better mining speed line)?\./.exec(p2.text);
+      const want2 = ((1 + p2.spd / 100) / (1 + p1.spd / 100) - 1) * 100;
+      assert(m2 && !/for a tier/.test(p2.text) && (m2[2] == null || Math.abs(num(m2[2]) - want2) < 0.06),
+        `tool-speed-adds-up: a better tier 1 pickaxe names its old one and no right-tool part (want +${want2.toFixed(1)}%: ${p2.text.slice(0, 220)})`);
+      // 3. at Mining 14 (tier 2 open) a tier 1 pickaxe over the Stone Pick names no right-tool part
+      await X(`S.equip.pick = null; S.skills.mine.lv = 14; gearDirty(); true`);
+      const p3 = await make('pick', 1, 'common');
+      assert(/Mining is \d+% faster than with your Stone Pick/.test(p3.text) && !/for a tier/.test(p3.text), `tool-speed-adds-up: at Mining 14 a tier 1 pickaxe names no right-tool part (${p3.text.slice(0, 220)})`);
+      // 4. the first spear: its rough tool shares its name, so "than before"
+      const sp = await X(`'spear' in S.equip`);
+      if (sp) {
+        const p4 = await make('spear', 1, 'common');
+        assert(/Hunting is \d+% faster than before[:.]/.test(p4.text) && !/than with your/.test(p4.text), `tool-speed-adds-up: the first spear says "than before" (${p4.text.slice(0, 220)})`);
+      } else assert(false, 'tool-speed-adds-up: the camp save has no spear slot');
+      assert(!errs.length, 'tool-speed-adds-up: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('tool-speed-adds-up crashed: ' + (e.stack || e)); }
 
 // ==== next-tier-gate-goal: with every tier 1 piece worn and the next tier locked, Next Up names what opens it ====
 // save-tier-gate: the seed 1 walk at minute 23 (zone 13, Woodcraft 8, Tailoring 6, Woodcutting 7, Hunting 4) with every tool worn.

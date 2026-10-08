@@ -131,7 +131,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   the cap with a bar, a minute and an hour, Working on the node you work). Lower tiers fold into one tap; the next
   locked tier says what it needs and further locked tiers are one line.
 - **Tools** (`55-tools.js`): pickaxe, axe, sickle and spear, made at the Workbench. The right tool is a speed bonus,
-  never a gate. Each tool kind has its own mastery.
+  never a gate. A tool you make and wear says on its craft card what it is faster than and why: the right-tool
+  bonus (+25% while its tier is at least the node's) and its speed line, multiplying to the total. Each tool kind has its own mastery.
 - **The Storehouse** (`55-store.js`): a cap per material and grade, from every source. Skill XP keeps counting at the
   cap. Its view (Gather > Store, `75-store-ui.js`) opens on a shelf: one stack per family at the grade you use (the
   lower of your zone's grade and your skill's top node; the largest stack at or below it when that grade is empty;
