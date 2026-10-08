@@ -12799,7 +12799,7 @@ if (section('guide goal after reload')) try {
       assert(!a.errs.length, 'boot line: no page errors' + (a.errs.length ? ': ' + a.errs[0] : ''));
       await a.ctx.close();
       const b = await boot(after);
-      assert(!(await waitLine(b.page, b.X, 8000)), 'boot line: once read, the next boot does not bring it back');
+      assert(!(await waitLine(b.page, b.X, 30000)), 'boot line: once read, the next boot does not bring it back (fighting on for as long as the first boot was given)');
       await b.ctx.close();
     } finally { await browser.close(); }
   }
