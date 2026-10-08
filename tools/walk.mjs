@@ -28,8 +28,8 @@
 // the station or gathers in the named view for up to 5 minutes (the report's Gear section lists the gate rows pressed).
 // It closes a sheet it left over the bar with the X. The report's "Gear and boss tries" table says what it wore in each zone and the boss tries lost there.
 // Game time is a paused fake clock stepped in 100 ms frames (33 ms while a foe winds up); the page's frames are timers on it and CSS
-// animations are moved by the same steps, so two runs of a seed and build give the same first fights and first minutes (a rare
-// later split remains, suspected from layout that ResizeObserver reads when the browser draws).
+// animations are moved by the same steps; the page boots before the first step, performance.now() counts from the page's start, and
+// resize and scroll events wait for a frame on that clock, so two runs of a seed and build play the same hour (walk-repeatable-whole-hour).
 // The bot waits for the guide: no fight press while it reads a new tip, nor in a turn's first 0.3 s (the guide polls every 250 ms).
 //
 // What it logs, with game time and a shot: every tip, toast, card and banner, every unlock (S.onboard.got), each zone first clear,
@@ -85,11 +85,49 @@ const INIT = ([key, seedN]) => {
   Math.random = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   try { localStorage.removeItem(key); } catch (e) { /* a private window: the game starts fresh anyway */ }
   window.__ptStep = 16;
+  // Playwright replays its clock log when the page opens, and the real time between install and pauseAt lands in performance.now()
+  // (2 to 67 ms, different each run, while Date.now() is exact): count from here instead, so the page reads the same times every run.
+  { const pn = performance.now.bind(performance), p0 = pn(); performance.now = () => pn() - p0; }
   const caf = window.cancelAnimationFrame.bind(window), tids = new Set();
   // every frame is a timer on the paused clock, at 16 ms or the walk's step: the clock's own frame grid is set by when the page
   // happened to load, which moved the game's frames by up to 16 ms between runs (first-hour-map-two-clocks)
   window.requestAnimationFrame = cb => { const id = window.setTimeout(() => { tids.delete(id); cb(performance.now()); }, window.__ptStep); tids.add(id); return id; };
   window.cancelAnimationFrame = id => { if (tids.delete(id)) window.clearTimeout(id); else try { caf(id); } catch (e) { /* a timer id the fake clock made */ } };   // a mode switch cancels a frame the 100 ms stepping made with a timer   // the game caps a frame at 0.1 s, so 100 ms frames lose nothing
+  // The browser hands out ResizeObserver entries and scroll events when it draws, on the machine's clock, not the paused one. Both reach
+  // the game (the guide re-places its ring and runs its tick on a panel scroll), so a busy machine moved the guide by a step or two and a
+  // run split from minute 5 (#210). Here both wait for the walk's own draw at the end of each step it runs (advance): it passes on the
+  // scroll events the browser fired since and looks at every observed box. It shares its layout with the walk's next read, so the walk
+  // is barely slower than a timer that drew every 16 ms (walk-repeatable-whole-hour).
+  const ros = new Set(), scrolls = [];
+  const box = el => { let w = 0, h = 0, bw = 0, bh = 0, x = 0, y = 0;
+    if (el.isConnected) { const cs = getComputedStyle(el); if (cs.display !== 'none') { const p = k => parseFloat(cs[k]) || 0;
+      bw = el.offsetWidth || 0; bh = el.offsetHeight || 0; x = p('paddingLeft'); y = p('paddingTop');
+      w = Math.max(0, bw - p('borderLeftWidth') - p('borderRightWidth') - x - p('paddingRight')); h = Math.max(0, bh - p('borderTopWidth') - p('borderBottomWidth') - y - p('paddingBottom')); } }
+    return { w, h, bw, bh, x, y }; };
+  window.ResizeObserver = class {
+    constructor(cb) { this.cb = cb; this.els = new Map(); }
+    observe(el) { if (!this.els.has(el)) this.els.set(el, null); ros.add(this); }
+    unobserve(el) { this.els.delete(el); }
+    disconnect() { this.els.clear(); ros.delete(this); }
+  };
+  const addEv = EventTarget.prototype.addEventListener, rmEv = EventTarget.prototype.removeEventListener, wrapped = new WeakMap();
+  const wrapScroll = fn => { if (!fn) return fn; let w = wrapped.get(fn); if (!w) { w = function (e) { if (e.isTrusted && !e.__walkNow) { scrolls.push([this, fn, e]); return; } return typeof fn === 'function' ? fn.call(this, e) : fn.handleEvent(e); }; wrapped.set(fn, w); } return w; };
+  EventTarget.prototype.addEventListener = function (type, fn, o) { return addEv.call(this, type, type === 'scroll' ? wrapScroll(fn) : fn, o); };
+  EventTarget.prototype.removeEventListener = function (type, fn, o) { return rmEv.call(this, type, type === 'scroll' && fn && wrapped.has(fn) ? wrapped.get(fn) : fn, o); };
+  window.__walkDraw = () => {
+    for (const [t, fn, e] of scrolls.splice(0)) { try { e.__walkNow = 1; typeof fn === 'function' ? fn.call(t, e) : fn.handleEvent(e); } catch (err) { setTimeout(() => { throw err; }); } }
+    for (let pass = 0; pass < 4; pass++) {   // a callback that resizes a box is seen in the same draw, as the browser does
+      let any = false;
+      for (const ro of [...ros]) {
+        const es = [];
+        for (const [el, last] of ro.els) { const b = box(el); if (last && last.w === b.w && last.h === b.h) continue; ro.els.set(el, b);
+          es.push({ target: el, contentRect: { x: b.x, y: b.y, left: b.x, top: b.y, width: b.w, height: b.h, right: b.x + b.w, bottom: b.y + b.h },
+            contentBoxSize: [{ inlineSize: b.w, blockSize: b.h }], borderBoxSize: [{ inlineSize: b.bw, blockSize: b.bh }] }); }
+        if (es.length) { any = true; try { ro.cb(es, ro); } catch (err) { setTimeout(() => { throw err; }); } }
+      }
+      if (!any) break;
+    }
+  };
 };
 
 // A small seeded generator for the bot's own choices (the game's random numbers are its own stream).
@@ -149,7 +187,7 @@ const X = async s => { for (let i = 0; i < 50; i++) { const r = await page.evalu
 // time, so what the bot sees (a card fading in, a sheet sliding) depended on how fast the machine ran, and one seed gave three first
 // fights (first-hour-map-two-clocks). The walk stops that timeline (Animation.setPlaybackRate 0) and moves every animation on by the
 // game time it steps (after each runFor chunk of up to 1 s), so a run is the same on any machine. A paused animation stays where the game put it.
-const STEP_ANIM = d => { for (const a of document.getAnimations()) { if (a.playState === 'paused' || a.playState === 'finished') continue; try { a.currentTime = (a.currentTime || 0) + d; } catch (e) { /* an animation with no timeline */ } } };
+const STEP_ANIM = d => { for (const a of document.getAnimations()) { if (a.playState === 'paused' || a.playState === 'finished') continue; try { a.currentTime = (a.currentTime || 0) + d; } catch (e) { /* an animation with no timeline */ } } if (window.__walkDraw) window.__walkDraw(); };   // then the step's draw (INIT)
 async function advance(ms, step) {
   await page.evaluate(c => { window.__ptStep = c; }, step);
   let left = ms; while (left > 0) { const d = Math.min(left, 1000); await page.clock.runFor(d); await page.evaluate(STEP_ANIM, d); left -= d; }
@@ -680,7 +718,9 @@ async function run() {
   await page.addInitScript(INIT, [KEY, SEED]);
   const HTML = pageHtml();
   await page.route('**/*', r => (r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML }) : r.abort()));
-  await page.goto('http://lf.test/', { waitUntil: 'commit' });
+  // 'load', not 'commit': the 8 MB page parses on the machine's clock, and stepping the paused clock while it did so booted the game at a
+  // different game time each run (0 to 65 ms into the first step), which split two runs of seed 1 from the first tip (walk-repeatable-whole-hour)
+  await page.goto('http://lf.test/', { waitUntil: 'load' });
   fs.rmSync(SHOTS, { recursive: true, force: true });
   const t0 = Date.now(); let stop = '';
   await advance(1500, 16);

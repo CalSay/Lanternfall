@@ -12434,7 +12434,12 @@ if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
     const js = fs.existsSync(path.join(dir, 'walk-2000-01-01.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'walk-2000-01-01.json'), 'utf8')) : {};
     assert(['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F10', 'P4'].every(k => js.scorecard && js.scorecard[k] && typeof js.scorecard[k].pass === 'boolean'), 'the json carries F1-F6, F10 and P4');
     assert(js.log && js.log.some(e => e.kind === 'tip' || e.kind === 'card'), 'the walk logged what appeared on screen');
-    run();
+    r = run();
+    // walk-repeatable-whole-hour: game time moves only when the walk steps it, so two runs of one seed and build log the same things at the same times
+    const js2 = fs.existsSync(path.join(dir, 'walk-2000-01-01.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'walk-2000-01-01.json'), 'utf8')) : {};
+    const seen = j => (j.log || []).map(e => e.t + ' ' + e.kind + ' ' + e.text).join('\n');
+    assert(r.status === 0 && seen(js2) && seen(js2) === seen(js), 'two short walks of one seed and build log the same things at the same game times'
+      + (seen(js2) === seen(js) ? '' : ': first split at ' + (a => a.find((l, i) => l !== seen(js2).split('\n')[i]) || '(the second ran on)')(seen(js).split('\n'))));
     const rows = fs.readFileSync(sc, 'utf8').split('\n').filter(l => l.startsWith('| 2000-01-01 |'));
     assert(rows.length === 1, 'the same run twice keeps one scorecard row (' + rows.length + ')');
     fs.rmSync(dir, { recursive: true, force: true });
