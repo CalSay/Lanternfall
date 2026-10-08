@@ -15,7 +15,7 @@ jobs:
   # The full check runs as four shards on four runners (the same --shard=i/4 split check.mjs uses locally), so it costs
   # a quarter of the time. Each shard builds, then runs its slice; shard 0 also checks that dist is committed rebuilt.
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20   # room for one retry of a shard
     strategy:
       fail-fast: false
@@ -28,11 +28,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Runner image (part of the Playwright cache key)
+        id: image
+        run: echo "os=$ImageOS" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browser
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ steps.image.outputs.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
       - name: Build
         run: node tools/build.mjs
@@ -54,7 +57,7 @@ jobs:
 
   # Offline parity needs no browser, so it runs beside the checks.
   offline-parity:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +70,7 @@ jobs:
 
   # Report only (it never gated), so it gets its own runner and stays off the critical path.
   perf:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -76,11 +79,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Runner image (part of the Playwright cache key)
+        id: image
+        run: echo "os=$ImageOS" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browser
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ steps.image.outputs.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
       - run: node tools/build.mjs
       # The budgets are wall-clock timings tuned on a fast machine; on a shared runner the same build misses them
@@ -93,7 +99,7 @@ jobs:
   # change that moves a number past its tolerance fails here; accept it by running --write-baseline in the same PR.
   # Its own job, so it runs beside the checks and adds nothing to their time.
   health:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -107,7 +113,7 @@ jobs:
 
   # Report only until its bands have held for a few merges; its own job so the 150 s run is off the critical path.
   health-long:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -122,7 +128,7 @@ jobs:
 
   path-guard:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -138,7 +144,7 @@ jobs:
   # that changes src/ with no changed route.txt fails unless it has the `no-visible-change` label.
   eyes:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15   # room for one retry
     permissions:
       contents: read
@@ -158,12 +164,16 @@ jobs:
           cache: npm
       - if: steps.gate.outputs.go == 'true'
         run: npm ci
+      - name: Runner image (part of the Playwright cache key)
+        if: steps.gate.outputs.go == 'true'
+        id: image
+        run: echo "os=$ImageOS" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browser
         if: steps.gate.outputs.go == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ steps.image.outputs.os }}-${{ hashFiles('package-lock.json') }}
       - if: steps.gate.outputs.go == 'true'
         run: npx playwright install --with-deps chromium
       - name: Build the merge result
