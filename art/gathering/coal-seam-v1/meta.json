@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "name": "Coal Seam",
+  "grade": 1,
+  "generator": "built-in image_gen",
+  "baseCommit": "08c3163e",
+  "scale": 0.09569377990430622,
+  "node": {
+    "sheet": "coal-seam.png",
+    "w": 60,
+    "h": 60,
+    "anchor": {
+      "x": 30,
+      "y": 48
+    },
+    "frames": [
+      {
+        "name": "idle",
+        "file": "idle.png",
+        "w": 60,
+        "h": 60,
+        "anchor": {
+          "x": 30,
+          "y": 48
+        },
+        "durationMs": 600,
+        "bbox": [
+          6,
+          23,
+          54,
+          48
+        ],
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 60,
+          "h": 60
+        }
+      },
+      {
+        "name": "struck-1",
+        "file": "struck-1.png",
+        "w": 60,
+        "h": 60,
+        "anchor": {
+          "x": 30,
+          "y": 48
+        },
+        "durationMs": 90,
+        "bbox": [
+          6,
+          20,
+          54,
+          48
+        ],
+        "frame": {
+          "x": 60,
+          "y": 0,
+          "w": 60,
+          "h": 60
+        }
+      },
+      {
+        "name": "struck-2",
+        "file": "struck-2.png",
+        "w": 60,
+        "h": 60,
+        "anchor": {
+          "x": 30,
+          "y": 48
+        },
+        "durationMs": 110,
+        "bbox": [
+          3,
+          23,
+          54,
+          48
+        ],
+        "frame": {
+          "x": 0,
+          "y": 60,
+          "w": 60,
+          "h": 60
+        }
+      },
+      {
+        "name": "worked-out",
+        "file": "worked-out.png",
+        "w": 60,
+        "h": 60,
+        "anchor": {
+          "x": 30,
+          "y": 48
+        },
+        "durationMs": 250,
+        "bbox": [
+          6,
+          23,
+          54,
+          48
+        ],
+        "frame": {
+          "x": 60,
+          "y": 60,
+          "w": 60,
+          "h": 60
+        }
+      }
+    ],
+    "sequence": [
+      "idle",
+      "struck-1",
+      "struck-2",
+      "worked-out",
+      "idle"
+    ],
+    "pixelScale": 1,
+    "maxColorsPerFrame": 16,
+    "alpha": "binary",
+    "stageDisplayScale": 2
+  },
+  "bg": {
+    "file": "coal-quarry.png",
+    "w": 448,
+    "h": 224,
+    "groundY": 179,
+    "maxColors": 48,
+    "formatReference": "../../hunting/interim-v1/meta.json",
+    "objectPolicy": "Scenery only. Hero, coal node and chips are separate sprites.",
+    "cameraPolicy": "Uniform nearest-neighbour cover; centre crop; ground fixed at 80% of viewport height.",
+    "viewports": [
+      {
+        "w": 360,
+        "h": 740,
+        "coverSize": [
+          1480,
+          740
+        ],
+        "crop": [
+          560,
+          -1,
+          360,
+          740
+        ],
+        "groundY": 592,
+        "review": "scene-review-portrait.png"
+      },
+      {
+        "w": 740,
+        "h": 360,
+        "coverSize": [
+          740,
+          370
+        ],
+        "crop": [
+          0,
+          8,
+          740,
+          360
+        ],
+        "groundY": 288,
+        "review": "scene-review-landscape.png"
+      }
+    ]
+  },
+  "reference": {
+    "file": "copper-vein-reference.png",
+    "nativeSize": [
+      47,
+      28
+    ],
+    "anchor": [
+      24,
+      25
+    ],
+    "source": "Unchanged ART.enemyFrames(node:ore, tier 1).idle0 from local game at base commit."
+  }
+}
