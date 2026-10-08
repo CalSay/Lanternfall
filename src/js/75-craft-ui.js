@@ -39,6 +39,7 @@ let craftUI = null;
   document.addEventListener('pointerdown', () => { touchAt = Date.now(); }, true);
   const busy = () => Date.now() - touchAt < 1200;
   const act = (fn) => { const r = safe(fn, false); if (r) { save(); ui(true); } return r; };
+  const upCount = () => (S.deeds && S.deeds.n && +S.deeds.n.up) || 0;
 
   // ---------------- lookups ----------------
   const STATION_KEYS = Object.keys(CRAFT_STATIONS);
@@ -98,7 +99,8 @@ let craftUI = null;
   }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false };
+  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
+    tool: {}, fd: {}, crafted: false };   // craft-delta: tool: id -> { on, speed } from the crafted event; fd: id -> { sig, job, res } the fight line
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
   };
@@ -140,14 +142,56 @@ let craftUI = null;
     return r;
   }
   const roleFor = k => st8.role[k] || 'striker';
+  // craft-delta: how many recipes you could make right now (a craft made with two or more on offer is a choice)
+  const affordable = () => { let n = 0; for (const s of STATION_KEYS) for (const k of listFor(s, 'you')) for (let t = 1; t <= 5 && n < 2; t++) if (skillTierOpen(skillOfSt(s), t) && safe(() => canDo(k, t).ok, false)) n++; return n; };
   function doCraft(k, t) {
     if (!canDo(k, t).ok) return;
-    const d = CRAFT_KINDS[k], opts = {};
+    const d = CRAFT_KINDS[k], opts = { wear: true };   // craft-delta: a better tool goes on by itself (55-crafting craftItem)
     if (d.role === 'any') opts.role = roleFor(k);
     const mw = mwFor(k); if (mw != null) opts.mw = mw;
-    const f = K6.craft();
+    const f = K6.craft(), choice = affordable() >= 2;
     const it = safe(() => (f ? f(k, t, opts) : forgeItem(k, t)), null);
-    if (it) { if (it.id != null) st8.fresh.add(it.id); save(); ui(true); }
+    if (it) {
+      if (choice) emit('choice', 'craft');
+      if (!st8.crafted) { st8.crafted = true; emit('firstUse', 'craft'); }   // the first craft this visit (the walk plays one fresh game)
+      if (it.id != null) st8.fresh.add(it.id); save(); ui(true);
+    }
+  }
+  // ---- the fight line (craft-delta): what the piece changes against the boss at your furthest zone (55-fight-delta) ----
+  // Sampled a chunk at a time after the card opens, so the card never waits; the line joins it when the sample is done, or is
+  // left out. Keyed by what the fight depends on now, so a card seen again after a gear change samples again.
+  const fdSig = () => [S.maxZone, S.L, JSON.stringify(S.equip)].join('|');
+  function fdStart(it) {
+    if (typeof fightDeltaJob !== 'function' || !it || it.id == null) return;
+    const sig = fdSig(), cur = st8.fd[it.id];
+    if (cur && cur.sig === sig) return;
+    const job = safe(() => fightDeltaJob(it), null), rec = st8.fd[it.id] = { sig, job, res: null };
+    if (!job) return;
+    const run = () => {
+      if (st8.fd[it.id] !== rec) return;
+      if (safe(() => job.step(), true)) { rec.res = job.res; rec.job = null; if (st8.result === it.id) ui(true); return; }
+      setTimeout(run, 30);
+    };
+    setTimeout(run, 30);
+  }
+  function fightLine(it) {
+    const f = st8.fd[it.id], r = f && f.sig === fdSig() ? f.res : null;
+    if (!r) return '';
+    if (r.kind === 'wins') return `Zone ${r.zone} boss: you'd win about ${r.after} in 10, not ${r.before} in 10.`;
+    if (r.kind === 'turns') return `Zone ${r.zone} boss: about ${r.after} turns a win, not ${r.before}.`;
+    return `Zone ${r.zone} boss: a hit takes about ${r.after}% of your health, not ${r.before}%.`;
+  }
+  // the tool line: "Copper Pickaxe on. Mining is 25% faster." (or why it went in the bag)
+  function toolLine(it) {
+    const tl = st8.tool[it.id], d = itemKind(it);
+    if (!d || !d.tool) return '';
+    if (tl && tl.on && wornBy(it.id)) {
+      const [a, b] = tl.speed || [0, 0], pct = a > 0 && b > 0 ? Math.round((a / b - 1) * 100) : 0, sk = CRAFT_NODES[Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === it.slot)];
+      const nm = sk && SKILL[sk.skill] ? SKILL[sk.skill] : 'Gathering';
+      return `${kindName(it.slot, it.t, it.u)} on.` + (pct > 0 ? ` ${nm} is ${pct}% faster.` : '');
+    }
+    if (tl && !tl.on && !wornBy(it.id)) { const cur = itemById(S.equip[d.pos]); if (cur && cur.id !== it.id) return `It is in your bag. Your ${itemName(cur)} is better.`; }
+    return '';
   }
 
   // ================= Stations =================
@@ -257,8 +301,10 @@ let craftUI = null;
       lines.append(r);
     }
     if (lines.children.length) left.append(lines);
-    const df = diffRows(it);
-    if (wr) right.append(el('p', 'note cf-cmpn', `You wear it (${posName(wr.pos)}).`));
+    const df = diffRows(it), tl = toolLine(it), fl = !wr ? fightLine(it) : '';
+    if (tl) right.append(el('p', 'note cf-cmpn cf-toolon', tl));
+    if (fl) right.append(el('p', 'note cf-cmpn cf-fight', fl));
+    if (wr) { if (!tl) right.append(el('p', 'note cf-cmpn', `You wear it (${posName(wr.pos)}).`)); }
     else if (df) {
       right.append(el('p', 'note cf-cmpn', `Against your ${itemName(df.cur)}:`));
       const rows = el('div', 'cf-dl');
@@ -313,8 +359,10 @@ let craftUI = null;
     const it = e && e.item; if (!it || it.id == null) return;
     st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
     st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null };
+    else fdStart(it);
     if ((it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
-      moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. It is in your bag.`, rarity: it.r, icon: { item: it } });
+      moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });
   });
   function recipeRow(k, t) {
     const d = CRAFT_KINDS[k], can = canDo(k, t);
@@ -391,7 +439,8 @@ let craftUI = null;
       // craft-reveal: the result card and the last-five strip
       if (st8.result != null && !itemById(st8.result)) st8.result = null;
       st8.recent = st8.recent.filter(id => itemById(id));
-      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos]]; })() : 0]);
+      { const it = st8.result != null ? itemById(st8.result) : null; if (it && !(itemKind(it) || {}).tool && !wornBy(it.id)) fdStart(it); }   // craft-delta: a card seen again after a gear change samples again
+      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos], fightLine(it)]; })() : 0]);
       if (resSig !== rec.resSig) {
         rec.resSig = resSig; rec.resBox.textContent = '';
         const rit = st8.result != null ? itemById(st8.result) : null;
@@ -842,7 +891,7 @@ let craftUI = null;
       const okMats = hasMats(c.mats, it.t) && S.gold >= c.gold && (!c.troph || (f && trophTotal() >= c.troph));
       const b = el('button', 'big forge cf-act', `Upgrade to +${it.plus + 1}`); b.type = 'button';
       b.disabled = !okMats || (!f && !heroPos);
-      b.addEventListener('click', () => { act(() => (f ? f(it.id) : upgradeEquipped(heroPos))); renderItem(); });
+      b.addEventListener('click', () => { const n0 = upCount(); if (act(() => (f ? f(it.id) : upgradeEquipped(heroPos))) && n0 === 0 && upCount() === 1) emit('firstUse', 'upgrade'); renderItem(); });   // craft-delta: the first upgrade ever (S.deeds.n.up)
       upBox.append(b);
       if (!f && !heroPos) upBox.append(el('p', 'note', 'Equip it to upgrade it.'));
       else if (c.troph && !f) upBox.append(el('p', 'note', 'Trophy upgrades open with the next crafting update.'));

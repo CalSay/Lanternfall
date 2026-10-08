@@ -272,12 +272,29 @@ var forgeGoalPicks = 0;
   registerGoal({
     id: 'forge', sys: 'forge',
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
-    label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t);
+    label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
       const k = Object.keys(b.cost).find(k => matOwn(k, b.t) < b.cost[k]);
       return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - matOwn(k, b.t))} more ${costName(k, b.t)}` : `Craft ${a} ${nm}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
     go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
+  });
+  // Upgrade (craft-delta): a worn piece whose next upgrade you can pay for now, offered only while no craft is ready
+  // (the craft goal is not Ready). Weapon first, then the slot order. Go opens the piece's sheet on Hero, Gear.
+  const upgradeNext = () => {
+    const f = forgeNext(); if (f && f.p >= 1) return null;
+    for (const pos of CRAFT_HERO_POS) {
+      const it = equipped(pos);
+      if (it && CRAFT_KINDS[it.slot] && craftKindVisible(it.slot) && canUpgrade(it.id).ok) return it;
+    }
+    return null;
+  };
+  registerGoal({
+    id: 'upgrade', sys: 'forge', prio: -0.5,
+    pct: () => upgradeNext() ? 1 : null,
+    label: () => { const it = upgradeNext(); return it ? `Upgrade your ${kindName(it.slot, it.t, it.u)} to +${it.plus + 1}` : ''; },
+    icon: () => { const it = upgradeNext(); return it ? { item: it } : null; },
+    go: () => { const it = upgradeNext(), id = it ? it.id : null; return { tab: 'party', view: 'gear', fn: () => { if (id != null && typeof craftUI === 'object' && craftUI) craftUI.openItem(id); } }; }
   });
 }

@@ -121,10 +121,13 @@ const OBS = `(() => {
   let s = {};
   try { s = { zone: S.zone, maxZone: S.maxZone, L: S.L, gold: Math.floor(S.gold), kills: S.totalKills, got: Object.assign({}, S.onboard && S.onboard.got), t: S.onboard && S.onboard.t,
     found: Object.keys(S.found || {}).length, stars: Object.keys((S.stars && S.stars.own) || {}).length, heroes: Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {}).length,
-    looks: typeof deeds === 'object' ? deeds.looks().filter(l => l.got).length : 0, forged: S.deeds && S.deeds.n ? S.deeds.n.forged : 0, act: S.activity, tab: S.tab,
+    looks: typeof deeds === 'object' ? deeds.looks().filter(l => l.got).length : 0, forged: S.deeds && S.deeds.n ? S.deeds.n.forged : 0, up: S.deeds && S.deeds.n ? S.deeds.n.up || 0 : 0, act: S.activity, tab: S.tab,
     acted: (() => { try { return Object.fromEntries(FEATURES.map(f => [f.id, !!(f.now && f.now())])); } catch (e) { return {}; } })() };
   } catch (e) { s = { err: String(e).slice(0, 80) }; }
   o.s = s;
+  // craft-delta: the game's 'choice' and 'firstUse' events, kept in a page array the walk drains each frame (it never assigns to S)
+  if (!window.__walkEv) { window.__walkEv = []; try { on('choice', k => window.__walkEv.push(['choice', k])); on('firstUse', k => window.__walkEv.push(['firstUse', k])); } catch (e) {} }
+  o.ev = window.__walkEv.splice(0);
   return o;
 })()`;
 
@@ -301,7 +304,7 @@ st.lastCard = -9; st.tabAt = -9; st.phAt = 0;
 // the place Go lands on offers. Since #115 that place is not always a flashed row: Learn opens the ability's detail sheet, whose
 // button sits outside .nu-flash, and Spend opens the Attributes view. A goal that stays ready after 4 presses is a finding; the
 // bot moves on to the next ready goal rather than idling on the chip. It only presses what a player can see.
-const GO_WORDS = /^(craft|claim|equip|spend|build|light|start|collect|learn|use|buy|train|upgrade|promote|open|forge|brew|set|wear|cook|hire|send|accept|ok|got it|continue)\b/i;
+const GO_WORDS = /^(craft|claim|equip|spend|build|light|start|collect|learn|use|buy|train|upgrade|promote|open|forge|brew|set|wear|cook|hire|send|accept|ok|got it|continue|smelt|saw|weave|tan|strike|infuse|retune)\b/i;
 const goalKey = l => l.replace(/\d+/g, '#');
 async function followNextUp(o) {
   const chipReady = await page.evaluate(`(() => { const c = document.getElementById('nuChip'); return !!c && !c.hidden && c.getClientRects().length > 0 && c.classList.contains('ready') ? (c.querySelector('.nu-lbl') || c).textContent.trim() : ''; })()`);
@@ -337,7 +340,7 @@ async function followNextUp(o) {
       const b = bs.find(b => ${GO_WORDS}.test((b.textContent || '').trim())) || bs[0]; if (!b) return ''; b.setAttribute('data-walk', '1'); return (b.textContent || b.getAttribute('aria-label') || '').trim().slice(0, 40) || 'button'; })()`);
     did = pick && (await click('[data-walk="1"]', 300)) ? pick : '';
     if (!did) {   // no flashed row: the row in the open menu that names the goal's thing ("Craft a Copper Pickaxe" -> the Copper Pickaxe row)
-      const name = label.replace(/:.*$/, '').replace(/^(craft|build|make|claim|equip|light|upgrade)\s+(a |an |the )?/i, '').replace(/\s+(lv|level)\s*\d+.*$/i, '').trim();
+      const name = label.replace(/:.*$/, '').replace(/^(craft|build|make|claim|equip|light|upgrade)\s+(a |an |the |your )?/i, '').replace(/\s+(lv|level)\s*\d+.*$/i, '').replace(/\s+for the zone \d+ boss$/i, '').replace(/\s+to \+\d+$/, '').trim();   // craft-delta: "Craft a Pine Bow for the zone 2 boss", "Upgrade your Pine Bow to +1"
       const alt = name.length > 3 && await page.evaluate(([nm, re]) => { const rx = new RegExp(re, 'i'), rows = [...document.querySelectorAll('#panels .row, #panels .recipe, #panels li')].filter(r => r.getClientRects().length && r.textContent.includes(nm)).filter((r, _i, all) => !all.some(o => o !== r && r.contains(o)));
         for (const r of rows) { const b = [...r.querySelectorAll('button')].find(b => !b.disabled && b.getClientRects().length && rx.test((b.textContent || '').trim())); if (b) { b.setAttribute('data-walk', '1'); return (b.textContent || '').trim().slice(0, 40); } } return ''; }, [name, GO_WORDS.source]);
       did = alt && (await click('[data-walk="1"]', 300)) ? alt : '';
@@ -398,9 +401,15 @@ async function openCraft(view) {
   const seg = await click(`#viewSeg button[data-view="${view}"]`, 300); await advance(350, 16);
   return { tab, seg };
 }
-// Craft > Gear > the piece > Equip, then close the sheet. Returns true when it tapped.
+// Gear and the bag live on Hero, Gear since #195 (cal-0107-gear-and-rates)
+async function openHeroGear() {
+  const tab = await click('.tabs .tab[data-tab="party"]', 300); await advance(450, 16);
+  const seg = await click('#viewSeg button[data-view="gear"]', 300); await advance(350, 16);
+  return { tab, seg };
+}
+// Hero > Gear > the piece > Equip, then close the sheet. Returns true when it tapped.
 async function wearGear(w) {
-  const nav = await openCraft('gear');
+  const nav = await openHeroGear();
   const opened = await click(`.cf-tile[data-item-id="${w.id}"]`, 300); await advance(450, 16);
   const did = opened && await click('.bsheet-ov .cf-wear button:text(^Equip$)', 300);
   await advance(300, 16);
@@ -408,7 +417,7 @@ async function wearGear(w) {
   const ok = await X(`S.equip[${JSON.stringify(w.pos)}] === ${w.id}`);
   if (ok) { st.gear.wornN++; if (st.gear.firstWear === null) st.gear.firstWear = gt; }
   await note(page, 'gear', `${ok ? 'wore' : 'could not wear'} ${w.nm} (${w.pos})`, { extra: { pos: w.pos, ok }, tag: 'gear-wear' });
-  if (!ok) addCheck('gear', 'the bot could not put on a piece from the bag', `${w.nm} for ${w.pos}: ${opened ? 'the Equip button did nothing' : !nav.tab ? 'the Craft tab could not be tapped' : !nav.seg ? 'the Gear view button could not be tapped' : 'no bag tile to tap in Craft > Gear'}`);
+  if (!ok) addCheck('gear', 'the bot could not put on a piece from the bag', `${w.nm} for ${w.pos}: ${opened ? 'the Equip button did nothing' : !nav.tab ? 'the Hero tab could not be tapped' : !nav.seg ? 'the Gear view button could not be tapped' : 'no bag tile to tap in Hero > Gear'}`);
   return true;
 }
 // Craft > Make > the goal's station > its tier > the recipe's Craft button.
@@ -486,8 +495,10 @@ async function gearStep(o) {
 // ---------------- watching ----------------
 const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge', 'momentBig', 'momentMid']);   // momentBig and momentMid are the moment layer's own stings (76-audio.js)
 const sfxLog = [];     // { t, name }
+const choices = [], firstUse = {};   // craft-delta: { t, k } for each choice event; the game time of each first use
 async function watch(o) {
   for (const s of o.sfx) sfxLog.push({ t: gt, name: s.name });
+  for (const [kind, k] of o.ev || []) { if (kind === 'choice') choices.push({ t: gt, k }); else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
   for (const t of o.toasts) if (!st.toastSeen.has(t)) { st.toastSeen.add(t); await note(page, 'toast', t, { shot: false }); }
   for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
   const s = o.s, p = st.prev;
@@ -505,6 +516,7 @@ async function watch(o) {
     if (s.heroes > p.heroes) await moment('hero', 'a hero joins', { big: true });
     if (s.looks > p.looks) await moment('look', 'a look found (' + s.looks + ')', { big: false });
     if (s.forged > p.forged) await moment('craft', 'forged (' + s.forged + ')', { big: false });
+    if (s.up > p.up) await note(page, 'upgrade', 'upgraded (' + s.up + ')', { shot: false });
   }
   st.prev = s;
 }
@@ -676,6 +688,13 @@ function report(res) {
     '| Zone | First stood in at | Level | Boss tries lost | Worn then |', '|---|---|---|---|---|');
   for (const [zn, e] of Object.entries(st.enter || {})) out.push(`| ${zn} | ${fmtT(e.t)} | ${e.L} | ${(st.tries || {})[zn] || 0} | ${e.gear} |`);
   out.push('');
+  // craft-delta: crafts plus upgrades, first uses, and the longest stretch of minutes 20-60 with no choice (spec target: one every 8 min)
+  const ups = log.filter(e => e.kind === 'upgrade'), crafts60 = log.filter(e => e.kind === 'moment' && /^craft:/.test(e.text) && e.t <= 3600).length, ups60 = ups.filter(e => e.t <= 3600).length;
+  const cw = [1200, ...choices.map(c => c.t).filter(t => t > 1200 && t < Math.min(3600, reached)), Math.min(3600, reached)];
+  let gap = { from: 1200, to: 1200 }; for (let i = 1; i < cw.length; i++) if (cw[i] - cw[i - 1] > gap.to - gap.from) gap = { from: cw[i - 1], to: cw[i] };
+  out.push('## Crafting and choices', '', `Crafts and upgrades in the first 60 min: ${crafts60 + ups60} (${crafts60} forged, ${ups60} upgrades; ${z.up || 0} upgrades in all). Choices: ${choices.length} (${['craft', 'nextup'].map(k => k + ' ' + choices.filter(c => c.k === k).length).join(', ')}).`, '',
+    reached > 1200 ? `Longest gap with no choice in minutes 20-60: ${fmtT(gap.to - gap.from)} (${fmtT(gap.from)} to ${fmtT(gap.to)}).` : 'Longest gap with no choice in minutes 20-60: not reached.', '',
+    'First uses: ' + (Object.keys(firstUse).length ? Object.entries(firstUse).map(([k, t]) => `${k} at ${fmtT(t)}`).join(', ') : 'none') + '.', '');
   out.push('## Scorecard', '', '| Id | Result | Target | Value |', '|---|---|---|---|');
   for (const [k, v] of Object.entries(sc)) out.push(`| ${k} | ${v.unmeasured ? 'not measured' : v.pass ? 'met' : 'missed'} | ${v.target} | ${v.value} |`);
   out.push('');
