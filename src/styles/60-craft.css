@@ -19,7 +19,8 @@
 /* recipes */
 .cf-tiers button { display: grid; justify-items: center; gap: 0; line-height: 1.1; }
 .cf-tiers button b { font: 600 calc(12px * var(--display-k)) var(--display); }
-.cf-tiers button small { font: 500 10.5px var(--body); color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-tiers button { padding-left: 2px; padding-right: 2px; }   /* small-text-clips: the widest material name (Briarthread) fits a fifth of a 360 px panel */
+.cf-tiers button small { font: 500 10.5px var(--body); color: var(--muted); max-width: 100%; text-align: center; }   /* two-word names wrap ("Hemp / Fibre"), never cut */
 .cf-tiers button.locked b { color: var(--muted); }
 .cf-tiers button.locked small { color: #FFB27A; }
 .cf-mw { display: grid; gap: 6px; }
@@ -53,7 +54,7 @@
 .cf-tmc { min-height: 60px; display: grid; justify-items: center; gap: 1px; padding: 5px 2px 4px; background: var(--well); border: 2px solid var(--line); cursor: pointer; min-width: 0; }
 .cf-tmc img { width: 20px; height: 20px; image-rendering: pixelated; }
 .cf-tmc b { font: 600 calc(14px * var(--display-k)) var(--display); font-variant-numeric: tabular-nums; }
-.cf-tmc small { font-size: 10.5px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-tmc small { font-size: 10.5px; line-height: 1.1; color: var(--muted); max-width: 100%; text-align: center; }   /* small-text-clips: names wrap, never cut */
 .cf-tmc[aria-pressed="true"] { border-color: var(--ember); background: var(--panel-2); }
 .cf-tma { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .cf-tma .mini { min-height: 44px; font-size: 13px; }
