@@ -10679,7 +10679,7 @@ if (section('craft reveal')) try {
         await page.goto('http://lf.test/'); await page.waitForTimeout(700);
         for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
         const X = s => page.evaluate(s => window.__t.x(s), s);
-        await X(`S.onboard.tips = false; true`);
+        await X(`S.onboard.tips = false; S.refine.said = 1; true`);   // refine-queues: save-mid predates refining; its one-time Forge card would cover Craft
         await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
         const odds = await X(`(() => { const t = document.querySelector('.cf-odds'); const w = rarityWeights(stationLevel(document.querySelector('.cf-rec').dataset.kind)), tot = Object.values(w).reduce((a, b) => a + b, 0);
           return { text: t ? t.textContent : '', common: Math.round(w.common / tot * 100) }; })()`);

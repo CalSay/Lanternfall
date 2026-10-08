@@ -43248,7 +43248,7 @@ const refineUI = {};
       openSheet(api => {
         api.sheet.classList.add('rf-old');
         api.body.append(el('h2', 'rf-title', 'Refining'), el('p', 'rf-oldtx', "The Forge can smelt now. Find Smelt on the Forge's card in Camp. Your gear is unchanged."));
-        const go = btn('big forge', 'Show me'), ok = btn('big', 'Got it');
+        const go = btn('big forge', 'Show me'), ok = btn('big sty-done', 'Got it');   // sty-done: the sheet's done button (tools/perf.mjs taps it away like a story sheet)
         go.addEventListener('click', () => { api.close(true); setTab('world', '#camp-b-forge'); });
         ok.addEventListener('click', () => api.close());
         api.foot.append(ok, go);
