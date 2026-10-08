@@ -49,7 +49,8 @@
 //           so xpAheadX applies). Zones 10-13 give 15, 16, 17, 18, the levels the walk arrives at (seeds 1 and 2).
 //   gear    tier 1 common +0, whatever the zone's tier: tier 2 needs gathering 14 (skillReqs) and the walk reaches zone 13 at 4-7
 //   mastery every zone's kills capped at ARRIVAL_KILLS (10: a zone's 5 fights and its boss), so no mastery stars; the
-//           fixture's stars came from a hero who played on to zone 20
+//           fixture's stars came from a hero who played on to zone 20. Bestiary kills a kind capped at ARRIVAL_KIND_KILLS (12:
+//           the walk has 9-14 a kind at zones 13-14, so Bestiary tier 1 and the second foe profile, not the mid save's 124-462)
 // Nothing is scaled to the reference hero: the numbers are the game's own, so a change to levels, gear, foes or Training
 // shows up here.
 //
@@ -97,8 +98,8 @@ const SETS = { 1: { wren: ['echo'], tobin: ['bash'], pip: ['fire'] },
 const LEGACY_LV = { 1: 3, 3: 6, 5: 10, 8: 15, 10: 18, 12: 21, 15: 24, 20: 29, 25: 33, 27: 34, 30: 37, 34: 40, 35: 41, 36: 42, 38: 43 };
 const LV_SHIFT = Number(opt('lv', 0));
 const FOOT = opt('foot', null);
-if (FOOT !== null && FOOT !== 'arrival') { console.error('budget: --foot arrival (the only footing it takes)'); process.exit(2); }
-const ARRIVAL_KILLS = 10;
+if ((flag('foot') && FOOT === null) || (FOOT !== null && FOOT !== 'arrival')) { console.error('budget: --foot arrival (the only footing it takes)'); process.exit(2); }
+const ARRIVAL_KILLS = 10, ARRIVAL_KIND_KILLS = 12;
 // the level a first-time player arrives at zone z with (the arrival footing above): a fresh hero fights ZONE_FIGHTS normal
 // foes and the boss in each zone before z, on the game's own XP (one core a hero and zone, kept)
 const arrivalCache = {};
@@ -227,7 +228,8 @@ function setup(c, k, lvShift, uq) {
     : `if (typeof attrSpread === 'function' && attrOn()) attrSpread(${J(k)});`;
   // a boss row meets its boss for the first time: the zone is the frontier (S.maxZone = z), which is what the footing floor (59k) keys on
   if (SET_ON && o.st === 'kept' && o.gear !== 'none' && zoneTierOf(z) >= 4) s += `if (!${J(uq || '')} || !['weapon', 'off', 'helm', 'body'].includes(UNIQ[${J(uq || 'x')}] ? UNIQ[${J(uq || 'x')}].pos : '')) { const g0 = gearCalc; gearCalc = over => { const g = g0(over); if (!over) { g.might = (g.might || 0) + 0.10 * TIER_POW[${zoneTierOf(z)}]; g.hp = (g.hp || 0) + 0.15 * TIER_POW[${zoneTierOf(z)}]; } return g; }; }`;
-  if (onArrival(o)) s += `for (const zz in S.mastery.zones) S.mastery.zones[zz] = Math.min(S.mastery.zones[zz], ${ARRIVAL_KILLS});`;
+  if (onArrival(o)) s += `for (const zz in S.mastery.zones) S.mastery.zones[zz] = Math.min(S.mastery.zones[zz], ${ARRIVAL_KILLS});
+    for (const t in S.mastery.types) S.mastery.types[t] = Math.min(S.mastery.types[t], ${ARRIVAL_KIND_KILLS});`;
   s += `gearDirty(); S.maxZone = ${c[2] === 'boss' ? z : `Math.max(S.maxZone, ${z})`}; setZone(${z});`;
   return s;
 }
@@ -309,7 +311,8 @@ const pc = x => x == null ? 'n/a' : (100 * x).toFixed(0);
 export function printBudget(rep) {
   const T = loadTargets(), all = cells(T, rep);
   console.log(`Difficulty budget: ${rep.fights} scratch turn fights a row, hero and player (each boss fight on its own seed; trash in chains of 5);`);
-  console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}). Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +${T.tobinBoss}).`);
+  console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z13-z15 bosses on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
+  console.log(`Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +${T.tobinBoss}).`);
   console.log('A "behind" row\'s casual number is the drop in casual wins against its ref row.');
   console.log('row'.padEnd(17) + 'kind'.padEnd(13) + 'casual w/t/p'.padEnd(14) + 'mean sprd'.padEnd(10) + 'band'.padEnd(16) + 'good w/t/p'.padEnd(13) + 'band'.padEnd(9) + 'tries w/t/p'.padEnd(16) + 'turns w/t/p'.padEnd(17) + 'level  out of band');
   for (const r of rep.rows) {

@@ -565,6 +565,19 @@ Ruled SHIP WITH CHANGES by an Opus high judge (`autopilot/reviews/pr5b/boss-tier
   passive cuts to zone-boss damage from the set and uniques stacked 10% at most (the 0.55 floor does not reach 16-34); no max-health cost or gain counted as safety;
   Crown of the Burrow at most once per gate; each unique gets a kept-up budget row (set worn) at z16, 20, 25, 30 in the PR that ships it (this PR measured stand-ins: damage x2, +50% health, foe damage x0.8). `gearCalc(over)` must never add set lines.
 
+### Zone 13 arrival footing (z13-arrival-footing) (2026-10-08)
+
+Ruled MERGE by an Opus high judge (PR for card `z13-arrival-footing`); Cal can veto any line.
+
+- **The z13, z14 and z15 boss rows measure the hero a first-time player arrives with:** level from the game's own XP for `ZONE_FIGHTS`
+  fights and the boss a zone (`arrivalLv`: 18, 19, 19, matching the walk), tier 1 common +0 (tier 2 needs gathering 14), zone kills capped
+  at 10 (no mastery stars), Bestiary kills a kind at 12. Casual reads 0% a try there, as the walk does. The kept-up rows stay the report rows (1-2 tries).
+- **Zones 10-12 stay on their footing.** They read the walk within 15 points as they are; at the arrival footing the sampler reads Wren and
+  Pip 54-78 under the walk (33-56 on Wren's own walk save), a sampler gap, not a footing one. They move once that gap is fixed.
+- **Gaps:** z13-15 casual and good, low side, owner `boss-balance-pass`, until 2026-12-01; Tobin's in-band z13 good cell stays gated.
+  The boss refit (`TURN_TUNE.boss` hitX/hpX to casual 60-80 at this footing) is a balance-pass row; until it lands the `gearHelps` gate on
+  the z13 and z15 kept-up rows passes trivially (first-hour casual is 0).
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
