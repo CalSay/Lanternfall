@@ -33,15 +33,23 @@ over the crisp pixels.
 | Portrait | 16 x 16 crop around the head | show at 32, 48, 64 or 96 CSS px | never at a non-integer scale |
 | Monsters | slime 24, bat 26 (hovers), beetle 25, spore 32, bones 36, wraith 35 (hovers), golem 45 tall | 2x | elders 1.3x and crowned |
 | Wyrm, nodes | wyrm about 80 x 66 (scaled to fit the stage); nodes 20-40 | 2x | |
-| Stage | 124 to 800 CSS px tall, 360 to 800 wide | zoom 1x-4x | ground line GY = 80% of the height |
+| Stage | from 360 x 124 CSS px (portrait strip) up to about 1596 x 1036 at 1920 x 1080 (x3) | zoom 1x-4x | ground line GY = 80% of the height |
 
-Stage zoom (62-stage.js): the stage is laid out in logical px and drawn at a zoom ZM of 1, 1.5, 2,
+Screens (browser first, owner 2026-10-08): art is judged first at the design size, a desktop browser at 1280 x 720
+CSS px, then at 1920 x 1080 (must look good) and 1366 x 640 (must fit). Landscape phones (740 x 360) and tablets
+(1024 x 768) must show it without clipping; phones held upright (360 x 740) must not break.
+
+Landscape stage zoom (62-stage.js `LAND_ZOOMS`, every viewport at least as wide as tall and 600 px or wider): the
+largest of x1 to x4 that leaves at least 360 x 280 logical px, so x1 on landscape phones, x2 at 1280 x 720 and
+1024 x 768, x3 at 1920 x 1080.
+
+Portrait stage zoom (62-stage.js): the stage is laid out in logical px and drawn at a zoom ZM of 1, 1.5, 2,
 2.5 ... so one art px is 2, 3, 4, 5 ... CSS px (whole pixels). ZM is the largest that keeps the
 logical stage at least minW x 196, where minW is 272 on square or wide stages and eases down to 216
 on tall portrait stages (height 1.3x the width or more), so the party fills a tall stage instead of
 standing small under an empty sky. On a device pixel ratio of 1 or 2 only zooms that land on whole
 device pixels are used. Examples (DPR 2): 336 x 526 (360 x 740 phone) and 388 x 701 (412 x 915) ->
-1.5x (3 px), 408 x 200 (740 x 360) -> 1x, 723 x 640 (1280 x 800, DPR 1) -> 2x. The container is
+1.5x (3 px). The container is
 re-read on every resize. Taps use stage fractions, so they work at any zoom. On a strip under 210
 logical px the ground drops to 14 px above the bottom and the scenery is built taller so it runs off
 the bottom edge. A stage with a floor band of 76 CSS px or more under the ground is "tall": the
@@ -248,5 +256,5 @@ passes as the party (`enemyFrames(key, variant)`, rigs marked `b1: 1`). Preview 
 5. The role weapon uses `w.P` / `w.R` / `w.G` so its tier and rarity show.
 6. Check `#dbg=<key>&s=6` on `prototypes/roster.html`: every frame, no stray pixels, the face
    reads, the prop reads, the silhouette differs from the other characters in the circle.
-7. Check the stage at 360 x 740 (the character in the upper and lower lane).
+7. Check the stage at 1280 x 720 first, then 1920 x 1080 and 740 x 360; 360 x 740 must not break.
 8. `node tools/build.mjs && node tools/check.mjs` (the art check builds every outfit in every pose).
