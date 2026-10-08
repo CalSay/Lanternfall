@@ -152,7 +152,10 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Hollow's Rest** (`57-camp.js`, `75-camp-ui.js`, scene `63d-scenery-camp.js`): the Hearth, Watchtower, Forge,
   Workbench, Loom, Enchanter's Table, Tavern, Storehouse, Tents, Library and Shrine. Builds run on the wall clock.
 - **A new game starts cold** (`55-hearth.js`): the hero lights the fire, then builds the Workbench, the first tool and
-  the Forge.
+  the Forge. Until the fire is lit (and once Gather is open), Next Up keeps a row for it: "Chop Pine Log for Hesketh's
+  fire: 3/8", then "Light Hesketh's fire: ready" with 8 logs in hand. Go sends the hero to the Pine Grove, where the fire is.
+  The row survives a reload and a closed tip. Hesketh's "Bring me Pine Log" line, if you reloaded before reading it,
+  comes back once at the next boot.
 - **Shrine Blessings** open as Codex pages fill.
 
 ## Gear and crafting

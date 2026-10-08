@@ -179,6 +179,26 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     return true;
   };
 
+  // ---- guide-goal-after-reload: Hesketh's fire on Next Up while it is cold ----
+  // The guide's Gather tip and his Pine Log line do not survive a reload or ×, so the fire keeps a row of its own
+  // until it is lit. Its own sys (never filtered by GOAL_FEATURE); prio 11 beats a sticky learn-ability (2.10), and
+  // sits under the unspent-points pile by design. Go only sends the hero to the Pine Grove; the player chops and lights.
+  const fireNeed = () => HEARTH_TUNE.light[0][2];
+  const fireHave = () => Math.floor(matOwn(HEARTH_TUNE.light[0][0], HEARTH_TUNE.light[0][1]));
+  const fireOn = () => hearthCold() && !hearthLit() && typeof isUnlocked === 'function' && isUnlocked('gather');
+  const choppingPine = () => S.activity === 'gather' && S.node && S.node.kind === 'wood' && S.node.t === 1;
+  registerGoal({
+    id: 'hearth-fire', sys: 'hearth', prio: 11,
+    icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] },
+    label: () => fireHave() >= fireNeed() ? "Light Hesketh's fire: ready" : `Chop Pine Log for Hesketh's fire: ${fireHave()}/${fireNeed()}`,
+    pct: () => {
+      if (!fireOn()) return 0;
+      if (fireHave() >= fireNeed() || !choppingPine()) return 1;
+      return Math.max(0.01, Math.min(0.99, fireHave() / fireNeed()));
+    },
+    go: { act: 'gather', node: { kind: 'wood', t: 1 } }
+  });
+
   // ---- the guide's tool step: any tool made ----
   on('crafted', e => {
     const d = e && typeof CRAFT_KINDS === 'object' && CRAFT_KINDS[e.kind];

@@ -583,6 +583,58 @@ Ruled MERGE by an Opus high judge (PR for card `z13-arrival-footing`); Cal can v
   The boss refit (`TURN_TUNE.boss` hitX/hpX to casual 60-80 at this footing) is a balance-pass row; until it lands the `gearHelps` gate on
   the z13 and z15 kept-up rows passes trivially (first-hour casual is 0).
 
+### Zone 13 unstick (z13-unstick) (2026-10-08)
+
+Ruled MERGE with option B2 by an Opus high judge (PR for card `z13-unstick`); Cal can veto any line. Data: the builder's
+measurements, re-run by the judge at 160 fights a row on the same build (same numbers within a few points).
+
+- **The pick: B2.** The zone 13, 14 and 15 boss knots in `TURN_TUNE.boss` change, and nothing else: hitX 0.539/0.461/0.491 to
+  0.10/0.085/0.05, hpX 1.848/1.656/1.7 to 0.36/0.38/0.12, hpFloor 0.81/0.84/0.76 to 1.0/1.0/0.9. Moves, timing windows, parry and
+  dodge rules, the hit cap, rally gates, Champion tables and boss pay do not change (zones 4-24 pay on a fixed length).
+- **Why not A.** Tier 2 gear at the arrival footing reads casual 0-2% at all three bosses with today's knots. To open tier 2 by
+  zone 13 the gathering gate would drop from 14 to about 6-7, which also moves tier 2 for zones 7-12.
+- **Why not C.** With tier 2 worn the bosses still need cuts of 4-5x on hitX and 3x on hpX (z13 0.12/0.65), Pip at z13 and Tobin
+  at z15 still sit under band, and it moves the gathering gate and the economy of zones 7-12. More change for less result.
+- **Why B2 and not B1.** B1 (hitX and hpX only) gets the arrival rows in band, but a kept-up hero who never parries or dodges then
+  wins 45-100% at zones 13-15 (z13 45/52/0, z14 58/56/100, z15 100/0/0). That breaks the owner's rule "it should always be very bad
+  for us to get hit by a boss". With hitX that low every landed hit sits on the hpFloor, so the hpFloor is the hit; raising it is
+  how the hit stays hard. The card's Never line names hitX and hpX only; its purpose is that no boss move changes, and B2 keeps
+  that. pr5 refit the same three tables.
+- **What a first-time player gets** (level 18-19, tier 1 common +0, no mastery stars; casual Wren/Tobin/Pip): z13 75/74/80,
+  z14 81/73/75, z15 55/50/43 (Champion band 40-60, Tobin 50-70: the card's 60-80 is the Captain band and does not apply at z15).
+  Good players 100. A weaker casual 35-61 at z13. A player who never defends wins 0-6%. Walks: seed 1 Wren cleared zone 13 on the
+  first try at 31:04 (was 30 tries lost), seed 2 Tobin at 36:38 (was 6 tries, cleared at 41-44 min). Neither lost a try at 14 or 15.
+- **How the fight feels.** A landed hit at zones 13-15 now costs a fixed share of your health, about a fifth for Wren and Pip (Tobin's own boss-hit share, heroHitX 1.6-2.55, lifts his toward the 40% cap), and a landed
+  charge nearly half (check reads z15 19-20% and 45-48%). Gear health no longer shrinks it; armour, Guard and timing still do. The
+  old hits sat on the 40% cap. Fights at the arrival footing last about 6 turns played well, as zone 12 does (z12 5.9/7.4/4.7, z13
+  5.9/7.8/5.7, z15 4.9/4.7/4.8); they were 17-24 turns and unwinnable.
+- **Cost, accepted for now.** In reference Attacks the zone 13-15 bosses carry less HP than zone 12's (5.8, 6.1 and 1.9 against
+  16.1), so fight length is flat from 12 to 15 and the z15 Champion is the shortest of them. Rally gates hold every fight to about
+  5 turns, kept-up too (z13 5.0, z15 4.8). Restoring the length ramp belongs to the balance pass's full refit.
+- **Kept-up z15 Champion is too easy for a geared casual:** 100/91/99 against 60-85 (was 76/83/88). A kept-up hero who never
+  defends still wins 0%. No z15 knot puts both rows in band: hpX 0.2 with hpFloor 0.9 drops the arrival row to 40 (Tobin 37) and
+  kept-up still reads 95; hpFloor 1.1 drops arrival to 39 and kept-up reads 86. The first-time player wins; this goes in a gap
+  (owner `boss-balance-pass`, until 2026-12-01). Kept-up z13 reads 99/98/98, inside tolerance of 75-95; no gap.
+- **Zones 1 to 12 are unchanged.** No knot, gate or pay below zone 13 moved, and the zone tables read whole zones, so zone 12
+  reads its own knot. The z11 and z12 rows give the same numbers on the old and new knots on the same seeds (z12 65/78/98). Margin
+  accepted: zero on the knots, and the gate's own tolerance (6 points or 2.5 sd) on any zone 1-12 budget cell or pre-zone-13
+  pacing metric. Both walks lost no boss try in zones 1-12.
+- **The wall moves to zone 16.** The walks reach zone 16 at 35-41 min and lose 28-57 tries there by 60:00 (the bot always presses
+  Try again). The active persona now reaches zone 16 (Wren, Pip) and dies there (wipes per hour 14.3 to 27.7; hero parity 0.07 to 0.22, as Wren and Pip end the hour at zone 16 and Tobin at 12). The 50-hour bots stall
+  3.6-5.5 h at zone 16 and reach zone 29 earlier (Wren sits there 24 h). These are existing walls met sooner, not new ones. They
+  stay the balance pass's; the health baselines are re-set to the new run with no tolerance change.
+- **Long-run empty-endgame watch.** long.postNewThingShare `abs` goes from 0.1 to 0.13 (each hero may move up to 0.26). At seed
+  offset 0, which CI runs, Wren now reaches the existing zone 29 wall at hour 26 and sits there 24 h: 0.48 against her 3-offset
+  baseline of 0.24. Offsets 1 and 2 do not stall there. Owner `boss-balance-pass`; back to 0.1 when the zone 29 wall is fixed. This is
+  the one tolerance change; the other re-baselines change no tolerance.
+- **Gaps.** The seven low-side z13-15 gaps from z13-arrival-footing are removed (all cells in band; z14 Wren casual 81 is an edge).
+  One gap added: z15-boss-keptup casual, above, all heroes.
+- **Switch off.** Put the nine knots back (hitX 0.539/0.461/0.491, hpX 1.848/1.656/1.7, hpFloor 0.81/0.84/0.76), restore the
+  seven gaps, the old baselines and long.postNewThingShare abs 0.1. No save change.
+
+Veto phrase for Cal: "put the zone 13 bosses back" (undoes the pick; "hold zone 13 for the balance pass" still undoes the timing
+and has the same effect).
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
