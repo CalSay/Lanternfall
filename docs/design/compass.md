@@ -112,7 +112,7 @@ A card that does any of these needs a strong reason, recorded in the PR.
   random; friction built to sell its removal; an offer that interrupts; selling a core convenience (Repeat, Assist,
   accessibility); taking back anything earned or bought.
 - **Settled no's:** anything DECISIONS lists as rejected or banned: prestige or resets; Auto, idle or away combat; a
-  telegraph of the foe's next move (no intent icons); suggested builds or combos; healing between fights; a party,
+  telegraph of the foe's next move (no intent icons); suggested builds or combos; a heal step between fights (a Rest button, regen while gathering or waiting; zone fights simply start at full HP); a party,
   formation or companions; ads of any kind; selling heroes, caches or keys; pay-to-win; art outside a vetted Codex pack
   (the art freeze).
 - **Silent loss:** any change that could lose or reshape a save. Old saves load; nothing earned is lost. (Q1.)

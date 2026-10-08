@@ -60,7 +60,7 @@ Win shares for each hero (Tobin's casual band on a boss sits 10 points higher, c
 
 | Kind | Where | Casual | Good | Why |
 |---|---|---|---|---|
-| normal | every zone | 90-100% | 98-100% | trash is won; losses come from bosses |
+| normal | every zone | 90-100% | 98-100% | trash is won; losses come from bosses; each fight from full HP, as in play (normal-death-says-so) |
 | elite | zone 15 and up | 75-97% | 95-100% | a small threat, not a wall |
 | firstBoss | zone bosses 1-3 | 85-100% | 97-100% | the player is learning to parry and dodge |
 | earlyCaptain | zone bosses 4-10 | 70-90% | 97-100% | a learning boss: losable, rarely lost |

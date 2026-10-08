@@ -32,6 +32,9 @@
 //   soloDodge, soloCounter.
 const TURN_TUNE = {
   on: 1,
+  // normal-death-says-so (judge, 2026-10-08): every zone fight (normal, elite, boss) starts at full HP, win or lose. 0 brings back
+  // the carried HP (a kill heals COMBAT_TUNE.packHealF, 15%). The Deepwell and the Provings carry HP either way.
+  normalFull: 1,
   heroRecovery: 0.35, foeRecovery: 0.4, foeWindup: 0.9, introHand: 1.2, introAuto: 0.6,
   turnPause: 0.9,
   // hit feel (owner, 2026-10-02): the fight clock stops for a beat on a big moment (seconds), with a shake and a flash
@@ -351,7 +354,7 @@ function turnMakeProfile(f, u) {
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
     bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0, bossRiderX: f.tk.rx || 1, bossDotCap: f.tk.dcap || 0,
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
-    gates: f.tk.gates || null, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
+    gates: f.tk.gates || null, fullHp: !!((f.boss || TURN_TUNE.normalFull) && !f.deep && !f.trial),   // the boss pass; every zone fight is met at full health (normalFull)
     zb: !!f.tk.zb, uq: typeof uniqRulesWorn === 'function' ? uniqRulesWorn() : [],   // uniques-first-four: a zone boss; the worn uniques' rules (none while UNIQ_TUNE.on is 0)
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
@@ -1160,8 +1163,11 @@ function turnCombatTick(dt) {
   if (!(f.born >= 1)) f.born = (f.born || 0) + dt;   // the legacy tick that grows a new foe in does not run here
   if (!TURN_LIVE || TURN_LIVE.ended || TURN_LIVE.foe !== f) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
-    const u = cbUnitByKey('hero');
-    if (f.boss && !f.deep && !f.trial && u && !u.down) u.hp = u.maxHp;   // a zone boss is met at full health (the Deepwell carries HP)
+    let u = cbUnitByKey('hero');
+    // a zone fight that starts in the gap after a loss (the zone arrow, or gathering and back, cut the gap short): the hero stands
+    // up first, so the fight never starts at 0 HP (normal-death-says-so review). The Deepwell and the Provings end on a loss.
+    if (u && u.down && !f.deep && !f.trial) { cbRestore(false); u = cbUnitByKey('hero'); }
+    if ((f.boss || TURN_TUNE.normalFull) && !f.deep && !f.trial && u && !u.down) u.hp = u.maxHp;   // every zone fight is met at full health (normalFull; the Deepwell carries HP)
     const p = turnMakeProfile(f, u); if (!p) return;
     // turnNew's gate skip reads the foe's HP, and TURN_LIVE is still the last fight here, so it reads f's own (rally-gates-live:
     // reading the last foe, dead at 0 HP, skipped every gate on every live boss from #160 to 8 Oct)

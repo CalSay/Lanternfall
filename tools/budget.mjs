@@ -27,8 +27,9 @@
 //
 // Fights. Each boss fight is its own turnCombatSample call on its own hashed seed (judge 2026-10-06: one random stream
 // for a whole sample correlates long fights; one seed's 60 fights read 13-32% where independent fights read 53-67%).
-// Normal and elite foes come in chains of 5 on one seed (a zone's trash: HP carries from fight to fight, healed
-// COMBAT_TUNE.packHealF on a kill, as the live loop does; a loss starts the next fight at full health).
+// Normal and elite foes come in chains of 5 on one seed (a zone's trash). Each fight starts at full health, as the live loop
+// does (TURN_TUNE.normalFull, normal-death-says-so; the profile's fullHp); with normalFull 0, HP carries from fight to fight,
+// healed COMBAT_TUNE.packHealF on a kill, and a loss starts the next fight at full health.
 //
 // The hero who keeps up at zone z (the budget's footing):
 //   level   floor(roadLv(z) + HERO_TUNE.joinLead) when the game has a road (hero-progression-rework: where a hero who plays

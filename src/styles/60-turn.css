@@ -97,6 +97,18 @@
 .tv-turncard.play:not(.calm) { animation: tv-tc var(--tc-dur, .9s) linear both; }
 .tv-turncard.play.calm { animation: tv-fade var(--tc-dur, .9s) linear both; }
 @keyframes tv-tc { 0% { opacity: 0; transform: translate(-24px, -50%); } 18%, 78% { opacity: 1; transform: translate(0, -50%); } 100% { opacity: 0; transform: translate(12px, -50%); } }
+/* a normal loss says so (75-turn-ui, normal-death-says-so): the banner's spot, two lines, for the gap before the next fight */
+.tv-beat { position: absolute; left: 0; right: 0; top: 42%; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 16px; transform: translateY(-50%); pointer-events: none; text-align: center;
+  background: linear-gradient(90deg, transparent, rgba(10, 7, 14, .94) 14%, rgba(10, 7, 14, .94) 86%, transparent); }
+.tv-beat[hidden] { display: none; }
+.tv-beat-txt { font: 700 calc(19px * var(--display-k, 1))/1.15 var(--display); letter-spacing: .03em; color: #FF9B8A; text-shadow: 2px 2px 0 #0B0810; }
+.tv-beat-help { font: 600 calc(14px * var(--display-k, 1))/1.2 var(--display); color: #EDE3D1; text-shadow: 1px 1px 0 #0B0810; }
+.tv-beat-help[hidden] { display: none; }
+.tv-beat.play:not(.calm) { animation: tv-beat-in .35s ease-out both; }
+.tv-beat.play.calm { animation: tv-beat-fade .35s linear both; }
+@keyframes tv-beat-in { 0% { opacity: 0; transform: translate(-16px, -50%); } 100% { opacity: 1; transform: translate(0, -50%); } }
+@keyframes tv-beat-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
 .tv-winding .sty-cap { opacity: .15; transition: opacity .15s; }
 /* Stage and dock (Combat C): the banner is a framed chip; the timing bar sits along the stage's bottom edge */
 .tv-n { padding: 3px 12px 2px; font: 600 calc(15px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; color: #C9BFD6; background: rgba(10, 7, 14, .88);

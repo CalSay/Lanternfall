@@ -85,7 +85,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   tcard.append(tcFace, tcTxt);
   if (box) box.append(tcard);
   let tcT = null;
-  const tcHide = () => { tcard.hidden = true; if (box) box.classList.remove('tc-on'); };   // tc-on: toasts wait while the banner shows (20-stage.css)
+  const tcHide = () => { tcard.hidden = true; if (box && beat.hidden) box.classList.remove('tc-on'); };   // tc-on: toasts wait while the banner (or the loss beat) shows (20-stage.css)
   on('turnCard', p => {
     if (!box || !p) return;
     const f = foeNow(), mine = p.who === 'hero', name = mine ? heroName() : (f && f.name) || 'The foe';
@@ -98,6 +98,39 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   });
   on('turn', () => { clearTimeout(tcT); tcHide(); });
   on('fightEnd', () => { clearTimeout(tcT); tcHide(); });
+
+  // ---- a normal loss says so (normal-death-says-so): in the banner's spot through the gap before the next fight ----
+  // A loss never moves you and gives full HP for the next fight; the second line names one way out that is true for this save.
+  // No pop and no card (a boss loss has the Try again card). The bell keeps the "beaten" line; losing three of ten fights in one
+  // zone adds one bell line, once per zone a session (runtime only, never saved).
+  const beat = el('div', 'tv-beat'); beat.hidden = true; beat.setAttribute('role', 'status'); beat.setAttribute('aria-live', 'polite');
+  const beatTxt = el('b', 'tv-beat-txt', "Beaten. You're back to full HP for the next fight."), beatHelp = el('span', 'tv-beat-help');
+  beat.append(beatTxt, beatHelp);
+  if (box) box.append(beat);
+  const lossHelp = () => {
+    try { if (attrOn() && attrPoints(soloHero()).free > 0) return 'Spend your attribute points on Hero > Build.'; } catch (e) {}
+    try { const b = craftGoalNext(); if (b && !b.gate && b.p >= 1) return 'Better gear helps: see Craft.'; } catch (e) {}
+    return S.zone > 1 ? 'An easier zone helps too: use the arrow by the zone name.' : '';
+  };
+  let beatT = 0;   // game seconds the line has been up (a fallback; game time, so a paused game or a tip keeps it)
+  const beatHide = () => { beatT = 0; if (beat.hidden) return; beat.hidden = true; beat.classList.remove('play'); if (box && tcard.hidden) box.classList.remove('tc-on'); };
+  const LOSS_N = 3, LOSS_OF = 10, lossAt = {}, lossTold = {};
+  let fightN = 0;
+  on('fightStart', () => { fightN++; beatHide(); });
+  on('unitUp', beatHide);
+  on('activity', beatHide);
+  onTick(dt => { if (!beat.hidden && (beatT += dt) > 8) beatHide(); });   // the next fight, a hero back up or a new activity hides it first
+  on('wipe', p => {
+    if (!box || !p || p.boss || p.arena) return;
+    const help = lossHelp();
+    putText(beatHelp, help); beatHelp.hidden = !help;
+    beat.className = 'tv-beat' + (reduced() ? ' calm' : '');
+    beat.hidden = false; box.classList.add('tc-on'); void beat.offsetWidth; beat.classList.add('play');
+    beatT = 0;
+    const z = p.zone, at = (lossAt[z] || []).filter(n => n > fightN - LOSS_OF);
+    at.push(fightN); lossAt[z] = at;
+    if (at.length >= LOSS_N && !lossTold[z]) { lossTold[z] = 1; toast('Losing a lot here? Gear, attribute points or an easier zone help.', 'raid', null, 'normal'); }
+  });
 
   // ---- the turn strip, the timing bar, the hero row ----
   // the turn order lives on the Versus card only (owner, 2026-10-02)

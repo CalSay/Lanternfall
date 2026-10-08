@@ -16,6 +16,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## Combat and balance
 
+- Treat a DECISIONS.md line the code never matched as a question, not a fact: check the code before building on it. Why: "No healing between fights" (2026-10-02) sat beside a 15% heal per kill and a full heal on a loss, so losing was the better heal until the normal-death-says-so judge ruled. (normal-death-says-so, 2026-10-08)
 - Never gate "Boss ready" on the old damage estimate; use the 30-scratch-fight estimate at the player's own parry and dodge record. Why: the old estimate read 0.4 to 0.5 at the Zone 1 boss that all three starters beat, and 0.03 on a late save. (boss-readiness, 2026-10-06)
 - Keep the readiness estimate running while a tip pauses the game, and include Deepwell boons, gear changes made while gathering, and the sim seed. Why: Codex found each of these in rounds 1 to 3 of PR #47. (boss-readiness, 2026-10-06)
 - Give every scratch fight its own seed (turnCombatSample hashes seed and fight index; the first fight keeps the caller's seed). Why: one LCG stream across a chain correlated long fights, so one seed read 13-32% where independent fights read 53-67%. (sampler-independence, 2026-10-06)
