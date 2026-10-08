@@ -14015,7 +14015,9 @@ var forgeGoalPicks = 0;
   const attrFree = () => { const k = typeof soloHero === 'function' ? soloHero() : null; return attrLive() && k ? attrPoints(k).free : 0; };
   registerGoal({
     // menu audit: a level that costs under 1% of your gold is free power, and ranks high (else it waits its turn)
-    id: 'hero-up', sys: 'hero', prio: () => { if (attrLive()) return attrFree() > 0 ? 3 : -1; const b = heroNext(); return b && b.cost <= S.gold * 0.01 ? 3 : -1; },
+    // unspent-points-nudge: its own sys, so learn-ability (sys 'hero') never pushes it out; a pile of two levels' points
+    // or more tops the chip (prio 20 beats a shown Ready goal at prio 11 plus STICK)
+    id: 'hero-up', sys: 'points', prio: () => { if (attrLive()) { const f = attrFree(); return f >= 2 * HERO_TUNE.perLevel ? 20 : f > 0 ? 3 : -1; } const b = heroNext(); return b && b.cost <= S.gold * 0.01 ? 3 : -1; },
     pct: () => { if (attrLive()) return attrFree() > 0 ? 1 : null; const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
     label: () => { if (attrLive()) { const n = attrFree(); return n > 0 ? `Spend ${n} attribute point${n === 1 ? '' : 's'}` : ''; }
       const b = heroNext(); if (!b) return ''; const lv = b.lv;

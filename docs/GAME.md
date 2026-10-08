@@ -49,7 +49,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   count half. Spread evenly, the points give the old +4% a level. Points belong to the
   hero. Adding them is free; Spread evenly places the free ones in one tap; the first Reset points is free and later
   ones cost gold (two taps). A fight takes them as it starts. The build only changes turn fights: away, raid and
-  farm power read the level as if spread evenly. Unspent points do nothing, so Next Up says when there are some. A
+  farm power read the level as if spread evenly. Unspent points do nothing, so Next Up says when there are some, and two levels' points or more unspent puts "Spend N attribute points" first, above every Ready row (the goal has its own system, so Learn never hides it). A
   level costs what the road expects (`xpNeed` follows the road, fights a zone rise by a steady ratio), and a hero more
   than 4 levels past the road's level at the furthest zone earns 0.6x XP a level further. A hero who takes the
   lamp joins at the road's level (2 above the road table, where players stand) at least (keeping their XP short of a level; a hero above it keeps theirs), and every
