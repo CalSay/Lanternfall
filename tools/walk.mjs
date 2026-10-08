@@ -302,10 +302,18 @@ st.lastCard = -9; st.tabAt = -9; st.phAt = 0;
 
 // Next Up: when the chip says Ready, open the list, press Go on the first ready goal the bot has not given up on, and press what
 // the place Go lands on offers. Since #115 that place is not always a flashed row: Learn opens the ability's detail sheet, whose
-// button sits outside .nu-flash, and Spend opens the Attributes view. A goal that stays ready after 4 presses is a finding; the
-// bot moves on to the next ready goal rather than idling on the chip. It only presses what a player can see.
+// button sits outside .nu-flash, and Spend opens the Attributes view. A goal whose last 4 presses changed nothing is a finding; the
+// bot moves on to the next ready goal rather than idling on the chip. A press that changed the save (walk-bot-retry-counts: the
+// fingerprint below) sets the goal's count back to 0, so "Spend 28 attribute points" is pressed again each time it comes back.
+// It only presses what a player can see.
 const GO_WORDS = /^(craft|claim|equip|spend|build|light|start|collect|learn|use|buy|train|upgrade|promote|open|forge|brew|set|wear|cook|hire|send|accept|ok|got it|continue|smelt|saw|weave|tan|strike|infuse|retune)\b/i;
 const goalKey = l => l.replace(/\d+/g, '#');
+// What a press can change, read (never set) just before Go and just after the press. Gold and materials rise from fights while
+// the list is open, so only a drop counts for those.
+const PRESS_FP = `(() => { const mats = {}; for (const [k, a] of Object.entries(S.mats || {})) mats[k] = (a || []).reduce((x, n) => x + (n || 0), 0);
+  try { mats.ess = essHave(); } catch (e) {}
+  return { k: JSON.stringify([S.attr, S.equip, S.items.length, S.abil && S.abil.unl, S.camp.b, S.camp.builds]), gold: S.gold, mats }; })()`;
+const pressChanged = (a, b) => a.k !== b.k || b.gold < a.gold || Object.keys(a.mats).some(k => (b.mats[k] || 0) < a.mats[k]);
 async function followNextUp(o) {
   const chipReady = await page.evaluate(`(() => { const c = document.getElementById('nuChip'); return !!c && !c.hidden && c.getClientRects().length > 0 && c.classList.contains('ready') ? (c.querySelector('.nu-lbl') || c).textContent.trim() : ''; })()`);
   if (!chipReady) return false;
@@ -317,6 +325,7 @@ async function followNextUp(o) {
   const closeList = () => click('.bsheet-ov .bsheet-x', 200);
   if (label === undefined) { await closeList(); return false; }
   st.calls[goalKey(label)] = (st.calls[goalKey(label)] || 0) + 1;
+  const fpBefore = await X(PRESS_FP);
   const marked = await page.evaluate(l => { for (const r of document.querySelectorAll('.nu-row.ready')) if ((r.querySelector('.nu-lbl') || r).textContent.trim() === l) { const g = r.querySelector('.nu-go'); if (g) { g.setAttribute('data-walk', '1'); return true; } } return false; }, label);
   const eqBefore = await X('JSON.stringify(S.equip)');
   const went = marked && await click('[data-walk="1"]', 300);
@@ -337,11 +346,23 @@ async function followNextUp(o) {
   } else if (/attribute point/i.test(label)) {   // a casual player taps Spread evenly
     if (await click('.at-spread', 300)) { did = 'Spread evenly'; await advance(250, 16); }
     for (let i = 0; i < 6 && await page.evaluate(() => [...document.querySelectorAll('.at-add[data-n="1"]')].some(b => !b.disabled && b.getClientRects().length)); i++) { if (!(await click('.at-add[data-n="1"]', 200))) break; await advance(150, 16); did = 'Spread evenly, +1'; }
+  } else if (/ready to build$/i.test(label)) {   // camp-build: Go opens the station's card in Camp; press its Build button (two taps, as the gear routine does)
+    const nm = label.replace(/:.*$/, '').replace(/\s+Lv\s*\d+$/i, '').trim();
+    const id = await page.evaluate(nm => { const f = document.querySelector('.nu-flash[id^="camp-b-"]'); if (f) return f.id.slice(7);
+      const c = [...document.querySelectorAll('[id^="camp-b-"]')].find(c => c.getClientRects().length && ((c.querySelector('.cb-nm span') || {}).textContent || '').trim() === nm); return c ? c.id.slice(7) : ''; }, nm);
+    if (id && await pressBuild(id)) did = 'Build';
   } else {
     // the flash lasts 1.6 s; find the panel's one button and press it with a real tap (a covered button is then a finding)
-    const pick = await page.evaluate(`(() => { const hit = document.querySelector('.nu-flash'); if (!hit) return ''; const bs = [...hit.querySelectorAll('button, [role=button], .btn, .big')].filter(b => !b.disabled && b.getClientRects().length && !b.classList.contains('off'));
+    if (/^Craft\b/i.test(label)) {   // Go focuses the Craft list and flashes the row's own Craft button (#forgeBtn): press the .cf-go in the .cf-rec row the goal names
+      const nm = label.replace(/:.*$/, '').replace(/^craft\s+(a |an )?/i, '').replace(/\s+for the zone \d+ boss$/i, '').trim();
+      const ok = await page.evaluate(nm => { const r = [...document.querySelectorAll('.cf-rec')].find(r => r.getClientRects().length && ((r.querySelector('.cf-rec-n') || {}).textContent || '').trim() === nm);
+        const b = r && r.querySelector('.cf-go'); if (!b || b.disabled) return false; b.setAttribute('data-walk', '1'); return true; }, nm);
+      if (ok && await click('[data-walk="1"]', 300)) did = 'Craft';
+      await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
+    }
+    const pick = did ? '' : await page.evaluate(`(() => { const hit = document.querySelector('.nu-flash'); if (!hit) return ''; const bs = [...hit.querySelectorAll('button, [role=button], .btn, .big')].filter(b => !b.disabled && b.getClientRects().length && !b.classList.contains('off'));
       const b = bs.find(b => ${GO_WORDS}.test((b.textContent || '').trim())) || bs[0]; if (!b) return ''; b.setAttribute('data-walk', '1'); return (b.textContent || b.getAttribute('aria-label') || '').trim().slice(0, 40) || 'button'; })()`);
-    did = pick && (await click('[data-walk="1"]', 300)) ? pick : '';
+    if (!did) did = pick && (await click('[data-walk="1"]', 300)) ? pick : '';
     if (!did) {   // no flashed row: the row in the open menu that names the goal's thing ("Craft a Copper Pickaxe" -> the Copper Pickaxe row)
       const name = label.replace(/:.*$/, '').replace(/^(craft|build|make|claim|equip|light|upgrade)\s+(a |an |the |your )?/i, '').replace(/\s+(lv|level)\s*\d+.*$/i, '').replace(/\s+for the zone \d+ boss$/i, '').replace(/\s+to \+\d+$/, '').trim();   // craft-delta: "Craft a Pine Bow for the zone 2 boss", "Upgrade your Pine Bow to +1"
       const alt = name.length > 3 && await page.evaluate(([nm, re]) => { const rx = new RegExp(re, 'i'), rows = [...document.querySelectorAll('#panels .row, #panels .recipe, #panels li')].filter(r => r.getClientRects().length && r.textContent.includes(nm)).filter((r, _i, all) => !all.some(o => o !== r && r.contains(o)));
@@ -352,6 +373,7 @@ async function followNextUp(o) {
     await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
   }
   await note(page, 'nextup', `${label}${did ? ' -> pressed "' + did + '"' : ' -> nothing to press'}`, { extra: { goal: label, pressed: did } });
+  if (did && pressChanged(fpBefore, await X(PRESS_FP))) st.calls[goalKey(label)] = 0;   // it worked: not a stuck goal
   await advance(500, 16);
   await click('.tabs .tab:text(Fight)', 300);
   return true;
@@ -438,10 +460,15 @@ async function craftGoal(g) {
   return true;
 }
 // Camp > the station's building > its Build button (the guide's "Build the Forge" is the same press).
+// The two taps on a station's Build button in Camp (Next Up's build goal uses them too). True when both landed.
+async function pressBuild(id) {
+  const a = await click(`#camp-b-${id} button:text(Build)`, 300); await advance(400, 16);   // the first tap arms the button ("Sure?")
+  const b = a && await click(`#camp-b-${id} button:text(Sure|Tap again)`, 300); await advance(500, 16);
+  return !!b;
+}
 async function buildStation(g) {
   await click('.tabs .tab[data-tab="world"]', 300); await advance(500, 16);
-  await click(`#camp-b-${g.build} button:text(Build)`, 300); await advance(400, 16);   // the first tap arms the button ("Sure?")
-  await click(`#camp-b-${g.build} button:text(Sure)`, 300); await advance(500, 16);
+  await pressBuild(g.build);
   const built = await X(`S.camp.builds.some(b => b.id === ${JSON.stringify(g.build)}) || !hearthStationWhy(${JSON.stringify(g.build)})`);
   await note(page, 'gear', `build ${g.nm}${built ? ' -> started' : ' -> not started'}`, { extra: { build: g.build }, tag: 'gear-build' });
   if (!built) await advance(1000, 16);
@@ -678,6 +705,21 @@ const placeholders = new Set();
 
 // ---------------- the report ----------------
 function sha() { try { return execSync('git rev-parse --short HEAD', { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch (e) { return 'unknown'; } }
+// walk-bot-retry-counts: the bot plays about 2.3 times a human's pace, so bot minutes 20-60 are a human's hour 2. The map's window
+// is the zone 6 first clear (beat 18, the map's 20:00) to 10 min after the zone 10 first clear (the map's 60:00), or to the minute
+// reached when that clear never comes. Next Up presses (the bot's own nextup notes that pressed something) and craft-screen picks
+// (choice kind craft) are counted apart.
+function mapWindow(reached) {
+  const head = 'Map window (zone 6 clear to 10 min after the zone 10 clear';
+  const z6 = moments.find(m => m.id === 'zone' && m.zone === 6), z10 = moments.find(m => m.id === 'zone' && m.zone === 10);
+  if (!z6) return head + '): not reached (zone 6 never cleared).';
+  const from = z6.t, to = z10 ? Math.min(z10.t + 600, reached) : reached;
+  const nu = log.filter(e => e.kind === 'nextup' && e.pressed && e.t >= from && e.t <= to).map(e => e.t);
+  const cr = choices.filter(c => c.k === 'craft' && c.t >= from && c.t <= to).map(c => c.t);
+  const ts = [from, ...[...nu, ...cr].sort((a, b) => a - b), to];
+  let g = 0; for (let i = 1; i < ts.length; i++) g = Math.max(g, ts[i] - ts[i - 1]);
+  return `${head}, bot ${fmtT(from)} to ${fmtT(to)}${z10 ? '' : ', zone 10 not cleared'}): ${nu.length} Next Up press${nu.length === 1 ? '' : 'es'}, ${cr.length} craft-screen pick${cr.length === 1 ? '' : 's'}, longest gap with neither ${fmtT(g)}.`;
+}
 function report(res) {
   const reached = Math.round(gt), sc = scorecard(reached), beats = readMap(), meas = measureBeats();
   const out = [];
@@ -697,6 +739,7 @@ function report(res) {
   let gap = { from: 1200, to: 1200 }; for (let i = 1; i < cw.length; i++) if (cw[i] - cw[i - 1] > gap.to - gap.from) gap = { from: cw[i - 1], to: cw[i] };
   out.push('## Crafting and choices', '', `Crafts and upgrades in the first 60 min: ${crafts60 + ups60} (${crafts60} forged, ${ups60} upgrades; ${z.up || 0} upgrades in all). Choices: ${choices.length} (${['craft', 'nextup'].map(k => k + ' ' + choices.filter(c => c.k === k).length).join(', ')}).`, '',
     reached > 1200 ? `Longest gap with no choice in minutes 20-60: ${fmtT(gap.to - gap.from)} (${fmtT(gap.from)} to ${fmtT(gap.to)}).` : 'Longest gap with no choice in minutes 20-60: not reached.', '',
+    mapWindow(reached), '',
     'First uses: ' + (Object.keys(firstUse).length ? Object.entries(firstUse).map(([k, t]) => `${k} at ${fmtT(t)}`).join(', ') : 'none') + '.', '');
   out.push('## Scorecard', '', '| Id | Result | Target | Value |', '|---|---|---|---|');
   for (const [k, v] of Object.entries(sc)) out.push(`| ${k} | ${v.unmeasured ? 'not measured' : v.pass ? 'met' : 'missed'} | ${v.target} | ${v.value} |`);
