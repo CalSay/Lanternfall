@@ -601,6 +601,7 @@ Ruled MERGE by an Opus high judge (PR for card `z13-arrival-footing`); Cal can v
   at 10 (no mastery stars), Bestiary kills a kind at 12. Casual reads 0% a try there, as the walk does. The kept-up rows stay the report rows (1-2 tries).
 - **Zones 10-12 stay on their footing.** They read the walk within 15 points as they are; at the arrival footing the sampler reads Wren and
   Pip 54-78 under the walk (33-56 on Wren's own walk save), a sampler gap, not a footing one. They move once that gap is fixed.
+  (Superseded by "Rally gates are live": the gap was the live fight skipping the rally gates; zones 7-12 moved to the arrival footing there.)
 - **Gaps:** z13-15 casual and good, low side, owner `boss-balance-pass`, until 2026-12-01; Tobin's in-band z13 good cell stays gated.
   The boss refit (`TURN_TUNE.boss` hitX/hpX to casual 60-80 at this footing) is a balance-pass row; until it lands the `gearHelps` gate on
   the z13 and z15 kept-up rows passes trivially (first-hour casual is 0).
@@ -929,6 +930,23 @@ Follow-up to "Zone 20 wall" ruling 3, ruled by an Opus high judge (PR for card `
 
 Veto phrases for Cal: "cap the zone 21-24 foes" (adds the 0.25 hit cap at zones 21-24 on top of the bot fix). "Bot presses every
 feint" drops the trick read and puts back the earlier numbers (abs 2.0).
+
+### Rally gates are live (rally-gates-live) (2026-10-08)
+
+Ruled C by an independent Opus high judge (`autopilot/rulings/2026-10-08-rally-gates-live.md`); Cal can veto.
+
+- **Rally gates are live (rally-gates-live, judge 2026-10-08; Cal can veto).** Since #160 the live fight skipped every gate
+  (59k:1164 read the previous foe's HP). The gates stay, the order is fixed, the rally shows on the boss bar, and z7-12 are
+  refit on the arrival footing with gates on. z13-34 keep their sampler-fitted knots, are re-measured, and wait for the balance
+  pass. This supersedes "a sampler gap, not a footing one" (z13-arrival-footing). Veto: "Turn the rally gates off".
+- **The rally on screen.** The boss bar marks each gate from the start of the fight; the mark it holds at turns gold and a passed one
+  fades. The line says "Rally! It holds at the mark until its next move ends." (with "Only a Stun breaks its charge." only while it
+  gathers a charged move), and "Rally over. Your hits land again." when it opens.
+- **The refit (zones 7-12 only).** hitX, hpX, hpFloor and Tobin's heroHitX, fitted with the gates on to arrival-footing casual in band;
+  no move, window, gate share or pay change. Landed hits sit on or near the hpFloor, which holds the kept-up never-defends player at 0%.
+  Tobin's heroHitX moved at 8, 10 and 12 (1.7 to 1.5, 2 to 1.8, 1.75 to 1.6) to keep him in his +10 band. Numbers: `docs/design/difficulty-budget.md`.
+
+Veto phrase for Cal: **"Turn the rally gates off"**: set `gate.on = 0` and refit every boss from z4 to z34 in the balance pass.
 
 ### The Lantern Rules
 

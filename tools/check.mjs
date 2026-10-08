@@ -9261,16 +9261,16 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.725 * 1.25, 15: 16 * 0.12, 20: 16 * 0.01625, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.35 * 1.25, 15: 16 * 0.12, 20: 16 * 0.01625, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zones 13-15 cut for the hero who first gets there by z13-unstick, zone 15 16 x 0.12, was 1.7; zones 20-24 by z20-wall, zone 20 16 x 0.01625, was 2.8; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zones 13-15 cut for the hero who first gets there by z13-unstick, zone 15 16 x 0.12, was 1.7; zones 20-24 by z20-wall, zone 20 16 x 0.01625, was 2.8; zones 7-12 by rally-gates-live for the hero who first gets there with the gates on, zone 10 16 x 0.35 x 1.25, was 0.725; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
     assert(n20.a > 4.7 && n20.a < 5.3 && Math.abs(n20.hx - 0.7) < 1e-9 && n3.hx === 1 && n38.hx === 1 && n20.cx === 1 && n20.full === !!E('TURN_TUNE.normalFull'),
       `boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), as written in zones 1-3 and 35+ (${JSON.stringify([n3, n20, n38].map(r => [+r.a.toFixed(2), r.hx]))})`);
-    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 1.055) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
-      `boss pass: boss hits x1.055 at zone 8 (the pr4 refit; charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
+    assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 0.5) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
+      `boss pass: boss hits x0.5 at zone 8 (rally-gates-live: was 1.055, the pr4 refit; charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
     assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 1.4 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
     // the Deepwell's Elders and the Provings' bosses keep their own numbers (they pass a move set and their HP in Attacks)
     const deep = E(`(() => { const f = { boss: true, type: 'bones', name: 'Elder' }; turnFoeSetup(f, 30, { set: 'bones', hpA: TURN_TUNE.deep.hpA.boss }); return { a: f.max / turnRefAtk(30), hx: f.tk.hx, cx: f.tk.cx }; })()`);
@@ -9573,10 +9573,10 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
   // a hero at its frontier boss: the zone's fights won, the boss next (as Next Up sees it)
   // hero-progression-rework: these expectations were measured with gold Training (the fixtures hold trained heroes), so they run
   // with HERO_TUNE.training = 1; the default game's Go target (Build while points are free) is asserted at the end.
-  const boot = (hero, fx, seed, flagOff) => {
+  const boot = (hero, fx, seed, flagOff, zone) => {
     const g = loadCore({ seed: seed || 7, turns: true, ...(flagOff ? {} : { training: true }), ...(fx ? { storage: memoryStorage({ [KEY]: FX(fx) }) } : {}) }), E = s => g.eval(s);
     if (fx) E('loadSave()');
-    E(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); ${hero ? `soloPick(${J(hero)}, {now:true});` : ''} setZone(Math.max(1, S.maxZone)); S.activity = 'fight'; arena = null; gearDirty();
+    E(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); ${hero ? `soloPick(${J(hero)}, {now:true});` : ''} ${zone ? `S.maxZone = ${zone};` : ''} setZone(Math.max(1, S.maxZone)); S.activity = 'fight'; arena = null; gearDirty();
       S.kills = ZONE_FIGHTS; fightBoss = false; spawn();`);
     for (let i = 0; i < 5; i++) g.fn.tick(0.1);   // the hero's unit exists, as in play
     return { g, E, goal: () => E('(() => { const x = GOALS.find(q => q.id === "zone-boss"); return { label: x.label(), pct: +x.pct(), go: x.go() }; })()') };
@@ -9588,10 +9588,12 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     assert(o && o.zone === 1 && o.n === 30 && o.win >= 0.7 && l.label === 'Boss ready in Zone 1' && l.pct === 1 && l.go.sel === '#gateBtn' && !g.errors.length,
       `boss odds: a fresh ${hero} is ready for the Zone 1 boss (${J(o)}, "${l.label}")`);
   }
-  // the early fixture (Wren, Zone 8) with no history: not ready, and Go takes the player to the Fight tab
-  { const { g, E, goal } = boot('', 'early'), o = E('bossOdds({ sync: true })'), l = goal();
+  // the early fixture (Wren) with no history at a frontier boss it is not ready for: not ready, and Go takes the player to the Fight tab.
+  // Zone 11 since rally-gates-live (2026-10-08): the zone 8 boss, refit to the hero who first gets there, is now ready for the fixture's
+  // level 14 Wren (90%), and the zone 10 Champion reads 0, so it would test the floor of the bar, not the goal's line.
+  { const { g, E, goal } = boot('', 'early', 0, false, 11), o = E('bossOdds({ sync: true })'), l = goal();
     assert(o && o.zone === E('S.maxZone') && o.win < 0.7 && /^Zone \d+ boss: a close fight\. Gear up to be safe$|^Zone \d+ boss is too strong\. Level up and gear up first$/.test(l.label) && l.pct < 1 && l.pct >= 0.01
-      && l.go.tab === 'adv' && l.go.sel === '#gateBtn' && !g.errors.length, `boss odds: the early fixture (Zone 8) is not ready with no record, and Go opens the Fight tab (${J(o)}, "${l.label}", ${l.pct.toFixed(2)})`); }
+      && l.go.tab === 'adv' && l.go.sel === '#gateBtn' && !g.errors.length, `boss odds: the early fixture at Zone 11 is not ready with no record, and Go opens the Fight tab (${J(o)}, "${l.label}", ${l.pct.toFixed(2)})`); }
   // the late fixture: too strong with no history; ready with a good record
   { const { g, E, goal } = boot('', 'late'), o = E('bossOdds({ sync: true })'), l = goal();
     assert(o && o.win < 0.35 && /^Zone \d+ boss is too strong\. Level up and gear up first$/.test(l.label) && l.go.sel === '#gateBtn' && l.pct >= 0.01 && l.pct < 0.5, `boss odds: the late fixture is too strong with no record (${J(o)}, "${l.label}")`);
@@ -11307,9 +11309,35 @@ if (section('boss tiers pr5')) try {
     return JSON.stringify({ rl, won: foe <= 0, ended: !!m.ended, moves }); })()`));
   const r6 = rallies(6), r8 = rallies(8), r15 = rallies(15), r9 = rallies(9);
   assert(r6.rl === 2 && r8.rl === 3 && r9.rl === 3 && r15.rl === 3 && [r6, r8, r9, r15].every(r => r.won), `boss gates: a hero who hits for a third of the boss a turn meets two rallies at a zone 6 Captain and three at zones 8, 9 and 15, and still wins (${[r6, r8, r9, r15].map(r => r.rl + (r.won ? 'w' : 'L')).join(' ')})`);
-  assert(/Only a Stun breaks its charge/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-turn-ui.js'), 'utf8')), 'boss gates: the rally line says only a Stun breaks the charge');
+  assert(/Only a Stun breaks its charge/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-turn-ui.js'), 'utf8')), 'boss gates: the rally line says only a Stun breaks the charge (while it charges; rally-gates-live)');
   assert(!g.errors.length, 'boss tiers pr5: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('boss tiers pr5 crashed: ' + (e.stack || e)); }
+
+// ---- rally-gates-live (judge 2026-10-08): the live fight (turnCombatTick, TURN_LIVE_IO) checks a boss's rally gates against the boss's own HP.
+// turnCombatSample has its own io, so a sim-only test could not see that the live path read the last foe's HP and skipped every gate (#160 to 8 Oct).
+if (section('rally gates live (core)')) try {
+  const g = loadCore({ seed: 5, turns: true }), E = s => g.eval(s);
+  E(`soloPick('wren', { now: true }); TURN_TUNE.on = 1; S.L = 16; S.maxZone = 11; setZone(11); S.activity = 'fight'; arena = null; fightBoss = false; gearDirty(); spawn();`);
+  const until = (cond, n = 400) => E(`(() => { for (let i = 0; i < ${n} && !(${cond}); i++) tick(0.05); return !!(${cond}); })()`);
+  // an ordinary foe's live fight starts, and the hero kills it through the fight's own io: the last fight now holds a foe at 0 HP
+  const met = until('TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.foe && !TURN_LIVE.foe.boss');
+  E(`TURN_LIVE_IO.damageFoe(TURN_LIVE.foe.hp + 1, 'hit', false, 'phys', 0); tick(0.05);`);
+  const dead = E('!!(TURN_LIVE && TURN_LIVE.foe && !TURN_LIVE.foe.boss && TURN_LIVE.foe.hp <= 0)');
+  E('fightBoss = true; spawn();');
+  const boss = until('TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.foe && TURN_LIVE.foe.boss');
+  const a = JSON.parse(E(`JSON.stringify({ gates: TURN_LIVE.p.gates, gi: TURN_LIVE.gi, full: TURN_LIVE.foe.hp >= TURN_LIVE.foe.max - 1e-6 })`));
+  assert(met && dead && boss && a.full && JSON.stringify(a.gates) === '[0.75,0.5,0.25]' && a.gi === 0,
+    `rally gates: a zone 11 Captain met in the live fight right after an ordinary kill starts at its first gate (gi ${a.gi}, gates ${JSON.stringify(a.gates)}, ordinary foe met ${met}, killed ${dead}, boss met ${boss}, full ${a.full})`);
+  // the same Captain left at 60% (the fight cut off, as a hero switch does) and met again starts past the 75% gate only
+  E(`TURN_LIVE.foe.hp = 0.6 * TURN_LIVE.foe.max; turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);`);
+  const again = until('TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.foe && TURN_LIVE.foe.boss', 40);
+  const b = JSON.parse(E(`JSON.stringify({ gi: TURN_LIVE.gi, left: TURN_LIVE.foe.hp / TURN_LIVE.foe.max })`));
+  assert(again && b.gi === 1 && Math.abs(b.left - 0.6) < 0.02, `rally gates: the same Captain met again at 60% starts at its second gate (gi ${b.gi}, at ${(100 * b.left).toFixed(0)}%)`);
+  // the bar marks each gate and the line says what a rally does (75-turn-ui); the Stun clause rides only a charge
+  const ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-turn-ui.js'), 'utf8');
+  assert(/on\('foeRallied'/.test(ui) && /tv-notch/.test(ui) && /p\.charging \? 'Rally! It holds at the mark\. Only a Stun breaks its charge\.'/.test(ui),
+    'rally gates: the boss bar marks each gate, the rally line names the mark (the Stun clause only while it charges), and a line says when the rally is over');
+} catch (e) { fail('rally gates live crashed: ' + (e.stack || e)); }
 
 // ==== counters-and-layers: Essence is one pile (any grade pays any Essence cost, lowest grade first) ====
 if (section('essence fungible')) try {

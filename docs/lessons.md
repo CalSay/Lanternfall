@@ -45,6 +45,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Check a boss-gain cap against every pair of rules one hero can wear together and against abilities that read the changed count (Oath x Mountain reached x1.82; Crimson's 10 stacks fed Final Echo +62%), and never let a one-action boost ride a stored Bleed that `Math.max` keeps all fight. Why: the code review of uniques-first-four found all three after each rule passed alone. (uniques-first-four, 2026-10-07)
 
 - Sample a "with this piece" fight change with at least 80 scratch fights a side on the same seeds, and show no line when the shares move less than half a step or the rounding points against the raw numbers; swap the piece into both `gsCache` and `S.equip[pos]` for the sample (59-combat reads the helm from `S.equip`). Why: 40 a side read a tier 4 Warblade into an empty slot as "7 in 10, not 8 in 10", and a gsCache-only swap left the new helm's armour out (review, craft-delta, 2026-10-08)
+- When a fight rule reads its io (a gate skip, a heal, a foe's HP), assert it on the live path (`turnCombatTick` with `TURN_LIVE_IO`) as well as through `turnCombatSample`, which builds its own io. Why: the live fight built each fight before it set the new foe, so the rally-gate skip read the last foe's 0 HP and every live boss from #160 to 8 Oct skipped its gates, while the budget and every boss fit had them on. (rally-gates-live, 2026-10-08)
 
 ## Economy and skilling
 
