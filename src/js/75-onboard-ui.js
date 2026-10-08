@@ -83,11 +83,13 @@
   const SAY_MORE = {
     defeat: 'No shame in that. The card showed what beat you, and each try shows one more of its moves.',
     scroll: () => `That boss dropped a ${(SCROLLS[scrollId] || SCROLLS.moss || { name: 'Scroll' }).name}. Open Hero, then Abilities, and learn a new move with it.`,
-    // learning a move from the Abilities view drops it into the first empty slot (75-abilities-ui), so he says where it went
-    // ("next to Attack": the moves' row sits under the stage in portrait and beside it in landscape)
+    // learning a move from the Abilities view drops it into the first empty slot (75-abilities-ui), so he says where it went. The row reads
+    // Attack, then slots Q, W, E in both views (75-solo-ui), so he names the move on its left as the row labels it (staged-guide-followups:
+    // "next to Attack" was wrong once Echo sat between them)
     slot: () => {
-      const eq = soloEquipped(), nm = (ABILITIES[slotAb] || {}).name || 'Your new move';
-      if (eq.includes(slotAb)) return `${nm} is next to Attack now. Press it there when it's ready.`;
+      const eq = soloEquipped(), nm = (ABILITIES[slotAb] || {}).name || 'Your new move', at = eq.indexOf(slotAb);
+      const left = at > 0 ? eq[at - 1] : null, leftNm = at === 0 ? 'Attack' : left ? (SOLO_ABILITIES[left] || {}).short || (ABILITIES[left] || {}).name : '';
+      if (at >= 0) return leftNm ? `${nm} is next to ${leftNm} now. Press it there when it's ready.` : `${nm} is in slot ${'QWE'[at]} now. Press it there when it's ready.`;
       return eq.includes(null) ? `${nm} needs a slot. Tap an empty slot next to Attack and pick it.` : `${nm} needs a slot. Hold one of your moves next to Attack to swap it in.`;
     }
   };
@@ -319,8 +321,16 @@
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov, .mm-ov';
   guideLineOk = () => !document.hidden && !q(BLOCK);   // core's lesson hold asks this: a line nobody can see must not hold the fight
-  let lastKey = '', useT0 = 0, useId = '', lastGT = null;
-  function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
+  let lastKey = '', useT0 = 0, useId = '', lastGT = null, gapHeld = false;
+  // the fight is on screen (no menu, or a landscape menu beside it) and you are fighting: a line here sits in the gap between two foes
+  const fightInView = () => fightingNow() && (!S.tab || !guideMenuCovers());
+  // a big moment card (the first boss's) is up, queued, or about to queue (the win's cache opens a tick after the kill)
+  // (the hold waits for the card itself, never for the cache: the cache opens on a game tick, which a hold would stop, and the boss's own card
+  // would then show alone with the cache's card after it)
+  const cardUp = () => { try { return !!q('.mm-ov') || MOMENT_Q.some(m => m.tier === 'big'); } catch (e) { return false; } };
+  const cachePending_ = () => typeof cachePending === 'function' && cachePending();
+  const cardComing = () => cardUp() || cachePending_();
+  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -336,20 +346,32 @@
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
     // unlock-voice: a new thing is announced only when no fight is in view, and the game waits on its Got it (cal-0107-staged-guide).
     // It goes before a between step that is not already up and holding (the news, then what to do), never over a fight lesson.
+    // staged-guide-followups: nor while a big card is up or on its way (the first boss's card came 1 s after the Scroll line and covered it)
     if (sayQ.length && O().tips && !document.hidden && guidePhase(!guideMenuCovers()) === 'between') {
       const id = sayQ[0];
       if (SAY_STILL[id] && !SAY_STILL[id]()) sayDone('say:' + id);
-      else if (sayCur === id || !step || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && ONBOARD.paused))) { sayCur = id; step = sayStep(id); }
+      else if (sayCur === id || !step || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && ONBOARD.paused))) {
+        // the card first: he waits, and the gap after the kill waits with him (the card holds the game too), so after Continue he speaks before the next foe
+        if (!sayCur && cardComing()) { hide(); ONBOARD.paused = fightInView() && cardUp() && !cachePending_(); return; }
+        sayCur = id; step = sayStep(id);
+      }
     }
-    // no guide step: the system on screen may still owe its first-use line (never alongside a guide step)
-    if (!step && S.tab) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
+    // no guide step: the system on screen may still owe its first-use line (never alongside a guide step), only with no fight in view
+    // (staged-guide-followups: a landscape menu leaves the fight beside it, and the line spoke over it)
+    if (!step && S.tab && (!fightInView() || guidePhase(true) === 'between')) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
     const use = /^(use|say):/.test(step.id);
+    // staged-guide-followups: a line that starts in the gap after a kill, with the fight in view, would show for under half a second before the
+    // next foe walks in and hides it. A line you read (a Got it note, a first-use line) holds that gap until you tap it; a live-progress line
+    // (materials, gold) waits for a calm screen instead (no fight, or a menu over it)
+    const gap = fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:')) && !onboardPaused(step) && !(cur && cur.id === step.id && gapHeld);
+    if (gap && !(step.ok || step.id.startsWith('use:'))) return hide();
+    gapHeld = gap || (gapHeld && !!cur && cur.id === step.id);
     // first-gold-and-camp-strip: the first weapon is ready to make, so Craft opens on it once (only from the game screen, never out of another menu)
     if (step.id === 'weapon' && !weaponOpened && !S.tab) { const k = weaponKind(); if (k) { weaponOpened = true; S.fSlot = k; S.fTier = 1; forgeGoalPicks++; setTab('forge'); } }
     let spec = null;
     const table = SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
-    // a first-use line has no target: it docks over the open menu with no ring, and never pauses the game
+    // a first-use line has no target: it docks over the open menu with no ring, and pauses only to hold a gap between foes (gapHeld)
     try { spec = use ? { node: S.tab || step.id.startsWith('use:') ? panels : stageBox, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
     // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
@@ -361,9 +383,9 @@
       if (R[step.id] >= GUIDE_QUIET && guideRetire(step.id)) return hide();
     }
     cur = step; curGo = spec.go || null;
-    putHidden(okb, !(step.ok || curGo));
+    putHidden(okb, !(step.ok || curGo || gapHeld));
     putText(okb, curGo ? curGo.label : 'Got it');
-    putToggle(bub, 'ok-row', !!step.ok && !curGo);   // a plain Got it sits beside the tip, so a short portrait stage keeps its height
+    putToggle(bub, 'ok-row', !!(step.ok || gapHeld) && !curGo);   // a plain Got it sits beside the tip, so a short portrait stage keeps its height
     place(spec);
     // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
     // never for a step that needs materials or time, and never while a press step is still short of what it costs.
@@ -371,7 +393,7 @@
     // and pauses nothing.
     const lost = table === STEP_UI && !use && !spec.noRing && !reachable(spec.node);
     if (lost) ring.hidden = true;
-    ONBOARD.paused = !lost && onboardPaused(step);
+    ONBOARD.paused = !lost && (onboardPaused(step) || gapHeld);
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).

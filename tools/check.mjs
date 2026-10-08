@@ -5788,9 +5788,12 @@ if (section('notices (browser, W1-B)')) try {
       assert(pops.length <= 8 && pops.length >= 1, `a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): ${pops.length} (${list})`);
       // The bot plays about four times a person's pace (zone 14 in 10 minutes; a person is at zone 5 near minute 18), so cards that a person
       // sees apart queue and fold into one, and a raw count over 10 bot minutes says little about a person's first 20. What the bot can
-      // prove is the shape (DECISIONS "Early game", moment cap): big cards stay few, banners keep the midMax budget, nothing doubles.
-      const big = (r.nb.mlist || []).filter(m => / big /.test(m)).length, med = r.nb.medT || [];
-      assert(big <= 8, `moment layer: big moments in a fresh game's first 10 minutes: ${big}; at most 8 (${(r.nb.mlist || []).join(', ')})`);
+      // prove is the shape (DECISIONS "Moment cap", 2026-10-08): F3 puts a big card at each first clear up to the zone 10 Champion (today
+      // zones 1-3 and 5-10, nine; zone 4's cache is a banner). Past zone 10 a cache is a banner unless it carries a unique, and a Feat card
+      // has no zone: at most 2 of those. Banners keep the midMax budget, and nothing doubles (the one-per-zone-clear assert below).
+      const bigs = (r.nb.mlist || []).filter(m => / big /.test(m)), med = r.nb.medT || [];
+      const bigPast = bigs.filter(m => { const z = / z(\d+)$/.exec(m); return !z || +z[1] > 10; });
+      assert(bigPast.length <= 2, `moment layer: big cards past the zone 10 Champion or with no zone (a unique's cache, a Feat): ${bigPast.length}; at most 2 in a fresh game's first 10 minutes (${bigs.length} big: ${(r.nb.mlist || []).join(', ')})`);
       assert(!med.some(t => med.filter(u => u >= t && u < t + 180).length > 3), `moment layer: at most 3 medium banners in any 3 minutes (${(r.nb.mlist || []).join(', ')})`);
       assert(new Set(r.nb.bigZones || []).size === (r.nb.bigZones || []).length && !r.nb.champEarly, 'moment layer: one big card for each zone clear, and a Champion card never shows before its cache opens' + (r.nb.champEarly ? ` (zone ${r.nb.champEarly})` : ` (big cards by zone: ${(r.nb.bigZones || []).join(', ')})`));
       assert((r.nb.moments || 0) <= r.zone, `moment layer: at most one big or medium moment for each zone cleared: ${r.nb.moments || 0} moments, zone ${r.zone} (${(r.nb.mlist || []).join(', ')})`);
@@ -7124,8 +7127,11 @@ if (section('guide target guard (browser)')) try {
           // 3. a first-use line has no ring and never pauses
           await X(`onboardStep = () => null; onboardUse = () => ({ id: 'use:camp', text: 'Build stations here.' }); setTab('world'); ui(true); true`);
           await page.evaluate(() => window.__gtgTick());
-          const u = await X(`({ ring: !document.querySelector('.ob-ring').parentNode.hidden && !document.querySelector('.ob-ring').hidden, paused: ONBOARD.paused, text: document.querySelector('.ob-txt').textContent })`);
-          assert(!u.ring && !u.paused && u.text === 'Build stations here.', `guard ${at}: a first-use line has no ring and never pauses (${JSON.stringify(u)})`);
+          const u = await X(`({ ring: !document.querySelector('.ob-ring').parentNode.hidden && !document.querySelector('.ob-ring').hidden, paused: ONBOARD.paused, text: document.querySelector('.ob-txt').textContent, up: !document.querySelector('.ob-bub').hidden, live: combatFoes().some(f => f && !f.dead && f.hp > 0 && !f.gone) })`);
+          // staged-guide-followups: a landscape menu leaves the live fight beside it, so the line waits for the gap between foes (that gap is timed in
+          // "staged guide follow-ups (browser)")
+          if (width > height && u.live) assert(!u.up && !u.paused, `guard ${at}: a first-use line waits while a live fight shows beside the menu, and pauses nothing (${JSON.stringify(u)})`);
+          else assert(!u.ring && !u.paused && u.text === 'Build stations here.', `guard ${at}: a first-use line has no ring and never pauses (${JSON.stringify(u)})`);
           assert(!errs.length, `guard ${at}: no browser errors` + (errs.length ? ': ' + errs[0] : ''));
         } finally { await ctx.close(); }
       }
@@ -11171,7 +11177,7 @@ if (section('staged guide (browser)')) try {
         let sl2 = null;
         for (let k = 0; k < 20 && !(sl2 && sl2.id === 'say:slot'); k++) { await page.waitForTimeout(200); sl2 = JSON.parse(await X(LOOK)); if (sl2.id && sl2.id !== 'say:slot' && sl2.id.startsWith('use:')) await X('document.querySelector(".ob-ok") && !document.querySelector(".ob-ok").hidden && document.querySelector(".ob-ok").click(); true'); }
         const slotted = await X(`soloEquipped().includes(${JSON.stringify(id)})`);
-        assert(slotted && sl2 && sl2.id === 'say:slot' && /is next to Attack now/.test(sl2.txt), `staged guide: a move learned into an empty slot gets his line saying where it went ("${sl2 && sl2.txt}", slotted ${slotted}, learned and slotted as the Learn button does)`);
+        assert(slotted && sl2 && sl2.id === 'say:slot' && /is next to Echo now/.test(sl2.txt), `staged guide: a move learned into an empty slot gets his line saying where it went ("${sl2 && sl2.txt}", slotted ${slotted}, learned and slotted as the Learn button does)`);
         assert(!errs.length, 'staged guide (Scroll, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -11196,6 +11202,138 @@ if (section('staged guide (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('staged guide (browser) crashed: ' + (e.stack || e)); }
+
+// ---- staged-guide-followups: Hesketh's first-hour lines land at the right moment, one at a time ----
+// With the real frame loop: a line never speaks over a live fight (a landscape menu leaves the fight beside it), a line that starts in the gap
+// after a kill holds that gap until it is read (it used to show for under half a second), the slot line names the move on the new move's left,
+// the back line comes within 2 s of the first point spent, and the first Scroll's line waits for the boss's card to close.
+if (section('staged guide follow-ups (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('staged guide follow-ups (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, moments) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, turns: true });
+      if (moments) await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} });
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X('for (const id of ["attack", "ability", "dodge", "parry"]) onboardDone(id); true');
+      return { ctx, page, errs, X };
+    };
+    const LOOK = `JSON.stringify((() => { const b = document.querySelector('.ob-bub'), up = !!(b && !b.hidden), q = turnCombatSnapshot();
+      return { up, id: up ? soloGuideWants() : '', txt: up ? document.querySelector('.ob-txt').textContent : '', paused: ONBOARD.paused, phase: q.phase,
+        live: combatFoes().some(f => f && !f.dead && f.hp > 0 && !f.gone), card: !!document.querySelector('.mm-ov'),
+        ok: up && !document.querySelector('.ob-ok').hidden, step: (s => (s ? s.id : ''))(onboardStep()) }; })())`;
+    // play on by hand for ms milliseconds (Attack on your turn, Dodge in a wind-up), logging each line: how long it stayed up and whether a foe
+    // was alive and the game running while it did
+    const play = async (X, page, ms, stopAt) => {
+      const shown = []; let cur = null, s = null;
+      for (const t0 = Date.now(); Date.now() - t0 < ms;) {
+        s = JSON.parse(await X(LOOK));
+        if ((s.up ? s.txt : '') !== (cur ? cur.txt : '')) { if (cur) { cur.dur = Date.now() - cur.at; shown.push(cur); } cur = s.up ? { txt: s.txt, id: s.id, at: Date.now(), overFight: false } : null; }
+        if (cur && s.live && !s.paused) cur.overFight = true;
+        if (stopAt && stopAt(s)) break;
+        if (!s.paused && s.phase === 'hero') await page.keyboard.press('d');
+        else if (!s.paused && s.phase === 'foeWindup') await page.keyboard.press('s');
+        await page.waitForTimeout(50);
+      }
+      if (cur) { cur.dur = Date.now() - cur.at; cur.open = true; shown.push(cur); }
+      return { shown, last: s };
+    };
+    try {
+      // item 2: landscape, the Gather menu open beside a live fight, its first-use line unread: he waits for the gap after the kill, then the line
+      // holds that gap with a Got it until you tap it
+      {
+        const { ctx, page, errs, X } = await open(740, 360);
+        await X('onboardDone("upgrade"); onboardDone("back"); onboardReveal("gather"); S.onboard.got.gather = Math.round(S.onboard.t); setTab("gat"); true');
+        const r = await play(X, page, 60000, s => s.up && /Pick a place to work/.test(s.txt) && s.paused);
+        const over = r.shown.filter(x => x.overFight);
+        assert(!over.length && r.last && r.last.up && r.last.paused && r.last.ok && !r.last.live, `staged guide follow-ups: in landscape the Gather menu's first line waits for the gap between foes, then holds it with a Got it (${over.length ? 'over a live fight: ' + over[0].txt : JSON.stringify(r.last)})`);
+        await page.click('.ob-ok'); await page.waitForTimeout(400);
+        assert(await X('!!S.onboard.done["use:gather"] && !ONBOARD.paused'), 'staged guide follow-ups: Got it reads the line and the fight goes on');
+        // and a between step (the cold fire's Gather line) never starts beside a live fight: it waits for the gap and holds it
+        await X('onboardReveal("party"); S.maxZone = 2; setTab("party"); true');
+        const r2 = await play(X, page, 20000, s => s.up && s.step === 'gather');
+        assert(!r2.shown.some(x => x.overFight) && (!r2.last.up || !r2.last.live), `staged guide follow-ups: in landscape, with the Hero menu open, a between line never starts over a live fight (${r2.shown.filter(x => x.overFight).map(x => x.txt).join('; ') || JSON.stringify(r2.last)})`);
+        assert(!errs.length, 'staged guide follow-ups (landscape line): no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // item 3: between fights, a Got it note (Next Up's) starts in the gap after a kill and stays until you tap it; a live-progress line never
+      // flashes up in that gap. No line shows for under 1 s, and none over a live fight.
+      {
+        const { ctx, page, errs, X } = await open(360, 740);
+        await X('for (const id of ["boss", "upgrade", "back", "gather", "chop", "light", "tab:party"]) onboardDone(id); onboardReveal("party"); onboardReveal("nextup"); S.maxZone = 3; true');
+        await page.waitForTimeout(500); await X('GUIDE_RT.lastEnd = -999; true');   // past his quiet minute
+        const r = await play(X, page, 60000, s => s.up && s.id === 'nextup' && s.paused);
+        const flash = r.shown.filter(x => !x.open && x.dur < 1000), over = r.shown.filter(x => x.overFight);
+        assert(r.last && r.last.id === 'nextup' && r.last.paused && r.last.ok, `staged guide follow-ups: Next Up's note starts between fights and holds the gap until Got it (${JSON.stringify(r.last)})`);
+        await page.waitForTimeout(1500);
+        assert(JSON.parse(await X(LOOK)).up && await X('combatFoes().every(f => !f || f.dead || f.hp <= 0 || f.gone)'), 'staged guide follow-ups: 1.5 s later the note is still up and the next foe still waits');
+        await page.click('.ob-ok'); await page.waitForTimeout(300);
+        // then play on: whatever else he has to say between fights also stays up at least 1 s
+        await X('onboardDone("nextup"); true');
+        const r2 = await play(X, page, 8000);
+        assert(!flash.length && !over.length && !r2.shown.some(x => x.overFight || (!x.open && x.dur < 1000)),
+          `staged guide follow-ups: no line flashes up for under 1 s between fights, and none speaks over a live fight (${[...flash, ...over, ...r2.shown].map(x => x.txt + ' ' + x.dur + ' ms').join('; ')})`);
+        // a portrait menu covers the fight, the Fight menu too: its first-use line (Bounties) shows at once and pauses nothing, as before
+        await X('onboardReveal("bounties"); S.onboard.got.bounties = Math.round(S.onboard.t); setTab("adv"); true'); await page.waitForTimeout(300);
+        await page.click('#viewSeg button[data-view="bounties"]'); await page.waitForTimeout(800);
+        const b3 = JSON.parse(await X(LOOK));
+        assert(b3.up && /short jobs/.test(b3.txt) && !b3.paused, `staged guide follow-ups: in portrait the Fight menu's first line (Bounties) shows over the menu and pauses nothing (${JSON.stringify(b3)})`);
+        assert(!errs.length, 'staged guide follow-ups (gap): no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // items 4 and 5: one point in Might brings the back line within 2 s (both views); Power Shot learned beside Echo is "next to Echo", as the row reads
+      for (const [w, h] of [[740, 360], [360, 740]]) {
+        const { ctx, page, errs, X } = await open(w, h);
+        await X('gainXp(xpNeed()); setTab("party"); true'); await page.waitForTimeout(300);
+        await page.click('#viewSeg button[data-view="attributes"]');
+        // (a level-up comes with a kill, so the line starts in that gap; here the points came mid-fight, so play on to the gap)
+        const s = (await play(X, page, 60000, s => /Put a point in Might/.test(s.txt))).last;
+        assert(s && /Put a point in Might/.test(s.txt), `staged guide follow-ups: the first level-up asks for a point in Might ("${s && s.txt}")`);
+        await page.click('#attrRows .at-row[data-at="might"] .at-add[data-n="1"]');
+        const t0 = Date.now(); let back = null;
+        for (let k = 0; k < 60; k++) { await page.waitForTimeout(100); const b = JSON.parse(await X(LOOK)); if (/close the menu/.test(b.txt)) { back = Date.now() - t0; break; } }
+        assert(back !== null && back <= 2000 && await X('attrPoints(soloHero()).free') > 0, `staged guide follow-ups ${w}x${h}: with points still left, the back line comes within 2 s of the first one spent (${back} ms)`);
+        if (w > h) { await ctx.close(); continue; }
+        await X('closeMenu(); for (const id of ["boss", "upgrade", "back"]) onboardDone(id); S.abil.scrolls.moss = 1; S.abil.got.moss = 1; onboardUseDone("say:scroll"); setTab("party", "abilities"); true');
+        await page.waitForTimeout(400);
+        await X('document.querySelectorAll(".ob-ok").forEach(b => { if (!b.hidden) b.click(); }); true');
+        const id = await X('HERO_ABILITIES.wren.find(id => ABILITIES[id].tier === 1)');
+        await X(`abilityLearn("wren", ${JSON.stringify(id)}) && soloEquip(soloEquipped().indexOf(null), ${JSON.stringify(id)}); true`);
+        let sl = null;
+        for (let k = 0; k < 20 && !(sl && sl.id === 'say:slot'); k++) { await page.waitForTimeout(200); sl = JSON.parse(await X(LOOK)); if (sl.id && sl.id.startsWith('use:')) await X('document.querySelector(".ob-ok").click(); true'); }
+        const row = await X('[...document.querySelectorAll("#soloBar .sb-row-ab .sbtn")].map(n => n.querySelector(".sb-lb").textContent).join("|")');
+        const eq = JSON.parse(await X('JSON.stringify(soloEquipped())')), at = eq.indexOf(id), labels = row.split('|');
+        assert(sl && sl.id === 'say:slot' && at === 1 && sl.txt.includes(`next to ${labels[at]} now`) && !/next to Attack/.test(sl.txt), `staged guide follow-ups: the slot line names the move on the new one's left, as the row reads (row ${row}; "${sl && sl.txt}")`);
+        assert(!errs.length, 'staged guide follow-ups (point, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // item 6: the first boss's card is on its way when the Scroll drops: the Scroll line waits for the card to close, then shows once
+      {
+        const { ctx, page, errs, X } = await open(360, 740, true);
+        await X('for (const id of ["boss", "upgrade", "back"]) onboardDone(id); onboardReveal("party"); true');
+        await page.waitForTimeout(4200);   // the moment layer holds cards for its first 4 s after boot
+        await play(X, page, 60000, s => !s.live && s.phase === 'off');   // the gap after a kill, as the boss's death leaves it
+        await X('S.abil.scrolls.moss = 1; S.abil.got.moss = 1; moment("cache", { title: "First boss down", sub: "Here is what the win gave you." }); emit("scrollDrop", { id: "moss", n: 1, first: true, firstEver: true }); true');
+        const seen = [];
+        for (let k = 0; k < 30; k++) { const s = JSON.parse(await X(LOOK)); seen.push((s.card ? 'card' : '') + (s.id === 'say:scroll' ? '+scroll' : '')); if (s.card) break; await page.waitForTimeout(100); }
+        assert(seen[seen.length - 1] === 'card' && !seen.some(x => x.includes('scroll')), `staged guide follow-ups: the Scroll line does not show before the boss's card (${seen.filter(Boolean).join(', ') || 'no card'})`);
+        await page.waitForTimeout(900); await page.click('.mm-ov button'); await page.waitForTimeout(800);
+        const sc = JSON.parse(await X(LOOK));
+        assert(sc.id === 'say:scroll' && /Moss Scroll/.test(sc.txt) && sc.paused && !sc.card && !sc.live, `staged guide follow-ups: after Continue, the Scroll line shows before the next foe ("${sc.txt}", foe alive ${sc.live})`);
+        assert(!errs.length, 'staged guide follow-ups (Scroll): no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('staged guide follow-ups (browser) crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
@@ -12244,6 +12382,21 @@ if (section('tell us form')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('tell us form crashed: ' + (e.stack || e)); }
+
+// ---- late-save-hero-card-repeat: a hero who joined is announced once; reloads and the late fixture show no "New hero" card ----
+// 75-moments-ui shows the hero moment only on the heroUnlocked event, so counting that event counts the cards.
+if (section('hero join shown once')) try {
+  const joins = g => { g.eval('globalThis.__joins = []; on("heroUnlocked", e => __joins.push(e.id))'); return () => g.eval('__joins.join()'); };
+  const run = (g, s) => { for (let i = 0; i < s * 4; i++) g.fn.tick(0.25); };
+  const g = loadCore({ seed: 9401 }), first = joins(g);
+  g.eval('S.maxZone = S.zone = UNLOCK_TUNE.progress.hesketh.zone'); run(g, 3); g.fn.save();
+  let st = g.storage.dump(); const again = [];
+  for (let i = 0; i < 2; i++) { const h = loadCore({ seed: 9402 + i, storage: memoryStorage(st) }), seen = joins(h); run(h, 5); again.push(seen()); h.fn.save(); st = h.storage.dump(); assert(!h.errors.length, `hero join: reload ${i + 1} has no errors`); }
+  assert(first() === 'hesketh' && again.join('|') === '|', `hero join: Hesketh joins once at zone 11 and two reloads announce no hero again (first "${first()}", reloads "${again.join('|')}")`);
+  const late = loadCore({ seed: 9404, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8') }) }), lateSeen = joins(late);
+  run(late, 5);
+  assert(lateSeen() === '' && !late.errors.length, `hero join: the late fixture already has its heroes, so loading it shows no "New hero" card (got "${lateSeen()}")`);
+} catch (e) { fail('hero join shown once crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
