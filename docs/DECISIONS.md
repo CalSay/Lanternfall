@@ -599,7 +599,7 @@ measurements, re-run by the judge at 160 fights a row on the same build (same nu
   z14 81/73/75, z15 55/50/43 (Champion band 40-60, Tobin 50-70: the card's 60-80 is the Captain band and does not apply at z15).
   Good players 100. A weaker casual 35-61 at z13. A player who never defends wins 0-6%. Walks: seed 1 Wren cleared zone 13 on the
   first try at 31:04 (was 30 tries lost), seed 2 Tobin at 36:38 (was 6 tries, cleared at 41-44 min). Neither lost a try at 14 or 15.
-- **How the fight feels.** A landed hit at zones 13-15 now costs a fixed share of your health, about a fifth, and a landed
+- **How the fight feels.** A landed hit at zones 13-15 now costs a fixed share of your health, about a fifth for Wren and Pip (Tobin's own boss-hit share, heroHitX 1.6-2.55, lifts his toward the 40% cap), and a landed
   charge nearly half (check reads z15 19-20% and 45-48%). Gear health no longer shrinks it; armour, Guard and timing still do. The
   old hits sat on the 40% cap. Fights at the arrival footing last about 6 turns played well, as zone 12 does (z12 5.9/7.4/4.7, z13
   5.9/7.8/5.7, z15 4.9/4.7/4.8); they were 17-24 turns and unwinnable.
@@ -615,7 +615,7 @@ measurements, re-run by the judge at 160 fights a row on the same build (same nu
   accepted: zero on the knots, and the gate's own tolerance (6 points or 2.5 sd) on any zone 1-12 budget cell or pre-zone-13
   pacing metric. Both walks lost no boss try in zones 1-12.
 - **The wall moves to zone 16.** The walks reach zone 16 at 35-41 min and lose 28-57 tries there by 60:00 (the bot always presses
-  Try again). The active persona now reaches zone 16 (Wren, Pip) and dies there (wipes per hour 14.3 to 27.7). The 50-hour bots stall
+  Try again). The active persona now reaches zone 16 (Wren, Pip) and dies there (wipes per hour 14.3 to 27.7; hero parity 0.07 to 0.22, as Wren and Pip end the hour at zone 16 and Tobin at 12). The 50-hour bots stall
   3.6-5.5 h at zone 16 and reach zone 29 earlier (Wren sits there 24 h). These are existing walls met sooner, not new ones. They
   stay the balance pass's; the health baselines are re-set to the new run with no tolerance change.
 - **Long-run empty-endgame watch.** long.postNewThingShare `abs` goes from 0.1 to 0.13 (each hero may move up to 0.26). At seed

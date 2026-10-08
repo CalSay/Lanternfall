@@ -9301,7 +9301,7 @@ if (section('C29 mid-game HP and Wren (core)')) try {
       // zones 25-34 (mid-zone-wall, 2026-10-07): the hero who keeps up there has only 0.2-0.4 of the reference HP (budget.mjs), and this
       // hero is scaled to the reference, so a boss hit that costs them 25-45% reads 8-16% here and a charge 20-45%
       // zones 15 and 20 (boss-tiers PR 3, 2026-10-07): the knots there are fitted to the budget's casual band, a boss hit reads 15-45% here
-      // zones 8 and 15 (boss-tiers-pr4, 2026-10-07): the tricks carry the difficulty there, so the refit hit scales are 0.46-0.9 of the old ones: a boss hit reads 22% at zone 8 and 10% at zone 15, a charge 52% and 24%
+      // zones 8 and 15 (boss-tiers-pr4, 2026-10-07): the tricks carry the difficulty there, so the refit hit scales are 0.46-0.9 of the old ones: a boss hit reads 22% at zone 8, a charge 52%; zone 15 (z13-unstick, 2026-10-08) reads its hpFloor, about 19-20% a hit and 45-48% a charge
       // zones 20-34 (boss-tiers-pr5b, 2026-10-07): the tricks, rally gates and footing floor carry the difficulty there, so the refit hit scales are 0.2-0.4 of the old ones:
       // a boss hit reads 16% at zone 20 and 4% at zones 25-34 here, a charge 35% and 9-10%
       const mid = z >= 25, b = mid ? [0.025, 0.08, 0.06, 0.2] : z === 15 ? [0.07, 0.42, 0.2, 0.92] : z === 20 ? [0.1, 0.42, 0.25, 0.92] : [0.18, 0.36, 0.45, 0.9];
