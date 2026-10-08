@@ -23,6 +23,8 @@
 // Gear (walk-bot-gear): it wears what a casual player wears. It puts on any better bag piece (Craft > Gear > the piece > Equip), crafts the
 // weapon, off-hand, head or body piece it is one tier short of (Craft > Make > station > tier > Craft), gathers the missing materials in the
 // Gather view for up to 5 minutes (Hunting for hide), builds the station a recipe needs (Camp > Build, two taps), and goes back to the fight.
+// Tier gates (next-tier-gate-goal): when no Next Up row is Ready and the craft row names a tier gate, it presses that row's Go and crafts at
+// the station or gathers in the named view for up to 5 minutes (the report's Gear section lists the gate rows pressed).
 // It closes a sheet it left over the bar with the X. The report's "Gear and boss tries" table says what it wore in each zone and the boss tries lost there.
 // Game time is a paused fake clock stepped in 100 ms frames (33 ms while a foe winds up); the page's frames are timers on it and CSS
 // animations are moved by the same steps, so two runs of a seed and build give the same first fights and first minutes (a rare
@@ -331,7 +333,7 @@ async function followNextUp(o) {
   if (!(await click('#nuChip', 300))) return false;
   await advance(300, 16);
   const rows = await page.evaluate(() => [...document.querySelectorAll('.nu-row.ready')].filter(r => r.getClientRects().length).map(r => (r.querySelector('.nu-lbl') || r).textContent.trim()));
-  const holdFight = st.gear.owns && st.gear.sess && !st.gear.sess.gaveUp;   // gathering for a gear goal: the boss row waits
+  const holdFight = (st.gear.owns && st.gear.sess && !st.gear.sess.gaveUp) || !!(st.gate.sess && st.gate.sess.owns);   // gathering for a gear goal or a tier gate: the boss row waits
   const label = rows.find(l => (st.calls[goalKey(l)] || 0) < 4 && !(holdFight && /^boss ready|boss is next|^the zone \d+ boss/i.test(l)));   // a goal the casual player cannot finish is a finding, not a loop
   const closeList = () => click('.bsheet-ov .bsheet-x', 200);
   if (label === undefined) { await closeList(); return false; }
@@ -533,6 +535,76 @@ async function gearStep(o) {
   return true;
 }
 
+// next-tier-gate-goal: when no Next Up row is Ready and the craft row names a tier gate ("Birch Bow for the zone 13 boss: Woodcraft
+// 8 of 10", or "...: Woodcutting 7 of 14 opens Birch Log"), the bot presses that row's Go and works it the way it works its own gear
+// goal: at a station gate it crafts the cheapest tier 1 piece at that station it can pay for (gathering that piece's missing material
+// first when none is affordable); at a material gate it gathers in the named Gather view. For up to 5 minutes, then back to the
+// fight; the same gate waits 5 more minutes of fighting before the bot takes it again. It reads the gate (craftGoalNext, 55-goals),
+// never sets it.
+const GATE_Q = `(() => { const b = craftGoalNext(); if (!b || !b.gate) return null; const g = b.gate;
+  return { key: g.skill + ':' + g.need, skill: g.skill, txt: SKILL[g.skill] + ' ' + g.lv + ' of ' + g.need, lv: S.skills[g.skill].lv, need: g.need, st: g.station || '', mat: g.mat || '', nm: kindName(b.kind, b.t),
+    act: S.activity, node: S.node ? { kind: S.node.kind, t: S.node.t } : null }; })()`;
+// a station gate: the cheapest tier 1 piece there the bot can pay for, else the missing material of the cheapest one it can gather for
+const GATE_ST_Q = st => `(() => { const t = 1, can = k => k !== 'ess' && !!CRAFT_NODES[k] && craftNodeVisible(k, t) && (k !== 'fibre' && k !== 'herb' || isUnlocked('forage'));
+  const all = Object.keys(CRAFT_KINDS).filter(k => CRAFT_KINDS[k].st === ${JSON.stringify(st)} && !CRAFT_KINDS[k].legacy && craftKindVisible(k))
+    .map(k => ({ k, c: canCraft(k, t), n: Object.values(craftRecipe(k, t)).reduce((a, n) => a + n, 0) })).filter(x => x.c.cost && !x.c.unbuilt).sort((a, b) => a.n - b.n);
+  const ok = all.find(x => x.c.ok); if (ok) return { craft: ok.k, nm: kindName(ok.k, t) };
+  for (const x of all) { const m = (x.c.miss || []).filter(([k]) => can(k)).sort((a, b) => b[1] - a[1])[0]; if (m && S.gold >= (x.c.cost.gold || 0)) return { gather: { k: m[0], t, n: m[1] }, nm: kindName(x.k, t) }; }
+  return { why: bagFull() ? 'the bag is full' : 'nothing at that station it can pay for or gather for' }; })()`;
+// a material gate: the named material's family, at the highest node tier its skill has open
+const GATE_MAT_Q = mat => `(() => { for (const k of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) if (costName(k, t) === ${JSON.stringify(mat)}) {
+  let tt = Math.min(5, skillTopTier(skillOf(k))); while (tt > 1 && !craftNodeVisible(k, tt)) tt--; return { k, t: tt }; } return null; })()`;
+st.gate = { sess: null, stepAt: -99, cool: {}, pressed: [], crafts: 0, firstT2: null };
+async function gateStep(o) {
+  const T = st.gate;
+  if (gt - T.stepAt < 5 || o.cards.length || o.tip || o.phase !== 'idle' || !o.s.got || !o.s.got.craft || !o.s.got.nextup || st.gear.owns) return false;
+  T.stepAt = gt;
+  const q = await X(GATE_Q);
+  const end = async why => {
+    const s = T.sess; T.sess = null; T.cool[s.key] = gt + 300;
+    await note(page, 'gate', `${s.txt}: ${why}`, { shot: false, extra: { gate: s.txt, end: why } });
+    if (s.owns && (await X('S.activity')) === 'gather') { await click('#modeSeg button[data-act="fight"]', 300); await advance(300, 16); }
+    return true;
+  };
+  if (T.sess) {
+    const s = T.sess;
+    if (!q || q.key !== s.key) return await end(q ? 'another gate took its place' : 'the gate opened');
+    if (gt - s.start > 300) return await end('5 min and still shut, back to the fight');
+    let m = null;
+    if (s.st) {
+      const w = await X(GATE_ST_Q(s.st));
+      if (w.craft) { T.crafts++; await craftGoal({ st: s.st, t: 1, kind: w.craft, nm: w.nm }); return true; }
+      if (!w.gather) return await end('stopped: ' + w.why);
+      m = w.gather;
+    } else {
+      m = await X(GATE_MAT_Q(s.mat));
+      if (!m) return await end('stopped: no node for ' + s.mat);
+    }
+    if (q.act === 'gather' && q.node && q.node.kind === m.k && q.node.t === m.t) return false;   // already working there
+    const did = await startGather(m.k, m.t);
+    if (did) s.owns = true;
+    await note(page, 'gate', `gathering ${m.k} tier ${m.t} for ${s.txt}${did ? '' : ' -> could not start'}`, { extra: { kind: m.k, t: m.t }, tag: 'gate-gather' });
+    return true;
+  }
+  if (!q || (T.cool[q.key] || 0) > gt) return false;
+  // open Next Up: only when no row is Ready (a Ready row is followNextUp's), press the gate row's Go
+  if (!(await click('#nuChip', 300))) return false;
+  await advance(300, 16);
+  const pick = await page.evaluate(txt => { const rows = [...document.querySelectorAll('.nu-row')].filter(r => r.getClientRects().length);
+    if (rows.some(r => r.classList.contains('ready'))) return '';
+    const r = rows.find(r => ((r.querySelector('.nu-lbl') || r).textContent || '').includes(txt)), g = r && r.querySelector('.nu-go');
+    if (!g) return ''; g.setAttribute('data-walk', '1'); return (r.querySelector('.nu-lbl') || r).textContent.trim(); }, q.txt);
+  const went = pick && await click('[data-walk="1"]', 300);
+  await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
+  if (!went) { await click('.bsheet-ov .bsheet-x', 200); return false; }
+  await advance(400, 16);
+  const where = await X('S.tab');
+  T.pressed.push({ t: gt, label: pick });
+  T.sess = { key: q.key, txt: q.txt, st: q.st, mat: q.mat, start: gt, owns: false };
+  await note(page, 'gate', `${pick} -> pressed Go (${where === 'forge' ? 'Craft' : where === q.skill ? 'its Gather view' : 'tab ' + where})`, { extra: { goal: pick, pressed: 'Go', tab: where }, tag: 'gate-go' });
+  return true;
+}
+
 // ---------------- watching ----------------
 const HIT_SOUNDS = new Set(['hit', 'crit', 'big', 'counter', 'kill']);   // F1: the sound of a hit landing (76-audio plays big or counter for those tiers, else hit or crit)
 const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge', 'momentBig', 'momentMid']);   // momentBig and momentMid are the moment layer's own stings (76-audio.js)
@@ -601,6 +673,7 @@ async function run() {
       if (Date.now() - t0 > BUDGET_MS) { stop = `clock budget spent at game minute ${(gt / 60).toFixed(1)}`; break; }
       o = await X(OBS);
       await watch(o);
+      if (Math.floor(gt / 60) !== lastMin && st.gate.firstT2 === null && await X('(b => !!b && !b.gate && b.t >= 2 && b.p > 0)(craftGoalNext())')) { st.gate.firstT2 = gt; await note(page, 'gate', 'first tier 2 craft goal on Next Up', { shot: false }); }   // next-tier-gate-goal
       if (Math.floor(gt / 60) !== lastMin) { lastMin = Math.floor(gt / 60); say(`minute ${lastMin}: zone ${o.s.maxZone}, level ${o.s.L}, gold ${o.s.gold} (${Math.round((Date.now() - t0) / 1000)} s clock)`); }
       if (process.env.WALK_DEBUG && Math.floor(gt) !== st.dbg) { st.dbg = Math.floor(gt); if (process.env.WALK_DEBUG === '2') console.error('  bar', await page.evaluate(() => [...document.querySelectorAll('#soloBar .sbtn')].map(b => b.className.replace('sbtn ', '') + (b.disabled ? ' DIS' : '') + ' ' + (b.getAttribute('aria-disabled') || '') + '|' + b.textContent.replace(/\s+/g, ' ').trim().slice(0, 30)).join(' ;; ')));
       console.error('  dbg', gt.toFixed(1), o.phase, JSON.stringify(o.tip && { a: o.tip.action, b: o.tip.button }), o.cards.length, JSON.stringify(o.s).slice(0, 120)); }
@@ -632,6 +705,7 @@ async function run() {
       if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('.tabs .tab[data-tab="adv"]', 300); }
       if (!did && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
       if (!did) did = await gearStep(o);
+      if (!did) did = await gateStep(o);
       // the Fight menu (tab "adv") covers the action bar in portrait: a player whose turn is waiting closes it
       if (!did && o.s.tab === 'adv' && o.phase !== 'idle' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('#menuX', 300); }
       const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || false;   // the 33 ms step is for the foe's wind-up and the parry window only
@@ -775,6 +849,9 @@ function report(res) {
     '| Zone | First stood in at | Level | Boss tries lost | Worn then |', '|---|---|---|---|---|');
   for (const [zn, e] of Object.entries(st.enter || {})) out.push(`| ${zn} | ${fmtT(e.t)} | ${e.L} | ${(st.tries || {})[zn] || 0} | ${e.gear} |`);
   out.push('');
+  // next-tier-gate-goal: the gate rows the bot pressed, and the minute Next Up first offered an open tier 2 craft
+  { const G = st.gate, ends = log.filter(e => e.kind === 'gate' && e.end);
+    out.push(`Next Up tier gates: ${G.pressed.length} gate row${G.pressed.length === 1 ? '' : 's'} pressed${G.pressed.length ? ' (' + G.pressed.map(p => `"${p.label}" at ${fmtT(p.t)}`).join(', ') + ')' : ''}; ${G.crafts} tier 1 craft${G.crafts === 1 ? '' : 's'} made for a station gate${ends.length ? '; ' + ends.map(e => `${e.end} at ${fmtT(e.t)}`).join(', ') : ''}. First tier 2 craft goal: ${G.firstT2 === null ? 'not seen in ' + fmtT(reached) : fmtT(G.firstT2)}.`, ''); }
   // craft-delta: crafts plus upgrades, first uses, and the longest stretch of minutes 20-60 with no choice (spec target: one every 8 min)
   const ups = log.filter(e => e.kind === 'upgrade'), crafts60 = log.filter(e => e.kind === 'moment' && /^craft:/.test(e.text) && e.t <= 3600).length, ups60 = ups.filter(e => e.t <= 3600).length;
   const cw = [1200, ...choices.map(c => c.t).filter(t => t > 1200 && t < Math.min(3600, reached)), Math.min(3600, reached)];
@@ -807,7 +884,7 @@ function report(res) {
   out.push('', med === null ? 'Walk against est: no beat to compare.' : `Walk against est (information, not a finding): the median beat came at ${med.toFixed(2)} of its est time over ${ratios.length} beats, so the bot plays about ${(1 / med).toFixed(1)} times a casual person's guessed pace.`, '');
   out.push('### More than 50% off the map\'s walk, for the lead', '', ...(off.length ? off.map(x => '- ' + x) : ['- none']), '');
   // dead air
-  const marks = [0, ...log.filter(e => ['unlock', 'moment', 'nextup', 'gear'].includes(e.kind) && !(e.kind === 'moment' && e.text.startsWith('level'))).map(e => e.t), reached].sort((a, b) => a - b);
+  const marks = [0, ...log.filter(e => ['unlock', 'moment', 'nextup', 'gear', 'gate'].includes(e.kind) && !(e.kind === 'moment' && e.text.startsWith('level'))).map(e => e.t), reached].sort((a, b) => a - b);
   const quiet = []; for (let i = 1; i < marks.length; i++) if (marks[i] - marks[i - 1] >= 180) quiet.push({ from: marks[i - 1], to: marks[i] });
   out.push('## Where it dragged', '', ...(quiet.length ? quiet.slice(0, 8).map(q => `- ${fmtT(q.from)} to ${fmtT(q.to)}: ${Math.round((q.to - q.from) / 60 * 10) / 10} min with no unlock, boss win, unique, Star, hero or Next Up result`) : ['- no stretch over 3 minutes without a reward or an unlock']), '');
   // findings
@@ -819,7 +896,7 @@ function report(res) {
   out.push('');
   // timeline
   out.push('## Timeline', '', 'Every tip, card, unlock and moment, with the game time it landed and its shot. Toasts and plain cards are in the json.', '', '| Time | Kind | What | Shot |', '|---|---|---|---|');
-  for (const e of log.filter(e => ['tip', 'unlock', 'moment', 'nextup', 'gear', 'stall', 'tab'].includes(e.kind) || (e.kind === 'card' && e.shot))) out.push(`| ${fmtT(e.t)} | ${e.kind} | ${e.text.replace(/\|/g, '/').slice(0, 110)} | ${e.shot ? '`' + e.shot + '`' : ''} |`);
+  for (const e of log.filter(e => ['tip', 'unlock', 'moment', 'nextup', 'gear', 'gate', 'stall', 'tab'].includes(e.kind) || (e.kind === 'card' && e.shot))) out.push(`| ${fmtT(e.t)} | ${e.kind} | ${e.text.replace(/\|/g, '/').slice(0, 110)} | ${e.shot ? '`' + e.shot + '`' : ''} |`);
   out.push('');
   return { md: out.join('\n'), sc, beats: beats.map(b => ({ id: b.id, est: b.est, mapWalk: b.walk, walk: meas[b.id] ?? null, measured: b.id in meas, note: notes[b.id] || '' })), off, median: med };
 }

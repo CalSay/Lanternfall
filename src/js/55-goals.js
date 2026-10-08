@@ -31,6 +31,8 @@ function registerGoal(g) {
   return () => { const j = GOALS.indexOf(rec); if (j >= 0) GOALS.splice(j, 1); };
 }
 let topGoals;
+// next-tier-gate-goal: the craft goal's pick, read-only (tools/walk.mjs reads it): forgeNext() below.
+let craftGoalNext = () => null;
 // Counts Next Up craft picks, so the Craft tab refocuses the recipe even when it is the same one.
 var forgeGoalPicks = 0;
 
@@ -197,8 +199,11 @@ var forgeGoalPicks = 0;
     go: { tab: 'adv', sel: '#sec-bestiary' }
   });
 
-  // Skills: the skill closest to its next level.
+  // Skills: the skill closest to its next level. next-tier-gate-goal: while the craft goal shows a tier gate, the skill that
+  // gate names (so the two rows agree), and its Go is the gate row's. A crafting skill's Go opens Craft at its station.
   const skillNext = () => {
+    const f = forgeNext();
+    if (f && f.gate) { const s = S.skills[f.gate.skill]; if (s) return { k: f.gate.skill, s, p: Math.min(0.99, s.xp / skillNeed(s.lv, f.gate.skill)), f }; }
     let best = null;
     for (const k of Object.keys(SKILL)) {
       if (k === 'hunt' && !huntingVisible()) continue;
@@ -208,13 +213,22 @@ var forgeGoalPicks = 0;
     }
     return best;
   };
-  const SKILL_IC = { mine: ['pick', '#D08A4E'], wood: ['axe', '#5FAE4E'], smith: ['anvil', '#6E6878'] };
+  const SKILL_IC = { mine: ['pick', '#D08A4E'], wood: ['axe', '#5FAE4E'], smith: ['anvil', '#6E6878'], bench: ['anvil', '#C9A56A'], loom: ['anvil', '#8FA868'], ench: ['anvil', '#B58CFF'] };
+  // the station a crafting skill levels at, and Go to it on Craft (the Forge's level bar is #smithBar, the others their station button)
+  const stationFor = k => Object.keys(CRAFT_STATIONS).find(s => CRAFT_STATIONS[s].skill === k);
+  const stationSel = s => s === 'forge' ? '#smithBar' : `.cf-st[data-st="${s}"]`;
+  const skillGo = k => {
+    const st = stationFor(k); if (!st) return { tab: 'gat', view: k };   // UX-A: a gathering skill's own Gather view
+    // pick a recipe at that station so the Craft screen opens there (75-craft-ui syncGoalPick reads S.fSlot / S.fTier)
+    const kind = CRAFT_HERO_POS.map(kindsFor).flat().find(x => CRAFT_KINDS[x].st === st) || Object.keys(CRAFT_KINDS).find(x => CRAFT_KINDS[x].st === st && !CRAFT_KINDS[x].legacy && craftKindVisible(x));
+    return { tab: 'forge', sel: stationSel(st), fn: () => { if (kind) { S.fSlot = kind; S.fTier = 1; forgeGoalPicks++; } } };
+  };
   registerGoal({
     id: 'skill', sys: 'skill', prio: -1,
     pct: () => { const b = skillNext(); return b ? b.p : null; },
     label: () => { const b = skillNext(); return b ? `${SKILL[b.k]}: ${fmt(Math.ceil(skillNeed(b.s.lv, b.k) - b.s.xp))} XP to level ${b.s.lv + 1}` + (skillNextReq(b.k) === b.s.lv + 1 ? `, which opens tier ${skillTopTier(b.k) + 1}` : '') : ''; },
     icon: () => { const b = skillNext(); return { ic: SKILL_IC[b ? b.k : 'mine'] || SKILL_IC.mine }; },
-    go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', view: b.k }; }   // UX-A: the skill's own Gather view
+    go: () => { const b = skillNext(); return !b ? { tab: 'gat' } : b.f ? gateGo(b.f) : skillGo(b.k); }
   });
 
   // Craft: the next tier of an item the hero can wear (class kinds via CRAFT_FITS/fits; a
@@ -248,8 +262,42 @@ var forgeGoalPicks = 0;
     icon: () => { const b = equipNext(); return b ? { item: b.it } : null; },
     go: () => { const b = equipNext(); if (b) equipItem(b.it.id, b.pos); }
   });
-  const forgeNext = () => {
+  // next-tier-gate-goal: what keeps a piece's next tier shut. The station's skill below the tier's gate is a station gate; else a
+  // material you are short of whose node tier is closed for its gathering skill (a refined one by the raw goods it is made from;
+  // coal comes with Copper Ore and essence has no tier, so neither gates). The nearer one (the higher lv / need) is named.
+  // null: nothing gates it; false: only a gate the player cannot raise now (Hunting hidden, Foraging not open yet).
+  const GATHER_OPEN = { hide: () => huntingVisible(), fibre: () => isUnlocked('forage'), herb: () => isUnlocked('forage') };
+  const nearer = (a, b) => !b || a.lv / a.need > b.lv / b.need;
+  const matGate = (k, t, short) => {
+    const prod = typeof REFINE_PRODUCTS === 'object' ? REFINE_PRODUCTS[k] : null;
+    const raw = prod ? prod.inputs(t).filter(([f]) => f !== 'coal').map(([f, tt, n]) => [f, tt, n * short - matOwn(f, tt)]) : [[k, t, short]];
+    let best = null, shut = false;
+    for (const [f, tt, miss] of raw) {
+      if (miss <= 0 || !CRAFT_NODES[f]) continue;
+      const sk = skillOf(f); if (skillTierOpen(sk, tt)) continue;
+      if (GATHER_OPEN[f] && !GATHER_OPEN[f]()) { shut = true; continue; }
+      const g = { skill: sk, lv: S.skills[sk].lv, need: skillReq(sk, tt), mat: costName(f, tt) };
+      if (nearer(g, best)) best = g;
+    }
+    return shut ? false : best;
+  };
+  const recipeGate = (kind, t, c) => {
+    if (c.lv < c.need) return { skill: stationOf(kind).skill, lv: c.lv, need: c.need, station: stationOf(kind).key };
     let best = null;
+    for (const [k, n] of Object.entries(c.cost.mats)) {
+      const short = n - matOwn(k, t); if (short <= 0) continue;
+      const g = matGate(k, t, short);
+      if (g === false) return false;
+      if (g && nearer(g, best)) best = g;
+    }
+    return best;
+  };
+  // a station gate beats any material gate (about 50 XP against thousands); then the nearer; on a tie, the weapon
+  const gateScore = e => (e.gate.station ? 2 : 0) + e.gate.lv / e.gate.need + (e.pos === 'weapon' ? 1e-6 : 0);
+  // forgeNext() -> { kind, t, pos, cost, p } the open recipe closest to done, or, when none with p > 0 is open,
+  // { kind, t, pos, gate: { skill, lv, need, mat?, station? }, p } the nearest gate (p = lv / need, at most 0.99, never Ready)
+  const forgeNext = () => {
+    let best = null, gate = null;
     const zt = zoneTier(S.maxZone);
     const eq = equipNext();
     for (const pos of CRAFT_HERO_POS) {
@@ -260,32 +308,44 @@ var forgeGoalPicks = 0;
         const t = have + 1;
         if (t > Math.min(5, zt)) continue;
         const c = canCraft(kind, t);
-        if (!c.cost || c.lv < c.need || c.unbuilt) continue;   // unbuilt: a cold save's station (H1)
+        if (!c.cost || c.unbuilt) continue;   // unbuilt: a cold save's station (H1); no gate on a station that is not built
+        const g = recipeGate(kind, t, c);
+        if (g !== null) {
+          if (g) { const e = { kind, t, pos, gate: g, p: Math.min(0.99, g.lv / g.need) }; if (!gate || gateScore(e) > gateScore(gate)) gate = e; }
+          continue;
+        }
         const ks = Object.keys(c.cost.mats);
         const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(matOwn(k, t), c.cost.mats[k])), 0) / Math.max(1, ks.length));
         const score = p + (pos === 'weapon' ? 0.02 : 0);
         if (!best || score > best.score) best = { kind, t, pos, cost: c.cost.mats, p, score };
       }
     }
-    return best;
+    return best && best.p > 0 ? best : gate || best;   // an open recipe at p = 0 (Next Up drops it) does not hide a gate
   };
+  // a gate row's Go: Craft at the station's tier 1 (a craft there levels it), or the gathering skill's Gather view
+  const gateGo = b => b.gate.station
+    ? { tab: 'forge', sel: stationSel(b.gate.station), fn: () => { S.fSlot = b.kind; S.fTier = 1; forgeGoalPicks++; } }
+    : { tab: 'gat', view: b.gate.skill };
+  craftGoalNext = () => forgeNext();
   registerGoal({
     id: 'forge', sys: 'forge',
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
     label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
+      if (b.gate) return `${nm}: ${SKILL[b.gate.skill]} ${b.gate.lv} of ${b.gate.need}` + (b.gate.mat ? ` opens ${b.gate.mat}` : '');
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
       const k = Object.keys(b.cost).find(k => matOwn(k, b.t) < b.cost[k]);
       return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - matOwn(k, b.t))} more ${costName(k, b.t)}` : `Craft ${a} ${nm}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
-    go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
+    go: () => { const b = forgeNext(); return b && b.gate ? gateGo(b) : { tab: 'forge', sel: '#forgeBtn', fn: () => { const x = forgeNext(); if (x && !x.gate) { S.fSlot = x.kind; S.fTier = x.t; forgeGoalPicks++; } } }; }
   });
   // Upgrade (craft-delta): a worn piece whose next upgrade you can pay for now, offered only while no craft is ready
   // (the craft goal is not Ready). Weapon first, then the slot order. Go opens the piece's sheet on Hero, Gear.
   // upgrade-goal-chip-order: never the piece the shown craft goal replaces, and never an upgrade that leaves less of a
   // shared material (same tier, or essence) than the craft needs; when nothing is left, the craft goal leads.
   const upgradeNext = () => {
-    const f = forgeNext(); if (f && f.p >= 1) return null;
+    const f0 = forgeNext(), f = f0 && !f0.gate ? f0 : null;   // next-tier-gate-goal: a gate row replaces no piece
+    if (f && f.p >= 1) return null;
     for (const pos of CRAFT_HERO_POS) {
       if (f && f.p > 0 && pos === f.pos) continue;
       const it = equipped(pos);

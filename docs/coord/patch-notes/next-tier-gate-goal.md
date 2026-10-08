@@ -1,0 +1,1 @@
+When your gear is the best your tier allows and the next tier is locked, Next Up now tells you what opens it, for example "Birch Bow for the zone 13 boss: Woodcraft 8 of 10" or "Woodcutting 7 of 14 opens Birch Log", and Go takes you where you level it. Best shot: nextup-gate.
