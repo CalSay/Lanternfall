@@ -217,7 +217,7 @@ export const CHECKPOINTS = [
   ['z38-boss-behind', 38, 'boss', { st: 'late', asc: 1, tier: -1, kind: 'behind', ref: 'z38-boss' }],
   // report only (kinds with "report": true): a hero who just took the lamp, and single-attribute builds (PR #58's
   // findings, 2026-10-06: a switched-in hero won 31-35% of zone 20 bosses; all-Focus Wren cleared trash 2-3x faster). The boss rows sit at
-  // zone 25 since z20-wall (zone 20 is fitted to the first-time hero, so they would read against a 99% ref there)
+  // zone 25 since z20-wall (zone 20 is fitted to the first-time hero, so they would read against a 91-92% ref there, where gear barely moves a fight)
   ['z25-boss-joined', 25, 'boss', { st: 'joined', fx: 'mid', kind: 'joined', ref: 'z25-boss' }],
   ['z38-boss-joined', 38, 'boss', { st: 'joined', fx: 'late', kind: 'joined', ref: 'z38-boss' }],
   ['z20-normal-focus', 20, 'normal', { st: 'kept', fx: 'mid', build: 'focus', kind: 'build', ref: 'z20-normal' }],

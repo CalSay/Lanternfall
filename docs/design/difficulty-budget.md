@@ -159,9 +159,9 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
   read 79-98 (gaps, `boss-balance-pass`); Tobin's arrival cells at 22-24 sit under his band (gaps, `tobin-safety-margin`). The gear
   checks moved to the first kept-up zones: `z25-boss-behind` (gated), the joined and build rows at z25, and check.mjs C29's played and
   gear asserts at zone 26 on the hero as built. On the arrival footing gear is worth little (nothing worn costs 4-29 points, better gear
-  adds 0-12), as at zones 13-19. The next wall is the zone 25 Champion (`z25-boss-arrival`, a report row, 0%).
+  adds up to 12, nothing for Tobin), as at zones 13-19. The next wall is the zone 25 Champion (`z25-boss-arrival`, a report row, 0%).
   The zone 10-12 rows stay on their footing: at the arrival footing the sampler reads Wren's bot 22-46 where the walk never loses
-  (Tobin's 78-98 matches), and on Wren's own walk save it reads 33-56, so that gap is the sampler's, not the footing's. Zones 16-19 Captains are gated on the kept-up hero too (gaps above).
+  (Tobin's 78-98 matches), and on Wren's own walk save it reads 33-56, so that gap is the sampler's, not the footing's. Zones 16-24 Captains are gated on the kept-up hero too (casual above band under gaps; good and never-defends gated).
 - **Zones 25-34 Captains are in band for Wren and Pip** (mid-zone-wall, 2026-10-07: casual 56-80, good 100%; z34 Wren sits 4 under, inside the seed noise). Tobin wins
   all of them casually (boss-tiers owns the +10 gap).
 - **The Fenmother is easier than the Captains around her** (boss-tiers): 67-100% casual against a 20-40 band; zone 36

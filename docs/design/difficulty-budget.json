@@ -661,7 +661,7 @@
       "hero": "tobin",
       "player": "casual",
       "side": "below",
-      "limit": 0.62,
+      "limit": 0.68,
       "owner": "tobin-safety-margin",
       "until": "2026-12-01",
       "why": "z20-wall (judge 2026-10-08): Tobin heroHitX 2.4-2.75 at zones 20-24; a lower one lifts his arrival row but lets a kept-up Tobin who never defends win (the z19 ruling)"
@@ -671,7 +671,7 @@
       "hero": "tobin",
       "player": "casual",
       "side": "below",
-      "limit": 0.55,
+      "limit": 0.6,
       "owner": "tobin-safety-margin",
       "until": "2026-12-01",
       "why": "z20-wall (judge 2026-10-08): Tobin heroHitX 2.4-2.75 at zones 20-24; a lower one lifts his arrival row but lets a kept-up Tobin who never defends win (the z19 ruling)"
@@ -681,7 +681,7 @@
       "hero": "tobin",
       "player": "casual",
       "side": "below",
-      "limit": 0.6,
+      "limit": 0.67,
       "owner": "tobin-safety-margin",
       "until": "2026-12-01",
       "why": "z20-wall (judge 2026-10-08): Tobin heroHitX 2.4-2.75 at zones 20-24; a lower one lifts his arrival row but lets a kept-up Tobin who never defends win (the z19 ruling)"
@@ -714,7 +714,7 @@
       "limit": 0.92,
       "owner": "boss-balance-pass",
       "until": "2026-12-01",
-      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 83-99, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
     },
     {
       "row": "z21-boss",
@@ -724,7 +724,7 @@
       "limit": 0.98,
       "owner": "boss-balance-pass",
       "until": "2026-12-01",
-      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 83-99, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
     },
     {
       "row": "z22-boss",
@@ -734,7 +734,7 @@
       "limit": 0.91,
       "owner": "boss-balance-pass",
       "until": "2026-12-01",
-      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 83-99, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
     },
     {
       "row": "z23-boss",
@@ -744,7 +744,7 @@
       "limit": 0.89,
       "owner": "boss-balance-pass",
       "until": "2026-12-01",
-      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 83-99, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
     },
     {
       "row": "z24-boss",
@@ -754,7 +754,7 @@
       "limit": 0.95,
       "owner": "boss-balance-pass",
       "until": "2026-12-01",
-      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 83-99, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
     }
   ]
 }

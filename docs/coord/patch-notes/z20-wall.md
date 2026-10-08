@@ -1,1 +1,1 @@
-The zone 20 to 24 bosses no longer wall you off: if you reach them the normal way, you now beat each of them in a try or two instead of losing again and again. A boss's Bleed or Venom tick now costs at most about 7% of your health, and parry and dodge still matter. Best shot: nextup-boss.
+The zone 20 to 24 bosses no longer wall you off: if you reach them the normal way, you now beat each of them in a try or two instead of losing again and again. Their Bleed and Venom ticks now cost at most 7% of your health, and parry and dodge still matter. Best shot: nextup-boss.

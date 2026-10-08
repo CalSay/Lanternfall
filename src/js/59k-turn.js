@@ -198,9 +198,9 @@ const turnZoneLine = (P, z) => {
   return P[P.length - 1][1];
 };
 const turnHeroHitX = (k, z) => { const L = TURN_TUNE.boss.heroHitX[k]; return Array.isArray(L) ? turnZoneLine(L, z) : L || 1; };   // a hero's own share of a zone boss's hits (boss.heroHitX)
-// a boss rider's tick on the hero (Bleed, Burn, Venom): a share of the reference HP (heroDot) x the zone's riderX, and from zone 20 no more
-// than dotCap of the hero's own max HP (z20-wall: a tick then costs a hero what it says, whatever footing they arrive on)
-const turnDotTick = (p, k) => { const t = TURN_TUNE.heroDot[k] * p.refHp * (p.bossRiderX || 1); return p.bossDotCap > 0 ? Math.min(t, p.bossDotCap * p.heroMaxHp) : t; };
+// a boss rider's tick on the hero (Bleed, Burn, Venom): a share of the reference HP (heroDot) x the zone's riderX, and at zones 20-24 no
+// more than dotCap of the hero's own max HP (z20-wall: a tick then costs a hero what it says, whatever footing they arrive on)
+const turnDotTick = (p, k) => { const t = TURN_TUNE.heroDot[k] * p.refHp * (p.bossRiderX || 1); return p.bossDotCap > 0 && p.heroMaxHp > 0 ? Math.min(t, p.bossDotCap * p.heroMaxHp) : t; };
 const turnLateX = (k, z) => { const L = TURN_TUNE.lateX[k]; return L ? turnZoneLine(L, z) : 1; };   // a hero's late-zone power (TURN_TUNE.lateX)
 const turnRefAtkX = z => turnZoneLine(TURN_TUNE.refAtk, z);
 const turnRefAtk = z => turnRefAtkX(z) * mobHp(z) * mod('foeHp');

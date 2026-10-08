@@ -846,20 +846,20 @@ first-time knots reach zone 20, as the z19 ruling asked.
   - The joined row and the three build rows move from z20-boss to z25-boss (`z25-boss-joined`, `-might`, `-vigour`, `-focus`; report
     only). `z20-normal-focus` stays.
   - New report rows at zones 20 and 24 (kind `arrivalGear`) show what gear is worth on the arrival footing: nothing worn costs 29/4/20
-    points at zone 20 (29/5/18 at 24); tier 2 common or tier 1 rare +5 adds 0-12.
+    points at zone 20 (29/5/18 at 24); tier 2 common or tier 1 rare +5 adds up to 12 (nothing for Tobin).
   - `check.mjs` C29 "mid-game HP": the first assert (a boss hit's cost by zone band) stays and passes with zone 20 in its list (27-29% a
     hit, 60-65% a charge). The played and gear asserts move to zone 26 on the hero as built (not scaled to the reference Attack), with
     their thresholds unchanged: zone 26 is the first kept-up Captain past the fitted span. A card that fits zone 26 re-judges where they
     live; their margins are thin (a tier behind's charge 50.9% against "over half", Tobin casual 92.9 against 95).
 - **Kept-up z20-24 is too easy for a geared casual:** 79-98 against 60-80. Gaps above, all heroes, `boss-balance-pass`, until 2026-12-01,
   as at zones 15-19 (ratcheted to 0.92/0.98/0.91/0.89/0.95). Good 100 and never-defends 0 stay gated. Tobin's arrival cells at zones 22-24
-  sit under his band (gaps below, `tobin-safety-margin`, limits 0.62/0.55/0.6).
+  sit under his band (gaps below, `tobin-safety-margin`, limits 0.68/0.6/0.67, the baseline).
 - **Zones 1-19 and 25 on are unchanged.** No knot, riderX row or gate outside zones 20-24 moved.
 - **Risks the judge named.** Gear barely matters from zones 13 to 24 (a landed hit sits on the floor whatever you wear; 5-20 points on
   the arrival footing); making gear count under the floor belongs to `boss-balance-pass`, and if testers say crafting feels pointless in
   the mid game, this is the reason. Kept-up Pip gets a little easier at zones 20, 22 and 23 (81-85 to 90-91). If a Pip who never defends
   ever wins at zones 20-24, or a boss move or rider there changes, refit or drop the Pip knot.
-- **Ruling 3: health re-baselined, the stall band at 2.9, the next wall carded.** The bots now pass the zone 20-24 bosses: zoneEnd 20.67
+- **Ruling 3: health re-baselined, the stall band at 2.9, the next wall carded.** The bots now pass the zone 20-24 bosses: zoneEnd 20
   to 22.67, longest stall 25,137 to 15,637 s, and no stall over an hour is at a zone 20-24 boss. They meet the next wall at zones 21-23:
   ordinary foes the hero cannot beat at level 25-27 on tier 2-3 gear (on the arrival footing they read 0% casual at zones 21-24, 0-46 at
   18-20; kept up on tier 4 rare +5, 98-100). The 10-hour bot's gear tier stays at 2.4-2.6 all ten hours. It is an existing wall met sooner,
@@ -873,6 +873,9 @@ first-time knots reach zone 20, as the z19 ruling asked.
     bot: its `farmZone` never farms the frontier tier (`tools/sim.mjs`), so a bot that cannot kill at its top zone may never earn tier 4.
   - **Owner: a new card, `z21-foe-climb`** (until 2026-12-01). It first decides whether the game (no reachable tier 4 by zone 21), the bot
     or the ordinary-foe knots are wrong, then sets the band back to max(1.3, 3 sd) and holds every hero's longest optimiser stall under 4 h.
+  - **The 50-hour run, re-baselined** (3 offsets): the same story. Zone at hour 10 goes from 20 to 22.11 and falls an hour from 61 to
+    84 (both past their old tolerance, so the long section is re-baselined; tolerances unchanged). Zone at the end 28.56 (was 29), the
+    longest stall 64,208 s (was 59,975), stalls over an hour 7.56 (was 7.55): the zone 25 Champion is the long wall, as before.
   - **Watch items, carried forward.** Stalls of 1.0-1.5 h at zone 19 (Wren offsets 0 and 5, Pip offset 4) and Pip's 2.2-3 h at zones
     17-18 predate this card (nothing below zone 20 changed); if the old code had no zone 19 stall over an hour at those offsets, re-judge.
 - **Walks** (90 game min, the bot that keeps fighting after a loss; this card's knots on the integration branch at b79b3f65): seed 1 Wren
