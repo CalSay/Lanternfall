@@ -761,7 +761,7 @@ function ui(force) {
   putHidden(H.statNums, tg === 'node');
   putText(H.sDps, fmt(totalDps() * (tg === 'world' ? raidMult() : 1)));
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
-  putText(H.hint, tg === 'node' ? 'Tap to work faster' : tg === 'mob' ? '' : 'Tap to strike');   // the buttons strike
+  putText(H.hint, tg === 'node' ? 'Click or tap to work faster' : tg === 'mob' ? '' : 'Click or tap to strike');   // the buttons strike
   for (const f of uiHooks) f(force);   // UX-A
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).

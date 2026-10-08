@@ -17,7 +17,7 @@
   const KIND = { damage: 'Damage', buff: 'Buff', debuff: 'Debuff', passive: 'Passive', finisher: 'Finisher' };
   const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
   const KEYS = 'QWE';
-  const BASIC = [['attack', 'Attack', 'Your plain hit. No cooldown.'], ['parry', 'Parry', 'Press as a hit lands to take none of it. A full parry earns a counter.'],
+  const BASIC = [['attack', 'Attack', 'Your plain hit. A short cooldown.'], ['parry', 'Parry', 'Press as a hit lands to take none of it. A full parry earns a counter.'],
     ['dodge', 'Dodge', 'Press as a hit comes to step out of it.']];
   // view state (not saved): the open detail ('' | ability id | 'mv:attack'), the filter, the info drawer, a Learn armed
   let root = null, sig = '', armed = '', selId = '', filt = 'all', infoOpen = false, listTop = -1;
@@ -226,7 +226,7 @@
     // the one action
     const act = el('div', 'ab-act');
     if (i.owned) {
-      act.append(el('small', 'ab-al', where >= 0 ? `In slot ${KEYS[where]}. Tap it to take it out.` : eq.slice(0, 3).every(x => x) ? 'Swap it in for:' : 'Put it in a slot:'));
+      act.append(el('small', 'ab-al', where >= 0 ? `In slot ${KEYS[where]}. Choose Take out to remove it.` : eq.slice(0, 3).every(x => x) ? 'Swap it in for:' : 'Put it in a slot:'));
       const row = el('div', 'ab-sl');
       for (let s = 0; s < 3; s++) {
         const cur = eq[s], b = btn('ab-slotb' + (where === s ? ' on' : ''));
