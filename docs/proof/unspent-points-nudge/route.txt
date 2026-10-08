@@ -1,0 +1,28 @@
+# seed: 1
+# Proof for card unspent-points-nudge: with two levels' points or more unspent, Next Up's chip says "Spend N attribute points"
+# and Go opens Hero > Build. save-dipper-z4 is the cold leg's phone dipper at zone 4: Wren Lv 9, 28 points free, Power Shot
+# ready to learn. Before this change the chip said "Learn Power Shot" and the points were not in the list at all.
+new dipper-z4
+wait 3
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 2
+expect "Spend 28 attribute points"
+shot chip-spend-28
+tap "Next up"
+wait 1
+expect "Learn Power Shot"
+shot list-learn-still-there
+tap "Go: Spend 28 attribute points"
+wait 2
+expect "Attack hits harder."
+shot build-view
+tap "Spread"
+wait 2
+tap-if "Back to the fight"
+tap-if "Close"
+wait 3
+expect-no "Spend 28 attribute points"
+expect "Learn Power Shot"
+shot chip-after-spend

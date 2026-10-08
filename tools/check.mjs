@@ -10318,6 +10318,15 @@ if (section('hero attributes (browser)')) try {
           await X('setTab("attributes"); true'); await page.waitForTimeout(1200);
           const bub = await X('(b => b && !b.hidden ? b.textContent : "")(document.querySelector(".ob-bub"))');
           assert(step === 'upgrade' && /Might/.test(bub) && !/Train/.test(bub), `${at}: the guide's upgrade step says "${bub.slice(0, 70)}" on Hero > Attributes`);
+          // hero-build-tab-blank: Build is drawn on first open, and with the guide's panel over the menu, Spread evenly and every + scroll clear of it
+          // (scrollIntoView 'nearest', as the walk's Next Up does). The panel lets taps through except on its own button, so test the boxes, not elementFromPoint.
+          const clear = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll(".at-spread, #attrRows .at-add")].map(n => {
+            const b = document.querySelector(".ob-bub.over-menu:not([hidden])");
+            if (!n.getClientRects().length) return { k: n.className, drawn: false };
+            n.scrollIntoView({ block: "nearest" }); const r = n.getBoundingClientRect(), br = b ? b.getBoundingClientRect() : null;
+            return { k: n.className + (n.dataset.n || ""), drawn: true, bub: !!b, clear: !!br && (r.bottom <= br.top || r.top >= br.bottom), r: [Math.round(r.top), Math.round(r.bottom)], b: br && [Math.round(br.top), Math.round(br.bottom)] };
+          }))`));
+          assert(clear.length === 9 && clear.some(c => /at-spread/.test(c.k)) && clear.every(c => c.drawn && c.bub && c.clear), `${at}: Build shows Spread evenly and the eight + buttons on first open, and each scrolls clear of the guide's panel (${JSON.stringify(clear.filter(c => !c.drawn || !c.bub || !c.clear))})`);
           const goal = await X('(g => g ? g.label() : "")(GOALS.find(x => x.id === "hero-up"))');
           assert(goal === `Spend ${2 * per} attribute points`, `${at}: Next Up says "${goal}" (Lv 3, ${2 * per} points)`);
         }
@@ -12751,7 +12760,7 @@ if (section('guide goal after reload')) try {
   assert(E('!!S.onboard.done.gather') && top()[0].id === 'hearth-fire', `fire goal: after × on the Gather tip it is still first (${top().map(x => x.id).join()})`);
   E('S.L += 2');   // 8 free attribute points
   l = top(); const fi = l.findIndex(x => x.id === 'hearth-fire');
-  assert(E('attrPoints(soloHero()).free') === 8 && fi >= 0 && fi <= 1 && (fi === 0 || l[0].id === 'hero-up'), `fire goal: with 8 free points it stays on top, or right under the points (unspent-points-nudge) (${l.map(x => x.id).join()})`);
+  assert(E('attrPoints(soloHero()).free') === 8 && fi === 1 && l[0].id === 'hero-up', `fire goal: with 8 free points it is second, right under the points (unspent-points-nudge) (${l.map(x => x.id).join()})`);
   E('S.L -= 2; S.mats.wood[0] = 0; S.activity = "gather"; S.node = { kind: "wood", t: 1 }');
   f = fire();
   assert(f && !f.ready && Math.abs(f.pct - 0.01) < 1e-9 && /: 0\/8$/.test(f.label), `fire goal: while chopping Pine with 0 logs it is listed, not Ready (pct ${f && f.pct}, "${f && f.label}")`);
@@ -12804,6 +12813,38 @@ if (section('guide goal after reload')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('guide goal after reload crashed: ' + (e.stack || e)); }
+
+// ==== unspent-points-nudge: a pile of two levels' points or more tops Next Up; learn-ability stays in the list ====
+// save-dipper-z4: the cold leg's phone dipper at zone 4 (Wren Lv 9, 28 points free, Power Shot learnable, a bounty ready).
+if (section('unspent points nudge')) try {
+  const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-dipper-z4.json'), 'utf8') }) }), E = s => g.eval(s);
+  E('tick(0.1)');
+  const per = E('HERO_TUNE.perLevel'), free = () => E('attrPoints(soloHero()).free');
+  const ids = o => E(`topGoals(3, ${o}).map(x => x.id)`);
+  assert(free() === 28 && E('attrOn()'), `unspent points: the fixture has 28 points free (${free()})`);
+  const off = ids('{ sticky: false }');
+  assert(off[0] === 'hero-up' && off.includes('learn-ability') && E('topGoals(3, { sticky: false })[0].label') === 'Spend 28 attribute points', `unspent points: 28 free tops Next Up, Learn stays in the list (no stickiness: ${off.join(', ')})`);
+  // sticky: the list a one-level hero sees is shown first (Learn on top), then the pile comes back and must take the top
+  const k0 = E('soloHero()'), m0 = E('attrOf(null, "might")');
+  const down = () => E(`attrAdd('might', attrPoints().free - ${per})`), up = () => E(`S.attr.pts[${JSON.stringify(k0)}].might = ${m0}`);
+  down(); const was = ids('{ now: 1000 }'); up();
+  const on = ids('{ now: 1e6 }');
+  assert(was[0] !== 'hero-up' && free() === 28 && on[0] === 'hero-up' && on.includes('learn-ability'), `unspent points: with stickiness the pile passes the shown list (${was.join(', ')} -> ${on.join(', ')})`);
+  // against a shown Ready goal at prio 11 (guide-goal-after-reload's fire goal): it was on top, the pile still passes it
+  E('registerGoal({ id: "zz-fire", sys: "zzfire", prio: 11, pct: () => 1, label: "Light the fire" })');
+  down(); ids('{ now: 2e6 }'); const fw = ids('{ now: 3e6 }'); up();
+  const fire = ids('{ now: 4e6 }');
+  assert(fw[0] === 'zz-fire' && fire[0] === 'hero-up' && fire.includes('zz-fire'), `unspent points: the pile beats a shown Ready goal at prio 11 (${fw.join(', ')} -> ${fire.join(', ')})`);
+  E('GOALS.splice(GOALS.findIndex(x => x.id === "zz-fire"), 1)');
+  // one level's points: in the list, not forced first
+  E(`attrAdd('might', attrPoints().free - ${per})`);
+  const one = ids('{ sticky: false }');
+  assert(free() === per && one.includes('hero-up') && one[0] !== 'hero-up' && E('GOALS.find(x => x.id === "hero-up").prio()') === 3, `unspent points: ${per} free shows the goal at its old rank (${one.join(', ')})`);
+  E(`attrAdd('might', ${per})`);
+  assert(free() === 0 && !ids('{ sticky: false }').includes('hero-up'), 'unspent points: none free, the goal is gone');
+  assert(E('GOALS.find(x => x.id === "hero-up").sys') === 'points' && E('GOALS.find(x => x.id === "learn-ability").sys') === 'hero', 'unspent points: hero-up has its own system');
+  assert(!g.errors.length, 'unspent points: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('unspent points nudge crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
