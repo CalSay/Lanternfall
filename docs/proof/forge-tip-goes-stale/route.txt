@@ -3,7 +3,8 @@
 # "You still need these for the Forge" line no longer follows her onto Hero or Craft (the hero list is all there); on Gather it
 # names where each material is; after Go she mines and the count moves.
 # In landscape the fight stays in view beside the menu and a materials line waits for a calm screen, so on Gather the route
-# starts gathering first (Gather here), as a player at the menu would. The × and the other menus are held by tools/check.mjs.
+# starts gathering first (Gather here), as a player at the menu would; if that already puts her at the Copper Vein, the line
+# has no Go and she mines there. The × and the other menus are held by tools/check.mjs.
 new forge-short
 wait 2
 tap-if "Continue"
@@ -25,7 +26,7 @@ wait 2
 expect "at the Copper Vein"
 expect "at the Pine Grove"
 shot gather-line-names-places
-tap "Mine at the Copper Vein"
+tap-if "Mine at the Copper Vein"
 wait 30
 tap-if "Continue"
 tap-if "Gather"
