@@ -12430,8 +12430,8 @@ if (section('small text clips')) try {
   }
 } catch (e) { fail('small text clips crashed: ' + (e.stack || e)); }
 
-// ---- unique-weapons-wall-icon: the Codex, the Unique loot wall and the raid loot card show an every-class unique weapon as the
-// hero's own weapon (icon and kind name), as the bag does; Tobin keeps his Warblade. Display only: the raid card writes nothing.
+// ---- unique-weapons-wall-icon: the Codex and the Unique loot wall show an every-class unique weapon as the hero's own weapon
+// (icon and kind name), as the bag does; Tobin keeps his Warblade. The raid loot card (74-ui-raid, path-guarded) is a scope cut.
 if (section('unique weapons wall icon')) try {
   const own = { wren: ['bow', 'Bow'], pip: ['staff', 'Staff'], tobin: ['warblade', 'Warblade'] };
   const fx = {};
@@ -12462,14 +12462,10 @@ if (section('unique weapons wall icon')) try {
         const r = await X(`(() => { const same = (tile, kind, t, u) => { const p = icTile(''); setIc(p, itemIcon(kind, t, u)); return tile.querySelector('img').src === p.querySelector('img').src; };
           uiForge(); const out = { hero: soloHero() };
           for (const k of ['golemfist', 'eaterfang']) { const e = trophyEls[k]; out[k] = { ic: same(e.tile, ${JSON.stringify(own[h][0])}, S.found[k], k), sword: same(e.tile, 'weapon', S.found[k], k), txt: e.ts1.textContent }; }
-          const before = JSON.stringify([S.raid, online.raiders]);
-          online.ready = true; online.world = { gen: RAID_UNIQ.indexOf('eaterfang') + 1, name: 'Test Eater', maxHp: 1000, spawnedAt: Date.now() }; uiRaid();
-          out.raid = { ic: same($('rLootIc'), ${JSON.stringify(own[h][0])}, Math.min(5, online.world.gen), 'eaterfang'), txt: $('rLoot').textContent, wrote: JSON.stringify([S.raid, online.raiders]) !== before };
-          online.ready = false; online.world = null; return out; })()`);
+          return out; })()`);
         for (const k of ['golemfist', 'eaterfang'])
           assert(r.hero === h && r[k].ic && !r[k].sword && r[k].txt.startsWith(own[h][1] + ' · '), `${h}: the Unique loot wall shows ${k} as a ${own[h][1]} (${JSON.stringify(r[k])})`);
-        assert(r.raid.ic && r.raid.txt.includes(`Lantern Eater's Fang, a ${own[h][1]}:`) && !/Sword/.test(r.raid.txt) && !r.raid.wrote, `${h}: the raid loot card shows the Fang as a ${own[h][1]} and writes nothing (${JSON.stringify(r.raid)})`);
-        assert(!errs.length, `${h}: wall and raid card, no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        assert(!errs.length, `${h}: Unique loot wall, no page errors` + (errs.length ? ': ' + errs[0] : ''));
       } finally { await ctx.close(); }
     } } finally { await browser.close(); }
   }

@@ -36193,9 +36193,8 @@ function uiRaid() {
     if (w) {
       const key = RAID_UNIQ[(w.gen - 1) % RAID_UNIQ.length], u = UNIQ[key];
       const ch = share >= 0.25 ? 100 : mine > 0 ? Math.min(100, (0.35 + share * 2) * 100) : 0;
-      const k = uniqKindFor(key, heroWho()) || u.slot, kn = k !== u.slot ? CRAFT_KINDS[k].noun : '';   // unique-weapons-wall-icon: shown as the hero's own weapon (display only)
-      setIc($('rLootIc'), itemIcon(k, Math.min(5, w.gen), key), 'legendary');
-      putText($('rLoot'), `Drops ${u.name}${kn ? `, ${/^[AEIOU]/.test(kn) ? 'an' : 'a'} ${kn}` : ''}: ${u.txt} Your chance right now: ${ch.toFixed(0)}%. Deal 25% of the damage to guarantee it.`);
+      setIc($('rLootIc'), itemIcon(u.slot, Math.min(5, w.gen), key), 'legendary');
+      putText($('rLoot'), `Drops ${u.name}: ${u.txt} Your chance right now: ${ch.toFixed(0)}%. Deal 25% of the damage to guarantee it.`);
     }
     putClass($('rNote'), 'note' + (online.canWrite ? '' : ' warn'));
     putText($('rNote'), online.canWrite
