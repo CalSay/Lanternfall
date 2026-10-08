@@ -128,8 +128,8 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 - **Live bosses rally again, and zones 7-12 are fitted with the gates on** (rally-gates-live, 2026-10-08). From #160 to 8 Oct the live
   fight skipped every rally gate (it read the last foe's HP), while every boss knot was fitted on the sampler with the gates on. The z7-z12
   boss rows are on the arrival footing (level 12-17, tier 1 common +0, no mastery stars) and refit with hitX, hpX, hpFloor and Tobin's
-  heroHitX: casual Wren, Tobin and Pip win about 82/88/85 at zone 7, 80/81/90 at zone 8, 80/95/85 at zone 9, 53/52/48 at the zone 10
-  Champion, 65/83/69 at zone 11 and 62/75/66 at zone 12 (240 fights; the baseline holds the 5-offset means); good players 100. A landed
+  heroHitX: casual Wren, Tobin and Pip win about 82/88/85 at zone 7, 80/81/90 at zone 8, 82/88/76 at zone 9, 53/52/48 at the zone 10
+  Champion, 65/80/74 at zone 11 and 62/75/66 at zone 12 (240 fights; the baseline holds the 5-offset means); good players 100. A landed
   hit there sits on or near the hpFloor, which keeps a kept-up hero who never defends at 0% (z8, z10, z12). The kept-up z8 and z12 rows read
   95-99 for a casual (a few points over 97 and 95, inside the tolerance). Zones 4-6 stay on the first-hour footing and did not move.
   The live fight now reads the same as the sampler (`autopilot/reports/sampler-reads-walk-z10-12/live-vs-sampler.mjs`, z10-12).
