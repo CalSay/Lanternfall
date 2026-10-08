@@ -124,6 +124,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - When a landscape fix trims a sheet's 44 px grab row, keep the 44 px close button (`.bsheet-x`, top 0) clear of the body's buttons, and have the check assert no overlap, not only that each button is on screen. Why: the reviewer found the close button over the top 16 px of Continue on short story cards after the grab row went to 28 px; a tap there skipped the scene. (story-card-landscape-fit, 2026-10-08)
 
 - The Almanac card shows the calendar's Omen (`almanac.today()`), not a forced one: `almanac.force()` changes `active()` and `mod()` only. To show a given Omen in a browser check, find a day where `almanac.omenFor(d)` plays it and set `Date.now` to noon that day. Why: the first almanac-forge-points-to-gear check forced Cheap Reforge and the Go still followed the real day. (almanac-forge-points-to-gear, 2026-10-08)
+- A walk shot taken just after the bot taps a tab can catch the menu mid-close: `renderMenu` hides the page at once and the menu slides out for 0.2 s, so it reads as an empty panel. Check the bot's last tap before calling a panel blank. And the guide's panel lets taps through (pointer-events: none) except on its own button, so test what it covers with boxes, not `elementFromPoint`. Why: hero-build-tab-blank's "empty Build" was that frame, and the first check passed with Spread evenly under the panel. (hero-build-tab-blank, 2026-10-08)
 
 ## Saves and offline parity
 

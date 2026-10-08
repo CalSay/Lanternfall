@@ -17,6 +17,9 @@
   font: 600 14px/1.3 var(--body); color: var(--bone); }
 .ob-bub[hidden] { display: none; }
 .ob-bub.over-menu { position: absolute; left: var(--gut); right: var(--gut); margin: 0; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 12px + var(--toast-h, 0px)); box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); }
+/* hero-build-tab-blank: over a menu the panel hides the menu's foot, so the menu gets that room at its end (its last buttons, Build's
+   Spread evenly, can scroll clear) and a button scrolled into view stops above the panel, not under it */
+.app:has(> .ob-bub.over-menu:not([hidden])) .panels { padding-bottom: calc(150px + var(--toast-h, 0px)); scroll-padding-bottom: calc(150px + var(--toast-h, 0px)); }
 .ob-bub.ok-row:not(.side) { grid-template-columns: 48px minmax(0, 1fr) auto; padding-right: 8px; }
 .ob-bub.ok-row:not(.side) .ob-x { display: none; }
 .ob-bub.ok-row:not(.side) .ob-txt { grid-row: 1 / span 2; }
