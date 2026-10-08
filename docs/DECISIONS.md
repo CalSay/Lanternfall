@@ -810,6 +810,84 @@ sooner than the z16-wall walks (55:04 and 59:38) with nothing before zone 19 cha
 Veto phrase for Cal: "put the zone 19 boss back" (undoes the whole pick). "No rider knot at zone 19" undoes only riderX: the knots
 stay and zone 19 reads about 13% a try for a first-time player (16/6/16), still a wall.
 
+### Zone 20 wall (z20-wall) (2026-10-08)
+
+Ruled by an Opus high judge in three rulings (PR for card `z20-wall`); Cal can veto any line. Data: the builder's runs (100-240 fights a
+row, seed offsets 0-4), re-run by the judge on offsets 1-5. The card first had to decide where the "gear matters" checks live once the
+first-time knots reach zone 20, as the z19 ruling asked.
+
+- **Why it walls.** Every boss from zone 20 to 26 read 0% a try for a first-time hero (level 23 at zones 20-22 and 24 at 23-26, tier 1
+  common +0, no mastery stars): the zone 20-24 knots were fitted to the kept-up hero. The z19-wall walks lost at the zone 20 boss and were
+  still there at 90:00; the 10-hour bot stalled there 5.3-7.2 hours.
+- **Ruling 1: fit zones 20 to 24 in one pass, stop before the zone 25 Champion.** Fixing zone 20 alone moves the 5-7 hour wall to zone 21
+  (the "buys one zone" trade the z19 judge turned down). In `TURN_TUNE.boss`: hpX 2.8/1.9/2.1/1.5/1.1 to 0.01625/0.01125/0.00775/0.0055/
+  0.00375 (a 1.44-a-zone ladder; the fight is gate-bound at about 4.8 turns, so hpX barely moves wins), hitX 0.751/0.424/0.314/0.238/
+  0.255 to 0.023/0.0161/0.01067/0.0067/0.00611, hpFloor 0 to 1.3 at zones 20-24 (0 from 25), Tobin's heroHitX 6.3-8.4 to 2.75/2.75/2.4/
+  2.4/2.75. Moves, timing windows, parry and dodge, the hit cap, rally gates and boss pay do not change. Zone 25 on keeps its knots.
+- **A tick cap instead of a riderX row per zone (`dotCap` 0.07, zones 20-24).** A boss's Bleed, Burn or Venom tick costs at most 7% of the
+  hero's own max HP, the "about 7% a tick" the z16 and z19 rulings chose. On knots alone z22 (Venom) and z23 (Bleed, Blind) read 36/18/38
+  and 30/13/37; with the cap 63/47/69 and 63/51/71. On a kept-up hero a tick is about 1.5% of their health, so the cap does not bind.
+  riderX stays 1 from zone 20; the z16 and z19 riderX rows do not change.
+- **Floor room.** At hpFloor 1.0 a kept-up Wren who never defends wins zone 21 100%; at 1.15 every hero reads 0 at zones 20-24. 1.3 keeps
+  0.15 of room, as z19 took. With every floor 0.15 lower a player who never defends wins 7% at most (Tobin, zone 23).
+- **Ruling 2: Pip's boss-hit share 0.9 at zones 20, 22 and 23** (`heroHitX.pip` `[[1, 1], [19, 1], [20, 0.9], [21, 1], [22, 0.9],
+  [23, 0.9], [24, 1]]`). Without it a first-time Pip read 52-57 at zone 23 whatever hpX did, and 54-61 at zones 20 and 22, on the edge of
+  the gate. A per-hero knot like Tobin's ("heroes differ on purpose"): a landed hit still costs her 1.17 of its share of her health. Not
+  picked: a lower dotCap at zone 23 only (lifts Wren and Tobin more than Pip, and halves the 7% tick), Pip at zone 23 only, or a Pip gap.
+- **What a first-time player gets** (casual Wren/Tobin/Pip, arrival footing, 5-offset baseline): z20 70/81/69, z21 78/72/74, z22
+  68/68/69, z23 71/60/64, z24 80/67/71. Good players 100. A player who never defends 0. The walk bot's player 88-97. `z20-boss-arrival` to
+  `z24-boss-arrival` are gated Captain rows; z25 and z26 stay report rows (0%, the next wall, left to `boss-balance-pass`).
+- **Where the gear checks live: both a gated check at the first kept-up zone and a report row on the arrival footing.** Once a zone fits
+  the first-time hero, every landed hit sits on the hpFloor (a share of the hero's own health) for everyone, so a kept-up hero a tier
+  behind loses almost nothing there (z20 drop 3/3/7 against a 10-60 band).
+  - `z20-boss-behind` becomes a report row (kind `reportBehind`) and its three `gear-weight` gaps go. A gated `z25-boss-behind` replaces
+    it: a tier behind costs 72/72/54 points at the zone 25 Champion, as it cost at zone 20 before (gaps above for Wren and Tobin,
+    `gear-weight`, until 2026-12-01).
+  - The joined row and the three build rows move from z20-boss to z25-boss (`z25-boss-joined`, `-might`, `-vigour`, `-focus`; report
+    only). `z20-normal-focus` stays.
+  - New report rows at zones 20 and 24 (kind `arrivalGear`) show what gear is worth on the arrival footing: nothing worn costs 29/4/20
+    points at zone 20 (29/5/18 at 24); tier 2 common or tier 1 rare +5 adds up to 12 (nothing for Tobin).
+  - `check.mjs` C29 "mid-game HP": the first assert (a boss hit's cost by zone band) stays and passes with zone 20 in its list (27-29% a
+    hit, 60-65% a charge). The played and gear asserts move to zone 26 on the hero as built (not scaled to the reference Attack), with
+    their thresholds unchanged: zone 26 is the first kept-up Captain past the fitted span. A card that fits zone 26 re-judges where they
+    live; their margins are thin (a tier behind's charge 50.9% against "over half", Tobin casual 92.9 against 95).
+- **Kept-up z20-24 is too easy for a geared casual:** 79-98 against 60-80. Gaps above, all heroes, `boss-balance-pass`, until 2026-12-01,
+  as at zones 15-19 (ratcheted to 0.92/0.98/0.91/0.89/0.95). Good 100 and never-defends 0 stay gated. Tobin's arrival cells at zones 22-24
+  sit under his band (gaps below, `tobin-safety-margin`, limits 0.68/0.6/0.67, the baseline).
+- **Zones 1-19 and 25 on are unchanged.** No knot, riderX row or gate outside zones 20-24 moved.
+- **Risks the judge named.** Gear barely matters from zones 13 to 24 (a landed hit sits on the floor whatever you wear; 5-20 points on
+  the arrival footing); making gear count under the floor belongs to `boss-balance-pass`, and if testers say crafting feels pointless in
+  the mid game, this is the reason. Kept-up Pip gets a little easier at zones 20, 22 and 23 (81-85 to 90-91). If a Pip who never defends
+  ever wins at zones 20-24, or a boss move or rider there changes, refit or drop the Pip knot.
+- **Ruling 3: health re-baselined, the stall band at 2.9, the next wall carded.** The bots now pass the zone 20-24 bosses: zoneEnd 20
+  to 22.67, longest stall 25,137 to 15,637 s, and no stall over an hour is at a zone 20-24 boss. They meet the next wall at zones 21-23:
+  ordinary foes the hero cannot beat at level 25-27 on tier 2-3 gear (on the arrival footing they read 0% casual at zones 21-24, 0-46 at
+  18-20; kept up on tier 4 rare +5, 98-100). The 10-hour bot's gear tier stays at 2.4-2.6 all ten hours. It is an existing wall met sooner,
+  as at z19. More, shorter stalls raise `optimiser.stallCount` from 4.93 to 7.33 (offsets 0-4: 8, 5.67, 8, 7.67, 7.33; sd 0.97; the
+  judge's offset 5: 8.33). Wipes an hour 49 to 79.7 (report only; mostly Wren and Pip on those foes).
+  - **`optimiser.stallCount` abs goes from 2.4 to 2.9**, the larger of 1.3 and three standard deviations, as `docs/design/health.md`
+    and the z19 ruling ask. The card's prediction (the band back to its old value) is missed for this reason.
+  - **The offset-0 "longest stall under 4 hours" target is waived** (Tobin 5.68 h at zone 22, ordinary foes), on the condition that no
+    stall over 4 hours sits at a zone 20-24 boss.
+  - **Not picked: fitting ordinary foes (`normHitX`) here.** It is not this card's lever, and the cause may be the gear climb or the
+    bot: its `farmZone` never farms the frontier tier (`tools/sim.mjs`), so a bot that cannot kill at its top zone may never earn tier 4.
+  - **Owner: a new card, `z21-foe-climb`** (until 2026-12-01). It first decides whether the game (no reachable tier 4 by zone 21), the bot
+    or the ordinary-foe knots are wrong, then sets the band back to max(1.3, 3 sd) and holds every hero's longest optimiser stall under 4 h.
+  - **The 50-hour run, re-baselined** (3 offsets): the same story. Zone at hour 10 goes from 20 to 22.11 and falls an hour from 61 to
+    84 (both past their old tolerance, so the long section is re-baselined; tolerances unchanged). Zone at the end 28.56 (was 29), the
+    longest stall 64,208 s (was 59,975), stalls over an hour 7.56 (was 7.55): the zone 25 Champion is the long wall, as before.
+  - **Watch items, carried forward.** Stalls of 1.0-1.5 h at zone 19 (Wren offsets 0 and 5, Pip offset 4) and Pip's 2.2-3 h at zones
+    17-18 predate this card (nothing below zone 20 changed); if the old code had no zone 19 stall over an hour at those offsets, re-judge.
+- **Walks** (90 game min, the bot that keeps fighting after a loss; this card's knots on the integration branch at b79b3f65): seed 1 Wren
+  reached zone 19 at 47:30 and zone 20 at 56:53 and cleared it on the first try at 68:44; seed 2 Tobin reached zone 20 at 72:18 and
+  cleared it on the first try at 87:49. Neither lost a try in zones 1 to 20. Both end in zone 21 at level 23.
+- **Switch off.** Put the zone 20-24 knots back (the old hpX, hitX and Tobin heroHitX above, hpFloor 0 from zone 20, Pip's heroHitX 1,
+  dotCap off), make z20-z24-boss-arrival report rows and z20-boss-behind gated again with its old gaps, move the joined and build rows and
+  C29's two asserts back to zone 20. No save change.
+
+Veto phrases for Cal: "put the zone 20 bosses back" (undoes the whole pick). "Keep the stall band at 2.4" undoes only the tolerance. "No tick cap" undoes only dotCap: zones 22 and 23 then read
+about 30-36% a try for a first-time player. "No Pip boss knot" sets Pip back to 1: zone 23 then reads about 52-57 for a first-time Pip.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)

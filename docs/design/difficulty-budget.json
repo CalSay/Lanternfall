@@ -268,7 +268,31 @@
         1
       ],
       "report": true,
-      "note": "report only (z16-wall; z19-wall moved it on): the zone 20 Captain on the arrival footing (arrival level, tier 1 common +0, no mastery stars), the next wall past the z19 fix; a follow-up card (z20-wall) fits it"
+      "note": "report only (z16-wall; z19-wall and z20-wall moved it on): the zone 25 and 26 bosses on the arrival footing (arrival level, tier 1 common +0, no mastery stars), the next wall past the z20-24 fit; left to boss-balance-pass"
+    },
+    "reportBehind": {
+      "casualDrop": [
+        0.1,
+        0.6
+      ],
+      "good": [
+        0.6,
+        1
+      ],
+      "report": true,
+      "note": "report only (z20-wall): a behind row at a zone fitted to the first-time hero (z20), where every landed hit sits on the hpFloor so a tier behind costs a kept-up hero almost nothing; the gated behind row is z25-boss-behind"
+    },
+    "arrivalGear": {
+      "casualDrop": [
+        -0.3,
+        0.3
+      ],
+      "good": [
+        0.95,
+        1
+      ],
+      "report": true,
+      "note": "report only (z20-wall): the first-time hero at a fitted zone (z20, z24) with nothing worn, tier 2 common or tier 1 rare +5, against the zone's arrival row (a negative drop is a gain). A landed hit sits on the hpFloor there, so gear is worth about 5-20 points; boss-balance-pass owns making it count"
     }
   },
   "gaps": [
@@ -321,36 +345,6 @@
       "owner": "foe-moves-by-type",
       "until": "2026-12-01",
       "why": "elites are no threat yet (one trait, one extra move)"
-    },
-    {
-      "row": "z20-boss-behind",
-      "hero": "wren",
-      "player": "casual",
-      "side": "above",
-      "limit": 0.6,
-      "owner": "gear-weight",
-      "until": "2026-12-01",
-      "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
-    },
-    {
-      "row": "z20-boss-behind",
-      "hero": "tobin",
-      "player": "casual",
-      "side": "above",
-      "limit": 0.69,
-      "owner": "gear-weight",
-      "until": "2026-12-01",
-      "why": "a tier behind costs this hero more than 60 points of casual wins now that bosses hit him for a real share (tobin-safety-margin)"
-    },
-    {
-      "row": "z20-boss-behind",
-      "hero": "pip",
-      "player": "casual",
-      "side": "above",
-      "limit": 0.76,
-      "owner": "gear-weight",
-      "until": "2026-12-01",
-      "why": "a tier behind costs this hero more than 60 points of casual wins (gear is close to a wall)"
     },
     {
       "row": "z30-elite",
@@ -661,6 +655,106 @@
       "owner": "tobin-safety-margin",
       "until": "2026-12-01",
       "why": "z19-wall (judge 2026-10-08): a lower heroHitX lifts his arrival row but lets a kept-up Tobin who never defends win 48-52% (2.2-2.0)"
+    },
+    {
+      "row": "z22-boss-arrival",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.68,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "z20-wall (judge 2026-10-08): Tobin heroHitX 2.4-2.75 at zones 20-24; a lower one lifts his arrival row but lets a kept-up Tobin who never defends win (the z19 ruling)"
+    },
+    {
+      "row": "z23-boss-arrival",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.6,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "z20-wall (judge 2026-10-08): Tobin heroHitX 2.4-2.75 at zones 20-24; a lower one lifts his arrival row but lets a kept-up Tobin who never defends win (the z19 ruling)"
+    },
+    {
+      "row": "z24-boss-arrival",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.67,
+      "owner": "tobin-safety-margin",
+      "until": "2026-12-01",
+      "why": "z20-wall (judge 2026-10-08): Tobin heroHitX 2.4-2.75 at zones 20-24; a lower one lifts his arrival row but lets a kept-up Tobin who never defends win (the z19 ruling)"
+    },
+    {
+      "row": "z25-boss-behind",
+      "hero": "wren",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.72,
+      "owner": "gear-weight",
+      "until": "2026-12-01",
+      "why": "z20-wall (judge 2026-10-08): the gated behind row moved from zone 20 (now fitted to the first-time hero, where a landed hit sits on the hpFloor) to the zone 25 Champion on kept-up knots; a tier behind costs Wren and Tobin about 72 points there, as it cost at zone 20 before"
+    },
+    {
+      "row": "z25-boss-behind",
+      "hero": "tobin",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.72,
+      "owner": "gear-weight",
+      "until": "2026-12-01",
+      "why": "z20-wall (judge 2026-10-08): the gated behind row moved from zone 20 (now fitted to the first-time hero, where a landed hit sits on the hpFloor) to the zone 25 Champion on kept-up knots; a tier behind costs Wren and Tobin about 72 points there, as it cost at zone 20 before"
+    },
+    {
+      "row": "z20-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.92,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+    },
+    {
+      "row": "z21-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.98,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+    },
+    {
+      "row": "z22-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.91,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+    },
+    {
+      "row": "z23-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.89,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+    },
+    {
+      "row": "z24-boss",
+      "hero": "*",
+      "player": "casual",
+      "side": "above",
+      "limit": 0.95,
+      "owner": "boss-balance-pass",
+      "until": "2026-12-01",
+      "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
     }
   ]
 }

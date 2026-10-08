@@ -80,8 +80,8 @@ sets the band):
 
 | Kind | Rows | Proposed band | What it watches |
 |---|---|---|---|
-| joined | z20, z38 boss | casual wins drop at most 30 points against the hero who kept the lamp; good 90%+ | a hero who just took the lamp (road level, the lamp's gear as it is, their signature only, no Stars of their own). 2026-10-06: they drop 63-95 points (PR #58 found the same: 31-35% at zone 20) |
-| build | z20 normal and boss | within 15 points of the even spread either way | every attribute point in one attribute (once the game has attributes; before that the rows equal the plain hero). budget.mjs also prints turns against the even spread. On PR #58: all-Focus clears trash in x0.79-1.00 of the turns, all-Might and all-Vigour bosses take x1.14-1.27 |
+| joined | z25, z38 boss (z20 until z20-wall) | casual wins drop at most 30 points against the hero who kept the lamp; good 90%+ | a hero who just took the lamp (road level, the lamp's gear as it is, their signature only, no Stars of their own). 2026-10-06: they drop 63-95 points (PR #58 found the same: 31-35% at zone 20) |
+| build | z20 normal, z25 boss (z20 boss until z20-wall) | within 15 points of the even spread either way | every attribute point in one attribute (once the game has attributes; before that the rows equal the plain hero). budget.mjs also prints turns against the even spread. On PR #58: all-Focus clears trash in x0.79-1.00 of the turns, all-Might and all-Vigour bosses take x1.14-1.27 |
 
 **The `none` player** (boss-tiers-pr5): never parries or dodges, rings as casual. Run on the kept-up rows only, held to **10% at most**
 (`none` in the kind): "gear buys room to miss, not immunity". Tobin's cells and Pip's z12 cell ride gaps (below). `casualHigh` and `bot`
@@ -89,7 +89,10 @@ sets the band):
 
 Report rows (kind `reportGear`, never failing): z10 at uncommon +2 (no cliff between common and rare gear) and z12 on the first-hour
 set with the mid save (how much progression outside gear is worth: Wren casual 91 against 70). Zone 14 kept-up is `keptUpReport`
-(report, gear must still help).
+(report, gear must still help). Since z20-wall: `z20-boss-behind` is a report row (`reportBehind`; zone 20 is fitted to the first-time
+hero, so a tier behind costs a kept-up hero almost nothing) and the gated behind row is `z25-boss-behind`; rows `z20-` and
+`z24-arrival-bare`, `-t2` and `-rare` (`arrivalGear`) show what nothing worn, tier 2 common and tier 1 rare +5 do against that zone's
+arrival row.
 
 Report-only columns (not gated): the three-hero mean, casual attempts per win for each hero (1 / win rate, capped at
 20), turns a fight played well, and Tobin's boss turns against the Wren and Pip mean (aim x1.15-1.30).
@@ -149,14 +152,22 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
   (`riderX`): one tick took 97% of a first-time Wren's health, now about 7%. The kept-up z19 row reads 94-100 (gap, `boss-balance-pass`);
   Tobin's arrival cell sits under his band (gap, `tobin-safety-margin`). The next wall is the zone 20 boss (`z20-boss-arrival`, a report
   row, 0%), left to a follow-up card so the zone 20 "gear matters" rows and checks keep working.
+- **Zones 20-24 no longer wall a first-time player** (z20-wall, 2026-10-08). `z20-boss-arrival` to `z24-boss-arrival` are gated Captain
+  rows (level 23-24, tier 1 common +0, no mastery stars): casual Wren, Tobin and Pip win 70/81/69, 78/72/74, 68/68/69, 71/60/64 and
+  80/67/71 (5-offset baseline); good players 100; a player who never defends 0. A boss's Bleed, Burn or Venom tick there costs at most
+  7% of the hero's own health (`dotCap`), and Pip's boss hits cost 0.9 of Wren's share at zones 20, 22 and 23. The kept-up z20-24 rows
+  read 79-98 (gaps, `boss-balance-pass`); Tobin's arrival cells at 22-24 sit under his band (gaps, `tobin-safety-margin`). The gear
+  checks moved to the first kept-up zones: `z25-boss-behind` (gated), the joined and build rows at z25, and check.mjs C29's played and
+  gear asserts at zone 26 on the hero as built. On the arrival footing gear is worth little (nothing worn costs 4-29 points, better gear
+  adds up to 12, nothing for Tobin), as at zones 13-19. The next wall is the zone 25 Champion (`z25-boss-arrival`, a report row, 0%).
   The zone 10-12 rows stay on their footing: at the arrival footing the sampler reads Wren's bot 22-46 where the walk never loses
-  (Tobin's 78-98 matches), and on Wren's own walk save it reads 33-56, so that gap is the sampler's, not the footing's. Zones 16-24 Captains are gated on the kept-up hero: Wren and Pip casual 54-85, Tobin 100 under gaps.
+  (Tobin's 78-98 matches), and on Wren's own walk save it reads 33-56, so that gap is the sampler's, not the footing's. Zones 16-24 Captains are gated on the kept-up hero too (casual above band under gaps; good and never-defends gated).
 - **Zones 25-34 Captains are in band for Wren and Pip** (mid-zone-wall, 2026-10-07: casual 56-80, good 100%; z34 Wren sits 4 under, inside the seed noise). Tobin wins
   all of them casually (boss-tiers owns the +10 gap).
 - **The Fenmother is easier than the Captains around her** (boss-tiers): 67-100% casual against a 20-40 band; zone 36
   is 98-100%.
-- **Gear a tier behind costs Wren and Pip 61-92 points of casual wins and Tobin 6-10** (gear-weight).
-- **Tobin** wins every zone 20 boss casually where Wren wins 63% (tobin-safety-margin).
+- **Gear a tier behind costs 72/72/54 points of casual wins at the zone 25 Champion** (gear-weight; measured at zone 20 until z20-wall).
+- **Tobin** wins kept-up Captains past zone 25 about 10 points more often than Wren (z27 80 against 70, z34 79 against 70), inside his +10 band.
 - **A hero who just took the lamp** loses most bosses a hero who stayed wins (report-only rows): the gap is abilities, Stars
   and gear, not level.
 
@@ -176,3 +187,4 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 | 2026-10-08 | z13-unstick | z13-15 boss hitX, hpX and hpFloor knots; the seven z13-15 low-side gaps removed; gap z15-boss-keptup casual above (boss-balance-pass, 2026-12-01); re-baseline of the budget, the personas and the long run (heroes now pass zone 13, wall at zone 16); long.postNewThingShare abs 0.1 -> 0.13 (zone 29 wall, boss-balance-pass) | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 13 unstick) |
 | 2026-10-08 | z16-wall | z16-18 boss hpX, hitX, hpFloor and Tobin heroHitX knots, new `riderX` (z16 and z18 Bleed ticks x0.2); new rows z16, z17, z18-boss-arrival (`captain`, gated) and z19-boss-arrival (new report kind `reportArrival`); gaps z16-18-boss casual above (all heroes, boss-balance-pass) and z16-18-boss-arrival Tobin casual below (tobin-safety-margin), all until 2026-12-01; re-baseline of the budget, the personas and the long run (bots now pass zone 18 and meet the zone 19 wall), no tolerance change | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 16 wall) |
 | 2026-10-08 | z19-wall | z19 boss hpX, hitX, hpFloor and Tobin heroHitX knots, `riderX` 0.07 at z19 (Venom ticks); z19-boss-arrival gated (`captain`), new report row z20-boss-arrival (`reportArrival`); the arrival footing no longer wears the crafted set; gaps z19-boss casual above (all heroes, boss-balance-pass) and z19-boss-arrival Tobin casual below (tobin-safety-margin), until 2026-12-01; re-baseline; optimiser.stallCount abs 1.3 -> 2.4 (three sd of the new 5-offset spread, 0.8; the zone 20 wall inside the 10 h; boss-balance-pass, back to max(1.3, 3 sd) when zone 20 is fixed) | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 19 wall) |
+| 2026-10-08 | z20-wall | z20-24 boss hpX, hitX, hpFloor 1.3 and Tobin heroHitX knots, Pip heroHitX 0.9 at z20/22/23, new `dotCap` 0.07 at z20-24 (a boss tick costs at most 7% of the hero's own max HP); z20-z24-boss-arrival gated (`captain`), z25/z26-boss-arrival report rows; gear checks moved to the first kept-up zones: z20-boss-behind report (`reportBehind`, its gear-weight gaps dropped), new gated z25-boss-behind (gaps Wren and Tobin above, gear-weight), joined and build rows z20 -> z25 boss, C29 played and gear asserts at zone 26 on the hero as built; new report rows z20/z24-arrival-bare, -t2, -rare (`arrivalGear`); gaps z20-z24-boss casual above (all heroes, boss-balance-pass) and z22-z24-boss-arrival Tobin casual below (tobin-safety-margin), until 2026-12-01; re-baseline; optimiser.stallCount abs 2.4 -> 2.9 (three sd of the new 5-offset spread, 0.97; the bots' next wall is ordinary foes at zones 21-23; owner z21-foe-climb) | Opus high judge 2026-10-08, three rulings (`docs/DECISIONS.md`, Zone 20 wall) |
