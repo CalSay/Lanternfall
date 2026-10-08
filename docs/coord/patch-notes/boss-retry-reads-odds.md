@@ -1,0 +1,1 @@
+When a zone boss beats you, the Try again card now tells you your chance to win. If it is low, Keep fighting here is the big button, and Auto waits for a fair chance instead of sending you back after every level. Best shot: weak-card-360.
