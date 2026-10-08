@@ -12009,6 +12009,21 @@ if (section('tell us form')) try {
   }
 } catch (e) { fail('tell us form crashed: ' + (e.stack || e)); }
 
+// ---- late-save-hero-card-repeat: a hero who joined is announced once; reloads and the late fixture show no "New hero" card ----
+// 75-moments-ui shows the hero moment only on the heroUnlocked event, so counting that event counts the cards.
+if (section('hero join shown once')) try {
+  const joins = g => { g.eval('globalThis.__joins = []; on("heroUnlocked", e => __joins.push(e.id))'); return () => g.eval('__joins.join()'); };
+  const run = (g, s) => { for (let i = 0; i < s * 4; i++) g.fn.tick(0.25); };
+  const g = loadCore({ seed: 9401 }), first = joins(g);
+  g.eval('S.maxZone = S.zone = UNLOCK_TUNE.progress.hesketh.zone'); run(g, 3); g.fn.save();
+  let st = g.storage.dump(); const again = [];
+  for (let i = 0; i < 2; i++) { const h = loadCore({ seed: 9402 + i, storage: memoryStorage(st) }), seen = joins(h); run(h, 5); again.push(seen()); h.fn.save(); st = h.storage.dump(); assert(!h.errors.length, `hero join: reload ${i + 1} has no errors`); }
+  assert(first() === 'hesketh' && again.join('|') === '|', `hero join: Hesketh joins once at zone 11 and two reloads announce no hero again (first "${first()}", reloads "${again.join('|')}")`);
+  const late = loadCore({ seed: 9404, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8') }) }), lateSeen = joins(late);
+  run(late, 5);
+  assert(lateSeen() === '' && !late.errors.length, `hero join: the late fixture already has its heroes, so loading it shows no "New hero" card (got "${lateSeen()}")`);
+} catch (e) { fail('hero join shown once crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
