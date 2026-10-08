@@ -9,6 +9,11 @@
 //   abLearnInfo(hero, id) -> { id, a, owned, tier, lv, lvOk, scroll, payWith, why }   why: '' (can learn now) | a reason
 //   abilityLearn(hero, id) -> bool (spends the Scroll; emits abilityLearned { hero, id })
 //   scrollCount(id) -> n; scrollFor(zone) -> the Scroll id a zone's boss drops
+//   scrollUsable(hero, id) -> bool: the hero can learn a move with that Scroll now (a move of its tier or lower, not owned, level met)
+//   scrollSpares(hero) -> { short: [{ id, lv }], spare: [{ id, n, play: [hero], join: [hero] }], idle: [id] } for the Scrolls held
+//     (scroll-spares): short, the hero still has moves a Scroll pays for but the level is short (lv: the lowest that opens one);
+//     spare, the hero has learned every move it pays for, and play / join name the other starters who still lack one (met: you can
+//     play them; not met: they join on the road); idle, no starter lacks one.
 // Events: scrollDrop { id, n, first, firstEver }, abilityLearned { hero, id }.
 // Save: registerState('abil', { unl: { hero: [ids] }, scrolls: { id: n }, dry: { id: n }, got: { id: n } }).
 // Talents (24e): each learned ability, and Attack, Parry and Dodge, has two talents, a free A | B toggle (no points).
@@ -16,7 +21,7 @@
 //   talentsOf(hero) -> { id: 'a' | 'b' } (only abilities the hero owns)
 //   talentSet(hero, id, 'a' | 'b' | null) -> bool (null clears it; emits talentSet)
 // Save: S.abil.tal = { hero: { id: 'a' | 'b' } }; S.abil.resTip = { hero: 1 } (the resource line has shown on its own, 75-turn-ui).
-var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, talentSet;
+var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, scrollUsable, scrollSpares, talentsOf, talentSet;
 {
   const SCROLL_TUNE = { replay: 0.2, pity: 5 };
   const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {}, tal: { wren: {}, tobin: {}, pip: {} }, resTip: {} });
@@ -36,6 +41,23 @@ var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, 
     const owned = abilityOwned(k, id), lv = T ? T.lv : 1, lvOk = lvOf(k) >= lv, scroll = T ? T.scroll : '', payWith = tier ? payFor(tier) : '';
     const why = owned ? 'owned' : !a || a.hero !== k ? 'other' : !lvOk ? `Level ${lv}` : !payWith ? `Needs a ${SCROLLS[scroll].name}` : '';
     return { id, a, owned, tier, lv, lvOk, scroll, payWith, why };
+  };
+  // a hero's moves a Scroll of tier t pays for that they have not learned
+  const leftFor = (k, t) => (typeof HERO_ABILITIES === 'object' && HERO_ABILITIES[k] || []).filter(id => { const a = ABILITIES[id]; return a && a.tier && a.tier <= t && !abilityOwned(k, id); });
+  scrollUsable = (k, id) => { const sc = SCROLLS[id]; return !!sc && leftFor(k, sc.tier).some(x => lvOf(k) >= ABILITY_TIERS[ABILITIES[x].tier].lv); };
+  scrollSpares = k => {
+    const out = { short: [], spare: [], idle: [] };
+    const starters = typeof ROSTER === 'object' ? Object.keys(ROSTER).filter(h => h !== k && ROSTER[h].route && ROSTER[h].route.type === 'starter' && HERO_ABILITIES[h]) : [];
+    for (const id of SCROLL_ORDER) {
+      const n = scrollCount(id); if (!n) continue;
+      const t = SCROLLS[id].tier, left = leftFor(k, t);
+      if (left.length) { if (!scrollUsable(k, id)) out.short.push({ id, lv: Math.min(...left.map(x => ABILITY_TIERS[ABILITIES[x].tier].lv)) }); continue; }
+      const need = starters.filter(h => leftFor(h, t).length);
+      if (!need.length) { out.idle.push(id); continue; }
+      const met = h => typeof heroCanPlay === 'function' ? !!heroCanPlay(h) : true;
+      out.spare.push({ id, n, play: need.filter(met), join: need.filter(h => !met(h)) });
+    }
+    return out;
   };
   abilityLearn = (k, id) => {
     const i = abLearnInfo(k, id);
@@ -83,8 +105,9 @@ var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, talentsOf, 
     const ever = SCROLL_ORDER.reduce((n, k) => n + (s.got[k] | 0), 0);
     emit('scrollDrop', { id, n: s.scrolls[id], first, firstEver: ever <= 1 });
     // the first Scroll ever teaches what it is for: Old Hesketh says it between fights (75-onboard-ui, cal-0107-staged-guide), so with tips on
-    // the toast is only the bell's entry; after that a quiet line (the stage float shows it)
+    // the toast is only the bell's entry; after that a quiet line, only when the hero in play can learn with it now (scroll-spares: a spare
+    // drops quietly, the stage float shows it and Abilities says who it is for)
     if (ever <= 1) toast(`${SCROLLS[id].name}! Spend it on the Hero tab to learn an ability.`, 'good', null, S.onboard && S.onboard.tips ? 'low' : 'high');
-    else toast(`${SCROLLS[id].name} found.`, 'good', null, 'low');
+    else if (!soloHero() || scrollUsable(soloHero(), id)) toast(`${SCROLLS[id].name} found.`, 'good', null, 'low');
   });
 }
