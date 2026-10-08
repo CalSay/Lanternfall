@@ -25,7 +25,8 @@
 // Gather view for up to 5 minutes (Hunting for hide), builds the station a recipe needs (Camp > Build, two taps), and goes back to the fight.
 // It closes a sheet it left over the bar with the X. The report's "Gear and boss tries" table says what it wore in each zone and the boss tries lost there.
 // Game time is a paused fake clock stepped in 100 ms frames (33 ms while a foe winds up); the page's frames are timers on it and CSS
-// animations are moved by the same steps, so a run is repeatable for a seed and build (two runs give the same timeline).
+// animations are moved by the same steps, so two runs of a seed and build give the same first fights and first minutes (a rare
+// later split remains, suspected from layout that ResizeObserver reads when the browser draws).
 // The bot waits for the guide: no fight press while it reads a new tip, nor in a turn's first 0.3 s (the guide polls every 250 ms).
 //
 // What it logs, with game time and a shot: every tip, toast, card and banner, every unlock (S.onboard.got), each zone first clear,

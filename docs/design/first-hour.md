@@ -41,8 +41,8 @@ other.
   2 Nov scorecard review re-sets it. The one cold human so far was slower than est (player B: zone 5 at minute 25,
   `/mnt/project-files/early-game/playtest-coldB.md`).
 - **walk** is the seed 1 bot's time (`node tools/walk.mjs --seed 1 --minutes 60`, 360x740) on the build named here:
-  `47a3ce4a` (2026-10-08, after #205). The bot never hesitates and taps through text, so it plays about 2.4 times est's pace. The walk is
-  repeatable: two runs on one build give the same times.
+  `47a3ce4a` (2026-10-08, after #205). The bot never hesitates and taps through text, so it plays about 2.4 times est's pace. Two runs on one
+  build give the same first fights and first minutes; a rare split can still come later (seed 1 matched to 5:06 and to 13:19).
 - The nightly walk compares each beat with the **walk** column. A beat more than 50% off it is a finding: the game changed
   pace. The walk's ratio to est is printed once, as information. Never move the game or est to fit the bot. A card that
   changes the first hour's pace on purpose re-takes the walk column in its PR.
