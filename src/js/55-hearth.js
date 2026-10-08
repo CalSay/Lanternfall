@@ -117,7 +117,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
     emit('campOpen', { quiet: false });
     emit('hearthLit', { quiet: false });
     toast('The fire catches. Camp is open. See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
-    if (S.activity !== 'fight') setActivity('fight');
+    // cal-0107-staged-guide (Cal's play note 10): the hero stays at the grove; Hesketh's talk plays there (55-story pumps the hearth scenes while gathering)
     save();
     return true;
   };

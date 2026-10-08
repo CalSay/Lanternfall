@@ -607,7 +607,7 @@ function measureBeats() {
   const nth = (id, n) => { const l = moments.filter(x => x.id === id); return l[n - 1] ? l[n - 1].t : null; };
   return {
     '1': at(e => e.kind === 'card' && /Chapter 1|lamp/i.test(e.text)), '2': firstTapAt, '3': at(e => e.kind === 'card' && /Hesketh/.test(e.text)),
-    '4': at(e => e.kind === 'tip' && e.action === 'attack'), '5': tip('dodge'), '6': tip('parry'), '8': tip('boss'), '9': zone(1),
+    '4': at(e => e.kind === 'tip' && e.action === 'attack'), '5': tip('ability'), '6': tip('parry'), '8': tip('boss'), '9': zone(1),   // cal-0107-staged-guide: Dodge rides beat 4, the ability is beat 5
     '10': unlock('party'), '11': unlock('gather'), '12': unlock('camp'), '12a': zone(2), '13': unlock('nextup'), '14': unlock('craft') ?? nth('craft', 1),
     '14a': zone(3), '15': unlock('awaynote'), '16': unlock('bounties'), '16a': zone(4), '17': nth('hero', 1), '18': nth('star', 1),
     '20': nth('unique', 1), '20a': zone(7), '21': unlock('bestiary'), '22': unlock('almanac'), '22a': zone(8), '23': unlock('tavern'), '23a': zone(9),

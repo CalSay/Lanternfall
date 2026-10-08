@@ -11,8 +11,9 @@ chance at a new look, and the next stretch of road.
 
 **Rules for every beat.**
 - At most one new thing (a tab, a system, a currency) per beat, and at most 2 in any 3 minutes of the first 30
-  (scorecard F4). The three fight verbs (Attack with the ability, Dodge, Parry) are taught one per fight and are not
-  counted as new things; a beat's "Learns" column still names one.
+  (scorecard F4). The fight verbs (Attack, Dodge, the ability, Parry) are each taught the first time they come up, with
+  the fight held until the player presses them (`cal-0107-staged-guide`), and are not counted as new things; a beat's
+  "Learns" column still names one.
 - A big moment at least every 5 minutes in the first 20, never a gap over 8; then one at every zone first clear from 5
   to 10 (F3, as amended in DECISIONS "Early game"). Moments: see the plan, section 1. Every zone
   Captain's first clear opens a Lantern Cache (`cache-core`), so those wins count as moments too.
@@ -30,8 +31,8 @@ chance at a new look, and the next stretch of road.
   - Never a new tab, the first attribute points, the first Scroll or a second ability in the first hour without a line
     from Hesketh that names it.
   - Never a sentence fragment or a stage direction as Hesketh's speech ("Materials in, gear out", "Go on, press it").
-  - The build breaks some of these today. `cal-0107-hesketh-voice` fixes the last one; `cal-0107-staged-guide` fixes
-    the rest it names (Cal's notes 2, 3, 4, 10 and 12).
+  - `cal-0107-hesketh-voice` fixed the last one; `cal-0107-staged-guide` fixed the rest (Cal's notes 2, 3, 4, 10 and 12),
+    held by tools/check.mjs "staged guide (browser)".
 - Times are for the casual walk (follows Next Up, parries and dodges at a set rate). **est** = estimated, **meas** =
   measured by the walk.
 
@@ -52,16 +53,16 @@ passes. At gap 90 the walk opens Hero 0:32, Gather 2:52, fire 3:19, Workbench 4:
 | 1 | 0:00 | Three stills, one line each; Skip. Text over the darkened Mossy Hollow background until `first-hour-art` passes | Taps through or skips | Why there is a lamp | nothing | curiosity | The lamp and the spiral; the last lamp goes out; you run with yours | built by `intro-and-picker`, `first-hour-art` |
 | 2 | 0:25 | "Who are you?": Wren, Tobin, Pip in second person | Picks a hero | Who they are | their hero | ownership | "You are good at doors." | built by `intro-and-picker` |
 | 3 | 0:35 | Hesketh's fire over still 3, at most 3 lines; then the guide panel with his face | Reads | A guide exists | nothing | warmth | Hesketh lights his fire from your lamp | built by `intro-and-picker`, `guide-panel` |
-| 4 | 0:45 | Fight 1 (within 45 s of opening for a player who taps through) | Attack, then the ability | Attack and the ability | gold ticks up | power | | tip panel placement: done (`guide-panel`, never over the stage); phase: done (`guide-phase-guards`, Attack and ability tips wait for your turn) |
-| 5 | 1:25 | Fight 2 | Dodges a heavy hit | Dodge | | relief | | built: `guide-voice` (the Dodge tip waits for fight 2, Hesketh's line) |
-| 6 | 1:55 | Fight 3 | Parries a heavy hit | Parry | Hit-stop on a good parry; PARRIED! stamp, sized numbers and a lamp row for clean parries (hit-feel, built) | skill | | built; card `hit-feel` |
+| 4 | 0:45 | Fight 1 (within 45 s of opening for a player who taps through), held on each new press: Attack on your first turn, then Dodge on the foe's first swing | Attack, then Dodge | Attack and Dodge | gold ticks up | power | | built: `cal-0107-staged-guide` (the foe's clock stops as the Dodge window opens; the line and the ringed button wait for the press); panel `guide-panel` |
+| 5 | 0:55 | Fight 1, your next turn: the ability, held (no word about swapping, no "Tap to add" on the empty slots) | Presses the ability | The ability | | relief | | built: `cal-0107-staged-guide` |
+| 6 | 1:05 | The foe's next swing (fight 1, or fight 2's first if the foe fell or was stunned) | Parries | Parry | Hit-stop on a good parry; PARRIED! stamp, sized numbers and a lamp row for clean parries (hit-feel, built) | skill | | built: `cal-0107-staged-guide` (all four done by the end of fight 2 for all three heroes); card `hit-feel` |
 | 7 | 2:25 | Fights 4 and 5 | Uses all three verbs | nothing new | | flow | | today |
 | 8 | 2:55 | The zone 1 Captain; Hesketh: "Watch the bar" (turn fight) or "Watch the red rings" (legacy) | Fights the boss | Boss strings | | tension | | built: `guide-voice` (the boss tip in Hesketh's voice; one paused step a fight) |
 | 9 | 3:45 | **Big moment: first boss win**, and the **first Lantern Cache** reveals the win's drops plus the Ember Red lantern colour; the stage relights | Taps to open | Caches | the win's drops; Ember Red | surprise | The hero's first line | built: card `cache-core` (card "First boss down" lists the win's drops and Ember Red; the stage shift is faint, see `cache-lantern-read`); card `moment-layer`; `hero-voice` done (boss1 bark on the card) |
 | 9a | when it happens | **Only if a zone boss beats you for the first time**: the Try again card shows what beat you; once it closes and the road is quiet, Hesketh adds one line: "No shame in that. The card showed what beat you, and each try shows one more of its moves." | Reads it; Try again or keeps fighting | Try again card | | understanding | Once per save. It waits behind any guide step and never pauses the game. | card `defeat-card-guide-tip` (`defeat` line in 75-onboard-ui SAY_MORE) |
-| 10 | 5:30 | The Hero tab (spacing governor), with the first attribute point | Spends the point | Attributes | +1 point | ownership | | `story-unlock-gates`; points from PR #58; moment `moment-layer`; built: `unlock-voice` (Hesketh announces the Hero tab after the next fight, in the guide panel) |
-| 11 | 7:15 | The Gather tab; Hesketh: "Wood first." | Chops 8 logs | Gathering | logs | | | `story-unlock-gates`; line `unlock-voice`; built: `unlock-voice` ("Wood first. Gather's open, and the hero works even while you're away.") |
-| 12 | 9:00 | **Medium moment: the camp fire lit**; the Camp tab; Hesketh's talk plays here | Lights the fire, listens | Camp | a home | relief | "Every road needs a place to come back to." | today (fire); cards `intro-and-picker` (talk moves here), `moment-layer` |
+| 10 | 1:10 | The Hero tab at the first level-up (level 2, the end of fight 2), with the first attribute points; Hesketh: "The Hero tab is open now. Open Hero and spend your new points." | Spends the points, then Back to the fight | Attributes | +4 points | ownership | | built: `cal-0107-staged-guide` (the tab opens on the level-up; the upgrade step carries the unlock line, so the tab is announced once; the level card says "4 attribute points to spend on the Hero tab."); moment `moment-layer` |
+| 11 | 7:15 | The Gather tab; Hesketh: "You can gather now. Bring me Pine Log for a proper fire, and we'll talk once it's lit." Then "Tap Gather and chop some Pine Log for the fire." | Chops 8 logs | Gathering | logs | | | `story-unlock-gates`; built: `cal-0107-staged-guide` (the wood-then-talk promise moved here from the roadside fire; said once) |
+| 12 | 9:00 | **Medium moment: the camp fire lit**; the Camp tab; Hesketh's talk plays at the grove, and you stay there gathering | Lights the fire, listens | Camp | a home | relief | "Every road needs a place to come back to." | built: `cal-0107-staged-guide` (no walk back to the fight; his next line is "Chop 12 Pine Log for the Workbench (0/12)."); cards `intro-and-picker`, `moment-layer` |
 | 12a | 10:00 | **Big moment: the second cache**, from the zone 2 Captain's first clear, with a second lantern colour; the stage relights | Taps to open | nothing new | the win's drops plus a colour | surprise | | card `cache-core`, `moment-layer` |
 | 13 | 10:45 | Next Up in the compact top bar | Reads Next Up | Next Up | | direction | | today: Next Up shares one line with Fight / Gather, zone arrows in the header (`top-bar-compact`); unlock time `story-unlock-gates` |
 | 14 | 12:30 | The Workbench and the first tool: the first craft, with a **result card** showing its grade | Crafts the tool | Crafting | a tool, revealed | pride | | today (chain); `cal-0107-flow-bugs`: after the tool is made the guide says to put it on (Equip on the tip and on the card, which closes once the piece is worn); result card built by `craft-reveal` (craft-reveal PR); `workbench-cost`: the Workbench costs 300 gold and 12 Pine Log (was 20 logs, no gold), the first gold a player spends; every hero holds 360 gold when zone 1 clears, so it never waits (walk, seeds 1-3: Workbench up at 2:45 to 3:45, numbers in `docs/coord/proposed/workbench-cost.md`) |

@@ -6,6 +6,7 @@
 {
   const O = () => S.onboard;
   ONBOARD.gate = true;   // Next Up leaves out goals of systems still hidden
+  ONBOARD.lessons = true;   // cal-0107-staged-guide: core holds the fight on the Dodge and Parry lessons (55-onboard guideLessonHold)
 
   // ---------------- progressive unlocks ----------------
   const MODE_FEATURE = { gather: 'gather', raid: 'raid' };
@@ -63,7 +64,7 @@
   // Hands (Tam's notice) say it elsewhere. Runtime queue only: an old save never replays one, and what a save already had stays quiet.
   const SAY_TXT = {
     party: "The Hero tab is open now. Your level, points and moves are kept there.",
-    gather: "Wood first. Gather's open, and the hero works even while you're away.",
+    gather: "You can gather now. Bring me Pine Log for a proper fire, and we'll talk once it's lit.",
     bounties: "Folk have posted bounties on the Fight tab. They pay well for small jobs.",
     camp: "There. That's a camp. Build on it from the Camp tab.",
     forage: "You can forage now, under Gather. You'll mostly find fibre and herbs.",
@@ -78,22 +79,41 @@
     deep: 'The Deepwell is open on the Fight tab. You pick a boon between its floors.'
   };
   // defeat-card-guide-tip: a line that is not an unlock (check.mjs keeps SAY_TXT to systems). The first time a boss beats you, once the card is shut and the road is quiet.
-  const SAY_MORE = { defeat: 'No shame in that. The card showed what beat you, and each try shows one more of its moves.' };
+  // cal-0107-staged-guide: the first Scroll (its toast hands over to him), and the slot for a second ability once it is learned.
+  const SAY_MORE = {
+    defeat: 'No shame in that. The card showed what beat you, and each try shows one more of its moves.',
+    scroll: 'That boss dropped a Moss Scroll. Open Hero, then Abilities, and learn a new move with it.',
+    slot: 'Your new move needs a slot. Tap an empty slot under the fight and pick it there.'
+  };
   const sayText = id => SAY_TXT[id] || SAY_MORE[id];
+  // a line that no longer matches the game when its turn comes is dropped, never said (the Scroll already spent, the move already slotted)
+  const spareMove = () => { try { const eq = soloEquipped(); return eq.includes(null) && soloAbilities().some(id => !eq.includes(id)); } catch (e) { return false; } };
+  const SAY_STILL = {
+    gather: () => typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit(),   // his promise is for the cold fire only
+    scroll: () => { try { return SCROLL_ORDER.some(id => scrollCount(id) > 0); } catch (e) { return false; } },
+    slot: spareMove
+  };
   const sayQ = []; let sayCur = '';
   function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) sayQ.push(id); }
   const sayDone = id => { sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); };
+  // an unlock line held while up: a Got it, the game waits, and only between fights (never two lines at once)
+  const sayStep = id => ({ id: 'say:' + id, text: sayText(id), ok: 1, pause: 1, ph: ['between'] });
+  // cal-0107-staged-guide: a guide step already says some unlocks, so his unlock line would say it twice. The Hero tab at the first level-up is
+  // the upgrade step's ("The Hero tab is open now..."); a cold Hearth's camp is the fire talk's and the Workbench steps' ("Open Camp and we'll build").
+  const saidBySteps = id => (id === 'party' && !O().done.upgrade) || (id === 'camp' && typeof hearthCold === 'function' && hearthCold() && !O().done.bench);
   const TAB_FEATURE = { party: 'party', gather: 'gat', camp: 'world', craft: 'forge' };
   on('unlock', ({ id, quiet }) => {
     applyFeatures();
     if (quiet || id === '*') return;
-    sayQueue(id);
+    if (saidBySteps(id)) onboardUseDone('say:' + id); else sayQueue(id);
     if (!OPEN_TXT[id]) return;
     const tab = TAB_FEATURE[id];
     const ic = tab ? document.querySelector(`.tab[data-tab="${tab}"] img`) : null;
     toast(OPEN_TXT[id], 'good', ic ? ic.src : { ic: ['banner', '#F2C14E'] }, tab || id === 'nextup' ? 'high' : 'normal');
   });
   on('wipe', e => { if (e && e.boss && !e.arena) sayQueue('defeat'); });
+  on('scrollDrop', e => { if (e && e.firstEver) sayQueue('scroll'); });
+  on('abilityLearned', e => { if (e && e.hero === soloHero() && spareMove()) sayQueue('slot'); });
   on('menuView', ({ tab, view }) => {
     const o = O();
     if (!o.seen[tab]) o.seen[tab] = 1;
@@ -209,19 +229,21 @@
   const sbtn = id => q(`#soloBar .sb-${id}`);
   const turnTxt = () => typeof turnCombatOn === 'function' && turnCombatOn();
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
+  // Cal's play note 4: no word about swapping while every move you own already has a slot
+  const swapTail = () => { try { return soloAbilities().length > soloEquipped().length ? ' Hold it to swap in another move.' : ''; } catch (e) { return ''; } };
   const SOLO_UI = {
-    attack: () => onCtrl() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: "Something's in the road. Press Attack and hit it." } : null,
-    ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Go on, press it. Hold the button to swap it.` } : null,
-    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: turnTxt() ? "It's winding up to hit you. Don't stand there. Press Dodge." : "See the red ring? A heavy hit's coming. Don't stand there. Press Dodge." } : null,
-    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: turnTxt() ? 'Harder now. Press Parry just before the hit lands. Parry every blow and you counter.' : 'Another heavy one. Press Parry just before it lands. It staggers, and you counter.' } : null,
-    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: turnTxt() ? "That's the zone boss. Watch the bar: Dodge or Parry every hit. If it gathers a big move, stun it or hit it hard." : "That's the zone boss. Watch the red rings. Dodge, or Parry at the last moment." }
+    attack: () => onCtrl() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'There it is. Press Attack and hit it.' } : null,
+    ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready now. Press it.${swapTail()}` } : null,
+    dodge: () => onCtrl() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: turnTxt() ? "It's about to hit you. Press Dodge now and get out of the way." : 'See the red ring? A heavy hit is coming. Press Dodge and get out of the way.' } : null,
+    parry: () => onCtrl() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: turnTxt() ? 'Here comes another. Press Parry now, just before the blow lands.' : 'Another heavy one. Press Parry just before it lands, and it staggers.' } : null,
+    boss: () => target() !== 'mob' || !mob || !mob.boss ? null : onGame() ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: turnTxt() ? "That's the zone boss. Watch its bar, and Dodge or Parry every hit." : "That's the zone boss. Watch the red rings, and Dodge or Parry at the last moment." }
       : isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'The zone boss is here. Close this menu and watch.' } : null,   // UX-L1: a landscape menu
     gather: () => {
       if (!onCtrl()) return null;
       const b = q('#modeSeg button[data-act="gather"]');
-      return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Pine Log for a camp fire.' } : null;
+      return b && !b.hidden ? { node: b, text: 'Tap Gather and chop some Pine Log for the fire.' } : null;
     },
-    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: "The Hero tab's open. Tap it." }
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'Your level and moves are kept on the Hero tab. Tap it and have a look.' }
   };
   // Cal's play notes 9 and 13: a piece in the bag does nothing until it is on. The tip names it and the Equip button wears it in one tap;
   // the ring sits on the craft card's own Equip button when that card is up.
@@ -277,9 +299,9 @@
     // hero-progression-rework: with attributes on, the first point goes into Might.
     upgrade: () => Object.assign(typeof attrOn === 'function' && attrOn()
       ? path('party', 'attributes', '#attrRows .at-row[data-at="might"] .at-add[data-n="1"]',
-        ["You've earned a point to spend. Open Hero.", 'Open Build.', 'Put your point in Might. It makes you hit harder.'])
+        ['The Hero tab is open now. Open Hero and spend your new points.', 'Open Build.', 'Put your point in Might. It makes you hit harder.'])
       : path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
-        ["You've gold to spend. Open Hero and train.", 'Open Training.', 'Train Attack. Each level makes you hit harder.']), { side: S.tab === 'party' ? 'up' : '' }),
+        ['The Hero tab is open now. Open Hero and train with your gold.', 'Open Training.', 'Train Attack. Each level makes you hit harder.']), { side: S.tab === 'party' ? 'up' : '' }),
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Tap it and see what you can mine." },
     'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Tap Camp and build." },
     'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Tap it and make gear." },
@@ -288,6 +310,7 @@
 
   const USE_SHOWN_MS = 7000;   // a first-use line counts as read after this long on screen
   const BLOCK = '.create, .away-ov, .bsheet-ov, .modal, .dw-ov, .mm-ov';
+  guideLineOk = () => !document.hidden && !q(BLOCK);   // core's lesson hold asks this: a line nobody can see must not hold the fight
   let lastKey = '', useT0 = 0, useId = '', lastGT = null;
   function hide() { useT0 = 0; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
@@ -303,9 +326,13 @@
     if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
-    // unlock-voice: a new thing is announced when no fight is in view, and only when no tip is up
-    // (it starts between fights and then stays up until read, so a quick next foe does not cut it short)
-    if (!step && sayQ.length && O().tips && !document.hidden && (sayCur === sayQ[0] || guidePhase(!guideMenuCovers()) === 'between')) { sayCur = sayQ[0]; step = { id: 'say:' + sayCur, text: sayText(sayCur) }; }
+    // unlock-voice: a new thing is announced only when no fight is in view, and the game waits on its Got it (cal-0107-staged-guide).
+    // It goes before a between step that is not already up and holding (the news, then what to do), never over a fight lesson.
+    if (sayQ.length && O().tips && !document.hidden && guidePhase(!guideMenuCovers()) === 'between') {
+      const id = sayQ[0];
+      if (SAY_STILL[id] && !SAY_STILL[id]()) sayDone('say:' + id);
+      else if (sayCur === id || !step || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && ONBOARD.paused))) { sayCur = id; step = sayStep(id); }
+    }
     // no guide step: the system on screen may still owe its first-use line (never alongside a guide step)
     if (!step && S.tab) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
@@ -319,7 +346,7 @@
     if (!spec || !vis(spec.node)) return hide();
     // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
     if (table === STEP_UI && !use && !spec.noRing && !pressable(spec.node)) return hide();
-    if (use) { if (useId !== step.id) { useId = step.id; useT0 = 0; } if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { finish(step); return hide(); } }
+    if (step.id.startsWith('use:')) { if (useId !== step.id) { useId = step.id; useT0 = 0; } if (!useT0) useT0 = Date.now(); else if (Date.now() - useT0 > USE_SHOWN_MS) { finish(step); return hide(); } }   // (a held say line waits for its Got it)
     // guide-voice: a live tip nobody answers for 60 s of play (game clock: a paused game adds none) retires to the Journal's Tips
     if (!use && step.tip && !step.needs && !ONBOARD.paused) {
       const R = GUIDE_RT.shown; R[step.id] = (R[step.id] || 0) + dg;
@@ -406,6 +433,9 @@
   addEventListener('resize', () => { invalidate(); tick(); });
   on('onboardStep', () => setTimeout(tick, 0));
   on('telegraphStart', () => setTimeout(tick, 0));   // SOLO1: the Dodge and Parry steps catch the wind-up at its start
+  // cal-0107-staged-guide: core has just held the fight for a lesson (show its line now), a press may have ended one (let the fight go on now),
+  // and a kill opens the gap between fights where a held line can start (it can be shorter than one poll)
+  for (const ev of ['guideHold', 'soloAttack', 'soloDodge', 'soloParry', 'ability', 'timingRing', 'kill']) on(ev, () => setTimeout(tick, 0));
   on('soloHero', () => setTimeout(tick, 0));
   on('menuView', () => { reveal = true; invalidate(); });
 

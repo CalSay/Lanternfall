@@ -8,10 +8,23 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## The game
 
-- **Claude decided: the guide teaches one thing a fight, in Hesketh's voice (card guide-voice, 2026-10-07; Cal can veto).** Every guide
+- **Claude decided: the first fight is a staged lesson, and the roadside fire's last line leads into it (card cal-0107-staged-guide,
+  2026-10-07; Cal can veto).** Cal's play note 3: "You need to have the game pause so it can explain dodging and parrying before you're
+  just dropped in it." One verb a fight left the first foe hitting you with nothing taught, so the verbs moved into fight 1: each is taught
+  the first time it comes up, with the fight held (Attack on your first turn, Dodge on the foe's first swing, the ability on your next
+  turn, Parry on the next swing or the next foe's first). The hold is decided every frame in core: the foe's clock stops as the Dodge or
+  Parry window opens, so the press always lands; key presses still pass, and while a lesson holds only the button it names works. After the lessons nothing speaks in a fight: other tips and
+  Hesketh's unlock lines wait for the gap between fights, and an unlock line holds the game with a Got it. Cal's note 2 ("'Wood first'
+  and then we're fighting? Makes no sense"): the fire's last line is now "Something's coming up the road. Keep that lamp behind you.",
+  and his ask for wood moves to when Gather opens. Also: the Hero tab opens at level 2 (the first points), announced once by the upgrade
+  step; the first Scroll and a second ability's slot get his lines; empty slots are silent until a move waits for one (note 4); lighting
+  the fire keeps you at the grove for his talk (note 10). Cost: with Hero first in the unlock queue, Gather opens sooner (warm walk
+  1:40, was 5:11) and Next Up later (5:19, was 0:11); the warm check's Next Up bound moves from 2:00 to the cold walk's 6:00.
+  Nothing saved (marks already exist).
+- **Claude decided: the guide teaches in Hesketh's voice (card guide-voice, 2026-10-07; Cal can veto).** Every guide
   step names the phases it may start in (your turn, a wind-up, the foe's turn, between fights); a step in the wrong phase waits.
-  Camp and menu tips start in a break and then stay up. One paused step a fight; Dodge waits for a later fight than the ability, Parry
-  for a later fight than Dodge (runtime counter, nothing saved). Hero tab and Next Up notes wait a minute after the last guide line.
+  Camp and menu tips start in a break and then stay up (cal-0107-staged-guide: hidden while a foe is on the field, back in the gap).
+  The fight's verbs are the staged lesson above. Hero tab and Next Up notes wait a minute after the last guide line.
   A tip nobody answers for 60 s of play retires: `onboard.done[id]` becomes 2 (it was always 1; every reader treats it as truthy),
   and the Journal's Tips lists it as "Tips you missed". Opus judge and a Sonnet red team: the turn-fight boss line says "Watch the
   bar" because only the legacy fight draws red rings; "stretch" and "strings" cut as jargon; the legacy Parry line no longer claims a
@@ -751,6 +764,12 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
 ## Replaced decisions
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
+
+- Guide: "one thing a fight: one paused step a fight; Dodge waits for a later fight than the ability, Parry for a later fight than
+  Dodge" (guide-voice, 2026-10-07) -> the staged first-fight lesson, every verb as it first comes up, with the fight held
+  (cal-0107-staged-guide, 2026-10-07, Cal's play notes 3 and 12).
+- Opening: Hesketh's fire ends "Wood first. Then we talk." (intro-and-picker, 2026-10-06) -> it ends on the foe coming up the road;
+  the wood-then-talk promise is his Gather line (cal-0107-staged-guide, 2026-10-07, Cal's play note 2).
 
 - Autopilot: "Cal approves batches and taps gated items" (2026-10-05) -> no batch waits for Cal; design calls go to the Opus judge
   (2026-10-05, Cal's autonomy request; recorded 2026-10-07).
