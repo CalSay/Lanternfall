@@ -798,7 +798,7 @@ function report(res) {
     if (!(b.id in meas)) { out.push(`| ${b.id} | ${b.min} | ${b.wmin} | not measured | | ${what} |`); continue; }
     if (m === null || m === undefined) { out.push(`| ${b.id} | ${b.min} | ${b.wmin} | not reached in ${fmtT(reached)} | | ${what} |`); if (b.walk !== null && b.walk < reached * 0.8) off.push(`beat ${b.id} (${b.what.slice(0, 40)}) never happened; the map's walk saw it at ${b.wmin}`); continue; }
     if (b.est && !['1', '2', '3'].includes(b.id)) ratios.push(m / b.est);   // the bot taps through the stills and the picker without reading
-    const pct = b.walk ? Math.round((m - b.walk) / b.walk * 100) : null, bad = pct !== null && Math.abs(pct) > 50 && Math.abs(m - b.walk) >= 10;
+    const pct = b.walk ? Math.round((m - b.walk) / b.walk * 100) : null, bad = pct !== null && Math.abs(pct) > 50 && Math.abs(m - b.walk) >= 10 && b.id !== '20';   // 20, the first unique, is a 15% roll: luck, not pace
     out.push(`| ${b.id} | ${b.min} | ${b.wmin} | ${fmtT(m)} | ${pct === null ? '' : (pct > 0 ? '+' : '') + pct + '%'}${bad ? ' **!**' : ''} | ${what} |`);
     if (bad) off.push(`beat ${b.id} (${b.what.slice(0, 40)}): map walk ${b.wmin}, this walk ${fmtT(m)} (${pct > 0 ? '+' : ''}${pct}%)`);
   }
