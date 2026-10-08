@@ -129,7 +129,7 @@
   // guide-goal-after-reload: his Pine Log line carries the first job, and the queue lives in memory only, so a reload before it was read
   // (Got it or ×) would lose it. Queue it again once a boot while the fire is still cold. Not an unlock, so the unlock spacing is untouched.
   // reload-keeps-tips: the lines queued and unread when the game closed, in order (each still checked by SAY_STILL when its turn comes)
-  try { for (const e of Array.isArray(O().sayQ) ? O().sayQ.slice() : []) { if (!e || typeof e.id !== 'string' || e.id === 'defeat') continue; if (e.id === 'scroll' && e.arg) scrollId = e.arg; if (e.id === 'slot' && e.arg) slotAb = e.arg; sayQueue(e.id); } } catch (e) {}
+  try { for (const e of Array.isArray(O().sayQ) ? O().sayQ.slice() : []) { if (!e || typeof e.id !== 'string' || e.id === 'defeat' || !(Object.hasOwn(SAY_TXT, e.id) || Object.hasOwn(SAY_MORE, e.id))) continue; if (e.id === 'scroll' && e.arg) scrollId = e.arg; if (e.id === 'slot' && e.arg) slotAb = e.arg; sayQueue(e.id); } } catch (e) {}
   try { if (isUnlocked('gather') && SAY_STILL.gather() && !O().done['say:gather']) sayQueue('gather'); } catch (e) {}
   // the upgrade step already brought you to the Hero tab and said what it is for: its first-use line would introduce it a second time
   on('onboardStep', e => { if (e && e.id === 'upgrade') onboardUseDone('use:party'); });

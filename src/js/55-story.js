@@ -340,7 +340,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // fire talk, voices, choices). A rebuilt scene can be shorter (a starter met as a person drops out when he is the hero): the page is clamped.
   // One that builds nothing, or Story cards off, files it late (its Journal entry offers it), as an untouched card does.
   let restored = false;
-  const REBUILD = { r: id => regionScene(id), p: (id, ph) => champScene(id, ph), e: (id, ph) => elderScene(id, ph), n: id => npcScene(id), v: id => voiceScene(id), ch: id => choiceScene(id) };
+  const REBUILD = { r: id => regionScene(id), p: (id, ph) => /^(pre|post)$/.test(ph) ? champScene(id, ph) : null, e: (id, ph) => /^(pre|post)$/.test(ph) ? elderScene(id, ph) : null, n: id => npcScene(id), v: id => voiceScene(id), ch: id => choiceScene(id) };
   function restore() {
     restored = true;
     const st = ST();
