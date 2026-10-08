@@ -109,7 +109,7 @@ async function shot(page, tag) {
   try { fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: path.join(SHOTS, f) }); return f; } catch (e) { return ''; }
 }
 async function note(page, kind, text, o = {}) {
-  const e = { t: Math.round(gt * 10) / 10, kind, text, ...o.extra };
+  const e = { ...o.extra, t: Math.round(gt * 10) / 10, kind, text };   // the extras never overwrite the time or kind (a gather note once logged its tier as its time)
   if (o.shot !== false) e.shot = await shot(page, o.tag || kind + '-' + text);
   log.push(e);
   if (!QUIET && o.say !== false) process.stderr.write(`  ${fmtT(gt).padStart(5)} ${kind.padEnd(8)} ${text.slice(0, 100)}\n`);
@@ -131,6 +131,7 @@ const OBS = `(() => {
   let s = {};
   try { s = { zone: S.zone, maxZone: S.maxZone, L: S.L, gold: Math.floor(S.gold), kills: S.totalKills, got: Object.assign({}, S.onboard && S.onboard.got), t: S.onboard && S.onboard.t,
     found: Object.keys(S.found || {}).length, stars: Object.keys((S.stars && S.stars.own) || {}).length, heroes: Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {}).length,
+    built: ['bench', 'forge', 'store'].filter(id => typeof campLevel === 'function' && (campLevel(id) >= 1 || (typeof campPending === 'function' && !!campPending(id)))),   // walk-bot-forge-logs: a station counts from its Build press
     looks: typeof deeds === 'object' ? deeds.looks().filter(l => l.got).length : 0, forged: S.deeds && S.deeds.n ? S.deeds.n.forged : 0, up: S.deeds && S.deeds.n ? S.deeds.n.up || 0 : 0, act: S.activity, tab: S.tab,
     acted: (() => { try { return Object.fromEntries(FEATURES.map(f => [f.id, !!(f.now && f.now())])); } catch (e) { return {}; } })() };
   } catch (e) { s = { err: String(e).slice(0, 80) }; }
@@ -436,6 +437,7 @@ const GEAR_Q = `(() => {
   return { wear, goal, act: S.activity, node: S.node ? { kind: S.node.kind, t: S.node.t } : null };
 })()`;
 const GATHER_VIEW = { ore: 'mine', crystal: 'mine', wood: 'wood', fibre: 'forage', herb: 'forage', hide: 'hunt' };
+st.builtAt = {};   // walk-bot-forge-logs: game time of each Camp station's Build press (the report's Forge time)
 st.gear = { sess: null, tries: {}, wearAt: -99, stepAt: -99, wornN: 0, crafted: 0, firstWear: null };
 async function openCraft(view) {
   const tab = await click('.tabs .tab[data-tab="forge"]', 300); await advance(450, 16);
@@ -471,7 +473,7 @@ async function craftGoal(g, gate) {   // gate: a tier gate's craft (next-tier-ga
   const state = await page.evaluate(sel => { const b = document.querySelector(sel); return b ? { dis: b.disabled, vis: b.getClientRects().length > 0 } : null; }, btn);
   const did = state && !state.dis && await click(btn, 300);
   await advance(400, 16);
-  await note(page, gate ? 'gate' : 'gear', `craft ${g.nm}${did ? ' -> pressed Craft' : ' -> nothing to press' + (state ? (state.dis ? ' (button greyed)' : '') : ' (no recipe row)')}`, { extra: { kind: g.kind, t: g.t, crafted: !!did }, tag: (gate ? 'gate' : 'gear') + '-craft' });
+  await note(page, gate ? 'gate' : 'gear', `craft ${g.nm}${did ? ' -> pressed Craft' : ' -> nothing to press' + (state ? (state.dis ? ' (button greyed)' : '') : ' (no recipe row)')}`, { extra: { piece: g.kind, tier: g.t, crafted: !!did }, tag: (gate ? 'gate' : 'gear') + '-craft' });
   if (gate) { if (!did) addCheck('gate', 'a tier gate\'s tier 1 recipe can be paid for and its Craft button cannot be pressed', `${g.nm}: ${state ? (state.dis ? 'button greyed' : 'hidden') : 'no recipe row in Craft > Make'}`); return !!did; }
   if (did) st.gear.crafted++;
   else addCheck('gear', 'a gear goal says "you have the materials" and its Craft button cannot be pressed', `${g.nm}: ${state ? (state.dis ? 'button greyed' : 'hidden') : 'no recipe row in Craft > Make'}`);
@@ -479,8 +481,13 @@ async function craftGoal(g, gate) {   // gate: a tier gate's craft (next-tier-ga
 }
 // Camp > the station's building > its Build button (the guide's "Build the Forge" is the same press).
 // The two taps on a station's Build button in Camp (Next Up's build goal uses them too). True when both landed.
+// Hesketh's own build step (bench, forge, store) builds on the first tap (camp-build-tap-again): then there is no second tap to make,
+// so the build counts when the station's level rose or its build is queued (walk-bot-forge-logs: "Forge Lv 1: ready to build -> nothing to press").
 async function pressBuild(id) {
+  const lvq = `(id => (typeof campLevel === 'function' ? campLevel(id) : 0) + '|' + ((S.camp.builds || []).some(b => b.id === id) ? 1 : 0))(${JSON.stringify(id)})`;
+  const before = await X(lvq);
   const a = await click(`#camp-b-${id} button:text(Build)`, 300); await advance(400, 16);   // the first tap arms the button ("Sure?")
+  if (a && (await X(lvq)) !== before) return true;
   const b = a && await click(`#camp-b-${id} button:text(Sure|Tap again)`, 300); await advance(500, 16);
   return !!b;
 }
@@ -536,7 +543,7 @@ async function gearStep(o) {
   if (q.act === 'gather' && q.node && q.node.kind === m.k && q.node.t === m.t) return false;   // already working there
   const did = await startGather(m.k, m.t);
   if (did) G.owns = true;
-  await note(page, 'gear', `gathering ${m.k} tier ${m.t} for ${g.nm} (${m.n} more)${did ? '' : ' -> could not start'}`, { extra: { kind: m.k, t: m.t }, tag: 'gear-gather' });
+  await note(page, 'gear', `gathering ${m.k} tier ${m.t} for ${g.nm} (${m.n} more)${did ? '' : ' -> could not start'}`, { extra: { mat: m.k, tier: m.t }, tag: 'gear-gather' });
   return true;
 }
 
@@ -588,7 +595,7 @@ async function gateStep(o) {
     if (q.act === 'gather' && q.node && q.node.kind === m.k && q.node.t === m.t) return false;   // already working there
     const did = await startGather(m.k, m.t);
     if (did) s.owns = true;
-    await note(page, 'gate', `gathering ${m.k} tier ${m.t} for ${s.txt}${did ? '' : ' -> could not start'}`, { extra: { kind: m.k, t: m.t }, tag: 'gate-gather' });
+    await note(page, 'gate', `gathering ${m.k} tier ${m.t} for ${s.txt}${did ? '' : ' -> could not start'}`, { extra: { mat: m.k, tier: m.t }, tag: 'gate-gather' });
     return true;
   }
   if (!q || (T.cool[q.key] || 0) > gt) return false;
@@ -637,6 +644,7 @@ async function watch(o) {
     if (s.looks > p.looks) await moment('look', 'a look found (' + s.looks + ')', { big: false });
     if (s.forged > p.forged) await moment('craft', 'forged (' + s.forged + ')', { big: false });
     if (s.up > p.up) await note(page, 'upgrade', 'upgraded (' + s.up + ')', { shot: false });
+    for (const id of s.built || []) if (!(p.built || []).includes(id) && !st.builtAt[id]) { st.builtAt[id] = gt; await note(page, 'camp', `built ${id}`, { shot: false }); }
   }
   st.prev = s;
 }
@@ -850,7 +858,7 @@ function report(res) {
   const z = st.prev ? st.prev : {};
   if (st.beaten) out.push(`The bot was beaten ${st.beaten} time${st.beaten === 1 ? '' : 's'} by bosses (the "try again" card).`, '');
   out.push(`End state: zone ${z.maxZone}, level ${z.L}, ${z.gold} gold, ${z.kills} kills, ${Object.keys(z.got || {}).length} things unlocked, ${z.found} uniques, ${z.stars} Stars, ${z.heroes} extra heroes, ${z.looks} looks.`, '');
-  out.push('## Gear and boss tries', '', `The bot crafted ${st.gear.crafted} piece(s) from its own gear goal, put on ${st.gear.wornN}${st.gear.firstWear === null ? '' : ' (first at ' + fmtT(st.gear.firstWear) + ')'}, and closed ${st.sheetsClosed || 0} sheet(s) it had left over the bar. Forged in all: ${z.forged || 0}.`, '',
+  out.push('## Gear and boss tries', '', `The bot crafted ${st.gear.crafted} piece(s) from its own gear goal, put on ${st.gear.wornN}${st.gear.firstWear === null ? '' : ' (first at ' + fmtT(st.gear.firstWear) + ')'}, and closed ${st.sheetsClosed || 0} sheet(s) it had left over the bar. Forged in all: ${z.forged || 0}. Camp built: ${['bench', 'forge', 'store'].map(id => id + ' ' + (st.builtAt[id] ? fmtT(st.builtAt[id]) : 'not built')).join(', ')}.`, '',
     '| Zone | First stood in at | Level | Boss tries lost | Worn then |', '|---|---|---|---|---|');
   for (const [zn, e] of Object.entries(st.enter || {})) out.push(`| ${zn} | ${fmtT(e.t)} | ${e.L} | ${(st.tries || {})[zn] || 0} | ${e.gear} |`);
   out.push('');
