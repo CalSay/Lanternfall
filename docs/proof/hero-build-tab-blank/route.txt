@@ -1,0 +1,29 @@
+# seed: 1
+# Proof for card hero-build-tab-blank. The walk's "empty Build panel" (shot 88, 6:11) is the Hero menu caught mid-close: the bot
+# tapped Fight, the menu hides its page at once and slides away for 0.2 s, and the walk's fake clock shot that frame. A player never
+# stops on it. The real fault in the same shot is that Old Hesketh's panel sat over Spread evenly, so the bot could not press it.
+# PR #212 (guide-bubble-clear-of-controls) fixed that: his tip now has its own row under the menu. This route and the check.mjs
+# box test hold it: Build is drawn on first open and Spread evenly and every + scroll clear of his tip.
+# The fixture: Wren, level 4, zone 2, points to spend, the guide at its upgrade step ("Open Build"). Selector expects, so the rows below
+# the fold in landscape count. The panel-clear boxes are held by tools/check.mjs (hero attributes, 360x740).
+new flow-points
+wait 2
+tap-if "Continue"
+tap "Hero"
+wait 1
+tap "Build"
+wait 1
+expect "Might"
+expect "Focus"
+expect "Guard"
+expect ".at-row[data-at=vigour]"
+expect ".at-spread"
+shot build-first-open
+scroll down
+wait 1
+expect ".at-spread"
+shot build-scrolled
+tap "Spread evenly"
+wait 1
+expect ".at-spread:disabled"
+shot build-spread

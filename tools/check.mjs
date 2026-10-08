@@ -10318,6 +10318,15 @@ if (section('hero attributes (browser)')) try {
           await X('setTab("attributes"); true'); await page.waitForTimeout(1200);
           const bub = await X('(b => b && !b.hidden ? b.textContent : "")(document.querySelector(".ob-bub"))');
           assert(step === 'upgrade' && /Might/.test(bub) && !/Train/.test(bub), `${at}: the guide's upgrade step says "${bub.slice(0, 70)}" on Hero > Attributes`);
+          // hero-build-tab-blank: Build is drawn on first open, and with the guide's panel over the menu, Spread evenly and every + scroll clear of it
+          // (scrollIntoView 'nearest', as the walk's Next Up does). The panel lets taps through except on its own button, so test the boxes, not elementFromPoint.
+          const clear = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll(".at-spread, #attrRows .at-add")].map(n => {
+            const b = document.querySelector(".ob-bub.over-menu:not([hidden])");
+            if (!n.getClientRects().length) return { k: n.className, drawn: false };
+            n.scrollIntoView({ block: "nearest" }); const r = n.getBoundingClientRect(), br = b ? b.getBoundingClientRect() : null;
+            return { k: n.className + (n.dataset.n || ""), drawn: true, bub: !!b, clear: !!br && (r.bottom <= br.top || r.top >= br.bottom), r: [Math.round(r.top), Math.round(r.bottom)], b: br && [Math.round(br.top), Math.round(br.bottom)] };
+          }))`));
+          assert(clear.length === 9 && clear.some(c => /at-spread/.test(c.k)) && clear.every(c => c.drawn && c.bub && c.clear), `${at}: Build shows Spread evenly and the eight + buttons on first open, and each scrolls clear of the guide's panel (${JSON.stringify(clear.filter(c => !c.drawn || !c.bub || !c.clear))})`);
           const goal = await X('(g => g ? g.label() : "")(GOALS.find(x => x.id === "hero-up"))');
           assert(goal === `Spend ${2 * per} attribute points`, `${at}: Next Up says "${goal}" (Lv 3, ${2 * per} points)`);
         }
