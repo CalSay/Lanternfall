@@ -104,6 +104,9 @@ const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (l
 const AWAY_BASE_H = 8;
 const awayBaseH = () => AWAY_BASE_H + 2 * S.relic.glass;
 const awayCapH = () => Math.min(CAMP_TUNE.awayMax, awayBaseH() + bonus('awayHours'));
+// A raid hit away keeps the old 4 h base (the online layer is out of scope for first-night-covered): never above awayCapH().
+const AWAY_RAID_BASE_H = 4;
+const awayRaidCapH = () => Math.min(awayCapH(), AWAY_RAID_BASE_H + 2 * S.relic.glass + bonus('awayHours'));
 
 // ================= formulas =================
 // hero-progression-rework: with HERO_TUNE.training off the level bonus is attrNeutral() (55-attributes: half of the old

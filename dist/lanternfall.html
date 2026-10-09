@@ -11148,6 +11148,9 @@ const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (l
 const AWAY_BASE_H = 8;
 const awayBaseH = () => AWAY_BASE_H + 2 * S.relic.glass;
 const awayCapH = () => Math.min(CAMP_TUNE.awayMax, awayBaseH() + bonus('awayHours'));
+// A raid hit away keeps the old 4 h base (the online layer is out of scope for first-night-covered): never above awayCapH().
+const AWAY_RAID_BASE_H = 4;
+const awayRaidCapH = () => Math.min(awayCapH(), AWAY_RAID_BASE_H + 2 * S.relic.glass + bonus('awayHours'));
 
 // ================= formulas =================
 // hero-progression-rework: with HERO_TUNE.training off the level bonus is attrNeutral() (55-attributes: half of the old
@@ -11888,7 +11891,7 @@ function awayBase(r) {
   }
   const dps = heroDps() * 0.5 * boost;
   if (S.activity === 'raid') {
-    const dmg = dps * raidMult() * t * 0.5;
+    const dmg = dps * raidMult() * Math.min(t, awayRaidCapH() * 3600) * 0.5;   // first-night-covered: raid damage keeps its old limit
     S.raid.dmg += dmg;
     r.lines.push({ icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `${fmt(dmg)} raid damage` });
     r.note = 'You kept hammering the raid boss.';

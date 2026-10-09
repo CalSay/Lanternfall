@@ -294,7 +294,7 @@ function awayBase(r) {
   }
   const dps = heroDps() * 0.5 * boost;
   if (S.activity === 'raid') {
-    const dmg = dps * raidMult() * t * 0.5;
+    const dmg = dps * raidMult() * Math.min(t, awayRaidCapH() * 3600) * 0.5;   // first-night-covered: raid damage keeps its old limit
     S.raid.dmg += dmg;
     r.lines.push({ icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `${fmt(dmg)} raid damage` });
     r.note = 'You kept hammering the raid boss.';

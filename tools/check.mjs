@@ -1151,6 +1151,11 @@ if (section('camp')) try {
     assert(a12.t === 28800 && a12.capped, `the same save away 12 h: 8 h credited and the limit shows (${a12.t} s, capped ${a12.capped})`);
     const capAt = (w, gl) => { N(`S.camp.b.hearth = 8; S.camp.b.watch = ${w}; S.relic.glass = ${gl}`); return away(30).t / 3600; };
     const w4 = capAt(4, 0), w5 = capAt(5, 0), w5g5 = capAt(5, 5);
+    // the raid hit away keeps its old 4 h base (online layer out of scope): 8 h away deals what 4 h does
+    N('S.camp.b.watch = 0; S.relic.glass = 0; S.activity = "raid"');
+    const raidAway = h => { const d0 = +N('S.raid.dmg') || 0; N(`awayGains(${h} * 3600)`); return (+N('S.raid.dmg') || 0) - d0; };
+    const r4 = raidAway(4), r8 = raidAway(8), r3 = raidAway(3);
+    assert(r4 > 0 && Math.abs(r8 - r4) <= r4 * 1e-9 && r3 < r4, `an away raid hit still stops at 4 h with no building (3 h ${Math.round(r3)}, 4 h ${Math.round(r4)}, 8 h ${Math.round(r8)})`);
     assert(w4 === 16 && w5 === 18 && w5g5 === 24, `Watchtower 4 credits 16 h, Watchtower 5 18 h, Watchtower 5 + Hourglass 5 24 h (${w4}, ${w5}, ${w5g5})`);
     assert(!n.errors.length, 'away limit core: no errors ' + n.errors.slice(0, 2).join('; '));
   }
