@@ -168,6 +168,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A two-column desktop rule loses to its own `> *` reset when the reset's selector carries a `:has()`: `:has(X)` adds X's specificity, so `.sec:has(> .a:not(:empty)) > *` beats `.sec > .a`. Repeat the same `:has()` on the item's rule. And `scaleText` grows SVG text too, in viewBox units, so a map's labels collide at Desktop 2: mark SVG text `/* tk:off */`. Why: the Make result card stayed in column 1 until measured, and the Stars map's names ran together at 1920x1080 (desktop-views-2, 2026-10-09)
 
 - Put an upright-only size rule inside the upright media query (`(max-aspect-ratio: 1/1), (max-width: 599px)`): `.sb-abslot .sb-lb` outranks 80-landscape's bare `.sb-lb` sizes, so a step-down written for 360 wide silently grew the landscape tiles' names from 9 px to 14 px. And measure every name a tile can hold, not only the one in the card: "Fireball" fit after the step-down, "Echo Shot" and "Shield Bash" needed a second line. (menu-tip-room, 2026-10-09)
+- A next-step line that names a gain reads it from the real formula one level up (raise the level, read, put it back), never `limit + 2`, and checks a cold save (`S.hearth.cold`: "Light the camp fire first", not "zone 5"). Why: the reviewer found the raid's 20 h top offered Watchtower and Hourglass levels that add no raid time, and a cold camp was told it opens at zone 5. (away-limit-says-next-step, 2026-10-09)
 
 ## Saves and offline parity
 

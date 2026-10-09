@@ -8540,6 +8540,46 @@ if (section('C14 away card (browser)')) try {
         assert(await page.locator('.away-ov .away-go').innerText() === 'Collect' && await page.locator('.away-ov').getAttribute('aria-modal') === 'true', 'C14 browser: the card offers a modal Collect action');
         assert(!await page.locator('.toast, .toasts').getByText(/While you were away/).count(), 'C14 browser: the keyed report is shown as a card without a duplicate toast');
         assert(!errs.length, 'C14 browser: opening and reading the card raises no page errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
+        // away-limit-says-next-step (ruling 2026-10-08-first-night-covered, card 2): a capped return gives both numbers and the one next step
+        {
+          const lim = async (setup, h, extra = '') => {
+            await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); ${setup};
+              showAwayReport({ secs: ${h} * 3600, t: Math.min(${h}, awayCapH()) * 3600, cap: awayCapH() * 3600, capped: ${h} > awayCapH(), activity: S.activity, note: '', empty: false,
+                gold: 0, xp: 0, kills: 0, mats: [], items: [], skills: [], lines: [${extra}], extra: [] }); true`);
+            return X(`(() => { const w = document.querySelector('.away-ov .away-limwrap'); return w ? w.textContent + (w.querySelector('.away-cap .away-lgo') ? ' [Go:' + w.querySelector('.away-cap .away-lgo').getAttribute('aria-label') + ']' : '') : ''; })()`);
+          };
+          const base = 'S.activity = "gather"; S.relic.glass = 0; S.maxZone = 13; S.camp.open = true;';
+          const t0 = await lim(base + 'Object.assign(S.camp.b, { hearth: 1, watch: 0, store: 1 })', 11);
+          const t1 = await lim(base + 'Object.assign(S.camp.b, { hearth: 1, watch: 1 })', 11);
+          const t4 = await lim(base + 'S.maxZone = 30; Object.assign(S.camp.b, { hearth: 6, watch: 4 })', 20);
+          const t5 = await lim(base + 'S.maxZone = 40; Object.assign(S.camp.b, { hearth: 8, watch: 5 })', 20);
+          const tc = await lim(base + 'S.maxZone = 3; S.camp.open = false; window.__cold = S.hearth.cold; S.hearth.cold = 0; Object.assign(S.camp.b, { hearth: 0, watch: 0 })', 11);
+          await X('S.hearth.cold = window.__cold; true');
+          const ts = await lim(base + 'Object.assign(S.camp.b, { hearth: 2, watch: 0, store: 1 })', 11, `{ txt: 'Storehouse full: Hemp Fibre', sub: 'Foraging XP still counted' }`);
+          const tr = await lim(base + 'Object.assign(S.camp.b, { hearth: 1, watch: 0 }); S.activity = "raid"', 9);
+          const tk = await lim(base + 'S.camp.open = false; window.__cold = S.hearth.cold; S.hearth.cold = true; Object.assign(S.camp.b, { hearth: 0, watch: 0 })', 11);
+          await X('S.hearth.cold = window.__cold; true');
+          // raid near the ceiling: Watchtower 4 + Hourglass 4 hold raid hits to 20 h, and neither next level adds raid time
+          const tt = await lim(base + 'S.maxZone = 40; Object.assign(S.camp.b, { hearth: 8, watch: 4 }); S.relic.glass = 4; S.activity = "raid"; window.__lim = [isUnlocked, online.ready]; isUnlocked = () => true; online.ready = true', 22);
+          await X('[isUnlocked, online.ready] = window.__lim; S.relic.glass = 0; true');
+          const tg = await lim(base + 'Object.assign(S.camp.b, { hearth: 1, watch: 0 }); window.__lim = [isUnlocked, online.ready]; isUnlocked = () => true; online.ready = true', 11);
+          await X('[isUnlocked, online.ready] = window.__lim; true');
+          const all = [t0, t1, t4, t5, tc, ts, tr, tg, tk, tt].join(' | ');
+          assert(t0.includes('Your hero worked 8h of your 11h away.') && t0.includes('Watchtower Lv 1: +2h (10h).') && t0.includes('[Go:Go to the Watchtower]'),
+            `away limit: Watchtower 0 at Hearth 1 says 8h of 11h and names Watchtower Lv 1 (+2h, 10h) with a Go to it (${t0})`);
+          assert(t1.includes('Watchtower Lv 2: +2h (12h).') && t1.includes('Opens at Hearth 2 (zone 10).') && t1.includes('[Go:Go to the Hearth]'),
+            `away limit: a locked next level names the Hearth level that opens it (${t1})`);
+          assert(t4.includes('16h is the most your camp can do in Chapter 1.') && !t4.includes('Watchtower Lv 5'), `away limit: Watchtower 4 in Chapter 1 is the camp's most (${t4})`);
+          assert(t5.includes('18h is the most your camp can do.') && !t5.includes('[Go:'), `away limit: Watchtower 5 is the camp's most, no Go (${t5})`);
+          assert(tc.includes('Watchtower Lv 1: +2h (10h).') && tc.includes('Your camp opens at zone 5.') && !tc.includes('[Go:'), `away limit: before the camp opens, no Go (${tc})`);
+          assert(tk.includes('Light the camp fire first.') && tk.includes('[Go:Go to the Hearth]') && !tk.includes('zone 5'), `away limit: a cold camp says to light the fire, not "zone 5" (${tk})`);
+          assert(tt.includes('20h of your 22h') && tt.includes('20h is the most your camp can do.') && !tt.includes('Watchtower Lv 5') && !tt.includes('Hourglass'), `away limit: a raid at its 20 h top offers no level that adds no raid time (${tt})`);
+          assert(ts.includes('Your Storehouse filled before your hero stopped.') && !ts.includes('Watchtower') && ts.includes('[Go:Go to the Storehouse]'), `away limit: a full Storehouse names the Storehouse, not the limit (${ts})`);
+          assert(tr.includes('hit the raid boss for 4h of your 9h away.') && tr.includes('(6h)') && !tr.includes('8h'), `away limit: a raid return keeps the raid's 4 h, never promising 8 h of raid hits (${tr})`);
+          assert(!t0.includes('Hourglass') && tg.includes('Hourglass Lv 1: +2h, for raid Embers.'), `away limit: the Hourglass shows only while the raid is open (${tg})`);
+          assert(!/24 hours/.test(all), `away limit: the card never says "24 hours" (${all})`);
+          await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true');
+        }
       } finally { await ctx.close(); }
     } finally { await browser.close(); }
   }
