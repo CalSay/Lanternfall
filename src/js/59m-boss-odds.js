@@ -46,7 +46,7 @@ const BOSS_READ_KEYS = ['feint', 'feintPress', 'hold', 'holdPress', 'holdEarly']
     const B = S && S.bossOdds; if (!B || !p || !p.zb || p.flinch || !(p.res === 'feint' || p.hold)) return;
     const z = Math.floor(+p.zone); if (!(z >= 1)) return;
     if (!B.reads || typeof B.reads !== 'object' || Array.isArray(B.reads)) B.reads = {};
-    const row = B.reads[z] && typeof B.reads[z] === 'object' ? B.reads[z] : (B.reads[z] = {});
+    const row = B.reads[z] && typeof B.reads[z] === 'object' && !Array.isArray(B.reads[z]) ? B.reads[z] : (B.reads[z] = {});
     for (const k of BOSS_READ_KEYS) if (!(Number.isInteger(row[k]) && row[k] >= 0)) row[k] = 0;
     if (p.res === 'feint') { row.feint++; if (p.pressed) row.feintPress++; }
     else { row.hold++; if (p.pressed) row.holdPress++; if (p.early) row.holdEarly++; }
