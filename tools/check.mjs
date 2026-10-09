@@ -15936,6 +15936,104 @@ if (section('menu-tip-room')) try {
   }
 } catch (e) { fail('menu-tip-room crashed: ' + (e.stack || e)); }
 
+// ==== ability-names-fit: every ability name a hero can slot reads in full on the fight bar and the Abilities Q W E buttons ====
+// save-pip-abilities (Pip, Fireball / Spark / Kindle), tips off. Each hero in turn, every ability that hero can learn goes into the three
+// slots (three at a time, ownership stubbed), and each name must not be cut (its text no wider than its box) on the fight bar's slot names at
+// 1280x720, 740x360 and 360x740, and on the Q W E buttons at the top of Hero > Abilities (and the Slot Q / W / E buttons in a card). The
+// check runs without the web fonts: Handjet fits every name with room to spare, the fallback (DejaVu Sans Mono here) needs the names to
+// step their size down (fitTextWidth, 75-abilities-ui). Upright, Fireball's card (its text, the slots, both talents) has no scroll of its own.
+if (section('ability-names-fit')) try {
+  const at = 'ability-names-fit', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-abilities.json'), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // cut: the text is wider than its box, read to the fraction (a Range): scrollWidth and clientWidth round, and 0.2 px over already shows "..."
+        const cut = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent).map(e => { const r = document.createRange(); r.selectNodeContents(e);
+          return [e.textContent, +r.getBoundingClientRect().width.toFixed(2), +e.getBoundingClientRect().width.toFixed(2), e.scrollWidth, e.clientWidth, e.parentElement.className + ' ' + e.tagName, e.style.fontSize, e.style.letterSpacing]; }).filter(([, need, room, sw, cw]) => sw > cw || need > room + 0.01))`;
+        // under the desktop tier's text floor (--tmin, Foreman 2026-10-09): a name never shrinks below it
+        const small = sel => `(() => { const f = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0;
+          return JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent && parseFloat(getComputedStyle(e).fontSize) < f - 0.01).map(e => [e.textContent, getComputedStyle(e).fontSize, 'floor ' + f])); })()`;
+        // a word split across two lines ("Lanternbur / st"): any word whose letters sit on more than one line
+        const split = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent).flatMap(e => { const t = e.firstChild, out = []; if (!t || t.nodeType !== 3) return out;
+          for (const m of t.data.matchAll(/\\S+/g)) { const r = document.createRange(); r.setStart(t, m.index); r.setEnd(t, m.index + m[0].length); const tops = new Set([...r.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))); if (tops.size > 1) out.push([e.textContent, m[0]]); }
+          return out; }))`;
+        // each hero's whole list, three to a pass; the bar redraws on the next frame
+        const sets = JSON.parse(await X(`abilityOwned = () => true; JSON.stringify(Object.keys(HERO_ABILITIES).map(k => [k, HERO_ABILITIES[k].filter(id => SOLO_ABILITIES[id])]))`));
+        let n = 0; const bad = [];
+        for (const [k, ids] of sets) for (let i = 0; i < ids.length; i += 3) {
+          const three = ids.slice(i, i + 3); while (three.length < 3) three.push(null);
+          await X(`S.solo.hero = ${JSON.stringify(k)}; soloEquipped().splice(0, 3, ...${JSON.stringify(three)}); ui(true); true`); await page.waitForTimeout(120);
+          const names = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#soloBar .sb-abslot .sb-lb')].map(e => e.textContent))`));
+          n += names.filter(t => t !== 'Empty').length;
+          bad.push(...JSON.parse(await X(cut('#soloBar .sb-abslot .sb-lb'))), ...JSON.parse(await X(small('#soloBar .sb-abslot .sb-lb'))));
+        }
+        assert(n >= 40 && !bad.length, `${v}: all ${n} ability names on the fight bar read in full (cut: ${JSON.stringify(bad)})`);
+        // the slot's sub-line (Foreman: Wildfire's "Needs ..." at 1280x720): every line a slot can show, from the turn fight's own
+        // reasons (59k-turn.js 'need:...', shown as 75-solo-ui's needTxt), reads whole at the floor, words unbroken, inside the tile
+        if (w !== 740) {
+          const subs = ['Ready', 'Wait', 'Passive', 'Turn 3', 'Used', '5 turns', ...[...fs.readFileSync(path.join(ROOT, 'src', 'js', '59k-turn.js'), 'utf8').matchAll(/'need:([^'<]+)'/g)]
+            .map(m => { const t = m[1].replace(/^a /, ''); return t.charAt(0).toUpperCase() + t.slice(1); })];
+          const subBad = JSON.parse(await X(`(() => { const out = [];
+            for (const b of document.querySelectorAll('#soloBar .sb-abslot')) { const e = b.querySelector('.sb-sub'), keep = e.textContent;
+              for (const t of ${JSON.stringify(subs)}) { e.textContent = t; fitTextWidth(e); const r = document.createRange(); r.selectNodeContents(e);
+                const tops = new Set([...r.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))), lines = tops.size, bb = b.getBoundingClientRect(), eb = e.getBoundingClientRect();
+                const words = [...t.matchAll(/\\S+/g)].some(m => { const w = document.createRange(); w.setStart(e.firstChild, m.index); w.setEnd(e.firstChild, m.index + m[0].length); return new Set([...w.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))).size > 1; });
+                if (r.getBoundingClientRect().width > eb.width + 0.01 || words || lines > 2 || eb.bottom > bb.bottom - 2) out.push([t, +r.getBoundingClientRect().width.toFixed(1), +eb.width.toFixed(1), lines, Math.round(eb.bottom), Math.round(bb.bottom)]); }
+              e.textContent = keep; fitTextWidth(e); }
+            return JSON.stringify(out); })()`));
+          const subSmall = JSON.parse(await X(small('#soloBar .sb-abslot .sb-sub')));
+          assert(subs.length >= 10 && !subBad.length && !subSmall.length, `${v}: every slot sub-line (${subs.join(', ')}) reads whole on at most two lines inside its tile, at the floor (${JSON.stringify([subBad, subSmall])})`);
+        }
+        // Hero > Abilities: the Q W E buttons hold each name, and a card's Slot buttons name what sits in each slot
+        await X(`setTab('party'); true`); await page.waitForTimeout(300);
+        await page.evaluate(() => document.querySelector('#viewSeg button[data-view="abilities"]').click()); await page.waitForTimeout(400);
+        let nq = 0, nl = 0; const badQ = [];
+        for (const [k, ids] of sets) for (let i = 0; i < ids.length; i += 3) {
+          const three = ids.slice(i, i + 3); while (three.length < 3) three.push(null);
+          const other = ids.find(id => !three.includes(id)) || ids[0];
+          await X(`S.solo.hero = ${JSON.stringify(k)}; soloEquipped().splice(0, 3, ...${JSON.stringify(three)}); ui(true); true`); await page.waitForTimeout(150);
+          // the list first (the card, once open, takes the list's place on a small landscape panel)
+          if (i === 0) { nl += JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('.ab-rt b')].filter(e => e.offsetParent).length)`));
+            badQ.push(...JSON.parse(await X(cut('.ab-rt b'))), ...JSON.parse(await X(split('.ab-rt b'))), ...JSON.parse(await X(small('.ab-rt b')))); }
+          const row = await X(`!!document.querySelector('.ab-row[data-ab=${JSON.stringify(other)}]')`);
+          if (row) { await page.evaluate(id => document.querySelector(`.ab-row[data-ab="${id}"]`).click(), other); await page.waitForTimeout(150); }
+          nq += JSON.parse(await X(`JSON.stringify(document.querySelectorAll('.ab-q:not(.empty) b').length)`));
+          // with a card open: the Q W E and Slot buttons, and on a wide panel the list beside the card (where "Lanternburst" broke)
+          badQ.push(...JSON.parse(await X(cut('.ab-q b, .ab-slotb small, .ab-rt b'))), ...JSON.parse(await X(split('.ab-rt b'))), ...JSON.parse(await X(small('.ab-q b, .ab-slotb small, .ab-rt b'))));
+          if (row) await page.evaluate(id => document.querySelector(`.ab-row[data-ab="${id}"]`)?.click(), other);
+        }
+        assert(nq >= 40 && nl >= 40 && !badQ.length, `${v}: all ${nq} names on the Abilities Q W E and Slot buttons and all ${nl} in the list read in full, no word split, none under the floor (${JSON.stringify(badQ)})`);
+        const tall = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('.ab-q')].map(b => Math.round(b.getBoundingClientRect().height)))`));
+        assert(tall.length === 3 && tall.every(t => t >= 44), `${v}: the Q W E buttons stay at least 44 px tall (${tall})`);
+        if (w < h) { // Fireball's card upright: no scroll of its own; with the panel scrolled to its end, its head and both talents show, under the bar
+          await X(`S.solo.hero = 'pip'; soloEquipped().splice(0, 3, 'fire', 'wildfire', 'kindle'); ui(true); true`); await page.waitForTimeout(200);
+          await page.evaluate(() => document.querySelector('.ab-row[data-ab="fire"]').click()); await page.waitForTimeout(300);
+          await X(`document.querySelector('#panels').scrollTop = 1e6; true`); await page.waitForTimeout(200);
+          const det = JSON.parse(await X(`(() => { const d = document.querySelector('.ab-det'); if (!d) return 'null'; const hit = e => { const r = e.getBoundingClientRect(), p = document.elementFromPoint(r.left + r.width / 2, r.bottom - 3); return !!p && e.contains(p); };
+            return JSON.stringify({ sh: d.scrollHeight, ch: d.clientHeight, top: Math.round(d.getBoundingClientRect().top), bar: Math.round(document.querySelector('.ab-bar').getBoundingClientRect().bottom),
+              head: hit(d.querySelector('.ab-dh')), tal: [...d.querySelectorAll('.ab-talb')].map(hit) }); })()`));
+          assert(det && det.sh <= det.ch + 1 && det.top >= det.bar && det.head && det.tal.length === 2 && det.tal.every(Boolean),
+            `${v}: Fireball's card shows its head and both talents with no scroll of its own, under the Q W E bar (${JSON.stringify(det)})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('ability-names-fit crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
