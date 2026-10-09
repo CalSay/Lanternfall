@@ -991,6 +991,19 @@ Ruled C by an independent Opus high judge (`autopilot/rulings/2026-10-08-rally-g
 
 Veto phrase for Cal: **"Turn the rally gates off"**: set `gate.on = 0` and refit every boss from z4 to z34 in the balance pass.
 
+### Wren at zones 9-10 (wren-z9-10-foes) (2026-10-08)
+
+Ruled A by an independent Opus high judge (`autopilot/rulings/2026-10-08-wren-z9-10-foes.md`); Cal can veto.
+
+- **Wren at zones 9-10 (wren-z9-10-foes, judge 2026-10-08; Cal can veto).** No refit. Wren's ordinary-foe losses come only from a fight-only bot that wears nothing. A Wren who crafts loses about 0 per 10 min. The card adds z9-z11 normal budget rows (arrival gated, bare as floors), models the Rattlebones get-up in the sampler and logs normal losses in the walk. Any z11 arrival gap goes to the balance pass, due 2026-11-15. Veto: "Make the zone 10 skeletons easier for Wren".
+- **What it measured** (5-offset budget baseline, casual Wren/Tobin/Pip, good 100 everywhere): arrival footing z9 98/100/100, z10
+  94/100/99, z11 81/100/94; nothing worn z10 81/100/90, z11 81/100/72. Wren's z11 cell is a known gap (`boss-balance-pass`, until
+  2026-11-15). No foe, hero, gear or boss number changed; in play nothing changed (the in-game sampler only meets bosses, which never get up).
+  Numbers: `docs/design/difficulty-budget.md`; proof: `docs/proof/wren-z9-10-foes/`.
+
+Veto phrase for Cal: **"Make the zone 10 skeletons easier for Wren"**: opens B as its own judge-gated card (the get-up restores 10%,
+ordinary Rattlebones only).
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
