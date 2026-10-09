@@ -97,6 +97,14 @@ const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
 // The region steps a zone has passed, multiplied.
 const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };
 
+// ================= away limit (first-night-covered, 2026-10-08) =================
+// The hero gathers away for AWAY_BASE_H with no building (was 4), +2 h per Hourglass level; awayBaseH() is the part the
+// Watchtower clamp (57-camp) subtracts. awayCapH() adds every awayHours bonus (Watchtower +2 h a level) and never passes
+// CAMP_TUNE.awayMax (24 h). Gatherer shifts, builds and refine orders keep their own clocks.
+const AWAY_BASE_H = 8;
+const awayBaseH = () => AWAY_BASE_H + 2 * S.relic.glass;
+const awayCapH = () => Math.min(CAMP_TUNE.awayMax, awayBaseH() + bonus('awayHours'));
+
 // ================= formulas =================
 // hero-progression-rework: with HERO_TUNE.training off the level bonus is attrNeutral() (55-attributes: half of the old
 // +PACE.heroLv a level, plus the hero's points as if spread evenly, so power outside a turn fight is the same for every

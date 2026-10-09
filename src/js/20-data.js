@@ -166,5 +166,5 @@ const RELICS = [
   // ECON-A: the Lucky Coin (+25% gold a level) became the Loaded Die (S.relic.edge; S.relic.coin stays at 0, unused).
   { id: 'edge', name: 'Loaded Die', base: 5, r: 1.6, cap: 5, ic: ['coin', '#6FCB6A', { 7: '#6FCB6A' }], desc: () => `+${Math.round(100 * ECON.crit.die)}% crit damage per level.` },
   { id: 'heart', name: 'Ember Heart', base: 4, r: 1.5, ic: ['heart', '#FF7A3D'], desc: () => `+30% raid damage per level.` },
-  { id: 'glass', name: 'Hourglass', base: 8, r: 2, cap: 5, ic: ['glass', '#F2E27A'], desc: () => `You keep working for ${4 + 2 * S.relic.glass}h while you're away. +2h per level.` }
+  { id: 'glass', name: 'Hourglass', base: 8, r: 2, cap: 5, ic: ['glass', '#F2E27A'], desc: () => `You keep working for ${awayCapH()}h while you're away. +2h per level.` }
 ];

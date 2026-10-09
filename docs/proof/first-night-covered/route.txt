@@ -1,0 +1,28 @@
+# Proof for card first-night-covered: the hero works a whole night away with no Watchtower (the base limit is 8 hours, was 4).
+# The save: zone 13, Hearth 1, Storehouse Lv 1, no Watchtower, no Hourglass (tests/proof-fixtures/save-tier-gate.json).
+#   leave-chip-*.png   gathering: the chip under Fight / Gather says what leaving now earns "in 8 hours".
+#   night-away-*.png   back after 7.5 hours: the away card says "Your hero worked 7h 30m of 8h", with no "Hero work limit reached"
+#                      (before this card the same night stopped at 4h and said "Hero work limit reached").
+# The numbers are held by tools/check.mjs ("camp": first-night-covered; "store": HS19 with the raised caps).
+# seed: 1
+new tier-gate
+wait 3
+tap-if "Skip this story"
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+tap "Gather: Foraging"
+wait 3
+tap-if "Got it"
+wait 1
+expect "in 8 hours"
+shot leave-chip
+away 7.5
+wait 2
+# The limit line sits low on the card (below the fold at 740x360), so it is checked by selector: the bar is there, the capped box is not.
+expect ".away-lim"
+expect-no ".away-cap"
+expect-no "Hero work limit reached"
+shot night-away

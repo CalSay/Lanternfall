@@ -141,7 +141,7 @@ const REG = [
   { id: 'embers', ids: ['embers'], name: 'Embers', field: 'S.embers', what: 'Raid currency. Buys relics. Online only.',
     src: [['A world raid boss falls', '52-raid.js', 'S\\.embers \\+= e'], ], snk: [['Buying relics', '51-actions.js', 'S\\.embers -= cost']] },
   { id: 'relics', ids: ['relic'], name: 'Relics', field: 'S.relic.{banner,heart,glass,edge}', what: 'Warbanner, Ember Heart, Hourglass (away cap) and Loaded Die (crit damage).',
-    src: [['Bought with Embers', '51-actions.js', 'S\\.relic\\[u\\.id\\]\\+\\+']], snk: [['Warbanner damage', '40-rules.js', 'S\\.relic\\.banner'], ['Ember Heart raid damage (raidMult)', '40-rules.js', 'S\\.relic\\.heart'], ['Hourglass away cap', '50-sim.js', 'S\\.relic\\.glass'], ['Loaded Die crit damage', '55-econ.js', 'S\\.relic\\.edge']],
+    src: [['Bought with Embers', '51-actions.js', 'S\\.relic\\[u\\.id\\]\\+\\+']], snk: [['Warbanner damage', '40-rules.js', 'S\\.relic\\.banner'], ['Ember Heart raid damage (raidMult)', '40-rules.js', 'S\\.relic\\.heart'], ['Hourglass away cap (awayBaseH)', '40-rules.js', 'S\\.relic\\.glass'], ['Loaded Die crit damage', '55-econ.js', 'S\\.relic\\.edge']],
     links: ['Permanent upgrades; "sink" is where the level is read.'] },
   { id: 'scrolls', ids: ['scroll'], name: 'Scrolls', field: 'S.abil.scrolls.{moss,hollow,barrow,roadlight,mother}', what: 'One learns one hero ability of its tier.',
     src: [['Zone boss kills (first win always, replays 20% or after 5 dry)', '56e-abilities.js', 's\\.scrolls\\[id\\] = scrollCount\\(id\\) \\+ 1']], snk: [['Learning an ability', '56e-abilities.js', 's\\.scrolls\\[i\\.payWith\\] = scrollCount\\(i\\.payWith\\) - 1']] },
