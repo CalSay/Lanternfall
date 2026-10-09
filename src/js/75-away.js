@@ -2,6 +2,8 @@
 // showAwayReport(r) takes the report built by awayGains() + 55-stats.js (see there for its
 // fields and for registerAwayLine). Shown when the player was gone 30s or more and
 // something happened. Numbers count up; under prefers-reduced-motion they appear at once.
+// Order (away-card-next-up-first, W8 card 3): results, the work limit, Next up, then one folded
+// "More (n)" row holding every other registerAwayLine group (folded, never dropped).
 
 let showAwayReport, awayLimitStep;
 {
@@ -31,11 +33,14 @@ let showAwayReport, awayLimitStep;
   }
   function onKey(e) {
     if (!root) return;
-    const onGo = e.target && e.target.classList && e.target.classList.contains('away-lgo');
+    const onMore = e.target && e.target.classList && e.target.classList.contains('away-more');
+    const onGo = onMore || (e.target && e.target.classList && e.target.classList.contains('away-lgo'));
+    // Space on More toggles the fold: stop it here so the fight's Space key (dodge) never sees it or cancels the toggle
+    if (onMore && e.key === ' ') { e.stopPropagation(); return; }
     if (e.key === 'Escape' || (e.key === 'Enter' && !onGo)) { e.preventDefault(); e.stopPropagation(); close(); }
     else if (e.key === 'Tab') {
-      // cycle through the Go buttons and Collect
-      const f = [...root.querySelectorAll('.away-lgo, .away-go')], i = f.indexOf(document.activeElement);
+      // cycle through the Go buttons, More and Collect (a closed fold's Go buttons are skipped)
+      const f = [...root.querySelectorAll('.away-lgo, .away-more, .away-go')].filter(b => !b.closest('.away-fold:not([open])') || b.matches('.away-more')), i = f.indexOf(document.activeElement);
       e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
     }
   }
@@ -137,6 +142,8 @@ let showAwayReport, awayLimitStep;
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'awayTitle');
     const card = el('div', 'away-card');
     const body = el('div', 'away-body');
+    // results on one side, what to do next on the other (side by side on a short landscape screen, 60-away.css)
+    const res = el('div', 'away-res'), next = el('div', 'away-next');
 
     // ---- header: time away ----
     const top = el('div', 'away-top');
@@ -147,11 +154,11 @@ let showAwayReport, awayLimitStep;
     // ---- what the hero did ----
     const actIc = r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
     const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
-    if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); body.append(n); }
+    if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); res.append(n); }
     if (r.activity === 'fight') {
       const rule = el('p', 'away-rule');
       rule.append(img(IC.glass()), el('span', null, AWAY_RULE_TXT));
-      body.append(rule);
+      res.append(rule);
     }
 
     // ---- headline numbers ----
@@ -164,7 +171,7 @@ let showAwayReport, awayLimitStep;
     if (r.bosses) tiles.append(tile(IC.boss(), r.bosses, 'Bosses beaten'));
     if (r.raidDmg >= 1) tiles.append(tile(IC.flame(), r.raidDmg, 'Raid damage', null, 'raid'));
     if (r.embers) tiles.append(tile(IC.ember(), r.embers, 'Embers', v => '+' + fmt(Math.floor(v)), 'ember'));
-    if (tiles.children.length) { tiles.dataset.n = Math.min(3, tiles.children.length); body.append(tiles); }
+    if (tiles.children.length) { tiles.dataset.n = Math.min(3, tiles.children.length); res.append(tiles); }
 
     // ---- materials by family and tier ----
     if (r.mats && r.mats.length) {
@@ -184,7 +191,7 @@ let showAwayReport, awayLimitStep;
         }
         row.append(chips); b.append(row);
       }
-      body.append(b);
+      res.append(b);
     }
 
     // ---- items ----
@@ -199,7 +206,7 @@ let showAwayReport, awayLimitStep;
         grid.append(row);
       }
       if (r.items.length > 8) grid.append(el('p', 'note', `And ${r.items.length - 8} more in your bag.`));
-      b.append(grid); body.append(b);
+      b.append(grid); res.append(b);
     }
 
     // ---- skills ----
@@ -212,7 +219,7 @@ let showAwayReport, awayLimitStep;
         row.append(img(SKILL_IC[s.k] ? SKILL_IC[s.k]() : IC.banner()), el('span', 'away-sn', SKILL[s.k] || s.k), lv);
         b.append(row);
       }
-      body.append(b);
+      res.append(b);
     }
 
     // ---- the hero's work limit, after the results ----
@@ -236,7 +243,7 @@ let showAwayReport, awayLimitStep;
       lim0.append(cap);
     }
     }
-    if (lim0.children.length) body.append(lim0);
+    if (lim0.children.length) next.append(lim0);
 
     // ---- lines from other systems (registerAwayLine) ----
     // A line may name its own block (group, e.g. 'Next up') and carry a Go button (go()).
@@ -246,7 +253,7 @@ let showAwayReport, awayLimitStep;
     // material amounts are already above; keep the useful reason without listing gains twice.
     const gathering = (r.lines || []).filter(l => l && l.sub && !String(l.txt || '').startsWith('+'));
     if (gathering.length) groups.set('Gathering', [...(groups.get('Gathering') || []), ...gathering]);
-    for (const [title, lines] of groups) {
+    const blockOf = (title, lines) => {
       const b = block(title);
       for (const l of lines) {
         const row = el('div', 'away-line');
@@ -258,8 +265,26 @@ let showAwayReport, awayLimitStep;
         if (typeof l.go === 'function') row.append(goBtn(l));
         b.append(row);
       }
-      body.append(b);
+      return b;
+    };
+    // Next up comes straight after the results; every other group folds under one "More (n)" row
+    const nu = groups.get('Next up');
+    if (nu) { groups.delete('Next up'); const b = blockOf('Next up', nu); b.classList.add('away-nu'); next.append(b); }
+    const n = [...groups.values()].reduce((a, ls) => a + ls.length, 0);
+    if (n) {
+      // a <details> fold (its summary is not a <button>, so a tool pressing the card's first button still meets a Go or
+      // Collect); the lines are built on first open, so no hidden Go sits in the card before Collect
+      const fold = el('details', 'away-fold'), more = el('summary', 'away-more', `More (${n})`);
+      fold.append(more);
+      fold.addEventListener('toggle', () => {
+        if (!fold.open) return;
+        if (fold.children.length === 1) for (const [title, lines] of groups) fold.append(blockOf(title, lines));
+        try { more.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' }); } catch (e) {}
+      });
+      next.append(fold);
     }
+    if (res.children.length) body.append(res);
+    if (next.children.length) { body.append(next); if (res.children.length) body.classList.add('two'); }
 
     const foot = el('div', 'away-foot');
     const go = el('button', 'big home away-go', 'Collect');

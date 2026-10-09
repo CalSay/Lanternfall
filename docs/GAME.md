@@ -146,7 +146,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   ([combat-turn-build.md](design/combat-turn-build.md) "The Deepwell and the Provings"). Only the world raid keeps its
   real-time fight (`59-combat.js`, `59g-active.js`, `59h-bosses.js`, `59i-elites.js`).
 - **Away:** gathering (and a raid hit) keeps earning; fights stop and earn nothing (`50-sim.js` `awayGains`). The away cap is 8 hours with no building, so a
-  first night is covered; each Watchtower level and each Hourglass level adds 2 hours, never past 24 (`awayCapH()` in `40-rules.js`; 16 hours is the most in Chapter 1 without the raid). Gatherer shifts stay 4 hours, and a raid hit away keeps the old 4-hour base (`awayRaidCapH()`). When the hero hits the limit, the away card's bar gives both numbers ("Your hero worked 8h of your 11h away.") and the box under it names the one next step with a Go: the next Watchtower level and its hours, or the Hearth level that opens it; "the most your camp can do" at the top (Watchtower 4 in Chapter 1, Watchtower 5 after it); the Storehouse instead when a pile filled first; and the Hourglass only while the raid is open. A raid return counts the raid's own limit (`awayLimitStep` in `75-away.js`). While you gather, a chip under the Fight / Gather row says "Leave now: about N <material> in 8 hours" (a floor: it ignores level-ups, and it caps at the Storehouse room and says so when it fills and Spillover moves on). A fighter sees the notice instead.
+  first night is covered; each Watchtower level and each Hourglass level adds 2 hours, never past 24 (`awayCapH()` in `40-rules.js`; 16 hours is the most in Chapter 1 without the raid). Gatherer shifts stay 4 hours, and a raid hit away keeps the old 4-hour base (`awayRaidCapH()`). When the hero hits the limit, the away card's bar gives both numbers ("Your hero worked 8h of your 11h away.") and the box under it names the one next step with a Go: the next Watchtower level and its hours, or the Hearth level that opens it; "the most your camp can do" at the top (Watchtower 4 in Chapter 1, Watchtower 5 after it); the Storehouse instead when a pile filled first; and the Hourglass only while the raid is open. A raid return counts the raid's own limit (`awayLimitStep` in `75-away.js`). The card reads results (what the hero did, the tiles, Materials, Items, Skills), the limit, Next up, then one folded "More (n)" row that holds every other `registerAwayLine` group; on a landscape or desktop screen results sit on the left and the limit and Next up on the right, so Next up's first row shows without scrolling. While you gather, a chip under the Fight / Gather row says "Leave now: about N <material> in 8 hours" (a floor: it ignores level-ups, and it caps at the Storehouse room and says so when it fills and Spillover moves on). A fighter sees the notice instead.
 
 ## Gathering and gatherers
 
@@ -307,7 +307,13 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   press it: Attack on your first turn, Dodge on the foe's first swing (the foe's clock stops as the Dodge window opens, so the press
   lands), your ability on your next turn, Parry on the next swing (or the next foe's first). While a lesson holds, only the button it
   names works. After that, in a fight, no line shows: every
-  other tip, and each unlock line from Hesketh, waits for the gap between fights, and an unlock line holds the game with a Got it.
+  other tip, and each unlock line from Hesketh, waits for the gap between fights. An unlock line (his news) holds only that gap until
+  its Got it: while you gather, or fight behind an upright menu, it shows and the game goes on (tips-pause-says-so). Whenever a tip
+  holds the game, except the fight lessons, the stage says "Paused" (on the strip's edge over an upright menu), Gather says Paused for
+  Working, and the fight bar stays in view, dimmed, unless the tip covers it (a phone on its side). A fight key (Q W E A S D Space) or a
+  press on a fight button during a Got it hold answers it and then acts; on a Go tip it counts as ×; a tip that waits for a press
+  elsewhere refuses it (the button shakes, the plate flashes). His Stars line never says you earned them, the boss-loss line is dropped
+  once that boss is beaten, and none of his lines shows while your hero is down.
   The Hero tab opens at the first level-up and the guide's next line says so; the first Scroll and a second ability's slot each get
   a line. Empty ability slots stay dim and silent until a learned move waits for one. Lighting the camp fire keeps you at the grove,
   where Hesketh's talk plays.
