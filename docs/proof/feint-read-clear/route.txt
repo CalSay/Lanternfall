@@ -1,0 +1,22 @@
+# Proof for card feint-read-clear. After a boss's feint the line over the stage says the real swing follows ("A feint! Press on the
+# real swing next."); a held swing says "It holds the swing. Press at the bar's end." Nothing is said before the trick shows. On the
+# zone 10 Champion (feints from zone 7, held swings from zone 4) the Champion's first move holds its swing, and the page's
+# body[data-trick-tip] mark (set by the line, and kept) shows a trick line was said. A route cannot time a press inside a held swing, so tools/check.mjs section
+# "feint-read-clear" carries the "Too early! Press at the bar's end." line, once a fight, at 1280x720, 740x360, 360x740 and 1920x1080.
+# seed: 1
+new z10-cantor
+wait 2
+tap-if "Continue"
+wait 2
+expect "body[data-trick-tip]"
+shot trick-line
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+expect "body[data-trick-tip]"
+shot after-moves

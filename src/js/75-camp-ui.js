@@ -230,7 +230,7 @@
       for (const bd of blds) {
         const b = btn('camp-bld', ''); b.dataset.bldId = bd.id;
         b.style.cssText = `position:absolute;left:${bd.x - 32}px;top:52px;width:64px;height:90px;background:transparent;border:0;cursor:pointer;pointer-events:auto;touch-action:auto`;
-        b.setAttribute('aria-label', `${bldName(bd.id)}, level ${bd.lv}. Tap to see what it does.`);
+        b.setAttribute('aria-label', `${bldName(bd.id)}, level ${bd.lv}. Open it to see what it does.`);
         b.title = bldName(bd.id);
         let down = null, dragged = false;
         b.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; dragged = false; });
@@ -531,7 +531,7 @@
       putHidden(sec, !campOpen() || n < 1); if (sec.hidden) return;
       const ids = Object.keys(CAMP_BLESS).filter(blessOpen), on = S.camp.bless, sw = blessCanSwap();
       const empty = on.length < n;   // free power left on the table (the audit's Lv 40 save had none picked)
-      setTxt(blessNote, empty ? `Pick ${n - on.length === 1 ? 'a Blessing' : (n - on.length) + ' Blessings'}: it is free. Tap one to choose it.`
+      setTxt(blessNote, empty ? `Pick ${n - on.length === 1 ? 'a Blessing' : (n - on.length) + ' Blessings'}: it is free. Choose one below.`
         : `The Shrine holds ${n === 1 ? '1 Blessing' : n + ' Blessings'}. Swapping is free${sw.ok ? '.' : ', but ' + sw.why.toLowerCase()}`);
       putToggle(blessNote, 'bless-pick', empty);
       const sig = JSON.stringify([ids, on, blessPower(), sw.ok]);

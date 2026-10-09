@@ -102,6 +102,7 @@ const WEIGHT = {
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
   'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  'feint-read-clear': 70,   // 64-74 s locally alone (feint-read-clear, 2026-10-09)
   'craft-odds-before-pay': 38,   // 38 s locally (craft-odds-before-pay, 2026-10-09)
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
@@ -1378,7 +1379,7 @@ if (section('camp')) try {
   assert(E('campBuild("hearth")'), 'Hearth 6 started');
   assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-timer" && /finishes in/.test(x.label))'), 'Next Up: "build finishes in <time>"');
   // first-gold-and-camp-strip: the camp tutorial goal shows until one building is tapped, then never again
-  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap" && /Tap a building/.test(x.label))'), 'Next Up: "Tap a building in your camp" while no building has been tapped');
+  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap" && /Choose a building/.test(x.label))'), 'Next Up: "Choose a building in your camp" while no building has been tapped');
   E('onboardUseDone("use:camp-tap")');
   assert(!E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap")'), 'Next Up: the camp tap goal is gone once a building is tapped');
   // hearth-two-next-up (W6): after the zone 10 clear Next Up names what Hearth 2 still needs and where it comes from; Go sends the
@@ -5751,7 +5752,7 @@ if (section('solo hero (browser)')) try {
       const tapS2 = async () => { await page.mouse.move(r2.x + r2.width / 2, r2.y + r2.height / 2); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(250); };
       // cal-0107-staged-guide: with one move (and it in a slot) an empty slot is dim and silent; it opens only once there is a move to put in it
       await tapS2();
-      const shut = await page.$eval('#soloBar .sb-ab1', b => ({ dim: b.style.opacity === '0.45', aria: b.getAttribute('aria-disabled'), add: /Tap to add/.test(b.textContent) }));
+      const shut = await page.$eval('#soloBar .sb-ab1', b => ({ dim: b.style.opacity === '0.45', aria: b.getAttribute('aria-disabled'), add: /Add a move/.test(b.textContent) }));
       assert(shut.dim && shut.aria === 'true' && !shut.add && !(await X('soloPickerOpen()')), `with one move, an empty slot is dim, says nothing and opens no picker (${JSON.stringify(shut)})`);
       await X('scrollCount("x"); S.abil.unl.pip = (S.abil.unl.pip || []).concat("spark"); true'); await page.waitForTimeout(350);
       await tapS2();
@@ -7141,7 +7142,7 @@ if (section('gatherers at camp (C2)')) try {
     assert(W('__person.tagName==="BUTTON" && __person.getAttribute("aria-label").includes("Tam")'), 'C2: the scene exposes the gatherer as a named native button');
     // first-gold-and-camp-strip: buildings in the panorama are buttons; a tap opens the card and ticks the camp tutorial goal
     W('S.camp.b.forge = Math.max(1, S.camp.b.forge | 0); delete S.onboard.done["use:camp-tap"]; __sections.camp.update()');
-    assert(W('$("camp-scene-blds").children.length > 0 && $("camp-scene-blds").children.every(b => b.tagName === "BUTTON" && b.getAttribute("aria-label").includes("Tap to see what it does"))'), 'camp strip: each built building is a named native button in its own layer');
+    assert(W('$("camp-scene-blds").children.length > 0 && $("camp-scene-blds").children.every(b => b.tagName === "BUTTON" && b.getAttribute("aria-label").includes("Open it to see what it does"))'), 'camp strip: each built building is a named native button in its own layer');
     W('$("camp-scene-blds").children.find(b => b.dataset.bldId === "forge").click()');
     assert(W('!$("camp-bld-card").hidden && $("camp-bld-card").textContent.includes("Forge") && $("camp-bld-card").textContent.includes("Makes weapons") && S.onboard.done["use:camp-tap"] === 1'), 'camp strip: tapping the Forge shows what it does and ticks the camp tap goal');
     const talk = W('handsGet("tam").talk||0');
@@ -12338,7 +12339,7 @@ if (section('staged guide (browser)')) try {
       return { id: up ? soloGuideWants() : '', txt: up ? document.querySelector('.ob-txt').textContent : '', paused: ONBOARD.paused, now: q.now, phase: q.phase,
         d: q.dodgeOpensAt, p: q.parryOpensAt, ops: TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.foeOps : -1, hp: u ? u.hp : 0, fight: window.__fights || 0, L: S.L,
         done: ['attack', 'dodge', 'ability', 'parry'].filter(k => S.onboard.done[k]), own: soloAbilities().length,
-        add: [...document.querySelectorAll('#soloBar .sb-abslot')].some(n => /Tap to add/.test(n.textContent)) }; })())`;
+        add: [...document.querySelectorAll('#soloBar .sb-abslot')].some(n => /Add a move/.test(n.textContent)) }; })())`;
     const KEYS = { attack: 'd', dodge: 's', ability: 'q', parry: 'a' }, WRONG = { attack: 'q', ability: 'd', dodge: 'a', parry: 's' };
     try {
       for (const hero of ['wren', 'tobin', 'pip']) {
@@ -12380,7 +12381,7 @@ if (section('staged guide (browser)')) try {
         assert(!moved.length, `staged guide ${hero}: while a lesson's line is up, the foe's clock, its moves and your HP stand still${moved.length ? ': ' + moved.join('; ') : ''}`);
         assert(!late.length, `staged guide ${hero}: the Dodge and Parry lines first show with the foe's clock at the window's opening, so the held key press lands (both were done by a key press)${late.length ? ': ' + late.join('; ') : ''}`);
         assert(wrong.length === 4 && wrong.every(w => w.endsWith(':ok')), `staged guide ${hero}: while a lesson holds, the other buttons do nothing (${wrong.join(', ')})`);
-        assert(!swap.length && !tapAdd.length, `staged guide ${hero}: with one ability, no line says "swap" and no empty slot says "Tap to add"${swap.length ? ': ' + swap[0] : ''}${tapAdd.length ? '; Tap to add during ' + tapAdd[0] : ''}`);
+        assert(!swap.length && !tapAdd.length, `staged guide ${hero}: with one ability, no line says "swap" and no empty slot says "Add a move"${swap.length ? ': ' + swap[0] : ''}${tapAdd.length ? '; Add a move during ' + tapAdd[0] : ''}`);
         if (hero === 'wren') {
           // the first level-up (level 2): the Hero tab opens and Hesketh's next line says so and points at your points, while the next foe waits
           let lv = null;
@@ -12422,7 +12423,7 @@ if (section('staged guide (browser)')) try {
         assert(sl.id === 'say:slot' && /needs a slot/.test(sl.txt), `staged guide: once the move is learned he says to put it in a slot under the fight ("${sl.txt}")`);
         await page.click('.ob-ok'); await X('closeMenu(); true'); await page.waitForTimeout(500);
         const shut1 = await slotTxt();
-        assert(!/Tap to add/.test(shut0) && /Tap to add/.test(shut1), `staged guide: an empty slot is silent until a learned move waits for it, then says "Tap to add" (${shut0} / ${shut1})`);
+        assert(!/Add a move/.test(shut0) && /Add a move/.test(shut1), `staged guide: an empty slot is silent until a learned move waits for it, then says "Add a move" (${shut0} / ${shut1})`);
         assert(!errs.length, 'staged guide (Scroll, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -14559,6 +14560,81 @@ if (section('foe-tricks-say-so')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('foe-tricks-say-so crashed: ' + (e.stack || e)); }
+
+// ==== feint-read-clear (card 9 Oct, from trick-read-rate #307): after a feint the line says the real swing follows; a press on a held
+// swing before its windows says "Too early", once a fight, in the same plate. Never before the trick shows. The foe's next move is
+// set to a feint then a held swing (the live path: its script), at 1280x720, 740x360, 360x740 and 1920x1080. The lines sit whole
+// inside the stage, at the 14 px floor on desktop. Tester notes: players obeyed "A feint! Do not press." and were hit by the real swing.
+if (section('feint-read-clear')) try {
+  const at = 'feint-read-clear', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const FEINT = 'A feint! Press on the real swing next.', HOLD = "It holds the swing. Press at the bar's end.", EARLY = "Too early! Press at the bar's end.";
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, desk = w >= 1280;
+        const ctx = await browser.newContext(desk ? { turns: true, viewport: { width: w, height: h } } : { turns: true, viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, val]) => { try { localStorage.setItem(k, val); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = src => page.evaluate(src => window.__t.x(src), src);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity !== 'fight' && setActivity('fight'); S.maxZone = Math.max(S.maxZone, 8); setZone(7); ui(true); true`);
+        for (let i = 0; i < 40 && !(await X('!!(TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== "intro" && TURN_LIVE.foe && !TURN_LIVE.foe.dead)')); i++) await page.waitForTimeout(150);
+        // the foe's move, started on the live path (turnBegin, its script): a feint, then a swing that holds. Both sides kept alive
+        await X(`(() => { S.turn.seen = {}; delete document.body.dataset.trickTip;
+          window.__keep = setInterval(() => { const u = cbUnitByKey('hero'); if (u) u.hp = u.maxHp; const t = TURN_LIVE; if (t && !t.ended && t.foe) t.foe.hp = Math.max(t.foe.hp, 0.9 * t.foe.max); }, 50);
+          window.__go = () => { const m = TURN_LIVE; m.charge = null; m.e.skip = 0; m.e.recover = 0; m.si = 0;
+            m.p.script = [{ id: 'fx', name: 'Test Swing', hits: [{ wind: 2.5, x: 0, feint: true }, { wind: 2, x: 0.001, hold: 3 }] }];
+            document.querySelector('.tv-warn').hidden = true; turnBegin(m, 'foe', TURN_LIVE_IO); return true; };
+          return __go(); })()`);
+        const warn = () => page.evaluate(() => { const b = document.querySelector('.tv-warn'), box = document.getElementById('stageBox'); if (!b || b.hidden) return { on: false };
+          const r = b.getBoundingClientRect(), sb = box.getBoundingClientRect();
+          return { on: true, txt: b.textContent, px: parseFloat(getComputedStyle(b).fontSize), inside: r.left >= sb.left - 1 && r.right <= sb.right + 1 && r.top >= sb.top - 1 && r.bottom <= sb.bottom + 1, cut: b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1 }; });
+        const hit = () => X('JSON.stringify(TURN_LIVE && TURN_LIVE.move && TURN_LIVE.phase === "foeWindup" ? { id: TURN_LIVE.move.id, i: TURN_LIVE.hitI, feint: !!TURN_LIVE.move.hits[TURN_LIVE.hitI].feint, now: TURN_LIVE.now, tellAt: TURN_LIVE.tellAt, holdFrom: TURN_LIVE.holdFrom, holdTo: TURN_LIVE.holdTo } : null)').then(JSON.parse);
+        const until = async (f, n = 100) => { for (let i = 0; i < n; i++) { const r = await f(); if (r) return r; await page.waitForTimeout(50); } return null; };
+        const holding = async () => { const x = await hit(); return x && x.id === 'fx' && x.i === 1 && x.now >= x.holdFrom && x.now < x.holdTo - 1 ? x : null; };
+        // before the feint's bar breaks, nothing names it (veto "warn before foe tricks")
+        const f0 = await hit();
+        assert(!!f0 && f0.id === 'fx' && f0.feint && f0.now < f0.tellAt, `${v}: the test move's feint winds up (${JSON.stringify(f0)})`);
+        const s0 = await warn(), t0 = await X('document.body.dataset.trickTip || ""');
+        assert(!(s0.on && s0.txt === FEINT) && !t0, `${v}: no feint line before its bar breaks (${JSON.stringify(s0)})`);
+        // the bar breaks: the line says the real swing follows, whole, inside the stage, at the floor on desktop
+        const sF = await until(async () => { const s = await warn(); return s.on && s.txt === FEINT ? s : null; });
+        assert(!!sF && sF.inside && !sF.cut, `${v}: after the feint the line says "${FEINT}" inside the stage (${JSON.stringify(sF)})`);
+        if (sF && desk) assert(sF.px >= 14, `${v}: the feint line is at least 14 px (${sF.px})`);
+        assert(await X('document.body.dataset.trickTip') === 'tfeint', `${v}: the page marks the feint line shown`);
+        // the held swing: the line shows once it holds; a press while it holds says "Too early", in the same plate
+        const h0 = await until(holding);
+        assert(!!h0, `${v}: the held swing stalls`);
+        const sH = await until(async () => { const s = await warn(); return s.on && s.txt === HOLD ? s : null; }, 20);
+        assert(!!sH && sH.inside && !sH.cut, `${v}: the held swing says "${HOLD}" inside the stage (${JSON.stringify(sH)})`);
+        if (sH && desk) assert(sH.px >= 14, `${v}: the held-swing line is at least 14 px (${sH.px})`);
+        await X(`turnCombatAction('parry'); true`); await page.waitForTimeout(60);
+        const sE = await warn();
+        assert(sE.on && sE.txt === EARLY && sE.inside && !sE.cut, `${v}: an early press on a held swing says "${EARLY}" in the same plate (${JSON.stringify(sE)})`);
+        if (desk) assert(sE.px >= 14, `${v}: the early line is at least 14 px (${sE.px})`);
+        assert(await X('document.body.dataset.trickTip') === 'early', `${v}: the page marks the early line shown`);
+        // once a fight: the same move again, its held swing pressed early, says no early line
+        await until(async () => !(await hit()), 200);
+        await X('delete document.body.dataset.trickTip; __go()');
+        const h1 = await until(holding, 200);
+        assert(!!h1, `${v}: the second held swing stalls`);
+        if (h1) { await X(`turnCombatAction('parry'); true`); await page.waitForTimeout(60);
+          const r1 = await X('JSON.stringify({ tip: document.body.dataset.trickTip || "", pressed: !!TURN_LIVE.usedDefense })').then(JSON.parse);
+          assert(r1.pressed && r1.tip !== 'early', `${v}: a second early press in the same fight says no early line (${JSON.stringify(r1)})`); }
+        await X('clearInterval(window.__keep); true');
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('feint-read-clear crashed: ' + (e.stack || e)); }
 
 if (section('foe moves by type')) try {
   const g = loadCore({ seed: 7 }), E = s => g.eval(s), J = s => JSON.parse(E(`JSON.stringify(${s})`));

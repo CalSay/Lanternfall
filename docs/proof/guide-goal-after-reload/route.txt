@@ -17,22 +17,7 @@ tap-if "Attack"
 wait 1.5
 tap-if "Attack"
 wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
+# his line comes after the fourth press in every view (seed 11); a fight press under it closes it, so stop pressing here
 expect "Bring me Pine Log for a proper fire"
 shot boot-line
 tap "Got it"
@@ -48,7 +33,7 @@ wait 1
 tap-if "Attack"
 wait 1
 tap-if "Attack"
-expect "Tap Gather and chop some Pine Log for the fire"
+expect "Press Gather and chop some Pine Log for the fire"
 tap "Dismiss this tip"
 wait 2
 away 0.01

@@ -174,7 +174,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
     if (G.next <= 0 && stashFull(S.node.kind, S.node.t)) G.next = nextGlint();   // H3: no Glint on a full pile
     else if (G.next <= 0) {
       G.left = CRAFT_GLINT.window + bonus('glint:' + skillOf(S.node.kind)); G.spark = 0;   // H2: tool mastery 10
-      addFloat('Glint! Tap it', '#FFF3C4', true, 0.66, 0.3);
+      addFloat('Glint! Click or tap it', '#FFF3C4', true, 0.66, 0.3);
       emit('glint', { on: true });
     }
   });

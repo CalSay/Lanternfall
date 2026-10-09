@@ -190,7 +190,7 @@ const EVO_DEFS = {
       { name: 'Heavy Hands', text: 'Your heavy hits deal double damage to shields.', s: 'S6' }],
     aura: null,
     idle: 'You hold the front, and hits build your Fury by themselves. Rend fires every 14s.',
-    active: 'Tap heavy hits to keep Fury at 100, parry for free Fury, and Rend into a stagger.',
+    active: 'Use heavy hits to keep Fury at 100, parry for free Fury, and Rend into a stagger.',
     ringKs: 'bloodrage',
     ring: [
       ['Hot Blood', 'Fury +1 for each hit you take.', { t: { furyHit: 1 } }, 1.006],
@@ -217,7 +217,7 @@ const EVO_DEFS = {
       { name: 'Oath of the Order', text: 'While you stand you take 10% less damage, and you stagger foes 30% faster.' }],
     aura: { name: 'Oath of the Order', text: 'Your Middle and Back take 10% less damage.' },
     idle: 'You block a quarter of all hits. Bulwark fills, and Stand Fast fires every 18s with what you stored.',
-    active: 'Parry for 3 Bulwark each, and hold Stand Fast for the big hit.',
+    active: 'Parry for 3 Bulwark each, and save Stand Fast for the big hit.',
     ringKs: 'aegis',
     ring: [
       ['Firm Shield', 'You block 2% more hits.', { t: { wBlock: 0.02 } }, 1.006],
@@ -244,7 +244,7 @@ const EVO_DEFS = {
       { name: 'Patient Hunter', text: 'You deal 2% more for each Venom on the foe (up to 20%).' }],
     aura: null,
     idle: 'Venom ramps by itself and seeps across the pack. Deathcap fires with whatever it has.',
-    active: 'Hold Deathcap until 10 Venom, and Focus the healer first: Venom 5+ halves their healing.',
+    active: 'Save Deathcap until 10 Venom, and Focus the healer first: Venom 5+ halves their healing.',
     ringKs: 'lingering',
     ring: [
       ['Toxin', 'Status damage +3%.', { t: { stDmg: 0.03 } }, 1.008],
@@ -325,7 +325,7 @@ const EVO_DEFS = {
     meter: 'blessing', ab2: 'sanctuary', finisher: 'dawnbreak', replaces: ['ember', 'flare', 'embers', 'lanternburst'],
     passives: [
       { name: 'Given Light', text: 'You hit softly, and your heroes deal the damage you give up. Your hits are holy.' },
-      { name: 'Blessing', text: 'Each tap heals the most hurt ally and blesses your heroes: +20% damage for 6s, up to 3 times.' },
+      { name: 'Blessing', text: 'Each press heals the most hurt ally and blesses your heroes: +20% damage for 6s, up to 3 times.' },
       { name: 'Ward', text: 'Healing past full health becomes a shield, up to 30% of health.' }],
     aura: { name: "Keeper's Light", text: 'You heal 40% more and hit 40% harder.' },
     idle: 'Blessing sits at about II. Rally Hymn and Sanctuary fire by themselves, and spare healing turns to shields.',

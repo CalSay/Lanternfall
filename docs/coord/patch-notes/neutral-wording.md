@@ -1,0 +1,1 @@
+The game's own words now read right with a mouse as well as a finger: Old Hesketh and the menus say "Open", "Choose" or "Press" where they said "Tap", for example "Press Gather and chop some Pine Log for the fire." (shot: docs/proof/neutral-wording/gather-line-portrait.png)
