@@ -16673,6 +16673,54 @@ if (section('online-off-clean')) try {
   }
 } catch (e) { fail('online-off-clean crashed: ' + (e.stack || e)); }
 
+// ==== stage-no-swarm-shrink (hero size ruling 2026-10-09, docs/design/desktop-layout/hero-size/ruling.md "Build card implied"): a turn fight
+// stands one foe, so a swarm zone (9) and a boss whose kit calls adds (the Elder Cave Bat's Call the Colony) draw at the zone's normal
+// whole-step zoom: the same as zone 10, x2 at 1280x720 and x3 at 1920x1080. Mouse contexts, device pixel ratio 1, save-early.json.
+if (section('stage-no-swarm-shrink (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('stage-no-swarm-shrink (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')); save.last = Date.now();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, zm] of [[1280, 720, 2], [1920, 1080, 3]]) {
+        const tag = `${w}x${h}`, ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: false, hasTouch: false, reducedMotion: 'reduce' });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false); true`); await page.waitForTimeout(300);
+        const turn0 = await page.waitForFunction(() => window.__t.x('turnCombatOn()'), null, { timeout: 8000 }).then(() => true, () => false);
+        assert(turn0, `${tag}: the fight is a turn fight (${await X(`JSON.stringify([S.activity, target(), S.solo && S.solo.hero, partyCombatOn(), turnArenaOk(), TURN_TUNE.on, S.combat])`)})`);
+        const at = async src => { await X(src + '; true'); await page.waitForTimeout(700);
+          return X('(() => { const s = stageStats(); return { ZM: s.ZM, turn: turnCombatOn(), boss: !!fightBoss, foes: s.foes.filter(Boolean).length, kit: !!(mob && kitOf(mob) && kitOf(mob).mech.some(x => x.adds && x.adds[1] >= 3)) }; })()'); };
+        const z10 = await at('fightBoss = false; setZone(10)'), z9 = await at('fightBoss = false; setZone(9)'), b9 = await at('S.kills = ZONE_FIGHTS; fightBoss = false; challenge()');
+        assert(z10.ZM === zm && z9.ZM === z10.ZM && z9.turn && z9.foes === 1, `${tag}: swarm zone 9 draws at zone 10's zoom, x${zm} (zone 10 ${JSON.stringify(z10)}, zone 9 ${JSON.stringify(z9)})`);
+        assert(b9.boss && b9.kit && b9.turn && b9.foes === 1 && b9.ZM === zm, `${tag}: the zone 9 boss (its kit calls the colony; a turn fight stands it alone) draws at x${zm} (${JSON.stringify(b9)})`);
+        assert(!errs.length, `${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the real-time fight (turns off: the old rule, a swarm zone steps out by its type) keeps today's step at 1280x720
+      {
+        const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false, reducedMotion: 'reduce' });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage();
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); fightBoss = false; setZone(9); true`); await page.waitForTimeout(700);
+        const p9 = await X('(() => { const s = stageStats(); return { ZM: s.ZM, turn: turnCombatOn(), foes: s.foes.filter(Boolean).length }; })()');
+        assert(!p9.turn && p9.ZM === 1, `1280x720, real-time fight: zone 9 keeps today's swarm step, x1 (${JSON.stringify(p9)})`);
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('stage-no-swarm-shrink crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
