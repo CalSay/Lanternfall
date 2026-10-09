@@ -206,6 +206,13 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   line on how often you'd beat the boss at your furthest zone with it (or, when you win nearly every time, how many turns a
   win takes); head and body pieces say how much of your health a boss hit takes. The line comes from 80 scratch turn
   fights a side (`55-fight-delta.js`, as the boss-odds readout samples) and is left out when the numbers barely change.
+- **Station levels** (Smithing at the Forge, Woodcraft at the Workbench, Tailoring at the Loom, Enchanting at the Enchanter's
+  Table; `SKILL_TUNE` in `20-data.js`): a station opens item tier 2, 3, 4 and 5 at level 10, 22, 36 and 54, and its XP comes
+  from crafts, upgrades, reforges and refining. Behind `CRAFT_TUNE.curve` (off in the game until the balance pass; card
+  craft-curve-skills-report) the levels follow the overhaul's planned curve (`SKILL_TUNE.craftNeedV2`, one piece a tier) and a
+  craft, upgrade or reforge below the station's highest open tier pays a tenth of its XP; bars keep their share of the level
+  when the switch flips (`S.craft.xpv`). The fit and the level-by-zone table:
+  [curve.md](design/skilling-crafting-overhaul/curve.md).
 - **Refining** (`55-refine.js`, `75-refine-ui.js`, `REFINE_TUNE` in `21-data-craft.js`; card refine-queues): the Forge
   smelts ore and coal into Ingots (Copper, Iron, Silver, Cobalt, Mithril Ingot), the Workbench saws logs into Planks
   (Pine, Birch, Oak, Mangrove, Tideash Plank), and the Loom weaves fibre into Cloth (Hemp Cloth, Linen, Briar Cloth,

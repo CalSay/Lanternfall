@@ -19,7 +19,7 @@
 //
 // The player: reads LF_EYES (src/js/89-eyes-hook.js) and presses what a person presses. It reads each guide tip for 1.2 s and then
 // presses what it names; it parries and dodges at the set rates when the foe winds up; it presses the timed ring at the right
-// moment at the parry rate; it taps Next Up's Go and presses the one button the panel then offers (Craft, Claim, Equip, Spend, Build,
+// moment (inside the Good window) at the parry rate; it taps Next Up's Go and presses the one button the panel then offers (Craft, Claim, Equip, Spend, Build,
 // Light, Start); it dismisses story cards, moment cards (Continue) and the picker. It never forces the game's state: nothing is set through `eval`, only read.
 // Gear (walk-bot-gear): it wears what a casual player wears. It puts on any better bag piece (Craft > Gear > the piece > Equip), crafts the
 // weapon, off-hand, head or body piece it is one tier short of (Craft > Make > station > tier > Craft), gathers the missing materials in the
@@ -27,6 +27,8 @@
 // Tier gates (next-tier-gate-goal): when no Next Up row is Ready and the craft row names a tier gate, it presses that row's Go and crafts at
 // the station or gathers in the named view for up to 5 minutes (the report's Gear section lists the gate rows pressed).
 // It closes a sheet it left over the bar with the X. The report's "Gear and boss tries" table says what it wore in each zone and the boss tries lost there.
+// Boss losses (walk-bot-keeps-fighting): the first lost try takes the Try again card's lead button; from the second in a row at one
+// boss it presses Keep fighting here and fights the zone's foes until the game brings the boss back (Auto, or Next Up's Ready boss row).
 // Game time is a paused fake clock stepped in 100 ms frames (33 ms while a foe winds up); the page's frames are timers on it and CSS
 // animations are moved by the same steps; the page boots before the first step, performance.now() counts from the page's start, and
 // resize and scroll events wait for a frame on that clock, so two runs of a seed and build play the same hour (walk-repeatable-whole-hour).
@@ -175,7 +177,7 @@ const OBS = `(() => {
   } catch (e) { s = { err: String(e).slice(0, 80) }; }
   o.s = s;
   // craft-delta: the game's 'choice' and 'firstUse' events, kept in a page array the walk drains each frame (it never assigns to S)
-  if (!window.__walkEv) { window.__walkEv = []; try { on('choice', k => window.__walkEv.push(['choice', k])); on('firstUse', k => window.__walkEv.push(['firstUse', k])); on('starterJoin', e => window.__walkEv.push(['join', e && e.ids || []])); on('spoilsPick', e => window.__walkEv.push(['spoils', Object.assign({ hero: soloHero() }, e)])); } catch (e) {} }
+  if (!window.__walkEv) { window.__walkEv = []; try { on('choice', k => window.__walkEv.push(['choice', k])); on('firstUse', k => window.__walkEv.push(['firstUse', k])); on('starterJoin', e => window.__walkEv.push(['join', e && e.ids || []])); on('spoilsPick', e => window.__walkEv.push(['spoils', Object.assign({ hero: soloHero() }, e)])); on('timingGrade', e => window.__walkEv.push(['grade', e && e.grade])); } catch (e) {} }
   o.ev = window.__walkEv.splice(0);
   return o;
 })()`;
@@ -250,20 +252,27 @@ const turnSnap = () => X('(() => { const q = turnCombatSnapshot(); return { now:
 // One look at the fight and one press. Returns true when it pressed something.
 async function fight(o) {
   const ph = o.phase;
+  if (ph !== 'player turn') st.ringKey = st.ringFor = '';   // a ring ended: the next one, even at the same fight time in a new fight, is new
   if (ph !== 'parry or dodge window' && ph !== 'foe wind-up') st.defKey = '';   // each try restarts the fight clock, so the same move can carry the same key: roll for every new foe hit
   if (ph === 'player turn') {
     // the timed ring first (press the lit ability again), then an ability that is ready, else Attack
     const live = await page.evaluate(() => !!document.querySelector('#soloBar .sb-abslot.live'));
     if (live) {
       const q = await turnSnap();
-      if (q.timing && st.ringKey !== q.timing.id + q.timing.i) {
-        // the ring closes at timing.closesAt: press near the end at the parry rate, otherwise late (a miss)
-        if (!st.ringDo) st.ringDo = rnd() < PARRY ? 'good' : 'miss';
+      // each ring is its own (walk-bot-keeps-fighting: the key was the ability and ring number, so after the first Power Shot the bot
+      // never pressed a Power Shot ring again, and its one late press at the close graded Perfect: 0 of 51 Good or Perfect in #213)
+      const rk = q.timing && q.timing.id + q.timing.i + '@' + q.timing.closesAt.toFixed(3);
+      if (q.timing && st.ringKey !== rk) {
+        // at the parry rate the bot presses inside the Good window and outside Perfect (59k TURN_TUNE.timed: good 0.15 s, perfect 0.06 s
+        // either side of the close; the ring is stepped at 33 ms, so the first look at 0.12 s or less lands 0.087-0.12 s early), else it
+        // lets the ring run out (a Miss)
+        if (st.ringFor !== rk) { st.ringFor = rk; st.ringDo = rnd() < PARRY ? 'good' : 'miss'; }
         const left = q.timing.closesAt - q.now;
-        if ((st.ringDo === 'good' && left < 0.22) || (st.ringDo === 'miss' && left < 0.04)) { st.ringKey = q.timing.id + q.timing.i; st.ringDo = ''; await click('#soloBar .sb-abslot.live', 200); return true; }
+        if (st.ringDo === 'good' && left <= 0.12) { st.ringKey = rk; await click('#soloBar .sb-abslot.live', 200); return true; }
       }
       return false;
     }
+    st.ringKey = st.ringFor = '';
     for (const b of ['#soloBar .sb-ab0', '#soloBar .sb-ab1', '#soloBar .sb-ab2']) if (await page.evaluate(BTN_OK(b))) return await click(b, 200);
     return await click('#soloBar .sb-atk', 200);
   }
@@ -335,7 +344,7 @@ async function dismissCards(o) {
   for (const c of o.cards) {
     const sig = c.cls + '|' + c.text.slice(0, 50); now.add(sig);
     let r = seen.get(sig);
-    if (/beat you/i.test(c.text) && !seen.has(sig)) { st.beaten = (st.beaten || 0) + 1; const bz = st.prev ? st.prev.zone : 0; st.tries = st.tries || {}; st.tries[bz] = (st.tries[bz] || 0) + 1; if (st.beaten === 5) addCheck('wall', 'the casual bot was beaten 5 times by one boss', c.text.slice(0, 80) + ' (parry rate ' + PARRY + ')'); }
+    if (/beat you/i.test(c.text) && !seen.has(sig)) { st.beaten = (st.beaten || 0) + 1; const bz = st.prev ? st.prev.zone : 0; st.tries = st.tries || {}; st.tries[bz] = (st.tries[bz] || 0) + 1; if (c.cls === 'bsheet-ov') st.losses.push({ t: gt, zone: bz, kills: o.s.kills || 0 }); if (st.beaten === 5) addCheck('wall', 'the casual bot was beaten 5 times by one boss', c.text.slice(0, 80) + ' (parry rate ' + PARRY + ')'); }
     if (!r) { r = { first: gt, last: gt, cls: c.cls, text: c.text, n: 0 }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls }, tag: 'card-' + c.cls }); }
     r.last = gt;
   }
@@ -355,9 +364,20 @@ async function dismissCards(o) {
     const n = await page.evaluate(() => document.querySelectorAll('.mm-ov .mm-pick').length);
     if (n) { st.lastCard = gt; const i = (SEED - 1 + spoils.length) % n; if (await click(`.mm-ov .mm-pick:nth-child(${i + 1})`, 300)) return true; }
   }
+  // walk-bot-keeps-fighting: from the second lost try in a row at one boss (the bot's own Try again cards at this zone: a win moves it on), a casual player
+  // stops pressing Try again: Keep fighting here, and the zone's foes until the game brings the boss back (Auto, on by default, at a
+  // fair chance; or Next Up's boss row once it reads Ready). The first loss still takes the card's lead button, as before.
+  const lost = all.find(r => r.cls === 'bsheet-ov' && /beat you/i.test(r.text));
+  const bz = st.prev ? st.prev.zone : o.s.zone, row = st.losses.filter(l => l.zone === bz).length;
+  if (lost && row >= 2 && gt - lost.first >= 2.4 && gt - st.lastCard >= 0.6 && await click('.bsheet-ov .bt-stay', 300)) {   // covered: the card rule below
+    st.lastCard = gt; st.stayed.push({ t: gt, zone: bz, kills: o.s.kills || 0 });
+    await note(page, 'boss', `pressed Keep fighting here after lost try ${row} in a row at the zone ${bz} boss`, { shot: false }); return true;
+  }
   if (oldest && gt - oldest.first >= 2.4 && gt - st.lastCard >= 0.6) { st.lastCard = gt; for (const d of DISMISS.split(', ')) if (await click(d, 300)) return true; }   // the card on top first: a sheet's own button can sit under it
   return false;
 }
+st.grades = {};   // walk-bot-keeps-fighting: the timed rings the game graded, by grade (timingGrade events)
+st.stayed = []; st.losses = [];   // walk-bot-keeps-fighting: each Keep fighting here press and each lost boss try { t, zone, kills }
 st.lastCard = -9; st.tabAt = -9; st.phAt = 0; st.phName = ''; st.phStart = 0; st.tipFirst = 0; st.firstPress = null;
 
 // Next Up: when the chip says Ready, open the list, press Go on the first ready goal the bot has not given up on, and press what
@@ -381,6 +401,7 @@ async function followNextUp(o) {
   await advance(300, 16);
   const rows = await page.evaluate(() => [...document.querySelectorAll('.nu-row.ready')].filter(r => r.getClientRects().length).map(r => (r.querySelector('.nu-lbl') || r).textContent.trim()));
   const holdFight = (st.gear.owns && st.gear.sess && !st.gear.sess.gaveUp) || !!(st.gate.sess && st.gate.sess.owns);   // gathering for a gear goal or a tier gate: the boss row waits
+  st.nuReady = rows.length;
   const label = rows.find(l => (st.calls[goalKey(l)] || 0) < 4 && !(holdFight && /^boss ready|boss is next|^the zone \d+ boss/i.test(l)));   // a goal the casual player cannot finish is a finding, not a loop
   const closeList = () => click('.bsheet-ov .bsheet-x', 200);
   if (label === undefined) { await closeList(); return false; }
@@ -642,7 +663,8 @@ async function gateStep(o) {
     return true;
   }
   if (!q || (T.cool[q.key] || 0) > gt) return false;
-  // open Next Up: only when no row is Ready (a Ready row is followNextUp's), press the gate row's Go
+  // open Next Up: only when no row is Ready (a Ready row is followNextUp's), press the gate row's Go (with no Ready row, not a real choice)
+  st.nuReady = 0;
   if (!(await click('#nuChip', 300))) return false;
   await advance(300, 16);
   const pick = await page.evaluate(txt => { const rows = [...document.querySelectorAll('.nu-row')].filter(r => r.getClientRects().length);
@@ -664,18 +686,20 @@ async function gateStep(o) {
 const HIT_SOUNDS = new Set(['hit', 'crit', 'big', 'counter', 'kill']);   // F1: the sound of a hit landing (76-audio plays big or counter for those tiers, else hit or crit)
 const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge', 'momentBig', 'momentMid']);   // momentBig and momentMid are the moment layer's own stings (76-audio.js)
 const sfxLog = [];     // { t, name }
-const choices = [], firstUse = {};   // craft-delta: { t, k } for each choice event; the game time of each first use
+const choices = [], firstUse = {};   // craft-delta: { t, k, real } for each choice event; the game time of each first use
+// walk-bot-keeps-fighting (W7): the game counts a Next Up press as a choice when the list shows two or more rows, ready or not; a real
+// choice is a pick between two or more ready rows (st.nuReady, set as the bot opens the list). Craft and spoils picks count as the game says.
 const spoils = [];   // boss-spoils-pick: { t, hero, zone, offered, taken } for each cache pick card closed
 async function watch(o) {
   for (const s of o.sfx) sfxLog.push({ t: gt, name: s.name });
-  for (const [kind, k] of o.ev || []) { if (kind === 'join') { for (const id of k) st.joinOnCard.add(id); continue; } if (kind === 'spoils') { spoils.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'choice') choices.push({ t: gt, k }); else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
+  for (const [kind, k] of o.ev || []) { if (kind === 'join') { for (const id of k) st.joinOnCard.add(id); continue; } if (kind === 'spoils') { spoils.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'grade') { st.grades[k] = (st.grades[k] || 0) + 1; continue; } if (kind === 'choice') { choices.push({ t: gt, k, real: k !== 'nextup' || st.nuReady >= 2 }); if (k === 'nextup') st.nuReady = 0; } else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
   for (const t of o.toasts) if (!st.toastSeen.has(t)) { st.toastSeen.add(t); await note(page, 'toast', t, { shot: false }); }
   for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
   const s = o.s, p = st.prev;
   if (!st.heroKeys && s.heroes !== undefined) st.heroKeys = await X('Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {})');
   if (s.zone > (st.enterMax || 0)) {   // the first time the hero stands in a zone: what it wears, before that zone's boss tries
     st.enterMax = s.zone; st.enter = st.enter || {};
-    st.enter[s.zone] = { t: Math.round(gt), L: s.L, gear: await X(`Object.entries(S.equip).filter(([, v]) => v != null && itemById(v)).map(([k, v]) => k + ' t' + itemById(v).t + ' ' + RAR[itemById(v).r].n).join(', ') || 'nothing'`), crafts: s.forged };
+    st.enter[s.zone] = { t: Math.round(gt), L: s.L, kills: s.kills || 0, gear: await X(`Object.entries(S.equip).filter(([, v]) => v != null && itemById(v)).map(([k, v]) => k + ' t' + itemById(v).t + ' ' + RAR[itemById(v).r].n).join(', ') || 'nothing'`), crafts: s.forged };
   }
   for (const k of Object.keys(s.got || {})) if (!st.got[k]) { st.got[k] = gt; const byAct = !!(s.acted && s.acted[k]); await note(page, 'unlock', k, { tag: 'unlock-' + k, extra: { play: s.got[k], byAct } }); }
   if (p && s.gold > p.gold && !st.rewardNoted) { st.rewardNoted = 1; await note(page, 'reward', 'first gold: +' + (s.gold - p.gold), { shot: false }); }
@@ -772,7 +796,7 @@ async function run() {
       if (!did) did = await gateStep(o);
       // the Fight menu (tab "adv") covers the action bar in portrait: a player whose turn is waiting closes it
       if (!did && o.s.tab === 'adv' && o.phase !== 'idle' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('#menuX', 300); }
-      const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || false;   // the 33 ms step is for the foe's wind-up and the parry window only
+      const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || !!st.ringFor;   // the 33 ms step is for the foe's wind-up, the parry window and a timed ring only
       await advance(fine ? 33 : 100, fine ? 16 : 100);
     }
   
@@ -782,6 +806,7 @@ async function run() {
     stop = `the browser closed at game minute ${(gt / 60).toFixed(1)} (${String(e.message).split('\n')[0].slice(0, 80)}); this is a tool fault, not a game error`;
   }
   if (!stop && gt < END) stop = 'ended early';
+  st.odds = await X('Object.assign({}, S.bossOdds)').catch(() => null);   // the boss odds record the game keeps of the bot's defence and rings
   const snap = await page.evaluate(k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, KEY).catch(() => null);
   await ctx.close().catch(() => {}); await browser.close().catch(() => {});
   return { stop, errs, snap, clockMs: Date.now() - t0 };
@@ -924,15 +949,21 @@ function report(res) {
     '| Zone | First stood in at | Level | Boss tries lost | Worn then |', '|---|---|---|---|---|');
   for (const [zn, e] of Object.entries(st.enter || {})) out.push(`| ${zn} | ${fmtT(e.t)} | ${e.L} | ${(st.tries || {})[zn] || 0} | ${e.gear} |`);
   out.push('');
+  // walk-bot-keeps-fighting: what each Keep fighting here press led to, until the next lost try, the next zone or the end of the walk
+  out.push(st.stayed.length ? `Keep fighting here, pressed by the two-loss rule (from the second lost try in a row at one boss): ${st.stayed.length} time${st.stayed.length === 1 ? '' : 's'}. ` + st.stayed.map(p => {
+    const nx = st.losses.find(l => l.t > p.t), en = (st.enter || {})[p.zone + 1], up = en && en.t > p.t && (!nx || en.t < nx.t) ? en : null, end = nx && !up ? nx : up || { kills: st.prev ? st.prev.kills || 0 : p.kills };
+    return `zone ${p.zone} at ${fmtT(p.t)}: +${end.kills - p.kills} kills ${nx && !up ? 'to the next lost try' : up ? 'to zone ' + (p.zone + 1) : 'to the end'}`; }).join('; ') + '.' : 'Keep fighting here by the two-loss rule: never needed (no boss beat the bot twice in a row).', '');
+  { const g = st.grades, n = (g.perfect || 0) + (g.good || 0) + (g.miss || 0), B = st.odds, r1 = v => Math.round((+v || 0) * 10) / 10;
+    out.push(`Timed rings graded: ${n} (Perfect ${g.perfect || 0}, Good ${g.good || 0}, Miss ${g.miss || 0}; the bot aims for Good at its parry rate ${PARRY}). ` + (B ? `Boss odds record at the end (S.bossOdds, decayed tallies): hits ${r1(B.hits)}, parry ${r1(B.parry)}, dodge ${r1(B.dodge)}, rings ${r1(B.rings)}, Good ${r1(B.good)}, Perfect ${r1(B.perfect)}.` : 'Boss odds record: not read.'), ''); }
   // next-tier-gate-goal: the gate rows the bot pressed, and the minute Next Up first offered an open tier 2 craft
   { const G = st.gate, ends = log.filter(e => e.kind === 'gate' && e.end);
     out.push(`Next Up tier gates: ${G.pressed.length} gate row${G.pressed.length === 1 ? '' : 's'} pressed${G.pressed.length ? ' (' + G.pressed.map(p => `"${p.label}" at ${fmtT(p.t)}`).join(', ') + ')' : ''}; ${G.crafts} tier 1 craft${G.crafts === 1 ? '' : 's'} made for a station gate${ends.length ? '; ' + ends.map(e => `${e.end} at ${fmtT(e.t)}`).join(', ') : ''}. First tier 2 craft goal: ${G.firstT2 === null ? 'not seen in ' + fmtT(reached) : fmtT(G.firstT2)}.`, ''); }
   // craft-delta: crafts plus upgrades, first uses, and the longest stretch of minutes 20-60 with no choice (spec target: one every 8 min)
   const ups = log.filter(e => e.kind === 'upgrade'), crafts60 = log.filter(e => e.kind === 'moment' && /^craft:/.test(e.text) && e.t <= 3600).length, ups60 = ups.filter(e => e.t <= 3600).length;
-  const cw = [1200, ...choices.map(c => c.t).filter(t => t > 1200 && t < Math.min(3600, reached)), Math.min(3600, reached)];
+  const cw = [1200, ...choices.filter(c => c.real).map(c => c.t).filter(t => t > 1200 && t < Math.min(3600, reached)), Math.min(3600, reached)];
   let gap = { from: 1200, to: 1200 }; for (let i = 1; i < cw.length; i++) if (cw[i] - cw[i - 1] > gap.to - gap.from) gap = { from: cw[i - 1], to: cw[i] };
-  out.push('## Crafting and choices', '', `Crafts and upgrades in the first 60 min: ${crafts60 + ups60} (${crafts60} forged, ${ups60} upgrades; ${z.up || 0} upgrades in all). Choices: ${choices.length} (${['craft', 'nextup', 'spoils'].map(k => k + ' ' + choices.filter(c => c.k === k).length).join(', ')}).`, '',
-    reached > 1200 ? `Longest gap with no choice in minutes 20-60: ${fmtT(gap.to - gap.from)} (${fmtT(gap.from)} to ${fmtT(gap.to)}).` : 'Longest gap with no choice in minutes 20-60: not reached.', '',
+  out.push('## Crafting and choices', '', `Crafts and upgrades in the first 60 min: ${crafts60 + ups60} (${crafts60} forged, ${ups60} upgrades; ${z.up || 0} upgrades in all). Real choices (a pick between two or more ready options): ${choices.filter(c => c.real).length} (${['craft', 'nextup', 'spoils'].map(k => k + ' ' + choices.filter(c => c.real && c.k === k).length).join(', ')}); the game counted ${choices.length}, with ${choices.filter(c => !c.real).length} Next Up press${choices.filter(c => !c.real).length === 1 ? '' : 'es'} that had only one ready row.`, '',
+    reached > 1200 ? `Longest gap with no real choice in minutes 20-60: ${fmtT(gap.to - gap.from)} (${fmtT(gap.from)} to ${fmtT(gap.to)}).` : 'Longest gap with no real choice in minutes 20-60: not reached.', '',
     mapWindow(reached), '',
     spoilsLine(), '',
     'First uses: ' + (Object.keys(firstUse).length ? Object.entries(firstUse).map(([k, t]) => `${k} at ${fmtT(t)}`).join(', ') : 'none') + '.', '');
@@ -1002,7 +1033,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const base = path.join(OUT, `walk-${DATE}`);
 fs.writeFileSync(base + '.md', rep.md);
 fs.writeFileSync(base + '.json', JSON.stringify({ date: DATE, build: sha(), seed: SEED, hero: HERO, size: SIZE.id, gameSeconds: Math.round(gt), clockSeconds: Math.round(res.clockMs / 1000), stop: res.stop,
-  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
+  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, bossTries: { stayed: st.stayed, losses: st.losses, grades: st.grades, odds: st.odds }, checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
 if (res.snap && (res.stop || flag('snapshot'))) fs.writeFileSync(path.join(OUT, `snapshot-min${Math.round(gt / 60)}.json`), res.snap);
 if (opt('scorecard', '')) writeScorecard(path.resolve(ROOT, opt('scorecard', '')), rep.sc, Math.round(gt));
 if (opt('reports', '')) {
