@@ -215,6 +215,12 @@ Other "Tap" and "Hold" lines (about 66, 14 of them in `75-onboard-ui.js`) wait f
    the design. Until then 768x1024 stays as today (the strip, a 536x638 stage at x1), which plays.
 4. **desktop-views-2 (P2):** Stars, Store, Uniques, Camp, Build and the Codex as desktop panels; keys for views
    (for example `[` and `]`); any grid v1 cut (4).
+   **Built (desktop-views-2, 2026-10-09):** `[` and `]` step through the open menu's views (70-ui.js `VIEW_KEYS`); each view's
+   CSS file has a Desktop 1 block that puts list and detail side by side (`docs/design/layout.md`, "Views"). v1's cut grids landed
+   here too: Gather (nodes beside the Now card) and Craft > Make (recipes beside the result card); Abilities had shipped in v1.
+   Build, Camp and Make widen at Desktop 1 to the stage less a 120 px strip (up to 980 px; Stars already widened), since at 1280x720 the two-thirds panel (596 px)
+   squeezed two columns into three-line rows. The Stars map's constellation names no longer grow with the text (`tk:off`): they
+   are SVG units, and at 1920x1080 they ran into each other.
 
 Deferring tooltips and the upright tablet departs from the approved plan; Cal can undo it with "Tooltips and tablet in v1".
 

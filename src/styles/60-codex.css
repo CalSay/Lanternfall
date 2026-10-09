@@ -174,3 +174,18 @@
   .cx-titlebtn { max-width: 112px; }
   .cx-light { font-size: 24px; }
 }
+
+/* desktop-views-2: at the desktop tiers the Codex is a wide panel. Its pages sit three to a row (four from 1600x900), and an
+   entry's details open on the right beside the page instead of under it. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .bsheet.cx-sheet { width: min(1040px, calc(100% - 48px)); display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .bsheet.cx-sheet:has(> .bsheet-foot:not(:empty)) { grid-template-columns: minmax(0, 1fr) minmax(300px, 36%); }
+  .bsheet.cx-sheet > .bsheet-grab { grid-column: 1 / -1; }
+  .bsheet.cx-sheet > .bsheet-body { grid-column: 1; grid-row: 2; min-height: 0; }
+  .bsheet.cx-sheet > .bsheet-foot { grid-column: 2; grid-row: 2; align-self: start; max-height: 100%; overflow-y: auto; border-top: 0; border-left: 2px solid var(--line); margin-right: 16px; }
+  .cx-pages { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cx-cn, .cx-cs, .cx-ntx, .cx-tag { white-space: normal; overflow: visible; text-overflow: clip; }
+}
+@media (min-aspect-ratio: 1/1) and (min-width: 1600px) and (min-height: 900px) {
+  .cx-pages { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

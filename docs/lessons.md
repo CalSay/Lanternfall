@@ -160,6 +160,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - `fmt` drops the decimals of any number of 10 or more, so a gain shown with it can read lower than it is (15.75 showed as "+15%"). Format small deltas with one decimal yourself. And a player-visible wording change ("grade" to "tier") breaks checks that match the old text in other sections: grep tools/check.mjs for the old words before the full run. Why: the reviewer caught the rounding and C9 failed on "80 grade-1 wood" (craft-shortfall-offer, 2026-10-09)
 
 - A browser check that expects the cache card's odds line must make the unique roll miss (stub `Math.random` high around `killPack`): `UNIQ_TUNE.on` does not stop the first-clear roll, and a dropped unique swaps the odds line for "Here is what the win gave you." Why: the first look-card-says-why check failed 3 runs in 7 on a Briar Sprig drop (reviewer, 2026-10-09)
+- A two-column desktop rule loses to its own `> *` reset when the reset's selector carries a `:has()`: `:has(X)` adds X's specificity, so `.sec:has(> .a:not(:empty)) > *` beats `.sec > .a`. Repeat the same `:has()` on the item's rule. And `scaleText` grows SVG text too, in viewBox units, so a map's labels collide at Desktop 2: mark SVG text `/* tk:off */`. Why: the Make result card stayed in column 1 until measured, and the Stars map's names ran together at 1920x1080 (desktop-views-2, 2026-10-09)
 
 ## Saves and offline parity
 

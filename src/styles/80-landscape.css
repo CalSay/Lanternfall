@@ -209,6 +209,10 @@
   .tabs .tab[data-tab="gat"]::before { content: "3"; }
   .tabs .tab[data-tab="forge"]::before { content: "4"; }
   .tabs .tab[data-tab="world"]::before { content: "5"; }
+  /* desktop-views-2: [ and ] step through the open menu's views; the switcher's ends show them */
+  #viewSeg button:first-child::before, #viewSeg button:last-child::before { position: absolute; bottom: 3px; font: 600 13px/1 var(--display); color: #8E80A0; }   /* tk:off */
+  #viewSeg button:first-child::before { content: "["; left: 5px; }
+  #viewSeg button:last-child::before { content: "]"; right: 5px; }
 }
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (prefers-reduced-motion: reduce) {
   .menu, .app:not(.menu-open) .menu { transition: none; }

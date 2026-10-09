@@ -739,6 +739,17 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .at-mv b { font: 600 max(var(--tmin, 0px), calc((14px * var(--display-k, 1)) * var(--tk, 1))) var(--display); color: var(--bone); }
 .at-mn { color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .at-pts.at-ok { animation: none; } }
+
+/* desktop-views-2: at the desktop tiers Hero > Build puts the attribute rows on the left and "From your level" (what the points
+   give now) on the right, held in view while you add points. Like Stars, the menu widens (up to 980 px, a 120 px strip of the stage left) while Build
+   is open, or the rows squeeze into three-line descriptions at 1280x720. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .app.menu-open .menu:has(#p-party:not([hidden]) > #sec-attributes:not(.off-view):not(.f-off)) { width: calc(100% - 120px); max-width: 980px; }   /* the stage's left strip (the hero) still shows */
+  .app:not(.detail-docked) #sec-attributes { grid-template-columns: minmax(0, 3fr) minmax(240px, 2fr); column-gap: 14px; align-items: start; }
+  .app:not(.detail-docked) #sec-attributes > * { grid-column: 1; }
+  .app:not(.detail-docked) #sec-attributes > .sec-title, .app:not(.detail-docked) #sec-attributes > .at-head { grid-column: 1 / -1; }
+  .app:not(.detail-docked) #sec-attributes > .at-moves { grid-column: 2; grid-row: 3 / span 3; position: sticky; top: 0; }
+}
 /* 60-away: the "While you were away" card (75-away.js) and the Journal (75-stats-ui.js). */
 
 /* ---- away report ---- */
@@ -992,6 +1003,18 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .camp-bld-card .mini { min-height: 44px; justify-self: start; }
 .camp-bld-card .cbc-x { justify-self: end; }
 .camp-bld:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+
+/* desktop-views-2: at the desktop tiers Camp shows two columns: Hesketh's board and the Hearth on the left, the buildings (each
+   opens in place) on the right; the camp scene and anything after it span both. Like Stars, the menu widens (up to
+   980 px) while Camp is open, so each column has room for a building's name and its Build button. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .app.menu-open .menu:has(#p-world:not([hidden]) > #p-camp:not(.off-view)) { width: calc(100% - 120px); max-width: 980px; }   /* the stage's left strip (the hero) still shows */
+  .app:not(.detail-docked) #p-camp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 14px; align-items: start; }
+  .app:not(.detail-docked) #p-camp > * { grid-column: 1 / -1; }
+  .app:not(.detail-docked) #p-camp > #sec-bounties-camp { grid-column: 1; grid-row: 1; }
+  .app:not(.detail-docked) #p-camp > #sec-camp { grid-column: 1; grid-row: 2; }
+  .app:not(.detail-docked) #p-camp > #sec-camp-buildings { grid-column: 2; grid-row: 1 / span 2; }
+}
 /* 60-classes: Classes 2.0 S2 (76-create.js): the picker's weight line, the free-change button and the
    class card rows on the hero sheet (evolution, second path, what changed). No motion. */
 .ccard .cl-wt { font-size: max(var(--tmin, 0px), calc(12px * var(--tk, 1))); color: var(--muted); letter-spacing: .02em; }
@@ -1182,6 +1205,21 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
   .cx-tile { min-height: 72px; }
   .cx-titlebtn { max-width: 112px; }
   .cx-light { font-size: max(var(--tmin, 0px), calc(24px * var(--tk, 1))); }
+}
+
+/* desktop-views-2: at the desktop tiers the Codex is a wide panel. Its pages sit three to a row (four from 1600x900), and an
+   entry's details open on the right beside the page instead of under it. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .bsheet.cx-sheet { width: min(1040px, calc(100% - 48px)); display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .bsheet.cx-sheet:has(> .bsheet-foot:not(:empty)) { grid-template-columns: minmax(0, 1fr) minmax(300px, 36%); }
+  .bsheet.cx-sheet > .bsheet-grab { grid-column: 1 / -1; }
+  .bsheet.cx-sheet > .bsheet-body { grid-column: 1; grid-row: 2; min-height: 0; }
+  .bsheet.cx-sheet > .bsheet-foot { grid-column: 2; grid-row: 2; align-self: start; max-height: 100%; overflow-y: auto; border-top: 0; border-left: 2px solid var(--line); margin-right: 16px; }
+  .cx-pages { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cx-cn, .cx-cs, .cx-ntx, .cx-tag { white-space: normal; overflow: visible; text-overflow: clip; }
+}
+@media (min-aspect-ratio: 1/1) and (min-width: 1600px) and (min-height: 900px) {
+  .cx-pages { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 /* 60-combat2: the active-combat HUD (Core 2.0 slice S6-E; combat-2.md 3.1, 3.9). 75-combat2-ui.js builds it.
    Word, shape and colour for every warning: PARRY red, DODGE orange, INTERRUPT purple, FINISHER gold. */
@@ -1428,6 +1466,26 @@ span.cf-d { font-weight: 600; }
   .cf-recent .ic.cf-tile { width: 72px; min-height: 72px; }
   .cf-gs .ic { width: 104px; height: 104px; }
   .cf-gs .ic img { width: 96px; height: 96px; }
+}
+
+/* desktop-views-2: at the desktop tiers Craft > Make puts the recipe list on the left and the last craft's result (its card and the
+   last five) on the right, held at the top; with no result yet the list keeps the whole panel. Craft > Uniques gives each card
+   more room so its find line reads whole. Like Stars, the menu widens (up to 980 px, a 120 px strip of the stage left) while Make is open, so the
+   recipe rows and the result card both have room at 1280x720. The result card scrolls inside its column, actions first. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .app.menu-open .menu:has(#p-forge:not([hidden]) > #sec-craft-recipes:not(.off-view)) { width: calc(100% - 120px); max-width: 980px; }   /* the stage's left strip (the hero) still shows */
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) { grid-template-columns: minmax(0, 3fr) minmax(250px, 2fr); column-gap: 14px; align-items: start; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) > * { grid-column: 1; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) > .sec-title { grid-column: 1 / -1; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) > .cf-resbox { grid-column: 2; grid-row: 2 / span 4; position: sticky; top: 0; z-index: 1;
+    max-height: calc(100dvh - var(--toprow, 44px) - 90px); overflow-y: auto; overscroll-behavior: contain; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res-l,
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res-r { display: contents; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res .cf-lines,
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res .cf-cmpn,
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res .cf-dl { order: 2; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res .cf-resact { order: 1; }
+  .trophies { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
 }
 /* 60-deeds: the Achievements menu, its sheets, the Feat card (75-deeds-ui.js) and the Journal's stats wall
    (75-stats-ui.js). Display text is Handjet: every display size is calc(Npx * var(--display-k)). */
@@ -2001,6 +2059,17 @@ span.cf-d { font-weight: 600; }
 .gw-have { color: var(--muted); font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); }
 .gw-where { margin: -6px 0 0; font-size: max(var(--tmin, 0px), calc(14.5px * var(--tk, 1))); line-height: 1.45; color: var(--bone); }
 .gw-go { min-height: 48px; }
+
+/* desktop-views-2 (docs/design/desktop-layout.md 4, "Later: desktop-views-2"): at the desktop tiers a gathering view puts the node
+   list on the left and the Now card on the right, held at the top while the list scrolls. A docked sheet (a material's "where to
+   get it") takes the right half instead, so the view goes back to one column under it. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .app:not(.detail-docked) .gx-view:has(> .gx-now) { grid-template-columns: minmax(0, 3fr) minmax(230px, 2fr); align-items: start; }
+  .app:not(.detail-docked) .gx-view:has(> .gx-now) > * { grid-column: 1; }
+  .app:not(.detail-docked) .gx-view:has(> .gx-now) > .gx-skhead { grid-column: 1 / -1; }
+  .app:not(.detail-docked) .gx-view:has(> .gx-now) > .gx-now { grid-column: 2; grid-row: 2; position: sticky; top: 0; z-index: 1; }
+  .gx-row .nm, .gx-now-name .nm, .gx-now:not(.on) .gx-now-name .nm { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+}
 /* 60-goals: the "Next up" chip on the game view, its list sheet, and Go buttons in the away card */
 
 /* the chip: one slim row, the top goal and its progress along the bottom edge; tap for the list */
@@ -2917,7 +2986,7 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
   box-shadow: inset 0 0 0 1px #3A2F47; }
 .sr-map svg { display: block; width: 100%; height: 100%; }
 .sr-dust circle { fill: #CFC6F0; }
-.sr-sky-t { font: 600 max(var(--tmin, 0px), calc(21px * var(--tk, 1))) var(--display); letter-spacing: .04em; fill: #A79CC2; text-transform: uppercase; }
+.sr-sky-t { font: 600 21px var(--display); letter-spacing: .04em; fill: #A79CC2; text-transform: uppercase; } /* tk:off */
 .sr-sky-n { fill: #7C7196; }
 .sr-sky.done .sr-sky-t { fill: var(--gold); }
 .sr-ln { stroke: #6C6290; stroke-width: 1.5; stroke-dasharray: 2 5; opacity: .5; }
@@ -3010,6 +3079,17 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
   .sr-put-n { display: none; } .sr-put-c { display: inline; }
   .sr-chip-t.long { font-size: max(var(--tmin, 0px), calc((9px * var(--display-k, 1)) * var(--tk, 1))); letter-spacing: -.02em; }
 }
+
+/* desktop-views-2: at the desktop tiers the open star's card sits on the right beside both the map and the "All stars" list, held
+   under the strip while the list scrolls, so picking a star in the list shows its card without scrolling back up. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .app:not(.detail-docked) .sr-root { grid-template-columns: minmax(0, 1fr) minmax(280px, 32%); column-gap: 12px; align-items: start; }
+  .app:not(.detail-docked) .sr-root > * { grid-column: 1; }
+  .app:not(.detail-docked) .sr-root > .sr-top { grid-column: 1 / -1; }
+  .app:not(.detail-docked) .sr-root > .sr-main { display: contents; }
+  .app:not(.detail-docked) .sr-main > .sr-card { grid-column: 2; grid-row: 2 / span 5; position: sticky; top: 104px; z-index: 2; }   /* 104 px: the strip's height at both tiers */
+  .app:not(.detail-docked) .sr-main .sr-card { max-height: calc(100dvh - var(--toprow, 44px) - 44px - 104px - 24px); }
+}
 /* 60-store: the Storehouse view in the Gather tab (75-store-ui.js; H3, rebuilt by UX-A GX1). */
 .sh-view { gap: 12px; }
 .sh-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line-hi); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
@@ -3072,6 +3152,13 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .mat.sh-over .mc { color: #F2A93B; }
 .mat.sh-over .sh-bar b { background: #F2A93B; }
 .sh-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+/* desktop-views-2: at the desktop tiers the Store's shelf is the list and a material's "where to get it" docks beside it
+   (72-ui-gather.js whereSheet, dock: true). The bigger text needs wider stacks, and a long name wraps instead of ending in "...". */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .sh-shelf { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .sh-stack-nm { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+}
 /* 60-story: the story on the stage and in its sheet (75-story-ui.js, LORE3). */
 
 /* ---- the stage caption: area title, zone line and Captain line, in the open sky mid-stage ---- */
@@ -3693,6 +3780,10 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .tabs .tab[data-tab="gat"]::before { content: "3"; }
   .tabs .tab[data-tab="forge"]::before { content: "4"; }
   .tabs .tab[data-tab="world"]::before { content: "5"; }
+  /* desktop-views-2: [ and ] step through the open menu's views; the switcher's ends show them */
+  #viewSeg button:first-child::before, #viewSeg button:last-child::before { position: absolute; bottom: 3px; font: 600 13px/1 var(--display); color: #8E80A0; }   /* tk:off */
+  #viewSeg button:first-child::before { content: "["; left: 5px; }
+  #viewSeg button:last-child::before { content: "]"; right: 5px; }
 }
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (prefers-reduced-motion: reduce) {
   .menu, .app:not(.menu-open) .menu { transition: none; }
@@ -35600,6 +35691,18 @@ document.addEventListener('keydown', e => {
   if (!b || b.hidden || b.disabled || !b.offsetParent) return;   // a tab not unlocked yet
   e.preventDefault();
   tabClick(t);
+});
+// desktop-views-2: [ and ] step through the open menu's views (the switcher's buttons, left and right, round the ends), with the
+// same skips as the number keys. A view is stepped to only while it is in the switcher (shownViews).
+const VIEW_KEYS = { '[': -1, ']': 1 };
+document.addEventListener('keydown', e => {
+  const d = VIEW_KEYS[e.key]; if (!d || !S.tab || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+  const n = e.target; if (n && (n.tagName === 'INPUT' || n.tagName === 'TEXTAREA' || n.tagName === 'SELECT' || n.isContentEditable)) return;
+  if (gameHeld() || document.querySelector(MODAL_UP + ', #abPicker, #moveSheet, .gl-ov, .mm-ov, .dw-ov, .dd-fc-ov, .tabs-ov, #introScreen')) return;
+  const list = shownViews(S.tab); if (list.length < 2) return;
+  const i = list.findIndex(v => v.id === curView(S.tab));
+  e.preventDefault();
+  setView(S.tab, list[(i + d + list.length) % list.length].id);
 });
 // Swipe down to close: on the menu's head, or on its content while it is scrolled to the top.
 {
