@@ -12,6 +12,7 @@ import vm from 'node:vm';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { ROOT, JS_DIR, CSS_DIR, listDir } from './core.mjs';
+import { b91Decode } from './b91.mjs';
 
 export const PAGE_FAIL = 14000000;   // the ceiling with the 2 MB margin kept free under 16 MB
 export const PAGE_WARN = 12000000;
@@ -43,7 +44,7 @@ const ART_FILES = { '21z-data-huntart.js': 'HUNT_ART', '21za-data-foeart.js': 'F
 const BASE_REF = 'origin/claude/elegant-johnson-m6k00u';
 
 const KB = n => (n / 1e3).toFixed(1) + ' KB', MB = n => (n / 1e6).toFixed(2) + ' MB';
-const b64 = s => Buffer.from(s, 'base64').length;
+const fileBytes = s => b91Decode(s).length;   // an embedded file's bytes (basE91 text since embed-base91)
 const isGen = src => /GENERATED/.test(src.split('\n')[0]);
 
 // The page by part: shell and markup, CSS, hand-written code, and each generated data file (as page-parts.mjs splits it).
@@ -73,11 +74,11 @@ export function packs(jsDir = JS_DIR) {
   for (const [k, p] of Object.entries(foe)) {
     const t = STAGE[k] || {};
     out.push({ id: 'foe:' + k, label: `foe pack "${k}"`, kind: String(p.kind || t.kind || '').toLowerCase() || null, zone: p.zone || t.zone,
-      bytes: Object.values(p.atlases || {}).reduce((a, s) => a + b64(s), 0) });
+      bytes: Object.values(p.atlases || {}).reduce((a, s) => a + fileBytes(s), 0) });
   }
   const bg = readData(jsDir, '21zb-data-bgart.js', 'BG_ART');
   for (const [theme, p] of Object.entries(bg)) for (const o of ['land', 'port']) if (p[o])
-    out.push({ id: `bg:${p.id}:${o}`, label: `background "${p.id}" (${theme}, ${o} ${p[o].w}x${p[o].h})`, kind: p.kind || 'background', bytes: b64(p[o].src) });
+    out.push({ id: `bg:${p.id}:${o}`, label: `background "${p.id}" (${theme}, ${o} ${p[o].w}x${p[o].h})`, kind: p.kind || 'background', bytes: fileBytes(p[o].src) });
   const hunt = readData(jsDir, '21z-data-huntart.js', 'HUNT_ART');
   out.push({ id: 'hunt:interim', label: 'interim Hunting art (HUNT_ART)', kind: 'interim', bytes: Buffer.byteLength(JSON.stringify(hunt)) });
   return out;
