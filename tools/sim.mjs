@@ -299,7 +299,7 @@ fn.on('campBuilt', ({ id, lv }) => { if (id === 'store' && lv === 1 && storeStat
 const storeAwayPick = () => {
   if (!storeOn || args.storeaway === '0') { storeFullSwitch(); return true; }
   const p = E(`(() => {
-    const secs = (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600, boost = (1 + gear().offline / 100) * mod('offline');
+    const secs = awayCapH() * 3600, boost = (1 + gear().offline / 100) * mod('offline');
     const f = (k, t) => stashRoom(k, t) / Math.max(1, secs / nodeTime(k, t) * boost * nodeYieldAvg(k) * mod('yield:' + k));
     if (f(S.node.kind, S.node.t) >= 0.5) return { keep: 1 };
     let best = null;

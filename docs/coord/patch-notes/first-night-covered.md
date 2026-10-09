@@ -1,0 +1,1 @@
+Your hero now works a whole night away: the away limit with no building is 8 hours (it was 4). Each Watchtower level still adds 2 hours, and the Storehouse holds more at every level so a full night's gathering fits. Best shot: night-away.

@@ -255,7 +255,7 @@ function harvest() {
 // r.lines/r.note are the base summary; line icons are specs (see toast()).
 function awayGains(secs) {
   secs = Math.max(0, +secs || 0);   // a save stamped in the future (clock set back) gives nothing, never negative gains
-  const r = { t: Math.min(secs, (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600), secs, lines: [] };
+  const r = { t: Math.min(secs, awayCapH() * 3600), secs, lines: [] };
   failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // (55-boss-try keeps the same baseline in the save) BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
   emit('awayBegin', r);
   awayBase(r);
@@ -294,7 +294,7 @@ function awayBase(r) {
   }
   const dps = heroDps() * 0.5 * boost;
   if (S.activity === 'raid') {
-    const dmg = dps * raidMult() * t * 0.5;
+    const dmg = dps * raidMult() * Math.min(t, awayRaidCapH() * 3600) * 0.5;   // first-night-covered: raid damage keeps its old limit
     S.raid.dmg += dmg;
     r.lines.push({ icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `${fmt(dmg)} raid damage` });
     r.note = 'You kept hammering the raid boss.';
