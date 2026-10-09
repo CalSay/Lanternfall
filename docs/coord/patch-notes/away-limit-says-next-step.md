@@ -1,0 +1,1 @@
+When your hero stops working while you're away, the away card now says how long it worked out of your time away and names the one building that adds more hours, with a Go that takes you there. Best shot: capped-away.
