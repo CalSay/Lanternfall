@@ -136,7 +136,8 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 
 - **Zones 9-11 ordinary foes are measured** (wren-z9-10-foes, judge 2026-10-08, ruling A: no refit). On the arrival footing (level 14-16,
   tier 1 common +0) casual Wren, Tobin and Pip win 98/100/100 at zone 9, 94/100/99 at zone 10 (the Rattlebones, getting up) and
-  81/100/94 at zone 11 (the Barrow Beetle) (5-offset baseline); good players 100. Wren's zone 11 cell sits under the normal band, a known
+  81/100/94 at zone 11 (the Barrow Beetle) (5-offset baseline; the card predicted 95+ for Wren at zone 10: offset 0 reads 97, the mean
+  94, a miss inside the 90 stop line); good players 100. Wren's zone 11 cell sits under the normal band, a known
   gap (`boss-balance-pass`, until 2026-11-15): her gap is kill speed, not HP. With nothing worn (the floors) Wren reads 81 at zones 10
   and 11, Pip 90 and 72, Tobin 100. Modelling the get-up moved only the rows that fight bones: z38-elite (Wren casual 100 -> 98) and
   z24-normal-bot (report only); no boss cell moved.

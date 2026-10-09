@@ -12000,6 +12000,10 @@ if (section('rattlebones get up (core)')) try {
       if (f.hp > 0) { TURN_LIVE_IO.damageFoe(f.hp + 1, 'attack', false, 'phys', 0); out.second = +(Math.max(0, f.hp) / f.max).toFixed(3); }
       return JSON.stringify(out); })()`)); };
   const la = live('attack'), lb = live('burn');
+  // an elite Rattlebones gets up too (59b checks only f.boss)
+  E('fightBoss = false; spawn(); for (let i = 0; i < 400 && !(combatFoes()[0] && combatFoes()[0].type === "bones"); i++) spawn(); turnFoeSetup(combatFoes()[0], S.zone, { elite: true });');
+  const el = JSON.parse(E(`(() => { const f = combatFoes()[0]; f.hp = 0; const up = onFoeDeath(f, 0, 'attack'); return JSON.stringify({ elite: !!f.elite, up, hp: +(f.hp / f.max).toFixed(3) }); })()`));
+  assert(el.elite && el.up && el.hp === +R.toFixed(3), `rattlebones: an elite Rattlebones gets up too (${JSON.stringify(el)})`);
   assert(la.met && la.again && la.first === +R.toFixed(3) && la.second === 0 && lb.met && !lb.again && lb.first === 0,
     `rattlebones: in the live fight an ordinary Rattlebones gets up once at ${R} of its HP, and a Burn kill keeps it down (${JSON.stringify({ la, lb })})`);
   assert(E(`onFoeDeath({ type: 'bones', boss: true, max: 100, hp: 0 }, 0, 'attack') === false`), 'rattlebones: the live rule never raises a boss');
