@@ -74,11 +74,12 @@ function forgeItem(slot, t) {
   const cost = craftCost(slot, t);
   if (!skillTierOpen('smith', t) || !hasMats(cost, t) || bagFull()) return null;
   payMats(cost, t);
-  const r = rollRarity();
-  const it = newItem(slot, t, r);
+  const g = gradedKind(slot) ? gradeFor(slot, t) : null;   // craft-attribute-grades: a Charm under CRAFT_TUNE.grades; tools keep the die
+  const r = g != null ? GRADE[g].r : rollRarity();
+  const it = newItem(slot, t, r, { g });
   addItem(it);
   gainSkill('smith', Math.round(20 * Math.pow(t, 1.7)) * (CRAFT_TUNE.curve && t < skillTopTier('smith') ? SKILL_TUNE.belowTierX : 1));   // craft-curve-skills-report: below the top open tier pays a share
-  toast(`Forged a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: { slot, t } }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
+  toast(`Forged a ${itemQual(it)} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: { slot, t } }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
   save();
   return it;
 }

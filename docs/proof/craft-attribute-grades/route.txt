@@ -1,0 +1,22 @@
+# Proof for card craft-attribute-grades. No player-visible change: CRAFT_TUNE.grades ships off until the balance pass, so a
+# craft still rolls the rarity die. This route crafts the first Pine Bow on the cold-camp save and reads the recipe's odds line
+# and the result card's rarity word, today's screens. The playtest driver cannot turn a switch on, so the switch-on screens are
+# taken by tools/check.mjs section "craft attribute grades (browser)" (LF_PROOF_SHOTS=dir writes them) in a scratch game at
+# Smithing 12: row-*.png (the Copper Warblade row reads "Grade A · S at Smithing 16" and "Copper Warblade grade A, or Iron
+# Warblade grade D"), made-*.png (the craft is made at grade A: "Grade A" on the card, "A" on the strip tile, a medium moment)
+# and reforge-*.png (a graded Reforge asks which bonus to put in). The rules are in section "craft-attribute-grades".
+# Run at the default view (1280x720), then with --landscape and --portrait.
+# seed: 1
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+tap "Craft"
+wait 1
+expect "Odds: Common"
+shot recipe-odds-today
+tap "Craft Pine Bow"
+wait 3
+expect ".cf-res .cf-grade"
+shot made-today

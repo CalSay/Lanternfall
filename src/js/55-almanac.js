@@ -16,7 +16,7 @@
 // offline, raid, yield:<family>, skillXp:<skill>, uniqueChance (50-sim kill),
 // foeHp / bossHp (50-sim spawn), nonCrit (50-sim heroSwing, 40-rules heroDps),
 // rareW (40-rules rarityWeights), salvage (51-actions), bountyPay (55-bounties).
-// Bonus keys: bestiaryMult / masteryMult (55-mastery), bountyNoWait (55-bounties),
+// Bonus keys: bestiaryMult / masteryMult (55-mastery), bountyNoWait (55-bounties), gradeLv (40-rules, craft-attribute-grades),
 // (bossTime is gone with the boss timer, owner 2026-10-01.)
 
 const almanac = {};
@@ -77,7 +77,7 @@ let OMENS, WEEKLY_GOALS;
       dare: { n: 'Iron Hide', fx: 'Bosses have 25% more health. Bosses drop uniques twice as often.', mod: { bossHp: 1.25, uniqueChance: 2 } } },
 
     { id: 'hotForge', n: 'Hot Forge', cat: 'craft', fx: 'Crafting skills earn +50% XP', mod: { 'skillXp:smith': 1.5, 'skillXp:bench': 1.5, 'skillXp:loom': 1.5, 'skillXp:ench': 1.5 }, ic: ['anvil', '#FF9E3D'], go: { tab: 'forge' } },
-    { id: 'steadyHands', n: 'Steady Hands', cat: 'craft', fx: 'Rare and Epic forge odds +50%', mod: { rareW: 1.5 }, ic: ['anvil', '#5FA8FF'], go: { tab: 'forge' } },
+    { id: 'steadyHands', n: 'Steady Hands', cat: 'craft', get fx() { return CRAFT_TUNE.grades ? 'Crafts grade as 2 levels higher' : 'Rare and Epic forge odds +50%'; }, mod: { rareW: 1.5 }, when: () => !CRAFT_TUNE.grades, bonus: { gradeLv: 2 }, ic: ['anvil', '#5FA8FF'], go: { tab: 'forge' } },   // craft-attribute-grades: with grades on, the grade bonus (gradeLv, read only then) replaces the odds
     { id: 'cheapReforge', n: 'Cheap Reforge', cat: 'craft', fx: 'Reforges cost half', mod: { reforge: 0.5 }, needs: 'K6', ic: ['anvil', '#B58CFF'], go: { tab: 'forge', gear: 'reforge' } },
     { id: 'salvagersLuck', n: "Salvager's Luck", cat: 'craft', fx: 'Salvage returns double', mod: { salvage: 2 }, ic: ['ore', '#F2C14E'], go: { tab: 'forge', gear: 'salvage' } },
     { id: 'transmuter', n: "Transmuter's Day", cat: 'craft', fx: 'Transmutes cost one less', bonus: { transmuteSave: 1 }, needs: 'K6', ic: ['orb', '#B58CFF'], go: { tab: 'forge' } },
@@ -286,7 +286,7 @@ let OMENS, WEEKLY_GOALS;
     wRef: { tier: 'steady', kind: 'ref', need: 3, needs: 'K6', txt: n => `Reforge ${n} item lines`, ic: ['anvil', '#B58CFF'] },
     wGath2: { tier: 'steady', kind: 'gath', need: 2000, scale: true, txt: n => `Gather ${num(n)} ore or logs at your top tier or one below`, ic: ['pick', '#D08A4E'] },
     wBty2: { tier: 'steady', kind: 'bty', need: 15, txt: n => `Claim ${n} bounties`, ic: ['banner', '#F2C14E'] },
-    wRare: { tier: 'steady', kind: 'rare', need: 3, txt: n => `Forge ${n} Rare or better items`, ic: ['anvil', '#5FA8FF'] },
+    wRare: { tier: 'steady', kind: 'rare', need: 3, txt: n => CRAFT_TUNE.grades ? `Craft ${n} items at grade A or S, or Rare` : `Forge ${n} Rare or better items`, ic: ['anvil', '#5FA8FF'] },
     wElder: { tier: 'steady', kind: 'elder', need: 1, needs: 'Deepwell', txt: () => 'Clear 2 boss floors in one Deepwell run', ic: ['orb', '#E0524F'] }
   };
   const TIER_COUNT = { easy: 3, steady: 2 };
