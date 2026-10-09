@@ -388,7 +388,8 @@ Coverage-map areas 19 (performance and stability: fast load) and 20 (saves and t
 ## 11. Not verified
 
 - Whether draft deploys cost 0 credits (Netlify's billing pages do not name them).
-- What the Netlify connector's deploy tool can do (card 2).
+- ~~What the Netlify connector's deploy tool can do (card 2).~~ Answered by netlify-preview-route: its only deploy tool,
+  `deploy-site`, takes just a `siteId` and was denied by a permission rule, so 7.2 takes route 2 (a branch deploy).
 - Whether Cal's team is on a credit-based or an older Pro plan (Netlify's billing page).
 - Netlify's Brotli level: inferred as between 4 and 5 from one page.
 - That Netlify answers a repeat visit with HTTP 304 (once yes from this thread, once no through the same proxy; card 5).
