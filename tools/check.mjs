@@ -72,14 +72,41 @@ const browserSummary = (n, reasons) => `browser sections skipped: ${n} (${[...re
 const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
-// Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'craft-shortfall-offer': 12, 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'landscape 1920x1080 (browser, UX-L1)': 40, 'desktop layout (browser, desktop-layout-v1)': 30, 'desktop tooltips (browser, desktop-tooltips)': 30, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+// Seconds a section takes on one CI-sized runner (measured with --times, ci-shard-hang 2026-10-09): the shards are balanced by these;
+// a section not listed counts 2. Re-measure when a shard nears half the job limit: `node tools/check.mjs --shard=i/N --times` prints
+// every section's time and the shard's planned load (CI runs it with --times, so the job log has both).
+const WEIGHT = {
+  'forge-line-while-fighting': 133, 'W1-D (browser)': 111, 'staged guide follow-ups (browser)': 90, 'moment layer': 79,
+  'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
+  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'landscape 740x360 (browser, UX-L1)': 55,
+  'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
+  'turn UI (browser)': 50, 'zone10-clear-moment': 42, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
+  'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
+  'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
+  'training (W2-A, browser)': 23, 'story-opening (browser)': 22, 'fight-input-during-banner': 22, 'hero voice': 20, 'tell us form': 18,
+  'action and menu icons (C26, browser)': 18, 'story-hollow-script (browser)': 17, 'foe-tricks-say-so': 16, 'hero attributes (browser)': 16,
+  'camp trade and import (C4, browser)': 15, 'scroll-spares': 14, 'craft-shortfall-offer': 14, 'intro-and-picker': 13, 'gathering': 12,
+  'wire-menu-icons (browser)': 11, 'starters join when met': 11, 'stars (browser)': 10, 'craft reveal': 10, 'forge-tip-goes-stale': 9,
+  'fight HUD fit': 9, 'Next Up Go targets (browser)': 8, 'refine icons (browser)': 8, 'C9 hero registry (browser)': 8,
+  'gear on the Hero tab (cal-0107-gear-and-rates)': 8, 'craft delta': 7, 'cb2': 7, 'gather scene warmup (C12, browser)': 7,
+  'gatherers UI (browser)': 7, 'reload keeps tips': 7, 'LF_EYES hook (browser, qa-player-eyes)': 6, 'nav': 5, 'unique weapons wall icon': 5,
+  'camp guide tracking (C2, browser)': 5, 'onboarding hint placement (HINT1)': 5, 'smelt-done-says-so': 5, 'guide target guard (browser)': 5,
+  'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
+  'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
+  'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11
+};
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
+const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
+// The measured sections are placed first, heaviest first, each on the lightest shard (ci-shard-hang: placed in file order, a long
+// section near the end landed on a shard that was already full). Every shard computes the same placement.
+const shardOf = {};
+if (SHARD) for (const [n, w] of Object.entries(WEIGHT).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))) { const k = lightest(); shardOf[n] = k; shardLoad[k] += w; }
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
-  if (SHARD) {   // every shard sees the same sections in the same order, so all of them make the same choice: the lightest shard takes it
-    let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i;
-    shardLoad[k] += WEIGHT[name] || 2;
+  if (SHARD) {   // every shard sees the same sections in the same order, so all of them make the same choice: the lightest shard takes the rest
+    let k = shardOf[name];
+    if (k === undefined) { k = lightest(); shardLoad[k] += 2; }
     if (k !== SHARD[0]) return false;
   }
   console.log(name);
@@ -111,7 +138,8 @@ if (JOBS > 1 && !SHARD) {
 if (process.argv.includes('--times')) {
   const log0 = console.log.bind(console); let cur = null, t0 = Date.now(); const rows = [];
   console.log = (...a) => { if (typeof a[0] === 'string' && /^[a-zA-Z]/.test(a[0])) { if (cur) rows.push([Date.now() - t0, cur]); cur = a[0]; t0 = Date.now(); } log0(...a); };
-  process.on('exit', () => { if (cur) rows.push([Date.now() - t0, cur]); log0('\nsection times (s):'); rows.sort((x, y) => y[0] - x[0]).slice(0, 15).forEach(r => log0('  ' + (r[0] / 1000).toFixed(1).padStart(6) + '  ' + r[1])); });
+  process.on('exit', () => { if (cur) rows.push([Date.now() - t0, cur]); log0('\nsection times (s):'); rows.sort((x, y) => y[0] - x[0]).forEach(r => log0('  ' + (r[0] / 1000).toFixed(1).padStart(6) + '  ' + r[1]));
+    if (shardLoad) log0(`planned shard loads by WEIGHT (s): ${shardLoad.join(', ')}; this is shard ${SHARD[0]}`); });
 }
 const ok = msg => console.log('  ok   ' + msg);
 const skipBrowser = msg => { browserSkipped++; browserSkipReasons.add(browserTools.reason || 'dist/lanternfall.html missing; run node tools/build.mjs'); ok(msg); };
@@ -5339,7 +5367,9 @@ if (section('solo guide: gathering never freezes (browser)')) try {
       const X = s => page.evaluate(s => window.__t.x(s), s);
       await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
       // the fight steps (Attack ... the first boss) are walked by the check above; here the first boss is down (with the 360 gold zone 1 pays: the Workbench costs 300)
-      await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.blade = 1; S.gold = 360; true');
+      // ci-shard-hang: no unique drops while the game fights on its own: a boss's unique tool (the Carapace Pick) would end the Tool
+      // step and bring the wear:tool step ahead of the Workbench, which is not the path this check walks
+      await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.blade = 1; S.gold = 360; UNIQ_TUNE.first = UNIQ_TUNE.again = 0; true');
       await page.waitForTimeout(1300);
       const trail = [], waited = [];
       let built = false, frozen = '';
@@ -12449,6 +12479,117 @@ if (section('desktop layout (browser, desktop-layout-v1)')) try {
   }
 } catch (e) { fail('desktop layout (browser) crashed: ' + (e.stack || e)); }
 
+// ==== desktop-views-2 (docs/design/desktop-layout.md "Later: desktop-views-2"): at the desktop tiers Stars, Build, Camp, Make, the
+// gathering views and the Store show their list and its detail side by side, the Codex is a wide panel with an entry's details beside
+// the page, and [ and ] step through the open menu's views. Mouse contexts, tests/fixtures/save-current.json. Phones never match the
+// desktop query (the section above checks it and compares their sizes).
+if (section('desktop views 2 (browser, desktop-views-2)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('desktop views 2 (browser): Playwright or Chromium not here, skipped');
+  else {
+    const h0 = fs.readFileSync(distFile, 'utf8'), end = h0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + h0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + h0.slice(end);
+    const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-current.json'), 'utf8')); save.last = Date.now();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
+      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X('soloPickerOpen = () => true; S.onboard.tips = false; for (const x of document.querySelectorAll(".bsheet-ov .bsheet-x")) x.click(); true');
+      return { ctx, page, errs, X };
+    };
+    const view = async (X, page, v) => { await X(`for (const x of document.querySelectorAll(".bsheet-ov .bsheet-x")) x.click(); setTab(${JSON.stringify(v)}); ui(true); true`); await menuSettled(page, true); await page.waitForTimeout(300); };
+    // the smallest visible text in the open menu and any open sheet, and every name cut with "..."
+    const READ = `(() => { let min = 99, at = ''; for (const e of document.querySelectorAll('#panels *, .bsheet *')) {
+      if (![...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) continue;
+      const r = e.getBoundingClientRect(), cs = getComputedStyle(e); if (!r.width || !r.height || cs.visibility === 'hidden' || r.bottom < 0 || r.top > innerHeight) continue;
+      const f = parseFloat(cs.fontSize); if (f < min) { min = f; at = (e.className || e.tagName) + ': ' + e.textContent.trim().slice(0, 20); } }
+      const clip = [...document.querySelectorAll('body *')].filter(e => { const cs = getComputedStyle(e); if (cs.textOverflow !== 'ellipsis' || !e.textContent.trim()) return false;
+        const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight && e.scrollWidth > e.clientWidth + 1; })
+        .map(e => (e.className || e.tagName) + ': ' + e.textContent.trim().slice(0, 24));
+      return { min, at, clip, scrollX: document.documentElement.scrollWidth - innerWidth }; })()`;
+    // list and detail side by side: the detail's left edge at or right of the list's right edge, and the two overlap top to bottom
+    const SIDE = (a, b) => `(() => { const A = document.querySelector(${JSON.stringify(a)}), B = document.querySelector(${JSON.stringify(b)}); if (!A || !B) return null;
+      const r = A.getBoundingClientRect(), d = B.getBoundingClientRect(); return { ok: d.left >= r.right - 1 && d.top < r.bottom && d.bottom > r.top && d.width >= 200, list: [r.left, r.right].map(Math.round), det: [d.left, d.right, d.top].map(Math.round) }; })()`;
+    const SHOWN = ['stars', 'attributes', 'pack', 'uniques', 'camp', 'wood', 'make'];
+    try {
+      for (const [w, h, floor] of [[1280, 720, 14], [1920, 1080, 15]]) {
+        const { ctx, page, errs, X } = await open(w, h);
+        const bad = [];
+        for (const v of SHOWN) { await view(X, page, v); const t = await X(READ); if (t.min < floor || t.clip.length || t.scrollX > 0) bad.push(v + ' ' + JSON.stringify(t)); }
+        assert(!bad.length, `${w}x${h}: Stars, Build, Store, Uniques, Camp, Wood and Make: the smallest text is ${floor} px or more, no name ends in "...", no sideways scroll (${bad.slice(0, 2).join(' / ') || 'all fine'})`);
+        // Stars: the open star's card beside the map and the list; a star picked low in the list shows its card in view
+        await view(X, page, 'stars');
+        const s1 = await X(SIDE('.sr-list', '.sr-card'));
+        await X('document.getElementById("panels").scrollTop = 900; true'); await page.waitForTimeout(150);
+        const row = await page.$$('.sr-list .sr-row'); await row[Math.min(6, row.length - 1)].click(); await page.waitForTimeout(250);
+        const s2 = await X('(() => { const c = document.querySelector(".sr-card").getBoundingClientRect(), p = document.getElementById("panels").getBoundingClientRect(), r = document.querySelector(".sr-row.sel"); return { inView: c.top >= p.top - 1 && c.top < innerHeight - 100, same: !!r && document.querySelector(".sr-card").textContent.includes(r.querySelector("b").textContent) }; })()');
+        assert(s1 && s1.det[0] >= s1.list[1] - 1 && s2.inView && s2.same, `${w}x${h} Stars: the star's card sits right of the list, and a star picked low in the list shows its card in view (${JSON.stringify([s1, s2])})`);
+        // Build and Camp: two columns
+        await view(X, page, 'attributes');
+        const b1 = await X(SIDE('#attrRows', '#sec-attributes .at-moves'));
+        await view(X, page, 'camp');
+        const c1 = await X(SIDE('#sec-bounties-camp', '#sec-camp-buildings'));
+        assert(b1 && b1.ok && c1 && c1.ok, `${w}x${h}: Build shows the attributes beside "From your level", Camp the board beside the buildings (${JSON.stringify([b1, c1])})`);
+        // a sheet docked over Build (the hero card, as the Proving goal opens it) folds Build back to one column
+        await view(X, page, 'attributes');
+        await X('partySheet.openHero(); true'); await page.waitForTimeout(300);
+        const bd = await X('[!!document.querySelector("#menu > .bsheet-ov.docked"), Math.round(document.getElementById("attrRows").getBoundingClientRect().width)]');
+        await X('closeDock(); true');
+        assert(bd[0] && bd[1] >= 330, `${w}x${h}: with the hero card docked, Build folds back to one column (${JSON.stringify(bd)})`);
+        // Gather: the node list beside the Now card; Store: a material's sheet docks beside the shelf
+        await view(X, page, 'wood');
+        const g1 = await X(SIDE('.gx-view:not(.off-view) .gx-fams', '.gx-view:not(.off-view) > .gx-now'));
+        await view(X, page, 'pack');
+        await page.click('.sh-shelf .sh-stack'); await page.waitForTimeout(300);
+        const p1 = await X(SIDE('.sh-shelf', '#menu > .bsheet-ov.docked .bsheet'));
+        assert(g1 && g1.ok && p1 && p1.ok, `${w}x${h}: Gather > Wood shows the groves beside the Now card; a Store material's "where to get it" docks beside the shelf (${JSON.stringify([g1, p1])})`);
+        // Make: after a craft the result card sits beside the recipes, its Equip button in view
+        await view(X, page, 'make');
+        await page.click('#forgeBtn'); await page.waitForTimeout(300);
+        await X('for (const x of document.querySelectorAll(".bsheet-ov:not(.docked) .bsheet-x")) x.click(); document.getElementById("panels").scrollTop = 0; true'); await page.waitForTimeout(250);
+        const m1 = await X(SIDE('.cf-list', '.cf-resbox'));
+        const eq = await X('(() => { const b = [...document.querySelectorAll(".cf-resbox button")].find(b => /^Equip/.test(b.textContent.trim())); if (!b) return null; const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; })()');
+        assert(m1 && m1.ok && eq, `${w}x${h}: Make shows a craft's result card beside the recipes with its Equip button in view (${JSON.stringify([m1, eq])})`);
+        // Codex: a wide panel; an entry's details open beside the page
+        await X('closeMenu(); emit("codexOpen", {}); true'); await page.waitForTimeout(300);
+        const cw = await X('Math.round(document.querySelector(".bsheet.cx-sheet").getBoundingClientRect().width)');
+        await page.click('.cx-pages .cx-card:not(.locked)'); await page.waitForTimeout(200);
+        await page.click('.cx-sheet .cx-tile, .cx-sheet .cx-row'); await page.waitForTimeout(200);
+        const cx = await X(SIDE('.cx-sheet .bsheet-body', '.cx-sheet .bsheet-foot'));
+        const ct = await X(READ);
+        assert(cw >= 900 && cx && cx.ok && ct.min >= floor && !ct.clip.length, `${w}x${h}: the Codex is a wide panel (${cw} px) with an entry's details beside the page, text ${floor} px or more, no cut names (${JSON.stringify([cx, ct.min, ct.clip.slice(0, 2)])})`);
+        await X('for (const x of document.querySelectorAll(".bsheet-ov .bsheet-x")) x.click(); true');
+        if (w === 1280) {
+          // [ and ] step through the open menu's views and wrap; not in a text field, not with a modifier, not with no menu open
+          await view(X, page, 'mine');
+          const seq = [];
+          for (const k of [']', ']', '[', '[', '[']) { await page.keyboard.press(k); await page.waitForTimeout(60); seq.push(await X('curView("gat")')); }
+          const shown = await X('shownViews("gat").map(v => v.id)');
+          const want = [shown[1], shown[2], shown[1], shown[0], shown[shown.length - 1]];
+          await X('(() => { const i = document.createElement("input"); i.id = "__dv2I"; document.body.append(i); return true; })()');
+          await page.focus('#__dv2I'); await page.keyboard.press(']'); await page.waitForTimeout(60);
+          const inField = await X('curView("gat")');
+          await X('document.activeElement.blur(); true');
+          await page.keyboard.press('Control+BracketRight'); await page.waitForTimeout(60);
+          const withCtrl = await X('curView("gat")');
+          await X('document.getElementById("__dv2I").remove(); closeMenu(); true'); await page.keyboard.press(']'); await page.waitForTimeout(60);
+          const closed = await X('[S.tab, curView("gat")].join()');
+          const hint = await page.evaluate(() => [getComputedStyle(document.querySelector('#viewSeg button:first-child'), '::before').content, getComputedStyle(document.querySelector('#viewSeg button:last-child'), '::before').content]);
+          assert(JSON.stringify(seq) === JSON.stringify(want) && inField === want[4] && withCtrl === want[4] && closed === ',' + want[4] && hint.join() === '"[","]"',
+            `1280x720: ] and [ step through Gather's views and wrap; a text field, Ctrl or no open menu leave them alone; the switcher's ends show [ and ] (${JSON.stringify({ seq, want, inField, withCtrl, closed, hint })})`);
+        }
+        assert(!errs.length, `${w}x${h}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('desktop views 2 (browser) crashed: ' + (e.stack || e)); }
+
 // ==== desktop-tooltips (docs/design/desktop-layout.md "Later: tooltips"; 70b-tips-ui.js): with a mouse, resting on an item, an ability
 // or a cost shows what it is and does. Every tip line is also on the view a click opens (never tip-only); touch never opens one; no tip
 // leaves the screen at 1280x720 or 1920x1080.
@@ -14390,9 +14531,10 @@ if (section('boss-spoils-pick')) try {
         await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await X(`window.__sp = []; on('choice', k => k === 'spoils' && __sp.push('choice')); on('spoilsPick', e => __sp.push(e)); true`);
-        // a zone boss's kill as the fight makes it (first clear when zone = maxZone), then the card; state is set before each win
+        // a zone boss's kill as the fight makes it (first clear when zone = maxZone), then the card; state is set before each win.
+        // The unique roll misses (ci-shard-hang): a unique on the win (15%) adds its own lines and Equip button, so the card is not the one checked here
         const win = async (z, js = '', replay = false, after = '') => {
-          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } __sp.length = 0; ${js}; S.activity = 'fight'; S.zone = ${z}; S.maxZone = ${replay ? z + 2 : z}; fightBoss = true; spawn(); killPack(mob, 40); ${after}; S.activity = 'gather'; emit('sceneReset'); true`);
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } __sp.length = 0; ${js}; S.activity = 'fight'; S.zone = ${z}; S.maxZone = ${replay ? z + 2 : z}; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 0; try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } ${after}; S.activity = 'gather'; emit('sceneReset'); true`);
           try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov')`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
           await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs)
           return X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };

@@ -42,7 +42,7 @@
   box-shadow: inset 0 0 0 1px #3A2F47; }
 .sr-map svg { display: block; width: 100%; height: 100%; }
 .sr-dust circle { fill: #CFC6F0; }
-.sr-sky-t { font: 600 21px var(--display); letter-spacing: .04em; fill: #A79CC2; text-transform: uppercase; }
+.sr-sky-t { font: 600 21px var(--display); letter-spacing: .04em; fill: #A79CC2; text-transform: uppercase; } /* tk:off */
 .sr-sky-n { fill: #7C7196; }
 .sr-sky.done .sr-sky-t { fill: var(--gold); }
 .sr-ln { stroke: #6C6290; stroke-width: 1.5; stroke-dasharray: 2 5; opacity: .5; }
@@ -134,4 +134,15 @@
   .sr-put small { font-size: 10px; }
   .sr-put-n { display: none; } .sr-put-c { display: inline; }
   .sr-chip-t.long { font-size: calc(9px * var(--display-k, 1)); letter-spacing: -.02em; }
+}
+
+/* desktop-views-2: at the desktop tiers the open star's card sits on the right beside both the map and the "All stars" list, held
+   under the strip while the list scrolls, so picking a star in the list shows its card without scrolling back up. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .app:not(.detail-docked) .sr-root { grid-template-columns: minmax(0, 1fr) minmax(280px, 32%); column-gap: 12px; align-items: start; }
+  .app:not(.detail-docked) .sr-root > * { grid-column: 1; }
+  .app:not(.detail-docked) .sr-root > .sr-top { grid-column: 1 / -1; }
+  .app:not(.detail-docked) .sr-root > .sr-main { display: contents; }
+  .app:not(.detail-docked) .sr-main > .sr-card { grid-column: 2; grid-row: 2 / span 5; position: sticky; top: 104px; z-index: 2; }   /* 104 px: the strip's height at both tiers */
+  .app:not(.detail-docked) .sr-main .sr-card { max-height: calc(100dvh - var(--toprow, 44px) - 44px - 104px - 24px); }
 }

@@ -100,3 +100,14 @@
 .gw-have { color: var(--muted); font-size: 13px; }
 .gw-where { margin: -6px 0 0; font-size: 14.5px; line-height: 1.45; color: var(--bone); }
 .gw-go { min-height: 48px; }
+
+/* desktop-views-2 (docs/design/desktop-layout.md 4, "Later: desktop-views-2"): at the desktop tiers a gathering view puts the node
+   list on the left and the Now card on the right, held at the top while the list scrolls. A docked sheet (a material's "where to
+   get it") takes the right half instead, so the view goes back to one column under it. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .app:not(.detail-docked) .gx-view:has(> .gx-now) { grid-template-columns: minmax(0, 3fr) minmax(230px, 2fr); align-items: start; }
+  .app:not(.detail-docked) .gx-view:has(> .gx-now) > * { grid-column: 1; }
+  .app:not(.detail-docked) .gx-view:has(> .gx-now) > .gx-skhead { grid-column: 1 / -1; }
+  .app:not(.detail-docked) .gx-view:has(> .gx-now) > .gx-now { grid-column: 2; grid-row: 2; position: sticky; top: 0; z-index: 1; }
+  .gx-row .nm, .gx-now-name .nm, .gx-now:not(.on) .gx-now-name .nm { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+}
