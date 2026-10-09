@@ -92,7 +92,9 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
+  'page size': 2
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -11290,16 +11292,21 @@ if (section('craft reveal')) try {
         await page.goto('http://lf.test/'); await page.waitForTimeout(700);
         for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
         const X = s => page.evaluate(s => window.__t.x(s), s);
+        // craft-reveal-flake-watch: wait for what the next line reads, not a fixed timer (under load the Forge rows were not drawn
+        // 500 ms after the tab click, so `.cf-rec` was null); `need` fails plainly when it never comes, `until` leaves that to the assert
+        const until = async (expr, ms = 5000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 50 }); return true; } catch (e) { return false; } };
+        const need = async (expr, what) => { if (!await until(expr)) throw new Error(`${at}: ${what} never appeared within 5 s`); };
         await X(`S.onboard.tips = false; S.refine.said = 1; true`);   // refine-queues: save-mid predates refining; its one-time Forge card would cover Craft
-        await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
+        await page.click('.tab[data-tab="forge"]'); await need(`!!document.querySelector('.cf-rec')`, 'the Forge recipe rows (.cf-rec)');
         const odds = await X(`(() => { const t = document.querySelector('.cf-odds'); const w = rarityWeights(stationLevel(document.querySelector('.cf-rec').dataset.kind)), tot = Object.values(w).reduce((a, b) => a + b, 0);
           return { text: t ? t.textContent : '', common: Math.round(w.common / tot * 100) }; })()`);
         assert(/^Odds: Common [\d.]+% · Uncommon [\d.]+% · Rare [\d.]+% · Epic [\d.]+%$/.test(odds.text) && Math.abs(parseFloat(/Common ([\d.]+)%/.exec(odds.text)[1]) - odds.common) <= 0.6, `${at}: each recipe shows one odds line computed from the rarity weights (${odds.text})`);
         const made = [];
         for (let i = 0; i < 6; i++) {
+          const was = await X(`(c => c ? c.dataset.itemId : '')(document.querySelector('.cf-res'))`);
           const ok = await X(`(() => { const b = [...document.querySelectorAll('.cf-rec .cf-go')].find(x => !x.disabled); if (!b) return false; b.click(); return true; })()`);
           if (!ok) break;
-          await page.waitForTimeout(150);
+          await need(`(c => !!c && c.dataset.itemId !== ${JSON.stringify(was)})(document.querySelector('.cf-res'))`, `craft ${i + 1}'s own result card (.cf-res)`);
           made.push(await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { grade: c.querySelector('.cf-grade').textContent, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent), arrows: c.querySelectorAll('.cf-d').length, strip: document.querySelectorAll('.cf-recent .cf-tile').length } : null; })()`));
         }
         assert(made.length >= 2 && made.every(m => m && ['Common', 'Uncommon', 'Rare', 'Epic', 'Unique'].includes(m.grade)), `${at}: every craft opens a result card with a real grade name (${JSON.stringify(made.map(m => m && m.grade))})`);
@@ -11309,10 +11316,10 @@ if (section('craft reveal')) try {
         assert(await X(`(() => { const r = document.querySelector('.cf-resbox').getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()`) , `${at}: the new card is on screen after a craft`);
         // cal-0107-flow-bugs (note 17): Equip wears the piece and closes its card; Keep and Salvage are for a piece that is not worn
         { const eq = await page.$('.cf-res .cf-resact button:text-is("Equip")');
-          if (eq) { const id = await X(`document.querySelector('.cf-res').dataset.itemId`); await eq.click(); await page.waitForTimeout(250);
+          if (eq) { const id = await X(`document.querySelector('.cf-res').dataset.itemId`); await eq.click(); await until(`!document.querySelector('.cf-res')`);
             assert(await X(`!document.querySelector('.cf-res') && Object.values(S.equip).includes(${JSON.stringify(+id)})`), `${at}: Equip wears the piece and closes its card`); } }
         await X(`setTab('party'); true`); await page.waitForTimeout(200);   // cal-0107-gear-and-rates: the bag is on the Hero tab
-        await page.click('#viewSeg button:text-is("Gear")'); await page.waitForTimeout(400);
+        await page.click('#viewSeg button:text-is("Gear")'); await until(`!!document.querySelector('.cf-bag .cf-tile .cf-gr')`);
         assert(await X(`(() => { const b = document.querySelector('.cf-bag .cf-tile .cf-gr'); return !!b && /^(Com|Unc|Rare|Epic|Uniq)$/.test(b.textContent); })()`), `${at}: a bag tile names its grade in text`);
         assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
@@ -14346,6 +14353,17 @@ if (section('foe moves by type')) try {
   // a normal fight plays out: each type's foe moves, and the casual starter still wins ordinary fights at zone 20 (budget bands hold)
   assert(!g.errors.length, 'foe moves: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('foe moves by type crashed: ' + (e.stack || e)); }
+
+// ==== page-size-check (docs/design/page-bytes.md 6, judge 2026-10-09): the page under 14 MB, each art pack under its ceiling ====
+// Read only (tools/lib/page-size.mjs): it measures dist and the generated art files, prints the growth line, and changes nothing.
+if (section('page size')) try {
+  const { pageSizeReport } = await import('./lib/page-size.mjs');
+  const r = pageSizeReport({ page: distFile });
+  for (const l of r.lines) console.log('  ' + l);
+  for (const w of r.warns) console.log('  WARN ' + w);
+  for (const f of r.fails) fail(f);
+  if (!r.fails.length) ok('page size: the page is under 14 MB and every art pack is under its ceiling or its measured exception');
+} catch (e) { fail('page size crashed: ' + (e.stack || e)); }
 
 // ==== hero portraits (tools/portraits.mjs -> 21yc-data-portraits.js, 64k-portraits.js) ====
 if (section('hero portraits')) try {
