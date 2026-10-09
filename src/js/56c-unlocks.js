@@ -56,13 +56,13 @@ const UNLOCK_TUNE = {
     davy: { place: 'Emberlea Ruins', hand: 'ashby', fallback: 80 },
     ferrin: { fallback: 90, pendingFee: 'gold' },
     linnet: { type: 'glasswalker', tier: 2, fallback: 92 },
-    oswin: { from: 85, pendingFee: 'gold and grade-8 Essence', fallbackBoss: 105 },
+    oswin: { from: 85, pendingFee: 'gold and tier-8 Essence', fallbackBoss: 105 },
     hob: { place: 'Cinder Road', cycle: 2, hand: 'nan', rumour: 'hob', fallback: 85 },
     beatrix: { boss: 105, waitSecs: 86400 },
     eskil: { from: 113, pendingFee: 'gold', fallback: 120 },
     brynja: { from: 110, fibre: [10, 60], hide: [10, 40], fallback: 128 },
-    inga: { from: 108, place: 2, pendingFee: 'grade-10 Essence', fallback: 124 },
-    ragna: { pendingFee: 'grade-11 Essence', fallback: 134 },
+    inga: { from: 108, place: 2, pendingFee: 'tier-10 Essence', fallback: 124 },
+    ragna: { pendingFee: 'tier-11 Essence', fallback: 134 },
     solveig: { boss: 140 },
     asta: { from: 141, freeWith: 'solveig', pendingFee: 'gold' }
   }
@@ -97,7 +97,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   const hand = id => !!(S.hands && S.hands.list && S.hands.list.some(h => h.key === id));
   const bestiary = (type, tier) => ((S.mastery && S.mastery.types[type]) || 0) >= BESTIARY_TIERS[tier - 1];
   const goldOf = q => (q.kills || 0) * goldPerFoe(q.zone || q.from || 1);
-  const matText = (k, t, n) => k === 'ess' ? `${n} Essence` : `${n} grade-${t} ${k === 'crystal' ? 'gems' : k}`;
+  const matText = (k, t, n) => k === 'ess' ? `${n} Essence` : `${n} tier-${t} ${k === 'crystal' ? 'gems' : k}`;
   const claim = (q, how, open = S.maxZone >= (q.from || q.zone || 1)) => {
     const mats = ['wood', 'ess', 'crystal', 'fibre', 'hide'].filter(k => q[k]).map(k => [k, ...q[k]]);
     const gold = goldOf(q), rn = q.spendRenown ? (q.renown || 0) : 0;
