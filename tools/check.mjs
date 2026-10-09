@@ -15755,7 +15755,7 @@ if (section('ability-names-fit')) try {
         const X = s => page.evaluate(s => window.__t.x(s), s);
         // cut: the text is wider than its box, read to the fraction (a Range): scrollWidth and clientWidth round, and 0.2 px over already shows "..."
         const cut = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent).map(e => { const r = document.createRange(); r.selectNodeContents(e);
-          return [e.textContent, +r.getBoundingClientRect().width.toFixed(2), +e.getBoundingClientRect().width.toFixed(2), e.scrollWidth, e.clientWidth]; }).filter(([, need, room, sw, cw]) => sw > cw || need > room + 0.01))`;
+          return [e.textContent, +r.getBoundingClientRect().width.toFixed(2), +e.getBoundingClientRect().width.toFixed(2), e.scrollWidth, e.clientWidth, e.parentElement.className + ' ' + e.tagName, e.style.fontSize, e.style.letterSpacing]; }).filter(([, need, room, sw, cw]) => sw > cw || need > room + 0.01))`;
         // under the desktop tier's text floor (--tmin, Foreman 2026-10-09): a name never shrinks below it
         const small = sel => `(() => { const f = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0;
           return JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent && parseFloat(getComputedStyle(e).fontSize) < f - 0.01).map(e => [e.textContent, getComputedStyle(e).fontSize, 'floor ' + f])); })()`;

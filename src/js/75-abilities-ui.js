@@ -155,7 +155,7 @@ function fitTextWidth(e, min = 7, cleared = false) {
     }
     main.append(list);
     if (selId) { const d = detFor(k, selId, eq, infos); if (d) main.append(d); else { selId = ''; root.classList.remove('has-det'); } }
-    root.append(main); fitQ();
+    root.append(main); fitQ(); requestAnimationFrame(fitQ);   // and again once the panel's scrollbar (if any) has taken its width
   }
   // scroll-spares: why Scrolls in hand teach this hero nothing. The level that opens a move first, then who a spare is for, then a
   // Scroll no starter needs. It never blames the level alone.
