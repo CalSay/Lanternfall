@@ -12050,7 +12050,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
             // a step that ended while the walk looked (Next Up opening ends spend-points-before-nextup's line unseen) is not a miss
             if (!c.ok && await X('(s => s ? s.id : "")(onboardStep())') !== st) continue;
-            if (!seen.has(key)) { seen.add(key); if (!c.ok) bad.push(`${key}: ${JSON.stringify(c)}`); }
+            // (a miss also says what the guide was doing: the line it wants, its say queue, a pending cache, the pause)
+            if (!seen.has(key)) { seen.add(key); if (!c.ok) bad.push(`${key}: ${JSON.stringify(c)} guide ${await X('JSON.stringify({ wants: soloGuideWants(), sayQ: S.onboard.sayQ, cache: cachePending(), paused: ONBOARD.paused, moments: MOMENT_Q.length, fighting: fightingNow() })')}`); }
             // do the step through its own target
             const live = await X(`!!(onboardSpec(${JSON.stringify(st)}) || {}).live`);
             if (live) {
