@@ -102,6 +102,7 @@ const WEIGHT = {
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
   'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'page size': 2
 };
