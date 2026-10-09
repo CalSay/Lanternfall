@@ -44,6 +44,8 @@ function loadCore(opts) {
 }
 
 let failed = 0;
+const CHECK_FONTS = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fonts', 'fonts.json'), 'utf8'))
+  .map(f => ({ ...f, data: fs.readFileSync(path.join(ROOT, 'tests', 'fonts', f.file)).toString('base64') }));
 const browserTools = findBrowser();
 // C29: the shipped page fights in turns. Browser sections written for the real-time fight get it back through a test key the
 // page reads at boot (75-turn-ui); a section that wants the shipped turn fight asks with newContext({ turns: true, ... }).
@@ -52,6 +54,11 @@ if (browserTools.pw) {
   browserTools.pw = Object.assign(Object.create(browserTools.pw), { chromium: Object.assign(Object.create(browserTools.pw.chromium), { launch: async (...a) => {
     const b = await launch(...a), newContext = b.newContext.bind(b);
     b.newContext = async (opts = {}) => { const { turns, story, ...o } = opts, ctx = await newContext(o);
+      // display-fallback-font: the page's Google Fonts link is aborted in checks, so every page gets the players' faces from
+      // tests/fonts/ (Google's own woff2 subsets and unicode ranges, SIL OFL). The published page never carries them.
+      await ctx.addInitScript(checkFonts => { try { for (const f of checkFonts) {
+        const bin = atob(f.data), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        document.fonts.add(new FontFace(f.family, u8, { weight: f.weight, style: f.style, unicodeRange: f.unicodeRange })); } } catch (e) {} }, CHECK_FONTS);
       if (!turns) await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.realtime', '1'); } catch (e) {} });
       // story-delivery: a new game opens on a story card, which would sit over every browser section's first click; the page skips story scenes
       // (the Journal still files them) unless a section asks for them with newContext({ story: true, ... }).
@@ -250,6 +257,39 @@ if (section('smoke')) try {
   assert(tapped, 'class tap marks the mob');
   assert(!g4.errors.length, 'no party handler errors' + (g4.errors.length ? ': ' + g4.errors[0] : ''));
 } catch (e) { fail('smoke crashed: ' + (e.stack || e)); }
+
+// ---- check fonts (display-fallback-font): every browser section measures text in the faces players get ----
+// The newContext wrapper above adds Handjet and Barlow Semi Condensed from tests/fonts/. This section logs the face the page's
+// --display and --body stacks resolve to, so a local run and a CI run can be compared, and fails when it is a fallback.
+if (section('check fonts')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('check fonts: Playwright or Chromium not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 720 } }), html = fs.readFileSync(distFile, 'utf8');
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(300);
+      const m = await page.evaluate(async () => {
+        const w = (fam, wt) => { const s = document.createElement('span'); s.style.cssText = `position:absolute;white-space:nowrap;font:${wt} 40px ${fam}`;
+          s.textContent = 'Dodge Lanternburst 0123'; document.body.appendChild(s); const v = s.getBoundingClientRect().width; s.remove(); return v; };
+        await document.fonts.load('600 40px Handjet'); await document.fonts.load('600 40px "Barlow Semi Condensed"'); await document.fonts.ready;
+        const out = {};
+        for (const [k, face, wt] of [['display', 'Handjet', 600], ['body', 'Barlow Semi Condensed', 500]]) {
+          const stack = getComputedStyle(document.documentElement).getPropertyValue('--' + k).trim();
+          out[k] = { face, stack, loaded: document.fonts.check(`${wt} 40px "${face}"`), page: w(stack, wt), real: w(`"${face}"`, wt), mono: w('monospace', wt), sans: w('sans-serif', wt) };
+        }
+        return out;
+      });
+      for (const k of ['display', 'body']) {
+        const f = m[k];
+        console.log(`  font ${k}: ${f.face} (tests/fonts) loaded=${f.loaded}; 40px sample ${f.page.toFixed(1)} px, ${f.face} ${f.real.toFixed(1)}, monospace ${f.mono.toFixed(1)}, sans-serif ${f.sans.toFixed(1)}`);
+        assert(f.loaded && Math.abs(f.page - f.real) < 0.5 && Math.abs(f.page - f.mono) > 2 && Math.abs(f.page - f.sans) > 2,
+          `check fonts: --${k} (${f.stack}) draws in ${f.face}, the face players get, not a fallback`);
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('check fonts crashed: ' + (e.stack || e)); }
 
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
