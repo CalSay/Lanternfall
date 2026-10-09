@@ -95,7 +95,7 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -1017,6 +1017,72 @@ if (section('craft-attribute-grades')) try {
   }
   assert(!g.errors.length, 'craft-attribute-grades: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('craft-attribute-grades crashed: ' + (e.stack || e)); }
+
+// ---- craft-strike-infuse: the Strike (a timing press) or Infuse (Essence) lifts a craft one grade, never above A, behind CRAFT_TUNE.strike
+// and CRAFT_TUNE.infuse (off in the game until the balance pass); S.craft.made counts pieces a station so its first piece has no Strike ----
+if (section('craft-strike-infuse')) try {
+  const g = loadCore({ seed: 13 }), E = s => g.eval(s), J = JSON.stringify;
+  E(`almanac.force('none'); chooseClass("warrior"); S.camp.b.store = 8; S.camp.b.forge = 1; for (const k of CRAFT_FAMILIES) S.mats[k] = [900, 900, 900, 900, 900];
+    for (const k of REFINED_FAMILIES) S.mats[k] = [900, 900, 900, 900, 900]; S.gold = 1e9; for (const k of SKILL_TUNE.craftSkills) S.skills[k].lv = 7;
+    globalThis.__lift = []; on('crafted', e => globalThis.__lift.push(e.lift || null))`);
+  assert(J(E('S.craft.made')) === '{"forge":0,"bench":0,"loom":0,"ench":0}', `a new game seeds S.craft.made with every station at 0 (${J(E('S.craft.made'))})`);
+  // switches off (as shipped): no bar, no Infuse, no lift whatever the call says
+  assert(E('CRAFT_TUNE.strike') === 0 && E('CRAFT_TUNE.infuse') === 0 && E('CRAFT_TUNE.infuseX') === 3, 'switches off: CRAFT_TUNE.strike and CRAFT_TUNE.infuse ship at 0, infuseX at 3');
+  E('CRAFT_TUNE.grades = 1; craftItem("warblade", 1)');
+  assert(!E('craftStrikeOffered("warblade", 1)') && E('craftInfusePrice("warblade", 1)') === 0 && !E('canCraft("warblade", 1, { infuse: true }).ok'),
+    'switches off: no Strike, Infuse costs nothing and is refused, even with grades on and a piece made');
+  assert(E('craftItem("warblade", 1, { strike: true }).g') === 2 && E('globalThis.__lift.pop()') === null && E('craftItem("warblade", 1, { infuse: true })') === null,
+    'switches off: a craft with a Strike is made at the level\'s grade (B at Smithing 7); an Infuse is refused and makes nothing');
+  // switches on: the first piece at a station has no bar
+  E('CRAFT_TUNE.strike = 1; CRAFT_TUNE.infuse = 1');
+  assert(E('S.craft.made.bench') === 0 && !E('craftStrikeOffered("bow", 1)') && E('craftInfusePrice("bow", 1)') === 6, 'switches on: the Workbench has made nothing, so a Pine Bow has no Strike; Infuse is offered at 3 x 2 Essence');
+  const first = E('(() => { const it = craftItem("bow", 1, { strike: true }); return { g: it.g, made: S.craft.made.bench, lift: globalThis.__lift.pop() }; })()');
+  assert(first.g === 2 && first.made === 1 && first.lift === null, `switches on: the first Pine Bow ignores a Strike and is made at grade B; the Workbench now counts 1 (${J(first)})`);
+  assert(E('craftStrikeOffered("bow", 1)') && E('craftLiftTo("bow", 1)') === 3, 'switches on: the second Pine Bow offers the Strike, to grade A');
+  // a hit lifts one grade; a miss gives the level's grade and pays once; no press (opts.strike undefined) is the level's grade too
+  const pay = code => E(`(() => { const m0 = JSON.stringify(S.mats), e0 = essHave(), it = ${code}; const used = {}; for (const k of Object.keys(S.mats)) S.mats[k].forEach((n, i) => { const d = JSON.parse(m0)[k][i] - n; if (d) used[k + (k === 'ess' ? '' : i + 1)] = d; });
+    return { g: it && it.g, r: it && it.r, lift: globalThis.__lift.pop() || null, used, ess: e0 - essHave() }; })()`);
+  const rec = E('JSON.stringify(craftRecipe("bow", 1))');
+  const hit = pay('craftItem("bow", 1, { strike: true })'), miss = pay('craftItem("bow", 1, { strike: false })'), none = pay('craftItem("bow", 1)');
+  assert(hit.g === 3 && hit.r === 'rare' && hit.lift === 'strike', `a Strike in the window lifts the Pine Bow from B to A (${J(hit)})`);
+  assert(miss.g === 2 && miss.lift === 'missed' && none.g === 2 && none.lift === null, `a missed Strike, or none, makes it at grade B (${J(miss)}, ${J(none)})`);
+  const want = JSON.parse(rec);
+  for (const r of [hit, miss, none]) assert(r.ess === want.ess && Object.entries(want).filter(([k]) => k !== 'ess' && k !== 'gold').every(([k, n]) => r.used[k + '1'] === n), `a Strike, hit or missed, pays the recipe once and no more (${J(r.used)} against ${rec})`);
+  // Infuse: 3 x the recipe's Essence (3 for a recipe with none), one grade, no Strike on top
+  const inf = pay('craftItem("bow", 1, { infuse: true, strike: true })');
+  assert(inf.g === 3 && inf.lift === 'infuse' && inf.ess === want.ess + 6, `Infuse pays 6 Essence on top of the recipe's ${want.ess} and lifts one grade to A, and a Strike on the same craft adds nothing (${J(inf)})`);
+  assert(E('craftInfusePrice("plate", 1)') === 3 && E('craftInfusePrice("charm", 1)') === 15 && E('craftInfusePrice("warblade", 2)') === 9, 'Infuse prices: a Plate (no Essence) 3, a Charm (5) 15, an Iron Warblade (3) 9');
+  E('S.skills.bench.lv = 7; S.skills.bench.xp = 0; S.mats.ess = [3, 0, 0, 0, 0]');   // the Bows above trained Woodcraft: back to grade B
+  const short = E('canCraft("bow", 1, { infuse: true })');
+  assert(!short.ok && /Essence/.test(short.why) && E('canCraft("bow", 1).ok') && E('craftItem("bow", 1, { infuse: true })') === null, `an Infuse short of Essence is refused and makes nothing ("${short.why}"); the plain craft still can`);
+  E('S.mats.ess = [900, 900, 900, 900, 900]');
+  // one grade from C, never above A; nothing at A or S; never tools or the old Sword
+  E('S.skills.bench.lv = 4; S.skills.bench.xp = 0');
+  assert(E('gradeFor("bow", 1)') === 1 && E('craftItem("bow", 1, { strike: true }).g') === 2 && E('craftItem("bow", 1, { infuse: true }).g') === 2, 'at grade C a Strike or Infuse lifts one grade, to B');
+  E('S.skills.bench.lv = 11');
+  assert(E('gradeFor("bow", 1)') === 3 && !E('craftStrikeOffered("bow", 1)') && E('craftInfusePrice("bow", 1)') === 0 && E('craftLiftTo("bow", 1)') === null && E('craftItem("bow", 1, { strike: true }).g') === 3,
+    'at grade A there is no bar and no Infuse, and a craft stays A');
+  E('S.skills.bench.lv = 16');
+  assert(E('gradeFor("bow", 1)') === 4 && !E('craftStrikeOffered("bow", 1)') && E('craftItem("bow", 1, { strike: true }).g') === 4 && E('craftItem("bow", 1, { infuse: true })') === null, 'at grade S nothing lifts (S comes only from level): a Strike is ignored and Infuse refused');
+  const pk = E('(() => { craftItem("pick", 1); return { s: craftStrikeOffered("pick", 1), i: craftInfusePrice("pick", 1), m: S.craft.made.forge, inf: canCraft("pick", 1, { infuse: true }).ok }; })()');
+  assert(!pk.s && !pk.i && !pk.inf && pk.m === E('S.items.filter(it => CRAFT_KINDS[it.slot].st === "forge" && !CRAFT_KINDS[it.slot].tool).length'), `tools: no Strike, no Infuse, and a Pickaxe does not count as a Forge piece (${J(pk)})`);
+  // save codes: made is optional, keyed by station, whole counts
+  E('S.cls.at = 0'); const code = E('encodeSave(S)'), back = E(`decodeSave(${J(code)})`);
+  assert(back.ok && J(back.data.craft.made) === J(E('S.craft.made')), 'save codes: S.craft.made round-trips');
+  const raw = JSON.parse(E('JSON.stringify(S)'));
+  const refuse = f => { const o = JSON.parse(J(raw)); f(o); return !E(`validateSave(${J(o)})`).ok; };
+  assert(refuse(o => { o.craft.made.anvil = 1; }) && refuse(o => { o.craft.made.forge = -1; }) && refuse(o => { o.craft.made.forge = 1.5; }) && refuse(o => { o.craft.made = [1]; })
+    && !refuse(o => { delete o.craft.made; }) && !refuse(o => { o.craft.made = {}; }), 'save codes: an unknown station, a negative or part count, or a list is refused; a missing or empty made loads');
+  // old saves: a missing entry is seeded from the station's pieces the player holds
+  for (const f of ['save-mid.json', 'save-late.json']) {
+    const txt = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), o = JSON.parse(txt);
+    if (o.craft) delete o.craft.made;
+    const h = loadCore({ seed: 1, storage: memoryStorage({ [KEY]: JSON.stringify(o) }) });
+    const m = h.eval('S.craft.made'), want2 = h.eval('Object.fromEntries(Object.keys(CRAFT_STATIONS).map(st => [st, S.items.filter(it => !it.u && CRAFT_KINDS[it.slot] && !CRAFT_KINDS[it.slot].tool && !CRAFT_KINDS[it.slot].legacy && CRAFT_KINDS[it.slot].st === st).length]))');
+    assert(J(m) === J(want2) && Object.values(m).some(n => n > 0) && !h.errors.length, `${f}: S.craft.made is seeded from the pieces held (${J(m)})`);
+  }
+  assert(!g.errors.length, 'craft-strike-infuse: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('craft-strike-infuse crashed: ' + (e.stack || e)); }
 
 // ---- bounties: gathering counts at any tier and while away (owner bug report) ----
 if (section('bounties')) try {
@@ -11187,6 +11253,98 @@ if (section('craft attribute grades (browser)')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('craft attribute grades (browser) crashed: ' + (e.stack || e)); }
+
+// ==== craft-strike-infuse (browser): with the craft switches on in a scratch game, the row names the choice, Craft shows the timing bar once
+// (holding the game), a press in the gold lifts one grade, an early press, no press or a hidden tab makes the level's grade with the
+// materials paid once, Infuse lifts with Essence and shows no bar, and there is no bar or Infuse at grade A or with the switches off ====
+if (section('craft strike infuse (browser)')) try {
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('craft strike infuse (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');   // Tobin, Forge recipes, Forge pieces held
+    const shots = process.env.LF_PROOF_SHOTS ? path.resolve(process.env.LF_PROOF_SHOTS) : null;
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, touch, motion] of [[1280, 720, false, 'no-preference'], [740, 360, true, 'reduce'], [360, 740, true, 'no-preference']]) {
+        const at = `craft strike infuse ${w}x${h}${motion === 'reduce' ? ' reduced motion' : ''}`;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: motion });
+        await ctx.addInitScript(([key, raw]) => {
+          try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {}
+          const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+        }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // Smithing 7: a Copper Warblade is grade B, A by a lift. lv(): back to 7 before each craft (crafting trains it)
+        const lv7 = `S.skills.smith.lv = 7; S.skills.smith.xp = 0; ui(true); true`;
+        await X(`CRAFT_TUNE.grades = 1; CRAFT_TUNE.strike = 1; CRAFT_TUNE.infuse = 1; almanac.force('none'); S.camp.b.forge = 1; S.onboard.tips = false; S.refine.said = 1; S.gold = 1e9; S.auto = false;
+          for (const k of SKILL_TUNE.craftSkills) { S.skills[k].lv = 7; S.skills[k].xp = 0; } for (const k of CRAFT_FAMILIES) S.mats[k] = [900, 900, 900, 900, 900];
+          for (const k of REFINED_FAMILIES) S.mats[k] = [900, 900, 900, 900, 900]; S.mats.ess = [900, 0, 0, 0, 0]; S.items = S.items.filter(it => Object.values(S.equip).includes(it.id));
+          window.__sk = []; on('craftStrike', e => window.__sk.push(e)); gearDirty(); ui(true); true`);
+        assert(await X('S.craft.made.forge > 0'), `${at}: the fixture's Forge pieces seed S.craft.made, so the next Warblade is not a first piece`);
+        await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
+        await X(`(() => { [...document.querySelectorAll('.cf-stations .cf-st')].find(x => x.dataset.st === 'forge').click(); document.querySelector('.cf-tiers button[data-t="1"]').click(); return true; })()`);
+        await page.waitForTimeout(300);
+        const row = await X(`(() => { const r = document.querySelector('.cf-rec[data-kind="warblade"]'); if (!r) return null; const l = r.querySelector('.cf-lift'), b = r.querySelector('.cf-inf'), box = r.getBoundingClientRect();
+          return { t: l && l.querySelector('.cf-lift-t').textContent, inf: !!b && !b.disabled, h: b ? Math.round(b.getBoundingClientRect().height) : 0,
+            fit: !!l && l.getBoundingClientRect().right <= box.right + 1 && (!b || b.getBoundingClientRect().right <= box.right + 1) }; })()`);
+        assert(row && row.t === 'Grade A: Strike, or Infuse for 6 Essence' && row.inf && row.h >= 44 && row.fit, `${at}: the Copper Warblade row names the choice, "Grade A: Strike, or Infuse for 6 Essence", with an Infuse button 44 px tall that fits (${JSON.stringify(row)})`);
+        if (shots) { await X(`document.querySelector('.cf-rec[data-kind="warblade"]').scrollIntoView({ block: 'center' }); true`); await page.waitForTimeout(150); await page.screenshot({ path: path.join(shots, `row-${w}x${h}.png`) }); }
+        const mats = `JSON.stringify([S.mats.ore[0], S.mats.wood[0], essHave()])`, craft = `document.querySelector('.cf-rec[data-kind="warblade"] .cf-go').click(); true`;
+        const card = `(() => { const c = document.querySelector('.cf-res'), it = c && itemById(+c.dataset.itemId); return c ? { g: it.g, note: (c.querySelector('.cf-liftn') || {}).textContent || '' } : null; })()`;
+        // 1. a press in the gold: the bar shows, holds the game, and the piece is grade A
+        await X(lv7); const m0 = await X(mats);
+        await X(craft); await page.waitForTimeout(60);
+        const up = await X(`(() => { const o = document.querySelector('.cf-strike'); return { shown: !!o && !o.hidden, held: gameHeld(), lg: (o.querySelector('.tv-lg-p') || {}).textContent, paid: ${mats} !== ${JSON.stringify(m0)} }; })()`);
+        assert(up.shown && up.held && up.lg === 'Strike' && !up.paid, `${at}: Craft shows the Strike bar, the game is held, and nothing is paid yet (${JSON.stringify(up)})`);
+        if (shots) { await page.waitForTimeout(500); await page.screenshot({ path: path.join(shots, `bar-${w}x${h}.png`) }); }
+        const press = w === 1280 ? `document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))` : `document.querySelector('.cf-strike').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }))`;
+        await X(`new Promise(res => { const go = () => document.querySelector('.cf-strike .tv-time').classList.contains('in-parry') ? (${press}, res(true)) : requestAnimationFrame(go); go(); })`);
+        await page.waitForTimeout(250);
+        const a = await X(card), m1 = await X(mats);
+        assert(a && a.g === 3 && a.note === 'Your Strike landed in the gold: Grade A.' && !(await X('gameHeld()')) && (await X('window.__sk.pop().hit')), `${at}: a ${w === 1280 ? 'Space press' : 'press'} in the gold makes it grade A and says so; the game runs again (${JSON.stringify(a)})`);
+        if (shots) { await X(`document.querySelector('.cf-resbox').scrollIntoView({ block: 'start' }); true`); await page.waitForTimeout(150); await page.screenshot({ path: path.join(shots, `hit-${w}x${h}.png`) }); }
+        // 2. an early press: grade B, nothing lost, the recipe paid once
+        await X(lv7); await X(craft); await page.waitForTimeout(80); await X(press.replace('document.dispatchEvent', 'document.dispatchEvent'));
+        await page.waitForTimeout(250);
+        const b = await X(card), m2 = await X(mats);
+        const d1 = JSON.parse(m0).map((n, i) => n - JSON.parse(m1)[i]), d2 = JSON.parse(m1).map((n, i) => n - JSON.parse(m2)[i]);
+        assert(b && b.g === 2 && b.note === 'The Strike missed the gold, so it is Grade B. Nothing was lost.' && JSON.stringify(d1) === JSON.stringify(d2) && JSON.stringify(d1) === await X(`JSON.stringify((r => [r.ore || 0, r.wood || 0, r.ess || 0])(craftRecipe('warblade', 1)))`),
+          `${at}: an early press makes it grade B, says nothing was lost, and pays the recipe once, as the hit did (${JSON.stringify(b)}, paid ${d2})`);
+        if (shots) { await X(`document.querySelector('.cf-resbox').scrollIntoView({ block: 'start' }); true`); await page.waitForTimeout(150); await page.screenshot({ path: path.join(shots, `miss-${w}x${h}.png`) }); }
+        // 3. no press (or a hidden tab): grade B
+        await X(lv7);
+        if (w === 360) { await X(craft); await page.waitForTimeout(100); await X(`Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); delete document.hidden; true`); }
+        else { await X(craft); await page.waitForTimeout(1700); }
+        const c = await X(card);
+        assert(c && c.g === 2 && /missed the gold/.test(c.note) && !(await X('gameHeld()')) && (await X('document.querySelector(".cf-strike").hidden')), `${at}: ${w === 360 ? 'a hidden tab' : 'no press'} makes it grade B and the bar goes (${JSON.stringify(c)})`);
+        // 4. Infuse: 6 Essence on top of the recipe, grade A, no bar
+        await X(lv7); const e0 = await X('essHave()');
+        await X(`document.querySelector('.cf-rec[data-kind="warblade"] .cf-inf').click(); true`); await page.waitForTimeout(80);
+        const i1 = await X(`({ bar: !document.querySelector('.cf-strike').hidden, ess: ${e0} - essHave() })`); await page.waitForTimeout(200);
+        const ic = await X(card);
+        assert(!i1.bar && i1.ess === 8 && ic && ic.g === 3 && ic.note === 'Infused with Essence: Grade A.', `${at}: Infuse spends 6 Essence (8 with the recipe's 2), shows no bar and makes grade A (${JSON.stringify([i1, ic])})`);
+        if (shots) { await X(`document.querySelector('.cf-resbox').scrollIntoView({ block: 'start' }); true`); await page.waitForTimeout(150); await page.screenshot({ path: path.join(shots, `infuse-${w}x${h}.png`) }); }
+        // 5. at grade A no lift line and no bar; with the switches off neither
+        await X(`S.skills.smith.lv = 11; S.skills.smith.xp = 0; ui(true); true`); await page.waitForTimeout(150);
+        assert(!(await X(`!!document.querySelector('.cf-rec[data-kind="warblade"] .cf-lift')`)), `${at}: at Smithing 11 (grade A) the row has no lift line`);
+        await X(craft); await page.waitForTimeout(80);
+        assert(await X(`document.querySelector('.cf-strike').hidden && itemById(+document.querySelector('.cf-res').dataset.itemId).g === 3`), `${at}: a grade A craft shows no bar`);
+        await X(`CRAFT_TUNE.strike = 0; CRAFT_TUNE.infuse = 0; ${lv7}`); await page.waitForTimeout(150);
+        assert(!(await X(`!!document.querySelector('.cf-rec[data-kind="warblade"] .cf-lift')`)), `${at}: switches off: no lift line`);
+        await X(craft); await page.waitForTimeout(80);
+        assert(await X(`document.querySelector('.cf-strike').hidden && itemById(+document.querySelector('.cf-res').dataset.itemId).g === 2`), `${at}: switches off: Craft makes grade B at once, no bar`);
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('craft strike infuse (browser) crashed: ' + (e.stack || e)); }
 
 // ==== craft-delta: a better tool goes on by itself, the result card's fight line, Next Up's boss and upgrade goals ====
 if (section('craft delta')) try {

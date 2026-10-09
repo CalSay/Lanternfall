@@ -12,6 +12,9 @@
 //                                                kind 'starChart' crafts the Star Chart and returns
 //                                                { kind: 'starChart', t: 3 } (not an item).
 //                                                Emits 'itemAdded' (via addItem) and 'crafted' {item, kind, t}.
+//                                                craft-strike-infuse: opts { strike: bool } (the timing bar's result: true in the
+//                                                window), { infuse: true } (pay Essence for the lift). The event carries lift:
+//                                                'strike' | 'infuse' | 'missed' | undefined.
 //   canCraft(kind, t, opts?) -> { ok, why, cost, lv, need, miss }   why: player text or ''.
 //                                                cost: {mats, gold, troph}; miss: [[fam, n], ...]
 //   stationOf(kind) -> { key, n, skill }         the station that makes a kind
@@ -34,6 +37,9 @@
 //   salvageItem(id) (51-actions) is generic; salvageGive calls craftSalvageBonus(it): affixed items
 //                                                have a 20% chance per line of 1 essence of their tier, and an
 //                                                upgraded item pays back craftUpgradeRefund(it) gold (ledger 'craft', negative)
+//   craftStrikeOffered(kind, t) -> bool          craft-strike-infuse: the timing bar shows for this craft (CRAFT_TUNE.strike)
+//   craftInfusePrice(kind, t) -> n               the Essence Infuse costs on this craft, 0 when Infuse is not offered (CRAFT_TUNE.infuse)
+//   craftLiftTo(kind, t) -> grade index | null   the grade a lift makes, null when the level's grade cannot be lifted (A or S)
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
 //   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
 //                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
@@ -52,7 +58,9 @@
 //     Swords/Helms and the hero's gear of another class into the new class's kinds (same id,
 //     tier, rarity, +N, lines). Anything that still does not fit goes back to the bag.
 //
-// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd, xpv }). xpv: the station curve the bars are on.
+// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd, xpv, made }). xpv: the station curve the bars are on.
+//   made: { [station]: n } pieces made at each station (craft-strike-infuse: a station's first piece has no Strike). Optional; a
+//   missing entry is seeded on load from the station's pieces the player holds, so a veteran's next craft is not their first.
 //   tmd: { fam: [n x 5] } units made by transmuting down (they cannot be broken down again; BAL1).
 //   troph: Trophy counts by zone type (CRAFT_TROPHIES order). tonic: { k, t, left } active.
 //   tonics: { 'key:t': count } the pouch. jobs, champ: K5/K10. starChart: Star Charts made.
@@ -75,10 +83,10 @@ function craftXpMap() {
 
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, upgradeCover, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare;
+  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare, craftStrikeOffered, craftInfusePrice, craftLiftTo;
 
 {
-  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0 });
+  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0, made: {} });
   craftXpMap();
   const C = () => S.craft;
   const STAR = { t: 3, mats: { crystal: 40, ess: 20 }, troph: [[6, 1]], st: 'ench' };
@@ -88,6 +96,14 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   const validTier = t => Number.isInteger(t) && t >= 1 && t <= 5;
   const trophyName = i => CRAFT_TROPHIES[i].n;
   trophies = () => C().troph.reduce((a, b) => a + (b || 0), 0);
+  // craft-strike-infuse: pieces made a station (a class piece, Trinket or Charm; never tools or the old Sword and Helm)
+  const pieceKind = kind => !!CRAFT_KINDS[kind] && !CRAFT_KINDS[kind].tool && !CRAFT_KINDS[kind].legacy;
+  const made = () => { const c = C(); if (!c.made || typeof c.made !== 'object' || Array.isArray(c.made)) c.made = {}; return c.made; };
+  { const m = made();
+    for (const st of Object.keys(CRAFT_STATIONS)) if (!Number.isInteger(m[st])) {
+      const n = (S.items || []).filter(it => it && !it.u && pieceKind(it.slot) && CRAFT_KINDS[it.slot].st === st).length;
+      m[st] = n;   // 0 too, so a new game's stations are never seeded again from pieces found later
+    } }
 
   // ---- stations ----
   stationOf = kind => {
@@ -120,6 +136,17 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     let top = 1; for (let u = 2; u <= 5; u++) if (stationTierOpen(kind, u)) top = u;
     return t < top ? SKILL_TUNE.belowTierX : 1;
   };
+  // ---- craft-strike-infuse: one lift a craft, never above A (S comes only from the station level) ----
+  const LIFT_TOP = GRADE.findIndex(x => x.n === 'A');
+  craftLiftTo = (kind, t) => {
+    if (!gradedKind(kind) || !validTier(t)) return null;
+    const g = gradeFor(kind, t); return g < LIFT_TOP ? g + 1 : null;
+  };
+  craftStrikeOffered = (kind, t) => !!CRAFT_TUNE.strike && craftLiftTo(kind, t) != null && (made()[CRAFT_KINDS[kind].st] | 0) > 0;
+  craftInfusePrice = (kind, t) => {
+    if (!CRAFT_TUNE.infuse || craftLiftTo(kind, t) == null) return 0;
+    return CRAFT_TUNE.infuseX * Math.max(1, craftRecipe(kind, t).ess || 0);   // a recipe with no Essence costs infuseX
+  };
   const gateWhy = (skill, need) => `Needs ${SKILL[skill]} ${need}`;
   // H1 (55-hearth): a cold save crafts only at a station it has built. '' = built (every warm save).
   const unbuilt = st => typeof hearthStationWhy === 'function' ? hearthStationWhy(st) : '';
@@ -140,6 +167,8 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const need = open ? Math.min(lv, CRAFT_STATION_REQ[t - 1]) : CRAFT_STATION_REQ[t - 1];   // a kept tier needs no more
     const cost = splitCost(craftRecipe(kind, t));
     if (opts.mw != null) cost.troph = [[opts.mw, 1]];
+    let inf = 0;
+    if (opts.infuse) { inf = craftInfusePrice(kind, t); if (!inf) return no('Infuse cannot lift this craft.', { cost, lv, need, miss: [] }); cost.mats.ess = (cost.mats.ess || 0) + inf; cost.infuse = inf; }
     const x = { cost, lv, need, miss: [] };
     if (unbuilt(st.key)) return no(unbuilt(st.key), Object.assign(x, { unbuilt: true }));
     if (!open) return no(gateWhy(st.skill, need), x);
@@ -161,14 +190,20 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     if (opts.mw != null) C().troph[opts.mw]--;
     // craft-attribute-grades: with CRAFT_TUNE.grades on, a class piece, Trinket or Charm is made at its station's grade (no die);
     // tools roll the die as before. Switch off: exactly the old roll.
-    const g = gradedKind(kind) ? gradeFor(kind, t) : null;
+    let g = gradedKind(kind) ? gradeFor(kind, t) : null;
+    // craft-strike-infuse: Infuse (paid above) or a Strike in the window lifts one grade, never above A; one lift a craft.
+    // A missed Strike makes the piece at the level's grade. Nothing is paid before this call, so a miss never loses materials.
+    let lift;
+    if (opts.infuse && c.cost.infuse) { g = craftLiftTo(kind, t); lift = 'infuse'; }
+    else if (opts.strike != null && craftStrikeOffered(kind, t)) { if (opts.strike) { g = craftLiftTo(kind, t); lift = 'strike'; } else lift = 'missed'; }
+    if (pieceKind(kind)) { const m = made(), st = CRAFT_KINDS[kind].st; m[st] = (m[st] | 0) + 1; }
     const r = g != null ? GRADE[g].r : rollRarity(stationLevel(kind));
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw, g });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t) * craftXpShare(kind, t));
     // craft-delta: opts.wear (the Craft button only) puts on a tool that beats the worn one, or fills an empty slot. Gear always asks.
     // Straight into S.equip, not equipItem (its "Equipped" toast would be a second toast for one craft; the result card is the receipt).
-    const ev = { item: it, kind, t }, d = CRAFT_KINDS[kind], pos = d && d.tool ? kindPos(kind) : null;
+    const ev = { item: it, kind, t, lift }, d = CRAFT_KINDS[kind], pos = d && d.tool ? kindPos(kind) : null;
     if (opts.wear && pos && pos in S.equip && fits(it, pos, 'hero')) {
       const cur = equipped(pos);
       if (!cur || itemPower(it) > itemPower(cur)) {
