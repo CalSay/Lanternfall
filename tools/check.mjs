@@ -1072,6 +1072,30 @@ if (section('camp')) try {
   assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap" && /Tap a building/.test(x.label))'), 'Next Up: "Tap a building in your camp" while no building has been tapped');
   E('onboardUseDone("use:camp-tap")');
   assert(!E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap")'), 'Next Up: the camp tap goal is gone once a building is tapped');
+  // hearth-two-next-up (W6): after the zone 10 clear Next Up names what Hearth 2 still needs and where it comes from; Go sends the
+  // hero to gather it, then back to the fight; the Tavern comes next once Hearth 2 stands
+  {
+    E('for (const f of FEATURES) S.onboard.got[f.id] = S.onboard.got[f.id] || 1');
+    E('S.camp.builds = []; Object.assign(S.camp.b, { hearth: 1, tavern: 0 }); S.maxZone = 10; S.gold = 1e6; for (const k of Object.keys(S.mats)) S.mats[k] = [0, 0, 0, 0, 0]; setActivity("fight")');
+    const step = () => E('(x => x ? x.label + "|" + x.ready : "")(topGoals(60, { sticky: false }).find(x => x.id === "camp-step"))');
+    const press = () => E('(() => { const x = topGoals(60, { sticky: false }).find(x => x.id === "camp-step"); const sp = x.go(); if (sp.fn) sp.fn(); if (sp.act) navGo(sp); })()');
+    assert(step() === '', 'Next Up: no Hearth 2 row before the zone 10 clear');
+    E('S.maxZone = 11'); const s1 = step();
+    assert(s1 === 'Build Hearth 2: 20 Pine Log at the Pine Grove, 20 Copper Ore at the Copper Vein, 5 Essence from fights|true', `Next Up: after the zone 10 clear, Hearth 2 and where its materials come from ("${s1}")`);
+    press(); const s2 = step();
+    assert(E('S.activity === "gather" && S.node.kind === "wood" && S.node.t === 1') && /\|false$/.test(s2), `Next Up: the Hearth 2 row's Go sends the hero to the Pine Grove ("${s2}")`);
+    E('S.mats.wood[0] = 20; S.mats.ore[0] = 20'); const s3 = step();
+    assert(s3 === 'Back to the fight: you have the Pine Log for Hearth 2|true', `Next Up: with the logs in hand, back to the fight ("${s3}")`);
+    press(); assert(E('S.activity') === 'fight' && /^Build Hearth 2: 5 Essence from fights\|false$/.test(step()), 'Next Up: back in the fight, the row waits on Essence');
+    E('S.mats.ess[0] = 5'); setNow(clock += 5000);
+    const rb = () => E('topGoals(60, { sticky: false }).filter(x => x.ready && /Hearth 2\\)?: ready to build$/.test(x.label)).map(x => x.id).join()');
+    assert(rb() === 'camp-step', `Next Up: with every material in hand, Hearth 2 is ready to build while camp-build offers a cheaper build (${rb()})`);
+    E('S.camp.b.watch = 1; S.gold = 110'); setNow(clock += 5000);
+    assert(rb() === 'camp-build', `Next Up: when camp-build offers Hearth 2 itself, the row steps aside, never two rows (${rb()})`);
+    E('S.camp.b.hearth = 2'); const s4 = step();
+    assert(/^Build the Tavern: 20 more Pine Log at the Pine Grove, 20 Sage Sprig .+\|true$/.test(s4), `Next Up: once Hearth 2 stands, the Tavern ("${s4}")`);
+    E('S.camp.b.tavern = 1'); assert(step() === '', 'Next Up: no camp step row once the Tavern stands');
+  }
   const bad = badNumbers(E('S'));
   assert(!bad.length, 'no NaN in the camp state' + (bad.length ? ': ' + bad[0] : ''));
   assert(!g.errors.length, 'no camp errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
