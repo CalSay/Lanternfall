@@ -37,7 +37,9 @@ on('cacheOpen', v => {
   const sp = spoilsMoves(v);
   const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1 || !!sp;   // a pick needs the card (zones 6 to 10 only)
   const lines = [];
-  if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
+  // look-card-says-why: the colour's own line says what it did, whatever the sub line shows (the desk player asked what a colour was)
+  if (v.look) { const ln = v.look.n.replace(/ lantern$/, '');
+    lines.push({ txt: v.look.worn ? `Your lantern burns ${ln} now.` : `New lantern colour: ${ln}. You own it now.`, icon: { ic: ['banner', v.look.col] } }); }
   if (v.unique) {
     lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
     const wn = typeof momentWearNote === 'function' ? momentWearNote(v.unique.item) : null; if (wn) lines.push(wn);   // Cal's play note 9: say where a unique you cannot wear went
@@ -54,8 +56,8 @@ on('cacheOpen', v => {
   const col = v.unique ? '#FF8A3D' : v.look ? v.look.col : v.star ? '#F2C14E' : v.scroll ? v.scroll.col : '#F2C14E';
   const icon = v.unique ? { item: v.unique.item } : { ic: ['banner', col] };
   const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
-  // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
-  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
+  // the sub is one short line: the unique's odds (honest, with modifiers); the colour's line says what a look did
+  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
   if (sp) Object.assign(o, spoilsPicks(v, sp));
   o.actions = [];

@@ -157,6 +157,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - `playtest.mjs look` lists covered buttons under OFF SCREEN (the opening story covers the whole game), so "off screen on a fresh game" can mean "behind the intro". Check `elementFromPoint` before moving a control. Why: #239 carded Notices, zone and Sound as off screen at 1280x720; they were under the opening card (desktop-layout-v1, 2026-10-08)
 - A non-modal sheet needs its own slot: when one shared `cur` holds every sheet, any sheet that pops up on its own (a story card, Next up) closes the docked one and fires its back chain, and a docked sheet's Escape listener must yield to overlays above it. Why: the reviewer caught a story card closing the docked item the player was reading (desktop-layout-v1, 2026-10-08)
 
+- A browser check that expects the cache card's odds line must make the unique roll miss (stub `Math.random` high around `killPack`): `UNIQ_TUNE.on` does not stop the first-clear roll, and a dropped unique swaps the odds line for "Here is what the win gave you." Why: the first look-card-says-why check failed 3 runs in 7 on a Briar Sprig drop (reviewer, 2026-10-09)
+
 ## Saves and offline parity
 
 - Mark a one-time line or scene done when the player answers it, not when it is queued, or keep the queue in the save: a queue in memory loses it on a reload. Story scenes are marked seen when queued, so `S.story.open` keeps the queued and open ones with their page, and Hesketh's say queue is saved as `S.onboard.sayQ`. A tip whose job is still undone (a piece in the bag) gets a session-only hide on ×, not a done mark. Why: the cold leg closed the game on page 1 of the Chapter 1 card and lost pages 2 and 3 and Hesketh's equip tip. (reload-keeps-tips, 2026-10-08)

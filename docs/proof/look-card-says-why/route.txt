@@ -1,10 +1,8 @@
 # seed: 1
-# Proof for card cache-core: the first boss falls and a Lantern Cache opens on a card with what the win paid, then Ember Red.
-# Fixture boss1: Wren on zone 1 with the boss next (a fresh save, levelled so the fight is won in both views).
-# A unique may drop on the win (the odds line then gives way to the unique), so the route does not expect the odds line.
-# Old-save and replay rules are in tools/check.mjs, section 'lantern caches'.
-# Updated 2026-10-08 (proof-routes-rot): the staged-guide lesson holds the boss's first swing until Dodge is pressed, so the route taps Dodge (tap-if) before attacking.
-# Updated 2026-10-09 (look-card-says-why): the colour line now reads "Your lantern burns Ember Red now."
+# Proof for card look-card-says-why: the first boss falls and the Lantern Cache card says what the lantern colour did in its own
+# line ("Your lantern burns Ember Red now."), next to what the win paid. Fixture boss1, the same fight as the cache-core route.
+# A unique may drop on the win (the odds line then gives way to the unique), so the route does not expect the odds line; the
+# odds line next to the colour line is in tools/check.mjs, section 'look-card-says-why'.
 new boss1
 wait 2
 tap-if "Got it"
@@ -105,7 +103,7 @@ expect "Your lantern burns Ember Red now."
 expect "gold"
 expect "Moss Scroll"
 expect .mm-head
-shot cache-card
+shot cache-card-ember
 wait 3
 tap "Continue"
 wait 2
