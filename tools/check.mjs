@@ -92,7 +92,9 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
+  'page size': 2
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -9403,8 +9405,8 @@ if (section('fixed battle backgrounds')) try {
   // Codex's owner-approved Mossy Hollow night scene (art/backgrounds/mossy-hollow/outlined-night-v1): embedded byte for byte
   { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-bg.mjs'), '--check'], { encoding: 'utf8' });
     assert(r.status === 0, 'backgrounds: src/js/21zb-data-bgart.js is up to date with the approved packs (node tools/art/embed-bg.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
-  const dir = path.join(ROOT, 'art', 'backgrounds', 'mossy-hollow', 'outlined-night-v1'), src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21zb-data-bgart.js'), 'utf8');
-  const B = JSON.parse(src.slice(src.indexOf('const BG_ART = ') + 15, src.lastIndexOf('}') + 1)).forest;
+  const dir = path.join(ROOT, 'art', 'backgrounds', 'mossy-hollow', 'outlined-night-v1');
+  const B = artData('21zb-data-bgart.js', 'BG_ART').forest;
   assert(B.land.src === fs.readFileSync(path.join(dir, 'runtime', 'mossy-hollow-night-960x540.webp')).toString('base64') &&
     B.port.src === fs.readFileSync(path.join(dir, 'runtime', 'mossy-hollow-night-portrait-480x900.webp')).toString('base64') &&
     Math.abs(B.land.road - 208 / 270) < 1e-9 && B.port.road === 0.89, 'backgrounds: the Mossy Hollow landscape and portrait scenes are the approved WebP bytes, with their painted road lines');
@@ -9416,7 +9418,7 @@ if (section('C22 Thorn Imp (zone 1)')) try {
   { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-foes.mjs'), '--check'], { encoding: 'utf8' });
     assert(r.status === 0, 'C22: src/js/21za-data-foeart.js is up to date with the approved packs (node tools/art/embed-foes.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
   { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'approved-v2'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
-    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21za-data-foeart.js'), 'utf8'), A = JSON.parse(src.slice(src.indexOf('const FOE_ART = ') + 16, src.lastIndexOf('}') + 1)).imp;
+    const A = artData('21za-data-foeart.js', 'FOE_ART').imp;
     const frames = Object.values(A.acts).reduce((n, a) => n + a.f.length, 0);
     const bytes = Object.entries(A.atlases).every(([p, b64]) => b64 === fs.readFileSync(path.join(dir, p)).toString('base64'));
     const timing = Object.entries(man.actions).every(([id, a]) => A.acts[id] && a.frames.every((f, i) => A.acts[id].f[i][0] === f.duration_ms) &&
@@ -9429,7 +9431,7 @@ if (section('C22 Thorn Imp (zone 1)')) try {
       `C22: the Imp's parry windows close on the art's contact frames (hop 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death (${JSON.stringify(w)})`); }
   { // Gloomjaw (art/enemies/gloomjaw/approved-v1, owner-approved 2026-10-02): zone 2's monster
     const dir = path.join(ROOT, 'art', 'enemies', 'gloomjaw', 'approved-v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
-    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21za-data-foeart.js'), 'utf8'), G = JSON.parse(src.slice(src.indexOf('const FOE_ART = ') + 16, src.lastIndexOf('}') + 1)).gloomjaw;
+    const G = artData('21za-data-foeart.js', 'FOE_ART').gloomjaw;
     const body = Object.values(G.acts).reduce((n, a) => n + a.f.length, 0), fxN = Object.values(G.fx).reduce((n, a) => n + a.f.length, 0);
     const bytes = Object.entries(G.atlases).every(([p, b64]) => b64 === fs.readFileSync(path.join(dir, p)).toString('base64'));
     const timing = Object.entries(man.actions).every(([id, a]) => { const X = a.layer === 'fx' ? G.fx[id] : G.acts[id];
@@ -11290,16 +11292,21 @@ if (section('craft reveal')) try {
         await page.goto('http://lf.test/'); await page.waitForTimeout(700);
         for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
         const X = s => page.evaluate(s => window.__t.x(s), s);
+        // craft-reveal-flake-watch: wait for what the next line reads, not a fixed timer (under load the Forge rows were not drawn
+        // 500 ms after the tab click, so `.cf-rec` was null); `need` fails plainly when it never comes, `until` leaves that to the assert
+        const until = async (expr, ms = 5000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 50 }); return true; } catch (e) { return false; } };
+        const need = async (expr, what) => { if (!await until(expr)) throw new Error(`${at}: ${what} never appeared within 5 s`); };
         await X(`S.onboard.tips = false; S.refine.said = 1; true`);   // refine-queues: save-mid predates refining; its one-time Forge card would cover Craft
-        await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
+        await page.click('.tab[data-tab="forge"]'); await need(`!!document.querySelector('.cf-rec')`, 'the Forge recipe rows (.cf-rec)');
         const odds = await X(`(() => { const t = document.querySelector('.cf-odds'); const w = rarityWeights(stationLevel(document.querySelector('.cf-rec').dataset.kind)), tot = Object.values(w).reduce((a, b) => a + b, 0);
           return { text: t ? t.textContent : '', common: Math.round(w.common / tot * 100) }; })()`);
         assert(/^Odds: Common [\d.]+% · Uncommon [\d.]+% · Rare [\d.]+% · Epic [\d.]+%$/.test(odds.text) && Math.abs(parseFloat(/Common ([\d.]+)%/.exec(odds.text)[1]) - odds.common) <= 0.6, `${at}: each recipe shows one odds line computed from the rarity weights (${odds.text})`);
         const made = [];
         for (let i = 0; i < 6; i++) {
+          const was = await X(`(c => c ? c.dataset.itemId : '')(document.querySelector('.cf-res'))`);
           const ok = await X(`(() => { const b = [...document.querySelectorAll('.cf-rec .cf-go')].find(x => !x.disabled); if (!b) return false; b.click(); return true; })()`);
           if (!ok) break;
-          await page.waitForTimeout(150);
+          await need(`(c => !!c && c.dataset.itemId !== ${JSON.stringify(was)})(document.querySelector('.cf-res'))`, `craft ${i + 1}'s own result card (.cf-res)`);
           made.push(await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { grade: c.querySelector('.cf-grade').textContent, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent), arrows: c.querySelectorAll('.cf-d').length, strip: document.querySelectorAll('.cf-recent .cf-tile').length } : null; })()`));
         }
         assert(made.length >= 2 && made.every(m => m && ['Common', 'Uncommon', 'Rare', 'Epic', 'Unique'].includes(m.grade)), `${at}: every craft opens a result card with a real grade name (${JSON.stringify(made.map(m => m && m.grade))})`);
@@ -11309,10 +11316,10 @@ if (section('craft reveal')) try {
         assert(await X(`(() => { const r = document.querySelector('.cf-resbox').getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()`) , `${at}: the new card is on screen after a craft`);
         // cal-0107-flow-bugs (note 17): Equip wears the piece and closes its card; Keep and Salvage are for a piece that is not worn
         { const eq = await page.$('.cf-res .cf-resact button:text-is("Equip")');
-          if (eq) { const id = await X(`document.querySelector('.cf-res').dataset.itemId`); await eq.click(); await page.waitForTimeout(250);
+          if (eq) { const id = await X(`document.querySelector('.cf-res').dataset.itemId`); await eq.click(); await until(`!document.querySelector('.cf-res')`);
             assert(await X(`!document.querySelector('.cf-res') && Object.values(S.equip).includes(${JSON.stringify(+id)})`), `${at}: Equip wears the piece and closes its card`); } }
         await X(`setTab('party'); true`); await page.waitForTimeout(200);   // cal-0107-gear-and-rates: the bag is on the Hero tab
-        await page.click('#viewSeg button:text-is("Gear")'); await page.waitForTimeout(400);
+        await page.click('#viewSeg button:text-is("Gear")'); await until(`!!document.querySelector('.cf-bag .cf-tile .cf-gr')`);
         assert(await X(`(() => { const b = document.querySelector('.cf-bag .cf-tile .cf-gr'); return !!b && /^(Com|Unc|Rare|Epic|Uniq)$/.test(b.textContent); })()`), `${at}: a bag tile names its grade in text`);
         assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
@@ -14346,6 +14353,77 @@ if (section('foe moves by type')) try {
   // a normal fight plays out: each type's foe moves, and the casual starter still wins ordinary fights at zone 20 (budget bands hold)
   assert(!g.errors.length, 'foe moves: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('foe moves by type crashed: ' + (e.stack || e)); }
+
+// ==== page-size-check (docs/design/page-bytes.md 6, judge 2026-10-09): the page under 14 MB, each art pack under its ceiling ====
+// Read only (tools/lib/page-size.mjs): it measures dist and the generated art files, prints the growth line, and changes nothing.
+if (section('page size')) try {
+  const { pageSizeReport } = await import('./lib/page-size.mjs');
+  const r = pageSizeReport({ page: distFile });
+  for (const l of r.lines) console.log('  ' + l);
+  for (const w of r.warns) console.log('  WARN ' + w);
+  for (const f of r.fails) fail(f);
+  if (!r.fails.length) ok('page size: the page is under 14 MB and every art pack is under its ceiling or its measured exception');
+} catch (e) { fail('page size crashed: ' + (e.stack || e)); }
+
+// ==== embed-base91 (docs/design/page-bytes.md lever 10): every embedded art file is basE91 text, read back by one decoder ====
+// The embed tools write each PNG or WebP as basE91 (tools/lib/b91.mjs); src/js/21zz-art-b91.js gives every reader the same
+// base64 or data URI as before. Checked here: each embedded file decodes, through the page's own decoder, to exactly the bytes
+// of its approved art file (same bytes, so the same pixels), the tools' encoder and the page's decoder agree, and the encoder
+// refuses a string that would end the page's script.
+// artData(file, name): a generated art file run with the page's decoder, as the game reads it (every image field decoded).
+function artData(file, name) {
+  const ctx = {}, J = path.join(ROOT, 'src', 'js');
+  vm.runInNewContext(`(() => {\n${fs.readFileSync(path.join(J, file), 'utf8')}\n${fs.readFileSync(path.join(J, '21zz-art-b91.js'), 'utf8')}\nthis.__x = ${name};\n})()`, ctx);
+  return ctx.__x;
+}
+if (section('embed-base91')) try {
+  const { b91Encode, b91Decode } = await import('./lib/b91.mjs');
+  const J = path.join(ROOT, 'src', 'js'), art = (...p) => fs.readFileSync(path.join(ROOT, 'art', ...p));
+  const PNG = 'data:image/png;base64,', rows = [];   // [what, string as the game reads it, the approved file's bytes, prefix]
+  // the C26 icon packs, against Codex's exports (the same lists tools/art/embed-icons.mjs keeps)
+  const exp = (f, name) => new Function(fs.readFileSync(path.join(ROOT, f), 'utf8') + `\nreturn ${name};`)();
+  const ICONS = [['21s-data-actionicons.js', 'ACTION_ICONS', 'art/actions/game-v1/action-icons.js'], ['21t-data-navicons.js', 'NAV_ICONS', 'art/navigation/game-v1/navigation-icons.js'],
+    ['21u-data-gearicons.js', 'GEAR_ICONS', 'art/gear/game-v2/gear-icons.js'], ['21v-data-statusicons.js', 'STATUS_ICONS', 'art/status/game-v1/status-icons.js']];
+  const abil = exp('art/abilities/game-v1/ability-icons.js', 'ABILITY_ICONS');
+  for (const [file, name, src] of ICONS) {
+    const D = artData(file, name), X = exp(src, name);
+    for (const [id, set] of Object.entries(D)) for (const [n, u] of Object.entries(set)) {
+      const want = X[id] ? X[id][n] : abil[id] && abil[id].data[n];
+      rows.push([`${name}.${id}.${n}`, u, want ? Buffer.from(want.slice(PNG.length), 'base64') : null, PNG]);
+    }
+  }
+  const R = artData('21r-data-resicons.js', 'RES_ICONS');
+  for (const [fam, list] of Object.entries(R.icons)) list.forEach((u, i) => rows.push([`RES_ICONS.${fam}.${i + 1}`, u, art('resources', 'game-v1', `${fam}-${i + 1}.png`), PNG]));
+  const P = artData('21yc-data-portraits.js', 'HERO_PORTRAITS');
+  for (const [id, u] of Object.entries(P)) rows.push([`HERO_PORTRAITS.${id}`, u, art('portraits', id + '.png'), PNG]);
+  const FOE_DIR = { imp: 'enemies/thorn-imp/approved-v2', gloomjaw: 'enemies/gloomjaw/approved-v1' }, F = artData('21za-data-foeart.js', 'FOE_ART');
+  for (const [k, pk] of Object.entries(F)) for (const [p, u] of Object.entries(pk.atlases))
+    rows.push([`FOE_ART.${k}.${p}`, u, FOE_DIR[k] ? art(...FOE_DIR[k].split('/'), p) : null, '']);
+  const BG = artData('21zb-data-bgart.js', 'BG_ART'), BGF = { 'mossy-hollow-outlined-night-v1': ['backgrounds/mossy-hollow/outlined-night-v1/runtime/mossy-hollow-night-960x540.webp', 'backgrounds/mossy-hollow/outlined-night-v1/runtime/mossy-hollow-night-portrait-480x900.webp'] };
+  for (const [t, B] of Object.entries(BG)) ['land', 'port'].forEach((o, i) => rows.push([`BG_ART.${t}.${o}`, B[o].src, BGF[B.id] ? art(...BGF[B.id][i].split('/')) : null, '']));
+  const bad = rows.filter(([, u, want, pre]) => !(typeof u === 'string' && u.startsWith(pre) && want && Buffer.from(u.slice(pre.length), 'base64').equals(want))).map(r => r[0]);
+  assert(rows.length > 700 && !bad.length, `embed-base91: all ${rows.length} embedded images read back as the approved files' exact bytes` + (bad.length ? ` (not: ${bad.slice(0, 6).join(', ')})` : ''));
+  // the files hold basE91, not base64: no data URI and no quoted string
+  // of base64 characters only (basE91 text mixes in its other 29 characters)
+  const left = [...ICONS.map(r => r[0]), '21r-data-resicons.js', '21yc-data-portraits.js', '21za-data-foeart.js', '21zb-data-bgart.js']
+    .filter(f => /data:image\/|['"][A-Za-z0-9+/]{100,}={0,2}['"]/.test(fs.readFileSync(path.join(J, f), 'utf8').split('\n').filter(l => !l.startsWith('//')).join('\n')));
+  assert(!left.length, 'embed-base91: the embedded art files carry basE91 text, not base64' + (left.length ? ' (' + left.join(', ') + ')' : ''));
+  // the tools' encoder and the page's decoder agree on every length and edge (random files, 0-600 bytes, plus all-0 and all-255)
+  { const ctx = {}; vm.runInNewContext(fs.readFileSync(path.join(J, '21zz-art-b91.js'), 'utf8') + '\nthis.dec = b91Bytes; this.b64 = b91Base64;', ctx);
+    let seed = 7, miss = 0, n = 0; const rnd = () => (seed = (seed * 1103515245 + 12345) >>> 0) >>> 24;
+    const cases = [Buffer.alloc(300), Buffer.alloc(300, 255)];
+    for (let len = 0; len <= 600; len++) cases.push(Buffer.from(Array.from({ length: len }, rnd)));
+    for (const c of cases) { let e; try { e = b91Encode(c); } catch (x) { continue; } n++;
+      if (!Buffer.from(ctx.dec(e)).equals(c) || !b91Decode(e).equals(c) || ctx.b64(e) !== c.toString('base64')) miss++; }
+    assert(n > 590 && !miss, `embed-base91: the encoder (tools/lib/b91.mjs) and the page's decoder (21zz-art-b91.js) round-trip ${n} files byte for byte` + (miss ? ` (${miss} differ)` : '')); }
+  // the encoder refuses a string holding "</script" in any case (it would end the page's script): crafted files whose basE91 text holds it (a
+  // trailing pair keeps the last 13-bit group whole, so the text round-trips)
+  { const craft = t => b91Decode(t), refuse = t => { try { b91Encode(craft(t)); return false; } catch (e) { return /<\/script/.test(e.message); } };
+    assert(refuse('</script>AA') && refuse('xx</SCRIPT') && refuse('AA</ScRiPtAA') && !refuse('<script/AA'), 'embed-base91: the encoder refuses any output containing "</script" (any case)'); }
+  // every generator writes what is committed (the embed tools' --check, and resicons' text against its PNGs above)
+  { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-icons.mjs'), '--check'], { encoding: 'utf8' });
+    assert(r.status === 0, 'embed-base91: the icon files are up to date with the approved packs (node tools/art/embed-icons.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
+} catch (e) { fail('embed-base91 crashed: ' + (e.stack || e)); }
 
 // ==== hero portraits (tools/portraits.mjs -> 21yc-data-portraits.js, 64k-portraits.js) ====
 if (section('hero portraits')) try {
