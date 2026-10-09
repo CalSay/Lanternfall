@@ -1,0 +1,47 @@
+# seed: 1
+# Proof for card boss-bar-long-names-fit. At 740x360 the foe plate gave a long boss name about 93 px beside the HP numbers, so
+# "The Hollow Cantor" took three lines and covered "Batwing Caves", and "Elder Rattlebones" ran past the plate's edge. Now a name that
+# does not fit beside the HP keeps one line at full size and the HP numbers drop to their own row under it; the plate keeps its height.
+# 1280x720 and 360x740 look as they did. The turn banner's two-line wrap at 740x360 is out of scope (it still sits over "Zone boss").
+# Every zone 1-10 boss name is measured by tools/check.mjs "fight HUD fit" at 740x360 and 360x740.
+new z10-cantor
+wait 2
+tap-if "Continue"
+wait 2
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+expect "The Hollow Cantor beat you"
+expect-no "Elder Rattlebones"
+shot loss-sheet-name
+tap "Try again"
+wait 2
+tap-if "Got it"
+wait 4
+expect-no "Elder Rattlebones"
+shot boss-name-one-line

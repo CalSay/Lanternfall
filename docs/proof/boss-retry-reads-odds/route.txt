@@ -4,9 +4,14 @@
 # section 'boss retry reads the odds', which also proves the Next Up line. On these saves Next Up is full of Ready goals the walk
 # bot left undone (64 points to spend, Hunter's Mark, the Golemfist, two deeds, the Watchtower), and a Ready goal is never pushed
 # out, so the route cannot show the boss row without doing all of them first.
-# Fixture z16-weak: the walk's minute 23 save (Wren, level 18) moved to zone 16 with its boss next: since #223 the zone 13 boss is
-# fair at level 18 and the wall is zone 16. The boss starts by itself; Wren only attacks.
-new z16-weak
+# Fixture z26-weak: save-z20-weak.json moved to zone 26 with its boss next, at level 24, the level tools/budget.mjs gives a
+# first-time player there (row z26-boss-arrival: tier 1 common +0, no mastery stars), its 8 new attribute points spent evenly.
+# Zone 26 is the first plain zone above the fitted walls (z13-24, which the balance pass re-measures; zone 25 is the Veiled
+# Oracle). Its boss is fitted for a hero who keeps up (gear at the zone's tier), so about this footing (the save has +4 tier 1
+# pieces, a Rattlecharm and first-time mastery) budget.mjs reads casual 0% and good 0% a try (z26-boss-arrival on the
+# z19-wall and z20-wall tuning) and the game's own odds read under 5%: a low chance on every run.
+# The z16-weak save stopped losing with a low chance after #229 softened the zone 16 boss. The boss starts by itself; Wren only attacks.
+new z26-weak
 wait 2
 tap-if "Got it"
 tap-if "Continue"
