@@ -1150,6 +1150,12 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   it, and it ships as is until then. The page grows about 365 KB (to about 8.3 MB of 16 MB). The 32 px fallback was turned down
   because it keeps the blur Cal complained about. Switch off: take 48 out of the sizes list in `tools/art/embed-icons.mjs` and
   the tiles fall back to 24 at x2.
+- **Page bytes (judge 2026-10-09; Cal can veto: "lift the Codex byte rule"):** 14 MB page ceiling (2 MB kept free); new sprite packs
+  are lossless WebP with at most 64 colours and 1-bit alpha, under 85/120/200/60 KB and 425 KB per area; backgrounds are one 960x540
+  lossless WebP of at most 190 KB with no colour cap; build order size-check, export brief, basE91, code packing, WebP embed, one
+  background per area; fewer frames and lossy backgrounds are reserve only; shipped packs are re-encoded only via the art judge.
+  (`docs/design/page-bytes.md`; ruling `autopilot/rulings/2026-10-09-page-bytes.md`; the size check is `tools/lib/page-size.mjs`, run by
+  `tools/check.mjs` as "page size")
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
