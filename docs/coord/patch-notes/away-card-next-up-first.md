@@ -1,0 +1,1 @@
+Coming back, the away card now shows what you got and what to do next on one screen: your results, then Next up, with camp, gatherer and other news folded under one More row. On a wide screen the two sit side by side. Best shot: next-up-first.

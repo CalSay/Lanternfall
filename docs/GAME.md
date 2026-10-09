@@ -100,7 +100,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Stars** change the rules of a fight on top: up to 3 set and 2 lit a hero (see The hero).
 - **Zones:** 5 won fights, then the zone boss, then the next zone (`ZONE_FIGHTS` in `40-rules.js`). Losing never moves
   you: a normal loss says so on the stage for the few seconds before the next fight ("Beaten. You're back to full HP for the
-  next fight.", with one line on what helps this save: unspent attribute points, a craft you can make, or an easier zone), and
+  next fight.", with one line on what helps this save: a hero with no weapon (or no armour at all) is told first to wear the
+  one in the bag or which piece to make and where, with a button; then unspent attribute points, a craft you can make, or an
+  easier zone), and
   three normal losses in ten fights in one zone add one bell line, once per zone a session; a boss loss opens the Try again
   card. Every fight in a zone (normal, elite or boss) starts at full HP, whether you won or lost the last one
   (`TURN_TUNE.normalFull`); in the Deepwell and the Provings your HP carries from foe to foe and each kill heals 15% of max
@@ -144,7 +146,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   ([combat-turn-build.md](design/combat-turn-build.md) "The Deepwell and the Provings"). Only the world raid keeps its
   real-time fight (`59-combat.js`, `59g-active.js`, `59h-bosses.js`, `59i-elites.js`).
 - **Away:** gathering (and a raid hit) keeps earning; fights stop and earn nothing (`50-sim.js` `awayGains`). The away cap is 8 hours with no building, so a
-  first night is covered; each Watchtower level and each Hourglass level adds 2 hours, never past 24 (`awayCapH()` in `40-rules.js`; 16 hours is the most in Chapter 1 without the raid). Gatherer shifts stay 4 hours, and a raid hit away keeps the old 4-hour base (`awayRaidCapH()`). While you gather, a chip under the Fight / Gather row says "Leave now: about N <material> in 8 hours" (a floor: it ignores level-ups, and it caps at the Storehouse room and says so when it fills and Spillover moves on). A fighter sees the notice instead.
+  first night is covered; each Watchtower level and each Hourglass level adds 2 hours, never past 24 (`awayCapH()` in `40-rules.js`; 16 hours is the most in Chapter 1 without the raid). Gatherer shifts stay 4 hours, and a raid hit away keeps the old 4-hour base (`awayRaidCapH()`). When the hero hits the limit, the away card's bar gives both numbers ("Your hero worked 8h of your 11h away.") and the box under it names the one next step with a Go: the next Watchtower level and its hours, or the Hearth level that opens it; "the most your camp can do" at the top (Watchtower 4 in Chapter 1, Watchtower 5 after it); the Storehouse instead when a pile filled first; and the Hourglass only while the raid is open. A raid return counts the raid's own limit (`awayLimitStep` in `75-away.js`). The card reads results (what the hero did, the tiles, Materials, Items, Skills), the limit, Next up, then one folded "More (n)" row that holds every other `registerAwayLine` group; on a landscape or desktop screen results sit on the left and the limit and Next up on the right, so Next up's first row shows without scrolling. While you gather, a chip under the Fight / Gather row says "Leave now: about N <material> in 8 hours" (a floor: it ignores level-ups, and it caps at the Storehouse room and says so when it fills and Spillover moves on). A fighter sees the notice instead.
 
 ## Gathering and gatherers
 
@@ -233,6 +235,20 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   piece is a pick: the line, then the bonus to put in, at the same price. Tools keep the die and the odds line. Items made with
   the switch off (no `g`) keep their rarity, lines and power exactly; with the switch off a graded item reads its twin (a B
   reads as Uncommon). Save codes check `g` only when present (0 to 4, its twin must match `r`, never on a tool or a unique).
+- **The Strike and Infuse** (behind `CRAFT_TUNE.strike` and `CRAFT_TUNE.infuse`, off in the game until the balance pass; card
+  craft-strike-infuse, spec section 5 "The Strike" and 7b): with grades on, each lifts a graded craft one grade, never above A (S
+  comes only from level); one lift a craft. The Strike: Craft shows the parry bar once over the screen (`75-craft-ui.js`, the
+  `.tv-time` look, its own clock) and holds the game; a press (or Space, Enter or F) in the gold lifts the piece, and the parry
+  chime plays. The gold is the fight's parry window (`SOLO_TUNE.turnParryWindow` x Assist, capped at
+  `TURN_TUNE.windowCaps.parry`) at the end of a 1.1 s fill. An early press, no press or a hidden tab makes the level's grade; the
+  craft is paid only when the bar resolves, so nothing is lost. Each station names it: Strike (Forge), Carve (Workbench), Stitch
+  (Loom), Etch (Enchanter's Table). No bar on tools, refining, at grade A or S, after Infuse, or on a station's first piece
+  (`S.craft.made`, pieces made a station; an old save seeds it from the pieces it holds). Infuse: the recipe row's Infuse button
+  pays `CRAFT_TUNE.infuseX` (3) x the recipe's Essence (3 when it has none: a Copper Warblade 6, a Charm 15; provisional until the balance pass; offered on a station's first piece too) from the one
+  Essence pile on top of the recipe. The row names the choice ("Grade A: Strike, or Infuse for 6 Essence") and the result card
+  says which lift landed ("Your Strike landed in the gold", "The Strike missed the gold ... Nothing was lost"). Taking either
+  emits `choice` 'craft'. Core: `craftItem(kind, t, { strike, infuse })`, `craftStrikeOffered`, `craftInfusePrice`,
+  `craftLiftTo` (55-crafting); the `crafted` event carries `lift`. Budget: `node tools/budget.mjs --craft grades=1,strike=1,infuse=1`.
   `node tools/budget.mjs --craft grades=1` measures the kept-up rows in graded gear (the results:
   [docs/proof/craft-attribute-grades/budget.md](proof/craft-attribute-grades/budget.md)).
 - **Refining** (`55-refine.js`, `75-refine-ui.js`, `REFINE_TUNE` in `21-data-craft.js`; card refine-queues): the Forge
@@ -291,7 +307,13 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   press it: Attack on your first turn, Dodge on the foe's first swing (the foe's clock stops as the Dodge window opens, so the press
   lands), your ability on your next turn, Parry on the next swing (or the next foe's first). While a lesson holds, only the button it
   names works. After that, in a fight, no line shows: every
-  other tip, and each unlock line from Hesketh, waits for the gap between fights, and an unlock line holds the game with a Got it.
+  other tip, and each unlock line from Hesketh, waits for the gap between fights. An unlock line (his news) holds only that gap until
+  its Got it: while you gather, or fight behind an upright menu, it shows and the game goes on (tips-pause-says-so). Whenever a tip
+  holds the game, except the fight lessons, the stage says "Paused" (on the strip's edge over an upright menu), Gather says Paused for
+  Working, and the fight bar stays in view, dimmed, unless the tip covers it (a phone on its side). A fight key (Q W E A S D Space) or a
+  press on a fight button during a Got it hold answers it and then acts; on a Go tip it counts as ×; a tip that waits for a press
+  elsewhere refuses it (the button shakes, the plate flashes). His Stars line never says you earned them, the boss-loss line is dropped
+  once that boss is beaten, and none of his lines shows while your hero is down.
   The Hero tab opens at the first level-up and the guide's next line says so; the first Scroll and a second ability's slot each get
   a line. Empty ability slots stay dim and silent until a learned move waits for one. Lighting the camp fire keeps you at the grove,
   where Hesketh's talk plays.

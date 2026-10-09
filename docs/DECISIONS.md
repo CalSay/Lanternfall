@@ -29,6 +29,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   and the Journal's Tips lists it as "Tips you missed". Opus judge and a Sonnet red team: the turn-fight boss line says "Watch the
   bar" because only the legacy fight draws red rings; "stretch" and "strings" cut as jargon; the legacy Parry line no longer claims a
   stagger it cannot show. Save risk read (Opus): safe, no new field. Camp and gather tips stay plain until `unlock-voice`.
+- **Tips say Paused (tips-pause-says-so, Opus high judge, 2026-10-08; Cal can veto with "Unlock lines hold
+  gathering again" or "Fight keys don't close tips").** A Hesketh news line holds only the gap between fights, never gathering or a fight
+  behind a menu. Any other hold that isn't a lesson shows "Paused" on the stage and in Gather. A fight press during a Got it hold counts as
+  Got it and then acts. The action bar stays in view, dimmed, wherever the tip doesn't cover it.
 - **Claude decided: materials lines show on Camp, on Gather and while gathering, never over other menus (card forge-tip-goes-stale,
   2026-10-08; Cal can veto with "keep the Forge tip on every menu").** This narrows "camp and menu tips stay up" above for Hesketh's
   materials lines only ("You still need these for the Forge: ..."): a fighter saw one on every menu for 15 minutes and it covered the hero
@@ -289,6 +293,12 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   with `CRAFT_TUNE.grades` on, a craft's grade (D to S) comes from the station level, its lines come in a fixed order and
   Reforge on a graded piece is a pick. The switch stays off in the weekly release until the balance pass. Items made before
   keep their rarity, lines and power. Infuse's "any Essence" drift is card craft-strike-infuse's.
+- **The Strike and Infuse, behind their switches (craft-strike-infuse, 2026-10-09; overhaul spec sections 5 and 7b):** a timing
+  press on the bar (the Strike) or Essence on the recipe row (Infuse) lifts a graded craft one grade, never above A; one lift a craft.
+  `CRAFT_TUNE.strike` and `CRAFT_TUNE.infuse` stay off in the weekly release until the balance pass. Infuse spends the one Essence
+  pile (any Essence pays; the spec's "Essence of the piece's tier" no longer fits since counters-and-layers made Essence one pile).
+  Infuse is offered on a station's first piece too, where the Strike is not (spec 7b: "any piece"). The price (3 x the recipe's
+  Essence) is provisional until the balance pass; at it, Infuse alone moves unspent Essence by a few points (economy review).
 - **15 material tiers, 3 per region; resources are gated by region.** (2026-09-28)
 - **Material names are real, standard fantasy materials,** never invented compounds. (2026-09-28) The approved 15-grade
   names for all seven families are in `art/resources/regional-audit/complete-ladder.json`. (2026-10-01)

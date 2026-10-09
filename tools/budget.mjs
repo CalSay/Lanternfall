@@ -19,6 +19,7 @@
 //   --read casual=0.5,good=0.7   set how often a player reads a boss trick (a feint or a held swing; 59k TURN_TUNE.tricks.read)   (manual)
 //   --craft k=v,..  CRAFT_TUNE switches (20-data), as sim.mjs --craft. --craft grades=1 (craft-attribute-grades): the kept-up rows wear
 //                   graded pieces (below, "Graded gear"); off (the default): every row exactly as before
+//                   --craft grades=1,strike=1,infuse=1 (craft-strike-infuse): the lift rows (below, "liftRow")
 //   --uniq ID       report only (uniques-first-four): each row twice for the heroes who can wear unique ID (20-data UNIQ, the new table),
 //                   once as is (S) and once with the unique worn in its position (R: zone tier, +5, UNIQ_TUNE.on), on the same fight
 //                   seeds, and print R - S. A unique in a set position breaks the set. Rows default to z16/z20/z25/z30 boss (--only to
@@ -136,6 +137,18 @@ const gradeCode = (k, z) => `(kind, t) => { const sk = CRAFT_STATIONS[CRAFT_KIND
   const lv = kind === 'charm' ? Math.max(L.ench, L.smith) : L[sk]; let u = 1; while (u < t && CRAFT_STATION_REQ[u] <= lv) u++;
   return { t: u, g: gradeFor(kind, u, lv) }; }`;
 const gradedRow = o => GRADED && o.st === 'kept' && !o.gear && !onArrival(o);
+// craft-strike-infuse (--craft grades=1 with strike=1 and/or infuse=1): the lift rows. On a graded row each piece may be lifted one grade,
+// never above A (S comes only from level), as a player would: with strike=1 the casual lifts the weapon only (one Strike they land on the
+// piece that matters most) and the good player every piece; with infuse=1 a second casual row, casualInfuse, lifts every piece with Essence.
+// Off: no lift, every row as before.
+const LIFT = { strike: !!CRAFT_KV.strike, infuse: !!CRAFT_KV.infuse };
+const liftRow = o => gradedRow(o) && (LIFT.strike || LIFT.infuse);
+const LIFT_PLAYERS = { casualInfuse: PLAYERS.casual };
+const liftSlots = pl => pl === 'casualInfuse' ? (LIFT.infuse ? 'all' : []) : !LIFT.strike ? [] : pl === 'good' ? 'all' : pl === 'casual' ? ['weapon'] : [];
+const liftCode = pl => `(() => { const P = ['weapon', 'off', 'helm', 'body', 'charm'], L = ${J(liftSlots(pl))}, top = GRADE.findIndex(x => x.n === 'A');
+  const g0 = globalThis.__g0 || (globalThis.__g0 = Object.fromEntries(P.map(p => [p, (itemById(S.equip[p]) || {}).g])));
+  for (const p of P) { const it = itemById(S.equip[p]); if (!it || g0[p] == null) continue; it.g = (L === 'all' || L.includes(p)) && g0[p] < top ? g0[p] + 1 : g0[p]; it.r = GRADE[it.g].r; }
+  gearDirty(); return true; })()`;
 const FOOT = opt('foot', null);
 if ((flag('foot') && FOOT === null) || (FOOT !== null && FOOT !== 'arrival')) { console.error('budget: --foot arrival (the only footing it takes)'); process.exit(2); }
 const ARRIVAL_KILLS = 10, ARRIVAL_KIND_KILLS = 12;
@@ -364,10 +377,11 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null, bot
   if (foe === 'boss' && !p0.boss) throw new Error(`${id} ${k}: no boss to fight`);
   if (foe === 'elite' && !p0.elite) throw new Error(`${id} ${k}: no elite to fight`);
   const chain = foe === 'boss' ? 1 : 5, n = Math.ceil(FIGHTS / chain);
-  for (const [pl, skill] of Object.entries(bot ? { ...players, ...BOT } : players)) {
+  for (const [pl, skill] of Object.entries(Object.assign({}, players, bot ? BOT : {}, liftRow(o) && LIFT.infuse ? LIFT_PLAYERS : {}))) {
     if (pl === 'none' && !NONE_KINDS.includes(o.kind) && !flag('none') && !UNIQ_ID) continue;
+    if (liftRow(o)) e(liftCode(pl));   // craft-strike-infuse: this player's lifted pieces (above)
     if (BOT[pl] && !BOT_KINDS.includes(o.kind)) continue;
-    const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl, i));
+    const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl === 'casualInfuse' ? 'casual' : pl, i));   // casualInfuse plays the casual's seeds, so the gap is the lift alone
     const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(o.st === 'joined' ? [SIG[k]] : setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
       let K = 0, D = 0, T = 0, F = 0, C = 0;
       for (const sd of ${J(seeds)}) { const r = turnCombatSample({ profile: p, seconds: 36000, fights: ${chain}, seed: sd, skill: ${J(skill)} });
@@ -399,7 +413,7 @@ export function printBudget(rep) {
   console.log(`Difficulty budget: ${rep.fights} scratch turn fights a row, hero and player (each boss fight on its own seed; trash in chains of 5);`);
   console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z7-z15 bosses and the z16-z26 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
   console.log(`Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +${T.tobinBoss}).`);
-  if (rep.craft) console.log(`CRAFT_TUNE ${JSON.stringify(rep.craft)}${rep.craft.grades ? ': the kept-up rows wear graded gear (the kept-up casual\'s grade at the zone, +5, no lift)' : ''}.`);
+  if (rep.craft) console.log(`CRAFT_TUNE ${JSON.stringify(rep.craft)}${rep.craft.grades ? `: the kept-up rows wear graded gear (the kept-up casual's grade at the zone, +5, ${rep.craft.strike || rep.craft.infuse ? `lifted one grade up to A: ${[rep.craft.strike ? 'the casual\'s weapon and every piece of the good player\'s (Strike)' : '', rep.craft.infuse ? 'every piece of casualInfuse\'s (Infuse)' : ''].filter(Boolean).join('; ')}` : 'no lift'})` : ''}.`);
   console.log('A "behind" row\'s casual number is the drop in casual wins against its ref row.');
   console.log('row'.padEnd(17) + 'kind'.padEnd(13) + 'casual w/t/p'.padEnd(14) + 'mean sprd'.padEnd(10) + 'band'.padEnd(16) + 'good w/t/p'.padEnd(13) + 'band'.padEnd(9) + 'tries w/t/p'.padEnd(16) + 'turns w/t/p'.padEnd(17) + 'level  out of band');
   for (const r of rep.rows) {
@@ -415,6 +429,7 @@ export function printBudget(rep) {
     if (ref) console.log('  turns played well against the even spread (w/t/p): ' + hs.map(h => r.perHero[h].good.turns && ref.perHero[h].good.turns ? 'x' + (r.perHero[h].good.turns / ref.perHero[h].good.turns).toFixed(2) : '-').join('/'));
     if (r.perHero[hs[0]].none) console.log('  ' + 'none (never defends) w/t/p'.padEnd(28) + hs.map(h => pc(r.perHero[h].none.win)).join('/'));
     for (const pl of Object.keys(BOT)) if (r.perHero[hs[0]][pl]) console.log('  ' + `${pl} bot w/t/p`.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
+    for (const pl of Object.keys(LIFT_PLAYERS)) if (r.perHero[hs[0]][pl]) console.log('  ' + 'casual, Infuses every piece'.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
     for (const pl of Object.keys(WIDE)) if (r.perHero[hs[0]][pl]) console.log('  ' + pl.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
     // closest to death: the share of won boss fights where the hero fell under half health (a good player; aim 20-35% at Champions)
     if (r.foe === 'boss' && r.perHero[hs[0]].good.close != null) console.log('  ' + 'good wins under half HP %'.padEnd(28) + hs.map(h => pc(r.perHero[h].good.close)).join('/'));

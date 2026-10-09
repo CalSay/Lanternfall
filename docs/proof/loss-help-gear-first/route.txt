@@ -1,0 +1,55 @@
+# Proof for card loss-help-gear-first: after a normal loss, a hero who wears no weapon is told to get one first.
+# The save: Wren at zone 12, fight 1 of 5, her Pine Bow +3 taken off and left in the bag (tests/proof-fixtures/save-early-z12-nobow.json:
+# save-early-z12 with no weapon worn). She presses Attack on each turn and never parries, so she loses.
+#   wear-first-*.png  the stage says "Beaten. You're back to full HP for the next fight." and, under it, "No weapon on. Wear your
+#                     Pine Bow +3 first." with a Wear button. Before this card it said "Spend your attribute points on Hero > Build."
+#                     (her 52 unspent points), so the Wear expect fails on that build.
+#   worn-*.png        Wear puts the bow on and the line goes.
+# The no-bow-in-the-bag case ("No weapon yet. Make a Pine Bow at the Workbench first." with a Go) and the fit at every view are
+# held by tools/check.mjs (normal-death-says-so: loss-help-gear-first).
+# seed: 1
+new early-z12-nobow
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+expect ".tv-beat .tv-beat-txt"
+expect ".tv-beat .tv-beat-go"
+expect "Wear"
+shot wear-first
+tap "Wear"
+wait 1
+expect-no ".tv-beat"
+shot worn

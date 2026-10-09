@@ -139,13 +139,16 @@ function gxRowUpdate(r, opts) {
   } else putText(r.meta, `Needs ${SKILL[sk]} ${req}`);
   putHidden(r.fill.parentNode, !open);
   if (open) putStyle(r.fill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
-  // a locked row offers no button (its line says what it needs); the node you work says Working
+  // a locked row offers no button (its line says what it needs); the node you work says Working (Paused while a tip holds the game)
   putHidden(r.btn, !open);
-  putText(r.btn, here ? 'Working' : NODE_VERB[kind]);
+  const wk = gxWork();
+  putText(r.btn, here ? wk : NODE_VERB[kind]);
   putClass(r.btn, 'gx-act' + (here ? ' here' : opts && opts.best ? ' best' : ''));
   putDisabled(r.btn, !open || here);
-  putAttr(r.btn, 'aria-label', here ? `Working at the ${NODE_NAMES[kind][t - 1]}` : `${NODE_VERB[kind]} at the ${NODE_NAMES[kind][t - 1]}`);
+  putAttr(r.btn, 'aria-label', here ? `${wk} at the ${NODE_NAMES[kind][t - 1]}` : `${NODE_VERB[kind]} at the ${NODE_NAMES[kind][t - 1]}`);
 }
+// tips-pause-says-so: while a Hesketh tip holds the game (#app.guide-held, 75-onboard-ui) nothing is gathered, so the node says so
+const gxWork = () => { const a = $('app'); return a && a.classList.contains('guide-held') ? 'Paused' : 'Working'; };
 const gxHead = (title, note) => {
   const h = el('div', 'sec-head gx-head'), t = el('h2', 'sec-title', title), n = el('span', 'note gx-hnote', note || '');
   h.append(t, n); return { h, t, n };
@@ -227,7 +230,7 @@ function gxNow(R) {
   putToggle(R.card, 'other', state === 'other');
   putHidden(R.nt, state === 'other');
   putHidden(R.strip, state !== 'other');
-  putHidden(R.nchip, !here);
+  putHidden(R.nchip, !here); putText(R.nchip, gxWork());
   putHidden(R.nrest, !here);
   putHidden(R.right, !here || !TOOL_TUNE.on);
   // which node the numbers are for: the one you work, or this skill's last node

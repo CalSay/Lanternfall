@@ -840,6 +840,35 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .gate-rule { order: 1; margin: 4px 8px 0; padding: 4px 8px; font-size: max(var(--tmin, 0px), calc(11.5px * var(--tk, 1))); gap: 6px; }
 .gate-rule img { width: 16px; height: 16px; }
 .gate-rule.hide { display: none; }
+/* away-card-next-up-first: results, then what to do next, then everything else folded under More */
+.away-res, .away-next { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.away-more { list-style: none; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; background: var(--well); border: 1px solid var(--line-hi); color: var(--muted); font: 600 max(var(--tmin, 0px), calc(11px * var(--tk, 1))) var(--body); letter-spacing: .16em; text-transform: uppercase; cursor: pointer; }
+.away-more::after { content: "+"; font: 600 max(var(--tmin, 0px), calc(16px * var(--tk, 1)))/1 var(--body); color: var(--ember); }
+.away-more::-webkit-details-marker { display: none; }
+.away-fold[open] > .away-more::after { content: "\2212"; }
+.away-more:hover { color: var(--bone); border-color: var(--ember-deep); }
+.away-fold > .away-block { margin-top: 14px; }
+/* landscape and desktop: results on the left, the limit and Next up on the right, both from the top */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) {
+  .away-card:has(.away-body.two) { width: min(720px, 100%); }
+  .away-body.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 18px; }
+  .away-body.two > .away-top { grid-column: 1 / -1; }
+  .away-body.two .away-limwrap .away-lim { width: 100%; }
+  .away-card:has(.away-body.two) .away-foot { display: flex; justify-content: center; }
+  .away-card:has(.away-body.two) .away-go { width: min(340px, 100%); }
+}
+/* a short landscape screen (740x360): a one-row header and tighter gaps */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
+  .away-ov { padding: 8px; }
+  .away-card { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+  .away-body { gap: 10px; }
+  .away-top { display: flex; align-items: baseline; justify-content: center; gap: 12px; padding: 8px 14px; }
+  .away-time { font-size: max(var(--tmin, 0px), calc((24px * var(--display-k)) * var(--tk, 1))); }
+  .away-res, .away-next { gap: 10px; }
+  .away-fold > .away-block { margin-top: 10px; }
+  .away-limwrap .away-lim { margin-top: 0; }
+  .away-foot { padding: 8px 14px 10px; }
+}
 /* 60-bosstry: the Try again card after a zone boss beats you (75-boss-try-ui.js). */
 .bt-eye { font: 600 max(var(--tmin, 0px), calc(11px * var(--tk, 1))) var(--body); letter-spacing: .18em; text-transform: uppercase; color: #E0524F; }
 .bt-head { margin: 2px 0 4px; font-size: max(var(--tmin, 0px), calc(20px * var(--tk, 1))); line-height: 1.2; }
@@ -1488,6 +1517,23 @@ span.cf-d { font-weight: 600; }
   .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res .cf-resact { order: 1; }
   .trophies { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
 }
+
+/* craft-strike-infuse: the recipe row's lift line (the Strike or Infuse, one grade, never above A), the Infuse button, the result note,
+   and the Strike's timing bar: the fight's parry bar (.tv-time, 60-turn.css) over the screen, which holds the game while it shows */
+.cf-lift { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: max(var(--tmin, 0px), calc(12.5px * var(--tk, 1))); color: var(--gold, #F2C14E); }
+.cf-lift-t { flex: 1 1 160px; min-width: 0; }
+.cf-inf { min-height: 44px; min-width: 76px; padding: 4px 12px; border: 2px solid #0B0810; cursor: pointer; font: 600 max(var(--tmin, 0px), calc((13px * var(--display-k)) * var(--tk, 1))) var(--display);
+  background: var(--panel-2); color: var(--gold, #F2C14E); box-shadow: inset 0 0 0 1px var(--gold, #F2C14E), inset 0 -3px 0 #1a1420; }
+.cf-inf:disabled { color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; cursor: default; }
+.cf-lift-w { flex-basis: 100%; color: var(--muted); font-size: max(var(--tmin, 0px), calc(12px * var(--tk, 1))); }
+.cf-liftn { margin: 0; }
+.cf-liftn.up { color: var(--gold, #F2C14E); }
+.cf-strike { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(10, 7, 14, .55); cursor: pointer; touch-action: none; user-select: none; }
+.cf-strike[hidden] { display: none; }
+.cf-sk { display: grid; justify-items: center; gap: 6px; padding: 12px 14px; max-width: calc(100vw - 32px); background: #0B0810; border: 2px solid var(--gold, #F2C14E); }
+.cf-sk-t { margin: 0; font: 700 max(var(--tmin, 0px), calc((16px * var(--display-k, 1)) * var(--tk, 1)))/1.2 var(--display); color: var(--bone); text-align: center; }
+.cf-sk-s { margin: 0; font-size: max(var(--tmin, 0px), calc(12.5px * var(--tk, 1))); color: var(--muted); text-align: center; max-width: 300px; }
+.cf-sk .tv-time { width: min(300px, calc(100vw - 64px)); }
 /* 60-deeds: the Achievements menu, its sheets, the Feat card (75-deeds-ui.js) and the Journal's stats wall
    (75-stats-ui.js). Display text is Handjet: every display size is calc(Npx * var(--display-k)). */
 
@@ -2536,6 +2582,25 @@ span.cf-d { font-weight: 600; }
 .ob-name { display: none; }
 .ob-x { pointer-events: auto; grid-column: 3; grid-row: 1; align-self: start; width: 44px; height: 44px; margin-top: -8px; background: none; border: 0; color: var(--muted); font: 600 max(var(--tmin, 0px), calc((20px * var(--display-k)) * var(--tk, 1)))/1 var(--display); cursor: pointer; }
 .ob-x:hover, .ob-x:focus-visible { color: var(--bone); }
+/* tips-pause-says-so: a tip holds the game (#app.guide-held, 75-onboard-ui). A flat plate says Paused (text, no art, no motion) at the top of
+   the stage, under the foe's bar on its right: the bars, the place line and the toast column take the centre, the turn banner the middle; over an upright menu the strip carries it as a tag on its top edge. A refused press flashes them red (a colour). */
+.ob-paused { display: none; position: absolute; top: calc(var(--vs-b, 54px) + 4px); right: 8px; z-index: 9; pointer-events: none;
+  padding: 2px 10px; background: #1A1422; border: 2px solid var(--gold); box-shadow: 0 2px 0 #0B0810; color: var(--gold);
+  font: 600 max(var(--tmin, 0px), calc((13px * var(--display-k)) * var(--tk, 1))) / 1.1 var(--display); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.app.guide-held .ob-paused:not(.off) { display: block; }
+.ob-held { display: none; position: absolute; top: -10px; left: 52px; pointer-events: none; padding: 1px 6px; background: #1A1422;
+  border: 2px solid var(--gold); color: var(--gold); font: 600 max(var(--tmin, 0px), calc((10px * var(--display-k)) * var(--tk, 1))) / 1 var(--display); letter-spacing: .08em; text-transform: uppercase; }
+.app.guide-held > .ob-bub.over-menu .ob-held { display: block; }
+.ob-paused.nope, .ob-held.nope { background: #3A1A20; border-color: #E0524F; color: #FFD0C8; }
+/* the fight bar stays in view under the hold, dimmed, its ready glow off. A tile the turn banner already dims (.wait,
+   fight-input-during-banner) keeps that look, so the two never stack. The .app.guide-held prefix outranks 60-solo.css, which loads later. */
+.app.guide-held .sbar .sbtn:not(.wait) .sb-ic, .app.guide-held .sbar .sbtn:not(.wait) .sb-tx, .app.guide-held .sbar .sbtn:not(.wait) .sb-n,
+.app.guide-held .sbar .sbtn:not(.wait)::before { opacity: .5; }
+.app.guide-held .sbar .sbtn:not(.wait) { outline-color: #3A3046; }
+.app.guide-held .sbar .sb-parry.live:not(.wait), .app.guide-held .sbar .sb-dodge.live:not(.wait) { box-shadow: inset 0 0 0 4px #1E1826, 0 3px 0 #0B0810; }
+.app.guide-held .sbar .sbtn.ready-now:not(.nope) { animation: none; }
+.app.guide-held .sbar .sbtn:focus-visible { outline-color: var(--gold); }
+.app.guide-held .sbar .sbtn.refused { outline-color: #A0442E; }
 /* locked sections (registerSection feature) */
 .sec.f-off { display: none !important; }
 /* new tab / new view: a gold mark until first opened */
@@ -3868,9 +3933,13 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 @media (max-aspect-ratio: 1/1), (max-width: 599px) {
   .hud.vs .hero-plate, .hud.vs .mob { min-height: 80px; }
 }
+/* boss-bar-long-names-fit (2026-10-09): at 740x360 the name's cell beside the HP was about 93 px, so "The Hollow Cantor" took three
+   lines and covered the place line, and "Elder Rattlebones" ran past the plate. Now a name that does not fit beside the HP keeps its
+   one line at full size and the HP drops to a row of its own under it: name, HP and bar still fit the plate's 58 px (the timer lies
+   along the bottom edge). Only a name wider than the whole plate wraps, inside it. */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) {
-  .stagebox .hud.vs .mob .mob-line { flex-wrap: nowrap; align-items: flex-start; }
-  .stagebox .hud.vs .mob .mob-name { flex: 1 1 0; min-width: 0; max-width: none; }
+  .stagebox .hud.vs .mob .mob-line { flex-wrap: wrap; align-items: baseline; row-gap: 0; }
+  .stagebox .hud.vs .mob .mob-name { flex: 1 0 auto; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
   .stagebox .hud.vs .mob .mob-hp { flex: none; }
   .hud.vs .hero-plate, .hud.vs .mob { min-height: 58px; }
 }
@@ -13508,6 +13577,9 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //                                                kind 'starChart' crafts the Star Chart and returns
 //                                                { kind: 'starChart', t: 3 } (not an item).
 //                                                Emits 'itemAdded' (via addItem) and 'crafted' {item, kind, t}.
+//                                                craft-strike-infuse: opts { strike: bool } (the timing bar's result: true in the
+//                                                window), { infuse: true } (pay Essence for the lift). The event carries lift:
+//                                                'strike' | 'infuse' | 'missed' | undefined.
 //   canCraft(kind, t, opts?) -> { ok, why, cost, lv, need, miss }   why: player text or ''.
 //                                                cost: {mats, gold, troph}; miss: [[fam, n], ...]
 //   stationOf(kind) -> { key, n, skill }         the station that makes a kind
@@ -13530,6 +13602,9 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //   salvageItem(id) (51-actions) is generic; salvageGive calls craftSalvageBonus(it): affixed items
 //                                                have a 20% chance per line of 1 essence of their tier, and an
 //                                                upgraded item pays back craftUpgradeRefund(it) gold (ledger 'craft', negative)
+//   craftStrikeOffered(kind, t) -> bool          craft-strike-infuse: the timing bar shows for this craft (CRAFT_TUNE.strike)
+//   craftInfusePrice(kind, t) -> n               the Essence Infuse costs on this craft, 0 when Infuse is not offered (CRAFT_TUNE.infuse)
+//   craftLiftTo(kind, t) -> grade index | null   the grade a lift makes, null when the level's grade cannot be lifted (A or S)
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
 //   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
 //                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
@@ -13548,7 +13623,9 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //     Swords/Helms and the hero's gear of another class into the new class's kinds (same id,
 //     tier, rarity, +N, lines). Anything that still does not fit goes back to the bag.
 //
-// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd, xpv }). xpv: the station curve the bars are on.
+// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd, xpv, made }). xpv: the station curve the bars are on.
+//   made: { [station]: n } pieces made at each station (craft-strike-infuse: a station's first piece has no Strike). Optional; a
+//   missing entry is seeded on load from the station's pieces the player holds, so a veteran's next craft is not their first.
 //   tmd: { fam: [n x 5] } units made by transmuting down (they cannot be broken down again; BAL1).
 //   troph: Trophy counts by zone type (CRAFT_TROPHIES order). tonic: { k, t, left } active.
 //   tonics: { 'key:t': count } the pouch. jobs, champ: K5/K10. starChart: Star Charts made.
@@ -13571,10 +13648,10 @@ function craftXpMap() {
 
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, upgradeCover, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare;
+  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare, craftStrikeOffered, craftInfusePrice, craftLiftTo;
 
 {
-  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0 });
+  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0, made: {} });
   craftXpMap();
   const C = () => S.craft;
   const STAR = { t: 3, mats: { crystal: 40, ess: 20 }, troph: [[6, 1]], st: 'ench' };
@@ -13584,6 +13661,14 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   const validTier = t => Number.isInteger(t) && t >= 1 && t <= 5;
   const trophyName = i => CRAFT_TROPHIES[i].n;
   trophies = () => C().troph.reduce((a, b) => a + (b || 0), 0);
+  // craft-strike-infuse: pieces made a station (a class piece, Trinket or Charm; never tools or the old Sword and Helm)
+  const pieceKind = kind => !!CRAFT_KINDS[kind] && !CRAFT_KINDS[kind].tool && !CRAFT_KINDS[kind].legacy;
+  const made = () => { const c = C(); if (!c.made || typeof c.made !== 'object' || Array.isArray(c.made)) c.made = {}; return c.made; };
+  { const m = made();
+    for (const st of Object.keys(CRAFT_STATIONS)) if (!Number.isInteger(m[st])) {
+      const n = (S.items || []).filter(it => it && !it.u && pieceKind(it.slot) && CRAFT_KINDS[it.slot].st === st).length;
+      m[st] = n;   // 0 too, so a new game's stations are never seeded again from pieces found later
+    } }
 
   // ---- stations ----
   stationOf = kind => {
@@ -13616,6 +13701,17 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     let top = 1; for (let u = 2; u <= 5; u++) if (stationTierOpen(kind, u)) top = u;
     return t < top ? SKILL_TUNE.belowTierX : 1;
   };
+  // ---- craft-strike-infuse: one lift a craft, never above A (S comes only from the station level) ----
+  const LIFT_TOP = GRADE.findIndex(x => x.n === 'A');
+  craftLiftTo = (kind, t) => {
+    if (!gradedKind(kind) || !validTier(t)) return null;
+    const g = gradeFor(kind, t); return g < LIFT_TOP ? g + 1 : null;
+  };
+  craftStrikeOffered = (kind, t) => !!CRAFT_TUNE.strike && craftLiftTo(kind, t) != null && (made()[CRAFT_KINDS[kind].st] | 0) > 0;
+  craftInfusePrice = (kind, t) => {
+    if (!CRAFT_TUNE.infuse || craftLiftTo(kind, t) == null) return 0;
+    return CRAFT_TUNE.infuseX * Math.max(1, craftRecipe(kind, t).ess || 0);   // a recipe with no Essence costs infuseX
+  };
   const gateWhy = (skill, need) => `Needs ${SKILL[skill]} ${need}`;
   // H1 (55-hearth): a cold save crafts only at a station it has built. '' = built (every warm save).
   const unbuilt = st => typeof hearthStationWhy === 'function' ? hearthStationWhy(st) : '';
@@ -13636,6 +13732,8 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const need = open ? Math.min(lv, CRAFT_STATION_REQ[t - 1]) : CRAFT_STATION_REQ[t - 1];   // a kept tier needs no more
     const cost = splitCost(craftRecipe(kind, t));
     if (opts.mw != null) cost.troph = [[opts.mw, 1]];
+    let inf = 0;
+    if (opts.infuse) { inf = craftInfusePrice(kind, t); if (!inf) return no('Infuse cannot lift this craft.', { cost, lv, need, miss: [] }); cost.mats.ess = (cost.mats.ess || 0) + inf; cost.infuse = inf; }
     const x = { cost, lv, need, miss: [] };
     if (unbuilt(st.key)) return no(unbuilt(st.key), Object.assign(x, { unbuilt: true }));
     if (!open) return no(gateWhy(st.skill, need), x);
@@ -13657,14 +13755,20 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     if (opts.mw != null) C().troph[opts.mw]--;
     // craft-attribute-grades: with CRAFT_TUNE.grades on, a class piece, Trinket or Charm is made at its station's grade (no die);
     // tools roll the die as before. Switch off: exactly the old roll.
-    const g = gradedKind(kind) ? gradeFor(kind, t) : null;
+    let g = gradedKind(kind) ? gradeFor(kind, t) : null;
+    // craft-strike-infuse: Infuse (paid above) or a Strike in the window lifts one grade, never above A; one lift a craft.
+    // A missed Strike makes the piece at the level's grade. Nothing is paid before this call, so a miss never loses materials.
+    let lift;
+    if (opts.infuse && c.cost.infuse) { g = craftLiftTo(kind, t); lift = 'infuse'; }
+    else if (opts.strike != null && craftStrikeOffered(kind, t)) { if (opts.strike) { g = craftLiftTo(kind, t); lift = 'strike'; } else lift = 'missed'; }
+    if (pieceKind(kind)) { const m = made(), st = CRAFT_KINDS[kind].st; m[st] = (m[st] | 0) + 1; }
     const r = g != null ? GRADE[g].r : rollRarity(stationLevel(kind));
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw, g });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t) * craftXpShare(kind, t));
     // craft-delta: opts.wear (the Craft button only) puts on a tool that beats the worn one, or fills an empty slot. Gear always asks.
     // Straight into S.equip, not equipItem (its "Equipped" toast would be a second toast for one craft; the result card is the receipt).
-    const ev = { item: it, kind, t }, d = CRAFT_KINDS[kind], pos = d && d.tool ? kindPos(kind) : null;
+    const ev = { item: it, kind, t, lift }, d = CRAFT_KINDS[kind], pos = d && d.tool ? kindPos(kind) : null;
     if (opts.wear && pos && pos in S.equip && fits(it, pos, 'hero')) {
       const cur = equipped(pos);
       if (!cur || itemPower(it) > itemPower(cur)) {
@@ -16968,7 +17072,8 @@ function validateSave(data) {
         }
       }
     }
-    if (data.craft && data.craft.xpv !== undefined) int(data.craft.xpv, 'craft.xpv', 0, 1);   // craft-curve-skills-report: which station curve the bars are on
+    if (data.craft && data.craft.xpv !== undefined) int(data.craft.xpv, 'craft.xpv', 0, 1);
+    if (data.craft && data.craft.made !== undefined) { record(data.craft.made, 'craft.made'); for (const [k, n] of Object.entries(data.craft.made)) { known(CRAFT_STATIONS, k, 'craft.made'); int(n, 'craft.made.' + k, 0, 1e9); } }   // craft-strike-infuse: pieces made a station   // craft-curve-skills-report: which station curve the bars are on
     if (data.craft && data.craft.tonic != null) { record(data.craft.tonic, 'craft.tonic'); known(CRAFT_TONICS, data.craft.tonic.k, 'craft.tonic.kind'); tier(data.craft.tonic.t, 'craft.tonic.tier'); num(data.craft.tonic.left, 'craft.tonic.left'); }
     return { ok: true, data };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'This save has invalid data.' }; }
@@ -36512,13 +36617,16 @@ function gxRowUpdate(r, opts) {
   } else putText(r.meta, `Needs ${SKILL[sk]} ${req}`);
   putHidden(r.fill.parentNode, !open);
   if (open) putStyle(r.fill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
-  // a locked row offers no button (its line says what it needs); the node you work says Working
+  // a locked row offers no button (its line says what it needs); the node you work says Working (Paused while a tip holds the game)
   putHidden(r.btn, !open);
-  putText(r.btn, here ? 'Working' : NODE_VERB[kind]);
+  const wk = gxWork();
+  putText(r.btn, here ? wk : NODE_VERB[kind]);
   putClass(r.btn, 'gx-act' + (here ? ' here' : opts && opts.best ? ' best' : ''));
   putDisabled(r.btn, !open || here);
-  putAttr(r.btn, 'aria-label', here ? `Working at the ${NODE_NAMES[kind][t - 1]}` : `${NODE_VERB[kind]} at the ${NODE_NAMES[kind][t - 1]}`);
+  putAttr(r.btn, 'aria-label', here ? `${wk} at the ${NODE_NAMES[kind][t - 1]}` : `${NODE_VERB[kind]} at the ${NODE_NAMES[kind][t - 1]}`);
 }
+// tips-pause-says-so: while a Hesketh tip holds the game (#app.guide-held, 75-onboard-ui) nothing is gathered, so the node says so
+const gxWork = () => { const a = $('app'); return a && a.classList.contains('guide-held') ? 'Paused' : 'Working'; };
 const gxHead = (title, note) => {
   const h = el('div', 'sec-head gx-head'), t = el('h2', 'sec-title', title), n = el('span', 'note gx-hnote', note || '');
   h.append(t, n); return { h, t, n };
@@ -36600,7 +36708,7 @@ function gxNow(R) {
   putToggle(R.card, 'other', state === 'other');
   putHidden(R.nt, state === 'other');
   putHidden(R.strip, state !== 'other');
-  putHidden(R.nchip, !here);
+  putHidden(R.nchip, !here); putText(R.nchip, gxWork());
   putHidden(R.nrest, !here);
   putHidden(R.right, !here || !TOOL_TUNE.on);
   // which node the numbers are for: the one you work, or this skill's last node
@@ -38181,8 +38289,10 @@ var handsTradeOpenPicker;
 // showAwayReport(r) takes the report built by awayGains() + 55-stats.js (see there for its
 // fields and for registerAwayLine). Shown when the player was gone 30s or more and
 // something happened. Numbers count up; under prefers-reduced-motion they appear at once.
+// Order (away-card-next-up-first, W8 card 3): results, the work limit, Next up, then one folded
+// "More (n)" row holding every other registerAwayLine group (folded, never dropped).
 
-let showAwayReport;
+let showAwayReport, awayLimitStep;
 {
   const COIN = () => iconURL('coin', '#F2C14E');
   const IC = {
@@ -38210,11 +38320,14 @@ let showAwayReport;
   }
   function onKey(e) {
     if (!root) return;
-    const onGo = e.target && e.target.classList && e.target.classList.contains('away-lgo');
+    const onMore = e.target && e.target.classList && e.target.classList.contains('away-more');
+    const onGo = onMore || (e.target && e.target.classList && e.target.classList.contains('away-lgo'));
+    // Space on More toggles the fold: stop it here so the fight's Space key (dodge) never sees it or cancels the toggle
+    if (onMore && e.key === ' ') { e.stopPropagation(); return; }
     if (e.key === 'Escape' || (e.key === 'Enter' && !onGo)) { e.preventDefault(); e.stopPropagation(); close(); }
     else if (e.key === 'Tab') {
-      // cycle through the Go buttons and Collect
-      const f = [...root.querySelectorAll('.away-lgo, .away-go')], i = f.indexOf(document.activeElement);
+      // cycle through the Go buttons, More and Collect (a closed fold's Go buttons are skipped)
+      const f = [...root.querySelectorAll('.away-lgo, .away-more, .away-go')].filter(b => !b.closest('.away-fold:not([open])') || b.matches('.away-more')), i = f.indexOf(document.activeElement);
       e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
     }
   }
@@ -38250,11 +38363,74 @@ let showAwayReport;
     return b;
   }
 
+  // A line's Go button: closes the card, then runs the line's go().
+  function goBtn(l) {
+    const gb = el('button', 'mini go away-lgo', l.goLabel || 'Go');
+    const aria = l.aria || (l.goLabel ? l.goLabel + ': ' + (l.txt || '') : '');
+    if (aria) gb.setAttribute('aria-label', aria);
+    gb.addEventListener('click', () => { close(); try { l.go(); } catch (e) { console.error('[lanternfall] away line go failed', e); } });
+    return gb;
+  }
+
+  // away-limit-says-next-step (ruling 2026-10-08-first-night-covered, card 2): when the hero hit the away limit,
+  // the bar gives both numbers and the box names the one next step. Read-only: it never changes the limit.
+  awayLimitStep = function (r) {
+    const H = 3600, max = CAMP_TUNE.awayMax;
+    const raid = r.activity === 'raid';
+    // a raid hit away keeps its old 4 h base (awayRaidCapH): the card never promises more raid time than that
+    const limH = () => raid ? awayRaidCapH() : awayCapH();
+    // the limit one level up, read with the real formulas (the level is put back at once; nothing is saved)
+    const limWith = (set, get) => { const was = get(); try { set(was + 1); return limH(); } finally { set(was); } };
+    const capH = raid ? awayRaidCapH() : r.cap / H;
+    const cap = capH * H, worked = Math.min(r.t, cap), capped = r.secs > cap;
+    const out = { cap, worked, capped, bar: '', rows: [] };
+    if (!capped) return out;
+    out.bar = raid ? `Your hero hit the raid boss for ${hm(worked)} of your ${hm(r.secs)} away.` : `Your hero worked ${hm(worked)} of your ${hm(r.secs)} away.`;
+    const camp = typeof campOpen === 'function' && campOpen();
+    const closed = S.hearth && S.hearth.cold ? 'Light the camp fire first.' : `Your camp opens at zone ${CAMP_TUNE.openZone}.`;
+    const hearth = campLevel('hearth'), goCamp = id => () => emit('campGoto', { tab: 'world', view: 'camp', sel: '#camp-b-' + id });
+    const goClosed = S.hearth && S.hearth.cold ? goCamp('hearth') : null;
+    // the Storehouse filled before the limit: more hours would not have held more, so it names the Storehouse
+    const full = !raid && (r.lines || []).some(l => l && /^Storehouse full/.test(String(l.txt || '')));
+    if (full) {
+      const st = campLevel('store'), to = st + 1, need = STORE_HREQ[to - 1];
+      if (to >= STORE_TUNE.caps.length) out.rows.push({ icon: IC.glass, txt: 'Your Storehouse filled before your hero stopped.', sub: 'It is at its biggest. Spend from a full pile to gather more.' });
+      else out.rows.push({ icon: IC.glass, txt: `Your Storehouse filled before your hero stopped. Storehouse Lv ${to} holds more.`,
+        sub: !camp ? closed : hearth < need ? `Opens at Hearth ${need} (zone ${CAMP_HZ[need - 1]}).` : '',
+        go: !camp ? goClosed : goCamp(hearth < need ? 'hearth' : 'store'), aria: `Go to the ${!camp || hearth < need ? 'Hearth' : 'Storehouse'}` });
+      return out;
+    }
+    const w = campLevel('watch'), to = w + 1;
+    const next = to > CAMP_B.watch.max ? capH : limWith(v => { S.camp.b.watch = v; }, () => campLevel('watch'));
+    const need = Math.max(CAMP_HREQ[to - 1] || 99, CAMP_B.watch.opens || 1);
+    // Watchtower 5 opens at Hearth 8 (zone 38), past the Hollow: in Chapter 1, Watchtower 4 is the camp's most
+    const ch1 = S.maxZone <= PACE.region && CAMP_HZ[need - 1] > PACE.region;
+    const sched = 'Gatherer jobs, trade runs and camp builds keep their own clocks.';
+    if (next <= capH || ch1) {
+      out.rows.push({ icon: IC.glass, txt: `${capH}h is the most your camp can do${ch1 && next > capH ? ' in Chapter 1' : ''}.`, sub: sched });
+    } else {
+      out.rows.push({ icon: IC.glass, txt: `Watchtower Lv ${to}: +${next - capH}h (${next}h).`,
+        sub: !camp ? closed : hearth < need ? `Opens at Hearth ${need} (zone ${CAMP_HZ[need - 1]}).` : sched,
+        go: !camp ? goClosed : goCamp(hearth < need ? 'hearth' : 'watch'), aria: `Go to the ${!camp || hearth < need ? 'Hearth' : 'Watchtower'}` });
+    }
+    // the Hourglass only while the raid is open (raid Embers buy it; a read-only check, the online layer is unchanged),
+    // and only while a level still adds time to this limit
+    const glass = RELICS.find(u => u.id === 'glass');
+    const raidOpen = online.ready && (typeof isUnlocked !== 'function' || isUnlocked('raid'));
+    if (raidOpen && glass && S.relic.glass < glass.cap) {
+      const g = limWith(v => { S.relic.glass = v; }, () => S.relic.glass);
+      if (g > capH) out.rows.push({ icon: IC.glass, txt: `Hourglass Lv ${S.relic.glass + 1}: +${g - capH}h, for raid Embers.`, go: () => emit('campGoto', { tab: 'world', view: 'raid', sel: '#relicRows' }), aria: 'Go to the Hourglass' });
+    }
+    return out;
+  };
+
   function build(r) {
     root = el('div', 'away-ov');
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'awayTitle');
     const card = el('div', 'away-card');
     const body = el('div', 'away-body');
+    // results on one side, what to do next on the other (side by side on a short landscape screen, 60-away.css)
+    const res = el('div', 'away-res'), next = el('div', 'away-next');
 
     // ---- header: time away ----
     const top = el('div', 'away-top');
@@ -38265,11 +38441,11 @@ let showAwayReport;
     // ---- what the hero did ----
     const actIc = r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
     const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
-    if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); body.append(n); }
+    if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); res.append(n); }
     if (r.activity === 'fight') {
       const rule = el('p', 'away-rule');
       rule.append(img(IC.glass()), el('span', null, AWAY_RULE_TXT));
-      body.append(rule);
+      res.append(rule);
     }
 
     // ---- headline numbers ----
@@ -38282,7 +38458,7 @@ let showAwayReport;
     if (r.bosses) tiles.append(tile(IC.boss(), r.bosses, 'Bosses beaten'));
     if (r.raidDmg >= 1) tiles.append(tile(IC.flame(), r.raidDmg, 'Raid damage', null, 'raid'));
     if (r.embers) tiles.append(tile(IC.ember(), r.embers, 'Embers', v => '+' + fmt(Math.floor(v)), 'ember'));
-    if (tiles.children.length) { tiles.dataset.n = Math.min(3, tiles.children.length); body.append(tiles); }
+    if (tiles.children.length) { tiles.dataset.n = Math.min(3, tiles.children.length); res.append(tiles); }
 
     // ---- materials by family and tier ----
     if (r.mats && r.mats.length) {
@@ -38302,7 +38478,7 @@ let showAwayReport;
         }
         row.append(chips); b.append(row);
       }
-      body.append(b);
+      res.append(b);
     }
 
     // ---- items ----
@@ -38317,7 +38493,7 @@ let showAwayReport;
         grid.append(row);
       }
       if (r.items.length > 8) grid.append(el('p', 'note', `And ${r.items.length - 8} more in your bag.`));
-      b.append(grid); body.append(b);
+      b.append(grid); res.append(b);
     }
 
     // ---- skills ----
@@ -38330,26 +38506,31 @@ let showAwayReport;
         row.append(img(SKILL_IC[s.k] ? SKILL_IC[s.k]() : IC.banner()), el('span', 'away-sn', SKILL[s.k] || s.k), lv);
         b.append(row);
       }
-      body.append(b);
+      res.append(b);
     }
 
     // ---- the hero's work limit, after the results ----
     const lim0 = el('div', 'away-limwrap');
     if (!r.turnCombat) {
+    const L = awayLimitStep(r);
     if (r.cap) {
       const lim = el('div', 'away-lim'), bar = el('div', 'bar'), fill = el('i');
-      fill.style.width = Math.min(100, r.t / r.cap * 100) + '%';
+      fill.style.width = Math.min(100, L.worked / L.cap * 100) + '%';
       bar.append(fill);
-      lim.append(bar, el('span', null, r.capped ? 'Hero work limit reached' : `Your hero worked ${hm(r.t)} of ${hm(r.cap)}`));
+      lim.append(bar, el('span', null, L.capped ? L.bar : r.activity === 'raid' ? `Your hero hit the raid boss for ${hm(L.worked)} of ${hm(L.cap)}` : `Your hero worked ${hm(L.worked)} of ${hm(L.cap)}`));
       lim0.append(lim);
     }
-    if (r.capped) {
+    for (const l of L.capped ? L.rows : []) {
       const cap = el('div', 'away-cap');
-      cap.append(img(IC.glass()), el('span', null, `Your hero works for up to ${hm(r.cap)} away. Gatherer jobs, trade runs and camp builds finish on their own schedules. Hourglass relics and the Watchtower raise the hero's limit, up to 24 hours.`));
+      const tx = el('div', 'away-ltx');
+      tx.append(el('div', null, l.txt));
+      if (l.sub) tx.append(el('div', 'away-lsub', l.sub));
+      cap.append(img(l.icon()), tx);
+      if (l.go) cap.append(goBtn(l));
       lim0.append(cap);
     }
     }
-    if (lim0.children.length) body.append(lim0);
+    if (lim0.children.length) next.append(lim0);
 
     // ---- lines from other systems (registerAwayLine) ----
     // A line may name its own block (group, e.g. 'Next up') and carry a Go button (go()).
@@ -38359,7 +38540,7 @@ let showAwayReport;
     // material amounts are already above; keep the useful reason without listing gains twice.
     const gathering = (r.lines || []).filter(l => l && l.sub && !String(l.txt || '').startsWith('+'));
     if (gathering.length) groups.set('Gathering', [...(groups.get('Gathering') || []), ...gathering]);
-    for (const [title, lines] of groups) {
+    const blockOf = (title, lines) => {
       const b = block(title);
       for (const l of lines) {
         const row = el('div', 'away-line');
@@ -38368,16 +38549,29 @@ let showAwayReport;
         tx.append(el('div', 'away-lt', l.txt || ''));
         if (l.sub) tx.append(el('div', 'away-lsub', l.sub));
         row.append(tx);
-        if (typeof l.go === 'function') {
-          const gb = el('button', 'mini go away-lgo', l.goLabel || 'Go');
-          if (l.goLabel) gb.setAttribute('aria-label', l.goLabel + ': ' + (l.txt || ''));
-          gb.addEventListener('click', () => { close(); try { l.go(); } catch (e) { console.error('[lanternfall] away line go failed', e); } });
-          row.append(gb);
-        }
+        if (typeof l.go === 'function') row.append(goBtn(l));
         b.append(row);
       }
-      body.append(b);
+      return b;
+    };
+    // Next up comes straight after the results; every other group folds under one "More (n)" row
+    const nu = groups.get('Next up');
+    if (nu) { groups.delete('Next up'); const b = blockOf('Next up', nu); b.classList.add('away-nu'); next.append(b); }
+    const n = [...groups.values()].reduce((a, ls) => a + ls.length, 0);
+    if (n) {
+      // a <details> fold (its summary is not a <button>, so a tool pressing the card's first button still meets a Go or
+      // Collect); the lines are built on first open, so no hidden Go sits in the card before Collect
+      const fold = el('details', 'away-fold'), more = el('summary', 'away-more', `More (${n})`);
+      fold.append(more);
+      fold.addEventListener('toggle', () => {
+        if (!fold.open) return;
+        if (fold.children.length === 1) for (const [title, lines] of groups) fold.append(blockOf(title, lines));
+        try { more.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' }); } catch (e) {}
+      });
+      next.append(fold);
     }
+    if (res.children.length) body.append(res);
+    if (next.children.length) { body.append(next); if (res.children.length) body.classList.add('two'); }
 
     const foot = el('div', 'away-foot');
     const go = el('button', 'big home away-go', 'Collect');
@@ -40160,7 +40354,7 @@ let craftUI = null;
   }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
+  const st8 = { lift: {}, st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
     tool: {}, fd: {}, crafted: false };   // craft-delta: tool: id -> { on, speed } from the crafted event; fd: id -> { sig, job, res } the fight line
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
@@ -40205,19 +40399,87 @@ let craftUI = null;
   const roleFor = k => st8.role[k] || 'striker';
   // craft-delta: how many recipes you could make right now (a craft made with two or more on offer is a choice)
   const affordable = () => { let n = 0; for (const s of STATION_KEYS) for (const k of listFor(s, 'you')) for (let t = 1; t <= 5 && n < 2; t++) if (skillTierOpen(skillOfSt(s), t) && safe(() => canDo(k, t).ok, false)) n++; return n; };
-  function doCraft(k, t) {
-    if (!canDo(k, t).ok) return;
+  // craft-strike-infuse: how = 'infuse' pays Essence for the lift. Otherwise, when the timing bar is offered (craftStrikeOffered), the bar
+  // shows first and the craft is made (and paid) only when it resolves, so a miss, no press or a hidden tab never loses materials.
+  function doCraft(k, t, how) {
+    if (!canDo(k, t).ok || strike.on) return;
     const d = CRAFT_KINDS[k], opts = { wear: true };   // craft-delta: a better tool goes on by itself (55-crafting craftItem)
     if (d.role === 'any') opts.role = roleFor(k);
     const mw = mwFor(k); if (mw != null) opts.mw = mw;
-    const f = K6.craft(), choice = affordable() >= 2;
+    const choice = affordable() >= 2;
+    if (how === 'infuse') { if (!safe(() => canCraft(k, t, { infuse: true }).ok, false)) return; opts.infuse = true; }
+    else if (K6.craft() && safe(() => craftStrikeOffered(k, t), false)) { strikeOpen(k, t, opts, choice); return; }
+    craftDone(k, t, opts, choice);
+  }
+  function craftDone(k, t, opts, choice) {
+    const f = K6.craft();
     const it = safe(() => (f ? f(k, t, opts) : forgeItem(k, t)), null);
     if (it) {
-      if (choice) emit('choice', 'craft');
+      if (choice || opts.infuse || opts.strike != null) emit('choice', 'craft');   // craft-strike-infuse: taking the Strike or Infuse is a choice
       if (!st8.crafted) { st8.crafted = true; emit('firstUse', 'craft'); }   // the first craft this visit (the walk plays one fresh game)
       if (it.id != null) st8.fresh.add(it.id); save(); ui(true);
     }
+    return it;
   }
+  // ---- the Strike (craft-strike-infuse): the parry bar's look (.tv-time, 60-turn.css) with its own clock; it holds the game ----
+  // The head fills the track in STRIKE_FILL seconds; the gold window is its last stretch, the fight's parry window (59k: SOLO_TUNE.turnParryWindow
+  // x turnAssistX, capped at TURN_TUNE.windowCaps.parry). A press in it lifts one grade; an early press, no press or a hidden tab makes the
+  // piece at the level's grade. Reduced motion: the bar is the same as the fight's, which only fills.
+  const STRIKE_WORD = { forge: 'Strike', bench: 'Carve', loom: 'Stitch', ench: 'Etch' };
+  const STRIKE_FILL = 1.1, STRIKE_LATE = 0.25;
+  const strike = { on: null, ov: null };
+  holdGame(() => !!strike.on);
+  const strikeWin = () => safe(() => Math.min(TURN_TUNE.windowCaps.parry, SOLO_TUNE.turnParryWindow * turnAssistX()), 0.18);
+  function strikeBuild() {
+    if (strike.ov) return strike.ov;
+    const ov = el('div', 'cf-strike'), box = el('div', 'cf-sk'), ttl = el('p', 'cf-sk-t'), bar = el('div', 'tv-time cf-sk-bar'), track = el('div', 'tv-track');
+    const fill = el('i', 'tv-fill'), pz = el('i', 'tv-parry'), head = el('i', 'tv-head'), legend = el('div', 'tv-legend'), lg = el('span', 'tv-lg-p'), sub = el('p', 'cf-sk-s');
+    ov.hidden = true; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-live', 'assertive');
+    ttl.id = 'cfStrikeT'; ov.setAttribute('aria-labelledby', 'cfStrikeT'); box.tabIndex = -1;
+    track.append(pz, fill, head); legend.append(lg); bar.append(track, legend); box.append(ttl, bar, sub); ov.append(box);
+    ov.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); strikePress(); });
+    document.body.append(ov);
+    strike.ov = { ov, ttl, bar, fill, pz, head, lg, sub };
+    return strike.ov;
+  }
+  function strikeOpen(k, t, opts, choice) {
+    const o = strikeBuild(), word = STRIKE_WORD[CRAFT_KINDS[k].st] || 'Strike', to = safe(() => craftLiftTo(k, t), null);
+    const win = strikeWin();
+    strike.on = { k, t, opts, choice, word, to, win, t0: performance.now() / 1000, done: false };
+    putText(o.ttl, `${word} as the bar reaches the gold`); putText(o.lg, word);
+    putText(o.sub, `In the gold: Grade ${to != null ? GRADE[to].n : 'up'}. A miss still makes it at Grade ${GRADE[safe(() => gradeFor(k, t), 0)].n}.`);
+    o.pz.style.left = (100 * (1 - win / STRIKE_FILL)) + '%'; o.pz.style.width = (100 * win / STRIKE_FILL) + '%';
+    o.bar.classList.remove('in-parry'); o.ov.hidden = false; try { o.ov.firstChild.focus({ preventScroll: true }); } catch (e) {}
+    requestAnimationFrame(strikeDraw);
+  }
+  function strikeDraw() {
+    const s = strike.on; if (!s || s.done) return;
+    const o = strike.ov, e = performance.now() / 1000 - s.t0, x = Math.min(1, e / STRIKE_FILL);
+    o.fill.style.width = (100 * x) + '%'; o.head.style.left = (100 * x) + '%';
+    o.bar.classList.toggle('in-parry', e >= STRIKE_FILL - s.win && e <= STRIKE_FILL);
+    if (e > STRIKE_FILL + STRIKE_LATE) { strikeEnd(false, false); return; }
+    requestAnimationFrame(strikeDraw);
+  }
+  function strikePress() {
+    const s = strike.on; if (!s || s.done) return;
+    const e = performance.now() / 1000 - s.t0;
+    strikeEnd(e >= STRIKE_FILL - s.win && e <= STRIKE_FILL + 0.05, true);   // a frame's grace at the end, as a press lands a moment after the eye sees it
+  }
+  function strikeEnd(hit, pressed) {
+    const s = strike.on; if (!s || s.done) return;
+    s.done = true;   // later presses are ignored; the overlay stays a beat so a second tap cannot reach the row under it
+    setTimeout(() => { if (strike.on === s) strike.on = null; if (strike.ov && !strike.on) strike.ov.ov.hidden = true; }, 250);
+    emit('craftStrike', { hit, pressed, kind: s.k, t: s.t });   // 76-audio: the parry chime on a hit
+    const opts = Object.assign({}, s.opts); if (pressed) opts.strike = hit;   // no press: made at the level's grade, and no choice was taken
+    const it = craftDone(s.k, s.t, opts, s.choice);
+    if (it && it.id != null && !pressed) { st8.lift[it.id] = 'missed'; ui(true); }   // the result card says so (a press sets it from 'crafted')
+  }
+  document.addEventListener('keydown', e => {
+    if (!strike.on || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === ' ' || e.key === 'Enter' || e.key === 'f' || e.key === 'F') { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) strikePress(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); strikeEnd(false, false); }   // the menu stays open: made at the level's grade
+  }, true);
+  document.addEventListener('visibilitychange', () => { if (document.hidden && strike.on) strikeEnd(false, false); });   // a hidden tab: the level's grade
   // ---- the fight line (craft-delta): what the piece changes against the boss at your furthest zone (55-fight-delta) ----
   // Sampled a chunk at a time after the card opens, so the card never waits; the line joins it when the sample is done, or is
   // left out. Keyed by what the fight depends on now, so a card seen again after a gear change samples again.
@@ -40411,6 +40673,9 @@ let craftUI = null;
       lines.append(r);
     }
     if (lines.children.length) left.append(lines);
+    { const lf = st8.lift[it.id], w = STRIKE_WORD[(CRAFT_KINDS[it.slot] || {}).st] || 'Strike', q = itemQual(it);   // craft-strike-infuse
+      const txt = lf === 'strike' ? `Your ${w} landed in the gold: ${q}.` : lf === 'infuse' ? `Infused with Essence: ${q}.` : lf === 'missed' ? `The ${w} missed the gold, so it is ${q}. Nothing was lost.` : '';
+      if (txt) left.append(el('p', 'note cf-liftn' + (lf === 'missed' ? '' : ' up'), txt)); }
     const df = diffRows(it), tl = toolLine(it), fl = !wr ? fightLine(it) : '';
     if (tl) right.append(el('p', 'note cf-cmpn cf-toolon', tl));
     if (fl) right.append(el('p', 'note cf-cmpn cf-fight', fl));
@@ -40469,12 +40734,37 @@ let craftUI = null;
     const it = e && e.item; if (!it || it.id == null) return;
     st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
     st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    if (e.lift) st8.lift[it.id] = e.lift;   // craft-strike-infuse: the result card names the lift
     if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null, parts: e.on ? safe(() => toolParts(it, e), null) : null };   // tool-speed-adds-up: the old tool and the parts, read now
     else fdStart(it);
     // a Rare or better craft, or (craft-attribute-grades) grade A or S, is a medium moment
     if ((itemGraded(it) ? GRADE[it.g].moment : it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
       moment('craft', { eye: `Well made · ${itemQual(it)}`, title: itemName(it), sub: `${itemQual(it)} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });
   });
+  // craft-strike-infuse: the lift a craft can take ({ to, sk, inf, ok, why, word }) or null: the Strike (the bar after Craft) and Infuse
+  // (Essence, the button on the row), each one grade, never above A. Names the choice: "Grade A: Strike, or Infuse for 6 Essence".
+  const liftInfo = (k, t) => safe(() => {
+    if (typeof craftLiftTo !== 'function' || !stationTierOpen(k, t)) return null;
+    const to = craftLiftTo(k, t); if (to == null) return null;
+    const sk = craftStrikeOffered(k, t), inf = craftInfusePrice(k, t); if (!sk && !inf) return null;
+    const c = inf ? canCraft(k, t, { infuse: true }) : null;
+    return { to, sk, inf, ok: !!(c && c.ok), why: c && !c.ok ? c.why : '', word: STRIKE_WORD[CRAFT_KINDS[k].st] || 'Strike' };
+  }, null);
+  function liftRow(k, t) {
+    const L = liftInfo(k, t); if (!L) return null;
+    const box = el('div', 'cf-lift');
+    const what = L.sk && L.inf ? `${L.word}, or Infuse for ${fmt(L.inf)} Essence` : L.sk ? `${L.word} in the gold after Craft` : `Infuse for ${fmt(L.inf)} Essence`;
+    box.append(el('span', 'cf-lift-t', `Grade ${GRADE[L.to].n}: ${what}`));
+    if (L.inf) {
+      const b = el('button', 'cf-inf', 'Infuse'); b.type = 'button'; b.disabled = !L.ok;
+      b.setAttribute('aria-label', `Craft ${tierName(k, t)} with Infuse for ${fmt(L.inf)} Essence`);
+      if (!L.ok && L.why) b.title = L.why;
+      b.addEventListener('click', () => doCraft(k, t, 'infuse'));
+      box.append(b);
+      if (!L.ok && L.why) box.append(el('small', 'cf-lift-w', L.why));
+    }
+    return box;
+  }
   function recipeRow(k, t) {
     const d = CRAFT_KINDS[k], can = canDo(k, t);
     const row = el('div', 'cf-rec' + (can.ok ? ' ok' : '') + (st8.focus === k ? ' focus' : ''));
@@ -40506,6 +40796,7 @@ let craftUI = null;
       const gl = stationTierOpen(k, t) ? gradeTxt(k, t) : ''; if (gl) row.append(el('div', 'cf-odds cf-gline', gl));
       const ch = choiceTxt(k, t); if (ch) row.append(el('div', 'cf-odds cf-choice', ch));
     } else { const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds)); }
+    const lr = can.ok ? liftRow(k, t) : null; if (lr) row.append(lr);   // craft-strike-infuse: the choice, on a craft you can make
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
       const seg = el('div', 'seg cf-seg');
@@ -40558,7 +40849,7 @@ let craftUI = null;
       if (st8.result != null && !itemById(st8.result)) st8.result = null;
       st8.recent = st8.recent.filter(id => itemById(id));
       { const it = st8.result != null ? itemById(st8.result) : null; if (it && !(itemKind(it) || {}).tool && !wornBy(it.id)) fdStart(it); }   // craft-delta: a card seen again after a gear change samples again
-      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos], fightLine(it)]; })() : 0]);
+      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? st8.lift[st8.result] || '' : '', st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos], fightLine(it)]; })() : 0]);
       if (resSig !== rec.resSig) {
         rec.resSig = resSig; rec.resBox.textContent = '';
         const rit = st8.result != null ? itemById(st8.result) : null;
@@ -40617,7 +40908,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -43713,7 +44004,8 @@ let navUI = null;
     tavern: "There's a Tavern at camp now. Folk on the road stop in there.",
     codex: "You've a Codex now, in the Journal. It keeps track of what you've found.",
     raid: 'The World raid is open at camp. Every player fights the same boss there.',
-    stars: "You've earned Stars. They're on the Hero tab, and each one changes how you fight.",
+    // tips-pause-says-so (F24): true for both triggers, the first star and hero level 10 with none found yet
+    stars: 'Stars are on the Hero tab now. Bosses drop them, and each one changes how you fight.',
     deep: 'The Deepwell is open on the Fight tab. You pick a boon between its floors.'
   };
   // forge-line-while-fighting: what each materials step is for. A fighter who never opens Camp or Gather hears the step's short gathered
@@ -43766,8 +44058,9 @@ let navUI = null;
   const sayKeep = () => { O().sayQ = sayQ.filter(id => id !== 'defeat').map(id => SAY_ARG[id] ? { id, arg: SAY_ARG[id]() } : { id }); };
   function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) { sayQ.push(id); sayKeep(); } }
   const sayDone = (id, said = true) => { if (said) sayEnd = GUIDE_RT.t; sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); sayKeep(); };
-  // an unlock line held while up: a Got it, the game waits, and only between fights (never two lines at once)
-  const sayStep = id => ({ id: 'say:' + id, text: sayText(id), ok: 1, pause: 1, ph: ['between'] });
+  // an unlock line with a Got it, only between fights (never two lines at once). tips-pause-says-so: it holds nothing of its own (no `pause`):
+  // with the fight in view it holds the gap after a kill (gapHeld, in tick), and gathering, or a fight behind an upright menu, goes on under it
+  const sayStep = id => ({ id: 'say:' + id, text: sayText(id), ok: 1, ph: ['between'] });
   // cal-0107-staged-guide: a guide step already says some unlocks, so his unlock line would say it twice. The Hero tab at the first level-up is
   // the upgrade step's ("The Hero tab is open now..."); a cold Hearth's camp is the fire talk's and the Workbench steps' ("Open Camp and we'll build").
   const saidBySteps = id => (id === 'party' && !O().done.upgrade) || (id === 'camp' && typeof hearthCold === 'function' && hearthCold() && !O().done.bench);
@@ -43781,7 +44074,11 @@ let navUI = null;
     const ic = tab ? document.querySelector(`.tab[data-tab="${tab}"] img`) : null;
     toast(OPEN_TXT[id], 'good', ic ? ic.src : { ic: ['banner', '#F2C14E'] }, tab || id === 'nextup' ? 'high' : 'normal');
   });
-  on('wipe', e => { if (e && e.boss && !e.arena) sayQueue('defeat'); });
+  // tips-pause-says-so (F24): the boss-loss line remembers its boss's zone, and is dropped unsaid (no done mark, so a later loss can say it)
+  // once that boss is beaten: "No shame in that" never follows the win
+  let defeatZone = 0;
+  on('wipe', e => { if (e && e.boss && !e.arena) { defeatZone = e.zone || S.zone; sayQueue('defeat'); } });
+  const defeatStale = () => { const i = sayQ.indexOf('defeat'); if (i >= 0 && S.maxZone > defeatZone) { sayQ.splice(i, 1); if (sayCur === 'defeat') sayCur = ''; } };
   on('scrollDrop', e => { if (e && e.firstEver) { scrollId = e.id || 'moss'; sayQueue('scroll'); } });
   on('abilityLearned', e => { if (e && e.hero === soloHero() && soloAbilities().length > 1) { slotAb = e.id; sayQueue('slot'); sayKeep(); } });
   // guide-goal-after-reload: his Pine Log line carries the first job, and the queue lives in memory only, so a reload before it was read
@@ -43833,7 +44130,9 @@ let navUI = null;
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
   // SOLO1: a step whose action is reading it (the first boss) has a Got it button
   const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
-  bub.append(faceBox, nm, txt, x, okb);
+  // tips-pause-says-so: over an upright menu the stage is out of sight, so the strip carries the "Paused" tag on its top edge
+  const heldTag = el('span', 'ob-held', 'Paused'); heldTag.setAttribute('aria-hidden', 'true');
+  bub.append(faceBox, nm, txt, x, okb, heldTag);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
   const finish = s => s.id.startsWith('say:') ? sayDone(s.id) : s.id.startsWith('use:') ? onboardUseDone(s.id) : guideHide(s.id) || onboardDone(s.id);   // a first-use line is read, not a guide step; a wear tip or the fire tip hides for this session (reload-keeps-tips)
@@ -44021,7 +44320,7 @@ let navUI = null;
   const sceneComing = () => { try { return typeof storyBusy === 'function' && MOMENT_Q.some(m => m.kind === 'champion' && m.scene && storyBusy(m.scene)); } catch (e) { return false; } };
   const tickOwed = () => cachePending_() || sceneComing();   // something only the game tick can finish: no hold may stop the tick now
   const cardComing = () => cardUp() || tickOwed();
-  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
+  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); syncHeld(); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -44035,13 +44334,16 @@ let navUI = null;
     if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
+    defeatStale();
     // forge-line-while-fighting: a materials step in the gap after a kill, fight in view and no menu, is hidden (below); a fighter who has not seen
     // its live line gets one held line for it instead, after a quiet minute, if something gathered is short
     if (step && STOCK_WHAT[step.id] && !S.tab && fightInView() && heroUp() && stockGathered(step.id).length && stockQuiet()) sayQueue(step.id);
     // unlock-voice: a new thing is announced only when no fight is in view, and the game waits on its Got it (cal-0107-staged-guide).
     // It goes before a between step that is not already up and holding (the news, then what to do), never over a fight lesson.
     // staged-guide-followups: nor while a big card is up or on its way (the first boss's card came 1 s after the Scroll line and covered it)
-    if (sayQ.length && O().tips && !document.hidden && guidePhase(!guideMenuCovers()) === 'between') {
+    // tips-pause-says-so (F24): never while the hero is down (a wipe clears the foes, so the phase reads "between" at 0 HP); the line waits for
+    // the next gap after the hero is back up
+    if (sayQ.length && O().tips && !document.hidden && heroUp() && guidePhase(!guideMenuCovers()) === 'between') {
       // forge-line-while-fighting: a materials line that waits (SAY_WAIT) lets the lines behind it go first; a stale one is dropped at once
       for (const i of sayQ.slice()) if (STOCK_WHAT[i] && !SAY_STILL[i]()) { const c = sayCur; sayDone('say:' + i, false); if (c !== i) sayCur = c; }
       const ready = i => !(SAY_WAIT[i] && SAY_WAIT[i]());
@@ -44066,9 +44368,11 @@ let navUI = null;
     // (materials, gold) waits for a calm screen instead (no fight, or a menu over it)
     // forge-line-while-fighting: on a wide view a materials line on Camp or Gather stays beside the fight, steady, holding nothing (keyed on the menu only)
     const stockSide = !!STOCK_WHAT[step.id] && isWide() && STOCK_TABS.includes(S.tab);
+    // tips-pause-says-so: nothing shows or holds in the gap after a wipe (the hero is down), and a news line's hold ends once the fight leaves view
+    // (Gather, an upright menu)
     const gap = !stockSide && fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:')) && !onboardPaused(step) && !(cur && cur.id === step.id && gapHeld);
-    if (gap && !(step.ok || step.id.startsWith('use:'))) return hide();
-    gapHeld = gap || (gapHeld && !!cur && cur.id === step.id);
+    if (gap && (!heroUp() || !(step.ok || step.id.startsWith('use:')))) return hide();
+    gapHeld = gap || (gapHeld && !!cur && cur.id === step.id && (!step.id.startsWith('say:') || fightInView()));
     // first-gold-and-camp-strip: the first weapon is ready to make, so Craft opens on it once (only from the game screen, never out of another menu)
     if (step.id === 'weapon' && !weaponOpened && !S.tab) { const k = weaponKind(); if (k) { weaponOpened = true; S.fSlot = k; S.fTier = 1; forgeGoalPicks++; setTab('forge'); } }
     let spec = null;
@@ -44102,11 +44406,64 @@ let navUI = null;
     if (lost) ring.hidden = true;
     // zone10-clear-moment: never while the cache or a Champion's scene waits on the tick (a paused game skips tick, so the win froze)
     ONBOARD.paused = !lost && (onboardPaused(step) || gapHeld) && !tickOwed();
+    syncHeld();
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
+  // ---------------- tips-pause-says-so: a hold says it holds ----------------
+  // While a tip holds the game (ONBOARD.paused) for anything but a fight lesson, #app carries `guide-held`: "Paused" sits on the stage (and on
+  // the strip's edge over an upright menu), Gather says Paused for Working (72-ui-gather), and the fight bar dims (60-onboard.css). The four
+  // lessons (LESSON_ACT in 75-solo-ui) keep their own look and press rules.
+  const LESSONS = ['attack', 'ability', 'dodge', 'parry'];
+  const plate = el('div', 'ob-paused', 'Paused'); plate.setAttribute('role', 'status');
+  stageBox.append(plate);
+  const heldNow = () => !!(ONBOARD.paused && cur && !layer.hidden && !LESSONS.includes(cur.id));
+  // (upright, an open menu covers the stage, so the plate there would sit on the menu: the strip's tag says it instead)
+  function syncHeld() { putToggle($('app'), 'guide-held', heldNow()); putToggle(plate, 'off', !!S.tab && guideMenuCovers()); }
+  // A fight press while a tip holds the game answers it, then acts as normal (the press is not lost): Got it for a Got it tip, × for a Go tip.
+  // A tip that waits for a press elsewhere ("Open Hero") refuses it: the button shakes and the plate flashes (a colour, not motion); the
+  // press itself goes on as before (it does nothing while the game is held, and a long press still opens the button's info).
+  // Capture-phase listeners, so they run before 75-solo-ui's; the guards copy its key handler's.
+  const FIGHT_KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'dodge' };
+  const solo = () => $('soloBar');   // built by 75-solo-ui, which loads after this file
+  const flashOn = (n, cls, ms) => { n.classList.remove(cls); void n.offsetWidth; n.classList.add(cls); clearTimeout(n._obT); n._obT = setTimeout(() => n.classList.remove(cls), ms); };
+  function refusePress(b) {
+    if (b) { flashOn(b, 'nope', 450); b.classList.add('refused'); clearTimeout(b._refT); b._refT = setTimeout(() => b.classList.remove('refused'), 250); }
+    flashOn(plate, 'nope', 450); flashOn(heldTag, 'nope', 450);
+  }
+  // -> true: the tip is answered and the press goes on; false: refused
+  function answerByPress() {
+    if (okb.hidden) return false;
+    const s = cur;
+    if (curGo || /^(say|use):/.test(s.id)) finish(s); else onboardDone(s.id);
+    hide(); setTimeout(tick, 0);
+    return true;
+  }
+  addEventListener('keydown', e => {
+    if (!heldNow() || typeof e.key !== 'string') return;
+    const id = FIGHT_KEYS[e.key.toLowerCase()]; if (!id) return;
+    const soloBar = solo();
+    if (!soloBar || soloBar.hidden || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
+    if (soloPickerOpen() || gameHeld() || (S.tab && !isWide())) return;
+    if (!answerByPress()) refusePress(soloBar.querySelector(`[data-act="${id}"]`));
+  }, true);
+  document.addEventListener('pointerdown', e => {
+    const soloBar = solo();
+    if (!heldNow() || !soloBar) return;
+    const b = e.target && e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!b || !soloBar.contains(b) || soloPickerOpen() || gameHeld()) return;
+    if (!answerByPress()) refusePress(b);
+  }, true);
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
   onboardSpec = id => { const table = SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
   let lastNode = null, lastRect = null;
+  const meetsBar = () => {
+    const soloBar = solo(), b = soloBar && !soloBar.hidden ? soloBar.getBoundingClientRect() : null; if (!b || !b.width || !b.height) return false;
+    const a = bub.getBoundingClientRect();
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  };
+  // (every look, not only on a layout change: the bar shows under an unchanged tip when the hero goes from gathering to the fight)
+  const syncBtn = () => putToggle($('app'), 'guide-btn', bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden && meetsBar());
   const resKept = new WeakSet();   // craft result cards the guide has already left in view once
   function place(spec) {
     const key = spec.text, newTarget = spec.node !== lastNode;
@@ -44125,6 +44482,7 @@ let navUI = null;
       // live progress ("12/20") updates in place; only a new hint pops
       if (fresh || !spec.live) { bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); } }
     }
+    if (!changed) syncBtn();   // (the bar can show or hide under an unchanged tip)
     if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
     dirty = false; panelScrolled = false; lastNode = spec.node;
     // the panel docks where notices dock and never over the stage: landscape, the side column (its notices slot;
@@ -44139,7 +44497,10 @@ let navUI = null;
     // landscape, a step with a button (read it, or Go) takes the dock's room too: the column is short and the button must not clip
     const btn = mode === 'side' && !okb.hidden;
     bub.classList.toggle('btn', btn);
-    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip); putToggle($('app'), 'guide-btn', btn);
+    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip);
+    // tips-pause-says-so: the fight bar hides under a side tip with a button only where the two boxes meet (a 740x360 phone on its side);
+    // a desktop keeps it in view, dimmed while the tip holds the game
+    syncBtn();
     faceUp();
     if (!inPanel) r = null;   // the dock may have moved the stage (portrait: the panel takes a slot): read the target after it
     // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's
@@ -47004,25 +47365,51 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   // zone adds one bell line, once per zone a session (runtime only, never saved).
   const beat = el('div', 'tv-beat'); beat.hidden = true; beat.setAttribute('role', 'status'); beat.setAttribute('aria-live', 'polite');
   const beatTxt = el('b', 'tv-beat-txt', "Beaten. You're back to full HP for the next fight."), beatHelp = el('span', 'tv-beat-help');
-  beat.append(beatTxt, beatHelp);
+  // loss-help-gear-first: a hero who wears no weapon (or no armour at all) is told to get that gear first, with a Go
+  const beatGo = el('button', 'mini go tv-beat-go'); beatGo.type = 'button'; beatGo.hidden = true; beatGo.style.pointerEvents = 'auto'; beatGo.style.minHeight = '44px';
+  let beatGoFn = null;
+  beatGo.addEventListener('pointerdown', e => e.stopPropagation());
+  beatGo.addEventListener('click', e => { e.stopPropagation(); const f = beatGoFn; beatHide(); if (f) try { f(); } catch (err) { console.error('[lanternfall] loss help go failed', err); } });
+  beat.append(beatTxt, beatHelp, beatGo);
   if (box) box.append(beat);
+  const ARMOUR = ['helm', 'body'];   // the off-hand is a Quiver, Lantern or Tome for most classes, not armour
+  // { t, go, lbl } when the hero lacks a weapon (else armour) and there is a piece to wear or a recipe to make; null otherwise
+  const gearFirst = () => {
+    const noWpn = !equipped('weapon'), want = noWpn ? ['weapon'] : ARMOUR.some(p => equipped(p)) ? [] : ARMOUR;
+    if (!want.length) return null;
+    const what = noWpn ? 'weapon' : 'armour';
+    let it = null;   // the strongest piece in the bag that fits, as the Equip goal picks
+    for (const i of S.items || []) if (!isEquipped(i.id) && want.some(p => fits(i, p, 'hero')) && (!it || itemPower(i) > itemPower(it))) it = i;
+    if (it) { const pos = want.find(p => fits(it, p, 'hero'));
+      return { t: `No ${what} on. Wear your ${itemName(it)} first.`, lbl: 'Wear', gear: 1, go: () => { if (!equipped(pos)) equipItem(it.id, pos); } }; }
+    const b = craftGoalNext(); if (!b || !want.includes(b.pos)) return null;
+    const nm = kindName(b.kind, b.t), a = /^[AEIOU]/.test(nm) ? 'an' : 'a', g = GOALS.find(x => x.id === 'forge');
+    const go = g && g.go ? () => followGo(g.go) : null;
+    if (b.gate) return { t: `No ${what} yet. ${a[0].toUpperCase() + a.slice(1)} ${nm} needs ${SKILL[b.gate.skill]} ${b.gate.need} first.`, lbl: 'Go', gear: 1, go };
+    const st = CRAFT_STATIONS[CRAFT_KINDS[b.kind].st];
+    return { t: `No ${what} yet. Make ${a} ${nm}${st ? ` at the ${st.n}` : ''} first.`, lbl: 'Go', gear: 1, go };
+  };
+  let beatGear = false;   // the line up now is a gear-first line: a gear change while it shows (Hero > Gear) drops its button
   const lossHelp = () => {
-    try { if (attrOn() && attrPoints(soloHero()).free > 0) return 'Spend your attribute points on Hero > Build.'; } catch (e) {}
-    try { const b = craftGoalNext(); if (b && !b.gate && b.p >= 1) return 'Better gear helps: see Craft.'; } catch (e) {}
-    return S.zone > 1 ? 'An easier zone helps too: use the arrow by the zone name.' : '';
+    try { const g = gearFirst(); if (g) return g; } catch (e) {}
+    try { if (attrOn() && attrPoints(soloHero()).free > 0) return { t: 'Spend your attribute points on Hero > Build.' }; } catch (e) {}
+    try { const b = craftGoalNext(); if (b && !b.gate && b.p >= 1) return { t: 'Better gear helps: see Craft.' }; } catch (e) {}
+    return { t: S.zone > 1 ? 'An easier zone helps too: use the arrow by the zone name.' : '' };
   };
   let beatT = 0;   // game seconds the line has been up (a fallback; game time, so a paused game or a tip keeps it)
   const beatHide = () => { beatT = 0; if (beat.hidden) return; beat.hidden = true; beat.classList.remove('play'); if (box && tcard.hidden) box.classList.remove('tc-on'); };
   const LOSS_N = 3, LOSS_OF = 10, lossAt = {}, lossTold = {};
   let fightN = 0;
   on('fightStart', () => { fightN++; beatHide(); });
+  on('gear', () => { if (beatGear && !beat.hidden) { beatGoFn = null; beatGo.hidden = true; } });
   on('unitUp', beatHide);
   on('activity', beatHide);
   onTick(dt => { if (!beat.hidden && (beatT += dt) > 8) beatHide(); });   // the next fight, a hero back up or a new activity hides it first
   on('wipe', p => {
     if (!box || !p || p.boss || p.arena) return;
     const help = lossHelp();
-    putText(beatHelp, help); beatHelp.hidden = !help;
+    putText(beatHelp, help.t); beatHelp.hidden = !help.t;
+    beatGoFn = help.go || null; putText(beatGo, help.lbl || ''); beatGo.hidden = !beatGoFn; beatGear = !!help.gear;
     beat.className = 'tv-beat' + (reduced() ? ' calm' : '');
     beat.hidden = false; box.classList.add('tc-on'); void beat.offsetWidth; beat.classList.add('play');
     beatT = 0;
@@ -47409,6 +47796,7 @@ document.addEventListener('click', e => {
   draw(); st.append(b);
 })();
 on('defGrade', p => { if (p && p.clean) SFX.play('cleanDef'); });
+on('craftStrike', p => { if (p && p.hit) SFX.play('cleanDef'); });   // craft-strike-infuse: a Strike in the gold rings like a clean parry
 
 // ---- src/js/76-create.js ----
 // 76-create: character creation (new games), the one-time "Choose your path" screen (existing saves,
