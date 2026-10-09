@@ -181,6 +181,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A core file loaded before `55-stats.js` cannot call `registerAwayLine` at load (`AWAY_LINES` is still in its temporal dead zone and the whole core fails to load); register on the first `awayBegin`. (refine-queues, 2026-10-08)
 
 ## CI and tooling
+- A browser check that closes a moment card presses the card's own button (`.mm-ov .mm-go`), not the first visible "Continue": on a CI runner another Continue matched first and the card never closed, so a later assert failed only on CI. And a display rename (a Champion's story name) must reach every scratch copy a check compares with the live one (`bossOddsFoe`). (zone10-clear-moment, 2026-10-09)
 - Win a zone boss in a proof route with `parry-clean` between attacks, not Attack alone, and replay the route after merging a boss change. Why: once rally-gates-live landed, the zone 7 boss held at its 25% gate until its charged move was parried, so an Attack-only route lost and eyes failed every expect. (boss-spoils-pick, 2026-10-09)
 
 - Commit the rebuilt `dist/lanternfall.html` with the source change (and again after merging the base): CI's first shard fails in seconds with "build.mjs changed dist" otherwise. Don't `git checkout dist` to clear a dirty tree before a commit; rebuild and commit it. (forge-line-while-fighting, 2026-10-08)
