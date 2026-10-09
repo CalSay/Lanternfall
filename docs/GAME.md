@@ -233,6 +233,20 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   piece is a pick: the line, then the bonus to put in, at the same price. Tools keep the die and the odds line. Items made with
   the switch off (no `g`) keep their rarity, lines and power exactly; with the switch off a graded item reads its twin (a B
   reads as Uncommon). Save codes check `g` only when present (0 to 4, its twin must match `r`, never on a tool or a unique).
+- **The Strike and Infuse** (behind `CRAFT_TUNE.strike` and `CRAFT_TUNE.infuse`, off in the game until the balance pass; card
+  craft-strike-infuse, spec section 5 "The Strike" and 7b): with grades on, each lifts a graded craft one grade, never above A (S
+  comes only from level); one lift a craft. The Strike: Craft shows the parry bar once over the screen (`75-craft-ui.js`, the
+  `.tv-time` look, its own clock) and holds the game; a press (or Space, Enter or F) in the gold lifts the piece, and the parry
+  chime plays. The gold is the fight's parry window (`SOLO_TUNE.turnParryWindow` x Assist, capped at
+  `TURN_TUNE.windowCaps.parry`) at the end of a 1.1 s fill. An early press, no press or a hidden tab makes the level's grade; the
+  craft is paid only when the bar resolves, so nothing is lost. Each station names it: Strike (Forge), Carve (Workbench), Stitch
+  (Loom), Etch (Enchanter's Table). No bar on tools, refining, at grade A or S, after Infuse, or on a station's first piece
+  (`S.craft.made`, pieces made a station; an old save seeds it from the pieces it holds). Infuse: the recipe row's Infuse button
+  pays `CRAFT_TUNE.infuseX` (3) x the recipe's Essence (3 when it has none: a Copper Warblade 6, a Charm 15; provisional until the balance pass; offered on a station's first piece too) from the one
+  Essence pile on top of the recipe. The row names the choice ("Grade A: Strike, or Infuse for 6 Essence") and the result card
+  says which lift landed ("Your Strike landed in the gold", "The Strike missed the gold ... Nothing was lost"). Taking either
+  emits `choice` 'craft'. Core: `craftItem(kind, t, { strike, infuse })`, `craftStrikeOffered`, `craftInfusePrice`,
+  `craftLiftTo` (55-crafting); the `crafted` event carries `lift`. Budget: `node tools/budget.mjs --craft grades=1,strike=1,infuse=1`.
   `node tools/budget.mjs --craft grades=1` measures the kept-up rows in graded gear (the results:
   [docs/proof/craft-attribute-grades/budget.md](proof/craft-attribute-grades/budget.md)).
 - **Refining** (`55-refine.js`, `75-refine-ui.js`, `REFINE_TUNE` in `21-data-craft.js`; card refine-queues): the Forge

@@ -289,6 +289,12 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   with `CRAFT_TUNE.grades` on, a craft's grade (D to S) comes from the station level, its lines come in a fixed order and
   Reforge on a graded piece is a pick. The switch stays off in the weekly release until the balance pass. Items made before
   keep their rarity, lines and power. Infuse's "any Essence" drift is card craft-strike-infuse's.
+- **The Strike and Infuse, behind their switches (craft-strike-infuse, 2026-10-09; overhaul spec sections 5 and 7b):** a timing
+  press on the bar (the Strike) or Essence on the recipe row (Infuse) lifts a graded craft one grade, never above A; one lift a craft.
+  `CRAFT_TUNE.strike` and `CRAFT_TUNE.infuse` stay off in the weekly release until the balance pass. Infuse spends the one Essence
+  pile (any Essence pays; the spec's "Essence of the piece's tier" no longer fits since counters-and-layers made Essence one pile).
+  Infuse is offered on a station's first piece too, where the Strike is not (spec 7b: "any piece"). The price (3 x the recipe's
+  Essence) is provisional until the balance pass; at it, Infuse alone moves unspent Essence by a few points (economy review).
 - **15 material tiers, 3 per region; resources are gated by region.** (2026-09-28)
 - **Material names are real, standard fantasy materials,** never invented compounds. (2026-09-28) The approved 15-grade
   names for all seven families are in `art/resources/regional-audit/complete-ladder.json`. (2026-10-01)

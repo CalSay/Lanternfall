@@ -120,3 +120,4 @@ document.addEventListener('click', e => {
   draw(); st.append(b);
 })();
 on('defGrade', p => { if (p && p.clean) SFX.play('cleanDef'); });
+on('craftStrike', p => { if (p && p.hit) SFX.play('cleanDef'); });   // craft-strike-infuse: a Strike in the gold rings like a clean parry
