@@ -17,22 +17,7 @@ tap-if "Attack"
 wait 1.5
 tap-if "Attack"
 wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
+# his line comes after the fourth press in every view (seed 11); a fight press under it closes it, so stop pressing here
 expect "Bring me Pine Log for a proper fire"
 shot boot-line
 tap "Got it"
