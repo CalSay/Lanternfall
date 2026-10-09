@@ -2261,6 +2261,16 @@ span.cf-d { font-weight: 600; }
 .mm-list img { width: 20px; height: 20px; image-rendering: pixelated; flex: none; }
 .mm-more { color: var(--muted); }
 .mm-acts { display: grid; gap: 6px; width: 100%; margin-top: 4px; }
+/* boss-spoils-pick: a compact row of moves to learn now (75-caches-ui), side by side on a wide screen, stacked on a narrow one; on a short
+   screen the card drops its art and the hero's line so the moves and Keep the Scroll fit */
+.mm-card.has-pick { width: min(560px, 100%); }
+.mm-picks { width: 100%; display: grid; gap: 5px; }
+.mm-pick-h { margin: 0; font: 600 max(var(--tmin, 0px), calc(12px * var(--tk, 1))) var(--body); letter-spacing: .06em; color: var(--mc); text-align: left; }
+.mm-pick-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+.mm-pick { display: grid; gap: 2px; align-content: start; min-height: 44px; padding: 6px 8px; text-align: left; cursor: pointer; color: var(--bone); background: var(--well); border: 1px solid color-mix(in srgb, var(--mc) 55%, var(--line)); font: inherit; }
+.mm-pick b { font-size: max(var(--tmin, 0px), calc(13.5px * var(--tk, 1))); color: #F2E6B0; }
+.mm-pick small { font-size: max(var(--tmin, 0px), calc(11.5px * var(--tk, 1))); line-height: 1.3; color: var(--muted); }
+.mm-pick:hover, .mm-pick:focus-visible { border-color: var(--mc); background: color-mix(in srgb, var(--mc) 16%, var(--well)); outline: none; }
 
 /* ---- the medium banner: a toast in the notices slot (the toast dock) ---- */
 .toast.mm-toast { --mc: var(--gold); align-items: flex-start; border-color: var(--mc); border-left: 3px solid var(--mc); background: linear-gradient(90deg, color-mix(in srgb, var(--mc) 24%, #0E0B12), #0E0B12E8 85%); box-shadow: 0 2px 0 #0B0810, 0 0 14px color-mix(in srgb, var(--mc) 35%, transparent); padding: 5px 8px 5px 6px; }
@@ -2283,6 +2293,7 @@ span.cf-d { font-weight: 600; }
 }
 /* 740x360: the card is short, so the art shrinks */
 @media (max-height: 420px) { .mm-art { width: 72px; height: 64px; } .mm-img { width: 44px; height: 44px; } .mm-card { gap: 5px; padding: 10px 12px; } }
+@media (max-height: 420px) { .mm-card.has-pick .mm-art, .mm-card.has-pick .mm-say { display: none; } .mm-pick { min-height: 0; padding: 4px 8px; } }
 
 /* ---- hero-voice: the hero's line on a card or banner, the hero sheet record ---- */
 .mm-say { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; padding: 6px 8px; text-align: left; background: var(--well); border: 1px solid var(--line); }
@@ -3178,6 +3189,14 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tabs-line { margin: 0 0 6px; font-size: max(var(--tmin, 0px), calc(15px * var(--tk, 1))); line-height: 1.35; }
 .tabs-note { margin: 0 0 14px; font-size: max(var(--tmin, 0px), calc(13.5px * var(--tk, 1))); line-height: 1.35; color: var(--muted); }
 .tabs-reload { min-height: 44px; min-width: 160px; padding: 0 18px; border: 2px solid #0B0810; background: var(--ember); color: #1A1420; font: 600 max(var(--tmin, 0px), calc((16px * var(--display-k)) * var(--tk, 1))) var(--display); cursor: pointer; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
+/* desktop-tooltips (70b-tips-ui.js): the hover tip on items, abilities and costs. Mouse only; it never takes a click. */
+.tip { position: fixed; left: 0; top: 0; z-index: 70; max-width: min(320px, calc(100vw - 16px)); padding: 7px 10px 8px;
+  display: grid; gap: 2px; pointer-events: none; background: var(--panel-2); border: 2px solid var(--line-hi);
+  box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); color: var(--bone); font: max(var(--tmin, 0px), calc(14px * var(--tk, 1)))/1.3 var(--body); text-align: left; }
+.tip > b { font: 600 max(var(--tmin, 0px), calc((17px * var(--display-k)) * var(--tk, 1)))/1.05 var(--display); color: var(--gold); letter-spacing: .02em; }
+.tip > span { color: var(--bone); }
+@media (prefers-reduced-motion: no-preference) { .tip:not([hidden]) { animation: tipIn .1s ease-out; } }
+@keyframes tipIn { from { opacity: 0; } }
 /* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
    The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
 .tl-mrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 2px; font-size: max(var(--tmin, 0px), calc(12px * var(--tk, 1))); }
@@ -7046,16 +7065,16 @@ const UNIQ = {
     rule: { id: 'crimson', stacks: 2, cap: 10, tickX: 0.9 }, txt: 'Needs something that makes Bleed. Your Bleed stacks twice as fast and holds up to 10. Bleed deals 10% less a turn.' },
   'carapace-pick': { name: "Burrower's Promise", slot: 'pick', pos: 'pick', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['beetle', 4], art: 0, col: '#9BE3F0', src: 'Zone boss · Beetle Barrows', fx: {},
     rise: 'mine', riseMax: 5, rule: { id: 'tool', skill: 'mine', spd: 0.9, partner: { ore: ['crystal', 3], crystal: ['ore', 3] } },
-    txt: 'Always the grade of your best open Mining ground. Every 3 Ore or Crystal you mine also turns up 1 of the other. Mining is 10% slower.' },
+    txt: 'Always the tier of your best open Mining ground. Every 3 Ore or Crystal you mine also turns up 1 of the other. Mining is 10% slower.' },
   'wisp-axe': { name: 'Reed of Remembrance', slot: 'axe', pos: 'axe', cls: 'any', legacy: false, pow: 1.8, g: [2, 5], from: ['wraith', 7], art: 0, col: '#35524C', src: 'Zone boss · Wraithmarsh', fx: {},
     rise: 'wood', riseMax: 5, rule: { id: 'tool', skill: 'wood', spd: 0.9, partner: { wood: ['fibre', 2] } },
-    txt: 'Always the grade of your best open Woodcutting ground. Every 2 Wood you cut also bring 1 Fibre. Woodcutting is 10% slower.' },
+    txt: 'Always the tier of your best open Woodcutting ground. Every 2 Wood you cut also bring 1 Fibre. Woodcutting is 10% slower.' },
   'spore-sickle': { name: 'Harvest of Whispers', slot: 'sickle', pos: 'sickle', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['spore', 5], art: 0, col: '#F3E6CF', src: 'Zone boss · Fungal Deep', fx: {},
     rise: 'forage', riseMax: 5, rule: { id: 'tool', skill: 'forage', spd: 0.9, partner: { herb: ['fibre', 2], fibre: ['herb', 2] } },
-    txt: 'Always the grade of your best open Foraging ground. Every 2 Herbs bring 1 Fibre, and every 2 Fibre bring 1 Herb. Foraging is 10% slower.' },
+    txt: 'Always the tier of your best open Foraging ground. Every 2 Herbs bring 1 Fibre, and every 2 Fibre bring 1 Herb. Foraging is 10% slower.' },
   'moss-spear': { name: 'Thorn of the First Grove', slot: 'spear', pos: 'spear', cls: 'any', legacy: false, pow: 1.8, g: [2, 3], from: ['slime', 8], art: 0, col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: {},
     rise: 'hunt', riseMax: 3, rule: { id: 'tool', skill: 'hunt', spd: 0.9, partner: { hide: ['fibre', 2] } },
-    txt: 'Always the grade of your best open Hunting ground, up to grade 3. Every 2 Hide bring 1 Fibre. Hunting is 10% slower.' }
+    txt: 'Always the tier of your best open Hunting ground, up to tier 3. Every 2 Hide bring 1 Fibre. Hunting is 10% slower.' }
 };
 // The uniques a player can see on the trophy wall, the Codex and the totals: every unique that still drops, plus a retired one they found.
 // A hidden retired unique's replacement (`was`) takes its place in the order, because the Codex's seen string is read by position.
@@ -7875,8 +7894,8 @@ const handsApplicantSkills = () => huntingOn() ? HANDS_SKILLS.concat('hunt') : H
 const HANDS_TRAITS = [
   { id: 'steady', n: 'Steady', txt: '+10% yield', y: 0.10 },
   { id: 'strong', n: 'Strong Back', txt: 'Works a four-hour shift' },
-  { id: 'mule', n: 'Packmule', txt: '+15% haul on grades 3–5', y: 0.15, tiers: [3, 4, 5] },
-  { id: 'home', n: 'Homebody', txt: '+15% yield on grades 1–2', y: 0.15, tiers: [1, 2] },
+  { id: 'mule', n: 'Packmule', txt: '+15% haul on tiers 3–5', y: 0.15, tiers: [3, 4, 5] },
+  { id: 'home', n: 'Homebody', txt: '+15% yield on tiers 1–2', y: 0.15, tiers: [1, 2] },
   { id: 'wander', n: 'Wanderer', txt: '-10% yield', y: -0.10 },
   { id: 'keen', n: 'Keen Eye', txt: 'Rare finds: 2% of units come back one tier up' },
   { id: 'early', n: 'Early Riser', txt: '+20% yield when sent 05:00–11:00, including queued shifts', y: 0.20, clock: [5, 11] },
@@ -13531,7 +13550,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     return toT != null ? toT : fromT + 1;
   };
   canTransmute = (fam, fromT, to, toT) => {
-    if (fam === 'ess') return no('Essence pays any cost at any grade, so it needs no Transmute.');
+    if (fam === 'ess') return no('Essence pays any cost at any tier, so it needs no Transmute.');
     if (!S.mats[fam] || !CRAFT_FAMILIES.includes(fam)) return no(typeof to === 'string' && to !== fam && to !== 'up' && to !== 'down' ? 'Transmute stays within one family.' : 'Unknown material.');
     const tt = resolveT(fam, fromT, to, toT);
     if (tt == null) return no('Transmute stays within one family.');
@@ -14516,6 +14535,67 @@ var forgeGoalPicks = 0;
     label: () => { const it = upgradeNext(); return it ? `Upgrade your ${kindName(it.slot, it.t, it.u)} to +${it.plus + 1}` : ''; },
     icon: () => { const it = upgradeNext(); return it ? { item: it } : null; },
     go: () => { const it = upgradeNext(), id = it ? it.id : null; return { tab: 'party', view: 'gear', fn: () => { if (id != null && typeof craftUI === 'object' && craftUI) craftUI.openItem(id); } }; }
+  });
+
+  // hearth-two-next-up (W6): after the zone 10 clear, the camp's step up: Hearth 2, then the Tavern. The row names each part of
+  // the cost still short and where it comes from ("Build Hearth 2: 20 Pine Log at the Pine Grove, 5 Essence from fights").
+  // Like Hesketh's fire (55-hearth) it is Ready while a gathered part is short and the hero works elsewhere: Go sends the hero to
+  // that node. Once everything is in hand it reads "ready to build", unless camp-build (57-camp) already offers this build (its
+  // pick: the cheapest build a free builder can start), so the two never show the same build twice. A hero still at a node
+  // this row sent them to, with no more needed there, is offered "Back to the fight". Costs and gates are campCan's own.
+  let stepSent = null;   // { kind, t, what }: the node this row's Go last sent the hero to (not saved)
+  const atNode = (k, t) => S.activity === 'gather' && !!S.node && S.node.kind === k && S.node.t === t;
+  const gathered = k => !!(CRAFT_FAMILY[k] && CRAFT_FAMILY[k].src === 'gather');
+  const stepWhere = (k, t) => {
+    if (k === 'ess' || k === 'gold') return 'from fights';
+    if (NODE_NAMES[k]) return `at the ${NODE_NAMES[k][t - 1]}`;
+    const pl = matPlace(k, t); return pl.skill ? `from ${SKILL[pl.skill]}` + (pl.opens ? `, which opens at ${pl.opens}` : '') : '';
+  };
+  const campStep = () => {
+    if (!(S.maxZone > 10) || typeof campCan !== 'function' || !campOpen()) return null;
+    const id = campLevel('hearth') < 2 ? 'hearth' : campLevel('tavern') < 1 ? 'tavern' : null;
+    if (!id || campPending(id) || !campList().includes(id)) return null;
+    const c = campCan(id);
+    if (!c.cost || c.max || c.need) return null;
+    const short = [], parts = [[S.gold, c.cost.gold]];
+    if (S.gold < c.cost.gold) short.push({ k: 'gold', t: 1, n: Math.ceil(c.cost.gold - S.gold), have: S.gold });
+    for (const [k, t, n] of c.cost.mats) { const h = matOwn(k, t); parts.push([h, n]); if (h < n) short.push({ k, t, n: Math.ceil(n - h), have: h }); }
+    if (c.miss && c.miss.length > short.length) return null;   // short of something this row cannot name (a Trophy)
+    const live = parts.filter(([, n]) => n > 0);
+    return { id, ok: !!c.ok, queue: !!c.queue, what: id === 'hearth' ? 'Hearth 2' : 'the Tavern', short, p: live.reduce((a, [h, n]) => a + Math.min(1, need(h, n)), 0) / Math.max(1, live.length) };
+  };
+  // camp-build's own pick (bestBuild in 57-camp): the cheapest build that can start now, the first in camp order on a tie
+  // (kept 900 ms, as camp-build keeps its own pick: it reads every building, and the two rows hand over on the same beat)
+  let pickAt = 0, pickVal = null;
+  const campPick = () => { const t = Date.now(); if (!(t - pickAt <= 900 && t >= pickAt)) { pickAt = t; let best = null;
+    for (const id of campList()) { const c = campCan(id); if (c.ok && !c.queue && (!best || c.cost.gold < best.g)) best = { id, g: c.cost.gold }; } pickVal = best ? best.id : null; } return pickVal; };
+  // the row's state: go (Ready: Go sends the hero to g's node), work (at a short node, or short of what fights bring), back and
+  // ready (both Ready)
+  const stepNow = () => {
+    if (stepSent && !atNode(stepSent.kind, stepSent.t)) stepSent = null;
+    const x = campStep(), sh = x ? x.short : [];
+    const back = !!stepSent && !sh.some(s => s.k === stepSent.kind && s.t === stepSent.t);
+    const deep = typeof deepActive === 'function' && deepActive();   // no Go to a node from the Deepwell (navGo refuses)
+    if (deep && sh.length) return { m: 'work', x };
+    if (sh.some(s => gathered(s.k) && atNode(s.k, s.t))) return { m: 'work', x };
+    const g = sh.find(s => gathered(s.k) && matPlace(s.k, s.t).open);
+    if (g) return { m: 'go', x, g };
+    if (back && S.activity === 'gather') return { m: 'back', x };
+    if (x && x.ok) return x.queue || campPick() !== x.id ? { m: 'ready', x } : null;
+    return sh.length ? { m: 'work', x } : null;
+  };
+  const stepPart = s => `${fmt(s.n)}${s.have > 0 ? ' more' : ''} ${s.k === 'gold' ? 'gold' : costName(s.k, s.t)} ${stepWhere(s.k, s.t)}`.trim();
+  registerGoal({
+    id: 'camp-step', sys: 'camp', prio: 1, icon: { ic: ['anvil', '#D08A4E'] },
+    pct: () => { const s = stepNow(); return !s ? null : s.m === 'work' ? Math.max(0.01, Math.min(0.99, s.x.p)) : 1; },
+    label: () => { const s = stepNow(); if (!s) return '';
+      if (s.m === 'ready') return `${s.x.what[0].toUpperCase() + s.x.what.slice(1)}: ready to build`;
+      if (s.m === 'back') return `Back to the fight: you have the ${costName(stepSent.kind, stepSent.t)} for ${stepSent.what}`;
+      return `Build ${s.x.what}: ${s.x.short.map(stepPart).join(', ')}`; },
+    go: () => { const s = stepNow(); if (!s) return { tab: 'world', view: 'camp' };
+      if (s.m === 'go') { const sent = { kind: s.g.k, t: s.g.t, what: s.x.what }; return { act: 'gather', node: { kind: sent.kind, t: sent.t }, fn: () => { stepSent = sent; } }; }
+      if (s.m === 'back') return { act: 'fight', fn: () => { stepSent = null; } };
+      return { tab: 'world', sel: '#camp-b-' + s.x.id }; }
   });
 }
 
@@ -16038,7 +16118,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
   refineAdd = (prod, tier, n) => {
     const p = REFINE_PRODUCTS[prod];
     if (!p || !refineOn()) return { ok: false, why: 'Unknown product.' };
-    if (!(Number.isInteger(tier) && tier >= 1 && tier <= 5)) return { ok: false, why: 'Unknown grade.' };
+    if (!(Number.isInteger(tier) && tier >= 1 && tier <= 5)) return { ok: false, why: 'Unknown tier.' };
     const st = p.st, all = n === 'all';
     if (!built(st)) return { ok: false, why: `Build the ${CAMP_B[st].n} first.` };
     if (!refineSlotFree(st)) return { ok: false, why: `The ${CAMP_B[st].n} holds ${T.max} orders. Remove one first.` };
@@ -18166,13 +18246,13 @@ const UNLOCK_TUNE = {
     davy: { place: 'Emberlea Ruins', hand: 'ashby', fallback: 80 },
     ferrin: { fallback: 90, pendingFee: 'gold' },
     linnet: { type: 'glasswalker', tier: 2, fallback: 92 },
-    oswin: { from: 85, pendingFee: 'gold and grade-8 Essence', fallbackBoss: 105 },
+    oswin: { from: 85, pendingFee: 'gold and tier-8 Essence', fallbackBoss: 105 },
     hob: { place: 'Cinder Road', cycle: 2, hand: 'nan', rumour: 'hob', fallback: 85 },
     beatrix: { boss: 105, waitSecs: 86400 },
     eskil: { from: 113, pendingFee: 'gold', fallback: 120 },
     brynja: { from: 110, fibre: [10, 60], hide: [10, 40], fallback: 128 },
-    inga: { from: 108, place: 2, pendingFee: 'grade-10 Essence', fallback: 124 },
-    ragna: { pendingFee: 'grade-11 Essence', fallback: 134 },
+    inga: { from: 108, place: 2, pendingFee: 'tier-10 Essence', fallback: 124 },
+    ragna: { pendingFee: 'tier-11 Essence', fallback: 134 },
     solveig: { boss: 140 },
     asta: { from: 141, freeWith: 'solveig', pendingFee: 'gold' }
   }
@@ -18207,7 +18287,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   const hand = id => !!(S.hands && S.hands.list && S.hands.list.some(h => h.key === id));
   const bestiary = (type, tier) => ((S.mastery && S.mastery.types[type]) || 0) >= BESTIARY_TIERS[tier - 1];
   const goldOf = q => (q.kills || 0) * goldPerFoe(q.zone || q.from || 1);
-  const matText = (k, t, n) => k === 'ess' ? `${n} Essence` : `${n} grade-${t} ${k === 'crystal' ? 'gems' : k}`;
+  const matText = (k, t, n) => k === 'ess' ? `${n} Essence` : `${n} tier-${t} ${k === 'crystal' ? 'gems' : k}`;
   const claim = (q, how, open = S.maxZone >= (q.from || q.zone || 1)) => {
     const mats = ['wood', 'ess', 'crystal', 'fibre', 'hide'].filter(k => q[k]).map(k => [k, ...q[k]]);
     const gold = goldOf(q), rn = q.spendRenown ? (q.renown || 0) : 0;
@@ -21766,7 +21846,7 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
     if (!cargoOK(cargo)) return no('Choose up to three different cargo lines, totalling 1–5,000 whole units.');
     let value = 0;
     for (const [f, t, n] of cargo) {
-      if (!eligible(h, f, t)) return no('Choose unlocked materials from this gatherer\'s profession, grades 1–3.');
+      if (!eligible(h, f, t)) return no('Choose unlocked materials from this gatherer\'s profession, tiers 1–3.');
       if (stock(f, t) < n) return no('Not enough ' + matName(f, t) + ' in the Storehouse.');
       const demand = market.lines.find(l => l.kind === f && l.t === t).demand, micros = price(f, t, demand);
       if (!Number.isSafeInteger(micros) || micros <= 0 || micros > T.maxUnitGold * UNIT) return no('This trade is not available.');
@@ -35262,11 +35342,13 @@ function costChips(box, mats, t, gold) {
     const have = matOwn(k, t);
     const c = el('span', 'cost' + (have < n ? ' short' : ''));
     c.append(img(matIcon(k, t)), el('span', null, `${fmt(have)}/${fmt(n)} ${costName(k, t)}`));
+    setTip(c, () => tipCost(costName(k, t), matOwn(k, t), n));   // desktop-tooltips
     box.append(c);
   }
   if (gold) {
     const c = el('span', 'cost' + (S.gold < gold ? ' short' : ''));
     c.append(img(iconURL('coin', '#F2C14E')), el('span', null, fmt(gold)));
+    setTip(c, () => tipCost('Gold', S.gold, gold));
     box.append(c);
   }
 }
@@ -35853,6 +35935,72 @@ on('raidUnavailable', () => setTab('raid'));
 on('itemAdded', e => { if (!(S.tab === 'party' && curView('party') === 'gear') && e && e.item) gearNew.add(e.item.id); viewDots(); });
 on('menuView', e => { if (e.tab === 'party' && e.view === 'gear' && gearNew.size) { gearNew.clear(); viewDots(); } });
 on('raidReward', () => { $('raidDot').hidden = S.tab === 'world'; });
+
+// ---- src/js/70b-tips-ui.js ----
+// desktop-tooltips (docs/design/desktop-layout.md "Later: tooltips"): with a mouse, resting on an item, an ability or a cost
+// shows what it is and does, without a click. A tip repeats what a click or tap already shows (the item sheet, the ability
+// card, the chip itself); nothing lives only in a tip. Touch and pen never open one: only pointerType 'mouse' does.
+//   setTip(el, text | () => text): the text is read when the tip opens, so a tile rebuilt every tick stays cheap. Lines are
+//   split on '\n'; with more than one line the first is the title. An empty text shows nothing.
+//   tipHook.item(it) -> text: the item's tip, set by 75-craft-ui.js (it owns the stat lines); tipItem(it) calls it.
+const tipHook = {};
+const TIP_DELAY = 120;   // ms: inside the card's 150 ms, long enough that sweeping the mouse across a grid opens nothing
+function setTip(e, t) { if (e) e._tip = t; return e; }
+function tipItem(it) { try { return it && tipHook.item ? tipHook.item(it) : it ? itemName(it) : ''; } catch (err) { return it ? itemName(it) : ''; } }
+// A cost chip's tip: its full name and what you have against what it needs.
+function tipCost(name, have, need) { return `${name}\nYou have ${fmt(have)}. It needs ${fmt(need)}.`; }
+{
+  let box = null, at = null, timer = 0, watch = 0;
+  const textOf = e => { const t = e._tip; try { return String((typeof t === 'function' ? t() : t) || ''); } catch (err) { return ''; } };
+  const owner = n => { for (; n && n !== document; n = n.parentNode) if (n._tip != null) return n; return null; };
+  function hide() {
+    clearTimeout(timer); timer = 0; clearInterval(watch); watch = 0; at = null;
+    if (box && !box.hidden) box.hidden = true;
+  }
+  function place(e) {
+    const r = e.getBoundingClientRect(), W = innerWidth, H = innerHeight, m = 8, gap = 6;
+    box.style.left = '0px'; box.style.top = '0px';
+    const b = box.getBoundingClientRect();
+    let x = r.left + r.width / 2 - b.width / 2;
+    x = Math.max(m, Math.min(x, W - m - b.width));
+    // below the target when it fits, else above, else whichever side has more room (clamped to the screen)
+    let y = r.bottom + gap;
+    if (y + b.height > H - m) y = r.top - gap - b.height >= m ? r.top - gap - b.height : H - r.bottom > r.top ? r.bottom + gap : r.top - gap - b.height;
+    y = Math.max(m, Math.min(y, H - m - b.height));
+    box.style.left = Math.round(x) + 'px'; box.style.top = Math.round(y) + 'px';
+  }
+  function fill(txt) {
+    const lines = txt.split('\n').map(s => s.trim()).filter(Boolean);
+    box.textContent = '';
+    lines.forEach((s, i) => box.append(el(i === 0 && lines.length > 1 ? 'b' : 'span', null, s)));
+  }
+  function show(e) {
+    timer = 0;
+    if (!e.isConnected || at !== e) return;
+    let txt = textOf(e).trim(); if (!txt) return hide();
+    if (!box) { box = el('div', 'tip'); box.id = 'tip'; box.setAttribute('aria-hidden', 'true'); box.hidden = true; document.body.append(box); }
+    fill(txt); box.hidden = false; place(e);
+    // while open: the target can be rebuilt, hidden or covered under a still mouse (lists redraw, a sheet opens on its own), so
+    // the tip goes with it; and its text follows the game (a cost's "You have", a slot's turn line)
+    clearInterval(watch); watch = setInterval(() => {
+      if (!at || !at.isConnected || !at.getClientRects().length || !at.matches(':hover')) return hide();
+      const t = textOf(at).trim(); if (!t) return hide();
+      if (t !== txt) { txt = t; fill(t); place(at); }
+    }, 250);
+  }
+  document.addEventListener('pointerover', ev => {
+    if (ev.pointerType !== 'mouse') return;
+    const e = owner(ev.target);
+    if (e === at) return;
+    hide();
+    if (!e || ev.buttons) return;
+    at = e; timer = setTimeout(() => show(e), TIP_DELAY);
+  }, true);
+  document.addEventListener('pointerout', ev => { if (at && !(ev.relatedTarget && at.contains(ev.relatedTarget))) hide(); }, true);
+  // any press, key, scroll or wheel closes it: the click's own view takes over
+  for (const t of ['pointerdown', 'keydown', 'wheel', 'scroll']) document.addEventListener(t, () => { if (at) hide(); }, { capture: true, passive: true });
+  addEventListener('blur', hide); addEventListener('resize', hide);
+}
 
 // ---- src/js/71-ui-fight.js ----
 // 71-ui-fight: the Fight tab (the boss gate) and the zone/mode controls.
@@ -36757,7 +36905,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       const fee = can.fee === undefined ? handsFee(x, n.kind, n.t) * count : can.fee;
       const row = btn('hd-job', ''); row.setAttribute('aria-disabled', String(!can.ok));
       const tx = el('span', 'hd-job-tx');
-      tx.append(el('b', null, `${handsNodeName(n.kind, n.t)} (grade ${n.t})`),
+      tx.append(el('b', null, `${handsNodeName(n.kind, n.t)} (tier ${n.t})`),
         el('small', null, `About ${storeNum(pv.haul)} ${matTxt(n.kind, n.t)} per ${dur(pv.secs)} shift` + (n.full ? '. Storehouse full.' : '')),
         el('small', 'fee', `${fee ? `Total fee ${gold(fee)}` : 'Free'}${can.ok ? '' : ' · ' + can.why}`));
       row.append(img(matIcon(n.kind, n.t)), tx);
@@ -37175,7 +37323,7 @@ var handsTradeOpenPicker;
       b.append(el('i', 'ab-key', KEYS[i]));
       if (id) {
         const a = SOLO_ABILITIES[id] || {}; b.append(tile(id), el('b', null, a.short || a.name || id));
-        b.setAttribute('aria-label', `Slot ${KEYS[i]}: ${(ABILITIES[id] || a).name}. Open it.`);
+        b.setAttribute('aria-label', `Slot ${KEYS[i]}: ${(ABILITIES[id] || a).name}. Open it.`); setTip(b, () => abTip(id));
         b.addEventListener('click', () => (selId === id ? closeDet() : openDet(id)));
       } else {
         b.append(el('b', null, 'Empty'));
@@ -37266,7 +37414,7 @@ var handsTradeOpenPicker;
     bd.append(el('span', 'ab-badge ' + (where >= 0 ? 'in' : i.owned ? 'own' : !i.why ? 'go' : 'lock'),
       where >= 0 ? `In ${KEYS[where]}` : i.owned ? 'Learned' : !i.why ? 'Learn' : i.why));
     if (i.owned) { const m = talMark(k, id); if (m) bd.append(m); }
-    r.append(tile(id), t, bd);
+    r.append(tile(id), t, bd); setTip(r, () => abTip(id));
     r.addEventListener('click', () => (selId === id ? closeDet() : openDet(id)));
     return r;
   }
@@ -37276,7 +37424,7 @@ var handsTradeOpenPicker;
     const t = el('span', 'ab-rt'); t.append(el('b', null, nm), el('small', null, 'Talents'));
     const bd = el('span', 'ab-bd'), m = talMark(k, k + ':' + mv);
     bd.append(m || el('small', 'ab-tm', 'No talent'));
-    r.append(tile(mv), t, bd);
+    r.append(tile(mv), t, bd); setTip(r, () => { const B = BASIC.find(x => x[0] === mv); return B ? `${B[1]}\nAlways ready\n${B[2]}` : ''; });
     r.addEventListener('click', () => (selId === id ? closeDet() : openDet(id)));
     return r;
   }
@@ -37300,6 +37448,11 @@ var handsTradeOpenPicker;
     }
     wrap.append(hd, row);
     return wrap;
+  }
+  // desktop-tooltips: an ability's hover tip, from its card (detFor): name, kind, cooldown, tier, path and what it does
+  function abTip(id) {
+    const a = ABILITIES[id]; if (!a) return '';
+    return `${a.name}\n${KIND[a.kind]} · ${a.kind === 'passive' ? 'Always on' : `${cdTxt(id)} cooldown`} · ${a.tier ? 'Tier ' + ROMAN[a.tier] : 'Starter'} · ${a.path}\n${a.desc}`;
   }
   function detHead(name, sub, tl, onX) {
     const h = el('div', 'ab-dh'), t = el('div', 'ab-t'), x = btn('ab-x');
@@ -38160,12 +38313,43 @@ let showAwayReport;
 // holds a look or a unique (or is the first Star, or zone 1's first boss). The card lists what the win paid, in the colour of the best
 // thing inside. The drops this clear already queued as moments (the unique, the first Star, zone 1's boss card) fold into the cache card.
 // This file loads before 75-moments-ui, so the moment layer's names are read inside the handler, never at load.
+// boss-spoils-pick (Opus judge 2026-10-08): a zone 6 to 10 first clear that drops a Scroll asks which move it teaches now, when two or more
+// moves of the hero in play can be learned with that Scroll. Up to three, in the Abilities list's order, never marked best; Keep the
+// Scroll (or any other close) keeps it. A pick learns the move and slots it in a free slot, else opens Abilities on it to swap.
+// Nothing new is paid. Events for the walk: choice 'spoils' and spoilsPick { zone, offered, taken } (taken: a move id or 'keep').
+const SPOILS_TUNE = { from: 6, to: 10, max: 3 };
+function spoilsMoves(v) {
+  try {
+    if (!v || !v.scroll || !(v.zone >= SPOILS_TUNE.from && v.zone <= SPOILS_TUNE.to) || typeof abLearnInfo !== 'function') return null;
+    const k = soloHero(); if (!k || !HERO_ABILITIES[k]) return null;
+    const ids = HERO_ABILITIES[k].filter(id => { const i = abLearnInfo(k, id); return i.why === '' && i.payWith === v.scroll.id; });
+    return ids.length >= 2 ? { k, ids: ids.slice(0, SPOILS_TUNE.max) } : null;
+  } catch (e) { return null; }
+}
+function spoilsPicks(v, sp) {
+  const sid = v.scroll.id, done = taken => { emit('choice', 'spoils'); emit('spoilsPick', { zone: v.zone, offered: sp.ids.length, taken }); };
+  const learn = id => {
+    const k = sp.k, i = abLearnInfo(k, id);
+    if (soloHero() !== k || i.why || i.payWith !== sid || !abilityLearn(k, id)) { done('keep'); return; }   // the card waited and the move went: the Scroll stays
+    const free = soloEquipped().indexOf(null);
+    if (free >= 0) soloEquip(free, id);
+    else { if (typeof abilityOpenDetail === 'function') abilityOpenDetail(id); setTab('abilities', '#sec-abilities'); }   // all slots full: Abilities, on the move, has "Swap it in for:"
+    try { save(); } catch (e) {}
+    try { ui(true); } catch (e) {}   // the fight bar shows the slotted move now
+    done(id);
+  };
+  return { pickHead: 'Learn one now:', goTxt: 'Keep the Scroll', onKeep: () => done('keep'),
+    picks: sp.ids.map(id => ({ txt: ABILITIES[id].name, sub: ABILITIES[id].line, fn: () => learn(id) })) };
+}
 on('cacheOpen', v => {
   if (typeof moment !== 'function') return;
   if (!MOMENT_KINDS.cacheAuto) MOMENT_KINDS.cacheAuto = { tier: 'medium', eye: 'Lantern Cache', col: '#F2C14E', snd: 'mid' };
-  const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1;
+  const sp = spoilsMoves(v);
+  const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1 || !!sp;   // a pick needs the card (zones 6 to 10 only)
   const lines = [];
-  if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
+  // look-card-says-why: the colour's own line says what it did, whatever the sub line shows (the desk player asked what a colour was)
+  if (v.look) { const ln = v.look.n.replace(/ lantern$/, '');
+    lines.push({ txt: v.look.worn ? `Your lantern burns ${ln} now.` : `New lantern colour: ${ln}. You own it now.`, icon: { ic: ['banner', v.look.col] } }); }
   if (v.unique) {
     lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
     const wn = typeof momentWearNote === 'function' ? momentWearNote(v.unique.item) : null; if (wn) lines.push(wn);   // Cal's play note 9: say where a unique you cannot wear went
@@ -38182,12 +38366,13 @@ on('cacheOpen', v => {
   const col = v.unique ? '#FF8A3D' : v.look ? v.look.col : v.star ? '#F2C14E' : v.scroll ? v.scroll.col : '#F2C14E';
   const icon = v.unique ? { item: v.unique.item } : { ic: ['banner', col] };
   const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
-  // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
-  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
+  // the sub is one short line: the unique's odds (honest, with modifiers); the colour's line says what a look did
+  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
+  if (sp) Object.assign(o, spoilsPicks(v, sp));
   o.actions = [];
   if (v.unique && typeof momentEquipAction === 'function') { const eq = momentEquipAction(v.unique.item); if (eq) o.actions.push(eq); }   // Cal's play note 9: the unique is one tap from being worn
-  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });
+  if (big && !sp && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });
   const barks = v.zone === 1 ? ['boss1'] : [];
   const ci = MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone);   // champion-moment: a Champion's first clear queued its own card (75-moments-ui)
   if (big || ci >= 0) {
@@ -38271,12 +38456,12 @@ on('cacheOpen', v => {
   // ---------------- cost chips (rebuilt only when their text changes) ----------------
   function chips(box, c) {
     const items = [];
-    if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'gold' });
-    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: costName(f, t) }); }
-    for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: 'Trophy' }); }
+    if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'Gold', h: () => S.gold, need: c.gold });
+    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: costName(f, t), h: () => matOwn(f, t), need: n }); }
+    for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: i === 'any' ? 'Trophies (any)' : CRAFT_TROPHIES[i].n, h: () => h, need: n }); }
     const sig = items.map(x => x.t + x.s).join('|');
     if (box._sig === sig) return; box._sig = sig; box.textContent = '';
-    for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); e.title = x.n; e.append(img(x.u), el('span', null, x.t)); box.append(e); }
+    for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); setTip(e, () => tipCost(x.n, x.h(), x.need)); e.append(img(x.u), el('span', null, x.t)); box.append(e); }   // desktop-tooltips: was a title
   }
   const setTxt = (e, t) => { if (e.textContent !== t) e.textContent = t; };
   // How many of a cost's parts the player already has: { have, all }.
@@ -39637,10 +39822,83 @@ let craftUI = null;
     }
     return out;
   }
+  // desktop-tooltips: an item's hover tip, from the item sheet's own head and lines (renderItem): name, grade, tier, kind, power,
+  // its stat lines and who wears it. The sheet stays the full view (upgrade, salvage, compare).
+  tipHook.item = it => {
+    const d = itemKind(it), wr = wornBy(it.id);
+    const out = [itemName(it), [RAR[it.r].n, `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun) : ''].filter(Boolean).join(' · '), `Power ${fmt(itemPower(it))}`];
+    for (const L of splitLines(it)) if (!L.lore) out.push(L.g === 'uniq' ? L.txt : lineTxt(L.l) + (lineLive(L.l) ? '' : ' (not active yet)'));
+    if (wr) out.push(`You wear it (${posName(wr.pos)})`);
+    return out.join('\n');
+  };
   function deltaTxt(k, v) {
     const s = CRAFT_STATS[k], unit = (s.f.match(/\{v\}(%|x)/) || [])[1] || '';
     const a = Math.abs(v), n = s.dp == null ? fmt(a) : a.toFixed(s.dp);
     return `${v > 0 ? '+' : '-'}${n}${unit}`;
+  }
+  // craft-shortfall-offer: what the next +1 adds to the piece's main line, in that line's own unit ("+3: +3% damage."). A
+  // line at its cap (a Quiver's crit, a Lantern's spell) says so and shows the power change instead. Copy only: itemPower
+  // and the upgrade cost are unchanged.
+  function nextPlusTxt(it) {
+    const nx = Object.assign({}, it, { plus: it.plus + 1 }), a = itemLines(it), b = itemLines(nx);
+    const head = `+${it.plus + 1}: `, more = a.length > 1 ? ' Its other lines grow too.' : '';
+    const [k, v0] = a[0] || [], v1 = b[0] && b[0][0] === k ? b[0][1] : v0, s = CRAFT_STATS[k];
+    const dv = Math.round((v1 - v0) * 10) / 10;   // one decimal, never cut down (an Epic Tier 3 weapon's +15.75 reads +15.8%, not +15%)
+    if (s && dv > 0) return `${head}${s.f.replace('{v}', dv % 1 ? dv.toFixed(1) : String(dv))}.${more}`;
+    const nextP = itemPower(Object.assign({}, it, { plus: it.plus + 1 }));   // playtester-code-bugs: uniques use UNIQ_TUNE.pow, as itemPower does
+    const pw = `power ${fmt(itemPower(it))} → ${fmt(nextP)}`;
+    return s ? `${head}${s.n} is at its cap. ${pw[0].toUpperCase() + pw.slice(1)}.${more}` : `${head}${pw}.`;
+  }
+  // craft-shortfall-offer: a cost short of a middle (Ingot, Plank, Cloth, Leather) at tier t, read from refineOffer (55-refine).
+  // -> { txt, btn, add } | null. btn (the one-tap order) only when every order's inputs are in hand together and the stations
+  // have room; else txt names what is short. Orders already queued read "Smelting at the Forge." Nothing is queued until the
+  // player presses the button. upgrade-gold-covers-short adds its gold choice to this same row.
+  const midName = (f, t, n) => f === 'coal' ? 'coal' : matName(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || MAT[f].unit === 'Log') ? 's' : '');
+  const andList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  function shortOffer(cost, t) {
+    if (typeof refineOffer !== 'function' || !refineOn()) return null;
+    const mats = cost && cost.mats ? cost.mats : cost || {};
+    const mids = Object.keys(mats).filter(k => REFINE_RAW[k] && matOwn(k, t) < mats[k]);
+    if (!mids.length) return null;
+    const off = refineOffer(mats, t), out = [];
+    const queued = mids.filter(k => !off.orders.some(o => o.prod === k));
+    let btn = '';
+    if (off.orders.length) {
+      out.push(`Short ${andList(off.orders.map(o => `${storeNum(o.want)} ${midName(o.prod, t, o.want)}`))}.`);
+      const need = {};
+      for (const o of off.orders) for (const [f, tt, n] of refineNeed(o.prod, o.tier)) need[f + ':' + tt] = (need[f + ':' + tt] || 0) + n * o.want;
+      const miss = Object.entries(need).map(([key, n]) => { const [f, tt] = key.split(':'); return [f, +tt, n - matOwn(f, +tt)]; }).filter(x => x[2] > 0);
+      const slots = {};
+      for (const o of off.orders) slots[o.st] = (slots[o.st] || 0) + 1;
+      const tight = Object.keys(slots).find(st => { const l = refineOrders(st); return REFINE_TUNE.max - l.length + l.filter(o => !o.all && o.made >= o.want).length < slots[st]; });
+      const bad = off.orders.find(o => !o.ok && (!refineBuilt(o.st) || !refineSlotFree(o.st))), ings = andList(off.orders.map(o => REFINE_PRODUCTS[o.prod].ing.toLowerCase()));
+      if (bad) out.push(bad.why);
+      else if (miss.length) out.push(`${ings[0].toUpperCase() + ings.slice(1)} them needs ${andList(miss.map(([f, tt, n]) => `${storeNum(n)} more ${midName(f, tt, n)}`))}${miss.some(x => x[0] === 'coal') ? ' (Copper Ore brings coal)' : ''}.`);
+      else if (tight) out.push(`The ${CAMP_B[tight].n} holds ${REFINE_TUNE.max} orders. Clear one first.`);
+      else if (off.orders.some(o => !o.full)) out.push('The Storehouse has no room for them.');
+      else {
+        out.push(`${andList(off.orders.map(o => `${REFINE_PRODUCTS[o.prod].verb} ${storeNum(o.want)}`))} (${andList(Object.entries(need).map(([key, n]) => { const [f, tt] = key.split(':'); return `${storeNum(n)} ${midName(f, +tt, n)}`; }))})?`);
+        btn = andList(off.orders.map((o, i) => `${i ? REFINE_PRODUCTS[o.prod].verb.toLowerCase() : REFINE_PRODUCTS[o.prod].verb} ${storeNum(o.want)}`));
+      }
+    }
+    for (const k of queued) {   // the order is queued: say it runs, or why it has stopped
+      const st = REFINE_PRODUCTS[k].st, mine = refineOrders(st).filter(o => o.prod === k && o.tier === t && (o.all || o.made < o.want));
+      const stop = mine.length && !mine.some(o => refineState(st, o).k === 'run') ? refineState(st, mine[0]).why : '';
+      out.push(stop ? `The ${CAMP_B[st].n}'s ${matName(k, t)} order has stopped: ${stop}.` : `${REFINE_PRODUCTS[k].ing} at the ${CAMP_B[st].n}.`);
+    }
+    return { txt: out.join(' '), btn, add: btn ? () => off.add() : null };
+  }
+  // The row under a recipe or an upgrade: the line, and the button when the order can start. after: re-render (the item sheet).
+  function shortRow(cost, t, after) {
+    const o = safe(() => shortOffer(cost, t), null); if (!o) return null;
+    const r = el('div', 'cf-src cf-short');
+    r.append(el('span', null, o.txt + ' '));
+    if (o.btn) {
+      const b = el('button', 'mini cf-order', o.btn); b.type = 'button';
+      b.addEventListener('click', () => { act(() => { const x = shortOffer(cost, t); return x && x.add ? x.add() > 0 : false; }); if (after) after(); });
+      r.append(b);
+    }
+    return r;
   }
 
   // ---------------- UI state (memory only) ----------------
@@ -39927,7 +40185,7 @@ let craftUI = null;
       const it = itemById(id); if (!it) continue;
       const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.result === id ? ' sel' : '')); b.type = 'button';
       b.append(img(itemIc(it)), el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
-      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`);
+      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`); setTip(b, () => tipItem(itemById(id)));
       b.addEventListener('click', () => { st8.result = id; st8.resArm = false; ui(true); });
       row.append(b);
     }
@@ -39963,12 +40221,13 @@ let craftUI = null;
     const mw = mwFor(k);
     if (mw != null) {
       const have = troph()[mw] || 0, c = el('span', 'cost mw' + (have < 1 ? ' short' : ''));
-      c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); costs.append(c);
+      c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); setTip(c, () => tipCost(CRAFT_TROPHIES[mw].n, troph()[mw] || 0, 1)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
     // gear-in-first-25: where each short gathered material comes from ("Bristlehide: from Hunting, which opens at zone 5."); none for
     // essence, gold, a middle (Planks, Ingots) or a material in hand
     for (const [f, n] of Object.entries(kindCost(k, t))) { if (matOwn(f, t) >= n) continue; const ln = matSourceLine(f, t); if (ln) row.append(el('div', 'cf-src', ln)); }
+    if (skillTierOpen(skillOfSt(d.st), t)) { const sr = shortRow(kindCost(k, t), t); if (sr) row.append(sr); }   // craft-shortfall-offer: only on a tier you can make
     const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds));
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
@@ -40081,7 +40340,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k)]);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -40194,10 +40453,10 @@ let craftUI = null;
       if (w !== 'any') for (const p of ['weapon', 'helm']) { const k = ((CRAFT_FITS[p] || {})[w] || [])[0]; if (k && ICON[CRAFT_KINDS[k].ic]) EMPTY_IC[p] = CRAFT_KINDS[k].ic; }
       for (const p of CRAFT_HERO_POS.filter(craftKindVisible)) {
         const e = gearEls[p], it = itemById(S.equip[p]);
-        if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
+        if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); setTip(e.b, () => tipItem(itemById(S.equip[p]))); }
         else {
           const ic = EMPTY_IC[p]; setIc(e.tile, ICON[ic] ? iconURL(ic, '#6E6080') : iconURL('charm', '#6E6080'), null, 'ghost soon');
-          e.plus.textContent = ''; e.b.setAttribute('aria-label', `${posName(p)}: empty. Choose gear.`);
+          e.plus.textContent = ''; e.b.setAttribute('aria-label', `${posName(p)}: empty. Choose gear.`); setTip(e.b, null);
         }
       }
     }
@@ -40342,6 +40601,7 @@ let craftUI = null;
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
         b.dataset.itemId = it.id;
         b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}${wr ? ', worn by you' : ''}${it.u ? ', unique' : ''}`);
+        setTip(b, () => tipItem(itemById(it.id)));   // desktop-tooltips
         if (bulk.on) {
           b.disabled = !eligible.has(it.id);
           b.setAttribute('aria-pressed', String(bulk.ids.has(it.id)));
@@ -40378,7 +40638,7 @@ let craftUI = null;
   const secBox = (title, ...kids) => { const s = el('div', 'cf-ss'); if (title) s.append(el('h4', null, title)); s.append(...kids); return s; };
   function trophChip(need) {
     const have = trophTotal(), c = el('span', 'cost' + (have < need ? ' short' : ''));
-    c.append(img(troIcon(0)), el('span', null, `${have}/${need} Trophy (any)`));
+    c.append(img(troIcon(0)), el('span', null, `${have}/${need} Trophy (any)`)); setTip(c, () => tipCost('Trophies (any)', trophTotal(), need));
     return c;
   }
   function salvagePreview(it) {
@@ -40467,8 +40727,8 @@ let craftUI = null;
       const c = kindUpgradeCost(it), chips = el('div', 'costs');
       costChips(chips, c.mats, it.t, c.gold);
       if (c.troph) chips.append(trophChip(c.troph));
-      const nextP = itemPower(Object.assign({}, it, { plus: it.plus + 1 }));   // playtester-code-bugs: uniques use UNIQ_TUNE.pow, as itemPower does
-      upBox.append(el('p', 'note', `+${it.plus + 1}: power ${fmt(itemPower(it))} → ${fmt(nextP)}. Every line grows.`), chips);
+      upBox.append(el('p', 'note cf-next', nextPlusTxt(it)), chips);   // craft-shortfall-offer: the main line's change, not a bare power number
+      { const sr = shortRow(c.mats, it.t, renderItem); if (sr) upBox.append(sr); }
       const f = K6.upgrade(), heroPos = wr && wr.who === 'hero' ? wr.pos : null;
       const okMats = hasMats(c.mats, it.t) && S.gold >= c.gold && (!c.troph || (f && trophTotal() >= c.troph));
       const b = el('button', 'big forge cf-act', `Upgrade to +${it.plus + 1}`); b.type = 'button';
@@ -42488,6 +42748,9 @@ var introUI;   // var: 76-create (loaded after this file) reads it at run time
 //   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
 //   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
+//   picks    [{ txt, sub, fn }] a compact row of choices under the list (.mm-pick; boss-spoils-pick), headed by pickHead; a pick closes the
+//            card, then runs its fn. goTxt renames Continue; onKeep runs when the card closes any other way (Continue, an action, a tap
+//            outside, Escape). The first item in a folded card that has picks owns them.
 //   bark     a hero-voice moment id (55-voice.js): the story hero's line shows on the card or banner with their portrait. At most one bark a
 //            flush (the strongest, VOICE_PRIO). kind 'bark' is a banner of just the line, dropped after 20 s if the banner budget has no room.
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
@@ -42564,6 +42827,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     u.ov.remove(); u.ov = null;
     if (u.lastFocus && u.lastFocus.focus && document.contains(u.lastFocus)) try { u.lastFocus.focus({ preventScroll: true }); } catch (e) {}
     u.wait = 0;
+    const keep = u.onKeep; u.onKeep = null;   // a card with picks closed without one (boss-spoils-pick)
+    if (keep) try { keep(); } catch (e) { console.error('[lanternfall] moment keep', e); }
     try { ui(true); } catch (e) {}
   }
   function lineRow(l) {
@@ -42617,19 +42882,36 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
       if (rows.length > MOMENT_TUNE.maxLines) ul.append(el('li', 'mm-more', `And ${rows.length - MOMENT_TUNE.maxLines} more.`));
       card.append(ul);
     }
+    // boss-spoils-pick: a compact row of choices; a pick closes the card first, then runs
+    const pk = list.find(x => x.picks && x.picks.length), keeps = list.filter(x => x.picks && x.picks.length && x !== pk && x.onKeep).map(x => x.onKeep);   // a second pick folded in keeps its Scroll
+    const keepRest = () => { for (const f of keeps) try { f(); } catch (e) { console.error('[lanternfall] moment keep', e); } };
+    u.onKeep = pk ? () => { if (pk.onKeep) pk.onKeep(); keepRest(); } : null;
+    if (pk) {
+      card.classList.add('has-pick');
+      const box = el('div', 'mm-picks');
+      if (pk.pickHead) box.append(el('p', 'mm-pick-h', pk.pickHead));
+      const row = el('div', 'mm-pick-row');
+      for (const p of pk.picks) {
+        const b = el('button', 'mm-pick'); b.type = 'button';
+        b.append(el('b', null, p.txt)); if (p.sub) b.append(el('small', null, p.sub));
+        b.addEventListener('click', e => { e.stopPropagation(); if (Date.now() - u.shownAt < MOMENT_TUNE.tapLockMs) return; u.onKeep = keeps.length ? keepRest : null; closeCard(); try { p.fn && p.fn(); } catch (err) { console.error('[lanternfall] moment pick', err); } });
+        row.append(b);
+      }
+      box.append(row); card.append(box);
+    }
     const acts = el('div', 'mm-acts');
     for (const a of (first.actions || [])) {
       const b = el('button', 'big mm-act', a.txt); b.type = 'button';
       b.addEventListener('click', e => { e.stopPropagation(); closeCard(); try { a.fn && a.fn(); } catch (err) { console.error('[lanternfall] moment action', err); } });
       acts.append(b);
     }
-    const go = el('button', 'big forge mm-go', 'Continue'); go.type = 'button';
+    const go = el('button', 'big forge mm-go', (pk && pk.goTxt) || 'Continue'); go.type = 'button';
     acts.append(go); card.append(acts);
     ov.append(card);
     u.shownAt = Date.now();
     const tryClose = () => { if (Date.now() - u.shownAt >= MOMENT_TUNE.tapLockMs) closeCard(); };   // a fight tap must not skip the card
     ov.addEventListener('click', tryClose);
-    ov.addEventListener('keydown', ev => { if (ev.key === 'Escape') tryClose(); if (ev.key === 'Tab') { ev.preventDefault(); go.focus(); } });
+    ov.addEventListener('keydown', ev => { if (ev.key === 'Escape') tryClose(); if (ev.key === 'Tab') { ev.preventDefault(); const bs = [...card.querySelectorAll('button')], i = bs.indexOf(document.activeElement); (i < 0 ? go : bs[(i + (ev.shiftKey ? bs.length - 1 : 1)) % bs.length]).focus(); } });   // Tab stays on the card's buttons
     document.body.append(ov); u.ov = ov;
     go.focus({ preventScroll: true });
     emit('momentShow', { tier: 'big', kind: first.kind, n: list.length, zone: first.zone });
@@ -43803,7 +44085,7 @@ let openSheet, partySheet;
       const d = el('div', 'cs-hslot' + (open ? '' : ' soon'));
       d.append(it ? slotTile(it, null, 56) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm', 56));
       d.append(el('small', null, nouns[s.id] || s.n));
-      d.title = it ? itemName(it) : open ? 'Empty. Choose gear in the Gear view, next to Hero.' : 'Coming with crafting.';
+      setTip(d, it ? itemName(it) : open ? 'Empty. Choose gear in the Gear view, next to Hero.' : 'Coming with crafting.');   // desktop-tooltips: was a title
       g.append(d);
     }
     body.append(section('Gear', g, '', el('p', 'note', 'Wear and swap gear in the Gear view, next to Hero. Make new gear in Craft.')));
@@ -43899,7 +44181,7 @@ let openSheet, partySheet;
       const d = el('div', 'pc-slot' + (open ? '' : ' soon'));
       const tile = it ? slotTile(it) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm');
       d.append(tile, el('small', null, nouns[s.id] || s.n));
-      d.title = it ? itemName(it) : open ? 'Empty' : 'Coming with crafting';
+      setTip(d, it ? itemName(it) : open ? 'Empty' : 'Coming with crafting');   // desktop-tooltips: was a title
       gearBox.append(d);
     }
     card.append(gearBox);
@@ -44777,7 +45059,7 @@ var soloIconURL = () => '';
         setCd(b, pas ? 0 : cd, tb.max(o.id), wait);
         // why it cannot be used: its cooldown (turns), the finisher's third turn, or what it needs (a Burn, Grit, ...)
         setN(b, pas ? '' : cd ? String(cd) : why === 'gate' ? 'T3' : why && why !== 'cd' && why !== 'turn' ? '!' : '');
-        putAttr(b, 'title', why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '');
+        b._why = why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '';   // its hover tip's last line
         b.classList.toggle('ready', !why && tb.heroTurn);
         b.classList.toggle('blocked', !!why && why !== 'cd' && !pas);
         putText(b._sub, pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? 'Needs ' + why.slice(5) : wait ? 'Wait' : 'Ready');
@@ -44795,6 +45077,12 @@ var soloIconURL = () => '';
     if (wait) for (const b of [bAtk, ...bAbs]) b.classList.remove('ready-now');   // a flash from the turn just played ends with it
     fillSkills(); fillFoe();
   }
+  // desktop-tooltips: with a mouse, resting on a slot shows its name, key and what it does (the aria-label's text; the slot's own
+  // card opens on a hold, the moves' help in the Abilities menu)
+  const moveTip = k => `${INFO[k].name} (${INFO[k].key})\n${INFO[k].desc}`;
+  setTip(bAtk, () => moveTip('atk')); setTip(bParry, () => moveTip('parry')); setTip(bDodge, () => moveTip('dodge'));
+  bAbs.forEach((b, i) => setTip(b, () => { const id = abIds[i], a = id && SOLO_ABILITIES[id]; if (!a) return '';
+    return `${a.name} (${KEY_LB['ab' + i]})\n${a.turnDesc || a.desc}` + (b._why && typeof turnBarInfo === 'function' && turnBarInfo() ? '\n' + b._why : ''); }));
   bAtk.setAttribute('aria-label', 'Attack (D). ' + INFO.atk.desc);
   bParry.setAttribute('aria-label', 'Parry (A). ' + INFO.parry.desc);
   bDodge.setAttribute('aria-label', 'Dodge (S or Space). ' + INFO.dodge.desc);
@@ -45441,8 +45729,8 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
 // building row is the Camp's list (75-camp-ui.js); its icon is registered here.
 //   - The view (id 'pack', label "Storehouse"): a top card (level, what it holds, Build or Upgrade ›),
 //     filter chips (All, each family with something in it, Fought, Trophies), sort chips (Fullest, Name) and
-//     "Show all grades". First view: the shelf, one stack per family at the grade you use (storeShelfGrade
-//     below; Essence is one pile), at most 7 stacks (8 once coal lands). "Show all grades" or a family filter:
+//     "Show all tiers". First view: the shelf, one stack per family at the grade you use (storeShelfGrade
+//     below; Essence is one pile), at most 7 stacks (8 once coal lands). "Show all tiers" or a family filter:
 //     families as rows of every grade with a held/cap bar, empty families folded into one line. Trophies
 //     fold. A stack or cell opens "where to get it" (72-ui-gather whereSheet).
 //   - The "Storehouse full" warning lives on the Now card and the header pill (72-ui-gather, 75-nav-ui).
@@ -45574,7 +45862,7 @@ function storeSalvageNote(preview, t) {
     V.up = btn('mini sh-up', 'Upgrade ›');
     V.up.addEventListener('click', () => setTab('world', '#camp-b-store'));
     card.append(tx, V.up);
-    // filter chips (wrap to a second row when narrow; no view swipe), then sort chips and "Show all grades"
+    // filter chips (wrap to a second row when narrow; no view swipe), then sort chips and "Show all tiers"
     const chips = el('div', 'sh-chips'); chips.dataset.noswipe = '';
     for (const [id, label] of FILTERS) {
       const b = btn('sh-fchip', label); b.setAttribute('aria-pressed', String(id === filter));
@@ -45589,7 +45877,7 @@ function storeSalvageNote(preview, t) {
       b.addEventListener('click', () => { sort = id; ui(true); });
       tools.append(b); V.sorts[id] = b;
     }
-    V.all = btn('sh-fchip sh-all', 'Show all grades');
+    V.all = btn('sh-fchip sh-all', 'Show all tiers');
     V.all.addEventListener('click', () => { showAll = !showAll; ui(true); });
     tools.append(V.all);
     // the shelf: one stack per family
@@ -45640,12 +45928,12 @@ function storeSalvageNote(preview, t) {
       putAttr(V.chips[id], 'aria-pressed', String(filter === id));
       putToggle(V.chips[id], 'on', filter === id);
     }
-    // sort and "Show all grades". The shelf is the first view; a family filter (or the toggle) shows every grade.
+    // sort and "Show all tiers". The shelf is the first view; a family filter (or the toggle) shows every grade.
     for (const [id] of SORTS) { putHidden(V.sorts[id], filter !== 'all'); putAttr(V.sorts[id], 'aria-pressed', String(sort === id)); putToggle(V.sorts[id], 'on', sort === id); }
     putHidden(V.sortl, filter !== 'all');   // sorting only changes the All view
     const fam1 = filter !== 'all' && filter !== 'fought' && filter !== 'troph';
     putHidden(V.all, filter !== 'all');
-    putText(V.all, showAll ? 'Show one grade' : 'Show all grades');
+    putText(V.all, showAll ? 'Show one tier' : 'Show all tiers');
     putAttr(V.all, 'aria-pressed', String(showAll));
     putToggle(V.all, 'on', showAll);
     const grades = filter !== 'troph' && (fam1 || (filter === 'all' && showAll));

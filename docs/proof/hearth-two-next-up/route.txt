@@ -1,0 +1,19 @@
+# seed: 1
+# Proof for card hearth-two-next-up: after the zone 10 clear, Next Up names Hearth 2, what it still needs and where each part
+# comes from, and Go sends the hero to gather the first one. Fixture z13-boss-ready: zone 13, Hearth 1, no Tavern, no logs.
+# The order of the steps (logs, ore, back to the fight, ready to build, then the Tavern) is in tools/check.mjs, section 'camp'.
+new z13-boss-ready
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+tap "Next up"
+expect "Build Hearth 2"
+expect "at the Pine Grove"
+expect "at the Copper Vein"
+shot nextup-hearth2
+tap "Go: Build Hearth 2"
+wait 4
+tap-if "Dismiss this tip"
+expect "Gather: Woodcutting"
+shot chopping

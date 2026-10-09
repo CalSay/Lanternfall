@@ -1,0 +1,8 @@
+/* desktop-tooltips (70b-tips-ui.js): the hover tip on items, abilities and costs. Mouse only; it never takes a click. */
+.tip { position: fixed; left: 0; top: 0; z-index: 70; max-width: min(320px, calc(100vw - 16px)); padding: 7px 10px 8px;
+  display: grid; gap: 2px; pointer-events: none; background: var(--panel-2); border: 2px solid var(--line-hi);
+  box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); color: var(--bone); font: 14px/1.3 var(--body); text-align: left; }
+.tip > b { font: 600 calc(17px * var(--display-k))/1.05 var(--display); color: var(--gold); letter-spacing: .02em; }
+.tip > span { color: var(--bone); }
+@media (prefers-reduced-motion: no-preference) { .tip:not([hidden]) { animation: tipIn .1s ease-out; } }
+@keyframes tipIn { from { opacity: 0; } }

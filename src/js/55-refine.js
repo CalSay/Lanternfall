@@ -111,7 +111,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
   refineAdd = (prod, tier, n) => {
     const p = REFINE_PRODUCTS[prod];
     if (!p || !refineOn()) return { ok: false, why: 'Unknown product.' };
-    if (!(Number.isInteger(tier) && tier >= 1 && tier <= 5)) return { ok: false, why: 'Unknown grade.' };
+    if (!(Number.isInteger(tier) && tier >= 1 && tier <= 5)) return { ok: false, why: 'Unknown tier.' };
     const st = p.st, all = n === 'all';
     if (!built(st)) return { ok: false, why: `Build the ${CAMP_B[st].n} first.` };
     if (!refineSlotFree(st)) return { ok: false, why: `The ${CAMP_B[st].n} holds ${T.max} orders. Remove one first.` };

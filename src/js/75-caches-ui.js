@@ -3,12 +3,43 @@
 // holds a look or a unique (or is the first Star, or zone 1's first boss). The card lists what the win paid, in the colour of the best
 // thing inside. The drops this clear already queued as moments (the unique, the first Star, zone 1's boss card) fold into the cache card.
 // This file loads before 75-moments-ui, so the moment layer's names are read inside the handler, never at load.
+// boss-spoils-pick (Opus judge 2026-10-08): a zone 6 to 10 first clear that drops a Scroll asks which move it teaches now, when two or more
+// moves of the hero in play can be learned with that Scroll. Up to three, in the Abilities list's order, never marked best; Keep the
+// Scroll (or any other close) keeps it. A pick learns the move and slots it in a free slot, else opens Abilities on it to swap.
+// Nothing new is paid. Events for the walk: choice 'spoils' and spoilsPick { zone, offered, taken } (taken: a move id or 'keep').
+const SPOILS_TUNE = { from: 6, to: 10, max: 3 };
+function spoilsMoves(v) {
+  try {
+    if (!v || !v.scroll || !(v.zone >= SPOILS_TUNE.from && v.zone <= SPOILS_TUNE.to) || typeof abLearnInfo !== 'function') return null;
+    const k = soloHero(); if (!k || !HERO_ABILITIES[k]) return null;
+    const ids = HERO_ABILITIES[k].filter(id => { const i = abLearnInfo(k, id); return i.why === '' && i.payWith === v.scroll.id; });
+    return ids.length >= 2 ? { k, ids: ids.slice(0, SPOILS_TUNE.max) } : null;
+  } catch (e) { return null; }
+}
+function spoilsPicks(v, sp) {
+  const sid = v.scroll.id, done = taken => { emit('choice', 'spoils'); emit('spoilsPick', { zone: v.zone, offered: sp.ids.length, taken }); };
+  const learn = id => {
+    const k = sp.k, i = abLearnInfo(k, id);
+    if (soloHero() !== k || i.why || i.payWith !== sid || !abilityLearn(k, id)) { done('keep'); return; }   // the card waited and the move went: the Scroll stays
+    const free = soloEquipped().indexOf(null);
+    if (free >= 0) soloEquip(free, id);
+    else { if (typeof abilityOpenDetail === 'function') abilityOpenDetail(id); setTab('abilities', '#sec-abilities'); }   // all slots full: Abilities, on the move, has "Swap it in for:"
+    try { save(); } catch (e) {}
+    try { ui(true); } catch (e) {}   // the fight bar shows the slotted move now
+    done(id);
+  };
+  return { pickHead: 'Learn one now:', goTxt: 'Keep the Scroll', onKeep: () => done('keep'),
+    picks: sp.ids.map(id => ({ txt: ABILITIES[id].name, sub: ABILITIES[id].line, fn: () => learn(id) })) };
+}
 on('cacheOpen', v => {
   if (typeof moment !== 'function') return;
   if (!MOMENT_KINDS.cacheAuto) MOMENT_KINDS.cacheAuto = { tier: 'medium', eye: 'Lantern Cache', col: '#F2C14E', snd: 'mid' };
-  const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1;
+  const sp = spoilsMoves(v);
+  const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1 || !!sp;   // a pick needs the card (zones 6 to 10 only)
   const lines = [];
-  if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
+  // look-card-says-why: the colour's own line says what it did, whatever the sub line shows (the desk player asked what a colour was)
+  if (v.look) { const ln = v.look.n.replace(/ lantern$/, '');
+    lines.push({ txt: v.look.worn ? `Your lantern burns ${ln} now.` : `New lantern colour: ${ln}. You own it now.`, icon: { ic: ['banner', v.look.col] } }); }
   if (v.unique) {
     lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
     const wn = typeof momentWearNote === 'function' ? momentWearNote(v.unique.item) : null; if (wn) lines.push(wn);   // Cal's play note 9: say where a unique you cannot wear went
@@ -25,12 +56,13 @@ on('cacheOpen', v => {
   const col = v.unique ? '#FF8A3D' : v.look ? v.look.col : v.star ? '#F2C14E' : v.scroll ? v.scroll.col : '#F2C14E';
   const icon = v.unique ? { item: v.unique.item } : { ic: ['banner', col] };
   const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
-  // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
-  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
+  // the sub is one short line: the unique's odds (honest, with modifiers); the colour's line says what a look did
+  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
+  if (sp) Object.assign(o, spoilsPicks(v, sp));
   o.actions = [];
   if (v.unique && typeof momentEquipAction === 'function') { const eq = momentEquipAction(v.unique.item); if (eq) o.actions.push(eq); }   // Cal's play note 9: the unique is one tap from being worn
-  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });
+  if (big && !sp && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });
   const barks = v.zone === 1 ? ['boss1'] : [];
   const ci = MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone);   // champion-moment: a Champion's first clear queued its own card (75-moments-ui)
   if (big || ci >= 0) {

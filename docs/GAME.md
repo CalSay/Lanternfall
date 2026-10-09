@@ -27,7 +27,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 at 1920x1080 and fit 1366x640. Landscape phones (740x360) and tablets (1024x768) still play without clipping; phones held
 upright (360x740) must not break, but new features need not be designed for them. On a desktop screen (1200x600 and up) text and chrome grow, an item's detail opens
 beside the list in its menu, and the number keys 1 to 5 open Fight, Hero, Gather, Craft and Camp (the open tab's number closes it;
-Escape closes the detail, then the menu). Two-press buttons (spend a Scroll, a camp build, a reset) say "Confirm" on the second press.
+Escape closes the detail, then the menu). Two-press buttons (spend a Scroll, a camp build, a reset) say "Confirm" on the second press. With a mouse, resting the pointer on an item, an ability or a cost shows a tip with what it is and does (the same lines a click opens; a touch screen never shows one).
 
 Menu sub-tabs keep their labels and show the drawn menu icons. Action buttons show small Ready, Cooldown,
 Locked or Unavailable badges; the ability picker marks the selected action. Icons use native pixel sizes.
@@ -90,7 +90,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
   and the rest cost a Scroll of their tier (or a higher one) from zone bosses; a Moss Scroll teaches one move per hero, so spares
   wait for Tobin and Pip, and Abilities' Can learn list says who they are for. "Scroll found." shows only for a Scroll the hero in play
-  can use now. **Talents** (`24e-data-talents.js`): two choices for each
+  can use now. On a zone 6 to 10 boss's first clear, the Lantern Cache card asks "Learn one now:" with up to three moves the dropped
+  Scroll can teach the hero in play (only when two or more can be learned): a pick learns it and fills a free slot, or opens Abilities on
+  it when the slots are full; "Keep the Scroll" keeps it (`75-caches-ui.js`, boss-spoils-pick). **Talents** (`24e-data-talents.js`): two choices for each
   ability and for Attack, Parry and Dodge. **Ability icons** (Codex's drawings, `art/abilities/`, converted by
   `tools/art/abilityicons.py`, embedded by `tools/art/embed-icons.mjs` under the live ability id): Pip's 14 are drawn on
   the bar, the picker and the Abilities list. Wren and Tobin keep lettered tiles until all 14 of theirs are drawn (whole
@@ -160,7 +162,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **The Storehouse** (`55-store.js`): a cap per material and grade, from every source. Skill XP keeps counting at the
   cap. Its view (Gather > Store, `75-store-ui.js`) opens on a shelf: one stack per family at the grade you use (the
   lower of your zone's grade and your skill's top node; the largest stack at or below it when that grade is empty;
-  Essence one pile; hide once Hunting shows), sorted Fullest or by Name, filtered by family. "Show all grades" or a
+  Essence one pile; hide once Hunting shows), sorted Fullest or by Name, filtered by family. "Show all tiers" or a
   family filter shows every grade. A refined good shares its raw family's stack ("Iron Ore 120" with "Iron Ingot 40"
   under it) and coal is its own stack once the Forge is built (at most 8 stacks). Coal and the refined goods show their
   names only, no icon, until their art pack passes.
@@ -188,11 +190,17 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 ## Gear and crafting
 
 - **Crafting** (`55-crafting.js`, `41-items.js`, `21-data-craft.js`, `75-craft-ui.js`): class gear at the camp's
-  stations, grades 1-5. Items roll affix lines by rarity. Upgrades go to +10 (Trophies gate +8 to +10). Reforge,
+  stations, tiers 1-5 (on screen the material step is a "tier", never a "grade"; card craft-shortfall-offer). Items roll
+  affix lines by rarity. Upgrades go to +10 (Trophies gate +8 to +10). Reforge,
   Masterwork is in the Craft tab; worn gear, the bag, upgrades, reforge and salvage are on the Hero tab's Gear view. Every combat line works in a turn fight (59k `turnMakeProfile`; the audit
   is [combat-turn-build.md](design/combat-turn-build.md) "Gear stats in turn fights"): Spell power is fire, frost and
   holy damage, Damage over time (the old Area) Burn and Bleed, Control boss Stagger, Counter (the old Threat) counter
   damage, Speed (the old Attack speed) how often you act, Focus a steady cooldown refund.
+  A recipe or upgrade short of an Ingot, Plank, Cloth or Leather says so and offers the order in one press ("Short 5 Iron
+  Ingots and 3 Birch Planks. Smelt 5 and Saw 3 (10 Iron Ore, 10 coal and 6 Birch Logs)?"), only when every raw input is in
+  hand; otherwise the line names what is short, and orders already queued read "Smelting at the Forge." An upgrade says what
+  its next +1 adds to the piece's main line in that line's unit ("+7: +8.5% damage."); a line at its cap says so and shows
+  the power change (`75-craft-ui.js` `shortOffer`, `nextPlusTxt`; card craft-shortfall-offer).
   The result card after a craft (`craft-delta`): a tool that beats the worn one (or fills an empty slot) goes on by itself
   and the card says how much faster you gather; gear always asks. A weapon, off-hand or charm the hero can wear gets one
   line on how often you'd beat the boss at your furthest zone with it (or, when you win nearly every time, how many turns a
@@ -237,7 +245,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   capped perks.
 - **Deeds** (`23-data-deeds.js`, `58-deeds.js`, `75-deeds-ui.js`): tracks, Feats, titles and looks drawn on the hero
   (`12g-art-accessories.js`, `64-looks.js`), and the Trophy Wall at camp (`63e-scenery-wall.js`).
-- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons. A weapon or armour craft goal names the boss it is for ("Craft a Pine Bow for the zone 2 boss"); when you can pay for an upgrade to a worn piece and no craft is ready, it offers "Upgrade your Pine Bow to +1", and Go opens the piece on Hero, Gear. From the first tool made until a weapon is worn, the weapon holds a row of its own above every unfinished row, names where its short material comes from ("Pine Staff for the zone 4 boss: mine 3 Quartz at the Quartz Geode"; Go opens that Gather view), and no upgrade is offered.
+- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons. A weapon or armour craft goal names the boss it is for ("Craft a Pine Bow for the zone 2 boss"); when you can pay for an upgrade to a worn piece and no craft is ready, it offers "Upgrade your Pine Bow to +1", and Go opens the piece on Hero, Gear. From the first tool made until a weapon is worn, the weapon holds a row of its own above every unfinished row, names where its short material comes from ("Pine Staff for the zone 4 boss: mine 3 Quartz at the Quartz Geode"; Go opens that Gather view), and no upgrade is offered. After the zone 10 clear, Next Up offers the camp's step up, Hearth 2 and then the Tavern, naming each part of the cost still short and where it comes from ("Build Hearth 2: 20 Pine Log at the Pine Grove, 20 Copper Ore at the Copper Vein, 5 Essence from fights"). While a gathered part is short and you are elsewhere the row is Ready and Go sends you to that node; once you have what that node gave, it offers "Back to the fight", and with everything in hand it reads "Hearth 2: ready to build" (or the camp's own build row offers it).
   **"Boss ready"** means you would usually win the zone boss. The game tries 30 scratch fights of that boss with your
   hero as they stand now, judged from your own Parry and Dodge record (a new player counts as casual), and says "Boss
   ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong", and Go opens
@@ -272,6 +280,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   moments (the first level up and every 5th level, a new ability, a new Star, a look found) show as one banner in the
   notices slot, at least 2.6 s, at most 2 in any 3 minutes of the first 30. All wait for the end of the fight, never show
   in a turn, and are never only a bell line. Several at one fight end fold into one card or banner.
+- **Lantern Caches** (`55-caches.js`, `75-caches-ui.js`): a zone boss's first clear opens a cache with what the win paid and the
+  unique's chance. Zones 1 to 3 and 7 to 9 also give a lantern colour, and its own line says what it did: "Your lantern burns
+  Ember Red now." when the lantern took it, else "New lantern colour: Deep Blue. You own it now." (look-card-says-why).
 
 ## Currencies
 

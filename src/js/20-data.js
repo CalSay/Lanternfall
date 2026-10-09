@@ -127,16 +127,16 @@ const UNIQ = {
     rule: { id: 'crimson', stacks: 2, cap: 10, tickX: 0.9 }, txt: 'Needs something that makes Bleed. Your Bleed stacks twice as fast and holds up to 10. Bleed deals 10% less a turn.' },
   'carapace-pick': { name: "Burrower's Promise", slot: 'pick', pos: 'pick', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['beetle', 4], art: 0, col: '#9BE3F0', src: 'Zone boss · Beetle Barrows', fx: {},
     rise: 'mine', riseMax: 5, rule: { id: 'tool', skill: 'mine', spd: 0.9, partner: { ore: ['crystal', 3], crystal: ['ore', 3] } },
-    txt: 'Always the grade of your best open Mining ground. Every 3 Ore or Crystal you mine also turns up 1 of the other. Mining is 10% slower.' },
+    txt: 'Always the tier of your best open Mining ground. Every 3 Ore or Crystal you mine also turns up 1 of the other. Mining is 10% slower.' },
   'wisp-axe': { name: 'Reed of Remembrance', slot: 'axe', pos: 'axe', cls: 'any', legacy: false, pow: 1.8, g: [2, 5], from: ['wraith', 7], art: 0, col: '#35524C', src: 'Zone boss · Wraithmarsh', fx: {},
     rise: 'wood', riseMax: 5, rule: { id: 'tool', skill: 'wood', spd: 0.9, partner: { wood: ['fibre', 2] } },
-    txt: 'Always the grade of your best open Woodcutting ground. Every 2 Wood you cut also bring 1 Fibre. Woodcutting is 10% slower.' },
+    txt: 'Always the tier of your best open Woodcutting ground. Every 2 Wood you cut also bring 1 Fibre. Woodcutting is 10% slower.' },
   'spore-sickle': { name: 'Harvest of Whispers', slot: 'sickle', pos: 'sickle', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['spore', 5], art: 0, col: '#F3E6CF', src: 'Zone boss · Fungal Deep', fx: {},
     rise: 'forage', riseMax: 5, rule: { id: 'tool', skill: 'forage', spd: 0.9, partner: { herb: ['fibre', 2], fibre: ['herb', 2] } },
-    txt: 'Always the grade of your best open Foraging ground. Every 2 Herbs bring 1 Fibre, and every 2 Fibre bring 1 Herb. Foraging is 10% slower.' },
+    txt: 'Always the tier of your best open Foraging ground. Every 2 Herbs bring 1 Fibre, and every 2 Fibre bring 1 Herb. Foraging is 10% slower.' },
   'moss-spear': { name: 'Thorn of the First Grove', slot: 'spear', pos: 'spear', cls: 'any', legacy: false, pow: 1.8, g: [2, 3], from: ['slime', 8], art: 0, col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: {},
     rise: 'hunt', riseMax: 3, rule: { id: 'tool', skill: 'hunt', spd: 0.9, partner: { hide: ['fibre', 2] } },
-    txt: 'Always the grade of your best open Hunting ground, up to grade 3. Every 2 Hide bring 1 Fibre. Hunting is 10% slower.' }
+    txt: 'Always the tier of your best open Hunting ground, up to tier 3. Every 2 Hide bring 1 Fibre. Hunting is 10% slower.' }
 };
 // The uniques a player can see on the trophy wall, the Codex and the totals: every unique that still drops, plus a retired one they found.
 // A hidden retired unique's replacement (`was`) takes its place in the order, because the Codex's seen string is read by position.

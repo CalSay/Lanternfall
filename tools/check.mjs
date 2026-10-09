@@ -73,7 +73,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'landscape 1920x1080 (browser, UX-L1)': 40, 'desktop layout (browser, desktop-layout-v1)': 30, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+const WEIGHT = { 'craft-shortfall-offer': 12, 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'landscape 1920x1080 (browser, UX-L1)': 40, 'desktop layout (browser, desktop-layout-v1)': 30, 'desktop tooltips (browser, desktop-tooltips)': 30, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -1146,6 +1146,30 @@ if (section('camp')) try {
   assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap" && /Tap a building/.test(x.label))'), 'Next Up: "Tap a building in your camp" while no building has been tapped');
   E('onboardUseDone("use:camp-tap")');
   assert(!E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap")'), 'Next Up: the camp tap goal is gone once a building is tapped');
+  // hearth-two-next-up (W6): after the zone 10 clear Next Up names what Hearth 2 still needs and where it comes from; Go sends the
+  // hero to gather it, then back to the fight; the Tavern comes next once Hearth 2 stands
+  {
+    E('for (const f of FEATURES) S.onboard.got[f.id] = S.onboard.got[f.id] || 1');
+    E('S.camp.builds = []; Object.assign(S.camp.b, { hearth: 1, tavern: 0 }); S.maxZone = 10; S.gold = 1e6; for (const k of Object.keys(S.mats)) S.mats[k] = [0, 0, 0, 0, 0]; setActivity("fight")');
+    const step = () => E('(x => x ? x.label + "|" + x.ready : "")(topGoals(60, { sticky: false }).find(x => x.id === "camp-step"))');
+    const press = () => E('(() => { const x = topGoals(60, { sticky: false }).find(x => x.id === "camp-step"); const sp = x.go(); if (sp.fn) sp.fn(); if (sp.act) navGo(sp); })()');
+    assert(step() === '', 'Next Up: no Hearth 2 row before the zone 10 clear');
+    E('S.maxZone = 11'); const s1 = step();
+    assert(s1 === 'Build Hearth 2: 20 Pine Log at the Pine Grove, 20 Copper Ore at the Copper Vein, 5 Essence from fights|true', `Next Up: after the zone 10 clear, Hearth 2 and where its materials come from ("${s1}")`);
+    press(); const s2 = step();
+    assert(E('S.activity === "gather" && S.node.kind === "wood" && S.node.t === 1') && /\|false$/.test(s2), `Next Up: the Hearth 2 row's Go sends the hero to the Pine Grove ("${s2}")`);
+    E('S.mats.wood[0] = 20; S.mats.ore[0] = 20'); const s3 = step();
+    assert(s3 === 'Back to the fight: you have the Pine Log for Hearth 2|true', `Next Up: with the logs in hand, back to the fight ("${s3}")`);
+    press(); assert(E('S.activity') === 'fight' && /^Build Hearth 2: 5 Essence from fights\|false$/.test(step()), 'Next Up: back in the fight, the row waits on Essence');
+    E('S.mats.ess[0] = 5'); setNow(clock += 5000);
+    const rb = () => E('topGoals(60, { sticky: false }).filter(x => x.ready && /Hearth 2\\)?: ready to build$/.test(x.label)).map(x => x.id).join()');
+    assert(rb() === 'camp-step', `Next Up: with every material in hand, Hearth 2 is ready to build while camp-build offers a cheaper build (${rb()})`);
+    E('S.camp.b.watch = 1; S.gold = 110'); setNow(clock += 5000);
+    assert(rb() === 'camp-build', `Next Up: when camp-build offers Hearth 2 itself, the row steps aside, never two rows (${rb()})`);
+    E('S.camp.b.hearth = 2'); const s4 = step();
+    assert(/^Build the Tavern: 20 more Pine Log at the Pine Grove, 20 Sage Sprig .+\|true$/.test(s4), `Next Up: once Hearth 2 stands, the Tavern ("${s4}")`);
+    E('S.camp.b.tavern = 1'); assert(step() === '', 'Next Up: no camp step row once the Tavern stands');
+  }
   const bad = badNumbers(E('S'));
   assert(!bad.length, 'no NaN in the camp state' + (bad.length ? ': ' + bad[0] : ''));
   assert(!g.errors.length, 'no camp errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
@@ -3453,7 +3477,7 @@ if (section('store shelf')) try {
   assert(g.eval('storeShelfShows("hide")') === true && g.eval('storeShelfGrade("hide")') === 2, 'held hide shows even before Hunting, at the grade held');
   g.eval('HUNT_TUNE.on = true; S.skills.hunt.lv = 200; S.maxZone = 60');
   assert(g.eval('storeShelfCap("hide")') === 3, `hide's cap is at most Hunting's 3 grounds (${g.eval('storeShelfCap("hide")')})`);
-  assert(/registerSection\('gat', \{\n    id: 'store', view: 'pack'/.test(ui) && /Show all grades/.test(ui) && /\['full', 'Fullest'\], \['name', 'Name'\]/.test(ui), '75-store-ui: the Store view keeps its section, has Show all grades and the Fullest / Name sort');
+  assert(/registerSection\('gat', \{\n    id: 'store', view: 'pack'/.test(ui) && /Show all tiers/.test(ui) && /\['full', 'Fullest'\], \['name', 'Name'\]/.test(ui), '75-store-ui: the Store view keeps its section, has Show all grades and the Fullest / Name sort');
 } catch (e) { fail('store shelf crashed: ' + (e.stack || e)); }
 // ---- refine-queues: the stations' orders, coal, the converted costs (55-refine.js, 21-data-craft.js; card refine-queues,
 // overhaul spec 2, 4, 12, 13; the art ruling 2026-10-08: coal is a drop once the Forge is built, coal and the middles are text only) ----
@@ -8021,7 +8045,7 @@ if (section('C9 hero registry (browser)')) try {
           assert(chipHeroes.slice(0, 3).join() === 'wren,tobin,pip' && chipHeroes.includes('bram') && chipHeroes.length < 10, `C9 ${tag}: camp chips show the playable heroes and the ready unlock, not the whole roster (${chipHeroes.join()})`);
           await page.click('#sec-solo-hero .sp-all');
           await page.waitForSelector('#heroSheet:not([hidden]) .sp-card');
-          assert(await page.locator('#heroSheet .sp-card').count()===32 && await page.$eval('#heroSheet .sp-card[data-hero="bram"]',b=>b.dataset.state==='locked' && !b.disabled && b.textContent.includes('80 grade-1 wood')), `C9 ${tag}: camp shows the same registry and a ready quest hand-in`);
+          assert(await page.locator('#heroSheet .sp-card').count()===32 && await page.$eval('#heroSheet .sp-card[data-hero="bram"]',b=>b.dataset.state==='locked' && !b.disabled && b.textContent.includes('80 tier-1 wood')), `C9 ${tag}: camp shows the same registry and a ready quest hand-in`);
           await page.click('#heroSheet .sp-card[data-hero="bram"]');
           assert(await X('S.mats.wood[0]===80 && !S.party.unlock.heroes.bram && soloHero()==="wren"'), `C9 ${tag}: the first unlock press asks for a second tap without charging`);
           await page.click('#heroSheet .sp-card[data-hero="bram"]');
@@ -12392,6 +12416,102 @@ if (section('desktop layout (browser, desktop-layout-v1)')) try {
   }
 } catch (e) { fail('desktop layout (browser) crashed: ' + (e.stack || e)); }
 
+// ==== desktop-tooltips (docs/design/desktop-layout.md "Later: tooltips"; 70b-tips-ui.js): with a mouse, resting on an item, an ability
+// or a cost shows what it is and does. Every tip line is also on the view a click opens (never tip-only); touch never opens one; no tip
+// leaves the screen at 1280x720 or 1920x1080.
+if (section('desktop tooltips (browser, desktop-tooltips)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('desktop tooltips (browser): Playwright or Chromium not here, skipped');
+  else {
+    const h0 = fs.readFileSync(distFile, 'utf8'), end = h0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + h0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + h0.slice(end);
+    const save = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-current.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, touch = false) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
+      // the save's clock is the page's own load time: each context opens a while after the last, and a stale one opens the away card
+      await ctx.addInitScript(s => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } catch (e) {} }, save);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X('S.onboard.tips = false; for (const x of document.querySelectorAll(".bsheet-ov .bsheet-x")) x.click(); true');
+      return { ctx, page, errs, X };
+    };
+    const view = async (X, page, v) => {
+      await X(v ? `setTab(${JSON.stringify(v)}); ui(true); true` : 'closeMenu(); ui(true); true'); await menuSettled(page, !!v); await page.waitForTimeout(250);
+      await X('for (const x of document.querySelectorAll(".bsheet-ov:not(.docked) .bsheet-x")) x.click(); true'); await page.waitForTimeout(200);
+    };
+    const TIP = `(() => { const b = document.getElementById('tip'); if (!b || b.hidden) return null; const r = b.getBoundingClientRect();
+      return { lines: [...b.children].map(c => c.textContent), ok: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, box: [r.left, r.top, r.right, r.bottom].map(Math.round) }; })()`;
+    const hover = async (page, loc) => { await page.mouse.move(1, 1); await page.waitForTimeout(60); if (!(await loc.hover({ timeout: 5000 }).then(() => true, () => false))) return null; await page.waitForTimeout(350); return page.evaluate(s => window.__t.x(s), TIP); };
+    const norm = s => s.replace(/\s+/g, ' ');
+    try {
+      for (const [w, h] of [[1280, 720], [1920, 1080]]) {
+        const { ctx, page, errs, X } = await open(w, h);
+        assert(await X('TIP_DELAY <= 150'), `${w}x${h}: a tip opens within 150 ms of resting on its target`);
+        // the fight bar: an ability and Dodge (the bottom-right corner)
+        await view(X, page, '');
+        const ab = await hover(page, page.locator('#soloBar .sb-ab0'));
+        const abWant = await X('(a => a ? [a.name, a.turnDesc || a.desc] : null)(SOLO_ABILITIES[soloButtons().abs[0].id])');
+        assert(ab && ab.ok && abWant && ab.lines[0].startsWith(abWant[0] + ' (') && ab.lines[1] === abWant[1], `${w}x${h} fight: the Q slot's tip names its ability and says what it does, on screen (${JSON.stringify(ab)})`);
+        const dg = await hover(page, page.locator('#soloBar .sb-dodge'));
+        assert(dg && dg.ok && /^Dodge/.test(dg.lines[0]), `${w}x${h} fight: Dodge's tip (the bottom-right corner) stays on screen (${JSON.stringify(dg)})`);
+        // Hero > Gear: a worn item's tip; a click docks its sheet, the tip goes, and every tip line is on the sheet
+        await view(X, page, 'gear');
+        const worn = page.locator('#sec-craft-gear .cf-gs').first(), wt = await hover(page, worn);
+        assert(wt && wt.ok && wt.lines.some(l => /^Power /.test(l)) && wt.lines.some(l => /^You wear it/.test(l)), `${w}x${h} Gear: a worn item's tip gives its power and says you wear it (${JSON.stringify(wt)})`);
+        await worn.click(); await page.waitForTimeout(350);
+        const sh = await X('(() => { const s = document.querySelector(".bsheet-ov .bsheet"); return s ? s.innerText : ""; })()'), gone = await X(TIP);
+        const miss = wt ? wt.lines.filter(l => !norm(sh).includes(norm(l))) : ['no tip'];
+        assert(!gone && !miss.length, `${w}x${h} Gear: a click closes the tip and opens the item's sheet, which shows every tip line (missing: ${JSON.stringify(miss)})`);
+        await page.keyboard.press('Escape'); await page.waitForTimeout(250);
+        const bag = page.locator('.cf-bag .cf-tile').first();
+        if (await bag.count()) {
+          const bt = await hover(page, bag), nm = await bag.getAttribute('aria-label');
+          assert(bt && bt.ok && nm && nm.startsWith(bt.lines[0]), `${w}x${h} Gear: a bag tile's tip opens with the item's name, on screen (${JSON.stringify([bt, nm])})`);
+        }
+        // Hero > Abilities: a row's tip is its card's head and text
+        await view(X, page, 'abilities');
+        const row = page.locator('.ab-row:not(.ab-basic)').first(), rt = await hover(page, row);
+        await row.click(); await page.waitForTimeout(300);
+        const det = await X('(d => d ? d.innerText : "")(document.querySelector(".ab-det"))'), rmiss = rt ? rt.lines.filter(l => !norm(det).includes(norm(l))) : ['no tip'];
+        assert(rt && rt.ok && rt.lines.length >= 3 && !rmiss.length, `${w}x${h} Abilities: a row's tip is on screen and every line is on the card a click opens (${JSON.stringify([rt, rmiss])})`);
+        // Craft > Make: a cost chip's tip names it in full with what you have and what it needs
+        await view(X, page, 'make');
+        const chip = page.locator('.cf-rec .cost').first(), ct = await hover(page, chip), ctx2 = await chip.innerText();
+        assert(ct && ct.ok && ct.lines.length === 2 && ctx2.includes(ct.lines[0]) && /^You have [\d.,KMB]+\. It needs [\d.,KMB]+\.$/.test(ct.lines[1]), `${w}x${h} Make: a cost chip's tip names it and gives have and need (${JSON.stringify([ct, ctx2])})`);
+        // no tip leaves the screen: every target in view in the fight, Gear, Abilities and Make
+        const out = []; let seen = 0;
+        for (const v of ['', 'gear', 'abilities', 'make']) {
+          await view(X, page, v);
+          const n = await page.evaluate(() => { let i = 0; for (const e of document.querySelectorAll('body *')) { if (e._tip == null) continue; const r = e.getBoundingClientRect(); if (!r.width || r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth) continue;
+            const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (hit && (hit === e || e.contains(hit))) e.dataset.tipAt = String(i++); } return i; });
+          for (let i = 0; i < n; i++) {   // a list that redrew since the count lost its marks: skip those
+            const loc = page.locator(`[data-tip-at="${i}"]`); if (!(await loc.count())) continue;
+            const t = await hover(page, loc); if (t) seen++; if (t && !t.ok) out.push(`${v || 'fight'} ${t.lines[0]} ${t.box}`); }
+          await X('for (const e of document.querySelectorAll("[data-tip-at]")) delete e.dataset.tipAt; true');
+        }
+        assert(!out.length && seen >= 12, `${w}x${h}: no tip is cut off by the screen edge in the fight, Gear, Abilities or Make (${seen} tips; ${out.slice(0, 3).join(' / ') || 'none cut'})`);
+        assert(!errs.length, `${w}x${h} tooltips: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // touch: a tap never opens a tip (the sheet it opens is the information)
+      {
+        const { ctx, page, errs, X } = await open(740, 360, true);
+        await view(X, page, 'gear');
+        const tile = await page.locator('#sec-craft-gear .cf-gs').first().boundingBox();
+        await page.touchscreen.tap(tile.x + tile.width / 2, tile.y + tile.height / 2); await page.waitForTimeout(400);
+        const t = await X(TIP), sheet = await X('!!document.querySelector(".bsheet-ov")');
+        assert(!t && sheet, `740x360 touch: a tap on a gear tile opens its sheet and no tip (${JSON.stringify([t, sheet])})`);
+        assert(!errs.length, '740x360 touch tooltips: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('desktop tooltips (browser) crashed: ' + (e.stack || e)); }
+
 // ---- Lantern Caches (card cache-core; 55-caches.js, 75-caches-ui.js) ----
 if (section('lantern caches')) try {
   const clear = (g, z, extra = '') => g.eval(`S.zone = S.maxZone = ${z}; killPack({ boss: true, xp: 1, hp: 0 }, 40); ${extra}`);
@@ -14130,6 +14250,148 @@ if (section('camp-build-tap-again')) try {
 } catch (e) { fail('camp build tap again crashed: ' + (e.stack || e)); }
 
 // ==== scroll-spares: Scrolls the hero in play can't use say who they are for; "Scroll found." only for a Scroll it can use now ====
+// ---- boss-spoils-pick (Opus judge 2026-10-08): a zone 6 to 10 first clear that drops a Scroll asks which move it teaches now (75-caches-ui.js,
+// 75-moments-ui.js picks). Two or more moves learnable with that Scroll, up to three, Keep the Scroll keeps it; nothing new is paid ----
+if (section('boss-spoils-pick')) try {
+  const at = 'boss-spoils-pick', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pre-z7-boss.json'), 'utf8');
+  {   // the fixture and the drop it relies on (core)
+    const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s), caches = [];
+    g.fn.on('cacheOpen', v => caches.push(v));
+    assert(E('soloHero()') === 'wren' && E('soloLevels().wren.L') >= 8 && E('S.zone === 7 && S.maxZone === 7 && bossReady()') && E('scrollCount("hollow") === 0')
+      && E('HERO_ABILITIES.wren.filter(id => ABILITIES[id].tier === 2 && !abilityOwned("wren", id)).length') === 3 && E('soloEquipped().indexOf(null)') === 2 && E('!S.onboard.tips'),
+      `${at}: the fixture is Wren at level 8+, zone 7's boss next, no Scroll held, three Tier II moves left and a free slot, tips off`);
+    E(`S.activity = 'fight'; fightBoss = true; spawn(); killPack(mob, 40)`); g.fn.tick(0.1);
+    assert(caches.length === 1 && caches[0].zone === 7 && caches[0].scroll && caches[0].scroll.id === 'hollow', `${at}: zone 7's first clear opens a cache with a Hollow Scroll (${JSON.stringify(caches.map(c => c.scroll))})`);
+    assert(!g.errors.length, `${at}: no core errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8');
+  assert(/i\.why === '' && i\.payWith === v\.scroll\.id/.test(src) && /ids\.length >= 2/.test(src) && !/best|suggest/i.test((src.match(/function spoilsPicks[\s\S]*?\n}\n/) || [''])[0]),
+    `${at}: a pick offers only moves learnable now with the Scroll that win dropped, needs two, and never says best or suggested`);
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`window.__sp = []; on('choice', k => k === 'spoils' && __sp.push('choice')); on('spoilsPick', e => __sp.push(e)); true`);
+        // a zone boss's kill as the fight makes it (first clear when zone = maxZone), then the card; state is set before each win
+        const win = async (z, js = '', replay = false, after = '') => {
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } __sp.length = 0; ${js}; S.activity = 'fight'; S.zone = ${z}; S.maxZone = ${replay ? z + 2 : z}; fightBoss = true; spawn(); killPack(mob, 40); ${after}; S.activity = 'gather'; emit('sceneReset'); true`);
+          try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov')`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
+          await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs)
+          return X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };
+            const c = o.querySelector('.mm-card').getBoundingClientRect(), go = o.querySelector('.mm-go'), g = go.getBoundingClientRect(), picks = [...o.querySelectorAll('.mm-pick')];
+            const inView = r => r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1;
+            return { up: true, text: o.textContent, eye: o.querySelector('.mm-eye').textContent, head: (o.querySelector('.mm-pick-h') || {}).textContent || '', go: go.textContent,
+              picks: picks.map(b => b.querySelector('b').textContent), subs: picks.map(b => (b.querySelector('small') || {}).textContent || ''),
+              fits: inView(c) && inView(g) && picks.every(b => inView(b.getBoundingClientRect())), auto: [...o.querySelectorAll('.mm-act')].some(b => /automatically|auto-open/.test(b.textContent)) }; })()`);
+        };
+        const reset = `S.L = 13; soloLevels().wren.L = 13; S.abil.unl.wren = ['powershot', 'barbed']; S.abil.scrolls = { moss: 2 }; soloEquip(2, null); soloEquip(1, 'powershot')`;
+        // 1. three moves offered; a pick learns it, spends that win's Hollow Scroll (never the Moss) and takes the free slot
+        let c = await win(7, reset);
+        const offered = await X(`HERO_ABILITIES.wren.filter(id => { const i = abLearnInfo('wren', id); return i.why === '' && i.payWith === 'hollow'; }).join()`);
+        assert(c.up && c.head === 'Learn one now:' && c.picks.join() === "Hunter's Mark,Deadeye,Bat Swarm" && c.go === 'Keep the Scroll' && c.fits && !c.auto,
+          `${vw}: zone 7's cache asks "Learn one now:" with three moves in the Abilities order and "Keep the Scroll", all on screen, no auto-open toggle (${JSON.stringify({ up: c.up, head: c.head, picks: c.picks, go: c.go, fits: c.fits, auto: c.auto })})`);
+        assert(offered === 'huntmark,deadeye,batswarm' && c.subs.every(s => s.length > 0) && !/\b(best|suggested|recommended)\b/i.test(c.text), `${vw}: every offered move is learnable now with the Hollow Scroll, has its line, and none is marked best (${offered})`);
+        if (w === 1280) await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'boss-spoils-pick', 'check-card-1280x720.png') });
+        await page.click('.mm-ov .mm-pick:nth-child(2)'); await page.waitForTimeout(200);
+        let r = await X(`JSON.stringify({ own: abilityOwned('wren', 'deadeye'), hollow: scrollCount('hollow'), moss: scrollCount('moss'), eq: soloEquipped(), up: !!document.querySelector('.mm-ov'), sp: __sp })`);
+        r = JSON.parse(r);
+        assert(r.own && r.hollow === 0 && r.moss === 2 && r.eq[2] === 'deadeye' && !r.up && r.sp.length === 2 && r.sp[0] === 'choice' && r.sp[1].taken === 'deadeye' && r.sp[1].offered === 3 && r.sp[1].zone === 7,
+          `${vw}: picking Deadeye learns it, spends the Hollow Scroll (the Moss stays), puts it in the free slot and says choice spoils + spoilsPick (${JSON.stringify(r)})`);
+        if (w !== 1280) { assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : '')); await ctx.close(); continue; }
+        // 2. all slots full: the pick opens Abilities on the move, where "Swap it in for:" is
+        c = await win(7, `${reset}; soloEquip(2, 'barbed')`);
+        await page.click('.mm-ov .mm-pick:nth-child(1)'); await menuSettled(page, true); await page.waitForTimeout(200);
+        r = await X(`(() => { const d = document.querySelector('#sec-abilities .ab-det'); return JSON.stringify({ own: abilityOwned('wren', 'huntmark'), eq: soloEquipped(), det: d && d.dataset.ab, swap: d && (d.querySelector('.ab-al') || {}).textContent, taken: (__sp[1] || {}).taken }); })()`);
+        r = JSON.parse(r);
+        assert(r.own && !r.eq.includes('huntmark') && r.det === 'huntmark' && r.swap === 'Swap it in for:' && r.taken === 'huntmark', `${vw}: with all slots full the pick opens Abilities on the move to swap it in (${JSON.stringify(r)})`);
+        await X(`setTab('adv'); true`);
+        // 3. Keep the Scroll keeps it and still counts as the choice
+        c = await win(7, reset);
+        await page.click('.mm-ov .mm-go'); await page.waitForTimeout(200);
+        r = JSON.parse(await X(`JSON.stringify({ hollow: scrollCount('hollow'), own: HERO_ABILITIES.wren.filter(id => abilityOwned('wren', id)).join(), sp: __sp })`));
+        assert(c.picks.length === 3 && r.hollow === 1 && r.own === 'echo,powershot,barbed' && r.sp[0] === 'choice' && r.sp[1].taken === 'keep', `${vw}: Keep the Scroll keeps it and emits choice spoils, taken keep (${JSON.stringify(r)})`);
+        // 4. one move left to learn, or level 7: no pick, the card is as before
+        c = await win(7, `${reset}; S.abil.unl.wren.push('huntmark', 'deadeye')`);
+        assert((!c.up || (!c.picks.length && c.go === 'Continue' && !/Learn one now/.test(c.text))) && !(await X('!!document.querySelector(".mm-pick")')), `${vw}: with one move to learn there is no pick (${JSON.stringify({ up: c.up, picks: c.picks, go: c.go })})`);
+        c = await win(7, reset, false, 'S.L = 7; soloLevels().wren.L = 7');   // after the kill's XP, before the cache opens (the next tick)
+        assert(!c.up || (!c.picks.length && c.go === 'Continue'), `${vw}: at level 7 (Hollow moves not open) there is no pick (${JSON.stringify({ up: c.up, picks: c.picks })})`);
+        // 5. a zone 11 first clear, and a zone 5 one, show no pick; a replay opens no cache at all
+        c = await win(11, reset);
+        assert(!c.up || !c.picks.length, `${vw}: a zone 11 first clear shows no pick (${JSON.stringify({ up: c.up, picks: c.picks, eye: c.eye })})`);
+        c = await win(5, reset);
+        assert(!c.picks || !c.picks.length, `${vw}: a zone 5 first clear shows no pick`);
+        c = await win(6, `${reset}; Math.random = () => 0`, true);
+        assert(!c.up || !c.picks.length, `${vw}: a replay shows no pick`);
+        // 6. the zone 10 Champion: the pick rides on the Champion's card
+        c = await win(10, `${reset}; S.abil.scrolls = {}`, false, 'for (const q of MOMENT_Q) if (q.kind === "champion") q.scene = ""');   // its story scene is not this check's (the page skips scenes here)
+        assert(c.up && c.picks.length === 3 && /Champion/i.test(c.eye) && c.go === 'Keep the Scroll', `${vw}: the zone 10 Champion's card carries the pick (${JSON.stringify({ up: c.up, eye: c.eye, picks: c.picks })})`);
+        await page.click('.mm-ov .mm-go'); await page.waitForTimeout(150);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('boss-spoils-pick: ' + (e.stack || e.message)); }
+
+// ---- look-card-says-why (W5 proposal 3): a cache's lantern colour says what it did in its own line, whatever the sub line shows ----
+if (section('look-card-says-why')) try {
+  const at = 'look-card-says-why', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pre-z7-boss.json'), 'utf8');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // a first clear with no lantern colour owned or worn and no unique on the win, then the cache card
+        const win = async z => {
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); }
+            ${z === 1 ? `for (const k of Object.keys(S.deep.cos)) if (k.startsWith('l_')) delete S.deep.cos[k]; S.deep.eq.lantern = null; if (S.deeds && S.deeds.wear) delete S.deeds.wear.flame;` : ''}
+            S.activity = 'fight'; S.zone = S.maxZone = ${z}; fightBoss = true; spawn();
+            const r0 = Math.random; Math.random = () => 0.999; try { killPack(mob, 40); } finally { Math.random = r0; }   // the unique roll misses, so the odds line shows
+            S.activity = 'gather'; emit('sceneReset'); true`);
+          try { await page.waitForFunction(() => window.__t.x(`[...document.querySelectorAll('.mm-ov')].some(o => /Lantern Cache|First boss/.test(o.textContent))`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
+          await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs)
+          return X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };
+            const inView = r => r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1;
+            const ln = [...o.querySelectorAll('.mm-card *')].filter(e => /lantern colour|lantern burns/.test(e.textContent)).pop();   // the colour's own line (the card itself may scroll on a short screen)
+            const cr = o.querySelector('.mm-card').getBoundingClientRect(), r = ln && ln.getBoundingClientRect();
+            return { up: true, text: o.textContent, fits: !!r && inView(r) && r.top >= cr.top && r.bottom <= cr.bottom + 1 }; })()`);
+        };
+        let c = await win(1);
+        assert(c.up && /Unique chance on this win: \d+(\.\d+)?%/.test(c.text) && /Your lantern burns Ember Red now\./.test(c.text) && !/New lantern colour/.test(c.text) && c.fits && await X('S.deep.eq.lantern === "l_ember"'),
+          `${vw}: zone 1's cache card shows the unique chance and says "Your lantern burns Ember Red now." in a line on screen (${JSON.stringify({ up: c.up, fits: c.fits, text: c.text && c.text.slice(0, 300) })})`);
+        if (w === 1280) {
+          c = await win(2);
+          assert(c.up && /New lantern colour: Deep Blue\. You own it now\./.test(c.text) && !/burns Deep Blue/.test(c.text) && await X('S.deep.eq.lantern === "l_ember"'),
+            `${vw}: a colour the lantern does not wear says it is owned, not burning (${JSON.stringify({ up: c.up, text: c.text && c.text.slice(0, 300) })})`);
+        }
+        assert(!/\bTap\b/.test(c.text || ''), `${vw}: neutral wording`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('look-card-says-why: ' + (e.stack || e.message)); }
 if (section('scroll-spares')) try {
   const at = 'scroll-spares', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-wren-spare-moss.json'), 'utf8');
   { // core: the fixture, then the toast rule
@@ -14295,6 +14557,90 @@ if (section('fight-input-during-banner')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('fight-input-during-banner crashed: ' + (e.stack || e)); }
+
+// ---- craft-shortfall-offer: a recipe or upgrade short of an Ingot, Plank, Cloth or Leather says so and offers the order in one press
+// (only when its raw inputs are in hand; else the line names what is short; queued orders read "Smelting at the Forge"); an upgrade
+// says what its next +1 adds to the main line in that line's own unit (a capped line says so); "tier", not "grade", for the
+// material step on screen. On save-refine (Forge and Workbench Lv 2, no Ingots or Planks). ----
+if (section('craft-shortfall-offer')) try {
+  // no player-visible string uses "grade" (the code names GRADE_SHORT, cf-grade, storeShelfGrade and a parry's p.grade stay)
+  const bad = [];
+  for (const f of fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js'))) {
+    fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').split('\n').forEach((l, i) => {
+      if (/^\s*(\/\/|\*)/.test(l)) return;
+      const code = l.replace(/\s\/\/ .*$/, '');
+      for (const m of code.matchAll(/(['"`])((?:(?!\1)[^\\]|\\.)*)\1/g)) if (/\bgrades?\b/i.test(m[2]) && !/\.grade\b|cf-grade|\bp\.grade|=== /.test(m[2])) bad.push(`${f}:${i + 1} ${m[0].slice(0, 60)}`);
+    });
+  }
+  assert(!bad.length, 'craft-shortfall-offer: no player-visible text says "grade" for the material step' + (bad.length ? ': ' + bad.slice(0, 4).join('; ') : ''));
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('craft-shortfall-offer (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-refine.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+      await ctx.addInitScript(([key, raw]) => {
+        if (sessionStorage.getItem('cso-seeded')) return; sessionStorage.setItem('cso-seeded', '1');
+        const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+      }, [KEY, raw]);
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(3200);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const orders = `JSON.stringify(REFINE_STATIONS.map(s => refineOrders(s).map(o => [o.prod, o.tier, o.want])))`;
+      const row = k => `(() => { const r = document.querySelector('.cf-rec[data-kind=${k}] .cf-short'); return r ? { txt: r.firstChild.textContent.trim(), btn: r.querySelector('.cf-order') ? r.querySelector('.cf-order').textContent : '' } : null; })()`;
+      const settle = () => page.waitForTimeout(1400);   // past the craft list's touch guard
+      await X(`S.activity = 'gather'; for (const st of REFINE_STATIONS) refineOrders(st).length = 0; setTab('forge'); ui(true); true`); await settle();
+      await X(`document.querySelectorAll('.cf-tiers button')[1].click(); true`); await settle();
+      // 1. short and every raw input in hand: the line, the counts and one button; nothing queued before the press
+      const a = await X(row('warblade'));
+      assert(a && a.txt === 'Short 5 Iron Ingots and 3 Birch Planks. Smelt 5 and Saw 3 (10 Iron Ore, 10 coal and 6 Birch Logs)?' && a.btn === 'Smelt 5 and saw 3' && await X(orders) === '[[],[],[]]',
+        `the Iron Warblade row offers the orders it is short, with their inputs, and queues nothing yet (${JSON.stringify(a)})`);
+      // 2. the press queues exactly those orders; the row then says they are on their way
+      await X(`document.querySelector('.cf-rec[data-kind=warblade] .cf-order').click(); true`); await settle();
+      const b = await X(row('warblade')), ob = await X(orders);
+      assert(ob === '[[["ingot",2,5]],[["plank",2,3]],[]]' && b && b.txt === 'Smelting at the Forge. Sawing at the Workbench.' && !b.btn,
+        `one press queues 5 Iron Ingots and 3 Birch Planks, and the row reads "Smelting at the Forge." (${ob} ${JSON.stringify(b)})`);
+      // 3. raw inputs short: no button, the line names what is missing, and nothing is queued
+      await X(`for (const st of REFINE_STATIONS) refineOrders(st).length = 0; S.mats.ore[1] = 3; ui(true); true`); await settle();
+      const c = await X(row('plate'));
+      assert(c && !c.btn && /^Short 6 Iron Ingots, 3 Duskfang Leather and 1 Linen\. .* needs 9 more Iron Ore\.$/.test(c.txt) && await X(orders) === '[[],[],[]]',
+        `with Iron Ore short the Iron Plate row has no button and names the 9 Iron Ore it needs (${JSON.stringify(c)})`);
+      // 3b. a queued order that has stopped says why, never "Smelting"
+      await X(`S.mats.ore[1] = 23168; refineAdd('ingot', 2, 6); S.mats.ore[1] = 0; ui(true); true`); await settle();
+      const st = await X(row('plate'));
+      assert(st && /The Forge's Iron Ingot order has stopped: Out of Iron Ore\./.test(st.txt) && !/Smelting/.test(st.txt), `a stopped Forge order reads "has stopped: Out of Iron Ore", not Smelting (${JSON.stringify(st)})`);
+      await X(`for (const st of REFINE_STATIONS) refineOrders(st).length = 0; true`);
+      // 4. every worn piece's upgrade names its main line's change in its own unit, never a bare power number
+      await X(`S.mats.ore[1] = 23168; true`);
+      const ups = await X(`(async () => { const out = []; for (const p of CRAFT_HERO_POS) { const it = equipped(p); if (!it || it.plus >= 10) continue;
+        craftUI.openItem(it.id); await new Promise(r => setTimeout(r, 150)); const n = document.querySelector('.cf-up-box .cf-next'); out.push([p, n ? n.textContent : '']); } return out; })()`);
+      assert(ups.length >= 5 && ups.every(([, t]) => /^\+\d+: \+[\d.]+% [a-z]/.test(t) && !/power/i.test(t)),
+        `every worn piece's upgrade says its main line's change, never power (${JSON.stringify(ups)})`);
+      // 5. a capped main line (a tier 5 legendary Quiver's crit) says so and shows the power change instead
+      const cap = await X(`(async () => { S.items.push({ id: 987654, slot: 'quiver', t: 5, r: 'legendary', plus: 2, a: [] }); craftUI.openItem(987654);
+        await new Promise(r => setTimeout(r, 150)); const n = document.querySelector('.cf-up-box .cf-next'); return n ? n.textContent : ''; })()`);
+      assert(/^\+3: Crit is at its cap\. Power [\d.,K]+ → [\d.,K]+\.$/.test(cap), `a capped Quiver's upgrade says its crit is at its cap and shows power (${cap})`);
+      // 5b. a change of 10 or more keeps its decimal (an Epic Tier 3 Warblade's +15.75 reads +15.8%, never +15%)
+      const ep = await X(`(async () => { S.items.push({ id: 987655, slot: 'warblade', t: 3, r: 'epic', plus: 3, a: [] }); craftUI.openItem(987655);
+        await new Promise(r => setTimeout(r, 150)); const n = document.querySelector('.cf-up-box .cf-next'); return n ? n.textContent : ''; })()`);
+      assert(/^\+4: \+15\.8% damage\.$/.test(ep), `an Epic Tier 3 Warblade's upgrade reads +15.8% damage (${ep})`);
+      await X(`S.items = S.items.filter(i => i.id !== 987655); true`);
+      // 6. the upgrade sheet's own offer (Silver Ingots for the Silver Warblade +6), pressed, queues that one order
+      await X(`S.items = S.items.filter(i => i.id !== 987654); for (const st of REFINE_STATIONS) refineOrders(st).length = 0; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(200);
+      const u = await X(`(() => { const r = document.querySelector('.cf-up-box .cf-short'); return r ? r.textContent : ''; })()`);
+      await X(`document.querySelector('.cf-up-box .cf-order').click(); true`); await page.waitForTimeout(200);
+      const ou = await X(orders);
+      assert(/^Short 6 Silver Ingots\. Smelt 6 \(12 Silver Ore and 18 coal\)\? Smelt 6$/.test(u) && ou === '[[["ingot",3,6]],[],[]]',
+        `the upgrade's row offers 6 Silver Ingots and one press queues them (${u} ${ou})`);
+      assert(!errs.length, 'craft-shortfall-offer: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('craft-shortfall-offer crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

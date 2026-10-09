@@ -201,6 +201,14 @@ Other "Tap" and "Hold" lines (about 66, 14 of them in `75-onboard-ui.js`) wait f
 1. **desktop-tooltips (P1, next after v1):** a hover tooltip component for items, abilities and costs on a fine pointer,
    with the same text the bar slots' and bag tiles' aria-labels already carry (`75-solo-ui.js:353`, `75-craft-ui.js`).
    Deferred because the dock already shows an item's full detail on one click, and a tooltip needs its own copy per thing.
+   **Built (desktop-tooltips, 2026-10-09):** `70b-tips-ui.js` (`setTip(el, text | () => text)`, `tipItem`, `tipCost`) and
+   `60-tips.css`. With a mouse (`pointerType` mouse only; touch and pen never), resting 120 ms on a target opens a tip; any press,
+   key, wheel or scroll closes it, so does its target going or being covered; its text follows the game while open; it stays
+   inside the screen. Targets: items (bag, worn gear, last crafts) show the item sheet's head and stat
+   lines (the hero card's and hero sheet's slots keep just the name, their old title, since a click there opens no item sheet); the fight bar's Attack, Parry, Dodge and ability slots and
+   Hero > Abilities' slots and rows show the ability card's head and text; cost chips (Craft, item upgrades, Camp) show the full
+   name with what you have and what it needs. Every line is also on the view a click opens. Those targets' old `title`
+   attributes moved into their tips, so the browser's own tooltip does not double them.
 2. **neutral-wording (P2):** the remaining "Tap" and "Hold" lines, after the onboard cards running now merge (they own
    `75-onboard-ui.js`).
 3. **upright-tablet (P2):** 768x1024 gets something better than the 560 px strip (`10-base.css:48-51`). That card picks

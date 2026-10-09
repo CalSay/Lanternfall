@@ -383,7 +383,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       const fee = can.fee === undefined ? handsFee(x, n.kind, n.t) * count : can.fee;
       const row = btn('hd-job', ''); row.setAttribute('aria-disabled', String(!can.ok));
       const tx = el('span', 'hd-job-tx');
-      tx.append(el('b', null, `${handsNodeName(n.kind, n.t)} (grade ${n.t})`),
+      tx.append(el('b', null, `${handsNodeName(n.kind, n.t)} (tier ${n.t})`),
         el('small', null, `About ${storeNum(pv.haul)} ${matTxt(n.kind, n.t)} per ${dur(pv.secs)} shift` + (n.full ? '. Storehouse full.' : '')),
         el('small', 'fee', `${fee ? `Total fee ${gold(fee)}` : 'Free'}${can.ok ? '' : ' · ' + can.why}`));
       row.append(img(matIcon(n.kind, n.t)), tx);

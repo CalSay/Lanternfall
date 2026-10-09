@@ -92,10 +92,83 @@ let craftUI = null;
     }
     return out;
   }
+  // desktop-tooltips: an item's hover tip, from the item sheet's own head and lines (renderItem): name, grade, tier, kind, power,
+  // its stat lines and who wears it. The sheet stays the full view (upgrade, salvage, compare).
+  tipHook.item = it => {
+    const d = itemKind(it), wr = wornBy(it.id);
+    const out = [itemName(it), [RAR[it.r].n, `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun) : ''].filter(Boolean).join(' · '), `Power ${fmt(itemPower(it))}`];
+    for (const L of splitLines(it)) if (!L.lore) out.push(L.g === 'uniq' ? L.txt : lineTxt(L.l) + (lineLive(L.l) ? '' : ' (not active yet)'));
+    if (wr) out.push(`You wear it (${posName(wr.pos)})`);
+    return out.join('\n');
+  };
   function deltaTxt(k, v) {
     const s = CRAFT_STATS[k], unit = (s.f.match(/\{v\}(%|x)/) || [])[1] || '';
     const a = Math.abs(v), n = s.dp == null ? fmt(a) : a.toFixed(s.dp);
     return `${v > 0 ? '+' : '-'}${n}${unit}`;
+  }
+  // craft-shortfall-offer: what the next +1 adds to the piece's main line, in that line's own unit ("+3: +3% damage."). A
+  // line at its cap (a Quiver's crit, a Lantern's spell) says so and shows the power change instead. Copy only: itemPower
+  // and the upgrade cost are unchanged.
+  function nextPlusTxt(it) {
+    const nx = Object.assign({}, it, { plus: it.plus + 1 }), a = itemLines(it), b = itemLines(nx);
+    const head = `+${it.plus + 1}: `, more = a.length > 1 ? ' Its other lines grow too.' : '';
+    const [k, v0] = a[0] || [], v1 = b[0] && b[0][0] === k ? b[0][1] : v0, s = CRAFT_STATS[k];
+    const dv = Math.round((v1 - v0) * 10) / 10;   // one decimal, never cut down (an Epic Tier 3 weapon's +15.75 reads +15.8%, not +15%)
+    if (s && dv > 0) return `${head}${s.f.replace('{v}', dv % 1 ? dv.toFixed(1) : String(dv))}.${more}`;
+    const nextP = itemPower(Object.assign({}, it, { plus: it.plus + 1 }));   // playtester-code-bugs: uniques use UNIQ_TUNE.pow, as itemPower does
+    const pw = `power ${fmt(itemPower(it))} → ${fmt(nextP)}`;
+    return s ? `${head}${s.n} is at its cap. ${pw[0].toUpperCase() + pw.slice(1)}.${more}` : `${head}${pw}.`;
+  }
+  // craft-shortfall-offer: a cost short of a middle (Ingot, Plank, Cloth, Leather) at tier t, read from refineOffer (55-refine).
+  // -> { txt, btn, add } | null. btn (the one-tap order) only when every order's inputs are in hand together and the stations
+  // have room; else txt names what is short. Orders already queued read "Smelting at the Forge." Nothing is queued until the
+  // player presses the button. upgrade-gold-covers-short adds its gold choice to this same row.
+  const midName = (f, t, n) => f === 'coal' ? 'coal' : matName(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || MAT[f].unit === 'Log') ? 's' : '');
+  const andList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  function shortOffer(cost, t) {
+    if (typeof refineOffer !== 'function' || !refineOn()) return null;
+    const mats = cost && cost.mats ? cost.mats : cost || {};
+    const mids = Object.keys(mats).filter(k => REFINE_RAW[k] && matOwn(k, t) < mats[k]);
+    if (!mids.length) return null;
+    const off = refineOffer(mats, t), out = [];
+    const queued = mids.filter(k => !off.orders.some(o => o.prod === k));
+    let btn = '';
+    if (off.orders.length) {
+      out.push(`Short ${andList(off.orders.map(o => `${storeNum(o.want)} ${midName(o.prod, t, o.want)}`))}.`);
+      const need = {};
+      for (const o of off.orders) for (const [f, tt, n] of refineNeed(o.prod, o.tier)) need[f + ':' + tt] = (need[f + ':' + tt] || 0) + n * o.want;
+      const miss = Object.entries(need).map(([key, n]) => { const [f, tt] = key.split(':'); return [f, +tt, n - matOwn(f, +tt)]; }).filter(x => x[2] > 0);
+      const slots = {};
+      for (const o of off.orders) slots[o.st] = (slots[o.st] || 0) + 1;
+      const tight = Object.keys(slots).find(st => { const l = refineOrders(st); return REFINE_TUNE.max - l.length + l.filter(o => !o.all && o.made >= o.want).length < slots[st]; });
+      const bad = off.orders.find(o => !o.ok && (!refineBuilt(o.st) || !refineSlotFree(o.st))), ings = andList(off.orders.map(o => REFINE_PRODUCTS[o.prod].ing.toLowerCase()));
+      if (bad) out.push(bad.why);
+      else if (miss.length) out.push(`${ings[0].toUpperCase() + ings.slice(1)} them needs ${andList(miss.map(([f, tt, n]) => `${storeNum(n)} more ${midName(f, tt, n)}`))}${miss.some(x => x[0] === 'coal') ? ' (Copper Ore brings coal)' : ''}.`);
+      else if (tight) out.push(`The ${CAMP_B[tight].n} holds ${REFINE_TUNE.max} orders. Clear one first.`);
+      else if (off.orders.some(o => !o.full)) out.push('The Storehouse has no room for them.');
+      else {
+        out.push(`${andList(off.orders.map(o => `${REFINE_PRODUCTS[o.prod].verb} ${storeNum(o.want)}`))} (${andList(Object.entries(need).map(([key, n]) => { const [f, tt] = key.split(':'); return `${storeNum(n)} ${midName(f, +tt, n)}`; }))})?`);
+        btn = andList(off.orders.map((o, i) => `${i ? REFINE_PRODUCTS[o.prod].verb.toLowerCase() : REFINE_PRODUCTS[o.prod].verb} ${storeNum(o.want)}`));
+      }
+    }
+    for (const k of queued) {   // the order is queued: say it runs, or why it has stopped
+      const st = REFINE_PRODUCTS[k].st, mine = refineOrders(st).filter(o => o.prod === k && o.tier === t && (o.all || o.made < o.want));
+      const stop = mine.length && !mine.some(o => refineState(st, o).k === 'run') ? refineState(st, mine[0]).why : '';
+      out.push(stop ? `The ${CAMP_B[st].n}'s ${matName(k, t)} order has stopped: ${stop}.` : `${REFINE_PRODUCTS[k].ing} at the ${CAMP_B[st].n}.`);
+    }
+    return { txt: out.join(' '), btn, add: btn ? () => off.add() : null };
+  }
+  // The row under a recipe or an upgrade: the line, and the button when the order can start. after: re-render (the item sheet).
+  function shortRow(cost, t, after) {
+    const o = safe(() => shortOffer(cost, t), null); if (!o) return null;
+    const r = el('div', 'cf-src cf-short');
+    r.append(el('span', null, o.txt + ' '));
+    if (o.btn) {
+      const b = el('button', 'mini cf-order', o.btn); b.type = 'button';
+      b.addEventListener('click', () => { act(() => { const x = shortOffer(cost, t); return x && x.add ? x.add() > 0 : false; }); if (after) after(); });
+      r.append(b);
+    }
+    return r;
   }
 
   // ---------------- UI state (memory only) ----------------
@@ -382,7 +455,7 @@ let craftUI = null;
       const it = itemById(id); if (!it) continue;
       const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.result === id ? ' sel' : '')); b.type = 'button';
       b.append(img(itemIc(it)), el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
-      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`);
+      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`); setTip(b, () => tipItem(itemById(id)));
       b.addEventListener('click', () => { st8.result = id; st8.resArm = false; ui(true); });
       row.append(b);
     }
@@ -418,12 +491,13 @@ let craftUI = null;
     const mw = mwFor(k);
     if (mw != null) {
       const have = troph()[mw] || 0, c = el('span', 'cost mw' + (have < 1 ? ' short' : ''));
-      c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); costs.append(c);
+      c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); setTip(c, () => tipCost(CRAFT_TROPHIES[mw].n, troph()[mw] || 0, 1)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
     // gear-in-first-25: where each short gathered material comes from ("Bristlehide: from Hunting, which opens at zone 5."); none for
     // essence, gold, a middle (Planks, Ingots) or a material in hand
     for (const [f, n] of Object.entries(kindCost(k, t))) { if (matOwn(f, t) >= n) continue; const ln = matSourceLine(f, t); if (ln) row.append(el('div', 'cf-src', ln)); }
+    if (skillTierOpen(skillOfSt(d.st), t)) { const sr = shortRow(kindCost(k, t), t); if (sr) row.append(sr); }   // craft-shortfall-offer: only on a tier you can make
     const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds));
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
@@ -536,7 +610,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k)]);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -649,10 +723,10 @@ let craftUI = null;
       if (w !== 'any') for (const p of ['weapon', 'helm']) { const k = ((CRAFT_FITS[p] || {})[w] || [])[0]; if (k && ICON[CRAFT_KINDS[k].ic]) EMPTY_IC[p] = CRAFT_KINDS[k].ic; }
       for (const p of CRAFT_HERO_POS.filter(craftKindVisible)) {
         const e = gearEls[p], it = itemById(S.equip[p]);
-        if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
+        if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); setTip(e.b, () => tipItem(itemById(S.equip[p]))); }
         else {
           const ic = EMPTY_IC[p]; setIc(e.tile, ICON[ic] ? iconURL(ic, '#6E6080') : iconURL('charm', '#6E6080'), null, 'ghost soon');
-          e.plus.textContent = ''; e.b.setAttribute('aria-label', `${posName(p)}: empty. Choose gear.`);
+          e.plus.textContent = ''; e.b.setAttribute('aria-label', `${posName(p)}: empty. Choose gear.`); setTip(e.b, null);
         }
       }
     }
@@ -797,6 +871,7 @@ let craftUI = null;
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
         b.dataset.itemId = it.id;
         b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}${wr ? ', worn by you' : ''}${it.u ? ', unique' : ''}`);
+        setTip(b, () => tipItem(itemById(it.id)));   // desktop-tooltips
         if (bulk.on) {
           b.disabled = !eligible.has(it.id);
           b.setAttribute('aria-pressed', String(bulk.ids.has(it.id)));
@@ -833,7 +908,7 @@ let craftUI = null;
   const secBox = (title, ...kids) => { const s = el('div', 'cf-ss'); if (title) s.append(el('h4', null, title)); s.append(...kids); return s; };
   function trophChip(need) {
     const have = trophTotal(), c = el('span', 'cost' + (have < need ? ' short' : ''));
-    c.append(img(troIcon(0)), el('span', null, `${have}/${need} Trophy (any)`));
+    c.append(img(troIcon(0)), el('span', null, `${have}/${need} Trophy (any)`)); setTip(c, () => tipCost('Trophies (any)', trophTotal(), need));
     return c;
   }
   function salvagePreview(it) {
@@ -922,8 +997,8 @@ let craftUI = null;
       const c = kindUpgradeCost(it), chips = el('div', 'costs');
       costChips(chips, c.mats, it.t, c.gold);
       if (c.troph) chips.append(trophChip(c.troph));
-      const nextP = itemPower(Object.assign({}, it, { plus: it.plus + 1 }));   // playtester-code-bugs: uniques use UNIQ_TUNE.pow, as itemPower does
-      upBox.append(el('p', 'note', `+${it.plus + 1}: power ${fmt(itemPower(it))} → ${fmt(nextP)}. Every line grows.`), chips);
+      upBox.append(el('p', 'note cf-next', nextPlusTxt(it)), chips);   // craft-shortfall-offer: the main line's change, not a bare power number
+      { const sr = shortRow(c.mats, it.t, renderItem); if (sr) upBox.append(sr); }
       const f = K6.upgrade(), heroPos = wr && wr.who === 'hero' ? wr.pos : null;
       const okMats = hasMats(c.mats, it.t) && S.gold >= c.gold && (!c.troph || (f && trophTotal() >= c.troph));
       const b = el('button', 'big forge cf-act', `Upgrade to +${it.plus + 1}`); b.type = 'button';

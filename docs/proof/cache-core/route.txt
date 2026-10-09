@@ -4,6 +4,7 @@
 # A unique may drop on the win (the odds line then gives way to the unique), so the route does not expect the odds line.
 # Old-save and replay rules are in tools/check.mjs, section 'lantern caches'.
 # Updated 2026-10-08 (proof-routes-rot): the staged-guide lesson holds the boss's first swing until Dodge is pressed, so the route taps Dodge (tap-if) before attacking.
+# Updated 2026-10-09 (look-card-says-why): the colour line now reads "Your lantern burns Ember Red now."
 new boss1
 wait 2
 tap-if "Got it"
@@ -100,7 +101,7 @@ wait 1
 wait 3
 expect .mm-card
 expect "Lantern Cache"
-expect "New lantern colour: Ember Red"
+expect "Your lantern burns Ember Red now."
 expect "gold"
 expect "Moss Scroll"
 expect .mm-head
