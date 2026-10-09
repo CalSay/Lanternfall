@@ -12,6 +12,8 @@
 //   FIGHT_DELTA (the tune table)
 //   fightDeltaJob(item) -> { zone, step() -> done, res } | null   one chunk of fights a step, so a card never waits
 //   fightDelta(item) -> { zone, kind, before, after } | null       every chunk now (checks)
+//   Either takes { scratch: true } as a second argument (craft-odds-before-pay): the piece is not in the bag (a recipe's piece
+//   before it is made, or the worn piece one upgrade on, under an id no item has). It stands in S.items only while its side runs.
 //   kind 'wins': wins in 10 (rounded); 'turns': hero turns a win, when both sides win at least turnsFrom (a share) of the fights;
 //   'hit': the average landed boss hit as a share (%) of max health, for head and body pieces. null: no turn fight, no hero
 //   fit, the piece is worn already, the rounded numbers are equal, the rounding points the other way from the raw counts, or
@@ -23,17 +25,19 @@ let fightDeltaJob, fightDelta;
   const ARMOUR = { helm: 1, body: 1 };
   const withGear = (s, fn) => {
     const keep = gsCache, had = s.pos ? S.equip[s.pos] : null;
-    gsCache = s.g; if (s.pos) S.equip[s.pos] = s.id;
-    try { return fn(); } finally { gsCache = keep; if (s.pos) S.equip[s.pos] = had; }
+    gsCache = s.g; if (s.pos) S.equip[s.pos] = s.id; if (s.scratch) S.items.push(s.scratch);
+    try { return fn(); } finally { gsCache = keep; if (s.pos) S.equip[s.pos] = had; if (s.scratch) { const i = S.items.lastIndexOf(s.scratch); if (i >= 0) S.items.splice(i, 1); } }
   };
-  fightDeltaJob = it => {
+  fightDeltaJob = (it, opt) => {
     if (!it || typeof bossOddsOn !== 'function' || !bossOddsOn()) return null;
     if (typeof deepActive === 'function' && deepActive()) return null;   // a Deepwell run's boons would count (59m)
     const d = CRAFT_KINDS[it.slot], pos = d && kindPos(it.slot);
     if (!d || d.tool || !pos || !fits(it, pos, 'hero') || S.equip[pos] === it.id) return null;
+    const scratch = opt && opt.scratch ? it : null;
+    if (scratch && itemById(it.id)) return null;   // a scratch piece's id must be no item's
     const z = S.maxZone, skill = bossOddsSkill(), F = FIGHT_DELTA, chunks = Math.ceil(F.fights / F.chunk);
     const side = (g, on) => {
-      const s = { g, pos: on ? pos : null, id: on ? it.id : null, p: null, k: 0, d: 0, turns: 0, won: 0, dmg: 0, hits: 0 };
+      const s = { g, pos: on ? pos : null, id: on ? it.id : null, scratch: on ? scratch : null, p: null, k: 0, d: 0, turns: 0, won: 0, dmg: 0, hits: 0 };
       s.p = withGear(s, () => { const u = typeof cbEstHero === 'function' ? cbEstHero() : null; return u ? turnMakeProfile(bossOddsFoe(z), u) : null; });
       return s;
     };
@@ -56,10 +60,10 @@ let fightDeltaJob, fightDelta;
       const s = sides[i % 2], c = i >> 1;
       const r = withGear(s, () => turnCombatSample({ profile: s.p, seconds: F.chunk * 600, seed: 1 + c * 7919 + z * 104729, skill, fights: F.chunk }));
       if (r) { s.k += r.kills; s.d += r.deaths; s.turns += r.totalHeroTurns; s.won += r.completedFights; s.dmg += r.damageTaken; s.hits += r.foeHits; }
-      if (++i >= chunks * 2) { job.done = true; try { job.res = finish(); } catch (e) { job.res = null; } }
+      if (++i >= chunks * 2) {  job.done = true; try { job.res = finish(); } catch (e) { job.res = null; } }
       return job.done;
     } };
     return job;
   };
-  fightDelta = it => { const j = fightDeltaJob(it); if (!j) return null; while (!j.step()); return j.res; };
+  fightDelta = (it, opt) => { const j = fightDeltaJob(it, opt); if (!j) return null; while (!j.step()); return j.res; };
 }

@@ -173,7 +173,7 @@ let craftUI = null;
 
   // ---------------- UI state (memory only) ----------------
   const st8 = { lift: {}, st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
-    tool: {}, fd: {}, crafted: false };   // craft-delta: tool: id -> { on, speed } from the crafted event; fd: id -> { sig, job, res } the fight line
+    tool: {}, fd: {}, pre: {}, nu: null, crafted: false };   // craft-delta: tool: id -> { on, speed } from the crafted event; fd: id -> { sig, job, res } the fight line
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
   };
@@ -322,6 +322,43 @@ let craftUI = null;
     if (r.kind === 'turns') return `Zone ${r.zone} boss: about ${r.after} turns a win, not ${r.before}.`;
     return `Zone ${r.zone} boss: a hit takes about ${r.after}% of your health, not ${r.before}%.`;
   }
+  // ---- craft-odds-before-pay: the same line before the press, on the recipe row Next Up's craft pick names and under the worn
+  // piece's Upgrade button. The piece is a scratch copy under an id no item has (55-fight-delta { scratch }): the worn piece one
+  // upgrade on, or the recipe's piece at its grade (or likeliest rarity) with middle bonus lines. Sampled a chunk at a time after the
+  // row shows, never on the click path; the same "barely changes" rule leaves the line out. st8.pre: key -> { sig, job, res }.
+  const PRE_ID = -1;
+  const preUp = it => it && it.plus < CRAFT_TROPHY_GATE.max ? Object.assign(JSON.parse(JSON.stringify(it)), { id: PRE_ID, plus: it.plus + 1 }) : null;
+  const preRec = (k, t) => {
+    const d = CRAFT_KINDS[k], g = gradedKind(k) ? gradeFor(k, t) : null;
+    let r = g != null ? GRADE[g].r : null;
+    if (!r) { const w = rarityWeights(stationLevel(k)); r = Object.keys(w).reduce((a, b) => (w[b] > w[a] ? b : a)); }
+    const it = { id: PRE_ID, slot: k, t, r, plus: 0 };
+    if (g != null) it.g = g;
+    if (d.role) { it.a = rollAffixes(k, r, t, roleFor(k), () => 0.5, g); if (d.role === 'any') it.ro = roleFor(k); }
+    return it;
+  };
+  function preStart(key, mk, done) {
+    if (typeof fightDeltaJob !== 'function') return;
+    const sig = fdSig(), cur = st8.pre[key];
+    if (cur && cur.sig === sig) return;
+    const it = safe(mk, null), job = it ? safe(() => fightDeltaJob(it, { scratch: true }), null) : null, rec = st8.pre[key] = { sig, job, res: null };
+    if (!job) return;
+    const run = () => {
+      if (st8.pre[key] !== rec) return;
+      if (safe(() => job.step(), true)) { rec.res = job.res; rec.job = null; if (rec.res) done(); return; }
+      setTimeout(run, 30);
+    };
+    setTimeout(run, 30);
+  }
+  function preLine(key) {
+    const f = st8.pre[key], r = f && f.sig === fdSig() ? f.res : null;
+    if (!r) return '';
+    if (r.kind === 'wins') return `Zone ${r.zone} boss: about ${r.after} in 10, now ${r.before}`;
+    if (r.kind === 'turns') return `Zone ${r.zone} boss: about ${r.after} turns a win, now ${r.before}`;
+    return `Zone ${r.zone} boss: a hit takes about ${r.after}% of your health, now ${r.before}%`;
+  }
+  // the recipe row Next Up's craft pick names (st8.nu, read once an update): its key, or '' on any other row
+  const preRecKey = (k, t) => { const n = st8.nu; return n && n.kind === k && n.t === t && !CRAFT_KINDS[k].tool ? `rec:${k}:${t}:${CRAFT_KINDS[k].role === 'any' ? roleFor(k) : ''}` : ''; };
   // the tool line: "Copper Pickaxe on. Mining is 35% faster than with your Stone Pick: +25% for a tier 1 tool on a tier 1 vein,
   // and +8.1% from its mining speed line." (or why it went in the bag). tool-speed-adds-up: the parts come from the crafted record
   // (toolParts); when they do not multiply to the total within 1 point, or one rounds to 0, only the total and the old tool show.
@@ -614,6 +651,7 @@ let craftUI = null;
       const gl = stationTierOpen(k, t) ? gradeTxt(k, t) : ''; if (gl) row.append(el('div', 'cf-odds cf-gline', gl));
       const ch = choiceTxt(k, t); if (ch) row.append(el('div', 'cf-odds cf-choice', ch));
     } else { const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds)); }
+    { const pk = preRecKey(k, t), pl = pk ? preLine(pk) : ''; if (pl) row.append(el('div', 'cf-odds cf-pre', pl)); }   // craft-odds-before-pay
     const lr = can.ok ? liftRow(k, t) : null; if (lr) row.append(lr);   // craft-strike-infuse: the choice, on a craft you can make
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
@@ -663,6 +701,8 @@ let craftUI = null;
         putText(b.lastChild, open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`);
       }
       if (!force && busy()) return;   // never swap a row under the player's finger
+      st8.nu = typeof craftGoalNext === 'function' ? safe(() => craftGoalNext(), null) : null;   // craft-odds-before-pay: the row Next Up points at
+      { const n = st8.nu, pk = n ? preRecKey(n.kind, n.t) : ''; if (pk) preStart(pk, () => preRec(n.kind, n.t), () => ui()); }   // sampled after the row shows
       // craft-reveal: the result card and the last-five strip
       if (st8.result != null && !itemById(st8.result)) st8.result = null;
       st8.recent = st8.recent.filter(id => itemById(id));
@@ -726,7 +766,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), (k => k && preLine(k))(preRecKey(k, t)), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -1137,6 +1177,11 @@ let craftUI = null;
       b.disabled = !okMats || (!f && !heroPos);
       b.addEventListener('click', () => { const n0 = upCount(); if (act(() => (f ? f(it.id) : upgradeEquipped(heroPos))) && n0 === 0 && upCount() === 1) emit('firstUse', 'upgrade'); renderItem(); });   // craft-delta: the first upgrade ever (S.deeds.n.up)
       upBox.append(b);
+      if (heroPos) {   // craft-odds-before-pay: what the next upgrade changes against the boss, before the press
+        const pk = `up:${it.id}:${it.plus}`, id = it.id;
+        preStart(pk, () => preUp(it), () => { if (sheet && sheet.id === id && !sheet.api.closed) renderItem(); });
+        const pl = preLine(pk); if (pl) upBox.append(el('p', 'note cf-pre', pl));
+      }
       if (!f && !heroPos) upBox.append(el('p', 'note', 'Equip it to upgrade it.'));
       else if (c.troph && !f) upBox.append(el('p', 'note', 'Trophy upgrades open with the next crafting update.'));
       else if (c.troph) upBox.append(el('p', 'note', 'From +8, each upgrade also takes a Trophy. Champions drop them.'));   // gold-without-training
