@@ -13470,7 +13470,13 @@ if (section('LF_EYES hook (browser, qa-player-eyes)')) try {
       for (let i = 0; i < 80 && (await E('LF_EYES.tip()')) === null; i++) await page.waitForTimeout(150);   // the first tip arrives a beat after the player's turn starts
       const api = await X('Object.keys(LF_EYES).sort().join() + "|" + Object.isFrozen(LF_EYES)');
       assert(api === 'floats,info,phase,rects,sfx,tip|true', `LF_EYES offers rects, phase, tip, sfx, floats and info, and is frozen (${api})`);
-      const R = await E('LF_EYES.rects()'), fin = b => b && [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0, within = (a, b) => a && b && a.x >= b.x - 2 && a.y >= b.y - 2 && a.x + a.w <= b.x + b.w + 2 && a.y + a.h <= b.y + b.h + 2;
+      // eyes-rects-settle: the stage shrinks for Hesketh's first tip a frame before the hero is redrawn there, so read the boxes
+      // only once two reads two frames apart agree on the hero and the stage (a slow runner read them mid-change, escape 40)
+      const frames = () => page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))), agree = (a, b) => JSON.stringify([a.hero, a.stage]) === JSON.stringify([b.hero, b.stage]);
+      let R = await E('LF_EYES.rects()'), settled = false;
+      for (const t0 = Date.now(); Date.now() - t0 < 3000;) { await frames(); const R2 = await E('LF_EYES.rects()'); settled = agree(R, R2); R = R2; if (settled) break; }
+      assert(settled, `rects(): the hero and stage boxes settle within 3 s (last hero ${JSON.stringify(R.hero)}, stage ${JSON.stringify(R.stage)})`);
+      const fin = b => b && [b.x, b.y, b.w, b.h].every(Number.isFinite) && b.w > 0 && b.h > 0, within = (a, b) => a && b && a.x >= b.x - 2 && a.y >= b.y - 2 && a.x + a.w <= b.x + b.w + 2 && a.y + a.h <= b.y + b.h + 2;
       assert(fin(R.stage) && fin(R.hero) && fin(R.foe) && fin(R.heroHp) && fin(R.foeHp), `rects(): stage, hero, foe and both HP boxes are real boxes (${JSON.stringify(Object.fromEntries(Object.entries(R).map(([k, v]) => [k, v && v.x != null ? 1 : v && v.length != null ? v.length : 0])))})`);
       assert(within(R.hero, R.stage) && within(R.foe, R.stage), `rects(): the hero and the foe lie on the stage (hero ${JSON.stringify(R.hero)}, foe ${JSON.stringify(R.foe)}, stage ${JSON.stringify(R.stage)})`);
       assert(R.hero.x < R.foe.x && R.boss === null && R.foes.length >= 1 && R.foes.every(f => typeof f.boss === 'boolean'), 'rects(): the hero stands left of the foe, no boss in the first fight, foes lists each foe');
