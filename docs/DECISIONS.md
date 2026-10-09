@@ -1164,6 +1164,16 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   changes fight by fight (the hero changes size between fights). Bigger heroes on big screens come with finer art (art-scale-ruling),
   shown at x2 on 1920x1080. Changing the stage zoom is layout, not art retuning under the freeze; whole steps only.
   (`docs/design/desktop-layout.md`, "Hero size ruling"; mockups, red team and ruling in `docs/design/desktop-layout/hero-size/`)
+- **Live 3D scenes (live-3d-scenes-ruling, Opus judge, 2026-10-09; Cal can veto: "Skip the spike, go 3D", "Stay pixel"):** A 5-day
+  scratch spike (`live-3d-spike`, 12-16 Oct, never in a Monday build) builds Wren and Gloomjaw from one rig both as live three.js and as
+  pre-rendered toon sprites, and measures bytes (foe ≤135 KB, hero ≤600 KB, engine ≤200 KB, first load ≤6.0 MB wire), hours (≤4 h for
+  the foe), parry timing (≤17 ms), frame rate on Cal's phone and a 2019 laptop (median ≥55 fps, p95 ≤33 ms), 30-minute battery (≤1.5x
+  2D) and the look (art judge, then Cal on unlabelled clips). Live passes all: B (live 3D fights). Toon only: pre-rendered sprites.
+  Neither: A with Codex paintover. The estimated live first load with Wren plus one foe is about 9.3-9.9 MB wire, past the 8.0 fail
+  line. Cal said enemies would be 3D too (21:21), so who models and keys, and any paid generator, go to Cal (`3d-art-maker-decision`). The
+  20 Nov post ships 2D. art-scale-ruling and 3d-hero-pipeline are held. Codex's zone 3-10 foe briefs continue, each with a 4-view
+  turnaround. The art freeze is unchanged. (`docs/design/live-3d/ruling.md`, red team `redteam.md`;
+  `autopilot/rulings/2026-10-09-live-3d-scenes.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 

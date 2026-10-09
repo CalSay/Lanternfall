@@ -1,0 +1,1 @@
+Docs only: the judge's ruling on whether fights and gathering move to live 3D. A one-week scratch test of a 3D Gloomjaw fight decides it; nothing changes in the game now (docs/design/live-3d/ruling.md). No player change. (no shot)
