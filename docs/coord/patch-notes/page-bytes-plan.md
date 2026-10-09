@@ -1,0 +1,1 @@
+Docs only: a plan for fitting Chapter 1's art into the one-page game (docs/design/page-bytes.md), with measured sizes, the levers that shrink art without changing it, a byte budget for each art pack and a proposed size check. No player change. (no shot)

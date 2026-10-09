@@ -75,9 +75,9 @@ const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '
 const WEIGHT = {
   'forge-line-while-fighting': 133, 'W1-D (browser)': 111, 'staged guide follow-ups (browser)': 90, 'moment layer': 79,
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
-  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'landscape 740x360 (browser, UX-L1)': 55,
+  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'zone10-clear-moment': 42, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -13330,6 +13330,110 @@ if (section('zone10-clear-moment')) try {
   })();
 } catch (e) { fail('zone10-clear-moment: ' + e.message); }
 
+// ---- champ-retry-scenes (card champ-retry-scenes; M0 beat 25): a Champion beaten on a later try plays its pre scene before the fight and its
+// post scene at the kill, then its card. The walk read the pre text at the kill for zones 10 and 15 only after a loss; the game was right, the
+// walk keyed both sheets by their first 50 characters (the same for those two Champions). This proves the game's order on every retry path.
+// Two sections (zone 10 at 1280x720; zone 15 and 740x360) so CI's shards share the time (about 100 s each).
+async function champRetryScenes(runs) {
+  {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('champ-retry-scenes (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-z10-cantor.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      // way: 'first' (a first-try win), 'again' (the loss card's Try again), 'gate' (Keep fighting here, a zone foe, then the Fight menu's
+      // boss button, which Next Up's boss row opens; Auto's own try calls the same challenge(), so it is not run apart)
+      for (const [zone, champ, way, w, h] of runs) {
+        const at = `champ-retry-scenes zone ${zone} ${way} ${w}x${h}`;
+        const save = JSON.parse(raw), t0 = Date.UTC(2026, 9, 9, 12), delta = t0 - save.last;
+        const shift = o => { for (const k in o) { const v = o[k]; if (typeof v === 'number' && v > 1.5e12 && v < 2.2e12) o[k] = v + delta; else if (v && typeof v === 'object') shift(v); } };
+        shift(save); save.zone = save.maxZone = zone; save.auto = false;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, turns: true, story: true });
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.clock.install({ time: t0 }); await page.clock.pauseAt(t0 + 1);
+        await page.addInitScript(([k, s]) => { if (!sessionStorage.getItem('crs')) { sessionStorage.setItem('crs', '1'); localStorage.setItem(k, s); } }, [KEY, JSON.stringify(save)]);
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/', { waitUntil: 'commit' });
+        const run = s => page.clock.runFor(Math.round(s * 1000));
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        for (let i = 0; i < 60 && !(await page.evaluate(() => !!window.__t)); i++) { await page.waitForTimeout(200); await run(0.2); }
+        // the order of events: a boss spawn or kill, each scene shown (its first line on screen) and closed, and the Champion card
+        // Hesketh's tips are off: his upgrade tip after a loss pauses the zone's fight until Hero is opened, and this check is about the story's order
+        await X(`S.onboard.tips = false; window.__ev = []; const E = s => window.__ev.push(s);
+          on('spawn', ({ mob }) => { if (mob && mob.boss) E('spawn'); }); on('kill', ({ mob }) => { if (mob && mob.boss) E('kill'); });
+          on('storyScene', s => E('scene ' + s.id)); on('storyEnd', s => E('end ' + s.id));
+          new MutationObserver(() => { const o = document.querySelector('.mm-ov'), y = document.querySelector('.sty-sheet .sty-text');
+            if (o && /falls/.test(o.textContent) && !window.__ev.includes('card')) E('card' + (document.querySelector('.sty-sheet') ? ' over a scene' : ''));
+            if (y && window.__ev[window.__ev.length - 1] !== 'text ' + y.textContent.slice(0, 24)) E('text ' + y.textContent.slice(0, 24)); }).observe(document.body, { childList: true, subtree: true, characterData: true });
+          true`);
+        await run(2);
+        const click = async rx => { for (const hd of await page.$$('button')) { const t = (await hd.innerText().catch(() => '')).trim(); if (rx.test(t) && await hd.isVisible()) { try { await hd.click({ timeout: 800 }); return t; } catch (e) {} } } return ''; };
+        const turn = boss => X(`(() => { const sn = turnCombatSnapshot(); return sn.phase === 'hero' && !!mob && !!mob.boss === ${boss}; })()`);
+        const toTurn = async (boss, rx) => { for (let i = 0; i < 60 && !(await turn(boss)); i++) { await click(rx); await run(0.5); } return turn(boss); };
+        assert(await toTurn(true, /^(Continue|Next|Got it|Fight)$/), `${at}: the Champion's fight starts (${JSON.stringify(await X('window.__ev'))})`);
+        await X(`window.__ev.push('turn'); true`);   // the first try's first turn: the pre scene has closed before it
+        if (way !== 'first') {
+          // a loss inside the fight's own tick (the foe's hit on 1 HP), as a player loses: a hit forced from outside the tick skips the
+          // turn fight's recovery, and the hero stays down after Keep fighting here
+          await X(`window.__lost = 0; on('bossFail', () => { window.__lost = 1; }); true`);
+          for (let i = 0; i < 40 && !(await X(`window.__lost`)); i++) {
+            await run(0.5);
+            if (await X(`turnCombatSnapshot().phase === 'hero'`)) await X(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max; cbUnitByKey('hero').hp = 1; turnCombatAction('attack'); true`);
+          }
+          assert(await X(`window.__lost`), `${at}: the first try is lost`);
+          if (way === 'again') { let again = '';
+            for (let i = 0; i < 20 && !again; i++) { await run(0.5); again = await click(/^Try again$/); }
+            assert(again && await toTurn(true, /^(Continue|Next|Got it)$/), `${at}: the loss card's Try again starts the next try`); }
+          else {
+            let stay = '';
+            for (let i = 0; i < 20 && !stay; i++) { await run(0.5); stay = await click(/^Keep fighting here$/); }
+            assert(stay, `${at}: the loss card offers Keep fighting here`);
+            assert(await toTurn(false, /^(Continue|Next|Got it)$/), `${at}: a zone foe comes next (${await X(`JSON.stringify({ ph: turnCombatSnapshot().phase, mob: mob && mob.name, boss: mob && mob.boss, act: S.activity, tab: S.tab, held: GAME_HOLDS.filter(f => f()).length, ov: [...document.querySelectorAll('.bsheet-ov, .mm-ov, .gl-ov')].map(o => o.className + ':' + o.textContent.slice(0, 40)) })`)})`);
+            await X(`TURN_LIVE.gi = 99; TURN_LIVE.foe.hp = 1; turnCombatAction('attack'); true`);
+            for (let i = 0; i < 8; i++) { await run(0.5); await click(/^(Continue|Next|Got it)$/); }
+            // the boss button in the Fight menu (where Next Up's boss row sends a player once the chance is close or ready); the player presses
+            // it and closes the menu to watch the fight, which a 740x360 menu covers
+            await X(`setTab('adv', '#gateBtn'); ui(true); true`); await run(0.4); await X(`$('gateBtn').click(); closeMenu(); true`);
+            assert(await toTurn(true, /^(Continue|Next|Got it)$/), `${at}: the Champion comes back (${JSON.stringify(await X('window.__ev'))})`);
+          }
+        }
+        // the win (past every rally gate), pressed at the hero's turn until it lands
+        for (let i = 0; i < 20 && !(await X(`window.__ev.includes('kill')`)); i++) {
+          if (await turn(true)) await X(`TURN_LIVE.gi = 99; TURN_LIVE.foe.hp = 1; turnCombatAction('attack'); true`);
+          await run(0.5);
+        }
+        let post = false;
+        for (let i = 0; i < 8 && !post; i++) { await run(0.5); post = await X(`!!document.querySelector('.sty-sheet') && window.__ev.includes('scene p:${champ}:post')`); }
+        if (post && w === 1280 && way === 'gate') await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'champ-retry-scenes', `post-after-retry-z${zone}-${w}x${h}.png`) });
+        for (let i = 0; i < 12 && !(await X(`window.__ev.some(e => /^card/.test(e))`)); i++) { await click(/^(Next|Continue)$/); await run(0.6); }
+        const ev = await X('window.__ev'), ix = s => ev.indexOf(s), kill = ev.lastIndexOf('kill');
+        const want = [`end p:${champ}:pre`, 'kill', `scene p:${champ}:post`, `end p:${champ}:post`, 'card'];
+        assert(want.every((s, i) => ix(s) >= 0 && (i === 0 || ix(s) > ix(want[i - 1]))) && kill >= 0 && ev.filter(e => e === 'kill').length === 1,
+          `${at}: pre before the fight, then at the kill the post, then the Champion card (${JSON.stringify(ev)})`);
+        // the save boots into the first try, so its pre scene may open before the listeners: its close, and at most one open, come before the first turn
+        const turn0 = ix('turn'), pres = ev.map((e, i) => e === `scene p:${champ}:pre` ? i : -1).filter(i => i >= 0);
+        assert(turn0 >= 0 && ix(`end p:${champ}:pre`) < turn0 && ev.filter(e => e === `end p:${champ}:pre`).length === 1 && pres.length <= 1 && pres.every(i => i < turn0),
+          `${at}: the pre scene plays once, before the first try's first turn, never again and never in the kill gap (${JSON.stringify(ev)})`);
+        const pre0 = (await X(`STORY_BEATS.champ.${champ}.pre[0]`)).slice(0, 24), post0 = (await X(`STORY_BEATS.champ.${champ}.post[0]`)).slice(0, 24);
+        assert(ev.indexOf('text ' + pre0) >= 0 && ev.indexOf('text ' + pre0) < kill && ev.indexOf('text ' + post0) > kill && !ev.slice(kill).includes('text ' + pre0),
+          `${at}: the sheet shows the pre lines before the kill and the post lines after it (${JSON.stringify(ev)})`);
+        assert(!ev.includes('card over a scene'), `${at}: the Champion card waits for the post sheet to close (${JSON.stringify(ev)})`);
+        assert(!errs.length, `${at}: no page errors (${errs.slice(0, 2).join(' | ')})`);
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+}
+if (section('champ-retry-scenes')) try {
+  await champRetryScenes([[10, 'cantor', 'first', 1280, 720], [10, 'cantor', 'again', 1280, 720], [10, 'cantor', 'gate', 1280, 720]]);
+} catch (e) { fail('champ-retry-scenes: ' + e.message); }
+if (section('champ-retry-scenes 2')) try {
+  await champRetryScenes([[15, 'marshal', 'again', 1280, 720], [10, 'cantor', 'gate', 740, 360]]);
+} catch (e) { fail('champ-retry-scenes 2: ' + e.message); }
+
 // ---- moment layer (card moment-layer; 75-moments-ui.js; docs/design/first-hour.md; scorecard F6) ----
 // Each big and medium moment is forced while the guide, a level-up and the toast flood compete, and must be on screen for at
 // least 2 s, not only in the bell. At 740x360 first (the main target), then 360x740, then with reduced motion.
@@ -15318,6 +15422,64 @@ if (section('boss-spoils-pick')) try {
   }
 } catch (e) { fail('boss-spoils-pick: ' + (e.stack || e.message)); }
 
+// ---- spoils-card-fits-with-unique (ci-shard-hang follow-up): a zone 6 to 10 first clear that drops a unique AND offers a move pick puts
+// the unique line, its Equip button, every pick and Keep the Scroll on screen without scrolling the card (75-caches-ui, 60-moments.css).
+// boss-spoils-pick makes the unique roll miss; this section makes it hit. At 360x740 the base card already fit, so it must still fit ----
+if (section('spoils-card-fits-with-unique')) try {
+  const at = 'spoils-card-fits-with-unique', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pre-z7-boss.json'), 'utf8');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      // moment-card-short-landscape: 932x430 and 926x428 (taller than the old 420 px compact line) must fit too; 568x320 and 360x640 are
+      // too short for the whole card, so there the first button shows without scrolling and every other one scrolls into view
+      const tight = (w, h) => (w === 568 && h === 320) || (w === 360 && h === 640);
+      for (const [w, h] of [[740, 360], [932, 430], [926, 428], [568, 320], [1280, 720], [360, 740], [360, 640]]) {
+        const vw = `${at} ${w}x${h}`;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // zone 7's boss, first clear, three Tier II moves to learn, a free slot; the unique roll always hits (the drop rate is restored after)
+        await X(`MOMENT_Q.length = 0; S.L = 13; soloLevels().wren.L = 13; S.abil.unl.wren = ['powershot', 'barbed']; S.abil.scrolls = { moss: 2 }; soloEquip(2, null); soloEquip(1, 'powershot');
+          S.activity = 'fight'; S.zone = 7; S.maxZone = 7; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 1;
+          try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } S.activity = 'gather'; emit('sceneReset'); true`);
+        try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov')`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
+        await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs) and the card's rise
+        const c = await X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };
+          const card = o.querySelector('.mm-card'), inView = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1; };
+          const btns = [...o.querySelectorAll('.mm-pick, .mm-act, .mm-go')], uq = [...o.querySelectorAll('.mm-list li')].find(li => /A unique\\./.test(li.textContent));
+          return { up: true, uq: uq ? uq.textContent : '', picks: [...o.querySelectorAll('.mm-pick b')].map(b => b.textContent), acts: [...o.querySelectorAll('.mm-act')].map(b => b.textContent),
+            go: (o.querySelector('.mm-go') || {}).textContent, scroll: card.scrollHeight - card.clientHeight, card: inView(card), btns: btns.map(b => b.textContent.slice(0, 18) + ':' + inView(b)),
+            allIn: btns.every(inView) && (!uq || inView(uq)), first: !!btns[0] && inView(btns[0]), top: card.scrollTop, h: Math.round(card.getBoundingClientRect().height) }; })()`);
+        assert(c.up && c.uq && c.picks.length === 3 && c.go === 'Keep the Scroll' && c.acts.some(t => /^Equip/.test(t)),
+          `${vw}: the card holds the unique line, its Equip button, three moves and Keep the Scroll (${JSON.stringify({ up: c.up, uq: c.uq, picks: c.picks, acts: c.acts, go: c.go })})`);
+        // 360x740: the base card already reached its height cap there (1 px of scroll, the font fallback can move it), so only being in view counts
+        if (!tight(w, h)) assert(c.card && c.allIn && c.top === 0 && (w === 360 || c.scroll <= 1), `${vw}: the unique line, every pick, Equip and Keep the Scroll are on screen${w === 360 ? '' : ' and the card does not scroll'} (${JSON.stringify({ h: c.h, scroll: c.scroll, top: c.top, btns: c.btns })})`);
+        else {
+          // the unique line and each button scroll into the card's view in turn (scrollIntoView moves the card only: the overlay is fixed), then the card goes back to the top
+          const reach = await X(`(() => { const o = document.querySelector('.mm-ov'), card = o.querySelector('.mm-card');
+            const inView = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1; };
+            const uq = [...o.querySelectorAll('.mm-list li')].find(li => /A unique\\./.test(li.textContent));
+            const out = [uq, ...o.querySelectorAll('.mm-pick, .mm-act, .mm-go')].filter(Boolean).map(b => { b.scrollIntoView({ block: 'nearest' }); return b.textContent.slice(0, 18) + ':' + inView(b); });
+            card.scrollTop = 0; return out; })()`);
+          assert(c.card && c.top === 0 && c.first && reach.every(t => t.endsWith(':true')), `${vw}: the card opens at its top with the first button on screen, and every button scrolls into view (${JSON.stringify({ h: c.h, scroll: c.scroll, btns: c.btns, reach })})`);
+        }
+        if ([[740, 360], [932, 430], [568, 320], [1280, 720]].some(([a, b]) => a === w && b === h)) await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'spoils-card-fits-with-unique', `check-card-${w}x${h}.png`) });
+        await page.click('.mm-ov .mm-go'); await page.waitForTimeout(200);
+        assert(!(await X('!!document.querySelector(".mm-ov")')) && (await X('scrollCount("hollow")')) === 1, `${vw}: Keep the Scroll closes the card and keeps the Scroll`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('spoils-card-fits-with-unique: ' + (e.stack || e.message)); }
+
 // ---- look-card-says-why (W5 proposal 3): a cache's lantern colour says what it did in its own line, whatever the sub line shows ----
 if (section('look-card-says-why')) try {
   const at = 'look-card-says-why', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pre-z7-boss.json'), 'utf8');
@@ -15773,6 +15935,104 @@ if (section('menu-tip-room')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('menu-tip-room crashed: ' + (e.stack || e)); }
+
+// ==== ability-names-fit: every ability name a hero can slot reads in full on the fight bar and the Abilities Q W E buttons ====
+// save-pip-abilities (Pip, Fireball / Spark / Kindle), tips off. Each hero in turn, every ability that hero can learn goes into the three
+// slots (three at a time, ownership stubbed), and each name must not be cut (its text no wider than its box) on the fight bar's slot names at
+// 1280x720, 740x360 and 360x740, and on the Q W E buttons at the top of Hero > Abilities (and the Slot Q / W / E buttons in a card). The
+// check runs without the web fonts: Handjet fits every name with room to spare, the fallback (DejaVu Sans Mono here) needs the names to
+// step their size down (fitTextWidth, 75-abilities-ui). Upright, Fireball's card (its text, the slots, both talents) has no scroll of its own.
+if (section('ability-names-fit')) try {
+  const at = 'ability-names-fit', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-abilities.json'), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // cut: the text is wider than its box, read to the fraction (a Range): scrollWidth and clientWidth round, and 0.2 px over already shows "..."
+        const cut = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent).map(e => { const r = document.createRange(); r.selectNodeContents(e);
+          return [e.textContent, +r.getBoundingClientRect().width.toFixed(2), +e.getBoundingClientRect().width.toFixed(2), e.scrollWidth, e.clientWidth, e.parentElement.className + ' ' + e.tagName, e.style.fontSize, e.style.letterSpacing]; }).filter(([, need, room, sw, cw]) => sw > cw || need > room + 0.01))`;
+        // under the desktop tier's text floor (--tmin, Foreman 2026-10-09): a name never shrinks below it
+        const small = sel => `(() => { const f = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0;
+          return JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent && parseFloat(getComputedStyle(e).fontSize) < f - 0.01).map(e => [e.textContent, getComputedStyle(e).fontSize, 'floor ' + f])); })()`;
+        // a word split across two lines ("Lanternbur / st"): any word whose letters sit on more than one line
+        const split = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent).flatMap(e => { const t = e.firstChild, out = []; if (!t || t.nodeType !== 3) return out;
+          for (const m of t.data.matchAll(/\\S+/g)) { const r = document.createRange(); r.setStart(t, m.index); r.setEnd(t, m.index + m[0].length); const tops = new Set([...r.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))); if (tops.size > 1) out.push([e.textContent, m[0]]); }
+          return out; }))`;
+        // each hero's whole list, three to a pass; the bar redraws on the next frame
+        const sets = JSON.parse(await X(`abilityOwned = () => true; JSON.stringify(Object.keys(HERO_ABILITIES).map(k => [k, HERO_ABILITIES[k].filter(id => SOLO_ABILITIES[id])]))`));
+        let n = 0; const bad = [];
+        for (const [k, ids] of sets) for (let i = 0; i < ids.length; i += 3) {
+          const three = ids.slice(i, i + 3); while (three.length < 3) three.push(null);
+          await X(`S.solo.hero = ${JSON.stringify(k)}; soloEquipped().splice(0, 3, ...${JSON.stringify(three)}); ui(true); true`); await page.waitForTimeout(120);
+          const names = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#soloBar .sb-abslot .sb-lb')].map(e => e.textContent))`));
+          n += names.filter(t => t !== 'Empty').length;
+          bad.push(...JSON.parse(await X(cut('#soloBar .sb-abslot .sb-lb'))), ...JSON.parse(await X(small('#soloBar .sb-abslot .sb-lb'))));
+        }
+        assert(n >= 40 && !bad.length, `${v}: all ${n} ability names on the fight bar read in full (cut: ${JSON.stringify(bad)})`);
+        // the slot's sub-line (Foreman: Wildfire's "Needs ..." at 1280x720): every line a slot can show, from the turn fight's own
+        // reasons (59k-turn.js 'need:...', shown as 75-solo-ui's needTxt), reads whole at the floor, words unbroken, inside the tile
+        if (w !== 740) {
+          const subs = ['Ready', 'Wait', 'Passive', 'Turn 3', 'Used', '5 turns', ...[...fs.readFileSync(path.join(ROOT, 'src', 'js', '59k-turn.js'), 'utf8').matchAll(/'need:([^'<]+)'/g)]
+            .map(m => { const t = m[1].replace(/^a /, ''); return t.charAt(0).toUpperCase() + t.slice(1); })];
+          const subBad = JSON.parse(await X(`(() => { const out = [];
+            for (const b of document.querySelectorAll('#soloBar .sb-abslot')) { const e = b.querySelector('.sb-sub'), keep = e.textContent;
+              for (const t of ${JSON.stringify(subs)}) { e.textContent = t; fitTextWidth(e); const r = document.createRange(); r.selectNodeContents(e);
+                const tops = new Set([...r.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))), lines = tops.size, bb = b.getBoundingClientRect(), eb = e.getBoundingClientRect();
+                const words = [...t.matchAll(/\\S+/g)].some(m => { const w = document.createRange(); w.setStart(e.firstChild, m.index); w.setEnd(e.firstChild, m.index + m[0].length); return new Set([...w.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))).size > 1; });
+                if (r.getBoundingClientRect().width > eb.width + 0.01 || words || lines > 2 || eb.bottom > bb.bottom - 2) out.push([t, +r.getBoundingClientRect().width.toFixed(1), +eb.width.toFixed(1), lines, Math.round(eb.bottom), Math.round(bb.bottom)]); }
+              e.textContent = keep; fitTextWidth(e); }
+            return JSON.stringify(out); })()`));
+          const subSmall = JSON.parse(await X(small('#soloBar .sb-abslot .sb-sub')));
+          assert(subs.length >= 10 && !subBad.length && !subSmall.length, `${v}: every slot sub-line (${subs.join(', ')}) reads whole on at most two lines inside its tile, at the floor (${JSON.stringify([subBad, subSmall])})`);
+        }
+        // Hero > Abilities: the Q W E buttons hold each name, and a card's Slot buttons name what sits in each slot
+        await X(`setTab('party'); true`); await page.waitForTimeout(300);
+        await page.evaluate(() => document.querySelector('#viewSeg button[data-view="abilities"]').click()); await page.waitForTimeout(400);
+        let nq = 0, nl = 0; const badQ = [];
+        for (const [k, ids] of sets) for (let i = 0; i < ids.length; i += 3) {
+          const three = ids.slice(i, i + 3); while (three.length < 3) three.push(null);
+          const other = ids.find(id => !three.includes(id)) || ids[0];
+          await X(`S.solo.hero = ${JSON.stringify(k)}; soloEquipped().splice(0, 3, ...${JSON.stringify(three)}); ui(true); true`); await page.waitForTimeout(150);
+          // the list first (the card, once open, takes the list's place on a small landscape panel)
+          if (i === 0) { nl += JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('.ab-rt b')].filter(e => e.offsetParent).length)`));
+            badQ.push(...JSON.parse(await X(cut('.ab-rt b'))), ...JSON.parse(await X(split('.ab-rt b'))), ...JSON.parse(await X(small('.ab-rt b')))); }
+          const row = await X(`!!document.querySelector('.ab-row[data-ab=${JSON.stringify(other)}]')`);
+          if (row) { await page.evaluate(id => document.querySelector(`.ab-row[data-ab="${id}"]`).click(), other); await page.waitForTimeout(150); }
+          nq += JSON.parse(await X(`JSON.stringify(document.querySelectorAll('.ab-q:not(.empty) b').length)`));
+          // with a card open: the Q W E and Slot buttons, and on a wide panel the list beside the card (where "Lanternburst" broke)
+          badQ.push(...JSON.parse(await X(cut('.ab-q b, .ab-slotb small, .ab-rt b'))), ...JSON.parse(await X(split('.ab-rt b'))), ...JSON.parse(await X(small('.ab-q b, .ab-slotb small, .ab-rt b'))));
+          if (row) await page.evaluate(id => document.querySelector(`.ab-row[data-ab="${id}"]`)?.click(), other);
+        }
+        assert(nq >= 40 && nl >= 40 && !badQ.length, `${v}: all ${nq} names on the Abilities Q W E and Slot buttons and all ${nl} in the list read in full, no word split, none under the floor (${JSON.stringify(badQ)})`);
+        const tall = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('.ab-q')].map(b => Math.round(b.getBoundingClientRect().height)))`));
+        assert(tall.length === 3 && tall.every(t => t >= 44), `${v}: the Q W E buttons stay at least 44 px tall (${tall})`);
+        if (w < h) { // Fireball's card upright: no scroll of its own; with the panel scrolled to its end, its head and both talents show, under the bar
+          await X(`S.solo.hero = 'pip'; soloEquipped().splice(0, 3, 'fire', 'wildfire', 'kindle'); ui(true); true`); await page.waitForTimeout(200);
+          await page.evaluate(() => document.querySelector('.ab-row[data-ab="fire"]').click()); await page.waitForTimeout(300);
+          await X(`document.querySelector('#panels').scrollTop = 1e6; true`); await page.waitForTimeout(200);
+          const det = JSON.parse(await X(`(() => { const d = document.querySelector('.ab-det'); if (!d) return 'null'; const hit = e => { const r = e.getBoundingClientRect(), p = document.elementFromPoint(r.left + r.width / 2, r.bottom - 3); return !!p && e.contains(p); };
+            return JSON.stringify({ sh: d.scrollHeight, ch: d.clientHeight, top: Math.round(d.getBoundingClientRect().top), bar: Math.round(document.querySelector('.ab-bar').getBoundingClientRect().bottom),
+              head: hit(d.querySelector('.ab-dh')), tal: [...d.querySelectorAll('.ab-talb')].map(hit) }); })()`));
+          assert(det && det.sh <= det.ch + 1 && det.top >= det.bar && det.head && det.tal.length === 2 && det.tal.every(Boolean),
+            `${v}: Fireball's card shows its head and both talents with no scroll of its own, under the Q W E bar (${JSON.stringify(det)})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('ability-names-fit crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

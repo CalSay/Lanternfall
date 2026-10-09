@@ -1,0 +1,43 @@
+# seed: 1
+# Proof for card ability-names-fit: Pip (fixture tests/proof-fixtures/save-pip-abilities, slots Fireball, Spark, Kindle). Wildfire goes
+# into slot W, so the fight bar holds two of the longest names (Fireball, Wildfire). Every name reads in full on the fight bar and on the
+# Q W E buttons at the top of Hero > Abilities (the key now sits over the name), and Fireball's card shows its text, slots and both
+# talents without a scroll of its own at 360x740 (Hesketh's tip is dismissed first: while his strip sits under the menu the card keeps
+# its old height and scrolls). tools/check.mjs "ability-names-fit" measures every ability all three heroes can
+# slot at 1280x720, 740x360 and 360x740. Run at all three views.
+new pip-abilities
+wait 3
+expect "Attack"
+wait 3
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 1
+tap "Hero"
+wait 1
+tap "Abilities"
+wait 1
+tap "Wildfire"
+wait 1
+tap "Put it in slot W"
+wait 1
+expect "Wildfire"
+shot abilities-slots
+tap "Slot Q: Fireball"
+wait 1
+tap-if "Dismiss this tip"
+wait 1
+tap-if "Dismiss this tip"
+wait 1
+tap-if "Dismiss this tip"
+wait 1
+scroll down
+wait 1
+expect "Scattered Cinders"
+shot fireball-card
+key Escape
+wait 1
+tap-if "Close menu"
+wait 1
+expect "Fireball"
+shot fight-bar-names
