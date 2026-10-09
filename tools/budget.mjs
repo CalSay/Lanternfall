@@ -76,7 +76,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadCore, ROOT } from './lib/core.mjs';
-import { HEROES, loadTargets, cells, offBand } from './lib/budget-score.mjs';
+import { HEROES, loadTargets, cells, offBand, shapeBlock } from './lib/budget-score.mjs';
+export { SHAPE_ZONES, shapeBlock } from './lib/budget-score.mjs';
 
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
@@ -447,32 +448,6 @@ function shapeOf(core, z) {
     if (ty2 !== ty && got[ty2].length) { out.foeHpNext = avg(got[ty2]); out.foeNameNext = names[ty2]; }
     out.ratio = out.foeHp ? Math.round(1000 * out.hp / out.foeHp) / 1000 : null;
     return out; })()`);
-}
-// the shape block (boss-tier-shape-report): zones 4-26, one boss row a zone (gated, but z4, z25 and z26 are report rows) (the -arrival row where there is one, else zN-boss), the
-// mean of the heroes run. ratio: boss HP over the ordinary foe's; turns and win: the casual's; hit: the heaviest landed hit and what sets it;
-// step (a Champion by bossTierOf): its casual win less the mean of its two neighbour zones' (the Captains either side).
-export const SHAPE_ZONES = Array.from({ length: 23 }, (_, i) => i + 4);
-export function shapeBlock(rep) {
-  const hs = rep.heroes, mean = a => { const v = a.filter(x => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
-  const rowOf = z => rep.rows.find(r => r.id === `z${z}-boss-arrival`) || rep.rows.find(r => r.id === `z${z}-boss`);
-  const out = [];
-  for (const z of SHAPE_ZONES) {
-    const r = rowOf(z);
-    if (!r || !hs.every(h => r.perHero[h] && r.perHero[h].shape)) continue;
-    const sh = h => r.perHero[h].shape, s0 = sh(hs[0]);
-    out.push({ zone: z, row: r.id, tier: s0.tier, boss: r.perHero[hs[0]].foe, gates: s0.gates, foe: s0.foeName,
-      hp: Object.fromEntries(hs.map(h => [h, sh(h).hp])), foeHp: Object.fromEntries(hs.map(h => [h, sh(h).foeHp])),
-      ...(s0.foeHpNext ? { foeNext: s0.foeNameNext, foeHpNext: Object.fromEntries(hs.map(h => [h, sh(h).foeHpNext])) } : {}),
-      ratio: Object.fromEntries(hs.map(h => [h, sh(h).ratio])),
-      turns: Object.fromEntries(hs.map(h => [h, r.perHero[h].casual.turns])), win: Object.fromEntries(hs.map(h => [h, r.perHero[h].casual.win])),
-      hit: Object.fromEntries(hs.map(h => [h, { own: sh(h).own, floor: sh(h).floor, foot: sh(h).foot, landed: sh(h).landed, set: sh(h).set }])),
-      winMean: mean(hs.map(h => r.perHero[h].casual.win)) });
-  }
-  for (const s of out) if (s.tier === 'champion') {
-    const nb = [s.zone - 1, s.zone + 1].map(z => out.find(x => x.zone === z)).filter(Boolean);
-    if (nb.length === 2 && s.winMean != null) s.step = { captains: nb.map(x => x.zone), captainWin: mean(nb.map(x => x.winMean)), d: s.winMean - mean(nb.map(x => x.winMean)) };
-  }
-  return out;
 }
 function printShape(shape, hs) {
   if (!shape.length) return;
