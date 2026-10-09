@@ -1,0 +1,78 @@
+# seed: 1
+# Proof for card spoils-card-fits-with-unique: a boss cache with a unique and a move pick fits 740x360 without scrolling.
+# A route cannot force the 15% unique roll, so the unique + pick case is forced in tools/check.mjs, section
+# 'spoils-card-fits-with-unique' (shots check-card-740x360.png and check-card-1280x720.png in this folder). This route replays
+# boss-spoils-pick's zone 7 win so the pick card (with or without a unique on this seed) is seen at each view: run at the default view
+# (1280x720), then with --landscape and --portrait. Fixture pre-z7-boss: Wren, three Tier II moves to learn, a free slot, zone 7's boss next.
+new pre-z7-boss
+wait 2
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+expect "Learn one now:"
+expect "Keep the Scroll"
+expect "Hunter's Mark"
+expect "Deadeye"
+expect "Bat Swarm"
+expect-no "best"
+shot spoils-card-fits
+tap "Keep the Scroll"
+wait 1
+expect-no "Keep the Scroll"
