@@ -11762,7 +11762,7 @@ if (section('craft-odds-before-pay')) try {
           assert(others === 'bow', `${v}: only the row Next Up points at has the line (${others})`);
           // the craft made the way the line's piece is (the likeliest rarity, middle bonus lines): the die reads 0.5 for this press only
           const t0 = Date.now();
-          const made = await X(`(() => { const r = Math.random; Math.random = () => 0.5; try { document.querySelector('[aria-label="Craft Pine Bow"]').click(); } finally { Math.random = r; } const it = itemById(st8probe()); return it ? it.r : null; })()`.replace('st8probe()', 'S.nextId - 1'));
+          const made = await X(`(() => { const r = Math.random; Math.random = () => 0.5; try { document.querySelector('[aria-label="Craft Pine Bow"]').click(); } finally { Math.random = r; } const it = itemById(S.nextId - 1); return it ? it.r : null; })()`);
           assert(Date.now() - t0 < 5000 && made === 'common', `${v}: the press makes a common Pine Bow and is not held up by the sample (${made})`);
           let line = '';
           while (Date.now() - t0 < 60000 && !line) { await page.waitForTimeout(200); line = await X(`(() => { const f = document.querySelector('.cf-res .cf-fight'); return f ? f.textContent : ''; })()`); }

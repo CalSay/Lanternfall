@@ -60,7 +60,7 @@ let fightDeltaJob, fightDelta;
       const s = sides[i % 2], c = i >> 1;
       const r = withGear(s, () => turnCombatSample({ profile: s.p, seconds: F.chunk * 600, seed: 1 + c * 7919 + z * 104729, skill, fights: F.chunk }));
       if (r) { s.k += r.kills; s.d += r.deaths; s.turns += r.totalHeroTurns; s.won += r.completedFights; s.dmg += r.damageTaken; s.hits += r.foeHits; }
-      if (++i >= chunks * 2) {  job.done = true; try { job.res = finish(); } catch (e) { job.res = null; } }
+      if (++i >= chunks * 2) { job.done = true; try { job.res = finish(); } catch (e) { job.res = null; } }
       return job.done;
     } };
     return job;

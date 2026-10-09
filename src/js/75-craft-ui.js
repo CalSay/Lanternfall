@@ -328,37 +328,47 @@ let craftUI = null;
   // row shows, never on the click path; the same "barely changes" rule leaves the line out. st8.pre: key -> { sig, job, res }.
   const PRE_ID = -1;
   const preUp = it => it && it.plus < CRAFT_TROPHY_GATE.max ? Object.assign(JSON.parse(JSON.stringify(it)), { id: PRE_ID, plus: it.plus + 1 }) : null;
+  // an ungraded recipe's piece is shown at the likeliest rarity at the station's level
+  const preRar = k => { const w = rarityWeights(stationLevel(k)); return Object.keys(w).reduce((a, b) => (w[b] > w[a] ? b : a)); };
   const preRec = (k, t) => {
     const d = CRAFT_KINDS[k], g = gradedKind(k) ? gradeFor(k, t) : null;
-    let r = g != null ? GRADE[g].r : null;
-    if (!r) { const w = rarityWeights(stationLevel(k)); r = Object.keys(w).reduce((a, b) => (w[b] > w[a] ? b : a)); }
+    const r = g != null ? GRADE[g].r : preRar(k);
     const it = { id: PRE_ID, slot: k, t, r, plus: 0 };
     if (g != null) it.g = g;
     if (d.role) { it.a = rollAffixes(k, r, t, roleFor(k), () => 0.5, g); if (d.role === 'any') it.ro = roleFor(k); }
     return it;
   };
+  // what the line depends on: the fight's signature and the worn pieces themselves (an upgrade or reforge keeps their ids)
+  const preSig = () => fdSig() + '|' + JSON.stringify(CRAFT_HERO_POS.map(p => { const w = itemById(S.equip[p]); return w ? [w.slot, w.t, w.r, w.plus, w.g, w.u, w.mw, w.a] : 0; }));
   function preStart(key, mk, done) {
     if (typeof fightDeltaJob !== 'function') return;
-    const sig = fdSig(), cur = st8.pre[key];
+    const sig = preSig(), cur = st8.pre[key];
     if (cur && cur.sig === sig) return;
-    const it = safe(mk, null), job = it ? safe(() => fightDeltaJob(it, { scratch: true }), null) : null, rec = st8.pre[key] = { sig, job, res: null };
-    if (!job) return;
-    const run = () => {
+    for (const k of Object.keys(st8.pre)) if (st8.pre[k].sig !== sig) delete st8.pre[k];   // lines from before a change can never show again
+    const rec = st8.pre[key] = { sig, job: null, res: null };
+    let job = null;
+    const run = () => {   // the piece and both profiles are made in the first step, off the click path
       if (st8.pre[key] !== rec) return;
-      if (safe(() => job.step(), true)) { rec.res = job.res; rec.job = null; if (rec.res) done(); return; }
+      if (!job) { const it = safe(mk, null); job = it ? safe(() => fightDeltaJob(it, { scratch: true }), null) : null; if (!job) return; }
+      if (safe(() => job.step(), true)) { rec.res = job.res; if (rec.res) done(); return; }
       setTimeout(run, 30);
     };
     setTimeout(run, 30);
   }
   function preLine(key) {
-    const f = st8.pre[key], r = f && f.sig === fdSig() ? f.res : null;
+    const f = st8.pre[key], r = f && f.sig === preSig() ? f.res : null;
     if (!r) return '';
     if (r.kind === 'wins') return `Zone ${r.zone} boss: about ${r.after} in 10, now ${r.before}`;
     if (r.kind === 'turns') return `Zone ${r.zone} boss: about ${r.after} turns a win, now ${r.before}`;
     return `Zone ${r.zone} boss: a hit takes about ${r.after}% of your health, now ${r.before}%`;
   }
-  // the recipe row Next Up's craft pick names (st8.nu, read once an update): its key, or '' on any other row
-  const preRecKey = (k, t) => { const n = st8.nu; return n && n.kind === k && n.t === t && !CRAFT_KINDS[k].tool ? `rec:${k}:${t}:${CRAFT_KINDS[k].role === 'any' ? roleFor(k) : ''}` : ''; };
+  // the recipe row Next Up's craft pick names (st8.nu, read once an update): its key (with the rarity or grade the piece is shown at),
+  // or '' on any other row
+  const preRecKey = (k, t) => {
+    const n = st8.nu; if (!(n && n.kind === k && n.t === t && !CRAFT_KINDS[k].tool)) return '';
+    const g = gradedKind(k) ? gradeFor(k, t) : null;
+    return `rec:${k}:${t}:${CRAFT_KINDS[k].role === 'any' ? roleFor(k) : ''}:${g != null ? 'g' + g : preRar(k)}`;
+  };
   // the tool line: "Copper Pickaxe on. Mining is 35% faster than with your Stone Pick: +25% for a tier 1 tool on a tier 1 vein,
   // and +8.1% from its mining speed line." (or why it went in the bag). tool-speed-adds-up: the parts come from the crafted record
   // (toolParts); when they do not multiply to the total within 1 point, or one rounds to 0, only the total and the old tool show.

@@ -2,7 +2,7 @@
 # Proof for card craft-odds-before-pay (W10 section 3). Fixture tests/proof-fixtures/save-flow-cold-camp: a cold new game, Workbench
 # built, Next Up's craft pick is the first Pine Bow. On Craft, the Pine Bow's row shows the boss line before the press ("Zone 2 boss:
 # about 4 in 10, now 3"); no other row has one. After Craft Pine Bow the result card's own line says the same within the sampler's
-# spread. tools/check.mjs "craft-odds-before-pay" also opens the worn weapon's Upgrade at zone 38 (a line) and Pip's staff at zone 10
+# spread. tools/check.mjs "craft-odds-before-pay" also opens a worn Hood's Upgrade before the zone 7 boss (a hit line) and Pip's staff at zone 10
 # (no line: the sampler says the +1 barely changes the fight), at 1280x720, 740x360 and 360x740. Run at all three views.
 new flow-cold-camp
 wait 2
