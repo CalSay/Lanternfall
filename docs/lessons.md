@@ -147,6 +147,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Sweep a new game to zone 15 with the clock moving to prove an unlock chain; set the hero level with the zone. Why: Stars opens at hero level 10 or a first star, so a sweep with a level 1 hero called it unreachable. (unlock-tip-coverage, 2026-10-07)
 ## Reviews and Codex
 
+- In neutral hero turnarounds, keep hair inside the rear hood and let the cape occlude belt accessories consistently with the side views; verify rear boot orientation separately. Why: Cal caught rear hair passing through the hood and exposed accessories in the Wren 3D reference draft. (wren-3d-reference, 2026-10-09)
+
 - "@codex review" must be commented by hand after opening the PR; auto review does not fire. Why: seen on fix-bounty-kind. Codex drips one P1 per round, so close the whole class of a finding at once. (fix-bounty-kind, 2026-10-05)
 - Re-review after fixing reviewer findings, before merging. Why: the last two fix commits of f-fun-library merged unreviewed; PR #48's final hook change also went in unreviewed at the round cap. If a fix must merge unreviewed, say so in the PR and keep it to one line. (f-fun-library, away-pre-leave-notice)
 - Expect P1s every round: budget 3 Codex rounds, then Opus high reviews. Fix-bounty took 6; f-health, playtest-bots, f-health-long and systems-map took 3. (several)
