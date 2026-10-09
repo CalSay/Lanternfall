@@ -67,7 +67,7 @@
       b.append(el('i', 'ab-key', KEYS[i]));
       if (id) {
         const a = SOLO_ABILITIES[id] || {}; b.append(tile(id), el('b', null, a.short || a.name || id));
-        b.setAttribute('aria-label', `Slot ${KEYS[i]}: ${(ABILITIES[id] || a).name}. Open it.`);
+        b.setAttribute('aria-label', `Slot ${KEYS[i]}: ${(ABILITIES[id] || a).name}. Open it.`); setTip(b, () => abTip(id));
         b.addEventListener('click', () => (selId === id ? closeDet() : openDet(id)));
       } else {
         b.append(el('b', null, 'Empty'));
@@ -158,7 +158,7 @@
     bd.append(el('span', 'ab-badge ' + (where >= 0 ? 'in' : i.owned ? 'own' : !i.why ? 'go' : 'lock'),
       where >= 0 ? `In ${KEYS[where]}` : i.owned ? 'Learned' : !i.why ? 'Learn' : i.why));
     if (i.owned) { const m = talMark(k, id); if (m) bd.append(m); }
-    r.append(tile(id), t, bd);
+    r.append(tile(id), t, bd); setTip(r, () => abTip(id));
     r.addEventListener('click', () => (selId === id ? closeDet() : openDet(id)));
     return r;
   }
@@ -168,7 +168,7 @@
     const t = el('span', 'ab-rt'); t.append(el('b', null, nm), el('small', null, 'Talents'));
     const bd = el('span', 'ab-bd'), m = talMark(k, k + ':' + mv);
     bd.append(m || el('small', 'ab-tm', 'No talent'));
-    r.append(tile(mv), t, bd);
+    r.append(tile(mv), t, bd); setTip(r, () => { const B = BASIC.find(x => x[0] === mv); return B ? `${B[1]}\nAlways ready\n${B[2]}` : ''; });
     r.addEventListener('click', () => (selId === id ? closeDet() : openDet(id)));
     return r;
   }
@@ -192,6 +192,11 @@
     }
     wrap.append(hd, row);
     return wrap;
+  }
+  // desktop-tooltips: an ability's hover tip, from its card (detFor): name, kind, cooldown, tier, path and what it does
+  function abTip(id) {
+    const a = ABILITIES[id]; if (!a) return '';
+    return `${a.name}\n${KIND[a.kind]} · ${a.kind === 'passive' ? 'Always on' : `${cdTxt(id)} cooldown`} · ${a.tier ? 'Tier ' + ROMAN[a.tier] : 'Starter'} · ${a.path}\n${a.desc}`;
   }
   function detHead(name, sub, tl, onX) {
     const h = el('div', 'ab-dh'), t = el('div', 'ab-t'), x = btn('ab-x');

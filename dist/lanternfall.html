@@ -3178,6 +3178,14 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tabs-line { margin: 0 0 6px; font-size: max(var(--tmin, 0px), calc(15px * var(--tk, 1))); line-height: 1.35; }
 .tabs-note { margin: 0 0 14px; font-size: max(var(--tmin, 0px), calc(13.5px * var(--tk, 1))); line-height: 1.35; color: var(--muted); }
 .tabs-reload { min-height: 44px; min-width: 160px; padding: 0 18px; border: 2px solid #0B0810; background: var(--ember); color: #1A1420; font: 600 max(var(--tmin, 0px), calc((16px * var(--display-k)) * var(--tk, 1))) var(--display); cursor: pointer; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
+/* desktop-tooltips (70b-tips-ui.js): the hover tip on items, abilities and costs. Mouse only; it never takes a click. */
+.tip { position: fixed; left: 0; top: 0; z-index: 70; max-width: min(320px, calc(100vw - 16px)); padding: 7px 10px 8px;
+  display: grid; gap: 2px; pointer-events: none; background: var(--panel-2); border: 2px solid var(--line-hi);
+  box-shadow: 0 3px 0 #0B0810, 0 8px 22px rgba(0,0,0,.55); color: var(--bone); font: max(var(--tmin, 0px), calc(14px * var(--tk, 1)))/1.3 var(--body); text-align: left; }
+.tip > b { font: 600 max(var(--tmin, 0px), calc((17px * var(--display-k)) * var(--tk, 1)))/1.05 var(--display); color: var(--gold); letter-spacing: .02em; }
+.tip > span { color: var(--bone); }
+@media (prefers-reduced-motion: no-preference) { .tip:not([hidden]) { animation: tipIn .1s ease-out; } }
+@keyframes tipIn { from { opacity: 0; } }
 /* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
    The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
 .tl-mrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 2px; font-size: max(var(--tmin, 0px), calc(12px * var(--tk, 1))); }
@@ -35284,11 +35292,13 @@ function costChips(box, mats, t, gold) {
     const have = matOwn(k, t);
     const c = el('span', 'cost' + (have < n ? ' short' : ''));
     c.append(img(matIcon(k, t)), el('span', null, `${fmt(have)}/${fmt(n)} ${costName(k, t)}`));
+    setTip(c, () => tipCost(costName(k, t), matOwn(k, t), n));   // desktop-tooltips
     box.append(c);
   }
   if (gold) {
     const c = el('span', 'cost' + (S.gold < gold ? ' short' : ''));
     c.append(img(iconURL('coin', '#F2C14E')), el('span', null, fmt(gold)));
+    setTip(c, () => tipCost('Gold', S.gold, gold));
     box.append(c);
   }
 }
@@ -35875,6 +35885,72 @@ on('raidUnavailable', () => setTab('raid'));
 on('itemAdded', e => { if (!(S.tab === 'party' && curView('party') === 'gear') && e && e.item) gearNew.add(e.item.id); viewDots(); });
 on('menuView', e => { if (e.tab === 'party' && e.view === 'gear' && gearNew.size) { gearNew.clear(); viewDots(); } });
 on('raidReward', () => { $('raidDot').hidden = S.tab === 'world'; });
+
+// ---- src/js/70b-tips-ui.js ----
+// desktop-tooltips (docs/design/desktop-layout.md "Later: tooltips"): with a mouse, resting on an item, an ability or a cost
+// shows what it is and does, without a click. A tip repeats what a click or tap already shows (the item sheet, the ability
+// card, the chip itself); nothing lives only in a tip. Touch and pen never open one: only pointerType 'mouse' does.
+//   setTip(el, text | () => text): the text is read when the tip opens, so a tile rebuilt every tick stays cheap. Lines are
+//   split on '\n'; with more than one line the first is the title. An empty text shows nothing.
+//   tipHook.item(it) -> text: the item's tip, set by 75-craft-ui.js (it owns the stat lines); tipItem(it) calls it.
+const tipHook = {};
+const TIP_DELAY = 120;   // ms: inside the card's 150 ms, long enough that sweeping the mouse across a grid opens nothing
+function setTip(e, t) { if (e) e._tip = t; return e; }
+function tipItem(it) { try { return it && tipHook.item ? tipHook.item(it) : it ? itemName(it) : ''; } catch (err) { return it ? itemName(it) : ''; } }
+// A cost chip's tip: its full name and what you have against what it needs.
+function tipCost(name, have, need) { return `${name}\nYou have ${fmt(have)}. It needs ${fmt(need)}.`; }
+{
+  let box = null, at = null, timer = 0, watch = 0;
+  const textOf = e => { const t = e._tip; try { return String((typeof t === 'function' ? t() : t) || ''); } catch (err) { return ''; } };
+  const owner = n => { for (; n && n !== document; n = n.parentNode) if (n._tip != null) return n; return null; };
+  function hide() {
+    clearTimeout(timer); timer = 0; clearInterval(watch); watch = 0; at = null;
+    if (box && !box.hidden) box.hidden = true;
+  }
+  function place(e) {
+    const r = e.getBoundingClientRect(), W = innerWidth, H = innerHeight, m = 8, gap = 6;
+    box.style.left = '0px'; box.style.top = '0px';
+    const b = box.getBoundingClientRect();
+    let x = r.left + r.width / 2 - b.width / 2;
+    x = Math.max(m, Math.min(x, W - m - b.width));
+    // below the target when it fits, else above, else whichever side has more room (clamped to the screen)
+    let y = r.bottom + gap;
+    if (y + b.height > H - m) y = r.top - gap - b.height >= m ? r.top - gap - b.height : H - r.bottom > r.top ? r.bottom + gap : r.top - gap - b.height;
+    y = Math.max(m, Math.min(y, H - m - b.height));
+    box.style.left = Math.round(x) + 'px'; box.style.top = Math.round(y) + 'px';
+  }
+  function fill(txt) {
+    const lines = txt.split('\n').map(s => s.trim()).filter(Boolean);
+    box.textContent = '';
+    lines.forEach((s, i) => box.append(el(i === 0 && lines.length > 1 ? 'b' : 'span', null, s)));
+  }
+  function show(e) {
+    timer = 0;
+    if (!e.isConnected || at !== e) return;
+    let txt = textOf(e).trim(); if (!txt) return hide();
+    if (!box) { box = el('div', 'tip'); box.id = 'tip'; box.setAttribute('aria-hidden', 'true'); box.hidden = true; document.body.append(box); }
+    fill(txt); box.hidden = false; place(e);
+    // while open: the target can be rebuilt, hidden or covered under a still mouse (lists redraw, a sheet opens on its own), so
+    // the tip goes with it; and its text follows the game (a cost's "You have", a slot's turn line)
+    clearInterval(watch); watch = setInterval(() => {
+      if (!at || !at.isConnected || !at.getClientRects().length || !at.matches(':hover')) return hide();
+      const t = textOf(at).trim(); if (!t) return hide();
+      if (t !== txt) { txt = t; fill(t); place(at); }
+    }, 250);
+  }
+  document.addEventListener('pointerover', ev => {
+    if (ev.pointerType !== 'mouse') return;
+    const e = owner(ev.target);
+    if (e === at) return;
+    hide();
+    if (!e || ev.buttons) return;
+    at = e; timer = setTimeout(() => show(e), TIP_DELAY);
+  }, true);
+  document.addEventListener('pointerout', ev => { if (at && !(ev.relatedTarget && at.contains(ev.relatedTarget))) hide(); }, true);
+  // any press, key, scroll or wheel closes it: the click's own view takes over
+  for (const t of ['pointerdown', 'keydown', 'wheel', 'scroll']) document.addEventListener(t, () => { if (at) hide(); }, { capture: true, passive: true });
+  addEventListener('blur', hide); addEventListener('resize', hide);
+}
 
 // ---- src/js/71-ui-fight.js ----
 // 71-ui-fight: the Fight tab (the boss gate) and the zone/mode controls.
@@ -37197,7 +37273,7 @@ var handsTradeOpenPicker;
       b.append(el('i', 'ab-key', KEYS[i]));
       if (id) {
         const a = SOLO_ABILITIES[id] || {}; b.append(tile(id), el('b', null, a.short || a.name || id));
-        b.setAttribute('aria-label', `Slot ${KEYS[i]}: ${(ABILITIES[id] || a).name}. Open it.`);
+        b.setAttribute('aria-label', `Slot ${KEYS[i]}: ${(ABILITIES[id] || a).name}. Open it.`); setTip(b, () => abTip(id));
         b.addEventListener('click', () => (selId === id ? closeDet() : openDet(id)));
       } else {
         b.append(el('b', null, 'Empty'));
@@ -37288,7 +37364,7 @@ var handsTradeOpenPicker;
     bd.append(el('span', 'ab-badge ' + (where >= 0 ? 'in' : i.owned ? 'own' : !i.why ? 'go' : 'lock'),
       where >= 0 ? `In ${KEYS[where]}` : i.owned ? 'Learned' : !i.why ? 'Learn' : i.why));
     if (i.owned) { const m = talMark(k, id); if (m) bd.append(m); }
-    r.append(tile(id), t, bd);
+    r.append(tile(id), t, bd); setTip(r, () => abTip(id));
     r.addEventListener('click', () => (selId === id ? closeDet() : openDet(id)));
     return r;
   }
@@ -37298,7 +37374,7 @@ var handsTradeOpenPicker;
     const t = el('span', 'ab-rt'); t.append(el('b', null, nm), el('small', null, 'Talents'));
     const bd = el('span', 'ab-bd'), m = talMark(k, k + ':' + mv);
     bd.append(m || el('small', 'ab-tm', 'No talent'));
-    r.append(tile(mv), t, bd);
+    r.append(tile(mv), t, bd); setTip(r, () => { const B = BASIC.find(x => x[0] === mv); return B ? `${B[1]}\nAlways ready\n${B[2]}` : ''; });
     r.addEventListener('click', () => (selId === id ? closeDet() : openDet(id)));
     return r;
   }
@@ -37322,6 +37398,11 @@ var handsTradeOpenPicker;
     }
     wrap.append(hd, row);
     return wrap;
+  }
+  // desktop-tooltips: an ability's hover tip, from its card (detFor): name, kind, cooldown, tier, path and what it does
+  function abTip(id) {
+    const a = ABILITIES[id]; if (!a) return '';
+    return `${a.name}\n${KIND[a.kind]} · ${a.kind === 'passive' ? 'Always on' : `${cdTxt(id)} cooldown`} · ${a.tier ? 'Tier ' + ROMAN[a.tier] : 'Starter'} · ${a.path}\n${a.desc}`;
   }
   function detHead(name, sub, tl, onX) {
     const h = el('div', 'ab-dh'), t = el('div', 'ab-t'), x = btn('ab-x');
@@ -38293,12 +38374,12 @@ on('cacheOpen', v => {
   // ---------------- cost chips (rebuilt only when their text changes) ----------------
   function chips(box, c) {
     const items = [];
-    if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'gold' });
-    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: costName(f, t) }); }
-    for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: 'Trophy' }); }
+    if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'Gold', h: () => S.gold, need: c.gold });
+    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: costName(f, t), h: () => matOwn(f, t), need: n }); }
+    for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: i === 'any' ? 'Trophies (any)' : CRAFT_TROPHIES[i].n, h: () => h, need: n }); }
     const sig = items.map(x => x.t + x.s).join('|');
     if (box._sig === sig) return; box._sig = sig; box.textContent = '';
-    for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); e.title = x.n; e.append(img(x.u), el('span', null, x.t)); box.append(e); }
+    for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); setTip(e, () => tipCost(x.n, x.h(), x.need)); e.append(img(x.u), el('span', null, x.t)); box.append(e); }   // desktop-tooltips: was a title
   }
   const setTxt = (e, t) => { if (e.textContent !== t) e.textContent = t; };
   // How many of a cost's parts the player already has: { have, all }.
@@ -39659,6 +39740,15 @@ let craftUI = null;
     }
     return out;
   }
+  // desktop-tooltips: an item's hover tip, from the item sheet's own head and lines (renderItem): name, grade, tier, kind, power,
+  // its stat lines and who wears it. The sheet stays the full view (upgrade, salvage, compare).
+  tipHook.item = it => {
+    const d = itemKind(it), wr = wornBy(it.id);
+    const out = [itemName(it), [RAR[it.r].n, `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun) : ''].filter(Boolean).join(' · '), `Power ${fmt(itemPower(it))}`];
+    for (const L of splitLines(it)) if (!L.lore) out.push(L.g === 'uniq' ? L.txt : lineTxt(L.l) + (lineLive(L.l) ? '' : ' (not active yet)'));
+    if (wr) out.push(`You wear it (${posName(wr.pos)})`);
+    return out.join('\n');
+  };
   function deltaTxt(k, v) {
     const s = CRAFT_STATS[k], unit = (s.f.match(/\{v\}(%|x)/) || [])[1] || '';
     const a = Math.abs(v), n = s.dp == null ? fmt(a) : a.toFixed(s.dp);
@@ -39949,7 +40039,7 @@ let craftUI = null;
       const it = itemById(id); if (!it) continue;
       const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.result === id ? ' sel' : '')); b.type = 'button';
       b.append(img(itemIc(it)), el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
-      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`);
+      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`); setTip(b, () => tipItem(itemById(id)));
       b.addEventListener('click', () => { st8.result = id; st8.resArm = false; ui(true); });
       row.append(b);
     }
@@ -39985,7 +40075,7 @@ let craftUI = null;
     const mw = mwFor(k);
     if (mw != null) {
       const have = troph()[mw] || 0, c = el('span', 'cost mw' + (have < 1 ? ' short' : ''));
-      c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); costs.append(c);
+      c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); setTip(c, () => tipCost(CRAFT_TROPHIES[mw].n, troph()[mw] || 0, 1)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
     // gear-in-first-25: where each short gathered material comes from ("Bristlehide: from Hunting, which opens at zone 5."); none for
@@ -40216,10 +40306,10 @@ let craftUI = null;
       if (w !== 'any') for (const p of ['weapon', 'helm']) { const k = ((CRAFT_FITS[p] || {})[w] || [])[0]; if (k && ICON[CRAFT_KINDS[k].ic]) EMPTY_IC[p] = CRAFT_KINDS[k].ic; }
       for (const p of CRAFT_HERO_POS.filter(craftKindVisible)) {
         const e = gearEls[p], it = itemById(S.equip[p]);
-        if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
+        if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); setTip(e.b, () => tipItem(itemById(S.equip[p]))); }
         else {
           const ic = EMPTY_IC[p]; setIc(e.tile, ICON[ic] ? iconURL(ic, '#6E6080') : iconURL('charm', '#6E6080'), null, 'ghost soon');
-          e.plus.textContent = ''; e.b.setAttribute('aria-label', `${posName(p)}: empty. Choose gear.`);
+          e.plus.textContent = ''; e.b.setAttribute('aria-label', `${posName(p)}: empty. Choose gear.`); setTip(e.b, null);
         }
       }
     }
@@ -40364,6 +40454,7 @@ let craftUI = null;
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
         b.dataset.itemId = it.id;
         b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}${wr ? ', worn by you' : ''}${it.u ? ', unique' : ''}`);
+        setTip(b, () => tipItem(itemById(it.id)));   // desktop-tooltips
         if (bulk.on) {
           b.disabled = !eligible.has(it.id);
           b.setAttribute('aria-pressed', String(bulk.ids.has(it.id)));
@@ -40400,7 +40491,7 @@ let craftUI = null;
   const secBox = (title, ...kids) => { const s = el('div', 'cf-ss'); if (title) s.append(el('h4', null, title)); s.append(...kids); return s; };
   function trophChip(need) {
     const have = trophTotal(), c = el('span', 'cost' + (have < need ? ' short' : ''));
-    c.append(img(troIcon(0)), el('span', null, `${have}/${need} Trophy (any)`));
+    c.append(img(troIcon(0)), el('span', null, `${have}/${need} Trophy (any)`)); setTip(c, () => tipCost('Trophies (any)', trophTotal(), need));
     return c;
   }
   function salvagePreview(it) {
@@ -43825,7 +43916,7 @@ let openSheet, partySheet;
       const d = el('div', 'cs-hslot' + (open ? '' : ' soon'));
       d.append(it ? slotTile(it, null, 56) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm', 56));
       d.append(el('small', null, nouns[s.id] || s.n));
-      d.title = it ? itemName(it) : open ? 'Empty. Choose gear in the Gear view, next to Hero.' : 'Coming with crafting.';
+      setTip(d, it ? itemName(it) : open ? 'Empty. Choose gear in the Gear view, next to Hero.' : 'Coming with crafting.');   // desktop-tooltips: was a title
       g.append(d);
     }
     body.append(section('Gear', g, '', el('p', 'note', 'Wear and swap gear in the Gear view, next to Hero. Make new gear in Craft.')));
@@ -43921,7 +44012,7 @@ let openSheet, partySheet;
       const d = el('div', 'pc-slot' + (open ? '' : ' soon'));
       const tile = it ? slotTile(it) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm');
       d.append(tile, el('small', null, nouns[s.id] || s.n));
-      d.title = it ? itemName(it) : open ? 'Empty' : 'Coming with crafting';
+      setTip(d, it ? itemName(it) : open ? 'Empty' : 'Coming with crafting');   // desktop-tooltips: was a title
       gearBox.append(d);
     }
     card.append(gearBox);
@@ -44799,7 +44890,7 @@ var soloIconURL = () => '';
         setCd(b, pas ? 0 : cd, tb.max(o.id), wait);
         // why it cannot be used: its cooldown (turns), the finisher's third turn, or what it needs (a Burn, Grit, ...)
         setN(b, pas ? '' : cd ? String(cd) : why === 'gate' ? 'T3' : why && why !== 'cd' && why !== 'turn' ? '!' : '');
-        putAttr(b, 'title', why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '');
+        b._why = why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '';   // its hover tip's last line
         b.classList.toggle('ready', !why && tb.heroTurn);
         b.classList.toggle('blocked', !!why && why !== 'cd' && !pas);
         putText(b._sub, pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? 'Needs ' + why.slice(5) : wait ? 'Wait' : 'Ready');
@@ -44817,6 +44908,12 @@ var soloIconURL = () => '';
     if (wait) for (const b of [bAtk, ...bAbs]) b.classList.remove('ready-now');   // a flash from the turn just played ends with it
     fillSkills(); fillFoe();
   }
+  // desktop-tooltips: with a mouse, resting on a slot shows its name, key and what it does (the aria-label's text; the slot's own
+  // card opens on a hold, the moves' help in the Abilities menu)
+  const moveTip = k => `${INFO[k].name} (${INFO[k].key})\n${INFO[k].desc}`;
+  setTip(bAtk, () => moveTip('atk')); setTip(bParry, () => moveTip('parry')); setTip(bDodge, () => moveTip('dodge'));
+  bAbs.forEach((b, i) => setTip(b, () => { const id = abIds[i], a = id && SOLO_ABILITIES[id]; if (!a) return '';
+    return `${a.name} (${KEY_LB['ab' + i]})\n${a.turnDesc || a.desc}` + (b._why && typeof turnBarInfo === 'function' && turnBarInfo() ? '\n' + b._why : ''); }));
   bAtk.setAttribute('aria-label', 'Attack (D). ' + INFO.atk.desc);
   bParry.setAttribute('aria-label', 'Parry (A). ' + INFO.parry.desc);
   bDodge.setAttribute('aria-label', 'Dodge (S or Space). ' + INFO.dodge.desc);

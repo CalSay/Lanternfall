@@ -354,11 +354,13 @@ function costChips(box, mats, t, gold) {
     const have = matOwn(k, t);
     const c = el('span', 'cost' + (have < n ? ' short' : ''));
     c.append(img(matIcon(k, t)), el('span', null, `${fmt(have)}/${fmt(n)} ${costName(k, t)}`));
+    setTip(c, () => tipCost(costName(k, t), matOwn(k, t), n));   // desktop-tooltips
     box.append(c);
   }
   if (gold) {
     const c = el('span', 'cost' + (S.gold < gold ? ' short' : ''));
     c.append(img(iconURL('coin', '#F2C14E')), el('span', null, fmt(gold)));
+    setTip(c, () => tipCost('Gold', S.gold, gold));
     box.append(c);
   }
 }

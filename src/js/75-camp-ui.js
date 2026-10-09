@@ -56,12 +56,12 @@
   // ---------------- cost chips (rebuilt only when their text changes) ----------------
   function chips(box, c) {
     const items = [];
-    if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'gold' });
-    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: costName(f, t) }); }
-    for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: 'Trophy' }); }
+    if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'Gold', h: () => S.gold, need: c.gold });
+    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: costName(f, t), h: () => matOwn(f, t), need: n }); }
+    for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: i === 'any' ? 'Trophies (any)' : CRAFT_TROPHIES[i].n, h: () => h, need: n }); }
     const sig = items.map(x => x.t + x.s).join('|');
     if (box._sig === sig) return; box._sig = sig; box.textContent = '';
-    for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); e.title = x.n; e.append(img(x.u), el('span', null, x.t)); box.append(e); }
+    for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); setTip(e, () => tipCost(x.n, x.h(), x.need)); e.append(img(x.u), el('span', null, x.t)); box.append(e); }   // desktop-tooltips: was a title
   }
   const setTxt = (e, t) => { if (e.textContent !== t) e.textContent = t; };
   // How many of a cost's parts the player already has: { have, all }.
