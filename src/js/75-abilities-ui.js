@@ -12,6 +12,10 @@
 //     a wide panel, a bottom sheet in portrait, and in place of the list (with Back) in the small landscape panel.
 // Ability icons: whole packs per hero (art freeze, owner 2026-09-30). The three starters (Echo Shot, Shield Bash, Fireball)
 // and all of Pip's 14 are drawn (wire-ability-icons); Wren and Tobin keep lettered tiles until their last four icons pass.
+// loadout-odds (W10): under Q W E, one line: "Zone 10 boss with these: about 4 in 10 wins", from the same scratch fights as the craft
+// card's line (55-fight-delta loadoutOdds), worked out a chunk at a time off the click path (the pump below). After a slot change it
+// adds "was 4" when the change passes the craft card's "barely changes" rule. A move you can learn says, in its detail, where Learn
+// puts it and what that does to the line (56e learnOdds); Learn puts it there. Never a whole set: one move, one spot.
 // ability-names-fit: a name wider than its box steps its font size down until it fits, never under `min` px nor the desktop tier's text
 // floor (--tmin: 14 px at Desktop 1, 15 at Desktop 2; Foreman 2026-10-09). Still too wide at the floor, its letters close up by at most
 // 0.06 em. The display web font fits every ability name; this is for a fallback font (often a monospace twice as wide). Used for the
@@ -50,7 +54,8 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
   const BASIC = [['attack', 'Attack', 'Your plain hit. A short cooldown.'], ['parry', 'Parry', 'Press as a hit lands to take none of it. A full parry earns a counter.'],
     ['dodge', 'Dodge', 'Press as a hit comes to step out of it.']];
   // view state (not saved): the open detail ('' | ability id | 'mv:attack'), the filter, the info drawer, a Learn armed
-  let root = null, sig = '', armed = '', selId = '', filt = 'all', infoOpen = false, listTop = -1;
+  let root = null, sig = '', armed = '', selId = '', filt = 'all', infoOpen = false, listTop = -1, oddsTxt = '';
+  let oddsLast = null, oddsWas = null;   // the line's last result { ctx, key, win } and the one before this set of slots { key, win }
   const heroNm = k => (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : k);
   const fitQ = () => { if (root) fitTextWidths(root.querySelectorAll('.ab-q b, .ab-slotb small, .ab-rt b'), 8); };
   const btn = (cls, text) => { const b = el('button', cls, text); b.type = 'button'; return b; };
@@ -84,6 +89,28 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
     listTop = -1;
     const row = root && root.querySelector(`.ab-row[data-ab="${id}"]`); if (row) try { row.focus({ preventScroll: true }); } catch (e) {}
   }
+  const abName = id => (ABILITIES[id] || SOLO_ABILITIES[id] || {}).name || id;
+  function oddsText(k, eq) {
+    let r = null; try { r = typeof loadoutOdds === 'function' ? loadoutOdds([eq], { first: true }) : null; } catch (e) { r = null; }
+    if (!r) return '';
+    const w = r.wins[0], ctx = k + '|' + r.zone, key = eq.join();
+    if (w == null) return `Zone ${r.zone} boss with these: working it out`;
+    if (!oddsLast || oddsLast.ctx !== ctx) oddsWas = null;
+    else if (oddsLast.key !== key) oddsWas = { key, win: oddsLast.win };
+    oddsLast = { ctx, key, win: w };
+    const L = oddsWas && oddsWas.key === key ? loadoutWins(oddsWas.win, w) : null;
+    return `Zone ${r.zone} boss with these: about ${Math.round(10 * w)} in 10 wins` + (L ? `, was ${L.before}` : '');
+  }
+  // a move you can learn: its learnOdds row, when Learn would put it somewhere that changes the line
+  const learnRow = (k, id) => { let lo = null; try { lo = typeof learnOdds === 'function' ? learnOdds(k) : null; } catch (e) { lo = null; }
+    const row = lo && lo.rows.find(x => x.id === id); return row && row.lift ? Object.assign({ zone: lo.zone }, row) : null; };
+  function spotText(row, eq) {
+    const parts = [`Learn puts it in ${KEYS[row.p]}`], occ = eq[row.p];
+    if (row.d !== row.p && occ) parts.push(`${abName(occ)} moves to ${KEYS[row.d]}`);
+    if (row.out) parts.push(`${abName(row.out)} comes out`);
+    const said = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0];
+    return `${said}. Zone ${row.zone} boss: about ${row.lift.after} in 10 wins, now ${row.lift.before}.`;
+  }
   function build() {
     const k = soloHero(); if (!root) return;
     root.textContent = '';
@@ -112,6 +139,7 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
     ib.append(el('b', null, `${nScroll} Scroll${nScroll === 1 ? '' : 's'}`));
     ib.addEventListener('click', () => { infoOpen = !infoOpen; redraw(); });
     bar.append(qwe, ib);
+    if (oddsTxt) { const o = el('p', 'ab-odds', oddsTxt); o.setAttribute('aria-live', 'polite'); bar.append(o); }
     root.append(bar);
     // ---- the drawer: each Scroll, where it drops, and how slots and talents work ----
     if (infoOpen) {
@@ -274,20 +302,23 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
       }
       act.append(row);
     } else if (!i.why) {
-      const pay = SCROLLS[i.payWith], b = btn('big ab-learn');
+      const pay = SCROLLS[i.payWith], b = btn('big ab-learn'), spot = learnRow(k, id);
       putText(b, armed === id ? `Confirm: spend a ${pay.name}` : `Learn · ${pay.name}`);
       if (armed === id) b.classList.add('armed');
       b.addEventListener('click', () => {
         if (armed !== id) { armed = id; redraw(); return; }
         armed = '';
+        const row = learnRow(k, id);   // where it goes, read before it is learned (then it is no longer a move to learn)
         if (abilityLearn(k, id)) {
-          toast(`${heroNm(k)} learned ${a.name}.`, 'good', null, 'normal');
-          const e2 = soloEquipped(), free = e2.indexOf(null); if (free >= 0) soloEquip(free, id);
+          const placed = row && abilityPlace(k, row);
+          toast(`${heroNm(k)} learned ${a.name}.` + (placed ? ` It is in ${KEYS[row.p]}${row.out ? `, and ${abName(row.out)} is out` : ''}.` : ''), 'good', null, 'normal');
+          const e2 = soloEquipped(), free = e2.indexOf(null); if (!placed && free >= 0) soloEquip(free, id);
           persist();
         }
         redraw();
       });
       act.append(b, el('small', 'ab-al', `You have ${scrollCount(i.payWith)} ${pay.name}${scrollCount(i.payWith) === 1 ? '' : 's'}.`));
+      if (spot) act.append(el('p', 'ab-spot', spotText(spot, eq)));
     } else {
       const s = SCROLLS[i.scroll];
       act.append(el('p', 'ab-need', !i.lvOk ? `Opens at level ${i.lv}. Then it needs a ${s.name}.` : `Needs a ${s.name}. It drops from ${s.from}.`));
@@ -300,8 +331,10 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
     if (!root || !root.isConnected) return;
     const k = soloHero(); if (!k) { if (sig !== 'none') { sig = 'none'; build(); } return; }
     const lv = soloLevels()[k], A = S.abil || {};
-    const P = typeof turnPowerNow === 'function' ? turnPowerNow() : null;
-    const s = [k, lv && lv.L, JSON.stringify(A.unl && A.unl[k]), JSON.stringify(A.scrolls), soloEquipped().join(), armed, P ? fmt(Math.round(P.U)) : '',
+    const P = typeof turnPowerNow === 'function' ? turnPowerNow() : null, eq = soloEquipped();
+    oddsTxt = oddsText(k, eq.slice(0, 3));
+    const spot = selId && !selId.startsWith('mv:') ? learnRow(k, selId) : null;
+    const s = [oddsTxt, spot ? spotText(spot, eq) : '', k, lv && lv.L, JSON.stringify(A.unl && A.unl[k]), JSON.stringify(A.scrolls), soloEquipped().join(), armed, P ? fmt(Math.round(P.U)) : '',
       JSON.stringify(A.tal && A.tal[k]), selId, filt, infoOpen].join('|');
     if (s === sig) return;
     sig = s; build();
@@ -314,4 +347,21 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
     update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] abilities', e); } } });
   on('soloHero', () => { selId = ''; armed = ''; });   // another hero: start at the list
   for (const ev of ['abilityLearned', 'scrollDrop', 'soloEquip', 'soloHero', 'levelup']) on(ev, () => { sig = ''; try { refresh(); } catch (e) {} });
+  // loadout-odds: the pump. The scratch fights for the line and the Learn order run here in slices of a few ms, never on a click;
+  // when a batch is done the menus redraw once (the line, Next Up's Learn row, the cache pick). It works only while something that
+  // shows them could be on screen: this card, a moment card (the Lantern Cache pick), or a move to learn (Next Up's Learn row), so a
+  // set queued here does not keep fighting in the background after the menu closes.
+  const PUMP = { sliceMs: 8, busyMs: 16, idleMs: 400 };
+  const pumpWanted = () => {
+    if (root && root.isConnected && root.getClientRects().length) return true;
+    if (document.querySelector('.mm-ov')) return true;
+    const k = soloHero(); return !!(k && typeof HERO_ABILITIES === 'object' && HERO_ABILITIES[k] && HERO_ABILITIES[k].some(id => !abLearnInfo(k, id).why));
+  };
+  const pump = () => {
+    let busy = false, more = false;
+    try { if (typeof loadoutPump === 'function' && !document.hidden && loadoutPump(0) && pumpWanted() && (busy = true)) { const t = performance.now(); do more = loadoutPump(1); while (more && performance.now() - t < PUMP.sliceMs); } } catch (e) { more = false; }
+    if (busy && !more) { sig = ''; try { ui(true); } catch (e) {} }
+    setTimeout(pump, more ? PUMP.busyMs : PUMP.idleMs);
+  };
+  setTimeout(pump, PUMP.idleMs);
 }
