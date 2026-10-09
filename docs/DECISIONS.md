@@ -285,6 +285,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   `codex-uniques-review/`.
 - **Crafting:** random affix lines by rarity, Reforge one line at the Enchanter's Table, Trophies gate +8 to +10.
   Essence stays fight-only. (2026-09-27)
+- **Grades replace the rarity die, behind a switch (craft-attribute-grades, 2026-10-09; Cal's answer 7, overhaul spec section 5):**
+  with `CRAFT_TUNE.grades` on, a craft's grade (D to S) comes from the station level, its lines come in a fixed order and
+  Reforge on a graded piece is a pick. The switch stays off in the weekly release until the balance pass. Items made before
+  keep their rarity, lines and power. Infuse's "any Essence" drift is card craft-strike-infuse's.
 - **15 material tiers, 3 per region; resources are gated by region.** (2026-09-28)
 - **Material names are real, standard fantasy materials,** never invented compounds. (2026-09-28) The approved 15-grade
   names for all seven families are in `art/resources/regional-audit/complete-ladder.json`. (2026-10-01)
@@ -315,8 +319,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   into Ingots, the Workbench saws logs into Planks, the Loom weaves fibre into Cloth and tans hide into Leather. Each
   station runs up to 3 orders in turn (a shortfall amount or All, which keeps 20% of each input), while you fight and
   while you are away. From grade 2 every craft's ore, wood, fibre and hide count becomes the middle at half, rounded up,
-  and every upgrade's material converts the same way at every grade (Copper Warblade +1 = 1 Copper Ingot). Tools,
-  charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
+  and every upgrade's material converts the same way at every grade (Copper Warblade +1 = 1 Copper Ingot). On an upgrade
+  only, gold may cover the material a hero is short, at 9 foes of the tier's foe gold for each raw unit (a Plank is 2), once
+  its gathering tier is open and its station built; covered units give no skill XP (gold-covers-material ruling,
+  2026-10-08). Crafts always take their materials. Tools, charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
   is never for sale (Lantern Rule 4).
   - **Names** (planner's, kept by the build): Ingot: Copper, Iron, Silver, Cobalt, Mithril Ingot. Plank: Pine, Birch,
     Oak, Mangrove, Tideash Plank. Cloth: Hemp Cloth, Linen, Briar Cloth, Kelp Cloth, Stormgrass Cloth. Leather: Bristle,

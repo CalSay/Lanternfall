@@ -7,7 +7,14 @@ const equipped = slot => itemById(S.equip[slot]);
 // uniques-first-four: a unique's power x is its own (pow, Rare level), else UNIQ_TUNE.pow. A Rising tool (UNIQ rise) is the grade of the
 // best open ground of its skill while UNIQ_TUNE.on (nothing saved: the item keeps its own t for upgrades and salvage).
 const itemTier = it => { const d = it.u && UNIQ[it.u]; return d && d.rise && UNIQ_TUNE.on && S.skills && S.skills[d.rise] ? Math.min(d.riseMax || 5, skillTopTier(d.rise)) : it.t; };
-const itemPower = it => TIER_POW[itemTier(it)] * (it.u ? (UNIQ[it.u] && UNIQ[it.u].pow) || UNIQ_TUNE.pow : RAR[it.r].m) * (1 + 0.15 * it.plus);
+// craft-attribute-grades: one rule everywhere (power, Reforge, labels). An item with a grade (g) reads it while CRAFT_TUNE.grades is on;
+// with the switch off, or with no g (every item made before), it reads its rarity r exactly as before. Uniques keep their branch first.
+const itemGraded = it => !!it && it.g != null && !it.u && !!CRAFT_TUNE.grades && !!GRADE[it.g];
+const itemMult = it => (itemGraded(it) ? GRADE[it.g].m : RAR[it.r].m);
+// what a player reads for an item's quality: "Grade B" for a graded item, else its rarity ("Rare"); short: "B" / "Rare" for a bag tile
+const itemQual = it => (itemGraded(it) ? `Grade ${GRADE[it.g].n}` : RAR[it.r].n);
+const itemQualShort = it => (itemGraded(it) ? GRADE[it.g].n : ({ common: 'Com', uncommon: 'Unc', rare: 'Rare', epic: 'Epic', legendary: 'Uniq' })[it.u ? 'legendary' : it.r] || RAR[it.r].n);
+const itemPower = it => TIER_POW[itemTier(it)] * (it.u ? (UNIQ[it.u] && UNIQ[it.u].pow) || UNIQ_TUNE.pow : itemMult(it)) * (1 + 0.15 * it.plus);
 // Item kinds, stat lines and the 8 hero positions live in 41-items.js (K4).
 function itemName(it) { return kindName(it.slot, it.t, it.u) + (it.plus ? ` +${it.plus}` : ''); }
 function slotStats(slot, p) {
@@ -37,6 +44,23 @@ const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) matPay(k, t,
 // sm: the crafting station's level (55-crafting passes it); Smithing by default.
 function rarityWeights(sm = S.skills.smith.lv) {
   return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: (10 + sm * 0.5) * mod('rareW'), epic: (2 + sm * 0.25) * mod('rareW') };
+}
+// craft-attribute-grades (docs/design/skilling-crafting-overhaul.md 5): with CRAFT_TUNE.grades on, a class piece, Trinket or Charm is made
+// at the grade its station level gives instead of a rarity die. Tools and the old Sword and Helm keep the die.
+// gradeLv(kind): the station level (55-crafting stationLevel), plus the 'gradeLv' bonus while the switch is on (Forge 5 +1, 57-camp;
+// the Steady Hands Omen +2, 55-almanac). gradeFor(kind, t): the grade index at tier t, from the levels past the tier's gate (GRADE past:
+// D at the gate, C +3, B +6, A +10, S +15; a tier kept from before its gate is D). gradeNext(kind, t): { g, lv } the next grade and the
+// level that makes it, or null at S.
+const gradedKind = kind => !!CRAFT_TUNE.grades && !!CRAFT_KINDS[kind] && !CRAFT_KINDS[kind].tool && !CRAFT_KINDS[kind].legacy;
+const gradeLv = kind => stationLevel(kind) + (CRAFT_TUNE.grades ? bonus('gradeLv') : 0);
+function gradeFor(kind, t, lv = gradeLv(kind)) {
+  const past = lv - CRAFT_STATION_REQ[t - 1];
+  let g = 0; for (let i = 0; i < GRADE.length; i++) if (past >= GRADE[i].past) g = i;
+  return g;
+}
+function gradeNext(kind, t, lv = gradeLv(kind)) {
+  const g = gradeFor(kind, t, lv); if (g >= GRADE.length - 1) return null;
+  return { g: g + 1, lv: stationLevel(kind) + CRAFT_STATION_REQ[t - 1] + GRADE[g + 1].past - lv };
 }
 function rollRarity(lv) {
   const w = rarityWeights(lv), tot = Object.values(w).reduce((a, b) => a + b, 0);

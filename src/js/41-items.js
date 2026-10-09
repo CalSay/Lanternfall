@@ -23,8 +23,9 @@
 //   make     newItem(kind, t, r, opts) -> item with a fresh id (not added to the bag)
 //            rollAffixes(kind, rarity, t, role, rnd = Math.random) -> [[affixId, q], ...]
 //   reforge  reforgeCost(item) -> {mats, gold} (craftReforgeCost of the item's tier and rf)
-//            reforgeLine(item, idx, rnd = Math.random) -> { a, rf, line, cost } or null (pure;
-//            the caller pays and applies). Never duplicates an affix stat, never touches mw.
+//            reforgeLine(item, idx, rnd = Math.random, pick) -> { a, rf, line, cost } or null (pure;
+//            the caller pays and applies). Never duplicates an affix stat, never touches mw. A graded item
+//            (craft-attribute-grades) needs `pick`, one of reforgeChoices(item): the pool stats it does not have.
 //   bag      equippedIds() -> Set of item ids worn by the hero
 //            isEquipped(id), bagCount() (unequipped items), bagFull() (>= CRAFT_BAG_MAX)
 //   uniques  (uniques-first-four, the new table in 20-data UNIQ: legacy false)
@@ -39,6 +40,8 @@
 //   id, slot (= kind), t, r, plus, u (unique key)
 //   a:  [[affixId, q], ...]  rolled affix lines, q in [0, 1] (2 decimals) is the roll
 //   mw: trophy index         Masterwork line (CRAFT_TROPHIES[mw]); missing = none
+//   g:  grade index 0-4      craft-attribute-grades: made at that GRADE (20-data), r holds its twin. Missing on every
+//                            item made with CRAFT_TUNE.grades off: those keep their rarity, lines and power
 //   rf: n                    reforges done on this item (Reforge cost grows with it)
 //   ro: role key             Trinkets only: the role pool it rolled from (for Reforge)
 //   rt: kind                 retooled (see below): the kind the item was made as. Its base lines
@@ -64,7 +67,7 @@
 // 'attack' feeds heroAtk() (40-rules). 'spell' is exposed through spellMult().
 
 let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats, gearCalc, spellMult,
-  kindName, kindColor, kindCost, kindUpgradeCost, newItem, rollAffixes, reforgeCost, reforgeLine,
+  kindName, kindColor, kindCost, kindUpgradeCost, newItem, rollAffixes, reforgeCost, reforgeLine, reforgeChoices,
   equippedIds, isEquipped, bagCount, bagFull, uniqAnyCls, uniqKindFor, uniqRulesWorn, uniqPool;
 
 {
@@ -228,8 +231,11 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
 
   // ---- making items ----
   const round2 = q => Math.round(q * 100) / 100;
-  rollAffixes = (kind, rarity, t, role, rnd = Math.random) => {
+  // craft-attribute-grades: a graded piece (g, a GRADE index) has no die: it takes its grade's line count from the class pool in the
+  // pool's own order (the role's signature stat first, Health last) at the middle roll, and uses no randomness.
+  rollAffixes = (kind, rarity, t, role, rnd = Math.random, g = null) => {
     const pool = craftAffixPool(kind, role).slice(), out = [];
+    if (g != null && GRADE[g]) return pool.slice(0, GRADE[g].lines).map(id => [id, 0.5]);
     let n = Math.min(craftAffixLines(rarity, null), pool.length);
     while (n-- > 0) {
       const id = pool.splice(Math.floor(rnd() * pool.length), 1)[0];
@@ -237,13 +243,16 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     }
     return out;
   };
-  // opts: { role (Trinkets), mw (trophy index), rnd }. Legacy kinds, Charm and tools roll
+  // opts: { role (Trinkets), mw (trophy index), rnd, g }. Legacy kinds, Charm and tools roll
   // nothing, so their items (and the rng use) are exactly what forgeItem made before K4.
+  // g (craft-attribute-grades): the grade index; the item stores it and its rarity twin (GRADE[g].r) in r, whatever r says.
   newItem = (kind, t, r, opts = {}) => {
-    const it = { id: S.nextId++, slot: kind, t, r, plus: 0 };
+    const g = opts.g != null && GRADE[opts.g] ? opts.g : null;
+    const it = { id: S.nextId++, slot: kind, t, r: g != null ? GRADE[g].r : r, plus: 0 };
+    if (g != null) it.g = g;
     const d = CRAFT_KINDS[kind];
     if (d && d.role) {
-      it.a = rollAffixes(kind, r, t, opts.role, opts.rnd || Math.random);
+      it.a = rollAffixes(kind, it.r, t, opts.role, opts.rnd || Math.random, g);
       if (d.role === 'any' && opts.role && CRAFT_ROLE_POOL[opts.role]) it.ro = opts.role;
     }
     if (opts.mw != null && CRAFT_TROPHIES[opts.mw] && craftTrophyLine(opts.mw, kind, 1)) it.mw = opts.mw;
@@ -252,9 +261,17 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
 
   // ---- Reforge ----
   reforgeCost = it => craftReforgeCost(it.t, it.rf || 0);
-  reforgeLine = (it, idx, rnd = Math.random) => {
+  // craft-attribute-grades: on a graded item (itemGraded) Reforge is a pick: `pick` names the pool stat that replaces the line, at the
+  // middle roll, and must be one the item does not have (reforgeChoices); no pick, or a bad one, is null. Other items keep the die.
+  reforgeChoices = it => { const have = (it && Array.isArray(it.a) ? it.a : []).map(l => l[0]); return craftAffixPool(it.slot, it.ro).filter(id => !have.includes(id)); };
+  reforgeLine = (it, idx, rnd = Math.random, pick = null) => {
     if (!it || !Array.isArray(it.a) || !it.a[idx]) return null;
     const pool = craftAffixPool(it.slot, it.ro); if (!pool.length) return null;
+    if (itemGraded(it)) {
+      if (!reforgeChoices(it).includes(pick)) return null;
+      const line = [pick, 0.5], a = it.a.map((l, i) => i === idx ? line : l.slice());
+      return { a, rf: (it.rf || 0) + 1, line, cost: reforgeCost(it) };
+    }
     const have = it.a.map(l => l[0]);
     let choice = pool.filter(id => !have.includes(id));
     if (!choice.length) choice = [it.a[idx][0]]; // every stat of the pool is on the item: reroll the value

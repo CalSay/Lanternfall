@@ -133,7 +133,7 @@ let showAwayReport;
       for (const it of r.items.slice(0, 8)) {
         const row = el('div', 'away-item' + (it.u ? ' uniq' : ''));
         const tx = el('div', 'away-it');
-        tx.append(el('span', 'away-in rar-' + it.r, itemName(it)), el('span', 'away-ir', `${RAR[it.r].n} ${String((CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].noun) || (SLOT[it.slot] && SLOT[it.slot].n) || "item").toLowerCase()}`));
+        tx.append(el('span', 'away-in rar-' + it.r, itemName(it)), el('span', 'away-ir', `${itemQual(it)} ${String((CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].noun) || (SLOT[it.slot] && SLOT[it.slot].n) || "item").toLowerCase()}`));
         row.append(icTile(itemIcon(it.slot, it.t, it.u), it.r), tx);
         grid.append(row);
       }
