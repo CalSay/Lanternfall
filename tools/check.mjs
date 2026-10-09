@@ -12017,7 +12017,7 @@ if (section('trick read counts (core)')) try {
     `trick reads: the fixture fight meets the zone 10 Champion's feints and held swings (${J(f.want)}, boss ${f.boss})`);
   assert(J(got) === J(f.want), `trick reads: the counts match what the player pressed (want ${J(f.want)}, got ${J(got)})`);
   assert(Object.keys(JSON.parse(E('JSON.stringify(S.bossOdds.reads)'))).join() === '10', 'trick reads: the counts sit under the boss\'s zone');
-  // a trick is not a plain defence: the decayed tallies the sampler reads only moved for real hits (each counted hit is a real one)
+  // the decayed tallies the sampler reads still count the fight's plain hits beside the trick counts
   const hits = E('S.bossOdds.hits');
   assert(hits > 0 && E('Number.isFinite(S.bossOdds.hits)') && tally0 !== E('JSON.stringify([S.bossOdds.hits, S.bossOdds.parry, S.bossOdds.dodge])'), `trick reads: the plain tallies still count the real hits (${hits.toFixed(2)})`);
   // the scratch sampler emits nothing to the save
@@ -12036,6 +12036,7 @@ if (section('trick read counts (core)')) try {
   refuse({ 10: { guess: 1 } }, 'an unknown count');
   refuse({ x: { feint: 1 } }, 'a key that is not a zone');
   refuse({ 10: 3 }, 'a row that is not a record');
+  refuse(5, 'counts that are not a record');
   // old saves (no reads) load with the default and count from there
   for (const fx of ['early', 'mid', 'late']) {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + fx + '.json'), 'utf8'), o = loadCore({ turns: true, storage: memoryStorage({ [KEY]: raw }) });

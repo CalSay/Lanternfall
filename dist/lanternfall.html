@@ -17053,6 +17053,7 @@ function validateSave(data) {
       for (const [id, v] of Object.entries(row)) { if (!FOE_TRICK_ORDER.includes(id)) fail('mastery.tricks.' + k + '.' + id); int(v, 'mastery.tricks.' + k + '.' + id, 0, 1); }
     }
     // trick-read-rate: the boss trick counts are { [zone]: { feint, feintPress, hold, holdPress, holdEarly } }, whole counts, a press never more than were seen
+    if (data.bossOdds && data.bossOdds.reads !== undefined) record(data.bossOdds.reads, 'bossOdds.reads');
     if (data.bossOdds && data.bossOdds.reads) for (const [z, row] of Object.entries(data.bossOdds.reads)) {
       const p = 'bossOdds.reads.' + z;
       if (!/^[1-9][0-9]*$/.test(z) || +z > lim.progression) fail(p, 'is not a zone');
@@ -27206,7 +27207,8 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
 //   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill, fights })
 // Events: fightStart { heroHaste, foeHaste, first }, turn { who, n }, timingRing { id, i, n, opensAt, closesAt },
 //   timingGrade { id, i, grade }, foeMove { id, name, anim, hits }, parryWindow
-//   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res }, foeCharge { name }, chargeBroken { name },
+//   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res, fooled, flinch, hold, zone, zb,
+//   pressed, early } (trick-read-rate: zb a zone boss; pressed the player's own press; early a held swing pressed before it swung), foeCharge { name }, chargeBroken { name },
 //   foeSkip { why }, turnPhase { name }, fightEnd { reason }, ability { cls: 'solo', id, name, slot }, soloAttack, soloParry,
 //   soloDodge, soloCounter, heroRider { id, foe, key, stacks, boss } (an ordinary foe's or a boss's rider landed on the hero:
 //   chill, venom or weaken; foe-tricks-say-so), turnCard { who, again, secs, chill } (chill: Chill on the hero is why the foe goes

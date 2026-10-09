@@ -142,6 +142,7 @@ function validateSave(data) {
       for (const [id, v] of Object.entries(row)) { if (!FOE_TRICK_ORDER.includes(id)) fail('mastery.tricks.' + k + '.' + id); int(v, 'mastery.tricks.' + k + '.' + id, 0, 1); }
     }
     // trick-read-rate: the boss trick counts are { [zone]: { feint, feintPress, hold, holdPress, holdEarly } }, whole counts, a press never more than were seen
+    if (data.bossOdds && data.bossOdds.reads !== undefined) record(data.bossOdds.reads, 'bossOdds.reads');
     if (data.bossOdds && data.bossOdds.reads) for (const [z, row] of Object.entries(data.bossOdds.reads)) {
       const p = 'bossOdds.reads.' + z;
       if (!/^[1-9][0-9]*$/.test(z) || +z > lim.progression) fail(p, 'is not a zone');
