@@ -1,0 +1,1 @@
+On landscape phones such as 932x430, the reward card after a boss now fits the screen: a cache with a unique and a move to learn shows all its buttons without scrolling. Best shot: check-card-932x430.
