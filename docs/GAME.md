@@ -27,7 +27,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 at 1920x1080 and fit 1366x640. Landscape phones (740x360) and tablets (1024x768) still play without clipping; phones held
 upright (360x740) must not break, but new features need not be designed for them. On a desktop screen (1200x600 and up) text and chrome grow, an item's detail opens
 beside the list in its menu, and the number keys 1 to 5 open Fight, Hero, Gather, Craft and Camp (the open tab's number closes it;
-Escape closes the detail, then the menu). Two-press buttons (spend a Scroll, a camp build, a reset) say "Confirm" on the second press. With a mouse, resting the pointer on an item, an ability or a cost shows a tip with what it is and does (the same lines a click opens; a touch screen never shows one).
+Escape closes the detail, then the menu), and [ and ] step through the open menu's views. Every menu shows its list and its detail side by side there (Stars, Build, Camp, Make, the gathering views, the Store, the Codex). Two-press buttons (spend a Scroll, a camp build, a reset) say "Confirm" on the second press. With a mouse, resting the pointer on an item, an ability or a cost shows a tip with what it is and does (the same lines a click opens; a touch screen never shows one).
 
 Menu sub-tabs keep their labels and show the drawn menu icons. Action buttons show small Ready, Cooldown,
 Locked or Unavailable badges; the ability picker marks the selected action. Icons use native pixel sizes.

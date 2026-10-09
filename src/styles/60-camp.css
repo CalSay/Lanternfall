@@ -128,3 +128,15 @@
 .camp-bld-card .mini { min-height: 44px; justify-self: start; }
 .camp-bld-card .cbc-x { justify-self: end; }
 .camp-bld:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+
+/* desktop-views-2: at the desktop tiers Camp shows two columns: Hesketh's board and the Hearth on the left, the buildings (each
+   opens in place) on the right; the camp scene and anything after it span both. Like Stars, the menu widens (up to
+   980 px) while Camp is open, so each column has room for a building's name and its Build button. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .app.menu-open .menu:has(#p-world:not([hidden]) > #p-camp:not(.off-view)) { width: calc(100% - 120px); max-width: 980px; }   /* the stage's left strip (the hero) still shows */
+  .app:not(.detail-docked) #p-camp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 14px; align-items: start; }
+  .app:not(.detail-docked) #p-camp > * { grid-column: 1 / -1; }
+  .app:not(.detail-docked) #p-camp > #sec-bounties-camp { grid-column: 1; grid-row: 1; }
+  .app:not(.detail-docked) #p-camp > #sec-camp { grid-column: 1; grid-row: 2; }
+  .app:not(.detail-docked) #p-camp > #sec-camp-buildings { grid-column: 2; grid-row: 1 / span 2; }
+}

@@ -42,7 +42,15 @@ would leave a 448 px stage at 768 wide, narrower than the strip. Phones (under 7
 - **Keys:** 1 to 5 press the rail's tabs (Fight, Hero, Gather, Craft, Camp) through `tabClick`; the number shows on each tab with
   a mouse. Never in a text field or select, with a modifier, on a repeat or under a modal. JS reads the tier as `isDesk()` (`DESK_Q`).
 - **Icons** keep their native sizes; at Desktop 2 the worn gear row shows the 48 px export at x2 (96 px) and bag tiles at 48 px.
-- The Gather, Craft > Make and Abilities two-column grids are for `desktop-views-2`.
+- **Views (desktop-views-2):** `[` and `]` step through the open menu's views and wrap (same skips as the number keys); the
+  switcher's first and last buttons show them with a mouse. Every menu shows its list and detail side by side: Stars (the star's
+  card held beside the map and the list), Hero > Build (the attributes beside "From your level"), Camp (Hesketh's board and the
+  Hearth beside the buildings), Craft > Make (the recipes beside the last craft's result, actions first), the gathering views
+  (the nodes beside the Now card), Gather > Store (the shelf beside a material's docked "where to get it"), Craft > Uniques (wider
+  cards) and the Codex (a wide sheet: pages three or four to a row, an entry's details beside the page). Build, Camp and Make
+  widen to the stage less a 120 px strip that keeps the hero in view (up to 980 px), as Stars already widened in landscape; the rest keep the two-thirds panel. A
+  docked sheet folds a two-column view back to one column. All of it sits in Desktop 1 media blocks: phones, 1024x768 and
+  360x740 compute as before.
 
 ## Screens
 

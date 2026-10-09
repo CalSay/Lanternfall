@@ -30,3 +30,14 @@
 .at-mv b { font: 600 calc(14px * var(--display-k, 1)) var(--display); color: var(--bone); }
 .at-mn { color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .at-pts.at-ok { animation: none; } }
+
+/* desktop-views-2: at the desktop tiers Hero > Build puts the attribute rows on the left and "From your level" (what the points
+   give now) on the right, held in view while you add points. Like Stars, the menu widens (up to 980 px, a 120 px strip of the stage left) while Build
+   is open, or the rows squeeze into three-line descriptions at 1280x720. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .app.menu-open .menu:has(#p-party:not([hidden]) > #sec-attributes:not(.off-view):not(.f-off)) { width: calc(100% - 120px); max-width: 980px; }   /* the stage's left strip (the hero) still shows */
+  .app:not(.detail-docked) #sec-attributes { grid-template-columns: minmax(0, 3fr) minmax(240px, 2fr); column-gap: 14px; align-items: start; }
+  .app:not(.detail-docked) #sec-attributes > * { grid-column: 1; }
+  .app:not(.detail-docked) #sec-attributes > .sec-title, .app:not(.detail-docked) #sec-attributes > .at-head { grid-column: 1 / -1; }
+  .app:not(.detail-docked) #sec-attributes > .at-moves { grid-column: 2; grid-row: 3 / span 3; position: sticky; top: 0; }
+}

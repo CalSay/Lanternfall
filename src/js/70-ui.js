@@ -646,6 +646,18 @@ document.addEventListener('keydown', e => {
   e.preventDefault();
   tabClick(t);
 });
+// desktop-views-2: [ and ] step through the open menu's views (the switcher's buttons, left and right, round the ends), with the
+// same skips as the number keys. A view is stepped to only while it is in the switcher (shownViews).
+const VIEW_KEYS = { '[': -1, ']': 1 };
+document.addEventListener('keydown', e => {
+  const d = VIEW_KEYS[e.key]; if (!d || !S.tab || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+  const n = e.target; if (n && (n.tagName === 'INPUT' || n.tagName === 'TEXTAREA' || n.tagName === 'SELECT' || n.isContentEditable)) return;
+  if (gameHeld() || document.querySelector(MODAL_UP + ', #abPicker, #moveSheet, .gl-ov, .mm-ov, .dw-ov, .dd-fc-ov, .tabs-ov, #introScreen')) return;
+  const list = shownViews(S.tab); if (list.length < 2) return;
+  const i = list.findIndex(v => v.id === curView(S.tab));
+  e.preventDefault();
+  setView(S.tab, list[(i + d + list.length) % list.length].id);
+});
 // Swipe down to close: on the menu's head, or on its content while it is scrolled to the top.
 {
   const menu = $('menu'), head = $('menuHead'), panels = $('panels');

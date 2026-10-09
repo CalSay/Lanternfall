@@ -1,0 +1,65 @@
+# seed: 1
+# Proof for card desktop-views-2 (docs/design/desktop-layout.md "Later: desktop-views-2"). Run: grep -v '^#' route.txt | node tools/playtest.mjs batch --seed 1
+# (desktop 1280x720 by default; then --view hd, --landscape and --portrait). Fixture save-current: Tobin at zone 20.
+#   stars-card-*.png  Hero > Stars, a star picked low in the list: its card stays in view beside the list.
+#   build-*.png       Hero > Build: the attributes on the left, "From your level" on the right.
+#   wood-*.png        Gather > Wood: the groves on the left, the Now card on the right. Reached with ] from Mining.
+#   store-dock-*.png  Gather > Store, a material clicked: "where to get it" docks beside the shelf.
+#   make-*.png        Craft > Make after a craft: the recipes on the left, the result card (Equip first) on the right.
+#   camp-*.png        Camp: Hesketh's board and the Hearth on the left, the buildings on the right.
+#   codex-*.png       the Codex: a wide panel, an entry's details beside the page.
+# Below-the-fold parts are expected by selector (a text expect only sees the screen). On a phone (740x360, 360x740) each view is the single column it was; tools/check.mjs ("desktop views 2") holds the sizes,
+# the side-by-side boxes and the keys.
+new current
+wait 2
+tap-if "Continue"
+tap "Hero"
+tap "Stars"
+wait 1
+tap "Cold Steel"
+wait 1
+expect "Put out"
+shot stars-card
+tap "Build"
+wait 1
+expect ".at-moves"
+shot build
+key 3
+wait 1
+tap "Mining"
+wait 1
+key ]
+wait 1
+expect ".gx-view:not(.off-view) > .gx-now"
+shot wood
+tap "Store"
+wait 1
+tap "Silver Ore"
+wait 1
+expect "Where to get it"
+shot store-dock
+key Escape
+wait 1
+key 4
+wait 1
+tap-if "Got it"
+tap "Make"
+wait 1
+tap "Craft Copper Warblade"
+wait 1
+tap-if "Got it"
+wait 1
+expect ".cf-resbox .cf-res"
+shot make
+key 5
+wait 1
+tap-if "Got it"
+tap "Camp"
+wait 1
+expect "#sec-camp-buildings .cb"
+shot camp
+tap "Library"
+wait 1
+tap-if "Open Codex"
+wait 1
+shot codex
