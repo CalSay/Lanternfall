@@ -5504,7 +5504,7 @@ if (section('solo hero')) try {
   assert(!errs.length, 'no solo errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('solo crashed: ' + (e.stack || e)); }
 
-// ---- shared by the browser guide walks (the solo walks below and the landscape walks): animsDone, pressHeld ----
+// ---- shared by the browser guide walks (the solo walks below and the landscape walks): animsDone, pressHeld, TICK_OWED ----
 // animsDone: the browser's own word that an element's transitions have ended (looping ones, like a pulse, are not waited for)
 const animsDone = `(e => { e.getBoundingClientRect(); return e.getAnimations({ subtree: true }).every(a => a.playState !== 'running' && a.playState !== 'pending' || a.effect.getComputedTiming().iterations === Infinity); })`;
 // walk-740-guide-crash: a held line's answer (Got it, or × on a held materials line, say:stock:*, whose button is a Go that would send
@@ -5526,6 +5526,12 @@ const pressHeld = async page => {
     if (!hit || !(hit === b || b.contains(hit))) return 'covered by ' + (hit ? hit.id || hit.className || hit.tagName : 'nothing');
     b.click(); return 'pressed'; }, HELD_BTN);
 };
+// ci-flakes-spend-hover: the walks freeze the frame loop and drive the game clock themselves. A boss killed on the last tick of a walk's
+// batch leaves its cache waiting for the next tick (55-caches opens it a tick after zoneClear), and while it waits the guide hides its hint
+// so the boss's card comes first (cardComing in 75-onboard-ui). With no tick coming the hint stayed hidden, and the walk read the step as
+// unmarked with no hint ("spend" and "gather": cache true, bubOk false, bubs 0 in CI runs 805-832). TICK_OWED is the guide's own tickOwed
+// (cache pending, or a Champion's post scene queued): while it holds, the walk gives the game the tick the frame loop would, then looks again.
+const TICK_OWED = `(cachePending() || (typeof storyBusy === 'function' && MOMENT_Q.some(m => m.kind === 'champion' && m.scene && storyBusy(m.scene))))`;
 
 // ---- W1-A: the guide's pause rules (audit-1 3.1, 3.8): a step that waits for time or materials never pauses the game ----
 if (section('solo guide pause rules')) try {
@@ -5684,12 +5690,15 @@ if (section('solo hero (browser)')) try {
       // freezes the frame loop (it skips tick() while soloPickerOpen() says true) and drives the game a second at a time, unless the game
       // is paused, as the loop would.
       await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
-      const seen = [], heldMiss = [];   // heldMiss: a held line's answer covered or never shown (pressHeld)
+      const seen = [], heldMiss = []; let owed = 0;   // heldMiss: a held line's answer covered or never shown (pressHeld); owed: ticks given in a row for TICK_OWED
       for (let i = 0; i < 80 && (seen.length < 6 || !['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x))); i++) {
         // a Hesketh line (the boss's scroll) holds the game with a Got it ahead of the step: read it and press Got it, as a player does
         if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { const r = await pressHeld(page); if (!/^(pressed|gone)$/.test(r)) heldMiss.push(r); await page.waitForTimeout(300); continue; }
         const st = await X('(s => s ? s.id : "")(onboardStep())');
         if (!st) { await X('for (let k = 0; k < 20; k++) tick(0.1); true'); await page.waitForTimeout(300); continue; }
+        // a cache or scene that only the next tick opens holds the hint back (TICK_OWED): give it that tick, then read the step again
+        // (at most 20 in a row: a cache or scene that one tick never opens is not waited out, and the step's own line reads what is up)
+        if (await X(TICK_OWED) && owed++ < 20) { await X('tick(0.1); true'); await page.waitForTimeout(300); continue; } owed = 0;
         await page.waitForTimeout(400);
         const chk = await X(`(() => { const sp = onboardSpec(${JSON.stringify(st)}); if (!sp || !sp.node) return { ok: false, why: 'no target' }; const n = sp.node, r = n.getBoundingClientRect(), ring = document.querySelector('.ob-ring').getBoundingClientRect();
           const vis = !!(n.getClientRects().length && n.offsetParent !== null && r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.left < innerWidth && r.right > 0);
@@ -12633,7 +12642,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
         try {
           const { ctx, page, errs, X } = await open(w, h);
           const trail = [], bad = [], seen = new Set();
-          let stuck = '', lastKey = '', same = 0, idle = 0, iters = 0; const passes = [];
+          let stuck = '', lastKey = '', same = 0, idle = 0, iters = 0, owed = 0; const passes = [];   // owed: ticks given in a row for TICK_OWED
           const want = ['attack', 'ability', 'dodge', 'parry', 'upgrade', 'gather', 'chop', 'light', 'bench', 'tool', 'forge', 'store', 'nextup'];   // (tab:party: done by the Training step's visit)
           // The Tool step is done by "any tool made" (55-hearth), so a hero who is dropped a pick first (Carapace Pick, a zone 4 boss
           // unique, an item with `u`) never sees it, and does not need to. The walk's idle passes run the game ahead while the guide waits for the screen, so
@@ -12660,6 +12669,9 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
                 if (S.onboard.done.store && S.maxZone < 3) { S.maxZone = 3; S.zone = 3; } true`);
               await page.waitForTimeout(120); continue;
             }
+            // a cache or scene that only the next tick opens holds the hint back (TICK_OWED): give it that tick, then read the step again
+            // (at most 20 in a row: a cache or scene that one tick never opens is not waited out, and the step's own line reads what is up)
+            if (await X(TICK_OWED) && owed++ < 20) { await X('tick(0.1); true'); await page.waitForTimeout(120); continue; } owed = 0;
             if (!trail.includes(st)) trail.push(st);
             // forge-tip-goes-stale: a materials line is hidden over a menu other than Camp or Gather, but its step is still current; the walk reads
             // it as live from onboardNeed (the materials come in) instead of looking for a line that is not drawn there
@@ -13130,6 +13142,10 @@ if (section('desktop tooltips (browser, desktop-tooltips)')) try {
       await page.goto('http://lf.test/'); await page.waitForTimeout(700);
       const X = s => page.evaluate(s => window.__t.x(s), s);
       await X('S.onboard.tips = false; for (const x of document.querySelectorAll(".bsheet-ov .bsheet-x")) x.click(); true');
+      // ci-flakes-spend-hover: the game holds still while the mouse rests (the frame loop skips tick() while soloPickerOpen() says true). The
+      // live fight changed what the Abilities list is drawn from (a level, a Scroll, the power number), the list rebuilt under a resting mouse,
+      // and the row the check hovered was gone before its tip opened ("no tip" under load). The tips run on wall-clock timers, as before.
+      await X('soloPickerOpen = () => true; true');
       return { ctx, page, errs, X };
     };
     const view = async (X, page, v) => {
@@ -13138,7 +13154,15 @@ if (section('desktop tooltips (browser, desktop-tooltips)')) try {
     };
     const TIP = `(() => { const b = document.getElementById('tip'); if (!b || b.hidden) return null; const r = b.getBoundingClientRect();
       return { lines: [...b.children].map(c => c.textContent), ok: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, box: [r.left, r.top, r.right, r.bottom].map(Math.round) }; })()`;
-    const hover = async (page, loc) => { await page.mouse.move(1, 1); await page.waitForTimeout(60); if (!(await loc.hover({ timeout: 5000 }).then(() => true, () => false))) return null; await page.waitForTimeout(350); return page.evaluate(s => window.__t.x(s), TIP); };
+    // ci-flakes-spend-hover: after the hover, wait for the tip itself, not a fixed 350 ms: its 120 ms timer (TIP_DELAY, asserted above)
+    // fired late on a busy CPU and the check read the box before it opened. The wait ends at once on a target whose text is empty (an
+    // empty slot shows no tip), and after 5 s the box is read as it is (a tip that never opens still fails its line).
+    const TIP_UP = (e, cap) => new Promise(done => { const t0 = performance.now(); let n = e; while (n && n !== document && n._tip == null) n = n.parentNode;
+      const f = () => { const b = document.getElementById('tip'), t = n && n !== document ? n._tip : null; let txt = '';
+        try { txt = String((typeof t === 'function' ? t() : t) || '').trim(); } catch (err) {}
+        if ((b && !b.hidden) || !txt || performance.now() - t0 > cap) return done(); requestAnimationFrame(f); }; f(); });
+    const hover = async (page, loc) => { await page.mouse.move(1, 1); await page.waitForTimeout(60); if (!(await loc.hover({ timeout: 5000 }).then(() => true, () => false))) return null;
+      await loc.evaluate(TIP_UP, 5000).catch(() => {}); return page.evaluate(s => window.__t.x(s), TIP); };
     const norm = s => s.replace(/\s+/g, ' ');
     try {
       for (const [w, h] of [[1280, 720], [1920, 1080]]) {
