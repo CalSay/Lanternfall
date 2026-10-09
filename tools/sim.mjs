@@ -528,7 +528,8 @@ function forgeGear2() {
 // Essence is there after the weapon hold (forgeItem's swordFirst), else Struck when the bar shows, in the gold --strikehit of the
 // time (default 0.5). Switches off: no opts, the craft exactly as before.
 const STRIKE_HIT = args.strikehit !== undefined ? +args.strikehit : 0.5;
-const liftStats = { strike: 0, missed: 0, infuse: 0, infuseEss: 0, gradeA: 0 };
+const liftStats = { strike: 0, missed: 0, infuse: 0, infuseEss: 0, gradeA: 0 }; let killEssMade = 0;
+fn.on('kill', e => { killEssMade += (e && e.ess) || 0; });
 fn.on('crafted', e => { if (e.lift) liftStats[e.lift]++; if (e.lift === 'infuse') liftStats.infuseEss += E(`CRAFT_TUNE.infuseX * Math.max(1, craftRecipe(${JSON.stringify(e.kind)}, ${e.t}).ess || 0)`); if (e.item && e.item.g >= 3 && e.lift && e.lift !== 'missed') liftStats.gradeA++; });
 function liftOpts(kind, t) {
   if (E('CRAFT_TUNE.infuse') && fn.canCraft(kind, t, { infuse: true }).ok) return { infuse: true };
@@ -548,7 +549,7 @@ function forgeRest() {
     for (const slot of SLOTS) {
       const cur = fn.equipped(slot);
       if (cur && cur.t >= t) continue;
-      const it = fn.forgeItem(slot, t);
+      const it = slot === 'charm' && liftOpts('charm', t) ? fn.craftItem('charm', t, liftOpts('charm', t)) : fn.forgeItem(slot, t);   // craft-strike-infuse: the Charm takes its lift too
       if (it) keepBest(slot, it);
     }
   }
@@ -1043,7 +1044,7 @@ if (cls && policy === "mixed") {
   const bl = Object.entries(craftStats.blocks).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${Math.round(100 * n / craftStats.blockMin)}%`).join(', ');
   console.log(`craft: G4 gather share ${Math.round(100 * share)}% (want 25-45%) / G6 top blocker ${worst ? `${worst[0]} ${Math.round(100 * worst[1] / craftStats.blockMin)}%` : '-'} of ${craftStats.blockMin} blocked min (want <= 50%) [${bl}]`);
   console.log(`craft: G9 first Trophy ${m(craftStats.troph)} (want 20-60m) | farm-back ${craftStats.farm} min | trophies ${E('trophies()')} ${E('JSON.stringify(S.craft.troph)')}, champions ${E('S.craft.champ')} | skills mine ${E('S.skills.mine.lv')} wood ${E('S.skills.wood.lv')} forage ${E('S.skills.forage.lv')}`);
-  if (E('CRAFT_TUNE.strike || CRAFT_TUNE.infuse')) console.log(`craft: lifts (craft-strike-infuse) ${JSON.stringify(liftStats)} | Essence held ${E('essHave()')}`);
+  if (E('CRAFT_TUNE.strike || CRAFT_TUNE.infuse')) console.log(`craft: lifts (craft-strike-infuse) ${JSON.stringify(liftStats)} | Essence held ${E('essHave()')} of ${Math.round(killEssMade)} made by kills (${killEssMade ? Math.round(100 * Math.min(1, E('essHave()') / killEssMade)) : 0}%, health's essHeldShare)`);
   console.log(`craft: pack ${['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'].concat(refineSim ? ['ingot', 'plank', 'cloth', 'leather', 'coal'] : []).map(k => k + ' ' + E(`JSON.stringify(S.mats.${k})`)).join(' ')}`);
   refineLine();
 }

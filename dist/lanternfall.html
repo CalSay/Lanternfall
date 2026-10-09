@@ -40263,7 +40263,8 @@ let craftUI = null;
     if (strike.ov) return strike.ov;
     const ov = el('div', 'cf-strike'), box = el('div', 'cf-sk'), ttl = el('p', 'cf-sk-t'), bar = el('div', 'tv-time cf-sk-bar'), track = el('div', 'tv-track');
     const fill = el('i', 'tv-fill'), pz = el('i', 'tv-parry'), head = el('i', 'tv-head'), legend = el('div', 'tv-legend'), lg = el('span', 'tv-lg-p'), sub = el('p', 'cf-sk-s');
-    ov.hidden = true; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-live', 'assertive');
+    ov.hidden = true; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-live', 'assertive');
+    ttl.id = 'cfStrikeT'; ov.setAttribute('aria-labelledby', 'cfStrikeT'); box.tabIndex = -1;
     track.append(pz, fill, head); legend.append(lg); bar.append(track, legend); box.append(ttl, bar, sub); ov.append(box);
     ov.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); strikePress(); });
     document.body.append(ov);
@@ -40275,9 +40276,9 @@ let craftUI = null;
     const win = strikeWin();
     strike.on = { k, t, opts, choice, word, to, win, t0: performance.now() / 1000, done: false };
     putText(o.ttl, `${word} as the bar reaches the gold`); putText(o.lg, word);
-    putText(o.sub, `In the gold: grade ${to != null ? GRADE[to].n : 'up'}. A miss still makes it at grade ${GRADE[safe(() => gradeFor(k, t), 0)].n}.`);
+    putText(o.sub, `In the gold: Grade ${to != null ? GRADE[to].n : 'up'}. A miss still makes it at Grade ${GRADE[safe(() => gradeFor(k, t), 0)].n}.`);
     o.pz.style.left = (100 * (1 - win / STRIKE_FILL)) + '%'; o.pz.style.width = (100 * win / STRIKE_FILL) + '%';
-    o.bar.classList.remove('in-parry'); o.ov.hidden = false;
+    o.bar.classList.remove('in-parry'); o.ov.hidden = false; try { o.ov.firstChild.focus({ preventScroll: true }); } catch (e) {}
     requestAnimationFrame(strikeDraw);
   }
   function strikeDraw() {
@@ -40295,15 +40296,17 @@ let craftUI = null;
   }
   function strikeEnd(hit, pressed) {
     const s = strike.on; if (!s || s.done) return;
-    s.done = true; strike.on = null; if (strike.ov) strike.ov.ov.hidden = true;
+    s.done = true;   // later presses are ignored; the overlay stays a beat so a second tap cannot reach the row under it
+    setTimeout(() => { if (strike.on === s) strike.on = null; if (strike.ov && !strike.on) strike.ov.ov.hidden = true; }, 250);
     emit('craftStrike', { hit, pressed, kind: s.k, t: s.t });   // 76-audio: the parry chime on a hit
     const opts = Object.assign({}, s.opts); if (pressed) opts.strike = hit;   // no press: made at the level's grade, and no choice was taken
     const it = craftDone(s.k, s.t, opts, s.choice);
     if (it && it.id != null && !pressed) { st8.lift[it.id] = 'missed'; ui(true); }   // the result card says so (a press sets it from 'crafted')
   }
   document.addEventListener('keydown', e => {
-    if (!strike.on) return;
+    if (!strike.on || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === ' ' || e.key === 'Enter' || e.key === 'f' || e.key === 'F') { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) strikePress(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); strikeEnd(false, false); }   // the menu stays open: made at the level's grade
   }, true);
   document.addEventListener('visibilitychange', () => { if (document.hidden && strike.on) strikeEnd(false, false); });   // a hidden tab: the level's grade
   // ---- the fight line (craft-delta): what the piece changes against the boss at your furthest zone (55-fight-delta) ----

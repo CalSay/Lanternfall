@@ -381,7 +381,7 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null, bot
     if (pl === 'none' && !NONE_KINDS.includes(o.kind) && !flag('none') && !UNIQ_ID) continue;
     if (liftRow(o)) e(liftCode(pl));   // craft-strike-infuse: this player's lifted pieces (above)
     if (BOT[pl] && !BOT_KINDS.includes(o.kind)) continue;
-    const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl, i));
+    const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl === 'casualInfuse' ? 'casual' : pl, i));   // casualInfuse plays the casual's seeds, so the gap is the lift alone
     const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(o.st === 'joined' ? [SIG[k]] : setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
       let K = 0, D = 0, T = 0, F = 0, C = 0;
       for (const sd of ${J(seeds)}) { const r = turnCombatSample({ profile: p, seconds: 36000, fights: ${chain}, seed: sd, skill: ${J(skill)} });

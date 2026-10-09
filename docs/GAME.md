@@ -242,7 +242,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   craft is paid only when the bar resolves, so nothing is lost. Each station names it: Strike (Forge), Carve (Workbench), Stitch
   (Loom), Etch (Enchanter's Table). No bar on tools, refining, at grade A or S, after Infuse, or on a station's first piece
   (`S.craft.made`, pieces made a station; an old save seeds it from the pieces it holds). Infuse: the recipe row's Infuse button
-  pays `CRAFT_TUNE.infuseX` (3) x the recipe's Essence (3 when it has none: a Copper Warblade 6, a Charm 15) from the one
+  pays `CRAFT_TUNE.infuseX` (3) x the recipe's Essence (3 when it has none: a Copper Warblade 6, a Charm 15; provisional until the balance pass; offered on a station's first piece too) from the one
   Essence pile on top of the recipe. The row names the choice ("Grade A: Strike, or Infuse for 6 Essence") and the result card
   says which lift landed ("Your Strike landed in the gold", "The Strike missed the gold ... Nothing was lost"). Taking either
   emits `choice` 'craft'. Core: `craftItem(kind, t, { strike, infuse })`, `craftStrikeOffered`, `craftInfusePrice`,

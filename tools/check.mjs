@@ -860,7 +860,9 @@ if (section('crafting')) try {
   for (const f of FIXTURES) {
     const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8')); delete old.craft;
     const go = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
-    const ok = go.eval('JSON.stringify(S.craft)') === JSON.stringify({ v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0 })
+    // craft-strike-infuse: made is seeded from the pieces held (its own section checks the counts)
+    const ok = go.eval('JSON.stringify(Object.assign({}, S.craft, { made: undefined }))') === JSON.stringify({ v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0 })
+      && go.eval('Object.keys(CRAFT_STATIONS).every(st => Number.isInteger(S.craft.made[st]))')
       && go.eval('S.items.length') === old.items.length && Object.keys(old.equip).every(k => go.eval(`S.equip.${k}`) === old.equip[k]);
     go.eval('save(); loadSave()');
     assert(ok && go.eval('S.craft.v === 1 && S.items.length') === old.items.length, `${f}: a save without S.craft gets its defaults, items and equip untouched, round trip ok`);
@@ -11305,13 +11307,13 @@ if (section('craft strike infuse (browser)')) try {
         if (shots) { await page.waitForTimeout(500); await page.screenshot({ path: path.join(shots, `bar-${w}x${h}.png`) }); }
         const press = w === 1280 ? `document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))` : `document.querySelector('.cf-strike').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }))`;
         await X(`new Promise(res => { const go = () => document.querySelector('.cf-strike .tv-time').classList.contains('in-parry') ? (${press}, res(true)) : requestAnimationFrame(go); go(); })`);
-        await page.waitForTimeout(250);
+        await page.waitForTimeout(450);
         const a = await X(card), m1 = await X(mats);
         assert(a && a.g === 3 && a.note === 'Your Strike landed in the gold: Grade A.' && !(await X('gameHeld()')) && (await X('window.__sk.pop().hit')), `${at}: a ${w === 1280 ? 'Space press' : 'press'} in the gold makes it grade A and says so; the game runs again (${JSON.stringify(a)})`);
         if (shots) { await X(`document.querySelector('.cf-resbox').scrollIntoView({ block: 'start' }); true`); await page.waitForTimeout(150); await page.screenshot({ path: path.join(shots, `hit-${w}x${h}.png`) }); }
         // 2. an early press: grade B, nothing lost, the recipe paid once
-        await X(lv7); await X(craft); await page.waitForTimeout(80); await X(press.replace('document.dispatchEvent', 'document.dispatchEvent'));
-        await page.waitForTimeout(250);
+        await X(lv7); await X(craft); await page.waitForTimeout(80); await X(press);
+        await page.waitForTimeout(450);
         const b = await X(card), m2 = await X(mats);
         const d1 = JSON.parse(m0).map((n, i) => n - JSON.parse(m1)[i]), d2 = JSON.parse(m1).map((n, i) => n - JSON.parse(m2)[i]);
         assert(b && b.g === 2 && b.note === 'The Strike missed the gold, so it is Grade B. Nothing was lost.' && JSON.stringify(d1) === JSON.stringify(d2) && JSON.stringify(d1) === await X(`JSON.stringify((r => [r.ore || 0, r.wood || 0, r.ess || 0])(craftRecipe('warblade', 1)))`),
@@ -11319,7 +11321,7 @@ if (section('craft strike infuse (browser)')) try {
         if (shots) { await X(`document.querySelector('.cf-resbox').scrollIntoView({ block: 'start' }); true`); await page.waitForTimeout(150); await page.screenshot({ path: path.join(shots, `miss-${w}x${h}.png`) }); }
         // 3. no press (or a hidden tab): grade B
         await X(lv7);
-        if (w === 360) { await X(craft); await page.waitForTimeout(100); await X(`Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); delete document.hidden; true`); }
+        if (w === 360) { await X(craft); await page.waitForTimeout(100); await X(`Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); delete document.hidden; true`); await page.waitForTimeout(400); }
         else { await X(craft); await page.waitForTimeout(1700); }
         const c = await X(card);
         assert(c && c.g === 2 && /missed the gold/.test(c.note) && !(await X('gameHeld()')) && (await X('document.querySelector(".cf-strike").hidden')), `${at}: ${w === 360 ? 'a hidden tab' : 'no press'} makes it grade B and the bar goes (${JSON.stringify(c)})`);
