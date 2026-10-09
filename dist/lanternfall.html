@@ -37680,24 +37680,20 @@ var handsTradeOpenPicker;
 // yet (a hidden menu) is left as it is.
 // fitTextWidths(list): the same for many boxes, with one layout for all of them (clear every size, read every width, then fit only the
 // few that overflow), so a list of 50 names costs one reflow, not 100.
-// textRoom(e): the width the text has inside the box's padding and borders, to the fraction (0 when the box has no width yet)
-function textRoom(e) {
-  if (!e.clientWidth) return 0;
-  const cs = getComputedStyle(e);
-  return e.getBoundingClientRect().width - ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((n, k) => n + (parseFloat(cs[k]) || 0), 0);
-}
 function fitTextWidths(list, min) {
   const els = [...list];
   for (const e of els) if (e.style.fontSize || e.style.letterSpacing) { e.style.fontSize = ''; e.style.letterSpacing = ''; }
-  const over = els.filter(e => { const room = textRoom(e); if (!room) return false;
+  const over = els.filter(e => { const room = e.clientWidth && e.getBoundingClientRect().width; if (!room) return false;
     const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect().width > room + 0.01; });
   for (const e of over) fitTextWidth(e, min, true);
 }
-function fitTextWidth(e, min = 7, cleared = false) {
+// inside: fit the text inside the box's padding and borders (the turn line's framed chip, 75-turn-ui), not to the whole box
+function fitTextWidth(e, min = 7, cleared = false, inside = false) {
   if (!cleared && (e.style.fontSize || e.style.letterSpacing)) { e.style.fontSize = ''; e.style.letterSpacing = ''; }
-  const room = textRoom(e); if (!room) return;   // inside any padding (turn-banner-clears-plate)
+  const cs = getComputedStyle(e), pad = inside ? ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((n, k) => n + (parseFloat(cs[k]) || 0), 0) : 0;
+  const room = e.clientWidth && e.getBoundingClientRect().width - pad; if (!room) return;
   const r = document.createRange(); r.selectNodeContents(e);
-  const need = () => r.getBoundingClientRect().width, cs = getComputedStyle(e);
+  const need = () => r.getBoundingClientRect().width;
   if (need() <= room + 0.01) return;
   min = Math.max(min, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0);
   for (let k = 0, n; k < 3 && (n = need()) > room + 0.01 && parseFloat(cs.fontSize) > min; k++)
@@ -47576,7 +47572,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   on('fightStart', () => { pendClean = null; lampSet(0); });
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
   const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
-  addEventListener('resize', () => { if (turnN.textContent) fitTextWidth(turnN); if (!tcard.hidden) fitTextWidth(tcTxt); });   // a turned phone refits both lines
+  addEventListener('resize', () => { if (turnN.textContent) fitTextWidth(turnN, 7, false, true); if (!tcard.hidden) fitTextWidth(tcTxt); });   // a turned phone refits both lines
   // along the stage's bottom edge: the timing bar (while the foe winds up)
   const bot = el('div', 'tv-bot'); bot.append(lamps, bar);   // hit feel: the lamps sit just above the timing bar, clear of the place caption and the resource row
   if (box) box.append(wrap, bot);
@@ -47700,7 +47696,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     drawRing(live ? s : null); drawNotches(live ? s : null);   // a rally holds the turn label too (below): the boss's own move lines take the banner
     if (!live) { if (!bar.hidden) bar.hidden = true; return; }
     const tn = s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.rally && s.foe ? 'Rally: it holds at the mark' : s.phase === 'foeWindup' && s.foe ? `${s.foe.name}'s turn` : s.n ? `Turn ${s.n}` : '';
-    if (turnN.textContent !== tn) { turnN.textContent = tn; if (tn) fitTextWidth(turnN); }   // one line, like the banner (turn-banner-clears-plate)
+    if (turnN.textContent !== tn) { turnN.textContent = tn; if (tn) fitTextWidth(turnN, 7, false, true); }   // one line, like the banner (turn-banner-clears-plate)
     turnN.classList.toggle('mine', s.phase === 'hero' || !!s.timing);
     turnN.classList.toggle('foe', s.phase === 'foeWindup');
     // the foe winds up: the bar fills to the hit; the dodge and parry windows sit at its end

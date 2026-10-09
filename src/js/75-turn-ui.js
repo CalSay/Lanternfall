@@ -232,7 +232,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   on('fightStart', () => { pendClean = null; lampSet(0); });
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
   const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
-  addEventListener('resize', () => { if (turnN.textContent) fitTextWidth(turnN); if (!tcard.hidden) fitTextWidth(tcTxt); });   // a turned phone refits both lines
+  addEventListener('resize', () => { if (turnN.textContent) fitTextWidth(turnN, 7, false, true); if (!tcard.hidden) fitTextWidth(tcTxt); });   // a turned phone refits both lines
   // along the stage's bottom edge: the timing bar (while the foe winds up)
   const bot = el('div', 'tv-bot'); bot.append(lamps, bar);   // hit feel: the lamps sit just above the timing bar, clear of the place caption and the resource row
   if (box) box.append(wrap, bot);
@@ -356,7 +356,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     drawRing(live ? s : null); drawNotches(live ? s : null);   // a rally holds the turn label too (below): the boss's own move lines take the banner
     if (!live) { if (!bar.hidden) bar.hidden = true; return; }
     const tn = s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.rally && s.foe ? 'Rally: it holds at the mark' : s.phase === 'foeWindup' && s.foe ? `${s.foe.name}'s turn` : s.n ? `Turn ${s.n}` : '';
-    if (turnN.textContent !== tn) { turnN.textContent = tn; if (tn) fitTextWidth(turnN); }   // one line, like the banner (turn-banner-clears-plate)
+    if (turnN.textContent !== tn) { turnN.textContent = tn; if (tn) fitTextWidth(turnN, 7, false, true); }   // one line, like the banner (turn-banner-clears-plate)
     turnN.classList.toggle('mine', s.phase === 'hero' || !!s.timing);
     turnN.classList.toggle('foe', s.phase === 'foeWindup');
     // the foe winds up: the bar fills to the hit; the dodge and parry windows sit at its end
