@@ -53,12 +53,14 @@ if (browserTools.pw) {
   const launch = browserTools.pw.chromium.launch.bind(browserTools.pw.chromium);
   browserTools.pw = Object.assign(Object.create(browserTools.pw), { chromium: Object.assign(Object.create(browserTools.pw.chromium), { launch: async (...a) => {
     const b = await launch(...a), newContext = b.newContext.bind(b);
-    b.newContext = async (opts = {}) => { const { turns, story, ...o } = opts, ctx = await newContext(o);
+    b.newContext = async (opts = {}) => { const { turns, story, webFonts = true, ...o } = opts, ctx = await newContext(o);
       // display-fallback-font: the page's Google Fonts link is aborted in checks, so every page gets the players' faces from
-      // tests/fonts/ (Google's own woff2 subsets and unicode ranges, SIL OFL). The published page never carries them.
-      await ctx.addInitScript(checkFonts => { try { for (const f of checkFonts) {
+      // tests/fonts/ (Google's own woff2 subsets and unicode ranges, SIL OFL). The published page never carries them. A failure
+      // here is a page error, which the sections count. newContext({ webFonts: false }) measures what a player whose web fonts
+      // fail to load sees (the --display / --body fallbacks).
+      if (webFonts) await ctx.addInitScript(checkFonts => { for (const f of checkFonts) {
         const bin = atob(f.data), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-        document.fonts.add(new FontFace(f.family, u8, { weight: f.weight, style: f.style, unicodeRange: f.unicodeRange })); } } catch (e) {} }, CHECK_FONTS);
+        document.fonts.add(new FontFace(f.family, u8, { weight: f.weight, style: f.style, unicodeRange: f.unicodeRange })); } }, CHECK_FONTS);
       if (!turns) await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.realtime', '1'); } catch (e) {} });
       // story-delivery: a new game opens on a story card, which would sit over every browser section's first click; the page skips story scenes
       // (the Journal still files them) unless a section asks for them with newContext({ story: true, ... }).
@@ -277,14 +279,14 @@ if (section('check fonts')) try {
         const out = {};
         for (const [k, face, wt] of [['display', 'Handjet', 600], ['body', 'Barlow Semi Condensed', 500]]) {
           const stack = getComputedStyle(document.documentElement).getPropertyValue('--' + k).trim();
-          out[k] = { face, stack, loaded: document.fonts.check(`${wt} 40px "${face}"`), page: w(stack, wt), real: w(`"${face}"`, wt), mono: w('monospace', wt), sans: w('sans-serif', wt) };
+          out[k] = { face, stack, faces: [...document.fonts].filter(x => x.family.replace(/"/g, '') === face && x.status === 'loaded').length, page: w(stack, wt), real: w(`"${face}"`, wt), mono: w('monospace', wt), sans: w('sans-serif', wt) };
         }
         return out;
       });
       for (const k of ['display', 'body']) {
         const f = m[k];
-        console.log(`  font ${k}: ${f.face} (tests/fonts) loaded=${f.loaded}; 40px sample ${f.page.toFixed(1)} px, ${f.face} ${f.real.toFixed(1)}, monospace ${f.mono.toFixed(1)}, sans-serif ${f.sans.toFixed(1)}`);
-        assert(f.loaded && Math.abs(f.page - f.real) < 0.5 && Math.abs(f.page - f.mono) > 2 && Math.abs(f.page - f.sans) > 2,
+        console.log(`  font ${k}: ${f.face} (tests/fonts, ${f.faces} subsets loaded); 40px sample ${f.page.toFixed(1)} px, ${f.face} ${f.real.toFixed(1)}, monospace ${f.mono.toFixed(1)}, sans-serif ${f.sans.toFixed(1)}`);
+        assert(f.faces > 0 && Math.abs(f.page - f.real) < 0.5 && Math.abs(f.page - f.mono) > 2 && Math.abs(f.page - f.sans) > 2,
           `check fonts: --${k} (${f.stack}) draws in ${f.face}, the face players get, not a fallback`);
       }
     } finally { await browser.close(); }
@@ -16040,8 +16042,8 @@ if (section('menu-tip-room')) try {
         await X('S.activity = "gather"; S.node = { kind: "wood", t: 1 }; setTab("gat"); ui(true); true');
         const up = await waitFor(X, `/Copper Vein/.test(document.querySelector('.ob-bub:not([hidden]) .ob-txt')?.textContent || '')`);
         const p = JSON.parse(await X(panel));
-        // the check runs without the game's web fonts: CI's fallback (DejaVu Sans) is far wider than Barlow Semi Condensed and wraps this
-        // 104-letter line to six lines, so past 96 px the strip may be only as tall as its text (the face, × and Go never add height)
+        // before display-fallback-font the check ran without the game's web fonts: CI's fallback (DejaVu Sans) is far wider than Barlow
+        // Semi Condensed and wrapped this 104-letter line to six lines, so past 96 px the strip may be only as tall as its text (the face, × and Go never add height)
         if (w < h) assert(up && /over-menu/.test(p.cls) && p.bub.h <= Math.max(96, p.t.h + 16) && p.ok && p.ok.h >= 44 && p.x && p.x.w >= 44 && p.bub.bottom <= p.tabs.top,
           `${v}: the materials line with its Go is at most 96 px tall over Gather, or no taller than its text (${JSON.stringify(p)})`);
         else { const cols = await X(`getComputedStyle(document.querySelector('.ob-bub')).gridTemplateColumns`);
@@ -16058,8 +16060,8 @@ if (section('menu-tip-room')) try {
 // save-pip-abilities (Pip, Fireball / Spark / Kindle), tips off. Each hero in turn, every ability that hero can learn goes into the three
 // slots (three at a time, ownership stubbed), and each name must not be cut (its text no wider than its box) on the fight bar's slot names at
 // 1280x720, 740x360 and 360x740, and on the Q W E buttons at the top of Hero > Abilities (and the Slot Q / W / E buttons in a card). The
-// check runs without the web fonts: Handjet fits every name with room to spare, the fallback (DejaVu Sans Mono here) needs the names to
-// step their size down (fitTextWidth, 75-abilities-ui). Upright, Fireball's card (its text, the slots, both talents) has no scroll of its own.
+// views run twice: in the players' fonts (Handjet, display-fallback-font) and with no web fonts, where the fallback (DejaVu Sans Mono
+// here) needs the names to step their size down (fitTextWidth, 75-abilities-ui). Upright, Fireball's card (its text, the slots, both talents) has no scroll of its own.
 if (section('ability-names-fit')) try {
   const at = 'ability-names-fit', { pw, exe } = browserTools;
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
@@ -16069,9 +16071,9 @@ if (section('ability-names-fit')) try {
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
-      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
-        const v = `${at} (browser ${w}x${h})`, touch = w < 1000;
-        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true });
+      for (const webFonts of [true, false]) for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h}${webFonts ? '' : ', fallback fonts'})`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true, webFonts });
         await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
         const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
