@@ -682,11 +682,13 @@ let deeds, deedBonus, wearGet;
 
   // near-miss nudge (Next Up), cached 2 s
   let nearCache = { at: -1e9, list: [] };
+  // online-off-clean: with no capability host (onlineOff, 70-ui.js) Next Up never names a raid track, followed or near
+  const raidHid = t => t.g === 'raid' && typeof onlineOff === 'function' && onlineOff();
   function nearList() {
     if (clock - nearCache.at < 2 && nearCache.at <= clock) return nearCache.list;
     const out = [];
     for (const t of DEED_TRACKS) {
-      if (t.kind === 'ladder' || t.kind === 'record' || !trackLive(t)) continue;
+      if (t.kind === 'ladder' || t.kind === 'record' || !trackLive(t) || raidHid(t)) continue;
       const k = tierOfId(t.id), nk = k + 1;
       if ((!t.star && k >= 4) || lockTxt(t, nk)) continue;
       const v = cur(t), from = k ? needAt(t, k) : 0, to = needAt(t, nk), pct = (v - from) / Math.max(1e-9, to - from);
@@ -700,7 +702,7 @@ let deeds, deedBonus, wearGet;
     const d = DS();
     if (!d.init || !d.nudge || now() - lastTierAt < T.quiet * 1000) return null;
     if ((typeof fightBoss !== 'undefined' && fightBoss) || safe(() => deepActive(), false)) return null;
-    if (d.follow && TR[d.follow] && trackLive(TR[d.follow])) { const r = trackRow(TR[d.follow]); if (r.next && !r.lock) return { id: r.id, label: r.label, pct: r.pct }; }
+    if (d.follow && TR[d.follow] && trackLive(TR[d.follow]) && !raidHid(TR[d.follow])) { const r = trackRow(TR[d.follow]); if (r.next && !r.lock) return { id: r.id, label: r.label, pct: r.pct }; }
     return nearList()[0] || null;
   };
   registerGoal({

@@ -220,11 +220,11 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     n: 'Omens', bless: 'road', seal: { key: 'offline', v: 0.03, txt: '+3% away gains' }, title: 'Omenreader', pic: 'rows',
     show: () => !!S.almanac && Array.isArray(OMENS),
     tiles: x => {
-      const out = [];
+      const out = [], raidOff = typeof onlineOff === 'function' && onlineOff();   // online-off-clean: no raid words with no capability host
       for (const o of OMENS) if (omenOk(o)) {
         const seen = S.almanac.seen && o.id in S.almanac.seen ? 1 : 0;
         out.push({ key: o.id, n: o.n, got: seen, max: 1, pts: seen * 2, ptsMax: 2, ic: o.ic, grp: 'Omens seen',
-          sub: seen ? o.fx : '', hint: seen ? '' : x.exact ? 'Its day will come. The Almanac shows today and tomorrow.' : 'Comes on its own day.' });
+          sub: seen ? (raidOff && /\braid\b/i.test(o.fx) ? '' : o.fx) : '', hint: seen ? '' : x.exact ? 'Its day will come. The Almanac shows today and tomorrow.' : 'Comes on its own day.' });
       }
       for (const o of OMENS) if (o.dare && omenOk(o)) {
         const got = R().dare[o.id] ? 1 : 0;

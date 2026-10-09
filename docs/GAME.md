@@ -349,7 +349,7 @@ The world raid (`52-raid.js`, `74-ui-raid.js`), the Tavern's online parts (`74-u
 With no capability host (no `window.claude`: the Netlify build, a page opened from disk) none of it can work, so the UI leaves
 it out (`onlineOff()` in `70-ui.js`; online-off-clean, `docs/design/hosting.md` section 3): no Raid view, no Embers coin, no
 Tavern "In the tavern now" or Hall of heroes box (its perks and the rename stay), no raid group in Stats, no raid group, tracks,
-Wyrmfall or Shoulder to Shoulder in Deeds, no raid uniques on the Craft tab's wall or in its counts, no raid words in the Codex's
+Wyrmfall or Shoulder to Shoulder in Deeds (nor a raid track in Next Up), no raid uniques on the Craft tab's wall or in its counts, no raid words in the Codex's
 unique hints, no zone 12 raid notice, and The Wyrm Stirs never comes up (its day falls back to another Omen). The raid's unlock and
 everything earned stay in the save. Inside the Artifact nothing changes; the Raid view shows once the host check ends, and a
 signed-out viewer still sees how to join.

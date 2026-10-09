@@ -16583,7 +16583,7 @@ if (section('online-off-clean')) try {
     const fx = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     // host: 'none' (no window.claude), 'in' (signed in, working stubs), 'out' (the Artifact with nobody signed in: no user, so no db)
-    const run = async ({ file, host, w, h, cross }) => {
+    const run = async ({ file, host, w, h, cross, slow }) => {
       const v = `${at} (${file}, ${host === 'none' ? 'no host' : host === 'in' ? 'host, signed in' : 'host, signed out'}, ${w}x${h})`, touch = w < 1000;
       const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true });
       await ctx.addInitScript(({ raw, key, host, cross }) => {
@@ -16596,13 +16596,18 @@ if (section('online-off-clean')) try {
           room: { onPeers: () => {}, on: () => {}, presence: async () => {}, emit: async () => {} } };
         window.claude = { use: async n => caps[n] || null };
       }, { raw: fx(file), key: KEY, host, cross });
+      if (slow) await ctx.addInitScript(() => { const c = window.claude, use = c.use; c.use = n => new Promise(r => setTimeout(r, 1500)).then(() => use(n)); });
       const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
-      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(1200);
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
       const X = s => page.evaluate(s => window.__t.x(s), s);
+      const segNow = () => X(`JSON.stringify([...document.querySelectorAll('#viewSeg button')].filter(b => b.offsetParent).map(b => b.dataset.view))`).then(JSON.parse);
+      let during = null, after = null;
+      const shut = `document.querySelectorAll('.bsheet-ov').forEach(o => o.sheetApi && o.sheetApi.close(true, true)); true`;
+      if (slow) { await page.waitForTimeout(300); await X(`setTab('camp'); true`); await page.waitForTimeout(150); during = await segNow(); await page.waitForTimeout(2200); after = await segNow(); await X(shut); }
+      await page.waitForTimeout(1200);
       const hits = new Map(), bars = [];
       const scan = async where => { for (const l of (await page.evaluate(() => document.body.innerText)).split('\n')) if (RE.test(l) && !hits.has(l.trim())) hits.set(l.trim(), where); };
-      const shut = `document.querySelectorAll('.bsheet-ov').forEach(o => o.sheetApi && o.sheetApi.close(true, true)); true`;
       const away = await X(`!!document.querySelector('.away-ov')`);
       await scan('the away card');
       await X(`(() => { const b = [...document.querySelectorAll('.away-ov button')].find(b => /Got it|Collect|Continue|Close/i.test(b.textContent)); if (b) b.click(); return true; })()`);
@@ -16624,21 +16629,24 @@ if (section('online-off-clean')) try {
       for (const p of [null, ...pages]) { await X(shut); await X(`emit('codexOpen', ${JSON.stringify(p ? { page: p } : {})}); true`); await page.waitForTimeout(150); await scan('the Codex' + (p ? ' > ' + p : '')); }
       // the Codex keeps every tile (its counts and seals are the save's), and an unfound raid unique's hint names no raid
       const cxHints = JSON.parse(await X(`JSON.stringify(codexPage('uniques').tiles.filter(t => RAID_UNIQ.includes(t.key)).map(t => t.hint + ' ' + t.sub))`));
+      await X(shut); await X(`document.getElementById('nuChip').click(); true`); await page.waitForTimeout(250); await scan('Next Up');   // a followed raid track (the fixture follows Wyrmslayer)
       await X(shut); await X('openNoticeLog(); true'); await page.waitForTimeout(250); await scan('notices');
       await X(`(() => { const b = [...document.querySelectorAll('.bsheet button')].find(b => /^Journal$/.test(b.textContent.trim())); if (b) b.click(); return true; })()`); await page.waitForTimeout(400); await scan('the Journal');
       await X(shut);
+      // near: Next Up's Deeds goal, read with the boss fight paused (the goal rests during one)
       const st = JSON.parse(await X(`JSON.stringify({ coin: document.getElementById('embers').parentElement.offsetParent !== null, mode: [...document.querySelectorAll('#modeSeg button, [data-act="raid"]')].some(b => b.dataset.act === 'raid' && b.offsetParent),
         got: isUnlocked('raid'), saved: S.onboard.got.raid != null, z: S.maxZone, wyrm: S.wyrms > 0 || S.raid.gen > 0,
         stirs: Array.from({ length: 200 }, (_, i) => almanac.omenFor(deviceDay(Date.now()) + i).id).filter(id => id === 'wyrmStirs').length,
-        say: JSON.stringify(S.onboard.sayQ || []), notes: notes.log.flatMap(n => [n.msg, ...(n.msgs || []), ...(n.list || []).map(l => (l && (l.txt || l.msg)) || String(l))]).filter(t => /World raid/.test(t)).length })`));
+        say: JSON.stringify(S.onboard.sayQ || []), near: (() => { const fb = fightBoss; fightBoss = false; try { return String(GOALS.find(g => g.id === 'deeds-near').label() || ''); } finally { fightBoss = fb; } })(), notes: notes.log.flatMap(n => [n.msg, ...(n.msgs || []), ...(n.list || []).map(l => (l && (l.txt || l.msg)) || String(l))]).filter(t => /World raid/.test(t)).length })`));
       await ctx.close();
-      return { v, hits, bars, away, cxHints, st, errs };
+      return { v, hits, bars, away, cxHints, st, errs, during, after };
     };
     try {
       for (const [file, w, h, cross] of [['save-raid.json', 1280, 720], ['save-raid.json', 740, 360], ['save-raid.json', 360, 740], ['save-late.json', 1280, 720], ['save-early.json', 1280, 720, true]]) {
         const r = await run({ file, host: 'none', w, h, cross });
         const list = [...r.hits].map(([l, wh]) => `${wh}: "${l.slice(0, 90)}"`);
         assert(!list.length && !r.bars.includes('raid'), `${r.v}: no raid words on any tab, view, Deeds group, Codex page, the Journal, the notices or the away card, and no Raid view (${r.bars.length} views opened, away card ${r.away ? 'shown' : 'not shown'})` + (list.length ? ': ' + list.slice(0, 6).join('; ') : ''));
+        assert(!RE.test(r.st.near), `${r.v}: Next Up's Deeds goal never names a raid track, followed or near ("${r.st.near}")`);
         assert(!r.st.coin && !r.st.mode, `${r.v}: the Embers coin and a Raid mode button are not shown (coin ${r.st.coin}, button ${r.st.mode})`);
         assert(r.st.got && r.st.saved && r.st.z >= 12, `${r.v}: the raid's unlock is still saved, so the save keeps the raid back in the Artifact (unlocked ${r.st.got}, saved ${r.st.saved}, zone ${r.st.z})`);
         assert(!r.st.stirs && r.cxHints.every(t => !RE.test(t)), `${r.v}: no day of the next 200 is The Wyrm Stirs and the Codex's raid uniques name no raid (${r.st.stirs} days; ${JSON.stringify(r.cxHints.slice(0, 2))})`);
@@ -16649,6 +16657,10 @@ if (section('online-off-clean')) try {
       const a = await run({ file: 'save-raid.json', host: 'in', w: 1280, h: 720 });
       assert(a.bars.includes('raid') && [...a.hits.keys()].some(l => /^March to the raid$/i.test(l)) && a.st.coin && a.st.stirs > 0 && a.cxHints.some(t => RE.test(t)),
         `${a.v} (mutation): the Raid view, its March button, the Embers coin, The Wyrm Stirs and the Codex's raid hints are all there (views ${a.bars.includes('raid')}, coin ${a.st.coin}, ${a.st.stirs} Wyrm days)`);
+      assert(RE.test(a.st.near), `${a.v} (mutation): Next Up's Deeds goal names the followed raid track ("${a.st.near}")`);
+      // the host check takes 1.5 s: the Camp bar holds no Raid while it runs, then gains it with no tab change (ui() rebuilds the bar)
+      const sl = await run({ file: 'save-raid.json', host: 'in', w: 740, h: 360, slow: true });
+      assert(sl.during && !sl.during.includes('raid') && sl.during.includes('camp') && sl.after.includes('raid'), `${sl.v} (mutation, slow host): no Raid view while the host check runs, then it joins the open bar (${JSON.stringify(sl.during)} then ${JSON.stringify(sl.after)})`);
       const o = await run({ file: 'save-raid.json', host: 'out', w: 1280, h: 720 });
       const words = [...o.hits.keys()];
       assert(o.bars.includes('raid') && words.includes('The shared world is out of reach') && words.some(l => /opened from its Claude link while signed in/.test(l)),
