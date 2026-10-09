@@ -95,3 +95,18 @@ Bytes (from `docs/design/page-bytes.md` section 2 and its hero-pack row; not re-
   different look, which art-direction-v2's sample test and art-scale-ruling decide.
 - **Codex time** (`art-direction-v2.md` section 2): about 6 to 12 h for the three heroes at 2x, and every foe still to
   come at the same scale, about 20 to 60 h more across Chapter 1.
+
+## Window sizes the red team asked for (re-measured)
+
+The red team pointed out that a maximized browser on a 1080p monitor is about 1920x950, not 1920x1080. Same mock, same save:
+
+| Window | Keep | x3 at 1280 | x4 at 1920 |
+|---|---|---|---|
+| 1920x950 (maximized 1080p) | x3, 303 px, 34% | x4, 404 px, 46% | **x3**, 303 px, 34% (no change) |
+| 1600x900 | x2, 202 px, 24% | x3, 303 px, 36% | x3, 303 px, 36% |
+| 1440x900 | x2, 202 px, 24% | x3, 303 px, 36% | x2, 202 px, 24% |
+| 1366x768 | x2, 202 px, 28% | x3, 303 px, 43% | x2, 202 px, 28% |
+| 2560x1440 | x4, 404 px, 29% | x4 | x4 |
+
+So "x4 at 1920" only changes a full-screen 1920x1080 (and flips 1600x900 to x3, which the desktop-layout check pins at x2);
+"x3 at 1280" changes most laptop windows and has 1 px of height slack at 1280x720. A 2560x1440 screen already draws x4 today.
