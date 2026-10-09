@@ -211,8 +211,8 @@ Other "Tap" and "Hold" lines (about 66, 14 of them in `75-onboard-ui.js`) wait f
    attributes moved into their tips, so the browser's own tooltip does not double them.
 2. **neutral-wording (P2):** the remaining "Tap" and "Hold" lines, after the onboard cards running now merge (they own
    `75-onboard-ui.js`).
-3. **upright-tablet (P2):** 768x1024 gets something better than the 560 px strip (`10-base.css:48-51`). That card picks
-   the design. Until then 768x1024 stays as today (the strip, a 536x638 stage at x1), which plays.
+3. **upright-tablet (P2, done):** 768x1024 and wider upright screens drop the 560 px strip and use the portrait layout at
+   full width (`docs/design/layout.md`, "Upright tablets").
 4. **desktop-views-2 (P2):** Stars, Store, Uniques, Camp, Build and the Codex as desktop panels; keys for views
    (for example `[` and `]`); any grid v1 cut (4).
 

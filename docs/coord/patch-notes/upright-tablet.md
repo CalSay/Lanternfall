@@ -1,0 +1,1 @@
+On a tablet held upright, the game now uses the whole screen: the fight, the menus and item cards are as wide as the tablet, the fight buttons are bigger, and the hero picker shows two heroes side by side. Best shot: hero.
