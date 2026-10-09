@@ -14944,13 +14944,15 @@ if (section('fight-input-during-banner')) try {
 // says what its next +1 adds to the main line in that line's own unit (a capped line says so); "tier", not "grade", for the
 // material step on screen. On save-refine (Forge and Workbench Lv 2, no Ingots or Planks). ----
 if (section('craft-shortfall-offer')) try {
-  // no player-visible string uses "grade" (the code names GRADE_SHORT, cf-grade, storeShelfGrade and a parry's p.grade stay)
+  // no player-visible string uses "grade" (the code names GRADE_SHORT, cf-grade, storeShelfGrade and a parry's p.grade stay);
+  // "grade" for the craft letter D to S (craft-attribute-grades) is the word's one meaning on screen and stays
+  const GRADE_LETTER = /\bgrades?\s+(?:[A-DS]\b|\$\{|as\b|and power)|GRADE\[|\btop grade\b|CRAFT_TUNE\.grades/i;
   const bad = [];
   for (const f of fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js'))) {
     fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').split('\n').forEach((l, i) => {
       if (/^\s*(\/\/|\*)/.test(l)) return;
       const code = l.replace(/\s\/\/ .*$/, '');
-      for (const m of code.matchAll(/(['"`])((?:(?!\1)[^\\]|\\.)*)\1/g)) if (/\bgrades?\b/i.test(m[2]) && !/\.grade\b|cf-grade|\bp\.grade|=== /.test(m[2])) bad.push(`${f}:${i + 1} ${m[0].slice(0, 60)}`);
+      for (const m of code.matchAll(/(['"`])((?:(?!\1)[^\\]|\\.)*)\1/g)) if (/\bgrades?\b/i.test(m[2]) && !/\.grade\b|cf-grade|\bp\.grade|=== /.test(m[2]) && !GRADE_LETTER.test(m[2])) bad.push(`${f}:${i + 1} ${m[0].slice(0, 60)}`);
     });
   }
   assert(!bad.length, 'craft-shortfall-offer: no player-visible text says "grade" for the material step' + (bad.length ? ': ' + bad.slice(0, 4).join('; ') : ''));
