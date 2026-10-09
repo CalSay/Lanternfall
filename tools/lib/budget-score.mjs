@@ -103,3 +103,30 @@ export function verdict(T, c, b, today) {
   if (wall) return { label: `FAIL (a wall: ${r2(c.value)} casual wins)`, fail: true };
   return Math.abs(off) > tol ? { label: `FAIL (out of band by ${r2(Math.abs(off))}, allowed ${r2(tol)})`, fail: true } : { label: 'ok (edge)', fail: false };
 }
+
+// the shape block (boss-tier-shape-report; here so health.mjs can rebuild it over its merged one-hero runs): zones 4-26, one boss row a zone (gated, but z4, z25 and z26 are report rows) (the -arrival row where there is one, else zN-boss), the
+// mean of the heroes run. ratio: boss HP over the ordinary foe's; turns and win: the casual's; hit: the heaviest landed hit and what sets it;
+// step (a Champion by bossTierOf): its casual win less the mean of its two neighbour zones' (the Captains either side).
+export const SHAPE_ZONES = Array.from({ length: 23 }, (_, i) => i + 4);
+export function shapeBlock(rep) {
+  const hs = rep.heroes, mean = a => { const v = a.filter(x => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+  const rowOf = z => rep.rows.find(r => r.id === `z${z}-boss-arrival`) || rep.rows.find(r => r.id === `z${z}-boss`);
+  const out = [];
+  for (const z of SHAPE_ZONES) {
+    const r = rowOf(z);
+    if (!r || !hs.every(h => r.perHero[h] && r.perHero[h].shape)) continue;
+    const sh = h => r.perHero[h].shape, s0 = sh(hs[0]);
+    out.push({ zone: z, row: r.id, tier: s0.tier, boss: r.perHero[hs[0]].foe, gates: s0.gates, foe: s0.foeName,
+      hp: Object.fromEntries(hs.map(h => [h, sh(h).hp])), foeHp: Object.fromEntries(hs.map(h => [h, sh(h).foeHp])),
+      ...(s0.foeHpNext ? { foeNext: s0.foeNameNext, foeHpNext: Object.fromEntries(hs.map(h => [h, sh(h).foeHpNext])) } : {}),
+      ratio: Object.fromEntries(hs.map(h => [h, sh(h).ratio])),
+      turns: Object.fromEntries(hs.map(h => [h, r.perHero[h].casual.turns])), win: Object.fromEntries(hs.map(h => [h, r.perHero[h].casual.win])),
+      hit: Object.fromEntries(hs.map(h => [h, { own: sh(h).own, floor: sh(h).floor, foot: sh(h).foot, landed: sh(h).landed, set: sh(h).set }])),
+      winMean: mean(hs.map(h => r.perHero[h].casual.win)) });
+  }
+  for (const s of out) if (s.tier === 'champion') {
+    const nb = [s.zone - 1, s.zone + 1].map(z => out.find(x => x.zone === z)).filter(Boolean);
+    if (nb.length === 2 && s.winMean != null) s.step = { captains: nb.map(x => x.zone), captainWin: mean(nb.map(x => x.winMean)), d: s.winMean - mean(nb.map(x => x.winMean)) };
+  }
+  return out;
+}
