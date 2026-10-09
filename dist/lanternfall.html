@@ -2407,12 +2407,13 @@ span.cf-d { font-weight: 600; }
   .mm-ov, .mm-card, .mm-img { animation: none; }
   .mm-burst { display: none; }
 }
-/* 740x360: the card is short, so the art shrinks */
-@media (max-height: 420px) { .mm-art { width: 72px; height: 64px; } .mm-img { width: 44px; height: 44px; } .mm-card { gap: 5px; padding: 10px 12px; } }
-@media (max-height: 420px) { .mm-card.has-pick .mm-art, .mm-card.has-pick .mm-say { display: none; } .mm-pick { min-height: 0; padding: 4px 8px; } }
+/* landscape phones up to 500 px tall (740x360 to 932x430, the landscape layout's own 500 px line in 80-landscape): the card is short, so the art
+   shrinks (moment-card-short-landscape; at 420 px the 926x428 and 932x430 phones drew it full size and scrolled it 196 px) */
+@media (max-height: 500px) { .mm-art { width: 72px; height: 64px; } .mm-img { width: 44px; height: 44px; } .mm-card { gap: 5px; padding: 10px 12px; } }
+@media (max-height: 500px) { .mm-card.has-pick .mm-art, .mm-card.has-pick .mm-say { display: none; } .mm-pick { min-height: 0; padding: 4px 8px; } }
 /* spoils-card-fits-with-unique: a unique adds its line and an Equip button to the pick card, so on a short screen the card widens (each
    move's line stays on one row), the list tightens and Equip sits beside Keep the Scroll; nothing is dropped */
-@media (max-height: 420px) {
+@media (max-height: 500px) {
   .mm-card.has-pick { width: min(680px, 100%); }
   .mm-card.has-pick .mm-head { font-size: max(var(--tmin, 0px), calc((20px * var(--display-k)) * var(--tk, 1))); }
   .mm-card.has-pick .mm-list { gap: 3px; padding: 5px 10px; }
@@ -2428,7 +2429,7 @@ span.cf-d { font-weight: 600; }
 .mm-t-say { font-size: max(var(--tmin, 0px), calc(12.5px * var(--tk, 1))); font-style: italic; color: var(--bone); }
 .gl-say { margin: 0; font-size: max(var(--tmin, 0px), calc(13.5px * var(--tk, 1))); font-style: italic; color: var(--bone); }
 .cs-rec { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: max(var(--tmin, 0px), calc(13.5px * var(--tk, 1))); color: var(--bone); }
-@media (max-height: 420px) { .mm-say { padding: 4px 8px; } .mm-say-pt { width: 28px; height: 28px; } .mm-say-tx p { font-size: max(var(--tmin, 0px), calc(12.5px * var(--tk, 1))); } .mm-say-tx small { display: none; } }
+@media (max-height: 500px) { .mm-say { padding: 4px 8px; } .mm-say-pt { width: 28px; height: 28px; } .mm-say-tx p { font-size: max(var(--tmin, 0px), calc(12.5px * var(--tk, 1))); } .mm-say-tx small { display: none; } }
 /* 60-nav: global navigation (UX-A, 75-nav-ui.js; docs/design/ux-overhaul.md 4): the activity pill
    in the header (two variants, NAV_TUNE.pillReplacesName), the Switch button on the control row,
    the quick switcher sheet, and the fade when a swipe changes the view. */

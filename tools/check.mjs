@@ -75,7 +75,7 @@ const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '
 const WEIGHT = {
   'forge-line-while-fighting': 133, 'W1-D (browser)': 111, 'staged guide follow-ups (browser)': 90, 'moment layer': 79,
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
-  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 14, 'landscape 740x360 (browser, UX-L1)': 55,
+  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
   'turn UI (browser)': 50, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
@@ -15434,7 +15434,10 @@ if (section('spoils-card-fits-with-unique')) try {
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe });
     try {
-      for (const [w, h] of [[740, 360], [1280, 720], [360, 740]]) {
+      // moment-card-short-landscape: 932x430 and 926x428 (taller than the old 420 px compact line) must fit too; 568x320 and 360x640 are
+      // too short for the whole card, so there the first button shows without scrolling and every other one scrolls into view
+      const tight = (w, h) => (w === 568 && h === 320) || (w === 360 && h === 640);
+      for (const [w, h] of [[740, 360], [932, 430], [926, 428], [568, 320], [1280, 720], [360, 740], [360, 640]]) {
         const vw = `${at} ${w}x${h}`;
         const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
         await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
@@ -15453,12 +15456,21 @@ if (section('spoils-card-fits-with-unique')) try {
           const btns = [...o.querySelectorAll('.mm-pick, .mm-act, .mm-go')], uq = [...o.querySelectorAll('.mm-list li')].find(li => /A unique\\./.test(li.textContent));
           return { up: true, uq: uq ? uq.textContent : '', picks: [...o.querySelectorAll('.mm-pick b')].map(b => b.textContent), acts: [...o.querySelectorAll('.mm-act')].map(b => b.textContent),
             go: (o.querySelector('.mm-go') || {}).textContent, scroll: card.scrollHeight - card.clientHeight, card: inView(card), btns: btns.map(b => b.textContent.slice(0, 18) + ':' + inView(b)),
-            allIn: btns.every(inView) && (!uq || inView(uq)), h: Math.round(card.getBoundingClientRect().height) }; })()`);
+            allIn: btns.every(inView) && (!uq || inView(uq)), first: !!btns[0] && inView(btns[0]), top: card.scrollTop, h: Math.round(card.getBoundingClientRect().height) }; })()`);
         assert(c.up && c.uq && c.picks.length === 3 && c.go === 'Keep the Scroll' && c.acts.some(t => /^Equip/.test(t)),
           `${vw}: the card holds the unique line, its Equip button, three moves and Keep the Scroll (${JSON.stringify({ up: c.up, uq: c.uq, picks: c.picks, acts: c.acts, go: c.go })})`);
         // 360x740: the base card already reached its height cap there (1 px of scroll, the font fallback can move it), so only being in view counts
-        assert(c.card && c.allIn && (w === 360 || c.scroll <= 1), `${vw}: the unique line, every pick, Equip and Keep the Scroll are on screen${w === 360 ? '' : ' and the card does not scroll'} (${JSON.stringify({ h: c.h, scroll: c.scroll, btns: c.btns })})`);
-        if (w !== 360) await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'spoils-card-fits-with-unique', `check-card-${w}x${h}.png`) });
+        if (!tight(w, h)) assert(c.card && c.allIn && c.top === 0 && (w === 360 || c.scroll <= 1), `${vw}: the unique line, every pick, Equip and Keep the Scroll are on screen${w === 360 ? '' : ' and the card does not scroll'} (${JSON.stringify({ h: c.h, scroll: c.scroll, top: c.top, btns: c.btns })})`);
+        else {
+          // the unique line and each button scroll into the card's view in turn (scrollIntoView moves the card only: the overlay is fixed), then the card goes back to the top
+          const reach = await X(`(() => { const o = document.querySelector('.mm-ov'), card = o.querySelector('.mm-card');
+            const inView = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1; };
+            const uq = [...o.querySelectorAll('.mm-list li')].find(li => /A unique\\./.test(li.textContent));
+            const out = [uq, ...o.querySelectorAll('.mm-pick, .mm-act, .mm-go')].filter(Boolean).map(b => { b.scrollIntoView({ block: 'nearest' }); return b.textContent.slice(0, 18) + ':' + inView(b); });
+            card.scrollTop = 0; return out; })()`);
+          assert(c.card && c.top === 0 && c.first && reach.every(t => t.endsWith(':true')), `${vw}: the card opens at its top with the first button on screen, and every button scrolls into view (${JSON.stringify({ h: c.h, scroll: c.scroll, btns: c.btns, reach })})`);
+        }
+        if ([[740, 360], [932, 430], [568, 320], [1280, 720]].some(([a, b]) => a === w && b === h)) await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'spoils-card-fits-with-unique', `check-card-${w}x${h}.png`) });
         await page.click('.mm-ov .mm-go'); await page.waitForTimeout(200);
         assert(!(await X('!!document.querySelector(".mm-ov")')) && (await X('scrollCount("hollow")')) === 1, `${vw}: Keep the Scroll closes the card and keeps the Scroll`);
         assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
