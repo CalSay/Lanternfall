@@ -150,6 +150,21 @@
   .bsheet { height: 94%; }
   .bsheet.small { max-height: 94%; }
 }
+/* ---- upright-tablet (768x1024 and up, held upright): the portrait layout, using the screen's whole width instead of the
+   560 px phone strip. The landscape layout is not used here: its rail and side column (64 + 256 px) would leave a 448 px stage
+   at 768 wide, narrower than the strip, and the game's isWide() (70-ui WIDE_Q) and the stage zoom stay portrait. So the menus,
+   the stage span the width, the fight bar grows, and a sheet (60-party.css) opens wide too. An exactly square window is
+   landscape. Phones (under 700 px wide) never match. ---- */
+@media (min-width: 700px) and (not (min-aspect-ratio: 1/1)) {
+  .app { --gut: 16px; max-width: none; }
+  /* the fight bar: bigger slots for two thumbs (352 px on a phone) */
+  .sbar { --sb-tile: 112px; }
+  .sb-tabs, .sb-pane, .sb-row { width: min(100%, 480px); }
+  /* Hero > Abilities is wide enough here for the desktop's list-beside-detail (60-abilities @container ab); beside the open
+     detail the filters wrap and a name takes two lines, as on desktop, never "Can learn..." */
+  .ab-filt { grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr)); }
+  .ab-rt b { white-space: normal; overflow-wrap: anywhere; }
+}
 /* phones on their side: the stage's sky is short, so the combat info sits in two plates (hero left, foe right) */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
   .hud::before { height: 48px; }
