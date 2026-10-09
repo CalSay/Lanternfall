@@ -66,7 +66,7 @@ function awayChipText() {
   if (S.activity !== 'gather') return '';
   const { kind, t: tier } = S.node;
   const boost = (1 + gear().offline / 100) * mod('offline');
-  const hrs = 4 + 2 * S.relic.glass + bonus('awayHours');
+  const hrs = awayCapH();
   let n = Math.floor(3600 / nodeTime(kind, tier) * boost * nodeYieldAvg(kind) * mod('yield:' + kind) * hrs);
   // A pile that fills mid-away: Spillover moves on to the next node (amounts then differ), otherwise the rest is lost.
   const room = stashRoom(kind, tier);

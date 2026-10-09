@@ -1287,6 +1287,24 @@ if (section('camp')) try {
   const r2 = JSON.parse(E('JSON.stringify(awayGains(48 * 3600))'));
   assert(r2.t === 24 * 3600 && r2.cap === 24 * 3600, `away cap never above 24h (Hourglass 5 + Watchtower 5 + another +7h: ${r2.t / 3600}h)`);
   E('S.camp.b.hearth = 0; S.camp.b.watch = 0; S.relic.glass = 0');
+  // first-night-covered (ruling 2026-10-08): the hero works 8 h away with no building; Watchtower and Hourglass +2 h a level, 24 h at most.
+  {
+    const n = loadCore({ seed: 11 }), N = s => n.eval(s);
+    N('S.maxZone = 10; S.camp.open = true; Object.assign(S.camp.b, { hearth: 2, store: 1, watch: 0 }); S.relic.glass = 0');
+    const away = h => JSON.parse(N(`JSON.stringify((({ t, cap, capped }) => ({ t, cap, capped }))(awayGains(${h} * 3600)))`));
+    const a8 = away(8), a12 = away(12);
+    assert(N('AWAY_BASE_H') === 8 && a8.t === 28800 && a8.cap === 28800 && !a8.capped, `first-hour save (Storehouse 1, no Watchtower): an 8 h night is credited in full (${a8.t} s, capped ${a8.capped})`);
+    assert(a12.t === 28800 && a12.capped, `the same save away 12 h: 8 h credited and the limit shows (${a12.t} s, capped ${a12.capped})`);
+    const capAt = (w, gl) => { N(`S.camp.b.hearth = 8; S.camp.b.watch = ${w}; S.relic.glass = ${gl}`); return away(30).t / 3600; };
+    const w4 = capAt(4, 0), w5 = capAt(5, 0), w5g5 = capAt(5, 5);
+    // the raid hit away keeps its old 4 h base (online layer out of scope): 8 h away deals what 4 h does
+    N('S.camp.b.watch = 0; S.relic.glass = 0; S.activity = "raid"');
+    const raidAway = h => { const d0 = +N('S.raid.dmg') || 0; N(`awayGains(${h} * 3600)`); return (+N('S.raid.dmg') || 0) - d0; };
+    const r4 = raidAway(4), r8 = raidAway(8), r3 = raidAway(3);
+    assert(r4 > 0 && Math.abs(r8 - r4) <= r4 * 1e-9 && r3 < r4, `an away raid hit still stops at 4 h with no building (3 h ${Math.round(r3)}, 4 h ${Math.round(r4)}, 8 h ${Math.round(r8)})`);
+    assert(w4 === 16 && w5 === 18 && w5g5 === 24, `Watchtower 4 credits 16 h, Watchtower 5 18 h, Watchtower 5 + Hourglass 5 24 h (${w4}, ${w5}, ${w5g5})`);
+    assert(!n.errors.length, 'away limit core: no errors ' + n.errors.slice(0, 2).join('; '));
+  }
   E('almanac.force("none")'); E('Object.assign(S.camp.b, { hearth: 0, forge: 1, bench: 1, loom: 1, ench: 1, library: 0, tavern: 1 })');
   const base = JSON.parse(E('JSON.stringify({ sx: mod("skillXp:smith"), sv: mod("salvage"), rf: mod("reforge"), ts: bonus("transmuteSave"), rw: mod("rareW"), off: mod("offline"), gx: mod("skillXp:mine"), cx: mod("xp"), bp: mod("bountyPay") })'));
   E('Object.assign(S.camp.b, { hearth: 10, forge: 5, bench: 5, loom: 5, ench: 5, library: 5, tavern: 4 })');
@@ -8491,7 +8509,7 @@ if (section('offline accounting and schedules (C14)')) try {
   for (const secs of AUDIT_SPANS) {
     const off = offlineRun(raw, secs), s = off.state, h = secs / 3600;
     const shifts = secs >= 30600 ? 2 : secs >= 14400 ? 1 : 0;
-    assert(off.report.t === Math.min(secs, 14400) && s.workerHours === shifts * 4 && s.workerUnits === shifts * 1698 && s.gathered === s.heroUnits,
+    assert(off.report.t === Math.min(secs, 28800) && s.workerHours === shifts * 4 && s.workerUnits === shifts * 1698 && s.gathered === s.heroUnits,
       `C14 ${h}h: hero work respects its cap; paid worker shifts follow their own schedule without adding hero Gathered units`);
     assert(s.trade.trips === +(secs >= 7200) && s.trade.gold === (secs >= 7200 ? 300 : 0), `C14 ${h}h: the reserved trade settles at its two-hour deadline exactly once`);
     assert(s.camp.bench === 2 && s.camp.forge === (secs >= 2400 ? 2 : 1) && s.builds.length === +(secs < 2400), `C14 ${h}h: both camp builds retain their ordered twenty-minute schedules`);
@@ -15266,6 +15284,80 @@ if (section('upgrade-gold-covers-short')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('upgrade-gold-covers-short crashed: ' + (e.stack || e)); }
+
+// ==== menu-tip-room: Hesketh's panel over a menu is a compact strip, and "Fireball" and "Can learn N" read in full ====
+// save-pip-points: save-flow-points with Pip (Fireball in Q), tips on, 12 attribute points free at the upgrade step. Spent, the menu still
+// open, he says to close it (the `back` line, with Back to the fight). save-forge-short gives a materials line with a Go on Gather.
+if (section('menu-tip-room')) try {
+  const at = 'menu-tip-room', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const fx = n => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', `save-${n}.json`), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (raw, w, h) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: 'reduce', turns: true });
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const click = async sel => { await page.evaluate(s => { const e = document.querySelector(s); if (!e) throw new Error('no ' + s); e.click(); }, sel); await page.waitForTimeout(400); };
+      return { ctx, page, errs, X, click };
+    };
+    const box = sel => `(e => { if (!e || e.hidden) return null; const r = e.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height), w: Math.round(r.width) }; })(document.querySelector(${JSON.stringify(sel)}))`;
+    const panel = `JSON.stringify({ cls: document.querySelector('.ob-bub').className, txt: document.querySelector('.ob-txt').textContent, bub: ${box('.ob-bub')}, face: ${box('.ob-face')}, t: ${box('.ob-txt')}, ok: ${box('.ob-ok')}, x: ${box('.ob-x')}, tabs: ${box('.tabs')} })`;
+    const fits = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].map(e => [e.textContent, e.scrollWidth, e.clientWidth]))`;
+    const waitFor = async (X, src, ms = 6000) => { for (let t = 0; t < ms; t += 200) { if (await X(src)) return true; await new Promise(r => setTimeout(r, 200)); } return false; };
+    try {
+      { // 360x740, Pip: the back line over Hero > Abilities
+        const v = `${at} (browser 360x740, Pip)`, { ctx, page, errs, X, click } = await open(fx('pip-points'), 360, 740);
+        await click('.tab[data-tab="party"]'); await click('#viewSeg button[data-view="attributes"]');
+        await click('#attrRows .at-row[data-at="might"] .at-add[data-n="1"]'); await click('#attrRows ~ .at-acts .at-spread');
+        await click('#viewSeg button[data-view="abilities"]');
+        const up = await waitFor(X, `/close the menu/.test(document.querySelector('.ob-bub:not([hidden]) .ob-txt')?.textContent || '')`);
+        const p = JSON.parse(await X(panel));
+        assert(up && /over-menu/.test(p.cls) && /Back to the fight/.test(await X(`document.querySelector('.ob-ok').textContent`)), `${v}: the back line is up over the menu with its button (${p.cls}: "${p.txt}")`);
+        assert(p.bub && p.bub.h <= 96 && p.face && p.face.w === 32 && p.ok && p.ok.h >= 44 && p.x && p.x.h >= 44 && p.x.w >= 44, `${v}: the panel is at most 96 px tall, his face 32 px, the button and × at least 44 px (${JSON.stringify(p)})`);
+        assert(p.bub.bottom <= p.tabs.top, `${v}: the panel stays above the tab bar (${p.bub.bottom} <= ${p.tabs.top})`);
+        // Fireball's card: scroll its talents into view; both sit wholly above the panel and nothing covers them
+        await click('.ab-row[data-ab="fire"]');
+        const tal = JSON.parse(await X(`(() => { const t = document.querySelector('.ab-det .ab-tal'); if (!t) return 'null'; t.scrollIntoView({ block: 'nearest' }); const top = document.querySelector('.ob-bub').getBoundingClientRect().top;
+          return JSON.stringify({ top: Math.round(top), cards: [...t.querySelectorAll('.ab-talb')].map(b => { const r = b.getBoundingClientRect(), e = document.elementFromPoint(r.left + r.width / 2, r.bottom - 4); return { top: Math.round(r.top), bottom: Math.round(r.bottom), hit: !!e && b.contains(e) }; }) }); })()`));
+        assert(tal && tal.cards.length === 2 && tal.cards.every(c => c.bottom <= tal.top && c.top >= 0 && c.hit), `${v}: both Fireball talent cards are wholly above the panel and not covered (${JSON.stringify(tal)})`);
+        const filt = JSON.parse(await X(fits('.ab-fb')));
+        const can = filt.find(f => /^Can learn \d+$/.test(f[0]));
+        assert(can && filt.every(f => f[1] <= f[2]), `${v}: every filter label reads in full, "Can learn N" too (${JSON.stringify(filt)})`);
+        // the fight bar: Fireball, and every hero's starter ability name, read in full
+        await click('#menuX'); await page.waitForTimeout(400);
+        const bar = JSON.parse(await X(fits('#soloBar .sb-abslot:not(.empty) .sb-lb')));
+        assert(bar.length && bar.some(b => b[0] === 'Fireball') && bar.every(b => b[1] <= b[2]), `${v}: "Fireball" on the fight bar is not cut (${JSON.stringify(bar)})`);
+        const starters = JSON.parse(await X(`(() => { const lb = document.querySelector('#soloBar .sb-abslot .sb-lb'), keep = lb.textContent, out = [];
+          for (const h of ['wren', 'tobin', 'pip']) { const id = S.solo.eq[h][0], nm = ABILITIES[id].name; lb.textContent = nm; out.push([nm, lb.scrollWidth, lb.clientWidth, lb.scrollHeight, lb.clientHeight, lb.closest('.sbtn').scrollHeight <= lb.closest('.sbtn').clientHeight]); }
+          lb.textContent = keep; return JSON.stringify(out); })()`));
+        assert(starters.length === 3 && starters.every(s => s[1] <= s[2] && s[3] <= s[4] && s[5]), `${v}: every starter ability name reads in full inside its tile (${JSON.stringify(starters)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      for (const [w, h] of [[360, 740], [740, 360]]) { // a materials line with its Go on Gather: compact upright; the side column unchanged in landscape
+        const v = `${at} (browser ${w}x${h}, Gather)`, { ctx, errs, X } = await open(fx('forge-short'), w, h);
+        await X('S.activity = "gather"; S.node = { kind: "wood", t: 1 }; setTab("gat"); ui(true); true');
+        const up = await waitFor(X, `/Copper Vein/.test(document.querySelector('.ob-bub:not([hidden]) .ob-txt')?.textContent || '')`);
+        const p = JSON.parse(await X(panel));
+        // the check runs without the game's web fonts: CI's fallback (DejaVu Sans) is far wider than Barlow Semi Condensed and wraps this
+        // 104-letter line to six lines, so past 96 px the strip may be only as tall as its text (the face, × and Go never add height)
+        if (w < h) assert(up && /over-menu/.test(p.cls) && p.bub.h <= Math.max(96, p.t.h + 16) && p.ok && p.ok.h >= 44 && p.x && p.x.w >= 44 && p.bub.bottom <= p.tabs.top,
+          `${v}: the materials line with its Go is at most 96 px tall over Gather, or no taller than its text (${JSON.stringify(p)})`);
+        else { const cols = await X(`getComputedStyle(document.querySelector('.ob-bub')).gridTemplateColumns`);
+          assert(up && /\bside\b/.test(p.cls) && !/over-menu/.test(p.cls) && p.face && p.face.w > 32 && !/^44px/.test(cols),
+            `${v}: landscape keeps the side column, none of the upright strip's sizes (${cols}; ${JSON.stringify(p)})`); }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('menu-tip-room crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

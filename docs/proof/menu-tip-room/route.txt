@@ -1,0 +1,30 @@
+# seed: 1
+# Proof for card menu-tip-room. The fixture (save-pip-points): save-flow-points with Pip, Fireball in Q, tips on, 12 attribute points
+# free at the upgrade step. Hero, Build, one point in Might and Spread evenly spend them all; with the Hero menu still over the fight
+# Hesketh says to close it (the `back` line, Back to the fight). Upright his panel is a compact strip under the menu (at most 96 px at
+# 360x740, was 108 px), so the menu keeps 16 px more (Fireball's talents still sit at the foot of its card; tools/check.mjs scrolls the card and finds both clear of the panel). Closing the menu shows "Fireball" in full on the fight
+# bar; the Abilities filter reads "Can learn 0" in full. Landscape and desktop keep his side column as it was (his line waits for the
+# gap after the foe there, as every 'between' line does).
+# Sizes, the long materials line on Gather and the starter names are held by tools/check.mjs "menu-tip-room".
+new pip-points
+wait 2
+tap-if "Continue"
+tap "Hero"
+wait 1
+tap "Build"
+wait 1
+tap "Add 1 point to Might"
+wait 1
+tap "Spread evenly"
+wait 1
+tap "Abilities"
+wait 1
+shot abilities-strip
+expect "Can learn 0"
+tap "Fireball"
+wait 1
+shot fireball-card
+tap "Close menu"
+wait 1
+expect "Fireball"
+shot fight-bar

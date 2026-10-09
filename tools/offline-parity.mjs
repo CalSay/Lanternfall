@@ -41,7 +41,7 @@ export function offlineSnapshot(g) {
     worker:handsGet('tam'),trade:S.trade,builds:S.camp.builds,camp:S.camp.b,
     applicants:S.hands.board.apps.map(a=>({id:a.id,key:a.key,at:a.at})),
     hands:S.hands.list.map(h=>({id:h.id,n:h.n,role:h.job&&h.job.role,jobEnd:h.job&&h.job.end,hrs:h.hrs,got:h.got})),rook:S.tavernLeads.rookSecs,
-    cap:(4+2*S.relic.glass+bonus('awayHours'))*3600,boost:mod('offline')*(1+gear().offline/100),
+    cap:awayCapH()*3600,boost:mod('offline')*(1+gear().offline/100),
     hold:S.activity==='fight'?partyHoldEstimate(S.zone):null,
     refined:STOCK_FAMILIES.filter(f=>REFINE_RAW[f]).reduce((a,f)=>a+S.mats[f].reduce((x,y)=>x+y,0),0),
     middles:Object.fromEntries(REFINED_FAMILIES.map(f=>[f,S.mats[f].slice()])),coal:S.mats.coal[0],

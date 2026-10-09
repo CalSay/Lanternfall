@@ -34,7 +34,7 @@
 
 // The cap table (owner, 2026-09-28: "an idle game: the Storehouse should scale up quite quickly;
 // meaningful, not ridiculous, never so small it's only worth idling for 10 minutes").
-// Rules: (1) Lv 1, built about minute 5-12 of a new game, holds a full 8 h away session at the best
+// Rules: (1) Lv 1, built about minute 5-12 of a new game, holds a full away session (h) at the best
 // tier then; (2) each later level holds a full away session (the away cap it can have by then) on the
 // best node the pacing expects at that level, so a full away session never overflows the cell you
 // gather; (3) the cap still matters in active play (tapping about doubles the rate); (4) builds are
@@ -46,21 +46,21 @@
 // haul fits caps[L]. Rates (units an hour, away, from that check): see the doc table.
 const STORE_TUNE = {
   on: 1,                   // 0: no caps at all (tools/sim.mjs --store 0)
-  caps: [5000, 40000, 50000, 100000, 200000, 300000, 750000, 1250000, 2500000],   // gathered cap by level 0..8
+  caps: [5000, 50000, 60000, 110000, 250000, 350000, 800000, 1250000, 2500000],   // gathered cap by level 0..8 (raised with the 8 h away base)
   group: { ore: 1, wood: 1, crystal: 1, fibre: 1, herb: 1, hide: 0.5, ess: 0.5, pearl: 0.5, fish: 0.5,
     ingot: 0.5, plank: 0.5, cloth: 0.5, leather: 0.5, coal: 1 },   // refine-queues: refined goods hold half; coal (one grade) as ore
   tierMult: [1, 1, 1, 1, 1],
-  // h: the away cap the player can have at Hearth L (4 h + Watchtower 2 h a level, Watchtower Lv w
-  // needs Hearth 1/2/4/6/8, plus Hourglass relics; 24 h at most), rounded up. The rest is the upper
+  // h: the away cap the player can have at Hearth L (8 h base + Watchtower 2 h a level, Watchtower Lv w
+  // needs Hearth 1/2/4/6/8, plus Hourglass relics; 24 h at most), rounded up (first-night-covered). The rest is the upper
   // edge of the sim's four classes on the day they reach Hearth L (--store 0 --days 30).
   pace: [null,
-    { h: 8, t: 1, lv: 25, tool: [1, 'rare', 3], m: 3, hl: 1 },
-    { h: 8, t: 2, lv: 40, tool: [2, 'rare', 3], m: 10, hl: 2 },
-    { h: 10, t: 3, lv: 50, tool: [3, 'rare', 6], m: 15, hl: 3 },
-    { h: 12, t: 3, lv: 74, tool: [3, 'epic', 10], m: 19, hl: 4 },
-    { h: 14, t: 4, lv: 90, tool: [4, 'rare', 10], m: 20, hl: 5 },
-    { h: 16, t: 4, lv: 110, tool: [5, 'rare', 10], m: 20, hl: 6 },
-    { h: 20, t: 5, lv: 135, tool: [5, 'epic', 10], m: 20, hl: 7 },
+    { h: 12, t: 1, lv: 25, tool: [1, 'rare', 3], m: 3, hl: 1 },
+    { h: 12, t: 2, lv: 40, tool: [2, 'rare', 3], m: 10, hl: 2 },
+    { h: 14, t: 3, lv: 50, tool: [3, 'rare', 6], m: 15, hl: 3 },
+    { h: 16, t: 3, lv: 74, tool: [3, 'epic', 10], m: 19, hl: 4 },
+    { h: 18, t: 4, lv: 90, tool: [4, 'rare', 10], m: 20, hl: 5 },
+    { h: 20, t: 4, lv: 110, tool: [5, 'rare', 10], m: 20, hl: 6 },
+    { h: 24, t: 5, lv: 135, tool: [5, 'epic', 10], m: 20, hl: 7 },
     { h: 24, t: 5, lv: 210, tool: [5, 'epic', 10], m: 20, hl: 8 }],
   spill: 3,                // Spillover opens at this level
   goldPerLv: 60,           // unused since ECON-A: gold = ECON.storeH hours of income at the Hearth gate zone; none at Lv 1

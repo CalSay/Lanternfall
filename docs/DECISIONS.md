@@ -255,6 +255,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Gathering tiers come slower:** a tier only 4 levels away was too fast. (2026-09-28)
 - **The Storehouse caps what you hold** from every source, active gathering included. Skill XP keeps counting when a
   pile is full. It must scale up fast enough for an idle game. (2026-09-28)
+- **The hero's away limit is 8 hours with no building,** so a first night's sleep is covered. The Watchtower adds 2 hours
+  a level (10 to 18 h; 16 h is the most in Chapter 1 without the raid), the Hourglass 2 a level, never past 24. The
+  Storehouse caps rose with it so a full away session still fits (HS19). Fights still earn nothing away.
+  (first-night-covered ruling, 2026-10-08)
 - **Gear needs its own building,** the Armoury (bag size, loadouts, lock, auto-salvage, display rack). (2026-09-28)
 - **A cold Hearth start** with stations you build; tools shown in the hero's hands; the hero gathers alone. (2026-09-28)
 - **Gatherers (Hands):** live at camp and show there; tap one to talk, then send them on a job of their profession.
