@@ -247,6 +247,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A Next Up row whose Go switches the activity (`{ act: 'gather' }`) does nothing in the walk: after every press `tools/walk.mjs` clicks the Fight tab, which runs `goFight()` and sets the activity back to fight, and a press that drops no gold or materials counts as stuck after 4 tries. Read the walk's `nextup` lines ("-> nothing to press") before claiming a walk prediction for such a row. Why: hearth-two-next-up's row was pressed 4 times in each seed and the bot never chopped a log (reviewer subagent, 2026-10-08).
 - In a browser check that opens several contexts from one fixture, stamp the save's `last` in the init script (at page load), not once at the section's start. Why: the second size opened 40 s "later", the away card came up over the menu and every hover and click timed out (desktop-tooltips, 2026-10-09)
 
+- A browser check that bounds a text box's height must allow for the fonts the check runs with: the page's web fonts never load in checks, so text falls back to Inter locally and DejaVu Sans on CI, both wider than Barlow Semi Condensed. A 104-letter line was 93 px locally and 110 px on CI. Bound the box against its own text height, or use a short line. (menu-tip-room, 2026-10-09)
+
 ## Reviews and Codex
 
 - "@codex review" must be commented by hand after opening the PR; auto review does not fire. Why: seen on fix-bounty-kind. Codex drips one P1 per round, so close the whole class of a finding at once. (fix-bounty-kind, 2026-10-05)

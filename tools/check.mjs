@@ -14983,7 +14983,7 @@ if (section('menu-tip-room')) try {
       return { ctx, page, errs, X, click };
     };
     const box = sel => `(e => { if (!e || e.hidden) return null; const r = e.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height), w: Math.round(r.width) }; })(document.querySelector(${JSON.stringify(sel)}))`;
-    const panel = `JSON.stringify({ cls: document.querySelector('.ob-bub').className, txt: document.querySelector('.ob-txt').textContent, bub: ${box('.ob-bub')}, face: ${box('.ob-face')}, ok: ${box('.ob-ok')}, x: ${box('.ob-x')}, tabs: ${box('.tabs')} })`;
+    const panel = `JSON.stringify({ cls: document.querySelector('.ob-bub').className, txt: document.querySelector('.ob-txt').textContent, bub: ${box('.ob-bub')}, face: ${box('.ob-face')}, t: ${box('.ob-txt')}, ok: ${box('.ob-ok')}, x: ${box('.ob-x')}, tabs: ${box('.tabs')} })`;
     const fits = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].map(e => [e.textContent, e.scrollWidth, e.clientWidth]))`;
     const waitFor = async (X, src, ms = 6000) => { for (let t = 0; t < ms; t += 200) { if (await X(src)) return true; await new Promise(r => setTimeout(r, 200)); } return false; };
     try {
@@ -15021,8 +15021,10 @@ if (section('menu-tip-room')) try {
         await X('S.activity = "gather"; S.node = { kind: "wood", t: 1 }; setTab("gat"); ui(true); true');
         const up = await waitFor(X, `/Copper Vein/.test(document.querySelector('.ob-bub:not([hidden]) .ob-txt')?.textContent || '')`);
         const p = JSON.parse(await X(panel));
-        if (w < h) assert(up && /over-menu/.test(p.cls) && p.bub.h <= 96 && p.ok && p.ok.h >= 44 && p.x && p.x.w >= 44 && p.bub.bottom <= p.tabs.top,
-          `${v}: the materials line with its Go is at most 96 px tall over Gather (${JSON.stringify(p)})`);
+        // the check runs without the game's web fonts: CI's fallback (DejaVu Sans) is far wider than Barlow Semi Condensed and wraps this
+        // 104-letter line to six lines, so past 96 px the strip may be only as tall as its text (the face, × and Go never add height)
+        if (w < h) assert(up && /over-menu/.test(p.cls) && p.bub.h <= Math.max(96, p.t.h + 16) && p.ok && p.ok.h >= 44 && p.x && p.x.w >= 44 && p.bub.bottom <= p.tabs.top,
+          `${v}: the materials line with its Go is at most 96 px tall over Gather, or no taller than its text (${JSON.stringify(p)})`);
         else { const cols = await X(`getComputedStyle(document.querySelector('.ob-bub')).gridTemplateColumns`);
           assert(up && /\bside\b/.test(p.cls) && !/over-menu/.test(p.cls) && p.face && p.face.w > 32 && !/^44px/.test(cols),
             `${v}: landscape keeps the side column, none of the upright strip's sizes (${cols}; ${JSON.stringify(p)})`); }
