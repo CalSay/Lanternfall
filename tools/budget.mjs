@@ -17,6 +17,8 @@
 //   --sweep         print casual and good wins at L-1, L and L+1 (how much one level matters)   (manual)
 //   --players wide  also play a weaker and a stronger casual (parry 15% / 35%, dodge 40% / 70%)      (manual)
 //   --read casual=0.5,good=0.7   set how often a player reads a boss trick (a feint or a held swing; 59k TURN_TUNE.tricks.read)   (manual)
+//   --craft k=v,..  CRAFT_TUNE switches (20-data), as sim.mjs --craft. --craft grades=1 (craft-attribute-grades): the kept-up rows wear
+//                   graded pieces (below, "Graded gear"); off (the default): every row exactly as before
 //   --uniq ID       report only (uniques-first-four): each row twice for the heroes who can wear unique ID (20-data UNIQ, the new table),
 //                   once as is (S) and once with the unique worn in its position (R: zone tier, +5, UNIQ_TUNE.on), on the same fight
 //                   seeds, and print R - S. A unique in a set position breaks the set. Rows default to z16/z20/z25/z30 boss (--only to
@@ -58,6 +60,15 @@
 // Nothing is scaled to the reference hero: the numbers are the game's own, so a change to levels, gear, foes or Training
 // shows up here.
 //
+// Graded gear (craft-attribute-grades, --craft grades=1): on the kept-up footing (a row with no gear option, not arrival), each piece
+// is made at the grade the kept-up casual's station level gives at the row's zone (CASUAL_LV: the level-by-zone table of
+// docs/design/skilling-crafting-overhaul/curve.md, CRAFT_TUNE.curve on, seed 1; a zone between columns reads the column before it, and
+// past the casual's last zone their end level), minus the tier's gate (gradeFor, 40-rules), at +5, with no lift (craft-strike-infuse
+// adds the lift rows). A piece is at the row's tier (a behind row's tier is one down) or, when the casual's station has not opened
+// it yet, the best tier it has open. A Charm reads the better of Enchanting and Smithing, as the game does. Each class piece wears
+// one HP line at the middle roll and no other bonus line (the rare footing's HP lines were rolled, on the pieces that drew one), so a
+// row measures the grade's power, not its line picks. The late rows (z35-z38, epic +10) and every row with a gear option keep their
+// rarity footing.
 // Players (as sim.mjs --report turns; the scratch player acts at once, so a real fight takes longer):
 //   casual  parries 25% of hits, dodges 50% of the rest; ability rings 10% Perfect, 40% Good, the rest missed
 //   good    parries 60%, dodges 90% of the rest; rings 40% Perfect, 45% Good
@@ -69,7 +80,7 @@ import { HEROES, loadTargets, cells, offBand } from './lib/budget-score.mjs';
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'foot', 'seed-offset', 'sweep', 'players', 'read', 'set', 'none', 'uniq'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
+{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'foot', 'seed-offset', 'sweep', 'players', 'read', 'set', 'none', 'uniq', 'craft'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('budget: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 const SET_ON = opt('set', 'on') !== 'none';
 const FIGHTS = Number(opt('fights', 240)), OFFSET = Number(opt('seed-offset', 0)), STARS = opt('stars', 'typical') !== 'none', TALS = opt('talents', 'typical') !== 'none';
@@ -105,6 +116,26 @@ const SETS = { 1: { wren: ['echo'], tobin: ['bash'], pip: ['fire'] },
 // above the table), floored, so the footing does not jump when the road lands
 const LEGACY_LV = { 1: 3, 3: 6, 5: 10, 8: 15, 10: 18, 12: 21, 15: 24, 20: 29, 25: 33, 27: 34, 30: 37, 34: 40, 35: 41, 36: 42, 38: 43 };
 const LV_SHIFT = Number(opt('lv', 0));
+const CRAFT_KV = Object.fromEntries(String(opt('craft', '')).split(',').filter(Boolean).map(kv => { const [k, v] = kv.split('='); return [k, +v]; }));
+if (Object.entries(CRAFT_KV).some(([k, v]) => !['grades', 'strike', 'infuse', 'curve'].includes(k) || !Number.isFinite(v))) { console.error('budget: --craft k=v,k=v with k in grades, strike, infuse, curve'); process.exit(2); }
+const GRADED = !!CRAFT_KV.grades;
+// the kept-up casual's station levels by zone (curve.md, "Level by zone, switch on (seed 1)", casual); null: past their last zone (end)
+const CASUAL_Z = [1, 3, 5, 7, 10, 13, 16, 19, 22, 25, 30, 35, 42, 45];
+const CASUAL_LV = {
+  wren: { smith: [1, 1, 9, 9, 9, 9, 22, 41, 47, 52, null, null, null, null, 53], bench: [1, 1, 6, 11, 16, 33, 42, 46, 49, 55, null, null, null, null, 72],
+    loom: [1, 1, 1, 11, 16, 36, 42, 44, 44, 52, null, null, null, null, 74], ench: [1, 1, 7, 9, 9, 9, 10, 10, 10, 11, null, null, null, null, 27] },
+  tobin: { smith: [1, 1, 9, 13, 20, 25, 27, 32, 41, 49, null, null, null, null, 55], bench: [1, 1, 3, 9, 12, 36, 40, 44, 49, 55, null, null, null, null, 74],
+    loom: [1, 1, 1, 1, 4, 9, 9, 23, 42, 54, null, null, null, null, 81], ench: [1, 1, 4, 7, 8, 8, 9, 9, 10, 25, null, null, null, null, 35] },
+  pip: { smith: [1, 1, 6, 6, 6, 14, 19, 26, 32, null, null, null, null, null, 34], bench: [1, 1, 4, 6, 8, 17, 36, 46, 48, null, null, null, null, null, 72],
+    loom: [1, 1, 1, 11, 14, 22, 22, 38, 43, null, null, null, null, null, 71], ench: [1, 1, 5, 7, 8, 9, 13, 22, 28, null, null, null, null, null, 37] }
+};
+const casualLv = (k, skill, z) => { const row = CASUAL_LV[k][skill]; let i = 0; while (i + 1 < CASUAL_Z.length && CASUAL_Z[i + 1] <= z) i++; return row[i] != null ? row[i] : row[row.length - 1]; };
+// the graded kept-up piece for hero k at zone z (run in the core: gradeFor and the station gates are the game's): (kind, t) -> { t, g },
+// t the row's tier or the best tier the station has open, if lower, and g the grade at that tier
+const gradeCode = (k, z) => `(kind, t) => { const sk = CRAFT_STATIONS[CRAFT_KINDS[kind].st].skill, L = ${JSON.stringify(Object.fromEntries(['smith', 'bench', 'loom', 'ench'].map(s => [s, casualLv(k, s, z)])))};
+  const lv = kind === 'charm' ? Math.max(L.ench, L.smith) : L[sk]; let u = 1; while (u < t && CRAFT_STATION_REQ[u] <= lv) u++;
+  return { t: u, g: gradeFor(kind, u, lv) }; }`;
+const gradedRow = o => GRADED && o.st === 'kept' && !o.gear && !onArrival(o);
 const FOOT = opt('foot', null);
 if ((flag('foot') && FOOT === null) || (FOOT !== null && FOOT !== 'arrival')) { console.error('budget: --foot arrival (the only footing it takes)'); process.exit(2); }
 const ARRIVAL_KILLS = 10, ARRIVAL_KIND_KILLS = 12;
@@ -259,13 +290,16 @@ function setup(c, k, lvShift, uq) {
   if (o.st === 'late') s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10;
       const own = { weapon: 0, off: 1, helm: 2, body: 3 }[sl]; if (own != null) { it.slot = ${J(KINDS[k])}[own]; delete it.rt; } if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }`;
   else if (o.st === 'kept' && o.gear === 'none') s += `for (const sl of ['weapon', 'off', 'helm', 'body', 'charm']) S.equip[sl] = null;`;
+  else if (gradedRow(o)) s += `(() => { const t = Math.max(1, Math.min(5, zoneTier(${z}) + ${o.tier || 0})), gr = ${gradeCode(k, z)};   // --craft grades=1: graded gear (above); a behind row's tier first
+      ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const p = gr(kind, t), it = newItem(kind, p.t, 'common', { g: p.g }); it.plus = 5; if (it.a) it.a = [['hp', 0.5]];
+        S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = ${onArrival(o) ? 1 : `zoneTier(${z})`};
       ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, ${J(o.gear === 'common' ? 'common' : o.gear === 'uncommon2' ? 'uncommon' : 'rare')}, { rnd }); it.plus = ${o.gear === 'common' ? 0 : o.gear === 'uncommon2' ? 2 : 5}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
         S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   // --uniq: the unique in its position at the zone's tier, +5 (a unique in a set position breaks the set, below)
   if (uq) s += `(() => { const key = ${J(uq)}, u = UNIQ[key]; UNIQ_TUNE.on = 1; const it = { id: S.nextId++, slot: uniqKindFor(key, S.party.cls), t: zoneTier(${z}), r: 'legendary', plus: 5, u: key };
       S.items.push(it); S.equip[u.pos] = it.id; })();`;
-  if (o.tier) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
+  if (o.tier && !gradedRow(o)) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
   // hero-progression-rework: attribute points spread evenly (the plain build), or all in one (a build row); no-op before
   // attributes exist
   s += o.build ? `if (typeof attrAdd === 'function' && attrOn()) { S.attr.pts[${J(k)}] = ATTR0(); attrAdd(${J(o.build)}, 1e9, ${J(k)}); }`
@@ -311,6 +345,7 @@ export function buildCore(c, k, lvShift = LV_SHIFT, uq = null) {
   const core = loadCore({ seed: 1, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
   const save = o.st === 'fresh' ? null : o.st === 'late' ? 'late' : o.fx;
   if (save) { core.storage.set(e('KEY'), fx(save)); e('loadSave()'); }
+  for (const [kk, v] of Object.entries(CRAFT_KV)) e(`CRAFT_TUNE[${J(kk)}] = ${v}`);   // --craft (none by default)
   e(setup(c, k, lvShift, uq));
   if (STARS && !o.zone1 && o.st !== 'joined') e(starsTypical(z));
   if (TALS) e(talentsTypical);
@@ -355,7 +390,7 @@ export function runBudget({ only, heroes = RUN_HEROES } = {}) {
     for (const k of heroes) perHero[k] = measure(c, k, LV_SHIFT, RUN_PLAYERS, null, true);
     rows.push({ id, zone: z, foe, kind: o.kind || perHero[heroes[0]].kind, ...(o.ref ? { ref: o.ref } : {}), perHero });
   }
-  return { version: 2, fights: FIGHTS, seedOffset: OFFSET, stars: STARS, talents: TALS, heroes, rows };
+  return { version: 2, fights: FIGHTS, seedOffset: OFFSET, stars: STARS, talents: TALS, heroes, ...(Object.keys(CRAFT_KV).length ? { craft: CRAFT_KV } : {}), rows };
 }
 
 const pc = x => x == null ? 'n/a' : (100 * x).toFixed(0);
@@ -364,6 +399,7 @@ export function printBudget(rep) {
   console.log(`Difficulty budget: ${rep.fights} scratch turn fights a row, hero and player (each boss fight on its own seed; trash in chains of 5);`);
   console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z7-z15 bosses and the z16-z26 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
   console.log(`Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +${T.tobinBoss}).`);
+  if (rep.craft) console.log(`CRAFT_TUNE ${JSON.stringify(rep.craft)}${rep.craft.grades ? ': the kept-up rows wear graded gear (the kept-up casual\'s grade at the zone, +5, no lift)' : ''}.`);
   console.log('A "behind" row\'s casual number is the drop in casual wins against its ref row.');
   console.log('row'.padEnd(17) + 'kind'.padEnd(13) + 'casual w/t/p'.padEnd(14) + 'mean sprd'.padEnd(10) + 'band'.padEnd(16) + 'good w/t/p'.padEnd(13) + 'band'.padEnd(9) + 'tries w/t/p'.padEnd(16) + 'turns w/t/p'.padEnd(17) + 'level  out of band');
   for (const r of rep.rows) {

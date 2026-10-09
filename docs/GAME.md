@@ -220,6 +220,21 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   craft, upgrade or reforge below the station's highest open tier pays a tenth of its XP; bars keep their share of the level
   when the switch flips (`S.craft.xpv`). The fit and the level-by-zone table:
   [curve.md](design/skilling-crafting-overhaul/curve.md).
+- **Grades** (behind `CRAFT_TUNE.grades`, off in the game until the balance pass; card craft-attribute-grades, spec
+  [skilling-crafting-overhaul.md](design/skilling-crafting-overhaul.md) section 5): with the switch on, a class piece, Trinket or
+  Charm is made at a grade, D to S, set by its station level instead of the rarity die: D at the tier's gate, C at +3, B at
+  +6, A at +10, S at +15 (Copper: C 4, B 7, A 11, S 16; `GRADE` in `20-data.js`, `gradeLv`/`gradeFor` in `40-rules.js`). The
+  Forge at Lv 5 counts as 1 level more and the Steady Hands Omen as 2 ("Crafts grade as 1 level higher"). Power is 1.0, 1.35,
+  1.55, 1.8 and 2.5 (the rarity values, B between); bonus lines are 1, 2, 2, 3 and 4, taken from the class pool in order
+  (the signature stat first) at the middle roll. The item stores `g` and its rarity twin in `r` (D Common, C and B Uncommon, A
+  Rare, S Epic), so Fine Work, the Epic craft deed and the Almanac's Rare count read it. The recipe row shows the grade before
+  you craft and the level of the next ("Grade B · A at Woodcraft 11") and names the choice when another tier is open ("Pine
+  Bow grade A, or Birch Bow grade D"); an A or S craft is a medium moment; the bag tile shows the letter. Reforge on a graded
+  piece is a pick: the line, then the bonus to put in, at the same price. Tools keep the die and the odds line. Items made with
+  the switch off (no `g`) keep their rarity, lines and power exactly; with the switch off a graded item reads its twin (a B
+  reads as Uncommon). Save codes check `g` only when present (0 to 4, its twin must match `r`, never on a tool or a unique).
+  `node tools/budget.mjs --craft grades=1` measures the kept-up rows in graded gear (the results:
+  [docs/proof/craft-attribute-grades/budget.md](proof/craft-attribute-grades/budget.md)).
 - **Refining** (`55-refine.js`, `75-refine-ui.js`, `REFINE_TUNE` in `21-data-craft.js`; card refine-queues): the Forge
   smelts ore and coal into Ingots (Copper, Iron, Silver, Cobalt, Mithril Ingot), the Workbench saws logs into Planks
   (Pine, Birch, Oak, Mangrove, Tideash Plank), and the Loom weaves fibre into Cloth (Hemp Cloth, Linen, Briar Cloth,
