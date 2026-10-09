@@ -1,0 +1,150 @@
+# First-hour walk, after
+
+Build `../../../tmp/claude-0/wb/base.html` at dfb602cb. Seed 1, wren, 1280x720. Bot: parries 55% of foe hits, dodges 50% of the rest, reads each tip 1.2 s, reads each card 2.4 s.
+Played 60:00 of 60:00 game time in 2199 s of clock. Report only: nothing here blocks a merge.
+
+The bot was beaten 1 time by bosses (the "try again" card).
+
+End state: zone 21, level 23, 14605 gold, 124 kills, 17 things unlocked, 3 uniques, 8 Stars, 3 extra heroes, 0 looks.
+
+## Gear and boss tries
+
+The bot crafted 1 piece(s) from its own gear goal, put on 5 (first at 3:42), and closed 10 sheet(s) it had left over the bar. Forged in all: 5. Camp built: bench 3:28, forge 5:33, store 7:25.
+
+| Zone | First stood in at | Level | Boss tries lost | Worn then |
+|---|---|---|---|---|
+| 1 | 0:02 | 1 | 0 | nothing |
+| 2 | 0:54 | 4 | 0 | nothing |
+| 3 | 2:06 | 6 | 0 | nothing |
+| 4 | 8:08 | 8 | 0 | weapon t1 Common, charm t1 Unique, pick t1 Common |
+| 5 | 9:28 | 10 | 0 | weapon t1 Common, charm t1 Unique, pick t1 Common |
+| 6 | 16:11 | 11 | 0 | weapon t1 Common, off t1 Epic, helm t1 Common, body t1 Common, charm t1 Unique, pick t1 Common |
+| 7 | 17:42 | 12 | 0 | weapon t1 Common, off t1 Epic, helm t1 Common, body t1 Common, charm t1 Unique, pick t1 Common |
+| 8 | 18:46 | 13 | 0 | weapon t1 Common, off t1 Epic, helm t1 Common, body t1 Common, charm t1 Unique, pick t1 Common |
+| 9 | 19:43 | 14 | 0 | weapon t1 Common, off t1 Epic, helm t1 Common, body t1 Common, charm t1 Unique, pick t1 Common |
+| 10 | 20:44 | 15 | 0 | weapon t1 Common, off t1 Epic, helm t1 Common, body t1 Common, charm t2 Unique, pick t1 Common |
+| 11 | 22:12 | 16 | 0 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t1 Common |
+| 12 | 23:28 | 17 | 0 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t1 Common |
+| 13 | 24:34 | 18 | 1 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t2 Unique |
+| 14 | 26:49 | 19 | 0 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t2 Unique |
+| 15 | 28:07 | 20 | 0 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t2 Unique |
+| 16 | 31:40 | 20 | 0 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t2 Unique |
+| 17 | 34:12 | 21 | 0 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t2 Unique |
+| 18 | 38:26 | 22 | 0 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t2 Unique |
+| 19 | 45:03 | 22 | 0 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t2 Unique |
+| 20 | 48:32 | 23 | 0 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t3 Unique |
+| 21 | 53:10 | 23 | 0 | weapon t1 Common, off t1 Epic, helm t2 Unique, body t1 Common, charm t2 Unique, pick t3 Unique |
+
+Keep fighting here by the two-loss rule: never needed (no boss beat the bot twice in a row).
+
+Timed rings graded: 181 (Perfect 0, Good 101, Miss 80; the bot aims for Good at its parry rate 0.55). Boss odds record at the end (S.bossOdds, decayed tallies): hits 99.8, parry 62, dodge 20.6, rings 83.8, Good 48.2, Perfect 0.
+
+Next Up tier gates: 1 gate row pressed ("Birch Bow for the zone 7 boss: Woodcraft 7 of 10" at 17:55); 0 tier 1 crafts made for a station gate; the gate opened at 18:05. First tier 2 craft goal: not seen in 60:00.
+
+## Crafting and choices
+
+Crafts and upgrades in the first 60 min: 12 (5 forged, 7 upgrades; 7 upgrades in all). Real choices (a pick between two or more ready options): 25 (craft 2, nextup 21, spoils 2); the game counted 57, with 32 Next Up presses that had only one ready row.
+
+Longest gap with no real choice in minutes 20-60: 11:20 (48:39 to 60:00).
+
+Map window (zone 6 clear to 10 min after the zone 10 clear, bot 17:41 to 32:11): 14 Next Up presses, 0 craft-screen picks, longest gap with neither 3:30; 2 spoils picks (cache move picks).
+
+Spoils picks (cache move picks): wren 2 (2 taken, 0 kept; 2 with 2+ moves offered). zone 6 at 17:46: 3 offered, deadeye; zone 7 at 18:49: 2 offered, batswarm.
+
+First uses: craft at 4:05, upgrade at 11:28.
+
+## Scorecard
+
+| Id | Result | Target | Value |
+|---|---|---|---|
+| F1 | met | the first press gets a hit with its sound within 10 s of the first tap, and the first gold, loot or XP within 30 s | first hit with its sound 7.9 s; first loot 15.0 s |
+| F2 | met | first boss beaten by 6:00 | 0:53 |
+| F3 | met | zones 1-10 in game time: never over 8 min without a progress moment (zone first clear, new ability, Star, hero join, unique) to the zone 10 Champion or minute 60; the first boss, zone 5 Champion and zone 10 Champion each reached with a big card that says what it gave | longest gap without progress 6:42 (9:28 to 16:10, gathering for a goal) to the zone 10 Champion at 22:11; peaks: the first boss 0:53, the zone 5 Champion 16:10, the zone 10 Champion 22:11 |
+| F4 | met | at most 2 new things the game releases on its own in any 3 min of the first 30, 4 in any 10 after (a thing the player's act or a drop opened is listed, not counted) | 15 new things (11 released, 4 by player or drop, 2 with a hero join, not counted); most released in 3 min (first 30): 2 from 0:24; most released in 10 min after: 1; all kinds in 3 min: 4 |
+| F5 | missed | no tip off its phase, nothing covering the fighters or bars, no clipped text | 2 findings at 1280x720 |
+| F6 | missed | every moment a card or banner for 2 s with its sound | 8 of 32 not shown right: zone at 8:07: no card or banner; star at 22:11: a card, no sound; zone at 24:34: no card or banner; star at 24:34: no card or banner, no sound; ... |
+| F10 | missed | no placeholder letters in the first hour | 2 placeholder tiles: Po in soloBar; Ma in soloBar |
+| P4 | not measured | at least 3 looks by minute 60, with a Wardrobe count | 0 looks found; Wardrobe count not read (the walk opens no Wardrobe yet), so P4 is not measured |
+
+Fight lessons: Attack 0:08 (fight 1), Dodge 0:11 (fight 1), the ability 0:15 (fight 1), Parry 0:23 (fight 2).
+
+## Beats against the map
+
+Each beat against the map's **walk** column, the seed 1 bot's time on the build the map names in `docs/design/first-hour.md`. More than 50% off is a finding: the game changed pace. **est** is a guess for a casual person; the bot plays faster than a person, so est is not compared.
+
+| Beat | est | Map walk | Walk saw | Off the map walk | What |
+|---|---|---|---|---|---|
+| 1 | 0:00 | 0:01 | 0:01 | +50% | Three stills, one line each; Skip. Text over the darkened Mossy Hollow |
+| 2 | 0:25 | 0:01 | 0:01 | +50% | "Who are you?": Wren, Tobin, Pip in second person |
+| 3 | 0:35 | 0:03 | 0:03 | 0% | Hesketh's fire over still 3, at most 3 lines; then the guide panel wit |
+| 4 | 0:45 | 0:08 | 0:08 | 0% | Fight 1 (within 45 s of opening for a player who taps through), held o |
+| 5 | 0:55 | 0:15 | 0:15 | +1% | Fight 1, your next turn: the ability, held (no word about swapping, no |
+| 6 | 1:05 | 0:23 | 0:23 | 0% | The foe's next swing (fight 1, or fight 2's first if the foe fell or w |
+| 7 | 2:25 | — | not measured | | Fights 4 and 5 |
+| 8 | 2:55 | 0:51 | 0:48 | -5% | The zone 1 Captain; Hesketh: "Watch the bar" (turn fight) or "Watch th |
+| 9 | 3:45 | 0:57 | 0:53 | -6% | Big moment: first boss win, and the first Lantern Cache reveals the wi |
+| 9a | when it happens | — | not measured | | Only if a zone boss beats you for the first time: the Try again card s |
+| 10 | 1:10 | 0:24 | 0:24 | +2% | The Hero tab at the first level-up (level 2, the end of fight 2), with |
+| 11 | 7:15 | 2:04 | 2:38 | +28% | The Gather tab; Hesketh: "You can gather now. Bring me Pine Log for a  |
+| 12 | 9:00 | 2:45 | 3:06 | +13% | Medium moment: the camp fire lit; the Camp tab; Hesketh's talk plays a |
+| 12a | 10:00 | 3:16 | 2:06 | -36% | Big moment: the second cache, from the zone 2 Captain's first clear, w |
+| 13 | 10:45 | 4:59 | 5:18 | +6% | Next Up in the compact top bar |
+| 14 | 12:30 | 3:20 | 3:40 | +10% | The Workbench and the first tool: the first craft, with a result card  |
+| 14a | 14:00 | 6:38 | 8:07 | +23% | Big moment: the zone 3 Captain's cache, with a third lantern colour (o |
+| 15 | 14:15 | 6:32 | 6:54 | +6% | The away chip joins the top bar |
+| 16 | 16:00 | 8:17 | 8:33 | +3% | Bounties (zone 4); Hesketh's board also at Camp; a ready bounty shows  |
+| 16a | 16:30 | 8:22 | 9:28 | +13% | Medium moment: the zone 4 Captain's cache (opens automatically, a bann |
+| 17 | 17:45 | 9:30 | 16:10 | +70% **!** | Big moment: the zone 5 Champion's first clear, its post scene in the c (a hero joined (tobin), a line on the Champion card at 16:10) |
+| 18 | 20:00 | 17:36 | 17:41 | +1% | Big moment: first Star (zone 6 Captain); the zone 6 cache opens inside |
+| 19 | 15:00 (est.) | — | not measured | | The first weapon. Wren and Pip make it at the Workbench right after th |
+| 19a | 24:00 (est.) | — | not measured | | The first refine, at the first upgrade: the Forge weapon's +1 takes 1  |
+| 20 | 25 to 40 | 6:38 | 0:53 | -86% | Big moment: first unique, by chance (15% on a first clear, with modifi |
+| 20a | 27:30 | 19:02 | 18:46 | -1% | Big moment: the zone 7 Captain's cache, with lantern colour 4 |
+| 21 | 28:00 | 11:37 | 17:59 | +55% **!** | The Bestiary |
+| 22 | 31:30 | 13:09 | 11:36 | -12% | The Almanac |
+| 22a | 35:00 | 19:34 | 19:42 | +1% | Big moment: the zone 8 Captain's cache, with colour 5 |
+| 23 | 35:00 | not reached | not reached in 60:00 | | The Tavern |
+| 23a | 42:30 | 20:21 | 20:43 | +2% | Big moment: the zone 9 Captain's cache, with colour 6 |
+| 24 | 45:00 | not reached | not reached in 60:00 | | A cache look and the Wardrobe count (only once `cache-art` passes) |
+| 25 | 50:00 | 21:55 | 22:11 | +1% | Big moment: the zone 10 Champion's first clear, its post scene in the  (a hero joined (hesketh) at 22:18) |
+| 25a | before 50:00 | — | not measured | | The Codex opens on arriving at zone 10 (`S.maxZone >= 10`), before the |
+
+Walk against est (information, not a finding): the median beat came at 0.41 of its est time over 24 beats, so the bot plays about 2.5 times a casual person's guessed pace.
+
+### More than 50% off the map's walk, for the lead
+
+- beat 17 (Big moment: the zone 5 Champion's first ): map walk 9:30, this walk 16:10 (+70%)
+- beat 21 (The Bestiary): map walk 11:37, this walk 17:59 (+55%)
+
+## F3: progress moments and the gaps between them
+
+Game time, the bot's own clock (no person-minute conversion until a human run sets one). A progress moment is a zone's first clear, a new ability, a Star, a hero joining or a unique; levels, hero lines, looks and crafts are not. Window: game time 0 to the zone 10 Champion at 22:11. Progress moments seen: 43 (zone 20, ability 9, star 8, hero 3, unique 3).
+
+Peaks (each needs its own big card that says what it gave):
+
+- the first boss: 0:53; card "First boss down", gave: Your lantern burns Ember Red now.; Briar Sprig. A unique.; Moss Scroll, 180 gold, 3 Essence
+- the zone 5 Champion: 16:10; card "The Briar Regent falls", gave: Tobin joins your camp. Switch heroes on the Hero tab, for free.; Hollow Scroll, 243 gold, 4 Essence
+- the zone 10 Champion: 22:11; card "The Hollow Cantor falls", gave: Star: Turning Point; Hollow Scroll, 371 gold, 4 Essence
+
+Gaps of 3 min or more (fights are diagnosis only; the time split is fighting, gathering, and held on a card, sheet or menu):
+
+| From | To | Gap | Fights | Lost boss tries | Fight / gather / held min | Cause |
+|---|---|---|---|---|---|---|
+| 2:06 | 5:43 | 3:36 | 3 | 0 | 1 / 2.5 / 0 | gathering for a goal |
+| 9:28 | 16:10 | 6:42 | 5 | 0 | 3.2 / 3.5 / 0.1 | gathering for a goal |
+
+## Where it dragged
+
+- 28:19 to 31:39: 3.3 min with no unlock, boss win, unique, Star, hero or Next Up result
+- 34:12 to 38:26: 4.2 min with no unlock, boss win, unique, Star, hero or Next Up result
+- 38:30 to 45:03: 6.5 min with no unlock, boss win, unique, Star, hero or Next Up result
+- 45:06 to 48:32: 3.4 min with no unlock, boss win, unique, Star, hero or Next Up result
+- 48:39 to 53:09: 4.5 min with no unlock, boss win, unique, Star, hero or Next Up result
+- 53:09 to 60:00: 6.8 min with no unlock, boss win, unique, Star, hero or Next Up result
+
+## What a new player would hit
+
+- **covered** at 8:10 (seen 4 times): a button the player needs is covered ([data-walk="1"]). a tap at 841,479 would land on .mm-ov
+- **covered** at 8:11 (seen 8 times): a button the player needs is covered (.bsheet-ov .bsheet-x). a tap at 870,373 would land on .mm-ov
+- **stall** at 41:38 (seen 3 times): the walk stalled for 90 s. phase "idle", tip none, 0 card(s) up, tab ""
+
