@@ -11698,7 +11698,7 @@ if (section('craft delta')) try {
 // ==== craft-odds-before-pay: the boss line shows on Next Up's recipe row and the worn piece's Upgrade, before the press ====
 // The same sampler as the result card (55-fight-delta) on a scratch piece (fightDelta(it, { scratch: true })), the same "barely
 // changes" rule. Pip at zone 10 (save-pip-z10-ward): the sampler reads the staff +1 as barely changing, so no line (W10 section 3's
-// "it will honestly say barely"); a worn Hood +1 before the zone 7 boss (save-pre-z7-boss) shows one, and after the press the fight
+// "it will honestly say barely"; on screen its Upgrade looks ahead to +2 instead, upgrade-odds-next-step); a worn Hood +1 before the zone 7 boss (save-pre-z7-boss) shows one, and after the press the fight
 // matches it. No Omen (almanac.force('none')): an Omen's fight boons move the sampler's numbers.
 if (section('craft-odds-before-pay')) try {
   const at = 'craft-odds-before-pay', pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
@@ -11785,12 +11785,19 @@ if (section('craft-odds-before-pay')) try {
           assert(!errs.length, `${v}: no page errors on the zone 7 save` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         }
-        { // Pip at zone 10: the staff +1 barely changes the fight, so its Upgrade shows no line
+        { // Pip at zone 10: the staff +1 barely changes the fight, so its Upgrade looks ahead to +2 instead (upgrade-odds-next-step)
           const { ctx, page, errs, X } = await open('save-pip-z10-ward.json');
-          await X(`craftUI.openItem(S.equip.weapon); true`);
-          await page.waitForTimeout(5000);   // the sample (16 chunks, 30 ms apart) is done well inside this
-          const n = await X(`document.querySelectorAll('.cf-up-box .cf-pre').length`), btn = await X(`!![...document.querySelectorAll('.cf-up-box button')].find(b => /^Upgrade to \\+1$/.test(b.textContent.trim()))`);
-          assert(btn && n === 0, `${v}: Pip's staff Upgrade to +1 shows no boss line (barely changes) (button ${btn}, lines ${n})`);
+          const lines = () => page.evaluate(() => { const l = document.querySelector('.cf-up-box .cf-pre'); if (!l) return 0; const r = document.createRange(); r.selectNodeContents(l); return new Set([...r.getClientRects()].map(q => Math.round(q.top))).size; });
+          for (const [p0, re] of [[0, /^Zone 10 boss: no change yet\. At \+2: about 5 in 10, now 4$/], [1, /^Zone 10 boss: about 5 in 10, now 4$/]]) {
+            await X(`typeof closeSheet === "function" && closeSheet(); itemById(S.equip.weapon).plus = ${p0}; gsCache = null; craftUI.openItem(S.equip.weapon); true`);
+            const shown = await wait(page, '.cf-up-box .cf-pre');
+            const o = shown ? await fit(page, '.cf-up-box .cf-pre', '.cf-up-box') : null, btn = await X(`!![...document.querySelectorAll('.cf-up-box button')].find(b => /^Upgrade to \\+${p0 + 1}$/.test(b.textContent.trim()))`);
+            assert(btn && o && re.test(o.text), `${v}: Pip's staff +${p0} Upgrade shows ${p0 ? 'the step its press makes' : 'the look-ahead to +2'} (${o ? o.text : 'none after 60 s'})`);
+            if (o) {
+              assert(!o.cut && o.inRow && !o.over, `${v}: the +${p0} line shows whole inside its box (${JSON.stringify(o)})`);
+              if (!phone) { assert(o.fs >= 14, `${v}: the +${p0} line keeps the 14 px desktop text floor (${o.fs})`); const n = await lines(); assert(n === 1, `${v}: the +${p0} line fits on one line (${n})`); }
+            }
+          }
           assert(!errs.length, `${v}: no page errors on the Pip save` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         }
@@ -11798,6 +11805,34 @@ if (section('craft-odds-before-pay')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('craft-odds-before-pay crashed: ' + (e.stack || e)); }
+
+// ==== upgrade-odds-next-step: when one press changes nothing, the Upgrade line looks ahead to the press that does ====
+// Pip's staff at the zone 10 Champion moves the fight only at +2 and +4 (pip-staff-odds-mismatch). With almanac.force('none'), as
+// every game here loads: the +0 and +2 rows look ahead (the next press is flat, the one after is the step), +1 and +3 show the step
+// itself, and the worn Circlet and Charm, which never move, show nothing. The look-ahead is the same fight as the plain line one
+// step on: a +0 row's "At +2" is the +1 row's line.
+if (section('upgrade-odds-next-step')) try {
+  const at = 'upgrade-odds-next-step', pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+  const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: pfx('save-pip-z10-ward.json') }) }), E = s => g.eval(s);
+  E("almanac.force('none')");   // the tool numbers (pip-staff-odds-mismatch) are on a day with no Omen
+  const ups = (pos, p0) => `[1, 2, 3].map(k => Object.assign(JSON.parse(JSON.stringify(itemById(S.equip.${pos}))), { id: -1, plus: ${p0} + k }))`;
+  const ahead = (pos, p0) => E(`(() => { const w = itemById(S.equip.${pos}), keep = w.plus; w.plus = ${p0}; gsCache = null; try { const j = fightDeltaAheadJob(${ups(pos, p0)}); if (!j) return 'nojob'; while (!j.step()); return JSON.stringify(j.res); } finally { w.plus = keep; gsCache = null; } })()`);
+  const rows = {};
+  for (const p0 of [0, 1, 2, 3]) rows[p0] = JSON.parse(ahead('weapon', p0));
+  const R = JSON.stringify(rows);
+  assert(E('S.maxZone') === 10 && E('itemById(S.equip.weapon).slot') === 'staff' && E('itemById(S.equip.weapon).plus') === 0, `${at}: the fixture is Pip's +0 staff at zone 10`);
+  assert(rows[0] && rows[0].ahead === 1 && rows[0].plus === 2 && rows[0].kind === 'wins' && rows[0].after > rows[0].before, `${at}: the +0 row looks ahead to +2 (${R})`);
+  assert(rows[2] && rows[2].ahead === 1 && rows[2].plus === 4 && rows[2].kind === 'wins' && rows[2].after > rows[2].before, `${at}: the +2 row looks ahead to +4 (${R})`);
+  assert(rows[1] && rows[1].ahead === 0 && rows[1].plus === 2 && rows[3] && rows[3].ahead === 0 && rows[3].plus === 4, `${at}: the +1 and +3 rows show the step their press makes (${R})`);
+  assert(rows[0].before === rows[1].before && rows[0].after === rows[1].after && rows[2].before === rows[3].before && rows[2].after === rows[3].after, `${at}: a look-ahead says what the press that makes the step will say (${R})`);
+  assert(rows[0].before === 4 && rows[0].after === 5 && rows[2].before === 5 && rows[2].after === 6, `${at}: the steps match the tool numbers (pip-staff-odds-mismatch: 4 -> 5 at +2, 5 -> 6 at +4) (${R})`);
+  // a look-ahead's first piece is the plain line's piece: the same fight as fightDelta one press on
+  const one = E(`JSON.stringify(fightDelta(Object.assign(JSON.parse(JSON.stringify(itemById(S.equip.weapon))), { id: -1, plus: 1 }), { scratch: true }))`);
+  assert(one === 'null', `${at}: the plain line for the +0 -> +1 press is still empty (${one})`);
+  for (const pos of ['helm', 'charm']) { const r = ahead(pos, 0); assert(r === 'null', `${at}: the worn ${pos === 'helm' ? 'Circlet' : 'Charm'} never moves the fight, so no look-ahead (${r})`); }
+  assert(E('itemById(-1)') === null && E('itemById(S.equip.weapon).plus') === 0, `${at}: the scratch pieces leave the bag as it was`);
+  assert(E(`fightDeltaAheadJob([]) === null && fightDeltaAheadJob([Object.assign(JSON.parse(JSON.stringify(itemById(S.items[0].id))), { id: S.items[0].id })]) === null`), `${at}: no pieces, or a piece under a real item's id, makes no job`);
+} catch (e) { fail('upgrade-odds-next-step crashed: ' + (e.stack || e)); }
 
 // ==== tool-speed-adds-up: a new tool's line says what it is faster than, and the parts multiply to the total ====
 if (section('tool-speed-adds-up')) try {
