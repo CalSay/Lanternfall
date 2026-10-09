@@ -86,7 +86,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'turn-banner-clears-plate': 14, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -102,6 +102,7 @@ const WEIGHT = {
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
   'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  'feint-read-clear': 70,   // 64-74 s locally alone (feint-read-clear, 2026-10-09)
   'craft-odds-before-pay': 38,   // 38 s locally (craft-odds-before-pay, 2026-10-09)
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
@@ -14560,6 +14561,81 @@ if (section('foe-tricks-say-so')) try {
   }
 } catch (e) { fail('foe-tricks-say-so crashed: ' + (e.stack || e)); }
 
+// ==== feint-read-clear (card 9 Oct, from trick-read-rate #307): after a feint the line says the real swing follows; a press on a held
+// swing before its windows says "Too early", once a fight, in the same plate. Never before the trick shows. The foe's next move is
+// set to a feint then a held swing (the live path: its script), at 1280x720, 740x360, 360x740 and 1920x1080. The lines sit whole
+// inside the stage, at the 14 px floor on desktop. Tester notes: players obeyed "A feint! Do not press." and were hit by the real swing.
+if (section('feint-read-clear')) try {
+  const at = 'feint-read-clear', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const FEINT = 'A feint! Press on the real swing next.', HOLD = "It holds the swing. Press at the bar's end.", EARLY = "Too early! Press at the bar's end.";
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, desk = w >= 1280;
+        const ctx = await browser.newContext(desk ? { turns: true, viewport: { width: w, height: h } } : { turns: true, viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, val]) => { try { localStorage.setItem(k, val); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = src => page.evaluate(src => window.__t.x(src), src);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity !== 'fight' && setActivity('fight'); S.maxZone = Math.max(S.maxZone, 8); setZone(7); ui(true); true`);
+        for (let i = 0; i < 40 && !(await X('!!(TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== "intro" && TURN_LIVE.foe && !TURN_LIVE.foe.dead)')); i++) await page.waitForTimeout(150);
+        // the foe's move, started on the live path (turnBegin, its script): a feint, then a swing that holds. Both sides kept alive
+        await X(`(() => { S.turn.seen = {}; delete document.body.dataset.trickTip;
+          window.__keep = setInterval(() => { const u = cbUnitByKey('hero'); if (u) u.hp = u.maxHp; const t = TURN_LIVE; if (t && !t.ended && t.foe) t.foe.hp = Math.max(t.foe.hp, 0.9 * t.foe.max); }, 50);
+          window.__go = () => { const m = TURN_LIVE; m.charge = null; m.e.skip = 0; m.e.recover = 0; m.si = 0;
+            m.p.script = [{ id: 'fx', name: 'Test Swing', hits: [{ wind: 2.5, x: 0, feint: true }, { wind: 2, x: 0.001, hold: 3 }] }];
+            document.querySelector('.tv-warn').hidden = true; turnBegin(m, 'foe', TURN_LIVE_IO); return true; };
+          return __go(); })()`);
+        const warn = () => page.evaluate(() => { const b = document.querySelector('.tv-warn'), box = document.getElementById('stageBox'); if (!b || b.hidden) return { on: false };
+          const r = b.getBoundingClientRect(), sb = box.getBoundingClientRect();
+          return { on: true, txt: b.textContent, px: parseFloat(getComputedStyle(b).fontSize), inside: r.left >= sb.left - 1 && r.right <= sb.right + 1 && r.top >= sb.top - 1 && r.bottom <= sb.bottom + 1, cut: b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1 }; });
+        const hit = () => X('JSON.stringify(TURN_LIVE && TURN_LIVE.move && TURN_LIVE.phase === "foeWindup" ? { id: TURN_LIVE.move.id, i: TURN_LIVE.hitI, feint: !!TURN_LIVE.move.hits[TURN_LIVE.hitI].feint, now: TURN_LIVE.now, tellAt: TURN_LIVE.tellAt, holdFrom: TURN_LIVE.holdFrom, holdTo: TURN_LIVE.holdTo } : null)').then(JSON.parse);
+        const until = async (f, n = 100) => { for (let i = 0; i < n; i++) { const r = await f(); if (r) return r; await page.waitForTimeout(50); } return null; };
+        const holding = async () => { const x = await hit(); return x && x.id === 'fx' && x.i === 1 && x.now >= x.holdFrom && x.now < x.holdTo - 1 ? x : null; };
+        // before the feint's bar breaks, nothing names it (veto "warn before foe tricks")
+        const f0 = await hit();
+        assert(!!f0 && f0.id === 'fx' && f0.feint && f0.now < f0.tellAt, `${v}: the test move's feint winds up (${JSON.stringify(f0)})`);
+        const s0 = await warn(), t0 = await X('document.body.dataset.trickTip || ""');
+        assert(!(s0.on && s0.txt === FEINT) && !t0, `${v}: no feint line before its bar breaks (${JSON.stringify(s0)})`);
+        // the bar breaks: the line says the real swing follows, whole, inside the stage, at the floor on desktop
+        const sF = await until(async () => { const s = await warn(); return s.on && s.txt === FEINT ? s : null; });
+        assert(!!sF && sF.inside && !sF.cut, `${v}: after the feint the line says "${FEINT}" inside the stage (${JSON.stringify(sF)})`);
+        if (sF && desk) assert(sF.px >= 14, `${v}: the feint line is at least 14 px (${sF.px})`);
+        assert(await X('document.body.dataset.trickTip') === 'tfeint', `${v}: the page marks the feint line shown`);
+        // the held swing: the line shows once it holds; a press while it holds says "Too early", in the same plate
+        const h0 = await until(holding);
+        assert(!!h0, `${v}: the held swing stalls`);
+        const sH = await until(async () => { const s = await warn(); return s.on && s.txt === HOLD ? s : null; }, 20);
+        assert(!!sH && sH.inside && !sH.cut, `${v}: the held swing says "${HOLD}" inside the stage (${JSON.stringify(sH)})`);
+        if (sH && desk) assert(sH.px >= 14, `${v}: the held-swing line is at least 14 px (${sH.px})`);
+        await X(`turnCombatAction('parry'); true`); await page.waitForTimeout(60);
+        const sE = await warn();
+        assert(sE.on && sE.txt === EARLY && sE.inside && !sE.cut, `${v}: an early press on a held swing says "${EARLY}" in the same plate (${JSON.stringify(sE)})`);
+        if (desk) assert(sE.px >= 14, `${v}: the early line is at least 14 px (${sE.px})`);
+        assert(await X('document.body.dataset.trickTip') === 'early', `${v}: the page marks the early line shown`);
+        // once a fight: the same move again, its held swing pressed early, says no early line
+        await until(async () => !(await hit()), 200);
+        await X('delete document.body.dataset.trickTip; __go()');
+        const h1 = await until(holding, 200);
+        assert(!!h1, `${v}: the second held swing stalls`);
+        if (h1) { await X(`turnCombatAction('parry'); true`); await page.waitForTimeout(60);
+          const r1 = await X('JSON.stringify({ tip: document.body.dataset.trickTip || "", pressed: !!TURN_LIVE.usedDefense })').then(JSON.parse);
+          assert(r1.pressed && r1.tip !== 'early', `${v}: a second early press in the same fight says no early line (${JSON.stringify(r1)})`); }
+        await X('clearInterval(window.__keep); true');
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('feint-read-clear crashed: ' + (e.stack || e)); }
+
 if (section('foe moves by type')) try {
   const g = loadCore({ seed: 7 }), E = s => g.eval(s), J = s => JSON.parse(E(`JSON.stringify(${s})`));
   const types = J('Object.keys(TURN_FOE_TYPES)');
@@ -16360,6 +16436,84 @@ if (section('ability-names-fit')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('ability-names-fit crashed: ' + (e.stack || e)); }
+
+// ==== loadout-odds: Hero > Abilities says the zone boss odds of the three slotted moves, and Learn picks by them (W10) ====
+// save-pip-z10-ward: Pip at the zone 10 Champion on W10's arrival footing (level 15, tier 1 commons +0), Fireball / Spark / Kindle in the
+// slots (where Next Up leads), one Hollow Scroll that can teach Arcane Ward, Frost Shard or Ignite, no Parry or Dodge record (the casual
+// player). Node: the line's number for her own slots (Fireball first) is within 10 points of W10's corrected figure for them: about 48%
+// (Foreman's correction of 9 Oct 16:58 to W10-2026-10-09.md; the first figure, 33%, was Spark first; copied here, the check cannot read
+// the report). Learn names Arcane Ward first (learnPick and
+// Next Up's row, which says the odds), and its spot is one move in and one out, never a new set. Browser, 1280x720 and 740x360 (360x740
+// must not break), with no Almanac day as in W10: the line shows under Q W E, its text fits its box, at or above the desktop floor (--tmin);
+// Arcane Ward's card says where Learn puts it; taking Fireball out of Q shows the new number and "was" the old one (upright, once its
+// sheet closes: the open sheet hides the line).
+if (section('loadout-odds')) try {
+  const at = 'loadout-odds', W10_SET = 0.48;
+  const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-z10-ward.json'), 'utf8');
+  const g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: raw }) }), J = x => JSON.parse(g.eval(`JSON.stringify(${x})`));
+  const st = J(`({ hero: soloHero(), L: S.L, z: S.maxZone, eq: soloEquipped(), on: bossOddsOn() })`);
+  assert(st.hero === 'pip' && st.z === 10 && st.on && st.eq.join() === 'fire,spark,kindle', `${at}: the fixture is Pip at zone 10 with Fireball, Spark, Kindle and a turn fight (${JSON.stringify(st)})`);
+  const base = J(`loadoutOdds([soloEquipped()], { sync: true })`);
+  assert(base && base.zone === 10 && Math.abs(base.wins[0] - W10_SET) <= 0.1, `${at}: her slots (Fireball, Spark, Kindle) win ${base && Math.round(100 * base.wins[0])}% of zone 10 boss fights, within 10 points of W10's corrected ${100 * W10_SET}%`);
+  const lo = J(`learnOdds('pip', true)`), pick = J(`learnPick('pip').id`), row = lo && lo.rows[0];
+  assert(row && row.id === 'arcaneward' && pick === 'arcaneward' && lo.rows.length === 3, `${at}: Learn names Arcane Ward first (${lo && lo.rows.map(r => r.id + ' ' + Math.round(100 * r.win)).join(', ')})`);
+  assert(row && row.lift && row.lift.after > row.lift.before && row.eq.filter(id => !st.eq.includes(id)).join() === 'arcaneward' && row.eq.filter(id => st.eq.includes(id)).length === 2,
+    `${at}: its spot adds Arcane Ward and keeps two of her moves, and lifts the line (${JSON.stringify(row)})`);
+  const lbl = J(`(topGoals(8).find(x => x.id === 'learn-ability') || {}).label`);
+  assert(/^Learn Arcane Ward: zone 10 boss, about \d+ in 10 wins \(now \d+\)$/.test(lbl || ''), `${at}: Next Up's Learn row names Arcane Ward and its odds (${lbl})`);
+  assert(!g.errors.length, `${at}: no handler errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // wait for what a step reads, with a cap that fails naming what never appeared (a fixed timer after a click flakes under 4 jobs)
+        const need = async (sel, what, ms = 15000) => { try { await page.waitForFunction(q => { const e = document.querySelector(q); return !!e && !!e.offsetParent; }, sel, { timeout: ms }); return true; }
+          catch (e) { assert(false, `${v}: ${what} (${sel}) never showed`); return false; } };
+        await X(`almanac.force('none'); gearDirty(); setTab('party'); true`);   // W10's footing has no Almanac day (a day's crits moved her to 6 in 10)
+        if (!(await need('#viewSeg button[data-view="abilities"]', 'the Abilities view button'))) { await ctx.close(); continue; }
+        await page.evaluate(() => document.querySelector('#viewSeg button[data-view="abilities"]').click());
+        const line = async re => { try { await page.waitForFunction(r => { const e = document.querySelector('.ab-odds'); return !!e && new RegExp(r).test(e.textContent); }, re, { timeout: 20000 }); } catch (e) {}
+          return JSON.parse(await X(`(() => { const e = document.querySelector('.ab-odds'); if (!e || !e.offsetParent) return 'null'; const r = document.createRange(); r.selectNodeContents(e);
+            const b = e.getBoundingClientRect(), bar = document.querySelector('.ab-bar').getBoundingClientRect(), q = document.querySelector('.ab-qwe').getBoundingClientRect(), f = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0;
+            return JSON.stringify({ txt: e.textContent, need: +r.getBoundingClientRect().width.toFixed(2), room: +b.width.toFixed(2), sw: e.scrollWidth, cw: e.clientWidth, under: b.top >= q.bottom - 1, inBar: b.bottom <= bar.bottom + 1 && b.left >= bar.left - 1 && b.right <= bar.right + 1,
+              fs: parseFloat(getComputedStyle(e).fontSize), floor: f, pageW: document.documentElement.scrollWidth, vw: innerWidth }); })()`)); };
+        const fits = l => !!l && l.need <= l.room + 0.01 && l.sw <= l.cw && l.under && l.inBar && l.fs >= l.floor - 0.01 && l.pageW <= l.vw;
+        const l1 = await line('about \\d+ in 10 wins$');
+        assert(l1 && /^Zone 10 boss with these: about \d+ in 10 wins$/.test(l1.txt) && fits(l1), `${v}: the line shows under Q W E and fits its row (${JSON.stringify(l1)})`);
+        // Arcane Ward's card: where Learn puts it (once the Learn order is in)
+        if (!(await need('.ab-row[data-ab="arcaneward"]', "Arcane Ward's row"))) { await ctx.close(); continue; }
+        await page.evaluate(() => document.querySelector('.ab-row[data-ab="arcaneward"]').click());
+        let spot = null; try { await page.waitForFunction(() => !!document.querySelector('.ab-det .ab-spot'), null, { timeout: 30000 }); spot = await X(`document.querySelector('.ab-det .ab-spot').textContent`); } catch (e) {}
+        assert(/^Learn puts it in [QWE]\b.*Zone 10 boss: about \d+ in 10 wins, now \d+\.$/.test(spot || ''), `${v}: Arcane Ward's card says where Learn puts it and the odds (${spot})`);
+        const goal = await X(`(topGoals(8).find(x => x.id === 'learn-ability') || {}).label || ''`);
+        assert(/^Learn Arcane Ward: zone 10 boss/.test(goal), `${v}: Next Up's Learn row names Arcane Ward first (${goal})`);
+        await page.evaluate(() => document.querySelector('.ab-det .ab-x').click());
+        // a slot change: Fireball out of Q (its card's Take out); the line says the new number and what it was
+        if (!(await need('.ab-q[data-slot="0"]', 'slot Q'))) { await ctx.close(); continue; }
+        await page.evaluate(() => document.querySelector('.ab-q[data-slot="0"]').click());
+        if (!(await need('.ab-det[data-ab="fire"] .ab-slotb.on', "Fireball's Take out"))) { await ctx.close(); continue; }
+        await page.evaluate(() => document.querySelector('.ab-det[data-ab="fire"] .ab-slotb.on').click());
+        if (w < h) await page.evaluate(() => document.querySelector('.ab-det .ab-x')?.click());   // upright, the open sheet hides the line (it needs the bar's old height)
+        const l2 = await line(', was \\d+$');
+        const n1 = l1 && (l1.txt.match(/about (\d+) in 10/) || [])[1], n2 = l2 && (l2.txt.match(/about (\d+) in 10/) || [])[1];
+        assert(l2 && n1 && n2 !== n1 && l2.txt === `Zone 10 boss with these: about ${n2} in 10 wins, was ${n1}` && fits(l2), `${v}: after a slot change the line says what it was (${n1}) and still fits (${JSON.stringify(l2)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('loadout-odds crashed: ' + (e.stack || e)); }
 
 // ==== turn-banner-clears-plate: the turn line and the whose-turn banner each read on one line and stay off the "Zone boss" line ====
 // save-mid, a zone boss fight, every foe renamed to the longest name the game can give a foe (a boss or its Deepwell "Deep" name, an

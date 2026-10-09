@@ -1,0 +1,1 @@
+Hero > Abilities now shows how often your three slotted moves beat the zone boss ("Zone 10 boss with these: about 4 in 10 wins"), and after a swap it says what it was. Next Up and the Lantern Cache suggest the move that lifts that line most, say by how much, and Learn puts it where the number assumed. Best shot: odds-was.

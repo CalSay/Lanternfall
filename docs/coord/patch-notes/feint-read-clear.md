@@ -1,0 +1,1 @@
+Boss tricks now say what to do next. After a feint the line reads "A feint! Press on the real swing next." A held swing reads "It holds the swing. Press at the bar's end." If you press while a swing is held, the line says "Too early! Press at the bar's end." (once a fight). Best shot: early-1280x720.

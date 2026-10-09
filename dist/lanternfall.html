@@ -479,6 +479,8 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .ab-q.empty { color: var(--muted); background: #1B1424; box-shadow: inset 0 0 0 1px #4E4060; }
 .ab-q.passive { box-shadow: inset 0 0 0 1px #5B86C9; }
 .ab-q.sel { box-shadow: inset 0 0 0 2px var(--ember); }
+/* loadout-odds: one line under Q W E, the whole bar wide; it wraps rather than cut a number */
+.ab-odds { grid-column: 1 / -1; margin: 0; font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); line-height: 1.25; color: var(--bone); overflow-wrap: anywhere; }
 .ab-infob { display: grid; align-content: center; justify-items: center; gap: 1px; min-width: 64px; min-height: 44px; padding: 2px 6px;
   background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #4E4060; color: var(--bone); cursor: pointer; }
 .ab-infob b { font: 600 max(var(--tmin, 0px), calc((13px * var(--display-k, 1)) * var(--tk, 1)))/1.1 var(--display); color: var(--gold); white-space: nowrap; }
@@ -499,6 +501,7 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .ab-gem { display: block; width: 10px; height: 10px; background: var(--scroll); transform: rotate(45deg); box-shadow: 0 0 0 1px #0B0810; opacity: .5; }
 .ab-scroll.has .ab-gem { opacity: 1; }
 .ab-res { margin: 0; font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); }
+.ab-spot { margin: 2px 0 0; font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); line-height: 1.25; color: var(--bone); }
 
 /* the filters */
 /* menu-tip-room: each button is at least as wide as its label, so "Can learn 2" reads in full at 360 wide (All gives up its room) */
@@ -587,6 +590,7 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
    the sheet's foot is at 686), so Fireball's card (its text, Slot Q W E and both talents) needs no scroll of its own there. While Hesketh's strip takes a row under the menu
    the old cap stays, so the sheet never rises under the bar. */
 @media (max-aspect-ratio: 1/1), (max-width: 599px) {
+  .ab-root.has-det .ab-odds { display: none; }   /* loadout-odds: the sheet needs the bar's old height; the line is back (with "was") when it closes */
   .ab-det { padding-bottom: 10px; max-height: max(min(56vh, 460px), min(calc(100dvh - 290px), 520px)); }
   .app:has(> .ob-bub.over-menu:not([hidden])) .ab-det { max-height: min(56vh, 460px); }
 }
@@ -14327,6 +14331,91 @@ let fightDeltaJob, fightDelta;
   fightDelta = (it, opt) => { const j = fightDeltaJob(it, opt); if (!j) return null; while (!j.step()); return j.res; };
 }
 
+// loadout-odds: the same scratch fights for a set of ability slots (Hero > Abilities' line, the Learn order in 56e, the cache pick).
+// One profile of the hero as they stand (cbEstHero, as bossOdds), against bossOddsFoe(S.maxZone) with bossOddsSkill(). Each set of
+// slots goes into that profile's eq (and its cooldowns) as a fight takes them, and plays its fights on the seeds every other
+// set plays (160 a set), so two sets differ by the moves, not the dice. A move not learned yet plays without a talent (talentsOf lists learned
+// moves only). Nothing is changed on the hero: only the scratch profile's slots.
+// The work is queued and done a chunk at a time by loadoutPump (the browser drives it off the click path, 75-abilities-ui; checks pass
+// sync). Results are kept for what the fight depends on (bossOdds' signature: hero, level, combat numbers, Stars, talents, skill) and
+// the set; a change to any of those starts over.
+//   loadoutOdds(sets, { sync, first, quick }) -> { zone, wins: [win share | null (pending)] } | null (no turn fight to judge)
+//     first: these sets go to the front of the queue (the line on screen before a ranking); sync: every chunk of them now;
+//     quick: the first 40 fights only (a sift: 56e tries every spot quick, then measures the best in full). A set's quick fights are
+//     the first 40 of its 160, so a full measure goes on from them.
+//   loadoutPump(n = 1) -> true while work is left (n chunks of 5 fights; 0 only asks)
+//   loadoutWins(a, b) -> { before, after } | null: wins in 10 (rounded) when b against a passes the craft card's "barely changes"
+//     rule (FIGHT_DELTA.minStep on the raw shares, the rounded numbers differ, and the rounding points the way the raw shares do)
+let loadoutOdds, loadoutPump, loadoutWins;
+{
+  let LC = { sig: '', zone: 0, p: null, skill: null, map: new Map(), queue: [] };
+  // 160 fights a set (twice the craft card's: at 80, a change of seeds alone moved Pip's slots from 4 to 5 in 10), in chunks of 5, so
+  // one chunk stays a few ms even on a slow phone; a quick read is the first 8 chunks (40 fights)
+  const F = FIGHT_DELTA, CHUNK = 5, CHUNKS = Math.ceil(160 / CHUNK), QUICK = 8;
+  const keyOf = eq => (eq || []).map(x => x || '-').join(',');
+  // the profile and its signature now (the same parts bossOdds keys its estimate on). Making a profile costs about a millisecond, and the
+  // Abilities line and Next Up ask several times a second, so it is remade at most every LOADOUT_REMAKE_MS (real time) while the hero,
+  // zone and level stay, or at once after a gear, level, hero or talent event, or a sync call (checks)
+  const LOADOUT_REMAKE_MS = 500;
+  let madeAt = -1e15, madeKey = '';
+  for (const ev of ['gear', 'levelup', 'soloHero', 'talentSet']) on(ev, () => { madeAt = -1e15; });
+  const now = force => {
+    if (typeof bossOddsOn !== 'function' || !bossOddsOn() || (typeof deepActive === 'function' && deepActive())) return null;   // a Deepwell run's boons would count (59m)
+    const key = [soloHero(), S.maxZone, S.L].join('|'), t = Date.now();
+    if (!force && LC.p && key === madeKey && t - madeAt >= 0 && t - madeAt < LOADOUT_REMAKE_MS) return LC;
+    madeKey = key; madeAt = t;
+    const z = S.maxZone, u = typeof cbEstHero === 'function' ? cbEstHero() : null; if (!u) return null;
+    let p; try { p = turnMakeProfile(bossOddsFoe(z), u); } catch (e) { p = null; }
+    if (!p) return null;
+    const skill = bossOddsSkill();
+    const sig = [z, p.heroKey, S.L, BOSS_ODDS_KEYS.map(k => bossOddsNum(p[k])).join(','), JSON.stringify(p.stars), JSON.stringify(p.starSet),
+      JSON.stringify(p.tal), skill.parry, skill.dodge, skill.perfect, skill.good].join('|');
+    if (sig !== LC.sig) LC = { sig, zone: z, p, skill, map: new Map(), queue: [] };
+    return LC;
+  };
+  const share = r => (r.k + r.d > 0 ? r.k / (r.k + r.d) : 0);
+  const pending = r => r.c < r.need;
+  const run = r => {   // one chunk of a set's fights; the quick read is kept when its last chunk is done
+    const p = LC.p; p.eq = r.eq; p.cds = { attack: 1 }; for (const id of r.eq) p.cds[id] = turnCdFor(id);
+    const c = r.c, res = turnCombatSample({ profile: p, seconds: CHUNK * 600, seed: 1 + c * 7919 + LC.zone * 104729, skill: LC.skill, fights: CHUNK });
+    if (res) { r.k += res.kills; r.d += res.deaths; }
+    if (++r.c === QUICK) r.quick = share(r);
+    if (r.c >= CHUNKS) r.win = share(r);
+  };
+  const fail = r => { r.c = CHUNKS; r.quick = r.win = 0; };
+  loadoutOdds = (sets, o) => {
+    o = o || {};
+    if (!Array.isArray(sets) || !now(!!o.sync)) return null;
+    const need = o.quick ? QUICK : CHUNKS, keys = [];
+    for (const s of sets) {
+      const key = keyOf(s); keys.push(key);
+      let r = LC.map.get(key);
+      if (!r) LC.map.set(key, r = { eq: (s || []).filter(Boolean), c: 0, k: 0, d: 0, need: 0, quick: null, win: null });
+      if (r.need < need) r.need = need;
+      if (pending(r) && !LC.queue.includes(key)) LC.queue.push(key);   // new, wanted further, or dropped by an event and still wanted
+    }
+    if (o.first) { const pend = keys.filter(k => pending(LC.map.get(k))); LC.queue = pend.concat(LC.queue.filter(k => !pend.includes(k))); }
+    if (o.sync) for (const key of keys) { const r = LC.map.get(key); try { while (pending(r)) run(r); } catch (e) { fail(r); } }
+    return { zone: LC.zone, wins: keys.map(k => { const r = LC.map.get(k); return o.quick ? r.quick : r.win; }) };
+  };
+  loadoutPump = (n = 1) => {
+    for (let i = 0; i < n; i++) {
+      while (LC.queue.length && !pending(LC.map.get(LC.queue[0]))) LC.queue.shift();
+      if (!LC.queue.length) return false;
+      const r = LC.map.get(LC.queue[0]);
+      try { run(r); } catch (e) { fail(r); }
+    }
+    return LC.queue.some(k => pending(LC.map.get(k)));
+  };
+  // what the queued sets were judged on has changed: drop them (the next loadoutOdds call queues what is wanted now)
+  for (const ev of ['gear', 'levelup', 'soloHero']) on(ev, () => { LC.queue = []; });
+  loadoutWins = (a, b) => {
+    if (a == null || b == null || Math.abs(b - a) < F.minStep) return null;
+    const before = Math.round(10 * a), after = Math.round(10 * b);
+    return before === after || Math.sign(after - before) !== Math.sign(b - a) ? null : { before, after };
+  };
+}
+
 // ---- src/js/55-gathering.js ----
 // 55-gathering: gathering for every family, fight drops, home ground, champions, trophies,
 // the Glint and offline credits (task K5).
@@ -18984,7 +19073,15 @@ function heroUnlockStateValid(u) {
 //   talentsOf(hero) -> { id: 'a' | 'b' } (only abilities the hero owns)
 //   talentSet(hero, id, 'a' | 'b' | null) -> bool (null clears it; emits talentSet)
 // Save: S.abil.tal = { hero: { id: 'a' | 'b' } }; S.abil.resTip = { hero: 1 } (the resource line has shown on its own, 75-turn-ui).
-var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, scrollUsable, scrollSpares, talentsOf, talentSet;
+// The Learn order (loadout-odds, W10): the moves the hero can learn now, by what each does to the zone boss line (55-fight-delta
+// loadoutOdds). A move is tried as one change to the slots: it goes into slot p, and the move that sat there takes the slot of the one
+// going out (d; when p is d it simply replaces it), the rest stay. Its best spot (sifted on 40 fights, measured on 160) ranks it. Never a
+// whole set: one move, one spot.
+//   learnOdds(k, sync) -> { zone, base, rows: [{ id, win, p, d, out, eq, lift }] (best first) } | null (pending, nothing to learn, no
+//     turn fight). base: the slots now; out: the move that leaves the slots ('' for none); lift: loadoutWins(base, win) or null.
+//   learnPick(k) -> abLearnInfo of the move Learn names first, with .row (its learnOdds row) once the odds are in
+//   abilityPlace(k, row) -> puts a learned move in its spot (p, d) as the row says
+var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, scrollUsable, scrollSpares, talentsOf, talentSet, learnOdds, learnPick, abilityPlace;
 {
   const SCROLL_TUNE = { replay: 0.2, pity: 5 };
   const blank = () => ({ unl: { wren: [], tobin: [], pip: [] }, scrolls: {}, dry: {}, got: {}, tal: { wren: {}, tobin: {}, pip: {} }, resTip: {} });
@@ -19047,11 +19144,52 @@ var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, scrollUsabl
     for (const [last, id] of SCROLL_BANDS) if (z <= last) return id;
     return 'roadlight';
   };
-  // Next Up (55-goals): a Scroll in hand and an ability it can teach the hero you play
-  const learnable = () => { const k = soloHero(); if (!k || typeof HERO_ABILITIES !== 'object' || !HERO_ABILITIES[k]) return null;
+  // the spots one move can take in the slots eq (see learnOdds above), each once
+  const spotsFor = (eq, m) => {
+    const out = [], seen = new Set();
+    for (let p = 0; p < 3; p++) for (let d = 0; d < 3; d++) {
+      const occ = eq[p] || null; if (d !== p && !occ) continue;   // nothing to move: it would drop a move for nothing
+      const e = eq.slice(0, 3); e[p] = m; if (d !== p) e[d] = occ;
+      const key = e.join(); if (seen.has(key)) continue; seen.add(key);
+      out.push({ eq: e, p, d, out: d === p ? occ || '' : eq[d] || '' });
+    }
+    return out;
+  };
+  learnOdds = (k, sync) => {
+    if (!k || k !== soloHero() || typeof loadoutOdds !== 'function' || typeof HERO_ABILITIES !== 'object' || !HERO_ABILITIES[k]) return null;
+    const ids = HERO_ABILITIES[k].filter(id => !abLearnInfo(k, id).why); if (!ids.length) return null;
+    // a sift: every spot on its first 40 fights; then the slots now and each move's best spot on all 160
+    const eq = soloEquipped().slice(0, 3), spots = ids.map(id => spotsFor(eq, id));
+    const q = loadoutOdds([].concat(...spots.map(ss => ss.map(s => s.eq))), { sync: !!sync, quick: true });
+    if (!q || q.wins.some(w => w == null)) return null;
+    let j = 0; const bests = spots.map(ss => { let b = null; for (const s of ss) { const w = q.wins[j++]; if (!b || w > b.w) b = { w, s }; } return b.s; });
+    const r = loadoutOdds([eq].concat(bests.map(s => s.eq)), { sync: !!sync });
+    if (!r || r.wins.some(w => w == null)) return null;
+    const base = r.wins[0], rows = ids.map((id, i) => Object.assign({ id, win: r.wins[i + 1] }, bests[i], { lift: loadoutWins(base, r.wins[i + 1]) }));
+    const ord = id => HERO_ABILITIES[k].indexOf(id);
+    rows.sort((a, b) => b.win - a.win || ABILITIES[a.id].tier - ABILITIES[b.id].tier || ord(a.id) - ord(b.id));
+    return { zone: r.zone, base, rows };
+  };
+  // in one change (one soloEquip event), so nothing reads the slots half done
+  abilityPlace = (k, row) => {
+    if (!row || k !== soloHero() || !abilityOwned(k, row.id) || typeof soloEquipped !== 'function') return false;
+    const cur = soloEquipped(); if (cur.includes(row.id)) return false;
+    const next = cur.slice(0, 3), occ = next[row.p] || null;
+    next[row.p] = row.id; if (row.d !== row.p && occ) next[row.d] = occ;
+    cur.splice(0, 3, ...next);
+    emit('soloEquip', { hero: k, slot: row.p, id: row.id });
+    return true;
+  };
+  // Next Up (55-goals): a Scroll in hand and an ability it can teach the hero you play. Once the odds are in, the move that lifts the
+  // zone boss line most; until then (or with no turn fight, or when no move lifts it) the lowest tier, then the list's order
+  learnPick = k => { k = k || soloHero(); if (!k || typeof HERO_ABILITIES !== 'object' || !HERO_ABILITIES[k]) return null;
+    const lo = learnOdds(k);
+    if (lo && lo.rows.length && lo.rows[0].lift && lo.rows[0].lift.after > lo.rows[0].lift.before) { const row = lo.rows[0], i = abLearnInfo(k, row.id); i.row = row; i.zone = lo.zone; i.base = lo.base; return i; }
     let best = null; for (const id of HERO_ABILITIES[k]) { const i = abLearnInfo(k, id); if (!i.why && (!best || i.tier < best.tier)) best = i; } return best; };
-  registerGoal({ id: 'learn-ability', sys: 'hero', prio: 4, pct: () => (learnable() ? 1 : null),
-    label: () => { const i = learnable(); return i ? `Learn ${i.a.name}: your ${SCROLLS[i.payWith].name} is ready` : ''; },
+  const learnable = () => learnPick(soloHero());
+  registerGoal({ id: 'learn-ability', sys: 'hero', prio: 4, pct: () => { const k = soloHero(); return k && typeof HERO_ABILITIES === 'object' && HERO_ABILITIES[k] && HERO_ABILITIES[k].some(id => !abLearnInfo(k, id).why) ? 1 : null; },
+    label: () => { const i = learnable(); if (!i) return '';
+      const L = i.row && i.row.lift; return L ? `Learn ${i.a.name}: zone ${i.zone} boss, about ${L.after} in 10 wins (now ${L.before})` : `Learn ${i.a.name}: your ${SCROLLS[i.payWith].name} is ready`; },
     icon: () => ({ ic: ['sword', '#F2C14E'] }),
     go: () => { const i = learnable(); return { tab: 'party', view: 'abilities', sel: i ? `#sec-abilities .ab-det[data-ab="${i.id}"] .ab-learn` : '#sec-abilities',
       fn: () => { if (i && typeof abilityOpenDetail === 'function') abilityOpenDetail(i.id); } }; } });   // the Learn button sits in the detail, so open it
@@ -37822,6 +37960,10 @@ var handsTradeOpenPicker;
 //     a wide panel, a bottom sheet in portrait, and in place of the list (with Back) in the small landscape panel.
 // Ability icons: whole packs per hero (art freeze, owner 2026-09-30). The three starters (Echo Shot, Shield Bash, Fireball)
 // and all of Pip's 14 are drawn (wire-ability-icons); Wren and Tobin keep lettered tiles until their last four icons pass.
+// loadout-odds (W10): under Q W E, one line: "Zone 10 boss with these: about 4 in 10 wins", from the same scratch fights as the craft
+// card's line (55-fight-delta loadoutOdds), worked out a chunk at a time off the click path (the pump below). After a slot change it
+// adds "was 4" when the change passes the craft card's "barely changes" rule. A move you can learn says, in its detail, where Learn
+// puts it and what that does to the line (56e learnOdds); Learn puts it there. Never a whole set: one move, one spot.
 // ability-names-fit: a name wider than its box steps its font size down until it fits, never under `min` px nor the desktop tier's text
 // floor (--tmin: 14 px at Desktop 1, 15 at Desktop 2; Foreman 2026-10-09). Still too wide at the floor, its letters close up by at most
 // 0.06 em. The display web font fits every ability name; this is for a fallback font (often a monospace twice as wide). Used for the
@@ -37860,7 +38002,8 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
   const BASIC = [['attack', 'Attack', 'Your plain hit. A short cooldown.'], ['parry', 'Parry', 'Press as a hit lands to take none of it. A full parry earns a counter.'],
     ['dodge', 'Dodge', 'Press as a hit comes to step out of it.']];
   // view state (not saved): the open detail ('' | ability id | 'mv:attack'), the filter, the info drawer, a Learn armed
-  let root = null, sig = '', armed = '', selId = '', filt = 'all', infoOpen = false, listTop = -1;
+  let root = null, sig = '', armed = '', selId = '', filt = 'all', infoOpen = false, listTop = -1, oddsTxt = '';
+  let oddsLast = null, oddsWas = null;   // the line's last result { ctx, key, win } and the one before this set of slots { key, win }
   const heroNm = k => (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : k);
   const fitQ = () => { if (root) fitTextWidths(root.querySelectorAll('.ab-q b, .ab-slotb small, .ab-rt b'), 8); };
   const btn = (cls, text) => { const b = el('button', cls, text); b.type = 'button'; return b; };
@@ -37894,6 +38037,28 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
     listTop = -1;
     const row = root && root.querySelector(`.ab-row[data-ab="${id}"]`); if (row) try { row.focus({ preventScroll: true }); } catch (e) {}
   }
+  const abName = id => (ABILITIES[id] || SOLO_ABILITIES[id] || {}).name || id;
+  function oddsText(k, eq) {
+    let r = null; try { r = typeof loadoutOdds === 'function' ? loadoutOdds([eq], { first: true }) : null; } catch (e) { r = null; }
+    if (!r) return '';
+    const w = r.wins[0], ctx = k + '|' + r.zone, key = eq.join();
+    if (w == null) return `Zone ${r.zone} boss with these: working it out`;
+    if (!oddsLast || oddsLast.ctx !== ctx) oddsWas = null;
+    else if (oddsLast.key !== key) oddsWas = { key, win: oddsLast.win };
+    oddsLast = { ctx, key, win: w };
+    const L = oddsWas && oddsWas.key === key ? loadoutWins(oddsWas.win, w) : null;
+    return `Zone ${r.zone} boss with these: about ${Math.round(10 * w)} in 10 wins` + (L ? `, was ${L.before}` : '');
+  }
+  // a move you can learn: its learnOdds row, when Learn would put it somewhere that changes the line
+  const learnRow = (k, id) => { let lo = null; try { lo = typeof learnOdds === 'function' ? learnOdds(k) : null; } catch (e) { lo = null; }
+    const row = lo && lo.rows.find(x => x.id === id); return row && row.lift ? Object.assign({ zone: lo.zone }, row) : null; };
+  function spotText(row, eq) {
+    const parts = [`Learn puts it in ${KEYS[row.p]}`], occ = eq[row.p];
+    if (row.d !== row.p && occ) parts.push(`${abName(occ)} moves to ${KEYS[row.d]}`);
+    if (row.out) parts.push(`${abName(row.out)} comes out`);
+    const said = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0];
+    return `${said}. Zone ${row.zone} boss: about ${row.lift.after} in 10 wins, now ${row.lift.before}.`;
+  }
   function build() {
     const k = soloHero(); if (!root) return;
     root.textContent = '';
@@ -37922,6 +38087,7 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
     ib.append(el('b', null, `${nScroll} Scroll${nScroll === 1 ? '' : 's'}`));
     ib.addEventListener('click', () => { infoOpen = !infoOpen; redraw(); });
     bar.append(qwe, ib);
+    if (oddsTxt) { const o = el('p', 'ab-odds', oddsTxt); o.setAttribute('aria-live', 'polite'); bar.append(o); }
     root.append(bar);
     // ---- the drawer: each Scroll, where it drops, and how slots and talents work ----
     if (infoOpen) {
@@ -38084,20 +38250,23 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
       }
       act.append(row);
     } else if (!i.why) {
-      const pay = SCROLLS[i.payWith], b = btn('big ab-learn');
+      const pay = SCROLLS[i.payWith], b = btn('big ab-learn'), spot = learnRow(k, id);
       putText(b, armed === id ? `Confirm: spend a ${pay.name}` : `Learn · ${pay.name}`);
       if (armed === id) b.classList.add('armed');
       b.addEventListener('click', () => {
         if (armed !== id) { armed = id; redraw(); return; }
         armed = '';
+        const row = learnRow(k, id);   // where it goes, read before it is learned (then it is no longer a move to learn)
         if (abilityLearn(k, id)) {
-          toast(`${heroNm(k)} learned ${a.name}.`, 'good', null, 'normal');
-          const e2 = soloEquipped(), free = e2.indexOf(null); if (free >= 0) soloEquip(free, id);
+          const placed = row && abilityPlace(k, row);
+          toast(`${heroNm(k)} learned ${a.name}.` + (placed ? ` It is in ${KEYS[row.p]}${row.out ? `, and ${abName(row.out)} is out` : ''}.` : ''), 'good', null, 'normal');
+          const e2 = soloEquipped(), free = e2.indexOf(null); if (!placed && free >= 0) soloEquip(free, id);
           persist();
         }
         redraw();
       });
       act.append(b, el('small', 'ab-al', `You have ${scrollCount(i.payWith)} ${pay.name}${scrollCount(i.payWith) === 1 ? '' : 's'}.`));
+      if (spot) act.append(el('p', 'ab-spot', spotText(spot, eq)));
     } else {
       const s = SCROLLS[i.scroll];
       act.append(el('p', 'ab-need', !i.lvOk ? `Opens at level ${i.lv}. Then it needs a ${s.name}.` : `Needs a ${s.name}. It drops from ${s.from}.`));
@@ -38110,8 +38279,10 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
     if (!root || !root.isConnected) return;
     const k = soloHero(); if (!k) { if (sig !== 'none') { sig = 'none'; build(); } return; }
     const lv = soloLevels()[k], A = S.abil || {};
-    const P = typeof turnPowerNow === 'function' ? turnPowerNow() : null;
-    const s = [k, lv && lv.L, JSON.stringify(A.unl && A.unl[k]), JSON.stringify(A.scrolls), soloEquipped().join(), armed, P ? fmt(Math.round(P.U)) : '',
+    const P = typeof turnPowerNow === 'function' ? turnPowerNow() : null, eq = soloEquipped();
+    oddsTxt = oddsText(k, eq.slice(0, 3));
+    const spot = selId && !selId.startsWith('mv:') ? learnRow(k, selId) : null;
+    const s = [oddsTxt, spot ? spotText(spot, eq) : '', k, lv && lv.L, JSON.stringify(A.unl && A.unl[k]), JSON.stringify(A.scrolls), soloEquipped().join(), armed, P ? fmt(Math.round(P.U)) : '',
       JSON.stringify(A.tal && A.tal[k]), selId, filt, infoOpen].join('|');
     if (s === sig) return;
     sig = s; build();
@@ -38124,6 +38295,23 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
     update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] abilities', e); } } });
   on('soloHero', () => { selId = ''; armed = ''; });   // another hero: start at the list
   for (const ev of ['abilityLearned', 'scrollDrop', 'soloEquip', 'soloHero', 'levelup']) on(ev, () => { sig = ''; try { refresh(); } catch (e) {} });
+  // loadout-odds: the pump. The scratch fights for the line and the Learn order run here in slices of a few ms, never on a click;
+  // when a batch is done the menus redraw once (the line, Next Up's Learn row, the cache pick). It works only while something that
+  // shows them could be on screen: this card, a moment card (the Lantern Cache pick), or a move to learn (Next Up's Learn row), so a
+  // set queued here does not keep fighting in the background after the menu closes.
+  const PUMP = { sliceMs: 8, busyMs: 16, idleMs: 400 };
+  const pumpWanted = () => {
+    if (root && root.isConnected && root.getClientRects().length) return true;
+    if (document.querySelector('.mm-ov')) return true;
+    const k = soloHero(); return !!(k && typeof HERO_ABILITIES === 'object' && HERO_ABILITIES[k] && HERO_ABILITIES[k].some(id => !abLearnInfo(k, id).why));
+  };
+  const pump = () => {
+    let busy = false, more = false;
+    try { if (typeof loadoutPump === 'function' && !document.hidden && loadoutPump(0) && pumpWanted() && (busy = true)) { const t = performance.now(); do more = loadoutPump(1); while (more && performance.now() - t < PUMP.sliceMs); } } catch (e) { more = false; }
+    if (busy && !more) { sig = ''; try { ui(true); } catch (e) {} }
+    setTimeout(pump, more ? PUMP.busyMs : PUMP.idleMs);
+  };
+  setTimeout(pump, PUMP.idleMs);
 }
 
 // ---- src/js/75-almanac-ui.js ----
@@ -38990,29 +39178,54 @@ let showAwayReport, awayLimitStep;
 // moves of the hero in play can be learned with that Scroll. Up to three, in the Abilities list's order, never marked best; Keep the
 // Scroll (or any other close) keeps it. A pick learns the move and slots it in a free slot, else opens Abilities on it to swap.
 // Nothing new is paid. Events for the walk: choice 'spoils' and spoilsPick { zone, offered, taken } (taken: a move id or 'keep').
-const SPOILS_TUNE = { from: 6, to: 10, max: 3 };
+// loadout-odds (W10): once the zone boss odds are in (56e learnOdds), the picks go most first, each saying what it does to the line
+// ("Zone 11 boss: about 8 in 10, now 4"), and a pick goes where that line assumed (abilityPlace). The odds start when the card opens
+// and take a moment: until they are in, the list's order and each move's own line; a sub fills in when its number arrives.
+const SPOILS_TUNE = { from: 6, to: 10, max: 3, waitMs: 300, tries: 100 };
+const spoilsOdds = k => { try { const lo = typeof learnOdds === 'function' ? learnOdds(k) : null; return lo && lo.rows.length ? lo : null; } catch (e) { return null; } };
+// the sub says where the pick goes when it moves the slots ("In Q, Spark out."), then the line
+const spoilsSub = (lo, id) => { const r = lo && lo.rows.find(x => x.id === id); if (!r || !r.lift) return '';
+  const nm = x => (ABILITIES[x] || {}).name || x;
+  return `In ${'QWE'[r.p]}${r.out ? `, ${nm(r.out)} out` : ''}. Zone ${lo.zone} boss: about ${r.lift.after} in 10, now ${r.lift.before}`; };
 function spoilsMoves(v) {
   try {
     if (!v || !v.scroll || !(v.zone >= SPOILS_TUNE.from && v.zone <= SPOILS_TUNE.to) || typeof abLearnInfo !== 'function') return null;
     const k = soloHero(); if (!k || !HERO_ABILITIES[k]) return null;
-    const ids = HERO_ABILITIES[k].filter(id => { const i = abLearnInfo(k, id); return i.why === '' && i.payWith === v.scroll.id; });
-    return ids.length >= 2 ? { k, ids: ids.slice(0, SPOILS_TUNE.max) } : null;
+    let ids = HERO_ABILITIES[k].filter(id => { const i = abLearnInfo(k, id); return i.why === '' && i.payWith === v.scroll.id; });
+    const lo = spoilsOdds(k);
+    if (lo) { const at = id => { const i = lo.rows.findIndex(r => r.id === id); return i < 0 ? 99 : i; }; ids = ids.slice().sort((a, b) => at(a) - at(b)); }
+    return ids.length >= 2 ? { k, ids: ids.slice(0, SPOILS_TUNE.max), lo } : null;
   } catch (e) { return null; }
+}
+// the odds arrive after the card is up: fill each pick's line in place (never reorder under the pointer)
+function spoilsFill(sp, n = 0) {
+  if (sp.lo || n > SPOILS_TUNE.tries) return;
+  const lo = spoilsOdds(sp.k);
+  if (!lo) { setTimeout(() => spoilsFill(sp, n + 1), SPOILS_TUNE.waitMs); return; }
+  let seen = 0;
+  for (const b of document.querySelectorAll('.mm-ov .mm-pick')) {
+    const nm = b.querySelector('b'), sm = b.querySelector('small'), id = nm && sp.ids.find(x => ABILITIES[x].name === nm.textContent), t = id && spoilsSub(lo, id);
+    if (id) seen++;
+    if (t && sm) sm.textContent = t;
+  }
+  if (!seen) setTimeout(() => spoilsFill(sp, n + 1), SPOILS_TUNE.waitMs);   // the card waits behind another: fill it once it shows
 }
 function spoilsPicks(v, sp) {
   const sid = v.scroll.id, done = taken => { emit('choice', 'spoils'); emit('spoilsPick', { zone: v.zone, offered: sp.ids.length, taken }); };
   const learn = id => {
     const k = sp.k, i = abLearnInfo(k, id);
-    if (soloHero() !== k || i.why || i.payWith !== sid || !abilityLearn(k, id)) { done('keep'); return; }   // the card waited and the move went: the Scroll stays
-    const free = soloEquipped().indexOf(null);
-    if (free >= 0) soloEquip(free, id);
-    else { if (typeof abilityOpenDetail === 'function') abilityOpenDetail(id); setTab('abilities', '#sec-abilities'); }   // all slots full: Abilities, on the move, has "Swap it in for:"
+    if (soloHero() !== k || i.why || i.payWith !== sid) { done('keep'); return; }   // the card waited and the move went: the Scroll stays
+    const lo = spoilsOdds(k), row = lo && lo.rows.find(r => r.id === id && r.lift);   // where it goes, read before it is learned
+    if (!abilityLearn(k, id)) { done('keep'); return; }
+    const free = soloEquipped().indexOf(null), placed = !!row && typeof abilityPlace === 'function' && abilityPlace(k, row);   // in the spot its line said
+    if (!placed && free >= 0) soloEquip(free, id);
+    else if (!placed) { if (typeof abilityOpenDetail === 'function') abilityOpenDetail(id); setTab('abilities', '#sec-abilities'); }   // all slots full: Abilities, on the move, has "Swap it in for:"
     try { save(); } catch (e) {}
     try { ui(true); } catch (e) {}   // the fight bar shows the slotted move now
     done(id);
   };
   return { pickHead: 'Learn one now:', goTxt: 'Keep the Scroll', onKeep: () => done('keep'),
-    picks: sp.ids.map(id => ({ txt: ABILITIES[id].name, sub: ABILITIES[id].line, fn: () => learn(id) })) };
+    picks: sp.ids.map(id => ({ txt: ABILITIES[id].name, sub: spoilsSub(sp.lo, id) || ABILITIES[id].line, fn: () => learn(id) })) };
 }
 on('cacheOpen', v => {
   if (typeof moment !== 'function') return;
@@ -39042,7 +39255,7 @@ on('cacheOpen', v => {
   // the sub is one short line: the unique's odds (honest, with modifiers); the colour's line says what a look did
   const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
-  if (sp) Object.assign(o, spoilsPicks(v, sp));
+  if (sp) { Object.assign(o, spoilsPicks(v, sp)); setTimeout(() => spoilsFill(sp), SPOILS_TUNE.waitMs); }
   o.actions = [];
   if (v.unique && typeof momentEquipAction === 'function') { const eq = momentEquipAction(v.unique.item); if (eq) o.actions.push(eq); }   // Cal's play note 9: the unique is one tap from being worn
   if (big && !sp && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });
@@ -47866,10 +48079,23 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   on('parryWindow', () => { winT0 = 0; said.hold = said.feint = said.flinch = 0; });
   // boss tricks (59k TURN_TUNE.tricks): the first time each shows, a line says what to do (S.turn.seen: additive keys in an existing object)
   const said = { hold: 0, feint: 0, flinch: 0 };
-  function trickTip(key, txt) {
+  // feint-read-clear: each line says what to do next (a feint: the real swing follows; a held swing: press at the bar's end), the
+  // whole line every time, up for less time after the first. body[data-trick-tip]: the last one shown, for a proof route
+  const TRICK_TIP = { tdelay: "It holds the swing. Press at the bar's end.", tfeint: 'A feint! Press on the real swing next.', early: "Too early! Press at the bar's end." };
+  function trickTip(key) {
     const seen = S.turn && (S.turn.seen || (S.turn.seen = {})); if (!seen) return;
-    if (seen[key]) say(txt.split('.')[0] + '.', 'charge', 1.0); else { seen[key] = 1; say(txt, 'charge', 3.2); }
+    say(TRICK_TIP[key], 'charge', seen[key] ? 1.6 : 3.2); seen[key] = 1; document.body.dataset.trickTip = key;
   }
+  // a press on a held swing before its windows open fails: once a fight, the line says it was early (never before the hold shows;
+  // a press cannot come late, as the hit lands when its windows close)
+  let toldEarly = 0;
+  on('fightStart', () => { toldEarly = 0; });
+  const earlyPress = p => {
+    if (!p || p.res === 'parry' || p.res === 'dodge' || toldEarly || !(typeof turnCombatOn === 'function' && turnCombatOn())) return;
+    const s = turnCombatSnapshot(); if (!s || s.phase !== 'foeWindup' || s.feint || !(s.holdTo > 0) || s.now < s.holdFrom || s.now >= s.dodgeOpensAt) return;
+    toldEarly = 1; said.hold = 1; trickTip('early');
+  };
+  on('soloParry', earlyPress); on('soloDodge', earlyPress);
   // the narrow stage line (about 18 characters wide): three short lines, as the trick tips are; the boss's name is on its bar
   // rally gates (rally-gates-live): the boss holds at the mark on its bar until it has made its next move; while it gathers a
   // charged move, hits cannot break the charge there, so only a Stun does
@@ -47933,8 +48159,8 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
       const inP = s.now >= s.parryOpensAt && !broke, inD = s.now >= s.dodgeOpensAt && !broke;
       bar.classList.toggle('in-parry', inP); bar.classList.toggle('in-dodge', inD && !inP);
       bar.classList.toggle('stall', stall); bar.classList.toggle('feint', broke); bar.classList.toggle('flinch', !!s.flinch);
-      if (stall && !said.hold) { said.hold = 1; trickTip('tdelay', 'It holds the swing. Wait for the bar.'); }
-      if (broke && !said.feint) { said.feint = 1; trickTip('tfeint', 'A feint! Do not press.'); }
+      if (stall && !said.hold) { said.hold = 1; trickTip('tdelay'); }
+      if (broke && !said.feint) { said.feint = 1; trickTip('tfeint'); }
       if (s.flinch && !said.flinch) { said.flinch = 1; say('Off balance. You cannot defend this one.', 'charge', 1.2); }
       dz.style.left = pct(at(s.dodgeOpensAt)); dz.style.width = pct(at(s.closesAt) - at(s.dodgeOpensAt));
       pz.style.left = pct(at(s.parryOpensAt)); pz.style.width = pct(at(s.closesAt) - at(s.parryOpensAt));
