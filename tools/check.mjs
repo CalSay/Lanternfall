@@ -95,7 +95,7 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -12105,7 +12105,8 @@ if (section('staged guide (browser)')) try {
         await X('S.abil.scrolls.moss = 1; S.abil.got.moss = 1; emit("scrollDrop", { id: "moss", n: 1, first: true, firstEver: true }); setTab("party"); true');
         await page.waitForTimeout(700);
         const sc = JSON.parse(await X(LOOK));
-        assert(sc.id === 'say:scroll' && /Moss Scroll/.test(sc.txt) && /Abilities/.test(sc.txt) && sc.paused && await X('!document.querySelector(".ob-ok").hidden'), `staged guide: the first Scroll gets Hesketh's line between fights, held with a Got it ("${sc.txt}")`);
+        // tips-pause-says-so: a news line over an upright menu holds nothing (the fight goes on behind the menu); it still waits for its Got it
+        assert(sc.id === 'say:scroll' && /Moss Scroll/.test(sc.txt) && /Abilities/.test(sc.txt) && !sc.paused && await X('!document.querySelector(".ob-ok").hidden'), `staged guide: the first Scroll gets Hesketh's line over the Hero menu with a Got it, holding nothing behind the menu ("${sc.txt}")`);
         await page.click('.ob-ok'); await page.waitForTimeout(300);
         // a move learned with nowhere chosen for it yet (an empty slot waits): he says to put it in a slot, and the slot wakes
         await X('abilityLearn("wren", HERO_ABILITIES.wren.find(id => ABILITIES[id].tier === 1)); true');
@@ -14851,6 +14852,188 @@ if (section('forge-line-while-fighting')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('forge-line-while-fighting crashed: ' + (e.stack || e)); }
+
+// ==== tips-pause-says-so (Opus high judge, 2026-10-08): a Hesketh news line holds only the gap after a kill, never gathering; any other hold that
+// is not a fight lesson says "Paused" (the stage plate, Gather); a fight press answers a Got it hold and then acts; the bar stays in view, dimmed,
+// where the tip does not cover it; and his Stars, boss-loss and hero-down lines never come at the wrong moment (75-onboard-ui.js, 72-ui-gather.js) ====
+if (section('tips-pause-says-so')) try {
+  const at = 'tips-pause-says-so', ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
+  {
+    const m = /\n {4}stars: '([^']*)',/.exec(ui);
+    assert(m && m[1].length <= 90 && !/earned/i.test(m[1]) && /Hero tab/.test(m[1]), `${at}: the Stars line is a literal of 90 letters or fewer that is true before the first star (${m ? JSON.stringify(m[1]) : 'not found'})`);
+    const st = /const sayStep = id => \(\{(.*)\}\);/.exec(ui);
+    assert(st && !/pause/.test(st[1]) && /ok: 1/.test(st[1]), `${at}: a news line (sayStep) carries a Got it and no pause of its own (${st ? st[1] : 'not found'})`);
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const raw0 = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-dipper-z4.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // fixture: null for a new game (the hero picker)
+    const open = async (w, h, edit, fixture = true) => {
+      const mobile = !(w === 1280 && h === 720);
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true });
+      if (fixture) { const o = JSON.parse(raw0); if (edit) edit(o); await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: JSON.stringify(o), key: KEY }); }
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // won fights counted; each puts the zone back to its first fight (no zone boss cuts in); a bubble-phase key log on window runs after 75-solo-ui's handler
+      await X('window.__kills = 0; on("kill", () => { S.kills = 0; }); on("fightEnd", e => { if (e && e.reason === "victory") { window.__kills++; S.kills = 0; } }); window.__keys = []; addEventListener("keydown", e => window.__keys.push(e.key)); true');
+      return { ctx, page, errs, X };
+    };
+    // every guide step marked done, so only the line under test can speak or hold
+    const QUIET = 'GUIDE_STEPS.forEach(s => { if (!S.onboard.done[s.id]) S.onboard.done[s.id] = 1; }); true';
+    const LOOK = `JSON.stringify((() => { const b = document.querySelector('.ob-bub'), up = !!b && !b.hidden, ok = document.querySelector('.ob-ok'), bar = document.querySelector('#soloBar'), pl = document.querySelector('.ob-paused');
+      const vis = n => !!n && n.getClientRects().length > 0 && getComputedStyle(n).visibility !== 'hidden' && getComputedStyle(n).display !== 'none';
+      const R = n => { const r = n.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); };
+      const atk = bar && bar.querySelector('.sb-atk'), chip = [...document.querySelectorAll('.gx-now-name .gx-chip')].find(vis), node = [...document.querySelectorAll('.gx-act.here')].find(vis);
+      return { want: soloGuideWants(), up, txt: up ? b.querySelector('.ob-txt').textContent : '', ok: up && ok && !ok.hidden ? ok.textContent : '', paused: ONBOARD.paused,
+        held: $('app').classList.contains('guide-held'), plate: vis(pl), tag: vis(document.querySelector('.ob-held')), pr: vis(pl) ? R(pl) : null, br: up ? R(b) : null, sr: R($('stageBox')),
+        bar: vis(bar), dim: atk ? +getComputedStyle(atk.querySelector('.sb-ic')).opacity : -1, wait: !!atk && atk.classList.contains('wait'),
+        chip: chip ? chip.textContent : '', node: node ? node.textContent : '', nodeAria: node ? node.getAttribute('aria-label') : '',
+        foe: liveFoe(), hero: cbHeroUp(), kills: window.__kills, wood: S.mats.wood[0], tab: S.tab, act: S.activity }; })())`;
+    const look = async X => JSON.parse(await X(LOOK));
+    const until = async (X, page, f, ms) => { let s = await look(X); for (const t0 = Date.now(); !f(s) && Date.now() - t0 < ms;) { await page.waitForTimeout(120); s = await look(X); } return s; };
+    // end the foe in view now (the shipped turn fight ends on its next tick)
+    const killFoe = X => X('if (TURN_LIVE && TURN_LIVE.foe && !TURN_LIVE.ended) TURN_LIVE.foe.hp = 0; true');
+    const gapLine = async (X, page, id, ms = 20000) => { let s = await look(X); for (const t0 = Date.now(); !(s.want === id && s.paused) && Date.now() - t0 < ms;) { if (s.foe) await killFoe(X); await page.waitForTimeout(150); s = await look(X); } return s; };
+    const meet = (a, b) => !!a && !!b && a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+    try {
+      // 1. a news line while gathering holds nothing; in the kill gap it holds and says Paused; a fight press answers it
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, { ctx, page, errs, X } = await open(w, h, o => { o.onboard.sayQ = [{ id: 'forage' }]; delete o.onboard.done['say:forage']; });
+        await X(QUIET); await X('setNode("wood", 1); setActivity("gather"); setTab("gat"); setView("gat", "wood"); true');
+        let s = await until(X, page, s => s.want === 'say:forage', 8000);
+        const w0 = s.wood; await page.waitForTimeout(4000); const s4 = await look(X);
+        assert(s.want === 'say:forage' && s.ok === 'Got it' && !s4.paused && !s4.held && !s4.plate && s4.want === 'say:forage' && s4.wood > w0 && s4.chip === 'Working' && s4.node === 'Working',
+          `${v}: chopping with Gather open, his forage line shows with Got it and holds nothing: wood rises over 4 s, Gather says Working (${w0} -> ${JSON.stringify(s4)})`);
+        await X('closeMenu(); setActivity("fight"); true');
+        s = await gapLine(X, page, 'say:forage');
+        const k0 = s.kills; await page.waitForTimeout(1500); const s2 = await look(X);
+        assert(s.want === 'say:forage' && s.paused && s.held && s.plate && !s.foe && s2.paused && !s2.foe && s2.kills === k0,
+          `${v}: back in the fight the same line holds the kill gap, the app carries the held class, "Paused" is on the stage and the next foe waits (${JSON.stringify(s)} -> ${JSON.stringify(s2)})`);
+        assert(meet(s.pr, s.sr) && s.pr[0] >= s.sr[0] && s.pr[2] <= s.sr[2] && !meet(s.pr, s.br), `${v}: the Paused plate sits inside the stage and clear of the tip (plate ${s.pr}, stage ${s.sr}, tip ${s.br})`);
+        if (w === 740) assert(!s.bar, `${v}: the tip covers the fight bar here, so the bar hides as before (${JSON.stringify(s)})`);
+        else assert(s.bar && Math.abs(s.dim - 0.5) < 0.05, `${v}: the fight bar stays in view under the tip, dimmed (opacity ${s.dim}, ${JSON.stringify(s)})`);
+        await X('document.querySelectorAll("#soloBar .sbtn").forEach(b => b.classList.remove("nope", "hit", "refused")); window.__keys = []; true');
+        if (w === 1280) {
+          // keys that must not answer it: Space on a focused button, a held-down repeat, a key typed in a text box
+          await X(`(() => { const b = document.querySelector('.tab[data-tab="party"]'); b.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+            document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', repeat: true, bubbles: true }));
+            const i = document.createElement('input'); document.body.append(i); i.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', bubbles: true })); i.remove(); return true; })()`);
+          s = await look(X);
+          assert(s.want === 'say:forage' && s.paused && !await X('!!S.onboard.done["say:forage"]'), `${v}: Space on a focused button, a repeat key and a key typed in a text box leave the line up (${JSON.stringify(s)})`);
+          await X('window.__keys = []; true');
+          await page.keyboard.press('d');
+        } else if (w === 360) await page.tap('#soloBar .sb-atk');
+        else await page.click('.ob-ok');
+        await page.waitForTimeout(60);
+        const acted = await X('(() => { const b = document.querySelector("#soloBar .sb-atk"); return b.classList.contains("nope") || b.classList.contains("hit"); })()');
+        s = await look(X);
+        const done = await X('!!S.onboard.done["say:forage"]'), keys = await X('window.__keys.slice()');
+        assert(s.want !== 'say:forage' && done && (!s.paused || s.want) && !(s.held && !s.want), `${v}: ${w === 740 ? 'Got it' : w === 1280 ? 'D (Attack)' : 'a press on Attack'} answers the line: it closes, the say key is done (${done}) and the hold ends (${JSON.stringify(s)})`);
+        if (w === 1280) assert(acted && keys.includes('d'), `${v}: the D press then goes on to the fight bar's own handler (acted ${acted}, keys after it ${JSON.stringify(keys)})`);
+        if (w === 360) assert(acted, `${v}: the press on Attack then reaches the button's own handler (acted ${acted})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // 2. a guide step that holds gathering says Paused in Gather; over the fight, a fight press it does not ask for is refused (it waits for Craft)
+      {
+        const v = `${at} (browser 1280x720, a guide hold)`, { ctx, page, errs, X } = await open(1280, 720);
+        await X('setNode("wood", 1); setActivity("gather"); setTab("gat"); setView("gat", "wood"); true');
+        let s = await until(X, page, s => s.paused && !!s.want && s.chip === 'Paused', 10000);
+        assert(s.paused && s.held && s.plate && s.chip === 'Paused' && s.node === 'Paused' && /^Paused at the /.test(s.nodeAria) && !s.ok,
+          `${v}: a guide step that holds the game while you gather ("${s.want}") shows Paused on the stage and Gather says Paused for Working (${JSON.stringify(s)})`);
+        const w0 = s.wood, want = s.want;
+        await page.waitForTimeout(1500); s = await look(X);
+        assert(s.wood === w0 && s.want === want, `${v}: nothing is gathered while it holds (${w0} -> ${s.wood})`);
+        // fighting with Gather still open beside the fight (a wide view): the same step holds, the fight bar in view
+        await X('setActivity("fight"); true');
+        s = await until(X, page, s => s.want === want && s.paused && s.bar, 8000);
+        await X('document.querySelectorAll("#soloBar .sbtn").forEach(b => b.classList.remove("nope", "hit", "refused")); window.__keys = []; true');
+        await page.keyboard.press('d'); await page.waitForTimeout(100);
+        const r = JSON.parse(await X('JSON.stringify({ keys: window.__keys.slice(), nope: document.querySelector(".ob-paused").classList.contains("nope"), ref: document.querySelector("#soloBar .sb-atk").classList.contains("nope") })'));
+        const s2 = await look(X);
+        assert(s.want === want && s.held && s2.want === want && s2.paused && s2.held && r.nope && r.ref,
+          `${v}: D with the fight beside Gather, while that step waits for Craft, is refused: the step stays and holds, Attack shakes and the plate flashes (${JSON.stringify(r)}, ${JSON.stringify(s)} -> ${JSON.stringify(s2)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // 2b. upright, a guide hold over a menu: the menu covers the stage, so the strip carries the Paused tag and the stage plate stays off the menu
+      {
+        const v = `${at} (browser 360x740, a guide hold over Gather)`, { ctx, page, errs, X } = await open(360, 740);
+        await X('setNode("wood", 1); setActivity("gather"); setTab("gat"); setView("gat", "wood"); true');
+        const s = await until(X, page, s => s.held && s.chip === 'Paused', 10000);
+        assert(s.held && s.tag && !s.plate && s.chip === 'Paused' && s.node === 'Paused', `${v}: the strip over the menu says Paused, the stage plate does not sit on the menu, and Gather says Paused (${JSON.stringify(s)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // 3. the Stars line before the first star; the boss-loss line after a win; a line while the hero is down
+      {
+        const v = `${at} (browser 1280x720, wrong moments)`, { ctx, page, errs, X } = await open(1280, 720, o => { delete o.onboard.done['say:stars']; delete o.onboard.done['say:codex']; delete o.onboard.done['say:defeat']; });
+        await X(QUIET);
+        await X('S.L = Math.max(S.L, 10); emit("unlock", { id: "stars" }); true');
+        let s = await gapLine(X, page, 'say:stars');
+        const stars0 = await X('Object.keys((S.stars && S.stars.own) || {}).length');
+        assert(s.want === 'say:stars' && stars0 === 0 && !/earned/i.test(s.txt) && /^Stars are on the Hero tab now\./.test(s.txt), `${v}: with no star found the Stars line does not say you earned them (${stars0} stars; "${s.txt}")`);
+        await page.click('.ob-x');
+        // a boss loss, then that boss beaten before the next gap: "No shame in that" never shows, and its key is not marked done
+        // (a real loss starts the turn fight's recovery, which stands the hero up and brings the next foe; the boss's Try again card, if one opens,
+        // is shut as a player shuts it)
+        const shut = async () => { await page.waitForTimeout(400); await X('document.querySelectorAll(".bsheet-ov:not(.docked) .bsheet-x").forEach(b => b.click()); true'); await page.waitForTimeout(300); };
+        await X('emit("wipe", { zone: S.maxZone, to: S.maxZone, boss: true, arena: false, stall: false }); S.maxZone++; TURN_RECOVER = 0.5; true'); await shut();
+        const k0 = (await look(X)).kills; let saw = '';
+        // (through the first kill gap after it, where the line would speak, and 1.5 s into that gap)
+        let gapAt = 0;
+        for (const t0 = Date.now(); Date.now() - t0 < 30000;) { s = await look(X); if (s.want === 'say:defeat') { saw = s.txt; break; } if (s.kills > k0) { gapAt = gapAt || Date.now(); if (Date.now() - gapAt > 1500) break; } if (s.foe) await killFoe(X); await page.waitForTimeout(150); }
+        assert(!saw && s.kills > k0 && !await X('!!S.onboard.done["say:defeat"]'), `${v}: after a boss loss and then the win, the boss-loss line never shows in the next gap and stays unmarked (saw "${saw}", ${s.kills - k0} kills; ${JSON.stringify(s)})`);
+        // (the same line after a loss with no win yet still comes: the drop is what kept it away)
+        await X('emit("wipe", { zone: S.maxZone, to: S.maxZone, boss: true, arena: false, stall: false }); TURN_RECOVER = 0.5; true'); await shut();
+        s = await gapLine(X, page, 'say:defeat');
+        assert(s.want === 'say:defeat' && /^No shame in that/.test(s.txt), `${v}: a boss loss with no win after it still gets the line (${JSON.stringify(s)})`);
+        await page.click('.ob-x');
+        // (the boss beaten again for the next case: the save back at its own frontier)
+        await X('S.maxZone--; true');
+        // the hero falls with the Codex line queued: nothing shows while the hero is down; it comes in the first gap after the hero is up
+        // (a lethal hit lands inside the turn fight's own tick, which starts its 5 s recovery; from outside it, the check starts it too)
+        await X('emit("unlock", { id: "codex" }); cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true');
+        let down = 0, early = '';
+        for (const t0 = Date.now(); Date.now() - t0 < 20000;) { s = await look(X); if (!s.hero) { down++; if (s.want === 'say:codex' || s.up) early = early || JSON.stringify(s); } else if (down) break; await page.waitForTimeout(100); }
+        assert(down > 0 && !early, `${v}: while the hero is down no line of his shows (${down} looks down${early ? '; ' + early : ''})`);
+        s = await gapLine(X, page, 'say:codex');
+        assert(s.want === 'say:codex' && s.hero && s.paused, `${v}: once the hero is up, the Codex line comes in the next kill gap (${JSON.stringify(s)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // 4. the fight lessons keep their own holds: no held class, no Paused, and a press never answers them out of order
+      {
+        const v = `${at} (browser 1280x720, lessons)`, { ctx, page, errs, X } = await open(1280, 720, null, false);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+        let s = await until(X, page, s => s.want === 'attack' && s.paused, 30000);
+        assert(s.want === 'attack' && s.paused && !s.held && !s.plate, `${v}: the Attack lesson holds as before, with no held class and no Paused (${JSON.stringify(s)})`);
+        await page.keyboard.press('q'); await page.waitForTimeout(150); s = await look(X);
+        assert(s.want === 'attack' && s.paused && !await X('!!S.onboard.done.attack'), `${v}: Q (not Attack) leaves the Attack lesson up (${JSON.stringify(s)})`);
+        await page.keyboard.press('d');
+        // the next lessons, in the order the fight brings them, until Dodge has been taught: each holds with no held class and no Paused
+        const KEY = { ability: 'q', dodge: 's', parry: 'a' }, seen = [], bad = [], trace = [];
+        for (const t0 = Date.now(); Date.now() - t0 < 40000 && !await X('!!S.onboard.done.dodge');) {
+          s = await look(X);
+          { const k = `${s.want}:${s.paused}:${await X('turnCombatSnapshot().phase')}`; if (trace[trace.length - 1] !== k) trace.push(k); }
+          if (KEY[s.want] && s.paused) { if (!seen.includes(s.want)) seen.push(s.want); if (s.held || s.plate) bad.push(JSON.stringify(s)); await page.keyboard.press(KEY[s.want]); await page.waitForTimeout(250); }
+          else if (!s.want && await X('turnCombatSnapshot().phase === "hero"')) { await page.keyboard.press('d'); await page.waitForTimeout(250); }   // your turn, no lesson: attack, so the foe swings
+          else await page.waitForTimeout(100);
+        }
+        assert(await X('!!S.onboard.done.attack && !!S.onboard.done.dodge') && seen.includes('dodge') && !bad.length,
+          `${v}: D answered the Attack lesson, and the next lessons (${seen.join(', ')}) held with no held class and no Paused, Dodge answered by S${bad.length ? '; ' + bad[0] : ''} (${trace.slice(-12).join(' ')})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tips-pause-says-so crashed: ' + (e.stack || e)); }
 
 // ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Confirm" for 6 s; Cancel always asks twice ====
 if (section('camp-build-tap-again')) try {

@@ -29,6 +29,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   and the Journal's Tips lists it as "Tips you missed". Opus judge and a Sonnet red team: the turn-fight boss line says "Watch the
   bar" because only the legacy fight draws red rings; "stretch" and "strings" cut as jargon; the legacy Parry line no longer claims a
   stagger it cannot show. Save risk read (Opus): safe, no new field. Camp and gather tips stay plain until `unlock-voice`.
+- **Tips say Paused (tips-pause-says-so, Opus high judge, 2026-10-08; Cal can veto with "Unlock lines hold
+  gathering again" or "Fight keys don't close tips").** A Hesketh news line holds only the gap between fights, never gathering or a fight
+  behind a menu. Any other hold that isn't a lesson shows "Paused" on the stage and in Gather. A fight press during a Got it hold counts as
+  Got it and then acts. The action bar stays in view, dimmed, wherever the tip doesn't cover it.
 - **Claude decided: materials lines show on Camp, on Gather and while gathering, never over other menus (card forge-tip-goes-stale,
   2026-10-08; Cal can veto with "keep the Forge tip on every menu").** This narrows "camp and menu tips stay up" above for Hesketh's
   materials lines only ("You still need these for the Forge: ..."): a fighter saw one on every menu for 15 minutes and it covered the hero
