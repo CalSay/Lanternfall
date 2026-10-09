@@ -12499,11 +12499,14 @@ if (section('zone10-clear-moment')) try {
         let card = '';
         for (let i = 0; i < 6 && !card; i++) { await click(/^(Next|Continue)$/); await run(1.2); card = await X(`(() => { const o = document.querySelector('.mm-ov'); return o ? o.textContent : ''; })()`); }
         assert(/The Hollow Cantor falls/.test(card) && /gold/i.test(card), `${at}: the Champion card follows the scene with the cache's lines (${card.slice(0, 160)})`);
+        const goHit = JSON.parse(await X(`(() => { const g = document.querySelector('.mm-ov .mm-go'); if (!g) return JSON.stringify({ ok: false, why: 'no card button' }); const r = g.getBoundingClientRect(), h = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return JSON.stringify({ txt: g.textContent, r: [r.left, r.top, r.width, r.height], hit: h && (h.id || h.className), ok: g === h || g.contains(h) }); })()`));
+        assert(goHit.ok, `${at}: the card's Continue is on top, so a click reaches it (${JSON.stringify(goHit)})`);
         const during = await X(`soloGuideWants()`);
         assert(!/^say:/.test(during), `${at}: no Hesketh line shows over the card (${during})`);
         let said = '';
+        // the card's own button closes it (a hover chip can sit over its Continue on a CI runner's fonts)
         // the line waits for the next gap between foes (a slow runner can take a while to get there): up to 30 s of game time
-        for (let i = 0; i < 30 && !said; i++) { await click(/^Continue$/); await run(1); const w = await X(`soloGuideWants()`); if (/^say:/.test(w)) said = w; }
+        for (let i = 0; i < 30 && !said; i++) { if (!(await X(`(b => !!b && (b.click(), true))(document.querySelector('.mm-ov .mm-go'))`))) await click(/^Continue$/); await run(1); const w = await X(`soloGuideWants()`); if (/^say:/.test(w)) said = w; }
         const after = said ? '' : await X(`JSON.stringify({ wants: soloGuideWants(), sayQ: S.onboard.sayQ, cache: cachePending(), paused: ONBOARD.paused, moments: MOMENT_Q.length, card: !!document.querySelector('.mm-ov'), story: !!document.querySelector('.sty-sheet'), fighting: fightingNow(), tab: S.tab })`);
         assert(said === 'say:stars' || (retry && said === 'say:defeat'), `${at}: the queued line speaks after the card closes (${said}${after})`);
         assert(!errs.length, `${at}: no page errors (${errs.slice(0, 2).join(' | ')})`);
