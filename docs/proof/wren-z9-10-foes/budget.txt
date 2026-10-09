@@ -1,0 +1,105 @@
+# wren-z9-10-foes: budget proof
+
+## The new rows (seed offset 0, 240 fights a row, hero and player; --players wide)
+
+$ node tools/budget.mjs --only z9-normal,z10-normal,z11-normal,z10-normal-bare,z11-normal-bare --players wide
+
+Difficulty budget: 240 scratch turn fights a row, hero and player (each boss fight on its own seed; trash in chains of 5);
+a hero who keeps up (road level, gear at the zone's tier, typical Stars); z7-z15 bosses and the z16-z26 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).
+Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +0.1).
+A "behind" row's casual number is the drop in casual wins against its ref row.
+row              kind         casual w/t/p  mean sprd band            good w/t/p   band     tries w/t/p     turns w/t/p      level  out of band
+z9-normal        normal       98/100/100    99 2      90-100          100/100/100  98-100   1/1/1           1.6/1/1.4           14  in band
+  casualLow                   94/100/100
+  casualHigh                  100/100/100
+  bot                         99/100/100
+  by type: bat                casual 100/100/100  good 100/100/100  casualLow 100/100/100  casualHigh 100/100/100  bot 100/100/100
+  by type: bones              casual 98/100/100  good 100/100/100  casualLow 94/100/100  casualHigh 100/100/100  bot 99/100/100  rises (casual) 239/240 240/240 155/240
+z10-normal       normal       97/100/99     99 3      90-100          100/100/100  98-100   1/1/1           2.8/3.2/2.8         15  in band
+  casualLow                   82/100/98
+  casualHigh                  99/100/100
+  bot                         100/100/100
+  by type: bones              casual 97/100/99  good 100/100/100  casualLow 82/100/98  casualHigh 99/100/100  bot 100/100/100  rises (casual) 239/240 240/240 198/240
+  by type: beetle             casual 98/100/100  good 100/100/100  casualLow 97/100/100  casualHigh 100/100/100  bot 100/100/100
+z11-normal       normal       82/100/93     92 18     90-100          99/100/100   98-100   1.2/1/1.1       2/3.3/2.3           16  wren casual -8
+  casualLow                   68/100/90
+  casualHigh                  94/100/99
+  bot                         91/100/98
+  by type: beetle             casual 82/100/93  good 99/100/100  casualLow 68/100/90  casualHigh 94/100/99  bot 91/100/98
+  by type: spore              casual 93/100/100  good 100/100/100  casualLow 82/100/100  casualHigh 99/100/100  bot 99/100/100
+z10-normal-bare  floorNormal  80/100/91     90 20     80-100          100/100/100  98-100   1.3/1/1.1       3/3.5/2.8           15  in band
+  casualLow                   71/100/83
+  casualHigh                  95/100/98
+  bot                         97/100/99
+  by type: bones              casual 80/100/91  good 100/100/100  casualLow 71/100/83  casualHigh 95/100/98  bot 98/100/100  rises (casual) 222/240 240/240 141/240
+  by type: beetle             casual 93/100/95  good 100/100/100  casualLow 91/100/87  casualHigh 97/100/100  bot 97/100/99
+z11-normal-bare  floorNormal  85/100/75     87 25     80-100          100/100/100  98-100   1.2/1/1.3       2/3.4/2.5           16  pip casual -5
+  casualLow                   65/100/57
+  casualHigh                  94/100/90
+  bot                         92/100/93
+  by type: beetle             casual 86/100/75  good 100/100/100  casualLow 65/100/57  casualHigh 94/100/90  bot 92/100/93
+  by type: spore              casual 85/100/95  good 100/100/100  casualLow 74/100/89  casualHigh 96/100/99  bot 96/100/98
+
+
+## The accepted baseline (5 seed offsets, node tools/health.mjs --only budget --write-baseline)
+
+New cells (mean over offsets 0-4; sd):
+  z9-normal|wren|casual            0.98  sd 0.009
+  z9-normal|tobin|casual              1  sd 0
+  z9-normal|pip|casual                1  sd 0
+  z9-normal|mean|casual            0.99  sd 0.004
+  z9-normal|wren|good                 1  sd 0
+  z9-normal|tobin|good                1  sd 0
+  z9-normal|pip|good                  1  sd 0
+  z9-normal|mean|good                 1  sd 0
+  z10-normal|wren|casual           0.94  sd 0.023
+  z10-normal|tobin|casual             1  sd 0
+  z10-normal|pip|casual            0.99  sd 0.007
+  z10-normal|mean|casual           0.98  sd 0.007
+  z10-normal|wren|good                1  sd 0
+  z10-normal|tobin|good               1  sd 0
+  z10-normal|pip|good                 1  sd 0
+  z10-normal|mean|good                1  sd 0
+  z11-normal|wren|casual           0.81  sd 0.025
+  z11-normal|tobin|casual             1  sd 0
+  z11-normal|pip|casual            0.94  sd 0.017
+  z11-normal|mean|casual           0.92  sd 0.01
+  z11-normal|wren|good                1  sd 0.006
+  z11-normal|tobin|good               1  sd 0
+  z11-normal|pip|good                 1  sd 0
+  z11-normal|mean|good                1  sd 0.002
+  z10-normal-bare|wren|casual      0.81  sd 0.026
+  z10-normal-bare|tobin|casual        1  sd 0
+  z10-normal-bare|pip|casual        0.9  sd 0.018
+  z10-normal-bare|mean|casual       0.9  sd 0.011
+  z10-normal-bare|wren|good           1  sd 0.004
+  z10-normal-bare|tobin|good          1  sd 0
+  z10-normal-bare|pip|good            1  sd 0
+  z10-normal-bare|mean|good           1  sd 0.001
+  z11-normal-bare|wren|casual      0.81  sd 0.037
+  z11-normal-bare|tobin|casual        1  sd 0
+  z11-normal-bare|pip|casual       0.72  sd 0.031
+  z11-normal-bare|mean|casual      0.85  sd 0.023
+  z11-normal-bare|wren|good           1  sd 0.005
+  z11-normal-bare|tobin|good          1  sd 0
+  z11-normal-bare|pip|good            1  sd 0.002
+  z11-normal-bare|mean|good           1  sd 0
+
+Moved cells (before -> after; every other existing cell kept its value):
+  z38-elite|wren|casual           1 -> 0.98
+  z38-elite|mean|casual           1 -> 0.99
+  z24-normal-bot|tobin|casual     0.02 -> 0.01
+  z24-normal-bot|mean|casual      0.01 -> 0
+  z24-normal-bot|wren|good        0.39 -> 0.34
+  z24-normal-bot|tobin|good       0.98 -> 0.96
+  z24-normal-bot|pip|good         0.36 -> 0.3
+  z24-normal-bot|mean|good        0.57 -> 0.53
+
+Gap added: z11-normal wren casual below, limit 0.80 (the offset-0 reading 0.82 rounded down to 5), ratcheted by --write-baseline to 0.81; owner boss-balance-pass, until 2026-11-15.
+
+Rows that also moved, off the gate: z38-normal (wins 100 for all three, turns a fight up 0.8-1.0 at offset 0: wren casual 2.0 -> 2.9, good 1.5 -> 2.4) and the report row z24-normal-bot. No boss row moved (every boss cell is the same as before).
+
+## node tools/health.mjs --compare (personas and budget, after the re-baseline)
+
+budget cells: 421 in band, 55 in known gaps, 24 at an edge or a closed gap, 227 report-only, 0 failing (the full table: node tools/budget.mjs)
+health ok: every metric is inside its tolerance

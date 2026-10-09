@@ -1,0 +1,50 @@
+# Proof for card champ-retry-scenes (M0 beat 25). The walk on 9 Oct read a Champion's pre scene at the kill after a loss (zones 10 and 15).
+# The game was right: the walk filed each sheet under its first 50 characters, and the zone 10 and 15 pre and post sheets start alike
+# ("Chapter 1: The Hollow · Zone 10The Hollow Cantor..."), so the post sheet showed under the pre's entry. No game change.
+# A route cannot force the win (playtest.mjs has no eval), so this route plays the loss and the retry's start. tools/check.mjs sections
+# "champ-retry-scenes" and "champ-retry-scenes 2" carry the order: zone 10 at 1280x720 on a first try, after Try again, and after Keep fighting
+# here then the Fight menu's boss button (where Next Up's boss row sends you); zone 15 after Try again; zone 10 at 740x360 after Keep fighting
+# here. Each sees the pre scene before the fight, the post scene at the kill, then the Champion card. Its shot of the post scene after a
+# lose-then-win is docs/proof/champ-retry-scenes/post-after-retry-z10-1280x720.png.
+# seed: 1
+new z10-cantor
+wait 2
+tap-if "Continue"
+wait 2
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+expect "The Hollow Cantor beat you"
+expect-no "Elder Rattlebones"
+shot cantor-loss-sheet
+tap "Try again"
+wait 2
+tap-if "Got it"
+wait 4
+expect-no "Elder Rattlebones"
+shot cantor-retry-fight
