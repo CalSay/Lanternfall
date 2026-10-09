@@ -44,6 +44,8 @@ function loadCore(opts) {
 }
 
 let failed = 0;
+const CHECK_FONTS = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fonts', 'fonts.json'), 'utf8'))
+  .map(f => ({ ...f, data: fs.readFileSync(path.join(ROOT, 'tests', 'fonts', f.file)).toString('base64') }));
 const browserTools = findBrowser();
 // C29: the shipped page fights in turns. Browser sections written for the real-time fight get it back through a test key the
 // page reads at boot (75-turn-ui); a section that wants the shipped turn fight asks with newContext({ turns: true, ... }).
@@ -51,7 +53,14 @@ if (browserTools.pw) {
   const launch = browserTools.pw.chromium.launch.bind(browserTools.pw.chromium);
   browserTools.pw = Object.assign(Object.create(browserTools.pw), { chromium: Object.assign(Object.create(browserTools.pw.chromium), { launch: async (...a) => {
     const b = await launch(...a), newContext = b.newContext.bind(b);
-    b.newContext = async (opts = {}) => { const { turns, story, ...o } = opts, ctx = await newContext(o);
+    b.newContext = async (opts = {}) => { const { turns, story, webFonts = true, ...o } = opts, ctx = await newContext(o);
+      // display-fallback-font: the page's Google Fonts link is aborted in checks, so every page gets the players' faces from
+      // tests/fonts/ (Google's own woff2 subsets and unicode ranges, SIL OFL). The published page never carries them. A failure
+      // here is a page error, which the sections count. newContext({ webFonts: false }) measures what a player whose web fonts
+      // fail to load sees (the --display / --body fallbacks).
+      if (webFonts) await ctx.addInitScript(checkFonts => { for (const f of checkFonts) {
+        const bin = atob(f.data), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        document.fonts.add(new FontFace(f.family, u8, { weight: f.weight, style: f.style, unicodeRange: f.unicodeRange })); } }, CHECK_FONTS);
       if (!turns) await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.realtime', '1'); } catch (e) {} });
       // story-delivery: a new game opens on a story card, which would sit over every browser section's first click; the page skips story scenes
       // (the Journal still files them) unless a section asks for them with newContext({ story: true, ... }).
@@ -75,9 +84,9 @@ const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '
 const WEIGHT = {
   'forge-line-while-fighting': 133, 'W1-D (browser)': 111, 'staged guide follow-ups (browser)': 90, 'moment layer': 79,
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
-  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'landscape 740x360 (browser, UX-L1)': 55,
+  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'zone10-clear-moment': 42, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'turn-banner-clears-plate': 14, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -92,7 +101,9 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
+  'page size': 2
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -248,6 +259,39 @@ if (section('smoke')) try {
   assert(tapped, 'class tap marks the mob');
   assert(!g4.errors.length, 'no party handler errors' + (g4.errors.length ? ': ' + g4.errors[0] : ''));
 } catch (e) { fail('smoke crashed: ' + (e.stack || e)); }
+
+// ---- check fonts (display-fallback-font): every browser section measures text in the faces players get ----
+// The newContext wrapper above adds Handjet and Barlow Semi Condensed from tests/fonts/. This section logs the face the page's
+// --display and --body stacks resolve to, so a local run and a CI run can be compared, and fails when it is a fallback.
+if (section('check fonts')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('check fonts: Playwright or Chromium not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 720 } }), html = fs.readFileSync(distFile, 'utf8');
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(300);
+      const m = await page.evaluate(async () => {
+        const w = (fam, wt) => { const s = document.createElement('span'); s.style.cssText = `position:absolute;white-space:nowrap;font:${wt} 40px ${fam}`;
+          s.textContent = 'Dodge Lanternburst 0123'; document.body.appendChild(s); const v = s.getBoundingClientRect().width; s.remove(); return v; };
+        await document.fonts.load('600 40px Handjet'); await document.fonts.load('600 40px "Barlow Semi Condensed"'); await document.fonts.ready;
+        const out = {};
+        for (const [k, face, wt] of [['display', 'Handjet', 600], ['body', 'Barlow Semi Condensed', 500]]) {
+          const stack = getComputedStyle(document.documentElement).getPropertyValue('--' + k).trim();
+          out[k] = { face, stack, faces: [...document.fonts].filter(x => x.family.replace(/"/g, '') === face && x.status === 'loaded').length, page: w(stack, wt), real: w(`"${face}"`, wt), mono: w('monospace', wt), sans: w('sans-serif', wt) };
+        }
+        return out;
+      });
+      for (const k of ['display', 'body']) {
+        const f = m[k];
+        console.log(`  font ${k}: ${f.face} (tests/fonts, ${f.faces} subsets loaded); 40px sample ${f.page.toFixed(1)} px, ${f.face} ${f.real.toFixed(1)}, monospace ${f.mono.toFixed(1)}, sans-serif ${f.sans.toFixed(1)}`);
+        assert(f.faces > 0 && Math.abs(f.page - f.real) < 0.5 && Math.abs(f.page - f.mono) > 2 && Math.abs(f.page - f.sans) > 2,
+          `check fonts: --${k} (${f.stack}) draws in ${f.face}, the face players get, not a fallback`);
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('check fonts crashed: ' + (e.stack || e)); }
 
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
@@ -9412,8 +9456,8 @@ if (section('fixed battle backgrounds')) try {
   // Codex's owner-approved Mossy Hollow night scene (art/backgrounds/mossy-hollow/outlined-night-v1): embedded byte for byte
   { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-bg.mjs'), '--check'], { encoding: 'utf8' });
     assert(r.status === 0, 'backgrounds: src/js/21zb-data-bgart.js is up to date with the approved packs (node tools/art/embed-bg.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
-  const dir = path.join(ROOT, 'art', 'backgrounds', 'mossy-hollow', 'outlined-night-v1'), src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21zb-data-bgart.js'), 'utf8');
-  const B = JSON.parse(src.slice(src.indexOf('const BG_ART = ') + 15, src.lastIndexOf('}') + 1)).forest;
+  const dir = path.join(ROOT, 'art', 'backgrounds', 'mossy-hollow', 'outlined-night-v1');
+  const B = artData('21zb-data-bgart.js', 'BG_ART').forest;
   assert(B.land.src === fs.readFileSync(path.join(dir, 'runtime', 'mossy-hollow-night-960x540.webp')).toString('base64') &&
     B.port.src === fs.readFileSync(path.join(dir, 'runtime', 'mossy-hollow-night-portrait-480x900.webp')).toString('base64') &&
     Math.abs(B.land.road - 208 / 270) < 1e-9 && B.port.road === 0.89, 'backgrounds: the Mossy Hollow landscape and portrait scenes are the approved WebP bytes, with their painted road lines');
@@ -9425,7 +9469,7 @@ if (section('C22 Thorn Imp (zone 1)')) try {
   { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-foes.mjs'), '--check'], { encoding: 'utf8' });
     assert(r.status === 0, 'C22: src/js/21za-data-foeart.js is up to date with the approved packs (node tools/art/embed-foes.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
   { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'approved-v2'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
-    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21za-data-foeart.js'), 'utf8'), A = JSON.parse(src.slice(src.indexOf('const FOE_ART = ') + 16, src.lastIndexOf('}') + 1)).imp;
+    const A = artData('21za-data-foeart.js', 'FOE_ART').imp;
     const frames = Object.values(A.acts).reduce((n, a) => n + a.f.length, 0);
     const bytes = Object.entries(A.atlases).every(([p, b64]) => b64 === fs.readFileSync(path.join(dir, p)).toString('base64'));
     const timing = Object.entries(man.actions).every(([id, a]) => A.acts[id] && a.frames.every((f, i) => A.acts[id].f[i][0] === f.duration_ms) &&
@@ -9438,7 +9482,7 @@ if (section('C22 Thorn Imp (zone 1)')) try {
       `C22: the Imp's parry windows close on the art's contact frames (hop 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death (${JSON.stringify(w)})`); }
   { // Gloomjaw (art/enemies/gloomjaw/approved-v1, owner-approved 2026-10-02): zone 2's monster
     const dir = path.join(ROOT, 'art', 'enemies', 'gloomjaw', 'approved-v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
-    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21za-data-foeart.js'), 'utf8'), G = JSON.parse(src.slice(src.indexOf('const FOE_ART = ') + 16, src.lastIndexOf('}') + 1)).gloomjaw;
+    const G = artData('21za-data-foeart.js', 'FOE_ART').gloomjaw;
     const body = Object.values(G.acts).reduce((n, a) => n + a.f.length, 0), fxN = Object.values(G.fx).reduce((n, a) => n + a.f.length, 0);
     const bytes = Object.entries(G.atlases).every(([p, b64]) => b64 === fs.readFileSync(path.join(dir, p)).toString('base64'));
     const timing = Object.entries(man.actions).every(([id, a]) => { const X = a.layer === 'fx' ? G.fx[id] : G.acts[id];
@@ -11299,16 +11343,21 @@ if (section('craft reveal')) try {
         await page.goto('http://lf.test/'); await page.waitForTimeout(700);
         for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
         const X = s => page.evaluate(s => window.__t.x(s), s);
+        // craft-reveal-flake-watch: wait for what the next line reads, not a fixed timer (under load the Forge rows were not drawn
+        // 500 ms after the tab click, so `.cf-rec` was null); `need` fails plainly when it never comes, `until` leaves that to the assert
+        const until = async (expr, ms = 5000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 50 }); return true; } catch (e) { return false; } };
+        const need = async (expr, what) => { if (!await until(expr)) throw new Error(`${at}: ${what} never appeared within 5 s`); };
         await X(`S.onboard.tips = false; S.refine.said = 1; true`);   // refine-queues: save-mid predates refining; its one-time Forge card would cover Craft
-        await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
+        await page.click('.tab[data-tab="forge"]'); await need(`!!document.querySelector('.cf-rec')`, 'the Forge recipe rows (.cf-rec)');
         const odds = await X(`(() => { const t = document.querySelector('.cf-odds'); const w = rarityWeights(stationLevel(document.querySelector('.cf-rec').dataset.kind)), tot = Object.values(w).reduce((a, b) => a + b, 0);
           return { text: t ? t.textContent : '', common: Math.round(w.common / tot * 100) }; })()`);
         assert(/^Odds: Common [\d.]+% · Uncommon [\d.]+% · Rare [\d.]+% · Epic [\d.]+%$/.test(odds.text) && Math.abs(parseFloat(/Common ([\d.]+)%/.exec(odds.text)[1]) - odds.common) <= 0.6, `${at}: each recipe shows one odds line computed from the rarity weights (${odds.text})`);
         const made = [];
         for (let i = 0; i < 6; i++) {
+          const was = await X(`(c => c ? c.dataset.itemId : '')(document.querySelector('.cf-res'))`);
           const ok = await X(`(() => { const b = [...document.querySelectorAll('.cf-rec .cf-go')].find(x => !x.disabled); if (!b) return false; b.click(); return true; })()`);
           if (!ok) break;
-          await page.waitForTimeout(150);
+          await need(`(c => !!c && c.dataset.itemId !== ${JSON.stringify(was)})(document.querySelector('.cf-res'))`, `craft ${i + 1}'s own result card (.cf-res)`);
           made.push(await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { grade: c.querySelector('.cf-grade').textContent, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent), arrows: c.querySelectorAll('.cf-d').length, strip: document.querySelectorAll('.cf-recent .cf-tile').length } : null; })()`));
         }
         assert(made.length >= 2 && made.every(m => m && ['Common', 'Uncommon', 'Rare', 'Epic', 'Unique'].includes(m.grade)), `${at}: every craft opens a result card with a real grade name (${JSON.stringify(made.map(m => m && m.grade))})`);
@@ -11318,10 +11367,10 @@ if (section('craft reveal')) try {
         assert(await X(`(() => { const r = document.querySelector('.cf-resbox').getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()`) , `${at}: the new card is on screen after a craft`);
         // cal-0107-flow-bugs (note 17): Equip wears the piece and closes its card; Keep and Salvage are for a piece that is not worn
         { const eq = await page.$('.cf-res .cf-resact button:text-is("Equip")');
-          if (eq) { const id = await X(`document.querySelector('.cf-res').dataset.itemId`); await eq.click(); await page.waitForTimeout(250);
+          if (eq) { const id = await X(`document.querySelector('.cf-res').dataset.itemId`); await eq.click(); await until(`!document.querySelector('.cf-res')`);
             assert(await X(`!document.querySelector('.cf-res') && Object.values(S.equip).includes(${JSON.stringify(+id)})`), `${at}: Equip wears the piece and closes its card`); } }
         await X(`setTab('party'); true`); await page.waitForTimeout(200);   // cal-0107-gear-and-rates: the bag is on the Hero tab
-        await page.click('#viewSeg button:text-is("Gear")'); await page.waitForTimeout(400);
+        await page.click('#viewSeg button:text-is("Gear")'); await until(`!!document.querySelector('.cf-bag .cf-tile .cf-gr')`);
         assert(await X(`(() => { const b = document.querySelector('.cf-bag .cf-tile .cf-gr'); return !!b && /^(Com|Unc|Rare|Epic|Uniq)$/.test(b.textContent); })()`), `${at}: a bag tile names its grade in text`);
         assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
@@ -11712,47 +11761,45 @@ if (section('next tier gate')) try {
   const goOf = id => E(`(() => { const r = topGoals(20, { sticky: false }).find(x => x.id === ${JSON.stringify(id)}); if (!r) return null; const s = typeof r.go === 'function' ? r.go() : r.go; return s ? { tab: s.tab, view: s.view, sel: s.sel, fn: typeof s.fn === 'function' } : null; })()`);
   const snap = E('JSON.stringify({ skills: S.skills, mats: S.mats })');
   const reset = () => E(`(() => { const o = JSON.parse(${JSON.stringify(snap)}); Object.assign(S.skills, o.skills); Object.assign(S.mats, o.mats); HUNT_TUNE.on = true; })()`);
-  // 1. the station gate: Woodcraft 8 of 10 for the Birch Bow, never Ready, in the top three
+  // 1. tier-two-named-for-return: the piece with the least XP left over all its gates (Woodcraft 8 of 10, Woodcutting 7 and Mining 5 of 14
+  // for the Birch Bow), named by its furthest gate; never Ready; with every tier 1 piece worn it keeps a row in the top three, no boss loss needed
+  const away = '. Gathering keeps going while you\'re away.';
   let l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Woodcraft 8 of 10' && !row(l).ready, `next tier gate: the Birch Bow's station gate shows (${JSON.stringify(l)})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away && !row(l).ready, `next tier gate: the Birch Bow's furthest gate shows (${JSON.stringify(l)})`);
   const top3 = E('topGoals(3, { sticky: false }).map(x => x.label)');
-  assert(top3.includes('Birch Bow for the zone 13 boss: Woodcraft 8 of 10'), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
-  // the row's Go opens Craft at the Workbench on tier 1, with the Birch Bow picked
+  assert(top3.includes('Birch Bow: Mining 5 of 14 opens Iron Ore' + away), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
   let go = goOf('forge');
+  assert(go && go.tab === 'gat' && go.view === 'mine', `next tier gate: the material gate's Go opens the Mining view (${JSON.stringify(go)})`);
+  assert(/^Mining: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('skill') || {}).view === 'mine', `next tier gate: the skill row follows the gate to Mining (${JSON.stringify(l.find(x => x.id === 'skill'))})`);
+  // 2. the station gate, once it is the only one (the bow's Birch Planks and Iron Ingots in the bag): Woodcraft 8 of 10, no away line
+  E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2');
+  l = goals();
+  assert(row(l) && row(l).label === 'Birch Bow: Woodcraft 8 of 10' && !row(l).ready, `next tier gate: the Birch Bow's station gate shows (${JSON.stringify(l)})`);
+  // the row's Go opens Craft at the Workbench on tier 1, with the Birch Bow picked
+  go = goOf('forge');
   assert(go && go.tab === 'forge' && go.sel === '.cf-st[data-st="bench"]' && go.fn, `next tier gate: the station gate's Go opens Craft at the Workbench (${JSON.stringify(go)})`);
   E('S.fSlot = "pick"; S.fTier = 3; (() => { const r = topGoals(20, { sticky: false }).find(x => x.id === "forge"); r.go().fn(); })()');
   assert(E('S.fSlot') === 'bow' && E('S.fTier') === 1, `next tier gate: Go picks the bow at tier 1 (${E('S.fSlot')}, ${E('S.fTier')})`);
   // the skill row names the gate's skill and its Go opens Craft too (never a Gather view)
   const sk = l.find(x => x.id === 'skill'), skGo = goOf('skill');
   assert(sk && /^Woodcraft: /.test(sk.label) && skGo && skGo.tab === 'forge' && skGo.sel === '.cf-st[data-st="bench"]', `next tier gate: the skill row names Woodcraft and opens Craft (${JSON.stringify(sk)}, ${JSON.stringify(skGo)})`);
-  // once the zone 13 boss has beaten you, the gate keeps a row of its own in the top three (it sat 4th in the seed 1 walk)
-  E('S.mastery.types.golem = 8; S.bossTry.tries[bossTryKey(soloHero(), 13)] = 2; S.skills.bench.lv = 5; S.skills.loom.lv = 5');   // the nearest gate 50%, under the bestiary's 80%
-  const top3b = E('topGoals(3, { sticky: false }).map(x => x.label)');
-  assert(top3b.some(x => / for the zone 13 boss: \w+ \d of 10$/.test(x)), `next tier gate: after a lost boss try the gate row keeps a place in the top three (${JSON.stringify(top3b)})`);
-  E('S.mastery.types.golem = 4; S.bossTry.tries = {}'); reset();
-  // 2. Woodcraft 10: the next station gate is the hood's or the leathers' Tailoring
-  E('S.skills.bench.lv = 10');
+  reset(); E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0');
+  // 3. with the stations open, still the bow's furthest gate (Mining 5, not the nearer Woodcutting 7); Go opens the Mining view
+  E('S.skills.bench.lv = 10; S.skills.loom.lv = 10');
   l = goals();
-  assert(row(l) && /^(\w+ )+(Hood|Leathers) for the zone 13 boss: Tailoring 6 of 10$/.test(row(l).label), `next tier gate: at Woodcraft 10 the Tailoring gate shows (${JSON.stringify(row(l))})`);
-  // 3. Tailoring 10 too: the material gate, Woodcutting 7 of 14 (it beats Hunting 4 of 14 for the Duskfang Pelt); Go opens the Woodcutting view
-  E('S.skills.loom.lv = 10');
-  l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Woodcutting 7 of 14 opens Birch Log' && !row(l).ready, `next tier gate: with the stations open, Woodcutting 7 of 14 opens Birch Log (${JSON.stringify(row(l))})`);
-  go = goOf('forge');
-  assert(go && go.tab === 'gat' && go.view === 'wood', `next tier gate: the material gate's Go opens the Woodcutting view (${JSON.stringify(go)})`);
-  assert(/^Woodcutting: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('skill') || {}).view === 'wood', `next tier gate: the skill row follows the gate to Woodcutting (${JSON.stringify(l.find(x => x.id === 'skill'))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away && !row(l).ready, `next tier gate: with the stations open, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
   // 4. the Birch Bow's middles in the bag (refine-queues: 5 Birch Plank and 2 Iron Ingot; gear-in-first-25 Step 0, wood + metal): the craft, Ready
   E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2');
   l = goals();
   assert(row(l) && /^Craft a Birch Bow for the zone 13 boss: you have the materials$/.test(row(l).label) && row(l).ready, `next tier gate: with its materials the Birch Bow craft is Ready, no gate (${JSON.stringify(row(l))})`);
   // 5. Birch Log enough for its planks: the bow's gate is Mining for the Iron Ore its Iron Ingots are smelted from (gear-in-first-25: was Hunting for Duskfang Pelt)
-  E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 5');   // Mining 5: nearer than the Quiver's Hunting 4 of 14
+  E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 5');   // Mining 5 alone: less XP left than the Quiver's Hunting 4 and Foraging 2
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Mining 5 of 14 opens Iron Ore', `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away, `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
   // 6. with Hunting hidden, no hide gate shows. The bow is wood + metal now (gear-in-first-25), so the hide gate is set up with the old hide bow
-  E('globalThis.__bowRec = CRAFT_KINDS.bow.rec; CRAFT_KINDS.bow.rec = { wood: 6, hide: 2, ess: 2 }; S.skills.mine.lv = 3');
+  E('globalThis.__bowRec = CRAFT_KINDS.bow.rec; CRAFT_KINDS.bow.rec = { wood: 6, hide: 2, ess: 2 }; S.skills.mine.lv = 1; S.skills.mine.xp = 0; S.skills.forage.lv = 14; S.mats.wood[1] = 40');   // Hunting is its one gate; Mining 1 puts the tools' Iron Ore further off
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Hunting 4 of 14 opens Duskfang Pelt', `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Hunting 4 of 14 opens Duskfang Pelt' + away, `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
   E('HUNT_TUNE.on = false');
   l = goals();
   assert(!l.some(x => /Hunting \d+ of|Duskfang Pelt$/.test(x.label)), `next tier gate: with Hunting hidden, no hide gate (${JSON.stringify(row(l))})`);
@@ -11764,17 +11811,18 @@ if (section('next tier gate')) try {
   assert(row(l) && /^Craft a Copper Sickle: /.test(row(l).label) && !l.some(x => / \d+ of \d+/.test(x.label)), `next tier gate: an open recipe hides the gate (${JSON.stringify(row(l))})`);
   reset();
   // review: a tool's gate names the skill that gives its level (tools use the better of their station and Smithing)
-  E('S.skills.smith.lv = 9; S.skills.bench.lv = 3');
+  E('S.skills.smith.lv = 9; S.skills.bench.lv = 3; S.mats.ore[1] = 10; S.mats.wood[1] = 10');   // the pickaxe's Iron Ore and Birch Log in hand: Smithing is its one gate
   l = goals();
   assert(row(l) && row(l).label === 'Iron Pickaxe: Smithing 9 of 10' && /^Smithing: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('forge') || {}).sel === '#smithBar', `next tier gate: a tool's Smithing gate says Smithing and opens the Forge (${JSON.stringify(l.filter(x => x.id === 'forge' || x.id === 'skill'))})`);
   reset();
   // review: a station at 0 XP keeps its skill row while its gate shows
-  E('S.skills.bench.xp = 0');
+  E('S.skills.bench.xp = 0; S.mats.plank[1] = 5; S.mats.ingot[1] = 2');   // the bow's materials in hand: its Woodcraft gate shows
   assert(/^Woodcraft: /.test((goals().find(x => x.id === 'skill') || {}).label || ''), 'next tier gate: the skill row stays at 0 XP');
   reset();
-  // review: Birch Log for the recipe's middles (10 for 5 Birch Planks): 9 is not enough (gear-in-first-25: the bow no longer takes Duskfang Leather)
-  E('S.skills.bench.lv = 10; S.skills.loom.lv = 10; S.mats.wood[1] = 9');
-  assert(/Woodcutting 7 of 14 opens Birch Log$/.test((row(goals()) || {}).label || ''), `next tier gate: 9 Birch Log still leaves the Woodcutting gate (${JSON.stringify(row(goals()))})`);
+  // review: Birch Log for the recipe's middles (10 for 5 Birch Planks): 9 is not enough (gear-in-first-25: the bow no longer takes Duskfang Leather).
+  // its 2 Iron Ingots in hand leave Woodcutting the bow's only gate (tier-two-named-for-return names the furthest)
+  E('S.skills.bench.lv = 10; S.skills.loom.lv = 10; S.mats.ingot[1] = 2; S.mats.wood[1] = 9');
+  assert(/^Birch Bow: Woodcutting 7 of 14 opens Birch Log\. /.test((row(goals()) || {}).label || ''), `next tier gate: 9 Birch Log still leaves the Woodcutting gate (${JSON.stringify(row(goals()))})`);
   reset();
   // 8. 8 Pine Log: the Golemfist's +1 is offered (refine-queues: "Saw 1 Pine Plank for your Golemfist +1"), and that Ready row
   // takes the forge slot over the gate row; this is why the fixture holds no Pine Log
@@ -11786,7 +11834,7 @@ if (section('next tier gate')) try {
   // weapon slot, and the Golemfist's upgrade still shows beside it
   E('S.mats.plank[0] = 1');
   l = goals();
-  assert(row(l) && / of 10$/.test(row(l).label) && l.some(x => x.id === 'upgrade' && x.label === 'Upgrade your Golemfist to +1'), `next tier gate: a gate on the weapon does not hide the weapon's upgrade (${JSON.stringify(l)})`);
+  assert(row(l) && /^Birch Bow: \w+ \d+ of \d+/.test(row(l).label) && l.some(x => x.id === 'upgrade' && x.label === 'Upgrade your Golemfist to +1'), `next tier gate: a gate on the weapon does not hide the weapon's upgrade (${JSON.stringify(l)})`);
   // review: never a gate on a node that is never offered (hide grades 4 and 5)
   const g3 = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8') }) });
   g3.eval('tick(0.1); S.maxZone = 60; for (const k in S.skills) S.skills[k].lv = Math.max(S.skills[k].lv, 70); S.skills.hunt.lv = 40; S.items.forEach(i => { i.t = 3; }); gearDirty()');
@@ -11974,6 +12022,50 @@ if (section('rally gates live (core)')) try {
   assert(/on\('foeRallied'/.test(ui) && /tv-notch/.test(ui) && /p\.charging \? 'Rally! It holds at the mark\. Only a Stun breaks its charge\.'/.test(ui),
     'rally gates: the boss bar marks each gate, the rally line names the mark (the Stun clause only while it charges), and a line says when the rally is over');
 } catch (e) { fail('rally gates live crashed: ' + (e.stack || e)); }
+
+// ---- wren-z9-10-foes (judge 2026-10-08): the scratch fight (turnCombatSample, the budget's) gets an ordinary Rattlebones up once a fight, as
+// the live loop does (59b onFoeDeath): at ENEMY_TUNE.reassemble of its HP, never a boss, never after a Burn kill. Asserted on the live path too
+// (lessons: a rule the sampler models is checked where the player meets it).
+if (section('rattlebones get up (core)')) try {
+  const g = loadCore({ seed: 9, turns: true }), E = s => g.eval(s);
+  E(`soloPick('wren', { now: true }); TURN_TUNE.on = 1; S.L = 15; S.maxZone = 10; setZone(10); S.activity = 'fight'; arena = null; fightBoss = false; gearDirty(); spawn();
+    for (let i = 0; i < 400 && !(combatFoes()[0] && combatFoes()[0].type === 'bones'); i++) spawn();
+    // the sampler's own io, caught as it starts a fight, so a test can land the killing blow itself
+    globalThis.__tn = turnNew; turnNew = (p, io) => { globalThis.__io = io; return __tn(p, io); };`);
+  const R = E('ENEMY_TUNE.reassemble');
+  // a scratch fight of one step (nothing dies), then the blows by hand: (profile changes) -> { rises, foe HP share after each blow }
+  const blows = (prof, kinds) => JSON.parse(E(`(() => { const p = Object.assign(turnCombatProfile(), ${JSON.stringify(prof)}), r = turnCombatSample({ profile: p, seconds: 0.05, seed: 3 }), io = __io, hp = [];
+    for (const k of ${JSON.stringify(kinds)}) { io.damageFoe(io.foeHp() + 1, k); hp.push(+(Math.max(0, io.foeHp()) / p.foeMaxHp).toFixed(3)); }
+    return JSON.stringify({ rises: r.rises, hp, type: p.foeType, boss: p.boss }); })()`));
+  const a = blows({}, ['attack', 'attack']), b = blows({}, ['burn']), c = blows({ boss: true }, ['attack']), d = blows({ foeType: 'beetle' }, ['attack']), e = blows({}, ['ignite', 'attack']);
+  assert(R > 0 && a.type === 'bones' && !a.boss && a.rises === 1 && a.hp[0] === +R.toFixed(3) && a.hp[1] === 0,
+    `rattlebones: in a scratch fight an ordinary Rattlebones gets up once at ${R} of its HP, and stays down the second time (${JSON.stringify(a)})`);
+  assert(b.rises === 0 && b.hp[0] === 0 && c.rises === 0 && c.hp[0] === 0 && d.rises === 0 && d.hp[0] === 0 && e.rises === 1 && e.hp[0] === +R.toFixed(3),
+    `rattlebones: a Burn kill keeps it down (an Ignite does not), a boss never gets up, and no other foe type does (${JSON.stringify({ b, c, d, e })})`);
+  // a whole sample: every won fight against her bones had a get-up first (Wren burns nothing), one a fight at most; a bones boss never rises
+  const s = JSON.parse(E(`JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 5, fights: 30, skill: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 } }))`));
+  E('turnNew = __tn; fightBoss = true; spawn();');
+  const sb = JSON.parse(E(`JSON.stringify(Object.assign(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 5, fights: 10, skill: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 } }), { type: turnCombatProfile().foeType, boss: turnCombatProfile().boss }))`));
+  assert(s.rises >= s.kills && s.rises <= s.kills + s.deaths && s.kills > 0 && sb.boss && sb.rises === 0,
+    `rattlebones: over 30 scratch fights Wren meets one get-up a fight at most and one before every kill (${s.rises} rises, ${s.kills} kills, ${s.deaths} losses); the zone 10 boss (${sb.type}) never gets up (${sb.rises})`);
+  // the live path (TURN_LIVE_IO -> cbTurnDamageFoe -> foeDies -> onFoeDeath): the same rule where the player meets it
+  const until = (cond, n = 400) => E(`(() => { for (let i = 0; i < ${n} && !(${cond}); i++) tick(0.05); return !!(${cond}); })()`);
+  const live = kind => { E('fightBoss = false; spawn(); for (let i = 0; i < 400 && !(combatFoes()[0] && combatFoes()[0].type === "bones"); i++) spawn();');
+    const met = until('TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.foe === combatFoes()[0] && TURN_LIVE.foe.type === "bones" && !TURN_LIVE.foe.boss && !TURN_LIVE.foe.again');
+    return JSON.parse(E(`(() => { const f = TURN_LIVE.foe, out = { met: ${met} }; TURN_LIVE_IO.damageFoe(f.hp + 1, ${JSON.stringify(kind)}, false, 'phys', 0);
+      out.first = +(Math.max(0, f.hp) / f.max).toFixed(3); out.again = !!f.again;
+      if (f.hp > 0) { TURN_LIVE_IO.damageFoe(f.hp + 1, 'attack', false, 'phys', 0); out.second = +(Math.max(0, f.hp) / f.max).toFixed(3); }
+      return JSON.stringify(out); })()`)); };
+  const la = live('attack'), lb = live('burn');
+  // an elite Rattlebones gets up too (59b checks only f.boss)
+  E('fightBoss = false; spawn(); for (let i = 0; i < 400 && !(combatFoes()[0] && combatFoes()[0].type === "bones"); i++) spawn(); turnFoeSetup(combatFoes()[0], S.zone, { elite: true });');
+  const el = JSON.parse(E(`(() => { const f = combatFoes()[0]; f.hp = 0; const up = onFoeDeath(f, 0, 'attack'); return JSON.stringify({ elite: !!f.elite, up, hp: +(f.hp / f.max).toFixed(3) }); })()`));
+  assert(el.elite && el.up && el.hp === +R.toFixed(3), `rattlebones: an elite Rattlebones gets up too (${JSON.stringify(el)})`);
+  assert(la.met && la.again && la.first === +R.toFixed(3) && la.second === 0 && lb.met && !lb.again && lb.first === 0,
+    `rattlebones: in the live fight an ordinary Rattlebones gets up once at ${R} of its HP, and a Burn kill keeps it down (${JSON.stringify({ la, lb })})`);
+  assert(E(`onFoeDeath({ type: 'bones', boss: true, max: 100, hp: 0 }, 0, 'attack') === false`), 'rattlebones: the live rule never raises a boss');
+  assert(!g.errors.length, 'rattlebones: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('rattlebones get up crashed: ' + (e.stack || e)); }
 
 // ==== counters-and-layers: Essence is one pile (any grade pays any Essence cost, lowest grade first) ====
 if (section('essence fungible')) try {
@@ -13310,6 +13402,110 @@ if (section('zone10-clear-moment')) try {
   })();
 } catch (e) { fail('zone10-clear-moment: ' + e.message); }
 
+// ---- champ-retry-scenes (card champ-retry-scenes; M0 beat 25): a Champion beaten on a later try plays its pre scene before the fight and its
+// post scene at the kill, then its card. The walk read the pre text at the kill for zones 10 and 15 only after a loss; the game was right, the
+// walk keyed both sheets by their first 50 characters (the same for those two Champions). This proves the game's order on every retry path.
+// Two sections (zone 10 at 1280x720; zone 15 and 740x360) so CI's shards share the time (about 100 s each).
+async function champRetryScenes(runs) {
+  {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('champ-retry-scenes (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-z10-cantor.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      // way: 'first' (a first-try win), 'again' (the loss card's Try again), 'gate' (Keep fighting here, a zone foe, then the Fight menu's
+      // boss button, which Next Up's boss row opens; Auto's own try calls the same challenge(), so it is not run apart)
+      for (const [zone, champ, way, w, h] of runs) {
+        const at = `champ-retry-scenes zone ${zone} ${way} ${w}x${h}`;
+        const save = JSON.parse(raw), t0 = Date.UTC(2026, 9, 9, 12), delta = t0 - save.last;
+        const shift = o => { for (const k in o) { const v = o[k]; if (typeof v === 'number' && v > 1.5e12 && v < 2.2e12) o[k] = v + delta; else if (v && typeof v === 'object') shift(v); } };
+        shift(save); save.zone = save.maxZone = zone; save.auto = false;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, turns: true, story: true });
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.clock.install({ time: t0 }); await page.clock.pauseAt(t0 + 1);
+        await page.addInitScript(([k, s]) => { if (!sessionStorage.getItem('crs')) { sessionStorage.setItem('crs', '1'); localStorage.setItem(k, s); } }, [KEY, JSON.stringify(save)]);
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/', { waitUntil: 'commit' });
+        const run = s => page.clock.runFor(Math.round(s * 1000));
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        for (let i = 0; i < 60 && !(await page.evaluate(() => !!window.__t)); i++) { await page.waitForTimeout(200); await run(0.2); }
+        // the order of events: a boss spawn or kill, each scene shown (its first line on screen) and closed, and the Champion card
+        // Hesketh's tips are off: his upgrade tip after a loss pauses the zone's fight until Hero is opened, and this check is about the story's order
+        await X(`S.onboard.tips = false; window.__ev = []; const E = s => window.__ev.push(s);
+          on('spawn', ({ mob }) => { if (mob && mob.boss) E('spawn'); }); on('kill', ({ mob }) => { if (mob && mob.boss) E('kill'); });
+          on('storyScene', s => E('scene ' + s.id)); on('storyEnd', s => E('end ' + s.id));
+          new MutationObserver(() => { const o = document.querySelector('.mm-ov'), y = document.querySelector('.sty-sheet .sty-text');
+            if (o && /falls/.test(o.textContent) && !window.__ev.includes('card')) E('card' + (document.querySelector('.sty-sheet') ? ' over a scene' : ''));
+            if (y && window.__ev[window.__ev.length - 1] !== 'text ' + y.textContent.slice(0, 24)) E('text ' + y.textContent.slice(0, 24)); }).observe(document.body, { childList: true, subtree: true, characterData: true });
+          true`);
+        await run(2);
+        const click = async rx => { for (const hd of await page.$$('button')) { const t = (await hd.innerText().catch(() => '')).trim(); if (rx.test(t) && await hd.isVisible()) { try { await hd.click({ timeout: 800 }); return t; } catch (e) {} } } return ''; };
+        const turn = boss => X(`(() => { const sn = turnCombatSnapshot(); return sn.phase === 'hero' && !!mob && !!mob.boss === ${boss}; })()`);
+        const toTurn = async (boss, rx) => { for (let i = 0; i < 60 && !(await turn(boss)); i++) { await click(rx); await run(0.5); } return turn(boss); };
+        assert(await toTurn(true, /^(Continue|Next|Got it|Fight)$/), `${at}: the Champion's fight starts (${JSON.stringify(await X('window.__ev'))})`);
+        await X(`window.__ev.push('turn'); true`);   // the first try's first turn: the pre scene has closed before it
+        if (way !== 'first') {
+          // a loss inside the fight's own tick (the foe's hit on 1 HP), as a player loses: a hit forced from outside the tick skips the
+          // turn fight's recovery, and the hero stays down after Keep fighting here
+          await X(`window.__lost = 0; on('bossFail', () => { window.__lost = 1; }); true`);
+          for (let i = 0; i < 40 && !(await X(`window.__lost`)); i++) {
+            await run(0.5);
+            if (await X(`turnCombatSnapshot().phase === 'hero'`)) await X(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max; cbUnitByKey('hero').hp = 1; turnCombatAction('attack'); true`);
+          }
+          assert(await X(`window.__lost`), `${at}: the first try is lost`);
+          if (way === 'again') { let again = '';
+            for (let i = 0; i < 20 && !again; i++) { await run(0.5); again = await click(/^Try again$/); }
+            assert(again && await toTurn(true, /^(Continue|Next|Got it)$/), `${at}: the loss card's Try again starts the next try`); }
+          else {
+            let stay = '';
+            for (let i = 0; i < 20 && !stay; i++) { await run(0.5); stay = await click(/^Keep fighting here$/); }
+            assert(stay, `${at}: the loss card offers Keep fighting here`);
+            assert(await toTurn(false, /^(Continue|Next|Got it)$/), `${at}: a zone foe comes next (${await X(`JSON.stringify({ ph: turnCombatSnapshot().phase, mob: mob && mob.name, boss: mob && mob.boss, act: S.activity, tab: S.tab, held: GAME_HOLDS.filter(f => f()).length, ov: [...document.querySelectorAll('.bsheet-ov, .mm-ov, .gl-ov')].map(o => o.className + ':' + o.textContent.slice(0, 40)) })`)})`);
+            await X(`TURN_LIVE.gi = 99; TURN_LIVE.foe.hp = 1; turnCombatAction('attack'); true`);
+            for (let i = 0; i < 8; i++) { await run(0.5); await click(/^(Continue|Next|Got it)$/); }
+            // the boss button in the Fight menu (where Next Up's boss row sends a player once the chance is close or ready); the player presses
+            // it and closes the menu to watch the fight, which a 740x360 menu covers
+            await X(`setTab('adv', '#gateBtn'); ui(true); true`); await run(0.4); await X(`$('gateBtn').click(); closeMenu(); true`);
+            assert(await toTurn(true, /^(Continue|Next|Got it)$/), `${at}: the Champion comes back (${JSON.stringify(await X('window.__ev'))})`);
+          }
+        }
+        // the win (past every rally gate), pressed at the hero's turn until it lands
+        for (let i = 0; i < 20 && !(await X(`window.__ev.includes('kill')`)); i++) {
+          if (await turn(true)) await X(`TURN_LIVE.gi = 99; TURN_LIVE.foe.hp = 1; turnCombatAction('attack'); true`);
+          await run(0.5);
+        }
+        let post = false;
+        for (let i = 0; i < 8 && !post; i++) { await run(0.5); post = await X(`!!document.querySelector('.sty-sheet') && window.__ev.includes('scene p:${champ}:post')`); }
+        if (post && w === 1280 && way === 'gate') await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'champ-retry-scenes', `post-after-retry-z${zone}-${w}x${h}.png`) });
+        for (let i = 0; i < 12 && !(await X(`window.__ev.some(e => /^card/.test(e))`)); i++) { await click(/^(Next|Continue)$/); await run(0.6); }
+        const ev = await X('window.__ev'), ix = s => ev.indexOf(s), kill = ev.lastIndexOf('kill');
+        const want = [`end p:${champ}:pre`, 'kill', `scene p:${champ}:post`, `end p:${champ}:post`, 'card'];
+        assert(want.every((s, i) => ix(s) >= 0 && (i === 0 || ix(s) > ix(want[i - 1]))) && kill >= 0 && ev.filter(e => e === 'kill').length === 1,
+          `${at}: pre before the fight, then at the kill the post, then the Champion card (${JSON.stringify(ev)})`);
+        // the save boots into the first try, so its pre scene may open before the listeners: its close, and at most one open, come before the first turn
+        const turn0 = ix('turn'), pres = ev.map((e, i) => e === `scene p:${champ}:pre` ? i : -1).filter(i => i >= 0);
+        assert(turn0 >= 0 && ix(`end p:${champ}:pre`) < turn0 && ev.filter(e => e === `end p:${champ}:pre`).length === 1 && pres.length <= 1 && pres.every(i => i < turn0),
+          `${at}: the pre scene plays once, before the first try's first turn, never again and never in the kill gap (${JSON.stringify(ev)})`);
+        const pre0 = (await X(`STORY_BEATS.champ.${champ}.pre[0]`)).slice(0, 24), post0 = (await X(`STORY_BEATS.champ.${champ}.post[0]`)).slice(0, 24);
+        assert(ev.indexOf('text ' + pre0) >= 0 && ev.indexOf('text ' + pre0) < kill && ev.indexOf('text ' + post0) > kill && !ev.slice(kill).includes('text ' + pre0),
+          `${at}: the sheet shows the pre lines before the kill and the post lines after it (${JSON.stringify(ev)})`);
+        assert(!ev.includes('card over a scene'), `${at}: the Champion card waits for the post sheet to close (${JSON.stringify(ev)})`);
+        assert(!errs.length, `${at}: no page errors (${errs.slice(0, 2).join(' | ')})`);
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+}
+if (section('champ-retry-scenes')) try {
+  await champRetryScenes([[10, 'cantor', 'first', 1280, 720], [10, 'cantor', 'again', 1280, 720], [10, 'cantor', 'gate', 1280, 720]]);
+} catch (e) { fail('champ-retry-scenes: ' + e.message); }
+if (section('champ-retry-scenes 2')) try {
+  await champRetryScenes([[15, 'marshal', 'again', 1280, 720], [10, 'cantor', 'gate', 740, 360]]);
+} catch (e) { fail('champ-retry-scenes 2: ' + e.message); }
+
 // ---- moment layer (card moment-layer; 75-moments-ui.js; docs/design/first-hour.md; scorecard F6) ----
 // Each big and medium moment is forced while the guide, a level-up and the toast flood compete, and must be on screen for at
 // least 2 s, not only in the bell. At 740x360 first (the main target), then 360x740, then with reduced motion.
@@ -14222,6 +14418,77 @@ if (section('foe moves by type')) try {
   // a normal fight plays out: each type's foe moves, and the casual starter still wins ordinary fights at zone 20 (budget bands hold)
   assert(!g.errors.length, 'foe moves: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('foe moves by type crashed: ' + (e.stack || e)); }
+
+// ==== page-size-check (docs/design/page-bytes.md 6, judge 2026-10-09): the page under 14 MB, each art pack under its ceiling ====
+// Read only (tools/lib/page-size.mjs): it measures dist and the generated art files, prints the growth line, and changes nothing.
+if (section('page size')) try {
+  const { pageSizeReport } = await import('./lib/page-size.mjs');
+  const r = pageSizeReport({ page: distFile });
+  for (const l of r.lines) console.log('  ' + l);
+  for (const w of r.warns) console.log('  WARN ' + w);
+  for (const f of r.fails) fail(f);
+  if (!r.fails.length) ok('page size: the page is under 14 MB and every art pack is under its ceiling or its measured exception');
+} catch (e) { fail('page size crashed: ' + (e.stack || e)); }
+
+// ==== embed-base91 (docs/design/page-bytes.md lever 10): every embedded art file is basE91 text, read back by one decoder ====
+// The embed tools write each PNG or WebP as basE91 (tools/lib/b91.mjs); src/js/21zz-art-b91.js gives every reader the same
+// base64 or data URI as before. Checked here: each embedded file decodes, through the page's own decoder, to exactly the bytes
+// of its approved art file (same bytes, so the same pixels), the tools' encoder and the page's decoder agree, and the encoder
+// refuses a string that would end the page's script.
+// artData(file, name): a generated art file run with the page's decoder, as the game reads it (every image field decoded).
+function artData(file, name) {
+  const ctx = {}, J = path.join(ROOT, 'src', 'js');
+  vm.runInNewContext(`(() => {\n${fs.readFileSync(path.join(J, file), 'utf8')}\n${fs.readFileSync(path.join(J, '21zz-art-b91.js'), 'utf8')}\nthis.__x = ${name};\n})()`, ctx);
+  return ctx.__x;
+}
+if (section('embed-base91')) try {
+  const { b91Encode, b91Decode } = await import('./lib/b91.mjs');
+  const J = path.join(ROOT, 'src', 'js'), art = (...p) => fs.readFileSync(path.join(ROOT, 'art', ...p));
+  const PNG = 'data:image/png;base64,', rows = [];   // [what, string as the game reads it, the approved file's bytes, prefix]
+  // the C26 icon packs, against Codex's exports (the same lists tools/art/embed-icons.mjs keeps)
+  const exp = (f, name) => new Function(fs.readFileSync(path.join(ROOT, f), 'utf8') + `\nreturn ${name};`)();
+  const ICONS = [['21s-data-actionicons.js', 'ACTION_ICONS', 'art/actions/game-v1/action-icons.js'], ['21t-data-navicons.js', 'NAV_ICONS', 'art/navigation/game-v1/navigation-icons.js'],
+    ['21u-data-gearicons.js', 'GEAR_ICONS', 'art/gear/game-v2/gear-icons.js'], ['21v-data-statusicons.js', 'STATUS_ICONS', 'art/status/game-v1/status-icons.js']];
+  const abil = exp('art/abilities/game-v1/ability-icons.js', 'ABILITY_ICONS');
+  for (const [file, name, src] of ICONS) {
+    const D = artData(file, name), X = exp(src, name);
+    for (const [id, set] of Object.entries(D)) for (const [n, u] of Object.entries(set)) {
+      const want = X[id] ? X[id][n] : abil[id] && abil[id].data[n];
+      rows.push([`${name}.${id}.${n}`, u, want ? Buffer.from(want.slice(PNG.length), 'base64') : null, PNG]);
+    }
+  }
+  const R = artData('21r-data-resicons.js', 'RES_ICONS');
+  for (const [fam, list] of Object.entries(R.icons)) list.forEach((u, i) => rows.push([`RES_ICONS.${fam}.${i + 1}`, u, art('resources', 'game-v1', `${fam}-${i + 1}.png`), PNG]));
+  const P = artData('21yc-data-portraits.js', 'HERO_PORTRAITS');
+  for (const [id, u] of Object.entries(P)) rows.push([`HERO_PORTRAITS.${id}`, u, art('portraits', id + '.png'), PNG]);
+  const FOE_DIR = { imp: 'enemies/thorn-imp/approved-v2', gloomjaw: 'enemies/gloomjaw/approved-v1' }, F = artData('21za-data-foeart.js', 'FOE_ART');
+  for (const [k, pk] of Object.entries(F)) for (const [p, u] of Object.entries(pk.atlases))
+    rows.push([`FOE_ART.${k}.${p}`, u, FOE_DIR[k] ? art(...FOE_DIR[k].split('/'), p) : null, '']);
+  const BG = artData('21zb-data-bgart.js', 'BG_ART'), BGF = { 'mossy-hollow-outlined-night-v1': ['backgrounds/mossy-hollow/outlined-night-v1/runtime/mossy-hollow-night-960x540.webp', 'backgrounds/mossy-hollow/outlined-night-v1/runtime/mossy-hollow-night-portrait-480x900.webp'] };
+  for (const [t, B] of Object.entries(BG)) ['land', 'port'].forEach((o, i) => rows.push([`BG_ART.${t}.${o}`, B[o].src, BGF[B.id] ? art(...BGF[B.id][i].split('/')) : null, '']));
+  const bad = rows.filter(([, u, want, pre]) => !(typeof u === 'string' && u.startsWith(pre) && want && Buffer.from(u.slice(pre.length), 'base64').equals(want))).map(r => r[0]);
+  assert(rows.length > 700 && !bad.length, `embed-base91: all ${rows.length} embedded images read back as the approved files' exact bytes` + (bad.length ? ` (not: ${bad.slice(0, 6).join(', ')})` : ''));
+  // the files hold basE91, not base64: no data URI and no quoted string
+  // of base64 characters only (basE91 text mixes in its other 29 characters)
+  const left = [...ICONS.map(r => r[0]), '21r-data-resicons.js', '21yc-data-portraits.js', '21za-data-foeart.js', '21zb-data-bgart.js']
+    .filter(f => /data:image\/|['"][A-Za-z0-9+/]{100,}={0,2}['"]/.test(fs.readFileSync(path.join(J, f), 'utf8').split('\n').filter(l => !l.startsWith('//')).join('\n')));
+  assert(!left.length, 'embed-base91: the embedded art files carry basE91 text, not base64' + (left.length ? ' (' + left.join(', ') + ')' : ''));
+  // the tools' encoder and the page's decoder agree on every length and edge (random files, 0-600 bytes, plus all-0 and all-255)
+  { const ctx = {}; vm.runInNewContext(fs.readFileSync(path.join(J, '21zz-art-b91.js'), 'utf8') + '\nthis.dec = b91Bytes; this.b64 = b91Base64;', ctx);
+    let seed = 7, miss = 0, n = 0; const rnd = () => (seed = (seed * 1103515245 + 12345) >>> 0) >>> 24;
+    const cases = [Buffer.alloc(300), Buffer.alloc(300, 255)];
+    for (let len = 0; len <= 600; len++) cases.push(Buffer.from(Array.from({ length: len }, rnd)));
+    for (const c of cases) { let e; try { e = b91Encode(c); } catch (x) { continue; } n++;
+      if (!Buffer.from(ctx.dec(e)).equals(c) || !b91Decode(e).equals(c) || ctx.b64(e) !== c.toString('base64')) miss++; }
+    assert(n > 590 && !miss, `embed-base91: the encoder (tools/lib/b91.mjs) and the page's decoder (21zz-art-b91.js) round-trip ${n} files byte for byte` + (miss ? ` (${miss} differ)` : '')); }
+  // the encoder refuses a string holding "</script" in any case (it would end the page's script): crafted files whose basE91 text holds it (a
+  // trailing pair keeps the last 13-bit group whole, so the text round-trips)
+  { const craft = t => b91Decode(t), refuse = t => { try { b91Encode(craft(t)); return false; } catch (e) { return /<\/script/.test(e.message); } };
+    assert(refuse('</script>AA') && refuse('xx</SCRIPT') && refuse('AA</ScRiPtAA') && !refuse('<script/AA'), 'embed-base91: the encoder refuses any output containing "</script" (any case)'); }
+  // every generator writes what is committed (the embed tools' --check, and resicons' text against its PNGs above)
+  { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-icons.mjs'), '--check'], { encoding: 'utf8' });
+    assert(r.status === 0, 'embed-base91: the icon files are up to date with the approved packs (node tools/art/embed-icons.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
+} catch (e) { fail('embed-base91 crashed: ' + (e.stack || e)); }
 
 // ==== hero portraits (tools/portraits.mjs -> 21yc-data-portraits.js, 64k-portraits.js) ====
 if (section('hero portraits')) try {
@@ -15298,6 +15565,64 @@ if (section('boss-spoils-pick')) try {
   }
 } catch (e) { fail('boss-spoils-pick: ' + (e.stack || e.message)); }
 
+// ---- spoils-card-fits-with-unique (ci-shard-hang follow-up): a zone 6 to 10 first clear that drops a unique AND offers a move pick puts
+// the unique line, its Equip button, every pick and Keep the Scroll on screen without scrolling the card (75-caches-ui, 60-moments.css).
+// boss-spoils-pick makes the unique roll miss; this section makes it hit. At 360x740 the base card already fit, so it must still fit ----
+if (section('spoils-card-fits-with-unique')) try {
+  const at = 'spoils-card-fits-with-unique', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pre-z7-boss.json'), 'utf8');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      // moment-card-short-landscape: 932x430 and 926x428 (taller than the old 420 px compact line) must fit too; 568x320 and 360x640 are
+      // too short for the whole card, so there the first button shows without scrolling and every other one scrolls into view
+      const tight = (w, h) => (w === 568 && h === 320) || (w === 360 && h === 640);
+      for (const [w, h] of [[740, 360], [932, 430], [926, 428], [568, 320], [1280, 720], [360, 740], [360, 640]]) {
+        const vw = `${at} ${w}x${h}`;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // zone 7's boss, first clear, three Tier II moves to learn, a free slot; the unique roll always hits (the drop rate is restored after)
+        await X(`MOMENT_Q.length = 0; S.L = 13; soloLevels().wren.L = 13; S.abil.unl.wren = ['powershot', 'barbed']; S.abil.scrolls = { moss: 2 }; soloEquip(2, null); soloEquip(1, 'powershot');
+          S.activity = 'fight'; S.zone = 7; S.maxZone = 7; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 1;
+          try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } S.activity = 'gather'; emit('sceneReset'); true`);
+        try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov')`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
+        await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs) and the card's rise
+        const c = await X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };
+          const card = o.querySelector('.mm-card'), inView = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1; };
+          const btns = [...o.querySelectorAll('.mm-pick, .mm-act, .mm-go')], uq = [...o.querySelectorAll('.mm-list li')].find(li => /A unique\\./.test(li.textContent));
+          return { up: true, uq: uq ? uq.textContent : '', picks: [...o.querySelectorAll('.mm-pick b')].map(b => b.textContent), acts: [...o.querySelectorAll('.mm-act')].map(b => b.textContent),
+            go: (o.querySelector('.mm-go') || {}).textContent, scroll: card.scrollHeight - card.clientHeight, card: inView(card), btns: btns.map(b => b.textContent.slice(0, 18) + ':' + inView(b)),
+            allIn: btns.every(inView) && (!uq || inView(uq)), first: !!btns[0] && inView(btns[0]), top: card.scrollTop, h: Math.round(card.getBoundingClientRect().height) }; })()`);
+        assert(c.up && c.uq && c.picks.length === 3 && c.go === 'Keep the Scroll' && c.acts.some(t => /^Equip/.test(t)),
+          `${vw}: the card holds the unique line, its Equip button, three moves and Keep the Scroll (${JSON.stringify({ up: c.up, uq: c.uq, picks: c.picks, acts: c.acts, go: c.go })})`);
+        // 360x740: the base card already reached its height cap there (1 px of scroll, the font fallback can move it), so only being in view counts
+        if (!tight(w, h)) assert(c.card && c.allIn && c.top === 0 && (w === 360 || c.scroll <= 1), `${vw}: the unique line, every pick, Equip and Keep the Scroll are on screen${w === 360 ? '' : ' and the card does not scroll'} (${JSON.stringify({ h: c.h, scroll: c.scroll, top: c.top, btns: c.btns })})`);
+        else {
+          // the unique line and each button scroll into the card's view in turn (scrollIntoView moves the card only: the overlay is fixed), then the card goes back to the top
+          const reach = await X(`(() => { const o = document.querySelector('.mm-ov'), card = o.querySelector('.mm-card');
+            const inView = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1; };
+            const uq = [...o.querySelectorAll('.mm-list li')].find(li => /A unique\\./.test(li.textContent));
+            const out = [uq, ...o.querySelectorAll('.mm-pick, .mm-act, .mm-go')].filter(Boolean).map(b => { b.scrollIntoView({ block: 'nearest' }); return b.textContent.slice(0, 18) + ':' + inView(b); });
+            card.scrollTop = 0; return out; })()`);
+          assert(c.card && c.top === 0 && c.first && reach.every(t => t.endsWith(':true')), `${vw}: the card opens at its top with the first button on screen, and every button scrolls into view (${JSON.stringify({ h: c.h, scroll: c.scroll, btns: c.btns, reach })})`);
+        }
+        if ([[740, 360], [932, 430], [568, 320], [1280, 720]].some(([a, b]) => a === w && b === h)) await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'spoils-card-fits-with-unique', `check-card-${w}x${h}.png`) });
+        await page.click('.mm-ov .mm-go'); await page.waitForTimeout(200);
+        assert(!(await X('!!document.querySelector(".mm-ov")')) && (await X('scrollCount("hollow")')) === 1, `${vw}: Keep the Scroll closes the card and keeps the Scroll`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('spoils-card-fits-with-unique: ' + (e.stack || e.message)); }
+
 // ---- look-card-says-why (W5 proposal 3): a cache's lantern colour says what it did in its own line, whatever the sub line shows ----
 if (section('look-card-says-why')) try {
   const at = 'look-card-says-why', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pre-z7-boss.json'), 'utf8');
@@ -15740,8 +16065,8 @@ if (section('menu-tip-room')) try {
         await X('S.activity = "gather"; S.node = { kind: "wood", t: 1 }; setTab("gat"); ui(true); true');
         const up = await waitFor(X, `/Copper Vein/.test(document.querySelector('.ob-bub:not([hidden]) .ob-txt')?.textContent || '')`);
         const p = JSON.parse(await X(panel));
-        // the check runs without the game's web fonts: CI's fallback (DejaVu Sans) is far wider than Barlow Semi Condensed and wraps this
-        // 104-letter line to six lines, so past 96 px the strip may be only as tall as its text (the face, × and Go never add height)
+        // before display-fallback-font the check ran without the game's web fonts: CI's fallback (DejaVu Sans) is far wider than Barlow
+        // Semi Condensed and wrapped this 104-letter line to six lines, so past 96 px the strip may be only as tall as its text (the face, × and Go never add height)
         if (w < h) assert(up && /over-menu/.test(p.cls) && p.bub.h <= Math.max(96, p.t.h + 16) && p.ok && p.ok.h >= 44 && p.x && p.x.w >= 44 && p.bub.bottom <= p.tabs.top,
           `${v}: the materials line with its Go is at most 96 px tall over Gather, or no taller than its text (${JSON.stringify(p)})`);
         else { const cols = await X(`getComputedStyle(document.querySelector('.ob-bub')).gridTemplateColumns`);
@@ -15753,6 +16078,278 @@ if (section('menu-tip-room')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('menu-tip-room crashed: ' + (e.stack || e)); }
+
+// ==== ability-names-fit: every ability name a hero can slot reads in full on the fight bar and the Abilities Q W E buttons ====
+// save-pip-abilities (Pip, Fireball / Spark / Kindle), tips off. Each hero in turn, every ability that hero can learn goes into the three
+// slots (three at a time, ownership stubbed), and each name must not be cut (its text no wider than its box) on the fight bar's slot names at
+// 1280x720, 740x360 and 360x740, and on the Q W E buttons at the top of Hero > Abilities (and the Slot Q / W / E buttons in a card). The
+// views run twice: in the players' fonts (Handjet, display-fallback-font) and with no web fonts, where the fallback (DejaVu Sans Mono
+// here) needs the names to step their size down (fitTextWidth, 75-abilities-ui). Upright, Fireball's card (its text, the slots, both talents) has no scroll of its own.
+if (section('ability-names-fit')) try {
+  const at = 'ability-names-fit', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-abilities.json'), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const webFonts of [true, false]) for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h}${webFonts ? '' : ', fallback fonts'})`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true, webFonts });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // cut: the text is wider than its box, read to the fraction (a Range): scrollWidth and clientWidth round, and 0.2 px over already shows "..."
+        const cut = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent).map(e => { const r = document.createRange(); r.selectNodeContents(e);
+          return [e.textContent, +r.getBoundingClientRect().width.toFixed(2), +e.getBoundingClientRect().width.toFixed(2), e.scrollWidth, e.clientWidth, e.parentElement.className + ' ' + e.tagName, e.style.fontSize, e.style.letterSpacing]; }).filter(([, need, room, sw, cw]) => sw > cw || need > room + 0.01))`;
+        // under the desktop tier's text floor (--tmin, Foreman 2026-10-09): a name never shrinks below it
+        const small = sel => `(() => { const f = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0;
+          return JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent && parseFloat(getComputedStyle(e).fontSize) < f - 0.01).map(e => [e.textContent, getComputedStyle(e).fontSize, 'floor ' + f])); })()`;
+        // a word split across two lines ("Lanternbur / st"): any word whose letters sit on more than one line
+        const split = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent).flatMap(e => { const t = e.firstChild, out = []; if (!t || t.nodeType !== 3) return out;
+          for (const m of t.data.matchAll(/\\S+/g)) { const r = document.createRange(); r.setStart(t, m.index); r.setEnd(t, m.index + m[0].length); const tops = new Set([...r.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))); if (tops.size > 1) out.push([e.textContent, m[0]]); }
+          return out; }))`;
+        // each hero's whole list, three to a pass; the bar redraws on the next frame
+        const sets = JSON.parse(await X(`abilityOwned = () => true; JSON.stringify(Object.keys(HERO_ABILITIES).map(k => [k, HERO_ABILITIES[k].filter(id => SOLO_ABILITIES[id])]))`));
+        let n = 0; const bad = [];
+        for (const [k, ids] of sets) for (let i = 0; i < ids.length; i += 3) {
+          const three = ids.slice(i, i + 3); while (three.length < 3) three.push(null);
+          await X(`S.solo.hero = ${JSON.stringify(k)}; soloEquipped().splice(0, 3, ...${JSON.stringify(three)}); ui(true); true`); await page.waitForTimeout(120);
+          const names = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#soloBar .sb-abslot .sb-lb')].map(e => e.textContent))`));
+          n += names.filter(t => t !== 'Empty').length;
+          bad.push(...JSON.parse(await X(cut('#soloBar .sb-abslot .sb-lb'))), ...JSON.parse(await X(small('#soloBar .sb-abslot .sb-lb'))));
+        }
+        assert(n >= 40 && !bad.length, `${v}: all ${n} ability names on the fight bar read in full (cut: ${JSON.stringify(bad)})`);
+        // the slot's sub-line (Foreman: Wildfire's "Needs ..." at 1280x720): every line a slot can show, from the turn fight's own
+        // reasons (59k-turn.js 'need:...', shown as 75-solo-ui's needTxt), reads whole at the floor, words unbroken, inside the tile
+        if (w !== 740) {
+          const subs = ['Ready', 'Wait', 'Passive', 'Turn 3', 'Used', '5 turns', ...[...fs.readFileSync(path.join(ROOT, 'src', 'js', '59k-turn.js'), 'utf8').matchAll(/'need:([^'<]+)'/g)]
+            .map(m => { const t = m[1].replace(/^a /, ''); return t.charAt(0).toUpperCase() + t.slice(1); })];
+          const subBad = JSON.parse(await X(`(() => { const out = [];
+            for (const b of document.querySelectorAll('#soloBar .sb-abslot')) { const e = b.querySelector('.sb-sub'), keep = e.textContent;
+              for (const t of ${JSON.stringify(subs)}) { e.textContent = t; fitTextWidth(e); const r = document.createRange(); r.selectNodeContents(e);
+                const tops = new Set([...r.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))), lines = tops.size, bb = b.getBoundingClientRect(), eb = e.getBoundingClientRect();
+                const words = [...t.matchAll(/\\S+/g)].some(m => { const w = document.createRange(); w.setStart(e.firstChild, m.index); w.setEnd(e.firstChild, m.index + m[0].length); return new Set([...w.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))).size > 1; });
+                if (r.getBoundingClientRect().width > eb.width + 0.01 || words || lines > 2 || eb.bottom > bb.bottom - 2) out.push([t, +r.getBoundingClientRect().width.toFixed(1), +eb.width.toFixed(1), lines, Math.round(eb.bottom), Math.round(bb.bottom)]); }
+              e.textContent = keep; fitTextWidth(e); }
+            return JSON.stringify(out); })()`));
+          const subSmall = JSON.parse(await X(small('#soloBar .sb-abslot .sb-sub')));
+          assert(subs.length >= 10 && !subBad.length && !subSmall.length, `${v}: every slot sub-line (${subs.join(', ')}) reads whole on at most two lines inside its tile, at the floor (${JSON.stringify([subBad, subSmall])})`);
+        }
+        // Hero > Abilities: the Q W E buttons hold each name, and a card's Slot buttons name what sits in each slot
+        await X(`setTab('party'); true`); await page.waitForTimeout(300);
+        await page.evaluate(() => document.querySelector('#viewSeg button[data-view="abilities"]').click()); await page.waitForTimeout(400);
+        let nq = 0, nl = 0; const badQ = [];
+        for (const [k, ids] of sets) for (let i = 0; i < ids.length; i += 3) {
+          const three = ids.slice(i, i + 3); while (three.length < 3) three.push(null);
+          const other = ids.find(id => !three.includes(id)) || ids[0];
+          await X(`S.solo.hero = ${JSON.stringify(k)}; soloEquipped().splice(0, 3, ...${JSON.stringify(three)}); ui(true); true`); await page.waitForTimeout(150);
+          // the list first (the card, once open, takes the list's place on a small landscape panel)
+          if (i === 0) { nl += JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('.ab-rt b')].filter(e => e.offsetParent).length)`));
+            badQ.push(...JSON.parse(await X(cut('.ab-rt b'))), ...JSON.parse(await X(split('.ab-rt b'))), ...JSON.parse(await X(small('.ab-rt b')))); }
+          const row = await X(`!!document.querySelector('.ab-row[data-ab=${JSON.stringify(other)}]')`);
+          if (row) { await page.evaluate(id => document.querySelector(`.ab-row[data-ab="${id}"]`).click(), other); await page.waitForTimeout(150); }
+          nq += JSON.parse(await X(`JSON.stringify(document.querySelectorAll('.ab-q:not(.empty) b').length)`));
+          // with a card open: the Q W E and Slot buttons, and on a wide panel the list beside the card (where "Lanternburst" broke)
+          badQ.push(...JSON.parse(await X(cut('.ab-q b, .ab-slotb small, .ab-rt b'))), ...JSON.parse(await X(split('.ab-rt b'))), ...JSON.parse(await X(small('.ab-q b, .ab-slotb small, .ab-rt b'))));
+          if (row) await page.evaluate(id => document.querySelector(`.ab-row[data-ab="${id}"]`)?.click(), other);
+        }
+        assert(nq >= 40 && nl >= 40 && !badQ.length, `${v}: all ${nq} names on the Abilities Q W E and Slot buttons and all ${nl} in the list read in full, no word split, none under the floor (${JSON.stringify(badQ)})`);
+        const tall = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('.ab-q')].map(b => Math.round(b.getBoundingClientRect().height)))`));
+        assert(tall.length === 3 && tall.every(t => t >= 44), `${v}: the Q W E buttons stay at least 44 px tall (${tall})`);
+        if (w < h) { // Fireball's card upright: no scroll of its own; with the panel scrolled to its end, its head and both talents show, under the bar
+          await X(`S.solo.hero = 'pip'; soloEquipped().splice(0, 3, 'fire', 'wildfire', 'kindle'); ui(true); true`); await page.waitForTimeout(200);
+          await page.evaluate(() => document.querySelector('.ab-row[data-ab="fire"]').click()); await page.waitForTimeout(300);
+          await X(`document.querySelector('#panels').scrollTop = 1e6; true`); await page.waitForTimeout(200);
+          const det = JSON.parse(await X(`(() => { const d = document.querySelector('.ab-det'); if (!d) return 'null'; const hit = e => { const r = e.getBoundingClientRect(), p = document.elementFromPoint(r.left + r.width / 2, r.bottom - 3); return !!p && e.contains(p); };
+            return JSON.stringify({ sh: d.scrollHeight, ch: d.clientHeight, top: Math.round(d.getBoundingClientRect().top), bar: Math.round(document.querySelector('.ab-bar').getBoundingClientRect().bottom),
+              head: hit(d.querySelector('.ab-dh')), tal: [...d.querySelectorAll('.ab-talb')].map(hit) }); })()`));
+          assert(det && det.sh <= det.ch + 1 && det.top >= det.bar && det.head && det.tal.length === 2 && det.tal.every(Boolean),
+            `${v}: Fireball's card shows its head and both talents with no scroll of its own, under the Q W E bar (${JSON.stringify(det)})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('ability-names-fit crashed: ' + (e.stack || e)); }
+
+// ==== turn-banner-clears-plate: the turn line and the whose-turn banner each read on one line and stay off the "Zone boss" line ====
+// save-mid, a zone boss fight, every foe renamed to the longest name the game can give a foe (a boss or its Deepwell "Deep" name, an
+// elite, a Champion, a story boss). At 1280x720, 740x360 and 360x740: the turn line over the stage ("<name>'s turn", .tv-n) on the foe's
+// wind-up, and the banner between turns ("<name> goes again", .tv-turncard) are each one line (the text's height under 1.5x the line
+// height), and neither box meets the place line's "Zone boss" (#zSub), which shows whole. In the hand-over the banner really plays in,
+// the turn line and Grit row under it step out of sight and a Chill trick's line drops clear of it. At 740x360 both wrapped to two lines and the turn line sat over "Zone boss".
+if (section('turn-banner-clears-plate')) try {
+  const at = 'turn-banner-clears-plate', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const mid = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, mid]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);   // the away card
+        // the longest foe name: every boss kit (and its Deepwell "Deep" name, 59h), a zone's "Elder" boss, every zone foe and monster
+        // type (plain, "Champion", and as an elite: "Elite" or a trait, 59k), every story boss and Champion name (55-story)
+        const name = await X(`(() => { const n = [], base = [];
+          for (const k in BOSS_KITS) n.push(BOSS_KITS[k].name, 'Deep ' + BOSS_KITS[k].name.replace(/^The /, ''));
+          if (typeof ZONE_FOES === 'object') for (const z in ZONE_FOES) base.push(ZONE_FOES[z].name);
+          for (const t of TYPES) if (t) { base.push(t.name); n.push('Elder ' + t.name); }
+          for (const b of base) { n.push(b, 'Champion ' + b, 'Elite ' + b); for (const k in ELITE_TRAITS) n.push(ELITE_TRAITS[k].name + ' ' + b); }
+          for (let z = 1; z <= 60; z++) { const c = champStoryName(z), r = regionOf(z); if (c) n.push(c); if (r && r.boss && r.boss.name) n.push(r.boss.name); }
+          return n.filter(x => typeof x === 'string').sort((a, b) => b.length - a.length)[0]; })()`);
+        assert(name && name.length >= 24, `${v}: the longest foe name is found (${name})`);
+        // a zone boss fight; the turn engine waits while __tp is set (59j turnPaused), so each phase can be read
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); UNIQ_TUNE.first = UNIQ_TUNE.again = 0; globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp;
+          S.kills = ZONE_FIGHTS; fightBoss = true; spawn(); true`);
+        const ren = `for (const f of [...combatFoes(), TURN_LIVE && TURN_LIVE.foe]) if (f) f.name = ${JSON.stringify(name)};`;
+        let ph = '';
+        for (const t0 = Date.now(); Date.now() - t0 < 60000;) {
+          ph = await X(`${ren} const p = TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.phase : 'off';
+            if (p === 'foeWindup') globalThis.__tp = 1; else if (p === 'hero') turnCombatAction('attack'); else if (p === 'timing') turnCombatAction('time'); p`);
+          if (ph === 'foeWindup') break;
+          await page.waitForTimeout(40);
+        }
+        assert(ph === 'foeWindup', `${v}: the boss winds up (${ph})`);
+        await page.waitForTimeout(400);
+        const box = sel => `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e || e.hidden || !e.offsetParent) return null; const b = e.getBoundingClientRect();
+          const g = document.createRange(); g.selectNodeContents(e); const t = g.getBoundingClientRect();
+          return { l: b.left, r: b.right, t: b.top, b: b.bottom, h: b.height, th: t.height, tl: t.left, tr: t.right, lh: parseFloat(getComputedStyle(e).lineHeight), fs: parseFloat(getComputedStyle(e).fontSize), txt: e.textContent }; })()`;
+        const read = sel => X(`JSON.stringify({ e: ${box(sel)}, z: ${box('#zSub')}, stage: ${box('#stageBox')} })`).then(JSON.parse);
+        const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+        const fits = (o, what, boxOf) => {
+          const e = o.e, z = o.z, b = boxOf || e;
+          assert(z && z.txt === 'Zone boss' && z.h > 0, `${v}: the place line says "Zone boss" (${z && z.txt})`);
+          assert(e && e.txt.includes(name), `${v}: ${what} names the foe in full (${e && e.txt})`);
+          if (!e || !z) return;
+          assert(e.th < 1.5 * e.lh, `${v}: ${what} is one line (its text ${e.th.toFixed(1)} px tall, line ${e.lh.toFixed(1)} px, ${e.fs.toFixed(1)} px text)`);
+          assert(!hit(b, z), `${v}: ${what} stays off the "Zone boss" line (${JSON.stringify([b.t, b.b, b.l, b.r].map(Math.round))} vs ${JSON.stringify([z.t, z.b, z.l, z.r].map(Math.round))})`);
+          assert(o.stage && e.tl >= o.stage.l - 1 && e.tr <= o.stage.r + 1, `${v}: ${what}'s words stay inside the stage (${Math.round(e.tl)}-${Math.round(e.tr)} in ${o.stage && Math.round(o.stage.l)}-${o.stage && Math.round(o.stage.r)})`);
+          if (!phone) assert(e.fs >= 14, `${v}: ${what} keeps the 14 px desktop text floor (${e.fs})`);
+        };
+        // the turn line on the foe's wind-up
+        fits(await read('.tv-top .tv-n'), 'the turn line');
+        // the banner between turns (the hand-over after a hit), with its longest words: "<name> goes again"
+        await X('globalThis.__tp = 0; true');
+        for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+          ph = await X(`${ren} const p = TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.phase : 'off'; if (p === 'handoff') globalThis.__tp = 1; p`);
+          if (ph === 'handoff') break;
+          await page.waitForTimeout(30);
+        }
+        assert(ph === 'handoff', `${v}: the turn passes over (${ph})`);
+        // Chill sends it again: its trick line ("Chilled: <name> goes again") shows with the banner (75-turn-ui trickSay)
+        await X(`emit('turnCard', { who: 'foe', again: true, chill: true, secs: 3 }); true`); await page.waitForTimeout(300);
+        const tc = await read('.tv-turncard .tv-tc-txt'), card = (await read('.tv-turncard')).e;
+        assert(card && tc.e && /goes again$/.test(tc.e.txt), `${v}: the whose-turn banner shows (${tc.e && tc.e.txt})`);
+        if (card) fits(tc, 'the whose-turn banner', card);
+        // nothing over the stage sits on the banner's words: the turn line, the Grit row, a trick's line
+        const over = await X(`JSON.stringify((() => { const t = document.querySelector('.tv-turncard .tv-tc-txt'), g = document.createRange(); g.selectNodeContents(t); const a = g.getBoundingClientRect();
+          return [...document.querySelectorAll('.tv-top .tv-n, .tv-top .tv-hero, .tv-top .tv-warn')].filter(e => { const cs = getComputedStyle(e); if (e.hidden || !e.offsetParent || cs.visibility === 'hidden' || +cs.opacity === 0) return false;
+            const b = e.getBoundingClientRect(); return b.width && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom; }).map(e => e.className + ': ' + e.textContent); })())`).then(JSON.parse);
+        assert(!over.length, `${v}: nothing over the stage sits on the banner's words (${over.join(' | ')})`);
+        // and the trick line sits clear of the whole banner
+        const wr = await X(`JSON.stringify((() => { const t = document.querySelector('.tv-turncard'), w = document.querySelector('.tv-top .tv-warn'), a = t.getBoundingClientRect(), b = w.getBoundingClientRect();
+          return { on: !w.hidden && b.height > 0 && /Chilled/.test(w.textContent), hit: a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom, a: [a.top, a.bottom].map(Math.round), b: [b.top, b.bottom].map(Math.round) }; })())`).then(JSON.parse);
+        assert(wr.on && !wr.hit, `${v}: a trick's line sits clear of the banner (banner ${wr.a}, line ${wr.b})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('turn-banner-clears-plate crashed: ' + (e.stack || e)); }
+
+// ==== tier-two-named-for-return (why W9): at the end of a first sitting Next Up names the nearest tier 2 piece and that gathering goes on away ====
+// save-min60-tier-gate: the seed 1 Wren walk at minute 60 (zone 21; Mining 7, Woodcutting 8, Foraging 7, Hunting 4, Woodcraft 14, Tailoring 4),
+// every tier 1 piece worn, three Ready rows and no boss loss. The old pick named the Leathers' Tailoring gate (a station gate won at +2)
+// with Hunting and Foraging 43 minutes behind it, and the row sat below the top 8.
+if (section('tier-two-named-for-return')) try {
+  const at = 'tier-two-named-for-return', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  const want = 'Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you\'re away.';
+  const load = () => { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1)'); return g; };
+  { const g = load(), E = s => g.eval(s);
+    const b = JSON.parse(E('JSON.stringify(craftGoalNext())'));
+    assert(b && b.kind === 'bow' && b.t === 2 && b.gate && b.gate.skill === 'mine' && !b.gate.station, `${at}: the pick is the Birch Bow, by its Mining gate (${JSON.stringify(b)})`);
+    // its whole distance is Woodcutting 8 to 14 and Mining 7 to 14; the Leathers' is Tailoring, Hunting and Foraging
+    assert(b.left > 10000 && b.left < 11500, `${at}: the bow's XP left over both its gates is about 10,800 (${b.left})`);
+    assert(E('canCraft("leathers", 2).lv') < E('canCraft("leathers", 2).need'), `${at}: the Leathers' Tailoring gate is still shut (the case the old pick named)`);
+    const all = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))'), r = all.find(x => x.id === 'forge');
+    assert(r && r.label === want && !r.ready && !all.some(x => /Leathers/.test(x.label)), `${at}: the row names the Birch Bow and its furthest gate, never the Leathers (${JSON.stringify(r)})`);
+    assert(!E('S.bossTry && S.bossTry.tries && S.bossTry.tries[bossTryKey(soloHero(), S.maxZone)] > 0'), `${at}: the save has no lost try at the zone 21 boss`);
+    const top3 = E('topGoals(3, { sticky: false }).map(x => ({ label: x.label, ready: x.ready }))');
+    assert(top3.some(x => x.label === want) && top3.filter(x => x.ready).length === 2, `${at}: with tier 1 done the row holds a top three place, beside two Ready rows (${JSON.stringify(top3)})`);
+    const go = E('(() => { const r = topGoals(20, { sticky: false }).find(x => x.id === "forge"); const s = typeof r.go === "function" ? r.go() : r.go; return { tab: s.tab, view: s.view }; })()');
+    assert(go.tab === 'gat' && go.view === 'mine', `${at}: Go opens the Mining view (${JSON.stringify(go)})`);
+    assert(/^Mining: /.test((all.find(x => x.id === 'skill') || {}).label || ''), `${at}: the skill row follows the gate to Mining (${JSON.stringify(all.find(x => x.id === 'skill'))})`);
+  }
+  // before tier 1 is done (the sickle not made yet) the row stays as today: the open tier 1 craft, in its old words
+  { const g = load(), E = s => g.eval(s);
+    E('(() => { const id = S.equip.sickle; S.equip.sickle = null; S.items = S.items.filter(i => i.id !== id); S.mats.ore[0] = Math.max(1, S.mats.ore[0]); gearDirty(); })()');
+    const r = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge');
+    assert(r && /^Craft a Copper Sickle: /.test(r.label), `${at}: before tier 1 is done, the row is the tier 1 craft (${JSON.stringify(r)})`);
+    // with nothing for the sickle in hand the row falls back to the gate, which keeps no row of its own until a boss loss (as before)
+    E('S.mats.ore[0] = 0; S.mats.wood[0] = 0; S.mats.plank[0] = 0; S.mats.ingot[0] = 0; gearDirty()');
+    const b = JSON.parse(E('JSON.stringify(craftGoalNext())')), resv = () => E('+GOALS.find(q => q.id === "forge").reserve()');
+    assert(b && b.gate && E('GOALS.find(q => q.id === "forge").prio()') === 0 && resv() === 0, `${at}: before tier 1 is done, a gate row keeps no row of its own without a boss loss (${JSON.stringify(b)})`);
+    E('S.bossTry.tries[bossTryKey(soloHero(), S.maxZone)] = 1');
+    assert(resv() === 1, `${at}: after a lost boss try it keeps its row, as before`);
+    const top3 = E('topGoals(3, { sticky: false }).map(x => ({ id: x.id, ready: x.ready }))');
+    assert(top3.some(x => x.id === 'forge') || top3.every(x => x.ready), `${at}: after a lost boss try the gate row sits in the top three unless all three are Ready (${JSON.stringify(top3)})`);
+  }
+  // Tobin and Pip on the same skills: the same scoring names their nearest piece (a tool for Tobin, whose Warblade needs Smithing 10 too)
+  for (const [cls, re] of [['warden', /^Iron Pickaxe: Mining 7 of 14 opens Iron Ore\. /], ['lanternmage', /^Birch Staff: Mining 7 of 14 opens Jasper\. /]]) {
+    const g = load(), E = s => g.eval(s);
+    E(`S.party.cls = '${cls}'; gearDirty(); for (const pos of CRAFT_HERO_POS) { const cur = equipped(pos), k = kindsFor0(pos); if (!k || (cur && (cur.slot === k || cur.u))) continue;
+      const it = { id: S.nextId++, slot: k, t: 1, r: 'common', plus: 0 }; S.items.push(it); S.equip[pos] = it.id; } gearDirty()`.replace('kindsFor0(pos)', '(CRAFT_FITS[pos][S.party.cls] || CRAFT_FITS[pos].any || []).find(k => !CRAFT_KINDS[k].legacy && fits(k, pos, "hero"))'));
+    const r = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge');
+    assert(r && re.test(r.label), `${at}: ${cls} on the minute 60 skills gets ${re} (${JSON.stringify(r)})`);
+  }
+  // the row in the Next Up list at the three views: whole (no clamp or ellipsis), and 14 px or more on the desktop
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800);
+        const o = await page.evaluate(want => { const row = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want); if (!row) return null;
+          const l = row.querySelector('.nu-lbl'), a = l.getBoundingClientRect(), b = row.getBoundingClientRect();
+          return { cut: l.scrollHeight > l.clientHeight + 1 || l.scrollWidth > l.clientWidth + 1, fs: parseFloat(getComputedStyle(l).fontSize), inRow: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        assert(o, `${v}: the Next Up list shows the Birch Bow row`);
+        if (o) {
+          assert(!o.cut && o.inRow, `${v}: the Birch Bow row's words show whole inside the row (${JSON.stringify(o)})`);
+          if (!phone) assert(o.fs >= 14, `${v}: the row keeps the 14 px desktop text floor (${o.fs})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tier-two-named-for-return crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

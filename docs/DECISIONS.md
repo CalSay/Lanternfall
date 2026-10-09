@@ -991,6 +991,19 @@ Ruled C by an independent Opus high judge (`autopilot/rulings/2026-10-08-rally-g
 
 Veto phrase for Cal: **"Turn the rally gates off"**: set `gate.on = 0` and refit every boss from z4 to z34 in the balance pass.
 
+### Wren at zones 9-10 (wren-z9-10-foes) (2026-10-08)
+
+Ruled A by an independent Opus high judge (`autopilot/rulings/2026-10-08-wren-z9-10-foes.md`); Cal can veto.
+
+- **Wren at zones 9-10 (wren-z9-10-foes, judge 2026-10-08; Cal can veto).** No refit. Wren's ordinary-foe losses come only from a fight-only bot that wears nothing. A Wren who crafts loses about 0 per 10 min. The card adds z9-z11 normal budget rows (arrival gated, bare as floors), models the Rattlebones get-up in the sampler and logs normal losses in the walk. Any z11 arrival gap goes to the balance pass, due 2026-11-15. Veto: "Make the zone 10 skeletons easier for Wren".
+- **What it measured** (5-offset budget baseline, casual Wren/Tobin/Pip, good 100 everywhere): arrival footing z9 98/100/100, z10
+  94/100/99, z11 81/100/94; nothing worn z10 81/100/90, z11 81/100/72. Wren's z11 cell is a known gap (`boss-balance-pass`, until
+  2026-11-15). No foe, hero, gear or boss number changed; in play nothing changed (the in-game sampler only meets bosses, which never get up).
+  Numbers: `docs/design/difficulty-budget.md`; proof: `docs/proof/wren-z9-10-foes/`.
+
+Veto phrase for Cal: **"Make the zone 10 skeletons easier for Wren"**: opens B as its own judge-gated card (the get-up restores 10%,
+ordinary Rattlebones only).
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
@@ -1137,6 +1150,12 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   it, and it ships as is until then. The page grows about 365 KB (to about 8.3 MB of 16 MB). The 32 px fallback was turned down
   because it keeps the blur Cal complained about. Switch off: take 48 out of the sizes list in `tools/art/embed-icons.mjs` and
   the tiles fall back to 24 at x2.
+- **Page bytes (judge 2026-10-09; Cal can veto: "lift the Codex byte rule"):** 14 MB page ceiling (2 MB kept free); new sprite packs
+  are lossless WebP with at most 64 colours and 1-bit alpha, under 85/120/200/60 KB and 425 KB per area; backgrounds are one 960x540
+  lossless WebP of at most 190 KB with no colour cap; build order size-check, export brief, basE91, code packing, WebP embed, one
+  background per area; fewer frames and lossy backgrounds are reserve only; shipped packs are re-encoded only via the art judge.
+  (`docs/design/page-bytes.md`; ruling `autopilot/rulings/2026-10-09-page-bytes.md`; the size check is `tools/lib/page-size.mjs`, run by
+  `tools/check.mjs` as "page size")
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 

@@ -53,6 +53,11 @@ var soloIconURL = () => '';
   // the dock's Act pane: Attack, then the three ability slots (keys D, Q, W, E); Parry and Dodge sit under it
   const bAtk = mkSlot(rowAb, 'atk', 'Attack');
   const bAbs = [0, 1, 2].map(i => { const b = mkSlot(rowAb, 'ab' + i, ''); b.classList.add('sb-abslot'); b.dataset.slot = i; return b; });
+  // ability-names-fit: a long name steps its size down to its tile's width when a fallback font draws it (fitTextWidth, 75-abilities-ui)
+  const fitLb = lb => fitTextWidth(lb);
+  const fitAbs = () => fitTextWidths(bAbs.flatMap(b => [b._lb, b._sub]));
+  if (typeof ResizeObserver === 'function') { const ro = new ResizeObserver(fitAbs); bAbs.forEach(b => ro.observe(b)); }
+  try { document.fonts.addEventListener('loadingdone', fitAbs); } catch (e) {}
   const bParry = mkSlot(rowAct, 'parry', 'Parry'), bDodge = mkSlot(rowAct, 'dodge', 'Dodge');
   bParry.classList.add('sb-def'); bDodge.classList.add('sb-def');
   putText(bParry._sub, 'Hard · counters'); putText(bDodge._sub, 'Easy · evades');
@@ -305,6 +310,9 @@ var soloIconURL = () => '';
   });
   let skSig = '', foeSig = '';
   const turnsTxt = n => `${n} turn${n > 1 ? 's' : ''}`;
+  // ability-names-fit: under a blocked slot, just what it needs ("Burn", "Parry first", "3 Cinders"): "Needs a Burn" cut to "Needs ..." in
+  // the 64 px desktop slot. The red "!" says it is blocked; the hover tip keeps the whole "Needs a Burn" (b._why).
+  const needTxt = why => { const t = why.slice(5).replace(/^a /, ''); return t.charAt(0).toUpperCase() + t.slice(1); };
   function fillSkills() {
     if (dockTab !== 'sk') return;
     const s = soloButtons(), tb = typeof turnBarInfo === 'function' ? turnBarInfo() : null;
@@ -360,7 +368,7 @@ var soloIconURL = () => '';
     for (let i = 0; i < 3; i++) {
       const o = s.abs[i], b = bAbs[i];
       if (o.id !== abIds[i]) {
-        abIds[i] = o.id; setIc(b._ic, o.id || 'empty', 48); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty');
+        abIds[i] = o.id; setIc(b._ic, o.id || 'empty', 48); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty'); fitLb(b._lb);
         b.classList.toggle('empty', !o.id);
         const a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
         b.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
@@ -397,7 +405,8 @@ var soloIconURL = () => '';
         b._why = why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '';   // its hover tip's last line
         b.classList.toggle('ready', !why && tb.heroTurn);
         b.classList.toggle('blocked', !!why && why !== 'cd' && !pas);
-        putText(b._sub, pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? 'Needs ' + why.slice(5) : wait ? 'Wait' : 'Ready');
+        const st = pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? needTxt(why) : wait ? 'Wait' : 'Ready';
+        if (b._sub.textContent !== st) { putText(b._sub, st); fitTextWidth(b._sub); }
       }
       const acd = tb.cds.attack || 0, res = typeof HERO_RESOURCE === 'object' && HERO_RESOURCE[k];
       putText(bAtk._sub, acd ? turnsTxt(acd) : res ? '+1 ' + res.name : '');

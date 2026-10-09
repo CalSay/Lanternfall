@@ -47,6 +47,8 @@
 .sb-dodge .sb-lb { color: #8FB8FF; }
 .sb-abslot { outline-color: #9A7A2E; box-shadow: inset 0 0 0 4px #33283E, inset 0 0 0 5px #6B5320, 0 3px 0 #0B0810; background: #231A30; }
 .sb-abslot .sb-lb { color: var(--gold); }
+/* ability-names-fit: a slot's sub-line ("Parry first", "Bleed or Aim") may take a second line, breaking only between words */
+.sb-abslot .sb-sub { white-space: normal; overflow-wrap: normal; line-height: 1.05; text-align: center; }
 /* menu-tip-room: upright, an ability's name steps down with the screen's width and a two-word name wraps to a second line, so "Fireball",
    "Echo Shot" and "Shield Bash" read in full on a 360 wide phone (the tile is 70 px inside there; "Fireball" needs 82 at 14 px). The tile
    keeps its height. Landscape and desktop set their own sizes (80-landscape.css). */
