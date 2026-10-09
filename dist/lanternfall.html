@@ -467,11 +467,15 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
   margin: calc(-1 * var(--ab-pt)) calc(-1 * var(--ab-px)) 0; padding: var(--ab-pt) var(--ab-px) 8px;
   background: var(--bg); border-bottom: 1px solid var(--line); box-shadow: 0 6px 10px -6px rgba(0,0,0,.6); }
 .ab-qwe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
-.ab-q { position: relative; display: flex; align-items: center; gap: 5px; min-width: 0; min-height: 44px; padding: 2px 5px 2px 4px;
+/* ability-names-fit: the key sits over the name, so the name has the slot's whole width ("Momentum" was "Mom..." beside the key) */
+.ab-q { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-auto-flow: column; align-content: center; justify-items: start;
+  gap: 2px 5px; min-width: 0; min-height: 44px; padding: 2px 5px 2px 4px;
   background: #231A30; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #6B5320; color: var(--gold); text-align: left; cursor: pointer; }
-.ab-q .ab-ic { flex: none; width: 28px; height: 28px; font-size: max(var(--tmin, 0px), calc((13px * var(--display-k, 1)) * var(--tk, 1))); }
-.ab-q b { min-width: 0; font: 600 max(var(--tmin, 0px), calc((13px * var(--display-k, 1)) * var(--tk, 1)))/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ab-q .ab-ic { grid-row: 1 / span 2; align-self: center; width: 28px; height: 28px; font-size: max(var(--tmin, 0px), calc((13px * var(--display-k, 1)) * var(--tk, 1))); }
+.ab-q b { grid-column: -2; grid-row: 2; max-width: 100%; min-width: 0; font: 600 max(var(--tmin, 0px), calc((13px * var(--display-k, 1)) * var(--tk, 1)))/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ab-key { flex: none; display: grid; place-items: center; width: 16px; height: 16px; background: #0B0810; color: var(--bone); font: 700 max(var(--tmin, 0px), calc((11px * var(--display-k, 1)) * var(--tk, 1)))/1 var(--display); font-style: normal; }
+.ab-q .ab-key { grid-column: -2; grid-row: 1; }
+.ab-q.empty { grid-template-columns: minmax(0, 1fr); }
 .ab-q.empty { color: var(--muted); background: #1B1424; box-shadow: inset 0 0 0 1px #4E4060; }
 .ab-q.passive { box-shadow: inset 0 0 0 1px #5B86C9; }
 .ab-q.sel { box-shadow: inset 0 0 0 2px var(--ember); }
@@ -480,7 +484,7 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .ab-infob b { font: 600 max(var(--tmin, 0px), calc((13px * var(--display-k, 1)) * var(--tk, 1)))/1.1 var(--display); color: var(--gold); white-space: nowrap; }
 .ab-infob small { font-size: max(var(--tmin, 0px), calc(12px * var(--tk, 1))); line-height: 1.1; color: var(--muted); white-space: nowrap; }
 .ab-infob.on { box-shadow: inset 0 0 0 2px var(--gold); }
-@container ab (max-width: 400px) { .ab-q .ab-ic { display: none; } }   /* a small panel: the key and the short name */
+@container ab (max-width: 400px) { .ab-q .ab-ic { display: none; } .ab-q { grid-template-columns: minmax(0, 1fr); } }   /* a small panel: the key and the short name */
 
 /* the drawer under the bar: each Scroll, where it drops, slots and talents */
 .ab-info { display: grid; gap: 6px; padding: 8px; background: #17111F; border: 2px solid #0B0810; }
@@ -577,6 +581,14 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .ab-det { position: sticky; bottom: calc(-1 * var(--ab-pb)); z-index: 2; max-height: min(56vh, 460px); overflow-y: auto; overscroll-behavior: contain;
   margin: 0 calc(-1 * var(--ab-px)) calc(-1 * var(--ab-pb)); padding-bottom: calc(10px + var(--ab-pb));
   border-top: 2px solid var(--gold); box-shadow: 0 -10px 18px rgba(0,0,0,.55); }
+/* ability-names-fit: upright, the sheet keeps 10 px under its last line (its foot stuck to the tab bar, so the other 24 px only hid
+   the talents), and it may rise to just under the loadout bar (the top bar, the menu head and the bar take about 235 px at 360x740;
+   the sheet's foot is at 686), so Fireball's card (its text, Slot Q W E and both talents) needs no scroll of its own there. While Hesketh's strip takes a row under the menu
+   the old cap stays, so the sheet never rises under the bar. */
+@media (max-aspect-ratio: 1/1), (max-width: 599px) {
+  .ab-det { padding-bottom: 10px; max-height: max(min(56vh, 460px), min(calc(100dvh - 290px), 520px)); }
+  .app:has(> .ob-bub.over-menu:not([hidden])) .ab-det { max-height: min(56vh, 460px); }
+}
 /* Landscape (UX-L1's query): the small panel has no room for a sheet, so the detail takes the list's place, with Back. */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) {
   .ab-sec { --ab-pt: 10px; --ab-px: 10px; --ab-pb: 20px; }
@@ -37634,6 +37646,17 @@ var handsTradeOpenPicker;
 //     a wide panel, a bottom sheet in portrait, and in place of the list (with Back) in the small landscape panel.
 // Ability icons: whole packs per hero (art freeze, owner 2026-09-30). The three starters (Echo Shot, Shield Bash, Fireball)
 // and all of Pip's 14 are drawn (wire-ability-icons); Wren and Tobin keep lettered tiles until their last four icons pass.
+// ability-names-fit: a name wider than its box steps its font size down until it fits, never under `min` px. The display web font fits
+// every ability name; this is for the fallback font ("Arial Narrow" is rare, so often a monospace twice as wide). Also the fight bar's
+// slots (75-solo-ui). Widths are read to the fraction (a Range over the text): 61.6 px of text in a 61.5 px box already shows "...",
+// though scrollWidth and clientWidth both round to 62. A box with no width yet (a hidden menu) is left as it is.
+function fitTextWidth(e, min = 7) {
+  e.style.fontSize = '';
+  const room = e.clientWidth && e.getBoundingClientRect().width; if (!room) return;
+  const r = document.createRange(); r.selectNodeContents(e);
+  for (let k = 0, need; k < 3 && (need = r.getBoundingClientRect().width) > room + 0.01; k++)
+    e.style.fontSize = Math.max(min, Math.floor(parseFloat(getComputedStyle(e).fontSize) * room / need * 10) / 10) + 'px';
+}
 {
   const icon = id => (typeof soloIconURL === 'function' ? soloIconURL(id) : '');
   const KIND = { damage: 'Damage', buff: 'Buff', debuff: 'Debuff', passive: 'Passive', finisher: 'Finisher' };
@@ -37644,6 +37667,7 @@ var handsTradeOpenPicker;
   // view state (not saved): the open detail ('' | ability id | 'mv:attack'), the filter, the info drawer, a Learn armed
   let root = null, sig = '', armed = '', selId = '', filt = 'all', infoOpen = false, listTop = -1;
   const heroNm = k => (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : k);
+  const fitQ = () => { if (root) root.querySelectorAll('.ab-q b, .ab-slotb small').forEach(b => fitTextWidth(b, 8)); };
   const btn = (cls, text) => { const b = el('button', cls, text); b.type = 'button'; return b; };
   function tile(id) {
     // a drawn icon shows at a native size (nicSet picks it from the box), never a 48 px image squeezed into 28-36 px
@@ -37748,7 +37772,7 @@ var handsTradeOpenPicker;
     }
     main.append(list);
     if (selId) { const d = detFor(k, selId, eq, infos); if (d) main.append(d); else { selId = ''; root.classList.remove('has-det'); } }
-    root.append(main);
+    root.append(main); fitQ();
   }
   // scroll-spares: why Scrolls in hand teach this hero nothing. The level that opens a move first, then who a spare is for, then a
   // Scroll no starter needs. It never blames the level alone.
@@ -37899,7 +37923,9 @@ var handsTradeOpenPicker;
   }
   registerView('party', { id: 'abilities', label: 'Abilities', order: 15, feature: 'party' });
   registerSection('party', { id: 'abilities', title: 'Abilities', view: 'abilities', feature: 'party',
-    mount(sec) { sec.classList.add('ab-sec'); root = el('div', 'ab-root'); sec.append(root); sig = ''; refresh(); },
+    mount(sec) { sec.classList.add('ab-sec'); root = el('div', 'ab-root'); sec.append(root); sig = ''; refresh();
+      if (typeof ResizeObserver === 'function') new ResizeObserver(fitQ).observe(root);
+      try { document.fonts.addEventListener('loadingdone', fitQ); } catch (e) {} },
     update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] abilities', e); } } });
   on('soloHero', () => { selId = ''; armed = ''; });   // another hero: start at the list
   for (const ev of ['abilityLearned', 'scrollDrop', 'soloEquip', 'soloHero', 'levelup']) on(ev, () => { sig = ''; try { refresh(); } catch (e) {} });
@@ -45405,6 +45431,11 @@ var soloIconURL = () => '';
   // the dock's Act pane: Attack, then the three ability slots (keys D, Q, W, E); Parry and Dodge sit under it
   const bAtk = mkSlot(rowAb, 'atk', 'Attack');
   const bAbs = [0, 1, 2].map(i => { const b = mkSlot(rowAb, 'ab' + i, ''); b.classList.add('sb-abslot'); b.dataset.slot = i; return b; });
+  // ability-names-fit: a long name steps its size down to its tile's width when a fallback font draws it (fitTextWidth, 75-abilities-ui)
+  const fitLb = lb => fitTextWidth(lb);
+  const fitAbs = () => bAbs.forEach(b => fitLb(b._lb));
+  if (typeof ResizeObserver === 'function') { const ro = new ResizeObserver(fitAbs); bAbs.forEach(b => ro.observe(b)); }
+  try { document.fonts.addEventListener('loadingdone', fitAbs); } catch (e) {}
   const bParry = mkSlot(rowAct, 'parry', 'Parry'), bDodge = mkSlot(rowAct, 'dodge', 'Dodge');
   bParry.classList.add('sb-def'); bDodge.classList.add('sb-def');
   putText(bParry._sub, 'Hard · counters'); putText(bDodge._sub, 'Easy · evades');
@@ -45712,7 +45743,7 @@ var soloIconURL = () => '';
     for (let i = 0; i < 3; i++) {
       const o = s.abs[i], b = bAbs[i];
       if (o.id !== abIds[i]) {
-        abIds[i] = o.id; setIc(b._ic, o.id || 'empty', 48); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty');
+        abIds[i] = o.id; setIc(b._ic, o.id || 'empty', 48); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty'); fitLb(b._lb);
         b.classList.toggle('empty', !o.id);
         const a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
         b.classList.toggle('passive', !!(pa && pa.kind === 'passive'));

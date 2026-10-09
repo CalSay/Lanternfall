@@ -53,6 +53,11 @@ var soloIconURL = () => '';
   // the dock's Act pane: Attack, then the three ability slots (keys D, Q, W, E); Parry and Dodge sit under it
   const bAtk = mkSlot(rowAb, 'atk', 'Attack');
   const bAbs = [0, 1, 2].map(i => { const b = mkSlot(rowAb, 'ab' + i, ''); b.classList.add('sb-abslot'); b.dataset.slot = i; return b; });
+  // ability-names-fit: a long name steps its size down to its tile's width when a fallback font draws it (fitTextWidth, 75-abilities-ui)
+  const fitLb = lb => fitTextWidth(lb);
+  const fitAbs = () => bAbs.forEach(b => fitLb(b._lb));
+  if (typeof ResizeObserver === 'function') { const ro = new ResizeObserver(fitAbs); bAbs.forEach(b => ro.observe(b)); }
+  try { document.fonts.addEventListener('loadingdone', fitAbs); } catch (e) {}
   const bParry = mkSlot(rowAct, 'parry', 'Parry'), bDodge = mkSlot(rowAct, 'dodge', 'Dodge');
   bParry.classList.add('sb-def'); bDodge.classList.add('sb-def');
   putText(bParry._sub, 'Hard · counters'); putText(bDodge._sub, 'Easy · evades');
@@ -360,7 +365,7 @@ var soloIconURL = () => '';
     for (let i = 0; i < 3; i++) {
       const o = s.abs[i], b = bAbs[i];
       if (o.id !== abIds[i]) {
-        abIds[i] = o.id; setIc(b._ic, o.id || 'empty', 48); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty');
+        abIds[i] = o.id; setIc(b._ic, o.id || 'empty', 48); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty'); fitLb(b._lb);
         b.classList.toggle('empty', !o.id);
         const a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
         b.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
