@@ -346,6 +346,14 @@ Every currency, material and token, with its sources and sinks, is in [design/sy
 The world raid (`52-raid.js`, `74-ui-raid.js`), the Tavern's online parts (`74-ui-tavern.js`) and presence
 (`80-online.js`). Shapes are frozen in `CLAUDE.md`.
 
+With no capability host (no `window.claude`: the Netlify build, a page opened from disk) none of it can work, so the UI leaves
+it out (`onlineOff()` in `70-ui.js`; online-off-clean, `docs/design/hosting.md` section 3): no Raid view, no Embers coin, no
+Tavern "In the tavern now" or Hall of heroes box (its perks and the rename stay), no raid group in Stats, no raid group, tracks,
+Wyrmfall or Shoulder to Shoulder in Deeds (nor a raid track in Next Up), no raid uniques on the Craft tab's wall or in its counts, no raid words in the Codex's
+unique hints, no zone 12 raid notice, and The Wyrm Stirs never comes up (its day falls back to another Omen). The raid's unlock and
+everything earned stay in the save. Inside the Artifact nothing changes; the Raid view shows once the host check ends, and a
+signed-out viewer still sees how to join.
+
 ## Not in the game
 
 Designed or decided but not built: the rest of the C22 roster (173 zone monsters, the Shadowborn Captains, Champions

@@ -1156,6 +1156,14 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   background per area; fewer frames and lossy backgrounds are reserve only; shipped packs are re-encoded only via the art judge.
   (`docs/design/page-bytes.md`; ruling `autopilot/rulings/2026-10-09-page-bytes.md`; the size check is `tools/lib/page-size.mjs`, run by
   `tools/check.mjs` as "page size")
+- **Hero screen size (hero-screen-size-ruling, Opus art judge, 2026-10-09; Cal can veto: "x4 on big screens", "Keep the swarm zoom"):**
+  Heroes keep today's whole-step stage zoom (x2 at 1280x720, x3 at 1920x1080, x1 on 740x360 phones). In turn fights the stage no longer
+  zooms out for swarm zones (2, 9, 16, 23, 30) or 3+-add bosses, which drew the hero at 101 px at 1280x720 (build card
+  `stage-no-swarm-shrink`). Turned down: x3 at 1280 (the boss's crown sits under the turn banner and the sword cuts through the boss),
+  x4 at 1920 (a maximized 1080p window stays x3; in full screen the foes crowd and code-drawn foes become 8 px blocks), and a zoom that
+  changes fight by fight (the hero changes size between fights). Bigger heroes on big screens come with finer art (art-scale-ruling),
+  shown at x2 on 1920x1080. Changing the stage zoom is layout, not art retuning under the freeze; whole steps only.
+  (`docs/design/desktop-layout.md`, "Hero size ruling"; mockups, red team and ruling in `docs/design/desktop-layout/hero-size/`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
@@ -1271,6 +1279,18 @@ nothing; no economy or save change. A cache with a pick is a big card.
   build is green. Netlify still builds only commits with "[deploy]" in the message. (2026-09-28, 2026-10-05)
 - **Preview:** after each merge wave the owner gets a private preview artifact with its own save key. Preview builds
   never go to the live artifact. (2026-09-27)
+- **Netlify draft previews, standing (Cal, 2026-10-09 16:34, "Yes, standing"):** a Netlify draft preview link goes up for
+  any build that passes the preview gate (walk + cold leg on that one SHA), outside the Monday release. The Monday public
+  deploy stays as it is, and there are no production deploys beyond Monday. How a draft is made and what happens to the
+  preview artifact: `docs/design/hosting.md` 7.2. Record: project files `autopilot/rulings/2026-10-09-netlify-previews.md`.
+- **Hosting (judge 2026-10-09; Cal can veto: "keep the game one file"):** Netlify carries the full game; with no capability
+  host, the online layer is hidden (online-off-clean first, before Monday if possible); previews go to one fixed
+  non-production Netlify address (the connector if it can deploy, else a branch deploy of `lf-preview` once Cal allows it);
+  the build becomes a page plus content-hashed art files, all loaded before play (B1); the art loader (B2) comes only on a
+  trigger; a first-load budget (warn 6.0, fail 8.0 MB at Brotli 4) replaces the 14 MB ceiling once the split ships, and the
+  per-pack ceilings stay; pack-code is parked until Cal decides the live artifact's future; saves move between addresses only
+  by save code. The live artifact's future and what the web build carries versus the paid build stay Cal's (options in
+  `docs/design/hosting.md` 7.4 and 7.5). Ruling: project files `autopilot/rulings/2026-10-09-hosting.md`.
 
 ## Replaced decisions
 

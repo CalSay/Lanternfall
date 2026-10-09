@@ -12400,7 +12400,8 @@ let OMENS, WEEKLY_GOALS;
 
     { id: 'longNight', n: 'Long Night', cat: 'rest', fx: 'Away gains +25%', mod: { offline: 1.25 }, ic: ['glass', '#B58CFF'], go: null },
     { id: 'hearthDay', n: 'Hearth Day', cat: 'rest', fx: "The Hearth's away bonus is doubled", mod: { hearth: 2 }, needs: 'Camp', ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: null },
-    { id: 'wyrmStirs', n: 'The Wyrm Stirs', cat: 'rest', fx: '+25% raid damage', mod: { raid: 1.25 }, ok: () => S.wyrms > 0 || S.raid.gen > 0, ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: { tab: 'world' } }
+    // online-off-clean: with no capability host (onlineOff, 70-ui.js) the raid cannot run, so its day falls back to another Omen
+    { id: 'wyrmStirs', n: 'The Wyrm Stirs', cat: 'rest', fx: '+25% raid damage', mod: { raid: 1.25 }, ok: () => (S.wyrms > 0 || S.raid.gen > 0) && !(typeof onlineOff === 'function' && onlineOff()), ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: { tab: 'world' } }
   ];
   const OMEN_BY = Object.fromEntries(OMENS.map(o => [o.id, o]));
   const AL_N = OMENS.length;
@@ -14957,7 +14958,11 @@ var forgeGoalPicks = 0;
     label: () => { const b = forgeNext(); if (!b) return '';
       // tier-two-named-for-return: a gate row names the piece and its furthest gate, not a boss (it is often a later sitting's piece); a
       // gathering gate says the skill rises while you're away ("Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away.")
-      if (b.gate) return `${kindName(b.kind, b.t)}: ${SKILL[b.gate.skill]} ${b.gate.lv} of ${b.gate.need}` + (b.gate.station ? '' : (b.gate.mat ? ` opens ${b.gate.mat}` : '') + '. Gathering keeps going while you\'re away.');
+      // away-line-only-when-true: only while the hero gathers that skill (awayBase raises nothing else away); else how to make it true
+      if (b.gate) { const sk = SKILL[b.gate.skill], dw = typeof DW === 'object' && DW && DW.run(),
+          on = (dw && !dw.paused ? dw.act : S.activity) === 'gather' && skillOf(S.node.kind) === b.gate.skill;   // a live Deepwell run holds the activity away resumes (57d awayBegin)
+        return `${kindName(b.kind, b.t)}: ${sk} ${b.gate.lv} of ${b.gate.need}` + (b.gate.station ? '' : (b.gate.mat ? ` opens ${b.gate.mat}` : '') +
+          (on ? '. Gathering keeps going while you\'re away.' : `. Gather ${sk} before you leave and it keeps going.`)); }
       const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
@@ -17080,6 +17085,16 @@ function validateSave(data) {
     if (data.mastery && data.mastery.tricks) for (const [k, row] of Object.entries(data.mastery.tricks)) {
       record(row, 'mastery.tricks.' + k);
       for (const [id, v] of Object.entries(row)) { if (!FOE_TRICK_ORDER.includes(id)) fail('mastery.tricks.' + k + '.' + id); int(v, 'mastery.tricks.' + k + '.' + id, 0, 1); }
+    }
+    // trick-read-rate: the boss trick counts are { [zone]: { feint, feintPress, hold, holdPress, holdEarly } }, whole counts, a press never more than were seen
+    if (data.bossOdds && data.bossOdds.reads !== undefined) record(data.bossOdds.reads, 'bossOdds.reads');
+    if (data.bossOdds && data.bossOdds.reads) for (const [z, row] of Object.entries(data.bossOdds.reads)) {
+      const p = 'bossOdds.reads.' + z;
+      if (!/^[1-9][0-9]*$/.test(z) || +z > lim.progression) fail(p, 'is not a zone');
+      record(row, p);
+      for (const [k, v] of Object.entries(row)) { if (!BOSS_READ_KEYS.includes(k)) fail(p + '.' + k, 'is not supported by this version'); int(v, p + '.' + k); }
+      const n = k => row[k] || 0;
+      if (n('feintPress') > n('feint') || n('holdPress') > n('hold') || n('holdEarly') > n('holdPress')) fail(p, 'counts more presses than tricks');
     }
     if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
     // C9: optional route maps are validated before storage or feature load; missing v5 maps use defaults.
@@ -19725,12 +19740,12 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 3. Uniques: 13 hero uniques ----------------
   page('uniques', {
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
-    tiles: x => uniqKeys().map(k => {
+    tiles: x => { const raidOff = typeof onlineOff === 'function' && onlineOff(); return uniqKeys().map(k => {   // online-off-clean: no raid words with no capability host (70-ui.js); the tiles and their counts stay
       const u = UNIQ[k], got = S.found[k] ? 1 : 0, fl = got && typeof storyItemLine === 'function' ? storyItemLine(k) : '';   // story-systems-hollow: the Champion it came from
       const kind = uniqKindFor(k, heroWho()) || u.slot, kn = kind !== u.slot ? CRAFT_KINDS[kind].noun + ' · ' : '';   // unique-weapons-wall-icon: the hero's own weapon, as the bag
       return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: kind, t: S.found[k] || 1, u: k },
-        sub: got ? kn + u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
-    })
+        sub: got ? kn + (raidOff && /\braid\b/i.test(u.txt) ? u.name + '.' : u.txt) + (fl ? ' ' + fl : '') : '', hint: got ? '' : raidOff && RAID_UNIQ.includes(k) ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
+    }); }
   });
   // ---------------- 4. Armoury: 13 affix stats x 5 tiers seen; 7 Masterwork lines ----------------
   const roleOf = a => Object.keys(CRAFT_ROLE_POOL).find(r => CRAFT_ROLE_POOL[r].includes(a)) || 'any';
@@ -19808,11 +19823,11 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     n: 'Omens', bless: 'road', seal: { key: 'offline', v: 0.03, txt: '+3% away gains' }, title: 'Omenreader', pic: 'rows',
     show: () => !!S.almanac && Array.isArray(OMENS),
     tiles: x => {
-      const out = [];
+      const out = [], raidOff = typeof onlineOff === 'function' && onlineOff();   // online-off-clean: no raid words with no capability host
       for (const o of OMENS) if (omenOk(o)) {
         const seen = S.almanac.seen && o.id in S.almanac.seen ? 1 : 0;
         out.push({ key: o.id, n: o.n, got: seen, max: 1, pts: seen * 2, ptsMax: 2, ic: o.ic, grp: 'Omens seen',
-          sub: seen ? o.fx : '', hint: seen ? '' : x.exact ? 'Its day will come. The Almanac shows today and tomorrow.' : 'Comes on its own day.' });
+          sub: seen ? (raidOff && /\braid\b/i.test(o.fx) ? '' : o.fx) : '', hint: seen ? '' : x.exact ? 'Its day will come. The Almanac shows today and tomorrow.' : 'Comes on its own day.' });
       }
       for (const o of OMENS) if (o.dare && omenOk(o)) {
         const got = R().dare[o.id] ? 1 : 0;
@@ -23095,11 +23110,13 @@ let deeds, deedBonus, wearGet;
 
   // near-miss nudge (Next Up), cached 2 s
   let nearCache = { at: -1e9, list: [] };
+  // online-off-clean: with no capability host (onlineOff, 70-ui.js) Next Up never names a raid track, followed or near
+  const raidHid = t => t.g === 'raid' && typeof onlineOff === 'function' && onlineOff();
   function nearList() {
     if (clock - nearCache.at < 2 && nearCache.at <= clock) return nearCache.list;
     const out = [];
     for (const t of DEED_TRACKS) {
-      if (t.kind === 'ladder' || t.kind === 'record' || !trackLive(t)) continue;
+      if (t.kind === 'ladder' || t.kind === 'record' || !trackLive(t) || raidHid(t)) continue;
       const k = tierOfId(t.id), nk = k + 1;
       if ((!t.star && k >= 4) || lockTxt(t, nk)) continue;
       const v = cur(t), from = k ? needAt(t, k) : 0, to = needAt(t, nk), pct = (v - from) / Math.max(1e-9, to - from);
@@ -23113,7 +23130,7 @@ let deeds, deedBonus, wearGet;
     const d = DS();
     if (!d.init || !d.nudge || now() - lastTierAt < T.quiet * 1000) return null;
     if ((typeof fightBoss !== 'undefined' && fightBoss) || safe(() => deepActive(), false)) return null;
-    if (d.follow && TR[d.follow] && trackLive(TR[d.follow])) { const r = trackRow(TR[d.follow]); if (r.next && !r.lock) return { id: r.id, label: r.label, pct: r.pct }; }
+    if (d.follow && TR[d.follow] && trackLive(TR[d.follow]) && !raidHid(TR[d.follow])) { const r = trackRow(TR[d.follow]); if (r.next && !r.lock) return { id: r.id, label: r.label, pct: r.pct }; }
     return nearList()[0] || null;
   };
   registerGoal({
@@ -27226,7 +27243,8 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
 //   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill, fights })
 // Events: fightStart { heroHaste, foeHaste, first }, turn { who, n }, timingRing { id, i, n, opensAt, closesAt },
 //   timingGrade { id, i, grade }, foeMove { id, name, anim, hits }, parryWindow
-//   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res }, foeCharge { name }, chargeBroken { name },
+//   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res, fooled, flinch, hold, zone, zb,
+//   pressed, early } (trick-read-rate: zb a zone boss; pressed the player's own press; early a held swing pressed before it swung), foeCharge { name }, chargeBroken { name },
 //   foeSkip { why }, turnPhase { name }, fightEnd { reason }, ability { cls: 'solo', id, name, slot }, soloAttack, soloParry,
 //   soloDodge, soloCounter, heroRider { id, foe, key, stacks, boss } (an ordinary foe's or a boss's rider landed on the hero:
 //   chill, venom or weaken; foe-tricks-say-so), turnCard { who, again, secs, chill } (chill: Chill on the hero is why the foe goes
@@ -28087,6 +28105,7 @@ function turnHitStart(m, io) {
   const T = TURN_TUNE, hit = m.move.hits[m.hitI], wind = hit.wind > 0 ? hit.wind : T.foeWindup, hold = hit.hold > 0 ? hit.hold : 0;
   m.phase = 'foeWindup'; m.until = m.now + wind + hold;
   m.defense = ''; m.usedDefense = !!m.fooled; m.flinch = !!m.fooled; m.fooled = 0;   // a hero fooled by a feint is off balance: this hit cannot be defended
+  m.pressAt = -1;   // trick-read-rate: when the player pressed on this hit (59m counts a held swing pressed before it swung)
   const w = turnWindows(m);
   // a delayed hit (hold) winds up, stalls for `hold` s, then runs the last (dodge window + tell) s to the windows; a feint shows its
   // tell at the same point in its run, then fades. Before that point the bar of a trick looks like any other hit's.
@@ -28164,7 +28183,11 @@ function turnContact(m, io) {
     m.fin = { id: m.move.id, name: m.move.name, hit: m.move.hits.slice(0, m.hitI).filter(x => !x.feint).length, hits: turnRealHits(m.move), charged: !!m.move.charge, defended: !!m.usedDefense && !m.flinch };
     turnLand(m, io, hit); m.landed++;
   }
-  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res, fooled: !!m.fooled, flinch: !!m.flinch, hold: hit.hold > 0 });
+  // trick-read-rate: what the player did on this hit, for the read count in S.bossOdds.reads (59m): pressed (a press of their own,
+  // not the lost defence after a feint fooled them), early (a held swing pressed while it held: before the bar ran on)
+  const pressed = !!m.usedDefense && !m.flinch;
+  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res, fooled: !!m.fooled, flinch: !!m.flinch, hold: hit.hold > 0,
+    zone: m.p.zone, zb: !!m.p.zb, pressed, early: pressed && hit.hold > 0 && m.pressAt >= 0 && m.pressAt < m.holdTo });
   if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }   // a parried hit can strike back (the Stars' Holy Sparks)
   m.hitI++;
@@ -28251,7 +28274,7 @@ function turnResolve(m, cmd, dt, io) {
     return true;
   }
   if (m.phase === 'foeWindup' && !m.usedDefense && (cmd.kind === 'parry' || cmd.kind === 'dodge')) {
-    m.usedDefense = true;
+    m.usedDefense = true; m.pressAt = m.now;
     const w = turnWindows(m), left = m.until - m.now;
     let ok = left >= 0 && left <= (cmd.kind === 'parry' ? w.parry : w.dodge);
     if (cmd.kind === 'dodge' && !ok && m.h.shadow > 0 && left >= 0) { ok = true; m.shadowUsed = 1; }   // Shadow Step: it cannot fail
@@ -28615,12 +28638,16 @@ function zoneFoeCycle(Z) {
 //   BOSS_ODDS (the tune table), bossOddsOn(), bossOddsSkill(), bossOdds(o) -> { win, n, zone } | null,
 //   bossOddsFoe(z) (the scratch boss), bossOddsReset()
 //   bossOdds({ skill, sync }): skill overrides the blend (tools), sync runs every chunk now (tools and checks).
-// Save field: S.bossOdds { hits, parry, dodge, rings, perfect, good } (decayed tallies; defaults only).
+// Save field: S.bossOdds { hits, parry, dodge, rings, perfect, good } (decayed tallies; defaults only), and
+//   S.bossOdds.reads { [zone]: { feint, feintPress, hold, holdPress, holdEarly } } (trick-read-rate: plain counts, never faded, of
+//   a zone boss's tricks in live fights: feints seen and pressed, held swings seen, pressed and pressed while they held. Nothing
+//   reads them in the game and the player never sees them; tools/walk.mjs and testers' saves read them for the read rate).
 const BOSS_ODDS = {
   fights: 30, chunk: 10, ready: 0.7, close: 0.35, w: 12, wr: 6, decay: 0.99, every: 0.4,
   prior: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }   // the sim's casual player (tools/sim.mjs)
 };
-registerState('bossOdds', { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 });
+registerState('bossOdds', { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0, reads: {} });
+const BOSS_READ_KEYS = ['feint', 'feintPress', 'hold', 'holdPress', 'holdEarly'];
 
 // the tally: live fights only (the scratch sampler's io.emit does nothing)
 {
@@ -28631,6 +28658,17 @@ registerState('bossOdds', { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, g
     if (!B || p.flinch || p.hold || (r !== 'parry' && r !== 'dodge' && r !== 'hit')) return;   // a held hit or the hit after a feint is a trick, not a plain defence (the sampler rolls tricks itself)   // 'miss': the foe missed from Blind, not the player's doing
     bump(B, ['hits', 'parry', 'dodge']);
     B.hits += 1; if (r === 'parry') B.parry += 1; else if (r === 'dodge') B.dodge += 1;
+  });
+  // trick-read-rate: a zone boss's feints and held swings (59k TURN_TUNE.tricks), by zone. A hit after a feint fooled the player
+  // (flinch) is not counted: no press could be made on it
+  on('foeContact', p => {
+    const B = S && S.bossOdds; if (!B || !p || !p.zb || p.flinch || !(p.res === 'feint' || p.hold)) return;
+    const z = Math.floor(+p.zone); if (!(z >= 1)) return;
+    if (!B.reads || typeof B.reads !== 'object' || Array.isArray(B.reads)) B.reads = {};
+    const row = B.reads[z] && typeof B.reads[z] === 'object' && !Array.isArray(B.reads[z]) ? B.reads[z] : (B.reads[z] = {});
+    for (const k of BOSS_READ_KEYS) if (!(Number.isInteger(row[k]) && row[k] >= 0)) row[k] = 0;
+    if (p.res === 'feint') { row.feint++; if (p.pressed) row.feintPress++; }
+    else { row.hold++; if (p.pressed) row.holdPress++; if (p.early) row.holdEarly++; }
   });
   on('timingGrade', p => {
     const B = S && S.bossOdds; if (!B || !p) return;
@@ -30667,12 +30705,18 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     if (hero.fr) refreshHero(false);   // a new gather node may need another tool
   });
   // S6-E: the zoom step (a swarm zone, or a boss fight with 3+ adds in its kit): one resize at the zone change or boss start
+  // stage-no-swarm-shrink (hero size ruling, 2026-10-09): a turn fight (59k) stands the foes it spawned and its boss calls no
+  // adds, so it steps out only when 2 or more foes really stand (a Deepwell pack); one foe keeps the zone's normal zoom.
   function zoomStep() {
     let want = 1, key = '';
     if (target() === 'mob' && partyCombatOn()) {
       const boss = typeof fightBoss !== 'undefined' && fightBoss, b = typeof FOE_BEH === 'object' && TYPES[zoneType(S.zone)] && FOE_BEH[TYPES[zoneType(S.zone)].key];
       key = S.zone + (boss ? 'B' : '');
-      if (boss) { const k = mob && typeof kitOf === 'function' && kitOf(mob); if (k && k.mech.some(x => x.adds && x.adds[1] >= 3)) want = 1.4; }
+      if (typeof turnCombatOn === 'function' && turnCombatOn()) {
+        const n = typeof combatFoes === 'function' ? combatFoes().length : 1;
+        key += 'T' + (n >= 2 ? 2 : 1);
+        if (n >= 2) want = 1.4;
+      } else if (boss) { const k = mob && typeof kitOf === 'function' && kitOf(mob); if (k && k.mech.some(x => x.adds && x.adds[1] >= 3)) want = 1.4; }
       else if (b && b.size === 'swarm' && COMBAT_TUNE.sizes) want = 1.4;
     }
     if (key === zoomKey) return;
@@ -35922,7 +35966,13 @@ registerView('forge', { id: 'uniques', label: 'Uniques', order: 30, feature: 'un
 registerView('world', { id: 'camp', label: 'Camp', order: 10, feature: 'camp', dot: () => !!(S.camp && S.camp.news && S.camp.news.length) });
 registerView('world', { id: 'tav', label: 'Tavern', order: 20, feature: 'tavern' });
 registerView('world', { id: 'almanac', label: 'Almanac', order: 30, feature: 'almanac', dot: () => typeof almanac === 'object' && almanac.readyCount() > 0 });
-registerView('world', { id: 'raid', label: 'Raid', order: 40, feature: 'raid' });
+// online-off-clean (docs/design/hosting.md section 3): the world raid, tavern presence and leaderboard run on the Artifact's capability
+// host. With no `window.claude` at all (Netlify, a page opened from disk) the UI leaves them out; inside the Artifact nothing changes and
+// a signed-out viewer keeps the raid's own words on how to join. Read live, never stored; 80-online.js and the unlocks are untouched.
+function onlineOff() { return !(typeof window === 'object' && window.claude && typeof window.claude.use === 'function'); }
+// The Raid view waits for the host check (online.checked), so it never shows and then goes; the bar is rebuilt when the check ends (ui).
+registerView('world', { id: 'raid', label: 'Raid', order: 40, feature: 'raid', show: () => !onlineOff() && online.checked });
+let raidBarChecked = false;
 
 function viewsOf(t) { return VIEWS[t] || []; }
 // The views the player can see now (locked ones are left out of the switcher).
@@ -36223,6 +36273,7 @@ function ui(force) {
   putStyle(H.xpFill, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%');
   putText(H.gold, fmt(S.gold));
   putText(H.embers, fmt(S.embers));
+  putHidden(H.embers.parentElement, onlineOff());   // online-off-clean: Embers come only from the raid, so with no capability host the coin stays out, even when held
   for (const b of modeBtns) {
     putAttr(b, 'aria-pressed', String(b.dataset.act === S.activity));
     if (b.dataset.act === 'raid') putDisabled(b, !(online.ready && online.canWrite));
@@ -36266,6 +36317,7 @@ function ui(force) {
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
   putText(H.hint, tg === 'node' ? 'Click or tap to work faster' : tg === 'mob' ? '' : 'Click or tap to strike');   // the buttons strike
   for (const f of uiHooks) f(force);   // UX-A
+  if (online.checked !== raidBarChecked) { raidBarChecked = online.checked; if (S.tab === 'world') { buildViewSeg('world'); applyView('world'); } }   // online-off-clean
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
   if (viewOpen('adv', 'upgrades')) uiFight();
@@ -36986,12 +37038,14 @@ for (const [key, u] of Object.entries(UNIQ)) {
   c.append(tile, tn, ts1, ts2); $('trophies').append(c);
   trophyEls[key] = { c, tile, tn, ts1, ts2 };
 }
-{ const shown = uniqKeys(); for (const k in trophyEls) putHidden(trophyEls[k].c, !shown.includes(k)); }   // a retired unfound unique never shows, even before the first render
+// online-off-clean: with no capability host (onlineOff, 70-ui.js) the world raid's uniques are left out of the wall and its counts
+const trophyKeys = () => onlineOff() ? uniqKeys().filter(k => !RAID_UNIQ.includes(k)) : uniqKeys();
+{ const shown = trophyKeys(); for (const k in trophyEls) putHidden(trophyEls[k].c, !shown.includes(k)); }   // a retired unfound unique never shows, even before the first render
 function renderTrophies() {
   let n = 0;
-  const shown = uniqKeys();
+  const shown = trophyKeys(), off = onlineOff();
   for (const [key, u] of Object.entries(UNIQ)) {
-    const f = S.found[key], e = trophyEls[key], k = trophyKind(key); if (f) n++;
+    const f = S.found[key], e = trophyEls[key], k = trophyKind(key); if (f && !(off && RAID_UNIQ.includes(key))) n++;
     putHidden(e.c, !shown.includes(key)); // a retired unique shows only once found
     putClass(e.c, 'trophy' + (f ? ' found' : ''));
     setIc(e.tile, itemIcon(k, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
@@ -37478,6 +37532,11 @@ function uiRaid() {
 let boardSig = '';
 async function uiTavern() {
   if (document.activeElement !== $('nameInput') && !$('nameInput').value) $('nameInput').value = S.name;
+  // online-off-clean: with no capability host (onlineOff, 70-ui.js) nobody can drop in and the hall cannot fill, so both boxes stay out;
+  // the tavern's perks and the rename stay
+  const off = onlineOff();
+  putHidden($('online').closest('.sec'), off); putHidden($('board').closest('.sec'), off);
+  if (off) return;
 
   const box = $('online');
   const seen = new Set(), list = [];
@@ -41662,6 +41721,10 @@ let deedsUI = null;
   const TR = {}; for (const t of DEED_TRACKS) TR[t.id] = t;
   const GR = {}; for (const g of DEED_GROUPS) GR[g.id] = g;
   const FE = {}; for (const f of DEED_FEATS) FE[f.id] = f;
+  // online-off-clean: with no capability host (onlineOff, 70-ui.js) the raid's group and tracks, Wyrmfall and Shoulder to Shoulder are left
+  // out of these lists; what was earned stays earned, and in the points
+  const RAID_DEED = new Set(['raid', 'f_raid', 's_crowd', ...DEED_TRACKS.filter(t => t.g === 'raid').map(t => t.id)]);
+  const deedShown = x => !(x && RAID_DEED.has(x.id) && onlineOff());
   const LK = {}; for (const l of DEED_LOOKS) LK[l.id] = l;
   const RAR_COL = { common: 'var(--r-common)', uncommon: 'var(--r-uncommon)', rare: 'var(--r-rare)', epic: 'var(--r-epic)', legendary: 'var(--r-legendary)' };
 
@@ -41811,8 +41874,8 @@ let deedsUI = null;
       const t = Date.now(); if (!force && t - deedsAt < 1000) return; deedsAt = t;
       deeds.seen();
       const P = deeds.points(), nx = deeds.next(), prev = ladderPrev(), ttl = heroTitleTxt();
-      const fol = S.deeds.follow, fr = fol ? deeds.track(fol) : null;
-      const near = deeds.near(3), rec = deeds.recent(5);
+      const fol = S.deeds.follow, fr = fol && deedShown({ id: fol }) ? deeds.track(fol) : null;
+      const near = deeds.near(99).filter(deedShown).slice(0, 3), rec = deeds.recent(99).filter(deedShown).slice(0, 5);
       const sig = [P, nx && nx.at, ttl, S.name, fol, fr && fr.tier, fr && Math.floor(fr.pct * 200), near.map(x => x.id + Math.floor(x.pct * 200) + x.label).join(), rec.map(r => r.key).join(), S.deeds.nudge, Math.floor(t / 60000)].join('|');
       if (sig === deedsSig && !force) return; deedsSig = sig;
       putText(dv.name, S.name);
@@ -41928,7 +41991,7 @@ let deedsUI = null;
     },
     update(force) {
       const t = Date.now(); if (!force && t - tracksAt < 1000) return; tracksAt = t;
-      const groups = deeds.groups();
+      const groups = deeds.groups().filter(deedShown);
       if (!groups.some(g => g.id === curGroup)) curGroup = groups.length ? groups[0].id : null;
       // chips
       const csig = groups.map(g => g.id + g.atGold + '/' + g.atEver + '/' + g.tracks + g.lv).join() + '|' + curGroup;
@@ -42044,7 +42107,7 @@ let deedsUI = null;
     },
     update(force) {
       const t = Date.now(); if (!force && t - featsAt < 2000) return; featsAt = t;
-      const feats = deeds.feats(), secs = deeds.secrets(), wall = deeds.wall();
+      const feats = deeds.feats().filter(deedShown), secs = deeds.secrets().filter(deedShown), wall = deeds.wall();
       const sig = feats.map(f => f.id + (f.got ? 'g' : '') + Math.floor(f.pct * 200) + f.parts.map(p => p.have).join(':')).join() + '|' + secs.map(s => s.id + (s.got ? 1 : 0) + (s.riddle ? 1 : 0)).join() + '|' + wall.join() + '|' + S.deeds.wear.critter + S.deeds.wear.cape;
       if (sig === featsSig && !force) return; featsSig = sig;
       fv.grid.textContent = ''; fv.doneGrid.textContent = '';
@@ -44224,6 +44287,7 @@ let navUI = null;
   on('unlock', ({ id, quiet }) => {
     applyFeatures();
     if (quiet || id === '*') return;
+    if (id === 'raid' && onlineOff()) return;   // online-off-clean: no capability host, no raid to announce; the unlock itself is kept (70-ui.js)
     if (saidBySteps(id)) onboardUseDone('say:' + id); else sayQueue(id);
     if (!OPEN_TXT[id]) return;
     const tab = TAB_FEATURE[id];
@@ -45751,7 +45815,11 @@ var soloIconURL = () => '';
   const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'dodge' };   // SOLO2: Space dodges
   addEventListener('keydown', e => {
     if (bar.hidden || pick || gameHeld() || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
+    // space-reopens-next-up: a clicked button keeps focus (a sheet hands it back on close) and the browser presses it on Space, so
+    // Space in a fight is the dodge, not a press of that button. The bar's own tiles still take Space and Enter as a click; Enter on
+    // any other focused button still presses it, and so does Space on a button in a sheet or card open over the fight or in the
+    // menu open beside it (wide views: a keyboard player working the Hero or Craft menu).
+    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === 'Enter' || (e.key === ' ' && (bar.contains(t) || t.closest(MODAL_UP) || (S.tab && t.closest('#menu')))))))) return;
     if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
     if (e.key.toLowerCase() === 'f') { if (typeof turnCombatOn === 'function' && turnCombatOn()) return; e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle (no Auto in turn fights)
     const id = KEYS[e.key.toLowerCase()]; if (!id) return;
@@ -46495,6 +46563,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
       sec.append(hero);
 
       for (const [gname, list, extra] of G) {
+        if (gname === 'Raid' && onlineOff()) continue;   // online-off-clean: no raid to count with no capability host (70-ui.js)
         const box = el('div', 'sw-group');
         box.append(el('h3', 'sw-h', gname));
         if (extra === 'mats') {

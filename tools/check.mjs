@@ -102,6 +102,7 @@ const WEIGHT = {
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
   'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'page size': 2
 };
@@ -10175,7 +10176,7 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     const s0 = sk();
     assert(Math.abs(s0.parry - 0.25) < 1e-9 && Math.abs(s0.dodge - 0.5) < 1e-9 && Math.abs(s0.perfect - 0.1) < 1e-9 && Math.abs(s0.good - 0.4) < 1e-9, `boss odds: with no record the player is the casual one (${J(s0)})`);
     E('bossOdds({ sync: true })'); const t0 = tally();
-    assert(t0 === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), 'boss odds: the scratch fights add nothing to the record (' + t0 + ')');
+    assert(t0 === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0, reads: {} }), 'boss odds: the scratch fights add nothing to the record (' + t0 + ')');
     E('turnCombatSample({ profile: turnCombatProfile(), seconds: 120, seed: 4 })'); assert(tally() === t0, 'boss odds: neither does a scratch sample');
     E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })'); const s1 = sk();
     assert(s1.parry > s0.parry && E('S.bossOdds.hits') === 1 && E('S.bossOdds.parry') === 1, `boss odds: a parry raises the parry share (${s0.parry.toFixed(3)} to ${s1.parry.toFixed(3)})`);
@@ -10186,7 +10187,7 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     assert(E('S.bossOdds.rings') > 1.9 && E('S.bossOdds.perfect') > 0.98 && E('S.bossOdds.good') === 0, 'boss odds: rings count Perfect, Good and missed');
     // many parries make a parrying player, and the skill is clamped
     for (let i = 0; i < 400; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })');
-    const s2 = sk(); assert(s2.parry > 0.9 && s2.dodge >= 0 && s2.dodge <= 1 && E('Object.values(S.bossOdds).every(Number.isFinite)') && E('Object.values(bossOddsSkill()).every(v => Math.abs(v / 0.05 - Math.round(v / 0.05)) < 1e-9)'), `boss odds: a long run of parries gives a parrying player; the skill stays in range and rounds to 0.05 (${J(s2)})`);
+    const s2 = sk(); assert(s2.parry > 0.9 && s2.dodge >= 0 && s2.dodge <= 1 && E('Object.entries(S.bossOdds).every(([k, v]) => k === "reads" ? JSON.stringify(v) === "{}" : Number.isFinite(v))') && E('Object.values(bossOddsSkill()).every(v => Math.abs(v / 0.05 - Math.round(v / 0.05)) < 1e-9)'), `boss odds: a long run of parries gives a parrying player; the skill stays in range and rounds to 0.05 (${J(s2)})`);
     // a player who improves counts as improved: 300 hits of dodging only, then parrying only
     E('S.bossOdds = { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }');
     for (let i = 0; i < 300; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "hit" })');
@@ -10196,7 +10197,7 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
   // old saves load with the record's defaults
   for (const f of ['early', 'mid', 'late']) {
     const raw = JSON.parse(FX(f)), g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: FX(f) }) });
-    assert(!('bossOdds' in raw) && g.eval('JSON.stringify(S.bossOdds)') === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), `boss odds: the ${f} fixture loads with the record's defaults`);
+    assert(!('bossOdds' in raw) && g.eval('JSON.stringify(S.bossOdds)') === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0, reads: {} }), `boss odds: the ${f} fixture loads with the record's defaults`);
   }
   // gear changed while gathering counts at once: the estimate reads a scratch hero from the current state (cbEstHero), not the
   // live unit, which only refreshes while fighting (Codex P1 on PR #47)
@@ -11778,11 +11779,12 @@ if (section('next tier gate')) try {
   const reset = () => E(`(() => { const o = JSON.parse(${JSON.stringify(snap)}); Object.assign(S.skills, o.skills); Object.assign(S.mats, o.mats); HUNT_TUNE.on = true; })()`);
   // 1. tier-two-named-for-return: the piece with the least XP left over all its gates (Woodcraft 8 of 10, Woodcutting 7 and Mining 5 of 14
   // for the Birch Bow), named by its furthest gate; never Ready; with every tier 1 piece worn it keeps a row in the top three, no boss loss needed
-  const away = '. Gathering keeps going while you\'re away.';
+  // away-line-only-when-true: the fixture fights, so a gathering gate says how to keep the skill rising away
+  const away = sk => `. Gather ${sk} before you leave and it keeps going.`;
   let l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away && !row(l).ready, `next tier gate: the Birch Bow's furthest gate shows (${JSON.stringify(l)})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining') && !row(l).ready, `next tier gate: the Birch Bow's furthest gate shows (${JSON.stringify(l)})`);
   const top3 = E('topGoals(3, { sticky: false }).map(x => x.label)');
-  assert(top3.includes('Birch Bow: Mining 5 of 14 opens Iron Ore' + away), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
+  assert(top3.includes('Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining')), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
   let go = goOf('forge');
   assert(go && go.tab === 'gat' && go.view === 'mine', `next tier gate: the material gate's Go opens the Mining view (${JSON.stringify(go)})`);
   assert(/^Mining: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('skill') || {}).view === 'mine', `next tier gate: the skill row follows the gate to Mining (${JSON.stringify(l.find(x => x.id === 'skill'))})`);
@@ -11802,7 +11804,7 @@ if (section('next tier gate')) try {
   // 3. with the stations open, still the bow's furthest gate (Mining 5, not the nearer Woodcutting 7); Go opens the Mining view
   E('S.skills.bench.lv = 10; S.skills.loom.lv = 10');
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away && !row(l).ready, `next tier gate: with the stations open, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining') && !row(l).ready, `next tier gate: with the stations open, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
   // 4. the Birch Bow's middles in the bag (refine-queues: 5 Birch Plank and 2 Iron Ingot; gear-in-first-25 Step 0, wood + metal): the craft, Ready
   E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2');
   l = goals();
@@ -11810,11 +11812,11 @@ if (section('next tier gate')) try {
   // 5. Birch Log enough for its planks: the bow's gate is Mining for the Iron Ore its Iron Ingots are smelted from (gear-in-first-25: was Hunting for Duskfang Pelt)
   E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 5');   // Mining 5 alone: less XP left than the Quiver's Hunting 4 and Foraging 2
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away, `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining'), `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
   // 6. with Hunting hidden, no hide gate shows. The bow is wood + metal now (gear-in-first-25), so the hide gate is set up with the old hide bow
   E('globalThis.__bowRec = CRAFT_KINDS.bow.rec; CRAFT_KINDS.bow.rec = { wood: 6, hide: 2, ess: 2 }; S.skills.mine.lv = 1; S.skills.mine.xp = 0; S.skills.forage.lv = 14; S.mats.wood[1] = 40');   // Hunting is its one gate; Mining 1 puts the tools' Iron Ore further off
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Hunting 4 of 14 opens Duskfang Pelt' + away, `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Hunting 4 of 14 opens Duskfang Pelt' + away('Hunting'), `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
   E('HUNT_TUNE.on = false');
   l = goals();
   assert(!l.some(x => /Hunting \d+ of|Duskfang Pelt$/.test(x.label)), `next tier gate: with Hunting hidden, no hide gate (${JSON.stringify(row(l))})`);
@@ -12037,6 +12039,83 @@ if (section('rally gates live (core)')) try {
   assert(/on\('foeRallied'/.test(ui) && /tv-notch/.test(ui) && /p\.charging \? 'Rally! It holds at the mark\. Only a Stun breaks its charge\.'/.test(ui),
     'rally gates: the boss bar marks each gate, the rally line names the mark (the Stun clause only while it charges), and a line says when the rally is over');
 } catch (e) { fail('rally gates live crashed: ' + (e.stack || e)); }
+
+// ---- trick-read-rate (why W2): the game counts how often the player reads a zone boss's tricks (S.bossOdds.reads, 59m), from the
+// live fight (59k foeContact: zone, zb, pressed, early). A fixture fight at the zone 10 Champion presses on a set share of its
+// feints and held swings and the counts must match what was pressed; an ordinary foe, the scratch sampler and the plain tallies
+// add nothing; old saves load with the default; save codes keep good counts and refuse bad ones. Nothing here is shown in the game.
+if (section('trick read counts (core)')) try {
+  const g = loadCore({ seed: 7, turns: true }), E = s => g.eval(s), J = JSON.stringify;
+  E(`soloPick('wren', { now: true }); S.cls.at = 0; TURN_TUNE.on = 1; S.L = 14; S.maxZone = 10; setZone(10); S.activity = 'fight'; arena = null; gearDirty();`);
+  const tally0 = E('JSON.stringify([S.bossOdds.hits, S.bossOdds.parry, S.bossOdds.dodge])');
+  // the player: on the k-th trick hit, a feint is pressed when k is even; a held swing is pressed while it holds when k % 3 is 0,
+  // in its parry window when k % 3 is 1, not at all when 2. Real hits are let through. Both sides stay alive so the fight runs on
+  const play = (boss, secs) => JSON.parse(E(`(() => {
+    fightBoss = ${boss}; spawn();
+    const want = { feint: 0, feintPress: 0, hold: 0, holdPress: 0, holdEarly: 0 };
+    let k = -1, key = '', act = '';
+    for (let t = 0; t < ${secs}; t += 0.05) {
+      const u = cbUnitByKey('hero'); if (u) u.hp = u.maxHp;
+      const m = TURN_LIVE;
+      if (m && !m.ended && m.foe) {
+        m.foe.hp = Math.max(m.foe.hp, 0.9 * m.foe.max);
+        if (m.phase === 'hero') turnCombatAction('attack');
+        if (m.phase === 'foeWindup') {
+          const h = m.move.hits[m.hitI], hk = m.n + ':' + m.move.id + ':' + m.hitI + ':' + m.until.toFixed(3);
+          if (hk !== key) { key = hk; act = '';
+            if (!m.usedDefense && (h.feint || h.hold > 0) && m.foe.boss) { k++; if (h.feint) { want.feint++; if (k % 2 === 0) { act = 'now'; want.feintPress++; } }
+              else { want.hold++; if (k % 3 !== 2) { want.holdPress++; act = k % 3 === 0 ? 'held' : 'win'; if (act === 'held') want.holdEarly++; } } } }
+          if (act && !m.usedDefense) {
+            const w = turnWindows(m), left = m.until - m.now;
+            if (act === 'now' || (act === 'held' && m.now >= m.holdFrom && m.now < m.holdTo) || (act === 'win' && left <= w.parry * 0.5)) { turnCombatAction('parry'); act = ''; }
+          }
+        }
+      }
+      tick(0.05);
+    }
+    return JSON.stringify({ want, boss: !!(TURN_LIVE && TURN_LIVE.foe && TURN_LIVE.foe.boss), name: TURN_LIVE && TURN_LIVE.foe ? TURN_LIVE.foe.name : '' });
+  })()`));
+  // an ordinary zone 10 foe first: no zone boss, so nothing is counted
+  const plain = play(false, 30), r0 = E('JSON.stringify(S.bossOdds.reads)');
+  assert(r0 === '{}', `trick reads: an ordinary foe's fight adds no read counts (${r0})`);
+  const f = play(true, 240), got = JSON.parse(E('JSON.stringify(S.bossOdds.reads)'))[10] || {};
+  console.log(`  trick reads: zone 10 Champion fixture fight (${f.name}): feints ${got.feint} (pressed ${got.feintPress}), held swings ${got.hold} (pressed ${got.holdPress}, ${got.holdEarly} while it held)`);
+  assert(f.boss && f.want.feint >= 4 && f.want.hold >= 6 && f.want.feintPress > 0 && f.want.holdEarly > 0 && f.want.holdPress > f.want.holdEarly,
+    `trick reads: the fixture fight meets the zone 10 Champion's feints and held swings (${J(f.want)}, boss ${f.boss})`);
+  assert(J(got) === J(f.want), `trick reads: the counts match what the player pressed (want ${J(f.want)}, got ${J(got)})`);
+  assert(Object.keys(JSON.parse(E('JSON.stringify(S.bossOdds.reads)'))).join() === '10', 'trick reads: the counts sit under the boss\'s zone');
+  // the decayed tallies the sampler reads still count the fight's plain hits beside the trick counts
+  const hits = E('S.bossOdds.hits');
+  assert(hits > 0 && E('Number.isFinite(S.bossOdds.hits)') && tally0 !== E('JSON.stringify([S.bossOdds.hits, S.bossOdds.parry, S.bossOdds.dodge])'), `trick reads: the plain tallies still count the real hits (${hits.toFixed(2)})`);
+  // the scratch sampler emits nothing to the save
+  const before = E('JSON.stringify(S.bossOdds)');
+  E('turnCombatSample({ profile: turnMakeProfile(bossOddsFoe(10), cbEstHero()), seconds: 120, seed: 4 })');
+  assert(E('JSON.stringify(S.bossOdds)') === before, 'trick reads: a scratch sample of the zone 10 boss adds no counts');
+  // a save code keeps the counts; a bad row is refused
+  E('S.cls.at = 0'); const code = E('encodeSave(S)'), back = E(`JSON.stringify(decodeSave(${J(code)}).data.bossOdds.reads)`);
+  assert(back === E('JSON.stringify(S.bossOdds.reads)'), `trick reads: a save code keeps the counts (${back})`);
+  const refuse = (reads, why) => { const raw = JSON.parse(E('JSON.stringify(S)')); raw.bossOdds.reads = reads;
+    const r = E(`validateSave(JSON.parse(${J(J(raw))}))`); assert(r && r.ok === false, `trick reads: a save code with ${why} is refused (${J(reads)})`); };
+  refuse({ 10: { feint: 2, feintPress: 3 } }, 'more presses than feints');
+  refuse({ 10: { hold: 4, holdPress: 2, holdEarly: 3 } }, 'more early presses than presses');
+  refuse({ 10: { feint: 1.5 } }, 'a part count');
+  refuse({ 10: { feint: -1 } }, 'a count below 0');
+  refuse({ 10: { guess: 1 } }, 'an unknown count');
+  refuse({ x: { feint: 1 } }, 'a key that is not a zone');
+  refuse({ 10: 3 }, 'a row that is not a record');
+  refuse(5, 'counts that are not a record');
+  // old saves (no reads) load with the default and count from there
+  for (const fx of ['early', 'mid', 'late']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + fx + '.json'), 'utf8'), o = loadCore({ turns: true, storage: memoryStorage({ [KEY]: raw }) });
+    assert(o.eval('JSON.stringify(S.bossOdds.reads)') === '{}' && !o.errors.length, `trick reads: the ${fx} fixture loads with no counts`);
+  }
+  { const o = loadCore({ turns: true, storage: memoryStorage({ [KEY]: JSON.stringify(Object.assign(JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')), { bossOdds: { hits: 5, parry: 2, dodge: 1, rings: 0, perfect: 0, good: 0 } })) }) });
+    assert(o.eval('JSON.stringify(S.bossOdds)') === J({ hits: 5, parry: 2, dodge: 1, rings: 0, perfect: 0, good: 0, reads: {} }), 'trick reads: a save with the old boss odds record keeps its tallies and gains the empty counts'); }
+  // the player is never shown the counts: no UI file reads them
+  const ui = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(n => parseInt(n, 10) >= 60).filter(n => /bossOdds\.reads|\.reads\[|holdEarly|feintPress/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', n), 'utf8')));
+  assert(!ui.length, `trick reads: no page file reads the counts (${ui.join(', ')})`);
+  assert(!g.errors.length, 'trick reads: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('trick read counts crashed: ' + (e.stack || e)); }
 
 // ---- wren-z9-10-foes (judge 2026-10-08): the scratch fight (turnCombatSample, the budget's) gets an ordinary Rattlebones up once a fight, as
 // the live loop does (59b onFoeDeath): at ENEMY_TUNE.reassemble of its HP, never a boss, never after a Burn kill. Asserted on the live path too
@@ -16292,7 +16371,8 @@ if (section('turn-banner-clears-plate')) try {
 // with Hunting and Foraging 43 minutes behind it, and the row sat below the top 8.
 if (section('tier-two-named-for-return')) try {
   const at = 'tier-two-named-for-return', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
-  const want = 'Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you\'re away.';
+  // away-line-only-when-true: the save fights, so the away sentence says how to make it true
+  const want = 'Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going.';
   const load = () => { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1)'); return g; };
   { const g = load(), E = s => g.eval(s);
     const b = JSON.parse(E('JSON.stringify(craftGoalNext())'));
@@ -16365,6 +16445,296 @@ if (section('tier-two-named-for-return')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('tier-two-named-for-return crashed: ' + (e.stack || e)); }
+
+// ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
+// save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
+// (50-sim awayBase), so the row promises "keeps going" only then; fighting or gathering another skill says how to make it true.
+if (section('away-line-only-when-true')) try {
+  const at = 'away-line-only-when-true', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  const base = 'Birch Bow: Mining 7 of 14 opens Iron Ore. ', on = base + 'Gathering keeps going while you\'re away.', off = base + 'Gather Mining before you leave and it keeps going.';
+  const states = [['fighting', '', off], ['gathering Woodcutting', 'setNode("wood", 1); setActivity("gather")', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather")', on]];
+  for (const [name, set, want] of states) {
+    const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    E('tick(0.1)'); if (set) E(set);
+    const r = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge');
+    assert(r && r.label === want, `${at}: ${name}, the row reads "${want}" (${JSON.stringify(r)})`);
+    // an away run of 1 h from this state: Mining rises only when the row says it keeps going
+    const lv0 = E('S.skills.mine.lv'), xp0 = E('S.skills.mine.xp'), rep = E('(() => { const r = awayGains(3600); return { note: r.note, lines: r.lines.map(l => l.txt) }; })()');
+    const rose = E('S.skills.mine.lv') > lv0 || E('S.skills.mine.xp') > xp0;
+    assert(rose === (want === on), `${at}: ${name}, 1 h away ${want === on ? 'raises' : 'leaves'} Mining (${lv0} -> ${E('S.skills.mine.lv')}; away report: ${JSON.stringify(rep)})`);
+  }
+  // the sentence follows the activity: back to a fight, the row says how to make it true again
+  { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s), lbl = () => (E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge') || {}).label;
+    E('tick(0.1); setNode("ore", 1); setActivity("gather")'); const a = lbl(); E('setActivity("fight")'); const b = lbl();
+    assert(a === on && b === off, `${at}: the sentence changes with the activity (${a} / ${b})`);
+    // a station gate has no away sentence while gathering either
+    E('setActivity("gather"); S.mats.plank[1] = 5; S.mats.ingot[1] = 2; S.skills.bench.lv = 8; gearDirty()');
+    const c = lbl();
+    assert(c === 'Birch Bow: Woodcraft 8 of 10', `${at}: a station gate says nothing about away (${c})`);
+  }
+  // review: a Deepwell run started from Mining fights below, but away resumes the gathering (57d awayBegin), so the row keeps its promise
+  { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s), lbl = () => (E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge') || {}).label;
+    E('tick(0.1); setNode("ore", 1); setActivity("gather"); S.camp.b.hearth = Math.max(3, S.camp.b.hearth || 0)');
+    assert(E('deepUnlocked() && DW.start(false)') && E('S.activity') === 'fight' && E('DW.run().act') === 'gather', `${at}: a Deepwell run starts from Mining`);
+    const a = lbl(), lv0 = E('S.skills.mine.lv'); E('awayGains(3600)');
+    assert(a === on && E('S.skills.mine.lv') > lv0, `${at}: in a Deepwell run started from Mining the row says it keeps going, and 1 h away raises Mining (${a}; ${lv0} -> ${E('S.skills.mine.lv')})`);
+  }
+  // both sentences show whole in the Next Up list at the three views, 14 px or more on the desktop
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800);
+        const measure = want => page.evaluate(want => { const row = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want); if (!row) return null;
+          const l = row.querySelector('.nu-lbl'), a = l.getBoundingClientRect(), b = row.getBoundingClientRect();
+          return { cut: l.scrollHeight > l.clientHeight + 1 || l.scrollWidth > l.clientWidth + 1, fs: parseFloat(getComputedStyle(l).fontSize), inRow: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        for (const [name, set, want] of [['fighting', '', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather"); true', on]]) {
+          if (set) { await X(set); await page.waitForTimeout(800); }   // the open list redraws every 500 ms
+          const o = await measure(want);
+          assert(o, `${v}: ${name}, the Next Up list shows "${want}"`);
+          if (o) {
+            assert(!o.cut && o.inRow, `${v}: ${name}, the row's words show whole inside the row (${JSON.stringify(o)})`);
+            if (!phone) assert(o.fs >= 14, `${v}: ${name}, the row keeps the 14 px desktop text floor (${o.fs})`);
+          }
+        }
+        if (process.env.LF_PROOF_SHOTS) await page.screenshot({ path: path.join(process.env.LF_PROOF_SHOTS, `${at}-${w}x${h}.png`) });
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('away-line-only-when-true crashed: ' + (e.stack || e)); }
+
+// ---- space-reopens-next-up: in a turn fight Space dodges, whatever button was last clicked. A clicked button keeps focus (a sheet
+// hands focus back to its opener on close), and the browser presses a focused button on Space; the fight bar used to step aside for it,
+// so Space at a boss swing reopened Next Up. Outside a fight Space on a focused button still presses it. 1280x720. ----
+if (section('space-reopens-next-up')) try {
+  const at = 'space-reopens-next-up', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } }), tag = `${at} 1280x720`;
+      await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);   // an hour in: the Next up chip shows
+      const page = await ctx.newPage(), errors = [];
+      page.on('pageerror', e => errors.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // the turn engine waits while __tp is set (59j turnPaused), so the foe's swing can be held open for the key press
+      await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); true`); await page.waitForTimeout(400);
+      await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); document.querySelectorAll('.mm-ov').forEach(n => n.remove()); typeof closeSheet === 'function' && closeSheet(); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; true`);
+      const sheets = () => X(`document.querySelectorAll('.bsheet-ov').length`);
+      const swing = async () => { await X('globalThis.__tp = 0; true');
+        for (const t0 = Date.now(); Date.now() - t0 < 60000;) {
+          if (await X(`!!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'foeWindup' && !TURN_LIVE.usedDefense`)) { await X('globalThis.__tp = 1; true'); await page.waitForTimeout(200); return true; }
+          await X(`TURN_LIVE && !TURN_LIVE.ended && (TURN_LIVE.foe && (TURN_LIVE.foe.hp = Math.max(TURN_LIVE.foe.hp, 1e6)), TURN_LIVE.phase === 'timing' && turnCombatAction('time'), TURN_LIVE.phase === 'hero' && turnCombatAction('attack')); true`);
+          await page.waitForTimeout(40);
+        } return false; };
+      const centre = sel => page.$eval(sel, e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+      // the boss of zone 1
+      await X(`S.kills = ZONE_FIGHTS; fightBoss = false; challenge(); true`); await page.waitForTimeout(400);
+      assert(await X('!!fightBoss'), `${tag}: a boss fight starts`);
+      // click Next up, close it with its ×: focus goes back to the chip
+      let [x, y] = await centre('#nuChip'); await page.mouse.click(x, y); await page.waitForTimeout(400);
+      assert(await sheets() === 1, `${tag}: a click on Next up opens its list`);
+      [x, y] = await centre('.bsheet-x'); await page.mouse.click(x, y); await page.waitForTimeout(400);
+      assert(await sheets() === 0 && await X(`document.activeElement === document.getElementById('nuChip')`), `${tag}: the list closes and the chip keeps focus (the case this section covers)`);
+      // Space at the boss's swing: a dodge, and Next up stays shut
+      assert(await swing(), `${tag}: the boss winds up a swing`);
+      await page.keyboard.press(' '); await page.waitForTimeout(300);
+      assert(await X('!!TURN_LIVE.usedDefense') && await sheets() === 0, `${tag}: Space at the swing with Next up focused dodges (${await X('!!TURN_LIVE.usedDefense')}) and Next up stays shut (${await sheets()} open)`);
+      // a second focused button: the Hero tab on the rail. Space dodges; no menu opens
+      assert(await swing(), `${tag}: the boss winds up another swing`);
+      await X(`document.querySelector('.tabs .tab[data-tab="party"]').focus(); true`);
+      await page.keyboard.press(' '); await page.waitForTimeout(300);
+      assert(await X('!!TURN_LIVE.usedDefense') && await X('!S.tab') && await sheets() === 0, `${tag}: Space at the swing with the Hero tab focused dodges (${await X('!!TURN_LIVE.usedDefense')}) and opens no menu (${await X('S.tab')})`);
+      // Enter on a focused button is not a fight key: it still presses the button in a fight
+      await X(`document.getElementById('nuChip').focus(); true`); await page.keyboard.press('Enter'); await page.waitForTimeout(400);
+      assert(await sheets() === 1, `${tag}: Enter on the focused Next up chip opens its list in a fight`);
+      // Space on a button in a sheet over the fight still presses it: the list's × closes it
+      await X(`document.querySelector('.bsheet-x').focus(); true`); await page.keyboard.press(' '); await page.waitForTimeout(400);
+      assert(await sheets() === 0, `${tag}: Space on the focused × of the Next up list closes it in a fight`);
+      // outside a fight (gathering) Space on a focused button presses it
+      await X('globalThis.__tp = 0; setActivity("gather"); true'); await page.waitForTimeout(600);
+      assert(await X(`document.getElementById('soloBar').hidden`), `${tag}: gathering, the fight bar is away`);
+      await X(`document.getElementById('nuChip').focus(); true`); await page.keyboard.press(' '); await page.waitForTimeout(400);
+      assert(await sheets() === 1, `${tag}: outside a fight Space on the focused Next up chip opens its list`);
+      assert(!errors.length, `${tag}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('space-reopens-next-up crashed: ' + (e.stack || e)); }
+
+// ==== online-off-clean (docs/design/hosting.md section 3, judge amendments 1 and 2): with no capability host there is no raid ====
+// The Netlify build has no `window.claude`, so the world raid, tavern presence and leaderboard cannot work there. Booted with no
+// `window.claude` on two saves past zone 12 (save-raid.json: raid history, with wyrms, raid damage, Embers and relics above 0; save-late.json)
+// and on save-early.json crossing zone 12 (the raid's unlock notice), every tab and view, every Deeds track group, the Codex pages, the
+// Journal, the notices and the away card show no raid words (word boundaries, so "afraid" passes) and no view bar holds Raid. The
+// unlock stays saved. Mutations, so the check cannot pass by hiding it everywhere: a fake `window.claude` with working stubs shows the
+// Raid view, its words and the Embers coin, and one whose user is signed out still shows the Raid view with today's words on how to join.
+if (section('online-off-clean')) try {
+  const at = 'online-off-clean', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const RE = /\b(raid|raids|raider|raiders|war horn|world boss|shared world|claude link)\b/i;
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const fx = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // host: 'none' (no window.claude), 'in' (signed in, working stubs), 'out' (the Artifact with nobody signed in: no user, so no db)
+    const run = async ({ file, host, w, h, cross, slow }) => {
+      const v = `${at} (${file}, ${host === 'none' ? 'no host' : host === 'in' ? 'host, signed in' : 'host, signed out'}, ${w}x${h})`, touch = w < 1000;
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true });
+      await ctx.addInitScript(({ raw, key, host, cross }) => {
+        const o = JSON.parse(raw); o.last = Date.now() - 3 * 3600e3; if (cross) { o.onboard.tips = true; } localStorage.setItem(key, JSON.stringify(o));
+        if (host === 'none') return;
+        const doc = { onSnapshot: f => { setTimeout(() => f({ exists: true, data: () => ({ gen: 9, name: 'Ashmaw', maxHp: 9e8, spawnedAt: 0 }) }), 10); return () => {}; },
+          set: async () => {}, get: async () => ({ exists: false }), acquire: async () => ({ acquired: false }) };
+        const caps = { db: { doc: () => doc, collection: () => ({ onSnapshot: f => { f({ docs: [] }); return () => {}; } }) },
+          user: host === 'in' ? { id: async () => 'u1', can: async () => true, profiles: async () => ({}) } : null,
+          room: { onPeers: () => {}, on: () => {}, presence: async () => {}, emit: async () => {} } };
+        window.claude = { use: async n => caps[n] || null };
+      }, { raw: fx(file), key: KEY, host, cross });
+      if (slow) await ctx.addInitScript(() => { const c = window.claude, use = c.use; c.use = n => new Promise(r => setTimeout(r, 1500)).then(() => use(n)); });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const segNow = () => X(`JSON.stringify([...document.querySelectorAll('#viewSeg button')].filter(b => b.offsetParent).map(b => b.dataset.view))`).then(JSON.parse);
+      let during = null, after = null;
+      const shut = `document.querySelectorAll('.bsheet-ov').forEach(o => o.sheetApi && o.sheetApi.close(true, true)); true`;
+      if (slow) { await page.waitForTimeout(300); await X(`setTab('camp'); true`); await page.waitForTimeout(150); during = await segNow(); await page.waitForTimeout(2200); after = await segNow(); await X(shut); }
+      await page.waitForTimeout(1200);
+      const hits = new Map(), bars = [];
+      const scan = async where => { for (const l of (await page.evaluate(() => document.body.innerText)).split('\n')) if (RE.test(l) && !hits.has(l.trim())) hits.set(l.trim(), where); };
+      const away = await X(`!!document.querySelector('.away-ov')`);
+      await scan('the away card');
+      await X(`(() => { const b = [...document.querySelectorAll('.away-ov button')].find(b => /Got it|Collect|Continue|Close/i.test(b.textContent)); if (b) b.click(); return true; })()`);
+      await page.waitForTimeout(300);
+      if (cross) { await X('S.maxZone = Math.max(S.maxZone, 12); true'); await page.waitForTimeout(2500); }
+      for (const t of ['adv', 'party', 'gat', 'forge', 'world', 'deeds']) {
+        const views = JSON.parse(await X(`JSON.stringify(shownViews(${JSON.stringify(t)}).map(v => v.id))`)); bars.push(...views);
+        for (const id of views) {
+          await X(`setTab(${JSON.stringify(id)}); true`); await page.waitForTimeout(200); await scan(`${t} > ${id}`);
+          const bar = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#viewSeg button')].filter(b => b.offsetParent).map(b => b.dataset.view))`));
+          if (bar.includes('raid')) hits.set(`Raid in the ${t} view bar`, `${t} > ${id}`);
+          // every Deeds track group (its chips) and every tab inside a view
+          const n = await X(`document.querySelectorAll('#panels .dd-chips button').length`);
+          for (let i = 0; i < n; i++) { await X(`(() => { const b = document.querySelectorAll('#panels .dd-chips button')[${i}]; if (b && b.offsetParent) b.click(); return true; })()`); await page.waitForTimeout(120); await scan(`${t} > ${id} > group ${i + 1}`); }
+          if (id === 'ach-feats') { await X(`(() => { const b = [...document.querySelectorAll('#panels button')].find(b => /^Show \\d+ finished feat/.test(b.textContent)); if (b) b.click(); return true; })()`); await page.waitForTimeout(150); await scan(`${t} > ${id} > finished feats`); }
+        }
+      }
+      const pages = JSON.parse(await X(`JSON.stringify(codexPages().map(p => p.id))`));
+      for (const p of [null, ...pages]) { await X(shut); await X(`emit('codexOpen', ${JSON.stringify(p ? { page: p } : {})}); true`); await page.waitForTimeout(150); await scan('the Codex' + (p ? ' > ' + p : '')); }
+      // the Codex keeps every tile (its counts and seals are the save's), and an unfound raid unique's hint names no raid
+      const cxHints = JSON.parse(await X(`JSON.stringify(codexPage('uniques').tiles.filter(t => RAID_UNIQ.includes(t.key)).map(t => t.hint + ' ' + t.sub))`));
+      await X(shut); await X(`document.getElementById('nuChip').click(); true`); await page.waitForTimeout(250); await scan('Next Up');   // a followed raid track (the fixture follows Wyrmslayer)
+      await X(shut); await X('openNoticeLog(); true'); await page.waitForTimeout(250); await scan('notices');
+      await X(`(() => { const b = [...document.querySelectorAll('.bsheet button')].find(b => /^Journal$/.test(b.textContent.trim())); if (b) b.click(); return true; })()`); await page.waitForTimeout(400); await scan('the Journal');
+      await X(shut);
+      // near: Next Up's Deeds goal, read with the boss fight paused (the goal rests during one)
+      const st = JSON.parse(await X(`JSON.stringify({ coin: document.getElementById('embers').parentElement.offsetParent !== null, mode: [...document.querySelectorAll('#modeSeg button, [data-act="raid"]')].some(b => b.dataset.act === 'raid' && b.offsetParent),
+        got: isUnlocked('raid'), saved: S.onboard.got.raid != null, z: S.maxZone, wyrm: S.wyrms > 0 || S.raid.gen > 0,
+        stirs: Array.from({ length: 200 }, (_, i) => almanac.omenFor(deviceDay(Date.now()) + i).id).filter(id => id === 'wyrmStirs').length,
+        say: JSON.stringify(S.onboard.sayQ || []), near: (() => { const fb = fightBoss; fightBoss = false; try { return String(GOALS.find(g => g.id === 'deeds-near').label() || ''); } finally { fightBoss = fb; } })(), notes: notes.log.flatMap(n => [n.msg, ...(n.msgs || []), ...(n.list || []).map(l => (l && (l.txt || l.msg)) || String(l))]).filter(t => /World raid/.test(t)).length })`));
+      await ctx.close();
+      return { v, hits, bars, away, cxHints, st, errs, during, after };
+    };
+    try {
+      for (const [file, w, h, cross] of [['save-raid.json', 1280, 720], ['save-raid.json', 740, 360], ['save-raid.json', 360, 740], ['save-late.json', 1280, 720], ['save-early.json', 1280, 720, true]]) {
+        const r = await run({ file, host: 'none', w, h, cross });
+        const list = [...r.hits].map(([l, wh]) => `${wh}: "${l.slice(0, 90)}"`);
+        assert(!list.length && !r.bars.includes('raid'), `${r.v}: no raid words on any tab, view, Deeds group, Codex page, the Journal, the notices or the away card, and no Raid view (${r.bars.length} views opened, away card ${r.away ? 'shown' : 'not shown'})` + (list.length ? ': ' + list.slice(0, 6).join('; ') : ''));
+        assert(!RE.test(r.st.near), `${r.v}: Next Up's Deeds goal never names a raid track, followed or near ("${r.st.near}")`);
+        assert(!r.st.coin && !r.st.mode, `${r.v}: the Embers coin and a Raid mode button are not shown (coin ${r.st.coin}, button ${r.st.mode})`);
+        assert(r.st.got && r.st.saved && r.st.z >= 12, `${r.v}: the raid's unlock is still saved, so the save keeps the raid back in the Artifact (unlocked ${r.st.got}, saved ${r.st.saved}, zone ${r.st.z})`);
+        assert(!r.st.stirs && r.cxHints.every(t => !RE.test(t)), `${r.v}: no day of the next 200 is The Wyrm Stirs and the Codex's raid uniques name no raid (${r.st.stirs} days; ${JSON.stringify(r.cxHints.slice(0, 2))})`);
+        if (cross) assert(r.st.notes === 0 && !/raid/.test(r.st.say), `${r.v}: crossing zone 12 raises no raid notice and queues no raid line (${r.st.notes} notices, queue ${r.st.say})`);
+        assert(!r.errs.length, `${r.v}: no page errors` + (r.errs.length ? ': ' + r.errs[0] : ''));
+      }
+      // mutations: with a host the raid is all there, as today
+      const a = await run({ file: 'save-raid.json', host: 'in', w: 1280, h: 720 });
+      assert(a.bars.includes('raid') && [...a.hits.keys()].some(l => /^March to the raid$/i.test(l)) && a.st.coin && a.st.stirs > 0 && a.cxHints.some(t => RE.test(t)),
+        `${a.v} (mutation): the Raid view, its March button, the Embers coin, The Wyrm Stirs and the Codex's raid hints are all there (views ${a.bars.includes('raid')}, coin ${a.st.coin}, ${a.st.stirs} Wyrm days)`);
+      assert(RE.test(a.st.near), `${a.v} (mutation): Next Up's Deeds goal names the followed raid track ("${a.st.near}")`);
+      // the host check takes 1.5 s: the Camp bar holds no Raid while it runs, then gains it with no tab change (ui() rebuilds the bar)
+      const sl = await run({ file: 'save-raid.json', host: 'in', w: 740, h: 360, slow: true });
+      assert(sl.during && !sl.during.includes('raid') && sl.during.includes('camp') && sl.after.includes('raid'), `${sl.v} (mutation, slow host): no Raid view while the host check runs, then it joins the open bar (${JSON.stringify(sl.during)} then ${JSON.stringify(sl.after)})`);
+      const o = await run({ file: 'save-raid.json', host: 'out', w: 1280, h: 720 });
+      const words = [...o.hits.keys()];
+      assert(o.bars.includes('raid') && words.includes('The shared world is out of reach') && words.some(l => /opened from its Claude link while signed in/.test(l)),
+        `${o.v} (mutation): the Raid view stays, with today's words on how to join (${words.filter(l => /shared world|Claude link/i.test(l)).join(' | ').slice(0, 200)})`);
+      const c = await run({ file: 'save-early.json', host: 'in', w: 1280, h: 720, cross: true });
+      assert(c.st.got && (c.st.notes > 0 || /raid/.test(c.st.say)), `${c.v} (mutation): with a host, crossing zone 12 still announces the raid (${c.st.notes} notices, queue ${c.st.say})`);
+      assert(!a.errs.length && !o.errs.length && !c.errs.length, `${at} (mutations): no page errors` + ([...a.errs, ...o.errs, ...c.errs].length ? ': ' + [...a.errs, ...o.errs, ...c.errs][0] : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('online-off-clean crashed: ' + (e.stack || e)); }
+
+// ==== stage-no-swarm-shrink (hero size ruling 2026-10-09, docs/design/desktop-layout/hero-size/ruling.md "Build card implied"): a turn fight
+// stands one foe, so a swarm zone (9) and a boss whose kit calls adds (the Elder Cave Bat's Call the Colony) draw at the zone's normal
+// whole-step zoom: the same as zone 10, x2 at 1280x720 and x3 at 1920x1080. Mouse contexts, device pixel ratio 1, save-early.json.
+if (section('stage-no-swarm-shrink (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('stage-no-swarm-shrink (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')); save.last = Date.now();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, zm] of [[1280, 720, 2], [1920, 1080, 3]]) {
+        const tag = `${w}x${h}`, ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: false, hasTouch: false, reducedMotion: 'reduce' });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false); true`); await page.waitForTimeout(300);
+        const turn0 = await page.waitForFunction(() => window.__t.x('turnCombatOn()'), null, { timeout: 8000 }).then(() => true, () => false);
+        assert(turn0, `${tag}: the fight is a turn fight (${await X(`JSON.stringify([S.activity, target(), S.solo && S.solo.hero, partyCombatOn(), turnArenaOk(), TURN_TUNE.on, S.combat])`)})`);
+        const at = async src => { await X(src + '; true'); await page.waitForTimeout(700);
+          return X('(() => { const s = stageStats(); return { ZM: s.ZM, turn: turnCombatOn(), boss: !!fightBoss, foes: s.foes.filter(Boolean).length, kit: !!(mob && kitOf(mob) && kitOf(mob).mech.some(x => x.adds && x.adds[1] >= 3)) }; })()'); };
+        const z10 = await at('fightBoss = false; setZone(10)'), z9 = await at('fightBoss = false; setZone(9)'), b9 = await at('S.kills = ZONE_FIGHTS; fightBoss = false; challenge()');
+        assert(z10.ZM === zm && z9.ZM === z10.ZM && z9.turn && z9.foes === 1, `${tag}: swarm zone 9 draws at zone 10's zoom, x${zm} (zone 10 ${JSON.stringify(z10)}, zone 9 ${JSON.stringify(z9)})`);
+        assert(b9.boss && b9.kit && b9.turn && b9.foes === 1 && b9.ZM === zm, `${tag}: the zone 9 boss (its kit calls the colony; a turn fight stands it alone) draws at x${zm} (${JSON.stringify(b9)})`);
+        assert(!errs.length, `${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the real-time fight (turns off: the old rule, a swarm zone steps out by its type) keeps today's step at 1280x720
+      {
+        const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false, reducedMotion: 'reduce' });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage();
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); fightBoss = false; setZone(9); true`); await page.waitForTimeout(700);
+        const p9 = await X('(() => { const s = stageStats(); return { ZM: s.ZM, turn: turnCombatOn(), foes: s.foes.filter(Boolean).length }; })()');
+        assert(!p9.turn && p9.ZM === 1, `1280x720, real-time fight: zone 9 keeps today's swarm step, x1 (${JSON.stringify(p9)})`);
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('stage-no-swarm-shrink crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

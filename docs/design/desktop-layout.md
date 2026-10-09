@@ -224,6 +224,25 @@ Other "Tap" and "Hold" lines (about 66, 14 of them in `75-onboard-ui.js`) wait f
 
 Deferring tooltips and the upright tablet departs from the approved plan; Cal can undo it with "Tooltips and tablet in v1".
 
+## Hero size ruling (hero-screen-size-ruling, Opus art judge, 2026-10-09)
+
+Cal asked whether the heroes could be bigger now the game is browser-first. Mockups of three integer zooms at five screen
+sizes, a red team and the art judge's ruling are in [desktop-layout/hero-size/](desktop-layout/hero-size/)
+([options](desktop-layout/hero-size/options.md), [red team](desktop-layout/hero-size/redteam.md),
+[ruling](desktop-layout/hero-size/ruling.md)).
+
+- **Keep the zoom floor:** x2 at 1280x720, x3 at 1920x1080, x1 on 740x360 (`LAND_ZOOMS`, `LAND_MIN_W`, `LAND_MIN_H` in
+  `62-stage.js` unchanged).
+- **Stop the swarm shrink** (build card `stage-no-swarm-shrink`): in turn fights the stage no longer zooms out for swarm
+  zones (2, 9, 16, 23, 30) or bosses with 3+ adds. Today zone 9 at 1280x720 draws the hero at 101 px (x1) beside one foe.
+- **Turned down:** x3 at 1280x720 (the boss's crown sits 98 px under the turn banner and the sword cuts through the boss;
+  1366x640 would stay x2), x4 at 1920x1080 (a maximized 1080p window, 1920x950, stays x3; in full screen foes crowd and
+  code-drawn foes show as 8 px blocks), a zoom that changes fight by fight, and a full-screen mode as a size lever.
+- **Bigger on big screens** comes with finer art (art-scale-ruling, on Codex's sample): 192 px art at x2 on 1920x1080 is
+  384 px and finer, and at x1 on 1280x720 it is today's size.
+- **The freeze:** changing the stage zoom is layout, not retuning art; whole steps only.
+- Veto phrases: "x4 on big screens", "Keep the swarm zoom".
+
 ## What stays the same
 
 - **740x360, 360x740 and 1024x768:** every computed size, every layout, every string except the "Confirm" labels. The

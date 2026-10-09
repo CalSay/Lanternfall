@@ -1,0 +1,1 @@
+Outside Claude (the Netlify build) the game no longer shows the world raid, the tavern's guest list and hall, or the Embers coin, since none of them can work there. Raid deeds, stats and uniques are left out of the lists too. Inside the Claude Artifact nothing changes, and your raid progress stays in your save. (no shot)

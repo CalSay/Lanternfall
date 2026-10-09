@@ -424,7 +424,11 @@ var forgeGoalPicks = 0;
     label: () => { const b = forgeNext(); if (!b) return '';
       // tier-two-named-for-return: a gate row names the piece and its furthest gate, not a boss (it is often a later sitting's piece); a
       // gathering gate says the skill rises while you're away ("Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away.")
-      if (b.gate) return `${kindName(b.kind, b.t)}: ${SKILL[b.gate.skill]} ${b.gate.lv} of ${b.gate.need}` + (b.gate.station ? '' : (b.gate.mat ? ` opens ${b.gate.mat}` : '') + '. Gathering keeps going while you\'re away.');
+      // away-line-only-when-true: only while the hero gathers that skill (awayBase raises nothing else away); else how to make it true
+      if (b.gate) { const sk = SKILL[b.gate.skill], dw = typeof DW === 'object' && DW && DW.run(),
+          on = (dw && !dw.paused ? dw.act : S.activity) === 'gather' && skillOf(S.node.kind) === b.gate.skill;   // a live Deepwell run holds the activity away resumes (57d awayBegin)
+        return `${kindName(b.kind, b.t)}: ${sk} ${b.gate.lv} of ${b.gate.need}` + (b.gate.station ? '' : (b.gate.mat ? ` opens ${b.gate.mat}` : '') +
+          (on ? '. Gathering keeps going while you\'re away.' : `. Gather ${sk} before you leave and it keeps going.`)); }
       const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;

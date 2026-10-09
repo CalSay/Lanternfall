@@ -26,6 +26,10 @@ let deedsUI = null;
   const TR = {}; for (const t of DEED_TRACKS) TR[t.id] = t;
   const GR = {}; for (const g of DEED_GROUPS) GR[g.id] = g;
   const FE = {}; for (const f of DEED_FEATS) FE[f.id] = f;
+  // online-off-clean: with no capability host (onlineOff, 70-ui.js) the raid's group and tracks, Wyrmfall and Shoulder to Shoulder are left
+  // out of these lists; what was earned stays earned, and in the points
+  const RAID_DEED = new Set(['raid', 'f_raid', 's_crowd', ...DEED_TRACKS.filter(t => t.g === 'raid').map(t => t.id)]);
+  const deedShown = x => !(x && RAID_DEED.has(x.id) && onlineOff());
   const LK = {}; for (const l of DEED_LOOKS) LK[l.id] = l;
   const RAR_COL = { common: 'var(--r-common)', uncommon: 'var(--r-uncommon)', rare: 'var(--r-rare)', epic: 'var(--r-epic)', legendary: 'var(--r-legendary)' };
 
@@ -175,8 +179,8 @@ let deedsUI = null;
       const t = Date.now(); if (!force && t - deedsAt < 1000) return; deedsAt = t;
       deeds.seen();
       const P = deeds.points(), nx = deeds.next(), prev = ladderPrev(), ttl = heroTitleTxt();
-      const fol = S.deeds.follow, fr = fol ? deeds.track(fol) : null;
-      const near = deeds.near(3), rec = deeds.recent(5);
+      const fol = S.deeds.follow, fr = fol && deedShown({ id: fol }) ? deeds.track(fol) : null;
+      const near = deeds.near(99).filter(deedShown).slice(0, 3), rec = deeds.recent(99).filter(deedShown).slice(0, 5);
       const sig = [P, nx && nx.at, ttl, S.name, fol, fr && fr.tier, fr && Math.floor(fr.pct * 200), near.map(x => x.id + Math.floor(x.pct * 200) + x.label).join(), rec.map(r => r.key).join(), S.deeds.nudge, Math.floor(t / 60000)].join('|');
       if (sig === deedsSig && !force) return; deedsSig = sig;
       putText(dv.name, S.name);
@@ -292,7 +296,7 @@ let deedsUI = null;
     },
     update(force) {
       const t = Date.now(); if (!force && t - tracksAt < 1000) return; tracksAt = t;
-      const groups = deeds.groups();
+      const groups = deeds.groups().filter(deedShown);
       if (!groups.some(g => g.id === curGroup)) curGroup = groups.length ? groups[0].id : null;
       // chips
       const csig = groups.map(g => g.id + g.atGold + '/' + g.atEver + '/' + g.tracks + g.lv).join() + '|' + curGroup;
@@ -408,7 +412,7 @@ let deedsUI = null;
     },
     update(force) {
       const t = Date.now(); if (!force && t - featsAt < 2000) return; featsAt = t;
-      const feats = deeds.feats(), secs = deeds.secrets(), wall = deeds.wall();
+      const feats = deeds.feats().filter(deedShown), secs = deeds.secrets().filter(deedShown), wall = deeds.wall();
       const sig = feats.map(f => f.id + (f.got ? 'g' : '') + Math.floor(f.pct * 200) + f.parts.map(p => p.have).join(':')).join() + '|' + secs.map(s => s.id + (s.got ? 1 : 0) + (s.riddle ? 1 : 0)).join() + '|' + wall.join() + '|' + S.deeds.wear.critter + S.deeds.wear.cape;
       if (sig === featsSig && !force) return; featsSig = sig;
       fv.grid.textContent = ''; fv.doneGrid.textContent = '';
