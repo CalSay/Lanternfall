@@ -17085,6 +17085,16 @@ function validateSave(data) {
       record(row, 'mastery.tricks.' + k);
       for (const [id, v] of Object.entries(row)) { if (!FOE_TRICK_ORDER.includes(id)) fail('mastery.tricks.' + k + '.' + id); int(v, 'mastery.tricks.' + k + '.' + id, 0, 1); }
     }
+    // trick-read-rate: the boss trick counts are { [zone]: { feint, feintPress, hold, holdPress, holdEarly } }, whole counts, a press never more than were seen
+    if (data.bossOdds && data.bossOdds.reads !== undefined) record(data.bossOdds.reads, 'bossOdds.reads');
+    if (data.bossOdds && data.bossOdds.reads) for (const [z, row] of Object.entries(data.bossOdds.reads)) {
+      const p = 'bossOdds.reads.' + z;
+      if (!/^[1-9][0-9]*$/.test(z) || +z > lim.progression) fail(p, 'is not a zone');
+      record(row, p);
+      for (const [k, v] of Object.entries(row)) { if (!BOSS_READ_KEYS.includes(k)) fail(p + '.' + k, 'is not supported by this version'); int(v, p + '.' + k); }
+      const n = k => row[k] || 0;
+      if (n('feintPress') > n('feint') || n('holdPress') > n('hold') || n('holdEarly') > n('holdPress')) fail(p, 'counts more presses than tricks');
+    }
     if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
     // C9: optional route maps are validated before storage or feature load; missing v5 maps use defaults.
     if (data.party && data.party.unlock !== undefined && !heroUnlockStateValid(data.party.unlock)) fail('party.unlock');
@@ -27230,7 +27240,8 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
 //   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill, fights })
 // Events: fightStart { heroHaste, foeHaste, first }, turn { who, n }, timingRing { id, i, n, opensAt, closesAt },
 //   timingGrade { id, i, grade }, foeMove { id, name, anim, hits }, parryWindow
-//   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res }, foeCharge { name }, chargeBroken { name },
+//   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res, fooled, flinch, hold, zone, zb,
+//   pressed, early } (trick-read-rate: zb a zone boss; pressed the player's own press; early a held swing pressed before it swung), foeCharge { name }, chargeBroken { name },
 //   foeSkip { why }, turnPhase { name }, fightEnd { reason }, ability { cls: 'solo', id, name, slot }, soloAttack, soloParry,
 //   soloDodge, soloCounter, heroRider { id, foe, key, stacks, boss } (an ordinary foe's or a boss's rider landed on the hero:
 //   chill, venom or weaken; foe-tricks-say-so), turnCard { who, again, secs, chill } (chill: Chill on the hero is why the foe goes
@@ -28091,6 +28102,7 @@ function turnHitStart(m, io) {
   const T = TURN_TUNE, hit = m.move.hits[m.hitI], wind = hit.wind > 0 ? hit.wind : T.foeWindup, hold = hit.hold > 0 ? hit.hold : 0;
   m.phase = 'foeWindup'; m.until = m.now + wind + hold;
   m.defense = ''; m.usedDefense = !!m.fooled; m.flinch = !!m.fooled; m.fooled = 0;   // a hero fooled by a feint is off balance: this hit cannot be defended
+  m.pressAt = -1;   // trick-read-rate: when the player pressed on this hit (59m counts a held swing pressed before it swung)
   const w = turnWindows(m);
   // a delayed hit (hold) winds up, stalls for `hold` s, then runs the last (dodge window + tell) s to the windows; a feint shows its
   // tell at the same point in its run, then fades. Before that point the bar of a trick looks like any other hit's.
@@ -28168,7 +28180,11 @@ function turnContact(m, io) {
     m.fin = { id: m.move.id, name: m.move.name, hit: m.move.hits.slice(0, m.hitI).filter(x => !x.feint).length, hits: turnRealHits(m.move), charged: !!m.move.charge, defended: !!m.usedDefense && !m.flinch };
     turnLand(m, io, hit); m.landed++;
   }
-  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res, fooled: !!m.fooled, flinch: !!m.flinch, hold: hit.hold > 0 });
+  // trick-read-rate: what the player did on this hit, for the read count in S.bossOdds.reads (59m): pressed (a press of their own,
+  // not the lost defence after a feint fooled them), early (a held swing pressed while it held: before the bar ran on)
+  const pressed = !!m.usedDefense && !m.flinch;
+  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res, fooled: !!m.fooled, flinch: !!m.flinch, hold: hit.hold > 0,
+    zone: m.p.zone, zb: !!m.p.zb, pressed, early: pressed && hit.hold > 0 && m.pressAt >= 0 && m.pressAt < m.holdTo });
   if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }   // a parried hit can strike back (the Stars' Holy Sparks)
   m.hitI++;
@@ -28255,7 +28271,7 @@ function turnResolve(m, cmd, dt, io) {
     return true;
   }
   if (m.phase === 'foeWindup' && !m.usedDefense && (cmd.kind === 'parry' || cmd.kind === 'dodge')) {
-    m.usedDefense = true;
+    m.usedDefense = true; m.pressAt = m.now;
     const w = turnWindows(m), left = m.until - m.now;
     let ok = left >= 0 && left <= (cmd.kind === 'parry' ? w.parry : w.dodge);
     if (cmd.kind === 'dodge' && !ok && m.h.shadow > 0 && left >= 0) { ok = true; m.shadowUsed = 1; }   // Shadow Step: it cannot fail
@@ -28619,12 +28635,16 @@ function zoneFoeCycle(Z) {
 //   BOSS_ODDS (the tune table), bossOddsOn(), bossOddsSkill(), bossOdds(o) -> { win, n, zone } | null,
 //   bossOddsFoe(z) (the scratch boss), bossOddsReset()
 //   bossOdds({ skill, sync }): skill overrides the blend (tools), sync runs every chunk now (tools and checks).
-// Save field: S.bossOdds { hits, parry, dodge, rings, perfect, good } (decayed tallies; defaults only).
+// Save field: S.bossOdds { hits, parry, dodge, rings, perfect, good } (decayed tallies; defaults only), and
+//   S.bossOdds.reads { [zone]: { feint, feintPress, hold, holdPress, holdEarly } } (trick-read-rate: plain counts, never faded, of
+//   a zone boss's tricks in live fights: feints seen and pressed, held swings seen, pressed and pressed while they held. Nothing
+//   reads them in the game and the player never sees them; tools/walk.mjs and testers' saves read them for the read rate).
 const BOSS_ODDS = {
   fights: 30, chunk: 10, ready: 0.7, close: 0.35, w: 12, wr: 6, decay: 0.99, every: 0.4,
   prior: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }   // the sim's casual player (tools/sim.mjs)
 };
-registerState('bossOdds', { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 });
+registerState('bossOdds', { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0, reads: {} });
+const BOSS_READ_KEYS = ['feint', 'feintPress', 'hold', 'holdPress', 'holdEarly'];
 
 // the tally: live fights only (the scratch sampler's io.emit does nothing)
 {
@@ -28635,6 +28655,17 @@ registerState('bossOdds', { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, g
     if (!B || p.flinch || p.hold || (r !== 'parry' && r !== 'dodge' && r !== 'hit')) return;   // a held hit or the hit after a feint is a trick, not a plain defence (the sampler rolls tricks itself)   // 'miss': the foe missed from Blind, not the player's doing
     bump(B, ['hits', 'parry', 'dodge']);
     B.hits += 1; if (r === 'parry') B.parry += 1; else if (r === 'dodge') B.dodge += 1;
+  });
+  // trick-read-rate: a zone boss's feints and held swings (59k TURN_TUNE.tricks), by zone. A hit after a feint fooled the player
+  // (flinch) is not counted: no press could be made on it
+  on('foeContact', p => {
+    const B = S && S.bossOdds; if (!B || !p || !p.zb || p.flinch || !(p.res === 'feint' || p.hold)) return;
+    const z = Math.floor(+p.zone); if (!(z >= 1)) return;
+    if (!B.reads || typeof B.reads !== 'object' || Array.isArray(B.reads)) B.reads = {};
+    const row = B.reads[z] && typeof B.reads[z] === 'object' && !Array.isArray(B.reads[z]) ? B.reads[z] : (B.reads[z] = {});
+    for (const k of BOSS_READ_KEYS) if (!(Number.isInteger(row[k]) && row[k] >= 0)) row[k] = 0;
+    if (p.res === 'feint') { row.feint++; if (p.pressed) row.feintPress++; }
+    else { row.hold++; if (p.pressed) row.holdPress++; if (p.early) row.holdEarly++; }
   });
   on('timingGrade', p => {
     const B = S && S.bossOdds; if (!B || !p) return;

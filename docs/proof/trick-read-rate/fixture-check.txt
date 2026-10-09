@@ -1,0 +1,22 @@
+  ok   trick reads: an ordinary foe's fight adds no read counts ({})
+  trick reads: zone 10 Champion fixture fight (The Hollow Cantor): feints 16 (pressed 8), held swings 28 (pressed 20, 10 while it held)
+  ok   trick reads: the fixture fight meets the zone 10 Champion's feints and held swings ({"feint":16,"feintPress":8,"hold":28,"holdPress":20,"holdEarly":10}, boss true)
+  ok   trick reads: the counts match what the player pressed (want {"feint":16,"feintPress":8,"hold":28,"holdPress":20,"holdEarly":10}, got {"feint":16,"feintPress":8,"hold":28,"holdPress":20,"holdEarly":10})
+  ok   trick reads: the counts sit under the boss's zone
+  ok   trick reads: the plain tallies still count the real hits (62.65)
+  ok   trick reads: a scratch sample of the zone 10 boss adds no counts
+  ok   trick reads: a save code keeps the counts ({"10":{"feint":16,"feintPress":8,"hold":28,"holdPress":20,"holdEarly":10}})
+  ok   trick reads: a save code with more presses than feints is refused ({"10":{"feint":2,"feintPress":3}})
+  ok   trick reads: a save code with more early presses than presses is refused ({"10":{"hold":4,"holdPress":2,"holdEarly":3}})
+  ok   trick reads: a save code with a part count is refused ({"10":{"feint":1.5}})
+  ok   trick reads: a save code with a count below 0 is refused ({"10":{"feint":-1}})
+  ok   trick reads: a save code with an unknown count is refused ({"10":{"guess":1}})
+  ok   trick reads: a save code with a key that is not a zone is refused ({"x":{"feint":1}})
+  ok   trick reads: a save code with a row that is not a record is refused ({"10":3})
+  ok   trick reads: a save code with counts that are not a record is refused (5)
+  ok   trick reads: the early fixture loads with no counts
+  ok   trick reads: the mid fixture loads with no counts
+  ok   trick reads: the late fixture loads with no counts
+  ok   trick reads: a save with the old boss odds record keeps its tallies and gains the empty counts
+  ok   trick reads: no page file reads the counts ()
+  ok   trick reads: no core errors

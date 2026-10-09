@@ -12,6 +12,9 @@
 //   --clock-budget <n>  clock minutes the walk may take (default 30). If the game minutes would not fit it plays on until the
 //                       budget is spent, writes the minute reached as the stop, and saves its save as snapshot-min<N>.json.
 //   --parry <p>  --dodge <p>    the bot's skill: the share of foe hits it parries, and of the rest it dodges (default 0.55, 0.5)
+//   --read <p>          how often the bot reads a boss trick it meant to defend (a feint: it holds; a held swing: it waits for the
+//                       swing), 0 to 1 (default 0.77, the sampler's bot). A misread feint is pressed; a misread held swing is pressed
+//                       as it starts to hold. The report says what the bot read and what the game counted (S.bossOdds.reads).
 //   --out <dir>         where the report, json, shots and snapshot go (default tools/.walk)    --date <YYYY-MM-DD>   the report's name
 //   --scorecard <file>  add this run's F1-F6, F10 and P4 line to that scorecard (created when missing)
 //   --reports <dir>     also copy walk-<date>.md/.json (and the shots) there, e.g. autopilot/reports
@@ -55,12 +58,13 @@ import { view, contextOptions, VIEW_HELP } from './lib/views.mjs';
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-{ const known = ['snapshot', 'seed', 'hero', 'size', 'minutes', 'html', 'clock-budget', 'parry', 'dodge', 'out', 'date', 'scorecard', 'reports', 'strict', 'quiet'],
+{ const known = ['snapshot', 'seed', 'hero', 'size', 'minutes', 'html', 'clock-budget', 'parry', 'dodge', 'read', 'out', 'date', 'scorecard', 'reports', 'strict', 'quiet'],
     bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('walk: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 const num = (n, d) => { const v = Number(opt(n, d)); if (!Number.isFinite(v) || v < 0) { console.error(`walk: --${n} needs a number of zero or more`); process.exit(2); } return v; };
 const SEED = num('seed', 1) | 0 || 1, MINUTES = num('minutes', 60), BUDGET_MS = num('clock-budget', 30) * 60e3;
-const PARRY = num('parry', 0.55), DODGE = num('dodge', 0.5), READ = num('read', 0.77);   // READ: how often the bot reads a boss trick (a feint, or a held swing); 0.77 is the sampler's bot (0.3 + 0.6 x its 77.5% avoidance)
+const PARRY = num('parry', 0.55), DODGE = num('dodge', 0.5), READ = num('read', 0.77);
+if (READ > 1) { console.error('walk: --read is a share from 0 to 1'); process.exit(2); }   // READ: how often the bot reads a boss trick (a feint, or a held swing); 0.77 is the sampler's bot (0.3 + 0.6 x its 77.5% avoidance)
 const HEROES = ['wren', 'tobin', 'pip'], HERO = opt('hero', HEROES[(SEED - 1) % 3]);
 if (!HEROES.includes(HERO)) { console.error('walk: --hero is wren, tobin or pip'); process.exit(2); }
 const SIZE = view(opt('size', 'desktop'));
@@ -298,7 +302,9 @@ async function fight(o) {
     if (key !== st.defKey) {
       st.defKey = key; const r = rnd(); st.defDo = r < PARRY ? 'parry' : rnd() < DODGE ? 'dodge' : ''; st.defAt = 0.35 + 0.4 * rnd(); st.defEarly = false;
       // a boss trick (59k TURN_TUNE.tricks): a bot that means to defend reads it with chance READ; else a feint fools it and a held swing meets its press too early
-      if (st.defDo && (q.feint || q.hf > 0)) { if (rnd() >= READ) st.defEarly = true; else if (q.feint) st.defDo = ''; }
+      if (st.defDo && (q.feint || q.hf > 0)) { const kd = q.feint ? 'feint' : 'hold', T = st.tricks[kd]; T.meant++;
+        if (rnd() >= READ) st.defEarly = true; else { T.read++; if (q.feint) st.defDo = ''; } }
+      else if (q.feint || q.hf > 0) st.tricks[q.feint ? 'feint' : 'hold'].let++;   // a trick it never meant to defend: nothing to read
     }
     if (!st.defDo) return false;
     if (st.defEarly) { if (q.now >= (q.hf || 0)) { const b = st.defDo === 'parry' ? '#soloBar .sb-parry' : '#soloBar .sb-dodge'; st.defDo = ''; return await click(b, 200); } return false; }
@@ -397,6 +403,7 @@ async function dismissCards(o) {
   return false;
 }
 st.grades = {};   // walk-bot-keeps-fighting: the timed rings the game graded, by grade (timingGrade events)
+st.tricks = { feint: { meant: 0, read: 0, let: 0 }, hold: { meant: 0, read: 0, let: 0 } };   // trick-read-rate: the boss tricks the bot met, by what it did
 st.normalLosses = [];   // wren-z9-10-foes: each ordinary-foe loss (a 'wipe' with no boss and no arena) { t, zone }
 st.stayed = []; st.losses = []; st.beatenAt = [];   // walk-bot-keeps-fighting: each Keep fighting here press and each lost boss try { t, zone, kills }
 st.lastCard = -9; st.tabAt = -9; st.phAt = 0; st.phName = ''; st.phStart = 0; st.tipFirst = 0; st.firstPress = null;
@@ -883,7 +890,7 @@ async function run() {
     stop = `the browser closed at game minute ${(gt / 60).toFixed(1)} (${String(e.message).split('\n')[0].slice(0, 80)}); this is a tool fault, not a game error`;
   }
   if (!stop && gt < END) stop = 'ended early';
-  st.odds = await X('Object.assign({}, S.bossOdds)').catch(() => null);   // the boss odds record the game keeps of the bot's defence and rings
+  st.odds = await X('JSON.parse(JSON.stringify(S.bossOdds))').catch(() => null);   // the boss odds record the game keeps of the bot's defence and rings
   const snap = await page.evaluate(k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, KEY).catch(() => null);
   await ctx.close().catch(() => {}); await browser.close().catch(() => {});
   return { stop, errs, snap, clockMs: Date.now() - t0 };
@@ -1075,6 +1082,12 @@ function report(res) {
     return `zone ${p.zone} at ${fmtT(p.t)}: +${end.kills - p.kills} kills ${nx && !up ? 'to the next lost try' : up ? 'to zone ' + (p.zone + 1) : 'to the end'}`; }).join('; ') + '.' : 'Keep fighting here by the two-loss rule: never needed (no boss beat the bot twice in a row).', '');
   { const g = st.grades, n = (g.perfect || 0) + (g.good || 0) + (g.miss || 0), B = st.odds, r1 = v => Math.round((+v || 0) * 10) / 10;
     out.push(`Timed rings graded: ${n} (Perfect ${g.perfect || 0}, Good ${g.good || 0}, Miss ${g.miss || 0}; the bot aims for Good at its parry rate ${PARRY}). ` + (B ? `Boss odds record at the end (S.bossOdds, decayed tallies): hits ${r1(B.hits)}, parry ${r1(B.parry)}, dodge ${r1(B.dodge)}, rings ${r1(B.rings)}, Good ${r1(B.good)}, Perfect ${r1(B.perfect)}.` : 'Boss odds record: not read.'), ''); }
+  // trick-read-rate: what the bot read (its own roll, against --read) and what the game counted of a zone boss's tricks (S.bossOdds.reads)
+  { const T = st.tricks, m = T.feint.meant + T.hold.meant, r = T.feint.read + T.hold.read, pc = (a, b) => (b ? Math.round(100 * a / b) + '%' : 'n/a');
+    const R = (st.odds && st.odds.reads) || {}, zs = Object.keys(R).sort((a, b) => a - b), sum = k => zs.reduce((n, z) => n + (R[z][k] || 0), 0);
+    out.push(`Boss tricks read: the bot meant to defend ${m} trick${m === 1 ? '' : 's'} and read ${r} (${pc(r, m)}; --read ${READ}): feints ${T.feint.read} of ${T.feint.meant}, held swings ${T.hold.read} of ${T.hold.meant}; ${T.feint.let + T.hold.let} more it never meant to defend. ` +
+      (zs.length ? `The game counted (S.bossOdds.reads): feints ${sum('feint')}, pressed ${sum('feintPress')}; held swings ${sum('hold')}, pressed ${sum('holdPress')}, ${sum('holdEarly')} while they held (` + zs.map(z => `zone ${z}: ${R[z].feint || 0} feints, ${R[z].feintPress || 0} pressed; ${R[z].hold || 0} held swings, ${R[z].holdPress || 0} pressed, ${R[z].holdEarly || 0} while they held`).join('; ') + '). ' +
+        `Read from the game's counts: ${pc(m - sum('feintPress') - sum('holdEarly'), m)} of the tricks the bot meant to defend (the bot's own count; a trick cut off by leaving the fight counts there but not in the game).` : 'The game counted no zone boss tricks.'), ''); }
   // next-tier-gate-goal: the gate rows the bot pressed, and the minute Next Up first offered an open tier 2 craft
   { const G = st.gate, ends = log.filter(e => e.kind === 'gate' && e.end);
     out.push(`Next Up tier gates: ${G.pressed.length} gate row${G.pressed.length === 1 ? '' : 's'} pressed${G.pressed.length ? ' (' + G.pressed.map(p => `"${p.label}" at ${fmtT(p.t)}`).join(', ') + ')' : ''}; ${G.crafts} tier 1 craft${G.crafts === 1 ? '' : 's'} made for a station gate${ends.length ? '; ' + ends.map(e => `${e.end} at ${fmtT(e.t)}`).join(', ') : ''}. First tier 2 craft goal: ${G.firstT2 === null ? 'not seen in ' + fmtT(reached) : fmtT(G.firstT2)}.`, ''); }
@@ -1159,7 +1172,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const base = path.join(OUT, `walk-${DATE}`);
 fs.writeFileSync(base + '.md', rep.md);
 fs.writeFileSync(base + '.json', JSON.stringify({ date: DATE, build: sha(), seed: SEED, hero: HERO, size: SIZE.id, gameSeconds: Math.round(gt), clockSeconds: Math.round(res.clockMs / 1000), stop: res.stop,
-  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, bossTries: { stayed: st.stayed, losses: st.losses, grades: st.grades, odds: st.odds }, normalLosses: st.normalLosses, checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
+  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, bossTries: { stayed: st.stayed, losses: st.losses, grades: st.grades, odds: st.odds, tricks: st.tricks, read: READ }, normalLosses: st.normalLosses, checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
 if (res.snap && (res.stop || flag('snapshot'))) fs.writeFileSync(path.join(OUT, `snapshot-min${Math.round(gt / 60)}.json`), res.snap);
 if (opt('scorecard', '')) writeScorecard(path.resolve(ROOT, opt('scorecard', '')), rep.sc, Math.round(gt));
 if (opt('reports', '')) {
