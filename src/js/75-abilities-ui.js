@@ -27,11 +27,13 @@ function fitTextWidths(list, min) {
     const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect().width > room + 0.01; });
   for (const e of over) fitTextWidth(e, min, true);
 }
-function fitTextWidth(e, min = 7, cleared = false) {
+// inside: fit the text inside the box's padding and borders (the turn line's framed chip, 75-turn-ui), not to the whole box
+function fitTextWidth(e, min = 7, cleared = false, inside = false) {
   if (!cleared && (e.style.fontSize || e.style.letterSpacing)) { e.style.fontSize = ''; e.style.letterSpacing = ''; }
-  const room = e.clientWidth && e.getBoundingClientRect().width; if (!room) return;
+  const cs = getComputedStyle(e), pad = inside ? ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((n, k) => n + (parseFloat(cs[k]) || 0), 0) : 0;
+  const room = e.clientWidth && e.getBoundingClientRect().width - pad; if (!room) return;
   const r = document.createRange(); r.selectNodeContents(e);
-  const need = () => r.getBoundingClientRect().width, cs = getComputedStyle(e);
+  const need = () => r.getBoundingClientRect().width;
   if (need() <= room + 0.01) return;
   min = Math.max(min, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0);
   for (let k = 0, n; k < 3 && (n = need()) > room + 0.01 && parseFloat(cs.fontSize) > min; k++)
