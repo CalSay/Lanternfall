@@ -998,8 +998,23 @@ let craftUI = null;
       costChips(chips, c.mats, it.t, c.gold);
       if (c.troph) chips.append(trophChip(c.troph));
       upBox.append(el('p', 'note cf-next', nextPlusTxt(it)), chips);   // craft-shortfall-offer: the main line's change, not a bare power number
-      { const sr = shortRow(c.mats, it.t, renderItem); if (sr) upBox.append(sr); }
       const f = K6.upgrade(), heroPos = wr && wr.who === 'hero' ? wr.pos : null;
+      {
+        let sr = shortRow(c.mats, it.t, renderItem);
+        // upgrade-gold-covers-short: gold may pay the material the piece is short, as the row's second button after the free
+        // refine order ("Upgrade: 340 + 270 gold for 3 Pine Planks"). Never on a craft, and only once the material is reachable.
+        const cv = f && typeof upgradeCover === 'function' ? safe(() => upgradeCover(it), null) : null;
+        if (cv) {
+          if (!sr) { sr = el('div', 'cf-src cf-short'); sr.append(el('span', null, `Short ${storeNum(cv.units)} ${midName(cv.fam, it.t, cv.units)}. `)); }
+          const g = el('button', 'mini cf-cover', `Upgrade: ${fmt(c.gold)} + ${fmt(cv.gold)} gold for ${storeNum(cv.units)} ${midName(cv.fam, it.t, cv.units)}`); g.type = 'button';
+          const can = safe(() => canUpgrade(it.id, undefined, { cover: true }), null);
+          g.disabled = !(can && can.ok);
+          if (can && !can.ok && can.why) g.title = can.why;
+          g.addEventListener('click', () => { const n0 = upCount(); if (act(() => f(it.id, undefined, { cover: true })) && n0 === 0 && upCount() === 1) emit('firstUse', 'upgrade'); renderItem(); });
+          sr.append(' ', g);
+        }
+        if (sr) upBox.append(sr);
+      }
       const okMats = hasMats(c.mats, it.t) && S.gold >= c.gold && (!c.troph || (f && trophTotal() >= c.troph));
       const b = el('button', 'big forge cf-act', `Upgrade to +${it.plus + 1}`); b.type = 'button';
       b.disabled = !okMats || (!f && !heroPos);
