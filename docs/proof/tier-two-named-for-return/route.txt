@@ -1,0 +1,25 @@
+# Proof for card tier-two-named-for-return (why W9): at the end of a first sitting, Next up names the nearest tier 2 piece and says
+# gathering keeps going while you're away.
+# The save: the seed 1 Wren walk at minute 60 (zone 21, Mining 7, Woodcutting 8, Tailoring 4, every tier 1 piece worn, no boss loss;
+# tests/proof-fixtures/save-min60-tier-gate.json).
+#   min60-next-up-*.png  Next up's list holds "Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away."
+#                        (before: the craft row named the Bristlehide Leathers' Tailoring gate and sat below the top 8).
+# The scoring, Tobin and Pip, a save before tier 1 is done, and the row fitting at 1280x720, 740x360 and 360x740 are held by
+# tools/check.mjs ("tier-two-named-for-return").
+# seed: 1
+new min60-tier-gate
+wait 3
+tap-if "Skip this story"
+tap-if "Collect"
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+expect ".nu-chip"
+tap "Next up"
+wait 1
+expect "Birch Bow: Mining 7 of 14 opens Iron Ore"
+expect "Gathering keeps going while you're away"
+expect-no "Leathers"
+shot min60-next-up
