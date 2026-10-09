@@ -75,9 +75,16 @@ heroes' scale, so if the heroes go finer, every foe still to come goes finer too
 
 The web page is one file with a 16 MB limit; today it is about 8.7 MB. The two foe packs already take about 1.6 MB of it
 (`21za-data-foeart.js`: Thorn Imp about 0.5 MB, Gloomjaw about 1.1 MB, as RGBA PNG atlases in base64). Chapter 1's 43 foes
-at today's scale would take over 30 MB, so the web page cannot hold the whole roster even now. At 2x each pack has about
-4x the pixels, so roughly 3 to 4x the bytes. The 7.3 MB still free holds about 9 foe packs at today's scale, but only 2
-or 3 at 2x. Heroes are cheap by comparison (all three are 180 KB today, so about 0.6 MB at 2x).
+at today's per-pack cost would not fit, so the web page cannot hold the whole roster even now. At 2x each pack has about
+4x the pixels, so roughly 3 to 4x the bytes. Heroes are cheap by comparison (all three are 180 KB today, so about 0.6 MB at 2x).
+
+The page-bytes ruling (Opus judge, 2026-10-09, `autopilot/rulings/2026-10-09-page-bytes.md`; Cal's veto: "lift the Codex
+byte rule") answers this with an export rule for new sprite packs: lossless WebP, at most 64 colours across a pack, alpha 0
+or 255 only, no soft edges or glows, held key poses instead of near-identical in-betweens, and ceilings in file bytes (a
+monster with its Captain 85 KB, an area's five monsters 425 KB, a Champion 120 KB, the Fenmother 200 KB, a hunting beast
+60 KB). **A finer scale must fit the same ceilings.** At today's scale the ceilings are already tight (a 64-colour Gloomjaw
+comes to about 91 KB, over 85 KB), so a 2x foe with 4x the pixels would have to cut frames hard to fit. Raster hero packs
+are not in that budget and need their own room.
 
 ### The pixel grid
 
@@ -105,7 +112,8 @@ Reasons:
 2. Codex time is the scarcest thing we have. A redraw takes about 9 to 18 h of drawing for the heroes and the two done
    foes, then about 20 to 60 h more across Chapter 1's roster, all behind Cal's hand-over. The same hours draw new zone
    monsters that replace the code-drawn slimes and bats, which is the bigger visible gain.
-3. The page holds about 9 more foe packs at today's scale, but only 2 or 3 at 2x.
+3. Foe packs must fit the page-bytes ceilings, which are already tight at today's scale; at 2x they would only fit by
+   cutting frames.
 4. 1.5x does not land on whole pixels at 1280x720.
 
 **What flips it to wire:** the Codex sample (section 4), shown in the game at 1280x720 and 1920x1080 beside today's Wren,
@@ -114,7 +122,8 @@ pixel grid, 1 px dark outline, flat shading clusters), and the 2x pixel grid is 
 - draw at **2x (192 px)**, never 1.5x;
 - heroes first, as whole packs behind the Classic art switch; foes from the C22 queue are drawn at 2x from then on; the
   Thorn Imp and Gloomjaw are redrawn last;
-- the 2x foe packs ship in the Steam build, and the web page keeps what fits in 16 MB (we need a byte plan first).
+- 2x foe packs must still meet the page-bytes ceilings (85 KB for a monster with its Captain), and hero packs need a
+  byte budget of their own first.
 
 **What makes it a re-brief:** the sample is better in some ways but breaks the style (soft edges, more than one outline
 weight, painterly shading), or only the 1.5x frame looks good.
@@ -149,7 +158,8 @@ Give Codex the quoted block as written; it is self-contained.
 > **Style (the same as today, only finer):** strict pixel art on a true grid; a clean 1-pixel dark outline at the new
 > scale (one art px, so it is thinner on screen than today's; never 2 px); flat shading clusters with 4 to 6 shades per
 > material, cooler shadows and warmer highlights; no noise, dithering, soft edges or anti-aliasing; binary alpha. Up to
-> 48 colours, built from `art/heroes/wren/palette.png` (new shades only between the existing ones). Use the extra pixels
+> 48 colours (the game's cap for sprite packs is 64), built from `art/heroes/wren/palette.png` (new shades only between
+> the existing ones). No glows or soft edges anywhere: every pixel is fully opaque or fully transparent. Use the extra pixels
 > for what reads better on a big screen: the face and eyes, the hands on the bow and string hand, the hood ears, the
 > cloak's wing edge, the gold trim. Do not add new costume pieces or change her proportions.
 >
@@ -159,10 +169,10 @@ Give Codex the quoted block as written; it is self-contained.
 > `codex/hero-animation-icons`, `art/concepts/hero-corrections-v1/wren.png` (face and costume only, not its painterly
 > rendering); the Thorn Imp and Gloomjaw packs for how a finished Codex sprite looks in this game.
 >
-> **Deliver** in `art/heroes/wren/scale-sample-v1/`: `full-draw-2x.png`, `full-draw-1_5x.png`, the palette as
-> `palette.png`, and a `README.md` that says how long it took, how you made it (tool, source image size, how you shrank and
-> cleaned it). Open a PR into `claude/elegant-johnson-m6k00u`. Do not change
-> any other file, and do not change the game.
+> **Deliver** in `art/heroes/wren/scale-sample-v1/`: `full-draw-2x.webp` and `full-draw-1_5x.webp` as lossless WebP
+> (the game's export format), a PNG copy of each for review, the palette as `palette.png`, and a `README.md` that says
+> how long it took, how you made it (tool, source image size, how you shrank and cleaned it) and each WebP's file size.
+> Open a PR into `claude/elegant-johnson-m6k00u`. Do not change any other file, and do not change the game.
 
 When it lands, a Claude thread puts the two frames into game shots beside today's Wren, scaled the way the game would draw
 them (nearest neighbour, nothing redrawn): the 2x frame at 1 CSS px per art px at 1280x720 and 1.5 at 1920x1080; the 1.5x
