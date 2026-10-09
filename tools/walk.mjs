@@ -171,7 +171,8 @@ const OBS = `(() => {
   o.cards = q('.mm-ov, .mm-toast, .bsheet-ov, .tv-card, .cb-banner, .tv-banner, .gl-card, .away-ov, .modal, .dd-feat, .feat-card', n => ({ cls: (n.className || '').toString().split(' ')[0], text: tx(n).slice(0, 160),
     head: n.classList.contains('mm-ov') ? tx(n.querySelector('.mm-head') || n) : undefined,
     age: n.classList.contains('mm-ov') && MOMENT_UI.ov === n ? (Date.now() - MOMENT_UI.shownAt) / 1000 : n._at ? (Date.now() - n._at) / 1000 : undefined,   // first-hour-walk-findings: how long the game has shown it
-    gave: n.classList.contains('mm-ov') ? [...n.querySelectorAll('.mm-list li')].map(tx).filter(Boolean).slice(0, 6) : undefined }));   // walk-f3-in-fights: what a big card says it gave (its lines; picks are offers, not gifts)
+    gave: n.classList.contains('mm-ov') ? [...n.querySelectorAll('.mm-list li')].map(tx).filter(Boolean).slice(0, 6) : undefined,   // walk-f3-in-fights: what a big card says it gave (its lines; picks are offers, not gifts)
+    scene: n.querySelector('.sty-scene') ? ('_walkScene' in n ? n._walkScene : (n._walkScene = window.__walkScene || (k => k.length === 1 ? k[0] : '')(Object.keys((S.story && S.story.open) || {})))) : undefined }));   // walk-story-sheet-key: the scene this story sheet opened for (each scene gets a new sheet), read once   // walk-f3-in-fights: what a big card says it gave (its lines; picks are offers, not gifts)
   o.tabs = q('.tabs .tab');
   o.intro = (n => n && vis(n) ? [n.querySelector('.intro-who'), n.querySelector('.intro-line')].filter(Boolean).map(tx).join(' ') : '')(document.querySelector('#introScreen'));   // the drawn opening: one line a tap
   o.create = !!document.querySelector('#createScreen') && vis(document.querySelector('#createScreen'));
@@ -187,7 +188,7 @@ const OBS = `(() => {
   } catch (e) { s = { err: String(e).slice(0, 80) }; }
   o.s = s;
   // craft-delta: the game's 'choice' and 'firstUse' events, kept in a page array the walk drains each frame (it never assigns to S)
-  if (!window.__walkEv) { window.__walkEv = []; try { on('choice', k => window.__walkEv.push(['choice', k])); on('firstUse', k => window.__walkEv.push(['firstUse', k])); on('starterJoin', e => window.__walkEv.push(['join', e && e.ids || []])); on('spoilsPick', e => window.__walkEv.push(['spoils', Object.assign({ hero: soloHero() }, e)])); on('timingGrade', e => window.__walkEv.push(['grade', e && e.grade]));
+  if (!window.__walkEv) { window.__walkEv = []; try { on('choice', k => window.__walkEv.push(['choice', k])); on('firstUse', k => window.__walkEv.push(['firstUse', k])); on('starterJoin', e => window.__walkEv.push(['join', e && e.ids || []])); on('spoilsPick', e => window.__walkEv.push(['spoils', Object.assign({ hero: soloHero() }, e)])); on('timingGrade', e => window.__walkEv.push(['grade', e && e.grade])); on('storyScene', sc => { if (sc && sc.kind === 'card') window.__walkScene = sc.id; });
     on('wipe', p => window.__walkEv.push(['wipe', { zone: p.zone, boss: p.boss, arena: p.arena, stall: p.stall }])); } catch (e) {} }   // wren-z9-10-foes: a copy (59-combat reuses WIPE_EV)
   o.ev = window.__walkEv.splice(0);
   return o;
@@ -356,11 +357,11 @@ async function pickHero() {
 async function dismissCards(o) {
   const seen = st.cardSeen, now = new Set();
   for (const c of o.cards) {
-    const sig = c.cls + '|' + c.text.slice(0, 50); now.add(sig);
+    const sig = c.cls + '|' + (c.scene ? c.scene + '|' : '') + c.text.slice(0, 50); now.add(sig);   // walk-story-sheet-key: a Champion's pre and post sheets share their first 50 letters at zones 10 and 15
     let r = seen.get(sig);
     if (/beat you/i.test(c.text) && !seen.has(sig)) { st.beaten = (st.beaten || 0) + 1; const bz = st.prev ? st.prev.zone : 0; st.tries = st.tries || {}; st.tries[bz] = (st.tries[bz] || 0) + 1; st.beatenAt.push({ t: gt, zone: bz }); if (c.cls === 'bsheet-ov') st.losses.push({ t: gt, zone: bz, kills: o.s.kills || 0 }); if (st.beaten === 5) addCheck('wall', 'the casual bot was beaten 5 times by one boss', c.text.slice(0, 80) + ' (parry rate ' + PARRY + ')'); }
     // a moment card or banner that came up while the bot was busy (a Next Up press, a menu) is dated from when the game showed it
-    if (!r) { r = { first: c.age >= 0 && c.age < 10 ? Math.round((gt - c.age) * 10) / 10 : gt, last: gt, cls: c.cls, text: c.text, n: 0, head: c.head, gave: c.gave }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls }, tag: 'card-' + c.cls }); }
+    if (!r) { r = { first: c.age >= 0 && c.age < 10 ? Math.round((gt - c.age) * 10) / 10 : gt, last: gt, cls: c.cls, text: c.text, n: 0, head: c.head, gave: c.gave, scene: c.scene || undefined }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls, scene: c.scene || undefined }, tag: 'card-' + c.cls }); }
     if (r.done && r.back === undefined && gt - r.first <= 8) r.back = gt;   // first-hour-walk-findings: back on screen after a cover (the turn banner hides the notices slot)
     r.last = gt;
   }
