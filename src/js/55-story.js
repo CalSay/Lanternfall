@@ -430,6 +430,9 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Fenmother")
     const r = regionOf(zone);
     if (mob.boss && zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
+    // zone10-clear-moment: a Champion's display name is its story name ("The Hollow Cantor"), the one its card uses, on a replay too
+    // (its type still sets its moves, Foe tab entry and kills)
+    else if (mob.boss) { const c = Object.values(D('champ')).find(v => v && v.zone === zone); if (c && c.name) mob.name = c.name; }
     spawned = { mob, zone };   // read next tick: an encounter card may set mob.encounter after this listener
     storySync(true);   // the walk-in scenes are due now: they open (and hold the game) before the first tick can fight
   });

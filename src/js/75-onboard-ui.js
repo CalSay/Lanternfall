@@ -375,7 +375,10 @@
   // would then show alone with the cache's card after it)
   const cardUp = () => { try { return !!q('.mm-ov') || MOMENT_Q.some(m => m.tier === 'big'); } catch (e) { return false; } };
   const cachePending_ = () => typeof cachePending === 'function' && cachePending();
-  const cardComing = () => cardUp() || cachePending_();
+  // zone10-clear-moment: a Champion's post scene waiting to play (storyBusy needs the scene id); it plays on a game tick, like the cache opens
+  const sceneComing = () => { try { return typeof storyBusy === 'function' && MOMENT_Q.some(m => m.kind === 'champion' && m.scene && storyBusy(m.scene)); } catch (e) { return false; } };
+  const tickOwed = () => cachePending_() || sceneComing();   // something only the game tick can finish: no hold may stop the tick now
+  const cardComing = () => cardUp() || tickOwed();
   function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
@@ -406,7 +409,8 @@
       else if (SAY_STILL[id] && !SAY_STILL[id]()) sayDone('say:' + id, false);
       else if (sayCur === id || !step || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && ONBOARD.paused))) {
         // the card first: he waits, and the gap after the kill waits with him (the card holds the game too), so after Continue he speaks before the next foe
-        if (!sayCur && cardComing()) { hide(); ONBOARD.paused = fightInView() && cardUp() && !cachePending_(); return; }
+        // zone10-clear-moment: a line already chosen (sayCur) waits too; it stays queued and speaks after the card
+        if (cardComing()) { hide(); ONBOARD.paused = fightInView() && cardUp() && !tickOwed(); return; }
         sayCur = id; step = sayStep(id);
       }
     }
@@ -454,7 +458,8 @@
     // and pauses nothing.
     const lost = table === STEP_UI && !use && !spec.noRing && !reachable(spec.node);
     if (lost) ring.hidden = true;
-    ONBOARD.paused = !lost && (onboardPaused(step) || gapHeld);
+    // zone10-clear-moment: never while the cache or a Champion's scene waits on the tick (a paused game skips tick, so the win froze)
+    ONBOARD.paused = !lost && (onboardPaused(step) || gapHeld) && !tickOwed();
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
