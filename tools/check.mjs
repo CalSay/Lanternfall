@@ -1219,6 +1219,24 @@ if (section('camp')) try {
   const r2 = JSON.parse(E('JSON.stringify(awayGains(48 * 3600))'));
   assert(r2.t === 24 * 3600 && r2.cap === 24 * 3600, `away cap never above 24h (Hourglass 5 + Watchtower 5 + another +7h: ${r2.t / 3600}h)`);
   E('S.camp.b.hearth = 0; S.camp.b.watch = 0; S.relic.glass = 0');
+  // first-night-covered (ruling 2026-10-08): the hero works 8 h away with no building; Watchtower and Hourglass +2 h a level, 24 h at most.
+  {
+    const n = loadCore({ seed: 11 }), N = s => n.eval(s);
+    N('S.maxZone = 10; S.camp.open = true; Object.assign(S.camp.b, { hearth: 2, store: 1, watch: 0 }); S.relic.glass = 0');
+    const away = h => JSON.parse(N(`JSON.stringify((({ t, cap, capped }) => ({ t, cap, capped }))(awayGains(${h} * 3600)))`));
+    const a8 = away(8), a12 = away(12);
+    assert(N('AWAY_BASE_H') === 8 && a8.t === 28800 && a8.cap === 28800 && !a8.capped, `first-hour save (Storehouse 1, no Watchtower): an 8 h night is credited in full (${a8.t} s, capped ${a8.capped})`);
+    assert(a12.t === 28800 && a12.capped, `the same save away 12 h: 8 h credited and the limit shows (${a12.t} s, capped ${a12.capped})`);
+    const capAt = (w, gl) => { N(`S.camp.b.hearth = 8; S.camp.b.watch = ${w}; S.relic.glass = ${gl}`); return away(30).t / 3600; };
+    const w4 = capAt(4, 0), w5 = capAt(5, 0), w5g5 = capAt(5, 5);
+    // the raid hit away keeps its old 4 h base (online layer out of scope): 8 h away deals what 4 h does
+    N('S.camp.b.watch = 0; S.relic.glass = 0; S.activity = "raid"');
+    const raidAway = h => { const d0 = +N('S.raid.dmg') || 0; N(`awayGains(${h} * 3600)`); return (+N('S.raid.dmg') || 0) - d0; };
+    const r4 = raidAway(4), r8 = raidAway(8), r3 = raidAway(3);
+    assert(r4 > 0 && Math.abs(r8 - r4) <= r4 * 1e-9 && r3 < r4, `an away raid hit still stops at 4 h with no building (3 h ${Math.round(r3)}, 4 h ${Math.round(r4)}, 8 h ${Math.round(r8)})`);
+    assert(w4 === 16 && w5 === 18 && w5g5 === 24, `Watchtower 4 credits 16 h, Watchtower 5 18 h, Watchtower 5 + Hourglass 5 24 h (${w4}, ${w5}, ${w5g5})`);
+    assert(!n.errors.length, 'away limit core: no errors ' + n.errors.slice(0, 2).join('; '));
+  }
   E('almanac.force("none")'); E('Object.assign(S.camp.b, { hearth: 0, forge: 1, bench: 1, loom: 1, ench: 1, library: 0, tavern: 1 })');
   const base = JSON.parse(E('JSON.stringify({ sx: mod("skillXp:smith"), sv: mod("salvage"), rf: mod("reforge"), ts: bonus("transmuteSave"), rw: mod("rareW"), off: mod("offline"), gx: mod("skillXp:mine"), cx: mod("xp"), bp: mod("bountyPay") })'));
   E('Object.assign(S.camp.b, { hearth: 10, forge: 5, bench: 5, loom: 5, ench: 5, library: 5, tavern: 4 })');
@@ -8423,7 +8441,7 @@ if (section('offline accounting and schedules (C14)')) try {
   for (const secs of AUDIT_SPANS) {
     const off = offlineRun(raw, secs), s = off.state, h = secs / 3600;
     const shifts = secs >= 30600 ? 2 : secs >= 14400 ? 1 : 0;
-    assert(off.report.t === Math.min(secs, 14400) && s.workerHours === shifts * 4 && s.workerUnits === shifts * 1698 && s.gathered === s.heroUnits,
+    assert(off.report.t === Math.min(secs, 28800) && s.workerHours === shifts * 4 && s.workerUnits === shifts * 1698 && s.gathered === s.heroUnits,
       `C14 ${h}h: hero work respects its cap; paid worker shifts follow their own schedule without adding hero Gathered units`);
     assert(s.trade.trips === +(secs >= 7200) && s.trade.gold === (secs >= 7200 ? 300 : 0), `C14 ${h}h: the reserved trade settles at its two-hour deadline exactly once`);
     assert(s.camp.bench === 2 && s.camp.forge === (secs >= 2400 ? 2 : 1) && s.builds.length === +(secs < 2400), `C14 ${h}h: both camp builds retain their ordered twenty-minute schedules`);
