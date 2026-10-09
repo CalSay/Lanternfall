@@ -296,6 +296,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A hover check waits for the tip box to open, not a fixed pause, and holds the game still while the mouse rests. Why: the tip's 120 ms timer fired after the check's 350 ms read on a busy CPU, and the live fight (a level, a Scroll or the power number changing) rebuilt the Abilities list under the mouse, so the row's tip never opened (ci-flakes-spend-hover, 2026-10-09).
 - In a size or measurement doc, paste every number from the final run of the script the doc cites, in the unit that script prints. Why: page-bytes-plan's first table came from a scratch run in KiB while the doc and `page-parts.mjs` say decimal MB, so 11 rows were 2.4% off until the reviewer re-ran it. (page-bytes-plan, 2026-10-09)
 - In a proof route.txt a `#` note goes on its own line: eyes reads a trailing `# ...` as part of the `expect` text and fails it. Why: a note after an edited expect failed the eyes job. (away-line-only-when-true, 2026-10-09)
+- When a game Go starts to switch the activity, check every bot that presses it: the walk's gate session only takes the hero back to the fight when it made the switch itself (`owns`), so a Go that switched for it left the bot gathering after every gate. Grep `followGo(` and `.go(` callers too (the defeat line's Go reuses Next Up's). Why: the reviewer of gate-go-starts-gathering (2026-10-09).
 
 ## Reviews and Codex
 

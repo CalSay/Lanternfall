@@ -1,0 +1,35 @@
+# Proof for card gate-go-starts-gathering: Go on a gathering gate row in Next up starts gathering that skill.
+# The save: the seed 1 Wren walk at minute 60 (tests/proof-fixtures/save-min60-tier-gate.json). The hero fights in zone 21 and Next up
+# holds "Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going."
+#   gate-go-before-*.png  the row as it reads while fighting
+#   gate-go-mining-*.png  right after its Go: the Mining view is open and the Copper Vein reads Working (the hero mines)
+#   gate-go-after-*.png   Next up again: the row now says "Gathering keeps going while you're away."
+# (before: Go opened the Mining view and the hero kept fighting, so leaving gained nothing.)
+# A station gate's Go (Craft at the Workbench, no switch), the skill row, a Deepwell run, a 1 h away run and the rows fitting at
+# 1280x720, 740x360 and 360x740 are held by tools/check.mjs ("gate-go-starts-gathering").
+# seed: 1
+new min60-tier-gate
+wait 3
+tap-if "Skip this story"
+tap-if "Collect"
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+expect ".nu-chip"
+tap "Next up"
+wait 1
+expect "Gather Mining before you leave and it keeps going"
+shot gate-go-before
+tap "Go: Birch Bow: Mining 7 of 14"
+wait 2
+expect "Mining Lv 7"
+expect "Working"
+expect-no "Gather Mining before you leave and it keeps going"
+shot gate-go-mining
+tap "Next up"
+wait 1
+expect "Birch Bow: Mining 7 of 14 opens Iron Ore"
+expect "Gathering keeps going while you're away"
+shot gate-go-after
