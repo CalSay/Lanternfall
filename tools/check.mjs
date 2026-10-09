@@ -16181,21 +16181,21 @@ if (section('ability-names-fit')) try {
 // ==== loadout-odds: Hero > Abilities says the zone boss odds of the three slotted moves, and Learn picks by them (W10) ====
 // save-pip-z10-ward: Pip at the zone 10 Champion on W10's arrival footing (level 15, tier 1 commons +0), Fireball / Spark / Kindle in the
 // slots (where Next Up leads), one Hollow Scroll that can teach Arcane Ward, Frost Shard or Ignite, no Parry or Dodge record (the casual
-// player). Node: the line's number for that set in W10's slot order is within 10 points of W10's measure (W10-data/abilities-pip.json,
-// z10-boss, Spark > Fireball > Kindle, casual 33%: copied here, the check cannot read the report). Her own order, Fireball first, wins
-// more (about 48% over 640 fights: W10's order search picked Spark first on 60 noisy fights), so the line shows 5. Learn names Arcane Ward first (learnPick and
+// player). Node: the line's number for her own slots (Fireball first) is within 10 points of W10's corrected figure for them: about 48%
+// (Foreman's correction of 9 Oct 16:58 to W10-2026-10-09.md; the first figure, 33%, was Spark first; copied here, the check cannot read
+// the report). Learn names Arcane Ward first (learnPick and
 // Next Up's row, which says the odds), and its spot is one move in and one out, never a new set. Browser, 1280x720 and 740x360 (360x740
 // must not break), with no Almanac day as in W10: the line shows under Q W E, its text fits its box, at or above the desktop floor (--tmin);
 // Arcane Ward's card says where Learn puts it; taking Fireball out of Q shows the new number and "was" the old one (upright, once its
 // sheet closes: the open sheet hides the line).
 if (section('loadout-odds')) try {
-  const at = 'loadout-odds', W10_SET = 0.33;
+  const at = 'loadout-odds', W10_SET = 0.48;
   const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-z10-ward.json'), 'utf8');
   const g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: raw }) }), J = x => JSON.parse(g.eval(`JSON.stringify(${x})`));
   const st = J(`({ hero: soloHero(), L: S.L, z: S.maxZone, eq: soloEquipped(), on: bossOddsOn() })`);
   assert(st.hero === 'pip' && st.z === 10 && st.on && st.eq.join() === 'fire,spark,kindle', `${at}: the fixture is Pip at zone 10 with Fireball, Spark, Kindle and a turn fight (${JSON.stringify(st)})`);
-  const base = J(`loadoutOdds([['spark', 'fire', 'kindle']], { sync: true })`);
-  assert(base && base.zone === 10 && Math.abs(base.wins[0] - W10_SET) <= 0.1, `${at}: Spark, Fireball, Kindle win ${base && Math.round(100 * base.wins[0])}% of zone 10 boss fights, within 10 points of W10's ${100 * W10_SET}%`);
+  const base = J(`loadoutOdds([soloEquipped()], { sync: true })`);
+  assert(base && base.zone === 10 && Math.abs(base.wins[0] - W10_SET) <= 0.1, `${at}: her slots (Fireball, Spark, Kindle) win ${base && Math.round(100 * base.wins[0])}% of zone 10 boss fights, within 10 points of W10's corrected ${100 * W10_SET}%`);
   const lo = J(`learnOdds('pip', true)`), pick = J(`learnPick('pip').id`), row = lo && lo.rows[0];
   assert(row && row.id === 'arcaneward' && pick === 'arcaneward' && lo.rows.length === 3, `${at}: Learn names Arcane Ward first (${lo && lo.rows.map(r => r.id + ' ' + Math.round(100 * r.win)).join(', ')})`);
   assert(row && row.lift && row.lift.after > row.lift.before && row.eq.filter(id => !st.eq.includes(id)).join() === 'arcaneward' && row.eq.filter(id => st.eq.includes(id)).length === 2,
