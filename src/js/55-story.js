@@ -84,6 +84,8 @@ const STORY_TUNE = { champMoment: true,   // champion-moment: a Champion's first
 let storyOn, storyPage, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
   storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey, storyBusy;
+// zone10-clear-moment: the story name of the Champion that holds zone z ("The Hollow Cantor"), or '' (the fight bar, the loss sheet and the boss odds' scratch boss use it)
+function champStoryName(z) { const C = (typeof STORY_BEATS === 'object' && STORY_BEATS && STORY_BEATS.champ) || {}; const c = Object.values(C).find(v => v && v.zone === z); return (c && c.name) || ''; }
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
   registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0, open: {} });
@@ -430,6 +432,9 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Fenmother")
     const r = regionOf(zone);
     if (mob.boss && zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
+    // zone10-clear-moment: a Champion's display name is its story name ("The Hollow Cantor"), the one its card uses, on a replay too
+    // (its type still sets its moves, Foe tab entry and kills)
+    else if (mob.boss && champStoryName(zone)) mob.name = champStoryName(zone);
     spawned = { mob, zone };   // read next tick: an encounter card may set mob.encounter after this listener
     storySync(true);   // the walk-in scenes are due now: they open (and hold the game) before the first tick can fight
   });
