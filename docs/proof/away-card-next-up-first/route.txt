@@ -1,0 +1,30 @@
+# Proof for card away-card-next-up-first: coming back, the away card shows what you got and what to do next on one screen.
+# Order: results, the work limit, Next up, then one folded "More (n)" row holding the camp, gatherer, Codex and other news.
+# The save: zone 13, Hearth 1, Storehouse Lv 1, no Watchtower (tests/proof-fixtures/save-tier-gate.json).
+#   next-up-first-*.png  back after 11 hours of gathering: Next up's first row shows above Collect without scrolling
+#                        (before: at 740x360 only the time and Materials showed above Collect; Next up was the 7th block).
+#   more-open-*.png      More opens the folded groups; every line is still there.
+# The mid fixture's 8 h return in all three views is held by tools/check.mjs ("C14 away card browser": away-card-next-up-first).
+# seed: 1
+new tier-gate
+wait 3
+tap-if "Skip this story"
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+tap "Gather: Foraging"
+wait 3
+tap-if "Got it"
+wait 1
+away 11
+wait 2
+expect ".away-nu .away-line"
+expect ".away-more"
+expect-no ".away-fold[open]"
+shot next-up-first
+tap "More ("
+wait 1
+expect ".away-fold[open] .away-block"
+shot more-open

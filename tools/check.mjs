@@ -8604,7 +8604,12 @@ if (section('C14 away card (browser)')) try {
         await page.waitForSelector('.away-ov[role="dialog"]');
         const title = (await page.locator('.away-ov').innerText()).toLowerCase();
         assert(title.includes('while you were away') && title.includes('30m') && title.includes('cinder road'), 'C14 browser: a fresh local game opens the away card with its time and hero summary (' + title.replace(/\n/g, ' | ') + ')');
-        assert(['gathering','gatherers','trade','camp','tavern','well rested'].every(g => title.includes(g)), 'C14 browser: the card displays the material explanation and each separate source group (' + title.replace(/\n/g, ' | ') + ')');
+        // away-card-next-up-first: the groups fold under one "More (n)" row; opening it shows every group (folded, never dropped)
+        const more0 = await page.locator('.away-ov .away-more').innerText();
+        await page.click('.away-ov .away-more'); await page.waitForTimeout(150);
+        const opened = (await page.locator('.away-ov').innerText()).toLowerCase();
+        assert(/^more \(6\)$/i.test(more0.trim()) && !['gatherers','trade','tavern','well rested'].some(g => title.includes(g)) && ['gathering','gatherers','trade','camp','tavern','well rested'].every(g => opened.includes(g)),
+          'C14 browser: the groups fold under "More (6)", and opening it displays the material explanation and each separate source group (' + more0 + ' | ' + opened.replace(/\n/g, ' | ') + ')');
         assert(await page.locator('.away-ov .away-go').innerText() === 'Collect' && await page.locator('.away-ov').getAttribute('aria-modal') === 'true', 'C14 browser: the card offers a modal Collect action');
         assert(!await page.locator('.toast, .toasts').getByText(/While you were away/).count(), 'C14 browser: the keyed report is shown as a card without a duplicate toast');
         assert(!errs.length, 'C14 browser: opening and reading the card raises no page errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
@@ -8648,7 +8653,54 @@ if (section('C14 away card (browser)')) try {
           assert(!/24 hours/.test(all), `away limit: the card never says "24 hours" (${all})`);
           await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true');
         }
+        // away-card-next-up-first (W8 card 3): results, the limit, Next up, then one folded "More (n)" row. Next up's first row shows
+        // above Collect without scrolling, a fold's Go only exists once More is open, and More counts every folded line.
+        {
+          await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.activity = 'gather';
+            showAwayReport({ secs: 11 * 3600, t: 8 * 3600, cap: 8 * 3600, capped: true, activity: 'gather', note: 'You gathered Oak.', empty: false, gold: 0, xp: 0, kills: 0,
+              mats: [{ k: 'wood', t: 3, n: 37000 }], items: [], skills: [{ k: 'wood', from: 30, to: 52 }], lines: [{ txt: 'Storehouse full: Oak', sub: 'Woodcutting XP still counted' }],
+              extra: [{ group: 'Codex', txt: 'Codex: +1 Lantern Light', go: () => {} }, { group: 'Gatherers', txt: 'Tam finished 1 shift: +754 Oak Log.', go: () => {} },
+                { group: 'Achievements', txt: 'Achievement points', sub: '+5 points.' }, { group: 'Next up', txt: 'Train Attack', sub: 'Ready now', go: () => {} },
+                { group: 'Next up', txt: 'Build the Watchtower', sub: '40% done', go: () => {} }, { group: 'Also', txt: 'Well Rested: 3 minutes spent.' }] }); true`);
+          await page.waitForSelector('.away-ov .away-nu');
+          const o = await X(`(() => { const q = s => document.querySelector('.away-ov ' + s), R = e => e && e.getBoundingClientRect();
+            const kids = [...q('.away-body').querySelectorAll('.away-tiles, .away-block, .away-limwrap, .away-fold')].map(e => e.matches('.away-nu') ? 'nu' : e.matches('.away-fold') ? 'more' : e.matches('.away-limwrap') ? 'lim' : e.matches('.away-fold .away-block') ? 'folded' : (e.querySelector('.away-h') || {}).textContent || 'tiles');
+            const row = R(q('.away-nu .away-line')), body = R(q('.away-body')), go = R(q('.away-go'));
+            return { kids, more: q('.away-more').textContent, open: q('.away-fold').open, foldGo: document.querySelectorAll('.away-fold .away-lgo').length,
+              shows: row.top >= body.top - 1 && row.bottom <= body.bottom + 1 && row.bottom <= go.top + 1 && q('.away-body').scrollTop === 0, row: [row.top, row.bottom], go: go.top, body: [body.top, body.bottom] }; })()`);
+          assert(o.kids.join(',') === 'Materials,Skills,lim,nu,more' && o.more === 'More (5)' && !o.open && !o.foldGo,
+            `away-card-next-up-first: the card reads results, limit, Next up, then a closed "More (5)" with no Go built inside it (${JSON.stringify(o)})`);
+          assert(o.shows, `away-card-next-up-first: at 740x360 the first Next up row shows above Collect without scrolling (${JSON.stringify(o)})`);
+          await page.click('.away-ov .away-more'); await page.waitForTimeout(200);
+          const op = await X(`[document.querySelector('.away-fold').open, [...document.querySelectorAll('.away-fold .away-h')].map(e => e.textContent).join(','), document.querySelectorAll('.away-fold .away-line').length, document.querySelectorAll('.away-fold .away-lgo').length]`);
+          assert(op[0] && op[1] === 'Codex,Gatherers,Achievements,Also,Gathering' && op[2] === 5 && op[3] === 2, `away-card-next-up-first: More opens every other group with its lines and Go buttons (${JSON.stringify(op)})`);
+          // keys: Tab from More skips a closed fold's Go buttons; Space on More opens it (the fight's Space dodge never takes it)
+          await page.click('.away-ov .away-more'); await page.focus('.away-ov .away-more'); await page.keyboard.press('Tab');
+          const tabTo = await X('document.activeElement.className');
+          await page.focus('.away-ov .away-more'); await page.keyboard.press(' '); await page.waitForTimeout(100);
+          const spaceOpen = await X("document.querySelector('.away-fold').open && !!document.querySelector('.away-ov')");
+          assert(/away-go/.test(tabTo) && spaceOpen, `away-card-next-up-first: Tab from a closed More goes to Collect, and Space opens More (${tabTo}, ${spaceOpen})`);
+          await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true');
+        }
       } finally { await ctx.close(); }
+      // ...and on the mid fixture's real 8 h return (fighting, as saved, and gathering), in all three views
+      const mid = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+      for (const [w, h] of [[740, 360], [1280, 720], [360, 740]]) for (const act of ['fight', 'gather']) {
+        const c2 = await browser.newContext({ viewport: { width: w, height: h }, ...(w === 1280 ? {} : { isMobile: true, hasTouch: true }) });
+        try {
+          await c2.addInitScript(([key, raw, act]) => { const o = JSON.parse(raw); o.last = Date.now() - 8 * 3600e3; o.activity = act; localStorage.setItem(key, JSON.stringify(o)); }, [KEY, mid, act]);
+          const p2 = await c2.newPage(), e2 = [];
+          p2.on('pageerror', e => e2.push(String(e)));
+          await p2.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await p2.goto('http://lf.test/');
+          await p2.waitForSelector('.away-ov .away-go', { timeout: 15000 }); await p2.waitForTimeout(500);
+          const m = await p2.evaluate(() => { const q = s => document.querySelector('.away-ov ' + s), R = e => e && e.getBoundingClientRect();
+            const row = R(q('.away-nu .away-line')), body = R(q('.away-body')), go = R(q('.away-go'));
+            return { time: (q('.away-time') || {}).textContent, more: (q('.away-more') || {}).textContent || '', row: row && [Math.round(row.top), Math.round(row.bottom)], go: Math.round(go.top),
+              shows: !!row && row.top >= body.top - 1 && row.bottom <= body.bottom + 1 && row.bottom <= go.top + 1 && q('.away-body').scrollTop === 0 }; });
+          assert(m.time === '8h' && m.shows && !e2.length, `away-card-next-up-first: the mid fixture's 8 h ${act} return at ${w}x${h} shows the first Next up row above Collect without scrolling (${JSON.stringify(m)}${e2.length ? ' ' + e2[0] : ''})`);
+        } finally { await c2.close(); }
+      }
     } finally { await browser.close(); }
   }
 } catch (e) { fail('C14 away card browser crashed: ' + (e.stack || e)); }
