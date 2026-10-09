@@ -263,6 +263,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - In a browser check that opens several contexts from one fixture, stamp the save's `last` in the init script (at page load), not once at the section's start. Why: the second size opened 40 s "later", the away card came up over the menu and every hover and click timed out (desktop-tooltips, 2026-10-09)
 
 - A browser check that bounds a text box's height must allow for the fonts the check runs with: the page's web fonts never load in checks, so text falls back to Inter locally and DejaVu Sans on CI, both wider than Barlow Semi Condensed. A 104-letter line was 93 px locally and 110 px on CI. Bound the box against its own text height, or use a short line. (menu-tip-room, 2026-10-09)
+- In a browser walk that drives the game clock itself, never `page.click` a guide button the guide can take down on its own (its 250 ms wall-clock pass hides a line for a card on its way, a result sheet, a finished build): Playwright then waits 30 s for a button that stays hidden until the walk ticks again. Wait for the line to be up and still or gone, then hit-test and press in one task (`pressHeld` in check.mjs, used by every guide walk). Why: the landscape guide walk crashed on a Got it timeout at all four sizes. (walk-740-guide-crash, 2026-10-09)
 
 ## Reviews and Codex
 
