@@ -73,7 +73,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'landscape 1920x1080 (browser, UX-L1)': 40, 'desktop layout (browser, desktop-layout-v1)': 30, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+const WEIGHT = { 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'landscape 1920x1080 (browser, UX-L1)': 40, 'desktop layout (browser, desktop-layout-v1)': 30, 'desktop tooltips (browser, desktop-tooltips)': 30, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -12343,6 +12343,102 @@ if (section('desktop layout (browser, desktop-layout-v1)')) try {
   }
 } catch (e) { fail('desktop layout (browser) crashed: ' + (e.stack || e)); }
 
+// ==== desktop-tooltips (docs/design/desktop-layout.md "Later: tooltips"; 70b-tips-ui.js): with a mouse, resting on an item, an ability
+// or a cost shows what it is and does. Every tip line is also on the view a click opens (never tip-only); touch never opens one; no tip
+// leaves the screen at 1280x720 or 1920x1080.
+if (section('desktop tooltips (browser, desktop-tooltips)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('desktop tooltips (browser): Playwright or Chromium not here, skipped');
+  else {
+    const h0 = fs.readFileSync(distFile, 'utf8'), end = h0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + h0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + h0.slice(end);
+    const save = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-current.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, touch = false) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
+      // the save's clock is the page's own load time: each context opens a while after the last, and a stale one opens the away card
+      await ctx.addInitScript(s => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } catch (e) {} }, save);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X('S.onboard.tips = false; for (const x of document.querySelectorAll(".bsheet-ov .bsheet-x")) x.click(); true');
+      return { ctx, page, errs, X };
+    };
+    const view = async (X, page, v) => {
+      await X(v ? `setTab(${JSON.stringify(v)}); ui(true); true` : 'closeMenu(); ui(true); true'); await menuSettled(page, !!v); await page.waitForTimeout(250);
+      await X('for (const x of document.querySelectorAll(".bsheet-ov:not(.docked) .bsheet-x")) x.click(); true'); await page.waitForTimeout(200);
+    };
+    const TIP = `(() => { const b = document.getElementById('tip'); if (!b || b.hidden) return null; const r = b.getBoundingClientRect();
+      return { lines: [...b.children].map(c => c.textContent), ok: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, box: [r.left, r.top, r.right, r.bottom].map(Math.round) }; })()`;
+    const hover = async (page, loc) => { await page.mouse.move(1, 1); await page.waitForTimeout(60); if (!(await loc.hover({ timeout: 5000 }).then(() => true, () => false))) return null; await page.waitForTimeout(350); return page.evaluate(s => window.__t.x(s), TIP); };
+    const norm = s => s.replace(/\s+/g, ' ');
+    try {
+      for (const [w, h] of [[1280, 720], [1920, 1080]]) {
+        const { ctx, page, errs, X } = await open(w, h);
+        assert(await X('TIP_DELAY <= 150'), `${w}x${h}: a tip opens within 150 ms of resting on its target`);
+        // the fight bar: an ability and Dodge (the bottom-right corner)
+        await view(X, page, '');
+        const ab = await hover(page, page.locator('#soloBar .sb-ab0'));
+        const abWant = await X('(a => a ? [a.name, a.turnDesc || a.desc] : null)(SOLO_ABILITIES[soloButtons().abs[0].id])');
+        assert(ab && ab.ok && abWant && ab.lines[0].startsWith(abWant[0] + ' (') && ab.lines[1] === abWant[1], `${w}x${h} fight: the Q slot's tip names its ability and says what it does, on screen (${JSON.stringify(ab)})`);
+        const dg = await hover(page, page.locator('#soloBar .sb-dodge'));
+        assert(dg && dg.ok && /^Dodge/.test(dg.lines[0]), `${w}x${h} fight: Dodge's tip (the bottom-right corner) stays on screen (${JSON.stringify(dg)})`);
+        // Hero > Gear: a worn item's tip; a click docks its sheet, the tip goes, and every tip line is on the sheet
+        await view(X, page, 'gear');
+        const worn = page.locator('#sec-craft-gear .cf-gs').first(), wt = await hover(page, worn);
+        assert(wt && wt.ok && wt.lines.some(l => /^Power /.test(l)) && wt.lines.some(l => /^You wear it/.test(l)), `${w}x${h} Gear: a worn item's tip gives its power and says you wear it (${JSON.stringify(wt)})`);
+        await worn.click(); await page.waitForTimeout(350);
+        const sh = await X('(() => { const s = document.querySelector(".bsheet-ov .bsheet"); return s ? s.innerText : ""; })()'), gone = await X(TIP);
+        const miss = wt ? wt.lines.filter(l => !norm(sh).includes(norm(l))) : ['no tip'];
+        assert(!gone && !miss.length, `${w}x${h} Gear: a click closes the tip and opens the item's sheet, which shows every tip line (missing: ${JSON.stringify(miss)})`);
+        await page.keyboard.press('Escape'); await page.waitForTimeout(250);
+        const bag = page.locator('.cf-bag .cf-tile').first();
+        if (await bag.count()) {
+          const bt = await hover(page, bag), nm = await bag.getAttribute('aria-label');
+          assert(bt && bt.ok && nm && nm.startsWith(bt.lines[0]), `${w}x${h} Gear: a bag tile's tip opens with the item's name, on screen (${JSON.stringify([bt, nm])})`);
+        }
+        // Hero > Abilities: a row's tip is its card's head and text
+        await view(X, page, 'abilities');
+        const row = page.locator('.ab-row:not(.ab-basic)').first(), rt = await hover(page, row);
+        await row.click(); await page.waitForTimeout(300);
+        const det = await X('(d => d ? d.innerText : "")(document.querySelector(".ab-det"))'), rmiss = rt ? rt.lines.filter(l => !norm(det).includes(norm(l))) : ['no tip'];
+        assert(rt && rt.ok && rt.lines.length >= 3 && !rmiss.length, `${w}x${h} Abilities: a row's tip is on screen and every line is on the card a click opens (${JSON.stringify([rt, rmiss])})`);
+        // Craft > Make: a cost chip's tip names it in full with what you have and what it needs
+        await view(X, page, 'make');
+        const chip = page.locator('.cf-rec .cost').first(), ct = await hover(page, chip), ctx2 = await chip.innerText();
+        assert(ct && ct.ok && ct.lines.length === 2 && ctx2.includes(ct.lines[0]) && /^You have [\d.,KMB]+\. It needs [\d.,KMB]+\.$/.test(ct.lines[1]), `${w}x${h} Make: a cost chip's tip names it and gives have and need (${JSON.stringify([ct, ctx2])})`);
+        // no tip leaves the screen: every target in view in the fight, Gear, Abilities and Make
+        const out = []; let seen = 0;
+        for (const v of ['', 'gear', 'abilities', 'make']) {
+          await view(X, page, v);
+          const n = await page.evaluate(() => { let i = 0; for (const e of document.querySelectorAll('body *')) { if (e._tip == null) continue; const r = e.getBoundingClientRect(); if (!r.width || r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth) continue;
+            const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (hit && (hit === e || e.contains(hit))) e.dataset.tipAt = String(i++); } return i; });
+          for (let i = 0; i < n; i++) {   // a list that redrew since the count lost its marks: skip those
+            const loc = page.locator(`[data-tip-at="${i}"]`); if (!(await loc.count())) continue;
+            const t = await hover(page, loc); if (t) seen++; if (t && !t.ok) out.push(`${v || 'fight'} ${t.lines[0]} ${t.box}`); }
+          await X('for (const e of document.querySelectorAll("[data-tip-at]")) delete e.dataset.tipAt; true');
+        }
+        assert(!out.length && seen >= 12, `${w}x${h}: no tip is cut off by the screen edge in the fight, Gear, Abilities or Make (${seen} tips; ${out.slice(0, 3).join(' / ') || 'none cut'})`);
+        assert(!errs.length, `${w}x${h} tooltips: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // touch: a tap never opens a tip (the sheet it opens is the information)
+      {
+        const { ctx, page, errs, X } = await open(740, 360, true);
+        await view(X, page, 'gear');
+        const tile = await page.locator('#sec-craft-gear .cf-gs').first().boundingBox();
+        await page.touchscreen.tap(tile.x + tile.width / 2, tile.y + tile.height / 2); await page.waitForTimeout(400);
+        const t = await X(TIP), sheet = await X('!!document.querySelector(".bsheet-ov")');
+        assert(!t && sheet, `740x360 touch: a tap on a gear tile opens its sheet and no tip (${JSON.stringify([t, sheet])})`);
+        assert(!errs.length, '740x360 touch tooltips: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('desktop tooltips (browser) crashed: ' + (e.stack || e)); }
+
 // ---- Lantern Caches (card cache-core; 55-caches.js, 75-caches-ui.js) ----
 if (section('lantern caches')) try {
   const clear = (g, z, extra = '') => g.eval(`S.zone = S.maxZone = ${z}; killPack({ boss: true, xp: 1, hp: 0 }, 40); ${extra}`);
@@ -14155,6 +14251,99 @@ if (section('camp-build-tap-again')) try {
 } catch (e) { fail('camp build tap again crashed: ' + (e.stack || e)); }
 
 // ==== scroll-spares: Scrolls the hero in play can't use say who they are for; "Scroll found." only for a Scroll it can use now ====
+// ---- boss-spoils-pick (Opus judge 2026-10-08): a zone 6 to 10 first clear that drops a Scroll asks which move it teaches now (75-caches-ui.js,
+// 75-moments-ui.js picks). Two or more moves learnable with that Scroll, up to three, Keep the Scroll keeps it; nothing new is paid ----
+if (section('boss-spoils-pick')) try {
+  const at = 'boss-spoils-pick', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pre-z7-boss.json'), 'utf8');
+  {   // the fixture and the drop it relies on (core)
+    const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s), caches = [];
+    g.fn.on('cacheOpen', v => caches.push(v));
+    assert(E('soloHero()') === 'wren' && E('soloLevels().wren.L') >= 8 && E('S.zone === 7 && S.maxZone === 7 && bossReady()') && E('scrollCount("hollow") === 0')
+      && E('HERO_ABILITIES.wren.filter(id => ABILITIES[id].tier === 2 && !abilityOwned("wren", id)).length') === 3 && E('soloEquipped().indexOf(null)') === 2 && E('!S.onboard.tips'),
+      `${at}: the fixture is Wren at level 8+, zone 7's boss next, no Scroll held, three Tier II moves left and a free slot, tips off`);
+    E(`S.activity = 'fight'; fightBoss = true; spawn(); killPack(mob, 40)`); g.fn.tick(0.1);
+    assert(caches.length === 1 && caches[0].zone === 7 && caches[0].scroll && caches[0].scroll.id === 'hollow', `${at}: zone 7's first clear opens a cache with a Hollow Scroll (${JSON.stringify(caches.map(c => c.scroll))})`);
+    assert(!g.errors.length, `${at}: no core errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8');
+  assert(/i\.why === '' && i\.payWith === v\.scroll\.id/.test(src) && /ids\.length >= 2/.test(src) && !/best|suggest/i.test((src.match(/function spoilsPicks[\s\S]*?\n}\n/) || [''])[0]),
+    `${at}: a pick offers only moves learnable now with the Scroll that win dropped, needs two, and never says best or suggested`);
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`window.__sp = []; on('choice', k => k === 'spoils' && __sp.push('choice')); on('spoilsPick', e => __sp.push(e)); true`);
+        // a zone boss's kill as the fight makes it (first clear when zone = maxZone), then the card; state is set before each win
+        const win = async (z, js = '', replay = false, after = '') => {
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } __sp.length = 0; ${js}; S.activity = 'fight'; S.zone = ${z}; S.maxZone = ${replay ? z + 2 : z}; fightBoss = true; spawn(); killPack(mob, 40); ${after}; S.activity = 'gather'; emit('sceneReset'); true`);
+          try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov')`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
+          await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs)
+          return X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };
+            const c = o.querySelector('.mm-card').getBoundingClientRect(), go = o.querySelector('.mm-go'), g = go.getBoundingClientRect(), picks = [...o.querySelectorAll('.mm-pick')];
+            const inView = r => r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1;
+            return { up: true, text: o.textContent, eye: o.querySelector('.mm-eye').textContent, head: (o.querySelector('.mm-pick-h') || {}).textContent || '', go: go.textContent,
+              picks: picks.map(b => b.querySelector('b').textContent), subs: picks.map(b => (b.querySelector('small') || {}).textContent || ''),
+              fits: inView(c) && inView(g) && picks.every(b => inView(b.getBoundingClientRect())), auto: [...o.querySelectorAll('.mm-act')].some(b => /automatically|auto-open/.test(b.textContent)) }; })()`);
+        };
+        const reset = `S.L = 13; soloLevels().wren.L = 13; S.abil.unl.wren = ['powershot', 'barbed']; S.abil.scrolls = { moss: 2 }; soloEquip(2, null); soloEquip(1, 'powershot')`;
+        // 1. three moves offered; a pick learns it, spends that win's Hollow Scroll (never the Moss) and takes the free slot
+        let c = await win(7, reset);
+        const offered = await X(`HERO_ABILITIES.wren.filter(id => { const i = abLearnInfo('wren', id); return i.why === '' && i.payWith === 'hollow'; }).join()`);
+        assert(c.up && c.head === 'Learn one now:' && c.picks.join() === "Hunter's Mark,Deadeye,Bat Swarm" && c.go === 'Keep the Scroll' && c.fits && !c.auto,
+          `${vw}: zone 7's cache asks "Learn one now:" with three moves in the Abilities order and "Keep the Scroll", all on screen, no auto-open toggle (${JSON.stringify({ up: c.up, head: c.head, picks: c.picks, go: c.go, fits: c.fits, auto: c.auto })})`);
+        assert(offered === 'huntmark,deadeye,batswarm' && c.subs.every(s => s.length > 0) && !/\b(best|suggested|recommended)\b/i.test(c.text), `${vw}: every offered move is learnable now with the Hollow Scroll, has its line, and none is marked best (${offered})`);
+        if (w === 1280) await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'boss-spoils-pick', 'check-card-1280x720.png') });
+        await page.click('.mm-ov .mm-pick:nth-child(2)'); await page.waitForTimeout(200);
+        let r = await X(`JSON.stringify({ own: abilityOwned('wren', 'deadeye'), hollow: scrollCount('hollow'), moss: scrollCount('moss'), eq: soloEquipped(), up: !!document.querySelector('.mm-ov'), sp: __sp })`);
+        r = JSON.parse(r);
+        assert(r.own && r.hollow === 0 && r.moss === 2 && r.eq[2] === 'deadeye' && !r.up && r.sp.length === 2 && r.sp[0] === 'choice' && r.sp[1].taken === 'deadeye' && r.sp[1].offered === 3 && r.sp[1].zone === 7,
+          `${vw}: picking Deadeye learns it, spends the Hollow Scroll (the Moss stays), puts it in the free slot and says choice spoils + spoilsPick (${JSON.stringify(r)})`);
+        if (w !== 1280) { assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : '')); await ctx.close(); continue; }
+        // 2. all slots full: the pick opens Abilities on the move, where "Swap it in for:" is
+        c = await win(7, `${reset}; soloEquip(2, 'barbed')`);
+        await page.click('.mm-ov .mm-pick:nth-child(1)'); await menuSettled(page, true); await page.waitForTimeout(200);
+        r = await X(`(() => { const d = document.querySelector('#sec-abilities .ab-det'); return JSON.stringify({ own: abilityOwned('wren', 'huntmark'), eq: soloEquipped(), det: d && d.dataset.ab, swap: d && (d.querySelector('.ab-al') || {}).textContent, taken: (__sp[1] || {}).taken }); })()`);
+        r = JSON.parse(r);
+        assert(r.own && !r.eq.includes('huntmark') && r.det === 'huntmark' && r.swap === 'Swap it in for:' && r.taken === 'huntmark', `${vw}: with all slots full the pick opens Abilities on the move to swap it in (${JSON.stringify(r)})`);
+        await X(`setTab('adv'); true`);
+        // 3. Keep the Scroll keeps it and still counts as the choice
+        c = await win(7, reset);
+        await page.click('.mm-ov .mm-go'); await page.waitForTimeout(200);
+        r = JSON.parse(await X(`JSON.stringify({ hollow: scrollCount('hollow'), own: HERO_ABILITIES.wren.filter(id => abilityOwned('wren', id)).join(), sp: __sp })`));
+        assert(c.picks.length === 3 && r.hollow === 1 && r.own === 'echo,powershot,barbed' && r.sp[0] === 'choice' && r.sp[1].taken === 'keep', `${vw}: Keep the Scroll keeps it and emits choice spoils, taken keep (${JSON.stringify(r)})`);
+        // 4. one move left to learn, or level 7: no pick, the card is as before
+        c = await win(7, `${reset}; S.abil.unl.wren.push('huntmark', 'deadeye')`);
+        assert((!c.up || (!c.picks.length && c.go === 'Continue' && !/Learn one now/.test(c.text))) && !(await X('!!document.querySelector(".mm-pick")')), `${vw}: with one move to learn there is no pick (${JSON.stringify({ up: c.up, picks: c.picks, go: c.go })})`);
+        c = await win(7, reset, false, 'S.L = 7; soloLevels().wren.L = 7');   // after the kill's XP, before the cache opens (the next tick)
+        assert(!c.up || (!c.picks.length && c.go === 'Continue'), `${vw}: at level 7 (Hollow moves not open) there is no pick (${JSON.stringify({ up: c.up, picks: c.picks })})`);
+        // 5. a zone 11 first clear, and a zone 5 one, show no pick; a replay opens no cache at all
+        c = await win(11, reset);
+        assert(!c.up || !c.picks.length, `${vw}: a zone 11 first clear shows no pick (${JSON.stringify({ up: c.up, picks: c.picks, eye: c.eye })})`);
+        c = await win(5, reset);
+        assert(!c.picks || !c.picks.length, `${vw}: a zone 5 first clear shows no pick`);
+        c = await win(6, `${reset}; Math.random = () => 0`, true);
+        assert(!c.up || !c.picks.length, `${vw}: a replay shows no pick`);
+        // 6. the zone 10 Champion: the pick rides on the Champion's card
+        c = await win(10, `${reset}; S.abil.scrolls = {}`, false, 'for (const q of MOMENT_Q) if (q.kind === "champion") q.scene = ""');   // its story scene is not this check's (the page skips scenes here)
+        assert(c.up && c.picks.length === 3 && /Champion/i.test(c.eye) && c.go === 'Keep the Scroll', `${vw}: the zone 10 Champion's card carries the pick (${JSON.stringify({ up: c.up, eye: c.eye, picks: c.picks })})`);
+        await page.click('.mm-ov .mm-go'); await page.waitForTimeout(150);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('boss-spoils-pick: ' + (e.stack || e.message)); }
 if (section('scroll-spares')) try {
   const at = 'scroll-spares', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-wren-spare-moss.json'), 'utf8');
   { // core: the fixture, then the toast rule

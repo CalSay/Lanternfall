@@ -394,7 +394,7 @@ var soloIconURL = () => '';
         setCd(b, pas ? 0 : cd, tb.max(o.id), wait);
         // why it cannot be used: its cooldown (turns), the finisher's third turn, or what it needs (a Burn, Grit, ...)
         setN(b, pas ? '' : cd ? String(cd) : why === 'gate' ? 'T3' : why && why !== 'cd' && why !== 'turn' ? '!' : '');
-        putAttr(b, 'title', why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '');
+        b._why = why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '';   // its hover tip's last line
         b.classList.toggle('ready', !why && tb.heroTurn);
         b.classList.toggle('blocked', !!why && why !== 'cd' && !pas);
         putText(b._sub, pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? 'Needs ' + why.slice(5) : wait ? 'Wait' : 'Ready');
@@ -412,6 +412,12 @@ var soloIconURL = () => '';
     if (wait) for (const b of [bAtk, ...bAbs]) b.classList.remove('ready-now');   // a flash from the turn just played ends with it
     fillSkills(); fillFoe();
   }
+  // desktop-tooltips: with a mouse, resting on a slot shows its name, key and what it does (the aria-label's text; the slot's own
+  // card opens on a hold, the moves' help in the Abilities menu)
+  const moveTip = k => `${INFO[k].name} (${INFO[k].key})\n${INFO[k].desc}`;
+  setTip(bAtk, () => moveTip('atk')); setTip(bParry, () => moveTip('parry')); setTip(bDodge, () => moveTip('dodge'));
+  bAbs.forEach((b, i) => setTip(b, () => { const id = abIds[i], a = id && SOLO_ABILITIES[id]; if (!a) return '';
+    return `${a.name} (${KEY_LB['ab' + i]})\n${a.turnDesc || a.desc}` + (b._why && typeof turnBarInfo === 'function' && turnBarInfo() ? '\n' + b._why : ''); }));
   bAtk.setAttribute('aria-label', 'Attack (D). ' + INFO.atk.desc);
   bParry.setAttribute('aria-label', 'Parry (A). ' + INFO.parry.desc);
   bDodge.setAttribute('aria-label', 'Dodge (S or Space). ' + INFO.dodge.desc);

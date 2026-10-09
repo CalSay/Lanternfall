@@ -27,7 +27,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 at 1920x1080 and fit 1366x640. Landscape phones (740x360) and tablets (1024x768) still play without clipping; phones held
 upright (360x740) must not break, but new features need not be designed for them. On a desktop screen (1200x600 and up) text and chrome grow, an item's detail opens
 beside the list in its menu, and the number keys 1 to 5 open Fight, Hero, Gather, Craft and Camp (the open tab's number closes it;
-Escape closes the detail, then the menu). Two-press buttons (spend a Scroll, a camp build, a reset) say "Confirm" on the second press.
+Escape closes the detail, then the menu). Two-press buttons (spend a Scroll, a camp build, a reset) say "Confirm" on the second press. With a mouse, resting the pointer on an item, an ability or a cost shows a tip with what it is and does (the same lines a click opens; a touch screen never shows one).
 
 Menu sub-tabs keep their labels and show the drawn menu icons. Action buttons show small Ready, Cooldown,
 Locked or Unavailable badges; the ability picker marks the selected action. Icons use native pixel sizes.
@@ -90,7 +90,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
   and the rest cost a Scroll of their tier (or a higher one) from zone bosses; a Moss Scroll teaches one move per hero, so spares
   wait for Tobin and Pip, and Abilities' Can learn list says who they are for. "Scroll found." shows only for a Scroll the hero in play
-  can use now. **Talents** (`24e-data-talents.js`): two choices for each
+  can use now. On a zone 6 to 10 boss's first clear, the Lantern Cache card asks "Learn one now:" with up to three moves the dropped
+  Scroll can teach the hero in play (only when two or more can be learned): a pick learns it and fills a free slot, or opens Abilities on
+  it when the slots are full; "Keep the Scroll" keeps it (`75-caches-ui.js`, boss-spoils-pick). **Talents** (`24e-data-talents.js`): two choices for each
   ability and for Attack, Parry and Dodge. **Ability icons** (Codex's drawings, `art/abilities/`, converted by
   `tools/art/abilityicons.py`, embedded by `tools/art/embed-icons.mjs` under the live ability id): Pip's 14 are drawn on
   the bar, the picker and the Abilities list. Wren and Tobin keep lettered tiles until all 14 of theirs are drawn (whole
