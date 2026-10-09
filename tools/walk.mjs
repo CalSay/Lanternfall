@@ -26,6 +26,8 @@
 // Gather view for up to 5 minutes (Hunting for hide), builds the station a recipe needs (Camp > Build, two taps), and goes back to the fight.
 // Tier gates (next-tier-gate-goal): when no Next Up row is Ready and the craft row names a tier gate, it presses that row's Go and crafts at
 // the station or gathers in the named view for up to 5 minutes (the report's Gear section lists the gate rows pressed).
+// Gather Go (walk-follows-gather-go): when a Next Up Go itself sends the hero to a node (Build Hearth 2: 20 Pine Log at the Pine Grove), it
+// stays there while the row reads as work, for up to 5 minutes, then goes back to the fight; the Gear section's Camp built line dates Hearth 2 and the Tavern.
 // It closes a sheet it left over the bar with the X. The report's "Gear and boss tries" table says what it wore in each zone and the boss tries lost there.
 // Boss losses (walk-bot-keeps-fighting): the first lost try takes the Try again card's lead button; from the second in a row at one
 // boss it presses Keep fighting here and fights the zone's foes until the game brings the boss back (Auto, or Next Up's Ready boss row).
@@ -178,7 +180,8 @@ const OBS = `(() => {
   try { s = { zone: S.zone, maxZone: S.maxZone, L: S.L, gold: Math.floor(S.gold), kills: S.totalKills, got: Object.assign({}, S.onboard && S.onboard.got), t: S.onboard && S.onboard.t,
     found: Object.keys(S.found || {}).length, stars: Object.keys((S.stars && S.stars.own) || {}).length, heroes: Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {}).length,
     abil: S.abil && S.abil.unl ? Object.values(S.abil.unl).reduce((n, l) => n + (Array.isArray(l) ? l.length : 0), 0) : 0,   // walk-f3-in-fights: abilities learned past the signature (56e)
-    built: ['bench', 'forge', 'store'].filter(id => typeof campLevel === 'function' && (campLevel(id) >= 1 || (typeof campPending === 'function' && !!campPending(id)))),   // walk-bot-forge-logs: a station counts from its Build press
+    built: ['bench', 'forge', 'store'].filter(id => typeof campLevel === 'function' && (campLevel(id) >= 1 || (typeof campPending === 'function' && !!campPending(id))))
+      .concat([['hearth2', 'hearth', 2], ['tavern', 'tavern', 1]].filter(([, id, n]) => typeof campLevel === 'function' && (campLevel(id) >= n || (campLevel(id) === n - 1 && typeof campPending === 'function' && !!campPending(id)))).map(x => x[0])),   // walk-follows-gather-go: Hearth 2 and the Tavern from their Build press   // walk-bot-forge-logs: a station counts from its Build press
     looks: typeof deeds === 'object' ? deeds.looks().filter(l => l.got).length : 0, forged: S.deeds && S.deeds.n ? S.deeds.n.forged : 0, up: S.deeds && S.deeds.n ? S.deeds.n.up || 0 : 0, act: S.activity, tab: S.tab,
     acted: (() => { try { return Object.fromEntries(FEATURES.map(f => [f.id, !!(f.now && f.now())])); } catch (e) { return {}; } })() };
   } catch (e) { s = { err: String(e).slice(0, 80) }; }
@@ -409,8 +412,10 @@ const goalKey = l => l.replace(/\d+/g, '#');
 // the list is open, so only a drop counts for those.
 const PRESS_FP = `(() => { const mats = {}; for (const [k, a] of Object.entries(S.mats || {})) mats[k] = (a || []).reduce((x, n) => x + (n || 0), 0);
   try { mats.ess = essHave(); } catch (e) {}
-  return { k: JSON.stringify([S.attr, S.equip, S.items.length, S.abil && S.abil.unl, S.camp.b, S.camp.builds]), gold: S.gold, mats }; })()`;
-const pressChanged = (a, b) => a.k !== b.k || b.gold < a.gold || Object.keys(a.mats).some(k => (b.mats[k] || 0) < a.mats[k]);
+  return { k: JSON.stringify([S.attr, S.equip, S.items.length, S.abil && S.abil.unl, S.camp.b, S.camp.builds]), w: JSON.stringify([S.activity, S.node]), gold: S.gold, mats }; })()`;   // walk-follows-gather-go: w, a Go that sends the hero to gather
+const WHERE_Q = `S.activity + ':' + (S.node ? S.node.kind + ' tier ' + S.node.t : '')`;
+// where: count a move of the hero (S.activity, S.node) as a change, only when the bot stays there (not when the Fight tab undoes it at once)
+const pressChanged = (a, b, where) => a.k !== b.k || (where && a.w !== b.w) || b.gold < a.gold || Object.keys(a.mats).some(k => (b.mats[k] || 0) < a.mats[k]);
 async function followNextUp(o) {
   const chipReady = await page.evaluate(`(() => { const c = document.getElementById('nuChip'); return !!c && !c.hidden && c.getClientRects().length > 0 && c.classList.contains('ready') ? (c.querySelector('.nu-lbl') || c).textContent.trim() : ''; })()`);
   if (!chipReady) return false;
@@ -420,13 +425,14 @@ async function followNextUp(o) {
   // pressing anything under it. The bot leaves the list; the card rule closes the card, and the list is closed later with its X.
   if (await page.evaluate(() => !!document.querySelector('.mm-ov'))) return true;   // true: the next pass reads the screen again (no other press under the card)
   const rows = await page.evaluate(() => [...document.querySelectorAll('.nu-row.ready')].filter(r => r.getClientRects().length).map(r => (r.querySelector('.nu-lbl') || r).textContent.trim()));
+  const ids = await X(`(() => { const m = {}; for (const g of topGoals(3, { sticky: false })) m[g.label] = g.id; return m; })()`);   // the list shows topGoals(3): each row's goal id, by its label (sticky: false, so the read leaves the list's order alone)
   const holdFight = (st.gear.owns && st.gear.sess && !st.gear.sess.gaveUp) || !!(st.gate.sess && st.gate.sess.owns);   // gathering for a gear goal or a tier gate: the boss row waits
   st.nuReady = rows.length;
-  const label = rows.find(l => (st.calls[goalKey(l)] || 0) < 4 && !(holdFight && /^boss ready|boss is next|^the zone \d+ boss/i.test(l)));   // a goal the casual player cannot finish is a finding, not a loop
+  const label = rows.find(l => (st.calls[goalKey(l)] || 0) < 4 && !(holdFight && /^boss ready|boss is next|^the zone \d+ boss/i.test(l)) && !((st.nuGatherCool[ids[l]] || 0) > gt));   // a goal the casual player cannot finish is a finding, not a loop
   const closeList = () => click('.bsheet-ov .bsheet-x', 200);
   if (label === undefined) { await closeList(); return false; }
   st.calls[goalKey(label)] = (st.calls[goalKey(label)] || 0) + 1;
-  const fpBefore = await X(PRESS_FP);
+  const fpBefore = await X(PRESS_FP), whereBefore = await X(WHERE_Q);
   const marked = await page.evaluate(l => { for (const r of document.querySelectorAll('.nu-row.ready')) if ((r.querySelector('.nu-lbl') || r).textContent.trim() === l) { const g = r.querySelector('.nu-go'); if (g) { g.setAttribute('data-walk', '1'); return true; } } return false; }, label);
   const eqBefore = await X('JSON.stringify(S.equip)');
   const went = marked && await click('[data-walk="1"]', 300);
@@ -473,10 +479,44 @@ async function followNextUp(o) {
     }
     await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
   }
+  // walk-follows-gather-go: Go itself sent the hero to a node (Hesketh's fire, Build Hearth 2: 20 Pine Log at the Pine Grove): that is the press
+  const sent = await X(`(() => { const g = GOALS.find(q => q.id === ${JSON.stringify(ids[label] || '')}); let p = 0; try { p = g ? +g.pct() : 0; } catch (e) {}
+    return { act: S.activity, node: S.node ? S.node.kind + ' tier ' + S.node.t : '', work: p > 0 && p < 1 }; })()`);
+  // only when the press itself moved the hero: a craft pressed while a gear session already gathers is not a gather Go
+  const fpAfter = await X(PRESS_FP), gatherGo = sent.act === 'gather' && (await X(WHERE_Q)) !== whereBefore;
+  if (!did && gatherGo) did = 'Go: gathering ' + sent.node;
   await note(page, 'nextup', `${label}${did ? ' -> pressed "' + did + '"' : ' -> nothing to press'}`, { extra: { goal: label, pressed: did } });
-  if (did && pressChanged(fpBefore, await X(PRESS_FP))) st.calls[goalKey(label)] = 0;   // it worked: not a stuck goal
+  const stay = gatherGo && sent.work && !!ids[label];
+  if (did && pressChanged(fpBefore, fpAfter, stay)) st.calls[goalKey(label)] = 0;   // it worked: not a stuck goal
   await advance(500, 16);
+  // the hero now works the node the row named and the row reads as work: stay and gather (nuGatherStep), as a player who pressed Go does.
+  // The Fight tab would run goFight() and put the hero straight back on the fight, so nothing would be gathered.
+  if (stay) {
+    st.nuGather = { id: ids[label], label, node: sent.node, start: gt, stepAt: gt };
+    if (await X('S.tab')) await click('#menuX', 300);   // close what the Go left open (navGo closes the menu itself)
+    return true;
+  }
   await click('.tabs .tab:text(Fight)', 300);
+  return true;
+}
+// walk-follows-gather-go: a Next Up Go left the hero gathering for its row. The bot gathers while the row reads as work (its bar between
+// 0 and 100%) and the hero is still gathering, for at most 5 minutes (as gear sessions do), then goes back to the fight. When the row is
+// Ready again (the node's part is in, or the build is ready) followNextUp presses its next Go; after the 5 minute cap the same goal waits
+// 5 minutes of fighting before the bot takes it again. While it gathers, Next Up, gear and tier-gate routines wait (they would move the hero).
+st.nuGather = null; st.nuGatherCool = {}; st.nuGathers = [];
+async function nuGatherStep(o) {
+  const s = st.nuGather;
+  if (!s || gt - s.stepAt < 5 || o.cards.length || o.tip) return false;
+  s.stepAt = gt;
+  const q = await X(`(() => { const g = GOALS.find(q => q.id === ${JSON.stringify(s.id)}); let p = 0; try { p = g ? +g.pct() : 0; } catch (e) {} return { p, act: S.activity }; })()`);
+  const why = q.act !== 'gather' ? 'the hero left the node' : !(q.p > 0) ? 'the row is gone' : q.p >= 1 ? 'the row is Ready' : gt - s.start > 300 ? '5 min and still short' : '';
+  if (!why) return false;
+  st.nuGather = null;
+  if (why === '5 min and still short') st.nuGatherCool[s.id] = gt + 300;
+  st.nuGathers.push({ t: s.start, label: s.label, node: s.node, min: Math.round((gt - s.start) / 6) / 10, end: why });
+  await note(page, 'nextup', `gathered ${s.node} for ${Math.round(gt - s.start)} s (${s.label.replace(/:.*$/, '')}): ${why}`, { shot: false, extra: { goal: s.label, end: why }, tag: 'nextup-gather' });
+  if (q.act === 'gather') { await click('#modeSeg button[data-act="fight"]', 300); await advance(300, 16); }
+  st.nuAt = -99;   // a Ready row's next Go comes on the next pass
   return true;
 }
 
@@ -824,10 +864,12 @@ async function run() {
       const waitGuide = (o.tip && gt - st.tipFirst < 1.2) || (o.phase === 'player turn' && gt - st.phStart < 0.3);
       if (!did && !waitGuide && (!o.s.tab || (o.s.tab === 'adv' && SIZE.wide))) did = await fight(o);   // a menu that covers the action bar is not a fight the player can press
       // back to the fight once a tip or Next Up has been served: a menu that stays open leaves the foe waiting
-      if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('.tabs .tab[data-tab="adv"]', 300); }
-      if (!did && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
-      if (!did) did = await gearStep(o);
-      if (!did) did = await gateStep(o);
+      // (gathering for a Next Up row: the Fight tab would end it, so the menu's X closes the menu)
+      if (!did && o.s.tab && o.s.tab !== 'adv' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click(st.nuGather ? '#menuX' : '.tabs .tab[data-tab="adv"]', 300); }
+      if (!did) did = await nuGatherStep(o);
+      if (!did && !st.nuGather && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
+      if (!did && !st.nuGather) did = await gearStep(o);
+      if (!did && !st.nuGather) did = await gateStep(o);
       // the Fight menu (tab "adv") covers the action bar in portrait: a player whose turn is waiting closes it
       if (!did && o.s.tab === 'adv' && o.phase !== 'idle' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('#menuX', 300); }
       const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || !!st.ringFor;   // the 33 ms step is for the foe's wind-up, the parry window and a timed ring only
@@ -1019,7 +1061,7 @@ function report(res) {
   const z = st.prev ? st.prev : {};
   if (st.beaten) out.push(`The bot was beaten ${st.beaten} time${st.beaten === 1 ? '' : 's'} by bosses (the "try again" card).`, '');
   out.push(`End state: zone ${z.maxZone}, level ${z.L}, ${z.gold} gold, ${z.kills} kills, ${Object.keys(z.got || {}).length} things unlocked, ${z.found} uniques, ${z.stars} Stars, ${z.heroes} extra heroes, ${z.looks} looks.`, '');
-  out.push('## Gear and boss tries', '', `The bot crafted ${st.gear.crafted} piece(s) from its own gear goal, put on ${st.gear.wornN}${st.gear.firstWear === null ? '' : ' (first at ' + fmtT(st.gear.firstWear) + ')'}, and closed ${st.sheetsClosed || 0} sheet(s) it had left over the bar. Forged in all: ${z.forged || 0}. Camp built: ${['bench', 'forge', 'store'].map(id => id + ' ' + (st.builtAt[id] ? fmtT(st.builtAt[id]) : 'not built')).join(', ')}.`, '',
+  out.push('## Gear and boss tries', '', `The bot crafted ${st.gear.crafted} piece(s) from its own gear goal, put on ${st.gear.wornN}${st.gear.firstWear === null ? '' : ' (first at ' + fmtT(st.gear.firstWear) + ')'}, and closed ${st.sheetsClosed || 0} sheet(s) it had left over the bar. Forged in all: ${z.forged || 0}. Camp built: ${['bench', 'forge', 'store', 'hearth2', 'tavern'].map(id => (id === 'hearth2' ? 'Hearth 2' : id) + ' ' + (st.builtAt[id] ? fmtT(st.builtAt[id]) : 'not built')).join(', ')}.${st.nuGathers.length ? ' Next Up sent it to gather ' + st.nuGathers.length + ' time(s): ' + st.nuGathers.map(g => `${fmtT(g.t)} ${g.node} ${g.min} min (${g.end})`).join('; ') + '.' : ''}`, '',
     '| Zone | First stood in at | Level | Boss tries lost | Worn then |', '|---|---|---|---|---|');
   for (const [zn, e] of Object.entries(st.enter || {})) out.push(`| ${zn} | ${fmtT(e.t)} | ${e.L} | ${(st.tries || {})[zn] || 0} | ${e.gear} |`);
   out.push('');
