@@ -951,7 +951,7 @@ let craftUI = null;
     bag.bulk.textContent = ''; bag.bulk.hidden = !bulk.on;
     if (!bulk.on) return;
     if (bulk.note) bag.bulk.append(el('p', 'note', bulk.note));
-    if (!bulk.armed) { bag.bulk.append(el('p', 'note', `${valid.size} selected. Tap items to change the selection. Worn items and uniques are protected.`)); return; }
+    if (!bulk.armed) { bag.bulk.append(el('p', 'note', `${valid.size} selected. Choose items to change the selection. Worn items and uniques are protected.`)); return; }
     bag.bulk.append(el('p', null, `Salvage ${valid.size} items? They are gone for good. You get back about:`));
     for (const [t, row] of Object.entries(q.mats)) {
       const chips = el('div', 'costs');
@@ -1298,7 +1298,7 @@ let craftUI = null;
       if (now) {
         const r = el('div', 'cf-pr cur');
         const t = icTile(itemIc(now), frameOf(now)); r.append(t);
-        const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, (itemGraded(now) ? itemQual(now) + ' · ' : '') + 'Worn now. Tap for details.'));   // craft-attribute-grades: the letter in text
+        const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, (itemGraded(now) ? itemQual(now) + ' · ' : '') + 'Worn now. Open it for details.'));   // craft-attribute-grades: the letter in text
         r.append(tx);
         tx.addEventListener('click', () => openItem(now.id, backFn)); t.addEventListener('click', () => openItem(now.id, backFn));
         body.append(r);
