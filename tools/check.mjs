@@ -12050,7 +12050,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
             // a step that ended while the walk looked (Next Up opening ends spend-points-before-nextup's line unseen) is not a miss
             if (!c.ok && await X('(s => s ? s.id : "")(onboardStep())') !== st) continue;
-            if (!seen.has(key)) { seen.add(key); if (!c.ok) bad.push(`${key}: ${JSON.stringify(c)}`); }
+            // (a miss also says what the guide was doing: the line it wants, its say queue, a pending cache, the pause)
+            if (!seen.has(key)) { seen.add(key); if (!c.ok) bad.push(`${key}: ${JSON.stringify(c)} guide ${await X('JSON.stringify({ wants: soloGuideWants(), sayQ: S.onboard.sayQ, cache: cachePending(), paused: ONBOARD.paused, moments: MOMENT_Q.length, fighting: fightingNow() })')}`); }
             // do the step through its own target
             const live = await X(`!!(onboardSpec(${JSON.stringify(st)}) || {}).live`);
             if (live) {
@@ -12338,6 +12339,25 @@ if (section('desktop layout (browser, desktop-layout-v1)')) try {
         const [a, b] = snaps, same = k => a[k].n === b[k].n && a[k].fonts === b[k].fonts && a[k].boxes === b[k].boxes;
         assert(!a.desk && same('fight') && same('gear'), `${w}x${h}: not a desktop tier, and every font size and the layout boxes match the untransformed styles in the fight and in Hero > Gear with an item sheet open (${JSON.stringify({ desk: a.desk, fight: same('fight'), gear: same('gear') })})`);
       }
+      // ---- upright-tablet (80-landscape.css): a tablet held upright (768x1024) uses its width, not the 560 px phone strip ----
+      {
+        const { ctx, page, X, errs } = await open(768, 1024, { touch: true });
+        const BOX = `(() => { const w = id => Math.round(document.getElementById(id).getBoundingClientRect().width), sh = document.querySelector('.bsheet');
+          return { app: w('app'), stage: w('stageBox'), bar: Math.round(document.querySelector('#soloBar .sb-row').getBoundingClientRect().width), menu: w('menu'), sheet: sh ? Math.round(sh.getBoundingClientRect().width) : 0, wide: isWide(), scrollX: document.scrollingElement.scrollWidth - innerWidth }; })()`;
+        const f = await X(BOX), clip = (await X(CLIPPED)).filter(c => /^sb-/.test(c));
+        await view(X, page, 'gear');
+        await X('(t => t && t.click())(document.querySelector("#sec-craft-gear .cf-gs")); true'); await page.waitForTimeout(400);
+        const g = await X(BOX);
+        assert(!f.wide && f.app === 768 && f.stage >= 730 && f.bar >= 470 && !clip.length && g.menu === 768 && g.sheet >= 740 && g.scrollX <= 0,
+          `768x1024: the portrait layout spans the screen (app 768, stage 730+, fight bar 470+, no slot label cut), Hero > Gear's menu is 768 wide and an item sheet 740+, no sideways scroll (${JSON.stringify({ f, g, clip: clip.slice(0, 3) })})`);
+        // Hero > Abilities is wide enough for the desktop's list-beside-detail here: with a move open, no filter or name is cut
+        await view(X, page, 'abilities');
+        await X('(t => t && t.click())(document.querySelector(".ab-row")); true'); await page.waitForTimeout(300);
+        const ab = await X('[!!document.querySelector(".ab-det"), ...' + CLIPPED + ']');
+        assert(ab[0] && ab.length === 1, `768x1024 Hero > Abilities with a move open: the detail shows and nothing ends in "..." (${JSON.stringify(ab.slice(0, 4))})`);
+        assert(!errs.length, '768x1024: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
     } finally { await browser.close(); }
   }
 } catch (e) { fail('desktop layout (browser) crashed: ' + (e.stack || e)); }
@@ -12536,6 +12556,80 @@ if (section('champion moment')) try {
   assert(/champion: \{ tier: 'big'/.test(ui) && /on\('champWin'/.test(ui) && /storyBusy\(q\.scene\)/.test(ui), 'champion moment: a big MOMENT_KINDS row, the champWin listener, and the card waits for the scene');
   assert(/q\.kind === 'champion' && q\.zone === v\.zone/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8')), 'champion moment: the cache folds into the Champion card (one card for the win)');
 } catch (e) { fail('champion moment: ' + e.message); }
+
+// ---- zone 10 clear moment (card zone10-clear-moment; F28): a Hesketh line already chosen never freezes a boss win, and a Champion's
+// fight bar uses its story name. A paused game skips tick, so a hold must never wait on the cache or a story scene (only the tick finishes them).
+if (section('zone10-clear-moment')) try {
+  const names = (() => { const g = loadCore({ seed: 7 }), E = s => g.eval(s); E('soloPick("wren")');
+    const at = (z, max) => E(`S.activity = 'fight'; S.zone = ${z}; S.maxZone = ${max}; fightBoss = true; spawn(); ({ name: mob.name, type: mob.type || '', boss: !!mob.boss })`);
+    return { z5: at(5, 5), z10: at(10, 10), replay: at(10, 14), z6: at(6, 6) }; })();
+  assert(names.z5.name === 'The Briar Regent' && names.z10.name === 'The Hollow Cantor' && names.replay.name === 'The Hollow Cantor',
+    `zone10-clear-moment: a Champion's foe takes its story name, on a replay too (${JSON.stringify(names)})`);
+  assert(!/Regent|Cantor/.test(names.z5.type + names.z10.type) && !/Regent|Cantor/.test(names.z6.name), `zone10-clear-moment: its type is kept and a Captain keeps its own name (${JSON.stringify(names)})`);
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('zone10-clear-moment (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-z10-cantor.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const retry of [true, false]) {
+        const at = `zone10-clear-moment 1280x720 ${retry ? 'lose then win' : 'first-try win'}`;
+        const save = JSON.parse(raw), t0 = Date.UTC(2026, 9, 8, 12), delta = t0 - save.last;
+        const shift = o => { for (const k in o) { const v = o[k]; if (typeof v === 'number' && v > 1.5e12 && v < 2.2e12) o[k] = v + delta; else if (v && typeof v === 'object') shift(v); } };
+        shift(save);
+        const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, turns: true, story: true });
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.clock.install({ time: t0 }); await page.clock.pauseAt(t0 + 1);
+        await page.addInitScript(([k, s]) => { if (!sessionStorage.getItem('z10')) { sessionStorage.setItem('z10', '1'); localStorage.setItem(k, s); } }, [KEY, JSON.stringify(save)]);
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/', { waitUntil: 'commit' });
+        const run = s => page.clock.runFor(Math.round(s * 1000));
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        for (let i = 0; i < 60 && !(await page.evaluate(() => !!window.__t)); i++) { await page.waitForTimeout(200); await run(0.2); }
+        await run(2);
+        const click = async rx => { for (const h of await page.$$('button')) { const t = (await h.innerText().catch(() => '')).trim(); if (rx.test(t) && await h.isVisible()) { try { await h.click({ timeout: 800 }); return t; } catch (e) {} } } return ''; };
+        const bossTurn = () => X(`(() => { const sn = turnCombatSnapshot(); return sn.phase === 'hero' && !!(mob && mob.boss); })()`);
+        for (let i = 0; i < 40 && !(await bossTurn()); i++) { await click(/^(Continue|Next|Got it|Fight)$/); await run(0.5); }
+        const bar = await X(`(() => { const e = document.getElementById('mName'); return { mob: mob && mob.name, bar: e ? e.textContent : '' }; })()`);
+        assert(bar.mob === 'The Hollow Cantor' && (!bar.bar || bar.bar === 'The Hollow Cantor'), `${at}: the fight bar names the Champion as its card does (${JSON.stringify(bar)})`);
+        if (retry) {
+          await X(`window.__lost = 0; on('bossFail', () => { window.__lost = 1; }); cbTurnHitHero(1e12, false, 'hit'); true`);
+          for (let i = 0; i < 40 && !(await X(`window.__lost`)); i++) {   // the foe's next hit ends it (the probe's way: the hero at 1 HP, the foe kept whole)
+            await run(0.5);
+            if (await X(`turnCombatSnapshot().phase === 'hero'`)) await X(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max; cbUnitByKey('hero').hp = 1; turnCombatAction('attack'); true`);
+          }
+          const lost = await X(`S.bossTry && S.bossTry.last && S.bossTry.last.boss`);
+          assert(lost === 'The Hollow Cantor', `${at}: the loss sheet names the Hollow Cantor (${JSON.stringify(lost)})`);
+          for (let i = 0; i < 60 && !(await bossTurn()); i++) { await click(/^(Continue|Next|Got it|Try again)$/i); await run(0.5); }
+        }
+        // a Hesketh line chosen in an earlier gap: the freeze's cause (F28)
+        await X(`emit('unlock', { id: 'stars' }); true`); await run(0.5);
+        await X(`TURN_LIVE.gi = 99; TURN_LIVE.foe.hp = 1; turnCombatAction('attack'); true`);   // the win (past every rally gate)
+        let s = null;
+        for (let i = 0; i < 4; i++) { await run(0.5); s = await X(`({ paused: ONBOARD.paused, cache: cachePending(), story: !!document.querySelector('.sty-sheet') && /Hollow Cantor/.test(document.querySelector('.sty-sheet').textContent), gw: soloGuideWants(), clock: notes.clock })`); if (s.story) break; }
+        assert(s.story && !s.paused && !s.cache && !/^say:/.test(s.gw), `${at}: within 2 s of the kill, with no press, the post scene shows, the cache has opened and no Hesketh line holds the game (${JSON.stringify(s)})`);
+        let card = '';
+        for (let i = 0; i < 6 && !card; i++) { await click(/^(Next|Continue)$/); await run(1.2); card = await X(`(() => { const o = document.querySelector('.mm-ov'); return o ? o.textContent : ''; })()`); }
+        assert(/The Hollow Cantor falls/.test(card) && /gold/i.test(card), `${at}: the Champion card follows the scene with the cache's lines (${card.slice(0, 160)})`);
+        const goHit = JSON.parse(await X(`(() => { const g = document.querySelector('.mm-ov .mm-go'); if (!g) return JSON.stringify({ ok: false, why: 'no card button' }); const r = g.getBoundingClientRect(), h = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return JSON.stringify({ txt: g.textContent, r: [r.left, r.top, r.width, r.height], hit: h && (h.id || h.className), ok: g === h || g.contains(h) }); })()`));
+        assert(goHit.ok, `${at}: the card's Continue is on top, so a click reaches it (${JSON.stringify(goHit)})`);
+        const during = await X(`soloGuideWants()`);
+        assert(!/^say:/.test(during), `${at}: no Hesketh line shows over the card (${during})`);
+        let said = '';
+        // the card's own button closes it (a hover chip can sit over its Continue on a CI runner's fonts)
+        // the line waits for the next gap between foes (a slow runner can take a while to get there): up to 30 s of game time
+        for (let i = 0; i < 30 && !said; i++) { if (!(await X(`(b => !!b && (b.click(), true))(document.querySelector('.mm-ov .mm-go'))`))) await click(/^Continue$/); await run(1); const w = await X(`soloGuideWants()`); if (/^say:/.test(w)) said = w; }
+        const after = said ? '' : await X(`JSON.stringify({ wants: soloGuideWants(), sayQ: S.onboard.sayQ, cache: cachePending(), paused: ONBOARD.paused, moments: MOMENT_Q.length, card: !!document.querySelector('.mm-ov'), story: !!document.querySelector('.sty-sheet'), fighting: fightingNow(), tab: S.tab })`);
+        assert(said === 'say:stars' || (retry && said === 'say:defeat'), `${at}: the queued line speaks after the card closes (${said}${after})`);
+        assert(!errs.length, `${at}: no page errors (${errs.slice(0, 2).join(' | ')})`);
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('zone10-clear-moment: ' + e.message); }
 
 // ---- moment layer (card moment-layer; 75-moments-ui.js; docs/design/first-hour.md; scorecard F6) ----
 // Each big and medium moment is forced while the guide, a level-up and the toast flood compete, and must be on screen for at

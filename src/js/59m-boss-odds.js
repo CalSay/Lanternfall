@@ -68,6 +68,7 @@ function bossOddsFoe(z) {
   const rnd = Math.random;
   Math.random = () => 0.5;
   try { turnFoeSetup(f, z); } finally { Math.random = rnd; }
+  if (typeof champStoryName === 'function' && champStoryName(z) && !(typeof isRegionBoss === 'function' && isRegionBoss(z))) f.name = champStoryName(z);   // as 55-story's spawn names it (zone10-clear-moment)
   return f;
 }
 
