@@ -42,7 +42,7 @@
       const d = el('div', 'pc-slot' + (open ? '' : ' soon'));
       const tile = it ? slotTile(it) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm');
       d.append(tile, el('small', null, nouns[s.id] || s.n));
-      d.title = it ? itemName(it) : open ? 'Empty' : 'Coming with crafting';
+      setTip(d, it ? itemName(it) : open ? 'Empty' : 'Coming with crafting');   // desktop-tooltips: was a title
       gearBox.append(d);
     }
     card.append(gearBox);
