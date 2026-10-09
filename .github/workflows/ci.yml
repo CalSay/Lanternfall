@@ -12,15 +12,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # The full check runs as four shards on four runners (the same --shard=i/4 split check.mjs uses locally), so it costs
-  # a quarter of the time. Each shard builds, then runs its slice; shard 0 also checks that dist is committed rebuilt.
+  # The full check runs as six shards on six runners (the --shard=i/6 split check.mjs balances by its WEIGHT table), so each
+  # takes about a sixth of the time. Each shard builds, then runs its slice; shard 0 also checks that dist is committed rebuilt.
+  # A shard must stay under half the job limit so its one retry fits (ci-shard-hang); --times logs each section's time to re-weight by.
   checks:
     runs-on: ubuntu-24.04
     timeout-minutes: 20   # room for one retry of a shard
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,13 +47,13 @@ jobs:
             echo "::error::node tools/build.mjs changed dist/lanternfall.html. Commit the rebuilt dist."
             exit 1
           fi
-      - name: Check shard ${{ matrix.shard }}/4 (no browser section may be skipped)
+      - name: Check shard ${{ matrix.shard }}/6 (no browser section may be skipped)
         env:
           NODE_OPTIONS: --max-old-space-size=4096   # a check shard hit the 2 GB default heap limit on the runner
         run: |
           # One automatic retry (tools/ci/retry-once.sh): a pass on the second go shows as a FLAKE warning and in the job
           # summary, a second failure fails the job. Never skip or quarantine a check to get green.
-          RETRY_LOG=check.log tools/ci/retry-once.sh "check shard ${{ matrix.shard }}/4" node tools/check.mjs --shard=${{ matrix.shard }}/4 || exit $?
+          RETRY_LOG=check.log tools/ci/retry-once.sh "check shard ${{ matrix.shard }}/6" node tools/check.mjs --shard=${{ matrix.shard }}/6 --times || exit $?
           grep -q '^browser sections skipped: 0 ' check.log || { echo "::error::a browser section was skipped"; exit 1; }
 
   # Offline parity needs no browser, so it runs beside the checks.

@@ -72,14 +72,41 @@ const browserSummary = (n, reasons) => `browser sections skipped: ${n} (${[...re
 const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
-// Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'craft-shortfall-offer': 12, 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'landscape 1920x1080 (browser, UX-L1)': 40, 'desktop layout (browser, desktop-layout-v1)': 30, 'desktop tooltips (browser, desktop-tooltips)': 30, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+// Seconds a section takes on one CI-sized runner (measured with --times, ci-shard-hang 2026-10-09): the shards are balanced by these;
+// a section not listed counts 2. Re-measure when a shard nears half the job limit: `node tools/check.mjs --shard=i/N --times` prints
+// every section's time and the shard's planned load (CI runs it with --times, so the job log has both).
+const WEIGHT = {
+  'forge-line-while-fighting': 133, 'W1-D (browser)': 111, 'staged guide follow-ups (browser)': 90, 'moment layer': 79,
+  'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
+  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'landscape 740x360 (browser, UX-L1)': 55,
+  'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
+  'turn UI (browser)': 50, 'zone10-clear-moment': 42, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
+  'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
+  'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
+  'training (W2-A, browser)': 23, 'story-opening (browser)': 22, 'fight-input-during-banner': 22, 'hero voice': 20, 'tell us form': 18,
+  'action and menu icons (C26, browser)': 18, 'story-hollow-script (browser)': 17, 'foe-tricks-say-so': 16, 'hero attributes (browser)': 16,
+  'camp trade and import (C4, browser)': 15, 'scroll-spares': 14, 'craft-shortfall-offer': 14, 'intro-and-picker': 13, 'gathering': 12,
+  'wire-menu-icons (browser)': 11, 'starters join when met': 11, 'stars (browser)': 10, 'craft reveal': 10, 'forge-tip-goes-stale': 9,
+  'fight HUD fit': 9, 'Next Up Go targets (browser)': 8, 'refine icons (browser)': 8, 'C9 hero registry (browser)': 8,
+  'gear on the Hero tab (cal-0107-gear-and-rates)': 8, 'craft delta': 7, 'cb2': 7, 'gather scene warmup (C12, browser)': 7,
+  'gatherers UI (browser)': 7, 'reload keeps tips': 7, 'LF_EYES hook (browser, qa-player-eyes)': 6, 'nav': 5, 'unique weapons wall icon': 5,
+  'camp guide tracking (C2, browser)': 5, 'onboarding hint placement (HINT1)': 5, 'smelt-done-says-so': 5, 'guide target guard (browser)': 5,
+  'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
+  'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
+  'tool-speed-adds-up': 3, 'C14 away card (browser)': 3
+};
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
+const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
+// The measured sections are placed first, heaviest first, each on the lightest shard (ci-shard-hang: placed in file order, a long
+// section near the end landed on a shard that was already full). Every shard computes the same placement.
+const shardOf = {};
+if (SHARD) for (const [n, w] of Object.entries(WEIGHT).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))) { const k = lightest(); shardOf[n] = k; shardLoad[k] += w; }
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
-  if (SHARD) {   // every shard sees the same sections in the same order, so all of them make the same choice: the lightest shard takes it
-    let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i;
-    shardLoad[k] += WEIGHT[name] || 2;
+  if (SHARD) {   // every shard sees the same sections in the same order, so all of them make the same choice: the lightest shard takes the rest
+    let k = shardOf[name];
+    if (k === undefined) { k = lightest(); shardLoad[k] += 2; }
     if (k !== SHARD[0]) return false;
   }
   console.log(name);
@@ -111,7 +138,8 @@ if (JOBS > 1 && !SHARD) {
 if (process.argv.includes('--times')) {
   const log0 = console.log.bind(console); let cur = null, t0 = Date.now(); const rows = [];
   console.log = (...a) => { if (typeof a[0] === 'string' && /^[a-zA-Z]/.test(a[0])) { if (cur) rows.push([Date.now() - t0, cur]); cur = a[0]; t0 = Date.now(); } log0(...a); };
-  process.on('exit', () => { if (cur) rows.push([Date.now() - t0, cur]); log0('\nsection times (s):'); rows.sort((x, y) => y[0] - x[0]).slice(0, 15).forEach(r => log0('  ' + (r[0] / 1000).toFixed(1).padStart(6) + '  ' + r[1])); });
+  process.on('exit', () => { if (cur) rows.push([Date.now() - t0, cur]); log0('\nsection times (s):'); rows.sort((x, y) => y[0] - x[0]).forEach(r => log0('  ' + (r[0] / 1000).toFixed(1).padStart(6) + '  ' + r[1]));
+    if (shardLoad) log0(`planned shard loads by WEIGHT (s): ${shardLoad.join(', ')}; this is shard ${SHARD[0]}`); });
 }
 const ok = msg => console.log('  ok   ' + msg);
 const skipBrowser = msg => { browserSkipped++; browserSkipReasons.add(browserTools.reason || 'dist/lanternfall.html missing; run node tools/build.mjs'); ok(msg); };
@@ -5252,7 +5280,9 @@ if (section('solo guide: gathering never freezes (browser)')) try {
       const X = s => page.evaluate(s => window.__t.x(s), s);
       await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
       // the fight steps (Attack ... the first boss) are walked by the check above; here the first boss is down (with the 360 gold zone 1 pays: the Workbench costs 300)
-      await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.blade = 1; S.gold = 360; true');
+      // ci-shard-hang: no unique drops while the game fights on its own: a boss's unique tool (the Carapace Pick) would end the Tool
+      // step and bring the wear:tool step ahead of the Workbench, which is not the path this check walks
+      await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.blade = 1; S.gold = 360; UNIQ_TUNE.first = UNIQ_TUNE.again = 0; true');
       await page.waitForTimeout(1300);
       const trail = [], waited = [];
       let built = false, frozen = '';
@@ -14303,9 +14333,10 @@ if (section('boss-spoils-pick')) try {
         await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await X(`window.__sp = []; on('choice', k => k === 'spoils' && __sp.push('choice')); on('spoilsPick', e => __sp.push(e)); true`);
-        // a zone boss's kill as the fight makes it (first clear when zone = maxZone), then the card; state is set before each win
+        // a zone boss's kill as the fight makes it (first clear when zone = maxZone), then the card; state is set before each win.
+        // The unique roll misses (ci-shard-hang): a unique on the win (15%) adds its own lines and Equip button, so the card is not the one checked here
         const win = async (z, js = '', replay = false, after = '') => {
-          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } __sp.length = 0; ${js}; S.activity = 'fight'; S.zone = ${z}; S.maxZone = ${replay ? z + 2 : z}; fightBoss = true; spawn(); killPack(mob, 40); ${after}; S.activity = 'gather'; emit('sceneReset'); true`);
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } __sp.length = 0; ${js}; S.activity = 'fight'; S.zone = ${z}; S.maxZone = ${replay ? z + 2 : z}; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 0; try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } ${after}; S.activity = 'gather'; emit('sceneReset'); true`);
           try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov')`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
           await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs)
           return X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };
