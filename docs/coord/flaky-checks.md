@@ -32,8 +32,10 @@ changes how a check waits for the real state; it never loosens, skips, retries o
   crashed 3 times in 12 loaded runs: the sheet redrew between the two (Salvage arms and hides the Reforge box).
   The hero-sheet loop's selectors (`.sheet .cl-go`, `.cs-act`, `.cs-story summary`) match nothing in the game today, so that loop
   presses nothing, before and after; left for a follow-up card. The long-press step waits (capped at 5 s, a miss fails naming hero and slot) for the action
-  bar, for the last sheet to close, and for each slot's sheet or picker; a slot with nothing to hold keeps its plain hold. The game
-  holds still through the presses (`soloPickerOpen` reads true, as once a sheet is open), because in one full 4-job run after the
-  first fix Tobin's Attack long press never opened a sheet: the live fight can redraw the stage under the pointer inside the
-  550 ms. A missed press names what sat under the pointer and the slot's pointer events. A
+  bar, for the last sheet to close, and for each slot's sheet or picker; a slot with nothing to hold keeps its plain hold. A real mouse
+  resting on the button still lost Attack's long press twice under load (a full 4-job run, then 1 of 20 section runs, both Tobin):
+  Attack acts on the press, the dock's pane redrew, the bar got shorter, the Fight panels tabs slid under the resting pointer, and
+  the button's `pointerleave` dropped the press ("events: down:atk leave:atk ...; under the pointer: sb-tab"). Holding the game
+  still did not stop it. The press is now the slot's own `pointerdown` and `pointerup` sent to the button, so the game's long-press
+  code runs as for a finger and a redraw cannot move the pointer off it. A missed press names the slot's pointer events. A
   subclass choice with no tabs fails saying which path was taken. Thresholds (100, 4, 12) unchanged.
