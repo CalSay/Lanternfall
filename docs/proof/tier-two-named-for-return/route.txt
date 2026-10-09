@@ -20,6 +20,7 @@ expect ".nu-chip"
 tap "Next up"
 wait 1
 expect "Birch Bow: Mining 7 of 14 opens Iron Ore"
-expect "Gathering keeps going while you're away"
+# away-line-only-when-true: the save fights, so the row says how to keep Mining rising away
+expect "Gather Mining before you leave and it keeps going"
 expect-no "Leathers"
 shot min60-next-up

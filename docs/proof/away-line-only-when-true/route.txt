@@ -1,0 +1,23 @@
+# Proof for card away-line-only-when-true: the tier 2 row's away sentence shows only when it is true.
+# The save: the seed 1 Wren walk at minute 60 (tests/proof-fixtures/save-min60-tier-gate.json). The hero is fighting in zone 21, so
+# Mining does not rise away and the row says how to make it rise instead of promising it.
+#   away-line-fighting-*.png  Next up's list holds "Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going."
+# Gathering Mining (the row then says "Gathering keeps going while you're away."), gathering Woodcutting, a 1 h away run from each
+# state and both sentences fitting at 1280x720, 740x360 and 360x740 are held by tools/check.mjs ("away-line-only-when-true").
+# seed: 1
+new min60-tier-gate
+wait 3
+tap-if "Skip this story"
+tap-if "Collect"
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+expect ".nu-chip"
+tap "Next up"
+wait 1
+expect "Birch Bow: Mining 7 of 14 opens Iron Ore"
+expect "Gather Mining before you leave and it keeps going"
+expect-no "Gathering keeps going while you're away"
+shot away-line-fighting
