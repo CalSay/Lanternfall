@@ -102,6 +102,7 @@ const WEIGHT = {
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
   'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  'feint-read-clear': 70,   // 64-74 s locally alone (feint-read-clear, 2026-10-09)
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'page size': 2
@@ -14454,6 +14455,81 @@ if (section('foe-tricks-say-so')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('foe-tricks-say-so crashed: ' + (e.stack || e)); }
+
+// ==== feint-read-clear (card 9 Oct, from trick-read-rate #307): after a feint the line says the real swing follows; a press on a held
+// swing before its windows says "Too early", once a fight, in the same plate. Never before the trick shows. The foe's next move is
+// set to a feint then a held swing (the live path: its script), at 1280x720, 740x360, 360x740 and 1920x1080. The lines sit whole
+// inside the stage, at the 14 px floor on desktop. Tester notes: players obeyed "A feint! Do not press." and were hit by the real swing.
+if (section('feint-read-clear')) try {
+  const at = 'feint-read-clear', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const FEINT = 'A feint! Press on the real swing next.', HOLD = "It holds the swing. Press at the bar's end.", EARLY = "Too early! Press at the bar's end.";
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, desk = w >= 1280;
+        const ctx = await browser.newContext(desk ? { turns: true, viewport: { width: w, height: h } } : { turns: true, viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, val]) => { try { localStorage.setItem(k, val); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = src => page.evaluate(src => window.__t.x(src), src);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity !== 'fight' && setActivity('fight'); S.maxZone = Math.max(S.maxZone, 8); setZone(7); ui(true); true`);
+        for (let i = 0; i < 40 && !(await X('!!(TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== "intro" && TURN_LIVE.foe && !TURN_LIVE.foe.dead)')); i++) await page.waitForTimeout(150);
+        // the foe's move, started on the live path (turnBegin, its script): a feint, then a swing that holds. Both sides kept alive
+        await X(`(() => { S.turn.seen = {}; delete document.body.dataset.trickTip;
+          window.__keep = setInterval(() => { const u = cbUnitByKey('hero'); if (u) u.hp = u.maxHp; const t = TURN_LIVE; if (t && !t.ended && t.foe) t.foe.hp = Math.max(t.foe.hp, 0.9 * t.foe.max); }, 50);
+          window.__go = () => { const m = TURN_LIVE; m.charge = null; m.e.skip = 0; m.e.recover = 0; m.si = 0;
+            m.p.script = [{ id: 'fx', name: 'Test Swing', hits: [{ wind: 2.5, x: 0, feint: true }, { wind: 2, x: 0.001, hold: 3 }] }];
+            document.querySelector('.tv-warn').hidden = true; turnBegin(m, 'foe', TURN_LIVE_IO); return true; };
+          return __go(); })()`);
+        const warn = () => page.evaluate(() => { const b = document.querySelector('.tv-warn'), box = document.getElementById('stageBox'); if (!b || b.hidden) return { on: false };
+          const r = b.getBoundingClientRect(), sb = box.getBoundingClientRect();
+          return { on: true, txt: b.textContent, px: parseFloat(getComputedStyle(b).fontSize), inside: r.left >= sb.left - 1 && r.right <= sb.right + 1 && r.top >= sb.top - 1 && r.bottom <= sb.bottom + 1, cut: b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1 }; });
+        const hit = () => X('JSON.stringify(TURN_LIVE && TURN_LIVE.move && TURN_LIVE.phase === "foeWindup" ? { id: TURN_LIVE.move.id, i: TURN_LIVE.hitI, feint: !!TURN_LIVE.move.hits[TURN_LIVE.hitI].feint, now: TURN_LIVE.now, tellAt: TURN_LIVE.tellAt, holdFrom: TURN_LIVE.holdFrom, holdTo: TURN_LIVE.holdTo } : null)').then(JSON.parse);
+        const until = async (f, n = 100) => { for (let i = 0; i < n; i++) { const r = await f(); if (r) return r; await page.waitForTimeout(50); } return null; };
+        const holding = async () => { const x = await hit(); return x && x.id === 'fx' && x.i === 1 && x.now >= x.holdFrom && x.now < x.holdTo - 1 ? x : null; };
+        // before the feint's bar breaks, nothing names it (veto "warn before foe tricks")
+        const f0 = await hit();
+        assert(!!f0 && f0.id === 'fx' && f0.feint && f0.now < f0.tellAt, `${v}: the test move's feint winds up (${JSON.stringify(f0)})`);
+        const s0 = await warn(), t0 = await X('document.body.dataset.trickTip || ""');
+        assert(!(s0.on && s0.txt === FEINT) && !t0, `${v}: no feint line before its bar breaks (${JSON.stringify(s0)})`);
+        // the bar breaks: the line says the real swing follows, whole, inside the stage, at the floor on desktop
+        const sF = await until(async () => { const s = await warn(); return s.on && s.txt === FEINT ? s : null; });
+        assert(!!sF && sF.inside && !sF.cut, `${v}: after the feint the line says "${FEINT}" inside the stage (${JSON.stringify(sF)})`);
+        if (sF && desk) assert(sF.px >= 14, `${v}: the feint line is at least 14 px (${sF.px})`);
+        assert(await X('document.body.dataset.trickTip') === 'tfeint', `${v}: the page marks the feint line shown`);
+        // the held swing: the line shows once it holds; a press while it holds says "Too early", in the same plate
+        const h0 = await until(holding);
+        assert(!!h0, `${v}: the held swing stalls`);
+        const sH = await until(async () => { const s = await warn(); return s.on && s.txt === HOLD ? s : null; }, 20);
+        assert(!!sH && sH.inside && !sH.cut, `${v}: the held swing says "${HOLD}" inside the stage (${JSON.stringify(sH)})`);
+        if (sH && desk) assert(sH.px >= 14, `${v}: the held-swing line is at least 14 px (${sH.px})`);
+        await X(`turnCombatAction('parry'); true`); await page.waitForTimeout(60);
+        const sE = await warn();
+        assert(sE.on && sE.txt === EARLY && sE.inside && !sE.cut, `${v}: an early press on a held swing says "${EARLY}" in the same plate (${JSON.stringify(sE)})`);
+        if (desk) assert(sE.px >= 14, `${v}: the early line is at least 14 px (${sE.px})`);
+        assert(await X('document.body.dataset.trickTip') === 'early', `${v}: the page marks the early line shown`);
+        // once a fight: the same move again, its held swing pressed early, says no early line
+        await until(async () => !(await hit()), 200);
+        await X('delete document.body.dataset.trickTip; __go()');
+        const h1 = await until(holding, 200);
+        assert(!!h1, `${v}: the second held swing stalls`);
+        if (h1) { await X(`turnCombatAction('parry'); true`); await page.waitForTimeout(60);
+          const r1 = await X('JSON.stringify({ tip: document.body.dataset.trickTip || "", pressed: !!TURN_LIVE.usedDefense })').then(JSON.parse);
+          assert(r1.pressed && r1.tip !== 'early', `${v}: a second early press in the same fight says no early line (${JSON.stringify(r1)})`); }
+        await X('clearInterval(window.__keep); true');
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('feint-read-clear crashed: ' + (e.stack || e)); }
 
 if (section('foe moves by type')) try {
   const g = loadCore({ seed: 7 }), E = s => g.eval(s), J = s => JSON.parse(E(`JSON.stringify(${s})`));

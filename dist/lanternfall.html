@@ -47801,10 +47801,23 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   on('parryWindow', () => { winT0 = 0; said.hold = said.feint = said.flinch = 0; });
   // boss tricks (59k TURN_TUNE.tricks): the first time each shows, a line says what to do (S.turn.seen: additive keys in an existing object)
   const said = { hold: 0, feint: 0, flinch: 0 };
-  function trickTip(key, txt) {
+  // feint-read-clear: each line says what to do next (a feint: the real swing follows; a held swing: press at the bar's end), the
+  // whole line every time, up for less time after the first. body[data-trick-tip]: the last one shown, for a proof route
+  const TRICK_TIP = { tdelay: "It holds the swing. Press at the bar's end.", tfeint: 'A feint! Press on the real swing next.', early: "Too early! Press at the bar's end." };
+  function trickTip(key) {
     const seen = S.turn && (S.turn.seen || (S.turn.seen = {})); if (!seen) return;
-    if (seen[key]) say(txt.split('.')[0] + '.', 'charge', 1.0); else { seen[key] = 1; say(txt, 'charge', 3.2); }
+    say(TRICK_TIP[key], 'charge', seen[key] ? 1.6 : 3.2); seen[key] = 1; document.body.dataset.trickTip = key;
   }
+  // a press on a held swing before its windows open fails: once a fight, the line says it was early (never before the hold shows;
+  // a press cannot come late, as the hit lands when its windows close)
+  let toldEarly = 0;
+  on('fightStart', () => { toldEarly = 0; });
+  const earlyPress = p => {
+    if (!p || p.res === 'parry' || p.res === 'dodge' || toldEarly || !(typeof turnCombatOn === 'function' && turnCombatOn())) return;
+    const s = turnCombatSnapshot(); if (!s || s.phase !== 'foeWindup' || s.feint || !(s.holdTo > 0) || s.now < s.holdFrom || s.now >= s.dodgeOpensAt) return;
+    toldEarly = 1; said.hold = 1; trickTip('early');
+  };
+  on('soloParry', earlyPress); on('soloDodge', earlyPress);
   // the narrow stage line (about 18 characters wide): three short lines, as the trick tips are; the boss's name is on its bar
   // rally gates (rally-gates-live): the boss holds at the mark on its bar until it has made its next move; while it gathers a
   // charged move, hits cannot break the charge there, so only a Stun does
@@ -47868,8 +47881,8 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
       const inP = s.now >= s.parryOpensAt && !broke, inD = s.now >= s.dodgeOpensAt && !broke;
       bar.classList.toggle('in-parry', inP); bar.classList.toggle('in-dodge', inD && !inP);
       bar.classList.toggle('stall', stall); bar.classList.toggle('feint', broke); bar.classList.toggle('flinch', !!s.flinch);
-      if (stall && !said.hold) { said.hold = 1; trickTip('tdelay', 'It holds the swing. Wait for the bar.'); }
-      if (broke && !said.feint) { said.feint = 1; trickTip('tfeint', 'A feint! Do not press.'); }
+      if (stall && !said.hold) { said.hold = 1; trickTip('tdelay'); }
+      if (broke && !said.feint) { said.feint = 1; trickTip('tfeint'); }
       if (s.flinch && !said.flinch) { said.flinch = 1; say('Off balance. You cannot defend this one.', 'charge', 1.2); }
       dz.style.left = pct(at(s.dodgeOpensAt)); dz.style.width = pct(at(s.closesAt) - at(s.dodgeOpensAt));
       pz.style.left = pct(at(s.parryOpensAt)); pz.style.width = pct(at(s.closesAt) - at(s.parryOpensAt));
