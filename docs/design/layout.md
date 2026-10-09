@@ -26,6 +26,11 @@ tiers grow it (desktop-layout-v1, spec `docs/design/desktop-layout.md`):
 
 Tall landscape below Desktop 1 (1024x768 tablets) keeps the text as written but takes a side column of clamp(256px, 25vw, 300px), so the fight slots' labels fit.
 
+Upright tablets (upright-tablet, `80-landscape.css`: `(min-width: 700px) and (not (min-aspect-ratio: 1/1))`, so 768x1024 and up) keep
+the portrait layout but drop the 560 px strip: the stage, menus and sheets span the screen, the fight bar grows to 480 px
+(112 px slots) and the hero picker sets two cards across. The landscape layout was not used there: its rail and side column
+would leave a 448 px stage at 768 wide, narrower than the strip. Phones (under 700 px wide) never match.
+
 - **Text:** `tools/build.mjs` (`scaleText`) writes every CSS font size S as `max(var(--tmin, 0px), calc(S * var(--tk, 1)))`.
   `:root` sets `--tk: 1; --tmin: 0px`, so phones, 1024x768 tablets and 360x740 compute exactly as written. A line carrying
   `/* tk:off */` is left alone (the slot labels and key letters). A check compares every font size and the layout at 740x360,
