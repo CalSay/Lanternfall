@@ -85,5 +85,5 @@ replay them.
 | hero-build-tab-blank | (new) | pass | pass | Kept (merged while this card ran) |
 | unspent-points-nudge | (new) | pass | pass | Kept (merged while this card ran) |
 | z13-unstick | (new) | pass | pass | Kept (merged while this card ran) |
-| boss-retry-reads-odds | (new) | pass | pass | Kept (merged while this card ran) |
+| boss-retry-reads-odds | (new) | pass | pass | Fixed (route-boss-odds-fixture): after #229 softened the zone 16 boss, the z16-weak save lost with a fair chance, so Keep fighting here never led. The weak half now uses fixture z26-weak (zone 26, level 24, tier 1: budget.mjs z26-boss-arrival reads 0% a try; the game says under 5%), the first plain zone above the walls the balance pass re-measures. 10 of 10 at 360x740 and 740x360. |
 | gear-icons-48 | (new) | pass | pass | Kept (merged while this card ran) |
