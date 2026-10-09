@@ -14398,9 +14398,10 @@ if (section('embed-base91')) try {
   for (const [t, B] of Object.entries(BG)) ['land', 'port'].forEach((o, i) => rows.push([`BG_ART.${t}.${o}`, B[o].src, BGF[B.id] ? art(...BGF[B.id][i].split('/')) : null, '']));
   const bad = rows.filter(([, u, want, pre]) => !(typeof u === 'string' && u.startsWith(pre) && want && Buffer.from(u.slice(pre.length), 'base64').equals(want))).map(r => r[0]);
   assert(rows.length > 700 && !bad.length, `embed-base91: all ${rows.length} embedded images read back as the approved files' exact bytes` + (bad.length ? ` (not: ${bad.slice(0, 6).join(', ')})` : ''));
-  // the files hold basE91, not base64: no data URI or base64 run left in them, and every string sits in single quotes
+  // the files hold basE91, not base64: no data URI and no quoted string
+  // of base64 characters only (basE91 text mixes in its other 29 characters)
   const left = [...ICONS.map(r => r[0]), '21r-data-resicons.js', '21yc-data-portraits.js', '21za-data-foeart.js', '21zb-data-bgart.js']
-    .filter(f => /data:image\/|[A-Za-z0-9+/]{400}={0,2}"/.test(fs.readFileSync(path.join(J, f), 'utf8').split('\n').filter(l => !l.startsWith('//')).join('\n')));
+    .filter(f => /data:image\/|['"][A-Za-z0-9+/]{100,}={0,2}['"]/.test(fs.readFileSync(path.join(J, f), 'utf8').split('\n').filter(l => !l.startsWith('//')).join('\n')));
   assert(!left.length, 'embed-base91: the embedded art files carry basE91 text, not base64' + (left.length ? ' (' + left.join(', ') + ')' : ''));
   // the tools' encoder and the page's decoder agree on every length and edge (random files, 0-600 bytes, plus all-0 and all-255)
   { const ctx = {}; vm.runInNewContext(fs.readFileSync(path.join(J, '21zz-art-b91.js'), 'utf8') + '\nthis.dec = b91Bytes; this.b64 = b91Base64;', ctx);

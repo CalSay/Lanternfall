@@ -2,7 +2,7 @@
 // basE91 (Joachim Henke's alphabet) carries a file in about 1.23 characters a byte, against base64's 1.33. Its alphabet
 // has `"` but no `'` or `\`, so each string goes in the page in single quotes, never through JSON.stringify.
 //   b91Encode(bytes) -> string       refuses (throws) a string holding `</script` in any case, which would end the page's script
-//   b91Decode(string) -> Buffer      the exact bytes back (the page's own decoder is src/js/60-art-b91.js)
+//   b91Decode(string) -> Buffer      the exact bytes back (the page's own decoder is src/js/21zz-art-b91.js)
 //   b91Lit(bytes) -> `'...'`         the encoded file as a JS string literal
 // The embed tools write it; tools/check.mjs (section embed-base91) decodes every string with the page's decoder.
 export const B91_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"';
