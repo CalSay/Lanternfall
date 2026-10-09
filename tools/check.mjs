@@ -14269,6 +14269,55 @@ if (section('boss-spoils-pick')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('boss-spoils-pick: ' + (e.stack || e.message)); }
+
+// ---- look-card-says-why (W5 proposal 3): a cache's lantern colour says what it did in its own line, whatever the sub line shows ----
+if (section('look-card-says-why')) try {
+  const at = 'look-card-says-why', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pre-z7-boss.json'), 'utf8');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // a first clear with no lantern colour owned or worn and no unique on the win, then the cache card
+        const win = async z => {
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); }
+            ${z === 1 ? `for (const k of Object.keys(S.deep.cos)) if (k.startsWith('l_')) delete S.deep.cos[k]; S.deep.eq.lantern = null; if (S.deeds && S.deeds.wear) delete S.deeds.wear.flame;` : ''}
+            S.activity = 'fight'; S.zone = S.maxZone = ${z}; fightBoss = true; spawn();
+            const r0 = Math.random; Math.random = () => 0.999; try { killPack(mob, 40); } finally { Math.random = r0; }   // the unique roll misses, so the odds line shows
+            S.activity = 'gather'; emit('sceneReset'); true`);
+          try { await page.waitForFunction(() => window.__t.x(`[...document.querySelectorAll('.mm-ov')].some(o => /Lantern Cache|First boss/.test(o.textContent))`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
+          await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs)
+          return X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };
+            const inView = r => r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1;
+            const ln = [...o.querySelectorAll('.mm-card *')].filter(e => /lantern colour|lantern burns/.test(e.textContent)).pop();   // the colour's own line (the card itself may scroll on a short screen)
+            const cr = o.querySelector('.mm-card').getBoundingClientRect(), r = ln && ln.getBoundingClientRect();
+            return { up: true, text: o.textContent, fits: !!r && inView(r) && r.top >= cr.top && r.bottom <= cr.bottom + 1 }; })()`);
+        };
+        let c = await win(1);
+        assert(c.up && /Unique chance on this win: \d+(\.\d+)?%/.test(c.text) && /Your lantern burns Ember Red now\./.test(c.text) && !/New lantern colour/.test(c.text) && c.fits && await X('S.deep.eq.lantern === "l_ember"'),
+          `${vw}: zone 1's cache card shows the unique chance and says "Your lantern burns Ember Red now." in a line on screen (${JSON.stringify({ up: c.up, fits: c.fits, text: c.text && c.text.slice(0, 300) })})`);
+        if (w === 1280) {
+          c = await win(2);
+          assert(c.up && /New lantern colour: Deep Blue\. You own it now\./.test(c.text) && !/burns Deep Blue/.test(c.text) && await X('S.deep.eq.lantern === "l_ember"'),
+            `${vw}: a colour the lantern does not wear says it is owned, not burning (${JSON.stringify({ up: c.up, text: c.text && c.text.slice(0, 300) })})`);
+        }
+        assert(!/\bTap\b/.test(c.text || ''), `${vw}: neutral wording`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('look-card-says-why: ' + (e.stack || e.message)); }
 if (section('scroll-spares')) try {
   const at = 'scroll-spares', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-wren-spare-moss.json'), 'utf8');
   { // core: the fixture, then the toast rule
