@@ -8,6 +8,8 @@ new flow-cold-camp
 wait 2
 tap-if "Continue"
 tap "Craft"
+wait 1
+tap "Workbench"
 wait 4
 expect ".cf-rec .cf-pre"
 shot recipe-line-before-pay

@@ -40743,7 +40743,9 @@ let craftUI = null;
   };
   // what the line depends on: the fight's signature and the worn pieces themselves (an upgrade or reforge keeps their ids)
   const preSig = () => fdSig() + '|' + JSON.stringify(CRAFT_HERO_POS.map(p => { const w = itemById(S.equip[p]); return w ? [w.slot, w.t, w.r, w.plus, w.g, w.u, w.mw, w.a] : 0; }));
-  function preStart(key, mk, done) {
+  // live(): the row or sheet is still on screen; once it is not, the sample stops and is dropped (it starts again when the row shows),
+  // so no chunk runs under a fight or another menu
+  function preStart(key, mk, done, live) {
     if (typeof fightDeltaJob !== 'function') return;
     const sig = preSig(), cur = st8.pre[key];
     if (cur && cur.sig === sig) return;
@@ -40752,6 +40754,7 @@ let craftUI = null;
     let job = null;
     const run = () => {   // the piece and both profiles are made in the first step, off the click path
       if (st8.pre[key] !== rec) return;
+      if (!safe(live, false)) { delete st8.pre[key]; return; }
       if (!job) { const it = safe(mk, null); job = it ? safe(() => fightDeltaJob(it, { scratch: true }), null) : null; if (!job) return; }
       if (safe(() => job.step(), true)) { rec.res = job.res; if (rec.res) done(); return; }
       setTimeout(run, 30);
@@ -41115,7 +41118,7 @@ let craftUI = null;
       }
       if (!force && busy()) return;   // never swap a row under the player's finger
       st8.nu = typeof craftGoalNext === 'function' ? safe(() => craftGoalNext(), null) : null;   // craft-odds-before-pay: the row Next Up points at
-      { const n = st8.nu, pk = n ? preRecKey(n.kind, n.t) : ''; if (pk) preStart(pk, () => preRec(n.kind, n.t), () => ui()); }   // sampled after the row shows
+      { const n = st8.nu, pk = n ? preRecKey(n.kind, n.t) : ''; if (pk) preStart(pk, () => preRec(n.kind, n.t), () => ui(), () => rec.list.isConnected && rec.list.getClientRects().length > 0); }   // sampled after the row shows
       // craft-reveal: the result card and the last-five strip
       if (st8.result != null && !itemById(st8.result)) st8.result = null;
       st8.recent = st8.recent.filter(id => itemById(id));
@@ -41592,7 +41595,8 @@ let craftUI = null;
       upBox.append(b);
       if (heroPos) {   // craft-odds-before-pay: what the next upgrade changes against the boss, before the press
         const pk = `up:${it.id}:${it.plus}`, id = it.id;
-        preStart(pk, () => preUp(it), () => { if (sheet && sheet.id === id && !sheet.api.closed) renderItem(); });
+        const open = () => !!(sheet && sheet.id === id && !sheet.api.closed);
+        preStart(pk, () => preUp(it), () => { if (open()) renderItem(); }, open);
         const pl = preLine(pk); if (pl) upBox.append(el('p', 'note cf-pre', pl));
       }
       if (!f && !heroPos) upBox.append(el('p', 'note', 'Equip it to upgrade it.'));
