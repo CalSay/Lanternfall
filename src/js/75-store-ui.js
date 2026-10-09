@@ -3,8 +3,8 @@
 // building row is the Camp's list (75-camp-ui.js); its icon is registered here.
 //   - The view (id 'pack', label "Storehouse"): a top card (level, what it holds, Build or Upgrade ›),
 //     filter chips (All, each family with something in it, Fought, Trophies), sort chips (Fullest, Name) and
-//     "Show all grades". First view: the shelf, one stack per family at the grade you use (storeShelfGrade
-//     below; Essence is one pile), at most 7 stacks (8 once coal lands). "Show all grades" or a family filter:
+//     "Show all tiers". First view: the shelf, one stack per family at the grade you use (storeShelfGrade
+//     below; Essence is one pile), at most 7 stacks (8 once coal lands). "Show all tiers" or a family filter:
 //     families as rows of every grade with a held/cap bar, empty families folded into one line. Trophies
 //     fold. A stack or cell opens "where to get it" (72-ui-gather whereSheet).
 //   - The "Storehouse full" warning lives on the Now card and the header pill (72-ui-gather, 75-nav-ui).
@@ -136,7 +136,7 @@ function storeSalvageNote(preview, t) {
     V.up = btn('mini sh-up', 'Upgrade ›');
     V.up.addEventListener('click', () => setTab('world', '#camp-b-store'));
     card.append(tx, V.up);
-    // filter chips (wrap to a second row when narrow; no view swipe), then sort chips and "Show all grades"
+    // filter chips (wrap to a second row when narrow; no view swipe), then sort chips and "Show all tiers"
     const chips = el('div', 'sh-chips'); chips.dataset.noswipe = '';
     for (const [id, label] of FILTERS) {
       const b = btn('sh-fchip', label); b.setAttribute('aria-pressed', String(id === filter));
@@ -151,7 +151,7 @@ function storeSalvageNote(preview, t) {
       b.addEventListener('click', () => { sort = id; ui(true); });
       tools.append(b); V.sorts[id] = b;
     }
-    V.all = btn('sh-fchip sh-all', 'Show all grades');
+    V.all = btn('sh-fchip sh-all', 'Show all tiers');
     V.all.addEventListener('click', () => { showAll = !showAll; ui(true); });
     tools.append(V.all);
     // the shelf: one stack per family
@@ -202,12 +202,12 @@ function storeSalvageNote(preview, t) {
       putAttr(V.chips[id], 'aria-pressed', String(filter === id));
       putToggle(V.chips[id], 'on', filter === id);
     }
-    // sort and "Show all grades". The shelf is the first view; a family filter (or the toggle) shows every grade.
+    // sort and "Show all tiers". The shelf is the first view; a family filter (or the toggle) shows every grade.
     for (const [id] of SORTS) { putHidden(V.sorts[id], filter !== 'all'); putAttr(V.sorts[id], 'aria-pressed', String(sort === id)); putToggle(V.sorts[id], 'on', sort === id); }
     putHidden(V.sortl, filter !== 'all');   // sorting only changes the All view
     const fam1 = filter !== 'all' && filter !== 'fought' && filter !== 'troph';
     putHidden(V.all, filter !== 'all');
-    putText(V.all, showAll ? 'Show one grade' : 'Show all grades');
+    putText(V.all, showAll ? 'Show one tier' : 'Show all tiers');
     putAttr(V.all, 'aria-pressed', String(showAll));
     putToggle(V.all, 'on', showAll);
     const grades = filter !== 'troph' && (fam1 || (filter === 'all' && showAll));
