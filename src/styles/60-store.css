@@ -60,3 +60,10 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .mat.sh-over .mc { color: #F2A93B; }
 .mat.sh-over .sh-bar b { background: #F2A93B; }
 .sh-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+/* desktop-views-2: at the desktop tiers the Store's shelf is the list and a material's "where to get it" docks beside it
+   (72-ui-gather.js whereSheet, dock: true). The bigger text needs wider stacks, and a long name wraps instead of ending in "...". */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .sh-shelf { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .sh-stack-nm { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+}

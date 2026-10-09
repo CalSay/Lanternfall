@@ -18,8 +18,11 @@
 //   stationLevel(kind) -> level used for the tier gate and rarity (see N4 note below)
 //   stationTierOpen(kind, t) -> bool   the tier gate (GP1: also open when the save kept the tier)
 //   craftXpFor(skill, n) -> n with the catch-up multiplier applied (x2 while behind)
-//   upgradeItem(id, trophIdx?) -> bool           +1 (max +10); +8..+10 each pay 1 Trophy
-//   canUpgrade(id) -> { ok, why, cost }          (the most plentiful Trophy unless trophIdx)
+//   upgradeItem(id, trophIdx?, opts?) -> bool    +1 (max +10); +8..+10 each pay 1 Trophy
+//   canUpgrade(id, trophIdx?, opts?) -> { ok, why, cost, cover }   (the most plentiful Trophy unless trophIdx)
+//                                                opts: { cover: true } lets gold pay the material the hero is short
+//   upgradeItem(id, trophIdx?, opts?)            the same opts; emits 'upgraded' { item, gold, cover: { units, gold } }
+//   upgradeCover(it) -> { fam, t, units, gold } | null   what gold may cover of its next upgrade (upgrade-gold-covers-short)
 //   craftUpgradeRefund(it) -> gold               what salvaging it pays back: ECON.upRefund of the gold its +N cost
 //                                                at today's prices (gold-without-training; no save field)
 //   reforgeItem(id, lineIdx) -> bool             reroll one affix line (Enchanting gate)
@@ -47,17 +50,34 @@
 //     Swords/Helms and the hero's gear of another class into the new class's kinds (same id,
 //     tier, rarity, +N, lines). Anything that still does not fit goes back to the bag.
 //
-// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd }).
+// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd, xpv }). xpv: the station curve the bars are on.
 //   tmd: { fam: [n x 5] } units made by transmuting down (they cannot be broken down again; BAL1).
 //   troph: Trophy counts by zone type (CRAFT_TROPHIES order). tonic: { k, t, left } active.
 //   tonics: { 'key:t': count } the pouch. jobs, champ: K5/K10. starChart: Star Charts made.
 
-let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
+// craft-curve-skills-report: S.craft.xpv says which station curve the Smithing, Woodcraft, Tailoring and Enchanting bars are on
+// (0: today's SKILL_TUNE.craftNeed, 1: craftNeedV2). When CRAFT_TUNE.curve disagrees, each bar keeps its share of its level on the
+// other curve and stays under the next level, and no level changes (the S.attr.xpv rule, 55-attributes attrXpMap). Runs when the
+// craft state loads (a save-code import reloads into this) and before every station gain (gainSkill, 50-sim), so refine XP, which
+// skips gainStation, never chains level-ups on an unmapped bar.
+function craftXpMap() {
+  const c = S.craft; if (!c || typeof c !== 'object' || (c.xpv === 1) === !!CRAFT_TUNE.curve) return;
+  const on = CRAFT_TUNE.curve ? 1 : 0;
+  for (const k of SKILL_TUNE.craftSkills) {
+    const sk = S.skills && S.skills[k]; if (!sk || typeof sk !== 'object') continue;
+    const lv = Math.max(1, sk.lv | 0);
+    sk.xp = Math.min(0.999, Math.max(0, (+sk.xp || 0) / skillNeed(lv, k, 1 - on))) * skillNeed(lv, k, on);
+  }
+  c.xpv = on;
+}
+
+let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, upgradeCover, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund;
+  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare;
 
 {
-  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {} });
+  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0 });
+  craftXpMap();
   const C = () => S.craft;
   const STAR = { t: 3, mats: { crystal: 40, ess: 20 }, troph: [[6, 1]], st: 'ench' };
   const SALVAGE_ESS = 0.2; // chance per affix line of 1 extra essence (at most 1)
@@ -91,6 +111,13 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     return n * m;
   };
   const gainStation = (skill, n) => gainSkill(skill, craftXpFor(skill, n));
+  // craft-curve-skills-report: with CRAFT_TUNE.curve on, making, upgrading or reforging a piece below the highest tier its station
+  // has open pays SKILL_TUNE.belowTierX of its XP (re-crafting cheap items stops paying). Re-making on the top open tier pays in full.
+  craftXpShare = (kind, t) => {
+    if (!CRAFT_TUNE.curve) return 1;
+    let top = 1; for (let u = 2; u <= 5; u++) if (stationTierOpen(kind, u)) top = u;
+    return t < top ? SKILL_TUNE.belowTierX : 1;
+  };
   const gateWhy = (skill, need) => `Needs ${SKILL[skill]} ${need}`;
   // H1 (55-hearth): a cold save crafts only at a station it has built. '' = built (every warm save).
   const unbuilt = st => typeof hearthStationWhy === 'function' ? hearthStationWhy(st) : '';
@@ -133,7 +160,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const r = rollRarity(stationLevel(kind));
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
     addItem(it);
-    gainStation(stationOf(kind).skill, CRAFT_XP.craft(t));
+    gainStation(stationOf(kind).skill, CRAFT_XP.craft(t) * craftXpShare(kind, t));
     // craft-delta: opts.wear (the Craft button only) puts on a tool that beats the worn one, or fills an empty slot. Gear always asks.
     // Straight into S.equip, not equipItem (its "Equipped" toast would be a second toast for one craft; the result card is the receipt).
     const ev = { item: it, kind, t }, d = CRAFT_KINDS[kind], pos = d && d.tool ? kindPos(kind) : null;
@@ -159,31 +186,53 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     let best = -1; tr.forEach((n, i) => { if (n > 0 && (best < 0 || n > tr[best])) best = i; });
     return best;
   };
-  canUpgrade = (id, trophIdx) => {
+  // upgrade-gold-covers-short (ruling autopilot/rulings/2026-10-08-gold-covers-material.md, B): an upgrade short of its one
+  // material (never Essence, a Trophy or coal) may pay the units it lacks in gold, ECON.coverFoes foes of the tier's foe gold
+  // a raw unit (a middle is 2), once that material is reachable: its gathering is open at the item's tier and, for a middle,
+  // the station that makes it is built. Held units go first. Nothing is stored and covered units give no skill XP (only the
+  // upgrade's own station XP, unchanged); salvage refunds step gold only. Upgrades only: crafts always take their materials.
+  upgradeCover = it => {
+    if (!it || !CRAFT_KINDS[it.slot] || !(ECON.coverFoes > 0) || it.plus >= CRAFT_TROPHY_GATE.max) return null;
+    const t = it.t, mats = upgradeCost(it).mats, fam = Object.keys(mats).find(k => k !== 'ess' && k !== 'coal');
+    if (!fam) return null;
+    const units = mats[fam] - matOwn(fam, t); if (!(units > 0)) return null;
+    const mid = !!REFINE_RAW[fam], raw = mid ? REFINE_RAW[fam] : fam, fm = CRAFT_FAMILY[raw];
+    if (!fm || fm.src !== 'gather' || !skillTierOpen(skillOf(raw), t)) return null;
+    if (typeof navSkillOpen === 'function' && !navSkillOpen(skillOf(raw))) return null;   // Foraging and Hunting open with their feature
+    if (mid && !refineBuilt(REFINE_PRODUCTS[fam].st)) return null;
+    return { fam, t, units, gold: econSig(units * (mid ? 2 : 1) * ECON.coverFoes * foeGoldBase(econGradeZ(t))) };
+  };
+  canUpgrade = (id, trophIdx, opts) => {
     const it = itemById(id); if (!it) return no('No such item.');
     if (!CRAFT_KINDS[it.slot]) return no('This item cannot be upgraded.');
     if (it.plus >= CRAFT_TROPHY_GATE.max) return no(`Already +${CRAFT_TROPHY_GATE.max}.`);
     const cost = upgradeCost(it), x = { cost };
     if (cost.troph && pickTrophy(trophIdx) < 0) return no(trophIdx != null ? `Needs 1 ${trophyName(trophIdx)}` : 'Needs 1 Trophy of any kind', x);
-    const miss = missing(cost.mats, it.t);
+    let mats = cost.mats, gold = cost.gold;
+    if (opts && opts.cover) {
+      const cv = upgradeCover(it); if (!cv) return no('Gold cannot cover this upgrade.', x);
+      x.cover = cv; mats = Object.assign({}, mats); mats[cv.fam] -= cv.units; if (mats[cv.fam] <= 0) delete mats[cv.fam];
+      gold += cv.gold;
+    }
+    const miss = missing(mats, it.t);
     if (miss.length) return no(missWhy(miss, it.t), x);
-    if (S.gold < cost.gold) return no(`${fmt(cost.gold - S.gold)} more gold`, x);
-    return yes(x);
+    if (S.gold < gold) return no(`${fmt(gold - S.gold)} more gold`, x);
+    return yes(Object.assign(x, { pay: { mats, gold } }));
   };
-  upgradeItem = (id, trophIdx) => {
-    const c = canUpgrade(id, trophIdx); if (!c.ok) return false;
-    const it = itemById(id);
-    payMats(c.cost.mats, it.t); S.gold -= c.cost.gold; econSpend('craft', c.cost.gold);
+  upgradeItem = (id, trophIdx, opts) => {
+    const c = canUpgrade(id, trophIdx, opts); if (!c.ok) return false;
+    const it = itemById(id), cv = c.cover;
+    payMats(c.pay.mats, it.t); S.gold -= c.pay.gold; econSpend('craft', c.pay.gold);   // the cover gold under the upgrade's own ledger kind
     if (c.cost.troph) C().troph[pickTrophy(trophIdx)] -= c.cost.troph;
     it.plus++;
     gearDirty();
-    gainStation(stationOf(it.slot).skill, CRAFT_XP.upgrade(it.t));
+    gainStation(stationOf(it.slot).skill, CRAFT_XP.upgrade(it.t) * craftXpShare(it.slot, it.t));
     toast(`${itemName(it)} upgraded.`, 'good', { item: it }, 'low');
     // gold-without-training: the two steps worth a word. +7 is the last gold-only step; +10 is the top.
     const nm = kindName(it.slot, it.t, it.u);
     if (it.plus === CRAFT_TROPHY_GATE.from - 1) emit('toast', { key: 'upgrade:mark', msg: `${nm} is now +${it.plus}. The next three upgrades each need a Trophy from a champion.`, kind: 'good', prio: 'normal', icon: { item: it } });
     else if (it.plus === CRAFT_TROPHY_GATE.max) emit('toast', { key: 'upgrade:mark', msg: `${nm} is now +${it.plus}, fully upgraded.`, kind: 'good', prio: 'normal', icon: { item: it } });
-    emit('upgraded', { item: it, gold: c.cost.gold });
+    emit('upgraded', { item: it, gold: c.cost.gold, cover: { units: cv ? cv.units : 0, gold: cv ? cv.gold : 0 } });
     save();
     return true;
   };
@@ -211,7 +260,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     payMats(c.cost.mats, it.t); S.gold -= c.cost.gold; econSpend('craft', c.cost.gold);
     it.a = res.a; it.rf = res.rf;
     gearDirty();
-    gainStation('ench', CRAFT_XP.reforge(it.t));
+    gainStation('ench', CRAFT_XP.reforge(it.t) * (CRAFT_TUNE.curve && it.t < skillTopTier('ench') ? SKILL_TUNE.belowTierX : 1));   // reforge pays Enchanting, so its own top tier counts
     const [[stat, v]] = craftAffixValue(res.line[0], itemPower(it), res.line[1]);
     toast(`Reforged: ${craftFmtLine(stat, v)}.`, 'good', { item: it }, 'low');
     emit('reforged', { item: it, idx, line: res.line });

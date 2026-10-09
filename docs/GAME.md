@@ -27,7 +27,7 @@ The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the C
 at 1920x1080 and fit 1366x640. Landscape phones (740x360) and tablets (1024x768) still play without clipping; phones held
 upright (360x740) must not break, but new features need not be designed for them. On a desktop screen (1200x600 and up) text and chrome grow, an item's detail opens
 beside the list in its menu, and the number keys 1 to 5 open Fight, Hero, Gather, Craft and Camp (the open tab's number closes it;
-Escape closes the detail, then the menu). Two-press buttons (spend a Scroll, a camp build, a reset) say "Confirm" on the second press. With a mouse, resting the pointer on an item, an ability or a cost shows a tip with what it is and does (the same lines a click opens; a touch screen never shows one).
+Escape closes the detail, then the menu), and [ and ] step through the open menu's views. Every menu shows its list and its detail side by side there (Stars, Build, Camp, Make, the gathering views, the Store, the Codex). Two-press buttons (spend a Scroll, a camp build, a reset) say "Confirm" on the second press. With a mouse, resting the pointer on an item, an ability or a cost shows a tip with what it is and does (the same lines a click opens; a touch screen never shows one).
 
 Menu sub-tabs keep their labels and show the drawn menu icons. Action buttons show small Ready, Cooldown,
 Locked or Unavailable badges; the ability picker marks the selected action. Icons use native pixel sizes.
@@ -201,11 +201,25 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   hand; otherwise the line names what is short, and orders already queued read "Smelting at the Forge." An upgrade says what
   its next +1 adds to the piece's main line in that line's unit ("+7: +8.5% damage."); a line at its cap says so and shows
   the power change (`75-craft-ui.js` `shortOffer`, `nextPlusTxt`; card craft-shortfall-offer).
+  An upgrade short of its material also offers to cover it for gold, as the row's second button after the free order
+  ("Upgrade: 340 + 270 gold for 3 Pine Planks"): `ECON.coverFoes` (9) foes of the tier's foe gold a raw unit, a middle
+  counting 2 (90 gold a Pine Plank, 45 a Copper Ore). Held units go first. Only on an upgrade (never a craft, Essence or a
+  Trophy), and only once the material's gathering tier is open and, for a middle, its station built. Covered units give no
+  gathering or refining XP, salvage pays back step gold only, and `coverFoes` 0 turns it off (`55-crafting.js`
+  `upgradeCover`, `canUpgrade`/`upgradeItem` with `{ cover: true }`; the `upgraded` event carries `cover`; card
+  upgrade-gold-covers-short, ruling `autopilot/rulings/2026-10-08-gold-covers-material.md`).
   The result card after a craft (`craft-delta`): a tool that beats the worn one (or fills an empty slot) goes on by itself
   and the card says how much faster you gather; gear always asks. A weapon, off-hand or charm the hero can wear gets one
   line on how often you'd beat the boss at your furthest zone with it (or, when you win nearly every time, how many turns a
   win takes); head and body pieces say how much of your health a boss hit takes. The line comes from 80 scratch turn
   fights a side (`55-fight-delta.js`, as the boss-odds readout samples) and is left out when the numbers barely change.
+- **Station levels** (Smithing at the Forge, Woodcraft at the Workbench, Tailoring at the Loom, Enchanting at the Enchanter's
+  Table; `SKILL_TUNE` in `20-data.js`): a station opens item tier 2, 3, 4 and 5 at level 10, 22, 36 and 54, and its XP comes
+  from crafts, upgrades, reforges and refining. Behind `CRAFT_TUNE.curve` (off in the game until the balance pass; card
+  craft-curve-skills-report) the levels follow the overhaul's planned curve (`SKILL_TUNE.craftNeedV2`, one piece a tier) and a
+  craft, upgrade or reforge below the station's highest open tier pays a tenth of its XP; bars keep their share of the level
+  when the switch flips (`S.craft.xpv`). The fit and the level-by-zone table:
+  [curve.md](design/skilling-crafting-overhaul/curve.md).
 - **Refining** (`55-refine.js`, `75-refine-ui.js`, `REFINE_TUNE` in `21-data-craft.js`; card refine-queues): the Forge
   smelts ore and coal into Ingots (Copper, Iron, Silver, Cobalt, Mithril Ingot), the Workbench saws logs into Planks
   (Pine, Birch, Oak, Mangrove, Tideash Plank), and the Loom weaves fibre into Cloth (Hemp Cloth, Linen, Briar Cloth,
