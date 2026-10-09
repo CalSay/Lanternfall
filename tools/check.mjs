@@ -11752,47 +11752,45 @@ if (section('next tier gate')) try {
   const goOf = id => E(`(() => { const r = topGoals(20, { sticky: false }).find(x => x.id === ${JSON.stringify(id)}); if (!r) return null; const s = typeof r.go === 'function' ? r.go() : r.go; return s ? { tab: s.tab, view: s.view, sel: s.sel, fn: typeof s.fn === 'function' } : null; })()`);
   const snap = E('JSON.stringify({ skills: S.skills, mats: S.mats })');
   const reset = () => E(`(() => { const o = JSON.parse(${JSON.stringify(snap)}); Object.assign(S.skills, o.skills); Object.assign(S.mats, o.mats); HUNT_TUNE.on = true; })()`);
-  // 1. the station gate: Woodcraft 8 of 10 for the Birch Bow, never Ready, in the top three
+  // 1. tier-two-named-for-return: the piece with the least XP left over all its gates (Woodcraft 8 of 10, Woodcutting 7 and Mining 5 of 14
+  // for the Birch Bow), named by its furthest gate; never Ready; with every tier 1 piece worn it keeps a row in the top three, no boss loss needed
+  const away = '. Gathering keeps going while you\'re away.';
   let l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Woodcraft 8 of 10' && !row(l).ready, `next tier gate: the Birch Bow's station gate shows (${JSON.stringify(l)})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away && !row(l).ready, `next tier gate: the Birch Bow's furthest gate shows (${JSON.stringify(l)})`);
   const top3 = E('topGoals(3, { sticky: false }).map(x => x.label)');
-  assert(top3.includes('Birch Bow for the zone 13 boss: Woodcraft 8 of 10'), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
-  // the row's Go opens Craft at the Workbench on tier 1, with the Birch Bow picked
+  assert(top3.includes('Birch Bow: Mining 5 of 14 opens Iron Ore' + away), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
   let go = goOf('forge');
+  assert(go && go.tab === 'gat' && go.view === 'mine', `next tier gate: the material gate's Go opens the Mining view (${JSON.stringify(go)})`);
+  assert(/^Mining: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('skill') || {}).view === 'mine', `next tier gate: the skill row follows the gate to Mining (${JSON.stringify(l.find(x => x.id === 'skill'))})`);
+  // 2. the station gate, once it is the only one (the bow's Birch Planks and Iron Ingots in the bag): Woodcraft 8 of 10, no away line
+  E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2');
+  l = goals();
+  assert(row(l) && row(l).label === 'Birch Bow: Woodcraft 8 of 10' && !row(l).ready, `next tier gate: the Birch Bow's station gate shows (${JSON.stringify(l)})`);
+  // the row's Go opens Craft at the Workbench on tier 1, with the Birch Bow picked
+  go = goOf('forge');
   assert(go && go.tab === 'forge' && go.sel === '.cf-st[data-st="bench"]' && go.fn, `next tier gate: the station gate's Go opens Craft at the Workbench (${JSON.stringify(go)})`);
   E('S.fSlot = "pick"; S.fTier = 3; (() => { const r = topGoals(20, { sticky: false }).find(x => x.id === "forge"); r.go().fn(); })()');
   assert(E('S.fSlot') === 'bow' && E('S.fTier') === 1, `next tier gate: Go picks the bow at tier 1 (${E('S.fSlot')}, ${E('S.fTier')})`);
   // the skill row names the gate's skill and its Go opens Craft too (never a Gather view)
   const sk = l.find(x => x.id === 'skill'), skGo = goOf('skill');
   assert(sk && /^Woodcraft: /.test(sk.label) && skGo && skGo.tab === 'forge' && skGo.sel === '.cf-st[data-st="bench"]', `next tier gate: the skill row names Woodcraft and opens Craft (${JSON.stringify(sk)}, ${JSON.stringify(skGo)})`);
-  // once the zone 13 boss has beaten you, the gate keeps a row of its own in the top three (it sat 4th in the seed 1 walk)
-  E('S.mastery.types.golem = 8; S.bossTry.tries[bossTryKey(soloHero(), 13)] = 2; S.skills.bench.lv = 5; S.skills.loom.lv = 5');   // the nearest gate 50%, under the bestiary's 80%
-  const top3b = E('topGoals(3, { sticky: false }).map(x => x.label)');
-  assert(top3b.some(x => / for the zone 13 boss: \w+ \d of 10$/.test(x)), `next tier gate: after a lost boss try the gate row keeps a place in the top three (${JSON.stringify(top3b)})`);
-  E('S.mastery.types.golem = 4; S.bossTry.tries = {}'); reset();
-  // 2. Woodcraft 10: the next station gate is the hood's or the leathers' Tailoring
-  E('S.skills.bench.lv = 10');
+  reset(); E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0');
+  // 3. with the stations open, still the bow's furthest gate (Mining 5, not the nearer Woodcutting 7); Go opens the Mining view
+  E('S.skills.bench.lv = 10; S.skills.loom.lv = 10');
   l = goals();
-  assert(row(l) && /^(\w+ )+(Hood|Leathers) for the zone 13 boss: Tailoring 6 of 10$/.test(row(l).label), `next tier gate: at Woodcraft 10 the Tailoring gate shows (${JSON.stringify(row(l))})`);
-  // 3. Tailoring 10 too: the material gate, Woodcutting 7 of 14 (it beats Hunting 4 of 14 for the Duskfang Pelt); Go opens the Woodcutting view
-  E('S.skills.loom.lv = 10');
-  l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Woodcutting 7 of 14 opens Birch Log' && !row(l).ready, `next tier gate: with the stations open, Woodcutting 7 of 14 opens Birch Log (${JSON.stringify(row(l))})`);
-  go = goOf('forge');
-  assert(go && go.tab === 'gat' && go.view === 'wood', `next tier gate: the material gate's Go opens the Woodcutting view (${JSON.stringify(go)})`);
-  assert(/^Woodcutting: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('skill') || {}).view === 'wood', `next tier gate: the skill row follows the gate to Woodcutting (${JSON.stringify(l.find(x => x.id === 'skill'))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away && !row(l).ready, `next tier gate: with the stations open, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
   // 4. the Birch Bow's middles in the bag (refine-queues: 5 Birch Plank and 2 Iron Ingot; gear-in-first-25 Step 0, wood + metal): the craft, Ready
   E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2');
   l = goals();
   assert(row(l) && /^Craft a Birch Bow for the zone 13 boss: you have the materials$/.test(row(l).label) && row(l).ready, `next tier gate: with its materials the Birch Bow craft is Ready, no gate (${JSON.stringify(row(l))})`);
   // 5. Birch Log enough for its planks: the bow's gate is Mining for the Iron Ore its Iron Ingots are smelted from (gear-in-first-25: was Hunting for Duskfang Pelt)
-  E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 5');   // Mining 5: nearer than the Quiver's Hunting 4 of 14
+  E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 5');   // Mining 5 alone: less XP left than the Quiver's Hunting 4 and Foraging 2
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Mining 5 of 14 opens Iron Ore', `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away, `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
   // 6. with Hunting hidden, no hide gate shows. The bow is wood + metal now (gear-in-first-25), so the hide gate is set up with the old hide bow
-  E('globalThis.__bowRec = CRAFT_KINDS.bow.rec; CRAFT_KINDS.bow.rec = { wood: 6, hide: 2, ess: 2 }; S.skills.mine.lv = 3');
+  E('globalThis.__bowRec = CRAFT_KINDS.bow.rec; CRAFT_KINDS.bow.rec = { wood: 6, hide: 2, ess: 2 }; S.skills.mine.lv = 1; S.skills.mine.xp = 0; S.skills.forage.lv = 14; S.mats.wood[1] = 40');   // Hunting is its one gate; Mining 1 puts the tools' Iron Ore further off
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow for the zone 13 boss: Hunting 4 of 14 opens Duskfang Pelt', `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Hunting 4 of 14 opens Duskfang Pelt' + away, `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
   E('HUNT_TUNE.on = false');
   l = goals();
   assert(!l.some(x => /Hunting \d+ of|Duskfang Pelt$/.test(x.label)), `next tier gate: with Hunting hidden, no hide gate (${JSON.stringify(row(l))})`);
@@ -11804,17 +11802,18 @@ if (section('next tier gate')) try {
   assert(row(l) && /^Craft a Copper Sickle: /.test(row(l).label) && !l.some(x => / \d+ of \d+/.test(x.label)), `next tier gate: an open recipe hides the gate (${JSON.stringify(row(l))})`);
   reset();
   // review: a tool's gate names the skill that gives its level (tools use the better of their station and Smithing)
-  E('S.skills.smith.lv = 9; S.skills.bench.lv = 3');
+  E('S.skills.smith.lv = 9; S.skills.bench.lv = 3; S.mats.ore[1] = 10; S.mats.wood[1] = 10');   // the pickaxe's Iron Ore and Birch Log in hand: Smithing is its one gate
   l = goals();
   assert(row(l) && row(l).label === 'Iron Pickaxe: Smithing 9 of 10' && /^Smithing: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('forge') || {}).sel === '#smithBar', `next tier gate: a tool's Smithing gate says Smithing and opens the Forge (${JSON.stringify(l.filter(x => x.id === 'forge' || x.id === 'skill'))})`);
   reset();
   // review: a station at 0 XP keeps its skill row while its gate shows
-  E('S.skills.bench.xp = 0');
+  E('S.skills.bench.xp = 0; S.mats.plank[1] = 5; S.mats.ingot[1] = 2');   // the bow's materials in hand: its Woodcraft gate shows
   assert(/^Woodcraft: /.test((goals().find(x => x.id === 'skill') || {}).label || ''), 'next tier gate: the skill row stays at 0 XP');
   reset();
-  // review: Birch Log for the recipe's middles (10 for 5 Birch Planks): 9 is not enough (gear-in-first-25: the bow no longer takes Duskfang Leather)
-  E('S.skills.bench.lv = 10; S.skills.loom.lv = 10; S.mats.wood[1] = 9');
-  assert(/Woodcutting 7 of 14 opens Birch Log$/.test((row(goals()) || {}).label || ''), `next tier gate: 9 Birch Log still leaves the Woodcutting gate (${JSON.stringify(row(goals()))})`);
+  // review: Birch Log for the recipe's middles (10 for 5 Birch Planks): 9 is not enough (gear-in-first-25: the bow no longer takes Duskfang Leather).
+  // its 2 Iron Ingots in hand leave Woodcutting the bow's only gate (tier-two-named-for-return names the furthest)
+  E('S.skills.bench.lv = 10; S.skills.loom.lv = 10; S.mats.ingot[1] = 2; S.mats.wood[1] = 9');
+  assert(/^Birch Bow: Woodcutting 7 of 14 opens Birch Log\. /.test((row(goals()) || {}).label || ''), `next tier gate: 9 Birch Log still leaves the Woodcutting gate (${JSON.stringify(row(goals()))})`);
   reset();
   // 8. 8 Pine Log: the Golemfist's +1 is offered (refine-queues: "Saw 1 Pine Plank for your Golemfist +1"), and that Ready row
   // takes the forge slot over the gate row; this is why the fixture holds no Pine Log
@@ -11826,7 +11825,7 @@ if (section('next tier gate')) try {
   // weapon slot, and the Golemfist's upgrade still shows beside it
   E('S.mats.plank[0] = 1');
   l = goals();
-  assert(row(l) && / of 10$/.test(row(l).label) && l.some(x => x.id === 'upgrade' && x.label === 'Upgrade your Golemfist to +1'), `next tier gate: a gate on the weapon does not hide the weapon's upgrade (${JSON.stringify(l)})`);
+  assert(row(l) && /^Birch Bow: \w+ \d+ of \d+/.test(row(l).label) && l.some(x => x.id === 'upgrade' && x.label === 'Upgrade your Golemfist to +1'), `next tier gate: a gate on the weapon does not hide the weapon's upgrade (${JSON.stringify(l)})`);
   // review: never a gate on a node that is never offered (hide grades 4 and 5)
   const g3 = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-tier-gate.json'), 'utf8') }) });
   g3.eval('tick(0.1); S.maxZone = 60; for (const k in S.skills) S.skills[k].lv = Math.max(S.skills[k].lv, 70); S.skills.hunt.lv = 40; S.items.forEach(i => { i.t = 3; }); gearDirty()');
@@ -16247,6 +16246,86 @@ if (section('turn-banner-clears-plate')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('turn-banner-clears-plate crashed: ' + (e.stack || e)); }
+
+// ==== tier-two-named-for-return (why W9): at the end of a first sitting Next Up names the nearest tier 2 piece and that gathering goes on away ====
+// save-min60-tier-gate: the seed 1 Wren walk at minute 60 (zone 21; Mining 7, Woodcutting 8, Foraging 7, Hunting 4, Woodcraft 14, Tailoring 4),
+// every tier 1 piece worn, three Ready rows and no boss loss. The old pick named the Leathers' Tailoring gate (a station gate won at +2)
+// with Hunting and Foraging 43 minutes behind it, and the row sat below the top 8.
+if (section('tier-two-named-for-return')) try {
+  const at = 'tier-two-named-for-return', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  const want = 'Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you\'re away.';
+  const load = () => { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1)'); return g; };
+  { const g = load(), E = s => g.eval(s);
+    const b = JSON.parse(E('JSON.stringify(craftGoalNext())'));
+    assert(b && b.kind === 'bow' && b.t === 2 && b.gate && b.gate.skill === 'mine' && !b.gate.station, `${at}: the pick is the Birch Bow, by its Mining gate (${JSON.stringify(b)})`);
+    // its whole distance is Woodcutting 8 to 14 and Mining 7 to 14; the Leathers' is Tailoring, Hunting and Foraging
+    assert(b.left > 10000 && b.left < 11500, `${at}: the bow's XP left over both its gates is about 10,800 (${b.left})`);
+    assert(E('canCraft("leathers", 2).lv') < E('canCraft("leathers", 2).need'), `${at}: the Leathers' Tailoring gate is still shut (the case the old pick named)`);
+    const all = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label, ready: x.ready }))'), r = all.find(x => x.id === 'forge');
+    assert(r && r.label === want && !r.ready && !all.some(x => /Leathers/.test(x.label)), `${at}: the row names the Birch Bow and its furthest gate, never the Leathers (${JSON.stringify(r)})`);
+    assert(!E('S.bossTry && S.bossTry.tries && S.bossTry.tries[bossTryKey(soloHero(), S.maxZone)] > 0'), `${at}: the save has no lost try at the zone 21 boss`);
+    const top3 = E('topGoals(3, { sticky: false }).map(x => ({ label: x.label, ready: x.ready }))');
+    assert(top3.some(x => x.label === want) && top3.filter(x => x.ready).length === 2, `${at}: with tier 1 done the row holds a top three place, beside two Ready rows (${JSON.stringify(top3)})`);
+    const go = E('(() => { const r = topGoals(20, { sticky: false }).find(x => x.id === "forge"); const s = typeof r.go === "function" ? r.go() : r.go; return { tab: s.tab, view: s.view }; })()');
+    assert(go.tab === 'gat' && go.view === 'mine', `${at}: Go opens the Mining view (${JSON.stringify(go)})`);
+    assert(/^Mining: /.test((all.find(x => x.id === 'skill') || {}).label || ''), `${at}: the skill row follows the gate to Mining (${JSON.stringify(all.find(x => x.id === 'skill'))})`);
+  }
+  // before tier 1 is done (the sickle not made yet) the row stays as today: the open tier 1 craft, in its old words
+  { const g = load(), E = s => g.eval(s);
+    E('(() => { const id = S.equip.sickle; S.equip.sickle = null; S.items = S.items.filter(i => i.id !== id); S.mats.ore[0] = Math.max(1, S.mats.ore[0]); gearDirty(); })()');
+    const r = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge');
+    assert(r && /^Craft a Copper Sickle: /.test(r.label), `${at}: before tier 1 is done, the row is the tier 1 craft (${JSON.stringify(r)})`);
+    // with nothing for the sickle in hand the row falls back to the gate, which keeps no row of its own until a boss loss (as before)
+    E('S.mats.ore[0] = 0; S.mats.wood[0] = 0; S.mats.plank[0] = 0; S.mats.ingot[0] = 0; gearDirty()');
+    const b = JSON.parse(E('JSON.stringify(craftGoalNext())')), resv = () => E('+GOALS.find(q => q.id === "forge").reserve()');
+    assert(b && b.gate && E('GOALS.find(q => q.id === "forge").prio()') === 0 && resv() === 0, `${at}: before tier 1 is done, a gate row keeps no row of its own without a boss loss (${JSON.stringify(b)})`);
+    E('S.bossTry.tries[bossTryKey(soloHero(), S.maxZone)] = 1');
+    assert(resv() === 1, `${at}: after a lost boss try it keeps its row, as before`);
+    const top3 = E('topGoals(3, { sticky: false }).map(x => ({ id: x.id, ready: x.ready }))');
+    assert(top3.some(x => x.id === 'forge') || top3.every(x => x.ready), `${at}: after a lost boss try the gate row sits in the top three unless all three are Ready (${JSON.stringify(top3)})`);
+  }
+  // Tobin and Pip on the same skills: the same scoring names their nearest piece (a tool for Tobin, whose Warblade needs Smithing 10 too)
+  for (const [cls, re] of [['warden', /^Iron Pickaxe: Mining 7 of 14 opens Iron Ore\. /], ['lanternmage', /^Birch Staff: Mining 7 of 14 opens Jasper\. /]]) {
+    const g = load(), E = s => g.eval(s);
+    E(`S.party.cls = '${cls}'; gearDirty(); for (const pos of CRAFT_HERO_POS) { const cur = equipped(pos), k = kindsFor0(pos); if (!k || (cur && (cur.slot === k || cur.u))) continue;
+      const it = { id: S.nextId++, slot: k, t: 1, r: 'common', plus: 0 }; S.items.push(it); S.equip[pos] = it.id; } gearDirty()`.replace('kindsFor0(pos)', '(CRAFT_FITS[pos][S.party.cls] || CRAFT_FITS[pos].any || []).find(k => !CRAFT_KINDS[k].legacy && fits(k, pos, "hero"))'));
+    const r = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge');
+    assert(r && re.test(r.label), `${at}: ${cls} on the minute 60 skills gets ${re} (${JSON.stringify(r)})`);
+  }
+  // the row in the Next Up list at the three views: whole (no clamp or ellipsis), and 14 px or more on the desktop
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800);
+        const o = await page.evaluate(want => { const row = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want); if (!row) return null;
+          const l = row.querySelector('.nu-lbl'), a = l.getBoundingClientRect(), b = row.getBoundingClientRect();
+          return { cut: l.scrollHeight > l.clientHeight + 1 || l.scrollWidth > l.clientWidth + 1, fs: parseFloat(getComputedStyle(l).fontSize), inRow: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        assert(o, `${v}: the Next Up list shows the Birch Bow row`);
+        if (o) {
+          assert(!o.cut && o.inRow, `${v}: the Birch Bow row's words show whole inside the row (${JSON.stringify(o)})`);
+          if (!phone) assert(o.fs >= 14, `${v}: the row keeps the 14 px desktop text floor (${o.fs})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tier-two-named-for-return crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
