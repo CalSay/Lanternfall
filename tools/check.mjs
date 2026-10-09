@@ -6528,7 +6528,11 @@ if (section('solo copy (browser, W1-C)')) try {
         for (const [id, txt] of sheets) { judge('item sheet ' + id, txt); opened++; if (txt.length < 4) empty++; }
         for (let i = 8; i < made.ids.length; i += 9) {
           const id = made.ids[i]; await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15);
-          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button']) { const b = page.locator(`.cf-sheet ${sel}`).first(); if (await b.count()) { try { await b.click({ timeout: 300, force: true }); await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } catch (e) {} } }
+          // w1f-scan-load-flake: a DOM click on the button itself. A forced pointer click lands on whatever covers the button's spot: the
+          // path choice card the "evolution choice" step leaves open. Under load two such clicks pressed "Become" then "Yes", a path was
+          // taken, and the subclass step below found no tabs. Unloaded, the clicks failed (below the sheet's fold) and were swallowed.
+          // The find and the click are one step in the page, so the sheet cannot redraw between them.
+          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button']) { if (await page.evaluate(q => { const b = document.querySelector(q); if (b) b.click(); return !!b; }, `.cf-sheet ${sel}`)) { await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } }
           await page.keyboard.press('Escape');
         }
         await page.keyboard.press('Escape');
@@ -6538,20 +6542,31 @@ if (section('solo copy (browser, W1-C)')) try {
         await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(200);
         await page.evaluate(() => document.querySelectorAll('.cs-sheet details, .sheet details').forEach(d => { d.open = true; }));
         await scan('hero sheet (all opened)');
-        for (const sel of ['.cl-go', '.cs-act', '.cs-story summary']) { const n = Math.min(await page.locator(`.sheet ${sel}`).count(), 8); for (let i = 0; i < n; i++) { try { await page.locator(`.sheet ${sel}`).nth(i).click({ timeout: 300, force: true }); await page.waitForTimeout(60); await scan(`hero sheet ${sel} #${i}`); } catch (e) {} } }
+        for (const sel of ['.cl-go', '.cs-act', '.cs-story summary']) { const n = Math.min(await page.locator(`.sheet ${sel}`).count(), 8); for (let i = 0; i < n; i++) { if (!(await page.evaluate(([q, i]) => { const b = document.querySelectorAll(q)[i]; if (b) b.click(); return !!b; }, [`.sheet ${sel}`, i]))) continue; await page.waitForTimeout(60); await scan(`hero sheet ${sel} #${i}`); } }
         await page.keyboard.press('Escape');
         await X(`S.party.chosen = true; S.cls.trials = S.cls.trials || {}; S.cls.trials.check = { won: 1, best: 100 }; classEvoUI.openChoice()`); await page.waitForTimeout(250);
         const tabs = await page.locator('.evo-tab').count();
+        if (!tabs) fail(`${hero}: W1-F the subclass choice opened no path tabs (path already taken: ${await X('lbClass().evo')})`);
         for (let i = 0; i < tabs; i++) { await page.locator('.evo-tab').nth(i).click({ force: true }); await page.waitForTimeout(80); await scan(`subclass card ${i}`); await page.locator('.create-go').first().click({ force: true }).catch(() => {}); await page.waitForTimeout(60); await scan(`subclass card ${i} confirm`); }
         await X('classEvoUI.closeAll()');
         await X('classEvoUI.openRespec && classEvoUI.openRespec()'); await page.waitForTimeout(200); await scan('class change'); await X('classEvoUI.closeAll()');
         items.cards += tabs;
         // long-press info on each action-bar slot (Attack, Parry, Dodge: a tip; the three ability slots: the picker)
-        await X('setActivity("fight"); setTab("adv"); closeMenu()'); await page.waitForTimeout(300);
+        // w1f-scan-load-flake: each step waits for the state it reads (capped at 5 s, a miss fails naming the hero and slot) instead of a
+        // fixed timer. Under load the bar was read before it showed, or the 550 ms long press had not fired by a fixed 700 ms hold.
+        const until = async (what, fn, arg) => { try { await page.waitForFunction(fn, arg, { timeout: 5000, polling: 50 }); return true; } catch (e) { fail(`${hero}: W1-F ${what} within 5 s`); return false; } };
+        await X('setActivity("fight"); setTab("adv"); closeMenu()');
+        await until('the action bar (Attack) never showed', () => { const b = document.querySelector('[data-act="atk"]'); return !!(b && b.offsetParent !== null && b.getBoundingClientRect().width > 0); });
+        // an ability slot with nothing it could hold opens nothing on a long press (75-solo-ui slotShut); every other slot opens a sheet or the picker
+        const shut = JSON.parse(await X('JSON.stringify([0, 1, 2].map(i => { const eq = soloEquipped(); return !eq[i] && !soloAbilities().some(id => !eq.includes(id)); }))'));
+        const sheetUp = () => !!document.querySelector('#abPicker, .tr-card');   // what the count below reads
         for (const a of ['atk', 'parry', 'dodge', 'ab0', 'ab1', 'ab2']) {
           const b = page.locator(`[data-act="${a}"]`).first();
           if (!(await b.count()) || !(await b.isVisible())) continue;
-          const bb = await b.boundingBox(); await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(700);
+          await until(`long-press ${a}: the last sheet never closed`, () => !document.querySelector('#abPicker, #moveSheet, .tr-card'));
+          const bb = await b.boundingBox(); await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down();
+          if (a.startsWith('ab') && shut[+a[2]]) await page.waitForTimeout(700);   // a shut slot: hold past the long press; nothing opens
+          else await until(`long-press ${a}: no sheet or picker opened`, sheetUp);
           const shownTip = await page.evaluate(() => { const t = document.getElementById('soloTip'), p = document.getElementById('abPicker'); return (t && !t.hidden ? 1 : 0) + (p ? 2 : 0) + (document.querySelector('.tr-card') ? 4 : 0); });   // W2-A: a long press opens a Training card (Attack, Parry, Dodge: a sheet; ability slots: the picker with a card)
           await scan('long-press ' + a); await page.mouse.up(); await page.keyboard.press('Escape'); await X('typeof closePicker === "function" && closePicker()');
           if (shownTip) items.press++;
