@@ -233,8 +233,9 @@ var soloIconURL = () => '';
     if (bar.hidden || pick || gameHeld() || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     // space-reopens-next-up: a clicked button keeps focus (a sheet hands it back on close) and the browser presses it on Space, so
     // Space in a fight is the dodge, not a press of that button. The bar's own tiles still take Space and Enter as a click; Enter on
-    // any other focused button still presses it, and so does Space on a button in a sheet or card open over the fight.
-    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === 'Enter' || (e.key === ' ' && (bar.contains(t) || t.closest(MODAL_UP))))))) return;
+    // any other focused button still presses it, and so does Space on a button in a sheet or card open over the fight or in the
+    // menu open beside it (wide views: a keyboard player working the Hero or Craft menu).
+    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === 'Enter' || (e.key === ' ' && (bar.contains(t) || t.closest(MODAL_UP) || (S.tab && t.closest('#menu')))))))) return;
     if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
     if (e.key.toLowerCase() === 'f') { if (typeof turnCombatOn === 'function' && turnCombatOn()) return; e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle (no Auto in turn fights)
     const id = KEYS[e.key.toLowerCase()]; if (!id) return;
