@@ -200,9 +200,13 @@ const xpAheadX = (L = S.L) => HERO_TUNE.training ? 1 : Math.pow(HERO_TUNE.aheadX
 const xpNeed = (L = S.L) => HERO_TUNE.training ? Math.floor(15 * Math.pow(1.3, L - 1)) : Math.max(1, Math.round(roadFights(L) * roadFoeXp(roadZone(L))));
 // Skill XP and tier gates (GP1, knobs in SKILL_TUNE, 20-data). skillNeed(lv, k): k picks the crafting
 // curve for a station skill; without k it is the gathering curve.
-const skillCurve = k => SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.craftNeed : SKILL_TUNE.gatherNeed;
-const skillNeed = (lv, k) => {
-  const c = skillCurve(k), e = SKILL_TUNE.gatherEarly, early = e && c === SKILL_TUNE.gatherNeed && lv < e.below ? e.x : 1;
+// craft-curve-skills-report: with CRAFT_TUNE.curve on, a station skill reads the planned curve in pieces (SKILL_TUNE.craftNeedV2).
+// `on` (optional) picks the station curve regardless of the switch (55-crafting craftXpMap).
+const skillCurve = (k, on = CRAFT_TUNE.curve) => SKILL_TUNE.craftSkills.includes(k) ? (on ? SKILL_TUNE.craftNeedV2 : SKILL_TUNE.craftNeed) : SKILL_TUNE.gatherNeed;
+const skillNeed = (lv, k, on) => {
+  const c = skillCurve(k, on);
+  if (Array.isArray(c[0])) { let p = c[0]; for (const q of c) if (lv >= q[0]) p = q; return Math.floor(p[1] * Math.pow(p[2], lv - p[0])); }
+  const e = SKILL_TUNE.gatherEarly, early = e && c === SKILL_TUNE.gatherNeed && lv < e.below ? e.x : 1;
   return Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2] || 1, lv - 1) * early);
 };
 // A tier is open when the level reaches its gate. Gathering skills use NODE_REQ,

@@ -831,12 +831,86 @@ if (section('crafting')) try {
   for (const f of FIXTURES) {
     const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8')); delete old.craft;
     const go = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
-    const ok = go.eval('JSON.stringify(S.craft)') === JSON.stringify({ v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {} })
+    const ok = go.eval('JSON.stringify(S.craft)') === JSON.stringify({ v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0 })
       && go.eval('S.items.length') === old.items.length && Object.keys(old.equip).every(k => go.eval(`S.equip.${k}`) === old.equip[k]);
     go.eval('save(); loadSave()');
     assert(ok && go.eval('S.craft.v === 1 && S.items.length') === old.items.length, `${f}: a save without S.craft gets its defaults, items and equip untouched, round trip ok`);
   }
 } catch (e) { fail('crafting crashed: ' + (e.stack || e)); }
+
+// ---- craft-curve-skills-report: CRAFT_TUNE, the planned station curve, the re-craft rule and the S.craft.xpv map ----
+if (section('craft-curve-skills-report')) try {
+  const g = loadCore({ seed: 7 }), E = s => g.eval(s);
+  // switch off is today: every switch off, today's curve, full XP, no map
+  assert(E('JSON.stringify(CRAFT_TUNE)') === '{"grades":0,"strike":0,"infuse":0,"curve":0,"infuseX":3}', 'CRAFT_TUNE ships with every switch off');
+  const old = E(`(() => { const c = SKILL_TUNE.craftNeed, bad = []; for (const k of SKILL_TUNE.craftSkills) for (let lv = 1; lv <= 160; lv++) if (skillNeed(lv, k) !== Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2], lv - 1))) bad.push(k + lv); return bad; })()`);
+  assert(old.length === 0 && E('skillNeed(20, "mine") === skillNeed(20, "mine", 1)'), `switch off: station levels need today's XP (craftNeed) at levels 1-160; gathering never reads the station curve${old.length ? ' (' + old.slice(0, 5) + ')' : ''}`);
+  E('chooseClass("lanternmage"); S.camp.b.store = 8; for (const k of CRAFT_FAMILIES) S.mats[k] = [400, 400, 400, 400, 400]; for (const k of REFINED_FAMILIES) S.mats[k] = [400, 400, 400, 400, 400]; S.gold = 1e7');
+  E(`S.skills.smith.lv = 1; S.skills.loom.lv = CRAFT_STATION_REQ[1]; S.skills.loom.xp = 0`);
+  const xp0 = E('S.skills.loom.xp'); E('craftItem("robe", 1)'); const full = E('S.skills.loom.xp') - xp0;
+  assert(Math.abs(full - E('CRAFT_XP.craft(1)')) < 1e-9 && E('craftXpShare("robe", 1)') === 1 && E('S.craft.xpv') === 0, `switch off: a tier 1 Robe at Tailoring ${E('CRAFT_STATION_REQ[1]')} pays its full ${full} XP and the bars stay on today's curve`);
+  // switch on: the planned curve in pieces, from each tier's gate
+  E('CRAFT_TUNE.curve = 1');
+  const V2 = E('SKILL_TUNE.craftNeedV2'), REQ = E('SKILL_TUNE.stationReq');
+  assert(V2.length === REQ.length && V2.every((p, i) => p[0] === REQ[i]), `switch on: one curve piece a tier, starting at its gate (${V2.map(p => p[0]).join('/')})`);
+  const pieceOk = E(`(() => { for (const k of SKILL_TUNE.craftSkills) for (let lv = 1; lv <= 160; lv++) { let p = SKILL_TUNE.craftNeedV2[0]; for (const q of SKILL_TUNE.craftNeedV2) if (lv >= q[0]) p = q;
+    if (skillNeed(lv, k) !== Math.floor(p[1] * Math.pow(p[2], lv - p[0])) || !(skillNeed(lv, k) >= 1) || (lv > 1 && skillNeed(lv, k) < skillNeed(lv - 1, k))) return k + lv; } return ''; })()`);
+  assert(pieceOk === '' && E('skillNeed(20, "mine") === skillNeed(20, "mine", 0)'), `switch on: skillNeed reads the pieces at levels 1-160, never falls from one level to the next, and gathering keeps its curve${pieceOk ? ' (' + pieceOk + ')' : ''}`);
+  // the re-craft rule: below the top open tier pays belowTierX of a craft, an upgrade or a reforge; the top tier pays in full
+  const tot = () => E('(() => { let n = S.skills.loom.xp; for (let l = 1; l < S.skills.loom.lv; l++) n += skillNeed(l, "loom"); return n; })()');   // all the XP the bar holds
+  const gain = src => { const a = tot(); E(src); return tot() - a; };
+  E('S.skills.loom.lv = CRAFT_STATION_REQ[1]; S.skills.loom.xp = 0; S.craft.xpv = 1');
+  const low = gain('craftItem("robe", 1)'), top = gain('craftItem("robe", 2)');
+  assert(Math.abs(low - 0.1 * E('CRAFT_XP.craft(1)')) < 1e-6 && Math.abs(top - E('CRAFT_XP.craft(2)')) < 1e-6 && E('SKILL_TUNE.belowTierX') === 0.1,
+    `switch on: a tier 1 Robe with tier 2 open pays a tenth (${low.toFixed(1)} XP); a tier 2 Robe pays in full (${top} XP)`);
+  const r1 = E('S.items.find(it => it.slot === "robe" && it.t === 1).id'), up = gain(`upgradeItem(${r1})`);
+  assert(Math.abs(up - 0.1 * E('CRAFT_XP.upgrade(1)')) < 1e-9, `switch on: upgrading the tier 1 Robe pays a tenth (${up.toFixed(2)} XP)`);
+  const rfX = (() => {   // Enchanting 22 (tier 3 open), Tailoring 10: a tier 2 Robe is below Enchanting's top, so its reforge pays a tenth
+    E(`S.skills.ench.lv = CRAFT_STATION_REQ[2]; S.skills.ench.xp = 0; S.gold = 1e9; for (const k in S.mats) if (Array.isArray(S.mats[k])) S.mats[k] = S.mats[k].map(() => 999)`);
+    const id = E('(() => { const it = S.items.find(it => it.slot === "robe" && it.t === 2); if (!it.a || !it.a.length) it.a = [["hp", 1]]; return it.id; })()');
+    const a = E('S.skills.ench.xp'), ok = E(`reforgeItem(${id}, 0)`); return ok ? E('S.skills.ench.xp') - a : NaN;
+  })();
+  assert(Math.abs(rfX - 0.1 * E('CRAFT_XP.reforge(2)')) < 1e-9, `switch on: reforging a tier 2 Robe at Enchanting ${E('CRAFT_STATION_REQ[2]')} pays a tenth, by Enchanting's own top tier (${rfX} XP)`);
+  const smithX = (() => { E('S.skills.smith.lv = CRAFT_STATION_REQ[1]; S.skills.smith.xp = 0; S.equip.charm = null'); const a = E('S.skills.smith.xp'); E('forgeItem("charm", 1)'); return E('S.skills.smith.xp') - a; })();
+  assert(Math.abs(smithX - 2) < 1e-9, `switch on: the legacy forgeItem path (a tier 1 Charm, Smithing ${E('CRAFT_STATION_REQ[1]')}) pays a tenth too (${smithX} XP)`);
+  const ref0 = E('S.skills.loom.xp'); E('S.refine.st.loom = []; refineAdd("cloth", 1, 1); refineTick(REFINE_TUNE.secs[0] + 0.01)');
+  assert(Math.abs(E('S.skills.loom.xp') - ref0 - E('REFINE_TUNE.xp')) < 1e-9, 'switch on: refining keeps its XP (2 x grade a unit, never a tenth)');
+  // the map: each flip keeps every level and each bar's share of its level, and the bar stays under the next level
+  const share = k => E(`S.skills.${k}.xp / skillNeed(S.skills.${k}.lv, ${JSON.stringify(k)})`);
+  E('CRAFT_TUNE.curve = 0; S.craft.xpv = 0; S.skills.smith.lv = 96; S.skills.smith.xp = 0.4 * skillNeed(96, "smith"); S.skills.bench.lv = 28; S.skills.bench.xp = 0.75 * skillNeed(28, "bench"); S.skills.loom.lv = 1; S.skills.loom.xp = 0; S.skills.ench.lv = 12; S.skills.ench.xp = 0.9999 * skillNeed(12, "ench")');
+  const lv0 = E('SKILL_TUNE.craftSkills.map(k => S.skills[k].lv).join()');
+  E('CRAFT_TUNE.curve = 1; gainSkill("bench", 0, true)');   // the first gain maps every station bar before it adds
+  const on = ['smith', 'bench', 'loom', 'ench'].map(share);
+  assert(E('S.craft.xpv') === 1 && E('SKILL_TUNE.craftSkills.map(k => S.skills[k].lv).join()') === lv0 && Math.abs(on[0] - 0.4) < 1e-9 && Math.abs(on[1] - 0.75) < 1e-9 && on[2] === 0 && on[3] < 1 && Math.abs(on[3] - 0.999) < 1e-9,
+    `flip on (before a gain): levels kept (${lv0}), bars keep their shares (${on.map(x => x.toFixed(3)).join('/')}), a full bar stays under the next level`);
+  E('CRAFT_TUNE.curve = 0; S.refine.st.loom = []; refineAdd("cloth", 1, 1); refineTick(REFINE_TUNE.secs[0] + 0.01)');   // refine XP goes straight to gainSkill: the map runs there too
+  const off = ['smith', 'bench'].map(share);
+  assert(E('S.craft.xpv') === 0 && E('SKILL_TUNE.craftSkills.map(k => S.skills[k].lv).join()') === lv0 && Math.abs(off[0] - 0.4) < 1e-9 && Math.abs(off[1] - 0.75) < 1e-9, `flip off: back on today's curve with the same levels and shares (${off.map(x => x.toFixed(3)).join('/')})`);
+  E('CRAFT_TUNE.curve = 1; S.skills.loom.lv = 9; S.skills.loom.xp = 0.98 * skillNeed(9, "loom", 0); S.craft.xpv = 0; gainSkill("loom", 1, true)');
+  assert(E('S.skills.loom.lv') === 10 || E('S.skills.loom.lv') === 9, `a gain right after a flip never chains level-ups on an unmapped bar (Tailoring 9 -> ${E('S.skills.loom.lv')})`);
+  // old saves without xpv, and save codes
+  for (const f of ['save-mid.json', 'save-late.json']) {
+    const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8')); if (raw.craft) delete raw.craft.xpv;
+    const h = loadCore({ seed: 1, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), H = s => h.eval(s);
+    const lvs = ['smith', 'bench', 'loom', 'ench'].map(k => raw.skills[k] ? raw.skills[k].lv : 1).join();
+    const sh = ['smith', 'bench', 'loom', 'ench'].map(k => H(`S.skills.${k}.xp / skillNeed(S.skills.${k}.lv, "${k}")`));
+    assert(H('S.craft.xpv') === 0 && H('SKILL_TUNE.craftSkills.map(k => S.skills[k].lv).join()') === lvs && !h.errors.length, `${f}: a save without S.craft.xpv loads on today's curve with its levels (${lvs})`);
+    H('CRAFT_TUNE.curve = 1; craftXpMap(); for (let i = 0; i < 600; i++) tick(0.1)');
+    const sh2 = ['smith', 'bench', 'loom', 'ench'].map(k => H(`S.skills.${k}.xp / skillNeed(S.skills.${k}.lv, "${k}")`));
+    assert(H('S.craft.xpv') === 1 && H('SKILL_TUNE.craftSkills.map(k => S.skills[k].lv).join()').split(',').every((x, i) => +x >= +lvs.split(',')[i]) && sh2.every(x => x < 1) && !h.errors.length,
+      `${f}: with the curve on it maps and plays a minute (levels kept or up, every bar under its next level; shares ${sh.map(x => x.toFixed(2)).join('/')} -> ${sh2.map(x => x.toFixed(2)).join('/')})`);
+    const code = H('encodeSave(S)'), back = H(`decodeSave(${JSON.stringify(code)})`);
+    assert(back.ok && back.data.craft.xpv === 1, `${f}: a save code with S.craft.xpv 1 round-trips`);
+    const bad = JSON.parse(H('JSON.stringify(S)')); bad.craft.xpv = 2;
+    assert(!H(`validateSave(${JSON.stringify(bad)})`).ok, `${f}: a save code with S.craft.xpv 2 is refused`);
+  }
+  // the by-zone report on the planned curve, one short run: the good Wren's Woodcraft gate (tier 2) by the zone that opens tier 2 + 2
+  const { spawnSync } = await import('node:child_process');
+  const sim = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'sim.mjs'), '--days', '1', '--class', 'ranger', '--active', '1', '--turns', '1', '--skill', 'good', '--checkins', '8,13,19', '--session', '60', '--first', '60', '--seed', '1', '--skzone', '1', '--reroll', '0', '--craft', 'curve=1', '--json', '1'], { encoding: 'utf8', maxBuffer: 1 << 26 });
+  const js = (sim.stdout || '').split('\n').find(l => l.startsWith('JSON '));
+  const skz = js ? JSON.parse(js.slice(5)).skz : null, zb = skz && skz.lvZone.bench ? skz.lvZone.bench[REQ[1]] : undefined, tz = E('PACE.essTier[1]');
+  assert(skz && zb !== undefined && zb <= tz + 2, `switch on, sim --skzone (good Wren, day 1): Woodcraft ${REQ[1]} at zone ${zb} (want by zone ${tz}, missed after ${tz + 2})${skz ? '' : ' ' + (sim.stderr || '').slice(0, 300)}`);
+} catch (e) { fail('craft-curve-skills-report crashed: ' + (e.stack || e)); }
 
 // ---- bounties: gathering counts at any tier and while away (owner bug report) ----
 if (section('bounties')) try {

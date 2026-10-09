@@ -1,0 +1,22 @@
+# Proof for card craft-curve-skills-report. No player-visible change: CRAFT_TUNE.curve ships off, so the stations level on
+# today's curve. This route crafts the first Pine Bow on the cold-camp save and reads the Workbench line: 20 XP takes Woodcraft
+# to Lv 3 with 3 of 13 XP, today's numbers (the planned curve would read Lv 4, 2 / 6 XP). The curve, the re-craft rule and the
+# S.craft.xpv map are held by tools/check.mjs (section "craft-curve-skills-report"); the by-zone table is in
+# docs/design/skilling-crafting-overhaul/curve.md (node tools/sim.mjs --report skills --parts C --craft curve=1).
+# seed: 1
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+tap "Craft"
+wait 1
+tap "Craft Pine Bow"
+wait 3
+tap-if "Equip"
+wait 1
+tap "Workbench"
+wait 1
+expect "Woodcraft Lv 3, 3 / 13 XP"
+expect "Next tier at Lv 10"
+shot workbench-today-curve
