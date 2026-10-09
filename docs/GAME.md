@@ -201,6 +201,13 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   hand; otherwise the line names what is short, and orders already queued read "Smelting at the Forge." An upgrade says what
   its next +1 adds to the piece's main line in that line's unit ("+7: +8.5% damage."); a line at its cap says so and shows
   the power change (`75-craft-ui.js` `shortOffer`, `nextPlusTxt`; card craft-shortfall-offer).
+  An upgrade short of its material also offers to cover it for gold, as the row's second button after the free order
+  ("Upgrade: 340 + 270 gold for 3 Pine Planks"): `ECON.coverFoes` (9) foes of the tier's foe gold a raw unit, a middle
+  counting 2 (90 gold a Pine Plank, 45 a Copper Ore). Held units go first. Only on an upgrade (never a craft, Essence or a
+  Trophy), and only once the material's gathering tier is open and, for a middle, its station built. Covered units give no
+  gathering or refining XP, salvage pays back step gold only, and `coverFoes` 0 turns it off (`55-crafting.js`
+  `upgradeCover`, `canUpgrade`/`upgradeItem` with `{ cover: true }`; the `upgraded` event carries `cover`; card
+  upgrade-gold-covers-short, ruling `autopilot/rulings/2026-10-08-gold-covers-material.md`).
   The result card after a craft (`craft-delta`): a tool that beats the worn one (or fills an empty slot) goes on by itself
   and the card says how much faster you gather; gear always asks. A weapon, off-hand or charm the hero can wear gets one
   line on how often you'd beat the boss at your furthest zone with it (or, when you win nearly every time, how many turns a

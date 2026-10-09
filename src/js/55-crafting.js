@@ -18,8 +18,11 @@
 //   stationLevel(kind) -> level used for the tier gate and rarity (see N4 note below)
 //   stationTierOpen(kind, t) -> bool   the tier gate (GP1: also open when the save kept the tier)
 //   craftXpFor(skill, n) -> n with the catch-up multiplier applied (x2 while behind)
-//   upgradeItem(id, trophIdx?) -> bool           +1 (max +10); +8..+10 each pay 1 Trophy
-//   canUpgrade(id) -> { ok, why, cost }          (the most plentiful Trophy unless trophIdx)
+//   upgradeItem(id, trophIdx?, opts?) -> bool    +1 (max +10); +8..+10 each pay 1 Trophy
+//   canUpgrade(id, trophIdx?, opts?) -> { ok, why, cost, cover }   (the most plentiful Trophy unless trophIdx)
+//                                                opts: { cover: true } lets gold pay the material the hero is short
+//   upgradeItem(id, trophIdx?, opts?)            the same opts; emits 'upgraded' { item, gold, cover: { units, gold } }
+//   upgradeCover(it) -> { fam, t, units, gold } | null   what gold may cover of its next upgrade (upgrade-gold-covers-short)
 //   craftUpgradeRefund(it) -> gold               what salvaging it pays back: ECON.upRefund of the gold its +N cost
 //                                                at today's prices (gold-without-training; no save field)
 //   reforgeItem(id, lineIdx) -> bool             reroll one affix line (Enchanting gate)
@@ -68,7 +71,7 @@ function craftXpMap() {
   c.xpv = on;
 }
 
-let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
+let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, upgradeCover, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
   drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare;
 
@@ -183,21 +186,43 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     let best = -1; tr.forEach((n, i) => { if (n > 0 && (best < 0 || n > tr[best])) best = i; });
     return best;
   };
-  canUpgrade = (id, trophIdx) => {
+  // upgrade-gold-covers-short (ruling autopilot/rulings/2026-10-08-gold-covers-material.md, B): an upgrade short of its one
+  // material (never Essence, a Trophy or coal) may pay the units it lacks in gold, ECON.coverFoes foes of the tier's foe gold
+  // a raw unit (a middle is 2), once that material is reachable: its gathering is open at the item's tier and, for a middle,
+  // the station that makes it is built. Held units go first. Nothing is stored and covered units give no skill XP (only the
+  // upgrade's own station XP, unchanged); salvage refunds step gold only. Upgrades only: crafts always take their materials.
+  upgradeCover = it => {
+    if (!it || !CRAFT_KINDS[it.slot] || !(ECON.coverFoes > 0) || it.plus >= CRAFT_TROPHY_GATE.max) return null;
+    const t = it.t, mats = upgradeCost(it).mats, fam = Object.keys(mats).find(k => k !== 'ess' && k !== 'coal');
+    if (!fam) return null;
+    const units = mats[fam] - matOwn(fam, t); if (!(units > 0)) return null;
+    const mid = !!REFINE_RAW[fam], raw = mid ? REFINE_RAW[fam] : fam, fm = CRAFT_FAMILY[raw];
+    if (!fm || fm.src !== 'gather' || !skillTierOpen(skillOf(raw), t)) return null;
+    if (typeof navSkillOpen === 'function' && !navSkillOpen(skillOf(raw))) return null;   // Foraging and Hunting open with their feature
+    if (mid && !refineBuilt(REFINE_PRODUCTS[fam].st)) return null;
+    return { fam, t, units, gold: econSig(units * (mid ? 2 : 1) * ECON.coverFoes * foeGoldBase(econGradeZ(t))) };
+  };
+  canUpgrade = (id, trophIdx, opts) => {
     const it = itemById(id); if (!it) return no('No such item.');
     if (!CRAFT_KINDS[it.slot]) return no('This item cannot be upgraded.');
     if (it.plus >= CRAFT_TROPHY_GATE.max) return no(`Already +${CRAFT_TROPHY_GATE.max}.`);
     const cost = upgradeCost(it), x = { cost };
     if (cost.troph && pickTrophy(trophIdx) < 0) return no(trophIdx != null ? `Needs 1 ${trophyName(trophIdx)}` : 'Needs 1 Trophy of any kind', x);
-    const miss = missing(cost.mats, it.t);
+    let mats = cost.mats, gold = cost.gold;
+    if (opts && opts.cover) {
+      const cv = upgradeCover(it); if (!cv) return no('Gold cannot cover this upgrade.', x);
+      x.cover = cv; mats = Object.assign({}, mats); mats[cv.fam] -= cv.units; if (mats[cv.fam] <= 0) delete mats[cv.fam];
+      gold += cv.gold;
+    }
+    const miss = missing(mats, it.t);
     if (miss.length) return no(missWhy(miss, it.t), x);
-    if (S.gold < cost.gold) return no(`${fmt(cost.gold - S.gold)} more gold`, x);
-    return yes(x);
+    if (S.gold < gold) return no(`${fmt(gold - S.gold)} more gold`, x);
+    return yes(Object.assign(x, { pay: { mats, gold } }));
   };
-  upgradeItem = (id, trophIdx) => {
-    const c = canUpgrade(id, trophIdx); if (!c.ok) return false;
-    const it = itemById(id);
-    payMats(c.cost.mats, it.t); S.gold -= c.cost.gold; econSpend('craft', c.cost.gold);
+  upgradeItem = (id, trophIdx, opts) => {
+    const c = canUpgrade(id, trophIdx, opts); if (!c.ok) return false;
+    const it = itemById(id), cv = c.cover;
+    payMats(c.pay.mats, it.t); S.gold -= c.pay.gold; econSpend('craft', c.pay.gold);   // the cover gold under the upgrade's own ledger kind
     if (c.cost.troph) C().troph[pickTrophy(trophIdx)] -= c.cost.troph;
     it.plus++;
     gearDirty();
@@ -207,7 +232,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const nm = kindName(it.slot, it.t, it.u);
     if (it.plus === CRAFT_TROPHY_GATE.from - 1) emit('toast', { key: 'upgrade:mark', msg: `${nm} is now +${it.plus}. The next three upgrades each need a Trophy from a champion.`, kind: 'good', prio: 'normal', icon: { item: it } });
     else if (it.plus === CRAFT_TROPHY_GATE.max) emit('toast', { key: 'upgrade:mark', msg: `${nm} is now +${it.plus}, fully upgraded.`, kind: 'good', prio: 'normal', icon: { item: it } });
-    emit('upgraded', { item: it, gold: c.cost.gold });
+    emit('upgraded', { item: it, gold: c.cost.gold, cover: { units: cv ? cv.units : 0, gold: cv ? cv.gold : 0 } });
     save();
     return true;
   };

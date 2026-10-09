@@ -70,6 +70,10 @@ const ECON = {
   // recipe count x (plus + 1)), so gold, not essence or hide, is what an upgrade waits on. Salvage pays back upRefund
   // of the gold an item's upgrades cost (55-crafting craftUpgradeRefund), so a +7 you outgrow is never wasted.
   upFoes: 20, upGrow: 1.5, upMat: 0.25, upRefund: 0.5,   // upgrade +plus -> +plus+1: 20 x foeGold(gradeZ) x 1.5^plus
+  // upgrade-gold-covers-short (ruling 2026-10-08, B; PROVISIONAL until the one balance pass, which may move it once, never
+  // below 6): an upgrade short of its material may pay the rest in gold, coverFoes x foeGold(gradeZ) a raw unit (a middle is
+  // 2): 45 gold a tier-1 log, 90 a Pine Plank. 0 turns the offer off (no save impact). 55-crafting upgradeCover.
+  coverFoes: 9,
   reforgeFoes: 15, reforgeGrow: 1.5,   // reforge: 15 x foeGold(gradeZ) x 1.5^n
   // ---- trade (3.5, TR1 reads it): a unit's price = foeGold(grade's first zone) x famW ----
   famW: { gathered: 0.06, gem: 0.075, herb: 0.075, hide: 0.09, ess: 0.18, secondary: 0.03, refined: 0.15 },
