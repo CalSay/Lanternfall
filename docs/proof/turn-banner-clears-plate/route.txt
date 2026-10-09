@@ -1,0 +1,21 @@
+# Proof for card turn-banner-clears-plate. At 740x360 the turn line over the stage ("<name>'s turn") and the whose-turn banner between
+# turns wrapped to two lines on a boss fight, and the turn line sat over the "Zone boss" line under the area name. Now both read on one
+# line (a long name steps the text down to fit the stage) and the turn line starts under the "Zone boss" line. This route fights the
+# zone 10 Champion, The Hollow Cantor: "cantor-turn" and "cantor-rally" show the turn line one line under "Zone boss".
+# tools/check.mjs "turn-banner-clears-plate" renames the foe to the longest name the game can give (Deep Elder Kelp Strangler) and
+# measures both lines at 1280x720, 740x360 and 360x740. Run at all three views.
+# seed: 1
+new z10-cantor
+wait 2
+tap-if "Continue"
+wait 2
+expect "#zSub"
+tap-if "Attack"
+wait 1.5
+shot cantor-turn
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.2
+shot cantor-rally
+expect "#zSub"

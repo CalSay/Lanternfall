@@ -20,16 +20,22 @@
 // yet (a hidden menu) is left as it is.
 // fitTextWidths(list): the same for many boxes, with one layout for all of them (clear every size, read every width, then fit only the
 // few that overflow), so a list of 50 names costs one reflow, not 100.
+// textRoom(e): the width the text has inside the box's padding and borders, to the fraction (0 when the box has no width yet)
+function textRoom(e) {
+  if (!e.clientWidth) return 0;
+  const cs = getComputedStyle(e);
+  return e.getBoundingClientRect().width - ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((n, k) => n + (parseFloat(cs[k]) || 0), 0);
+}
 function fitTextWidths(list, min) {
   const els = [...list];
   for (const e of els) if (e.style.fontSize || e.style.letterSpacing) { e.style.fontSize = ''; e.style.letterSpacing = ''; }
-  const over = els.filter(e => { const room = e.clientWidth && e.getBoundingClientRect().width; if (!room) return false;
+  const over = els.filter(e => { const room = textRoom(e); if (!room) return false;
     const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect().width > room + 0.01; });
   for (const e of over) fitTextWidth(e, min, true);
 }
 function fitTextWidth(e, min = 7, cleared = false) {
   if (!cleared && (e.style.fontSize || e.style.letterSpacing)) { e.style.fontSize = ''; e.style.letterSpacing = ''; }
-  const room = e.clientWidth && e.getBoundingClientRect().width; if (!room) return;
+  const room = textRoom(e); if (!room) return;   // inside any padding (turn-banner-clears-plate)
   const r = document.createRange(); r.selectNodeContents(e);
   const need = () => r.getBoundingClientRect().width, cs = getComputedStyle(e);
   if (need() <= room + 0.01) return;

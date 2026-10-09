@@ -77,7 +77,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'turn-banner-clears-plate': 14, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -16033,6 +16033,100 @@ if (section('ability-names-fit')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('ability-names-fit crashed: ' + (e.stack || e)); }
+
+// ==== turn-banner-clears-plate: the turn line and the whose-turn banner each read on one line and stay off the "Zone boss" line ====
+// save-mid, a zone boss fight, every foe renamed to the longest name the game can give a foe (a boss or its Deepwell "Deep" name, an
+// elite, a Champion, a story boss). At 1280x720, 740x360 and 360x740: the turn line over the stage ("<name>'s turn", .tv-n) on the foe's
+// wind-up, and the banner between turns ("<name> goes again", .tv-turncard) are each one line (the text's height under 1.5x the line
+// height), and neither box meets the place line's "Zone boss" (#zSub), which shows whole. In the hand-over the banner really plays in,
+// the turn line and Grit row under it step out of sight and a Chill trick's line drops clear of it. At 740x360 both wrapped to two lines and the turn line sat over "Zone boss".
+if (section('turn-banner-clears-plate')) try {
+  const at = 'turn-banner-clears-plate', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const mid = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, mid]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);   // the away card
+        // the longest foe name: every boss kit (and its Deepwell "Deep" name, 59h), a zone's "Elder" boss, every zone foe and monster
+        // type (plain, "Champion", and as an elite: "Elite" or a trait, 59k), every story boss and Champion name (55-story)
+        const name = await X(`(() => { const n = [], base = [];
+          for (const k in BOSS_KITS) n.push(BOSS_KITS[k].name, 'Deep ' + BOSS_KITS[k].name.replace(/^The /, ''));
+          if (typeof ZONE_FOES === 'object') for (const z in ZONE_FOES) base.push(ZONE_FOES[z].name);
+          for (const t of TYPES) if (t) { base.push(t.name); n.push('Elder ' + t.name); }
+          for (const b of base) { n.push(b, 'Champion ' + b, 'Elite ' + b); for (const k in ELITE_TRAITS) n.push(ELITE_TRAITS[k].name + ' ' + b); }
+          for (let z = 1; z <= 60; z++) { const c = champStoryName(z), r = regionOf(z); if (c) n.push(c); if (r && r.boss && r.boss.name) n.push(r.boss.name); }
+          return n.filter(x => typeof x === 'string').sort((a, b) => b.length - a.length)[0]; })()`);
+        assert(name && name.length >= 24, `${v}: the longest foe name is found (${name})`);
+        // a zone boss fight; the turn engine waits while __tp is set (59j turnPaused), so each phase can be read
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); UNIQ_TUNE.first = UNIQ_TUNE.again = 0; globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp;
+          S.kills = ZONE_FIGHTS; fightBoss = true; spawn(); true`);
+        const ren = `for (const f of [...combatFoes(), TURN_LIVE && TURN_LIVE.foe]) if (f) f.name = ${JSON.stringify(name)};`;
+        let ph = '';
+        for (const t0 = Date.now(); Date.now() - t0 < 60000;) {
+          ph = await X(`${ren} const p = TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.phase : 'off';
+            if (p === 'foeWindup') globalThis.__tp = 1; else if (p === 'hero') turnCombatAction('attack'); else if (p === 'timing') turnCombatAction('time'); p`);
+          if (ph === 'foeWindup') break;
+          await page.waitForTimeout(40);
+        }
+        assert(ph === 'foeWindup', `${v}: the boss winds up (${ph})`);
+        await page.waitForTimeout(400);
+        const box = sel => `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e || e.hidden || !e.offsetParent) return null; const b = e.getBoundingClientRect();
+          const g = document.createRange(); g.selectNodeContents(e); const t = g.getBoundingClientRect();
+          return { l: b.left, r: b.right, t: b.top, b: b.bottom, h: b.height, th: t.height, tl: t.left, tr: t.right, lh: parseFloat(getComputedStyle(e).lineHeight), fs: parseFloat(getComputedStyle(e).fontSize), txt: e.textContent }; })()`;
+        const read = sel => X(`JSON.stringify({ e: ${box(sel)}, z: ${box('#zSub')}, stage: ${box('#stageBox')} })`).then(JSON.parse);
+        const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+        const fits = (o, what, boxOf) => {
+          const e = o.e, z = o.z, b = boxOf || e;
+          assert(z && z.txt === 'Zone boss' && z.h > 0, `${v}: the place line says "Zone boss" (${z && z.txt})`);
+          assert(e && e.txt.includes(name), `${v}: ${what} names the foe in full (${e && e.txt})`);
+          if (!e || !z) return;
+          assert(e.th < 1.5 * e.lh, `${v}: ${what} is one line (its text ${e.th.toFixed(1)} px tall, line ${e.lh.toFixed(1)} px, ${e.fs.toFixed(1)} px text)`);
+          assert(!hit(b, z), `${v}: ${what} stays off the "Zone boss" line (${JSON.stringify([b.t, b.b, b.l, b.r].map(Math.round))} vs ${JSON.stringify([z.t, z.b, z.l, z.r].map(Math.round))})`);
+          assert(o.stage && e.tl >= o.stage.l - 1 && e.tr <= o.stage.r + 1, `${v}: ${what}'s words stay inside the stage (${Math.round(e.tl)}-${Math.round(e.tr)} in ${o.stage && Math.round(o.stage.l)}-${o.stage && Math.round(o.stage.r)})`);
+          if (!phone) assert(e.fs >= 14, `${v}: ${what} keeps the 14 px desktop text floor (${e.fs})`);
+        };
+        // the turn line on the foe's wind-up
+        fits(await read('.tv-top .tv-n'), 'the turn line');
+        // the banner between turns (the hand-over after a hit), with its longest words: "<name> goes again"
+        await X('globalThis.__tp = 0; true');
+        for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+          ph = await X(`${ren} const p = TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.phase : 'off'; if (p === 'handoff') globalThis.__tp = 1; p`);
+          if (ph === 'handoff') break;
+          await page.waitForTimeout(30);
+        }
+        assert(ph === 'handoff', `${v}: the turn passes over (${ph})`);
+        // Chill sends it again: its trick line ("Chilled: <name> goes again") shows with the banner (75-turn-ui trickSay)
+        await X(`emit('turnCard', { who: 'foe', again: true, chill: true, secs: 3 }); true`); await page.waitForTimeout(300);
+        const tc = await read('.tv-turncard .tv-tc-txt'), card = (await read('.tv-turncard')).e;
+        assert(card && tc.e && /goes again$/.test(tc.e.txt), `${v}: the whose-turn banner shows (${tc.e && tc.e.txt})`);
+        if (card) fits(tc, 'the whose-turn banner', card);
+        // nothing over the stage sits on the banner's words: the turn line, the Grit row, a trick's line
+        const over = await X(`JSON.stringify((() => { const t = document.querySelector('.tv-turncard .tv-tc-txt'), g = document.createRange(); g.selectNodeContents(t); const a = g.getBoundingClientRect();
+          return [...document.querySelectorAll('.tv-top .tv-n, .tv-top .tv-hero, .tv-top .tv-warn')].filter(e => { const cs = getComputedStyle(e); if (e.hidden || !e.offsetParent || cs.visibility === 'hidden' || +cs.opacity === 0) return false;
+            const b = e.getBoundingClientRect(); return b.width && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom; }).map(e => e.className + ': ' + e.textContent); })())`).then(JSON.parse);
+        assert(!over.length, `${v}: nothing over the stage sits on the banner's words (${over.join(' | ')})`);
+        // and the trick line sits clear of the whole banner
+        const wr = await X(`JSON.stringify((() => { const t = document.querySelector('.tv-turncard'), w = document.querySelector('.tv-top .tv-warn'), a = t.getBoundingClientRect(), b = w.getBoundingClientRect();
+          return { on: !w.hidden && b.height > 0 && /Chilled/.test(w.textContent), hit: a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom, a: [a.top, a.bottom].map(Math.round), b: [b.top, b.bottom].map(Math.round) }; })())`).then(JSON.parse);
+        assert(wr.on && !wr.hit, `${v}: a trick's line sits clear of the banner (banner ${wr.a}, line ${wr.b})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('turn-banner-clears-plate crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
