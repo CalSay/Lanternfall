@@ -130,6 +130,12 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Foes:** zone 1 is the Thorn Imp and zone 2 Gloomjaw, from the C22 roster with approved art (`59l-zone-foes.js`,
   `64j-foe-art.js`). Other zones still use the old foe types with turn move sets (`24d-data-turnfoes.js`). From zone
   15 about one fight in five is an elite with one trait.
+- **Foe tricks say what they did** (foe-tricks-say-so): when a foe's rider lands on you, the stage line names it ("Chilled:
+  you're slower", "Venom: you take damage for 2 turns", "Weakened: your next move hits softer"), and "Chilled: <foe> goes again"
+  when Chill is why it acts twice. Rattlebones getting back up floats "Back up!"; the first resisted or armoured hit of a fight
+  says "Resists <element>" or "Armoured" (Burn and Ignite numbers carry the ▼ too); a frozen foe's lost turn reads "Frozen".
+  Nothing warns before a move. The Foe tab and the Bestiary add a line for each trick once it has landed on you
+  (`S.mastery.tricks`, `55-mastery.js`); a boss's riders never teach an ordinary foe's entry.
 - **Regions in code** (`22-data-regions.js`): the Hollow (zones 1-35, the Fenmother) and the Sunken Coast (36-70). The
   Coast reuses the Hollow's foes and scenery until its content lands. The first kill of a region boss relights a
   Great Lantern (`55-lantern.js`).
@@ -226,7 +232,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   capped perks.
 - **Deeds** (`23-data-deeds.js`, `58-deeds.js`, `75-deeds-ui.js`): tracks, Feats, titles and looks drawn on the hero
   (`12g-art-accessories.js`, `64-looks.js`), and the Trophy Wall at camp (`63e-scenery-wall.js`).
-- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons. A weapon or armour craft goal names the boss it is for ("Craft a Pine Bow for the zone 2 boss"); when you can pay for an upgrade to a worn piece and no craft is ready, it offers "Upgrade your Pine Bow to +1", and Go opens the piece on Hero, Gear. From the first tool made until a weapon is worn, the weapon holds a row of its own above every unfinished row, names where its short material comes from ("Pine Staff for the zone 4 boss: mine 3 Quartz at the Quartz Geode"; Go opens that Gather view), and no upgrade is offered.
+- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons. A weapon or armour craft goal names the boss it is for ("Craft a Pine Bow for the zone 2 boss"); when you can pay for an upgrade to a worn piece and no craft is ready, it offers "Upgrade your Pine Bow to +1", and Go opens the piece on Hero, Gear. From the first tool made until a weapon is worn, the weapon holds a row of its own above every unfinished row, names where its short material comes from ("Pine Staff for the zone 4 boss: mine 3 Quartz at the Quartz Geode"; Go opens that Gather view), and no upgrade is offered. After the zone 10 clear, Next Up offers the camp's step up, Hearth 2 and then the Tavern, naming each part of the cost still short and where it comes from ("Build Hearth 2: 20 Pine Log at the Pine Grove, 20 Copper Ore at the Copper Vein, 5 Essence from fights"). While a gathered part is short and you are elsewhere the row is Ready and Go sends you to that node; once you have what that node gave, it offers "Back to the fight", and with everything in hand it reads "Hearth 2: ready to build" (or the camp's own build row offers it).
   **"Boss ready"** means you would usually win the zone boss. The game tries 30 scratch fights of that boss with your
   hero as they stand now, judged from your own Parry and Dodge record (a new player counts as casual), and says "Boss
   ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong", and Go opens

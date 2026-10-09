@@ -1,0 +1,1 @@
+After the zone 10 clear, Next Up names the camp's next step: Hearth 2, what it still needs and where each part comes from ("Build Hearth 2: 20 Pine Log at the Pine Grove, 20 Copper Ore at the Copper Vein"). Go takes you to gather it, then back to the fight, and the Tavern comes next. Best shot: nextup-hearth2.

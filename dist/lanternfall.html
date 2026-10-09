@@ -14490,6 +14490,67 @@ var forgeGoalPicks = 0;
     icon: () => { const it = upgradeNext(); return it ? { item: it } : null; },
     go: () => { const it = upgradeNext(), id = it ? it.id : null; return { tab: 'party', view: 'gear', fn: () => { if (id != null && typeof craftUI === 'object' && craftUI) craftUI.openItem(id); } }; }
   });
+
+  // hearth-two-next-up (W6): after the zone 10 clear, the camp's step up: Hearth 2, then the Tavern. The row names each part of
+  // the cost still short and where it comes from ("Build Hearth 2: 20 Pine Log at the Pine Grove, 5 Essence from fights").
+  // Like Hesketh's fire (55-hearth) it is Ready while a gathered part is short and the hero works elsewhere: Go sends the hero to
+  // that node. Once everything is in hand it reads "ready to build", unless camp-build (57-camp) already offers this build (its
+  // pick: the cheapest build a free builder can start), so the two never show the same build twice. A hero still at a node
+  // this row sent them to, with no more needed there, is offered "Back to the fight". Costs and gates are campCan's own.
+  let stepSent = null;   // { kind, t, what }: the node this row's Go last sent the hero to (not saved)
+  const atNode = (k, t) => S.activity === 'gather' && !!S.node && S.node.kind === k && S.node.t === t;
+  const gathered = k => !!(CRAFT_FAMILY[k] && CRAFT_FAMILY[k].src === 'gather');
+  const stepWhere = (k, t) => {
+    if (k === 'ess' || k === 'gold') return 'from fights';
+    if (NODE_NAMES[k]) return `at the ${NODE_NAMES[k][t - 1]}`;
+    const pl = matPlace(k, t); return pl.skill ? `from ${SKILL[pl.skill]}` + (pl.opens ? `, which opens at ${pl.opens}` : '') : '';
+  };
+  const campStep = () => {
+    if (!(S.maxZone > 10) || typeof campCan !== 'function' || !campOpen()) return null;
+    const id = campLevel('hearth') < 2 ? 'hearth' : campLevel('tavern') < 1 ? 'tavern' : null;
+    if (!id || campPending(id) || !campList().includes(id)) return null;
+    const c = campCan(id);
+    if (!c.cost || c.max || c.need) return null;
+    const short = [], parts = [[S.gold, c.cost.gold]];
+    if (S.gold < c.cost.gold) short.push({ k: 'gold', t: 1, n: Math.ceil(c.cost.gold - S.gold), have: S.gold });
+    for (const [k, t, n] of c.cost.mats) { const h = matOwn(k, t); parts.push([h, n]); if (h < n) short.push({ k, t, n: Math.ceil(n - h), have: h }); }
+    if (c.miss && c.miss.length > short.length) return null;   // short of something this row cannot name (a Trophy)
+    const live = parts.filter(([, n]) => n > 0);
+    return { id, ok: !!c.ok, queue: !!c.queue, what: id === 'hearth' ? 'Hearth 2' : 'the Tavern', short, p: live.reduce((a, [h, n]) => a + Math.min(1, need(h, n)), 0) / Math.max(1, live.length) };
+  };
+  // camp-build's own pick (bestBuild in 57-camp): the cheapest build that can start now, the first in camp order on a tie
+  // (kept 900 ms, as camp-build keeps its own pick: it reads every building, and the two rows hand over on the same beat)
+  let pickAt = 0, pickVal = null;
+  const campPick = () => { const t = Date.now(); if (!(t - pickAt <= 900 && t >= pickAt)) { pickAt = t; let best = null;
+    for (const id of campList()) { const c = campCan(id); if (c.ok && !c.queue && (!best || c.cost.gold < best.g)) best = { id, g: c.cost.gold }; } pickVal = best ? best.id : null; } return pickVal; };
+  // the row's state: go (Ready: Go sends the hero to g's node), work (at a short node, or short of what fights bring), back and
+  // ready (both Ready)
+  const stepNow = () => {
+    if (stepSent && !atNode(stepSent.kind, stepSent.t)) stepSent = null;
+    const x = campStep(), sh = x ? x.short : [];
+    const back = !!stepSent && !sh.some(s => s.k === stepSent.kind && s.t === stepSent.t);
+    const deep = typeof deepActive === 'function' && deepActive();   // no Go to a node from the Deepwell (navGo refuses)
+    if (deep && sh.length) return { m: 'work', x };
+    if (sh.some(s => gathered(s.k) && atNode(s.k, s.t))) return { m: 'work', x };
+    const g = sh.find(s => gathered(s.k) && matPlace(s.k, s.t).open);
+    if (g) return { m: 'go', x, g };
+    if (back && S.activity === 'gather') return { m: 'back', x };
+    if (x && x.ok) return x.queue || campPick() !== x.id ? { m: 'ready', x } : null;
+    return sh.length ? { m: 'work', x } : null;
+  };
+  const stepPart = s => `${fmt(s.n)}${s.have > 0 ? ' more' : ''} ${s.k === 'gold' ? 'gold' : costName(s.k, s.t)} ${stepWhere(s.k, s.t)}`.trim();
+  registerGoal({
+    id: 'camp-step', sys: 'camp', prio: 1, icon: { ic: ['anvil', '#D08A4E'] },
+    pct: () => { const s = stepNow(); return !s ? null : s.m === 'work' ? Math.max(0.01, Math.min(0.99, s.x.p)) : 1; },
+    label: () => { const s = stepNow(); if (!s) return '';
+      if (s.m === 'ready') return `${s.x.what[0].toUpperCase() + s.x.what.slice(1)}: ready to build`;
+      if (s.m === 'back') return `Back to the fight: you have the ${costName(stepSent.kind, stepSent.t)} for ${stepSent.what}`;
+      return `Build ${s.x.what}: ${s.x.short.map(stepPart).join(', ')}`; },
+    go: () => { const s = stepNow(); if (!s) return { tab: 'world', view: 'camp' };
+      if (s.m === 'go') { const sent = { kind: s.g.k, t: s.g.t, what: s.x.what }; return { act: 'gather', node: { kind: sent.kind, t: sent.t }, fn: () => { stepSent = sent; } }; }
+      if (s.m === 'back') return { act: 'fight', fn: () => { stepSent = null; } };
+      return { tab: 'world', sel: '#camp-b-' + s.x.id }; }
+  });
 }
 
 // ---- src/js/55-hearth.js ----
@@ -14795,11 +14856,24 @@ const PROFILE_BONUS = 0.05;
 const FOE_TELL = {};
 for (const k in FOE_COUNTERS) FOE_TELL[k] = `Moves: ${TURN_FOE_TYPES[k].moves.map(m => m.name).join(', ')}. ${FOE_COUNTERS[k].tip}`;
 
+// foe-tricks-say-so (judge 2026-10-08): the Foe tab learns a trick the first time it lands on you (S.mastery.tricks[key][id] = 1),
+// never before. Keyed on the foe's type; a boss's riders never teach an ordinary foe's entry. A line for a type and trick, or the
+// trick's own line.
+const FOE_TRICK_LINES = {
+  wraith: { chill: "Chill Touch chills you: you're slower, so it can act twice." },
+  slime: { venom: n => `Ooze Lash poisons you: you take damage for ${n} turns.` },
+  spore: { venom: n => `Poison Cloud poisons you: you take damage for ${n} turns.`, weaken: 'Spore Puff weakens you: your next move hits softer.' },
+  bones: { getUp: 'Gets back up once. A Burn that finishes it keeps it down.' },
+  any: { chill: "It chills you: you're slower, so it can act twice.", venom: n => `It poisons you: you take damage for ${n} turns.`,
+    weaken: 'It weakens you: your next move hits softer.', getUp: 'Gets back up once.' }
+};
+const FOE_TRICK_ORDER = ['chill', 'venom', 'weaken', 'getUp'];
+
 // Helpers for the UI (75-mastery-ui.js) and tools; filled in below.
 const masteryApi = {};
 
 {
-  registerState('mastery', { zones: {}, types: {}, seen: {} });
+  registerState('mastery', { zones: {}, types: {}, seen: {}, tricks: {} });
 
   const starsFor = n => { let s = 0; while (s < MASTERY_STARS.length && n >= MASTERY_STARS[s]) s++; return s; };
   const tierFor = n => { let t = 0; while (t < BESTIARY_TIERS.length && n >= BESTIARY_TIERS[t]) t++; return t; };
@@ -14813,10 +14887,26 @@ const masteryApi = {};
     const n = typeKills(k), row = typeof FOE_TYPE === 'object' ? FOE_TYPE[k] : null;
     return { n, stats: n >= PROFILE_TIERS[0], weak: n >= PROFILE_TIERS[1], tell: n >= PROFILE_TIERS[2], bonus: n >= PROFILE_TIERS[3],
       next: PROFILE_TIERS.find(x => x > n) || 0, seen: S.mastery.seen[k] || null,
-      weakTo: row && row.weak || null, resists: row && row.res || [], tellTxt: FOE_TELL[k] || '' };
+      weakTo: row && row.weak || null, resists: row && row.res || [], tellTxt: FOE_TELL[k] || '', tricks: trickLines(k) };
   };
+  // foe-tricks-say-so: the tricks of kind k that have landed on you, as Foe tab lines (none before one lands)
+  const trickLines = k => {
+    const got = (S.mastery.tricks || {})[k], n = typeof TURN_TUNE === 'object' ? TURN_TUNE.heroDotT : 2;
+    if (!got) return [];
+    return FOE_TRICK_ORDER.filter(id => got[id]).map(id => { const l = (FOE_TRICK_LINES[k] || {})[id] || FOE_TRICK_LINES.any[id]; return typeof l === 'function' ? l(n) : l; });
+  };
+  const learnTrick = (k, id) => {
+    if (!k || !FOE_TRICK_LINES.any[id]) return false;
+    const t = S.mastery.tricks || (S.mastery.tricks = {});
+    if (!t[k] || typeof t[k] !== 'object') t[k] = {};
+    const row = t[k];
+    if (row[id]) return false;
+    row[id] = 1; return true;
+  };
+  on('heroRider', p => { if (p && !p.boss) learnTrick(p.key, p.id); });
+  on('foeGetUp', p => { if (p) learnTrick(p.key, 'getUp'); });
   const profileX = k => (typeKills(k) >= PROFILE_TIERS[3] ? 1 + PROFILE_BONUS : 1);
-  Object.assign(masteryApi, { starsFor, tierFor, zoneKills, typeKills, totalStars, perkBonus, profile, profileX });
+  Object.assign(masteryApi, { starsFor, tierFor, zoneKills, typeKills, totalStars, perkBonus, profile, profileX, trickLines, learnTrick });
 
   on('kill', ({ mob, zone, tier }) => {
     const m = S.mastery;
@@ -16481,6 +16571,11 @@ function validateSave(data) {
       }
       if (a.forged !== undefined) int(a.forged, 'achievements.forged');
       for (const k of ['init', 'epic']) if (a[k] !== undefined && typeof a[k] !== 'boolean') fail('achievements.' + k, 'has the wrong type');
+    }
+    // foe-tricks-say-so: the Foe tab's learned tricks are { [foe type]: { [trick]: 1 } }
+    if (data.mastery && data.mastery.tricks) for (const [k, row] of Object.entries(data.mastery.tricks)) {
+      record(row, 'mastery.tricks.' + k);
+      for (const [id, v] of Object.entries(row)) { if (!FOE_TRICK_ORDER.includes(id)) fail('mastery.tricks.' + k + '.' + id); int(v, 'mastery.tricks.' + k + '.' + id, 0, 1); }
     }
     if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
     // C9: optional route maps are validated before storage or feature load; missing v5 maps use defaults.
@@ -23118,9 +23213,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     FLOAT_EV.txt = (kind === 'counter' ? 'COUNTER ' : '') + fmt(a) + (n > 1 ? ` x${n}` : '') + (crit ? '!' : '');
     FLOAT_EV.color = src ? src[0] : kind === 'counter' || crit ? '#FF9E3D' : '#FFFFFF';
     FLOAT_EV.big = !!crit || kind === 'counter' || kind === 'ignite' || !(kind === 'attack' || DOT_KIND[kind]); FLOAT_EV.x = undefined; FLOAT_EV.y = undefined;
-    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = !src && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; FLOAT_EV.crit = !!crit; FLOAT_EV.tier = tier || '';
+    FLOAT_EV.dt = src ? 'st:' + src[1] : dt && dt !== 'phys' ? dt : ''; FLOAT_EV.rel = !src && dt && typeof typeRel === 'function' ? typeRel(f.txRow || f.type, dt) : 0; if ((kind === 'burn' || kind === 'ignite') && dt && typeof typeRel === 'function') FLOAT_EV.rel = Math.min(0, typeRel(f.txRow || f.type, dt)); FLOAT_EV.hdt = dt || 'phys'; FLOAT_EV.hk = kind || ''; FLOAT_EV.crit = !!crit; FLOAT_EV.tier = tier || '';   // foe-tricks-say-so: Burn and Ignite show the resist mark (never the weak one)
     emit('float', FLOAT_EV);
-    FLOAT_EV.tier = '';
+    FLOAT_EV.tier = ''; FLOAT_EV.hdt = ''; FLOAT_EV.hk = '';   // hdt, hk: the hit's damage type and kind (foe-tricks-say-so: 75-turn-ui's Resists and Armoured)
     if (crit) emit('crit', { tap: true });
     if (f.hp <= 0) foeDies(f, 0, kind || 'turn');
     return a;
@@ -24262,6 +24357,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
   onFoeDeath = (f, src, kind) => {
     if (E.reassemble > 0 && f.type === 'bones' && !f.again && !f.boss && kind !== 'magic' && kind !== 'burn' && !(quotas() && PK.rise >= q('bones', 'rise', 2))) {
       f.again = true; f.hp = f.max * E.reassemble; f.hit = 0.2; PK.rise++;   // S6-A: the first 2 that fall get up
+      emit('foeGetUp', { name: f.name, hp: f.hp, key: f.type });   // foe-tricks-say-so: the stage and the Foe tab say so (75-turn-ui, 55-mastery)
       return true;
     }
     return false;
@@ -26618,7 +26714,9 @@ var soloHero, soloPick, soloLevels, soloBenchXp, soloAttack, soloParry, soloDodg
 //   timingGrade { id, i, grade }, foeMove { id, name, anim, hits }, parryWindow
 //   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res }, foeCharge { name }, chargeBroken { name },
 //   foeSkip { why }, turnPhase { name }, fightEnd { reason }, ability { cls: 'solo', id, name, slot }, soloAttack, soloParry,
-//   soloDodge, soloCounter.
+//   soloDodge, soloCounter, heroRider { id, foe, key, stacks, boss } (an ordinary foe's or a boss's rider landed on the hero:
+//   chill, venom or weaken; foe-tricks-say-so), turnCard { who, again, secs, chill } (chill: Chill on the hero is why the foe goes
+//   again), foeGetUp (59b: Rattlebones gets back up).
 const TURN_TUNE = {
   on: 1,
   // normal-death-says-so (judge, 2026-10-08): every zone fight (normal, elite, boss) starts at full HP, win or lose. 0 brings back
@@ -27062,10 +27160,14 @@ function turnPreview(m, n) {
 // 'handoff', while 75-turn-ui shows whose turn it is (turnCard); the turn itself (its damage over time too) starts after it.
 function turnNextTurn(m, io) {
   if (m.ended) return;
+  // foe-tricks-say-so: who would go with no Chill on the hero (the same pick on the same state), so the banner names Chill only
+  // when it is why the foe goes again
+  let free = '';
+  if (m.h.chill > 0) { const c = m.h.chill; m.h.chill = 0; free = turnPick(m).who; m.h.chill = c; }
   const who = turnAdvance(m, m);
   if (m.n > 0 && TURN_TUNE.turnPause > 0) {
     m.phase = 'handoff'; m.pending = who; m.next = who; m.until = m.now + TURN_TUNE.turnPause;
-    io.emit('turnCard', { who, again: m.run > 1, secs: TURN_TUNE.turnPause });
+    io.emit('turnCard', { who, again: m.run > 1, secs: TURN_TUNE.turnPause, chill: who === 'foe' && m.run > 1 && free === 'hero' });
     return;
   }
   turnBegin(m, who, io);
@@ -27431,7 +27533,7 @@ function turnBegin(m, who, io) {
   }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
   if (e.skip > 0 || e.recover > 0) {
-    const why = e.recover > 0 ? 'recover' : 'stun';
+    const why = e.recover > 0 ? 'recover' : m.lastCtl === 'freeze' ? 'freeze' : 'stun';
     e.skip = 0; e.recover = 0;
     io.emit('turn', { who, n: m.n });
     io.emit('foeSkip', { why, turn: true });
@@ -27521,6 +27623,9 @@ function turnLand(m, io, hit) {
   else if (r === 'chill') { h.chill = Math.min(2, h.chill + 1); h.chillT = 2; }
   else if (r === 'weaken') h.weaken = 1;
   else if (r === 'blind') h.blind = 1;
+  // foe-tricks-say-so: the words come after the trick lands, never before (75-turn-ui; the Foe tab learns it, 55-mastery)
+  if (r === 'chill' || r === 'venom' || r === 'weaken') { const lf = io.foe && io.foe();
+    io.emit('heroRider', { id: r, foe: p.foeType, key: (lf && lf.type) || p.foeType || '', stacks: r === 'chill' ? h.chill : r === 'venom' ? h.dot.venom : 1, boss: !!p.boss }); }
 }
 function turnContact(m, io) {
   const T = TURN_TUNE, h = m.h, e = m.e, hit = m.move.hits[m.hitI];
@@ -42385,6 +42490,7 @@ var introUI;   // var: 76-create (loaded after this file) reads it at run time
     if (p.stats && p.seen) out.push(`Last met in zone ${p.seen.z}: ${fmt(p.seen.hp)} HP, hits for ${fmt(p.seen.atk)}, haste ${typeof TURN_TUNE === 'object' ? TURN_TUNE.foeHaste : '?'}.`);
     if (p.weak) out.push((p.weakTo ? `Weak to ${dtName(p.weakTo)}.` : 'No weakness.') + (p.resists.length ? ` Resists ${p.resists.map(dtName).join(' and ')}.` : ''));
     if (p.tell && p.tellTxt) out.push(`Watch for: ${p.tellTxt}`);
+    for (const t of p.tricks || []) out.push(t);   // foe-tricks-say-so: what its tricks did to you
     if (p.next)   // the +5% for a foe you know well is said once, in the section note (menu audit #14)
       out.push(`${fmt(Math.ceil(p.next - p.n))} more to learn ${p.next === 5 ? 'its weakness' : p.next === 15 ? 'what to watch for' : '+5% damage to it'}.`);
     return out.join('\n');
@@ -46503,6 +46609,25 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   // elite traits (59k, 24d TURN_TRAITS): the first of each kind says what it does; breaking one shows
   on('traitSeen', p => { if (p && p.first) say(p.txt, 'charge', 4); });
   on('traitBroken', p => { if (p) { emit('float', { txt: p.txt, color: '#BFE6FF', big: true }); emit('shake', 0.2); } });
+  // foe tricks say what they did (foe-tricks-say-so, judge 2026-10-08): a word when a trick lands, never before. A boss's riders
+  // keep their charge and rally lines. body[data-trick-*]: what has been said (the last rider, the get-up, resist, armour), for a proof
+  // route that cannot catch the frame (as rally-gates-live's data-rally-seen).
+  const trickSay = (txt, secs, flag, v) => { if (warnSticky) return false; say(txt, 'charge', secs || 1.8); document.body.dataset.trickSaid = txt; if (flag) document.body.dataset[flag] = v || '1'; return true; };   // a boss's charge line keeps the line
+  const RIDER_WORD = { chill: () => "Chilled: you're slower", venom: p => `Venom: you take damage for ${p.stacks > 0 ? p.stacks : 2} turn${p.stacks === 1 ? '' : 's'}`, weaken: () => 'Weakened: your next move hits softer' };
+  on('heroRider', p => { if (p && !p.boss && RIDER_WORD[p.id]) trickSay(RIDER_WORD[p.id](p), 0, 'trickRider', p.id); });
+  on('turnCard', p => { if (p && p.chill && p.who === 'foe') { const f = foeNow(); trickSay(`Chilled: ${(f && f.name) || 'The foe'} goes again`, 2, 'trickAgain'); } });
+  on('foeGetUp', p => { if (!p) return; emit('float', { txt: 'Back up!', color: '#E8E4DA', big: true }); trickSay(`${p.name || 'It'} gets back up!`, 0, 'trickGetup'); });
+  // resist and armour: once a fight each, on the first hit that meets it (59-combat sets hdt, the hit's damage type, and hk, its kind)
+  let toldRes = 0, toldArm = 0;
+  on('fightStart', () => { toldRes = toldArm = 0; });
+  on('float', p => {
+    if (!p || !p.hdt || !(typeof turnCombatOn === 'function' && turnCombatOn())) return;
+    if (warnSticky) return;
+    const f = foeNow(), words = [];
+    if (p.rel < 0 && !toldRes) { toldRes = 1; words.push(`Resists ${(typeof DT_INFO === 'object' && DT_INFO[p.hdt] ? DT_INFO[p.hdt].n : p.hdt).toLowerCase()}`); }
+    if (p.hdt === 'phys' && !toldArm && f && f.tk && f.tk.arm > 0 && !/^(bleed|swarm|curse)$/.test(p.hk)) { toldArm = 1; words.push('Armoured'); }
+    if (words.length) trickSay(words.join('. '), 1.6, toldArm && words[words.length - 1] === 'Armoured' ? 'trickArm' : 'trickRes');
+  });
   on('shieldHit', () => emit('float', { txt: 'Shield', color: '#BFE6FF', big: false }));
   on('heroMiss', () => emit('float', { txt: 'Miss', color: '#A9B1BD', big: false, x: 0.66, y: 0.42 }));
   on('foeContact', p => { if (p && p.res === 'miss') emit('float', { txt: 'Missed you', color: '#8FB8FF', big: false, x: 0.27, y: 0.42 }); });
@@ -46606,6 +46731,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const pr = typeof masteryApi === 'object' && masteryApi.profile ? masteryApi.profile(f.type) : null, dtn = d => (typeof DT_INFO === 'object' && DT_INFO[d] ? DT_INFO[d].n : d), learn = [];
     if (pr && pr.weak) learn.push(['Weak', (pr.weakTo ? `Weak to ${dtn(pr.weakTo)}.` : 'No weakness.') + (pr.resists.length ? ` Resists ${pr.resists.map(dtn).join(' and ')}.` : '')]);
     if (pr && pr.tell && pr.tellTxt) learn.push(['Tell', 'Watch for: ' + pr.tellTxt.replace(/^Moves:[^.]*\.\s*/, '')]);
+    if (pr && pr.tricks && !f.boss) learn.unshift(...pr.tricks.map(t => ['Trick', t]));   // foe-tricks-say-so: each trick once it has landed on you, first (the dock is short in landscape)
     const nx = pr ? (pr.n < 5 ? 5 : pr.n < 15 ? 15 : 0) : 0;
     if (nx) learn.push(['Learn', `${nx - pr.n} more kill${nx - pr.n > 1 ? 's' : ''} to learn ${nx === 5 ? 'its weakness' : 'what to watch for'}.`]);
     return { name: f.name, tags, trait, known: sh ? true : known, moves: known || sh ? moves : [], hidden: sh ? sh.hidden : 0, learn };
