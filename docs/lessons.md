@@ -191,6 +191,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   normal one: the zoom floor and the swarm step both read the stage's own size. Why: "x4 at 1920" changed nothing in a maximized
   1080p window (red team), and the swarm step already drew the hero at half size in zone 9 at 1280x720 (judge). (hero-screen-size-ruling, 2026-10-09)
 
+- A hide must cover every screen that names the thing, not only its own lists: Next Up's Deeds goal (`58-deeds.js` nearList and the followed track) still named a raid track after the Deeds tab hid it, and give the fixture the case (a followed track) so the check can see it. Why: the reviewer of online-off-clean found "13 raid bosses to Wyrmslayer III" off-host. (online-off-clean, 2026-10-09)
+
 ## Saves and offline parity
 
 - Mark a one-time line or scene done when the player answers it, not when it is queued, or keep the queue in the save: a queue in memory loses it on a reload. Story scenes are marked seen when queued, so `S.story.open` keeps the queued and open ones with their page, and Hesketh's say queue is saved as `S.onboard.sayQ`. A tip whose job is still undone (a piece in the bag) gets a session-only hide on ×, not a done mark. Why: the cold leg closed the game on page 1 of the Chapter 1 card and lost pages 2 and 3 and Hesketh's equip tip. (reload-keeps-tips, 2026-10-08)
@@ -211,6 +213,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Read the hero's away limit through `awayCapH()` (and the Watchtower clamp through `awayBaseH()`) in `40-rules.js`, never a copy of the formula. When the limit moves, also move C14's credited hours (`check.mjs` offline accounting), the systems map's Hourglass sink (`tools/systems-map.mjs`, a file plus a regex) and the Storehouse `pace` `h` column (HS19). Why: first-night-covered found six copies of `4 + 2 * S.relic.glass`, and the full check failed C14 and the systems map after the helper landed. (first-night-covered, 2026-10-09)
 - When a counter map joins an existing registered record (`S.bossOdds.reads`), validate the map itself as a record in save codes as well as each row, rebuild a stored row that is a list or not an object at use, and update every check that pins the record's JSON or calls `Number.isFinite` on all its values. Why: the code and save reviews of trick-read-rate found `reads: 5` accepted and a list row silently dropping counts. (trick-read-rate, 2026-10-09)
 - A core file loaded before `55-stats.js` cannot call `registerAwayLine` at load (`AWAY_LINES` is still in its temporal dead zone and the whole core fails to load); register on the first `awayBegin`. (refine-queues, 2026-10-08)
+
+- Write a new fixture by loading and saving it through the game (twice), never by setting fields: a hand-set raid history had no deeds tiers for its wyrms, so AD3 found first-load lines, and it held values the game cannot make (a retired relic above 0, a raid unique at the wrong tier). Why: the save review of online-off-clean. (online-off-clean, 2026-10-09)
 
 ## CI and tooling
 - A browser check that opens a menu tab waits for the rows it reads (`page.waitForFunction` with a cap that fails naming what never appeared), never a fixed timer after the click. Why: a tab's first open builds its sections over later tasks once 30 ms (`COLD_MS`) is spent, so under a full 4-job run the Forge rows were not drawn 500 ms after the click and craft reveal crashed on a null `.cf-rec`. (craft-reveal-flake-watch, 2026-10-09)

@@ -93,7 +93,8 @@ let OMENS, WEEKLY_GOALS;
 
     { id: 'longNight', n: 'Long Night', cat: 'rest', fx: 'Away gains +25%', mod: { offline: 1.25 }, ic: ['glass', '#B58CFF'], go: null },
     { id: 'hearthDay', n: 'Hearth Day', cat: 'rest', fx: "The Hearth's away bonus is doubled", mod: { hearth: 2 }, needs: 'Camp', ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: null },
-    { id: 'wyrmStirs', n: 'The Wyrm Stirs', cat: 'rest', fx: '+25% raid damage', mod: { raid: 1.25 }, ok: () => S.wyrms > 0 || S.raid.gen > 0, ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: { tab: 'world' } }
+    // online-off-clean: with no capability host (onlineOff, 70-ui.js) the raid cannot run, so its day falls back to another Omen
+    { id: 'wyrmStirs', n: 'The Wyrm Stirs', cat: 'rest', fx: '+25% raid damage', mod: { raid: 1.25 }, ok: () => (S.wyrms > 0 || S.raid.gen > 0) && !(typeof onlineOff === 'function' && onlineOff()), ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: { tab: 'world' } }
   ];
   const OMEN_BY = Object.fromEntries(OMENS.map(o => [o.id, o]));
   const AL_N = OMENS.length;
