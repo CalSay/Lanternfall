@@ -840,6 +840,35 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .gate-rule { order: 1; margin: 4px 8px 0; padding: 4px 8px; font-size: max(var(--tmin, 0px), calc(11.5px * var(--tk, 1))); gap: 6px; }
 .gate-rule img { width: 16px; height: 16px; }
 .gate-rule.hide { display: none; }
+/* away-card-next-up-first: results, then what to do next, then everything else folded under More */
+.away-res, .away-next { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.away-more { list-style: none; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; background: var(--well); border: 1px solid var(--line-hi); color: var(--muted); font: 600 max(var(--tmin, 0px), calc(11px * var(--tk, 1))) var(--body); letter-spacing: .16em; text-transform: uppercase; cursor: pointer; }
+.away-more::after { content: "+"; font: 600 max(var(--tmin, 0px), calc(16px * var(--tk, 1)))/1 var(--body); color: var(--ember); }
+.away-more::-webkit-details-marker { display: none; }
+.away-fold[open] > .away-more::after { content: "\2212"; }
+.away-more:hover { color: var(--bone); border-color: var(--ember-deep); }
+.away-fold > .away-block { margin-top: 14px; }
+/* landscape and desktop: results on the left, the limit and Next up on the right, both from the top */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) {
+  .away-card:has(.away-body.two) { width: min(720px, 100%); }
+  .away-body.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 18px; }
+  .away-body.two > .away-top { grid-column: 1 / -1; }
+  .away-body.two .away-limwrap .away-lim { width: 100%; }
+  .away-card:has(.away-body.two) .away-foot { display: flex; justify-content: center; }
+  .away-card:has(.away-body.two) .away-go { width: min(340px, 100%); }
+}
+/* a short landscape screen (740x360): a one-row header and tighter gaps */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
+  .away-ov { padding: 8px; }
+  .away-card { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+  .away-body { gap: 10px; }
+  .away-top { display: flex; align-items: baseline; justify-content: center; gap: 12px; padding: 8px 14px; }
+  .away-time { font-size: max(var(--tmin, 0px), calc((24px * var(--display-k)) * var(--tk, 1))); }
+  .away-res, .away-next { gap: 10px; }
+  .away-fold > .away-block { margin-top: 10px; }
+  .away-limwrap .away-lim { margin-top: 0; }
+  .away-foot { padding: 8px 14px 10px; }
+}
 /* 60-bosstry: the Try again card after a zone boss beats you (75-boss-try-ui.js). */
 .bt-eye { font: 600 max(var(--tmin, 0px), calc(11px * var(--tk, 1))) var(--body); letter-spacing: .18em; text-transform: uppercase; color: #E0524F; }
 .bt-head { margin: 2px 0 4px; font-size: max(var(--tmin, 0px), calc(20px * var(--tk, 1))); line-height: 1.2; }
@@ -38234,6 +38263,8 @@ var handsTradeOpenPicker;
 // showAwayReport(r) takes the report built by awayGains() + 55-stats.js (see there for its
 // fields and for registerAwayLine). Shown when the player was gone 30s or more and
 // something happened. Numbers count up; under prefers-reduced-motion they appear at once.
+// Order (away-card-next-up-first, W8 card 3): results, the work limit, Next up, then one folded
+// "More (n)" row holding every other registerAwayLine group (folded, never dropped).
 
 let showAwayReport, awayLimitStep;
 {
@@ -38263,11 +38294,14 @@ let showAwayReport, awayLimitStep;
   }
   function onKey(e) {
     if (!root) return;
-    const onGo = e.target && e.target.classList && e.target.classList.contains('away-lgo');
+    const onMore = e.target && e.target.classList && e.target.classList.contains('away-more');
+    const onGo = onMore || (e.target && e.target.classList && e.target.classList.contains('away-lgo'));
+    // Space on More toggles the fold: stop it here so the fight's Space key (dodge) never sees it or cancels the toggle
+    if (onMore && e.key === ' ') { e.stopPropagation(); return; }
     if (e.key === 'Escape' || (e.key === 'Enter' && !onGo)) { e.preventDefault(); e.stopPropagation(); close(); }
     else if (e.key === 'Tab') {
-      // cycle through the Go buttons and Collect
-      const f = [...root.querySelectorAll('.away-lgo, .away-go')], i = f.indexOf(document.activeElement);
+      // cycle through the Go buttons, More and Collect (a closed fold's Go buttons are skipped)
+      const f = [...root.querySelectorAll('.away-lgo, .away-more, .away-go')].filter(b => !b.closest('.away-fold:not([open])') || b.matches('.away-more')), i = f.indexOf(document.activeElement);
       e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
     }
   }
@@ -38369,6 +38403,8 @@ let showAwayReport, awayLimitStep;
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'awayTitle');
     const card = el('div', 'away-card');
     const body = el('div', 'away-body');
+    // results on one side, what to do next on the other (side by side on a short landscape screen, 60-away.css)
+    const res = el('div', 'away-res'), next = el('div', 'away-next');
 
     // ---- header: time away ----
     const top = el('div', 'away-top');
@@ -38379,11 +38415,11 @@ let showAwayReport, awayLimitStep;
     // ---- what the hero did ----
     const actIc = r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
     const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
-    if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); body.append(n); }
+    if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); res.append(n); }
     if (r.activity === 'fight') {
       const rule = el('p', 'away-rule');
       rule.append(img(IC.glass()), el('span', null, AWAY_RULE_TXT));
-      body.append(rule);
+      res.append(rule);
     }
 
     // ---- headline numbers ----
@@ -38396,7 +38432,7 @@ let showAwayReport, awayLimitStep;
     if (r.bosses) tiles.append(tile(IC.boss(), r.bosses, 'Bosses beaten'));
     if (r.raidDmg >= 1) tiles.append(tile(IC.flame(), r.raidDmg, 'Raid damage', null, 'raid'));
     if (r.embers) tiles.append(tile(IC.ember(), r.embers, 'Embers', v => '+' + fmt(Math.floor(v)), 'ember'));
-    if (tiles.children.length) { tiles.dataset.n = Math.min(3, tiles.children.length); body.append(tiles); }
+    if (tiles.children.length) { tiles.dataset.n = Math.min(3, tiles.children.length); res.append(tiles); }
 
     // ---- materials by family and tier ----
     if (r.mats && r.mats.length) {
@@ -38416,7 +38452,7 @@ let showAwayReport, awayLimitStep;
         }
         row.append(chips); b.append(row);
       }
-      body.append(b);
+      res.append(b);
     }
 
     // ---- items ----
@@ -38431,7 +38467,7 @@ let showAwayReport, awayLimitStep;
         grid.append(row);
       }
       if (r.items.length > 8) grid.append(el('p', 'note', `And ${r.items.length - 8} more in your bag.`));
-      b.append(grid); body.append(b);
+      b.append(grid); res.append(b);
     }
 
     // ---- skills ----
@@ -38444,7 +38480,7 @@ let showAwayReport, awayLimitStep;
         row.append(img(SKILL_IC[s.k] ? SKILL_IC[s.k]() : IC.banner()), el('span', 'away-sn', SKILL[s.k] || s.k), lv);
         b.append(row);
       }
-      body.append(b);
+      res.append(b);
     }
 
     // ---- the hero's work limit, after the results ----
@@ -38468,7 +38504,7 @@ let showAwayReport, awayLimitStep;
       lim0.append(cap);
     }
     }
-    if (lim0.children.length) body.append(lim0);
+    if (lim0.children.length) next.append(lim0);
 
     // ---- lines from other systems (registerAwayLine) ----
     // A line may name its own block (group, e.g. 'Next up') and carry a Go button (go()).
@@ -38478,7 +38514,7 @@ let showAwayReport, awayLimitStep;
     // material amounts are already above; keep the useful reason without listing gains twice.
     const gathering = (r.lines || []).filter(l => l && l.sub && !String(l.txt || '').startsWith('+'));
     if (gathering.length) groups.set('Gathering', [...(groups.get('Gathering') || []), ...gathering]);
-    for (const [title, lines] of groups) {
+    const blockOf = (title, lines) => {
       const b = block(title);
       for (const l of lines) {
         const row = el('div', 'away-line');
@@ -38490,8 +38526,26 @@ let showAwayReport, awayLimitStep;
         if (typeof l.go === 'function') row.append(goBtn(l));
         b.append(row);
       }
-      body.append(b);
+      return b;
+    };
+    // Next up comes straight after the results; every other group folds under one "More (n)" row
+    const nu = groups.get('Next up');
+    if (nu) { groups.delete('Next up'); const b = blockOf('Next up', nu); b.classList.add('away-nu'); next.append(b); }
+    const n = [...groups.values()].reduce((a, ls) => a + ls.length, 0);
+    if (n) {
+      // a <details> fold (its summary is not a <button>, so a tool pressing the card's first button still meets a Go or
+      // Collect); the lines are built on first open, so no hidden Go sits in the card before Collect
+      const fold = el('details', 'away-fold'), more = el('summary', 'away-more', `More (${n})`);
+      fold.append(more);
+      fold.addEventListener('toggle', () => {
+        if (!fold.open) return;
+        if (fold.children.length === 1) for (const [title, lines] of groups) fold.append(blockOf(title, lines));
+        try { more.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' }); } catch (e) {}
+      });
+      next.append(fold);
     }
+    if (res.children.length) body.append(res);
+    if (next.children.length) { body.append(next); if (res.children.length) body.classList.add('two'); }
 
     const foot = el('div', 'away-foot');
     const go = el('button', 'big home away-go', 'Collect');

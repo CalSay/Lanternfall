@@ -87,3 +87,32 @@
 .gate-rule { order: 1; margin: 4px 8px 0; padding: 4px 8px; font-size: 11.5px; gap: 6px; }
 .gate-rule img { width: 16px; height: 16px; }
 .gate-rule.hide { display: none; }
+/* away-card-next-up-first: results, then what to do next, then everything else folded under More */
+.away-res, .away-next { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.away-more { list-style: none; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; background: var(--well); border: 1px solid var(--line-hi); color: var(--muted); font: 600 11px var(--body); letter-spacing: .16em; text-transform: uppercase; cursor: pointer; }
+.away-more::after { content: "+"; font: 600 16px/1 var(--body); color: var(--ember); }
+.away-more::-webkit-details-marker { display: none; }
+.away-fold[open] > .away-more::after { content: "\2212"; }
+.away-more:hover { color: var(--bone); border-color: var(--ember-deep); }
+.away-fold > .away-block { margin-top: 14px; }
+/* landscape and desktop: results on the left, the limit and Next up on the right, both from the top */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) {
+  .away-card:has(.away-body.two) { width: min(720px, 100%); }
+  .away-body.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 18px; }
+  .away-body.two > .away-top { grid-column: 1 / -1; }
+  .away-body.two .away-limwrap .away-lim { width: 100%; }
+  .away-card:has(.away-body.two) .away-foot { display: flex; justify-content: center; }
+  .away-card:has(.away-body.two) .away-go { width: min(340px, 100%); }
+}
+/* a short landscape screen (740x360): a one-row header and tighter gaps */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
+  .away-ov { padding: 8px; }
+  .away-card { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+  .away-body { gap: 10px; }
+  .away-top { display: flex; align-items: baseline; justify-content: center; gap: 12px; padding: 8px 14px; }
+  .away-time { font-size: calc(24px * var(--display-k)); }
+  .away-res, .away-next { gap: 10px; }
+  .away-fold > .away-block { margin-top: 10px; }
+  .away-limwrap .away-lim { margin-top: 0; }
+  .away-foot { padding: 8px 14px 10px; }
+}
