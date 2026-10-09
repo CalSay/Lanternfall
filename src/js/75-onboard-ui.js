@@ -75,7 +75,8 @@
     tavern: "There's a Tavern at camp now. Folk on the road stop in there.",
     codex: "You've a Codex now, in the Journal. It keeps track of what you've found.",
     raid: 'The World raid is open at camp. Every player fights the same boss there.',
-    stars: "You've earned Stars. They're on the Hero tab, and each one changes how you fight.",
+    // tips-pause-says-so (F24): true for both triggers, the first star and hero level 10 with none found yet
+    stars: 'Stars are on the Hero tab now. Bosses drop them, and each one changes how you fight.',
     deep: 'The Deepwell is open on the Fight tab. You pick a boon between its floors.'
   };
   // forge-line-while-fighting: what each materials step is for. A fighter who never opens Camp or Gather hears the step's short gathered
@@ -128,8 +129,9 @@
   const sayKeep = () => { O().sayQ = sayQ.filter(id => id !== 'defeat').map(id => SAY_ARG[id] ? { id, arg: SAY_ARG[id]() } : { id }); };
   function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) { sayQ.push(id); sayKeep(); } }
   const sayDone = (id, said = true) => { if (said) sayEnd = GUIDE_RT.t; sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); sayKeep(); };
-  // an unlock line held while up: a Got it, the game waits, and only between fights (never two lines at once)
-  const sayStep = id => ({ id: 'say:' + id, text: sayText(id), ok: 1, pause: 1, ph: ['between'] });
+  // an unlock line with a Got it, only between fights (never two lines at once). tips-pause-says-so: it holds nothing of its own (no `pause`):
+  // with the fight in view it holds the gap after a kill (gapHeld, in tick), and gathering, or a fight behind an upright menu, goes on under it
+  const sayStep = id => ({ id: 'say:' + id, text: sayText(id), ok: 1, ph: ['between'] });
   // cal-0107-staged-guide: a guide step already says some unlocks, so his unlock line would say it twice. The Hero tab at the first level-up is
   // the upgrade step's ("The Hero tab is open now..."); a cold Hearth's camp is the fire talk's and the Workbench steps' ("Open Camp and we'll build").
   const saidBySteps = id => (id === 'party' && !O().done.upgrade) || (id === 'camp' && typeof hearthCold === 'function' && hearthCold() && !O().done.bench);
@@ -143,7 +145,11 @@
     const ic = tab ? document.querySelector(`.tab[data-tab="${tab}"] img`) : null;
     toast(OPEN_TXT[id], 'good', ic ? ic.src : { ic: ['banner', '#F2C14E'] }, tab || id === 'nextup' ? 'high' : 'normal');
   });
-  on('wipe', e => { if (e && e.boss && !e.arena) sayQueue('defeat'); });
+  // tips-pause-says-so (F24): the boss-loss line remembers its boss's zone, and is dropped unsaid (no done mark, so a later loss can say it)
+  // once that boss is beaten: "No shame in that" never follows the win
+  let defeatZone = 0;
+  on('wipe', e => { if (e && e.boss && !e.arena) { defeatZone = e.zone || S.zone; sayQueue('defeat'); } });
+  const defeatStale = () => { const i = sayQ.indexOf('defeat'); if (i >= 0 && S.maxZone > defeatZone) { sayQ.splice(i, 1); if (sayCur === 'defeat') sayCur = ''; } };
   on('scrollDrop', e => { if (e && e.firstEver) { scrollId = e.id || 'moss'; sayQueue('scroll'); } });
   on('abilityLearned', e => { if (e && e.hero === soloHero() && soloAbilities().length > 1) { slotAb = e.id; sayQueue('slot'); sayKeep(); } });
   // guide-goal-after-reload: his Pine Log line carries the first job, and the queue lives in memory only, so a reload before it was read
@@ -195,7 +201,9 @@
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
   // SOLO1: a step whose action is reading it (the first boss) has a Got it button
   const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
-  bub.append(faceBox, nm, txt, x, okb);
+  // tips-pause-says-so: over an upright menu the stage is out of sight, so the strip carries the "Paused" tag on its top edge
+  const heldTag = el('span', 'ob-held', 'Paused'); heldTag.setAttribute('aria-hidden', 'true');
+  bub.append(faceBox, nm, txt, x, okb, heldTag);
   // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
   let curGo = null;
   const finish = s => s.id.startsWith('say:') ? sayDone(s.id) : s.id.startsWith('use:') ? onboardUseDone(s.id) : guideHide(s.id) || onboardDone(s.id);   // a first-use line is read, not a guide step; a wear tip or the fire tip hides for this session (reload-keeps-tips)
@@ -383,7 +391,7 @@
   const sceneComing = () => { try { return typeof storyBusy === 'function' && MOMENT_Q.some(m => m.kind === 'champion' && m.scene && storyBusy(m.scene)); } catch (e) { return false; } };
   const tickOwed = () => cachePending_() || sceneComing();   // something only the game tick can finish: no hold may stop the tick now
   const cardComing = () => cardUp() || tickOwed();
-  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); }
+  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); syncHeld(); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -397,13 +405,16 @@
     if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; reveal = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
+    defeatStale();
     // forge-line-while-fighting: a materials step in the gap after a kill, fight in view and no menu, is hidden (below); a fighter who has not seen
     // its live line gets one held line for it instead, after a quiet minute, if something gathered is short
     if (step && STOCK_WHAT[step.id] && !S.tab && fightInView() && heroUp() && stockGathered(step.id).length && stockQuiet()) sayQueue(step.id);
     // unlock-voice: a new thing is announced only when no fight is in view, and the game waits on its Got it (cal-0107-staged-guide).
     // It goes before a between step that is not already up and holding (the news, then what to do), never over a fight lesson.
     // staged-guide-followups: nor while a big card is up or on its way (the first boss's card came 1 s after the Scroll line and covered it)
-    if (sayQ.length && O().tips && !document.hidden && guidePhase(!guideMenuCovers()) === 'between') {
+    // tips-pause-says-so (F24): never while the hero is down (a wipe clears the foes, so the phase reads "between" at 0 HP); the line waits for
+    // the next gap after the hero is back up
+    if (sayQ.length && O().tips && !document.hidden && heroUp() && guidePhase(!guideMenuCovers()) === 'between') {
       // forge-line-while-fighting: a materials line that waits (SAY_WAIT) lets the lines behind it go first; a stale one is dropped at once
       for (const i of sayQ.slice()) if (STOCK_WHAT[i] && !SAY_STILL[i]()) { const c = sayCur; sayDone('say:' + i, false); if (c !== i) sayCur = c; }
       const ready = i => !(SAY_WAIT[i] && SAY_WAIT[i]());
@@ -428,9 +439,11 @@
     // (materials, gold) waits for a calm screen instead (no fight, or a menu over it)
     // forge-line-while-fighting: on a wide view a materials line on Camp or Gather stays beside the fight, steady, holding nothing (keyed on the menu only)
     const stockSide = !!STOCK_WHAT[step.id] && isWide() && STOCK_TABS.includes(S.tab);
+    // tips-pause-says-so: nothing shows or holds in the gap after a wipe (the hero is down), and a news line's hold ends once the fight leaves view
+    // (Gather, an upright menu)
     const gap = !stockSide && fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:')) && !onboardPaused(step) && !(cur && cur.id === step.id && gapHeld);
-    if (gap && !(step.ok || step.id.startsWith('use:'))) return hide();
-    gapHeld = gap || (gapHeld && !!cur && cur.id === step.id);
+    if (gap && (!heroUp() || !(step.ok || step.id.startsWith('use:')))) return hide();
+    gapHeld = gap || (gapHeld && !!cur && cur.id === step.id && (!step.id.startsWith('say:') || fightInView()));
     // first-gold-and-camp-strip: the first weapon is ready to make, so Craft opens on it once (only from the game screen, never out of another menu)
     if (step.id === 'weapon' && !weaponOpened && !S.tab) { const k = weaponKind(); if (k) { weaponOpened = true; S.fSlot = k; S.fTier = 1; forgeGoalPicks++; setTab('forge'); } }
     let spec = null;
@@ -464,11 +477,64 @@
     if (lost) ring.hidden = true;
     // zone10-clear-moment: never while the cache or a Champion's scene waits on the tick (a paused game skips tick, so the win froze)
     ONBOARD.paused = !lost && (onboardPaused(step) || gapHeld) && !tickOwed();
+    syncHeld();
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
+  // ---------------- tips-pause-says-so: a hold says it holds ----------------
+  // While a tip holds the game (ONBOARD.paused) for anything but a fight lesson, #app carries `guide-held`: "Paused" sits on the stage (and on
+  // the strip's edge over an upright menu), Gather says Paused for Working (72-ui-gather), and the fight bar dims (60-onboard.css). The four
+  // lessons (LESSON_ACT in 75-solo-ui) keep their own look and press rules.
+  const LESSONS = ['attack', 'ability', 'dodge', 'parry'];
+  const plate = el('div', 'ob-paused', 'Paused'); plate.setAttribute('role', 'status');
+  stageBox.append(plate);
+  const heldNow = () => !!(ONBOARD.paused && cur && !layer.hidden && !LESSONS.includes(cur.id));
+  // (upright, an open menu covers the stage, so the plate there would sit on the menu: the strip's tag says it instead)
+  function syncHeld() { putToggle($('app'), 'guide-held', heldNow()); putToggle(plate, 'off', !!S.tab && guideMenuCovers()); }
+  // A fight press while a tip holds the game answers it, then acts as normal (the press is not lost): Got it for a Got it tip, × for a Go tip.
+  // A tip that waits for a press elsewhere ("Open Hero") refuses it: the button shakes and the plate flashes (a colour, not motion); the
+  // press itself goes on as before (it does nothing while the game is held, and a long press still opens the button's info).
+  // Capture-phase listeners, so they run before 75-solo-ui's; the guards copy its key handler's.
+  const FIGHT_KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'dodge' };
+  const solo = () => $('soloBar');   // built by 75-solo-ui, which loads after this file
+  const flashOn = (n, cls, ms) => { n.classList.remove(cls); void n.offsetWidth; n.classList.add(cls); clearTimeout(n._obT); n._obT = setTimeout(() => n.classList.remove(cls), ms); };
+  function refusePress(b) {
+    if (b) { flashOn(b, 'nope', 450); b.classList.add('refused'); clearTimeout(b._refT); b._refT = setTimeout(() => b.classList.remove('refused'), 250); }
+    flashOn(plate, 'nope', 450); flashOn(heldTag, 'nope', 450);
+  }
+  // -> true: the tip is answered and the press goes on; false: refused
+  function answerByPress() {
+    if (okb.hidden) return false;
+    const s = cur;
+    if (curGo || /^(say|use):/.test(s.id)) finish(s); else onboardDone(s.id);
+    hide(); setTimeout(tick, 0);
+    return true;
+  }
+  addEventListener('keydown', e => {
+    if (!heldNow() || typeof e.key !== 'string') return;
+    const id = FIGHT_KEYS[e.key.toLowerCase()]; if (!id) return;
+    const soloBar = solo();
+    if (!soloBar || soloBar.hidden || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
+    if (soloPickerOpen() || gameHeld() || (S.tab && !isWide())) return;
+    if (!answerByPress()) refusePress(soloBar.querySelector(`[data-act="${id}"]`));
+  }, true);
+  document.addEventListener('pointerdown', e => {
+    const soloBar = solo();
+    if (!heldNow() || !soloBar) return;
+    const b = e.target && e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!b || !soloBar.contains(b) || soloPickerOpen() || gameHeld()) return;
+    if (!answerByPress()) refusePress(b);
+  }, true);
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
   onboardSpec = id => { const table = SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
   let lastNode = null, lastRect = null;
+  const meetsBar = () => {
+    const soloBar = solo(), b = soloBar && !soloBar.hidden ? soloBar.getBoundingClientRect() : null; if (!b || !b.width || !b.height) return false;
+    const a = bub.getBoundingClientRect();
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  };
+  // (every look, not only on a layout change: the bar shows under an unchanged tip when the hero goes from gathering to the fight)
+  const syncBtn = () => putToggle($('app'), 'guide-btn', bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden && meetsBar());
   const resKept = new WeakSet();   // craft result cards the guide has already left in view once
   function place(spec) {
     const key = spec.text, newTarget = spec.node !== lastNode;
@@ -487,7 +553,7 @@
       // live progress ("12/20") updates in place; only a new hint pops
       if (fresh || !spec.live) { bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); } }
     }
-    if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
+    if (!changed) { syncBtn(); return; }   // no real layout change and the same target/text: leave it exactly where it is
     dirty = false; panelScrolled = false; lastNode = spec.node;
     // the panel docks where notices dock and never over the stage: landscape, the side column (its notices slot;
     // it stands in for Next Up while it speaks, except for the Next Up step itself, which points at the chip);
@@ -501,7 +567,10 @@
     // landscape, a step with a button (read it, or Go) takes the dock's room too: the column is short and the button must not clip
     const btn = mode === 'side' && !okb.hidden;
     bub.classList.toggle('btn', btn);
-    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip); putToggle($('app'), 'guide-btn', btn);
+    putToggle($('app'), 'guide-side', mode === 'side'); putToggle($('app'), 'guide-nu', mode === 'side' && spec.node === chip);
+    // tips-pause-says-so: the fight bar hides under a side tip with a button only where the two boxes meet (a 740x360 phone on its side);
+    // a desktop keeps it in view, dimmed while the tip holds the game
+    syncBtn();
     faceUp();
     if (!inPanel) r = null;   // the dock may have moved the stage (portrait: the panel takes a slot): read the target after it
     // UX-L1: a target inside the menu's scrolling content that is out of sight (a short landscape menu: the Make view's

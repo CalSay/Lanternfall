@@ -291,7 +291,13 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   press it: Attack on your first turn, Dodge on the foe's first swing (the foe's clock stops as the Dodge window opens, so the press
   lands), your ability on your next turn, Parry on the next swing (or the next foe's first). While a lesson holds, only the button it
   names works. After that, in a fight, no line shows: every
-  other tip, and each unlock line from Hesketh, waits for the gap between fights, and an unlock line holds the game with a Got it.
+  other tip, and each unlock line from Hesketh, waits for the gap between fights. An unlock line (his news) holds only that gap until
+  its Got it: while you gather, or fight behind an upright menu, it shows and the game goes on (tips-pause-says-so). Whenever a tip
+  holds the game, except the fight lessons, the stage says "Paused" (on the strip's edge over an upright menu), Gather says Paused for
+  Working, and the fight bar stays in view, dimmed, unless the tip covers it (a phone on its side). A fight key (Q W E A S D Space) or a
+  press on a fight button during a Got it hold answers it and then acts; on a Go tip it counts as ×; a tip that waits for a press
+  elsewhere refuses it (the button shakes, the plate flashes). His Stars line never says you earned them, the boss-loss line is dropped
+  once that boss is beaten, and none of his lines shows while your hero is down.
   The Hero tab opens at the first level-up and the guide's next line says so; the first Scroll and a second ability's slot each get
   a line. Empty ability slots stay dim and silent until a learned move waits for one. Lighting the camp fire keeps you at the grove,
   where Hesketh's talk plays.
