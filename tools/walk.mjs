@@ -168,7 +168,7 @@ const OBS = `(() => {
   o.toasts = q('#toasts .toast');
   o.cards = q('.mm-ov, .mm-toast, .bsheet-ov, .tv-card, .cb-banner, .tv-banner, .gl-card, .away-ov, .modal, .dd-feat, .feat-card', n => ({ cls: (n.className || '').toString().split(' ')[0], text: tx(n).slice(0, 160),
     head: n.classList.contains('mm-ov') ? tx(n.querySelector('.mm-head') || n) : undefined,
-    gave: n.classList.contains('mm-ov') ? [...n.querySelectorAll('.mm-list li, .mm-pick b')].map(tx).filter(Boolean).slice(0, 6) : undefined }));   // walk-f3-in-fights: what a big card says it gave (its lines and picks)
+    gave: n.classList.contains('mm-ov') ? [...n.querySelectorAll('.mm-list li')].map(tx).filter(Boolean).slice(0, 6) : undefined }));   // walk-f3-in-fights: what a big card says it gave (its lines; picks are offers, not gifts)
   o.tabs = q('.tabs .tab');
   o.intro = (n => n && vis(n) ? [n.querySelector('.intro-who'), n.querySelector('.intro-line')].filter(Boolean).map(tx).join(' ') : '')(document.querySelector('#introScreen'));   // the drawn opening: one line a tap
   o.create = !!document.querySelector('#createScreen') && vis(document.querySelector('#createScreen'));
@@ -703,9 +703,9 @@ async function watch(o) {
   for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
   const s = o.s, p = st.prev;
   // walk-f3-in-fights: where each stretch of game time went, so a long gap between progress moments can name its stall. Gathering is
-  // the Gather view working (a goal's materials, the bot's tier gates); held is a card, tip or menu up while not gathering (the fight
-  // waits on the player); the rest is fighting, foes and bosses. The kills count by time gives the fights in a gap.
-  { const cat = s.act === 'gather' ? 'gather' : (o.cards.length || o.tip || (s.tab && s.tab !== 'adv')) ? 'held' : 'fight', l = st.spans, last = l[l.length - 1];
+  // the Gather view working (a goal's materials, the bot's tier gates); held is a card, sheet or menu up while not gathering (the fight
+  // waits on the player; a tip or banner over a running fight is still fighting); the rest is fighting, foes and bosses. The kills count by time gives the fights in a gap.
+  { const cat = s.act === 'gather' ? 'gather' : (o.cards.some(c => /^(mm-ov|bsheet-ov|away-ov|modal|gl-card|feat-card|dd-feat)$/.test(c.cls)) || (s.tab && s.tab !== 'adv')) ? 'held' : 'fight', l = st.spans, last = l[l.length - 1];
     if (last && last.cat === cat) last.to = gt; else { if (last) last.to = gt; l.push({ cat, from: gt, to: gt }); }
     if (s.kills !== undefined && (!st.killsAt.length || st.killsAt[st.killsAt.length - 1].kills !== s.kills)) st.killsAt.push({ t: gt, kills: s.kills }); }
   if (!st.heroKeys && s.heroes !== undefined) st.heroKeys = await X('Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {})');
@@ -718,7 +718,7 @@ async function watch(o) {
   if (p) {
     if (s.maxZone > p.maxZone) await moment('zone', `zone ${p.maxZone} cleared (maxZone ${s.maxZone})`, { big: true, zone: p.maxZone });
     if (s.L > p.L) await moment('level', 'level ' + s.L, { big: false });
-    if (s.abil > p.abil) await moment('ability', 'a new ability (' + s.abil + ' learned)', { big: false });
+    if (s.abil > p.abil) await moment('ability', 'a new ability (' + s.abil + ' learned)', { big: false, quiet: true });
     if (s.found > p.found) await moment('unique', 'unique found', { big: true });
     if (s.stars > p.stars) await moment('star', 'new Star', { big: true });
     if (s.heroes > p.heroes) { const ks = await X('Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {})'), nw = ks.filter(k => !(st.heroKeys || []).includes(k)); st.heroKeys = ks;
@@ -742,6 +742,7 @@ const moments = [];   // { t, id, text, big, prog, zone, rode } (rode: a join sa
 async function moment(id, text, o) {
   moments.push({ t: Math.round(gt * 10) / 10, id, text, big: !!o.big, prog: PROGRESS.has(id), zone: o.zone, rode: !!o.rode });
   await note(page, 'moment', `${id}: ${text}`, { tag: 'moment-' + id, extra: { big: !!o.big } });
+  if (o.quiet) return;   // walk-f3-in-fights: a new ability is logged for F3 only, so the placeholder and layout scans sample as before
   for (const p of await page.evaluate(PLACEHOLDERS)) placeholders.add(p);
   // eyes layout lint at the moment
   for (const f of await page.evaluate(LINT)) { if (f.pair && ALLOW[f.pair]) continue; addCheck('layout', 'at ' + id + ': ' + f.what, f.detail); }
@@ -877,7 +878,7 @@ function lessonLine() {
 
 // ---------------- F3: progress moments and the stalls between them ----------------
 // walk-f3-in-fights. The gaps between progress moments from game time 0 to the end of F3's window, each with the fights in it and what
-// its time went on (st.spans), and the cause named: boss losses, gathering for a goal, or a pause (cards, tips and menus up).
+// its time went on (st.spans), and the cause named: boss losses, gathering for a goal, or a pause (cards, sheets and menus up).
 function killsAt(t) { let k = 0; for (const e of st.killsAt) { if (e.t > t) break; k = e.kills; } return k; }
 function gapCause(from, to) {
   const tm = { fight: 0, gather: 0, held: 0 };
@@ -885,7 +886,7 @@ function gapCause(from, to) {
   const lost = st.beatenAt.filter(l => l.t > from && l.t <= to), tries = lost.length;
   const fights = Math.max(0, killsAt(to) - killsAt(from)), zones = [...new Set(lost.map(l => l.zone))];
   const top = Object.entries(tm).sort((a, b) => b[1] - a[1])[0][0], mins = v => Math.round(v / 6) / 10;
-  const cause = top === 'gather' ? 'gathering for a goal' : top === 'held' ? 'a pause (cards, tips and menus up)'
+  const cause = top === 'gather' ? 'gathering for a goal' : top === 'held' ? 'a pause (cards, sheets and menus up)'
     : tries ? `boss losses (${tries} lost tr${tries === 1 ? 'y' : 'ies'}${zones.length ? ' at zone ' + zones.join(', ') : ''})` : 'fighting with no boss lost (a grind)';
   return { cause, fights, tries, fightMin: mins(tm.fight), gatherMin: mins(tm.gather), heldMin: mins(tm.held) };
 }
@@ -894,14 +895,15 @@ function f3Read(reached) {
   const endWhy = zc10 && zc10.t <= Math.min(3600, reached) ? 'the zone 10 Champion at ' + fmtT(zc10.t) : reached < 3600 ? 'the end of the walk at ' + fmtT(reached) : 'minute 60 (zone 10 not cleared)';
   const ts = [...new Set(moments.filter(m => m.prog && m.t <= end).map(m => m.t))].sort((a, b) => a - b);
   const gaps = []; let prev = 0;
-  for (const t of [...ts, end]) { if (t > prev || !gaps.length) gaps.push(Object.assign({ from: prev, to: t, gap: Math.round(t - prev) }, gapCause(prev, t))); prev = t; }
+  for (const t of [...ts, end]) { if (t > prev || !gaps.length) gaps.push(Object.assign({ from: prev, to: t, gap: Math.round((t - prev) * 10) / 10 }, gapCause(prev, t))); prev = t; }
   const worst = gaps.reduce((a, g) => (g.gap > a.gap ? g : a), { from: 0, to: 0, gap: 0, cause: '' });
   // (b): the peak's clear, and a big card (the moment layer's .mm-ov) that first showed from just before the kill to a minute after it
-  // (the Champion's scene plays first, #264), with lines or picks naming what it gave
+  // (the Champion's scene plays first, #264), headed as a boss card ("First boss down", "The <Champion> falls") so a unique's or a
+  // hero's card in that minute is not taken for it, with lines naming what it gave. A clear after minute 60 is not reached.
   const peaks = [['the first boss', 1], ['the zone 5 Champion', 5], ['the zone 10 Champion', 10]].map(([name, z]) => {
-    const m = moments.find(x => x.id === 'zone' && x.zone === z);
+    const m = moments.find(x => x.id === 'zone' && x.zone === z && x.t <= 3600);
     if (!m) return { name, zone: z, t: null, card: null, gave: [] };
-    const c = [...st.cardSeen.values()].filter(c => c.cls === 'mm-ov' && c.first >= m.t - 1.5 && c.first <= m.t + 60).sort((a, b) => a.first - b.first)[0];
+    const c = [...st.cardSeen.values()].filter(c => c.cls === 'mm-ov' && /boss down|falls/i.test(c.head || '') && c.first >= m.t - 1.5 && c.first <= m.t + 60).sort((a, b) => a.first - b.first)[0];
     return { name, zone: z, t: m.t, card: c ? (c.head || c.text).slice(0, 80) : null, gave: c ? c.gave || [] : [] };
   }).map(p => Object.assign(p, { gave: p.gave.length ? p.gave : null }));
   return { gaps, worst, peaks, end, endWhy };
@@ -1038,10 +1040,10 @@ function report(res) {
   { const F = sc.F3, long = F.gaps.filter(g => g.gap >= 180), prog = moments.filter(m => m.prog);
     out.push('## F3: progress moments and the gaps between them', '', `Game time, the bot's own clock (no person-minute conversion until a human run sets one). A progress moment is a zone's first clear, a new ability, a Star, a hero joining or a unique; levels, hero lines, looks and crafts are not. Window: game time 0 to ${F.endWhy}. Progress moments seen: ${prog.length} (${[...PROGRESS].map(k => k + ' ' + prog.filter(m => m.id === k).length).join(', ')}).`, '',
       'Peaks (each needs its own big card that says what it gave):', '', ...F.peaks.map(p => `- ${p.name}: ${p.t === null ? 'not reached' : fmtT(p.t) + '; ' + (p.card ? `card "${p.card}"${p.gave ? ', gave: ' + p.gave.join('; ') : ', with no line saying what it gave'}` : 'no big card of its own within a minute')}`), '',
-      'Gaps of 3 min or more (fights are diagnosis only; the time split is fighting, gathering, and held on a card, tip or menu):', '',
+      'Gaps of 3 min or more (fights are diagnosis only; the time split is fighting, gathering, and held on a card, sheet or menu):', '',
       ...(long.length ? ['| From | To | Gap | Fights | Lost boss tries | Fight / gather / held min | Cause |', '|---|---|---|---|---|---|---|', ...long.map(g => `| ${fmtT(g.from)} | ${fmtT(g.to)} | ${fmtT(g.gap)}${g.gap > 480 ? ' **over 8**' : ''} | ${g.fights} | ${g.tries} | ${g.fightMin} / ${g.gatherMin} / ${g.heldMin} | ${g.cause} |`)] : ['- none']), ''); }
   // dead air
-  const marks = [0, ...log.filter(e => (['unlock', 'moment', 'nextup', 'gear'].includes(e.kind) || (e.kind === 'gate' && e.go)) && !(e.kind === 'moment' && e.text.startsWith('level'))).map(e => e.t), reached].sort((a, b) => a - b);
+  const marks = [0, ...log.filter(e => (['unlock', 'moment', 'nextup', 'gear'].includes(e.kind) || (e.kind === 'gate' && e.go)) && !(e.kind === 'moment' && /^(level|ability)/.test(e.text))).map(e => e.t), reached].sort((a, b) => a - b);
   const quiet = []; for (let i = 1; i < marks.length; i++) if (marks[i] - marks[i - 1] >= 180) quiet.push({ from: marks[i - 1], to: marks[i] });
   out.push('## Where it dragged', '', ...(quiet.length ? quiet.slice(0, 8).map(q => `- ${fmtT(q.from)} to ${fmtT(q.to)}: ${Math.round((q.to - q.from) / 60 * 10) / 10} min with no unlock, boss win, unique, Star, hero or Next Up result`) : ['- no stretch over 3 minutes without a reward or an unlock']), '');
   // findings
