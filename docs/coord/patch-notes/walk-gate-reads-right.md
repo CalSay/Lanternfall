@@ -1,0 +1,1 @@
+Tooling only. Nothing changes in the game. The test walk now says why it stopped working a crafting gate: "the gate opened" only when the skill really reached the level, otherwise what took the craft row's place. Its report also shows the craft row at 30, 45 and 60 minutes and each gathering skill's level against 14 at the end.
