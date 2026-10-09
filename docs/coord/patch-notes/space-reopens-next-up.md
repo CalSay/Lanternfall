@@ -1,0 +1,1 @@
+Space always dodges in a fight, even after you click Next up or another button. Before, Space could press the last button you clicked and reopen Next up mid-swing. Enter still presses a focused button.
