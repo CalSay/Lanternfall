@@ -13389,6 +13389,29 @@ if (section('moment layer')) try {
           assert(cap === '1:false', `${at}: a third medium moment inside 3 minutes waits in the queue (${cap})`);
           await X(`MOMENT_UI.midAt.length = 0; true`); await until(`!!document.querySelector('.mm-toast')`);
           assert(await X(`!!document.querySelector('.mm-toast')`), `${at}: ...and shows when the window frees`);
+          // first-hour-walk-findings (F6): a zone clear and a Star in the same second both show, at once, even with the cap full (the walk
+          // saw zones 12 and 14 and their Stars wait 23 to 52 s behind it). They fold into one banner: still one a fight end.
+          await page.waitForTimeout(3200);
+          await X(`notes.clock = 100; MOMENT_UI.midAt = [40, 70]; moment('star', { title: 'Check Star' }); moment('cacheAuto', { title: 'Zone 12 cleared', zone: 12 }); true`);
+          await until(`!!document.querySelector('.mm-toast')`, 3000);
+          const two = await X(`({ n: document.querySelectorAll('.mm-toast').length, text: (document.querySelector('.mm-toast') || { textContent: '' }).textContent, q: momentState().queued })`);
+          assert(two.n === 1 && /Check Star/.test(two.text) && /Zone 12 cleared/.test(two.text) && two.q === 0, `${at}: a zone clear and a Star in the same second show at once in one banner, cap or not (${JSON.stringify(two).slice(0, 160)})`);
+          // the next fight's turn banner hides the notices slot (.tc-on): a moment banner's hold waits while it is hidden
+          await page.waitForTimeout(3600);
+          await X(`MOMENT_UI.midAt.length = 0; emit('levelup', { L: 30 }); true`); await until(`!!document.querySelector('.mm-toast')`);
+          await X(`document.getElementById('stageBox').classList.add('tc-on'); true`); await page.waitForTimeout(300);
+          const hid = await X(`+getComputedStyle(document.getElementById('toasts')).opacity < 0.1`);
+          await page.waitForTimeout(2500); await X(`document.getElementById('stageBox').classList.remove('tc-on'); true`); await page.waitForTimeout(500);
+          const kept = await X(`!!document.querySelector('.mm-toast')`);
+          assert(w < h ? hid && kept : !hid || kept, `${at}: a banner hidden under the turn banner keeps its time on screen (${hid ? 'hidden 2.8 s, ' + (kept ? 'still up' : 'gone') : 'this view never hides it'}; upright views hide it)`);
+          await page.waitForTimeout(3000);
+          // a bark said on a big card is the card's own line, not a medium moment: it does not use up the cap
+          await page.waitForTimeout(3600);
+          const bq = await X(`MOMENT_UI.midAt.length = 0; moment('cache', { title: 'Zone 4 cleared', zone: 4 }); moment('bark', { bark: 'boss' })`);
+          await until(`!!document.querySelector('.mm-ov')`);
+          const bk = await X(`({ up: !!document.querySelector('.mm-ov'), mid: MOMENT_UI.midAt.length })`);
+          assert(bq && bk.up && bk.mid === 0, `${at}: a bark folded into a big card does not count against the medium cap (${JSON.stringify({ queued: bq, ...bk })})`);
+          await X(`MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); true`); await page.waitForTimeout(300);
           // it never shows during a turn: a live fight (past its intro) holds it, the fight's end lets it through
           await page.waitForTimeout(3200);
           await X(`MOMENT_UI.midAt.length = 0; S.activity = 'fight'; emit('sceneReset'); true`);

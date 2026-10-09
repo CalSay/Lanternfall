@@ -205,13 +205,23 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     if (list.length > shown.length) tx.append(el('div', 'mm-t-line', `And ${list.length - shown.length} more.`));
     t.append(tx);
     const ms = (MOMENT_TUNE.bannerS + MOMENT_TUNE.bannerExtraS * (shown.length - 1)) * 1000;
-    t._hold = Date.now() + ms;
+    t._hold = Date.now() + ms; t._at = Date.now();   // _at: when it showed (tools/walk.mjs reads a card's age)
     const live = [...box.children].filter(x => !x._gone && !(x._hold > Date.now()));
     const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
     const held = [...box.children].filter(x => !x._gone && x._hold > Date.now()).length;
     for (let i = 0; i <= live.length - Math.max(1, room - held); i++) { const o = live[i]; if (!o) break; o._gone = true; clearTimeout(o._timer); o.remove(); }
     box.append(t); u.banner = t;
-    t._timer = setTimeout(() => { dropToast(t); if (u.banner === t) u.banner = null; }, ms);
+    // first-hour-walk-findings (F6): the next fight's turn banner hides the notices slot (20-stage.css .tc-on); the hold waits while it
+    // is hidden, so the player still sees the banner for its full time (the walk saw one up for 1.8 s, then gone under "You go first")
+    let last = Date.now(), hidMs = 0;
+    const hold = () => {
+      if (t._gone) return;
+      const now = Date.now(), dt = now - last; last = now;
+      if (+getComputedStyle(box).opacity < 0.1 && hidMs < 8000) { t._hold += dt; hidMs += dt; }   // at most 8 s more: a slot hidden for good never pins the queue
+      if (now >= t._hold) { dropToast(t); if (u.banner === t) u.banner = null; return; }
+      t._timer = setTimeout(hold, 100);
+    };
+    t._timer = setTimeout(hold, 100);
     u.midAt.push(notes.clock);
     emit('momentShow', { tier: 'medium', kind: first.kind, n: list.length, zone: first.zone });
   }
@@ -228,12 +238,14 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const big = MOMENT_Q.filter(x => x.tier === 'big'), mid = MOMENT_Q.filter(x => x.tier !== 'big');
     if (big.length && !u.ov) {
       const all = withSay(big.concat(fold(mid))); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
-      for (const x of mid) MOMENT_UI.midAt.push(notes.clock);   // each folded medium counts against the cap
+      for (const x of mid) if (x.kind !== 'bark') MOMENT_UI.midAt.push(notes.clock);   // each folded medium counts against the cap; a bark is the card's own line, not a moment
       showCard(all); return;
     }
     if (big.length) return;   // a big card is up: wait for it
     if (u.ov || (u.banner && u.banner._hold > Date.now())) return;   // a banner keeps its minimum time; a banner under a big card would play unseen
-    if (mid.length && midRoom()) { const all = withSay(fold(mid)); MOMENT_Q.length = 0; showBanner(all); }
+    // first-hour-walk-findings: a zone's first clear (its cache banner) is never held by the cap: the walk saw zone 12 and 14 with their
+    // Stars land 23 to 52 s late. What waits with it folds into the same banner, so it is still one a fight end.
+    if (mid.length && (midRoom() || mid.some(x => x.kind === 'cacheAuto'))) { const all = withSay(fold(mid)); MOMENT_Q.length = 0; showBanner(all); }
   }
   // a timer, not onTick: a guide step or a card that holds the game must not hold a moment back
   setInterval(() => {

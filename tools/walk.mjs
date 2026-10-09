@@ -168,6 +168,7 @@ const OBS = `(() => {
   o.toasts = q('#toasts .toast');
   o.cards = q('.mm-ov, .mm-toast, .bsheet-ov, .tv-card, .cb-banner, .tv-banner, .gl-card, .away-ov, .modal, .dd-feat, .feat-card', n => ({ cls: (n.className || '').toString().split(' ')[0], text: tx(n).slice(0, 160),
     head: n.classList.contains('mm-ov') ? tx(n.querySelector('.mm-head') || n) : undefined,
+    age: n.classList.contains('mm-ov') && MOMENT_UI.ov === n ? (Date.now() - MOMENT_UI.shownAt) / 1000 : n._at ? (Date.now() - n._at) / 1000 : undefined,   // first-hour-walk-findings: how long the game has shown it
     gave: n.classList.contains('mm-ov') ? [...n.querySelectorAll('.mm-list li')].map(tx).filter(Boolean).slice(0, 6) : undefined }));   // walk-f3-in-fights: what a big card says it gave (its lines; picks are offers, not gifts)
   o.tabs = q('.tabs .tab');
   o.intro = (n => n && vis(n) ? [n.querySelector('.intro-who'), n.querySelector('.intro-line')].filter(Boolean).map(tx).join(' ') : '')(document.querySelector('#introScreen'));   // the drawn opening: one line a tap
@@ -213,7 +214,7 @@ const TAP = ([sel, re]) => {
     const r = n.getBoundingClientRect(); if (r.width < 2 || r.height < 2) continue;
     const x = Math.min(innerWidth - 1, Math.max(1, r.left + r.width / 2)), y = Math.min(innerHeight - 1, Math.max(1, r.top + r.height / 2));
     const top = document.elementFromPoint(x, y);
-    if (top && top !== n && !n.contains(top) && !top.contains(n)) return { covered: (top.id ? '#' + top.id : '.' + String(top.className).split(' ')[0]), sheet: !!(top.closest && top.closest('.bsheet-ov')), what: (top.closest && top.closest('.bsheet-ov') || top).textContent.replace(/\s+/g, ' ').trim().slice(0, 50), x, y };
+    if (top && top !== n && !n.contains(top) && !top.contains(n)) return { covered: (top.id ? '#' + top.id : '.' + String(top.className).split(' ')[0]), sheet: !!(top.closest && top.closest('.bsheet-ov')), modal: !!(top.closest && top.closest('.mm-ov')), what: (top.closest && top.closest('.bsheet-ov') || top).textContent.replace(/\s+/g, ' ').trim().slice(0, 50), x, y };
     return { x, y };
   }
   return null;
@@ -227,6 +228,9 @@ async function click(sel, _to) {
   let r = await page.evaluate(TAP, [css, re || '']);
   if (!r) return false;
   if (process.env.WALK_DEBUG) console.error('  tap', css, re || '', JSON.stringify(r));
+  // first-hour-walk-findings (F5): a moment card is a dialog over the whole game (it holds the game), so a press it covers waits until
+  // the card is read and closed; the card rule does that on the next pass. Only a non-modal cover is a layout finding.
+  if (r.covered && r.modal && !css.includes('.mm-')) return false;
   // Something sits on the button. A player waits a beat for a toast or a sliding sheet to clear, closes a sheet the bot left open with its
   // X, and presses again. Only a cover that stays after that is a finding.
   for (let i = 0; r.covered && (r.sheet || /toast|bsheet|mm-/.test(r.covered)) && i < 5; i++) {
@@ -351,10 +355,15 @@ async function dismissCards(o) {
     const sig = c.cls + '|' + c.text.slice(0, 50); now.add(sig);
     let r = seen.get(sig);
     if (/beat you/i.test(c.text) && !seen.has(sig)) { st.beaten = (st.beaten || 0) + 1; const bz = st.prev ? st.prev.zone : 0; st.tries = st.tries || {}; st.tries[bz] = (st.tries[bz] || 0) + 1; st.beatenAt.push({ t: gt, zone: bz }); if (c.cls === 'bsheet-ov') st.losses.push({ t: gt, zone: bz, kills: o.s.kills || 0 }); if (st.beaten === 5) addCheck('wall', 'the casual bot was beaten 5 times by one boss', c.text.slice(0, 80) + ' (parry rate ' + PARRY + ')'); }
-    if (!r) { r = { first: gt, last: gt, cls: c.cls, text: c.text, n: 0, head: c.head, gave: c.gave }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls }, tag: 'card-' + c.cls }); }
+    // a moment card or banner that came up while the bot was busy (a Next Up press, a menu) is dated from when the game showed it
+    if (!r) { r = { first: c.age >= 0 && c.age < 10 ? Math.round((gt - c.age) * 10) / 10 : gt, last: gt, cls: c.cls, text: c.text, n: 0, head: c.head, gave: c.gave }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls }, tag: 'card-' + c.cls }); }
+    if (r.done && r.back === undefined && gt - r.first <= 8) r.back = gt;   // first-hour-walk-findings: back on screen after a cover (the turn banner hides the notices slot)
     r.last = gt;
   }
-  for (const [sig, r] of seen) if (!now.has(sig) && !r.done) { r.done = true; r.dwell = Math.round((gt - r.first) * 10) / 10; }
+  for (const [sig, r] of seen) if (!now.has(sig)) {
+    if (!r.done) { r.done = true; r.dwell = Math.round((gt - r.first) * 10) / 10; }
+    else if (r.back !== undefined && r.back !== null) { r.dwell = Math.round((r.dwell + gt - r.back) * 10) / 10; r.back = null; }   // its time on screen, both stints
+  }
   // a Next Up list left open (its Go was covered by a card) is closed with its X, as a player would
   const nu = [...now].map(g => seen.get(g)).find(r => r.cls === 'bsheet-ov' && /^×Next up/.test(r.text));
   if (nu && gt - nu.last < 1 && gt - nu.first >= 8 && gt - st.lastCard >= 0.6 && ![...now].some(g => seen.get(g).cls === 'mm-ov')) { st.lastCard = gt; if (await click('.bsheet-ov .bsheet-x', 300)) { nu.first = gt; return true; } }
@@ -405,6 +414,9 @@ async function followNextUp(o) {
   if (!chipReady) return false;
   if (!(await click('#nuChip', 300))) return false;
   await advance(300, 16);
+  // first-hour-walk-findings (F5): a moment card that came up as the list opened sits over it, and a person reads the card before
+  // pressing anything under it. The bot leaves the list; the card rule closes the card, and the list is closed later with its X.
+  if (await page.evaluate(() => !!document.querySelector('.mm-ov'))) return true;   // true: the next pass reads the screen again (no other press under the card)
   const rows = await page.evaluate(() => [...document.querySelectorAll('.nu-row.ready')].filter(r => r.getClientRects().length).map(r => (r.querySelector('.nu-lbl') || r).textContent.trim()));
   const holdFight = (st.gear.owns && st.gear.sess && !st.gear.sess.gaveUp) || !!(st.gate.sess && st.gate.sess.owns);   // gathering for a gear goal or a tier gate: the boss row waits
   st.nuReady = rows.length;
@@ -673,6 +685,9 @@ async function gateStep(o) {
   st.nuReady = 0;
   if (!(await click('#nuChip', 300))) return false;
   await advance(300, 16);
+  // first-hour-walk-findings (F5): a moment card that came up as the list opened sits over it, and a person reads the card before
+  // pressing anything under it. The bot leaves the list; the card rule closes the card, and the list is closed later with its X.
+  if (await page.evaluate(() => !!document.querySelector('.mm-ov'))) return true;   // true: the next pass reads the screen again (no other press under the card)
   const pick = await page.evaluate(txt => { const rows = [...document.querySelectorAll('.nu-row')].filter(r => r.getClientRects().length);
     if (rows.some(r => r.classList.contains('ready'))) return '';
     const r = rows.find(r => ((r.querySelector('.nu-lbl') || r).textContent || '').includes(txt)), g = r && r.querySelector('.nu-go');
@@ -943,10 +958,21 @@ function scorecard(reached) {
   // F6: each big or medium moment shows a card, banner or sheet for 2 s with a sound near it
   const bad = [];
   for (const m of moments.filter(m => m.big || m.id === 'look')) {
-    const near = [...st.cardSeen.values()].filter(c => c.first >= m.t - 1.5 && c.first <= m.t + 3 && !/^tv-(card|banner)$/.test(c.cls));   // a turn-order banner is not the moment's card
+    const cards = [...st.cardSeen.values()].filter(c => !/^tv-(card|banner)$/.test(c.cls));   // a turn-order banner is not the moment's card
+    // first-hour-walk-findings: a Champion's post scene plays first and its card follows (champion-moment, #264), with what the clear
+    // gave (a Star) as lines; a starter met there adds a scene or two before the card. A story sheet is never the moment's card:
+    // the card and its sound may come from the moment to 3 s after the last of those scenes closes.
+    const story = c => c.cls === 'bsheet-ov' && !/^×?Next up|beat you/i.test(c.text);
+    const scene = cards.find(c => story(c) && /^×?Chapter \d/.test(c.text) && c.first >= m.t - 1.5 && c.first <= m.t + 3);
+    let end = m.t;
+    if (scene) { end = scene.first + (scene.dwell ?? (reached - scene.first));
+      for (const c of cards.filter(story).sort((a, b) => a.first - b.first)) if (c !== scene && c.first >= scene.first && c.first <= end + 1) end = Math.max(end, c.first + (c.dwell ?? (reached - c.first))); }
+    const until = end + 3;
+    const near = cards.filter(c => !(scene && story(c)) && c.first >= m.t - 1.5 && c.first <= until);
     const want = { zone: ['zone', 'kill', 'momentBig'], unique: ['loot', 'momentBig'], craft: ['forge', 'momentMid'], star: ['skill', 'loot', 'momentMid', 'momentBig'], hero: ['skill', 'zone', 'momentBig'], look: ['loot', 'skill', 'momentMid'] }[m.id] || [...SOUNDS];
-    const snd = sfxLog.some(s => want.includes(s.name) && s.t >= m.t - 1 && s.t <= m.t + 3);
     const card = near.find(c => (c.dwell ?? (reached - c.first)) >= 2);
+    // the sound: near the moment as before, or (after a scene) as the card itself shows
+    const snd = sfxLog.some(s => want.includes(s.name) && ((s.t >= m.t - 1 && s.t <= m.t + 3) || (scene && card && s.t >= card.first - 0.5 && s.t <= card.first + 1.5)));
     if (!card || !snd) bad.push(`${m.id} at ${fmtT(m.t)}: ${!near.length ? 'no card or banner' : !card ? 'card up under 2 s' : 'a card'}${snd ? '' : ', no sound'}`);
   }
   sc.F6 = { value: bad.length ? bad.length + ' of ' + moments.filter(m => m.big || m.id === 'look').length + ' not shown right: ' + bad.slice(0, 4).join('; ') + (bad.length > 4 ? '; ...' : '') : 'all shown', pass: bad.length === 0, bad, target: 'every moment a card or banner for 2 s with its sound' };

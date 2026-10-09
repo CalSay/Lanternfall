@@ -1,0 +1,27 @@
+# Proof for card first-hour-walk-findings (walk F6 and F5, nightly walk 2026-10-09). A zone clear and a Star that land in the same
+# second used to wait up to a minute behind the medium-moment cap (zones 12 and 14 in the walk); a bark said on a big card used up that
+# cap; and the next fight's turn banner hid a moment banner while its time ran out. Now a zone clear's banner shows at once with what
+# landed with it, a bark on a card is not counted, and a banner's time waits while it is hidden.
+# A route cannot force a zone clear with a Star (playtest.mjs has no eval, and CI replays in real time), so tools/check.mjs section
+# "moment layer" carries the same-second banner, the bark and the hidden-banner hold at 740x360 and 360x740. This route walks into the
+# zone 12 fixture, where the walk met the late banner, and shows the fight that leads to it.
+# seed: 1
+new early-z12
+wait 2
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+wait 2
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+wait 3
+tap-if "Continue"
+wait 1
+tap-if "Attack"
+wait 1
+expect "#soloBar"
+shot zone-12-fight
