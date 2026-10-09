@@ -190,7 +190,7 @@
     }
     grid.dataset.n = land ? 3 : v.cards.length;
     s.append(grid);
-    if (!land && v.ban > 0) s.append(el('p', 'dw-hint', `Tap × on a card to banish it for this run (${v.ban} left).`));
+    if (!land && v.ban > 0) s.append(el('p', 'dw-hint', `Press × on a card to banish it for this run (${v.ban} left).`));
     // footer
     const foot = el('div', 'dw-dfoot');
     if (!land) {

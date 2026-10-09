@@ -126,7 +126,7 @@ var soloIconURL = () => '';
   // The guide's Dodge and Parry steps pause the game on a heavy hit; the first press there always counts (59j forgive).
   const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
   // cal-0107-staged-guide (Cal's play note 4): an empty slot with nothing to put in it (every move you own already has a slot) is dim and
-  // silent: no "Tap to add", no picker. It stays in place (the six-slot bar), and wakes once a learned move is waiting for a slot.
+  // silent: no "Add a move", no picker. It stays in place (the six-slot bar), and wakes once a learned move is waiting for a slot.
   const slotShut = i => { try { const eq = soloEquipped(); return !eq[i] && !soloAbilities().some(id => !eq.includes(id)); } catch (e) { return false; } };
   const castSlot = i => {
     if (slotShut(i)) return;
@@ -272,7 +272,7 @@ var soloIconURL = () => '';
     if (abIc.tagName === 'IMG') nicSet(abIc, 'act', on_ ? 'auto-on' : 'auto-off', 16);
     badge.setAttribute('aria-pressed', String(soloAuto()));
     badge.setAttribute('aria-label', soloAuto() ? 'Auto is on: your hero fights alone. Turn it off' : 'Auto is off: you are fighting. Turn it on');
-    badge.title = soloAuto() ? 'Auto is on: your hero fights alone. Tap to turn it off and fight by hand. (F)' : 'Auto is off: you are fighting. Tap to turn Auto on. (F)';
+    badge.title = soloAuto() ? 'Auto is on: your hero fights alone. Press to turn it off and fight by hand. (F)' : 'Auto is off: you are fighting. Press to turn Auto on. (F)';
   };
   on('soloActive', setBadge);
   // the page hidden or the app in the background: Auto fights while it is hidden; back on screen, your setting returns
@@ -385,7 +385,7 @@ var soloIconURL = () => '';
         b._shut = sk; putStyle(b, 'opacity', shut ? '0.45' : ''); b.setAttribute('aria-disabled', String(shut));
         if (!o.id) b.setAttribute('aria-label', shut ? `Empty ability slot ${i + 1}. Learn another move to use it.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
       }
-      putText(b._sub, !o.id ? (shut ? '' : 'Tap to add') : o.left > 0 ? '' : wait ? 'Wait' : 'Ready');
+      putText(b._sub, !o.id ? (shut ? '' : 'Add a move') : o.left > 0 ? '' : wait ? 'Wait' : 'Ready');
     }
     putText(bAtk._sub, '');
     setCd(bAtk, s.atk.left, s.atk.max, wait);

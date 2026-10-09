@@ -62,7 +62,7 @@
         dare.setAttribute('aria-checked', String(on));
         dare.classList.toggle('on', on);
         dNm.textContent = on ? `Dare taken: ${o.dare.n}` : `Take the Dare: ${o.dare.n}`;
-        dFx.textContent = o.dare.fx + (on ? ' Tap to drop it.' : ' Drop it any time.');
+        dFx.textContent = o.dare.fx + (on ? ' Choose it again to drop it.' : ' Drop it any time.');
       }
       tmr.textContent = `Tomorrow: ${t.n}. ${t.fx}.`;
       if (board) {

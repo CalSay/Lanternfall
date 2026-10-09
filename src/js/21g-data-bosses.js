@@ -158,7 +158,7 @@ const ELITE_TRAITS = {
   explosive: { name: 'Explosive', counter: 'dodge, or kill it Chilled', badge: ['...y.', '..o..', '.ooo.', 'ooooo', '.ooo.'], col: '#FF9B3D',
     first: 'Explosive elite: it blasts when it dies. Dodge the blast, or kill it while it is Chilled.' },
   summoner: { name: 'Summoner', counter: 'interrupt', badge: ['.vvv.', 'v...v', 'v.v.v', 'v...v', '.vvv.'], col: '#B47BFF',
-    first: 'Summoner elite: tap while it casts to stop its adds.' },
+    first: 'Summoner elite: hit it while it casts to stop its adds.' },
   enraged: { name: 'Enraged', counter: 'Chill, or burst it', badge: ['r...r', 'r...r', '.rrr.', 'rrrrr', '.rrr.'], col: '#FF5A4A',
     first: 'Enraged elite: under half health it attacks faster. Chill calms it.' },
   frozen: { name: 'Ice-Clad', counter: 'fire', badge: ['bbbbb', 'b.w.b', 'bwwwb', 'b.w.b', 'bbbbb'], col: '#9CDCFF',

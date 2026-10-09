@@ -110,7 +110,7 @@ const DEED_TRACKS = [
   { id: 's_forage', g: 'gather', n: 'Rare Blooms', what: 'Foraging units by tier', need: [1, 2, 3, 4], star: null, bonus: 'gatherSpeed:forage', src: 'new', kind: 'ladder', skill: 'forage',
     steps: ['1,000 tier 2 units', '1,000 tier 3 units', '1,000 tier 4 units', '10,000 tier 5 units'] },
   { id: 'finds', g: 'gather', n: 'Lucky Strike', what: 'Rare finds', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: 'gatherSpeed', src: 'save', u: ['rare find', 'rare finds'] },
-  { id: 'glint', g: 'gather', n: 'Glint Chaser', what: 'Glints tapped', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'gatherSpeed', src: 'new', u: ['Glint', 'Glints'] },
+  { id: 'glint', g: 'gather', n: 'Glint Chaser', what: 'Glints caught', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'gatherSpeed', src: 'new', u: ['Glint', 'Glints'] },
   { id: 'tools', g: 'gather', n: 'Toolwise', what: 'Tool mastery levels, all tools', need: [10, 30, 50, 60], star: { add: 20 }, bonus: 'gatherSpeed', src: 'save', kind: 'level', u: ['mastery level', 'mastery levels'] },
   // ---- 2.5 Crafting ----
   { id: 'smith', g: 'craft', n: 'Smith', what: 'Smithing level', need: [10, 22, 54, 150], star: null, bonus: 'skillXp:smith', src: 'save', kind: 'level', u: ['Smithing level', 'Smithing levels'] },
@@ -206,7 +206,7 @@ const DEED_FEATS = [
 const DEED_SECRETS = [
   { id: 's_night', n: 'Night Owl', riddle: "The fire burns low. You don't.", how: '10 minutes of fighting between 02:00 and 04:00', title: 'Nightowl', look: 'h_night' },
   { id: 's_wisp', n: 'A Wisp Followed You Home', riddle: "Hesketh said not to follow them. He never said they couldn't follow you.", how: '10 minutes in a Wraithmarsh zone between 21:00 and 05:00', title: 'Wispfriend', look: 'cr_wisp' },
-  { id: 's_fire', n: 'Sit a While', riddle: 'Some evenings you just sit.', how: 'The camp open for 5 minutes with no taps', title: 'Firesitter' },
+  { id: 's_fire', n: 'Sit a While', riddle: 'Some evenings you just sit.', how: 'The camp open for 5 minutes with no presses', title: 'Firesitter' },
   { id: 's_bare', n: 'Untouched', riddle: 'Not a scratch.', how: 'Beat a zone boss from zone 10 without taking a hit', title: 'Unscathed' },
   { id: 's_alone', n: 'Last Lamp Standing', riddle: 'Nearly out. One flicker left.', how: 'Beat a zone boss from zone 10 after your health fell under 10%', title: 'Lone Lamp' },
   { id: 's_close', n: 'First Try', riddle: 'It never saw you coming twice.', how: 'From zone 10, beat a zone boss on your first try', title: 'Clutch' },
