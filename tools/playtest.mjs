@@ -353,8 +353,10 @@ async function tap(page, wanted, how = 'click') {
   if (cover) return { ok: false, msg: `"${b.label}" is covered by something else (${cover}): a menu, dialog or tip is in front of it. Close that first.` };
   if (how === 'hover') {   // a mouse view only: rest the pointer on it, as a desktop player does before clicking
     await page.mouse.move(x, y);
+    await page.clock.runFor(200);   // desktop-tooltips: the game's own tip opens 120 ms after the pointer rests (70b-tips-ui.js)
+    const own = await page.evaluate(() => { const t = document.getElementById('tip'); return t && !t.hidden ? [...t.children].map(c => c.textContent).join(' / ') : ''; });
     const tip = await handle.evaluate(e => { for (let a = e; a; a = a.parentElement) if (a.title) return a.title; return ''; });
-    return { ok: true, msg: `hovered [${b.label}]${tip ? `; its title (the browser's own tooltip) reads "${tip}"` : '; it has no title tooltip'}` };
+    return { ok: true, msg: `hovered [${b.label}]${own ? `; its tip reads "${own}"` : tip ? `; its title (the browser's own tooltip) reads "${tip}"` : '; it has no tip'}` };
   }
   await page.mouse.click(x, y);
   const extra = hit.length > 1 ? ` (${hit.length} buttons matched; took the first${inV.has(b.i) ? '' : ', after scrolling'})` : '';
