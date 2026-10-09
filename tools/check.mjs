@@ -16503,6 +16503,69 @@ if (section('away-line-only-when-true')) try {
   }
 } catch (e) { fail('away-line-only-when-true crashed: ' + (e.stack || e)); }
 
+// ---- space-reopens-next-up: in a turn fight Space dodges, whatever button was last clicked. A clicked button keeps focus (a sheet
+// hands focus back to its opener on close), and the browser presses a focused button on Space; the fight bar used to step aside for it,
+// so Space at a boss swing reopened Next Up. Outside a fight Space on a focused button still presses it. 1280x720. ----
+if (section('space-reopens-next-up')) try {
+  const at = 'space-reopens-next-up', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } }), tag = `${at} 1280x720`;
+      await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);   // an hour in: the Next up chip shows
+      const page = await ctx.newPage(), errors = [];
+      page.on('pageerror', e => errors.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // the turn engine waits while __tp is set (59j turnPaused), so the foe's swing can be held open for the key press
+      await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); true`); await page.waitForTimeout(400);
+      await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); document.querySelectorAll('.mm-ov').forEach(n => n.remove()); typeof closeSheet === 'function' && closeSheet(); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; true`);
+      const sheets = () => X(`document.querySelectorAll('.bsheet-ov').length`);
+      const swing = async () => { await X('globalThis.__tp = 0; true');
+        for (const t0 = Date.now(); Date.now() - t0 < 60000;) {
+          if (await X(`!!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'foeWindup' && !TURN_LIVE.usedDefense`)) { await X('globalThis.__tp = 1; true'); await page.waitForTimeout(200); return true; }
+          await X(`TURN_LIVE && !TURN_LIVE.ended && (TURN_LIVE.foe && (TURN_LIVE.foe.hp = Math.max(TURN_LIVE.foe.hp, 1e6)), TURN_LIVE.phase === 'timing' && turnCombatAction('time'), TURN_LIVE.phase === 'hero' && turnCombatAction('attack')); true`);
+          await page.waitForTimeout(40);
+        } return false; };
+      const centre = sel => page.$eval(sel, e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+      // the boss of zone 1
+      await X(`S.kills = ZONE_FIGHTS; fightBoss = false; challenge(); true`); await page.waitForTimeout(400);
+      assert(await X('!!fightBoss'), `${tag}: a boss fight starts`);
+      // click Next up, close it with its ×: focus goes back to the chip
+      let [x, y] = await centre('#nuChip'); await page.mouse.click(x, y); await page.waitForTimeout(400);
+      assert(await sheets() === 1, `${tag}: a click on Next up opens its list`);
+      [x, y] = await centre('.bsheet-x'); await page.mouse.click(x, y); await page.waitForTimeout(400);
+      assert(await sheets() === 0 && await X(`document.activeElement === document.getElementById('nuChip')`), `${tag}: the list closes and the chip keeps focus (the case this section covers)`);
+      // Space at the boss's swing: a dodge, and Next up stays shut
+      assert(await swing(), `${tag}: the boss winds up a swing`);
+      await page.keyboard.press(' '); await page.waitForTimeout(300);
+      assert(await X('!!TURN_LIVE.usedDefense') && await sheets() === 0, `${tag}: Space at the swing with Next up focused dodges (${await X('!!TURN_LIVE.usedDefense')}) and Next up stays shut (${await sheets()} open)`);
+      // a second focused button: the Hero tab on the rail. Space dodges; no menu opens
+      assert(await swing(), `${tag}: the boss winds up another swing`);
+      await X(`document.querySelector('.tabs .tab[data-tab="party"]').focus(); true`);
+      await page.keyboard.press(' '); await page.waitForTimeout(300);
+      assert(await X('!!TURN_LIVE.usedDefense') && await X('!S.tab') && await sheets() === 0, `${tag}: Space at the swing with the Hero tab focused dodges (${await X('!!TURN_LIVE.usedDefense')}) and opens no menu (${await X('S.tab')})`);
+      // Enter on a focused button is not a fight key: it still presses the button in a fight
+      await X(`document.getElementById('nuChip').focus(); true`); await page.keyboard.press('Enter'); await page.waitForTimeout(400);
+      assert(await sheets() === 1, `${tag}: Enter on the focused Next up chip opens its list in a fight`);
+      // Space on a button in a sheet over the fight still presses it: the list's × closes it
+      await X(`document.querySelector('.bsheet-x').focus(); true`); await page.keyboard.press(' '); await page.waitForTimeout(400);
+      assert(await sheets() === 0, `${tag}: Space on the focused × of the Next up list closes it in a fight`);
+      // outside a fight (gathering) Space on a focused button presses it
+      await X('globalThis.__tp = 0; setActivity("gather"); true'); await page.waitForTimeout(600);
+      assert(await X(`document.getElementById('soloBar').hidden`), `${tag}: gathering, the fight bar is away`);
+      await X(`document.getElementById('nuChip').focus(); true`); await page.keyboard.press(' '); await page.waitForTimeout(400);
+      assert(await sheets() === 1, `${tag}: outside a fight Space on the focused Next up chip opens its list`);
+      assert(!errors.length, `${tag}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('space-reopens-next-up crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
