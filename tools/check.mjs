@@ -14840,7 +14840,7 @@ if (section('craft-shortfall-offer')) try {
       const u = await X(`(() => { const r = document.querySelector('.cf-up-box .cf-short'); return r ? r.textContent : ''; })()`);
       await X(`document.querySelector('.cf-up-box .cf-order').click(); true`); await page.waitForTimeout(200);
       const ou = await X(orders);
-      assert(/^Short 6 Silver Ingots\. Smelt 6 \(12 Silver Ore and 18 coal\)\? Smelt 6(Upgrade: .*)?$/.test(u) && ou === '[[["ingot",3,6]],[],[]]',   // upgrade-gold-covers-short adds its button after
+      assert(/^Short 6 Silver Ingots\. Smelt 6 \(12 Silver Ore and 18 coal\)\? Smelt 6( Upgrade: .*)?$/.test(u) && ou === '[[["ingot",3,6]],[],[]]',   // upgrade-gold-covers-short adds its button after
         `the upgrade's row offers 6 Silver Ingots and one press queues them (${u} ${ou})`);
       assert(!errs.length, 'craft-shortfall-offer: no page errors' + (errs.length ? ': ' + errs[0] : ''));
     } finally { await browser.close(); }
@@ -14914,7 +14914,7 @@ if (section('upgrade-gold-covers-short')) try {
       await X(`S.activity = 'gather'; for (const st of REFINE_STATIONS) refineOrders(st).length = 0; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(250);
       const r = await X(`(() => { const r = document.querySelector('.cf-up-box .cf-short'); if (!r) return null; const bs = [...r.querySelectorAll('button')]; const c = r.querySelector('.cf-cover'), box = c && c.getBoundingClientRect();
         return { btns: bs.map(b => b.className.replace('mini ', '')), cover: c ? c.textContent : '', dis: c ? c.disabled : null, inView: !!box && box.right <= innerWidth && box.left >= 0 }; })()`);
-      assert(r && JSON.stringify(r.btns) === '["cf-order","cf-cover"]' && r.cover === 'Upgrade: 1.80K + 860 gold for 6 Silver Ingots' && r.dis === false && r.inView,
+      assert(r && JSON.stringify(r.btns) === '["cf-order","cf-cover"]' && r.cover === 'Upgrade: 1,800 + 860 gold for 6 Silver Ingots' && r.dis === false && r.inView,
         `the Silver Warblade's upgrade row offers the Smelt order first and the gold cover second, inside a 360 px screen (${JSON.stringify(r)})`);
       const g0 = await X('S.gold');
       await X(`document.querySelector('.cf-up-box .cf-cover').click(); true`); await page.waitForTimeout(250);
@@ -14922,8 +14922,8 @@ if (section('upgrade-gold-covers-short')) try {
       assert(after === '[7,2660,[0,0,0]]', `one press upgrades to +7 for 2,660 gold and queues nothing (${after})`);
       // short of gold: the button stays, pressed does nothing, and says how much more
       await X(`S.gold = 2000; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(250);
-      const poor = await X(`(() => { const c = document.querySelector('.cf-up-box .cf-cover'); return c ? [c.disabled, c.title] : null; })()`);
-      assert(poor && poor[0] === true && /more gold$/.test(poor[1]), `short of gold, the cover button is off and says how much more (${JSON.stringify(poor)})`);
+      const poor = await X(`(() => { const c = document.querySelector('.cf-up-box .cf-cover'), w = document.querySelector('.cf-up-box .cf-cover-why'); return c ? [c.disabled, w ? w.textContent : ''] : null; })()`);
+      assert(poor && poor[0] === true && poor[1] === 'To cover them: 1.56K more gold.', `short of gold, the cover button is off and a line says how much more (${JSON.stringify(poor)})`);
       assert(!errs.length, 'upgrade-gold-covers-short: no page errors' + (errs.length ? ': ' + errs[0] : ''));
     } finally { await browser.close(); }
   })();

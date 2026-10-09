@@ -1,10 +1,10 @@
 # seed: 1
 # Proof for card upgrade-gold-covers-short: an upgrade short of its material offers to cover it for gold, as the row's second
 # button after the free refine order. Fixture save-refine (Tobin, zone 20, Forge and Workbench Lv 2, no Ingots or Planks).
-#   covered-*.png Hero, Gear, the worn Silver Warblade +6 short 6 Silver Ingots: the route presses "Upgrade: 1.80K + 860 gold
+#   covered-*.png Hero, Gear, the worn Silver Warblade +6 short 6 Silver Ingots: the route presses "Upgrade: 1,800 + 860 gold
 #                 for 6 Silver Ingots" (the row's second button, after "Smelt 6"). The shot shows the Warblade at +7 and the
 #                 same row for +8: "Short 6 Silver Ingots. Smelt 6 (12 Silver Ore and 18 coal)?", "Smelt 6", then
-#                 "Upgrade: 2.70K + 860 gold for 6 Silver Ingots"; no order was queued.
+#                 "Upgrade: 2,700 + 860 gold for 6 Silver Ingots"; no order was queued.
 # Rules (the price, held units first, the gathering tier and station limits, no skill XP, never a craft, Essence or Trophy,
 # coverFoes 0, the upgraded event's cover) are in tools/check.mjs, section 'upgrade-gold-covers-short'. Run at the default view
 # (1280x720), then with --landscape and --portrait.
@@ -28,8 +28,8 @@ tap "Warblade"
 wait 1
 expect ".cf-up-box .cf-order"
 expect ".cf-up-box .cf-cover"
-tap "Upgrade: 1.80K + 860 gold for 6 Silver Ingots"
+tap "Upgrade: 1,800 + 860 gold for 6 Silver Ingots"
 wait 1
-expect "Upgrade: 2.70K + 860 gold for 6 Silver Ingots"
+expect "Upgrade: 2,700 + 860 gold for 6 Silver Ingots"
 expect-no "Smelting at the Forge."
 shot covered
