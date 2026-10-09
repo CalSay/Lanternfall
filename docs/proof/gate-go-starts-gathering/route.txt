@@ -28,6 +28,8 @@ expect "Mining Lv 7"
 expect "Working"
 expect-no "Gather Mining before you leave and it keeps going"
 shot gate-go-mining
+tap-if "Close menu"
+wait 1
 tap "Next up"
 wait 1
 expect "Birch Bow: Mining 7 of 14 opens Iron Ore"
