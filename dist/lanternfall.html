@@ -1488,6 +1488,23 @@ span.cf-d { font-weight: 600; }
   .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res .cf-resact { order: 1; }
   .trophies { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
 }
+
+/* craft-strike-infuse: the recipe row's lift line (the Strike or Infuse, one grade, never above A), the Infuse button, the result note,
+   and the Strike's timing bar: the fight's parry bar (.tv-time, 60-turn.css) over the screen, which holds the game while it shows */
+.cf-lift { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: max(var(--tmin, 0px), calc(12.5px * var(--tk, 1))); color: var(--gold, #F2C14E); }
+.cf-lift-t { flex: 1 1 160px; min-width: 0; }
+.cf-inf { min-height: 44px; min-width: 76px; padding: 4px 12px; border: 2px solid #0B0810; cursor: pointer; font: 600 max(var(--tmin, 0px), calc((13px * var(--display-k)) * var(--tk, 1))) var(--display);
+  background: var(--panel-2); color: var(--gold, #F2C14E); box-shadow: inset 0 0 0 1px var(--gold, #F2C14E), inset 0 -3px 0 #1a1420; }
+.cf-inf:disabled { color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; cursor: default; }
+.cf-lift-w { flex-basis: 100%; color: var(--muted); font-size: max(var(--tmin, 0px), calc(12px * var(--tk, 1))); }
+.cf-liftn { margin: 0; }
+.cf-liftn.up { color: var(--gold, #F2C14E); }
+.cf-strike { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(10, 7, 14, .55); cursor: pointer; touch-action: none; user-select: none; }
+.cf-strike[hidden] { display: none; }
+.cf-sk { display: grid; justify-items: center; gap: 6px; padding: 12px 14px; max-width: calc(100vw - 32px); background: #0B0810; border: 2px solid var(--gold, #F2C14E); }
+.cf-sk-t { margin: 0; font: 700 max(var(--tmin, 0px), calc((16px * var(--display-k, 1)) * var(--tk, 1)))/1.2 var(--display); color: var(--bone); text-align: center; }
+.cf-sk-s { margin: 0; font-size: max(var(--tmin, 0px), calc(12.5px * var(--tk, 1))); color: var(--muted); text-align: center; max-width: 300px; }
+.cf-sk .tv-time { width: min(300px, calc(100vw - 64px)); }
 /* 60-deeds: the Achievements menu, its sheets, the Feat card (75-deeds-ui.js) and the Journal's stats wall
    (75-stats-ui.js). Display text is Handjet: every display size is calc(Npx * var(--display-k)). */
 
@@ -7266,7 +7283,7 @@ const RELICS = [
   // ECON-A: the Lucky Coin (+25% gold a level) became the Loaded Die (S.relic.edge; S.relic.coin stays at 0, unused).
   { id: 'edge', name: 'Loaded Die', base: 5, r: 1.6, cap: 5, ic: ['coin', '#6FCB6A', { 7: '#6FCB6A' }], desc: () => `+${Math.round(100 * ECON.crit.die)}% crit damage per level.` },
   { id: 'heart', name: 'Ember Heart', base: 4, r: 1.5, ic: ['heart', '#FF7A3D'], desc: () => `+30% raid damage per level.` },
-  { id: 'glass', name: 'Hourglass', base: 8, r: 2, cap: 5, ic: ['glass', '#F2E27A'], desc: () => `You keep working for ${4 + 2 * S.relic.glass}h while you're away. +2h per level.` }
+  { id: 'glass', name: 'Hourglass', base: 8, r: 2, cap: 5, ic: ['glass', '#F2E27A'], desc: () => `You keep working for ${awayCapH()}h while you're away. +2h per level.` }
 ];
 
 // ---- src/js/21-data-craft.js ----
@@ -11219,6 +11236,17 @@ const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
 // The region steps a zone has passed, multiplied.
 const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };
 
+// ================= away limit (first-night-covered, 2026-10-08) =================
+// The hero gathers away for AWAY_BASE_H with no building (was 4), +2 h per Hourglass level; awayBaseH() is the part the
+// Watchtower clamp (57-camp) subtracts. awayCapH() adds every awayHours bonus (Watchtower +2 h a level) and never passes
+// CAMP_TUNE.awayMax (24 h). Gatherer shifts, builds and refine orders keep their own clocks.
+const AWAY_BASE_H = 8;
+const awayBaseH = () => AWAY_BASE_H + 2 * S.relic.glass;
+const awayCapH = () => Math.min(CAMP_TUNE.awayMax, awayBaseH() + bonus('awayHours'));
+// A raid hit away keeps the old 4 h base (the online layer is out of scope for first-night-covered): never above awayCapH().
+const AWAY_RAID_BASE_H = 4;
+const awayRaidCapH = () => Math.min(awayCapH(), AWAY_RAID_BASE_H + 2 * S.relic.glass + bonus('awayHours'));
+
 // ================= formulas =================
 // hero-progression-rework: with HERO_TUNE.training off the level bonus is attrNeutral() (55-attributes: half of the old
 // +PACE.heroLv a level, plus the hero's points as if spread evenly, so power outside a turn fight is the same for every
@@ -11936,7 +11964,7 @@ function harvest() {
 // r.lines/r.note are the base summary; line icons are specs (see toast()).
 function awayGains(secs) {
   secs = Math.max(0, +secs || 0);   // a save stamped in the future (clock set back) gives nothing, never negative gains
-  const r = { t: Math.min(secs, (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600), secs, lines: [] };
+  const r = { t: Math.min(secs, awayCapH() * 3600), secs, lines: [] };
   failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // (55-boss-try keeps the same baseline in the save) BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
   emit('awayBegin', r);
   awayBase(r);
@@ -11975,7 +12003,7 @@ function awayBase(r) {
   }
   const dps = heroDps() * 0.5 * boost;
   if (S.activity === 'raid') {
-    const dmg = dps * raidMult() * t * 0.5;
+    const dmg = dps * raidMult() * Math.min(t, awayRaidCapH() * 3600) * 0.5;   // first-night-covered: raid damage keeps its old limit
     S.raid.dmg += dmg;
     r.lines.push({ icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `${fmt(dmg)} raid damage` });
     r.note = 'You kept hammering the raid boss.';
@@ -13516,6 +13544,9 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //                                                kind 'starChart' crafts the Star Chart and returns
 //                                                { kind: 'starChart', t: 3 } (not an item).
 //                                                Emits 'itemAdded' (via addItem) and 'crafted' {item, kind, t}.
+//                                                craft-strike-infuse: opts { strike: bool } (the timing bar's result: true in the
+//                                                window), { infuse: true } (pay Essence for the lift). The event carries lift:
+//                                                'strike' | 'infuse' | 'missed' | undefined.
 //   canCraft(kind, t, opts?) -> { ok, why, cost, lv, need, miss }   why: player text or ''.
 //                                                cost: {mats, gold, troph}; miss: [[fam, n], ...]
 //   stationOf(kind) -> { key, n, skill }         the station that makes a kind
@@ -13538,6 +13569,9 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //   salvageItem(id) (51-actions) is generic; salvageGive calls craftSalvageBonus(it): affixed items
 //                                                have a 20% chance per line of 1 essence of their tier, and an
 //                                                upgraded item pays back craftUpgradeRefund(it) gold (ledger 'craft', negative)
+//   craftStrikeOffered(kind, t) -> bool          craft-strike-infuse: the timing bar shows for this craft (CRAFT_TUNE.strike)
+//   craftInfusePrice(kind, t) -> n               the Essence Infuse costs on this craft, 0 when Infuse is not offered (CRAFT_TUNE.infuse)
+//   craftLiftTo(kind, t) -> grade index | null   the grade a lift makes, null when the level's grade cannot be lifted (A or S)
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
 //   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
 //                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
@@ -13556,7 +13590,9 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //     Swords/Helms and the hero's gear of another class into the new class's kinds (same id,
 //     tier, rarity, +N, lines). Anything that still does not fit goes back to the bag.
 //
-// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd, xpv }). xpv: the station curve the bars are on.
+// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd, xpv, made }). xpv: the station curve the bars are on.
+//   made: { [station]: n } pieces made at each station (craft-strike-infuse: a station's first piece has no Strike). Optional; a
+//   missing entry is seeded on load from the station's pieces the player holds, so a veteran's next craft is not their first.
 //   tmd: { fam: [n x 5] } units made by transmuting down (they cannot be broken down again; BAL1).
 //   troph: Trophy counts by zone type (CRAFT_TROPHIES order). tonic: { k, t, left } active.
 //   tonics: { 'key:t': count } the pouch. jobs, champ: K5/K10. starChart: Star Charts made.
@@ -13579,10 +13615,10 @@ function craftXpMap() {
 
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, upgradeCover, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare;
+  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare, craftStrikeOffered, craftInfusePrice, craftLiftTo;
 
 {
-  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0 });
+  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0, made: {} });
   craftXpMap();
   const C = () => S.craft;
   const STAR = { t: 3, mats: { crystal: 40, ess: 20 }, troph: [[6, 1]], st: 'ench' };
@@ -13592,6 +13628,14 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   const validTier = t => Number.isInteger(t) && t >= 1 && t <= 5;
   const trophyName = i => CRAFT_TROPHIES[i].n;
   trophies = () => C().troph.reduce((a, b) => a + (b || 0), 0);
+  // craft-strike-infuse: pieces made a station (a class piece, Trinket or Charm; never tools or the old Sword and Helm)
+  const pieceKind = kind => !!CRAFT_KINDS[kind] && !CRAFT_KINDS[kind].tool && !CRAFT_KINDS[kind].legacy;
+  const made = () => { const c = C(); if (!c.made || typeof c.made !== 'object' || Array.isArray(c.made)) c.made = {}; return c.made; };
+  { const m = made();
+    for (const st of Object.keys(CRAFT_STATIONS)) if (!Number.isInteger(m[st])) {
+      const n = (S.items || []).filter(it => it && !it.u && pieceKind(it.slot) && CRAFT_KINDS[it.slot].st === st).length;
+      m[st] = n;   // 0 too, so a new game's stations are never seeded again from pieces found later
+    } }
 
   // ---- stations ----
   stationOf = kind => {
@@ -13624,6 +13668,17 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     let top = 1; for (let u = 2; u <= 5; u++) if (stationTierOpen(kind, u)) top = u;
     return t < top ? SKILL_TUNE.belowTierX : 1;
   };
+  // ---- craft-strike-infuse: one lift a craft, never above A (S comes only from the station level) ----
+  const LIFT_TOP = GRADE.findIndex(x => x.n === 'A');
+  craftLiftTo = (kind, t) => {
+    if (!gradedKind(kind) || !validTier(t)) return null;
+    const g = gradeFor(kind, t); return g < LIFT_TOP ? g + 1 : null;
+  };
+  craftStrikeOffered = (kind, t) => !!CRAFT_TUNE.strike && craftLiftTo(kind, t) != null && (made()[CRAFT_KINDS[kind].st] | 0) > 0;
+  craftInfusePrice = (kind, t) => {
+    if (!CRAFT_TUNE.infuse || craftLiftTo(kind, t) == null) return 0;
+    return CRAFT_TUNE.infuseX * Math.max(1, craftRecipe(kind, t).ess || 0);   // a recipe with no Essence costs infuseX
+  };
   const gateWhy = (skill, need) => `Needs ${SKILL[skill]} ${need}`;
   // H1 (55-hearth): a cold save crafts only at a station it has built. '' = built (every warm save).
   const unbuilt = st => typeof hearthStationWhy === 'function' ? hearthStationWhy(st) : '';
@@ -13644,6 +13699,8 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const need = open ? Math.min(lv, CRAFT_STATION_REQ[t - 1]) : CRAFT_STATION_REQ[t - 1];   // a kept tier needs no more
     const cost = splitCost(craftRecipe(kind, t));
     if (opts.mw != null) cost.troph = [[opts.mw, 1]];
+    let inf = 0;
+    if (opts.infuse) { inf = craftInfusePrice(kind, t); if (!inf) return no('Infuse cannot lift this craft.', { cost, lv, need, miss: [] }); cost.mats.ess = (cost.mats.ess || 0) + inf; cost.infuse = inf; }
     const x = { cost, lv, need, miss: [] };
     if (unbuilt(st.key)) return no(unbuilt(st.key), Object.assign(x, { unbuilt: true }));
     if (!open) return no(gateWhy(st.skill, need), x);
@@ -13665,14 +13722,20 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     if (opts.mw != null) C().troph[opts.mw]--;
     // craft-attribute-grades: with CRAFT_TUNE.grades on, a class piece, Trinket or Charm is made at its station's grade (no die);
     // tools roll the die as before. Switch off: exactly the old roll.
-    const g = gradedKind(kind) ? gradeFor(kind, t) : null;
+    let g = gradedKind(kind) ? gradeFor(kind, t) : null;
+    // craft-strike-infuse: Infuse (paid above) or a Strike in the window lifts one grade, never above A; one lift a craft.
+    // A missed Strike makes the piece at the level's grade. Nothing is paid before this call, so a miss never loses materials.
+    let lift;
+    if (opts.infuse && c.cost.infuse) { g = craftLiftTo(kind, t); lift = 'infuse'; }
+    else if (opts.strike != null && craftStrikeOffered(kind, t)) { if (opts.strike) { g = craftLiftTo(kind, t); lift = 'strike'; } else lift = 'missed'; }
+    if (pieceKind(kind)) { const m = made(), st = CRAFT_KINDS[kind].st; m[st] = (m[st] | 0) + 1; }
     const r = g != null ? GRADE[g].r : rollRarity(stationLevel(kind));
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw, g });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t) * craftXpShare(kind, t));
     // craft-delta: opts.wear (the Craft button only) puts on a tool that beats the worn one, or fills an empty slot. Gear always asks.
     // Straight into S.equip, not equipItem (its "Equipped" toast would be a second toast for one craft; the result card is the receipt).
-    const ev = { item: it, kind, t }, d = CRAFT_KINDS[kind], pos = d && d.tool ? kindPos(kind) : null;
+    const ev = { item: it, kind, t, lift }, d = CRAFT_KINDS[kind], pos = d && d.tool ? kindPos(kind) : null;
     if (opts.wear && pos && pos in S.equip && fits(it, pos, 'hero')) {
       const cur = equipped(pos);
       if (!cur || itemPower(it) > itemPower(cur)) {
@@ -16976,7 +17039,8 @@ function validateSave(data) {
         }
       }
     }
-    if (data.craft && data.craft.xpv !== undefined) int(data.craft.xpv, 'craft.xpv', 0, 1);   // craft-curve-skills-report: which station curve the bars are on
+    if (data.craft && data.craft.xpv !== undefined) int(data.craft.xpv, 'craft.xpv', 0, 1);
+    if (data.craft && data.craft.made !== undefined) { record(data.craft.made, 'craft.made'); for (const [k, n] of Object.entries(data.craft.made)) { known(CRAFT_STATIONS, k, 'craft.made'); int(n, 'craft.made.' + k, 0, 1e9); } }   // craft-strike-infuse: pieces made a station   // craft-curve-skills-report: which station curve the bars are on
     if (data.craft && data.craft.tonic != null) { record(data.craft.tonic, 'craft.tonic'); known(CRAFT_TONICS, data.craft.tonic.k, 'craft.tonic.kind'); tier(data.craft.tonic.t, 'craft.tonic.tier'); num(data.craft.tonic.left, 'craft.tonic.left'); }
     return { ok: true, data };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'This save has invalid data.' }; }
@@ -17085,7 +17149,7 @@ const statsApi = {};
   const MAT_KINDS = STOCK_FAMILIES; // every family (K5), then the middles and coal (refine-queues), in pouch order
   let snap = null;
   on('awayBegin', r => {
-    r.cap = (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600;
+    r.cap = awayCapH() * 3600;
     r.capped = r.secs > r.cap;
     r.activity = S.activity;
     snap = {
@@ -17165,7 +17229,7 @@ const statsApi = {};
 
 // The cap table (owner, 2026-09-28: "an idle game: the Storehouse should scale up quite quickly;
 // meaningful, not ridiculous, never so small it's only worth idling for 10 minutes").
-// Rules: (1) Lv 1, built about minute 5-12 of a new game, holds a full 8 h away session at the best
+// Rules: (1) Lv 1, built about minute 5-12 of a new game, holds a full away session (h) at the best
 // tier then; (2) each later level holds a full away session (the away cap it can have by then) on the
 // best node the pacing expects at that level, so a full away session never overflows the cell you
 // gather; (3) the cap still matters in active play (tapping about doubles the rate); (4) builds are
@@ -17177,21 +17241,21 @@ const statsApi = {};
 // haul fits caps[L]. Rates (units an hour, away, from that check): see the doc table.
 const STORE_TUNE = {
   on: 1,                   // 0: no caps at all (tools/sim.mjs --store 0)
-  caps: [5000, 40000, 50000, 100000, 200000, 300000, 750000, 1250000, 2500000],   // gathered cap by level 0..8
+  caps: [5000, 50000, 60000, 110000, 250000, 350000, 800000, 1250000, 2500000],   // gathered cap by level 0..8 (raised with the 8 h away base)
   group: { ore: 1, wood: 1, crystal: 1, fibre: 1, herb: 1, hide: 0.5, ess: 0.5, pearl: 0.5, fish: 0.5,
     ingot: 0.5, plank: 0.5, cloth: 0.5, leather: 0.5, coal: 1 },   // refine-queues: refined goods hold half; coal (one grade) as ore
   tierMult: [1, 1, 1, 1, 1],
-  // h: the away cap the player can have at Hearth L (4 h + Watchtower 2 h a level, Watchtower Lv w
-  // needs Hearth 1/2/4/6/8, plus Hourglass relics; 24 h at most), rounded up. The rest is the upper
+  // h: the away cap the player can have at Hearth L (8 h base + Watchtower 2 h a level, Watchtower Lv w
+  // needs Hearth 1/2/4/6/8, plus Hourglass relics; 24 h at most), rounded up (first-night-covered). The rest is the upper
   // edge of the sim's four classes on the day they reach Hearth L (--store 0 --days 30).
   pace: [null,
-    { h: 8, t: 1, lv: 25, tool: [1, 'rare', 3], m: 3, hl: 1 },
-    { h: 8, t: 2, lv: 40, tool: [2, 'rare', 3], m: 10, hl: 2 },
-    { h: 10, t: 3, lv: 50, tool: [3, 'rare', 6], m: 15, hl: 3 },
-    { h: 12, t: 3, lv: 74, tool: [3, 'epic', 10], m: 19, hl: 4 },
-    { h: 14, t: 4, lv: 90, tool: [4, 'rare', 10], m: 20, hl: 5 },
-    { h: 16, t: 4, lv: 110, tool: [5, 'rare', 10], m: 20, hl: 6 },
-    { h: 20, t: 5, lv: 135, tool: [5, 'epic', 10], m: 20, hl: 7 },
+    { h: 12, t: 1, lv: 25, tool: [1, 'rare', 3], m: 3, hl: 1 },
+    { h: 12, t: 2, lv: 40, tool: [2, 'rare', 3], m: 10, hl: 2 },
+    { h: 14, t: 3, lv: 50, tool: [3, 'rare', 6], m: 15, hl: 3 },
+    { h: 16, t: 3, lv: 74, tool: [3, 'epic', 10], m: 19, hl: 4 },
+    { h: 18, t: 4, lv: 90, tool: [4, 'rare', 10], m: 20, hl: 5 },
+    { h: 20, t: 4, lv: 110, tool: [5, 'rare', 10], m: 20, hl: 6 },
+    { h: 24, t: 5, lv: 135, tool: [5, 'epic', 10], m: 20, hl: 7 },
     { h: 24, t: 5, lv: 210, tool: [5, 'epic', 10], m: 20, hl: 8 }],
   spill: 3,                // Spillover opens at this level
   goldPerLv: 60,           // unused since ECON-A: gold = ECON.storeH hours of income at the Hearth gate zone; none at Lv 1
@@ -19178,7 +19242,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (inAway || !lv('watch')) return 0;
     inAway = true; let others = 0;
     try { others = bonus('awayHours'); } finally { inAway = false; }
-    return Math.max(0, Math.min(2 * lv('watch'), T.awayMax - (4 + 2 * S.relic.glass) - others));
+    return Math.max(0, Math.min(2 * lv('watch'), T.awayMax - awayBaseH() - others));
   });
   // Library: gathering XP +5% per level; hero XP +5% per level after the first.
   for (const k of ['mine', 'wood', 'forage']) addModifier('skillXp:' + k, () => 1 + 0.05 * lv('library'));
@@ -36337,7 +36401,7 @@ function awayChipText() {
   if (S.activity !== 'gather') return '';
   const { kind, t: tier } = S.node;
   const boost = (1 + gear().offline / 100) * mod('offline');
-  const hrs = 4 + 2 * S.relic.glass + bonus('awayHours');
+  const hrs = awayCapH();
   let n = Math.floor(3600 / nodeTime(kind, tier) * boost * nodeYieldAvg(kind) * mod('yield:' + kind) * hrs);
   // A pile that fills mid-away: Spillover moves on to the next node (amounts then differ), otherwise the rest is lost.
   const room = stashRoom(kind, tier);
@@ -38193,7 +38257,7 @@ var handsTradeOpenPicker;
 // fields and for registerAwayLine). Shown when the player was gone 30s or more and
 // something happened. Numbers count up; under prefers-reduced-motion they appear at once.
 
-let showAwayReport;
+let showAwayReport, awayLimitStep;
 {
   const COIN = () => iconURL('coin', '#F2C14E');
   const IC = {
@@ -38260,6 +38324,67 @@ let showAwayReport;
     b.append(el('h4', 'away-h', title));
     return b;
   }
+
+  // A line's Go button: closes the card, then runs the line's go().
+  function goBtn(l) {
+    const gb = el('button', 'mini go away-lgo', l.goLabel || 'Go');
+    const aria = l.aria || (l.goLabel ? l.goLabel + ': ' + (l.txt || '') : '');
+    if (aria) gb.setAttribute('aria-label', aria);
+    gb.addEventListener('click', () => { close(); try { l.go(); } catch (e) { console.error('[lanternfall] away line go failed', e); } });
+    return gb;
+  }
+
+  // away-limit-says-next-step (ruling 2026-10-08-first-night-covered, card 2): when the hero hit the away limit,
+  // the bar gives both numbers and the box names the one next step. Read-only: it never changes the limit.
+  awayLimitStep = function (r) {
+    const H = 3600, max = CAMP_TUNE.awayMax;
+    const raid = r.activity === 'raid';
+    // a raid hit away keeps its old 4 h base (awayRaidCapH): the card never promises more raid time than that
+    const limH = () => raid ? awayRaidCapH() : awayCapH();
+    // the limit one level up, read with the real formulas (the level is put back at once; nothing is saved)
+    const limWith = (set, get) => { const was = get(); try { set(was + 1); return limH(); } finally { set(was); } };
+    const capH = raid ? awayRaidCapH() : r.cap / H;
+    const cap = capH * H, worked = Math.min(r.t, cap), capped = r.secs > cap;
+    const out = { cap, worked, capped, bar: '', rows: [] };
+    if (!capped) return out;
+    out.bar = raid ? `Your hero hit the raid boss for ${hm(worked)} of your ${hm(r.secs)} away.` : `Your hero worked ${hm(worked)} of your ${hm(r.secs)} away.`;
+    const camp = typeof campOpen === 'function' && campOpen();
+    const closed = S.hearth && S.hearth.cold ? 'Light the camp fire first.' : `Your camp opens at zone ${CAMP_TUNE.openZone}.`;
+    const hearth = campLevel('hearth'), goCamp = id => () => emit('campGoto', { tab: 'world', view: 'camp', sel: '#camp-b-' + id });
+    const goClosed = S.hearth && S.hearth.cold ? goCamp('hearth') : null;
+    // the Storehouse filled before the limit: more hours would not have held more, so it names the Storehouse
+    const full = !raid && (r.lines || []).some(l => l && /^Storehouse full/.test(String(l.txt || '')));
+    if (full) {
+      const st = campLevel('store'), to = st + 1, need = STORE_HREQ[to - 1];
+      if (to >= STORE_TUNE.caps.length) out.rows.push({ icon: IC.glass, txt: 'Your Storehouse filled before your hero stopped.', sub: 'It is at its biggest. Spend from a full pile to gather more.' });
+      else out.rows.push({ icon: IC.glass, txt: `Your Storehouse filled before your hero stopped. Storehouse Lv ${to} holds more.`,
+        sub: !camp ? closed : hearth < need ? `Opens at Hearth ${need} (zone ${CAMP_HZ[need - 1]}).` : '',
+        go: !camp ? goClosed : goCamp(hearth < need ? 'hearth' : 'store'), aria: `Go to the ${!camp || hearth < need ? 'Hearth' : 'Storehouse'}` });
+      return out;
+    }
+    const w = campLevel('watch'), to = w + 1;
+    const next = to > CAMP_B.watch.max ? capH : limWith(v => { S.camp.b.watch = v; }, () => campLevel('watch'));
+    const need = Math.max(CAMP_HREQ[to - 1] || 99, CAMP_B.watch.opens || 1);
+    // Watchtower 5 opens at Hearth 8 (zone 38), past the Hollow: in Chapter 1, Watchtower 4 is the camp's most
+    const ch1 = S.maxZone <= PACE.region && CAMP_HZ[need - 1] > PACE.region;
+    const sched = 'Gatherer jobs, trade runs and camp builds keep their own clocks.';
+    if (next <= capH || ch1) {
+      out.rows.push({ icon: IC.glass, txt: `${capH}h is the most your camp can do${ch1 && next > capH ? ' in Chapter 1' : ''}.`, sub: sched });
+    } else {
+      out.rows.push({ icon: IC.glass, txt: `Watchtower Lv ${to}: +${next - capH}h (${next}h).`,
+        sub: !camp ? closed : hearth < need ? `Opens at Hearth ${need} (zone ${CAMP_HZ[need - 1]}).` : sched,
+        go: !camp ? goClosed : goCamp(hearth < need ? 'hearth' : 'watch'), aria: `Go to the ${!camp || hearth < need ? 'Hearth' : 'Watchtower'}` });
+    }
+    // the Hourglass only while the raid is open (raid Embers buy it; a read-only check, the online layer is unchanged),
+    // and only while a level still adds time to this limit
+    const glass = RELICS.find(u => u.id === 'glass');
+    const raidOpen = online.ready && (typeof isUnlocked !== 'function' || isUnlocked('raid'));
+    if (raidOpen && glass && S.relic.glass < glass.cap) {
+      const g = limWith(v => { S.relic.glass = v; }, () => S.relic.glass);
+      if (g > capH) out.rows.push({ icon: IC.glass, txt: `Hourglass Lv ${S.relic.glass + 1}: +${g - capH}h, for raid Embers.`, go: () => emit('campGoto', { tab: 'world', view: 'raid', sel: '#relicRows' }), aria: 'Go to the Hourglass' });
+    }
+    return out;
+  };
 
   function build(r) {
     root = el('div', 'away-ov');
@@ -38347,16 +38472,21 @@ let showAwayReport;
     // ---- the hero's work limit, after the results ----
     const lim0 = el('div', 'away-limwrap');
     if (!r.turnCombat) {
+    const L = awayLimitStep(r);
     if (r.cap) {
       const lim = el('div', 'away-lim'), bar = el('div', 'bar'), fill = el('i');
-      fill.style.width = Math.min(100, r.t / r.cap * 100) + '%';
+      fill.style.width = Math.min(100, L.worked / L.cap * 100) + '%';
       bar.append(fill);
-      lim.append(bar, el('span', null, r.capped ? 'Hero work limit reached' : `Your hero worked ${hm(r.t)} of ${hm(r.cap)}`));
+      lim.append(bar, el('span', null, L.capped ? L.bar : r.activity === 'raid' ? `Your hero hit the raid boss for ${hm(L.worked)} of ${hm(L.cap)}` : `Your hero worked ${hm(L.worked)} of ${hm(L.cap)}`));
       lim0.append(lim);
     }
-    if (r.capped) {
+    for (const l of L.capped ? L.rows : []) {
       const cap = el('div', 'away-cap');
-      cap.append(img(IC.glass()), el('span', null, `Your hero works for up to ${hm(r.cap)} away. Gatherer jobs, trade runs and camp builds finish on their own schedules. Hourglass relics and the Watchtower raise the hero's limit, up to 24 hours.`));
+      const tx = el('div', 'away-ltx');
+      tx.append(el('div', null, l.txt));
+      if (l.sub) tx.append(el('div', 'away-lsub', l.sub));
+      cap.append(img(l.icon()), tx);
+      if (l.go) cap.append(goBtn(l));
       lim0.append(cap);
     }
     }
@@ -38379,12 +38509,7 @@ let showAwayReport;
         tx.append(el('div', 'away-lt', l.txt || ''));
         if (l.sub) tx.append(el('div', 'away-lsub', l.sub));
         row.append(tx);
-        if (typeof l.go === 'function') {
-          const gb = el('button', 'mini go away-lgo', l.goLabel || 'Go');
-          if (l.goLabel) gb.setAttribute('aria-label', l.goLabel + ': ' + (l.txt || ''));
-          gb.addEventListener('click', () => { close(); try { l.go(); } catch (e) { console.error('[lanternfall] away line go failed', e); } });
-          row.append(gb);
-        }
+        if (typeof l.go === 'function') row.append(goBtn(l));
         b.append(row);
       }
       body.append(b);
@@ -40171,7 +40296,7 @@ let craftUI = null;
   }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
+  const st8 = { lift: {}, st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
     tool: {}, fd: {}, crafted: false };   // craft-delta: tool: id -> { on, speed } from the crafted event; fd: id -> { sig, job, res } the fight line
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
@@ -40216,19 +40341,87 @@ let craftUI = null;
   const roleFor = k => st8.role[k] || 'striker';
   // craft-delta: how many recipes you could make right now (a craft made with two or more on offer is a choice)
   const affordable = () => { let n = 0; for (const s of STATION_KEYS) for (const k of listFor(s, 'you')) for (let t = 1; t <= 5 && n < 2; t++) if (skillTierOpen(skillOfSt(s), t) && safe(() => canDo(k, t).ok, false)) n++; return n; };
-  function doCraft(k, t) {
-    if (!canDo(k, t).ok) return;
+  // craft-strike-infuse: how = 'infuse' pays Essence for the lift. Otherwise, when the timing bar is offered (craftStrikeOffered), the bar
+  // shows first and the craft is made (and paid) only when it resolves, so a miss, no press or a hidden tab never loses materials.
+  function doCraft(k, t, how) {
+    if (!canDo(k, t).ok || strike.on) return;
     const d = CRAFT_KINDS[k], opts = { wear: true };   // craft-delta: a better tool goes on by itself (55-crafting craftItem)
     if (d.role === 'any') opts.role = roleFor(k);
     const mw = mwFor(k); if (mw != null) opts.mw = mw;
-    const f = K6.craft(), choice = affordable() >= 2;
+    const choice = affordable() >= 2;
+    if (how === 'infuse') { if (!safe(() => canCraft(k, t, { infuse: true }).ok, false)) return; opts.infuse = true; }
+    else if (K6.craft() && safe(() => craftStrikeOffered(k, t), false)) { strikeOpen(k, t, opts, choice); return; }
+    craftDone(k, t, opts, choice);
+  }
+  function craftDone(k, t, opts, choice) {
+    const f = K6.craft();
     const it = safe(() => (f ? f(k, t, opts) : forgeItem(k, t)), null);
     if (it) {
-      if (choice) emit('choice', 'craft');
+      if (choice || opts.infuse || opts.strike != null) emit('choice', 'craft');   // craft-strike-infuse: taking the Strike or Infuse is a choice
       if (!st8.crafted) { st8.crafted = true; emit('firstUse', 'craft'); }   // the first craft this visit (the walk plays one fresh game)
       if (it.id != null) st8.fresh.add(it.id); save(); ui(true);
     }
+    return it;
   }
+  // ---- the Strike (craft-strike-infuse): the parry bar's look (.tv-time, 60-turn.css) with its own clock; it holds the game ----
+  // The head fills the track in STRIKE_FILL seconds; the gold window is its last stretch, the fight's parry window (59k: SOLO_TUNE.turnParryWindow
+  // x turnAssistX, capped at TURN_TUNE.windowCaps.parry). A press in it lifts one grade; an early press, no press or a hidden tab makes the
+  // piece at the level's grade. Reduced motion: the bar is the same as the fight's, which only fills.
+  const STRIKE_WORD = { forge: 'Strike', bench: 'Carve', loom: 'Stitch', ench: 'Etch' };
+  const STRIKE_FILL = 1.1, STRIKE_LATE = 0.25;
+  const strike = { on: null, ov: null };
+  holdGame(() => !!strike.on);
+  const strikeWin = () => safe(() => Math.min(TURN_TUNE.windowCaps.parry, SOLO_TUNE.turnParryWindow * turnAssistX()), 0.18);
+  function strikeBuild() {
+    if (strike.ov) return strike.ov;
+    const ov = el('div', 'cf-strike'), box = el('div', 'cf-sk'), ttl = el('p', 'cf-sk-t'), bar = el('div', 'tv-time cf-sk-bar'), track = el('div', 'tv-track');
+    const fill = el('i', 'tv-fill'), pz = el('i', 'tv-parry'), head = el('i', 'tv-head'), legend = el('div', 'tv-legend'), lg = el('span', 'tv-lg-p'), sub = el('p', 'cf-sk-s');
+    ov.hidden = true; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-live', 'assertive');
+    ttl.id = 'cfStrikeT'; ov.setAttribute('aria-labelledby', 'cfStrikeT'); box.tabIndex = -1;
+    track.append(pz, fill, head); legend.append(lg); bar.append(track, legend); box.append(ttl, bar, sub); ov.append(box);
+    ov.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); strikePress(); });
+    document.body.append(ov);
+    strike.ov = { ov, ttl, bar, fill, pz, head, lg, sub };
+    return strike.ov;
+  }
+  function strikeOpen(k, t, opts, choice) {
+    const o = strikeBuild(), word = STRIKE_WORD[CRAFT_KINDS[k].st] || 'Strike', to = safe(() => craftLiftTo(k, t), null);
+    const win = strikeWin();
+    strike.on = { k, t, opts, choice, word, to, win, t0: performance.now() / 1000, done: false };
+    putText(o.ttl, `${word} as the bar reaches the gold`); putText(o.lg, word);
+    putText(o.sub, `In the gold: Grade ${to != null ? GRADE[to].n : 'up'}. A miss still makes it at Grade ${GRADE[safe(() => gradeFor(k, t), 0)].n}.`);
+    o.pz.style.left = (100 * (1 - win / STRIKE_FILL)) + '%'; o.pz.style.width = (100 * win / STRIKE_FILL) + '%';
+    o.bar.classList.remove('in-parry'); o.ov.hidden = false; try { o.ov.firstChild.focus({ preventScroll: true }); } catch (e) {}
+    requestAnimationFrame(strikeDraw);
+  }
+  function strikeDraw() {
+    const s = strike.on; if (!s || s.done) return;
+    const o = strike.ov, e = performance.now() / 1000 - s.t0, x = Math.min(1, e / STRIKE_FILL);
+    o.fill.style.width = (100 * x) + '%'; o.head.style.left = (100 * x) + '%';
+    o.bar.classList.toggle('in-parry', e >= STRIKE_FILL - s.win && e <= STRIKE_FILL);
+    if (e > STRIKE_FILL + STRIKE_LATE) { strikeEnd(false, false); return; }
+    requestAnimationFrame(strikeDraw);
+  }
+  function strikePress() {
+    const s = strike.on; if (!s || s.done) return;
+    const e = performance.now() / 1000 - s.t0;
+    strikeEnd(e >= STRIKE_FILL - s.win && e <= STRIKE_FILL + 0.05, true);   // a frame's grace at the end, as a press lands a moment after the eye sees it
+  }
+  function strikeEnd(hit, pressed) {
+    const s = strike.on; if (!s || s.done) return;
+    s.done = true;   // later presses are ignored; the overlay stays a beat so a second tap cannot reach the row under it
+    setTimeout(() => { if (strike.on === s) strike.on = null; if (strike.ov && !strike.on) strike.ov.ov.hidden = true; }, 250);
+    emit('craftStrike', { hit, pressed, kind: s.k, t: s.t });   // 76-audio: the parry chime on a hit
+    const opts = Object.assign({}, s.opts); if (pressed) opts.strike = hit;   // no press: made at the level's grade, and no choice was taken
+    const it = craftDone(s.k, s.t, opts, s.choice);
+    if (it && it.id != null && !pressed) { st8.lift[it.id] = 'missed'; ui(true); }   // the result card says so (a press sets it from 'crafted')
+  }
+  document.addEventListener('keydown', e => {
+    if (!strike.on || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === ' ' || e.key === 'Enter' || e.key === 'f' || e.key === 'F') { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) strikePress(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); strikeEnd(false, false); }   // the menu stays open: made at the level's grade
+  }, true);
+  document.addEventListener('visibilitychange', () => { if (document.hidden && strike.on) strikeEnd(false, false); });   // a hidden tab: the level's grade
   // ---- the fight line (craft-delta): what the piece changes against the boss at your furthest zone (55-fight-delta) ----
   // Sampled a chunk at a time after the card opens, so the card never waits; the line joins it when the sample is done, or is
   // left out. Keyed by what the fight depends on now, so a card seen again after a gear change samples again.
@@ -40422,6 +40615,9 @@ let craftUI = null;
       lines.append(r);
     }
     if (lines.children.length) left.append(lines);
+    { const lf = st8.lift[it.id], w = STRIKE_WORD[(CRAFT_KINDS[it.slot] || {}).st] || 'Strike', q = itemQual(it);   // craft-strike-infuse
+      const txt = lf === 'strike' ? `Your ${w} landed in the gold: ${q}.` : lf === 'infuse' ? `Infused with Essence: ${q}.` : lf === 'missed' ? `The ${w} missed the gold, so it is ${q}. Nothing was lost.` : '';
+      if (txt) left.append(el('p', 'note cf-liftn' + (lf === 'missed' ? '' : ' up'), txt)); }
     const df = diffRows(it), tl = toolLine(it), fl = !wr ? fightLine(it) : '';
     if (tl) right.append(el('p', 'note cf-cmpn cf-toolon', tl));
     if (fl) right.append(el('p', 'note cf-cmpn cf-fight', fl));
@@ -40480,12 +40676,37 @@ let craftUI = null;
     const it = e && e.item; if (!it || it.id == null) return;
     st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
     st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    if (e.lift) st8.lift[it.id] = e.lift;   // craft-strike-infuse: the result card names the lift
     if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null, parts: e.on ? safe(() => toolParts(it, e), null) : null };   // tool-speed-adds-up: the old tool and the parts, read now
     else fdStart(it);
     // a Rare or better craft, or (craft-attribute-grades) grade A or S, is a medium moment
     if ((itemGraded(it) ? GRADE[it.g].moment : it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
       moment('craft', { eye: `Well made · ${itemQual(it)}`, title: itemName(it), sub: `${itemQual(it)} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });
   });
+  // craft-strike-infuse: the lift a craft can take ({ to, sk, inf, ok, why, word }) or null: the Strike (the bar after Craft) and Infuse
+  // (Essence, the button on the row), each one grade, never above A. Names the choice: "Grade A: Strike, or Infuse for 6 Essence".
+  const liftInfo = (k, t) => safe(() => {
+    if (typeof craftLiftTo !== 'function' || !stationTierOpen(k, t)) return null;
+    const to = craftLiftTo(k, t); if (to == null) return null;
+    const sk = craftStrikeOffered(k, t), inf = craftInfusePrice(k, t); if (!sk && !inf) return null;
+    const c = inf ? canCraft(k, t, { infuse: true }) : null;
+    return { to, sk, inf, ok: !!(c && c.ok), why: c && !c.ok ? c.why : '', word: STRIKE_WORD[CRAFT_KINDS[k].st] || 'Strike' };
+  }, null);
+  function liftRow(k, t) {
+    const L = liftInfo(k, t); if (!L) return null;
+    const box = el('div', 'cf-lift');
+    const what = L.sk && L.inf ? `${L.word}, or Infuse for ${fmt(L.inf)} Essence` : L.sk ? `${L.word} in the gold after Craft` : `Infuse for ${fmt(L.inf)} Essence`;
+    box.append(el('span', 'cf-lift-t', `Grade ${GRADE[L.to].n}: ${what}`));
+    if (L.inf) {
+      const b = el('button', 'cf-inf', 'Infuse'); b.type = 'button'; b.disabled = !L.ok;
+      b.setAttribute('aria-label', `Craft ${tierName(k, t)} with Infuse for ${fmt(L.inf)} Essence`);
+      if (!L.ok && L.why) b.title = L.why;
+      b.addEventListener('click', () => doCraft(k, t, 'infuse'));
+      box.append(b);
+      if (!L.ok && L.why) box.append(el('small', 'cf-lift-w', L.why));
+    }
+    return box;
+  }
   function recipeRow(k, t) {
     const d = CRAFT_KINDS[k], can = canDo(k, t);
     const row = el('div', 'cf-rec' + (can.ok ? ' ok' : '') + (st8.focus === k ? ' focus' : ''));
@@ -40517,6 +40738,7 @@ let craftUI = null;
       const gl = stationTierOpen(k, t) ? gradeTxt(k, t) : ''; if (gl) row.append(el('div', 'cf-odds cf-gline', gl));
       const ch = choiceTxt(k, t); if (ch) row.append(el('div', 'cf-odds cf-choice', ch));
     } else { const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds)); }
+    const lr = can.ok ? liftRow(k, t) : null; if (lr) row.append(lr);   // craft-strike-infuse: the choice, on a craft you can make
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
       const seg = el('div', 'seg cf-seg');
@@ -40569,7 +40791,7 @@ let craftUI = null;
       if (st8.result != null && !itemById(st8.result)) st8.result = null;
       st8.recent = st8.recent.filter(id => itemById(id));
       { const it = st8.result != null ? itemById(st8.result) : null; if (it && !(itemKind(it) || {}).tool && !wornBy(it.id)) fdStart(it); }   // craft-delta: a card seen again after a gear change samples again
-      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos], fightLine(it)]; })() : 0]);
+      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? st8.lift[st8.result] || '' : '', st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos], fightLine(it)]; })() : 0]);
       if (resSig !== rec.resSig) {
         rec.resSig = resSig; rec.resBox.textContent = '';
         const rit = st8.result != null ? itemById(st8.result) : null;
@@ -40628,7 +40850,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -47477,6 +47699,7 @@ document.addEventListener('click', e => {
   draw(); st.append(b);
 })();
 on('defGrade', p => { if (p && p.clean) SFX.play('cleanDef'); });
+on('craftStrike', p => { if (p && p.hit) SFX.play('cleanDef'); });   // craft-strike-infuse: a Strike in the gold rings like a clean parry
 
 // ---- src/js/76-create.js ----
 // 76-create: character creation (new games), the one-time "Choose your path" screen (existing saves,

@@ -375,7 +375,7 @@ Sources:
 Sinks:
 - Warbanner damage (`40-rules.js`)
 - Ember Heart raid damage (raidMult) (`40-rules.js`)
-- Hourglass away cap (`50-sim.js`)
+- Hourglass away cap (awayBaseH) (`40-rules.js`)
 - Loaded Die crit damage (`55-econ.js`)
 
 Note: Permanent upgrades; "sink" is where the level is read.

@@ -159,7 +159,7 @@ if (args.report === 'hands') { await runHandsReport(); process.exit(0); }
 if (args.report === 'econ') { await runEconReport(); process.exit(0); }
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
-Object.assign(fn, g.eval('({ craftItem, canCraft })'));   // 55-crafting.js (K6)
+Object.assign(fn, g.eval('({ craftItem, canCraft, craftStrikeOffered })'));   // 55-crafting.js (K6)
 // Sim clock: the game's Date.now (bounty timers, the Tavern's device day) follows sim time.
 const day0 = args.day !== undefined ? +args.day : 277;
 const clock0 = Date.UTC(2026, 0, 1) + day0 * 864e5 + new Date(Date.UTC(2026, 0, 1) + day0 * 864e5).getTimezoneOffset() * 6e4 + 8 * 3600e3;   // 08:00 local
@@ -299,7 +299,7 @@ fn.on('campBuilt', ({ id, lv }) => { if (id === 'store' && lv === 1 && storeStat
 const storeAwayPick = () => {
   if (!storeOn || args.storeaway === '0') { storeFullSwitch(); return true; }
   const p = E(`(() => {
-    const secs = (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600, boost = (1 + gear().offline / 100) * mod('offline');
+    const secs = awayCapH() * 3600, boost = (1 + gear().offline / 100) * mod('offline');
     const f = (k, t) => stashRoom(k, t) / Math.max(1, secs / nodeTime(k, t) * boost * nodeYieldAvg(k) * mod('yield:' + k));
     if (f(S.node.kind, S.node.t) >= 0.5) return { keep: 1 };
     let best = null;
@@ -524,6 +524,18 @@ function forgeGear2() {
     try { forgeRest(); } finally { hold.forEach((n, i) => { if (n) E(`S.mats.ess[${i}] += ${n}`); }); }
   } else forgeRest();
 }
+// craft-strike-infuse (CRAFT_TUNE.strike, CRAFT_TUNE.infuse, --craft): a class piece is lifted as the casual would: Infused when the
+// Essence is there after the weapon hold (forgeItem's swordFirst), else Struck when the bar shows, in the gold --strikehit of the
+// time (default 0.5). Switches off: no opts, the craft exactly as before.
+const STRIKE_HIT = args.strikehit !== undefined ? +args.strikehit : 0.5;
+const liftStats = { strike: 0, missed: 0, infuse: 0, infuseEss: 0, gradeA: 0 }; let killEssMade = 0;
+fn.on('kill', e => { killEssMade += (e && e.ess) || 0; });
+fn.on('crafted', e => { if (e.lift) liftStats[e.lift]++; if (e.lift === 'infuse') liftStats.infuseEss += E(`CRAFT_TUNE.infuseX * Math.max(1, craftRecipe(${JSON.stringify(e.kind)}, ${e.t}).ess || 0)`); if (e.item && e.item.g >= 3 && e.lift && e.lift !== 'missed') liftStats.gradeA++; });
+function liftOpts(kind, t) {
+  if (E('CRAFT_TUNE.infuse') && fn.canCraft(kind, t, { infuse: true }).ok) return { infuse: true };
+  if (E('CRAFT_TUNE.strike') && fn.craftStrikeOffered(kind, t)) return { strike: E('Math.random()') < STRIKE_HIT };
+  return undefined;
+}
 function forgeRest() {
   for (let t = 5; t >= 1; t--) {
     for (const pos of cls ? CLASS_POS : []) {
@@ -531,13 +543,13 @@ function forgeRest() {
       if (cur && cur.t >= t && (isClassItem(cur, pos) || cur.u || cur.t > t)) continue;
       const c = fn.canCraft(kind, t);
       if (args.transmute && args.transmute !== '0' && !c.ok && c.lv >= c.need) for (const [m, n] of c.miss) transmuteDown(m, t, n);   // break higher tiers down (Enchanter's Table)
-      const it = fn.craftItem(kind, t);
+      const it = fn.craftItem(kind, t, liftOpts(kind, t));
       if (it) keepBest(pos, it);
     }
     for (const slot of SLOTS) {
       const cur = fn.equipped(slot);
       if (cur && cur.t >= t) continue;
-      const it = fn.forgeItem(slot, t);
+      const it = slot === 'charm' && liftOpts('charm', t) ? fn.craftItem('charm', t, liftOpts('charm', t)) : fn.forgeItem(slot, t);   // craft-strike-infuse: the Charm takes its lift too
       if (it) keepBest(slot, it);
     }
   }
@@ -1032,6 +1044,7 @@ if (cls && policy === "mixed") {
   const bl = Object.entries(craftStats.blocks).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${Math.round(100 * n / craftStats.blockMin)}%`).join(', ');
   console.log(`craft: G4 gather share ${Math.round(100 * share)}% (want 25-45%) / G6 top blocker ${worst ? `${worst[0]} ${Math.round(100 * worst[1] / craftStats.blockMin)}%` : '-'} of ${craftStats.blockMin} blocked min (want <= 50%) [${bl}]`);
   console.log(`craft: G9 first Trophy ${m(craftStats.troph)} (want 20-60m) | farm-back ${craftStats.farm} min | trophies ${E('trophies()')} ${E('JSON.stringify(S.craft.troph)')}, champions ${E('S.craft.champ')} | skills mine ${E('S.skills.mine.lv')} wood ${E('S.skills.wood.lv')} forage ${E('S.skills.forage.lv')}`);
+  if (E('CRAFT_TUNE.strike || CRAFT_TUNE.infuse')) console.log(`craft: lifts (craft-strike-infuse) ${JSON.stringify(liftStats)} | Essence held ${E('essHave()')} of ${Math.round(killEssMade)} made by kills (${killEssMade ? Math.round(100 * Math.min(1, E('essHave()') / killEssMade)) : 0}%, health's essHeldShare)`);
   console.log(`craft: pack ${['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'].concat(refineSim ? ['ingot', 'plank', 'cloth', 'leather', 'coal'] : []).map(k => k + ' ' + E(`JSON.stringify(S.mats.${k})`)).join(' ')}`);
   refineLine();
 }

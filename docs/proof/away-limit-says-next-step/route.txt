@@ -1,0 +1,33 @@
+# Proof for card away-limit-says-next-step: a capped return says how long the hero worked and the one building that adds more.
+# The save: zone 13, Hearth 1, Storehouse Lv 1, no Watchtower, no Hourglass (tests/proof-fixtures/save-tier-gate.json).
+#   capped-away-*.png   back after 11 hours of gathering: the bar says "Your hero worked 8h of your 11h away." and the box
+#                       names "Watchtower Lv 1: +2h (10h)." with a Go (before: "Hero work limit reached" and "up to 24 hours").
+#   capped-away-low-*.png the same card scrolled down (the box sits below the fold at 740x360).
+#   go-watchtower-*.png the Go closes the card and opens the camp at the Watchtower.
+# The other cases (Hearth gate, the top, Chapter 1, the Storehouse first, the raid's 4 h, the Hourglass) are held by
+# tools/check.mjs ("C14 away card browser": away-limit-says-next-step).
+# seed: 1
+new tier-gate
+wait 3
+tap-if "Skip this story"
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+tap "Gather: Foraging"
+wait 3
+tap-if "Got it"
+wait 1
+away 11
+wait 2
+expect ".away-cap"
+expect-no "Hero work limit reached"
+expect-no "up to 24 hours"
+shot capped-away
+scroll down
+shot capped-away-low
+tap "Go to the Watchtower"
+wait 1
+expect "#camp-b-watch"
+shot go-watchtower

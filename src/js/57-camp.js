@@ -335,7 +335,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (inAway || !lv('watch')) return 0;
     inAway = true; let others = 0;
     try { others = bonus('awayHours'); } finally { inAway = false; }
-    return Math.max(0, Math.min(2 * lv('watch'), T.awayMax - (4 + 2 * S.relic.glass) - others));
+    return Math.max(0, Math.min(2 * lv('watch'), T.awayMax - awayBaseH() - others));
   });
   // Library: gathering XP +5% per level; hero XP +5% per level after the first.
   for (const k of ['mine', 'wood', 'forage']) addModifier('skillXp:' + k, () => 1 + 0.05 * lv('library'));
