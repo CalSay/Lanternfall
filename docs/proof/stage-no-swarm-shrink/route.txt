@@ -1,0 +1,11 @@
+# seed: 1
+# Proof for card stage-no-swarm-shrink (hero size ruling, 2026-10-09). A swarm zone (2, 9, 16, 23, 30) and a boss whose kit calls
+# 3 or more adds dropped the stage one zoom step, so at 1280x720 the hero was drawn at x1 (101 px) beside its one turn-fight foe.
+# A turn fight stands one foe and its boss calls no adds, so the stage now keeps the zone's normal zoom: x2 (202 px) at 1280x720,
+# x3 at 1920x1080. 740x360 stays x1; 360x740 draws at its zone-10 size too. tools/check.mjs "stage-no-swarm-shrink" measures zone 9
+# and its boss against zone 10. Zone 16 here is a bat swarm zone.
+new z16-weak
+wait 3
+tap-if "Continue"
+wait 2
+shot swarm-zone-hero-full-size
