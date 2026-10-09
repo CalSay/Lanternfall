@@ -2261,6 +2261,16 @@ span.cf-d { font-weight: 600; }
 .mm-list img { width: 20px; height: 20px; image-rendering: pixelated; flex: none; }
 .mm-more { color: var(--muted); }
 .mm-acts { display: grid; gap: 6px; width: 100%; margin-top: 4px; }
+/* boss-spoils-pick: a compact row of moves to learn now (75-caches-ui), side by side on a wide screen, stacked on a narrow one; on a short
+   screen the card drops its art and the hero's line so the moves and Keep the Scroll fit */
+.mm-card.has-pick { width: min(560px, 100%); }
+.mm-picks { width: 100%; display: grid; gap: 5px; }
+.mm-pick-h { margin: 0; font: 600 max(var(--tmin, 0px), calc(12px * var(--tk, 1))) var(--body); letter-spacing: .06em; color: var(--mc); text-align: left; }
+.mm-pick-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+.mm-pick { display: grid; gap: 2px; align-content: start; min-height: 44px; padding: 6px 8px; text-align: left; cursor: pointer; color: var(--bone); background: var(--well); border: 1px solid color-mix(in srgb, var(--mc) 55%, var(--line)); font: inherit; }
+.mm-pick b { font-size: max(var(--tmin, 0px), calc(13.5px * var(--tk, 1))); color: #F2E6B0; }
+.mm-pick small { font-size: max(var(--tmin, 0px), calc(11.5px * var(--tk, 1))); line-height: 1.3; color: var(--muted); }
+.mm-pick:hover, .mm-pick:focus-visible { border-color: var(--mc); background: color-mix(in srgb, var(--mc) 16%, var(--well)); outline: none; }
 
 /* ---- the medium banner: a toast in the notices slot (the toast dock) ---- */
 .toast.mm-toast { --mc: var(--gold); align-items: flex-start; border-color: var(--mc); border-left: 3px solid var(--mc); background: linear-gradient(90deg, color-mix(in srgb, var(--mc) 24%, #0E0B12), #0E0B12E8 85%); box-shadow: 0 2px 0 #0B0810, 0 0 14px color-mix(in srgb, var(--mc) 35%, transparent); padding: 5px 8px 5px 6px; }
@@ -2283,6 +2293,7 @@ span.cf-d { font-weight: 600; }
 }
 /* 740x360: the card is short, so the art shrinks */
 @media (max-height: 420px) { .mm-art { width: 72px; height: 64px; } .mm-img { width: 44px; height: 44px; } .mm-card { gap: 5px; padding: 10px 12px; } }
+@media (max-height: 420px) { .mm-card.has-pick .mm-art, .mm-card.has-pick .mm-say { display: none; } .mm-pick { min-height: 0; padding: 4px 8px; } }
 
 /* ---- hero-voice: the hero's line on a card or banner, the hero sheet record ---- */
 .mm-say { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; padding: 6px 8px; text-align: left; background: var(--well); border: 1px solid var(--line); }
@@ -38182,10 +38193,39 @@ let showAwayReport;
 // holds a look or a unique (or is the first Star, or zone 1's first boss). The card lists what the win paid, in the colour of the best
 // thing inside. The drops this clear already queued as moments (the unique, the first Star, zone 1's boss card) fold into the cache card.
 // This file loads before 75-moments-ui, so the moment layer's names are read inside the handler, never at load.
+// boss-spoils-pick (Opus judge 2026-10-08): a zone 6 to 10 first clear that drops a Scroll asks which move it teaches now, when two or more
+// moves of the hero in play can be learned with that Scroll. Up to three, in the Abilities list's order, never marked best; Keep the
+// Scroll (or any other close) keeps it. A pick learns the move and slots it in a free slot, else opens Abilities on it to swap.
+// Nothing new is paid. Events for the walk: choice 'spoils' and spoilsPick { zone, offered, taken } (taken: a move id or 'keep').
+const SPOILS_TUNE = { from: 6, to: 10, max: 3 };
+function spoilsMoves(v) {
+  try {
+    if (!v || !v.scroll || !(v.zone >= SPOILS_TUNE.from && v.zone <= SPOILS_TUNE.to) || typeof abLearnInfo !== 'function') return null;
+    const k = soloHero(); if (!k || !HERO_ABILITIES[k]) return null;
+    const ids = HERO_ABILITIES[k].filter(id => { const i = abLearnInfo(k, id); return i.why === '' && i.payWith === v.scroll.id; });
+    return ids.length >= 2 ? { k, ids: ids.slice(0, SPOILS_TUNE.max) } : null;
+  } catch (e) { return null; }
+}
+function spoilsPicks(v, sp) {
+  const sid = v.scroll.id, done = taken => { emit('choice', 'spoils'); emit('spoilsPick', { zone: v.zone, offered: sp.ids.length, taken }); };
+  const learn = id => {
+    const k = sp.k, i = abLearnInfo(k, id);
+    if (soloHero() !== k || i.why || i.payWith !== sid || !abilityLearn(k, id)) { done('keep'); return; }   // the card waited and the move went: the Scroll stays
+    const free = soloEquipped().indexOf(null);
+    if (free >= 0) soloEquip(free, id);
+    else { if (typeof abilityOpenDetail === 'function') abilityOpenDetail(id); setTab('abilities', '#sec-abilities'); }   // all slots full: Abilities, on the move, has "Swap it in for:"
+    try { save(); } catch (e) {}
+    try { ui(true); } catch (e) {}   // the fight bar shows the slotted move now
+    done(id);
+  };
+  return { pickHead: 'Learn one now:', goTxt: 'Keep the Scroll', onKeep: () => done('keep'),
+    picks: sp.ids.map(id => ({ txt: ABILITIES[id].name, sub: ABILITIES[id].line, fn: () => learn(id) })) };
+}
 on('cacheOpen', v => {
   if (typeof moment !== 'function') return;
   if (!MOMENT_KINDS.cacheAuto) MOMENT_KINDS.cacheAuto = { tier: 'medium', eye: 'Lantern Cache', col: '#F2C14E', snd: 'mid' };
-  const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1;
+  const sp = spoilsMoves(v);
+  const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1 || !!sp;   // a pick needs the card (zones 6 to 10 only)
   const lines = [];
   if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
   if (v.unique) {
@@ -38207,9 +38247,10 @@ on('cacheOpen', v => {
   // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
   const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
+  if (sp) Object.assign(o, spoilsPicks(v, sp));
   o.actions = [];
   if (v.unique && typeof momentEquipAction === 'function') { const eq = momentEquipAction(v.unique.item); if (eq) o.actions.push(eq); }   // Cal's play note 9: the unique is one tap from being worn
-  if (big && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });
+  if (big && !sp && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });
   const barks = v.zone === 1 ? ['boss1'] : [];
   const ci = MOMENT_Q.findIndex(q => q.kind === 'champion' && q.zone === v.zone);   // champion-moment: a Champion's first clear queued its own card (75-moments-ui)
   if (big || ci >= 0) {
@@ -42510,6 +42551,9 @@ var introUI;   // var: 76-create (loaded after this file) reads it at run time
 //   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
 //   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
+//   picks    [{ txt, sub, fn }] a compact row of choices under the list (.mm-pick; boss-spoils-pick), headed by pickHead; a pick closes the
+//            card, then runs its fn. goTxt renames Continue; onKeep runs when the card closes any other way (Continue, an action, a tap
+//            outside, Escape). The first item in a folded card that has picks owns them.
 //   bark     a hero-voice moment id (55-voice.js): the story hero's line shows on the card or banner with their portrait. At most one bark a
 //            flush (the strongest, VOICE_PRIO). kind 'bark' is a banner of just the line, dropped after 20 s if the banner budget has no room.
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
@@ -42586,6 +42630,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     u.ov.remove(); u.ov = null;
     if (u.lastFocus && u.lastFocus.focus && document.contains(u.lastFocus)) try { u.lastFocus.focus({ preventScroll: true }); } catch (e) {}
     u.wait = 0;
+    const keep = u.onKeep; u.onKeep = null;   // a card with picks closed without one (boss-spoils-pick)
+    if (keep) try { keep(); } catch (e) { console.error('[lanternfall] moment keep', e); }
     try { ui(true); } catch (e) {}
   }
   function lineRow(l) {
@@ -42639,19 +42685,36 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
       if (rows.length > MOMENT_TUNE.maxLines) ul.append(el('li', 'mm-more', `And ${rows.length - MOMENT_TUNE.maxLines} more.`));
       card.append(ul);
     }
+    // boss-spoils-pick: a compact row of choices; a pick closes the card first, then runs
+    const pk = list.find(x => x.picks && x.picks.length), keeps = list.filter(x => x.picks && x.picks.length && x !== pk && x.onKeep).map(x => x.onKeep);   // a second pick folded in keeps its Scroll
+    const keepRest = () => { for (const f of keeps) try { f(); } catch (e) { console.error('[lanternfall] moment keep', e); } };
+    u.onKeep = pk ? () => { if (pk.onKeep) pk.onKeep(); keepRest(); } : null;
+    if (pk) {
+      card.classList.add('has-pick');
+      const box = el('div', 'mm-picks');
+      if (pk.pickHead) box.append(el('p', 'mm-pick-h', pk.pickHead));
+      const row = el('div', 'mm-pick-row');
+      for (const p of pk.picks) {
+        const b = el('button', 'mm-pick'); b.type = 'button';
+        b.append(el('b', null, p.txt)); if (p.sub) b.append(el('small', null, p.sub));
+        b.addEventListener('click', e => { e.stopPropagation(); if (Date.now() - u.shownAt < MOMENT_TUNE.tapLockMs) return; u.onKeep = keeps.length ? keepRest : null; closeCard(); try { p.fn && p.fn(); } catch (err) { console.error('[lanternfall] moment pick', err); } });
+        row.append(b);
+      }
+      box.append(row); card.append(box);
+    }
     const acts = el('div', 'mm-acts');
     for (const a of (first.actions || [])) {
       const b = el('button', 'big mm-act', a.txt); b.type = 'button';
       b.addEventListener('click', e => { e.stopPropagation(); closeCard(); try { a.fn && a.fn(); } catch (err) { console.error('[lanternfall] moment action', err); } });
       acts.append(b);
     }
-    const go = el('button', 'big forge mm-go', 'Continue'); go.type = 'button';
+    const go = el('button', 'big forge mm-go', (pk && pk.goTxt) || 'Continue'); go.type = 'button';
     acts.append(go); card.append(acts);
     ov.append(card);
     u.shownAt = Date.now();
     const tryClose = () => { if (Date.now() - u.shownAt >= MOMENT_TUNE.tapLockMs) closeCard(); };   // a fight tap must not skip the card
     ov.addEventListener('click', tryClose);
-    ov.addEventListener('keydown', ev => { if (ev.key === 'Escape') tryClose(); if (ev.key === 'Tab') { ev.preventDefault(); go.focus(); } });
+    ov.addEventListener('keydown', ev => { if (ev.key === 'Escape') tryClose(); if (ev.key === 'Tab') { ev.preventDefault(); const bs = [...card.querySelectorAll('button')], i = bs.indexOf(document.activeElement); (i < 0 ? go : bs[(i + (ev.shiftKey ? bs.length - 1 : 1)) % bs.length]).focus(); } });   // Tab stays on the card's buttons
     document.body.append(ov); u.ov = ov;
     go.focus({ preventScroll: true });
     emit('momentShow', { tier: 'big', kind: first.kind, n: list.length, zone: first.zone });

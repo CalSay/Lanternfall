@@ -175,7 +175,7 @@ const OBS = `(() => {
   } catch (e) { s = { err: String(e).slice(0, 80) }; }
   o.s = s;
   // craft-delta: the game's 'choice' and 'firstUse' events, kept in a page array the walk drains each frame (it never assigns to S)
-  if (!window.__walkEv) { window.__walkEv = []; try { on('choice', k => window.__walkEv.push(['choice', k])); on('firstUse', k => window.__walkEv.push(['firstUse', k])); on('starterJoin', e => window.__walkEv.push(['join', e && e.ids || []])); } catch (e) {} }
+  if (!window.__walkEv) { window.__walkEv = []; try { on('choice', k => window.__walkEv.push(['choice', k])); on('firstUse', k => window.__walkEv.push(['firstUse', k])); on('starterJoin', e => window.__walkEv.push(['join', e && e.ids || []])); on('spoilsPick', e => window.__walkEv.push(['spoils', Object.assign({ hero: soloHero() }, e)])); } catch (e) {} }
   o.ev = window.__walkEv.splice(0);
   return o;
 })()`;
@@ -350,6 +350,11 @@ async function dismissCards(o) {
   // the card a player is reading is the one on top (a moment card), not an older sheet beneath it
   const all = [...now].map(s => seen.get(s)), top = all.filter(r => r.cls === 'mm-ov' || r.cls === 'mm-toast').sort((a, b) => b.first - a.first)[0];
   const oldest = top || all.sort((a, b) => a.first - b.first)[0];
+  // boss-spoils-pick: a cache card that offers moves to learn: the bot picks one by the Abilities list's order, rotated by the seed
+  if (oldest && oldest.cls === 'mm-ov' && gt - oldest.first >= 2.4 && gt - st.lastCard >= 0.6) {
+    const n = await page.evaluate(() => document.querySelectorAll('.mm-ov .mm-pick').length);
+    if (n) { st.lastCard = gt; const i = (SEED - 1 + spoils.length) % n; if (await click(`.mm-ov .mm-pick:nth-child(${i + 1})`, 300)) return true; }
+  }
   if (oldest && gt - oldest.first >= 2.4 && gt - st.lastCard >= 0.6) { st.lastCard = gt; for (const d of DISMISS.split(', ')) if (await click(d, 300)) return true; }   // the card on top first: a sheet's own button can sit under it
   return false;
 }
@@ -660,9 +665,10 @@ const HIT_SOUNDS = new Set(['hit', 'crit', 'big', 'counter', 'kill']);   // F1: 
 const SOUNDS = new Set(['kill', 'loot', 'level', 'skill', 'zone', 'forge', 'momentBig', 'momentMid']);   // momentBig and momentMid are the moment layer's own stings (76-audio.js)
 const sfxLog = [];     // { t, name }
 const choices = [], firstUse = {};   // craft-delta: { t, k } for each choice event; the game time of each first use
+const spoils = [];   // boss-spoils-pick: { t, hero, zone, offered, taken } for each cache pick card closed
 async function watch(o) {
   for (const s of o.sfx) sfxLog.push({ t: gt, name: s.name });
-  for (const [kind, k] of o.ev || []) { if (kind === 'join') { for (const id of k) st.joinOnCard.add(id); continue; } if (kind === 'choice') choices.push({ t: gt, k }); else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
+  for (const [kind, k] of o.ev || []) { if (kind === 'join') { for (const id of k) st.joinOnCard.add(id); continue; } if (kind === 'spoils') { spoils.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'choice') choices.push({ t: gt, k }); else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
   for (const t of o.toasts) if (!st.toastSeen.has(t)) { st.toastSeen.add(t); await note(page, 'toast', t, { shot: false }); }
   for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
   const s = o.s, p = st.prev;
@@ -893,9 +899,17 @@ function mapWindow(reached) {
   const from = z6.t, to = z10 ? Math.min(z10.t + 600, reached) : reached;
   const nu = log.filter(e => e.kind === 'nextup' && e.pressed && e.t >= from && e.t <= to).map(e => e.t);
   const cr = choices.filter(c => c.k === 'craft' && c.t >= from && c.t <= to).map(c => c.t);
+  const sp = choices.filter(c => c.k === 'spoils' && c.t >= from && c.t <= to).length;
   const ts = [from, ...[...nu, ...cr].sort((a, b) => a - b), to];
   let g = 0; for (let i = 1; i < ts.length; i++) g = Math.max(g, ts[i] - ts[i - 1]);
-  return `${head}, bot ${fmtT(from)} to ${fmtT(to)}${z10 ? '' : ', zone 10 not cleared'}): ${nu.length} Next Up press${nu.length === 1 ? '' : 'es'}, ${cr.length} craft-screen pick${cr.length === 1 ? '' : 's'}, longest gap with neither ${fmtT(g)}.`;
+  return `${head}, bot ${fmtT(from)} to ${fmtT(to)}${z10 ? '' : ', zone 10 not cleared'}): ${nu.length} Next Up press${nu.length === 1 ? '' : 'es'}, ${cr.length} craft-screen pick${cr.length === 1 ? '' : 's'}, longest gap with neither ${fmtT(g)}; ${sp} spoils pick${sp === 1 ? '' : 's'} (cache move picks).`;
+}
+// boss-spoils-pick: each cache move pick (zones 6 to 10), by hero: offered, taken and kept
+function spoilsLine() {
+  if (!spoils.length) return 'Spoils picks (cache move picks): none.';
+  const by = {}; for (const p of spoils) (by[p.hero] = by[p.hero] || []).push(p);
+  return 'Spoils picks (cache move picks): ' + Object.entries(by).map(([h, l]) => `${h} ${l.length} (${l.filter(p => p.taken !== 'keep').length} taken, ${l.filter(p => p.taken === 'keep').length} kept; ${l.filter(p => p.offered >= 2).length} with 2+ moves offered)`).join(', ') + '. '
+    + spoils.map(p => `zone ${p.zone} at ${fmtT(p.t)}: ${p.offered} offered, ${p.taken}`).join('; ') + '.';
 }
 function report(res) {
   const reached = Math.round(gt), sc = scorecard(reached), beats = readMap(), meas = measureBeats();
@@ -917,9 +931,10 @@ function report(res) {
   const ups = log.filter(e => e.kind === 'upgrade'), crafts60 = log.filter(e => e.kind === 'moment' && /^craft:/.test(e.text) && e.t <= 3600).length, ups60 = ups.filter(e => e.t <= 3600).length;
   const cw = [1200, ...choices.map(c => c.t).filter(t => t > 1200 && t < Math.min(3600, reached)), Math.min(3600, reached)];
   let gap = { from: 1200, to: 1200 }; for (let i = 1; i < cw.length; i++) if (cw[i] - cw[i - 1] > gap.to - gap.from) gap = { from: cw[i - 1], to: cw[i] };
-  out.push('## Crafting and choices', '', `Crafts and upgrades in the first 60 min: ${crafts60 + ups60} (${crafts60} forged, ${ups60} upgrades; ${z.up || 0} upgrades in all). Choices: ${choices.length} (${['craft', 'nextup'].map(k => k + ' ' + choices.filter(c => c.k === k).length).join(', ')}).`, '',
+  out.push('## Crafting and choices', '', `Crafts and upgrades in the first 60 min: ${crafts60 + ups60} (${crafts60} forged, ${ups60} upgrades; ${z.up || 0} upgrades in all). Choices: ${choices.length} (${['craft', 'nextup', 'spoils'].map(k => k + ' ' + choices.filter(c => c.k === k).length).join(', ')}).`, '',
     reached > 1200 ? `Longest gap with no choice in minutes 20-60: ${fmtT(gap.to - gap.from)} (${fmtT(gap.from)} to ${fmtT(gap.to)}).` : 'Longest gap with no choice in minutes 20-60: not reached.', '',
     mapWindow(reached), '',
+    spoilsLine(), '',
     'First uses: ' + (Object.keys(firstUse).length ? Object.entries(firstUse).map(([k, t]) => `${k} at ${fmtT(t)}`).join(', ') : 'none') + '.', '');
   out.push('## Scorecard', '', '| Id | Result | Target | Value |', '|---|---|---|---|');
   for (const [k, v] of Object.entries(sc)) out.push(`| ${k} | ${v.unmeasured ? 'not measured' : v.pass ? 'met' : 'missed'} | ${v.target} | ${v.value} |`);
@@ -987,7 +1002,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const base = path.join(OUT, `walk-${DATE}`);
 fs.writeFileSync(base + '.md', rep.md);
 fs.writeFileSync(base + '.json', JSON.stringify({ date: DATE, build: sha(), seed: SEED, hero: HERO, size: SIZE.id, gameSeconds: Math.round(gt), clockSeconds: Math.round(res.clockMs / 1000), stop: res.stop,
-  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
+  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
 if (res.snap && (res.stop || flag('snapshot'))) fs.writeFileSync(path.join(OUT, `snapshot-min${Math.round(gt / 60)}.json`), res.snap);
 if (opt('scorecard', '')) writeScorecard(path.resolve(ROOT, opt('scorecard', '')), rep.sc, Math.round(gt));
 if (opt('reports', '')) {
