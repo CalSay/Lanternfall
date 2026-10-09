@@ -1,0 +1,1 @@
+Beating the Hollow Cantor after a loss no longer freezes the screen behind one of Old Hesketh's tips: its scene and reward card come straight away, and his tip waits until after. Champion fights now name the boss the way its card does (The Briar Regent, The Hollow Cantor). Best shot: loss-sheet-name.
