@@ -7,22 +7,27 @@ Card `live-3d-spike`, from the ruling in `docs/design/live-3d/ruling.md` (#320).
 
 Live 3D clears every gate Claude can measure: bytes, Gloomjaw's hours, parry timing and reduced motion. The smooth-pictures
 route (toon sprites baked from the same models) clears bytes only at the 2D pack's own resolution, upscaled and soft; at full
-sharpness its Gloomjaw is 308 KB against a 135 KB gate. Three gates are still open: frame rate and battery (Cal's phone and a
-2019-or-older laptop) and look (red team, art judge, then Cal's blind pick of three clips). The decision rule cannot be applied
-until those land. Wren's model and moves are not ready: Cal's own notes on her (9 Oct 22:58) apply to every 3D clip here.
+sharpness its Gloomjaw is 309 KB against a 135 KB gate. Frame rate and battery wait on Cal's phone and a 2019-or-older laptop,
+and Cal's blind pick of four clips is still to come. The look gate's judge ruling is below. Wren's 3D model and moves are not
+ready: Cal's own notes on her (9 Oct 22:58) apply to every 3D clip here. A fourth route joined on 9 Oct 23:13 (route S,
+Scenario's 2D key frames of the new full-body Wren); it is measured beside the others.
 
 ## What was built
 
-One real zone 2 fight (Mossy Hollow, Wren against Gloomjaw), over today's background and UI, drawn three ways from one page:
+One real zone 2 fight (Mossy Hollow, Wren against Gloomjaw), over today's background and UI, drawn four ways from one page:
 
 | Look | What draws Wren and Gloomjaw |
 |---|---|
 | Live 3D | three.js 0.169 toon shading with outlines, posed from the game's own clock every frame |
 | Smooth pictures | toon sprites baked from the same models at the 2D pack's frame times (Codex byte rule: 63 colours, 1-bit alpha, lossless WebP) |
 | Today's 2D | the shipped packs, unchanged |
+| Route S (2D poses) | Wren: Scenario's key frames of the new full-body concept, 8 per move, shown stepped (no blending), about 190 CSS px tall at 1280x720. Gloomjaw: today's 2D pack |
 
-The 3D foe and hero are hooked into the built game file by six exact-match string patches (`build-spike.mjs`); the game's code is
-not changed. Everything else (Gloomjaw's effects, the bolt, the UI, the background) stays 2D.
+The 3D foe and hero are hooked into the built game file by six exact-match string patches (`build-spike.mjs`); the game's
+source is not changed. Everything else (Gloomjaw's effects, the bolt, the UI, the background) stays 2D. One side effect the red
+team caught: three.js draws its object ids from `Math.random`, so loading 3D shifted the game's dice and the first live clip
+played a different fight. The spike page now gives three.js its own generator; every final clip ends on the same Gloomjaw HP
+(21,453).
 
 - Test page (private Artifact, scratch): https://claude.ai/artifact/8N7jJD5e2mtEoSk5pWgBcQ. Its box at the top right switches the
   look, jumps to the Gloomjaw fight, runs the 60 s frame-rate measure and the 30 min battery run.
@@ -39,6 +44,9 @@ not changed. Everything else (Gloomjaw's effects, the bolt, the UI, the backgrou
 - Moves (Claude, `gj_anim.py`): all 7 actions hand-keyed to the approved pack's frame timings (idle 1020 ms loop, hop 600,
   snap-shut 1600 with contact at 1110, void-bolt 1670 with release at 1150, hurt 440, stagger 660, death 1375). No library
   move drives three petal jaws, so none is used.
+- After the red team, the jaws open wider (70/70/55 degrees, from 42/42/34). They still do not open into the approved X: the
+  generated mesh fuses the plates, so the lower plate swings out like a sack. Region rules on a generated mesh cannot split
+  the plates cleanly; a mesh built from a 4-view turnaround with separate plates, or hand-painted weights, would, at more hours.
 
 ### Wren
 
@@ -60,6 +68,26 @@ live 3D and smooth-picture clips here use that same Wren and do not clear any of
 and separate, so the look gate can be read per character: Wren's result is a motion-source result, Gloomjaw's is a rendering
 and keying result.
 
+### Route S: Scenario 2D poses of the new Wren
+
+Cal asked (9 Oct 23:05) for poses from his new full-body Wren concept, and said ranged heroes need no walk and melee heroes can
+dash, so no route here has a walk. The 3D thread had Scenario (GPT Image 2.5) draw 20 moves at 8 key frames each from that concept
+(`/mnt/project-files/experiments/2d-poses-scenario/wren-moves/`, 360 credits; an earlier six-pose set A, 117 credits). The fight
+uses 7 of them:
+
+| Game state | Move | Timing |
+|---|---|---|
+| Fight idle | idle | 8 frames x 160 ms, looped (frame 1 held under reduced motion) |
+| Attack | attack | frames 1-5 over the 270 ms wind, release (frame 6) on the 2D hit frame, 7-8 by 900 ms |
+| Ability | echoshot | as attack |
+| Block | parry | 8 frames over 660 ms |
+| Hurt | hit | 8 frames over 540 ms |
+| Death | defeat | 8 frames over 2080 ms, last held |
+
+Frames are stepped, not blended: a cross-fade between generated key frames ghosts, and in-betweens would be new art. Effects
+(arrows, glows, bats) are separate in the set and not drawn. At today's 96 px these poses turn to mush; at about 190 px they
+hold. Who may make game art ("art only by Codex") stays with Cal's art-maker card; this report does not rule on it.
+
 ### "One rig" read as one pipeline, two skeletons
 
 The ruling asks for "Wren and Gloomjaw from one rig". Wren's auto-rig only fits two-legged bodies, so Gloomjaw cannot share it.
@@ -74,15 +102,19 @@ needs its own (see Hours). Bytes are per model either way.
 | Gate | Pass mark | Live 3D | Smooth pictures | Verdict |
 |---|---|---|---|---|
 | Engine bytes | <= 200 KB | 153.5 KB (three.js subset, Brotli 4) | none needed | Pass |
-| Foe bytes | <= 135 KB | 71.9 KB (GLB, meshopt, Brotli 4) | 100.7 KB at 1x; 307.7 KB at 2x (sharp at 1280x720) | Live pass; toon pass only at 1x |
+| Foe bytes | <= 135 KB | 72.3 KB (GLB, meshopt, Brotli 4) | 101.9 KB at 1x; 308.7 KB at 2x (sharp at 1280x720) | Live pass; toon pass only at 1x |
 | Hero bytes | <= 600 KB | 495.1 KB (Wren v2, simplified to 40%, 512 px 32-colour texture) | 62.3 KB at 1x; 203.6 KB at 2x | Pass |
 | First load | <= 6.0 MB on the wire | about 4.8 MB (5.65 MB if the 2D packs are also kept as a fallback) | about 4.3 MB (1x), 4.6 MB (2x) | Pass |
-| Hours | Gloomjaw <= 4 h, model to bake | 37 min (0.62 h), logged per step | same model and bake | Pass |
+| Hours | Gloomjaw <= 4 h, model to bake | 49 min (0.82 h), logged per step, the red-team fix included | same model and bake | Pass on time; the jaws are still off-model |
 | Parry timing | contact drives `zoneFoeWinds` within 17 ms | Snap Shut contact key at 1110 ms = pack contact frame (0 ms); Spit the Light release key 1150/1151 ms = pack release frame (0-1 ms). Winds from the 3D keys: 1.61 s and 1.40 s, as the game's | same keys | Pass |
 | Frame rate, live | median >= 55 fps, p95 <= 33 ms, 60 s, Cal's phone at 740x360 and a 2019-or-older laptop | **Cal's runs, by 18 Oct** | n/a | Open |
 | Battery, live | 30 min drop <= 1.5x the 2D build's | **Cal's runs, by 18 Oct** | n/a | Open |
 | Reduced motion | no camera motion, poses hold | Idle poses hold at 0 ms for both models (one distinct pose over 3 s, against 30 without); the camera is fixed by design | uses the same clock | Pass |
-| Look | judge after red team; Cal's blind pick | see Look | see Look | Open |
+| Look | judge after red team; Cal's blind pick | see Look | see Look | see Look |
+
+Route S (no 3D, no engine): Wren's 7 fight moves (56 frames at 190 px, 63 colours) are **568.9 KB**, under the 600 KB hero gate
+with little room; her full 20 moves (160 frames) are **1.68 MB**, over it. First load with the fight set: about 5.5 MB (Gloomjaw
+stays the 2D pack). Frame rate: a 2D canvas draw like today's, so no new risk. Reduced motion: the idle holds frame 1.
 
 ### How the numbers were taken
 
@@ -96,6 +128,8 @@ needs its own (see Hours). Bytes are per model either way.
   foe follows the same stage clock as the 2D frames (`62-stage` fits the clip's playback rate so contact lands as the window
   closes), so it adds no offset of its own. The stage's own end-to-end jitter measured 16-40 ms in headless Chromium at 30 fps,
   the same for 2D and 3D; on a 60 fps device one frame is 17 ms.
+- Clips: three.js no longer touches the game's dice (above). Even so, a capture on this busy machine sometimes played a
+  different fight, so each clip was re-recorded until it ended on the HP a run without screenshots reaches (21,453).
 - Frame rate here means nothing: the test machine renders WebGL in software (SwiftShader, about 10 fps). Real figures need
   Cal's devices.
 
@@ -103,9 +137,9 @@ needs its own (see Hours). Bytes are per model either way.
 
 | Bake scale | Gloomjaw atlas | Wren atlas | Look at 1280x720 |
 |---|---|---|---|
-| 1x (the 2D pack's own pixels) | 100.7 KB | 62.3 KB | soft when the game draws it at 2x |
+| 1x (the 2D pack's own pixels) | 101.9 KB | 62.3 KB | soft when the game draws it at 2x |
 | 1.5x | 197.6 KB | 119.7 KB | |
-| 2x (one picture pixel per screen pixel) | 307.7 KB | 203.6 KB | sharp |
+| 2x (one picture pixel per screen pixel) | 308.7 KB | 203.6 KB | sharp |
 
 Fewer colours do not close the gap (2x at 15 colours is still 178.5 KB). Today's shipped 2D Gloomjaw body is about 805 KB, so
 even the 2x bake is under half of it, but the gate is 135 KB. The blind clip uses the 1x bake, the one that passes.
@@ -113,16 +147,16 @@ even the 2x bake is under half of it, but the gate is 135 KB. The blind clip use
 ## Hours (Gloomjaw, model to bake)
 
 From `logs/hours.md`: input 2 min, generation 6 (5 of it waiting), looking at the model 5, rig 6, keying and packing 7, colours 6,
-bake 5: **37 minutes**. The rig, key and pack tools were written inside those windows. Times 43: about 26 h for Gloomjaw-like
-foes, plus about 1 h for each new body plan's rig rules (about 10 plans): **about 36 h of thread time** for Chapter 1, plus judge
-time. Generator spend: 60 credits a foe, about 2,600 for 43 (Scenario Pro gives 5,000 a month).
+bake 5, then the red team's jaw fix 12: **49 minutes**. The rig, key and pack tools were written inside those windows. Times 43:
+about 34 h for Gloomjaw-like foes, plus about 1 h for each new body plan's rig rules (about 10 plans): **about 44 h of thread
+time** for Chapter 1, plus judge time. That is time to a moving model, not to an on-model one: Gloomjaw's jaws are still off. Generator spend: 60 credits a foe, about 2,600 for 43 (Scenario Pro gives 5,000 a month).
 
 ## Look
 
 - Clips (10 s, 30 fps, the same seeded fight and the same key presses, captured on a stepped clock so every frame is exact):
-  `clips/clip-1.mp4`, `clip-2.mp4`, `clip-3.mp4`, unlabelled. Which is which is in `clips/key.md`; the judge and Cal should not
-  open it before picking.
-- Shots of all three looks at 1280x720, 740x360 and 1024x768: `shots/`.
+  `clips/clip-1.mp4` to `clip-4.mp4`, unlabelled: live 3D, smooth pictures (the 1x bake that passes bytes), today's 2D and
+  route S, in a shuffled order. Which is which is in `clips/key.md`; Cal should not open it before picking.
+- Shots of all four looks at 1280x720, 740x360 and 1024x768: `shots/`.
 - Red team and judge: see the Look ruling below.
 
 Pending: the red team and judge run once the clips are recorded.
@@ -138,7 +172,7 @@ Pending: the red team and judge run once the clips are recorded.
 ## What happens next
 
 1. Cal runs frame rate (phone at 740x360, a 2019-or-older laptop) and battery on the test page, by 18 Oct.
-2. Cal picks his favourite of clips 1-3 without opening the key.
+2. Cal picks his favourite of clips 1-4 without opening the key.
 3. The judge applies the ruling's decision rule to this report plus those results, by 20 Oct.
 
 Process note: the card's window was 12-16 Oct; this ran on 9 Oct as the coordinator allowed.
