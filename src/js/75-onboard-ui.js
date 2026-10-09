@@ -139,6 +139,7 @@
   on('unlock', ({ id, quiet }) => {
     applyFeatures();
     if (quiet || id === '*') return;
+    if (id === 'raid' && onlineOff()) return;   // online-off-clean: no capability host, no raid to announce; the unlock itself is kept (70-ui.js)
     if (saidBySteps(id)) onboardUseDone('say:' + id); else sayQueue(id);
     if (!OPEN_TXT[id]) return;
     const tab = TAB_FEATURE[id];

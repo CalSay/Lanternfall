@@ -1,0 +1,25 @@
+# Proof for card online-off-clean (docs/design/hosting.md section 3). The playtest page has no `window.claude`, as on Netlify, so
+# on a zone 38 save the Camp tab shows Camp, Tavern and Almanac with no Raid view, the Tavern keeps its perks with no guest list
+# or Hall of heroes, and the top bar has no Embers coin. tools/check.mjs section "online-off-clean" walks every tab, view, Deeds
+# group, Codex page, the Journal and the away card on two saves past zone 12 (one with raid history), and its mutations show the
+# Raid view with a capability host, signed in or signed out.
+# seed: 1
+new late
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+expect-no ".ember-coin:not([hidden])"
+tap "Camp"
+wait 1
+expect "Almanac"
+expect-no "#viewSeg button[data-view=raid]"
+shot camp-views
+tap "Tavern"
+wait 1
+expect-no "Hall of heroes"
+expect-no "In the tavern now"
+expect-no "Claude link"
+shot tavern

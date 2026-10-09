@@ -12400,7 +12400,8 @@ let OMENS, WEEKLY_GOALS;
 
     { id: 'longNight', n: 'Long Night', cat: 'rest', fx: 'Away gains +25%', mod: { offline: 1.25 }, ic: ['glass', '#B58CFF'], go: null },
     { id: 'hearthDay', n: 'Hearth Day', cat: 'rest', fx: "The Hearth's away bonus is doubled", mod: { hearth: 2 }, needs: 'Camp', ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: null },
-    { id: 'wyrmStirs', n: 'The Wyrm Stirs', cat: 'rest', fx: '+25% raid damage', mod: { raid: 1.25 }, ok: () => S.wyrms > 0 || S.raid.gen > 0, ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: { tab: 'world' } }
+    // online-off-clean: with no capability host (onlineOff, 70-ui.js) the raid cannot run, so its day falls back to another Omen
+    { id: 'wyrmStirs', n: 'The Wyrm Stirs', cat: 'rest', fx: '+25% raid damage', mod: { raid: 1.25 }, ok: () => (S.wyrms > 0 || S.raid.gen > 0) && !(typeof onlineOff === 'function' && onlineOff()), ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: { tab: 'world' } }
   ];
   const OMEN_BY = Object.fromEntries(OMENS.map(o => [o.id, o]));
   const AL_N = OMENS.length;
@@ -19739,12 +19740,12 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 3. Uniques: 13 hero uniques ----------------
   page('uniques', {
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
-    tiles: x => uniqKeys().map(k => {
+    tiles: x => { const raidOff = typeof onlineOff === 'function' && onlineOff(); return uniqKeys().map(k => {   // online-off-clean: no raid words with no capability host (70-ui.js); the tiles and their counts stay
       const u = UNIQ[k], got = S.found[k] ? 1 : 0, fl = got && typeof storyItemLine === 'function' ? storyItemLine(k) : '';   // story-systems-hollow: the Champion it came from
       const kind = uniqKindFor(k, heroWho()) || u.slot, kn = kind !== u.slot ? CRAFT_KINDS[kind].noun + ' · ' : '';   // unique-weapons-wall-icon: the hero's own weapon, as the bag
       return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: kind, t: S.found[k] || 1, u: k },
-        sub: got ? kn + u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
-    })
+        sub: got ? kn + (raidOff && /\braid\b/i.test(u.txt) ? u.name + '.' : u.txt) + (fl ? ' ' + fl : '') : '', hint: got ? '' : raidOff && RAID_UNIQ.includes(k) ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
+    }); }
   });
   // ---------------- 4. Armoury: 13 affix stats x 5 tiers seen; 7 Masterwork lines ----------------
   const roleOf = a => Object.keys(CRAFT_ROLE_POOL).find(r => CRAFT_ROLE_POOL[r].includes(a)) || 'any';
@@ -35957,7 +35958,13 @@ registerView('forge', { id: 'uniques', label: 'Uniques', order: 30, feature: 'un
 registerView('world', { id: 'camp', label: 'Camp', order: 10, feature: 'camp', dot: () => !!(S.camp && S.camp.news && S.camp.news.length) });
 registerView('world', { id: 'tav', label: 'Tavern', order: 20, feature: 'tavern' });
 registerView('world', { id: 'almanac', label: 'Almanac', order: 30, feature: 'almanac', dot: () => typeof almanac === 'object' && almanac.readyCount() > 0 });
-registerView('world', { id: 'raid', label: 'Raid', order: 40, feature: 'raid' });
+// online-off-clean (docs/design/hosting.md section 3): the world raid, tavern presence and leaderboard run on the Artifact's capability
+// host. With no `window.claude` at all (Netlify, a page opened from disk) the UI leaves them out; inside the Artifact nothing changes and
+// a signed-out viewer keeps the raid's own words on how to join. Read live, never stored; 80-online.js and the unlocks are untouched.
+function onlineOff() { return !(typeof window === 'object' && window.claude && typeof window.claude.use === 'function'); }
+// The Raid view waits for the host check (online.checked), so it never shows and then goes; the bar is rebuilt when the check ends (ui).
+registerView('world', { id: 'raid', label: 'Raid', order: 40, feature: 'raid', show: () => !onlineOff() && online.checked });
+let raidBarChecked = false;
 
 function viewsOf(t) { return VIEWS[t] || []; }
 // The views the player can see now (locked ones are left out of the switcher).
@@ -36258,6 +36265,7 @@ function ui(force) {
   putStyle(H.xpFill, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%');
   putText(H.gold, fmt(S.gold));
   putText(H.embers, fmt(S.embers));
+  putHidden(H.embers.parentElement, onlineOff());   // online-off-clean: Embers come only from the raid, so with no capability host the coin stays out, even when held
   for (const b of modeBtns) {
     putAttr(b, 'aria-pressed', String(b.dataset.act === S.activity));
     if (b.dataset.act === 'raid') putDisabled(b, !(online.ready && online.canWrite));
@@ -36301,6 +36309,7 @@ function ui(force) {
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
   putText(H.hint, tg === 'node' ? 'Click or tap to work faster' : tg === 'mob' ? '' : 'Click or tap to strike');   // the buttons strike
   for (const f of uiHooks) f(force);   // UX-A
+  if (online.checked !== raidBarChecked) { raidBarChecked = online.checked; if (S.tab === 'world') { buildViewSeg('world'); applyView('world'); } }   // online-off-clean
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
   if (viewOpen('adv', 'upgrades')) uiFight();
@@ -37021,12 +37030,14 @@ for (const [key, u] of Object.entries(UNIQ)) {
   c.append(tile, tn, ts1, ts2); $('trophies').append(c);
   trophyEls[key] = { c, tile, tn, ts1, ts2 };
 }
-{ const shown = uniqKeys(); for (const k in trophyEls) putHidden(trophyEls[k].c, !shown.includes(k)); }   // a retired unfound unique never shows, even before the first render
+// online-off-clean: with no capability host (onlineOff, 70-ui.js) the world raid's uniques are left out of the wall and its counts
+const trophyKeys = () => onlineOff() ? uniqKeys().filter(k => !RAID_UNIQ.includes(k)) : uniqKeys();
+{ const shown = trophyKeys(); for (const k in trophyEls) putHidden(trophyEls[k].c, !shown.includes(k)); }   // a retired unfound unique never shows, even before the first render
 function renderTrophies() {
   let n = 0;
-  const shown = uniqKeys();
+  const shown = trophyKeys(), off = onlineOff();
   for (const [key, u] of Object.entries(UNIQ)) {
-    const f = S.found[key], e = trophyEls[key], k = trophyKind(key); if (f) n++;
+    const f = S.found[key], e = trophyEls[key], k = trophyKind(key); if (f && !(off && RAID_UNIQ.includes(key))) n++;
     putHidden(e.c, !shown.includes(key)); // a retired unique shows only once found
     putClass(e.c, 'trophy' + (f ? ' found' : ''));
     setIc(e.tile, itemIcon(k, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
@@ -37513,6 +37524,11 @@ function uiRaid() {
 let boardSig = '';
 async function uiTavern() {
   if (document.activeElement !== $('nameInput') && !$('nameInput').value) $('nameInput').value = S.name;
+  // online-off-clean: with no capability host (onlineOff, 70-ui.js) nobody can drop in and the hall cannot fill, so both boxes stay out;
+  // the tavern's perks and the rename stay
+  const off = onlineOff();
+  putHidden($('online').closest('.sec'), off); putHidden($('board').closest('.sec'), off);
+  if (off) return;
 
   const box = $('online');
   const seen = new Set(), list = [];
@@ -41697,6 +41713,10 @@ let deedsUI = null;
   const TR = {}; for (const t of DEED_TRACKS) TR[t.id] = t;
   const GR = {}; for (const g of DEED_GROUPS) GR[g.id] = g;
   const FE = {}; for (const f of DEED_FEATS) FE[f.id] = f;
+  // online-off-clean: with no capability host (onlineOff, 70-ui.js) the raid's group and tracks, Wyrmfall and Shoulder to Shoulder are left
+  // out of these lists; what was earned stays earned, and in the points
+  const RAID_DEED = new Set(['raid', 'f_raid', 's_crowd', ...DEED_TRACKS.filter(t => t.g === 'raid').map(t => t.id)]);
+  const deedShown = x => !(x && RAID_DEED.has(x.id) && onlineOff());
   const LK = {}; for (const l of DEED_LOOKS) LK[l.id] = l;
   const RAR_COL = { common: 'var(--r-common)', uncommon: 'var(--r-uncommon)', rare: 'var(--r-rare)', epic: 'var(--r-epic)', legendary: 'var(--r-legendary)' };
 
@@ -41846,8 +41866,8 @@ let deedsUI = null;
       const t = Date.now(); if (!force && t - deedsAt < 1000) return; deedsAt = t;
       deeds.seen();
       const P = deeds.points(), nx = deeds.next(), prev = ladderPrev(), ttl = heroTitleTxt();
-      const fol = S.deeds.follow, fr = fol ? deeds.track(fol) : null;
-      const near = deeds.near(3), rec = deeds.recent(5);
+      const fol = S.deeds.follow, fr = fol && deedShown({ id: fol }) ? deeds.track(fol) : null;
+      const near = deeds.near(99).filter(deedShown).slice(0, 3), rec = deeds.recent(99).filter(deedShown).slice(0, 5);
       const sig = [P, nx && nx.at, ttl, S.name, fol, fr && fr.tier, fr && Math.floor(fr.pct * 200), near.map(x => x.id + Math.floor(x.pct * 200) + x.label).join(), rec.map(r => r.key).join(), S.deeds.nudge, Math.floor(t / 60000)].join('|');
       if (sig === deedsSig && !force) return; deedsSig = sig;
       putText(dv.name, S.name);
@@ -41963,7 +41983,7 @@ let deedsUI = null;
     },
     update(force) {
       const t = Date.now(); if (!force && t - tracksAt < 1000) return; tracksAt = t;
-      const groups = deeds.groups();
+      const groups = deeds.groups().filter(deedShown);
       if (!groups.some(g => g.id === curGroup)) curGroup = groups.length ? groups[0].id : null;
       // chips
       const csig = groups.map(g => g.id + g.atGold + '/' + g.atEver + '/' + g.tracks + g.lv).join() + '|' + curGroup;
@@ -42079,7 +42099,7 @@ let deedsUI = null;
     },
     update(force) {
       const t = Date.now(); if (!force && t - featsAt < 2000) return; featsAt = t;
-      const feats = deeds.feats(), secs = deeds.secrets(), wall = deeds.wall();
+      const feats = deeds.feats().filter(deedShown), secs = deeds.secrets().filter(deedShown), wall = deeds.wall();
       const sig = feats.map(f => f.id + (f.got ? 'g' : '') + Math.floor(f.pct * 200) + f.parts.map(p => p.have).join(':')).join() + '|' + secs.map(s => s.id + (s.got ? 1 : 0) + (s.riddle ? 1 : 0)).join() + '|' + wall.join() + '|' + S.deeds.wear.critter + S.deeds.wear.cape;
       if (sig === featsSig && !force) return; featsSig = sig;
       fv.grid.textContent = ''; fv.doneGrid.textContent = '';
@@ -44259,6 +44279,7 @@ let navUI = null;
   on('unlock', ({ id, quiet }) => {
     applyFeatures();
     if (quiet || id === '*') return;
+    if (id === 'raid' && onlineOff()) return;   // online-off-clean: no capability host, no raid to announce; the unlock itself is kept (70-ui.js)
     if (saidBySteps(id)) onboardUseDone('say:' + id); else sayQueue(id);
     if (!OPEN_TXT[id]) return;
     const tab = TAB_FEATURE[id];
@@ -46534,6 +46555,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
       sec.append(hero);
 
       for (const [gname, list, extra] of G) {
+        if (gname === 'Raid' && onlineOff()) continue;   // online-off-clean: no raid to count with no capability host (70-ui.js)
         const box = el('div', 'sw-group');
         box.append(el('h3', 'sw-h', gname));
         if (extra === 'mats') {

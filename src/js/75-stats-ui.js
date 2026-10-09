@@ -176,6 +176,7 @@
       sec.append(hero);
 
       for (const [gname, list, extra] of G) {
+        if (gname === 'Raid' && onlineOff()) continue;   // online-off-clean: no raid to count with no capability host (70-ui.js)
         const box = el('div', 'sw-group');
         box.append(el('h3', 'sw-h', gname));
         if (extra === 'mats') {
