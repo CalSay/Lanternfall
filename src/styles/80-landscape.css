@@ -272,9 +272,13 @@
 @media (max-aspect-ratio: 1/1), (max-width: 599px) {
   .hud.vs .hero-plate, .hud.vs .mob { min-height: 80px; }
 }
+/* boss-bar-long-names-fit (2026-10-09): at 740x360 the name's cell beside the HP was about 93 px, so "The Hollow Cantor" took three
+   lines and covered the place line, and "Elder Rattlebones" ran past the plate. Now a name that does not fit beside the HP keeps its
+   one line at full size and the HP drops to a row of its own under it: name, HP and bar still fit the plate's 58 px (the timer lies
+   along the bottom edge). Only a name wider than the whole plate wraps, inside it. */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) {
-  .stagebox .hud.vs .mob .mob-line { flex-wrap: nowrap; align-items: flex-start; }
-  .stagebox .hud.vs .mob .mob-name { flex: 1 1 0; min-width: 0; max-width: none; }
+  .stagebox .hud.vs .mob .mob-line { flex-wrap: wrap; align-items: baseline; row-gap: 0; }
+  .stagebox .hud.vs .mob .mob-name { flex: 1 0 auto; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
   .stagebox .hud.vs .mob .mob-hp { flex: none; }
   .hud.vs .hero-plate, .hud.vs .mob { min-height: 58px; }
 }
