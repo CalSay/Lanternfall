@@ -15733,6 +15733,13 @@ if (section('ability-names-fit')) try {
         // cut: the text is wider than its box, read to the fraction (a Range): scrollWidth and clientWidth round, and 0.2 px over already shows "..."
         const cut = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent).map(e => { const r = document.createRange(); r.selectNodeContents(e);
           return [e.textContent, +r.getBoundingClientRect().width.toFixed(2), +e.getBoundingClientRect().width.toFixed(2), e.scrollWidth, e.clientWidth]; }).filter(([, need, room, sw, cw]) => sw > cw || need > room + 0.01))`;
+        // under the desktop tier's text floor (--tmin, Foreman 2026-10-09): a name never shrinks below it
+        const small = sel => `(() => { const f = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0;
+          return JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent && parseFloat(getComputedStyle(e).fontSize) < f - 0.01).map(e => [e.textContent, getComputedStyle(e).fontSize, 'floor ' + f])); })()`;
+        // a word split across two lines ("Lanternbur / st"): any word whose letters sit on more than one line
+        const split = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => e.offsetParent).flatMap(e => { const t = e.firstChild, out = []; if (!t || t.nodeType !== 3) return out;
+          for (const m of t.data.matchAll(/\\S+/g)) { const r = document.createRange(); r.setStart(t, m.index); r.setEnd(t, m.index + m[0].length); const tops = new Set([...r.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))); if (tops.size > 1) out.push([e.textContent, m[0]]); }
+          return out; }))`;
         // each hero's whole list, three to a pass; the bar redraws on the next frame
         const sets = JSON.parse(await X(`abilityOwned = () => true; JSON.stringify(Object.keys(HERO_ABILITIES).map(k => [k, HERO_ABILITIES[k].filter(id => SOLO_ABILITIES[id])]))`));
         let n = 0; const bad = [];
@@ -15741,24 +15748,44 @@ if (section('ability-names-fit')) try {
           await X(`S.solo.hero = ${JSON.stringify(k)}; soloEquipped().splice(0, 3, ...${JSON.stringify(three)}); ui(true); true`); await page.waitForTimeout(120);
           const names = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#soloBar .sb-abslot .sb-lb')].map(e => e.textContent))`));
           n += names.filter(t => t !== 'Empty').length;
-          bad.push(...JSON.parse(await X(cut('#soloBar .sb-abslot .sb-lb'))));
+          bad.push(...JSON.parse(await X(cut('#soloBar .sb-abslot .sb-lb'))), ...JSON.parse(await X(small('#soloBar .sb-abslot .sb-lb'))));
         }
         assert(n >= 40 && !bad.length, `${v}: all ${n} ability names on the fight bar read in full (cut: ${JSON.stringify(bad)})`);
+        // the slot's sub-line (Foreman: Wildfire's "Needs ..." at 1280x720): every line a slot can show, from the turn fight's own
+        // reasons (59k-turn.js 'need:...', shown as 75-solo-ui's needTxt), reads whole at the floor, words unbroken, inside the tile
+        if (w !== 740) {
+          const subs = ['Ready', 'Wait', 'Passive', 'Turn 3', 'Used', '5 turns', ...[...fs.readFileSync(path.join(ROOT, 'src', 'js', '59k-turn.js'), 'utf8').matchAll(/'need:([^'<]+)'/g)]
+            .map(m => { const t = m[1].replace(/^a /, ''); return t.charAt(0).toUpperCase() + t.slice(1); })];
+          const subBad = JSON.parse(await X(`(() => { const out = [];
+            for (const b of document.querySelectorAll('#soloBar .sb-abslot')) { const e = b.querySelector('.sb-sub'), keep = e.textContent;
+              for (const t of ${JSON.stringify(subs)}) { e.textContent = t; fitTextWidth(e); const r = document.createRange(); r.selectNodeContents(e);
+                const tops = new Set([...r.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))), lines = tops.size, bb = b.getBoundingClientRect(), eb = e.getBoundingClientRect();
+                const words = [...t.matchAll(/\\S+/g)].some(m => { const w = document.createRange(); w.setStart(e.firstChild, m.index); w.setEnd(e.firstChild, m.index + m[0].length); return new Set([...w.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top))).size > 1; });
+                if (r.getBoundingClientRect().width > eb.width + 0.01 || words || lines > 2 || eb.bottom > bb.bottom - 2) out.push([t, +r.getBoundingClientRect().width.toFixed(1), +eb.width.toFixed(1), lines, Math.round(eb.bottom), Math.round(bb.bottom)]); }
+              e.textContent = keep; fitTextWidth(e); }
+            return JSON.stringify(out); })()`));
+          const subSmall = JSON.parse(await X(small('#soloBar .sb-abslot .sb-sub')));
+          assert(subs.length >= 10 && !subBad.length && !subSmall.length, `${v}: every slot sub-line (${subs.join(', ')}) reads whole on at most two lines inside its tile, at the floor (${JSON.stringify([subBad, subSmall])})`);
+        }
         // Hero > Abilities: the Q W E buttons hold each name, and a card's Slot buttons name what sits in each slot
         await X(`setTab('party'); true`); await page.waitForTimeout(300);
         await page.evaluate(() => document.querySelector('#viewSeg button[data-view="abilities"]').click()); await page.waitForTimeout(400);
-        let nq = 0; const badQ = [];
+        let nq = 0, nl = 0; const badQ = [];
         for (const [k, ids] of sets) for (let i = 0; i < ids.length; i += 3) {
           const three = ids.slice(i, i + 3); while (three.length < 3) three.push(null);
           const other = ids.find(id => !three.includes(id)) || ids[0];
           await X(`S.solo.hero = ${JSON.stringify(k)}; soloEquipped().splice(0, 3, ...${JSON.stringify(three)}); ui(true); true`); await page.waitForTimeout(150);
+          // the list first (the card, once open, takes the list's place on a small landscape panel)
+          if (i === 0) { nl += JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('.ab-rt b')].filter(e => e.offsetParent).length)`));
+            badQ.push(...JSON.parse(await X(cut('.ab-rt b'))), ...JSON.parse(await X(split('.ab-rt b'))), ...JSON.parse(await X(small('.ab-rt b')))); }
           const row = await X(`!!document.querySelector('.ab-row[data-ab=${JSON.stringify(other)}]')`);
           if (row) { await page.evaluate(id => document.querySelector(`.ab-row[data-ab="${id}"]`).click(), other); await page.waitForTimeout(150); }
           nq += JSON.parse(await X(`JSON.stringify(document.querySelectorAll('.ab-q:not(.empty) b').length)`));
-          badQ.push(...JSON.parse(await X(cut('.ab-q b'))), ...JSON.parse(await X(cut('.ab-slotb small'))));
+          // with a card open: the Q W E and Slot buttons, and on a wide panel the list beside the card (where "Lanternburst" broke)
+          badQ.push(...JSON.parse(await X(cut('.ab-q b, .ab-slotb small, .ab-rt b'))), ...JSON.parse(await X(split('.ab-rt b'))), ...JSON.parse(await X(small('.ab-q b, .ab-slotb small, .ab-rt b'))));
           if (row) await page.evaluate(id => document.querySelector(`.ab-row[data-ab="${id}"]`)?.click(), other);
         }
-        assert(nq >= 40 && !badQ.length, `${v}: all ${nq} names on the Abilities Q W E buttons and Slot buttons read in full (cut: ${JSON.stringify(badQ)})`);
+        assert(nq >= 40 && nl >= 40 && !badQ.length, `${v}: all ${nq} names on the Abilities Q W E and Slot buttons and all ${nl} in the list read in full, no word split, none under the floor (${JSON.stringify(badQ)})`);
         const tall = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('.ab-q')].map(b => Math.round(b.getBoundingClientRect().height)))`));
         assert(tall.length === 3 && tall.every(t => t >= 44), `${v}: the Q W E buttons stay at least 44 px tall (${tall})`);
         if (w < h) { // Fireball's card upright: no scroll of its own; with the panel scrolled to its end, its head and both talents show, under the bar

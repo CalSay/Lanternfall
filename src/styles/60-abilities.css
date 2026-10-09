@@ -192,5 +192,6 @@
 @media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
   .ab-rows { grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr)); }
   .ab-filt { grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr)); }
-  .ab-rt b { white-space: normal; overflow-wrap: anywhere; }   /* beside the open detail a name wraps to two lines, never "Heavy Str..." */
+  .ab-rt b { white-space: normal; overflow-wrap: normal; }   /* beside the open detail a name wraps to two lines, never "Heavy Str...";
+     it breaks only between words: a one-word name too wide shrinks to fit (fitTextWidth, ability-names-fit), never "Lanternbur / st" */
 }

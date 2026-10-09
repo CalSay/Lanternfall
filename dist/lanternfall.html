@@ -28,7 +28,9 @@
   /* Fonts (Google Fonts, linked in src/shell.html). Handjet is narrow and reads small, so every
      display-font size is written calc(Npx * var(--display-k)). Reading font: switch it here and in
      the reading-font link (IBM Plex Sans Condensed: "IBM Plex Sans Condensed", "Arial Narrow", ...). */
-  --display: "Handjet", "Arial Narrow", monospace;
+  /* ability-names-fit: narrow fonts before the monospace, so a page whose web font fails still draws names narrow where one is installed
+     (Android has sans-serif-condensed). Checks and CI have none of them and still fall back to the monospace. */
+  --display: "Handjet", "Arial Narrow", "Liberation Sans Narrow", "DejaVu Sans Condensed", "Roboto Condensed", sans-serif-condensed, monospace;
   --display-k: 1.2;
   --body: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
   /* desktop-layout-v1: tools/build.mjs (scaleText) writes every font size S as max(var(--tmin), S * var(--tk)). These
@@ -620,7 +622,8 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 @media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
   .ab-rows { grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr)); }
   .ab-filt { grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr)); }
-  .ab-rt b { white-space: normal; overflow-wrap: anywhere; }   /* beside the open detail a name wraps to two lines, never "Heavy Str..." */
+  .ab-rt b { white-space: normal; overflow-wrap: normal; }   /* beside the open detail a name wraps to two lines, never "Heavy Str...";
+     it breaks only between words: a one-word name too wide shrinks to fit (fitTextWidth, ability-names-fit), never "Lanternbur / st" */
 }
 /* 60-almanac: the Omen banner (Fight tab) and the Almanac part of the World tab (75-almanac-ui.js). */
 
@@ -2898,6 +2901,8 @@ span.cf-d { font-weight: 600; }
 .sb-dodge .sb-lb { color: #8FB8FF; }
 .sb-abslot { outline-color: #9A7A2E; box-shadow: inset 0 0 0 4px #33283E, inset 0 0 0 5px #6B5320, 0 3px 0 #0B0810; background: #231A30; }
 .sb-abslot .sb-lb { color: var(--gold); }
+/* ability-names-fit: a slot's sub-line ("Parry first", "Bleed or Aim") may take a second line, breaking only between words */
+.sb-abslot .sb-sub { white-space: normal; overflow-wrap: normal; line-height: 1.05; text-align: center; }
 /* menu-tip-room: upright, an ability's name steps down with the screen's width and a two-word name wraps to a second line, so "Fireball",
    "Echo Shot" and "Shield Bash" read in full on a 360 wide phone (the tile is 70 px inside there; "Fireball" needs 82 at 14 px). The tile
    keeps its height. Landscape and desktop set their own sizes (80-landscape.css). */
@@ -3836,7 +3841,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   /* Hero > Abilities is wide enough here for the desktop's list-beside-detail (60-abilities @container ab); beside the open
      detail the filters wrap and a name takes two lines, as on desktop, never "Can learn..." */
   .ab-filt { grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr)); }
-  .ab-rt b { white-space: normal; overflow-wrap: anywhere; }
+  .ab-rt b { white-space: normal; overflow-wrap: normal; }   /* between words only; a long word shrinks (fitTextWidth) */
 }
 /* phones on their side: the stage's sky is short, so the combat info sits in two plates (hero left, foe right) */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
@@ -37646,16 +37651,33 @@ var handsTradeOpenPicker;
 //     a wide panel, a bottom sheet in portrait, and in place of the list (with Back) in the small landscape panel.
 // Ability icons: whole packs per hero (art freeze, owner 2026-09-30). The three starters (Echo Shot, Shield Bash, Fireball)
 // and all of Pip's 14 are drawn (wire-ability-icons); Wren and Tobin keep lettered tiles until their last four icons pass.
-// ability-names-fit: a name wider than its box steps its font size down until it fits, never under `min` px. The display web font fits
-// every ability name; this is for the fallback font ("Arial Narrow" is rare, so often a monospace twice as wide). Also the fight bar's
-// slots (75-solo-ui). Widths are read to the fraction (a Range over the text): 61.6 px of text in a 61.5 px box already shows "...",
-// though scrollWidth and clientWidth both round to 62. A box with no width yet (a hidden menu) is left as it is.
-function fitTextWidth(e, min = 7) {
-  e.style.fontSize = '';
+// ability-names-fit: a name wider than its box steps its font size down until it fits, never under `min` px nor the desktop tier's text
+// floor (--tmin: 14 px at Desktop 1, 15 at Desktop 2; Foreman 2026-10-09). Still too wide at the floor, its letters close up by at most
+// 0.06 em. The display web font fits every ability name; this is for a fallback font (often a monospace twice as wide). Used for the
+// fight bar's slots (75-solo-ui), the Q W E and Slot buttons and the list's names. Widths are read to the fraction (a Range over the
+// text): 61.6 px of text in a 61.5 px box already shows "...", though scrollWidth and clientWidth both round to 62. A box with no width
+// yet (a hidden menu) is left as it is.
+// fitTextWidths(list): the same for many boxes, with one layout for all of them (clear every size, read every width, then fit only the
+// few that overflow), so a list of 50 names costs one reflow, not 100.
+function fitTextWidths(list, min) {
+  const els = [...list];
+  for (const e of els) if (e.style.fontSize || e.style.letterSpacing) { e.style.fontSize = ''; e.style.letterSpacing = ''; }
+  const over = els.filter(e => { const room = e.clientWidth && e.getBoundingClientRect().width; if (!room) return false;
+    const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect().width > room + 0.01; });
+  for (const e of over) fitTextWidth(e, min, true);
+}
+function fitTextWidth(e, min = 7, cleared = false) {
+  if (!cleared && (e.style.fontSize || e.style.letterSpacing)) { e.style.fontSize = ''; e.style.letterSpacing = ''; }
   const room = e.clientWidth && e.getBoundingClientRect().width; if (!room) return;
   const r = document.createRange(); r.selectNodeContents(e);
-  for (let k = 0, need; k < 3 && (need = r.getBoundingClientRect().width) > room + 0.01; k++)
-    e.style.fontSize = Math.max(min, Math.floor(parseFloat(getComputedStyle(e).fontSize) * room / need * 10) / 10) + 'px';
+  const need = () => r.getBoundingClientRect().width, cs = getComputedStyle(e);
+  if (need() <= room + 0.01) return;
+  min = Math.max(min, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0);
+  for (let k = 0, n; k < 3 && (n = need()) > room + 0.01 && parseFloat(cs.fontSize) > min; k++)
+    e.style.fontSize = Math.max(min, Math.floor(parseFloat(cs.fontSize) * room / n * 10) / 10) + 'px';
+  const over = need() - room, chars = e.textContent.length;
+  if (over > 0.01 && chars > 1) { const fs = parseFloat(cs.fontSize), ls = parseFloat(cs.letterSpacing) || 0;
+    e.style.letterSpacing = Math.max(ls - 0.06 * fs, ls - Math.ceil(over / chars * 100 + 1) / 100) + 'px'; }
 }
 {
   const icon = id => (typeof soloIconURL === 'function' ? soloIconURL(id) : '');
@@ -37667,7 +37689,7 @@ function fitTextWidth(e, min = 7) {
   // view state (not saved): the open detail ('' | ability id | 'mv:attack'), the filter, the info drawer, a Learn armed
   let root = null, sig = '', armed = '', selId = '', filt = 'all', infoOpen = false, listTop = -1;
   const heroNm = k => (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : k);
-  const fitQ = () => { if (root) root.querySelectorAll('.ab-q b, .ab-slotb small').forEach(b => fitTextWidth(b, 8)); };
+  const fitQ = () => { if (root) fitTextWidths(root.querySelectorAll('.ab-q b, .ab-slotb small, .ab-rt b'), 8); };
   const btn = (cls, text) => { const b = el('button', cls, text); b.type = 'button'; return b; };
   function tile(id) {
     // a drawn icon shows at a native size (nicSet picks it from the box), never a 48 px image squeezed into 28-36 px
@@ -45433,7 +45455,7 @@ var soloIconURL = () => '';
   const bAbs = [0, 1, 2].map(i => { const b = mkSlot(rowAb, 'ab' + i, ''); b.classList.add('sb-abslot'); b.dataset.slot = i; return b; });
   // ability-names-fit: a long name steps its size down to its tile's width when a fallback font draws it (fitTextWidth, 75-abilities-ui)
   const fitLb = lb => fitTextWidth(lb);
-  const fitAbs = () => bAbs.forEach(b => fitLb(b._lb));
+  const fitAbs = () => fitTextWidths(bAbs.flatMap(b => [b._lb, b._sub]));
   if (typeof ResizeObserver === 'function') { const ro = new ResizeObserver(fitAbs); bAbs.forEach(b => ro.observe(b)); }
   try { document.fonts.addEventListener('loadingdone', fitAbs); } catch (e) {}
   const bParry = mkSlot(rowAct, 'parry', 'Parry'), bDodge = mkSlot(rowAct, 'dodge', 'Dodge');
@@ -45688,6 +45710,9 @@ var soloIconURL = () => '';
   });
   let skSig = '', foeSig = '';
   const turnsTxt = n => `${n} turn${n > 1 ? 's' : ''}`;
+  // ability-names-fit: under a blocked slot, just what it needs ("Burn", "Parry first", "3 Cinders"): "Needs a Burn" cut to "Needs ..." in
+  // the 64 px desktop slot. The red "!" says it is blocked; the hover tip keeps the whole "Needs a Burn" (b._why).
+  const needTxt = why => { const t = why.slice(5).replace(/^a /, ''); return t.charAt(0).toUpperCase() + t.slice(1); };
   function fillSkills() {
     if (dockTab !== 'sk') return;
     const s = soloButtons(), tb = typeof turnBarInfo === 'function' ? turnBarInfo() : null;
@@ -45780,7 +45805,8 @@ var soloIconURL = () => '';
         b._why = why.startsWith('need:') ? 'Needs ' + why.slice(5) : why === 'gate' ? 'A finisher: from your third turn' : why === 'once' ? 'Once a fight' : '';   // its hover tip's last line
         b.classList.toggle('ready', !why && tb.heroTurn);
         b.classList.toggle('blocked', !!why && why !== 'cd' && !pas);
-        putText(b._sub, pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? 'Needs ' + why.slice(5) : wait ? 'Wait' : 'Ready');
+        const st = pas ? 'Passive' : cd ? turnsTxt(cd) : why === 'gate' ? 'Turn 3' : why === 'once' ? 'Used' : why.startsWith('need:') ? needTxt(why) : wait ? 'Wait' : 'Ready';
+        if (b._sub.textContent !== st) { putText(b._sub, st); fitTextWidth(b._sub); }
       }
       const acd = tb.cds.attack || 0, res = typeof HERO_RESOURCE === 'object' && HERO_RESOURCE[k];
       putText(bAtk._sub, acd ? turnsTxt(acd) : res ? '+1 ' + res.name : '');

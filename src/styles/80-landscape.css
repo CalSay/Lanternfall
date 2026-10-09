@@ -163,7 +163,7 @@
   /* Hero > Abilities is wide enough here for the desktop's list-beside-detail (60-abilities @container ab); beside the open
      detail the filters wrap and a name takes two lines, as on desktop, never "Can learn..." */
   .ab-filt { grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr)); }
-  .ab-rt b { white-space: normal; overflow-wrap: anywhere; }
+  .ab-rt b { white-space: normal; overflow-wrap: normal; }   /* between words only; a long word shrinks (fitTextWidth) */
 }
 /* phones on their side: the stage's sky is short, so the combat info sits in two plates (hero left, foe right) */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
