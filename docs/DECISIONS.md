@@ -281,6 +281,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   `codex-uniques-review/`.
 - **Crafting:** random affix lines by rarity, Reforge one line at the Enchanter's Table, Trophies gate +8 to +10.
   Essence stays fight-only. (2026-09-27)
+- **Grades replace the rarity die, behind a switch (craft-attribute-grades, 2026-10-09; Cal's answer 7, overhaul spec section 5):**
+  with `CRAFT_TUNE.grades` on, a craft's grade (D to S) comes from the station level, its lines come in a fixed order and
+  Reforge on a graded piece is a pick. The switch stays off in the weekly release until the balance pass. Items made before
+  keep their rarity, lines and power. Infuse's "any Essence" drift is card craft-strike-infuse's.
 - **15 material tiers, 3 per region; resources are gated by region.** (2026-09-28)
 - **Material names are real, standard fantasy materials,** never invented compounds. (2026-09-28) The approved 15-grade
   names for all seven families are in `art/resources/regional-audit/complete-ladder.json`. (2026-10-01)

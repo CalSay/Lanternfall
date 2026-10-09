@@ -25,8 +25,9 @@
 //   upgradeCover(it) -> { fam, t, units, gold } | null   what gold may cover of its next upgrade (upgrade-gold-covers-short)
 //   craftUpgradeRefund(it) -> gold               what salvaging it pays back: ECON.upRefund of the gold its +N cost
 //                                                at today's prices (gold-without-training; no save field)
-//   reforgeItem(id, lineIdx) -> bool             reroll one affix line (Enchanting gate)
-//   canReforge(id, lineIdx) -> { ok, why, cost } cost includes the Almanac's 'reforge' modifier
+//   reforgeItem(id, lineIdx, pick?) -> bool      reroll one affix line (Enchanting gate); a graded item puts in `pick`
+//   canReforge(id, lineIdx, pick?) -> { ok, why, cost, pick } cost includes the Almanac's 'reforge' modifier; pick: true when
+//                                                the item is graded and the player picks the stat (craft-attribute-grades)
 //   transmute(fam, fromT, to, toT?) -> bool      within one family: `to` is the target tier (number),
 //                                                'up' / 'down', or the family name (then toT, default up)
 //   canTransmute(fam, fromT, to, toT?) -> { ok, why, take, give, toT }
@@ -42,7 +43,8 @@
 //   - Tier gate: stationLevel(kind) >= CRAFT_STATION_REQ[t - 1], or a tier kept from before GP1 (stationTierOpen). Kinds that existed before K4
 //     (Charm, Axe) moved to new stations; they gate on the better of that station and Smithing
 //     so no save loses a recipe (camp N4). Their XP goes to the new station.
-//   - Rarity: rollRarity(level of the station), so the Forge odds are exactly as before.
+//   - Rarity: rollRarity(level of the station), so the Forge odds are exactly as before. With CRAFT_TUNE.grades on
+//     (craft-attribute-grades) a class piece, Trinket or Charm is made at gradeFor(kind, t) instead (40-rules); tools keep the die.
 //   - Station XP: CRAFT_XP; x CRAFT_CATCHUP.mult while below the listed skills.
 //   - The bag must have room (bagFull()) to craft. Equipped items never count.
 //   - Legacy Sword/Helm (kinds 'weapon', 'helm') are no longer made: canCraft refuses them.
@@ -157,8 +159,11 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const c = canCraft(kind, t, opts); if (!c.ok) return null;
     payMats(c.cost.mats, t); S.gold -= c.cost.gold; econSpend('craft', c.cost.gold);
     if (opts.mw != null) C().troph[opts.mw]--;
-    const r = rollRarity(stationLevel(kind));
-    const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
+    // craft-attribute-grades: with CRAFT_TUNE.grades on, a class piece, Trinket or Charm is made at its station's grade (no die);
+    // tools roll the die as before. Switch off: exactly the old roll.
+    const g = gradedKind(kind) ? gradeFor(kind, t) : null;
+    const r = g != null ? GRADE[g].r : rollRarity(stationLevel(kind));
+    const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw, g });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t) * craftXpShare(kind, t));
     // craft-delta: opts.wear (the Craft button only) puts on a tool that beats the worn one, or fills an empty slot. Gear always asks.
@@ -173,7 +178,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
         ev.on = pos; ev.was = cur ? cur.id : null; ev.speed = [before, fam ? nodeTime(fam, nt) : 0];
       }
     }
-    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, 'good', { item: it }, 'low');   // craft-reveal: the result card (75-craft-ui) shows it; no bell line
+    toast(`Made a ${itemQual(it)} ${itemName(it)}.`, 'good', { item: it }, 'low');   // craft-reveal: the result card (75-craft-ui) shows it; no bell line
     emit('crafted', ev);
     save();
     return it;
@@ -243,10 +248,17 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     for (const [k, n] of Object.entries(b.mats)) mats[k] = Math.max(1, Math.ceil(n * m));
     return { mats, gold: Math.round(b.gold * m) };
   };
-  canReforge = (id, idx) => {
+  // craft-attribute-grades: a graded item's Reforge takes `pick`, the stat to put in (reforgeChoices, 41-items); the price is the same.
+  canReforge = (id, idx, pick) => {
     const it = itemById(id); if (!it) return no('No such item.');
     if (!Array.isArray(it.a) || !it.a[idx]) return no('Pick a line to reforge.');
     const cost = reforgePrice(it), x = { cost }, need = CRAFT_STATION_REQ[it.t - 1];
+    if (itemGraded(it)) {
+      x.pick = true;
+      if (!reforgeChoices(it).length) return no('This piece already has every bonus it can take.', x);
+      if (pick == null) return no('Pick the bonus to put in.', x);
+      if (!reforgeChoices(it).includes(pick)) return no('That bonus cannot go on this piece.', x);
+    }
     if (unbuilt('ench')) return no(unbuilt('ench'), x);
     if (!skillTierOpen('ench', it.t)) return no(gateWhy('ench', need), x);
     const miss = missing(cost.mats, it.t);
@@ -254,9 +266,9 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     if (S.gold < cost.gold) return no(`${fmt(cost.gold - S.gold)} more gold`, x);
     return yes(x);
   };
-  reforgeItem = (id, idx) => {
-    const c = canReforge(id, idx); if (!c.ok) return false;
-    const it = itemById(id), res = reforgeLine(it, idx); if (!res) return false;
+  reforgeItem = (id, idx, pick) => {
+    const c = canReforge(id, idx, pick); if (!c.ok) return false;
+    const it = itemById(id), res = reforgeLine(it, idx, Math.random, pick); if (!res) return false;
     payMats(c.cost.mats, it.t); S.gold -= c.cost.gold; econSpend('craft', c.cost.gold);
     it.a = res.a; it.rf = res.rf;
     gearDirty();
