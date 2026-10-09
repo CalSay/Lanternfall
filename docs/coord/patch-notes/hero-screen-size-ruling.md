@@ -1,0 +1,1 @@
+Docs only: the art judge's ruling on how big the heroes are on a desktop screen at today's art, with mockups of each size at five screen sizes (docs/design/desktop-layout.md, "Hero size ruling"). No player change. (no shot)
