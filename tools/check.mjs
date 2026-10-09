@@ -94,7 +94,8 @@ const WEIGHT = {
   'camp guide tracking (C2, browser)': 5, 'onboarding hint placement (HINT1)': 5, 'smelt-done-says-so': 5, 'guide target guard (browser)': 5,
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
-  'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11
+  'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
+  'upgrade-gold-covers-short': 8
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
