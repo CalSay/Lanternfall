@@ -111,6 +111,6 @@ guide tip and Next Up, presses moment cards, parries and dodges at set rates) on
 plus shots: the scorecard values F1 to F6, F10 and P4, each beat of `docs/design/first-hour.md` against the minute it
 happened (over 50% off is listed), the stretches with nothing new, and every eyes finding (tip over the fighters, off-phase
 tip, clipped text, a covered button, a marker that leads nowhere, a stall). It never sets game state. Options: `--size <view>` (`d` 1280x720 with a mouse, the default; `l` 740x360; `p` 360x740; `laptop`, `tablet`, `hd` or WxH: `tools/lib/views.mjs`),
-`--hero`, `--minutes`, `--clock-budget <min>` (default 30; the walk stops there and saves a snapshot), `--parry`, `--dodge`,
+`--hero`, `--minutes`, `--clock-budget <min>` (default 30; the walk stops there and saves a snapshot), `--parry`, `--dodge`, `--read <0-1>` (how often the bot reads a boss trick it meant to defend; default 0.77),
 `--scorecard <file>` (adds one row), `--reports <dir>`, `--snapshot`. Report only. The nightly run is `.github/workflows/walk.yml`
 (03:00 UK on the integration head at `d,l,p`; a manual run takes `seeds` and `sizes`). About 15 clock minutes for 60 game minutes.
