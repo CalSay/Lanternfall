@@ -100,7 +100,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Stars** change the rules of a fight on top: up to 3 set and 2 lit a hero (see The hero).
 - **Zones:** 5 won fights, then the zone boss, then the next zone (`ZONE_FIGHTS` in `40-rules.js`). Losing never moves
   you: a normal loss says so on the stage for the few seconds before the next fight ("Beaten. You're back to full HP for the
-  next fight.", with one line on what helps this save: unspent attribute points, a craft you can make, or an easier zone), and
+  next fight.", with one line on what helps this save: a hero with no weapon (or no armour at all) is told first to wear the
+  one in the bag or which piece to make and where, with a button; then unspent attribute points, a craft you can make, or an
+  easier zone), and
   three normal losses in ten fights in one zone add one bell line, once per zone a session; a boss loss opens the Try again
   card. Every fight in a zone (normal, elite or boss) starts at full HP, whether you won or lost the last one
   (`TURN_TUNE.normalFull`); in the Deepwell and the Provings your HP carries from foe to foe and each kill heals 15% of max
@@ -305,7 +307,13 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   press it: Attack on your first turn, Dodge on the foe's first swing (the foe's clock stops as the Dodge window opens, so the press
   lands), your ability on your next turn, Parry on the next swing (or the next foe's first). While a lesson holds, only the button it
   names works. After that, in a fight, no line shows: every
-  other tip, and each unlock line from Hesketh, waits for the gap between fights, and an unlock line holds the game with a Got it.
+  other tip, and each unlock line from Hesketh, waits for the gap between fights. An unlock line (his news) holds only that gap until
+  its Got it: while you gather, or fight behind an upright menu, it shows and the game goes on (tips-pause-says-so). Whenever a tip
+  holds the game, except the fight lessons, the stage says "Paused" (on the strip's edge over an upright menu), Gather says Paused for
+  Working, and the fight bar stays in view, dimmed, unless the tip covers it (a phone on its side). A fight key (Q W E A S D Space) or a
+  press on a fight button during a Got it hold answers it and then acts; on a Go tip it counts as ×; a tip that waits for a press
+  elsewhere refuses it (the button shakes, the plate flashes). His Stars line never says you earned them, the boss-loss line is dropped
+  once that boss is beaten, and none of his lines shows while your hero is down.
   The Hero tab opens at the first level-up and the guide's next line says so; the first Scroll and a second ability's slot each get
   a line. Empty ability slots stay dim and silent until a learned move waits for one. Lighting the camp fire keeps you at the grove,
   where Hesketh's talk plays.
