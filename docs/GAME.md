@@ -100,7 +100,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Stars** change the rules of a fight on top: up to 3 set and 2 lit a hero (see The hero).
 - **Zones:** 5 won fights, then the zone boss, then the next zone (`ZONE_FIGHTS` in `40-rules.js`). Losing never moves
   you: a normal loss says so on the stage for the few seconds before the next fight ("Beaten. You're back to full HP for the
-  next fight.", with one line on what helps this save: unspent attribute points, a craft you can make, or an easier zone), and
+  next fight.", with one line on what helps this save: a hero with no weapon (or no armour at all) is told first to wear the
+  one in the bag or which piece to make and where, with a button; then unspent attribute points, a craft you can make, or an
+  easier zone), and
   three normal losses in ten fights in one zone add one bell line, once per zone a session; a boss loss opens the Try again
   card. Every fight in a zone (normal, elite or boss) starts at full HP, whether you won or lost the last one
   (`TURN_TUNE.normalFull`); in the Deepwell and the Provings your HP carries from foe to foe and each kill heals 15% of max

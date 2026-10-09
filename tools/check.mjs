@@ -13886,7 +13886,32 @@ if (section('normal-death-says-so')) try {
         await X('notify({ msg: "Test notice for the loss beat check", kind: "hi" }, "now"); true').catch(() => {});
         await page.waitForTimeout(150);
         assert(!(await st()).overToasts, `${w}x${h}: the loss line and the toasts are never both on screen on the same spot`);
-        if (!desk) { assert(!errs.length, `${w}x${h}: no page errors` + (errs.length ? ': ' + errs[0] : '')); await ctx.close(); continue; }
+        const gearFirst = async () => {
+          // loss-help-gear-first: a hero who wears no weapon is told to get one first, with a Go that fits the stage; a bow in the bag
+          // is worn by its Wear button; with none, the line names the recipe and its station
+          const gearHelp = async (setup, goal) => {
+            await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true'); await page.waitForTimeout(100);
+            await X(`window.__gfE = Object.assign({}, S.equip); window.__gfI = S.items.slice(); window.__gfG = craftGoalNext; ${setup}; craftGoalNext = () => (${goal});
+              emit('wipe', { zone: ++__ndZn, to: 10, boss: false, arena: false, stall: false }); craftGoalNext = __gfG; true`); await page.waitForTimeout(400);
+            const r = await st(), go = await page.evaluate(() => { const g = document.querySelector('.tv-beat-go'), box = document.getElementById('stageBox'), r = g && g.getBoundingClientRect(), sb = box.getBoundingClientRect();
+              return { lbl: g && !g.hidden ? g.textContent : '', inside: !!r && r.width > 0 && r.left >= sb.left - 1 && r.right <= sb.right + 1 && r.top >= sb.top - 1 && r.bottom <= sb.bottom + 1, hit: !!r && document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) === g }; });
+            return { ...r, go };
+          };
+          const gw = await gearHelp('S.equip.weapon = null', 'null');
+          assert(gw.on && gw.help === 'No weapon on. Wear your ' + (await X('itemName(itemById(__gfE.weapon))')) + ' first.' && gw.go.lbl === 'Wear' && gw.go.inside && gw.go.hit && gw.inside && !gw.cut,
+            `${w}x${h}: a loss with a weapon in the bag says to wear it first, with a Wear button inside the stage (${JSON.stringify(gw)})`);
+          await page.click('.tv-beat-go'); await page.waitForTimeout(150);
+          assert((await X('S.equip.weapon === __gfE.weapon')) && !(await st()).on, `${w}x${h}: Wear puts the bow on and hides the loss line`);
+          await X('window.__gfA = attrPoints; attrPoints = k => ({ total: 4, spent: 2, free: 2 }); true');
+          const gc = await gearHelp('S.equip.weapon = null; S.items = S.items.filter(i => i.id !== __gfE.weapon)', '{ kind: "bow", t: 1, pos: "weapon", p: 0.5, cost: { wood: 6 } }');
+          await X('attrPoints = __gfA; true');
+          const bowNm = await X('kindName("bow", 1)');
+          assert(gc.on && gc.help === `No weapon yet. Make a ${bowNm} at the Workbench first.` && gc.go.lbl === 'Go' && gc.go.inside && gc.go.hit && !gc.cut,
+            `${w}x${h}: a loss with no weapon to wear names the one to make and where, ahead of any other help (${JSON.stringify(gc)})`);
+          if (desk) { await page.click('.tv-beat-go'); await page.waitForTimeout(200); assert(!(await st()).on, '1280x720: Go on the gear line hides the loss line'); await X('ui(true); true'); }
+          await X('S.equip = __gfE; S.items = __gfI; gearDirty(); emit("unitUp", { key: "hero", hp: 1 }); true');
+        };
+        if (!desk) { await gearFirst(); assert(!errs.length, `${w}x${h}: no page errors` + (errs.length ? ': ' + errs[0] : '')); await ctx.close(); continue; }
         // it stays through the recovery gap, then the next fight starts with full HP and the line goes
         await page.waitForTimeout(3000);
         assert((await st()).on, '1280x720: the loss line stays up through the gap before the next fight');
@@ -13905,6 +13930,7 @@ if (section('normal-death-says-so')) try {
         assert(hp.help === 'Spend your attribute points on Hero > Build.' && hc.help === 'Better gear helps: see Craft.' && hg.help === 'An easier zone helps too: use the arrow by the zone name.' &&
           hz.help === 'An easier zone helps too: use the arrow by the zone name.' && h1.on && h1.help === '', `1280x720: the loss line's help matches the save (points, then a craftable goal, then the zone arrow; none at zone 1): ${JSON.stringify([hp.help, hc.help, hg.help, hz.help, h1.help])}`);
         assert(!(await st()).on, '1280x720: the hero back up hides the loss line');
+        await gearFirst();
         // switching to gathering in the gap hides it
         await live(); await X('cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true'); await page.waitForTimeout(200);
         const g0 = (await st()).on; await X('setActivity("gather"); true'); await page.waitForTimeout(150);
