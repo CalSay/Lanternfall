@@ -151,6 +151,7 @@ function gainXp(n, quiet) {
   }
 }
 function gainSkill(k, n, quiet) {
+  if (SKILL_TUNE.craftSkills.includes(k)) craftXpMap();   // craft-curve-skills-report: a station bar is on the curve in use before it grows (55-crafting)
   const sk = S.skills[k]; sk.xp += n * mod('skillXp') * mod('skillXp:' + k);
   while (sk.xp >= skillNeed(sk.lv, k)) {
     const top0 = skillTopTier(k);

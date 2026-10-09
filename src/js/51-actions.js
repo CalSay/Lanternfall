@@ -77,7 +77,7 @@ function forgeItem(slot, t) {
   const r = rollRarity();
   const it = newItem(slot, t, r);
   addItem(it);
-  gainSkill('smith', Math.round(20 * Math.pow(t, 1.7)));
+  gainSkill('smith', Math.round(20 * Math.pow(t, 1.7)) * (CRAFT_TUNE.curve && t < skillTopTier('smith') ? SKILL_TUNE.belowTierX : 1));   // craft-curve-skills-report: below the top open tier pays a share
   toast(`Forged a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: { slot, t } }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
   save();
   return it;
