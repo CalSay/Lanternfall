@@ -1,0 +1,4 @@
+# Proof for card walk-gate-reads-right (tooling only). No player-visible change: nothing in src/ changed, so there is
+# nothing to play. The proof is the seed 1 walk at 1280x720 for 60 game minutes: walk-seed1.txt next to this file holds
+# the gate lines from the walk log and the report's "Next Up tier gates" and "Craft row" lines. The press log matched
+# the base walk entry for entry (only the gate end reason's text changed).
