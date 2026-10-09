@@ -13796,6 +13796,23 @@ if (section('fight HUD fit')) try {
         const cut = await page.evaluate(() => [...document.querySelectorAll('.hud.vs .hero-plate .mob-name, .hud.vs .mob .mob-name, .hud.vs .hud-zone .zname, .hud.vs .mob-hp')]
           .filter(e => e.offsetParent && e.scrollWidth > e.clientWidth + 1).map(e => e.className + ':' + e.textContent));
         assert(!cut.length, `${w}x${h}: hero and foe names, numbers and the place line are not cut (${cut.join(' | ')})`);
+        // boss-bar-long-names-fit: every zone 1-10 boss name sits inside the foe plate on at most two lines, the HP numbers stay
+        // whole beside or under it, and the place line under the plates stays clear (at 740x360 "The Hollow Cantor" took three lines)
+        const longNames = await page.evaluate(names => {
+          const nm = document.getElementById('mName'), was = nm.textContent, out = [];
+          const R = s => { const e = document.querySelector(s); return e && e.offsetParent ? e.getBoundingClientRect() : null; };
+          for (const n of names) {
+            nm.textContent = n;
+            const rg = document.createRange(); rg.selectNodeContents(nm);
+            const lines = new Set([...rg.getClientRects()].map(r => Math.round(r.top))).size, plate = R('.hud.vs .mob'), name = rg.getBoundingClientRect(), hp = R('#mHp'), zn = R('.hud.vs .hud-zone .zname');
+            const inside = b => plate && b && b.left >= plate.left - 1 && b.right <= plate.right + 1 && b.top >= plate.top - 1 && b.bottom <= plate.bottom + 1;
+            const bad = lines > 2 || !inside(name) || !inside(hp) || hp.width < 10 || (zn && plate && zn.top < plate.bottom - 1 && zn.right > plate.left && zn.left < plate.right);
+            if (bad) out.push(`${n}: ${lines} lines`);
+          }
+          nm.textContent = was;
+          return out;
+        }, JSON.parse(await X('JSON.stringify([...Array(10)].map((_, i) => { const z = i + 1, r = regionOf(z); return (r.z1 === z && r.boss && r.boss.name) || champStoryName(z) || ("Elder " + TYPES[zoneType(z)].name); }))')));
+        assert(!longNames.length, `${w}x${h}: every zone 1-10 boss name fits the foe plate on two lines at most, HP whole, place line clear (${longNames.join(' | ')})`);
         // top-bar-compact: at phone width the top of the fight is two rows (the header's zone bar, then one line with Fight / Gather
         // and Next Up side by side), the "While away" sentence is gone and the Next Up goal is whole
         if (w < h) {
