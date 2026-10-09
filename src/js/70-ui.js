@@ -460,7 +460,13 @@ registerView('forge', { id: 'uniques', label: 'Uniques', order: 30, feature: 'un
 registerView('world', { id: 'camp', label: 'Camp', order: 10, feature: 'camp', dot: () => !!(S.camp && S.camp.news && S.camp.news.length) });
 registerView('world', { id: 'tav', label: 'Tavern', order: 20, feature: 'tavern' });
 registerView('world', { id: 'almanac', label: 'Almanac', order: 30, feature: 'almanac', dot: () => typeof almanac === 'object' && almanac.readyCount() > 0 });
-registerView('world', { id: 'raid', label: 'Raid', order: 40, feature: 'raid' });
+// online-off-clean (docs/design/hosting.md section 3): the world raid, tavern presence and leaderboard run on the Artifact's capability
+// host. With no `window.claude` at all (Netlify, a page opened from disk) the UI leaves them out; inside the Artifact nothing changes and
+// a signed-out viewer keeps the raid's own words on how to join. Read live, never stored; 80-online.js and the unlocks are untouched.
+function onlineOff() { return !(typeof window === 'object' && window.claude && typeof window.claude.use === 'function'); }
+// The Raid view waits for the host check (online.checked), so it never shows and then goes; the bar is rebuilt when the check ends (ui).
+registerView('world', { id: 'raid', label: 'Raid', order: 40, feature: 'raid', show: () => !onlineOff() && online.checked });
+let raidBarChecked = false;
 
 function viewsOf(t) { return VIEWS[t] || []; }
 // The views the player can see now (locked ones are left out of the switcher).
@@ -761,6 +767,7 @@ function ui(force) {
   putStyle(H.xpFill, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%');
   putText(H.gold, fmt(S.gold));
   putText(H.embers, fmt(S.embers));
+  putHidden(H.embers.parentElement, onlineOff());   // online-off-clean: Embers come only from the raid, so with no capability host the coin stays out, even when held
   for (const b of modeBtns) {
     putAttr(b, 'aria-pressed', String(b.dataset.act === S.activity));
     if (b.dataset.act === 'raid') putDisabled(b, !(online.ready && online.canWrite));
@@ -804,6 +811,7 @@ function ui(force) {
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
   putText(H.hint, tg === 'node' ? 'Click or tap to work faster' : tg === 'mob' ? '' : 'Click or tap to strike');   // the buttons strike
   for (const f of uiHooks) f(force);   // UX-A
+  if (online.checked !== raidBarChecked) { raidBarChecked = online.checked; if (S.tab === 'world') { buildViewSeg('world'); applyView('world'); } }   // online-off-clean
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
   if (viewOpen('adv', 'upgrades')) uiFight();
