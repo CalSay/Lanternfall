@@ -352,9 +352,13 @@ async function dismissCards(o) {
     let r = seen.get(sig);
     if (/beat you/i.test(c.text) && !seen.has(sig)) { st.beaten = (st.beaten || 0) + 1; const bz = st.prev ? st.prev.zone : 0; st.tries = st.tries || {}; st.tries[bz] = (st.tries[bz] || 0) + 1; st.beatenAt.push({ t: gt, zone: bz }); if (c.cls === 'bsheet-ov') st.losses.push({ t: gt, zone: bz, kills: o.s.kills || 0 }); if (st.beaten === 5) addCheck('wall', 'the casual bot was beaten 5 times by one boss', c.text.slice(0, 80) + ' (parry rate ' + PARRY + ')'); }
     if (!r) { r = { first: gt, last: gt, cls: c.cls, text: c.text, n: 0, head: c.head, gave: c.gave }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls }, tag: 'card-' + c.cls }); }
+    if (r.done && r.back === undefined && gt - r.first <= 8) r.back = gt;   // first-hour-walk-findings: back on screen after a cover (the turn banner hides the notices slot)
     r.last = gt;
   }
-  for (const [sig, r] of seen) if (!now.has(sig) && !r.done) { r.done = true; r.dwell = Math.round((gt - r.first) * 10) / 10; }
+  for (const [sig, r] of seen) if (!now.has(sig)) {
+    if (!r.done) { r.done = true; r.dwell = Math.round((gt - r.first) * 10) / 10; }
+    else if (r.back !== undefined && r.back !== null) { r.dwell = Math.round((r.dwell + gt - r.back) * 10) / 10; r.back = null; }   // its time on screen, both stints
+  }
   // a Next Up list left open (its Go was covered by a card) is closed with its X, as a player would
   const nu = [...now].map(g => seen.get(g)).find(r => r.cls === 'bsheet-ov' && /^×Next up/.test(r.text));
   if (nu && gt - nu.last < 1 && gt - nu.first >= 8 && gt - st.lastCard >= 0.6 && ![...now].some(g => seen.get(g).cls === 'mm-ov')) { st.lastCard = gt; if (await click('.bsheet-ov .bsheet-x', 300)) { nu.first = gt; return true; } }
@@ -405,6 +409,9 @@ async function followNextUp(o) {
   if (!chipReady) return false;
   if (!(await click('#nuChip', 300))) return false;
   await advance(300, 16);
+  // first-hour-walk-findings (F5): a moment card that came up as the list opened sits over it, and a person reads the card before
+  // pressing anything under it. The bot leaves the list; the card rule closes the card, and the list is closed later with its X.
+  if (await page.evaluate(() => !!document.querySelector('.mm-ov'))) return true;   // true: the next pass reads the screen again (no other press under the card)
   const rows = await page.evaluate(() => [...document.querySelectorAll('.nu-row.ready')].filter(r => r.getClientRects().length).map(r => (r.querySelector('.nu-lbl') || r).textContent.trim()));
   const holdFight = (st.gear.owns && st.gear.sess && !st.gear.sess.gaveUp) || !!(st.gate.sess && st.gate.sess.owns);   // gathering for a gear goal or a tier gate: the boss row waits
   st.nuReady = rows.length;
@@ -673,6 +680,9 @@ async function gateStep(o) {
   st.nuReady = 0;
   if (!(await click('#nuChip', 300))) return false;
   await advance(300, 16);
+  // first-hour-walk-findings (F5): a moment card that came up as the list opened sits over it, and a person reads the card before
+  // pressing anything under it. The bot leaves the list; the card rule closes the card, and the list is closed later with its X.
+  if (await page.evaluate(() => !!document.querySelector('.mm-ov'))) return true;   // true: the next pass reads the screen again (no other press under the card)
   const pick = await page.evaluate(txt => { const rows = [...document.querySelectorAll('.nu-row')].filter(r => r.getClientRects().length);
     if (rows.some(r => r.classList.contains('ready'))) return '';
     const r = rows.find(r => ((r.querySelector('.nu-lbl') || r).textContent || '').includes(txt)), g = r && r.querySelector('.nu-go');
@@ -943,9 +953,15 @@ function scorecard(reached) {
   // F6: each big or medium moment shows a card, banner or sheet for 2 s with a sound near it
   const bad = [];
   for (const m of moments.filter(m => m.big || m.id === 'look')) {
-    const near = [...st.cardSeen.values()].filter(c => c.first >= m.t - 1.5 && c.first <= m.t + 3 && !/^tv-(card|banner)$/.test(c.cls));   // a turn-order banner is not the moment's card
+    const cards = [...st.cardSeen.values()].filter(c => !/^tv-(card|banner)$/.test(c.cls));   // a turn-order banner is not the moment's card
+    // first-hour-walk-findings: a Champion's post scene plays first and its card follows when the scene closes (champion-moment, #264),
+    // with what the clear gave (a Star) as lines. The 3 s for the card and its sound run from the scene's close, not from the kill.
+    // The scene is not the card: the card that counts opens after it, and its sound plays then.
+    const scene = cards.find(c => c.cls === 'bsheet-ov' && /^×?Chapter \d/.test(c.text) && c.first >= m.t - 1.5 && c.first <= m.t + 3);
+    const from = scene ? scene.first + (scene.dwell ?? (reached - scene.first)) - 0.5 : m.t - 1.5, until = scene ? from + 3.5 : m.t + 3;
+    const near = cards.filter(c => c !== scene && c.first >= from && c.first <= until);
     const want = { zone: ['zone', 'kill', 'momentBig'], unique: ['loot', 'momentBig'], craft: ['forge', 'momentMid'], star: ['skill', 'loot', 'momentMid', 'momentBig'], hero: ['skill', 'zone', 'momentBig'], look: ['loot', 'skill', 'momentMid'] }[m.id] || [...SOUNDS];
-    const snd = sfxLog.some(s => want.includes(s.name) && s.t >= m.t - 1 && s.t <= m.t + 3);
+    const snd = sfxLog.some(s => want.includes(s.name) && s.t >= (scene ? from : m.t - 1) && s.t <= until);
     const card = near.find(c => (c.dwell ?? (reached - c.first)) >= 2);
     if (!card || !snd) bad.push(`${m.id} at ${fmtT(m.t)}: ${!near.length ? 'no card or banner' : !card ? 'card up under 2 s' : 'a card'}${snd ? '' : ', no sound'}`);
   }

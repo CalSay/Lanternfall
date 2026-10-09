@@ -163,6 +163,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 - A browser check that expects the cache card's odds line must make the unique roll miss (stub `Math.random` high around `killPack`): `UNIQ_TUNE.on` does not stop the first-clear roll, and a dropped unique swaps the odds line for "Here is what the win gave you." Why: the first look-card-says-why check failed 3 runs in 7 on a Briar Sprig drop (reviewer, 2026-10-09)
 - A two-column desktop rule loses to its own `> *` reset when the reset's selector carries a `:has()`: `:has(X)` adds X's specificity, so `.sec:has(> .a:not(:empty)) > *` beats `.sec > .a`. Repeat the same `:has()` on the item's rule. And `scaleText` grows SVG text too, in viewBox units, so a map's labels collide at Desktop 2: mark SVG text `/* tk:off */`. Why: the Make result card stayed in column 1 until measured, and the Stars map's names ran together at 1920x1080 (desktop-views-2, 2026-10-09)
+- A cap on moments must never hold a zone clear, and a line a card already says (a bark) is not a moment of its own: the medium cap (2 in 3 minutes) counted every bark folded into a big card, so zone 12 and 14 clears with their Stars waited 23 to 52 s and the walk read them as never shown. And a banner's time must run only while it is visible: the next fight's turn banner hides the notices slot (.tc-on). When the walk says a moment had no card, list the cards after it before blaming the moment (the cards were there, late). (first-hour-walk-findings, 2026-10-09)
 
 ## Saves and offline parity
 
