@@ -253,6 +253,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - In a browser check that opens several contexts from one fixture, stamp the save's `last` in the init script (at page load), not once at the section's start. Why: the second size opened 40 s "later", the away card came up over the menu and every hover and click timed out (desktop-tooltips, 2026-10-09)
 
 - A browser check that bounds a text box's height must allow for the fonts the check runs with: the page's web fonts never load in checks, so text falls back to Inter locally and DejaVu Sans on CI, both wider than Barlow Semi Condensed. A 104-letter line was 93 px locally and 110 px on CI. Bound the box against its own text height, or use a short line. (menu-tip-room, 2026-10-09)
+- The walk only sees the screen between its own actions: a card or banner that came up while the bot was pressing through Next Up or a menu was dated seconds late and read as short or missing. Date a moment card from the game's own show time (`MOMENT_UI.shownAt`, a banner's `_at`), and never count a story sheet as a moment's card. Why: the head walk for first-hour-walk-findings read zone 11's banner as up 1.4 s (it was up 3.3 s) and zone 14's card as 3.5 s late. (first-hour-walk-findings, 2026-10-09)
 
 ## Reviews and Codex
 

@@ -919,7 +919,7 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .cb-hit .ic { width: 36px; height: 36px; }
 .cb-hit .ic img { width: 28px; height: 28px; }
 .cb-mid { min-width: 0; }
-.cb-nm { display: flex; gap: 6px; align-items: baseline; font: 600 max(var(--tmin, 0px), calc((15px * var(--display-k)) * var(--tk, 1)))/1.15 var(--display); white-space: nowrap; min-width: 0; }
+.cb-nm { display: flex; flex-wrap: wrap; column-gap: 6px; row-gap: 0; align-items: baseline; font: 600 max(var(--tmin, 0px), calc((15px * var(--display-k)) * var(--tk, 1)))/1.15 var(--display); white-space: nowrap; min-width: 0; }   /* first-hour-walk-findings: a long name keeps its width and "Not built" drops under it ("Watchtow..." at 1280x720) */
 .cb-nm > span:first-child { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 @media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {   /* portrait: a long station name wraps, the level drops under it */
   .cb-nm { flex-wrap: wrap; white-space: normal; column-gap: 6px; row-gap: 0; }
@@ -43246,7 +43246,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     if (list.length > shown.length) tx.append(el('div', 'mm-t-line', `And ${list.length - shown.length} more.`));
     t.append(tx);
     const ms = (MOMENT_TUNE.bannerS + MOMENT_TUNE.bannerExtraS * (shown.length - 1)) * 1000;
-    t._hold = Date.now() + ms;
+    t._hold = Date.now() + ms; t._at = Date.now();   // _at: when it showed (tools/walk.mjs reads a card's age)
     const live = [...box.children].filter(x => !x._gone && !(x._hold > Date.now()));
     const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
     const held = [...box.children].filter(x => !x._gone && x._hold > Date.now()).length;

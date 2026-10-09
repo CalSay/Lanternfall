@@ -205,7 +205,7 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     if (list.length > shown.length) tx.append(el('div', 'mm-t-line', `And ${list.length - shown.length} more.`));
     t.append(tx);
     const ms = (MOMENT_TUNE.bannerS + MOMENT_TUNE.bannerExtraS * (shown.length - 1)) * 1000;
-    t._hold = Date.now() + ms;
+    t._hold = Date.now() + ms; t._at = Date.now();   // _at: when it showed (tools/walk.mjs reads a card's age)
     const live = [...box.children].filter(x => !x._gone && !(x._hold > Date.now()));
     const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
     const held = [...box.children].filter(x => !x._gone && x._hold > Date.now()).length;
