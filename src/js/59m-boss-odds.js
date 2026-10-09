@@ -19,12 +19,16 @@
 //   BOSS_ODDS (the tune table), bossOddsOn(), bossOddsSkill(), bossOdds(o) -> { win, n, zone } | null,
 //   bossOddsFoe(z) (the scratch boss), bossOddsReset()
 //   bossOdds({ skill, sync }): skill overrides the blend (tools), sync runs every chunk now (tools and checks).
-// Save field: S.bossOdds { hits, parry, dodge, rings, perfect, good } (decayed tallies; defaults only).
+// Save field: S.bossOdds { hits, parry, dodge, rings, perfect, good } (decayed tallies; defaults only), and
+//   S.bossOdds.reads { [zone]: { feint, feintPress, hold, holdPress, holdEarly } } (trick-read-rate: plain counts, never faded, of
+//   a zone boss's tricks in live fights: feints seen and pressed, held swings seen, pressed and pressed while they held. Nothing
+//   reads them in the game and the player never sees them; tools/walk.mjs and testers' saves read them for the read rate).
 const BOSS_ODDS = {
   fights: 30, chunk: 10, ready: 0.7, close: 0.35, w: 12, wr: 6, decay: 0.99, every: 0.4,
   prior: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }   // the sim's casual player (tools/sim.mjs)
 };
-registerState('bossOdds', { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 });
+registerState('bossOdds', { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0, reads: {} });
+const BOSS_READ_KEYS = ['feint', 'feintPress', 'hold', 'holdPress', 'holdEarly'];
 
 // the tally: live fights only (the scratch sampler's io.emit does nothing)
 {
@@ -35,6 +39,17 @@ registerState('bossOdds', { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, g
     if (!B || p.flinch || p.hold || (r !== 'parry' && r !== 'dodge' && r !== 'hit')) return;   // a held hit or the hit after a feint is a trick, not a plain defence (the sampler rolls tricks itself)   // 'miss': the foe missed from Blind, not the player's doing
     bump(B, ['hits', 'parry', 'dodge']);
     B.hits += 1; if (r === 'parry') B.parry += 1; else if (r === 'dodge') B.dodge += 1;
+  });
+  // trick-read-rate: a zone boss's feints and held swings (59k TURN_TUNE.tricks), by zone. A hit after a feint fooled the player
+  // (flinch) is not counted: no press could be made on it
+  on('foeContact', p => {
+    const B = S && S.bossOdds; if (!B || !p || !p.zb || p.flinch || !(p.res === 'feint' || p.hold)) return;
+    const z = Math.floor(+p.zone); if (!(z >= 1)) return;
+    if (!B.reads || typeof B.reads !== 'object' || Array.isArray(B.reads)) B.reads = {};
+    const row = B.reads[z] && typeof B.reads[z] === 'object' ? B.reads[z] : (B.reads[z] = {});
+    for (const k of BOSS_READ_KEYS) if (!(Number.isInteger(row[k]) && row[k] >= 0)) row[k] = 0;
+    if (p.res === 'feint') { row.feint++; if (p.pressed) row.feintPress++; }
+    else { row.hold++; if (p.pressed) row.holdPress++; if (p.early) row.holdEarly++; }
   });
   on('timingGrade', p => {
     const B = S && S.bossOdds; if (!B || !p) return;

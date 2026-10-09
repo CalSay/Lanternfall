@@ -888,6 +888,7 @@ function turnHitStart(m, io) {
   const T = TURN_TUNE, hit = m.move.hits[m.hitI], wind = hit.wind > 0 ? hit.wind : T.foeWindup, hold = hit.hold > 0 ? hit.hold : 0;
   m.phase = 'foeWindup'; m.until = m.now + wind + hold;
   m.defense = ''; m.usedDefense = !!m.fooled; m.flinch = !!m.fooled; m.fooled = 0;   // a hero fooled by a feint is off balance: this hit cannot be defended
+  m.pressAt = -1;   // trick-read-rate: when the player pressed on this hit (59m counts a held swing pressed before it swung)
   const w = turnWindows(m);
   // a delayed hit (hold) winds up, stalls for `hold` s, then runs the last (dodge window + tell) s to the windows; a feint shows its
   // tell at the same point in its run, then fades. Before that point the bar of a trick looks like any other hit's.
@@ -965,7 +966,11 @@ function turnContact(m, io) {
     m.fin = { id: m.move.id, name: m.move.name, hit: m.move.hits.slice(0, m.hitI).filter(x => !x.feint).length, hits: turnRealHits(m.move), charged: !!m.move.charge, defended: !!m.usedDefense && !m.flinch };
     turnLand(m, io, hit); m.landed++;
   }
-  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res, fooled: !!m.fooled, flinch: !!m.flinch, hold: hit.hold > 0 });
+  // trick-read-rate: what the player did on this hit, for the read count in S.bossOdds.reads (59m): pressed (a press of their own,
+  // not the lost defence after a feint fooled them), early (a held swing pressed while it held: before the bar ran on)
+  const pressed = !!m.usedDefense && !m.flinch;
+  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res, fooled: !!m.fooled, flinch: !!m.flinch, hold: hit.hold > 0,
+    zone: m.p.zone, zb: !!m.p.zb, pressed, early: pressed && hit.hold > 0 && m.pressAt >= 0 && m.pressAt < m.holdTo });
   if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }   // a parried hit can strike back (the Stars' Holy Sparks)
   m.hitI++;
@@ -1052,7 +1057,7 @@ function turnResolve(m, cmd, dt, io) {
     return true;
   }
   if (m.phase === 'foeWindup' && !m.usedDefense && (cmd.kind === 'parry' || cmd.kind === 'dodge')) {
-    m.usedDefense = true;
+    m.usedDefense = true; m.pressAt = m.now;
     const w = turnWindows(m), left = m.until - m.now;
     let ok = left >= 0 && left <= (cmd.kind === 'parry' ? w.parry : w.dodge);
     if (cmd.kind === 'dodge' && !ok && m.h.shadow > 0 && left >= 0) { ok = true; m.shadowUsed = 1; }   // Shadow Step: it cannot fail

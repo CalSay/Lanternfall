@@ -1,0 +1,1 @@
+Nothing changes in the game. It now quietly counts how often a zone boss's fake swings and held swings catch you out, so we can tune boss fights to how people really play. The test walk can also play as a player who reads those tricks more or less often.

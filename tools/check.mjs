@@ -10109,7 +10109,7 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     const s0 = sk();
     assert(Math.abs(s0.parry - 0.25) < 1e-9 && Math.abs(s0.dodge - 0.5) < 1e-9 && Math.abs(s0.perfect - 0.1) < 1e-9 && Math.abs(s0.good - 0.4) < 1e-9, `boss odds: with no record the player is the casual one (${J(s0)})`);
     E('bossOdds({ sync: true })'); const t0 = tally();
-    assert(t0 === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), 'boss odds: the scratch fights add nothing to the record (' + t0 + ')');
+    assert(t0 === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0, reads: {} }), 'boss odds: the scratch fights add nothing to the record (' + t0 + ')');
     E('turnCombatSample({ profile: turnCombatProfile(), seconds: 120, seed: 4 })'); assert(tally() === t0, 'boss odds: neither does a scratch sample');
     E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })'); const s1 = sk();
     assert(s1.parry > s0.parry && E('S.bossOdds.hits') === 1 && E('S.bossOdds.parry') === 1, `boss odds: a parry raises the parry share (${s0.parry.toFixed(3)} to ${s1.parry.toFixed(3)})`);
@@ -10120,7 +10120,7 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     assert(E('S.bossOdds.rings') > 1.9 && E('S.bossOdds.perfect') > 0.98 && E('S.bossOdds.good') === 0, 'boss odds: rings count Perfect, Good and missed');
     // many parries make a parrying player, and the skill is clamped
     for (let i = 0; i < 400; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })');
-    const s2 = sk(); assert(s2.parry > 0.9 && s2.dodge >= 0 && s2.dodge <= 1 && E('Object.values(S.bossOdds).every(Number.isFinite)') && E('Object.values(bossOddsSkill()).every(v => Math.abs(v / 0.05 - Math.round(v / 0.05)) < 1e-9)'), `boss odds: a long run of parries gives a parrying player; the skill stays in range and rounds to 0.05 (${J(s2)})`);
+    const s2 = sk(); assert(s2.parry > 0.9 && s2.dodge >= 0 && s2.dodge <= 1 && E('Object.entries(S.bossOdds).every(([k, v]) => k === "reads" ? JSON.stringify(v) === "{}" : Number.isFinite(v))') && E('Object.values(bossOddsSkill()).every(v => Math.abs(v / 0.05 - Math.round(v / 0.05)) < 1e-9)'), `boss odds: a long run of parries gives a parrying player; the skill stays in range and rounds to 0.05 (${J(s2)})`);
     // a player who improves counts as improved: 300 hits of dodging only, then parrying only
     E('S.bossOdds = { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }');
     for (let i = 0; i < 300; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "hit" })');
@@ -10130,7 +10130,7 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
   // old saves load with the record's defaults
   for (const f of ['early', 'mid', 'late']) {
     const raw = JSON.parse(FX(f)), g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: FX(f) }) });
-    assert(!('bossOdds' in raw) && g.eval('JSON.stringify(S.bossOdds)') === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), `boss odds: the ${f} fixture loads with the record's defaults`);
+    assert(!('bossOdds' in raw) && g.eval('JSON.stringify(S.bossOdds)') === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0, reads: {} }), `boss odds: the ${f} fixture loads with the record's defaults`);
   }
   // gear changed while gathering counts at once: the estimate reads a scratch hero from the current state (cbEstHero), not the
   // live unit, which only refreshes while fighting (Codex P1 on PR #47)
@@ -11972,6 +11972,82 @@ if (section('rally gates live (core)')) try {
   assert(/on\('foeRallied'/.test(ui) && /tv-notch/.test(ui) && /p\.charging \? 'Rally! It holds at the mark\. Only a Stun breaks its charge\.'/.test(ui),
     'rally gates: the boss bar marks each gate, the rally line names the mark (the Stun clause only while it charges), and a line says when the rally is over');
 } catch (e) { fail('rally gates live crashed: ' + (e.stack || e)); }
+
+// ---- trick-read-rate (why W2): the game counts how often the player reads a zone boss's tricks (S.bossOdds.reads, 59m), from the
+// live fight (59k foeContact: zone, zb, pressed, early). A fixture fight at the zone 10 Champion presses on a set share of its
+// feints and held swings and the counts must match what was pressed; an ordinary foe, the scratch sampler and the plain tallies
+// add nothing; old saves load with the default; save codes keep good counts and refuse bad ones. Nothing here is shown in the game.
+if (section('trick read counts (core)')) try {
+  const g = loadCore({ seed: 7, turns: true }), E = s => g.eval(s), J = JSON.stringify;
+  E(`soloPick('wren', { now: true }); S.cls.at = 0; TURN_TUNE.on = 1; S.L = 14; S.maxZone = 10; setZone(10); S.activity = 'fight'; arena = null; gearDirty();`);
+  const tally0 = E('JSON.stringify([S.bossOdds.hits, S.bossOdds.parry, S.bossOdds.dodge])');
+  // the player: on the k-th trick hit, a feint is pressed when k is even; a held swing is pressed while it holds when k % 3 is 0,
+  // in its parry window when k % 3 is 1, not at all when 2. Real hits are let through. Both sides stay alive so the fight runs on
+  const play = (boss, secs) => JSON.parse(E(`(() => {
+    fightBoss = ${boss}; spawn();
+    const want = { feint: 0, feintPress: 0, hold: 0, holdPress: 0, holdEarly: 0 };
+    let k = -1, key = '', act = '';
+    for (let t = 0; t < ${secs}; t += 0.05) {
+      const u = cbUnitByKey('hero'); if (u) u.hp = u.maxHp;
+      const m = TURN_LIVE;
+      if (m && !m.ended && m.foe) {
+        m.foe.hp = Math.max(m.foe.hp, 0.9 * m.foe.max);
+        if (m.phase === 'hero') turnCombatAction('attack');
+        if (m.phase === 'foeWindup') {
+          const h = m.move.hits[m.hitI], hk = m.n + ':' + m.move.id + ':' + m.hitI + ':' + m.until.toFixed(3);
+          if (hk !== key) { key = hk; act = '';
+            if (!m.usedDefense && (h.feint || h.hold > 0) && m.foe.boss) { k++; if (h.feint) { want.feint++; if (k % 2 === 0) { act = 'now'; want.feintPress++; } }
+              else { want.hold++; if (k % 3 !== 2) { want.holdPress++; act = k % 3 === 0 ? 'held' : 'win'; if (act === 'held') want.holdEarly++; } } } }
+          if (act && !m.usedDefense) {
+            const w = turnWindows(m), left = m.until - m.now;
+            if (act === 'now' || (act === 'held' && m.now >= m.holdFrom && m.now < m.holdTo) || (act === 'win' && left <= w.parry * 0.5)) { turnCombatAction('parry'); act = ''; }
+          }
+        }
+      }
+      tick(0.05);
+    }
+    return JSON.stringify({ want, boss: !!(TURN_LIVE && TURN_LIVE.foe && TURN_LIVE.foe.boss), name: TURN_LIVE && TURN_LIVE.foe ? TURN_LIVE.foe.name : '' });
+  })()`));
+  // an ordinary zone 10 foe first: no zone boss, so nothing is counted
+  const plain = play(false, 30), r0 = E('JSON.stringify(S.bossOdds.reads)');
+  assert(r0 === '{}', `trick reads: an ordinary foe's fight adds no read counts (${r0})`);
+  const f = play(true, 240), got = JSON.parse(E('JSON.stringify(S.bossOdds.reads)'))[10] || {};
+  console.log(`  trick reads: zone 10 Champion fixture fight (${f.name}): feints ${got.feint} (pressed ${got.feintPress}), held swings ${got.hold} (pressed ${got.holdPress}, ${got.holdEarly} while it held)`);
+  assert(f.boss && f.want.feint >= 4 && f.want.hold >= 6 && f.want.feintPress > 0 && f.want.holdEarly > 0 && f.want.holdPress > f.want.holdEarly,
+    `trick reads: the fixture fight meets the zone 10 Champion's feints and held swings (${J(f.want)}, boss ${f.boss})`);
+  assert(J(got) === J(f.want), `trick reads: the counts match what the player pressed (want ${J(f.want)}, got ${J(got)})`);
+  assert(Object.keys(JSON.parse(E('JSON.stringify(S.bossOdds.reads)'))).join() === '10', 'trick reads: the counts sit under the boss\'s zone');
+  // a trick is not a plain defence: the decayed tallies the sampler reads only moved for real hits (each counted hit is a real one)
+  const hits = E('S.bossOdds.hits');
+  assert(hits > 0 && E('Number.isFinite(S.bossOdds.hits)') && tally0 !== E('JSON.stringify([S.bossOdds.hits, S.bossOdds.parry, S.bossOdds.dodge])'), `trick reads: the plain tallies still count the real hits (${hits.toFixed(2)})`);
+  // the scratch sampler emits nothing to the save
+  const before = E('JSON.stringify(S.bossOdds)');
+  E('turnCombatSample({ profile: turnMakeProfile(bossOddsFoe(10), cbEstHero()), seconds: 120, seed: 4 })');
+  assert(E('JSON.stringify(S.bossOdds)') === before, 'trick reads: a scratch sample of the zone 10 boss adds no counts');
+  // a save code keeps the counts; a bad row is refused
+  E('S.cls.at = 0'); const code = E('encodeSave(S)'), back = E(`JSON.stringify(decodeSave(${J(code)}).data.bossOdds.reads)`);
+  assert(back === E('JSON.stringify(S.bossOdds.reads)'), `trick reads: a save code keeps the counts (${back})`);
+  const refuse = (reads, why) => { const raw = JSON.parse(E('JSON.stringify(S)')); raw.bossOdds.reads = reads;
+    const r = E(`validateSave(JSON.parse(${J(J(raw))}))`); assert(r && r.ok === false, `trick reads: a save code with ${why} is refused (${J(reads)})`); };
+  refuse({ 10: { feint: 2, feintPress: 3 } }, 'more presses than feints');
+  refuse({ 10: { hold: 4, holdPress: 2, holdEarly: 3 } }, 'more early presses than presses');
+  refuse({ 10: { feint: 1.5 } }, 'a part count');
+  refuse({ 10: { feint: -1 } }, 'a count below 0');
+  refuse({ 10: { guess: 1 } }, 'an unknown count');
+  refuse({ x: { feint: 1 } }, 'a key that is not a zone');
+  refuse({ 10: 3 }, 'a row that is not a record');
+  // old saves (no reads) load with the default and count from there
+  for (const fx of ['early', 'mid', 'late']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + fx + '.json'), 'utf8'), o = loadCore({ turns: true, storage: memoryStorage({ [KEY]: raw }) });
+    assert(o.eval('JSON.stringify(S.bossOdds.reads)') === '{}' && !o.errors.length, `trick reads: the ${fx} fixture loads with no counts`);
+  }
+  { const o = loadCore({ turns: true, storage: memoryStorage({ [KEY]: JSON.stringify(Object.assign(JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')), { bossOdds: { hits: 5, parry: 2, dodge: 1, rings: 0, perfect: 0, good: 0 } })) }) });
+    assert(o.eval('JSON.stringify(S.bossOdds)') === J({ hits: 5, parry: 2, dodge: 1, rings: 0, perfect: 0, good: 0, reads: {} }), 'trick reads: a save with the old boss odds record keeps its tallies and gains the empty counts'); }
+  // the player is never shown the counts: no UI file reads them
+  const ui = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(n => parseInt(n, 10) >= 60).filter(n => /bossOdds\.reads|\.reads\[|holdEarly|feintPress/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', n), 'utf8')));
+  assert(!ui.length, `trick reads: no page file reads the counts (${ui.join(', ')})`);
+  assert(!g.errors.length, 'trick reads: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('trick read counts crashed: ' + (e.stack || e)); }
 
 // ---- wren-z9-10-foes (judge 2026-10-08): the scratch fight (turnCombatSample, the budget's) gets an ordinary Rattlebones up once a fight, as
 // the live loop does (59b onFoeDeath): at ENEMY_TUNE.reassemble of its HP, never a boss, never after a Burn kill. Asserted on the live path too

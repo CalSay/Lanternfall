@@ -141,6 +141,15 @@ function validateSave(data) {
       record(row, 'mastery.tricks.' + k);
       for (const [id, v] of Object.entries(row)) { if (!FOE_TRICK_ORDER.includes(id)) fail('mastery.tricks.' + k + '.' + id); int(v, 'mastery.tricks.' + k + '.' + id, 0, 1); }
     }
+    // trick-read-rate: the boss trick counts are { [zone]: { feint, feintPress, hold, holdPress, holdEarly } }, whole counts, a press never more than were seen
+    if (data.bossOdds && data.bossOdds.reads) for (const [z, row] of Object.entries(data.bossOdds.reads)) {
+      const p = 'bossOdds.reads.' + z;
+      if (!/^[1-9][0-9]*$/.test(z) || +z > lim.progression) fail(p, 'is not a zone');
+      record(row, p);
+      for (const [k, v] of Object.entries(row)) { if (!BOSS_READ_KEYS.includes(k)) fail(p + '.' + k, 'is not supported by this version'); int(v, p + '.' + k); }
+      const n = k => row[k] || 0;
+      if (n('feintPress') > n('feint') || n('holdPress') > n('hold') || n('holdEarly') > n('holdPress')) fail(p, 'counts more presses than tricks');
+    }
     if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
     // C9: optional route maps are validated before storage or feature load; missing v5 maps use defaults.
     if (data.party && data.party.unlock !== undefined && !heroUnlockStateValid(data.party.unlock)) fail('party.unlock');
