@@ -1,0 +1,1 @@
+Late in a first sitting, Next up now names the tier 2 piece you are closest to and what opens it, for example "Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away." It keeps a place in Next up once your tier 1 gear is done, instead of only after a boss beats you. Best shot: min60-next-up.
