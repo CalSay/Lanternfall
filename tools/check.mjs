@@ -16798,6 +16798,122 @@ if (section('away-line-only-when-true')) try {
   }
 } catch (e) { fail('away-line-only-when-true crashed: ' + (e.stack || e)); }
 
+// ==== gate-go-starts-gathering: Go on a gathering gate row starts gathering that skill, so the away sentence comes true ====
+// save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Go used to open the Mining view only and the hero kept
+// fighting, so a player who pressed it and left gained nothing away. A station gate's Go is unchanged (Craft at the station, no switch).
+if (section('gate-go-starts-gathering')) try {
+  const at = 'gate-go-starts-gathering', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  const base = 'Birch Bow: Mining 7 of 14 opens Iron Ore. ', on = base + 'Gathering keeps going while you\'re away.', off = base + 'Gather Mining before you leave and it keeps going.';
+  const load = () => { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1)'); return g; };
+  const row = (E, id) => E(`topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))`).find(x => x.id === id) || {};
+  const press = (E, id) => E(`(() => { const r = topGoals(20, { sticky: false }).find(x => x.id === ${JSON.stringify(id)}); const s = typeof r.go === "function" ? r.go() : r.go; if (s.fn) s.fn(); return { tab: s.tab, view: s.view, sel: s.sel || null, act: s.act || null }; })()`);
+  const where = E => E('({ act: S.activity, kind: S.node.kind, t: S.node.t, skill: skillOf(S.node.kind), open: skillTierOpen(skillOf(S.node.kind), S.node.t) && craftNodeVisible(S.node.kind, S.node.t) })');
+  // fighting: Go switches to Mining at the gate's family (ore) at its highest open tier, and the row then promises what away does
+  { const g = load(), E = s => g.eval(s);
+    assert(row(E, 'forge').label === off && E('S.activity') === 'fight', `${at}: the save fights and the row says how to make it true (${row(E, 'forge').label})`);
+    const s = press(E, 'forge'), w = where(E);
+    assert(s.tab === 'gat' && s.view === 'mine' && !s.act, `${at}: Go still opens the Mining view (${JSON.stringify(s)})`);
+    assert(w.act === 'gather' && w.skill === 'mine' && w.open && w.kind === 'ore' && w.t === E('skillTopTier("mine")'), `${at}: Go starts mining ore at its highest open tier (${JSON.stringify(w)})`);
+    assert(row(E, 'forge').label === on, `${at}: after Go the row reads "${on}" (${row(E, 'forge').label})`);
+    const lv0 = E('S.skills.mine.lv'), xp0 = E('S.skills.mine.xp'); E('awayGains(3600)');
+    assert(E('S.skills.mine.lv') > lv0 || E('S.skills.mine.xp') > xp0, `${at}: after Go, 1 h away raises Mining (${lv0} -> ${E('S.skills.mine.lv')})`);
+  }
+  // the skill row mirrors the gate (next-tier-gate-goal: "its Go is the gate row's"), so its Go does the same
+  { const g = load(), E = s => g.eval(s);
+    assert(/^Mining: /.test(row(E, 'skill').label || ''), `${at}: the skill row names Mining (${row(E, 'skill').label})`);
+    press(E, 'skill'); const w = where(E);
+    assert(w.act === 'gather' && w.skill === 'mine', `${at}: the skill row's Go, the gate row's, starts mining too (${JSON.stringify(w)})`);
+  }
+  // gathering Woodcutting: Go moves to Mining; already mining a lower tier: Go keeps the node the player picked
+  { const g = load(), E = s => g.eval(s);
+    E('setNode("wood", 1); setActivity("gather")'); press(E, 'forge'); const w = where(E);
+    assert(w.act === 'gather' && w.skill === 'mine', `${at}: from Woodcutting, Go moves to Mining (${JSON.stringify(w)})`);
+    E('setNode("crystal", 1); setActivity("gather")'); press(E, 'forge'); const w2 = where(E);
+    assert(w2.act === 'gather' && w2.kind === 'crystal' && w2.t === 1, `${at}: already mining, Go keeps the node (${JSON.stringify(w2)})`);
+  }
+  // a station gate (Woodcraft 8 of 10): Go is today's Craft target and the hero keeps fighting
+  { const g = load(), E = s => g.eval(s);
+    E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2; S.skills.bench.lv = 8; gearDirty()');
+    assert(row(E, 'forge').label === 'Birch Bow: Woodcraft 8 of 10' && E('S.activity') === 'fight', `${at}: the station gate row shows while fighting (${row(E, 'forge').label})`);
+    const s = press(E, 'forge');
+    assert(s.tab === 'forge' && s.sel === '.cf-st[data-st="bench"]' && E('S.activity') === 'fight' && E('S.fSlot') === 'bow' && E('S.fTier') === 1, `${at}: a station gate's Go opens Craft at the Workbench and does not switch (${JSON.stringify(s)}, ${E('S.activity')})`);
+  }
+  // a live Deepwell run: no switch (navGo would refuse it with a toast); the Mining view still opens
+  { const g = load(), E = s => g.eval(s);
+    E('S.camp.b.hearth = Math.max(3, S.camp.b.hearth || 0)');
+    assert(E('deepUnlocked() && DW.start(false)') && E('deepActive()'), `${at}: a Deepwell run starts`);
+    const s = press(E, 'forge');
+    assert(s.view === 'mine' && E('S.activity') === 'fight' && E('deepActive()'), `${at}: in a Deepwell run Go switches nothing (${E('S.activity')})`);
+  }
+  // the browser at the three views: a real tap on the row's Go, the Mining view, the hero mining, and the "keeps going" row whole
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const openList = async () => { await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800); };
+        const goOf = want => page.evaluate(want => { const r = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want), g = r && r.querySelector('.nu-go');
+          if (!g) return null; const b = g.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; }, want);
+        const measure = want => page.evaluate(want => { const row = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want); if (!row) return null;
+          const l = row.querySelector('.nu-lbl'), a = l.getBoundingClientRect(), b = row.getBoundingClientRect();
+          return { cut: l.scrollHeight > l.clientHeight + 1 || l.scrollWidth > l.clientWidth + 1, fs: parseFloat(getComputedStyle(l).fontSize), inRow: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        await openList();
+        const xy = await goOf(off);
+        assert(xy, `${v}: the Next Up list shows the Birch Bow row with a Go`);
+        if (xy) {
+          if (phone) await page.touchscreen.tap(xy[0], xy[1]); else await page.mouse.click(xy[0], xy[1]);
+          await page.waitForTimeout(800);
+          const st = await X('({ act: S.activity, skill: skillOf(S.node.kind), tab: S.tab, view: curView(S.tab), sheets: document.querySelectorAll(".bsheet-ov").length })');
+          assert(st.act === 'gather' && st.skill === 'mine', `${v}: after Go the hero mines (${JSON.stringify(st)})`);
+          assert(st.tab === 'gat' && st.view === 'mine', `${v}: after Go the Mining view is open (${JSON.stringify(st)})`);
+          if (process.env.LF_PROOF_SHOTS) await page.screenshot({ path: path.join(process.env.LF_PROOF_SHOTS, `${at}-${w}x${h}.png`) });
+          if (st.sheets) { await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true'); await page.waitForTimeout(300); }
+          await openList();
+          const o = await measure(on);
+          assert(o, `${v}: the list now shows "${on}"`);
+          if (o) { assert(!o.cut && o.inRow, `${v}: the row's words show whole inside the row (${JSON.stringify(o)})`); if (!phone) assert(o.fs >= 14, `${v}: 14 px desktop text floor (${o.fs})`); }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // a station gate in the browser at the three views: Go opens Craft at the Workbench, and the hero keeps fighting
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) { const phone = w < 1200, v = `${at} station ${w}x${h}`;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); S.mats.plank[1] = 5; S.mats.ingot[1] = 2; S.skills.bench.lv = 8; gearDirty(); true');
+        await page.waitForTimeout(300);
+        await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800);
+        const xy = await page.evaluate(() => { const r = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === 'Birch Bow: Woodcraft 8 of 10'), g = r && r.querySelector('.nu-go');
+          if (!g) return null; const b = g.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; });
+        assert(xy, `${v}: the list shows the Woodcraft gate row with a Go`);
+        if (xy) { if (phone) await page.touchscreen.tap(xy[0], xy[1]); else await page.mouse.click(xy[0], xy[1]); await page.waitForTimeout(800);
+          const st = await X('({ act: S.activity, tab: S.tab })');
+          assert(st.act === 'fight' && st.tab === 'forge', `${v}: a station gate's Go opens Craft and the hero keeps fighting (${JSON.stringify(st)})`); }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('gate-go-starts-gathering crashed: ' + (e.stack || e)); }
+
 // ---- space-reopens-next-up: in a turn fight Space dodges, whatever button was last clicked. A clicked button keeps focus (a sheet
 // hands focus back to its opener on close), and the browser presses a focused button on Space; the fight bar used to step aside for it,
 // so Space at a boss swing reopened Next Up. Outside a fight Space on a focused button still presses it. 1280x720. ----

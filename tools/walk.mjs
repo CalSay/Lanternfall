@@ -748,7 +748,8 @@ async function gateStep(o) {
   await advance(400, 16);
   const where = await X('S.tab');
   T.pressed.push({ t: gt, label: pick });
-  T.sess = { key: q.key, txt: q.txt, st: q.st, mat: q.mat, start: gt, owns: false };
+  // gate-go-starts-gathering: a gathering gate's Go starts the hero gathering itself; the bot owns that switch (it takes the hero back to the fight)
+  T.sess = { key: q.key, txt: q.txt, st: q.st, mat: q.mat, start: gt, owns: q.act !== 'gather' && (await X('S.activity')) === 'gather' };
   await note(page, 'gate', `${pick} -> pressed Go (${where === 'forge' ? 'Craft' : where === 'gat' ? 'its Gather view' : 'tab ' + where})`, { extra: { goal: pick, pressed: 'Go', go: true, tab: where }, tag: 'gate-go' });
   return true;
 }
