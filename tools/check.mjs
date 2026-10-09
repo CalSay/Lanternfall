@@ -16552,7 +16552,9 @@ if (section('space-reopens-next-up')) try {
       // Enter on a focused button is not a fight key: it still presses the button in a fight
       await X(`document.getElementById('nuChip').focus(); true`); await page.keyboard.press('Enter'); await page.waitForTimeout(400);
       assert(await sheets() === 1, `${tag}: Enter on the focused Next up chip opens its list in a fight`);
-      await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+      // Space on a button in a sheet over the fight still presses it: the list's × closes it
+      await X(`document.querySelector('.bsheet-x').focus(); true`); await page.keyboard.press(' '); await page.waitForTimeout(400);
+      assert(await sheets() === 0, `${tag}: Space on the focused × of the Next up list closes it in a fight`);
       // outside a fight (gathering) Space on a focused button presses it
       await X('globalThis.__tp = 0; setActivity("gather"); true'); await page.waitForTimeout(600);
       assert(await X(`document.getElementById('soloBar').hidden`), `${tag}: gathering, the fight bar is away`);
