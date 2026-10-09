@@ -21,7 +21,7 @@
 @keyframes tv-in-r { 0% { transform: translateX(40px); opacity: 0; } 25%, 100% { transform: none; opacity: 1; } }
 @keyframes tv-fade { 0% { opacity: 0; } 12%, 82% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tv-card.play .tv-side { animation: none !important; } }
-.tv-top { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
+.tv-top { position: absolute; left: 8px; right: 8px; top: max(80px, calc(var(--vs-zb, 0px) + 2px)); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
 .tv-top[hidden] { display: none; }
 .tv-order { display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 4px; }
 .tv-order-lb { font-size: 11px; color: #E0D6C2; text-shadow: 1px 1px 0 #0B0810; }
@@ -84,12 +84,12 @@
 .tv-ring-t { position: absolute; left: 0; top: 34px; transform: translateX(-50%); white-space: nowrap; font: 700 calc(13px * var(--display-k, 1))/1 var(--display);
   color: var(--gold, #F2C14E); text-shadow: 1px 1px 0 #0B0810; }
 /* whose turn: the banner in the pause between turns (59k turnCard) */
-.tv-turncard { position: absolute; left: 0; right: 0; top: 42%; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 10px;
+.tv-turncard { position: absolute; left: 0; right: 0; top: max(42%, calc(var(--vs-zb, 0px) + 30px)); z-index: 5; display: flex; align-items: center; justify-content: center; gap: 10px;
   padding: 6px 12px; transform: translateY(-50%); pointer-events: none; background: linear-gradient(90deg, transparent, rgba(10, 7, 14, .94) 18%, rgba(10, 7, 14, .94) 82%, transparent); }
 .tv-turncard[hidden] { display: none; }
 .tv-tc-face { width: 36px; height: 36px; display: grid; place-items: center; background: #16111C; border: 2px solid #0B0810; }
 .tv-tc-img { max-width: 32px; max-height: 32px; image-rendering: pixelated; }
-.tv-tc-txt { font: 700 calc(22px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; text-shadow: 2px 2px 0 #0B0810; }
+.tv-tc-txt { font: 700 calc(22px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; text-shadow: 2px 2px 0 #0B0810; white-space: nowrap; min-width: 0; }
 .tv-turncard.hero .tv-tc-txt { color: var(--gold, #F2C14E); }
 .tv-turncard.hero .tv-tc-face { box-shadow: inset 0 0 0 1px var(--gold, #F2C14E); }
 .tv-turncard.foe .tv-tc-txt { color: #FF9B8A; }
@@ -112,7 +112,7 @@
 .tv-winding .sty-cap { opacity: .15; transition: opacity .15s; }
 /* Stage and dock (Combat C): the banner is a framed chip; the timing bar sits along the stage's bottom edge */
 .tv-n { padding: 3px 12px 2px; font: 600 calc(15px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; color: #C9BFD6; background: rgba(10, 7, 14, .88);
-  border: 1px solid #5E5270; text-shadow: 1px 1px 0 #0B0810; }
+  border: 1px solid #5E5270; text-shadow: 1px 1px 0 #0B0810; white-space: nowrap; max-width: 100%; }
 .tv-n:empty { display: none; }
 .tv-n.mine { color: var(--gold, #F2C14E); border-color: var(--gold, #F2C14E); }
 .tv-n.foe { color: #FF9B8A; border-color: #A8323A; }
@@ -142,14 +142,20 @@
 .hud.vs .mob .hpbar > i.tv-notch { left: calc((1 - var(--g)) * 100% - 1px); }
 .hpbar > i.tv-notch.past { opacity: .35; }
 .hpbar > i.tv-notch.held { width: 4px; margin-left: -1px; background: var(--gold, #F2C14E); }
-/* desktop-layout-v1 (desk playtest F03, F09, F04). Desktop text is bigger, so the turn line sits under the place line (62-stage sets
-   --vs-zb on the stage box), not on it; the whose-turn banner crosses the stage under the floating numbers ("Miss", damage), which
-   start higher; at 1920x1080 the timing bar moves to the stage's bottom-right corner, next to Parry and Dodge. */
+/* desktop-layout-v1 (desk playtest F03, F09, F04). The turn line sits under the place line (62-stage sets --vs-zb on the stage box;
+   every view since turn-banner-clears-plate, .tv-top above); the whose-turn banner crosses the stage under the floating numbers
+   ("Miss", damage), which start higher; at 1920x1080 the timing bar moves to the stage's bottom-right corner, next to Parry and Dodge. */
 @media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
-  .tv-top { top: max(80px, calc(var(--vs-zb, 0px) + 2px)); }
-  .tv-turncard { top: 52%; }
+  .tv-turncard { top: max(52%, calc(var(--vs-zb, 0px) + 30px)); }
 }
 @media (min-aspect-ratio: 1/1) and (min-width: 1600px) and (min-height: 900px) {
   .tv-bot { justify-items: end; right: 56px; }
   .tv-bot .tv-time { width: min(420px, 100%); }
 }
+/* turn-banner-clears-plate: the turn line (.tv-n) and the whose-turn banner (.tv-tc-txt) stay on one line, under the place line ("Zone
+   boss") at every view: .tv-top spans the stage and starts under the place line, the banner's middle sits 30 px under it, and a line too
+   long for the stage steps its size down to fit (fitTextWidth in 75-turn-ui). Names and words are never cut. While the banner shows
+   (.tc-on) it takes the turn line's spot: the turn line and the Grit row step out of sight (they keep their room) and a foe trick's
+   line drops under the banner. */
+.tc-on .tv-top .tv-n, .tc-on .tv-top .tv-hero { visibility: hidden; }
+.tc-on .tv-top .tv-warn { margin-top: 14px; }

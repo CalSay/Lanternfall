@@ -132,6 +132,22 @@ the card that asks for it and a line in the change log below. A routine re-basel
 `node tools/health.mjs --compare`. If a cell you meant to move lands in band, re-baseline; the ratchet tightens its gap.
 If a cell leaves its band and you think the band is wrong, that is a judge decision, not a re-baseline.
 
+## The boss shape block (report only, `boss-tier-shape-report`, 2026-10-09)
+
+After the table, `node tools/budget.mjs` prints a "Boss shape" line for each zone 4-26 (JSON: `shape`, and `perHero.<hero>.shape` on
+every boss row), so the balance pass refits to the tiers' shape and not only to win rates (why W2). Each line reads the zone's boss row
+(gated, except the report rows at zones 4, 25 and 26) on that row's own footing (the `-arrival` row where there is one, else `zN-boss`; zones 4-6 are the first-hour footing, the rest
+arrival): **HP/foe** is the boss's HP over the mean HP of 24 of the zone's own ordinary foes (each spawn rolls its HP by about 5%; the
+JSON keeps the next type's too); **casual turns** and **win** are the row's casual cells; **hit** is the boss's heaviest landed hit, feints
+left out, as a share of the hero's max HP without defence, next to the boss's own line (x refHp x hitX), the `hpFloor` line and the footing floor's, and
+**set by** says which of own, floor, foot (the footing floor) or cap decides it; on a Champion (`bossTierOf`) the **Champion step** is
+its casual win against the mean of the two zones either side. Read a healthy shape as HP/foe above 1 and rising with the tier, a
+Champion step below zero (a peak), and "own" where the boss's line, not the hero's health, should set the hit. It gates nothing. Checked
+against the W2 study's `hp-ratio.json` on its footing (`--foot arrival`, Wren): boss HP, the landed hit, the floor flag, gates and tier
+match at all 23 zones. The study read one spawn's ordinary foe: at zones 4-14 that was the zone's next type (the JSON's `foeHpNext`), and
+against that type the ratio matches to 0.01; at zones 15-24 it matches to 0.01 on the zone's own type; at 25-26 its spawn rolled 5% high,
+so the block reads 3.21 and 2.44 where the study read 3.05 and 2.32.
+
 ## Where the game stands (2026-10-08)
 
 - **Zones 9-11 ordinary foes are measured** (wren-z9-10-foes, judge 2026-10-08, ruling A: no refit). On the arrival footing (level 14-16,
