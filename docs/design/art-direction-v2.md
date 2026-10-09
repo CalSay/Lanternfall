@@ -78,7 +78,7 @@ The web page is one file with a 16 MB limit; today it is about 8.7 MB. The two f
 at today's per-pack cost would not fit, so the web page cannot hold the whole roster even now. At 2x each pack has about
 4x the pixels, so roughly 3 to 4x the bytes. Heroes are cheap by comparison (all three are 180 KB today, so about 0.6 MB at 2x).
 
-The page-bytes ruling (Opus judge, 2026-10-09, `autopilot/rulings/2026-10-09-page-bytes.md`; Cal's veto: "lift the Codex
+The page-bytes ruling (Opus judge, 2026-10-09, `docs/design/page-bytes.md` section 4 and `autopilot/rulings/2026-10-09-page-bytes.md`; Cal's veto: "lift the Codex
 byte rule") answers this with an export rule for new sprite packs: lossless WebP, at most 64 colours across a pack, alpha 0
 or 255 only, no soft edges or glows, held key poses instead of near-identical in-betweens, and ceilings in file bytes (a
 monster with its Captain 85 KB, an area's five monsters 425 KB, a Champion 120 KB, the Fenmother 200 KB, a hunting beast
