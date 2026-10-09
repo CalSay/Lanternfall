@@ -27,11 +27,24 @@ const PROFILE_BONUS = 0.05;
 const FOE_TELL = {};
 for (const k in FOE_COUNTERS) FOE_TELL[k] = `Moves: ${TURN_FOE_TYPES[k].moves.map(m => m.name).join(', ')}. ${FOE_COUNTERS[k].tip}`;
 
+// foe-tricks-say-so (judge 2026-10-08): the Foe tab learns a trick the first time it lands on you (S.mastery.tricks[key][id] = 1),
+// never before. Keyed on the foe's type; a boss's riders never teach an ordinary foe's entry. A line for a type and trick, or the
+// trick's own line.
+const FOE_TRICK_LINES = {
+  wraith: { chill: "Chill Touch chills you: you're slower, so it can act twice." },
+  slime: { venom: n => `Ooze Lash poisons you: you take damage for ${n} turns.` },
+  spore: { venom: n => `Poison Cloud poisons you: you take damage for ${n} turns.`, weaken: 'Spore Puff weakens you: your next move hits softer.' },
+  bones: { getUp: 'Gets back up once. A Burn that finishes it keeps it down.' },
+  any: { chill: "It chills you: you're slower, so it can act twice.", venom: n => `It poisons you: you take damage for ${n} turns.`,
+    weaken: 'It weakens you: your next move hits softer.', getUp: 'Gets back up once.' }
+};
+const FOE_TRICK_ORDER = ['chill', 'venom', 'weaken', 'getUp'];
+
 // Helpers for the UI (75-mastery-ui.js) and tools; filled in below.
 const masteryApi = {};
 
 {
-  registerState('mastery', { zones: {}, types: {}, seen: {} });
+  registerState('mastery', { zones: {}, types: {}, seen: {}, tricks: {} });
 
   const starsFor = n => { let s = 0; while (s < MASTERY_STARS.length && n >= MASTERY_STARS[s]) s++; return s; };
   const tierFor = n => { let t = 0; while (t < BESTIARY_TIERS.length && n >= BESTIARY_TIERS[t]) t++; return t; };
@@ -45,10 +58,26 @@ const masteryApi = {};
     const n = typeKills(k), row = typeof FOE_TYPE === 'object' ? FOE_TYPE[k] : null;
     return { n, stats: n >= PROFILE_TIERS[0], weak: n >= PROFILE_TIERS[1], tell: n >= PROFILE_TIERS[2], bonus: n >= PROFILE_TIERS[3],
       next: PROFILE_TIERS.find(x => x > n) || 0, seen: S.mastery.seen[k] || null,
-      weakTo: row && row.weak || null, resists: row && row.res || [], tellTxt: FOE_TELL[k] || '' };
+      weakTo: row && row.weak || null, resists: row && row.res || [], tellTxt: FOE_TELL[k] || '', tricks: trickLines(k) };
   };
+  // foe-tricks-say-so: the tricks of kind k that have landed on you, as Foe tab lines (none before one lands)
+  const trickLines = k => {
+    const got = (S.mastery.tricks || {})[k], n = typeof TURN_TUNE === 'object' ? TURN_TUNE.heroDotT : 2;
+    if (!got) return [];
+    return FOE_TRICK_ORDER.filter(id => got[id]).map(id => { const l = (FOE_TRICK_LINES[k] || {})[id] || FOE_TRICK_LINES.any[id]; return typeof l === 'function' ? l(n) : l; });
+  };
+  const learnTrick = (k, id) => {
+    if (!k || !FOE_TRICK_LINES.any[id]) return false;
+    const t = S.mastery.tricks || (S.mastery.tricks = {});
+    if (!t[k] || typeof t[k] !== 'object') t[k] = {};
+    const row = t[k];
+    if (row[id]) return false;
+    row[id] = 1; return true;
+  };
+  on('heroRider', p => { if (p && !p.boss) learnTrick(p.key, p.id); });
+  on('foeGetUp', p => { if (p) learnTrick(p.key, 'getUp'); });
   const profileX = k => (typeKills(k) >= PROFILE_TIERS[3] ? 1 + PROFILE_BONUS : 1);
-  Object.assign(masteryApi, { starsFor, tierFor, zoneKills, typeKills, totalStars, perkBonus, profile, profileX });
+  Object.assign(masteryApi, { starsFor, tierFor, zoneKills, typeKills, totalStars, perkBonus, profile, profileX, trickLines, learnTrick });
 
   on('kill', ({ mob, zone, tier }) => {
     const m = S.mastery;

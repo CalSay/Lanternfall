@@ -29,7 +29,9 @@
 //   timingGrade { id, i, grade }, foeMove { id, name, anim, hits }, parryWindow
 //   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res }, foeCharge { name }, chargeBroken { name },
 //   foeSkip { why }, turnPhase { name }, fightEnd { reason }, ability { cls: 'solo', id, name, slot }, soloAttack, soloParry,
-//   soloDodge, soloCounter.
+//   soloDodge, soloCounter, heroRider { id, foe, key, stacks, boss } (an ordinary foe's or a boss's rider landed on the hero:
+//   chill, venom or weaken; foe-tricks-say-so), turnCard { who, again, secs, chill } (chill: Chill on the hero is why the foe goes
+//   again), foeGetUp (59b: Rattlebones gets back up).
 const TURN_TUNE = {
   on: 1,
   // normal-death-says-so (judge, 2026-10-08): every zone fight (normal, elite, boss) starts at full HP, win or lose. 0 brings back
@@ -473,10 +475,14 @@ function turnPreview(m, n) {
 // 'handoff', while 75-turn-ui shows whose turn it is (turnCard); the turn itself (its damage over time too) starts after it.
 function turnNextTurn(m, io) {
   if (m.ended) return;
+  // foe-tricks-say-so: who would go with no Chill on the hero (the same pick on the same state), so the banner names Chill only
+  // when it is why the foe goes again
+  let free = '';
+  if (m.h.chill > 0) { const c = m.h.chill; m.h.chill = 0; free = turnPick(m).who; m.h.chill = c; }
   const who = turnAdvance(m, m);
   if (m.n > 0 && TURN_TUNE.turnPause > 0) {
     m.phase = 'handoff'; m.pending = who; m.next = who; m.until = m.now + TURN_TUNE.turnPause;
-    io.emit('turnCard', { who, again: m.run > 1, secs: TURN_TUNE.turnPause });
+    io.emit('turnCard', { who, again: m.run > 1, secs: TURN_TUNE.turnPause, chill: who === 'foe' && m.run > 1 && free === 'hero' });
     return;
   }
   turnBegin(m, who, io);
@@ -842,7 +848,7 @@ function turnBegin(m, who, io) {
   }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
   if (e.skip > 0 || e.recover > 0) {
-    const why = e.recover > 0 ? 'recover' : 'stun';
+    const why = e.recover > 0 ? 'recover' : m.lastCtl === 'freeze' ? 'freeze' : 'stun';
     e.skip = 0; e.recover = 0;
     io.emit('turn', { who, n: m.n });
     io.emit('foeSkip', { why, turn: true });
@@ -932,6 +938,9 @@ function turnLand(m, io, hit) {
   else if (r === 'chill') { h.chill = Math.min(2, h.chill + 1); h.chillT = 2; }
   else if (r === 'weaken') h.weaken = 1;
   else if (r === 'blind') h.blind = 1;
+  // foe-tricks-say-so: the words come after the trick lands, never before (75-turn-ui; the Foe tab learns it, 55-mastery)
+  if (r === 'chill' || r === 'venom' || r === 'weaken') { const lf = io.foe && io.foe();
+    io.emit('heroRider', { id: r, foe: p.foeType, key: (lf && lf.type) || p.foeType || '', stacks: r === 'chill' ? h.chill : r === 'venom' ? h.dot.venom : 1, boss: !!p.boss }); }
 }
 function turnContact(m, io) {
   const T = TURN_TUNE, h = m.h, e = m.e, hit = m.move.hits[m.hitI];

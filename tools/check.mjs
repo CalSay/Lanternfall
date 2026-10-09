@@ -13147,6 +13147,143 @@ if (section('normal-death-says-so')) try {
   }
 } catch (e) { fail('normal-death-says-so crashed: ' + (e.stack || e)); }
 
+// ==== foe-tricks-say-so (judge 2026-10-08): a foe's trick says what it did when it lands, never before; the Foe tab learns it ====
+if (section('foe-tricks-say-so')) try {
+  const g = loadCore({ seed: 11, turns: true }), E = s => g.eval(s), J = s => JSON.parse(E(`JSON.stringify(${s})`));
+  E('soloPick("pip", { now: true }); S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity = "fight"; arena = null; S.maxZone = 12; setZone(7); spawn()');
+  for (let t = 0; t < 3 && !E('!!(TURN_LIVE && !TURN_LIVE.ended)'); t += 0.1) g.fn.tick(0.1);
+  assert(E('!!(TURN_LIVE && !TURN_LIVE.ended)'), 'foe tricks: a zone 7 turn fight is live');
+  E('globalThis.__ev = []; for (const n of ["heroRider", "foeGetUp", "turnCard", "foeSkip"]) on(n, p => __ev.push([n, JSON.parse(JSON.stringify(p || {}))]))');
+  // an old save without tricks loads: the default fills it, and nothing is learned before a trick lands
+  assert(J('S.mastery.tricks') && !Object.keys(J('S.mastery.tricks')).length && J('masteryApi.profile("wraith").tricks').length === 0,
+    'foe tricks: S.mastery.tricks starts empty and the Foe tab has no trick line before one lands');
+  // a parried Chill Touch emits nothing; a landed one emits heroRider chill and teaches the wraith's entry
+  const chillMove = '{ id: "chilltouch", name: "Chill Touch", hits: [{ wind: 1.2, x: 0.01, dt: "frost", ride: "chill" }] }';
+  const contact = def => E(`(() => { const m = TURN_LIVE; m.foe.type = "wraith"; m.move = ${chillMove}; m.hitI = 0; m.defense = "${def}"; m.usedDefense = ${def ? 'true' : 'false'}; m.parried = 0; m.flinch = 0; m.fooled = 0;
+    cbUnitByKey("hero").hp = cbUnitByKey("hero").maxHp; turnContact(m, TURN_LIVE_IO); return true; })()`);
+  contact('parry');
+  assert(!J('__ev').some(x => x[0] === 'heroRider') && J('masteryApi.profile("wraith").tricks').length === 0, 'foe tricks: a parried Chill Touch says nothing and teaches nothing');
+  E('__ev.length = 0'); if (!E('!!(TURN_LIVE && !TURN_LIVE.ended)')) { E('spawn()'); for (let t = 0; t < 3 && !E('!!(TURN_LIVE && !TURN_LIVE.ended)'); t += 0.1) g.fn.tick(0.1); }
+  contact('');
+  const rid = J('__ev.filter(x => x[0] === "heroRider")');
+  assert(rid.length === 1 && rid[0][1].id === 'chill' && rid[0][1].key === 'wraith' && rid[0][1].stacks === 1 && rid[0][1].boss === false,
+    `foe tricks: a landed Chill Touch emits heroRider chill once (${JSON.stringify(rid)})`);
+  assert(J('S.mastery.tricks.wraith') && J('S.mastery.tricks.wraith').chill === 1 && J('masteryApi.profile("wraith").tricks').join() === "Chill Touch chills you: you're slower, so it can act twice.",
+    `foe tricks: the first landing teaches the Foe tab line (${JSON.stringify(J('masteryApi.profile("wraith").tricks'))})`);
+  // Venom and Weaken (turnLand): their events carry the real turns; a boss rider says boss and teaches nothing
+  E('__ev.length = 0; cbUnitByKey("hero").hp = cbUnitByKey("hero").maxHp; TURN_LIVE.foe.type = "spore"; turnLand(TURN_LIVE, TURN_LIVE_IO, { x: 0.01, ride: "venom" }); turnLand(TURN_LIVE, TURN_LIVE_IO, { x: 0.01, ride: "weaken" })');
+  const vw = J('__ev.filter(x => x[0] === "heroRider").map(x => x[1].id + ":" + x[1].stacks)');
+  assert(vw.join() === `venom:${E('TURN_TUNE.heroDotT')},weaken:1` && J('masteryApi.profile("spore").tricks').length === 2, `foe tricks: Venom and Weaken landings emit with their turns and teach (${vw})`);
+  E('__ev.length = 0; cbUnitByKey("hero").hp = cbUnitByKey("hero").maxHp; TURN_LIVE.foe.type = "bat"; TURN_LIVE.p.boss = true; turnLand(TURN_LIVE, TURN_LIVE_IO, { x: 0.01, ride: "venom" }); TURN_LIVE.p.boss = false');
+  assert(J('__ev.filter(x => x[0] === "heroRider")').map(x => x[1].boss).join() === 'true' && E('!S.mastery.tricks.bat'), 'foe tricks: a boss rider emits with boss set and teaches no Foe tab line');
+  // a rider with no word (Bleed, Blind) emits nothing
+  E('__ev.length = 0; turnLand(TURN_LIVE, TURN_LIVE_IO, { x: 0.01, ride: "bleed" })');
+  assert(!J('__ev').length, 'foe tricks: a Bleed rider sends no trick event (no word for a trick zones 6-12 do not have)');
+  // the Chill cause: Chill is named only when the hero would have gone without it
+  const card = (gFsplit) => J(`(() => { const p = TURN_LIVE.p, out = []; const io = { ...TURN_LIVE_IO, emit: (n, x) => { if (n === 'turnCard') out.push(x); } };
+    const m = turnNew(p, io); m.n = 1; m.last = 'foe'; m.run = 1; m.gH = 0; m.h.chill = 2;
+    const rH0 = p.heroSpd, rH1 = turnRate(m, 'hero'), rF = turnRate(m, 'foe'), tF = ${gFsplit} ? (100 / rH0 + 100 / rH1) / 2 : 0;
+    m.gF = 100 - tF * rF; turnNextTurn(m, io); return out[0] || null; })()`);
+  const caused = card(true), notCaused = card(false);
+  assert(caused && caused.who === 'foe' && caused.again && caused.chill === true, `foe tricks: a second foe turn Chill caused sends turnCard chill (${JSON.stringify(caused)})`);
+  assert(notCaused && notCaused.who === 'foe' && notCaused.again && caused && notCaused.chill === false, `foe tricks: a second foe turn the hero would not have had anyway keeps the plain banner (${JSON.stringify(notCaused)})`);
+  // a frozen foe's lost turn says freeze, a stunned one stun (the engine's control path)
+  const skip = kind => J(`(() => { const p = TURN_LIVE.p, out = []; const io = { ...TURN_LIVE_IO, emit: (n, x) => { if (n === 'foeSkip' && x.turn) out.push(x.why); } };
+    const m = turnNew(p, io); turnControl(m, io, '${kind}'); m.gF = 100; m.gH = 0; m.last = 'hero'; m.run = 1; m.n = 0; turnNextTurn(m, io); return out; })()`);
+  assert(skip('freeze').join() === 'freeze' && skip('stun').join() === 'stun', `foe tricks: a frozen foe's lost turn is Frozen, a stunned one's Stunned (${skip('freeze')}, ${skip('stun')})`);
+  // Rattlebones: an Ignite kill gets it up once (foeGetUp, and the Foe tab learns it); a Burn tick kill keeps it down
+  E('__ev.length = 0; (() => { const f = TURN_LIVE.foe; f.type = "bones"; f.again = false; cbTurnDamageFoe(f, f.hp + 1, "ignite", false, "fire", 0, ""); })()');
+  const up = J('__ev.filter(x => x[0] === "foeGetUp")'), back = J('(f => ({ hp: f.hp / f.max, again: !!f.again }))(TURN_LIVE.foe)');
+  assert(up.length === 1 && up[0][1].key === 'bones' && Math.abs(back.hp - 0.2) < 1e-9 && back.again && J('masteryApi.profile("bones").tricks').join() === 'Gets back up once. A Burn that finishes it keeps it down.',
+    `foe tricks: an Ignite kill on Rattlebones gets it back up once, says foeGetUp and teaches the Foe tab (${JSON.stringify([up, back])})`);
+  E('__ev.length = 0; (() => { const f = TURN_LIVE.foe; cbTurnDamageFoe(f, f.hp + 1, "ignite", false, "fire", 0, ""); })()');
+  assert(!J('__ev').some(x => x[0] === 'foeGetUp'), 'foe tricks: it gets up only once');
+  E('spawn()'); for (let t = 0; t < 4 && !E('!!(TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.foe && !TURN_LIVE.foe.dead)'); t += 0.1) g.fn.tick(0.1);
+  E('__ev.length = 0; (() => { const f = TURN_LIVE.foe; f.type = "bones"; f.again = false; cbTurnDamageFoe(f, f.hp + 1, "burn", false, "fire", 1, ""); })()');
+  assert(!J('__ev').some(x => x[0] === 'foeGetUp') && E('TURN_LIVE.foe.hp <= 0 || !!TURN_LIVE.foe.dead'), 'foe tricks: a Burn tick kill keeps Rattlebones down and says nothing');
+  // the resist mark: Burn and Ignite floats carry it when the foe resists fire; a physical hit on a Wraith carries it too
+  E('spawn()'); for (let t = 0; t < 4 && !E('!!(TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.foe && !TURN_LIVE.foe.dead)'); t += 0.1) g.fn.tick(0.1);
+  const rel = (row, kind, dt) => J(`(() => { const f = TURN_LIVE.foe, t0 = f.txRow; f.txRow = '${row}'; let r = null; const k = p => { if (r === null) r = { rel: p.rel, hdt: p.hdt, hk: p.hk }; }; on('float', k);
+    cbTurnDamageFoe(f, 1, '${kind}', false, '${dt}', 1, ''); f.txRow = t0; f.hp = f.max; return r; })()`);
+  const rb = rel('deckhand', 'burn', 'fire'), ri = rel('deckhand', 'ignite', 'fire'), rw = rel('wraith', 'attack', 'phys'), rs = rel('slime', 'burn', 'fire');
+  assert(rb.rel === -1 && ri.rel === -1 && rw.rel === -1 && rw.hdt === 'phys' && rs.rel === 0, `foe tricks: Burn and Ignite carry the resist mark on a foe that resists fire (never the weak mark), as a physical hit on a Wraith does (${JSON.stringify([rb, ri, rw, rs])})`);
+  // save codes: the learned tricks pass; a junk row or value is refused; a code without them still loads
+  const vs = d => E(`(() => { const d = JSON.parse(JSON.stringify(fresh())); d.mastery = JSON.parse(JSON.stringify(S.mastery)); ${d}; const r = validateSave(d); return r.ok || r.error; })()`) === true;
+  assert(vs('') && vs('delete d.mastery.tricks') && !vs('d.mastery.tricks.wraith = 5') && !vs('d.mastery.tricks.wraith = { chill: "yes" }') && !vs('d.mastery.tricks.wraith = { heal: 1 }'),
+    'foe tricks: a save code keeps learned tricks, loads without them and refuses a junk row');
+  assert(!g.errors.length, 'foe tricks: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('foe-tricks-say-so (browser): Playwright or Chromium not here, skipped'); }
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const desk = w === 1280, ctx = await browser.newContext(desk ? { turns: true, viewport: { width: w, height: h } } : { turns: true, viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = src => page.evaluate(src => window.__t.x(src), src);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity !== 'fight' && setActivity('fight'); S.maxZone = Math.max(S.maxZone, 8); setZone(7); ui(true); true`);
+        const live = async () => { for (let i = 0; i < 40 && !(await X('!!(TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== "intro" && TURN_LIVE.foe && !TURN_LIVE.foe.dead)')); i++) await page.waitForTimeout(150); };
+        await live();
+        const warn = () => page.evaluate(() => { const b = document.querySelector('.tv-warn'), box = document.getElementById('stageBox'); if (!b || b.hidden) return { on: false };
+          const r = b.getBoundingClientRect(), sb = box.getBoundingClientRect();
+          return { on: true, txt: b.textContent, inside: r.left >= sb.left - 1 && r.right <= sb.right + 1, cut: b.scrollWidth > b.clientWidth + 1 }; });
+        // nothing says a trick before one lands
+        const before = await X('JSON.stringify({ said: document.body.dataset.trickSaid || "", lines: masteryApi.profile("wraith").tricks })').then(JSON.parse);
+        assert(!before.said && !before.lines.length, `${w}x${h}: no trick word or Foe tab line before a trick lands`);
+        // a landed Chill (the engine's own path) says so on the stage line, inside the stage and whole
+        await X('TURN_LIVE.foe.type = "wraith"; turnLand(TURN_LIVE, TURN_LIVE_IO, { x: 0.001, ride: "chill" }); true'); await page.waitForTimeout(60);
+        let s = await warn();
+        assert(s.on && s.txt === "Chilled: you're slower" && s.inside && !s.cut, `${w}x${h}: a landed Chill says "Chilled: you're slower" inside the stage (${JSON.stringify(s)})`);
+        await X(`emit('turnCard', { who: 'foe', again: true, secs: 0.9, chill: true }); true`); await page.waitForTimeout(60);
+        s = await warn();
+        assert(s.on && /^Chilled: .+ goes again$/.test(s.txt) && s.inside && !s.cut, `${w}x${h}: a Chill-caused second turn says "Chilled: <foe> goes again" (${JSON.stringify(s)})`);
+        await X(`document.querySelector('.tv-warn').hidden = true; emit('turnCard', { who: 'foe', again: true, secs: 0.9, chill: false }); true`); await page.waitForTimeout(60);
+        assert(!(await warn()).on, `${w}x${h}: a second turn Chill did not cause says nothing more than the banner`);
+        for (const [ev, want] of [[`{ id: 'venom', stacks: 2, boss: false }`, 'Venom: you take damage for 2 turns'], [`{ id: 'weaken', stacks: 1, boss: false }`, 'Weakened: your next move hits softer']]) {
+          await X(`emit('heroRider', ${ev}); true`); await page.waitForTimeout(40); s = await warn();
+          assert(s.on && s.txt === want && !s.cut, `${w}x${h}: ${want} (${JSON.stringify(s)})`);
+        }
+        await X(`document.querySelector('.tv-warn').hidden = true; emit('heroRider', { id: 'venom', stacks: 2, boss: true }); true`); await page.waitForTimeout(40);
+        assert(!(await warn()).on, `${w}x${h}: a boss rider shows no ordinary trick word`);
+        await X(`emit('foeGetUp', { name: 'Rattlebones', hp: 10, key: 'bones' }); true`); await page.waitForTimeout(40); s = await warn();
+        assert(s.on && s.txt === 'Rattlebones gets back up!' && !s.cut, `${w}x${h}: the get-up says so (${JSON.stringify(s)})`);
+        // resist and armour, once a fight each: the first physical hit on a Wraith says Resists physical, the second nothing; a golem says Armoured
+        await X(`document.querySelector('.tv-warn').hidden = true; emit('fightStart', { heroHaste: 10, foeHaste: 9, first: 'hero' }); (() => { const f = TURN_LIVE.foe; f.txRow = 'wraith'; f.tk.arm = 0; cbTurnDamageFoe(f, 1, 'attack', false, 'phys', 0, ''); })(); true`);
+        await page.waitForTimeout(40); s = await warn();
+        assert(s.on && s.txt === 'Resists physical', `${w}x${h}: the first resisted hit says "Resists physical" (${JSON.stringify(s)})`);
+        await X(`document.querySelector('.tv-warn').hidden = true; cbTurnDamageFoe(TURN_LIVE.foe, 1, 'attack', false, 'phys', 0, ''); true`); await page.waitForTimeout(40);
+        assert(!(await warn()).on, `${w}x${h}: the second resisted hit of the fight says nothing`);
+        await X(`emit('fightStart', { heroHaste: 10, foeHaste: 9, first: 'hero' }); (() => { const f = TURN_LIVE.foe; f.txRow = 'golem'; f.tk.arm = 0.3; cbTurnDamageFoe(f, 1, 'attack', false, 'phys', 0, ''); f.txRow = ''; f.tk.arm = 0; })(); true`);
+        await page.waitForTimeout(40); s = await warn();
+        assert(s.on && s.txt === 'Armoured', `${w}x${h}: the first physical hit on an armoured foe says "Armoured" (${JSON.stringify(s)})`);
+        // a frozen foe's lost turn floats Frozen
+        await X(`window.__fl = []; on('float', p => __fl.push(p.txt)); emit('foeSkip', { why: 'freeze', turn: true }); true`);
+        assert((await X('__fl.join()')).includes('Frozen') && !(await X('__fl.join()')).includes('Stunned'), `${w}x${h}: a frozen foe's lost turn floats "Frozen"`);
+        // the Foe tab shows the learned line (the live foe set to a Wraith)
+        if (desk || w === 740) {
+          await X(`TURN_LIVE.foe.type = 'wraith'; true`);
+          const tab = page.locator('.sb-tab[data-tab="foe"]');
+          if (await tab.isVisible().catch(() => false)) {
+            await page.evaluate(() => { document.querySelectorAll('.away-ov').forEach(o => o.remove()); document.querySelector('.sb-tab[data-tab="foe"]').click(); }); await page.waitForTimeout(400);
+            const rows = await page.evaluate(() => [...document.querySelectorAll('.sb-fr')].filter(r => r.offsetParent).map(r => r.textContent));
+            assert(rows.some(r => /^Trick.*Chill Touch chills you: you're slower, so it can act twice\.$/.test(r)), `${w}x${h}: the Foe tab shows the learned Chill line (${JSON.stringify(rows)})`);
+          } else fail(`${w}x${h}: the Foe tab button is not visible`);
+        }
+        assert(!errs.length, `${w}x${h}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('foe-tricks-say-so crashed: ' + (e.stack || e)); }
+
 if (section('foe moves by type')) try {
   const g = loadCore({ seed: 7 }), E = s => g.eval(s), J = s => JSON.parse(E(`JSON.stringify(${s})`));
   const types = J('Object.keys(TURN_FOE_TYPES)');
