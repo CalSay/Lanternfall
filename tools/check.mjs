@@ -11763,11 +11763,12 @@ if (section('next tier gate')) try {
   const reset = () => E(`(() => { const o = JSON.parse(${JSON.stringify(snap)}); Object.assign(S.skills, o.skills); Object.assign(S.mats, o.mats); HUNT_TUNE.on = true; })()`);
   // 1. tier-two-named-for-return: the piece with the least XP left over all its gates (Woodcraft 8 of 10, Woodcutting 7 and Mining 5 of 14
   // for the Birch Bow), named by its furthest gate; never Ready; with every tier 1 piece worn it keeps a row in the top three, no boss loss needed
-  const away = '. Gathering keeps going while you\'re away.';
+  // away-line-only-when-true: the fixture fights, so a gathering gate says how to keep the skill rising away
+  const away = sk => `. Gather ${sk} before you leave and it keeps going.`;
   let l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away && !row(l).ready, `next tier gate: the Birch Bow's furthest gate shows (${JSON.stringify(l)})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining') && !row(l).ready, `next tier gate: the Birch Bow's furthest gate shows (${JSON.stringify(l)})`);
   const top3 = E('topGoals(3, { sticky: false }).map(x => x.label)');
-  assert(top3.includes('Birch Bow: Mining 5 of 14 opens Iron Ore' + away), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
+  assert(top3.includes('Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining')), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
   let go = goOf('forge');
   assert(go && go.tab === 'gat' && go.view === 'mine', `next tier gate: the material gate's Go opens the Mining view (${JSON.stringify(go)})`);
   assert(/^Mining: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('skill') || {}).view === 'mine', `next tier gate: the skill row follows the gate to Mining (${JSON.stringify(l.find(x => x.id === 'skill'))})`);
@@ -11787,7 +11788,7 @@ if (section('next tier gate')) try {
   // 3. with the stations open, still the bow's furthest gate (Mining 5, not the nearer Woodcutting 7); Go opens the Mining view
   E('S.skills.bench.lv = 10; S.skills.loom.lv = 10');
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away && !row(l).ready, `next tier gate: with the stations open, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining') && !row(l).ready, `next tier gate: with the stations open, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
   // 4. the Birch Bow's middles in the bag (refine-queues: 5 Birch Plank and 2 Iron Ingot; gear-in-first-25 Step 0, wood + metal): the craft, Ready
   E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2');
   l = goals();
@@ -11795,11 +11796,11 @@ if (section('next tier gate')) try {
   // 5. Birch Log enough for its planks: the bow's gate is Mining for the Iron Ore its Iron Ingots are smelted from (gear-in-first-25: was Hunting for Duskfang Pelt)
   E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 5');   // Mining 5 alone: less XP left than the Quiver's Hunting 4 and Foraging 2
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away, `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining'), `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
   // 6. with Hunting hidden, no hide gate shows. The bow is wood + metal now (gear-in-first-25), so the hide gate is set up with the old hide bow
   E('globalThis.__bowRec = CRAFT_KINDS.bow.rec; CRAFT_KINDS.bow.rec = { wood: 6, hide: 2, ess: 2 }; S.skills.mine.lv = 1; S.skills.mine.xp = 0; S.skills.forage.lv = 14; S.mats.wood[1] = 40');   // Hunting is its one gate; Mining 1 puts the tools' Iron Ore further off
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Hunting 4 of 14 opens Duskfang Pelt' + away, `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Hunting 4 of 14 opens Duskfang Pelt' + away('Hunting'), `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
   E('HUNT_TUNE.on = false');
   l = goals();
   assert(!l.some(x => /Hunting \d+ of|Duskfang Pelt$/.test(x.label)), `next tier gate: with Hunting hidden, no hide gate (${JSON.stringify(row(l))})`);
@@ -16277,7 +16278,8 @@ if (section('turn-banner-clears-plate')) try {
 // with Hunting and Foraging 43 minutes behind it, and the row sat below the top 8.
 if (section('tier-two-named-for-return')) try {
   const at = 'tier-two-named-for-return', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
-  const want = 'Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you\'re away.';
+  // away-line-only-when-true: the save fights, so the away sentence says how to make it true
+  const want = 'Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going.';
   const load = () => { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1)'); return g; };
   { const g = load(), E = s => g.eval(s);
     const b = JSON.parse(E('JSON.stringify(craftGoalNext())'));
@@ -16350,6 +16352,79 @@ if (section('tier-two-named-for-return')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('tier-two-named-for-return crashed: ' + (e.stack || e)); }
+
+// ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
+// save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
+// (50-sim awayBase), so the row promises "keeps going" only then; fighting or gathering another skill says how to make it true.
+if (section('away-line-only-when-true')) try {
+  const at = 'away-line-only-when-true', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  const base = 'Birch Bow: Mining 7 of 14 opens Iron Ore. ', on = base + 'Gathering keeps going while you\'re away.', off = base + 'Gather Mining before you leave and it keeps going.';
+  const states = [['fighting', '', off], ['gathering Woodcutting', 'setNode("wood", 1); setActivity("gather")', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather")', on]];
+  for (const [name, set, want] of states) {
+    const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    E('tick(0.1)'); if (set) E(set);
+    const r = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge');
+    assert(r && r.label === want, `${at}: ${name}, the row reads "${want}" (${JSON.stringify(r)})`);
+    // an away run of 1 h from this state: Mining rises only when the row says it keeps going
+    const lv0 = E('S.skills.mine.lv'), xp0 = E('S.skills.mine.xp'), rep = E('(() => { const r = awayGains(3600); return { note: r.note, lines: r.lines.map(l => l.txt) }; })()');
+    const rose = E('S.skills.mine.lv') > lv0 || E('S.skills.mine.xp') > xp0;
+    assert(rose === (want === on), `${at}: ${name}, 1 h away ${want === on ? 'raises' : 'leaves'} Mining (${lv0} -> ${E('S.skills.mine.lv')}; away report: ${JSON.stringify(rep)})`);
+  }
+  // the sentence follows the activity: back to a fight, the row says how to make it true again
+  { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s), lbl = () => (E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge') || {}).label;
+    E('tick(0.1); setNode("ore", 1); setActivity("gather")'); const a = lbl(); E('setActivity("fight")'); const b = lbl();
+    assert(a === on && b === off, `${at}: the sentence changes with the activity (${a} / ${b})`);
+    // a station gate has no away sentence while gathering either
+    E('setActivity("gather"); S.mats.plank[1] = 5; S.mats.ingot[1] = 2; S.skills.bench.lv = 8; gearDirty()');
+    const c = lbl();
+    assert(c === 'Birch Bow: Woodcraft 8 of 10', `${at}: a station gate says nothing about away (${c})`);
+  }
+  // review: a Deepwell run started from Mining fights below, but away resumes the gathering (57d awayBegin), so the row keeps its promise
+  { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s), lbl = () => (E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge') || {}).label;
+    E('tick(0.1); setNode("ore", 1); setActivity("gather"); S.camp.b.hearth = Math.max(3, S.camp.b.hearth || 0)');
+    assert(E('deepUnlocked() && DW.start(false)') && E('S.activity') === 'fight' && E('DW.run().act') === 'gather', `${at}: a Deepwell run starts from Mining`);
+    const a = lbl(), lv0 = E('S.skills.mine.lv'); E('awayGains(3600)');
+    assert(a === on && E('S.skills.mine.lv') > lv0, `${at}: in a Deepwell run started from Mining the row says it keeps going, and 1 h away raises Mining (${a}; ${lv0} -> ${E('S.skills.mine.lv')})`);
+  }
+  // both sentences show whole in the Next Up list at the three views, 14 px or more on the desktop
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800);
+        const measure = want => page.evaluate(want => { const row = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want); if (!row) return null;
+          const l = row.querySelector('.nu-lbl'), a = l.getBoundingClientRect(), b = row.getBoundingClientRect();
+          return { cut: l.scrollHeight > l.clientHeight + 1 || l.scrollWidth > l.clientWidth + 1, fs: parseFloat(getComputedStyle(l).fontSize), inRow: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        for (const [name, set, want] of [['fighting', '', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather"); true', on]]) {
+          if (set) { await X(set); await page.waitForTimeout(800); }   // the open list redraws every 500 ms
+          const o = await measure(want);
+          assert(o, `${v}: ${name}, the Next Up list shows "${want}"`);
+          if (o) {
+            assert(!o.cut && o.inRow, `${v}: ${name}, the row's words show whole inside the row (${JSON.stringify(o)})`);
+            if (!phone) assert(o.fs >= 14, `${v}: ${name}, the row keeps the 14 px desktop text floor (${o.fs})`);
+          }
+        }
+        if (process.env.LF_PROOF_SHOTS) await page.screenshot({ path: path.join(process.env.LF_PROOF_SHOTS, `${at}-${w}x${h}.png`) });
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('away-line-only-when-true crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

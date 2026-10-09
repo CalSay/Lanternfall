@@ -1,0 +1,1 @@
+Next up only says gathering keeps going while you're away when your hero is gathering that skill. Otherwise it tells you what to do, for example "Gather Mining before you leave and it keeps going." Best shot: away-line-fighting.
