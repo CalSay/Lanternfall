@@ -69,7 +69,8 @@
 .ab-res { margin: 0; font-size: 13px; }
 
 /* the filters */
-.ab-filt { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 2px solid #0B0810; background: var(--well, #140F1A); }
+/* menu-tip-room: each button is at least as wide as its label, so "Can learn 2" reads in full at 360 wide (All gives up its room) */
+.ab-filt { display: grid; grid-template-columns: minmax(min-content, 2fr) minmax(min-content, 3fr) minmax(min-content, 3fr); border: 2px solid #0B0810; background: var(--well, #140F1A); }
 .ab-fb { min-width: 0; min-height: 44px; padding: 0 4px; background: none; border: 0; color: var(--muted); cursor: pointer;
   font: 600 calc(14px * var(--display-k, 1))/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ab-fb + .ab-fb { border-left: 2px solid #0B0810; }

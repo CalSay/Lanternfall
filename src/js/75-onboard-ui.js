@@ -225,6 +225,10 @@
     if (!r.width || !r.height) return false;
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return false;
+    // menu-tip-room: upright, a menu row scrolled past the menu's edge is out of reach, though the point may land on the menu around it
+    // (wide views lay some menus out beside the scroller, so they keep the old test)
+    const pn = $('panels'), pr = pn && bub.classList.contains('over-menu') && pn.contains(n) ? pn.getBoundingClientRect() : null;
+    if (pr && (y < pr.top || y > pr.bottom)) return false;
     const h = document.elementFromPoint(x, y);
     return !!h && (n.contains(h) || h.contains(n));
   }
@@ -465,6 +469,7 @@
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
   onboardSpec = id => { const table = SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
   let lastNode = null, lastRect = null;
+  const resKept = new WeakSet();   // craft result cards the guide has already left in view once
   function place(spec) {
     const key = spec.text, newTarget = spec.node !== lastNode;
     const inPanel = !!S.tab && panels.contains(spec.node);
@@ -504,7 +509,14 @@
     // scroll or reflow only moves the ring, so following it never pulls the player back.
     if (inPanel && !spec.noRing && (newTarget || reveal)) {
       const pr = panels.getBoundingClientRect();
-      if (r.height && (r.top < pr.top || r.bottom > pr.bottom - (bub.classList.contains('over-menu') ? bub.offsetHeight + 12 : 56))) {
+      // menu-tip-room: over a menu the panel has its own grid row, so the menu already ends above it; count only a small gap, not its height again
+      const hid = r.height && (r.top < pr.top || r.bottom > pr.bottom - (bub.classList.contains('over-menu') ? 12 : 56));
+      // menu-tip-room: upright, a fresh craft result card in view ("Copper Pickaxe on.") is not scrolled away the first time a new target asks;
+      // the target waits for the player's own scroll (craft-delta's route, after #235). Wide views keep the card beside the list.
+      const res = hid && mode === 'over-menu' ? q('#panels .cf-res') : null, rr = res && res.getBoundingClientRect();
+      const keep = !!rr && rr.height > 0 && rr.bottom > pr.top && rr.top < pr.bottom && !res.contains(spec.node) && !resKept.has(res);
+      if (keep) resKept.add(res);
+      if (hid && !keep) {
         scrollMenuTo(spec.node);
         r = spec.node.getBoundingClientRect();
       }

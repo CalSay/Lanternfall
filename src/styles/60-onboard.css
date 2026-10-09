@@ -27,6 +27,17 @@
 .ob-bub.ok-row:not(.side) .ob-x { display: none; }
 .ob-bub.ok-row:not(.side) .ob-txt { grid-row: 1 / span 2; }
 .ob-bub.ok-row:not(.side) .ob-ok { grid-column: 3; grid-row: 1 / span 2; align-self: center; margin-top: 0; padding: 0 12px; }
+/* menu-tip-room: over a menu the panel is a compact strip, so the menu keeps its room (at 360x740 at most 96 px for a line of about 110
+   letters with a button). His face at half its 64 px size with × under it, the text wrapping beside it, the button at the side.
+   The dock and the landscape side column are unchanged. */
+.app > .ob-bub.over-menu { grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); column-gap: 8px;
+  padding: 4px 6px 4px 4px; font-size: 13px; line-height: 1.25; }
+.app > .ob-bub.over-menu .ob-facebox { grid-column: 1; grid-row: 1; justify-self: center; width: 36px; height: 36px; }
+.app > .ob-bub.over-menu .ob-face { width: 32px; height: 32px; }
+.app > .ob-bub.over-menu .ob-txt { grid-column: 2; grid-row: 1 / span 2; }
+.app > .ob-bub.over-menu .ob-x { grid-column: 1; grid-row: 2; align-self: end; margin-top: 0; }
+.app > .ob-bub.over-menu .ob-ok { grid-column: 3; grid-row: 1 / span 2; align-self: center; margin-top: 0; max-width: 104px; padding: 0 6px;
+  font-size: calc(13px * var(--display-k)); line-height: 1.1; }
 .ob-bub.pop { animation: obIn .22s ease-out; }
 @keyframes obIn { from { opacity: 0; transform: translateY(6px); } }
 .ob-facebox { grid-column: 1; grid-row: 1 / span 2; width: 48px; height: 48px; display: grid; place-items: center; background: #0E0B12; border: 2px solid #0B0810; outline: 1px solid var(--line-hi); }

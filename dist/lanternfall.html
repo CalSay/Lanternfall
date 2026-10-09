@@ -497,7 +497,8 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .ab-res { margin: 0; font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); }
 
 /* the filters */
-.ab-filt { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 2px solid #0B0810; background: var(--well, #140F1A); }
+/* menu-tip-room: each button is at least as wide as its label, so "Can learn 2" reads in full at 360 wide (All gives up its room) */
+.ab-filt { display: grid; grid-template-columns: minmax(min-content, 2fr) minmax(min-content, 3fr) minmax(min-content, 3fr); border: 2px solid #0B0810; background: var(--well, #140F1A); }
 .ab-fb { min-width: 0; min-height: 44px; padding: 0 4px; background: none; border: 0; color: var(--muted); cursor: pointer;
   font: 600 max(var(--tmin, 0px), calc((14px * var(--display-k, 1)) * var(--tk, 1)))/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ab-fb + .ab-fb { border-left: 2px solid #0B0810; }
@@ -2512,6 +2513,17 @@ span.cf-d { font-weight: 600; }
 .ob-bub.ok-row:not(.side) .ob-x { display: none; }
 .ob-bub.ok-row:not(.side) .ob-txt { grid-row: 1 / span 2; }
 .ob-bub.ok-row:not(.side) .ob-ok { grid-column: 3; grid-row: 1 / span 2; align-self: center; margin-top: 0; padding: 0 12px; }
+/* menu-tip-room: over a menu the panel is a compact strip, so the menu keeps its room (at 360x740 at most 96 px for a line of about 110
+   letters with a button). His face at half its 64 px size with × under it, the text wrapping beside it, the button at the side.
+   The dock and the landscape side column are unchanged. */
+.app > .ob-bub.over-menu { grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); column-gap: 8px;
+  padding: 4px 6px 4px 4px; font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); line-height: 1.25; }
+.app > .ob-bub.over-menu .ob-facebox { grid-column: 1; grid-row: 1; justify-self: center; width: 36px; height: 36px; }
+.app > .ob-bub.over-menu .ob-face { width: 32px; height: 32px; }
+.app > .ob-bub.over-menu .ob-txt { grid-column: 2; grid-row: 1 / span 2; }
+.app > .ob-bub.over-menu .ob-x { grid-column: 1; grid-row: 2; align-self: end; margin-top: 0; }
+.app > .ob-bub.over-menu .ob-ok { grid-column: 3; grid-row: 1 / span 2; align-self: center; margin-top: 0; max-width: 104px; padding: 0 6px;
+  font-size: max(var(--tmin, 0px), calc((13px * var(--display-k)) * var(--tk, 1))); line-height: 1.1; }
 .ob-bub.pop { animation: obIn .22s ease-out; }
 @keyframes obIn { from { opacity: 0; transform: translateY(6px); } }
 .ob-facebox { grid-column: 1; grid-row: 1 / span 2; width: 48px; height: 48px; display: grid; place-items: center; background: #0E0B12; border: 2px solid #0B0810; outline: 1px solid var(--line-hi); }
@@ -2809,6 +2821,13 @@ span.cf-d { font-weight: 600; }
 .sb-dodge .sb-lb { color: #8FB8FF; }
 .sb-abslot { outline-color: #9A7A2E; box-shadow: inset 0 0 0 4px #33283E, inset 0 0 0 5px #6B5320, 0 3px 0 #0B0810; background: #231A30; }
 .sb-abslot .sb-lb { color: var(--gold); }
+/* menu-tip-room: upright, an ability's name steps down with the screen's width and a two-word name wraps to a second line, so "Fireball",
+   "Echo Shot" and "Shield Bash" read in full on a 360 wide phone (the tile is 70 px inside there; "Fireball" needs 82 at 14 px). The tile
+   keeps its height. Landscape and desktop set their own sizes (80-landscape.css). */
+@media (max-aspect-ratio: 1/1), (max-width: 599px) {
+  .sb-abslot .sb-lb { font-size: min(calc(14px * var(--display-k, 1)), calc(3.2vw * var(--display-k, 1))); letter-spacing: 0;
+    white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+}
 .sb-abslot.ready { outline-color: var(--gold); }
 .sb-abslot.empty { background: #16111C; outline-color: #3A3046; box-shadow: inset 0 0 0 4px #1E1826, 0 3px 0 #0B0810; }
 .sb-abslot.empty .sb-lb { color: #6B6275; }
@@ -43821,6 +43840,10 @@ let navUI = null;
     if (!r.width || !r.height) return false;
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return false;
+    // menu-tip-room: upright, a menu row scrolled past the menu's edge is out of reach, though the point may land on the menu around it
+    // (wide views lay some menus out beside the scroller, so they keep the old test)
+    const pn = $('panels'), pr = pn && bub.classList.contains('over-menu') && pn.contains(n) ? pn.getBoundingClientRect() : null;
+    if (pr && (y < pr.top || y > pr.bottom)) return false;
     const h = document.elementFromPoint(x, y);
     return !!h && (n.contains(h) || h.contains(n));
   }
@@ -44061,6 +44084,7 @@ let navUI = null;
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
   onboardSpec = id => { const table = SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
   let lastNode = null, lastRect = null;
+  const resKept = new WeakSet();   // craft result cards the guide has already left in view once
   function place(spec) {
     const key = spec.text, newTarget = spec.node !== lastNode;
     const inPanel = !!S.tab && panels.contains(spec.node);
@@ -44100,7 +44124,14 @@ let navUI = null;
     // scroll or reflow only moves the ring, so following it never pulls the player back.
     if (inPanel && !spec.noRing && (newTarget || reveal)) {
       const pr = panels.getBoundingClientRect();
-      if (r.height && (r.top < pr.top || r.bottom > pr.bottom - (bub.classList.contains('over-menu') ? bub.offsetHeight + 12 : 56))) {
+      // menu-tip-room: over a menu the panel has its own grid row, so the menu already ends above it; count only a small gap, not its height again
+      const hid = r.height && (r.top < pr.top || r.bottom > pr.bottom - (bub.classList.contains('over-menu') ? 12 : 56));
+      // menu-tip-room: upright, a fresh craft result card in view ("Copper Pickaxe on.") is not scrolled away the first time a new target asks;
+      // the target waits for the player's own scroll (craft-delta's route, after #235). Wide views keep the card beside the list.
+      const res = hid && mode === 'over-menu' ? q('#panels .cf-res') : null, rr = res && res.getBoundingClientRect();
+      const keep = !!rr && rr.height > 0 && rr.bottom > pr.top && rr.top < pr.bottom && !res.contains(spec.node) && !resKept.has(res);
+      if (keep) resKept.add(res);
+      if (hid && !keep) {
         scrollMenuTo(spec.node);
         r = spec.node.getBoundingClientRect();
       }
