@@ -1,0 +1,22 @@
+# seed: 1
+# Proof for card upright-tablet: a tablet held upright (768x1024) gets the portrait layout at the screen's full width instead of
+# the 560 px phone strip: the stage, the Hero menu and an item sheet span the width, and the fight bar grows. CI replays routes
+# at 360x740, 740x360 and 1920x1080, where nothing changes; run it with --view 768x1024 to see the tablet. The widths at
+# 768x1024 are asserted in tools/check.mjs, section 'desktop layout (browser, desktop-layout-v1)' ("768x1024: ...").
+new mid
+wait 1
+tap-if "Close"
+wait 1
+tap-if "Close"
+wait 1
+expect "Parry"
+expect "Dodge"
+shot fight
+tap "Hero"
+wait 1
+expect "Your hero"
+shot hero
+tap-if "Gear"
+wait 1
+expect "Your gear"
+shot gear

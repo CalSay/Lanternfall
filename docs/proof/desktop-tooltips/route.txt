@@ -1,0 +1,26 @@
+# seed: 1
+# Proof for card desktop-tooltips (docs/design/desktop-layout.md "Later: tooltips"). Run: grep -v '^#' route.txt | node tools/playtest.mjs batch --seed 1
+# (desktop 1280x720 by default; then --view hd). Touch views skip each hover and carry on. Fixture save-current: Tobin at zone 20, worn gear.
+#   tip-ability-*.png  the fight: the pointer rests on the Q slot; its tip names Shield Bash and says what it does.
+#   tip-item-*.png     Hero > Gear: the pointer rests on the weapon; its tip gives grade, tier, power, its stat lines, and that you wear it.
+#   tip-row-*.png      Hero > Abilities: the pointer rests on Brace; its tip is the head and text of the card a click opens.
+# Cost chips are not buttons, so a route cannot rest on one: check.mjs holds their tip (name, have, need).
+# The rest (every tip line is on the view a click opens, no tip off the screen edge, a tap opens no tip) is held by tools/check.mjs ("desktop tooltips").
+new current
+wait 2
+tap-if "Continue"
+hover "Shield Bash"
+shot tip-ability
+tap "Hero"
+tap "Gear"
+wait 1
+hover "Weapon"
+shot tip-item
+tap "Weapon"
+wait 1
+expect "Silver Warblade"
+key Escape
+tap "Abilities"
+wait 1
+hover "Brace"
+shot tip-row

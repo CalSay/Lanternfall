@@ -29,6 +29,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   and the Journal's Tips lists it as "Tips you missed". Opus judge and a Sonnet red team: the turn-fight boss line says "Watch the
   bar" because only the legacy fight draws red rings; "stretch" and "strings" cut as jargon; the legacy Parry line no longer claims a
   stagger it cannot show. Save risk read (Opus): safe, no new field. Camp and gather tips stay plain until `unlock-voice`.
+- **Tips say Paused (tips-pause-says-so, Opus high judge, 2026-10-08; Cal can veto with "Unlock lines hold
+  gathering again" or "Fight keys don't close tips").** A Hesketh news line holds only the gap between fights, never gathering or a fight
+  behind a menu. Any other hold that isn't a lesson shows "Paused" on the stage and in Gather. A fight press during a Got it hold counts as
+  Got it and then acts. The action bar stays in view, dimmed, wherever the tip doesn't cover it.
 - **Claude decided: materials lines show on Camp, on Gather and while gathering, never over other menus (card forge-tip-goes-stale,
   2026-10-08; Cal can veto with "keep the Forge tip on every menu").** This narrows "camp and menu tips stay up" above for Hesketh's
   materials lines only ("You still need these for the Forge: ..."): a fighter saw one on every menu for 15 minutes and it covered the hero
@@ -175,12 +179,18 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   (its bar sits near 0), unless the craft goal holds that row for a tier gate.
 - **Fight feel:** a pause between turns with a whose-turn banner, a bigger labelled timing bar, hit-stop and shake on
   big hits, damage numbers that say their source, ability numbers shown only outside a fight. (2026-10-02)
+- **The banner pause is shown, not buffered (fight-input-during-banner, planner 2026-10-08; Cal can veto
+  with "queue presses during the banner").** While the turn banner or VS card plays, Attack and ability tiles dim and say "Wait"; a press
+  is refused with a visible answer that reduced motion keeps. Presses are not queued; Parry and Dodge are never queued.
 - **Versus header:** fighting-game HP bars across the top, hero left, foe right. (2026-10-01)
 - **A zone foe resets after every attack** (hop in, attack, hop home, rest), so approved animations play in full.
   (2026-10-02)
 - **No telegraph of the foe's next move:** it makes combat easier. (2026-10-02)
+- **Foe tricks say so when they land, never before (foe-tricks-say-so, Opus judge 2026-10-08; Cal can veto with "warn before
+  foe tricks").** A word for Chill and its second turn, Venom, Weaken, the get-up, resist, armour and Frozen, and the Foe tab
+  learns a trick the first time it lands. No telegraph stands.
 - **No suggested builds or combos in the game.** Finding what works should be hard and rewarding. (2026-10-02)
-- **No healing between fights.** (2026-10-02)
+- **Every zone fight starts at full HP:** normal, elite and boss, win or lose; no Rest button and no regen between fights. The Deepwell and the Provings still carry HP from foe to foe (a kill heals 15%, times the Healing gear line). (judge, normal-death-says-so, 2026-10-08; replaces "No healing between fights" (2026-10-02), which the code never matched: each kill healed 15% and a loss gave full HP, so losing was the better heal. Cal can veto with "carry HP between fights again", which sets `TURN_TUNE.normalFull = 0`.)
 - **Elite traits in turn fights,** but Speed never gives a foe endless turns (2 in a row at most, a boss 3). (2026-10-02)
 - **Talents** (Codex's star forks): two picks per ability and for Attack, Parry and Dodge. (2026-10-02)
 - **The Deepwell and the Provings fight in turns** like the zones. (2026-10-02)
@@ -249,6 +259,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Gathering tiers come slower:** a tier only 4 levels away was too fast. (2026-09-28)
 - **The Storehouse caps what you hold** from every source, active gathering included. Skill XP keeps counting when a
   pile is full. It must scale up fast enough for an idle game. (2026-09-28)
+- **The hero's away limit is 8 hours with no building,** so a first night's sleep is covered. The Watchtower adds 2 hours
+  a level (10 to 18 h; 16 h is the most in Chapter 1 without the raid), the Hourglass 2 a level, never past 24. The
+  Storehouse caps rose with it so a full away session still fits (HS19). Fights still earn nothing away.
+  (first-night-covered ruling, 2026-10-08)
 - **Gear needs its own building,** the Armoury (bag size, loadouts, lock, auto-salvage, display rack). (2026-09-28)
 - **A cold Hearth start** with stations you build; tools shown in the hero's hands; the hero gathers alone. (2026-09-28)
 - **Gatherers (Hands):** live at camp and show there; tap one to talk, then send them on a job of their profession.
@@ -275,6 +289,16 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   `codex-uniques-review/`.
 - **Crafting:** random affix lines by rarity, Reforge one line at the Enchanter's Table, Trophies gate +8 to +10.
   Essence stays fight-only. (2026-09-27)
+- **Grades replace the rarity die, behind a switch (craft-attribute-grades, 2026-10-09; Cal's answer 7, overhaul spec section 5):**
+  with `CRAFT_TUNE.grades` on, a craft's grade (D to S) comes from the station level, its lines come in a fixed order and
+  Reforge on a graded piece is a pick. The switch stays off in the weekly release until the balance pass. Items made before
+  keep their rarity, lines and power. Infuse's "any Essence" drift is card craft-strike-infuse's.
+- **The Strike and Infuse, behind their switches (craft-strike-infuse, 2026-10-09; overhaul spec sections 5 and 7b):** a timing
+  press on the bar (the Strike) or Essence on the recipe row (Infuse) lifts a graded craft one grade, never above A; one lift a craft.
+  `CRAFT_TUNE.strike` and `CRAFT_TUNE.infuse` stay off in the weekly release until the balance pass. Infuse spends the one Essence
+  pile (any Essence pays; the spec's "Essence of the piece's tier" no longer fits since counters-and-layers made Essence one pile).
+  Infuse is offered on a station's first piece too, where the Strike is not (spec 7b: "any piece"). The price (3 x the recipe's
+  Essence) is provisional until the balance pass; at it, Infuse alone moves unspent Essence by a few points (economy review).
 - **15 material tiers, 3 per region; resources are gated by region.** (2026-09-28)
 - **Material names are real, standard fantasy materials,** never invented compounds. (2026-09-28) The approved 15-grade
   names for all seven families are in `art/resources/regional-audit/complete-ladder.json`. (2026-10-01)
@@ -305,8 +329,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   into Ingots, the Workbench saws logs into Planks, the Loom weaves fibre into Cloth and tans hide into Leather. Each
   station runs up to 3 orders in turn (a shortfall amount or All, which keeps 20% of each input), while you fight and
   while you are away. From grade 2 every craft's ore, wood, fibre and hide count becomes the middle at half, rounded up,
-  and every upgrade's material converts the same way at every grade (Copper Warblade +1 = 1 Copper Ingot). Tools,
-  charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
+  and every upgrade's material converts the same way at every grade (Copper Warblade +1 = 1 Copper Ingot). On an upgrade
+  only, gold may cover the material a hero is short, at 9 foes of the tier's foe gold for each raw unit (a Plank is 2), once
+  its gathering tier is open and its station built; covered units give no skill XP (gold-covers-material ruling,
+  2026-10-08). Crafts always take their materials. Tools, charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
   is never for sale (Lantern Rule 4).
   - **Names** (planner's, kept by the build): Ingot: Copper, Iron, Silver, Cobalt, Mithril Ingot. Plank: Pine, Birch,
     Oak, Mangrove, Tideash Plank. Cloth: Hemp Cloth, Linen, Briar Cloth, Kelp Cloth, Stormgrass Cloth. Leather: Bristle,
@@ -363,6 +389,13 @@ payment code, live prices and business and legal set-up stay with Cal.
 - **Prediction:** at least 75% of Steam reviews that mention money are positive in the first 90 days after the store
   opens, tagged the way the plan tagged IdleOn's (IdleOn: 53 of 86, about 62%). Missed below 65%; a miss reopens the
   Keeper's away bonus and the supporter tiers first. (2026-10-06)
+- **Business model: PROPOSED, not decided; the lines above stand until Cal says yes.** Opus judge on card
+  `business-model-judge`, from the W3 money research: Lanternfall sells as a paid Steam game at about £5 to £8 plus one
+  supporter pack of looks, with no store screen; the Lantern Keeper is folded in and never built. The public web build is
+  free and ends the road at the zone 15 Champion from its first public day (the camp keeps running), on its own URL; the
+  friends link keeps the full road. How much of the road stays free for good is ruled on 14 Dec from stranger data. The
+  20 Nov post calls it "a free early build", never "free forever", "free full game", "free to play" or "demo". Veto
+  phrase: "Stay free with looks." Ruling: project files `autopilot/rulings/2026-10-08-business-model.md`. (2026-10-08)
 
 ### Mid-zone wall: judge rulings (2026-10-07)
 
@@ -598,6 +631,7 @@ Ruled MERGE by an Opus high judge (PR for card `z13-arrival-footing`); Cal can v
   at 10 (no mastery stars), Bestiary kills a kind at 12. Casual reads 0% a try there, as the walk does. The kept-up rows stay the report rows (1-2 tries).
 - **Zones 10-12 stay on their footing.** They read the walk within 15 points as they are; at the arrival footing the sampler reads Wren and
   Pip 54-78 under the walk (33-56 on Wren's own walk save), a sampler gap, not a footing one. They move once that gap is fixed.
+  (Superseded by "Rally gates are live": the gap was the live fight skipping the rally gates; zones 7-12 moved to the arrival footing there.)
 - **Gaps:** z13-15 casual and good, low side, owner `boss-balance-pass`, until 2026-12-01; Tobin's in-band z13 good cell stays gated.
   The boss refit (`TURN_TUNE.boss` hitX/hpX to casual 60-80 at this footing) is a balance-pass row; until it lands the `gearHelps` gate on
   the z13 and z15 kept-up rows passes trivially (first-hour casual is 0).
@@ -887,6 +921,88 @@ first-time knots reach zone 20, as the z19 ruling asked.
 
 Veto phrases for Cal: "put the zone 20 bosses back" (undoes the whole pick). "Keep the stall band at 2.4" undoes only the tolerance. "No tick cap" undoes only dotCap: zones 22 and 23 then read
 about 30-36% a try for a first-time player. "No Pip boss knot" sets Pip back to 1: zone 23 then reads about 52-57 for a first-time Pip.
+Follow-up: the card `z21-foe-climb` found the health bot defended only a move's first hit; see "Zone 21 foe climb" below.
+
+### Zone 21 foe climb (z21-foe-climb) (2026-10-08)
+
+Follow-up to "Zone 20 wall" ruling 3, ruled by an Opus high judge (PR for card `z21-foe-climb`); Cal can veto. Evidence:
+`docs/proof/z21-foe-climb/evidence.md` (optimiser and 50-hour runs on five offsets each, before and after).
+
+- **The bot was wrong; the rest of the wall is the gear climb, sent to the balance pass.** The health bot (`tools/sim.mjs`
+  `turnPlayer`) keyed its defence on the turn, so it defended only the first hit of a move of several hits (`59k-turn.js` keeps
+  turn `n` across a move's hits). The walks (`walk.mjs`) and the budget sampler defend every hit and were never affected, so the
+  z13-z20 boss fits stand. The fix keys the defence on the hit too. Pressing every hit then made the bot press every boss feint
+  (fooled every time) and time every held swing perfectly, so it now reads a trick as the sampler and the walks do (read 0.3 +
+  0.6 x avoidance, about 0.78; else it presses early). No game file changes.
+- Optimiser, five offsets: longest stall 15,637 to 12,568 s; runs with a stall over 4 h 7/15 to 3/15 (offset 0 Tobin 241 min z24,
+  offset 2 Wren 267 min z23, offset 3 Pip 315 min z23); zoneEnd 22.67 to 24.67; wipes an hour 79.7 to 51.3. The bot no longer
+  stalls at zones 17-19 (the z20-wall watch items).
+- Health is re-baselined for every persona and the long run (the game did not change; the first-hour game measures held: active
+  first boss 68 s, casual zoneEnd 12.33, active zoneEnd 16.33). `optimiser.stallCount` 7.20, abs 2.9 to 2.1 (three sample sd of
+  the five offsets). 50-hour, three offsets: zoneEnd 30.67, longest stall 50,219 s, stalls over 3 h 5.22.
+- **Missed:** the card's prediction (stallCount back near 4.93): the bot passes more zones, so it meets more stall points. The
+  offset-0 "longest stall under 4 hours" target (offset 0 is 225/241/220 min; 3/15 runs over 4 h, all at zones 23-24). The
+  acceptance "no 3 h+ stall at zones 21-24": 9 of 15 optimiser runs (3.0-5.3 h); the 50-hour run's offset 0 still stalls 3.5-4.4 h
+  at zones 21-24 and 16-17 h at zone 25.
+- A first ruling (same day, before the PR review found the feint problem) had read 0/15 runs over 4 h and the target restored;
+  this ruling replaces it.
+- **Cause of what is left:** ordinary foes from zone 19 scale to a tier 4 rare +5 hero at road level (`refHpX`, `refAtk`). Tier 4
+  needs gathering 64 and a station at 36, and a 10-hour player has 22-24; from level 25 a level takes 390 fights.
+- **Not picked:** a 0.25 cap on an ordinary foe's hit at zones 21-24. It moves the wall to zone 25 (5/15 runs over 4 h, offset-0
+  Wren 4.8 h) and makes gear count for less.
+- Report rows `z20-normal-bot` to `z24-normal-bot` (kind `reportBot`: arrival level + 2, tier 2 rare +5, with the bot's own
+  defence) show the wall.
+- **Owner `boss-balance-pass`** (the overhaul balance pass), until 2026-12-01: refit `refHpX`/`refAtk` for ordinary foes at zones
+  19-24 to the gear a 10-hour player can reach after the crafting overhaul, or open tier 4 sooner, so that every optimiser run's
+  longest stall is under 4 h and none is 3 h+ at zones 21-24. Pull it ahead if players get stuck there first.
+- Watch: Tobin's active hour fell after the trick read (zoneEnd 14.2 to 13, longest active stall 701 to 1007 s). Re-judge if a walk
+  shows a Tobin stall of 15 min or more before zone 14.
+
+Veto phrases for Cal: "cap the zone 21-24 foes" (adds the 0.25 hit cap at zones 21-24 on top of the bot fix). "Bot presses every
+feint" drops the trick read and puts back the earlier numbers (abs 2.0).
+
+### Rally gates are live (rally-gates-live) (2026-10-08)
+
+Ruled C by an independent Opus high judge (`autopilot/rulings/2026-10-08-rally-gates-live.md`); Cal can veto.
+
+- **Rally gates are live (rally-gates-live, judge 2026-10-08; Cal can veto).** Since #160 the live fight skipped every gate
+  (59k:1164 read the previous foe's HP). The gates stay, the order is fixed, the rally shows on the boss bar, and z7-12 are
+  refit on the arrival footing with gates on. z13-34 keep their sampler-fitted knots, are re-measured, and wait for the balance
+  pass. This supersedes "a sampler gap, not a footing one" (z13-arrival-footing). Veto: "Turn the rally gates off".
+- **The rally on screen.** The boss bar marks each gate from the start of the fight; the mark it holds at turns gold and a passed one
+  fades. The line says "Rally! It holds at the mark until its next move ends." (with "Only a Stun breaks its charge." only while it
+  gathers a charged move), and "Rally over. Your hits land again." when it opens. While it holds, the turn label reads "Rally: it
+  holds at the mark" unless a charged move's own line needs it.
+- **The refit (zones 7-12 only).** hitX, hpX, hpFloor and Tobin's heroHitX, fitted with the gates on to arrival-footing casual in band;
+  no move, window, gate share or pay change. Landed hits sit on or near the hpFloor, which holds the kept-up never-defends player under 10% (0% measured).
+  Tobin's heroHitX moved at 8, 10, 11 and 12 (1.7 to 1.5, 2 to 1.8, 1.25 to 1.5, 1.75 to 1.6) to keep him in his +10 band.
+  Knots z7-12: hpX 0.95/0.7/0.4/0.35/0.4/0.2, hitX 0.9/0.5/0.3/0.25/0.2/0.12, hpFloor 1.03/1/1.1/1.3/0.95/1.2 (were hpX
+  1.075/0.95/0.75/0.725/0.882/1.008, hitX 1.5/1.055/0.632/0.45/0.407/0.403, hpFloor 1.03/0.84/0.92/0.95/0.94/0.82). The zone 10
+  Champion keeps the most HP of zones 7-12 (the Champion peak check). Arrival-footing casual Wren/Tobin/Pip, 240 fights a row: z7
+  82/88/85, z8 80/81/90, z9 82/88/76, z10 53/52/48, z11 65/80/74, z12 62/75/66; good 100 on every row. Numbers: `docs/design/difficulty-budget.md`.
+- **Walks** (seeds 1-3, Wren, Tobin and Pip, 90 game minutes; each stopped on the 60-minute clock budget at game minute 81-83):
+  every boss from zone 4 to the last one reached (zone 20, 22 and 19) started at gate 0, played all its rallies and fell on the
+  first try. Zones 7-12 took minutes 18-31. Zone 20 at 62:38 (Wren), 49:18 (Tobin) and 65:40 (Pip), against the z20-wall walks'
+  56:53 (Wren) and 72:18 (Tobin). Movement at zones 13 and up goes to the balance-pass row "Rally gates were off on live bosses".
+- **Health parity baselines are the mean of each offset's parity, not the parity of the mean** (rally-gates-live, judge 2026-10-08;
+  the tolerance is unchanged; the 50h section keeps the old value until its Pip goldSpentShare fail is fixed). This raises the
+  active parity reference from 0.21 to the offsets' mean. The 50h section is not rewritten here: it did not move, and a rewrite would bake in
+  Pip's goldSpentShare 0.87 (a real fail, already on the base build). Rewrite it when that fail is fixed. Veto: "Put the old parity baseline back".
+
+Veto phrase for Cal: **"Turn the rally gates off"**: set `gate.on = 0` and refit every boss from z4 to z34 in the balance pass.
+
+### Wren at zones 9-10 (wren-z9-10-foes) (2026-10-08)
+
+Ruled A by an independent Opus high judge (`autopilot/rulings/2026-10-08-wren-z9-10-foes.md`); Cal can veto.
+
+- **Wren at zones 9-10 (wren-z9-10-foes, judge 2026-10-08; Cal can veto).** No refit. Wren's ordinary-foe losses come only from a fight-only bot that wears nothing. A Wren who crafts loses about 0 per 10 min. The card adds z9-z11 normal budget rows (arrival gated, bare as floors), models the Rattlebones get-up in the sampler and logs normal losses in the walk. Any z11 arrival gap goes to the balance pass, due 2026-11-15. Veto: "Make the zone 10 skeletons easier for Wren".
+- **What it measured** (5-offset budget baseline, casual Wren/Tobin/Pip, good 100 everywhere): arrival footing z9 98/100/100, z10
+  94/100/99, z11 81/100/94; nothing worn z10 81/100/90, z11 81/100/72. Wren's z11 cell is a known gap (`boss-balance-pass`, until
+  2026-11-15). No foe, hero, gear or boss number changed; in play nothing changed (the in-game sampler only meets bosses, which never get up).
+  Numbers: `docs/design/difficulty-budget.md`; proof: `docs/proof/wren-z9-10-foes/`.
+
+Veto phrase for Cal: **"Make the zone 10 skeletons easier for Wren"**: opens B as its own judge-gated card (the get-up restores 10%,
+ordinary Rattlebones only).
 
 ### The Lantern Rules
 
@@ -926,6 +1042,11 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
 - **Fonts:** Handjet (pixel display) with Barlow Semi Condensed (body). (2026-09-28)
 - **Icons:** the approved C26 icon packs (resources, gear, actions, menus, statuses). (2026-10-01)
 - **Desktop layout (desktop-layout-spec, Opus high judge, 2026-10-08; Cal can veto):** On screens 1200 px and wider, text and chrome grow in two tiers. Desktop 1 is landscape at 1200x600 or more: text x1.15, never under 14 px. Desktop 2 is 1600x900 or more: text x1.3, never under 15 px. The rail, top row, side column and action bar grow with each tier; icons stay at their native sizes. Phones (740x360, 360x740) and 1024x768 do not change. Text grows through one build step (`scaleText` in tools/build.mjs), not CSS zoom, so pixel art stays on whole pixels. The menu stays a panel over the stage, two thirds of its width (560 to 1040 px). A sheet opened from Hero > Gear, the bag, the hero card or a gather node docks into the panel's right half next to the list and blocks nothing. Gather and Craft > Make show the list and detail side by side. The bag at 48 px and the gear row at 96 px start at Desktop 2. Keys 1 to 5 open and close Fight, Hero, Gather, Craft and Camp; letters stay fight keys. Every "Tap again" becomes "Confirm: ...". Hover tooltips (next, P1), the upright tablet and the other menus' desktop layouts wait for their own cards; this departs from the approved browser-first plan. Spec: `docs/design/desktop-layout.md`. Veto phrases: "Hand-write the desktop text sizes", "Floor back to 13", "Big icons from 1440", "Split the stage for menus", "Rebuild the menus inline", "Tooltips and tablet in v1", "Tablet gets the landscape menus now", "Letters for tabs", "Keep Tap again".
+- **Claude decided: a fighter is told what the Forge needs (card forge-line-while-fighting,
+  Opus judge, 2026-10-08; Cal can veto with "no Forge line while fighting").** On a wide view, Hesketh's materials line shows on Camp
+  and Gather even with the fight beside the menu, and never pauses it. A fighter who has not seen a materials step's line hears it
+  once, held in the gap after a kill, with its Go (a say: mark, no save field, at most one a minute, never for gold or essence alone).
+  It still never shows over Hero, Craft or other menus.
 
 ## Story
 
@@ -1029,6 +1150,12 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   it, and it ships as is until then. The page grows about 365 KB (to about 8.3 MB of 16 MB). The 32 px fallback was turned down
   because it keeps the blur Cal complained about. Switch off: take 48 out of the sizes list in `tools/art/embed-icons.mjs` and
   the tiles fall back to 24 at x2.
+- **Page bytes (judge 2026-10-09; Cal can veto: "lift the Codex byte rule"):** 14 MB page ceiling (2 MB kept free); new sprite packs
+  are lossless WebP with at most 64 colours and 1-bit alpha, under 85/120/200/60 KB and 425 KB per area; backgrounds are one 960x540
+  lossless WebP of at most 190 KB with no colour cap; build order size-check, export brief, basE91, code packing, WebP embed, one
+  background per area; fewer frames and lossy backgrounds are reserve only; shipped packs are re-encoded only via the art judge.
+  (`docs/design/page-bytes.md`; ruling `autopilot/rulings/2026-10-09-page-bytes.md`; the size check is `tools/lib/page-size.mjs`, run by
+  `tools/check.mjs` as "page size")
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
@@ -1046,6 +1173,10 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   first-clear caches of zones 1 to 3 and 7 to 9 each give a Deepwell lantern colour the save does not own yet (Ember Red
   first), print it as a certain look, and relight the stage. This is the cache's look, not an extra reward; a save that
   owns all six gets none. The Wardrobe tags each look Deed, Cache or (later) Store, and counts earned looks only.
+- **Captain spoils are a move pick, not a reward pick (boss-spoils-pick, Opus judge 2026-10-08;
+Cal can veto with "No move pick at Captains").** A zone boss's first clear in zones 6 to 10 that drops a Scroll lets you learn one of up to
+three moves it can teach now, or keep it; there is no pick when fewer than two can be learned. Caches still pay no materials and add
+nothing; no economy or save change. A cache with a pick is a big card.
 - **Moments.** Big moments (the first boss win, a Champion's first clear with its post scene in the card and the join
   when an unpicked starter is met there, a cache with a look or unique, a unique, a new hero, the first Star, a Great
   Lantern) and medium moments (the first and every 5th level, a new ability, a look, a Rare-or-better craft) sit
@@ -1080,13 +1211,23 @@ Plan and rulings: `/mnt/project-files/early-game/plan.md`, `plan-judge.md`. Beat
   unlocks on player action or thresholds, never a wall clock, and show about 4 to 6 new things in 10 minutes (90 s gives
   8, one silent; 60 s gave 11). It supports keeping acts off the clock and decided nothing else. Replaces the 60 s gap
   of story-unlock-gates. Files: `docs/design/unlock-pace/judge.md` (prior), walk data in the PR.
-- **F3, the big-moment pace** (amends the self-improving plan's scorecard). Minutes 0 to 20: a big moment at least every
-  5 minutes, no gap over 8. From minute 20 to the zone 10 Champion (or minute 60, if that comes first): a big moment at
-  every zone's first clear from 5 to 10, no gap over 8 on the casual walk. The 2026-11-02 review sets the pace after
-  zone 10. Why: big moments are tied to bosses, so their minutes follow play speed, and zone 10 closes the first hour.
-  Prediction: the nightly walk shows no gap over 8 minutes between big moments up to the zone 10 Champion, for every
-  starter pick; missed if any seed shows one. Coverage areas 2 and 3. No save change; the colour grants switch off
-  with `CACHE_TUNE.on` (card `cache-core`).
+- **F3, the shape of the first hour** (f3-restate, Opus high judge 2026-10-08; Cal can veto: "put the five-minute moments
+  back"). Zones 1 to 10; replaces the 2026-10-06 wording. (a) **No dead stretch.** On the casual walk, never more than 8
+  minutes without a progress moment, up to the zone 10 Champion (or minute 60, if that comes first). A progress moment is a
+  zone's first clear, a new ability, a Star, a hero joining or a unique. Level cards, hero lines, looks and crafts do not
+  count: a grind or a wall makes those on its own. (b) **Three peaks, rising.** The first boss win and its cache (F2), the
+  zone 5 Champion with the first companion, and the zone 10 Champion closing the chapter. Each has its own big card that says
+  what it gave. A casual person reaches the zone 5 Champion by minute 30 and the zone 10 Champion by minute 60. Later is a
+  miss; earlier is never a miss and never a reason to slow the game. (c) **Every big card says what it gave.** A tester can
+  name what each big card gave them. F3 sets nothing past zone 10 (the 2026-11-02 review does). "5 to 10" in older cards means
+  zones, never minutes. F3 alone is never a reason to keep, add or fold a card. Why: no source gives a big-moment interval,
+  and the 8-minute cap is well supported; every gap the old floor flagged was a stall with its own fix, and the floor was being
+  used to defend cards. Level cards and hero lines fire during grinds and losses, so they cannot reset the cap. Until the
+  walk scores (a), the Sunday hold reads F3 by the longest gap to the zone 10 clear and the 5:00 floor is report-only.
+  Prediction: on the walk after `rally-gates-live`, seeds 1 to 3 show no gap over 8 minutes between progress moments up to the
+  zone 10 Champion; the next desk, panel or human run clears zone 10 by minute 60 and asks what a big card gave 0 times (desk
+  run: 2). Coverage areas 2 and 3. Docs only, no save change. Ruling and red team:
+  `docs/design/first-hour-records/2026-10-08-f3-restate.md`.
 - **F1 after the staged lesson** (coordinator, 2026-10-08, on the planner's recommendation; Cal may veto). Cal's staged first fight
   (#197) holds fight 1 for its lessons, so the first gold lands at about 0:19. Keep the lesson. F1 now reads: "the first press gets a
   hit with its sound within 10 s of the first tap, and the first loot (gold, loot or XP) within 30 s". Why: F1 exists so something
@@ -1141,6 +1282,9 @@ Kept only to explain current rules. Each line: the old decision, then what repla
 - Opening: Hesketh's fire ends "Wood first. Then we talk." (intro-and-picker, 2026-10-06) -> it ends on the foe coming up the road;
   the wood-then-talk promise is his Gather line (cal-0107-staged-guide, 2026-10-07, Cal's play note 2).
 
+- F3: "Minutes 0 to 20: a big moment at least every 5 minutes, no gap over 8. From minute 20 to the zone 10 Champion (or minute
+  60): a big moment at every zone's first clear from 5 to 10" (early-game judge, 2026-10-06) -> F3, the shape of the first hour:
+  an 8-minute cap on progress moments, three peaks, every big card says what it gave (f3-restate, 2026-10-08).
 - Autopilot: "Cal approves batches and taps gated items" (2026-10-05) -> no batch waits for Cal; design calls go to the Opus judge
   (2026-10-05, Cal's autonomy request; recorded 2026-10-07).
 - Owner role: art direction asked of Cal (2026-09-27) -> art direction is a judge call (2026-10-06).

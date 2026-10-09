@@ -1,0 +1,48 @@
+# Proof for card zone10-clear-moment (F28). Winning the zone 10 Champion after a loss froze the screen behind a Hesketh line chosen
+# under the loss sheet: the line held the game, and a held game never opened the cache or played the post scene. Now a card or a
+# Champion's scene always goes first and the line speaks after it; a Champion's fight bar uses its story name.
+# A route cannot force the win (playtest.mjs has no eval) and no seed wins the second try on this fixture with plain attacks, so this
+# route shows the loss sheet's new name and the retry fight's bar. tools/check.mjs section "zone10-clear-moment" carries the
+# lose-then-win and first-try win (post scene within 2 s with no press, the cache open, the Champion card, then the line).
+# seed: 1
+new z10-cantor
+wait 2
+tap-if "Continue"
+wait 2
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+expect "The Hollow Cantor beat you"
+expect-no "Elder Rattlebones"
+shot loss-sheet-name
+tap "Try again"
+wait 2
+tap-if "Got it"
+wait 4
+expect-no "Elder Rattlebones"
+shot retry-fight-bar

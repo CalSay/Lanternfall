@@ -1,0 +1,1 @@
+Tooling only: the difficulty budget report now shows each boss's shape for zones 4-26 (its HP against the zone's ordinary foes, casual turns, what sets its heaviest hit, and each Champion against the Captains either side), for the balance pass. Nothing in the game changed. (no shot)

@@ -33,7 +33,7 @@
 .sb-tx { position: relative; z-index: 1; display: grid; justify-items: center; gap: 1px; max-width: 100%; padding: 0 3px; }
 .sb-lb { max-width: 100%; font: 600 calc(14px * var(--display-k, 1))/1 var(--display); letter-spacing: .01em; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
 .sb-sub { max-width: 100%; min-height: 1em; font: calc(11px * var(--display-k, 1))/1 var(--body, inherit); color: #8A8195; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sb-key { position: absolute; z-index: 3; top: 5px; left: 6px; font: 600 10px/1 var(--display); color: #8E80A0; }
+.sb-key { position: absolute; z-index: 3; top: 5px; left: 6px; font: 600 10px/1 var(--display); color: #8E80A0; }   /* tk:off */
 @media (hover: none) and (pointer: coarse) { .sb-key { display: none; } }
 /* the cooldown: a dark sweep, clockwise from the top, that leaves the tile as the slot comes back (--cd 1 -> 0) */
 .sb-ring { position: absolute; inset: 4px; z-index: 2; pointer-events: none;
@@ -47,6 +47,15 @@
 .sb-dodge .sb-lb { color: #8FB8FF; }
 .sb-abslot { outline-color: #9A7A2E; box-shadow: inset 0 0 0 4px #33283E, inset 0 0 0 5px #6B5320, 0 3px 0 #0B0810; background: #231A30; }
 .sb-abslot .sb-lb { color: var(--gold); }
+/* ability-names-fit: a slot's sub-line ("Parry first", "Bleed or Aim") may take a second line, breaking only between words */
+.sb-abslot .sb-sub { white-space: normal; overflow-wrap: normal; line-height: 1.05; text-align: center; }
+/* menu-tip-room: upright, an ability's name steps down with the screen's width and a two-word name wraps to a second line, so "Fireball",
+   "Echo Shot" and "Shield Bash" read in full on a 360 wide phone (the tile is 70 px inside there; "Fireball" needs 82 at 14 px). The tile
+   keeps its height. Landscape and desktop set their own sizes (80-landscape.css). */
+@media (max-aspect-ratio: 1/1), (max-width: 599px) {
+  .sb-abslot .sb-lb { font-size: min(calc(14px * var(--display-k, 1)), calc(3.2vw * var(--display-k, 1))); letter-spacing: 0;
+    white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+}
 .sb-abslot.ready { outline-color: var(--gold); }
 .sb-abslot.empty { background: #16111C; outline-color: #3A3046; box-shadow: inset 0 0 0 4px #1E1826, 0 3px 0 #0B0810; }
 .sb-abslot.empty .sb-lb { color: #6B6275; }
@@ -60,10 +69,18 @@
 .sb-def .sb-key { top: 3px; left: auto; right: 6px; }
 /* disabled: nothing to hit right now */
 .sbtn.off .sb-ic { opacity: .45; }
+/* fight-input-during-banner: the turn banner or VS card plays, so the hero cannot act yet: the whole tile dims and the frame goes dull */
+.sbtn.wait .sb-ic, .sbtn.wait .sb-tx, .sbtn.wait .sb-n { opacity: .5; }
+.sbtn.wait.off .sb-ic { opacity: .5; }
+.sbtn.wait { outline-color: #3A3046; box-shadow: inset 0 0 0 4px #1E1826, 0 3px 0 #0B0810; }
+.sb-abslot.wait .sb-lb { color: #A89A7A; }
+.sbtn.wait:active, .sbtn.wait.hit { box-shadow: inset 0 0 0 4px #1E1826, 0 1px 0 #0B0810; }
 /* a telegraphed hit is coming: Parry and Dodge glow */
 .sb-parry.live { outline-color: #E0524F; box-shadow: inset 0 0 0 4px #3A1A20, 0 0 10px rgba(224, 82, 79, .75), 0 3px 0 #0B0810; }
 .sb-dodge.live { outline-color: #8FB8FF; box-shadow: inset 0 0 0 4px #1A2640, 0 0 10px rgba(143, 184, 255, .75), 0 3px 0 #0B0810; }
 .sb-parry.open { background: #4A1E22; }   /* a missed parry: open for a moment */
+/* a refused press: a short red-brown outline, not an animation, so reduced motion keeps it */
+.sbtn.refused, .sbtn.wait.refused, .sb-parry.live.refused, .sb-dodge.live.refused { outline-color: #A0442E; box-shadow: inset 0 0 0 4px #3A1A20, 0 3px 0 #0B0810; }
 .sbtn.nope { animation: sb-nope .25s steps(3); }
 .sbtn.good { animation: sb-good .45s ease-out; }
 .sbtn.ready-now { animation: sb-ready .45s ease-out; }
@@ -167,7 +184,14 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .sb-abslot.passive { background: #1C2430; box-shadow: inset 0 0 0 4px #26303E, inset 0 0 0 5px #4E6A8A, 0 3px 0 #0B0810; }
 .sb-abslot.passive .sb-lb { color: #8FB8FF; }
 .sb-abslot.blocked .sb-ic, .sb-abslot.blocked::before { opacity: .45; }
+.sbtn.wait::before { opacity: .5; }   /* fight-input-during-banner: a lettered tile dims with the rest */
 .sp-ab .sp-mono { width: 36px; height: 36px; margin-left: 6px; display: grid; place-items: center; background: #33283E; color: #FFE7A8;
   font: 700 calc(16px * var(--display-k, 1))/1 var(--display); box-shadow: inset 0 0 0 1px #6B5320; }
 /* Skills and Foe scroll inside the pane: the bottom edge fades to say there is more */
 .sb-p-sk, .sb-p-foe { -webkit-mask-image: linear-gradient(#000 calc(100% - 16px), transparent); mask-image: linear-gradient(#000 calc(100% - 16px), transparent); padding-bottom: 12px; box-sizing: border-box; }
+/* desktop-layout-v1 (desk playtest F08): on a desktop screen the Foe tab opens above the buttons (75-solo-ui setTab), not in their place */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .sb-pane.with-foe { height: auto; display: flex; flex-direction: column; gap: 6px; }
+  .sb-pane.with-foe > .sb-p-act { height: var(--sb-tile); flex: none; }
+  .sb-pane.with-foe > .sb-p-foe { order: -1; height: auto; max-height: min(240px, 34vh); }
+}

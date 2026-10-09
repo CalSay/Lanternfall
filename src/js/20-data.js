@@ -51,10 +51,20 @@ const SKILL_TUNE = {
   gatherEarly: { below: 14, x: 0.5 }, // C10a (owner: "level 14 of each resource gathering takes a while"): levels 1-13 need
                                       // half the XP, so each skill reaches 14 (tier 2) in about half the time; 14+ unchanged
   craftNeed: [7, 0.5, 1.04],          // the same for Smithing, Woodcraft, Tailoring, Enchanting
+  // craft-curve-skills-report: the planned station curve, read only while CRAFT_TUNE.curve is on (skillCurve, skillNeed). One piece a
+  // tier: [first level, XP from that level to the next, growth a level], so each tier's gate comes by the zone that opens it and the
+  // levels between gates (the grades) slow down. Fitted with node tools/sim.mjs --report skills (docs/design/skilling-crafting-overhaul/curve.md).
+  craftNeedV2: [[1, 6, 1.08], [10, 11, 1.05], [22, 73, 1.09], [36, 400, 1.24], [54, 16000, 1.025]],   // provisional until the balance pass
+  belowTierX: 0.1,                    // CRAFT_TUNE.curve: a craft, upgrade or reforge below the station's highest open tier pays this share of its XP (provisional)
   craftSkills: ['smith', 'bench', 'loom', 'ench'],
   nodeXp: [7, 1],                     // XP a swing at a tier-t node: a x t^b (nodeXp)
   spdPerLv: 0.02                      // gathering speed per level above 1 (nodeTime)
 };
+// craft-curve-skills-report: the crafting overhaul's switches (docs/design/skilling-crafting-overhaul.md 13). All off in code until the
+// balance pass; checks and tools turn them on in a scratch game. curve: SKILL_TUNE.craftNeedV2 and belowTierX (40-rules, 55-crafting).
+// grades, strike, infuse, infuseX: read by the cards that build them (craft-attribute-grades, craft-strike-infuse).
+// A runtime flip of grades must call gearDirty(): gear() caches item power.
+const CRAFT_TUNE = { grades: 0, strike: 0, infuse: 0, curve: 0, infuseX: 3 };
 const NODE_REQ = SKILL_TUNE.nodeReq;
 const SMITH_REQ = SKILL_TUNE.stationReq;
 const SKILL = { mine: 'Mining', wood: 'Woodcutting', smith: 'Smithing' };
@@ -66,6 +76,17 @@ const skillOf = kind => NODE_SKILL[kind] || 'wood';
 // BAL1 (owner: "damage ramps too fast"): gear tiers step x2.2 / x1.9 / x1.8 / x1.7 (was 10, 28, 70, 160, 360).
 const TIER_POW = [0, 10, 22, 42, 75, 130];
 const RAR = { common: { n: 'Common', m: 1 }, uncommon: { n: 'Uncommon', m: 1.35 }, rare: { n: 'Rare', m: 1.8 }, epic: { n: 'Epic', m: 2.5 }, legendary: { n: 'Unique', m: 3.2 } };
+// craft-attribute-grades (docs/design/skilling-crafting-overhaul.md 5): with CRAFT_TUNE.grades on, a craft's grade (D to S, item field
+// g = the index) comes from the station level (gradeLv, 40-rules) instead of the rarity die. m: power (D, C, A and S equal the rarity
+// values, B sits between; never retuned); r: the rarity twin the item also keeps in `r`; lines: bonus lines; ws: weapon scaling (stored for weapon-profiles); past:
+// levels past the tier's gate that reach it; moment: an A or S craft is a medium moment.
+const GRADE = [
+  { n: 'D', m: 1, r: 'common', lines: 1, ws: 0.10, past: 0 },
+  { n: 'C', m: 1.35, r: 'uncommon', lines: 2, ws: 0.20, past: 3 },
+  { n: 'B', m: 1.55, r: 'uncommon', lines: 2, ws: 0.30, past: 6 },
+  { n: 'A', m: 1.8, r: 'rare', lines: 3, ws: 0.42, past: 10, moment: 1 },
+  { n: 'S', m: 2.5, r: 'epic', lines: 4, ws: 0.55, past: 15, moment: 1 }
+];
 const SLOTS = [
   { id: 'weapon', n: 'Weapon', noun: 'Sword', prefix: 'ore', icon: 'sword' },
   { id: 'helm', n: 'Helm', noun: 'Helm', prefix: 'ore', icon: 'helm' },
@@ -118,16 +139,16 @@ const UNIQ = {
     rule: { id: 'crimson', stacks: 2, cap: 10, tickX: 0.9 }, txt: 'Needs something that makes Bleed. Your Bleed stacks twice as fast and holds up to 10. Bleed deals 10% less a turn.' },
   'carapace-pick': { name: "Burrower's Promise", slot: 'pick', pos: 'pick', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['beetle', 4], art: 0, col: '#9BE3F0', src: 'Zone boss · Beetle Barrows', fx: {},
     rise: 'mine', riseMax: 5, rule: { id: 'tool', skill: 'mine', spd: 0.9, partner: { ore: ['crystal', 3], crystal: ['ore', 3] } },
-    txt: 'Always the grade of your best open Mining ground. Every 3 Ore or Crystal you mine also turns up 1 of the other. Mining is 10% slower.' },
+    txt: 'Always the tier of your best open Mining ground. Every 3 Ore or Crystal you mine also turns up 1 of the other. Mining is 10% slower.' },
   'wisp-axe': { name: 'Reed of Remembrance', slot: 'axe', pos: 'axe', cls: 'any', legacy: false, pow: 1.8, g: [2, 5], from: ['wraith', 7], art: 0, col: '#35524C', src: 'Zone boss · Wraithmarsh', fx: {},
     rise: 'wood', riseMax: 5, rule: { id: 'tool', skill: 'wood', spd: 0.9, partner: { wood: ['fibre', 2] } },
-    txt: 'Always the grade of your best open Woodcutting ground. Every 2 Wood you cut also bring 1 Fibre. Woodcutting is 10% slower.' },
+    txt: 'Always the tier of your best open Woodcutting ground. Every 2 Wood you cut also bring 1 Fibre. Woodcutting is 10% slower.' },
   'spore-sickle': { name: 'Harvest of Whispers', slot: 'sickle', pos: 'sickle', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['spore', 5], art: 0, col: '#F3E6CF', src: 'Zone boss · Fungal Deep', fx: {},
     rise: 'forage', riseMax: 5, rule: { id: 'tool', skill: 'forage', spd: 0.9, partner: { herb: ['fibre', 2], fibre: ['herb', 2] } },
-    txt: 'Always the grade of your best open Foraging ground. Every 2 Herbs bring 1 Fibre, and every 2 Fibre bring 1 Herb. Foraging is 10% slower.' },
+    txt: 'Always the tier of your best open Foraging ground. Every 2 Herbs bring 1 Fibre, and every 2 Fibre bring 1 Herb. Foraging is 10% slower.' },
   'moss-spear': { name: 'Thorn of the First Grove', slot: 'spear', pos: 'spear', cls: 'any', legacy: false, pow: 1.8, g: [2, 3], from: ['slime', 8], art: 0, col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: {},
     rise: 'hunt', riseMax: 3, rule: { id: 'tool', skill: 'hunt', spd: 0.9, partner: { hide: ['fibre', 2] } },
-    txt: 'Always the grade of your best open Hunting ground, up to grade 3. Every 2 Hide bring 1 Fibre. Hunting is 10% slower.' }
+    txt: 'Always the tier of your best open Hunting ground, up to tier 3. Every 2 Hide bring 1 Fibre. Hunting is 10% slower.' }
 };
 // The uniques a player can see on the trophy wall, the Codex and the totals: every unique that still drops, plus a retired one they found.
 // A hidden retired unique's replacement (`was`) takes its place in the order, because the Codex's seen string is read by position.
@@ -157,5 +178,5 @@ const RELICS = [
   // ECON-A: the Lucky Coin (+25% gold a level) became the Loaded Die (S.relic.edge; S.relic.coin stays at 0, unused).
   { id: 'edge', name: 'Loaded Die', base: 5, r: 1.6, cap: 5, ic: ['coin', '#6FCB6A', { 7: '#6FCB6A' }], desc: () => `+${Math.round(100 * ECON.crit.die)}% crit damage per level.` },
   { id: 'heart', name: 'Ember Heart', base: 4, r: 1.5, ic: ['heart', '#FF7A3D'], desc: () => `+30% raid damage per level.` },
-  { id: 'glass', name: 'Hourglass', base: 8, r: 2, cap: 5, ic: ['glass', '#F2E27A'], desc: () => `You keep working for ${4 + 2 * S.relic.glass}h while you're away. +2h per level.` }
+  { id: 'glass', name: 'Hourglass', base: 8, r: 2, cap: 5, ic: ['glass', '#F2E27A'], desc: () => `You keep working for ${awayCapH()}h while you're away. +2h per level.` }
 ];

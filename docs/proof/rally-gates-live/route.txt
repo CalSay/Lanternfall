@@ -1,0 +1,113 @@
+# Proof for card rally-gates-live. Wren (the early test save, tier 1 common gear, 52 attribute points unspent) at the zone 8 boss
+# and then the zone 10 boss (tests/proof-fixtures/save-early-z8-boss.json and save-early-z10-boss.json: save-early with zone and
+# maxZone 8 or 10 and kills 5, so the next fight is the boss), at 1280x720, 740x360 and 360x740.
+# Zone 8: Wren presses Attack each turn until the boss drops to its first gate (75%).
+#   rally-z8-*.png  the boss holds there: a gold mark on its HP bar, "Rally! It holds at the mark. Only a Stun breaks its charge."
+#                   (it is gathering Great Engulf, so the Stun clause shows) and the turn label "Rally: it holds at the mark".
+#                   The other two marks (50%, 25%) sit ahead on the bar. Before this card the live boss skipped every gate (it
+#                   read the last foe's HP), so the bar had no marks, no rally line showed and the first expect fails on that build.
+#   over-z8-*.png   Wren parries the charged move clean; at its end the rally is over ("Rally over. Your hits land again.", a short
+#                   line that has faded by the shot) and the first mark is greyed: the next one is where the boss holds again.
+# Zone 10 (the Champion): Wren attacks and parries clean until the boss reaches its first gate.
+#   rally-z10-*.png the same rally at zone 10, its marks at 75%, 50% and 25%.
+# The rally lines are banners that the next move line replaces, so the expects read the body flags the handlers set
+# (data-rally-seen, data-rally-over) and the held mark by selector; the shots show the words. A `new` empties the shots folder,
+# so CI keeps only the zone 10 shots; the zone 8 shots here came from the same route cut after its first part.
+# seed: 1
+new early-z8-boss
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 0.3
+expect "body[data-rally-seen]"
+expect ".tv-notch.held"
+shot rally-z8
+wait 0.7
+parry-clean 6
+parry-clean 6
+parry-clean 6
+expect "body[data-rally-over]"
+expect ".tv-notch.past"
+shot over-z8
+new early-z10-boss
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 0.5
+parry-clean 4
+parry-clean 4
+parry-clean 4
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 0.5
+parry-clean 4
+parry-clean 4
+parry-clean 4
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 0.5
+parry-clean 4
+parry-clean 4
+parry-clean 4
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Attack"
+wait 0.5
+parry-clean 4
+parry-clean 4
+parry-clean 4
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+expect "body[data-rally-seen]"
+expect ".tv-notch.held"
+shot rally-z10

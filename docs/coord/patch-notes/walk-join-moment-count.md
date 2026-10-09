@@ -1,0 +1,1 @@
+Tooling only, no change to the game. Our test walk counted a hero joining at a Champion as its own big card, though the player sees one card with the join as a line on it. It now counts one big card per Champion clear, and the Switch hero tip that comes with a join no longer counts as a new thing.

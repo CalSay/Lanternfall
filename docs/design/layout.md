@@ -16,8 +16,41 @@ its compact-stage-on-scroll is gone, because a menu no longer shares the screen 
 | Still works: plays without clipping | 740 x 360 (landscape phones), 1024 x 768 (tablets) |
 | Still works, no new polish: must not break | 360 x 740 (phones held upright) |
 
-Mouse and keyboard come first; touch still works everywhere. The sections below describe the layout as built
-(phone-sized chrome around a stage that grows); the desktop layout pass changes it for 1280 x 720 and up.
+Mouse and keyboard come first; touch still works everywhere. The landscape section below is the base layout; two desktop
+tiers grow it (desktop-layout-v1, spec `docs/design/desktop-layout.md`):
+
+| Tier | Query (with `min-aspect-ratio: 1/1`) | Text (`--tk`, floor `--tmin`) | Rail / top row / side column | Slot tile |
+|---|---|---|---|---|
+| Desktop 1 | `min-width: 1200px` and `min-height: 600px` (1280x720, 1366x640, 1440x900) | x1.15, 14 px | 76 / 56 / clamp(300px, 23.5vw, 340px) | 116 |
+| Desktop 2 | `min-width: 1600px` and `min-height: 900px` (1920x1080 and up) | x1.3, 15 px | 92 / 64 / clamp(300px, 20vw, 380px) | 132 |
+
+Tall landscape below Desktop 1 (1024x768 tablets) keeps the text as written but takes a side column of clamp(256px, 25vw, 300px), so the fight slots' labels fit.
+
+Upright tablets (upright-tablet, `80-landscape.css`: `(min-width: 700px) and (not (min-aspect-ratio: 1/1))`, so 768x1024 and up) keep
+the portrait layout but drop the 560 px strip: the stage, menus and sheets span the screen, the fight bar grows to 480 px
+(112 px slots) and the hero picker sets two cards across. The landscape layout was not used there: its rail and side column
+would leave a 448 px stage at 768 wide, narrower than the strip. Phones (under 700 px wide) never match.
+
+- **Text:** `tools/build.mjs` (`scaleText`) writes every CSS font size S as `max(var(--tmin, 0px), calc(S * var(--tk, 1)))`.
+  `:root` sets `--tk: 1; --tmin: 0px`, so phones, 1024x768 tablets and 360x740 compute exactly as written. A line carrying
+  `/* tk:off */` is left alone (the slot labels and key letters). A check compares every font size and the layout at 740x360,
+  360x740 and 1024x768 with the untransformed styles.
+- **Menus:** the panel takes two thirds of the stage (`clamp(560px, 66%, 1040px)`). An item, the hero card or a "where to get it"
+  sheet opened inside it docks in its right half under the view switcher (`openSheet(build, { dock: true })`, `.bsheet-ov.docked`),
+  not modal: the list stays live, another item swaps it, Escape closes it before the menu. Tab switches, view changes, closing the
+  menu and leaving the desktop tiers close it. Blockers (Escape, the number keys, the guide, story cards) use `.bsheet-ov:not(.docked)`.
+- **Keys:** 1 to 5 press the rail's tabs (Fight, Hero, Gather, Craft, Camp) through `tabClick`; the number shows on each tab with
+  a mouse. Never in a text field or select, with a modifier, on a repeat or under a modal. JS reads the tier as `isDesk()` (`DESK_Q`).
+- **Icons** keep their native sizes; at Desktop 2 the worn gear row shows the 48 px export at x2 (96 px) and bag tiles at 48 px.
+- **Views (desktop-views-2):** `[` and `]` step through the open menu's views and wrap (same skips as the number keys); the
+  switcher's first and last buttons show them with a mouse. Every menu shows its list and detail side by side: Stars (the star's
+  card held beside the map and the list), Hero > Build (the attributes beside "From your level"), Camp (Hesketh's board and the
+  Hearth beside the buildings), Craft > Make (the recipes beside the last craft's result, actions first), the gathering views
+  (the nodes beside the Now card), Gather > Store (the shelf beside a material's docked "where to get it"), Craft > Uniques (wider
+  cards) and the Codex (a wide sheet: pages three or four to a row, an entry's details beside the page). Build, Camp and Make
+  widen to the stage less a 120 px strip that keeps the hero in view (up to 980 px), as Stars already widened in landscape; the rest keep the two-thirds panel. A
+  docked sheet folds a two-column view back to one column. All of it sits in Desktop 1 media blocks: phones, 1024x768 and
+  360x740 compute as before.
 
 ## Screens
 
@@ -122,7 +155,7 @@ Screenshots (`img/menus-*.png`, portrait): `menus-360-game`, `-fight`, `-party`,
 | Fight (`adv`) | Boss · Bounties · Bestiary · Deepwell | Omen banner, the zone's fight count and boss · bounties · zone mastery, bestiary · Deepwell runs |
 | Hero (`party`) | Hero · Abilities · Training · Stars | the hero card and gear row · Scrolls, slots, abilities and talents · Training · the star map |
 | Gather (`gat`) | Mining · Wood · Forage · Hunting · Store | skill views with nodes and the Now card · the Storehouse |
-| Craft (`forge`) | Make · Gear · Uniques | stations and recipes · your gear and the bag · unique loot |
+| Craft (`forge`) | Make · Uniques | stations and recipes · unique loot (your gear and the bag are in Hero > Gear) |
 | Camp (`world`) | Camp · Tavern · Almanac · Raid | camp scene, buildings, gatherers, Blessings · gatherer board and Tavern perks · today's Omen and the week · world raid |
 
 The **Journal** (lifetime stats, Achievements, the Codex) and **Settings** sit in the bell sheet: Notices | Journal |

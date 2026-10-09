@@ -178,3 +178,51 @@ span.cf-d { font-weight: 600; }
   .cf-res .cf-resact { order: 1; }
   .cf-res .warn { order: 0; }
 }
+
+/* desktop-layout-v1 (docs/design/desktop-layout.md 5): Desktop 2 (1920x1080 and up). Bag tiles 72 px with the 48 px export,
+   the worn gear row 104 px with the 48 px export at x2 (as the item card shows it). nicons scales by whole steps only. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1600px) and (min-height: 900px) {
+  .cf-bag { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
+  .ic.cf-tile { min-height: 72px; }
+  .ic.cf-tile > img:first-child { width: 48px; height: 48px; }
+  .cf-recent .ic.cf-tile { width: 72px; min-height: 72px; }
+  .cf-gs .ic { width: 104px; height: 104px; }
+  .cf-gs .ic img { width: 96px; height: 96px; }
+}
+
+/* desktop-views-2: at the desktop tiers Craft > Make puts the recipe list on the left and the last craft's result (its card and the
+   last five) on the right, held at the top; with no result yet the list keeps the whole panel. Craft > Uniques gives each card
+   more room so its find line reads whole. Like Stars, the menu widens (up to 980 px, a 120 px strip of the stage left) while Make is open, so the
+   recipe rows and the result card both have room at 1280x720. The result card scrolls inside its column, actions first. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .app.menu-open .menu:has(#p-forge:not([hidden]) > #sec-craft-recipes:not(.off-view)) { width: calc(100% - 120px); max-width: 980px; }   /* the stage's left strip (the hero) still shows */
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) { grid-template-columns: minmax(0, 3fr) minmax(250px, 2fr); column-gap: 14px; align-items: start; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) > * { grid-column: 1; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) > .sec-title { grid-column: 1 / -1; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) > .cf-resbox { grid-column: 2; grid-row: 2 / span 4; position: sticky; top: 0; z-index: 1;
+    max-height: calc(100dvh - var(--toprow, 44px) - 90px); overflow-y: auto; overscroll-behavior: contain; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res-l,
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res-r { display: contents; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res .cf-lines,
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res .cf-cmpn,
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res .cf-dl { order: 2; }
+  .app:not(.detail-docked) #sec-craft-recipes:has(> .cf-resbox:not(:empty)) .cf-res .cf-resact { order: 1; }
+  .trophies { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+}
+
+/* craft-strike-infuse: the recipe row's lift line (the Strike or Infuse, one grade, never above A), the Infuse button, the result note,
+   and the Strike's timing bar: the fight's parry bar (.tv-time, 60-turn.css) over the screen, which holds the game while it shows */
+.cf-lift { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 12.5px; color: var(--gold, #F2C14E); }
+.cf-lift-t { flex: 1 1 160px; min-width: 0; }
+.cf-inf { min-height: 44px; min-width: 76px; padding: 4px 12px; border: 2px solid #0B0810; cursor: pointer; font: 600 calc(13px * var(--display-k)) var(--display);
+  background: var(--panel-2); color: var(--gold, #F2C14E); box-shadow: inset 0 0 0 1px var(--gold, #F2C14E), inset 0 -3px 0 #1a1420; }
+.cf-inf:disabled { color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; cursor: default; }
+.cf-lift-w { flex-basis: 100%; color: var(--muted); font-size: 12px; }
+.cf-liftn { margin: 0; }
+.cf-liftn.up { color: var(--gold, #F2C14E); }
+.cf-strike { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(10, 7, 14, .55); cursor: pointer; touch-action: none; user-select: none; }
+.cf-strike[hidden] { display: none; }
+.cf-sk { display: grid; justify-items: center; gap: 6px; padding: 12px 14px; max-width: calc(100vw - 32px); background: #0B0810; border: 2px solid var(--gold, #F2C14E); }
+.cf-sk-t { margin: 0; font: 700 calc(16px * var(--display-k, 1))/1.2 var(--display); color: var(--bone); text-align: center; }
+.cf-sk-s { margin: 0; font-size: 12.5px; color: var(--muted); text-align: center; max-width: 300px; }
+.cf-sk .tv-time { width: min(300px, calc(100vw - 64px)); }

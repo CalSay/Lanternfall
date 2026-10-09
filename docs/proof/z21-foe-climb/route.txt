@@ -1,0 +1,16 @@
+# Proof for card z21-foe-climb. No game file changes: the card fixes the health bot (tools/sim.mjs defends every hit of a move,
+# not only the first) and adds report rows at the bot's footing (tools/budget.mjs z20-z24-normal-bot). The numbers are in
+# docs/proof/z21-foe-climb/evidence.md and held by tools/health.mjs --compare and --long --compare.
+# This route replays the zone 20 boss row on the z20 proof save (as z20-wall's route) to show the game there is unchanged.
+# seed: 1
+new z20-weak
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+tap "Next up"
+wait 1
+expect "Boss ready in Zone 20"
+shot nextup-boss

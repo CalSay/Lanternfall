@@ -92,14 +92,87 @@ let craftUI = null;
     }
     return out;
   }
+  // desktop-tooltips: an item's hover tip, from the item sheet's own head and lines (renderItem): name, grade, tier, kind, power,
+  // its stat lines and who wears it. The sheet stays the full view (upgrade, salvage, compare).
+  tipHook.item = it => {
+    const d = itemKind(it), wr = wornBy(it.id);
+    const out = [itemName(it), [itemQual(it), `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun) : ''].filter(Boolean).join(' · '), `Power ${fmt(itemPower(it))}`];
+    for (const L of splitLines(it)) if (!L.lore) out.push(L.g === 'uniq' ? L.txt : lineTxt(L.l) + (lineLive(L.l) ? '' : ' (not active yet)'));
+    if (wr) out.push(`You wear it (${posName(wr.pos)})`);
+    return out.join('\n');
+  };
   function deltaTxt(k, v) {
     const s = CRAFT_STATS[k], unit = (s.f.match(/\{v\}(%|x)/) || [])[1] || '';
     const a = Math.abs(v), n = s.dp == null ? fmt(a) : a.toFixed(s.dp);
     return `${v > 0 ? '+' : '-'}${n}${unit}`;
   }
+  // craft-shortfall-offer: what the next +1 adds to the piece's main line, in that line's own unit ("+3: +3% damage."). A
+  // line at its cap (a Quiver's crit, a Lantern's spell) says so and shows the power change instead. Copy only: itemPower
+  // and the upgrade cost are unchanged.
+  function nextPlusTxt(it) {
+    const nx = Object.assign({}, it, { plus: it.plus + 1 }), a = itemLines(it), b = itemLines(nx);
+    const head = `+${it.plus + 1}: `, more = a.length > 1 ? ' Its other lines grow too.' : '';
+    const [k, v0] = a[0] || [], v1 = b[0] && b[0][0] === k ? b[0][1] : v0, s = CRAFT_STATS[k];
+    const dv = Math.round((v1 - v0) * 10) / 10;   // one decimal, never cut down (an Epic Tier 3 weapon's +15.75 reads +15.8%, not +15%)
+    if (s && dv > 0) return `${head}${s.f.replace('{v}', dv % 1 ? dv.toFixed(1) : String(dv))}.${more}`;
+    const nextP = itemPower(Object.assign({}, it, { plus: it.plus + 1 }));   // playtester-code-bugs: uniques use UNIQ_TUNE.pow, as itemPower does
+    const pw = `power ${fmt(itemPower(it))} → ${fmt(nextP)}`;
+    return s ? `${head}${s.n} is at its cap. ${pw[0].toUpperCase() + pw.slice(1)}.${more}` : `${head}${pw}.`;
+  }
+  // craft-shortfall-offer: a cost short of a middle (Ingot, Plank, Cloth, Leather) at tier t, read from refineOffer (55-refine).
+  // -> { txt, btn, add } | null. btn (the one-tap order) only when every order's inputs are in hand together and the stations
+  // have room; else txt names what is short. Orders already queued read "Smelting at the Forge." Nothing is queued until the
+  // player presses the button. upgrade-gold-covers-short adds its gold choice to this same row.
+  const midName = (f, t, n) => f === 'coal' ? 'coal' : matName(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || MAT[f].unit === 'Log') ? 's' : '');
+  const andList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  function shortOffer(cost, t) {
+    if (typeof refineOffer !== 'function' || !refineOn()) return null;
+    const mats = cost && cost.mats ? cost.mats : cost || {};
+    const mids = Object.keys(mats).filter(k => REFINE_RAW[k] && matOwn(k, t) < mats[k]);
+    if (!mids.length) return null;
+    const off = refineOffer(mats, t), out = [];
+    const queued = mids.filter(k => !off.orders.some(o => o.prod === k));
+    let btn = '';
+    if (off.orders.length) {
+      out.push(`Short ${andList(off.orders.map(o => `${storeNum(o.want)} ${midName(o.prod, t, o.want)}`))}.`);
+      const need = {};
+      for (const o of off.orders) for (const [f, tt, n] of refineNeed(o.prod, o.tier)) need[f + ':' + tt] = (need[f + ':' + tt] || 0) + n * o.want;
+      const miss = Object.entries(need).map(([key, n]) => { const [f, tt] = key.split(':'); return [f, +tt, n - matOwn(f, +tt)]; }).filter(x => x[2] > 0);
+      const slots = {};
+      for (const o of off.orders) slots[o.st] = (slots[o.st] || 0) + 1;
+      const tight = Object.keys(slots).find(st => { const l = refineOrders(st); return REFINE_TUNE.max - l.length + l.filter(o => !o.all && o.made >= o.want).length < slots[st]; });
+      const bad = off.orders.find(o => !o.ok && (!refineBuilt(o.st) || !refineSlotFree(o.st))), ings = andList(off.orders.map(o => REFINE_PRODUCTS[o.prod].ing.toLowerCase()));
+      if (bad) out.push(bad.why);
+      else if (miss.length) out.push(`${ings[0].toUpperCase() + ings.slice(1)} them needs ${andList(miss.map(([f, tt, n]) => `${storeNum(n)} more ${midName(f, tt, n)}`))}${miss.some(x => x[0] === 'coal') ? ' (Copper Ore brings coal)' : ''}.`);
+      else if (tight) out.push(`The ${CAMP_B[tight].n} holds ${REFINE_TUNE.max} orders. Clear one first.`);
+      else if (off.orders.some(o => !o.full)) out.push('The Storehouse has no room for them.');
+      else {
+        out.push(`${andList(off.orders.map(o => `${REFINE_PRODUCTS[o.prod].verb} ${storeNum(o.want)}`))} (${andList(Object.entries(need).map(([key, n]) => { const [f, tt] = key.split(':'); return `${storeNum(n)} ${midName(f, +tt, n)}`; }))})?`);
+        btn = andList(off.orders.map((o, i) => `${i ? REFINE_PRODUCTS[o.prod].verb.toLowerCase() : REFINE_PRODUCTS[o.prod].verb} ${storeNum(o.want)}`));
+      }
+    }
+    for (const k of queued) {   // the order is queued: say it runs, or why it has stopped
+      const st = REFINE_PRODUCTS[k].st, mine = refineOrders(st).filter(o => o.prod === k && o.tier === t && (o.all || o.made < o.want));
+      const stop = mine.length && !mine.some(o => refineState(st, o).k === 'run') ? refineState(st, mine[0]).why : '';
+      out.push(stop ? `The ${CAMP_B[st].n}'s ${matName(k, t)} order has stopped: ${stop}.` : `${REFINE_PRODUCTS[k].ing} at the ${CAMP_B[st].n}.`);
+    }
+    return { txt: out.join(' '), btn, add: btn ? () => off.add() : null };
+  }
+  // The row under a recipe or an upgrade: the line, and the button when the order can start. after: re-render (the item sheet).
+  function shortRow(cost, t, after) {
+    const o = safe(() => shortOffer(cost, t), null); if (!o) return null;
+    const r = el('div', 'cf-src cf-short');
+    r.append(el('span', null, o.txt + ' '));
+    if (o.btn) {
+      const b = el('button', 'mini cf-order', o.btn); b.type = 'button';
+      b.addEventListener('click', () => { act(() => { const x = shortOffer(cost, t); return x && x.add ? x.add() > 0 : false; }); if (after) after(); });
+      r.append(b);
+    }
+    return r;
+  }
 
   // ---------------- UI state (memory only) ----------------
-  const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
+  const st8 = { lift: {}, st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
     tool: {}, fd: {}, crafted: false };   // craft-delta: tool: id -> { on, speed } from the crafted event; fd: id -> { sig, job, res } the fight line
   const openTier = st => {
     return skillTopTier(skillOfSt(st));
@@ -144,19 +217,87 @@ let craftUI = null;
   const roleFor = k => st8.role[k] || 'striker';
   // craft-delta: how many recipes you could make right now (a craft made with two or more on offer is a choice)
   const affordable = () => { let n = 0; for (const s of STATION_KEYS) for (const k of listFor(s, 'you')) for (let t = 1; t <= 5 && n < 2; t++) if (skillTierOpen(skillOfSt(s), t) && safe(() => canDo(k, t).ok, false)) n++; return n; };
-  function doCraft(k, t) {
-    if (!canDo(k, t).ok) return;
+  // craft-strike-infuse: how = 'infuse' pays Essence for the lift. Otherwise, when the timing bar is offered (craftStrikeOffered), the bar
+  // shows first and the craft is made (and paid) only when it resolves, so a miss, no press or a hidden tab never loses materials.
+  function doCraft(k, t, how) {
+    if (!canDo(k, t).ok || strike.on) return;
     const d = CRAFT_KINDS[k], opts = { wear: true };   // craft-delta: a better tool goes on by itself (55-crafting craftItem)
     if (d.role === 'any') opts.role = roleFor(k);
     const mw = mwFor(k); if (mw != null) opts.mw = mw;
-    const f = K6.craft(), choice = affordable() >= 2;
+    const choice = affordable() >= 2;
+    if (how === 'infuse') { if (!safe(() => canCraft(k, t, { infuse: true }).ok, false)) return; opts.infuse = true; }
+    else if (K6.craft() && safe(() => craftStrikeOffered(k, t), false)) { strikeOpen(k, t, opts, choice); return; }
+    craftDone(k, t, opts, choice);
+  }
+  function craftDone(k, t, opts, choice) {
+    const f = K6.craft();
     const it = safe(() => (f ? f(k, t, opts) : forgeItem(k, t)), null);
     if (it) {
-      if (choice) emit('choice', 'craft');
+      if (choice || opts.infuse || opts.strike != null) emit('choice', 'craft');   // craft-strike-infuse: taking the Strike or Infuse is a choice
       if (!st8.crafted) { st8.crafted = true; emit('firstUse', 'craft'); }   // the first craft this visit (the walk plays one fresh game)
       if (it.id != null) st8.fresh.add(it.id); save(); ui(true);
     }
+    return it;
   }
+  // ---- the Strike (craft-strike-infuse): the parry bar's look (.tv-time, 60-turn.css) with its own clock; it holds the game ----
+  // The head fills the track in STRIKE_FILL seconds; the gold window is its last stretch, the fight's parry window (59k: SOLO_TUNE.turnParryWindow
+  // x turnAssistX, capped at TURN_TUNE.windowCaps.parry). A press in it lifts one grade; an early press, no press or a hidden tab makes the
+  // piece at the level's grade. Reduced motion: the bar is the same as the fight's, which only fills.
+  const STRIKE_WORD = { forge: 'Strike', bench: 'Carve', loom: 'Stitch', ench: 'Etch' };
+  const STRIKE_FILL = 1.1, STRIKE_LATE = 0.25;
+  const strike = { on: null, ov: null };
+  holdGame(() => !!strike.on);
+  const strikeWin = () => safe(() => Math.min(TURN_TUNE.windowCaps.parry, SOLO_TUNE.turnParryWindow * turnAssistX()), 0.18);
+  function strikeBuild() {
+    if (strike.ov) return strike.ov;
+    const ov = el('div', 'cf-strike'), box = el('div', 'cf-sk'), ttl = el('p', 'cf-sk-t'), bar = el('div', 'tv-time cf-sk-bar'), track = el('div', 'tv-track');
+    const fill = el('i', 'tv-fill'), pz = el('i', 'tv-parry'), head = el('i', 'tv-head'), legend = el('div', 'tv-legend'), lg = el('span', 'tv-lg-p'), sub = el('p', 'cf-sk-s');
+    ov.hidden = true; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-live', 'assertive');
+    ttl.id = 'cfStrikeT'; ov.setAttribute('aria-labelledby', 'cfStrikeT'); box.tabIndex = -1;
+    track.append(pz, fill, head); legend.append(lg); bar.append(track, legend); box.append(ttl, bar, sub); ov.append(box);
+    ov.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); strikePress(); });
+    document.body.append(ov);
+    strike.ov = { ov, ttl, bar, fill, pz, head, lg, sub };
+    return strike.ov;
+  }
+  function strikeOpen(k, t, opts, choice) {
+    const o = strikeBuild(), word = STRIKE_WORD[CRAFT_KINDS[k].st] || 'Strike', to = safe(() => craftLiftTo(k, t), null);
+    const win = strikeWin();
+    strike.on = { k, t, opts, choice, word, to, win, t0: performance.now() / 1000, done: false };
+    putText(o.ttl, `${word} as the bar reaches the gold`); putText(o.lg, word);
+    putText(o.sub, `In the gold: Grade ${to != null ? GRADE[to].n : 'up'}. A miss still makes it at Grade ${GRADE[safe(() => gradeFor(k, t), 0)].n}.`);
+    o.pz.style.left = (100 * (1 - win / STRIKE_FILL)) + '%'; o.pz.style.width = (100 * win / STRIKE_FILL) + '%';
+    o.bar.classList.remove('in-parry'); o.ov.hidden = false; try { o.ov.firstChild.focus({ preventScroll: true }); } catch (e) {}
+    requestAnimationFrame(strikeDraw);
+  }
+  function strikeDraw() {
+    const s = strike.on; if (!s || s.done) return;
+    const o = strike.ov, e = performance.now() / 1000 - s.t0, x = Math.min(1, e / STRIKE_FILL);
+    o.fill.style.width = (100 * x) + '%'; o.head.style.left = (100 * x) + '%';
+    o.bar.classList.toggle('in-parry', e >= STRIKE_FILL - s.win && e <= STRIKE_FILL);
+    if (e > STRIKE_FILL + STRIKE_LATE) { strikeEnd(false, false); return; }
+    requestAnimationFrame(strikeDraw);
+  }
+  function strikePress() {
+    const s = strike.on; if (!s || s.done) return;
+    const e = performance.now() / 1000 - s.t0;
+    strikeEnd(e >= STRIKE_FILL - s.win && e <= STRIKE_FILL + 0.05, true);   // a frame's grace at the end, as a press lands a moment after the eye sees it
+  }
+  function strikeEnd(hit, pressed) {
+    const s = strike.on; if (!s || s.done) return;
+    s.done = true;   // later presses are ignored; the overlay stays a beat so a second tap cannot reach the row under it
+    setTimeout(() => { if (strike.on === s) strike.on = null; if (strike.ov && !strike.on) strike.ov.ov.hidden = true; }, 250);
+    emit('craftStrike', { hit, pressed, kind: s.k, t: s.t });   // 76-audio: the parry chime on a hit
+    const opts = Object.assign({}, s.opts); if (pressed) opts.strike = hit;   // no press: made at the level's grade, and no choice was taken
+    const it = craftDone(s.k, s.t, opts, s.choice);
+    if (it && it.id != null && !pressed) { st8.lift[it.id] = 'missed'; ui(true); }   // the result card says so (a press sets it from 'crafted')
+  }
+  document.addEventListener('keydown', e => {
+    if (!strike.on || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === ' ' || e.key === 'Enter' || e.key === 'f' || e.key === 'F') { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) strikePress(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); strikeEnd(false, false); }   // the menu stays open: made at the level's grade
+  }, true);
+  document.addEventListener('visibilitychange', () => { if (document.hidden && strike.on) strikeEnd(false, false); });   // a hidden tab: the level's grade
   // ---- the fight line (craft-delta): what the piece changes against the boss at your furthest zone (55-fight-delta) ----
   // Sampled a chunk at a time after the card opens, so the card never waits; the line joins it when the sample is done, or is
   // left out. Keyed by what the fight depends on now, so a card seen again after a gear change samples again.
@@ -291,14 +432,29 @@ let craftUI = null;
     if (!d.pos && !d.comp) bits.push('Special');
     return bits.join(' · ');
   }
+  // craft-attribute-grades: with CRAFT_TUNE.grades on, a graded recipe shows the grade it will be made at and the level of the next
+  // grade ("Grade B · A at Woodcraft 11"), and, when another tier is open, the choice between them ("Pine Bow grade A, or Birch Bow
+  // grade D"). Tools keep the odds line.
+  const gradeTxt = (k, t) => safe(() => {
+    if (!gradedKind(k)) return '';
+    // the skill that sets the level: a Charm grades on the better of Enchanting and Smithing (stationLevel), so name the one in use
+    const own = skillOfSt(CRAFT_KINDS[k].st), sk = SKILL[stationLevel(k) > lvOf(own) ? 'smith' : own], g = gradeFor(k, t), nx = gradeNext(k, t);
+    return `Grade ${GRADE[g].n} · ` + (nx ? `${GRADE[nx.g].n} at ${sk} ${nx.lv}` : 'the top grade');
+  }, '');
+  const choiceTxt = (k, t) => safe(() => {
+    if (!gradedKind(k) || !stationTierOpen(k, t)) return '';
+    const u = t < 5 && stationTierOpen(k, t + 1) ? t + 1 : t > 1 ? t - 1 : 0;
+    if (!u) return '';
+    return `${tierName(k, t)} grade ${GRADE[gradeFor(k, t)].n}, or ${tierName(k, u)} grade ${GRADE[gradeFor(k, u)].n}`;
+  }, '');
   // craft-reveal: the odds a craft rolls on (the same weights craftItem rolls with), one line per recipe
   const oddsTxt = k => safe(() => {
     const w = rarityWeights(stationLevel(k)), tot = Object.values(w).reduce((a, b) => a + b, 0);
     const pc = v => { const p = v / tot * 100; return (p < 10 ? p.toFixed(1) : String(Math.round(p))) + '%'; };
     return 'Odds: ' + ['common', 'uncommon', 'rare', 'epic'].map(r => `${RAR[r].n} ${pc(w[r])}`).join(' · ');
   }, '');
-  // short grade word for a bag tile (the full word sits on the item sheet and in the label)
-  const GRADE_SHORT = { common: 'Com', uncommon: 'Unc', rare: 'Rare', epic: 'Epic', legendary: 'Uniq' };
+  // short quality word for a bag tile (the full word sits on the item sheet and in the label): itemQualShort (40-rules), "Rare" or
+  // a graded item's letter ("B")
   // stat changes against what the hero wears in that slot: [{ label, v, txt }]
   function diffRows(it) {
     const d = itemKind(it), cur = d && d.pos ? itemById(S.equip[d.pos]) : null;
@@ -319,7 +475,7 @@ let craftUI = null;
     const head = el('div', 'cf-ih'), tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s56');
     const who = el('div', 'cf-ihw');
     who.append(el('h3', 'cf-in rar-' + it.r, itemName(it)));
-    const grade = el('span', 'cf-grade rar-' + it.r, RAR[it.r].n);
+    const grade = el('span', 'cf-grade rar-' + it.r, itemQual(it));
     const meta = el('div', 'cf-im'); meta.append(grade, ` · Tier ${it.t}${d ? ' · ' + (d.pos ? posName(d.pos) : d.noun) : ''}`);
     who.append(meta);
     head.append(tile, who);
@@ -335,6 +491,9 @@ let craftUI = null;
       lines.append(r);
     }
     if (lines.children.length) left.append(lines);
+    { const lf = st8.lift[it.id], w = STRIKE_WORD[(CRAFT_KINDS[it.slot] || {}).st] || 'Strike', q = itemQual(it);   // craft-strike-infuse
+      const txt = lf === 'strike' ? `Your ${w} landed in the gold: ${q}.` : lf === 'infuse' ? `Infused with Essence: ${q}.` : lf === 'missed' ? `The ${w} missed the gold, so it is ${q}. Nothing was lost.` : '';
+      if (txt) left.append(el('p', 'note cf-liftn' + (lf === 'missed' ? '' : ' up'), txt)); }
     const df = diffRows(it), tl = toolLine(it), fl = !wr ? fightLine(it) : '';
     if (tl) right.append(el('p', 'note cf-cmpn cf-toolon', tl));
     if (fl) right.append(el('p', 'note cf-cmpn cf-fight', fl));
@@ -381,8 +540,8 @@ let craftUI = null;
     for (const id of st8.recent) {
       const it = itemById(id); if (!it) continue;
       const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.result === id ? ' sel' : '')); b.type = 'button';
-      b.append(img(itemIc(it)), el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
-      b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}`);
+      b.append(img(itemIc(it)), el('span', 'cf-gr rar-' + it.r, itemQualShort(it)));
+      b.setAttribute('aria-label', `${itemName(it)}, ${itemQual(it)}`); setTip(b, () => tipItem(itemById(id)));
       b.addEventListener('click', () => { st8.result = id; st8.resArm = false; ui(true); });
       row.append(b);
     }
@@ -393,11 +552,37 @@ let craftUI = null;
     const it = e && e.item; if (!it || it.id == null) return;
     st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
     st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    if (e.lift) st8.lift[it.id] = e.lift;   // craft-strike-infuse: the result card names the lift
     if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null, parts: e.on ? safe(() => toolParts(it, e), null) : null };   // tool-speed-adds-up: the old tool and the parts, read now
     else fdStart(it);
-    if ((it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
-      moment('craft', { title: itemName(it), sub: `${RAR[it.r].n} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });
+    // a Rare or better craft, or (craft-attribute-grades) grade A or S, is a medium moment
+    if ((itemGraded(it) ? GRADE[it.g].moment : it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
+      moment('craft', { eye: `Well made · ${itemQual(it)}`, title: itemName(it), sub: `${itemQual(it)} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });
   });
+  // craft-strike-infuse: the lift a craft can take ({ to, sk, inf, ok, why, word }) or null: the Strike (the bar after Craft) and Infuse
+  // (Essence, the button on the row), each one grade, never above A. Names the choice: "Grade A: Strike, or Infuse for 6 Essence".
+  const liftInfo = (k, t) => safe(() => {
+    if (typeof craftLiftTo !== 'function' || !stationTierOpen(k, t)) return null;
+    const to = craftLiftTo(k, t); if (to == null) return null;
+    const sk = craftStrikeOffered(k, t), inf = craftInfusePrice(k, t); if (!sk && !inf) return null;
+    const c = inf ? canCraft(k, t, { infuse: true }) : null;
+    return { to, sk, inf, ok: !!(c && c.ok), why: c && !c.ok ? c.why : '', word: STRIKE_WORD[CRAFT_KINDS[k].st] || 'Strike' };
+  }, null);
+  function liftRow(k, t) {
+    const L = liftInfo(k, t); if (!L) return null;
+    const box = el('div', 'cf-lift');
+    const what = L.sk && L.inf ? `${L.word}, or Infuse for ${fmt(L.inf)} Essence` : L.sk ? `${L.word} in the gold after Craft` : `Infuse for ${fmt(L.inf)} Essence`;
+    box.append(el('span', 'cf-lift-t', `Grade ${GRADE[L.to].n}: ${what}`));
+    if (L.inf) {
+      const b = el('button', 'cf-inf', 'Infuse'); b.type = 'button'; b.disabled = !L.ok;
+      b.setAttribute('aria-label', `Craft ${tierName(k, t)} with Infuse for ${fmt(L.inf)} Essence`);
+      if (!L.ok && L.why) b.title = L.why;
+      b.addEventListener('click', () => doCraft(k, t, 'infuse'));
+      box.append(b);
+      if (!L.ok && L.why) box.append(el('small', 'cf-lift-w', L.why));
+    }
+    return box;
+  }
   function recipeRow(k, t) {
     const d = CRAFT_KINDS[k], can = canDo(k, t);
     const row = el('div', 'cf-rec' + (can.ok ? ' ok' : '') + (st8.focus === k ? ' focus' : ''));
@@ -418,13 +603,18 @@ let craftUI = null;
     const mw = mwFor(k);
     if (mw != null) {
       const have = troph()[mw] || 0, c = el('span', 'cost mw' + (have < 1 ? ' short' : ''));
-      c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); costs.append(c);
+      c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); setTip(c, () => tipCost(CRAFT_TROPHIES[mw].n, troph()[mw] || 0, 1)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
     // gear-in-first-25: where each short gathered material comes from ("Bristlehide: from Hunting, which opens at zone 5."); none for
     // essence, gold, a middle (Planks, Ingots) or a material in hand
     for (const [f, n] of Object.entries(kindCost(k, t))) { if (matOwn(f, t) >= n) continue; const ln = matSourceLine(f, t); if (ln) row.append(el('div', 'cf-src', ln)); }
-    const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds));
+    if (skillTierOpen(skillOfSt(d.st), t)) { const sr = shortRow(kindCost(k, t), t); if (sr) row.append(sr); }   // craft-shortfall-offer: only on a tier you can make
+    if (gradedKind(k)) {   // craft-attribute-grades: the grade line and the choice in place of the odds
+      const gl = stationTierOpen(k, t) ? gradeTxt(k, t) : ''; if (gl) row.append(el('div', 'cf-odds cf-gline', gl));
+      const ch = choiceTxt(k, t); if (ch) row.append(el('div', 'cf-odds cf-choice', ch));
+    } else { const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds)); }
+    const lr = can.ok ? liftRow(k, t) : null; if (lr) row.append(lr);   // craft-strike-infuse: the choice, on a craft you can make
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
       const seg = el('div', 'seg cf-seg');
@@ -477,7 +667,7 @@ let craftUI = null;
       if (st8.result != null && !itemById(st8.result)) st8.result = null;
       st8.recent = st8.recent.filter(id => itemById(id));
       { const it = st8.result != null ? itemById(st8.result) : null; if (it && !(itemKind(it) || {}).tool && !wornBy(it.id)) fdStart(it); }   // craft-delta: a card seen again after a gear change samples again
-      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos], fightLine(it)]; })() : 0]);
+      const resSig = JSON.stringify([st8.result, st8.resArm, st8.recent, st8.result != null ? st8.lift[st8.result] || '' : '', st8.result != null ? (() => { const it = itemById(st8.result); return [it.r, it.plus, wornBy(it.id) && wornBy(it.id).pos, S.equip[CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].pos], fightLine(it)]; })() : 0]);
       if (resSig !== rec.resSig) {
         rec.resSig = resSig; rec.resBox.textContent = '';
         const rit = st8.result != null ? itemById(st8.result) : null;
@@ -536,7 +726,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k)]);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -649,10 +839,10 @@ let craftUI = null;
       if (w !== 'any') for (const p of ['weapon', 'helm']) { const k = ((CRAFT_FITS[p] || {})[w] || [])[0]; if (k && ICON[CRAFT_KINDS[k].ic]) EMPTY_IC[p] = CRAFT_KINDS[k].ic; }
       for (const p of CRAFT_HERO_POS.filter(craftKindVisible)) {
         const e = gearEls[p], it = itemById(S.equip[p]);
-        if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
+        if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); setTip(e.b, () => tipItem(itemById(S.equip[p]))); }
         else {
           const ic = EMPTY_IC[p]; setIc(e.tile, ICON[ic] ? iconURL(ic, '#6E6080') : iconURL('charm', '#6E6080'), null, 'ghost soon');
-          e.plus.textContent = ''; e.b.setAttribute('aria-label', `${posName(p)}: empty. Choose gear.`);
+          e.plus.textContent = ''; e.b.setAttribute('aria-label', `${posName(p)}: empty. Choose gear.`); setTip(e.b, null);
         }
       }
     }
@@ -661,7 +851,7 @@ let craftUI = null;
   // ================= Bag =================
   let bag = null;
   const bulk = { on: false, ids: new Set(), armed: '', note: '' };
-  const spareRank = (a, b) => a.t - b.t || a.plus - b.plus || RAR[a.r].m - RAR[b.r].m;
+  const spareRank = (a, b) => a.t - b.t || a.plus - b.plus || itemMult(a) - itemMult(b);
   function salvageable() {
     const worn = equippedIds(), counts = new Map();
     for (const it of S.items) counts.set(it.id, (counts.get(it.id) || 0) + 1);
@@ -776,7 +966,7 @@ let craftUI = null;
       for (const b of bag.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.bfilt));
       for (const b of bag.sort.children) putAttr(b, 'aria-pressed', String(b.dataset.s === st8.sort));
       const w = wearers(), eligible = new Set(salvageable().map(it => it.id));
-      const sig = [bulk.on, [...bulk.ids].join(), st8.bfilt, st8.sort, S.items.map(i => [i.id,i.slot,i.t,i.plus,i.r,i.u,i.rf || 0].join(':')).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
+      const sig = [bulk.on, [...bulk.ids].join(), st8.bfilt, st8.sort, S.items.map(i => [i.id,i.slot,i.t,i.plus,i.r,i.u,i.rf || 0,i.g].join(':')).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
       if (!force && (sig === bag.sig || busy())) return;
       bag.sig = sig;
       let list = S.items.filter(it => craftKindVisible(it.slot));
@@ -791,12 +981,13 @@ let craftUI = null;
       for (const it of list) {
         const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
         b.append(img(itemIc(it)));
-        b.append(el('span', 'cf-gr rar-' + it.r, GRADE_SHORT[frameOf(it)] || RAR[it.r].n));
+        b.append(el('span', 'cf-gr rar-' + it.r, itemQualShort(it)));
         if (it.plus) b.append(el('span', 'cf-plus', '+' + it.plus));
         const wr = w.get(it.id);
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
         b.dataset.itemId = it.id;
-        b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}${wr ? ', worn by you' : ''}${it.u ? ', unique' : ''}`);
+        b.setAttribute('aria-label', `${itemName(it)}, ${itemQual(it)}${wr ? ', worn by you' : ''}${it.u ? ', unique' : ''}`);
+        setTip(b, () => tipItem(itemById(it.id)));   // desktop-tooltips
         if (bulk.on) {
           b.disabled = !eligible.has(it.id);
           b.setAttribute('aria-pressed', String(bulk.ids.has(it.id)));
@@ -818,7 +1009,7 @@ let craftUI = null;
   let sheet = null, switching = false;
   function open(label, back, small) {
     switching = true;
-    const api = openSheet(() => {}, { label, small, onClose: () => { if (sheet && sheet.api === api) sheet = null; if (!switching && back) setTimeout(() => safe(back), 0); } });
+    const api = openSheet(() => {}, { label, small, dock: true, onClose: quiet => { if (sheet && sheet.api === api) sheet = null; if (!switching && !quiet && back) setTimeout(() => safe(back), 0); } });
     switching = false;
     api.sheet.classList.add('cf-sheet');
     return api;
@@ -827,13 +1018,13 @@ let craftUI = null;
     const it = itemById(id); if (!it || !craftKindVisible(it.slot)) return;
     const api = open(itemName(it), back || (sheet && sheet.back));
     api.sheet.classList.add('cf-isheet');   // landscape: two columns (80-landscape.css)
-    sheet = { api, id, back: back || null, mode: null, sel: -1, arm: null, flash: -1 };
+    sheet = { api, id, back: back || null, mode: null, sel: -1, arm: null, flash: -1, pick: null };
     renderItem();
   }
   const secBox = (title, ...kids) => { const s = el('div', 'cf-ss'); if (title) s.append(el('h4', null, title)); s.append(...kids); return s; };
   function trophChip(need) {
     const have = trophTotal(), c = el('span', 'cost' + (have < need ? ' short' : ''));
-    c.append(img(troIcon(0)), el('span', null, `${have}/${need} Trophy (any)`));
+    c.append(img(troIcon(0)), el('span', null, `${have}/${need} Trophy (any)`)); setTip(c, () => tipCost('Trophies (any)', trophTotal(), need));
     return c;
   }
   function salvagePreview(it) {
@@ -854,7 +1045,7 @@ let craftUI = null;
     const tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s104');
     const who = el('div', 'cf-ihw');
     who.append(el('h3', 'cf-in rar-' + it.r, itemName(it)));
-    const meta = [RAR[it.r].n, `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun + (d.legacy ? ' (old style)' : '')) : ''].filter(Boolean).join(' · ');
+    const meta = [itemQual(it), `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun + (d.legacy ? ' (old style)' : '')) : ''].filter(Boolean).join(' · ');
     who.append(el('div', 'cf-im', meta));
     const fit = [];
     if (d && d.pos) fit.push(heroFitsIt(it) ? `${posName(d.pos)} for you` : `${posName(d.pos)} for ${d.cls && HERO_CLASSES[d.cls] ? 'a ' + HERO_CLASSES[d.cls].name : 'a hero with no class'}`);
@@ -922,9 +1113,25 @@ let craftUI = null;
       const c = kindUpgradeCost(it), chips = el('div', 'costs');
       costChips(chips, c.mats, it.t, c.gold);
       if (c.troph) chips.append(trophChip(c.troph));
-      const nextP = itemPower(Object.assign({}, it, { plus: it.plus + 1 }));   // playtester-code-bugs: uniques use UNIQ_TUNE.pow, as itemPower does
-      upBox.append(el('p', 'note', `+${it.plus + 1}: power ${fmt(itemPower(it))} → ${fmt(nextP)}. Every line grows.`), chips);
+      upBox.append(el('p', 'note cf-next', nextPlusTxt(it)), chips);   // craft-shortfall-offer: the main line's change, not a bare power number
       const f = K6.upgrade(), heroPos = wr && wr.who === 'hero' ? wr.pos : null;
+      {
+        let sr = shortRow(c.mats, it.t, renderItem), coverWhy = '';
+        // upgrade-gold-covers-short: gold may pay the material the piece is short, as the row's second button after the free
+        // refine order ("Upgrade: 340 + 270 gold for 3 Pine Planks"). Never on a craft, and only once the material is reachable.
+        const cv = f && typeof upgradeCover === 'function' ? safe(() => upgradeCover(it), null) : null;
+        if (cv) {
+          if (!sr) { sr = el('div', 'cf-src cf-short'); sr.append(el('span', null, `Short ${storeNum(cv.units)} ${midName(cv.fam, it.t, cv.units)}. `)); }
+          const g = el('button', 'mini cf-cover', `Upgrade: ${storeNum(c.gold)} + ${storeNum(cv.gold)} gold for ${storeNum(cv.units)} ${midName(cv.fam, it.t, cv.units)}`); g.type = 'button';
+          const can = safe(() => canUpgrade(it.id, undefined, { cover: true }), null);
+          g.disabled = !(can && can.ok);
+          if (can && !can.ok && can.why) coverWhy = `To cover them: ${can.why[0].toLowerCase() + can.why.slice(1)}.`;   // said on screen: a title never shows on a phone
+          g.addEventListener('click', () => { const n0 = upCount(); if (act(() => f(it.id, undefined, { cover: true })) && n0 === 0 && upCount() === 1) emit('firstUse', 'upgrade'); renderItem(); });
+          sr.append(' ', g);
+        }
+        if (sr) upBox.append(sr);
+        if (coverWhy) upBox.append(el('p', 'note cf-cover-why', coverWhy));
+      }
       const okMats = hasMats(c.mats, it.t) && S.gold >= c.gold && (!c.troph || (f && trophTotal() >= c.troph));
       const b = el('button', 'big forge cf-act', `Upgrade to +${it.plus + 1}`); b.type = 'button';
       b.disabled = !okMats || (!f && !heroPos);
@@ -967,9 +1174,12 @@ let craftUI = null;
   function reforgeBox(it) {
     const box = el('div', 'cf-rf');
     const f = K6.reforge(), cost = safe(() => reforgeCost(it), null), req = CRAFT_STATION_REQ[it.t - 1];
-    box.append(el('p', 'note', `At the Enchanter's Table. Pick one bonus line to reroll. Rarity and power stay.${it.rf ? ` Reforged ${it.rf} time${it.rf > 1 ? 's' : ''}: the price grows each time.` : ''}`));
-    const opts = el('div', 'cf-rfo'); opts.setAttribute('role', 'radiogroup');
-    const parts = splitLines(it).filter(L => L.g === 'affix');
+    // craft-attribute-grades: a graded piece's Reforge is a pick: the line to swap, then the bonus to put in (same price, no die)
+    const graded = itemGraded(it), choices = graded ? safe(() => reforgeChoices(it), []) : [];
+    box.append(el('p', 'note', (graded ? `At the Enchanter's Table. Pick a bonus line, then the bonus to put in its place. Grade and power stay.`
+      : `At the Enchanter's Table. Pick one bonus line to reroll. Rarity and power stay.`) + (it.rf ? ` Reforged ${it.rf} time${it.rf > 1 ? 's' : ''}: the price grows each time.` : '')));
+    const opts = el('div', 'cf-rfo'); opts.setAttribute('role', 'radiogroup'); opts.setAttribute('aria-label', 'Line to reforge');
+    const parts = graded && !choices.length ? [] : splitLines(it).filter(L => L.g === 'affix');   // a graded piece with every bonus has nothing to swap
     for (const L of parts) {
       const b = el('button', 'cf-rfl'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(sheet.sel === L.idx));
       b.append(el('i'), el('span', null, lineTxt(L.l)));
@@ -977,15 +1187,28 @@ let craftUI = null;
       opts.append(b);
     }
     box.append(opts);
+    if (graded && !choices.includes(sheet.pick)) sheet.pick = null;
+    if (graded && sheet.sel >= 0 && choices.length) {
+      box.append(el('p', 'note', 'Put in:'));
+      const pk = el('div', 'cf-rfo cf-rfpick'); pk.setAttribute('role', 'radiogroup'); pk.setAttribute('aria-label', 'Bonus to put in');
+      for (const id of choices) {
+        const b = el('button', 'cf-rfl'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(sheet.pick === id)); b.dataset.pick = id;
+        b.append(el('i'), el('span', null, safe(() => lineTxt(craftAffixValue(id, itemPower(it), 0.5)), id)));
+        b.addEventListener('click', () => { sheet.pick = id; sheet.arm = null; renderItem(); });
+        pk.append(b);
+      }
+      box.append(pk);
+    }
+    if (graded && !choices.length) box.append(el('p', 'note', 'This piece already has every bonus it can take.'));
     if (cost) { const chips = el('div', 'costs'); costChips(chips, cost.mats, it.t, cost.gold); box.append(chips); }
-    const ok = f && cost && sheet.sel >= 0 && skillTierOpen('ench', it.t) && hasMats(cost.mats, it.t) && S.gold >= cost.gold;
+    const ok = f && cost && sheet.sel >= 0 && (!graded || sheet.pick != null) && skillTierOpen('ench', it.t) && hasMats(cost.mats, it.t) && S.gold >= cost.gold;
     const armed = sheet.arm === 'reforge';
-    const b = el('button', 'big cf-act ' + (armed ? 'cf-arm' : 'forge'), !f ? 'Reforge opens soon' : sheet.sel < 0 ? 'Pick a line to reforge' : armed ? 'Tap again to reforge' : 'Reforge this line'); b.type = 'button';
+    const b = el('button', 'big cf-act ' + (armed ? 'cf-arm' : 'forge'), !f ? 'Reforge opens soon' : graded && !choices.length ? 'Nothing to reforge' : sheet.sel < 0 ? 'Pick a line to reforge' : graded && sheet.pick == null ? 'Pick the bonus to put in' : armed ? 'Confirm: reforge' : 'Reforge this line'); b.type = 'button';
     b.disabled = !ok;
     b.addEventListener('click', () => {
       if (!armed) { sheet.arm = 'reforge'; renderItem(); return; }
-      const idx = sheet.sel; sheet.arm = null;
-      if (act(() => f(it.id, idx))) sheet.flash = idx;
+      const idx = sheet.sel, pick = sheet.pick; sheet.arm = null;
+      if (act(() => f(it.id, idx, graded ? pick : undefined))) { sheet.flash = idx; sheet.pick = null; }
       renderItem();
     });
     box.append(b);
@@ -1016,7 +1239,7 @@ let craftUI = null;
       if (now) {
         const r = el('div', 'cf-pr cur');
         const t = icTile(itemIc(now), frameOf(now)); r.append(t);
-        const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, 'Worn now. Tap for details.'));
+        const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, (itemGraded(now) ? itemQual(now) + ' · ' : '') + 'Worn now. Tap for details.'));   // craft-attribute-grades: the letter in text
         r.append(tx);
         tx.addEventListener('click', () => openItem(now.id, backFn)); t.addEventListener('click', () => openItem(now.id, backFn));
         body.append(r);
@@ -1042,7 +1265,7 @@ let craftUI = null;
         const dp = itemPower(it) - (now ? itemPower(now) : 0);
         const wr = w.get(it.id);
         tx.append(el('b', 'rar-' + it.r, itemName(it)));
-        const sm = el('small', null, (wr ? 'You wear it · ' : ''));
+        const sm = el('small', null, (itemGraded(it) ? itemQual(it) + ' · ' : '') + (wr ? 'You wear it · ' : ''));
         sm.append(el('span', 'cf-d ' + (dp > 0 ? 'up' : 'dn'), `${dp >= 0 ? '+' : '-'}${fmt(Math.abs(dp))} power`));
         tx.append(sm);
         t.addEventListener('click', () => openItem(it.id, backFn)); tx.addEventListener('click', () => openItem(it.id, backFn));

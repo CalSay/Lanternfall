@@ -291,21 +291,23 @@ var forgeGoalPicks = 0;
   });
   // next-tier-gate-goal: what keeps a piece's next tier shut. The station's skill below the tier's gate is a station gate; else a
   // material you are short of whose node tier is closed for its gathering skill (a refined one by the raw goods it is made from;
-  // coal comes with Copper Ore and essence has no tier, so neither gates). The nearer one (the higher lv / need) is named.
+  // coal comes with Copper Ore and essence has no tier, so neither gates). The furthest gate of the nearest piece is named.
   // null: nothing gates it; false: only a gate the player cannot raise now (Hunting hidden, Foraging not open yet).
   const GATHER_OPEN = { hide: () => huntingVisible(), fibre: () => isUnlocked('forage'), herb: () => isUnlocked('forage') };
-  const nearer = (a, b) => !b || a.lv / a.need > b.lv / b.need;
   // a raw cell's gate, or false when its node never opens or its skill is hidden
   const rawGate = (f, tt) => {
     const sk = skillOf(f); if (skillTierOpen(sk, tt)) return null;
     if (!craftNodeEnabled(f, tt) || (GATHER_OPEN[f] && !GATHER_OPEN[f]())) return false;   // hide grades 4-5 are never offered
     return { skill: sk, lv: S.skills[sk].lv, need: skillReq(sk, tt), mat: costName(f, tt) };
   };
-  const recipeGate = (kind, t, c) => {
+  // every gate on a recipe: [] none, false when one cannot be raised now (Hunting hidden, Foraging not open yet).
+  // tier-two-named-for-return: the station gate and every short material's gate (one per skill, the highest need), not only the nearer
+  const recipeGates = (kind, t, c) => {
+    const out = [];
     if (c.lv < c.need) {
       // tools and pre-K4 kinds use the better of their station and Smithing (stationLevel): name the skill that gives that level
       const st = stationOf(kind), sk = S.skills[st.skill].lv >= c.lv ? st.skill : 'smith';
-      return { skill: sk, lv: S.skills[sk].lv, need: c.need, station: stationFor(sk) };
+      out.push({ skill: sk, lv: S.skills[sk].lv, need: c.need, station: stationFor(sk) });
     }
     // what the recipe takes as raw cells: a raw cost as it is, a refined one you are short of by the raw goods it is made from,
     // totalled over the recipe (Birch Planks and Duskfang Leather both take Birch Log); a cell gates only when you hold too few
@@ -314,20 +316,29 @@ var forgeGoalPicks = 0;
       const prod = typeof REFINE_PRODUCTS === 'object' ? REFINE_PRODUCTS[k] : null, short = n - matOwn(k, t);
       if (!prod) add(k, t, n); else if (short > 0) for (const [f, tt, m] of prod.inputs(t)) add(f, tt, m * short);
     }
-    let best = null;
     for (const [key, n] of Object.entries(raw)) {
       const [f, tt] = [key.split(':')[0], +key.split(':')[1]];
       if (matOwn(f, tt) >= n) continue;
       const g = rawGate(f, tt);
       if (g === false) return false;
-      if (g && nearer(g, best)) best = g;
+      if (!g) continue;
+      const i = out.findIndex(x => x.skill === g.skill);
+      if (i < 0) out.push(g); else if (g.need > out[i].need) out[i] = g;
     }
-    return best;
+    return out;
   };
-  // a station gate beats any material gate (about 50 XP against thousands); then the nearer; on a tie, the weapon
-  const gateScore = e => (e.gate.station ? 2 : 0) + e.gate.lv / e.gate.need + (e.pos === 'weapon' ? 1e-6 : 0);
+  // XP a skill still needs to reach a gate's level (its own curve: gathering, or the station's)
+  const xpLeft = g => { const s = S.skills[g.skill]; let n = -(s.xp || 0); for (let lv = s.lv; lv < g.need; lv++) n += skillNeed(lv, g.skill); return Math.max(0, n); };
+  // tier-two-named-for-return (why W9): a piece is as far as the XP left over all its gates (a station gate alone used to win at +2 and
+  // named the Leathers' Tailoring with 43 minutes of Hunting and Foraging behind it); the least wins, and on a tie the weapon
+  const gateScore = e => -e.left + (e.pos === 'weapon' ? 1e-6 : 0);
+  // tier 1 done: every position the hero can craft for wears a piece (a gate row then keeps a Next Up row of its own)
+  const tierOneDone = () => CRAFT_HERO_POS.every(p => equipped(p) || !kindsFor(p).some(k => craftKindVisible(k)));
+  // a tier 2 gate only: a later tier's gate keeps today's rule (its row after a boss loss), so the near-deed row is not pushed out all game
+  const tierTwoGate = b => !!(b && b.gate && b.t === 2 && tierOneDone());
   // forgeNext() -> { kind, t, pos, cost, p } the open recipe closest to done, or, when none with p > 0 is open,
-  // { kind, t, pos, gate: { skill, lv, need, mat?, station? }, p } the nearest gate (p = lv / need, at most 0.99, never Ready)
+  // { kind, t, pos, gate: { skill, lv, need, mat?, station? }, left, p } the piece with the least XP left over all its gates, naming the
+  // furthest of them (left = that XP; p = lv / need, at most 0.99, never Ready)
   // gear-in-first-25: from the first tool made (the guide's `tool` step) until a weapon is worn, with none in the bag, the hero's own
   // weapon is the pick, ahead of any tool or armour ("closest to done" let a ready Woodaxe hide a weapon short of Quartz). `closed`: the
   // first short material whose place is not open yet (matPlace, 55-onboard); the row then says when it opens.
@@ -364,9 +375,13 @@ var forgeGoalPicks = 0;
         if (t > Math.min(5, zt)) continue;
         const c = canCraft(kind, t);
         if (!c.cost || c.unbuilt) continue;   // unbuilt: a cold save's station (H1); no gate on a station that is not built
-        const g = recipeGate(kind, t, c);
-        if (g !== null) {
-          if (g) { const e = { kind, t, pos, gate: g, p: Math.min(0.99, g.lv / g.need) }; if (!gate || gateScore(e) > gateScore(gate)) gate = e; }
+        const gs = recipeGates(kind, t, c);
+        if (gs === false) continue;
+        if (gs.length) {
+          // the row names the furthest gate (the one most of the XP left is in)
+          const left = gs.map(xpLeft), i = left.indexOf(Math.max(...left)), g = gs[i];
+          const e = { kind, t, pos, gate: g, left: left.reduce((a, n) => a + n, 0), p: Math.min(0.99, g.lv / g.need) };
+          if (!gate || gateScore(e) > gateScore(gate)) gate = e;
           continue;
         }
         if (pos !== 'weapon' && forgeHold(t, c.cost.mats)) continue;
@@ -396,13 +411,21 @@ var forgeGoalPicks = 0;
     id: 'forge', sys: 'forge',
     // a tier gate keeps a row of its own once the frontier boss has beaten you: it is the way forward ("gear up"), and in the seed 1
     // walk it otherwise sat 4th behind the boss, refine and contract rows
-    reserve: () => { const b = forgeNext(), bt = S.bossTry; if (b && b.first) return b.closed ? 0 : 1; return b && b.gate && bt && bt.tries && typeof bossTryKey === 'function' && bt.tries[bossTryKey(soloHero(), S.maxZone)] > 0 ? 1 : 0; },
+    // tier-two-named-for-return: and once tier 1 is done, without a boss loss (bosses rarely beat you after z13-unstick, so at minute 60
+    // the row sat below the top 8)
+    reserve: () => { const b = forgeNext(), bt = S.bossTry; if (b && b.first) return b.closed ? 0 : 1; if (!b || !b.gate) return 0; if (tierTwoGate(b)) return 1;
+      return bt && bt.tries && typeof bossTryKey === 'function' && bt.tries[bossTryKey(soloHero(), S.maxZone)] > 0 ? 1 : 0; },
     // gear-in-first-25: the first weapon, its places open, ranks above every unfinished row (20); once Ready, above other Ready rows
     // (13) but under a pile of unspent points (hero-up's 20, even with this row shown first: 2.13 + STICK < 2.2)
-    prio: () => { const b = forgeNext(); return b && b.first && !b.closed ? (b.p >= 1 ? 13 : 20) : 0; },
+    // tier-two-named-for-return: a tier 2 gate once tier 1 is done is prio 13, so its reserved row holds a place in the top three even
+    // when three rows are Ready (it is the session's end goal, and a Ready row is one press away on the full list)
+    prio: () => { const b = forgeNext(); return b && b.first && !b.closed ? (b.p >= 1 ? 13 : 20) : tierTwoGate(b) ? 13 : 0; },
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
-    label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
-      if (b.gate) return `${nm}: ${SKILL[b.gate.skill]} ${b.gate.lv} of ${b.gate.need}` + (b.gate.mat ? ` opens ${b.gate.mat}` : '');
+    label: () => { const b = forgeNext(); if (!b) return '';
+      // tier-two-named-for-return: a gate row names the piece and its furthest gate, not a boss (it is often a later sitting's piece); a
+      // gathering gate says the skill rises while you're away ("Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away.")
+      if (b.gate) return `${kindName(b.kind, b.t)}: ${SKILL[b.gate.skill]} ${b.gate.lv} of ${b.gate.need}` + (b.gate.station ? '' : (b.gate.mat ? ` opens ${b.gate.mat}` : '') + '. Gathering keeps going while you\'re away.');
+      const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
       if (b.first) return `${nm}: ${firstWeaponWhere(b)}`;   // "Pine Staff for the zone 4 boss: mine 3 Quartz at the Quartz Geode"
@@ -437,5 +460,66 @@ var forgeGoalPicks = 0;
     label: () => { const it = upgradeNext(); return it ? `Upgrade your ${kindName(it.slot, it.t, it.u)} to +${it.plus + 1}` : ''; },
     icon: () => { const it = upgradeNext(); return it ? { item: it } : null; },
     go: () => { const it = upgradeNext(), id = it ? it.id : null; return { tab: 'party', view: 'gear', fn: () => { if (id != null && typeof craftUI === 'object' && craftUI) craftUI.openItem(id); } }; }
+  });
+
+  // hearth-two-next-up (W6): after the zone 10 clear, the camp's step up: Hearth 2, then the Tavern. The row names each part of
+  // the cost still short and where it comes from ("Build Hearth 2: 20 Pine Log at the Pine Grove, 5 Essence from fights").
+  // Like Hesketh's fire (55-hearth) it is Ready while a gathered part is short and the hero works elsewhere: Go sends the hero to
+  // that node. Once everything is in hand it reads "ready to build", unless camp-build (57-camp) already offers this build (its
+  // pick: the cheapest build a free builder can start), so the two never show the same build twice. A hero still at a node
+  // this row sent them to, with no more needed there, is offered "Back to the fight". Costs and gates are campCan's own.
+  let stepSent = null;   // { kind, t, what }: the node this row's Go last sent the hero to (not saved)
+  const atNode = (k, t) => S.activity === 'gather' && !!S.node && S.node.kind === k && S.node.t === t;
+  const gathered = k => !!(CRAFT_FAMILY[k] && CRAFT_FAMILY[k].src === 'gather');
+  const stepWhere = (k, t) => {
+    if (k === 'ess' || k === 'gold') return 'from fights';
+    if (NODE_NAMES[k]) return `at the ${NODE_NAMES[k][t - 1]}`;
+    const pl = matPlace(k, t); return pl.skill ? `from ${SKILL[pl.skill]}` + (pl.opens ? `, which opens at ${pl.opens}` : '') : '';
+  };
+  const campStep = () => {
+    if (!(S.maxZone > 10) || typeof campCan !== 'function' || !campOpen()) return null;
+    const id = campLevel('hearth') < 2 ? 'hearth' : campLevel('tavern') < 1 ? 'tavern' : null;
+    if (!id || campPending(id) || !campList().includes(id)) return null;
+    const c = campCan(id);
+    if (!c.cost || c.max || c.need) return null;
+    const short = [], parts = [[S.gold, c.cost.gold]];
+    if (S.gold < c.cost.gold) short.push({ k: 'gold', t: 1, n: Math.ceil(c.cost.gold - S.gold), have: S.gold });
+    for (const [k, t, n] of c.cost.mats) { const h = matOwn(k, t); parts.push([h, n]); if (h < n) short.push({ k, t, n: Math.ceil(n - h), have: h }); }
+    if (c.miss && c.miss.length > short.length) return null;   // short of something this row cannot name (a Trophy)
+    const live = parts.filter(([, n]) => n > 0);
+    return { id, ok: !!c.ok, queue: !!c.queue, what: id === 'hearth' ? 'Hearth 2' : 'the Tavern', short, p: live.reduce((a, [h, n]) => a + Math.min(1, need(h, n)), 0) / Math.max(1, live.length) };
+  };
+  // camp-build's own pick (bestBuild in 57-camp): the cheapest build that can start now, the first in camp order on a tie
+  // (kept 900 ms, as camp-build keeps its own pick: it reads every building, and the two rows hand over on the same beat)
+  let pickAt = 0, pickVal = null;
+  const campPick = () => { const t = Date.now(); if (!(t - pickAt <= 900 && t >= pickAt)) { pickAt = t; let best = null;
+    for (const id of campList()) { const c = campCan(id); if (c.ok && !c.queue && (!best || c.cost.gold < best.g)) best = { id, g: c.cost.gold }; } pickVal = best ? best.id : null; } return pickVal; };
+  // the row's state: go (Ready: Go sends the hero to g's node), work (at a short node, or short of what fights bring), back and
+  // ready (both Ready)
+  const stepNow = () => {
+    if (stepSent && !atNode(stepSent.kind, stepSent.t)) stepSent = null;
+    const x = campStep(), sh = x ? x.short : [];
+    const back = !!stepSent && !sh.some(s => s.k === stepSent.kind && s.t === stepSent.t);
+    const deep = typeof deepActive === 'function' && deepActive();   // no Go to a node from the Deepwell (navGo refuses)
+    if (deep && sh.length) return { m: 'work', x };
+    if (sh.some(s => gathered(s.k) && atNode(s.k, s.t))) return { m: 'work', x };
+    const g = sh.find(s => gathered(s.k) && matPlace(s.k, s.t).open);
+    if (g) return { m: 'go', x, g };
+    if (back && S.activity === 'gather') return { m: 'back', x };
+    if (x && x.ok) return x.queue || campPick() !== x.id ? { m: 'ready', x } : null;
+    return sh.length ? { m: 'work', x } : null;
+  };
+  const stepPart = s => `${fmt(s.n)}${s.have > 0 ? ' more' : ''} ${s.k === 'gold' ? 'gold' : costName(s.k, s.t)} ${stepWhere(s.k, s.t)}`.trim();
+  registerGoal({
+    id: 'camp-step', sys: 'camp', prio: 1, icon: { ic: ['anvil', '#D08A4E'] },
+    pct: () => { const s = stepNow(); return !s ? null : s.m === 'work' ? Math.max(0.01, Math.min(0.99, s.x.p)) : 1; },
+    label: () => { const s = stepNow(); if (!s) return '';
+      if (s.m === 'ready') return `${s.x.what[0].toUpperCase() + s.x.what.slice(1)}: ready to build`;
+      if (s.m === 'back') return `Back to the fight: you have the ${costName(stepSent.kind, stepSent.t)} for ${stepSent.what}`;
+      return `Build ${s.x.what}: ${s.x.short.map(stepPart).join(', ')}`; },
+    go: () => { const s = stepNow(); if (!s) return { tab: 'world', view: 'camp' };
+      if (s.m === 'go') { const sent = { kind: s.g.k, t: s.g.t, what: s.x.what }; return { act: 'gather', node: { kind: sent.kind, t: sent.t }, fn: () => { stepSent = sent; } }; }
+      if (s.m === 'back') return { act: 'fight', fn: () => { stepSent = null; } };
+      return { tab: 'world', sel: '#camp-b-' + s.x.id }; }
   });
 }

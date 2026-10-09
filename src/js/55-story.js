@@ -62,10 +62,13 @@
 // starter is the story hero (the active hero if it is a starter, else S.story.starter).
 //
 // Save: registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {},
-//   journalOpens: 0 }). v, seen, read, init are the old fields, kept. `seen` keys: 'r:<region>' (R), 'a:<areaIdx>' and 'z:<zone>'
+//   journalOpens: 0, open: {} }). v, seen, read, init are the old fields, kept. `seen` keys: 'r:<region>' (R), 'a:<areaIdx>' and 'z:<zone>'
 //   (A, Z), 'c:<zone>' (C), 'p:<id>:pre|post' (P), 'e:<id>:pre|post' (E), 'n:<id>' (N), 'v:<id>' (V), 'ch:<id>' (choice),
 //   'j:<id>' (page), 'l:<id>' and 'o:<id>' (letter, note); value = ms played (negative = filed by the catch-up). The old
 //   keys ('a:<region>:<place>', 'b:', 'ei:', 'ef:') are kept and ignored. `read`: Journal entry id -> 1.
+//   open (reload-keeps-tips): scene id -> the page on screen (0-based), from the moment a card scene is queued until it closes, so a
+//   reload brings it back at that page at the first gap (restore, below). Every scene is marked seen when queued, so without it a reload
+//   lost the scene. An id with no builder (or none for this hero) is filed late, as an 'auto' close is.
 //   off: 1 = Story cards off. ends: scene key -> 'done' | 'skipped' (12a; never 'auto'). journalOpens: Journal opens (12a).
 //   starter, litFor (Great Lantern -> name), coldhearth: for story-opening and story-choices.
 //   'i:open' (the drawn opening was shown or skipped), 'n:<id>' for the opening's NPC scenes (heskethFire, over the stills; heskethTalk, at the camp fire).
@@ -78,12 +81,14 @@ const STORY_ON = true;   // dev switch (bible 10.4): false plays no story at all
 const STORY_TUNE = { champMoment: true,   // champion-moment: a Champion's first clear is one big card (its scene, then the cache). false: the scene plays as a story card and the cache opens on its own, as before
   joinOnMeet: true };   // starters-join-when-met (56c): a new game's other two starters join at their meet scenes' Champions. false: all three from the start
 
-let storyOn, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
+let storyOn, storyPage, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
   storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey, storyBusy;
+// zone10-clear-moment: the story name of the Champion that holds zone z ("The Hollow Cantor"), or '' (the fight bar, the loss sheet and the boss odds' scratch boss use it)
+function champStoryName(z) { const C = (typeof STORY_BEATS === 'object' && STORY_BEATS && STORY_BEATS.champ) || {}; const c = Object.values(C).find(v => v && v.zone === z); return (c && c.name) || ''; }
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
 {
-  registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0 });
+  registerState('story', { v: 1, seen: {}, read: {}, init: 0, off: 0, starter: '', litFor: {}, coldhearth: '', ends: {}, journalOpens: 0, open: {} });
   const ST = () => S.story;
   const D = k => (typeof STORY_BEATS === 'object' && STORY_BEATS && STORY_BEATS[k]) || {};
   const foeIn = z => typeof ZONE_FOES === 'object' && !!ZONE_FOES[z];
@@ -294,6 +299,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     if (!cur || cur.id !== id) return;
     const sc = cur, shown = claimed; cur = null; claimed = false;
     const st = ST();
+    delete st.open[id];
     const auto = how === 'auto';   // nobody touched it: filed as a page to catch up on, and no `ends` entry (bible 12a)
     // skipped: the default. Left alone in a Champion's or Elder's scene, a choice stays open: its Journal entry offers it to catch up on
     if (!(auto && /^[pe]:/.test(sc.id))) for (const c of sc.cards) if (c.choice) storyChoose(c.choice);
@@ -311,7 +317,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   function pump(chain) {
     while (!cur && queue.length) {
       const sc = queue.shift();
-      if (stale(sc)) continue;
+      if (stale(sc)) { delete ST().open[sc.id]; continue; }
       if (chain) sc.chain = true;   // follows a shown scene: the UI plays it once the last sheet has closed, gap or not
       cur = sc; claimed = false; heldAt = Date.now();
       emit('storyScene', sc);
@@ -328,7 +334,29 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     cur = sc; claimed = false; heldAt = Date.now();
     emit('storyScene', sc);
   }
-  const push = sc => { if (sc) queue.push(sc); };
+  const push = sc => { if (!sc) return; queue.push(sc); if (sc.kind === 'card') ST().open[sc.id] = 0; };
+  storyPage = (id, i) => { if (ST().open[id] !== undefined) ST().open[id] = i; };   // the UI draws page i of that scene
+
+  // ---- a reload mid-scene (reload-keeps-tips): what was queued or on screen comes back at its page, at the first gap ----
+  // Every card scene's builder takes its id, so all of them can be rebuilt (the Champion and Elder scenes, region cards, NPCs, Hesketh's camp
+  // fire talk, voices, choices). A rebuilt scene can be shorter (a starter met as a person drops out when he is the hero): the page is clamped.
+  // One that builds nothing, or Story cards off, files it late (its Journal entry offers it), as an untouched card does.
+  let restored = false;
+  const REBUILD = { r: id => regionScene(id), p: (id, ph) => /^(pre|post)$/.test(ph) ? champScene(id, ph) : null, e: (id, ph) => /^(pre|post)$/.test(ph) ? elderScene(id, ph) : null, n: id => npcScene(id), v: id => voiceScene(id), ch: id => choiceScene(id) };
+  function restore() {
+    restored = true;
+    const st = ST();
+    if (!st.open || typeof st.open !== 'object' || Array.isArray(st.open)) { st.open = {}; return; }
+    for (const id of Object.keys(st.open)) {
+      const [k, a, b] = id.split(':');
+      let sc = null;
+      if (storyOn() && REBUILD[k]) try { sc = REBUILD[k](a, b); } catch (e) { sc = null; }
+      if (sc && sc.id === id && sc.cards.length) { sc.at = Math.max(0, Math.min(sc.cards.length - 1, Math.floor(+st.open[id]) || 0)); st.open[id] = sc.at; queue.push(sc); continue; }
+      delete st.open[id];
+      if (st.seen[id] > 0) st.seen[id] = -st.seen[id];   // late, unread: "Catch up on the story"
+      const post = /^([pe]:[^:]+):post$/.exec(id); if (post) delete st.read[post[1]];
+    }
+  }
   storyBusy = id => (!!cur && cur.id === id) || queue.some(sc => sc.id === id);   // that scene is up or waiting (the moment layer holds a Champion card until it has played)
 
   // ---- time and gaps ----
@@ -355,7 +383,8 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   // ---- each tick: what is due where the hero stands ----
   storySync = early => {
     const mz = S.maxZone || 1;
-    if (!storyOn()) { queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); return; }   // off: nothing plays and nothing is filed or defaulted; the catch-up runs when it is turned back on
+    if (!restored) restore();
+    if (!storyOn()) { for (const sc of queue) delete ST().open[sc.id]; queue.length = 0; if (cur && !claimed) storyClose(cur.id, 'skipped'); return; }   // off: nothing plays and nothing is filed or defaulted; the catch-up runs when it is turned back on
     if (mz !== swept) { swept = mz; sweep(mz); }
     if (!has('k:ranks') && storyRanks().length) mark('k:ranks');
     if (!ST().starter && STARTERS.includes(heroKey())) ST().starter = heroKey();   // bible 4.4: the cold-start hero, stored once (an old save: its hero now)
@@ -403,6 +432,9 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Fenmother")
     const r = regionOf(zone);
     if (mob.boss && zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
+    // zone10-clear-moment: a Champion's display name is its story name ("The Hollow Cantor"), the one its card uses, on a replay too
+    // (its type still sets its moves, Foe tab entry and kills)
+    else if (mob.boss && champStoryName(zone)) mob.name = champStoryName(zone);
     spawned = { mob, zone };   // read next tick: an encounter card may set mob.encounter after this listener
     storySync(true);   // the walk-in scenes are due now: they open (and hold the game) before the first tick can fight
   });

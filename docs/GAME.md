@@ -25,7 +25,9 @@ Five tabs, each a full-screen menu over the stage ([layout.md](design/layout.md)
 The bell opens Notices, the Journal and Settings. Achievements (Deeds) and the Codex open from the Journal. Browser first
 (owner, 2026-10-08): the design size is a desktop browser at 1280x720 CSS px with mouse and keyboard; it must look good
 at 1920x1080 and fit 1366x640. Landscape phones (740x360) and tablets (1024x768) still play without clipping; phones held
-upright (360x740) must not break, but new features need not be designed for them.
+upright (360x740) must not break, but new features need not be designed for them. On a desktop screen (1200x600 and up) text and chrome grow, an item's detail opens
+beside the list in its menu, and the number keys 1 to 5 open Fight, Hero, Gather, Craft and Camp (the open tab's number closes it;
+Escape closes the detail, then the menu), and [ and ] step through the open menu's views. Every menu shows its list and its detail side by side there (Stars, Build, Camp, Make, the gathering views, the Store, the Codex). Two-press buttons (spend a Scroll, a camp build, a reset) say "Confirm" on the second press. With a mouse, resting the pointer on an item, an ability or a cost shows a tip with what it is and does (the same lines a click opens; a touch screen never shows one).
 
 Menu sub-tabs keep their labels and show the drawn menu icons. Action buttons show small Ready, Cooldown,
 Locked or Unavailable badges; the ability picker marks the selected action. Icons use native pixel sizes.
@@ -80,23 +82,39 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **The fight screen is Stage and dock** (Cal, 2026-10-05; `75-solo-ui.js`, `75-turn-ui.js`). The stage shows the hero and
   foe, a turn banner and the timing bar along its bottom edge while a hit winds up. Under it, the dock has three tabs.
   **Act**: Attack and the three ability slots as tiles (D, Q, W, E), each with its name and "Ready", turns left or
-  "Passive". **Skills**: each slot's ability and cooldown; tap one to change it. **Foe**: its kind, an elite's trait and
+  "Passive". While the turn banner or the Versus card plays (and on the foe's turn), Attack and the abilities dim, their
+  gold frame goes dull and an ability says "Wait"; a press then is refused with a short red outline (reduced motion keeps
+  it) and is not queued (fight-input-during-banner). **Skills**: each slot's ability and cooldown; tap one to change it. **Foe**: its kind, an elite's trait and
   the moves you have learned (a zone boss shows the ones your lost tries taught you, one more a try; a beaten boss shows all). Parry and Dodge (A, S) sit under the dock on every tab and glow while a
   hit winds up. Short landscape keeps the names under small tiles. The turn order shows on the Versus card only.
 - **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
   and the rest cost a Scroll of their tier (or a higher one) from zone bosses; a Moss Scroll teaches one move per hero, so spares
   wait for Tobin and Pip, and Abilities' Can learn list says who they are for. "Scroll found." shows only for a Scroll the hero in play
-  can use now. **Talents** (`24e-data-talents.js`): two choices for each
+  can use now. On a zone 6 to 10 boss's first clear, the Lantern Cache card asks "Learn one now:" with up to three moves the dropped
+  Scroll can teach the hero in play (only when two or more can be learned): a pick learns it and fills a free slot, or opens Abilities on
+  it when the slots are full; "Keep the Scroll" keeps it (`75-caches-ui.js`, boss-spoils-pick). **Talents** (`24e-data-talents.js`): two choices for each
   ability and for Attack, Parry and Dodge. **Ability icons** (Codex's drawings, `art/abilities/`, converted by
   `tools/art/abilityicons.py`, embedded by `tools/art/embed-icons.mjs` under the live ability id): Pip's 14 are drawn on
   the bar, the picker and the Abilities list. Wren and Tobin keep lettered tiles until all 14 of theirs are drawn (whole
   packs only); `check.mjs` lists the complete heroes.
 - **Stars** change the rules of a fight on top: up to 3 set and 2 lit a hero (see The hero).
 - **Zones:** 5 won fights, then the zone boss, then the next zone (`ZONE_FIGHTS` in `40-rules.js`). Losing never moves
-  you. Bosses have no timer. In zones 1 to 15 no single boss hit takes more than 40% of your max HP, so one missed parry never
-  ends a fight from full health; in zones 16 to 34 the cap is 75%. Zone bosses from 4 to 12 are tuned to a hero in the zone's first gear (common, +0).
-  Zone bosses 4 to 34 play move tricks (held swings, feints) and rally (at two thirds and a third in zones 4 to 6, at three quarters, half and a quarter from zone 7) (only a Stun breaks a
-  rallying boss's charge), and on a boss you have not beaten, health above the zone's own gear does not shrink its hits (from zone 16 that gear is rare +5).
+  you: a normal loss says so on the stage for the few seconds before the next fight ("Beaten. You're back to full HP for the
+  next fight.", with one line on what helps this save: a hero with no weapon (or no armour at all) is told first to wear the
+  one in the bag or which piece to make and where, with a button; then unspent attribute points, a craft you can make, or an
+  easier zone), and
+  three normal losses in ten fights in one zone add one bell line, once per zone a session; a boss loss opens the Try again
+  card. Every fight in a zone (normal, elite or boss) starts at full HP, whether you won or lost the last one
+  (`TURN_TUNE.normalFull`); in the Deepwell and the Provings your HP carries from foe to foe and each kill heals 15% of max
+  HP (times the Healing gear line; the Deepwell's floor heal is its own). Bosses have no timer. In zones 1 to 15 no single boss hit takes more than 40% of your max HP, so one missed parry never
+  ends a fight from full health; in zones 16 to 34 the cap is 75%. Zone bosses from 4 to 6 are tuned to a hero in the zone's first gear (common, +0),
+  and from 7 to 24 to the hero a first-time player arrives with (the arrival footing: tier 1 common +0, the level the zones before give).
+  Zone bosses 4 to 34 play move tricks (held swings, feints) and rally: at two thirds and a third of their HP in zones 4 to 6, and at three
+  quarters, half and a quarter from zone 7. The boss's HP bar marks each rally point from the start of the fight. When your damage reaches
+  a mark, the boss holds there until it has finished its next move (the mark turns gold and a line says so; damage past the mark is lost),
+  then a line says the rally is over and the bar fades that mark. A rally that comes while the boss gathers a charged move means only a
+  Stun breaks that charge. A boss you left part-way and meet again keeps the rallies it has already passed. On a boss you have not beaten,
+  health above the zone's own gear does not shrink its hits (from zone 16 that gear is rare +5).
   Zone 16 to 34 numbers are provisional until the skilling and crafting balance pass.
 - **After a boss beats you** (`55-boss-try.js`, `75-boss-try-ui.js`): the game stops on a Try again card. It names the hit
   that won and why (a charged move, a hit you did not parry or dodge, a try with bad timing, damage over time, or "so
@@ -114,6 +132,12 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Foes:** zone 1 is the Thorn Imp and zone 2 Gloomjaw, from the C22 roster with approved art (`59l-zone-foes.js`,
   `64j-foe-art.js`). Other zones still use the old foe types with turn move sets (`24d-data-turnfoes.js`). From zone
   15 about one fight in five is an elite with one trait.
+- **Foe tricks say what they did** (foe-tricks-say-so): when a foe's rider lands on you, the stage line names it ("Chilled:
+  you're slower", "Venom: you take damage for 2 turns", "Weakened: your next move hits softer"), and "Chilled: <foe> goes again"
+  when Chill is why it acts twice. Rattlebones getting back up floats "Back up!"; the first resisted or armoured hit of a fight
+  says "Resists <element>" or "Armoured" (Burn and Ignite numbers carry the ▼ too); a frozen foe's lost turn reads "Frozen".
+  Nothing warns before a move. The Foe tab and the Bestiary add a line for each trick once it has landed on you
+  (`S.mastery.tricks`, `55-mastery.js`); a boss's riders never teach an ordinary foe's entry.
 - **Regions in code** (`22-data-regions.js`): the Hollow (zones 1-35, the Fenmother) and the Sunken Coast (36-70). The
   Coast reuses the Hollow's foes and scenery until its content lands. The first kill of a region boss relights a
   Great Lantern (`55-lantern.js`).
@@ -121,8 +145,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   `TRIAL_TUNE.turn`) are turn fights too: one foe at a time, limits counted in turns, no clock
   ([combat-turn-build.md](design/combat-turn-build.md) "The Deepwell and the Provings"). Only the world raid keeps its
   real-time fight (`59-combat.js`, `59g-active.js`, `59h-bosses.js`, `59i-elites.js`).
-- **Away:** gathering (and a raid hit) keeps earning; fights stop and earn nothing (`50-sim.js` `awayGains`). The away cap is 4 hours, raised by the
-  Hourglass and the Watchtower, up to 24 hours. While you gather, a chip under the Fight / Gather row says "Leave now: about N <material> in 4 hours" (a floor: it ignores level-ups, and it caps at the Storehouse room and says so when it fills and Spillover moves on). A fighter sees the notice instead.
+- **Away:** gathering (and a raid hit) keeps earning; fights stop and earn nothing (`50-sim.js` `awayGains`). The away cap is 8 hours with no building, so a
+  first night is covered; each Watchtower level and each Hourglass level adds 2 hours, never past 24 (`awayCapH()` in `40-rules.js`; 16 hours is the most in Chapter 1 without the raid). Gatherer shifts stay 4 hours, and a raid hit away keeps the old 4-hour base (`awayRaidCapH()`). When the hero hits the limit, the away card's bar gives both numbers ("Your hero worked 8h of your 11h away.") and the box under it names the one next step with a Go: the next Watchtower level and its hours, or the Hearth level that opens it; "the most your camp can do" at the top (Watchtower 4 in Chapter 1, Watchtower 5 after it); the Storehouse instead when a pile filled first; and the Hourglass only while the raid is open. A raid return counts the raid's own limit (`awayLimitStep` in `75-away.js`). The card reads results (what the hero did, the tiles, Materials, Items, Skills), the limit, Next up, then one folded "More (n)" row that holds every other `registerAwayLine` group; on a landscape or desktop screen results sit on the left and the limit and Next up on the right, so Next up's first row shows without scrolling. While you gather, a chip under the Fight / Gather row says "Leave now: about N <material> in 8 hours" (a floor: it ignores level-ups, and it caps at the Storehouse room and says so when it fills and Spillover moves on). A fighter sees the notice instead.
 
 ## Gathering and gatherers
 
@@ -140,7 +164,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **The Storehouse** (`55-store.js`): a cap per material and grade, from every source. Skill XP keeps counting at the
   cap. Its view (Gather > Store, `75-store-ui.js`) opens on a shelf: one stack per family at the grade you use (the
   lower of your zone's grade and your skill's top node; the largest stack at or below it when that grade is empty;
-  Essence one pile; hide once Hunting shows), sorted Fullest or by Name, filtered by family. "Show all grades" or a
+  Essence one pile; hide once Hunting shows), sorted Fullest or by Name, filtered by family. "Show all tiers" or a
   family filter shows every grade. A refined good shares its raw family's stack ("Iron Ore 120" with "Iron Ingot 40"
   under it) and coal is its own stack once the Forge is built (at most 8 stacks). Coal and the refined goods show their
   names only, no icon, until their art pack passes.
@@ -168,16 +192,65 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 ## Gear and crafting
 
 - **Crafting** (`55-crafting.js`, `41-items.js`, `21-data-craft.js`, `75-craft-ui.js`): class gear at the camp's
-  stations, grades 1-5. Items roll affix lines by rarity. Upgrades go to +10 (Trophies gate +8 to +10). Reforge,
+  stations, tiers 1-5 (on screen the material step is a "tier", never a "grade"; card craft-shortfall-offer). Items roll
+  affix lines by rarity. Upgrades go to +10 (Trophies gate +8 to +10). Reforge,
   Masterwork is in the Craft tab; worn gear, the bag, upgrades, reforge and salvage are on the Hero tab's Gear view. Every combat line works in a turn fight (59k `turnMakeProfile`; the audit
   is [combat-turn-build.md](design/combat-turn-build.md) "Gear stats in turn fights"): Spell power is fire, frost and
   holy damage, Damage over time (the old Area) Burn and Bleed, Control boss Stagger, Counter (the old Threat) counter
   damage, Speed (the old Attack speed) how often you act, Focus a steady cooldown refund.
+  A recipe or upgrade short of an Ingot, Plank, Cloth or Leather says so and offers the order in one press ("Short 5 Iron
+  Ingots and 3 Birch Planks. Smelt 5 and Saw 3 (10 Iron Ore, 10 coal and 6 Birch Logs)?"), only when every raw input is in
+  hand; otherwise the line names what is short, and orders already queued read "Smelting at the Forge." An upgrade says what
+  its next +1 adds to the piece's main line in that line's unit ("+7: +8.5% damage."); a line at its cap says so and shows
+  the power change (`75-craft-ui.js` `shortOffer`, `nextPlusTxt`; card craft-shortfall-offer).
+  An upgrade short of its material also offers to cover it for gold, as the row's second button after the free order
+  ("Upgrade: 340 + 270 gold for 3 Pine Planks"): `ECON.coverFoes` (9) foes of the tier's foe gold a raw unit, a middle
+  counting 2 (90 gold a Pine Plank, 45 a Copper Ore). Held units go first. Only on an upgrade (never a craft, Essence or a
+  Trophy), and only once the material's gathering tier is open and, for a middle, its station built. Covered units give no
+  gathering or refining XP, salvage pays back step gold only, and `coverFoes` 0 turns it off (`55-crafting.js`
+  `upgradeCover`, `canUpgrade`/`upgradeItem` with `{ cover: true }`; the `upgraded` event carries `cover`; card
+  upgrade-gold-covers-short, ruling `autopilot/rulings/2026-10-08-gold-covers-material.md`).
   The result card after a craft (`craft-delta`): a tool that beats the worn one (or fills an empty slot) goes on by itself
   and the card says how much faster you gather; gear always asks. A weapon, off-hand or charm the hero can wear gets one
   line on how often you'd beat the boss at your furthest zone with it (or, when you win nearly every time, how many turns a
   win takes); head and body pieces say how much of your health a boss hit takes. The line comes from 80 scratch turn
   fights a side (`55-fight-delta.js`, as the boss-odds readout samples) and is left out when the numbers barely change.
+- **Station levels** (Smithing at the Forge, Woodcraft at the Workbench, Tailoring at the Loom, Enchanting at the Enchanter's
+  Table; `SKILL_TUNE` in `20-data.js`): a station opens item tier 2, 3, 4 and 5 at level 10, 22, 36 and 54, and its XP comes
+  from crafts, upgrades, reforges and refining. Behind `CRAFT_TUNE.curve` (off in the game until the balance pass; card
+  craft-curve-skills-report) the levels follow the overhaul's planned curve (`SKILL_TUNE.craftNeedV2`, one piece a tier) and a
+  craft, upgrade or reforge below the station's highest open tier pays a tenth of its XP; bars keep their share of the level
+  when the switch flips (`S.craft.xpv`). The fit and the level-by-zone table:
+  [curve.md](design/skilling-crafting-overhaul/curve.md).
+- **Grades** (behind `CRAFT_TUNE.grades`, off in the game until the balance pass; card craft-attribute-grades, spec
+  [skilling-crafting-overhaul.md](design/skilling-crafting-overhaul.md) section 5): with the switch on, a class piece, Trinket or
+  Charm is made at a grade, D to S, set by its station level instead of the rarity die: D at the tier's gate, C at +3, B at
+  +6, A at +10, S at +15 (Copper: C 4, B 7, A 11, S 16; `GRADE` in `20-data.js`, `gradeLv`/`gradeFor` in `40-rules.js`). The
+  Forge at Lv 5 counts as 1 level more and the Steady Hands Omen as 2 ("Crafts grade as 1 level higher"). Power is 1.0, 1.35,
+  1.55, 1.8 and 2.5 (the rarity values, B between); bonus lines are 1, 2, 2, 3 and 4, taken from the class pool in order
+  (the signature stat first) at the middle roll. The item stores `g` and its rarity twin in `r` (D Common, C and B Uncommon, A
+  Rare, S Epic), so Fine Work, the Epic craft deed and the Almanac's Rare count read it. The recipe row shows the grade before
+  you craft and the level of the next ("Grade B · A at Woodcraft 11") and names the choice when another tier is open ("Pine
+  Bow grade A, or Birch Bow grade D"); an A or S craft is a medium moment; the bag tile shows the letter. Reforge on a graded
+  piece is a pick: the line, then the bonus to put in, at the same price. Tools keep the die and the odds line. Items made with
+  the switch off (no `g`) keep their rarity, lines and power exactly; with the switch off a graded item reads its twin (a B
+  reads as Uncommon). Save codes check `g` only when present (0 to 4, its twin must match `r`, never on a tool or a unique).
+- **The Strike and Infuse** (behind `CRAFT_TUNE.strike` and `CRAFT_TUNE.infuse`, off in the game until the balance pass; card
+  craft-strike-infuse, spec section 5 "The Strike" and 7b): with grades on, each lifts a graded craft one grade, never above A (S
+  comes only from level); one lift a craft. The Strike: Craft shows the parry bar once over the screen (`75-craft-ui.js`, the
+  `.tv-time` look, its own clock) and holds the game; a press (or Space, Enter or F) in the gold lifts the piece, and the parry
+  chime plays. The gold is the fight's parry window (`SOLO_TUNE.turnParryWindow` x Assist, capped at
+  `TURN_TUNE.windowCaps.parry`) at the end of a 1.1 s fill. An early press, no press or a hidden tab makes the level's grade; the
+  craft is paid only when the bar resolves, so nothing is lost. Each station names it: Strike (Forge), Carve (Workbench), Stitch
+  (Loom), Etch (Enchanter's Table). No bar on tools, refining, at grade A or S, after Infuse, or on a station's first piece
+  (`S.craft.made`, pieces made a station; an old save seeds it from the pieces it holds). Infuse: the recipe row's Infuse button
+  pays `CRAFT_TUNE.infuseX` (3) x the recipe's Essence (3 when it has none: a Copper Warblade 6, a Charm 15; provisional until the balance pass; offered on a station's first piece too) from the one
+  Essence pile on top of the recipe. The row names the choice ("Grade A: Strike, or Infuse for 6 Essence") and the result card
+  says which lift landed ("Your Strike landed in the gold", "The Strike missed the gold ... Nothing was lost"). Taking either
+  emits `choice` 'craft'. Core: `craftItem(kind, t, { strike, infuse })`, `craftStrikeOffered`, `craftInfusePrice`,
+  `craftLiftTo` (55-crafting); the `crafted` event carries `lift`. Budget: `node tools/budget.mjs --craft grades=1,strike=1,infuse=1`.
+  `node tools/budget.mjs --craft grades=1` measures the kept-up rows in graded gear (the results:
+  [docs/proof/craft-attribute-grades/budget.md](proof/craft-attribute-grades/budget.md)).
 - **Refining** (`55-refine.js`, `75-refine-ui.js`, `REFINE_TUNE` in `21-data-craft.js`; card refine-queues): the Forge
   smelts ore and coal into Ingots (Copper, Iron, Silver, Cobalt, Mithril Ingot), the Workbench saws logs into Planks
   (Pine, Birch, Oak, Mangrove, Tideash Plank), and the Loom weaves fibre into Cloth (Hemp Cloth, Linen, Briar Cloth,
@@ -188,7 +261,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   stay raw. Each station's card in Camp has a button (Smelt, Saw, Weave and Tan) that opens its order list: up to 3
   orders, run in turn, each 10 units or All (All keeps 20% of each input). A running order shows its rate; a stopped one
   says why (done, out of an input, Storehouse full). Orders run while you fight and while you are away (the away report
-  has a line per station). Station levels refine 10% faster a level. Next Up offers "Smelt 1 Copper Ingot for your
+  has a line per station). An order of 10 that finishes while you play puts one line in the bell ("The Forge made 10 Copper
+  Ingots."; orders done back to back share one line) and lights the Camp tab's dot; an All order and the away run add none
+  (card smelt-done-says-so). Station levels refine 10% faster a level. Next Up offers "Smelt 1 Copper Ingot for your
   Warblade +1" when a worn piece's upgrade or next craft waits only on a middle, or says where to get the missing coal or
   ore. **Coal** comes with Copper Ore once the Forge is built: about 1 for every 2 ore the hero mines (live, away, the
   Glint, Spillover); gatherers bring none until the Coal Seam (card coal-seam-integrate). A save from before refining
@@ -208,13 +283,13 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   capped perks.
 - **Deeds** (`23-data-deeds.js`, `58-deeds.js`, `75-deeds-ui.js`): tracks, Feats, titles and looks drawn on the hero
   (`12g-art-accessories.js`, `64-looks.js`), and the Trophy Wall at camp (`63e-scenery-wall.js`).
-- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons. A weapon or armour craft goal names the boss it is for ("Craft a Pine Bow for the zone 2 boss"); when you can pay for an upgrade to a worn piece and no craft is ready, it offers "Upgrade your Pine Bow to +1", and Go opens the piece on Hero, Gear. From the first tool made until a weapon is worn, the weapon holds a row of its own above every unfinished row, names where its short material comes from ("Pine Staff for the zone 4 boss: mine 3 Quartz at the Quartz Geode"; Go opens that Gather view), and no upgrade is offered.
+- **Next Up** (`55-goals.js`): the goals closest to done, with Go buttons. A weapon or armour craft goal names the boss it is for ("Craft a Pine Bow for the zone 2 boss"); when you can pay for an upgrade to a worn piece and no craft is ready, it offers "Upgrade your Pine Bow to +1", and Go opens the piece on Hero, Gear. From the first tool made until a weapon is worn, the weapon holds a row of its own above every unfinished row, names where its short material comes from ("Pine Staff for the zone 4 boss: mine 3 Quartz at the Quartz Geode"; Go opens that Gather view), and no upgrade is offered. After the zone 10 clear, Next Up offers the camp's step up, Hearth 2 and then the Tavern, naming each part of the cost still short and where it comes from ("Build Hearth 2: 20 Pine Log at the Pine Grove, 20 Copper Ore at the Copper Vein, 5 Essence from fights"). While a gathered part is short and you are elsewhere the row is Ready and Go sends you to that node; once you have what that node gave, it offers "Back to the fight", and with everything in hand it reads "Hearth 2: ready to build" (or the camp's own build row offers it).
   **"Boss ready"** means you would usually win the zone boss. The game tries 30 scratch fights of that boss with your
   hero as they stand now, judged from your own Parry and Dodge record (a new player counts as casual), and says "Boss
   ready" at 70% or better. Under that it says "a close fight" (35% to 70%) or "too strong", and Go opens
   Build when you have points to spend, else the fight. While it works it says "The Zone N boss is next". It only judges; you can still challenge any time
   (`59m-boss-odds.js`, `bossOdds()`).
-- **Story** (`55-story.js`, `75-story-ui.js`, `21k-story-hollow.js`, `21h-lore-hollow.js`, `21b-stories-coast.js`, `21j-lore-omens.js`): one system that plays the region card, area titles, zone and Captain lines, Champion and Elder scenes, NPC and Voice cards and choices from `STORY_BEATS`, once per save, between fights, silent where the game is not ready (no monster or encounter, no data). Skip always works; everything read is in the Journal (Codex). A story card waits for a tap, but files itself to the Journal under "Catch up on the story" after 45 s untouched, and the game runs again; a choice in it waits in the Journal entry until you make it. Settings > Story switches it off. On a landscape phone a story card is a wide bottom sheet no taller than 60% of the screen, with Continue and Skip in a column beside the text, so every Chapter 1 card shows all its lines without scrolling. A new game opens on the Chapter 1 card, then two Old Hesketh cards (the fire, then what is in the ground), all before the first fight; a save already past zone 1 finds them in the Journal. The hero picker shows bios for the three starters only; every other hero says "Locked" and who you meet. No new hero can unlock before their first scene can have played (`STORY_MEET` in `56c-unlocks.js`; a scene on a Champion's post plays when that Champion falls, so Bram and Thessaly join from zone 36); heroes a save already owns are kept. At camp, All heroes says when a held hero joins: the zone in your chapter ("You meet Bram when the Hollow is won, at zone 36."), else the chapter ("You meet Kestrel in Chapter 4."). A won hero token is a bell line that says when that hero joins. The story bible is [story-bible.md](design/story-bible.md); [lore.md](design/lore.md) is the older lore. The Journal also holds "Who answers to whom", a page that adds a row the first time you meet each rank (Shadowborn, Captain, Champion, Elder, the Voice). Once an Elder is down, the Tavern shows Vesper's verse for it.
+- **Story** (`55-story.js`, `75-story-ui.js`, `21k-story-hollow.js`, `21h-lore-hollow.js`, `21b-stories-coast.js`, `21j-lore-omens.js`): one system that plays the region card, area titles, zone and Captain lines, Champion and Elder scenes, NPC and Voice cards and choices from `STORY_BEATS`, once per save, between fights, silent where the game is not ready (no monster or encounter, no data). Skip always works; everything read is in the Journal (Codex). A story card waits for a tap, but files itself to the Journal under "Catch up on the story" after 45 s untouched, and the game runs again; a choice in it waits in the Journal entry until you make it. Settings > Story switches it off. Close the game while a story card is up (or still waiting for its gap) and it opens again at the page you were on, at the first gap after you come back; a card that can no longer be built (a hero who is now in it) goes to the Journal instead (`S.story.open`). On a landscape phone a story card is a wide bottom sheet no taller than 60% of the screen, with Continue and Skip in a column beside the text, so every Chapter 1 card shows all its lines without scrolling. A new game opens on the Chapter 1 card, then two Old Hesketh cards (the fire, then what is in the ground), all before the first fight; a save already past zone 1 finds them in the Journal. The hero picker shows bios for the three starters only; every other hero says "Locked" and who you meet. No new hero can unlock before their first scene can have played (`STORY_MEET` in `56c-unlocks.js`; a scene on a Champion's post plays when that Champion falls, so Bram and Thessaly join from zone 36); heroes a save already owns are kept. At camp, All heroes says when a held hero joins: the zone in your chapter ("You meet Bram when the Hollow is won, at zone 36."), else the chapter ("You meet Kestrel in Chapter 4."). A won hero token is a bell line that says when that hero joins. The story bible is [story-bible.md](design/story-bible.md); [lore.md](design/lore.md) is the older lore. The Journal also holds "Who answers to whom", a page that adds a row the first time you meet each rank (Shadowborn, Captain, Champion, Elder, the Voice). Once an Elder is down, the Tavern shows Vesper's verse for it. A Champion's fight bar, turn banners and loss sheet use its story name (The Briar Regent at zone 5, The Hollow Cantor at zone 10), as the region boss does, on a replay too; its type still sets its moves, Foe tab entry and kills. Its win plays the post scene, then the Champion card with the cache folded in, and only then any Old Hesketh line that was waiting (zone10-clear-moment).
 
 ## Onboarding and notices
 
@@ -228,13 +303,19 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   boss Hero comes first, then Gather, Next Up and the away strip (row `awaynote`), 90 s apart. A row the player's own act
   or a drop opened skips the queue: walking to gather, the fire lit (Camp), the Workbench (Craft), the Tavern built, the first
   star (Stars), the first unique (Uniques); the raid opens as before.
-- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, spoken by Old Hesketh (his face on the left) from a panel that never covers the stage: in landscape the side column's notices slot (it stands in for Next Up while it speaks), in portrait a slot above the Act / Skills / Foe bar, and over an open menu the bottom of the menu panel. The Got it / Go button has its own row. After the first ability the guide asks you to add a point to Might on Hero > Build, then, once the points are spent, offers Back to the fight (it closes the menu). A tool or first weapon that is in the bag but not worn gets its own step: the tip names it, rings the card's Equip button and carries an Equip button of its own. A weapon you only own does not count as made until it is worn. Wren and Pip make their first weapon at the Workbench, so its steps come right after the tool and before the Forge, and the materials line names the place ("Mine 2 Copper Ore at the Copper Vein for your first weapon (0/2)."); Tobin's Warblade still waits for the Forge. A materials line ("You still need these for the Forge: Copper Ore 0/25 at the Copper Vein, Pine Log 2/10 at the Pine Grove.") shows on Camp, on Gather and on the game screen while you gather, never over Hero, Craft or another menu; a line for two or more materials names each one's place. A press step (build, make) waits until its materials are in hand, so closing a materials line with × never puts an "Open Camp." in its place while you are short. Under a recipe short of a gathered material, the Craft card says where it comes from ("Bristlehide: from Hunting, which opens at zone 5."). The Storehouse tip says the packs are near full only when a pile is at 80% of what the packs hold; otherwise it says the Forge is up.
+- **The guide** (`GUIDE_STEPS` in `55-onboard.js`, UI `75-onboard-ui.js`): one hint at a time, spoken by Old Hesketh (his face on the left) from a panel that never covers the stage: in landscape the side column's notices slot (it stands in for Next Up while it speaks), in portrait a slot above the Act / Skills / Foe bar, and over an open menu the bottom of the menu panel. The Got it / Go button has its own row. After the first ability the guide asks you to add a point to Might on Hero > Build, then, once the points are spent, offers Back to the fight (it closes the menu). A tool or first weapon that is in the bag but not worn gets its own step: the tip names it, rings the card's Equip button and carries an Equip button of its own. A weapon you only own does not count as made until it is worn. Wren and Pip make their first weapon at the Workbench, so its steps come right after the tool and before the Forge, and the materials line names the place ("Mine 2 Copper Ore at the Copper Vein for your first weapon (0/2)."); Tobin's Warblade still waits for the Forge. A materials line ("You still need these for the Forge: Copper Ore 0/25 at the Copper Vein, Pine Log 2/10 at the Pine Grove.") shows on Camp, on Gather and on the game screen while you gather, never over Hero, Craft or another menu; a line for two or more materials names each one's place. On a wide view (a laptop, a desktop, a phone on its side) it also shows on Camp and Gather while you fight, beside the menu, steady between foes and with no button, so Attack, Parry and Dodge stay in view. A fighter who never opens Camp or Gather hears it once instead, held in the gap after a kill ("The Forge needs Copper Ore 0/25 from the Copper Vein and Pine Log 2/10 from the Pine Grove."), with a Go to the first node and ×: never in the first minute after you open the game, at most one such line a minute, never over a menu, never for gold or essence alone, and never once you have seen the live line. A press step (build, make) waits until its materials are in hand, so closing a materials line with × never puts an "Open Camp." in its place while you are short. Under a recipe short of a gathered material, the Craft card says where it comes from ("Bristlehide: from Hunting, which opens at zone 5."). Old Hesketh's unread lines (a new tab, your first Scroll, a new move's slot) survive a reload (`S.onboard.sayQ`); the boss-loss line does not. Closing his tip that your weapon or tool is still in your bag, or his Gather tip for the cold fire, with × (or leaving it for a minute) hides it until the next time you open the game, while the job is still undone; wearing the piece, or going to gather, ends it for good. The Storehouse tip says the packs are near full only when a pile is at 80% of what the packs hold; otherwise it says the Forge is up.
   A step pauses the game only while it waits for a press; a step that needs game time shows live progress instead.
   The first fight is a lesson (cal-0107-staged-guide): each press is taught the first time it comes up, with the fight held until you
   press it: Attack on your first turn, Dodge on the foe's first swing (the foe's clock stops as the Dodge window opens, so the press
   lands), your ability on your next turn, Parry on the next swing (or the next foe's first). While a lesson holds, only the button it
   names works. After that, in a fight, no line shows: every
-  other tip, and each unlock line from Hesketh, waits for the gap between fights, and an unlock line holds the game with a Got it.
+  other tip, and each unlock line from Hesketh, waits for the gap between fights. An unlock line (his news) holds only that gap until
+  its Got it: while you gather, or fight behind an upright menu, it shows and the game goes on (tips-pause-says-so). Whenever a tip
+  holds the game, except the fight lessons, the stage says "Paused" (on the strip's edge over an upright menu), Gather says Paused for
+  Working, and the fight bar stays in view, dimmed, unless the tip covers it (a phone on its side). A fight key (Q W E A S D Space) or a
+  press on a fight button during a Got it hold answers it and then acts; on a Go tip it counts as ×; a tip that waits for a press
+  elsewhere refuses it (the button shakes, the plate flashes). His Stars line never says you earned them, the boss-loss line is dropped
+  once that boss is beaten, and none of his lines shows while your hero is down.
   The Hero tab opens at the first level-up and the guide's next line says so; the first Scroll and a second ability's slot each get
   a line. Empty ability slots stay dim and silent until a learned move waits for one. Lighting the camp fire keeps you at the grove,
   where Hesketh's talk plays.
@@ -245,6 +326,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   moments (the first level up and every 5th level, a new ability, a new Star, a look found) show as one banner in the
   notices slot, at least 2.6 s, at most 2 in any 3 minutes of the first 30. All wait for the end of the fight, never show
   in a turn, and are never only a bell line. Several at one fight end fold into one card or banner.
+- **Lantern Caches** (`55-caches.js`, `75-caches-ui.js`): a zone boss's first clear opens a cache with what the win paid and the
+  unique's chance. Zones 1 to 3 and 7 to 9 also give a lantern colour, and its own line says what it did: "Your lantern burns
+  Ember Red now." when the lantern took it, else "New lantern colour: Deep Blue. You own it now." (look-card-says-why).
 
 ## Currencies
 

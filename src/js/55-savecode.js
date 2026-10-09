@@ -136,6 +136,11 @@ function validateSave(data) {
       if (a.forged !== undefined) int(a.forged, 'achievements.forged');
       for (const k of ['init', 'epic']) if (a[k] !== undefined && typeof a[k] !== 'boolean') fail('achievements.' + k, 'has the wrong type');
     }
+    // foe-tricks-say-so: the Foe tab's learned tricks are { [foe type]: { [trick]: 1 } }
+    if (data.mastery && data.mastery.tricks) for (const [k, row] of Object.entries(data.mastery.tricks)) {
+      record(row, 'mastery.tricks.' + k);
+      for (const [id, v] of Object.entries(row)) { if (!FOE_TRICK_ORDER.includes(id)) fail('mastery.tricks.' + k + '.' + id); int(v, 'mastery.tricks.' + k + '.' + id, 0, 1); }
+    }
     if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
     // C9: optional route maps are validated before storage or feature load; missing v5 maps use defaults.
     if (data.party && data.party.unlock !== undefined && !heroUnlockStateValid(data.party.unlock)) fail('party.unlock');
@@ -157,6 +162,8 @@ function validateSave(data) {
       if (it.a !== undefined) { array(it.a, 'item.a'); for (const a of it.a) { array(a, 'item.a[]'); if (a.length !== 2) fail('item.a[]'); known(CRAFT_AFFIXES, a[0], 'item.a[].stat'); num(a[1], 'item.a[].value', 0, 1); } }
       if (it.mw != null) int(it.mw, 'item.mw', 0, CRAFT_TROPHIES.length - 1);
       if (it.rf !== undefined) int(it.rf, 'item.rf', 0, 1000);
+      // craft-attribute-grades: a grade (only on items made with CRAFT_TUNE.grades on) is 0-4 and its rarity twin must match
+      if (it.g != null) { int(it.g, 'item.g', 0, GRADE.length - 1); if (it.r !== GRADE[it.g].r) fail('item.g', 'does not match its rarity'); if (it.u != null || CRAFT_KINDS[it.slot].tool || CRAFT_KINDS[it.slot].legacy) fail('item.g', 'is on an item that is never graded'); }
     }
     int(data.nextId, 'nextId', 1); for (const id of ids) if (id >= data.nextId) fail('nextId', 'would reuse an item ID');
     for (const [slot, id] of Object.entries(data.equip)) { known(CRAFT_FITS, slot, 'equip.' + slot); if (id !== null && (!Number.isInteger(id) || !ids.has(id))) fail('equip.' + slot, 'refers to a missing item'); }
@@ -242,6 +249,8 @@ function validateSave(data) {
         }
       }
     }
+    if (data.craft && data.craft.xpv !== undefined) int(data.craft.xpv, 'craft.xpv', 0, 1);
+    if (data.craft && data.craft.made !== undefined) { record(data.craft.made, 'craft.made'); for (const [k, n] of Object.entries(data.craft.made)) { known(CRAFT_STATIONS, k, 'craft.made'); int(n, 'craft.made.' + k, 0, 1e9); } }   // craft-strike-infuse: pieces made a station   // craft-curve-skills-report: which station curve the bars are on
     if (data.craft && data.craft.tonic != null) { record(data.craft.tonic, 'craft.tonic'); known(CRAFT_TONICS, data.craft.tonic.k, 'craft.tonic.kind'); tier(data.craft.tonic.t, 'craft.tonic.tier'); num(data.craft.tonic.left, 'craft.tonic.left'); }
     return { ok: true, data };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'This save has invalid data.' }; }

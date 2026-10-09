@@ -29,9 +29,14 @@
 //   timingGrade { id, i, grade }, foeMove { id, name, anim, hits }, parryWindow
 //   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res }, foeCharge { name }, chargeBroken { name },
 //   foeSkip { why }, turnPhase { name }, fightEnd { reason }, ability { cls: 'solo', id, name, slot }, soloAttack, soloParry,
-//   soloDodge, soloCounter.
+//   soloDodge, soloCounter, heroRider { id, foe, key, stacks, boss } (an ordinary foe's or a boss's rider landed on the hero:
+//   chill, venom or weaken; foe-tricks-say-so), turnCard { who, again, secs, chill } (chill: Chill on the hero is why the foe goes
+//   again), foeGetUp (59b: Rattlebones gets back up).
 const TURN_TUNE = {
   on: 1,
+  // normal-death-says-so (judge, 2026-10-08): every zone fight (normal, elite, boss) starts at full HP, win or lose. 0 brings back
+  // the carried HP (a kill heals COMBAT_TUNE.packHealF, 15%). The Deepwell and the Provings carry HP either way.
+  normalFull: 1,
   heroRecovery: 0.35, foeRecovery: 0.4, foeWindup: 0.9, introHand: 1.2, introAuto: 0.6,
   turnPause: 0.9,
   // hit feel (owner, 2026-10-02): the fight clock stops for a beat on a big moment (seconds), with a shake and a flash
@@ -90,10 +95,13 @@ const TURN_TUNE = {
   //            kept-up hero about a quarter to a third of their health, a landed charge about two thirds. From zone 35
   //            the reference HP sits below a kept-up hero's (the late-zone pass), so hitX steps up there.
   //   payX     a longer boss pays more: gold and XP x (1 + payX x (its HP share - 1)), so an hour of play pays as before
-  boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 1.075], [8, 0.95], [9, 0.75], [10, 0.725], [11, 0.882], [12, 1.008], [13, 0.36], [14, 0.38], [15, 0.12], [16, 0.15], [17, 0.15], [18, 0.12], [19, 0.07], [20, 0.01625], [21, 0.01125], [22, 0.00775], [23, 0.0055], [24, 0.00375], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
+  boss: { hpX: [[3, 1], [4, 0.75], [5, 0.925], [6, 1.1], [7, 0.95], [8, 0.7], [9, 0.4], [10, 0.35], [11, 0.4], [12, 0.2], [13, 0.36], [14, 0.38], [15, 0.12], [16, 0.15], [17, 0.15], [18, 0.12], [19, 0.07], [20, 0.01625], [21, 0.01125], [22, 0.00775], [23, 0.0055], [24, 0.00375], [25, 1], [27, 0.52], [30, 1.55], [34, 0.94], [35, 2.725], [36, 1.85]], regionHpX: 1.4,   // the gear pass (2026-10-02): zones 15-34 about x1.09, 36+ 1.5 -> 1.85, region 1.25 -> 1.4
     // heroHitX: a zone boss's hits x this on the hero (tobin-safety-margin: the safest hero still feels a boss; 1 = the zone table's hit)
-    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.7], [9, 1.25], [10, 2], [11, 1.25], [12, 1.75], [13, 1.6], [14, 1.7], [15, 2.55], [16, 2.75], [17, 2.75], [18, 2.6], [19, 2.4], [20, 2.75], [21, 2.75], [22, 2.4], [23, 2.4], [24, 2.75], [25, 6.81], [27, 7.45], [30, 8.32], [34, 6.85], [36, 7], [38, 7]], pip: [[1, 1], [19, 1], [20, 0.9], [21, 1], [22, 0.9], [23, 0.9], [24, 1]] },
-    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 1.5], [8, 1.055], [9, 0.632], [10, 0.45], [11, 0.407], [12, 0.403], [13, 0.1], [14, 0.085], [15, 0.05], [16, 0.03], [17, 0.03], [18, 0.03], [19, 0.015], [20, 0.023], [21, 0.0161], [22, 0.01067], [23, 0.0067], [24, 0.00611], [25, 0.215], [27, 0.131], [30, 0.165], [34, 0.203], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+    heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.5], [9, 1.25], [10, 1.8], [11, 1.5], [12, 1.6], [13, 1.6], [14, 1.7], [15, 2.55], [16, 2.75], [17, 2.75], [18, 2.6], [19, 2.4], [20, 2.75], [21, 2.75], [22, 2.4], [23, 2.4], [24, 2.75], [25, 6.81], [27, 7.45], [30, 8.32], [34, 6.85], [36, 7], [38, 7]], pip: [[1, 1], [19, 1], [20, 0.9], [21, 1], [22, 0.9], [23, 0.9], [24, 1]] },
+    hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 0.9], [8, 0.5], [9, 0.3], [10, 0.25], [11, 0.2], [12, 0.12], [13, 0.1], [14, 0.085], [15, 0.05], [16, 0.03], [17, 0.03], [18, 0.03], [19, 0.015], [20, 0.023], [21, 0.0161], [22, 0.01067], [23, 0.0067], [24, 0.00611], [25, 0.215], [27, 0.131], [30, 0.165], [34, 0.203], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
+    // rally-gates-live (judge 2026-10-08, docs/DECISIONS.md "Rally gates are live"): the zone 7-12 hitX, hpX, hpFloor and Tobin heroHitX knots are
+    // fitted with the rally gates on to the hero who first gets there (the arrival footing: level 12-17, tier 1 common +0). Landed hits sit on
+    // or near the hpFloor, which holds the kept-up never-defends player under 10%; hpX sets how many turns the arrival hero needs between gates.
     // z13-unstick (judge 2026-10-08, docs/DECISIONS.md "Zone 13 unstick"): the zone 13-15 hitX, hpX and hpFloor knots are fitted to the hero who
     // first gets there (level 18-19, tier 1 common +0). hitX there is dormant (every landed hit sits on the hpFloor), and hpX sits under zone 12's
     // in reference Attacks until the balance pass restores the length ramp.
@@ -121,7 +129,7 @@ const TURN_TUNE = {
     riderX: [[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 0.07], [20, 1]],
     dotCap: [[1, 0], [19, 0], [20, 0.07], [24, 0.07], [25, 0]],
     // hpFloor: see turnLand (zone table of multiples; 0 off). gate: rally gates (see TURN_TUNE.gateNote)
-    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 0.84], [9, 0.92], [10, 0.95], [11, 0.94], [12, 0.82], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 1.35], [20, 1.3], [24, 1.3], [25, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
+    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 1], [9, 1.1], [10, 1.3], [11, 0.95], [12, 1.2], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 1.35], [20, 1.3], [24, 1.3], [25, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
   // Boss move tricks (card boss-tiers-pr4; docs/design/foe-moves.md "Boss tricks"): zone bosses from `from` play the Captain and
   // Champion sets in TURN_BOSS_TRICKS (24d): hits that hold their swing (`hold`), fakes (`feint`: no damage, and a press at one
   // fools you: the next hit cannot be defended), longer strings and an uneven rhythm. `on` 0 plays the old sets. `feintFrom`: the
@@ -131,7 +139,8 @@ const TURN_TUNE = {
   tricks: { on: 1, from: 4, to: 34, feintFrom: 7, tell: 0.25, read: [0.3, 0.6] },
   // Rally gates (boss-tiers-pr4, judge 2026-10-07): the tempo floor. A Captain's HP has gates at these shares, a Champion's at its own;
   // damage cannot take the boss below the next gate until it has finished one move after reaching it. Zones from..to only.
-  // The first-hour footing hero deals about a sixth of the boss a turn, so the gates rarely bind there; a hero who kills in 3 turns meets them.
+  // They bind on every boss row from zone 4: z8 Wren on the first-hour footing takes 6.4 turns with them, 2.5 without (rally-gates-live, judge
+  // 2026-10-08). The z7-12 knots are fitted with them on, on the arrival footing; the fight bar marks each gate (75-turn-ui).
   gateNote: 0,
   // the boss riders on the hero (shares of the reference HP a tick, two hero turns)
   heroDot: { bleed: 0.02, burn: 0.04, venom: 0.02 }, heroDotT: 2, heroChill: 0.1, heroBlind: 0.3,
@@ -350,7 +359,7 @@ function turnMakeProfile(f, u) {
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
     bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0, bossRiderX: f.tk.rx || 1, bossDotCap: f.tk.dcap || 0,
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
-    gates: f.tk.gates || null, fullHp: !!(f.boss && !f.deep && !f.trial),   // the boss pass; a zone boss is met at full health
+    gates: f.tk.gates || null, fullHp: !!((f.boss || TURN_TUNE.normalFull) && !f.deep && !f.trial),   // the boss pass; every zone fight is met at full health (normalFull)
     zb: !!f.tk.zb, uq: typeof uniqRulesWorn === 'function' ? uniqRulesWorn() : [],   // uniques-first-four: a zone boss; the worn uniques' rules (none while UNIQ_TUNE.on is 0)
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
     script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
@@ -466,10 +475,14 @@ function turnPreview(m, n) {
 // 'handoff', while 75-turn-ui shows whose turn it is (turnCard); the turn itself (its damage over time too) starts after it.
 function turnNextTurn(m, io) {
   if (m.ended) return;
+  // foe-tricks-say-so: who would go with no Chill on the hero (the same pick on the same state), so the banner names Chill only
+  // when it is why the foe goes again
+  let free = '';
+  if (m.h.chill > 0) { const c = m.h.chill; m.h.chill = 0; free = turnPick(m).who; m.h.chill = c; }
   const who = turnAdvance(m, m);
   if (m.n > 0 && TURN_TUNE.turnPause > 0) {
     m.phase = 'handoff'; m.pending = who; m.next = who; m.until = m.now + TURN_TUNE.turnPause;
-    io.emit('turnCard', { who, again: m.run > 1, secs: TURN_TUNE.turnPause });
+    io.emit('turnCard', { who, again: m.run > 1, secs: TURN_TUNE.turnPause, chill: who === 'foe' && m.run > 1 && free === 'hero' });
     return;
   }
   turnBegin(m, who, io);
@@ -522,7 +535,7 @@ function turnHitFoe(m, io, pow, o) {
   // after reaching it; the excess is lost. Burn and Bleed count too, so no build skips it.
   if (p.gates && m.gi < p.gates.length) {
     const lvl = p.gates[m.gi] * p.foeMaxHp, hp = io.foeHp();
-    if (hp - d < lvl) { d = Math.max(0, hp - lvl); if (!m.rally) { m.rally = 1; io.emit('foeRally', { name: p.foeName, gate: m.gi }); } }
+    if (hp - d < lvl) { d = Math.max(0, hp - lvl); if (!m.rally) { m.rally = 1; io.emit('foeRally', { name: p.foeName, gate: m.gi, charging: !!m.charge }); } }
     if (!(d > 0)) return 0;
   }
   const got = io.damageFoe(d, o.kind || 'hit', crit, o.dt || 'phys', o.n || 0);
@@ -835,7 +848,7 @@ function turnBegin(m, who, io) {
   }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }
   if (e.skip > 0 || e.recover > 0) {
-    const why = e.recover > 0 ? 'recover' : 'stun';
+    const why = e.recover > 0 ? 'recover' : m.lastCtl === 'freeze' ? 'freeze' : 'stun';
     e.skip = 0; e.recover = 0;
     io.emit('turn', { who, n: m.n });
     io.emit('foeSkip', { why, turn: true });
@@ -925,6 +938,9 @@ function turnLand(m, io, hit) {
   else if (r === 'chill') { h.chill = Math.min(2, h.chill + 1); h.chillT = 2; }
   else if (r === 'weaken') h.weaken = 1;
   else if (r === 'blind') h.blind = 1;
+  // foe-tricks-say-so: the words come after the trick lands, never before (75-turn-ui; the Foe tab learns it, 55-mastery)
+  if (r === 'chill' || r === 'venom' || r === 'weaken') { const lf = io.foe && io.foe();
+    io.emit('heroRider', { id: r, foe: p.foeType, key: (lf && lf.type) || p.foeType || '', stacks: r === 'chill' ? h.chill : r === 'venom' ? h.dot.venom : 1, boss: !!p.boss }); }
 }
 function turnContact(m, io) {
   const T = TURN_TUNE, h = m.h, e = m.e, hit = m.move.hits[m.hitI];
@@ -1084,7 +1100,8 @@ function turnCombatSnapshot() {
     hero: { aim: m.h.aim, grit: m.h.grit, embers: m.h.embers }, charge: m.charge ? m.charge.mv.name : '', heroOps: m.heroOps,
     canDefend: m.phase === 'foeWindup' && !m.usedDefense,
     timing: m.phase === 'timing' && m.tm ? { id: m.tm.id, i: m.tm.i, n: m.tm.n, closesAt: m.until } : null,
-    shadow: m.h.shadow > 0 };
+    shadow: m.h.shadow > 0,
+    gates: m.p.gates || null, gi: m.gi, rally: m.rally };   // rally gates (rally-gates-live): the boss bar marks each one, and the one it holds at
 }
 function turnCombatProfile() {
   if (TURN_LIVE && !TURN_LIVE.ended) return { ...TURN_LIVE.p, cds: { ...TURN_LIVE.p.cds } };
@@ -1158,10 +1175,15 @@ function turnCombatTick(dt) {
   if (!(f.born >= 1)) f.born = (f.born || 0) + dt;   // the legacy tick that grows a new foe in does not run here
   if (!TURN_LIVE || TURN_LIVE.ended || TURN_LIVE.foe !== f) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
-    const u = cbUnitByKey('hero');
-    if (f.boss && !f.deep && !f.trial && u && !u.down) u.hp = u.maxHp;   // a zone boss is met at full health (the Deepwell carries HP)
+    let u = cbUnitByKey('hero');
+    // a zone fight that starts in the gap after a loss (the zone arrow, or gathering and back, cut the gap short): the hero stands
+    // up first, so the fight never starts at 0 HP (normal-death-says-so review). The Deepwell and the Provings end on a loss.
+    if (u && u.down && !f.deep && !f.trial) { cbRestore(false); u = cbUnitByKey('hero'); }
+    if ((f.boss || TURN_TUNE.normalFull) && !f.deep && !f.trial && u && !u.down) u.hp = u.maxHp;   // every zone fight is met at full health (normalFull; the Deepwell carries HP)
     const p = turnMakeProfile(f, u); if (!p) return;
-    TURN_LIVE = turnNew(p, TURN_LIVE_IO); TURN_LIVE.foe = f; TURN_LAST_PROFILE = p;
+    // turnNew's gate skip reads the foe's HP, and TURN_LIVE is still the last fight here, so it reads f's own (rally-gates-live:
+    // reading the last foe, dead at 0 HP, skipped every gate on every live boss from #160 to 8 Oct)
+    TURN_LIVE = turnNew(p, { ...TURN_LIVE_IO, foeHp: () => Math.max(0, f.hp) }); TURN_LIVE.foe = f; TURN_LAST_PROFILE = p;
     emit('fightStart', { heroHaste: p.heroSpd, foeHaste: p.foeSpd, first: TURN_LIVE.first });
     if (p.trait) {   // an elite's trait: the first of each kind explains itself
       const seen = S.turn.seen || (S.turn.seen = {});
@@ -1231,14 +1253,20 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
   const reseed = () => { if (!fightN++) { x = (seed | 0) || 1; return; } let h = Math.imul((seed | 0) ^ Math.imul(fightN, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; x = h | 0 || 1; };
   const roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
   const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0, foeHits: 0, parries: 0, dodges: 0,
-    completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0, closeWins: 0 };   // closeWins: kills where the hero fell under half health
-  let low = 1, heroHp = p.heroMaxHp, foeHp = p.foeMaxHp, m, downtime = 0, plan = '', trick = '', tplan = null;
+    completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0, closeWins: 0, rises: 0 };   // closeWins: kills where the hero fell under half health; rises: Rattlebones get-ups
+  let low = 1, heroHp = p.heroMaxHp, foeHp = p.foeMaxHp, m, downtime = 0, plan = '', trick = '', tplan = null, again = false;
+  // the Rattlebones get-up, as the live loop's 59b onFoeDeath (wren-z9-10-foes): an ordinary bones foe that falls gets up once a fight
+  // at ENEMY_TUNE.reassemble of its HP, unless a Burn tick (or magic) killed it; never a boss (an elite does). A turn fight is its own
+  // pack, so the pack's quota of 2 never binds. Draws no random number, so every other roll stays on its stream.
+  const rise = (p.foeType === 'bones' && !p.boss && typeof ENEMY_TUNE === 'object' && ENEMY_TUNE.reassemble) || 0;
   const io = { random: roll, emit: () => {}, alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), foeHp: () => Math.max(0, foeHp),
     heroHp: () => heroHp, slotId: i => p.eq[i] || null,
-    damageFoe: d => { foeHp -= d; out.damageDone += d; return d; },
+    damageFoe: (d, kind) => { foeHp -= d; out.damageDone += d;
+      if (foeHp <= 0 && rise > 0 && !again && kind !== 'magic' && kind !== 'burn') { again = true; foeHp = p.foeMaxHp * rise; out.rises++; }
+      return d; },
     damageHero: d => { heroHp -= d; out.damageTaken += d; if (d > 0) out.foeHits++; low = Math.min(low, heroHp / p.heroMaxHp); return d; },
     healHero: d => { heroHp = Math.min(p.heroMaxHp, heroHp + d); }, healFoe: d => { foeHp = Math.min(p.foeMaxHp, foeHp + d); }, defense: (k, ok) => { if (ok) out[k === 'parry' ? 'parries' : 'dodges']++; } };
-  const start = () => { reseed(); tplan = null; foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; low = Math.max(0, heroHp) / p.heroMaxHp; };   // a zone boss is met at full health, as in play
+  const start = () => { reseed(); tplan = null; again = false; foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; low = Math.max(0, heroHp) / p.heroMaxHp; };   // a zone boss is met at full health, as in play
   start();
   const step = 0.05;
   for (let t = 0; t < seconds; t += step) {

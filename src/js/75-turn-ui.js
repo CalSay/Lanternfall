@@ -85,7 +85,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   tcard.append(tcFace, tcTxt);
   if (box) box.append(tcard);
   let tcT = null;
-  const tcHide = () => { tcard.hidden = true; if (box) box.classList.remove('tc-on'); };   // tc-on: toasts wait while the banner shows (20-stage.css)
+  const tcHide = () => { tcard.hidden = true; if (box && beat.hidden) box.classList.remove('tc-on'); };   // tc-on: toasts wait while the banner (or the loss beat) shows (20-stage.css)
   on('turnCard', p => {
     if (!box || !p) return;
     const f = foeNow(), mine = p.who === 'hero', name = mine ? heroName() : (f && f.name) || 'The foe';
@@ -93,11 +93,70 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     putText(tcTxt, mine ? (p.again ? 'Your turn again' : 'Your turn') : p.again ? `${name} goes again` : `${name}'s turn`);
     tcard.className = 'tv-turncard ' + (mine ? 'hero' : 'foe') + (reduced() ? ' calm' : '');
     tcard.style.setProperty('--tc-dur', (p.secs || 0.9) + 's');
-    tcard.hidden = false; box.classList.add('tc-on'); void tcard.offsetWidth; tcard.classList.add('play');
+    tcard.hidden = false; box.classList.add('tc-on'); fitTextWidth(tcTxt); void tcard.offsetWidth; tcard.classList.add('play');   // one line: a long name steps the size down to the stage (turn-banner-clears-plate)
     clearTimeout(tcT); tcT = setTimeout(tcHide, (p.secs || 0.9) * 1000 + 150);
   });
   on('turn', () => { clearTimeout(tcT); tcHide(); });
   on('fightEnd', () => { clearTimeout(tcT); tcHide(); });
+
+  // ---- a normal loss says so (normal-death-says-so): in the banner's spot through the gap before the next fight ----
+  // A loss never moves you and gives full HP for the next fight; the second line names one way out that is true for this save.
+  // No pop and no card (a boss loss has the Try again card). The bell keeps the "beaten" line; losing three of ten fights in one
+  // zone adds one bell line, once per zone a session (runtime only, never saved).
+  const beat = el('div', 'tv-beat'); beat.hidden = true; beat.setAttribute('role', 'status'); beat.setAttribute('aria-live', 'polite');
+  const beatTxt = el('b', 'tv-beat-txt', "Beaten. You're back to full HP for the next fight."), beatHelp = el('span', 'tv-beat-help');
+  // loss-help-gear-first: a hero who wears no weapon (or no armour at all) is told to get that gear first, with a Go
+  const beatGo = el('button', 'mini go tv-beat-go'); beatGo.type = 'button'; beatGo.hidden = true; beatGo.style.pointerEvents = 'auto'; beatGo.style.minHeight = '44px';
+  let beatGoFn = null;
+  beatGo.addEventListener('pointerdown', e => e.stopPropagation());
+  beatGo.addEventListener('click', e => { e.stopPropagation(); const f = beatGoFn; beatHide(); if (f) try { f(); } catch (err) { console.error('[lanternfall] loss help go failed', err); } });
+  beat.append(beatTxt, beatHelp, beatGo);
+  if (box) box.append(beat);
+  const ARMOUR = ['helm', 'body'];   // the off-hand is a Quiver, Lantern or Tome for most classes, not armour
+  // { t, go, lbl } when the hero lacks a weapon (else armour) and there is a piece to wear or a recipe to make; null otherwise
+  const gearFirst = () => {
+    const noWpn = !equipped('weapon'), want = noWpn ? ['weapon'] : ARMOUR.some(p => equipped(p)) ? [] : ARMOUR;
+    if (!want.length) return null;
+    const what = noWpn ? 'weapon' : 'armour';
+    let it = null;   // the strongest piece in the bag that fits, as the Equip goal picks
+    for (const i of S.items || []) if (!isEquipped(i.id) && want.some(p => fits(i, p, 'hero')) && (!it || itemPower(i) > itemPower(it))) it = i;
+    if (it) { const pos = want.find(p => fits(it, p, 'hero'));
+      return { t: `No ${what} on. Wear your ${itemName(it)} first.`, lbl: 'Wear', gear: 1, go: () => { if (!equipped(pos)) equipItem(it.id, pos); } }; }
+    const b = craftGoalNext(); if (!b || !want.includes(b.pos)) return null;
+    const nm = kindName(b.kind, b.t), a = /^[AEIOU]/.test(nm) ? 'an' : 'a', g = GOALS.find(x => x.id === 'forge');
+    const go = g && g.go ? () => followGo(g.go) : null;
+    if (b.gate) return { t: `No ${what} yet. ${a[0].toUpperCase() + a.slice(1)} ${nm} needs ${SKILL[b.gate.skill]} ${b.gate.need} first.`, lbl: 'Go', gear: 1, go };
+    const st = CRAFT_STATIONS[CRAFT_KINDS[b.kind].st];
+    return { t: `No ${what} yet. Make ${a} ${nm}${st ? ` at the ${st.n}` : ''} first.`, lbl: 'Go', gear: 1, go };
+  };
+  let beatGear = false;   // the line up now is a gear-first line: a gear change while it shows (Hero > Gear) drops its button
+  const lossHelp = () => {
+    try { const g = gearFirst(); if (g) return g; } catch (e) {}
+    try { if (attrOn() && attrPoints(soloHero()).free > 0) return { t: 'Spend your attribute points on Hero > Build.' }; } catch (e) {}
+    try { const b = craftGoalNext(); if (b && !b.gate && b.p >= 1) return { t: 'Better gear helps: see Craft.' }; } catch (e) {}
+    return { t: S.zone > 1 ? 'An easier zone helps too: use the arrow by the zone name.' : '' };
+  };
+  let beatT = 0;   // game seconds the line has been up (a fallback; game time, so a paused game or a tip keeps it)
+  const beatHide = () => { beatT = 0; if (beat.hidden) return; beat.hidden = true; beat.classList.remove('play'); if (box && tcard.hidden) box.classList.remove('tc-on'); };
+  const LOSS_N = 3, LOSS_OF = 10, lossAt = {}, lossTold = {};
+  let fightN = 0;
+  on('fightStart', () => { fightN++; beatHide(); });
+  on('gear', () => { if (beatGear && !beat.hidden) { beatGoFn = null; beatGo.hidden = true; } });
+  on('unitUp', beatHide);
+  on('activity', beatHide);
+  onTick(dt => { if (!beat.hidden && (beatT += dt) > 8) beatHide(); });   // the next fight, a hero back up or a new activity hides it first
+  on('wipe', p => {
+    if (!box || !p || p.boss || p.arena) return;
+    const help = lossHelp();
+    putText(beatHelp, help.t); beatHelp.hidden = !help.t;
+    beatGoFn = help.go || null; putText(beatGo, help.lbl || ''); beatGo.hidden = !beatGoFn; beatGear = !!help.gear;
+    beat.className = 'tv-beat' + (reduced() ? ' calm' : '');
+    beat.hidden = false; box.classList.add('tc-on'); void beat.offsetWidth; beat.classList.add('play');
+    beatT = 0;
+    const z = p.zone, at = (lossAt[z] || []).filter(n => n > fightN - LOSS_OF);
+    at.push(fightN); lossAt[z] = at;
+    if (at.length >= LOSS_N && !lossTold[z]) { lossTold[z] = 1; toast('Losing a lot here? Gear, attribute points or an easier zone help.', 'raid', null, 'normal'); }
+  });
 
   // ---- the turn strip, the timing bar, the hero row ----
   // the turn order lives on the Versus card only (owner, 2026-10-02)
@@ -173,6 +232,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   on('fightStart', () => { pendClean = null; lampSet(0); });
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
   const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
+  addEventListener('resize', () => { if (turnN.textContent) fitTextWidth(turnN, 7, false, true); if (!tcard.hidden) fitTextWidth(tcTxt); });   // a turned phone refits both lines
   // along the stage's bottom edge: the timing bar (while the foe winds up)
   const bot = el('div', 'tv-bot'); bot.append(lamps, bar);   // hit feel: the lamps sit just above the timing bar, clear of the place caption and the resource row
   if (box) box.append(wrap, bot);
@@ -194,6 +254,18 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     ring.classList.toggle('hot', Math.abs(ringClose - s.now) <= (TURN_TUNE.timed ? TURN_TUNE.timed.good : 0.15));
   };
 
+  // rally gates (rally-gates-live, 59k TURN_TUNE.boss.gate): a mark on the boss's bar at each gate, from the fight's start; the one it
+  // holds at shows gold, and a passed one fades
+  const foeBar = $('mBar') && $('mBar').parentElement;
+  let notchSig = '';
+  const drawNotches = s => {
+    const g = s && s.foe && Array.isArray(s.gates) && s.gates.length ? s.gates : null, sig = g ? `${g.join()}|${s.gi}|${s.rally ? 1 : 0}` : '';
+    if (!foeBar || sig === notchSig) return;
+    notchSig = sig;
+    foeBar.querySelectorAll('.tv-notch').forEach(n => n.remove());
+    if (g) foeBar.append(...g.map((x, i) => { const n = el('i', 'tv-notch' + (i < s.gi ? ' past' : i === s.gi && s.rally ? ' held' : '')); n.style.setProperty('--g', String(x)); return n; }));
+  };
+
   // warnings: a short banner (a charge stays up while it is gathering)
   let warnT = 0, warnSticky = '';
   const say = (txt, cls, secs) => { putText(warn, txt); warn.className = 'tv-warn ' + (cls || ''); warn.hidden = false; warnT = performance.now() + (secs || 1.6) * 1000; };
@@ -206,6 +278,25 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   // elite traits (59k, 24d TURN_TRAITS): the first of each kind says what it does; breaking one shows
   on('traitSeen', p => { if (p && p.first) say(p.txt, 'charge', 4); });
   on('traitBroken', p => { if (p) { emit('float', { txt: p.txt, color: '#BFE6FF', big: true }); emit('shake', 0.2); } });
+  // foe tricks say what they did (foe-tricks-say-so, judge 2026-10-08): a word when a trick lands, never before. A boss's riders
+  // keep their charge and rally lines. body[data-trick-*]: what has been said (the last rider, the get-up, resist, armour), for a proof
+  // route that cannot catch the frame (as rally-gates-live's data-rally-seen).
+  const trickSay = (txt, secs, flag, v) => { if (warnSticky) return false; say(txt, 'charge', secs || 1.8); document.body.dataset.trickSaid = txt; if (flag) document.body.dataset[flag] = v || '1'; return true; };   // a boss's charge line keeps the line
+  const RIDER_WORD = { chill: () => "Chilled: you're slower", venom: p => `Venom: you take damage for ${p.stacks > 0 ? p.stacks : 2} turn${p.stacks === 1 ? '' : 's'}`, weaken: () => 'Weakened: your next move hits softer' };
+  on('heroRider', p => { if (p && !p.boss && RIDER_WORD[p.id]) trickSay(RIDER_WORD[p.id](p), 0, 'trickRider', p.id); });
+  on('turnCard', p => { if (p && p.chill && p.who === 'foe') { const f = foeNow(); trickSay(`Chilled: ${(f && f.name) || 'The foe'} goes again`, 2, 'trickAgain'); } });
+  on('foeGetUp', p => { if (!p) return; emit('float', { txt: 'Back up!', color: '#E8E4DA', big: true }); trickSay(`${p.name || 'It'} gets back up!`, 0, 'trickGetup'); });
+  // resist and armour: once a fight each, on the first hit that meets it (59-combat sets hdt, the hit's damage type, and hk, its kind)
+  let toldRes = 0, toldArm = 0;
+  on('fightStart', () => { toldRes = toldArm = 0; });
+  on('float', p => {
+    if (!p || !p.hdt || !(typeof turnCombatOn === 'function' && turnCombatOn())) return;
+    if (warnSticky) return;
+    const f = foeNow(), words = [];
+    if (p.rel < 0 && !toldRes) { toldRes = 1; words.push(`Resists ${(typeof DT_INFO === 'object' && DT_INFO[p.hdt] ? DT_INFO[p.hdt].n : p.hdt).toLowerCase()}`); }
+    if (p.hdt === 'phys' && !toldArm && f && f.tk && f.tk.arm > 0 && !/^(bleed|swarm|curse)$/.test(p.hk)) { toldArm = 1; words.push('Armoured'); }
+    if (words.length) trickSay(words.join('. '), 1.6, toldArm && words[words.length - 1] === 'Armoured' ? 'trickArm' : 'trickRes');
+  });
   on('shieldHit', () => emit('float', { txt: 'Shield', color: '#BFE6FF', big: false }));
   on('heroMiss', () => emit('float', { txt: 'Miss', color: '#A9B1BD', big: false, x: 0.66, y: 0.42 }));
   on('foeContact', p => { if (p && p.res === 'miss') emit('float', { txt: 'Missed you', color: '#8FB8FF', big: false, x: 0.27, y: 0.42 }); });
@@ -221,7 +312,11 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     if (seen[key]) say(txt.split('.')[0] + '.', 'charge', 1.0); else { seen[key] = 1; say(txt, 'charge', 3.2); }
   }
   // the narrow stage line (about 18 characters wide): three short lines, as the trick tips are; the boss's name is on its bar
-  on('foeRally', p => { if (p) say('Rally! Only a Stun breaks its charge.', 'charge', 2.4); });
+  // rally gates (rally-gates-live): the boss holds at the mark on its bar until it has made its next move; while it gathers a
+  // charged move, hits cannot break the charge there, so only a Stun does
+  // body[data-rally-seen] / [data-rally-over]: what has shown, for a proof route that cannot catch the frame (as hit-feel's data-hit-seen)
+  on('foeRally', p => { if (!p) return; say(p.charging ? 'Rally! It holds at the mark. Only a Stun breaks its charge.' : 'Rally! It holds at the mark until its next move ends.', 'charge', 3); document.body.dataset.rallySeen = '1'; });
+  on('foeRallied', p => { if (!p) return; say('Rally over. Your hits land again.', 'good', 1.6); document.body.dataset.rallyOver = '1'; });
   on('foeContact', p => {
     if (!p || p.res !== 'feint') return;
     if (p.fooled) { emit('float', { txt: 'FOOLED', color: '#FF9B8A', big: true, x: 0.27, y: 0.34 }); emit('shake', 0.1); pendClean = null; lampSet(0); }
@@ -258,9 +353,10 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     if (!card.hidden && (!s || s.phase !== 'intro') && performance.now() - cardAt > 250) { card.hidden = true; card.classList.remove('play'); }
     if (wrap.hidden === live) { wrap.hidden = !live; bot.hidden = !live; }
     if (!warn.hidden && performance.now() > warnT) warn.hidden = true;
-    drawRing(live ? s : null);
+    drawRing(live ? s : null); drawNotches(live ? s : null);   // a rally holds the turn label too (below): the boss's own move lines take the banner
     if (!live) { if (!bar.hidden) bar.hidden = true; return; }
-    putText(turnN, s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.phase === 'foeWindup' && s.foe ? `${s.foe.name}'s turn` : s.n ? `Turn ${s.n}` : '');
+    const tn = s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.rally && s.foe ? 'Rally: it holds at the mark' : s.phase === 'foeWindup' && s.foe ? `${s.foe.name}'s turn` : s.n ? `Turn ${s.n}` : '';
+    if (turnN.textContent !== tn) { turnN.textContent = tn; if (tn) fitTextWidth(turnN, 7, false, true); }   // one line, like the banner (turn-banner-clears-plate)
     turnN.classList.toggle('mine', s.phase === 'hero' || !!s.timing);
     turnN.classList.toggle('foe', s.phase === 'foeWindup');
     // the foe winds up: the bar fills to the hit; the dodge and parry windows sit at its end
@@ -305,6 +401,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     const pr = typeof masteryApi === 'object' && masteryApi.profile ? masteryApi.profile(f.type) : null, dtn = d => (typeof DT_INFO === 'object' && DT_INFO[d] ? DT_INFO[d].n : d), learn = [];
     if (pr && pr.weak) learn.push(['Weak', (pr.weakTo ? `Weak to ${dtn(pr.weakTo)}.` : 'No weakness.') + (pr.resists.length ? ` Resists ${pr.resists.map(dtn).join(' and ')}.` : '')]);
     if (pr && pr.tell && pr.tellTxt) learn.push(['Tell', 'Watch for: ' + pr.tellTxt.replace(/^Moves:[^.]*\.\s*/, '')]);
+    if (pr && pr.tricks && !f.boss) learn.unshift(...pr.tricks.map(t => ['Trick', t]));   // foe-tricks-say-so: each trick once it has landed on you, first (the dock is short in landscape)
     const nx = pr ? (pr.n < 5 ? 5 : pr.n < 15 ? 15 : 0) : 0;
     if (nx) learn.push(['Learn', `${nx - pr.n} more kill${nx - pr.n > 1 ? 's' : ''} to learn ${nx === 5 ? 'its weakness' : 'what to watch for'}.`]);
     return { name: f.name, tags, trait, known: sh ? true : known, moves: known || sh ? moves : [], hidden: sh ? sh.hidden : 0, learn };

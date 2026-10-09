@@ -16,6 +16,9 @@
 //   title    the name, one line;  sub  one short line;  rarity  common..legendary (the colour; else the kind's own)
 //   icon     an icon spec for iconOf() ({ item }, { mat }, { ic });  still  a data URL (a bigger picture)
 //   lines    [{ txt, ic? }] a short list under the title;  actions  [{ txt, fn }] extra buttons beside Continue
+//   picks    [{ txt, sub, fn }] a compact row of choices under the list (.mm-pick; boss-spoils-pick), headed by pickHead; a pick closes the
+//            card, then runs its fn. goTxt renames Continue; onKeep runs when the card closes any other way (Continue, an action, a tap
+//            outside, Escape). The first item in a folded card that has picks owns them.
 //   bark     a hero-voice moment id (55-voice.js): the story hero's line shows on the card or banner with their portrait. At most one bark a
 //            flush (the strongest, VOICE_PRIO). kind 'bark' is a banner of just the line, dropped after 20 s if the banner budget has no room.
 // momentState() -> { up, banner, queued } for the checks. Nothing here is saved: a moment not yet seen when the game closes
@@ -92,6 +95,8 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     u.ov.remove(); u.ov = null;
     if (u.lastFocus && u.lastFocus.focus && document.contains(u.lastFocus)) try { u.lastFocus.focus({ preventScroll: true }); } catch (e) {}
     u.wait = 0;
+    const keep = u.onKeep; u.onKeep = null;   // a card with picks closed without one (boss-spoils-pick)
+    if (keep) try { keep(); } catch (e) { console.error('[lanternfall] moment keep', e); }
     try { ui(true); } catch (e) {}
   }
   function lineRow(l) {
@@ -145,19 +150,36 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
       if (rows.length > MOMENT_TUNE.maxLines) ul.append(el('li', 'mm-more', `And ${rows.length - MOMENT_TUNE.maxLines} more.`));
       card.append(ul);
     }
+    // boss-spoils-pick: a compact row of choices; a pick closes the card first, then runs
+    const pk = list.find(x => x.picks && x.picks.length), keeps = list.filter(x => x.picks && x.picks.length && x !== pk && x.onKeep).map(x => x.onKeep);   // a second pick folded in keeps its Scroll
+    const keepRest = () => { for (const f of keeps) try { f(); } catch (e) { console.error('[lanternfall] moment keep', e); } };
+    u.onKeep = pk ? () => { if (pk.onKeep) pk.onKeep(); keepRest(); } : null;
+    if (pk) {
+      card.classList.add('has-pick');
+      const box = el('div', 'mm-picks');
+      if (pk.pickHead) box.append(el('p', 'mm-pick-h', pk.pickHead));
+      const row = el('div', 'mm-pick-row');
+      for (const p of pk.picks) {
+        const b = el('button', 'mm-pick'); b.type = 'button';
+        b.append(el('b', null, p.txt)); if (p.sub) b.append(el('small', null, p.sub));
+        b.addEventListener('click', e => { e.stopPropagation(); if (Date.now() - u.shownAt < MOMENT_TUNE.tapLockMs) return; u.onKeep = keeps.length ? keepRest : null; closeCard(); try { p.fn && p.fn(); } catch (err) { console.error('[lanternfall] moment pick', err); } });
+        row.append(b);
+      }
+      box.append(row); card.append(box);
+    }
     const acts = el('div', 'mm-acts');
     for (const a of (first.actions || [])) {
       const b = el('button', 'big mm-act', a.txt); b.type = 'button';
       b.addEventListener('click', e => { e.stopPropagation(); closeCard(); try { a.fn && a.fn(); } catch (err) { console.error('[lanternfall] moment action', err); } });
       acts.append(b);
     }
-    const go = el('button', 'big forge mm-go', 'Continue'); go.type = 'button';
+    const go = el('button', 'big forge mm-go', (pk && pk.goTxt) || 'Continue'); go.type = 'button';
     acts.append(go); card.append(acts);
     ov.append(card);
     u.shownAt = Date.now();
     const tryClose = () => { if (Date.now() - u.shownAt >= MOMENT_TUNE.tapLockMs) closeCard(); };   // a fight tap must not skip the card
     ov.addEventListener('click', tryClose);
-    ov.addEventListener('keydown', ev => { if (ev.key === 'Escape') tryClose(); if (ev.key === 'Tab') { ev.preventDefault(); go.focus(); } });
+    ov.addEventListener('keydown', ev => { if (ev.key === 'Escape') tryClose(); if (ev.key === 'Tab') { ev.preventDefault(); const bs = [...card.querySelectorAll('button')], i = bs.indexOf(document.activeElement); (i < 0 ? go : bs[(i + (ev.shiftKey ? bs.length - 1 : 1)) % bs.length]).focus(); } });   // Tab stays on the card's buttons
     document.body.append(ov); u.ov = ov;
     go.focus({ preventScroll: true });
     emit('momentShow', { tier: 'big', kind: first.kind, n: list.length, zone: first.zone });
@@ -183,13 +205,23 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     if (list.length > shown.length) tx.append(el('div', 'mm-t-line', `And ${list.length - shown.length} more.`));
     t.append(tx);
     const ms = (MOMENT_TUNE.bannerS + MOMENT_TUNE.bannerExtraS * (shown.length - 1)) * 1000;
-    t._hold = Date.now() + ms;
+    t._hold = Date.now() + ms; t._at = Date.now();   // _at: when it showed (tools/walk.mjs reads a card's age)
     const live = [...box.children].filter(x => !x._gone && !(x._hold > Date.now()));
     const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
     const held = [...box.children].filter(x => !x._gone && x._hold > Date.now()).length;
     for (let i = 0; i <= live.length - Math.max(1, room - held); i++) { const o = live[i]; if (!o) break; o._gone = true; clearTimeout(o._timer); o.remove(); }
     box.append(t); u.banner = t;
-    t._timer = setTimeout(() => { dropToast(t); if (u.banner === t) u.banner = null; }, ms);
+    // first-hour-walk-findings (F6): the next fight's turn banner hides the notices slot (20-stage.css .tc-on); the hold waits while it
+    // is hidden, so the player still sees the banner for its full time (the walk saw one up for 1.8 s, then gone under "You go first")
+    let last = Date.now(), hidMs = 0;
+    const hold = () => {
+      if (t._gone) return;
+      const now = Date.now(), dt = now - last; last = now;
+      if (+getComputedStyle(box).opacity < 0.1 && hidMs < 8000) { t._hold += dt; hidMs += dt; }   // at most 8 s more: a slot hidden for good never pins the queue
+      if (now >= t._hold) { dropToast(t); if (u.banner === t) u.banner = null; return; }
+      t._timer = setTimeout(hold, 100);
+    };
+    t._timer = setTimeout(hold, 100);
     u.midAt.push(notes.clock);
     emit('momentShow', { tier: 'medium', kind: first.kind, n: list.length, zone: first.zone });
   }
@@ -206,12 +238,14 @@ function momentState() { return { up: !!MOMENT_UI.ov, banner: !!MOMENT_UI.banner
     const big = MOMENT_Q.filter(x => x.tier === 'big'), mid = MOMENT_Q.filter(x => x.tier !== 'big');
     if (big.length && !u.ov) {
       const all = withSay(big.concat(fold(mid))); MOMENT_Q.length = 0;   // mediums ride on the big card as lines
-      for (const x of mid) MOMENT_UI.midAt.push(notes.clock);   // each folded medium counts against the cap
+      for (const x of mid) if (x.kind !== 'bark') MOMENT_UI.midAt.push(notes.clock);   // each folded medium counts against the cap; a bark is the card's own line, not a moment
       showCard(all); return;
     }
     if (big.length) return;   // a big card is up: wait for it
     if (u.ov || (u.banner && u.banner._hold > Date.now())) return;   // a banner keeps its minimum time; a banner under a big card would play unseen
-    if (mid.length && midRoom()) { const all = withSay(fold(mid)); MOMENT_Q.length = 0; showBanner(all); }
+    // first-hour-walk-findings: a zone's first clear (its cache banner) is never held by the cap: the walk saw zone 12 and 14 with their
+    // Stars land 23 to 52 s late. What waits with it folds into the same banner, so it is still one a fight end.
+    if (mid.length && (midRoom() || mid.some(x => x.kind === 'cacheAuto'))) { const all = withSay(fold(mid)); MOMENT_Q.length = 0; showBanner(all); }
   }
   // a timer, not onTick: a guide step or a card that holds the game must not hold a moment back
   setInterval(() => {

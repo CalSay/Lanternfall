@@ -1,0 +1,29 @@
+# seed: 1
+# Proof for card smelt-done-says-so: a Forge order finished while you chop wood puts one line in the bell and lights the Camp dot.
+# Fixture save-refine (Forge Lv 2, zone 20): the hero chops wood meanwhile, since a zone 20 fight would end in a hero card. The
+# moment card (a new hero) and the guide tip are closed first: either holds the game. 10 Copper Ingots take about 136 s; the route waits 200. Rules (one line per order, merged lines, no line for an
+# All order or the away run, no dot with Camp open) are in tools/check.mjs, section 'smelt-done-says-so'.
+new refine
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+wait 6
+tap-if "Continue"
+tap "Gather: Woodcutting"
+wait 1
+tap "Camp"
+tap "Forge"
+tap "Smelt"
+tap "Smelt 10 Copper Ingot"
+shot order-set
+key Escape
+tap-if "Close menu"
+tap-if "Dismiss this tip"
+wait 200
+tap-if "Continue"
+tap-if "Close menu"
+expect "#raidDot:not([hidden])"
+shot camp-dot
+tap "Notices"
+expect "The Forge made 10 Copper Ingots."
+shot bell-line

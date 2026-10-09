@@ -15,6 +15,16 @@
 .mm-list img { width: 20px; height: 20px; image-rendering: pixelated; flex: none; }
 .mm-more { color: var(--muted); }
 .mm-acts { display: grid; gap: 6px; width: 100%; margin-top: 4px; }
+/* boss-spoils-pick: a compact row of moves to learn now (75-caches-ui), side by side on a wide screen, stacked on a narrow one; on a short
+   screen the card drops its art and the hero's line so the moves and Keep the Scroll fit */
+.mm-card.has-pick { width: min(560px, 100%); }
+.mm-picks { width: 100%; display: grid; gap: 5px; }
+.mm-pick-h { margin: 0; font: 600 12px var(--body); letter-spacing: .06em; color: var(--mc); text-align: left; }
+.mm-pick-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+.mm-pick { display: grid; gap: 2px; align-content: start; min-height: 44px; padding: 6px 8px; text-align: left; cursor: pointer; color: var(--bone); background: var(--well); border: 1px solid color-mix(in srgb, var(--mc) 55%, var(--line)); font: inherit; }
+.mm-pick b { font-size: 13.5px; color: #F2E6B0; }
+.mm-pick small { font-size: 11.5px; line-height: 1.3; color: var(--muted); }
+.mm-pick:hover, .mm-pick:focus-visible { border-color: var(--mc); background: color-mix(in srgb, var(--mc) 16%, var(--well)); outline: none; }
 
 /* ---- the medium banner: a toast in the notices slot (the toast dock) ---- */
 .toast.mm-toast { --mc: var(--gold); align-items: flex-start; border-color: var(--mc); border-left: 3px solid var(--mc); background: linear-gradient(90deg, color-mix(in srgb, var(--mc) 24%, #0E0B12), #0E0B12E8 85%); box-shadow: 0 2px 0 #0B0810, 0 0 14px color-mix(in srgb, var(--mc) 35%, transparent); padding: 5px 8px 5px 6px; }
@@ -35,8 +45,19 @@
   .mm-ov, .mm-card, .mm-img { animation: none; }
   .mm-burst { display: none; }
 }
-/* 740x360: the card is short, so the art shrinks */
-@media (max-height: 420px) { .mm-art { width: 72px; height: 64px; } .mm-img { width: 44px; height: 44px; } .mm-card { gap: 5px; padding: 10px 12px; } }
+/* landscape phones up to 500 px tall (740x360 to 932x430, the landscape layout's own 500 px line in 80-landscape): the card is short, so the art
+   shrinks (moment-card-short-landscape; at 420 px the 926x428 and 932x430 phones drew it full size and scrolled it 196 px) */
+@media (max-height: 500px) { .mm-art { width: 72px; height: 64px; } .mm-img { width: 44px; height: 44px; } .mm-card { gap: 5px; padding: 10px 12px; } }
+@media (max-height: 500px) { .mm-card.has-pick .mm-art, .mm-card.has-pick .mm-say { display: none; } .mm-pick { min-height: 0; padding: 4px 8px; } }
+/* spoils-card-fits-with-unique: a unique adds its line and an Equip button to the pick card, so on a short screen the card widens (each
+   move's line stays on one row), the list tightens and Equip sits beside Keep the Scroll; nothing is dropped */
+@media (max-height: 500px) {
+  .mm-card.has-pick { width: min(680px, 100%); }
+  .mm-card.has-pick .mm-head { font-size: calc(20px * var(--display-k)); }
+  .mm-card.has-pick .mm-list { gap: 3px; padding: 5px 10px; }
+  .mm-card.has-pick .mm-acts { grid-auto-flow: column; grid-auto-columns: 1fr; margin-top: 2px; }
+  .mm-card.has-pick .mm-acts .big { padding: 10px 8px; }
+}
 
 /* ---- hero-voice: the hero's line on a card or banner, the hero sheet record ---- */
 .mm-say { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; padding: 6px 8px; text-align: left; background: var(--well); border: 1px solid var(--line); }
@@ -46,4 +67,4 @@
 .mm-t-say { font-size: 12.5px; font-style: italic; color: var(--bone); }
 .gl-say { margin: 0; font-size: 13.5px; font-style: italic; color: var(--bone); }
 .cs-rec { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 13.5px; color: var(--bone); }
-@media (max-height: 420px) { .mm-say { padding: 4px 8px; } .mm-say-pt { width: 28px; height: 28px; } .mm-say-tx p { font-size: 12.5px; } .mm-say-tx small { display: none; } }
+@media (max-height: 500px) { .mm-say { padding: 4px 8px; } .mm-say-pt { width: 28px; height: 28px; } .mm-say-tx p { font-size: 12.5px; } .mm-say-tx small { display: none; } }

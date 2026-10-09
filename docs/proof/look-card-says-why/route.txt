@@ -1,0 +1,110 @@
+# seed: 1
+# Proof for card look-card-says-why: the first boss falls and the Lantern Cache card says what the lantern colour did in its own
+# line ("Your lantern burns Ember Red now."), next to what the win paid. Fixture boss1, the same fight as the cache-core route.
+# A unique may drop on the win (the odds line then gives way to the unique), so the route does not expect the odds line; the
+# odds line next to the colour line is in tools/check.mjs, section 'look-card-says-why'.
+new boss1
+wait 2
+tap-if "Got it"
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Dodge"
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+tap-if "Attack"
+tap-if "Echo Shot"
+wait 1
+wait 3
+expect .mm-card
+expect "Lantern Cache"
+expect "Your lantern burns Ember Red now."
+expect "gold"
+expect "Moss Scroll"
+expect .mm-head
+shot cache-card-ember
+wait 3
+tap "Continue"
+wait 2
+shot stage-ember

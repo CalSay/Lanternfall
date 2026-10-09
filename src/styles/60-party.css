@@ -91,6 +91,13 @@
 .bsheet-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 0 16px 16px; display: grid; align-content: start; gap: 14px; -webkit-overflow-scrolling: touch; }
 .bsheet-foot { flex: none; display: grid; gap: 8px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 2px solid var(--line); background: var(--panel); }
 .bsheet-foot:empty { display: none; }
+/* desktop-layout-v1: a sheet docked in the menu's right half, under its head (75-party-sheet openSheet opts.dock; top set there).
+   Not modal: no dimmer, no rise, no grab bar. Only the desktop tiers dock one (70-ui isDesk). */
+.menu:has(> .bsheet-ov.docked) { position: relative; }
+.bsheet-ov.docked { position: absolute; top: 0; right: 0; bottom: 0; left: auto; width: 50%; z-index: 6; background: none; align-items: stretch; animation: none; }
+.bsheet-ov.docked .bsheet, .bsheet-ov.docked .bsheet.small { width: 100%; height: 100%; max-height: none; border: 0; border-left: 2px solid var(--line-hi); box-shadow: -4px 0 0 #0B0810; animation: none; transform: none; }
+.bsheet-ov.docked .bsheet-grab { cursor: default; }
+.bsheet-ov.docked .bsheet-grab > i { visibility: hidden; }
 
 /* character sheet */
 .cs-top { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; align-items: center; }
@@ -163,3 +170,16 @@
 /* ---- polish: Codex title, expedition status ---- */
 .pc-who > small.pc-ctitle, .cs-ctitle { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
 .pc-ctitle[hidden] { display: none; }
+/* desktop-layout-v1 (desk playtest F01): the hero picker uses a desktop screen: wider, the hero cards side by side */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .create-in { width: min(1120px, 100%); padding-left: 24px; padding-right: 24px; }
+  .create-in > p { max-width: 72ch; }
+  .create-in > .create-go { justify-self: start; width: min(480px, 100%); }
+  .ccards { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+}
+/* upright-tablet (80-landscape.css): a sheet opens at the wide strip's width, and the hero picker sets its cards two across */
+@media (min-width: 700px) and (not (min-aspect-ratio: 1/1)) {
+  .bsheet { width: min(760px, 100%); }
+  .create-in { width: min(820px, 100%); padding-left: 24px; padding-right: 24px; }
+  .ccards { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+}

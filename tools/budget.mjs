@@ -13,10 +13,13 @@
 //   --set none      kept-up heroes at grade 4 and up do not wear the crafted set (default: they do, see "The set" below)
 //   --stars none    no Stars (default: the typical Stars a player carries at that zone, as sim.mjs --stars typical)
 //   --lv N          every kept-up hero N levels off the road (-1: a level behind)
-//   --foot arrival  every first-hour row (tier common +0) on the arrival footing (below), not only z13-z15   (manual: the z10-z12 check)
+//   --foot arrival  every first-hour row (tier common +0) on the arrival footing (below), not only z7-z15   (manual: the z4-z6 check)
 //   --sweep         print casual and good wins at L-1, L and L+1 (how much one level matters)   (manual)
 //   --players wide  also play a weaker and a stronger casual (parry 15% / 35%, dodge 40% / 70%)      (manual)
 //   --read casual=0.5,good=0.7   set how often a player reads a boss trick (a feint or a held swing; 59k TURN_TUNE.tricks.read)   (manual)
+//   --craft k=v,..  CRAFT_TUNE switches (20-data), as sim.mjs --craft. --craft grades=1 (craft-attribute-grades): the kept-up rows wear
+//                   graded pieces (below, "Graded gear"); off (the default): every row exactly as before
+//                   --craft grades=1,strike=1,infuse=1 (craft-strike-infuse): the lift rows (below, "liftRow")
 //   --uniq ID       report only (uniques-first-four): each row twice for the heroes who can wear unique ID (20-data UNIQ, the new table),
 //                   once as is (S) and once with the unique worn in its position (R: zone tier, +5, UNIQ_TUNE.on), on the same fight
 //                   seeds, and print R - S. A unique in a set position breaks the set. Rows default to z16/z20/z25/z30 boss (--only to
@@ -27,8 +30,9 @@
 //
 // Fights. Each boss fight is its own turnCombatSample call on its own hashed seed (judge 2026-10-06: one random stream
 // for a whole sample correlates long fights; one seed's 60 fights read 13-32% where independent fights read 53-67%).
-// Normal and elite foes come in chains of 5 on one seed (a zone's trash: HP carries from fight to fight, healed
-// COMBAT_TUNE.packHealF on a kill, as the live loop does; a loss starts the next fight at full health).
+// Normal and elite foes come in chains of 5 on one seed (a zone's trash). Each fight starts at full health, as the live loop
+// does (TURN_TUNE.normalFull, normal-death-says-so; the profile's fullHp); with normalFull 0, HP carries from fight to fight,
+// healed COMBAT_TUNE.packHealF on a kill, and a loss starts the next fight at full health.
 //
 // The hero who keeps up at zone z (the budget's footing):
 //   level   floor(roadLv(z) + HERO_TUNE.joinLead) when the game has a road (hero-progression-rework: where a hero who plays
@@ -45,16 +49,27 @@
 //           Not on the arrival footing either (z19-wall): a first-time player at zone 19 has tier 1 common +0 and no crafted set.
 //   build   attribute points spread evenly (hero-progression-rework's attrSpread), once the game has attributes
 // The arrival footing (z13-arrival-footing, docs/design/z13-bot-sim-gap.md): the hero a first-time player has when they
-// first reach zone z, on the z13-z15 first-hour rows and the z16-z26 -arrival rows, z20-wall's arrival gear rows (and every first-hour row with --foot arrival):
+// first reach zone z, on the z7-z15 first-hour rows (z7-z12 since rally-gates-live) and the z16-z26 -arrival rows, z20-wall's arrival gear rows
+// (and every first-hour row with --foot arrival):
 //   level   arrivalLv(z): the game's own XP for ZONE_FIGHTS normal foes and the boss in each zone before z (gainXp,
 //           so xpAheadX applies). Zones 10-13 give 15, 16, 17, 18, the levels the walk arrives at (seeds 1 and 2).
 //   gear    tier 1 common +0, whatever the zone's tier: tier 2 needs gathering 14 (skillReqs) and the walk reaches zone 13 at 4-7
 //   mastery every zone's kills capped at ARRIVAL_KILLS (10: a zone's 5 fights and its boss), so no mastery stars; the
 //           fixture's stars came from a hero who played on to zone 20. Bestiary kills a kind capped at ARRIVAL_KIND_KILLS (12:
 //           the walk has 9-14 a kind at zones 13-14, so Bestiary tier 1 and the second foe profile, not the mid save's 124-462)
+// The bot footing (z21-foe-climb, the -bot rows, report only): the arrival footing two levels up, in tier 2 rare +5 (o.lv, gear, tier)
 // Nothing is scaled to the reference hero: the numbers are the game's own, so a change to levels, gear, foes or Training
 // shows up here.
 //
+// Graded gear (craft-attribute-grades, --craft grades=1): on the kept-up footing (a row with no gear option, not arrival), each piece
+// is made at the grade the kept-up casual's station level gives at the row's zone (CASUAL_LV: the level-by-zone table of
+// docs/design/skilling-crafting-overhaul/curve.md, CRAFT_TUNE.curve on, seed 1; a zone between columns reads the column before it, and
+// past the casual's last zone their end level), minus the tier's gate (gradeFor, 40-rules), at +5, with no lift (craft-strike-infuse
+// adds the lift rows). A piece is at the row's tier (a behind row's tier is one down) or, when the casual's station has not opened
+// it yet, the best tier it has open. A Charm reads the better of Enchanting and Smithing, as the game does. Each class piece wears
+// one HP line at the middle roll and no other bonus line (the rare footing's HP lines were rolled, on the pieces that drew one), so a
+// row measures the grade's power, not its line picks. The late rows (z35-z38, epic +10) and every row with a gear option keep their
+// rarity footing.
 // Players (as sim.mjs --report turns; the scratch player acts at once, so a real fight takes longer):
 //   casual  parries 25% of hits, dodges 50% of the rest; ability rings 10% Perfect, 40% Good, the rest missed
 //   good    parries 60%, dodges 90% of the rest; rings 40% Perfect, 45% Good
@@ -66,7 +81,7 @@ import { HEROES, loadTargets, cells, offBand } from './lib/budget-score.mjs';
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'foot', 'seed-offset', 'sweep', 'players', 'read', 'set', 'none', 'uniq'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
+{ const known = ['json', 'fights', 'heroes', 'only', 'eval', 'stars', 'talents', 'lv', 'foot', 'seed-offset', 'sweep', 'players', 'read', 'set', 'none', 'uniq', 'craft'], bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('budget: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 const SET_ON = opt('set', 'on') !== 'none';
 const FIGHTS = Number(opt('fights', 240)), OFFSET = Number(opt('seed-offset', 0)), STARS = opt('stars', 'typical') !== 'none', TALS = opt('talents', 'typical') !== 'none';
@@ -78,6 +93,10 @@ const J = JSON.stringify;
 // none (boss-tiers-pr5): never parries or dodges, rings as casual; run on the kept-up rows only ("gear buys room to miss, not immunity")
 export const PLAYERS = { casual: { parry: 0.25, dodge: 0.5, perfect: 0.1, good: 0.4 }, good: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 }, none: { parry: 0, dodge: 0, perfect: 0.1, good: 0.4 } };
 const NONE_KINDS = ['keptUpEarly', 'keptUpCaptain', 'keptUpChampion', 'keptUpReport', 'captainMid'];
+// optimiser (z21-foe-climb): the health optimiser's bot (tools/sim.mjs turnPlayer with no --skill): tries a parry on 60% of hits and a
+// dodge on the rest, on time 4 in 5 (else early, a miss), and never presses a ring. Played on the reportBot rows only (report).
+const BOT = { optimiser: { parry: 0.48, dodge: 0.62, perfect: 0, good: 0 } };
+const BOT_KINDS = ['reportBot'];
 // bot: the walk bot's defence (tools/walk.mjs PARRY 0.55, DODGE 0.5), as casual on the rings
 const WIDE = { casualLow: { parry: 0.15, dodge: 0.4, perfect: 0.1, good: 0.4 }, casualHigh: { parry: 0.35, dodge: 0.7, perfect: 0.1, good: 0.4 }, bot: { parry: 0.55, dodge: 0.5, perfect: 0.1, good: 0.4 } };
 // dodge (uniques-first-four, the uniques judge's dodge-first persona, final-pool-v2.md): parries little, dodges most hits
@@ -98,6 +117,38 @@ const SETS = { 1: { wren: ['echo'], tobin: ['bash'], pip: ['fire'] },
 // above the table), floored, so the footing does not jump when the road lands
 const LEGACY_LV = { 1: 3, 3: 6, 5: 10, 8: 15, 10: 18, 12: 21, 15: 24, 20: 29, 25: 33, 27: 34, 30: 37, 34: 40, 35: 41, 36: 42, 38: 43 };
 const LV_SHIFT = Number(opt('lv', 0));
+const CRAFT_KV = Object.fromEntries(String(opt('craft', '')).split(',').filter(Boolean).map(kv => { const [k, v] = kv.split('='); return [k, +v]; }));
+if (Object.entries(CRAFT_KV).some(([k, v]) => !['grades', 'strike', 'infuse', 'curve'].includes(k) || !Number.isFinite(v))) { console.error('budget: --craft k=v,k=v with k in grades, strike, infuse, curve'); process.exit(2); }
+const GRADED = !!CRAFT_KV.grades;
+// the kept-up casual's station levels by zone (curve.md, "Level by zone, switch on (seed 1)", casual); null: past their last zone (end)
+const CASUAL_Z = [1, 3, 5, 7, 10, 13, 16, 19, 22, 25, 30, 35, 42, 45];
+const CASUAL_LV = {
+  wren: { smith: [1, 1, 9, 9, 9, 9, 22, 41, 47, 52, null, null, null, null, 53], bench: [1, 1, 6, 11, 16, 33, 42, 46, 49, 55, null, null, null, null, 72],
+    loom: [1, 1, 1, 11, 16, 36, 42, 44, 44, 52, null, null, null, null, 74], ench: [1, 1, 7, 9, 9, 9, 10, 10, 10, 11, null, null, null, null, 27] },
+  tobin: { smith: [1, 1, 9, 13, 20, 25, 27, 32, 41, 49, null, null, null, null, 55], bench: [1, 1, 3, 9, 12, 36, 40, 44, 49, 55, null, null, null, null, 74],
+    loom: [1, 1, 1, 1, 4, 9, 9, 23, 42, 54, null, null, null, null, 81], ench: [1, 1, 4, 7, 8, 8, 9, 9, 10, 25, null, null, null, null, 35] },
+  pip: { smith: [1, 1, 6, 6, 6, 14, 19, 26, 32, null, null, null, null, null, 34], bench: [1, 1, 4, 6, 8, 17, 36, 46, 48, null, null, null, null, null, 72],
+    loom: [1, 1, 1, 11, 14, 22, 22, 38, 43, null, null, null, null, null, 71], ench: [1, 1, 5, 7, 8, 9, 13, 22, 28, null, null, null, null, null, 37] }
+};
+const casualLv = (k, skill, z) => { const row = CASUAL_LV[k][skill]; let i = 0; while (i + 1 < CASUAL_Z.length && CASUAL_Z[i + 1] <= z) i++; return row[i] != null ? row[i] : row[row.length - 1]; };
+// the graded kept-up piece for hero k at zone z (run in the core: gradeFor and the station gates are the game's): (kind, t) -> { t, g },
+// t the row's tier or the best tier the station has open, if lower, and g the grade at that tier
+const gradeCode = (k, z) => `(kind, t) => { const sk = CRAFT_STATIONS[CRAFT_KINDS[kind].st].skill, L = ${JSON.stringify(Object.fromEntries(['smith', 'bench', 'loom', 'ench'].map(s => [s, casualLv(k, s, z)])))};
+  const lv = kind === 'charm' ? Math.max(L.ench, L.smith) : L[sk]; let u = 1; while (u < t && CRAFT_STATION_REQ[u] <= lv) u++;
+  return { t: u, g: gradeFor(kind, u, lv) }; }`;
+const gradedRow = o => GRADED && o.st === 'kept' && !o.gear && !onArrival(o);
+// craft-strike-infuse (--craft grades=1 with strike=1 and/or infuse=1): the lift rows. On a graded row each piece may be lifted one grade,
+// never above A (S comes only from level), as a player would: with strike=1 the casual lifts the weapon only (one Strike they land on the
+// piece that matters most) and the good player every piece; with infuse=1 a second casual row, casualInfuse, lifts every piece with Essence.
+// Off: no lift, every row as before.
+const LIFT = { strike: !!CRAFT_KV.strike, infuse: !!CRAFT_KV.infuse };
+const liftRow = o => gradedRow(o) && (LIFT.strike || LIFT.infuse);
+const LIFT_PLAYERS = { casualInfuse: PLAYERS.casual };
+const liftSlots = pl => pl === 'casualInfuse' ? (LIFT.infuse ? 'all' : []) : !LIFT.strike ? [] : pl === 'good' ? 'all' : pl === 'casual' ? ['weapon'] : [];
+const liftCode = pl => `(() => { const P = ['weapon', 'off', 'helm', 'body', 'charm'], L = ${J(liftSlots(pl))}, top = GRADE.findIndex(x => x.n === 'A');
+  const g0 = globalThis.__g0 || (globalThis.__g0 = Object.fromEntries(P.map(p => [p, (itemById(S.equip[p]) || {}).g])));
+  for (const p of P) { const it = itemById(S.equip[p]); if (!it || g0[p] == null) continue; it.g = (L === 'all' || L.includes(p)) && g0[p] < top ? g0[p] + 1 : g0[p]; it.r = GRADE[it.g].r; }
+  gearDirty(); return true; })()`;
 const FOOT = opt('foot', null);
 if ((flag('foot') && FOOT === null) || (FOOT !== null && FOOT !== 'arrival')) { console.error('budget: --foot arrival (the only footing it takes)'); process.exit(2); }
 const ARRIVAL_KILLS = 10, ARRIVAL_KIND_KILLS = 12;
@@ -136,13 +187,23 @@ export const CHECKPOINTS = [
   // (rare +5) at zones 8, 10 and 12 are report-only (gear must help: kept-up casual >= first-hour casual).
   ['z4-boss', 4, 'boss', { st: 'kept', fx: 'early', gear: 'common', kind: 'reportCaptain' }],
   ['z6-boss', 6, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z7-boss', 7, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  // rally-gates-live (judge 2026-10-08): zones 7-12 on the arrival footing (arrival level, tier 1 common +0, kills capped), the hero the
+  // walk brings there at minutes 8-31; their knots are fitted here with the rally gates on. Zones 4-6 stay on the first-hour footing.
+  ['z7-boss', 7, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
   ['z8-normal', 8, 'normal', { st: 'kept', fx: 'early' }],
-  ['z8-boss', 8, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z9-boss', 9, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z11-boss', 11, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
-  ['z12-boss', 12, 'boss', { st: 'kept', fx: 'early', gear: 'common' }],
+  // wren-z9-10-foes (judge 2026-10-08, ruling A): the zone 9-11 ordinary foes on the arrival footing, gated on the normal band, each of the
+  // zone's two foe types sampled on its own (types: the row reads the worse one; a Rattlebones gets up once a fight, 59k's sampler).
+  // The bare rows are floors (report only): arrival level with nothing worn, the fight-only bot's Wren who never crafts.
+  ['z9-normal', 9, 'normal', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival', types: true }],
+  ['z10-normal', 10, 'normal', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival', types: true }],
+  ['z11-normal', 11, 'normal', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival', types: true }],
+  ['z10-normal-bare', 10, 'normal', { st: 'kept', fx: 'early', gear: 'none', foot: 'arrival', kind: 'floorNormal', types: true }],
+  ['z11-normal-bare', 11, 'normal', { st: 'kept', fx: 'early', gear: 'none', foot: 'arrival', kind: 'floorNormal', types: true }],
+  ['z8-boss', 8, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
+  ['z9-boss', 9, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
+  ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
+  ['z11-boss', 11, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
+  ['z12-boss', 12, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
   // kept-up rows (boss-tiers-pr5, judge 2026-10-07 point 8): the zone's tier at rare +5 on the same save as the first-hour row, gated, with the
   // never-defends player held under 10%. z12 moved to the early save (the mid save's effect is the report row z12-boss-midsave).
   ['z5-boss-keptup', 5, 'boss', { st: 'kept', fx: 'early', kind: 'keptUpChampion', ref: 'z5-boss' }],
@@ -218,6 +279,14 @@ export const CHECKPOINTS = [
   // report only (kinds with "report": true): a hero who just took the lamp, and single-attribute builds (PR #58's
   // findings, 2026-10-06: a switched-in hero won 31-35% of zone 20 bosses; all-Focus Wren cleared trash 2-3x faster). The boss rows sit at
   // zone 25 since z20-wall (zone 20 is fitted to the first-time hero, so they would read against a 91-92% ref there, where gear barely moves a fight)
+  // z21-foe-climb: ordinary foes at the 10-hour bot's footing (report only): the arrival footing two levels up (the bot's level 24-26) in
+  // tier 2 rare +5 (its worn tier is 2.4-2.6 all ten hours: tier 3 nodes need gathering 30 and tier 4 needs 64, the bot has 22-24 at hour
+  // 10). The kept-up rows wear the zone's tier 4 rare +5 from zone 19, which no 10-hour player reaches. Where the 10-hour bot meets its wall.
+  ['z20-normal-bot', 20, 'normal', { st: 'kept', fx: 'mid', gear: 'rare', tier: 1, lv: 2, foot: 'arrival', kind: 'reportBot' }],
+  ['z21-normal-bot', 21, 'normal', { st: 'kept', fx: 'mid', gear: 'rare', tier: 1, lv: 2, foot: 'arrival', kind: 'reportBot' }],
+  ['z22-normal-bot', 22, 'normal', { st: 'kept', fx: 'mid', gear: 'rare', tier: 1, lv: 2, foot: 'arrival', kind: 'reportBot' }],
+  ['z23-normal-bot', 23, 'normal', { st: 'kept', fx: 'mid', gear: 'rare', tier: 1, lv: 2, foot: 'arrival', kind: 'reportBot' }],
+  ['z24-normal-bot', 24, 'normal', { st: 'kept', fx: 'mid', gear: 'rare', tier: 1, lv: 2, foot: 'arrival', kind: 'reportBot' }],
   ['z25-boss-joined', 25, 'boss', { st: 'joined', fx: 'mid', kind: 'joined', ref: 'z25-boss' }],
   ['z38-boss-joined', 38, 'boss', { st: 'joined', fx: 'late', kind: 'joined', ref: 'z38-boss' }],
   ['z20-normal-focus', 20, 'normal', { st: 'kept', fx: 'mid', build: 'focus', kind: 'build', ref: 'z20-normal' }],
@@ -235,20 +304,23 @@ const KIND_FOR = z => `(isRegionBoss(${z}) ? 'elder' : ${z} <= 3 ? 'firstBoss' :
 // the setup code for hero k at checkpoint c (run inside a fresh core after the fixture loads)
 function setup(c, k, lvShift, uq) {
   const [, z, , o] = c;
-  const lv = onArrival(o) ? `Math.max(1, ${lvShift} + ${arrivalLv(k, z)})` : `Math.max(1, ${lvShift} + (typeof roadLv === 'function' ? Math.floor(roadLv(${z}) + ((typeof HERO_TUNE === 'object' && HERO_TUNE.joinLead) || 0)) : ${LEGACY_LV[z] || 1}))`;
+  const lv = onArrival(o) ? `Math.max(1, ${lvShift} + ${arrivalLv(k, z) + (o.lv || 0)})` : `Math.max(1, ${lvShift} + (typeof roadLv === 'function' ? Math.floor(roadLv(${z}) + ((typeof HERO_TUNE === 'object' && HERO_TUNE.joinLead) || 0)) : ${LEGACY_LV[z] || 1}))`;
   if (o.st === 'fresh' && o.zone1) return `soloPick(${J(k)}, {now:true}); setZone(1);`;   // zone 1: a brand-new hero, level 1
   let s = `soloPick(${J(k)}, {now:true}); const LV = ${lv}; S.L = LV; if (S.solo.tr && S.solo.tr[${J(k)}]) { S.solo.tr[${J(k)}].atk = LV - 1; S.solo.tr[${J(k)}][${J(SIG[k])}] = LV - 1; }
     S.solo.asc[${J(k)}] = ${o.asc ? 1 : 0};`;
   if (o.st === 'late') s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10;
       const own = { weapon: 0, off: 1, helm: 2, body: 3 }[sl]; if (own != null) { it.slot = ${J(KINDS[k])}[own]; delete it.rt; } if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }`;
   else if (o.st === 'kept' && o.gear === 'none') s += `for (const sl of ['weapon', 'off', 'helm', 'body', 'charm']) S.equip[sl] = null;`;
+  else if (gradedRow(o)) s += `(() => { const t = Math.max(1, Math.min(5, zoneTier(${z}) + ${o.tier || 0})), gr = ${gradeCode(k, z)};   // --craft grades=1: graded gear (above); a behind row's tier first
+      ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const p = gr(kind, t), it = newItem(kind, p.t, 'common', { g: p.g }); it.plus = 5; if (it.a) it.a = [['hp', 0.5]];
+        S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = ${onArrival(o) ? 1 : `zoneTier(${z})`};
       ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, ${J(o.gear === 'common' ? 'common' : o.gear === 'uncommon2' ? 'uncommon' : 'rare')}, { rnd }); it.plus = ${o.gear === 'common' ? 0 : o.gear === 'uncommon2' ? 2 : 5}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
         S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   // --uniq: the unique in its position at the zone's tier, +5 (a unique in a set position breaks the set, below)
   if (uq) s += `(() => { const key = ${J(uq)}, u = UNIQ[key]; UNIQ_TUNE.on = 1; const it = { id: S.nextId++, slot: uniqKindFor(key, S.party.cls), t: zoneTier(${z}), r: 'legendary', plus: 5, u: key };
       S.items.push(it); S.equip[u.pos] = it.id; })();`;
-  if (o.tier) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
+  if (o.tier && !gradedRow(o)) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
   // hero-progression-rework: attribute points spread evenly (the plain build), or all in one (a build row); no-op before
   // attributes exist
   s += o.build ? `if (typeof attrAdd === 'function' && attrOn()) { S.attr.pts[${J(k)}] = ATTR0(); attrAdd(${J(o.build)}, 1e9, ${J(k)}); }`
@@ -288,17 +360,43 @@ export function seedOf(...parts) {
 
 const fixtures = {};
 const fx = n => fixtures[n] || (fixtures[n] = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + n + '.json'), 'utf8'));
-// one hero at one checkpoint: win rate, hero turns a won fight and expected attempts for each player
-function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null) {
-  const [id, z, foe, o] = c, out = {};
+// a fresh core with hero k built for checkpoint c and its foe on the stage (the fight not begun)
+export function buildCore(c, k, lvShift = LV_SHIFT, uq = null) {
+  const [, z, foe, o] = c;
   const core = loadCore({ seed: 1, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
   const save = o.st === 'fresh' ? null : o.st === 'late' ? 'late' : o.fx;
   if (save) { core.storage.set(e('KEY'), fx(save)); e('loadSave()'); }
+  for (const [kk, v] of Object.entries(CRAFT_KV)) e(`CRAFT_TUNE[${J(kk)}] = ${v}`);   // --craft (none by default)
   e(setup(c, k, lvShift, uq));
   if (STARS && !o.zone1 && o.st !== 'joined') e(starsTypical(z));
   if (TALS) e(talentsTypical);
   if (opt('eval')) e(String(opt('eval')));   // before the foe spawns, so a TURN_TUNE.boss change reaches its setup
   e(`TURN_TUNE.on = 1; S.activity = 'fight'; arena = null; gearDirty(); fightBoss = ${foe === 'boss'}; spawn();`);
+  return core;
+}
+// one hero at one checkpoint: win rate, hero turns a won fight and expected attempts for each player
+// A row with `types` (wren-z9-10-foes) plays each of the zone's two foe types on its own (respawning until the stage holds it, as
+// the planner's probe did) and keeps both in byType; each player's cell is the worse type's, so cells() and health.mjs read it as before.
+function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null, bot = false) {   // bot: also play BOT (the budget run only)
+  const [id, z, foe, o] = c;
+  const core = buildCore(c, k, lvShift, uq), e = s => core.eval(s);
+  if (!o.types) return measureFoe(c, k, core, players, bot, null);
+  const types = [...new Set(e(`[TYPES[zoneType(${z})].key, TYPES[zoneNextType(${z})].key]`))], byType = {};
+  for (const ty of types) {
+    const got = e(`(() => { for (let i = 0; i < 400; i++) { const f = combatFoes().find(x => x && !x.dead); if (f && f.type === ${J(ty)} && !f.elite) return true; spawn(); } return false; })()`);
+    if (!got) throw new Error(`${id} ${k}: no ${ty} in 400 spawns at zone ${z}`);
+    byType[ty] = measureFoe(c, k, core, players, bot, ty);
+  }
+  const worse = pl => types.reduce((a, b) => byType[b][pl].win < byType[a][pl].win ? b : a);
+  const pls = Object.keys(byType[types[0]]).filter(pl => byType[types[0]][pl] && byType[types[0]][pl].win != null);
+  const out = Object.fromEntries(pls.map(pl => [pl, { ...byType[worse(pl)][pl], type: worse(pl) }]));
+  const { L, hpr, kind } = byType[types[0]];
+  return { ...out, L, hpr, foe: types.map(ty => byType[ty].foe).join(' / '), kind,
+    byType: Object.fromEntries(types.map(ty => [ty, Object.fromEntries(pls.map(pl => [pl, byType[ty][pl]]).concat([['foe', byType[ty].foe]]))])) };
+}
+// one hero against the foe on the stage (ty: its type, a seed part, on a `types` row)
+function measureFoe(c, k, core, players, bot, ty) {
+  const [id, z, foe, o] = c, out = {}, e = s => core.eval(s);
   if (foe === 'elite') e(`(() => { const f = combatFoes().find(x => x && !x.dead); turnFoeSetup(f, S.zone, { elite: true }); })()`);
   // big: the boss's heaviest single hit as a share of the hero's max HP before the hit cap (a charged move's hits on their own)
   const p0 = e(`(() => { const p = turnCombatProfile(); let big = 0; for (const mv of p.script || []) for (const h of mv.hits || []) big = Math.max(big, (h.x || 0.2) * (mv.charge ? p.bossChargeX || 1 : 1));
@@ -306,20 +404,88 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null) {
   if (foe === 'boss' && !p0.boss) throw new Error(`${id} ${k}: no boss to fight`);
   if (foe === 'elite' && !p0.elite) throw new Error(`${id} ${k}: no elite to fight`);
   const chain = foe === 'boss' ? 1 : 5, n = Math.ceil(FIGHTS / chain);
-  for (const [pl, skill] of Object.entries(players)) {
+  for (const [pl, skill] of Object.entries(Object.assign({}, players, bot ? BOT : {}, liftRow(o) && LIFT.infuse ? LIFT_PLAYERS : {}))) {
     if (pl === 'none' && !NONE_KINDS.includes(o.kind) && !flag('none') && !UNIQ_ID) continue;
-    const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl, i));
+    if (liftRow(o)) e(liftCode(pl));   // craft-strike-infuse: this player's lifted pieces (above)
+    if (BOT[pl] && !BOT_KINDS.includes(o.kind)) continue;
+    const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, ...(ty ? [ty] : []), k, pl === 'casualInfuse' ? 'casual' : pl, i));   // casualInfuse plays the casual's seeds, so the gap is the lift alone
     const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(o.st === 'joined' ? [SIG[k]] : setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
-      let K = 0, D = 0, T = 0, F = 0, C = 0;
+      let K = 0, D = 0, T = 0, F = 0, C = 0, R = 0;
       for (const sd of ${J(seeds)}) { const r = turnCombatSample({ profile: p, seconds: 36000, fights: ${chain}, seed: sd, skill: ${J(skill)} });
-        K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; C += r.closeWins; }
-      return { K, D, T, F, C }; })()`);
+        K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; C += r.closeWins; R += r.rises || 0; }
+      return { K, D, T, F, C, R }; })()`);
     if (r.K + r.D < n * chain) throw new Error(`${id} ${k} ${pl}: ${n * chain - r.K - r.D} fight(s) never ended (a stalemate the win rate would hide)`);
     const win = r.K / Math.max(1, r.K + r.D);
-    out[pl] = { win: Math.round(win * 1000) / 1000, turns: r.F ? Math.round(10 * r.T / r.F) / 10 : null, fights: r.K + r.D, close: r.K ? Math.round(1000 * r.C / r.K) / 1000 : null, attempts: win > 0 ? Math.min(20, Math.round(10 / win) / 10) : 20 };
+    out[pl] = { win: Math.round(win * 1000) / 1000, turns: r.F ? Math.round(10 * r.T / r.F) / 10 : null, fights: r.K + r.D, close: r.K ? Math.round(1000 * r.C / r.K) / 1000 : null, attempts: win > 0 ? Math.min(20, Math.round(10 / win) / 10) : 20,
+      ...(r.R ? { rises: r.R } : {}) };   // rises: Rattlebones get-ups (wren-z9-10-foes)
   }
+  const shape = foe === 'boss' ? shapeOf(core, z) : null;   // after the fights: it puts an ordinary foe on the stage
   if (core.errors.length) throw new Error(`${id} ${k}: ${core.errors.slice(0, 3).join('; ')}`);
-  return { ...out, L: p0.L, hpr: p0.hpr, foe: p0.foe, kind: p0.kind, ...(p0.big != null ? { big: p0.big } : {}) };
+  return { ...out, L: p0.L, hpr: p0.hpr, foe: p0.foe, kind: p0.kind, ...(p0.big != null ? { big: p0.big } : {}), ...(shape ? { shape } : {}) };
+}
+// boss-tier-shape-report (why W2, report only): the boss on the stage against its zone, on the row's own footing. hp: the boss's
+// HP; foeHp: the zone's own ordinary foe type's, the mean of SHAPE_SPAWNS non-elite spawns (each spawn rolls its HP, about +-5%);
+// foeHpNext: the same for the next type in the zone's cycle, which turns up now and then (from the same spawns); the heaviest landed hit (feints left out,
+// a charged move's hits on their own) as a share of the hero's max HP, in turnLand's order without defence or Guard: own (the boss's
+// own line, x refHp hitX), floor (hpFloor x x of the hero's max HP), foot (the footing floor), then the cap and the hero's share.
+// set: which of own, floor, foot or cap sets the landed hit. gates: the boss's rally gates. tier: the game's bossTierOf.
+const SHAPE_SPAWNS = 24;
+function shapeOf(core, z) {
+  return core.eval(`(() => { const p = turnCombatProfile(), f = combatFoes().find(x => x && !x.dead); let big = 0, cxBig = 1;
+    for (const mv of p.script || []) for (const h of mv.hits || []) { if (h.feint) continue; const cx = mv.charge ? p.bossChargeX || 1 : 1; if ((h.x || 0.2) * cx > big * cxBig) { big = h.x || 0.2; cxBig = cx; } }
+    const M = p.heroMaxHp, own = big * cxBig * p.refHp * (p.bossHitX || 1), floor = p.bossHitFloor > 0 ? p.bossHitFloor * big * cxBig * M : 0,
+      foot = p.bossFoot > 0 && p.footHp > 0 ? own * p.bossFoot * M / p.footHp : 0, side = Math.max(own, floor, foot), cap = p.bossHitCap > 0 ? p.bossHitCap * M : Infinity;
+    const hx = p.hitX * (p.bossHeroX || 1); let land = Math.min(side, cap) * hx; if (p.bossHitCap > 0 && (p.bossHeroX || 1) > 1) land = Math.min(land, cap);
+    const set = side > cap || land >= cap ? 'cap' : side === own ? 'own' : side === floor ? 'floor' : 'foot', r3 = x => Math.round(1000 * x) / 1000;
+    const out = { hp: Math.round(f.max), tier: typeof bossTierOf === 'function' ? bossTierOf(${z}) : '', gates: p.gates ? p.gates.length : 0,
+      own: r3(own * hx / M), floor: r3(floor * hx / M), foot: r3(foot * hx / M), landed: r3(land / M), set };
+    const ty = TYPES[zoneType(${z})].key, ty2 = TYPES[zoneNextType(${z})].key, got = { [ty]: [], [ty2]: [] }, names = {}; fightBoss = false;
+    for (let i = 0; i < 800 && got[ty].length < ${SHAPE_SPAWNS}; i++) { arena = null; spawn(); const g = combatFoes().find(x => x && !x.dead);
+      if (g && !g.elite && got[g.type] && got[g.type].length < ${SHAPE_SPAWNS}) { got[g.type].push(g.max); names[g.type] = g.name; } }
+    const avg = a => a.length ? Math.round(a.reduce((s, x) => s + x, 0) / a.length) : null;
+    out.foeHp = avg(got[ty]); out.foeName = names[ty] || ty;
+    if (ty2 !== ty && got[ty2].length) { out.foeHpNext = avg(got[ty2]); out.foeNameNext = names[ty2]; }
+    out.ratio = out.foeHp ? Math.round(1000 * out.hp / out.foeHp) / 1000 : null;
+    return out; })()`);
+}
+// the shape block (boss-tier-shape-report): zones 4-26, one boss row a zone (gated, but z4, z25 and z26 are report rows) (the -arrival row where there is one, else zN-boss), the
+// mean of the heroes run. ratio: boss HP over the ordinary foe's; turns and win: the casual's; hit: the heaviest landed hit and what sets it;
+// step (a Champion by bossTierOf): its casual win less the mean of its two neighbour zones' (the Captains either side).
+export const SHAPE_ZONES = Array.from({ length: 23 }, (_, i) => i + 4);
+export function shapeBlock(rep) {
+  const hs = rep.heroes, mean = a => { const v = a.filter(x => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+  const rowOf = z => rep.rows.find(r => r.id === `z${z}-boss-arrival`) || rep.rows.find(r => r.id === `z${z}-boss`);
+  const out = [];
+  for (const z of SHAPE_ZONES) {
+    const r = rowOf(z);
+    if (!r || !hs.every(h => r.perHero[h] && r.perHero[h].shape)) continue;
+    const sh = h => r.perHero[h].shape, s0 = sh(hs[0]);
+    out.push({ zone: z, row: r.id, tier: s0.tier, boss: r.perHero[hs[0]].foe, gates: s0.gates, foe: s0.foeName,
+      hp: Object.fromEntries(hs.map(h => [h, sh(h).hp])), foeHp: Object.fromEntries(hs.map(h => [h, sh(h).foeHp])),
+      ...(s0.foeHpNext ? { foeNext: s0.foeNameNext, foeHpNext: Object.fromEntries(hs.map(h => [h, sh(h).foeHpNext])) } : {}),
+      ratio: Object.fromEntries(hs.map(h => [h, sh(h).ratio])),
+      turns: Object.fromEntries(hs.map(h => [h, r.perHero[h].casual.turns])), win: Object.fromEntries(hs.map(h => [h, r.perHero[h].casual.win])),
+      hit: Object.fromEntries(hs.map(h => [h, { own: sh(h).own, floor: sh(h).floor, foot: sh(h).foot, landed: sh(h).landed, set: sh(h).set }])),
+      winMean: mean(hs.map(h => r.perHero[h].casual.win)) });
+  }
+  for (const s of out) if (s.tier === 'champion') {
+    const nb = [s.zone - 1, s.zone + 1].map(z => out.find(x => x.zone === z)).filter(Boolean);
+    if (nb.length === 2 && s.winMean != null) s.step = { captains: nb.map(x => x.zone), captainWin: mean(nb.map(x => x.winMean)), d: s.winMean - mean(nb.map(x => x.winMean)) };
+  }
+  return out;
+}
+function printShape(shape, hs) {
+  if (!shape.length) return;
+  const r2 = x => x == null ? 'n/a' : x < 0.1 ? x.toFixed(3) : x.toFixed(2), w = o => hs.map(h => o[h]), hl = hs.map(h => h[0]).join('/');
+  console.log(`\nBoss shape (boss-tier-shape-report, report only; ${hs.join('/')}; each zone's boss row and its footing): boss HP over the zone's ordinary foe's,`);
+  console.log('casual turns and wins, the heaviest landed hit as % of max HP and what sets it (own line, hpFloor, footing floor or the cap), a Champion against its two Captains.');
+  console.log('zone tier      gates  ' + `HP/foe ${hl}`.padEnd(20) + 'casual turns    ' + `win ${hl}`.padEnd(12) + `hit % landed ${hl}`.padEnd(20) + 'own line %        hpFloor %     foot floor %  set by            ordinary foe');
+  for (const s of shape) {
+    const hit = k => w(s.hit).map(x => pc(x[k])).join('/');
+    console.log(`z${s.zone}`.padEnd(5) + String(s.tier).padEnd(10) + String(s.gates).padEnd(7) + w(s.ratio).map(r2).join('/').padEnd(20) + w(s.turns).map(x => x ?? '-').join('/').padEnd(16)
+      + w(s.win).map(pc).join('/').padEnd(12) + hit('landed').padEnd(20) + hit('own').padEnd(18) + hit('floor').padEnd(14) + hit('foot').padEnd(14) + w(s.hit).map(x => x.set).join('/').padEnd(18) + s.foe
+      + (s.step ? `\n     Champion step: casual ${pc(s.winMean)} against ${pc(s.step.captainWin)} at z${s.step.captains.join(' and z')} (${s.step.d >= 0 ? '+' : ''}${pc(s.step.d)} points)` : ''));
+  }
 }
 
 export function runBudget({ only, heroes = RUN_HEROES } = {}) {
@@ -328,18 +494,21 @@ export function runBudget({ only, heroes = RUN_HEROES } = {}) {
     const [id, z, foe, o] = c;
     if (only && !only.includes(id)) continue;
     const perHero = {};
-    for (const k of heroes) perHero[k] = measure(c, k);
+    for (const k of heroes) perHero[k] = measure(c, k, LV_SHIFT, RUN_PLAYERS, null, true);
     rows.push({ id, zone: z, foe, kind: o.kind || perHero[heroes[0]].kind, ...(o.ref ? { ref: o.ref } : {}), perHero });
   }
-  return { version: 2, fights: FIGHTS, seedOffset: OFFSET, stars: STARS, talents: TALS, heroes, rows };
+  const rep = { version: 2, fights: FIGHTS, seedOffset: OFFSET, stars: STARS, talents: TALS, heroes, ...(Object.keys(CRAFT_KV).length ? { craft: CRAFT_KV } : {}), rows };
+  rep.shape = shapeBlock(rep);
+  return rep;
 }
 
 const pc = x => x == null ? 'n/a' : (100 * x).toFixed(0);
 export function printBudget(rep) {
   const T = loadTargets(), all = cells(T, rep);
   console.log(`Difficulty budget: ${rep.fights} scratch turn fights a row, hero and player (each boss fight on its own seed; trash in chains of 5);`);
-  console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z13-z15 bosses and the z16-z26 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
+  console.log(`a hero who keeps up (road level, gear at the zone's tier${rep.stars ? ', typical Stars' : ''}); z7-z15 bosses and the z16-z26 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).`);
   console.log(`Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +${T.tobinBoss}).`);
+  if (rep.craft) console.log(`CRAFT_TUNE ${JSON.stringify(rep.craft)}${rep.craft.grades ? `: the kept-up rows wear graded gear (the kept-up casual's grade at the zone, +5, ${rep.craft.strike || rep.craft.infuse ? `lifted one grade up to A: ${[rep.craft.strike ? 'the casual\'s weapon and every piece of the good player\'s (Strike)' : '', rep.craft.infuse ? 'every piece of casualInfuse\'s (Infuse)' : ''].filter(Boolean).join('; ')}` : 'no lift'})` : ''}.`);
   console.log('A "behind" row\'s casual number is the drop in casual wins against its ref row.');
   console.log('row'.padEnd(17) + 'kind'.padEnd(13) + 'casual w/t/p'.padEnd(14) + 'mean sprd'.padEnd(10) + 'band'.padEnd(16) + 'good w/t/p'.padEnd(13) + 'band'.padEnd(9) + 'tries w/t/p'.padEnd(16) + 'turns w/t/p'.padEnd(17) + 'level  out of band');
   for (const r of rep.rows) {
@@ -354,12 +523,21 @@ export function printBudget(rep) {
     const ref = r.kind === 'build' && rep.rows.find(x => x.id === r.ref);   // a build row: its turns against the even spread
     if (ref) console.log('  turns played well against the even spread (w/t/p): ' + hs.map(h => r.perHero[h].good.turns && ref.perHero[h].good.turns ? 'x' + (r.perHero[h].good.turns / ref.perHero[h].good.turns).toFixed(2) : '-').join('/'));
     if (r.perHero[hs[0]].none) console.log('  ' + 'none (never defends) w/t/p'.padEnd(28) + hs.map(h => pc(r.perHero[h].none.win)).join('/'));
+    for (const pl of Object.keys(BOT)) if (r.perHero[hs[0]][pl]) console.log('  ' + `${pl} bot w/t/p`.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
+    for (const pl of Object.keys(LIFT_PLAYERS)) if (r.perHero[hs[0]][pl]) console.log('  ' + 'casual, Infuses every piece'.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
     for (const pl of Object.keys(WIDE)) if (r.perHero[hs[0]][pl]) console.log('  ' + pl.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
+    // a `types` row (wren-z9-10-foes): each foe type's wins, and how often a Rattlebones got up (the casual's fights)
+    if (r.perHero[hs[0]].byType) for (const ty of Object.keys(r.perHero[hs[0]].byType)) {
+      const bt = h => r.perHero[h].byType[ty], pls = Object.keys(bt(hs[0])).filter(pl => pl !== 'foe');
+      console.log('  ' + `by type: ${ty}`.padEnd(28) + pls.map(pl => `${pl} ${hs.map(h => pc(bt(h)[pl].win)).join('/')}`).join('  ')
+        + (hs.some(h => bt(h).casual.rises) ? `  rises (casual) ${hs.map(h => `${bt(h).casual.rises || 0}/${bt(h).casual.fights}`).join(' ')}` : ''));
+    }
     // closest to death: the share of won boss fights where the hero fell under half health (a good player; aim 20-35% at Champions)
     if (r.foe === 'boss' && r.perHero[hs[0]].good.close != null) console.log('  ' + 'good wins under half HP %'.padEnd(28) + hs.map(h => pc(r.perHero[h].good.close)).join('/'));
   }
   const tob = rep.rows.filter(r => r.foe === 'boss' && r.perHero.tobin && r.perHero.wren && r.perHero.pip && r.perHero.tobin.good.turns);
   if (tob.length) console.log(`\nTobin's boss turns against the Wren and Pip mean (played well; aim 1.15-1.30): ` + tob.map(r => `${r.id} x${(2 * r.perHero.tobin.good.turns / (r.perHero.wren.good.turns + r.perHero.pip.good.turns)).toFixed(2)}`).join(', '));
+  printShape(rep.shape || shapeBlock(rep), rep.heroes);
 }
 const GATED = ['casual', 'good', 'none'];
 

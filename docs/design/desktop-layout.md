@@ -201,12 +201,26 @@ Other "Tap" and "Hold" lines (about 66, 14 of them in `75-onboard-ui.js`) wait f
 1. **desktop-tooltips (P1, next after v1):** a hover tooltip component for items, abilities and costs on a fine pointer,
    with the same text the bar slots' and bag tiles' aria-labels already carry (`75-solo-ui.js:353`, `75-craft-ui.js`).
    Deferred because the dock already shows an item's full detail on one click, and a tooltip needs its own copy per thing.
+   **Built (desktop-tooltips, 2026-10-09):** `70b-tips-ui.js` (`setTip(el, text | () => text)`, `tipItem`, `tipCost`) and
+   `60-tips.css`. With a mouse (`pointerType` mouse only; touch and pen never), resting 120 ms on a target opens a tip; any press,
+   key, wheel or scroll closes it, so does its target going or being covered; its text follows the game while open; it stays
+   inside the screen. Targets: items (bag, worn gear, last crafts) show the item sheet's head and stat
+   lines (the hero card's and hero sheet's slots keep just the name, their old title, since a click there opens no item sheet); the fight bar's Attack, Parry, Dodge and ability slots and
+   Hero > Abilities' slots and rows show the ability card's head and text; cost chips (Craft, item upgrades, Camp) show the full
+   name with what you have and what it needs. Every line is also on the view a click opens. Those targets' old `title`
+   attributes moved into their tips, so the browser's own tooltip does not double them.
 2. **neutral-wording (P2):** the remaining "Tap" and "Hold" lines, after the onboard cards running now merge (they own
    `75-onboard-ui.js`).
-3. **upright-tablet (P2):** 768x1024 gets something better than the 560 px strip (`10-base.css:48-51`). That card picks
-   the design. Until then 768x1024 stays as today (the strip, a 536x638 stage at x1), which plays.
+3. **upright-tablet (P2, done):** 768x1024 and wider upright screens drop the 560 px strip and use the portrait layout at
+   full width (`docs/design/layout.md`, "Upright tablets").
 4. **desktop-views-2 (P2):** Stars, Store, Uniques, Camp, Build and the Codex as desktop panels; keys for views
    (for example `[` and `]`); any grid v1 cut (4).
+   **Built (desktop-views-2, 2026-10-09):** `[` and `]` step through the open menu's views (70-ui.js `VIEW_KEYS`); each view's
+   CSS file has a Desktop 1 block that puts list and detail side by side (`docs/design/layout.md`, "Views"). v1's cut grids landed
+   here too: Gather (nodes beside the Now card) and Craft > Make (recipes beside the result card); Abilities had shipped in v1.
+   Build, Camp and Make widen at Desktop 1 to the stage less a 120 px strip (up to 980 px; Stars already widened), since at 1280x720 the two-thirds panel (596 px)
+   squeezed two columns into three-line rows. The Stars map's constellation names no longer grow with the text (`tk:off`): they
+   are SVG units, and at 1920x1080 they ran into each other.
 
 Deferring tooltips and the upright tablet departs from the approved plan; Cal can undo it with "Tooltips and tablet in v1".
 

@@ -17,6 +17,8 @@
 //   node tools/playtest.mjs scroll [down|up]      scroll the biggest scrolling panel on screen (or the page) by most of a screen
 //   node tools/playtest.mjs expect-no "<text|css>"   exit 1 if that text (or CSS selector) IS visible on screen right now
 //   node tools/playtest.mjs expect-save <f><op><n>   exit 1 unless the stored save's field compares true, e.g. gold>=12345 (ops >= <= > < =)
+//   node tools/playtest.mjs parry-clean [secs]    wait (default 8 s of game time) for the foe's swing to reach its last 0.1 s, then tap
+//                                                 Parry: a clean parry, timed from the fight's own clock. Stops early on the hero's turn
 //   tab new [field=n]   (batch only) open the game in a second tab of the same browser (same storage); the open tab goes to the
 //                       background first. field=n edits the stored save just before the new tab loads it (the new tab's progress)
 //   tab <n>             (batch only) bring tab n (1 = the first) to the front; the one in front goes to the background
@@ -115,7 +117,12 @@ function pageHtml() {
   const file = htmlFile ? path.resolve(htmlFile) : path.join(ROOT, 'dist', 'lanternfall.html');
   if (!fs.existsSync(file)) die(file + ' is missing: run node tools/build.mjs');
   // The artifact host wraps the page in a document skeleton with a device-width viewport; do the same.
-  return '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + fs.readFileSync(file, 'utf8');
+  let h = fs.readFileSync(file, 'utf8');
+  // One read-only hook for parry-clean: the swing's timing, copied out of the fight (no handle on game state, nothing writes back)
+  const end = h.lastIndexOf('})();\n</script>');
+  if (end > 0) h = h.slice(0, end) + '\n;window.__ptSwing = () => { const s = typeof turnCombatSnapshot === \'function\' ? turnCombatSnapshot() : null;\n'
+    + '  return s ? { phase: s.phase, now: s.now, closesAt: s.closesAt, opensAt: s.parryOpensAt, can: !!s.canDefend, feint: !!s.feint || !!s.flinch } : null; };\n' + h.slice(end);
+  return '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + h;
 }
 
 // Frames: the game caps one frame at 0.1 s of game time, so fast-forwarding steps the frame loop every 100 ms
@@ -346,14 +353,48 @@ async function tap(page, wanted, how = 'click') {
   if (cover) return { ok: false, msg: `"${b.label}" is covered by something else (${cover}): a menu, dialog or tip is in front of it. Close that first.` };
   if (how === 'hover') {   // a mouse view only: rest the pointer on it, as a desktop player does before clicking
     await page.mouse.move(x, y);
+    await page.clock.runFor(200);   // desktop-tooltips: the game's own tip opens 120 ms after the pointer rests (70b-tips-ui.js)
+    const own = await page.evaluate(() => { const t = document.getElementById('tip'); return t && !t.hidden ? [...t.children].map(c => c.textContent).join(' / ') : ''; });
     const tip = await handle.evaluate(e => { for (let a = e; a; a = a.parentElement) if (a.title) return a.title; return ''; });
-    return { ok: true, msg: `hovered [${b.label}]${tip ? `; its title (the browser's own tooltip) reads "${tip}"` : '; it has no title tooltip'}` };
+    return { ok: true, msg: `hovered [${b.label}]${own ? `; its tip reads "${own}"` : tip ? `; its title (the browser's own tooltip) reads "${tip}"` : '; it has no tip'}` };
   }
   await page.mouse.click(x, y);
   const extra = hit.length > 1 ? ` (${hit.length} buttons matched; took the first${inV.has(b.i) ? '' : ', after scrolling'})` : '';
   return { ok: true, msg: `tapped [${b.label}]${b.disabled ? ' (it was greyed out)' : ''}${extra}` };
 }
 const innerW = page => page.viewportSize().width - 1;
+
+// parry-clean: the hit-feel lamps count a parry clean when it is pressed in the last min(0.1 s, half the window) before the hit
+// (75-turn-ui defPress). Brute-force tapping lands there by chance, so this reads the fight's own clock (turnCombatSnapshot,
+// through pageHtml's read-only hook) and presses inside that span. The clock stands still while it reads and taps, so a busy
+// machine cannot make the press late. Feints are let through (a press at a fake always fails). Stops on the hero's turn, so a route taps Attack in between.
+async function parryClean(page, secs) {
+  const SNAP = () => (typeof window.__ptSwing === 'function' ? window.__ptSwing() : null);   // pageHtml's hook
+  // hold the clock (it also runs with real time): a little ahead of now, as a busy machine can move it on between the read and the hold
+  for (let i = 0; ; i++) { try { await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 20); break; } catch (e) { if (i >= 4 || !/past/.test(String(e && e.message))) throw e; } }
+  let ran = 0, out = null, sawFoe = false;
+  const step = async ms => { await page.clock.runFor(ms); ran += ms / 1000; };
+  try {
+    while (ran < secs) {
+      const s = await page.evaluate(SNAP);
+      if (s && s.phase === 'foeWindup') sawFoe = true;
+      if (s && s.phase === 'hero' && sawFoe) { out = { ok: false, msg: `parry-clean: the foe's swing passed with no clean press (feint or no defence); the hero's turn came` }; break; }
+      if (s && s.phase === 'hero' && ran > 0.5) { out = { ok: false, msg: 'parry-clean: the hero\'s turn: tap Attack first, then parry-clean' }; break; }
+      if (!s || s.phase !== 'foeWindup' || !s.can || s.feint) { await step(s && s.phase === 'foeWindup' ? 16 : 50); continue; }
+      const left = s.closesAt - s.now, hi = Math.min(0.1, 0.5 * (s.closesAt - s.opensAt)), aim = hi / 2;
+      if (left > aim + 0.016) { await step(Math.max(16, Math.round((left - aim) * 1000) - 16)); continue; }   // frames are 16 ms: land within one of aim
+      if (left < 0.01) { await step(16); continue; }
+      const r = await tap(page, 'Parry');
+      if (!r.ok) { out = { ok: false, msg: 'parry-clean: ' + r.msg }; break; }
+      await step(Math.ceil(left * 1000) + 50);   // just past the hit: the lamp row has graded it and the stamp is up
+      const seen = await page.evaluate(() => document.body.dataset.hitSeen || '');
+      out = { ok: true, left: +left.toFixed(3), msg: `parry-clean: tapped Parry ${Math.round(left * 1000)} ms before the hit (clean span ${Math.round(hi * 1000)} ms); hit-seen "${seen}"` };
+      break;
+    }
+  } finally { if (!flags.frozen) await page.clock.resume(); }
+  ranSecs += ran;
+  return out || { ok: false, msg: `parry-clean: no swing to parry in ${secs} s of game time` };
+}
 
 // ---------------- commands ----------------
 async function exec(cmd, args, ctx) {
@@ -465,6 +506,10 @@ async function exec(cmd, args, ctx) {
       await run(page, 0.3);
       return { text: moved ? `scrolled ${dir > 0 ? 'down' : 'up'}` : `nothing to scroll ${dir > 0 ? 'down' : 'up'}`, data: { scrolled: moved } };
     }
+    case 'parry-clean': {   // wait (up to N s of game time) for the foe's swing to reach its last 0.1 s, then tap Parry: a clean parry
+      const r = await parryClean(page, args.length ? num(args[0], 'parry-clean') : 8);
+      return { text: r.msg, data: r };
+    }
     case 'shot': {
       if (!args.length) die('shot needs a name: shot first-fight');
       const f = await namedShot(page, args[0]);
@@ -476,7 +521,7 @@ async function exec(cmd, args, ctx) {
       for (let i = 1; i <= 6; i++) { fs6.push(await namedShot(page, `${args[0]}-${i}`)); if (i < 6) await run(page, 0.3); }
       return { text: `burst ${fs6.length} frames: ${fs6[0]} .. ${fs6[5]}`, data: { burst: fs6 } };
     }
-    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, hover, key, wait, away, state, new, expect, expect-no, expect-save, scroll, shot, burst, stub-site, type, tab, batch`);
+    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, hover, key, wait, parry-clean, away, state, new, expect, expect-no, expect-save, scroll, shot, burst, stub-site, type, tab, batch`);
   }
 }
 

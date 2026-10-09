@@ -51,3 +51,5 @@ body.cb-left .stage.tall .abil.abil2 { left: 110px; }
 .cb-toggle { justify-self: start; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line-hi); background: var(--panel-2); color: var(--bone); font: inherit; cursor: pointer; }
 .cb-toggle[aria-pressed="true"] { border-color: var(--ember); }
 @media (max-width: 380px) { .cb-word { max-width: 130px; } .cb-bar { width: 48px; } }
+/* desktop-layout-v1 (desk playtest F14): settings that only mean something on a touch screen hide when there is no touch pointer */
+@media not (any-pointer: coarse) { .cb-set.touch-only { display: none; } }

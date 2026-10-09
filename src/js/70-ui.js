@@ -354,11 +354,13 @@ function costChips(box, mats, t, gold) {
     const have = matOwn(k, t);
     const c = el('span', 'cost' + (have < n ? ' short' : ''));
     c.append(img(matIcon(k, t)), el('span', null, `${fmt(have)}/${fmt(n)} ${costName(k, t)}`));
+    setTip(c, () => tipCost(costName(k, t), matOwn(k, t), n));   // desktop-tooltips
     box.append(c);
   }
   if (gold) {
     const c = el('span', 'cost' + (S.gold < gold ? ' short' : ''));
     c.append(img(iconURL('coin', '#F2C14E')), el('span', null, fmt(gold)));
+    setTip(c, () => tipCost('Gold', S.gold, gold));
     box.append(c);
   }
 }
@@ -404,6 +406,14 @@ const VIEW_OF = {};  // view id -> tabId, so setTab(viewId) opens the right tab 
 const WIDE_Q = '(min-aspect-ratio: 1/1) and (min-width: 600px)';
 const wideMQ = matchMedia(WIDE_Q);
 const isWide = () => wideMQ.matches;
+// desktop-layout-v1 (docs/design/desktop-layout.md): the Desktop 1 tier of 80-landscape.css (1280x720, 1366x640 and up). Its
+// twin in JS: a sheet opened inside a menu docks beside the list (openSheet's opts.dock). Nothing else in JS reads a width.
+const DESK_Q = '(min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px)';
+const deskMQ = matchMedia(DESK_Q);
+const isDesk = () => deskMQ.matches;
+// Close the docked detail sheet (75-party-sheet), quietly: no "back" chain reopens a picker in a menu that is going away.
+function closeDock() { const ov = document.querySelector('#menu > .bsheet-ov.docked'); if (ov && ov.sheetApi) ov.sheetApi.close(true, true); }
+deskMQ.addEventListener('change', () => { if (!isDesk()) closeDock(); });
 const UI_KEY = 'lanternfall.ui.v1';
 const uiPrefs = (() => { let o = null; try { o = JSON.parse(localStorage.getItem(UI_KEY)); } catch (e) {} return o && typeof o === 'object' ? o : {}; })();
 if (!uiPrefs.views || typeof uiPrefs.views !== 'object') uiPrefs.views = {};
@@ -491,6 +501,7 @@ function buildViewSeg(t) {
 }
 function setView(t, id) {
   const same = curView(t) === id;
+  if (!same) closeDock();
   uiPrefs.views[t] = id; saveUiPrefs();
   applyView(t);
   if (!same) $('panels').scrollTop = 0;
@@ -568,6 +579,7 @@ function setTab(t, sel) {
     if (v && !featOk(v.feature)) onboardReveal(v.feature);
   }
   const was = S.tab, wasView = curView(t);
+  if (was !== t || (view && view !== wasView)) closeDock();
   S.tab = t; if (!TAB_HIDDEN.has(t)) uiPrefs.tab = t;   // a hidden tab's menu is never the one reopened at boot
   if (view) uiPrefs.views[t] = view;
   saveUiPrefs();
@@ -586,6 +598,7 @@ function closeMenu() {
   if (!S.tab) return;
   // Keyboard users keep their place: focus goes back to the tab that opened the menu.
   if ($('menu').contains(document.activeElement)) { const tb = document.querySelector(`.tab[data-tab="${S.tab}"]`); if (tb) try { tb.focus({ preventScroll: true }); } catch (e) {} }
+  closeDock();
   S.tab = '';
   renderMenu('');
   ui(true); viewDots();
@@ -601,6 +614,7 @@ wideMQ.addEventListener('change', () => { renderMenu(S.tab); ui(true); });
 // Combat is active only (owner, 2026-10-01): every Fight button goes straight to the live fight, not the Fight menu.
 function goFight() {
   if (S.activity !== 'fight' && typeof setActivity === 'function') setActivity('fight');
+  closeDock();
   for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();   // any open sheet
   if (S.tab) closeMenu(); else ui(true);
 }
@@ -612,10 +626,37 @@ function tabClick(t) {
 }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => tabClick(b.dataset.tab)));
 $('menuX').addEventListener('click', closeMenu);
+// A modal over the game: Escape and the number keys leave it alone. A docked sheet (desktop) is not one.
+const MODAL_UP = '.bsheet-ov:not(.docked), .modal, .away-ov, .join-ov, .create';
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape' || !S.tab) return;
-  if (document.querySelector('.bsheet-ov, .modal, .away-ov, .join-ov, .create')) return;
+  if (document.querySelector(MODAL_UP)) return;
   closeMenu();
+});
+// desktop-layout-v1: 1 to 5 press the rail's tabs (Fight, Hero, Gather, Craft, Camp) through tabClick, so the open tab's number
+// closes it and 1 goes to the live fight. Never inside a text field or select, with a modifier, on a repeat, while the game is
+// held or under a modal. Letters stay the fight bar's (Q W E A S D F).
+const TAB_KEYS = { 1: 'adv', 2: 'party', 3: 'gat', 4: 'forge', 5: 'world' };
+document.addEventListener('keydown', e => {
+  const t = TAB_KEYS[e.key]; if (!t || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+  const n = e.target; if (n && (n.tagName === 'INPUT' || n.tagName === 'TEXTAREA' || n.tagName === 'SELECT' || n.isContentEditable)) return;
+  if (gameHeld() || document.querySelector(MODAL_UP + ', #abPicker, #moveSheet, .gl-ov, .mm-ov, .dw-ov, .dd-fc-ov, .tabs-ov, #introScreen')) return;
+  const b = document.querySelector(`.tabs .tab[data-tab="${t}"]`);
+  if (!b || b.hidden || b.disabled || !b.offsetParent) return;   // a tab not unlocked yet
+  e.preventDefault();
+  tabClick(t);
+});
+// desktop-views-2: [ and ] step through the open menu's views (the switcher's buttons, left and right, round the ends), with the
+// same skips as the number keys. A view is stepped to only while it is in the switcher (shownViews).
+const VIEW_KEYS = { '[': -1, ']': 1 };
+document.addEventListener('keydown', e => {
+  const d = VIEW_KEYS[e.key]; if (!d || !S.tab || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+  const n = e.target; if (n && (n.tagName === 'INPUT' || n.tagName === 'TEXTAREA' || n.tagName === 'SELECT' || n.isContentEditable)) return;
+  if (gameHeld() || document.querySelector(MODAL_UP + ', #abPicker, #moveSheet, .gl-ov, .mm-ov, .dw-ov, .dd-fc-ov, .tabs-ov, #introScreen')) return;
+  const list = shownViews(S.tab); if (list.length < 2) return;
+  const i = list.findIndex(v => v.id === curView(S.tab));
+  e.preventDefault();
+  setView(S.tab, list[(i + d + list.length) % list.length].id);
 });
 // Swipe down to close: on the menu's head, or on its content while it is scrolled to the top.
 {

@@ -56,12 +56,12 @@
   // ---------------- cost chips (rebuilt only when their text changes) ----------------
   function chips(box, c) {
     const items = [];
-    if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'gold' });
-    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: costName(f, t) }); }
-    for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: 'Trophy' }); }
+    if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'Gold', h: () => S.gold, need: c.gold });
+    for (const [f, t, n] of c.mats) { const h = matOwn(f, t); items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: costName(f, t), h: () => matOwn(f, t), need: n }); }
+    for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: i === 'any' ? 'Trophies (any)' : CRAFT_TROPHIES[i].n, h: () => h, need: n }); }
     const sig = items.map(x => x.t + x.s).join('|');
     if (box._sig === sig) return; box._sig = sig; box.textContent = '';
-    for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); e.title = x.n; e.append(img(x.u), el('span', null, x.t)); box.append(e); }
+    for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); setTip(e, () => tipCost(x.n, x.h(), x.need)); e.append(img(x.u), el('span', null, x.t)); box.append(e); }   // desktop-tooltips: was a title
   }
   const setTxt = (e, t) => { if (e.textContent !== t) e.textContent = t; };
   // How many of a cost's parts the player already has: { have, all }.
@@ -118,12 +118,12 @@
       el: box, set(c, pend) {
         const done = c.max;
         putHidden(go, !!pend || done || !!c.need); putHidden(cancel, !pend);
-        if (pend) setTxt(cancel, isArmed('c:' + id) ? `Tap again: refund ${pend.start ? 'half' : 'all'} of the cost` : 'Cancel build');
+        if (pend) setTxt(cancel, isArmed('c:' + id) ? `Confirm: refund ${pend.start ? 'half' : 'all'} of the cost` : 'Cancel build');
         if (!pend && !done) {
           const verb = c.queue ? 'Queue' : 'Build', armd = isArmed('b:' + id);
           const target = id === 'tent' ? `Tent ${c.to}` : `${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to}`;
-          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Tap again' : verb); putAttr(go, 'aria-label', armd ? `Tap again to ${verb.toLowerCase()} ${target}` : `${verb} ${target}, ${dur(c.dur / 1000)}`); }
-          else setTxt(go, armd ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${target} · ${dur(c.dur / 1000)}`);
+          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Confirm' : verb); putAttr(go, 'aria-label', armd ? `Confirm: ${verb.toLowerCase()} ${target}` : `${verb} ${target}, ${dur(c.dur / 1000)}`); }
+          else setTxt(go, armd ? `Confirm: ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${target} · ${dur(c.dur / 1000)}`);
           putDisabled(go, !c.ok); putToggle(go, 'armed', armd);
         }
         const w = pend || done ? '' : c.ok ? (c.queue ? 'Your builder is busy. This starts when the current build ends.' : '') : (c.miss ? '' : c.why);
@@ -551,6 +551,7 @@
   const dot = () => { if (S.tab !== 'world') $('raidDot').hidden = false; };
   on('campOpen', dot);
   on('campBuilt', dot);
+  on('refineDone', dot);
   on('campGoto', ({ tab, sel }) => {
     setTab(tab, sel);
     const t = sel && document.querySelector(sel); if (!t) return;

@@ -16,7 +16,7 @@
         0.98,
         1
       ],
-      "note": "a foe between bosses (a chain of 5, HP carried)"
+      "note": "a foe between bosses (a chain of 5, each from full HP: TURN_TUNE.normalFull)"
     },
     "elite": {
       "casual": [
@@ -166,6 +166,18 @@
       "report": true,
       "note": "report only: nothing worn at the zone 5 Champion (casual 35%+; do not re-create the 983e9f5 zone 5 stall)"
     },
+    "floorNormal": {
+      "casual": [
+        0.8,
+        1
+      ],
+      "good": [
+        0.98,
+        1
+      ],
+      "report": true,
+      "note": "report only (wren-z9-10-foes): the zone 10-11 ordinary foes with nothing worn at arrival level, the fight-only bot's hero who never crafts (casual 80%+, good 98%+); each foe type sampled, the worse one read"
+    },
     "keptUpEarly": {
       "casual": [
         0.8,
@@ -293,6 +305,18 @@
       ],
       "report": true,
       "note": "report only (z20-wall): the first-time hero at a fitted zone (z20, z24) with nothing worn, tier 2 common or tier 1 rare +5, against the zone's arrival row (a negative drop is a gain). A landed hit sits on the hpFloor there, so gear is worth about 5-20 points; boss-balance-pass owns making it count"
+    },
+    "reportBot": {
+      "casual": [
+        0.9,
+        1
+      ],
+      "good": [
+        0.98,
+        1
+      ],
+      "report": true,
+      "note": "report only (z21-foe-climb): zone 20-24 ordinary foes at the 10-hour bot's footing (arrival level + 2, tier 2 rare +5), held to the normal band; the optimiser line is the health bot's own defence (tools/sim.mjs). The kept-up footing (tier 4 rare +5 from zone 19) is out of a 10-hour player's reach"
     }
   },
   "gaps": [
@@ -471,7 +495,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.94,
+      "limit": 0.9,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
@@ -481,7 +505,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.97,
+      "limit": 0.9,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip wins 15-30 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07)"
@@ -491,7 +515,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.99,
+      "limit": 0.8,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip wins 15-35 points more than Wren against the same first-hour boss (hero parity, boss-tiers judge 2026-10-07; the pr4 refit moved z12 Pip from 91 to 98 while Wren held, the z12 fit matched the Wren and Pip mean)"
@@ -511,7 +535,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 0.99,
+      "limit": 0.97,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip's first-hour cell here is already in a wren-first-hour-parity gap (Pip wins far more than Wren at the same set, so her kept-up cell rides it)"
@@ -521,7 +545,7 @@
       "hero": "pip",
       "player": "casual",
       "side": "above",
-      "limit": 1,
+      "limit": 0.95,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip's first-hour cell here is already in a wren-first-hour-parity gap (Pip wins far more than Wren at the same set, so her kept-up cell rides it)"
@@ -531,7 +555,7 @@
       "hero": "pip",
       "player": "none",
       "side": "above",
-      "limit": 1,
+      "limit": 0.1,
       "owner": "wren-first-hour-parity",
       "until": "2026-11-15",
       "why": "Pip who never defends still wins the z12 kept-up boss (judge 2026-10-07 point 8): Pip wins far more than Wren at the same set, so her kept-up cell rides it)"
@@ -755,6 +779,16 @@
       "owner": "boss-balance-pass",
       "until": "2026-12-01",
       "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+    },
+    {
+      "row": "z11-normal",
+      "hero": "wren",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.81,
+      "owner": "boss-balance-pass",
+      "until": "2026-11-15",
+      "why": "wren-z9-10-foes (judge 2026-10-08, ruling A, no refit): a normal row, not a boss. Wren on arrival gear (level 16, tier 1 common +0) wins 81% casual against the zone 11 Barrow Beetle (5-offset baseline; Pip 94, Tobin 100); her gap is kill speed, not HP. Balance-pass refit, due 2026-11-15"
     }
   ]
 }

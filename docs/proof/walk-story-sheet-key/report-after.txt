@@ -1,0 +1,12 @@
+# seed 1 walk, 1280x720, this branch (after): story sheets and Champion clears, zones 5, 10, 15
+# node tools/walk.mjs --seed 1 --minutes 150 --clock-budget 50 --quiet
+# game seconds played: 3742 | F6: all shown
+  616.8 card    p:regent:pre    ×Chapter 1: The Hollow · Zone 5The Briar RegentThe hedges part. Something sits where the v
+  662.3 moment  -               zone: zone 5 cleared (maxZone 6)
+  662.3 card    p:regent:post   ×Chapter 1: The Hollow · Zone 5The Briar RegentIts throne comes apart. Doors open up and d
+ 1350.9 card    p:cantor:pre    ×Chapter 1: The Hollow · Zone 10The Hollow CantorThe singing comes from inside its chest. 
+ 1391.2 moment  -               zone: zone 10 cleared (maxZone 11)
+ 1391.2 card    p:cantor:post   ×Chapter 1: The Hollow · Zone 10The Hollow CantorThe song breaks. One voice, on its own, s
+ 2617.9 card    p:marshal:pre   ×Chapter 1: The Hollow · Zone 15The Ossuary MarshalA lance as long as a tree stands plante
+ 2652.9 moment  -               zone: zone 15 cleared (maxZone 16)
+ 2652.9 card    p:marshal:post  ×Chapter 1: The Hollow · Zone 15The Ossuary MarshalThe lance cracks. The graves are only g

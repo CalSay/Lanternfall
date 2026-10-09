@@ -21,7 +21,8 @@ judge ruling, first runs) are in the project folder `autopilot/reports/difficult
 ## What is measured
 
 Scratch turn fights (59k `turnCombatSample`, the live rules) for **each starter** (Wren, Tobin, Pip), built as **a hero
-who keeps up with the road** at 26 gated checkpoints from zone 1 to zone 38, plus 6 report-only rows (below):
+who keeps up with the road** at checkpoints from zone 1 to zone 38: 58 gated rows and 28 report-only rows (below; the first-hour rows
+use the arrival footing):
 
 | Part | The footing |
 |---|---|
@@ -31,8 +32,9 @@ who keeps up with the road** at 26 gated checkpoints from zone 1 to zone 38, plu
 | Stars | Everything found behind the checkpoint's zone, learned, 3 set (zone 1: none). |
 | Build | Attribute points spread evenly, once the game has attributes. |
 
-**The arrival footing (zones 13-15, card `z13-arrival-footing`, 2026-10-08).** The z13, z14 and z15 boss rows are the hero a
-first-time player has when they first get there, not the hero who kept up (`docs/design/z13-bot-sim-gap.md`):
+**The arrival footing (zones 7-15, cards `z13-arrival-footing` and `rally-gates-live`, 2026-10-08).** The z7 to z15 boss rows are the hero a
+first-time player has when they first get there, not the hero who kept up (`docs/design/z13-bot-sim-gap.md`). Zones 7-12 moved in
+`rally-gates-live`, where the walk passes them between minutes 8 and 31:
 
 | Part | The arrival footing |
 |---|---|
@@ -41,7 +43,7 @@ first-time player has when they first get there, not the hero who kept up (`docs
 | Mastery | Every zone's kills capped at 10 (a zone's fights and its boss): no mastery stars. The mid fixture's 23 stars (x1.35) came from a hero who played on to zone 20. Bestiary kills a kind capped at 12 (the walk has 9-14 a kind at zones 13-14). |
 
 Skills, Stars, talents and the build are as above. The kept-up rows (`z13-boss-keptup` and on) stay the report rows for a player
-who stayed, fought and crafted. `--foot arrival` puts every first-hour row on this footing (the zone 10-12 check).
+who stayed, fought and crafted. `--foot arrival` puts every first-hour row on this footing (the zone 4-6 check).
 
 | Player | Parry | Dodge (of the rest) | Ability rings |
 |---|---|---|---|
@@ -52,7 +54,14 @@ The scratch player acts at once, so real fights take longer, and the personas ar
 real players (follow-up `persona-calibration`). 240 fights per row, hero and player. **Each boss fight runs on its own
 hashed seed**: one random stream for a whole sample correlates long fights (one seed's 60 fights read 13-32% where
 independent fights read 53-67%), the bias the judge found; `sampler-independence` fixes the sampler itself. Trash comes
-in chains of 5 on one seed: HP carries from fight to fight, healed on a kill as the live loop does.
+in chains of 5 on one seed, and each fight starts at full HP, as the live loop does (`TURN_TUNE.normalFull`; DECISIONS.md, every
+fight at full HP). An ordinary Rattlebones gets up once a fight at a fifth of its HP, as in play (59b `onFoeDeath`; the sampler since
+wren-z9-10-foes): never a boss, never after a Burn kill.
+
+**Ordinary foes by type (wren-z9-10-foes, 2026-10-08).** A zone sends its own foe type and now and then the next one in its cycle. A row
+marked `types` (z9-normal, z10-normal, z11-normal and the two bare rows) plays each of the zone's two types on its own, prints both
+("by type", with how often a Rattlebones got up), and reads the worse one into the gate. Other rows play whatever foe the first spawn
+gives (at the budget's core seed, the zone's own type).
 
 ## The bands
 
@@ -60,7 +69,7 @@ Win shares for each hero (Tobin's casual band on a boss sits 10 points higher, c
 
 | Kind | Where | Casual | Good | Why |
 |---|---|---|---|---|
-| normal | every zone | 90-100% | 98-100% | trash is won; losses come from bosses |
+| normal | every zone | 90-100% | 98-100% | trash is won; losses come from bosses; each fight from full HP, as in play (normal-death-says-so). Zones 9-11 on the arrival footing (wren-z9-10-foes) |
 | elite | zone 15 and up | 75-97% | 95-100% | a small threat, not a wall |
 | firstBoss | zone bosses 1-3 | 85-100% | 97-100% | the player is learning to parry and dodge |
 | earlyCaptain | zone bosses 4-10 | 70-90% | 97-100% | a learning boss: losable, rarely lost |
@@ -92,7 +101,8 @@ set with the mid save (how much progression outside gear is worth: Wren casual 9
 (report, gear must still help). Since z20-wall: `z20-boss-behind` is a report row (`reportBehind`; zone 20 is fitted to the first-time
 hero, so a tier behind costs a kept-up hero almost nothing) and the gated behind row is `z25-boss-behind`; rows `z20-` and
 `z24-arrival-bare`, `-t2` and `-rare` (`arrivalGear`) show what nothing worn, tier 2 common and tier 1 rare +5 do against that zone's
-arrival row.
+arrival row. `z10-normal-bare` and `z11-normal-bare` (`floorNormal`, casual 80%+, good 98%+) are the zone 10-11 ordinary foes with nothing
+worn at arrival level: the fight-only bot's hero who never crafts (wren-z9-10-foes). They are floors and never gate.
 
 Report-only columns (not gated): the three-hero mean, casual attempts per win for each hero (1 / win rate, capped at
 20), turns a fight played well, and Tobin's boss turns against the Wren and Pip mean (aim x1.15-1.30).
@@ -122,7 +132,39 @@ the card that asks for it and a line in the change log below. A routine re-basel
 `node tools/health.mjs --compare`. If a cell you meant to move lands in band, re-baseline; the ratchet tightens its gap.
 If a cell leaves its band and you think the band is wrong, that is a judge decision, not a re-baseline.
 
+## The boss shape block (report only, `boss-tier-shape-report`, 2026-10-09)
+
+After the table, `node tools/budget.mjs` prints a "Boss shape" line for each zone 4-26 (JSON: `shape`, and `perHero.<hero>.shape` on
+every boss row), so the balance pass refits to the tiers' shape and not only to win rates (why W2). Each line reads the zone's boss row
+(gated, except the report rows at zones 4, 25 and 26) on that row's own footing (the `-arrival` row where there is one, else `zN-boss`; zones 4-6 are the first-hour footing, the rest
+arrival): **HP/foe** is the boss's HP over the mean HP of 24 of the zone's own ordinary foes (each spawn rolls its HP by about 5%; the
+JSON keeps the next type's too); **casual turns** and **win** are the row's casual cells; **hit** is the boss's heaviest landed hit, feints
+left out, as a share of the hero's max HP without defence, next to the boss's own line (x refHp x hitX), the `hpFloor` line and the footing floor's, and
+**set by** says which of own, floor, foot (the footing floor) or cap decides it; on a Champion (`bossTierOf`) the **Champion step** is
+its casual win against the mean of the two zones either side. Read a healthy shape as HP/foe above 1 and rising with the tier, a
+Champion step below zero (a peak), and "own" where the boss's line, not the hero's health, should set the hit. It gates nothing. Checked
+against the W2 study's `hp-ratio.json` on its footing (`--foot arrival`, Wren): boss HP, the landed hit, the floor flag, gates and tier
+match at all 23 zones. The study read one spawn's ordinary foe: at zones 4-14 that was the zone's next type (the JSON's `foeHpNext`), and
+against that type the ratio matches to 0.01; at zones 15-24 it matches to 0.01 on the zone's own type; at 25-26 its spawn rolled 5% high,
+so the block reads 3.21 and 2.44 where the study read 3.05 and 2.32.
+
 ## Where the game stands (2026-10-08)
+
+- **Zones 9-11 ordinary foes are measured** (wren-z9-10-foes, judge 2026-10-08, ruling A: no refit). On the arrival footing (level 14-16,
+  tier 1 common +0) casual Wren, Tobin and Pip win 98/100/100 at zone 9, 94/100/99 at zone 10 (the Rattlebones, getting up) and
+  81/100/94 at zone 11 (the Barrow Beetle) (5-offset baseline; the card predicted 95+ for Wren at zone 10: offset 0 reads 97, the mean
+  94, a miss inside the 90 stop line); good players 100. Wren's zone 11 cell sits under the normal band, a known
+  gap (`boss-balance-pass`, until 2026-11-15): her gap is kill speed, not HP. With nothing worn (the floors) Wren reads 81 at zones 10
+  and 11, Pip 90 and 72, Tobin 100. Modelling the get-up moved only the rows that fight bones: z38-elite (Wren casual 100 -> 98) and
+  z24-normal-bot (report only); no boss cell moved.
+- **Live bosses rally again, and zones 7-12 are fitted with the gates on** (rally-gates-live, 2026-10-08). From #160 to 8 Oct the live
+  fight skipped every rally gate (it read the last foe's HP), while every boss knot was fitted on the sampler with the gates on. The z7-z12
+  boss rows are on the arrival footing (level 12-17, tier 1 common +0, no mastery stars) and refit with hitX, hpX, hpFloor and Tobin's
+  heroHitX: casual Wren, Tobin and Pip win about 82/88/85 at zone 7, 80/81/90 at zone 8, 82/88/76 at zone 9, 53/52/48 at the zone 10
+  Champion, 65/80/74 at zone 11 and 62/75/66 at zone 12 (240 fights; the baseline holds the 5-offset means); good players 100. A landed
+  hit there sits on or near the hpFloor, which keeps a kept-up hero who never defends at 0% (z8, z10, z12). The kept-up z8 and z12 rows read
+  95-99 for a casual (a few points over 97 and 95, inside the tolerance). Zones 4-6 stay on the first-hour footing and did not move.
+  The live fight now reads the same as the sampler (`autopilot/reports/sampler-reads-walk-z10-12/live-vs-sampler.mjs`, z10-12).
 
 - **Kept-up heroes (boss-tiers-pr5, zones 4-15)** are gated: on a boss they have not beaten, a hit costs at least its first-hour share of
   the hero's health (the footing floor), Captains rally three times from zone 7, and zone 15 is a Champion. 5-seed means, casual / never
@@ -130,7 +172,7 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
   every gated row; Pip sits above where her first-hour cell has a `wren-first-hour-parity` gap (z5, z8, z12), and edges over 85-95 at z10,
   z13 and z15. Tobin's kept-up cells (casual 100, never-defends 1-100) ride `tobin-safety-margin` gaps.
 
-- **Zones 5-12 are measured on the first-hour set** (boss-tiers PR 1, 2026-10-07): Wren sits in band; Pip and Tobin above it under
+- **Zones 5-6 are measured on the first-hour set** (boss-tiers PR 1, 2026-10-07; zones 7-12 until rally-gates-live): Wren sits in band; Pip and Tobin above it under
   gaps. A kept-up hero (report-only rows) still wins them 100%. The elites are too easy for a kept-up hero (foe-moves-by-type).
 - **Zones 13-15 no longer wall a first-time player** (z13-unstick, 2026-10-08; the rows went on the arrival footing in
   z13-arrival-footing). On the arrival footing (level 18-19, tier 1 common +0, no mastery stars) casual Wren, Tobin and Pip win
@@ -160,8 +202,8 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
   checks moved to the first kept-up zones: `z25-boss-behind` (gated), the joined and build rows at z25, and check.mjs C29's played and
   gear asserts at zone 26 on the hero as built. On the arrival footing gear is worth little (nothing worn costs 4-29 points, better gear
   adds up to 12, nothing for Tobin), as at zones 13-19. The next wall is the zone 25 Champion (`z25-boss-arrival`, a report row, 0%).
-  The zone 10-12 rows stay on their footing: at the arrival footing the sampler reads Wren's bot 22-46 where the walk never loses
-  (Tobin's 78-98 matches), and on Wren's own walk save it reads 33-56, so that gap is the sampler's, not the footing's. Zones 16-24 Captains are gated on the kept-up hero too (casual above band under gaps; good and never-defends gated).
+  (Superseded by rally-gates-live: the zone 10-12 gap between the sampler and the walk was the live fight skipping the rally gates, not the
+  sampler; zones 7-12 are now on the arrival footing.) Zones 16-24 Captains are gated on the kept-up hero too (casual above band under gaps; good and never-defends gated).
 - **Zones 25-34 Captains are in band for Wren and Pip** (mid-zone-wall, 2026-10-07: casual 56-80, good 100%; z34 Wren sits 4 under, inside the seed noise). Tobin wins
   all of them casually (boss-tiers owns the +10 gap).
 - **The Fenmother is easier than the Captains around her** (boss-tiers): 67-100% casual against a 20-40 band; zone 36
@@ -188,3 +230,6 @@ If a cell leaves its band and you think the band is wrong, that is a judge decis
 | 2026-10-08 | z16-wall | z16-18 boss hpX, hitX, hpFloor and Tobin heroHitX knots, new `riderX` (z16 and z18 Bleed ticks x0.2); new rows z16, z17, z18-boss-arrival (`captain`, gated) and z19-boss-arrival (new report kind `reportArrival`); gaps z16-18-boss casual above (all heroes, boss-balance-pass) and z16-18-boss-arrival Tobin casual below (tobin-safety-margin), all until 2026-12-01; re-baseline of the budget, the personas and the long run (bots now pass zone 18 and meet the zone 19 wall), no tolerance change | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 16 wall) |
 | 2026-10-08 | z19-wall | z19 boss hpX, hitX, hpFloor and Tobin heroHitX knots, `riderX` 0.07 at z19 (Venom ticks); z19-boss-arrival gated (`captain`), new report row z20-boss-arrival (`reportArrival`); the arrival footing no longer wears the crafted set; gaps z19-boss casual above (all heroes, boss-balance-pass) and z19-boss-arrival Tobin casual below (tobin-safety-margin), until 2026-12-01; re-baseline; optimiser.stallCount abs 1.3 -> 2.4 (three sd of the new 5-offset spread, 0.8; the zone 20 wall inside the 10 h; boss-balance-pass, back to max(1.3, 3 sd) when zone 20 is fixed) | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 19 wall) |
 | 2026-10-08 | z20-wall | z20-24 boss hpX, hitX, hpFloor 1.3 and Tobin heroHitX knots, Pip heroHitX 0.9 at z20/22/23, new `dotCap` 0.07 at z20-24 (a boss tick costs at most 7% of the hero's own max HP); z20-z24-boss-arrival gated (`captain`), z25/z26-boss-arrival report rows; gear checks moved to the first kept-up zones: z20-boss-behind report (`reportBehind`, its gear-weight gaps dropped), new gated z25-boss-behind (gaps Wren and Tobin above, gear-weight), joined and build rows z20 -> z25 boss, C29 played and gear asserts at zone 26 on the hero as built; new report rows z20/z24-arrival-bare, -t2, -rare (`arrivalGear`); gaps z20-z24-boss casual above (all heroes, boss-balance-pass) and z22-z24-boss-arrival Tobin casual below (tobin-safety-margin), until 2026-12-01; re-baseline; optimiser.stallCount abs 2.4 -> 2.9 (three sd of the new 5-offset spread, 0.97; the bots' next wall is ordinary foes at zones 21-23; owner z21-foe-climb) | Opus high judge 2026-10-08, three rulings (`docs/DECISIONS.md`, Zone 20 wall) |
+| 2026-10-08 | z21-foe-climb | New report kind `reportBot` and rows z20-z24-normal-bot (the 10-hour bot's footing: arrival level + 2 via `o.lv`, tier 2 rare +5), with an `optimiser` player (the health bot's own defence) on those rows only; no budget cell moved. The health bot (`tools/sim.mjs`) defends every hit of a move and reads boss feints and held swings as the sampler does; re-baseline of the personas and the long run; optimiser.stallCount abs 2.9 -> 2.1 (three sample sd, 0.69). The zone 21-24 ordinary-foe wall left after the fix goes to boss-balance-pass (until 2026-12-01) | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Zone 21 foe climb) |
+| 2026-10-08 | rally-gates-live | The live fight checks a boss's rally gates against its own HP (it read the last foe's, so every live boss from #160 skipped them); z7-z12 boss rows on the arrival footing; z7-12 boss hitX, hpX, hpFloor and Tobin heroHitX knots refit with the gates on; the z7, z8 and z12 Pip gaps ratchet; re-baseline of the budget and the personas (they played gateless bosses; the 50-hour run did not move and is not rewritten) | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Rally gates are live; `autopilot/rulings/2026-10-08-rally-gates-live.md`) |
+| 2026-10-08 | wren-z9-10-foes | The scratch fight gets an ordinary Rattlebones up once a fight (59k `turnCombatSample`, `out.rises`), as the live loop does; new gated rows z9-normal, z10-normal and z11-normal on the arrival footing, and report floors z10-normal-bare and z11-normal-bare (new kind `floorNormal`, casual 80%+, good 98%+), each sampling both of the zone's foe types (`types`); gap z11-normal Wren casual below (limit 0.80, ratcheted to the 5-offset 0.81; owner `boss-balance-pass`, until 2026-11-15); re-baseline of the budget. Moved cells: z38-elite Wren casual 1.00 -> 0.98 (mean 1.00 -> 0.99), z24-normal-bot Tobin casual 0.02 -> 0.01, good Wren 0.39 -> 0.34, Tobin 0.98 -> 0.96, Pip 0.36 -> 0.30 (means 0.01 -> 0, 0.57 -> 0.53); z38-normal moved only its turns; no boss cell moved | Opus high judge 2026-10-08 (`docs/DECISIONS.md`, Wren at zones 9-10; `autopilot/rulings/2026-10-08-wren-z9-10-foes.md`) |

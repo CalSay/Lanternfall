@@ -51,14 +51,20 @@ let openSheet, partySheet;
 
 
   // ================= generic bottom sheet =================
-  let cur = null;
+  // cur: the open modal sheet. curDock: the docked detail, kept in its own slot so a modal (a story card, Next up) opens over it
+  // without closing it.
+  let cur = null, curDock = null;
   openSheet = function (build, opts) {
-    if (cur) cur.close(true);
     opts = opts || {};
+    // desktop-layout-v1: a sheet opened from inside an open menu on a desktop screen docks into the menu's right half, below its head,
+    // beside the list (docs/design/desktop-layout.md 3). It is not modal: no focus trap, no grab drag; × and Escape still close it.
+    const dock = !!(opts.dock && typeof isDesk === 'function' && isDesk() && S.tab);
+    if (cur) cur.close(true);
+    if (dock && curDock) curDock.close(true);
     const last = document.activeElement;
-    const ov = el('div', 'bsheet-ov');
+    const ov = el('div', 'bsheet-ov' + (dock ? ' docked' : ''));
     const sh = el('div', 'bsheet' + (opts.small ? ' small' : ''));
-    sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-modal', 'true');
+    sh.setAttribute('role', 'dialog'); if (!dock) sh.setAttribute('aria-modal', 'true');
     if (opts.label) sh.setAttribute('aria-label', opts.label);
     const grab = el('div', 'bsheet-grab'); grab.append(el('i'));
     const x = el('button', 'bsheet-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close');
@@ -66,21 +72,39 @@ let openSheet, partySheet;
     const body = el('div', 'bsheet-body');
     const foot = el('div', 'bsheet-foot');
     sh.append(grab, body, foot); ov.append(sh);
-    document.body.append(ov);
+    if (dock) {
+      const menu = document.getElementById('menu'), head = document.getElementById('menuHead');
+      ov.style.top = (head ? head.offsetHeight : 0) + 'px';
+      menu.append(ov); document.getElementById('app').classList.add('detail-docked');
+    } else document.body.append(ov);
     const api = {
-      body, foot, sheet: sh,
-      close(instant) {
+      body, foot, sheet: sh, docked: dock,
+      // quiet (closeDock in 70-ui: a tab switch or the menu closing): onClose is told, so a "back" chain does not reopen a sheet
+      close(instant, quiet) {
         if (api.closed) return; api.closed = true;
         document.removeEventListener('keydown', onKey, true);
         if (cur === api) cur = null;
-        const done = () => { ov.remove(); if (opts.onClose) safe(opts.onClose); if (last && last.focus && document.contains(last)) try { last.focus({ preventScroll: true }); } catch (e) {} };
-        if (instant || reduced) done();
+        if (curDock === api) curDock = null;
+        if (dock) document.getElementById('app').classList.remove('detail-docked');
+        // A quiet close (tab switch) does not go back to the opener; if focus was in the sheet, it moves to the open tab instead of the page body.
+        const held = sh.contains(document.activeElement);
+        const done = () => {
+          ov.remove(); if (opts.onClose) safe(() => opts.onClose(!!quiet));
+          const to = !quiet ? last : held ? document.querySelector('.tabs .tab.on, .tabs .tab[aria-selected="true"]') : null;
+          if (to && to.focus && document.contains(to)) try { to.focus({ preventScroll: true }); } catch (e) {}
+        };
+        if (instant || reduced || dock) done();
         else { ov.classList.add('out'); setTimeout(done, 180); }
       }
     };
+    ov.sheetApi = api;
     function onKey(e) {
-      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); api.close(); return; }
-      if (e.key !== 'Tab') return;
+      if (e.key === 'Escape') {
+        // A docked sheet sits under the game's overlays; Escape belongs to whatever is on top of it.
+        if (dock && document.querySelector(MODAL_UP + ', #abPicker, #moveSheet, .gl-ov, .mm-ov, .dw-ov, .dd-fc-ov, .tabs-ov, #introScreen')) return;
+        e.preventDefault(); e.stopPropagation(); api.close(); return;
+      }
+      if (dock || e.key !== 'Tab') return;
       const f = [...sh.querySelectorAll('button:not(:disabled), [href], input, summary, [tabindex]:not([tabindex="-1"])')].filter(n => n.offsetParent !== null);
       if (!f.length) return;
       if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
@@ -89,7 +113,7 @@ let openSheet, partySheet;
     document.addEventListener('keydown', onKey, true);
     x.addEventListener('click', () => api.close());
     ov.addEventListener('click', e => { if (e.target === ov) api.close(); });
-    // Swipe down on the handle, or on the body while it is scrolled to the top.
+    // Swipe down on the handle, or on the body while it is scrolled to the top (not when docked).
     let y0 = null, dy = 0, fromBody = false;
     const down = e => {
       fromBody = body.contains(e.target);
@@ -106,12 +130,14 @@ let openSheet, partySheet;
       if (y0 == null) return; y0 = null; sh.style.transition = '';
       if (dy > 90) api.close(); else sh.style.transform = '';
     };
-    grab.addEventListener('pointerdown', e => { if (e.target === x) return; down(e); grab.setPointerCapture(e.pointerId); });
-    grab.addEventListener('pointermove', move); grab.addEventListener('pointerup', up); grab.addEventListener('pointercancel', up);
-    body.addEventListener('touchstart', down, { passive: true });
-    body.addEventListener('touchmove', move, { passive: false });
-    body.addEventListener('touchend', up); body.addEventListener('touchcancel', up);
-    cur = api;
+    if (!dock) {
+      grab.addEventListener('pointerdown', e => { if (e.target === x) return; down(e); grab.setPointerCapture(e.pointerId); });
+      grab.addEventListener('pointermove', move); grab.addEventListener('pointerup', up); grab.addEventListener('pointercancel', up);
+      body.addEventListener('touchstart', down, { passive: true });
+      body.addEventListener('touchmove', move, { passive: false });
+      body.addEventListener('touchend', up); body.addEventListener('touchcancel', up);
+    }
+    if (dock) curDock = api; else cur = api;
     build(api);
     requestAnimationFrame(() => { try { x.focus({ preventScroll: true }); } catch (e) {} });
     return api;
@@ -175,7 +201,7 @@ let openSheet, partySheet;
       const d = el('div', 'cs-hslot' + (open ? '' : ' soon'));
       d.append(it ? slotTile(it, null, 56) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm', 56));
       d.append(el('small', null, nouns[s.id] || s.n));
-      d.title = it ? itemName(it) : open ? 'Empty. Choose gear in the Gear view, next to Hero.' : 'Coming with crafting.';
+      setTip(d, it ? itemName(it) : open ? 'Empty. Choose gear in the Gear view, next to Hero.' : 'Coming with crafting.');   // desktop-tooltips: was a title
       g.append(d);
     }
     body.append(section('Gear', g, '', el('p', 'note', 'Wear and swap gear in the Gear view, next to Hero. Make new gear in Craft.')));
@@ -184,7 +210,7 @@ let openSheet, partySheet;
     const mt = el('div'); mt.append(el('b', null, `Mirror of Embers: ${n}`), el('small', null, n ? 'Use one to choose a new class. Your level and gear stay.' : 'Bosses from zone 36 sometimes drop one. It lets you change class.'));
     mir.append(mt);
     if (n > 0 && typeof useMirror === 'function') {
-      const b = el('button', 'mini' + (mirrorArm ? ' warn' : ' go'), mirrorArm ? 'Tap again to use' : 'Use'); b.type = 'button';
+      const b = el('button', 'mini' + (mirrorArm ? ' warn' : ' go'), mirrorArm ? 'Confirm: use' : 'Use'); b.type = 'button';
       b.addEventListener('click', () => {
         if (!mirrorArm) { mirrorArm = true; buildHero(); return; }
         mirrorArm = false; partySheet.close(); if (useMirror()) { save(); ui(true); }
@@ -213,7 +239,7 @@ let openSheet, partySheet;
   function openFor() {
     if (sheet) sheet.close(true);   // S3: close the open one first (its onClose would clear the new one)
     sig = ''; mirrorArm = false;
-    sheet = openSheet(() => {}, { label: S.name, onClose: () => { sheet = null; refs = {}; } });
+    sheet = openSheet(() => {}, { label: S.name, dock: true, onClose: () => { sheet = null; refs = {}; } });
     sheet.sheet.classList.add('csheet');
     render(true);
   }

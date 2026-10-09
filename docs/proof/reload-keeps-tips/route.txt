@@ -1,0 +1,57 @@
+# Proof for card reload-keeps-tips: closing the game mid-way loses no story page and no Hesketh tip.
+# `tab new` opens the game again on the stored save (the open tab goes to the background first, which saves it): a reload.
+# Fixtures: save-join-z5 (a Wren new game at the zone 5 Champion, tips off); save-wren-unique-bag (Wren at zone 6 on a cold Hearth, tips on,
+# the Golemfist in the bag, the weapon slot empty, the weapon tip never answered).
+#   story-page2-*.png   page 2 of the Chapter 1 card ("2 of 3"), just before the reload.
+#   story-reload-*.png  after the reload the same card opens again at "2 of 3".
+#   wear-reload-*.png   Hesketh's weapon tip, closed with ×, says it once more after a reload.
+# The wear part runs first: a `new` clears the shots taken before it, so CI's artifact keeps the story shots (all three are committed here).
+# The rules (the page saved and clamped, closing removes it, ids with no builder filed late, Story cards off, the saved say queue, × and the
+# retire on the wear and fire tips, the boot clear) are held by tools/check.mjs ("reload keeps tips").
+# seed: 1
+new wren-unique-bag
+wait 1
+tap "Hero"
+wait 1
+expect "Put it on and fight with it"
+tap "Dismiss this tip"
+wait 2
+expect-no "Put it on and fight with it"
+tab new
+tap-if "Continue"
+wait 1
+tap "Hero"
+wait 1
+# his unread Uniques line ("Bosses sometimes drop rare gear") came back with the reload too: one line at a time, so read it first
+tap-if "Got it"
+wait 1
+expect "Put it on and fight with it"
+shot wear-reload
+tap "Equip Golemfist"
+wait 1
+expect-no "Put it on and fight with it"
+new join-z5
+wait 1
+tap "Continue"
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+expect "1 of 3"
+tap "Next"
+expect "2 of 3"
+shot story-page2
+tab new
+tap-if "Continue"
+wait 2
+expect "2 of 3"
+expect "I'm going to my uncle Hesketh"
+shot story-reload

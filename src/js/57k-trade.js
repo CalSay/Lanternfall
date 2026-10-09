@@ -74,7 +74,7 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
     if (!cargoOK(cargo)) return no('Choose up to three different cargo lines, totalling 1–5,000 whole units.');
     let value = 0;
     for (const [f, t, n] of cargo) {
-      if (!eligible(h, f, t)) return no('Choose unlocked materials from this gatherer\'s profession, grades 1–3.');
+      if (!eligible(h, f, t)) return no('Choose unlocked materials from this gatherer\'s profession, tiers 1–3.');
       if (stock(f, t) < n) return no('Not enough ' + matName(f, t) + ' in the Storehouse.');
       const demand = market.lines.find(l => l.kind === f && l.t === t).demand, micros = price(f, t, demand);
       if (!Number.isSafeInteger(micros) || micros <= 0 || micros > T.maxUnitGold * UNIT) return no('This trade is not available.');

@@ -7,7 +7,14 @@ const equipped = slot => itemById(S.equip[slot]);
 // uniques-first-four: a unique's power x is its own (pow, Rare level), else UNIQ_TUNE.pow. A Rising tool (UNIQ rise) is the grade of the
 // best open ground of its skill while UNIQ_TUNE.on (nothing saved: the item keeps its own t for upgrades and salvage).
 const itemTier = it => { const d = it.u && UNIQ[it.u]; return d && d.rise && UNIQ_TUNE.on && S.skills && S.skills[d.rise] ? Math.min(d.riseMax || 5, skillTopTier(d.rise)) : it.t; };
-const itemPower = it => TIER_POW[itemTier(it)] * (it.u ? (UNIQ[it.u] && UNIQ[it.u].pow) || UNIQ_TUNE.pow : RAR[it.r].m) * (1 + 0.15 * it.plus);
+// craft-attribute-grades: one rule everywhere (power, Reforge, labels). An item with a grade (g) reads it while CRAFT_TUNE.grades is on;
+// with the switch off, or with no g (every item made before), it reads its rarity r exactly as before. Uniques keep their branch first.
+const itemGraded = it => !!it && it.g != null && !it.u && !!CRAFT_TUNE.grades && !!GRADE[it.g];
+const itemMult = it => (itemGraded(it) ? GRADE[it.g].m : RAR[it.r].m);
+// what a player reads for an item's quality: "Grade B" for a graded item, else its rarity ("Rare"); short: "B" / "Rare" for a bag tile
+const itemQual = it => (itemGraded(it) ? `Grade ${GRADE[it.g].n}` : RAR[it.r].n);
+const itemQualShort = it => (itemGraded(it) ? GRADE[it.g].n : ({ common: 'Com', uncommon: 'Unc', rare: 'Rare', epic: 'Epic', legendary: 'Uniq' })[it.u ? 'legendary' : it.r] || RAR[it.r].n);
+const itemPower = it => TIER_POW[itemTier(it)] * (it.u ? (UNIQ[it.u] && UNIQ[it.u].pow) || UNIQ_TUNE.pow : itemMult(it)) * (1 + 0.15 * it.plus);
 // Item kinds, stat lines and the 8 hero positions live in 41-items.js (K4).
 function itemName(it) { return kindName(it.slot, it.t, it.u) + (it.plus ? ` +${it.plus}` : ''); }
 function slotStats(slot, p) {
@@ -37,6 +44,23 @@ const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) matPay(k, t,
 // sm: the crafting station's level (55-crafting passes it); Smithing by default.
 function rarityWeights(sm = S.skills.smith.lv) {
   return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: (10 + sm * 0.5) * mod('rareW'), epic: (2 + sm * 0.25) * mod('rareW') };
+}
+// craft-attribute-grades (docs/design/skilling-crafting-overhaul.md 5): with CRAFT_TUNE.grades on, a class piece, Trinket or Charm is made
+// at the grade its station level gives instead of a rarity die. Tools and the old Sword and Helm keep the die.
+// gradeLv(kind): the station level (55-crafting stationLevel), plus the 'gradeLv' bonus while the switch is on (Forge 5 +1, 57-camp;
+// the Steady Hands Omen +2, 55-almanac). gradeFor(kind, t): the grade index at tier t, from the levels past the tier's gate (GRADE past:
+// D at the gate, C +3, B +6, A +10, S +15; a tier kept from before its gate is D). gradeNext(kind, t): { g, lv } the next grade and the
+// level that makes it, or null at S.
+const gradedKind = kind => !!CRAFT_TUNE.grades && !!CRAFT_KINDS[kind] && !CRAFT_KINDS[kind].tool && !CRAFT_KINDS[kind].legacy;
+const gradeLv = kind => stationLevel(kind) + (CRAFT_TUNE.grades ? bonus('gradeLv') : 0);
+function gradeFor(kind, t, lv = gradeLv(kind)) {
+  const past = lv - CRAFT_STATION_REQ[t - 1];
+  let g = 0; for (let i = 0; i < GRADE.length; i++) if (past >= GRADE[i].past) g = i;
+  return g;
+}
+function gradeNext(kind, t, lv = gradeLv(kind)) {
+  const g = gradeFor(kind, t, lv); if (g >= GRADE.length - 1) return null;
+  return { g: g + 1, lv: stationLevel(kind) + CRAFT_STATION_REQ[t - 1] + GRADE[g + 1].past - lv };
 }
 function rollRarity(lv) {
   const w = rarityWeights(lv), tot = Object.values(w).reduce((a, b) => a + b, 0);
@@ -96,6 +120,17 @@ const bossTierOf = z => isRegionBoss(z) ? 'elder' : z % 5 === 0 ? 'champion' : '
 const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
 // The region steps a zone has passed, multiplied.
 const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };
+
+// ================= away limit (first-night-covered, 2026-10-08) =================
+// The hero gathers away for AWAY_BASE_H with no building (was 4), +2 h per Hourglass level; awayBaseH() is the part the
+// Watchtower clamp (57-camp) subtracts. awayCapH() adds every awayHours bonus (Watchtower +2 h a level) and never passes
+// CAMP_TUNE.awayMax (24 h). Gatherer shifts, builds and refine orders keep their own clocks.
+const AWAY_BASE_H = 8;
+const awayBaseH = () => AWAY_BASE_H + 2 * S.relic.glass;
+const awayCapH = () => Math.min(CAMP_TUNE.awayMax, awayBaseH() + bonus('awayHours'));
+// A raid hit away keeps the old 4 h base (the online layer is out of scope for first-night-covered): never above awayCapH().
+const AWAY_RAID_BASE_H = 4;
+const awayRaidCapH = () => Math.min(awayCapH(), AWAY_RAID_BASE_H + 2 * S.relic.glass + bonus('awayHours'));
 
 // ================= formulas =================
 // hero-progression-rework: with HERO_TUNE.training off the level bonus is attrNeutral() (55-attributes: half of the old
@@ -200,9 +235,13 @@ const xpAheadX = (L = S.L) => HERO_TUNE.training ? 1 : Math.pow(HERO_TUNE.aheadX
 const xpNeed = (L = S.L) => HERO_TUNE.training ? Math.floor(15 * Math.pow(1.3, L - 1)) : Math.max(1, Math.round(roadFights(L) * roadFoeXp(roadZone(L))));
 // Skill XP and tier gates (GP1, knobs in SKILL_TUNE, 20-data). skillNeed(lv, k): k picks the crafting
 // curve for a station skill; without k it is the gathering curve.
-const skillCurve = k => SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.craftNeed : SKILL_TUNE.gatherNeed;
-const skillNeed = (lv, k) => {
-  const c = skillCurve(k), e = SKILL_TUNE.gatherEarly, early = e && c === SKILL_TUNE.gatherNeed && lv < e.below ? e.x : 1;
+// craft-curve-skills-report: with CRAFT_TUNE.curve on, a station skill reads the planned curve in pieces (SKILL_TUNE.craftNeedV2).
+// `on` (optional) picks the station curve regardless of the switch (55-crafting craftXpMap).
+const skillCurve = (k, on = CRAFT_TUNE.curve) => SKILL_TUNE.craftSkills.includes(k) ? (on ? SKILL_TUNE.craftNeedV2 : SKILL_TUNE.craftNeed) : SKILL_TUNE.gatherNeed;
+const skillNeed = (lv, k, on) => {
+  const c = skillCurve(k, on);
+  if (Array.isArray(c[0])) { let p = c[0]; for (const q of c) if (lv >= q[0]) p = q; return Math.floor(p[1] * Math.pow(p[2], lv - p[0])); }
+  const e = SKILL_TUNE.gatherEarly, early = e && c === SKILL_TUNE.gatherNeed && lv < e.below ? e.x : 1;
   return Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2] || 1, lv - 1) * early);
 };
 // A tier is open when the level reaches its gate. Gathering skills use NODE_REQ,
