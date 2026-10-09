@@ -1,0 +1,22 @@
+# seed: 1
+# Proof for card upgrade-odds-next-step. Pip at the zone 10 Champion (fixture tests/proof-fixtures/save-pip-z10-ward), worn Pine Staff
+# +0. The staff moves the fight only at +2 and +4 (pip-staff-odds-mismatch), so the +0 -> +1 press changes nothing. Its Upgrade now
+# looks up to two presses further and names the first step: "Zone 10 boss: no change yet. At +2: about 5 in 10, now 4". The numbers
+# move with the day's Almanac: on a day with a fight boon (Hunter's Feast) no step shows and the line stays hidden. tools/check.mjs
+# "upgrade-odds-next-step" proves +0 and +2 look ahead, +1 and +3 show their step, and the Circlet and Charm show nothing, with no
+# Almanac day; "craft-odds-before-pay" checks the +0 and +1 lines on screen at 1280x720, 740x360 and 360x740. Run at all three views. At 1280x720 and 740x360 the line sits under the
+# sheet's fold (scroll the item sheet to see it); at 360x740 it shows in the shot.
+new pip-z10-ward
+wait 3
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 1
+tap "Hero"
+wait 1
+tap "Gear"
+wait 1
+tap "Weapon: Pine Staff"
+wait 4
+expect "+1: +1.5% damage."
+shot staff-upgrade-look-ahead
