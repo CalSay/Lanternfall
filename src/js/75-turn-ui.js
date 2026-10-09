@@ -105,25 +105,51 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   // zone adds one bell line, once per zone a session (runtime only, never saved).
   const beat = el('div', 'tv-beat'); beat.hidden = true; beat.setAttribute('role', 'status'); beat.setAttribute('aria-live', 'polite');
   const beatTxt = el('b', 'tv-beat-txt', "Beaten. You're back to full HP for the next fight."), beatHelp = el('span', 'tv-beat-help');
-  beat.append(beatTxt, beatHelp);
+  // loss-help-gear-first: a hero who wears no weapon (or no armour at all) is told to get that gear first, with a Go
+  const beatGo = el('button', 'mini go tv-beat-go'); beatGo.type = 'button'; beatGo.hidden = true; beatGo.style.pointerEvents = 'auto'; beatGo.style.minHeight = '44px';
+  let beatGoFn = null;
+  beatGo.addEventListener('pointerdown', e => e.stopPropagation());
+  beatGo.addEventListener('click', e => { e.stopPropagation(); const f = beatGoFn; beatHide(); if (f) try { f(); } catch (err) { console.error('[lanternfall] loss help go failed', err); } });
+  beat.append(beatTxt, beatHelp, beatGo);
   if (box) box.append(beat);
+  const ARMOUR = ['helm', 'body'];   // the off-hand is a Quiver, Lantern or Tome for most classes, not armour
+  // { t, go, lbl } when the hero lacks a weapon (else armour) and there is a piece to wear or a recipe to make; null otherwise
+  const gearFirst = () => {
+    const noWpn = !equipped('weapon'), want = noWpn ? ['weapon'] : ARMOUR.some(p => equipped(p)) ? [] : ARMOUR;
+    if (!want.length) return null;
+    const what = noWpn ? 'weapon' : 'armour';
+    let it = null;   // the strongest piece in the bag that fits, as the Equip goal picks
+    for (const i of S.items || []) if (!isEquipped(i.id) && want.some(p => fits(i, p, 'hero')) && (!it || itemPower(i) > itemPower(it))) it = i;
+    if (it) { const pos = want.find(p => fits(it, p, 'hero'));
+      return { t: `No ${what} on. Wear your ${itemName(it)} first.`, lbl: 'Wear', gear: 1, go: () => { if (!equipped(pos)) equipItem(it.id, pos); } }; }
+    const b = craftGoalNext(); if (!b || !want.includes(b.pos)) return null;
+    const nm = kindName(b.kind, b.t), a = /^[AEIOU]/.test(nm) ? 'an' : 'a', g = GOALS.find(x => x.id === 'forge');
+    const go = g && g.go ? () => followGo(g.go) : null;
+    if (b.gate) return { t: `No ${what} yet. ${a[0].toUpperCase() + a.slice(1)} ${nm} needs ${SKILL[b.gate.skill]} ${b.gate.need} first.`, lbl: 'Go', gear: 1, go };
+    const st = CRAFT_STATIONS[CRAFT_KINDS[b.kind].st];
+    return { t: `No ${what} yet. Make ${a} ${nm}${st ? ` at the ${st.n}` : ''} first.`, lbl: 'Go', gear: 1, go };
+  };
+  let beatGear = false;   // the line up now is a gear-first line: a gear change while it shows (Hero > Gear) drops its button
   const lossHelp = () => {
-    try { if (attrOn() && attrPoints(soloHero()).free > 0) return 'Spend your attribute points on Hero > Build.'; } catch (e) {}
-    try { const b = craftGoalNext(); if (b && !b.gate && b.p >= 1) return 'Better gear helps: see Craft.'; } catch (e) {}
-    return S.zone > 1 ? 'An easier zone helps too: use the arrow by the zone name.' : '';
+    try { const g = gearFirst(); if (g) return g; } catch (e) {}
+    try { if (attrOn() && attrPoints(soloHero()).free > 0) return { t: 'Spend your attribute points on Hero > Build.' }; } catch (e) {}
+    try { const b = craftGoalNext(); if (b && !b.gate && b.p >= 1) return { t: 'Better gear helps: see Craft.' }; } catch (e) {}
+    return { t: S.zone > 1 ? 'An easier zone helps too: use the arrow by the zone name.' : '' };
   };
   let beatT = 0;   // game seconds the line has been up (a fallback; game time, so a paused game or a tip keeps it)
   const beatHide = () => { beatT = 0; if (beat.hidden) return; beat.hidden = true; beat.classList.remove('play'); if (box && tcard.hidden) box.classList.remove('tc-on'); };
   const LOSS_N = 3, LOSS_OF = 10, lossAt = {}, lossTold = {};
   let fightN = 0;
   on('fightStart', () => { fightN++; beatHide(); });
+  on('gear', () => { if (beatGear && !beat.hidden) { beatGoFn = null; beatGo.hidden = true; } });
   on('unitUp', beatHide);
   on('activity', beatHide);
   onTick(dt => { if (!beat.hidden && (beatT += dt) > 8) beatHide(); });   // the next fight, a hero back up or a new activity hides it first
   on('wipe', p => {
     if (!box || !p || p.boss || p.arena) return;
     const help = lossHelp();
-    putText(beatHelp, help); beatHelp.hidden = !help;
+    putText(beatHelp, help.t); beatHelp.hidden = !help.t;
+    beatGoFn = help.go || null; putText(beatGo, help.lbl || ''); beatGo.hidden = !beatGoFn; beatGear = !!help.gear;
     beat.className = 'tv-beat' + (reduced() ? ' calm' : '');
     beat.hidden = false; box.classList.add('tc-on'); void beat.offsetWidth; beat.classList.add('play');
     beatT = 0;
