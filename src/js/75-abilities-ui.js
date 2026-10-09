@@ -12,6 +12,34 @@
 //     a wide panel, a bottom sheet in portrait, and in place of the list (with Back) in the small landscape panel.
 // Ability icons: whole packs per hero (art freeze, owner 2026-09-30). The three starters (Echo Shot, Shield Bash, Fireball)
 // and all of Pip's 14 are drawn (wire-ability-icons); Wren and Tobin keep lettered tiles until their last four icons pass.
+// ability-names-fit: a name wider than its box steps its font size down until it fits, never under `min` px nor the desktop tier's text
+// floor (--tmin: 14 px at Desktop 1, 15 at Desktop 2; Foreman 2026-10-09). Still too wide at the floor, its letters close up by at most
+// 0.06 em. The display web font fits every ability name; this is for a fallback font (often a monospace twice as wide). Used for the
+// fight bar's slots (75-solo-ui), the Q W E and Slot buttons and the list's names. Widths are read to the fraction (a Range over the
+// text): 61.6 px of text in a 61.5 px box already shows "...", though scrollWidth and clientWidth both round to 62. A box with no width
+// yet (a hidden menu) is left as it is.
+// fitTextWidths(list): the same for many boxes, with one layout for all of them (clear every size, read every width, then fit only the
+// few that overflow), so a list of 50 names costs one reflow, not 100.
+function fitTextWidths(list, min) {
+  const els = [...list];
+  for (const e of els) if (e.style.fontSize || e.style.letterSpacing) { e.style.fontSize = ''; e.style.letterSpacing = ''; }
+  const over = els.filter(e => { const room = e.clientWidth && e.getBoundingClientRect().width; if (!room) return false;
+    const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect().width > room + 0.01; });
+  for (const e of over) fitTextWidth(e, min, true);
+}
+function fitTextWidth(e, min = 7, cleared = false) {
+  if (!cleared && (e.style.fontSize || e.style.letterSpacing)) { e.style.fontSize = ''; e.style.letterSpacing = ''; }
+  const room = e.clientWidth && e.getBoundingClientRect().width; if (!room) return;
+  const r = document.createRange(); r.selectNodeContents(e);
+  const need = () => r.getBoundingClientRect().width, cs = getComputedStyle(e);
+  if (need() <= room + 0.01) return;
+  min = Math.max(min, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0);
+  for (let k = 0, n; k < 3 && (n = need()) > room + 0.01 && parseFloat(cs.fontSize) > min; k++)
+    e.style.fontSize = Math.max(min, Math.floor(parseFloat(cs.fontSize) * room / n * 10) / 10) + 'px';
+  const over = need() - room, chars = e.textContent.length;
+  if (over > 0.01 && chars > 1) { const fs = parseFloat(cs.fontSize), ls = parseFloat(cs.letterSpacing) || 0;
+    e.style.letterSpacing = Math.max(ls - 0.06 * fs, ls - Math.ceil(over / chars * 100 + 1) / 100) + 'px'; }
+}
 {
   const icon = id => (typeof soloIconURL === 'function' ? soloIconURL(id) : '');
   const KIND = { damage: 'Damage', buff: 'Buff', debuff: 'Debuff', passive: 'Passive', finisher: 'Finisher' };
@@ -22,6 +50,7 @@
   // view state (not saved): the open detail ('' | ability id | 'mv:attack'), the filter, the info drawer, a Learn armed
   let root = null, sig = '', armed = '', selId = '', filt = 'all', infoOpen = false, listTop = -1;
   const heroNm = k => (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : k);
+  const fitQ = () => { if (root) fitTextWidths(root.querySelectorAll('.ab-q b, .ab-slotb small, .ab-rt b'), 8); };
   const btn = (cls, text) => { const b = el('button', cls, text); b.type = 'button'; return b; };
   function tile(id) {
     // a drawn icon shows at a native size (nicSet picks it from the box), never a 48 px image squeezed into 28-36 px
@@ -126,7 +155,7 @@
     }
     main.append(list);
     if (selId) { const d = detFor(k, selId, eq, infos); if (d) main.append(d); else { selId = ''; root.classList.remove('has-det'); } }
-    root.append(main);
+    root.append(main); fitQ(); requestAnimationFrame(fitQ);   // and again once the panel's scrollbar (if any) has taken its width
   }
   // scroll-spares: why Scrolls in hand teach this hero nothing. The level that opens a move first, then who a spare is for, then a
   // Scroll no starter needs. It never blames the level alone.
@@ -277,7 +306,9 @@
   }
   registerView('party', { id: 'abilities', label: 'Abilities', order: 15, feature: 'party' });
   registerSection('party', { id: 'abilities', title: 'Abilities', view: 'abilities', feature: 'party',
-    mount(sec) { sec.classList.add('ab-sec'); root = el('div', 'ab-root'); sec.append(root); sig = ''; refresh(); },
+    mount(sec) { sec.classList.add('ab-sec'); root = el('div', 'ab-root'); sec.append(root); sig = ''; refresh();
+      if (typeof ResizeObserver === 'function') new ResizeObserver(fitQ).observe(root);
+      try { document.fonts.addEventListener('loadingdone', fitQ); } catch (e) {} },
     update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] abilities', e); } } });
   on('soloHero', () => { selId = ''; armed = ''; });   // another hero: start at the list
   for (const ev of ['abilityLearned', 'scrollDrop', 'soloEquip', 'soloHero', 'levelup']) on(ev, () => { sig = ''; try { refresh(); } catch (e) {} });
