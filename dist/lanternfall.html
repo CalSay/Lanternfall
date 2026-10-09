@@ -3464,7 +3464,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 @keyframes tv-in-r { 0% { transform: translateX(40px); opacity: 0; } 25%, 100% { transform: none; opacity: 1; } }
 @keyframes tv-fade { 0% { opacity: 0; } 12%, 82% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tv-card.play .tv-side { animation: none !important; } }
-.tv-top { position: absolute; left: 50%; top: 80px; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
+.tv-top { position: absolute; left: 8px; right: 8px; top: max(80px, calc(var(--vs-zb, 0px) + 2px)); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; }
 .tv-top[hidden] { display: none; }
 .tv-order { display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 4px; }
 .tv-order-lb { font-size: max(var(--tmin, 0px), calc(11px * var(--tk, 1))); color: #E0D6C2; text-shadow: 1px 1px 0 #0B0810; }
@@ -3527,12 +3527,12 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-ring-t { position: absolute; left: 0; top: 34px; transform: translateX(-50%); white-space: nowrap; font: 700 max(var(--tmin, 0px), calc((13px * var(--display-k, 1)) * var(--tk, 1)))/1 var(--display);
   color: var(--gold, #F2C14E); text-shadow: 1px 1px 0 #0B0810; }
 /* whose turn: the banner in the pause between turns (59k turnCard) */
-.tv-turncard { position: absolute; left: 0; right: 0; top: 42%; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 10px;
+.tv-turncard { position: absolute; left: 0; right: 0; top: max(42%, calc(var(--vs-zb, 0px) + 30px)); z-index: 5; display: flex; align-items: center; justify-content: center; gap: 10px;
   padding: 6px 12px; transform: translateY(-50%); pointer-events: none; background: linear-gradient(90deg, transparent, rgba(10, 7, 14, .94) 18%, rgba(10, 7, 14, .94) 82%, transparent); }
 .tv-turncard[hidden] { display: none; }
 .tv-tc-face { width: 36px; height: 36px; display: grid; place-items: center; background: #16111C; border: 2px solid #0B0810; }
 .tv-tc-img { max-width: 32px; max-height: 32px; image-rendering: pixelated; }
-.tv-tc-txt { font: 700 max(var(--tmin, 0px), calc((22px * var(--display-k, 1)) * var(--tk, 1)))/1 var(--display); letter-spacing: .04em; text-shadow: 2px 2px 0 #0B0810; }
+.tv-tc-txt { font: 700 max(var(--tmin, 0px), calc((22px * var(--display-k, 1)) * var(--tk, 1)))/1 var(--display); letter-spacing: .04em; text-shadow: 2px 2px 0 #0B0810; white-space: nowrap; min-width: 0; }
 .tv-turncard.hero .tv-tc-txt { color: var(--gold, #F2C14E); }
 .tv-turncard.hero .tv-tc-face { box-shadow: inset 0 0 0 1px var(--gold, #F2C14E); }
 .tv-turncard.foe .tv-tc-txt { color: #FF9B8A; }
@@ -3555,7 +3555,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tv-winding .sty-cap { opacity: .15; transition: opacity .15s; }
 /* Stage and dock (Combat C): the banner is a framed chip; the timing bar sits along the stage's bottom edge */
 .tv-n { padding: 3px 12px 2px; font: 600 max(var(--tmin, 0px), calc((15px * var(--display-k, 1)) * var(--tk, 1)))/1 var(--display); letter-spacing: .04em; color: #C9BFD6; background: rgba(10, 7, 14, .88);
-  border: 1px solid #5E5270; text-shadow: 1px 1px 0 #0B0810; }
+  border: 1px solid #5E5270; text-shadow: 1px 1px 0 #0B0810; white-space: nowrap; max-width: 100%; }
 .tv-n:empty { display: none; }
 .tv-n.mine { color: var(--gold, #F2C14E); border-color: var(--gold, #F2C14E); }
 .tv-n.foe { color: #FF9B8A; border-color: #A8323A; }
@@ -3585,17 +3585,23 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .hud.vs .mob .hpbar > i.tv-notch { left: calc((1 - var(--g)) * 100% - 1px); }
 .hpbar > i.tv-notch.past { opacity: .35; }
 .hpbar > i.tv-notch.held { width: 4px; margin-left: -1px; background: var(--gold, #F2C14E); }
-/* desktop-layout-v1 (desk playtest F03, F09, F04). Desktop text is bigger, so the turn line sits under the place line (62-stage sets
-   --vs-zb on the stage box), not on it; the whose-turn banner crosses the stage under the floating numbers ("Miss", damage), which
-   start higher; at 1920x1080 the timing bar moves to the stage's bottom-right corner, next to Parry and Dodge. */
+/* desktop-layout-v1 (desk playtest F03, F09, F04). The turn line sits under the place line (62-stage sets --vs-zb on the stage box;
+   every view since turn-banner-clears-plate, .tv-top above); the whose-turn banner crosses the stage under the floating numbers
+   ("Miss", damage), which start higher; at 1920x1080 the timing bar moves to the stage's bottom-right corner, next to Parry and Dodge. */
 @media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
-  .tv-top { top: max(80px, calc(var(--vs-zb, 0px) + 2px)); }
-  .tv-turncard { top: 52%; }
+  .tv-turncard { top: max(52%, calc(var(--vs-zb, 0px) + 30px)); }
 }
 @media (min-aspect-ratio: 1/1) and (min-width: 1600px) and (min-height: 900px) {
   .tv-bot { justify-items: end; right: 56px; }
   .tv-bot .tv-time { width: min(420px, 100%); }
 }
+/* turn-banner-clears-plate: the turn line (.tv-n) and the whose-turn banner (.tv-tc-txt) stay on one line, under the place line ("Zone
+   boss") at every view: .tv-top spans the stage and starts under the place line, the banner's middle sits 30 px under it, and a line too
+   long for the stage steps its size down to fit (fitTextWidth in 75-turn-ui). Names and words are never cut. While the banner shows
+   (.tc-on) it takes the turn line's spot: the turn line and the Grit row step out of sight (they keep their room) and a foe trick's
+   line drops under the banner. */
+.tc-on .tv-top .tv-n, .tc-on .tv-top .tv-hero { visibility: hidden; }
+.tc-on .tv-top .tv-warn { margin-top: 14px; }
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
 .tw-scene { display: flex; justify-content: center; width: 100%; min-height: 144px; margin: 0; padding: 0; overflow: hidden; background: #0E0B1E; border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
 .tw-scene:hover, .tw-scene:focus-visible { border-color: var(--gold); }
@@ -37743,11 +37749,13 @@ function fitTextWidths(list, min) {
     const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect().width > room + 0.01; });
   for (const e of over) fitTextWidth(e, min, true);
 }
-function fitTextWidth(e, min = 7, cleared = false) {
+// inside: fit the text inside the box's padding and borders (the turn line's framed chip, 75-turn-ui), not to the whole box
+function fitTextWidth(e, min = 7, cleared = false, inside = false) {
   if (!cleared && (e.style.fontSize || e.style.letterSpacing)) { e.style.fontSize = ''; e.style.letterSpacing = ''; }
-  const room = e.clientWidth && e.getBoundingClientRect().width; if (!room) return;
+  const cs = getComputedStyle(e), pad = inside ? ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((n, k) => n + (parseFloat(cs[k]) || 0), 0) : 0;
+  const room = e.clientWidth && e.getBoundingClientRect().width - pad; if (!room) return;
   const r = document.createRange(); r.selectNodeContents(e);
-  const need = () => r.getBoundingClientRect().width, cs = getComputedStyle(e);
+  const need = () => r.getBoundingClientRect().width;
   if (need() <= room + 0.01) return;
   min = Math.max(min, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0);
   for (let k = 0, n; k < 3 && (n = need()) > room + 0.01 && parseFloat(cs.fontSize) > min; k++)
@@ -47487,7 +47495,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     putText(tcTxt, mine ? (p.again ? 'Your turn again' : 'Your turn') : p.again ? `${name} goes again` : `${name}'s turn`);
     tcard.className = 'tv-turncard ' + (mine ? 'hero' : 'foe') + (reduced() ? ' calm' : '');
     tcard.style.setProperty('--tc-dur', (p.secs || 0.9) + 's');
-    tcard.hidden = false; box.classList.add('tc-on'); void tcard.offsetWidth; tcard.classList.add('play');
+    tcard.hidden = false; box.classList.add('tc-on'); fitTextWidth(tcTxt); void tcard.offsetWidth; tcard.classList.add('play');   // one line: a long name steps the size down to the stage (turn-banner-clears-plate)
     clearTimeout(tcT); tcT = setTimeout(tcHide, (p.secs || 0.9) * 1000 + 150);
   });
   on('turn', () => { clearTimeout(tcT); tcHide(); });
@@ -47626,6 +47634,7 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   on('fightStart', () => { pendClean = null; lampSet(0); });
   const warn = el('div', 'tv-warn'); warn.hidden = true; warn.setAttribute('role', 'status'); warn.setAttribute('aria-live', 'assertive');
   const wrap = el('div', 'tv-top'); wrap.append(turnN, heroRow, resTip, warn);
+  addEventListener('resize', () => { if (turnN.textContent) fitTextWidth(turnN, 7, false, true); if (!tcard.hidden) fitTextWidth(tcTxt); });   // a turned phone refits both lines
   // along the stage's bottom edge: the timing bar (while the foe winds up)
   const bot = el('div', 'tv-bot'); bot.append(lamps, bar);   // hit feel: the lamps sit just above the timing bar, clear of the place caption and the resource row
   if (box) box.append(wrap, bot);
@@ -47748,7 +47757,8 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
     if (!warn.hidden && performance.now() > warnT) warn.hidden = true;
     drawRing(live ? s : null); drawNotches(live ? s : null);   // a rally holds the turn label too (below): the boss's own move lines take the banner
     if (!live) { if (!bar.hidden) bar.hidden = true; return; }
-    putText(turnN, s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.rally && s.foe ? 'Rally: it holds at the mark' : s.phase === 'foeWindup' && s.foe ? `${s.foe.name}'s turn` : s.n ? `Turn ${s.n}` : '');
+    const tn = s.phase === 'hero' ? 'Your turn' : s.timing ? 'Press again as the ring closes' : s.charge ? `${s.charge} is coming` : s.rally && s.foe ? 'Rally: it holds at the mark' : s.phase === 'foeWindup' && s.foe ? `${s.foe.name}'s turn` : s.n ? `Turn ${s.n}` : '';
+    if (turnN.textContent !== tn) { turnN.textContent = tn; if (tn) fitTextWidth(turnN, 7, false, true); }   // one line, like the banner (turn-banner-clears-plate)
     turnN.classList.toggle('mine', s.phase === 'hero' || !!s.timing);
     turnN.classList.toggle('foe', s.phase === 'foeWindup');
     // the foe winds up: the bar fills to the hit; the dodge and parry windows sit at its end
