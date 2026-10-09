@@ -186,6 +186,10 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Measure a Next Up label in the list sheet, not on the chip: at 360x740 a sheet row's words get about 203 px (icon and Go take the rest), so a two-line clamp cut an 82-letter goal ("Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away.") after "Gathering"; the clamp is 4 lines now. Why: the label passed at 1280x720 and 740x360 and only the 360 wide view showed the cut. (tier-two-named-for-return, 2026-10-09)
 - A line that promises what happens away reads the same test awayBase uses, and a live Deepwell run's held activity (`DW.run().act`), not `S.activity` alone: in a run `S.activity` is 'fight' but away resumes the gathering. Why: the first cut told a Deepwell player gathering Mining to go gather Mining. (away-line-only-when-true, 2026-10-09)
 
+- Measure a stage size option on a maximized window (1920x950, not only a 1920x1080 viewport) and in a swarm zone (2 or 9) as well as a
+  normal one: the zoom floor and the swarm step both read the stage's own size. Why: "x4 at 1920" changed nothing in a maximized
+  1080p window (red team), and the swarm step already drew the hero at half size in zone 9 at 1280x720 (judge). (hero-screen-size-ruling, 2026-10-09)
+
 ## Saves and offline parity
 
 - Mark a one-time line or scene done when the player answers it, not when it is queued, or keep the queue in the save: a queue in memory loses it on a reload. Story scenes are marked seen when queued, so `S.story.open` keeps the queued and open ones with their page, and Hesketh's say queue is saved as `S.onboard.sayQ`. A tip whose job is still undone (a piece in the bag) gets a session-only hide on ×, not a done mark. Why: the cold leg closed the game on page 1 of the Chapter 1 card and lost pages 2 and 3 and Hesketh's equip tip. (reload-keeps-tips, 2026-10-08)

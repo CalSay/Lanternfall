@@ -1156,6 +1156,14 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   background per area; fewer frames and lossy backgrounds are reserve only; shipped packs are re-encoded only via the art judge.
   (`docs/design/page-bytes.md`; ruling `autopilot/rulings/2026-10-09-page-bytes.md`; the size check is `tools/lib/page-size.mjs`, run by
   `tools/check.mjs` as "page size")
+- **Hero screen size (hero-screen-size-ruling, Opus art judge, 2026-10-09; Cal can veto: "x4 on big screens", "Keep the swarm zoom"):**
+  Heroes keep today's whole-step stage zoom (x2 at 1280x720, x3 at 1920x1080, x1 on 740x360 phones). In turn fights the stage no longer
+  zooms out for swarm zones (2, 9, 16, 23, 30) or 3+-add bosses, which drew the hero at 101 px at 1280x720 (build card
+  `stage-no-swarm-shrink`). Turned down: x3 at 1280 (the boss's crown sits under the turn banner and the sword cuts through the boss),
+  x4 at 1920 (a maximized 1080p window stays x3; in full screen the foes crowd and code-drawn foes become 8 px blocks), and a zoom that
+  changes fight by fight (the hero changes size between fights). Bigger heroes on big screens come with finer art (art-scale-ruling),
+  shown at x2 on 1920x1080. Changing the stage zoom is layout, not art retuning under the freeze; whole steps only.
+  (`docs/design/desktop-layout.md`, "Hero size ruling"; mockups, red team and ruling in `docs/design/desktop-layout/hero-size/`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
