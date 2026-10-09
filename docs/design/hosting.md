@@ -294,7 +294,9 @@ Once card 6 has landed (until then the section stays as it is), replace "Hard co
 
 ## 8. What each hero size needs from the host
 
-`hero-screen-size-ruling` had not ruled when this was written; these are the byte facts for it.
+`hero-screen-size-ruling` ruled on 9 Oct (merged in #310, `DECISIONS.md`, "Hero screen size"): heroes keep today's whole-step
+zoom at 96 px art, which costs no bytes on any host, and bigger heroes on big screens come only with finer art, 192 px shown at x2
+on 1920x1080, which `art-scale-ruling` decides on Codex's sample. So the row that matters for hosting is "finer art at 2x".
 
 | Hero size | Bytes (`page-bytes.md` 2 at today's cost; export-rule estimate) | Artifact (14 MB) | Netlify or Steam |
 |---|---|---|---|
