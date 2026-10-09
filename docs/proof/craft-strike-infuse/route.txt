@@ -1,0 +1,24 @@
+# Proof for card craft-strike-infuse. No player-visible change: CRAFT_TUNE.strike and CRAFT_TUNE.infuse (and CRAFT_TUNE.grades,
+# which they lift) ship off until the balance pass, so Craft makes the piece at once with no bar and the row has no Infuse button.
+# This route crafts the first Pine Bow on the cold-camp save and checks today's screens. The playtest driver cannot turn a switch
+# on, so the switch-on screens are taken by tools/check.mjs section "craft strike infuse (browser)" (LF_PROOF_SHOTS=dir writes
+# them) in a scratch game at Smithing 7 (Copper Warblade grade B, A by a lift): row-*.png (the row reads "Grade A: Strike, or
+# Infuse for 6 Essence" with an Infuse button), bar-*.png (the Strike bar over the screen, the game held), hit-*.png (a press in
+# the gold: "Your Strike landed in the gold: Grade A."), miss-*.png (an early press: "The Strike missed the gold, so it is Grade
+# B. Nothing was lost.") and infuse-*.png (Infuse, no bar: "Infused with Essence: Grade A."). 740x360 runs with reduced motion.
+# The rules are in section "craft-strike-infuse".
+# Run at the default view (1280x720), then with --landscape and --portrait.
+# seed: 1
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+tap "Craft"
+wait 1
+expect "Odds: Common"
+shot recipe-today
+tap "Craft Pine Bow"
+wait 3
+expect ".cf-res .cf-grade"
+shot made-today
