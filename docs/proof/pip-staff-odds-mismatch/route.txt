@@ -1,0 +1,3 @@
+# Proof for card pip-staff-odds-mismatch (measurement only). No player-visible change: nothing in src/ changed, so there is
+# nothing to play. The numbers come from node docs/proof/pip-staff-odds-mismatch/measure.mjs (see note.md); the existing
+# craft-odds-before-pay route and tools/check.mjs section "craft-odds-before-pay" still cover the line in the game.

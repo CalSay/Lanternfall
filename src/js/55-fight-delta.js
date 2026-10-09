@@ -12,6 +12,8 @@
 //   FIGHT_DELTA (the tune table)
 //   fightDeltaJob(item) -> { zone, step() -> done, res } | null   one chunk of fights a step, so a card never waits
 //   fightDelta(item) -> { zone, kind, before, after } | null       every chunk now (checks)
+//   Either takes { scratch: true } as a second argument (craft-odds-before-pay): the piece is not in the bag (a recipe's piece
+//   before it is made, or the worn piece one upgrade on, under an id no item has). It stands in S.items only while its side runs.
 //   kind 'wins': wins in 10 (rounded); 'turns': hero turns a win, when both sides win at least turnsFrom (a share) of the fights;
 //   'hit': the average landed boss hit as a share (%) of max health, for head and body pieces. null: no turn fight, no hero
 //   fit, the piece is worn already, the rounded numbers are equal, the rounding points the other way from the raw counts, or
@@ -23,17 +25,19 @@ let fightDeltaJob, fightDelta;
   const ARMOUR = { helm: 1, body: 1 };
   const withGear = (s, fn) => {
     const keep = gsCache, had = s.pos ? S.equip[s.pos] : null;
-    gsCache = s.g; if (s.pos) S.equip[s.pos] = s.id;
-    try { return fn(); } finally { gsCache = keep; if (s.pos) S.equip[s.pos] = had; }
+    gsCache = s.g; if (s.pos) S.equip[s.pos] = s.id; if (s.scratch) S.items.push(s.scratch);
+    try { return fn(); } finally { gsCache = keep; if (s.pos) S.equip[s.pos] = had; if (s.scratch) { const i = S.items.lastIndexOf(s.scratch); if (i >= 0) S.items.splice(i, 1); } }
   };
-  fightDeltaJob = it => {
+  fightDeltaJob = (it, opt) => {
     if (!it || typeof bossOddsOn !== 'function' || !bossOddsOn()) return null;
     if (typeof deepActive === 'function' && deepActive()) return null;   // a Deepwell run's boons would count (59m)
     const d = CRAFT_KINDS[it.slot], pos = d && kindPos(it.slot);
     if (!d || d.tool || !pos || !fits(it, pos, 'hero') || S.equip[pos] === it.id) return null;
+    const scratch = opt && opt.scratch ? it : null;
+    if (scratch && itemById(it.id)) return null;   // a scratch piece's id must be no item's
     const z = S.maxZone, skill = bossOddsSkill(), F = FIGHT_DELTA, chunks = Math.ceil(F.fights / F.chunk);
     const side = (g, on) => {
-      const s = { g, pos: on ? pos : null, id: on ? it.id : null, p: null, k: 0, d: 0, turns: 0, won: 0, dmg: 0, hits: 0 };
+      const s = { g, pos: on ? pos : null, id: on ? it.id : null, scratch: on ? scratch : null, p: null, k: 0, d: 0, turns: 0, won: 0, dmg: 0, hits: 0 };
       s.p = withGear(s, () => { const u = typeof cbEstHero === 'function' ? cbEstHero() : null; return u ? turnMakeProfile(bossOddsFoe(z), u) : null; });
       return s;
     };
@@ -61,5 +65,90 @@ let fightDeltaJob, fightDelta;
     } };
     return job;
   };
-  fightDelta = it => { const j = fightDeltaJob(it); if (!j) return null; while (!j.step()); return j.res; };
+  fightDelta = (it, opt) => { const j = fightDeltaJob(it, opt); if (!j) return null; while (!j.step()); return j.res; };
+}
+
+// loadout-odds: the same scratch fights for a set of ability slots (Hero > Abilities' line, the Learn order in 56e, the cache pick).
+// One profile of the hero as they stand (cbEstHero, as bossOdds), against bossOddsFoe(S.maxZone) with bossOddsSkill(). Each set of
+// slots goes into that profile's eq (and its cooldowns) as a fight takes them, and plays its fights on the seeds every other
+// set plays (160 a set), so two sets differ by the moves, not the dice. A move not learned yet plays without a talent (talentsOf lists learned
+// moves only). Nothing is changed on the hero: only the scratch profile's slots.
+// The work is queued and done a chunk at a time by loadoutPump (the browser drives it off the click path, 75-abilities-ui; checks pass
+// sync). Results are kept for what the fight depends on (bossOdds' signature: hero, level, combat numbers, Stars, talents, skill) and
+// the set; a change to any of those starts over.
+//   loadoutOdds(sets, { sync, first, quick }) -> { zone, wins: [win share | null (pending)] } | null (no turn fight to judge)
+//     first: these sets go to the front of the queue (the line on screen before a ranking); sync: every chunk of them now;
+//     quick: the first 40 fights only (a sift: 56e tries every spot quick, then measures the best in full). A set's quick fights are
+//     the first 40 of its 160, so a full measure goes on from them.
+//   loadoutPump(n = 1) -> true while work is left (n chunks of 5 fights; 0 only asks)
+//   loadoutWins(a, b) -> { before, after } | null: wins in 10 (rounded) when b against a passes the craft card's "barely changes"
+//     rule (FIGHT_DELTA.minStep on the raw shares, the rounded numbers differ, and the rounding points the way the raw shares do)
+let loadoutOdds, loadoutPump, loadoutWins;
+{
+  let LC = { sig: '', zone: 0, p: null, skill: null, map: new Map(), queue: [] };
+  // 160 fights a set (twice the craft card's: at 80, a change of seeds alone moved Pip's slots from 4 to 5 in 10), in chunks of 5, so
+  // one chunk stays a few ms even on a slow phone; a quick read is the first 8 chunks (40 fights)
+  const F = FIGHT_DELTA, CHUNK = 5, CHUNKS = Math.ceil(160 / CHUNK), QUICK = 8;
+  const keyOf = eq => (eq || []).map(x => x || '-').join(',');
+  // the profile and its signature now (the same parts bossOdds keys its estimate on). Making a profile costs about a millisecond, and the
+  // Abilities line and Next Up ask several times a second, so it is remade at most every LOADOUT_REMAKE_MS (real time) while the hero,
+  // zone and level stay, or at once after a gear, level, hero or talent event, or a sync call (checks)
+  const LOADOUT_REMAKE_MS = 500;
+  let madeAt = -1e15, madeKey = '';
+  for (const ev of ['gear', 'levelup', 'soloHero', 'talentSet']) on(ev, () => { madeAt = -1e15; });
+  const now = force => {
+    if (typeof bossOddsOn !== 'function' || !bossOddsOn() || (typeof deepActive === 'function' && deepActive())) return null;   // a Deepwell run's boons would count (59m)
+    const key = [soloHero(), S.maxZone, S.L].join('|'), t = Date.now();
+    if (!force && LC.p && key === madeKey && t - madeAt >= 0 && t - madeAt < LOADOUT_REMAKE_MS) return LC;
+    madeKey = key; madeAt = t;
+    const z = S.maxZone, u = typeof cbEstHero === 'function' ? cbEstHero() : null; if (!u) return null;
+    let p; try { p = turnMakeProfile(bossOddsFoe(z), u); } catch (e) { p = null; }
+    if (!p) return null;
+    const skill = bossOddsSkill();
+    const sig = [z, p.heroKey, S.L, BOSS_ODDS_KEYS.map(k => bossOddsNum(p[k])).join(','), JSON.stringify(p.stars), JSON.stringify(p.starSet),
+      JSON.stringify(p.tal), skill.parry, skill.dodge, skill.perfect, skill.good].join('|');
+    if (sig !== LC.sig) LC = { sig, zone: z, p, skill, map: new Map(), queue: [] };
+    return LC;
+  };
+  const share = r => (r.k + r.d > 0 ? r.k / (r.k + r.d) : 0);
+  const pending = r => r.c < r.need;
+  const run = r => {   // one chunk of a set's fights; the quick read is kept when its last chunk is done
+    const p = LC.p; p.eq = r.eq; p.cds = { attack: 1 }; for (const id of r.eq) p.cds[id] = turnCdFor(id);
+    const c = r.c, res = turnCombatSample({ profile: p, seconds: CHUNK * 600, seed: 1 + c * 7919 + LC.zone * 104729, skill: LC.skill, fights: CHUNK });
+    if (res) { r.k += res.kills; r.d += res.deaths; }
+    if (++r.c === QUICK) r.quick = share(r);
+    if (r.c >= CHUNKS) r.win = share(r);
+  };
+  const fail = r => { r.c = CHUNKS; r.quick = r.win = 0; };
+  loadoutOdds = (sets, o) => {
+    o = o || {};
+    if (!Array.isArray(sets) || !now(!!o.sync)) return null;
+    const need = o.quick ? QUICK : CHUNKS, keys = [];
+    for (const s of sets) {
+      const key = keyOf(s); keys.push(key);
+      let r = LC.map.get(key);
+      if (!r) LC.map.set(key, r = { eq: (s || []).filter(Boolean), c: 0, k: 0, d: 0, need: 0, quick: null, win: null });
+      if (r.need < need) r.need = need;
+      if (pending(r) && !LC.queue.includes(key)) LC.queue.push(key);   // new, wanted further, or dropped by an event and still wanted
+    }
+    if (o.first) { const pend = keys.filter(k => pending(LC.map.get(k))); LC.queue = pend.concat(LC.queue.filter(k => !pend.includes(k))); }
+    if (o.sync) for (const key of keys) { const r = LC.map.get(key); try { while (pending(r)) run(r); } catch (e) { fail(r); } }
+    return { zone: LC.zone, wins: keys.map(k => { const r = LC.map.get(k); return o.quick ? r.quick : r.win; }) };
+  };
+  loadoutPump = (n = 1) => {
+    for (let i = 0; i < n; i++) {
+      while (LC.queue.length && !pending(LC.map.get(LC.queue[0]))) LC.queue.shift();
+      if (!LC.queue.length) return false;
+      const r = LC.map.get(LC.queue[0]);
+      try { run(r); } catch (e) { fail(r); }
+    }
+    return LC.queue.some(k => pending(LC.map.get(k)));
+  };
+  // what the queued sets were judged on has changed: drop them (the next loadoutOdds call queues what is wanted now)
+  for (const ev of ['gear', 'levelup', 'soloHero']) on(ev, () => { LC.queue = []; });
+  loadoutWins = (a, b) => {
+    if (a == null || b == null || Math.abs(b - a) < F.minStep) return null;
+    const before = Math.round(10 * a), after = Math.round(10 * b);
+    return before === after || Math.sign(after - before) !== Math.sign(b - a) ? null : { before, after };
+  };
 }

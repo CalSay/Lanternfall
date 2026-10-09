@@ -1,0 +1,1 @@
+Nothing changes in the game. A measurement for the balance pass found the Forge odds line and the W10 report agree on Pip's staff: from +0 to +5 it lifts her wins against the zone 10 Champion from about 4 in 10 to about 6. (no shot)

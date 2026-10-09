@@ -1,0 +1,34 @@
+# seed: 1
+# Proof for card loadout-odds: Pip at the zone 10 Champion on W10's arrival footing (fixture tests/proof-fixtures/save-pip-z10-ward,
+# slots Fireball, Spark, Kindle, one Hollow Scroll). Hero > Abilities shows one line under Q W E: the zone 10 boss odds of the three
+# slotted moves. Arcane Ward's card says where Learn puts it and what that does to the line; Learn puts it there, and the line then says
+# the new number and what it was (upright once the card closes: the open card hides the line). The number moves with the day's Almanac. tools/check.mjs "loadout-odds" measures the line at
+# 1280x720, 740x360 and 360x740 with no Almanac day. Run at all three views.
+new pip-z10-ward
+wait 3
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 1
+tap "Hero"
+wait 1
+tap "Abilities"
+wait 4
+expect "Zone 10 boss with these"
+shot abilities-odds-line
+tap "Arcane Ward"
+wait 15
+scroll down
+wait 1
+expect "Learn puts it in"
+shot ward-card-spot
+tap "Learn · Hollow Scroll"
+wait 1
+tap "Confirm: spend a Hollow Scroll"
+wait 1
+tap-if "Got it"
+wait 1
+tap-if "Close"
+wait 6
+expect "was"
+shot odds-was
