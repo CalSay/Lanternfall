@@ -119,7 +119,7 @@ const DEED_TRACKS = [
   { id: 'ench', g: 'craft', n: 'Enchanter', what: 'Enchanting level', need: [10, 22, 54, 150], star: null, bonus: 'skillXp:ench', src: 'save', kind: 'level', u: ['Enchanting level', 'Enchanting levels'] },
   { id: 'made', g: 'craft', n: 'Maker', what: 'Items crafted', need: [10, 100, 1e3, 1e4], star: X10, bonus: 'skillXp', src: 'save', u: ['craft', 'crafts'] },
   { id: 'fine', g: 'craft', n: 'Fine Work', what: 'Best craft', need: [1, 2, 3, 4], star: null, bonus: 'skillXp', src: 'derived', kind: 'ladder',
-    steps: ['an Uncommon', 'a Rare', 'an Epic', 'an Epic tier 5 at +10'] },
+    get steps() { return CRAFT_TUNE.grades ? ['an Uncommon or grade C', 'a Rare or grade A', 'an Epic or grade S', 'an Epic or grade S, tier 5 at +10'] : ['an Uncommon', 'a Rare', 'an Epic', 'an Epic tier 5 at +10']; } },   // craft-attribute-grades: a graded piece counts by its rarity twin
   { id: 'honed', g: 'craft', n: 'Honed', what: 'Upgrades (+1 each)', need: [10, 100, 1e3, 1e4], star: X10, bonus: 'skillXp', src: 'new', u: ['upgrade', 'upgrades'] },
   { id: 'reforge', g: 'craft', n: 'Second Thoughts', what: 'Reforges', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'skillXp', src: 'new', u: ['reforge', 'reforges'] },
   { id: 'alchemy', g: 'craft', n: 'Alchemist', what: 'Transmutes', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'skillXp', src: 'new', u: ['transmute', 'transmutes'] },

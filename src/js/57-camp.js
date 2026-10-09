@@ -29,7 +29,7 @@
 // Events: campGoto { tab, sel } (an away-card Go button; the UI opens the tab), campOpen { quiet }, campStart { id, to, queued }, campBuilt { id, lv }, campCancel { id, to, refund },
 //         blessChange { bless }.
 // Modifier keys written: offline (Hearth), skillXp:<skill> (stations, Library), xp (Library),
-//   rareW (Forge 5), salvage (Workbench 5), gatherSpeed (Loom 5), reforge (Enchanter's Table 5),
+//   rareW (Forge 5; with CRAFT_TUNE.grades on, the bonus gradeLv +1 instead), salvage (Workbench 5), gatherSpeed (Loom 5), reforge (Enchanter's Table 5),
 //   bountyPay (Tavern 4) and the Blessings' keys (dmg, gold, skillXp:*, offline,
 //   gatherSpeed, buildTime, essence). Bonus keys: awayHours (Watchtower, capped so the
 //   whole away cap stays <= 24h), transmuteSave (Enchanter's Table 5), deepOil.
@@ -315,7 +315,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   // ---------------- effects ----------------
   const STN_XP = [0, 0, 0.1, 0.2, 0.25, 0.3];
   const STN_FIVE = {
-    forge: { txt: 'Rare and Epic odds +10%', key: 'rareW', v: 1.1 },
+    forge: { get txt() { return CRAFT_TUNE.grades ? 'Crafts grade as 1 level higher' : 'Rare and Epic odds +10%'; }, key: 'rareW', v: 1.1 },   // craft-attribute-grades: the grades switch reads gradeLv (below)
     bench: { txt: 'Salvage returns +25%', key: 'salvage', v: 1.25 },
     loom: { txt: 'Sturdier packs: gathering 10% faster', key: 'gatherSpeed', v: 1.1 },
     ench: { txt: 'Reforge costs 20% less; transmuting up takes 1 less', key: 'reforge', v: 0.8 }
@@ -326,6 +326,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     addModifier(f.key, () => lv(id) >= 5 ? f.v : 1);
   }
   addBonus('transmuteSave', () => lv('ench') >= 5 ? 1 : 0);
+  addBonus('gradeLv', () => lv('forge') >= 5 ? 1 : 0);   // craft-attribute-grades: read by gradeLv (40-rules) only while CRAFT_TUNE.grades is on
   // Hearth: +3% away gains per level (Hearth Day doubles it).
   addModifier('offline', () => 1 + 0.03 * lv('hearth') * mod('hearth'));
   // Watchtower: +2h per level, and the whole away cap (Hourglass + every awayHours bonus) stays <= 24h.

@@ -95,7 +95,7 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -940,6 +940,81 @@ if (section('craft-curve-skills-report')) try {
   const skz = js ? JSON.parse(js.slice(5)).skz : null, zb = skz && skz.lvZone.bench ? skz.lvZone.bench[REQ[1]] : undefined, tz = E('PACE.essTier[1]');
   assert(skz && zb !== undefined && zb <= tz + 2, `switch on, sim --skzone (good Wren, day 1): Woodcraft ${REQ[1]} at zone ${zb} (want by zone ${tz}, missed after ${tz + 2})${skz ? '' : ' ' + (sim.stderr || '').slice(0, 300)}`);
 } catch (e) { fail('craft-curve-skills-report crashed: ' + (e.stack || e)); }
+
+// ---- craft-attribute-grades: station level sets the grade (D to S) behind CRAFT_TUNE.grades (off in the game until the balance pass) ----
+if (section('craft-attribute-grades')) try {
+  const g = loadCore({ seed: 11 }), E = s => g.eval(s), J = JSON.stringify;
+  E(`almanac.force('none'); chooseClass("ranger"); S.camp.b.store = 8; S.camp.b.forge = 1; for (const k of CRAFT_FAMILIES) S.mats[k] = [900, 900, 900, 900, 900];
+    for (const k of REFINED_FAMILIES) S.mats[k] = [900, 900, 900, 900, 900]; S.gold = 1e9; for (const k of SKILL_TUNE.craftSkills) S.skills[k].lv = 7`);   // no Omen today, Forge Lv 1: no grade bonus
+  const pow = id => E(`itemPower(itemById(${id}))`);
+  // switch off: the die, rarity words and today's bonus texts; no item gets a grade
+  assert(E('CRAFT_TUNE.grades') === 0 && E('gradeLv("bow")') === 7 && E('campEffects("forge", 5).includes("Rare and Epic odds +10%")'), "switch off: CRAFT_TUNE.grades ships at 0; the Forge's Lv 5 perk keeps today's words");
+  const offIds = []; for (let i = 0; i < 24; i++) offIds.push(E('craftItem("bow", 1).id'));
+  const offR = E(`${J(offIds)}.map(id => itemById(id).r)`);
+  assert(E(`${J(offIds)}.every(id => itemById(id).g === undefined)`) && new Set(offR).size >= 2 && E(`${J(offIds)}.every(id => itemPower(itemById(id)) === TIER_POW[1] * RAR[itemById(id).r].m)`),
+    `switch off: 24 Pine Bows roll the die (${[...new Set(offR)].join('/')}), none has a grade, power reads the rarity`);
+  assert(E(`itemQual(itemById(${offIds[0]}))`) === E(`RAR[itemById(${offIds[0]}).r].n`) && E(`itemQualShort(itemById(${offIds[0]}))`) === { common: 'Com', uncommon: 'Unc', rare: 'Rare', epic: 'Epic' }[offR[0]], 'switch off: an item reads its rarity word');
+  assert(E('OMENS.find(o => o.id === "steadyHands").fx') === 'Rare and Epic forge odds +50%' && E('bonus("gradeLv")') === 0, "switch off: Steady Hands keeps today's text");
+  // a graded item read with the switch off reads its rarity twin (grade B reads as uncommon: the stated drop)
+  E(`S.items.push({ id: S.nextId++, slot: 'bow', t: 1, r: 'uncommon', g: 2, plus: 0, a: [['attack', 0.5], ['crit', 0.5]] })`);
+  const gOff = E('S.items[S.items.length - 1].id');
+  assert(Math.abs(pow(gOff) - 13.5) < 1e-9 && E(`itemQual(itemById(${gOff}))`) === 'Uncommon' && E(`canReforge(${gOff}, 0).ok && !canReforge(${gOff}, 0).pick`), 'switch off: a graded Pine Bow (B) reads its twin: Uncommon, power 13.5, the random Reforge');
+  // switch on: the grade from Woodcraft (D at the gate, C +3, B +6, A +10, S +15)
+  E('CRAFT_TUNE.grades = 1');
+  assert(Math.abs(pow(gOff) - 15.5) < 1e-9 && E(`itemQual(itemById(${gOff}))`) === 'Grade B', 'switch on: the same grade B Pine Bow reads Grade B at power 15.5');
+  const ladder = E(`[3, 4, 6, 7, 10, 11, 15, 16].map(lv => GRADE[gradeFor('warblade', 1, lv)].n).join('')`);
+  assert(ladder === 'DCCBBAAS' && E(`GRADE.map(x => x.m).join()`) === '1,1.35,1.55,1.8,2.5' && E(`GRADE.map(x => x.r).join()`) === 'common,uncommon,uncommon,rare,epic', `switch on: Copper grades at Smithing 3/4/6/7/10/11/15/16 read ${ladder} (C 4, B 7, A 11, S 16); multipliers equal the rarity values`);
+  const offPow = offIds.map(pow), offRaw = E(`JSON.stringify(${J(offIds)}.map(id => itemById(id)))`);
+  E('S.skills.bench.lv = 7');
+  assert(E('gradeFor("bow", 1)') === 2 && J(E('gradeNext("bow", 1)')) === '{"g":3,"lv":11}', 'switch on: a Pine Bow at Woodcraft 7 is grade B, and A comes at Woodcraft 11');
+  const b7 = E('(() => { const it = craftItem("bow", 1); return { g: it.g, r: it.r, a: it.a, p: itemPower(it), q: itemQual(it) }; })()');
+  assert(b7.g === 2 && b7.r === 'uncommon' && J(b7.a) === '[["attack",0.5],["crit",0.5]]' && Math.abs(b7.p - 15.5) < 1e-9 && b7.q === 'Grade B',
+    `switch on: the Pine Bow is made at grade B: twin uncommon, the Striker pool's first two lines at the middle roll, power 15.5 (${J(b7)})`);
+  E('S.skills.bench.lv = 12');
+  assert(E('gradeFor("bow", 1)') === 3 && E('gradeFor("bow", 2)') === 0, 'switch on: at Woodcraft 12, Pine Bow grade A or Birch Bow grade D');
+  // the bonuses: Forge 5 (+1 level) and Steady Hands (+2), with their new words
+  E('S.skills.bench.lv = 9'); const g9 = E('gradeLv("bow")');
+  E('S.camp.b.forge = 5'); const g9f = E('gradeLv("bow")');
+  E(`almanac.force('steadyHands')`); const g9s = E('gradeLv("bow")');
+  assert(g9 === 9 && g9f === 10 && g9s === 12 && E('OMENS.find(o => o.id === "steadyHands").fx') === 'Crafts grade as 2 levels higher' && E('campEffects("forge", 5).includes("Crafts grade as 1 level higher")'), `switch on: Woodcraft 9 grades as ${g9}, ${g9f} with the Forge at Lv 5, ${g9s} with Steady Hands too; Steady Hands reads "Crafts grade as 2 levels higher"`);
+  assert(E('gradeFor("bow", 1)') === 3 && E('craftItem("bow", 1).g') === 3, 'switch on: the bonus levels lift the grade the craft is made at (Woodcraft 9 + 3 = A)');
+  E(`almanac.force('none'); S.camp.b.forge = 1`);
+  // grade S: four lines, twin epic, and the deeds count it by the twin
+  E('S.skills.smith.lv = 16');
+  const sw = E('(() => { const it = craftItem("warblade", 1); return { g: it.g, r: it.r, n: it.a.length, a0: it.a[0][0], p: itemPower(it), fine: S.deeds.rec.fine, epic: !!S.deeds.rec.epic }; })()');
+  assert(sw.g === 4 && sw.r === 'epic' && sw.n === 4 && sw.a0 === 'armour' && Math.abs(sw.p - 25) < 1e-9 && sw.fine >= 3 && sw.epic,
+    `switch on: a Copper Warblade at Smithing 16 is grade S (twin epic, 4 lines, Tank's armour first, power 25); Fine Work and the Epic craft deed count it (${J(sw)})`);
+  // tools keep the die; old items are never touched
+  const pk = E('(() => { const it = craftItem("pick", 1); return { g: it.g, r: it.r }; })()');
+  assert(pk.g === undefined && ['common', 'uncommon', 'rare', 'epic'].includes(pk.r), `switch on: a Pickaxe is not graded (it rolls ${pk.r})`);
+  assert(E(`JSON.stringify(${J(offIds)}.map(id => itemById(id)))`) === offRaw && J(offIds.map(pow)) === J(offPow), 'switch on: the 24 Bows made before keep their rarity, lines and power exactly');
+  // Reforge: a pick on a graded item at the same price; the old Bows keep the random Reforge
+  E('S.skills.ench.lv = 12');
+  const gid = E('S.items.find(it => it.g === 2 && it.slot === "bow" && it.id !== ' + gOff + ').id'), oid = offIds.find(id => E(`itemById(${id}).a.length`) === 2);
+  const rp = E(`(() => { const a = canReforge(${gid}, 0), b = canReforge(${gid}, 0, 'attack'), c = canReforge(${gid}, 0, 'pierce'), o = canReforge(${oid}, 0);
+    return { a: a.ok, ap: a.pick, b: b.ok, c: c.ok, same: JSON.stringify(c.cost) === JSON.stringify(o.cost), o: o.ok && !o.pick, ch: reforgeChoices(itemById(${gid})) }; })()`);
+  assert(!rp.a && rp.ap && !rp.b && rp.c && rp.same && rp.o && J(rp.ch) === '["pierce","hp"]', `switch on: a graded Bow's Reforge needs a pick from the stats it lacks (${rp.ch.join(', ')}) at the old price; an old Bow rerolls (${J(rp)})`);
+  const g0 = E('S.gold');
+  assert(E(`reforgeItem(${gid}, 0, 'pierce')`) && J(E(`itemById(${gid}).a`)) === '[["pierce",0.5],["crit",0.5]]' && E(`itemById(${gid}).rf`) === 1 && E('S.gold') < g0, 'switch on: reforging the graded Bow puts Pierce in at the middle roll and pays');
+  E(`S.items.push({ id: S.nextId++, slot: 'warblade', t: 1, r: 'epic', g: 4, plus: 0, a: [['armour', 0.5], ['threat', 0.5], ['block', 0.5], ['hp', 0.5]] })`);
+  assert(/every bonus/.test(E(`canReforge(S.items[S.items.length - 1].id, 0, 'attack').why`)), 'switch on: a grade S Warblade with every Tank bonus has nothing to pick');
+  // save codes: g is checked only when present
+  E('S.cls.at = 0'); const code = E('encodeSave(S)'), back = E(`decodeSave(${J(code)})`);
+  assert(back.ok && back.data.items.some(it => it.g === 4) && back.data.items.some(it => it.g === undefined), 'save codes: graded and old items round-trip');
+  const raw = JSON.parse(E('JSON.stringify(S)')), gi = raw.items.findIndex(it => it.g === 2);
+  const refuse = f => { const o = JSON.parse(J(raw)); f(o); return !E(`validateSave(${J(o)})`).ok; };
+  assert(refuse(o => { o.items[gi].g = 5; }) && refuse(o => { o.items[gi].g = 1.5; }) && refuse(o => { o.items[gi].r = 'rare'; }) && refuse(o => { const p = o.items.find(it => it.slot === 'pick'); p.g = 0; p.r = 'common'; })
+    && !refuse(o => { o.items[gi].g = 1; }), 'save codes: a grade of 5 or 1.5, a grade whose twin does not match r, or a graded tool is refused; a matching grade loads');
+  // old saves: every item loads unchanged, with the same power, with the switch on
+  for (const f of ['save-mid.json', 'save-late.json']) {
+    const txt = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const read = on => { const h = loadCore({ seed: 1, storage: memoryStorage({ [KEY]: txt }) }); if (on) h.eval('CRAFT_TUNE.grades = 1; gearDirty()');
+      return { items: h.eval('JSON.stringify(S.items)'), pow: h.eval('JSON.stringify(S.items.map(itemPower))'), dps: h.eval('Math.round(heroDps() * 1000)'), err: h.errors.length }; };
+    const a = read(false), b = read(true);
+    assert(a.items === b.items && a.pow === b.pow && a.dps === b.dps && !a.err && !b.err && !JSON.parse(b.items).some(it => it.g !== undefined), `${f}: with the switch on, every item loads unchanged with the same power and damage`);
+  }
+  assert(!g.errors.length, 'craft-attribute-grades: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('craft-attribute-grades crashed: ' + (e.stack || e)); }
 
 // ---- bounties: gathering counts at any tier and while away (owner bug report) ----
 if (section('bounties')) try {
@@ -11043,6 +11118,73 @@ if (section('craft reveal')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('craft reveal crashed: ' + (e.stack || e)); }
+
+// ==== craft-attribute-grades (browser): with CRAFT_TUNE.grades on in a scratch game, the recipe row shows its grade and the choice,
+// a craft is made at that grade (an A is a medium moment), the bag and the item sheet name the letter, and a graded Reforge is a pick ====
+if (section('craft attribute grades (browser)')) try {
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('craft attribute grades (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');   // Tobin, Forge recipes
+    const shots = process.env.LF_PROOF_SHOTS ? path.resolve(process.env.LF_PROOF_SHOTS) : null;
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, touch, motion] of [[1280, 720, false, 'no-preference'], [740, 360, true, 'reduce'], [360, 740, true, 'no-preference']]) {
+        const at = `craft attribute grades ${w}x${h}${motion === 'reduce' ? ' reduced motion' : ''}`;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: motion });
+        await ctx.addInitScript(([key, raw]) => {
+          try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {}
+          const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+        }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // a scratch game: the switch on, no Omen, Forge Lv 1 (no bonus level), every station at Lv 12, the bag empty but the worn set
+        await X(`CRAFT_TUNE.grades = 1; almanac.force('none'); S.camp.b.forge = 1; S.onboard.tips = false; S.refine.said = 1; S.gold = 1e9; S.auto = false;
+          for (const k of SKILL_TUNE.craftSkills) { S.skills[k].lv = 12; S.skills[k].xp = 0; } for (const k of CRAFT_FAMILIES) S.mats[k] = [900, 900, 900, 900, 900];
+          for (const k of REFINED_FAMILIES) S.mats[k] = [900, 900, 900, 900, 900]; window.__mom = []; const m0 = moment; moment = (k, o) => { window.__mom.push([k, o && o.eye]); return m0(k, o); };
+          gearDirty(); ui(true); true`);
+        await page.click('.tab[data-tab="forge"]'); await page.waitForTimeout(500);
+        await X(`(() => { const b = [...document.querySelectorAll('.cf-stations .cf-st')].find(x => x.dataset.st === 'forge'); b.click(); const t = document.querySelector('.cf-tiers button[data-t="1"]'); t.click(); return true; })()`);
+        await page.waitForTimeout(300);
+        const row = await X(`(() => { const r = document.querySelector('.cf-rec[data-kind="warblade"]'); if (!r) return null; const q = s => r.querySelector(s);
+          const box = r.getBoundingClientRect(), fit = [...r.querySelectorAll('.cf-gline, .cf-choice')].every(e => e.scrollWidth <= e.clientWidth + 1 && e.getBoundingClientRect().right <= box.right + 1);
+          return { gl: q('.cf-gline') && q('.cf-gline').textContent, ch: q('.cf-choice') && q('.cf-choice').textContent, odds: !!r.querySelector('.cf-odds:not(.cf-gline):not(.cf-choice)'), fit }; })()`);
+        assert(row && row.gl === 'Grade A · S at Smithing 16' && row.ch === 'Copper Warblade grade A, or Iron Warblade grade D' && !row.odds && row.fit,
+          `${at}: the Copper Warblade row at Smithing 12 reads "Grade A · S at Smithing 16" and "Copper Warblade grade A, or Iron Warblade grade D", no odds line, both lines fit (${JSON.stringify(row)})`);
+        if (shots) { await X(`document.querySelector('.cf-rec[data-kind="warblade"]').scrollIntoView({ block: 'center' }); true`); await page.waitForTimeout(150); await page.screenshot({ path: path.join(shots, `row-${w}x${h}.png`) }); }
+        // the tools keep the die and its odds line
+        await X(`(() => { [...document.querySelectorAll('.cf-stations .cf-st')].find(x => x.dataset.st === 'bench').click(); return true; })()`); await page.waitForTimeout(250);
+        assert(await X(`(() => { const r = document.querySelector('.cf-rec[data-kind="pick"]'); return !!r && /^Odds: /.test((r.querySelector('.cf-odds') || {}).textContent || '') && !r.querySelector('.cf-gline'); })()`), `${at}: the Pickaxe row keeps its odds line (tools are not graded)`);
+        await X(`(() => { [...document.querySelectorAll('.cf-stations .cf-st')].find(x => x.dataset.st === 'forge').click(); return true; })()`); await page.waitForTimeout(250);
+        await X(`document.querySelector('.cf-rec[data-kind="warblade"] .cf-go').click(); true`); await page.waitForTimeout(400);
+        const res = await X(`(() => { const c = document.querySelector('.cf-res'), it = c && itemById(+c.dataset.itemId); return c ? { grade: c.querySelector('.cf-grade').textContent, g: it.g, r: it.r, tile: (document.querySelector('.cf-recent .cf-gr') || {}).textContent, mom: window.__mom } : null; })()`);
+        assert(res && res.grade === 'Grade A' && res.g === 3 && res.r === 'rare' && res.tile === 'A' && res.mom.some(m => m[0] === 'craft' && m[1] === 'Well made · Grade A'),
+          `${at}: the craft is made at grade A: the card says "Grade A", the strip tile "A", and it is a medium moment ("Well made · Grade A") (${JSON.stringify(res)})`);
+        if (shots) { await X(`document.querySelector('.cf-resbox').scrollIntoView({ block: 'start' }); true`); await page.waitForTimeout(150); await page.screenshot({ path: path.join(shots, `made-${w}x${h}.png`) }); }
+        // the item sheet: the letter in its head, and a graded Reforge asks which bonus to put in
+        const id = await X(`+document.querySelector('.cf-res').dataset.itemId`);
+        await X(`craftUI.openItem ? craftUI.openItem(${id}) : document.querySelector('.cf-recent .cf-tile').click(); true`); await page.waitForTimeout(400);
+        const head = await X(`(() => { const s = document.querySelector('.bsheet .cf-ihbig .cf-im'); return s ? s.textContent : ''; })()`);
+        assert(/^Grade A · Tier 1 · Warblade$/.test(head), `${at}: the item sheet's head reads "${head}"`);
+        await X(`document.querySelector('.bsheet .cf-rfo .cf-rfl').click(); true`); await page.waitForTimeout(200);
+        const pk = await X(`(() => { const b = [...document.querySelectorAll('.bsheet .cf-rfpick .cf-rfl')]; const go = [...document.querySelectorAll('.bsheet .cf-rf .cf-act')].pop(); return { picks: b.map(x => x.dataset.pick), go: go && go.textContent, dis: go && go.disabled }; })()`);
+        assert(JSON.stringify(pk.picks) === '["hp"]' && pk.go === 'Pick the bonus to put in' && pk.dis, `${at}: after a line is picked, the sheet asks for the bonus to put in (${JSON.stringify(pk)})`);
+        await X(`document.querySelector('.bsheet .cf-rfpick .cf-rfl').click(); true`); await page.waitForTimeout(200);
+        for (let i = 0; i < 2; i++) { await X(`[...document.querySelectorAll('.bsheet .cf-rf .cf-act')].pop().click(); true`); await page.waitForTimeout(250); }
+        assert(await X(`JSON.stringify(itemById(${id}).a[0]) === '["hp",0.5]' && itemById(${id}).rf === 1`), `${at}: Confirm puts Health in place of the first line at the middle roll`);
+        if (shots) { await page.screenshot({ path: path.join(shots, `reforge-${w}x${h}.png`) }); }
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('craft attribute grades (browser) crashed: ' + (e.stack || e)); }
 
 // ==== craft-delta: a better tool goes on by itself, the result card's fight line, Next Up's boss and upgrade goals ====
 if (section('craft delta')) try {
