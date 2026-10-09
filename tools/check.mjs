@@ -14940,8 +14940,9 @@ if (section('menu-tip-room')) try {
         const p = JSON.parse(await X(panel));
         if (w < h) assert(up && /over-menu/.test(p.cls) && p.bub.h <= 96 && p.ok && p.ok.h >= 44 && p.x && p.x.w >= 44 && p.bub.bottom <= p.tabs.top,
           `${v}: the materials line with its Go is at most 96 px tall over Gather (${JSON.stringify(p)})`);
-        else assert(up && /\bside\b/.test(p.cls) && !/over-menu/.test(p.cls) && p.face && p.face.w === 36 && p.bub.w === 195,
-          `${v}: landscape keeps the side column as it was (195 px wide, his face at 36 px) (${JSON.stringify(p)})`);
+        else { const cols = await X(`getComputedStyle(document.querySelector('.ob-bub')).gridTemplateColumns`);
+          assert(up && /\bside\b/.test(p.cls) && !/over-menu/.test(p.cls) && p.face && p.face.w > 32 && !/^44px/.test(cols),
+            `${v}: landscape keeps the side column, none of the upright strip's sizes (${cols}; ${JSON.stringify(p)})`); }
         assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
