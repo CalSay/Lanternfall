@@ -16725,6 +16725,52 @@ if (section('tier-two-named-for-return')) try {
   }
 } catch (e) { fail('tier-two-named-for-return crashed: ' + (e.stack || e)); }
 
+// ==== nu-chip-gate-label-fits: the always-on Next Up chip shows the whole tier 2 gate label ====
+// save-min60-tier-gate's Birch Bow gate row (~90 characters) is the longest Next Up label a first sitting meets. The chip clamps its
+// label to 3 lines in landscape (80-landscape), and tier-two-named-for-return measures only the opened list's .nu-row. The chip shows
+// topGoals(3)[0], so the section puts the gate row's words in the chip's label and counts the lines they take where the chip draws them.
+// The clamp leaves overflow visible, so scrollHeight misses a cut: the section counts the text's own line boxes. At 740x360 the words
+// take all 3 lines with nothing to spare, so a longer gate wording or a narrower side column fails here.
+if (section('nu-chip-gate-label-fits')) try {
+  const at = 'nu-chip-gate-label-fits', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[740, 360], [1024, 768], [1280, 720], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const want = await X('(topGoals(20, { sticky: false }).find(x => x.id === "forge") || {}).label || ""');
+        assert(/^Birch Bow: Mining 7 of 14 opens Iron Ore\. /.test(want), `${v}: the fixture's gate row is the Birch Bow's (${want})`);
+        const o = await page.evaluate(want => { const c = document.getElementById('nuChip'), l = c && c.querySelector('.nu-lbl'); if (!l || c.offsetParent === null) return null;
+          l.textContent = want;   // renderChip rewrites only when the goals change, so the words stay for the measure
+          const cs = getComputedStyle(l), a = l.getBoundingClientRect(), b = c.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(l);
+          const rs = [...rg.getClientRects()].filter(r => r.width > 0), clamp = parseInt(cs.webkitLineClamp, 10) || 0;
+          return { lines: new Set(rs.map(r => Math.round(r.top))).size, clamp, textBottom: Math.round(Math.max(...rs.map(r => r.bottom))), boxBottom: Math.round(a.bottom),
+            fs: parseFloat(cs.fontSize), ellipsis: cs.textOverflow === 'ellipsis' && l.scrollWidth > l.clientWidth + 1,
+            inChip: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        assert(o, `${v}: the Next Up chip shows`);
+        if (o) {
+          assert((!o.clamp || o.lines <= o.clamp) && o.textBottom <= o.boxBottom + 1 && !o.ellipsis && o.inChip, `${v}: the gate label shows whole inside the chip, no clamp or ellipsis (${JSON.stringify(o)})`);
+          assert(o.fs >= (w >= 1280 ? 14 : 13), `${v}: the chip label keeps its text floor (${o.fs})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('nu-chip-gate-label-fits crashed: ' + (e.stack || e)); }
+
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
 // (50-sim awayBase), so the row promises "keeps going" only then; fighting or gathering another skill says how to make it true.
