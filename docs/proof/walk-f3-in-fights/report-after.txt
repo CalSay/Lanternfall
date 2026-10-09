@@ -1,7 +1,7 @@
 # First-hour walk, after
 
-Build `../../../tmp/claude-0/wb/base.html` at ac9f0a20. Seed 1, wren, 1280x720. Bot: parries 55% of foe hits, dodges 50% of the rest, reads each tip 1.2 s, reads each card 2.4 s.
-Played 60:00 of 60:00 game time in 2346 s of clock. Report only: nothing here blocks a merge.
+Build `../../../tmp/claude-0/wb/base.html` at dfb602cb. Seed 1, wren, 1280x720. Bot: parries 55% of foe hits, dodges 50% of the rest, reads each tip 1.2 s, reads each card 2.4 s.
+Played 60:00 of 60:00 game time in 2199 s of clock. Report only: nothing here blocks a merge.
 
 The bot was beaten 1 time by bosses (the "try again" card).
 
@@ -63,7 +63,7 @@ First uses: craft at 4:05, upgrade at 11:28.
 | F4 | met | at most 2 new things the game releases on its own in any 3 min of the first 30, 4 in any 10 after (a thing the player's act or a drop opened is listed, not counted) | 15 new things (11 released, 4 by player or drop, 2 with a hero join, not counted); most released in 3 min (first 30): 2 from 0:24; most released in 10 min after: 1; all kinds in 3 min: 4 |
 | F5 | missed | no tip off its phase, nothing covering the fighters or bars, no clipped text | 2 findings at 1280x720 |
 | F6 | missed | every moment a card or banner for 2 s with its sound | 8 of 32 not shown right: zone at 8:07: no card or banner; star at 22:11: a card, no sound; zone at 24:34: no card or banner; star at 24:34: no card or banner, no sound; ... |
-| F10 | missed | no placeholder letters in the first hour | 15 placeholder tiles: Po in soloBar; Ma in soloBar; Po in panels; Ma in panels |
+| F10 | missed | no placeholder letters in the first hour | 2 placeholder tiles: Po in soloBar; Ma in soloBar |
 | P4 | not measured | at least 3 looks by minute 60, with a Wardrobe count | 0 looks found; Wardrobe count not read (the walk opens no Wardrobe yet), so P4 is not measured |
 
 Fight lessons: Attack 0:08 (fight 1), Dodge 0:11 (fight 1), the ability 0:15 (fight 1), Parry 0:23 (fight 2).
@@ -126,17 +126,17 @@ Peaks (each needs its own big card that says what it gave):
 - the zone 5 Champion: 16:10; card "The Briar Regent falls", gave: Tobin joins your camp. Switch heroes on the Hero tab, for free.; Hollow Scroll, 243 gold, 4 Essence
 - the zone 10 Champion: 22:11; card "The Hollow Cantor falls", gave: Star: Turning Point; Hollow Scroll, 371 gold, 4 Essence
 
-Gaps of 3 min or more (fights are diagnosis only; the time split is fighting, gathering, and held on a card, tip or menu):
+Gaps of 3 min or more (fights are diagnosis only; the time split is fighting, gathering, and held on a card, sheet or menu):
 
 | From | To | Gap | Fights | Lost boss tries | Fight / gather / held min | Cause |
 |---|---|---|---|---|---|---|
-| 2:06 | 5:43 | 3:37 | 3 | 0 | 0.8 / 2.5 / 0.2 | gathering for a goal |
-| 9:28 | 16:10 | 6:42 | 5 | 0 | 2.7 / 3.5 / 0.6 | gathering for a goal |
+| 2:06 | 5:43 | 3:36 | 3 | 0 | 1 / 2.5 / 0 | gathering for a goal |
+| 9:28 | 16:10 | 6:42 | 5 | 0 | 3.2 / 3.5 / 0.1 | gathering for a goal |
 
 ## Where it dragged
 
 - 28:19 to 31:39: 3.3 min with no unlock, boss win, unique, Star, hero or Next Up result
-- 34:13 to 38:26: 4.2 min with no unlock, boss win, unique, Star, hero or Next Up result
+- 34:12 to 38:26: 4.2 min with no unlock, boss win, unique, Star, hero or Next Up result
 - 38:30 to 45:03: 6.5 min with no unlock, boss win, unique, Star, hero or Next Up result
 - 45:06 to 48:32: 3.4 min with no unlock, boss win, unique, Star, hero or Next Up result
 - 48:39 to 53:09: 4.5 min with no unlock, boss win, unique, Star, hero or Next Up result
