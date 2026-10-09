@@ -15125,6 +15125,80 @@ if (section('upgrade-gold-covers-short')) try {
   })();
 } catch (e) { fail('upgrade-gold-covers-short crashed: ' + (e.stack || e)); }
 
+// ==== menu-tip-room: Hesketh's panel over a menu is a compact strip, and "Fireball" and "Can learn N" read in full ====
+// save-pip-points: save-flow-points with Pip (Fireball in Q), tips on, 12 attribute points free at the upgrade step. Spent, the menu still
+// open, he says to close it (the `back` line, with Back to the fight). save-forge-short gives a materials line with a Go on Gather.
+if (section('menu-tip-room')) try {
+  const at = 'menu-tip-room', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const fx = n => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', `save-${n}.json`), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (raw, w, h) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: 'reduce', turns: true });
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const click = async sel => { await page.evaluate(s => { const e = document.querySelector(s); if (!e) throw new Error('no ' + s); e.click(); }, sel); await page.waitForTimeout(400); };
+      return { ctx, page, errs, X, click };
+    };
+    const box = sel => `(e => { if (!e || e.hidden) return null; const r = e.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height), w: Math.round(r.width) }; })(document.querySelector(${JSON.stringify(sel)}))`;
+    const panel = `JSON.stringify({ cls: document.querySelector('.ob-bub').className, txt: document.querySelector('.ob-txt').textContent, bub: ${box('.ob-bub')}, face: ${box('.ob-face')}, t: ${box('.ob-txt')}, ok: ${box('.ob-ok')}, x: ${box('.ob-x')}, tabs: ${box('.tabs')} })`;
+    const fits = sel => `JSON.stringify([...document.querySelectorAll(${JSON.stringify(sel)})].map(e => [e.textContent, e.scrollWidth, e.clientWidth]))`;
+    const waitFor = async (X, src, ms = 6000) => { for (let t = 0; t < ms; t += 200) { if (await X(src)) return true; await new Promise(r => setTimeout(r, 200)); } return false; };
+    try {
+      { // 360x740, Pip: the back line over Hero > Abilities
+        const v = `${at} (browser 360x740, Pip)`, { ctx, page, errs, X, click } = await open(fx('pip-points'), 360, 740);
+        await click('.tab[data-tab="party"]'); await click('#viewSeg button[data-view="attributes"]');
+        await click('#attrRows .at-row[data-at="might"] .at-add[data-n="1"]'); await click('#attrRows ~ .at-acts .at-spread');
+        await click('#viewSeg button[data-view="abilities"]');
+        const up = await waitFor(X, `/close the menu/.test(document.querySelector('.ob-bub:not([hidden]) .ob-txt')?.textContent || '')`);
+        const p = JSON.parse(await X(panel));
+        assert(up && /over-menu/.test(p.cls) && /Back to the fight/.test(await X(`document.querySelector('.ob-ok').textContent`)), `${v}: the back line is up over the menu with its button (${p.cls}: "${p.txt}")`);
+        assert(p.bub && p.bub.h <= 96 && p.face && p.face.w === 32 && p.ok && p.ok.h >= 44 && p.x && p.x.h >= 44 && p.x.w >= 44, `${v}: the panel is at most 96 px tall, his face 32 px, the button and × at least 44 px (${JSON.stringify(p)})`);
+        assert(p.bub.bottom <= p.tabs.top, `${v}: the panel stays above the tab bar (${p.bub.bottom} <= ${p.tabs.top})`);
+        // Fireball's card: scroll its talents into view; both sit wholly above the panel and nothing covers them
+        await click('.ab-row[data-ab="fire"]');
+        const tal = JSON.parse(await X(`(() => { const t = document.querySelector('.ab-det .ab-tal'); if (!t) return 'null'; t.scrollIntoView({ block: 'nearest' }); const top = document.querySelector('.ob-bub').getBoundingClientRect().top;
+          return JSON.stringify({ top: Math.round(top), cards: [...t.querySelectorAll('.ab-talb')].map(b => { const r = b.getBoundingClientRect(), e = document.elementFromPoint(r.left + r.width / 2, r.bottom - 4); return { top: Math.round(r.top), bottom: Math.round(r.bottom), hit: !!e && b.contains(e) }; }) }); })()`));
+        assert(tal && tal.cards.length === 2 && tal.cards.every(c => c.bottom <= tal.top && c.top >= 0 && c.hit), `${v}: both Fireball talent cards are wholly above the panel and not covered (${JSON.stringify(tal)})`);
+        const filt = JSON.parse(await X(fits('.ab-fb')));
+        const can = filt.find(f => /^Can learn \d+$/.test(f[0]));
+        assert(can && filt.every(f => f[1] <= f[2]), `${v}: every filter label reads in full, "Can learn N" too (${JSON.stringify(filt)})`);
+        // the fight bar: Fireball, and every hero's starter ability name, read in full
+        await click('#menuX'); await page.waitForTimeout(400);
+        const bar = JSON.parse(await X(fits('#soloBar .sb-abslot:not(.empty) .sb-lb')));
+        assert(bar.length && bar.some(b => b[0] === 'Fireball') && bar.every(b => b[1] <= b[2]), `${v}: "Fireball" on the fight bar is not cut (${JSON.stringify(bar)})`);
+        const starters = JSON.parse(await X(`(() => { const lb = document.querySelector('#soloBar .sb-abslot .sb-lb'), keep = lb.textContent, out = [];
+          for (const h of ['wren', 'tobin', 'pip']) { const id = S.solo.eq[h][0], nm = ABILITIES[id].name; lb.textContent = nm; out.push([nm, lb.scrollWidth, lb.clientWidth, lb.scrollHeight, lb.clientHeight, lb.closest('.sbtn').scrollHeight <= lb.closest('.sbtn').clientHeight]); }
+          lb.textContent = keep; return JSON.stringify(out); })()`));
+        assert(starters.length === 3 && starters.every(s => s[1] <= s[2] && s[3] <= s[4] && s[5]), `${v}: every starter ability name reads in full inside its tile (${JSON.stringify(starters)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      for (const [w, h] of [[360, 740], [740, 360]]) { // a materials line with its Go on Gather: compact upright; the side column unchanged in landscape
+        const v = `${at} (browser ${w}x${h}, Gather)`, { ctx, errs, X } = await open(fx('forge-short'), w, h);
+        await X('S.activity = "gather"; S.node = { kind: "wood", t: 1 }; setTab("gat"); ui(true); true');
+        const up = await waitFor(X, `/Copper Vein/.test(document.querySelector('.ob-bub:not([hidden]) .ob-txt')?.textContent || '')`);
+        const p = JSON.parse(await X(panel));
+        // the check runs without the game's web fonts: CI's fallback (DejaVu Sans) is far wider than Barlow Semi Condensed and wraps this
+        // 104-letter line to six lines, so past 96 px the strip may be only as tall as its text (the face, × and Go never add height)
+        if (w < h) assert(up && /over-menu/.test(p.cls) && p.bub.h <= Math.max(96, p.t.h + 16) && p.ok && p.ok.h >= 44 && p.x && p.x.w >= 44 && p.bub.bottom <= p.tabs.top,
+          `${v}: the materials line with its Go is at most 96 px tall over Gather, or no taller than its text (${JSON.stringify(p)})`);
+        else { const cols = await X(`getComputedStyle(document.querySelector('.ob-bub')).gridTemplateColumns`);
+          assert(up && /\bside\b/.test(p.cls) && !/over-menu/.test(p.cls) && p.face && p.face.w > 32 && !/^44px/.test(cols),
+            `${v}: landscape keeps the side column, none of the upright strip's sizes (${cols}; ${JSON.stringify(p)})`); }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('menu-tip-room crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
