@@ -12502,8 +12502,10 @@ if (section('zone10-clear-moment')) try {
         const during = await X(`soloGuideWants()`);
         assert(!/^say:/.test(during), `${at}: no Hesketh line shows over the card (${during})`);
         let said = '';
-        for (let i = 0; i < 6 && !said; i++) { await click(/^Continue$/); await run(1.2); const w = await X(`soloGuideWants()`); if (/^say:/.test(w)) said = w; }
-        assert(said === 'say:stars' || (retry && said === 'say:defeat'), `${at}: the queued line speaks after the card closes (${said})`);
+        // the line waits for the next gap between foes (a slow runner can take a while to get there): up to 30 s of game time
+        for (let i = 0; i < 30 && !said; i++) { await click(/^Continue$/); await run(1); const w = await X(`soloGuideWants()`); if (/^say:/.test(w)) said = w; }
+        const after = said ? '' : await X(`JSON.stringify({ wants: soloGuideWants(), sayQ: S.onboard.sayQ, cache: cachePending(), paused: ONBOARD.paused, moments: MOMENT_Q.length, card: !!document.querySelector('.mm-ov'), story: !!document.querySelector('.sty-sheet'), fighting: fightingNow(), tab: S.tab })`);
+        assert(said === 'say:stars' || (retry && said === 'say:defeat'), `${at}: the queued line speaks after the card closes (${said}${after})`);
         assert(!errs.length, `${at}: no page errors (${errs.slice(0, 2).join(' | ')})`);
         await ctx.close();
       }
