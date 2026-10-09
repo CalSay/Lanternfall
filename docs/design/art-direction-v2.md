@@ -173,6 +173,17 @@ Give Codex the quoted block as written; it is self-contained.
 > (the game's export format), a PNG copy of each for review, the palette as `palette.png`, and a `README.md` that says
 > how long it took, how you made it (tool, source image size, how you shrank and cleaned it) and each WebP's file size.
 > Open a PR into `claude/elegant-johnson-m6k00u`. Do not change any other file, and do not change the game.
+>
+> **The byte rule for every Codex pack** (page-bytes ruling, 2026-10-09). This sample is a hero frame, so the ceilings
+> below do not bind it, but report its sizes against them; any pack drawn at the new scale must meet them:
+> 1. Export every pack and background as lossless WebP.
+> 2. Sprite packs (monsters with their Captains, Champions, the Fenmother, beasts): at most 64 colours across the whole
+>    pack, alpha 0 or 255 only, no soft edges or glows. Backgrounds get no colour cap.
+> 3. Ceilings in file bytes, all atlases together: monster with its Captain 85 KB, an area's five monsters 425 KB,
+>    Champion 120 KB, Fenmother 200 KB, beast 60 KB, still 25 KB. A Captain's look and poses fit inside its monster's
+>    ceiling.
+> 4. Backgrounds: one 960x540 picture an area, at most 190 KB, no colour cap, with the upright crop's safe area marked.
+> 5. Hold key poses with manifest timing rather than drawing in-betweens that barely move.
 
 When it lands, a Claude thread puts the two frames into game shots beside today's Wren, scaled the way the game would draw
 them (nearest neighbour, nothing redrawn): the 2x frame at 1 CSS px per art px at 1280x720 and 1.5 at 1920x1080; the 1.5x
