@@ -1271,6 +1271,18 @@ nothing; no economy or save change. A cache with a pick is a big card.
   build is green. Netlify still builds only commits with "[deploy]" in the message. (2026-09-28, 2026-10-05)
 - **Preview:** after each merge wave the owner gets a private preview artifact with its own save key. Preview builds
   never go to the live artifact. (2026-09-27)
+- **Netlify draft previews, standing (Cal, 2026-10-09 16:34, "Yes, standing"):** a Netlify draft preview link goes up for
+  any build that passes the preview gate (walk + cold leg on that one SHA), outside the Monday release. The Monday public
+  deploy stays as it is, and there are no production deploys beyond Monday. How a draft is made and what happens to the
+  preview artifact: `docs/design/hosting.md` 7.2. Record: project files `autopilot/rulings/2026-10-09-netlify-previews.md`.
+- **Hosting (judge 2026-10-09; Cal can veto: "keep the game one file"):** Netlify carries the full game; with no capability
+  host, the online layer is hidden (online-off-clean first, before Monday if possible); previews go to one fixed
+  non-production Netlify address (the connector if it can deploy, else a branch deploy of `lf-preview` once Cal allows it);
+  the build becomes a page plus content-hashed art files, all loaded before play (B1); the art loader (B2) comes only on a
+  trigger; a first-load budget (warn 6.0, fail 8.0 MB at Brotli 4) replaces the 14 MB ceiling once the split ships, and the
+  per-pack ceilings stay; pack-code is parked until Cal decides the live artifact's future; saves move between addresses only
+  by save code. The live artifact's future and what the web build carries versus the paid build stay Cal's (options in
+  `docs/design/hosting.md` 7.4 and 7.5). Ruling: project files `autopilot/rulings/2026-10-09-hosting.md`.
 
 ## Replaced decisions
 
