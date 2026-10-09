@@ -194,6 +194,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   1080p window (red team), and the swarm step already drew the hero at half size in zone 9 at 1280x720 (judge). (hero-screen-size-ruling, 2026-10-09)
 
 - A hide must cover every screen that names the thing, not only its own lists: Next Up's Deeds goal (`58-deeds.js` nearList and the followed track) still named a raid track after the Deeds tab hid it, and give the fixture the case (a followed track) so the check can see it. Why: the reviewer of online-off-clean found "13 raid bosses to Wyrmslayer III" off-host. (online-off-clean, 2026-10-09)
+- Key a cached fight line on the worn pieces themselves, not only `S.equip` ids: an upgrade or reforge keeps the id, so a line keyed on ids shows the old numbers. And make a sampler job (its profiles cost milliseconds) in the first timer step, not in `update()`, which a tab press runs. Why: the reviewer caught both on the Forge's before-the-press line (craft-odds-before-pay, 2026-10-09)
 
 ## Saves and offline parity
 

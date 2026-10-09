@@ -1,0 +1,1 @@
+Before you craft the piece Next Up suggests, or upgrade the piece you wear, the Forge now says what it changes against your furthest boss, for example "Zone 2 boss: about 4 in 10, now 3". A piece that barely changes the fight shows no line. (shot: recipe-line-before-pay)
