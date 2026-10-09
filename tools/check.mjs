@@ -6555,23 +6555,30 @@ if (section('solo copy (browser, W1-C)')) try {
         // long-press info on each action-bar slot (Attack, Parry, Dodge: a tip; the three ability slots: the picker)
         // w1f-scan-load-flake: each step waits for the state it reads (capped at 5 s, a miss fails naming the hero and slot) instead of a
         // fixed timer. Under load the bar was read before it showed, or the 550 ms long press had not fired by a fixed 700 ms hold.
-        const until = async (what, fn, arg) => { try { await page.waitForFunction(fn, arg, { timeout: 5000, polling: 50 }); return true; } catch (e) { fail(`${hero}: W1-F ${what} within 5 s`); return false; } };
+        const until = async (what, fn, arg, more) => { try { await page.waitForFunction(fn, arg, { timeout: 5000, polling: 50 }); return true; } catch (e) { fail(`${hero}: W1-F ${what} within 5 s` + (more ? ` (${await more().catch(x => String(x))})` : '')); return false; } };
+        // what a missed long press saw: the slot's pointer events and what sat under the pointer
+        await page.evaluate(() => { window.__lp = []; for (const t of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) document.addEventListener(t, e => { const a = e.target && e.target.closest && e.target.closest('[data-act]'); window.__lp.push(t.slice(7) + ':' + (a ? a.dataset.act : (e.target.id || e.target.className || e.target.tagName))); }, true); });
         await X('setActivity("fight"); setTab("adv"); closeMenu()');
         await until('the action bar (Attack) never showed', () => { const b = document.querySelector('[data-act="atk"]'); return !!(b && b.offsetParent !== null && b.getBoundingClientRect().width > 0); });
         // an ability slot with nothing it could hold opens nothing on a long press (75-solo-ui slotShut); every other slot opens a sheet or the picker
         const shut = JSON.parse(await X('JSON.stringify([0, 1, 2].map(i => { const eq = soloEquipped(); return !eq[i] && !soloAbilities().some(id => !eq.includes(id)); }))'));
         const sheetUp = () => !!document.querySelector('#abPicker, .tr-card');   // what the count below reads
+        // the game holds still through the presses (as it does once a sheet is open: the frame loop skips tick() while soloPickerOpen() says
+        // true; ci-flakes-spend-hover), so the live fight cannot redraw the stage under the pointer inside a press's 550 ms (Attack's long press
+        // once never fired in a full 4-job run).
+        await X('window.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
         for (const a of ['atk', 'parry', 'dodge', 'ab0', 'ab1', 'ab2']) {
           const b = page.locator(`[data-act="${a}"]`).first();
           if (!(await b.count()) || !(await b.isVisible())) continue;
           await until(`long-press ${a}: the last sheet never closed`, () => !document.querySelector('#abPicker, #moveSheet, .tr-card'));
-          const bb = await b.boundingBox(); await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down();
+          const bb = await b.boundingBox(); await page.evaluate(() => { window.__lp = []; }); await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down();
           if (a.startsWith('ab') && shut[+a[2]]) await page.waitForTimeout(700);   // a shut slot: hold past the long press; nothing opens
-          else await until(`long-press ${a}: no sheet or picker opened`, sheetUp);
+          else await until(`long-press ${a}: no sheet or picker opened`, sheetUp, undefined, () => page.evaluate(([x, y, a]) => { const e = document.elementFromPoint(x, y), b = document.querySelector(`[data-act="${a}"]`); return `under the pointer: ${e ? (e.closest('[data-act]') ? 'slot ' + e.closest('[data-act]').dataset.act : e.id || e.className || e.tagName) : 'nothing'}; slot ${b && b.disabled ? 'disabled' : 'enabled'}; events: ${window.__lp.join(' ') || 'none'}; open: ${[...document.querySelectorAll('[role=dialog],[aria-modal]')].filter(d => !d.hidden && d.offsetParent !== null).map(d => d.id || d.className).join(', ') || 'none'}`; }, [bb.x + bb.width / 2, bb.y + bb.height / 2, a]));
           const shownTip = await page.evaluate(() => { const t = document.getElementById('soloTip'), p = document.getElementById('abPicker'); return (t && !t.hidden ? 1 : 0) + (p ? 2 : 0) + (document.querySelector('.tr-card') ? 4 : 0); });   // W2-A: a long press opens a Training card (Attack, Parry, Dodge: a sheet; ability slots: the picker with a card)
           await scan('long-press ' + a); await page.mouse.up(); await page.keyboard.press('Escape'); await X('typeof closePicker === "function" && closePicker()');
           if (shownTip) items.press++;
         }
+        await X('soloPickerOpen = window.__spo; true');
         assert(!errs.length, `${hero}: no page errors while reading every screen` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
