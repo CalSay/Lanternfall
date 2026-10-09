@@ -48,6 +48,15 @@
 /* 740x360: the card is short, so the art shrinks */
 @media (max-height: 420px) { .mm-art { width: 72px; height: 64px; } .mm-img { width: 44px; height: 44px; } .mm-card { gap: 5px; padding: 10px 12px; } }
 @media (max-height: 420px) { .mm-card.has-pick .mm-art, .mm-card.has-pick .mm-say { display: none; } .mm-pick { min-height: 0; padding: 4px 8px; } }
+/* spoils-card-fits-with-unique: a unique adds its line and an Equip button to the pick card, so on a short screen the card widens (each
+   move's line stays on one row), the list tightens and Equip sits beside Keep the Scroll; nothing is dropped */
+@media (max-height: 420px) {
+  .mm-card.has-pick { width: min(680px, 100%); }
+  .mm-card.has-pick .mm-head { font-size: calc(20px * var(--display-k)); }
+  .mm-card.has-pick .mm-list { gap: 3px; padding: 5px 10px; }
+  .mm-card.has-pick .mm-acts { grid-auto-flow: column; grid-auto-columns: 1fr; margin-top: 2px; }
+  .mm-card.has-pick .mm-acts .big { padding: 10px 8px; }
+}
 
 /* ---- hero-voice: the hero's line on a card or banner, the hero sheet record ---- */
 .mm-say { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; padding: 6px 8px; text-align: left; background: var(--well); border: 1px solid var(--line); }

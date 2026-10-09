@@ -1,0 +1,1 @@
+On a landscape phone, a boss cache that drops a unique and offers a move to learn now fits on screen: the unique, its Equip button, every move and Keep the Scroll show without scrolling the card. Best shot: check-card-740x360.

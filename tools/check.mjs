@@ -75,7 +75,7 @@ const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '
 const WEIGHT = {
   'forge-line-while-fighting': 133, 'W1-D (browser)': 111, 'staged guide follow-ups (browser)': 90, 'moment layer': 79,
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
-  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'landscape 740x360 (browser, UX-L1)': 55,
+  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 14, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
   'turn UI (browser)': 50, 'zone10-clear-moment': 42, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
@@ -15273,6 +15273,52 @@ if (section('boss-spoils-pick')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('boss-spoils-pick: ' + (e.stack || e.message)); }
+
+// ---- spoils-card-fits-with-unique (ci-shard-hang follow-up): a zone 6 to 10 first clear that drops a unique AND offers a move pick puts
+// the unique line, its Equip button, every pick and Keep the Scroll on screen without scrolling the card (75-caches-ui, 60-moments.css).
+// boss-spoils-pick makes the unique roll miss; this section makes it hit. At 360x740 the base card already fit, so it must still fit ----
+if (section('spoils-card-fits-with-unique')) try {
+  const at = 'spoils-card-fits-with-unique', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pre-z7-boss.json'), 'utf8');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[740, 360], [1280, 720], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // zone 7's boss, first clear, three Tier II moves to learn, a free slot; the unique roll always hits (the drop rate is restored after)
+        await X(`MOMENT_Q.length = 0; S.L = 13; soloLevels().wren.L = 13; S.abil.unl.wren = ['powershot', 'barbed']; S.abil.scrolls = { moss: 2 }; soloEquip(2, null); soloEquip(1, 'powershot');
+          S.activity = 'fight'; S.zone = 7; S.maxZone = 7; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 1;
+          try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } S.activity = 'gather'; emit('sceneReset'); true`);
+        try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov')`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
+        await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs) and the card's rise
+        const c = await X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };
+          const card = o.querySelector('.mm-card'), inView = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1; };
+          const btns = [...o.querySelectorAll('.mm-pick, .mm-act, .mm-go')], uq = [...o.querySelectorAll('.mm-list li')].find(li => /A unique\\./.test(li.textContent));
+          return { up: true, uq: uq ? uq.textContent : '', picks: [...o.querySelectorAll('.mm-pick b')].map(b => b.textContent), acts: [...o.querySelectorAll('.mm-act')].map(b => b.textContent),
+            go: (o.querySelector('.mm-go') || {}).textContent, scroll: card.scrollHeight - card.clientHeight, card: inView(card), btns: btns.map(b => b.textContent.slice(0, 18) + ':' + inView(b)),
+            allIn: btns.every(inView) && (!uq || inView(uq)), h: Math.round(card.getBoundingClientRect().height) }; })()`);
+        assert(c.up && c.uq && c.picks.length === 3 && c.go === 'Keep the Scroll' && c.acts.some(t => /^Equip/.test(t)),
+          `${vw}: the card holds the unique line, its Equip button, three moves and Keep the Scroll (${JSON.stringify({ up: c.up, uq: c.uq, picks: c.picks, acts: c.acts, go: c.go })})`);
+        // 360x740: the base card already reached its height cap there (1 px of scroll, the font fallback can move it), so only being in view counts
+        assert(c.card && c.allIn && (w === 360 || c.scroll <= 1), `${vw}: the unique line, every pick, Equip and Keep the Scroll are on screen${w === 360 ? '' : ' and the card does not scroll'} (${JSON.stringify({ h: c.h, scroll: c.scroll, btns: c.btns })})`);
+        if (w !== 360) await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'spoils-card-fits-with-unique', `check-card-${w}x${h}.png`) });
+        await page.click('.mm-ov .mm-go'); await page.waitForTimeout(200);
+        assert(!(await X('!!document.querySelector(".mm-ov")')) && (await X('scrollCount("hollow")')) === 1, `${vw}: Keep the Scroll closes the card and keeps the Scroll`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('spoils-card-fits-with-unique: ' + (e.stack || e.message)); }
 
 // ---- look-card-says-why (W5 proposal 3): a cache's lantern colour says what it did in its own line, whatever the sub line shows ----
 if (section('look-card-says-why')) try {
