@@ -103,6 +103,7 @@ const WEIGHT = {
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
   'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
   'feint-read-clear': 70,   // 64-74 s locally alone (feint-read-clear, 2026-10-09)
+  'craft-odds-before-pay': 38,   // 38 s locally (craft-odds-before-pay, 2026-10-09)
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'page size': 2
@@ -11693,6 +11694,110 @@ if (section('craft delta')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('craft delta crashed: ' + (e.stack || e)); }
+
+// ==== craft-odds-before-pay: the boss line shows on Next Up's recipe row and the worn piece's Upgrade, before the press ====
+// The same sampler as the result card (55-fight-delta) on a scratch piece (fightDelta(it, { scratch: true })), the same "barely
+// changes" rule. Pip at zone 10 (save-pip-z10-ward): the sampler reads the staff +1 as barely changing, so no line (W10 section 3's
+// "it will honestly say barely"); a worn Hood +1 before the zone 7 boss (save-pre-z7-boss) shows one, and after the press the fight
+// matches it. No Omen (almanac.force('none')): an Omen's fight boons move the sampler's numbers.
+if (section('craft-odds-before-pay')) try {
+  const at = 'craft-odds-before-pay', pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+  const coreOn = f => loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: pfx(f) }) });
+  const up1 = pos => `(w => Object.assign(JSON.parse(JSON.stringify(w)), { id: -1, plus: w.plus + 1 }))(itemById(S.equip.${pos}))`;
+  { const g = coreOn('save-pip-z10-ward.json'), E = s => g.eval(s);
+    const before = E('JSON.stringify([S.items, S.equip])');
+    const st = E(`JSON.stringify(fightDelta(${up1('weapon')}, { scratch: true }))`);
+    assert(E('S.maxZone') === 10 && E('itemById(S.equip.weapon).slot') === 'staff' && st === 'null', `${at}: Pip's staff +1 at zone 10 barely changes the boss fight, so no line (${st})`);
+    const ch = E(`JSON.stringify(fightDelta({ id: -1, slot: 'charm', t: 1, r: 'common', plus: 0 }, { scratch: true }))`);
+    assert(ch === 'null', `${at}: a Charm recipe shows no line (${ch})`);
+    assert(E('JSON.stringify([S.items, S.equip])') === before && E('itemById(-1)') === null, `${at}: the scratch piece leaves the bag and the worn gear as they were`);
+    assert(E(`fightDelta(Object.assign(JSON.parse(JSON.stringify(itemById(S.items[0].id))), { id: S.items[0].id }), { scratch: true })`) === null, `${at}: a scratch piece under a real item's id is refused`);
+  }
+  { const g = coreOn('save-pre-z7-boss.json'), E = s => g.eval(s);
+    const pre = E(`fightDelta(${up1('helm')}, { scratch: true })`);
+    assert(pre && pre.kind === 'hit' && pre.zone === 7 && pre.after < pre.before, `${at}: a worn Hood +1 before the zone 7 boss shows the hit line before the press (${JSON.stringify(pre)})`);
+    const id = E('S.equip.helm'), p0 = E(`itemById(${id}).plus`);
+    E(`S.gold = 1e9; for (const k of Object.keys(S.mats)) S.mats[k] = S.mats[k].map(() => 9999)`);
+    assert(E(`!!upgradeItem(${id})`) && E(`itemById(${id}).plus`) === p0 + 1, `${at}: the upgrade goes through`);
+    // after the press: the old piece against the one now worn, on the same seeds; its "now" is the fight the line promised
+    const post = E(`fightDelta(Object.assign(JSON.parse(JSON.stringify(itemById(${id}))), { id: -1, plus: ${p0} }), { scratch: true })`);
+    assert(post && Math.abs(post.before - pre.after) <= 1 && Math.abs(post.after - pre.before) <= 1, `${at}: after the press the fight matches the line within the sampler's spread (before ${JSON.stringify(pre)}, after ${JSON.stringify(post)})`);
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the line's box: whole, inside its row or box, and its font size
+    const fit = (page, sel, box) => page.evaluate(([sel, box]) => { const l = document.querySelector(sel); if (!l || !l.getClientRects().length) return null; const r = l.closest(box), a = l.getBoundingClientRect(), b = r.getBoundingClientRect();
+      return { text: l.textContent, cut: l.scrollWidth > l.clientWidth + 1, fs: parseFloat(getComputedStyle(l).fontSize), inRow: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1, over: document.documentElement.scrollWidth > innerWidth + 1 }; }, [sel, box]);
+    const wait = async (page, sel, ms = 60000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await page.evaluate(s => { const l = document.querySelector(s); return !!(l && l.getClientRects().length); }, sel)) return true; await page.waitForTimeout(200); } return false; };
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const open = async fx => {
+          const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+          await ctx.addInitScript(([key, raw]) => { if (sessionStorage.getItem('cob-seeded')) return; sessionStorage.setItem('cob-seeded', '1'); const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, [KEY, pfx(fx)]);
+          const page = await ctx.newPage(), errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          await X('typeof almanac === "object" && almanac.force && almanac.force("none"); S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+          return { ctx, page, errs, X };
+        };
+        { // the recipe row Next Up points at: the first Pine Bow, at the Workbench
+          const { ctx, page, errs, X } = await open('save-flow-cold-camp.json');
+          const nu = await X('JSON.stringify(craftGoalNext())');
+          await X(`setTab('forge'); ui(true); true`); await page.waitForTimeout(300);
+          await X(`(() => { const b = document.querySelector('.cf-st[data-st="bench"]'); if (b) b.click(); return true; })()`);
+          const shown = await wait(page, '.cf-rec[data-kind="bow"] .cf-pre');
+          const o = shown ? await fit(page, '.cf-rec[data-kind="bow"] .cf-pre', '.cf-rec') : null;
+          assert(/"kind":"bow","t":1/.test(nu) && o && /^Zone 2 boss: about \d+ in 10, now \d+$/.test(o.text), `${v}: Next Up's Pine Bow row shows the boss line before the press (${nu}; ${o ? o.text : 'none after 60 s'})`);
+          if (o) {
+            assert(!o.cut && o.inRow && !o.over, `${v}: the recipe line shows whole inside its row (${JSON.stringify(o)})`);
+            if (!phone) assert(o.fs >= 14, `${v}: the recipe line keeps the 14 px desktop text floor (${o.fs})`);
+          }
+          const others = await X(`[...document.querySelectorAll('.cf-rec .cf-pre')].map(n => n.closest('.cf-rec').dataset.kind).join()`);
+          assert(others === 'bow', `${v}: only the row Next Up points at has the line (${others})`);
+          // the craft made the way the line's piece is (the likeliest rarity, middle bonus lines): the die reads 0.5 for this press only
+          const t0 = Date.now();
+          const made = await X(`(() => { const r = Math.random; Math.random = () => 0.5; try { document.querySelector('[aria-label="Craft Pine Bow"]').click(); } finally { Math.random = r; } const it = itemById(S.nextId - 1); return it ? it.r : null; })()`);
+          assert(Date.now() - t0 < 5000 && made === 'common', `${v}: the press makes a common Pine Bow and is not held up by the sample (${made})`);
+          let line = '';
+          while (Date.now() - t0 < 60000 && !line) { await page.waitForTimeout(200); line = await X(`(() => { const f = document.querySelector('.cf-res .cf-fight'); return f ? f.textContent : ''; })()`); }
+          const a = o && o.text.match(/about (\d+) in 10, now (\d+)/), b = line.match(/about (\d+) in 10, not (\d+) in 10/);
+          assert(a && b && Math.abs(+a[1] - +b[1]) <= 1 && +a[2] === +b[2], `${v}: the result card's line matches the line before the press within the sampler's spread (${o && o.text} / ${line || 'none'})`);
+          assert(!errs.length, `${v}: no page errors on the camp save` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // the worn Hood's Upgrade before the zone 7 boss
+          const { ctx, page, errs, X } = await open('save-pre-z7-boss.json');
+          await X(`craftUI.openItem(S.equip.helm); true`);
+          const shown = await wait(page, '.cf-up-box .cf-pre');
+          const o = shown ? await fit(page, '.cf-up-box .cf-pre', '.cf-up-box') : null;
+          assert(o && /^Zone 7 boss: a hit takes about \d+% of your health, now \d+%$/.test(o.text), `${v}: the worn Hood's Upgrade shows the boss line before the press (${o ? o.text : 'none after 60 s'})`);
+          if (o) {
+            assert(!o.cut && o.inRow && !o.over, `${v}: the Upgrade line shows whole inside its box (${JSON.stringify(o)})`);
+            if (!phone) assert(o.fs >= 14, `${v}: the Upgrade line keeps the 14 px desktop text floor (${o.fs})`);
+          }
+          assert(!errs.length, `${v}: no page errors on the zone 7 save` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // Pip at zone 10: the staff +1 barely changes the fight, so its Upgrade shows no line
+          const { ctx, page, errs, X } = await open('save-pip-z10-ward.json');
+          await X(`craftUI.openItem(S.equip.weapon); true`);
+          await page.waitForTimeout(5000);   // the sample (16 chunks, 30 ms apart) is done well inside this
+          const n = await X(`document.querySelectorAll('.cf-up-box .cf-pre').length`), btn = await X(`!![...document.querySelectorAll('.cf-up-box button')].find(b => /^Upgrade to \\+1$/.test(b.textContent.trim()))`);
+          assert(btn && n === 0, `${v}: Pip's staff Upgrade to +1 shows no boss line (barely changes) (button ${btn}, lines ${n})`);
+          assert(!errs.length, `${v}: no page errors on the Pip save` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('craft-odds-before-pay crashed: ' + (e.stack || e)); }
 
 // ==== tool-speed-adds-up: a new tool's line says what it is faster than, and the parts multiply to the total ====
 if (section('tool-speed-adds-up')) try {
