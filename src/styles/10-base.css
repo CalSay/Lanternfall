@@ -22,9 +22,7 @@
   /* Fonts (Google Fonts, linked in src/shell.html). Handjet is narrow and reads small, so every
      display-font size is written calc(Npx * var(--display-k)). Reading font: switch it here and in
      the reading-font link (IBM Plex Sans Condensed: "IBM Plex Sans Condensed", "Arial Narrow", ...). */
-  /* ability-names-fit: narrow fonts before the monospace, so a page whose web font fails still draws names narrow where one is installed
-     (Android has sans-serif-condensed). Checks and CI have none of them and still fall back to the monospace. */
-  --display: "Handjet", "Arial Narrow", "Liberation Sans Narrow", "DejaVu Sans Condensed", "Roboto Condensed", sans-serif-condensed, monospace;
+  --display: "Handjet", "Arial Narrow", monospace;
   --display-k: 1.2;
   --body: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
   /* desktop-layout-v1: tools/build.mjs (scaleText) writes every font size S as max(var(--tmin), S * var(--tk)). These
