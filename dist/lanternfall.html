@@ -30702,12 +30702,18 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     if (hero.fr) refreshHero(false);   // a new gather node may need another tool
   });
   // S6-E: the zoom step (a swarm zone, or a boss fight with 3+ adds in its kit): one resize at the zone change or boss start
+  // stage-no-swarm-shrink (hero size ruling, 2026-10-09): a turn fight (59k) stands the foes it spawned and its boss calls no
+  // adds, so it steps out only when 2 or more foes really stand (a Deepwell pack); one foe keeps the zone's normal zoom.
   function zoomStep() {
     let want = 1, key = '';
     if (target() === 'mob' && partyCombatOn()) {
       const boss = typeof fightBoss !== 'undefined' && fightBoss, b = typeof FOE_BEH === 'object' && TYPES[zoneType(S.zone)] && FOE_BEH[TYPES[zoneType(S.zone)].key];
       key = S.zone + (boss ? 'B' : '');
-      if (boss) { const k = mob && typeof kitOf === 'function' && kitOf(mob); if (k && k.mech.some(x => x.adds && x.adds[1] >= 3)) want = 1.4; }
+      if (typeof turnCombatOn === 'function' && turnCombatOn()) {
+        const n = typeof combatFoes === 'function' ? combatFoes().length : 1;
+        key += 'T' + (n >= 2 ? 2 : 1);
+        if (n >= 2) want = 1.4;
+      } else if (boss) { const k = mob && typeof kitOf === 'function' && kitOf(mob); if (k && k.mech.some(x => x.adds && x.adds[1] >= 3)) want = 1.4; }
       else if (b && b.size === 'swarm' && COMBAT_TUNE.sizes) want = 1.4;
     }
     if (key === zoomKey) return;
