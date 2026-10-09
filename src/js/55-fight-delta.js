@@ -72,8 +72,10 @@ let fightDeltaJob, fightDelta;
 // The work is queued and done a chunk at a time by loadoutPump (the browser drives it off the click path, 75-abilities-ui; checks pass
 // sync). Results are kept for what the fight depends on (bossOdds' signature: hero, level, combat numbers, Stars, talents, skill) and
 // the set; a change to any of those starts over.
-//   loadoutOdds(sets, { sync, first }) -> { zone, wins: [win share | null (pending)] } | null (no turn fight to judge)
-//     first: these sets go to the front of the queue (the line on screen before a ranking); sync: every chunk of them now
+//   loadoutOdds(sets, { sync, first, quick }) -> { zone, wins: [win share | null (pending)] } | null (no turn fight to judge)
+//     first: these sets go to the front of the queue (the line on screen before a ranking); sync: every chunk of them now;
+//     quick: the first 40 fights only (a sift: 56e tries every spot quick, then measures the best in full). A set's quick fights are
+//     the first 40 of its 160, so a full measure goes on from them.
 //   loadoutPump(n = 1) -> true while work is left (n chunks of 5 fights; 0 only asks)
 //   loadoutWins(a, b) -> { before, after } | null: wins in 10 (rounded) when b against a passes the craft card's "barely changes"
 //     rule (FIGHT_DELTA.minStep on the raw shares, the rounded numbers differ, and the rounding points the way the raw shares do)
@@ -81,12 +83,20 @@ let loadoutOdds, loadoutPump, loadoutWins;
 {
   let LC = { sig: '', zone: 0, p: null, skill: null, map: new Map(), queue: [] };
   // 160 fights a set (twice the craft card's: at 80, a change of seeds alone moved Pip's slots from 4 to 5 in 10), in chunks of 5, so
-  // one chunk stays a few ms even on a slow phone
-  const F = FIGHT_DELTA, CHUNK = 5, CHUNKS = Math.ceil(160 / CHUNK);
+  // one chunk stays a few ms even on a slow phone; a quick read is the first 8 chunks (40 fights)
+  const F = FIGHT_DELTA, CHUNK = 5, CHUNKS = Math.ceil(160 / CHUNK), QUICK = 8;
   const keyOf = eq => (eq || []).map(x => x || '-').join(',');
-  // the profile and its signature now (the same parts bossOdds keys its estimate on)
-  const now = () => {
+  // the profile and its signature now (the same parts bossOdds keys its estimate on). Making a profile costs about a millisecond, and the
+  // Abilities line and Next Up ask several times a second, so it is remade at most every LOADOUT_REMAKE_MS (real time) while the hero,
+  // zone and level stay, or at once after a gear, level, hero or talent event, or a sync call (checks)
+  const LOADOUT_REMAKE_MS = 500;
+  let madeAt = -1e15, madeKey = '';
+  for (const ev of ['gear', 'levelup', 'soloHero', 'talentSet']) on(ev, () => { madeAt = -1e15; });
+  const now = force => {
     if (typeof bossOddsOn !== 'function' || !bossOddsOn() || (typeof deepActive === 'function' && deepActive())) return null;   // a Deepwell run's boons would count (59m)
+    const key = [soloHero(), S.maxZone, S.L].join('|'), t = Date.now();
+    if (!force && LC.p && key === madeKey && t - madeAt >= 0 && t - madeAt < LOADOUT_REMAKE_MS) return LC;
+    madeKey = key; madeAt = t;
     const z = S.maxZone, u = typeof cbEstHero === 'function' ? cbEstHero() : null; if (!u) return null;
     let p; try { p = turnMakeProfile(bossOddsFoe(z), u); } catch (e) { p = null; }
     if (!p) return null;
@@ -96,33 +106,39 @@ let loadoutOdds, loadoutPump, loadoutWins;
     if (sig !== LC.sig) LC = { sig, zone: z, p, skill, map: new Map(), queue: [] };
     return LC;
   };
-  const run = r => {   // one chunk of a set's fights
+  const share = r => (r.k + r.d > 0 ? r.k / (r.k + r.d) : 0);
+  const pending = r => r.c < r.need;
+  const run = r => {   // one chunk of a set's fights; the quick read is kept when its last chunk is done
     const p = LC.p; p.eq = r.eq; p.cds = { attack: 1 }; for (const id of r.eq) p.cds[id] = turnCdFor(id);
     const c = r.c, res = turnCombatSample({ profile: p, seconds: CHUNK * 600, seed: 1 + c * 7919 + LC.zone * 104729, skill: LC.skill, fights: CHUNK });
     if (res) { r.k += res.kills; r.d += res.deaths; }
-    if (++r.c >= CHUNKS) r.win = r.k + r.d > 0 ? r.k / (r.k + r.d) : 0;
+    if (++r.c === QUICK) r.quick = share(r);
+    if (r.c >= CHUNKS) r.win = share(r);
   };
+  const fail = r => { r.c = CHUNKS; r.quick = r.win = 0; };
   loadoutOdds = (sets, o) => {
     o = o || {};
-    if (!Array.isArray(sets) || !now()) return null;
-    const keys = [];
+    if (!Array.isArray(sets) || !now(!!o.sync)) return null;
+    const need = o.quick ? QUICK : CHUNKS, keys = [];
     for (const s of sets) {
       const key = keyOf(s); keys.push(key);
-      if (!LC.map.has(key)) { LC.map.set(key, { eq: (s || []).filter(Boolean), c: 0, k: 0, d: 0, win: null }); LC.queue.push(key); }
-      else if (LC.map.get(key).win == null && !LC.queue.includes(key)) LC.queue.push(key);   // dropped by an event, still wanted
+      let r = LC.map.get(key);
+      if (!r) LC.map.set(key, r = { eq: (s || []).filter(Boolean), c: 0, k: 0, d: 0, need: 0, quick: null, win: null });
+      if (r.need < need) r.need = need;
+      if (pending(r) && !LC.queue.includes(key)) LC.queue.push(key);   // new, wanted further, or dropped by an event and still wanted
     }
-    if (o.first) { const pend = keys.filter(k => LC.map.get(k).win == null); LC.queue = pend.concat(LC.queue.filter(k => !pend.includes(k))); }
-    if (o.sync) for (const key of keys) { const r = LC.map.get(key); try { while (r.win == null) run(r); } catch (e) { r.win = 0; r.c = CHUNKS; } }
-    return { zone: LC.zone, wins: keys.map(k => LC.map.get(k).win) };
+    if (o.first) { const pend = keys.filter(k => pending(LC.map.get(k))); LC.queue = pend.concat(LC.queue.filter(k => !pend.includes(k))); }
+    if (o.sync) for (const key of keys) { const r = LC.map.get(key); try { while (pending(r)) run(r); } catch (e) { fail(r); } }
+    return { zone: LC.zone, wins: keys.map(k => { const r = LC.map.get(k); return o.quick ? r.quick : r.win; }) };
   };
   loadoutPump = (n = 1) => {
     for (let i = 0; i < n; i++) {
-      while (LC.queue.length && LC.map.get(LC.queue[0]).win != null) LC.queue.shift();
+      while (LC.queue.length && !pending(LC.map.get(LC.queue[0]))) LC.queue.shift();
       if (!LC.queue.length) return false;
       const r = LC.map.get(LC.queue[0]);
-      try { run(r); } catch (e) { r.win = 0; r.c = CHUNKS; }
+      try { run(r); } catch (e) { fail(r); }
     }
-    return LC.queue.some(k => LC.map.get(k).win == null);
+    return LC.queue.some(k => pending(LC.map.get(k)));
   };
   // what the queued sets were judged on has changed: drop them (the next loadoutOdds call queues what is wanted now)
   for (const ev of ['gear', 'levelup', 'soloHero']) on(ev, () => { LC.queue = []; });

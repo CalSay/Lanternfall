@@ -16221,7 +16221,7 @@ if (section('loadout-odds')) try {
         // wait for what a step reads, with a cap that fails naming what never appeared (a fixed timer after a click flakes under 4 jobs)
         const need = async (sel, what, ms = 15000) => { try { await page.waitForFunction(q => { const e = document.querySelector(q); return !!e && !!e.offsetParent; }, sel, { timeout: ms }); return true; }
           catch (e) { assert(false, `${v}: ${what} (${sel}) never showed`); return false; } };
-        await X(`almanac.force('none'); setTab('party'); true`);   // W10's footing has no Almanac day (a day's crits moved her to 6 in 10)
+        await X(`almanac.force('none'); gearDirty(); setTab('party'); true`);   // W10's footing has no Almanac day (a day's crits moved her to 6 in 10)
         if (!(await need('#viewSeg button[data-view="abilities"]', 'the Abilities view button'))) { await ctx.close(); continue; }
         await page.evaluate(() => document.querySelector('#viewSeg button[data-view="abilities"]').click());
         const line = async re => { try { await page.waitForFunction(r => { const e = document.querySelector('.ab-odds'); return !!e && new RegExp(r).test(e.textContent); }, re, { timeout: 20000 }); } catch (e) {}

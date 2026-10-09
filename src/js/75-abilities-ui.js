@@ -349,7 +349,7 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
   for (const ev of ['abilityLearned', 'scrollDrop', 'soloEquip', 'soloHero', 'levelup']) on(ev, () => { sig = ''; try { refresh(); } catch (e) {} });
   // loadout-odds: the pump. The scratch fights for the line and the Learn order run here in slices of a few ms, never on a click;
   // when a batch is done the menus redraw once (the line, Next Up's Learn row, the cache pick).
-  const PUMP = { sliceMs: 6, busyMs: 8, idleMs: 400 };
+  const PUMP = { sliceMs: 8, busyMs: 16, idleMs: 400 };
   const pump = () => {
     let busy = false, more = false;
     try { if (typeof loadoutPump === 'function' && !document.hidden && (busy = loadoutPump(0))) { const t = performance.now(); do more = loadoutPump(1); while (more && performance.now() - t < PUMP.sliceMs); } } catch (e) { more = false; }

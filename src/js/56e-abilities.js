@@ -23,7 +23,8 @@
 // Save: S.abil.tal = { hero: { id: 'a' | 'b' } }; S.abil.resTip = { hero: 1 } (the resource line has shown on its own, 75-turn-ui).
 // The Learn order (loadout-odds, W10): the moves the hero can learn now, by what each does to the zone boss line (55-fight-delta
 // loadoutOdds). A move is tried as one change to the slots: it goes into slot p, and the move that sat there takes the slot of the one
-// going out (d; when p is d it simply replaces it), the rest stay. Its best spot ranks it. Never a whole set: one move, one spot.
+// going out (d; when p is d it simply replaces it), the rest stay. Its best spot (sifted on 40 fights, measured on 160) ranks it. Never a
+// whole set: one move, one spot.
 //   learnOdds(k, sync) -> { zone, base, rows: [{ id, win, p, d, out, eq, lift }] (best first) } | null (pending, nothing to learn, no
 //     turn fight). base: the slots now; out: the move that leaves the slots ('' for none); lift: loadoutWins(base, win) or null.
 //   learnPick(k) -> abLearnInfo of the move Learn names first, with .row (its learnOdds row) once the odds are in
@@ -105,12 +106,14 @@ var abilityOwned, abLearnInfo, abilityLearn, scrollCount, scrollFor, scrollUsabl
   learnOdds = (k, sync) => {
     if (!k || k !== soloHero() || typeof loadoutOdds !== 'function' || typeof HERO_ABILITIES !== 'object' || !HERO_ABILITIES[k]) return null;
     const ids = HERO_ABILITIES[k].filter(id => !abLearnInfo(k, id).why); if (!ids.length) return null;
+    // a sift: every spot on its first 40 fights; then the slots now and each move's best spot on all 160
     const eq = soloEquipped().slice(0, 3), spots = ids.map(id => spotsFor(eq, id));
-    const r = loadoutOdds([eq].concat(...spots.map(ss => ss.map(s => s.eq))), { sync: !!sync });
+    const q = loadoutOdds([].concat(...spots.map(ss => ss.map(s => s.eq))), { sync: !!sync, quick: true });
+    if (!q || q.wins.some(w => w == null)) return null;
+    let j = 0; const bests = spots.map(ss => { let b = null; for (const s of ss) { const w = q.wins[j++]; if (!b || w > b.w) b = { w, s }; } return b.s; });
+    const r = loadoutOdds([eq].concat(bests.map(s => s.eq)), { sync: !!sync });
     if (!r || r.wins.some(w => w == null)) return null;
-    let j = 1; const base = r.wins[0], rows = [];
-    ids.forEach((id, i) => { let best = null; for (const s of spots[i]) { const w = r.wins[j++]; if (!best || w > best.win) best = Object.assign({ id, win: w }, s); }
-      if (best) rows.push(Object.assign(best, { lift: loadoutWins(base, best.win) })); });
+    const base = r.wins[0], rows = ids.map((id, i) => Object.assign({ id, win: r.wins[i + 1] }, bests[i], { lift: loadoutWins(base, r.wins[i + 1]) }));
     const ord = id => HERO_ABILITIES[k].indexOf(id);
     rows.sort((a, b) => b.win - a.win || ABILITIES[a.id].tier - ABILITIES[b.id].tier || ord(a.id) - ord(b.id));
     return { zone: r.zone, base, rows };
