@@ -38,6 +38,9 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ steps.image.outputs.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
+      - name: Fetch the integration branch (the page size check's growth line, which runs on shard 0)
+        if: matrix.shard == 0
+        run: git fetch --no-tags --deepen=200 origin +refs/heads/claude/elegant-johnson-m6k00u:refs/remotes/origin/claude/elegant-johnson-m6k00u || echo "growth line: fetch failed, it will print without a base"
       - name: Build
         run: node tools/build.mjs
       - name: dist is committed rebuilt

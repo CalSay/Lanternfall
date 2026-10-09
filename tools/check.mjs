@@ -92,7 +92,9 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
+  'page size': 2
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -14346,6 +14348,17 @@ if (section('foe moves by type')) try {
   // a normal fight plays out: each type's foe moves, and the casual starter still wins ordinary fights at zone 20 (budget bands hold)
   assert(!g.errors.length, 'foe moves: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('foe moves by type crashed: ' + (e.stack || e)); }
+
+// ==== page-size-check (docs/design/page-bytes.md 6, judge 2026-10-09): the page under 14 MB, each art pack under its ceiling ====
+// Read only (tools/lib/page-size.mjs): it measures dist and the generated art files, prints the growth line, and changes nothing.
+if (section('page size')) try {
+  const { pageSizeReport } = await import('./lib/page-size.mjs');
+  const r = pageSizeReport({ page: distFile });
+  for (const l of r.lines) console.log('  ' + l);
+  for (const w of r.warns) console.log('  WARN ' + w);
+  for (const f of r.fails) fail(f);
+  if (!r.fails.length) ok('page size: the page is under 14 MB and every art pack is under its ceiling or its measured exception');
+} catch (e) { fail('page size crashed: ' + (e.stack || e)); }
 
 // ==== hero portraits (tools/portraits.mjs -> 21yc-data-portraits.js, 64k-portraits.js) ====
 if (section('hero portraits')) try {
