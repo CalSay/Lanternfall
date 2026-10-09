@@ -43,7 +43,7 @@
 .cb-hit .ic { width: 36px; height: 36px; }
 .cb-hit .ic img { width: 28px; height: 28px; }
 .cb-mid { min-width: 0; }
-.cb-nm { display: flex; gap: 6px; align-items: baseline; font: 600 calc(15px * var(--display-k))/1.15 var(--display); white-space: nowrap; min-width: 0; }
+.cb-nm { display: flex; flex-wrap: wrap; column-gap: 6px; row-gap: 0; align-items: baseline; font: 600 calc(15px * var(--display-k))/1.15 var(--display); white-space: nowrap; min-width: 0; }   /* first-hour-walk-findings: a long name keeps its width and "Not built" drops under it ("Watchtow..." at 1280x720) */
 .cb-nm > span:first-child { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 @media not ((min-aspect-ratio: 1/1) and (min-width: 600px)) {   /* portrait: a long station name wraps, the level drops under it */
   .cb-nm { flex-wrap: wrap; white-space: normal; column-gap: 6px; row-gap: 0; }
