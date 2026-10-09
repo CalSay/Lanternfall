@@ -3,6 +3,11 @@
 let boardSig = '';
 async function uiTavern() {
   if (document.activeElement !== $('nameInput') && !$('nameInput').value) $('nameInput').value = S.name;
+  // online-off-clean: with no capability host (onlineOff, 70-ui.js) nobody can drop in and the hall cannot fill, so both boxes stay out;
+  // the tavern's perks and the rename stay
+  const off = onlineOff();
+  putHidden($('online').closest('.sec'), off); putHidden($('board').closest('.sec'), off);
+  if (off) return;
 
   const box = $('online');
   const seen = new Set(), list = [];

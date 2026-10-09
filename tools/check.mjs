@@ -102,6 +102,7 @@ const WEIGHT = {
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
   'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'page size': 2
 };
@@ -16565,6 +16566,112 @@ if (section('space-reopens-next-up')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('space-reopens-next-up crashed: ' + (e.stack || e)); }
+
+// ==== online-off-clean (docs/design/hosting.md section 3, judge amendments 1 and 2): with no capability host there is no raid ====
+// The Netlify build has no `window.claude`, so the world raid, tavern presence and leaderboard cannot work there. Booted with no
+// `window.claude` on two saves past zone 12 (save-raid.json: raid history, with wyrms, raid damage, Embers and relics above 0; save-late.json)
+// and on save-early.json crossing zone 12 (the raid's unlock notice), every tab and view, every Deeds track group, the Codex pages, the
+// Journal, the notices and the away card show no raid words (word boundaries, so "afraid" passes) and no view bar holds Raid. The
+// unlock stays saved. Mutations, so the check cannot pass by hiding it everywhere: a fake `window.claude` with working stubs shows the
+// Raid view, its words and the Embers coin, and one whose user is signed out still shows the Raid view with today's words on how to join.
+if (section('online-off-clean')) try {
+  const at = 'online-off-clean', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const RE = /\b(raid|raids|raider|raiders|war horn|world boss|shared world|claude link)\b/i;
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const fx = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // host: 'none' (no window.claude), 'in' (signed in, working stubs), 'out' (the Artifact with nobody signed in: no user, so no db)
+    const run = async ({ file, host, w, h, cross, slow }) => {
+      const v = `${at} (${file}, ${host === 'none' ? 'no host' : host === 'in' ? 'host, signed in' : 'host, signed out'}, ${w}x${h})`, touch = w < 1000;
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true });
+      await ctx.addInitScript(({ raw, key, host, cross }) => {
+        const o = JSON.parse(raw); o.last = Date.now() - 3 * 3600e3; if (cross) { o.onboard.tips = true; } localStorage.setItem(key, JSON.stringify(o));
+        if (host === 'none') return;
+        const doc = { onSnapshot: f => { setTimeout(() => f({ exists: true, data: () => ({ gen: 9, name: 'Ashmaw', maxHp: 9e8, spawnedAt: 0 }) }), 10); return () => {}; },
+          set: async () => {}, get: async () => ({ exists: false }), acquire: async () => ({ acquired: false }) };
+        const caps = { db: { doc: () => doc, collection: () => ({ onSnapshot: f => { f({ docs: [] }); return () => {}; } }) },
+          user: host === 'in' ? { id: async () => 'u1', can: async () => true, profiles: async () => ({}) } : null,
+          room: { onPeers: () => {}, on: () => {}, presence: async () => {}, emit: async () => {} } };
+        window.claude = { use: async n => caps[n] || null };
+      }, { raw: fx(file), key: KEY, host, cross });
+      if (slow) await ctx.addInitScript(() => { const c = window.claude, use = c.use; c.use = n => new Promise(r => setTimeout(r, 1500)).then(() => use(n)); });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const segNow = () => X(`JSON.stringify([...document.querySelectorAll('#viewSeg button')].filter(b => b.offsetParent).map(b => b.dataset.view))`).then(JSON.parse);
+      let during = null, after = null;
+      const shut = `document.querySelectorAll('.bsheet-ov').forEach(o => o.sheetApi && o.sheetApi.close(true, true)); true`;
+      if (slow) { await page.waitForTimeout(300); await X(`setTab('camp'); true`); await page.waitForTimeout(150); during = await segNow(); await page.waitForTimeout(2200); after = await segNow(); await X(shut); }
+      await page.waitForTimeout(1200);
+      const hits = new Map(), bars = [];
+      const scan = async where => { for (const l of (await page.evaluate(() => document.body.innerText)).split('\n')) if (RE.test(l) && !hits.has(l.trim())) hits.set(l.trim(), where); };
+      const away = await X(`!!document.querySelector('.away-ov')`);
+      await scan('the away card');
+      await X(`(() => { const b = [...document.querySelectorAll('.away-ov button')].find(b => /Got it|Collect|Continue|Close/i.test(b.textContent)); if (b) b.click(); return true; })()`);
+      await page.waitForTimeout(300);
+      if (cross) { await X('S.maxZone = Math.max(S.maxZone, 12); true'); await page.waitForTimeout(2500); }
+      for (const t of ['adv', 'party', 'gat', 'forge', 'world', 'deeds']) {
+        const views = JSON.parse(await X(`JSON.stringify(shownViews(${JSON.stringify(t)}).map(v => v.id))`)); bars.push(...views);
+        for (const id of views) {
+          await X(`setTab(${JSON.stringify(id)}); true`); await page.waitForTimeout(200); await scan(`${t} > ${id}`);
+          const bar = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#viewSeg button')].filter(b => b.offsetParent).map(b => b.dataset.view))`));
+          if (bar.includes('raid')) hits.set(`Raid in the ${t} view bar`, `${t} > ${id}`);
+          // every Deeds track group (its chips) and every tab inside a view
+          const n = await X(`document.querySelectorAll('#panels .dd-chips button').length`);
+          for (let i = 0; i < n; i++) { await X(`(() => { const b = document.querySelectorAll('#panels .dd-chips button')[${i}]; if (b && b.offsetParent) b.click(); return true; })()`); await page.waitForTimeout(120); await scan(`${t} > ${id} > group ${i + 1}`); }
+          if (id === 'ach-feats') { await X(`(() => { const b = [...document.querySelectorAll('#panels button')].find(b => /^Show \\d+ finished feat/.test(b.textContent)); if (b) b.click(); return true; })()`); await page.waitForTimeout(150); await scan(`${t} > ${id} > finished feats`); }
+        }
+      }
+      const pages = JSON.parse(await X(`JSON.stringify(codexPages().map(p => p.id))`));
+      for (const p of [null, ...pages]) { await X(shut); await X(`emit('codexOpen', ${JSON.stringify(p ? { page: p } : {})}); true`); await page.waitForTimeout(150); await scan('the Codex' + (p ? ' > ' + p : '')); }
+      // the Codex keeps every tile (its counts and seals are the save's), and an unfound raid unique's hint names no raid
+      const cxHints = JSON.parse(await X(`JSON.stringify(codexPage('uniques').tiles.filter(t => RAID_UNIQ.includes(t.key)).map(t => t.hint + ' ' + t.sub))`));
+      await X(shut); await X(`document.getElementById('nuChip').click(); true`); await page.waitForTimeout(250); await scan('Next Up');   // a followed raid track (the fixture follows Wyrmslayer)
+      await X(shut); await X('openNoticeLog(); true'); await page.waitForTimeout(250); await scan('notices');
+      await X(`(() => { const b = [...document.querySelectorAll('.bsheet button')].find(b => /^Journal$/.test(b.textContent.trim())); if (b) b.click(); return true; })()`); await page.waitForTimeout(400); await scan('the Journal');
+      await X(shut);
+      // near: Next Up's Deeds goal, read with the boss fight paused (the goal rests during one)
+      const st = JSON.parse(await X(`JSON.stringify({ coin: document.getElementById('embers').parentElement.offsetParent !== null, mode: [...document.querySelectorAll('#modeSeg button, [data-act="raid"]')].some(b => b.dataset.act === 'raid' && b.offsetParent),
+        got: isUnlocked('raid'), saved: S.onboard.got.raid != null, z: S.maxZone, wyrm: S.wyrms > 0 || S.raid.gen > 0,
+        stirs: Array.from({ length: 200 }, (_, i) => almanac.omenFor(deviceDay(Date.now()) + i).id).filter(id => id === 'wyrmStirs').length,
+        say: JSON.stringify(S.onboard.sayQ || []), near: (() => { const fb = fightBoss; fightBoss = false; try { return String(GOALS.find(g => g.id === 'deeds-near').label() || ''); } finally { fightBoss = fb; } })(), notes: notes.log.flatMap(n => [n.msg, ...(n.msgs || []), ...(n.list || []).map(l => (l && (l.txt || l.msg)) || String(l))]).filter(t => /World raid/.test(t)).length })`));
+      await ctx.close();
+      return { v, hits, bars, away, cxHints, st, errs, during, after };
+    };
+    try {
+      for (const [file, w, h, cross] of [['save-raid.json', 1280, 720], ['save-raid.json', 740, 360], ['save-raid.json', 360, 740], ['save-late.json', 1280, 720], ['save-early.json', 1280, 720, true]]) {
+        const r = await run({ file, host: 'none', w, h, cross });
+        const list = [...r.hits].map(([l, wh]) => `${wh}: "${l.slice(0, 90)}"`);
+        assert(!list.length && !r.bars.includes('raid'), `${r.v}: no raid words on any tab, view, Deeds group, Codex page, the Journal, the notices or the away card, and no Raid view (${r.bars.length} views opened, away card ${r.away ? 'shown' : 'not shown'})` + (list.length ? ': ' + list.slice(0, 6).join('; ') : ''));
+        assert(!RE.test(r.st.near), `${r.v}: Next Up's Deeds goal never names a raid track, followed or near ("${r.st.near}")`);
+        assert(!r.st.coin && !r.st.mode, `${r.v}: the Embers coin and a Raid mode button are not shown (coin ${r.st.coin}, button ${r.st.mode})`);
+        assert(r.st.got && r.st.saved && r.st.z >= 12, `${r.v}: the raid's unlock is still saved, so the save keeps the raid back in the Artifact (unlocked ${r.st.got}, saved ${r.st.saved}, zone ${r.st.z})`);
+        assert(!r.st.stirs && r.cxHints.every(t => !RE.test(t)), `${r.v}: no day of the next 200 is The Wyrm Stirs and the Codex's raid uniques name no raid (${r.st.stirs} days; ${JSON.stringify(r.cxHints.slice(0, 2))})`);
+        if (cross) assert(r.st.notes === 0 && !/raid/.test(r.st.say), `${r.v}: crossing zone 12 raises no raid notice and queues no raid line (${r.st.notes} notices, queue ${r.st.say})`);
+        assert(!r.errs.length, `${r.v}: no page errors` + (r.errs.length ? ': ' + r.errs[0] : ''));
+      }
+      // mutations: with a host the raid is all there, as today
+      const a = await run({ file: 'save-raid.json', host: 'in', w: 1280, h: 720 });
+      assert(a.bars.includes('raid') && [...a.hits.keys()].some(l => /^March to the raid$/i.test(l)) && a.st.coin && a.st.stirs > 0 && a.cxHints.some(t => RE.test(t)),
+        `${a.v} (mutation): the Raid view, its March button, the Embers coin, The Wyrm Stirs and the Codex's raid hints are all there (views ${a.bars.includes('raid')}, coin ${a.st.coin}, ${a.st.stirs} Wyrm days)`);
+      assert(RE.test(a.st.near), `${a.v} (mutation): Next Up's Deeds goal names the followed raid track ("${a.st.near}")`);
+      // the host check takes 1.5 s: the Camp bar holds no Raid while it runs, then gains it with no tab change (ui() rebuilds the bar)
+      const sl = await run({ file: 'save-raid.json', host: 'in', w: 740, h: 360, slow: true });
+      assert(sl.during && !sl.during.includes('raid') && sl.during.includes('camp') && sl.after.includes('raid'), `${sl.v} (mutation, slow host): no Raid view while the host check runs, then it joins the open bar (${JSON.stringify(sl.during)} then ${JSON.stringify(sl.after)})`);
+      const o = await run({ file: 'save-raid.json', host: 'out', w: 1280, h: 720 });
+      const words = [...o.hits.keys()];
+      assert(o.bars.includes('raid') && words.includes('The shared world is out of reach') && words.some(l => /opened from its Claude link while signed in/.test(l)),
+        `${o.v} (mutation): the Raid view stays, with today's words on how to join (${words.filter(l => /shared world|Claude link/i.test(l)).join(' | ').slice(0, 200)})`);
+      const c = await run({ file: 'save-early.json', host: 'in', w: 1280, h: 720, cross: true });
+      assert(c.st.got && (c.st.notes > 0 || /raid/.test(c.st.say)), `${c.v} (mutation): with a host, crossing zone 12 still announces the raid (${c.st.notes} notices, queue ${c.st.say})`);
+      assert(!a.errs.length && !o.errs.length && !c.errs.length, `${at} (mutations): no page errors` + ([...a.errs, ...o.errs, ...c.errs].length ? ': ' + [...a.errs, ...o.errs, ...c.errs][0] : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('online-off-clean crashed: ' + (e.stack || e)); }
 
 // ==== stage-no-swarm-shrink (hero size ruling 2026-10-09, docs/design/desktop-layout/hero-size/ruling.md "Build card implied"): a turn fight
 // stands one foe, so a swarm zone (9) and a boss whose kit calls adds (the Elder Cave Bat's Call the Colony) draw at the zone's normal
