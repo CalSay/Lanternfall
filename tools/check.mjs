@@ -11304,7 +11304,7 @@ if (section('craft reveal')) try {
           const was = await X(`(c => c ? c.dataset.itemId : '')(document.querySelector('.cf-res'))`);
           const ok = await X(`(() => { const b = [...document.querySelectorAll('.cf-rec .cf-go')].find(x => !x.disabled); if (!b) return false; b.click(); return true; })()`);
           if (!ok) break;
-          await until(`(c => !!c && c.dataset.itemId !== ${JSON.stringify(was)})(document.querySelector('.cf-res'))`);   // this craft's own card
+          await need(`(c => !!c && c.dataset.itemId !== ${JSON.stringify(was)})(document.querySelector('.cf-res'))`, `craft ${i + 1}'s own result card (.cf-res)`);
           made.push(await X(`(() => { const c = document.querySelector('.cf-res'); return c ? { grade: c.querySelector('.cf-grade').textContent, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent), arrows: c.querySelectorAll('.cf-d').length, strip: document.querySelectorAll('.cf-recent .cf-tile').length } : null; })()`));
         }
         assert(made.length >= 2 && made.every(m => m && ['Common', 'Uncommon', 'Rare', 'Epic', 'Unique'].includes(m.grade)), `${at}: every craft opens a result card with a real grade name (${JSON.stringify(made.map(m => m && m.grade))})`);
