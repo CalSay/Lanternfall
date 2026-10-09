@@ -44,9 +44,6 @@ function loadCore(opts) {
 }
 
 let failed = 0;
-// forge-line-while-fighting: the browser guide walks answer a held line with its button, and a held materials line (say:stock:*) with ×: its
-// button is a Go that would send the hero gathering
-const SAY_ANSWER = 'String(soloGuideWants() || "").startsWith("say:stock:") ? ".ob-x" : ".ob-ok"';
 const browserTools = findBrowser();
 // C29: the shipped page fights in turns. Browser sections written for the real-time fight get it back through a test key the
 // page reads at boot (75-turn-ui); a section that wants the shipped turn fight asks with newContext({ turns: true, ... }).
@@ -5463,6 +5460,29 @@ if (section('solo hero')) try {
   assert(!errs.length, 'no solo errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('solo crashed: ' + (e.stack || e)); }
 
+// ---- shared by the browser guide walks (the solo walks below and the landscape walks): animsDone, pressHeld ----
+// animsDone: the browser's own word that an element's transitions have ended (looping ones, like a pulse, are not waited for)
+const animsDone = `(e => { e.getBoundingClientRect(); return e.getAnimations({ subtree: true }).every(a => a.playState !== 'running' && a.playState !== 'pending' || a.effect.getComputedTiming().iterations === Infinity); })`;
+// walk-740-guide-crash: a held line's answer (Got it, or × on a held materials line, say:stock:*, whose button is a Go that would send
+// the hero gathering: forge-line-while-fighting), pressed as one task once the guide shows it. The guide re-reads
+// the game every 250 ms on the wall clock, so it can take the line down between the walk's look and its press: a card on its way after the
+// walk's last tick, a result sheet or a camp build that finished on the wall clock. page.click then waited 30 s for a button that stays hidden
+// until the walk ticks the game again, and the walk crashed (CI at 740x360, 844x390, 1280x720 and 1920x1080; the solo walks at 360x740 pressed the same way). The walk now waits for the line
+// to be up and still (its slide-in done) or gone, and presses only a button that is shown and on top at its centre (as tapAt). A line that went
+// is read again on the walk's next pass; a button that never shows, or is covered, comes back as a miss for the walk to report.
+const HELD_BTN = `(want => { const b = want.startsWith('say:') && document.querySelector(want.startsWith('say:stock:') ? '.ob-x' : '.ob-ok');
+  return b && b.checkVisibility() ? b : null; })(String(window.__t.x('soloGuideWants()') || ''))`;
+const pressHeld = async page => {
+  const st = await page.waitForFunction(([btn, animsDone]) => { if (!String(window.__t.x('soloGuideWants()') || '').startsWith('say:')) return 'gone';
+    const b = eval(btn); return !!b && eval(animsDone)(document.querySelector('.ob-bub')) && 'up'; }, [HELD_BTN, animsDone], { polling: 'raf', timeout: 10000 })
+    .then(h => h.jsonValue(), e => /Timeout/.test(e.message) ? 'not shown in 10 s' : 'wait failed: ' + String(e.message).split('\n')[0]);
+  if (st !== 'up') return st;
+  return page.evaluate(btn => { const b = eval(btn); if (!b) return 'gone';
+    const r = b.getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!hit || !(hit === b || b.contains(hit))) return 'covered by ' + (hit ? hit.id || hit.className || hit.tagName : 'nothing');
+    b.click(); return 'pressed'; }, HELD_BTN);
+};
+
 // ---- W1-A: the guide's pause rules (audit-1 3.1, 3.8): a step that waits for time or materials never pauses the game ----
 if (section('solo guide pause rules')) try {
   const g = loadCore({ solo: true, cold: true, seed: 103 }), E = s => g.eval(s);
@@ -5522,14 +5542,14 @@ if (section('solo guide: gathering never freezes (browser)')) try {
       // step and bring the wear:tool step ahead of the Workbench, which is not the path this check walks
       await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.blade = 1; S.gold = 360; UNIQ_TUNE.first = UNIQ_TUNE.again = 0; true');
       await page.waitForTimeout(1300);
-      const trail = [], waited = [];
+      const trail = [], waited = [], heldMiss = [];   // heldMiss: a held line's answer covered or never shown (pressHeld)
       let built = false, frozen = '';
       const taps0 = await X('S.onboard.taps');
       const isBuilt = () => X('campLevel("bench") >= 1 || !!campPending("bench")');
       for (let i = 0; i < 400 && !built; i++) {
         const info = JSON.parse(await X('(() => { const s = onboardStep(), b = document.querySelector(".ob-bub"); return JSON.stringify({ id: s ? s.id : "", paused: ONBOARD.paused, need: s ? onboardNeed(s.id).length : 0, hasNeeds: !!(s && s.needs), t: S.onboard.t }); })()'));
         // cal-0107-staged-guide: an unlock line from Hesketh holds the game with a Got it; read it and press Got it, as a player does
-        if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click(await X(SAY_ANSWER)); await page.waitForTimeout(300); continue; }
+        if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { const r = await pressHeld(page); if (!/^(pressed|gone)$/.test(r)) heldMiss.push(r); await page.waitForTimeout(300); continue; }
         if (!info.id) { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); await page.waitForTimeout(280); built = await isBuilt(); continue; }
         if (!trail.includes(info.id)) trail.push(info.id);
         if (info.hasNeeds || info.need) {
@@ -5554,6 +5574,7 @@ if (section('solo guide: gathering never freezes (browser)')) try {
       }
       const tapsMade = (await X('S.onboard.taps')) - taps0;
       assert(built && await X('hearthLit()'), `a fresh game that only presses what the guide asks reaches a Workbench build (steps: ${trail.join(' > ')})`);
+      assert(!heldMiss.length, 'every held Hesketh line the walk met could be answered (its button shown and on top)' + (heldMiss.length ? ': ' + heldMiss.slice(0, 3).join(' / ') : ''));
       assert(tapsMade === 0 && waited.includes('chop') && waited.includes('stock:bench'), `no taps on the gather node; the guide waited on Pine Log twice (${waited.join(', ')})`);
       assert(!frozen, 'the game clock advanced on every step that waited for materials, and none of them paused' + (frozen ? ': ' + frozen : ''));
       try { await page.waitForFunction(() => window.__t.x('campLevel("bench") >= 1'), null, { timeout: 20000 }); } catch (e) {}   // the build timer runs on the wall clock (10 s)
@@ -5619,10 +5640,10 @@ if (section('solo hero (browser)')) try {
       // freezes the frame loop (it skips tick() while soloPickerOpen() says true) and drives the game a second at a time, unless the game
       // is paused, as the loop would.
       await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
-      const seen = [];
+      const seen = [], heldMiss = [];   // heldMiss: a held line's answer covered or never shown (pressHeld)
       for (let i = 0; i < 80 && (seen.length < 6 || !['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x))); i++) {
         // a Hesketh line (the boss's scroll) holds the game with a Got it ahead of the step: read it and press Got it, as a player does
-        if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click(await X(SAY_ANSWER)); await page.waitForTimeout(300); continue; }
+        if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { const r = await pressHeld(page); if (!/^(pressed|gone)$/.test(r)) heldMiss.push(r); await page.waitForTimeout(300); continue; }
         const st = await X('(s => s ? s.id : "")(onboardStep())');
         if (!st) { await X('for (let k = 0; k < 20; k++) tick(0.1); true'); await page.waitForTimeout(300); continue; }
         await page.waitForTimeout(400);
@@ -5644,6 +5665,7 @@ if (section('solo hero (browser)')) try {
       }
       await X('soloPickerOpen = __spo; true');
       assert(['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x)), `the first session walks Attack, the ability, Dodge and Parry (${seen.join(', ')})`);
+      assert(!heldMiss.length, 'every held Hesketh line the walk met could be answered (its button shown and on top)' + (heldMiss.length ? ': ' + heldMiss.slice(0, 3).join(' / ') : ''));
       // the slot states: a cooldown sweep and seconds after a cast; Parry and Dodge glow on a heavy hit; the picker
       await X('S.onboard.tips = false; closeMenu(); S.activity === "fight" || setActivity("fight"); true'); await page.waitForTimeout(300);
       for (let i = 0; i < 30 && !(await X('soloButtons().fight && soloButtons().abs[0].ready')); i++) { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); await page.waitForTimeout(50); }
@@ -9043,9 +9065,9 @@ if (section('action and menu icons (C26, browser)')) try {
 
 // ---- shared waits for the browser sections below (and the landscape sections after them) ----
 // Waits for what the page shows, not for a time: a shared CPU slows a slide-in or a fade by seconds, and a fixed pause then reads a
-// half-moved menu (or one that has not yet hidden). animsDone is the browser's own word that the element's transitions have ended
-// (looping ones, like a pulse, are not waited for); a menu that never gets there falls through to the caller's own assertion.
-const animsDone = `(e => { e.getBoundingClientRect(); return e.getAnimations({ subtree: true }).every(a => a.playState !== 'running' && a.playState !== 'pending' || a.effect.getComputedTiming().iterations === Infinity); })`;
+// half-moved menu (or one that has not yet hidden). animsDone (defined above the solo guide walks) is the browser's own word that the
+// element's transitions have ended (looping ones, like a pulse, are not waited for); a menu that never gets there falls through to the
+// caller's own assertion.
 const menuSettled = (page, open) => page.waitForFunction(([open, animsDone]) => { const m = document.getElementById('menu');
   return getComputedStyle(m).visibility === (open ? 'visible' : 'hidden') && !!window.__t.x('S.tab') === open && eval(animsDone)(m); }, [open, animsDone], { polling: 'raf', timeout: 10000 }).catch(() => {});
 // The same for any one element: it exists and its transitions have ended (a toast slides in, a sheet opens).
@@ -12525,6 +12547,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
           // unique, an item with `u`) never sees it, and does not need to. The walk's idle passes run the game ahead while the guide waits for the screen, so
           // on a slow runner that drop can come before the Workbench; the step then counts as walked once the game itself calls it done.
           let toolGiven = false;
+          // a held line's answer (pressHeld): a press that found it covered or never shown is a miss, said once per line
+          const heldMiss = new Set(), held = async () => { const r = await pressHeld(page); if (/^(pressed|gone)$/.test(r)) return; const line = await X('soloGuideWants()') || 'a held line'; if (!heldMiss.has(line)) { heldMiss.add(line); bad.push(`${line}: its answer ${r}`); } };
           const walked = x => trail.includes(x) || (x === 'tool' && toolGiven);
           // hero-progression-rework: a hero who levels fast reaches zone 3 (the Next Up note) before the Workbench is done; the walk
           // goes on past the note until every step has come
@@ -12532,7 +12556,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
           for (let i = 0; i < 320 && !want.every(walked); i++) {
             iters = i + 1;
             // cal-0107-staged-guide: an unlock line from Hesketh holds the game with a Got it (no ring); the walk reads it and presses Got it
-            if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await page.click(await X(SAY_ANSWER)); await page.waitForTimeout(200); continue; }
+            if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { await held(); await page.waitForTimeout(200); continue; }
             const st = await X('(s => s ? s.id : "")(onboardStep())');
             if (!toolGiven && !trail.includes('tool')) toolGiven = await X('!!S.onboard.done.tool && S.items.some(it => it.u && CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool)');
             if (!st) {
@@ -12563,7 +12587,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             // places itself every 250 ms: look again until it is right, and report what it still is after 3 s (a real miss never gets there)
             for (let w8 = 0, max = seen.has(key) ? 2 : 15; !c.ok && w8 < max; w8++) {
               // an unlock line that arrived meanwhile (Craft opens with the Workbench) holds the game with a Got it: press it, then look again
-              if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) await page.click(await X(SAY_ANSWER));
+              if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) await held();
               await page.waitForTimeout(200); c = await X(TARGET(st));
             }
             // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk

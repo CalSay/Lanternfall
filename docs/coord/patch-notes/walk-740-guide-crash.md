@@ -1,0 +1,1 @@
+Tooling only: the guide walk check now waits for Old Hesketh's line to be on screen before it presses Got it, and reads the line again if it went away, so it no longer stops on a 30-second click timeout on a slow runner. No player change. (no shot)
