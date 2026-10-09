@@ -12338,6 +12338,25 @@ if (section('desktop layout (browser, desktop-layout-v1)')) try {
         const [a, b] = snaps, same = k => a[k].n === b[k].n && a[k].fonts === b[k].fonts && a[k].boxes === b[k].boxes;
         assert(!a.desk && same('fight') && same('gear'), `${w}x${h}: not a desktop tier, and every font size and the layout boxes match the untransformed styles in the fight and in Hero > Gear with an item sheet open (${JSON.stringify({ desk: a.desk, fight: same('fight'), gear: same('gear') })})`);
       }
+      // ---- upright-tablet (80-landscape.css): a tablet held upright (768x1024) uses its width, not the 560 px phone strip ----
+      {
+        const { ctx, page, X, errs } = await open(768, 1024, { touch: true });
+        const BOX = `(() => { const w = id => Math.round(document.getElementById(id).getBoundingClientRect().width), sh = document.querySelector('.bsheet');
+          return { app: w('app'), stage: w('stageBox'), bar: Math.round(document.querySelector('#soloBar .sb-row').getBoundingClientRect().width), menu: w('menu'), sheet: sh ? Math.round(sh.getBoundingClientRect().width) : 0, wide: isWide(), scrollX: document.scrollingElement.scrollWidth - innerWidth }; })()`;
+        const f = await X(BOX), clip = (await X(CLIPPED)).filter(c => /^sb-/.test(c));
+        await view(X, page, 'gear');
+        await X('(t => t && t.click())(document.querySelector("#sec-craft-gear .cf-gs")); true'); await page.waitForTimeout(400);
+        const g = await X(BOX);
+        assert(!f.wide && f.app === 768 && f.stage >= 730 && f.bar >= 470 && !clip.length && g.menu === 768 && g.sheet >= 740 && g.scrollX <= 0,
+          `768x1024: the portrait layout spans the screen (app 768, stage 730+, fight bar 470+, no slot label cut), Hero > Gear's menu is 768 wide and an item sheet 740+, no sideways scroll (${JSON.stringify({ f, g, clip: clip.slice(0, 3) })})`);
+        // Hero > Abilities is wide enough for the desktop's list-beside-detail here: with a move open, no filter or name is cut
+        await view(X, page, 'abilities');
+        await X('(t => t && t.click())(document.querySelector(".ab-row")); true'); await page.waitForTimeout(300);
+        const ab = await X('[!!document.querySelector(".ab-det"), ...' + CLIPPED + ']');
+        assert(ab[0] && ab.length === 1, `768x1024 Hero > Abilities with a move open: the detail shows and nothing ends in "..." (${JSON.stringify(ab.slice(0, 4))})`);
+        assert(!errs.length, '768x1024: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
     } finally { await browser.close(); }
   }
 } catch (e) { fail('desktop layout (browser) crashed: ' + (e.stack || e)); }

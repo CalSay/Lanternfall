@@ -177,3 +177,9 @@
   .create-in > .create-go { justify-self: start; width: min(480px, 100%); }
   .ccards { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
 }
+/* upright-tablet (80-landscape.css): a sheet opens at the wide strip's width, and the hero picker sets its cards two across */
+@media (min-width: 700px) and (not (min-aspect-ratio: 1/1)) {
+  .bsheet { width: min(760px, 100%); }
+  .create-in { width: min(820px, 100%); padding-left: 24px; padding-right: 24px; }
+  .ccards { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+}
