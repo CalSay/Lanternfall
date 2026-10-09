@@ -247,6 +247,7 @@ function validateSave(data) {
         }
       }
     }
+    if (data.craft && data.craft.xpv !== undefined) int(data.craft.xpv, 'craft.xpv', 0, 1);   // craft-curve-skills-report: which station curve the bars are on
     if (data.craft && data.craft.tonic != null) { record(data.craft.tonic, 'craft.tonic'); known(CRAFT_TONICS, data.craft.tonic.k, 'craft.tonic.kind'); tier(data.craft.tonic.t, 'craft.tonic.tier'); num(data.craft.tonic.left, 'craft.tonic.left'); }
     return { ok: true, data };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'This save has invalid data.' }; }

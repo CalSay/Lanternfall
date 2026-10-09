@@ -142,6 +142,11 @@ const profile = args.profile ? PROFILES[args.profile] : null;
 if (args.profile && !profile) { console.error('--profile must be idle, normal or active'); process.exit(1); }
 if (profile) for (const k of ['checkins', 'session', 'first']) if (args[k] === undefined) args[k] = String(profile[k]);
 
+// --store 0|1 (H3): Storehouse caps; the policy keeps Spillover on (it acts from Storehouse Lv 3).
+// --storeswitch 0: the hero stays on a full pile (no Switch, no Spillover): skill XP over materials.
+// Declared before the reports below: applyKnobs reads them (craft-curve-skills-report: --report skills crashed here).
+const storeOn = args.store !== '0';
+const storeSw = args.storeswitch !== '0';
 if (args.report === 'turns') { await runTurnReport(); process.exit(0); }
 if (args.report === 'bossodds') { await runBossOddsReport(); process.exit(0); }
 if (args.report === 'heroes') { await runHeroReport(); process.exit(0); }
@@ -182,6 +187,9 @@ if (args.tools !== undefined) E(`TOOL_TUNE.on = ${+args.tools}`);
 // --cold 0|1: a new game starts at a cold Hearth (55-hearth.js, H1; default 1): the policy chops 8 Oak,
 // lights the fire, then plays as before and builds each station as soon as it can pay. 0 = the old warm start.
 if (args.cold === '0') E('hearthWarm()');
+// --craft k=v,k=v (craft-curve-skills-report): CRAFT_TUNE switches (20-data), e.g. --craft curve=1 runs the planned station curve.
+function craftKnobs(h) { if (args.craft) for (const kv of String(args.craft).split(',')) { const [k, v] = kv.split('='); h.eval(`CRAFT_TUNE[${JSON.stringify(k)}] = ${+v}`); } }
+craftKnobs(g);
 // --eval "code": run code in the game scope after the knobs (experiments, e.g. --eval "CRAFT_CATCHUP.mult = 3").
 if (args.eval) E(String(args.eval));
 // --evalfile path: the same, from a file (probes that print from an onTick hook).
@@ -189,10 +197,6 @@ if (args.evalfile) E((await import('node:fs')).readFileSync(String(args.evalfile
 // --unlock path=v,path=v overrides UNLOCK_TUNE knobs (56c-unlocks.js), e.g. quests.morwen.zone=33.
 const unlockTune = h => { if (args.unlock) for (const kv of String(args.unlock).split(',')) { const [k, v] = kv.split('='); h.eval(`UNLOCK_TUNE.${k} = ${+v}`); } };
 unlockTune(g);
-// --store 0|1 (H3): Storehouse caps; the policy keeps Spillover on (it acts from Storehouse Lv 3).
-const storeOn = args.store !== '0';
-// --storeswitch 0: the hero stays on a full pile (no Switch, no Spillover): skill XP over materials.
-const storeSw = args.storeswitch !== '0';
 if (!storeOn) E('STORE_TUNE.on = 0'); else if (storeSw) E('S.store.spill = 1');
 const storeStats = { lv1: null };
 // --health path (f-health): write telemetry for tools/health.mjs when the run ends. Event times are active seconds
@@ -328,6 +332,7 @@ function applyKnobs(h) {
   if (args.hands === '0') h.eval('HANDS_TUNE.on = 0');
   if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); h.eval(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
   if (args.tools !== undefined) h.eval(`TOOL_TUNE.on = ${+args.tools}`);
+  craftKnobs(h);
   for (const [flag, obj] of [['combat', 'COMBAT_TUNE'], ['enemy', 'ENEMY_TUNE']]) if (args[flag]) for (const kv of String(args[flag]).split(',')) { const [k, v] = kv.split('='); h.eval(`${obj}.${k} = ${+v}`); }
   if (args.eval) h.eval(String(args.eval));
 }
@@ -539,7 +544,8 @@ function forgeRest() {
   // Like a player: upgrade equipped gear when affordable, and re-roll equipped-tier gear
   // (forge, keep if better, else salvage) while mats are plentiful. Both train the stations.
   for (const pos of HERO_POS) { for (let k = 0; k < 3 && fn.upgradeEquipped(pos); k++); }
-  for (const pos of HERO_POS) {
+  // --reroll 0 (craft-curve-skills-report part C): no re-rolls, as a player who keeps up but does not grind the rarity die.
+  if (args.reroll !== '0') for (const pos of HERO_POS) {
     const cur = fn.equipped(pos); if (!cur || cur.u) continue;
     for (let k = 0; k < 3; k++) {
       const c = fn.craftCost(cur.slot, cur.t);
@@ -1088,6 +1094,22 @@ function runDays() {
   // GP1: a gathering tier that opens (new nodes) is a meaningful upgrade too, now that tiers take days.
   const skStamp = () => { for (const k of SKILL_KEYS) { const top = topTierOf(k), a = skTier[k] || (skTier[k] = [0]); while (a.length < top) { a.push(+(wall / H / 24).toFixed(2)); if (['mine', 'wood', 'forage'].includes(k)) mark('skill', k + a.length); } } };
   fn.on('skillUp', skStamp);
+  // craft-curve-skills-report (--skzone 1, read by --report skills part C): the station levels when each zone is first reached,
+  // the furthest zone at each station level, and station XP split into refining (live and away) and the rest (crafts, upgrades,
+  // reforges and the other station actions). The split wraps the game's own gainSkill, refineTick and refineAwayRun in this core.
+  const skz = args.skzone ? { at: {}, lvZone: {}, end: null } : null;
+  const skzLv = () => E('({ smith: S.skills.smith.lv, bench: S.skills.bench.lv, loom: S.skills.loom.lv, ench: S.skills.ench.lv })');
+  const skzRow = () => ({ day: +(wall / H / 24).toFixed(2), act: +(act / H).toFixed(2), zone: E('S.maxZone'), lv: skzLv(), xp: E('JSON.parse(JSON.stringify(globalThis.__skx))') });
+  if (skz) {
+    E(`(() => { const g0 = gainSkill, rt = refineTick, ra = refineAwayRun, X = globalThis.__skx = {}; let inRef = 0;
+      gainSkill = (k, n, q) => { if (SKILL_TUNE.craftSkills.includes(k)) { const r = X[k] || (X[k] = { ref: 0, other: 0 }); r[inRef ? 'ref' : 'other'] += n * mod('skillXp') * mod('skillXp:' + k); } return g0(k, n, q); };
+      refineTick = dt => { inRef++; try { return rt(dt); } finally { inRef--; } };
+      refineAwayRun = (...a) => { inRef++; try { return ra(...a); } finally { inRef--; } };
+    })()`);
+    skz.at[1] = skzRow();
+    fn.on('zoneClear', ({ zone }) => { if (skz.at[zone + 1] === undefined) skz.at[zone + 1] = skzRow(); });
+    fn.on('skillUp', ({ k, lv }) => { if (!(k in skz.at[1].lv)) return; const a = skz.lvZone[k] || (skz.lvZone[k] = {}); if (a[lv] === undefined) a[lv] = E('S.maxZone'); });
+  }
   const skAdd = (k, part, s) => { const o = skGather[k] || (skGather[k] = { live: 0, away: 0 }); o[part] += s; };
   const slotTier = {};
   const checkTiers = () => { for (const s of HERO_POS) { const it = fn.equipped(s); if (it && it.t > (slotTier[s] || 0)) { slotTier[s] = it.t; mark('tier', `${s}${it.t}`); } } };
@@ -1152,6 +1174,13 @@ function runDays() {
       if (args.debug) console.log(`   d${d} ${checkins[sIdx % checkins.length]}h zone ${E('S.maxZone')} L${E('S.L')} | might ${E('gear().might.toFixed(0)')} gear ${Math.round(gs())} attack ${E("trainLv('atk')")} dps ${fmt(fn.totalDps())} hero ${Math.round(100 * fn.heroDps() / fn.totalDps())}%`);
       handsStep();
       eco.bank.push([+(wall / H).toFixed(2), E('S.gold'), E('S.totalGold'), E('S.maxZone')]);
+      // --awayrefine 1 (craft-curve-skills-report part C): leaving, a player who keeps up sets each built station to refine All of
+      // the material its gear tier uses (each product's highest grade up to the zone's tier with raw to spare), so the stations work
+      // while away (overhaul spec 3: refining is the main source of station XP). Shortfall orders still run first (refineAdd).
+      if (args.awayrefine === '1') E(`(() => { if (typeof refineAdd !== 'function' || !refineOn()) return; const zt = zoneTier(S.maxZone);
+        for (const st of REFINE_STATIONS) { if (!refineBuilt(st)) continue; for (const prod of refineProducts(st)) {
+          if (refineOrders(st).some(o => o.all && o.prod === prod && refineState(st, o).k === 'run')) continue;
+          for (let t = zt; t >= 1; t--) if (refineMaxUnits(prod, t, true) >= 1) { refineAdd(prod, t, 'all'); break; } } } })()`);
       // Leaving: pick the away activity.
       if ((!profile || profile.gatherGap) && sIdx % checkins.length === 0 && checkins.length > 1 && (bestNode(true), storeAwayPick())) fn.setActivity('gather');
       else { fn.setActivity('fight'); if (E('S.zone !== S.maxZone')) fn.setZone(E('S.maxZone')); }
@@ -1217,7 +1246,8 @@ function runDays() {
   const awayLog = storeDays.map(x => (x[5] || []).reduce((m, e) => !m || e[1] > m[1] ? e : m, null));
   if (store) store.away = awayLog;
   console.log('store: away rate by day (Storehouse Lv, units/h before the cap, away hours, tier): ' + awayLog.map((e, i) => e && [1, 2, 3, 5, 7, 10, 14, 21, 30, 45].includes(i + 1) ? `d${i + 1} Lv${e[0]} ${e[1]}/h ${e[2]}h T${e[3]} ${e[9]} (H${e[5]} skill ${e[6]} tool ${e[7]} m${e[8]})` : '').filter(Boolean).join(' | '));
-  if (args.json) console.log('JSON ' + JSON.stringify({ store, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk, deeds: r.deeds })), deeds: hasDeeds ? Object.assign(dd, { groups: E('Object.fromEntries(DEED_TRACKS.map(t => [t.id, t.g]))'), live: E('deeds.tracks().map(t => t.id)') }) : null, bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, hands: handsJson(), econ: Object.assign(eco, { top: E('globalThis.__ecoTop || []') }), errors: g.errors.length }));
+  if (skz) skz.end = skzRow();
+  if (args.json) console.log('JSON ' + JSON.stringify({ skz, store, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk, deeds: r.deeds })), deeds: hasDeeds ? Object.assign(dd, { groups: E('Object.fromEntries(DEED_TRACKS.map(t => [t.id, t.g]))'), live: E('deeds.tracks().map(t => t.id)') }) : null, bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, hands: handsJson(), econ: Object.assign(eco, { top: E('globalThis.__ecoTop || []') }), errors: g.errors.length }));
 }
 
 // ================= --targets: PASS/FAIL for the balance targets =================
@@ -1444,7 +1474,16 @@ async function runDeedsReport() {
 //   --focus H: hours per run (default 200).
 // Part B, normal play: the --days check-in policy (default 30 days), each class: the day each
 //   gathering and crafting skill opens each tier, and the live / away hours spent per gathering skill.
+// Part C, by zone (craft-curve-skills-report): the station curve against the road. Each starter (Wren, Tobin, Pip) played in
+//   turn fights by the turn era's two players (docs/design/pacing-turn-era.md 1): casual, 45 minutes a day for --cdays (60) days,
+//   and good, 3 hours a day for --gdays (17) days, on the mixed policy, which crafts each next class piece as its tier opens (the
+//   sim's kept-up player). Prints the station levels when each zone is first reached, the zone each gate and grade A level is met
+//   (SKILL_TUNE.stationReq; grade A is the gate + 10), and refining's share of station XP, against the overhaul's targets
+//   (docs/design/skilling-crafting-overhaul.md 3 and 12). --craft curve=1 runs the planned curve; --md PATH writes the tables.
+//   --parts A,B,C picks the parts (default all).
 async function runSkillsReport() {
+  const parts = String(args.parts || 'A,B,C').toUpperCase().split(',');
+  if (!parts.includes('A') && !parts.includes('B')) { if (parts.includes('C')) await runSkillsZoneReport(); return; }
   const focusH = +(args.focus || 200);
   const KINDS = { mine: 'ore', wood: 'wood', forage: 'herb' };
   const hh = s => s == null ? '-' : s < 3600 ? (s / 60).toFixed(0) + 'm' : (s / 3600).toFixed(1) + 'h';
@@ -1475,10 +1514,10 @@ async function runSkillsReport() {
     })()`);
   };
   console.log(`GP1 skill pace report (seed ${seed})`);
-  console.log(`\nA. Focused: hours of one gathering skill's own time to each tier (${focusH}h runs)`);
-  console.log('skill   mode    tier2  tier3  tier4  tier5 | level at 10m/30m/1h/3h/10h/30h | longest level gap in the first 30m');
   const focusRes = {};
-  for (const skill of Object.keys(KINDS)) for (const mode of ['tooled', 'rough', 'away']) {
+  if (parts.includes('A')) console.log(`\nA. Focused: hours of one gathering skill's own time to each tier (${focusH}h runs)`);
+  if (parts.includes('A')) console.log('skill   mode    tier2  tier3  tier4  tier5 | level at 10m/30m/1h/3h/10h/30h | longest level gap in the first 30m');
+  if (parts.includes('A')) for (const skill of Object.keys(KINDS)) for (const mode of ['tooled', 'rough', 'away']) {
     const o = focus(skill, mode); focusRes[skill + ':' + mode] = o;
     const lvAt = s => { let l = 1; for (const [k, v] of Object.entries(o.lv)) if (v <= s) l = Math.max(l, +k); return l; };
     const lvs = Object.values(o.lv).sort((a, b) => a - b);
@@ -1486,11 +1525,15 @@ async function runSkillsReport() {
     console.log(`${skill.padEnd(7)} ${mode.padEnd(6)} ${[1, 2, 3, 4].map(i => hh(o.tier[i]).padStart(6)).join(' ')} | ${[600, 1800, 3600, 10800, 36000, 108000].map(lvAt).join('/')} | ${mode === 'away' ? '-' : hh(gap)} (end Lv ${o.end}, mastery ${o.mastery})`);
   }
   // Part B
+  if (!parts.includes('B')) { if (parts.includes('C')) await runSkillsZoneReport(); return; }
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
-  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy', 'tools'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy', 'tools', 'craft'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'], nDays = +(args.days || 30), SKILL_KEYS = ['mine', 'wood', 'forage', 'smith', 'bench', 'loom', 'ench'];
-  const outs = await Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass])));
+  // craft-curve-skills-report: a class whose legacy real-time run crashes (the Lightkeeper, in actTick, on the base too) prints a
+  // line and drops out, instead of taking the whole report (and part C) down with it.
+  const outs = await Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass]).catch(e => { console.log(`(${c}: the run crashed: ${String(e.message || e).split('\n').find(l => /Error/.test(l)) || 'error'})`); return null; })));
+  for (let i = classes.length - 1; i >= 0; i--) if (!outs[i]) { classes.splice(i, 1); outs.splice(i, 1); }
   const js = outs.map(o => JSON.parse(o.split('\n').find(l => l.startsWith('JSON ')).slice(5)));
   const dd = x => x == null ? '-' : x.toFixed(1);
   console.log(`\nB. Normal play (--days ${nDays}, check-ins 8,13,19): the day each skill opens tiers 2/3/4/5 (day 0.3 = install at 08:00 on day 1)`);
@@ -1501,6 +1544,69 @@ async function runSkillsReport() {
   js.forEach((j, i) => console.log(classes[i].padEnd(12) + ' ' + ['mine', 'wood', 'forage'].map(k => { const gg = j.skGather[k] || { live: 0, away: 0 }; return `${k} ${(gg.live / 3600).toFixed(1)}+${(gg.away / 3600).toFixed(0)}h`; }).join(', ')
     + ' | ' + SKILL_KEYS.map(k => k + ' ' + DAYS.map(d => (j.rows[d - 1] && j.rows[d - 1].sk) ? j.rows[d - 1].sk[k] : '-').join('/')).join(' ')));
   if (args.json) console.log('JSON ' + JSON.stringify({ focus: focusRes, days: js.map((j, i) => ({ cls: classes[i], skTier: j.skTier, skGather: j.skGather, rows: j.rows })) }));
+  if (parts.includes('C')) await runSkillsZoneReport();
+}
+// Part C (see runSkillsReport). Targets: each tier's gate (10/22/36/54) by the zone that opens the tier (PACE.essTier 7/13/19/42),
+// grade A on tiers 2-4 (levels 20/32/46) by that zone + 3 (10/16/22); missed if later than the target zone + 2. Tier 4 S (level 51)
+// not before zone 35. Refining at least half of station XP (missed under a third). Checked on the stations that make the hero's
+// class set (weapon, off-hand, head, body); the others print too.
+async function runSkillsZoneReport() {
+  const { execFile } = await import('node:child_process');
+  const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(new Error(String(e) + out)) : res(out)));
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy', 'tools', 'craft'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : [])
+    .concat(['--reroll', String(args.reroll || '0'), '--awayrefine', String(args.awayrefine || '1')]);   // the kept-up player does not grind the rarity die and leaves its stations refining (--reroll 1, --awayrefine 0: the plain mixed policy)
+  const HEROES = [['ranger', 'Wren'], ['warden', 'Tobin'], ['lanternmage', 'Pip']], ST = ['smith', 'bench', 'loom', 'ench'];
+  const PLAYERS = { casual: ['--days', String(+(args.cdays || 60)), '--session', '15', '--first', '15'], good: ['--days', String(+(args.gdays || 17)), '--session', '60', '--first', '60'] };
+  const h0 = loadCore({ seed }); craftKnobs(h0);
+  const req = h0.eval('SKILL_TUNE.stationReq'), tz = h0.eval('PACE.essTier'), curveOn = !!h0.eval('CRAFT_TUNE.curve');
+  const setSt = c => h0.eval(`[...new Set(['weapon', 'off', 'helm', 'body'].map(p => CRAFT_STATIONS[CRAFT_KINDS[CRAFT_FITS[p][${JSON.stringify(c)}][0]].st].skill))]`);
+  // [label, level, target zone, kind]: gate by the tier's zone; grade A by the tier's zone + 3; tier 4 S not before zone 35
+  const CHECKS = [[`T2 gate ${req[1]}`, req[1], tz[1], 'by'], [`T2 A ${req[1] + 10}`, req[1] + 10, tz[1] + 3, 'by'], [`T3 gate ${req[2]}`, req[2], tz[2], 'by'],
+    [`T3 A ${req[2] + 10}`, req[2] + 10, tz[2] + 3, 'by'], [`T4 gate ${req[3]}`, req[3], tz[3], 'by'], [`T4 A ${req[3] + 10}`, req[3] + 10, tz[3] + 3, 'by'],
+    [`T4 S ${req[3] + 15}`, req[3] + 15, 35, 'notBefore'], [`T5 gate ${req[4]}`, req[4], tz[4], 'by']];
+  const jobs = [];
+  for (const [p, pa] of Object.entries(PLAYERS)) for (const [c] of HEROES) jobs.push([p, c, ['--class', c, '--active', '1', '--turns', '1', '--skill', p, '--checkins', '8,13,19', '--seed', String(seed), '--skzone', '1', '--json', '1', ...pa, ...pass]]);
+  const outs = await Promise.all(jobs.map(([, , a]) => run(a)));
+  const res = jobs.map(([p, c], i) => ({ p, c, j: JSON.parse(outs[i].split('\n').find(l => l.startsWith('JSON ')).slice(5)).skz }));
+  const ZONES = [1, 3, 5, 7, 10, 13, 16, 19, 22, 25, 30, 35, 42, 45];
+  const md = [], say = (l, m) => { console.log(l); md.push(m === undefined ? l : m); };
+  say(`\nC. By zone: station levels for the turn era's players (casual ${PLAYERS.casual[1]} days x 45 min, good ${PLAYERS.good[1]} days x 3 h), seed ${seed}, CRAFT_TUNE.curve ${curveOn ? 1 : 0}`, `## By zone, CRAFT_TUNE.curve ${curveOn ? 1 : 0} (seed ${seed})`);
+  let misses = 0;
+  for (const p of Object.keys(PLAYERS)) {
+    say(`\n${p}: the level of each station when the zone is first reached (* = makes a class set piece; end = the run's last day)`, `\n### ${p}\n\n| hero | station | ${ZONES.map(z => 'z' + z).join(' | ')} | end |\n|---|---|${ZONES.map(() => '---|').join('')}---|`);
+    console.log('hero   station ' + ZONES.map(z => ('z' + z).padStart(4)).join('') + '  end');
+    const verdicts = [];
+    for (const r of res.filter(x => x.p === p)) {
+      const name = HEROES.find(h => h[0] === r.c)[1], sets = setSt(r.c), at = r.j.at, end = r.j.end;
+      for (const k of ST) {
+        const cells = ZONES.map(z => at[z] ? String(at[z].lv[k]) : '-');
+        const endTxt = `${end.lv[k]} (z${end.zone}, day ${Math.ceil(end.day)})`;
+        say(`${name.padEnd(6)} ${(k + (sets.includes(k) ? '*' : '')).padEnd(7)} ${cells.map(x => x.padStart(4)).join('')}  ${endTxt}`, `| ${name} | ${k}${sets.includes(k) ? ' *' : ''} | ${cells.join(' | ')} | ${endTxt} |`);
+      }
+      // gates on the set's stations: the furthest zone when the level was first reached
+      for (const k of sets) {
+        const lz = r.j.lvZone[k] || {};
+        const line = CHECKS.map(([lab, lv, z, kind]) => {
+          const got = lz[lv];
+          let v;
+          if (kind === 'notBefore') v = got !== undefined && got < z ? 'MISS' : 'ok';
+          else if (got !== undefined) v = got <= z + 2 ? 'ok' : 'MISS';
+          else v = end.zone > z + 2 ? 'MISS' : 'n/a';
+          if (v === 'MISS') misses++;
+          return `${lab} z${got === undefined ? '-' : got} (${kind === 'by' ? 'by z' + z : 'not before z' + z}) ${v}`;
+        });
+        verdicts.push([name, k, line]);
+      }
+      const xp = end.xp, sum = f => ST.reduce((a, k) => a + ((xp[k] && xp[k][f]) || 0), 0), share = sum('ref') / Math.max(1e-9, sum('ref') + sum('other'));
+      const v = share >= 0.5 ? 'ok' : share < 1 / 3 ? 'MISS' : 'short';
+      if (v === 'MISS') misses++;
+      verdicts.push([name, 'refining', [`refining ${Math.round(100 * share)}% of station XP (${Math.round(sum('ref'))} of ${Math.round(sum('ref') + sum('other'))}; want at least 50%, missed under 33%) ${v}`]]);
+    }
+    say(`\n${p}: gates (the furthest zone when the level is first reached; n/a: the run ends before the target zone + 2)`, `\n${p}: gates (the furthest zone when the level is first reached; n/a: the run ends before the target zone + 2)\n`);
+    for (const [name, k, line] of verdicts) say(`  ${name.padEnd(6)} ${k.padEnd(8)} ${line.join(' | ')}`, `- ${name} ${k}: ${line.join('; ')}`);
+  }
+  say(`\nby-zone misses: ${misses}`);
+  if (args.md) writeFileSync(String(args.md), md.join('\n') + '\n');
 }
 
 // ================= --report hands: Hands targets (hearth-and-hands.md 7.2, N1) =================

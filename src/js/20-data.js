@@ -51,10 +51,19 @@ const SKILL_TUNE = {
   gatherEarly: { below: 14, x: 0.5 }, // C10a (owner: "level 14 of each resource gathering takes a while"): levels 1-13 need
                                       // half the XP, so each skill reaches 14 (tier 2) in about half the time; 14+ unchanged
   craftNeed: [7, 0.5, 1.04],          // the same for Smithing, Woodcraft, Tailoring, Enchanting
+  // craft-curve-skills-report: the planned station curve, read only while CRAFT_TUNE.curve is on (skillCurve, skillNeed). One piece a
+  // tier: [first level, XP from that level to the next, growth a level], so each tier's gate comes by the zone that opens it and the
+  // levels between gates (the grades) slow down. Fitted with node tools/sim.mjs --report skills (docs/design/skilling-crafting-overhaul/curve.md).
+  craftNeedV2: [[1, 6, 1.08], [10, 11, 1.05], [22, 73, 1.09], [36, 400, 1.24], [54, 16000, 1.025]],   // provisional until the balance pass
+  belowTierX: 0.1,                    // CRAFT_TUNE.curve: a craft, upgrade or reforge below the station's highest open tier pays this share of its XP (provisional)
   craftSkills: ['smith', 'bench', 'loom', 'ench'],
   nodeXp: [7, 1],                     // XP a swing at a tier-t node: a x t^b (nodeXp)
   spdPerLv: 0.02                      // gathering speed per level above 1 (nodeTime)
 };
+// craft-curve-skills-report: the crafting overhaul's switches (docs/design/skilling-crafting-overhaul.md 13). All off in code until the
+// balance pass; checks and tools turn them on in a scratch game. curve: SKILL_TUNE.craftNeedV2 and belowTierX (40-rules, 55-crafting).
+// grades, strike, infuse, infuseX: read by the cards that build them (craft-attribute-grades, craft-strike-infuse).
+const CRAFT_TUNE = { grades: 0, strike: 0, infuse: 0, curve: 0, infuseX: 3 };
 const NODE_REQ = SKILL_TUNE.nodeReq;
 const SMITH_REQ = SKILL_TUNE.stationReq;
 const SKILL = { mine: 'Mining', wood: 'Woodcutting', smith: 'Smithing' };

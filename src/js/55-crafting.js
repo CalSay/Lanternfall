@@ -47,17 +47,34 @@
 //     Swords/Helms and the hero's gear of another class into the new class's kinds (same id,
 //     tier, rarity, +N, lines). Anything that still does not fit goes back to the bag.
 //
-// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd }).
+// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd, xpv }). xpv: the station curve the bars are on.
 //   tmd: { fam: [n x 5] } units made by transmuting down (they cannot be broken down again; BAL1).
 //   troph: Trophy counts by zone type (CRAFT_TROPHIES order). tonic: { k, t, left } active.
 //   tonics: { 'key:t': count } the pouch. jobs, champ: K5/K10. starChart: Star Charts made.
 
+// craft-curve-skills-report: S.craft.xpv says which station curve the Smithing, Woodcraft, Tailoring and Enchanting bars are on
+// (0: today's SKILL_TUNE.craftNeed, 1: craftNeedV2). When CRAFT_TUNE.curve disagrees, each bar keeps its share of its level on the
+// other curve and stays under the next level, and no level changes (the S.attr.xpv rule, 55-attributes attrXpMap). Runs when the
+// craft state loads (a save-code import reloads into this) and before every station gain (gainSkill, 50-sim), so refine XP, which
+// skips gainStation, never chains level-ups on an unmapped bar.
+function craftXpMap() {
+  const c = S.craft; if (!c || typeof c !== 'object' || (c.xpv === 1) === !!CRAFT_TUNE.curve) return;
+  const on = CRAFT_TUNE.curve ? 1 : 0;
+  for (const k of SKILL_TUNE.craftSkills) {
+    const sk = S.skills && S.skills[k]; if (!sk || typeof sk !== 'object') continue;
+    const lv = Math.max(1, sk.lv | 0);
+    sk.xp = Math.min(0.999, Math.max(0, (+sk.xp || 0) / skillNeed(lv, k, 1 - on))) * skillNeed(lv, k, on);
+  }
+  c.xpv = on;
+}
+
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund;
+  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare;
 
 {
-  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {} });
+  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0 });
+  craftXpMap();
   const C = () => S.craft;
   const STAR = { t: 3, mats: { crystal: 40, ess: 20 }, troph: [[6, 1]], st: 'ench' };
   const SALVAGE_ESS = 0.2; // chance per affix line of 1 extra essence (at most 1)
@@ -91,6 +108,13 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     return n * m;
   };
   const gainStation = (skill, n) => gainSkill(skill, craftXpFor(skill, n));
+  // craft-curve-skills-report: with CRAFT_TUNE.curve on, making, upgrading or reforging a piece below the highest tier its station
+  // has open pays SKILL_TUNE.belowTierX of its XP (re-crafting cheap items stops paying). Re-making on the top open tier pays in full.
+  craftXpShare = (kind, t) => {
+    if (!CRAFT_TUNE.curve) return 1;
+    let top = 1; for (let u = 2; u <= 5; u++) if (stationTierOpen(kind, u)) top = u;
+    return t < top ? SKILL_TUNE.belowTierX : 1;
+  };
   const gateWhy = (skill, need) => `Needs ${SKILL[skill]} ${need}`;
   // H1 (55-hearth): a cold save crafts only at a station it has built. '' = built (every warm save).
   const unbuilt = st => typeof hearthStationWhy === 'function' ? hearthStationWhy(st) : '';
@@ -133,7 +157,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const r = rollRarity(stationLevel(kind));
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
     addItem(it);
-    gainStation(stationOf(kind).skill, CRAFT_XP.craft(t));
+    gainStation(stationOf(kind).skill, CRAFT_XP.craft(t) * craftXpShare(kind, t));
     // craft-delta: opts.wear (the Craft button only) puts on a tool that beats the worn one, or fills an empty slot. Gear always asks.
     // Straight into S.equip, not equipItem (its "Equipped" toast would be a second toast for one craft; the result card is the receipt).
     const ev = { item: it, kind, t }, d = CRAFT_KINDS[kind], pos = d && d.tool ? kindPos(kind) : null;
@@ -177,7 +201,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     if (c.cost.troph) C().troph[pickTrophy(trophIdx)] -= c.cost.troph;
     it.plus++;
     gearDirty();
-    gainStation(stationOf(it.slot).skill, CRAFT_XP.upgrade(it.t));
+    gainStation(stationOf(it.slot).skill, CRAFT_XP.upgrade(it.t) * craftXpShare(it.slot, it.t));
     toast(`${itemName(it)} upgraded.`, 'good', { item: it }, 'low');
     // gold-without-training: the two steps worth a word. +7 is the last gold-only step; +10 is the top.
     const nm = kindName(it.slot, it.t, it.u);
@@ -211,7 +235,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     payMats(c.cost.mats, it.t); S.gold -= c.cost.gold; econSpend('craft', c.cost.gold);
     it.a = res.a; it.rf = res.rf;
     gearDirty();
-    gainStation('ench', CRAFT_XP.reforge(it.t));
+    gainStation('ench', CRAFT_XP.reforge(it.t) * (CRAFT_TUNE.curve && it.t < skillTopTier('ench') ? SKILL_TUNE.belowTierX : 1));   // reforge pays Enchanting, so its own top tier counts
     const [[stat, v]] = craftAffixValue(res.line[0], itemPower(it), res.line[1]);
     toast(`Reforged: ${craftFmtLine(stat, v)}.`, 'good', { item: it }, 'low');
     emit('reforged', { item: it, idx, line: res.line });
