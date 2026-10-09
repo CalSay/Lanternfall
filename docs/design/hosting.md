@@ -217,31 +217,59 @@ The gate does not change: a preview goes up only for a SHA that passed the walk 
 **Branch taken: "Yes, standing."** Netlify draft preview links for new builds, outside the Monday release, whenever a build
 passes the gate. No production deploy beyond Monday.
 
-- **Who:** the Foreman, at the playbook's Preview step (tick step 7), in place of the Artifact republish.
-- **What:** `node tools/site.mjs site` on the gated SHA, then a non-production deploy of `site/` to one fixed address, with the
-  SHA in the deploy's message. Three routes, in order:
-  1. **The Netlify connector's deploy tool.** At this session's start the connector listed a deploy "updater" tool, which then
-     disconnected; the tools left are read-only, so this route is almost surely not available. If it can make a draft with an
-     alias, no new setting or secret is needed.
-  2. **A branch deploy** of a branch `lf-preview` at `lf-preview--lanternfall.netlify.app` (branch deploys are non-metered). Needs
-     Cal to allow that branch in Netlify's branch-deploy settings, and a `netlify.toml` line that builds that branch without the
-     deploy tag (a guarded path: `cal-approved`). After that, previews are a git push, a tool every thread already has.
-     **Recommended** if route 1 does not exist.
-  3. **The Netlify CLI** (`netlify deploy --dir site --alias preview`). Needs an auth token as an environment secret and the npm
-     registry; both are Cal's (secrets, network).
-  So the standing yes most likely needs one more step from Cal before the first preview. Card 2 checks route 1 first; if it is
-  not there, the coordinator asks Cal once on a decision card for route 2, which says plainly that a branch deploy stands in for
-  a "draft" (same cost, a fixed address, built by Netlify from a branch).
-- **Things Cal should know about a fixed address:** anyone who guesses `lf-preview--lanternfall.netlify.app` can open it (the
-  repository is public, so the code already is); and "Tell us" notes from the preview land in the same Netlify Forms inbox as the
-  public build's, told apart by their build field (the SHA).
-- **Where the link goes:** the Foreman's digest and the coordinator's morning report, in place of the preview Artifact link, with
-  the SHA.
-- **The first preview** checks that its deploy shows as non-production on Netlify (no 15-credit production deploy in the usage
-  page). Bandwidth from previews is counted like any other and is not a reason to stop.
-- **The preview Artifact `R6RAoesiNhRpfx4Brxkyxr`:** keep republishing it beside the Netlify preview until a week in which every gated
-  build got a working Netlify link; then stop republishing. Its last build stays as a fallback while the page fits 14 MB.
-- The coordinator applies the playbook text (the coordinator owns `playbook.md`); card 2 proposes it.
+**Route check (card netlify-preview-route, 9 Oct).** Three routes were named, in order:
+1. **The Netlify connector's deploy tool: not available.** The connector lists one write tool for deploys,
+   `netlify-deploy-services-updater`, with a single operation `deploy-site` whose only parameter is `siteId`. It has no
+   draft/production switch, no alias or branch, no folder and no message, so it cannot promise a non-production deploy at one
+   fixed address. In the checking session it was also refused by a permission rule (the updater tools for deploys, projects and
+   extensions were withdrawn as "Denied by a permission rule"), so no thread can call it today. No deploy was made. The read
+   tools work: `netlify-project-services-reader get-project` for site `53373011-f31a-4302-84c4-102b3f1f135f` returned plan
+   `nf_team_pro`, production at `lanternfall.netlify.app` (deploy `6abad0ab4f8db300098f0a30`, ready), no password or team login,
+   forms enabled, and a branch address `claude-elegant-johnson-m6k00u--lanternfall.netlify.app`.
+2. **A branch deploy of `claude/lf-preview`: the route to take.** Netlify builds the branch `claude/lf-preview` and serves it
+   at `claude-lf-preview--lanternfall.netlify.app`. The name keeps the `claude/` prefix because session git proxies may refuse
+   pushes outside it. A branch deploy is non-production, costs 0 credits and keeps one fixed address, so it stands in for a
+   "draft". It needs two things from Cal, once (a decision card from the coordinator):
+   - in Netlify, Project configuration > Developer settings > Continuous deployment > Branches and deploy contexts >
+     Configure: make sure `claude/lf-preview` gets branch deploys (Netlify settings are Cal's). It may already: the project shows
+     a branch address for the integration branch, so the setting may be "All";
+   - one guarded `netlify.toml` line (`cal-approved`) so `claude/lf-preview` builds without the `[deploy]` tag. The `ignore` line
+     becomes
+     `ignore = "[ \"$BRANCH\" = claude/lf-preview ] && exit 1; git log -1 --pretty=%B | grep -qF '[deploy]' && exit 1 || exit 0"`
+     (Netlify sets `BRANCH` for every build). Every other branch, production included, keeps the `[deploy]` rule, so Monday is
+     unchanged.
+3. **The Netlify CLI** (`netlify deploy --dir site --alias preview`): needs an auth token as an environment secret and the npm
+   registry; both are Cal's. Not proposed while route 2 is open.
+
+**Procedure (route 2, once Cal has done both steps):**
+- **Who:** the Foreman, at the playbook's Preview step (tick step 7), beside the Artifact republish until a clean week (below),
+  then in its place. No build thread pushes `claude/lf-preview`.
+- **Which SHA:** the integration branch head that passed the walk and the cold leg, `<sha>`. Nothing else goes up.
+- **Gate first:** if the walk or the cold leg has not passed on `<sha>`, there is no preview this tick; the digest says why and
+  the last link stays up.
+- **Deploy:** `git push --force origin <sha>:refs/heads/claude/lf-preview` (a plain copy of the gated commit, no new
+  commit, so the build is exactly `<sha>`). Netlify runs `node tools/site.mjs site` on that commit. `claude/lf-preview` is the
+  Foreman's own branch, so forcing it rewrites no one else's work.
+- **Check:** with the Netlify read tools, find the newest deploy on `claude/lf-preview` and confirm it is `ready`, its context is
+  `branch-deploy` (not production) and its commit is `<sha>`. Then load the address and confirm the page opens. On the first
+  preview, also confirm the usage page shows no 15-credit production deploy.
+- **"Tell us" shows the SHA:** `tools/site.mjs` writes `build` from Netlify's `COMMIT_REF`, the first 7 characters of `<sha>`.
+  A note sent from the preview carries that build, which tells it apart from the public build's notes in the same Forms inbox.
+- **Where the link goes:** `https://claude-lf-preview--lanternfall.netlify.app` with `<sha>`, in the Foreman's digest and the
+  coordinator's morning report, in place of the preview Artifact link.
+- **If the deploy fails or is not ready:** the digest says so with the deploy id, the last good preview stays up, and the
+  Foreman retries at the next tick. Never fall back to a production deploy.
+
+**Things Cal should know about a fixed address:** anyone who guesses `claude-lf-preview--lanternfall.netlify.app` can open it (the
+repository is public, so the code already is). Its saves are separate from the public build's, because a different address keeps
+its own browser storage. "Tell us" notes from the preview land in the same Netlify Forms inbox as the public build's, told apart
+by their build field. Bandwidth from previews is counted like any other and is not a reason to stop.
+
+**Until Cal acts on route 2,** previews stay on the preview Artifact `R6RAoesiNhRpfx4Brxkyxr` as today. After that, keep
+republishing it beside the Netlify preview until a week in which every gated build got a working Netlify link; then stop
+republishing. Its last build stays as a fallback while the page fits 14 MB.
+
+The coordinator applies the playbook text (the coordinator owns `playbook.md`); card netlify-preview-route proposed it.
 
 **Other branch: if Cal withdraws the standing yes.** Previews go back to the preview Artifact while the one-file build fits 14 MB.
 After that, a new build is seen only on Monday at `lanternfall.netlify.app`, unless Cal approves a draft for that build.
@@ -360,7 +388,8 @@ Coverage-map areas 19 (performance and stability: fast load) and 20 (saves and t
 ## 11. Not verified
 
 - Whether draft deploys cost 0 credits (Netlify's billing pages do not name them).
-- What the Netlify connector's deploy tool can do (card 2).
+- ~~What the Netlify connector's deploy tool can do (card 2).~~ Answered by netlify-preview-route: its only deploy tool,
+  `deploy-site`, takes just a `siteId` and was denied by a permission rule, so 7.2 takes route 2 (a branch deploy).
 - Whether Cal's team is on a credit-based or an older Pro plan (Netlify's billing page).
 - Netlify's Brotli level: inferred as between 4 and 5 from one page.
 - That Netlify answers a repeat visit with HTTP 304 (once yes from this thread, once no through the same proxy; card 5).
