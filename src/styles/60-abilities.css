@@ -121,8 +121,9 @@
 .ab-timed { margin: 0; font-size: 13px; color: var(--gold); }
 .ab-act { display: grid; gap: 4px; }
 .ab-al { font-size: 12px; color: var(--muted); }
-.ab-sl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.ab-slotb { display: grid; place-items: center; gap: 1px; min-width: 0; min-height: 48px; padding: 3px 4px; background: var(--panel-2); color: var(--bone);
+.ab-sl { display: flex; flex-wrap: wrap; gap: 6px; }
+/* each slot is at least as wide as the name it holds; three long names wrap to a second row */
+.ab-slotb { flex: 1 1 0; display: grid; place-items: center; gap: 1px; min-width: max-content; min-height: 48px; padding: 3px 4px; background: var(--panel-2); color: var(--bone);
   border: 2px solid #0B0810; cursor: pointer; }
 .ab-slotb b { font: 700 calc(18px * var(--display-k, 1))/1 var(--display); }
 .ab-slotb small { max-width: 100%; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
