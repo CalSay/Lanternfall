@@ -211,6 +211,9 @@ Other "Tap" and "Hold" lines (about 66, 14 of them in `75-onboard-ui.js`) wait f
    attributes moved into their tips, so the browser's own tooltip does not double them.
 2. **neutral-wording (P2):** the remaining "Tap" and "Hold" lines, after the onboard cards running now merge (they own
    `75-onboard-ui.js`).
+   **Built (neutral-wording, 2026-10-09):** player copy says "Open", "Choose", "Press", "again" or "Click or tap" (things on the
+   stage: the fire, a tree) instead of "Tap". "Hold" stays where it is a real long press (an ability slot's swap) or means keep or
+   own ("Hold the Bridge", a Codex material hint); "hold Stand Fast" and "Hold Deathcap" became "save".
 3. **upright-tablet (P2, done):** 768x1024 and wider upright screens drop the 560 px strip and use the portrait layout at
    full width (`docs/design/layout.md`, "Upright tablets").
 4. **desktop-views-2 (P2):** Stars, Store, Uniques, Camp, Build and the Codex as desktop panels; keys for views

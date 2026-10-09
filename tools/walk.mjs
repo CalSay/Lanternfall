@@ -338,7 +338,7 @@ async function followTip(o) {
     // an info notice (unlock-voice: "The Hero tab's open…") has a × and no ring: a player reads it and closes it
     if (!tp.target && /^(say|use):/.test(tp.action) && await click('.ob-bub .ob-x', 300)) { st.tipTaps = 0; return true; }
     if (st.tipTaps >= 2 && st.tipTaps % 2 === 0) {
-      const m = /\b(?:[Oo]pen|[Tt]ap|[Pp]ress|[Pp]ick|[Cc]hoose|[Ll]ight|[Bb]uild|[Cc]raft|[Cc]hop|[Mm]ine|[Ss]tart|[Cc]laim|[Ee]quip|[Gg]o to)\s+(?:the\s+|your\s+)?([A-Z]\w*(?:\s[A-Z]\w*)?)/.exec(tp.text);
+      const m = /\b(?:[Oo]pen|[Pp]ress|[Pp]ick|[Cc]hoose|[Ll]ight|[Bb]uild|[Cc]raft|[Cc]hop|[Mm]ine|[Ss]tart|[Cc]laim|[Ee]quip|[Gg]o to)\s+(?:the\s+|your\s+)?([A-Z]\w*(?:\s[A-Z]\w*)?)/.exec(tp.text);
       if (m && await click('button, [role=tab], .tab:text((^|\\W|New)' + m[1] + '\\s*$)', 300)) return true;
       // a first-use line has no marker and never pauses: it clears itself, so there is nothing to tap (guide-target-guard)
       if (st.tipTaps === 4 && !/^use:/.test(tp.action) && !/\d+\s*\/\s*\d+/.test(tp.text)) addCheck('guide', 'a tip\'s marker leads nowhere: "' + tp.text.slice(0, 60) + '"', `tapped the ringed spot twice and the tip stayed; ring at ${tp.target ? Math.round(tp.target.x) + ',' + Math.round(tp.target.y) + ' ' + Math.round(tp.target.w) + 'x' + Math.round(tp.target.h) : 'none'}`);

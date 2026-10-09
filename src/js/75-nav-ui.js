@@ -120,7 +120,7 @@ let navUI = null;
   sw.addEventListener('click', () => openSwitcher());
   let gSk = '';
   uiHooks.push(() => {
-    // A cold Hearth before the fire keeps "Gather" (the guide says "Tap Gather").
+    // A cold Hearth before the fire keeps "Gather" (the guide says "Press Gather").
     const cold = typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit();
     const sk = cold ? 'gather' : skillOf(S.node.kind);
     if (sk !== gSk) {

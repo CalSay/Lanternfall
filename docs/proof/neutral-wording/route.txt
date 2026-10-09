@@ -1,0 +1,53 @@
+# seed: 11
+# Proof for card neutral-wording: the last "Tap" lines in player copy now read right with a mouse and on a touch screen.
+# Part 1 (fixture unlit-8log: at the grove, fire unlit, 8 Pine Log): Hesketh says "Click or tap the fire and light it."
+#   fire-line-*.png  his fire line.
+# Part 2 (fixture cold-z2-unlit, as guide-goal-after-reload): after a fight his Gather line says "Press Gather", not "Tap Gather".
+#   gather-line-*.png  the Gather tip.
+# Every changed line, and the lines kept with a reason, are listed in the PR. Copy only: no button does anything new.
+new unlit-8log
+wait 2
+tap-if "Got it"
+expect "Click or tap the fire and light it"
+shot fire-line
+new cold-z2-unlit
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Attack"
+wait 1.5
+tap-if "Got it"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+wait 1
+tap-if "Attack"
+expect "Press Gather and chop some Pine Log for the fire"
+expect-no "Tap Gather"
+shot gather-line

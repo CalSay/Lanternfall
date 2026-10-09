@@ -8377,7 +8377,7 @@ const ELITE_TRAITS = {
   explosive: { name: 'Explosive', counter: 'dodge, or kill it Chilled', badge: ['...y.', '..o..', '.ooo.', 'ooooo', '.ooo.'], col: '#FF9B3D',
     first: 'Explosive elite: it blasts when it dies. Dodge the blast, or kill it while it is Chilled.' },
   summoner: { name: 'Summoner', counter: 'interrupt', badge: ['.vvv.', 'v...v', 'v.v.v', 'v...v', '.vvv.'], col: '#B47BFF',
-    first: 'Summoner elite: tap while it casts to stop its adds.' },
+    first: 'Summoner elite: hit it while it casts to stop its adds.' },
   enraged: { name: 'Enraged', counter: 'Chill, or burst it', badge: ['r...r', 'r...r', '.rrr.', 'rrrrr', '.rrr.'], col: '#FF5A4A',
     first: 'Enraged elite: under half health it attacks faster. Chill calms it.' },
   frozen: { name: 'Ice-Clad', counter: 'fire', badge: ['bbbbb', 'b.w.b', 'bwwwb', 'b.w.b', 'bbbbb'], col: '#9CDCFF',
@@ -9712,7 +9712,7 @@ const DEED_TRACKS = [
   { id: 's_forage', g: 'gather', n: 'Rare Blooms', what: 'Foraging units by tier', need: [1, 2, 3, 4], star: null, bonus: 'gatherSpeed:forage', src: 'new', kind: 'ladder', skill: 'forage',
     steps: ['1,000 tier 2 units', '1,000 tier 3 units', '1,000 tier 4 units', '10,000 tier 5 units'] },
   { id: 'finds', g: 'gather', n: 'Lucky Strike', what: 'Rare finds', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: 'gatherSpeed', src: 'save', u: ['rare find', 'rare finds'] },
-  { id: 'glint', g: 'gather', n: 'Glint Chaser', what: 'Glints tapped', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'gatherSpeed', src: 'new', u: ['Glint', 'Glints'] },
+  { id: 'glint', g: 'gather', n: 'Glint Chaser', what: 'Glints caught', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'gatherSpeed', src: 'new', u: ['Glint', 'Glints'] },
   { id: 'tools', g: 'gather', n: 'Toolwise', what: 'Tool mastery levels, all tools', need: [10, 30, 50, 60], star: { add: 20 }, bonus: 'gatherSpeed', src: 'save', kind: 'level', u: ['mastery level', 'mastery levels'] },
   // ---- 2.5 Crafting ----
   { id: 'smith', g: 'craft', n: 'Smith', what: 'Smithing level', need: [10, 22, 54, 150], star: null, bonus: 'skillXp:smith', src: 'save', kind: 'level', u: ['Smithing level', 'Smithing levels'] },
@@ -9808,7 +9808,7 @@ const DEED_FEATS = [
 const DEED_SECRETS = [
   { id: 's_night', n: 'Night Owl', riddle: "The fire burns low. You don't.", how: '10 minutes of fighting between 02:00 and 04:00', title: 'Nightowl', look: 'h_night' },
   { id: 's_wisp', n: 'A Wisp Followed You Home', riddle: "Hesketh said not to follow them. He never said they couldn't follow you.", how: '10 minutes in a Wraithmarsh zone between 21:00 and 05:00', title: 'Wispfriend', look: 'cr_wisp' },
-  { id: 's_fire', n: 'Sit a While', riddle: 'Some evenings you just sit.', how: 'The camp open for 5 minutes with no taps', title: 'Firesitter' },
+  { id: 's_fire', n: 'Sit a While', riddle: 'Some evenings you just sit.', how: 'The camp open for 5 minutes with no presses', title: 'Firesitter' },
   { id: 's_bare', n: 'Untouched', riddle: 'Not a scratch.', how: 'Beat a zone boss from zone 10 without taking a hit', title: 'Unscathed' },
   { id: 's_alone', n: 'Last Lamp Standing', riddle: 'Nearly out. One flicker left.', how: 'Beat a zone boss from zone 10 after your health fell under 10%', title: 'Lone Lamp' },
   { id: 's_close', n: 'First Try', riddle: 'It never saw you coming twice.', how: 'From zone 10, beat a zone boss on your first try', title: 'Clutch' },
@@ -10262,7 +10262,7 @@ const EVO_DEFS = {
       { name: 'Heavy Hands', text: 'Your heavy hits deal double damage to shields.', s: 'S6' }],
     aura: null,
     idle: 'You hold the front, and hits build your Fury by themselves. Rend fires every 14s.',
-    active: 'Tap heavy hits to keep Fury at 100, parry for free Fury, and Rend into a stagger.',
+    active: 'Use heavy hits to keep Fury at 100, parry for free Fury, and Rend into a stagger.',
     ringKs: 'bloodrage',
     ring: [
       ['Hot Blood', 'Fury +1 for each hit you take.', { t: { furyHit: 1 } }, 1.006],
@@ -10289,7 +10289,7 @@ const EVO_DEFS = {
       { name: 'Oath of the Order', text: 'While you stand you take 10% less damage, and you stagger foes 30% faster.' }],
     aura: { name: 'Oath of the Order', text: 'Your Middle and Back take 10% less damage.' },
     idle: 'You block a quarter of all hits. Bulwark fills, and Stand Fast fires every 18s with what you stored.',
-    active: 'Parry for 3 Bulwark each, and hold Stand Fast for the big hit.',
+    active: 'Parry for 3 Bulwark each, and save Stand Fast for the big hit.',
     ringKs: 'aegis',
     ring: [
       ['Firm Shield', 'You block 2% more hits.', { t: { wBlock: 0.02 } }, 1.006],
@@ -10316,7 +10316,7 @@ const EVO_DEFS = {
       { name: 'Patient Hunter', text: 'You deal 2% more for each Venom on the foe (up to 20%).' }],
     aura: null,
     idle: 'Venom ramps by itself and seeps across the pack. Deathcap fires with whatever it has.',
-    active: 'Hold Deathcap until 10 Venom, and Focus the healer first: Venom 5+ halves their healing.',
+    active: 'Save Deathcap until 10 Venom, and Focus the healer first: Venom 5+ halves their healing.',
     ringKs: 'lingering',
     ring: [
       ['Toxin', 'Status damage +3%.', { t: { stDmg: 0.03 } }, 1.008],
@@ -10397,7 +10397,7 @@ const EVO_DEFS = {
     meter: 'blessing', ab2: 'sanctuary', finisher: 'dawnbreak', replaces: ['ember', 'flare', 'embers', 'lanternburst'],
     passives: [
       { name: 'Given Light', text: 'You hit softly, and your heroes deal the damage you give up. Your hits are holy.' },
-      { name: 'Blessing', text: 'Each tap heals the most hurt ally and blesses your heroes: +20% damage for 6s, up to 3 times.' },
+      { name: 'Blessing', text: 'Each press heals the most hurt ally and blesses your heroes: +20% damage for 6s, up to 3 times.' },
       { name: 'Ward', text: 'Healing past full health becomes a shield, up to 30% of health.' }],
     aura: { name: "Keeper's Light", text: 'You heal 40% more and hit 40% harder.' },
     idle: 'Blessing sits at about II. Rally Hymn and Sanctuary fire by themselves, and spare healing turns to shields.',
@@ -12940,7 +12940,7 @@ on('heroJoin', ({ key } = {}) => {
   const free = attrPoints(key).free; if (a.met[key] || !(free > 0)) return;
   a.met[key] = 1;
   const nm = typeof ROSTER === 'object' && ROSTER[key] ? ROSTER[key].name.split(' ')[0] : 'Your hero';
-  emit('toast', { key: 'attr-join', msg: `${nm} has ${free} attribute point${free === 1 ? '' : 's'}. Spread them evenly in one tap, or build your own.`, kind: 'good', prio: 'normal', go: { view: 'attributes' } });
+  emit('toast', { key: 'attr-join', msg: `${nm} has ${free} attribute point${free === 1 ? '' : 's'}. Spread them evenly in one press, or build your own.`, kind: 'good', prio: 'normal', go: { view: 'attributes' } });
 });
 
 registerState('attr', { v: 1, pts: {}, resets: {}, met: {}, live: 0, xpv: 0 });
@@ -14593,7 +14593,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
     if (G.next <= 0 && stashFull(S.node.kind, S.node.t)) G.next = nextGlint();   // H3: no Glint on a full pile
     else if (G.next <= 0) {
       G.left = CRAFT_GLINT.window + bonus('glint:' + skillOf(S.node.kind)); G.spark = 0;   // H2: tool mastery 10
-      addFloat('Glint! Tap it', '#FFF3C4', true, 0.66, 0.3);
+      addFloat('Glint! Click or tap it', '#FFF3C4', true, 0.66, 0.3);
       emit('glint', { on: true });
     }
   });
@@ -15858,7 +15858,7 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same window as a view's "new" mark)
 const FIRST_USE = {
   party: { text: 'This is where you grow. Your level, build and abilities are all here.' },
-  nextup: { text: 'That chip is Next Up. It shows the best thing to do next, so tap it.', via: 'guide' },
+  nextup: { text: 'That chip is Next Up. It shows the best thing to do next, so press it.', via: 'guide' },
   awaynote: { text: "While you're away, gathering goes on but fighting stops.", via: 'strip' },   // the strip is its own line (71-ui-fight)
   gather: { text: "Pick a place to work and you'll keep chopping or mining it, even while you're away." },
   bounties: { text: 'Folk post three short jobs here. They pay in gold, materials and Renown.' },
@@ -16019,7 +16019,7 @@ const GUIDE_STEPS = [
   { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu and get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
   // Cal's play notes 9 and 13: a weapon found or made sits in the bag until it is worn. The tip names it and wears it in one tap.
   { id: 'wear:weapon', ph: ['between'], pause: 1, tip: 'Your new weapon is in your bag. Put it on.', when: () => coldH() && !!wearPiece('weapon'), done: () => weaponMade() },
-  { id: 'gather', ph: ['between'], tip: 'Tap Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
+  { id: 'gather', ph: ['between'], tip: 'Press Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
   { id: 'stock:bench', ph: ['between'], needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
@@ -19705,7 +19705,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   // first-gold-and-camp-strip: the camp tutorial goal. Tap any building in the panorama (75-camp-ui) and it ticks off for good.
   registerGoal({
     id: 'camp-tap', sys: 'camp-look', prio: -1, icon: icFor,
-    label: () => 'Tap a building in your camp',
+    label: () => 'Choose a building in your camp',
     pct: () => campOpen() && S.onboard && S.onboard.tips && S.onboard.done && !S.onboard.done['use:camp-tap'] && CAMP_IDS.some(id => id !== 'hearth' && id !== 'tent' && lv(id) > 0) ? 0.4 : 0,
     go: { tab: 'world', view: 'camp', sel: '#camp-scene-scroll' }
   });
@@ -33965,7 +33965,7 @@ const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the
 // cold save gathers wood; warm saves never see it.
 //
 // The fire is a button (#hearthFire) over the stage while it can be lit: a tap lights it (the
-// guide's "Tap the fire to light it." points here). Taps on it never reach the stage (no chop).
+// guide's "Click or tap the fire and light it." points here). Taps on it never reach the stage (no chop).
 // Reduced motion: no flicker, no smoke drift, Hesketh stands still.
 //
 // N2 (the camp scene) may share paintFire below with its own panorama: campPaintFire(g, x, y, on, t)
@@ -35868,7 +35868,7 @@ function newsEntry(lines) {
 function newsToast() {
   NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
   if (S.party && S.party.newGame && !(S.totalKills > 0)) return;   // SOLO1 (playtest): a new game has no "since your last visit"; the lines wait in the bell
-  const msg = `What's new since your last visit. Tap to read.`, d = noticeDecide(msg, 'news');
+  const msg = `What's new since your last visit. Open it to read.`, d = noticeDecide(msg, 'news');
   noteStat(d.rule, d.ch === 'held' ? 'held:bell' : d.ch, msg);
   if (d.ch !== 'pop') return;   // the bell line is there already
   { notes.pops.push(notes.clock); notes.popN++; }
@@ -38379,7 +38379,7 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
         dare.setAttribute('aria-checked', String(on));
         dare.classList.toggle('on', on);
         dNm.textContent = on ? `Dare taken: ${o.dare.n}` : `Take the Dare: ${o.dare.n}`;
-        dFx.textContent = o.dare.fx + (on ? ' Tap to drop it.' : ' Drop it any time.');
+        dFx.textContent = o.dare.fx + (on ? ' Choose it again to drop it.' : ' Drop it any time.');
       }
       tmr.textContent = `Tomorrow: ${t.n}. ${t.fx}.`;
       if (board) {
@@ -39516,7 +39516,7 @@ on('cacheOpen', v => {
       for (const bd of blds) {
         const b = btn('camp-bld', ''); b.dataset.bldId = bd.id;
         b.style.cssText = `position:absolute;left:${bd.x - 32}px;top:52px;width:64px;height:90px;background:transparent;border:0;cursor:pointer;pointer-events:auto;touch-action:auto`;
-        b.setAttribute('aria-label', `${bldName(bd.id)}, level ${bd.lv}. Tap to see what it does.`);
+        b.setAttribute('aria-label', `${bldName(bd.id)}, level ${bd.lv}. Open it to see what it does.`);
         b.title = bldName(bd.id);
         let down = null, dragged = false;
         b.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; dragged = false; });
@@ -39817,7 +39817,7 @@ on('cacheOpen', v => {
       putHidden(sec, !campOpen() || n < 1); if (sec.hidden) return;
       const ids = Object.keys(CAMP_BLESS).filter(blessOpen), on = S.camp.bless, sw = blessCanSwap();
       const empty = on.length < n;   // free power left on the table (the audit's Lv 40 save had none picked)
-      setTxt(blessNote, empty ? `Pick ${n - on.length === 1 ? 'a Blessing' : (n - on.length) + ' Blessings'}: it is free. Tap one to choose it.`
+      setTxt(blessNote, empty ? `Pick ${n - on.length === 1 ? 'a Blessing' : (n - on.length) + ' Blessings'}: it is free. Choose one below.`
         : `The Shrine holds ${n === 1 ? '1 Blessing' : n + ' Blessings'}. Swapping is free${sw.ok ? '.' : ', but ' + sw.why.toLowerCase()}`);
       putToggle(blessNote, 'bless-pick', empty);
       const sig = JSON.stringify([ids, on, blessPower(), sw.ok]);
@@ -41567,7 +41567,7 @@ let craftUI = null;
     bag.bulk.textContent = ''; bag.bulk.hidden = !bulk.on;
     if (!bulk.on) return;
     if (bulk.note) bag.bulk.append(el('p', 'note', bulk.note));
-    if (!bulk.armed) { bag.bulk.append(el('p', 'note', `${valid.size} selected. Tap items to change the selection. Worn items and uniques are protected.`)); return; }
+    if (!bulk.armed) { bag.bulk.append(el('p', 'note', `${valid.size} selected. Choose items to change the selection. Worn items and uniques are protected.`)); return; }
     bag.bulk.append(el('p', null, `Salvage ${valid.size} items? They are gone for good. You get back about:`));
     for (const [t, row] of Object.entries(q.mats)) {
       const chips = el('div', 'costs');
@@ -41914,7 +41914,7 @@ let craftUI = null;
       if (now) {
         const r = el('div', 'cf-pr cur');
         const t = icTile(itemIc(now), frameOf(now)); r.append(t);
-        const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, (itemGraded(now) ? itemQual(now) + ' · ' : '') + 'Worn now. Tap for details.'));   // craft-attribute-grades: the letter in text
+        const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, (itemGraded(now) ? itemQual(now) + ' · ' : '') + 'Worn now. Open it for details.'));   // craft-attribute-grades: the letter in text
         r.append(tx);
         tx.addEventListener('click', () => openItem(now.id, backFn)); t.addEventListener('click', () => openItem(now.id, backFn));
         body.append(r);
@@ -42912,7 +42912,7 @@ let deedsUI = null;
     }
     grid.dataset.n = land ? 3 : v.cards.length;
     s.append(grid);
-    if (!land && v.ban > 0) s.append(el('p', 'dw-hint', `Tap × on a card to banish it for this run (${v.ban} left).`));
+    if (!land && v.ban > 0) s.append(el('p', 'dw-hint', `Press × on a card to banish it for this run (${v.ban} left).`));
     // footer
     const foot = el('div', 'dw-dfoot');
     if (!land) {
@@ -44276,7 +44276,7 @@ let navUI = null;
   sw.addEventListener('click', () => openSwitcher());
   let gSk = '';
   uiHooks.push(() => {
-    // A cold Hearth before the fire keeps "Gather" (the guide says "Tap Gather").
+    // A cold Hearth before the fire keeps "Gather" (the guide says "Press Gather").
     const cold = typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit();
     const sk = cold ? 'gather' : skillOf(S.node.kind);
     if (sk !== gSk) {
@@ -44527,7 +44527,7 @@ let navUI = null;
       const eq = soloEquipped(), nm = (ABILITIES[slotAb] || {}).name || 'Your new move', at = eq.indexOf(slotAb);
       const left = at > 0 ? eq[at - 1] : null, leftNm = at === 0 ? 'Attack' : left ? (SOLO_ABILITIES[left] || {}).short || (ABILITIES[left] || {}).name : '';
       if (at >= 0) return leftNm ? `${nm} is next to ${leftNm} now. Press it there when it's ready.` : `${nm} is in slot ${'QWE'[at]} now. Press it there when it's ready.`;
-      return eq.includes(null) ? `${nm} needs a slot. Tap an empty slot next to Attack and pick it.` : `${nm} needs a slot. Hold one of your moves next to Attack to swap it in.`;
+      return eq.includes(null) ? `${nm} needs a slot. Press an empty slot next to Attack and pick it.` : `${nm} needs a slot. Hold one of your moves next to Attack to swap it in.`;
     },
     ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => stockSay(id)]))
   };
@@ -44730,9 +44730,9 @@ let navUI = null;
     gather: () => {
       if (!onCtrl()) return null;
       const b = q('#modeSeg button[data-act="gather"]');
-      return b && !b.hidden ? { node: b, text: 'Tap Gather and chop some Pine Log for the fire.' } : null;
+      return b && !b.hidden ? { node: b, text: 'Press Gather and chop some Pine Log for the fire.' } : null;
     },
-    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'Your level and moves are kept on the Hero tab. Tap it and have a look.' }
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'Your level and moves are kept on the Hero tab. Open it and have a look.' }
   };
   // Cal's play notes 9 and 13: a piece in the bag does nothing until it is on. The tip names it and the Equip button wears it in one tap;
   // the ring sits on the craft card's own Equip button when that card is up.
@@ -44745,7 +44745,7 @@ let navUI = null;
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays over Camp and Gather and points at the lit tab
     // (forge-tip-goes-stale: stockSpec draws no materials line over any other menu)
-    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree yourself and it goes faster.') : null,
+    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Click or tap the tree yourself and it goes faster.') : null,
     back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: "When you're done here, close the menu and the fight goes on.", go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
     'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is still in your bag. A tool only helps once you wear it.`),
     'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is still in your bag. Put it on and fight with it.`),
@@ -44755,10 +44755,10 @@ let navUI = null;
     'stock:store': () => stockSpec('stock:store', STOCK_WHAT['stock:store']),
     'stock:weapon': () => stockSpec('stock:weapon', STOCK_WHAT['stock:weapon'], '', true),
     light: () => {
-      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire to light it.' } : null;
+      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then click or tap the fire to light it.' } : null;
       const f = $('hearthFire');
-      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Tap the fire and light it. I've missed the warmth." };
-      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, and then you can light the fire.' : 'Tap Gather and chop some Pine Log. It burns well.' };
+      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Click or tap the fire and light it. I've missed the warmth." };
+      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Press Gather, and then you can light the fire.' : 'Press Gather and chop some Pine Log. It burns well.' };
       return null;
     },
     bench: () => campPath('bench', ["The fire's burning now. Open Camp and we'll build.", 'Open Camp.', "Build a Workbench. That's where your tools are made."]),
@@ -44766,10 +44766,10 @@ let navUI = null;
       if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is up. Open Craft and make your first tool.' };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="bench"]');
-      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Choose the Workbench.' };
       // the list can open on a higher tier (the highest the Workbench has opened, or a Next Up pick): the Copper Pickaxe is Tier 1
       const t1 = q('#sec-craft-recipes .cf-tiers button[data-t="1"]');
-      if (t1 && t1.getAttribute('aria-pressed') !== 'true') return { node: t1, text: 'Tap Tier 1.' };
+      if (t1 && t1.getAttribute('aria-pressed') !== 'true') return { node: t1, text: 'Choose Tier 1.' };
       // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
       return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll need one for the ore." };
     },
@@ -44782,7 +44782,7 @@ let navUI = null;
       if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'You have enough for your first weapon. Open Craft.' };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="' + CRAFT_KINDS[k].st + '"]');
-      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Choose the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
       return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon, then put it on.' };
     },
     // Cal's play note 15: only say the packs are near full when they are (the Storehouse plot also opens once the Forge is built)
@@ -44797,9 +44797,9 @@ let navUI = null;
     // spend-points-before-nextup: the pile, named from the data, then Spread evenly spends it all at once (spent: back's line, the menu still open)
     spend: () => { const n = attrPoints(soloHero()).free; if (n < 2 * HERO_TUNE.perLevel) return STEP_UI.back(); return Object.assign(path('party', 'attributes', '#attrRows ~ .at-acts .at-spread',
       [`You have ${n} attribute points waiting. Open Hero and spend them.`, 'Open Build.', 'Press Spread evenly to spend them all at once.']), { side: S.tab === 'party' ? 'up' : '' }); },
-    'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Tap it and see what you can mine." },
-    'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Tap Camp and build." },
-    'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Tap it and make gear." },
+    'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Open it and see what you can mine." },
+    'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Open Camp and build." },
+    'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Open it and make gear." },
     nextup: () => onCtrl() ? { node: chip, text: FIRST_USE.nextup.text } : null
   };
 
@@ -45988,7 +45988,7 @@ var soloIconURL = () => '';
   // The guide's Dodge and Parry steps pause the game on a heavy hit; the first press there always counts (59j forgive).
   const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
   // cal-0107-staged-guide (Cal's play note 4): an empty slot with nothing to put in it (every move you own already has a slot) is dim and
-  // silent: no "Tap to add", no picker. It stays in place (the six-slot bar), and wakes once a learned move is waiting for a slot.
+  // silent: no "Add a move", no picker. It stays in place (the six-slot bar), and wakes once a learned move is waiting for a slot.
   const slotShut = i => { try { const eq = soloEquipped(); return !eq[i] && !soloAbilities().some(id => !eq.includes(id)); } catch (e) { return false; } };
   const castSlot = i => {
     if (slotShut(i)) return;
@@ -46134,7 +46134,7 @@ var soloIconURL = () => '';
     if (abIc.tagName === 'IMG') nicSet(abIc, 'act', on_ ? 'auto-on' : 'auto-off', 16);
     badge.setAttribute('aria-pressed', String(soloAuto()));
     badge.setAttribute('aria-label', soloAuto() ? 'Auto is on: your hero fights alone. Turn it off' : 'Auto is off: you are fighting. Turn it on');
-    badge.title = soloAuto() ? 'Auto is on: your hero fights alone. Tap to turn it off and fight by hand. (F)' : 'Auto is off: you are fighting. Tap to turn Auto on. (F)';
+    badge.title = soloAuto() ? 'Auto is on: your hero fights alone. Press to turn it off and fight by hand. (F)' : 'Auto is off: you are fighting. Press to turn Auto on. (F)';
   };
   on('soloActive', setBadge);
   // the page hidden or the app in the background: Auto fights while it is hidden; back on screen, your setting returns
@@ -46247,7 +46247,7 @@ var soloIconURL = () => '';
         b._shut = sk; putStyle(b, 'opacity', shut ? '0.45' : ''); b.setAttribute('aria-disabled', String(shut));
         if (!o.id) b.setAttribute('aria-label', shut ? `Empty ability slot ${i + 1}. Learn another move to use it.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
       }
-      putText(b._sub, !o.id ? (shut ? '' : 'Tap to add') : o.left > 0 ? '' : wait ? 'Wait' : 'Ready');
+      putText(b._sub, !o.id ? (shut ? '' : 'Add a move') : o.left > 0 ? '' : wait ? 'Wait' : 'Ready');
     }
     putText(bAtk._sub, '');
     setCd(bAtk, s.atk.left, s.atk.max, wait);
@@ -46466,8 +46466,8 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
       // an empty slot takes the open star, when it can
       const can = kind === 'set' ? !!pick && starOwned(pick) && !starSlots(k).includes(pick)
         : !!pick && starLearned(pick) && !starLit(k).includes(pick) && !starWhy(pick, k);
-      b.append(el('span', 'sr-chip-t', '+ ' + label), el('small', null, can ? 'Tap to set' : 'Empty'));
-      b.setAttribute('aria-label', `${label}: empty` + (can ? `. Tap to put ${STARS[pick].name} here.` : ''));
+      b.append(el('span', 'sr-chip-t', '+ ' + label), el('small', null, can ? 'Set it here' : 'Empty'));
+      b.setAttribute('aria-label', `${label}: empty` + (can ? `. Choose it to put ${STARS[pick].name} here.` : ''));
       b.disabled = !can;
       b.addEventListener('click', () => { if (kind === 'set') starSet(i, pick, k); else starLight(pick, k); persist(); });
       c.append(b);
@@ -46490,7 +46490,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
   function sky(k) {
     const C = STAR_SKY_CELL, W = 3 * C.w, H = 2 * C.h, set = starSlots(k), lit = starLit(k);
     const box = el('div', 'sr-map');
-    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'group', 'aria-label': 'Star map: six constellations. Tap a star to see it.' });
+    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'group', 'aria-label': 'Star map: six constellations. Choose a star to see it.' });
     // the night: faint specks at fixed places (no art: dots)
     let seed = 7;
     const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
@@ -46563,7 +46563,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
       else sub.textContent = 'Empty';
       b.append(lb, sub);
       b.setAttribute('aria-pressed', String(where === i));
-      b.setAttribute('aria-label', where === i ? `Slot ${i + 1}: set here. Tap to clear.` : `Set in slot ${i + 1}` + (cur ? `, in place of ${STARS[cur].name}` : ''));
+      b.setAttribute('aria-label', where === i ? `Slot ${i + 1}: set here. Choose again to clear.` : `Set in slot ${i + 1}` + (cur ? `, in place of ${STARS[cur].name}` : ''));
       b.addEventListener('click', () => { if (where === i) starSet(i, null, k); else starSet(i, id, k); persist(); });
       foot.append(b);
     }
@@ -46738,7 +46738,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
     ]],
     ['Materials', [
       ['Rare finds', () => (S.tools ? +S.tools.finds || 0 : null)],
-      ['Glints tapped', () => n('glint'), { since: () => since('glint') }]
+      ['Glints caught', () => n('glint'), { since: () => since('glint') }]
     ], 'mats'],
     ['Crafting', [
       ['Items crafted', () => statsApi.forged()],
@@ -46907,7 +46907,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
       const cur = hasDeeds() ? deeds.num() : 'letters';
       for (const b of numBtns) putAttr(b, 'aria-selected', String(b.dataset.v === cur)), putAttr(b, 'aria-checked', String(b.dataset.v === cur));
       const s0 = late() ? dateText(late()) : '';
-      note.textContent = 'Time played counts only while the game is open. Tap a number to see all of it.' + (s0 ? ` Time, taps and gathering were first counted on ${s0}.` : '');
+      note.textContent = 'Time played counts only while the game is open. Choose a number to see all of it.' + (s0 ? ` Time, presses and gathering were first counted on ${s0}.` : '');
     }
   });
   function paintMats() {
@@ -47117,7 +47117,7 @@ function storeSalvageNote(preview, t) {
       c.append(img(iconURL(...craftIcon('tro_' + TYPES[i].key))), n, el('div', 'mn', tr.n.split(' ')[1] || tr.n));
       V.troRow.append(c); V.troCells.push({ c, n });
     });
-    const note = el('p', 'note', 'Tap a material to see where it comes from.');
+    const note = el('p', 'note', 'Choose a material to see where it comes from.');
     sec.append(card, chips, tools, V.shelf, fams, V.empty, V.tro, V.troRow, note);
     // icons last: 35 cells, only on the view's first show (coal and the middles have none: their names show alone)
     for (const f of CRAFT_FAMILIES) for (const x of V.fams[f].cells) x.c.prepend(img(matIcon(f, x.t)));
@@ -47429,7 +47429,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
         const c = btn('sty-catch');
         c.append(img(PAGE_IC(), 'px sty-chip-ic'));
         const tx = el('span', 'sty-chip-tx');
-        tx.append(el('b', null, 'Catch up on the story'), el('span', 'sty-chip-note', `${late.length} ${late.length > 1 ? 'pages' : 'page'} from before you got here. One tap each.`));
+        tx.append(el('b', null, 'Catch up on the story'), el('span', 'sty-chip-note', `${late.length} ${late.length > 1 ? 'pages' : 'page'} from before you got here. One press each.`));
         c.append(tx, el('span', 'sty-chip-go', 'Read'));
         c.addEventListener('click', () => { fromCodex = !!codex; openEntry(late[0], { chain: late }); });
         api.body.append(c);

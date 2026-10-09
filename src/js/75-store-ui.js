@@ -180,7 +180,7 @@ function storeSalvageNote(preview, t) {
       c.append(img(iconURL(...craftIcon('tro_' + TYPES[i].key))), n, el('div', 'mn', tr.n.split(' ')[1] || tr.n));
       V.troRow.append(c); V.troCells.push({ c, n });
     });
-    const note = el('p', 'note', 'Tap a material to see where it comes from.');
+    const note = el('p', 'note', 'Choose a material to see where it comes from.');
     sec.append(card, chips, tools, V.shelf, fams, V.empty, V.tro, V.troRow, note);
     // icons last: 35 cells, only on the view's first show (coal and the middles have none: their names show alone)
     for (const f of CRAFT_FAMILIES) for (const x of V.fams[f].cells) x.c.prepend(img(matIcon(f, x.t)));

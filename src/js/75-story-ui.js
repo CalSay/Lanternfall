@@ -211,7 +211,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
         const c = btn('sty-catch');
         c.append(img(PAGE_IC(), 'px sty-chip-ic'));
         const tx = el('span', 'sty-chip-tx');
-        tx.append(el('b', null, 'Catch up on the story'), el('span', 'sty-chip-note', `${late.length} ${late.length > 1 ? 'pages' : 'page'} from before you got here. One tap each.`));
+        tx.append(el('b', null, 'Catch up on the story'), el('span', 'sty-chip-note', `${late.length} ${late.length > 1 ? 'pages' : 'page'} from before you got here. One press each.`));
         c.append(tx, el('span', 'sty-chip-go', 'Read'));
         c.addEventListener('click', () => { fromCodex = !!codex; openEntry(late[0], { chain: late }); });
         api.body.append(c);
