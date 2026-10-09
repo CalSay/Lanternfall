@@ -298,6 +298,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A hover check waits for the tip box to open, not a fixed pause, and holds the game still while the mouse rests. Why: the tip's 120 ms timer fired after the check's 350 ms read on a busy CPU, and the live fight (a level, a Scroll or the power number changing) rebuilt the Abilities list under the mouse, so the row's tip never opened (ci-flakes-spend-hover, 2026-10-09).
 - In a size or measurement doc, paste every number from the final run of the script the doc cites, in the unit that script prints. Why: page-bytes-plan's first table came from a scratch run in KiB while the doc and `page-parts.mjs` say decimal MB, so 11 rows were 2.4% off until the reviewer re-ran it. (page-bytes-plan, 2026-10-09)
 - In a proof route.txt a `#` note goes on its own line: eyes reads a trailing `# ...` as part of the `expect` text and fails it. Why: a note after an edited expect failed the eyes job. (away-line-only-when-true, 2026-10-09)
+- Stop a background job by the PID you started, never `pkill -f <pattern>`: the shell running the pkill carries the same pattern in its own command line and kills itself (exit 144), taking any queued steps with it. Why: it happened twice in one run, once stopping a 3D clip capture halfway. (live-3d-spike, 2026-10-09)
 
 ## Reviews and Codex
 

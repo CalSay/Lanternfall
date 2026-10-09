@@ -1,0 +1,1 @@
+Docs only: the live 3D spike report. Gloomjaw and Wren were built as live 3D and as smooth pictures in a scratch copy of the zone 2 fight; bytes, build hours, parry timing and reduced motion are measured, and frame rate, battery and look wait on Cal and the judge (docs/proof/live-3d-spike/report.md). No player change. (no shot)
