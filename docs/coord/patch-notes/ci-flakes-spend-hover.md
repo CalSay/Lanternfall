@@ -1,0 +1,1 @@
+Tooling only: the guide walk checks give the game the tick a boss cache waits for before they read a step, and the hover-tip check waits for the tip to open while the game holds still, so neither fails on a slow runner. No player change. (no shot)
