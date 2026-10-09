@@ -35,7 +35,10 @@
 // The bot waits for the guide: no fight press while it reads a new tip, nor in a turn's first 0.3 s (the guide polls every 250 ms).
 //
 // What it logs, with game time and a shot: every tip, toast, card and banner, every unlock (S.onboard.got), each zone first clear,
-// level, unique, Star, new hero, look and craft. Each new tip, card and moment runs the eyes layout and tip-phase checks.
+// level, new ability, unique, Star, new hero, look and craft. Each new tip, card and moment runs the eyes layout and tip-phase checks.
+// F3 (walk-f3-in-fights, on the f3-restate ruling) is scored in game time on progress moments only (zone first clear, new ability, Star,
+// hero join, unique): no gap over 8 min to the zone 10 Champion or minute 60, and the three peaks (first boss, zone 5 and zone 10
+// Champions) each with a big card that says what it gave. The report names each long gap's cause and its fights.
 // The report diffs the run against docs/design/first-hour.md: each beat against the map's walk column (the bot's own time on a named
 // build; over 50% off is listed: the game changed pace), and the median of walk / est once (est is a guess for a casual person).
 import fs from 'node:fs';
@@ -163,7 +166,9 @@ const OBS = `(() => {
   const q = (sel, f) => [...document.querySelectorAll(sel)].filter(vis).map(f || tx);
   const o = { phase: LF_EYES.phase(), tip: LF_EYES.tip(), sfx: LF_EYES.sfx() };
   o.toasts = q('#toasts .toast');
-  o.cards = q('.mm-ov, .mm-toast, .bsheet-ov, .tv-card, .cb-banner, .tv-banner, .gl-card, .away-ov, .modal, .dd-feat, .feat-card', n => ({ cls: (n.className || '').toString().split(' ')[0], text: tx(n).slice(0, 160) }));
+  o.cards = q('.mm-ov, .mm-toast, .bsheet-ov, .tv-card, .cb-banner, .tv-banner, .gl-card, .away-ov, .modal, .dd-feat, .feat-card', n => ({ cls: (n.className || '').toString().split(' ')[0], text: tx(n).slice(0, 160),
+    head: n.classList.contains('mm-ov') ? tx(n.querySelector('.mm-head') || n) : undefined,
+    gave: n.classList.contains('mm-ov') ? [...n.querySelectorAll('.mm-list li, .mm-pick b')].map(tx).filter(Boolean).slice(0, 6) : undefined }));   // walk-f3-in-fights: what a big card says it gave (its lines and picks)
   o.tabs = q('.tabs .tab');
   o.intro = (n => n && vis(n) ? [n.querySelector('.intro-who'), n.querySelector('.intro-line')].filter(Boolean).map(tx).join(' ') : '')(document.querySelector('#introScreen'));   // the drawn opening: one line a tap
   o.create = !!document.querySelector('#createScreen') && vis(document.querySelector('#createScreen'));
@@ -171,6 +176,7 @@ const OBS = `(() => {
   let s = {};
   try { s = { zone: S.zone, maxZone: S.maxZone, L: S.L, gold: Math.floor(S.gold), kills: S.totalKills, got: Object.assign({}, S.onboard && S.onboard.got), t: S.onboard && S.onboard.t,
     found: Object.keys(S.found || {}).length, stars: Object.keys((S.stars && S.stars.own) || {}).length, heroes: Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {}).length,
+    abil: S.abil && S.abil.unl ? Object.values(S.abil.unl).reduce((n, l) => n + (Array.isArray(l) ? l.length : 0), 0) : 0,   // walk-f3-in-fights: abilities learned past the signature (56e)
     built: ['bench', 'forge', 'store'].filter(id => typeof campLevel === 'function' && (campLevel(id) >= 1 || (typeof campPending === 'function' && !!campPending(id)))),   // walk-bot-forge-logs: a station counts from its Build press
     looks: typeof deeds === 'object' ? deeds.looks().filter(l => l.got).length : 0, forged: S.deeds && S.deeds.n ? S.deeds.n.forged : 0, up: S.deeds && S.deeds.n ? S.deeds.n.up || 0 : 0, act: S.activity, tab: S.tab,
     acted: (() => { try { return Object.fromEntries(FEATURES.map(f => [f.id, !!(f.now && f.now())])); } catch (e) { return {}; } })() };
@@ -344,8 +350,8 @@ async function dismissCards(o) {
   for (const c of o.cards) {
     const sig = c.cls + '|' + c.text.slice(0, 50); now.add(sig);
     let r = seen.get(sig);
-    if (/beat you/i.test(c.text) && !seen.has(sig)) { st.beaten = (st.beaten || 0) + 1; const bz = st.prev ? st.prev.zone : 0; st.tries = st.tries || {}; st.tries[bz] = (st.tries[bz] || 0) + 1; if (c.cls === 'bsheet-ov') st.losses.push({ t: gt, zone: bz, kills: o.s.kills || 0 }); if (st.beaten === 5) addCheck('wall', 'the casual bot was beaten 5 times by one boss', c.text.slice(0, 80) + ' (parry rate ' + PARRY + ')'); }
-    if (!r) { r = { first: gt, last: gt, cls: c.cls, text: c.text, n: 0 }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls }, tag: 'card-' + c.cls }); }
+    if (/beat you/i.test(c.text) && !seen.has(sig)) { st.beaten = (st.beaten || 0) + 1; const bz = st.prev ? st.prev.zone : 0; st.tries = st.tries || {}; st.tries[bz] = (st.tries[bz] || 0) + 1; st.beatenAt.push({ t: gt, zone: bz }); if (c.cls === 'bsheet-ov') st.losses.push({ t: gt, zone: bz, kills: o.s.kills || 0 }); if (st.beaten === 5) addCheck('wall', 'the casual bot was beaten 5 times by one boss', c.text.slice(0, 80) + ' (parry rate ' + PARRY + ')'); }
+    if (!r) { r = { first: gt, last: gt, cls: c.cls, text: c.text, n: 0, head: c.head, gave: c.gave }; seen.set(sig, r); await note(page, 'card', c.text, { extra: { cls: c.cls }, tag: 'card-' + c.cls }); }
     r.last = gt;
   }
   for (const [sig, r] of seen) if (!now.has(sig) && !r.done) { r.done = true; r.dwell = Math.round((gt - r.first) * 10) / 10; }
@@ -377,7 +383,7 @@ async function dismissCards(o) {
   return false;
 }
 st.grades = {};   // walk-bot-keeps-fighting: the timed rings the game graded, by grade (timingGrade events)
-st.stayed = []; st.losses = [];   // walk-bot-keeps-fighting: each Keep fighting here press and each lost boss try { t, zone, kills }
+st.stayed = []; st.losses = []; st.beatenAt = [];   // walk-bot-keeps-fighting: each Keep fighting here press and each lost boss try { t, zone, kills }
 st.lastCard = -9; st.tabAt = -9; st.phAt = 0; st.phName = ''; st.phStart = 0; st.tipFirst = 0; st.firstPress = null;
 
 // Next Up: when the chip says Ready, open the list, press Go on the first ready goal the bot has not given up on, and press what
@@ -696,6 +702,12 @@ async function watch(o) {
   for (const t of o.toasts) if (!st.toastSeen.has(t)) { st.toastSeen.add(t); await note(page, 'toast', t, { shot: false }); }
   for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
   const s = o.s, p = st.prev;
+  // walk-f3-in-fights: where each stretch of game time went, so a long gap between progress moments can name its stall. Gathering is
+  // the Gather view working (a goal's materials, the bot's tier gates); held is a card, tip or menu up while not gathering (the fight
+  // waits on the player); the rest is fighting, foes and bosses. The kills count by time gives the fights in a gap.
+  { const cat = s.act === 'gather' ? 'gather' : (o.cards.length || o.tip || (s.tab && s.tab !== 'adv')) ? 'held' : 'fight', l = st.spans, last = l[l.length - 1];
+    if (last && last.cat === cat) last.to = gt; else { if (last) last.to = gt; l.push({ cat, from: gt, to: gt }); }
+    if (s.kills !== undefined && (!st.killsAt.length || st.killsAt[st.killsAt.length - 1].kills !== s.kills)) st.killsAt.push({ t: gt, kills: s.kills }); }
   if (!st.heroKeys && s.heroes !== undefined) st.heroKeys = await X('Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {})');
   if (s.zone > (st.enterMax || 0)) {   // the first time the hero stands in a zone: what it wears, before that zone's boss tries
     st.enterMax = s.zone; st.enter = st.enter || {};
@@ -706,6 +718,7 @@ async function watch(o) {
   if (p) {
     if (s.maxZone > p.maxZone) await moment('zone', `zone ${p.maxZone} cleared (maxZone ${s.maxZone})`, { big: true, zone: p.maxZone });
     if (s.L > p.L) await moment('level', 'level ' + s.L, { big: false });
+    if (s.abil > p.abil) await moment('ability', 'a new ability (' + s.abil + ' learned)', { big: false });
     if (s.found > p.found) await moment('unique', 'unique found', { big: true });
     if (s.stars > p.stars) await moment('star', 'new Star', { big: true });
     if (s.heroes > p.heroes) { const ks = await X('Object.keys((S.party && S.party.unlock && S.party.unlock.heroes) || {})'), nw = ks.filter(k => !(st.heroKeys || []).includes(k)); st.heroKeys = ks;
@@ -721,10 +734,13 @@ async function watch(o) {
   }
   st.prev = s;
 }
-st.tabSeen = new Set(); st.joinOnCard = new Set();
-const moments = [];   // { t, id, text, big, zone, rode } (rode: a join said on the Champion card or a toast, not a card of its own)
+st.tabSeen = new Set(); st.joinOnCard = new Set(); st.spans = []; st.killsAt = [];
+// F3 (a), DECISIONS "F3, the shape of the first hour" (f3-restate, 2026-10-08): a progress moment is a zone's first clear, a new
+// ability, a Star, a hero joining or a unique. Level cards, hero lines, looks and crafts are moments the report logs, never progress.
+const PROGRESS = new Set(['zone', 'ability', 'star', 'hero', 'unique']);
+const moments = [];   // { t, id, text, big, prog, zone, rode } (rode: a join said on the Champion card or a toast, not a card of its own)
 async function moment(id, text, o) {
-  moments.push({ t: Math.round(gt * 10) / 10, id, text, big: !!o.big, zone: o.zone, rode: !!o.rode });
+  moments.push({ t: Math.round(gt * 10) / 10, id, text, big: !!o.big, prog: PROGRESS.has(id), zone: o.zone, rode: !!o.rode });
   await note(page, 'moment', `${id}: ${text}`, { tag: 'moment-' + id, extra: { big: !!o.big } });
   for (const p of await page.evaluate(PLACEHOLDERS)) placeholders.add(p);
   // eyes layout lint at the moment
@@ -859,6 +875,38 @@ function lessonLine() {
   return 'Fight lessons: ' + l.join(', ') + '.';
 }
 
+// ---------------- F3: progress moments and the stalls between them ----------------
+// walk-f3-in-fights. The gaps between progress moments from game time 0 to the end of F3's window, each with the fights in it and what
+// its time went on (st.spans), and the cause named: boss losses, gathering for a goal, or a pause (cards, tips and menus up).
+function killsAt(t) { let k = 0; for (const e of st.killsAt) { if (e.t > t) break; k = e.kills; } return k; }
+function gapCause(from, to) {
+  const tm = { fight: 0, gather: 0, held: 0 };
+  for (const sp of st.spans) { const a = Math.max(sp.from, from), b = Math.min(sp.to, to); if (b > a) tm[sp.cat] += b - a; }
+  const lost = st.beatenAt.filter(l => l.t > from && l.t <= to), tries = lost.length;
+  const fights = Math.max(0, killsAt(to) - killsAt(from)), zones = [...new Set(lost.map(l => l.zone))];
+  const top = Object.entries(tm).sort((a, b) => b[1] - a[1])[0][0], mins = v => Math.round(v / 6) / 10;
+  const cause = top === 'gather' ? 'gathering for a goal' : top === 'held' ? 'a pause (cards, tips and menus up)'
+    : tries ? `boss losses (${tries} lost tr${tries === 1 ? 'y' : 'ies'}${zones.length ? ' at zone ' + zones.join(', ') : ''})` : 'fighting with no boss lost (a grind)';
+  return { cause, fights, tries, fightMin: mins(tm.fight), gatherMin: mins(tm.gather), heldMin: mins(tm.held) };
+}
+function f3Read(reached) {
+  const zc10 = moments.find(m => m.id === 'zone' && m.zone === 10), end = Math.min(zc10 ? zc10.t : Infinity, 3600, reached);
+  const endWhy = zc10 && zc10.t <= Math.min(3600, reached) ? 'the zone 10 Champion at ' + fmtT(zc10.t) : reached < 3600 ? 'the end of the walk at ' + fmtT(reached) : 'minute 60 (zone 10 not cleared)';
+  const ts = [...new Set(moments.filter(m => m.prog && m.t <= end).map(m => m.t))].sort((a, b) => a - b);
+  const gaps = []; let prev = 0;
+  for (const t of [...ts, end]) { if (t > prev || !gaps.length) gaps.push(Object.assign({ from: prev, to: t, gap: Math.round(t - prev) }, gapCause(prev, t))); prev = t; }
+  const worst = gaps.reduce((a, g) => (g.gap > a.gap ? g : a), { from: 0, to: 0, gap: 0, cause: '' });
+  // (b): the peak's clear, and a big card (the moment layer's .mm-ov) that first showed from just before the kill to a minute after it
+  // (the Champion's scene plays first, #264), with lines or picks naming what it gave
+  const peaks = [['the first boss', 1], ['the zone 5 Champion', 5], ['the zone 10 Champion', 10]].map(([name, z]) => {
+    const m = moments.find(x => x.id === 'zone' && x.zone === z);
+    if (!m) return { name, zone: z, t: null, card: null, gave: [] };
+    const c = [...st.cardSeen.values()].filter(c => c.cls === 'mm-ov' && c.first >= m.t - 1.5 && c.first <= m.t + 60).sort((a, b) => a.first - b.first)[0];
+    return { name, zone: z, t: m.t, card: c ? (c.head || c.text).slice(0, 80) : null, gave: c ? c.gave || [] : [] };
+  }).map(p => Object.assign(p, { gave: p.gave.length ? p.gave : null }));
+  return { gaps, worst, peaks, end, endWhy };
+}
+
 // ---------------- scorecard values ----------------
 function scorecard(reached) {
   const sc = {};
@@ -871,18 +919,14 @@ function scorecard(reached) {
     target: 'the first press gets a hit with its sound within 10 s of the first tap, and the first gold, loot or XP within 30 s' };
   const z1 = moments.find(m => m.id === 'zone');
   sc.F2 = { value: z1 ? fmtT(z1.t) : 'not reached', pass: !!z1 && z1.t <= 360, target: 'first boss beaten by 6:00' };
-  const big = moments.filter(m => m.big).map(m => m.t);
-  const gaps = []; let prev = 0;
-  for (const t of [...big, reached]) { gaps.push({ from: prev, to: t, gap: t - prev }); prev = t; }
-  const zc10 = moments.find(m => m.id === 'zone' && m.zone === 10);
-  const lateEnd = zc10 ? Math.min(zc10.t, 3600) : reached;   // the pace after the zone 10 Champion is not set yet (DECISIONS, F3)
-  const early = gaps.filter(g => g.from < 1200).map(g => ({ ...g, gap: Math.min(g.to, 1200) - g.from }));
-  const late = gaps.filter(g => g.to > 1200 && g.from < lateEnd).map(g => ({ ...g, gap: Math.min(g.to, lateEnd) - Math.max(g.from, 1200) }));
-  const mx = l => l.reduce((a, g) => (g.gap > a.gap ? g : a), { gap: 0 });
-  const worstEarly = mx(early), worstLate = mx(late), worst = mx([...early, ...late]);
-  const z510 = [5, 6, 7, 8, 9, 10].filter(z => reached > 1200 && !moments.some(m => m.id === 'zone' && m.zone === z));
-  sc.F3 = { value: `${big.length} big moments; in the first 20 min the longest gap is ${fmtT(worstEarly.gap || 0)}, after it ${fmtT(worstLate.gap || 0)} to ${fmtT(lateEnd)}` + (z510.length ? `; no first clear seen for zones ${z510.join(', ')}` : ''),
-    pass: worstEarly.gap <= 300 && worstLate.gap <= 480 && z510.length === 0, target: 'a big moment every 5 min to minute 20; then every zone first clear 5 to 10, no gap over 8 (the 8-minute cap holds in the first 20 too)' };
+  // F3 (f3-restate, DECISIONS 2026-10-08), in game time. (a) No dead stretch: never more than 8 min without a progress moment, up to the
+  // zone 10 Champion's first clear (or minute 60, or the end of the walk). (b) Three peaks: the first boss win, the zone 5 Champion and
+  // the zone 10 Champion, each with its own big card that says what it gave. No 5:00 floor and no person-minute conversion: the bot's
+  // clock is its own until a human run sets a ratio. Earlier is never a miss. A fight count between moments is diagnosis only.
+  const f3 = f3Read(reached), worst = f3.worst, pk = f3.peaks;
+  sc.F3 = { value: `longest gap without progress ${fmtT(worst.gap)} (${fmtT(worst.from)} to ${fmtT(worst.to)}${worst.gap ? ', ' + worst.cause : ''}) to ${f3.endWhy}; peaks: ` + pk.map(p => `${p.name} ${p.t === null ? 'not reached' : fmtT(p.t) + (p.card ? (p.gave ? '' : ', its card says nothing it gave') : ', no big card of its own')}`).join(', '),
+    pass: worst.gap <= 480 && pk.every(p => p.t !== null && p.card && p.gave), worst, gaps: f3.gaps, peaks: pk, endWhy: f3.endWhy,
+    target: 'zones 1-10 in game time: never over 8 min without a progress moment (zone first clear, new ability, Star, hero join, unique) to the zone 10 Champion or minute 60; the first boss, zone 5 Champion and zone 10 Champion each reached with a big card that says what it gave' };
   // F4: new things = unlocks (S.onboard.got) by the time they landed. unlock-gap-trial (judge): the target counts only what the
   // spacing governor releases; a thing the player's act or a drop opened (its row's now() true) is listed, not counted.
   // walk-join-moment-count: the first starter's join opens the Switch hero row, a later one stamps got['join:<id>'] (55-onboard
@@ -990,6 +1034,12 @@ function report(res) {
   const med = ratios.length ? (ratios.length % 2 ? ratios[(ratios.length - 1) / 2] : (ratios[ratios.length / 2 - 1] + ratios[ratios.length / 2]) / 2) : null;
   out.push('', med === null ? 'Walk against est: no beat to compare.' : `Walk against est (information, not a finding): the median beat came at ${med.toFixed(2)} of its est time over ${ratios.length} beats, so the bot plays about ${(1 / med).toFixed(1)} times a casual person's guessed pace.`, '');
   out.push('### More than 50% off the map\'s walk, for the lead', '', ...(off.length ? off.map(x => '- ' + x) : ['- none']), '');
+  // walk-f3-in-fights: F3 in game time, the peaks, and every gap of 3 min or more between progress moments with its fights and cause
+  { const F = sc.F3, long = F.gaps.filter(g => g.gap >= 180), prog = moments.filter(m => m.prog);
+    out.push('## F3: progress moments and the gaps between them', '', `Game time, the bot's own clock (no person-minute conversion until a human run sets one). A progress moment is a zone's first clear, a new ability, a Star, a hero joining or a unique; levels, hero lines, looks and crafts are not. Window: game time 0 to ${F.endWhy}. Progress moments seen: ${prog.length} (${[...PROGRESS].map(k => k + ' ' + prog.filter(m => m.id === k).length).join(', ')}).`, '',
+      'Peaks (each needs its own big card that says what it gave):', '', ...F.peaks.map(p => `- ${p.name}: ${p.t === null ? 'not reached' : fmtT(p.t) + '; ' + (p.card ? `card "${p.card}"${p.gave ? ', gave: ' + p.gave.join('; ') : ', with no line saying what it gave'}` : 'no big card of its own within a minute')}`), '',
+      'Gaps of 3 min or more (fights are diagnosis only; the time split is fighting, gathering, and held on a card, tip or menu):', '',
+      ...(long.length ? ['| From | To | Gap | Fights | Lost boss tries | Fight / gather / held min | Cause |', '|---|---|---|---|---|---|---|', ...long.map(g => `| ${fmtT(g.from)} | ${fmtT(g.to)} | ${fmtT(g.gap)}${g.gap > 480 ? ' **over 8**' : ''} | ${g.fights} | ${g.tries} | ${g.fightMin} / ${g.gatherMin} / ${g.heldMin} | ${g.cause} |`)] : ['- none']), ''); }
   // dead air
   const marks = [0, ...log.filter(e => (['unlock', 'moment', 'nextup', 'gear'].includes(e.kind) || (e.kind === 'gate' && e.go)) && !(e.kind === 'moment' && e.text.startsWith('level'))).map(e => e.t), reached].sort((a, b) => a - b);
   const quiet = []; for (let i = 1; i < marks.length; i++) if (marks[i] - marks[i - 1] >= 180) quiet.push({ from: marks[i - 1], to: marks[i] });
