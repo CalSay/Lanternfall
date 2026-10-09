@@ -175,6 +175,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A core file loaded before `55-stats.js` cannot call `registerAwayLine` at load (`AWAY_LINES` is still in its temporal dead zone and the whole core fails to load); register on the first `awayBegin`. (refine-queues, 2026-10-08)
 
 ## CI and tooling
+- Win a zone boss in a proof route with `parry-clean` between attacks, not Attack alone, and replay the route after merging a boss change. Why: once rally-gates-live landed, the zone 7 boss held at its 25% gate until its charged move was parried, so an Attack-only route lost and eyes failed every expect. (boss-spoils-pick, 2026-10-09)
 
 - Commit the rebuilt `dist/lanternfall.html` with the source change (and again after merging the base): CI's first shard fails in seconds with "build.mjs changed dist" otherwise. Don't `git checkout dist` to clear a dirty tree before a commit; rebuild and commit it. (forge-line-while-fighting, 2026-10-08)
 - A browser check that needs the game clock to run must not copy the usual page wrapper's `soloPickerOpen=()=>true`: 90-boot.js skips every tick while the picker reads open, so foes never die and `GUIDE_RT.t` stays 0, and a section about kill gaps passes its first assertions on a frozen game. In a long realtime run, also reset `S.kills` on each kill, or the zone boss comes, drops a Scroll and its held line cuts in. (forge-line-while-fighting, 2026-10-08)
