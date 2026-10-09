@@ -553,7 +553,8 @@
       // live progress ("12/20") updates in place; only a new hint pops
       if (fresh || !spec.live) { bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); } }
     }
-    if (!changed) { syncBtn(); return; }   // no real layout change and the same target/text: leave it exactly where it is
+    if (!changed) syncBtn();   // (the bar can show or hide under an unchanged tip)
+    if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
     dirty = false; panelScrolled = false; lastNode = spec.node;
     // the panel docks where notices dock and never over the stage: landscape, the side column (its notices slot;
     // it stands in for Next Up while it speaks, except for the Next Up step itself, which points at the chip);
