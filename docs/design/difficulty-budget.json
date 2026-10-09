@@ -166,6 +166,18 @@
       "report": true,
       "note": "report only: nothing worn at the zone 5 Champion (casual 35%+; do not re-create the 983e9f5 zone 5 stall)"
     },
+    "floorNormal": {
+      "casual": [
+        0.8,
+        1
+      ],
+      "good": [
+        0.98,
+        1
+      ],
+      "report": true,
+      "note": "report only (wren-z9-10-foes): the zone 10-11 ordinary foes with nothing worn at arrival level, the fight-only bot's hero who never crafts (casual 80%+, good 98%+); each foe type sampled, the worse one read"
+    },
     "keptUpEarly": {
       "casual": [
         0.8,
@@ -767,6 +779,16 @@
       "owner": "boss-balance-pass",
       "until": "2026-12-01",
       "why": "z20-wall (judge 2026-10-08): z20-24 knots fitted to the hero who first gets there (level 23-24, tier 1 common +0); kept-up casual 79-98, never-defends 0-7 also with the floor 0.15 lower. Every landed hit sits on the hpFloor, so no knot puts both rows in band. Balance-pass refit"
+    },
+    {
+      "row": "z11-normal",
+      "hero": "wren",
+      "player": "casual",
+      "side": "below",
+      "limit": 0.81,
+      "owner": "boss-balance-pass",
+      "until": "2026-11-15",
+      "why": "wren-z9-10-foes (judge 2026-10-08, ruling A, no refit): a normal row, not a boss. Wren on arrival gear (level 16, tier 1 common +0) wins 81% casual against the zone 11 Barrow Beetle (5-offset baseline; Pip 94, Tobin 100); her gap is kill speed, not HP. Balance-pass refit, due 2026-11-15"
     }
   ]
 }

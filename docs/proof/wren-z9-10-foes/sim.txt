@@ -1,0 +1,11 @@
+# wren-z9-10-foes: sim cross-check (the live engine, not the sampler)
+
+sim-probe.mjs (the planner's copy of tools/sim.mjs at 8ecff0e4, from /mnt/project-files/early-game/cold-leg-data/wren-z9-10/, its core import pointed at this branch), then analyze.mjs:
+
+$ PROBE_OUT=... node sim-probe.mjs --policy mixed --hours 1 --class ranger --active 1 --turns 1 --skill casual --seed N --every 600 --t11 0   (N = 1..10)
+
+group | normal lost/fights | win% | min in z9-10 | losses/10min | median turns (hero+foe) | boss lost/tries | per seed lost/min
+ranger casual mixed | 0/154 | 100% | 103 | 0.0 | 5 | 18/38 | 0/15m 0/15m 0/8m 0/17m 0/15m 0/5m 0/5m 0/4m 0/9m 0/9m
+
+
+Casual Wren who gathers and crafts: 0 ordinary-foe losses in 154 zone 9-10 fights, 0.0 per 10 min (prediction: 0.5 or fewer). The same table as the planner's at 8ecff0e4: this card does not touch the live engine.

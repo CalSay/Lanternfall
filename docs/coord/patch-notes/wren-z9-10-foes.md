@@ -1,0 +1,1 @@
+No change to the game. Our checks now count how often each hero loses to ordinary foes at zones 9-11, with the skeletons getting back up as they do in play. Wren wins 94% of zone 10 fights on her first gear and loses none in the test walks; her 81% at zone 11 is written down for the coming balance pass.

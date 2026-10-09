@@ -11966,6 +11966,50 @@ if (section('rally gates live (core)')) try {
     'rally gates: the boss bar marks each gate, the rally line names the mark (the Stun clause only while it charges), and a line says when the rally is over');
 } catch (e) { fail('rally gates live crashed: ' + (e.stack || e)); }
 
+// ---- wren-z9-10-foes (judge 2026-10-08): the scratch fight (turnCombatSample, the budget's) gets an ordinary Rattlebones up once a fight, as
+// the live loop does (59b onFoeDeath): at ENEMY_TUNE.reassemble of its HP, never a boss, never after a Burn kill. Asserted on the live path too
+// (lessons: a rule the sampler models is checked where the player meets it).
+if (section('rattlebones get up (core)')) try {
+  const g = loadCore({ seed: 9, turns: true }), E = s => g.eval(s);
+  E(`soloPick('wren', { now: true }); TURN_TUNE.on = 1; S.L = 15; S.maxZone = 10; setZone(10); S.activity = 'fight'; arena = null; fightBoss = false; gearDirty(); spawn();
+    for (let i = 0; i < 400 && !(combatFoes()[0] && combatFoes()[0].type === 'bones'); i++) spawn();
+    // the sampler's own io, caught as it starts a fight, so a test can land the killing blow itself
+    globalThis.__tn = turnNew; turnNew = (p, io) => { globalThis.__io = io; return __tn(p, io); };`);
+  const R = E('ENEMY_TUNE.reassemble');
+  // a scratch fight of one step (nothing dies), then the blows by hand: (profile changes) -> { rises, foe HP share after each blow }
+  const blows = (prof, kinds) => JSON.parse(E(`(() => { const p = Object.assign(turnCombatProfile(), ${JSON.stringify(prof)}), r = turnCombatSample({ profile: p, seconds: 0.05, seed: 3 }), io = __io, hp = [];
+    for (const k of ${JSON.stringify(kinds)}) { io.damageFoe(io.foeHp() + 1, k); hp.push(+(Math.max(0, io.foeHp()) / p.foeMaxHp).toFixed(3)); }
+    return JSON.stringify({ rises: r.rises, hp, type: p.foeType, boss: p.boss }); })()`));
+  const a = blows({}, ['attack', 'attack']), b = blows({}, ['burn']), c = blows({ boss: true }, ['attack']), d = blows({ foeType: 'beetle' }, ['attack']), e = blows({}, ['ignite', 'attack']);
+  assert(R > 0 && a.type === 'bones' && !a.boss && a.rises === 1 && a.hp[0] === +R.toFixed(3) && a.hp[1] === 0,
+    `rattlebones: in a scratch fight an ordinary Rattlebones gets up once at ${R} of its HP, and stays down the second time (${JSON.stringify(a)})`);
+  assert(b.rises === 0 && b.hp[0] === 0 && c.rises === 0 && c.hp[0] === 0 && d.rises === 0 && d.hp[0] === 0 && e.rises === 1 && e.hp[0] === +R.toFixed(3),
+    `rattlebones: a Burn kill keeps it down (an Ignite does not), a boss never gets up, and no other foe type does (${JSON.stringify({ b, c, d, e })})`);
+  // a whole sample: every won fight against her bones had a get-up first (Wren burns nothing), one a fight at most; a bones boss never rises
+  const s = JSON.parse(E(`JSON.stringify(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 5, fights: 30, skill: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 } }))`));
+  E('turnNew = __tn; fightBoss = true; spawn();');
+  const sb = JSON.parse(E(`JSON.stringify(Object.assign(turnCombatSample({ profile: turnCombatProfile(), seconds: 3600, seed: 5, fights: 10, skill: { parry: 0.6, dodge: 0.9, perfect: 0.4, good: 0.45 } }), { type: turnCombatProfile().foeType, boss: turnCombatProfile().boss }))`));
+  assert(s.rises >= s.kills && s.rises <= s.kills + s.deaths && s.kills > 0 && sb.boss && sb.rises === 0,
+    `rattlebones: over 30 scratch fights Wren meets one get-up a fight at most and one before every kill (${s.rises} rises, ${s.kills} kills, ${s.deaths} losses); the zone 10 boss (${sb.type}) never gets up (${sb.rises})`);
+  // the live path (TURN_LIVE_IO -> cbTurnDamageFoe -> foeDies -> onFoeDeath): the same rule where the player meets it
+  const until = (cond, n = 400) => E(`(() => { for (let i = 0; i < ${n} && !(${cond}); i++) tick(0.05); return !!(${cond}); })()`);
+  const live = kind => { E('fightBoss = false; spawn(); for (let i = 0; i < 400 && !(combatFoes()[0] && combatFoes()[0].type === "bones"); i++) spawn();');
+    const met = until('TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.foe === combatFoes()[0] && TURN_LIVE.foe.type === "bones" && !TURN_LIVE.foe.boss && !TURN_LIVE.foe.again');
+    return JSON.parse(E(`(() => { const f = TURN_LIVE.foe, out = { met: ${met} }; TURN_LIVE_IO.damageFoe(f.hp + 1, ${JSON.stringify(kind)}, false, 'phys', 0);
+      out.first = +(Math.max(0, f.hp) / f.max).toFixed(3); out.again = !!f.again;
+      if (f.hp > 0) { TURN_LIVE_IO.damageFoe(f.hp + 1, 'attack', false, 'phys', 0); out.second = +(Math.max(0, f.hp) / f.max).toFixed(3); }
+      return JSON.stringify(out); })()`)); };
+  const la = live('attack'), lb = live('burn');
+  // an elite Rattlebones gets up too (59b checks only f.boss)
+  E('fightBoss = false; spawn(); for (let i = 0; i < 400 && !(combatFoes()[0] && combatFoes()[0].type === "bones"); i++) spawn(); turnFoeSetup(combatFoes()[0], S.zone, { elite: true });');
+  const el = JSON.parse(E(`(() => { const f = combatFoes()[0]; f.hp = 0; const up = onFoeDeath(f, 0, 'attack'); return JSON.stringify({ elite: !!f.elite, up, hp: +(f.hp / f.max).toFixed(3) }); })()`));
+  assert(el.elite && el.up && el.hp === +R.toFixed(3), `rattlebones: an elite Rattlebones gets up too (${JSON.stringify(el)})`);
+  assert(la.met && la.again && la.first === +R.toFixed(3) && la.second === 0 && lb.met && !lb.again && lb.first === 0,
+    `rattlebones: in the live fight an ordinary Rattlebones gets up once at ${R} of its HP, and a Burn kill keeps it down (${JSON.stringify({ la, lb })})`);
+  assert(E(`onFoeDeath({ type: 'bones', boss: true, max: 100, hp: 0 }, 0, 'attack') === false`), 'rattlebones: the live rule never raises a boss');
+  assert(!g.errors.length, 'rattlebones: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('rattlebones get up crashed: ' + (e.stack || e)); }
+
 // ==== counters-and-layers: Essence is one pile (any grade pays any Essence cost, lowest grade first) ====
 if (section('essence fungible')) try {
   const g = loadCore({ seed: 41 }), E = x => g.eval(x);
