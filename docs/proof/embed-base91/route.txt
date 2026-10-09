@@ -1,0 +1,40 @@
+# seed: 1
+# Proof for card embed-base91: the embedded pictures are stored as basE91 text and read back through one decoder
+# (src/js/21zz-art-b91.js). Nothing should look different. The route shows each kind of embedded picture in place:
+# the Mossy Hollow background (intro), the Thorn Imp and the action icons (a zone 1 fight), the menu icons and gear icons (Hero menu).
+# Resource, status and the other icons are held by the check below. Byte-for-byte equality of all 746 images with their approved files is tools/check.mjs
+# 'embed-base91'; the PR lists a Chromium pixel comparison of every image before and after.
+new fresh
+wait 4
+shot intro-mossy-hollow
+tap "Skip"
+wait 2
+expect "Begin as Wren"
+shot picker-portraits
+tap "Begin as Wren"
+wait 6
+tap "Skip"
+wait 3
+tap-if "Got it"
+tap-if "Dismiss this tip"
+wait 3
+expect ".hud.vs .mob"
+expect ".hud.vs .hero-plate"
+shot zone1-imp-and-action-icons
+new menu-icons
+wait 3
+tap-if "Skip"
+wait 3
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+wait 1
+tap "Hero"
+wait 1
+expect "#viewSeg .menu-nav-ic"
+expect "Gear"
+shot menu-icons-hero
+tap "Gear"
+wait 1
+expect "Your gear"
+shot gear-icons
