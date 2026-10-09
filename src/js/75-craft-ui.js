@@ -327,7 +327,11 @@ let craftUI = null;
   // upgrade on, or the recipe's piece at its grade (or likeliest rarity) with middle bonus lines. Sampled a chunk at a time after the
   // row shows, never on the click path; the same "barely changes" rule leaves the line out. st8.pre: key -> { sig, job, res }.
   const PRE_ID = -1;
-  const preUp = it => it && it.plus < CRAFT_TROPHY_GATE.max ? Object.assign(JSON.parse(JSON.stringify(it)), { id: PRE_ID, plus: it.plus + 1 }) : null;
+  // the worn piece one upgrade on, then up to PRE_AHEAD more, never past +max (upgrade-odds-next-step). When the next press changes
+  // nothing, the line names the first of these that moves the fight up (55-fight-delta fightDeltaAheadJob), so a press that sets up
+  // a step says so; a press that is the step shows the plain line.
+  const PRE_AHEAD = 2;
+  const preUps = it => { const out = []; for (let k = 1; it && k <= 1 + PRE_AHEAD && it.plus + k <= CRAFT_TROPHY_GATE.max; k++) out.push(Object.assign(JSON.parse(JSON.stringify(it)), { id: PRE_ID, plus: it.plus + k })); return out.length ? out : null; };
   // an ungraded recipe's piece is shown at the likeliest rarity at the station's level
   const preRar = k => { const w = rarityWeights(stationLevel(k)); return Object.keys(w).reduce((a, b) => (w[b] > w[a] ? b : a)); };
   const preRec = (k, t) => {
@@ -352,7 +356,11 @@ let craftUI = null;
     const run = () => {   // the piece and both profiles are made in the first step, off the click path
       if (st8.pre[key] !== rec) return;
       if (!safe(live, false)) { delete st8.pre[key]; return; }
-      if (!job) { const it = safe(mk, null); job = it ? safe(() => fightDeltaJob(it, { scratch: true }), null) : null; if (!job) return; }
+      if (!job) {   // mk: one piece, or the pieces of a look-ahead (preUps)
+        const it = safe(mk, null);
+        job = Array.isArray(it) ? (typeof fightDeltaAheadJob === 'function' ? safe(() => fightDeltaAheadJob(it), null) : null) : it ? safe(() => fightDeltaJob(it, { scratch: true }), null) : null;
+        if (!job) return;
+      }
       if (safe(() => job.step(), true)) { rec.res = job.res; if (rec.res) done(); return; }
       setTimeout(run, 30);
     };
@@ -361,6 +369,12 @@ let craftUI = null;
   function preLine(key) {
     const f = st8.pre[key], r = f && f.sig === preSig() ? f.res : null;
     if (!r) return '';
+    if (r.ahead > 0) {   // the next press changes nothing; a few more would
+      const at = `Zone ${r.zone} boss: no change yet. At +${r.plus}:`;
+      if (r.kind === 'wins') return `${at} about ${r.after} in 10, now ${r.before}`;
+      if (r.kind === 'turns') return `${at} about ${r.after} turns a win, now ${r.before}`;
+      return `${at} a hit takes about ${r.after}% of your health, now ${r.before}%`;
+    }
     if (r.kind === 'wins') return `Zone ${r.zone} boss: about ${r.after} in 10, now ${r.before}`;
     if (r.kind === 'turns') return `Zone ${r.zone} boss: about ${r.after} turns a win, now ${r.before}`;
     return `Zone ${r.zone} boss: a hit takes about ${r.after}% of your health, now ${r.before}%`;
@@ -1193,7 +1207,7 @@ let craftUI = null;
       if (heroPos) {   // craft-odds-before-pay: what the next upgrade changes against the boss, before the press
         const pk = `up:${it.id}:${it.plus}`, id = it.id;
         const open = () => !!(sheet && sheet.id === id && !sheet.api.closed);
-        preStart(pk, () => preUp(it), () => { if (open()) renderItem(); }, open);
+        preStart(pk, () => preUps(it), () => { if (open()) renderItem(); }, open);
         const pl = preLine(pk); if (pl) upBox.append(el('p', 'note cf-pre', pl));
       }
       if (!f && !heroPos) upBox.append(el('p', 'note', 'Equip it to upgrade it.'));
