@@ -709,7 +709,8 @@ const GATE_WHY_Q = s => `(() => { const k = ${JSON.stringify(s.skill)}, need = $
   if (!b.gate) return 'a tier ' + b.t + ' row took its place (' + kindName(b.kind, b.t) + (b.p >= 1 ? ', Ready' : '') + ')' + still;
   return 'another gate took its place (' + kindName(b.kind, b.t) + ': ' + SKILL[b.gate.skill] + ' ' + b.gate.lv + ' of ' + b.gate.need + ')' + still; })()`;
 // walk-gate-reads-right: the craft row (Next Up's 'forge' goal) at 30, 45 and 60 minutes: its text, its place among the 3 rows the list
-// shows and its rank among every row the game would offer (sticky: false, so the read leaves the list's order alone)
+// shows and its rank among the rows the game would offer (two per system at most, as the list picks them). sticky: false, so the read
+// leaves the list's order alone; the list on screen gives rows already shown a small head start, so a near tie can read one place off
 const CRAFT_ROW_Q = `(() => { const all = topGoals(50, { sticky: false }), top = topGoals(3, { sticky: false }), i = all.findIndex(g => g.id === 'forge'), r = all[i];
   return r ? { txt: r.label, ready: !!r.ready, rank: i + 1, of: all.length, row: top.findIndex(g => g.id === 'forge') + 1 } : null; })()`;
 // and each gathering skill's level against the tier 2 node gate (NODE_REQ[1], 14) at the end
