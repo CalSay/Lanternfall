@@ -73,7 +73,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'landscape 1920x1080 (browser, UX-L1)': 40, 'desktop layout (browser, desktop-layout-v1)': 30, 'desktop tooltips (browser, desktop-tooltips)': 30, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
+const WEIGHT = { 'craft-shortfall-offer': 12, 'first-hour walk (browser, qa-first-hour-walk)': 25, 'LF_EYES hook (browser, qa-player-eyes)': 12, 'landscape 740x360 (browser, UX-L1)': 42, 'landscape 844x390 (browser, UX-L1)': 38, 'landscape 1280x720 (browser, UX-L1)': 38, 'landscape 1920x1080 (browser, UX-L1)': 40, 'desktop layout (browser, desktop-layout-v1)': 30, 'desktop tooltips (browser, desktop-tooltips)': 30, 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5, 'camp trade and import (C4, browser)': 15 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
@@ -3403,7 +3403,7 @@ if (section('store shelf')) try {
   assert(g.eval('storeShelfShows("hide")') === true && g.eval('storeShelfGrade("hide")') === 2, 'held hide shows even before Hunting, at the grade held');
   g.eval('HUNT_TUNE.on = true; S.skills.hunt.lv = 200; S.maxZone = 60');
   assert(g.eval('storeShelfCap("hide")') === 3, `hide's cap is at most Hunting's 3 grounds (${g.eval('storeShelfCap("hide")')})`);
-  assert(/registerSection\('gat', \{\n    id: 'store', view: 'pack'/.test(ui) && /Show all grades/.test(ui) && /\['full', 'Fullest'\], \['name', 'Name'\]/.test(ui), '75-store-ui: the Store view keeps its section, has Show all grades and the Fullest / Name sort');
+  assert(/registerSection\('gat', \{\n    id: 'store', view: 'pack'/.test(ui) && /Show all tiers/.test(ui) && /\['full', 'Fullest'\], \['name', 'Name'\]/.test(ui), '75-store-ui: the Store view keeps its section, has Show all grades and the Fullest / Name sort');
 } catch (e) { fail('store shelf crashed: ' + (e.stack || e)); }
 // ---- refine-queues: the stations' orders, coal, the converted costs (55-refine.js, 21-data-craft.js; card refine-queues,
 // overhaul spec 2, 4, 12, 13; the art ruling 2026-10-08: coal is a drop once the Forge is built, coal and the middles are text only) ----
@@ -7971,7 +7971,7 @@ if (section('C9 hero registry (browser)')) try {
           assert(chipHeroes.slice(0, 3).join() === 'wren,tobin,pip' && chipHeroes.includes('bram') && chipHeroes.length < 10, `C9 ${tag}: camp chips show the playable heroes and the ready unlock, not the whole roster (${chipHeroes.join()})`);
           await page.click('#sec-solo-hero .sp-all');
           await page.waitForSelector('#heroSheet:not([hidden]) .sp-card');
-          assert(await page.locator('#heroSheet .sp-card').count()===32 && await page.$eval('#heroSheet .sp-card[data-hero="bram"]',b=>b.dataset.state==='locked' && !b.disabled && b.textContent.includes('80 grade-1 wood')), `C9 ${tag}: camp shows the same registry and a ready quest hand-in`);
+          assert(await page.locator('#heroSheet .sp-card').count()===32 && await page.$eval('#heroSheet .sp-card[data-hero="bram"]',b=>b.dataset.state==='locked' && !b.disabled && b.textContent.includes('80 tier-1 wood')), `C9 ${tag}: camp shows the same registry and a ready quest hand-in`);
           await page.click('#heroSheet .sp-card[data-hero="bram"]');
           assert(await X('S.mats.wood[0]===80 && !S.party.unlock.heroes.bram && soloHero()==="wren"'), `C9 ${tag}: the first unlock press asks for a second tap without charging`);
           await page.click('#heroSheet .sp-card[data-hero="bram"]');
@@ -14344,6 +14344,55 @@ if (section('boss-spoils-pick')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('boss-spoils-pick: ' + (e.stack || e.message)); }
+
+// ---- look-card-says-why (W5 proposal 3): a cache's lantern colour says what it did in its own line, whatever the sub line shows ----
+if (section('look-card-says-why')) try {
+  const at = 'look-card-says-why', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pre-z7-boss.json'), 'utf8');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // a first clear with no lantern colour owned or worn and no unique on the win, then the cache card
+        const win = async z => {
+          await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); }
+            ${z === 1 ? `for (const k of Object.keys(S.deep.cos)) if (k.startsWith('l_')) delete S.deep.cos[k]; S.deep.eq.lantern = null; if (S.deeds && S.deeds.wear) delete S.deeds.wear.flame;` : ''}
+            S.activity = 'fight'; S.zone = S.maxZone = ${z}; fightBoss = true; spawn();
+            const r0 = Math.random; Math.random = () => 0.999; try { killPack(mob, 40); } finally { Math.random = r0; }   // the unique roll misses, so the odds line shows
+            S.activity = 'gather'; emit('sceneReset'); true`);
+          try { await page.waitForFunction(() => window.__t.x(`[...document.querySelectorAll('.mm-ov')].some(o => /Lantern Cache|First boss/.test(o.textContent))`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
+          await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs)
+          return X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };
+            const inView = r => r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1;
+            const ln = [...o.querySelectorAll('.mm-card *')].filter(e => /lantern colour|lantern burns/.test(e.textContent)).pop();   // the colour's own line (the card itself may scroll on a short screen)
+            const cr = o.querySelector('.mm-card').getBoundingClientRect(), r = ln && ln.getBoundingClientRect();
+            return { up: true, text: o.textContent, fits: !!r && inView(r) && r.top >= cr.top && r.bottom <= cr.bottom + 1 }; })()`);
+        };
+        let c = await win(1);
+        assert(c.up && /Unique chance on this win: \d+(\.\d+)?%/.test(c.text) && /Your lantern burns Ember Red now\./.test(c.text) && !/New lantern colour/.test(c.text) && c.fits && await X('S.deep.eq.lantern === "l_ember"'),
+          `${vw}: zone 1's cache card shows the unique chance and says "Your lantern burns Ember Red now." in a line on screen (${JSON.stringify({ up: c.up, fits: c.fits, text: c.text && c.text.slice(0, 300) })})`);
+        if (w === 1280) {
+          c = await win(2);
+          assert(c.up && /New lantern colour: Deep Blue\. You own it now\./.test(c.text) && !/burns Deep Blue/.test(c.text) && await X('S.deep.eq.lantern === "l_ember"'),
+            `${vw}: a colour the lantern does not wear says it is owned, not burning (${JSON.stringify({ up: c.up, text: c.text && c.text.slice(0, 300) })})`);
+        }
+        assert(!/\bTap\b/.test(c.text || ''), `${vw}: neutral wording`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('look-card-says-why: ' + (e.stack || e.message)); }
 if (section('scroll-spares')) try {
   const at = 'scroll-spares', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-wren-spare-moss.json'), 'utf8');
   { // core: the fixture, then the toast rule
@@ -14509,6 +14558,90 @@ if (section('fight-input-during-banner')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('fight-input-during-banner crashed: ' + (e.stack || e)); }
+
+// ---- craft-shortfall-offer: a recipe or upgrade short of an Ingot, Plank, Cloth or Leather says so and offers the order in one press
+// (only when its raw inputs are in hand; else the line names what is short; queued orders read "Smelting at the Forge"); an upgrade
+// says what its next +1 adds to the main line in that line's own unit (a capped line says so); "tier", not "grade", for the
+// material step on screen. On save-refine (Forge and Workbench Lv 2, no Ingots or Planks). ----
+if (section('craft-shortfall-offer')) try {
+  // no player-visible string uses "grade" (the code names GRADE_SHORT, cf-grade, storeShelfGrade and a parry's p.grade stay)
+  const bad = [];
+  for (const f of fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js'))) {
+    fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').split('\n').forEach((l, i) => {
+      if (/^\s*(\/\/|\*)/.test(l)) return;
+      const code = l.replace(/\s\/\/ .*$/, '');
+      for (const m of code.matchAll(/(['"`])((?:(?!\1)[^\\]|\\.)*)\1/g)) if (/\bgrades?\b/i.test(m[2]) && !/\.grade\b|cf-grade|\bp\.grade|=== /.test(m[2])) bad.push(`${f}:${i + 1} ${m[0].slice(0, 60)}`);
+    });
+  }
+  assert(!bad.length, 'craft-shortfall-offer: no player-visible text says "grade" for the material step' + (bad.length ? ': ' + bad.slice(0, 4).join('; ') : ''));
+  await (async () => {
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('craft-shortfall-offer (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-refine.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+      await ctx.addInitScript(([key, raw]) => {
+        if (sessionStorage.getItem('cso-seeded')) return; sessionStorage.setItem('cso-seeded', '1');
+        const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+      }, [KEY, raw]);
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(3200);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const orders = `JSON.stringify(REFINE_STATIONS.map(s => refineOrders(s).map(o => [o.prod, o.tier, o.want])))`;
+      const row = k => `(() => { const r = document.querySelector('.cf-rec[data-kind=${k}] .cf-short'); return r ? { txt: r.firstChild.textContent.trim(), btn: r.querySelector('.cf-order') ? r.querySelector('.cf-order').textContent : '' } : null; })()`;
+      const settle = () => page.waitForTimeout(1400);   // past the craft list's touch guard
+      await X(`S.activity = 'gather'; for (const st of REFINE_STATIONS) refineOrders(st).length = 0; setTab('forge'); ui(true); true`); await settle();
+      await X(`document.querySelectorAll('.cf-tiers button')[1].click(); true`); await settle();
+      // 1. short and every raw input in hand: the line, the counts and one button; nothing queued before the press
+      const a = await X(row('warblade'));
+      assert(a && a.txt === 'Short 5 Iron Ingots and 3 Birch Planks. Smelt 5 and Saw 3 (10 Iron Ore, 10 coal and 6 Birch Logs)?' && a.btn === 'Smelt 5 and saw 3' && await X(orders) === '[[],[],[]]',
+        `the Iron Warblade row offers the orders it is short, with their inputs, and queues nothing yet (${JSON.stringify(a)})`);
+      // 2. the press queues exactly those orders; the row then says they are on their way
+      await X(`document.querySelector('.cf-rec[data-kind=warblade] .cf-order').click(); true`); await settle();
+      const b = await X(row('warblade')), ob = await X(orders);
+      assert(ob === '[[["ingot",2,5]],[["plank",2,3]],[]]' && b && b.txt === 'Smelting at the Forge. Sawing at the Workbench.' && !b.btn,
+        `one press queues 5 Iron Ingots and 3 Birch Planks, and the row reads "Smelting at the Forge." (${ob} ${JSON.stringify(b)})`);
+      // 3. raw inputs short: no button, the line names what is missing, and nothing is queued
+      await X(`for (const st of REFINE_STATIONS) refineOrders(st).length = 0; S.mats.ore[1] = 3; ui(true); true`); await settle();
+      const c = await X(row('plate'));
+      assert(c && !c.btn && /^Short 6 Iron Ingots, 3 Duskfang Leather and 1 Linen\. .* needs 9 more Iron Ore\.$/.test(c.txt) && await X(orders) === '[[],[],[]]',
+        `with Iron Ore short the Iron Plate row has no button and names the 9 Iron Ore it needs (${JSON.stringify(c)})`);
+      // 3b. a queued order that has stopped says why, never "Smelting"
+      await X(`S.mats.ore[1] = 23168; refineAdd('ingot', 2, 6); S.mats.ore[1] = 0; ui(true); true`); await settle();
+      const st = await X(row('plate'));
+      assert(st && /The Forge's Iron Ingot order has stopped: Out of Iron Ore\./.test(st.txt) && !/Smelting/.test(st.txt), `a stopped Forge order reads "has stopped: Out of Iron Ore", not Smelting (${JSON.stringify(st)})`);
+      await X(`for (const st of REFINE_STATIONS) refineOrders(st).length = 0; true`);
+      // 4. every worn piece's upgrade names its main line's change in its own unit, never a bare power number
+      await X(`S.mats.ore[1] = 23168; true`);
+      const ups = await X(`(async () => { const out = []; for (const p of CRAFT_HERO_POS) { const it = equipped(p); if (!it || it.plus >= 10) continue;
+        craftUI.openItem(it.id); await new Promise(r => setTimeout(r, 150)); const n = document.querySelector('.cf-up-box .cf-next'); out.push([p, n ? n.textContent : '']); } return out; })()`);
+      assert(ups.length >= 5 && ups.every(([, t]) => /^\+\d+: \+[\d.]+% [a-z]/.test(t) && !/power/i.test(t)),
+        `every worn piece's upgrade says its main line's change, never power (${JSON.stringify(ups)})`);
+      // 5. a capped main line (a tier 5 legendary Quiver's crit) says so and shows the power change instead
+      const cap = await X(`(async () => { S.items.push({ id: 987654, slot: 'quiver', t: 5, r: 'legendary', plus: 2, a: [] }); craftUI.openItem(987654);
+        await new Promise(r => setTimeout(r, 150)); const n = document.querySelector('.cf-up-box .cf-next'); return n ? n.textContent : ''; })()`);
+      assert(/^\+3: Crit is at its cap\. Power [\d.,K]+ → [\d.,K]+\.$/.test(cap), `a capped Quiver's upgrade says its crit is at its cap and shows power (${cap})`);
+      // 5b. a change of 10 or more keeps its decimal (an Epic Tier 3 Warblade's +15.75 reads +15.8%, never +15%)
+      const ep = await X(`(async () => { S.items.push({ id: 987655, slot: 'warblade', t: 3, r: 'epic', plus: 3, a: [] }); craftUI.openItem(987655);
+        await new Promise(r => setTimeout(r, 150)); const n = document.querySelector('.cf-up-box .cf-next'); return n ? n.textContent : ''; })()`);
+      assert(/^\+4: \+15\.8% damage\.$/.test(ep), `an Epic Tier 3 Warblade's upgrade reads +15.8% damage (${ep})`);
+      await X(`S.items = S.items.filter(i => i.id !== 987655); true`);
+      // 6. the upgrade sheet's own offer (Silver Ingots for the Silver Warblade +6), pressed, queues that one order
+      await X(`S.items = S.items.filter(i => i.id !== 987654); for (const st of REFINE_STATIONS) refineOrders(st).length = 0; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(200);
+      const u = await X(`(() => { const r = document.querySelector('.cf-up-box .cf-short'); return r ? r.textContent : ''; })()`);
+      await X(`document.querySelector('.cf-up-box .cf-order').click(); true`); await page.waitForTimeout(200);
+      const ou = await X(orders);
+      assert(/^Short 6 Silver Ingots\. Smelt 6 \(12 Silver Ore and 18 coal\)\? Smelt 6$/.test(u) && ou === '[[["ingot",3,6]],[],[]]',
+        `the upgrade's row offers 6 Silver Ingots and one press queues them (${u} ${ou})`);
+      assert(!errs.length, 'craft-shortfall-offer: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('craft-shortfall-offer crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

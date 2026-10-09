@@ -55,8 +55,8 @@ const handsApplicantSkills = () => huntingOn() ? HANDS_SKILLS.concat('hunt') : H
 const HANDS_TRAITS = [
   { id: 'steady', n: 'Steady', txt: '+10% yield', y: 0.10 },
   { id: 'strong', n: 'Strong Back', txt: 'Works a four-hour shift' },
-  { id: 'mule', n: 'Packmule', txt: '+15% haul on grades 3–5', y: 0.15, tiers: [3, 4, 5] },
-  { id: 'home', n: 'Homebody', txt: '+15% yield on grades 1–2', y: 0.15, tiers: [1, 2] },
+  { id: 'mule', n: 'Packmule', txt: '+15% haul on tiers 3–5', y: 0.15, tiers: [3, 4, 5] },
+  { id: 'home', n: 'Homebody', txt: '+15% yield on tiers 1–2', y: 0.15, tiers: [1, 2] },
   { id: 'wander', n: 'Wanderer', txt: '-10% yield', y: -0.10 },
   { id: 'keen', n: 'Keen Eye', txt: 'Rare finds: 2% of units come back one tier up' },
   { id: 'early', n: 'Early Riser', txt: '+20% yield when sent 05:00–11:00, including queued shifts', y: 0.20, clock: [5, 11] },

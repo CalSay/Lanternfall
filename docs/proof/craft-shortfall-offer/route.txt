@@ -1,0 +1,47 @@
+# seed: 1
+# Proof for card craft-shortfall-offer: a recipe short of Ingots or Planks offers the order in one press, and an upgrade says
+# what its next +1 adds in its own unit. Fixture save-refine (Tobin, zone 20, Forge and Workbench Lv 2, no Ingots or Planks).
+#   offer-*.png   Craft, Forge, Tier 2: the Iron Warblade row reads "Short 5 Iron Ingots and 3 Birch Planks. Smelt 5 and Saw 3
+#                 (10 Iron Ore, 10 coal and 6 Birch Logs)?" with a "Smelt 5 and saw 3" button.
+#   queued-*.png  after the press: the row reads "Smelting at the Forge. Sawing at the Workbench." (the orders are queued).
+#   upgrade-*.png Hero, Gear, the worn Silver Warblade +6: "+7: +8.5% damage. Its other lines grow too.", then its
+#                 "Short 6 Silver Ingots" offer pressed (the row now reads "Smelting at the Forge.").
+# Rules (counts, no button when raw inputs are short, pending orders, every upgrade line, "tier" wording) are in
+# tools/check.mjs, section 'craft-shortfall-offer'. Run at the default view (1280x720), then with --landscape and --portrait.
+new refine
+wait 3
+tap-if "Skip this story"
+tap-if "Close"
+wait 2
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+tap-if "Dismiss this tip"
+wait 1
+tap "Craft"
+wait 1
+tap-if "Got it"
+wait 1
+tap "Tier 2"
+wait 1
+expect ".cf-rec[data-kind=warblade] .cf-order"
+scroll
+wait 0.5
+shot offer
+tap "Smelt 5 and saw 3"
+wait 1
+expect "Smelting at the Forge. Sawing at the Workbench."
+shot queued
+tap-if "Dismiss this tip"
+tap "Hero"
+wait 1
+tap "Gear"
+wait 1
+tap "Warblade"
+wait 1
+expect ".cf-up-box .cf-next"
+expect ".cf-up-box .cf-order"
+tap "Smelt 6"
+wait 1
+expect "Smelting at the Forge."
+shot upgrade

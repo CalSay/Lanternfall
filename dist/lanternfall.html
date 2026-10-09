@@ -7056,16 +7056,16 @@ const UNIQ = {
     rule: { id: 'crimson', stacks: 2, cap: 10, tickX: 0.9 }, txt: 'Needs something that makes Bleed. Your Bleed stacks twice as fast and holds up to 10. Bleed deals 10% less a turn.' },
   'carapace-pick': { name: "Burrower's Promise", slot: 'pick', pos: 'pick', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['beetle', 4], art: 0, col: '#9BE3F0', src: 'Zone boss · Beetle Barrows', fx: {},
     rise: 'mine', riseMax: 5, rule: { id: 'tool', skill: 'mine', spd: 0.9, partner: { ore: ['crystal', 3], crystal: ['ore', 3] } },
-    txt: 'Always the grade of your best open Mining ground. Every 3 Ore or Crystal you mine also turns up 1 of the other. Mining is 10% slower.' },
+    txt: 'Always the tier of your best open Mining ground. Every 3 Ore or Crystal you mine also turns up 1 of the other. Mining is 10% slower.' },
   'wisp-axe': { name: 'Reed of Remembrance', slot: 'axe', pos: 'axe', cls: 'any', legacy: false, pow: 1.8, g: [2, 5], from: ['wraith', 7], art: 0, col: '#35524C', src: 'Zone boss · Wraithmarsh', fx: {},
     rise: 'wood', riseMax: 5, rule: { id: 'tool', skill: 'wood', spd: 0.9, partner: { wood: ['fibre', 2] } },
-    txt: 'Always the grade of your best open Woodcutting ground. Every 2 Wood you cut also bring 1 Fibre. Woodcutting is 10% slower.' },
+    txt: 'Always the tier of your best open Woodcutting ground. Every 2 Wood you cut also bring 1 Fibre. Woodcutting is 10% slower.' },
   'spore-sickle': { name: 'Harvest of Whispers', slot: 'sickle', pos: 'sickle', cls: 'any', legacy: false, pow: 1.8, g: [1, 5], from: ['spore', 5], art: 0, col: '#F3E6CF', src: 'Zone boss · Fungal Deep', fx: {},
     rise: 'forage', riseMax: 5, rule: { id: 'tool', skill: 'forage', spd: 0.9, partner: { herb: ['fibre', 2], fibre: ['herb', 2] } },
-    txt: 'Always the grade of your best open Foraging ground. Every 2 Herbs bring 1 Fibre, and every 2 Fibre bring 1 Herb. Foraging is 10% slower.' },
+    txt: 'Always the tier of your best open Foraging ground. Every 2 Herbs bring 1 Fibre, and every 2 Fibre bring 1 Herb. Foraging is 10% slower.' },
   'moss-spear': { name: 'Thorn of the First Grove', slot: 'spear', pos: 'spear', cls: 'any', legacy: false, pow: 1.8, g: [2, 3], from: ['slime', 8], art: 0, col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: {},
     rise: 'hunt', riseMax: 3, rule: { id: 'tool', skill: 'hunt', spd: 0.9, partner: { hide: ['fibre', 2] } },
-    txt: 'Always the grade of your best open Hunting ground, up to grade 3. Every 2 Hide bring 1 Fibre. Hunting is 10% slower.' }
+    txt: 'Always the tier of your best open Hunting ground, up to tier 3. Every 2 Hide bring 1 Fibre. Hunting is 10% slower.' }
 };
 // The uniques a player can see on the trophy wall, the Codex and the totals: every unique that still drops, plus a retired one they found.
 // A hidden retired unique's replacement (`was`) takes its place in the order, because the Codex's seen string is read by position.
@@ -7885,8 +7885,8 @@ const handsApplicantSkills = () => huntingOn() ? HANDS_SKILLS.concat('hunt') : H
 const HANDS_TRAITS = [
   { id: 'steady', n: 'Steady', txt: '+10% yield', y: 0.10 },
   { id: 'strong', n: 'Strong Back', txt: 'Works a four-hour shift' },
-  { id: 'mule', n: 'Packmule', txt: '+15% haul on grades 3–5', y: 0.15, tiers: [3, 4, 5] },
-  { id: 'home', n: 'Homebody', txt: '+15% yield on grades 1–2', y: 0.15, tiers: [1, 2] },
+  { id: 'mule', n: 'Packmule', txt: '+15% haul on tiers 3–5', y: 0.15, tiers: [3, 4, 5] },
+  { id: 'home', n: 'Homebody', txt: '+15% yield on tiers 1–2', y: 0.15, tiers: [1, 2] },
   { id: 'wander', n: 'Wanderer', txt: '-10% yield', y: -0.10 },
   { id: 'keen', n: 'Keen Eye', txt: 'Rare finds: 2% of units come back one tier up' },
   { id: 'early', n: 'Early Riser', txt: '+20% yield when sent 05:00–11:00, including queued shifts', y: 0.20, clock: [5, 11] },
@@ -13512,7 +13512,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     return toT != null ? toT : fromT + 1;
   };
   canTransmute = (fam, fromT, to, toT) => {
-    if (fam === 'ess') return no('Essence pays any cost at any grade, so it needs no Transmute.');
+    if (fam === 'ess') return no('Essence pays any cost at any tier, so it needs no Transmute.');
     if (!S.mats[fam] || !CRAFT_FAMILIES.includes(fam)) return no(typeof to === 'string' && to !== fam && to !== 'up' && to !== 'down' ? 'Transmute stays within one family.' : 'Unknown material.');
     const tt = resolveT(fam, fromT, to, toT);
     if (tt == null) return no('Transmute stays within one family.');
@@ -16080,7 +16080,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
   refineAdd = (prod, tier, n) => {
     const p = REFINE_PRODUCTS[prod];
     if (!p || !refineOn()) return { ok: false, why: 'Unknown product.' };
-    if (!(Number.isInteger(tier) && tier >= 1 && tier <= 5)) return { ok: false, why: 'Unknown grade.' };
+    if (!(Number.isInteger(tier) && tier >= 1 && tier <= 5)) return { ok: false, why: 'Unknown tier.' };
     const st = p.st, all = n === 'all';
     if (!built(st)) return { ok: false, why: `Build the ${CAMP_B[st].n} first.` };
     if (!refineSlotFree(st)) return { ok: false, why: `The ${CAMP_B[st].n} holds ${T.max} orders. Remove one first.` };
@@ -18212,13 +18212,13 @@ const UNLOCK_TUNE = {
     davy: { place: 'Emberlea Ruins', hand: 'ashby', fallback: 80 },
     ferrin: { fallback: 90, pendingFee: 'gold' },
     linnet: { type: 'glasswalker', tier: 2, fallback: 92 },
-    oswin: { from: 85, pendingFee: 'gold and grade-8 Essence', fallbackBoss: 105 },
+    oswin: { from: 85, pendingFee: 'gold and tier-8 Essence', fallbackBoss: 105 },
     hob: { place: 'Cinder Road', cycle: 2, hand: 'nan', rumour: 'hob', fallback: 85 },
     beatrix: { boss: 105, waitSecs: 86400 },
     eskil: { from: 113, pendingFee: 'gold', fallback: 120 },
     brynja: { from: 110, fibre: [10, 60], hide: [10, 40], fallback: 128 },
-    inga: { from: 108, place: 2, pendingFee: 'grade-10 Essence', fallback: 124 },
-    ragna: { pendingFee: 'grade-11 Essence', fallback: 134 },
+    inga: { from: 108, place: 2, pendingFee: 'tier-10 Essence', fallback: 124 },
+    ragna: { pendingFee: 'tier-11 Essence', fallback: 134 },
     solveig: { boss: 140 },
     asta: { from: 141, freeWith: 'solveig', pendingFee: 'gold' }
   }
@@ -18253,7 +18253,7 @@ let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, 
   const hand = id => !!(S.hands && S.hands.list && S.hands.list.some(h => h.key === id));
   const bestiary = (type, tier) => ((S.mastery && S.mastery.types[type]) || 0) >= BESTIARY_TIERS[tier - 1];
   const goldOf = q => (q.kills || 0) * goldPerFoe(q.zone || q.from || 1);
-  const matText = (k, t, n) => k === 'ess' ? `${n} Essence` : `${n} grade-${t} ${k === 'crystal' ? 'gems' : k}`;
+  const matText = (k, t, n) => k === 'ess' ? `${n} Essence` : `${n} tier-${t} ${k === 'crystal' ? 'gems' : k}`;
   const claim = (q, how, open = S.maxZone >= (q.from || q.zone || 1)) => {
     const mats = ['wood', 'ess', 'crystal', 'fibre', 'hide'].filter(k => q[k]).map(k => [k, ...q[k]]);
     const gold = goldOf(q), rn = q.spendRenown ? (q.renown || 0) : 0;
@@ -21812,7 +21812,7 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
     if (!cargoOK(cargo)) return no('Choose up to three different cargo lines, totalling 1–5,000 whole units.');
     let value = 0;
     for (const [f, t, n] of cargo) {
-      if (!eligible(h, f, t)) return no('Choose unlocked materials from this gatherer\'s profession, grades 1–3.');
+      if (!eligible(h, f, t)) return no('Choose unlocked materials from this gatherer\'s profession, tiers 1–3.');
       if (stock(f, t) < n) return no('Not enough ' + matName(f, t) + ' in the Storehouse.');
       const demand = market.lines.find(l => l.kind === f && l.t === t).demand, micros = price(f, t, demand);
       if (!Number.isSafeInteger(micros) || micros <= 0 || micros > T.maxUnitGold * UNIT) return no('This trade is not available.');
@@ -36872,7 +36872,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       const fee = can.fee === undefined ? handsFee(x, n.kind, n.t) * count : can.fee;
       const row = btn('hd-job', ''); row.setAttribute('aria-disabled', String(!can.ok));
       const tx = el('span', 'hd-job-tx');
-      tx.append(el('b', null, `${handsNodeName(n.kind, n.t)} (grade ${n.t})`),
+      tx.append(el('b', null, `${handsNodeName(n.kind, n.t)} (tier ${n.t})`),
         el('small', null, `About ${storeNum(pv.haul)} ${matTxt(n.kind, n.t)} per ${dur(pv.secs)} shift` + (n.full ? '. Storehouse full.' : '')),
         el('small', 'fee', `${fee ? `Total fee ${gold(fee)}` : 'Free'}${can.ok ? '' : ' · ' + can.why}`));
       row.append(img(matIcon(n.kind, n.t)), tx);
@@ -38314,7 +38314,9 @@ on('cacheOpen', v => {
   const sp = spoilsMoves(v);
   const big = !v.auto || !!v.look || !!v.unique || v.starFirst || v.zone === 1 || !!sp;   // a pick needs the card (zones 6 to 10 only)
   const lines = [];
-  if (v.look) lines.push({ txt: `New lantern colour: ${v.look.n.replace(/ lantern$/, '')}`, icon: { ic: ['banner', v.look.col] } });
+  // look-card-says-why: the colour's own line says what it did, whatever the sub line shows (the desk player asked what a colour was)
+  if (v.look) { const ln = v.look.n.replace(/ lantern$/, '');
+    lines.push({ txt: v.look.worn ? `Your lantern burns ${ln} now.` : `New lantern colour: ${ln}. You own it now.`, icon: { ic: ['banner', v.look.col] } }); }
   if (v.unique) {
     lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
     const wn = typeof momentWearNote === 'function' ? momentWearNote(v.unique.item) : null; if (wn) lines.push(wn);   // Cal's play note 9: say where a unique you cannot wear went
@@ -38331,8 +38333,8 @@ on('cacheOpen', v => {
   const col = v.unique ? '#FF8A3D' : v.look ? v.look.col : v.star ? '#F2C14E' : v.scroll ? v.scroll.col : '#F2C14E';
   const icon = v.unique ? { item: v.unique.item } : { ic: ['banner', col] };
   const title = v.zone === 1 ? 'First boss down' : `Zone ${v.zone} cleared`;
-  // the sub is one short line: the unique's odds (honest, with modifiers), else what a look does
-  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : v.look && v.look.worn ? 'Your lantern burns it now.' : 'Here is what the win gave you.';
+  // the sub is one short line: the unique's odds (honest, with modifiers); the colour's line says what a look did
+  const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
   if (sp) Object.assign(o, spoilsPicks(v, sp));
   o.actions = [];
@@ -39801,6 +39803,70 @@ let craftUI = null;
     const a = Math.abs(v), n = s.dp == null ? fmt(a) : a.toFixed(s.dp);
     return `${v > 0 ? '+' : '-'}${n}${unit}`;
   }
+  // craft-shortfall-offer: what the next +1 adds to the piece's main line, in that line's own unit ("+3: +3% damage."). A
+  // line at its cap (a Quiver's crit, a Lantern's spell) says so and shows the power change instead. Copy only: itemPower
+  // and the upgrade cost are unchanged.
+  function nextPlusTxt(it) {
+    const nx = Object.assign({}, it, { plus: it.plus + 1 }), a = itemLines(it), b = itemLines(nx);
+    const head = `+${it.plus + 1}: `, more = a.length > 1 ? ' Its other lines grow too.' : '';
+    const [k, v0] = a[0] || [], v1 = b[0] && b[0][0] === k ? b[0][1] : v0, s = CRAFT_STATS[k];
+    const dv = Math.round((v1 - v0) * 10) / 10;   // one decimal, never cut down (an Epic Tier 3 weapon's +15.75 reads +15.8%, not +15%)
+    if (s && dv > 0) return `${head}${s.f.replace('{v}', dv % 1 ? dv.toFixed(1) : String(dv))}.${more}`;
+    const nextP = itemPower(Object.assign({}, it, { plus: it.plus + 1 }));   // playtester-code-bugs: uniques use UNIQ_TUNE.pow, as itemPower does
+    const pw = `power ${fmt(itemPower(it))} → ${fmt(nextP)}`;
+    return s ? `${head}${s.n} is at its cap. ${pw[0].toUpperCase() + pw.slice(1)}.${more}` : `${head}${pw}.`;
+  }
+  // craft-shortfall-offer: a cost short of a middle (Ingot, Plank, Cloth, Leather) at tier t, read from refineOffer (55-refine).
+  // -> { txt, btn, add } | null. btn (the one-tap order) only when every order's inputs are in hand together and the stations
+  // have room; else txt names what is short. Orders already queued read "Smelting at the Forge." Nothing is queued until the
+  // player presses the button. upgrade-gold-covers-short adds its gold choice to this same row.
+  const midName = (f, t, n) => f === 'coal' ? 'coal' : matName(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || MAT[f].unit === 'Log') ? 's' : '');
+  const andList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  function shortOffer(cost, t) {
+    if (typeof refineOffer !== 'function' || !refineOn()) return null;
+    const mats = cost && cost.mats ? cost.mats : cost || {};
+    const mids = Object.keys(mats).filter(k => REFINE_RAW[k] && matOwn(k, t) < mats[k]);
+    if (!mids.length) return null;
+    const off = refineOffer(mats, t), out = [];
+    const queued = mids.filter(k => !off.orders.some(o => o.prod === k));
+    let btn = '';
+    if (off.orders.length) {
+      out.push(`Short ${andList(off.orders.map(o => `${storeNum(o.want)} ${midName(o.prod, t, o.want)}`))}.`);
+      const need = {};
+      for (const o of off.orders) for (const [f, tt, n] of refineNeed(o.prod, o.tier)) need[f + ':' + tt] = (need[f + ':' + tt] || 0) + n * o.want;
+      const miss = Object.entries(need).map(([key, n]) => { const [f, tt] = key.split(':'); return [f, +tt, n - matOwn(f, +tt)]; }).filter(x => x[2] > 0);
+      const slots = {};
+      for (const o of off.orders) slots[o.st] = (slots[o.st] || 0) + 1;
+      const tight = Object.keys(slots).find(st => { const l = refineOrders(st); return REFINE_TUNE.max - l.length + l.filter(o => !o.all && o.made >= o.want).length < slots[st]; });
+      const bad = off.orders.find(o => !o.ok && (!refineBuilt(o.st) || !refineSlotFree(o.st))), ings = andList(off.orders.map(o => REFINE_PRODUCTS[o.prod].ing.toLowerCase()));
+      if (bad) out.push(bad.why);
+      else if (miss.length) out.push(`${ings[0].toUpperCase() + ings.slice(1)} them needs ${andList(miss.map(([f, tt, n]) => `${storeNum(n)} more ${midName(f, tt, n)}`))}${miss.some(x => x[0] === 'coal') ? ' (Copper Ore brings coal)' : ''}.`);
+      else if (tight) out.push(`The ${CAMP_B[tight].n} holds ${REFINE_TUNE.max} orders. Clear one first.`);
+      else if (off.orders.some(o => !o.full)) out.push('The Storehouse has no room for them.');
+      else {
+        out.push(`${andList(off.orders.map(o => `${REFINE_PRODUCTS[o.prod].verb} ${storeNum(o.want)}`))} (${andList(Object.entries(need).map(([key, n]) => { const [f, tt] = key.split(':'); return `${storeNum(n)} ${midName(f, +tt, n)}`; }))})?`);
+        btn = andList(off.orders.map((o, i) => `${i ? REFINE_PRODUCTS[o.prod].verb.toLowerCase() : REFINE_PRODUCTS[o.prod].verb} ${storeNum(o.want)}`));
+      }
+    }
+    for (const k of queued) {   // the order is queued: say it runs, or why it has stopped
+      const st = REFINE_PRODUCTS[k].st, mine = refineOrders(st).filter(o => o.prod === k && o.tier === t && (o.all || o.made < o.want));
+      const stop = mine.length && !mine.some(o => refineState(st, o).k === 'run') ? refineState(st, mine[0]).why : '';
+      out.push(stop ? `The ${CAMP_B[st].n}'s ${matName(k, t)} order has stopped: ${stop}.` : `${REFINE_PRODUCTS[k].ing} at the ${CAMP_B[st].n}.`);
+    }
+    return { txt: out.join(' '), btn, add: btn ? () => off.add() : null };
+  }
+  // The row under a recipe or an upgrade: the line, and the button when the order can start. after: re-render (the item sheet).
+  function shortRow(cost, t, after) {
+    const o = safe(() => shortOffer(cost, t), null); if (!o) return null;
+    const r = el('div', 'cf-src cf-short');
+    r.append(el('span', null, o.txt + ' '));
+    if (o.btn) {
+      const b = el('button', 'mini cf-order', o.btn); b.type = 'button';
+      b.addEventListener('click', () => { act(() => { const x = shortOffer(cost, t); return x && x.add ? x.add() > 0 : false; }); if (after) after(); });
+      r.append(b);
+    }
+    return r;
+  }
 
   // ---------------- UI state (memory only) ----------------
   const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
@@ -40128,6 +40194,7 @@ let craftUI = null;
     // gear-in-first-25: where each short gathered material comes from ("Bristlehide: from Hunting, which opens at zone 5."); none for
     // essence, gold, a middle (Planks, Ingots) or a material in hand
     for (const [f, n] of Object.entries(kindCost(k, t))) { if (matOwn(f, t) >= n) continue; const ln = matSourceLine(f, t); if (ln) row.append(el('div', 'cf-src', ln)); }
+    if (skillTierOpen(skillOfSt(d.st), t)) { const sr = shortRow(kindCost(k, t), t); if (sr) row.append(sr); }   // craft-shortfall-offer: only on a tier you can make
     const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds));
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
@@ -40240,7 +40307,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k)]);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -40627,8 +40694,8 @@ let craftUI = null;
       const c = kindUpgradeCost(it), chips = el('div', 'costs');
       costChips(chips, c.mats, it.t, c.gold);
       if (c.troph) chips.append(trophChip(c.troph));
-      const nextP = itemPower(Object.assign({}, it, { plus: it.plus + 1 }));   // playtester-code-bugs: uniques use UNIQ_TUNE.pow, as itemPower does
-      upBox.append(el('p', 'note', `+${it.plus + 1}: power ${fmt(itemPower(it))} → ${fmt(nextP)}. Every line grows.`), chips);
+      upBox.append(el('p', 'note cf-next', nextPlusTxt(it)), chips);   // craft-shortfall-offer: the main line's change, not a bare power number
+      { const sr = shortRow(c.mats, it.t, renderItem); if (sr) upBox.append(sr); }
       const f = K6.upgrade(), heroPos = wr && wr.who === 'hero' ? wr.pos : null;
       const okMats = hasMats(c.mats, it.t) && S.gold >= c.gold && (!c.troph || (f && trophTotal() >= c.troph));
       const b = el('button', 'big forge cf-act', `Upgrade to +${it.plus + 1}`); b.type = 'button';
@@ -45634,8 +45701,8 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
 // building row is the Camp's list (75-camp-ui.js); its icon is registered here.
 //   - The view (id 'pack', label "Storehouse"): a top card (level, what it holds, Build or Upgrade ›),
 //     filter chips (All, each family with something in it, Fought, Trophies), sort chips (Fullest, Name) and
-//     "Show all grades". First view: the shelf, one stack per family at the grade you use (storeShelfGrade
-//     below; Essence is one pile), at most 7 stacks (8 once coal lands). "Show all grades" or a family filter:
+//     "Show all tiers". First view: the shelf, one stack per family at the grade you use (storeShelfGrade
+//     below; Essence is one pile), at most 7 stacks (8 once coal lands). "Show all tiers" or a family filter:
 //     families as rows of every grade with a held/cap bar, empty families folded into one line. Trophies
 //     fold. A stack or cell opens "where to get it" (72-ui-gather whereSheet).
 //   - The "Storehouse full" warning lives on the Now card and the header pill (72-ui-gather, 75-nav-ui).
@@ -45767,7 +45834,7 @@ function storeSalvageNote(preview, t) {
     V.up = btn('mini sh-up', 'Upgrade ›');
     V.up.addEventListener('click', () => setTab('world', '#camp-b-store'));
     card.append(tx, V.up);
-    // filter chips (wrap to a second row when narrow; no view swipe), then sort chips and "Show all grades"
+    // filter chips (wrap to a second row when narrow; no view swipe), then sort chips and "Show all tiers"
     const chips = el('div', 'sh-chips'); chips.dataset.noswipe = '';
     for (const [id, label] of FILTERS) {
       const b = btn('sh-fchip', label); b.setAttribute('aria-pressed', String(id === filter));
@@ -45782,7 +45849,7 @@ function storeSalvageNote(preview, t) {
       b.addEventListener('click', () => { sort = id; ui(true); });
       tools.append(b); V.sorts[id] = b;
     }
-    V.all = btn('sh-fchip sh-all', 'Show all grades');
+    V.all = btn('sh-fchip sh-all', 'Show all tiers');
     V.all.addEventListener('click', () => { showAll = !showAll; ui(true); });
     tools.append(V.all);
     // the shelf: one stack per family
@@ -45833,12 +45900,12 @@ function storeSalvageNote(preview, t) {
       putAttr(V.chips[id], 'aria-pressed', String(filter === id));
       putToggle(V.chips[id], 'on', filter === id);
     }
-    // sort and "Show all grades". The shelf is the first view; a family filter (or the toggle) shows every grade.
+    // sort and "Show all tiers". The shelf is the first view; a family filter (or the toggle) shows every grade.
     for (const [id] of SORTS) { putHidden(V.sorts[id], filter !== 'all'); putAttr(V.sorts[id], 'aria-pressed', String(sort === id)); putToggle(V.sorts[id], 'on', sort === id); }
     putHidden(V.sortl, filter !== 'all');   // sorting only changes the All view
     const fam1 = filter !== 'all' && filter !== 'fought' && filter !== 'troph';
     putHidden(V.all, filter !== 'all');
-    putText(V.all, showAll ? 'Show one grade' : 'Show all grades');
+    putText(V.all, showAll ? 'Show one tier' : 'Show all tiers');
     putAttr(V.all, 'aria-pressed', String(showAll));
     putToggle(V.all, 'on', showAll);
     const grades = filter !== 'troph' && (fam1 || (filter === 'all' && showAll));

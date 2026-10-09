@@ -162,7 +162,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **The Storehouse** (`55-store.js`): a cap per material and grade, from every source. Skill XP keeps counting at the
   cap. Its view (Gather > Store, `75-store-ui.js`) opens on a shelf: one stack per family at the grade you use (the
   lower of your zone's grade and your skill's top node; the largest stack at or below it when that grade is empty;
-  Essence one pile; hide once Hunting shows), sorted Fullest or by Name, filtered by family. "Show all grades" or a
+  Essence one pile; hide once Hunting shows), sorted Fullest or by Name, filtered by family. "Show all tiers" or a
   family filter shows every grade. A refined good shares its raw family's stack ("Iron Ore 120" with "Iron Ingot 40"
   under it) and coal is its own stack once the Forge is built (at most 8 stacks). Coal and the refined goods show their
   names only, no icon, until their art pack passes.
@@ -190,11 +190,17 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 ## Gear and crafting
 
 - **Crafting** (`55-crafting.js`, `41-items.js`, `21-data-craft.js`, `75-craft-ui.js`): class gear at the camp's
-  stations, grades 1-5. Items roll affix lines by rarity. Upgrades go to +10 (Trophies gate +8 to +10). Reforge,
+  stations, tiers 1-5 (on screen the material step is a "tier", never a "grade"; card craft-shortfall-offer). Items roll
+  affix lines by rarity. Upgrades go to +10 (Trophies gate +8 to +10). Reforge,
   Masterwork is in the Craft tab; worn gear, the bag, upgrades, reforge and salvage are on the Hero tab's Gear view. Every combat line works in a turn fight (59k `turnMakeProfile`; the audit
   is [combat-turn-build.md](design/combat-turn-build.md) "Gear stats in turn fights"): Spell power is fire, frost and
   holy damage, Damage over time (the old Area) Burn and Bleed, Control boss Stagger, Counter (the old Threat) counter
   damage, Speed (the old Attack speed) how often you act, Focus a steady cooldown refund.
+  A recipe or upgrade short of an Ingot, Plank, Cloth or Leather says so and offers the order in one press ("Short 5 Iron
+  Ingots and 3 Birch Planks. Smelt 5 and Saw 3 (10 Iron Ore, 10 coal and 6 Birch Logs)?"), only when every raw input is in
+  hand; otherwise the line names what is short, and orders already queued read "Smelting at the Forge." An upgrade says what
+  its next +1 adds to the piece's main line in that line's unit ("+7: +8.5% damage."); a line at its cap says so and shows
+  the power change (`75-craft-ui.js` `shortOffer`, `nextPlusTxt`; card craft-shortfall-offer).
   The result card after a craft (`craft-delta`): a tool that beats the worn one (or fills an empty slot) goes on by itself
   and the card says how much faster you gather; gear always asks. A weapon, off-hand or charm the hero can wear gets one
   line on how often you'd beat the boss at your furthest zone with it (or, when you win nearly every time, how many turns a
@@ -267,6 +273,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   moments (the first level up and every 5th level, a new ability, a new Star, a look found) show as one banner in the
   notices slot, at least 2.6 s, at most 2 in any 3 minutes of the first 30. All wait for the end of the fight, never show
   in a turn, and are never only a bell line. Several at one fight end fold into one card or banner.
+- **Lantern Caches** (`55-caches.js`, `75-caches-ui.js`): a zone boss's first clear opens a cache with what the win paid and the
+  unique's chance. Zones 1 to 3 and 7 to 9 also give a lantern colour, and its own line says what it did: "Your lantern burns
+  Ember Red now." when the lantern took it, else "New lantern colour: Deep Blue. You own it now." (look-card-says-why).
 
 ## Currencies
 
