@@ -7113,6 +7113,7 @@ const SKILL_TUNE = {
 // craft-curve-skills-report: the crafting overhaul's switches (docs/design/skilling-crafting-overhaul.md 13). All off in code until the
 // balance pass; checks and tools turn them on in a scratch game. curve: SKILL_TUNE.craftNeedV2 and belowTierX (40-rules, 55-crafting).
 // grades, strike, infuse, infuseX: read by the cards that build them (craft-attribute-grades, craft-strike-infuse).
+// A runtime flip of grades must call gearDirty(): gear() caches item power.
 const CRAFT_TUNE = { grades: 0, strike: 0, infuse: 0, curve: 0, infuseX: 3 };
 const NODE_REQ = SKILL_TUNE.nodeReq;
 const SMITH_REQ = SKILL_TUNE.stationReq;
@@ -7126,8 +7127,8 @@ const skillOf = kind => NODE_SKILL[kind] || 'wood';
 const TIER_POW = [0, 10, 22, 42, 75, 130];
 const RAR = { common: { n: 'Common', m: 1 }, uncommon: { n: 'Uncommon', m: 1.35 }, rare: { n: 'Rare', m: 1.8 }, epic: { n: 'Epic', m: 2.5 }, legendary: { n: 'Unique', m: 3.2 } };
 // craft-attribute-grades (docs/design/skilling-crafting-overhaul.md 5): with CRAFT_TUNE.grades on, a craft's grade (D to S, item field
-// g = the index) comes from the station level (gradeLv, 40-rules) instead of the rarity die. m: power (equal to the rarity values, never
-// retuned); r: the rarity twin the item also keeps in `r`; lines: bonus lines; ws: weapon scaling (stored for weapon-profiles); past:
+// g = the index) comes from the station level (gradeLv, 40-rules) instead of the rarity die. m: power (D, C, A and S equal the rarity
+// values, B sits between; never retuned); r: the rarity twin the item also keeps in `r`; lines: bonus lines; ws: weapon scaling (stored for weapon-profiles); past:
 // levels past the tier's gate that reach it; moment: an A or S craft is a medium moment.
 const GRADE = [
   { n: 'D', m: 1, r: 'common', lines: 1, ws: 0.10, past: 0 },
@@ -9532,7 +9533,7 @@ const DEED_TRACKS = [
   { id: 'ench', g: 'craft', n: 'Enchanter', what: 'Enchanting level', need: [10, 22, 54, 150], star: null, bonus: 'skillXp:ench', src: 'save', kind: 'level', u: ['Enchanting level', 'Enchanting levels'] },
   { id: 'made', g: 'craft', n: 'Maker', what: 'Items crafted', need: [10, 100, 1e3, 1e4], star: X10, bonus: 'skillXp', src: 'save', u: ['craft', 'crafts'] },
   { id: 'fine', g: 'craft', n: 'Fine Work', what: 'Best craft', need: [1, 2, 3, 4], star: null, bonus: 'skillXp', src: 'derived', kind: 'ladder',
-    get steps() { return CRAFT_TUNE.grades ? ['an Uncommon or grade C', 'a Rare or grade A', 'an Epic or grade S', 'an Epic or grade S, tier 5 at +10'] : ['an Uncommon', 'a Rare', 'an Epic', 'an Epic tier 5 at +10']; } },   // craft-attribute-grades: a graded piece counts by its rarity twin
+    get steps() { return CRAFT_TUNE.grades ? ['an Uncommon or grade C or better', 'a Rare or grade A', 'an Epic or grade S', 'an Epic or grade S, tier 5 at +10'] : ['an Uncommon', 'a Rare', 'an Epic', 'an Epic tier 5 at +10']; } },   // craft-attribute-grades: a graded piece counts by its rarity twin
   { id: 'honed', g: 'craft', n: 'Honed', what: 'Upgrades (+1 each)', need: [10, 100, 1e3, 1e4], star: X10, bonus: 'skillXp', src: 'new', u: ['upgrade', 'upgrades'] },
   { id: 'reforge', g: 'craft', n: 'Second Thoughts', what: 'Reforges', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'skillXp', src: 'new', u: ['reforge', 'reforges'] },
   { id: 'alchemy', g: 'craft', n: 'Alchemist', what: 'Transmutes', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'skillXp', src: 'new', u: ['transmute', 'transmutes'] },
@@ -12190,7 +12191,7 @@ let OMENS, WEEKLY_GOALS;
       dare: { n: 'Iron Hide', fx: 'Bosses have 25% more health. Bosses drop uniques twice as often.', mod: { bossHp: 1.25, uniqueChance: 2 } } },
 
     { id: 'hotForge', n: 'Hot Forge', cat: 'craft', fx: 'Crafting skills earn +50% XP', mod: { 'skillXp:smith': 1.5, 'skillXp:bench': 1.5, 'skillXp:loom': 1.5, 'skillXp:ench': 1.5 }, ic: ['anvil', '#FF9E3D'], go: { tab: 'forge' } },
-    { id: 'steadyHands', n: 'Steady Hands', cat: 'craft', get fx() { return CRAFT_TUNE.grades ? 'Crafts grade as 2 levels higher' : 'Rare and Epic forge odds +50%'; }, mod: { rareW: 1.5 }, bonus: { gradeLv: 2 }, ic: ['anvil', '#5FA8FF'], go: { tab: 'forge' } },   // craft-attribute-grades: gradeLv is read only while CRAFT_TUNE.grades is on
+    { id: 'steadyHands', n: 'Steady Hands', cat: 'craft', get fx() { return CRAFT_TUNE.grades ? 'Crafts grade as 2 levels higher' : 'Rare and Epic forge odds +50%'; }, mod: { rareW: 1.5 }, when: () => !CRAFT_TUNE.grades, bonus: { gradeLv: 2 }, ic: ['anvil', '#5FA8FF'], go: { tab: 'forge' } },   // craft-attribute-grades: with grades on, the grade bonus (gradeLv, read only then) replaces the odds
     { id: 'cheapReforge', n: 'Cheap Reforge', cat: 'craft', fx: 'Reforges cost half', mod: { reforge: 0.5 }, needs: 'K6', ic: ['anvil', '#B58CFF'], go: { tab: 'forge', gear: 'reforge' } },
     { id: 'salvagersLuck', n: "Salvager's Luck", cat: 'craft', fx: 'Salvage returns double', mod: { salvage: 2 }, ic: ['ore', '#F2C14E'], go: { tab: 'forge', gear: 'salvage' } },
     { id: 'transmuter', n: "Transmuter's Day", cat: 'craft', fx: 'Transmutes cost one less', bonus: { transmuteSave: 1 }, needs: 'K6', ic: ['orb', '#B58CFF'], go: { tab: 'forge' } },
@@ -12399,7 +12400,7 @@ let OMENS, WEEKLY_GOALS;
     wRef: { tier: 'steady', kind: 'ref', need: 3, needs: 'K6', txt: n => `Reforge ${n} item lines`, ic: ['anvil', '#B58CFF'] },
     wGath2: { tier: 'steady', kind: 'gath', need: 2000, scale: true, txt: n => `Gather ${num(n)} ore or logs at your top tier or one below`, ic: ['pick', '#D08A4E'] },
     wBty2: { tier: 'steady', kind: 'bty', need: 15, txt: n => `Claim ${n} bounties`, ic: ['banner', '#F2C14E'] },
-    wRare: { tier: 'steady', kind: 'rare', need: 3, txt: n => CRAFT_TUNE.grades ? `Craft ${n} items at grade A or better, or Rare` : `Forge ${n} Rare or better items`, ic: ['anvil', '#5FA8FF'] },
+    wRare: { tier: 'steady', kind: 'rare', need: 3, txt: n => CRAFT_TUNE.grades ? `Craft ${n} items at grade A or S, or Rare` : `Forge ${n} Rare or better items`, ic: ['anvil', '#5FA8FF'] },
     wElder: { tier: 'steady', kind: 'elder', need: 1, needs: 'Deepwell', txt: () => 'Clear 2 boss floors in one Deepwell run', ic: ['orb', '#E0524F'] }
   };
   const TIER_COUNT = { easy: 3, steady: 2 };
@@ -16851,7 +16852,7 @@ function validateSave(data) {
       if (it.mw != null) int(it.mw, 'item.mw', 0, CRAFT_TROPHIES.length - 1);
       if (it.rf !== undefined) int(it.rf, 'item.rf', 0, 1000);
       // craft-attribute-grades: a grade (only on items made with CRAFT_TUNE.grades on) is 0-4 and its rarity twin must match
-      if (it.g !== undefined) { int(it.g, 'item.g', 0, GRADE.length - 1); if (it.r !== GRADE[it.g].r) fail('item.g', 'does not match its rarity'); if (it.u != null || CRAFT_KINDS[it.slot].tool || CRAFT_KINDS[it.slot].legacy) fail('item.g', 'is on an item that is never graded'); }
+      if (it.g != null) { int(it.g, 'item.g', 0, GRADE.length - 1); if (it.r !== GRADE[it.g].r) fail('item.g', 'does not match its rarity'); if (it.u != null || CRAFT_KINDS[it.slot].tool || CRAFT_KINDS[it.slot].legacy) fail('item.g', 'is on an item that is never graded'); }
     }
     int(data.nextId, 'nextId', 1); for (const id of ids) if (id >= data.nextId) fail('nextId', 'would reuse an item ID');
     for (const [slot, id] of Object.entries(data.equip)) { known(CRAFT_FITS, slot, 'equip.' + slot); if (id !== null && (!Number.isInteger(id) || !ids.has(id))) fail('equip.' + slot, 'refers to a missing item'); }
@@ -19127,7 +19128,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   for (const id of ['forge', 'bench', 'loom', 'ench']) {
     const d = B(id), f = STN_FIVE[id];
     addModifier('skillXp:' + d.skill, () => 1 + STN_XP[Math.min(5, lv(id))]);
-    addModifier(f.key, () => lv(id) >= 5 ? f.v : 1);
+    addModifier(f.key, () => lv(id) >= 5 && !(f.key === 'rareW' && CRAFT_TUNE.grades) ? f.v : 1);   // craft-attribute-grades: with grades on, Forge 5 lifts the grade instead of the odds
   }
   addBonus('transmuteSave', () => lv('ench') >= 5 ? 1 : 0);
   addBonus('gradeLv', () => lv('forge') >= 5 ? 1 : 0);   // craft-attribute-grades: read by gradeLv (40-rules) only while CRAFT_TUNE.grades is on
@@ -40326,7 +40327,8 @@ let craftUI = null;
   // grade D"). Tools keep the odds line.
   const gradeTxt = (k, t) => safe(() => {
     if (!gradedKind(k)) return '';
-    const g = gradeFor(k, t), nx = gradeNext(k, t), sk = SKILL[skillOfSt(CRAFT_KINDS[k].st)];
+    // the skill that sets the level: a Charm grades on the better of Enchanting and Smithing (stationLevel), so name the one in use
+    const own = skillOfSt(CRAFT_KINDS[k].st), sk = SKILL[stationLevel(k) > lvOf(own) ? 'smith' : own], g = gradeFor(k, t), nx = gradeNext(k, t);
     return `Grade ${GRADE[g].n} · ` + (nx ? `${GRADE[nx.g].n} at ${sk} ${nx.lv}` : 'the top grade');
   }, '');
   const choiceTxt = (k, t) => safe(() => {
@@ -41038,7 +41040,7 @@ let craftUI = null;
     box.append(el('p', 'note', (graded ? `At the Enchanter's Table. Pick a bonus line, then the bonus to put in its place. Grade and power stay.`
       : `At the Enchanter's Table. Pick one bonus line to reroll. Rarity and power stay.`) + (it.rf ? ` Reforged ${it.rf} time${it.rf > 1 ? 's' : ''}: the price grows each time.` : '')));
     const opts = el('div', 'cf-rfo'); opts.setAttribute('role', 'radiogroup'); opts.setAttribute('aria-label', 'Line to reforge');
-    const parts = splitLines(it).filter(L => L.g === 'affix');
+    const parts = graded && !choices.length ? [] : splitLines(it).filter(L => L.g === 'affix');   // a graded piece with every bonus has nothing to swap
     for (const L of parts) {
       const b = el('button', 'cf-rfl'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(sheet.sel === L.idx));
       b.append(el('i'), el('span', null, lineTxt(L.l)));
@@ -41062,7 +41064,7 @@ let craftUI = null;
     if (cost) { const chips = el('div', 'costs'); costChips(chips, cost.mats, it.t, cost.gold); box.append(chips); }
     const ok = f && cost && sheet.sel >= 0 && (!graded || sheet.pick != null) && skillTierOpen('ench', it.t) && hasMats(cost.mats, it.t) && S.gold >= cost.gold;
     const armed = sheet.arm === 'reforge';
-    const b = el('button', 'big cf-act ' + (armed ? 'cf-arm' : 'forge'), !f ? 'Reforge opens soon' : sheet.sel < 0 ? 'Pick a line to reforge' : graded && sheet.pick == null ? 'Pick the bonus to put in' : armed ? 'Confirm: reforge' : 'Reforge this line'); b.type = 'button';
+    const b = el('button', 'big cf-act ' + (armed ? 'cf-arm' : 'forge'), !f ? 'Reforge opens soon' : graded && !choices.length ? 'Nothing to reforge' : sheet.sel < 0 ? 'Pick a line to reforge' : graded && sheet.pick == null ? 'Pick the bonus to put in' : armed ? 'Confirm: reforge' : 'Reforge this line'); b.type = 'button';
     b.disabled = !ok;
     b.addEventListener('click', () => {
       if (!armed) { sheet.arm = 'reforge'; renderItem(); return; }
@@ -41098,7 +41100,7 @@ let craftUI = null;
       if (now) {
         const r = el('div', 'cf-pr cur');
         const t = icTile(itemIc(now), frameOf(now)); r.append(t);
-        const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, 'Worn now. Tap for details.'));
+        const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, (itemGraded(now) ? itemQual(now) + ' · ' : '') + 'Worn now. Tap for details.'));   // craft-attribute-grades: the letter in text
         r.append(tx);
         tx.addEventListener('click', () => openItem(now.id, backFn)); t.addEventListener('click', () => openItem(now.id, backFn));
         body.append(r);
@@ -41124,7 +41126,7 @@ let craftUI = null;
         const dp = itemPower(it) - (now ? itemPower(now) : 0);
         const wr = w.get(it.id);
         tx.append(el('b', 'rar-' + it.r, itemName(it)));
-        const sm = el('small', null, (wr ? 'You wear it · ' : ''));
+        const sm = el('small', null, (itemGraded(it) ? itemQual(it) + ' · ' : '') + (wr ? 'You wear it · ' : ''));
         sm.append(el('span', 'cf-d ' + (dp > 0 ? 'up' : 'dn'), `${dp >= 0 ? '+' : '-'}${fmt(Math.abs(dp))} power`));
         tx.append(sm);
         t.addEventListener('click', () => openItem(it.id, backFn)); tx.addEventListener('click', () => openItem(it.id, backFn));

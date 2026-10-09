@@ -369,7 +369,8 @@ let craftUI = null;
   // grade D"). Tools keep the odds line.
   const gradeTxt = (k, t) => safe(() => {
     if (!gradedKind(k)) return '';
-    const g = gradeFor(k, t), nx = gradeNext(k, t), sk = SKILL[skillOfSt(CRAFT_KINDS[k].st)];
+    // the skill that sets the level: a Charm grades on the better of Enchanting and Smithing (stationLevel), so name the one in use
+    const own = skillOfSt(CRAFT_KINDS[k].st), sk = SKILL[stationLevel(k) > lvOf(own) ? 'smith' : own], g = gradeFor(k, t), nx = gradeNext(k, t);
     return `Grade ${GRADE[g].n} · ` + (nx ? `${GRADE[nx.g].n} at ${sk} ${nx.lv}` : 'the top grade');
   }, '');
   const choiceTxt = (k, t) => safe(() => {
@@ -1081,7 +1082,7 @@ let craftUI = null;
     box.append(el('p', 'note', (graded ? `At the Enchanter's Table. Pick a bonus line, then the bonus to put in its place. Grade and power stay.`
       : `At the Enchanter's Table. Pick one bonus line to reroll. Rarity and power stay.`) + (it.rf ? ` Reforged ${it.rf} time${it.rf > 1 ? 's' : ''}: the price grows each time.` : '')));
     const opts = el('div', 'cf-rfo'); opts.setAttribute('role', 'radiogroup'); opts.setAttribute('aria-label', 'Line to reforge');
-    const parts = splitLines(it).filter(L => L.g === 'affix');
+    const parts = graded && !choices.length ? [] : splitLines(it).filter(L => L.g === 'affix');   // a graded piece with every bonus has nothing to swap
     for (const L of parts) {
       const b = el('button', 'cf-rfl'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(sheet.sel === L.idx));
       b.append(el('i'), el('span', null, lineTxt(L.l)));
@@ -1105,7 +1106,7 @@ let craftUI = null;
     if (cost) { const chips = el('div', 'costs'); costChips(chips, cost.mats, it.t, cost.gold); box.append(chips); }
     const ok = f && cost && sheet.sel >= 0 && (!graded || sheet.pick != null) && skillTierOpen('ench', it.t) && hasMats(cost.mats, it.t) && S.gold >= cost.gold;
     const armed = sheet.arm === 'reforge';
-    const b = el('button', 'big cf-act ' + (armed ? 'cf-arm' : 'forge'), !f ? 'Reforge opens soon' : sheet.sel < 0 ? 'Pick a line to reforge' : graded && sheet.pick == null ? 'Pick the bonus to put in' : armed ? 'Confirm: reforge' : 'Reforge this line'); b.type = 'button';
+    const b = el('button', 'big cf-act ' + (armed ? 'cf-arm' : 'forge'), !f ? 'Reforge opens soon' : graded && !choices.length ? 'Nothing to reforge' : sheet.sel < 0 ? 'Pick a line to reforge' : graded && sheet.pick == null ? 'Pick the bonus to put in' : armed ? 'Confirm: reforge' : 'Reforge this line'); b.type = 'button';
     b.disabled = !ok;
     b.addEventListener('click', () => {
       if (!armed) { sheet.arm = 'reforge'; renderItem(); return; }
@@ -1141,7 +1142,7 @@ let craftUI = null;
       if (now) {
         const r = el('div', 'cf-pr cur');
         const t = icTile(itemIc(now), frameOf(now)); r.append(t);
-        const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, 'Worn now. Tap for details.'));
+        const tx = el('div', 'cf-gt'); tx.append(el('b', 'rar-' + now.r, itemName(now)), el('small', null, (itemGraded(now) ? itemQual(now) + ' · ' : '') + 'Worn now. Tap for details.'));   // craft-attribute-grades: the letter in text
         r.append(tx);
         tx.addEventListener('click', () => openItem(now.id, backFn)); t.addEventListener('click', () => openItem(now.id, backFn));
         body.append(r);
@@ -1167,7 +1168,7 @@ let craftUI = null;
         const dp = itemPower(it) - (now ? itemPower(now) : 0);
         const wr = w.get(it.id);
         tx.append(el('b', 'rar-' + it.r, itemName(it)));
-        const sm = el('small', null, (wr ? 'You wear it · ' : ''));
+        const sm = el('small', null, (itemGraded(it) ? itemQual(it) + ' · ' : '') + (wr ? 'You wear it · ' : ''));
         sm.append(el('span', 'cf-d ' + (dp > 0 ? 'up' : 'dn'), `${dp >= 0 ? '+' : '-'}${fmt(Math.abs(dp))} power`));
         tx.append(sm);
         t.addEventListener('click', () => openItem(it.id, backFn)); tx.addEventListener('click', () => openItem(it.id, backFn));

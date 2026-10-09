@@ -977,7 +977,9 @@ if (section('craft-attribute-grades')) try {
   E('S.camp.b.forge = 5'); const g9f = E('gradeLv("bow")');
   E(`almanac.force('steadyHands')`); const g9s = E('gradeLv("bow")');
   assert(g9 === 9 && g9f === 10 && g9s === 12 && E('OMENS.find(o => o.id === "steadyHands").fx') === 'Crafts grade as 2 levels higher' && E('campEffects("forge", 5).includes("Crafts grade as 1 level higher")'), `switch on: Woodcraft 9 grades as ${g9}, ${g9f} with the Forge at Lv 5, ${g9s} with Steady Hands too; Steady Hands reads "Crafts grade as 2 levels higher"`);
-  assert(E('gradeFor("bow", 1)') === 3 && E('craftItem("bow", 1).g') === 3, 'switch on: the bonus levels lift the grade the craft is made at (Woodcraft 9 + 3 = A)');
+  E('S.deeds.rec.fine = 0; S.deeds.rec.epic = false');   // the die-rolled Bows above may have set them
+  assert(E('gradeFor("bow", 1)') === 3 && E('craftItem("bow", 1).g') === 3 && E('S.deeds.rec.fine') === 2 && !E('S.deeds.rec.epic'), 'switch on: the bonus levels lift the grade the craft is made at (Woodcraft 9 + 3 = A); Fine Work counts the A as a Rare');
+  assert(E('mod("rareW")') === 1, 'switch on: Forge 5 and Steady Hands no longer lift the rarity odds (the grade bonus replaces them)');
   E(`almanac.force('none'); S.camp.b.forge = 1`);
   // grade S: four lines, twin epic, and the deeds count it by the twin
   E('S.skills.smith.lv = 16');

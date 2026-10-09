@@ -323,7 +323,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   for (const id of ['forge', 'bench', 'loom', 'ench']) {
     const d = B(id), f = STN_FIVE[id];
     addModifier('skillXp:' + d.skill, () => 1 + STN_XP[Math.min(5, lv(id))]);
-    addModifier(f.key, () => lv(id) >= 5 ? f.v : 1);
+    addModifier(f.key, () => lv(id) >= 5 && !(f.key === 'rareW' && CRAFT_TUNE.grades) ? f.v : 1);   // craft-attribute-grades: with grades on, Forge 5 lifts the grade instead of the odds
   }
   addBonus('transmuteSave', () => lv('ench') >= 5 ? 1 : 0);
   addBonus('gradeLv', () => lv('forge') >= 5 ? 1 : 0);   // craft-attribute-grades: read by gradeLv (40-rules) only while CRAFT_TUNE.grades is on

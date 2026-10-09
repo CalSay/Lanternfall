@@ -163,7 +163,7 @@ function validateSave(data) {
       if (it.mw != null) int(it.mw, 'item.mw', 0, CRAFT_TROPHIES.length - 1);
       if (it.rf !== undefined) int(it.rf, 'item.rf', 0, 1000);
       // craft-attribute-grades: a grade (only on items made with CRAFT_TUNE.grades on) is 0-4 and its rarity twin must match
-      if (it.g !== undefined) { int(it.g, 'item.g', 0, GRADE.length - 1); if (it.r !== GRADE[it.g].r) fail('item.g', 'does not match its rarity'); if (it.u != null || CRAFT_KINDS[it.slot].tool || CRAFT_KINDS[it.slot].legacy) fail('item.g', 'is on an item that is never graded'); }
+      if (it.g != null) { int(it.g, 'item.g', 0, GRADE.length - 1); if (it.r !== GRADE[it.g].r) fail('item.g', 'does not match its rarity'); if (it.u != null || CRAFT_KINDS[it.slot].tool || CRAFT_KINDS[it.slot].legacy) fail('item.g', 'is on an item that is never graded'); }
     }
     int(data.nextId, 'nextId', 1); for (const id of ids) if (id >= data.nextId) fail('nextId', 'would reuse an item ID');
     for (const [slot, id] of Object.entries(data.equip)) { known(CRAFT_FITS, slot, 'equip.' + slot); if (id !== null && (!Number.isInteger(id) || !ids.has(id))) fail('equip.' + slot, 'refers to a missing item'); }

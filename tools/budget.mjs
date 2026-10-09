@@ -64,9 +64,11 @@
 // is made at the grade the kept-up casual's station level gives at the row's zone (CASUAL_LV: the level-by-zone table of
 // docs/design/skilling-crafting-overhaul/curve.md, CRAFT_TUNE.curve on, seed 1; a zone between columns reads the column before it, and
 // past the casual's last zone their end level), minus the tier's gate (gradeFor, 40-rules), at +5, with no lift (craft-strike-infuse
-// adds the lift rows). A Charm reads the better of Enchanting and Smithing, as the game does. Each piece keeps the footing's one shared
-// HP line, at the grade's fixed roll, so a row measures the grade's power and not its line picks. The late rows (z35-z38, epic +10)
-// and every row with a gear option keep their rarity footing.
+// adds the lift rows). A piece is at the row's tier (a behind row's tier is one down) or, when the casual's station has not opened
+// it yet, the best tier it has open. A Charm reads the better of Enchanting and Smithing, as the game does. Each class piece wears
+// one HP line at the middle roll and no other bonus line (the rare footing's HP lines were rolled, on the pieces that drew one), so a
+// row measures the grade's power, not its line picks. The late rows (z35-z38, epic +10) and every row with a gear option keep their
+// rarity footing.
 // Players (as sim.mjs --report turns; the scratch player acts at once, so a real fight takes longer):
 //   casual  parries 25% of hits, dodges 50% of the rest; ability rings 10% Perfect, 40% Good, the rest missed
 //   good    parries 60%, dodges 90% of the rest; rings 40% Perfect, 45% Good
@@ -128,9 +130,12 @@ const CASUAL_LV = {
     loom: [1, 1, 1, 11, 14, 22, 22, 38, 43, null, null, null, null, null, 71], ench: [1, 1, 5, 7, 8, 9, 13, 22, 28, null, null, null, null, null, 37] }
 };
 const casualLv = (k, skill, z) => { const row = CASUAL_LV[k][skill]; let i = 0; while (i + 1 < CASUAL_Z.length && CASUAL_Z[i + 1] <= z) i++; return row[i] != null ? row[i] : row[row.length - 1]; };
-// the graded kept-up piece's grade index for hero k, kind, tier t at zone z (run in the core: gradeFor and the station table are the game's)
+// the graded kept-up piece for hero k at zone z (run in the core: gradeFor and the station gates are the game's): (kind, t) -> { t, g },
+// t the row's tier or the best tier the station has open, if lower, and g the grade at that tier
 const gradeCode = (k, z) => `(kind, t) => { const sk = CRAFT_STATIONS[CRAFT_KINDS[kind].st].skill, L = ${JSON.stringify(Object.fromEntries(['smith', 'bench', 'loom', 'ench'].map(s => [s, casualLv(k, s, z)])))};
-  return gradeFor(kind, t, kind === 'charm' ? Math.max(L.ench, L.smith) : L[sk]); }`;
+  const lv = kind === 'charm' ? Math.max(L.ench, L.smith) : L[sk]; let u = 1; while (u < t && CRAFT_STATION_REQ[u] <= lv) u++;
+  return { t: u, g: gradeFor(kind, u, lv) }; }`;
+const gradedRow = o => GRADED && o.st === 'kept' && !o.gear && !onArrival(o);
 const FOOT = opt('foot', null);
 if ((flag('foot') && FOOT === null) || (FOOT !== null && FOOT !== 'arrival')) { console.error('budget: --foot arrival (the only footing it takes)'); process.exit(2); }
 const ARRIVAL_KILLS = 10, ARRIVAL_KIND_KILLS = 12;
@@ -285,8 +290,8 @@ function setup(c, k, lvShift, uq) {
   if (o.st === 'late') s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) { it.r = 'epic'; it.plus = 10;
       const own = { weapon: 0, off: 1, helm: 2, body: 3 }[sl]; if (own != null) { it.slot = ${J(KINDS[k])}[own]; delete it.rt; } if (it.a) it.a = it.a.filter(l => l[0] === 'hp'); } }`;
   else if (o.st === 'kept' && o.gear === 'none') s += `for (const sl of ['weapon', 'off', 'helm', 'body', 'charm']) S.equip[sl] = null;`;
-  else if (o.st === 'kept' && GRADED && !o.gear && !onArrival(o)) s += `(() => { const t = zoneTier(${z}), gr = ${gradeCode(k, z)};   // --craft grades=1: graded gear (above)
-      ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, 'common', { g: gr(kind, t) }); it.plus = 5; if (it.a) it.a = [['hp', 0.5]];
+  else if (gradedRow(o)) s += `(() => { const t = Math.max(1, Math.min(5, zoneTier(${z}) + ${o.tier || 0})), gr = ${gradeCode(k, z)};   // --craft grades=1: graded gear (above); a behind row's tier first
+      ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const p = gr(kind, t), it = newItem(kind, p.t, 'common', { g: p.g }); it.plus = 5; if (it.a) it.a = [['hp', 0.5]];
         S.items.push(it); S.equip[['weapon', 'off', 'helm', 'body', 'charm'][i]] = it.id; }); })();`;
   else if (o.st === 'kept') s += `(() => { let sd = 7919; const rnd = () => (sd = sd * 16807 % 2147483647) / 2147483647, t = ${onArrival(o) ? 1 : `zoneTier(${z})`};
       ${J(KINDS[k])}.concat(['charm']).forEach((kind, i) => { const it = newItem(kind, t, ${J(o.gear === 'common' ? 'common' : o.gear === 'uncommon2' ? 'uncommon' : 'rare')}, { rnd }); it.plus = ${o.gear === 'common' ? 0 : o.gear === 'uncommon2' ? 2 : 5}; if (it.a) it.a = it.a.filter(l => l[0] === 'hp');
@@ -294,7 +299,7 @@ function setup(c, k, lvShift, uq) {
   // --uniq: the unique in its position at the zone's tier, +5 (a unique in a set position breaks the set, below)
   if (uq) s += `(() => { const key = ${J(uq)}, u = UNIQ[key]; UNIQ_TUNE.on = 1; const it = { id: S.nextId++, slot: uniqKindFor(key, S.party.cls), t: zoneTier(${z}), r: 'legendary', plus: 5, u: key };
       S.items.push(it); S.equip[u.pos] = it.id; })();`;
-  if (o.tier) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
+  if (o.tier && !gradedRow(o)) s += `for (const sl of Object.keys(S.equip)) { const it = itemById(S.equip[sl]); if (it && !['pick', 'axe', 'sickle', 'spear'].includes(it.slot)) it.t = Math.max(1, Math.min(5, it.t + (${o.tier}))); }`;
   // hero-progression-rework: attribute points spread evenly (the plain build), or all in one (a build row); no-op before
   // attributes exist
   s += o.build ? `if (typeof attrAdd === 'function' && attrOn()) { S.attr.pts[${J(k)}] = ATTR0(); attrAdd(${J(o.build)}, 1e9, ${J(k)}); }`

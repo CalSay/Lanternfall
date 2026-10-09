@@ -63,6 +63,7 @@ const SKILL_TUNE = {
 // craft-curve-skills-report: the crafting overhaul's switches (docs/design/skilling-crafting-overhaul.md 13). All off in code until the
 // balance pass; checks and tools turn them on in a scratch game. curve: SKILL_TUNE.craftNeedV2 and belowTierX (40-rules, 55-crafting).
 // grades, strike, infuse, infuseX: read by the cards that build them (craft-attribute-grades, craft-strike-infuse).
+// A runtime flip of grades must call gearDirty(): gear() caches item power.
 const CRAFT_TUNE = { grades: 0, strike: 0, infuse: 0, curve: 0, infuseX: 3 };
 const NODE_REQ = SKILL_TUNE.nodeReq;
 const SMITH_REQ = SKILL_TUNE.stationReq;
@@ -76,8 +77,8 @@ const skillOf = kind => NODE_SKILL[kind] || 'wood';
 const TIER_POW = [0, 10, 22, 42, 75, 130];
 const RAR = { common: { n: 'Common', m: 1 }, uncommon: { n: 'Uncommon', m: 1.35 }, rare: { n: 'Rare', m: 1.8 }, epic: { n: 'Epic', m: 2.5 }, legendary: { n: 'Unique', m: 3.2 } };
 // craft-attribute-grades (docs/design/skilling-crafting-overhaul.md 5): with CRAFT_TUNE.grades on, a craft's grade (D to S, item field
-// g = the index) comes from the station level (gradeLv, 40-rules) instead of the rarity die. m: power (equal to the rarity values, never
-// retuned); r: the rarity twin the item also keeps in `r`; lines: bonus lines; ws: weapon scaling (stored for weapon-profiles); past:
+// g = the index) comes from the station level (gradeLv, 40-rules) instead of the rarity die. m: power (D, C, A and S equal the rarity
+// values, B sits between; never retuned); r: the rarity twin the item also keeps in `r`; lines: bonus lines; ws: weapon scaling (stored for weapon-profiles); past:
 // levels past the tier's gate that reach it; moment: an A or S craft is a medium moment.
 const GRADE = [
   { n: 'D', m: 1, r: 'common', lines: 1, ws: 0.10, past: 0 },
