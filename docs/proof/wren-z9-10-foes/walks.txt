@@ -1,0 +1,51 @@
+# wren-z9-10-foes: walks (ordinary-foe losses by zone)
+
+Built at e4bcb246 (this branch). Each walk 60 game minutes asked, stopped by the 30-minute clock budget at game minute 41 (three walks ran side by side). The losses line is the new walk summary line (tools/walk.mjs, a 'wipe' with no boss and no arena).
+
+## A: node tools/walk.mjs --seed 1 (Wren) --out A
+
+Played 41:23 of 60:00 game time in 1800 s of clock. **Stopped: clock budget spent at game minute 41.4.** Report only: nothing here blocks a merge.
+End state: zone 19, level 22, 9988 gold, 110 kills, 17 things unlocked, 4 uniques, 7 Stars, 3 extra heroes, 0 looks.
+Losses to ordinary foes (not bosses): 27 (zone 12: 1 at 24:22; zone 14: 1 at 27:03; zone 16: 4 at 29:50, 30:14, 30:22, 30:40; zone 17: 15 at 32:03, 32:13, 32:59, 33:19, 33:35, 33:55, 34:10, 34:26, 34:35, 34:44, 35:00, 35:09, 35:19, 35:52, 36:26; zone 18: 2 at 38:44, 38:58; zone 19: 4 at 40:05, 40:23, 40:32, 40:48).
+
+| Zone | First stood in at | Level | Boss tries lost | Worn then |
+|---|---|---|---|---|
+| 8 | 13:27 | 13 | 0 | weapon t1 Common, charm t1 Unique, pick t1 Unique |
+| 9 | 19:29 | 14 | 0 | weapon t1 Common, off t1 Common, charm t1 Unique, pick t1 Unique |
+| 10 | 21:31 | 15 | 0 | weapon t1 Common, off t1 Common, helm t1 Common, body t1 Common, charm t1 Unique, pick t1 Unique |
+| 11 | 23:11 | 16 | 0 | weapon t1 Common, off t1 Common, helm t2 Unique, body t1 Common, charm t1 Unique, pick t1 Unique |
+| 12 | 24:17 | 17 | 0 | weapon t1 Common, off t1 Common, helm t2 Unique, body t1 Common, charm t2 Unique, pick t1 Unique |
+
+## B: node tools/walk.mjs --seed 2 --hero wren --out B
+
+Played 41:39 of 60:00 game time in 1800 s of clock. **Stopped: clock budget spent at game minute 41.7.** Report only: nothing here blocks a merge.
+End state: zone 17, level 21, 9520 gold, 97 kills, 16 things unlocked, 1 uniques, 6 Stars, 3 extra heroes, 0 looks.
+Losses to ordinary foes (not bosses): 32 (zone 13: 3 at 26:11, 26:20, 26:30; zone 14: 4 at 28:12, 28:56, 29:19, 29:34; zone 15: 3 at 30:43, 30:52, 31:24; zone 16: 18 at 32:39, 32:48, 33:11, 33:32, 33:40, 33:58, 34:05, 34:12, 34:38, 35:09, 35:28, 35:58, 36:13, 36:44, 38:12, 38:26, 38:41, 39:17; zone 17: 4 at 40:20, 40:30, 40:50, 41:24).
+
+| Zone | First stood in at | Level | Boss tries lost | Worn then |
+|---|---|---|---|---|
+| 8 | 13:29 | 13 | 0 | weapon t1 Common, charm t1 Unique, pick t1 Common |
+| 9 | 19:12 | 14 | 0 | weapon t1 Common, off t1 Rare, charm t1 Unique, pick t1 Common |
+| 10 | 21:22 | 15 | 0 | weapon t1 Common, off t1 Rare, helm t1 Common, body t1 Common, charm t1 Unique, pick t1 Common |
+| 11 | 23:10 | 16 | 0 | weapon t1 Common, off t1 Rare, helm t1 Common, body t1 Common, charm t1 Unique, pick t1 Common |
+| 12 | 24:34 | 17 | 0 | weapon t1 Common, off t1 Rare, helm t1 Common, body t1 Common, charm t1 Unique, pick t1 Common |
+
+## C: node tools/walk.mjs --seed 1 --hero pip --out C
+
+Played 41:14 of 60:00 game time in 1800 s of clock. **Stopped: clock budget spent at game minute 41.2.** Report only: nothing here blocks a merge.
+End state: zone 18, level 22, 11164 gold, 103 kills, 17 things unlocked, 3 uniques, 6 Stars, 3 extra heroes, 0 looks.
+Losses to ordinary foes (not bosses): 22 (zone 14: 2 at 29:10, 29:47; zone 15: 2 at 31:07, 31:31; zone 16: 3 at 32:35, 32:50, 33:28; zone 17: 13 at 34:59, 35:14, 35:25, 35:44, 36:29, 36:53, 37:04, 37:29, 37:51, 38:01, 39:02, 39:22, 39:32; zone 18: 2 at 40:55, 41:05).
+
+| Zone | First stood in at | Level | Boss tries lost | Worn then |
+|---|---|---|---|---|
+| 8 | 20:51 | 13 | 0 | weapon t1 Unique, off t1 Uncommon, helm t1 Uncommon, body t1 Common, pick t1 Rare |
+| 9 | 21:42 | 14 | 0 | weapon t1 Unique, off t1 Uncommon, helm t1 Uncommon, body t1 Common, pick t1 Rare |
+| 10 | 22:48 | 15 | 0 | weapon t1 Unique, off t1 Uncommon, helm t1 Uncommon, body t1 Common, pick t1 Rare |
+| 11 | 24:28 | 16 | 0 | weapon t1 Unique, off t1 Uncommon, helm t2 Unique, body t1 Common, pick t1 Rare |
+| 12 | 25:56 | 17 | 0 | weapon t1 Unique, off t1 Uncommon, helm t2 Unique, body t1 Common, charm t2 Unique, pick t1 Rare |
+
+## Prediction
+
+1 or fewer Wren normal losses in zones 9-10 per seed: seed 1 Wren 0, seed 2 Wren 0 (Pip seed 1: 0). Hit.
+
+Seen past the card's zones (out of scope, passed on): the bots' ordinary-foe losses start at zone 12-14 and peak at zones 16-17 (15, 18 and 13 losses in one zone).

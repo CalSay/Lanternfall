@@ -28335,14 +28335,20 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
   const reseed = () => { if (!fightN++) { x = (seed | 0) || 1; return; } let h = Math.imul((seed | 0) ^ Math.imul(fightN, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; x = h | 0 || 1; };
   const roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
   const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0, foeHits: 0, parries: 0, dodges: 0,
-    completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0, closeWins: 0 };   // closeWins: kills where the hero fell under half health
-  let low = 1, heroHp = p.heroMaxHp, foeHp = p.foeMaxHp, m, downtime = 0, plan = '', trick = '', tplan = null;
+    completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0, closeWins: 0, rises: 0 };   // closeWins: kills where the hero fell under half health; rises: Rattlebones get-ups
+  let low = 1, heroHp = p.heroMaxHp, foeHp = p.foeMaxHp, m, downtime = 0, plan = '', trick = '', tplan = null, again = false;
+  // the Rattlebones get-up, as the live loop's 59b onFoeDeath (wren-z9-10-foes): an ordinary bones foe that falls gets up once a fight
+  // at ENEMY_TUNE.reassemble of its HP, unless a Burn tick (or magic) killed it; never a boss (an elite does). A turn fight is its own
+  // pack, so the pack's quota of 2 never binds. Draws no random number, so every other roll stays on its stream.
+  const rise = (p.foeType === 'bones' && !p.boss && typeof ENEMY_TUNE === 'object' && ENEMY_TUNE.reassemble) || 0;
   const io = { random: roll, emit: () => {}, alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), foeHp: () => Math.max(0, foeHp),
     heroHp: () => heroHp, slotId: i => p.eq[i] || null,
-    damageFoe: d => { foeHp -= d; out.damageDone += d; return d; },
+    damageFoe: (d, kind) => { foeHp -= d; out.damageDone += d;
+      if (foeHp <= 0 && rise > 0 && !again && kind !== 'magic' && kind !== 'burn') { again = true; foeHp = p.foeMaxHp * rise; out.rises++; }
+      return d; },
     damageHero: d => { heroHp -= d; out.damageTaken += d; if (d > 0) out.foeHits++; low = Math.min(low, heroHp / p.heroMaxHp); return d; },
     healHero: d => { heroHp = Math.min(p.heroMaxHp, heroHp + d); }, healFoe: d => { foeHp = Math.min(p.foeMaxHp, foeHp + d); }, defense: (k, ok) => { if (ok) out[k === 'parry' ? 'parries' : 'dodges']++; } };
-  const start = () => { reseed(); tplan = null; foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; low = Math.max(0, heroHp) / p.heroMaxHp; };   // a zone boss is met at full health, as in play
+  const start = () => { reseed(); tplan = null; again = false; foeHp = p.foeMaxHp; if (p.fullHp) heroHp = p.heroMaxHp; m = turnNew(p, io); plan = ''; low = Math.max(0, heroHp) / p.heroMaxHp; };   // a zone boss is met at full health, as in play
   start();
   const step = 0.05;
   for (let t = 0; t < seconds; t += step) {

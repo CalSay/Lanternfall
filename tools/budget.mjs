@@ -191,6 +191,14 @@ export const CHECKPOINTS = [
   // walk brings there at minutes 8-31; their knots are fitted here with the rally gates on. Zones 4-6 stay on the first-hour footing.
   ['z7-boss', 7, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
   ['z8-normal', 8, 'normal', { st: 'kept', fx: 'early' }],
+  // wren-z9-10-foes (judge 2026-10-08, ruling A): the zone 9-11 ordinary foes on the arrival footing, gated on the normal band, each of the
+  // zone's two foe types sampled on its own (types: the row reads the worse one; a Rattlebones gets up once a fight, 59k's sampler).
+  // The bare rows are floors (report only): arrival level with nothing worn, the fight-only bot's Wren who never crafts.
+  ['z9-normal', 9, 'normal', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival', types: true }],
+  ['z10-normal', 10, 'normal', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival', types: true }],
+  ['z11-normal', 11, 'normal', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival', types: true }],
+  ['z10-normal-bare', 10, 'normal', { st: 'kept', fx: 'early', gear: 'none', foot: 'arrival', kind: 'floorNormal', types: true }],
+  ['z11-normal-bare', 11, 'normal', { st: 'kept', fx: 'early', gear: 'none', foot: 'arrival', kind: 'floorNormal', types: true }],
   ['z8-boss', 8, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
   ['z9-boss', 9, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
   ['z10-boss', 10, 'boss', { st: 'kept', fx: 'early', gear: 'common', foot: 'arrival' }],
@@ -367,9 +375,28 @@ export function buildCore(c, k, lvShift = LV_SHIFT, uq = null) {
   return core;
 }
 // one hero at one checkpoint: win rate, hero turns a won fight and expected attempts for each player
+// A row with `types` (wren-z9-10-foes) plays each of the zone's two foe types on its own (respawning until the stage holds it, as
+// the planner's probe did) and keeps both in byType; each player's cell is the worse type's, so cells() and health.mjs read it as before.
 function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null, bot = false) {   // bot: also play BOT (the budget run only)
-  const [id, z, foe, o] = c, out = {};
+  const [id, z, foe, o] = c;
   const core = buildCore(c, k, lvShift, uq), e = s => core.eval(s);
+  if (!o.types) return measureFoe(c, k, core, players, bot, null);
+  const types = [...new Set(e(`[TYPES[zoneType(${z})].key, TYPES[zoneNextType(${z})].key]`))], byType = {};
+  for (const ty of types) {
+    const got = e(`(() => { for (let i = 0; i < 400; i++) { const f = combatFoes().find(x => x && !x.dead); if (f && f.type === ${J(ty)} && !f.elite) return true; spawn(); } return false; })()`);
+    if (!got) throw new Error(`${id} ${k}: no ${ty} in 400 spawns at zone ${z}`);
+    byType[ty] = measureFoe(c, k, core, players, bot, ty);
+  }
+  const worse = pl => types.reduce((a, b) => byType[b][pl].win < byType[a][pl].win ? b : a);
+  const pls = Object.keys(byType[types[0]]).filter(pl => byType[types[0]][pl] && byType[types[0]][pl].win != null);
+  const out = Object.fromEntries(pls.map(pl => [pl, { ...byType[worse(pl)][pl], type: worse(pl) }]));
+  const { L, hpr, kind } = byType[types[0]];
+  return { ...out, L, hpr, foe: types.map(ty => byType[ty].foe).join(' / '), kind,
+    byType: Object.fromEntries(types.map(ty => [ty, Object.fromEntries(pls.map(pl => [pl, byType[ty][pl]]).concat([['foe', byType[ty].foe]]))])) };
+}
+// one hero against the foe on the stage (ty: its type, a seed part, on a `types` row)
+function measureFoe(c, k, core, players, bot, ty) {
+  const [id, z, foe, o] = c, out = {}, e = s => core.eval(s);
   if (foe === 'elite') e(`(() => { const f = combatFoes().find(x => x && !x.dead); turnFoeSetup(f, S.zone, { elite: true }); })()`);
   // big: the boss's heaviest single hit as a share of the hero's max HP before the hit cap (a charged move's hits on their own)
   const p0 = e(`(() => { const p = turnCombatProfile(); let big = 0; for (const mv of p.script || []) for (const h of mv.hits || []) big = Math.max(big, (h.x || 0.2) * (mv.charge ? p.bossChargeX || 1 : 1));
@@ -381,15 +408,16 @@ function measure(c, k, lvShift = LV_SHIFT, players = RUN_PLAYERS, uq = null, bot
     if (pl === 'none' && !NONE_KINDS.includes(o.kind) && !flag('none') && !UNIQ_ID) continue;
     if (liftRow(o)) e(liftCode(pl));   // craft-strike-infuse: this player's lifted pieces (above)
     if (BOT[pl] && !BOT_KINDS.includes(o.kind)) continue;
-    const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, k, pl === 'casualInfuse' ? 'casual' : pl, i));   // casualInfuse plays the casual's seeds, so the gap is the lift alone
+    const seeds = Array.from({ length: n }, (_, i) => seedOf(OFFSET, id, ...(ty ? [ty] : []), k, pl === 'casualInfuse' ? 'casual' : pl, i));   // casualInfuse plays the casual's seeds, so the gap is the lift alone
     const r = e(`(() => { const p = turnCombatProfile(); p.eq = ${J(o.st === 'joined' ? [SIG[k]] : setFor(z, k))}; p.cds = { attack: 1 }; for (const id of p.eq) p.cds[id] = turnCdFor(id);
-      let K = 0, D = 0, T = 0, F = 0, C = 0;
+      let K = 0, D = 0, T = 0, F = 0, C = 0, R = 0;
       for (const sd of ${J(seeds)}) { const r = turnCombatSample({ profile: p, seconds: 36000, fights: ${chain}, seed: sd, skill: ${J(skill)} });
-        K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; C += r.closeWins; }
-      return { K, D, T, F, C }; })()`);
+        K += r.kills; D += r.deaths; T += r.totalHeroTurns; F += r.completedFights; C += r.closeWins; R += r.rises || 0; }
+      return { K, D, T, F, C, R }; })()`);
     if (r.K + r.D < n * chain) throw new Error(`${id} ${k} ${pl}: ${n * chain - r.K - r.D} fight(s) never ended (a stalemate the win rate would hide)`);
     const win = r.K / Math.max(1, r.K + r.D);
-    out[pl] = { win: Math.round(win * 1000) / 1000, turns: r.F ? Math.round(10 * r.T / r.F) / 10 : null, fights: r.K + r.D, close: r.K ? Math.round(1000 * r.C / r.K) / 1000 : null, attempts: win > 0 ? Math.min(20, Math.round(10 / win) / 10) : 20 };
+    out[pl] = { win: Math.round(win * 1000) / 1000, turns: r.F ? Math.round(10 * r.T / r.F) / 10 : null, fights: r.K + r.D, close: r.K ? Math.round(1000 * r.C / r.K) / 1000 : null, attempts: win > 0 ? Math.min(20, Math.round(10 / win) / 10) : 20,
+      ...(r.R ? { rises: r.R } : {}) };   // rises: Rattlebones get-ups (wren-z9-10-foes)
   }
   if (core.errors.length) throw new Error(`${id} ${k}: ${core.errors.slice(0, 3).join('; ')}`);
   return { ...out, L: p0.L, hpr: p0.hpr, foe: p0.foe, kind: p0.kind, ...(p0.big != null ? { big: p0.big } : {}) };
@@ -431,6 +459,12 @@ export function printBudget(rep) {
     for (const pl of Object.keys(BOT)) if (r.perHero[hs[0]][pl]) console.log('  ' + `${pl} bot w/t/p`.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
     for (const pl of Object.keys(LIFT_PLAYERS)) if (r.perHero[hs[0]][pl]) console.log('  ' + 'casual, Infuses every piece'.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
     for (const pl of Object.keys(WIDE)) if (r.perHero[hs[0]][pl]) console.log('  ' + pl.padEnd(28) + hs.map(h => pc(r.perHero[h][pl].win)).join('/'));
+    // a `types` row (wren-z9-10-foes): each foe type's wins, and how often a Rattlebones got up (the casual's fights)
+    if (r.perHero[hs[0]].byType) for (const ty of Object.keys(r.perHero[hs[0]].byType)) {
+      const bt = h => r.perHero[h].byType[ty], pls = Object.keys(bt(hs[0])).filter(pl => pl !== 'foe');
+      console.log('  ' + `by type: ${ty}`.padEnd(28) + pls.map(pl => `${pl} ${hs.map(h => pc(bt(h)[pl].win)).join('/')}`).join('  ')
+        + (hs.some(h => bt(h).casual.rises) ? `  rises (casual) ${hs.map(h => `${bt(h).casual.rises || 0}/${bt(h).casual.fights}`).join(' ')}` : ''));
+    }
     // closest to death: the share of won boss fights where the hero fell under half health (a good player; aim 20-35% at Champions)
     if (r.foe === 'boss' && r.perHero[hs[0]].good.close != null) console.log('  ' + 'good wins under half HP %'.padEnd(28) + hs.map(h => pc(r.perHero[h].good.close)).join('/'));
   }
