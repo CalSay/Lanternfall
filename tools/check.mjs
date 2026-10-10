@@ -18366,7 +18366,8 @@ if (section('stage-no-swarm-shrink (browser)')) try {
 } catch (e) { fail('stage-no-swarm-shrink crashed: ' + (e.stack || e)); }
 
 // ==== actor-scale (ruling #328, docs/design/route-s/ruling.md "Build card spec: actor-scale"): heroes, foes, bosses, adds, gather nodes
-// and beasts draw ACTOR_K = 1.5 times bigger against unchanged scenery on landscape stages at a whole-step zoom of 2 or more (G1). There
+// and beasts draw ACTOR_K = 2 times bigger (bigger-heroes) against unchanged scenery on landscape stages at a whole-step zoom of 2 or
+// more (G1), and 3x on a roomy zoom-1 stage (1024x768; 62-stage zoom1K). There
 // no actor's drawn box meets the HP plates, the place line, the turn line, the whose-turn banner, the Grit row, the boss strip or the
 // stage buttons, and the hero stands 16 stage px or more from the foe (G2). A crowd of foes (a pack, a boss with adds), a zoom-1 stage
 // (740x360) and portrait keep today's size (G2, G3, G4). save-late.json; the game held (ticks off, the turn engine paused) while each
@@ -18388,7 +18389,7 @@ if (section('actor-scale (browser)')) try {
       return { R, ui, st: { ZM: st.ZM, AK: st.AK, ZA: st.ZA, foes: st.foes }, heroSt: st.heroSt, mob: mob && mob.key }; })()`;
     const cross = (a, b) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
     try {
-      for (const [w, h, dpr, ak] of [[1280, 720, 1, 1.5], [1366, 640, 1, 1.5], [1920, 1080, 1, 1.5], [740, 360, 2, 1], [360, 740, 2, 1]]) {
+      for (const [w, h, dpr, ak] of [[1280, 720, 1, 2], [1366, 640, 1, 1.5], [1920, 1080, 1, 2], [1024, 768, 1, 3], [1000, 768, 1, 3], [740, 360, 2, 1], [360, 740, 2, 1]]) {
         const tag = `${w}x${h}`, touch = w < 1000;
         const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
         await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
@@ -18424,7 +18425,9 @@ if (section('actor-scale (browser)')) try {
           assert(!!(r && r.R.hero && r.R.foes.length === 1), `${tag} ${name}: the turn fight settles with the hero and one foe on the stage (${r ? JSON.stringify({ hero: !!r.R.hero, foes: r.R.foes.length }) : 'never settled'})`);
           if (!r || !r.R.hero || !r.R.foes.length || ak === 1) continue;
           const hero = r.R.hero, foe = r.R.foes[0], z = r.st.ZM;
-          assert(hero.h / r.st.ZA >= 85, `${tag} ${name}: the hero draws 1.5x (${Math.round(hero.h)} CSS px tall, ${Math.round(hero.h / r.st.ZA)} actor px)`);
+          // bigger-heroes: classic Tobin's sword and the Elder Moss Slime need more than 1280x720's width at 2x (62-stage pairWide)
+          if (w === 1280 && name === 'Tobin, Elder Moss Slime') assert(r.st.AK === 1.5, `${tag} ${name}: a pair too wide for the stage at 2x draws at 1.5x (AK ${r.st.AK})`);
+          assert(hero.h / r.st.ZA >= 85, `${tag} ${name}: the hero draws ${ak}x (${Math.round(hero.h)} CSS px tall, ${Math.round(hero.h / r.st.ZA)} actor px)`);
           const gap = (foe.x - hero.x - hero.w) / z;
           assert(gap >= 16, `${tag} ${name}: the hero stands ${Math.round(gap)} stage px from the foe, 16 or more (G2)`);
           // the banner, raised as a turn starts (the game is held, so it stays up)
@@ -18457,11 +18460,13 @@ if (section('actor-scale (browser)')) try {
           ['a boss with adds', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; setActivity("fight"); fightBoss = false; setZone(8); S.kills = ZONE_FIGHTS; challenge(); mob.max = 1e15; mob.hp = mob.max * 0.3; setTimeout(() => { for (const f of combatFoes()) f.hp = f.max = 1e15; }, 400)'],
         ]) {
           await X(`globalThis.__hold = 0; globalThis.__tp = 0; ${src}; true`); await page.waitForTimeout(2500);
-          const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, ZA: s.ZA, ZM: s.ZM }; })()');
+          const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, ZA: s.ZA, ZM: s.ZM, GY: s.GY }; })()');
           assert(c.n >= 2 && c.AK === 1 && c.ZA === c.ZM, `${tag} ${name}: a crowd of foes draws at today's size (${JSON.stringify(c)})`);
           await X('TURN_TUNE.on = true; COMBAT_TUNE.single = 1; COMBAT_TUNE.sizes = 1; COMBAT_TUNE.packSize = 3; fightBoss = false; setZone(1); true'); await page.waitForTimeout(1500);
-          const one = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK }; })()');
-          assert(one.n === 1 && one.AK === ak, `${tag} ${name}: the next one-foe fight is drawn 1.5x again (${JSON.stringify(one)})`);
+          const one = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, GY: s.GY }; })()');
+          // bigger-heroes (judge C1): the ground stays put when a crowd comes and goes (the scenery's ground line, stage px)
+          assert(one.GY === c.GY, `${tag} ${name}: the ground line stays at ${one.GY} stage px with a crowd and without (crowd ${c.GY})`);
+          assert(one.n === 1 && one.AK === ak, `${tag} ${name}: the next one-foe fight is drawn ${ak}x again (${JSON.stringify(one)})`);
         }
         assert(!errs.length, `${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();

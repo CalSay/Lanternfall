@@ -178,7 +178,7 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
 .stagebox .hud.vs .hud-zone .zname { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.1; overflow-wrap: anywhere; }
 /* the turn banner owns the middle of the stage while it shows; toasts and the strip wait out its short pause */
 .stagebox.tc-on .toasts { opacity: 0; transition: opacity .1s; }
-/* actor-scale: heroes and foes drawn 1.5x (62-stage sets .actor-k) stand tall enough to reach the middle of the stage, so the
+/* actor-scale: heroes and foes drawn bigger (2x, 62-stage sets .actor-k) stand tall enough to reach the middle of the stage, so the
    whose-turn banner takes the turn line's spot under the place line (turn-banner-clears-plate) instead of crossing their heads */
 .stagebox.actor-k .tv-turncard { top: calc(var(--vs-zb, 0px) + 30px); }
 .stagebox.vs-on .toasts:not(.over-menu) { top: max(calc(var(--vs-b, 54px) + 22px), var(--vs-zb, 0px)); }   /* under the bars and the place line, not over them */
@@ -30383,14 +30383,27 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // draw ACTOR_K times bigger against unchanged scenery. The stage zoom ZS (pickZoom, whole steps) sets the scenery:
   // SWS x SHS stage px, built SCH tall with its ground on GYS. Everything else on the stage (actors, effects, lights, the
   // layout) lives in actor px: SW x SH, ground GY, drawn at ZM = ZS * AK CSS px per actor px. AK is ACTOR_K on landscape
-  // stages and 1 in portrait until UX-L1. Nearest-neighbour: an art px of a 96 px hero is 1.5 x ZS CSS px (3 at 1280x720).
+  // stages and 1 in portrait until UX-L1. Nearest-neighbour: an art px of a 96 px hero is ACTOR_K x ZS CSS px (4 at 1280x720).
   // ACTOR_K1, a stage at zoom 1 (a phone on its side, 740x360): 1 (gate G3). At 1.5 the heroes' heads ran under the turn
   // line, the Grit row and a foe trick's line, and the timing bar crossed their feet. A crowd (2 or more foes on the stage:
   // a Deepwell pack, boss adds, the raid-only real-time packs) keeps today's size too, as the zoom steps out for it (zoomStep):
   // at 1.5 a pack of wide foes left no room for the hero's 16 px and 15% overlap (G2). syncPack resizes when it changes.
   // While AK > 1 the stage box carries .actor-k (20-stage.css: the whose-turn banner takes the turn line's spot, over the heads).
-  const ACTOR_K = 1.5, ACTOR_K1 = 1;
-  let ZS = 1, AK = 1, SWS = 0, SHS = 0, GYS = 1, crowd = false;
+  // bigger-heroes (Cal, 10 Oct: "Heroes need to be bigger"): ACTOR_K 2, so an art px of route S art is a whole 2 CSS px at
+  // 1280x720 (3 at 1920x1080). A roomy stage that still draws at zoom 1 (1024x768, a narrow browser window: ROOMY_H CSS px tall
+  // or more) takes the largest of ACTOR_KR whose actor stage stays at least ACT_MIN_W actor px wide; a phone on its side (740x360)
+  // is shorter and keeps ACTOR_K1. At 2x or more the ground drops to GROUND_BIG of the stage (the scenery is built taller and runs
+  // off the bottom, as on a short strip), so the heads clear the place line, the turn line and the banner. A stage too short for
+  // that (1366x640: the hero's HERO_BOX actor px would reach above TOP_UI CSS px under the stage's top) keeps ACTOR_K_SHORT.
+  const ACTOR_K = 2, ACTOR_K_SHORT = 1.5, ACTOR_K1 = 1, ACTOR_KR = [2, 3], ROOMY_H = 480, ACT_MIN_W = 225, GROUND_BIG = 0.86, HERO_BOX = 102, TOP_UI = 156;
+  const fits = (h, z) => h * GROUND_BIG - HERO_BOX * z >= TOP_UI;
+  const zoom1K = (w, h) => { let k = ACTOR_K1; if (h >= ROOMY_H) for (const c of ACTOR_KR) if (w / c >= ACT_MIN_W && fits(h, c)) k = c; return k; };
+  // soloK: the scale a lone foe's fight takes on this stage; its steps down for a pair too wide for it (pairK), largest first
+  const soloK = (w, h) => !LAND_Q.matches ? 1 : ZS === 1 ? zoom1K(w, h) : fits(h, ZS * ACTOR_K) ? ACTOR_K : ACTOR_K_SHORT;
+  const stepsK = k0 => k0 === 3 ? [3, 2, 1] : k0 === 2 ? (ZS === 1 ? [2, 1] : [2, ACTOR_K_SHORT]) : [k0];
+  // pairK: the step a wide pair takes (0: none). The ground (GYS, SCH, tall) follows soloK, not crowd or pairK, so it never
+  // moves mid-fight when adds come (judge, bigger-heroes).
+  let ZS = 1, AK = 1, SWS = 0, SHS = 0, GYS = 1, crowd = false, pairK = 0;
   const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_WT = 216, ZOOM_H = 196, SOLO_MIN_W = 300;
   // S6-E (combat-2 2.5): the width floor rises x1.4 for a swarm zone or a boss with 3+ adds (zoomX), one step out,
   // chosen per zone or boss fight (sceneReset, a boss's first pack), never between packs of one zone.
@@ -30449,7 +30462,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     if (w === CW && h === CH && dpr === DPR && cv.width === Math.round(w * DPR)) return;
     DPR = dpr; CW = w; CH = h;
     ZS = pickZoom(w, h, DPR);
-    AK = LAND_Q.matches && !crowd ? (ZS === 1 ? ACTOR_K1 : ACTOR_K) : 1;
+    const k0 = soloK(w, h);
+    AK = LAND_Q.matches && !crowd ? (pairK && pairK < k0 ? pairK : k0) : 1;
     ZM = ZS * AK;
     SWS = Math.round(w / ZS); SHS = Math.round(h / ZS);
     SW = Math.round(w / ZM); SH = Math.round(h / ZM);
@@ -30457,8 +30471,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     // Ground line 80% down (the compact-strip CSS assumes it). On a short strip the ground drops
     // nearer the bottom so the party stays under the HUD; the scenery is then built taller (SCH, its
     // own ground at 80%) and simply runs off the bottom edge. The actors' ground is the scenery's, to the nearest actor px.
-    GYS = SHS >= 210 ? Math.round(SHS * 0.8) : Math.round(Math.max(SHS * 0.8, SHS - 14));
-    SCH = SHS >= 210 ? SHS : Math.round(GYS / 0.8);
+    GYS = k0 >= 2 ? Math.round(SHS * GROUND_BIG) : SHS >= 210 ? Math.round(SHS * 0.8) : Math.round(Math.max(SHS * 0.8, SHS - 14));
+    SCH = SHS >= 210 && k0 < 2 ? SHS : Math.round(GYS / 0.8);
     GY = Math.round(GYS / AK);
     // Tall stages keep a floor band of 76 CSS px or more under the ground line: the ability button
     // and the small stage buttons move down into it (20-stage.css, .stage.tall). There the upper
@@ -30561,6 +30575,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   function refreshParty() { layoutDirty = true; }   // the hero stands alone
   function layout() {
     layoutDirty = false;
+    const pk = pairStep(); if (pk !== pairK) { pairK = pk; CW = 0; resize(); return; }
     const cells = {}, used = {};
     order = target() === 'node' ? [hero] : [hero];
     for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; a.col = c.col; a.lane = c.lane; used[c.col + ':' + c.lane] = 1; }
@@ -30574,8 +30589,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     // (the upper lane's half-column step counts toward the room, so nobody leaves the left edge)
     // The front column stands at PARTY_X1 (a little less on narrow stages), and further back when a
     // big foe (an elder, the wyrm, a tree node) would stand on it: its right edge stops 8 px into the foe's box.
+    // At 2x or more (bigger-heroes) a wide melee hero (Tobin's sword) may stand back to SW * 0.12, so it keeps its 16 px from the foe.
     const hf = hero.fr && hero.fr.idle0, fl = frontLeft(), reach = fl == null ? 1e9 : AK > 1 ? fl - heroReach() : fl + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16);
-    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (AK > 1 ? 0.2 : packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
+    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (AK >= 2 ? 0.12 : AK > 1 ? 0.2 : packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
     const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
     const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
     const laneX = Math.round(Math.max(16, D * 0.46));
@@ -30618,7 +30634,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // heroArtDraw hands back one shared record (hero._f is the same object), so its frame is read, then the record put back
   // as it was; the reach is kept per hero art id once that art has loaded
   const reachOf = new Map();
-  function heroReach() {
+  function heroReach(k = AK) {
     const id0 = typeof heroArtId === 'function' && heroArtId(), id = id0 && (typeof wrenSOn === 'function' && wrenSOn() ? id0 + ':s' : id0);   // route S Wren reaches as drawn (64l)
     let r = id ? reachOf.get(id) : undefined;
     if (r == null && id && reachC && typeof heroArtDraw === 'function') {
@@ -30628,7 +30644,24 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       if (keep && f === h) { h.c = keep.c; h.ox = keep.ox; h.oy = keep.oy; if (keep.lights) { h.lights.length = 0; h.lights.push(...keep.lights); } }
     }
     if (r == null) { const f = hero.fr && hero.fr.idle0; r = f ? rightEdge(f) - f.ox : 16; }
-    return r + Math.ceil(GAP_K / AK);
+    return r + Math.ceil(GAP_K / k);
+  }
+  // bigger-heroes: a hero and a lone foe that need more than the stage's width at its scale (classic Tobin's sword against the
+  // Elder Moss Slime at 1280x720) step down (stepsK: 2 to 1.5; at zoom 1, 3 to 2 to 1), so the hero keeps GAP_K stage px from
+  // the foe (G2), as a crowd keeps today's size. Each step is read at its own actor width, so the answer does not change with
+  // the scale it picks: the hero at its leftmost (the stage's floor, or 64h's whole-art margin heroArtLeft) and the foe pushed
+  // to the stage's right edge. 0: no step.
+  function pairStep() {
+    if (!LAND_Q.matches || target() !== 'mob' || packN !== 1 || !CW) return 0;
+    const f = slots[0].fr && slots[0].fr.idle0, hf = hero.fr && hero.fr.idle0;
+    if (!f || !hf) return 0;
+    const id = typeof heroArtId === 'function' && heroArtId(), ks = stepsK(soloK(CW, CH)), art = id && typeof heroArtLeft === 'function' ? heroArtLeft(id) : hf.ox - leftEdge(hf) + 2;
+    for (let i = 0; i < ks.length; i++) {
+      const k = ks[i], sw = Math.round(CW / (ZS * k)), left = Math.max(Math.round(sw * 0.12), art);
+      const foeL = sw - 6 - f.c.width + leftEdge(f) - (CH - GYS * ZS >= 76 ? 0 : Math.round(50 / (ZS * k)));   // the stage's own floor band, not tall (it rounds with AK)
+      if (left + heroReach(k) <= foeL || i === ks.length - 1) return i ? k : 0;
+    }
+    return 0;
   }
   // First opaque column of a baked frame (cached per canvas): the sprite's real left edge.
   const leftEdges = new WeakMap();
@@ -30692,7 +30725,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   let packList = null, packN = 0, packBoss = false, packDirty = false, colX0 = 0, lastFL = null;
   const foePad = () => (tall || target() === 'node' ? 0 : Math.round(50 / ZM));
   const gSpot = () => target() === 'node' && typeof gatherSpot === 'function' ? gatherSpot(SW, GY) : null;
-  const soloX = () => { const g = gSpot(); return g ? g.x : Math.round(SW * (target() === 'node' ? 0.68 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0))); };
+  const soloX = () => { const g = gSpot(); return g ? g.x : Math.round(SW * (target() === 'node' ? 0.68 : AK >= 2 && target() === 'mob' ? 0.95 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0))); };   // 2x: as far right as its art allows (bigger-heroes)
   function refreshFoe() {
     const tg = target();
     if (tg === 'mob') { syncPack(); return; }
@@ -36116,7 +36149,7 @@ let lookIconURL, looksPreview, lookCritterDraw;
 //   heroArtUnrle([x0, y0, w, h, rle]) -> { w, h, idx }   the decoder, for other HERO_ART-format data (HUNT_ART)
 //   heroArtPreview(cv, id) -> bool   the camp pose, feet at the bottom centre of the canvas (the hero picker and the camp switch; W1-D)
 //   heroArtPortraitURL(id) -> data URL of a 28x28 crop of the camp pose's head (the header portrait; 1 art px = 1 CSS px)
-var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL, heroArtPreview, heroArtUnrle;
+var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL, heroArtPreview, heroArtUnrle, heroArtLeft;
 {
   const D = typeof HERO_ART !== 'undefined' ? HERO_ART : null;
   const AX = 96, AY = 132, CUT = 118;
@@ -36505,6 +36538,8 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
   }
   const now = () => (typeof T === 'number' ? T : 0);
   const go = s => { ST.s = s; ST.t0 = now(); ST.hitT = -1; };
+  // the leftmost the stage may stand the hero (actor px from the stage's left): its widest pose stays in view (62-stage pairWide)
+  heroArtLeft = id => D && D.heroes[id] ? set(id).left + 2 : 0;
   heroArtStage = function (g, a, x, alpha) {
     const id = heroArtId(); if (!id || !ANIMS[id]) return false;
     const t = now(), A = ANIMS[id], tg = typeof target === 'function' ? target() : 'mob';
@@ -36537,7 +36572,7 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
       if (frame >= an.f.length) { go(rest); frame = null; }
     }
     // The art is wider than the baked sprites: on a narrow stage the whole hero (and Wren's bat) stays in view.
-    x = Math.max(x, set(id).left + 2);
+    x = Math.max(x, heroArtLeft(id));
     // noFly: the stage fires its own arrow or bolt at the target (62-stage fire()), so the art's in-flight one is skipped
     const info = heroArtDraw(g, id, ST.s, t - ST.t0, x, a.hy + a.dy, { frame, flameT: t, alpha, noFly: true });
     if (!info) return false;
@@ -36722,7 +36757,7 @@ var conceptPortraitURL, portraitsClassic;
 // back today's Wren (64h) and today's arrows.
 //
 // Scale: 0.5 x ACTOR_K logical px per art px, that is 0.5 actor px (62-stage draws actors ACTOR_K times bigger). At 1 device px
-// per art px or more (1280x720: 1.5 CSS px, 1920x1080: 2.25) the frame is drawn nearest-neighbour; below 1 (740x360 on DPR 1:
+// per art px or more (1280x720: 2 CSS px, 1920x1080: 3, 1024x768: 1.5) the frame is drawn nearest-neighbour; below 1 (740x360 on DPR 1:
 // 0.5) it is downscaled once, with smoothing, into a cached canvas and drawn 1:1. Frames land on whole device px.
 // Timing (the spike's): attack and abilities 900 ms, the release frame on the stage's shot (its wind fits the last two frames
 // before the release, 62-stage WIND); parry and dodge 660 ms; hit 540 ms; defeat 2080 ms, the last frame held. A timed ability
