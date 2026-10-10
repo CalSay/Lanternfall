@@ -115,6 +115,7 @@ const WEIGHT = {
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
+  'hero queue (hero-queue)': 9,   // 8 s locally alone (hero-queue, 2026-10-10)
   'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
   'new-style screens (browser)': 36   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
 };
@@ -654,7 +655,7 @@ if (section('hero packs (hero-packs)')) try {
       return { cover: r ? c.firstChild.textContent : null, full: !!r && r.left <= st.left && r.top <= st.top && r.right >= st.right && r.bottom >= st.bottom };
     });
     const later = s.packs.filter(p => p.f === TF && p.hero === 'wren' && !p.core).map(p => p.id), coreOf = h => `hero:HERO_TEST.${h}.core`;
-    const until = async (fn, cap = 10000) => { for (const t0 = Date.now(); !fn() && Date.now() - t0 < cap;) await new Promise(r => setTimeout(r, 100)); };   // files load one at a time
+    const until = async (fn, cap = 10000) => { for (const t0 = Date.now(); !fn() && Date.now() - t0 < cap;) await new Promise(r => setTimeout(r, 100)); };   // files load a few at a time
     try {
       // 1. a Wren save boots with Wren's core only: her core moves are in as the source has them, her other moves are asked for after
       //    boot, and Tobin's and Pip's packs are never asked for
@@ -666,8 +667,8 @@ if (section('hero packs (hero-packs)')) try {
           ready: [artHeroReady('wren', 'draw'), artHeroReady('wren', 'h1')].join(), held: gameHeld() })`.replace('window.__want', JSON.stringify(T.heroes.wren.moves)));
         const c = await look(page);
         assert(r.boot === coreOf('wren') && r.hero === 'wren' && r.moves === REG.core.wren.join() && r.same && r.others === 0 && r.ready === 'true,false' && !r.held && !c.cover
-          && asked[0] === coreOf('wren') && asked.length <= 2 && asked.every(id => [coreOf('wren'), later[0]].includes(id)) && !errs.length,
-          `hero packs: a Wren save boots with only her core moves in (${JSON.stringify(r)}, cover ${c.cover}), then asks for her other moves one file at a time (${asked.join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
+          && asked[0] === coreOf('wren') && asked.length <= 4 && asked.slice(1).every((id, i) => id === later[i]) && !errs.length,
+          `hero packs: a Wren save boots with only her core moves in (${JSON.stringify(r)}, cover ${c.cover}), then asks for her other moves in table order, at most three files at once (hero-queue: ${asked.join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
         // 1b. a move the stage asks for and then stops asking for (another hero, another screen) lets go within a second, still not in
         await X(page, `S.activity = 'fight', ui(true)`); await page.waitForTimeout(300);
         await X(page, `(() => { let n = 0; const f = () => { artHeroNeed('wren', 'h2'); if (++n < 10) requestAnimationFrame(f); }; requestAnimationFrame(f); })()`);
@@ -713,6 +714,82 @@ if (section('hero packs (hero-packs)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('hero packs crashed: ' + (e.stack || e)); }
+
+// ---- hero queue (card hero-queue; src/js/75-art-load.js wanted/pump, 64h heroArtMove; loading-screen-judge.md) ----
+// The shipped hero file's packs (Wren's route S moves) load in the order a new player's first fights need them: her Attack, Hit,
+// Parry and Dodge and the moves her slots draw before the next zone's pack, up to three hero files at once, a zone's pack alone;
+// a new game fetches every hero's Attack and Hit after the cores; slotting or learning an ability asks for its move at once.
+if (section('hero queue (hero-queue)')) try {
+  const s = buildSplit({ write: false }), heroP = s.packs.filter(p => p.hero), key = (h, m) => heroP.find(p => p.hero === h && p.moves.includes(m) && !p.core);
+  const wren = heroP.filter(p => p.hero === 'wren' && !p.core), gloom = s.packs.find(p => p.id === 'foe:gloomjaw');
+  const { pw, exe } = browserTools;
+  if (!wren.length || !gloom) fail(`hero queue: the build ships Wren's route S moves as hero packs and Gloomjaw as zone 2's pack (${wren.length} Wren packs, gloomjaw ${!!gloom})`);
+  else if (!pw || !exe) skipBrowser('hero queue: the fetch order: Playwright or Chromium not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const end = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(end);
+    const KEY = 'lanternfall.save.v5', early = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
+    const assets = pageAssets(s.file, s.html, Object.fromEntries(s.files.map(a => [a.name, a.text])));
+    const byName = new Map(s.packs.map(p => [p.name, p])), short = id => id.replace(/^hero:WREN_S\.wren\./, '');
+    const until = async (fn, cap = 10000) => { for (const t0 = Date.now(); !(await fn()) && Date.now() - t0 < cap;) await new Promise(r => setTimeout(r, 100)); };
+    // every pack in `hold` waits until gate.open(id); asked: the pack ids the page asked for after boot (hero packs but cores, and Gloomjaw), in order
+    const open = async ({ save = null, hold = [] } = {}) => {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), page = await ctx.newPage(), errs = [], asked = [], gates = {}, where = [];
+      await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+      if (save) await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...save, last: Date.now() })]);
+      page.on('pageerror', e => errs.push(String(e)));
+      page.on('request', q => { const p = byName.get(q.url().split('/').pop()); if (p && ((p.hero && !p.core) || p.id === gloom.id)) asked.push(p.id);
+        if (p && p.id === gloom.id) page.evaluate(() => window.__t.x(`S.zone + ' ' + S.kills + ' ' + target()`)).then(v => where.push(v), () => {}); });   // where the game was when it asked for Gloomjaw
+      await routePage(page, 'http://lf.test/', probe, assets);
+      for (const id of hold) { let go; const g = new Promise(r => { go = r; }); gates[id] = go;
+        await page.route('**/assets/' + s.packs.find(p => p.id === id).name, async q => { await g; return q.fallback(); }); }
+      await page.goto('http://lf.test/', { waitUntil: 'commit' });
+      await page.waitForFunction(() => !document.getElementById('lfBoot') && !!(document.getElementById('zName') || {}).textContent && !!window.__t, null, { timeout: 15000 }).catch(() => {});
+      return { page, errs, asked, where, release: (...ids) => { for (const id of ids) if (gates[id]) gates[id](); } };
+    };
+    const X = (page, js) => page.evaluate(j => window.__t.x(j), js);
+    const ids = ms => ms.map(m => key('wren', m).id);
+    try {
+      // 1. a Wren save in zone 1 (Echo Shot in her first slot): her Attack, Hit and Parry go first, three at once; Dodge and the slot's
+      //    Echo Shot next; Gloomjaw (zone 2) only once no hero file loads, and alone; her other moves after it
+      { const first = ids(['attack', 'hit', 'parry', 'dodge', 'echoshot']), all = wren.map(p => p.id);
+        const { page, errs, asked, where, release } = await open({ save: { ...early, zone: 1, maxZone: 1, kills: 0 }, hold: [...all, gloom.id] });   // kills 0: the fixture's 10 would call zone 1's boss
+        const map = await X(page, `['echo', 'moonvolley', 'powershot', 'twinshot'].map(a => heroArtMove('wren', a)).concat(heroArtMove('tobin', 'bash')).join()`);
+        assert(map === 'echoshot,moonlit,powershot,twinshot,bash', `hero queue: heroArtMove maps an ability to the move its hero file draws (Wren's echo -> echoshot, moonvolley -> moonlit; another hero's id as it is): ${map}`);
+        await until(() => asked.length >= 3); await page.waitForTimeout(600);
+        const a1 = asked.slice(), at = await X(page, `S.zone + ' ' + S.kills + ' ' + target()`);
+        assert(a1.join() === first.slice(0, 3).join(), `hero queue: a Wren save asks first for her Attack, Hit and Parry, three files at once, and nothing else while they load (${a1.map(short).join(', ')}; zone, kills and target ${at}${where.length ? '; at Gloomjaw ' + where.join() : ''})`);
+        // what the stage waits for has a slot more: a move it needs now starts while the queue's three still load
+        const dft = key('wren', 'defeat').id;
+        await X(page, `artHeroNeed('wren', 'defeat')`); await until(() => asked.length >= 4); await page.waitForTimeout(300);
+        assert(asked.slice(3).join() === dft, `hero queue: a move the stage waits for (Defeat) starts at once, while the queue's three files still load (${asked.slice(3).map(short).join(', ')})`);
+        release(...first.slice(0, 3), dft); await until(() => asked.length >= 6); await page.waitForTimeout(600);
+        const a2 = asked.slice(4);
+        assert(a2.join() === first.slice(3).join(), `hero queue: then her Dodge and the move her slot draws (Echo Shot), still before zone 2's pack (${a2.map(short).join(', ')})`);
+        release(...first.slice(3)); await until(() => asked.length >= 7); await page.waitForTimeout(600);
+        const a3 = asked.slice(6);
+        assert(a3.join() === gloom.id, `hero queue: then zone 2's pack (Gloomjaw), alone: no hero file starts while it loads (${a3.map(short).join(', ')})`);
+        // 2. slotting or learning an ability asks for its move at once, even while a zone's pack loads
+        await X(page, `emit('soloEquip', { hero: 'wren', slot: 1, id: 'deadeye' }), emit('abilityLearned', { hero: 'wren', id: 'moonvolley' })`);
+        await until(() => asked.length >= 9); await page.waitForTimeout(300);
+        const a4 = asked.slice(7);
+        assert(a4.join() === ids(['deadeye', 'moonlit']).join(), `hero queue: slotting Deadeye and learning Moonlit Volley ask for their moves at once, while zone 2's pack still loads (${a4.map(short).join(', ')})`);
+        release(...all, gloom.id);
+        await until(() => all.every(id => asked.includes(id)), 15000);
+        const dup = asked.filter((id, i) => asked.indexOf(id) !== i);
+        assert(all.every(id => asked.includes(id)) && !dup.length && !errs.length, `hero queue: then all her other moves load, each once (${asked.length} asked${dup.length ? '; twice: ' + dup.map(short).join(', ') : ''})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 3. a new game (no hero yet): after the cores, every hero's Attack and Hit (only Wren's ship) before zone 2's pack
+      { const { page, errs, asked, release } = await open({ hold: [...wren.map(p => p.id), gloom.id] });
+        await until(() => asked.length >= 2); await page.waitForTimeout(800);
+        const hero = await X(page, 'soloHero()'), a = asked.filter(id => id !== key('wren', 'victory').id);   // the picker's figure may ask for her camp pose
+        assert(hero === null && a.slice(0, 2).join() === ids(['attack', 'hit']).join() && !asked.includes(gloom.id) && !errs.length,
+          `hero queue: a new game, no hero picked yet (${hero}), asks for every hero's Attack and Hit before zone 2's pack (${asked.map(short).join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
+        release(...wren.map(p => p.id), gloom.id);
+        await page.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('hero queue crashed: ' + (e.stack || e)); }
 
 // ---- new-style screens (card ns-scenery-engine; docs/design/new-style/engine.md) ----
 // The pieces each screen needs (59n) match what the game really puts there, and the split build carries NS_ART's pictures in packs

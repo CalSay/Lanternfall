@@ -34,6 +34,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
   // turn-fight ability ids -> moves (24c); Twin Shot (passive) turns the Attack into its own move
   const ABIL = { powershot: 'powershot', barbed: 'barbed', pinning: 'pinning', huntmark: 'huntmark', volley: 'volley', echo: 'echoshot',
     batswarm: 'batswarm', deadeye: 'deadeye', sonic: 'sonic', shadowstep: 'shadowstep', moonvolley: 'moonlit', finalecho: 'finalecho' };
+  if (typeof heroArtMove === 'function') { const base = heroArtMove; heroArtMove = (id, ab) => (id === 'wren' && ABIL[ab]) || base(id, ab); }   // the queue (75-art-load) reads it
   // which arrow sprite each move shoots (fx3.js's R table: heavy for the big shots, the whistle head for Sonic Arrow)
   const ARROW = { powershot: 'heavy', deadeye: 'heavy', finalecho: 'heavy', sonic: 'sonic' };
   // a timed ability's frames per ring: [frames drawn while the ring closes, the release frame at contact]. Volley draws and
