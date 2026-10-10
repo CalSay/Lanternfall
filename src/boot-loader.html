@@ -17,7 +17,16 @@ var lfBoot = (function () {
   } catch (e) {}
   var boot = [], q = zone > road ? road - 34 + (zone - road - 1) % 35 : zone;   // past the road the scenery repeats every 35 zones
   for (k in packs) if (packs[k].h ? packs[k].c && packs[k].h === hero : packs[k].z.some(function (r) { return q >= r[0] && q <= r[1]; })) { boot.push(k); files[packs[k].f.split('/').pop()] = packs[k].b; }
-  var heroFiles = {};   // hero art constants by name: each hero file's page part registers its own (lfBoot.heroFile)
+  // Hero art constants by name, each as { <hero>: that hero's table }: each hero file's page part registers its own
+  // (lfBoot.heroFile, as it runs), which puts in the core pack that came before it, so the core is in before the next file runs.
+  var heroFiles = {}, plain = function (o) { return !!o && typeof o === 'object' && !Array.isArray(o); };
+  var putHero = function (id, data) {   // a hero pack's moves into its hero's moves (merged into what the page kept of each)
+    var p = packs[id], H = p && heroFiles[p.v] && heroFiles[p.v][p.h], M, m;
+    if (!H || !plain(data)) return false;
+    M = plain(H.moves) ? H.moves : (H.moves = {});
+    for (m in data) M[m] = plain(M[m]) && plain(data[m]) ? Object.assign(M[m], data[m]) : data[m];
+    return true;
+  };
   for (k in files) total += files[k];
   var mb = function (n) { return (n / 1e6).toFixed(1); };
   var line = function () {
@@ -36,7 +45,11 @@ var lfBoot = (function () {
   boot.forEach(function (id) { document.write('<script src="' + packs[id].f + '" onload="lfBoot.done(this)" onerror="lfBoot.fail(this)"><\/script>'); });
   return {
     packs: packs, road: road, boot: boot, zone: zone, hero: hero, heroFiles: heroFiles,   // road: the pack table covers zones 1 to road
-    heroFile: function (name, obj) { heroFiles[name] = obj; },
+    heroFile: function (name, obj, one) {
+      var t = {}; if (one) t[one] = obj; heroFiles[name] = one ? t : (obj && plain(obj.heroes) ? obj.heroes : {});
+      for (var id in art) if (packs[id] && packs[id].v === name) putHero(id, art[id]);
+    },
+    putHero: putHero,
     put: function (kind, key, data) { var id = kind + ':' + key; if (listen) listen(id, data); else art[id] = data; },
     // the game takes the packs that came before it ran, then every later one as it arrives
     take: function (fn) { listen = fn; var a = art; art = {}; for (var id in a) fn(id, a[id]); },

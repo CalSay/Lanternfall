@@ -39432,13 +39432,17 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
 //   artZoneReady(z) -> bool: every pack zone z shows is in (and, for one that came after boot, its pictures have decoded)
 // Hero packs (card hero-packs; tools/build.mjs heroPacks): a hero file's moves come by hero. The boot loader wrote the save's
 // hero's core pack; that hero's other moves load first after boot, and another hero's when the save has that hero (a new game,
-// with no hero yet, loads every hero's core). Each move goes in <file's constant>.heroes.<hero>.moves.<move> (merged into what the
-// page kept of it), then 'artPack' { id, kind: 'hero', key, hero, moves } is emitted: a drawer that must prepare its data (basE91
-// text, cutting frames) does it there. The code that draws a hero asks before it draws a move:
+// with no hero yet, loads every hero's core). Each move goes in its hero's moves (lfBoot.putHero: <file's constant>.moves, or
+// .heroes.<hero>.moves, merged into what the page kept of it). The save's hero's core is in the constant as soon as its file runs,
+// as in the inline page; a move that comes later emits 'artPack' { id, kind: 'hero', key, hero, moves }, and a drawer that must
+// prepare its data (basE91 text, cutting frames) does it there (the boot packs emit it too, when this file runs).
+// The code that draws a hero asks before it draws a move, every frame it draws it:
 //   artHeroNeed(hero, move) -> bool: true when the move is in (draw it); false: draw nothing for it (never a stand-in): the game
 //                              holds under a plain line over the stage, and the move loads before anything else, until it is in
+//                              or nothing has asked for it for half a second (the stage moved on: another hero, another screen)
 //   artHeroReady(hero, move) -> bool: the same answer, with no hold (true in the inline page, and for a move no pack holds)
-//   artHeroWait(fn)          -> fn(hero, move) returns false while a move that is in is not ready to draw yet (pictures decoding)
+//   artHeroWait(fn)          -> fn(hero, move) returns false while a move that is in is not ready to draw yet (pictures decoding);
+//                              it must turn true once it gives up (a picture that never decodes), or the hold never ends
 //   artHeroPacks(hero, move) -> the hero's pack ids (those holding that move, when named)
 var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [];
 {
@@ -39462,17 +39466,21 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     const isReady = id => ready[id] || (got[id] && id.startsWith('foe:') && framesDone(id.slice(4)) && (ready[id] = true));
     artZoneReady = z => artZonePacks(z).every(isReady);
     // ---- hero packs ----
-    const HF = LB.heroFiles || {}, waits = [], need = {};   // need: 'hero move' -> [hero, move] while the stage waits for it
+    const waits = [], need = {};   // need: 'hero move' -> [hero, move, when it was last asked for] while the stage waits for it
     artHeroPacks = (hero, move) => Object.keys(P).filter(id => P[id].h === hero && (!move || P[id].m.includes(move)));
     artHeroWait = fn => { if (typeof fn === 'function') waits.push(fn); };
     artHeroReady = (hero, move) => artHeroPacks(hero, move).every(id => got[id]) && waits.every(f => { try { return f(hero, move) !== false; } catch (e) { return true; } });
     artHeroNeed = (hero, move) => {
       if (artHeroReady(hero, move)) return true;
-      const k = hero + ' ' + move;
-      if (!need[k]) { need[k] = [hero, move]; queueMicrotask(recheck); setTimeout(pump, 0); }   // the cover goes up before this frame paints
+      const k = hero + ' ' + move, first = !need[k];
+      need[k] = [hero, move, Date.now()];
+      if (first) { queueMicrotask(recheck); setTimeout(pump, 0); }   // the cover goes up before this frame paints
       return false;
     };
-    const heroWaiting = () => { for (const k in need) if (artHeroReady(need[k][0], need[k][1])) delete need[k]; return Object.keys(need).length > 0; };
+    const heroWaiting = () => {
+      for (const k in need) if (Date.now() - need[k][2] > 500 || artHeroReady(need[k][0], need[k][1])) delete need[k];
+      return Object.keys(need).length > 0;
+    };
     const heroNow = () => { const out = []; for (const k in need) for (const id of artHeroPacks(need[k][0], need[k][1])) if (!out.includes(id)) out.push(id); return out; };
     const heroName = h => (typeof ROSTER === 'object' && ROSTER[h] && ROSTER[h].name ? ROSTER[h].name.split(' ')[0] : 'your hero');
     // o[k] holds basE91 text; it reads back as base64, decoded on the first read (21zz's getter, for a field that came late)
@@ -39487,10 +39495,8 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
       const i = id.indexOf(':'), kind = id.slice(0, i), key = id.slice(i + 1), late = booted;
       const done = more => { got[id] = true; if (!late || kind !== 'foe') ready[id] = true; delete failed[id]; delete stale[id]; emit('artPack', Object.assign({ id, kind, key }, more)); };
       if (kind === 'hero') {
-        const p = P[id], T = HF[p.v], H = T && T.heroes && T.heroes[p.h]; if (!H) return;
-        const M = H.moves || (H.moves = {}), plain = o => o && typeof o === 'object' && !Array.isArray(o);
-        for (const m of Object.keys(data)) M[m] = plain(M[m]) && plain(data[m]) ? Object.assign(M[m], data[m]) : data[m];
-        done({ hero: p.h, moves: Object.keys(data) });
+        if (typeof LB.putHero !== 'function' || !LB.putHero(id, data)) return;
+        done({ hero: P[id].h, moves: Object.keys(data) });
       } else if (kind === 'foe') {
         const F = typeof FOE_ART === 'object' && FOE_ART[key]; if (!F) return;
         for (const p of Object.keys(data.atlases || {})) { F.atlases[p] = data.atlases[p]; lazy(F.atlases, p); }
@@ -39521,12 +39527,15 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
 
     // ---- loading ----
     const wanted = () => {
-      const z = Math.max(1, S.zone | 0), a0 = zoneAreaIdx(z) * AREA_ZONES + 1, zs = [z, z + 1, z - 1];
-      for (let q = a0; q < a0 + 2 * AREA_ZONES; q++) zs.push(q);
-      // the save's hero's moves first, core then the rest (table order); with no hero yet, every hero's core
-      const h = typeof soloHero === 'function' ? soloHero() : null;
-      const out = Object.keys(P).filter(id => P[id].h && (h ? P[id].h === h : P[id].c)).sort((a, b) => P[b].c - P[a].c);
-      for (const q of zs) if (q >= 1) for (const id of artZonePacks(q)) if (!out.includes(id)) out.push(id);
+      const z = Math.max(1, S.zone | 0), a0 = zoneAreaIdx(z) * AREA_ZONES + 1, near = [z, z + 1, z - 1], area = [];
+      for (let q = a0; q < a0 + 2 * AREA_ZONES; q++) area.push(q);
+      // the save's hero's core (with no hero yet, every hero's core), the zones either side, then the hero's other moves (table
+      // order), then the rest of the area and the next one
+      const h = typeof soloHero === 'function' ? soloHero() : null, mine = Object.keys(P).filter(id => P[id].h && (h ? P[id].h === h : P[id].c));
+      const out = mine.filter(id => P[id].c), add = ids => { for (const id of ids) if (!out.includes(id)) out.push(id); };
+      for (const q of near) if (q >= 1) add(artZonePacks(q));
+      add(mine);
+      for (const q of area) add(artZonePacks(q));
       return out;
     };
     const due = id => !got[id] && !busy[id] && !stale[id] && !broken[id] && !(failed[id] && failed[id].at > Date.now());   // a stale file is gone for good

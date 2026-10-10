@@ -528,23 +528,29 @@ if (section('split build (asset-build)')) try {
 // No hero file ships yet (the route S wire cards register theirs), so this section proves the kind with a test hero file built
 // in memory from today's art (21y's HERO_ART, its poses as moves; nothing redrawn, nothing written).
 // heroPackCheck: a hero file's packs, table rows and page part (also run on every real hero entry by the split section).
+// A one-hero file (entry `hero`) is { moves, ... } with `core` a list; otherwise { heroes: { <hero>: { moves, ... } } } with `core` per hero.
+// (a function declaration: the split section above calls it before this line runs)
 function heroPackCheck(s, f, A, D) {
-  const mine = s.packs.filter(p => p.f === f), tag = f.replace(/-data-.*$/, '');
-  const want = Object.entries(D.heroes).flatMap(([h, H]) => [`${h}.core`, ...Object.keys(H.moves).filter(m => !A.core[h].includes(m)).map(m => `${h}.${m}`)]).map(k => `hero:${A.v}.${k}`);
+  const SOLO_IDS = vm.runInNewContext(/const SOLO_ORDER = (\[[^\]]*\])/.exec(fs.readFileSync(path.join(ROOT, 'src', 'js', '24b-data-solo.js'), 'utf8'))[1]);
+  const mine = s.packs.filter(p => p.f === f), tag = f.replace(/-data-.*$/, ''), one = typeof A.hero === 'string';
+  const HS = one ? { [A.hero]: D } : D.heroes, coreOf = h => (one ? A.core : A.core[h]);
+  assert(Object.keys(HS).every(h => SOLO_IDS.includes(h)), `hero packs: ${A.v} names only the game's heroes (${Object.keys(HS).join(', ')} of ${SOLO_IDS.join(', ')}), so the boot loader never loads a hero the game will not draw`);
+  const want = Object.entries(HS).flatMap(([h, H]) => [`${h}.core`, ...Object.keys(H.moves).filter(m => !coreOf(h).includes(m)).map(m => `${h}.${m}`)]).map(k => `hero:${A.v}.${k}`);
   assert(mine.map(p => p.id).join() === want.join(), `hero packs: ${A.v} has one core pack per hero and one pack per other move (${mine.length} packs: ${mine.slice(0, 4).map(p => p.id).join(', ')}...)`);
   const table = JSON.parse(s.html.match(/packs = (\{.*?\}), road = /)[1]);
   const bad = mine.filter(p => {
     let got = null; vm.runInNewContext(p.text, { lfArt: (kind, key, d) => { got = { id: kind + ':' + key, d }; } });
-    const H = D.heroes[p.hero].moves, t = table[p.id], ms = p.core ? A.core[p.hero] : [p.id.split('.').pop()];
+    const H = HS[p.hero].moves, t = table[p.id], ms = p.core ? coreOf(p.hero) : [p.id.split('.').pop()];
     return !got || got.id !== p.id || JSON.stringify(got.d) !== JSON.stringify(Object.fromEntries(ms.map(m => [m, A.load(H[m])])))
       || !new RegExp(`^${tag}-hero-${p.id.slice(5).replace(/\./g, '\\.')}\\.[0-9a-f]{10}\\.js$`).test(p.name)
       || !t || t.f !== 'assets/' + p.name || t.b !== p.bytes || t.z.length || t.h !== p.hero || t.c !== (p.core ? 1 : 0) || t.m.join() !== ms.join() || t.v !== A.v;
   });
   assert(!bad.length, `hero packs: each ${A.v} pack holds its moves as the source has them, under a hashed name, with its hero, moves and no zones in the loader's table (${bad.map(p => p.id).join(', ') || 'all ' + mine.length})`);
   const part = s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?)\\n// ---- src`))[1];
-  let reg = null; const kept = vm.runInNewContext(`${part}\n;${A.v}`, { lfBoot: { heroFile: (n, o) => { reg = n; } } });
-  const keepWant = { ...D, heroes: Object.fromEntries(Object.entries(D.heroes).map(([h, H]) => [h, { ...H, moves: A.keep ? Object.fromEntries(Object.entries(H.moves).map(([m, M]) => [m, A.keep(M)])) : {} }])) };
-  assert(JSON.stringify(kept) === JSON.stringify(keepWant) && reg === A.v, `hero packs: the page keeps ${A.v} with every field but the moves' data, and registers it for 75-art-load (lfBoot.heroFile ${reg})`);
+  let reg = null; const kept = vm.runInNewContext(`${part}\n;${A.v}`, { lfBoot: { heroFile: (n, o, h) => { reg = n + (h ? ' ' + h : ''); } } });
+  const keptHero = H => ({ ...H, moves: A.keep ? Object.fromEntries(Object.entries(H.moves).map(([m, M]) => [m, A.keep(M)])) : {} });
+  const keepWant = one ? keptHero(D) : { ...D, heroes: Object.fromEntries(Object.entries(D.heroes).map(([h, H]) => [h, keptHero(H)])) };
+  assert(JSON.stringify(kept) === JSON.stringify(keepWant) && reg === A.v + (one ? ' ' + A.hero : ''), `hero packs: the page keeps ${A.v} with every field but the moves' data, and registers it for 75-art-load (lfBoot.heroFile ${reg})`);
 }
 if (section('hero packs (hero-packs)')) try {
   const src = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\n*$/, '\n');
@@ -559,8 +565,28 @@ if (section('hero packs (hero-packs)')) try {
     ['a hero with no core list', { ...REG, core: { wren: REG.core.wren, tobin: REG.core.tobin } }, T, /names no core moves for pip/],
     ['a core move the hero lacks', { ...REG, core: { ...REG.core, wren: ['draw', 'jump'] } }, T, /wren's core moves jump are not in HERO_TEST\.heroes\.wren\.moves/],
     ['a move named core', REG, { ...T, heroes: { ...T.heroes, pip: { ...T.heroes.pip, moves: { ...T.heroes.pip.moves, core: [] } } } }, /core cannot name a hero or a move/],
-    ['no heroes table', REG, { v: 1 }, /needs a heroes table/]
+    ['no heroes table', REG, { v: 1 }, /needs a heroes table/],
+    ['a one-hero file with no moves', { ...REG, hero: 'wren', core: ['draw'] }, { v: 1 }, /needs its moves .* for wren/]
   ]) { let threw = ''; try { heroPacks({ f: TF, text }, A, D); } catch (e) { threw = String(e.message); } assert(re.test(threw), `hero packs: ${what} stops the build (${threw.slice(0, 100) || 'it built'})`); }
+  // a one-hero file (as Wren's route S file is shaped): the same packs, the page keeps { moves: {} , ... } and registers it with its hero
+  { const W = { v: 1, string: 'kept', moves: T.heroes.wren.moves }, WF = '21zw-data-herotest1.js', WREG = { v: 'HERO_ONE', kind: 'hero', hero: 'wren', core: REG.core.wren, keep: null, load: M => M };
+    const s1 = buildSplit({ write: false, art: { ...AREA_ART, [WF]: WREG }, extra: [{ f: WF, text: `// 21zw-data-herotest1: GENERATED by tools/check.mjs. Never shipped.\nconst HERO_ONE = ${JSON.stringify(W)};\n` }] });
+    heroPackCheck(s1, WF, WREG, W); }
+  // the boot loader puts the save's hero's core in the constant as the file registers (before the next file runs, as inline), merging a
+  // move's pack data into what the page kept of it
+  { const loader = s.html.match(/<script id="lfBootJs">([\s\S]*?)<\/script>/)[1], wrote = [];
+    const ctx = { localStorage: { getItem: () => JSON.stringify({ zone: 1, solo: { hero: 'wren' } }) }, document: { write: t => wrote.push(t), getElementById: () => null } };
+    vm.runInNewContext(loader, ctx);
+    const core = s.packs.find(p => p.id === 'hero:HERO_TEST.wren.core');
+    vm.runInNewContext(core.text, ctx);
+    const part = s.html.match(/\/\/ ---- src\/js\/21zx-data-herotest\.js ----\n([\s\S]*?)\n\/\/ ---- src/)[1];
+    const H = vm.runInNewContext(`${part}\n;HERO_TEST`, ctx), got = Object.keys(H.heroes.wren.moves).join();
+    const k = { heroes: { wren: { moves: { a: { box: 1 }, b: [1] } } } }, kf = 'HERO_K';
+    ctx.lfBoot.packs['hero:HERO_K.wren.core'] = { h: 'wren', v: kf, c: 1, m: ['a', 'b'], z: [] };
+    ctx.lfBoot.heroFile(kf, k); ctx.lfBoot.putHero('hero:HERO_K.wren.core', { a: { atlas: 'x' }, b: [2] });
+    assert(wrote.some(t => t.includes(core.name)) && got === REG.core.wren.join() && JSON.stringify(H.heroes.wren.moves.draw) === JSON.stringify(T.heroes.wren.moves.draw)
+      && JSON.stringify(k.heroes.wren.moves) === '{"a":{"box":1,"atlas":"x"},"b":[2]}',
+      `hero packs: the boot loader writes the save's hero's core and puts it in the constant as the file registers (${got}); a kept move takes its pack's fields (${JSON.stringify(k.heroes.wren.moves)})`); }
   // the boot lines: a hero's core counts in both (the heaviest hero, also for a new game), a move outside the core counts in neither
   const sizes = new Map(), size = x => (sizes.has(x) ? sizes.get(x) : (sizes.set(x, wire(x)), sizes.get(x))), MBs = n => (n / 1e6).toFixed(2);
   const r = loadReport(s, { size }), r0 = loadReport(base, { size }), heroes = Object.keys(T.heroes);
@@ -578,8 +604,9 @@ if (section('hero packs (hero-packs)')) try {
     assert(!m2.fails.some(f => /^boot set/.test(f)) && near(m2.zone1.counted, r.zone1.counted), `hero packs: a move outside the core (1 MB more) is not in the boot set (${m2.fails.join('; ') || 'no boot line fails'})`); }
   // a reader of a shipped hero file's constant asks 75-art-load before it draws (a move may come after boot)
   const heroV = Object.entries(AREA_ART).filter(([, A]) => A.kind === 'hero').map(([f, A]) => A.v);
+  const code = f => src(f).split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
   const loose = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js') && !isAsset(src(f)) && !['21zz-art-b91.js', '75-art-load.js'].includes(f))
-    .filter(f => heroV.some(v => new RegExp(`\\b${v}\\b`).test(src(f))) && !/\bartHero(Need|Ready)\(/.test(src(f)));
+    .filter(f => heroV.some(v => new RegExp(`\\b${v}\\b`).test(code(f))) && !/\bartHero(Need|Ready)\(/.test(code(f)));
   assert(!loose.length, `hero packs: every file that reads a hero file's moves (${heroV.join(', ') || 'none ships yet'}) asks artHeroNeed or artHeroReady (${loose.join(', ') || 'yes'})`);
   // the inline page: no loader, every move is in
   { const r = vm.runInNewContext(`${src('75-art-load.js')}\n;[artHeroNeed('wren', 'h1'), artHeroReady('pip', 'cast'), artHeroPacks('wren').length].join()`, {});
@@ -591,7 +618,7 @@ if (section('hero packs (hero-packs)')) try {
     const end = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(end);
     const KEY = 'lanternfall.save.v5', early = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
     const assets = pageAssets(s.file, s.html, Object.fromEntries(s.files.map(a => [a.name, a.text])));
-    const heroOf = name => { const p = s.packs.find(q => q.name === name); return p && p.f === TF ? p : null; };   // the test file's packs (a shipped hero file's load too)
+    const heroOf = name => { const p = s.packs.find(q => q.name === name); return p && p.f === TF ? p : null; };   // only the test file's packs (a shipped hero file loads too, unrecorded)
     // hold: every pack of these ids waits until release(); asked: the hero pack ids the page asked for, in order
     const open = async ({ save = null, hold = [] } = {}) => {
       const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), page = await ctx.newPage(), errs = [], asked = [];
@@ -626,6 +653,14 @@ if (section('hero packs (hero-packs)')) try {
         assert(r.boot === coreOf('wren') && r.hero === 'wren' && r.moves === REG.core.wren.join() && r.same && r.others === 0 && r.ready === 'true,false' && !r.held && !c.cover
           && asked[0] === coreOf('wren') && asked.length <= 2 && asked.every(id => [coreOf('wren'), later[0]].includes(id)) && !errs.length,
           `hero packs: a Wren save boots with only her core moves in (${JSON.stringify(r)}, cover ${c.cover}), then asks for her other moves one file at a time (${asked.join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
+        // 1b. a move the stage asks for and then stops asking for (another hero, another screen) lets go within a second, still not in
+        await X(page, `S.activity = 'fight', ui(true)`); await page.waitForTimeout(300);
+        await X(page, `(() => { let n = 0; const f = () => { artHeroNeed('wren', 'h2'); if (++n < 10) requestAnimationFrame(f); }; requestAnimationFrame(f); })()`);
+        await page.waitForTimeout(250);
+        const on = { c: (await look(page)).cover, t: await X(page, 'gameHeld()') };
+        await page.waitForTimeout(1200);
+        const off = { c: (await look(page)).cover, t: await X(page, 'gameHeld()'), in: await X(page, `artHeroReady('wren', 'h2')`) };
+        assert(on.c === 'Loading Wren' && on.t && !off.c && !off.t && !off.in, `hero packs: a move asked for and then no longer asked for holds (${JSON.stringify(on)}) and lets go once nothing asks, still not in (${JSON.stringify(off)})`);
         // 2. the stage needs a move still loading: the game holds under a plain line over the stage and nothing moves; the first frame
         //    after the hold draws the move (decoded from its pack, not a stand-in)
         await X(page, `S.activity = 'fight', ui(true)`); await page.waitForTimeout(300);
