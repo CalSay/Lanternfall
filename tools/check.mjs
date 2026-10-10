@@ -18497,6 +18497,7 @@ if (section('wren route S (browser)')) try {
           await page.waitForFunction(() => window.__t && window.__t.x('wrenSOn()'), null, { timeout: 20000 }).catch(() => {});
           const boot = await X(`lfBoot.boot.filter(id => id.startsWith('hero:')).join()`);
           await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); setActivity('fight'); true`);
+          await page.waitForFunction(() => window.__t.x("target() === 'mob'"), null, { timeout: 20000 }).catch(() => {});   // on the fight, not a gathering scene
           await page.waitForTimeout(400);
           await X(`emit('soloParry', { res: 'parry' }); true`);
           await page.waitForTimeout(300);

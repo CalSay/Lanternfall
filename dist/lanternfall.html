@@ -36832,14 +36832,14 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     if (typeof heroArtStage === 'function') {
       const base = heroArtStage;
       heroArtStage = function (g, a, x, alpha) {
-        if (!routeS()) return base(g, a, x, alpha);
+        if (!routeS()) { ST.heldT = -1; return base(g, a, x, alpha); }   // a hold that ends off route S (Classic, another hero, hunting) is not carried
         if (!IMG.idle) {   // the idle decoding (a moment at boot, nothing drawn); split build with Classic on at boot: not fetched, so held for
           if (bad.idle) return base(g, a, x, alpha);
           if (typeof atlasOf(IDLE[0]) !== 'string') return need(IDLE[0]) ? base(g, a, x, alpha) : true;
           want(IDLE[0]); return true;
         }
         // split build: held until the move is in, nothing drawn; the move's clock waits with the game, so it plays from its start
-        if (ST.heldT >= 0) { const d = now() - ST.heldT; ST.t0 += d; if (ST.hitT >= 0) ST.hitT += d; ST.heldT = -1; }
+        if (ST.heldT >= 0) { const d = now() - ST.heldT; if (d >= 0 && d <= 0.25) { ST.t0 += d; if (ST.hitT >= 0) ST.hitT += d; } ST.heldT = -1; }   // held frames only (90-boot caps a frame at 0.1 s)
         const p = pick(a);
         if (!need(p.mv)) { ST.heldT = now(); return true; }
         if (!IMG[p.mv]) { want(p.mv); p.mv = IDLE[0]; p.i = IDLE[1]; }   // inline: still decoding (or it failed)
