@@ -20,6 +20,8 @@ let stageDeco = null;
 // Ability effects (62b-fx.js): stageFx.swing(x, y) as the hero's swing fires, stageFx.aim(s) the foe's chest, and
 // stageFx.draw(ctx, phase, v), phase 'back' (before the actors), 'fx' (after the rings and particles) or 'dev' (device px, over the HUD).
 let stageFx = null;
+// A k pack foe's own effects (62c-foefx.js, the Scenario Thorn Imp): foeFx.has(s), back(g, s, f, x, y, cam), front(g, s, cam), hit(s, x, y).
+let foeFx = null;
 let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
 {
   const A = ANIM;
@@ -544,7 +546,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   }
   function bindSlot(s, m) {
     s.m = m; s.st = 0; s.t = 0; s.dx = 0; s.jx = 0; s.jy = 0; s.dv = 0; s.dvOn = false; s.dvA = null; s.kb = 0; s.kn = 0; s.fl = 0;
-    s.hm = null; s.hpF = null; s.trail = 1; s.dF = null; s.aq = null; s.at = 0; s.ar = 1; s.ax = 0; s.ae = 0; s.amv = ''; s.amr = null; s.al = null; s.hurtT = 0; s.sgT = 0; s.aCur = null; s.pj = null; s.pjDone = false; s.ifx = null; s.lmI = 0;
+    s.hm = null; s.hpF = null; s.trail = 1; s.dF = null; s.aq = null; s.at = 0; s.ar = 1; s.ax = 0; s.ae = 0; s.amv = ''; s.amr = null; s.al = null; s.hurtT = 0; s.sgT = 0; s.aCur = null; s.pj = null; s.pjDone = false; s.ifx = null; s.lmI = 0; s.aA = ''; s.aI = 0; s.aU = -1; s.fxS = null;
     if (!m) { s.fr = null; s.key = ''; return; }
     const type = m.key.replace(/\d+$/, '');
     let key, fr;
@@ -861,7 +863,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     else if (s.st !== 2) { s.st = 2; s.t = 0; }
     // the white hit flash: every big hit, else at most every 0.6 s (a tank under three foes would strobe)
     const big = kind === 'heavy' || kind === 'slam' || kind === 'dive';
-    if (big || !(a.fcd > 0)) { a.flash = Math.max(a.flash, 0.08); a.fcd = 0.6; }
+    const fresh = big || !(a.fcd > 0);   // a tank under a pack of imps would strobe and shake: their effects keep the flash's pace
+    if (fresh) { a.flash = Math.max(a.flash, 0.08); a.fcd = 0.6; }
+    if (fresh && foeFx && foeFx.has(s) && kind !== 'ranged' && kind !== 'cloud') { a.flash = Math.max(a.flash, 0.18); a.kb = 0.35; foeFx.hit(s, tx, a.hy - 34); }   // the imp's blow (62c)
     if (kind === 'ranged') {
       const spore = s.anim === 'cast' || s.anim === 'heal';
       A.proj(spore ? 'spore' : 'arrow', s.left + 4, s.cy - 6, tx, ty, spore ? 0.4 : 0.3, spore ? '#B6F09A' : '#B8B0A0', spore ? 10 : 6, sparkW);
@@ -952,15 +956,16 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     s.sgT = m && m.stunT > 0 && !m.dead ? (s.sgT || 0) + dt : 0;
     if (m && m.dead) s.aq = null;   // death takes over where it stands
     else if (!turnFight()) artLegacy(s);
-    const q = s.aq;
+    const q = s.aq; s.aU = -1;
     if (q && q.length) {
       s.at += dt * 1000 * (s.ar || 1);
       let c = q[0], d = clipMs(F, c);
       while (c && s.at >= d) { if (c.hop) s.ax = c.hop[1]; s.at -= d; q.shift(); c = q[0]; d = c ? clipMs(F, c) : 0; if (c && c.hop && c.hop[1] === 0) s.ar = 1; }
       if (c && c.hop) {
         const P = FOE_ART[F.key], w = F.acts[c.act].mv || P.hopMove, m0 = w[0], m1 = w[1];
-        const u = reduced ? (s.at >= m0 ? 1 : 0) : Math.max(0, Math.min(1, (s.at - m0) / (m1 - m0)));
-        s.ax = c.hop[0] + (c.hop[1] - c.hop[0]) * u;
+        const u = reduced ? (s.at >= m0 ? 1 : 0) : Math.max(0, Math.min(1, (s.at - m0) / (m1 - m0))), dash = !!F.acts[c.act].mv;
+        s.ax = c.hop[0] + (c.hop[1] - c.hop[0]) * (dash ? 1 - (1 - u) ** 3 : u);   // a dash eases out (thorn-imp-fx)
+        s.aU = dash ? u : -1;
       }
       if (!q.length) s.aq = null;
     }
@@ -979,9 +984,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // the frames the foe shows now: { body, atk, hit } (hit: the landed-hit spark of the latest contact, if it landed)
   function artCur(s, tele) {
     const F = artOf(s), m = s.m, A = F.acts, c = s.aq && s.aq[0];
-    if (m && m.dead) { const D = A.death; return { body: D.fr[clipFrame(D, 1, D.fr.length, m.dead * 1000) - 1].body }; }
+    s.aA = ''; s.aI = 0;   // the action and frame shown (62c-foefx)
+    if (m && m.dead) { const D = A.death, i = clipFrame(D, 1, D.fr.length, m.dead * 1000); s.aA = 'death'; s.aI = i; return { body: D.fr[i - 1].body }; }
     if (c) {
       const X = A[c.act], i = clipFrame(X, c.a, c.b, s.at), fr = X.fr[i - 1];
+      s.aA = c.act; s.aI = i;
       let k = -1; for (let j = 0; j < X.con.length; j++) if (X.con[j] <= i) k = j;
       let mouth = null;   // a ranged move's throat effect: the charge (frames 1-4) up to the release, then the release (5-6)
       if (s.amr && !c.hop && F.fx['void-fx'] && X.rel.length) {
@@ -990,8 +997,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
       }
       return { body: fr.body, atk: c.hop ? null : fr.atk, hit: !c.hop && k >= 0 && s.al && s.al[k] ? fr.hit : null, mouth };
     }
-    if (m && m.stunT > 0) { const G = A.stagger; return { body: G.fr[clipFrame(G, 1, G.fr.length, s.sgT * 1000) - 1].body }; }
-    if (s.hurtT > 0) { const H = A.hurt, tot = actMs(H, 1, H.fr.length); return { body: H.fr[clipFrame(H, 1, H.fr.length, tot - s.hurtT * 1000) - 1].body }; }
+    if (m && m.stunT > 0) { const G = A.stagger, i = clipFrame(G, 1, G.fr.length, s.sgT * 1000); s.aA = 'stagger'; s.aI = i; return { body: G.fr[i - 1].body }; }
+    if (s.hurtT > 0) { const H = A.hurt, tot = actMs(H, 1, H.fr.length), i = clipFrame(H, 1, H.fr.length, tot - s.hurtT * 1000); s.aA = 'hurt'; s.aI = i; return { body: H.fr[i - 1].body }; }
     if (m && tele && tele.foe === m) { const mv = artLegacyMoves(s)[0], J = mv && A[mv.anim]; if (J) return { body: J.fr[F.hk && J.con.length ? Math.max(0, J.con[0] - 2) : J.start + 2].body }; }   // a legacy telegraph: a wind-up (a k pack: the frame before the contact)
     const I = A.idle; return { body: I.fr[clipFrame(I, 1, I.fr.length, reduced ? 0 : (T * 1000 + (s.hx & 7) * 90) % actMs(I, 1, I.fr.length)) - 1].body };
   }
@@ -1525,7 +1532,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     const dx = Math.round(x - f.ox), h = f.c.height, c = s.lane === 0 && f !== s.fr.hit ? dimOf(f.c) : f.c;
     ctx.globalAlpha = alpha;
     if (ns) nsBlit(ctx, f, x, y, { a: alpha, d: s.lane === 0, w: m && !m.dead && s.fl > 0.02 ? 0.55 : 0 });   // hit: a white flash
-    else if (f.hk && sy === 1) foeArtBlit(ctx, f, x, y, s.lane === 0);   // a k pack (64j): its art px on whole device px
+    else if (f.hk && sy === 1) {   // a k pack (64j): its art px on whole device px; its own effects (62c) first: behind it, its hop and knock-back
+      const o = foeFx && foeFx.has(s) && m ? foeFx.back(ctx, s, f, x, y, cam) : null;
+      if (o) { x += o[0]; y += o[1]; }
+      foeArtBlit(ctx, f, x, y, s.lane === 0);
+    }
     else if (m && m.dead) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SW, s.gy + 2); ctx.clip(); ctx.drawImage(c, dx, Math.round(y - f.oy)); ctx.restore(); }
     else if (sy < 1) ctx.drawImage(c, dx, Math.round(y - f.oy * sy), f.c.width, Math.round(h * sy));
     else ctx.drawImage(c, dx, Math.round(y - f.oy));
@@ -1534,7 +1545,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     s.fxX = x; s.fxY = y; s.fxOn = !!(artOf(s) && s.aCur && sy === 1);   // its effects draw over the hero (drawFoeFx)
     if (m && !m.dead && s.fl > 0.02 && sy === 1 && !artOf(s) && !ns) { ctx.globalAlpha = 0.55 * alpha; ctx.drawImage(s.fr.hit.c, dx, Math.round(y - f.oy)); }
     // stunned: three sparks circle over its head (still under reduced motion)
-    if (m && !m.dead && m.stunT > 0) {
+    if (m && !m.dead && m.stunT > 0 && !(foeFx && foeFx.has(s))) {   // the imp's own motes: 62c
       const hy = Math.round(y - f.oy + headTop(s.fr.idle0)) - 4, cx = Math.round(x), r = Math.max(6, Math.round(s.w * 0.18));
       for (let i = 0; i < 3; i++) {
         const an = (reduced ? 0 : T * 5) + i * 2.094;
@@ -1558,6 +1569,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
       ctx.drawImage(f.c, Math.round(P.x0 + (t.x - P.x0) * u - cam - f.ox), Math.round(P.y0 + (t.y - P.y0) * u - f.oy));
     }
     if (s.ifx) { const X = F.fx[s.ifx.id], f = X && X.fr[clipFrame(X, 1, X.fr.length, s.ifx.t) - 1]; if (f) ctx.drawImage(f.c, Math.round(s.ifx.x - cam - f.ox), Math.round(s.ifx.y - f.oy)); }
+    if (foeFx && foeFx.has(s)) foeFx.front(ctx, s, cam);
   }
   // A fixed battle background (BG_ART, 21zb): the landscape export on a wide stage, the portrait one on a tall stage,
   // scaled (smooth) to cover the stage with its painted road on the ground line GYS, centred (stage px, the scenery's view). False until it has loaded.

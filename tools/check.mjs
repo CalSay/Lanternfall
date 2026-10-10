@@ -10423,6 +10423,13 @@ if (section('C22 Thorn Imp (zone 1)')) try {
     assert(frames === 30 && Object.keys(A.acts).length === 8 && bytes && timing && A.fmt === 'webp' && A.k === 0.5 && webp && man.colours <= 64 &&
       !srcs.includes('jab-2') && !srcs.includes('jab-7') && A.acts.dashIn && A.acts.dashOut && A.acts.death.fade > 0,
       `C22: the Scenario Thorn Imp pack (8 actions, ${frames} frames, lossless WebP, ${man.colours} colours) is embedded with its atlases byte for byte, its timings and contacts; Briar Jab never shows Cal's rejected frames 2 and 7; it dashes in and out; death fades`); }
+  { // its effects (62c-foefx, thorn-imp-fx: Cal 21:34 "Very happy with all effects"): each hangs on a frame the pack has; death fades over 1.4 s
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '62c-foefx.js'), 'utf8'), m = src.match(/const FOE_FX = (\{[\s\S]*?\n\});/);
+    const X = m && new Function('return ' + m[1])().imp, A = artData('21za-data-foeart.js', 'FOE_ART').imp;
+    const bad = X ? Object.entries(X.ev).flatMap(([act, ev]) => Object.keys(ev).filter(i => !A.acts[act] || !(i >= 1 && i <= A.acts[act].f.length)).map(i => act + ':' + i)) : ['no FOE_FX'];
+    assert(X && !bad.length && A.acts.death.fade === 1400 && X.ev.jab[4] === 'thrust' && A.acts.jab.con[0] === 4 && X.ev.crosscut[3] === 'arcDown' && X.ev.crosscut[5] === 'arcUp' &&
+      JSON.stringify(A.acts.crosscut.con) === '[3,5]' && /if \(reduced\) return;\s*if \(turnOn\(\) && typeof turnHitstop/.test(src),
+      `C22: the Imp's effects hang on its own frames (the thrust on the Jab's contact, the crescents on the Crosscut's two), death fades over 1.4 s, and reduced motion drops the hit-stop and shake (${bad.join(', ') || 'ok'})`); }
   { const g = loadCore({ seed: 1 }), E = s => g.eval(s);
     const w = JSON.parse(E('JSON.stringify(ZONE_FOES[1].moves.map(m => m.hits.map(h => h.wind)))'));
     assert(JSON.stringify(w) === '[[1.61],[1.61,1]]' && E('zoneFoeDeathS({ skin: "imp" })') === 2.31,

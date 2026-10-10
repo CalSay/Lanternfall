@@ -41,7 +41,7 @@ ACTIONS = {
                             ('crosscut-6', 260), ('crosscut-7', 220), ('crosscut-8', 200)], 'contacts': [3, 5]},
     'hurt':     {'frames': [('hurt-2', 350), ('hurt-3', 350)]},
     'stagger':  {'frames': [('hurt-4', 300), ('hurt-5', 300)]},
-    'death':    {'frames': [('hurt-6', 450), ('hurt-7', 450), ('hurt-8', 1410)], 'fade_ms': 400},   # lies still, then fades
+    'death':    {'frames': [('hurt-6', 450), ('hurt-7', 450), ('hurt-8', 1410)], 'fade_ms': 1400},   # lies still, fading over 1.4 s (thorn-imp-fx: the spec's fade)
 }
 
 

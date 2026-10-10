@@ -1,0 +1,25 @@
+# seed: 1
+# Proof for card thorn-imp-fx: the Thorn Imp's effects (Cal 10 Oct 2026 21:34: "Very happy with all effects"), drawn by the
+# game: dust as it dashes, purple after-images and speed lines, the glint on its blade, the thrust streak, the Crosscut's
+# crescents, sparks and a ring on the hero it hits (with a short hit-stop and shake, none under reduced motion), splinters and
+# a white flash when it is hurt, grey motes while stunned, and purple wisps as it fades over 1.4 s.
+# The effects' frames and the fade are held by tools/check.mjs ("C22 Thorn Imp (zone 1)").
+#   imp-idle.png      a new game's first fight: the Thorn Imp stands opposite Wren
+#   imp-turn.png      the imp's turn: it dashes in with its after-images and speed lines
+new fresh
+wait 4
+tap "Skip"
+wait 2
+tap "Begin as Wren"
+wait 6
+tap "Skip"
+wait 3
+tap-if "Got it"
+tap-if "Dismiss this tip"
+wait 3
+expect ".hud.vs .mob"
+shot imp-idle
+tap-if "Attack"
+wait-for "Dodge" 8
+wait 1
+shot imp-turn

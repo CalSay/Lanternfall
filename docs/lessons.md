@@ -16,6 +16,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## Combat and balance
 
+- A foe's per-hit effects (flash, shake, hit-stop) keep the stage's own per-target throttle (62-stage foeStrike `fcd`). Why: on 10 Oct the reviewer found the Thorn Imp's first effects pass flashed and shook on every blow, so a tank under a pack of imps would strobe in a legacy fight.
 - Treat a DECISIONS.md line the code never matched as a question, not a fact: check the code before building on it. Why: "No healing between fights" (2026-10-02) sat beside a 15% heal per kill and a full heal on a loss, so losing was the better heal until the normal-death-says-so judge ruled. (normal-death-says-so, 2026-10-08)
 - Never gate "Boss ready" on the old damage estimate; use the 30-scratch-fight estimate at the player's own parry and dodge record. Why: the old estimate read 0.4 to 0.5 at the Zone 1 boss that all three starters beat, and 0.03 on a late save. (boss-readiness, 2026-10-06)
 - Keep the readiness estimate running while a tip pauses the game, and include Deepwell boons, gear changes made while gathering, and the sim seed. Why: Codex found each of these in rounds 1 to 3 of PR #47. (boss-readiness, 2026-10-06)
