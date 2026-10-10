@@ -20,12 +20,12 @@ Veil) and gated by her story scene at zone 116, Chapter 4 (`56c-unlocks.js:81` `
 
 **Call a star, hold out until it lands, and bring it down early when the fight turns.** One star at a time: Falling Star calls
 it, and it lands after her next 2 turns for a big Starlight hit and a Stun. While it falls she builds Bearings with Attack and
-softens the foe with Chill and Weaken. When a boss starts gathering a charged move (which the game shows as it starts, never
+softens the foe with Glimmer's Pin, Ill Omen's Weaken and Eclipse. When a boss starts gathering a charged move (which the game shows as it starts, never
 before: "No telegraph", DECISIONS, The hero), she can Call It Down and drop the star on it now.
 
 **Pip burns; Oriel stops.** Pip's damage comes over time: she sets a Burn, feeds it and cashes it in, and her defence is Ashen
-Ward. Oriel's damage comes late and in one piece, and her defence is taking the foe's turns away: the star's Stun, Freeze from
-Chill, Weaken and Pin from Ill Omen. Pip asks "is the fire still going?"; Oriel asks "is my star still up there, and is now the
+Ward. Oriel's damage comes late and in one piece, and her defence is taking the foe's turns away: the star's Stun, Glimmer's Pin (a
+Stun on a Perfect press), Weaken and Pin from Ill Omen. Pip asks "is the fire still going?"; Oriel asks "is my star still up there, and is now the
 moment to pull it down?". On a boss a Stun is a Stagger and a charge-breaker rather than a lost turn, so her boss play is
 reactive: keep a star falling, and spend it on the charge you can see.
 
@@ -37,7 +37,8 @@ you hold when it lands. Starfall spends them all for a big blast.' }`
 - Attack gives 1 after contact (as Aim, Grit and Cinders). Take a Bearing gives 2. Starbolt gives 1 when no star is falling.
 - Cap 4 (`turnGain` caps every resource but Aim and Grit at 5 today: the build adds Bearings' cap). Resets every fight. The star
   reads Bearings and does not spend them; only Starfall spends them.
-- Point of Light, her quick bolt (hero-kits.md section 3), gives no Bearing: a cooldown-2 source would keep the star at 300%.
+- Polaris, her quick bolt (hero-kits.md section 3), gives 1 Bearing only the first time it is used while a star falls: one per
+  star, so the star does not always land at 300%.
 
 ## 3. The falling star (the rule the build adds to 59k)
 
@@ -49,15 +50,15 @@ you hold when it lands. Starfall spends them all for a big blast.' }`
   let a one-action boost ride stored damage). A Blind on the hero does not make it miss (it is not her swing).
 - **Then it Stuns** (`turnControl(m, io, 'stun')`): an ordinary foe loses its next turn; a boss Staggers (25) and a gathering
   charge breaks under the usual rules, rallies included. **When the control lock blocks the Stun** (a Stun or Freeze in the foe's
-  last 3 turns), the star adds 1 Chill instead, and the countdown chip says "No Stun yet" while the lock holds, so the trade is
+  last 3 turns), the star Pins instead, and the countdown chip says "No Stun yet" while the lock holds, so the trade is
   visible.
 - **One star at a time.** While one falls, Falling Star is not usable ("Your star is still falling."). A star still falling when
   the fight ends is lost.
 - **The chip** on the foe reads "Falls in 2", "Falls in 1" in the Starlight colour (hero-kits.md section 4). Text calls it "your star"; never
   "Star 2" (it would read as the Stars system, the Star Chart or the Chained Star).
 - **Rally gates:** the landing counts as part of the action it lands after, so the gate that caps one move caps the star too.
-- **Old Light and Foretold:** the landing counts as a spell that hits (Old Light arms for the next Attack; a foe under Foretold, which
-  is Cursed, stores 20% of it).
+- **Old Light and Eclipse:** the landing counts as a spell that hits (Old Light arms for the next Attack) and as a payoff hit (it
+  spends Exposed for 25% more, so Eclipse before a landing makes the star bigger).
 - **Live fight (damage-on-impact):** the action's pose plays and lands at its strike as usual. If the star is due, `turnHeroDone`
   then runs a **second strike**: it plays the fx recipe `oriel:star` (a bolt of light falling from above the foe's aim point, on
   Moonlit Volley's `rainAt`/`rainFly` timing), waits `fxImpactIn('oriel:star')`, applies the hit and Stun, and only then hands the
@@ -71,10 +72,10 @@ Ids equal the art thread's pose ids, so each move finds its frames by name.
 
 ### Her style six (hero-kits.md section 3)
 
-The caster template's mechanics, made hers, with new ids: Point of Light (O9, `pointoflight`), Hush (O10, `hush`, timed),
-Dusk Mantle (O11, `duskmantle`), Foretold (O12, `foretold`), Old Light (O13, `oldlight`, passive), Turning Sky (O14,
-`turningsky`). All Starlight. The full rows are in hero-kits.md; they replace Pip's six, which she used to
-borrow.
+Five new star moves (Cal, 10 Oct 14:01-14:15) and one passive: Polaris (O9, `polaris`), Glimmer (O10, `glimmer`, timed),
+Chart the Sky (O11, `chartsky`), Eclipse (O12, `eclipse`), Old Light (O13, `oldlight`, passive), Moonbeam (O14, `moonbeam`).
+All Starlight, all from above. The full rows and her three combos (Long Night, Lock and Break, Full Chart) are in hero-kits.md
+section 3; they replace Pip's six, which she used to borrow.
 
 ### Her own 8
 
@@ -96,19 +97,19 @@ intentionally shared abilities).
 | O8 | `slivershum` | Starfall | Starfall | finisher | 5 | 1.6 | 7 | star | yes | Finisher, from your third turn. 160% power, plus 40% for each Bearing; uses them all. Needs 2 Bearings. | Spends all Bearings for a blast. |
 
 Perfect presses (`ABILITY_PERFECT`): `clearnight: 'a sure crit'`, `letters: '1 Bearing'`, `slivershum: '2 Bearings come back'`
-(the refund lands after the spend, so a star landing after Starfall reads 2). With Hush (`hush: '1 more Chill'`) that is 4
+(the refund lands after the spend, so a star landing after Starfall reads 2). With Glimmer (`glimmer: 'Stuns instead'`) that is 4
 timed moves, as every hero has (DECISIONS, Abilities).
 
 Order inside one action, for the readers that care: the action's own hit and riders, then its resource gain or spend (Starfall's
 spend, then its Perfect refund), then the countdown, then the star if it is due. So Starfall before a landing leaves the
 star at 0 to 2 Bearings: spending them first or letting the star read them is the player's call.
 
-Statuses she uses all exist: Stun, Chill (3 = Freeze), Weaken, Pin. Stun and Freeze share the control lock (section 3).
+Statuses she uses all exist: Stun, Pin, Weaken, Exposed, Ward. Glimmer's Stun shares the star's control lock (section 3).
 
 Abilities screen groups (`HERO_PATHS.oriel`, 4/5/5 like Pip's):
 - **The Star:** fallingletter, pullreading, letters, newsarrives
-- **Clear Sky:** clearnight, hush, bearing, slivershum, pointoflight
-- **Omens:** badnews, foretold, duskmantle, turningsky, oldlight
+- **Clear Sky:** clearnight, polaris, bearing, slivershum, chartsky
+- **Omens:** badnews, glimmer, eclipse, moonbeam, oldlight
 
 ### What changed from Codex's kit, and why
 
@@ -117,11 +118,11 @@ Abilities screen groups (`HERO_PATHS.oriel`, 4/5/5 like Pip's):
 | Falling Letter | O1, the starter, now Stuns | Her type data is Stun (and now Starlight); the starter carries the identity (as Bash, Fireball, Echo do: W10 found the signature moves win most). Holy becomes Starlight. |
 | Pull the Reading | O2, kept | The early-landing choice is Codex's core decision, and it is how she meets a charge. |
 | Take a Bearing | O3, kept | "Alignment charge" becomes a plain next-hit boost, kept off the star. |
-| Clear Night | O4, kept | Her Bearing bolt. (#350 gave it 1 Chill; hero-kits.md moved her Chill to Hush so the two bolts read apart.) |
-| Bad News | O5, kept, untimed, Pin rider | Codex's "no reveal" stays (no telegraph); Pin is the existing "easier to read". 3 own timed + Hush = 4. |
+| Clear Night | O4, kept | Her Bearing bolt. (#350 gave it 1 Chill; hero-kits.md drops it: she has no Chill move now.) |
+| Bad News | O5, kept, untimed, Pin rider | Codex's "no reveal" stays (no telegraph); Pin is the existing "easier to read". 3 own timed + Glimmer = 4. |
 | Letters Unsent | O6, simplified | Codex's two-branch choice needs a choice screen mid-turn. Now it only hurries the star. |
 | Sliver's Hum | O8, now the finisher | Its two-hand lunge pose reads as her biggest move; it spends Bearings as Final Echo, Hammerfall and Lanternburst spend theirs. It no longer lands the star (red team: star + Hum in one action was 7.2 of ability power). |
-| Fold the Chart | **cut** | Cancelling your own star for a Ward overlaps her Ward (Dusk Mantle) and feels bad. |
+| Fold the Chart | **cut** | Cancelling your own star for a Ward overlaps her Ward (Chart the Sky) and feels bad. |
 | Someone Looks Up | **cut** | A mid-fight heal is a rule no other hero has outside Last Stand; every boss table would need re-fitting. |
 | News Arrives | O7, her one passive | The simplest of the three, and it rewards waiting. |
 | Chart by Hand, Sky Answers | **cut** | One passive per signature set (DECISIONS). Sky Answers made Attack queue stars: a second source of the one rule. |
@@ -183,7 +184,7 @@ joining player has: Falling Star plus the moves the lamp's spare Scrolls teach, 
 5. **Gain cap pairs:** every pair of rules one hero can wear in one move stays under the boss-fight damage gain cap (+50%) and
    never passes a rally gate in one move: Take a Bearing then Starfall with 4 Bearings; the star with 4 Bearings after Shooting
    Star; Call It Down at 80% after Take a Bearing (the boost must not reach it); Starfall with Swift Tide (finisher from turn 1); and the Stars
-   rules Ringing Blow, Dazed Prey, Snare and Shatterpoint against the star's Stun and Chill (`docs/lessons.md`, Combat).
+   rules Ringing Blow, Dazed Prey, Snare and Shatterpoint against the star's Stun and Pin (`docs/lessons.md`, Combat).
 6. **The bot's policy** (the sampler casts the first ready move in slot order, which is wrong for her): never Falling Star while a
    star falls; Call It Down when a boss starts a charge with a star falling, or when the foe would die before the star lands;
    Shooting Star when the star has 2 turns left; Starfall at 4 Bearings or with no star falling. A test asserts each.
@@ -214,19 +215,20 @@ card re-measures on the packed frames. No effect is drawn in the art: bolts, rin
 | `badnews` | O5 | 8 | 5 | staff star, 5: 0.92, 0.08 | a wave from the staff; Weaken (and Pin) marks on the foe |
 | `letters` | O6 | 8 | 5 | open book, 5: 0.91, 0.27 | a sweep of force from the pages; the chip ticks down |
 | `slivershum` | O8 | 8 | 5 | staff star, 5: 0.92, 0.24 | the big charged blast (finisher) |
-| `spark` | O9 Point of Light (`pointoflight`) | 8 | 4 | two fingers, 4: 0.99, 0.27 | a small bolt of starlight |
-| `frostshard` | O10 Hush (`hush`) | 8 | 4 | staff star, 4: 0.91, 0.21 | a bolt of cold starlight, Chill on hit (no ice shards) |
-| `arcaneward` | O11 Dusk Mantle (`duskmantle`) | 8 | 6 | her body centre, 6: 0.45, 0.55 (book 0.90, 0.23) | a mantle of dusk sky and small stars round her |
-| `hex` | O12 Foretold (`foretold`) | 8 | 5 | clawed hand, 5: 0.92, 0.19 | a pale sign settles on the foe (the Cursed status colour) |
-| `nova` | O14 Turning Sky (`turningsky`) | 8 | 4 | staff butt on the ground, 4: 0.87, 0.99 | a ring of starlight wheeling out from the ground |
+| `polaris` | O9 Polaris | 8 | 4 | two fingers raised, 4: to measure | a fixed point of light high above the foe drops a thin ray onto it |
+| `glimmer` | O10 Glimmer | 8 | 4 | open front palm raised high, 4: to measure | a flash of starlight from above, the Pin mark |
+| `chartsky` | O11 Chart the Sky | 8 | 5 | front hand tracing overhead, 5: to measure | lines of a constellation drawn round her (the Ward) |
+| `eclipse` | O12 Eclipse | 8 | 5 | front hand raised over the foe, 5: to measure | a dark disc slides across a light above the foe |
+| `moonbeam` | O14 Moonbeam | 8 | 4 | front arm raised, palm down, 4: to measure | one steady beam of pale light straight down onto the foe |
 | `parry` | Parry | 8 | 3 (the block) | staff middle | parry flash |
 | `dodge` | Dodge | 8 | 3 (in the air) | none | none |
 | `hit`, `idle`, `defeat`, `victory` | | 8 each | none | none | none |
 | `mining`, `woodcut`, `forage`, `hunt` | gathering | 8 each | mining 5, woodcut 5, forage 4, hunt 5 | tool head | the game-placed axe on `woodcut` (empty fists) |
 
-Passives (Old Light, News Arrives) have no pose. The pack's `spark`, `frostshard`, `arcaneward`, `hex` and `nova` files are
-packed under her new ids (a file mapping, nothing redrawn). **Cut, not used:** `foldchart`, `looksup` (drawn, kept on file, not wired).
-Nothing needs redrawing for the kit: every kept move keeps its drawn pose. The art judge still vets the whole pack.
+Passives (Old Light, News Arrives) have no pose. The five new moves need new poses (card `oriel-own-poses`, priced per frame,
+on Cal's yes), each with the staff upright in her rear hand and the casting done by her free hand. The pack's old `spark`,
+`frostshard`, `arcaneward`, `hex` and `nova` files are Pip's moves and are not used. **Cut, not used:** `foldchart`, `looksup` (drawn, kept on file, not wired).
+Her eight own moves keep their drawn poses (Cal picks the generation; the four broken ones are being redrawn at high quality).
 
 ## 8. What the wire card must change outside 24c (found by the red team)
 
