@@ -1,0 +1,18 @@
+Use case: precise-object-edit.
+Asset type: fantasy game loot crate concept sheet, matching open states for an approved five-tier lineup.
+Input image 1 is the EDIT TARGET and exact design reference.
+
+Primary request: show these EXACT SAME FIVE CHESTS with their lids OPEN. This is a mechanical pose change of the existing designs, not a redesign. Preserve the lower body of every chest as closely as possible, including all front lantern clasps, carved flourishes, feet, corners, side handles, plank colors, metal straps, gems, proportions and relative tier sizes. Preserve the same warm, richly shaded outlined fantasy illustration style and crisp edges.
+
+Open each existing rounded lid backwards on its rear hinge to approximately 100 degrees from its closed position. Show a clear mouth, a hollow interior and the inside of the raised lid, with mechanically plausible visible rear hinges. Each existing lid is a SINGLE rigid structure with its original curved shell, matching bands, corner ornaments and attached crest carried with it as it rotates. Keep every lid attached to its own chest; the whole front body stays stationary. Preserve rather than replace lid ornaments, including Gilded's little lantern-and-laurel crest, Sovereign's amethyst-and-laurel crest, and Hallowed's great sunburst halo, with their positions and perspective correctly following their open lids. Do not duplicate those ornaments onto the inner lid. Give the lid inner surfaces simple matching material backs and the reverse of their existing frame, not newly invented decorations.
+
+Exact identities, left to right:
+I ROADWORN: worn light brown timber, plain dark iron straps, modest amber lantern on front, simple wooden interior.
+II IRONBOUND: dark green wood lid, sturdy dark iron and muted bronze bands, amber lantern on front, dark wood interior.
+III GILDED: rich walnut with ornate gold leaf corners and gold straps, gold leaf scrollwork on front, golden amber lantern, small lantern-and-laurel lid crest, warm walnut interior. Preserve the latest ornate approved design exactly.
+IV SOVEREIGN: deep plum/blackwood with substantial gold corners, paired gold front flourishes, large violet lantern gemstone, raised amethyst-and-laurel crest, restrained violet light. Preserve the recently enhanced regal design exactly. Dark plum interior.
+V HALLOWED: the largest chest, ivory and black panels with lavish gold architecture, large front amber-white lantern, broad gold feet and impressive sunburst halo mounted on the lid. Matching ivory and dark interior with restrained warm light. Keep it clearly the top tier.
+
+Composition: all five open crates together in ONE evenly spaced horizontal lineup, same three-quarter viewpoint showing the fronts and right sides, same floor baseline and relative size progression as the source. Same warm grey parchment studio backdrop, same grounded shadows. Provide enough clear headroom to show every complete raised lid and halo with no clipping or overlap, extending the canvas vertically if needed. Keep title 'LANTERN CACHES' centered above all objects and exact captions below: 'I ROADWORN', 'II IRONBOUND', 'III GILDED', 'IV SOVEREIGN', 'V HALLOWED', in the same typography.
+
+Interiors should be visibly hollow and empty so the construction and open state are easy to read; no coins, weapons, loot piles or new props. Only the subtle existing magical light appropriate to each tier, no large beams, smoke or effects obscuring the design. No new ornament, changes of tier identity, altered front panels, additional crates, closed lids, duplicated lids or detached lids. Fidelity to the provided designs is the priority.

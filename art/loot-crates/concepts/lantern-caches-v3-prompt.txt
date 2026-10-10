@@ -1,0 +1,14 @@
+Edit the supplied Lantern Caches illustration with one localized refinement: make ONLY the THIRD chest, captioned III GILDED, a little grander and more prestigious. This is a moderate upgrade of the existing walnut-and-gold Gilded design, not a new tier or wholesale redesign.
+
+Preserve the canvas dimensions, background, title, all captions, baseline, viewpoint, and the exact appearance of the ROADWORN, IRONBOUND, SOVEREIGN and HALLOWED chests. Keep the Gilded chest in its current position, with the same footprint and warm walnut, gold/brass and amber material palette. Preserve its readable lid seam, hinged construction and central glowing amber lantern clasp.
+
+Refine GILDED with:
+- Thicker, more sculpted burnished-gold corner guards, shaped as elegant curling leaves, with slightly more substantial ornamented feet.
+- Rich raised gold scrollwork climbing partway up the walnut front panels and framing the lantern clasp, leaving plenty of rich reddish-brown timber visible.
+- A more finely sculpted curved lid, with elegant gilded ribs and a small crest centered on its upper ridge: a compact gold lantern-and-laurel finial rising only a little above the current lid. Clearly smaller and simpler than Sovereign's tall pointed crest.
+- Turn the current simple lid medallion into a richer embossed lantern-and-laurel emblem that feels crafted into the wood.
+- A very thin warm amber glimmer at the front lid seam and slightly richer highlights on the gold.
+
+The result should feel like a treasured ceremonial chest: visibly more opulent than Ironbound, still clearly less magnificent than Sovereign. Preserve its warm, grounded identity; no blue or silver, no large crown, sun halo, ivory panels, excessive gems or floating particles. Do not enlarge the chest substantially or increase ornament beyond tier III.
+
+Match the existing hand-illustrated Lanternfall equipment-art rendering, dark contours, detailed material shading, light direction, and restrained warm glow. Text remains exactly as in the input, including III GILDED. Only the third chest changes.

@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "status": "concept-prototype-awaiting-art-review",
+  "created": "2026-10-10",
+  "generationMode": "built-in imagegen",
+  "currentClosed": "concepts/lantern-caches-v4-sovereign.png",
+  "currentOpen": "concepts/lantern-caches-open-v1.png",
+  "animation": {
+    "path": "sovereign-reveal-v2/sovereign-reveal-v2-50fps.gif",
+    "width": 960,
+    "height": 640,
+    "fps": 50,
+    "frames": 400,
+    "durationMs": 8000,
+    "sourcePoses": 8,
+    "sampleReward": true
+  },
+  "files": [
+    {
+      "path": "concepts/lantern-caches-open-v1-prompt.txt",
+      "bytes": 3645,
+      "sha256": "ded86238e42a9ed9b32995620e18dff4cfc71c106e2e07a0d1fce05d1bd84ee9"
+    },
+    {
+      "path": "concepts/lantern-caches-open-v1.png",
+      "bytes": 2232572,
+      "sha256": "3d94cbd85a161f5f88d8b1edd59bc5584596cc252f633f94ae0ac84fc2b07245"
+    },
+    {
+      "path": "concepts/lantern-caches-v1-prompt.txt",
+      "bytes": 4007,
+      "sha256": "bcb9067a7e5e73a4641fe522045fdee6ded06660b7c4f8d544052bb813a2445d"
+    },
+    {
+      "path": "concepts/lantern-caches-v1.png",
+      "bytes": 2556758,
+      "sha256": "815df4e35a29d92278440ea9e0246ecde7031c1d1afedc3122923c421fa16f98"
+    },
+    {
+      "path": "concepts/lantern-caches-v2-gilded.png",
+      "bytes": 2374763,
+      "sha256": "04e63c0af55bdd30da57b75f004b66e09a1ceeb687f0b9df37e5e51f41b46510"
+    },
+    {
+      "path": "concepts/lantern-caches-v2-prompt.txt",
+      "bytes": 1963,
+      "sha256": "e41f7c1bb27cb7a975200732c28e668cd58f1473bbc430ba4e0a87dc0c903d9f"
+    },
+    {
+      "path": "concepts/lantern-caches-v3-gilded.png",
+      "bytes": 2272933,
+      "sha256": "ab366928c95811a9b468daec163066e2d946109ba7c91cb9a171560d0be00538"
+    },
+    {
+      "path": "concepts/lantern-caches-v3-prompt.txt",
+      "bytes": 2068,
+      "sha256": "7a12659e4fb87a44f0addba4a152a5de268bb4564b9290921f3b1395361a3235"
+    },
+    {
+      "path": "concepts/lantern-caches-v4-prompt.txt",
+      "bytes": 1883,
+      "sha256": "95bea3cd87afe06476140607aaf9fb652279848ea60ed828e656712f326a085e"
+    },
+    {
+      "path": "concepts/lantern-caches-v4-sovereign.png",
+      "bytes": 2228398,
+      "sha256": "9369fa09e47c4218595ec0f41a797a9b014c11070fa46dfecbd136091e478e64"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/glow.png",
+      "bytes": 519837,
+      "sha256": "cc09c4a458f62eb76db4aabbc6299daf6a3a436f49c908ecd55085122e6f3bce"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/halo.png",
+      "bytes": 521865,
+      "sha256": "adae5edc3fd26986f9c4fd8e13affde7f650dff8ab9577bf8a0ead7e55a18b5d"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/pose-0.png",
+      "bytes": 322708,
+      "sha256": "8c6505a2a09a251b8170debbe0eb507d25109d230311334b8a86dc7c8ef9e645"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/pose-1.png",
+      "bytes": 327167,
+      "sha256": "a923ecedab4009f226c19c32c206eef1014b2a97b2ccf79646e17a12abb7a361"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/pose-2.png",
+      "bytes": 334367,
+      "sha256": "57bd69b0bed10f908b6c2f808361a47423fe030ae6fb9296e6bd43d36de8e89c"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/pose-3.png",
+      "bytes": 355314,
+      "sha256": "a654491d955b14290e40187ed7f0c685862cb4dd8a73992a675edc8249e307bf"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/pose-4.png",
+      "bytes": 346988,
+      "sha256": "3d23971c69837e3d366ad7f80dd909afb4098050d2b4303f7e8ee52441c498f2"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/pose-5.png",
+      "bytes": 346420,
+      "sha256": "114fa1afd4da88a746454ffb6ef27f7bf6a24aa4462cdadb62c86431b1a94941"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/pose-6.png",
+      "bytes": 347685,
+      "sha256": "c1059ab09c3d5d3dea4d6972a4298ff6c6e20ce9b0ba9ef84fffec253e8ceacc"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/pose-7.png",
+      "bytes": 345591,
+      "sha256": "01e67cb38dc8fddf401fe5a041eaa710916a9193baa2bee840ad045b74ed42ba"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/scroll.png",
+      "bytes": 427077,
+      "sha256": "eb2afacf7c8a34520ef7dca05af1abfd97ebeade7b77a6ecd110de3245f3520f"
+    },
+    {
+      "path": "sovereign-reveal-v2/assets/sparks.png",
+      "bytes": 209921,
+      "sha256": "32809e7bf715dd61de984bee06a6e6fd74376d0fab8640fd7ae358d8f5c6c5df"
+    },
+    {
+      "path": "sovereign-reveal-v2/generation-prompt.txt",
+      "bytes": 2877,
+      "sha256": "c2e200d4aa0cc2fae3e106984ad92ba0eb8ea3dc844c6b037c06f1ebaed8c118"
+    },
+    {
+      "path": "sovereign-reveal-v2/reward-hold.png",
+      "bytes": 586967,
+      "sha256": "6dbc433ea6ee26fb3c6adbdf92f56ee972cdad5c13e0dd4c4013382b887c3d95"
+    },
+    {
+      "path": "sovereign-reveal-v2/sources/generation-prompts.txt",
+      "bytes": 4281,
+      "sha256": "8ec03133c637364c4dcc3d8bd396025371e991462b99f0c336f35565825cbe14"
+    },
+    {
+      "path": "sovereign-reveal-v2/sources/opening-keyframes.png",
+      "bytes": 2205150,
+      "sha256": "d693c9e2325e250b4a922c3ebd68bc4e092e999eb806be9e9fb3ea6f5e4ad1a3"
+    },
+    {
+      "path": "sovereign-reveal-v2/sources/reveal-effects.png",
+      "bytes": 1592559,
+      "sha256": "0a0c752c43c716246d099a5000b5f30d4cf50356ce373abe62f2cd7e9220dec5"
+    },
+    {
+      "path": "sovereign-reveal-v2/sources/sovereign-ceremonial-effects.png",
+      "bytes": 1836939,
+      "sha256": "e18fb88d169d952d128d73d3dde7c8ae6bc11c296f73c253362bc2185146d979"
+    },
+    {
+      "path": "sovereign-reveal-v2/sovereign-reveal-v2-50fps.gif",
+      "bytes": 47577587,
+      "sha256": "b8994e31f74eea364b3bfd202bb3f5cf967ebc331a19cf2b76cfe3136d2cdbcc"
+    },
+    {
+      "path": "sovereign-reveal-v2/sovereign-reveal-v2-preview.gif",
+      "bytes": 26899303,
+      "sha256": "675b9c2e3d838623f2da1679cb8a8b6a05f5f7e993409ecc1f50e31497a1d5d7"
+    },
+    {
+      "path": "sovereign-reveal-v2/timing-contact-sheet.png",
+      "bytes": 518070,
+      "sha256": "4eabfc4a9691b559a53d6f4349cab719d9e5860288e7d8b76258f7b13036b80f"
+    }
+  ]
+}

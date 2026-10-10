@@ -1,0 +1,23 @@
+Mode: built-in imagegen.
+
+OPENING KEYFRAMES
+Create an animation SPRITE SHEET derived from the exact SOVEREIGN chest (fourth chest, purple wood and gold) in these two reference images. Image 1 shows its approved closed design, image 2 its approved open design. Use only the Sovereign design, ignore the other four chests.
+
+Output one transparent PNG, 2048 by 1024 pixels, a precise 4-column by 2-row grid of eight equal 512 by 512 pixel cells. NO text, labels, borders, floor, scenery, shadows on a floor, or background. Each cell contains one complete isolated chest opening keyframe, identical scale and camera, horizontally centered at x=256 relative to that cell, with the exact same feet resting at y=472 and same stationary body occupying approximately x=80..435 y=310..472. The chest should have adequate clear space above and around it within every cell. Do not crop any crest or foot. READ ORDER LEFT TO RIGHT then top to bottom.
+
+The lower body must remain IDENTICAL in every cell, all front and side panels, feet, gold scrollwork, violet lantern gem clasp, dark purple timber, gold corners and side handle stay fixed in shape, size, position and appearance. No shaking, squashing or movement of the lower body. Same front three-quarter angle showing the right side.
+
+Animate only the rounded lid opening backwards on its REAR hinge. Frame 1: fully closed, exactly the approved closed Sovereign design. Frame 2: lid lifted 10 degrees. Frame 3: 25 degrees. Frame 4: 43 degrees. Frame 5: 63 degrees. Frame 6: 83 degrees. Frame 7: 99 degrees. Frame 8: settled fully open at 96 degrees, matching the approved open Sovereign. Lid physically rotates as one rigid piece with its attached gold bands, raised amethyst-and-laurel crest and corner finials. The crest tilts naturally with the lid. Show the hollow dark plum interior as the lid opens. The front purple lantern stays attached to the stationary body. Do not duplicate lid or crest. Do not make new ornament. No glow bursts or reward items in this sheet, only the chest. Consistent subtle violet lantern light.
+
+Match the reference's exceptionally detailed warm outlined fantasy game illustration style, rich plum-black wood, gold leaf trim and sculpted corner feet, radiant violet gem lantern, beautiful amethyst laurel crest. This is a strict animation asset: locked scale, locked perspective, locked body alignment, genuine transparent background and clear separation between cells. Eight frames in the exact regular 4x2 grid, all the same chest.
+
+REWARD AND EFFECTS
+Use case: stylized-concept. Make a transparent production asset atlas for a fantasy treasure chest reveal animation, matching the ornate gold and amethyst Sovereign chest in the reference. The reference is style and color guidance only.
+
+Output a square transparent PNG with an exact 2x2 layout of four clearly separated assets, each occupying only its own quadrant with broad transparent padding. No borders, writing, letters, labels or scenery.
+
+TOP LEFT: a single highly detailed reward icon, a rolled ivory spell scroll at a diagonal with golden ornamental end caps, tied with a deep violet ribbon and a small luminous amethyst seal. Sharp readable silhouette, clean dark outline, rich hand-painted fantasy illustration shading and tiny warm metal highlights matching the chest. This is the main object. Keep it inside the central 65% of its quadrant.
+TOP RIGHT: a soft circular magical glow sprite, brightest ivory-white center fading through luminous lavender to violet and fully transparent edges. Smooth alpha falloff with no hard rectangular edge, no opaque dark pixels behind it.
+BOTTOM LEFT: a small elegant cluster of gold and lilac sparks, six delicate tapered four-point glints and tiny soft motes spreading from the center, alpha background, airy and restrained. This effect must not contain any objects or a chest.
+BOTTOM RIGHT: a restrained circular violet and gold magical halo, a thin soft ring with subtle small radial gold glints and transparent empty center, no runic text or symbols. Smooth luminous alpha edges.
+Genuine transparent RGBA background in all four cells, including between effects. Individual assets don't touch or overlap. Refined high quality game illustration and VFX, not flat vector, no checkerboard baked in.

@@ -1,0 +1,10 @@
+{
+  "width": 960,
+  "height": 640,
+  "frames": 400,
+  "fps": 50,
+  "durationMs": 8000,
+  "loop": 0,
+  "loopBoundaryMeanChannelError": 0.48532958984375,
+  "bytes": 47577587
+}

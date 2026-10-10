@@ -1,0 +1,18 @@
+Mode: built-in imagegen.
+Purpose: new VFX atlas for the second Sovereign animation draft.
+
+Use case: stylized-concept.
+Asset type: transparent illustrated VFX atlas for the Sovereign treasure crate reveal, tier FOUR of FIVE.
+Input image is a STYLE AND COLOR REFERENCE only: preserve its rich amethyst violet, warm polished gold and sophisticated fantasy illustration finish. Create effects that feel royal and powerful. Hallowed, the highest tier, owns the giant sunburst/celestial spectacle; Sovereign should feel like a grand royal vault releasing stored magic.
+
+Output one square transparent PNG with an exact 2 by 2 grid. Four separate effect sprites, one per quadrant, broad transparent padding in EVERY cell. No text, captions, borders, chest, reward object, scenery, symbols or runes. No checkerboard.
+
+TOP LEFT: an upward fan of magical light emerging from one small point near the bottom center of its quadrant. Several beautiful translucent amethyst shafts with warm champagne-gold inner edges and small bright motes. The fan broadens elegantly upward, with softly tapering tips. A bright but compact ivory-gold origin. Everything fades to alpha, bounded with clear margins and no rectangular opaque edges. This effect will emerge from the mouth of a chest, so the bottom point must be obvious and the upper rays airy rather than a solid triangle.
+
+TOP RIGHT: a thin elliptical ring shockwave viewed from above at a shallow angle, luminous violet outer rim and a narrow molten-gold inner rim, with a small amount of soft violet trailing mist. Wide and shallow ellipse, no center fill. It will spread across the floor beneath an opening chest. Keep all of the ellipse inside its cell with generous empty margin.
+
+BOTTOM LEFT: one flowing curved ribbon of royal magic, forming a graceful rising S-shaped trail made of fine golden particles, several tiny lilac four-point glints and a wispy violet thread. Airy and segmented with space between sparkling motes; no opaque solid ribbon. Complete trail fits within the cell. To be rotated and scaled as a particle trail during reveal.
+
+BOTTOM RIGHT: a luxurious circular gold-laurel reward wreath surrounding a completely EMPTY transparent center. Delicate symmetrical sculpted golden laurel branches sweep upward from a small gold diamond at the bottom; a small three-point royal crest with one amethyst at the top. A faint soft violet halo sits just behind the wreath. This frames a reward icon, so the central 60 percent of the circle must be clear, with nothing across it. No sunburst, wings, letters or text. Detailed hand-painted gold to match the chest.
+
+All four are high-quality fantasy GAME VFX sprites ready for layering, genuine RGBA alpha including all soft glow falloff. Warm gold, jewel violet, delicate ivory highlights. Clear separation between four equally sized cells; artwork never touches a cell edge.
