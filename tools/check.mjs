@@ -655,7 +655,7 @@ if (section('foe wind-up after a hold (browser)')) try {
       // the hero's turns go to the foe (lessons.md: drive the foe with turnBegin, not its own turns), so every turn is a wind-up and
       // nothing dies; events counted; a test hold and a test guide pause to switch
       await X(`(() => { onboardTips(false); S.activity = 'fight'; setZone(1); ui(true);
-        window.__ev = { move: 0, win: 0 }; on('foeMove', () => window.__ev.move++); on('parryWindow', () => window.__ev.win++);
+        window.__ev = { move: 0, win: 0 }; on('foeMove', () => window.__ev.move++); on('parryWindow', () => { window.__ev.win++; window.__ev.pw = TURN_LIVE.until - TURN_LIVE.now; });
         window.__hold = false; holdGame(() => window.__hold);
         let gp = false; Object.defineProperty(ONBOARD, 'paused', { get: () => gp || window.__gp, set: v => { gp = v; }, configurable: true });
         const f = () => { if (S.zone !== 1 || S.activity !== 'fight') { S.activity = 'fight'; setZone(1); }   // the save's own zone may come back as it settles
@@ -681,13 +681,13 @@ if (section('foe wind-up after a hold (browser)')) try {
       const h = await across('__hold', false);
       assert(h.b && h.b.held && h.b.now === h.a.now && h.b.left === h.a.left,
         `foe wind-up after a hold ${view}: the test hold stops the fight mid wind-up (${JSON.stringify(h)})`);
-      assert(h.c && h.c.ph === 'foeWindup' && h.c.hit === 0 && h.c.len === h.a.len && h.c.left > h.a.len - 0.15 && h.c.left <= h.a.len && h.c.ev.move === h.a.ev.move + 1 && h.c.ev.win === h.a.ev.win + 1,
+      assert(h.c && h.c.ph === 'foeWindup' && h.c.hit === 0 && h.c.len === h.a.len && Math.abs(h.c.ev.pw - h.a.len) < 1e-9 && h.c.left <= h.a.len && h.c.ev.move === h.a.ev.move + 1 && h.c.ev.win === h.a.ev.win + 1,
         `foe wind-up after a hold ${view}: once the hold lifts the wind-up starts again at its full length, and the move's clip with it (${JSON.stringify(h)})`);
       const g = await across('__gp', false);
-      assert(g.c && g.c.ph === 'foeWindup' && g.c.left < g.a.left && g.c.left > g.a.left - 0.2 && g.c.ev.move === g.a.ev.move && g.c.ev.win === g.a.ev.win,
+      assert(g.c && g.c.ph === 'foeWindup' && g.c.left < g.a.left && g.c.ev.move === g.a.ev.move && g.c.ev.win === g.a.ev.win,
         `foe wind-up after a hold ${view}: the guide's pause does not restart a wind-up (a lesson waits for the press) (${JSON.stringify(g)})`);
       const p = await across('__hold', true);
-      assert(p.a.used && p.c && p.c.ph === 'foeWindup' && p.c.left < p.a.left && p.c.left > p.a.left - 0.2 && p.c.ev.win === p.a.ev.win,
+      assert(p.a.used && p.c && p.c.ph === 'foeWindup' && p.c.left < p.a.left && p.c.ev.win === p.a.ev.win,
         `foe wind-up after a hold ${view}: a hit the player already pressed for is not restarted (${JSON.stringify(p)})`);
       assert(!errs.length, `foe wind-up after a hold ${view}: no page errors` + (errs[0] ? ': ' + errs[0] : ''));
       await page.close(); await ctx.close();

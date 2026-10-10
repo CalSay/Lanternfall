@@ -28682,13 +28682,13 @@ function turnSyncEquip() {
 on('soloEquip', turnSyncEquip);
 // A wind-up across a hold (card foe-windup-after-hold): a loading hold (75-art-load) or a card over the fight stops the tick,
 // not the frame clock (62's T), and the player could not watch the tell under it. So a foe mid wind-up, before any press, starts
-// that hit's wind-up again from the start (the move's clip too, on its first hit), at its own length. This file's hold check
+// that hit's wind-up again from the start (the move's clip too, on its first hit; a later hit's clip is 62-stage's), at its own length. This file's hold check
 // never holds: it notes the frames the frame loop asks about while a wind-up is up. The guide's pause (ONBOARD.paused: a lesson
 // waits for the press in its window) skips that ask in 90-boot, and here, so a lesson is never restarted.
 // TURN_HOLD: tick, the frame clock at the last tick; at, at the last ask; miss, a frame was asked about and not ticked.
 const TURN_HOLD = { tick: -1, at: -1, miss: 0 };
 const turnFrameT = () => { try { return T; } catch (e) { return -1; } };   // the Node tools have no frame clock: nothing restarts
-holdGame(() => {
+GAME_HOLDS.unshift(() => {   // first in the list: gameHeld() stops at the first hold that is up (a story scene's comes earlier)
   const H = TURN_HOLD, t = turnFrameT();
   if (t >= 0 && TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'foeWindup' && !ONBOARD.paused) { if (H.at > H.tick && H.at < t) H.miss = 1; H.at = t; }
   return false;
