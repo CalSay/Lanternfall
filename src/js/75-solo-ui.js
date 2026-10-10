@@ -379,7 +379,7 @@ var soloIconURL = () => '';
         b.classList.toggle('empty', !o.id);
         const a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
         b.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
-        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.turnDesc || a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
+        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.turnDesc || a.desc} To change the slot, open Hero, then Abilities.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
       }
       setCd(b, o.left, o.max, wait); setN(b, secs(o.left));
       b.classList.toggle('ready', !!o.id && o.ready);
