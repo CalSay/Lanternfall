@@ -1,0 +1,1 @@
+Tooling only: the away card check no longer lets its fake zone 40 light the Great Lantern, whose card could open over the next away card on a slow runner. The check's More clicks wait until nothing covers them. No player change. (no shot)
