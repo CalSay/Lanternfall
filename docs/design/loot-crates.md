@@ -89,5 +89,5 @@ is random. A pity counter makes the crate's top tier certain after a set number 
 - They use the same five tiers, the same open and the same printed odds and pity line as earned crates.
 - Nothing is built yet. Store code still waits for the early-game milestone, behind its one switch.
 - A legal check per country comes before launch. Belgium bans paid loot boxes, so crates are not sold there. Brazil
-  bars them for minors, and Australia rates games that have them M or higher. Steam requires the odds to be shown,
+  bars them for minors, and Australia rates games that have them M or higher. Apple and Google require the odds to be shown,
   which the design already does.
