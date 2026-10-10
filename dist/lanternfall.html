@@ -14813,8 +14813,8 @@ var forgeGoalPicks = 0;
       if (r) {
         if (pick.length < n) pick.push(r);
         else { let lo = -1; pick.forEach((e, i) => { if (!e.ready && (lo < 0 || e.score < pick[lo].score)) lo = i; });   // a ready goal is never displaced,
-          // except by a prio 13+ row (gear-in-first-25: the first weapon). nextup-z13-boss: a Ready boss row is the way on, so only the
-          // first weapon (prio 20) takes its place; a tier 2 gate (prio 13) takes another Ready row's (a shown row's STICK left the boss lowest)
+          // except by a prio 13+ row (gear-in-first-25: the first weapon). nextup-z13-boss: a Ready boss row is the way on, so only the unfinished
+          // first weapon (prio 20) takes its place; a Ready first weapon or a tier 2 gate (prio 13) takes another Ready row's (a shown row's STICK left the boss lowest)
           if (lo < 0 && r.prio >= 13) pick.forEach((e, i) => { if (e.prio < 13 && !(e.sys === 'boss' && r.prio < 20) && (lo < 0 || e.score < pick[lo].score)) lo = i; });
           if (lo >= 0) pick[lo] = r; }
       }
