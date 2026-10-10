@@ -873,12 +873,13 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     }
     if (kind === 'heavy' || kind === 'slam' || kind === 'dive') a.kb = 0.35;
   }
-  // Approved animation packs (64j, the Thorn Imp). An attack is a queue of clips: a hop in, the attack, a hop back; then
-  // it idles. In a turn fight the engine drives it (59k): foeMove starts the clips, each parryWindow sets the playback
+  // Approved animation packs (64j: the Thorn Imp, Gloomjaw). An attack is a queue of clips: a hop in, the attack, a hop back
+  // (a pack with dashIn and dashOut, the Scenario imp, dashes in and out instead: artHop); then it idles. In a turn fight the engine drives it (59k): foeMove starts the clips, each parryWindow sets the playback
   // rate so that hit's contact frame lands as its defence window closes, and foeContact marks the hit landed or not (the
   // landed-hit spark shows only for a landed hit). In a legacy fight a swing plays the Jab from its release (a heavy one
   // the Crosscut), already in reach. Hurt plays on a hit taken while idle, stagger while stunned, death when it falls
-  // (its last frame is empty). The hop moves the foe only during the pack's hopMove window; its lift is in the frames.
+  // (its last frame is empty; the imp's lies still, then fades: its fade). The hop moves the foe only during the pack's hopMove
+  // window (a dash: its own mv window); its lift is in the frames.
   // s.aq: clips [{ act, a, b (one-based, inclusive), hop: [from, to] engage fraction }], s.at: ms into the head clip,
   // s.ar: playback rate, s.ax: engage fraction (0 home, 1 in reach), s.ae: the step-in (px) at 1, s.amv: the attack,
   // s.al: contact index -> landed, s.hurtT / s.sgT: hurt seconds left / seconds staggered.
@@ -894,16 +895,18 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   }
   // back: hop home after it (turn fights); a legacy fight's foe stays in reach between its swings
   // the zone monster's move that plays act (59l ZONE_FOES): ranged, flight
+  // the clip that brings the foe in (out: false) or takes it home (out: true)
+  const artHop = (F, out) => (out ? F.acts.dashOut : F.acts.dashIn) ? (out ? 'dashOut' : 'dashIn') : F.acts.hop ? 'hop' : null;
   const artMv = (s, act) => { const Z = s.m && typeof zoneFoeOf === 'function' && zoneFoeOf(s.m); return (Z && Z.moves.find(m => m.anim === act)) || null; };
   function artMove(s, act, from, back = true) {
-    const F = artOf(s), A = F && F.acts[act], hop = F && F.acts.hop; if (!A || !hop) return;
+    const F = artOf(s), A = F && F.acts[act], hin = F && artHop(F, false), hout = F && artHop(F, true); if (!A || !hin || !hout) return;
     const mv = artMv(s, act), ranged = !!(mv && mv.ranged);
     s.amv = act; s.amr = ranged ? mv : null; s.al = {}; s.ar = 1; s.at = 0; s.pj = null;
     if (!ranged) s.ae = artEngage(s, act);
     s.aq = [];
-    if (!ranged && !(s.ax >= 1)) s.aq.push({ act: 'hop', a: 1, b: hop.fr.length, hop: [s.ax || 0, 1] });
+    if (!ranged && !(s.ax >= 1)) s.aq.push({ act: hin, a: 1, b: F.acts[hin].fr.length, hop: [s.ax || 0, 1] });
     s.aq.push({ act, a: from || A.start, b: A.end });
-    if (back && !ranged) s.aq.push({ act: 'hop', a: 1, b: hop.fr.length, hop: [1, 0] });
+    if (back && !ranged) s.aq.push({ act: hout, a: 1, b: F.acts[hout].fr.length, hop: [1, 0] });
   }
   // where the hero is hit: projectiles fly to it, impacts land on it (world px)
   const artTarget = () => ({ x: ax(hero) + 4, y: hero.hy - 34 });
@@ -921,7 +924,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // comes as the swing does. 59l slows a skinned foe's swings so every cycle plays in full, with a rest between.
   const artLegacyMoves = s => { const Z = s.m && typeof zoneFoeOf === 'function' && zoneFoeOf(s.m); return Z ? Z.moves.filter(m => m.hits.length === 1 && artOf(s).acts[m.anim]) : []; };
   function artLegacy(s) {
-    const F = artOf(s), m = s.m, hop = F.acts.hop, L = artLegacyMoves(s);
+    const F = artOf(s), m = s.m, hop = F.acts[artHop(F, false)], L = artLegacyMoves(s);
     if (!L.length || !m || m.dead || s.aq || !(m.born >= 0.3) || !(m.swing >= 0) || m.stunT > 0) return;
     const mv = L[(s.lmI || 0) % L.length], A = F.acts[mv.anim];
     const hopIn = mv.ranged || s.ax >= 1 ? 0 : actMs(hop, 1, hop.fr.length);
@@ -955,7 +958,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
       let c = q[0], d = clipMs(F, c);
       while (c && s.at >= d) { if (c.hop) s.ax = c.hop[1]; s.at -= d; q.shift(); c = q[0]; d = c ? clipMs(F, c) : 0; if (c && c.hop && c.hop[1] === 0) s.ar = 1; }
       if (c && c.hop) {
-        const P = FOE_ART[F.key], m0 = P.hopMove[0], m1 = P.hopMove[1];
+        const P = FOE_ART[F.key], w = F.acts[c.act].mv || P.hopMove, m0 = w[0], m1 = w[1];
         const u = reduced ? (s.at >= m0 ? 1 : 0) : Math.max(0, Math.min(1, (s.at - m0) / (m1 - m0)));
         s.ax = c.hop[0] + (c.hop[1] - c.hop[0]) * u;
       }
@@ -989,7 +992,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     }
     if (m && m.stunT > 0) { const G = A.stagger; return { body: G.fr[clipFrame(G, 1, G.fr.length, s.sgT * 1000) - 1].body }; }
     if (s.hurtT > 0) { const H = A.hurt, tot = actMs(H, 1, H.fr.length); return { body: H.fr[clipFrame(H, 1, H.fr.length, tot - s.hurtT * 1000) - 1].body }; }
-    if (m && tele && tele.foe === m) { const mv = artLegacyMoves(s)[0], J = mv && A[mv.anim]; if (J) return { body: J.fr[J.start + 2].body }; }   // a legacy telegraph: a wind-up
+    if (m && tele && tele.foe === m) { const mv = artLegacyMoves(s)[0], J = mv && A[mv.anim]; if (J) return { body: J.fr[F.hk && J.con.length ? Math.max(0, J.con[0] - 2) : J.start + 2].body }; }   // a legacy telegraph: a wind-up (a k pack: the frame before the contact)
     const I = A.idle; return { body: I.fr[clipFrame(I, 1, I.fr.length, reduced ? 0 : (T * 1000 + (s.hx & 7) * 90) % actMs(I, 1, I.fr.length)) - 1].body };
   }
   const turnSlot = () => { const s = foe; return artOf(s) && turnFight() && s.m === mob && !s.m.dead ? s : null; };
@@ -1506,7 +1509,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     if (m) {
       if (s.fl > 0.02) x += 2;
       if (ns) { if (m.dead) alpha = Math.max(0, 1 - Math.max(0, m.dead - 0.2) / 0.4); else if (m.born < 0.15) alpha = Math.min(1, m.born / 0.1 + 0.3); y -= s.fr.hover; }   // new style: no sinking
-      else if (m.dead) { if (!artOf(s)) { alpha = Math.max(0, 1 - m.dead / 0.4); y += Math.round(m.dead * 30); } }   // a pack foe plays its own death (it ends empty)
+      else if (m.dead) {   // a pack foe plays its own death (it ends empty, or fades over its last frame: fade)
+        const D = artOf(s) && s.fr.acts.death;
+        if (!D) { alpha = Math.max(0, 1 - m.dead / 0.4); y += Math.round(m.dead * 30); }
+        else if (D.fade) alpha = Math.max(0, Math.min(1, (actMs(D, 1, D.fr.length) - m.dead * 1000) / D.fade));
+      }
       else if (m.born < 0.15) { sy = 0.4 + 0.6 * (m.born / 0.15); alpha = Math.min(1, m.born / 0.1 + 0.3); }
       if (s.hover && !reduced) y += Math.round(Math.sin(T * 3 + (s.hx & 7)) * 2);
     } else if (tg === 'node' && typeof gatherFall === 'function' && gatherFall() >= 0) {
@@ -1518,6 +1525,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     const dx = Math.round(x - f.ox), h = f.c.height, c = s.lane === 0 && f !== s.fr.hit ? dimOf(f.c) : f.c;
     ctx.globalAlpha = alpha;
     if (ns) nsBlit(ctx, f, x, y, { a: alpha, d: s.lane === 0, w: m && !m.dead && s.fl > 0.02 ? 0.55 : 0 });   // hit: a white flash
+    else if (f.hk && sy === 1) foeArtBlit(ctx, f, x, y, s.lane === 0);   // a k pack (64j): its art px on whole device px
     else if (m && m.dead) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SW, s.gy + 2); ctx.clip(); ctx.drawImage(c, dx, Math.round(y - f.oy)); ctx.restore(); }
     else if (sy < 1) ctx.drawImage(c, dx, Math.round(y - f.oy * sy), f.c.width, Math.round(h * sy));
     else ctx.drawImage(c, dx, Math.round(y - f.oy));

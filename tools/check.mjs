@@ -10298,22 +10298,26 @@ if (section('fixed battle backgrounds')) try {
 } catch (e) { fail('backgrounds crashed: ' + (e.stack || e)); }
 
 if (section('C22 Thorn Imp (zone 1)')) try {
-  // The owner-approved Thorn Imp (art/enemies/thorn-imp/v1): the art is embedded byte for byte, zone 1's regular foe is the
-  // Imp, and in turn fights it alternates Briar Jab (1 hit) and Crosscut (2 hits, slow then fast), each hit its own parry.
+  // The Thorn Imp (art/enemies/thorn-imp/scenario-v1, Cal signed off 10 Oct 2026 19:44; tools/art/thorn-imp-s.py): the art is
+  // embedded byte for byte, zone 1's regular foe is the Imp, and in turn fights it alternates Briar Jab (1 hit) and Crosscut
+  // (2 hits, slow then fast), each hit its own parry, dashing in before each and out after.
   { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-foes.mjs'), '--check'], { encoding: 'utf8' });
     assert(r.status === 0, 'C22: src/js/21za-data-foeart.js is up to date with the approved packs (node tools/art/embed-foes.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
-  { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'approved-v2'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+  { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'scenario-v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
     const A = artData('21za-data-foeart.js', 'FOE_ART').imp;
     const frames = Object.values(A.acts).reduce((n, a) => n + a.f.length, 0);
     const bytes = Object.entries(A.atlases).every(([p, b64]) => b64 === fs.readFileSync(path.join(dir, p)).toString('base64'));
     const timing = Object.entries(man.actions).every(([id, a]) => A.acts[id] && a.frames.every((f, i) => A.acts[id].f[i][0] === f.duration_ms) &&
       JSON.stringify(A.acts[id].con) === JSON.stringify(a.contacts) && JSON.stringify(A.acts[id].rel) === JSON.stringify(a.release_cues));
-    assert(frames === 55 && Object.keys(A.acts).length === 7 && bytes && timing && A.acts.death.f[8][3] === -1,
-      `C22: the approved Thorn Imp pack (7 actions, ${frames} frames) is embedded with its atlases byte for byte, its timings, releases and contacts; death ends empty`); }
+    const srcs = Object.values(man.actions).flatMap(a => a.frames.map(f => f.source));
+    const webp = Object.values(A.atlases).every(b => { const x = Buffer.from(b, 'base64'); return x.toString('latin1', 0, 4) === 'RIFF' && x.toString('latin1', 8, 15) === 'WEBPVP8' && x[15] === 0x4C; });   // VP8L: lossless
+    assert(frames === 30 && Object.keys(A.acts).length === 8 && bytes && timing && A.fmt === 'webp' && A.k === 0.5 && webp && man.colours <= 64 &&
+      !srcs.includes('jab-2') && !srcs.includes('jab-7') && A.acts.dashIn && A.acts.dashOut && A.acts.death.fade > 0,
+      `C22: the Scenario Thorn Imp pack (8 actions, ${frames} frames, lossless WebP, ${man.colours} colours) is embedded with its atlases byte for byte, its timings and contacts; Briar Jab never shows Cal's rejected frames 2 and 7; it dashes in and out; death fades`); }
   { const g = loadCore({ seed: 1 }), E = s => g.eval(s);
     const w = JSON.parse(E('JSON.stringify(ZONE_FOES[1].moves.map(m => m.hits.map(h => h.wind)))'));
     assert(JSON.stringify(w) === '[[1.61],[1.61,1]]' && E('zoneFoeDeathS({ skin: "imp" })') === 2.31,
-      `C22: the Imp's parry windows close on the art's contact frames (hop 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death (${JSON.stringify(w)})`); }
+      `C22: the Imp's parry windows close on the art's contact frames (dash in 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death (${JSON.stringify(w)})`); }
   { // Gloomjaw (art/enemies/gloomjaw/approved-v1, owner-approved 2026-10-02): zone 2's monster
     const dir = path.join(ROOT, 'art', 'enemies', 'gloomjaw', 'approved-v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
     const G = artData('21za-data-foeart.js', 'FOE_ART').gloomjaw;
@@ -15764,7 +15768,7 @@ if (section('embed-base91')) try {
   for (const [fam, list] of Object.entries(R.icons)) list.forEach((u, i) => rows.push([`RES_ICONS.${fam}.${i + 1}`, u, art('resources', 'game-v1', `${fam}-${i + 1}.png`), PNG]));
   const P = artData('21yc-data-portraits.js', 'HERO_PORTRAITS');
   for (const [id, u] of Object.entries(P)) rows.push([`HERO_PORTRAITS.${id}`, u, art('portraits', id + '.png'), PNG]);
-  const FOE_DIR = { imp: 'enemies/thorn-imp/approved-v2', gloomjaw: 'enemies/gloomjaw/approved-v1' }, F = artData('21za-data-foeart.js', 'FOE_ART');
+  const FOE_DIR = { imp: 'enemies/thorn-imp/scenario-v1', gloomjaw: 'enemies/gloomjaw/approved-v1' }, F = artData('21za-data-foeart.js', 'FOE_ART');
   for (const [k, pk] of Object.entries(F)) for (const [p, u] of Object.entries(pk.atlases))
     rows.push([`FOE_ART.${k}.${p}`, u, FOE_DIR[k] ? art(...FOE_DIR[k].split('/'), p) : null, '']);
   const BG = artData('21zb-data-bgart.js', 'BG_ART'), BGF = { 'mossy-hollow-outlined-night-v1': ['backgrounds/mossy-hollow/outlined-night-v1/runtime/mossy-hollow-night-960x540.webp', 'backgrounds/mossy-hollow/outlined-night-v1/runtime/mossy-hollow-night-portrait-480x900.webp'] };

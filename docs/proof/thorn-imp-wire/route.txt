@@ -1,0 +1,24 @@
+# seed: 1
+# Proof for card thorn-imp-wire: zone 1's Thorn Imp is the Scenario pack Cal signed off (10 Oct 2026 19:44), drawn crisp at
+# the heroes' art scale and about two-thirds of Wren's height on a phone (half on desktop, where foes draw smaller than heroes).
+# Every attack dashes in, strikes and dashes back out. Briar Jab never shows the two frames Cal turned down (2 and 7).
+# The pack, its timings and the parry windows are held by tools/check.mjs ("C22 Thorn Imp (zone 1)").
+#   imp-idle.png      a new game's first fight: the new Thorn Imp stands opposite Wren
+#   imp-turn.png      the imp's turn (the first lesson holds its first swing for Dodge; the dash plays when it swings)
+new fresh
+wait 4
+tap "Skip"
+wait 2
+tap "Begin as Wren"
+wait 6
+tap "Skip"
+wait 3
+tap-if "Got it"
+tap-if "Dismiss this tip"
+wait 3
+expect ".hud.vs .mob"
+shot imp-idle
+tap-if "Attack"
+wait-for "Dodge" 8
+wait 1
+shot imp-turn

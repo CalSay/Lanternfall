@@ -1,0 +1,443 @@
+{
+ "version": 1,
+ "enemy": "thorn-imp",
+ "source": "Scenario GPT Image 2.5 HIGH (experiments/2d-poses-scenario/thorn-imp), converted by tools/art/thorn-imp-s.py",
+ "approval": "Cal 10 Oct 2026 19:44 cmsg_01AYPNgUeMrmxpJNQMppEbk9Lw2iTvVMUqnS1FVw1Ph1X5: only Briar Jab f2 and f7 are wrong, all others good enough",
+ "facing": "left",
+ "format": "webp",
+ "art_scale": 0.5,
+ "scale_from_source": 0.18117,
+ "standing_height_px": 127,
+ "body_cell": [
+  201,
+  158
+ ],
+ "body_origin": [
+  119,
+  158
+ ],
+ "alpha": "binary",
+ "frame_numbering": "one-based",
+ "actions": {
+  "idle": {
+   "loop": true,
+   "contacts": [],
+   "release_cues": [],
+   "body_atlas": "idle.webp",
+   "frames": [
+    {
+     "source": "jab-1",
+     "duration_ms": 480,
+     "body_rect": [
+      0,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 59
+    }
+   ],
+   "breathe_ms": 480
+  },
+  "dashIn": {
+   "loop": false,
+   "contacts": [],
+   "release_cues": [],
+   "body_atlas": "dashIn.webp",
+   "frames": [
+    {
+     "source": "dash-1",
+     "duration_ms": 140,
+     "body_rect": [
+      0,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 53
+    },
+    {
+     "source": "dash-2",
+     "duration_ms": 160,
+     "body_rect": [
+      201,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 57
+    },
+    {
+     "source": "dash-3",
+     "duration_ms": 260,
+     "body_rect": [
+      402,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 2
+    },
+    {
+     "source": "dash-4",
+     "duration_ms": 170,
+     "body_rect": [
+      603,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 57
+    }
+   ],
+   "move_ms": [
+    140,
+    560
+   ]
+  },
+  "dashOut": {
+   "loop": false,
+   "contacts": [],
+   "release_cues": [],
+   "body_atlas": "dashOut.webp",
+   "frames": [
+    {
+     "source": "dash-5",
+     "duration_ms": 140,
+     "body_rect": [
+      0,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 87
+    },
+    {
+     "source": "dash-6",
+     "duration_ms": 260,
+     "body_rect": [
+      201,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 83
+    },
+    {
+     "source": "dash-7",
+     "duration_ms": 170,
+     "body_rect": [
+      402,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 58
+    },
+    {
+     "source": "dash-8",
+     "duration_ms": 160,
+     "body_rect": [
+      603,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 55
+    }
+   ],
+   "move_ms": [
+    60,
+    400
+   ]
+  },
+  "jab": {
+   "loop": false,
+   "contacts": [
+    4
+   ],
+   "release_cues": [],
+   "body_atlas": "jab.webp",
+   "frames": [
+    {
+     "source": "jab-1",
+     "duration_ms": 200,
+     "body_rect": [
+      0,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 59
+    },
+    {
+     "source": "jab-3",
+     "duration_ms": 300,
+     "body_rect": [
+      201,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 62
+    },
+    {
+     "source": "jab-4",
+     "duration_ms": 380,
+     "body_rect": [
+      402,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 34
+    },
+    {
+     "source": "jab-5",
+     "duration_ms": 260,
+     "body_rect": [
+      603,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 1
+    },
+    {
+     "source": "jab-6",
+     "duration_ms": 220,
+     "body_rect": [
+      804,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 67
+    },
+    {
+     "source": "jab-8",
+     "duration_ms": 400,
+     "body_rect": [
+      1005,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 59
+    }
+   ]
+  },
+  "crosscut": {
+   "loop": false,
+   "contacts": [
+    3,
+    5
+   ],
+   "release_cues": [],
+   "body_atlas": "crosscut.webp",
+   "frames": [
+    {
+     "source": "crosscut-1",
+     "duration_ms": 380,
+     "body_rect": [
+      0,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 61
+    },
+    {
+     "source": "crosscut-2",
+     "duration_ms": 500,
+     "body_rect": [
+      201,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 71
+    },
+    {
+     "source": "crosscut-3",
+     "duration_ms": 420,
+     "body_rect": [
+      402,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 43
+    },
+    {
+     "source": "crosscut-4",
+     "duration_ms": 580,
+     "body_rect": [
+      603,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 71
+    },
+    {
+     "source": "crosscut-5",
+     "duration_ms": 300,
+     "body_rect": [
+      804,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 39
+    },
+    {
+     "source": "crosscut-6",
+     "duration_ms": 260,
+     "body_rect": [
+      1005,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 61
+    },
+    {
+     "source": "crosscut-7",
+     "duration_ms": 220,
+     "body_rect": [
+      1206,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 61
+    },
+    {
+     "source": "crosscut-8",
+     "duration_ms": 200,
+     "body_rect": [
+      1407,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 61
+    }
+   ]
+  },
+  "hurt": {
+   "loop": false,
+   "contacts": [],
+   "release_cues": [],
+   "body_atlas": "hurt.webp",
+   "frames": [
+    {
+     "source": "hurt-2",
+     "duration_ms": 350,
+     "body_rect": [
+      0,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 52
+    },
+    {
+     "source": "hurt-3",
+     "duration_ms": 350,
+     "body_rect": [
+      201,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 61
+    }
+   ]
+  },
+  "stagger": {
+   "loop": false,
+   "contacts": [],
+   "release_cues": [],
+   "body_atlas": "stagger.webp",
+   "frames": [
+    {
+     "source": "hurt-4",
+     "duration_ms": 300,
+     "body_rect": [
+      0,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 57
+    },
+    {
+     "source": "hurt-5",
+     "duration_ms": 300,
+     "body_rect": [
+      201,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 59
+    }
+   ]
+  },
+  "death": {
+   "loop": false,
+   "contacts": [],
+   "release_cues": [],
+   "body_atlas": "death.webp",
+   "frames": [
+    {
+     "source": "hurt-6",
+     "duration_ms": 450,
+     "body_rect": [
+      0,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 55
+    },
+    {
+     "source": "hurt-7",
+     "duration_ms": 450,
+     "body_rect": [
+      201,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 67
+    },
+    {
+     "source": "hurt-8",
+     "duration_ms": 1410,
+     "body_rect": [
+      402,
+      0,
+      201,
+      158
+     ],
+     "left_edge": 68
+    }
+   ],
+   "fade_ms": 400
+  }
+ },
+ "bytes": {
+  "idle.webp": 6108,
+  "dashIn.webp": 24534,
+  "dashOut.webp": 21456,
+  "jab.webp": 32418,
+  "crosscut.webp": 46582,
+  "hurt.webp": 12996,
+  "stagger.webp": 11054,
+  "death.webp": 12944
+ },
+ "colours": 63
+}
