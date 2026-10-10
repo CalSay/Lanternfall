@@ -344,7 +344,7 @@ const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the
   }
   const G = { fallT: -99, reach: 0, reachT: -9, key: '', kind: '', t: 1, fam: 'rock', fr: null, nodes: [], cur: 0, pile: 0, lastT: -1, SW: 0, GY: 0, lift: 0, walk: null, snap: true, stage: 0, cutX: 0 };
   const ease = q => q < 0 ? 0 : q > 1 ? 1 : q * q * (3 - 2 * q);
-  const frames = () => enemyFrames('node:' + gatherArtKind(G.kind), { tier: G.t });
+  const frames = () => (typeof nsNodeSet === 'function' && nsNodeSet(G.kind, G.t)) || enemyFrames('node:' + gatherArtKind(G.kind), { tier: G.t });
 
   let seenT = -1, seenSW = 0, seenGY = 0;
   function ensure(SW, GY) {
@@ -354,7 +354,7 @@ const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the
     // the hero's real reach, once its strike frame is baked (until then an estimate)
     if (!G.reach && kind === G.kind && T > G.reachT + 1) { G.reachT = T; const r = heroReach(); if (r) { G.reach = r; G.key = ''; } }
     const cold = kind === 'wood' && t === 1 && typeof hearthScene === 'function' && !!hearthScene();   // the opening camp scene only
-    const key = kind + t + '|' + SW + '|' + GY + '|' + cold;
+    const ns = typeof nsOn === 'function' && nsOn(), key = kind + t + '|' + SW + '|' + GY + '|' + cold + '|' + ns;
     if (key === G.key) return;
     const again = G.kind === kind && G.t === t;
     if (!again) { G.reach = 0; G.reachT = -9; }
@@ -373,7 +373,7 @@ const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the
     // open ground left of the worked row (behind the hero), then in the row's gaps. Never over the fire.
     const list = [];
     for (let i = 0; i < nw; i++) list.push({ x: nw > 1 ? Math.round(xa + (xb - xa) * i / (nw - 1)) : beast ? Math.max(xa, Math.round((xa + xb) / 2)) : Math.max(xa, xb), lane: (nw - 1 - i) % 2 ? 0 : 1 });   // the beast: mid-stage
-    const nDeep = beast ? 0 : Math.max(1, (SW < 270 ? 4 : 5) - nw), spots = [], half = Math.round(w * 0.25), x0 = cold ? Math.round(SW * 0.36) + half : Math.round(half * 0.5);
+    const nDeep = beast || ns ? 0 : Math.max(1, (SW < 270 ? 4 : 5) - nw), spots = [], half = Math.round(w * 0.25), x0 = cold ? Math.round(SW * 0.36) + half : Math.round(half * 0.5);
     for (let x = x0; x <= xa - Math.round(gap * 1.1); x += Math.max(30, Math.round(w * 0.5))) spots.push(x);
     for (let i = 1; i < nw; i += 2) if (list[i].x - list[i - 1].x >= w * 0.5) spots.push(Math.round((list[i - 1].x + list[i].x) / 2));
     if (!spots.length) spots.push(Math.min(SW - half - 4, xb + Math.round(gap * 0.8)));
@@ -440,8 +440,8 @@ const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the
   // a gather that leaves the node standing: a few chips
   function chipFx(nd) {
     if (typeof ANIM === 'undefined') return;
-    const f = G.fr && G.fr.idle0; if (!f) return;
-    ANIM.burstPx(nd.x - 6, nd.y - f.oy * 0.45, G.fam === 'tree' ? '#E8C890' : G.fam === 'plant' ? '#9FD878' : G.fam === 'beast' ? '#C89A68' : nodeColor(), 5, 55);
+    const f = G.fr && G.fr.idle0, ch = G.fr && G.fr.chips; if (!f) return;
+    ANIM.burstPx(ch ? nd.x + ch[0] : nd.x - 6, ch ? nd.y + ch[1] : nd.y - f.oy * 0.45, G.fam === 'tree' ? '#E8C890' : G.fam === 'plant' ? '#9FD878' : G.fam === 'beast' ? '#C89A68' : nodeColor(), 5, 55);
   }
   function spentFx(nd) {
     if (typeof ANIM === 'undefined') return;
@@ -659,6 +659,15 @@ const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the
     const fr = G.fr; if (!fr) return;
     const x = nd.x - cam, y = nd.y;
     const put = (m, a) => { if (a !== undefined) ctx.globalAlpha = a; ctx.drawImage(m.c, Math.round(x - m.ox), Math.round(y - m.oy)); ctx.globalAlpha = 1; };
+    if (fr.ns) {   // new style (64m): its spent frame, the full one growing back
+      const m = nd.st === 'full' ? frameOf(nd) : null, a = { a: 1, d: nd.lane === 0 };
+      if (m) { nsBlit(ctx, m, x, y, a); return; }
+      if (G.fam === 'beast') { const g = REDUCED ? (nd.g > 0.5 ? 1 : 0) : nd.g; if (fr.fallen && g < 0.6) nsBlit(ctx, fr.fallen, x, y, { a: Math.min(1, (0.6 - g) / 0.2), d: a.d }); if (g > 0.5) nsBlit(ctx, fr.idle0, x, y, { a: Math.min(1, (g - 0.5) / 0.4), d: a.d }); return; }
+      if (fr.spent) nsBlit(ctx, fr.spent, x, y, a);
+      const q = REDUCED ? Math.floor(nd.g * 3) / 3 : nd.g;
+      if (q > 0.12) nsBlit(ctx, fr.idle0, x, y, { a: Math.min(1, (q - 0.12) / 0.88) * (fr.spent ? 1 : 0.85), d: a.d });
+      return;
+    }
     if (nd.st === 'full') { put(img(nd, frameOf(nd))); return; }
     if (G.fam === 'beast') {   // a spent beast lies down, then fades out as a fresh one fades in (64i)
       const g = REDUCED ? (nd.g > 0.5 ? 1 : 0) : nd.g;
@@ -702,13 +711,16 @@ const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the
     // the load: cart, woodpile, basket or crate, in the floor band (the ground layer: parallax 1)
     const pl = scene && scene.ext && scene.ext.pile;
     if (pl) {
-      const kind = pl.kind, spr = pileSprite(kind, G.pile + (kind === 'logs' ? 2 : 0));
-      const x = G.cold ? G.SW - 58 : pl.x, y = G.cold ? pl.y + 10 : pl.y;
-      ctx.drawImage(spr, Math.round(x - cam - spr.ox), Math.round(y - spr.oy));
+      const kind = pl.kind, x = G.cold ? G.SW - 58 : pl.x, y = G.cold ? pl.y + 10 : pl.y;
+      // new style: the pile's frame for its fill (p0, p1, ...)
+      if (!(G.fr.ns && nsDraw(ctx, 'prop', 'pile.' + kind, 'p' + G.pile, x - cam, y))) {
+        const spr = pileSprite(kind, G.pile + (kind === 'logs' ? 2 : 0));
+        ctx.drawImage(spr, Math.round(x - cam - spr.ox), Math.round(y - spr.oy));
+      }
     }
     const f = s && s.dF;
     const lp = lifeProg();
-    if (f && f.art && lp > 0.05 && G.fam !== 'beast') {   // beasts take no cracks
+    if (f && f.art && !f.ns && lp > 0.05 && G.fam !== 'beast') {   // beasts and new-style nodes take no cracks
       const cr = cracksOf(f), n = Math.round(cr.length * Math.floor(lp * 5) / 4);
       for (let i = 0; i < Math.min(n, cr.length); i++) { const p = cr[i]; ctx.fillStyle = CRACK[p[2]]; ctx.fillRect(s.dX + p[0] * 2, s.dY + p[1] * 2, 2, 2); }
     }
@@ -717,7 +729,7 @@ const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the
     const gl = typeof glint === 'function' ? glint() : null;
     if (gl && gl.on && f) {
       // the rich vein: a warm glow that breathes, and stars twinkling around the node
-      const cx = s.dX + f.ox, cy = s.dY + f.oy * 0.5, p = REDUCED ? 0.8 : 0.65 + 0.35 * Math.sin(T * 7);
+      const gp = G.fr.glint, cx = s.dX + f.ox + (gp ? gp[0] : 0), cy = s.dY + (gp ? f.oy + gp[1] : f.oy * 0.5), p = REDUCED ? 0.8 : 0.65 + 0.35 * Math.sin(T * 7);
       ANIM.lightAt(ctx, '255,214,120', cx, cy, Math.max(f.c.width, f.oy) * 0.8, 0.4 * p);
       ctx.globalCompositeOperation = 'source-over'; ctx.imageSmoothingEnabled = false;
       for (let k = 0; k < 3; k++) {

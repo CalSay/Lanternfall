@@ -8,7 +8,8 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
-import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire, heroPacks } from './build.mjs';
+import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire, heroPacks, nsPacks } from './build.mjs';
+import { nsFixture } from './lib/ns-fixture.mjs';
 import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
@@ -114,7 +115,8 @@ const WEIGHT = {
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
-  'wren route S (browser)': 12   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
+  'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
+  'new-style screens (browser)': 36   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -329,6 +331,7 @@ if (section('split build (asset-build)')) try {
   const packData = p => { let got = null; vm.runInNewContext(p.text, { lfArt: (kind, key, d) => { got = { id: kind + ':' + key, d }; } }); return got; };
   for (const [f, A] of Object.entries(AREA_ART)) {
     if (A.kind === 'hero') { heroPackCheck(s, f, A, data(f, A.v)); continue; }   // section 'hero packs (hero-packs)' says how they split
+    if (A.kind === 'ns') continue;   // one pack per piece: section 'new-style screens (ns-scenery-engine)' builds a test NS_ART
     const D = data(f, A.v), mine = s.packs.filter(p => p.f === f);
     assert(mine.map(p => p.id).join() === Object.keys(D).map(k => A.kind + ':' + k).join(), `split: ${A.v} has one pack per entry (${mine.map(p => p.id).join(', ')})`);
     for (const p of mine) {
@@ -710,6 +713,206 @@ if (section('hero packs (hero-packs)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('hero packs crashed: ' + (e.stack || e)); }
+
+// ---- new-style screens (card ns-scenery-engine; docs/design/new-style/engine.md) ----
+// The pieces each screen needs (59n) match what the game really puts there, and the split build carries NS_ART's pictures in packs
+// by zone (75-art-load, the boot loader), off while Classic art is on. The fixture (tools/lib/ns-fixture.mjs) stands in for a pack.
+if (section('new-style screens (ns-scenery-engine)')) try {
+  const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+  // every foe a turn fight puts on the stage in zones 1-35 is a piece of that zone's fight, and every foe piece is one it puts
+  // there (a piece no fight shows would hold its screen classic for good), with the zone monsters' areas off (today) and on
+  for (const on of [0, 1]) {
+    const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: early }) });
+    if (on) g.eval('zoneFoeArea(0, 1); zoneFoeArea(1, 1)');
+    const r = g.eval(`(() => { const bad = [], unused = [], seen = {}; S.activity = 'fight';
+      for (let z = 1; z <= 35; z++) { S.zone = z; const got = new Set();
+        for (let i = 0; i < 41; i++) { cbSpawn(i === 40); for (const m of combatFoes()) { const k = nsFoeKey(m); got.add(k); if (!m.turn || !nsZoneFoes(z).includes(k)) bad.push(z + ' ' + k); } }
+        for (const k of nsZoneFoes(z)) if (!got.has(k)) unused.push(z + ' ' + k);
+        if (z <= 5) for (const k of got) seen[k] = 1; }
+      return { bad, unused, a1: Object.keys(seen).sort().join() }; })()`);
+    assert(!r.bad.length && !r.unused.length, `new-style screens: with ${on ? 'the zone monsters on (zones 1-10)' : "today's foes"}, every foe a turn fight shows in zones 1-35 is a piece of its zone's fight, and each piece shows (${r.bad.concat(r.unused).slice(0, 6).join(', ') || 'yes'})`);
+    if (on) assert(r.a1 === 'gloomjaw,gloomjaw.captain,imp,imp.captain,nightseed,ravager,ravager.captain,regent,thornwing,thornwing.captain',
+      `new-style screens: Mossy Hollow's fights (zones 1-5, monsters on) need the plan's A1 roster: five monsters, the Captains that fight there and the Briar Regent (${r.a1})`);
+  }
+  { const g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: early }) }), E = s => JSON.stringify(g.eval(s));
+    const got = { f1: E('nsFightPieces(1)[0]'), f6: E('nsFightPieces(6)[0]'), grove: E(`nsGatherPieces('wood', 1, true)`), hunt: E(`nsGatherPieces('hide', 1)`), road: E('[nsFightPieces(ROAD_ZONES + 1)[0], nsFightPieces(ROAD_ZONES - 34)[0]]'), none: E(`nsGatherPieces('smith', 1)`),
+      z: E(`[nsPackZones('scenery:fight.0'), nsPackZones('foe:imp'), nsPackZones('node:wood.1'), nsPackZones('critter:cr_moth')]`) };
+    assert(got.f1 === '"scenery:fight.0"' && got.f6 === '"scenery:fight.1"' && got.hunt === '["scenery:gather.gwoods","beast:enraged-boar","prop:pile.logs"]' && got.none === '[]'
+      && JSON.parse(got.road)[0] === JSON.parse(got.road)[1]
+      && ['scenery:gather.gwoods', 'node:wood.1', 'prop:pile.logs', 'prop:fire', 'npc:hesketh', 'prop:stake', 'station:bench', 'station:forge', 'station:store'].every(p => got.grove.includes(p))
+      && got.z === `[[[1,5]],[[1,1]],[],[[1,${g.eval('ROAD_ZONES')}]]]`,
+      `new-style screens: a fight shows its area's scenery (past the road, the scenery the loaders fetch), the cold Hearth its grove's props, Hesketh and every plot, hunting its beast on the woods with the log pile; a fight's pieces load by zone, a critter in every zone, a gather spot's when asked (${JSON.stringify(got)})`); }
+  // the split build: one pack per piece, by zone, never holding the game (n), left out while Classic art is on (x)
+  const fx = nsFixture(), NF = '21zc-data-nsart.js', s = buildSplit({ write: false, extra: [{ f: NF, text: fx.text }] });
+  const ns = s.packs.filter(p => p.id.startsWith('ns:')), want = Object.entries(fx.data).filter(([, G]) => G && typeof G === 'object').flatMap(([g, G]) => Object.keys(G).map(k => `ns:${g}.${k}`));
+  const table = JSON.parse(s.html.match(/packs = (\{.*?\}), road = /)[1]), zoneOf = id => JSON.stringify(table[id].z);
+  assert(ns.length === want.length && want.every(id => table[id] && table[id].n === 1 && table[id].x === 1) && zoneOf('ns:scenery.fight.0') === '[[1,5]]' && zoneOf('ns:foe.gloomjaw') === '[[2,2]]'
+    && zoneOf('ns:node.wood.1') === '[]' && zoneOf('ns:critter.cr_moth') === `[[1,${s.road}]]`,
+    `new-style screens: the split build makes one pack per piece (${ns.length} of ${want.length}), each marked never to hold the game and off with Classic art, on the zones whose fights show it`);
+  { const part = s.html.match(/\/\/ ---- src\/js\/21zc-data-nsart\.js ----\n([\s\S]*?)\n\/\/ ---- src/)[1], K = vm.runInNewContext(`${part}\n;NS_ART`, {});
+    const put = {}, pk = ns.find(p => p.id === 'ns:foe.imp');
+    vm.runInNewContext(pk.text, { lfArt: (kind, key, d) => { put.kind = kind; put.key = key; put.img = Object.keys(d.img).join(); } });
+    const empty = want.every(id => { const [g, ...k] = id.slice(3).split('.'); const e = K[g][k.join('.')]; return e && !Object.keys(e.img).length; });
+    assert(empty && K.foe.imp.f.idle.length === 6 && K.scenery['fight.0'].layers.length === 3 && put.kind === 'ns' && put.key === 'foe.imp' && put.img === 'sheet',
+      `new-style screens: the page keeps every piece's frames and anchors with no pictures (${empty}); a pack carries its piece's pictures (${JSON.stringify(put)})`); }
+  { const loader = s.html.match(/<script id="lfBootJs">([\s\S]*?)<\/script>/)[1];
+    const boot = classic => { const ctx = { localStorage: { getItem: k => (/classic/i.test(k) ? (classic ? '1' : '0') : JSON.stringify({ zone: 1, solo: { hero: 'wren' } })) }, document: { write: () => {}, getElementById: () => null } };
+      vm.runInNewContext(loader, ctx); return ctx.lfBoot.boot.filter(id => id.startsWith('ns:')).sort().join(); };
+    const a = boot(false), b = boot(true);
+    assert(a === 'ns:critter.cr_moth,ns:foe.imp,ns:foe.slime.elder,ns:scenery.fight.0' && b === '',
+      `new-style screens: a zone 1 save boots with zone 1's fight pieces and the critters (${a}); with Classic art on, none (${b || 'none'})`); }
+  { let threw = ''; try { nsPacks({ f: NF, text: '' }, AREA_ART[NF], { v: 1, foe: { 'a b': {} } }); } catch (e) { threw = e.message; }
+    assert(/cannot name a new-style piece/.test(threw), `new-style screens: a piece a pack file name cannot carry stops the build (${threw.slice(0, 80) || 'it built'})`); }
+  { // the page size check knows each piece's kind and bytes (the fixture's art in a scratch copy of the art files)
+    const { packs: sizePacks, CEIL } = await import('./lib/page-size.mjs'), dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-ns-'));
+    try {
+      for (const f of ['21z-data-huntart.js', '21za-data-foeart.js', '21zb-data-bgart.js']) fs.copyFileSync(path.join(ROOT, 'src', 'js', f), path.join(dir, f));
+      fs.writeFileSync(path.join(dir, NF), fx.text);
+      const rows = sizePacks(dir).filter(p => p.id.startsWith('ns:')), kind = id => (rows.find(p => p.id === id) || {}).kind;
+      assert(rows.length === want.length && rows.every(p => p.bytes > 0 && Object.hasOwn(CEIL, p.kind)) && kind('ns:scenery.fight.0') === 'scenery' && kind('ns:foe.imp') === 'monster'
+        && kind('ns:node.wood.1') === 'node' && kind('ns:station.forge') === 'piece',
+        `new-style screens: the page size check measures every piece against a ceiling of its kind (${rows.length} of ${want.length})`);
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); } }
+  { const src = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+    const r = vm.runInNewContext(`${src('75-art-load.js')}\n;typeof artNsWant === 'function' && artNsWant(['foe:imp']) === undefined && artZonePacks(1).length === 0`, {});
+    assert(r === true, `new-style screens: with no boot loader (the inline page) asking for a piece does nothing (${r})`); }
+} catch (e) { fail('new-style screens crashed: ' + (e.stack || e)); }
+
+// the engine on the page, with the fixture's pictures in the page (the inline build) and as packs (the split build); shots of the
+// fixture's marker colours go to LF_PROOF_SHOTS when it is set
+if (section('new-style screens (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('new-style screens (browser): Playwright or Chromium not here, skipped');
+  else {
+    const shots = process.env.LF_PROOF_SHOTS ? path.resolve(process.env.LF_PROOF_SHOTS) : null;
+    const fx = nsFixture(), html0 = fs.readFileSync(distFile, 'utf8'), probe = h => { const e = h.lastIndexOf('})();\n</script>'); return h.slice(0, e) + '\n;window.__t = { x: src => eval(src) };\n' + h.slice(e); };
+    const head = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n';
+    const shipped = fs.readFileSync(path.join(ROOT, 'src', 'js', '21zc-data-nsart.js'), 'utf8').replace(/\n*$/, '');
+    if (!html0.includes(shipped)) fail('new-style screens (browser): the page does not hold 21zc-data-nsart.js as its source has it');
+    const html = head + probe(html0.replace(shipped, () => fx.text.replace(/\n*$/, ''))), plain = head + probe(html0);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const save = s => { try { if (!localStorage.getItem('lanternfall.save.v5')) { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} };
+    const START = `const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false, S.onboard.all = true); for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();
+      soloPick('wren', { now: true }); setZone(1); setActivity('fight'); fightBoss = false; true`;
+    // the stage canvas's column x (device px): the first row in the fixture's ground green and whether the rows above are its far blue
+    const COLUMN = x => `(() => { const c = document.getElementById('cv'), d = c.getContext('2d').getImageData(${x}, 0, 1, c.height).data, at = y => [d[y * 4], d[y * 4 + 1], d[y * 4 + 2]];
+      let g = -1; for (let y = 0; y < c.height; y++) { const [r, gg, b] = at(y); if (gg > r + 40 && gg > b + 40) { g = y; break; } }
+      let blue = 0; for (let y = Math.max(0, g - 40); y < g - 4; y++) { const [r, gg, b] = at(y); if (b > r + 20 && b > gg) blue++; }
+      return { g, blue, h: c.height }; })()`;
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740], [1366, 640], [1920, 1080]]) {
+        const tag = `${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: touch, hasTouch: touch });
+        await ctx.addInitScript(save, early);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        const X = s => page.evaluate(s => window.__t.x(s), s), J = async s => JSON.parse(await X(`JSON.stringify(${s})`));
+        await X(START);
+        const n = await X('nsStats.decodeAll()'); await X('wrenSStats.decodeAll()');
+        await page.waitForTimeout(500);
+        // a zone 1 turn fight with every piece in: the scenery and both foes new style, each foe's feet on the actors' ground line
+        const a = await J(`{ ns: nsStats(), st: stageStats(), slot: stageStats().foes.filter(Boolean).map(f => f[0]) }`);
+        const k = 0.5 * a.st.DPR * a.st.ZA, sc = a.ns.scene;
+        assert(n === Object.values(fx.data).filter(G => G && typeof G === 'object').reduce((t, G) => t + Object.values(G).reduce((u, e) => u + Object.keys(e.img).length, 0), 0)
+          && a.ns.st === 'on' && a.ns.key === 'f1|wren|' && a.ns.pieces.join() === 'scenery:fight.0,foe:imp,foe:slime.elder,hero:wren' && a.slot.length && a.slot.every(s => s === 'Nfoe:imp'),
+          `new-style screens ${tag}: a zone 1 fight with every piece in draws new style (${a.ns.st}, ${a.ns.pieces.join()}; foes ${a.slot.join()}; ${n} pictures)`);
+        assert(a.ns.drawn.scenery > 0 && a.ns.drawn.foe > 0 && a.ns.last.p === 'foe:imp' && Math.abs(a.ns.last.k - k) < 1e-6 && a.ns.last.y === a.st.aGY
+          && Math.abs(sc.y0 + 432 * sc.k - a.st.GY) < 1e-6 && sc.k >= 0.5 && sc.x0 <= -8 && sc.x0 + 960 * sc.k >= a.st.SW + 8,
+          `new-style screens ${tag}: a foe draws at ${a.ns.last.k} device px per art px (0.5 x DPR x actor zoom ${a.st.ZA}) with its feet on the ground line (${a.ns.last.y} / ${a.st.aGY}); the scenery covers the stage (x ${sc.x0.toFixed(1)}, scale ${sc.k.toFixed(3)}) with its seat line on the stage's (${(sc.y0 + 432 * sc.k).toFixed(1)} / ${a.st.GY})`);
+        const col = await J(COLUMN(3)), gy = Math.round(a.st.GY * a.st.ZM * a.st.DPR);
+        assert(col.g >= 0 && col.blue >= 20 && Math.abs(col.g - gy - (col.h - Math.round(a.st.SH * a.st.ZM * a.st.DPR))) <= 2 + Math.abs(col.h - Math.round(a.st.SH * a.st.ZM * a.st.DPR)),
+          `new-style screens ${tag}: on the canvas the far layer's blue sits above the ground's green, which starts at the seat line (row ${col.g}, the line at ${gy}; ${col.blue} blue rows above)`);
+        if (shots && (w === 1280 || w === 740)) await page.screenshot({ path: path.join(shots, `fight-${tag}.png`) });
+        if (w === 1280) {
+          // a piece not in: that fight stays classic for the visit (and asks for it); Classic art: classic, and new again when it is off
+          const b = await J(`(() => { setZone(3); return null; })()`) || await (async () => { await page.waitForTimeout(300); return J(`{ ns: nsStats(), slot: stageStats().foes.filter(Boolean).map(f => f[0]) }`); })();
+          assert(b.ns.st === 'off' && b.ns.miss.length && b.ns.miss.every(p => p.startsWith('foe:')) && b.slot.length && b.slot.every(s => s[0] !== 'N'),
+            `new-style screens: a fight with a piece not in stays classic (${b.ns.st}; missing ${b.ns.miss.join()}; foes ${b.slot.join()})`);
+          await X('setZone(1); true'); await page.waitForTimeout(300);
+          const c = await J(`[nsStats().st, (portraitsClassic(true), nsScreen()), (stageStats().foes.filter(Boolean).map(f => f[0]).join())]`);
+          await page.waitForTimeout(300);
+          const c2 = await J(`[stageStats().foes.filter(Boolean).map(f => f[0]).join(), (portraitsClassic(false), nsScreen())]`);
+          assert(c[0] === 'on' && c[1] === 'off' && !/N/.test(c2[0]) && c2[1] === 'on', `new-style screens: back on zone 1 the fight is new style again; Classic art turns it classic (foes ${c2[0]}) and off brings it back (${JSON.stringify([c, c2])})`);
+          // the cold Hearth's woods (hero gathering art stands in for route-s-wren-gather): node, pile, fire, Hesketh, plots
+          const g0 = await J('nsStats().drawn');
+          await X(`nsHeroArt.gather.wren = () => true; setActivity('gather'); setNode('wood', 1); true`); await page.waitForTimeout(800);
+          const g = await J(`{ ns: nsStats(), grove: !!hearthScene() }`), d = k => (g.ns.drawn[k] || 0) - (g0[k] || 0);
+          assert(g.ns.st === 'on' && g.ns.pieces[0] === 'scenery:gather.gwoods' && d('node') > 0 && d('prop') > 0 && (!g.grove || d('npc') > 0),
+            `new-style screens: gathering wood with every piece in draws its scenery, the tree, the pile${g.grove ? ', the fire and Hesketh' : ''} new style (${g.ns.st}; drawn ${JSON.stringify(g.ns.drawn)})`);
+          if (shots) await page.screenshot({ path: path.join(shots, `gather-${tag}.png`) });
+          // with no hero art for gathering (today), the same spot is classic
+          await X(`delete nsHeroArt.gather.wren; setActivity('fight'); true`); await page.waitForTimeout(200);
+          await X(`setActivity('gather'); setNode('wood', 1); true`); await page.waitForTimeout(300);
+          const g2 = await J('nsStats()');
+          assert(g2.st === 'off' && g2.miss.join() === 'hero:wren', `new-style screens: gathering stays classic until Wren's gathering art is wired (${g2.st}; missing ${g2.miss.join()})`);
+          // the camp panorama: its own screen, every piece in or classic
+          const cp = await J(`(() => { const v = campSceneLayout(), c = document.createElement('canvas'); c.width = v.width; c.height = v.height; const g = c.getContext('2d');
+            const ps = nsCampPieces(v), miss = ps.filter(p => nsStats.pieceSt(p) !== 3), d0 = nsStats().drawn.station || 0;
+            campPaintScene(g, v, 1); const st = nsCamp(v); campPaintScene(g, v, 1);
+            const px = g.getImageData(2, v.height - 2, 1, 1).data; return { ps, miss, st, stations: (nsStats().drawn.station || 0) - d0, px: [px[0], px[1], px[2]], b: v.buildings.length }; })()`);
+          assert(cp.ps[0] === 'scenery:camp' && (cp.miss.length ? cp.st === 'off' : cp.st === 'on' && cp.stations >= cp.b && cp.px[1] > cp.px[0] + 30),
+            `new-style screens: the camp panorama is new style when its pieces are in (${cp.ps.join()}; missing ${cp.miss.join() || 'none'}; ${cp.st}, ${cp.stations} stations drawn, corner ${cp.px})`);
+          // a camp visit keeps its style: a gatherer with no new-style art hired mid-visit leaves it new; the next visit is classic
+          const cv = await J(`(() => { const v = campSceneLayout(), c = document.createElement('canvas'); c.width = v.width; c.height = v.height; const g = c.getContext('2d');
+            campPaintScene(g, v, 1); const a = nsCamp(v), w = Object.assign({}, v, { actors: v.actors.concat([{ id: 'x', key: 'nobody', x: 500, y: 164, status: { st: 'idle' } }]) });
+            campPaintScene(g, w, 1); return [a, nsCamp(w)]; })()`);
+          await page.waitForTimeout(1200);
+          const cv2 = await J(`(() => { const v = campSceneLayout(), w = Object.assign({}, v, { actors: v.actors.concat([{ id: 'x', key: 'nobody', x: 500, y: 164, status: { st: 'idle' } }]) }); return nsCamp(w); })()`);
+          assert(cv[0] === 'on' && cv[1] === 'on' && cv2 === 'off', `new-style screens: a gatherer with no new-style art hired while the camp is open leaves it new for the visit (${cv}); the next visit is classic (${cv2})`);
+          // a worn critter is a piece of the screen; in the fixture, its frames draw instead of the classic critter's (64-looks reads what is worn every 2 s)
+          const cr = await J(`(() => { window.__w0 = wearGet; wearGet = s => s === 'critter' ? 'cr_moth' : window.__w0(s); setActivity('fight'); setZone(1); return null; })()`) || await (async () => {
+            await page.waitForTimeout(2600); return J(`(() => { const r = { ns: nsStats() }; wearGet = window.__w0; return r; })()`); })();
+          assert(cr.ns.st === 'on' && cr.ns.pieces.includes('critter:cr_moth') && cr.ns.drawn.critter > 0, `new-style screens: a worn critter is a piece of the fight and draws new style (${cr.ns.st}; ${cr.ns.pieces.join()}; ${cr.ns.drawn.critter || 0} drawn)`);
+        }
+        assert(!errs.length, `new-style screens ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      { // the page as it ships (no new-style art yet): every screen classic
+        const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } });
+        await ctx.addInitScript(save, early);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: plain, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(START); await page.waitForTimeout(400);
+        const r = JSON.parse(await X(`JSON.stringify({ st: nsScreen(), d: nsStats().drawn, keys: Object.keys(NS_ART).join() })`));
+        assert(r.st === 'off' && !Object.keys(r.d).length && r.keys === 'v' && !errs.length, `new-style screens: the page as it ships has no new-style art and draws every screen classic (${JSON.stringify(r)})` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      { // the split build: a zone 1 save boots with its fight's pieces; a piece still loading leaves that fight classic for the visit,
+        // and the next visit is new style
+        const s = buildSplit({ write: false, extra: [{ f: '21zc-data-nsart.js', text: fx.text }] }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
+        const sp = probe(s.html), assets = pageAssets(s.file, sp, files), pk = id => s.packs.find(p => p.id === id);
+        const z2 = loadCore({ turns: true }).eval('nsFightPieces(2)').filter(p => p.startsWith('foe:') && fx.data.foe[p.slice(4)]);
+        const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } });
+        await ctx.addInitScript(save, JSON.stringify(Object.assign(JSON.parse(early), { zone: 1 })));
+        const page = await ctx.newPage(), errs = []; let release; const held = new Promise(r => { release = r; });
+        page.on('pageerror', e => errs.push(String(e)));
+        await routePage(page, 'http://lf.test/', sp, assets);
+        let hits = 0;
+        if (z2[0]) await page.route('**/assets/' + pk('ns:' + z2[0].replace(':', '.')).name, async r => { hits++; await held; return r.fallback(); });
+        await page.goto('http://lf.test/', { waitUntil: 'commit' });   // the held pack can keep the load event back
+        await page.waitForFunction(() => window.__t && !document.getElementById('lfBoot'), null, { timeout: 20000 }).catch(() => {});
+        const X = s => page.evaluate(s => window.__t.x(s), s), J = async s => JSON.parse(await X(`JSON.stringify(${s})`));
+        await X(START); await X('nsStats.decodeAll()'); await X('wrenSStats.decodeAll()'); await page.waitForTimeout(400);
+        const a = await J(`{ boot: lfBoot.boot.filter(id => id.startsWith('ns:')).sort(), st: nsStats().st }`);
+        await X('setZone(2); true'); await page.waitForTimeout(400);
+        const b = await J('nsStats()'), asked = hits;
+        release(); await page.waitForTimeout(1500); await X('nsStats.decodeAll()');
+        const b2 = await J('nsStats().st');
+        await X('setZone(1); true'); await page.waitForTimeout(200); await X('setZone(2); true'); await page.waitForTimeout(400);
+        const c = await J('nsStats()');
+        assert(z2.length && a.boot.join() === 'ns:critter.cr_moth,ns:foe.imp,ns:foe.slime.elder,ns:scenery.fight.0' && a.st === 'on' && b.st === 'off' && b.miss.includes(z2[0]) && asked > 0 && b2 === 'off' && c.st === 'on' && !errs.length,
+          `new-style screens split: a zone 1 save boots with its fight's pieces and draws new style (${a.boot.join()}, ${a.st}); zone 2 with ${z2[0]} still loading stays classic for the visit and the game asks for it (${b.st}, asked ${asked}, then ${b2}) and the next visit is new style (${c.st})` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('new-style screens (browser) crashed: ' + (e.stack || e)); }
 
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,

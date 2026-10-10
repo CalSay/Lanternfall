@@ -18,6 +18,9 @@ export const PAGE_FAIL = 14000000;   // the ceiling with the 2 MB margin kept fr
 export const PAGE_WARN = 12000000;
 // Section 4's ceilings in file bytes (lossless WebP, every atlas of a pack together). Never looser than the ruling.
 export const CEIL = { monster: 85e3, champion: 120e3, elder: 200e3, beast: 60e3, background: 190e3, still: 25e3 };
+// New-style pieces (NS_ART, docs/design/new-style/plan.md 5.1, adopted 2026-10-10): a layered scenery set, a node (the tree line,
+// the larger), and a camp station, gatherer, critter, Hesketh or prop. Foes take the kinds above from their entry's `kind`.
+CEIL.scenery = 400e3; CEIL.node = 70e3; CEIL.piece = 25e3;
 export const AREA_CEIL = 425e3;      // an area's five monsters with their Captains, together
 export const ZONES_PER_AREA = 5;     // Chapter 1: 35 zones in 7 areas (Mossy Hollow 1-5, Batwing Caves 6-10, ...)
 // A pack's kind and zone by stage key (FOE_ART), until the embed tools write a `kind` (and `zone`) field into the pack.
@@ -40,7 +43,7 @@ export const EXCEPT = {
   'hunt:interim': 171537                                    // the interim Hunting art (RLE, not files; the whole of HUNT_ART as embedded)
 };
 // The art data files this check reads. A new generated 21z* file must join this list (and its packs the ceilings).
-const ART_FILES = { '21z-data-huntart.js': 'HUNT_ART', '21za-data-foeart.js': 'FOE_ART', '21zb-data-bgart.js': 'BG_ART' };
+const ART_FILES = { '21z-data-huntart.js': 'HUNT_ART', '21za-data-foeart.js': 'FOE_ART', '21zb-data-bgart.js': 'BG_ART', '21zc-data-nsart.js': 'NS_ART' };
 const BASE_REF = 'origin/claude/elegant-johnson-m6k00u';
 
 const KB = n => (n / 1e3).toFixed(1) + ' KB', MB = n => (n / 1e6).toFixed(2) + ' MB';
@@ -81,6 +84,10 @@ export function packs(jsDir = JS_DIR) {
     out.push({ id: `bg:${p.id}:${o}`, label: `background "${p.id}" (${theme}, ${o} ${p[o].w}x${p[o].h})`, kind: p.kind || 'background', bytes: fileBytes(p[o].src) });
   const hunt = readData(jsDir, '21z-data-huntart.js', 'HUNT_ART');
   out.push({ id: 'hunt:interim', label: 'interim Hunting art (HUNT_ART)', kind: 'interim', bytes: Buffer.byteLength(JSON.stringify(hunt)) });
+  const ns = readData(jsDir, '21zc-data-nsart.js', 'NS_ART'), NSK = { scenery: 'scenery', foe: null, beast: 'beast', node: 'node' };
+  for (const [g, G] of Object.entries(ns)) if (G && typeof G === 'object') for (const [k, e] of Object.entries(G))
+    out.push({ id: `ns:${g}.${k}`, label: `new-style ${g} "${k}"`, kind: g === 'foe' ? e.kind || 'monster' : NSK[g] || 'piece', zone: e.zone,
+      bytes: Object.values(e.img || {}).reduce((a, s) => a + fileBytes(s), 0) });
   return out;
 }
 

@@ -112,6 +112,7 @@ let lookIconURL, looksPreview, lookCritterDraw;
     st.fx = st.x; st.fy = Math.min(v.SH - 2, Math.max(v.hy, v.GY) + 12); st.front = true;   // on the floor just in front of the party's line
   }
   function drawCritter(g) {
+    if (typeof nsDraw === 'function' && nsDraw(g, 'critter', cur.critter, st.fr, st.fx, st.fy)) return;   // a new-style screen (64m)
     const set = critCache.get(cur.critter); if (!set) return;
     const f = set[st.fr] || set.idle0;
     g.drawImage(f.c, Math.round(st.fx - f.ox), Math.round(st.fy - f.oy));
