@@ -1,0 +1,1 @@
+Go on a gathering goal in Next up ("Gather Mining before you leave and it keeps going") now starts your hero gathering that skill, not just opening its page, so the skill keeps rising while you're away. Best shot: gate-go-mining.

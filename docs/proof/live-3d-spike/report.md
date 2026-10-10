@@ -8,7 +8,10 @@ Card `live-3d-spike`, from the ruling in `docs/design/live-3d/ruling.md` (#320).
 Live 3D clears every gate Claude can measure: bytes, Gloomjaw's hours, parry timing and reduced motion. The smooth-pictures
 route (toon sprites baked from the same models) clears bytes only at the 2D pack's own resolution, upscaled and soft; at full
 sharpness its Gloomjaw is 309 KB against a 135 KB gate. Frame rate and battery wait on Cal's phone and a 2019-or-older laptop,
-and Cal's blind pick of four clips is still to come. The look gate's judge ruling is below. Wren's 3D model and moves are not
+and Cal's blind pick of four clips is still to come. **The art judge fails both 3D routes on the look**: Gloomjaw's 3D bite never
+opens into the approved X, and 3D Wren never shows her bow. On the look alone the ruling's rule gives **A** (2D, with Codex's
+paintover), whatever the frame rate and battery show. Route S, Scenario's 2D key frames of the new Wren at about 190 px, is read as
+A at a larger scale and has not passed yet. Cal can veto with "Keep 3D open on the look". Wren's 3D model and moves are not
 ready: Cal's own notes on her (9 Oct 22:58) apply to every 3D clip here. A fourth route joined on 9 Oct 23:13 (route S,
 Scenario's 2D key frames of the new full-body Wren); it is measured beside the others.
 
@@ -84,7 +87,11 @@ uses 7 of them:
 | Hurt | hit | 8 frames over 540 ms |
 | Death | defeat | 8 frames over 2080 ms, last held |
 
-Frames are stepped, not blended: a cross-fade between generated key frames ghosts, and in-betweens would be new art. Effects
+Frames are stepped, not blended: a cross-fade between generated key frames ghosts, and in-betweens would be new art. The
+bowstring is drawn by the game (Cal, 9 Oct 23:47, "Game string it is"): the shooting moves were remade without a string
+(198 credits, 3D thread), each frame carries its top tip, drawing hand and bottom tip, and the game draws a 1 px line through them
+that shivers for about 0.3 s after release. Cost: 289 bytes of points for the attack plus about 1 KB of code, and 0.005 ms a draw
+(0.038 ms against 0.033 ms, headless Chromium). The art freeze keeps a code-drawn string out of any build until it is ruled on. Effects
 (arrows, glows, bats) are separate in the set and not drawn. At today's 96 px these poses turn to mush; at about 190 px they
 hold. Who may make game art ("art only by Codex") stays with Cal's art-maker card; this report does not rule on it.
 
@@ -112,8 +119,8 @@ needs its own (see Hours). Bytes are per model either way.
 | Reduced motion | no camera motion, poses hold | Idle poses hold at 0 ms for both models (one distinct pose over 3 s, against 30 without); the camera is fixed by design | uses the same clock | Pass |
 | Look | judge after red team; Cal's blind pick | see Look | see Look | see Look |
 
-Route S (no 3D, no engine): Wren's 7 fight moves (56 frames at 190 px, 63 colours) are **568.9 KB**, under the 600 KB hero gate
-with little room; her full 20 moves (160 frames) are **1.68 MB**, over it. First load with the fight set: about 5.5 MB (Gloomjaw
+Route S (no 3D, no engine): Wren's 7 fight moves (56 frames at 190 px, 63 colours, the string-less shooting frames) are
+**576.3 KB**, under the 600 KB hero gate with little room; her full 20 moves (160 frames) are **1.69 MB**, over it. First load with the fight set: about 5.5 MB (Gloomjaw
 stays the 2D pack). Frame rate: a 2D canvas draw like today's, so no new risk. Reduced motion: the idle holds frame 1.
 
 ### How the numbers were taken
@@ -155,11 +162,46 @@ time** for Chapter 1, plus judge time. That is time to a moving model, not to an
 
 - Clips (10 s, 30 fps, the same seeded fight and the same key presses, captured on a stepped clock so every frame is exact):
   `clips/clip-1.mp4` to `clip-4.mp4`, unlabelled: live 3D, smooth pictures (the 1x bake that passes bytes), today's 2D and
-  route S, in a shuffled order. Which is which is in `clips/key.md`; Cal should not open it before picking.
+  route S, in a shuffled order. Which is which is in `clips/key.md`; Cal should not open it before picking. The final clips show
+Wren's three attacks (see "Why Wren did not attack" below) and route S's game-drawn string.
 - Shots of all four looks at 1280x720, 740x360 and 1024x768: `shots/`.
 - Red team and judge: see the Look ruling below.
 
-Pending: the red team and judge run once the clips are recorded.
+### Red team (9 Oct)
+
+Against both 3D routes: 3D Wren never visibly draws or even shows her bow, her idle slumps, and her hurt is a one-frame jerk
+(Uthana's hit move at 2x). She does not match her own portrait and icons. Gloomjaw's jaws never open into the approved X and
+read as a hooded sack; his colours run beige where the pack is yellow-olive. Crisp pixel effects sit on soft models, the 1x
+bake is visibly soft, and at 740x360 3D Wren is about 30 px wide, brown on brown. For 3D: Gloomjaw's hop and lunge travel more
+smoothly, he has real volume, and he is 72 KB against about 805 KB. The red team's decisive point: Wren fails on both 3D routes
+on her moves, and that comes from the motion source.
+
+### Judge's ruling (Opus art judge, 9 Oct)
+
+**On the look alone the rule gives A.** Gloomjaw's bite looks weird on both 3D routes, so frame rate and battery cannot change it.
+
+| Route | (a) No weird move | (b) No clash with the 2D scene and UI |
+|---|---|---|
+| Live 3D | Fail: the bite closes as a beige sack and never opens into the X (live f0026; today's 2D opens at f0025); Wren shows no bow at her presses and her hood slumps; her hurt is one step straight back | Fail: a crisp pixel spark on a soft model (f0027); a brown-and-yellow Wren beside her purple portrait and icons |
+| Smooth pictures | Fail: same models and keys, same sack bite | Fail: the 1x bake is blurred at 2x, same colour clash |
+| Route S | Fail as first clipped: no draw at her presses, no recoil when bitten, and the idle cape outline shifts every 160 ms | Partly: smoothed, 1 CSS px detail and 63 colours beside Gloomjaw's 2 px grid (the pipeline asks for a true pixel grid of up to 40 colours); the string is drawn in code, which the art freeze keeps out of any build; her colours match her portrait and icons |
+
+Route S is read as **A at about 190 px**: 2D frames, no engine. It feeds art-scale-ruling. Who makes the art stays with Cal's
+art-maker card. The judge asked for the S clip to be re-captured so the draw and the hurt show (done, see below).
+
+Judge's veto phrase for Cal: **"Keep 3D open on the look"**. That means a re-rule once Gloomjaw is rebuilt from a 4-view
+turnaround with separate jaw plates and Wren has a new motion source.
+
+Risks the judge named: a rebuilt Gloomjaw could open the X and reopen 3D's look case. If the re-captured S clip still shows no
+draw, the fault is in the art, not the timing.
+
+### Why Wren did not attack in the first clips
+
+In a turn fight, Wren's Attack lands (about 4.9K off Gloomjaw at once) but plays no swing in any look, today's 2D included: the
+hero's swing state never leaves 0. The likely cause, read from the code and not tested: `59k-turn.js:676` emits only
+`soloAttack`, while `62-stage.js` swings the hero only on `classTap`, `ability` or `lunge` (lines 988, 1026, 1035). This is outside
+the spike and has gone to the Foreman. The final clips call the stage's own swing at each press, the same way in all four looks.
+That swing also adds hits of its own, so the final clips end on 14,835 Gloomjaw HP, all four alike.
 
 ## Known gaps
 

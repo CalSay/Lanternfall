@@ -1,0 +1,24 @@
+# Proof for card nu-chip-gate-label-fits: the Next up chip's label shows a whole tier 2 gate row, never cut after its third line.
+# The save: the seed 1 Wren walk at minute 60 (tests/proof-fixtures/save-min60-tier-gate.json), whose gate row reads
+# "Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going." (~90 characters).
+#   nuchip-*.png      the chip as the save opens (its top goal is a Ready row)
+#   nuchip-list-*.png the opened list with the gate row whole
+# The chip shows the top goal, not the gate row, so the measure of the gate row's words in the chip (740x360, 1024x768, 1280x720,
+# 1920x1080; whole lines inside the 3 line clamp, the 14 px floor at 1280x720) is held by tools/check.mjs ("nu-chip-gate-label-fits").
+# Measured 9 Oct: the words fit on 3 lines at every view, with no room to spare at 740x360 and 1024x768. Nothing visible changed.
+# seed: 1
+new min60-tier-gate
+wait 3
+tap-if "Skip this story"
+tap-if "Collect"
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+expect ".nu-chip"
+shot nuchip
+tap "Next up"
+wait 1
+expect "Birch Bow: Mining 7 of 14 opens Iron Ore"
+shot nuchip-list
