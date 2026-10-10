@@ -1,6 +1,6 @@
 # Ruling: route-s-oriel-judge (Opus art judge, 2026-10-10, base 6658f2a5)
 
-Question: should Oriel's route S pack go into the 2D game? It holds 23 kept moves x 8 Scenario key frames, the 11:02 finals after the
+Question: should Auriel's route S pack go into the 2D game? It holds 23 kept moves x 8 Scenario key frames, the 11:02 finals after the
 redraw. The judge rules **wire**, **re-brief** or **shelve** per move, after a red team. The yardstick is
 `docs/design/art-direction.md`, the live game's look, and Wren's wired pack (#346). The questions follow Tobin's and Pip's rulings.
 
@@ -113,7 +113,7 @@ plays; a skipped frame is never shown.
 | forage | **wire** | 1-8 | 4 | sickle | Two-hand sickle grip in 4 and finger holes in 8 are minor |
 | hunt | **re-brief** | - | 5 | spear point | The spear shrinks to about 40% at the thrust (4-6) and ends at her fist at impact; no skip fixes the thrust |
 
-A "fallback" list applies only if Cal says "Skip the bad Oriel frames" (below), or if a reroll comes back worse than the frame it replaces.
+A "fallback" list applies only if Cal says "Skip the bad Auriel frames" (below), or if a reroll comes back worse than the frame it replaces.
 
 ## The woodcut sheet and the game-placed axe
 
@@ -124,7 +124,7 @@ bowstring's pattern: the art is the artist's, and the game supplies the position
 is not a minor detail. It is new art, and it stays out under CLAUDE.md's art rules.
 
 **Does it fix Cal's axe problem? It fixes the axe, not the pose.** Every earlier sheet drew a different axe, or drew it edge-on as a
-T-bar (Wren v3, Pip v5, Tobin v4). One vetted axe sprite is the same in every frame, so that failure cannot come back. But Oriel's sheet
+T-bar (Wren v3, Pip v5, Tobin v4). One vetted axe sprite is the same in every frame, so that failure cannot come back. But Auriel's sheet
 cannot take it yet:
 - Frame 3 is the only frame with two fists on one line that a straight handle could pass through.
 - Frames 1, 7 and 8 are a clasp (one hand cups the other fist).
@@ -133,8 +133,8 @@ cannot take it yet:
 
 The Tobin test strip (`tests-10oct/tobin-woodcut-comp.webp`) shows the second risk: at impact the axe points up, not into the trunk.
 
-So woodcut is re-briefed (lines below). The axe sprite is part of Oriel's pack and is judged in the same woodcut recheck, not on
-its own. Before it wires, a composite strip of Oriel with the placed axe goes to the recheck judge. The
+So woodcut is re-briefed (lines below). The axe sprite is part of Auriel's pack and is judged in the same woodcut recheck, not on
+its own. Before it wires, a composite strip of Auriel with the placed axe goes to the recheck judge. The
 pass test is Tobin's woodcut v6 recheck: the axe head forward at about two-thirds of her height at impact, the edge into the trunk, and
 the same axe in every frame.
 
@@ -160,12 +160,12 @@ These lines go into `extra.json` for the 19 sheets. Keep every existing line, in
 
 ## Veto phrases for Cal
 
-- **"Skip the bad Oriel frames":** no rerolls. Ship the moves that have a fallback list (spark, hex, pullreading, clearnight, defeat,
+- **"Skip the bad Auriel frames":** no rerolls. Ship the moves that have a fallback list (spark, hex, pullreading, clearnight, defeat,
   victory) with those frames skipped. The other 13 re-briefed moves have no fallback, so her pack still cannot wire whole until they
   are rerolled.
-- **"Code can draw Oriel's axe":** the game may draw the axe itself, not only place an artist-drawn one. This changes CLAUDE.md's art
+- **"Code can draw Auriel's axe":** the game may draw the axe itself, not only place an artist-drawn one. This changes CLAUDE.md's art
   rules for one prop.
-- **"Oriel's hunt spear is fine":** puts hunt back to wire as drawn, frames 1-8 (the independent judge check moved it to re-brief).
+- **"Auriel's hunt spear is fine":** puts hunt back to wire as drawn, frames 1-8 (the independent judge check moved it to re-brief).
 - **"Short staffs and spears are fine":** accept the half-length staff or spear in thrusts as foreshortening. Attack, frostshard,
   badnews, bearing, slivershum, dodge and hunt then pass as drawn or with skips; nova, fallingletter, letters, mining and woodcut stay re-briefed for their other faults.
 

@@ -1,1 +1,1 @@
-Nothing changes in the game you play today. Oriel will deal her own kind of damage, Starlight, shown in night blue with a star icon. No foe in Chapter 1 resists it or is weak to it. Best shot: none (a plan; the builds come next).
+Nothing changes in the game you play today. Auriel will deal her own kind of damage, Starlight, shown in night blue with a star icon. No foe in Chapter 1 resists it or is weak to it. Best shot: none (a plan; the builds come next).

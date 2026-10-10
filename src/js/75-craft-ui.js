@@ -861,12 +861,12 @@ let craftUI = null;
       const dn = f && t > 1 && have[t - 1] >= D.take ? canTransmute(fam, t, t - 1) : null;
       ench.dnB.disabled = !f || t <= 1 || have[t - 1] < D.take || !(dn && dn.ok);
       ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : upShut ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
-      // Star Chart (Oriel's recruit route): a recipe when K6 defines it as a kind or an action.
+      // Star Chart (Auriel's recruit route): a recipe when K6 defines it as a kind or an action.
       const sc = K6.starChart(), made = !!(S.craft && S.craft.starChart);
-      ench.star.hidden = true;   // no Oriel to draw yet (she is a hero to unlock later), so no Star Chart recipe
+      ench.star.hidden = true;   // no Auriel to draw yet (she is a hero to unlock later), so no Star Chart recipe
       if (!ench.star.hidden) {
         ench.star.textContent = '';
-        ench.star.append(el('h3', null, 'Star Chart'), el('p', 'note', made ? 'You made the Star Chart. Oriel Vess has seen it.' : "Chart the sky to draw Oriel Vess, the Starcaller, to your camp."));
+        ench.star.append(el('h3', null, 'Star Chart'), el('p', 'note', made ? 'You made the Star Chart. Auriel Vess has seen it.' : "Chart the sky to draw Auriel Vess, the Starcaller, to your camp."));
         if (!made) {
           const b = el('button', 'big forge', 'Craft the Star Chart'); b.type = 'button';
           b.addEventListener('click', () => act(() => sc()));

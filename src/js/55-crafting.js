@@ -1,6 +1,6 @@
 // 55-crafting: crafting actions (task K6). Craft any kind at its station, upgrade (trophies
 // gate +8..+10), Reforge one affix line, Transmute within a family, generic salvage, companion
-// gear with the one-wearer rule, the Star Chart (Oriel) and Tonics (K6b).
+// gear with the one-wearer rule, the Star Chart (Auriel) and Tonics (K6b).
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Spec: docs/design/gathering-and-crafting.md 3, 4 and 9 (K6) with its "Owner decisions"
 // (random affixes, Reforge at the Enchanter's Table, trophies gate +8..+10) and camp.md N4
@@ -42,7 +42,7 @@
 //   craftLiftTo(kind, t) -> grade index | null   the grade a lift makes, null when the level's grade cannot be lifted (A or S)
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
 //   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
-//                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
+//                                                Essence, 1 Wraith Veil; Enchanting 9; Auriel joins
 //   brewTonic(key, t) / drinkTonic(key, t) / tonicActive() -> { key, t, left, v } | null   (K6b)
 //
 // Rules:
@@ -381,12 +381,12 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     save();
   });
 
-  // ---- Star Chart (Oriel) ----
+  // ---- Star Chart (Auriel) ----
   const orielDone = () => C().starChart > 0;
   function canStar() {
     const t = STAR.t, need = CRAFT_STATION_REQ[t - 1], cost = { mats: STAR.mats, gold: 0, troph: STAR.troph };
     const x = { cost, lv: S.skills.ench.lv, need, miss: [] };
-    if (orielDone()) return no('Oriel already answered your Star Chart.', x);
+    if (orielDone()) return no('Auriel already answered your Star Chart.', x);
     if (unbuilt(STAR.st)) return no(unbuilt(STAR.st), x);
     if (!skillTierOpen('ench', t)) return no(gateWhy('ench', need), x);
     const tmiss = STAR.troph.filter(([i, n]) => (C().troph[i] || 0) < n);

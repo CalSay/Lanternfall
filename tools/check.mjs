@@ -1580,13 +1580,13 @@ if (section('crafting')) try {
   const hd1 = E('heroDps()');
   assert(E('JSON.stringify(gear())') === gear0 && hd1 >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${hd1.toFixed(1)})`);
   assert(toasts.includes('Your old helm was reforged into Warrior gear.') && toasts.includes('Your Lanternmage gear was reforged into Warrior gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
-  // Star Chart -> Oriel
+  // Star Chart -> Auriel
   E(`S.skills.ench.lv = ${RQ(3) - 1}`);
   assert(E('canCraft("starChart", 3).why') === `Needs Enchanting ${RQ(3)}`, `Star Chart needs Enchanting ${RQ(3)}`);
   E(`S.skills.ench.lv = ${RQ(3)}; S.mats.crystal[2] = 40; S.mats.ess[2] = 20; S.craft.troph = [0, 0, 0, 0, 0, 0, 0]`);
   assert(E('canCraft("starChart", 3).why') === '1 more Wraith Veil', 'Star Chart needs a Wraith Veil');
   E('S.craft.troph[6] = 1');
-  assert(E('!!craftItem("starChart", 3)') && E('S.craft.starChart') === 1 && E('S.mats.crystal[2]') === 0 && E('S.craft.troph[6]') === 0, "Star Chart pays and grants Oriel's route");
+  assert(E('!!craftItem("starChart", 3)') && E('S.craft.starChart') === 1 && E('S.mats.crystal[2]') === 0 && E('S.craft.troph[6]') === 0, "Star Chart pays and grants Auriel's route");
   assert(!E('canCraft("starChart", 3).ok'), 'no second Star Chart (solo: the Star Chart only opens the party route, so nobody joins; the Craft tab hides it)');
   // Tonics (K6b)
   E('almanac.force("none")'); const dm = E('mod("dmg")');
@@ -11455,16 +11455,16 @@ if (section('story-systems-hollow')) try {
   const g = loadCore({ seed: 9201 }), E = x => g.eval(x);
   const L = E('LORE_LIMITS'), retired = E('STORY_RETIRED');
   const bad = (lines, re) => lines.filter(l => re.test(l));
-  // Omens and Dares name nobody and nowhere the player has not met; Oriel waits for the end of Chapter 4 (zone 141)
-  const unmet = /\b(Oriel|Emberwaste|Emberlea|Pale Reach|Gloamvale|Saltreach|Fenmother|Kestrel|Elowen|Hesketh|Bram|Thessaly|Grenna|Morwen|Anselm|Maren|Caedmon|Durand|Silas|Wraithmarsh|Voice)\b/;
+  // Omens and Dares name nobody and nowhere the player has not met; Auriel waits for the end of Chapter 4 (zone 141)
+  const unmet = /\b(Auriel|Emberwaste|Emberlea|Pale Reach|Gloamvale|Saltreach|Fenmother|Kestrel|Elowen|Hesketh|Bram|Thessaly|Grenna|Morwen|Anselm|Maren|Caedmon|Durand|Silas|Wraithmarsh|Voice)\b/;
   const omens = [...Object.values(E('OMEN_LINES')), ...Object.values(E('DARE_LINES'))];
   assert(!bad(omens, unmet).length && !omens.some(l => retired.some(re => re.test(l))), 'systems-hollow: no Omen or Dare line names an unmet person or place or uses a retired word' + (bad(omens, unmet).length ? ': ' + bad(omens, unmet)[0] : ''));
   const late = E('OMEN_LATE');
-  assert(Object.keys(late).length === 1 && late.luckyStar.zone === 141 && /Oriel/.test(late.luckyStar.line) && late.luckyStar.line.length <= L.omen + 10
-    && !/Oriel/.test(E('omenLine("luckyStar", false, 140)')) && !/Oriel/.test(E('omenLine("luckyStar", false, 141)')) && /Oriel/.test(E('omenLine("luckyStar", false, 141, h => h === "oriel")'))
-    && !/Oriel/.test(E('omenLine("luckyStar", false, 141, h => false)')) && !/Oriel/.test(E('omenLine("luckyStar", false)')),
-    'systems-hollow: Oriel\'s Omen line waits until Chapter 4 is done (zone 141) and she has been met, and the plain line shows before');
-  assert(/Oriel/.test(late.luckyStar.line) && E('omenLine("goldRain", true, 999)') === E('DARE_LINES.goldRain'), 'systems-hollow: a taken Dare still shows its own line');
+  assert(Object.keys(late).length === 1 && late.luckyStar.zone === 141 && /Auriel/.test(late.luckyStar.line) && late.luckyStar.line.length <= L.omen + 10
+    && !/Auriel/.test(E('omenLine("luckyStar", false, 140)')) && !/Auriel/.test(E('omenLine("luckyStar", false, 141)')) && /Auriel/.test(E('omenLine("luckyStar", false, 141, h => h === "oriel")'))
+    && !/Auriel/.test(E('omenLine("luckyStar", false, 141, h => false)')) && !/Auriel/.test(E('omenLine("luckyStar", false)')),
+    'systems-hollow: Auriel\'s Omen line waits until Chapter 4 is done (zone 141) and she has been met, and the plain line shows before');
+  assert(/Auriel/.test(late.luckyStar.line) && E('omenLine("goldRain", true, 999)') === E('DARE_LINES.goldRain'), 'systems-hollow: a taken Dare still shows its own line');
   // Deep Lore: the Elders page is rule 4, the Rope page carries the Season 2 seed, Maud's Lantern page is untouched
   const pages = E('DEEP_PAGES');
   assert(pages.length === 10 && /copied/.test(pages[6][1]) && !/what the dark makes/i.test(pages[6][1]) && pages[6][1].length <= E('STORY_LIMITS.page')
@@ -11512,7 +11512,7 @@ if (section('story-systems-hollow')) try {
   const a = mk(30), H = (h, x) => h.eval(x);
   assert(H(a, 'S.hands.board.apps.some(x => x.key === "fennel") && !S.hands.board.apps.some(x => x.key === "rook")'), 'systems-hollow: reaching zone 30 brings Fennel, not Rook');
   const named = E('HANDS_LEGENDS.map(l => l.about + " " + (HANDS_ROUTES[l.key] ? HANDS_ROUTES[l.key].hint : ""))').join(' | ');
-  assert(!/Grenna|Bram|Caedmon|Elowen|Kestrel|Oriel|Wren|Tobin|Pip/.test(named.replace("Elowen's chapel.", '')), 'systems-hollow: no named Hand\'s line or route hint names an unmet hero' + (/Grenna|Bram|Caedmon/.test(named) ? ': ' + named.match(/.{20}(Grenna|Bram|Caedmon).{10}/) : ''));
+  assert(!/Grenna|Bram|Caedmon|Elowen|Kestrel|Auriel|Wren|Tobin|Pip/.test(named.replace("Elowen's chapel.", '')), 'systems-hollow: no named Hand\'s line or route hint names an unmet hero' + (/Grenna|Bram|Caedmon/.test(named) ? ': ' + named.match(/.{20}(Grenna|Bram|Caedmon).{10}/) : ''));
   assert(!/Elowen/.test(H(a, 'handsAbout("fennel")')), 'systems-hollow: Fennel does not name Elowen\'s chapel before the Hollow\'s Elder is down');
   H(a, 'S.maxZone = 31'); pulse(a);
   assert(H(a, 'S.hands.board.apps.some(x => x.key === "rook")'), 'systems-hollow: Rook arrives after the zone 30 boss');
