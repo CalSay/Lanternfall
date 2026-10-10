@@ -1200,6 +1200,21 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   steps only" end; heroes and foes draw 1.5x against unchanged scenery (ACTOR_K = 1.5, card actor-scale; a hero about 142 logical
   px, 285 CSS at 1280x720) from the 190 px art with no new bytes; portrait stays 1x until UX-L1. #320 closed with the spike: foes
   stay 2D. A menu-only phone mode is a separate Cal decision. (`docs/design/route-s/ruling.md`)
+- **Route S Pip (integrate-route-s-pip, Opus art judge, 2026-10-10; Cal can veto: "Wire Pip now", "Pull the new Pip", "Wait for
+  all three heroes", "Pip as tall as Wren", "Skip the Pip rerolls", "No Hex sigil"):** wire Pip's 19 fight moves (Scenario key frames
+  from her concept, 63 colours seeded with the concept's 12 swatches, 1-bit alpha, lossless WebP, at most 1,350 KB), with her fireball,
+  frost, spark, kindle, burning-ground and cinder sprites (at most 40 KB; a sprite replaces the live bolt head, never both), behind
+  Classic art (build card route-s-pip-wire, gated like Wren's and Tobin's plus a re-cut from raw, frame skips, per-move emit anchors
+  and a hand count on every shipped frame). Pip stands shorter, as Cal's 2026-09-29 heights rule says: hat-top 171 art px, 0.9 of Wren's
+  190, at the same pack scale. It waits for the split build (asset-build, art-loader): with Wren's sets, her fight set makes the one-file page
+  12.4-12.7 MB, and with Tobin too 14.3-14.6 MB. Cal's checks: no border halo at game size and no fused fingers, but 6 third-hand frames
+  (the README said 0): fire 4, spark 3, frost shard 6 and Searing Eye 7 are skipped; victory 5 and 7 are rerolled. Of 100 counted
+  defects, 24 are white pockets and punched lantern glass or mouths that a re-cut fixes, 52 are handled by conversion or accepted, and 24 need
+  rerolls: victory v2, Arcane Ward v2 (the staff ping-pongs between hands; v2 is the brief's lantern raise), Lanternburst v2 (the staff shrinks
+  to 25-49% and the lantern is never used), the Hex sigil v2 (an opaque disc in the Blind and Mark colours with an eye), woodcut v6 (the
+  edge-on head reads as a T-bar, Wren's v3 failure) and hunt v4 (the spear shrinks mid-thrust); 6 sheets, about 108 credits, the pack
+  at about 936 of ~1,000. Live Nova, Lantern Flare and Lanternburst fire a bolt from her hand against the art; card pip-cast-recipes
+  re-recipes them for route S art. The gather loops wire through route-s-pip-gather after woodcut v6 and hunt v4. (`docs/design/route-s/ruling-pip.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
