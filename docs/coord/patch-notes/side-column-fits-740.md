@@ -1,0 +1,1 @@
+On phones held sideways, the Next Up box beside the fight now shows the whole goal, however long. Later gear goals ("Tide Kelpie Hide Leathers: Woodcutting 111 of 112 opens Tideash Log...") were cut off after three lines. The "Leave now" line you see while gathering is a little bigger and easier to read. Best shot: sidecol-fight.

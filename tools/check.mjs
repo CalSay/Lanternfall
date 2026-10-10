@@ -86,7 +86,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -8697,7 +8697,20 @@ if (section('C14 away card (browser)')) try {
         await page.goto('http://lf.test/');
         await page.waitForSelector('#createScreen .ccard[data-state]');
         await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
-        await page.waitForTimeout(350);
+        // c14-away-card-load-flake: each step waits for the state it needs (5 s cap) and fails naming what never came, never a fixed timer
+        const ready = async (fn, arg, what) => { try { await page.waitForFunction(fn, arg, { timeout: 5000 }); } catch (e) { throw new Error(`C14: ${what} never happened within 5 s (${String(e.message || e).split('\n')[0]})`); } };
+        // a click waits until the element is the one under its own centre, so a card over it fails naming that card, not a 30 s timeout
+        const tap = async (sel, what) => {
+          const top = () => page.evaluate(sel => { const e = document.querySelector(sel); if (!e) return 'the button is missing;';
+            e.scrollIntoView({ block: 'nearest' }); const r = e.getBoundingClientRect(), t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+            if (!t) return 'the button is off screen;'; if (e === t || e.contains(t)) return '';
+            const c = t.closest('[role="dialog"]') || t; return (typeof c.className === 'string' && c.className) || c.tagName.toLowerCase(); }, sel);
+          const t0 = Date.now(); let on;
+          while ((on = await top()) && Date.now() - t0 < 5000) await page.waitForTimeout(50);
+          if (on) throw new Error(`C14: ${what} (${sel}) could not be pressed within 5 s: ${/;$/.test(on) ? on.slice(0, -1) : on + ' was on top of it'}`);
+          await page.click(sel);
+        };
+        await ready(() => !document.querySelector('#createScreen'), null, 'the create screen closing after Begin');
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await X(`showAwayReport({secs:1800,t:1800,cap:14400,capped:false,activity:'fight',note:'You held Cinder Road.',gold:300,xp:0,kills:0,
           mats:[],items:[],skills:[],lines:[{txt:'Storehouse full',sub:'The Storehouse kept the extra ore safe.'}],
@@ -8708,7 +8721,8 @@ if (section('C14 away card (browser)')) try {
         assert(title.includes('while you were away') && title.includes('30m') && title.includes('cinder road'), 'C14 browser: a fresh local game opens the away card with its time and hero summary (' + title.replace(/\n/g, ' | ') + ')');
         // away-card-next-up-first: the groups fold under one "More (n)" row; opening it shows every group (folded, never dropped)
         const more0 = await page.locator('.away-ov .away-more').innerText();
-        await page.click('.away-ov .away-more'); await page.waitForTimeout(150);
+        await tap('.away-ov .away-more', 'the first card\'s More row');
+        await ready(() => { const f = document.querySelector('.away-ov .away-fold'); return f && f.open && f.children.length > 1; }, null, 'More opening its groups');
         const opened = (await page.locator('.away-ov').innerText()).toLowerCase();
         assert(/^more \(6\)$/i.test(more0.trim()) && !['gatherers','trade','tavern','well rested'].some(g => title.includes(g)) && ['gathering','gatherers','trade','camp','tavern','well rested'].every(g => opened.includes(g)),
           'C14 browser: the groups fold under "More (6)", and opening it displays the material explanation and each separate source group (' + more0 + ' | ' + opened.replace(/\n/g, ' | ') + ')');
@@ -8717,8 +8731,14 @@ if (section('C14 away card (browser)')) try {
         assert(!errs.length, 'C14 browser: opening and reading the card raises no page errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
         // away-limit-says-next-step (ruling 2026-10-08-first-night-covered, card 2): a capped return gives both numbers and the one next step
         {
+          // closing a card the next step needs gone: a missing card or one that stays open fails, never skipped
+          const closeAway = `{ const c = document.querySelector('.away-ov .away-go'); if (!c) throw new Error('C14: no away card to close');
+            c.click(); if (document.querySelector('.away-ov')) throw new Error('C14: the away card stayed open after Collect'); }`;
+          // S.lantern.seen: the faked zone 40 is past the Hollow's end (35). Left unseen, the next tick lights its Great Lantern
+          // and queues that full-screen card; it waits behind the away card, opens in the gap after the last Collect and covers More
+          // below (the load flake). Every faked zone is marked seen in the same step, so none lights anything.
           const lim = async (setup, h, extra = '') => {
-            await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); ${setup};
+            await X(`${closeAway} ${setup}; S.lantern.seen = S.maxZone;
               showAwayReport({ secs: ${h} * 3600, t: Math.min(${h}, awayCapH()) * 3600, cap: awayCapH() * 3600, capped: ${h} > awayCapH(), activity: S.activity, note: '', empty: false,
                 gold: 0, xp: 0, kills: 0, mats: [], items: [], skills: [], lines: [${extra}], extra: [] }); true`);
             return X(`(() => { const w = document.querySelector('.away-ov .away-limwrap'); return w ? w.textContent + (w.querySelector('.away-cap .away-lgo') ? ' [Go:' + w.querySelector('.away-cap .away-lgo').getAttribute('aria-label') + ']' : '') : ''; })()`);
@@ -8753,12 +8773,12 @@ if (section('C14 away card (browser)')) try {
           assert(tr.includes('hit the raid boss for 4h of your 9h away.') && tr.includes('(6h)') && !tr.includes('8h'), `away limit: a raid return keeps the raid's 4 h, never promising 8 h of raid hits (${tr})`);
           assert(!t0.includes('Hourglass') && tg.includes('Hourglass Lv 1: +2h, for raid Embers.'), `away limit: the Hourglass shows only while the raid is open (${tg})`);
           assert(!/24 hours/.test(all), `away limit: the card never says "24 hours" (${all})`);
-          await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true');
+          await X(`${closeAway} true`);
         }
         // away-card-next-up-first (W8 card 3): results, the limit, Next up, then one folded "More (n)" row. Next up's first row shows
         // above Collect without scrolling, a fold's Go only exists once More is open, and More counts every folded line.
         {
-          await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.activity = 'gather';
+          await X(`if (document.querySelector('.away-ov')) throw new Error('C14: an away card is still open'); S.activity = 'gather';
             showAwayReport({ secs: 11 * 3600, t: 8 * 3600, cap: 8 * 3600, capped: true, activity: 'gather', note: 'You gathered Oak.', empty: false, gold: 0, xp: 0, kills: 0,
               mats: [{ k: 'wood', t: 3, n: 37000 }], items: [], skills: [{ k: 'wood', from: 30, to: 52 }], lines: [{ txt: 'Storehouse full: Oak', sub: 'Woodcutting XP still counted' }],
               extra: [{ group: 'Codex', txt: 'Codex: +1 Lantern Light', go: () => {} }, { group: 'Gatherers', txt: 'Tam finished 1 shift: +754 Oak Log.', go: () => {} },
@@ -8773,16 +8793,19 @@ if (section('C14 away card (browser)')) try {
           assert(o.kids.join(',') === 'Materials,Skills,lim,nu,more' && o.more === 'More (5)' && !o.open && !o.foldGo,
             `away-card-next-up-first: the card reads results, limit, Next up, then a closed "More (5)" with no Go built inside it (${JSON.stringify(o)})`);
           assert(o.shows, `away-card-next-up-first: at 740x360 the first Next up row shows above Collect without scrolling (${JSON.stringify(o)})`);
-          await page.click('.away-ov .away-more'); await page.waitForTimeout(200);
+          await tap('.away-ov .away-more', 'the second card\'s More row');
+          await ready(() => { const f = document.querySelector('.away-ov .away-fold'); return f && f.open && f.children.length > 1; }, null, 'More opening its groups');
           const op = await X(`[document.querySelector('.away-fold').open, [...document.querySelectorAll('.away-fold .away-h')].map(e => e.textContent).join(','), document.querySelectorAll('.away-fold .away-line').length, document.querySelectorAll('.away-fold .away-lgo').length]`);
           assert(op[0] && op[1] === 'Codex,Gatherers,Achievements,Also,Gathering' && op[2] === 5 && op[3] === 2, `away-card-next-up-first: More opens every other group with its lines and Go buttons (${JSON.stringify(op)})`);
           // keys: Tab from More skips a closed fold's Go buttons; Space on More opens it (the fight's Space dodge never takes it)
-          await page.click('.away-ov .away-more'); await page.focus('.away-ov .away-more'); await page.keyboard.press('Tab');
+          await tap('.away-ov .away-more', 'the open More row'); await ready(() => !document.querySelector('.away-ov .away-fold').open, null, 'More closing');
+          await page.focus('.away-ov .away-more'); await page.keyboard.press('Tab');
           const tabTo = await X('document.activeElement.className');
-          await page.focus('.away-ov .away-more'); await page.keyboard.press(' '); await page.waitForTimeout(100);
+          await page.focus('.away-ov .away-more'); await page.keyboard.press(' ');
+          await page.waitForFunction(() => document.querySelector('.away-fold').open, null, { timeout: 5000 }).catch(() => {});   // the assert below names a miss
           const spaceOpen = await X("document.querySelector('.away-fold').open && !!document.querySelector('.away-ov')");
           assert(/away-go/.test(tabTo) && spaceOpen, `away-card-next-up-first: Tab from a closed More goes to Collect, and Space opens More (${tabTo}, ${spaceOpen})`);
-          await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true');
+          await X(`{ const c = document.querySelector('.away-ov .away-go'); if (!c) throw new Error('C14: no away card to close'); c.click(); } true`);
         }
       } finally { await ctx.close(); }
       // ...and on the mid fixture's real 8 h return (fighting, as saved, and gathering), in all three views
@@ -16574,6 +16597,80 @@ if (section('loadout-odds')) try {
   }
 } catch (e) { fail('loadout-odds crashed: ' + (e.stack || e)); }
 
+// ==== cache-pick-order-settles: the Lantern Cache's move pick keeps one order from its first paint, and its odds stop when it closes ====
+// save-pip-z10-ward (Pip at the zone 10 Champion, one Hollow Scroll, Arcane Ward / Frost Shard / Ignite to learn). Her zone 10 first clear
+// opens the cache on the Champion's card with a pick (75-caches-ui). The kill moves maxZone, so the zone 11 odds start then and arrive
+// after the card is up. Browser, 1280x720, 740x360 and 360x740: every order the pick row ever paints is the first one (a watcher on the
+// card, and two reads 1 s apart once the odds are in), the move that lifts the line most is marked in place, and the card fits; with the
+// odds already in at open (they once sorted it) the order is the same. First of all, a card closed at once (Keep the Scroll) while its
+// odds are pending does no odds work after it closes: no learnOdds call from the pick's fill for 3 s.
+if (section('cache-pick-order-settles')) try {
+  const at = 'cache-pick-order-settles', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-z10-ward.json'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8'), mv = (src.match(/function spoilsMoves[\s\S]*?\n}\n/) || [''])[0];
+  assert(mv && !/\.sort\(/.test(mv), `${at}: spoilsMoves offers the moves in the Abilities list's order, never sorted by odds that may or may not be in yet`);
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // a watcher keeps every order (and each pick's sub and mark) the pick row paints; __late counts learnOdds calls from the fill after a close
+        await X(`window.__ord = []; window.__closed = false; window.__late = 0; { let inFill = false; const f0 = spoilsFill, l0 = learnOdds;
+          spoilsFill = (sp, n) => { inFill = true; try { return f0(sp, n); } finally { inFill = false; } };
+          learnOdds = (...a) => { if (inFill && __closed) __late++; return l0(...a); }; }
+          new MutationObserver(() => { const r = document.querySelector('.mm-ov .mm-pick-row'); if (!r) return; const bs = [...r.querySelectorAll('.mm-pick')];
+            const o = bs.map(b => b.querySelector('b').textContent).join(), s = bs.map(b => (b.querySelector('small') || {}).textContent || '').join(' | '), m = bs.filter(b => b.classList.contains('lift')).map(b => b.querySelector('b').textContent).join();
+            const l = __ord[__ord.length - 1]; if (!l || l.o !== o || l.s !== s || l.m !== m) __ord.push({ o, s, m }); }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] }); true`);
+        // the zone 10 boss's kill as the fight makes it (first clear), unique roll missed (its card is spoils-card-fits-with-unique's)
+        const win = async (ready = false) => { await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } __ord.length = 0;
+          S.activity = 'fight'; S.zone = 10; S.maxZone = 10; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 0;
+          try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } for (const q of MOMENT_Q) if (q.kind === 'champion') q.scene = ''; S.activity = 'gather'; emit('sceneReset');
+          ${ready ? "learnOdds('pip', true);" : ''} true`);   // ready: the zone 11 odds worked out now, before the cache opens on the next tick
+          try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov .mm-pick')`), null, { timeout: 8000, polling: 50 }); return true; }
+          catch (e) { assert(false, `${vw}: the zone 10 clear's card with a pick never showed`); return false; } };
+        // first, before anything has worked out the zone 11 odds: closed at its first paint (Keep the Scroll), then no odds work from the pick
+        if (!(await win())) { await ctx.close(); continue; }
+        const pend = await X(`(() => { const lo = learnOdds('pip'); MOMENT_UI.shownAt = 0; document.querySelector('.mm-ov .mm-go').click(); __closed = true; return !lo; })()`);
+        await page.waitForTimeout(3000);
+        const late = await X(`__late`), up = await X(`!!document.querySelector('.mm-ov .mm-pick')`);
+        assert(pend && !up && late === 0, `${vw}: closed while its odds were still pending (${pend}), the pick's fill asks for no odds after (${late} calls in 3 s)`);
+        await X(`__closed = false; true`);
+        if (!(await win())) { await ctx.close(); continue; }
+        const first = JSON.parse(await X(`JSON.stringify(__ord[0])`));
+        // the odds are in once a pick's sub names the zone 11 boss; then read twice, 1 s apart
+        try { await page.waitForFunction(() => window.__t.x(`[...document.querySelectorAll('.mm-ov .mm-pick small')].some(e => /Zone 11 boss/.test(e.textContent))`), null, { timeout: 30000, polling: 100 }); }
+        catch (e) { assert(false, `${vw}: the pick's odds never arrived`); }
+        const read = () => X(`(() => { const o = document.querySelector('.mm-ov'), bs = [...o.querySelectorAll('.mm-pick')], inView = r => r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1;
+          return JSON.stringify({ o: bs.map(b => b.querySelector('b').textContent).join(), lift: bs.filter(b => b.classList.contains('lift')).map(b => b.querySelector('b').textContent),
+            top: (learnOdds('pip') || { rows: [] }).rows.map(r => r.id)[0], fits: inView(o.querySelector('.mm-card').getBoundingClientRect()) && [...bs, o.querySelector('.mm-go')].every(b => inView(b.getBoundingClientRect())), pageW: document.documentElement.scrollWidth <= innerWidth }); })()`).then(JSON.parse);
+        const r1 = await read(); await page.waitForTimeout(1000); const r2 = await read();
+        const all = JSON.parse(await X(`JSON.stringify(__ord)`));
+        assert(first && first.o === 'Ignite,Frost Shard,Arcane Ward' && r1.o === first.o && r2.o === first.o && all.every(x => x.o === first.o),
+          `${vw}: the pick keeps the Abilities list's order from its first paint, through the odds arriving, and 1 s later (${JSON.stringify({ first, r1: r1.o, r2: r2.o, painted: all.map(x => x.o) })})`);
+        if (w === 1280) await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'cache-pick-order-settles', 'check-card-1280x720.png') });
+        assert(r2.top === 'arcaneward' && r2.lift.join() === 'Arcane Ward' && r2.fits && r2.pageW, `${vw}: Arcane Ward, the move that lifts the zone 11 line most, is marked in place, and the card fits (${JSON.stringify(r2)})`);
+        // the odds already in when the card opens (once they sorted it: Arcane Ward first): the same order, marked from the first paint
+        if (!(await win(true))) { await ctx.close(); continue; }
+        await page.waitForTimeout(1000);
+        const r3 = await read(), all3 = JSON.parse(await X(`JSON.stringify(__ord)`));
+        assert(r3.o === first.o && all3.every(x => x.o === first.o) && r3.lift.join() === 'Arcane Ward' && /Zone 11 boss/.test(all3[0].s),
+          `${vw}: with the odds in at open, the pick paints the same order, its lines filled and Arcane Ward marked (${JSON.stringify({ r3, painted: all3 })})`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('cache-pick-order-settles crashed: ' + (e.stack || e)); }
+
 // ==== turn-banner-clears-plate: the turn line and the whose-turn banner each read on one line and stay off the "Zone boss" line ====
 // save-mid, a zone boss fight, every foe renamed to the longest name the game can give a foe (a boss or its Deepwell "Deep" name, an
 // elite, a Champion, a story boss). At 1280x720, 740x360 and 360x740: the turn line over the stage ("<name>'s turn", .tv-n) on the foe's
@@ -16794,6 +16891,105 @@ if (section('nu-chip-gate-label-fits')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('nu-chip-gate-label-fits crashed: ' + (e.stack || e)); }
+
+// ==== side-column-fits-740: every gate label and every away line fit the landscape side column ====
+// The side column holds the Next Up chip (row 2), the away chip (row 3) and the dock (row 4, .sb-tabs at its top). The dock shows
+// only while fighting (75-solo-ui: target() is 'mob') and the away chip only while gathering (71-ui-fight awayChipText), so the
+// height budget is per state: fighting, the chip ends above .sb-tabs; gathering, the chip and the away chip end above the screen's
+// foot and the dock is hidden. The section builds every tier gate label the game can make (gateLabel over each kind, tiers 2 to 5,
+// its station gates and each raw cell its recipe takes, one level short, gathering that skill and not) and every away line
+// (awayChipSay over each gathered material: about N in the longest away, fills up, full), and measures the longest of each, with
+// the players' web fonts and with the fallbacks (display-fallback-font).
+if (section('side-column-fits-740')) try {
+  const at = 'side-column-fits-740', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the chip's label lines and cut, the away chip's words, and the boxes, with the given words put in place (the next pass may
+    // rewrite them, so all of it is read in one task)
+    const measure = (page, label, away) => page.evaluate(([label, away]) => {
+      const c = document.getElementById('nuChip'), l = c && c.querySelector('.nu-lbl'), a = document.querySelector('.away-chip'), tabs = document.querySelector('.sb-tabs');
+      const on = e => !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden';
+      if (!on(c) || !l) return null;
+      const keep = [l.textContent, a && a.lastChild.textContent];
+      l.textContent = label; if (away != null && a) a.lastChild.textContent = away;
+      const lines = n => { const rg = document.createRange(); rg.selectNodeContents(n); return [...rg.getClientRects()].filter(r => r.width > 0); };
+      const lr = lines(l), lb = l.getBoundingClientRect(), cb = c.getBoundingClientRect(), cs = getComputedStyle(l), clamp = parseInt(cs.webkitLineClamp, 10) || 0;
+      const o = { lines: new Set(lr.map(r => Math.round(r.top))).size, clamp, cut: Math.max(...lr.map(r => r.bottom)) > lb.bottom + 1 || lb.bottom > cb.bottom + 1 || Math.max(...lr.map(r => r.right)) > cb.right + 1,
+        fs: parseFloat(cs.fontSize), chipBottom: Math.round(cb.bottom), away: on(a) ? null : false, dock: on(tabs) ? Math.round(tabs.getBoundingClientRect().top) : null, foot: innerHeight };
+      if (on(a)) { const ar = lines(a.lastChild), ab = a.getBoundingClientRect();
+        o.away = { top: Math.round(ab.top), bottom: Math.round(ab.bottom), cut: Math.max(...ar.map(r => r.bottom)) > ab.bottom + 1 || Math.max(...ar.map(r => r.right)) > ab.right + 1, fs: parseFloat(getComputedStyle(a).fontSize) }; }
+      l.textContent = keep[0]; if (a && keep[1] != null) a.lastChild.textContent = keep[1];
+      return o;
+    }, [label, away]);
+    try {
+      for (const webFonts of [true, false]) for (const [w, h] of [[740, 360], [1024, 768], [1280, 720], [1366, 640], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}${webFonts ? '' : ', fallback fonts'}`, phone = w < 1000, desk = w >= 1200;
+        const ctx = await browser.newContext({ turns: true, webFonts, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        // stamped at load, so no away card opens over the column
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const words = await X(`(() => {
+          const labels = new Set(), aways = new Set();
+          for (const kind of Object.keys(CRAFT_KINDS)) { if (CRAFT_KINDS[kind].legacy) continue;
+            for (let t = 2; t <= 5; t++) { const rec = craftRecipe(kind, t); if (!rec) continue;
+              const gs = [], st = stationOf(kind), need = CRAFT_STATION_REQ[t - 1];
+              if (st) for (const sk of new Set([st.skill, 'smith'])) gs.push({ skill: sk, lv: need - 1, need, station: st.key });
+              for (const k of Object.keys(rec)) { if (k === 'gold') continue; const prod = REFINE_PRODUCTS[k];
+                for (const [f, tt] of prod ? prod.inputs(t) : [[k, t]]) { if (f === 'coal' || !CRAFT_NODES[f]) continue;
+                  const sk = skillOf(f), nd = skillReq(sk, tt); if (nd > 1) gs.push({ skill: sk, lv: nd - 1, need: nd, mat: costName(f, tt) }); } }
+              for (const gate of gs) for (const on of [true, false]) labels.add(gateLabel({ kind, t, gate }, on)); } }
+          for (const f of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) { const nm = matName(f, t);
+            for (const n of ['spill', 0, 99999]) aways.add(awayChipSay(nm, n, CAMP_TUNE.awayMax)); }
+          const by = s => [...s].sort((a, b) => b.length - a.length);
+          return { labels: by(labels), aways: by(aways) }; })()`);
+        assert(words.labels.length > 100 && words.aways.length > 30, `${v}: the game makes gate labels and away lines (${words.labels.length}, ${words.aways.length})`);
+        // line breaks, not only length, decide the height: the 12 longest of each are measured
+        const L = words.labels.slice(0, 12), A = words.aways.slice(0, 12);
+        // fighting: the dock shows and the away chip does not; every label shows whole and the chip ends 4 px or more above .sb-tabs
+        let worst = null, bad = null, floor = true;
+        for (const lt of L) { const o = await measure(page, lt, null); if (!o) { bad = 'no chip'; break; }
+          if (o.away !== false || o.dock == null) { bad = `fighting shows the away chip or no dock (${JSON.stringify(o)})`; break; }
+          if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `cut: ${lt} (${o.lines} lines, clamp ${o.clamp})`; break; }
+          if (o.fs < (desk ? 14 : 13)) floor = false;
+          if (!worst || o.chipBottom - o.dock > worst.chipBottom - worst.dock) worst = { ...o, lt }; }
+        assert(!bad, `${v}: fighting, every gate label shows whole in the Next Up chip${bad ? ' (' + bad + ')' : ''}`);
+        if (worst) {
+          console.log(`  ${v}: fighting, the longest label takes ${worst.lines} lines and the chip ends ${worst.dock - worst.chipBottom} px above the dock`);
+          assert(worst.chipBottom + 4 <= worst.dock, `${v}: fighting, the chip ends above .sb-tabs (${worst.chipBottom} vs ${worst.dock}: ${worst.lt})`);
+        }
+        assert(floor, `${v}: the chip label keeps its ${desk ? 14 : 13} px floor`);
+        // gathering: the away chip shows and the dock does not; every label with every away line fits above the screen's foot
+        await X('navGo({ act: "gather", node: { kind: "ore", t: 1 } }); true');
+        await page.waitForTimeout(600);
+        worst = null; bad = null; floor = true;
+        for (const lt of L) for (const al of A) { const o = await measure(page, lt, al); if (!o) { bad = 'no chip'; break; }
+          if (!o.away || o.dock != null) { bad = `gathering shows no away chip or the dock (${JSON.stringify(o)})`; break; }
+          if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `label cut: ${lt}`; break; }
+          if (o.away.cut) { bad = `away line cut: ${al}`; break; }
+          if (o.away.top < o.chipBottom) { bad = `the away chip starts over the Next Up chip (${lt} / ${al})`; break; }
+          if (o.fs < (desk ? 14 : 13) || o.away.fs < (desk ? 14 : 13)) floor = false;
+          if (!worst || o.away.bottom > worst.away.bottom) worst = { ...o, lt, al }; }
+        assert(!bad, `${v}: gathering, every gate label and away line shows whole, the away chip under the Next Up chip${bad ? ' (' + bad + ')' : ''}`);
+        if (worst) {
+          console.log(`  ${v}: gathering, the longest pair ends ${worst.foot - worst.away.bottom} px above the screen's foot`);
+          assert(worst.away.bottom + 4 <= worst.foot, `${v}: gathering, the away chip ends above the screen's foot (${worst.away.bottom} vs ${worst.foot}: ${worst.lt} / ${worst.al})`);
+        }
+        assert(floor, `${v}: the chip and away text keep the ${desk ? 14 : 13} px floor`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('side-column-fits-740 crashed: ' + (e.stack || e)); }
 
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away

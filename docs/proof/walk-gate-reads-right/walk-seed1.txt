@@ -1,0 +1,19 @@
+# node tools/walk.mjs --seed 1 (1280x720, 60 game minutes) on 287ef2c1 (base 3614ff68, after #321). Gate lines from the log (json text, untruncated):
+30:00  craft row at 30 min: "Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away.", row 3 of 3 on Next Up (rank 3 of 10)
+31:16  Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going. -> pressed Go (its Gather view)
+31:22  gathering ore tier 1 for Mining 7 of 14
+34:24  gathering ore tier 1 for Mining 7 of 14
+35:22  gathering ore tier 1 for Mining 7 of 14
+35:27  gathering ore tier 1 for Mining 7 of 14
+35:32  gathering ore tier 1 for Mining 7 of 14
+35:38  gathering ore tier 1 for Mining 7 of 14
+35:52  Mining 7 of 14: another gate took its place (Birch Bow: Woodcutting 8 of 14); Mining still 8 of 14
+45:00  craft row at 45 min: "Birch Bow: Woodcutting 8 of 14 opens Birch Log. Gather Woodcutting before you leave and it keeps going.", row 3 of 3 on Next Up (rank 3 of 9)
+60:00  craft row at 60 min: "Birch Bow: Woodcutting 8 of 14 opens Birch Log. Gather Woodcutting before you leave and it keeps going.", row 3 of 3 on Next Up (rank 5 of 11)
+60:00  gathering at the end: Mining 8 of 14, Woodcutting 8 of 14, Foraging 7 of 14, Hunting 4 of 14
+
+# The report's Gear section:
+Next Up tier gates: 1 gate row pressed ("Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going." at 31:16); 0 tier 1 crafts made for a station gate; another gate took its place (Birch Bow: Woodcutting 8 of 14); Mining still 8 of 14 at 35:52. First tier 2 craft goal: not seen in 60:00.
+Craft row: at 30 min "Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away.", row 3 of 3 on Next Up (rank 3 of 10); at 45 min "Birch Bow: Woodcutting 8 of 14 opens Birch Log. Gather Woodcutting before you leave and it keeps going.", row 3 of 3 on Next Up (rank 3 of 9); at 60 min "Birch Bow: Woodcutting 8 of 14 opens Birch Log. Gather Woodcutting before you leave and it keeps going.", row 3 of 3 on Next Up (rank 5 of 11). Gathering at the end: Mining 8 of 14, Woodcutting 8 of 14, Foraging 7 of 14, Hunting 4 of 14.
+
+# Press log: the same walk with the base's tools/walk.mjs logged the same entries at the same times through minute 50 (a container restart cut that run); the only changed line is the gate end at 35:52, which read "Mining 7 of 14: another gate took its place". Before #321 merged, the full 60 min matched entry for entry (536 entries).
