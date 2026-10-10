@@ -1,0 +1,1 @@
+Docs only: a plan to redraw the scenery, roads, gathering scenes, resource nodes, monsters, hunting beasts and camp in the new hero art style, early game first, in whole judged packs (docs/design/new-style/plan.md). It lists the Scenario credits each pack needs as Cal decisions. No art was made and nothing was wired. No player change. (no shot)
