@@ -27,7 +27,8 @@
 var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
 {
   const D = typeof WREN_S === 'object' ? WREN_S : null;
-  const SC = 0.5;                                   // actor px per art px
+  const SC0 = 0.5;                                  // actor px per art px at the stage's hero scale 1
+  let SC = SC0;                                     // now: SC0 x the stage's hero scale (62-stage stageHeroK, foe-scale-own)
   const MS = { attack: 900, parry: 660, dodge: 660, hit: 540, defeat: 2080 };
   const WIND = 0.14;                                // 62-stage WIND: the swing's wind before the shot
   // turn-fight ability ids -> moves (24c); Twin Shot (passive) turns the Attack into its own move
@@ -195,7 +196,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     // the record the stage reads (bounds, the head's bar, Shadow Step's ghosts, the eyes hook): the frame at actor px
     const PROXY = new Map();
     function proxyOf(mv, i) {
-      const key = mv + ':' + i; let p = PROXY.get(key); if (p) return p;
+      const key = mv + ':' + i + ':' + SC; let p = PROXY.get(key); if (p) return p;
       const src = frameCanvas(mv, i, 0, 0); if (!src) return null;
       const [, , , , ax, ay] = D.moves[mv].f[i];
       const c = mk(Math.ceil(src.width * SC), Math.ceil(src.height * SC)), g = c.getContext('2d');
@@ -302,11 +303,12 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     function shiver(t) { const d = t - ST.relT; if (reducedNow() || d < 0 || d > 0.3) return 0; return Math.sin(d * 70) > 0 ? 1 : -1; }
 
     // ---------------- hooks ----------------
-    const leftExt = Math.max(...Object.values(D.moves).flatMap(M => M.f.map(f => f[4]))) * SC;
+    const leftExt0 = Math.max(...Object.values(D.moves).flatMap(M => M.f.map(f => f[4])));
     let lastInfo = null;
     if (typeof heroArtStage === 'function') {
       const base = heroArtStage;
       heroArtStage = function (g, a, x, alpha) {
+        SC = SC0 * (typeof stageHeroK === 'function' ? stageHeroK() : 1);   // the hero's own scale on the stage (foe-scale-own)
         if (!routeS()) { ST.heldT = -1; return base(g, a, x, alpha); }   // a hold that ends off route S (Classic, another hero, hunting) is not carried
         if (!IMG.idle) {   // the idle decoding (a moment at boot, nothing drawn); split build with Classic on at boot: not fetched, so held for
           if (bad.idle) return base(g, a, x, alpha);
@@ -319,7 +321,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
         if (!need(p.mv)) { ST.heldT = now(); return true; }
         if (!IMG[p.mv]) { want(p.mv); p.mv = IDLE[0]; p.i = IDLE[1]; }   // inline: still decoding (or it failed)
         if (ST.hitT >= 0 && ST.relT < ST.hitT) ST.relT = ST.hitT;
-        const x0 = x; x = Math.max(x, leftExt + 2); LAST.dx = x - x0;   // a narrow stage: she steps in so her cloak stays on it
+        const x0 = x; x = Math.max(x, leftExt0 * SC + 2); LAST.dx = x - x0;   // a narrow stage: she steps in so her cloak stays on it
         const y = a.hy + a.dy;
         if (!blit(g, p.mv, p.i, x, y, { br: p.br, sh: p.sh, alpha })) return base(g, a, x, alpha);
         bat(g, x, y, now(), alpha);
@@ -337,13 +339,17 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       heroArtDraw = function (g, id, state, t, x, y, opts) {
         const m = MAP[state] || IDLE, mv = m[0], o = opts || {};
         if (!(isWren(id) && !classic() && IMG[mv])) return base(g, id, state, t, x, y, opts);
+        const keep = SC; SC = SC0 * (o.k || 1);   // opts.k: a scale on top of SC0 (62-stage heroReach reads it at 1)
+        try { return drawS(g, m, mv, o, t, x, y, id, state, opts); } finally { SC = keep; }
+      };
+      function drawS(g, m, mv, o, t, x, y, id, state, opts) {
         const i = m.length > 1 ? m[1] : o.frame != null ? Math.max(0, Math.min(7, o.frame)) : wrenSFrame(mv, { ms: Math.max(0, t) * 1000 });
         if (!blit(g, mv, i, x, y, { alpha: o.alpha })) return base(g, id, state, t, x, y, opts);
         const f = proxyOf(mv, i);
         INFO.frame = i; INFO.done = m.length === 1 && Math.max(0, t) * 1000 >= (MS[mv] || MS.attack); INFO.f = f;
         INFO.x0 = Math.round(x) - f.ox; INFO.y0 = Math.round(y) - f.oy;
         return INFO;
-      };
+      }
     }
     // the picker, the hero sheet and the camp switch: the camp pose at 0.5 scale, the canvas sized to hold all of it
     if (typeof heroArtPreview === 'function') {
@@ -353,6 +359,10 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
           if (cv && cv._w0) { cv.width = cv._w0; cv.height = cv._h0; cv.style.width = cv.style.height = ''; cv._w0 = 0; }
           return base(cv, id);
         }
+        const keep = SC; SC = SC0;   // the picker draws at 0.5, whatever the stage's hero scale
+        try { return preview(cv); } finally { SC = keep; }
+      };
+      const preview = cv => {
         const [, , w, h, ax, ay] = D.moves[CAMP[0]].f[CAMP[1]];
         // CSS px; the backing store at the screen's density, so a DPR 2 screen draws her 1:1 (nearest-neighbour), not doubled
         const W = Math.ceil(Math.max(ax, w - ax) * SC) * 2 + 4, H = Math.ceil(h * SC) + 4, r = Math.max(1, Math.round((typeof devicePixelRatio === 'number' && devicePixelRatio) || 1));
@@ -378,6 +388,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     if (typeof ANIM === 'object' && ANIM.hooks) {
       ANIM.hooks.arrowSprite = (g, p, dx, dy) => {
         if (!IMG.arrows || !(p.own || p.kind === 'rain') || !wrenSOn() || (typeof target === 'function' && target() !== 'mob')) return false;   // her arrows only (rain: her Volleys)
+        SC = SC0 * (typeof stageHeroK === 'function' ? stageHeroK() : 1);
         const r = D.arrows.r[p.kind === 'rain' ? 'plain' : ST.arrow] || D.arrows.r.plain, [sx, sy, w, h] = r;
         const T0 = g.getTransform(), K = T0.a, k = SC * K, ang = Math.atan2(dy, dx), flat = Math.abs(ang) < 0.06;
         g.save();
@@ -392,6 +403,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     // where the bow is on the frame drawn last: the middle of its tips (the shot leaves from there), in actor px from the feet
     wrenSHand = () => {
       if (!lastInfo || !wrenSOn()) return null;
+      SC = SC0 * (typeof stageHeroK === 'function' ? stageHeroK() : 1);   // fresh: the stage may have rescaled since her last frame
       const M = D.moves[lastInfo.mv], s = M && M.s && M.s[lastInfo.i];
       if (!s) return null;
       const p = s[2] || [(s[0][0] + s[1][0]) / 2, (s[0][1] + s[1][1]) / 2];

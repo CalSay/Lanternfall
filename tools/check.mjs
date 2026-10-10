@@ -18386,10 +18386,11 @@ if (section('actor-scale (browser)')) try {
       for (const e of document.querySelectorAll(${JSON.stringify(UI)})) { const b = e.getBoundingClientRect(), cs = getComputedStyle(e);
         if (!b.width || !b.height || cs.visibility === 'hidden' || e.closest('[hidden]')) continue;
         ui.push({ n: String(e.className).split(' ')[0], x: b.left, y: b.top, w: b.width, h: b.height }); }
-      return { R, ui, st: { ZM: st.ZM, AK: st.AK, ZA: st.ZA, foes: st.foes }, heroSt: st.heroSt, mob: mob && mob.key }; })()`;
+      return { R, ui, st: { ZM: st.ZM, AK: st.AK, HS: st.HS, ZA: st.ZA, foes: st.foes }, heroSt: st.heroSt, mob: mob && mob.key }; })()`;
     const cross = (a, b) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
     try {
-      for (const [w, h, dpr, ak] of [[1280, 720, 1, 2], [1366, 640, 1, 1.5], [1920, 1080, 1, 2], [1024, 768, 1, 3], [1000, 768, 1, 3], [740, 360, 2, 1], [360, 740, 2, 1]]) {
+      // foe-scale-own: ak is the actors' (foes', nodes') scale, hs the hero's own (2 beside 1.5 foes, 3 beside 2)
+      for (const [w, h, dpr, ak, hs] of [[1280, 720, 1, 1.5, 2], [1366, 640, 1, 1.5, 1.5], [1920, 1080, 1, 1.5, 2], [1024, 768, 1, 2, 3], [1000, 768, 1, 2, 3], [740, 360, 2, 1, 1], [360, 740, 2, 1, 1]]) {
         const tag = `${w}x${h}`, touch = w < 1000;
         const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
         await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
@@ -18412,6 +18413,7 @@ if (section('actor-scale (browser)')) try {
           return r;
         };
         const st0 = await X('JSON.stringify(stageStats())').then(JSON.parse);
+        assert(st0.HS === hs, `${tag}: the hero draws at x${hs} and the foes at x${ak} (foe-scale-own; hero x${st0.HS}, foes x${st0.AK})`);
         assert(st0.AK === ak && st0.ZA === st0.ZM * ak, `${tag}: actors draw at x${ak} against the scenery (G1, G3, G4; AK ${st0.AK}, stage x${st0.ZM}, actors x${st0.ZA})`);
         const fights = [
           ['Wren, zone 1', 'soloPick("wren"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1)'],
@@ -18426,8 +18428,8 @@ if (section('actor-scale (browser)')) try {
           if (!r || !r.R.hero || !r.R.foes.length || ak === 1) continue;
           const hero = r.R.hero, foe = r.R.foes[0], z = r.st.ZM;
           // bigger-heroes: classic Tobin's sword and the Elder Moss Slime need more than 1280x720's width at 2x (62-stage pairWide)
-          if (w === 1280 && name === 'Tobin, Elder Moss Slime') assert(r.st.AK === 1.5, `${tag} ${name}: a pair too wide for the stage at 2x draws at 1.5x (AK ${r.st.AK})`);
-          assert(hero.h / r.st.ZA >= 85, `${tag} ${name}: the hero draws ${ak}x (${Math.round(hero.h)} CSS px tall, ${Math.round(hero.h / r.st.ZA)} actor px)`);
+          if (w === 1280 && name === 'Tobin, Elder Moss Slime') assert(r.st.HS === 2, `${tag} ${name}: with the foes at 1.5x the pair fits, so the hero stays 2x (hero x${r.st.HS})`);
+          assert(hero.h / r.st.ZA >= 85 * r.st.HS / ak - 2, `${tag} ${name}: the hero draws ${r.st.HS}x (${Math.round(hero.h)} CSS px tall, ${Math.round(hero.h / r.st.ZA)} actor px)`);
           const gap = (foe.x - hero.x - hero.w) / z;
           assert(gap >= 16, `${tag} ${name}: the hero stands ${Math.round(gap)} stage px from the foe, 16 or more (G2)`);
           // the banner, raised as a turn starts (the game is held, so it stays up)
@@ -18800,8 +18802,8 @@ if (section('wren route S (browser)')) try {
         }
         // the draw scale: 0.5 x ACTOR_K actor px per art px, so 0.5 x DPR x the actors' zoom device px; whole device px
         await page.waitForTimeout(300);
-        const st = JSON.parse(await X(`JSON.stringify({ s: wrenSStats(), z: stageStats().ZA })`)), k = 0.5 * dpr * st.z;
-        assert(Math.abs(st.s.drawn.k - k) < 1e-6 && (w !== 1280 || k >= 1) && (w !== 740 || k < 1), `wren route S ${tag}: she draws at ${st.s.drawn.k} device px per art px (0.5 x DPR ${dpr} x actor zoom ${st.z}; ${k >= 1 ? 'nearest-neighbour' : 'a cached smoothed downscale'}) (gate 6)`);
+        const st = JSON.parse(await X(`JSON.stringify({ s: wrenSStats(), z: stageStats().ZA, hk: stageStats().HK })`)), k = 0.5 * dpr * st.z * st.hk;   // x the hero's own scale (foe-scale-own)
+        assert(Math.abs(st.s.drawn.k - k) < 1e-6 && (w !== 1280 || k >= 1) && (w !== 740 || k < 1), `wren route S ${tag}: she draws at ${st.s.drawn.k} device px per art px (0.5 x DPR ${dpr} x actor zoom ${st.z} x hero ${st.hk}; ${k >= 1 ? 'nearest-neighbour' : 'a cached smoothed downscale'}) (gate 6)`);
         // the idle breathes (1 art px above the waist, 160 ms steps), and holds still under reduced motion
         const br = await X(`new Promise(res => { const seen = new Set(), t0 = performance.now(); (function f() { const d = wrenSStats().drawn; if (d.move === 'idle') seen.add(d.br); if (performance.now() - t0 < 1500) requestAnimationFrame(f); else res([...seen].sort().join()); })(); })`);
         assert(red ? br === '0' : br === '0,1', `wren route S ${tag}: the held idle ${red ? 'holds still' : 'breathes'} (breath steps ${br || 'none'}) (gate 3)`);

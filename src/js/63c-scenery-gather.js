@@ -354,7 +354,7 @@ const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the
     // the hero's real reach, once its strike frame is baked (until then an estimate)
     if (!G.reach && kind === G.kind && T > G.reachT + 1) { G.reachT = T; const r = heroReach(); if (r) { G.reach = r; G.key = ''; } }
     const cold = kind === 'wood' && t === 1 && typeof hearthScene === 'function' && !!hearthScene();   // the opening camp scene only
-    const ns = typeof nsOn === 'function' && nsOn(), key = kind + t + '|' + SW + '|' + GY + '|' + cold + '|' + ns;
+    const ns = typeof nsOn === 'function' && nsOn(), hk = typeof stageHeroK === 'function' ? stageHeroK() : 1, key = kind + t + '|' + SW + '|' + GY + '|' + cold + '|' + ns + '|' + hk;
     if (key === G.key) return;
     const again = G.kind === kind && G.t === t;
     if (!again) { G.reach = 0; G.reachT = -9; }
@@ -364,7 +364,7 @@ const BEAST_FALL = 1.6, BEAST_FADE = 0.4;   // s a spent beast lies there; s the
     const f = G.fr && G.fr.idle0, w = f ? f.c.width : 60, ox = f ? f.ox : 30, rx = w - ox;
     // at the cold Hearth (63d) the station plots take the stage's right edge: keep it clear
     // (and the hero stands clear of the fire and Hesketh, at the left)
-    const xa = Math.round((cold ? Math.max(HERO_MIN, SW * 0.3) : HERO_MIN) + (G.reach || REACH) - w * (NODE_HIT[gatherArtKind(kind)] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), cold ? SW - rx - 30 : Math.round(SW - rx * 0.75));
+    const xa = Math.round((cold ? Math.max(HERO_MIN, SW * 0.3) : HERO_MIN) + Math.round((G.reach || REACH) * hk) - w * (NODE_HIT[gatherArtKind(kind)] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), cold ? SW - rx - 30 : Math.round(SW - rx * 0.75));
     // hunting: one beast at a time (owner, 2026-10-01); it falls and a fresh one takes its place (gatherFall)
     const beast = G.fam === 'beast', gap = Math.max(24, Math.round(w * 0.42)), nMax = SW < 270 ? 3 : SW < 400 ? 4 : 5;
     const nw = beast || xb - xa < 10 ? 1 : Math.max(2, Math.min(nMax, Math.floor((xb - xa) / gap) + 1));   // two at least: the hero walks

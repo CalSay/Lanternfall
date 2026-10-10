@@ -1225,6 +1225,10 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   for it (1366x640) keeps 1.5x. A roomy zoom-1 stage (480+ CSS px tall: 1024x768, a narrow window) draws 2x or 3x; G3's x1 now
   covers only short stages (740x360). A hero and lone foe too wide for the stage step down (2 to 1.5; 3 to 2 to 1). Crowds and
   portrait keep x1; the ground does not move when a crowd comes. Follow-up: try 1.5x for crowds before 1x (needs its own judge).
+- **Foes keep their own size (Cal, 2026-10-10 12:29: "I didn't say the enemies needed to match the size necessarily. The
+  gloomjaw looks huge in comparison"; card foe-scale-own; Cal can veto: "Foes as big as the heroes"):** only the hero takes the
+  bigger-heroes scale. Foes, bosses, adds and gather nodes draw at 1.5x beside a 2x hero and 2x beside a 3x one (62-stage foeK);
+  the hero draws HS / AK times the actors' scale about its feet. 1366x640, 740x360, portrait and crowds keep one size for all.
 - **Route S Tobin (integrate-route-s-tobin, Opus art judge, 2026-10-10; Cal can veto: "Wire Tobin now", "Pull the new Tobin",
   "Wait for all three heroes", "Keep the first cleave", "Last Stand should be a shield raise"):** wire Tobin's 21 fight moves
   (Scenario key frames from his concept, 190 px at Wren's pack scale, 63 colours seeded with the concept's 14 swatches so his olive
