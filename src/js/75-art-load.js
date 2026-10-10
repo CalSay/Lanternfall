@@ -7,7 +7,7 @@
 // - puts a pack's data in FOE_ART (the foe's atlases; its timings are in the page) or BG_ART (the whole background), each image
 //   a basE91 getter as 21zz makes them, then emits 'artPack' { id, kind, key } (64j cuts that foe's frames).
 // - loads the packs the zone on screen shows first, then those of the zones either side, the rest of its area and the next
-//   area: one file at a time, and one more at once for the zone on screen.
+//   area: a zone's pack alone, hero files up to three at once (the queue below), and one more for what the stage waits for.
 // - holds the game (holdGame) while the zone on screen lacks a pack: a plain line covers the stage and the zone number reads
 //   "loading". A pack still loading is never drawn as a stand-in (art freeze).
 // - when a pack file fails, asks the server for the page (through lfBoot.page: the game's own code makes no network call): if the page no longer names that file (a new deploy took the old
@@ -15,8 +15,8 @@
 //   artZonePacks(z) -> the pack ids zone z shows ([] in the inline page)
 //   artZoneReady(z) -> bool: every pack zone z shows is in (and, for one that came after boot, its pictures have decoded)
 // Hero packs (card hero-packs; tools/build.mjs heroPacks): a hero file's moves come by hero. The boot loader wrote the save's
-// hero's core pack; that hero's other moves load first after boot, and another hero's when the save has that hero (a new game,
-// with no hero yet, loads every hero's core). Each move goes in its hero's moves (lfBoot.putHero: <file's constant>.moves, or
+// hero's core pack; after boot that hero's first-hour moves come first (the queue below), its other moves after the zones either
+// side, and another hero's when the save has that hero (a new game, with no hero yet, loads every hero's core). Each move goes in its hero's moves (lfBoot.putHero: <file's constant>.moves, or
 // .heroes.<hero>.moves, merged into what the page kept of it). The save's hero's core is in the constant as soon as its file runs,
 // as in the inline page; a move that comes later emits 'artPack' { id, kind: 'hero', key, hero, moves }, and a drawer that must
 // prepare its data (basE91 text, cutting frames) does it there (the boot packs emit it too, when this file runs).
@@ -30,6 +30,11 @@
 //   artHeroPacks(hero, move) -> the hero's pack ids (those holding that move, when named)
 //   artHeroWant(hero, move)  -> load the move's pack soon, with no hold (a screen off the stage that can wait for it: the hero
 //                              picker's figure; route-s-wren-wire); its 'artPack' says when it is in
+// The queue (card hero-queue; loading-screen-judge.md): the moves a new player's first fights draw come before the next zones.
+// With a hero: its Attack, Hit, Parry and Dodge, then the moves its three slots draw (64h heroArtMove maps an ability to its
+// move). A new game, with no hero yet: every hero's Attack and Hit after the cores, so whichever starter is picked can swing and
+// take a hit at once. Slotting or learning an ability asks for its move (artHeroWant). Hero files are small (one move, about
+// 0.1 MB), so up to three load at once; a zone's pack loads alone, as before. What the stage waits for always has a slot more.
 var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {};
 {
   const LB = typeof lfBoot === 'object' && lfBoot && lfBoot.packs && typeof lfBoot.take === 'function' ? lfBoot : null;
@@ -103,6 +108,22 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     LB.take(put);
     booted = true;
 
+    // ---- the queue's hero moves (card hero-queue) ----
+    const FIRST = ['attack', 'hit', 'parry', 'dodge'], OPENING = FIRST.slice(0, 2);
+    const shows = id => !(P[id].x && classicOn());   // a file the Classic art switch turns off waits until asked for
+    const moveOf = (hero, ab) => { try { return typeof heroArtMove === 'function' ? heroArtMove(hero, ab) || ab : ab; } catch (e) { return ab; } };
+    const movePacks = (hero, moves) => moves.flatMap(m => (m ? artHeroPacks(hero, m) : [])).filter(shows);
+    // the hero's three slots, read only (S.solo.eq, as 59j soloEquipped keeps it; not the accessor, which tidies the row as it reads):
+    // a stale id only asks for a move early, or for nothing
+    const slots = h => { const r = S.solo && S.solo.eq && S.solo.eq[h], d = typeof SOLO_HEROES === 'object' && SOLO_HEROES[h] && SOLO_HEROES[h].eq; return Array.isArray(r) ? r : Array.isArray(d) ? d : []; };
+    // the first hour's moves: with a hero, its Attack, Hit, Parry, Dodge and slots; with none yet, every hero's Attack and Hit
+    const firstMoves = h => h ? movePacks(h, FIRST.concat(slots(h).filter(ab => typeof ab === 'string').map(ab => moveOf(h, ab))))
+      : [...new Set(Object.keys(P).map(id => P[id].h).filter(Boolean))].flatMap(x => movePacks(x, OPENING));
+    const wantAbility = p => { if (p && p.hero && p.id && p.hero === soloHero()) for (const id of movePacks(p.hero, [moveOf(p.hero, p.id)])) if (!got[id] && !soon.includes(id)) soon.push(id); pump(); };
+    on('soloEquip', wantAbility);
+    on('abilityLearned', wantAbility);
+    on('soloHero', () => pump());
+
     const deep = () => typeof deepActive === 'function' && deepActive();
     const screenZone = () => (target() === 'mob' && !deep() ? S.zone : 0);   // only a fight on the road draws a zone's art
     // 90-boot asks every frame, before tick and draw. A zone change inside tick that emits nothing (a retreat after a wipe) is
@@ -119,27 +140,33 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     const wanted = () => {
       const z = Math.max(1, S.zone | 0), a0 = zoneAreaIdx(z) * AREA_ZONES + 1, near = [z, z + 1, z - 1], area = [];
       for (let q = a0; q < a0 + 2 * AREA_ZONES; q++) area.push(q);
-      // the save's hero's core (with no hero yet, every hero's core), the zones either side, then the hero's other moves (table
-      // order), then the rest of the area and the next one
-      const h = typeof soloHero === 'function' ? soloHero() : null, mine = Object.keys(P).filter(id => P[id].h && (h ? P[id].h === h : P[id].c) && !(P[id].x && classicOn()));
+      // the save's hero's core (with no hero yet, every hero's core), its first hour's moves (firstMoves), the zones either side,
+      // then the hero's other moves (table order), then the rest of the area and the next one
+      const h = typeof soloHero === 'function' ? soloHero() : null, mine = Object.keys(P).filter(id => P[id].h && (h ? P[id].h === h : P[id].c) && shows(id));
       const out = mine.filter(id => P[id].c), add = ids => { for (const id of ids) if (!out.includes(id)) out.push(id); };
+      add(firstMoves(h));
       for (const q of near) if (q >= 1) add(artZonePacks(q));
       add(mine);
       for (const q of area) add(artZonePacks(q));
       return out;
     };
     const due = id => !got[id] && !busy[id] && !stale[id] && !broken[id] && !(failed[id] && failed[id].at > Date.now());   // a stale file is gone for good
+    // What the stage waits for (and the zone on screen, and artHeroWant) goes first, in its order, while fewer than four files load:
+    // the queue never takes the last slot, and nothing from the queue starts while one of these waits. Then the queue (wanted), in
+    // its order: a hero file while fewer than three load and no zone's pack does, a zone's pack only alone.
+    const small = id => !!P[id].h;
     function pump() {
       const now = heroNow().concat(screenZone() >= 1 ? artZonePacks(screenZone()) : [], soon), n = Object.keys(busy).length;
-      const id = (n < 2 ? now.find(due) : null) || (n < 1 ? wanted().find(due) : null);
-      if (!id) return;
+      let id = now.find(due);
+      if (id) { if (n >= 4) return; }
+      else { id = wanted().find(due); if (!id || !(small(id) ? n < 3 && Object.keys(busy).every(small) : n < 1)) return; }
       busy[id] = true;
       const s = document.createElement('script');
       const end = ok => { s.remove(); delete busy[id]; if (!ok || !got[id]) gone(id); pump(); };
       s.onload = () => end(true); s.onerror = () => end(false);
       s.src = P[id].f;
       document.body.appendChild(s);
-      pump();   // a second file for the zone on screen, if it needs one
+      pump();   // another file, if one may go now
     }
     // A failed file: wait a little longer each time. A new deploy names other files, so ask the server for the page: at most
     // once every two minutes for all packs together (the page is about 1 MB on the wire), and every failed pack it no longer
