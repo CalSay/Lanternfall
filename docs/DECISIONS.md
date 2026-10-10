@@ -1237,6 +1237,13 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   edge-on head reads as a T-bar, Wren's v3 failure) and hunt v4 (the spear shrinks mid-thrust); 6 sheets, about 108 credits, the pack
   at about 936 of ~1,000. Live Nova, Lantern Flare and Lanternburst fire a bolt from her hand against the art; card pip-cast-recipes
   re-recipes them for route S art. The gather loops wire through route-s-pip-gather after woodcut v6 and hunt v4. (`docs/design/route-s/ruling-pip.md`)
+- **Route S Pip re-brief recheck (route-s-pip-rebrief, Opus art judge, 2026-10-10; Cal can veto: "No Hex sigil", "Skip the Pip rerolls"):**
+  Pip's fight set clears the re-brief hold except the Hex sigil, and still waits on the split build. Victory v2 plays 1-7 and holds 6,
+  the camp pose (8 swaps the staff hand). Arcane Ward v2 plays 1, 2, 3, 6, 7, 8 (4-5 show a second lantern). Lanternburst v3, the one
+  retry, keeps the full staff in her rear hand and thrusts the lantern; it plays 1, 2, 3, 6, 8 and emits from the lantern (5 and 7 show
+  a second lantern). Woodcut v6 passes the impact and loops 1, 2, 5, 6, 7, 8. Hunt v4 (one hand and a short spear again) and the Hex
+  sigil v2 (two marks read as a G) wait for Cal's next budget; gathering keeps the camp pose meanwhile. Cal's checks: 0 third hands,
+  1 halo pixel (real steel) in 48 frames. Seven sheets, 132 credits; Pip's pack 960 of ~1,000. (`docs/design/route-s/recheck-pip.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
