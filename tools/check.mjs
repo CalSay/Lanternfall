@@ -8,7 +8,7 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
-import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire } from './build.mjs';
+import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire, heroPacks } from './build.mjs';
 import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
@@ -111,7 +111,8 @@ const WEIGHT = {
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'page size': 2,
-  'split build (asset-build)': 30   // 31 s locally alone (art-loader, 2026-10-10)
+  'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
+  'hero packs (hero-packs)': 15   // 14 s locally alone (hero-packs, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -325,6 +326,7 @@ if (section('split build (asset-build)')) try {
   const G = loadCore(), data = (f, v) => vm.runInNewContext(`${src(f)}\n;${v}`);
   const packData = p => { let got = null; vm.runInNewContext(p.text, { lfArt: (kind, key, d) => { got = { id: kind + ':' + key, d }; } }); return got; };
   for (const [f, A] of Object.entries(AREA_ART)) {
+    if (A.kind === 'hero') { heroPackCheck(s, f, A, data(f, A.v)); continue; }   // section 'hero packs (hero-packs)' says how they split
     const D = data(f, A.v), mine = s.packs.filter(p => p.f === f);
     assert(mine.map(p => p.id).join() === Object.keys(D).map(k => A.kind + ':' + k).join(), `split: ${A.v} has one pack per entry (${mine.map(p => p.id).join(', ')})`);
     for (const p of mine) {
@@ -346,8 +348,8 @@ if (section('split build (asset-build)')) try {
   const inZ = (p, z) => p.zones.some(([a, b]) => z >= a && z <= b);
   const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => p.id === id)).sort().join(), s.packs.filter(p => inZ(p, i + 1)).map(p => p.id).sort().join()]).filter(r => r[1] !== r[2]);
   const past = G.eval(`Array.from({ length: 2000 }, (_, i) => ${road} + 1 + i).filter(z => zoneTheme(z) !== zoneTheme(z - 35) || ZONE_FOES[z] || regionIdx(z) === 0).length`);
-  assert(!badZ.length && !past && s.packs.every(p => p.zones.length), `split: each pack names the zones whose fights show it, from ZONE_FOES and zoneTheme `
-    + `(${badZ.slice(0, 3).map(r => r.join(' ')).join('; ') || 'all ' + road}), every pack shows somewhere (${s.packs.filter(p => !p.zones.length).map(p => p.id).join(', ') || 'yes'}), `
+  assert(!badZ.length && !past && s.packs.every(p => p.hero || p.zones.length), `split: each pack names the zones whose fights show it, from ZONE_FOES and zoneTheme `
+    + `(${badZ.slice(0, 3).map(r => r.join(' ')).join('; ') || 'all ' + road}), every area pack shows somewhere (${s.packs.filter(p => !p.hero && !p.zones.length).map(p => p.id).join(', ') || 'yes'}), `
     + `and past the road the scenery repeats every 35 zones with no zone monster (2000 zones; ${past} differ)`);
   const strip = h => h.replace(/<!-- Boot loader[\s\S]*?<\/script>\n/, '').replace(/<script src="assets\/[^"]+"[^>]*><\/script>\n/g, '').replace('\n<script>lfBoot.end();</script>', '');
   let want = inline;
@@ -438,7 +440,7 @@ if (section('split build (asset-build)')) try {
       //    the boot files does any other pack load
       { const { page, errs } = await open({ save: { ...early, zone: 2, maxZone: 8 }, html: probe });
         await page.waitForLoadState('load'); await booted(page); await page.waitForTimeout(400);
-        const r = await page.evaluate(() => window.__t.x(`({ boot: lfBoot.boot.join(), ready: [1, 2, 8].map(z => artZoneReady(z)).join(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })(), bg: !!BG_ART.forest && BG_ART.forest.land.src.length > 1000 })`));
+        const r = await page.evaluate(() => window.__t.x(`({ boot: lfBoot.boot.filter(id => !id.startsWith('hero:')).join(), ready: [1, 2, 8].map(z => artZoneReady(z)).join(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })(), bg: !!BG_ART.forest && BG_ART.forest.land.src.length > 1000 })`));
         const c = await look(page);
         assert(r.boot === 'foe:gloomjaw,bg:forest' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
           `split: a zone 2 save boots with its packs in (Gloomjaw cut, Mossy Hollow drawn, no cover) and the rest of the area arrives after (${JSON.stringify(r)}, ${JSON.stringify(c)})` + (errs[0] ? ': ' + errs[0] : ''));
@@ -518,6 +520,149 @@ if (section('split build (asset-build)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('split build crashed: ' + (e.stack || e)); }
+
+// ---- hero packs (card hero-packs; tools/build.mjs heroPacks, src/js/75-art-load.js, src/boot-loader.html) ----
+// A hero art file (an AREA_ART entry of kind 'hero') splits by hero: one pack of each hero's core moves, which the boot loader
+// writes only for the save's hero, and one pack per other move, loaded after boot. The boot lines count the heaviest hero's
+// core. While the stage needs a move that is not in (artHeroNeed), the game holds under a plain line, never a stand-in.
+// No hero file ships yet (the route S wire cards register theirs), so this section proves the kind with a test hero file built
+// in memory from today's art (21y's HERO_ART, its poses as moves; nothing redrawn, nothing written).
+// heroPackCheck: a hero file's packs, table rows and page part (also run on every real hero entry by the split section).
+function heroPackCheck(s, f, A, D) {
+  const mine = s.packs.filter(p => p.f === f), tag = f.replace(/-data-.*$/, '');
+  const want = Object.entries(D.heroes).flatMap(([h, H]) => [`${h}.core`, ...Object.keys(H.moves).filter(m => !A.core[h].includes(m)).map(m => `${h}.${m}`)]).map(k => `hero:${A.v}.${k}`);
+  assert(mine.map(p => p.id).join() === want.join(), `hero packs: ${A.v} has one core pack per hero and one pack per other move (${mine.length} packs: ${mine.slice(0, 4).map(p => p.id).join(', ')}...)`);
+  const table = JSON.parse(s.html.match(/packs = (\{.*?\}), road = /)[1]);
+  const bad = mine.filter(p => {
+    let got = null; vm.runInNewContext(p.text, { lfArt: (kind, key, d) => { got = { id: kind + ':' + key, d }; } });
+    const H = D.heroes[p.hero].moves, t = table[p.id], ms = p.core ? A.core[p.hero] : [p.id.split('.').pop()];
+    return !got || got.id !== p.id || JSON.stringify(got.d) !== JSON.stringify(Object.fromEntries(ms.map(m => [m, A.load(H[m])])))
+      || !new RegExp(`^${tag}-hero-${p.id.slice(5).replace(/\./g, '\\.')}\\.[0-9a-f]{10}\\.js$`).test(p.name)
+      || !t || t.f !== 'assets/' + p.name || t.b !== p.bytes || t.z.length || t.h !== p.hero || t.c !== (p.core ? 1 : 0) || t.m.join() !== ms.join() || t.v !== A.v;
+  });
+  assert(!bad.length, `hero packs: each ${A.v} pack holds its moves as the source has them, under a hashed name, with its hero, moves and no zones in the loader's table (${bad.map(p => p.id).join(', ') || 'all ' + mine.length})`);
+  const part = s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?)\\n// ---- src`))[1];
+  let reg = null; const kept = vm.runInNewContext(`${part}\n;${A.v}`, { lfBoot: { heroFile: (n, o) => { reg = n; } } });
+  const keepWant = { ...D, heroes: Object.fromEntries(Object.entries(D.heroes).map(([h, H]) => [h, { ...H, moves: A.keep ? Object.fromEntries(Object.entries(H.moves).map(([m, M]) => [m, A.keep(M)])) : {} }])) };
+  assert(JSON.stringify(kept) === JSON.stringify(keepWant) && reg === A.v, `hero packs: the page keeps ${A.v} with every field but the moves' data, and registers it for 75-art-load (lfBoot.heroFile ${reg})`);
+}
+if (section('hero packs (hero-packs)')) try {
+  const src = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\n*$/, '\n');
+  const HA = vm.runInNewContext(`${src('21y-data-heroart.js')}\n;HERO_ART`);
+  const T = { v: HA.v, w: HA.w, h: HA.h, ax: HA.ax, ay: HA.ay, heroes: Object.fromEntries(Object.entries(HA.heroes).map(([k, H]) => [k, { pal: H.pal, moves: H.poses }])) };
+  const TF = '21zx-data-herotest.js', text = `// 21zx-data-herotest: GENERATED by tools/check.mjs (section hero packs) from 21y-data-heroart.js. Never shipped.\nconst HERO_TEST = ${JSON.stringify(T)};\n`;
+  const REG = { v: 'HERO_TEST', kind: 'hero', keep: null, load: M => M, core: { wren: ['draw', 'release', 'camp', 'hurt', 'fallen'], tobin: ['ready', 'wind', 'strike', 'camp', 'hurt', 'fallen'], pip: ['ready', 'wind', 'cast', 'camp', 'hurt', 'fallen'] } };
+  const art = { ...AREA_ART, [TF]: REG }, s = buildSplit({ write: false, art, extra: [{ f: TF, text }] }), base = buildSplit({ write: false });
+  heroPackCheck(s, TF, REG, T);
+  // a hero file that does not say its core moves, names a core move it lacks, or names a move a file name cannot carry, stops the build
+  for (const [what, A, D, re] of [
+    ['a hero with no core list', { ...REG, core: { wren: REG.core.wren, tobin: REG.core.tobin } }, T, /names no core moves for pip/],
+    ['a core move the hero lacks', { ...REG, core: { ...REG.core, wren: ['draw', 'jump'] } }, T, /wren's core moves jump are not in HERO_TEST\.heroes\.wren\.moves/],
+    ['a move named core', REG, { ...T, heroes: { ...T.heroes, pip: { ...T.heroes.pip, moves: { ...T.heroes.pip.moves, core: [] } } } }, /core cannot name a hero or a move/],
+    ['no heroes table', REG, { v: 1 }, /needs a heroes table/]
+  ]) { let threw = ''; try { heroPacks({ f: TF, text }, A, D); } catch (e) { threw = String(e.message); } assert(re.test(threw), `hero packs: ${what} stops the build (${threw.slice(0, 100) || 'it built'})`); }
+  // the boot lines: a hero's core counts in both (the heaviest hero, also for a new game), a move outside the core counts in neither
+  const sizes = new Map(), size = x => (sizes.has(x) ? sizes.get(x) : (sizes.set(x, wire(x)), sizes.get(x))), MBs = n => (n / 1e6).toFixed(2);
+  const r = loadReport(s, { size }), r0 = loadReport(base, { size }), heroes = Object.keys(T.heroes);
+  // (a hero file that ships counts too: each hero's core is the sum of its core packs over every hero file)
+  const cores = Object.fromEntries(heroes.map(h => [h, s.packs.filter(p => p.hero === h && p.core).reduce((n, p) => n + size(p.text), 0)]));
+  const top = heroes.reduce((m, h) => (cores[h] > cores[m] ? h : m)), extra = s.assets.reduce((n, a) => n + size(a.text), 0) - r0.boot + r.page - r0.page - r0.hero.b;
+  const near = (a, b) => Math.abs(a - b) < 1;
+  assert(r.hero.h === top && near(r.hero.b, cores[top]) && near(r.zone1.counted, r0.zone1.counted + cores[top] + extra) && r.worst.z === r0.worst.z && near(r.worst.counted, r0.worst.counted + cores[top] + extra),
+    `hero packs: both boot lines count the heaviest hero's core (${top}, ${MBs(cores[top])} MB): a new game ${MBs(r0.zone1.counted)} -> ${MBs(r.zone1.counted)} MB, the worst zone ${MBs(r0.worst.counted)} -> ${MBs(r.worst.counted)} MB`);
+  const mineT = s.packs.filter(p => p.f === TF), sumT = ps => ps.reduce((n, p) => n + size(p.text), 0);
+  console.log(`  hero packs: today's hero art as hero packs: cores ${heroes.map(h => `${h} ${MBs(sumT(mineT.filter(p => p.hero === h && p.core)))}`).join(', ')} MB; the other moves ${MBs(sumT(mineT.filter(p => !p.core)))} MB load after boot`);
+  { const core = s.packs.find(p => p.hero === top && p.core), rest = s.packs.find(p => p.hero === top && !p.core), over = n => Math.max(0, LOAD_LINES.bootFail - n) + 1e4;
+    const m1 = loadReport(s, { size: x => size(x) + (x === core.text ? over(r.zone1.counted) : 0) }), m2 = loadReport(s, { size: x => size(x) + (x === rest.text ? 1e6 : 0) });
+    assert(m1.fails.some(f => /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/.test(f)), `hero packs: mutation (a hero's core past the line) fails line 1 (${m1.fails.join('; ') || 'nothing failed'})`);
+    assert(!m2.fails.some(f => /^boot set/.test(f)) && near(m2.zone1.counted, r.zone1.counted), `hero packs: a move outside the core (1 MB more) is not in the boot set (${m2.fails.join('; ') || 'no boot line fails'})`); }
+  // a reader of a shipped hero file's constant asks 75-art-load before it draws (a move may come after boot)
+  const heroV = Object.entries(AREA_ART).filter(([, A]) => A.kind === 'hero').map(([f, A]) => A.v);
+  const loose = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js') && !isAsset(src(f)) && !['21zz-art-b91.js', '75-art-load.js'].includes(f))
+    .filter(f => heroV.some(v => new RegExp(`\\b${v}\\b`).test(src(f))) && !/\bartHero(Need|Ready)\(/.test(src(f)));
+  assert(!loose.length, `hero packs: every file that reads a hero file's moves (${heroV.join(', ') || 'none ships yet'}) asks artHeroNeed or artHeroReady (${loose.join(', ') || 'yes'})`);
+  // the inline page: no loader, every move is in
+  { const r = vm.runInNewContext(`${src('75-art-load.js')}\n;[artHeroNeed('wren', 'h1'), artHeroReady('pip', 'cast'), artHeroPacks('wren').length].join()`, {});
+    assert(r === 'true,true,0', `hero packs: with no boot loader (the inline page) every move is in: artHeroNeed and artHeroReady say yes, no packs (${r})`); }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe) skipBrowser('hero packs: boot, the hold and the first frame after it: Playwright or Chromium not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const end = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(end);
+    const KEY = 'lanternfall.save.v5', early = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
+    const assets = pageAssets(s.file, s.html, Object.fromEntries(s.files.map(a => [a.name, a.text])));
+    const heroOf = name => { const p = s.packs.find(q => q.name === name); return p && p.f === TF ? p : null; };   // the test file's packs (a shipped hero file's load too)
+    // hold: every pack of these ids waits until release(); asked: the hero pack ids the page asked for, in order
+    const open = async ({ save = null, hold = [] } = {}) => {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), page = await ctx.newPage(), errs = [], asked = [];
+      await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+      if (save) await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...save, last: Date.now() })]);
+      page.on('pageerror', e => errs.push(String(e)));
+      page.on('request', q => { const p = heroOf(q.url().split('/').pop()); if (p) asked.push(p.id); });
+      let release; const held = new Promise(r => { release = r; });
+      await routePage(page, 'http://lf.test/', probe, assets);
+      for (const id of hold) await page.route('**/assets/' + s.packs.find(p => p.id === id).name, async q => { await held; return q.fallback(); });
+      await page.goto('http://lf.test/', { waitUntil: 'commit' });
+      await page.waitForFunction(() => !document.getElementById('lfBoot') && !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+      return { page, errs, asked, release };
+    };
+    const X = (page, js) => page.evaluate(j => window.__t.x(j), js);
+    const look = page => page.evaluate(() => {
+      const c = document.getElementById('artWait'), st = document.getElementById('stage').getBoundingClientRect(), r = c && !c.hidden ? c.getBoundingClientRect() : null;
+      return { cover: r ? c.firstChild.textContent : null, full: !!r && r.left <= st.left && r.top <= st.top && r.right >= st.right && r.bottom >= st.bottom };
+    });
+    const later = s.packs.filter(p => p.f === TF && p.hero === 'wren' && !p.core).map(p => p.id), coreOf = h => `hero:HERO_TEST.${h}.core`;
+    const until = async (fn, cap = 10000) => { for (const t0 = Date.now(); !fn() && Date.now() - t0 < cap;) await new Promise(r => setTimeout(r, 100)); };   // files load one at a time
+    try {
+      // 1. a Wren save boots with Wren's core only: her core moves are in as the source has them, her other moves are asked for after
+      //    boot, and Tobin's and Pip's packs are never asked for
+      { const { page, errs, asked, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: later });
+        await page.waitForTimeout(800);
+        const r = await X(page, `({ boot: lfBoot.boot.filter(id => id.startsWith('hero:HERO_TEST.')).join(), hero: lfBoot.hero, moves: Object.keys(HERO_TEST.heroes.wren.moves).join(),
+          same: ${JSON.stringify(REG.core.wren)}.every(m => JSON.stringify(HERO_TEST.heroes.wren.moves[m]) === JSON.stringify(window.__want[m])),
+          others: Object.keys(HERO_TEST.heroes.tobin.moves).length + Object.keys(HERO_TEST.heroes.pip.moves).length,
+          ready: [artHeroReady('wren', 'draw'), artHeroReady('wren', 'h1')].join(), held: gameHeld() })`.replace('window.__want', JSON.stringify(T.heroes.wren.moves)));
+        const c = await look(page);
+        assert(r.boot === coreOf('wren') && r.hero === 'wren' && r.moves === REG.core.wren.join() && r.same && r.others === 0 && r.ready === 'true,false' && !r.held && !c.cover
+          && asked[0] === coreOf('wren') && asked.length <= 2 && asked.every(id => [coreOf('wren'), later[0]].includes(id)) && !errs.length,
+          `hero packs: a Wren save boots with only her core moves in (${JSON.stringify(r)}, cover ${c.cover}), then asks for her other moves one file at a time (${asked.join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
+        // 2. the stage needs a move still loading: the game holds under a plain line over the stage and nothing moves; the first frame
+        //    after the hold draws the move (decoded from its pack, not a stand-in)
+        await X(page, `S.activity = 'fight', ui(true)`); await page.waitForTimeout(300);
+        await X(page, `(() => { let n = 0; const f = () => { const held = gameHeld(), ok = artHeroNeed('wren', 'h1');
+          if (!n++) { window.__ask = ok; return requestAnimationFrame(f); }
+          if (held) { window.__heldFrames = (window.__heldFrames || 0) + 1; return requestAnimationFrame(f); }
+          const D = ok && heroArtUnrle(HERO_TEST.heroes.wren.moves.h1); window.__first = { ok, px: D ? D.idx.reduce((a, v) => a + (v ? 1 : 0), 0) : 0 }; };
+          requestAnimationFrame(f); })()`);
+        await page.waitForTimeout(300);
+        const a = await look(page), g1 = await X(page, '({ t: gameHeld(), k: S.kills, hp: mob && mob.hp, ask: window.__ask })');
+        await page.waitForTimeout(1500);
+        const b = await look(page), g2 = await X(page, '({ t: gameHeld(), k: S.kills, hp: mob && mob.hp, ask: window.__ask })');
+        assert(g1.ask === false && a.cover === 'Loading Wren' && a.full && b.cover === 'Loading Wren' && g1.t && JSON.stringify(g1) === JSON.stringify(g2),
+          `hero packs: a move the stage needs that is still loading holds the game under "${a.cover}" over the whole stage (${a.full}); nothing moves (${JSON.stringify(g1)} then ${JSON.stringify(g2)})`);
+        release(); await page.waitForTimeout(1500);
+        const first = await X(page, '({ first: window.__first, frames: window.__heldFrames, t: gameHeld() })'), c2 = await look(page);
+        assert(first.first && first.first.ok === true && first.first.px > 200 && first.frames > 10 && !first.t && !c2.cover && !errs.length,
+          `hero packs: on the first frame after the hold the move is in and draws (${JSON.stringify(first)}), the cover goes and the game runs` + (errs[0] ? ': ' + errs[0] : ''));
+        await until(() => later.every(id => asked.includes(id)));
+        assert(later.every(id => asked.includes(id)) && asked.every(id => id.startsWith('hero:HERO_TEST.wren.')),
+          `hero packs: then all her other moves load, and no other hero's (${asked.length} of ${later.length + 1} asked: ${asked.filter(id => !id.startsWith('hero:HERO_TEST.wren.')).join(', ') || 'only hers'})`);
+        await page.close(); }
+      // 3. a new game has no hero yet: no hero pack boots, and after boot every hero's core loads (the picker shows them all), nothing else
+      { const { page, errs, asked } = await open();
+        await page.waitForTimeout(1500);
+        const r = await X(page, `({ boot: lfBoot.boot.filter(id => id.startsWith('hero:')).length, hero: lfBoot.hero })`);   // no hero pack of any file
+        const cores = Object.keys(T.heroes).map(coreOf);
+        assert(r.boot === 0 && r.hero === null && cores.every(id => asked.includes(id)) && asked.slice(0, 3).sort().join() === cores.sort().join() && !errs.length,
+          `hero packs: a new game boots with no hero pack and then asks for every hero's core first (${asked.slice(0, 5).join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
+        // 4. once the save has a hero, that hero's other moves load (as when a hero is picked or switched)
+        const tob = s.packs.filter(p => p.f === TF && p.hero === 'tobin' && !p.core).map(p => p.id);
+        await X(page, `S.solo.hero = 'tobin'`); await until(() => tob.every(id => asked.includes(id)));
+        assert(tob.every(id => asked.includes(id)) && !asked.some(id => id.startsWith('hero:HERO_TEST.wren.') && !id.endsWith('.core')), `hero packs: once the hero is Tobin his other moves load, and no other hero's (${asked.length} asked)`);
+        await page.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('hero packs crashed: ' + (e.stack || e)); }
 
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
