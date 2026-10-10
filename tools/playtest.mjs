@@ -314,7 +314,7 @@ const fmtDur = s => s >= 3600 ? `${(s / 3600).toFixed(1)} h` : s >= 60 ? `${(s /
 const fmtState = o => Object.entries(o).map(([k, v]) => `${k}: ${typeof v === 'object' ? Object.entries(v).map(([a, b]) => `${a} ${b}`).join(', ') : v}`).join('\n');
 
 // ---------------- tapping ----------------
-async function tap(page, wanted, how = 'click') {
+async function tap(page, wanted, how = 'click', fresh = false) {
   const s = await page.evaluate(SCREEN);
   const all = [...s.buttons, ...s.offAll];
   const labels = {};
@@ -333,6 +333,9 @@ async function tap(page, wanted, how = 'click') {
   if (!hit.length) return { ok: false, msg: `no button labelled "${wanted}". Buttons on screen: ${s.buttons.map(b => `[${b.label}]`).join(' ') || '(none)'}. (Each separate call reopens the game: an open menu or sheet closes. Use batch to tap through a menu in one go.)` };
   const b = hit[0];
   const handle = await page.$(`[data-pt="${b.i}"]`);
+  // the game redrew that panel between the read and the tap (an art pack landing can rebuild a sheet), so the stamp is gone:
+  // read the screen once more and find the button again, as a player's finger would; if it is still not there, the tap misses
+  if (!handle) return fresh ? { ok: false, msg: `"${wanted}" went away as it was tapped (the screen redrew twice)` } : tap(page, wanted, how, true);
   // a button inside the viewport can still be cut off by its scrolling panel (a menu that ends above the guide's row): a player
   // scrolls it into view first, so the tap does too
   const clipped = inV.has(b.i) && await handle.evaluate(e => { const r = e.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
