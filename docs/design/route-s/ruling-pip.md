@@ -17,10 +17,10 @@ and effect sprites from the approved concept, so "art only by Codex" does not bl
 
 ## Ruling: wire, held for the split build; re-brief 4 sheets first (2 more for gathering)
 
-The pack is on-model and its border halo is gone, but Cal's third arm is still there: **6 frames**, not the README's 0 (Fireball
-frame 4 included). **Wire** Pip's 19 fight moves and her effect sprites through `route-s-pip-wire` (below; Pip's route S wire card,
+The pack is on-model and its border halo is gone, but Cal's third arm is still there: **6 frames**, not the 0 in the README's final note
+(Fireball frame 4 included). **Wire** Pip's 19 fight moves and her effect sprites through `route-s-pip-wire` (below; Pip's route S wire card,
 a sibling of Wren's and Tobin's), behind the shared Classic art switch. It waits on (1) victory v2, Arcane Ward v2, Lanternburst v2
-and Hex sigil v2 passing the judge's recheck, and (2) the split build, `asset-build` and `art-loader`: with Wren's sets her fight
+and Hex sigil v2 passing the judge's recheck, and (2) the split build, `asset-build` (merged in #334 after this ruling's base) and `art-loader`: with Wren's sets her fight
 set takes the one-file page to 12.4-12.7 MB, past #328's 12 MB second-hero line, and with Tobin too past 14 MB. The 4 gather loops
 wire as one set through `route-s-pip-gather` after woodcut v6 and hunt v4 pass; until then gathering shows the camp pose.
 
@@ -34,7 +34,7 @@ from raw) or a conversion fault. None needs a redraw.
   A-C, `redteam/lineup-x2.png`). The orb is unlit and no fire is drawn, by design: the game draws light (00:40 rule).
 - **Cal's checks.** Halo: **0** pale edge pixels in all 23 seeded atlases at 190 px (`judge/tools/halo190.py`). Fused fingers: 0.
   Third hands: 6, each confirmed at game size (`judge/crops/thirdhand-a.png`, `-b.png`, `fire4-zoom-top.png`). Staff or tool held
-  wrong: 19 frames (table).
+  wrong: 19 counted defects (table rows 6-8, 16, 18, 22-24).
 - **Bytes say wait.** Her whole pack fits the 2.0 MB hero ceiling (1,660 KB registered), but with Wren's sets her fight set makes the
   page 12.4-12.7 MB, and with Tobin too 14.3-14.6 MB (question 4). The whole-pack rule forbids a core-only Pip.
 - **Meaning.** Woodcut v5 4-6 repeat Wren's failed v3 (a level jab, the head a T-bar at 190 px, `judge/crops/woodcut-all.png`).
@@ -45,10 +45,10 @@ from raw) or a conversion fault. None needs a redraw.
 
 - "Wire Pip now": embed her fight set in the one-file page now (about 12.6 MB with Wren's sets). Tobin then waits for the split.
 - "Pull the new Pip": undoes the wire.
-- "Wait for all three heroes": holds Pip until Tobin's pack is also wired.
+- "Wait for all three heroes": holds Pip until Wren's and Tobin's packs also wire, so the new heroes arrive together.
 - "Pip as tall as Wren": register her at Wren's 190 px line, not 171.
-- "Skip the Pip rerolls": no new sheets. Victory plays 1-4, 6. Arcane Ward plays idle-1, 3, 4, 5, 8. Lanternburst, woodcut, hunt
-  and the Hex sigil wait for a later batch.
+- "Skip the Pip rerolls": no new sheets now. Arcane Ward and Lanternburst have no clean fallback (Arcane Ward's release frame 6 is
+  one of its swaps), so her fight set waits for a later batch under the whole-pack rule, and so do woodcut, hunt and the Hex sigil.
 - "No Hex sigil": the live curse effect alone marks Hex.
 
 ## The nine questions
@@ -109,7 +109,7 @@ thin:** confirmed, 4-6 fail; v6. Gathering is complete after woodcut v6 and hunt
 
 **7. Cal's defects, counted** (table below): **100**. (a) 24 cut faults, fixed by a re-cut from raw; (b) 52 by conversion or code,
 24 fixed and 28 accepted minors the clip watches; (c) 24 need a reroll, on 6 sheets. **Third hands 6** (4 skipped, 2 rerolled);
-staff or tool wrong 19 frames; border halo at game size 0; fused fingers 0.
+staff or tool wrong 19 counted defects; border halo at game size 0; fused fingers 0.
 
 **8. Effect sprites.**
 - **Wire with the fight set:** fireball 0-3, frost 0-1, spark 0-1, kindle 0-3, flames 0-3, cinder 0-2: flat clusters in her palette,
@@ -164,7 +164,9 @@ staff or tool wrong 19 frames; border halo at game size 0; fused fingers 0.
 | 27 | Hex sigil: solid disc; Blind and Mark colours; an eye; Latin-letter runes | fx hex0 | 4 | c |
 
 Totals: a 24, b 24, b-acc 28, c 24 = **100**. Not counted: about 40 hair specks and about 35 brass or band holes that vanish at 190;
-258 pale source edge pixels (0 at 190); defects on frames already counted for a skip or reroll (arcaneward 5's ambiguous arm).
+258 pale source edge pixels (0 at 190); a second defect on a frame whose skip or reroll is already counted (arcaneward 5's ambiguous arm). Rows 1-4 list every frame
+the re-cut touches, including about 7 that a skip or reroll later removes (searing 7, arcaneward 1 and 7, victory 4, woodcut 3-4, hunt 2);
+woodcut 3 shows in rows 1 and 25.
 
 ## The red team's case and the answer
 
@@ -280,8 +282,8 @@ Roll in this order, in the pack's `moves.json` form (title, 8 frames, emitter) w
    orb as big as there."
 
 Credits: 6 sheets at 18 = 108, bringing the pack to 936. At most one retry each for items 1-3 (54) gives 990. If credits run out,
-the fallbacks are: victory plays 1-4, 6; Arcane Ward plays idle-1, 3, 4, 5, 8; and Lanternburst, Hex, woodcut and hunt wait for Cal's next
-budget. A staff under 60% never ships.
+victory can play 1-4, 6, but Arcane Ward and Lanternburst have no clean fallback: the fight set waits for Cal's next budget, and so do Hex,
+woodcut and hunt. A staff under 60% never ships.
 
 ## Risks
 
@@ -308,8 +310,8 @@ frame (the auditors' game-size scans were used); bytes after a real build or the
 
 Pip's new art looks like her concept on every frame. The light border pixels are gone. But your third arm is still there: six frames
 have an extra hand, and the pack notes said Fireball was clean when it wasn't. Four of those frames are simply skipped. The victory
-dance has two of them, so it gets a fresh sheet. Arcane Ward swaps her staff between hands, and Lanternburst shrinks it and forgets
-the lantern, so those get fresh sheets too, as does the Hex symbol, which looks like a dark coin. The woodcutting and spear loops need one more go
+dance has two of them, so it gets a fresh sheet. Arcane Ward swaps her staff between hands, so it gets one too. Lanternburst shrinks
+the staff and forgets the lantern, so it gets one too. The Hex symbol looks like a dark coin, so it is made again. The woodcutting and spear loops need one more go
 each. That is six sheets, about 108 credits, which keeps her under 1,000. She stands a little shorter than Wren and Tobin, as you set for her
 in September. She is too big to fit in the one-page game with Wren, so she goes in when the game moves to its own hosting. To
 overrule, say "Wire Pip now", "Pull the new Pip", "Wait for all three heroes", "Pip as tall as Wren", "Skip the Pip rerolls" or
