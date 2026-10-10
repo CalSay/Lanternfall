@@ -7,6 +7,9 @@
 //   node tools/ci/eyes.mjs --local [labels]     the same check on your branch against origin/claude/elegant-johnson-m6k00u
 //                                               (build first: node tools/build.mjs). Works with no CI. Paste eyes-out/summary.md in the PR.
 //   node tools/ci/eyes.mjs --gate <base> <head> prints `go=true` if src/ or a route changed (CI uses it to skip the browser install)
+//   node tools/ci/eyes.mjs --all [k/n]          replay EVERY docs/proof/*/route.txt on the built game in the two gating views (no hd
+//                                               shot, no player eyes), or only slice k of n (every n-th route from the k-th: the
+//                                               proposed nightly replay's six slices). Same summary and causes; catches routes that rot on the base.
 // Exit 1 when an `expect` fails, a route cannot run, or src/ changed with no changed route.txt (unless the PR carries
 // the `no-visible-change` label). A route may start with a comment line `# seed: <n>` (default 1).
 import fs from 'node:fs';
@@ -15,6 +18,9 @@ import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 
 let [base, head, labelStr = ''] = process.argv.slice(2);
+const all = base === '--all', slice = all && head ? (head.match(/^(\d+)\/(\d+)$/) || []).slice(1).map(Number) : null;
+if (slice && !(slice.length === 2 && slice[1] >= 1 && slice[0] >= 1 && slice[0] <= slice[1])) { console.error('usage: eyes.mjs --all [k/n] with 1 <= k <= n'); process.exit(2); }
+if (all) base = head = '';
 const gate = base === '--gate';
 if (gate) [base, head] = [head, labelStr];
 if (base === '--local') {
@@ -23,17 +29,18 @@ if (base === '--local') {
   try { base = execFileSync('git', ['merge-base', INTEGRATION, 'HEAD'], { encoding: 'utf8' }).trim(); } catch { console.error(`no ${INTEGRATION}: git fetch origin claude/elegant-johnson-m6k00u`); process.exit(2); }
   head = null;   // the working tree: committed, staged, changed and new files
 }
-if (!base || (!head && head !== null)) { console.error('usage: eyes.mjs <base-sha> <head-sha> "<labels>"'); process.exit(2); }
+if (!all && (!base || (!head && head !== null))) { console.error('usage: eyes.mjs <base-sha> <head-sha> "<labels>"'); process.exit(2); }
 const labels = labelStr.split(',').map(s => s.trim()).filter(Boolean);
 const git = a => execFileSync('git', a, { encoding: 'utf8' }).split('\n').filter(Boolean);
-const changed = head ? git(['diff', '--name-only', base, head]) : [...git(['diff', '--name-only', base]), ...git(['ls-files', '-o', '--exclude-standard'])];
-const routes = changed.filter(f => /^docs\/proof\/[^/]+\/route\.txt$/.test(f) && fs.existsSync(f));
-const srcChanged = changed.some(f => f.startsWith('src/'));
+const changed = all ? fs.readdirSync('docs/proof').sort().map(d => `docs/proof/${d}/route.txt`)
+  : head ? git(['diff', '--name-only', base, head]) : [...git(['diff', '--name-only', base]), ...git(['ls-files', '-o', '--exclude-standard'])];
+const routes = changed.filter(f => /^docs\/proof\/[^/]+\/route\.txt$/.test(f) && fs.existsSync(f)).filter((f, i) => !slice || i % slice[1] === slice[0] - 1);
+const srcChanged = !all && changed.some(f => f.startsWith('src/'));
 if (gate) { console.log(`go=${srcChanged || routes.length > 0}`); process.exit(0); }
 const out = 'eyes-out';
 fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(out, { recursive: true });
 
-const lines = ['<!-- lanternfall-eyes -->', '### Eyes: the change, played', ''];
+const lines = ['<!-- lanternfall-eyes -->', all ? `### Eyes: every proof route, replayed${slice ? ` (slice ${slice.join('/')})` : ''}` : '### Eyes: the change, played', ''];
 let failed = false;
 // Every failure gets one cause so a red run says why: missing-route-txt (src/ changed, no route), timeout-under-load (the
 // route run hit its time limit and was killed), expect-false (an `expect` missed, or a tap could not be made), run-error
@@ -44,11 +51,13 @@ const fail = (cause, where, detail = '') => { failed = true; causes.push({ cause
 if (srcChanged && !routes.length && !labels.includes('no-visible-change')) {
   fail('missing-route-txt', 'PR');
   lines.push('**FAIL.** This PR changes `src/` but no `docs/proof/<card-id>/route.txt`. Play the change with `tools/playtest.mjs`, commit the route, or add the `no-visible-change` label if a player cannot see it.', '');
+} else if (all && !routes.length) {
+  fail('run-error', '--all', 'no route.txt found under docs/proof');
 } else if (!routes.length) {
   lines.push(srcChanged ? 'No route changed. Label `no-visible-change` is set.' : 'No `src/` change and no route changed. Nothing to play.', '');
 }
 // The routes' gating views stay today's two phone views (desktop-view-in-checks); hd is the Bar's 1920x1080 shot, report only.
-const VIEWS = [['portrait', ['--view', 'portrait'], true], ['landscape', ['--view', 'landscape'], true], ['hd', ['--view', 'hd'], false]];
+const VIEWS = [['portrait', ['--view', 'portrait'], true], ['landscape', ['--view', 'landscape'], true], ['hd', ['--view', 'hd'], false]].slice(0, all ? 2 : 3);
 // Every (route, view) run is its own browser, so they run side by side (up to 4 at once); the report keeps route order.
 const run = (cmd, args, opts) => new Promise(res => {
   const c = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'pipe'] }); let out = '', err = '', done = false, timedOut = false;

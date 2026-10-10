@@ -9,15 +9,29 @@
 # points pile) and his Pine Log line coming back once at boot are held by tools/check.mjs ("guide goal after reload").
 # seed: 11
 new cold-z2-unlit
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-tap-if "Attack"
-wait 1.5
-# his line comes after the fourth press in every view (seed 11); a fight press under it closes it, so stop pressing here
+# Updated 2026-10-10 (routes replay): four presses 1.5 s apart raced the foe's turn (a press on the foe's turn is greyed and does
+# nothing), so under load the foe was still up at the expect. Now each round presses only while his line is not up (`unless`; a
+# press under it answers it), with rounds to spare, so it waits on the line, not on a count of presses.
+unless "Bring me Pine Log for a proper fire" tap-if "Attack"
+wait 2
+unless "Bring me Pine Log for a proper fire" tap-if "Attack"
+wait 2
+unless "Bring me Pine Log for a proper fire" tap-if "Attack"
+wait 2
+unless "Bring me Pine Log for a proper fire" tap-if "Attack"
+wait 2
+unless "Bring me Pine Log for a proper fire" tap-if "Attack"
+wait 2
+unless "Bring me Pine Log for a proper fire" tap-if "Attack"
+wait 2
+unless "Bring me Pine Log for a proper fire" tap-if "Attack"
+wait 2
+unless "Bring me Pine Log for a proper fire" tap-if "Attack"
+wait 2
+unless "Bring me Pine Log for a proper fire" tap-if "Attack"
+wait 2
+unless "Bring me Pine Log for a proper fire" tap-if "Attack"
+wait 2
 expect "Bring me Pine Log for a proper fire"
 shot boot-line
 tap "Got it"
