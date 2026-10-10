@@ -645,6 +645,8 @@
   // and a kill opens the gap between fights where a held line can start (it can be shorter than one poll)
   for (const ev of ['guideHold', 'soloAttack', 'soloDodge', 'soloParry', 'ability', 'timingRing', 'kill']) on(ev, () => setTimeout(tick, 0));
   on('soloHero', () => setTimeout(tick, 0));
+  // tips-pause-740-flake: the fight bar comes or goes on its own clock (75-solo-ui); a tip already up fits around it now, not on the next look
+  on('soloBar', () => { if (cur && !layer.hidden) syncBtn(); setTimeout(tick, 0); });
   on('menuView', () => { reveal = true; invalidate(); });
 
   // ---------------- Journal: Tips ----------------

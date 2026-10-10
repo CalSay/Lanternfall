@@ -16479,7 +16479,13 @@ if (section('tips-pause-says-so')) try {
         const w0 = s.wood; await page.waitForTimeout(4000); const s4 = await look(X);
         assert(s.want === 'say:forage' && s.ok === 'Got it' && !s4.paused && !s4.held && !s4.plate && s4.want === 'say:forage' && s4.wood > w0 && s4.chip === 'Working' && s4.node === 'Working',
           `${v}: chopping with Gather open, his forage line shows with Got it and holds nothing: wood rises over 4 s, Gather says Working (${w0} -> ${JSON.stringify(s4)})`);
-        await X('closeMenu(); setActivity("fight"); true');
+        // (tips-pause-740-flake: the bar and the tip's fit used to follow the switch on their own 250 ms looks, so the kill gap could be held with
+        // the bar still away or over it unfitted; read in the same task as the switch, before any timer runs)
+        const sw = JSON.parse(await X(`closeMenu(); setActivity("fight"); JSON.stringify((() => { const bar = $('soloBar'), b = document.querySelector('.ob-bub'), ok = document.querySelector('.ob-ok');
+          const up = !!b && !b.hidden, br = up && b.getBoundingClientRect(), sb = !bar.hidden && bar.getBoundingClientRect();
+          const meets = !!br && !!sb && br.left < sb.right && br.right > sb.left && br.top < sb.bottom && br.bottom > sb.top;
+          return { bar: !bar.hidden, up, meets, want: meets && b.classList.contains('side') && b.classList.contains('btn') && !ok.hidden, fit: $('app').classList.contains('guide-btn') }; })())`));
+        assert(sw.bar && sw.want === sw.fit, `${v}: the fight bar is back the moment the fight is, and a tip over it fits around it at once (${JSON.stringify(sw)})`);
         s = await gapLine(X, page, 'say:forage');
         const k0 = s.kills; await page.waitForTimeout(1500); const s2 = await look(X);
         assert(s.want === 'say:forage' && s.paused && s.held && s.plate && !s.foe && s2.paused && !s2.foe && s2.kills === k0,
