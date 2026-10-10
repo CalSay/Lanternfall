@@ -17786,6 +17786,18 @@ if (section('tier-two-named-for-return')) try {
   // away-line-only-when-true: the save fights, so the away sentence says how to make it true
   const want = 'Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going.';
   const load = () => { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1)'); return g; };
+  // nextup-z13-boss: the zone 13 walk save (tier 1 done, a Birch Bow tier 2 gate). Two Ready rows shown while the boss's chance was
+  // worked out keep their STICK; once the chance reads Ready the boss row must still show beside the gate row (the gate row took the
+  // lowest Ready row's place, the boss's: z13-unstick's route failed from #304 on)
+  { const z = loadCore({ seed: 1, turns: true, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-z13-boss-ready.json'), 'utf8') }) }), E = s => z.eval(s);
+    E('loadSave(); tick(0.1); bossOddsReset(); globalThis.__offZ = [1, 2].map(i => registerGoal({ id: "t-ready" + i, sys: "t" + i, prio: 1, pct: () => 1, label: "ready " + i }))');
+    const before = E('topGoals(3, { now: 1 }).map(x => x.id + ":" + x.ready)');
+    E('bossOdds({ sync: true })');
+    const win = E('(bossOdds() || {}).win'), after = E('topGoals(3, { now: 1000 }).map(x => x.id + ":" + x.ready)');
+    E('__offZ.forEach(f => f())');
+    assert(!before.includes('zone-boss:true') && win >= E('BOSS_ODDS.ready') && after.includes('zone-boss:true') && after.some(x => /^forge:/.test(x)),
+      `${at}: at zone 13 a Ready boss keeps its row beside the tier 2 gate row (before ${before.join(', ')}; win ${win}; after ${after.join(', ')})`);
+  }
   { const g = load(), E = s => g.eval(s);
     const b = JSON.parse(E('JSON.stringify(craftGoalNext())'));
     assert(b && b.kind === 'bow' && b.t === 2 && b.gate && b.gate.skill === 'mine' && !b.gate.station, `${at}: the pick is the Birch Bow, by its Mining gate (${JSON.stringify(b)})`);
