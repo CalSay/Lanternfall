@@ -1,0 +1,4 @@
+# Proof for card normal-death-says-so-flake (tooling only). No player-visible change: nothing in src/ changed, so there is
+# nothing to play. The proof is tools/check.mjs section "normal-death-says-so": before the fix it failed 3 of 8 runs with four
+# copies of the section at once ("the loss line sits inside the stage", 1280x720 and 740x360); after it, 12 of 12 that way
+# and 20 of 20 beside CI shards 0/6 and 1/6. See docs/coord/flaky-checks.md.
