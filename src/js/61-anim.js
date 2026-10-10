@@ -119,7 +119,7 @@ const ANIM = (() => {
     const p = projs[ji]; ji = (ji + 1) % NJ;
     if (p.on && p.hit) { const h = p.hit; p.hit = null; h(p.tx, p.ty); }
     p.on = true; p.kind = kind; p.sx = p.x = p.px = sx; p.sy = p.y = p.py = sy; p.tx = tx; p.ty = ty;
-    p.t = 0; p.dur = dur; p.col = col; p.rgb = rgbOf(col); p.arc = arc || 0; p.hit = hit || null; p.delay = delay || 0;
+    p.t = 0; p.dur = dur; p.col = col; p.rgb = rgbOf(col); p.arc = arc || 0; p.hit = hit || null; p.delay = delay || 0; p.own = 0;   // own: the hero's (62-stage)
     return p;
   }
 

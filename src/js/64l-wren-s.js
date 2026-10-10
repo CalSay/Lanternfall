@@ -94,17 +94,17 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     const IMG = {};   // name -> ImageBitmap | HTMLImageElement
     const CORE = ['idle', 'attack', 'hit', 'parry', 'defeat', 'victory'];
     const ORDER = CORE.concat(Object.keys(D.moves).filter(m => !CORE.includes(m)));
-    let decoded = 0, started = false;
+    let decoded = 0, tried = 0, started = false;
     function decode(name, s) {
       return new Promise(res => {
         let bytes = null;
-        try { bytes = b91Bytes(s); } catch (e) { console.error('[lanternfall] wren art', name, e); res(); return; }
-        const done = im => { if (im) { IMG[name] = im; decoded++; } res(); };
+        try { bytes = b91Bytes(s); } catch (e) { console.error('[lanternfall] wren art', name, e); tried++; res(); return; }
+        const done = im => { tried++; if (im) { IMG[name] = im; decoded++; } res(); };
         const viaImg = () => {
           const im = new Image(); let url = '';
           try { url = URL.createObjectURL(new Blob([bytes], { type: 'image/webp' })); } catch (e) { url = 'data:image/webp;base64,' + b91Base64(s); }
           im.onload = () => { done(im); if (url.startsWith('blob:')) try { URL.revokeObjectURL(url); } catch (e) {} };
-          im.onerror = () => { console.error('[lanternfall] wren art: cannot decode', name); res(); };
+          im.onerror = () => { console.error('[lanternfall] wren art: cannot decode', name); tried++; res(); };
           im.src = url;
         };
         if (typeof createImageBitmap === 'function') createImageBitmap(new Blob([bytes], { type: 'image/webp' })).then(done, viaImg);
@@ -121,10 +121,16 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     const ready = () => CORE.every(m => IMG[m]);
     const classic = () => typeof portraitsClassic === 'function' && portraitsClassic();
     const isWren = id => id === 'wren';
-    wrenSOn = () => !classic() && ready() && isWren(typeof heroArtId === 'function' ? heroArtId() : null);
-    if (typeof idleTask === 'function') idleTask(() => { if (!classic()) start(); });
-    else start();
-    if (typeof on === 'function') { on('soloHero', () => { if (!classic()) start(); }); on('classicArt', p => { if (p && !p.on) start(); }); }
+    const wrenNow = () => isWren(typeof heroArtId === 'function' ? heroArtId() : null);
+    // hunting keeps Codex's interim spear poses (64h) until route-s-wren-gather replaces them (its gate G4)
+    const hunting = () => typeof target === 'function' && target() === 'node' && typeof skillOf === 'function' && typeof S === 'object' && S.node && skillOf(S.node.kind) === 'hunt';
+    wrenSOn = () => !classic() && ready() && wrenNow() && !hunting();
+    // decoded only for a game with Wren on the stage (or when the picker or the hero sheet draws her)
+    // as soon as the save says Wren (the stage draws today's Wren until the core moves are in, a moment at boot)
+    const kick = () => { try { if (!classic() && wrenNow()) start(); } catch (e) {} };
+    kick();
+    if (typeof idleTask === 'function') idleTask(kick);
+    if (typeof on === 'function') { on('soloHero', () => { if (!classic() && wrenNow()) start(); }); on('classicArt', p => { if (p && !p.on && wrenNow()) start(); }); }
 
     // ---------------- frames: art-px canvases with the string and the breathing applied (a small LRU) ----------------
     const LRU = new Map(), LMAX = 64;
@@ -177,7 +183,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     }
 
     // ---------------- drawing ----------------
-    const LAST = { move: '', frame: 0, k: 0, x: 0, y: 0, br: 0 };
+    const LAST = { move: '', frame: 0, k: 0, x: 0, y: 0, br: 0, n: 0, dx: 0 };
     // draw move frame i with its feet at (x, y) in the context's current units (actor px on the stage)
     function blit(g, mv, i, x, y, o) {
       const br = o && o.br ? 1 : 0, sh = (o && o.sh) || 0;
@@ -189,7 +195,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       if (k >= 1) { g.imageSmoothingEnabled = false; g.drawImage(src, fx - Math.round(ax * k), fy - Math.round(ay * k), src.width * k, src.height * k); }
       else { const s = smallCanvas(src, k); g.drawImage(s, fx - Math.round(ax * k), fy - Math.round(ay * k)); }
       g.restore();
-      LAST.move = mv; LAST.frame = i; LAST.k = k; LAST.x = x; LAST.y = y; LAST.br = br;
+      LAST.move = mv; LAST.frame = i; LAST.k = k; LAST.x = x; LAST.y = y; LAST.br = br; LAST.n++;
       return src;
     }
     // the companion bat: 6 flaps, one offset from the feet (never over her head: tools/check.mjs 'wren route S')
@@ -216,7 +222,8 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       // a timed ability's rings (59k turnRingStart): open and contact times on the turn clock; graded: the last one was answered
       on('timingRing', p => {
         if (!p || !RINGS_OF(p.id)) return;
-        if (!ST.ring || p.i === 0 || ST.ring.mv !== ABIL[p.id]) { ST.ring = { mv: ABIL[p.id], rings: [], done: false }; ST.relRing = -1; }
+        if (p.i === 0 || (ST.ring && ST.ring.mv !== ABIL[p.id])) { ST.ring = { mv: ABIL[p.id], rings: [], done: false }; ST.relRing = -1; }
+        if (!ST.ring) return;   // its first ring went by unseen (a scene change): this ability plays as a swing
         ST.ring.rings[p.i] = { open: p.opensAt, close: p.closesAt }; ST.ring.done = false;
       });
       on('timingGrade', p => { if (ST.ring && p && p.i === ST.ring.rings.length - 1) ST.ring.done = true; });
@@ -278,7 +285,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
         if (!wrenSOn()) return base(g, a, x, alpha);
         const p = pick(a); if (!IMG[p.mv]) { p.mv = IDLE[0]; p.i = IDLE[1]; }
         if (ST.hitT >= 0 && ST.relT < ST.hitT) ST.relT = ST.hitT;
-        x = Math.max(x, leftExt + 2);
+        const x0 = x; x = Math.max(x, leftExt + 2); LAST.dx = x - x0;   // a narrow stage: she steps in so her cloak stays on it
         const y = a.hy + a.dy;
         if (!blit(g, p.mv, p.i, x, y, { br: p.br, sh: p.sh, alpha })) return base(g, a, x, alpha);
         bat(g, x, y, now(), alpha);
@@ -314,12 +321,13 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
         }
         if (!ready()) { start(); PENDING.add(cv); return base(cv, id); }   // drawn again once the atlases are in (wrenArt)
         const [, , w, h, ax, ay] = D.moves[CAMP[0]].f[CAMP[1]];
-        const W = Math.ceil(Math.max(ax, w - ax) * SC) * 2 + 4, H = Math.ceil(h * SC) + 6;
+        // CSS px; the backing store at the screen's density, so a DPR 2 screen draws her 1:1 (nearest-neighbour), not doubled
+        const W = Math.ceil(Math.max(ax, w - ax) * SC) * 2 + 4, H = Math.ceil(h * SC) + 4, r = Math.max(1, Math.round((typeof devicePixelRatio === 'number' && devicePixelRatio) || 1));
         if (!cv._w0) { cv._w0 = cv.width; cv._h0 = cv.height; }
-        if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+        if (cv.width !== W * r || cv.height !== H * r) { cv.width = W * r; cv.height = H * r; }
         if (cv.style) { cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
-        const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
-        return !!blit(g, CAMP[0], CAMP[1], W / 2, H - 3, null);
+        const g = cv.getContext('2d'); g.setTransform(r, 0, 0, r, 0, 0); g.clearRect(0, 0, W, H);
+        return !!blit(g, CAMP[0], CAMP[1], W / 2, H - 2, null);
       };
     }
     const PENDING = new Set();
@@ -327,14 +335,14 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     // her arrows: the Scenario sprites (plain, heavy, sonic) in place of the stage's line arrows (61-anim drawProj)
     if (typeof ANIM === 'object' && ANIM.hooks) {
       ANIM.hooks.arrowSprite = (g, p, dx, dy) => {
-        if (!IMG.arrows || !wrenSOn() || (typeof target === 'function' && target() !== 'mob')) return false;
+        if (!IMG.arrows || !(p.own || p.kind === 'rain') || !wrenSOn() || (typeof target === 'function' && target() !== 'mob')) return false;   // her arrows only (rain: her Volleys)
         const r = D.arrows.r[p.kind === 'rain' ? 'plain' : ST.arrow] || D.arrows.r.plain, [sx, sy, w, h] = r;
         const T0 = g.getTransform(), K = T0.a, k = SC * K, ang = Math.atan2(dy, dx), flat = Math.abs(ang) < 0.06;
         g.save();
         if (flat) {   // level: whole device px, nearest-neighbour
           g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = k < 1;
           g.drawImage(IMG.arrows, sx, sy, w, h, Math.round(K * p.x + T0.e - w * k), Math.round(K * p.y + T0.f - h * k / 2), w * k, h * k);
-        } else { g.translate(p.x, p.y); g.rotate(ang); g.imageSmoothingEnabled = true; g.drawImage(IMG.arrows, sx, sy, w, h, -w * SC, -h * SC / 2, w * SC, h * SC); }
+        } else { g.translate(p.x, p.y); g.rotate(ang); g.imageSmoothingEnabled = k < 1; g.drawImage(IMG.arrows, sx, sy, w, h, -w * SC, -h * SC / 2, w * SC, h * SC); }
         g.restore();
         return true;
       };
@@ -345,15 +353,16 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       const M = D.moves[lastInfo.mv], s = M && M.s && M.s[lastInfo.i];
       if (!s) return null;
       const p = s[2] || [(s[0][0] + s[1][0]) / 2, (s[0][1] + s[1][1]) / 2];
-      return [p[0] * SC, p[1] * SC];
+      return [p[0] * SC + LAST.dx, p[1] * SC];
     };
     wrenSStats = () => ({ ready: ready(), decoded, classic: classic(), drawn: Object.assign({}, LAST), state: ST.s, move: ST.mv });
     // the checks (tools/check.mjs 'wren route S (browser)'): decode everything now, read pixels of a frame
-    wrenSStats.decodeAll = () => { start(); return new Promise(res => { const w = () => (decoded >= ORDER.length + 2 ? res(decoded) : setTimeout(w, 20)); w(); }); };
-    wrenSStats.alphaAt = (mv, i, xs) => {
-      const src = frameCanvas(mv, i, 0, 0); if (!src) return null;
-      const d = src.getContext('2d').getImageData(0, 0, src.width, src.height).data, [, , , , ax, ay] = D.moves[mv].f[i];
-      return xs.map(([x, y]) => { const X = x + ax, Y = y + ay; return X < 0 || Y < 0 || X >= src.width || Y >= src.height ? 0 : d[(Y * src.width + X) * 4 + 3]; });
+    wrenSStats.decodeAll = () => { start(); return new Promise(res => { const w = () => (tried >= ORDER.length + 2 ? res(decoded) : setTimeout(w, 20)); w(); }); };
+    wrenSStats.alphaAt = (mv, i, xs) => {   // the converted frame's own pixels (the atlas, before the game draws its string)
+      const im = IMG[mv]; if (!im) return null;
+      const [x0, y0, w, h, ax, ay] = D.moves[mv].f[i], c = mk(w, h), g = c.getContext('2d'); g.drawImage(im, x0, y0, w, h, 0, 0, w, h);
+      const d = g.getImageData(0, 0, w, h).data;
+      return xs.map(([x, y]) => { const X = x + ax, Y = y + ay; return X < 0 || Y < 0 || X >= w || Y >= h ? 0 : d[(Y * w + X) * 4 + 3]; });
     };
     wrenSStats.rows = (mv, i) => {   // [top row, bottom row, feet centre] of the opaque pixels, from the feet anchor (art px)
       const im = IMG[mv]; if (!im) return null;

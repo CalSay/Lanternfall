@@ -18172,8 +18172,9 @@ if (section('wren route S')) try {
     s.forEach((a, i) => { if (a !== 0 && !(Array.isArray(a) && a.length === 3 && a.slice(0, 2).every(p => Array.isArray(p) && p.length === 2) && (a[2] === null || a[2].length === 2))) sbad.push(`${m} ${i + 1}`); });
   }
   const noStr = WREN_SHOOT.flatMap(m => W.moves[m].s.map((a, i) => (a === 0 ? `${m} ${i + 1}` : null)).filter(Boolean));
-  console.log(`  wren route S string: drawn on ${WREN_SHOOT.length * 8 - noStr.length} shooting frames, none on ${noStr.length} (${noStr.join(', ')}); dropped anchors ${P.strDropped.join(', ')}`);
-  assert(!sbad.length && noStr.length <= 12, 'wren route S: the 12 shooting moves carry the string\'s three anchors per frame, the other 8 none (gate 4)' + (sbad.length ? ': ' + sbad.join('; ') : ''));
+  // a frame with no string is one whose anchors were never marked (Final Echo 2: her spin, the bow edge-on); none was dropped
+  console.log(`  wren route S string: drawn on ${WREN_SHOOT.length * 8 - noStr.length} shooting frames, none on ${noStr.length} (${noStr.join(', ')}); anchors moved over 3 px onto the bow: ${P.snapFar.length} (each looked at)`);
+  assert(!sbad.length && !P.strDropped.length && noStr.join() === 'finalecho 2', 'wren route S: the 12 shooting moves carry the string\'s three anchors on every frame but one never marked, the other 8 none (gate 4)' + (sbad.length || P.strDropped.length ? ': ' + [...sbad, ...P.strDropped].join('; ') : '') + ` (no string: ${noStr.join(', ')})`);
   // gate 9: the bat's box at its one offset from the feet clears every frame's head box (all moves)
   { const [bx, by] = W.bats.at, bw = Math.max(...W.bats.f.map(r => r[2])), bh = Math.max(...W.bats.f.map(r => r[3])), over = [];
     for (const m of WREN_FIGHT) P.moves[m].f.forEach((f, i) => { const h = f.head; if (bx < h[2] && bx + bw > h[0] && by < h[3] && by + bh > h[1]) over.push(`${m} ${i + 1}`); });
@@ -18252,10 +18253,16 @@ if (section('wren route S (browser)')) try {
         assert(red ? br === '0' : br === '0,1', `wren route S ${tag}: the held idle ${red ? 'holds still' : 'breathes'} (breath steps ${br || 'none'}) (gate 3)`);
         if (w === 1280) {
           // Classic art: the old Wren on the stage, and the new one again (the pref has its own key; cleared after)
-          const cl = await X(`new Promise(res => { portraitsClassic(true); const a = wrenSOn(), d0 = wrenSStats().drawn.move;
-            setTimeout(() => { const hero = !!(stageRects().hero); portraitsClassic(false); setTimeout(() => res(JSON.stringify({ a, hero, b: wrenSOn() })), 200); }, 300); })`);
+          // (64l's draw count stands still while Classic is on and the stage still draws a hero; it moves again once it is off)
+          const cl = await X(`new Promise(res => { portraitsClassic(true); const a = wrenSOn();
+            setTimeout(() => { const n0 = wrenSStats().drawn.n; setTimeout(() => { const still = wrenSStats().drawn.n === n0, hero = !!(stageRects().hero); portraitsClassic(false);
+              setTimeout(() => res(JSON.stringify({ a, still, hero, b: wrenSOn(), moved: wrenSStats().drawn.n > n0 })), 300); }, 300); }, 100); })`);
           const c = JSON.parse(cl);
-          assert(!c.a && c.hero && c.b, `wren route S: Classic art turns the stage's Wren back to today's and off again brings route S back (gate 8; ${cl})`);
+          assert(!c.a && c.still && c.hero && c.b && c.moved, `wren route S: Classic art turns the stage's Wren back to today's and off again brings route S back (gate 8; ${cl})`);
+          // gathering: the camp pose (victory frame 4) until route-s-wren-gather; hunting keeps Codex's interim spear poses (64h)
+          const ga = JSON.parse(await X(`new Promise(res => { setActivity('gather'); setNode('wood', 1); setTimeout(() => { const d = wrenSStats().drawn, wood = { on: wrenSOn(), mv: d.move, i: d.frame };
+            const n0 = S.node; S.node = { kind: 'hide', t: 1 }; setTimeout(() => { const hunt = { on: wrenSOn(), tg: target() }; S.node = n0; setActivity('fight'); res(JSON.stringify({ wood, hunt })); }, 300); }, 600); })`));
+          assert(ga.wood.on && ga.wood.mv === 'victory' && ga.wood.i === 3 && !ga.hunt.on && ga.hunt.tg === 'node', `wren route S: gathering shows her camp pose; hunting keeps the interim spear poses (gate 7; ${JSON.stringify(ga)})`);
         }
         assert(!errs.length, `wren route S ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
@@ -18267,11 +18274,12 @@ if (section('wren route S (browser)')) try {
         const page = await ctx.newPage();
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
         await page.goto('http://lf.test/');
-        await page.waitForFunction(() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'); return c && c.width > 56; }, null, { timeout: 20000 }).catch(() => {});
+        await page.waitForFunction(() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'); return c && c.width > 112; }, null, { timeout: 20000 }).catch(() => {});
         const r = await page.evaluate(() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'), f = c && c.parentElement; if (!c) return null;
           const a = c.getBoundingClientRect(), b = f.getBoundingClientRect(); return { cw: c.width, ch: c.height, a: [a.left, a.top, a.right, a.bottom], b: [b.left, b.top, b.right, b.bottom] }; });
-        const inside = r && r.a[0] >= r.b[0] - 0.5 && r.a[1] >= r.b[1] - 0.5 && r.a[2] <= r.b[2] + 0.5 && r.a[3] <= r.b[3] + 0.5;
-        assert(!!(r && r.cw > 56 && inside), `wren route S ${w}x${h}: the picker's figure holds Wren's camp pose (${r ? r.cw + 'x' + r.ch : 'none'}) inside its box (gate 7)`);
+        // inside the box's border (1 px)
+        const inside = r && r.a[0] >= r.b[0] + 0.5 && r.a[1] >= r.b[1] + 0.5 && r.a[2] <= r.b[2] - 0.5 && r.a[3] <= r.b[3] - 0.5;
+        assert(!!(r && r.cw > 112 && inside), `wren route S ${w}x${h}: the picker's figure holds Wren's camp pose (${r ? r.cw + 'x' + r.ch : 'none'} at DPR 2) inside its box (gate 7)`);
         await ctx.close();
       }
     } finally { await browser.close(); }

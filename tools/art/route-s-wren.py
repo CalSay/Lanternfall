@@ -47,6 +47,7 @@ BAT_W = 28                                          # art px, the widest flap
 STAND = 2                                           # art px: a frame lifted this little is standing (see scaled)
 HELD = {'idle': [0]}                                # moves embedded as one held frame (the rest of the sheet is not drawn)
 SNAP = 6                                            # art px: how far an anchor may move to reach an opaque pixel
+SNAP_WIDE = 14                                      # art px: the second search, for a tip marked in the clear past the bow
 
 
 # ---------------- numpy stand-ins for the scipy.ndimage calls cut8.py makes (scipy is not installed here) ----------------
@@ -246,7 +247,7 @@ def main():
     pack = {'v': 1, 'what': "Wren's route S fight moves (ruling #328), converted by tools/art/route-s-wren.py",
             'packScale': PACK_K, 'hood': HOOD, 'colours': NC, 'swatches': len(sw),
             'palette': ['%02x%02x%02x' % c for c in cols], 'moves': {}, 'bytes': {}}
-    strcol = {}; snaps = []; dropped = []
+    strcol = {}; snaps = []; dropped = []; far = []
     for mv in FIGHT:
         M = moves[mv]; k = M['k']; frames = []; qs = []
         for i, t in enumerate(M['tiles']):
@@ -260,7 +261,9 @@ def main():
             hb = al[rows[0]:rows[0] + HOOD * 3 // 10]; hl, hn = label(hb); big = 1 + int(np.argmax(lsum(hb, hl, hn)))
             hy, hc = np.nonzero(hl == big); hy0 = hy.min(); sel = hy < hy0 + HOOD // 5; hc = hc[sel]
             fd['head'] = [int(hc.min() - axi), int(rows[0] + hy0 - gy), int(hc.max() + 1 - axi), int(rows[0] + hy0 + HOOD // 5 - gy)]
-            # string anchors -> art px of this frame, moved onto the nearest opaque pixel (within 3 px)
+            # string anchors -> art px of this frame, moved onto the nearest opaque pixel (within SNAP px; a tip marked in the
+            # clear just past the bow, as on 4 frames, within SNAP_WIDE). Every move over 3 px is listed (pack.json snapFar) and
+            # was looked at on the converted frame: each lands on the bow tip or the hand.
             an = M['anc'][i]
             if mv in SHOOT:
                 if an is None: fd['str'] = None
@@ -270,14 +273,17 @@ def main():
                         p = an[key]
                         if p is None: pts.append(None); continue
                         x, y = p[0] * k, p[1] * k; best = None
-                        for dy in range(-SNAP, SNAP + 1):
-                            for dx in range(-SNAP, SNAP + 1):
-                                xx, yy = int(np.floor(x)) + dx, int(np.floor(y)) + dy
-                                if 0 <= yy < al.shape[0] and 0 <= xx < al.shape[1] and al[yy, xx]:
-                                    d = (xx + 0.5 - x) ** 2 + (yy + 0.5 - y) ** 2
-                                    if best is None or d < best[0]: best = (d, xx, yy)
+                        for R in (SNAP, SNAP_WIDE):
+                            for dy in range(-R, R + 1):
+                                for dx in range(-R, R + 1):
+                                    xx, yy = int(np.floor(x)) + dx, int(np.floor(y)) + dy
+                                    if 0 <= yy < al.shape[0] and 0 <= xx < al.shape[1] and al[yy, xx]:
+                                        d = (xx + 0.5 - x) ** 2 + (yy + 0.5 - y) ** 2
+                                        if best is None or d < best[0]: best = (d, xx, yy)
+                            if best is not None: break
                         if best is None: pts = None; dropped.append(f'{mv} {i + 1} {key}'); break
                         pts.append([best[1] - axi, best[2] - gy]); snaps.append(round(best[0] ** 0.5, 2))
+                        if best[0] > 9: far.append([mv, i, key, round(best[0] ** 0.5, 1)])
                     fd['str'] = pts   # None: no string on this frame (the bow behind her, or a marked tip off the bow)
             else:
                 # the painted string: isolated 1 px opaque runs in the bow's half of the frame (right of the feet)
@@ -318,6 +324,7 @@ def main():
     fight = sum(pack['bytes'][m + '.webp'] for m in FIGHT); fx = pack['bytes']['arrows.webp'] + pack['bytes']['bats.webp']
     pack['totals'] = {'fight': fight, 'fx': fx}
     pack['strDropped'] = dropped
+    pack['snapFar'] = far
     pack['snap'] = {'max': max(snaps), 'mean': round(sum(snaps) / len(snaps), 2), 'n': len(snaps)}
     with open(os.path.join(OUT, 'pack.json'), 'w') as fh: json.dump(pack, fh, separators=(',', ':'))
     print(f'fight atlases {fight / 1e3:.1f} KB (ceiling 1,650 KB, 1 KB = 1,000 bytes as tools/lib/page-size.mjs); arrows and bats {fx / 1e3:.1f} KB (ceiling 60 KB)')

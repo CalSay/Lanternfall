@@ -749,7 +749,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const tx = fa ? fa[0] : s.x + (Math.random() - 0.5) * s.w * 0.3, ty = fa ? fa[1] : s.cy + (Math.random() - 0.5) * s.h * 0.3;
     if (!a.kind) { a.slash = 0.16; A.burstPx(s.left + 6, ty, '#FFF3C4', 4, 40); return; }
     const sx = handX(a), sy = handY(a), col = a.pcol;
-    if (a.kind === 'arrow') A.proj('arrow', sx, sy, tx, ty, 0.2, col, 6, (x, y) => A.burstPx(x, y, '#E8DCC0', 3, 30));
+    if (a.kind === 'arrow') A.proj('arrow', sx, sy, tx, ty, 0.2, col, 6, (x, y) => A.burstPx(x, y, '#E8DCC0', 3, 30)).own = a === hero ? 1 : 0;   // the hero's: 64l may draw it
     else if (a.kind === 'bolt') A.proj('bolt', sx, sy - 4, tx, ty, 0.28, col, 0, (x, y) => { A.burstPx(x, y, col, 6, 45, 60, 4); A.ring(x, y, 2, 11, 0.3, col, 1, 1); if (a.role === 'caster') splash(s, col); });
     else A.proj('mote', sx, sy - 6, tx, ty, 0.36, col, 14, (x, y) => A.burstPx(x, y, col, 5, 30, 0, 4));
   }
@@ -1081,6 +1081,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   on('classChosen', () => { refreshHero(true); refreshParty(); });
   on('mirrorUsed', () => refreshHero(true));
   on('activity', () => { layoutDirty = true; solo.key = ''; packList = null; if (hero.fr) refreshHero(false); });
+  for (const ev of ['classicArt', 'wrenArt']) on(ev, () => { layoutDirty = true; });   // the hero's reach follows the art drawn (64l)
 
   on('classTap', p => {
     attack(hero);
