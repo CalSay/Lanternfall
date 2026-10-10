@@ -10,7 +10,7 @@
 //   area: one file at a time, and one more at once for the zone on screen.
 // - holds the game (holdGame) while the zone on screen lacks a pack: a plain line covers the stage and the zone number reads
 //   "loading". A pack still loading is never drawn as a stand-in (art freeze).
-// - when a pack file fails, asks the server for the page: if the page no longer names that file (a new deploy took the old
+// - when a pack file fails, asks the server for the page (through lfBoot.page: the game's own code makes no network call): if the page no longer names that file (a new deploy took the old
 //   hashed files away), the game saves and reloads once the zone on screen needs it; otherwise it tries again later.
 //   artZonePacks(z) -> the pack ids zone z shows ([] in the inline page)
 //   artZoneReady(z) -> bool: every pack zone z shows is in (and, for one that came after boot, its pictures have decoded)
@@ -100,10 +100,9 @@ var artZoneReady = () => true, artZonePacks = () => [];
     let askedAt = -Infinity;
     function gone(id) {
       const f = failed[id] = failed[id] || { n: 0 }; f.n++; f.at = Date.now() + Math.min(30, 2 ** f.n) * 1000;
-      if (typeof fetch !== 'function' || Date.now() - askedAt < 120000) return;
+      if (typeof LB.page !== 'function' || Date.now() - askedAt < 120000) return;
       askedAt = Date.now();
-      fetch(location.href, { cache: 'no-store' }).then(r => (r.ok ? r.text() : null))
-        .then(t => { if (t) for (const k in failed) if (!got[k] && !t.includes(P[k].f)) stale[k] = true; cover(); }, () => {});
+      LB.page(t => { for (const k in failed) if (!got[k] && !t.includes(P[k].f)) stale[k] = true; cover(); });   // the boot loader asks (the game page makes no network call)
     }
     let reloading = false;
     function reload() {

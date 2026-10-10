@@ -35,6 +35,11 @@ var lfBoot = (function () {
     // the game takes the packs that came before it ran, then every later one as it arrives
     take: function (fn) { listen = fn; var a = art; art = {}; for (var id in a) fn(id, a[id]); },
     done: function (el) { count(el.src); },
+    // the server's page as it is now (75-art-load asks when a pack file fails: a page that no longer names it means a new deploy)
+    page: function (cb) {
+      if (typeof fetch !== 'function') return;
+      fetch(location.href, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).then(function (t) { if (t) cb(t); }, function () {});
+    },
     fail: function () {
       failed = true;
       var box = document.getElementById('lfBoot'), t = document.getElementById('lfBootText');
