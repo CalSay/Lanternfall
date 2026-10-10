@@ -6,8 +6,8 @@
      Until the game runs the loading screen (card loading-screen: the game's name, a bar and a line, no art) shows the bytes done:
      a file counts once its download ends (resource timing) or it runs. -->
 <style id="lfBootCss">
-#lfBoot{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg,#140F1A);color:var(--bone,#EFE6D6);font:16px/1.4 var(--body,sans-serif);text-align:center;transition:opacity .25s}
-#lfBoot.lf-out{opacity:0}
+#lfBoot{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg,#140F1A);color:var(--bone,#EFE6D6);font:16px/1.4 var(--body,sans-serif);text-align:center}
+#lfLoad{display:none}
 .lf-boot-name.lf-wait{opacity:0}
 .lf-boot-name{transition:opacity .2s}
 .lf-boot-in{display:flex;flex-direction:column;align-items:center;gap:14px;width:min(100%,360px)}
@@ -16,7 +16,7 @@
 .lf-boot-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ember-deep,#B8621B),var(--ember,#FF9E3D));transition:width .2s}
 #lfBootText{color:var(--muted,#A597B4)}
 @media (max-height:420px){.lf-boot-in{gap:10px}.lf-boot-name{font-size:min(calc(34px * var(--display-k,1.2)),11vw)}}
-@media (prefers-reduced-motion:reduce){#lfBoot,.lf-boot-name,.lf-boot-bar i{transition:none}}
+@media (prefers-reduced-motion:reduce){.lf-boot-name,.lf-boot-bar i{transition:none}}
 </style>
 <div id="lfBoot" role="status" aria-live="polite"><div class="lf-boot-in"><b class="lf-boot-name lf-wait" id="lfBootName">Lanternfall</b><div class="lf-boot-bar" aria-hidden="true"><i id="lfBootFill"></i></div><span id="lfBootText">Loading the game</span></div></div>
 <script id="lfBootJs">
