@@ -76,6 +76,9 @@
 .stagebox .hud.vs .hud-zone .zname { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.1; overflow-wrap: anywhere; }
 /* the turn banner owns the middle of the stage while it shows; toasts and the strip wait out its short pause */
 .stagebox.tc-on .toasts { opacity: 0; transition: opacity .1s; }
+/* actor-scale: heroes and foes drawn 1.5x (62-stage sets .actor-k) stand tall enough to reach the middle of the stage, so the
+   whose-turn banner takes the turn line's spot under the place line (turn-banner-clears-plate) instead of crossing their heads */
+.stagebox.actor-k .tv-turncard { top: calc(var(--vs-zb, 0px) + 30px); }
 .stagebox.vs-on .toasts:not(.over-menu) { top: max(calc(var(--vs-b, 54px) + 22px), var(--vs-zb, 0px)); }   /* under the bars and the place line, not over them */
 /* portrait: no room under the place line, the hero's head is there (a banner sat over its upper half with the guide tip up). A toast docks at the
    foot of the stage, left of the sound buttons, and a moment banner shrinks to one row: no sub line, no hero line under a title. Landscape keeps its own dock. */
