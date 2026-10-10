@@ -189,6 +189,15 @@
      Vein") and left the line two, cutting "The Forge needs Copper Ore 0/25" before where to get it. A smaller Go takes two lines */
   .ob-bub.side .ob-ok { font-size: calc(12px * var(--display-k)); }
 }
+/* defend-bar-740: the timing bar stood 38 px (track, then Dodge and Parry under it), so at 740x360 its top sat about 8 px above the ground
+   line, across the foe's legs and the hero's feet on the foe's turn (upright at 360x740 a lunging Thorn Imp's feet met it too). On a phone,
+   on its side or upright, Dodge and Parry sit beside the track on one row, so the bar is about 22 px and starts under the actors' feet, still
+   above the stat line and clear of the stage buttons. The legend keeps the width of its grown words (in-dodge, in-parry), so the track never
+   jumps as the window opens. Wide views (desktop, a tablet on its side) keep the bar as it was; any upright view gets the one row. */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px), (max-aspect-ratio: 1/1), (max-width: 599px) {
+  .tv-bot .tv-time { width: min(330px, 100%); grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 6px; }
+  .tv-bot .tv-legend { min-width: calc(92px * var(--display-k, 1)); height: 16px; align-items: center; }   /* the track's height: a grown word never lifts the bar */
+}
 /* tall landscape (tablets, desktop): the mock-up's desktop sizes, a wider rail and a taller top row; key labels on the slots */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (min-height: 600px) {
   /* side 25vw (256 px at 1024x768): at 20vw the slot labels ("Attack", "Hard · counters") were cut off (desktop-layout-v1) */

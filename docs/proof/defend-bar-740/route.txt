@@ -1,0 +1,23 @@
+# seed: 1
+# Proof for card defend-bar-740: on the foe's turn the Dodge/Parry timing bar no longer covers the foe or the hero. On a phone on its
+# side (740x360) Dodge and Parry sit beside the track on one row, so the bar starts under the actors' feet; 1280x720 and 1366x640
+# keep the bar as it was (track, then Dodge and Parry under it).
+# Fixture dipper-z4: Wren at zone 4; she steps back to zone 1 and attacks once, so the Thorn Imp winds up.
+#   foe-turn.png   the Thorn Imp winds up with the timing bar showing under both actors' feet
+# The geometry (the bar clear of the hero and every foe at 740x360, 1280x720, 1366x640 and 360x740, on a plain foe and a boss, and
+# the track not moving when the window opens) is held by tools/check.mjs ("defend-bar-740").
+new dipper-z4
+wait 1
+tap-if "Dismiss this tip"
+tap "Previous zone"
+tap "Previous zone"
+tap "Previous zone"
+wait 2
+tap "Attack"
+wait-for ".tv-bot .tv-time:not([hidden])" 6
+unless ".tv-bot .tv-time:not([hidden])" tap-if "Attack"
+unless ".tv-bot .tv-time:not([hidden])" wait-for ".tv-bot .tv-time:not([hidden])" 6
+unless ".tv-bot .tv-time:not([hidden])" tap-if "Attack"
+unless ".tv-bot .tv-time:not([hidden])" wait-for ".tv-bot .tv-time:not([hidden])" 6
+expect ".tv-bot .tv-time:not([hidden])"
+shot foe-turn
