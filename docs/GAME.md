@@ -92,7 +92,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   wait for Tobin and Pip, and Abilities' Can learn list says who they are for. "Scroll found." shows only for a Scroll the hero in play
   can use now. On a zone 6 to 10 boss's first clear, the Lantern Cache card asks "Learn one now:" with up to three moves the dropped
   Scroll can teach the hero in play (only when two or more can be learned): a pick learns it and fills a free slot, or opens Abilities on
-  it when the slots are full; "Keep the Scroll" keeps it (`75-caches-ui.js`, boss-spoils-pick). **Talents** (`24e-data-talents.js`): two choices for each
+  it when the slots are full; "Keep the Scroll" keeps it (`75-caches-ui.js`, boss-spoils-pick). The moves keep the Abilities list's
+  order; once the zone boss odds are in, each says what it does to the line and the one that lifts it most gets a gold bar, in place
+  (cache-pick-order-settles). **Talents** (`24e-data-talents.js`): two choices for each
   ability and for Attack, Parry and Dodge. **Ability icons** (Codex's drawings, `art/abilities/`, converted by
   `tools/art/abilityicons.py`, embedded by `tools/art/embed-icons.mjs` under the live ability id): Pip's 14 are drawn on
   the bar, the picker and the Abilities list. Wren and Tobin keep lettered tiles until all 14 of theirs are drawn (whole

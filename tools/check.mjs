@@ -86,7 +86,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -16572,6 +16572,80 @@ if (section('loadout-odds')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('loadout-odds crashed: ' + (e.stack || e)); }
+
+// ==== cache-pick-order-settles: the Lantern Cache's move pick keeps one order from its first paint, and its odds stop when it closes ====
+// save-pip-z10-ward (Pip at the zone 10 Champion, one Hollow Scroll, Arcane Ward / Frost Shard / Ignite to learn). Her zone 10 first clear
+// opens the cache on the Champion's card with a pick (75-caches-ui). The kill moves maxZone, so the zone 11 odds start then and arrive
+// after the card is up. Browser, 1280x720, 740x360 and 360x740: every order the pick row ever paints is the first one (a watcher on the
+// card, and two reads 1 s apart once the odds are in), the move that lifts the line most is marked in place, and the card fits; with the
+// odds already in at open (they once sorted it) the order is the same. First of all, a card closed at once (Keep the Scroll) while its
+// odds are pending does no odds work after it closes: no learnOdds call from the pick's fill for 3 s.
+if (section('cache-pick-order-settles')) try {
+  const at = 'cache-pick-order-settles', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-z10-ward.json'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8'), mv = (src.match(/function spoilsMoves[\s\S]*?\n}\n/) || [''])[0];
+  assert(mv && !/\.sort\(/.test(mv), `${at}: spoilsMoves offers the moves in the Abilities list's order, never sorted by odds that may or may not be in yet`);
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // a watcher keeps every order (and each pick's sub and mark) the pick row paints; __late counts learnOdds calls from the fill after a close
+        await X(`window.__ord = []; window.__closed = false; window.__late = 0; { let inFill = false; const f0 = spoilsFill, l0 = learnOdds;
+          spoilsFill = (sp, n) => { inFill = true; try { return f0(sp, n); } finally { inFill = false; } };
+          learnOdds = (...a) => { if (inFill && __closed) __late++; return l0(...a); }; }
+          new MutationObserver(() => { const r = document.querySelector('.mm-ov .mm-pick-row'); if (!r) return; const bs = [...r.querySelectorAll('.mm-pick')];
+            const o = bs.map(b => b.querySelector('b').textContent).join(), s = bs.map(b => (b.querySelector('small') || {}).textContent || '').join(' | '), m = bs.filter(b => b.classList.contains('lift')).map(b => b.querySelector('b').textContent).join();
+            const l = __ord[__ord.length - 1]; if (!l || l.o !== o || l.s !== s || l.m !== m) __ord.push({ o, s, m }); }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] }); true`);
+        // the zone 10 boss's kill as the fight makes it (first clear), unique roll missed (its card is spoils-card-fits-with-unique's)
+        const win = async (ready = false) => { await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } __ord.length = 0;
+          S.activity = 'fight'; S.zone = 10; S.maxZone = 10; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 0;
+          try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } for (const q of MOMENT_Q) if (q.kind === 'champion') q.scene = ''; S.activity = 'gather'; emit('sceneReset');
+          ${ready ? "learnOdds('pip', true);" : ''} true`);   // ready: the zone 11 odds worked out now, before the cache opens on the next tick
+          try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov .mm-pick')`), null, { timeout: 8000, polling: 50 }); return true; }
+          catch (e) { assert(false, `${vw}: the zone 10 clear's card with a pick never showed`); return false; } };
+        // first, before anything has worked out the zone 11 odds: closed at its first paint (Keep the Scroll), then no odds work from the pick
+        if (!(await win())) { await ctx.close(); continue; }
+        const pend = await X(`(() => { const lo = learnOdds('pip'); MOMENT_UI.shownAt = 0; document.querySelector('.mm-ov .mm-go').click(); __closed = true; return !lo; })()`);
+        await page.waitForTimeout(3000);
+        const late = await X(`__late`), up = await X(`!!document.querySelector('.mm-ov .mm-pick')`);
+        assert(pend && !up && late === 0, `${vw}: closed while its odds were still pending (${pend}), the pick's fill asks for no odds after (${late} calls in 3 s)`);
+        await X(`__closed = false; true`);
+        if (!(await win())) { await ctx.close(); continue; }
+        const first = JSON.parse(await X(`JSON.stringify(__ord[0])`));
+        // the odds are in once a pick's sub names the zone 11 boss; then read twice, 1 s apart
+        try { await page.waitForFunction(() => window.__t.x(`[...document.querySelectorAll('.mm-ov .mm-pick small')].some(e => /Zone 11 boss/.test(e.textContent))`), null, { timeout: 30000, polling: 100 }); }
+        catch (e) { assert(false, `${vw}: the pick's odds never arrived`); }
+        const read = () => X(`(() => { const o = document.querySelector('.mm-ov'), bs = [...o.querySelectorAll('.mm-pick')], inView = r => r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1;
+          return JSON.stringify({ o: bs.map(b => b.querySelector('b').textContent).join(), lift: bs.filter(b => b.classList.contains('lift')).map(b => b.querySelector('b').textContent),
+            top: (learnOdds('pip') || { rows: [] }).rows.map(r => r.id)[0], fits: inView(o.querySelector('.mm-card').getBoundingClientRect()) && [...bs, o.querySelector('.mm-go')].every(b => inView(b.getBoundingClientRect())), pageW: document.documentElement.scrollWidth <= innerWidth }); })()`).then(JSON.parse);
+        const r1 = await read(); await page.waitForTimeout(1000); const r2 = await read();
+        const all = JSON.parse(await X(`JSON.stringify(__ord)`));
+        assert(first && first.o === 'Ignite,Frost Shard,Arcane Ward' && r1.o === first.o && r2.o === first.o && all.every(x => x.o === first.o),
+          `${vw}: the pick keeps the Abilities list's order from its first paint, through the odds arriving, and 1 s later (${JSON.stringify({ first, r1: r1.o, r2: r2.o, painted: all.map(x => x.o) })})`);
+        if (w === 1280) await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'cache-pick-order-settles', 'check-card-1280x720.png') });
+        assert(r2.top === 'arcaneward' && r2.lift.join() === 'Arcane Ward' && r2.fits && r2.pageW, `${vw}: Arcane Ward, the move that lifts the zone 11 line most, is marked in place, and the card fits (${JSON.stringify(r2)})`);
+        // the odds already in when the card opens (once they sorted it: Arcane Ward first): the same order, marked from the first paint
+        if (!(await win(true))) { await ctx.close(); continue; }
+        await page.waitForTimeout(1000);
+        const r3 = await read(), all3 = JSON.parse(await X(`JSON.stringify(__ord)`));
+        assert(r3.o === first.o && all3.every(x => x.o === first.o) && r3.lift.join() === 'Arcane Ward' && /Zone 11 boss/.test(all3[0].s),
+          `${vw}: with the odds in at open, the pick paints the same order, its lines filled and Arcane Ward marked (${JSON.stringify({ r3, painted: all3 })})`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('cache-pick-order-settles crashed: ' + (e.stack || e)); }
 
 // ==== turn-banner-clears-plate: the turn line and the whose-turn banner each read on one line and stay off the "Zone boss" line ====
 // save-mid, a zone boss fight, every foe renamed to the longest name the game can give a foe (a boss or its Deepwell "Deep" name, an
