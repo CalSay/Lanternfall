@@ -1,11 +1,11 @@
 # Hero kits: every ability belongs to one hero
 
-Card `hero-themed-kits` (P1 spec). Status: **spec, judge ruled 2026-10-10; Oriel's type changed to Starlight by Cal at 13:07 (section 4).** No code here: the build cards in
+Card `hero-themed-kits` (P1 spec). Status: **spec, judge ruled 2026-10-10; Auriel's type changed to Starlight by Cal at 13:07 (section 4).** No code here: the build cards in
 section 7 and the wire cards build it.
 
 Cal, 10 Oct 11:10: "I think I want to remove the shared abilities. At least intentionally sharing. I don't mind if abilities do
 similar things across heroes. But I think it causes theme issues when we have a star mage or a fire mage casting frost shard
-for example." 12:02: "I still think we need to change the shared abilities into Oriel specific abilities."
+for example." 12:02: "I still think we need to change the shared abilities into Auriel specific abilities."
 
 Facts checked at `6658f2a5`: `src/js/24c-data-abilities.js`, `24d-data-turnfoes.js`, `24e-data-talents.js`, `24f-data-stars.js`,
 `21x-data-types.js`, `21s-data-actionicons.js`, `59k-turn.js`, `62b-fx.js`, `56e-abilities.js`, `55-savecode.js`,
@@ -30,8 +30,8 @@ alike (a quick bolt, a ward, a curse); each hero's version has its own name, eff
 
 ## 2. What it changes, hero by hero
 
-Today only Pip and Oriel break the rule. Wren's and Tobin's style six were only ever theirs (`hero: 'wren'`, `hero: 'tobin'`, all
-physical) and fit them. Pip's include a frost move on a fire mage. Oriel (not in the game yet) borrows Pip's six outright.
+Today only Pip and Auriel break the rule. Wren's and Tobin's style six were only ever theirs (`hero: 'wren'`, `hero: 'tobin'`, all
+physical) and fit them. Pip's include a frost move on a fire mage. Auriel (not in the game yet) borrows Pip's six outright.
 
 - **Wren: no change.** Power Shot, Barbed Arrow, Pinning Shot, Hunter's Mark, Volley and Twin Shot are a night archer's
   arrows. Her 20 wired moves (#346) are untouched.
@@ -41,10 +41,10 @@ physical) and fit them. Pip's include a frost move on a fire mage. Oriel (not in
   Cal 10 Oct 14:42: "Hex: Not a fire mage ability". Frost Shard becomes
   Smoke Bolt (fire). Arcane Ward becomes Ashen Ward and Nova becomes Ring of Light (her lantern's holy light, as Lantern Flare
   is). Three talents lose their frost.
-- **Oriel: six style moves of her own** in place of the six she borrowed from Pip. Five of them are new star moves Cal asked
+- **Auriel: six style moves of her own** in place of the six she borrowed from Pip. Five of them are new star moves Cal asked
   for on 10 Oct (14:01), with their own poses; the sixth is Old Light, a passive.
 
-**Pip burns; Oriel stops** (oriel.md section 1) gets sharper: Chill and Freeze leave Pip's kit. Oriel's control is the star's
+**Pip burns; Auriel stops** (oriel.md section 1) gets sharper: Chill and Freeze leave Pip's kit. Auriel's control is the star's
 Stun, Pin (Ill Omen, Glimmer) and Weaken; no hero's own kit adds Chill now (the Stars still can). Pip's new
 control is smoke: a short Weaken, longer on a burning foe, and no lost turn.
 
@@ -98,12 +98,12 @@ Kept: Bank the Spark, Mending Light, Hard Shell, Long and Short Sentence, Banked
 Abilities groups keep their names and members (Lantern Keeper now holds Smoke Bolt, Ashen Ward, Ring of Light, Lantern Flare,
 Cinder Heart).
 
-### Oriel (new ids; she is in no save yet)
+### Auriel (new ids; she is in no save yet)
 
 Her own 8 stay as oriel.md section 4 has them (names from #352), with one change: Starbolt no longer adds Chill (below). These
 six replace the borrowed Pip moves. **Cal, 10 Oct 13:58: "It's not just old names, the abilities are the same"; 14:01: "Make her
 5 new abilities to replace the shared mage abilities. Make sure they fit with her kit and offer combo opportunities (combos are
-with up to 3 abilities)."** He OK'd Polaris, Glimmer, Chart the Sky and Eclipse at 14:13 and Moonbeam at 14:15 ("Oriels
+with up to 3 abilities)."** He OK'd Polaris, Glimmer, Chart the Sky and Eclipse at 14:13 and Moonbeam at 14:15 ("Auriels
 abilities should come fro above, she's a star mage"; "Sure, I'll sign it off"). Old Light, the passive, stays. Her type is
 Starlight (section 4). Codes continue her own.
 
@@ -132,7 +132,7 @@ Starlight (section 4). Codes continue her own.
 - **Starbolt drops its Chill.** Starbolt (`clearnight`) becomes: "A star bolt for 140% power. If no star is falling, gain 1
   Bearing." Its Perfect becomes `'a sure crit'`.
 - Her 4 timed moves: Glimmer, Starbolt, Shooting Star, Starfall. Her passives: Old Light (style) and News Arrives (signature).
-- **The Curse burst takes the type of the move that set it** (today 59k:1021 hard-codes holy). Pip's Smoulder bursts as fire. Oriel no
+- **The Curse burst takes the type of the move that set it** (today 59k:1021 hard-codes holy). Pip's Smoulder bursts as fire. Auriel no
   longer sets a Curse herself, so the rule change (one foe field, `curseDt`, defaulting to `'holy'`) only matters for Stars and
   uniques; the type card may drop it.
 - `HERO_PATHS.oriel`: **The Star:** fallingletter, pullreading, letters, newsarrives. **Clear Sky:** clearnight, polaris,
@@ -148,10 +148,10 @@ Foretold, Old Light, Turning Sky, Lamp Spark, Choking Smoke, Kindled Smoke, Fire
 Glint, Halo, Cold Light, Lingering Light, Hearth (gathering, lore, story, class and camp words), "Night" (Wren's: Night Hunter,
 Night Wings), "Chill" in a name (the status word), and "Star" beyond the four #352 names.
 
-## 4. Oriel's damage type: Starlight, her own
+## 4. Auriel's damage type: Starlight, her own
 
-**Cal decided (10 Oct 13:07): "Yeah I think Oriel should have her own type of damage."** The first judge ruling here (frost,
-drawn as cold starlight) is vetoed; section 9 keeps it as history. Oriel deals **Starlight**, a sixth damage type.
+**Cal decided (10 Oct 13:07): "Yeah I think Auriel should have her own type of damage."** The first judge ruling here (frost,
+drawn as cold starlight) is vetoed; section 9 keeps it as history. Auriel deals **Starlight**, a sixth damage type.
 
 | Part | Starlight (defaults; card `starlight-type` builds them) |
 |---|---|
@@ -187,7 +187,7 @@ or `kind`. **The type card waits for `starlight-icon`:** `typeIcon` (`61b-type-i
 - Pip: every id is kept, so `S.abil.unl.pip`, `S.solo.eq.pip`, `S.abil.tal.pip` and save codes load as they are. Learned moves
   keep working under their new names and rules. A pick on a rewritten talent carries to the new talent in the same A/B slot; the
   patch note says Pip's frost talents changed. Picks are free toggles (DECISIONS, Abilities), so nothing is lost.
-- Oriel: her ids are new and she is in no save yet. The wire card adds `oriel` to the save blank in `56e-abilities.js:36`
+- Auriel: her ids are new and she is in no save yet. The wire card adds `oriel` to the save blank in `56e-abilities.js:36`
   (`unl`, `tal`) with defaults; an old save without those keys gets them from the blank (no key bump; lessons, Saves: "Add new
   per-item fields as optional").
 - Save codes check every learned id against `ABILITIES[id].hero` (`55-savecode.js:236`); one hero per id keeps that check
@@ -206,7 +206,7 @@ or `kind`. **The type card waits for `starlight-icon`:** `typeIcon` (`61b-type-i
 - Thermal Shock: card 2 reports its FIT gain (`sim.mjs:2066`) with Smoke Bolt in place of Frost Shard. If the gain is under 3%
   on every Pip row, the Foreman cards a Thermal Shock rework for a judge: before 1.0 its only Chill source left is Cold Steel
   (Frostfire is found at zone 53), and a Pip-tagged star that never pays is a trap.
-- Oriel's rows: every row in oriel.md section 6, re-run with her six style moves, is a pass condition for her wire card.
+- Auriel's rows: every row in oriel.md section 6, re-run with her six style moves, is a pass condition for her wire card.
 - A test asserts the rule: every `ABILITIES` id has one hero, every hero's `HERO_ABILITIES` has 14 distinct ids, and no two
   heroes' lists share a name.
 
@@ -238,7 +238,7 @@ The Foreman writes them; the wire cards pick them up.
 6. **`oriel-icons` (Codex):** icons for her 14 moves. She is not a complete icon hero until all 14 are vetted, so she ships with
    none of Codex's (the `COMPLETE` rule), as Wren and Tobin do today.
 
-Oriel's five new moves need new poses (above); no other hero needs any. The effects are the game's.
+Auriel's five new moves need new poses (above); no other hero needs any. The effects are the game's.
 
 Wire card notes (added to each card file): `route-s-oriel-wire` builds the six new ids (Polaris, Glimmer, Chart the Sky, Eclipse, Old Light, Moonbeam) and drops the `pool` field plan;
 `route-s-pip-wire` packs Pip's poses under unchanged ids, with effects that follow `pip-themed-kit`; `route-s-tobin-wire` renames
@@ -247,7 +247,7 @@ nothing.
 ## 8. Design-doc rubric lines
 
 - **Player problem and evidence:** Cal's words (10 Oct 11:10, 12:02). Counted at `6658f2a5`: Pip has 1 frost ability and 3
-  frost talents (Cold Spark, Rime Ring, Frost Touch) on a fire mage; Oriel's spec borrowed 6 of her 14 moves from Pip, so a star
+  frost talents (Cold Spark, Rime Ring, Frost Touch) on a fire mage; Auriel's spec borrowed 6 of her 14 moves from Pip, so a star
   mage would cast Frost Shard and Nova. Codex's 34-hero list (`hero-abilities-34.json`) gives each hero 12 of their own but keeps
   six shared class tools each, so the clash would grow with every hero added.
 - **Alternatives weighed:** (a) keep the pool and rename per hero at display time: rejected, because talents, fx, icons and poses
@@ -257,17 +257,17 @@ nothing.
 - **Coverage-map areas:** 14 (heroes and build variety), 15 (world and story: a hero's moves say who they are). Compass pillar 3,
   Your hero.
 - **Predicted effect:** after the builds, 0 ability ids or names shared between heroes (the section 6 test); Pip's boss rows
-  within 5 points of today either way; Oriel's rows inside the starters' spread. Missed: any shared name, or a Pip row more than 5
+  within 5 points of today either way; Auriel's rows inside the starters' spread. Missed: any shared name, or a Pip row more than 5
   points off after the tuning order in section 6.
 - **Switch off:** the Pip build is a data and rules change on unchanged ids; reverting its commit restores Frost Shard, and saves
-  load either way. Oriel's six ship with her and her join flag.
+  load either way. Auriel's six ship with her and her join flag.
 - Nothing here touches the Cal-only list.
 
 ## 9. Red team and judge
 
 Red team (Opus, read-only, on the first draft), ten findings, each answered in this draft:
 1. Smoke Bolt "plain tile" breaks the complete-icons check for Pip: card 1 (icons) now goes before card 2 (build).
-2. Retagging Thermal Shock, Cold Steel and Frostfire fails the Stars check and they do nothing for frost Oriel: tags stay.
+2. Retagging Thermal Shock, Cold Steel and Frostfire fails the Stars check and they do nothing for frost Auriel: tags stay.
 3. Making Nova fire cost Pip her holy hits and left the counter tips stale: Ring of Light stays holy; 24d tips are in card 2.
 4. Smoke Bolt (Weaken 2 + Pin, cooldown 3) copied Ill Omen and outclassed Tobin's Roar: now Weaken 1 (2 on a burning foe), no
    Pin; the miss threshold is two-sided.
@@ -286,7 +286,7 @@ Red team (Opus, read-only, on the first draft), ten findings, each answered in t
 2. **Pip: approved.** Smoke Bolt fixes the theme and still costs Pip control overall; Ring of Light staying holy keeps her holy
    answer. Amendments: the loadout-odds assert keeps one exact re-derived order (A); card 2 reports Thermal Shock's gain and a
    rework is carded if it is under 3% (B).
-3. **Oriel's six: approved,** with Starbolt losing Chill and Point of Light giving no Bearing. Amendment: the burst type is a
+3. **Auriel's six: approved,** with Starbolt losing Chill and Point of Light giving no Bearing. Amendment: the burst type is a
    `curseDt` foe field defaulting to holy, and Short Sentence reads it (C).
    Superseded on 10 Oct 14:01-14:15: Cal replaced her six with Polaris, Glimmer, Chart the Sky, Eclipse, Old Light and
    Moonbeam (section 3). His word signs off.
@@ -295,9 +295,9 @@ Red team (Opus, read-only, on the first draft), ten findings, each answered in t
 5. **Save impact: sound.** No key bump; the patch note says Pip's frost talent picks now point to new talents.
 6. **Buildable: yes.** Card 2 owns the rule test, the 24c header and `docs/GAME.md` (D).
 
-Veto phrase for Cal: **"Give Oriel her own Starlight damage type"**.
+Veto phrase for Cal: **"Give Auriel her own Starlight damage type"**.
 
-**Cal used it (10 Oct 13:07):** "Yeah I think Oriel should have her own type of damage." Section 4 now gives her Starlight;
+**Cal used it (10 Oct 13:07):** "Yeah I think Auriel should have her own type of damage." Section 4 now gives her Starlight;
 ruling 4 above is history. The Starlight details (colour, icon, no weakness or resistance in Chapter 1) were ruled by a second
 Opus judge (below).
 

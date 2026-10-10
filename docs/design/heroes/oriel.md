@@ -1,7 +1,7 @@
-# Oriel Vess, the Starcaller: fight kit, how a player meets her, pose list
+# Auriel Vess, the Starcaller: fight kit, how a player meets her, pose list
 
 Card `oriel-ability-spec` (Cal, 10 Oct 09:51: "Shall we work on adding a different hero into the game with the new art? I'd like to see
-Oriel I think"; 09:56: "We have an ability list that codex already made"). Status: **spec, judge ruled 2026-10-10 (section 10).**
+Auriel I think"; 09:56: "We have an ability list that codex already made"). Status: **spec, judge ruled 2026-10-10 (section 10).**
 No code here: `route-s-oriel-wire` builds it, the art thread draws it.
 
 Starting list: Codex's hero-13 kit in `docs/design/hero-abilities-34.json` (branch `codex/hero-animation-icons`, commit 227bda46;
@@ -23,9 +23,9 @@ it, and it lands after her next 2 turns for a big Starlight hit and a Stun. Whil
 softens the foe with Glimmer's Pin, Ill Omen's Weaken and Eclipse. When a boss starts gathering a charged move (which the game shows as it starts, never
 before: "No telegraph", DECISIONS, The hero), she can Call It Down and drop the star on it now.
 
-**Pip burns; Oriel stops.** Pip's damage comes over time: she sets a Burn, feeds it and cashes it in, and her defence is Ashen
-Ward. Oriel's damage comes late and in one piece, and her defence is taking the foe's turns away: the star's Stun, Glimmer's Pin (a
-Stun on a Perfect press), Weaken and Pin from Ill Omen. Pip asks "is the fire still going?"; Oriel asks "is my star still up there, and is now the
+**Pip burns; Auriel stops.** Pip's damage comes over time: she sets a Burn, feeds it and cashes it in, and her defence is Ashen
+Ward. Auriel's damage comes late and in one piece, and her defence is taking the foe's turns away: the star's Stun, Glimmer's Pin (a
+Stun on a Perfect press), Weaken and Pin from Ill Omen. Pip asks "is the fire still going?"; Auriel asks "is my star still up there, and is now the
 moment to pull it down?". On a boss a Stun is a Stagger and a charge-breaker rather than a lost turn, so her boss play is
 reactive: keep a star falling, and spend it on the charge you can see.
 
@@ -42,7 +42,7 @@ you hold when it lands. Starfall spends them all for a big blast.' }`
 
 ## 3. The falling star (the rule the build adds to 59k)
 
-- **Falling Star** queues one star: `h.fall = 2`. It counts down after each of Oriel's own completed actions (Attack or an
+- **Falling Star** queues one star: `h.fall = 2`. It counts down after each of Auriel's own completed actions (Attack or an
   ability; Parry and Dodge happen in the foe's turn and do not count). After the action that takes it to 0, the star lands.
 - **What the star reads, all at landing, nothing at cast:** ability power (level, Focus, gear) at that moment; base 220%, plus
   20% for each Bearing held then (added, not multiplied: at most 300%); one crit roll; type Starlight. **No one-action boost rides
@@ -255,12 +255,12 @@ reward (a quest card), Hallowed looks and her subclass.
    22. The Star Chart becomes her hero quest.
 3. **Numbers and sims: enough,** with the zone 20 rows and the sampler-matches-live row (8) added.
 
-Veto phrase for Cal: **"Oriel joins at zone 25"**. Red team findings and how each was answered: this card's thread; the changes
+Veto phrase for Cal: **"Auriel joins at zone 25"**. Red team findings and how each was answered: this card's thread; the changes
 are in sections 3 to 8.
 
 ## 11. Design-doc rubric lines
 
-- **Player problem and evidence:** Cal asked to see Oriel with the new art (10 Oct 09:51). Every hero stalls between zones 20 and
+- **Player problem and evidence:** Cal asked to see Auriel with the new art (10 Oct 09:51). Every hero stalls between zones 20 and
   30 for days (`pacing-turn-era.md`), and the 50-hour run shows a 12-hour wall near zones 24-25 (lessons, Economy: "No hard
   progress walls"). A new hero at the start of the stall gives the player something new to try there.
 - **Coverage-map areas:** 14 (heroes and build variety), 7 (progression curve), 21 (long-term retention).

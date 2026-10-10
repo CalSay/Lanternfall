@@ -1,4 +1,4 @@
-# Red team, group B: Oriel route S pack
+# Red team, group B: Auriel route S pack
 
 Moves: fallingletter, pullreading, bearing, clearnight, badnews, letters, slivershum, idle (64 frames).
 Method: I opened the review sheet for each move, then every frame at full size. I made zoom crops of doubtful areas, plus game-size (1/4) strips, in `../crops/` (named `<move>-<n>-<what>.png`). I also ran an alpha scan: there is no semi-transparent edge, no pale halo, and no stray opaque island bigger than a hair curl or a flake.

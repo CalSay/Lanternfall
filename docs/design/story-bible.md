@@ -211,7 +211,7 @@ then a text tag.
 | Corvin Black | Ch5 a4 | Served a king he never saw for twenty years; walked into the Gloamvale to find the face. There was only ever a voice behind the curtain. |
 | Kestrel Thane | Ch4 a1 | Rowan |
 | Eskil Hauk | Ch4 a1 | Waits by Rowan's cairn to learn why; learns it at a7 |
-| Oriel Vess | Ch4 a3 | Your star |
+| Auriel Vess | Ch4 a3 | Your star |
 | Inga Fallow | Ch4 a3 | Digs the Starscar's shards; finds what the Starved Orbit eats |
 | Solveig Lund | Ch4 a5 | Kept one candle lit in the Silent Village for everyone in it, alone, for ten winters |
 | Brynja Berg | Ch4 a6 | Held the village's last warm doorway three nights; carried the brazier down still warm, and keeps it lit |
@@ -476,7 +476,7 @@ it, and every recurring person changes. Section 6.4 lists every appearance.
   still braced in the gate, and the storm's real road round the high pass. After the Whitehush: "It had his shape. I gave
   it his voice." Then: "That's for Rowan." Ch5 a1 she sees you off at the Last Descent.
 
-**Oriel Vess, stargazer** (Ch4; Omens; finale).
+**Auriel Vess, stargazer** (Ch4; Omens; finale).
 - Ch4 a3: she has watched one small new star since the night you took up the road. It's your lamp, seen from above. "I
   could always see it. I think the dark just learned to look." Omen lines after Ch4 are hers. Finale: "The stars are back
   to gossip."
@@ -537,7 +537,7 @@ note (8.5), so every area carries a name the finale calls back.
 | 1 | **Tam**, Tobin, Hob | Wren | **Anselm**, Pip | **Maren** | **Morwen** | **Grenna**, Rook | **Bram**, **Thessaly** | **Hesketh**, **Elowen**, **Vesper** |
 | 2 | **Hallam**, Loveday | **Hallam**, Aldric | Nell | **Hallam**, Cass | Ama | **Anselm** | **Maren** | Silas, Loveday, **Hallam**, **Elowen**, **Vesper** |
 | 3 | **Caedmon**, **Hallam** | **Ashby**, Davy, **Caedmon** | Beatrix, Isolde | **Grenna**, Linnet; camp: **Hesketh**, **Tam** | **Caedmon**, Ferrin | **Bram** | Oswin | **Caedmon**, Durand, **Elowen**, **Vesper** |
-| 4 | **Kestrel**, Eskil | Hild | **Oriel**, Inga | **Kestrel** | Liss, Solveig | Brynja, Ragna, **Morwen** | **Kestrel**, Eskil, **Asta**, **Caedmon**, **Durand** | **Kestrel**, **Elowen**, **Vesper** |
+| 4 | **Kestrel**, Eskil | Hild | **Auriel**, Inga | **Kestrel** | Liss, Solveig | Brynja, Ragna, **Morwen** | **Kestrel**, Eskil, **Asta**, **Caedmon**, **Durand** | **Kestrel**, **Elowen**, **Vesper** |
 | 5 | **Kestrel**, **Asta**, **Caedmon**, **Durand** | **Asta**; Tam's lamp | the Mere; Rook's lamp | Corvin; Ada's lamp | Morwen's candle; Ashby's lamp | **Thessaly**'s note | alone, by choice | everyone (9) |
 
 Chapter 5 thins on purpose, because the road is cutting you off, but every area has a living person or a named lamp,
@@ -559,11 +559,11 @@ and the finale brings them all back.
 | **Hunting** | Bram: frightened animals, not Shadowborn | |
 | **The Deepwell** | The stair to the Old Light; Maud's Lantern; Season 2 seeds | Added Deep Lore line: "The stair goes further than any rope has measured." |
 | **The Proving** | The Order's test of its keepers, opened by Elowen in her chapel after the Fenmother. Re-theme its trials from "defend a lamp" to the Order's old tests | |
-| **Omens** | The world waking up; Oriel's lines after Ch4 | "The birds are back in the trees today." |
+| **Omens** | The world waking up; Auriel's lines after Ch4 | "The birds are back in the trees today." |
 | **Bestiary** | Rule 4: each line says what shape this Shadowborn copied | |
 | **Uniques** | One flavour line naming the Champion and place it came from | Sproutblade: "Cut from the Briar Regent's throne. Still putting out shoots." |
 | **Codex, Journal** | Every story page, re-readable; Silas's letters and Pip's torn pages as collectibles (never a turn on their own) | |
-| **Stars** | Oriel's star: your lamp seen from the sky | |
+| **Stars** | Auriel's star: your lamp seen from the sky | |
 | **Online** (raid, tavern presence) | Unchanged. Other lamp-bearers carry other sparks Elowen gave away | Client text only |
 
 ---
@@ -720,7 +720,7 @@ for yourselves. They'd take it."
 |---|---|---|---|---|---|
 | 1 | **Frostgate Pass** (106-110) | Skarn, the Mountain Maw | Kestrel, coming home ahead of you on the pass; Eskil at Rowan's cairn | **R**: she says it plainly. "Rowan held the gate when the storm came. He died holding it." Eskil: "Then how did the storm get through?" Kestrel doesn't answer. What she believes is that Rowan opened the door. | Rowan |
 | 2 | **The Eyries** (111-115) | Velka Sixwing | Granny Hild's candle ropes | **G**: cliff villages pass candles on ropes, each lit for someone. Hild sends one down the line to you. You've never been given a light you could see. You carry it beside your lamp from here on. The Sixwing was cutting the ropes. | Receiving |
-| 3 | **The Starscar** (116-120) | Orris, the Starved Orbit | Oriel and her star; Inga | **E (midpoint)**: Oriel has watched a small new star since the night you took up the road. It's your lamp, seen from above. "I could always see it. I think the dark just learned to look." Inga shows you the Starved Orbit's trail through the craters: it has been eating its way toward that star. The storm is hunting you. | You are the target |
+| 3 | **The Starscar** (116-120) | Orris, the Starved Orbit | Auriel and her star; Inga | **E (midpoint)**: Auriel has watched a small new star since the night you took up the road. It's your lamp, seen from above. "I could always see it. I think the dark just learned to look." Inga shows you the Starved Orbit's trail through the craters: it has been eating its way toward that star. The storm is hunting you. | You are the target |
 | 4 | **The Blue Caves** (121-125) | Istra, the Unseen Face | Kestrel's grief | **V**: at the cave mouth, Rowan's shape: the Whitehush, walking the storm, wearing what Kestrel hopes to see. It never speaks. Kestrel talks to it, and answers for it in Rowan's words: "Kes. It's warm here." She believes Rowan opened the door. | Shape, never voice |
 | 5 | **The Silent Village** (126-130) | Nera, the Hush Regent | Liss; Solveig and her candle | **L (low point)**: in the storm a voice like a neighbour's knocked at every door. One by one, families shut the door and lit their candles for themselves. Kept, the candles were called. Then the cold offered rest, and they said yes, and each family's voice went to knock on the next door. No one has spoken in ten years. Liss writes in the frost: "Mum shut the door." Only Solveig kept a candle lit for them all, at her window, every night; no Shadowborn could put it out, and the storm hid her window from the Voice. | The cost in full: whole villages |
 | 6 | **The Rimewood** (131-135) | Brakka, the White Briar | Brynja, Ragna, Morwen | **G**: Brynja carried the village's last brazier down here, still warm, after three nights in the last open doorway, and has kept it lit since. Morwen has brought candles up the mountain, and the Rimewood folk light them for the people in the Silent Village by name. Morwen gives you one: "If you find their hearth, light this." Ragna: "The snow says you're going further." | Morwen's candle |
@@ -899,7 +899,7 @@ for. The Oath is undone, one waymark at a time.
 
 Long-play players quit over an empty endgame (research, `fun-library.md` section 8), so these are concrete threads
 with names on them, not a fog of "more to come". Recurring people each end Season 1 with one open line: Elowen (bait),
-Aldric (the Oath), Grenna (the well cover), Morwen (Maud), Kestrel (she means to walk the high pass the storm took), Oriel ("one star is
+Aldric (the Oath), Grenna (the well cover), Morwen (Maud), Kestrel (she means to walk the high pass the storm took), Auriel ("one star is
 moving under the ground").
 
 ### 11.3 Lore that unlocks in pieces

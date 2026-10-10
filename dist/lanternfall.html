@@ -5831,7 +5831,7 @@ const RIG = { COMPANIONS: AK.CHARS, CLASSES: AK.CLASSES, FAM: AK.FAM, SKINS: AK.
 }
 
 // ---- src/js/12e-art-dusk.js ----
-// 12e-art-dusk: the Dusk Company circle in B1 (Kestrel, Isolde, Oriel, Corvin). DATA only.
+// 12e-art-dusk: the Dusk Company circle in B1 (Kestrel, Isolde, Auriel, Corvin). DATA only.
 // Entry format: see 12c-art-hedgefolk.js. Kit and rules: 12a-art-body.js, docs/design/art-direction.md.
 {
   const { m, E, P, C, R, Q, arcPts, rrect, legs, torsoShape, robeShape, arm, head, face, hairShort, hood, belt, SKINS } = AK;
@@ -5929,9 +5929,9 @@ const RIG = { COMPANIONS: AK.CHARS, CLASSES: AK.CLASSES, FAM: AK.FAM, SKINS: AK.
       k.add(6.42, 'armF', rose, R(k.pF[0] - 5, k.pF[1] + k.armR * .45, 10, k.U(.9)), { clip: sp });
     } };
 
-  // ---------------- Oriel Vess, the Starcaller (Epic caster) ----------------
+  // ---------------- Auriel Vess, the Starcaller (Epic caster) ----------------
   // Silhouette: tall, a stiff standing collar framing her head, a staff with a star hung from its crook.
-  AK.CHARS.oriel = { name: 'Oriel', circle: 'dusk', hs: 1.08, ws: .92, aF: -.3, aB: -.2, anim: 'cast', eye: '#1A1420',
+  AK.CHARS.oriel = { name: 'Auriel', circle: 'dusk', hs: 1.08, ws: .92, aF: -.3, aB: -.2, anim: 'cast', eye: '#1A1420',
     wpn: { fam: 'wood', fam2: 'crystal', t: 3, r: 2 },
     build(k, w) {
       const u = k.u, { hx, hy, hw, hh } = k;
@@ -7846,7 +7846,7 @@ const BIOS = {
   anselm: 'Anselm rang the chapel bell every dusk for thirty years. When the chapel fell, he took the bell with him. It is heavier than he is, and he will not put it down.',
   grenna: 'Grenna cut stone until the golems woke and the quarry turned on the town. She broke the first golem with her bare hands. The rest she broke with a hammer.',
   isolde: 'Isolde\'s contract was signed in the dark, and she has never read it. She says it only has one word on it, and the word is "finish".',
-  oriel: 'Oriel reads the sky the way others read letters, and most of the news is bad. When the stars answer, they answer all at once.',
+  oriel: 'Auriel reads the sky the way others read letters, and most of the news is bad. When the stars answer, they answer all at once.',
   morwen: 'Morwen makes candles from things she will not name, and each burns a different colour. She is kind to children and cruel to everything else. The Fungal Deep was her garden before the spores took it.',
   vesper: 'Vesper sings in taverns for a coin and a bed, and fights for free when the song is good. She knows every road song in Lanternfall. She wrote half of them, and changed the endings.',
   elowen: 'The land is called Lanternfall because of what Elowen did the night the lights went out. She will not talk about it. She keeps her flame low.',
@@ -7900,7 +7900,7 @@ const JOIN_LINES = {
     'Isolde Marrow is already walking toward the next fight.'],
   oriel: ['The Star Chart catches fire in your hand, and the ash drifts upward.',
     '"You called. The sky told me you would. It rarely says anything nice."',
-    'Oriel Vess steps out of the smoke and looks up.'],
+    'Auriel Vess steps out of the smoke and looks up.'],
   morwen: ['A green candle lights itself on the Fungal Deep boss\'s corpse.',
     '"You cleared my garden without a nursemaid. I like that."',
     'Morwen Tallow gathers the wax and walks with you.'],
@@ -8001,9 +8001,9 @@ const STORIES = {
     { title: 'Finish', text: 'Isolde once finished a job and felt nothing, and the next one only made her tired. Since she met you, she feels something new when a fight is done. She does not have a word for it yet. She says she is working on it.' }
   ],
   oriel: [
-    { title: 'Bad News from the Sky', text: 'Oriel says the stars have been sending bad news since the lights went out. Before that, they mostly gossiped. She still reads them every night. Someone has to, and she is good at it.' },
-    { title: 'The Falling Star', text: 'When Oriel was a girl, a star fell in her village square, and it stayed warm for a week. She sat beside it until it went cold. The staff she carries holds a sliver of it. It still hums on clear nights.' },
-    { title: 'What the Stars Want', text: 'Oriel admits she does not know what the stars want. She thinks they just want someone to look up. She points out a small new star low on the horizon. It appeared, she says, the night you took up the road.' }
+    { title: 'Bad News from the Sky', text: 'Auriel says the stars have been sending bad news since the lights went out. Before that, they mostly gossiped. She still reads them every night. Someone has to, and she is good at it.' },
+    { title: 'The Falling Star', text: 'When Auriel was a girl, a star fell in her village square, and it stayed warm for a week. She sat beside it until it went cold. The staff she carries holds a sliver of it. It still hums on clear nights.' },
+    { title: 'What the Stars Want', text: 'Auriel admits she does not know what the stars want. She thinks they just want someone to look up. She points out a small new star low on the horizon. It appeared, she says, the night you took up the road.' }
   ],
   morwen: [
     { title: 'Colours of Wax', text: 'Morwen\'s candles burn green, violet and a blue that hurts to look at. Each colour means something she will not explain. The children at the Tavern ask for a red one. She makes it for them, and it smells of apples.' },
@@ -8643,8 +8643,8 @@ const DARE_LINES = {
 };
 
 // Lines that name a person or place the player meets later. Each waits for the zone given (the best zone reached) and then replaces
-// the Omen's plain line. Oriel is met in Chapter 4, so her lines come after it (bible 7, 12).
-const OMEN_LATE = { luckyStar: { zone: 141, hero: 'oriel', line: 'One star is winking. Oriel says it means you.' } };
+// the Omen's plain line. Auriel is met in Chapter 4, so her lines come after it (bible 7, 12).
+const OMEN_LATE = { luckyStar: { zone: 141, hero: 'oriel', line: 'One star is winking. Auriel says it means you.' } };
 
 const omenLine = (id, dare, maxZone, met) => (dare && DARE_LINES[id]) || (OMEN_LATE[id] && maxZone >= OMEN_LATE[id].zone && typeof met === 'function' && met(OMEN_LATE[id].hero) && OMEN_LATE[id].line) || OMEN_LINES[id]
   || (typeof COAST_OMEN_TEXT === 'object' && COAST_OMEN_TEXT[id] && COAST_OMEN_TEXT[id].say) || '';
@@ -13714,7 +13714,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 // ---- src/js/55-crafting.js ----
 // 55-crafting: crafting actions (task K6). Craft any kind at its station, upgrade (trophies
 // gate +8..+10), Reforge one affix line, Transmute within a family, generic salvage, companion
-// gear with the one-wearer rule, the Star Chart (Oriel) and Tonics (K6b).
+// gear with the one-wearer rule, the Star Chart (Auriel) and Tonics (K6b).
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Spec: docs/design/gathering-and-crafting.md 3, 4 and 9 (K6) with its "Owner decisions"
 // (random affixes, Reforge at the Enchanter's Table, trophies gate +8..+10) and camp.md N4
@@ -13756,7 +13756,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //   craftLiftTo(kind, t) -> grade index | null   the grade a lift makes, null when the level's grade cannot be lifted (A or S)
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
 //   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
-//                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
+//                                                Essence, 1 Wraith Veil; Enchanting 9; Auriel joins
 //   brewTonic(key, t) / drinkTonic(key, t) / tonicActive() -> { key, t, left, v } | null   (K6b)
 //
 // Rules:
@@ -14095,12 +14095,12 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     save();
   });
 
-  // ---- Star Chart (Oriel) ----
+  // ---- Star Chart (Auriel) ----
   const orielDone = () => C().starChart > 0;
   function canStar() {
     const t = STAR.t, need = CRAFT_STATION_REQ[t - 1], cost = { mats: STAR.mats, gold: 0, troph: STAR.troph };
     const x = { cost, lv: S.skills.ench.lv, need, miss: [] };
-    if (orielDone()) return no('Oriel already answered your Star Chart.', x);
+    if (orielDone()) return no('Auriel already answered your Star Chart.', x);
     if (unbuilt(STAR.st)) return no(unbuilt(STAR.st), x);
     if (!skillTierOpen('ench', t)) return no(gateWhy('ench', need), x);
     const tmiss = STAR.troph.filter(([i, n]) => (C().troph[i] || 0) < n);
@@ -18831,7 +18831,7 @@ const ROSTER = {
   anselm: { name: 'Brother Anselm', title: 'the Bellringer', rarity: 'rare', role: 'support', circle: 'oath', route: { type: 'tavern' }, how: 'Meet him at the Tavern and bring gold and Essence.' },
   grenna: { name: 'Grenna Holt', title: 'the Stonebreaker', rarity: 'epic', role: 'tank', circle: 'wayfarers', route: { type: 'token' }, how: "Win a Stonebreaker's Token from Quarry Ruins bosses." },
   isolde: { name: 'Isolde Marrow', title: 'the Duskblade', rarity: 'epic', role: 'striker', circle: 'dusk', route: { type: 'token' }, how: 'Win a Dusk Contract from zone bosses.' },
-  oriel: { name: 'Oriel Vess', title: 'the Starcaller', rarity: 'epic', role: 'caster', circle: 'dusk', route: { type: 'craft' }, how: "Craft a Star Chart at the Enchanter's Table." },
+  oriel: { name: 'Auriel Vess', title: 'the Starcaller', rarity: 'epic', role: 'caster', circle: 'dusk', route: { type: 'craft' }, how: "Craft a Star Chart at the Enchanter's Table." },
   morwen: { name: 'Morwen Tallow', title: 'the Candlewitch', rarity: 'epic', role: 'caster', circle: 'wayfarers', route: { type: 'quest' }, how: 'Beat the Fungal Deep boss.' },
   vesper: { name: 'Vesper Lark', title: 'the Songweaver', rarity: 'epic', role: 'support', circle: 'wayfarers', route: { type: 'tavern' }, how: 'Earn Renown on the bounty board.' },
   elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', route: { type: 'quest' }, how: 'Quest: relight the chapel with gold and Essence.' },
@@ -18848,7 +18848,7 @@ const ROSTER = {
   beatrix: {"name": "Beatrix Fairweather", "title": "the Wandering Scholar", "rarity": "legendary", "role": "support", "circle": "hedgefolk", "route": {"type": "quest"}, "dt": "holy", "sst": "regen", "bio": "Beatrix wrote the book Pip taught herself fire from, then went east to learn if its last chapter was true. She tore that chapter out herself. It was true, and she has carried it through the ash ever since."},
   eskil: {"name": "Eskil Hauk", "title": "the Pass Scout", "rarity": "rare", "role": "striker", "circle": "dusk", "route": {"type": "progress"}, "dt": "poison", "sst": "venom", "bio": "Eskil scouted the pass with Rowan and Kestrel for the Dusk Company. He came down the mountain the winter Rowan didn’t, and he has waited by the cairn every storm since, to learn why.", "ranged": true},
   brynja: {"name": "Brynja Berg", "title": "the Doorward", "rarity": "epic", "role": "tank", "circle": "reachfolk", "route": {"type": "quest"}, "dt": "fire", "sst": "burn", "bio": "Brynja stood in the Silent Village’s last warm doorway for three nights with a brazier and a door-bar. The brazier was still warm when she reached the Rimewood. She keeps it lit."},
-  inga: {"name": "Inga Fallow", "title": "the Stardigger", "rarity": "epic", "role": "caster", "circle": "dusk", "route": {"type": "quest"}, "dt": "frost", "sst": "chill", "bio": "Inga reads the Starscar’s craters the way Oriel reads the sky, from underneath. The Dusk Company paid her to find the shards before the dark did. She kept finding them."},
+  inga: {"name": "Inga Fallow", "title": "the Stardigger", "rarity": "epic", "role": "caster", "circle": "dusk", "route": {"type": "quest"}, "dt": "frost", "sst": "chill", "bio": "Inga reads the Starscar’s craters the way Auriel reads the sky, from underneath. The Dusk Company paid her to find the shards before the dark did. She kept finding them."},
   ragna: {"name": "Ragna Vik", "title": "the Lichen-Witch", "rarity": "epic", "role": "caster", "circle": "reachfolk", "route": {"type": "token"}, "dt": "poison", "sst": "venom", "bio": "Ragna scrapes lichen off the Rimewood’s glass branches and boils it into things wolves hate. She talks to the snow. The snow, she says, listens better than people."},
   solveig: {"name": "Solveig Lund", "title": "the Sill-Candle", "rarity": "legendary", "role": "support", "circle": "reachfolk", "route": {"type": "quest"}, "dt": "fire", "sst": "regen", "bio": "For ten winters Solveig kept one candle lit in the Silent Village, for everyone in it, alone. She is quiet, practical and very hard to impress."},
   asta: {"name": "Asta Grey", "title": "the Guide", "rarity": "epic", "role": "support", "circle": "reachfolk", "route": {"type": "progress"}, "dt": "fire", "sst": "empower", "bio": "Asta guided traders over every pass in the Reach for forty years. She walked down into the Gloamvale once, turned back, and has been sorry she turned back ever since."}
@@ -43573,12 +43573,12 @@ let craftUI = null;
       const dn = f && t > 1 && have[t - 1] >= D.take ? canTransmute(fam, t, t - 1) : null;
       ench.dnB.disabled = !f || t <= 1 || have[t - 1] < D.take || !(dn && dn.ok);
       ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : upShut ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
-      // Star Chart (Oriel's recruit route): a recipe when K6 defines it as a kind or an action.
+      // Star Chart (Auriel's recruit route): a recipe when K6 defines it as a kind or an action.
       const sc = K6.starChart(), made = !!(S.craft && S.craft.starChart);
-      ench.star.hidden = true;   // no Oriel to draw yet (she is a hero to unlock later), so no Star Chart recipe
+      ench.star.hidden = true;   // no Auriel to draw yet (she is a hero to unlock later), so no Star Chart recipe
       if (!ench.star.hidden) {
         ench.star.textContent = '';
-        ench.star.append(el('h3', null, 'Star Chart'), el('p', 'note', made ? 'You made the Star Chart. Oriel Vess has seen it.' : "Chart the sky to draw Oriel Vess, the Starcaller, to your camp."));
+        ench.star.append(el('h3', null, 'Star Chart'), el('p', 'note', made ? 'You made the Star Chart. Auriel Vess has seen it.' : "Chart the sky to draw Auriel Vess, the Starcaller, to your camp."));
         if (!made) {
           const b = el('button', 'big forge', 'Craft the Star Chart'); b.type = 'button';
           b.addEventListener('click', () => act(() => sc()));

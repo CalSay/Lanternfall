@@ -1,4 +1,4 @@
-// 12e-art-dusk: the Dusk Company circle in B1 (Kestrel, Isolde, Oriel, Corvin). DATA only.
+// 12e-art-dusk: the Dusk Company circle in B1 (Kestrel, Isolde, Auriel, Corvin). DATA only.
 // Entry format: see 12c-art-hedgefolk.js. Kit and rules: 12a-art-body.js, docs/design/art-direction.md.
 {
   const { m, E, P, C, R, Q, arcPts, rrect, legs, torsoShape, robeShape, arm, head, face, hairShort, hood, belt, SKINS } = AK;
@@ -96,9 +96,9 @@
       k.add(6.42, 'armF', rose, R(k.pF[0] - 5, k.pF[1] + k.armR * .45, 10, k.U(.9)), { clip: sp });
     } };
 
-  // ---------------- Oriel Vess, the Starcaller (Epic caster) ----------------
+  // ---------------- Auriel Vess, the Starcaller (Epic caster) ----------------
   // Silhouette: tall, a stiff standing collar framing her head, a staff with a star hung from its crook.
-  AK.CHARS.oriel = { name: 'Oriel', circle: 'dusk', hs: 1.08, ws: .92, aF: -.3, aB: -.2, anim: 'cast', eye: '#1A1420',
+  AK.CHARS.oriel = { name: 'Auriel', circle: 'dusk', hs: 1.08, ws: .92, aF: -.3, aB: -.2, anim: 'cast', eye: '#1A1420',
     wpn: { fam: 'wood', fam2: 'crystal', t: 3, r: 2 },
     build(k, w) {
       const u = k.u, { hx, hy, hw, hh } = k;
