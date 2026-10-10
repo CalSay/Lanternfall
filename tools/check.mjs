@@ -86,7 +86,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -16816,6 +16816,105 @@ if (section('nu-chip-gate-label-fits')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('nu-chip-gate-label-fits crashed: ' + (e.stack || e)); }
+
+// ==== side-column-fits-740: every gate label and every away line fit the landscape side column ====
+// The side column holds the Next Up chip (row 2), the away chip (row 3) and the dock (row 4, .sb-tabs at its top). The dock shows
+// only while fighting (75-solo-ui: target() is 'mob') and the away chip only while gathering (71-ui-fight awayChipText), so the
+// height budget is per state: fighting, the chip ends above .sb-tabs; gathering, the chip and the away chip end above the screen's
+// foot and the dock is hidden. The section builds every tier gate label the game can make (gateLabel over each kind, tiers 2 to 5,
+// its station gates and each raw cell its recipe takes, one level short, gathering that skill and not) and every away line
+// (awayChipSay over each gathered material: about N in the longest away, fills up, full), and measures the longest of each, with
+// the players' web fonts and with the fallbacks (display-fallback-font).
+if (section('side-column-fits-740')) try {
+  const at = 'side-column-fits-740', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the chip's label lines and cut, the away chip's words, and the boxes, with the given words put in place (the next pass may
+    // rewrite them, so all of it is read in one task)
+    const measure = (page, label, away) => page.evaluate(([label, away]) => {
+      const c = document.getElementById('nuChip'), l = c && c.querySelector('.nu-lbl'), a = document.querySelector('.away-chip'), tabs = document.querySelector('.sb-tabs');
+      const on = e => !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden';
+      if (!on(c) || !l) return null;
+      const keep = [l.textContent, a && a.lastChild.textContent];
+      l.textContent = label; if (away != null && a) a.lastChild.textContent = away;
+      const lines = n => { const rg = document.createRange(); rg.selectNodeContents(n); return [...rg.getClientRects()].filter(r => r.width > 0); };
+      const lr = lines(l), lb = l.getBoundingClientRect(), cb = c.getBoundingClientRect(), cs = getComputedStyle(l), clamp = parseInt(cs.webkitLineClamp, 10) || 0;
+      const o = { lines: new Set(lr.map(r => Math.round(r.top))).size, clamp, cut: Math.max(...lr.map(r => r.bottom)) > lb.bottom + 1 || lb.bottom > cb.bottom + 1 || Math.max(...lr.map(r => r.right)) > cb.right + 1,
+        fs: parseFloat(cs.fontSize), chipBottom: Math.round(cb.bottom), away: on(a) ? null : false, dock: on(tabs) ? Math.round(tabs.getBoundingClientRect().top) : null, foot: innerHeight };
+      if (on(a)) { const ar = lines(a.lastChild), ab = a.getBoundingClientRect();
+        o.away = { top: Math.round(ab.top), bottom: Math.round(ab.bottom), cut: Math.max(...ar.map(r => r.bottom)) > ab.bottom + 1 || Math.max(...ar.map(r => r.right)) > ab.right + 1, fs: parseFloat(getComputedStyle(a).fontSize) }; }
+      l.textContent = keep[0]; if (a && keep[1] != null) a.lastChild.textContent = keep[1];
+      return o;
+    }, [label, away]);
+    try {
+      for (const webFonts of [true, false]) for (const [w, h] of [[740, 360], [1024, 768], [1280, 720], [1366, 640], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}${webFonts ? '' : ', fallback fonts'}`, phone = w < 1000, desk = w >= 1200;
+        const ctx = await browser.newContext({ turns: true, webFonts, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        // stamped at load, so no away card opens over the column
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const words = await X(`(() => {
+          const labels = new Set(), aways = new Set();
+          for (const kind of Object.keys(CRAFT_KINDS)) { if (CRAFT_KINDS[kind].legacy) continue;
+            for (let t = 2; t <= 5; t++) { const rec = craftRecipe(kind, t); if (!rec) continue;
+              const gs = [], st = stationOf(kind), need = CRAFT_STATION_REQ[t - 1];
+              if (st) for (const sk of new Set([st.skill, 'smith'])) gs.push({ skill: sk, lv: need - 1, need, station: st.key });
+              for (const k of Object.keys(rec)) { if (k === 'gold') continue; const prod = REFINE_PRODUCTS[k];
+                for (const [f, tt] of prod ? prod.inputs(t) : [[k, t]]) { if (f === 'coal' || !CRAFT_NODES[f]) continue;
+                  const sk = skillOf(f), nd = skillReq(sk, tt); if (nd > 1) gs.push({ skill: sk, lv: nd - 1, need: nd, mat: costName(f, tt) }); } }
+              for (const gate of gs) for (const on of [true, false]) labels.add(gateLabel({ kind, t, gate }, on)); } }
+          for (const f of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) { const nm = matName(f, t);
+            for (const n of ['spill', 0, 99999]) aways.add(awayChipSay(nm, n, CAMP_TUNE.awayMax)); }
+          const by = s => [...s].sort((a, b) => b.length - a.length);
+          return { labels: by(labels), aways: by(aways) }; })()`);
+        assert(words.labels.length > 100 && words.aways.length > 30, `${v}: the game makes gate labels and away lines (${words.labels.length}, ${words.aways.length})`);
+        // line breaks, not only length, decide the height: the 12 longest of each are measured
+        const L = words.labels.slice(0, 12), A = words.aways.slice(0, 12);
+        // fighting: the dock shows and the away chip does not; every label shows whole and the chip ends 4 px or more above .sb-tabs
+        let worst = null, bad = null, floor = true;
+        for (const lt of L) { const o = await measure(page, lt, null); if (!o) { bad = 'no chip'; break; }
+          if (o.away !== false || o.dock == null) { bad = `fighting shows the away chip or no dock (${JSON.stringify(o)})`; break; }
+          if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `cut: ${lt} (${o.lines} lines, clamp ${o.clamp})`; break; }
+          if (o.fs < (desk ? 14 : 13)) floor = false;
+          if (!worst || o.chipBottom - o.dock > worst.chipBottom - worst.dock) worst = { ...o, lt }; }
+        assert(!bad, `${v}: fighting, every gate label shows whole in the Next Up chip${bad ? ' (' + bad + ')' : ''}`);
+        if (worst) {
+          console.log(`  ${v}: fighting, the longest label takes ${worst.lines} lines and the chip ends ${worst.dock - worst.chipBottom} px above the dock`);
+          assert(worst.chipBottom + 4 <= worst.dock, `${v}: fighting, the chip ends above .sb-tabs (${worst.chipBottom} vs ${worst.dock}: ${worst.lt})`);
+        }
+        assert(floor, `${v}: the chip label keeps its ${desk ? 14 : 13} px floor`);
+        // gathering: the away chip shows and the dock does not; every label with every away line fits above the screen's foot
+        await X('navGo({ act: "gather", node: { kind: "ore", t: 1 } }); true');
+        await page.waitForTimeout(600);
+        worst = null; bad = null; floor = true;
+        for (const lt of L) for (const al of A) { const o = await measure(page, lt, al); if (!o) { bad = 'no chip'; break; }
+          if (!o.away || o.dock != null) { bad = `gathering shows no away chip or the dock (${JSON.stringify(o)})`; break; }
+          if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `label cut: ${lt}`; break; }
+          if (o.away.cut) { bad = `away line cut: ${al}`; break; }
+          if (o.away.top < o.chipBottom) { bad = `the away chip starts over the Next Up chip (${lt} / ${al})`; break; }
+          if (o.fs < (desk ? 14 : 13) || o.away.fs < (desk ? 14 : 13)) floor = false;
+          if (!worst || o.away.bottom > worst.away.bottom) worst = { ...o, lt, al }; }
+        assert(!bad, `${v}: gathering, every gate label and away line shows whole, the away chip under the Next Up chip${bad ? ' (' + bad + ')' : ''}`);
+        if (worst) {
+          console.log(`  ${v}: gathering, the longest pair ends ${worst.foot - worst.away.bottom} px above the screen's foot`);
+          assert(worst.away.bottom + 4 <= worst.foot, `${v}: gathering, the away chip ends above the screen's foot (${worst.away.bottom} vs ${worst.foot}: ${worst.lt} / ${worst.al})`);
+        }
+        assert(floor, `${v}: the chip and away text keep the ${desk ? 14 : 13} px floor`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('side-column-fits-740 crashed: ' + (e.stack || e)); }
 
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away

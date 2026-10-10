@@ -1190,6 +1190,16 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   rules and the walk and cold-leg gates still stand. (`autopilot/rulings/2026-10-10-wren-pipeline-default.md`)
 - **Live 3D spike (#320) closed early by Cal, 2026-10-10 00:37:** "Scenario has made 2D the best option we have"
   (cmsg_01AYPNgUeMrmxpJNQMppEbk94veePoKTgXG8AL6PW7VNHM). The spike is cancelled.
+- **Route S Wren (integrate-route-s-wren, Opus art judge, 2026-10-10; Cal can veto: "Pull the new Wren", "Wait for all three
+  heroes", "Turn the axe edge into the tree", "Heroes back to 95 px", "Heroes only, not foes"):** wire Wren's 20 fight moves
+  (Scenario key frames, 190 px, 63 colours, 1-bit alpha, lossless WebP, at most 1,650 KB), with arrow and bat sprites (at most
+  60 KB), a game-drawn string and game-drawn effects, behind Classic art (build card route-s-wren-wire, gated on registration,
+  bytes, shots and a judge clip read). The woodcut axe failed as a sledgehammer (v2) and a pick (v3) and passed on v4; the 4 gather
+  loops (277.6 KB, at most 300 KB) wire next through route-s-wren-gather, the axe head drawn over the trunk on impact. Any hero's
+  pack is at most 2.0 MB of files. Hero size (Cal 00:43, 01:23 "She looks like a little kid"): the 96 px art spec and "whole
+  steps only" end; heroes and foes draw 1.5x against unchanged scenery (ACTOR_K = 1.5, card actor-scale; a hero about 142 logical
+  px, 285 CSS at 1280x720) from the 190 px art with no new bytes; portrait stays 1x until UX-L1. #320 closed with the spike: foes
+  stay 2D. A menu-only phone mode is a separate Cal decision. (`docs/design/route-s/ruling.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 

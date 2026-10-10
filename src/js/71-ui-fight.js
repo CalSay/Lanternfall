@@ -70,9 +70,13 @@ function awayChipText() {
   let n = Math.floor(3600 / nodeTime(kind, tier) * boost * nodeYieldAvg(kind) * mod('yield:' + kind) * hrs);
   // A pile that fills mid-away: Spillover moves on to the next node (amounts then differ), otherwise the rest is lost.
   const room = stashRoom(kind, tier);
-  if (n > room && storeSpillOn()) return `Leave now: ${matName(kind, tier)} fills up, then Spillover moves your hero on.`;
-  n = Math.min(n, room);
-  return n > 0 ? `Leave now: about ${fmt(n)} ${matName(kind, tier)} in ${hrs} hours.` : `Leave now: ${matName(kind, tier)} is full, you earn nothing. Spend it or pick another node.`;
+  return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs);
+}
+// the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full
+// (side-column-fits-740 measures every variant for every material)
+function awayChipSay(nm, n, hrs) {
+  if (n === 'spill') return `Leave now: ${nm} fills up, then Spillover moves your hero on.`;
+  return n > 0 ? `Leave now: about ${fmt(n)} ${nm} in ${hrs} hours.` : `Leave now: ${nm} is full, you earn nothing. Spend it or pick another node.`;
 }
 function uiAwayChip() {
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');

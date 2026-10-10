@@ -29,6 +29,8 @@
 // Gather view for up to 5 minutes (Hunting for hide), builds the station a recipe needs (Camp > Build, two taps), and goes back to the fight.
 // Tier gates (next-tier-gate-goal): when no Next Up row is Ready and the craft row names a tier gate, it presses that row's Go and crafts at
 // the station or gathers in the named view for up to 5 minutes (the report's Gear section lists the gate rows pressed).
+// It logs why each gate session ended (walk-gate-reads-right): "the gate opened" only when the level reached the need, else what took
+// the craft row's place; the Gear section adds the craft row's text and Next Up place at 30, 45 and 60 min and each gathering level against 14.
 // Gather Go (walk-follows-gather-go): when a Next Up Go itself sends the hero to a node (Build Hearth 2: 20 Pine Log at the Pine Grove), it
 // stays there while the row reads as work, for up to 5 minutes, then goes back to the fight; the Gear section's Camp built line dates Hearth 2 and the Tavern.
 // It closes a sheet it left over the bar with the X. The report's "Gear and boss tries" table says what it wore in each zone and the boss tries lost there.
@@ -698,7 +700,29 @@ const GATE_ST_Q = st => `(() => { const t = 1, can = k => k !== 'ess' && !!CRAFT
 // a material gate: the named material's family, at the highest node tier its skill has open
 const GATE_MAT_Q = mat => `(() => { for (const k of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) if (costName(k, t) === ${JSON.stringify(mat)}) {
   let tt = Math.min(5, skillTopTier(skillOf(k))); while (tt > 1 && !craftNodeVisible(k, tt)) tt--; return { k, t: tt }; } return null; })()`;
-st.gate = { sess: null, stepAt: -99, cool: {}, pressed: [], crafts: 0, firstT2: null };
+// walk-gate-reads-right (why W9): why a gate session ended. The gate row also leaves Next Up's craft row when another piece takes the
+// row (a tier 1 tool turned Ready while Woodcraft was still 9 of 10), so "the gate opened" is said only when the level reached the need.
+const GATE_WHY_Q = s => `(() => { const k = ${JSON.stringify(s.skill)}, need = ${s.need}, sk = SKILL[k] || k, lv = S.skills[k] ? S.skills[k].lv : 0, b = craftGoalNext();
+  if (lv >= need) return 'the gate opened (' + sk + ' ' + lv + ' of ' + need + ')';
+  const still = '; ' + sk + ' still ' + lv + ' of ' + need;
+  if (!b) return 'the craft row went away' + still;
+  if (!b.gate) return 'a tier ' + b.t + ' row took its place (' + kindName(b.kind, b.t) + (b.p >= 1 ? ', Ready' : '') + ')' + still;
+  return 'another gate took its place (' + kindName(b.kind, b.t) + ': ' + SKILL[b.gate.skill] + ' ' + b.gate.lv + ' of ' + b.gate.need + ')' + still; })()`;
+// walk-gate-reads-right: the craft row (Next Up's 'forge' goal) at 30, 45 and 60 minutes: its text, its place among the 3 rows the list
+// shows and its rank among the rows the game would offer (two per system at most, as the list picks them). sticky: false, so the read
+// leaves the list's order alone; the list on screen gives rows already shown a small head start, so a near tie can read one place off
+const CRAFT_ROW_Q = `(() => { const all = topGoals(50, { sticky: false }), top = topGoals(3, { sticky: false }), i = all.findIndex(g => g.id === 'forge'), r = all[i];
+  return r ? { txt: r.label, ready: !!r.ready, rank: i + 1, of: all.length, row: top.findIndex(g => g.id === 'forge') + 1 } : null; })()`;
+// and each gathering skill's level against the tier 2 node gate (NODE_REQ[1], 14) at the end
+const GATHER_LV_Q = `Object.keys(S.skills).filter(k => !SKILL_TUNE.craftSkills.includes(k) && SKILL[k]).map(k => ({ k, nm: SKILL[k], lv: S.skills[k].lv, need: NODE_REQ[1] }))`;
+const CRAFT_ROW_AT = [30, 45, 60];
+st.gate = { sess: null, stepAt: -99, cool: {}, pressed: [], crafts: 0, firstT2: null, rows: [], gatherLv: null };
+async function craftRowAt(min) {
+  const r = await X(CRAFT_ROW_Q);
+  st.gate.rows.push({ min, t: gt, r });
+  await note(page, 'gate', `craft row at ${min} min: ${craftRowTxt(r)}`, { shot: false, extra: { craftRow: r, min } });
+}
+const craftRowTxt = r => r ? `"${r.txt}"${r.ready ? ' (Ready)' : ''}, ${r.row ? 'row ' + r.row + ' of 3 on Next Up' : 'not in Next Up\'s 3 rows'} (rank ${r.rank} of ${r.of})` : 'no craft row';
 async function gateStep(o) {
   const T = st.gate;
   if (gt - T.stepAt < 5 || o.cards.length || o.tip || o.phase !== 'idle' || !o.s.got || !o.s.got.craft || !o.s.got.nextup || st.gear.owns) return false;
@@ -712,7 +736,7 @@ async function gateStep(o) {
   };
   if (T.sess) {
     const s = T.sess;
-    if (!q || q.key !== s.key) return await end(q ? 'another gate took its place' : 'the gate opened');
+    if (!q || q.key !== s.key) return await end(await X(GATE_WHY_Q(s)));
     if (gt - s.start > 300) return await end('5 min and still shut, back to the fight');
     let m = null;
     if (s.st) {
@@ -749,7 +773,7 @@ async function gateStep(o) {
   const where = await X('S.tab');
   T.pressed.push({ t: gt, label: pick });
   // gate-go-starts-gathering: a gathering gate's Go starts the hero gathering itself; the bot owns that switch (it takes the hero back to the fight)
-  T.sess = { key: q.key, txt: q.txt, st: q.st, mat: q.mat, start: gt, owns: q.act !== 'gather' && (await X('S.activity')) === 'gather' };
+  T.sess = { key: q.key, txt: q.txt, skill: q.skill, need: q.need, st: q.st, mat: q.mat, start: gt, owns: q.act !== 'gather' && (await X('S.activity')) === 'gather' };
   await note(page, 'gate', `${pick} -> pressed Go (${where === 'forge' ? 'Craft' : where === 'gat' ? 'its Gather view' : 'tab ' + where})`, { extra: { goal: pick, pressed: 'Go', go: true, tab: where }, tag: 'gate-go' });
   return true;
 }
@@ -845,6 +869,7 @@ async function run() {
       o = await X(OBS);
       await watch(o);
       if (Math.floor(gt / 60) !== lastMin && st.gate.firstT2 === null && await X('(b => !!b && !b.gate && b.t >= 2 && b.p > 0)(craftGoalNext())')) { st.gate.firstT2 = gt; await note(page, 'gate', 'first tier 2 craft goal on Next Up', { shot: false }); }   // next-tier-gate-goal
+      while (st.gate.rows.length < CRAFT_ROW_AT.length && gt >= CRAFT_ROW_AT[st.gate.rows.length] * 60) await craftRowAt(CRAFT_ROW_AT[st.gate.rows.length]);   // walk-gate-reads-right
       if (Math.floor(gt / 60) !== lastMin) { lastMin = Math.floor(gt / 60); say(`minute ${lastMin}: zone ${o.s.maxZone}, level ${o.s.L}, gold ${o.s.gold} (${Math.round((Date.now() - t0) / 1000)} s clock)`); }
       if (process.env.WALK_DEBUG && Math.floor(gt) !== st.dbg) { st.dbg = Math.floor(gt); if (process.env.WALK_DEBUG === '2') console.error('  bar', await page.evaluate(() => [...document.querySelectorAll('#soloBar .sbtn')].map(b => b.className.replace('sbtn ', '') + (b.disabled ? ' DIS' : '') + ' ' + (b.getAttribute('aria-disabled') || '') + '|' + b.textContent.replace(/\s+/g, ' ').trim().slice(0, 30)).join(' ;; ')));
       console.error('  dbg', gt.toFixed(1), o.phase, JSON.stringify(o.tip && { a: o.tip.action, b: o.tip.button }), o.cards.length, JSON.stringify(o.s).slice(0, 120)); }
@@ -884,6 +909,10 @@ async function run() {
       const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || !!st.ringFor;   // the 33 ms step is for the foe's wind-up, the parry window and a timed ring only
       await advance(fine ? 33 : 100, fine ? 16 : 100);
     }
+    // walk-gate-reads-right: the 60 min craft row is read as the hour ends, then each gathering level against the tier 2 gate
+    while (st.gate.rows.length < CRAFT_ROW_AT.length && gt >= CRAFT_ROW_AT[st.gate.rows.length] * 60) await craftRowAt(CRAFT_ROW_AT[st.gate.rows.length]);
+    st.gate.gatherLv = await X(GATHER_LV_Q);
+    await note(page, 'gate', 'gathering at the end: ' + st.gate.gatherLv.map(g => `${g.nm} ${g.lv} of ${g.need}`).join(', '), { shot: false, extra: { gatherLv: st.gate.gatherLv } });
   
   } catch (e) {   // the browser or page went away (a crash, the container's memory): report the run so far instead of a stack trace
     if (!(page.isClosed() || /has been closed|Target crashed|Target page, context or browser|Browser closed|disconnected/i.test(String(e && e.message)))) throw e;
@@ -1091,7 +1120,10 @@ function report(res) {
         `Read from the game's counts: ${pc(m - sum('feintPress') - sum('holdEarly'), m)} of the tricks the bot meant to defend (the bot's own count; a trick cut off by leaving the fight counts there but not in the game).` : 'The game counted no zone boss tricks.'), ''); }
   // next-tier-gate-goal: the gate rows the bot pressed, and the minute Next Up first offered an open tier 2 craft
   { const G = st.gate, ends = log.filter(e => e.kind === 'gate' && e.end);
-    out.push(`Next Up tier gates: ${G.pressed.length} gate row${G.pressed.length === 1 ? '' : 's'} pressed${G.pressed.length ? ' (' + G.pressed.map(p => `"${p.label}" at ${fmtT(p.t)}`).join(', ') + ')' : ''}; ${G.crafts} tier 1 craft${G.crafts === 1 ? '' : 's'} made for a station gate${ends.length ? '; ' + ends.map(e => `${e.end} at ${fmtT(e.t)}`).join(', ') : ''}. First tier 2 craft goal: ${G.firstT2 === null ? 'not seen in ' + fmtT(reached) : fmtT(G.firstT2)}.`, ''); }
+    out.push(`Next Up tier gates: ${G.pressed.length} gate row${G.pressed.length === 1 ? '' : 's'} pressed${G.pressed.length ? ' (' + G.pressed.map(p => `"${p.label}" at ${fmtT(p.t)}`).join(', ') + ')' : ''}; ${G.crafts} tier 1 craft${G.crafts === 1 ? '' : 's'} made for a station gate${ends.length ? '; ' + ends.map(e => `${e.end} at ${fmtT(e.t)}`).join(', ') : ''}. First tier 2 craft goal: ${G.firstT2 === null ? 'not seen in ' + fmtT(reached) : fmtT(G.firstT2)}.`, '',
+      // walk-gate-reads-right: the craft row over the hour, and each gathering level against the tier 2 node gate
+      `Craft row: ${CRAFT_ROW_AT.map(m => { const x = G.rows.find(r => r.min === m); return `at ${m} min ${x ? craftRowTxt(x.r) : 'not reached'}`; }).join('; ')}. ` +
+      `Gathering at the end: ${G.gatherLv ? G.gatherLv.map(g => `${g.nm} ${g.lv} of ${g.need}`).join(', ') : 'not read'}.`, ''); }
   // craft-delta: crafts plus upgrades, first uses, and the longest stretch of minutes 20-60 with no choice (spec target: one every 8 min)
   const ups = log.filter(e => e.kind === 'upgrade'), crafts60 = log.filter(e => e.kind === 'moment' && /^craft:/.test(e.text) && e.t <= 3600).length, ups60 = ups.filter(e => e.t <= 3600).length;
   const cw = [1200, ...choices.filter(c => c.real).map(c => c.t).filter(t => t > 1200 && t < Math.min(3600, reached)), Math.min(3600, reached)];
