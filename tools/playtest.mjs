@@ -5,6 +5,10 @@
 //   node tools/playtest.mjs look                  what is on screen: visible text, tappable buttons, notices, a screenshot path
 //   node tools/playtest.mjs tap "<label>"         tap the button with that label (exact, then partial match; scrolls it into view)
 //   node tools/playtest.mjs tap-if "<label>"      tap it when it is on screen; carry on without failing when it is not
+//   node tools/playtest.mjs unless "<text|css>" <command ...>   run the command only while that text (or CSS selector) is NOT on
+//                                                 screen: a fight loop that stops pressing once the line or card it waits for is up
+//                                                 (`unless "No weapon on" tap-if "Attack"`; a fight press answers a held guide line)
+//   node tools/playtest.mjs if "<text|css>" <command ...>       the same, but only while it IS on screen (`if "Press Parry now" tap-if "Parry"`)
 //   node tools/playtest.mjs hover "<label>"       (mouse views; skipped in touch views) rest the pointer on that button, then look; names its title tooltip
 //   node tools/playtest.mjs key <name>            press a key: Escape, Enter, Space, a letter (Playwright key names)
 //   node tools/playtest.mjs wait <seconds>        let the game run that many seconds of game time (fast-forwards the clock)
@@ -398,6 +402,15 @@ async function parryClean(page, secs) {
   return out || { ok: false, msg: `parry-clean: no swing to parry in ${secs} s of game time` };
 }
 
+// Is this text (or CSS selector) visible on screen right now? The same read as `expect`.
+const onScreen = (page, want) => page.evaluate(([w, scr]) => {
+  const s = (new Function('return ' + scr))()();
+  const sel = /^[#.\[]|^[a-z][a-z0-9-]*[#.\[>]/i.test(w) && !/\s{2}/.test(w);
+  if (sel) { try { return [...document.querySelectorAll(w)].some(e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity !== 0; }); } catch (e) { /* not a selector: fall through to text */ } }
+  const hay = (s.lines.join(' ') + ' ' + s.buttons.map(b => b.label).join(' ')).replace(/\s+/g, ' ').toLowerCase();
+  return hay.includes(w.replace(/\s+/g, ' ').toLowerCase());
+}, [want, '(' + SCREEN.toString() + ')']);
+
 // ---------------- commands ----------------
 async function exec(cmd, args, ctx) {
   const { session, page, errors } = ctx;
@@ -442,6 +455,13 @@ async function exec(cmd, args, ctx) {
       session.time = await page.evaluate(() => Date.now());
       const o = summary(session, await readSave(page));
       return { text: fmtState(o), data: o };
+    }
+    case 'unless': case 'if': {   // wait on game state: run a play command only while that text (or CSS selector) is NOT on screen (unless) or IS (if)
+      if (args.length < 2) die(`${cmd} needs text (or a CSS selector) and a command: ${cmd} "No weapon on" tap-if "Attack"`);
+      const [want, sub, ...rest] = args;
+      if (!['tap', 'tap-if', 'wait', 'parry-clean', 'key', 'scroll', 'hover'].includes(sub)) die(`${cmd} runs a play command (tap, tap-if, wait, parry-clean, key, scroll, hover), not ${sub}: a check or shot never depends on the screen`);
+      if (await onScreen(page, want) === (cmd === 'unless')) return { text: `${cmd}: "${want}" is ${cmd === 'unless' ? '' : 'not '}on screen, skipped ${sub}`, data: { ok: true, skipped: true } };
+      return exec(sub, rest, ctx);
     }
     case 'expect': {
       if (!args.length) die('expect needs text or a CSS selector: expect "Attack"');
@@ -523,7 +543,7 @@ async function exec(cmd, args, ctx) {
       for (let i = 1; i <= 6; i++) { fs6.push(await namedShot(page, `${args[0]}-${i}`)); if (i < 6) await run(page, 0.3); }
       return { text: `burst ${fs6.length} frames: ${fs6[0]} .. ${fs6[5]}`, data: { burst: fs6 } };
     }
-    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, hover, key, wait, parry-clean, away, state, new, expect, expect-no, expect-save, scroll, shot, burst, stub-site, type, tab, batch`);
+    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, unless, if, hover, key, wait, parry-clean, away, state, new, expect, expect-no, expect-save, scroll, shot, burst, stub-site, type, tab, batch`);
   }
 }
 

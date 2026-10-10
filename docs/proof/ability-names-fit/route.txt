@@ -7,6 +7,9 @@
 # slot at 1280x720, 740x360 and 360x740. Run at all three views.
 new pip-abilities
 wait 3
+# a story card can cover the fight by 3 s on a loaded runner (routes replay, 2026-10-10): clear it before reading the bar
+tap-if "Continue"
+wait 1
 expect "Attack"
 wait 3
 tap-if "Continue"

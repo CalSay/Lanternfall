@@ -8,42 +8,89 @@
 # The no-bow-in-the-bag case ("No weapon yet. Make a Pine Bow at the Workbench first." with a Go) and the fit at every view are
 # held by tools/check.mjs (normal-death-says-so: loss-help-gear-first).
 # seed: 1
+# The loss line stays up until the next fight press, so each round presses Attack only while it is not up (a fixed 7 presses
+# raced it: the next fight cleared it). 16 rounds; she loses by about round 7.
 new early-z12-nobow
 wait 1
 tap-if "Continue"
 tap-if "Got it"
 tap-if "Dismiss this tip"
-tap-if "Attack"
+unless "No weapon on" tap-if "Attack"
 wait 1
 tap-if "Continue"
 tap-if "Got it"
 tap-if "Dismiss this tip"
-tap-if "Attack"
+unless "No weapon on" tap-if "Attack"
 wait 1
 tap-if "Continue"
 tap-if "Got it"
 tap-if "Dismiss this tip"
-tap-if "Attack"
+unless "No weapon on" tap-if "Attack"
 wait 1
 tap-if "Continue"
 tap-if "Got it"
 tap-if "Dismiss this tip"
-tap-if "Attack"
+unless "No weapon on" tap-if "Attack"
 wait 1
 tap-if "Continue"
 tap-if "Got it"
 tap-if "Dismiss this tip"
-tap-if "Attack"
+unless "No weapon on" tap-if "Attack"
 wait 1
 tap-if "Continue"
 tap-if "Got it"
 tap-if "Dismiss this tip"
-tap-if "Attack"
+unless "No weapon on" tap-if "Attack"
 wait 1
 tap-if "Continue"
 tap-if "Got it"
 tap-if "Dismiss this tip"
-tap-if "Attack"
+unless "No weapon on" tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+unless "No weapon on" tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+unless "No weapon on" tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+unless "No weapon on" tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+unless "No weapon on" tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+unless "No weapon on" tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+unless "No weapon on" tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+unless "No weapon on" tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+unless "No weapon on" tap-if "Attack"
+wait 1
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+unless "No weapon on" tap-if "Attack"
 wait 1
 expect ".tv-beat .tv-beat-txt"
 expect ".tv-beat .tv-beat-go"

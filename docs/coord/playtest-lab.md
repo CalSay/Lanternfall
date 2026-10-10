@@ -22,6 +22,8 @@ session folder (`--session <dir>`, default `.playtest/`, ignored by git), so eac
 | `state` | A short save summary: hero, level, zone, gold, skill levels, game time played. |
 | `batch` | Reads one command per line from stdin and runs them in one browser launch (quicker). |
 | `tap-if "<label>"` | Tap it when it is on screen, carry on when it is not. For things that come and go, such as story cards. |
+| `unless "<text\|css>" <command>` | Run the command only while that text or selector is not on screen: `unless "No weapon on" tap-if "Attack"`. A fight loop that waits on game state, so it stops pressing once a line or card is up (a fight press answers a held guide line). Play commands only: never an `expect` or a `shot`. |
+| `if "<text\|css>" <command>` | The same, but only while that text or selector is on screen: `if "Press Parry now" tap-if "Parry"` answers a guide prompt that holds the fight, and never presses otherwise. |
 | `expect "<text or css>"` | Exit 1 if that text (or a CSS selector such as `#stage`) is not visible on screen now. Prints `EXPECT PASS` or `EXPECT FAIL`. In `batch` the run carries on after a miss, so one run reports every miss. |
 | `shot <name>` | Screenshot named `<name>.png` in the shots folder. |
 | `burst <name>` | Six frames over 1.5 s of game time: `<name>-1.png` to `<name>-6.png`. For motion, parry rings and flashes. |
