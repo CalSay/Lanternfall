@@ -8696,7 +8696,20 @@ if (section('C14 away card (browser)')) try {
         await page.goto('http://lf.test/');
         await page.waitForSelector('#createScreen .ccard[data-state]');
         await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
-        await page.waitForTimeout(350);
+        // c14-away-card-load-flake: each step waits for the state it needs (5 s cap) and fails naming what never came, never a fixed timer
+        const ready = async (fn, arg, what) => { try { await page.waitForFunction(fn, arg, { timeout: 5000 }); } catch (e) { throw new Error(`C14: ${what} never happened within 5 s (${String(e.message || e).split('\n')[0]})`); } };
+        // a click waits until the element is the one under its own centre, so a card over it fails naming that card, not a 30 s timeout
+        const tap = async (sel, what) => {
+          const top = () => page.evaluate(sel => { const e = document.querySelector(sel); if (!e) return 'the button is missing;';
+            e.scrollIntoView({ block: 'nearest' }); const r = e.getBoundingClientRect(), t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+            if (!t) return 'the button is off screen;'; if (e === t || e.contains(t)) return '';
+            const c = t.closest('[role="dialog"]') || t; return (typeof c.className === 'string' && c.className) || c.tagName.toLowerCase(); }, sel);
+          const t0 = Date.now(); let on;
+          while ((on = await top()) && Date.now() - t0 < 5000) await page.waitForTimeout(50);
+          if (on) throw new Error(`C14: ${what} (${sel}) could not be pressed within 5 s: ${/;$/.test(on) ? on.slice(0, -1) : on + ' was on top of it'}`);
+          await page.click(sel);
+        };
+        await ready(() => !document.querySelector('#createScreen'), null, 'the create screen closing after Begin');
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await X(`showAwayReport({secs:1800,t:1800,cap:14400,capped:false,activity:'fight',note:'You held Cinder Road.',gold:300,xp:0,kills:0,
           mats:[],items:[],skills:[],lines:[{txt:'Storehouse full',sub:'The Storehouse kept the extra ore safe.'}],
@@ -8707,7 +8720,8 @@ if (section('C14 away card (browser)')) try {
         assert(title.includes('while you were away') && title.includes('30m') && title.includes('cinder road'), 'C14 browser: a fresh local game opens the away card with its time and hero summary (' + title.replace(/\n/g, ' | ') + ')');
         // away-card-next-up-first: the groups fold under one "More (n)" row; opening it shows every group (folded, never dropped)
         const more0 = await page.locator('.away-ov .away-more').innerText();
-        await page.click('.away-ov .away-more'); await page.waitForTimeout(150);
+        await tap('.away-ov .away-more', 'the first card\'s More row');
+        await ready(() => { const f = document.querySelector('.away-ov .away-fold'); return f && f.open && f.children.length > 1; }, null, 'More opening its groups');
         const opened = (await page.locator('.away-ov').innerText()).toLowerCase();
         assert(/^more \(6\)$/i.test(more0.trim()) && !['gatherers','trade','tavern','well rested'].some(g => title.includes(g)) && ['gathering','gatherers','trade','camp','tavern','well rested'].every(g => opened.includes(g)),
           'C14 browser: the groups fold under "More (6)", and opening it displays the material explanation and each separate source group (' + more0 + ' | ' + opened.replace(/\n/g, ' | ') + ')');
@@ -8716,8 +8730,14 @@ if (section('C14 away card (browser)')) try {
         assert(!errs.length, 'C14 browser: opening and reading the card raises no page errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
         // away-limit-says-next-step (ruling 2026-10-08-first-night-covered, card 2): a capped return gives both numbers and the one next step
         {
+          // closing a card the next step needs gone: a missing card or one that stays open fails, never skipped
+          const closeAway = `{ const c = document.querySelector('.away-ov .away-go'); if (!c) throw new Error('C14: no away card to close');
+            c.click(); if (document.querySelector('.away-ov')) throw new Error('C14: the away card stayed open after Collect'); }`;
+          // S.lantern.seen: the faked zone 40 is past the Hollow's end (35). Left unseen, the next tick lights its Great Lantern
+          // and queues that full-screen card; it waits behind the away card, opens in the gap after the last Collect and covers More
+          // below (the load flake). Every faked zone is marked seen in the same step, so none lights anything.
           const lim = async (setup, h, extra = '') => {
-            await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); ${setup};
+            await X(`${closeAway} ${setup}; S.lantern.seen = S.maxZone;
               showAwayReport({ secs: ${h} * 3600, t: Math.min(${h}, awayCapH()) * 3600, cap: awayCapH() * 3600, capped: ${h} > awayCapH(), activity: S.activity, note: '', empty: false,
                 gold: 0, xp: 0, kills: 0, mats: [], items: [], skills: [], lines: [${extra}], extra: [] }); true`);
             return X(`(() => { const w = document.querySelector('.away-ov .away-limwrap'); return w ? w.textContent + (w.querySelector('.away-cap .away-lgo') ? ' [Go:' + w.querySelector('.away-cap .away-lgo').getAttribute('aria-label') + ']' : '') : ''; })()`);
@@ -8752,12 +8772,12 @@ if (section('C14 away card (browser)')) try {
           assert(tr.includes('hit the raid boss for 4h of your 9h away.') && tr.includes('(6h)') && !tr.includes('8h'), `away limit: a raid return keeps the raid's 4 h, never promising 8 h of raid hits (${tr})`);
           assert(!t0.includes('Hourglass') && tg.includes('Hourglass Lv 1: +2h, for raid Embers.'), `away limit: the Hourglass shows only while the raid is open (${tg})`);
           assert(!/24 hours/.test(all), `away limit: the card never says "24 hours" (${all})`);
-          await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true');
+          await X(`${closeAway} true`);
         }
         // away-card-next-up-first (W8 card 3): results, the limit, Next up, then one folded "More (n)" row. Next up's first row shows
         // above Collect without scrolling, a fold's Go only exists once More is open, and More counts every folded line.
         {
-          await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.activity = 'gather';
+          await X(`if (document.querySelector('.away-ov')) throw new Error('C14: an away card is still open'); S.activity = 'gather';
             showAwayReport({ secs: 11 * 3600, t: 8 * 3600, cap: 8 * 3600, capped: true, activity: 'gather', note: 'You gathered Oak.', empty: false, gold: 0, xp: 0, kills: 0,
               mats: [{ k: 'wood', t: 3, n: 37000 }], items: [], skills: [{ k: 'wood', from: 30, to: 52 }], lines: [{ txt: 'Storehouse full: Oak', sub: 'Woodcutting XP still counted' }],
               extra: [{ group: 'Codex', txt: 'Codex: +1 Lantern Light', go: () => {} }, { group: 'Gatherers', txt: 'Tam finished 1 shift: +754 Oak Log.', go: () => {} },
@@ -8772,16 +8792,19 @@ if (section('C14 away card (browser)')) try {
           assert(o.kids.join(',') === 'Materials,Skills,lim,nu,more' && o.more === 'More (5)' && !o.open && !o.foldGo,
             `away-card-next-up-first: the card reads results, limit, Next up, then a closed "More (5)" with no Go built inside it (${JSON.stringify(o)})`);
           assert(o.shows, `away-card-next-up-first: at 740x360 the first Next up row shows above Collect without scrolling (${JSON.stringify(o)})`);
-          await page.click('.away-ov .away-more'); await page.waitForTimeout(200);
+          await tap('.away-ov .away-more', 'the second card\'s More row');
+          await ready(() => { const f = document.querySelector('.away-ov .away-fold'); return f && f.open && f.children.length > 1; }, null, 'More opening its groups');
           const op = await X(`[document.querySelector('.away-fold').open, [...document.querySelectorAll('.away-fold .away-h')].map(e => e.textContent).join(','), document.querySelectorAll('.away-fold .away-line').length, document.querySelectorAll('.away-fold .away-lgo').length]`);
           assert(op[0] && op[1] === 'Codex,Gatherers,Achievements,Also,Gathering' && op[2] === 5 && op[3] === 2, `away-card-next-up-first: More opens every other group with its lines and Go buttons (${JSON.stringify(op)})`);
           // keys: Tab from More skips a closed fold's Go buttons; Space on More opens it (the fight's Space dodge never takes it)
-          await page.click('.away-ov .away-more'); await page.focus('.away-ov .away-more'); await page.keyboard.press('Tab');
+          await tap('.away-ov .away-more', 'the open More row'); await ready(() => !document.querySelector('.away-ov .away-fold').open, null, 'More closing');
+          await page.focus('.away-ov .away-more'); await page.keyboard.press('Tab');
           const tabTo = await X('document.activeElement.className');
-          await page.focus('.away-ov .away-more'); await page.keyboard.press(' '); await page.waitForTimeout(100);
+          await page.focus('.away-ov .away-more'); await page.keyboard.press(' ');
+          await page.waitForFunction(() => document.querySelector('.away-fold').open, null, { timeout: 5000 }).catch(() => {});   // the assert below names a miss
           const spaceOpen = await X("document.querySelector('.away-fold').open && !!document.querySelector('.away-ov')");
           assert(/away-go/.test(tabTo) && spaceOpen, `away-card-next-up-first: Tab from a closed More goes to Collect, and Space opens More (${tabTo}, ${spaceOpen})`);
-          await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true');
+          await X(`{ const c = document.querySelector('.away-ov .away-go'); if (!c) throw new Error('C14: no away card to close'); c.click(); } true`);
         }
       } finally { await ctx.close(); }
       // ...and on the mid fixture's real 8 h return (fighting, as saved, and gathering), in all three views
