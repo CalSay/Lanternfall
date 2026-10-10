@@ -476,8 +476,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       key = 'w' + gen + ':' + s;
       if (key !== foe.key) fr = enemyFrames('wyrm', { gen, hue: Math.floor((gen - 1) / 6) * 60 % 360, S: s });
     } else {
-      key = 'n' + S.node.kind + S.node.t;
-      if (key !== foe.key) fr = enemyFrames('node:' + gatherArtKind(S.node.kind), { tier: S.node.t });
+      const ns = typeof nsNodeSet === 'function' ? nsNodeSet(S.node.kind, S.node.t) : null;   // new style (64m)
+      key = (ns ? 'N' : 'n') + S.node.kind + S.node.t;
+      if (key !== foe.key) fr = ns || enemyFrames('node:' + gatherArtKind(S.node.kind), { tier: S.node.t });
     }
     if (key === foe.key) return;
     layoutDirty = true;
@@ -508,9 +509,10 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const type = m.key.replace(/\d+$/, '');
     let key, fr;
     if (m.deep) { const b = coldBand(m.floor); key = 'd' + type + (m.boss ? 'E' : '') + b; fr = coldFrames(type, !!m.boss, b); }
+    else if ((fr = typeof nsFoeSet === 'function' ? nsFoeSet(m) : null)) key = 'N' + fr.k;   // new style (64m)
     else { key = 'm' + type + (m.boss ? 'E' : '') + zoneHue(S.zone); fr = enemyFrames(type, { elder: !!m.boss, hue: zoneHue(S.zone) }); }
     const rig = typeof ENEMY_RIGS !== 'undefined' && ENEMY_RIGS[type];
-    s.anim = rig && rig.anim || 'lunge'; s.hover = !!(rig && rig.hover);
+    s.anim = rig && rig.anim || 'lunge'; s.hover = fr.ns ? fr.hover > 0 : !!(rig && rig.hover); s.nsI = 0; s.nsSt = 0;
     s.next = 1.5 + Math.random() * 3; s.key = key; s.fr = fr;
   }
   // Home positions of the bound slots (on a new pack, new adds, or a resize).
@@ -699,7 +701,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     if (hr) return Math.max(16, Math.round(foe.left + foe.w * NODE_HIT.hide) - hr);
     const f = hero.fr; if (!f) return foe.left - 18;
     if (!ART.ready(f, 'strike')) return foe.left - 4 - (f.idle0.c.width - f.idle0.ox);
-    return Math.max(16, Math.round(foe.left + foe.w * (NODE_HIT[S.node.kind] ?? 0.15)) - (rightEdge(f.strike) - f.strike.ox));
+    const ct = foe.fr && foe.fr.contact && foe.fr.contact[typeof heroArtId === 'function' && heroArtId()];   // a new-style node's contact for this hero (64m)
+    return Math.max(16, (ct != null ? foe.x + ct : Math.round(foe.left + foe.w * (NODE_HIT[S.node.kind] ?? 0.15))) - (rightEdge(f.strike) - f.strike.ox));
   };
   const heroHome = () => target() !== 'node' ? hero.hx : typeof gatherHeroX === 'function' ? gatherHeroX(nodeHome()) : nodeHome();
   // attack(a, aim, arc): a swing (wind, strike, recover). Melee dashes to its foe (aim, else the
@@ -1222,6 +1225,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       if (hudZone) hudZone.style.visibility = dOn ? 'hidden' : '';
       if (hudTimer) hudTimer.style.display = dOn ? 'none' : '';
     }
+    // the screen's style (64m, once per visit): a change binds the foes and node again
+    const ns = typeof nsScreen === 'function' ? nsScreen() : 'off';
+    if (ns !== nsSt) { nsSt = ns; solo.key = ''; packList = null; layoutDirty = true; }
     refreshFoe(); foeGeom();
     if (layoutDirty) layout();
     if (wyrmHit > 0) wyrmHit -= dt;
@@ -1409,6 +1415,17 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const f = s.fr; if (!f) return null;
     const tg = target(), m = s.m;
     if (tg === 'mob' && artOf(s)) { s.aCur = artCur(s, tele); return s.aCur.body; }   // an animation pack (64j); its effects: drawFoe
+    if (f.ns && tg === 'mob') {   // new style (64m): defeat, advance, hurt, its moves in turn
+      if (m && m.dead) return f.defeat;
+      if (m && m.born < 0.25) return f.advance;
+      if (s.st === 1 && s.nsSt !== 1) s.nsI++;
+      s.nsSt = s.st;
+      if (s.fl > 0.02) return f.hit;
+      const mv = f.mv[s.nsI % f.mv.length];
+      if ((m && !m.dead && ((tele && tele.foe === m) || m.chanT > 0)) || s.st === 1) return mv[0];
+      if (s.st === 2) return mv[1];
+      return !reduced && ((T * 1.6 + (s.hx & 7) * 0.25) % 2) >= 1 ? f.idle1 : f.idle0;
+    }
     if (s.fl > 0) return tg === 'mob' && s.fl > 0.02 ? f.idle0 : f.hit;   // a pack foe's hit flash is an overlay on idle0 (drawFoe)
     if (tg === 'world' && wyrmHit > 0) return f.hit;
     if (tg === 'node') {
@@ -1425,9 +1442,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const f = foeFrame(s, tele); s.dF = null; s.fxOn = false; if (!f) return;
     const tg = target(), m = tg === 'mob' ? s.m : null;
     let x = s.x + s.dx - cam, y = s.gy, alpha = 1, sy = 1;
+    const ns = !!s.fr.ns;
     if (m) {
       if (s.fl > 0.02) x += 2;
-      if (m.dead) { if (!artOf(s)) { alpha = Math.max(0, 1 - m.dead / 0.4); y += Math.round(m.dead * 30); } }   // a pack foe plays its own death (it ends empty)
+      if (ns) { if (m.dead) alpha = Math.max(0, 1 - Math.max(0, m.dead - 0.2) / 0.4); else if (m.born < 0.15) alpha = Math.min(1, m.born / 0.1 + 0.3); y -= s.fr.hover; }   // new style: no sinking
+      else if (m.dead) { if (!artOf(s)) { alpha = Math.max(0, 1 - m.dead / 0.4); y += Math.round(m.dead * 30); } }   // a pack foe plays its own death (it ends empty)
       else if (m.born < 0.15) { sy = 0.4 + 0.6 * (m.born / 0.15); alpha = Math.min(1, m.born / 0.1 + 0.3); }
       if (s.hover && !reduced) y += Math.round(Math.sin(T * 3 + (s.hx & 7)) * 2);
     } else if (tg === 'node' && typeof gatherFall === 'function' && gatherFall() >= 0) {
@@ -1438,13 +1457,14 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     if (alpha <= 0) return;
     const dx = Math.round(x - f.ox), h = f.c.height, c = s.lane === 0 && f !== s.fr.hit ? dimOf(f.c) : f.c;
     ctx.globalAlpha = alpha;
-    if (m && m.dead) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SW, s.gy + 2); ctx.clip(); ctx.drawImage(c, dx, Math.round(y - f.oy)); ctx.restore(); }
+    if (ns) nsBlit(ctx, f, x, y, { a: alpha, d: s.lane === 0, w: m && !m.dead && s.fl > 0.02 ? 0.55 : 0 });   // hit: a white flash
+    else if (m && m.dead) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SW, s.gy + 2); ctx.clip(); ctx.drawImage(c, dx, Math.round(y - f.oy)); ctx.restore(); }
     else if (sy < 1) ctx.drawImage(c, dx, Math.round(y - f.oy * sy), f.c.width, Math.round(h * sy));
     else ctx.drawImage(c, dx, Math.round(y - f.oy));
     // hit: a half-strength white flash over the frame (a pack takes hits from the whole party; a full
     // white silhouette each time would hide the foe)
     s.fxX = x; s.fxY = y; s.fxOn = !!(artOf(s) && s.aCur && sy === 1);   // its effects draw over the hero (drawFoeFx)
-    if (m && !m.dead && s.fl > 0.02 && sy === 1 && !artOf(s)) { ctx.globalAlpha = 0.55 * alpha; ctx.drawImage(s.fr.hit.c, dx, Math.round(y - f.oy)); }
+    if (m && !m.dead && s.fl > 0.02 && sy === 1 && !artOf(s) && !ns) { ctx.globalAlpha = 0.55 * alpha; ctx.drawImage(s.fr.hit.c, dx, Math.round(y - f.oy)); }
     // stunned: three sparks circle over its head (still under reduced motion)
     if (m && !m.dead && m.stunT > 0) {
       const hy = Math.round(y - f.oy + headTop(s.fr.idle0)) - 4, cx = Math.round(x), r = Math.max(6, Math.round(s.w * 0.18));
@@ -1501,7 +1521,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     }
   }
 
-  let drawMs = 0;
+  let drawMs = 0, nsSt = 'off';
   const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0, hx: 0, hy: 0, hl: 1, hd: false, hf: null, hX: 0, hY: 0 };
   const FXV = { T: 0, cam: 0, SW: 0, SH: 0, GY: 0, K: 1, KS: 1, DPR: 1, sx: 0, sy: 0, fight: false, foe: null, hx: 0, hy: 0, hfX: 0, hfY: 0, hc: null, hX: 0, hY: 0 };   // stageFx's view (reused)
   draw = function () {
@@ -1522,11 +1542,15 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
+    // a new-style screen still decoding (64m 'wait'): the backdrop only, never a mix
+    if (nsSt === 'wait') { ctx.fillStyle = '#0B0810'; ctx.fillRect(-4, -4, SWS + 8, SHS + 8); A.devView(0); return; }
+    // a new-style screen (64m): its layered scenery in place of everything below
+    const nsBg = nsSt === 'on' && nsScenery(ctx, 'back', SWS, SHS, GYS, camF);
     // an approved fixed battle background (21zb, Mossy Hollow): one painted scene with its light baked in, in place of
     // the procedural layers, their fog, glows and vignette
-    const bgArt = fight && !deepOn() && bgArtDraw(ctx, curTheme);
+    const bgArt = nsBg || (fight && !deepOn() && bgArtDraw(ctx, curTheme));
     if (!bgArt) drawScene(ctx, scene, camF, 'back', KS, sxd, syd, '#0B0810');
-    const huntBg = gath && S.node.kind === 'hide' && typeof huntBgDraw === 'function' && HUNT_TUNE.interim && huntBgDraw(ctx, SWS, GYS);   // interim Hunting grounds (64i)
+    const huntBg = !nsBg && gath && S.node.kind === 'hide' && typeof huntBgDraw === 'function' && HUNT_TUNE.interim && huntBgDraw(ctx, SWS, GYS);   // interim Hunting grounds (64i)
     actorView();
     const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; dv.hx = hero.fr ? ax(hero) : null; dv.hy = hero.hy; dv.hl = hero.lane; dv.hd = hero.down; dv.hf = hero._f; dv.hX = hero._x; dv.hY = hero._y; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
@@ -1574,12 +1598,14 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     }
     A.drawProj(ctx);
     if (!huntBg && !bgArt) { sceneView(); drawScene(ctx, scene, camF, 'fg', KS, sxd, syd); actorView(); }   // the hunting grounds bring their own foreground
+    else if (nsBg) { sceneView(); nsScenery(ctx, 'fore', SWS, SHS, GYS, camF); actorView(); }
 
     // smooth pass: slashes, character and effect lights
     ctx.imageSmoothingEnabled = true;
     for (const a of order) if (a.slash > 0) drawSlash(a, cam);
     ctx.globalCompositeOperation = 'lighter';
     keyLight();
+    if (nsBg) { sceneView(); nsScenery(ctx, 'light', SWS, SHS, GYS, camF); actorView(); }
     if (stageDeco) stageDeco(ctx, 'light', dv);
     for (const a of order) lightsOf(a);
     if (fight) { for (let i = 0; i < packN; i++) foeLights(slots[i], tele); } else foeLights(solo, null);
@@ -1803,6 +1829,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // so bars sit just over the hair or hat, not over a raised weapon.
   const headTops = new WeakMap();
   function headTop(f) {
+    if (f.headY != null) return f.headY;   // a new-style frame's own head anchor (64m)
     let t = headTops.get(f.c);
     if (t === undefined) {
       t = 0;
