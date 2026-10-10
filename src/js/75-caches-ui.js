@@ -4,12 +4,15 @@
 // thing inside. The drops this clear already queued as moments (the unique, the first Star, zone 1's boss card) fold into the cache card.
 // This file loads before 75-moments-ui, so the moment layer's names are read inside the handler, never at load.
 // boss-spoils-pick (Opus judge 2026-10-08): a zone 6 to 10 first clear that drops a Scroll asks which move it teaches now, when two or more
-// moves of the hero in play can be learned with that Scroll. Up to three, in the Abilities list's order, never marked best; Keep the
+// moves of the hero in play can be learned with that Scroll. Up to three, in the Abilities list's order, never sorted (the top move is marked: see cache-pick-order-settles below); Keep the
 // Scroll (or any other close) keeps it. A pick learns the move and slots it in a free slot, else opens Abilities on it to swap.
 // Nothing new is paid. Events for the walk: choice 'spoils' and spoilsPick { zone, offered, taken } (taken: a move id or 'keep').
-// loadout-odds (W10): once the zone boss odds are in (56e learnOdds), the picks go most first, each saying what it does to the line
-// ("Zone 11 boss: about 8 in 10, now 4"), and a pick goes where that line assumed (abilityPlace). The odds start when the card opens
-// and take a moment: until they are in, the list's order and each move's own line; a sub fills in when its number arrives.
+// loadout-odds (W10): once the zone boss odds are in (56e learnOdds), each pick says what it does to the line ("Zone 11 boss: about 8 in
+// 10, now 4"), and a pick goes where that line assumed (abilityPlace). The odds start when the card opens and take a moment: until they
+// are in, each move's own line; a sub fills in when its number arrives.
+// cache-pick-order-settles: the picks always keep the Abilities list's order, so a card never moves under the pointer (the kill moves
+// maxZone, so the odds were almost never in at open, and when they were the order differed). The move that lifts the line most is
+// marked in place (.lift) once its number is in. The fill stops when the card closes: no odds work for a pick no one can see.
 const SPOILS_TUNE = { from: 6, to: 10, max: 3, waitMs: 300, tries: 100 };
 const spoilsOdds = k => { try { const lo = typeof learnOdds === 'function' ? learnOdds(k) : null; return lo && lo.rows.length ? lo : null; } catch (e) { return null; } };
 // the sub says where the pick goes when it moves the slots ("In Q, Spark out."), then the line
@@ -21,26 +24,27 @@ function spoilsMoves(v) {
     if (!v || !v.scroll || !(v.zone >= SPOILS_TUNE.from && v.zone <= SPOILS_TUNE.to) || typeof abLearnInfo !== 'function') return null;
     const k = soloHero(); if (!k || !HERO_ABILITIES[k]) return null;
     let ids = HERO_ABILITIES[k].filter(id => { const i = abLearnInfo(k, id); return i.why === '' && i.payWith === v.scroll.id; });
-    const lo = spoilsOdds(k);
-    if (lo) { const at = id => { const i = lo.rows.findIndex(r => r.id === id); return i < 0 ? 99 : i; }; ids = ids.slice().sort((a, b) => at(a) - at(b)); }
-    return ids.length >= 2 ? { k, ids: ids.slice(0, SPOILS_TUNE.max), lo } : null;
+    return ids.length >= 2 ? { k, ids: ids.slice(0, SPOILS_TUNE.max), lo: spoilsOdds(k), closed: false } : null;
   } catch (e) { return null; }
 }
-// the odds arrive after the card is up: fill each pick's line in place (never reorder under the pointer)
+// the offered move that lifts the line most (learnOdds rows are best first), or '' when none lifts it
+const spoilsTop = (lo, ids) => { const r = lo && lo.rows.find(x => ids.includes(x.id)); return r && r.lift && r.lift.after > r.lift.before ? r.id : ''; };
+// the odds arrive after the card is up: fill each pick's line and mark the top move in place (never reorder under the pointer)
 function spoilsFill(sp, n = 0) {
-  if (sp.lo || n > SPOILS_TUNE.tries) return;
-  const lo = spoilsOdds(sp.k);
+  if (sp.closed || n > SPOILS_TUNE.tries) return;
+  const lo = sp.lo || spoilsOdds(sp.k);
   if (!lo) { setTimeout(() => spoilsFill(sp, n + 1), SPOILS_TUNE.waitMs); return; }
-  let seen = 0;
-  for (const b of document.querySelectorAll('.mm-ov .mm-pick')) {
-    const nm = b.querySelector('b'), sm = b.querySelector('small'), id = nm && sp.ids.find(x => ABILITIES[x].name === nm.textContent), t = id && spoilsSub(lo, id);
-    if (id) seen++;
+  const top = spoilsTop(lo, sp.ids);
+  // only this pick's own row (a second pick folded into the card shows no row of its own: it waits for its close)
+  const bs = [...document.querySelectorAll('.mm-ov .mm-pick')], nm = b => (b.querySelector('b') || {}).textContent;
+  const seen = bs.length === sp.ids.length && sp.ids.every((x, i) => ABILITIES[x].name === nm(bs[i]));
+  if (seen) sp.ids.forEach((id, i) => { const sm = bs[i].querySelector('small'), t = spoilsSub(lo, id);
     if (t && sm) sm.textContent = t;
-  }
+    if (id === top) bs[i].classList.add('lift'); });
   if (!seen) setTimeout(() => spoilsFill(sp, n + 1), SPOILS_TUNE.waitMs);   // the card waits behind another: fill it once it shows
 }
 function spoilsPicks(v, sp) {
-  const sid = v.scroll.id, done = taken => { emit('choice', 'spoils'); emit('spoilsPick', { zone: v.zone, offered: sp.ids.length, taken }); };
+  const sid = v.scroll.id, done = taken => { sp.closed = true; emit('choice', 'spoils'); emit('spoilsPick', { zone: v.zone, offered: sp.ids.length, taken }); };
   const learn = id => {
     const k = sp.k, i = abLearnInfo(k, id);
     if (soloHero() !== k || i.why || i.payWith !== sid) { done('keep'); return; }   // the card waited and the move went: the Scroll stays

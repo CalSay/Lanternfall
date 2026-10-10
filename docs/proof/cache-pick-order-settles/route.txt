@@ -1,0 +1,82 @@
+# seed: 1
+# Proof for card cache-pick-order-settles: the Lantern Cache's move pick keeps the Abilities list's order from its first paint. When the
+# zone boss odds arrive (a moment after the card opens), each move's line fills in place and the move that lifts the line most gets a
+# gold bar on its left; no card moves. Closing the card stops its odds work. tools/check.mjs "cache-pick-order-settles" proves it on
+# the Pip z10 fixture at 1280x720, 740x360 and 360x740 (every painted order, two reads 1 s apart, no odds calls after a close).
+# The gold bar shows in check-card-1280x720.png (Pip, Arcane Ward). This route plays a real win to the same kind of card: fixture pre-z7-boss (as boss-spoils-pick's route), Wren attacks and parries clean;
+# the two shots 4 s apart show Hunter's Mark, Deadeye, Bat Swarm in the same places (Wren's odds may not mark a move here).
+# Run at the default view (1280x720), then with --landscape and --portrait.
+new pre-z7-boss
+wait 2
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+expect "Learn one now:"
+expect "Hunter's Mark"
+expect "Deadeye"
+expect "Bat Swarm"
+shot pick-first-paint
+wait 4
+expect "Learn one now:"
+shot pick-later
+tap "Keep the Scroll"
+wait 1
+expect-no "Learn one now:"
+shot pick-closed
