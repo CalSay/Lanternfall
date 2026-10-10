@@ -91,6 +91,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A timing press the player makes in a menu needs its own clock and a game hold, and must pay only when it resolves; a hidden tab resolves it as a miss. Why: the fight's bar is private to the turn UI and only draws in a wind-up, and a craft paid before the press would lose materials to a closed tab (craft-strike-infuse spec). (craft-strike-infuse, 2026-10-09)
 - No hard progress walls. Why: walls are the top long-play quit reason in the research set (99 mentions); the 50h run shows 9 to 10 stalls of an hour or more per hero and a 12h wall near zones 24 to 25. (f-fun-library, f-health-long)
 - Check a hero's unlock route against the skill level its craft needs (item tier 3 = station level 22, `SKILL_TUNE.stationReq`) and the casual curve before placing the hero in a chapter. Why: the Star Chart looked reachable in Chapter 1 by its materials, but the Enchanter's Table lags every gate, so the red team moved Auriel's join to a Champion scene (oriel-ability-spec, 2026-10-10).
+- Size a new system's stakes in price-hours (`econH(z)`), not foe gold, and keep a side system's gold out of the econ ledger. Why: `earlyGold` doubles foe gold to zone 20 while prices don't, so foe-gold limits were 2x off early and fell from zone 21 to 35; and `health.mjs` and EC4 read every ledger category, so booked table wins would have leaked into the health metrics (tavern-blackjack red team, 2026-10-10).
 
 ## Story and lore
 
