@@ -22754,7 +22754,7 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
 const BJ_TUNE = {
   on: typeof __BJ === 'number' ? __BJ : 1,   // 1: the table exists. 0: no row, section or notice; a hand in play refunds its bet at load (spec 9). Checks set __BJ in a prelude
   decks: 4,
-  hiH: 0.2,           // highest bet, in price-hours (econH at S.maxZone)
+  hiH: 0.12,          // highest bet, in price-hours (econH at S.maxZone)
   loDiv: 20, loMin: 10,
   dayBets: 5,         // the day's win limit and loss limit, each in highest bets
   stand: 17,
