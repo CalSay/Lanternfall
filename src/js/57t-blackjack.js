@@ -12,7 +12,9 @@
 // API: bjOpen() -> the FEATURES gate; bjLimits() -> { lo, hi, win, loss }; bjView() -> what the table shows;
 //      bjSetBet(n), bjDeal(), bjHit(), bjStand(), bjDouble(), bjNext() -> bool (true: something changed);
 //      bjImport(data, today?) -> the save-code import's copy of `data` (spec 8); bjCheckSave(b, fail) (55-savecode).
-// Save: S.blackjack = { v, day, net, bet, hand, n: { hands, won, lost, tied, bj } }.
+// Save: S.blackjack = { v, day, net, top, bet, w, hand, n: { hands, won, lost, tied, bj } }. w: seconds of play with the Tavern built (the
+//   gate's wait; it stops counting at BJ_TUNE.wait). top: today's highest net (the win limit reads it, so a save-code import of an
+//   earlier code can't reopen a table a win closed).
 //   hand: { p: [card ids], d: [card ids], bet, dbl: 0|1, done: 0|1, res: { k, p, d, x } | null }. A card id is 0-51:
 //   suit Math.floor(id / 13) (Lanterns, Keys, Cups, Thorns), rank id % 13 + 1 (1 Ace ... 11 Knave, 12 Queen, 13 King).
 // Events: blackjack { k } after a result.
@@ -38,9 +40,11 @@ function bjCheckSave(b, fail) {
   const card = c => isInt(c, 0, 51);
   if (b === null || typeof b !== 'object' || Array.isArray(b)) fail('blackjack', 'must be a record');
   if (b.v !== undefined && !isInt(b.v, 1, 1000)) fail('blackjack.v');
-  if (b.day !== undefined && !isInt(b.day, 0, 1e7)) fail('blackjack.day');
+  if (b.day !== undefined && !isInt(b.day, -1e7, 1e7)) fail('blackjack.day');   // a clock before 2026 gives a negative deviceDay
   if (b.net !== undefined && !isInt(b.net, -1e15, 1e15)) fail('blackjack.net');
+  if (b.top !== undefined && !isInt(b.top, -1e15, 1e15)) fail('blackjack.top');
   if (b.bet !== undefined && !isInt(b.bet)) fail('blackjack.bet');
+  if (b.w !== undefined && (typeof b.w !== 'number' || !Number.isFinite(b.w) || b.w < 0 || b.w > BJ_TUNE.wait)) fail('blackjack.w');
   if (b.n !== undefined) {
     if (b.n === null || typeof b.n !== 'object' || Array.isArray(b.n)) fail('blackjack.n', 'must be a record');
     for (const [k, v] of Object.entries(b.n)) if (!['hands', 'won', 'lost', 'tied', 'bj'].includes(k) || !isInt(v)) fail('blackjack.n.' + k);
@@ -48,7 +52,7 @@ function bjCheckSave(b, fail) {
   const h = b.hand;
   if (h === undefined || h === null) return;
   if (typeof h !== 'object' || Array.isArray(h)) fail('blackjack.hand', 'must be a record');
-  if (!Array.isArray(h.p) || h.p.length < 2 || h.p.length > 12 || !h.p.every(card)) fail('blackjack.hand.p');
+  if (!Array.isArray(h.p) || h.p.length < 2 || h.p.length > 21 || !h.p.every(card)) fail('blackjack.hand.p');
   if (!Array.isArray(h.d) || h.d.length < 1 || h.d.length > 12 || !h.d.every(card)) fail('blackjack.hand.d');
   const all = h.p.concat(h.d), copies = {};
   for (const c of all) if ((copies[c] = (copies[c] || 0) + 1) > BJ_TUNE.decks) fail('blackjack.hand', 'holds a card more often than the decks do');
@@ -59,7 +63,7 @@ function bjCheckSave(b, fail) {
   if (h.res !== undefined && h.res !== null && (typeof h.res !== 'object' || Array.isArray(h.res))) fail('blackjack.hand.res');
 }
 {
-  registerState('blackjack', { v: 1, day: 0, net: 0, bet: 0, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } });
+  registerState('blackjack', { v: 1, day: 0, net: 0, top: 0, bet: 0, w: 0, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } });
   const B = () => S.blackjack;
   const today = () => deviceDay(Date.now());
   const rank = c => c % 13 + 1;
@@ -81,10 +85,15 @@ function bjCheckSave(b, fail) {
   const stake = h => h.bet * (h.dbl ? 2 : 1);
   const live = () => !!(B().hand && !B().hand.done);
   // The device day turns over: the day's books start again. A hand in play finishes on the day it was dealt.
-  const roll = () => { const d = today(); if (B().day !== d && !live()) { B().day = d; B().net = 0; } };
+  const roll = () => { const d = today(); if (B().day !== d && !live()) { B().day = d; B().net = 0; B().top = 0; } };
 
+  // The wait (spec 7): 600 s of play with the Tavern built, on the table's own clock (S.blackjack.w), which keeps running after
+  // every tab is open; the guide's clock (S.onboard.t) stops then, so a cold player who builds the Tavern late would otherwise get
+  // the build, the Tavern, Hands and the table at once. While the guide's clock still runs, the Tavern and Hands rows also wait 600 s.
+  onTick(dt => { const b = B(); if (b.w < BJ_TUNE.wait && dt > 0 && campLevel('tavern') >= 1) b.w = Math.min(BJ_TUNE.wait, (b.w || 0) + dt); });
   const waitOk = () => {
-    const o = S.onboard; if (!o || o.all) return true;   // the clock stops once every tab is open (55-onboard), so the wait does too
+    if (!(B().w >= BJ_TUNE.wait)) return false;
+    const o = S.onboard; if (!o || o.all) return true;
     const at = ['tavern', 'hands'].map(id => o.got[id]).filter(v => typeof v === 'number' && Number.isFinite(v));
     return o.got.tavern != null && at.length > 0 && o.t - Math.max(...at) >= BJ_TUNE.wait;
   };
@@ -95,7 +104,7 @@ function bjCheckSave(b, fail) {
     return { lo, hi, win: BJ_TUNE.dayBets * hi, loss: BJ_TUNE.dayBets * hi };
   };
   const room = L => L.loss + B().net;   // gold the table may still take today
-  const closed = L => B().net >= L.win || room(L) < L.lo;
+  const closed = L => B().net >= L.win || (B().top || 0) >= L.win || room(L) < L.lo;
   const cap = L => Math.min(L.hi, Math.floor(S.gold), room(L));
   const betNow = L => Math.max(L.lo, Math.min(cap(L), B().bet > 0 ? B().bet : L.lo));
   const can = () => !!BJ_TUNE.on && bjOpen();
@@ -111,6 +120,7 @@ function bjCheckSave(b, fail) {
   const settle = (k, x, back) => {
     const h = B().hand, b = B();
     if (back > 0) { S.gold += back; b.net += back; }
+    if (b.net > (b.top || 0)) b.top = b.net;
     h.done = 1; h.res = { k, p: total(h.p).t, d: total(h.d).t, x };
     b.n.hands++;
     if (k === 'win' || k === 'dbust' || k === 'bj') b.n.won++;
@@ -165,7 +175,11 @@ function bjCheckSave(b, fail) {
     const h = B().hand;
     S.gold -= h.bet; B().net -= h.bet; h.dbl = 1;
     h.p.push(draw(h)); save();
-    if (total(h.p).t > 21) return settle('bust', stake(h), 0);
+    if (total(h.p).t > 21) {
+      // his blackjack takes the first bet only (spec 3), so a busted Double against an Ace or a ten-card shows his second card first
+      if (worth(h.d[0]) === 1 || worth(h.d[0]) === 10) { h.d.push(draw(h)); save(); if (natural(h.d)) return settle('dbj', h.bet, h.bet); }
+      return settle('bust', stake(h), 0);
+    }
     return finish();
   };
   bjNext = () => { if (!B().hand || !B().hand.done) return false; B().hand = null; roll(); save(); return true; };
@@ -199,17 +213,20 @@ function bjCheckSave(b, fail) {
   };
 
   // spec 8: a save-code import clears the hand in play (its bet stays paid) and keeps the lower of today's stored and
-  // imported net, so an old code can't reopen a table a loss closed. A net from another day counts as 0.
+  // imported net, so an old code can't reopen a table a loss closed, and the higher of today's tops, so one can't reopen a table a
+  // win closed. A net or top from another day counts as 0.
   bjImport = (data, day = today()) => {
     if (!data || typeof data !== 'object') return data;
     const now = S.blackjack && S.blackjack.day === day ? S.blackjack.net : 0;
     const imp = data.blackjack && typeof data.blackjack === 'object' ? data.blackjack : null;
     const was = imp && imp.day === day && Number.isFinite(imp.net) ? imp.net : 0;
+    const top = Math.max(S.blackjack && S.blackjack.day === day ? S.blackjack.top || 0 : 0, imp && imp.day === day && Number.isFinite(imp.top) ? imp.top : 0);
     const out = Object.assign({}, data);
-    out.blackjack = Object.assign({}, imp || {}, { day, net: Math.min(now, was), hand: null });
+    out.blackjack = Object.assign({}, imp || {}, { day, net: Math.min(now, was), top, hand: null });
     return out;
   };
 
   // spec 9: with the switch off, a hand in play gives its bet back the next time the game loads.
-  if (!BJ_TUNE.on && live()) { const s = stake(B().hand); S.gold += s; B().net += s; B().hand = null; save(); }
+  // No save() here: a save stamps S.last, and the boot's away gains (90-boot) read it later. The next normal save writes the refund.
+  if (!BJ_TUNE.on && live()) { const s = stake(B().hand); S.gold += s; B().net += s; B().hand = null; }
 }

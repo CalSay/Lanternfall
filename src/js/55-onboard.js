@@ -113,8 +113,8 @@ const FIRST_USE = {
   stars: { text: 'Each star changes how your fights play.', via: 'notice' },
   deep: { text: 'The Deepwell goes down floor by floor. Pick a boon between floors and earn Marks.' },
   hands: { text: "You can hire gatherers on the Tavern board. They work shifts while you're away." },
-  switch: { text: 'Switch heroes on the Hero tab, for free.', via: 'notice' },
-  blackjack: { text: "Bet gold and beat Hesketh's hand without going over 21." }   // the join line on the Champion card (56c heroJoinLine)
+  switch: { text: 'Switch heroes on the Hero tab, for free.', via: 'notice' },   // the join line on the Champion card (56c heroJoinLine)
+  blackjack: { text: "Bet gold and beat Hesketh's hand without going over 21." }
 };
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.

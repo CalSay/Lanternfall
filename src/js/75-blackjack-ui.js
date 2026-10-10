@@ -1,6 +1,6 @@
 // 75-blackjack-ui: Tavern Blackjack's box on Camp > Tavern (docs/design/tavern-blackjack.md). Rules, limits and save: 57t-blackjack.js.
 // Plain UI cards until the Codex pack is vetted (spec 10): a flat panel, the rank as text, the suit's name in small capitals in
-// its colour, and a flat face-down card. No suit glyphs, emoji or drawn pictures here (the art freeze). The coins are ICON.coin.
+// its colour. Hesketh has one card until you stand (no hole card), so no face-down card shows: his cards come at once. No suit glyphs, emoji or drawn pictures here (the art freeze). The coins are ICON.coin.
 // The action row keeps three fixed places: Deal and Next hand sit in the middle (Stand's place), so Hit is never where Deal
 // sat, and every press is ignored for 300 ms after Deal, Next hand and a result (a double tap can't play the next step).
 {
@@ -24,16 +24,13 @@
     return k;
   };
   // only the new cards slide in: a hand that grows keeps the cards already on the table
-  const fill = (box, cards, back) => {
+  const fill = (box, cards) => {
     if (!box._ids) box._ids = [];
     const ids = cards.map(c => c.id), had = box._ids;
     if (had.length > ids.length || had.some((id, i) => id !== ids[i])) { box.textContent = ''; box._ids = []; }
-    const old = box.querySelector('.bj-back'); if (old) old.remove();
     for (const c of cards.slice(box._ids.length)) box.append(cardEl(c));
     box._ids = ids;
-    if (back) box.append(backEl());
   };
-  const backEl = () => { const k = el('div', 'bj-card bj-back'); k.setAttribute('aria-label', 'Face-down card'); return k; };
 
   function mount(sec) {
     R = { sec };
@@ -83,7 +80,7 @@
     putHidden(R.table, !dealt);
     if (dealt) {
       setTxt(R.dHead, `Hesketh: ${v.dt.t}`); setTxt(R.pHead, `You: ${v.pt.t}`);
-      fill(R.dHand, v.d, play); fill(R.pHand, v.p, false);
+      fill(R.dHand, v.d); fill(R.pHand, v.p);
       setTxt(R.line, v.line);
     }
     const bet = play ? v.stake : v.bet;

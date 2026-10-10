@@ -7683,7 +7683,7 @@ if (section('tavern blackjack')) try {
   const C = (r, s = 0) => s * 13 + r - 1;
   const mk = (o = {}) => {
     const g = loadCore({ seed: 4411, storage: o.storage, prelude: `Date.__t = ${o.at || T0}; Date.now = () => Date.__t;` + (o.off ? ' const __BJ = 0;' : '') }), E = s => g.eval(s);
-    if (!o.storage) E('S.maxZone = 14; S.zone = 14; S.camp.open = true; S.camp.b.tavern = 1; S.onboard.all = true; S.gold = 100000');
+    if (!o.storage) E('S.maxZone = 14; S.zone = 14; S.camp.open = true; S.camp.b.tavern = 1; S.onboard.all = true; S.blackjack.w = 600; S.gold = 100000');
     E(`globalThis.__q = []; Math.random = (() => { const r0 = Math.random; return () => { if (!globalThis.__q.length) return r0();
       const c = globalThis.__q.shift(), h = S.blackjack.hand, used = {}; for (const x of h.p.concat(h.d)) used[x] = (used[x] || 0) + 1;
       let n = 0; for (let i = 0; i < c; i++) n += BJ_TUNE.decks - (used[i] || 0); return (n + 0.5) / (52 * BJ_TUNE.decks - h.p.length - h.d.length); }; })()`);
@@ -7709,7 +7709,13 @@ if (section('tavern blackjack')) try {
     E('S.maxZone = 13'); assert(!E('bjOpen()'), 'blackjack: not before the zone 13 Captain is beaten (zone 14)');
     E('S.maxZone = 14; S.camp.b.tavern = 0'); assert(!E('bjOpen()'), 'blackjack: not without the Tavern built');
     E('S.camp.b.tavern = 1; S.onboard.got.tavern = null; S.onboard.got.hands = null'); assert(!E('bjOpen()'), 'blackjack: not before the Tavern row has opened');
-    E('S.onboard.all = true'); assert(E('bjOpen()'), 'blackjack: the wait is skipped once every tab is open (its clock stops)');
+    E('S.onboard.all = true'); assert(E('bjOpen()'), 'blackjack: once every tab is open the guide\'s stopped clock no longer holds it');
+    E('S.blackjack.w = 0; S.camp.b.tavern = 0'); for (let i = 0; i < 700; i++) E('tick(1)');
+    assert(E('S.blackjack.w') === 0 && !E('bjOpen()'), 'blackjack: the table\'s own wait does not run before the Tavern is built');
+    E('S.camp.b.tavern = 1'); for (let i = 0; i < 590; i++) E('tick(1)');
+    assert(!E('bjOpen()'), 'blackjack: with every tab open, a Tavern built late still waits 600 s of play (the table\'s own clock), so the build, Hands and the table never open at once');
+    for (let i = 0; i < 15; i++) E('tick(1)');
+    assert(E('bjOpen()') && E('S.blackjack.w') === 600, 'blackjack: after 600 s of play with the Tavern built the table opens, and the wait stops counting');
     const row = E('JSON.stringify(FEATURES.find(f => f.id === "blackjack"))');
     assert(/"late":true/.test(row) && /"view":"tav"/.test(row) && !/"now"/.test(row) && E('FIRST_USE.blackjack.text') === "Bet gold and beat Hesketh's hand without going over 21.",
       'blackjack: the FEATURES row is late, lives on Camp > Tavern, has no `now` (the spacing governor holds it) and a first-use line');
@@ -7731,6 +7737,10 @@ if (section('tavern blackjack')) try {
     assert(r.d === 0 && r.v.line === 'Both on 21. Your bet comes back.', 'blackjack: your natural against his two-card 21 is a tie (' + r.d + ')');
     r = play([C(5), C(6), C(1), C(9), C(13)], ['bjDouble']);
     assert(r.d === -510 && r.v.line === 'Hesketh makes blackjack. You lose 510 gold.' && r.v.p.length === 3, 'blackjack: his two-card 21 takes the first bet only; the Double\'s extra comes back (' + r.d + ')');
+    r = play([C(7), C(5), C(1), C(13), C(12)], ['bjDouble']);
+    assert(r.d === -510 && r.v.line === 'Hesketh makes blackjack. You lose 510 gold.' && r.v.d.length === 2, 'blackjack: a busted Double against his Ace shows his second card, and his blackjack takes the first bet only (' + r.d + ')');
+    r = play([C(7), C(5), C(9), C(13)], ['bjDouble']);
+    assert(r.d === -1020 && r.v.line === 'Bust at 22. You lose 1,020 gold.', 'blackjack: a busted Double against a 9 loses both bets (' + r.d + ', ' + r.v.line + ')');
     r = play([C(10), C(6), C(9), C(13)], ['bjHit']);
     assert(r.d === -510 && r.v.line === 'Bust at 26. You lose 510 gold.' && r.v.d.length === 1, 'blackjack: over 21 loses at once and Hesketh draws nothing (' + r.d + ')');
     r = play([C(10), C(7), C(1), C(6)], ['bjStand']);
@@ -7800,6 +7810,7 @@ if (section('tavern blackjack')) try {
     const a = mk(); a.force([C(10), C(6), C(9)]); a.E('bjSetBet(510); bjDeal()');
     const gold = a.E('S.gold'), raw = a.g.storage.get(KEY);
     const b = mk({ storage: memoryStorage({ [KEY]: raw }), off: true });
+    assert(b.g.storage.get(KEY) === raw, 'blackjack: the switch-off refund does not save at load (a save would stamp S.last before the boot reads the away time)');
     assert(b.E('S.gold') === gold + 510 && b.E('S.blackjack.hand') === null && b.E('S.blackjack.net') === 0 && b.E('typeof S.blackjack') === 'object', 'blackjack: BJ_TUNE.on = 0 refunds a hand in play at load, and the save field stays');
   }
   // 7. save codes (spec 8): a code with a hand exports and imports; the import clears the hand and keeps today's lower net
@@ -7810,16 +7821,19 @@ if (section('tavern blackjack')) try {
     assert(dec.ok && dec.data.blackjack.hand.p.length === 2, 'blackjack: a save with a hand in play exports and decodes' + (dec.ok ? '' : ': ' + dec.error));
     const day = E('deviceDay(Date.now())');
     E('S.blackjack.net = -2000');
-    let imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day}, net: -100, bet: 26, hand: { p: [1, 2], d: [3], bet: 26, dbl: 0, done: 0, res: null }, n: { hands: 4, won: 1, lost: 3, tied: 0, bj: 0 } } })))`));
+    let imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day}, net: -100, w: 600, bet: 26, hand: { p: [1, 2], d: [3], bet: 26, dbl: 0, done: 0, res: null }, n: { hands: 4, won: 1, lost: 3, tied: 0, bj: 0 } } })))`));
     assert(imp.blackjack.hand === null && imp.blackjack.net === -2000 && imp.blackjack.n.hands === 4, 'blackjack: an import clears the hand in play and keeps the lower of today\'s nets (an old code can\'t reopen a table a loss closed)');
     imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day - 3}, net: -9000, bet: 26, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } } })))`));
     assert(imp.blackjack.net === -2000 && imp.blackjack.day === day, 'blackjack: an imported net from another day counts as 0');
-    E('S.blackjack.net = 0'); imp = JSON.parse(E(`JSON.stringify(bjImport((({ blackjack, ...rest }) => rest)(JSON.parse(JSON.stringify(S)))))`));
+    E('S.blackjack.net = 2600; S.blackjack.top = 2600'); imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day}, net: 0, top: 0, bet: 26, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } } })))`));
+    assert(imp.blackjack.net === 0 && imp.blackjack.top === 2600, 'blackjack: an import keeps today\'s highest net, so a morning code can\'t reopen a table a win closed');
+    E('S.blackjack = Object.assign(S.blackjack, { net: 0, top: 2600, hand: null })'); assert(E('bjView().closed'), 'blackjack: the day\'s top at the win limit keeps the table closed');
+    E('S.blackjack.top = 0; S.blackjack.net = 0'); imp = JSON.parse(E(`JSON.stringify(bjImport((({ blackjack, ...rest }) => rest)(JSON.parse(JSON.stringify(S)))))`));
     assert(imp.blackjack.net === 0 && imp.blackjack.hand === null, 'blackjack: a code from before the table imports with a fresh table');
     const bad = h => E(`validateSave(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: Object.assign({ v: 1, day: 0, net: 0, bet: 0, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } }, ${JSON.stringify(h)}) })).ok`);
     assert(!bad({ hand: { p: [1, 1, 1, 1, 1], d: [3], bet: 26, dbl: 0, done: 0 } }) && !bad({ hand: { p: [1, 2], d: [3, 4], bet: 26, dbl: 0, done: 0 } }) && !bad({ hand: { p: [99, 2], d: [3], bet: 26, dbl: 0, done: 0 } })
-      && !bad({ net: 0.5 }) && !bad({ n: { hands: -1 } }) && bad({ hand: { p: [1, 2], d: [3], bet: 26, dbl: 0, done: 0, res: null } }),
-      'blackjack: save codes refuse a card held more often than four decks, a second Hesketh card before you stood, an unknown card, a fractional net and a negative count');
+      && !bad({ net: 0.5 }) && !bad({ n: { hands: -1 } }) && !bad({ w: 601 }) && bad({ day: -3 }) && bad({ hand: { p: [0, 13, 26, 39, 1, 0, 13, 26, 39, 1, 0, 13], d: [9], bet: 26, dbl: 0, done: 0, res: null } }) && bad({ hand: { p: [1, 2], d: [3], bet: 26, dbl: 0, done: 0, res: null } }),
+      'blackjack: save codes take a 12-card hand and a clock before 2026, and refuse a card held more often than four decks, a second Hesketh card before you stood, an unknown card, a fractional net and a negative count');
     assert(/candidateRaw = JSON\.stringify\(bjImport\(checked\.data\)\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-savecode-ui.js'), 'utf8')), 'blackjack: the save-code import writes the table through bjImport');
   }
   // 8. the art freeze (spec 10) and the copy (spec 11)
@@ -7852,7 +7866,7 @@ if (section('tavern blackjack (browser)')) try {
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
         await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; onboardTips(false); true');
-        await X('S.maxZone = 14; S.zone = 14; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.gold = 1e6; onboardUnlockAll(); for (let i = 0; i < 6; i++) tick(1.2); onboardReveal("blackjack"); true');
+        await X('S.maxZone = 14; S.zone = 14; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.blackjack.w = 600; S.gold = 1e6; onboardUnlockAll(); for (let i = 0; i < 6; i++) tick(1.2); onboardReveal("blackjack"); true');
         await X('setTab("tav"); ui(true); true'); await page.waitForTimeout(400);
         await page.$eval('#sec-blackjack', n => n.scrollIntoView({ block: 'start' })); await page.waitForTimeout(250);
         const box = () => page.$eval('#sec-blackjack', n => {
@@ -7875,10 +7889,10 @@ if (section('tavern blackjack (browser)')) try {
         assert(v1.phase === 'play' && v1.p.length === 2, `blackjack ${tag}: a second tap within 300 ms of Deal is ignored (the hand is still in play)`);
         assert(hit[0] !== deal[0] && Math.abs(hit[0] - deal[0]) >= hit[2] - 1, `blackjack ${tag}: Hit is never where Deal sat (${JSON.stringify([hit, deal])})`);
         await page.waitForTimeout(350);
-        assert(await page.$$eval('#sec-blackjack .bj-card', ns => ns.length) === 4 && /THORNS|LANTERNS|KEYS|CUPS/i.test(await page.textContent('#sec-blackjack .bj-table')) && /You have 15\. Hesketh shows a 9\./.test(await page.textContent('#sec-blackjack .bj-line')),
-          `blackjack ${tag}: two cards each side (Hesketh's second face down), the suit named in words, "You have 15. Hesketh shows a 9."`);
+        assert(await page.$$eval('#sec-blackjack .bj-card', ns => ns.length) === 3 && /THORNS|LANTERNS|KEYS|CUPS/i.test(await page.textContent('#sec-blackjack .bj-table')) && /You have 15\. Hesketh shows a 9\./.test(await page.textContent('#sec-blackjack .bj-line')),
+          `blackjack ${tag}: two cards for you and Hesketh's one (no hole card), the suit named in words, "You have 15. Hesketh shows a 9."`);
         b = await box(); assert(!b.sx && !b.wide.length && !b.small.length && !b.cut.length && (rm !== 'reduce' || b.anim === 'none'), `blackjack ${tag}: the hand in play fits, each suit's name inside its card${rm === 'reduce' ? ', and reduced motion stops the card slide' : ''} (${JSON.stringify(b)})`);
-        await X('globalThis.__q = [12, 12]; true');
+        await X('globalThis.__q = [12]; true');
         await page.click('#sec-blackjack .bj-mid'); await page.click('#sec-blackjack .bj-mid', { delay: 0 });
         const v2 = JSON.parse(await X('JSON.stringify(bjView())'));
         assert(v2.phase === 'done' && /Next hand/.test(await page.textContent('#sec-blackjack .bj-mid')), `blackjack ${tag}: Stand settles the hand and a second tap inside 300 ms does not press Next hand (${v2.line})`);
