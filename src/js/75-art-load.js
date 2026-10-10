@@ -14,7 +14,25 @@
 //   hashed files away), the game saves and reloads once the zone on screen needs it; otherwise it tries again later.
 //   artZonePacks(z) -> the pack ids zone z shows ([] in the inline page)
 //   artZoneReady(z) -> bool: every pack zone z shows is in (and, for one that came after boot, its pictures have decoded)
-var artZoneReady = () => true, artZonePacks = () => [];
+// Hero packs (card hero-packs; tools/build.mjs heroPacks): a hero file's moves come by hero. The boot loader wrote the save's
+// hero's core pack; that hero's other moves load first after boot, and another hero's when the save has that hero (a new game,
+// with no hero yet, loads every hero's core). Each move goes in its hero's moves (lfBoot.putHero: <file's constant>.moves, or
+// .heroes.<hero>.moves, merged into what the page kept of it). The save's hero's core is in the constant as soon as its file runs,
+// as in the inline page; a move that comes later emits 'artPack' { id, kind: 'hero', key, hero, moves }, and a drawer that must
+// prepare its data (basE91 text, cutting frames) does it there (the boot packs emit it too, when this file runs).
+// The code that draws a hero asks before it draws a move, every frame it draws it:
+//   artHeroNeed(hero, move) -> bool: true when the move is in (draw it); false: draw nothing for it (never a stand-in): the game
+//                              holds under a plain line over the stage, and the move loads before anything else, until it is in
+//                              or nothing has asked for it for half a second (the stage moved on: another hero, another screen)
+//   artHeroReady(hero, move) -> bool: the same answer, with no hold (true in the inline page, and for a move no pack holds)
+//   artHeroWait(fn)          -> fn(hero, move) returns false while a move that is in is not ready to draw yet (pictures decoding);
+//                              it must turn true once it gives up (a picture that never decodes), or the hold never ends
+//   artHeroPacks(hero, move) -> the hero's pack ids (those holding that move, when named)
+//   artHeroWant(hero, move)  -> load the move's pack soon, with no hold (a screen off the stage that can wait for it: the hero
+//                              picker's figure; route-s-wren-wire); its 'artPack' says when it is in
+// New-style packs (n in the table; docs/design/new-style/engine.md) never hold the game: they load by zone after its own packs,
+// or when 64m asks: artNsWant(pieces) (none while Classic art is on).
+var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {}, artNsWant = () => {};
 {
   const LB = typeof lfBoot === 'object' && lfBoot && lfBoot.packs && typeof lfBoot.take === 'function' ? lfBoot : null;
   if (LB && typeof document !== 'undefined') {
@@ -23,7 +41,9 @@ var artZoneReady = () => true, artZonePacks = () => [];
     const RELOAD_KEY = 'lanternfall.artReloadAt';
     // the build's table (zones 1 to LB.road); past the road the scenery repeats every 35 zones (check.mjs holds it), as in the loader
     const tableZone = z => (z > LB.road ? LB.road - 34 + (z - LB.road - 1) % 35 : z);
-    artZonePacks = z => { const q = tableZone(z); return Object.keys(P).filter(id => P[id].z.some(r => q >= r[0] && q <= r[1])); };
+    const inZone = (id, q) => P[id].z.some(r => q >= r[0] && q <= r[1]);
+    artZonePacks = z => { const q = tableZone(z); return Object.keys(P).filter(id => !P[id].n && inZone(id, q)); };
+    const nsPacks = z => { const q = tableZone(z); return classicOn() ? [] : Object.keys(P).filter(id => P[id].n && inZone(id, q)); };
     // A pack that came after boot is ready once its pictures have decoded, so the first frame after the hold draws them (the
     // packs the boot loader wrote come in before the game runs and are used as the inline page uses its art)
     const framesDone = key => {
@@ -35,6 +55,31 @@ var artZoneReady = () => true, artZonePacks = () => [];
     };
     const isReady = id => ready[id] || (got[id] && id.startsWith('foe:') && framesDone(id.slice(4)) && (ready[id] = true));
     artZoneReady = z => artZonePacks(z).every(isReady);
+    // ---- hero packs ----
+    const waits = [], need = {};   // need: 'hero move' -> [hero, move, when it was last asked for] while the stage waits for it
+    artHeroPacks = (hero, move) => Object.keys(P).filter(id => P[id].h === hero && (!move || P[id].m.includes(move)));
+    artHeroWait = fn => { if (typeof fn === 'function') waits.push(fn); };
+    // a hero file the Classic art switch turns off (x in the table: Wren's route S, route-s-wren-wire) loads only when asked while it is on
+    const classicOn = () => typeof portraitsClassic === 'function' && portraitsClassic();
+    const soon = [];   // packs asked for with artHeroWant or artNsWant, loaded after the ones the stage holds for
+    // (a new-style ask that queues nothing starts nothing: it must not take the slot a hero move needs)
+    const ask = (ids, quiet) => { const n = soon.length; for (const id of ids) if (P[id] && !got[id] && !soon.includes(id)) soon.push(id); if (!quiet || soon.length > n) pump(); };
+    artHeroWant = (hero, move) => ask(artHeroPacks(hero, move));
+    artNsWant = ps => { if (!classicOn()) ask((ps || []).map(p => 'ns:' + p.replace(':', '.')), true); };
+    artHeroReady = (hero, move) => artHeroPacks(hero, move).every(id => got[id]) && waits.every(f => { try { return f(hero, move) !== false; } catch (e) { return true; } });
+    artHeroNeed = (hero, move) => {
+      if (artHeroReady(hero, move)) return true;
+      const k = hero + ' ' + move, first = !need[k];
+      need[k] = [hero, move, Date.now()];
+      if (first) { queueMicrotask(recheck); setTimeout(pump, 0); }   // the cover goes up before this frame paints
+      return false;
+    };
+    const heroWaiting = () => {
+      for (const k in need) if (Date.now() - need[k][2] > 500 || artHeroReady(need[k][0], need[k][1])) delete need[k];
+      return Object.keys(need).length > 0;
+    };
+    const heroNow = () => { const out = []; for (const k in need) for (const id of artHeroPacks(need[k][0], need[k][1])) if (!out.includes(id)) out.push(id); return out; };
+    const heroName = h => (typeof ROSTER === 'object' && ROSTER[h] && ROSTER[h].name ? ROSTER[h].name.split(' ')[0] : 'your hero');
     // o[k] holds basE91 text; it reads back as base64, decoded on the first read (21zz's getter, for a field that came late)
     const lazy = (o, k) => {
       const s = o[k]; if (typeof s !== 'string') return;
@@ -45,11 +90,17 @@ var artZoneReady = () => true, artZonePacks = () => [];
     const put = (id, data) => {
       if (got[id] || !P[id] || !data) return;
       const i = id.indexOf(':'), kind = id.slice(0, i), key = id.slice(i + 1), late = booted;
-      const done = () => { got[id] = true; if (!late || kind !== 'foe') ready[id] = true; delete failed[id]; delete stale[id]; emit('artPack', { id, kind, key }); };
-      if (kind === 'foe') {
+      const done = more => { got[id] = true; if (!late || kind !== 'foe') ready[id] = true; delete failed[id]; delete stale[id]; emit('artPack', Object.assign({ id, kind, key }, more)); };
+      if (kind === 'hero') {
+        if (typeof LB.putHero !== 'function' || !LB.putHero(id, data)) return;
+        done({ hero: P[id].h, moves: Object.keys(data) });
+      } else if (kind === 'foe') {
         const F = typeof FOE_ART === 'object' && FOE_ART[key]; if (!F) return;
         for (const p of Object.keys(data.atlases || {})) { F.atlases[p] = data.atlases[p]; lazy(F.atlases, p); }
         done();   // 64j cuts the frames as each atlas loads; isReady waits for them
+      } else if (kind === 'ns' && typeof NS_ART === 'object') {   // basE91 pictures (64m decodes them)
+        const i = key.indexOf('.'), G = NS_ART[key.slice(0, i)], e = G && G[key.slice(i + 1)]; if (!e) return;
+        e.img = Object.assign(e.img || {}, data.img); done();
       } else if (kind === 'bg' && typeof BG_ART === 'object') {
         for (const o of ['land', 'port']) if (data[o]) lazy(data[o], 'src');
         if (!late) { BG_ART[key] = data; done(); return; }
@@ -66,24 +117,31 @@ var artZoneReady = () => true, artZonePacks = () => [];
     const screenZone = () => (target() === 'mob' && !deep() ? S.zone : 0);   // only a fight on the road draws a zone's art
     // 90-boot asks every frame, before tick and draw. A zone change inside tick that emits nothing (a retreat after a wipe) is
     // caught by the microtask, which runs after that frame's draw and before the browser paints it: the cover is up in time.
+    // A move the stage asked for (artHeroNeed) holds the game too, wherever the stage is.
     let coverKey = '';
-    const key = () => { const z = screenZone(); return z + ':' + (z >= 1 && !artZoneReady(z)); };
-    const recheck = () => { if (coverKey !== key()) cover(); };
-    const held = () => { const z = screenZone(), h = z >= 1 && !artZoneReady(z); if (coverKey !== z + ':' + h) cover(); queueMicrotask(recheck); return h; };
+    const key = () => { const z = screenZone(); return z + ':' + (z >= 1 && !artZoneReady(z)) + ':' + heroWaiting(); };
+    function recheck() { if (coverKey !== key()) cover(); }
+    const held = () => { const k = key(); if (coverKey !== k) cover(); queueMicrotask(recheck); return !k.endsWith(':false:false'); };
     addEventListener('online', () => { for (const id in failed) failed[id].at = 0; pump(); });   // back online: try again now
     holdGame(held);
 
     // ---- loading ----
     const wanted = () => {
-      const z = Math.max(1, S.zone | 0), a0 = zoneAreaIdx(z) * AREA_ZONES + 1, zs = [z, z + 1, z - 1];
-      for (let q = a0; q < a0 + 2 * AREA_ZONES; q++) zs.push(q);
-      const out = [];
-      for (const q of zs) if (q >= 1) for (const id of artZonePacks(q)) if (!out.includes(id)) out.push(id);
+      const z = Math.max(1, S.zone | 0), a0 = zoneAreaIdx(z) * AREA_ZONES + 1, near = [z, z + 1, z - 1], area = [];
+      for (let q = a0; q < a0 + 2 * AREA_ZONES; q++) area.push(q);
+      // the save's hero's core (with no hero yet, every hero's core), the zones either side, then the hero's other moves (table
+      // order), then the rest of the area and the next one
+      const h = typeof soloHero === 'function' ? soloHero() : null, mine = Object.keys(P).filter(id => P[id].h && (h ? P[id].h === h : P[id].c) && !(P[id].x && classicOn()));
+      const out = mine.filter(id => P[id].c), add = ids => { for (const id of ids) if (!out.includes(id)) out.push(id); };
+      for (const q of near) if (q >= 1) add(artZonePacks(q));
+      add(mine);
+      for (const q of near) if (q >= 1) add(nsPacks(q));
+      for (const q of area) { add(artZonePacks(q)); add(nsPacks(q)); }
       return out;
     };
     const due = id => !got[id] && !busy[id] && !stale[id] && !broken[id] && !(failed[id] && failed[id].at > Date.now());   // a stale file is gone for good
     function pump() {
-      const now = screenZone() >= 1 ? artZonePacks(screenZone()) : [], n = Object.keys(busy).length;
+      const now = heroNow().concat(screenZone() >= 1 ? artZonePacks(screenZone()) : [], soon), n = Object.keys(busy).length;
       const id = (n < 2 ? now.find(due) : null) || (n < 1 ? wanted().find(due) : null);
       if (!id) return;
       busy[id] = true;
@@ -118,8 +176,8 @@ var artZoneReady = () => true, artZonePacks = () => [];
     // ---- the cover over the stage, and the zone number ----
     let box = null, line = null, btn = null;
     function cover() {
-      const z = screenZone(), on = z >= 1 && !artZoneReady(z);
-      coverKey = z + ':' + on;
+      const z = screenZone(), zw = z >= 1 && !artZoneReady(z), hw = heroWaiting(), on = zw || hw;
+      coverKey = z + ':' + zw + ':' + hw;
       const stage = document.getElementById('stage');
       if (!on) { if (box) box.hidden = true; return; }
       if (!box && stage) {
@@ -133,12 +191,13 @@ var artZoneReady = () => true, artZonePacks = () => [];
         for (const ev of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'click']) box.addEventListener(ev, e => e.stopPropagation());   // no strikes through it
       }
       if (!box) return;
-      const ids = artZonePacks(z).filter(id => !isReady(id));
-      let t = `Loading ${zoneAreaName(z)}`, ask = false;
+      const ids = (zw ? artZonePacks(z) : []).concat(heroNow()).filter(id => !isReady(id));
+      const what = zw ? zoneAreaName(z) : heroName(P[ids[0]] ? P[ids[0]].h : Object.values(need)[0][0]);
+      let t = `Loading ${what}`, ask = false;
       if (reloading || (ids.some(id => stale[id]) && reload())) t = 'The game was updated. Reloading.';
       else if (ids.some(id => stale[id])) { t = 'The game was updated. Reload the page to go on.'; ask = true; }
-      else if (ids.some(id => broken[id])) { t = `${zoneAreaName(z)} did not load. Reload the page to go on.`; ask = true; }
-      else if (ids.some(id => failed[id])) t = `Waiting for the connection to load ${zoneAreaName(z)}`;
+      else if (ids.some(id => broken[id])) { t = `${what} did not load. Reload the page to go on.`; ask = true; }
+      else if (ids.some(id => failed[id])) t = `Waiting for the connection to load ${what}`;
       box.hidden = false;
       if (line.textContent !== t) line.textContent = t;
       btn.hidden = !ask;

@@ -152,6 +152,19 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Moss teaches one move per hero, "Scroll found." toasts only when the hero in play can use it, and a full-slot learn detail says "Swap it
   in for:". No drop, trade or save change.
 
+- **Claude decided: Oriel Vess joins at the zone 20 Champion with a falling-star frost kit (oriel-ability-spec, Opus judge
+  2026-10-10; Cal can veto with "Oriel joins at zone 25").** She is the fourth hero to carry the lamp. Her scene plays after
+  Maren's on the Sepulchre Engine's card, and she joins at the road's level; the Star Chart becomes her hero quest. Her kit is
+  Pip's 6 shared caster moves plus 8 of her own from Codex's list, with Fold the Chart and Someone Looks Up cut. Falling Letter
+  calls one star that lands 2 turns later for a frost hit and a Stun, and every bonus is read when it lands. Zone 20, not 25,
+  because casual players reach it on day 5 rather than day 15-27, right where the climb stalls. Spec:
+  [heroes/oriel.md](design/heroes/oriel.md).
+
+- **Cal decided: Oriel's own abilities get plain star names (Cal, 2026-10-10 11:12: "Can you rename the abilities officially").**
+  Falling Star, Call It Down, Take a Bearing, Starbolt, Ill Omen, Shooting Star, Starfall and News Arrives. Codex's names (Falling
+  Letter, Pull the Reading, Clear Night, Bad News, Letters Unsent, Sliver's Hum) read as riddles; players should see what a move
+  does. Ids stay as they were, since saves, art and effects key on them. [heroes/oriel.md](design/heroes/oriel.md).
+
 ## Combat
 
 - **Turn-based, one enemy at a time.** Enemies are stronger to make up for it. No click-spamming. (2026-09-30)
@@ -1207,6 +1220,11 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   steps only" end; heroes and foes draw 1.5x against unchanged scenery (ACTOR_K = 1.5, card actor-scale; a hero about 142 logical
   px, 285 CSS at 1280x720) from the 190 px art with no new bytes; portrait stays 1x until UX-L1. #320 closed with the spike: foes
   stay 2D. A menu-only phone mode is a separate Cal decision. (`docs/design/route-s/ruling.md`)
+- **Bigger heroes (Cal, 2026-10-10 10:52: "Heroes need to be bigger"; Opus judge approved with conditions; Cal can veto: "Keep
+  heroes at one and a half"):** ACTOR_K 2 at stage zoom 2+ (1280x720, 1920x1080), ground at 86% of the stage there. A stage too short
+  for it (1366x640) keeps 1.5x. A roomy zoom-1 stage (480+ CSS px tall: 1024x768, a narrow window) draws 2x or 3x; G3's x1 now
+  covers only short stages (740x360). A hero and lone foe too wide for the stage step down (2 to 1.5; 3 to 2 to 1). Crowds and
+  portrait keep x1; the ground does not move when a crowd comes. Follow-up: try 1.5x for crowds before 1x (needs its own judge).
 - **Route S Tobin (integrate-route-s-tobin, Opus art judge, 2026-10-10; Cal can veto: "Wire Tobin now", "Pull the new Tobin",
   "Wait for all three heroes", "Keep the first cleave", "Last Stand should be a shield raise"):** wire Tobin's 21 fight moves
   (Scenario key frames from his concept, 190 px at Wren's pack scale, 63 colours seeded with the concept's 14 swatches so his olive
@@ -1244,6 +1262,20 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   edge-on head reads as a T-bar, Wren's v3 failure) and hunt v4 (the spear shrinks mid-thrust); 6 sheets, about 108 credits, the pack
   at about 936 of ~1,000. Live Nova, Lantern Flare and Lanternburst fire a bolt from her hand against the art; card pip-cast-recipes
   re-recipes them for route S art. The gather loops wire through route-s-pip-gather after woodcut v6 and hunt v4. (`docs/design/route-s/ruling-pip.md`)
+- **Route S Pip re-brief recheck (route-s-pip-rebrief, Opus art judge, 2026-10-10; Cal can veto: "No Hex sigil", "Skip the Pip rerolls"):**
+  Pip's fight set clears the re-brief hold except the Hex sigil, and still waits on the split build. Victory v2 plays 1-7 and holds 6,
+  the camp pose (8 swaps the staff hand). Arcane Ward v2 plays 1, 2, 3, 6, 7, 8 (4-5 show a second lantern). Lanternburst v3, the one
+  retry, keeps the full staff in her rear hand and thrusts the lantern; it plays 1, 2, 3, 6, 8 and emits from the lantern (5 and 7 show
+  a second lantern). Woodcut v6 passes the impact and loops 1, 2, 5, 6, 7, 8. Hunt v4 (one hand and a short spear again) and the Hex
+  sigil v2 (two marks read as a G) wait for Cal's next budget; gathering keeps the camp pose meanwhile. Cal's checks: 0 third hands,
+  1 halo pixel (real steel) in 48 frames. Seven sheets, 132 credits; Pip's pack 960 of ~1,000. (`docs/design/route-s/recheck-pip.md`)
+- **Route S Wren wire (route-s-wren-wire, #346, Opus art judge, 2026-10-10; Cal can veto: "Pull the new Wren"):** wire. Gate 11 shots
+  pass at all 9 views. Gate 12 clips pass on the re-shoot: all 8 Volley and Moonlit Volley releases show on the contact frame in both clips
+  (they were 133 ms late before the fix, because a Perfect's hit-stop froze the clock the release waited on; a ring now lets go at the press or
+  the contact, whichever is first). Accepted as drawn: Power Shot's and Barbed's end frames at 186 px (crouched in the source) and Final
+  Echo frame 2 with no string (the bow is hidden, and the frame never shows in turn fights). In the split build only her idle is at boot (new
+  game 3.49 MB, zone 2 3.95 MB, no hero exception). The Foreman's rule: no hero-core judge, since at 10 Mbps her Attack is in about 3 s
+  before a new player's first swing ("Loading Wren" never shows). Goes to Cal as a preview (gate 13).
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
@@ -1378,6 +1410,8 @@ nothing; no economy or save change. A cache with a pick is a big card.
   (0.39), Gloomjaw (0.85) and Mossy Hollow (1.45) named exceptions until ns-a1-wire; B1's 6.0/8.0 first-load lines become a
   report for the split build; per-hero packs (core moves at boot) are a follow-up card that the route S wire cards depend on.
   Record: `docs/design/hosting/art-loader-judge.md`.
+- **Loading screen (judge 2026-10-10, docs/design/hosting/loading-screen-judge.md; Cal can veto: "make the screen wait for the hero's moves"):** the split build opens on a title screen with no art (the name, a bar, the line) and waits for no hero moves; card hero-queue first reorders and preloads the hero's first-hour moves and measures holds, and a fight-set wait comes only if holds remain, inside the boot set under E2 (at most 0.45 MB, real boot bytes at most 4.60 MB). The 6.0 s and 4.0 MB lines stand. cold-load.mjs times the font stylesheets. netlify-split-deploy owns long-lived caching on /assets/*.
+- **Engine boot bytes (judge 2026-10-10, ns-scenery-engine #351; Cal can veto: "trim the engine under the warn line"):** the new-style engine's ~7.5 KB on the wire puts the new-game boot set at 3.5007 MB, over the 3.5 warn line, and is accepted as named in the PR: plan.md 5.1 already expects about 3.8 MB with A1, a camp cut would only move the bytes to the camp wire card, and hero cores count once (the heaviest), not stacked. The 3.5 warn and 4.0 fail lines stand; the cold load stays within 6.0 s (4.5 s measured on the PR head).
 
 ## Replaced decisions
 

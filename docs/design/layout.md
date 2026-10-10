@@ -200,7 +200,9 @@ To tune: change a rule's `ch` in NOTICES (or `NOTICE_TUNE` for the budget). A ne
 - On the game view, toasts sit in the stage box under the HP bar, never over the control row or the
   ability button (right 62 px stay clear). At most 2 on a stage 200 px or taller, else 1.
 - While a menu covers the game (portrait), the toast stack moves over the bottom of the menu, just above
-  the tab bar, full width, at most 2. Landscape: toasts always sit in the side column, above the action bar.
+  the tab bar, full width, at most 2. Landscape: toasts always sit in the side column, above the action bar, except on a
+  phone on its side (500 px tall or less), where they sit at the foot of the stage, two side by side, menu or not: the side
+  column's notices row there is 23 to 77 px under Next Up, too short for a toast and a banner (first-craft-toast-clip).
 - Tap or swipe a toast away. Repeats become "+1". Every notice but `none` goes to the bell log (last 50, this visit).
 - **What's new** (Q1): notices raised in the first 2.5 s of play (old-save catch-ups: achievements, Codex
   Light, retooled gear, the camp and its welcome) fold into one bell notice with a short list, and one toast

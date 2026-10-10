@@ -8,7 +8,8 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
-import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire } from './build.mjs';
+import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire, heroPacks, nsPacks } from './build.mjs';
+import { nsFixture } from './lib/ns-fixture.mjs';
 import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
@@ -109,9 +110,13 @@ const WEIGHT = {
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
+  'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'page size': 2,
-  'split build (asset-build)': 30   // 31 s locally alone (art-loader, 2026-10-10)
+  'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
+  'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
+  'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
+  'new-style screens (browser)': 36   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -325,6 +330,8 @@ if (section('split build (asset-build)')) try {
   const G = loadCore(), data = (f, v) => vm.runInNewContext(`${src(f)}\n;${v}`);
   const packData = p => { let got = null; vm.runInNewContext(p.text, { lfArt: (kind, key, d) => { got = { id: kind + ':' + key, d }; } }); return got; };
   for (const [f, A] of Object.entries(AREA_ART)) {
+    if (A.kind === 'hero') { heroPackCheck(s, f, A, data(f, A.v)); continue; }   // section 'hero packs (hero-packs)' says how they split
+    if (A.kind === 'ns') continue;   // one pack per piece: section 'new-style screens (ns-scenery-engine)' builds a test NS_ART
     const D = data(f, A.v), mine = s.packs.filter(p => p.f === f);
     assert(mine.map(p => p.id).join() === Object.keys(D).map(k => A.kind + ':' + k).join(), `split: ${A.v} has one pack per entry (${mine.map(p => p.id).join(', ')})`);
     for (const p of mine) {
@@ -346,14 +353,24 @@ if (section('split build (asset-build)')) try {
   const inZ = (p, z) => p.zones.some(([a, b]) => z >= a && z <= b);
   const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => p.id === id)).sort().join(), s.packs.filter(p => inZ(p, i + 1)).map(p => p.id).sort().join()]).filter(r => r[1] !== r[2]);
   const past = G.eval(`Array.from({ length: 2000 }, (_, i) => ${road} + 1 + i).filter(z => zoneTheme(z) !== zoneTheme(z - 35) || ZONE_FOES[z] || regionIdx(z) === 0).length`);
-  assert(!badZ.length && !past && s.packs.every(p => p.zones.length), `split: each pack names the zones whose fights show it, from ZONE_FOES and zoneTheme `
-    + `(${badZ.slice(0, 3).map(r => r.join(' ')).join('; ') || 'all ' + road}), every pack shows somewhere (${s.packs.filter(p => !p.zones.length).map(p => p.id).join(', ') || 'yes'}), `
+  assert(!badZ.length && !past && s.packs.every(p => p.hero || p.zones.length), `split: each pack names the zones whose fights show it, from ZONE_FOES and zoneTheme `
+    + `(${badZ.slice(0, 3).map(r => r.join(' ')).join('; ') || 'all ' + road}), every area pack shows somewhere (${s.packs.filter(p => !p.hero && !p.zones.length).map(p => p.id).join(', ') || 'yes'}), `
     + `and past the road the scenery repeats every 35 zones with no zone monster (2000 zones; ${past} differ)`);
   const strip = h => h.replace(/<!-- Boot loader[\s\S]*?<\/script>\n/, '').replace(/<script src="assets\/[^"]+"[^>]*><\/script>\n/g, '').replace('\n<script>lfBoot.end();</script>', '');
   let want = inline;
   for (const a of s.assets) want = want.replace(`// ---- src/js/${a.f} ----\n${a.text}\n`, () => '');
   for (const f of Object.keys(AREA_ART)) want = want.replace(`// ---- src/js/${f} ----\n${src(f)}`, () => `// ---- src/js/${f} ----\n${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?\\n)\\n// ---- src`))[1]}`);
   assert(inline && strip(s.html) === want, 'split: apart from the loader, the page is the inline page with the boot files taken out and the area art kept as above');
+  // the loading screens (card loading-screen; loading-screen judge 2026-10-10): each comes before any game markup, draws no art
+  // (art freeze: text, the game's colours and a bar), and has a reduced-motion rule; 90-boot takes the inline one away
+  { const loader = s.html.slice(s.html.indexOf('<!-- Boot loader'), s.html.indexOf('<script id="lfBootJs">')), css = fs.readFileSync(path.join(ROOT, 'src', 'styles', '15-loading.css'), 'utf8');
+    const inl = (inline.match(/<div class="lf-load" id="lfLoad"[^]*?<\/div>/) || [''])[0], art = t => /<(img|canvas|svg|picture)\b|url\(|data:image|background-image/i.test(t);
+    const app = h => h.indexOf('<div class="app" id="app">');
+    assert(s.html.indexOf('<div id="lfBoot"') > 0 && s.html.indexOf('<div id="lfBoot"') < app(s.html) && inline.indexOf('id="lfLoad"') > 0 && inline.indexOf('id="lfLoad"') < app(inline) && app(inline) > 0,
+      'loading screen: the split page\'s screen (#lfBoot) and the inline page\'s (#lfLoad) come before any game markup');
+    assert(inl && loader.includes('id="lfBootFill"') && !art(loader) && !art(inl) && !art(css), 'loading screen: neither screen draws art (no image, canvas, svg, url() or picture data; a bar and text only)');
+    assert(/@media \(prefers-reduced-motion: ?reduce\)/.test(loader) && /@media \(prefers-reduced-motion: ?reduce\)/.test(css), 'loading screen: both screens have a reduced-motion rule');
+    assert(/document\.getElementById\('lfLoad'\); if \(el\) el\.remove\(\);/.test(src('90-boot.js').split('// ================= boot =================')[1] || ''), '90-boot takes the inline page\'s loading screen away at boot'); }
   // the load lines (docs/design/hosting.md 6; art-loader judge 2026-10-10), each fail line with a mutation run
   { const sizes = new Map(), size = x => (sizes.has(x) ? sizes.get(x) : (sizes.set(x, wire(x)), sizes.get(x)));
     const r = loadReport(s, { size }), MBs = n => (n / 1e6).toFixed(2);
@@ -414,8 +431,8 @@ if (section('split build (asset-build)')) try {
       for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
         const { page, errs } = await open({ width: w, height: h });
         await page.waitForLoadState('load'); await booted(page);
-        const r = await page.evaluate(() => ({ line: !!document.getElementById('lfBoot'), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait') }));
-        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && !errs.length, `split: boots at ${w}x${h} with the loading line and its tags gone, no loading cover` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
+        const r = await page.evaluate(() => ({ line: !!(document.getElementById('lfBoot') || document.getElementById('lfBootCss') || document.getElementById('lfLoad')), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait') }));
+        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && !errs.length, `split: boots at ${w}x${h} with both loading screens, their styles and the tags gone, no loading cover` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
         await page.close();
       }
       // 2. while the biggest boot file is still loading, the line shows the bytes done of the total: the boot files and zone 1's packs
@@ -438,7 +455,7 @@ if (section('split build (asset-build)')) try {
       //    the boot files does any other pack load
       { const { page, errs } = await open({ save: { ...early, zone: 2, maxZone: 8 }, html: probe });
         await page.waitForLoadState('load'); await booted(page); await page.waitForTimeout(400);
-        const r = await page.evaluate(() => window.__t.x(`({ boot: lfBoot.boot.join(), ready: [1, 2, 8].map(z => artZoneReady(z)).join(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })(), bg: !!BG_ART.forest && BG_ART.forest.land.src.length > 1000 })`));
+        const r = await page.evaluate(() => window.__t.x(`({ boot: lfBoot.boot.filter(id => !id.startsWith('hero:')).join(), ready: [1, 2, 8].map(z => artZoneReady(z)).join(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })(), bg: !!BG_ART.forest && BG_ART.forest.land.src.length > 1000 })`));
         const c = await look(page);
         assert(r.boot === 'foe:gloomjaw,bg:forest' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
           `split: a zone 2 save boots with its packs in (Gloomjaw cut, Mossy Hollow drawn, no cover) and the rest of the area arrives after (${JSON.stringify(r)}, ${JSON.stringify(c)})` + (errs[0] ? ': ' + errs[0] : ''));
@@ -506,7 +523,7 @@ if (section('split build (asset-build)')) try {
           const v = JSON.parse(localStorage.getItem(k)); sessionStorage.setItem('t.z', String(v.zone)); v.zone = 1; localStorage.setItem(k, JSON.stringify(v)); } } catch (e) {} };
         const { page, navs } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'gone' }, html: probe, later: after, init });
         await booted(page); await page.waitForTimeout(500);
-        await go2(page);
+        await go2(page).catch(() => {});   // go2 starts the reload this step expects; on a slow runner it can land before evaluate returns
         await page.waitForFunction(() => sessionStorage.getItem('t.z'), null, { timeout: 8000 }).catch(() => {});   // the reload: a new page
         await booted(page); await page.waitForTimeout(800);
         const saved = await page.evaluate(() => sessionStorage.getItem('t.z'));
@@ -518,6 +535,384 @@ if (section('split build (asset-build)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('split build crashed: ' + (e.stack || e)); }
+
+// ---- hero packs (card hero-packs; tools/build.mjs heroPacks, src/js/75-art-load.js, src/boot-loader.html) ----
+// A hero art file (an AREA_ART entry of kind 'hero') splits by hero: one pack of each hero's core moves, which the boot loader
+// writes only for the save's hero, and one pack per other move, loaded after boot. The boot lines count the heaviest hero's
+// core. While the stage needs a move that is not in (artHeroNeed), the game holds under a plain line, never a stand-in.
+// No hero file ships yet (the route S wire cards register theirs), so this section proves the kind with a test hero file built
+// in memory from today's art (21y's HERO_ART, its poses as moves; nothing redrawn, nothing written).
+// heroPackCheck: a hero file's packs, table rows and page part (also run on every real hero entry by the split section).
+// A one-hero file (entry `hero`) is { moves, ... } with `core` a list; otherwise { heroes: { <hero>: { moves, ... } } } with `core` per hero.
+// (a function declaration: the split section above calls it before this line runs)
+function heroPackCheck(s, f, A, D) {
+  const SOLO_IDS = vm.runInNewContext(/const SOLO_ORDER = (\[[^\]]*\])/.exec(fs.readFileSync(path.join(ROOT, 'src', 'js', '24b-data-solo.js'), 'utf8'))[1]);
+  const mine = s.packs.filter(p => p.f === f), tag = f.replace(/-data-.*$/, ''), one = typeof A.hero === 'string';
+  const HS = one ? { [A.hero]: D } : D.heroes, coreOf = h => (one ? A.core : A.core[h]);
+  assert(Object.keys(HS).every(h => SOLO_IDS.includes(h)), `hero packs: ${A.v} names only the game's heroes (${Object.keys(HS).join(', ')} of ${SOLO_IDS.join(', ')}), so the boot loader never loads a hero the game will not draw`);
+  const want = Object.entries(HS).flatMap(([h, H]) => [`${h}.core`, ...Object.keys(H.moves).filter(m => !coreOf(h).includes(m)).map(m => `${h}.${m}`)]).map(k => `hero:${A.v}.${k}`);
+  assert(mine.map(p => p.id).join() === want.join(), `hero packs: ${A.v} has one core pack per hero and one pack per other move (${mine.length} packs: ${mine.slice(0, 4).map(p => p.id).join(', ')}...)`);
+  const table = JSON.parse(s.html.match(/packs = (\{.*?\}), road = /)[1]);
+  const bad = mine.filter(p => {
+    let got = null; vm.runInNewContext(p.text, { lfArt: (kind, key, d) => { got = { id: kind + ':' + key, d }; } });
+    const H = HS[p.hero].moves, t = table[p.id], ms = p.core ? coreOf(p.hero) : [p.id.split('.').pop()];
+    return !got || got.id !== p.id || JSON.stringify(got.d) !== JSON.stringify(Object.fromEntries(ms.map(m => [m, A.load(H[m])])))
+      || !new RegExp(`^${tag}-hero-${p.id.slice(5).replace(/\./g, '\\.')}\\.[0-9a-f]{10}\\.js$`).test(p.name)
+      || !t || t.f !== 'assets/' + p.name || t.b !== p.bytes || t.z.length || t.h !== p.hero || t.c !== (p.core ? 1 : 0) || t.m.join() !== ms.join() || t.v !== A.v;
+  });
+  assert(!bad.length, `hero packs: each ${A.v} pack holds its moves as the source has them, under a hashed name, with its hero, moves and no zones in the loader's table (${bad.map(p => p.id).join(', ') || 'all ' + mine.length})`);
+  const part = s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?)\\n// ---- src`))[1];
+  let reg = null; const kept = vm.runInNewContext(`${part}\n;${A.v}`, { lfBoot: { heroFile: (n, o, h) => { reg = n + (h ? ' ' + h : ''); } } });
+  const keptHero = H => ({ ...H, moves: A.keep ? Object.fromEntries(Object.entries(H.moves).map(([m, M]) => [m, A.keep(M)])) : {} });
+  const keepWant = one ? keptHero(D) : { ...D, heroes: Object.fromEntries(Object.entries(D.heroes).map(([h, H]) => [h, keptHero(H)])) };
+  assert(JSON.stringify(kept) === JSON.stringify(keepWant) && reg === A.v + (one ? ' ' + A.hero : ''), `hero packs: the page keeps ${A.v} with every field but the moves' data, and registers it for 75-art-load (lfBoot.heroFile ${reg})`);
+}
+if (section('hero packs (hero-packs)')) try {
+  const src = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\n*$/, '\n');
+  const HA = vm.runInNewContext(`${src('21y-data-heroart.js')}\n;HERO_ART`);
+  const T = { v: HA.v, w: HA.w, h: HA.h, ax: HA.ax, ay: HA.ay, heroes: Object.fromEntries(Object.entries(HA.heroes).map(([k, H]) => [k, { pal: H.pal, moves: H.poses }])) };
+  const TF = '21zx-data-herotest.js', text = `// 21zx-data-herotest: GENERATED by tools/check.mjs (section hero packs) from 21y-data-heroart.js. Never shipped.\nconst HERO_TEST = ${JSON.stringify(T)};\n`;
+  const REG = { v: 'HERO_TEST', kind: 'hero', keep: null, load: M => M, core: { wren: ['draw', 'release', 'camp', 'hurt', 'fallen'], tobin: ['ready', 'wind', 'strike', 'camp', 'hurt', 'fallen'], pip: ['ready', 'wind', 'cast', 'camp', 'hurt', 'fallen'] } };
+  const art = { ...AREA_ART, [TF]: REG }, s = buildSplit({ write: false, art, extra: [{ f: TF, text }] }), base = buildSplit({ write: false });
+  heroPackCheck(s, TF, REG, T);
+  // a hero file that does not say its core moves, names a core move it lacks, or names a move a file name cannot carry, stops the build
+  for (const [what, A, D, re] of [
+    ['a hero with no core list', { ...REG, core: { wren: REG.core.wren, tobin: REG.core.tobin } }, T, /names no core moves for pip/],
+    ['a core move the hero lacks', { ...REG, core: { ...REG.core, wren: ['draw', 'jump'] } }, T, /wren's core moves jump are not in HERO_TEST\.heroes\.wren\.moves/],
+    ['a move named core', REG, { ...T, heroes: { ...T.heroes, pip: { ...T.heroes.pip, moves: { ...T.heroes.pip.moves, core: [] } } } }, /core cannot name a hero or a move/],
+    ['no heroes table', REG, { v: 1 }, /needs a heroes table/],
+    ['a one-hero file with no moves', { ...REG, hero: 'wren', core: ['draw'] }, { v: 1 }, /needs its moves .* for wren/]
+  ]) { let threw = ''; try { heroPacks({ f: TF, text }, A, D); } catch (e) { threw = String(e.message); } assert(re.test(threw), `hero packs: ${what} stops the build (${threw.slice(0, 100) || 'it built'})`); }
+  // a one-hero file (as Wren's route S file is shaped): the same packs, the page keeps { moves: {} , ... } and registers it with its hero
+  { const W = { v: 1, string: 'kept', moves: T.heroes.wren.moves }, WF = '21zw-data-herotest1.js', WREG = { v: 'HERO_ONE', kind: 'hero', hero: 'wren', core: REG.core.wren, keep: null, load: M => M };
+    const s1 = buildSplit({ write: false, art: { ...AREA_ART, [WF]: WREG }, extra: [{ f: WF, text: `// 21zw-data-herotest1: GENERATED by tools/check.mjs. Never shipped.\nconst HERO_ONE = ${JSON.stringify(W)};\n` }] });
+    heroPackCheck(s1, WF, WREG, W); }
+  // the boot loader puts the save's hero's core in the constant as the file registers (before the next file runs, as inline), merging a
+  // move's pack data into what the page kept of it
+  { const loader = s.html.match(/<script id="lfBootJs">([\s\S]*?)<\/script>/)[1], wrote = [];
+    const ctx = { localStorage: { getItem: () => JSON.stringify({ zone: 1, solo: { hero: 'wren' } }) }, document: { write: t => wrote.push(t), getElementById: () => null } };
+    vm.runInNewContext(loader, ctx);
+    const core = s.packs.find(p => p.id === 'hero:HERO_TEST.wren.core');
+    vm.runInNewContext(core.text, ctx);
+    const part = s.html.match(/\/\/ ---- src\/js\/21zx-data-herotest\.js ----\n([\s\S]*?)\n\/\/ ---- src/)[1];
+    const H = vm.runInNewContext(`${part}\n;HERO_TEST`, ctx), got = Object.keys(H.heroes.wren.moves).join();
+    const k = { heroes: { wren: { moves: { a: { box: 1 }, b: [1] } } } }, kf = 'HERO_K';
+    ctx.lfBoot.packs['hero:HERO_K.wren.core'] = { h: 'wren', v: kf, c: 1, m: ['a', 'b'], z: [] };
+    ctx.lfBoot.heroFile(kf, k); ctx.lfBoot.putHero('hero:HERO_K.wren.core', { a: { atlas: 'x' }, b: [2] });
+    assert(wrote.some(t => t.includes(core.name)) && got === REG.core.wren.join() && JSON.stringify(H.heroes.wren.moves.draw) === JSON.stringify(T.heroes.wren.moves.draw)
+      && JSON.stringify(k.heroes.wren.moves) === '{"a":{"box":1,"atlas":"x"},"b":[2]}',
+      `hero packs: the boot loader writes the save's hero's core and puts it in the constant as the file registers (${got}); a kept move takes its pack's fields (${JSON.stringify(k.heroes.wren.moves)})`); }
+  // the boot lines: a hero's core counts in both (the heaviest hero, also for a new game), a move outside the core counts in neither
+  const sizes = new Map(), size = x => (sizes.has(x) ? sizes.get(x) : (sizes.set(x, wire(x)), sizes.get(x))), MBs = n => (n / 1e6).toFixed(2);
+  const r = loadReport(s, { size }), r0 = loadReport(base, { size }), heroes = Object.keys(T.heroes);
+  // (a hero file that ships counts too: each hero's core is the sum of its core packs over every hero file)
+  const cores = Object.fromEntries(heroes.map(h => [h, s.packs.filter(p => p.hero === h && p.core).reduce((n, p) => n + size(p.text), 0)]));
+  const top = heroes.reduce((m, h) => (cores[h] > cores[m] ? h : m)), extra = s.assets.reduce((n, a) => n + size(a.text), 0) - r0.boot + r.page - r0.page - r0.hero.b;
+  const near = (a, b) => Math.abs(a - b) < 1;
+  assert(r.hero.h === top && near(r.hero.b, cores[top]) && near(r.zone1.counted, r0.zone1.counted + cores[top] + extra) && r.worst.z === r0.worst.z && near(r.worst.counted, r0.worst.counted + cores[top] + extra),
+    `hero packs: both boot lines count the heaviest hero's core (${top}, ${MBs(cores[top])} MB): a new game ${MBs(r0.zone1.counted)} -> ${MBs(r.zone1.counted)} MB, the worst zone ${MBs(r0.worst.counted)} -> ${MBs(r.worst.counted)} MB`);
+  const mineT = s.packs.filter(p => p.f === TF), sumT = ps => ps.reduce((n, p) => n + size(p.text), 0);
+  console.log(`  hero packs: today's hero art as hero packs: cores ${heroes.map(h => `${h} ${MBs(sumT(mineT.filter(p => p.hero === h && p.core)))}`).join(', ')} MB; the other moves ${MBs(sumT(mineT.filter(p => !p.core)))} MB load after boot`);
+  { const core = s.packs.find(p => p.hero === top && p.core), rest = s.packs.find(p => p.hero === top && !p.core), over = n => Math.max(0, LOAD_LINES.bootFail - n) + 1e4;
+    const m1 = loadReport(s, { size: x => size(x) + (x === core.text ? over(r.zone1.counted) : 0) }), m2 = loadReport(s, { size: x => size(x) + (x === rest.text ? 1e6 : 0) });
+    assert(m1.fails.some(f => /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/.test(f)), `hero packs: mutation (a hero's core past the line) fails line 1 (${m1.fails.join('; ') || 'nothing failed'})`);
+    assert(!m2.fails.some(f => /^boot set/.test(f)) && near(m2.zone1.counted, r.zone1.counted), `hero packs: a move outside the core (1 MB more) is not in the boot set (${m2.fails.join('; ') || 'no boot line fails'})`); }
+  // a reader of a shipped hero file's constant asks 75-art-load before it draws (a move may come after boot)
+  const heroV = Object.entries(AREA_ART).filter(([, A]) => A.kind === 'hero').map(([f, A]) => A.v);
+  const code = f => src(f).split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
+  const loose = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js') && !isAsset(src(f)) && !['21zz-art-b91.js', '75-art-load.js'].includes(f))
+    .filter(f => heroV.some(v => new RegExp(`\\b${v}\\b`).test(code(f))) && !/\bartHero(Need|Ready)\(/.test(code(f)));
+  assert(!loose.length, `hero packs: every file that reads a hero file's moves (${heroV.join(', ') || 'none ships yet'}) asks artHeroNeed or artHeroReady (${loose.join(', ') || 'yes'})`);
+  // the inline page: no loader, every move is in
+  { const r = vm.runInNewContext(`${src('75-art-load.js')}\n;[artHeroNeed('wren', 'h1'), artHeroReady('pip', 'cast'), artHeroPacks('wren').length].join()`, {});
+    assert(r === 'true,true,0', `hero packs: with no boot loader (the inline page) every move is in: artHeroNeed and artHeroReady say yes, no packs (${r})`); }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe) skipBrowser('hero packs: boot, the hold and the first frame after it: Playwright or Chromium not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const end = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(end);
+    const KEY = 'lanternfall.save.v5', early = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
+    const assets = pageAssets(s.file, s.html, Object.fromEntries(s.files.map(a => [a.name, a.text])));
+    const heroOf = name => { const p = s.packs.find(q => q.name === name); return p && p.f === TF ? p : null; };   // only the test file's packs (a shipped hero file loads too, unrecorded)
+    // hold: every pack of these ids waits until release(); asked: the hero pack ids the page asked for, in order
+    const open = async ({ save = null, hold = [] } = {}) => {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), page = await ctx.newPage(), errs = [], asked = [];
+      await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+      if (save) await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...save, last: Date.now() })]);
+      page.on('pageerror', e => errs.push(String(e)));
+      page.on('request', q => { const p = heroOf(q.url().split('/').pop()); if (p) asked.push(p.id); });
+      let release; const held = new Promise(r => { release = r; });
+      await routePage(page, 'http://lf.test/', probe, assets);
+      for (const id of hold) await page.route('**/assets/' + s.packs.find(p => p.id === id).name, async q => { await held; return q.fallback(); });
+      await page.goto('http://lf.test/', { waitUntil: 'commit' });
+      await page.waitForFunction(() => !document.getElementById('lfBoot') && !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+      return { page, errs, asked, release };
+    };
+    const X = (page, js) => page.evaluate(j => window.__t.x(j), js);
+    const look = page => page.evaluate(() => {
+      const c = document.getElementById('artWait'), st = document.getElementById('stage').getBoundingClientRect(), r = c && !c.hidden ? c.getBoundingClientRect() : null;
+      return { cover: r ? c.firstChild.textContent : null, full: !!r && r.left <= st.left && r.top <= st.top && r.right >= st.right && r.bottom >= st.bottom };
+    });
+    const later = s.packs.filter(p => p.f === TF && p.hero === 'wren' && !p.core).map(p => p.id), coreOf = h => `hero:HERO_TEST.${h}.core`;
+    const until = async (fn, cap = 10000) => { for (const t0 = Date.now(); !fn() && Date.now() - t0 < cap;) await new Promise(r => setTimeout(r, 100)); };   // files load one at a time
+    try {
+      // 1. a Wren save boots with Wren's core only: her core moves are in as the source has them, her other moves are asked for after
+      //    boot, and Tobin's and Pip's packs are never asked for
+      { const { page, errs, asked, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: later });
+        await page.waitForTimeout(800);
+        const r = await X(page, `({ boot: lfBoot.boot.filter(id => id.startsWith('hero:HERO_TEST.')).join(), hero: lfBoot.hero, moves: Object.keys(HERO_TEST.heroes.wren.moves).join(),
+          same: ${JSON.stringify(REG.core.wren)}.every(m => JSON.stringify(HERO_TEST.heroes.wren.moves[m]) === JSON.stringify(window.__want[m])),
+          others: Object.keys(HERO_TEST.heroes.tobin.moves).length + Object.keys(HERO_TEST.heroes.pip.moves).length,
+          ready: [artHeroReady('wren', 'draw'), artHeroReady('wren', 'h1')].join(), held: gameHeld() })`.replace('window.__want', JSON.stringify(T.heroes.wren.moves)));
+        const c = await look(page);
+        assert(r.boot === coreOf('wren') && r.hero === 'wren' && r.moves === REG.core.wren.join() && r.same && r.others === 0 && r.ready === 'true,false' && !r.held && !c.cover
+          && asked[0] === coreOf('wren') && asked.length <= 2 && asked.every(id => [coreOf('wren'), later[0]].includes(id)) && !errs.length,
+          `hero packs: a Wren save boots with only her core moves in (${JSON.stringify(r)}, cover ${c.cover}), then asks for her other moves one file at a time (${asked.join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
+        // 1b. a move the stage asks for and then stops asking for (another hero, another screen) lets go within a second, still not in
+        await X(page, `S.activity = 'fight', ui(true)`); await page.waitForTimeout(300);
+        await X(page, `(() => { let n = 0; const f = () => { artHeroNeed('wren', 'h2'); if (++n < 10) requestAnimationFrame(f); }; requestAnimationFrame(f); })()`);
+        await page.waitForTimeout(250);
+        const on = { c: (await look(page)).cover, t: await X(page, 'gameHeld()') };
+        await page.waitForTimeout(1200);
+        const off = { c: (await look(page)).cover, t: await X(page, 'gameHeld()'), in: await X(page, `artHeroReady('wren', 'h2')`) };
+        assert(on.c === 'Loading Wren' && on.t && !off.c && !off.t && !off.in, `hero packs: a move asked for and then no longer asked for holds (${JSON.stringify(on)}) and lets go once nothing asks, still not in (${JSON.stringify(off)})`);
+        // 2. the stage needs a move still loading: the game holds under a plain line over the stage and nothing moves; the first frame
+        //    after the hold draws the move (decoded from its pack, not a stand-in)
+        await X(page, `S.activity = 'fight', ui(true)`); await page.waitForTimeout(300);
+        await X(page, `(() => { let n = 0; const f = () => { const held = gameHeld(), ok = artHeroNeed('wren', 'h1');
+          if (!n++) { window.__ask = ok; return requestAnimationFrame(f); }
+          if (held) { window.__heldFrames = (window.__heldFrames || 0) + 1; return requestAnimationFrame(f); }
+          const D = ok && heroArtUnrle(HERO_TEST.heroes.wren.moves.h1); window.__first = { ok, px: D ? D.idx.reduce((a, v) => a + (v ? 1 : 0), 0) : 0 }; };
+          requestAnimationFrame(f); })()`);
+        await page.waitForTimeout(300);
+        const a = await look(page), g1 = await X(page, '({ t: gameHeld(), k: S.kills, hp: mob && mob.hp, ask: window.__ask })');
+        await page.waitForTimeout(1500);
+        const b = await look(page), g2 = await X(page, '({ t: gameHeld(), k: S.kills, hp: mob && mob.hp, ask: window.__ask })');
+        assert(g1.ask === false && a.cover === 'Loading Wren' && a.full && b.cover === 'Loading Wren' && g1.t && JSON.stringify(g1) === JSON.stringify(g2),
+          `hero packs: a move the stage needs that is still loading holds the game under "${a.cover}" over the whole stage (${a.full}); nothing moves (${JSON.stringify(g1)} then ${JSON.stringify(g2)})`);
+        release(); await page.waitForTimeout(1500);
+        const first = await X(page, '({ first: window.__first, frames: window.__heldFrames, t: gameHeld() })'), c2 = await look(page);
+        assert(first.first && first.first.ok === true && first.first.px > 200 && first.frames > 10 && !first.t && !c2.cover && !errs.length,
+          `hero packs: on the first frame after the hold the move is in and draws (${JSON.stringify(first)}), the cover goes and the game runs` + (errs[0] ? ': ' + errs[0] : ''));
+        await until(() => later.every(id => asked.includes(id)));
+        assert(later.every(id => asked.includes(id)) && asked.every(id => id.startsWith('hero:HERO_TEST.wren.')),
+          `hero packs: then all her other moves load, and no other hero's (${asked.length} of ${later.length + 1} asked: ${asked.filter(id => !id.startsWith('hero:HERO_TEST.wren.')).join(', ') || 'only hers'})`);
+        await page.close(); }
+      // 3. a new game has no hero yet: no hero pack boots, and after boot every hero's core loads (the picker shows them all), nothing else
+      { const { page, errs, asked } = await open();
+        await page.waitForTimeout(1500);
+        const r = await X(page, `({ boot: lfBoot.boot.filter(id => id.startsWith('hero:')).length, hero: lfBoot.hero })`);   // no hero pack of any file
+        const cores = Object.keys(T.heroes).map(coreOf);
+        assert(r.boot === 0 && r.hero === null && cores.every(id => asked.includes(id)) && asked.slice(0, 3).sort().join() === cores.sort().join() && !errs.length,
+          `hero packs: a new game boots with no hero pack and then asks for every hero's core first (${asked.slice(0, 5).join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
+        // 4. once the save has a hero, that hero's other moves load (as when a hero is picked or switched)
+        const tob = s.packs.filter(p => p.f === TF && p.hero === 'tobin' && !p.core).map(p => p.id);
+        await X(page, `S.solo.hero = 'tobin'`); await until(() => tob.every(id => asked.includes(id)));
+        assert(tob.every(id => asked.includes(id)) && !asked.some(id => id.startsWith('hero:HERO_TEST.wren.') && !id.endsWith('.core')), `hero packs: once the hero is Tobin his other moves load, and no other hero's (${asked.length} asked)`);
+        await page.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('hero packs crashed: ' + (e.stack || e)); }
+
+// ---- new-style screens (card ns-scenery-engine; docs/design/new-style/engine.md) ----
+// The pieces each screen needs (59n) match what the game really puts there, and the split build carries NS_ART's pictures in packs
+// by zone (75-art-load, the boot loader), off while Classic art is on. The fixture (tools/lib/ns-fixture.mjs) stands in for a pack.
+if (section('new-style screens (ns-scenery-engine)')) try {
+  const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+  // every foe a turn fight puts on the stage in zones 1-35 is a piece of that zone's fight, and every foe piece is one it puts
+  // there (a piece no fight shows would hold its screen classic for good), with the zone monsters' areas off (today) and on
+  for (const on of [0, 1]) {
+    const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: early }) });
+    if (on) g.eval('zoneFoeArea(0, 1); zoneFoeArea(1, 1)');
+    const r = g.eval(`(() => { const bad = [], unused = [], seen = {}; S.activity = 'fight';
+      for (let z = 1; z <= 35; z++) { S.zone = z; const got = new Set();
+        for (let i = 0; i < 41; i++) { cbSpawn(i === 40); for (const m of combatFoes()) { const k = nsFoeKey(m); got.add(k); if (!m.turn || !nsZoneFoes(z).includes(k)) bad.push(z + ' ' + k); } }
+        for (const k of nsZoneFoes(z)) if (!got.has(k)) unused.push(z + ' ' + k);
+        if (z <= 5) for (const k of got) seen[k] = 1; }
+      return { bad, unused, a1: Object.keys(seen).sort().join() }; })()`);
+    assert(!r.bad.length && !r.unused.length, `new-style screens: with ${on ? 'the zone monsters on (zones 1-10)' : "today's foes"}, every foe a turn fight shows in zones 1-35 is a piece of its zone's fight, and each piece shows (${r.bad.concat(r.unused).slice(0, 6).join(', ') || 'yes'})`);
+    if (on) assert(r.a1 === 'gloomjaw,gloomjaw.captain,imp,imp.captain,nightseed,ravager,ravager.captain,regent,thornwing,thornwing.captain',
+      `new-style screens: Mossy Hollow's fights (zones 1-5, monsters on) need the plan's A1 roster: five monsters, the Captains that fight there and the Briar Regent (${r.a1})`);
+  }
+  { const g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: early }) }), E = s => JSON.stringify(g.eval(s));
+    const got = { f1: E('nsFightPieces(1)[0]'), f6: E('nsFightPieces(6)[0]'), grove: E(`nsGatherPieces('wood', 1, true)`), hunt: E(`nsGatherPieces('hide', 1)`), road: E('[nsFightPieces(ROAD_ZONES + 1)[0], nsFightPieces(ROAD_ZONES - 34)[0]]'), none: E(`nsGatherPieces('smith', 1)`),
+      z: E(`[nsPackZones('scenery:fight.0'), nsPackZones('foe:imp'), nsPackZones('node:wood.1'), nsPackZones('critter:cr_moth')]`) };
+    assert(got.f1 === '"scenery:fight.0"' && got.f6 === '"scenery:fight.1"' && got.hunt === '["scenery:gather.gwoods","beast:enraged-boar","prop:pile.logs"]' && got.none === '[]'
+      && JSON.parse(got.road)[0] === JSON.parse(got.road)[1]
+      && ['scenery:gather.gwoods', 'node:wood.1', 'prop:pile.logs', 'prop:fire', 'npc:hesketh', 'prop:stake', 'station:bench', 'station:forge', 'station:store'].every(p => got.grove.includes(p))
+      && got.z === `[[[1,5]],[[1,1]],[],[[1,${g.eval('ROAD_ZONES')}]]]`,
+      `new-style screens: a fight shows its area's scenery (past the road, the scenery the loaders fetch), the cold Hearth its grove's props, Hesketh and every plot, hunting its beast on the woods with the log pile; a fight's pieces load by zone, a critter in every zone, a gather spot's when asked (${JSON.stringify(got)})`); }
+  // the split build: one pack per piece, by zone, never holding the game (n), left out while Classic art is on (x)
+  const fx = nsFixture(), NF = '21zc-data-nsart.js', s = buildSplit({ write: false, extra: [{ f: NF, text: fx.text }] });
+  const ns = s.packs.filter(p => p.id.startsWith('ns:')), want = Object.entries(fx.data).filter(([, G]) => G && typeof G === 'object').flatMap(([g, G]) => Object.keys(G).map(k => `ns:${g}.${k}`));
+  const table = JSON.parse(s.html.match(/packs = (\{.*?\}), road = /)[1]), zoneOf = id => JSON.stringify(table[id].z);
+  assert(ns.length === want.length && want.every(id => table[id] && table[id].n === 1 && table[id].x === 1) && zoneOf('ns:scenery.fight.0') === '[[1,5]]' && zoneOf('ns:foe.gloomjaw') === '[[2,2]]'
+    && zoneOf('ns:node.wood.1') === '[]' && zoneOf('ns:critter.cr_moth') === `[[1,${s.road}]]`,
+    `new-style screens: the split build makes one pack per piece (${ns.length} of ${want.length}), each marked never to hold the game and off with Classic art, on the zones whose fights show it`);
+  { const part = s.html.match(/\/\/ ---- src\/js\/21zc-data-nsart\.js ----\n([\s\S]*?)\n\/\/ ---- src/)[1], K = vm.runInNewContext(`${part}\n;NS_ART`, {});
+    const put = {}, pk = ns.find(p => p.id === 'ns:foe.imp');
+    vm.runInNewContext(pk.text, { lfArt: (kind, key, d) => { put.kind = kind; put.key = key; put.img = Object.keys(d.img).join(); } });
+    const empty = want.every(id => { const [g, ...k] = id.slice(3).split('.'); const e = K[g][k.join('.')]; return e && !Object.keys(e.img).length; });
+    assert(empty && K.foe.imp.f.idle.length === 6 && K.scenery['fight.0'].layers.length === 3 && put.kind === 'ns' && put.key === 'foe.imp' && put.img === 'sheet',
+      `new-style screens: the page keeps every piece's frames and anchors with no pictures (${empty}); a pack carries its piece's pictures (${JSON.stringify(put)})`); }
+  { const loader = s.html.match(/<script id="lfBootJs">([\s\S]*?)<\/script>/)[1];
+    const boot = classic => { const ctx = { localStorage: { getItem: k => (/classic/i.test(k) ? (classic ? '1' : '0') : JSON.stringify({ zone: 1, solo: { hero: 'wren' } })) }, document: { write: () => {}, getElementById: () => null } };
+      vm.runInNewContext(loader, ctx); return ctx.lfBoot.boot.filter(id => id.startsWith('ns:')).sort().join(); };
+    const a = boot(false), b = boot(true);
+    assert(a === 'ns:critter.cr_moth,ns:foe.imp,ns:foe.slime.elder,ns:scenery.fight.0' && b === '',
+      `new-style screens: a zone 1 save boots with zone 1's fight pieces and the critters (${a}); with Classic art on, none (${b || 'none'})`); }
+  { let threw = ''; try { nsPacks({ f: NF, text: '' }, AREA_ART[NF], { v: 1, foe: { 'a b': {} } }); } catch (e) { threw = e.message; }
+    assert(/cannot name a new-style piece/.test(threw), `new-style screens: a piece a pack file name cannot carry stops the build (${threw.slice(0, 80) || 'it built'})`); }
+  { // the page size check knows each piece's kind and bytes (the fixture's art in a scratch copy of the art files)
+    const { packs: sizePacks, CEIL } = await import('./lib/page-size.mjs'), dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-ns-'));
+    try {
+      for (const f of ['21z-data-huntart.js', '21za-data-foeart.js', '21zb-data-bgart.js']) fs.copyFileSync(path.join(ROOT, 'src', 'js', f), path.join(dir, f));
+      fs.writeFileSync(path.join(dir, NF), fx.text);
+      const rows = sizePacks(dir).filter(p => p.id.startsWith('ns:')), kind = id => (rows.find(p => p.id === id) || {}).kind;
+      assert(rows.length === want.length && rows.every(p => p.bytes > 0 && Object.hasOwn(CEIL, p.kind)) && kind('ns:scenery.fight.0') === 'scenery' && kind('ns:foe.imp') === 'monster'
+        && kind('ns:node.wood.1') === 'node' && kind('ns:station.forge') === 'piece',
+        `new-style screens: the page size check measures every piece against a ceiling of its kind (${rows.length} of ${want.length})`);
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); } }
+  { const src = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+    const r = vm.runInNewContext(`${src('75-art-load.js')}\n;typeof artNsWant === 'function' && artNsWant(['foe:imp']) === undefined && artZonePacks(1).length === 0`, {});
+    assert(r === true, `new-style screens: with no boot loader (the inline page) asking for a piece does nothing (${r})`); }
+} catch (e) { fail('new-style screens crashed: ' + (e.stack || e)); }
+
+// the engine on the page, with the fixture's pictures in the page (the inline build) and as packs (the split build); shots of the
+// fixture's marker colours go to LF_PROOF_SHOTS when it is set
+if (section('new-style screens (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('new-style screens (browser): Playwright or Chromium not here, skipped');
+  else {
+    const shots = process.env.LF_PROOF_SHOTS ? path.resolve(process.env.LF_PROOF_SHOTS) : null;
+    const fx = nsFixture(), html0 = fs.readFileSync(distFile, 'utf8'), probe = h => { const e = h.lastIndexOf('})();\n</script>'); return h.slice(0, e) + '\n;window.__t = { x: src => eval(src) };\n' + h.slice(e); };
+    const head = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n';
+    const shipped = fs.readFileSync(path.join(ROOT, 'src', 'js', '21zc-data-nsart.js'), 'utf8').replace(/\n*$/, '');
+    if (!html0.includes(shipped)) fail('new-style screens (browser): the page does not hold 21zc-data-nsart.js as its source has it');
+    const html = head + probe(html0.replace(shipped, () => fx.text.replace(/\n*$/, ''))), plain = head + probe(html0);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const save = s => { try { if (!localStorage.getItem('lanternfall.save.v5')) { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} };
+    const START = `const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false, S.onboard.all = true); for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();
+      soloPick('wren', { now: true }); setZone(1); setActivity('fight'); fightBoss = false; true`;
+    // the stage canvas's column x (device px): the first row in the fixture's ground green and whether the rows above are its far blue
+    const COLUMN = x => `(() => { const c = document.getElementById('cv'), d = c.getContext('2d').getImageData(${x}, 0, 1, c.height).data, at = y => [d[y * 4], d[y * 4 + 1], d[y * 4 + 2]];
+      let g = -1; for (let y = 0; y < c.height; y++) { const [r, gg, b] = at(y); if (gg > r + 40 && gg > b + 40) { g = y; break; } }
+      let blue = 0; for (let y = Math.max(0, g - 40); y < g - 4; y++) { const [r, gg, b] = at(y); if (b > r + 20 && b > gg) blue++; }
+      return { g, blue, h: c.height }; })()`;
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740], [1366, 640], [1920, 1080]]) {
+        const tag = `${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: touch, hasTouch: touch });
+        await ctx.addInitScript(save, early);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        const X = s => page.evaluate(s => window.__t.x(s), s), J = async s => JSON.parse(await X(`JSON.stringify(${s})`));
+        await X(START);
+        const n = await X('nsStats.decodeAll()'); await X('wrenSStats.decodeAll()');
+        await page.waitForTimeout(500);
+        // a zone 1 turn fight with every piece in: the scenery and both foes new style, each foe's feet on the actors' ground line
+        const a = await J(`{ ns: nsStats(), st: stageStats(), slot: stageStats().foes.filter(Boolean).map(f => f[0]) }`);
+        const k = 0.5 * a.st.DPR * a.st.ZA, sc = a.ns.scene;
+        assert(n === Object.values(fx.data).filter(G => G && typeof G === 'object').reduce((t, G) => t + Object.values(G).reduce((u, e) => u + Object.keys(e.img).length, 0), 0)
+          && a.ns.st === 'on' && a.ns.key === 'f1|wren|' && a.ns.pieces.join() === 'scenery:fight.0,foe:imp,foe:slime.elder,hero:wren' && a.slot.length && a.slot.every(s => s === 'Nfoe:imp'),
+          `new-style screens ${tag}: a zone 1 fight with every piece in draws new style (${a.ns.st}, ${a.ns.pieces.join()}; foes ${a.slot.join()}; ${n} pictures)`);
+        assert(a.ns.drawn.scenery > 0 && a.ns.drawn.foe > 0 && a.ns.last.p === 'foe:imp' && Math.abs(a.ns.last.k - k) < 1e-6 && a.ns.last.y === a.st.aGY
+          && Math.abs(sc.y0 + 432 * sc.k - a.st.GY) < 1e-6 && sc.k >= 0.5 && sc.x0 <= -8 && sc.x0 + 960 * sc.k >= a.st.SW + 8,
+          `new-style screens ${tag}: a foe draws at ${a.ns.last.k} device px per art px (0.5 x DPR x actor zoom ${a.st.ZA}) with its feet on the ground line (${a.ns.last.y} / ${a.st.aGY}); the scenery covers the stage (x ${sc.x0.toFixed(1)}, scale ${sc.k.toFixed(3)}) with its seat line on the stage's (${(sc.y0 + 432 * sc.k).toFixed(1)} / ${a.st.GY})`);
+        const col = await J(COLUMN(3)), gy = Math.round(a.st.GY * a.st.ZM * a.st.DPR);
+        assert(col.g >= 0 && col.blue >= 20 && Math.abs(col.g - gy - (col.h - Math.round(a.st.SH * a.st.ZM * a.st.DPR))) <= 2 + Math.abs(col.h - Math.round(a.st.SH * a.st.ZM * a.st.DPR)),
+          `new-style screens ${tag}: on the canvas the far layer's blue sits above the ground's green, which starts at the seat line (row ${col.g}, the line at ${gy}; ${col.blue} blue rows above)`);
+        if (shots && (w === 1280 || w === 740)) await page.screenshot({ path: path.join(shots, `fight-${tag}.png`) });
+        if (w === 1280) {
+          // a piece not in: that fight stays classic for the visit (and asks for it); Classic art: classic, and new again when it is off
+          const b = await J(`(() => { setZone(3); return null; })()`) || await (async () => { await page.waitForTimeout(300); return J(`{ ns: nsStats(), slot: stageStats().foes.filter(Boolean).map(f => f[0]) }`); })();
+          assert(b.ns.st === 'off' && b.ns.miss.length && b.ns.miss.every(p => p.startsWith('foe:')) && b.slot.length && b.slot.every(s => s[0] !== 'N'),
+            `new-style screens: a fight with a piece not in stays classic (${b.ns.st}; missing ${b.ns.miss.join()}; foes ${b.slot.join()})`);
+          await X('setZone(1); true'); await page.waitForTimeout(300);
+          const c = await J(`[nsStats().st, (portraitsClassic(true), nsScreen()), (stageStats().foes.filter(Boolean).map(f => f[0]).join())]`);
+          await page.waitForTimeout(300);
+          const c2 = await J(`[stageStats().foes.filter(Boolean).map(f => f[0]).join(), (portraitsClassic(false), nsScreen())]`);
+          assert(c[0] === 'on' && c[1] === 'off' && !/N/.test(c2[0]) && c2[1] === 'on', `new-style screens: back on zone 1 the fight is new style again; Classic art turns it classic (foes ${c2[0]}) and off brings it back (${JSON.stringify([c, c2])})`);
+          // the cold Hearth's woods (hero gathering art stands in for route-s-wren-gather): node, pile, fire, Hesketh, plots
+          const g0 = await J('nsStats().drawn');
+          await X(`nsHeroArt.gather.wren = () => true; setActivity('gather'); setNode('wood', 1); true`); await page.waitForTimeout(800);
+          const g = await J(`{ ns: nsStats(), grove: !!hearthScene() }`), d = k => (g.ns.drawn[k] || 0) - (g0[k] || 0);
+          assert(g.ns.st === 'on' && g.ns.pieces[0] === 'scenery:gather.gwoods' && d('node') > 0 && d('prop') > 0 && (!g.grove || d('npc') > 0),
+            `new-style screens: gathering wood with every piece in draws its scenery, the tree, the pile${g.grove ? ', the fire and Hesketh' : ''} new style (${g.ns.st}; drawn ${JSON.stringify(g.ns.drawn)})`);
+          if (shots) await page.screenshot({ path: path.join(shots, `gather-${tag}.png`) });
+          // with no hero art for gathering (today), the same spot is classic
+          await X(`delete nsHeroArt.gather.wren; setActivity('fight'); true`); await page.waitForTimeout(200);
+          await X(`setActivity('gather'); setNode('wood', 1); true`); await page.waitForTimeout(300);
+          const g2 = await J('nsStats()');
+          assert(g2.st === 'off' && g2.miss.join() === 'hero:wren', `new-style screens: gathering stays classic until Wren's gathering art is wired (${g2.st}; missing ${g2.miss.join()})`);
+          // the camp panorama: its own screen, every piece in or classic
+          const cp = await J(`(() => { const v = campSceneLayout(), c = document.createElement('canvas'); c.width = v.width; c.height = v.height; const g = c.getContext('2d');
+            const ps = nsCampPieces(v), miss = ps.filter(p => nsStats.pieceSt(p) !== 3), d0 = nsStats().drawn.station || 0;
+            campPaintScene(g, v, 1); const st = nsCamp(v); campPaintScene(g, v, 1);
+            const px = g.getImageData(2, v.height - 2, 1, 1).data; return { ps, miss, st, stations: (nsStats().drawn.station || 0) - d0, px: [px[0], px[1], px[2]], b: v.buildings.length }; })()`);
+          assert(cp.ps[0] === 'scenery:camp' && (cp.miss.length ? cp.st === 'off' : cp.st === 'on' && cp.stations >= cp.b && cp.px[1] > cp.px[0] + 30),
+            `new-style screens: the camp panorama is new style when its pieces are in (${cp.ps.join()}; missing ${cp.miss.join() || 'none'}; ${cp.st}, ${cp.stations} stations drawn, corner ${cp.px})`);
+          // a camp visit keeps its style: a gatherer with no new-style art hired mid-visit leaves it new; the next visit is classic
+          const cv = await J(`(() => { const v = campSceneLayout(), c = document.createElement('canvas'); c.width = v.width; c.height = v.height; const g = c.getContext('2d');
+            campPaintScene(g, v, 1); const a = nsCamp(v), w = Object.assign({}, v, { actors: v.actors.concat([{ id: 'x', key: 'nobody', x: 500, y: 164, status: { st: 'idle' } }]) });
+            campPaintScene(g, w, 1); return [a, nsCamp(w)]; })()`);
+          await page.waitForTimeout(1200);
+          const cv2 = await J(`(() => { const v = campSceneLayout(), w = Object.assign({}, v, { actors: v.actors.concat([{ id: 'x', key: 'nobody', x: 500, y: 164, status: { st: 'idle' } }]) }); return nsCamp(w); })()`);
+          assert(cv[0] === 'on' && cv[1] === 'on' && cv2 === 'off', `new-style screens: a gatherer with no new-style art hired while the camp is open leaves it new for the visit (${cv}); the next visit is classic (${cv2})`);
+          // a worn critter is a piece of the screen; in the fixture, its frames draw instead of the classic critter's (64-looks reads what is worn every 2 s)
+          const cr = await J(`(() => { window.__w0 = wearGet; wearGet = s => s === 'critter' ? 'cr_moth' : window.__w0(s); setActivity('fight'); setZone(1); return null; })()`) || await (async () => {
+            await page.waitForTimeout(2600); return J(`(() => { const r = { ns: nsStats() }; wearGet = window.__w0; return r; })()`); })();
+          assert(cr.ns.st === 'on' && cr.ns.pieces.includes('critter:cr_moth') && cr.ns.drawn.critter > 0, `new-style screens: a worn critter is a piece of the fight and draws new style (${cr.ns.st}; ${cr.ns.pieces.join()}; ${cr.ns.drawn.critter || 0} drawn)`);
+        }
+        assert(!errs.length, `new-style screens ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      { // the page as it ships (no new-style art yet): every screen classic
+        const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } });
+        await ctx.addInitScript(save, early);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: plain, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(START); await page.waitForTimeout(400);
+        const r = JSON.parse(await X(`JSON.stringify({ st: nsScreen(), d: nsStats().drawn, keys: Object.keys(NS_ART).join() })`));
+        assert(r.st === 'off' && !Object.keys(r.d).length && r.keys === 'v' && !errs.length, `new-style screens: the page as it ships has no new-style art and draws every screen classic (${JSON.stringify(r)})` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      { // the split build: a zone 1 save boots with its fight's pieces; a piece still loading leaves that fight classic for the visit,
+        // and the next visit is new style
+        const s = buildSplit({ write: false, extra: [{ f: '21zc-data-nsart.js', text: fx.text }] }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
+        const sp = probe(s.html), assets = pageAssets(s.file, sp, files), pk = id => s.packs.find(p => p.id === id);
+        const z2 = loadCore({ turns: true }).eval('nsFightPieces(2)').filter(p => p.startsWith('foe:') && fx.data.foe[p.slice(4)]);
+        const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } });
+        await ctx.addInitScript(save, JSON.stringify(Object.assign(JSON.parse(early), { zone: 1 })));
+        const page = await ctx.newPage(), errs = []; let release; const held = new Promise(r => { release = r; });
+        page.on('pageerror', e => errs.push(String(e)));
+        await routePage(page, 'http://lf.test/', sp, assets);
+        let hits = 0;
+        if (z2[0]) await page.route('**/assets/' + pk('ns:' + z2[0].replace(':', '.')).name, async r => { hits++; await held; return r.fallback(); });
+        await page.goto('http://lf.test/', { waitUntil: 'commit' });   // the held pack can keep the load event back
+        await page.waitForFunction(() => window.__t && !document.getElementById('lfBoot'), null, { timeout: 20000 }).catch(() => {});
+        const X = s => page.evaluate(s => window.__t.x(s), s), J = async s => JSON.parse(await X(`JSON.stringify(${s})`));
+        await X(START); await X('nsStats.decodeAll()'); await X('wrenSStats.decodeAll()'); await page.waitForTimeout(400);
+        const a = await J(`{ boot: lfBoot.boot.filter(id => id.startsWith('ns:')).sort(), st: nsStats().st }`);
+        await X('setZone(2); true'); await page.waitForTimeout(400);
+        const b = await J('nsStats()'), asked = hits;
+        release(); await page.waitForTimeout(1500); await X('nsStats.decodeAll()');
+        const b2 = await J('nsStats().st');
+        await X('setZone(1); true'); await page.waitForTimeout(200); await X('setZone(2); true'); await page.waitForTimeout(400);
+        const c = await J('nsStats()');
+        assert(z2.length && a.boot.join() === 'ns:critter.cr_moth,ns:foe.imp,ns:foe.slime.elder,ns:scenery.fight.0' && a.st === 'on' && b.st === 'off' && b.miss.includes(z2[0]) && asked > 0 && b2 === 'off' && c.st === 'on' && !errs.length,
+          `new-style screens split: a zone 1 save boots with its fight's pieces and draws new style (${a.boot.join()}, ${a.st}); zone 2 with ${z2[0]} still loading stays classic for the visit and the game asks for it (${b.st}, asked ${asked}, then ${b2}) and the next visit is new style (${c.st})` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('new-style screens (browser) crashed: ' + (e.stack || e)); }
 
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
@@ -12528,6 +12923,54 @@ if (section('rally gates live (core)')) try {
     'rally gates: the boss bar marks each gate, the rally line names the mark (the Stun clause only while it charges), and a line says when the rally is over');
 } catch (e) { fail('rally gates live crashed: ' + (e.stack || e)); }
 
+// ---- damage-on-impact (Cal, 2026-10-10: "the damage being calculated the second the button is pressed rather than waiting for the
+// ability or attack to finish"). The live fight with the stage's timing (62b fxImpactIn, loaded here): a press starts the move at
+// once (soloAttack / ability, the 'strike' phase) and nothing lands until its impact: the swing (0.14 s), then an arrow (0.2 s) or a
+// bolt (0.28 s); a melee blow at the swing. Its damage, statuses and cooldown all land then; a fight cut off first lands nothing.
+// The scratch fight (no impactIn) lands at once as before.
+if (section('damage-on-impact (core)')) try {
+  const fx = fs.readFileSync(path.join(ROOT, 'src', 'js', '62b-fx.js'), 'utf8');
+  const g = loadCore({ seed: 5, turns: true, extraSource: fx }), E = s => g.eval(s), J = s => JSON.parse(E(s));
+  const until = (cond, n = 600) => E(`(() => { for (let i = 0; i < ${n} && !(${cond}); i++) tick(0.02); return !!(${cond}); })()`);
+  assert(E('fxImpactIn("wren:attack")').toFixed(2) === '0.34' && E('fxImpactIn("pip:attack")').toFixed(2) === '0.42' && E('fxImpactIn("tobin:attack")').toFixed(2) === '0.14'
+    && E('fxImpactIn("moonvolley")').toFixed(2) === '0.73' && E('fxImpactIn("nope")') === 0,
+    `damage-on-impact: the impact times follow the stage (Wren ${E('fxImpactIn("wren:attack")')}, Pip ${E('fxImpactIn("pip:attack")')}, Tobin ${E('fxImpactIn("tobin:attack")')}, Moonlit Volley ${E('fxImpactIn("moonvolley")')})`);
+  E(`globalThis.__ev = []; on('soloAttack', () => __ev.push(['soloAttack', TURN_LIVE.foe.hp])); on('ability', p => __ev.push(['ability', TURN_LIVE.foe.hp]));`);
+  // one press per case: the hero, its ability (null: Attack), and what must land with the hit
+  for (const [k, ab, slots, landed] of [['wren', null, '["echo", null, null]', ''], ['pip', null, '["spark", null, null]', ''], ['tobin', null, '["cleave", null, null]', ''],
+    ['wren', 'echo', '["echo", null, null]', 'TURN_LIVE.e.mark > 0'], ['pip', 'spark', '["spark", null, null]', 'TURN_LIVE.h.embers > 0'], ['tobin', 'cleave', '["cleave", null, null]', 'TURN_LIVE.e.bleed > 0']]) {
+    const tag = `damage-on-impact ${k} ${ab || 'Attack'}`, id = ab || `${k}:attack`;
+    E(`TURN_LIVE = null; soloPick('${k}', { now: true }); S.solo.eq.${k} = ${slots}; TURN_TUNE.on = 1; S.L = 12; S.maxZone = 6; setZone(6); S.activity = 'fight'; arena = null; fightBoss = false; gearDirty(); spawn();`);
+    const met = until(`TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'hero' && TURN_LIVE.cds.attack === 0`, 2000)
+      && E(`S.abil.unl.${k} = ${slots}.filter(Boolean); turnSyncEquip(); TURN_LIVE.cds['${ab || 'attack'}'] === 0`);
+    E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max; TURN_LIVE.p.gates = null; TURN_LIVE.e.bleed = 0; TURN_LIVE.e.mark = 0; TURN_LIVE.h.embers = 0; TURN_LIVE.h.blind = 0; __ev.length = 0;`);
+    const hp0 = E('TURN_LIVE.foe.hp'), wait = E(`fxImpactIn('${id}')`), t0 = E('TURN_LIVE.now');
+    const pressed = E(ab ? `turnCombatAction('ability', 0)` : `turnCombatAction('attack')`);
+    const a = J(`JSON.stringify({ ph: TURN_LIVE.phase, hp: TURN_LIVE.foe.hp, ev: __ev.slice(), cd: TURN_LIVE.cds['${ab || 'attack'}'], landed: !!(${landed || 'false'}) })`);
+    assert(met && pressed && a.ph === 'strike' && a.hp === hp0 && a.ev.length === 1 && a.ev[0][0] === (ab ? 'ability' : 'soloAttack') && a.ev[0][1] === hp0 && a.cd === 0 && !a.landed,
+      `${tag}: the press starts the move at once and lands nothing yet (met ${met}, pressed ${pressed}, ${JSON.stringify(a)}, foe HP ${hp0})`);
+    E(`globalThis.__burn = 0; (() => { for (let t = 0; t < ${wait} - 0.03; t += 0.01) { if (!turnWaiting()) __burn += 0.01; tick(0.01); } })()`);
+    const b = J(`JSON.stringify({ ph: TURN_LIVE.phase, hp: TURN_LIVE.foe.hp, dt: TURN_LIVE.now - ${t0} })`);
+    assert(b.ph === 'strike' && b.hp === hp0, `${tag}: still flying ${b.dt.toFixed(2)} s after the press (impact at ${wait.toFixed(2)} s): no damage yet (${JSON.stringify(b)})`);
+    const hit = E(`(() => { for (let i = 0; i < 20 && TURN_LIVE.phase === 'strike'; i++) { if (!turnWaiting()) __burn += 0.01; tick(0.01); } return TURN_LIVE.phase !== 'strike'; })()`);
+    const c = J(`JSON.stringify({ ph: TURN_LIVE.ended ? 'ended' : TURN_LIVE.phase, hp: TURN_LIVE.foe.hp, dt: TURN_LIVE.now - ${t0}, cd: TURN_LIVE.cds['${ab || 'attack'}'], landed: !!(${landed || 'true'}) })`);
+    assert(hit && c.hp < hp0 && c.dt >= wait - 1e-6 && c.dt < wait + 0.05 && c.cd > 0 && c.landed && (c.ph === 'recovery' || c.ph === 'ended'),
+      `${tag}: the damage, its statuses and the cooldown land on the impact (${c.dt.toFixed(2)} s after the press, impact ${wait.toFixed(2)} s; ${JSON.stringify(c)})`);
+    // the Deepwell's Oil burns while the fight does not wait (57d): an action still burns heroRecovery, whatever its flight
+    const burn = c.ph === 'ended' ? null : E(`(() => { while (!TURN_LIVE.ended && TURN_LIVE.phase === 'recovery') { if (!turnWaiting()) __burn += 0.01; tick(0.01); } return __burn; })()`);
+    assert(burn === null || Math.abs(burn - E('TURN_TUNE.heroRecovery')) < 0.025, `${tag}: the action burns ${burn && burn.toFixed(2)} s of Deepwell Oil, as before (${E('TURN_TUNE.heroRecovery')} s)`);
+  }
+  // a fight cut off between the press and the impact lands nothing
+  E(`TURN_LIVE = null; soloPick('pip', { now: true }); spawn();`);
+  until(`TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'hero' && TURN_LIVE.cds.attack === 0`, 2000);
+  E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max; globalThis.__f = TURN_LIVE.foe; turnCombatAction('attack'); turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); for (let i = 0; i < 40; i++) tick(0.02);`);
+  assert(E('__f.hp === __f.max'), `damage-on-impact: a fight that ends before the bolt lands deals nothing (${E('__f.hp')} of ${E('__f.max')})`);
+  // the scratch fight (budget, odds, sim) has no impactIn: the press lands at once, as before
+  const s = J(`(() => { const p = turnCombatProfile(), io = { ...TURN_LIVE_IO, impactIn: undefined }; let hp = 1e9; io.foeHp = () => hp; io.alive = () => ({ hero: true, foe: hp > 0 });
+    io.damageFoe = d => { hp -= d; return d; }; const m = turnNew(p, io); m.phase = 'hero'; m.cds.attack = 0; const ok = turnResolve(m, { kind: 'attack' }, 0, io); return JSON.stringify({ ok, ph: m.phase, hp }); })()`);
+  assert(s.ok && s.ph === 'recovery' && s.hp < 1e9, `damage-on-impact: a scratch fight with no impact timing still lands on the press (${JSON.stringify(s)})`);
+} catch (e) { fail('damage-on-impact crashed: ' + (e.stack || e)); }
+
 // ---- trick-read-rate (why W2): the game counts how often the player reads a zone boss's tricks (S.bossOdds.reads, 59m), from the
 // live fight (59k foeContact: zone, zb, pressed, early). A fixture fight at the zone 10 Champion presses on a set share of its
 // feints and held swings and the counts must match what was pressed; an ordinary foe, the scratch sampler and the plain tallies
@@ -13338,10 +13781,13 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             `${at}: the dock is Attack and the three abilities over Parry and Dodge, keys of 44 px or more in the bottom-right corner, all on top (${L.slots.map(s => s.act + ' ' + s.w + 'x' + s.h + '@' + s.l + ',' + s.t).join(' ')})`);
           assert(L.nu.l >= L.stage.r - 1 && L.nu.t >= topH - 1 && L.nu.b <= Math.min(...L.slots.map(s => s.t)), `${at}: Next Up sits at the top of the side column, above the bar (${JSON.stringify(L.nu)})`);
           assert(!L.clipped.length && L.scrollX <= 0 && L.appX <= 0, `${at}: no label cut off and no sideways scroll (${L.clipped.join(', ') || 'none'}; page ${L.scrollX}, app ${L.appX})`);
-          // notices dock in the side column above the bar, menu or not
+          // notices dock in the side column above the bar, menu or not; a phone on its side (500 px tall or less) docks them at the stage's
+          // foot instead, where the side column's notices row (23 to 77 px under Next Up) cannot hold them (first-craft-toast-clip)
+          const footDock = h <= 500;
           await X('notes.pops.length = 0; notes.clock += 60; toast("Test notice for the side column.", "good", null, "high"); true'); await boxSettled(page, '#toasts .toast');
-          const ts = await page.evaluate(() => { const t = document.querySelector('#toasts .toast'); if (!t) return null; const r = t.getBoundingClientRect(), a = document.querySelector('#soloBar .sb-ab0').getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(); return { l: r.left, r: r.right, b: r.bottom, barT: a.top, stageR: s.right, W: innerWidth }; });
-          assert(ts && ts.l >= ts.stageR - 1 && ts.r <= ts.W && ts.b <= ts.barT, `${at}: a notice pops in the side column, above the bar and clear of the stage (${JSON.stringify(ts)})`);
+          const ts = await page.evaluate(() => { const t = document.querySelector('#toasts .toast'); if (!t) return null; const r = t.getBoundingClientRect(), a = document.querySelector('#soloBar .sb-ab0').getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), n = document.getElementById('nuChip').getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, barT: a.top, stageL: s.left, stageR: s.right, stageB: s.bottom, nuB: n.bottom, W: innerWidth }; });
+          if (footDock) assert(ts && ts.l >= ts.stageL - 1 && ts.r <= ts.stageR + 1 && ts.b <= ts.stageB && ts.t >= ts.stageB - 90, `${at}: a notice pops at the foot of the stage, clear of the side column (${JSON.stringify(ts)})`);
+          else assert(ts && ts.l >= ts.stageR - 1 && ts.r <= ts.W && ts.b <= ts.barT && ts.t >= ts.nuB, `${at}: a notice pops in the side column, under Next Up, above the bar and clear of the stage (${JSON.stringify(ts)})`);
           // each tab's menu: opens from the rail as a panel beside the bar, which stays usable; closes with its X, the lit tab or Escape
           const menuBad = [];
           const closers = ['x', 'tab', 'esc', 'x', 'tab'];
@@ -13364,11 +13810,13 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             if (closed !== ',hidden') menuBad.push(`${t}: did not close by ${how} (${closed})`);
           }
           assert(!menuBad.length, `${at}: each tab's menu opens as a panel (300 px or wider, the stage's left strip still showing, no sideways scroll), the bar stays on top and Attack still acts, and it closes with its X, the lit tab or Escape` + (menuBad.length ? ': ' + menuBad.slice(0, 2).join(' / ') : ''));
-          // a notice while a menu is open stays in the side column
+          // a notice while a menu is open stays in the side column (on a phone on its side, at the stage's foot, over the menu's foot as
+          // upright, never over the side column)
           await page.click('.tabs .tab[data-tab="forge"]'); await menuSettled(page, true);
           await X('notes.pops.length = 0; notes.clock += 60; toast("Another notice, over a menu.", "good", null, "high"); true'); await boxSettled(page, '#toasts .toast:last-child');
-          const tm = await page.evaluate(() => { const l = [...document.querySelectorAll('#toasts .toast')].pop(), m = document.getElementById('menu').getBoundingClientRect(); if (!l) return null; const r = l.getBoundingClientRect(); return { l: r.left, mr: m.right }; });
-          assert(tm && tm.l >= tm.mr - 1, `${at}: over an open menu, notices stay in the side column (${JSON.stringify(tm)})`);
+          const tm = await page.evaluate(() => { const l = [...document.querySelectorAll('#toasts .toast')].pop(), m = document.getElementById('menu').getBoundingClientRect(); if (!l) return null; const r = l.getBoundingClientRect(), cs = getComputedStyle(l), sb = document.getElementById('stageBox').getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, stageB: sb.bottom, mr: m.right, H: innerHeight, vis: cs.visibility !== 'hidden' && +cs.opacity > 0.5, top: (e => !!e && l.contains(e))(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)) }; });
+          if (footDock) assert(tm && tm.r <= tm.mr + 1 && tm.b <= tm.stageB && tm.t >= tm.stageB - 90 && tm.vis && tm.top, `${at}: over an open menu, notices stay at the stage's foot, on top of the menu (${JSON.stringify(tm)})`);
+          else assert(tm && tm.l >= tm.mr - 1, `${at}: over an open menu, notices stay in the side column (${JSON.stringify(tm)})`);
           // the Training view and the gatherer board fit the panel
           const fit = async (view, sel) => {
             await X(`setTab(${JSON.stringify(view)}); ui(true); true`); await menuSettled(page, true); await page.waitForTimeout(350);
@@ -17421,6 +17869,96 @@ if (section('side-column-fits-740')) try {
   }
 } catch (e) { fail('side-column-fits-740 crashed: ' + (e.stack || e)); }
 
+// ==== first-craft-toast-clip: the first craft's toasts keep clear of Next Up and the bell, and the banner's name reads whole ====
+// Eyes "first craft" (four sightings to 10 Oct): at 740x360 the craft's toast and banner, docked in the side column's notices row
+// (23 to 77 px under Next Up), climbed over the chip and the bell; at 360x740 the banner's title sat beside its eye and was cut
+// ("Copper Warblade", 163 px of text in 78). A phone on its side now docks toasts at the stage's foot, two side by side (80-landscape),
+// and the eye sits over the title (20-stage, 80-landscape). The section crafts on save-mid, as eyes does, with the longest Next Up
+// goal the game makes in the chip, and samples the boxes every 100 ms while the toasts come and go: no toast over #nuChip, the
+// bell or the stage's buttons (and on a phone on its side the stat line), every banner title whole, and on a phone on its side no toast above the hero's feet (the lowest quarter of its box; upright
+// the dock already sits there). A name far longer than any item's wraps whole. 1280x720 and up keep the side column's notices row.
+if (section('first-craft-toast-clip')) try {
+  const at = 'first-craft-toast-clip', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const assets = pageAssets(distFile), raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // every visible toast's box against the chip, the bell and the hero; every banner title's text against its own box
+    const sample = (page, side) => page.evaluate(side => {
+      const on = e => !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > 0.05;
+      const box = e => { const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; };
+      const ov = (a, b) => ({ w: Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), h: Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) });
+      const r = n => `${Math.round(n.x)},${Math.round(n.y)} ${Math.round(n.w)}x${Math.round(n.h)}`;
+      const R = window.LF_EYES ? LF_EYES.rects() : {}, out = { side, hero: !!R.hero, n: 0, bad: [], titles: [], dock: getComputedStyle(document.getElementById('toasts')).gridColumnStart };
+      const others = [['#nuChip', document.getElementById('nuChip')], ['the bell', document.querySelector('.bell')], ...[...document.querySelectorAll(side ? '.sfx-btn, .stage-btns button, .stat-nums' : '.sfx-btn, .stage-btns button')].map(n => [n.className.toString().split(' ')[0], n])];   // upright the dock has always sat over the stat line
+      for (const t of document.querySelectorAll('#toasts .toast')) { if (!on(t) || t._gone) continue; out.n++; const tb = box(t);
+        for (const [k, n] of others) if (on(n)) { const o = ov(tb, box(n)); if (o.w > 0 && o.h > 0) out.bad.push(`toast ${r(tb)} over ${k} ${r(box(n))} by ${Math.round(o.w)}x${Math.round(o.h)}: "${t.innerText.replace(/\n/g, ' | ').slice(0, 60)}"`); }
+        if (R.hero && out.side) { const o = ov(tb, R.hero); if (o.w > 4 && o.h > R.hero.h / 4) out.bad.push(`toast ${r(tb)} over the hero ${r(R.hero)} by ${Math.round(o.w)}x${Math.round(o.h)}, past its feet`); } }
+      for (const t of document.querySelectorAll('#toasts .mm-t-title')) { if (!on(t)) continue; const rg = document.createRange(); rg.selectNodeContents(t);
+        const ls = [...rg.getClientRects()].filter(x => x.width > 0), tb = t.getBoundingClientRect(), cs = getComputedStyle(t);
+        out.titles.push({ text: t.textContent, fs: parseFloat(cs.fontSize), lines: new Set(ls.map(x => Math.round(x.top))).size,
+          cut: t.scrollWidth > t.clientWidth + 1 || Math.max(...ls.map(x => x.right)) > tb.right + 1 || Math.max(...ls.map(x => x.bottom)) > tb.bottom + 1 || cs.textOverflow === 'ellipsis' && cs.whiteSpace === 'nowrap' }); }
+      return out;
+    }, side);
+    try {
+      for (const [w, h] of [[740, 360], [360, 740], [1280, 720], [1366, 640], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000, side = w > h && h <= 500, wide = w > h;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        // the moment layer stays on (75-moments-ui MOMENT_OFF): the banner is what is measured
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await routePage(page, 'http://lf.test/', html, assets);
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        for (let i = 0; i < 8; i++) { const b = await page.$('.bsheet-ov .sty-done, .bsheet-ov .big:has-text("Begin"), .bsheet-ov .big:has-text("Continue"), .away-ov button'); if (!b) break; try { await b.click({ timeout: 800 }); } catch (e) { break; } await page.waitForTimeout(400); }
+        await X('onboardUnlockAll(); true');
+        // the tallest chip: the longest gate label the game makes (side-column-fits-740 builds the same list), kept in place while sampling
+        const long = await X(`(() => { let best = '';
+          for (const kind of Object.keys(CRAFT_KINDS)) { if (CRAFT_KINDS[kind].legacy) continue;
+            for (let t = 2; t <= 5; t++) { const rec = craftRecipe(kind, t), st = stationOf(kind), need = CRAFT_STATION_REQ[t - 1]; if (!rec || !st) continue;
+              for (const on of [true, false]) { const l = gateLabel({ kind, t, gate: { skill: st.skill, lv: need - 1, need, station: st.key } }, on); if (l.length > best.length) best = l; } } }
+          return best; })()`);
+        const pin = () => page.evaluate(l => { const n = document.querySelector('#nuChip .nu-lbl'); if (n && n.textContent !== l) n.textContent = l; }, long);
+        await pin();
+        // a Rare or better craft is a moment (75-craft-ui); the grade is a roll, so a plainer one gets the same moment a Rare would
+        const kind = await X(`(() => { const k = Object.keys(CRAFT_KINDS).find(k => { for (const e of Object.keys(S.mats)) S.mats[e] = S.mats[e].map(() => 5000); S.gold = 1e9; return canCraft(k, 1).ok; }); const it = k && craftItem(k, 1);
+          if (it && !MOMENT_Q.some(q => q.kind === 'craft')) moment('craft', { eye: 'Well made · Rare', title: itemName(it), sub: 'Rare item. It is in your bag.', rarity: 'rare', icon: { item: it } });
+          return k; })()`);
+        assert(!!kind, `${v}: save-mid can craft something (${kind})`);
+        // the banner waits for the fight to end; a check flushes it (75-moments-ui __momentFlush) a moment after the craft's toast
+        await page.waitForTimeout(300); await X('window.__momentFlush(); true');
+        let most = 0, bad = null, titles = new Map(), dock = null, longName = null, hero = false;
+        for (let t0 = Date.now(); Date.now() - t0 < 6000;) {
+          await pin();
+          const o = await sample(page, side);
+          most = Math.max(most, o.n); dock = dock || (o.n ? o.dock : null); hero = hero || o.hero;
+          if (!bad && o.bad.length) bad = o.bad[0];
+          for (const t of o.titles) if (!titles.has(t.text) || t.cut) titles.set(t.text, t);
+          // a name far longer than any item's wraps between words, whole (upright and on a phone on its side, where the banner is short)
+          if (!longName && (!wide || side) && o.titles.length) longName = await page.evaluate(() => { const t = document.querySelector('#toasts .mm-toast .mm-t-title'); if (!t) return null;
+            const keep = t.textContent; t.textContent = 'Everflame Warblade of the Hollow Cantor'; const rg = document.createRange(); rg.selectNodeContents(t); const ls = [...rg.getClientRects()].filter(x => x.width > 0), tb = t.getBoundingClientRect();
+            const o = { lines: new Set(ls.map(x => Math.round(x.top))).size, cut: t.scrollWidth > t.clientWidth + 1 || Math.max(...ls.map(x => x.right)) > tb.right + 1 }; t.textContent = keep; return o; });
+          await page.waitForTimeout(100);
+        }
+        assert(most >= 1, `${v}: the first craft shows a toast (${most})`);
+        if (side) assert(hero, `${v}: the eyes hook gives the hero's box, so the hero is measured`);
+        assert(!bad, `${v}: no toast covers the Next Up chip, the bell or the stage's buttons${side ? ', or the hero past its feet' : ''}${bad ? ' (' + bad + ')' : ''}`);
+        const tl = [...titles.values()];
+        assert(tl.length >= 1, `${v}: the craft's banner shows a title (${tl.map(t => t.text).join(' | ')})`);
+        for (const t of tl) assert(!t.cut, `${v}: the banner title "${t.text}" reads whole (${t.lines} lines)`);
+        if (w >= 1200) for (const t of tl) assert(t.fs >= 14, `${v}: the banner title keeps the 14 px desktop floor (${t.fs})`);
+        if (wide) assert(dock === (side ? '2' : '4'), `${v}: the toasts dock ${side ? "at the stage's foot" : "in the side column's notices row"} (grid column ${dock})`);
+        if (!wide || side) assert(longName && !longName.cut && longName.lines <= 2, `${v}: a 39-letter name wraps whole in at most two lines (${JSON.stringify(longName)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('first-craft-toast-clip crashed: ' + (e.stack || e)); }
+
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
 // (50-sim awayBase), so the row promises "keeps going" only then; fighting or gathering another skill says how to make it true.
@@ -17828,7 +18366,8 @@ if (section('stage-no-swarm-shrink (browser)')) try {
 } catch (e) { fail('stage-no-swarm-shrink crashed: ' + (e.stack || e)); }
 
 // ==== actor-scale (ruling #328, docs/design/route-s/ruling.md "Build card spec: actor-scale"): heroes, foes, bosses, adds, gather nodes
-// and beasts draw ACTOR_K = 1.5 times bigger against unchanged scenery on landscape stages at a whole-step zoom of 2 or more (G1). There
+// and beasts draw ACTOR_K = 2 times bigger (bigger-heroes) against unchanged scenery on landscape stages at a whole-step zoom of 2 or
+// more (G1), and 3x on a roomy zoom-1 stage (1024x768; 62-stage zoom1K). There
 // no actor's drawn box meets the HP plates, the place line, the turn line, the whose-turn banner, the Grit row, the boss strip or the
 // stage buttons, and the hero stands 16 stage px or more from the foe (G2). A crowd of foes (a pack, a boss with adds), a zoom-1 stage
 // (740x360) and portrait keep today's size (G2, G3, G4). save-late.json; the game held (ticks off, the turn engine paused) while each
@@ -17850,7 +18389,7 @@ if (section('actor-scale (browser)')) try {
       return { R, ui, st: { ZM: st.ZM, AK: st.AK, ZA: st.ZA, foes: st.foes }, heroSt: st.heroSt, mob: mob && mob.key }; })()`;
     const cross = (a, b) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
     try {
-      for (const [w, h, dpr, ak] of [[1280, 720, 1, 1.5], [1366, 640, 1, 1.5], [1920, 1080, 1, 1.5], [740, 360, 2, 1], [360, 740, 2, 1]]) {
+      for (const [w, h, dpr, ak] of [[1280, 720, 1, 2], [1366, 640, 1, 1.5], [1920, 1080, 1, 2], [1024, 768, 1, 3], [1000, 768, 1, 3], [740, 360, 2, 1], [360, 740, 2, 1]]) {
         const tag = `${w}x${h}`, touch = w < 1000;
         const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
         await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
@@ -17886,7 +18425,9 @@ if (section('actor-scale (browser)')) try {
           assert(!!(r && r.R.hero && r.R.foes.length === 1), `${tag} ${name}: the turn fight settles with the hero and one foe on the stage (${r ? JSON.stringify({ hero: !!r.R.hero, foes: r.R.foes.length }) : 'never settled'})`);
           if (!r || !r.R.hero || !r.R.foes.length || ak === 1) continue;
           const hero = r.R.hero, foe = r.R.foes[0], z = r.st.ZM;
-          assert(hero.h / r.st.ZA >= 85, `${tag} ${name}: the hero draws 1.5x (${Math.round(hero.h)} CSS px tall, ${Math.round(hero.h / r.st.ZA)} actor px)`);
+          // bigger-heroes: classic Tobin's sword and the Elder Moss Slime need more than 1280x720's width at 2x (62-stage pairWide)
+          if (w === 1280 && name === 'Tobin, Elder Moss Slime') assert(r.st.AK === 1.5, `${tag} ${name}: a pair too wide for the stage at 2x draws at 1.5x (AK ${r.st.AK})`);
+          assert(hero.h / r.st.ZA >= 85, `${tag} ${name}: the hero draws ${ak}x (${Math.round(hero.h)} CSS px tall, ${Math.round(hero.h / r.st.ZA)} actor px)`);
           const gap = (foe.x - hero.x - hero.w) / z;
           assert(gap >= 16, `${tag} ${name}: the hero stands ${Math.round(gap)} stage px from the foe, 16 or more (G2)`);
           // the banner, raised as a turn starts (the game is held, so it stays up)
@@ -17919,11 +18460,13 @@ if (section('actor-scale (browser)')) try {
           ['a boss with adds', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; setActivity("fight"); fightBoss = false; setZone(8); S.kills = ZONE_FIGHTS; challenge(); mob.max = 1e15; mob.hp = mob.max * 0.3; setTimeout(() => { for (const f of combatFoes()) f.hp = f.max = 1e15; }, 400)'],
         ]) {
           await X(`globalThis.__hold = 0; globalThis.__tp = 0; ${src}; true`); await page.waitForTimeout(2500);
-          const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, ZA: s.ZA, ZM: s.ZM }; })()');
+          const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, ZA: s.ZA, ZM: s.ZM, GY: s.GY }; })()');
           assert(c.n >= 2 && c.AK === 1 && c.ZA === c.ZM, `${tag} ${name}: a crowd of foes draws at today's size (${JSON.stringify(c)})`);
           await X('TURN_TUNE.on = true; COMBAT_TUNE.single = 1; COMBAT_TUNE.sizes = 1; COMBAT_TUNE.packSize = 3; fightBoss = false; setZone(1); true'); await page.waitForTimeout(1500);
-          const one = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK }; })()');
-          assert(one.n === 1 && one.AK === ak, `${tag} ${name}: the next one-foe fight is drawn 1.5x again (${JSON.stringify(one)})`);
+          const one = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, GY: s.GY }; })()');
+          // bigger-heroes (judge C1): the ground stays put when a crowd comes and goes (the scenery's ground line, stage px)
+          assert(one.GY === c.GY, `${tag} ${name}: the ground line stays at ${one.GY} stage px with a crowd and without (crowd ${c.GY})`);
+          assert(one.n === 1 && one.AK === ak, `${tag} ${name}: the next one-foe fight is drawn ${ak}x again (${JSON.stringify(one)})`);
         }
         assert(!errs.length, `${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
@@ -18120,6 +18663,247 @@ if (section('ability-effects-live')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('ability-effects-live crashed: ' + (e.stack || e)); }
+
+// ==== route-s-wren-wire (docs/design/route-s/ruling.md, "Build card spec: route-s-wren-wire"): Wren's route S fight moves ====
+// From the converter's record (art/heroes/wren/route-s/pack.json, tools/art/route-s-wren.py) and the embedded data (21ye): bytes
+// (gate 1), registration (gate 2), release frames and the string's anchors (gates 4 and 5), the timings and the timed rings
+// (gate 5), the bat (gate 9), the Classic switch's default (gate 8). The page's pixels: 'wren route S (browser)'.
+const WREN_FIGHT = ['idle', 'attack', 'twinshot', 'powershot', 'barbed', 'pinning', 'huntmark', 'volley', 'echoshot', 'batswarm', 'deadeye',
+  'sonic', 'shadowstep', 'moonlit', 'finalecho', 'parry', 'dodge', 'hit', 'defeat', 'victory'];
+const WREN_SHOOT = ['attack', 'twinshot', 'powershot', 'barbed', 'pinning', 'huntmark', 'volley', 'echoshot', 'deadeye', 'sonic', 'moonlit', 'finalecho'];
+if (section('wren route S')) try {
+  const { spawnSync } = await import('node:child_process'), { b91Decode } = await import('./lib/b91.mjs');
+  const D = path.join(ROOT, 'art', 'heroes', 'wren', 'route-s'), P = JSON.parse(fs.readFileSync(path.join(D, 'pack.json'), 'utf8'));
+  { const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-wren-s.mjs'), '--check'], { encoding: 'utf8' });
+    assert(r.status === 0, 'wren route S: src/js/21ye-data-wren-s.js is up to date with art/heroes/wren/route-s (node tools/art/embed-wren-s.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
+  const W = artData('21ye-data-wren-s.js', 'WREN_S');
+  const sorted = o => JSON.stringify(Object.keys(o).sort()), want20 = JSON.stringify([...WREN_FIGHT].sort());   // 21ye orders them for loading
+  assert(sorted(W.moves) === want20 && sorted(P.moves) === want20 && Object.keys(W.moves)[0] === 'idle',
+    `wren route S: all 20 fight moves are embedded (${Object.keys(W.moves).length})`);
+  // gate 1: bytes (decimal KB and MB, as tools/lib/page-size.mjs); the embedded atlases are the converted files, byte for byte
+  const size = f => fs.statSync(path.join(D, f)).size;
+  const fight = WREN_FIGHT.reduce((s, m) => s + size(m + '.webp'), 0), fx = size('arrows.webp') + size('bats.webp'), page = fs.statSync(distFile).size;
+  console.log(`  wren route S bytes: fight atlases ${(fight / 1e3).toFixed(1)} KB (ceiling 1,650 KB); arrows and bats ${(fx / 1e3).toFixed(1)} KB (ceiling 60 KB); page ${(page / 1e6).toFixed(2)} MB (ceiling 10.6 MB)`);
+  assert(fight <= 1650e3 && fx <= 60e3 && page <= 10.6e6, `wren route S: fight atlases ${(fight / 1e3).toFixed(1)} KB <= 1,650 KB, arrows and bats ${(fx / 1e3).toFixed(1)} KB <= 60 KB, page ${(page / 1e6).toFixed(2)} MB <= 10.6 MB (gate 1)`);
+  const same = [...WREN_FIGHT.map(m => [m, W.moves[m].atlas]), ['arrows', W.arrows.atlas], ['bats', W.bats.atlas]].filter(([n, s]) => !Buffer.from(b91Decode(s)).equals(fs.readFileSync(path.join(D, n + '.webp'))));
+  assert(!same.length, 'wren route S: every embedded atlas is its converted WebP, byte for byte' + (same.length ? ` (not: ${same.map(r => r[0]).join(', ')})` : ''));
+  assert(P.colours >= 63 && P.palette.length >= 63 && P.palette.length <= 64 && P.palette.includes(P.string) && W.string === P.string,
+    `wren route S: one palette of ${P.palette.length} colours (63 or 64), the string's colour ${P.string} in it (gate 1, gate 4)`);
+  // gate 2: one scale per move within 0.88-1.12 of the pack's; each frame's feet anchor as converted; the opening and closing
+  // frames standing on the ground line (feet rows within 1 art px), hood tops 190 +-3 art px. Power Shot and Barbed Shot drop
+  // their head between those frames as drawn (opening and closing 7 and 9 art px apart), so one scale per move holds them
+  // within 4 and 5 (flagged for the art judge in route-s-wren-wire's PR).
+  const DRAWN_DROP = { powershot: 4, barbed: 5 }, reg = [];
+  for (const m of WREN_FIGHT) {
+    const M = P.moves[m], E = W.moves[m], k = M.k / 0.2217, n = m === 'idle' ? 1 : 8;
+    if (!(k >= 0.88 && k <= 1.12)) reg.push(`${m}: scale x${k.toFixed(3)} of the pack's`);
+    if (M.f.length !== n || E.f.length !== n) reg.push(`${m}: ${E.f.length} frames`);
+    if (E.f.some((f, i) => f[4] !== M.f[i].ax || f[5] !== M.f[i].ay)) reg.push(`${m}: a feet anchor differs from the converter's`);
+    const ends = m === 'idle' || m === 'defeat' ? [M.f[0]] : [M.f[0], M.f[7]], tol = DRAWN_DROP[m] || 3;   // Defeat closes lying down
+    for (const f of ends) { if (Math.abs(f.hood - 190) > tol) reg.push(`${m}: hood top ${f.hood}`); if (f.feet > 1) reg.push(`${m}: feet ${f.feet} rows up`); }
+    if (Math.max(...ends.map(f => f.feet)) - Math.min(...ends.map(f => f.feet)) > 1) reg.push(`${m}: standing feet rows ${ends.map(f => f.feet)}`);
+    if (!(M.rel.length && M.rel.every(i => i >= 0 && i < n)) || JSON.stringify(E.rel) !== JSON.stringify(M.rel)) reg.push(`${m}: release frames ${M.rel}`);
+  }
+  assert(!reg.length, 'wren route S: one scale per move (0.88-1.12 of 0.2217); opening and closing frames on the ground, hood tops 190 +-3 art px; a release frame per move (gates 2, 5)' + (reg.length ? ': ' + reg.join('; ') : ''));
+  // gate 4: the 12 shooting moves carry the string's anchors (top tip, bottom tip, drawing hand or none) on each frame, or 0
+  // where no string shows; the 8 others keep their painted string
+  const sbad = [];
+  for (const m of WREN_FIGHT) {
+    const s = W.moves[m].s, shoot = WREN_SHOOT.includes(m);
+    if (!shoot) { if (s) sbad.push(`${m}: has anchors`); continue; }
+    if (!s || s.length !== 8) { sbad.push(`${m}: ${s ? s.length : 0} anchor rows`); continue; }
+    s.forEach((a, i) => { if (a !== 0 && !(Array.isArray(a) && a.length === 3 && a.slice(0, 2).every(p => Array.isArray(p) && p.length === 2) && (a[2] === null || a[2].length === 2))) sbad.push(`${m} ${i + 1}`); });
+  }
+  const noStr = WREN_SHOOT.flatMap(m => W.moves[m].s.map((a, i) => (a === 0 ? `${m} ${i + 1}` : null)).filter(Boolean));
+  // a frame with no string is one whose anchors were never marked (Final Echo 2: her spin, the bow edge-on); none was dropped
+  console.log(`  wren route S string: drawn on ${WREN_SHOOT.length * 8 - noStr.length} shooting frames, none on ${noStr.length} (${noStr.join(', ')}); anchors moved over 3 px onto the bow: ${P.snapFar.length} (each looked at)`);
+  assert(!sbad.length && !P.strDropped.length && noStr.join() === 'finalecho 2', 'wren route S: the 12 shooting moves carry the string\'s three anchors on every frame but one never marked, the other 8 none (gate 4)' + (sbad.length || P.strDropped.length ? ': ' + [...sbad, ...P.strDropped].join('; ') : '') + ` (no string: ${noStr.join(', ')})`);
+  // gate 9: the bat's box at its one offset from the feet clears every frame's head box (all moves)
+  { const [bx, by] = W.bats.at, bw = Math.max(...W.bats.f.map(r => r[2])), bh = Math.max(...W.bats.f.map(r => r[3])), over = [];
+    for (const m of WREN_FIGHT) P.moves[m].f.forEach((f, i) => { const h = f.head; if (bx < h[2] && bx + bw > h[0] && by < h[3] && by + bh > h[1]) over.push(`${m} ${i + 1}`); });
+    assert(JSON.stringify(W.bats.at) === JSON.stringify(P.bats.at) && W.bats.f.length === 6 && !over.length, `wren route S: the bat (6 flaps) at [${W.bats.at}] from the feet never covers her head box (gate 9)` + (over.length ? ': ' + over.join(', ') : '')); }
+  // gate 5: the timings, run through 64l's own functions (pure)
+  const ctx = {}; vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'src', 'js', '21ye-data-wren-s.js'), 'utf8') + '\n' + fs.readFileSync(path.join(ROOT, 'src', 'js', '64l-wren-s.js'), 'utf8') + '\nthis.F = wrenSFrame; this.R = wrenSTimed;', ctx);
+  const tbad = [], F = (m, ms) => ctx.F(m, { ms });
+  for (const m of WREN_FIGHT.filter(m => !['idle', 'parry', 'dodge', 'hit', 'defeat', 'victory'].includes(m))) {
+    const rel = W.moves[m].rel[0];
+    if (F(m, 139) === rel || F(m, 140) !== rel || F(m, 899) !== 7) tbad.push(`${m}: ${F(m, 139)},${F(m, 140)},${F(m, 899)}`);   // the release on the shot (62-stage WIND 0.14 s), the end at 900 ms
+  }
+  for (const [m, ms] of [['parry', 660], ['dodge', 660], ['hit', 540], ['defeat', 2080]]) if (F(m, 0) !== 0 || F(m, ms - 1) !== 7 || F(m, ms * 4) !== 7 || F(m, ms / 2) !== 4) tbad.push(`${m}: ${F(m, ms / 2)},${F(m, ms - 1)}`);
+  if (F('idle', 1234) !== 0) tbad.push('idle moves');
+  // the timed rings (59k TURN_TUNE.timed: ring 0.9 s, gap 0.55 s; a press up to 0.15 s late or early, or none, graded at the
+  // press or 0.15 s after the contact): each ring's release frame first shows at a 60 fps frame within 17 ms after its contact
+  // or its press, whichever is first, never before. A Perfect press stops the turn clock for 59k's hitstop.perfect (6 frames
+  // at 60 fps): the release must show through that beat, not after it (the judge's gate 12 finding, 133 ms late)
+  const late = [];
+  for (const [m, n, R] of [['volley', 3, [3, 5, 6]], ['moonlit', 5, [4, 5, 5, 5, 5]], ['powershot', 1, [5]], ['deadeye', 1, [5]]]) for (const press of [-0.06, -0.02, 0, 0.1, null]) for (const ph of [0, 0.004, 0.011, 0.016]) {
+    const rings = [{ open: 0, close: 0.9 }], seen = {};
+    let t = ph, stop = 0;
+    for (let k = 0; k < 600; k++) {
+      if (stop > 0) stop--; else if (k > 0) t += 1 / 60;   // the turn clock: still through a hit-stop
+      const cur = rings[rings.length - 1], grade = press == null ? cur.close + 0.15 : cur.close + press;
+      if (cur.press == null && t >= grade) {   // 59k grades the ring (timingGrade): 64l notes the press; a Perfect stops the clock
+        cur.press = t;
+        if (press != null && Math.abs(press) <= 0.06) stop = 6;
+        if (rings.length < n) rings.push({ open: t, close: t + 0.55 });
+      }
+      const f = ctx.R(m, rings, t);
+      rings.forEach((g, j) => { if (seen[j] == null && f.rel === j && f.i === R[j]) seen[j] = t - Math.min(g.close, g.press == null ? Infinity : g.press); });
+    }
+    for (let j = 0; j < n; j++) if (!(seen[j] >= 0 && seen[j] <= 0.017 + 1e-9)) late.push(`${m} ring ${j + 1} press ${press}: ${seen[j] == null ? 'never' : Math.round(seen[j] * 1000) + ' ms'}`);
+  }
+  assert(!tbad.length && !late.length, 'wren route S: attack and abilities 900 ms with the release on the shot, parry and dodge 660 ms, hit 540 ms, defeat 2080 ms held; Volley\'s 3 and Moonlit Volley\'s 5 releases each within 17 ms of contact or an earlier press, through a Perfect\'s hit-stop (gate 5)' + (tbad.length || late.length ? ': ' + [...tbad, ...late.slice(0, 4)].join('; ') : ''));
+  // gate 8: one Settings switch, Hero art, default new art (its own key, not the save; no save-key bump)
+  const pu = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-portraits-ui.js'), 'utf8'), pk = fs.readFileSync(path.join(ROOT, 'src', 'js', '64k-portraits.js'), 'utf8');
+  assert(/title: 'Hero art'/.test(pu) && /Wren\\'s new fight poses/.test(pu) && /storage\.get\(PREF\) === '1'/.test(pk) && /emit\('classicArt'/.test(pk),
+    'wren route S: Settings > Hero art has the one Classic art switch for the portraits and Wren\'s fight poses, off (new art) unless chosen (gate 8)');
+} catch (e) { fail('wren route S crashed: ' + (e.stack || e)); }
+
+// The page: every atlas decodes; anchors on opaque pixels; 1-bit alpha, at most 64 colours; feet centres; the draw scale at
+// 1280x720 (nearest-neighbour, x1.5) and 740x360 on a DPR 1 phone (downscaled); the idle breathes, and holds still under reduced
+// motion; Classic art brings the old Wren back and the new one again; the picker's figure holds her camp pose unclipped.
+if (section('wren route S (browser)')) try {
+  // the picker's Wren figure: how many of its canvas's pixels are drawn (0: empty or not there)
+  const WREN_FIG = `() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'); if (!c || !c.width) return 0;
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; }`;
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('wren route S (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, dpr, red] of [[1280, 720, 1, false], [740, 360, 1, true]]) {
+        const tag = `${w}x${h} DPR ${dpr}${red ? ', reduced motion' : ''}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch, reducedMotion: red ? 'reduce' : 'no-preference' });
+        await ctx.addInitScript(s => { try { if (!localStorage.getItem('lanternfall.save.v5')) { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} }, early);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false, S.onboard.all = true); for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();
+          soloPick('wren', { now: true }); setZone(2); setActivity('fight'); fightBoss = false; true`);
+        const n = await X('wrenSStats.decodeAll()');
+        assert(n === 22 && await X('wrenSOn()'), `wren route S ${tag}: the 20 moves, arrows and bats decode and the stage draws route S Wren (${n} atlases)`);
+        if (w === 1280) {
+          const px = JSON.parse(await X(`JSON.stringify((() => { const D = WREN_S, bad = [], feet = {}, a = wrenSStats.colours();
+            for (const m in D.moves) D.moves[m].f.forEach((f, i) => { const s = D.moves[m].s && D.moves[m].s[i];
+              if (s) { const pts = [s[0], s[1]].concat(s[2] ? [s[2]] : []), al = wrenSStats.alphaAt(m, i, pts); if (al.some(v => v !== 255)) bad.push(m + ' ' + (i + 1)); }
+              if (i === 0 || i === D.moves[m].f.length - 1) feet[m + ' ' + (i + 1)] = wrenSStats.rows(m, i).feet; });
+            return { bad, feet, a }; })())`));
+          assert(!px.bad.length, `wren route S: every string anchor sits on an opaque pixel of its frame (bow tip or hand) on every shooting frame (gate 4)` + (px.bad.length ? ': ' + px.bad.join(', ') : ''));
+          assert(px.a.partAlpha === 0 && px.a.colours <= 64, `wren route S: the atlases are 1-bit alpha with ${px.a.colours} colours, at most 64 (gate 1; ${px.a.partAlpha} part-clear pixels)`);
+          const f0 = px.feet['idle 1'], off = Object.entries(px.feet).filter(([k, v]) => !k.startsWith('defeat 8') && Math.abs(v - f0) > 3);
+          assert(!off.length, `wren route S: the opening and closing frames' feet centres sit within 3 art px of the idle's held frame (gate 2)` + (off.length ? ': ' + off.map(([k, v]) => `${k} ${v - f0}`).join(', ') : ''));
+        }
+        // the draw scale: 0.5 x ACTOR_K actor px per art px, so 0.5 x DPR x the actors' zoom device px; whole device px
+        await page.waitForTimeout(300);
+        const st = JSON.parse(await X(`JSON.stringify({ s: wrenSStats(), z: stageStats().ZA })`)), k = 0.5 * dpr * st.z;
+        assert(Math.abs(st.s.drawn.k - k) < 1e-6 && (w !== 1280 || k >= 1) && (w !== 740 || k < 1), `wren route S ${tag}: she draws at ${st.s.drawn.k} device px per art px (0.5 x DPR ${dpr} x actor zoom ${st.z}; ${k >= 1 ? 'nearest-neighbour' : 'a cached smoothed downscale'}) (gate 6)`);
+        // the idle breathes (1 art px above the waist, 160 ms steps), and holds still under reduced motion
+        const br = await X(`new Promise(res => { const seen = new Set(), t0 = performance.now(); (function f() { const d = wrenSStats().drawn; if (d.move === 'idle') seen.add(d.br); if (performance.now() - t0 < 1500) requestAnimationFrame(f); else res([...seen].sort().join()); })(); })`);
+        assert(red ? br === '0' : br === '0,1', `wren route S ${tag}: the held idle ${red ? 'holds still' : 'breathes'} (breath steps ${br || 'none'}) (gate 3)`);
+        if (w === 1280) {
+          // Classic art: the old Wren on the stage, and the new one again (the pref has its own key; cleared after)
+          // (64l's draw count stands still while Classic is on and the stage still draws a hero; it moves again once it is off)
+          const cl = await X(`new Promise(res => { portraitsClassic(true); const a = wrenSOn();
+            setTimeout(() => { const n0 = wrenSStats().drawn.n; setTimeout(() => { const still = wrenSStats().drawn.n === n0, hero = !!(stageRects().hero); portraitsClassic(false);
+              setTimeout(() => res(JSON.stringify({ a, still, hero, b: wrenSOn(), moved: wrenSStats().drawn.n > n0 })), 300); }, 300); }, 100); })`);
+          const c = JSON.parse(cl);
+          assert(!c.a && c.still && c.hero && c.b && c.moved, `wren route S: Classic art turns the stage's Wren back to today's and off again brings route S back (gate 8; ${cl})`);
+          // gathering: the camp pose (victory frame 4) until route-s-wren-gather; hunting keeps Codex's interim spear poses (64h)
+          const ga = JSON.parse(await X(`new Promise(res => { setActivity('gather'); setNode('wood', 1); setTimeout(() => { const d = wrenSStats().drawn, wood = { on: wrenSOn(), mv: d.move, i: d.frame };
+            const n0 = S.node; S.node = { kind: 'hide', t: 1 }; setTimeout(() => { const hunt = { on: wrenSOn(), tg: target() }; S.node = n0; setActivity('fight'); res(JSON.stringify({ wood, hunt })); }, 300); }, 600); })`));
+          assert(ga.wood.on && ga.wood.mv === 'victory' && ga.wood.i === 3 && !ga.hunt.on && ga.hunt.tg === 'node', `wren route S: gathering shows her camp pose; hunting keeps the interim spear poses (gate 7; ${JSON.stringify(ga)})`);
+        }
+        assert(!errs.length, `wren route S ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the new-game picker: her camp pose at 0.5 scale, all of it inside the figure's box (gate 7)
+      for (const [w, h] of [[1280, 720], [360, 740]]) {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: w < 1000, hasTouch: w < 1000 });
+        await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+        const page = await ctx.newPage();
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/');
+        await page.waitForFunction(`(${WREN_FIG})() > 0`, null, { timeout: 20000 }).catch(() => {});
+        const r = await page.evaluate(`(() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'), f = c && c.parentElement; if (!c) return null;
+          const a = c.getBoundingClientRect(), b = f.getBoundingClientRect(); return { cw: c.width, ch: c.height, a: [a.left, a.top, a.right, a.bottom], b: [b.left, b.top, b.right, b.bottom], px: (${WREN_FIG})() }; })()`);
+        // inside the box's border (1 px)
+        const inside = r && r.a[0] >= r.b[0] + 0.5 && r.a[1] >= r.b[1] + 0.5 && r.a[2] <= r.b[2] - 0.5 && r.a[3] <= r.b[3] - 0.5;
+        assert(!!(r && r.cw > 112 && r.px && inside), `wren route S ${w}x${h}: the picker's figure holds Wren's camp pose (${r ? r.cw + 'x' + r.ch : 'none'} at DPR 2, ${r && r.px} px drawn) inside its box (gate 7)`);
+        await ctx.close();
+      }
+      // the split build (tools/build.mjs hero packs): only her idle comes at boot; a move still loading holds the game under
+      // "Loading Wren" with nothing drawn for her, and the first frame after it is in draws it; the new-game picker fills her figure
+      // when the camp pose arrives, with no hold
+      {
+        const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
+        const e2 = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, e2) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(e2);
+        const assets = pageAssets(s.file, probe, files), pk = id => s.packs.find(p => p.id === id);
+        const open = async (save, hold, pre = '') => {
+          const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } });
+          await ctx.addInitScript(([s, pre]) => { try { if (s && !localStorage.getItem('lanternfall.save.v5')) { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } localStorage.setItem('lanternfall.test.nostory', '1'); if (pre && !sessionStorage.getItem('pre')) { sessionStorage.setItem('pre', '1'); (0, eval)(pre); } } catch (e) {} }, [save, pre]);
+          const page = await ctx.newPage(), errs = []; let release; const held = new Promise(r => { release = r; });
+          page.on('pageerror', e => errs.push(String(e)));
+          await routePage(page, 'http://lf.test/', probe, assets);
+          await page.route('**/assets/' + pk(hold).name, async r => { await held; return r.fallback(); });
+          await page.goto('http://lf.test/', { waitUntil: 'commit' });   // the held pack keeps the page's load event back
+          return { ctx, page, errs, release, X: src => page.evaluate(src => window.__t.x(src), src) };
+        };
+        const cover = `(() => { const c = document.getElementById('artWait'); return c && !c.hidden ? c.firstChild.textContent : null; })()`;
+        { // a Wren save, her Parry held back
+          const { ctx, page, errs, release, X } = await open(early, 'hero:WREN_S.wren.parry');
+          await page.waitForFunction(() => window.__t && window.__t.x('wrenSOn()'), null, { timeout: 20000 }).catch(() => {});
+          const boot = await X(`lfBoot.boot.filter(id => id.startsWith('hero:')).join()`);
+          await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); setActivity('fight'); true`);
+          await page.waitForFunction(() => window.__t.x("target() === 'mob'"), null, { timeout: 20000 }).catch(() => {});   // on the fight, not a gathering scene
+          await page.waitForTimeout(400);
+          await X(`emit('soloParry', { res: 'parry' }); true`);
+          await page.waitForTimeout(300);
+          const a = JSON.parse(await X(`JSON.stringify({ c: ${cover}, n: wrenSStats().drawn.n, mv: wrenSStats().drawn.move })`));
+          await page.waitForTimeout(300);
+          const b = JSON.parse(await X(`JSON.stringify({ c: ${cover}, n: wrenSStats().drawn.n, mv: wrenSStats().drawn.move })`));
+          assert(boot === 'hero:WREN_S.wren.core' && a.c === 'Loading Wren' && b.c === 'Loading Wren' && a.n === b.n && b.mv !== 'parry',
+            `wren route S split: a Wren save boots with her idle pack only (${boot}); a Parry still loading holds the game under "Loading Wren" and nothing is drawn for her (${JSON.stringify([a, b])})`);
+          const after = page.evaluate(() => new Promise(res => { const seen = []; const f = () => { const c = document.getElementById('artWait'), d = window.__t.x('wrenSStats().drawn');
+            seen.push((c && !c.hidden ? 'held ' : '') + d.move + ' ' + d.frame); if (!(c && !c.hidden) || seen.length > 600) return res(seen.slice(-2)); requestAnimationFrame(f); }; requestAnimationFrame(f); }));
+          release();
+          const seen = await after;
+          assert(/^parry [01]$/.test(seen[seen.length - 1]), `wren route S split: on the first frame after the hold her Parry is in and draws from its start (${seen.join(', ')})`);
+          assert(!errs.length, 'wren route S split: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // Classic art on: no route S pack at boot or after; Classic off brings her in (held under "Loading Wren" until her idle is in)
+          const { ctx, page, errs, X } = await open(early, 'hero:WREN_S.wren.attack', `localStorage.setItem('lanternfall.pref.classicPortraits', '1')`);
+          const asked = []; page.on('request', q => { if (/WREN_S/.test(q.url())) asked.push(q.url().split('/').pop()); });
+          await page.waitForFunction(() => window.__t && document.getElementById('cv').width > 0 && !document.getElementById('lfBoot'), null, { timeout: 20000 }).catch(() => {});
+          await page.waitForTimeout(2500);
+          const a = JSON.parse(await X(`JSON.stringify({ boot: lfBoot.boot.filter(id => id.startsWith('hero:')), on: wrenSOn(), c: portraitsClassic() })`)), n0 = asked.length;
+          await X(`portraitsClassic(false); true`);
+          await page.waitForFunction(() => window.__t.x('wrenSOn()'), null, { timeout: 20000 }).catch(() => {});
+          const b = JSON.parse(await X(`JSON.stringify({ on: wrenSOn(), c: ${cover} })`));
+          assert(!a.boot.length && !a.on && a.c && n0 === 0 && b.on && !errs.length,
+            `wren route S split: with Classic art on a Wren save fetches none of her route S packs (boot ${a.boot.join() || 'none'}, after ${n0}); off brings route S in (${JSON.stringify(b)}; ${asked.slice(0, 2).join(', ')})` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // a new game, her camp pose held back: the picker's figure stays empty with no hold, then fills
+          const { ctx, page, errs, release, X } = await open(null, 'hero:WREN_S.wren.victory');
+          await page.waitForSelector('.ccard[data-cls="wren"] .fig canvas', { timeout: 20000 }).catch(() => {});
+          await page.waitForTimeout(800);
+          const a = await page.evaluate(`({ px: (${WREN_FIG})(), c: ${cover} })`);
+          release();
+          await page.waitForFunction(`(${WREN_FIG})() > 0`, null, { timeout: 20000 }).catch(() => {});
+          const b = await page.evaluate(`({ px: (${WREN_FIG})(), c: ${cover} })`);
+          assert(!a.px && !a.c && b.px > 0 && !b.c && !errs.length, `wren route S split: a new game's picker leaves Wren's figure empty while her camp pose loads, with no hold, and draws it when it is in (${JSON.stringify([a, b])})` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('wren route S (browser) crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

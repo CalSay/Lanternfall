@@ -4,3 +4,6 @@ useStorage({
   get: key => { try { return localStorage.getItem(key); } catch (e) { return null; } },
   set: (key, value) => { try { localStorage.setItem(key, value); } catch (e) {} }
 });
+// The inline page's loading screen (src/shell.html #lfLoad, card loading-screen) goes at boot (90-boot), or at the first
+// uncaught error before that, so a page that failed to boot never hides behind "Loading the game".
+if (typeof addEventListener === 'function') addEventListener('error', () => { const el = typeof document === 'object' && document.getElementById('lfLoad'); if (el) el.remove(); });

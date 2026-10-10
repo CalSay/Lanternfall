@@ -77,6 +77,10 @@ export function build() {
 //   What stays in the page: the foes' timings and frame tables (59l reads them in fights, so a fight plays the same whether its
 //   art is in or not); their atlases come with the pack. A background stays out of BG_ART until its pack arrives (only the
 //   stage and the opening read it, and zoneTheme falls back to the scenery rule until then).
+// - hero art (AREA_ART entries of kind 'hero', card hero-packs) by hero, not by zone: one pack of each hero's core moves and one
+//   pack for each other move. The boot loader writes only the save's hero's core pack; the rest of that hero's moves load first
+//   after boot, and another hero's packs load when the save has that hero (heroPacks below; 75-art-load holds the game while the
+//   stage needs a move that is not in yet).
 // The boot loader shows a plain text line with the bytes done until the game's script has run. The inline page stays the
 // default and is written the same way in both modes.
 export const ASSET_DIR = path.join(ROOT, 'dist', 'assets');
@@ -89,14 +93,29 @@ const attr = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 // BOOT_ART loads before the game, whole; AREA_ART is split into packs that load by zone.
 export const BOOT_ART = ['21r-data-resicons.js', '21s-data-actionicons.js', '21t-data-navicons.js', '21u-data-gearicons.js', '21v-data-statusicons.js',
   '21y-data-heroart.js', '21yc-data-portraits.js', '21z-data-huntart.js'];
-export function placeArt(files) {
-  const loose = files.filter(f => !BOOT_ART.includes(f) && !AREA_ART[f]);
+export function placeArt(files, art = AREA_ART) {
+  const loose = files.filter(f => !BOOT_ART.includes(f) && !art[f]);
   if (loose.length) throw new Error(`split: ${loose.join(', ')} is generated art in neither BOOT_ART nor AREA_ART (tools/build.mjs): say whether it loads before the game or by zone`);
 }
 // file -> { v: the constant, kind: the pack kind, keep: what the page keeps of one entry (null: nothing), load: the pack's data }
+// A hero file (kind 'hero', card hero-packs) registers here too, with no new loader code. Either one hero's file:
+//   constant { moves: { <move>: data }, ...other fields }, entry { v, kind: 'hero', hero: <hero id>, core: [<move>, ...], keep, load }
+// or several heroes in one file:
+//   constant { heroes: { <hero>: { moves, ...that hero's other fields } }, ...other fields }, entry { v, kind: 'hero', core: { <hero>: [...] }, keep, load }
+// core: the moves the hero needs on the first frame (the boot set counts the heaviest hero's core); keep and load work per move
+// (when both keep part of a move, make both plain objects: 75-art-load merges them with Object.assign, anything else is replaced).
+// Hero ids are SOLO_ORDER's (check.mjs). The page keeps everything but the moves' data and registers the constant
+// (lfBoot.heroFile), which puts in the save's hero's core at once, so the core is in the constant before the next file runs, as inline.
+const CORE_WREN = ['idle'];   // only the idle fits the boot set (the next lightest core, idle + victory, puts zone 2 at 4.03 MB)
 export const AREA_ART = {
   '21za-data-foeart.js': { v: 'FOE_ART', kind: 'foe', keep: P => Object.assign({}, P, { atlases: {} }), load: P => ({ atlases: P.atlases }) },
-  '21zb-data-bgart.js': { v: 'BG_ART', kind: 'bg', keep: null, load: B => B }
+  '21zb-data-bgart.js': { v: 'BG_ART', kind: 'bg', keep: null, load: B => B },
+  // Wren's route S fight moves (route-s-wren-wire): the page keeps each move's frame table, its atlas comes in the move's pack
+  // classic: the Classic art switch (64k) turns this art off, so the loaders leave its packs out while it is on (x in the table)
+  '21ye-data-wren-s.js': { v: 'WREN_S', kind: 'hero', hero: 'wren', core: CORE_WREN, classic: true, keep: ({ atlas, ...M }) => M, load: M => ({ atlas: M.atlas }) },
+  // the new-style packs (card ns-scenery-engine; the wire cards write the file): one pack per piece, NS_ART.<group>.<key>; the
+  // page keeps each entry's frame tables and anchors, its pictures (img) come in its pack (nsPacks below)
+  '21zc-data-nsart.js': { v: 'NS_ART', kind: 'ns', classic: true, keep: E => ({ ...E, img: {} }), load: E => ({ img: E.img || {} }) }
 };
 // A JS literal: JSON, but a string with no quote, backslash or line break goes in single quotes, as the embed tools write basE91.
 const lit = v => typeof v === 'string' ? (/['\\\n\r\u2028\u2029]/.test(v) ? JSON.stringify(v) : `'${v}'`)
@@ -113,10 +132,56 @@ function packZones() {
   rows.forEach(([foe, theme], i) => { if (foe) add('foe:' + foe, i + 1); add('bg:' + theme, i + 1); });
   return { out, road: n, area: core.eval(`Array.from({ length: ${n} }, (_, i) => zoneAreaIdx(i + 1))`) };
 }
-export function areaPacks(frags) {
+// A hero file's packs: one of each hero's core moves (id hero:<v>.<hero>.core) and one per other move (hero:<v>.<hero>.<move>).
+// Each is `lfArt('hero', key, { <move>: data })`; 75-art-load puts each move in the hero's moves (<v>.moves for a one-hero file,
+// <v>.heroes.<hero>.moves otherwise).
+const NAME = /^[a-z0-9_-]+$/i;
+export function heroPacks(x, A, data) {
+  const packs = [], heroes = {}, tag = x.f.replace(/-data-.*$/, ''), one = typeof A.hero === 'string';
+  if (one ? !data || typeof data.moves !== 'object' || !data.moves : !data || typeof data.heroes !== 'object' || !data.heroes)
+    throw new Error(`split: ${x.f} is hero art, so ${A.v} needs ${one ? `its moves ({ moves: { <move>: data } }) for ${A.hero}` : 'a heroes table ({ heroes: { <hero>: { moves } } }), or the entry names its one hero'}`);
+  for (const [hero, H] of Object.entries(one ? { [A.hero]: data } : data.heroes)) {
+    const moves = (H && H.moves) || {}, core = one ? A.core : A.core && A.core[hero], bad = [hero, ...Object.keys(moves)].filter(n => !NAME.test(n) || n === 'core');
+    if (bad.length) throw new Error(`split: ${x.f}: ${bad.join(', ')} cannot name a hero or a move in a pack file (letters, digits, - and _ only, and never "core")`);
+    if (!Array.isArray(core) || !core.length) throw new Error(`split: ${x.f} names no core moves for ${hero} (AREA_ART core): say which moves the first frame needs`);
+    const lost = core.filter(m => !Object.prototype.hasOwnProperty.call(moves, m));
+    if (lost.length) throw new Error(`split: ${x.f}: ${hero}'s core moves ${lost.join(', ')} are not in ${A.v}${one ? '' : '.heroes.' + hero}.moves`);
+    for (const [set, ms] of [['core', core], ...Object.keys(moves).filter(m => !core.includes(m)).map(m => [m, [m]])]) {
+      const key = `${A.v}.${hero}.${set}`, id = 'hero:' + key;
+      const text = `// ${x.f.replace(/\.js$/, '')} ${id}: GENERATED by tools/build.mjs --split from src/js/${x.f} (hero-packs). Do not edit.\n`
+        + `lfArt("hero", ${JSON.stringify(key)}, ${lit(Object.fromEntries(ms.map(m => [m, A.load(moves[m])])))});\n`;
+      packs.push({ id, f: x.f, name: `${tag}-hero-${key}.${hash10(text)}.js`, text, bytes: Buffer.byteLength(text), zones: [], hero, core: set === 'core', moves: ms, v: A.v, classic: !!A.classic, shapes: null });
+    }
+    heroes[hero] = { ...H, moves: A.keep ? Object.fromEntries(Object.entries(moves).map(([m, M]) => [m, A.keep(M)])) : {} };
+  }
+  const keep = { f: x.f, text: `// ${x.f.replace(/\.js$/, '')} (split build, hero-packs): ${A.v} as the page keeps it; each hero's moves come in its packs (assets/).\n`
+    + `const ${A.v} = ${lit(one ? heroes[A.hero] : { ...data, heroes })};\nlfBoot.heroFile(${JSON.stringify(A.v)}, ${A.v}${one ? ', ' + JSON.stringify(A.hero) : ''});\n` };
+  return { packs, keep };
+}
+// A new-style file's packs (kind 'ns'): one per piece, id ns:<group>.<key>, on the road zones whose fights show it (59n
+// nsPackZones: a fight's scenery and foes, every zone for a critter; [] for a gather spot's or the camp's piece, which load when
+// 64m asks). Each is `lfArt('ns', '<group>.<key>', { img })`; 75-art-load puts img in NS_ART.<group>.<key>.
+export function nsPacks(x, A, data, core = loadCore()) {
+  const packs = [], kept = {}, tag = x.f.replace(/-data-.*$/, '');
+  for (const [group, G] of Object.entries(data || {})) {
+    if (!G || typeof G !== 'object') { kept[group] = G; continue; }
+    kept[group] = {};
+    for (const [key, entry] of Object.entries(G)) {
+      if (!NAME.test(group) || !/^[a-z0-9_.-]+$/i.test(key)) throw new Error(`split: ${x.f}: ${group}.${key} cannot name a new-style piece in a pack file (letters, digits, ., - and _ only)`);
+      const id = `ns:${group}.${key}`, text = `// ${x.f.replace(/\.js$/, '')} ${id}: GENERATED by tools/build.mjs --split from src/js/${x.f} (ns-scenery-engine). Do not edit.\n`
+        + `lfArt("ns", ${JSON.stringify(group + '.' + key)}, ${lit(A.load(entry))});\n`;
+      packs.push({ id, f: x.f, name: `${tag}-ns-${group}.${key}.${hash10(text)}.js`, text, bytes: Buffer.byteLength(text), zones: core.eval(`nsPackZones(${JSON.stringify(group + ':' + key)})`), ns: true, classic: !!A.classic, shapes: null });
+      kept[group][key] = A.keep(entry);
+    }
+  }
+  return { packs, keep: { f: x.f, text: `// ${x.f.replace(/\.js$/, '')} (split build, ns-scenery-engine): ${A.v} as the page keeps it; each piece's pictures come in its pack (assets/).\nconst ${A.v} = ${lit(kept)};\n` } };
+}
+export function areaPacks(frags, art = AREA_ART) {
   const { out: zones, road, area } = packZones(), packs = [], keep = [];
   for (const x of frags) {
-    const A = AREA_ART[x.f]; if (!A) continue;
+    const A = art[x.f]; if (!A) continue;
+    if (A.kind === 'hero') { const h = heroPacks(x, A, dataOf(x.f, x.text, A.v)); packs.push(...h.packs); keep.push(h.keep); continue; }
+    if (A.kind === 'ns') { const n = nsPacks(x, A, dataOf(x.f, x.text, A.v)); packs.push(...n.packs); keep.push(n.keep); continue; }
     const data = dataOf(x.f, x.text, A.v), kept = {};
     for (const [key, entry] of Object.entries(data)) {
       const id = A.kind + ':' + key, text = `// ${x.f.replace(/\.js$/, '')} ${id}: GENERATED by tools/build.mjs --split from src/js/${x.f} (art-loader). Do not edit.\n`
@@ -132,19 +197,28 @@ export function areaPacks(frags) {
   return { packs, keep, road, area };
 }
 
-export function buildSplit({ write = true } = {}) {
-  const { shell, css, frags } = parts();
-  const gen = frags.filter(x => isAsset(x.text)), { packs, keep, road, area } = areaPacks(gen);
-  placeArt(gen.map(x => x.f));
-  const assets = gen.filter(x => !AREA_ART[x.f]).map(x => ({ f: x.f, name: assetName(x.f, x.text), text: x.text, bytes: Buffer.byteLength(x.text) }));
+// art and extra: checks only (check.mjs builds a test hero file from today's art in memory with them; nothing is written then);
+// an extra file replaces the source file of its name
+export function buildSplit({ write = true, art = AREA_ART, extra = [] } = {}) {
+  const { shell, css, frags: own } = parts(), frags = [...own.filter(x => !extra.some(e => e.f === x.f)), ...extra].sort((a, b) => (a.f < b.f ? -1 : a.f > b.f ? 1 : 0));
+  const gen = frags.filter(x => isAsset(x.text)), { packs, keep, road, area } = areaPacks(gen, art);
+  placeArt(gen.map(x => x.f), art);
+  const assets = gen.filter(x => !art[x.f]).map(x => ({ f: x.f, name: assetName(x.f, x.text), text: x.text, bytes: Buffer.byteLength(x.text) }));
   const saveKey = /const KEY = '([^']+)'/.exec(fs.readFileSync(path.join(JS_DIR, '30-state.js'), 'utf8'))[1];
-  const table = Object.fromEntries(packs.map(p => [p.id, { f: 'assets/' + p.name, b: p.bytes, z: p.zones }]));
+  const classicKey = /const PREF = '([^']+)'/.exec(fs.readFileSync(path.join(JS_DIR, '64k-portraits.js'), 'utf8'))[1];   // the Classic art switch
+  // a hero pack: h its hero, c 1 for the core moves, m the moves it holds, v the constant it goes in (no zones); a new-style
+  // pack: n 1 (it never holds the game); x 1: the Classic art switch turns its art off (the loaders leave it out while it is on)
+  const table = Object.fromEntries(packs.map(p => [p.id, p.hero ? { f: 'assets/' + p.name, b: p.bytes, z: [], h: p.hero, c: p.core ? 1 : 0, m: p.moves, v: p.v, ...(p.classic ? { x: 1 } : {}) }
+    : { f: 'assets/' + p.name, b: p.bytes, z: p.zones, ...(p.ns ? { n: 1 } : {}), ...(p.classic ? { x: 1 } : {}) }]));
   const loader = fs.readFileSync(path.join(ROOT, 'src', 'boot-loader.html'), 'utf8')
     .replace('/* @files */', () => JSON.stringify(Object.fromEntries(assets.map(a => [a.name, a.bytes]))))
-    .replace('/* @packs */', () => JSON.stringify(table)).replace('/* @road */', () => String(road)).replace('/* @key */', () => JSON.stringify(saveKey));
+    .replace('/* @packs */', () => JSON.stringify(table)).replace('/* @road */', () => String(road)).replace('/* @key */', () => JSON.stringify(saveKey))
+    .replace('/* @classic */', () => JSON.stringify(classicKey));
   const tags = assets.map(a => `<script src="assets/${attr(a.name)}" onload="lfBoot.done(this)" onerror="lfBoot.fail(this)"></script>`).join('\n');
-  const code = frags.filter(x => !isAsset(x.text) || AREA_ART[x.f]).map(x => keep.find(k => k.f === x.f) || x);
-  const html = page(shell, css, `${loader.replace(/\n*$/, '\n')}${tags}\n${iife(code)}\n<script>lfBoot.end();</script>`);
+  const code = frags.filter(x => !isAsset(x.text) || art[x.f]).map(x => keep.find(k => k.f === x.f) || x);
+  // the loader (its screen and script) right after the styles, before any game markup, so its screen is the first thing painted
+  // (card loading-screen); the boot files' tags and the game's script stay where the inline page has its script
+  const html = page(shell, `${css}</style>\n${loader.replace(/\n*$/, '')}\n<style>`, `${tags}\n${iife(code)}\n<script>lfBoot.end();</script>`).replace('\n<style></style>', '');
   const files = [...assets, ...packs];
   if (write) {
     fs.mkdirSync(ASSET_DIR, { recursive: true });
@@ -165,6 +239,8 @@ const KB = n => (n / 1024).toFixed(1) + ' KB', MB = n => (n / 1e6).toFixed(2) + 
 //   road read as the road's last 35 zones). E1: while Mossy Hollow's pack holds both shapes it counts at its landscape shape, and
 //   the portrait share left out is capped. zoneSet: one zone's packs; areaSet: the packs an area shows first. Both count a pack at
 //   its larger shape and leave out area 1's named exceptions, each held to its cap until ns-a1-wire empties the list.
+//   Hero packs (hero-packs): both boot lines count the heaviest hero's core packs (the boot loader writes only the save's hero's
+//   core; a new game is counted as if it had the heaviest hero, so no hero needs an exception). Other moves load after boot.
 export const LOAD_LINES = {
   bootWarn: 3.5e6, bootFail: 4.0e6, e1: { pack: 'bg:forest', port: 0.70e6 }, zoneSet: 0.65e6, areaSet: 1.0e6, scan: 2000,
   area1: { 'foe:imp': 0.39e6, 'foe:gloomjaw': 0.85e6, 'bg:forest': 1.45e6 }
@@ -176,11 +252,14 @@ export function loadReport(s, { size = wire, lines = LOAD_LINES } = {}) {
     return [p.id, { real, big: sh ? Math.max(sh.land, sh.port) : real, counted: sh && p.id === lines.e1.pack ? sh.land : real, port: sh ? real - sh.land : 0 }];
   }));
   const at = (p, q) => p.zones.some(([a, b]) => q >= a && q <= b), map = z => (z > s.road ? s.road - 34 + (z - s.road - 1) % 35 : z);
-  const zoneBoot = z => { const ps = s.packs.filter(p => at(p, map(z))); return { z, counted: page + boot + ps.reduce((n, p) => n + pk[p.id].counted, 0), real: page + boot + ps.reduce((n, p) => n + pk[p.id].real, 0) }; };
+  const cores = {};
+  for (const p of s.packs) if (p.hero && p.core) cores[p.hero] = (cores[p.hero] || 0) + pk[p.id].real;
+  const hero = Object.entries(cores).reduce((m, [h, b]) => (b > m.b ? { h, b } : m), { h: null, b: 0 });
+  const zoneBoot = z => { const ps = s.packs.filter(p => at(p, map(z))); return { z, counted: page + boot + hero.b + ps.reduce((n, p) => n + pk[p.id].counted, 0), real: page + boot + hero.b + ps.reduce((n, p) => n + pk[p.id].real, 0) }; };
   const zone1 = zoneBoot(1); let worst = zone1;
   for (let z = 2; z <= lines.scan; z++) { const b = zoneBoot(z); if (b.counted > worst.counted) worst = b; }
   for (const [name, b] of [['a new game (zone 1)', zone1], [`the worst zone (${worst.z})`, worst]]) {
-    const say = `boot set, ${name}: ${MB(b.counted)} counted (${MB(b.real)} with both of Mossy Hollow's shapes)`;
+    const say = `boot set, ${name}: ${MB(b.counted)} counted (${MB(b.real)} with both of Mossy Hollow's shapes${hero.h ? `; ${hero.h}'s core moves ${MB(hero.b)}` : ''})`;
     if (b.counted > lines.bootFail) fails.push(`${say}, over ${MB(lines.bootFail)}`); else if (b.counted > lines.bootWarn) warns.push(`${say}, over the ${MB(lines.bootWarn)} warn line`);
   }
   for (const [id, x] of Object.entries(pk)) {
@@ -200,7 +279,7 @@ export function loadReport(s, { size = wire, lines = LOAD_LINES } = {}) {
   const areaMax = Object.entries(areas).reduce((m, [a, b]) => (b > m.b ? { a: +a, b } : m), { a: 0, b: 0 });
   if (areaMax.b > lines.areaSet) fails.push(`area ${areaMax.a + 1}'s new packs are ${MB(areaMax.b)}, over ${MB(lines.areaSet)} (area set)`);
   const everything = page + boot + Object.values(pk).reduce((n, x) => n + x.real, 0);
-  return { page, boot, packs: pk, zone1, worst, zoneMax, areaMax, everything, fails, warns };
+  return { page, boot, packs: pk, hero, zone1, worst, zoneMax, areaMax, everything, fails, warns };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -210,7 +289,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const s = buildSplit(), r = loadReport(s), raw = s.assets.reduce((n, a) => n + a.bytes, 0);
     console.log(`built ${path.relative(ROOT, s.file)} (${KB(s.bytes)}; ${MB(r.page)} on the wire) + ${path.relative(ROOT, ASSET_DIR)}/ (${s.assets.length} boot files, ${KB(raw)}; ${MB(r.boot)} on the wire; ${s.packs.length} area packs)`);
     console.log(`boot set (B2): zone 1 ${MB(r.zone1.counted)}, worst zone ${r.worst.z} ${MB(r.worst.counted)} counted (with both of Mossy Hollow's shapes ${MB(r.zone1.real)} and ${MB(r.worst.real)}); `
-      + `packs: ${Object.entries(r.packs).map(([id, x]) => `${id} ${MB(x.real)}`).join(', ')}; largest zone set ${MB(r.zoneMax.b)} (zone ${r.zoneMax.z}), area set ${MB(r.areaMax.b)} (area ${r.areaMax.a + 1}), area 1's exceptions left out`);
+      + `packs: ${Object.entries(r.packs).map(([id, x]) => `${id} ${MB(x.real)}`).join(', ')}; ${r.hero.h ? `heaviest hero core ${r.hero.h} ${MB(r.hero.b)}` : 'no hero packs'}; largest zone set ${MB(r.zoneMax.b)} (zone ${r.zoneMax.z}), area set ${MB(r.areaMax.b)} (area ${r.areaMax.a + 1}), area 1's exceptions left out`);
     console.log(`everything: ${MB(r.everything)} on the wire (B1's 6.0 / 8.0 MB first-load lines are a report here); a returning player after a code change: ${MB(r.page)} (wire = Brotli quality 4)`);
     for (const w of r.warns) console.log('warn: ' + w);
     for (const f of r.fails) console.log('over a load line: ' + f);

@@ -1,0 +1,22 @@
+# seed: 1
+# Proof for card route-s-wren-wire (route S ruling #328, docs/design/route-s/ruling.md "Build card spec: route-s-wren-wire").
+# Wren's 20 route S fight moves are converted as drawn and drawn on the stage, with a game-drawn bowstring, her companion bat
+# and her Scenario arrows; Settings > Hero art > Classic art brings the old Wren back. The route plays the early fixture (Wren,
+# zone 8) into a turn fight: her held idle, an Attack (burst: draw, release, follow-through), then a clean parry.
+# tools/check.mjs "wren route S" and "wren route S (browser)" carry the gates: bytes, registration, anchors on opaque pixels,
+# timings and timed releases, the bat, the draw scale at 1280x720 and 740x360, breathing and reduced motion, Classic art, picker.
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+shot wren-idle
+expect "Attack"
+tap-if "Attack"
+burst wren-attack
+wait 3
+parry-clean 10
+shot wren-parry
+expect ".hud.vs .mob"

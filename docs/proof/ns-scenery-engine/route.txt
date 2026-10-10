@@ -1,0 +1,21 @@
+# seed: 1
+# Proof for card ns-scenery-engine (docs/design/new-style/plan.md 8.1; contract in docs/design/new-style/engine.md). Nothing
+# changes in the game a player sees today. No new-style art ships yet (NS_ART comes with the wire cards), so every screen draws
+# classic, and this route shows the early save's zone 8 fight and the Pine Grove as before. The engine is proved in tools/check.mjs
+# sections "new-style screens (ns-scenery-engine)" and "new-style screens (browser)", using the test fixture
+# tools/lib/ns-fixture.mjs. Its flat marker colours are not art. Those sections check five things:
+#   1. Every foe a turn fight shows in zones 1-35 is a piece of its zone's fight, with zone monsters off and on.
+#   2. At 1280x720, 740x360, 360x740, 1366x640 and 1920x1080, a fight with every piece in draws new style. Each foe draws at
+#      0.5 x DPR x the actor zoom with its feet on the ground line, and the scenery's seat line sits on the stage's.
+#   3. A piece that is not in keeps that fight classic for the visit. Classic art turns everything classic.
+#   4. Gathering, the grove and camp follow the same rule, and gathering waits for the hero's gathering art.
+#   5. The split build boots a zone 1 save with zone 1's pieces. A pack still loading leaves its fight classic until the next visit.
+# The fixture shots (fight-1280x720.png, fight-740x360.png, gather-1280x720.png) sit next to this file. They come from
+# LF_PROOF_SHOTS=docs/proof/ns-scenery-engine node tools/check.mjs --only="^new-style screens \(browser".
+new early
+wait 2
+tap-if "Continue"
+tap-if "Got it"
+wait 3
+expect-no "#artWait"
+shot fight
