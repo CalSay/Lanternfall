@@ -234,7 +234,7 @@ His loop: **Brace and parry, build Grit, then stun and smash.** He is the counte
 | T5 | **Hammerfall** | 3 | damage | 1.4 + 0.25 per Grit | 5 | Requires at least 2 Grit. Spends all Grit. ×1.25 and consume Exposed. | the main Grit payoff | overhead |
 | T6 | **Shield Throw** | 4 | damage + debuff | 1.4 | 4 | Attempts Stun and leaves Exposed on a Sundered foe; shield returns during the same action. | Sunder, then this | throw |
 | T7 | **Bulwark** | 4 | passive | — | — | Every successful parry grants +1 extra Grit and its counter deals ×1.25. | the parry engine, always on | none |
-| T8 | **Last Stand** (F) | 5 | finisher buff | counter ×2 | 8, opens hero turn 3; once per fight | For the next 2 foe opportunities he cannot drop below 1 HP, has twice the normal parry window (under the cap), and completed all-parry counters deal ×2. No automatic retaliation. He still chooses each reaction. Then heals 15% max HP if alive; protection cannot refresh. | the comeback | shield-raise |
+| T8 | **Last Stand** (F) | 5 | finisher damage + buff | 1.8; counter ×2 | 8, opens hero turn 3; once per fight | Hits for 180% power. Then, for the next 2 foe opportunities he cannot drop below 1 HP, has twice the normal parry window (under the cap), and completed all-parry counters deal ×2. No automatic retaliation. He still chooses each reaction. Then heals 15% max HP if alive; protection cannot refresh. | the comeback | slash, then stand |
 
 ### 6.3 Pip, the Lanternmage: Burn and Embers
 
