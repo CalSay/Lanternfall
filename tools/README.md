@@ -62,9 +62,11 @@ node tools/serve.mjs
 ```
 
 `node tools/build.mjs --split` also writes the split build (asset-build, `docs/design/hosting.md` 5): `dist/lanternfall-split.html`
-(not committed) plus the art data files under content-hashed names in `dist/assets/` (committed; CI checks it). Walk, eyes,
-playtest and perf take it with `--html dist/lanternfall-split.html`, and `node tools/serve.mjs --split` serves it.
-`node docs/design/hosting/cold-load.mjs` times its loading line on a throttled link.
+(not committed) plus the art data files under content-hashed names in `dist/assets/` (committed; CI checks it): the boot files
+as they are, and the area art (art-loader, B2) as one pack per foe and per battle background, loaded by zone after boot. Walk,
+eyes, playtest and perf take it with `--html dist/lanternfall-split.html`, and `node tools/serve.mjs --split` serves it. The
+build prints the boot set per zone on the wire. `node docs/design/hosting/cold-load.mjs [--mbps 10] [--zone 2]` times its
+loading line and the game's ready time on a throttled link.
 
 The save-code tool validates the JSON before loading it and prints an import code. The site tool wraps
 the built artifact in a local `site/` folder; it does not upload or publish it. The server exposes the

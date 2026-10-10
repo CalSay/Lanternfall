@@ -1,10 +1,18 @@
-<!-- Boot loader for the split build only (tools/build.mjs --split; card asset-build). The inline page never carries it.
-     The art data files follow as plain <script src> tags, so the game boots after every one has run, as the inline page does.
-     Until then this plain text line shows the bytes done: a file counts once its download ends (resource timing) or it runs. -->
+<!-- Boot loader for the split build only (tools/build.mjs --split; cards asset-build and art-loader). The inline page never carries it.
+     The boot files follow as plain <script src> tags, so the game boots after every one has run, as the inline page does.
+     Before them it writes the tags of the area packs the save's zone shows (its foe and its background), so the game opens on
+     that zone with its art in; every other pack loads after boot (src/js/75-art-load.js) and reaches the game through lfArt.
+     Until the game runs this plain text line shows the bytes done: a file counts once its download ends (resource timing) or it runs. -->
 <div id="lfBoot" role="status" aria-live="polite" style="position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;background:var(--bg,#140F1A);color:var(--bone,#EFE6D6);font:16px/1.4 var(--body,sans-serif);text-align:center"><span id="lfBootText">Loading the game</span></div>
 <script id="lfBootJs">
 var lfBoot = (function () {
-  var files = /* @files */, total = 0, got = 0, seen = {}, failed = false, k;
+  var files = /* @files */, packs = /* @packs */, road = /* @road */, total = 0, got = 0, seen = {}, failed = false, k;
+  var art = {}, listen = null;   // pack id -> its data until the game takes it (lfArt), then the game's own hook
+  // the save's zone (the game's own save key, read the same way 30-state does; no save or a bad one: zone 1)
+  var zone = 1;
+  try { var sv = JSON.parse(localStorage.getItem(/* @key */) || 'null'); if (sv && sv.zone >= 1) zone = Math.floor(sv.zone); } catch (e) {}
+  var boot = [];
+  for (k in packs) if (packs[k].z.some(function (r) { return zone >= r[0] && zone <= r[1]; })) { boot.push(k); files[packs[k].f.split('/').pop()] = packs[k].b; }
   for (k in files) total += files[k];
   var mb = function (n) { return (n / 1e6).toFixed(1); };
   var line = function () {
@@ -19,7 +27,13 @@ var lfBoot = (function () {
     new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { count(e.name); }); }).observe({ type: 'resource', buffered: true });
   } catch (e) { /* no resource timing: each file counts when it runs */ }
   line();
+  // the save's zone's packs, parser-inserted so they run before the boot files and the game (same origin, so never blocked)
+  boot.forEach(function (id) { document.write('<script src="' + packs[id].f + '" onload="lfBoot.done(this)" onerror="lfBoot.fail(this)"><\/script>'); });
   return {
+    packs: packs, road: road, boot: boot, zone: zone,   // road: the pack table covers zones 1 to road
+    put: function (kind, key, data) { var id = kind + ':' + key; if (listen) listen(id, data); else art[id] = data; },
+    // the game takes the packs that came before it ran, then every later one as it arrives
+    take: function (fn) { listen = fn; var a = art; art = {}; for (var id in a) fn(id, a[id]); },
     done: function (el) { count(el.src); },
     fail: function () {
       failed = true;
@@ -41,4 +55,6 @@ var lfBoot = (function () {
     }
   };
 })();
+// A pack file is one call: lfArt(kind, key, data) (tools/build.mjs areaPacks).
+var lfArt = function (kind, key, data) { lfBoot.put(kind, key, data); };
 </script>

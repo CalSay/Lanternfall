@@ -8,7 +8,7 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
-import { buildSplit, isAsset, assetName } from './build.mjs';
+import { buildSplit, isAsset, assetName, AREA_ART } from './build.mjs';
 import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
@@ -111,7 +111,7 @@ const WEIGHT = {
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'page size': 2,
-  'split build (asset-build)': 12   // 11 s locally alone (asset-build, 2026-10-10)
+  'split build (asset-build)': 30   // 31 s locally alone (art-loader, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -301,62 +301,158 @@ if (section('check fonts')) try {
   }
 } catch (e) { fail('check fonts crashed: ' + (e.stack || e)); }
 
-// ---- split build (asset-build; docs/design/hosting.md 5, B1): page plus content-hashed art files, all run before the game ----
-// Built in memory (nothing written). The split page must hold the inline page's code with only the generated art data files
-// moved out, as they are, under hashed names; it boots with the loader line gone, the line counts bytes while a file is still
-// loading, and a file that fails to load says so with a Reload button.
+// ---- split build (asset-build, art-loader; docs/design/hosting.md 5, B2): the page, its boot files and the area packs ----
+// Built in memory (nothing written). The boot files are the generated art data files as they are, under hashed names, run before
+// the game. The area art (AREA_ART: foe atlases, battle backgrounds) is one pack per foe and per background; the page keeps the
+// foes' timings. The boot loader writes the save's zone's packs before the game runs; the rest load after boot, one area ahead
+// (75-art-load), and while the zone on screen lacks a pack the game is held under a plain line, never drawn with a stand-in.
+// A pack whose file is gone after a deploy reloads the page once the zone on screen needs it (never twice in a minute).
 if (section('split build (asset-build)')) try {
-  const s = buildSplit({ write: false }), files = Object.fromEntries(s.assets.map(a => [a.name, a.text]));
+  const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
   const inline = fs.existsSync(distFile) ? fs.readFileSync(distFile, 'utf8') : '';
+  const src = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\n*$/, '\n');
   assert(s.html.startsWith('<title>') && !/<!doctype|<(html|head|body)[\s>]/i.test(s.html), 'split: the page keeps the Artifact page shape (starts with <title>, no doctype/html/head/body)');
-  const gen = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js')).sort().filter(f => isAsset(fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8')));
-  assert(gen.length >= 10 && s.assets.map(a => a.f).join() === gen.join(), `split: every generated data file is an asset (${s.assets.length}), in filename order`);
-  assert(s.assets.every(a => a.text === fs.readFileSync(path.join(ROOT, 'src', 'js', a.f), 'utf8').replace(/\n*$/, '\n') && a.name === assetName(a.f, a.text)),
-    'split: each asset is its file as it is, named by its content hash');
+  const gen = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js')).sort().filter(f => isAsset(src(f)));
+  assert(gen.length >= 10 && s.assets.map(a => a.f).join() === gen.filter(f => !AREA_ART[f]).join() && Object.keys(AREA_ART).every(f => gen.includes(f)),
+    `split: every generated data file but the area art is a boot file (${s.assets.length}), in filename order`);
+  assert(s.assets.every(a => a.text === src(a.f) && a.name === assetName(a.f, a.text)), 'split: each boot file is its file as it is, named by its content hash');
   assert([...s.html.matchAll(/<script src="assets\/([^"]+)"/g)].map(m => m[1]).join() === s.assets.map(a => a.name).join() && s.html.lastIndexOf('<script src="assets/') < s.html.lastIndexOf('})();\n</script>'),
-    'split: the page names every asset once, in order, before the game\'s script');
+    'split: the page names every boot file once, in order, before the game\'s script');
+  // the area packs: each entry of FOE_ART and BG_ART is one pack, its data the entry's art exactly; the page keeps the rest
+  const G = loadCore(), data = (f, v) => vm.runInNewContext(`${src(f)}\n;${v}`);
+  const packData = p => { let got = null; vm.runInNewContext(p.text, { lfArt: (kind, key, d) => { got = { id: kind + ':' + key, d }; } }); return got; };
+  for (const [f, A] of Object.entries(AREA_ART)) {
+    const D = data(f, A.v), mine = s.packs.filter(p => p.f === f);
+    assert(mine.map(p => p.id).join() === Object.keys(D).map(k => A.kind + ':' + k).join(), `split: ${A.v} has one pack per entry (${mine.map(p => p.id).join(', ')})`);
+    for (const p of mine) {
+      const got = packData(p), key = p.id.slice(A.kind.length + 1);
+      assert(got && got.id === p.id && JSON.stringify(got.d) === JSON.stringify(A.load(D[key])) && p.name === `${f.replace(/-data-.*$/, '')}-${A.kind}-${key}.${p.name.split('.').slice(-2, -1)[0]}.js`,
+        `split: ${p.id}'s pack holds its art as the source has it, under a hashed name (${p.name})`);
+    }
+    const kept = vm.runInNewContext(`${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?)\\n// ---- src`))[1]}\n;${A.v}`);
+    assert(JSON.stringify(kept) === JSON.stringify(A.keep ? Object.fromEntries(Object.entries(D).map(([k, e]) => [k, A.keep(e)])) : {}),
+      `split: the page keeps ${A.v} ${A.keep ? 'with every field but the atlases (59l\'s timings)' : 'empty until a pack comes'}`);
+  }
+  // only the readers that know a pack can come late read the art fields (gameplay reads the timings, which the page keeps)
+  const readers = (re, ok) => fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js') && !isAsset(src(f)) && !ok.includes(f)
+    && src(f).split('\n').some(l => !/^\s*\/\//.test(l) && re.test(l)));
+  const foeR = readers(/\.atlases\b/, ['21zz-art-b91.js', '64j-foe-art.js', '75-art-load.js']), bgR = readers(/\bBG_ART\b/, ['22-data-regions.js', '62-stage.js', '75-intro-ui.js', '75-art-load.js', '21zz-art-b91.js']);
+  assert(!foeR.length && !bgR.length, `split: foe atlases and BG_ART are read only where a late pack is handled (${[...foeR, ...bgR].join(', ') || 'none else'})`);
+  // the zone table is the shipped code's own answer, and past the road no zone's scenery depends on a background being in
+  const road = G.eval('ROAD_ZONES'), live = G.eval(`Array.from({ length: ${road} }, (_, i) => [ZONE_FOES[i + 1] ? 'foe:' + ZONE_FOES[i + 1].key : null, 'bg:' + zoneTheme(i + 1)])`);
+  const inZ = (p, z) => p.zones.some(([a, b]) => z >= a && z <= b);
+  const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => p.id === id)).sort().join(), s.packs.filter(p => inZ(p, i + 1)).map(p => p.id).sort().join()]).filter(r => r[1] !== r[2]);
+  assert(!badZ.length && G.eval(`Array.from({ length: 210 }, (_, i) => regionIdx(${road} + 1 + i)).every(r => r > 0)`) && G.eval('regionOf(35).z1') === 35,
+    `split: each pack names the zones whose fights show it, from ZONE_FOES and zoneTheme (${badZ.slice(0, 3).map(r => r.join(' ')).join('; ') || 'all ' + road}); past the Hollow zoneTheme never reads BG_ART`);
   const strip = h => h.replace(/<!-- Boot loader[\s\S]*?<\/script>\n/, '').replace(/<script src="assets\/[^"]+"[^>]*><\/script>\n/g, '').replace('\n<script>lfBoot.end();</script>', '');
   let want = inline;
   for (const a of s.assets) want = want.replace(`// ---- src/js/${a.f} ----\n${a.text}\n`, () => '');
-  assert(inline && strip(s.html) === want, 'split: apart from the loader, the page is the inline page with only the asset files taken out');
+  for (const f of Object.keys(AREA_ART)) want = want.replace(`// ---- src/js/${f} ----\n${src(f)}`, () => `// ---- src/js/${f} ----\n${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?\\n)\\n// ---- src`))[1]}`);
+  assert(inline && strip(s.html) === want, 'split: apart from the loader, the page is the inline page with the boot files taken out and the area art kept as above');
   const { pw, exe } = browserTools;
-  if (!pw || !exe) skipBrowser('split: boot, progress and failure lines: Playwright or Chromium not here, skipped');
+  if (!pw || !exe) skipBrowser('split: boot, progress, failure, packs and the loading line: Playwright or Chromium not here, skipped');
   else {
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const end = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(end);
+    const KEY = 'lanternfall.save.v5', early = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
     try {
       const assets = pageAssets(s.file, s.html, files), big = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m));
-      const open = async (hold, width = 1280, height = 720) => {
-        const page = await browser.newPage({ viewport: { width, height } }), errs = [];
+      const pk = id => s.packs.find(p => p.id === id);
+      // hold: { name: 'hold' | 'fail' } per file (a pack or boot file name); page: what the server's page reads on a later request
+      const open = async ({ hold = {}, width = 1280, height = 720, save = null, html = s.html, later = null, init = null } = {}) => {
+        const ctx = await browser.newContext({ viewport: { width, height } }), page = await ctx.newPage(), errs = [];
+        await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+        if (save) await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...save, last: Date.now() })]);
+        if (init) await ctx.addInitScript(init, KEY);
         page.on('pageerror', e => errs.push(String(e)));
         let release; const held = new Promise(r => { release = r; });
-        await routePage(page, 'http://lf.test/', s.html, assets);
-        if (hold) await page.route('**/assets/' + big.name, async r => { await held; return hold === 'fail' ? r.abort() : r.fallback(); });
+        await routePage(page, 'http://lf.test/', html, assets);
+        let pages = 0;
+        page.on('load', () => pages++);
+        if (later) await page.route('http://lf.test/', r => (r.request().isNavigationRequest() ? r.fallback() : r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: later })));
+        for (const [name, how] of Object.entries(hold)) await page.route('**/assets/' + name, async r => { if (how === 'gone') return r.fulfill({ status: 404, body: '' }); await held; return how === 'fail' ? r.abort() : r.fallback(); });
         await page.goto('http://lf.test/', { waitUntil: 'commit' });
-        return { page, errs, release };
+        return { page, errs, release, navs: () => pages };
       };
-      // 1. a clean boot at each view: the line goes, the game runs (its zone name is set) with no page error
+      const go2 = page => page.evaluate(() => window.__t.x('S.activity = "fight", setZone(2), ui(true)'));   // as the zone arrows do
+      const booted = page => page.waitForFunction(() => !document.getElementById('lfBoot') && !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+      const look = page => page.evaluate(() => {
+        const c = document.getElementById('artWait'), st = document.getElementById('stage').getBoundingClientRect(), r = c && !c.hidden ? c.getBoundingClientRect() : null;
+        return { cover: r ? c.firstChild.textContent + (c.lastChild.hidden ? '' : ' [' + c.lastChild.textContent + ']') : null, full: !!r && r.left <= st.left && r.top <= st.top && r.right >= st.right && r.bottom >= st.bottom && getComputedStyle(c).backgroundColor === 'rgb(11, 8, 16)',
+          zone: (document.getElementById('zNum') || {}).textContent, hp: (document.getElementById('mHp') || {}).textContent, sub: (document.getElementById('zSub') || {}).textContent };
+      });
+      // 1. a clean boot at each view: the line goes, the game runs (its zone name is set) with no page error and no cover
       for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
-        const { page, errs } = await open(null, w, h);
-        await page.waitForLoadState('load');
-        await page.waitForFunction(() => !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
-        const r = await page.evaluate(() => ({ line: !!document.getElementById('lfBoot'), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width }));
-        assert(!r.line && !r.tags && r.zone && r.w > 0 && !errs.length, `split: boots at ${w}x${h} with the loading line and its tags gone` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
+        const { page, errs } = await open({ width: w, height: h });
+        await page.waitForLoadState('load'); await booted(page);
+        const r = await page.evaluate(() => ({ line: !!document.getElementById('lfBoot'), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait') }));
+        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && !errs.length, `split: boots at ${w}x${h} with the loading line and its tags gone, no loading cover` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
         await page.close();
       }
-      // 2. while the biggest file is still loading, the line shows the bytes done of the total
-      { const { page, release } = await open('hold');
+      // 2. while the biggest boot file is still loading, the line shows the bytes done of the total: the boot files and zone 1's packs
+      { const { page, release } = await open({ hold: { [big.name]: 'hold' } });
         await page.waitForFunction(() => /^Loading the game: [\d.]+ of [\d.]+ MB$/.test((document.getElementById('lfBootText') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
         const t = await page.evaluate(() => (document.getElementById('lfBootText') || {}).textContent || '');
-        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = s.assets.reduce((n, a) => n + a.bytes, 0) / 1e6;
-        assert(m && +m[2] === +total.toFixed(1) && +m[1] < +m[2], `split: while a file loads the line reads the bytes done ("${t}")`);
-        release(); await page.waitForLoadState('load');
+        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = (s.assets.reduce((n, a) => n + a.bytes, 0) + s.packs.filter(p => inZ(p, 1)).reduce((n, p) => n + p.bytes, 0)) / 1e6;
+        assert(m && +m[2] === +total.toFixed(1) && +m[1] < +m[2], `split: while a file loads the line reads the bytes done of the boot files and zone 1's packs ("${t}", ${total.toFixed(1)} MB)`);
+        release(); await booted(page);
         assert(!(await page.$('#lfBoot')), 'split: the line goes once the held file arrives');
         await page.close(); }
-      // 3. a file that fails to load says so, with a Reload button
-      { const { page, release } = await open('fail'); release();
+      // 3. a file that fails to load says so, with a Reload button (a boot file, and the save's zone's pack)
+      for (const name of [big.name, pk('foe:imp').name]) {
+        const { page, release } = await open({ hold: { [name]: 'fail' } }); release();
         await page.waitForLoadState('load'); await page.waitForTimeout(300);
         const r = await page.evaluate(() => ({ t: (document.getElementById('lfBootText') || {}).textContent, b: !!document.querySelector('#lfBoot button') }));
-        assert(/did not load/.test(r.t || '') && r.b, `split: a failed file shows "${r.t}" and a Reload button`);
+        assert(/did not load/.test(r.t || '') && r.b, `split: a failed ${name === big.name ? 'boot file' : 'zone 1 pack'} shows "${r.t}" and a Reload button`);
+        await page.close(); }
+      // 4. the save's zone's packs come before the game: a zone 2 save boots with Gloomjaw's frames cut and no cover, and only after
+      //    the boot files does any other pack load
+      { const { page, errs } = await open({ save: { ...early, zone: 2, maxZone: 8 }, html: probe });
+        await page.waitForLoadState('load'); await booted(page); await page.waitForTimeout(400);
+        const r = await page.evaluate(() => window.__t.x(`({ boot: lfBoot.boot.join(), ready: [1, 2, 8].map(z => artZoneReady(z)).join(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })(), bg: !!BG_ART.forest && BG_ART.forest.land.src.length > 1000 })`));
+        const c = await look(page);
+        assert(r.boot === 'foe:gloomjaw,bg:forest' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
+          `split: a zone 2 save boots with its packs in (Gloomjaw cut, Mossy Hollow drawn, no cover) and the rest of the area arrives after (${JSON.stringify(r)}, ${JSON.stringify(c)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5. a zone whose pack is still loading: the game holds under an opaque line covering the stage, the zone reads "loading",
+      //    nothing moves; when it arrives the line goes and the fight runs
+      { const { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'hold' }, html: probe });
+        await booted(page); await page.waitForTimeout(500);
+        await go2(page); await page.waitForTimeout(300);
+        const a = await look(page), held = await page.evaluate(() => window.__t.x('({ t: gameHeld(), z: S.zone, k: S.kills, hp: mob && mob.hp })'));
+        await page.waitForTimeout(1500);
+        const b = await look(page), held2 = await page.evaluate(() => window.__t.x('({ t: gameHeld(), z: S.zone, k: S.kills, hp: mob && mob.hp })'));
+        assert(a.cover === 'Loading Mossy Hollow' && a.full && a.zone === 'Zone 2 · loading' && held.t && held.z === 2 && JSON.stringify(held) === JSON.stringify(held2) && a.hp === b.hp,
+          `split: zone 2 with Gloomjaw still loading: "${a.cover}" covers the stage (${a.full}), the zone reads "${a.zone}", the game holds (${JSON.stringify(held)} then ${JSON.stringify(held2)})`);
+        release(); await page.waitForTimeout(1500);
+        const c = await look(page), run = await page.evaluate(() => window.__t.x(`({ t: gameHeld(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })() })`));
+        assert(!c.cover && c.zone === 'Zone 2' && !run.t && !run.pend && !errs.length, `split: when Gloomjaw arrives the cover goes, its frames are cut and the game runs (${JSON.stringify(c)}, ${JSON.stringify(run)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 6. a pack that fails while the server's page still names it: "Waiting for the connection", then it tries again and loads
+      { const { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'fail' }, html: probe });
+        await booted(page); release(); await page.waitForTimeout(300);
+        await go2(page); await page.waitForTimeout(600);
+        const a = await look(page);
+        await page.unroute('**/assets/' + pk('foe:gloomjaw').name); await page.waitForTimeout(4500);
+        const b = await look(page);
+        assert(/^Waiting for the connection to load Mossy Hollow$/.test(a.cover || '') && !b.cover && b.zone === 'Zone 2' && !errs.length, `split: a failed pack waits ("${a.cover}", ${JSON.stringify(a)}) and loads on a later try (${JSON.stringify(b)})`);
+        await page.close(); }
+      // 7. a pack whose file is gone and that the server's page no longer names (a deploy): once the zone on screen needs it, the
+      //    game saves and reloads. If it happens again within a minute it does not loop: the line asks the player to reload.
+      //    (After the reload the check puts the save back in zone 1, so the new page boots and the second time can be seen.)
+      { const after = probe.split(pk('foe:gloomjaw').name).join('21za-foe-gloomjaw.0000000000.js');
+        const init = k => { try { if (sessionStorage.getItem('lanternfall.artReloadAt') && !sessionStorage.getItem('t.z')) {
+          const v = JSON.parse(localStorage.getItem(k)); sessionStorage.setItem('t.z', String(v.zone)); v.zone = 1; localStorage.setItem(k, JSON.stringify(v)); } } catch (e) {} };
+        const { page, navs } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'gone' }, html: probe, later: after, init });
+        await booted(page); await page.waitForTimeout(500);
+        await go2(page);
+        await page.waitForFunction(() => sessionStorage.getItem('t.z'), null, { timeout: 8000 }).catch(() => {});   // the reload: a new page
+        await booted(page); await page.waitForTimeout(800);
+        const saved = await page.evaluate(() => sessionStorage.getItem('t.z'));
+        await go2(page).catch(() => {}); await page.waitForTimeout(1500);
+        const b = await look(page);
+        assert(navs() === 2 && saved === '2' && b.cover === 'The game was updated. Reload the page to go on. [Reload]',
+          `split: a pack gone after a deploy saves (zone ${saved}) and reloads the page (${navs()} loads), and a second time within a minute asks: "${b.cover}"`);
         await page.close(); }
     } finally { await browser.close(); }
   }

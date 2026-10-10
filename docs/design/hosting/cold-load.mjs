@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // Cold load of the split build on a throttled link (card asset-build's check; docs/design/hosting.md 9 card 3). Read only.
-//   node tools/build.mjs --split && node docs/design/hosting/cold-load.mjs [--mbps 1.6] [--rtt 150]
+//   node tools/build.mjs --split && node docs/design/hosting/cold-load.mjs [--mbps 1.6] [--rtt 150] [--zone 2]
+// --zone N opens a save in zone N (tests/fixtures/save-early.json moved there), so its boot set holds that zone's area packs
+// (art-loader, B2); without it the page opens as a new game, in zone 1.
 // Serves dist/lanternfall-split.html and dist/assets/ from a local server that answers in Brotli quality 4 (the cautious stand-in
 // for Netlify's, see measure.mjs), opens it in a fresh browser on Lighthouse's "slow 4G" (1.6 Mbps down, 150 ms round trip) and
 // prints when the loading line first shows and is first painted, beside the page's own wire time (its Brotli bytes at that speed).
@@ -15,7 +17,7 @@ import { pageAssets, assetFor, ASSET_TYPE } from '../../../tools/lib/page-assets
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? +process.argv[i + 1] : d; };
-const MBPS = arg('mbps', 1.6), RTT = arg('rtt', 150);
+const MBPS = arg('mbps', 1.6), RTT = arg('rtt', 150), ZONE = arg('zone', 0);
 const file = path.join(ROOT, 'dist', 'lanternfall-split.html');
 if (!fs.existsSync(file)) { console.error('dist/lanternfall-split.html is missing: run node tools/build.mjs --split'); process.exit(2); }
 const html = Buffer.from('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + fs.readFileSync(file, 'utf8'));
@@ -34,7 +36,12 @@ const base = `http://127.0.0.1:${srv.address().port}/`;
 const { pw, exe, reason } = findBrowser();
 if (!pw || !exe) { console.error(reason); process.exit(2); }
 const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
-const page = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+if (ZONE) {
+  const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
+  await context.addInitScript(v => { try { localStorage.setItem('lanternfall.save.v5', v); } catch (e) {} }, JSON.stringify({ ...save, zone: ZONE, maxZone: Math.max(ZONE, save.maxZone), last: Date.now() }));
+}
+const page = await context.newPage();
 await page.route('**/*', r => (r.request().url().startsWith(base) ? r.continue() : r.abort()));
 const cdp = await page.context().newCDPSession(page);
 await cdp.send('Network.enable');
@@ -59,9 +66,11 @@ const ready = (Date.now() - t0) / 1000;
 const paint = await page.evaluate(() => (performance.getEntriesByName('first-contentful-paint')[0] || {}).startTime || null);
 const pageWire = body.get('/').length, assetWire = [...body.keys()].filter(k => k !== '/').reduce((n, k) => n + body.get(k).length, 0);
 const wireTime = pageWire * 8 / (MBPS * 1e6);
-console.log(`[cold-load] ${MBPS} Mbps, ${RTT} ms round trip. Page ${(pageWire / 1e6).toFixed(2)} MB on the wire (${wireTime.toFixed(1)} s at this speed), assets ${(assetWire / 1e6).toFixed(2)} MB`);
+const zoneNote = ZONE ? `, a save in zone ${ZONE}` : ', a new game';
+console.log(`[cold-load] ${MBPS} Mbps, ${RTT} ms round trip${zoneNote}. Page ${(pageWire / 1e6).toFixed(2)} MB on the wire (${wireTime.toFixed(1)} s at this speed), assets ${(assetWire / 1e6).toFixed(2)} MB`);
 console.log(`[cold-load] loading line in the page at ${shown == null ? 'never' : shown.toFixed(1) + ' s'}; first paint at ${paint == null ? 'none' : (paint / 1000).toFixed(1) + ' s'}; game ready at ${ready.toFixed(1)} s`);
 console.log(`[cold-load] lines seen: ${lines.join(' | ')}`);
 const limit = wireTime + 2, at = Math.max(shown ?? Infinity, paint == null ? Infinity : paint / 1000);
 console.log(`[cold-load] ${at <= limit ? 'PASS' : 'MISS'}: the line shows at ${at.toFixed(1)} s, limit ${limit.toFixed(1)} s (page wire time + 2 s)`);
+if (MBPS === 10) console.log(`[cold-load] ${ready <= 6 ? 'PASS' : 'MISS'}: ready for input at ${ready.toFixed(1)} s, limit 6.0 s at 10 Mbps (art-loader)`);
 await browser.close(); srv.close();
