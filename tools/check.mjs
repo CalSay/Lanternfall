@@ -8,6 +8,8 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
+import { buildSplit, isAsset, assetName } from './build.mjs';
+import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
 // Every game this run loads has no Omen (almanac.force('none')), so a new real-world day never
@@ -107,7 +109,9 @@ const WEIGHT = {
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
-  'page size': 2
+  'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
+  'page size': 2,
+  'split build (asset-build)': 12   // 11 s locally alone (asset-build, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -296,6 +300,67 @@ if (section('check fonts')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('check fonts crashed: ' + (e.stack || e)); }
+
+// ---- split build (asset-build; docs/design/hosting.md 5, B1): page plus content-hashed art files, all run before the game ----
+// Built in memory (nothing written). The split page must hold the inline page's code with only the generated art data files
+// moved out, as they are, under hashed names; it boots with the loader line gone, the line counts bytes while a file is still
+// loading, and a file that fails to load says so with a Reload button.
+if (section('split build (asset-build)')) try {
+  const s = buildSplit({ write: false }), files = Object.fromEntries(s.assets.map(a => [a.name, a.text]));
+  const inline = fs.existsSync(distFile) ? fs.readFileSync(distFile, 'utf8') : '';
+  assert(s.html.startsWith('<title>') && !/<!doctype|<(html|head|body)[\s>]/i.test(s.html), 'split: the page keeps the Artifact page shape (starts with <title>, no doctype/html/head/body)');
+  const gen = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js')).sort().filter(f => isAsset(fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8')));
+  assert(gen.length >= 10 && s.assets.map(a => a.f).join() === gen.join(), `split: every generated data file is an asset (${s.assets.length}), in filename order`);
+  assert(s.assets.every(a => a.text === fs.readFileSync(path.join(ROOT, 'src', 'js', a.f), 'utf8').replace(/\n*$/, '\n') && a.name === assetName(a.f, a.text)),
+    'split: each asset is its file as it is, named by its content hash');
+  assert([...s.html.matchAll(/<script src="assets\/([^"]+)"/g)].map(m => m[1]).join() === s.assets.map(a => a.name).join() && s.html.lastIndexOf('<script src="assets/') < s.html.lastIndexOf('})();\n</script>'),
+    'split: the page names every asset once, in order, before the game\'s script');
+  const strip = h => h.replace(/<!-- Boot loader[\s\S]*?<\/script>\n/, '').replace(/<script src="assets\/[^"]+"[^>]*><\/script>\n/g, '').replace('\n<script>lfBoot.end();</script>', '');
+  let want = inline;
+  for (const a of s.assets) want = want.replace(`// ---- src/js/${a.f} ----\n${a.text}\n`, () => '');
+  assert(inline && strip(s.html) === want, 'split: apart from the loader, the page is the inline page with only the asset files taken out');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe) skipBrowser('split: boot, progress and failure lines: Playwright or Chromium not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const assets = pageAssets(s.file, s.html, files), big = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m));
+      const open = async (hold, width = 1280, height = 720) => {
+        const page = await browser.newPage({ viewport: { width, height } }), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        let release; const held = new Promise(r => { release = r; });
+        await routePage(page, 'http://lf.test/', s.html, assets);
+        if (hold) await page.route('**/assets/' + big.name, async r => { await held; return hold === 'fail' ? r.abort() : r.fallback(); });
+        await page.goto('http://lf.test/', { waitUntil: 'commit' });
+        return { page, errs, release };
+      };
+      // 1. a clean boot at each view: the line goes, the game runs (its zone name is set) with no page error
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const { page, errs } = await open(null, w, h);
+        await page.waitForLoadState('load');
+        await page.waitForFunction(() => !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+        const r = await page.evaluate(() => ({ line: !!document.getElementById('lfBoot'), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width }));
+        assert(!r.line && !r.tags && r.zone && r.w > 0 && !errs.length, `split: boots at ${w}x${h} with the loading line and its tags gone` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
+        await page.close();
+      }
+      // 2. while the biggest file is still loading, the line shows the bytes done of the total
+      { const { page, release } = await open('hold');
+        await page.waitForFunction(() => /^Loading the game: [\d.]+ of [\d.]+ MB$/.test((document.getElementById('lfBootText') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
+        const t = await page.evaluate(() => (document.getElementById('lfBootText') || {}).textContent || '');
+        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = s.assets.reduce((n, a) => n + a.bytes, 0) / 1e6;
+        assert(m && +m[2] === +total.toFixed(1) && +m[1] < +m[2], `split: while a file loads the line reads the bytes done ("${t}")`);
+        release(); await page.waitForLoadState('load');
+        assert(!(await page.$('#lfBoot')), 'split: the line goes once the held file arrives');
+        await page.close(); }
+      // 3. a file that fails to load says so, with a Reload button
+      { const { page, release } = await open('fail'); release();
+        await page.waitForLoadState('load'); await page.waitForTimeout(300);
+        const r = await page.evaluate(() => ({ t: (document.getElementById('lfBootText') || {}).textContent, b: !!document.querySelector('#lfBoot button') }));
+        assert(/did not load/.test(r.t || '') && r.b, `split: a failed file shows "${r.t}" and a Reload button`);
+        await page.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('split build crashed: ' + (e.stack || e)); }
 
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
@@ -17477,6 +17542,113 @@ if (section('basic-attack-swings')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('basic-attack-swings crashed: ' + (e.stack || e)); }
+
+// ==== ability-effects-live: every ability's effect in a turn fight, one colour per status (62b-fx.js) ====
+// The game draws the motion and the light (CLAUDE.md "Art freeze", Cal 2026-10-10). Every non-passive ability of every hero has a
+// recipe, every status the turn fight shows has a colour and a name (and Codex's icon where the pack has one), and each foe's
+// aim point is on its drawn body. In a real turn fight at 1280x720, 740x360 and 360x740 (reduced motion) each cast lands: an
+// impact, a Barbed Arrow's Bleed pops its icon at a native size, and reduced motion draws no particles and no shake.
+if (section('ability-effects-live')) try {
+  const at = 'ability-effects-live', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, o = {}) => {
+      const phone = w < 1200;
+      const ctx = await browser.newContext({ ...o, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+      await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+      await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);   // the away card
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    try {
+      // the tables and the aim, in the page (the frames need a canvas)
+      {
+        const { ctx, errs, X } = await open(1280, 720, { turns: true });
+        const t = JSON.parse(await X(`JSON.stringify((() => {
+          const miss = [], cols = [], aims = [];
+          for (const k in HERO_ABILITIES) for (const id of ['attack'].concat(HERO_ABILITIES[k])) { const a = ABILITIES[id];
+            if (a && a.kind === 'passive') { if (FX_RECIPES[id]) miss.push(id + ' (a passive with a recipe)'); continue; }
+            const r = FX_RECIPES[id === 'attack' ? k + ':attack' : id]; if (!r) { miss.push(k + ':' + id); continue; }
+            for (const c of r.col) if (!FX_COL[c]) cols.push(id + ' ' + c); }
+          // every status the turn fight's chips and the hero's side can show
+          const st = ['stun', 'frozen', 'burn', 'bleed', 'chill', 'mark', 'exposed', 'sunder', 'pinned', 'weaken', 'blind', 'curse', 'guard', 'ward', 'keen'];
+          const noCol = st.filter(id => !FX_COL[id] || !FX_NAME[id]), noIcon = st.filter(id => !STATUS_ICONS[id]);
+          const keys = Object.keys(ENEMY_RIGS).filter(k => !k.startsWith('node') && k !== 'wyrm').flatMap(k => [[k, false], [k, true]]).concat(Object.keys(FOE_ART).map(k => [k, false]));
+          for (const [k, el] of keys) { const fr = enemyFrames(k, { elder: el }); if (!fr || !fr.idle0) { aims.push(k + ': no frame'); continue; }
+            const i = stageFx.aimInfo({ fr, x: 100, gy: 200, dx: 0, hover: !!(ENEMY_RIGS[k] && ENEMY_RIGS[k].hover), m: { key: k } }), b = i.box, h = b[3] - b[1];
+            if (!(i.x > b[0] && i.x < b[2] && i.y > b[1] + 0.15 * h && i.y < b[1] + 0.75 * h)) aims.push(k + (el ? ' elder' : '') + ' ' + i.cls + ' at ' + i.x + ',' + i.y + ' box ' + b.join(',')); }
+          return { miss, cols, noCol, noIcon, aims, n: keys.length };
+        })())`));
+        assert(!t.miss.length, `${at}: every non-passive ability of every hero has an effect, and no passive has one (${t.miss.join(', ') || 'all'})`);
+        assert(!t.cols.length && !t.noCol.length, `${at}: every recipe's colours and every status's colour and name are in the tables (${t.cols.concat(t.noCol).join(', ') || 'all'})`);
+        assert(!t.noIcon.length, `${at}: every status that pops has Codex's approved icon (${t.noIcon.join(', ') || 'all 15'})`);
+        assert(!t.aims.length && t.n >= 14, `${at}: each of ${t.n} foe frames is aimed at its chest, on its drawn body (${t.aims.join('; ') || 'all'})`);
+        assert(!errs.length, `${at} tables: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      for (const [w, h, red, all] of [[1280, 720, false, true], [740, 360, false, false], [360, 740, true, false]]) {
+        const v = `${at} ${w}x${h}${red ? ' (reduced motion)' : ''}`;
+        const { ctx, errs, X, page } = await open(w, h, { turns: true, ...(red ? { reducedMotion: 'reduce' } : {}) });   // turns: the game's turn fights (check.mjs newContext)
+        // the turn engine waits while __tp is set (59j turnPaused): the casts below are the only actions
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; true');
+        const bad = [], quiet = [];
+        for (const k of ['wren', 'tobin', 'pip']) {
+          await X(`globalThis.__tp = 0; soloPick("${k}", { now: true }); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true`);
+          // the hero's turn in a live fight with the foe on the stage (a foe killed while the engine waits is replaced first)
+          const ready = async () => {
+            let ph = '';
+            await X('globalThis.__tp = 0; true');
+            for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+              ph = await X(`(() => { if (!TURN_LIVE || TURN_LIVE.ended) { S.activity = "fight"; spawn(); return 'off'; } return TURN_LIVE.foe !== mob ? 'other foe' : TURN_LIVE.phase; })()`);
+              if (ph === 'hero') break;
+              await page.waitForTimeout(60);
+            }
+            return ph;
+          };
+          const ph = await ready();
+          assert(ph === 'hero', `${v} ${k}: the hero's turn comes (${ph})`);
+          const ids = all ? JSON.parse(await X(`JSON.stringify(['attack'].concat(HERO_ABILITIES["${k}"].filter(i => ABILITIES[i].kind !== 'passive')))`))
+            : { wren: ['attack', 'barbed', 'moonvolley'], tobin: ['bash', 'brace'], pip: ['fire', 'hex'] }[k];
+          for (const id of ids) {
+            // each ability made usable (cooldowns, resources, a Burn, a parry, the third turn), cast through the turn engine
+            if (await X('!TURN_LIVE || TURN_LIVE.ended || TURN_LIVE.foe !== mob')) { const p2 = await ready(); if (p2 !== 'hero') { bad.push(`${k} ${id}: no hero turn (${p2})`); continue; } }
+            const r = JSON.parse(await X(`(() => { const m = TURN_LIVE; if (!m || m.ended) return '{"why":"no fight"}'; globalThis.__tp = 1;
+              for (const c in m.cds) m.cds[c] = 0; m.heroOps = 5; m.h.aim = 3; m.h.grit = 6; m.h.embers = 5; m.h.ripo = 1; m.h.lastUsed = 0; m.h.blind = 0;
+              if (!m.e.burn) { m.e.burn = 2; m.e.burnDmg = 1; } if (m.foe) m.foe.hp = m.foe.max = Math.max(m.foe.max, 1e7);   // no cast ends the fight
+              if ("${id}" !== "attack" && !m.p.eq.includes("${id}")) m.p.eq = ["${id}"].concat(m.p.eq.slice(0, 2));
+              const why = "${id}" === "attack" ? "" : turnUsable(m, "${id}"); if (why) return JSON.stringify({ why });
+              const s0 = stageFx.stats(); turnHeroAct(m, TURN_LIVE_IO, "${id}", 0); return JSON.stringify({ c0: s0.casts, i0: s0.impacts, p0: s0.popped }); })()`));
+            if (r.why) { bad.push(`${k} ${id}: ${r.why}`); continue; }
+            // the hit lands on the stage's clock (a slow page falls behind): wait for it, up to 6 s, then a beat for the status
+            let s;
+            for (const t0 = Date.now(); ; ) {
+              s = JSON.parse(await X('JSON.stringify(stageFx.stats())'));
+              if ((s.impacts > r.i0 && (id !== 'barbed' || (s.popped > r.p0 && s.popN))) || Date.now() - t0 > 6000) break;
+              await page.waitForTimeout(100);
+            }
+            if (id === 'barbed') { await page.waitForTimeout(300); s = JSON.parse(await X('JSON.stringify(stageFx.stats())')); }
+            if (s.casts !== r.c0 + 1 || s.impacts <= r.i0) bad.push(`${k} ${id}: cast ${s.casts - r.c0}, impacts ${s.impacts - r.i0}, last ${s.last}`);
+            if (id === 'barbed' && !(s.popped > r.p0 && s.status.includes('bleed') && [16, 24, 36, 48].includes(s.popN))) bad.push(`barbed: no Bleed icon drawn at a native size (${JSON.stringify(s.status)}, ${s.popN} px, the stage ${s.view})`);
+            if (red && (s.parts || s.rings || s.live || s.shakes)) quiet.push(`${k} ${id}: ${s.parts} particles, ${s.rings} rings, ${s.live} shots, ${s.shakes} shakes`);
+            await X(`(() => { const m = TURN_LIVE; if (m && m.foe) m.foe.hp = m.foe.max; return true; })()`);
+          }
+          await X('globalThis.__tp = 0; true');
+        }
+        assert(!bad.length, `${v}: each cast lands its effect (${bad.join('; ') || 'all'})`);
+        if (red) assert(!quiet.length, `${v}: reduced motion draws no particles, rings, trails or shake, only still light and the icons (${quiet.join('; ') || 'none'})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('ability-effects-live crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

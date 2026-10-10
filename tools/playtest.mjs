@@ -45,6 +45,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
+import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { view, contextOptions, VIEW_HELP } from './lib/views.mjs';
 
 const KEY = 'lanternfall.save.v5';
@@ -113,8 +114,9 @@ function loadSession() {
 const bt = findBrowser();
 if (!bt.pw || !bt.exe) die(bt.reason || 'no browser found');
 
+const pageFile = () => (htmlFile ? path.resolve(htmlFile) : path.join(ROOT, 'dist', 'lanternfall.html'));
 function pageHtml() {
-  const file = htmlFile ? path.resolve(htmlFile) : path.join(ROOT, 'dist', 'lanternfall.html');
+  const file = pageFile();
   if (!fs.existsSync(file)) die(file + ' is missing: run node tools/build.mjs');
   // The artifact host wraps the page in a document skeleton with a device-width viewport; do the same.
   let h = fs.readFileSync(file, 'utf8');
@@ -153,7 +155,7 @@ async function openPage(browser, session, afterAway = false, tab = null) {
   await page.addInitScript(INIT, [KEY, session.save, seed, !!tab]);
   // The page is served from a fake origin (so localStorage works); every other request is refused, so nothing leaves the machine.
   const html = pageHtml();
-  await page.route('**/*', r => (r.request().url() === ORIGIN ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : r.abort()));
+  await routePage(page, ORIGIN, html, pageAssets(pageFile()));   // the split build's asset files too (tools/lib/page-assets.mjs)
   await page.goto(ORIGIN, { waitUntil: 'commit' });
   // Boot and first frames. A save whose hero is not chosen yet opens the picker on a timer: wait for it, as a player would.
   await run(page, 1.5);
