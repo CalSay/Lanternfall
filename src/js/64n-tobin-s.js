@@ -139,10 +139,14 @@ var tobinSOn, tobinSPlan, tobinSStats;
       if (typeof createImageBitmap === 'function') createImageBitmap(new Blob([bytes], { type: 'image/webp' })).then(done, viaImg);
       else viaImg();
     }
-    // Tobin in play: the shield and the rubble, then every move that is here, in table order (the idle first)
+    // a move and the effect atlases that ride in it (Shield Throw's shield, Hammerfall's rubble): the split build brings them in one pack
+    const fxOf = mv => Object.keys(FXOF).filter(n => FXOF[n] === mv);
+    const wantMove = mv => { want(mv); for (const n of fxOf(mv)) want(n); };
+    const moveSettled = mv => settled(mv) && fxOf(mv).every(n => settled(n) || typeof atlasOf(n) !== 'string');
+    // Tobin in play: every move that is here, in table order (the idle first), with its effects
     function start() {
       if (started) return; started = true;
-      for (const mv of ORDER) want(mv); want('shield'); want('rubble');
+      for (const mv of ORDER) wantMove(mv);
     }
     const classic = () => typeof portraitsClassic === 'function' && portraitsClassic();
     const isTobin = id => id === 'tobin';
@@ -153,15 +157,17 @@ var tobinSOn, tobinSPlan, tobinSStats;
     let waitOn = false;
     const hookWait = () => {
       if (waitOn || typeof artHeroWait !== 'function') return; waitOn = true;
-      artHeroWait((h, m) => { if (!isTobin(h) || classic() || !D.moves[m] || settled(m)) return true; want(m); return false; });
+      artHeroWait((h, m) => { if (!isTobin(h) || classic() || !D.moves[m] || moveSettled(m)) return true; wantMove(m); return false; });
     };
     const need = mv => { hookWait(); return typeof artHeroNeed !== 'function' || artHeroNeed('tobin', mv); };
-    const kick = () => { try { hookWait(); if (!classic() && tobinNow()) start(); } catch (e) {} };
+    // every blow plays dash and dashback, so the split build fetches them with his first moves (75-art-load's queue asks for
+    // Attack, Hit, Parry and Dodge by name)
+    const kick = () => { try { hookWait(); if (!classic() && tobinNow()) { start(); if (typeof artHeroWant === 'function') { artHeroWant('tobin', 'dash'); artHeroWant('tobin', 'dashback'); } } } catch (e) {} };
     kick();
     if (typeof idleTask === 'function') idleTask(kick);
     if (typeof on === 'function') {
       on('soloHero', kick); on('classicArt', p => { if (p && !p.on) kick(); });
-      on('artPack', p => { if (p && p.kind === 'hero' && isTobin(p.hero)) for (const m of p.moves || []) if (started || (m === CAMP[0] && PENDING.size)) want(m); });
+      on('artPack', p => { if (p && p.kind === 'hero' && isTobin(p.hero)) for (const m of p.moves || []) if (started || (m === CAMP[0] && PENDING.size)) wantMove(m); });
     }
 
     // ---------------- frames: art-px canvases with the breathing applied (a small LRU) ----------------
@@ -224,7 +230,7 @@ var tobinSOn, tobinSPlan, tobinSStats;
     // ---------------- the stage's state machine (64h heroArtStage's, for route S) ----------------
     const now = () => (typeof T === 'number' ? T : 0);
     const ST = { s: 'idle', t0: 0, mv: 'idle', hitT: -1, lastSt: 0, lastFl: 0, ab: '', abT: -9, parry: -9, sawParry: -9, dodge: -9, sawDodge: -9,
-      ring: null, timed: false, heldT: -1, gap: 0, fx: null, catchT: -9 };
+      ring: null, timed: false, heldT: -1, gap: 0, fx: null, catchT: -9, catchOf: null };
     const go = (s, mv) => { ST.s = s; ST.mv = mv || s; ST.t0 = now(); ST.hitT = -1; };
     if (typeof on === 'function') {
       on('ability', p => { if (p && p.cls === 'solo' && ABIL[p.id]) { ST.ab = p.id; ST.abT = now(); } });
@@ -249,7 +255,7 @@ var tobinSOn, tobinSPlan, tobinSStats;
       const r = ST.ring, L = typeof TURN_LIVE !== 'undefined' && TURN_LIVE; if (!r || !L || L.ended || !r.rings.length) return null;
       if (L.phase !== 'timing' && (!r.done || L.now > r.rings[0].close + 1)) return null;
       const g = r.rings[0], ds = g.open, go_ = g.press != null ? Math.min(g.close, g.press) : g.close, t = L.now;
-      if (r.mv === 'shieldthrow') { const f = throwPlan((t - ds) / Math.max(0.05, go_ - ds)); if (f.p === D.moves.shieldthrow.catch && ST.catchT < ds) ST.catchT = now(); return { mv: 'shieldthrow', p: f.p, u: 0, fly: f.fly }; }
+      if (r.mv === 'shieldthrow') { const f = throwPlan((t - ds) / Math.max(0.05, go_ - ds)); if (f.p === D.moves.shieldthrow.catch && ST.catchOf !== r) { ST.catchOf = r; ST.catchT = now(); } return { mv: 'shieldthrow', p: f.p, u: 0, fly: f.fly }; }
       if (!D.moves[r.mv].dash) return { mv: r.mv, p: Math.min(D.moves[r.mv].hit - 1, Math.floor(Math.max(0, t - ds) / Math.max(0.05, go_ - ds) * D.moves[r.mv].hit)), u: 0 };
       return ringPlan(r.mv, ds, go_, t);
     }
@@ -263,7 +269,6 @@ var tobinSOn, tobinSPlan, tobinSStats;
         const ab = t - ST.abT < 0.35 ? ST.ab : '', mv = ab && D.moves[ab] ? ab : 'attack';
         const wasTimed = !!(ab && ST.ring && ST.ring.mv === ab && ST.ring.done);
         go('swing', mv); ST.timed = wasTimed; ST.ring = null; ST.gap = gapNow();
-        if (mv === 'shieldthrow' && !wasTimed) ST.catchT = -9;
       } else if (ST.parry > ST.sawParry) { ST.sawParry = ST.parry; if (ST.s !== 'swing') go('parry'); }
       else if (ST.dodge > ST.sawDodge) { ST.sawDodge = ST.dodge; if (ST.s !== 'swing') go('dodge'); }
       else if (a.flash > 0.03 && a.flash > ST.lastFl + 0.01 && ST.s === 'idle') go('hit');
@@ -284,7 +289,7 @@ var tobinSOn, tobinSPlan, tobinSStats;
         if (ms < MS[mv]) return tobinSPlan(mv, ms);
         go('idle');
       }
-      const rf = ringFrame(); if (rf) { if (rf.u) ST.gap = gapNow(); return rf; }
+      const rf = ringFrame(); if (rf) { if (rf.u || rf.mv === 'shieldthrow') ST.gap = gapNow(); return rf; }   // the dash's or the shield's reach
       return { mv: IDLE[0], p: 0, u: 0, br: reducedNow() || !(t >= 0) ? 0 : BR[Math.floor(t * 1000 / 160) % 8] };
     }
     // Shield Throw on the swing: after a ring it holds the catch; with none, the release, the flight out by the hit and back
@@ -294,13 +299,13 @@ var tobinSOn, tobinSPlan, tobinSStats;
       if (ms < H) return { mv: 'shieldthrow', p: M.hit, u: 0, fly: Math.min(1, ms / H) };
       const back = (ms - H) / 300;
       if (back < 1) return { mv: 'shieldthrow', p: back < 0.5 ? M.hit + 1 : Math.min(M.catch - 1, M.hit + 2), u: 0, fly: 1 + back };
-      if (ST.catchT < ST.t0) ST.catchT = now();
+      if (ST.catchOf !== ST.t0) { ST.catchOf = ST.t0; ST.catchT = now(); }   // once per throw
       return { mv: 'shieldthrow', p: M.catch, u: 0 };
     }
     // how far he dashes (actor px): to the front foe's box, his idle front edge 4 px into it (62-stage attack's reach)
     let idleRight = 0;
     function gapNow() {
-      const g0 = typeof stageMeleeGap === 'function' ? stageMeleeGap() : null; if (g0 == null) return ST.gap || 0;
+      const g0 = typeof stageMeleeGap === 'function' ? stageMeleeGap() : null; if (g0 == null) return 0;
       if (!idleRight) { const [, , w, , ax] = D.moves.idle.f[0]; idleRight = w - ax; }
       return Math.max(0, g0 + 4 - Math.round(idleRight * SC));
     }
@@ -310,7 +315,9 @@ var tobinSOn, tobinSPlan, tobinSStats;
     const shieldAt = p => { const s = D.moves.shieldthrow.sh && D.moves.shieldthrow.sh[p]; return s ? [s[0] * SC, s[1] * SC] : [30 * SC, -110 * SC]; };
     function drawShield(g, x, y, fly, t) {
       const M = D.moves.shieldthrow, R = shieldAt(M.hit), C = shieldAt(M.catch);
-      const tx = x + ST.gap + Math.round(24 * SC), ty = y + R[1];
+      // the turn: into the front foe's box (the dash's reach puts his idle front edge at it), 30 art px deep
+      if (!idleRight) { const [, , w, , ax] = D.moves.idle.f[0]; idleRight = w - ax; }
+      const tx = x + ST.gap + Math.round((idleRight + 30) * SC), ty = y + R[1];
       let px, py;
       if (fly <= 1) { const u = Math.max(0, fly); px = x + R[0] + (tx - x - R[0]) * u; py = y + R[1] + (ty - y - R[1]) * u - Math.sin(Math.PI * u) * 10 * SC; }
       else { const u = Math.min(1, fly - 1); px = tx + (x + C[0] - tx) * u; py = ty + (y + C[1] - ty) * u - Math.sin(Math.PI * u) * 14 * SC; }
@@ -365,7 +372,9 @@ var tobinSOn, tobinSPlan, tobinSStats;
         let mv = mv0, slot = slot0;
         if (!IMG[mv]) { want(mv); mv = IDLE[0]; slot = IDLE[1]; }
         // his home: the stage's spot without its own dash (he travels his own way); a narrow stage steps him in so his cape stays on it
-        const home0 = x - (a.dd || 0), home = Math.max(home0, leftExt0 * SC + 2); LAST.dx = home - home0;
+        // (off a road fight, the world raid, there is no front foe to measure: the stage's own dash carries him and the chain plays in place)
+        const own = typeof stageMeleeGap === 'function' && stageMeleeGap() != null;
+        const home0 = own ? x - (a.dd || 0) : x, home = Math.max(home0, leftExt0 * SC + 2); LAST.dx = home - home0;
         const red = reducedNow(), u = red ? (pl.u > 0 ? 1 : 0) : pl.u, X = home + Math.round(ST.gap * u), y = a.hy + a.dy;
         if (ST.fx) rubble(g, 'back', home + Math.round(ST.gap), y);
         if (lastU !== u && pl.mv === 'dash') smear(g, mv, slot, X, y, X - lastX, alpha);
@@ -387,7 +396,7 @@ var tobinSOn, tobinSPlan, tobinSStats;
       const MAP = { fightIdle: 'idle', campIdle: 'camp', attack: 'attack', ability: 'attack', hurt: 'hit', death: 'defeat', block: 'parry' };
       heroArtDraw = function (g, id, state, t, x, y, opts) {
         const m = MAP[state] || 'idle', o = opts || {}, mv = m === 'camp' ? CAMP[0] : m;
-        if (!(isTobin(id) && !classic() && IMG[mv])) return base(g, id, state, t, x, y, opts);
+        if (!(MAP[state] && isTobin(id) && !classic() && !hunting() && IMG[mv])) return base(g, id, state, t, x, y, opts);   // hunting's spear poses stay 64h's
         const keep = SC; SC = SC0 * (o.k || 1);
         try {
           const n = playN(mv), p = m === 'camp' || m === 'idle' ? 0 : o.frame != null ? Math.max(0, Math.min(n - 1, o.frame)) : tobinSPlan(mv, Math.max(0, t) * 1000).p;
@@ -432,7 +441,8 @@ var tobinSOn, tobinSPlan, tobinSStats;
       const cvs = [...PENDING]; PENDING.clear();
       for (const cv of cvs) try { if (cv.isConnected) heroArtPreview(cv, 'tobin'); } catch (e) {}
     });
-    tobinSStats = () => ({ ready: !!IMG.idle, decoded, classic: classic(), drawn: Object.assign({}, LAST), state: ST.s, move: ST.mv, gap: ST.gap });
+    tobinSStats = () => ({ ready: !!IMG.idle, decoded, classic: classic(), drawn: Object.assign({}, LAST), state: ST.s, move: ST.mv, gap: ST.gap,
+      fx: { shield: !!IMG.shield, rubble: !!IMG.rubble } });
     tobinSStats.decodeAll = () => {
       const here = ORDER.concat('shield', 'rubble').filter(n => typeof atlasOf(n) === 'string');
       here.forEach(want);

@@ -19182,8 +19182,15 @@ if (section('tobin route S (browser)')) try {
           assert(!c.a && c.still && c.hero && c.b && c.moved, `tobin route S: Classic art turns the stage's Tobin back to today's and off again brings route S back (gate 9; ${cl})`);
           // gathering: the camp pose (victory-7) until route-s-tobin-gather; hunting keeps Codex's interim spear poses (64h)
           const ga = JSON.parse(await X(`new Promise(res => { setActivity('gather'); setNode('wood', 1); setTimeout(() => { const d = tobinSStats().drawn, wood = { on: tobinSOn(), mv: d.move, i: d.slot };
-            const n0 = S.node; S.node = { kind: 'hide', t: 1 }; setTimeout(() => { const hunt = { on: tobinSOn(), tg: target() }; S.node = n0; setActivity('fight'); res(JSON.stringify({ wood, hunt })); }, 300); }, 600); })`));
-          assert(ga.wood.on && ga.wood.mv === 'victory' && ga.wood.i === 6 && !ga.hunt.on && ga.hunt.tg === 'node', `tobin route S: gathering shows his camp pose (victory-7); hunting keeps the interim spear poses (gate 9; ${JSON.stringify(ga)})`);
+            const n0 = S.node; S.node = { kind: 'hide', t: 1 }; setTimeout(() => { const d0 = tobinSStats().drawn.n; setTimeout(() => { const hunt = { on: tobinSOn(), tg: target(), still: tobinSStats().drawn.n === d0, hero: !!(stageRects().hero) };
+              S.node = n0; setActivity('fight'); res(JSON.stringify({ wood, hunt })); }, 400); }, 300); }, 600); })`));
+          // (hunting: 64n draws nothing, not even through 64h's heroArtDraw calls for the spear states, while the stage draws a hero)
+          assert(ga.wood.on && ga.wood.mv === 'victory' && ga.wood.i === 6 && !ga.hunt.on && ga.hunt.tg === 'node' && ga.hunt.still && ga.hunt.hero, `tobin route S: gathering shows his camp pose (victory-7); hunting keeps the interim spear poses (gate 9; ${JSON.stringify(ga)})`);
+          // gate 8: an untimed Shield Throw closes one ring on his hand at the catch, not one a frame
+          await page.waitForFunction(() => window.__t.x("target() === 'mob' && tobinSStats().state === 'idle'"), null, { timeout: 10000 }).catch(() => {}); await page.waitForTimeout(400);   // back on the fight
+          const rings = await X(`new Promise(res => { const A = ANIM, r0 = A.ring; let n = 0; A.ring = function (...a) { if (a[5] === '#8FB8FF') n++; return r0.apply(this, a); };
+            emit('ability', { cls: 'solo', id: 'shieldthrow' }); setTimeout(() => { A.ring = r0; res(n); }, 1500); })`);   // (the ability swings the stage itself)
+          assert(rings === 1, `tobin route S: an untimed Shield Throw closes one catch ring (${rings}) (gate 8)`);
         }
         assert(!errs.length, `tobin route S ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
@@ -19221,6 +19228,7 @@ if (section('tobin route S (browser)')) try {
         const cover = `(() => { const c = document.getElementById('artWait'); return c && !c.hidden ? c.firstChild.textContent : null; })()`;
         { // a Tobin save, his Parry held back
           const { ctx, page, errs, release, X } = await open(earlyTobin, 'hero:TOBIN_S.tobin.parry');
+          const asked = []; page.on('request', q => { const f = q.url().split('/').pop(), p = s.packs.find(p => p.name === f); if (p) asked.push(p.id); });
           await page.waitForFunction(() => window.__t && window.__t.x('tobinSOn()'), null, { timeout: 20000 }).catch(() => {});
           const boot = await X(`lfBoot.boot.filter(id => id.startsWith('hero:')).join()`);
           await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); setActivity('fight'); true`);
@@ -19238,6 +19246,12 @@ if (section('tobin route S (browser)')) try {
           release();
           const seen = await after;
           assert(/^parry [01]$/.test(seen[seen.length - 1]), `tobin route S split: on the first frame after the hold his Parry is in and draws from its start (${seen.join(', ')})`);
+          // every blow plays dash and dashback: they come with his first moves, before any other zone's pack; the shield and the rubble
+          // decode from the Shield Throw and Hammerfall packs (no decodeAll here)
+          await page.waitForFunction(() => { const f = window.__t.x('tobinSStats().fx'); return f.shield && f.rubble; }, null, { timeout: 20000 }).catch(() => {});
+          const fx = await X('tobinSStats().fx'), at = id => asked.indexOf(id), zone = asked.findIndex(id => /^foe:/.test(id));   // the zones either side (the screen's own background may come first)
+          const early = ['dash', 'dashback'].every(m => at('hero:TOBIN_S.tobin.' + m) >= 0 && (zone < 0 || at('hero:TOBIN_S.tobin.' + m) < zone));
+          assert(early && fx.shield && fx.rubble, `tobin route S split: his dash and dashback load with his first moves, before the next zones' foes, and the shield and rubble come in with their moves (${JSON.stringify(fx)}; asked ${asked.slice(0, 12).map(id => id.replace('hero:TOBIN_S.tobin.', '')).join(', ')})`);
           assert(!errs.length, 'tobin route S split: no page errors' + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         }
