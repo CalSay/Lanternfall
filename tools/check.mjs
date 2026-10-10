@@ -13798,6 +13798,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             }
             // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk
             if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
+            // hesketh-boss-loss-line: no step shows while the hero is down (a fight lost in the walk); the guide waits for the hero to stand, and so does the walk
+            if (!c.ok && !await X('typeof cbHeroUp !== "function" || cbHeroUp()')) { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
             // a step that ended while the walk looked (Next Up opening ends spend-points-before-nextup's line unseen) is not a miss
             if (!c.ok && await X('(s => s ? s.id : "")(onboardStep())') !== st) continue;
             // (a miss also says what the guide was doing: the line it wants, its say queue, a pending cache, the pause)
