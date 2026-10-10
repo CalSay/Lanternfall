@@ -23,6 +23,7 @@ import path from 'node:path';
 import http from 'node:http';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
+import { pageAssets, assetFor, ASSET_TYPE } from './lib/page-assets.mjs';
 
 const args = process.argv.slice(2);
 const QUICK = args.includes('--quick');
@@ -79,8 +80,9 @@ const HOOK = `
   };
 }
 `;
+const pageFile = over => (over ? path.resolve(over) : HTML ? path.resolve(HTML) : path.join(ROOT, 'dist', 'lanternfall.html'));
 function instrumented(over) {
-  const file = over ? path.resolve(over) : HTML ? path.resolve(HTML) : path.join(ROOT, 'dist', 'lanternfall.html');
+  const file = pageFile(over);
   if (!fs.existsSync(file)) throw new Error(file + ' missing: run node tools/build.mjs');
   let html = fs.readFileSync(file, 'utf8');
   const end = html.lastIndexOf('})();\n</script>');
@@ -90,9 +92,12 @@ function instrumented(over) {
   const skel = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n';
   return skel + html.slice(0, end) + HOOK + html.slice(end);
 }
-function serve(html) {
+function serve(html, assets = new Map()) {   // assets: the split build's files (tools/lib/page-assets.mjs)
   return new Promise(res => {
-    const srv = http.createServer((req, rsp) => { rsp.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }); rsp.end(html); });
+    const srv = http.createServer((req, rsp) => {
+      const a = assetFor(assets, new URL(req.url, 'http://x').pathname);
+      rsp.writeHead(200, { 'content-type': a ? ASSET_TYPE : 'text/html; charset=utf-8', 'cache-control': 'no-store' }); rsp.end(a || html);
+    });
     srv.listen(0, '127.0.0.1', () => res(srv));
   });
 }
@@ -445,9 +450,9 @@ function report(all) {
 // ---------------- main ----------------
 const { pw, exe, reason } = browserTools;
 if (!pw || !exe) { console.error(reason); process.exit(2); }
-const srv = await serve(instrumented());
+const srv = await serve(instrumented(), pageAssets(pageFile()));
 const base = `http://127.0.0.1:${srv.address().port}/`;
-const srvBase = COMPARE ? await serve(instrumented(COMPARE)) : null;
+const srvBase = COMPARE ? await serve(instrumented(COMPARE), pageAssets(pageFile(COMPARE))) : null;
 const browser = await pw.chromium.launch({ executablePath: exe, args: ['--enable-precise-memory-info', '--no-sandbox'] });
 const scenarios = [];
 for (const dev of QUICK ? ['phone'] : ['phone', 'desktop']) for (const save of ['new', 'late']) {

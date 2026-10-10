@@ -8,6 +8,8 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
+import { buildSplit, isAsset, assetName } from './build.mjs';
+import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
 // Every game this run loads has no Omen (almanac.force('none')), so a new real-world day never
@@ -296,6 +298,66 @@ if (section('check fonts')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('check fonts crashed: ' + (e.stack || e)); }
+
+// ---- split build (asset-build; docs/design/hosting.md 5, B1): page plus content-hashed art files, all run before the game ----
+// Built in memory (nothing written). The split page must hold the inline page's code with only the generated art data files
+// moved out, as they are, under hashed names; it boots with the loader line gone, the line counts bytes while a file is still
+// loading, and a file that fails to load says so with a Reload button.
+if (section('split build (asset-build)')) try {
+  const s = buildSplit({ write: false }), files = Object.fromEntries(s.assets.map(a => [a.name, a.text]));
+  const inline = fs.existsSync(distFile) ? fs.readFileSync(distFile, 'utf8') : '';
+  assert(s.html.startsWith('<title>') && !/<!doctype|<(html|head|body)[\s>]/i.test(s.html), 'split: the page keeps the Artifact page shape (starts with <title>, no doctype/html/head/body)');
+  const gen = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js')).sort().filter(f => isAsset(fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8')));
+  assert(gen.length >= 10 && s.assets.map(a => a.f).join() === gen.join(), `split: every generated data file is an asset (${s.assets.length}), in filename order`);
+  assert(s.assets.every(a => a.text === fs.readFileSync(path.join(ROOT, 'src', 'js', a.f), 'utf8').replace(/\n*$/, '\n') && a.name === assetName(a.f, a.text)),
+    'split: each asset is its file as it is, named by its content hash');
+  assert([...s.html.matchAll(/<script src="assets\/([^"]+)"/g)].map(m => m[1]).join() === s.assets.map(a => a.name).join() && s.html.lastIndexOf('<script src="assets/') < s.html.lastIndexOf('})();\n</script>'),
+    'split: the page names every asset once, in order, before the game\'s script');
+  const strip = h => h.replace(/<!-- Boot loader[\s\S]*?<\/script>\n/, '').replace(/<script src="assets\/[^"]+"[^>]*><\/script>\n/g, '').replace('\n<script>lfBoot.end();</script>', '');
+  let want = inline;
+  for (const a of s.assets) want = want.replace(`// ---- src/js/${a.f} ----\n${a.text}\n`, () => '');
+  assert(inline && strip(s.html) === want, 'split: apart from the loader, the page is the inline page with only the asset files taken out');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe) skipBrowser('split: boot, progress and failure lines: Playwright or Chromium not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const assets = pageAssets(s.file, s.html, files), big = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m));
+      const open = async (hold, width = 1280, height = 720) => {
+        const page = await browser.newPage({ viewport: { width, height } }), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        let release; const held = new Promise(r => { release = r; });
+        await routePage(page, 'http://lf.test/', s.html, assets);
+        if (hold) await page.route('**/assets/' + big.name, async r => { await held; return hold === 'fail' ? r.abort() : r.fallback(); });
+        await page.goto('http://lf.test/', { waitUntil: 'commit' });
+        return { page, errs, release };
+      };
+      // 1. a clean boot at each view: the line goes, the game runs (its zone name is set) with no page error
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const { page, errs } = await open(null, w, h);
+        await page.waitForLoadState('load'); await page.waitForTimeout(600);
+        const r = await page.evaluate(() => ({ line: !!document.getElementById('lfBoot'), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width }));
+        assert(!r.line && !r.tags && r.zone && r.w > 0 && !errs.length, `split: boots at ${w}x${h} with the loading line and its tags gone` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
+        await page.close();
+      }
+      // 2. while the biggest file is still loading, the line shows the bytes done of the total
+      { const { page, release } = await open('hold');
+        await page.waitForFunction(() => /^Loading the game: [\d.]+ of [\d.]+ MB$/.test((document.getElementById('lfBootText') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
+        const t = await page.evaluate(() => (document.getElementById('lfBootText') || {}).textContent || '');
+        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = s.assets.reduce((n, a) => n + a.bytes, 0) / 1e6;
+        assert(m && +m[2] === +total.toFixed(1) && +m[1] < +m[2], `split: while a file loads the line reads the bytes done ("${t}")`);
+        release(); await page.waitForLoadState('load');
+        assert(!(await page.$('#lfBoot')), 'split: the line goes once the held file arrives');
+        await page.close(); }
+      // 3. a file that fails to load says so, with a Reload button
+      { const { page, release } = await open('fail'); release();
+        await page.waitForLoadState('load'); await page.waitForTimeout(300);
+        const r = await page.evaluate(() => ({ t: (document.getElementById('lfBootText') || {}).textContent, b: !!document.querySelector('#lfBoot button') }));
+        assert(/did not load/.test(r.t || '') && r.b, `split: a failed file shows "${r.t}" and a Reload button`);
+        await page.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('split build crashed: ' + (e.stack || e)); }
 
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,

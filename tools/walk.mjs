@@ -53,6 +53,7 @@ import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
+import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { LINT, TIPPHASE, PLACEHOLDERS, ALLOW } from './lib/eyes-readers.mjs';
 import { view, contextOptions, VIEW_HELP } from './lib/views.mjs';
 
@@ -854,7 +855,7 @@ async function run() {
   await page.clock.pauseAt(Date.UTC(2026, 0, 5, 12, 0, 1));
   await page.addInitScript(INIT, [KEY, SEED]);
   const HTML = pageHtml();
-  await page.route('**/*', r => (r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: HTML }) : r.abort()));
+  await routePage(page, 'http://lf.test/', HTML, pageAssets(htmlFile));   // the split build's asset files too (tools/lib/page-assets.mjs)
   // 'load', not 'commit': the 8 MB page parses on the machine's clock, and stepping the paused clock while it did so booted the game at a
   // different game time each run (0 to 65 ms into the first step), which split two runs of seed 1 from the first tip (walk-repeatable-whole-hour)
   await page.goto('http://lf.test/', { waitUntil: 'load' });
