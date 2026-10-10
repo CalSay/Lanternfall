@@ -36,8 +36,10 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
 
 - No art goes into the game until the Opus art judge under the Autopilot gates has vetted the **whole pack** for that character or scene, and every piece
   matches the others and suits the game. No partial packs, no stopgaps.
-- Effects and props (arrows, bow strings, tools, sparks, chips) come from the artist in the pack, drawn to match the
-  art. Agents do not draw art assets in code and do not tell the owner that code will add them.
+- Effects and props (arrows, tools, sparks, chips) come from the artist in the pack, drawn to match the
+  art. Agents do not draw art assets in code and do not tell the owner that code will add them. One exception, bowstrings
+  only (Cal, 2026-10-09 23:47: "Game string it is"): hero frames carry no string; each frame marks three points (both bow
+  tips and the drawing hand) and the game draws the string through them. Arrows and every other prop still come from the artist.
 - Until then, agents do not wire, convert, retune or redraw existing art. Art tooling and art data files stay as they are.
 - Exception (owner, 2026-09-30): **Codex may create new art for a new item or scene it builds** (for example the
   Hunting scene and its beasts), since those cannot reuse existing assets. Match the style of the three heroes (Wren,

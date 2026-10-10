@@ -1,0 +1,1 @@
+Docs only: Cal's ruling that the game draws bowstrings through three marked points per frame ("Game string it is", 9 Oct), recorded in CLAUDE.md, docs/DECISIONS.md (Art) and docs/design/art-direction.md. Arrows and other props still come from the artist. No player change. (no shot)
