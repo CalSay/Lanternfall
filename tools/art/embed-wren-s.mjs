@@ -9,8 +9,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const D = path.join(ROOT, 'art', 'heroes', 'wren', 'route-s'), OUT = path.join(ROOT, 'src', 'js', '21ye-data-wren-s.js');
 const P = JSON.parse(fs.readFileSync(path.join(D, 'pack.json'), 'utf8'));
 const file = n => new B91(fs.readFileSync(path.join(D, n)));
+// the moves in the order the split build loads them after boot (tools/build.mjs hero packs: the idle is the core, at boot; then
+// what a first fight shows, then the camp pose, then the abilities)
+const FIRST = ['idle', 'attack', 'twinshot', 'hit', 'parry', 'dodge', 'victory', 'defeat'];
 const moves = {};
-for (const [mv, M] of Object.entries(P.moves)) {
+for (const [mv, M] of Object.entries(P.moves).sort(([a], [b]) => (FIRST.includes(a) ? FIRST.indexOf(a) : 99) - (FIRST.includes(b) ? FIRST.indexOf(b) : 99))) {
   // f: [atlas x, y, w, h, feet anchor x, y] per frame; s: the string's [top, bottom, hand or null] as offsets from the feet
   // anchor (art px), 0 for a frame with no game-drawn string, or no s at all (the 8 moves with a painted string)
   moves[mv] = { rel: M.rel, f: M.f.map(f => [...f.r, f.ax, f.ay]), atlas: file(mv + '.webp') };

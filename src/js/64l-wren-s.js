@@ -16,11 +16,13 @@
 // 1 art px), held still under reduced motion. Gathering shows the camp pose (victory frame 4) until route-s-wren-gather.
 //
 // API (the rest of the game asks these; all are no-ops with Classic art or before the atlases decode):
-//   wrenSOn() -> bool              the stage's Wren is route S now (Wren in play or asked for, not Classic, core atlases ready)
+//   wrenSOn() -> bool              the stage's Wren is route S now (Wren in play, not Classic, not hunting, the idle decoded)
 //   wrenSHand(a) -> [dx, dy] | null   where the bow is (actor px from the feet) on the frame last drawn (62-stage handX/handY)
 //   wrenSFrame(move, timing) -> frame index   (pure: the checks) see frameAt below
 //   wrenSTimed(mv, rings, now) -> { i, rel }   (pure: the checks) a timed ability's frame from its rings so far (see below)
 //   wrenSStats() -> { ready, decoded, drawn: { move, frame, k } }    (checks)
+// Split build (tools/build.mjs AREA_ART, card hero-packs): the idle is Wren's core pack (at boot), each other move its own pack;
+// the stage asks artHeroNeed before it draws a move and draws nothing while the game holds for it (never a stand-in).
 // Hooks it installs: heroArtStage, heroArtDraw and heroArtPreview (64h) for Wren; ANIM.hooks.arrowSprite (61-anim) for her arrows.
 var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
 {
@@ -90,47 +92,64 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     const rgb = D.string, STR = [parseInt(rgb.slice(0, 2), 16), parseInt(rgb.slice(2, 4), 16), parseInt(rgb.slice(4, 6), 16)];
     const STR_CSS = `rgb(${STR.join(',')})`;
 
-    // ---------------- decoding: each atlas once, in idle time (core moves first) ----------------
-    const IMG = {};   // name -> ImageBitmap | HTMLImageElement
-    const CORE = ['idle', 'attack', 'hit', 'parry', 'defeat', 'victory'];
-    const ORDER = CORE.concat(Object.keys(D.moves).filter(m => !CORE.includes(m)));
-    let decoded = 0, tried = 0, started = false;
-    function decode(name, s) {
-      return new Promise(res => {
-        let bytes = null;
-        try { bytes = b91Bytes(s); } catch (e) { console.error('[lanternfall] wren art', name, e); tried++; res(); return; }
-        const done = im => { tried++; if (im) { IMG[name] = im; decoded++; } res(); };
-        const viaImg = () => {
-          const im = new Image(); let url = '';
-          try { url = URL.createObjectURL(new Blob([bytes], { type: 'image/webp' })); } catch (e) { url = 'data:image/webp;base64,' + b91Base64(s); }
-          im.onload = () => { done(im); if (url.startsWith('blob:')) try { URL.revokeObjectURL(url); } catch (e) {} };
-          im.onerror = () => { console.error('[lanternfall] wren art: cannot decode', name); tried++; res(); };
-          im.src = url;
-        };
-        if (typeof createImageBitmap === 'function') createImageBitmap(new Blob([bytes], { type: 'image/webp' })).then(done, viaImg);
-        else viaImg();
-      });
+    // ---------------- decoding: each atlas once, as it comes ----------------
+    // The inline page holds every atlas. The split build (tools/build.mjs hero packs) holds the idle at boot and brings each
+    // other move in its own pack after boot ('artPack'); a move the stage needs that is not in yet holds the game (75-art-load
+    // artHeroNeed) until it is in and decoded (artHeroWait below), and nothing is drawn for it meanwhile.
+    const IMG = {}, bad = {}, busy = {};   // name -> ImageBitmap | HTMLImageElement; names that failed; names decoding
+    const ORDER = Object.keys(D.moves);
+    let decoded = 0, started = false;
+    const atlasOf = name => (name === 'arrows' || name === 'bats' ? D[name].atlas : D.moves[name] && D.moves[name].atlas);
+    const settled = name => !!(IMG[name] || bad[name]);
+    // decode one atlas if it is here and not decoded yet; emits 'wrenArt' { move } once it is in
+    function want(name) {
+      const s = atlasOf(name);
+      if (settled(name) || busy[name] || typeof s !== 'string') return;
+      busy[name] = true;
+      const fail = e => { console.error('[lanternfall] wren art: cannot decode', name, e || ''); bad[name] = true; delete busy[name]; };
+      let bytes = null;
+      try { bytes = b91Bytes(s); } catch (e) { fail(e); return; }
+      const done = im => {
+        delete busy[name]; IMG[name] = im; decoded++;
+        try { if (typeof emit === 'function') emit('wrenArt', { move: name }); } catch (e) {}
+      };
+      const viaImg = () => {
+        const im = new Image(); let url = '';
+        try { url = URL.createObjectURL(new Blob([bytes], { type: 'image/webp' })); } catch (e) { url = 'data:image/webp;base64,' + b91Base64(s); }
+        im.onload = () => { done(im); if (url.startsWith('blob:')) try { URL.revokeObjectURL(url); } catch (e) {} };
+        im.onerror = () => fail();
+        im.src = url;
+      };
+      if (typeof createImageBitmap === 'function') createImageBitmap(new Blob([bytes], { type: 'image/webp' })).then(done, viaImg);
+      else viaImg();
     }
+    // Wren in play: the bat and the arrows, then every move that is here, in table order (the idle first)
     function start() {
       if (started) return; started = true;
-      let p = Promise.resolve();
-      for (const mv of ORDER) p = p.then(() => decode(mv, D.moves[mv].atlas));
-      p = p.then(() => decode('arrows', D.arrows.atlas)).then(() => decode('bats', D.bats.atlas));
-      p.then(() => { try { if (typeof emit === 'function') emit('wrenArt', {}); } catch (e) {} });
+      want('bats'); want('arrows'); for (const mv of ORDER) want(mv);
     }
-    const ready = () => CORE.every(m => IMG[m]);
     const classic = () => typeof portraitsClassic === 'function' && portraitsClassic();
     const isWren = id => id === 'wren';
     const wrenNow = () => isWren(typeof heroArtId === 'function' ? heroArtId() : null);
     // hunting keeps Codex's interim spear poses (64h) until route-s-wren-gather replaces them (its gate G4)
     const hunting = () => typeof target === 'function' && target() === 'node' && typeof skillOf === 'function' && typeof S === 'object' && S.node && skillOf(S.node.kind) === 'hunt';
-    wrenSOn = () => !classic() && ready() && wrenNow() && !hunting();
-    // decoded only for a game with Wren on the stage (or when the picker or the hero sheet draws her)
-    // as soon as the save says Wren (the stage draws today's Wren until the core moves are in, a moment at boot)
-    const kick = () => { try { if (!classic() && wrenNow()) start(); } catch (e) {} };
+    const routeS = () => !classic() && wrenNow() && !hunting();
+    wrenSOn = () => routeS() && !!IMG.idle;
+    // the split build's hold: a move that is in but not decoded is not ready yet (a move that failed to decode never holds)
+    let waitOn = false;
+    const hookWait = () => {
+      if (waitOn || typeof artHeroWait !== 'function') return; waitOn = true;
+      artHeroWait((h, m) => { if (!isWren(h) || classic() || !D.moves[m] || settled(m)) return true; want(m); return false; });
+    };
+    // false: the split build is fetching or decoding the move (draw nothing for it; the game holds). Always true inline.
+    const need = mv => { hookWait(); return typeof artHeroNeed !== 'function' || artHeroNeed('wren', mv); };
+    const kick = () => { try { hookWait(); if (!classic() && wrenNow()) start(); } catch (e) {} };
     kick();
     if (typeof idleTask === 'function') idleTask(kick);
-    if (typeof on === 'function') { on('soloHero', () => { if (!classic() && wrenNow()) start(); }); on('classicArt', p => { if (p && !p.on && wrenNow()) start(); }); }
+    if (typeof on === 'function') {
+      on('soloHero', kick); on('classicArt', p => { if (p && !p.on) kick(); });
+      on('artPack', p => { if (p && p.kind === 'hero' && isWren(p.hero)) for (const m of p.moves || []) if (started || (m === CAMP[0] && PENDING.size)) want(m); });
+    }
 
     // ---------------- frames: art-px canvases with the string and the breathing applied (a small LRU) ----------------
     const LRU = new Map(), LMAX = 64;
@@ -201,7 +220,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     // the companion bat: 6 flaps, one offset from the feet (never over her head: tools/check.mjs 'wren route S')
     function bat(g, x, y, t, alpha) {
       const im = IMG.bats; if (!im) return;
-      const F = D.bats.f, i = reducedNow() ? 0 : Math.floor(t * 1000 / 90) % F.length, [bx, by, bw, bh] = F[i];
+      const F = D.bats.f, n = Math.floor(t * 1000 / 90), i = reducedNow() || !(n >= 0) ? 0 : n % F.length, [bx, by, bw, bh] = F[i];   // the game clock can start below 0
       const T = g.getTransform(), K = T.a, k = SC * K;
       const X = Math.round(K * x + T.e) + Math.round(D.bats.at[0] * k), Y = Math.round(K * y + T.f) + Math.round(D.bats.at[1] * k);
       g.save(); g.setTransform(1, 0, 0, 1, 0, 0); if (alpha != null) g.globalAlpha = alpha;
@@ -212,7 +231,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     // ---------------- the stage's state machine (64h heroArtStage's, for route S) ----------------
     const now = () => (typeof T === 'number' ? T : 0);
     const ST = { s: 'idle', t0: 0, mv: 'idle', hitT: -1, lastSt: 0, lastFl: 0, ab: '', abT: -9, parry: -9, sawParry: -9, dodge: -9, sawDodge: -9,
-      ring: null, relT: -9, relRing: -1, arrow: 'plain' };
+      ring: null, relT: -9, relRing: -1, arrow: 'plain', heldT: -1 };
     const go = (s, mv) => { ST.s = s; ST.mv = mv || s; ST.t0 = now(); ST.hitT = -1; };
     const twin = () => typeof TURN_LIVE !== 'undefined' && TURN_LIVE && TURN_LIVE.p && TURN_LIVE.p.eq && TURN_LIVE.p.eq.includes('twinshot');
     if (typeof on === 'function') {
@@ -271,7 +290,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       }
       const tf = timedFrame(); if (tf) return { mv: tf.mv, i: tf.i, sh: shiver(t) };
       // idle: the held frame, breathing (none under reduced motion)
-      return { mv: IDLE[0], i: IDLE[1], br: reducedNow() ? 0 : BR[Math.floor(t * 1000 / 160) % 8] };
+      return { mv: IDLE[0], i: IDLE[1], br: reducedNow() || !(t >= 0) ? 0 : BR[Math.floor(t * 1000 / 160) % 8] };
     }
     // the string shivers for 0.3 s after a release (1 art px, either side), still under reduced motion
     function shiver(t) { const d = t - ST.relT; if (reducedNow() || d < 0 || d > 0.3) return 0; return Math.sin(d * 70) > 0 ? 1 : -1; }
@@ -282,8 +301,13 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     if (typeof heroArtStage === 'function') {
       const base = heroArtStage;
       heroArtStage = function (g, a, x, alpha) {
-        if (!wrenSOn()) return base(g, a, x, alpha);
-        const p = pick(a); if (!IMG[p.mv]) { p.mv = IDLE[0]; p.i = IDLE[1]; }
+        if (!routeS()) return base(g, a, x, alpha);
+        if (!IMG.idle) { if (bad.idle) return base(g, a, x, alpha); want('idle'); return true; }   // the idle (in the page in both builds) decoding: a moment at boot, nothing drawn
+        // split build: held until the move is in, nothing drawn; the move's clock waits with the game, so it plays from its start
+        if (ST.heldT >= 0) { const d = now() - ST.heldT; ST.t0 += d; if (ST.hitT >= 0) ST.hitT += d; ST.heldT = -1; }
+        const p = pick(a);
+        if (!need(p.mv)) { ST.heldT = now(); return true; }
+        if (!IMG[p.mv]) { want(p.mv); p.mv = IDLE[0]; p.i = IDLE[1]; }   // inline: still decoding (or it failed)
         if (ST.hitT >= 0 && ST.relT < ST.hitT) ST.relT = ST.hitT;
         const x0 = x; x = Math.max(x, leftExt + 2); LAST.dx = x - x0;   // a narrow stage: she steps in so her cloak stays on it
         const y = a.hy + a.dy;
@@ -301,8 +325,8 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       const base = heroArtDraw, INFO = { frame: 0, n: 8, done: false, x0: 0, y0: 0, f: null };
       const MAP = { fightIdle: IDLE, campIdle: CAMP, attack: ['attack'], ability: ['attack'], hurt: ['hit'], death: ['defeat'], block: ['parry'] };
       heroArtDraw = function (g, id, state, t, x, y, opts) {
-        if (!(isWren(id) && !classic() && ready())) return base(g, id, state, t, x, y, opts);
         const m = MAP[state] || IDLE, mv = m[0], o = opts || {};
+        if (!(isWren(id) && !classic() && IMG[mv])) return base(g, id, state, t, x, y, opts);
         const i = m.length > 1 ? m[1] : o.frame != null ? Math.max(0, Math.min(7, o.frame)) : wrenSFrame(mv, { ms: Math.max(0, t) * 1000 });
         if (!blit(g, mv, i, x, y, { alpha: o.alpha })) return base(g, id, state, t, x, y, opts);
         const f = proxyOf(mv, i);
@@ -319,7 +343,6 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
           if (cv && cv._w0) { cv.width = cv._w0; cv.height = cv._h0; cv.style.width = cv.style.height = ''; cv._w0 = 0; }
           return base(cv, id);
         }
-        if (!ready()) { start(); PENDING.add(cv); return base(cv, id); }   // drawn again once the atlases are in (wrenArt)
         const [, , w, h, ax, ay] = D.moves[CAMP[0]].f[CAMP[1]];
         // CSS px; the backing store at the screen's density, so a DPR 2 screen draws her 1:1 (nearest-neighbour), not doubled
         const W = Math.ceil(Math.max(ax, w - ax) * SC) * 2 + 4, H = Math.ceil(h * SC) + 4, r = Math.max(1, Math.round((typeof devicePixelRatio === 'number' && devicePixelRatio) || 1));
@@ -327,11 +350,20 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
         if (cv.width !== W * r || cv.height !== H * r) { cv.width = W * r; cv.height = H * r; }
         if (cv.style) { cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
         const g = cv.getContext('2d'); g.setTransform(r, 0, 0, r, 0, 0); g.clearRect(0, 0, W, H);
+        if (!IMG[CAMP[0]]) {   // not decoded yet (split build: maybe not fetched yet): the box stays empty, drawn on 'wrenArt'
+          PENDING.add(cv);
+          if (typeof atlasOf(CAMP[0]) === 'string') want(CAMP[0]); else if (typeof artHeroWant === 'function') artHeroWant('wren', CAMP[0]);
+          return false;
+        }
         return !!blit(g, CAMP[0], CAMP[1], W / 2, H - 2, null);
       };
     }
     const PENDING = new Set();
-    if (typeof on === 'function') on('wrenArt', () => { for (const cv of PENDING) try { if (cv.isConnected) heroArtPreview(cv, 'wren'); } catch (e) {} PENDING.clear(); });
+    if (typeof on === 'function') on('wrenArt', p => {
+      if (!p || p.move !== CAMP[0]) return;
+      const cvs = [...PENDING]; PENDING.clear();
+      for (const cv of cvs) try { if (cv.isConnected) heroArtPreview(cv, 'wren'); } catch (e) {}
+    });
     // her arrows: the Scenario sprites (plain, heavy, sonic) in place of the stage's line arrows (61-anim drawProj)
     if (typeof ANIM === 'object' && ANIM.hooks) {
       ANIM.hooks.arrowSprite = (g, p, dx, dy) => {
@@ -355,9 +387,13 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       const p = s[2] || [(s[0][0] + s[1][0]) / 2, (s[0][1] + s[1][1]) / 2];
       return [p[0] * SC + LAST.dx, p[1] * SC];
     };
-    wrenSStats = () => ({ ready: ready(), decoded, classic: classic(), drawn: Object.assign({}, LAST), state: ST.s, move: ST.mv });
+    wrenSStats = () => ({ ready: !!IMG.idle, decoded, classic: classic(), drawn: Object.assign({}, LAST), state: ST.s, move: ST.mv });
     // the checks (tools/check.mjs 'wren route S (browser)'): decode everything now, read pixels of a frame
-    wrenSStats.decodeAll = () => { start(); return new Promise(res => { const w = () => (tried >= ORDER.length + 2 ? res(decoded) : setTimeout(w, 20)); w(); }); };
+    wrenSStats.decodeAll = () => {   // every atlas that is here (all of them inline)
+      const here = ORDER.concat('arrows', 'bats').filter(n => typeof atlasOf(n) === 'string');
+      here.forEach(want);
+      return new Promise(res => { const w = () => (here.every(settled) ? res(decoded) : setTimeout(w, 20)); w(); });
+    };
     wrenSStats.alphaAt = (mv, i, xs) => {   // the converted frame's own pixels (the atlas, before the game draws its string)
       const im = IMG[mv]; if (!im) return null;
       const [x0, y0, w, h, ax, ay] = D.moves[mv].f[i], c = mk(w, h), g = c.getContext('2d'); g.drawImage(im, x0, y0, w, h, 0, 0, w, h);
@@ -376,7 +412,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       colours = seen.size;
       return { top: top - ay, bot: bot - ay, feet: (c0 + c1 + 1) / 2 - ax, colours, partAlpha: alpha };
     };
-    wrenSStats.atlases = () => {   // every decoded atlas: the distinct opaque colours across all of them, and pixels neither clear nor opaque
+    wrenSStats.colours = () => {   // every decoded atlas: the distinct opaque colours across all of them, and pixels neither clear nor opaque
       const seen = new Set(); let part = 0;
       for (const im of Object.values(IMG)) {
         const c = mk(im.width, im.height), g = c.getContext('2d'); g.drawImage(im, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data;

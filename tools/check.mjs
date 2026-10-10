@@ -18315,7 +18315,8 @@ if (section('wren route S')) try {
   { const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-wren-s.mjs'), '--check'], { encoding: 'utf8' });
     assert(r.status === 0, 'wren route S: src/js/21ye-data-wren-s.js is up to date with art/heroes/wren/route-s (node tools/art/embed-wren-s.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
   const W = artData('21ye-data-wren-s.js', 'WREN_S');
-  assert(JSON.stringify(Object.keys(W.moves)) === JSON.stringify(WREN_FIGHT) && JSON.stringify(Object.keys(P.moves)) === JSON.stringify(WREN_FIGHT),
+  const sorted = o => JSON.stringify(Object.keys(o).sort()), want20 = JSON.stringify([...WREN_FIGHT].sort());   // 21ye orders them for loading
+  assert(sorted(W.moves) === want20 && sorted(P.moves) === want20 && Object.keys(W.moves)[0] === 'idle',
     `wren route S: all 20 fight moves are embedded (${Object.keys(W.moves).length})`);
   // gate 1: bytes (decimal KB and MB, as tools/lib/page-size.mjs); the embedded atlases are the converted files, byte for byte
   const size = f => fs.statSync(path.join(D, f)).size;
@@ -18392,6 +18393,9 @@ if (section('wren route S')) try {
 // 1280x720 (nearest-neighbour, x1.5) and 740x360 on a DPR 1 phone (downscaled); the idle breathes, and holds still under reduced
 // motion; Classic art brings the old Wren back and the new one again; the picker's figure holds her camp pose unclipped.
 if (section('wren route S (browser)')) try {
+  // the picker's Wren figure: how many of its canvas's pixels are drawn (0: empty or not there)
+  const WREN_FIG = `() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'); if (!c || !c.width) return 0;
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; }`;
   const { pw, exe } = browserTools;
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('wren route S (browser): Playwright or Chromium not here, skipped');
   else {
@@ -18414,7 +18418,7 @@ if (section('wren route S (browser)')) try {
         const n = await X('wrenSStats.decodeAll()');
         assert(n === 22 && await X('wrenSOn()'), `wren route S ${tag}: the 20 moves, arrows and bats decode and the stage draws route S Wren (${n} atlases)`);
         if (w === 1280) {
-          const px = JSON.parse(await X(`JSON.stringify((() => { const D = WREN_S, bad = [], feet = {}, a = wrenSStats.atlases();
+          const px = JSON.parse(await X(`JSON.stringify((() => { const D = WREN_S, bad = [], feet = {}, a = wrenSStats.colours();
             for (const m in D.moves) D.moves[m].f.forEach((f, i) => { const s = D.moves[m].s && D.moves[m].s[i];
               if (s) { const pts = [s[0], s[1]].concat(s[2] ? [s[2]] : []), al = wrenSStats.alphaAt(m, i, pts); if (al.some(v => v !== 255)) bad.push(m + ' ' + (i + 1)); }
               if (i === 0 || i === D.moves[m].f.length - 1) feet[m + ' ' + (i + 1)] = wrenSStats.rows(m, i).feet; });
@@ -18454,13 +18458,64 @@ if (section('wren route S (browser)')) try {
         const page = await ctx.newPage();
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
         await page.goto('http://lf.test/');
-        await page.waitForFunction(() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'); return c && c.width > 112; }, null, { timeout: 20000 }).catch(() => {});
-        const r = await page.evaluate(() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'), f = c && c.parentElement; if (!c) return null;
-          const a = c.getBoundingClientRect(), b = f.getBoundingClientRect(); return { cw: c.width, ch: c.height, a: [a.left, a.top, a.right, a.bottom], b: [b.left, b.top, b.right, b.bottom] }; });
+        await page.waitForFunction(`(${WREN_FIG})() > 0`, null, { timeout: 20000 }).catch(() => {});
+        const r = await page.evaluate(`(() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'), f = c && c.parentElement; if (!c) return null;
+          const a = c.getBoundingClientRect(), b = f.getBoundingClientRect(); return { cw: c.width, ch: c.height, a: [a.left, a.top, a.right, a.bottom], b: [b.left, b.top, b.right, b.bottom], px: (${WREN_FIG})() }; })()`);
         // inside the box's border (1 px)
         const inside = r && r.a[0] >= r.b[0] + 0.5 && r.a[1] >= r.b[1] + 0.5 && r.a[2] <= r.b[2] - 0.5 && r.a[3] <= r.b[3] - 0.5;
-        assert(!!(r && r.cw > 112 && inside), `wren route S ${w}x${h}: the picker's figure holds Wren's camp pose (${r ? r.cw + 'x' + r.ch : 'none'} at DPR 2) inside its box (gate 7)`);
+        assert(!!(r && r.cw > 112 && r.px && inside), `wren route S ${w}x${h}: the picker's figure holds Wren's camp pose (${r ? r.cw + 'x' + r.ch : 'none'} at DPR 2, ${r && r.px} px drawn) inside its box (gate 7)`);
         await ctx.close();
+      }
+      // the split build (tools/build.mjs hero packs): only her idle comes at boot; a move still loading holds the game under
+      // "Loading Wren" with nothing drawn for her, and the first frame after it is in draws it; the new-game picker fills her figure
+      // when the camp pose arrives, with no hold
+      {
+        const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
+        const e2 = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, e2) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(e2);
+        const assets = pageAssets(s.file, probe, files), pk = id => s.packs.find(p => p.id === id);
+        const open = async (save, hold) => {
+          const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } });
+          await ctx.addInitScript(s => { try { if (s && !localStorage.getItem('lanternfall.save.v5')) { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} }, save);
+          const page = await ctx.newPage(), errs = []; let release; const held = new Promise(r => { release = r; });
+          page.on('pageerror', e => errs.push(String(e)));
+          await routePage(page, 'http://lf.test/', probe, assets);
+          await page.route('**/assets/' + pk(hold).name, async r => { await held; return r.fallback(); });
+          await page.goto('http://lf.test/', { waitUntil: 'commit' });   // the held pack keeps the page's load event back
+          return { ctx, page, errs, release, X: src => page.evaluate(src => window.__t.x(src), src) };
+        };
+        const cover = `(() => { const c = document.getElementById('artWait'); return c && !c.hidden ? c.firstChild.textContent : null; })()`;
+        { // a Wren save, her Parry held back
+          const { ctx, page, errs, release, X } = await open(early, 'hero:WREN_S.wren.parry');
+          await page.waitForFunction(() => window.__t && window.__t.x('wrenSOn()'), null, { timeout: 20000 }).catch(() => {});
+          const boot = await X(`lfBoot.boot.filter(id => id.startsWith('hero:')).join()`);
+          await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); setActivity('fight'); true`);
+          await page.waitForTimeout(400);
+          await X(`emit('soloParry', { res: 'parry' }); true`);
+          await page.waitForTimeout(300);
+          const a = JSON.parse(await X(`JSON.stringify({ c: ${cover}, n: wrenSStats().drawn.n, mv: wrenSStats().drawn.move })`));
+          await page.waitForTimeout(300);
+          const b = JSON.parse(await X(`JSON.stringify({ c: ${cover}, n: wrenSStats().drawn.n, mv: wrenSStats().drawn.move })`));
+          assert(boot === 'hero:WREN_S.wren.core' && a.c === 'Loading Wren' && b.c === 'Loading Wren' && a.n === b.n && b.mv !== 'parry',
+            `wren route S split: a Wren save boots with her idle pack only (${boot}); a Parry still loading holds the game under "Loading Wren" and nothing is drawn for her (${JSON.stringify([a, b])})`);
+          const after = page.evaluate(() => new Promise(res => { const seen = []; const f = () => { const c = document.getElementById('artWait'), d = window.__t.x('wrenSStats().drawn');
+            seen.push((c && !c.hidden ? 'held ' : '') + d.move + ' ' + d.frame); if (!(c && !c.hidden) || seen.length > 600) return res(seen.slice(-2)); requestAnimationFrame(f); }; requestAnimationFrame(f); }));
+          release();
+          const seen = await after;
+          assert(/^parry [01]$/.test(seen[seen.length - 1]), `wren route S split: on the first frame after the hold her Parry is in and draws from its start (${seen.join(', ')})`);
+          assert(!errs.length, 'wren route S split: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // a new game, her camp pose held back: the picker's figure stays empty with no hold, then fills
+          const { ctx, page, errs, release, X } = await open(null, 'hero:WREN_S.wren.victory');
+          await page.waitForSelector('.ccard[data-cls="wren"] .fig canvas', { timeout: 20000 }).catch(() => {});
+          await page.waitForTimeout(800);
+          const a = await page.evaluate(`({ px: (${WREN_FIG})(), c: ${cover} })`);
+          release();
+          await page.waitForFunction(`(${WREN_FIG})() > 0`, null, { timeout: 20000 }).catch(() => {});
+          const b = await page.evaluate(`({ px: (${WREN_FIG})(), c: ${cover} })`);
+          assert(!a.px && !a.c && b.px > 0 && !b.c && !errs.length, `wren route S split: a new game's picker leaves Wren's figure empty while her camp pose loads, with no hold, and draws it when it is in (${JSON.stringify([a, b])})` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
       }
     } finally { await browser.close(); }
   }

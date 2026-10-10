@@ -28,7 +28,9 @@
 //   artHeroWait(fn)          -> fn(hero, move) returns false while a move that is in is not ready to draw yet (pictures decoding);
 //                              it must turn true once it gives up (a picture that never decodes), or the hold never ends
 //   artHeroPacks(hero, move) -> the hero's pack ids (those holding that move, when named)
-var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [];
+//   artHeroWant(hero, move)  -> load the move's pack soon, with no hold (a screen off the stage that can wait for it: the hero
+//                              picker's figure; route-s-wren-wire); its 'artPack' says when it is in
+var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {};
 {
   const LB = typeof lfBoot === 'object' && lfBoot && lfBoot.packs && typeof lfBoot.take === 'function' ? lfBoot : null;
   if (LB && typeof document !== 'undefined') {
@@ -53,6 +55,8 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     const waits = [], need = {};   // need: 'hero move' -> [hero, move, when it was last asked for] while the stage waits for it
     artHeroPacks = (hero, move) => Object.keys(P).filter(id => P[id].h === hero && (!move || P[id].m.includes(move)));
     artHeroWait = fn => { if (typeof fn === 'function') waits.push(fn); };
+    const soon = [];   // packs asked for with artHeroWant, loaded after the ones the stage holds for
+    artHeroWant = (hero, move) => { for (const id of artHeroPacks(hero, move)) if (!got[id] && !soon.includes(id)) soon.push(id); pump(); };
     artHeroReady = (hero, move) => artHeroPacks(hero, move).every(id => got[id]) && waits.every(f => { try { return f(hero, move) !== false; } catch (e) { return true; } });
     artHeroNeed = (hero, move) => {
       if (artHeroReady(hero, move)) return true;
@@ -124,7 +128,7 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     };
     const due = id => !got[id] && !busy[id] && !stale[id] && !broken[id] && !(failed[id] && failed[id].at > Date.now());   // a stale file is gone for good
     function pump() {
-      const now = heroNow().concat(screenZone() >= 1 ? artZonePacks(screenZone()) : []), n = Object.keys(busy).length;
+      const now = heroNow().concat(screenZone() >= 1 ? artZonePacks(screenZone()) : [], soon), n = Object.keys(busy).length;
       const id = (n < 2 ? now.find(due) : null) || (n < 1 ? wanted().find(due) : null);
       if (!id) return;
       busy[id] = true;

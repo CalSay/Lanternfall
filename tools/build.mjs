@@ -106,9 +106,12 @@ export function placeArt(files, art = AREA_ART) {
 // (when both keep part of a move, make both plain objects: 75-art-load merges them with Object.assign, anything else is replaced).
 // Hero ids are SOLO_ORDER's (check.mjs). The page keeps everything but the moves' data and registers the constant
 // (lfBoot.heroFile), which puts in the save's hero's core at once, so the core is in the constant before the next file runs, as inline.
+const CORE_WREN = ['idle'];   // only the idle fits the boot set (the next lightest core, idle + victory, puts zone 2 at 4.03 MB)
 export const AREA_ART = {
   '21za-data-foeart.js': { v: 'FOE_ART', kind: 'foe', keep: P => Object.assign({}, P, { atlases: {} }), load: P => ({ atlases: P.atlases }) },
-  '21zb-data-bgart.js': { v: 'BG_ART', kind: 'bg', keep: null, load: B => B }
+  '21zb-data-bgart.js': { v: 'BG_ART', kind: 'bg', keep: null, load: B => B },
+  // Wren's route S fight moves (route-s-wren-wire): the page keeps each move's frame table, its atlas comes in the move's pack
+  '21ye-data-wren-s.js': { v: 'WREN_S', kind: 'hero', hero: 'wren', core: CORE_WREN, keep: ({ atlas, ...M }) => M, load: M => ({ atlas: M.atlas }) }
 };
 // A JS literal: JSON, but a string with no quote, backslash or line break goes in single quotes, as the embed tools write basE91.
 const lit = v => typeof v === 'string' ? (/['\\\n\r\u2028\u2029]/.test(v) ? JSON.stringify(v) : `'${v}'`)
