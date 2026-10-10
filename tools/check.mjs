@@ -109,7 +109,8 @@ const WEIGHT = {
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
-  'page size': 2
+  'page size': 2,
+  'split build (asset-build)': 12   // 11 s locally alone (asset-build, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -335,7 +336,8 @@ if (section('split build (asset-build)')) try {
       // 1. a clean boot at each view: the line goes, the game runs (its zone name is set) with no page error
       for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
         const { page, errs } = await open(null, w, h);
-        await page.waitForLoadState('load'); await page.waitForTimeout(600);
+        await page.waitForLoadState('load');
+        await page.waitForFunction(() => !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
         const r = await page.evaluate(() => ({ line: !!document.getElementById('lfBoot'), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width }));
         assert(!r.line && !r.tags && r.zone && r.w > 0 && !errs.length, `split: boots at ${w}x${h} with the loading line and its tags gone` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
         await page.close();

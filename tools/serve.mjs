@@ -12,6 +12,7 @@ const DIST = path.join(ROOT, 'dist');
 const args = process.argv.slice(2), SPLIT = args.includes('--split');
 const port = +(args.find(a => !a.startsWith('--')) || process.env.PORT || 5173);
 const PAGE = SPLIT ? '/lanternfall-split.html' : '/lanternfall.html';
+if (SPLIT && !fs.existsSync(path.join(DIST, PAGE))) { console.error('dist' + PAGE + ' is missing: run node tools/build.mjs --split'); process.exit(2); }
 const assets = SPLIT ? pageAssets(path.join(DIST, PAGE)) : new Map();
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 http.createServer((req, res) => {

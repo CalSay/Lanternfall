@@ -22,7 +22,7 @@ export function pageAssets(htmlFile, html = fs.readFileSync(htmlFile, 'utf8'), f
 }
 
 // The asset for a request path ('/assets/NAME' under the page's origin), or null.
-export const assetFor = (assets, pathname) => assets.get(decodeURIComponent(pathname).replace(/^\//, '')) || null;
+export const assetFor = (assets, pathname) => { try { return assets.get(decodeURIComponent(pathname).replace(/^\//, '')) || null; } catch (e) { return null; } };
 export const ASSET_TYPE = JS;
 
 // Playwright: serve `html` at `origin` and its assets under it; every other request goes to `other` (default: refused, so
