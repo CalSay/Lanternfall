@@ -9712,6 +9712,14 @@ if (section('ns-foe-kits-z1-10 (zone 1-10 foe kits)')) try {
   const par = E(`(() => { let w = 0; for (const z of [3,4,5,6,7,8,9,10]) { const Z = ZONE_FOES[z], TY = TURN_FOE_TYPES[TYPES[zoneType(z)].key];
     w = Math.max(w, Math.abs(Z.speed * zoneFoeThreat(Z.moves) / (TY.speed * zoneFoeThreat(TY.moves)) - 1)); } return w; })()`);
   assert(par < 1e-9, `ns-foe-kits: with parity each monster deals its slot type's damage a second (worst off by ${par})`);
+  // a Captain inherits its monster's two roster moves unchanged (shaped as a boss, so holds and feints), not the ordinary fight's copy
+  const cap = JSON.parse(E(`JSON.stringify([3,4,6,7,8,9].map(z => { const K = ZONE_FOE_KITS[z], b = zoneFoeBoss(z, [TURN_BOSS_BASIC.a], 10.5, 0);
+    const raw = [K.monster.moves[0], K.monster.moves[1], K.captain.extra].map(mv => zoneFoeShape(mv, z, true)), ks = [];
+    const shape = raw.every((mv, i) => mv.id === b.script[i].id && mv.hits.length === b.script[i].hits.length && mv.hits.every((h, j) => { const o = b.script[i].hits[j];
+      if (!h.feint) ks.push(o.x / h.x); return o.wind === h.wind && (o.hold || 0) === (h.hold || 0) && !!o.feint === !!h.feint; }));
+    return [z, shape && Math.max(...ks) - Math.min(...ks) < 1e-9, b.script[0].hits.some(h => h.hold > 0) || b.script[1].hits.some(h => h.hold > 0)]; }))`));
+  assert(cap.every(([z, ok, held]) => ok && held === [4, 6, 8, 9].includes(z)),   // zone 3 is below tricks.from; the Maw Cantor's two moves hold nowhere in the roster
+    'ns-foe-kits: each Captain plays its monster\'s two roster moves as a boss (same winds, holds and feints, one scale with its extra move): the Thornwing, Riftwing, Devourer and Glassfang holds play ' + JSON.stringify(cap));
   // live: a zone 3 normal is the Ravager in the bones slot (it never gets up), the boss the Headsman with three moves; zone 10 the Hollow Cantor
   const fight = (z, boss) => E(`(() => { soloPick('tobin', {now:true}); S.activity = 'fight'; TURN_TUNE.on = 1; S.maxZone = ${z}; setZone(${z}); fightBoss = ${boss};
     for (let i = 0; i < 60; i++) { spawn(); const f = combatFoes()[0]; if (${boss} || f.skin) break; }

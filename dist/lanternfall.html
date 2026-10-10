@@ -28869,8 +28869,8 @@ const ZONE_FOE_TUNE = { on: [0, 0], parity: 1, hpX: 4 / 3,
   // more often than today's trick strings, and a full parry earns a counter), each hero's damage holds that hero's casual win rate, so the
   // heroes' spread stays as today's. Zones 2 to 4 sit at 100% either way and keep damage parity; zone 2 has no row and takes zone 1's
   // length; zone 4 is held to its rally gates (no HP brings its turns back) and takes zone 6's length.
-  fit: { 1: [1.13, 0.67, 1, 1], 2: [1.13, 1, 1, 1], 3: [0.92, 1, 1, 1], 4: [1.8, 1, 1, 1], 5: [1, 0.93, 1.33, 0.88], 6: [1.82, 0.8, 0.88, 0.76],
-    7: [1.8, 0.94, 1.23, 0.95], 8: [1.66, 0.83, 1.11, 0.83], 9: [1.75, 0.86, 1.4, 1.11], 10: [1, 1.25, 1.16, 1.38] } };
+  fit: { 1: [1.13, 0.67, 1, 1], 2: [1.13, 1, 1, 1], 3: [0.92, 1, 1, 1], 4: [2.34, 1, 1, 1], 5: [1, 0.93, 1.33, 0.88], 6: [1.73, 0.66, 0.77, 0.59],
+    7: [1.8, 0.94, 1.17, 0.96], 8: [1.64, 0.8, 0.97, 0.75], 9: [1.79, 0.8, 1.28, 0.95], 10: [1, 1.25, 1.16, 1.38] } };
 const ZONE_FOE_ROWS = {
   'zf-fire-frost': { region: 'hollow', weak: 'fire', res: ['frost'] },
   'zf-holy-frost': { region: 'hollow', weak: 'holy', res: ['frost'] }
@@ -28992,10 +28992,13 @@ const ZONE_FOE_BOSS_CACHE = {};
 function zoneFoeBoss(z, script, spd, arm) {
   const Z = ZONE_FOES[z], C = Z && (Z.champion || Z.captain);
   if (!C || !script || !script.length) return null;
-  const champ = !!Z.champion, ck = z + ':' + (champ ? 'c' : 'k') + ':' + script.map(m => m.id).join(',') + ':' + spd + ':' + arm;
+  const T = typeof TURN_TUNE === 'object' ? TURN_TUNE : null, champ = !!Z.champion;
+  const ck = [z, champ ? 'c' : 'k', script.map(m => m.id).join(','), spd, arm, ZONE_FOE_TUNE.parity, String(ZONE_FOE_TUNE.fit[z]),
+    T ? [T.tricks.on, T.tricks.from, T.tricks.feintFrom, String(T.boss.chargeX)].join() : ''].join(':');
   if (ZONE_FOE_BOSS_CACHE[ck]) return ZONE_FOE_BOSS_CACHE[ck];
-  const base = champ ? C.moves : [Z.moves[0], Z.moves[1], C.extra];
-  const cx = typeof TURN_TUNE === 'object' && typeof turnZoneLine === 'function' ? turnZoneLine(TURN_TUNE.boss.chargeX, z) : 1;
+  const M = ZONE_FOE_KITS[z] && ZONE_FOE_KITS[z].monster, mm = M ? M.moves : Z.moves;   // the roster's moves, not the ordinary fight's shaped and scaled copy
+  const base = champ ? C.moves : [mm[0], mm[1], C.extra];
+  const cx = T && typeof turnZoneLine === 'function' ? turnZoneLine(T.boss.chargeX, z) : 1;
   let s1 = base.map(mv => zoneFoeShape(mv, z, true)), s2 = champ && C.phase ? s1.map((mv, i) => i === C.phase.i ? zoneFoeShape(C.phase.move, z, true) : mv) : null;
   const armK = champ ? C.armour || 0 : Z.armour || 0, sp = C.speed * 10;
   const fit = (ZONE_FOE_TUNE.parity && ZONE_FOE_TUNE.fit[z]) || [1, 1, 1, 1];

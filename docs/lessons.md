@@ -53,6 +53,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Fit a boss swap on the budget rows, not on mean damage a turn: a boss whose moves have fewer hits is parried in full more
   often, and every full parry earns a counter, so equal damage a turn still played 10-15 casual points easier (ns-foe-kits
   z7 85 -> 98). Why: the first shared-parity kits widened the hero spread and made every Captain easier.
+- When a boss reuses an ordinary monster's moves, build it from the source data, not the ordinary fight's processed copy (shaped
+  without holds, scaled to its slot). Why: ns-foe-kits' first push gave every Captain its monster's tuned moves; the review caught it.
 - With a zone monster switched on, the budget's `types` rows throw (the zone sends one type); measure those zones with
   `normals.mjs`-style direct spawns instead. Why: ns-foe-kits z9/z10 normal rows could not run with kits on.
 

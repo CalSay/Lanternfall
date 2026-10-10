@@ -255,7 +255,7 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   `ZONE_FOE_TUNE.on` (Mossy Hollow, Batwing Caves). Switched on, each is held to the fight it replaces (today's damage and
   fight length, then a per-zone fit on the first-hour budget rows), because the roster's raw numbers play much easier
   (fewer hits a move, more full-parry counters). Open for `ns-a2-wire`: a kept-up hero who never defends beats the zone 8
-  Captain 41-79% (band under 10%). Proof: `docs/proof/ns-foe-kits-z1-10/report.md`. Cal can veto with "Play the roster's
+  Captain 15-100% (band under 10%). Proof: `docs/proof/ns-foe-kits-z1-10/report.md`. Cal can veto with "Play the roster's
   raw numbers" (`parity: 0`).
 
 ## Gathering, gatherers and the camp
