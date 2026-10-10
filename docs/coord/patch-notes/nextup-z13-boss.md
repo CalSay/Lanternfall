@@ -1,0 +1,1 @@
+Next up shows "Boss ready in Zone 13" again when you are ready for the boss. Since the tier 2 row arrived, that row could push the boss out of Next up while two other Ready rows stayed. Best shot: nextup-boss.
