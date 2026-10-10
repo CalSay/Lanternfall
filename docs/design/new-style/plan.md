@@ -21,7 +21,7 @@ copies of the zone 1 test (`/mnt/project-files/experiments/new-style-plan/`, wit
   the hunting beasts and the camp. That is 8 packs, about 122 sheets and 2,200 credits. The other 5 areas and the higher node
   tiers follow: about 170 sheets and 3,060 credits.
 - **One assumption Cal can veto.** Cal's 01:09 message names monsters, so the plan takes Scenario for scenery, nodes and
-  monsters as asked (section 7, A1). He can stop it with "Keep monsters and scenery Codex-only".
+  monsters as asked (section 7, S1). He can stop it with "Keep monsters and scenery Codex-only".
 - **One thing must be true first.** The hosting split and its art loader must be live, because the one-file page is already
   full with the new heroes (section 5.1).
 - **Two findings from the zone 1 test.** The 01:20 darkening fix made Wren harder to tell from the scene by lightness, though
@@ -38,11 +38,11 @@ Counted at `9685be4a`. "Today" is what the game draws now; "new" is what the new
 | Area scenery | Codex's Mossy Hollow painting (one flat 960x540 picture, road at 0.770, no parallax; 480x900 upright copy) in z1-8, 15, 22, 29; procedural scenes elsewhere | 1 painting + 11 procedural themes | `src/js/21zb-data-bgart.js:4`; `src/js/63-scenery.js:175-200`; `22-data-regions.js:83-86` | 7 sets |
 | Parallax layers | Procedural scenes: sky, far, mid, ground, fore at [0.05, 0.2, 0.5, 1, 1.35] | 5 a scene | `63-scenery.js:225`, `:814-819` | 4 a set: sky+far, mid, ground (with the road), fore |
 | Paths (roads) | Painted inside each theme's ground layer, art rows G-1 to G+7, per theme (forest dirt road `:401`, barrow slabs `:490`, marsh planks `:580`); not tiled | 1 a theme | `63-scenery.js:362-367` | Inside each set's ground layer, tiling across the width (the zone 1 road already tiles) |
-| Gathering scenes | gmine (ore), gwoods (wood), gmeadow (fibre and herb), gglade (crystal); each shows 3-5 nodes of the picked kind and tier | 4 | `src/js/63c-scenery-gather.js:1-12`, `:32` (`THEME` map), `:300-315` | 4 sets |
+| Gathering scenes | gmine (ore), gwoods (wood), gmeadow (fibre and herb), gglade (crystal); each shows 3-5 nodes of the picked kind and tier | 4 | `src/js/63c-scenery-gather.js:1-12`, `:33` (`THEME` map), `:300-315` | 4 sets |
 | Resource nodes | 5 rigs (ore, wood, crystal, fibre, herb) x 5 tiers; tiers are recolours with added detail; 4 frames (idle0, idle1, wind, strike) | 25 | `src/js/13-art-enemies.js:517-567`; `src/js/11-art-craft.js:128,152,173`; names `src/js/20-data.js:43`, `src/js/21-data-craft.js:154-156` | 25 stills (each tier its own drawing, Cal 01:26), with chips |
 | Zone monsters | Thorn Imp and Gloomjaw are Codex packs (7 actions, 55 and 67 frames); the rest are 7 procedural rigs of 4 frames (slime, bat, bones, beetle, spore, golem, wraith) | 35 designed (2 drawn) | `world-structure.md:22-27`; `src/js/21za-data-foeart.js:7`; `20-data.js:4-11` | 35 packs of 8 key frames |
 | Captains | A recolour of the zone's monster plus an extra move, inside its pack | 35 | `world-structure.md:29` | A palette in data plus up to 4 extra key frames |
-| Area Bosses (Champions) | Procedural "Elder" rigs at 1.3x with a crown | 7 | `world-structure.md:24`; `13-art-enemies.js:26` | 7 packs |
+| Area Bosses (Champions) | Procedural "Elder" rigs at 1.3x with a crown | 7 | `world-structure.md:24`; `13-art-enemies.js:22,28` | 7 packs |
 | Region Boss | The Fenmother, her own kit over the type art | 1 | `src/js/59h-bosses.js:28-35` | 1 pack |
 | Non-bipeds | No body-type field exists. Of z1-10: Thornwing, Riftwing and Cave Devourer clearly; Nightseed Sorcerer unclear; 6 bipeds. The "about 17 of 43" is an unchecked red-team estimate | 3-4 of 10 (z1-10) | `enemies-c22-hollow-final.md:27-114`; `live-3d/ruling.md:47` | Section 6 risk 2 |
 | Heroes | Wren route S (20 fight moves wiring, 4 gather loops next); Tobin and Pip route S packs being made overnight | 3 | `docs/design/route-s/ruling.md`; cards `integrate-route-s-tobin`, `-pip` | Already their own cards |
@@ -147,8 +147,8 @@ and mid layers; a haze grade at conversion (recorded in the pack's manifest, jud
 game adds a warm ground light pool under each actor and, at zoom 1 only, a 1 px rim of lantern light on the actor's edge (both
 light effects under #325, not drawn art). The kit measures all three on game shots of the zone 1 sample before A1 is made and
 reports which combination passes J2 in both views. If none does at 740x360, the A1 judge sets that view's line with its
-reasons, and phones fall to the K = 1 fallback of `actor-scale` (G3) only if that helps. J2 is the pass line, whatever the
-method.
+reasons and a 740x360 shot in the digest; any phone line below 70% median and 60% per case needs both. Veto: "Phones need the
+full contrast line". J2 is the pass line, whatever the method.
 
 ## 4. Order: early game first, in whole judged packs
 
@@ -177,8 +177,10 @@ already holds its scenery and Imp. G-woods goes second because the cold Hearth i
 set (`route-s-wren-gather`) lands on it.
 
 **Monsters need game data too.** Only z1-2 have named monsters in the game (`ZONE_FOES`, `src/js/59l-zone-foes.js`); z3-10
-fight the procedural type rigs, and the code that applies named monsters skips bosses and elites. Card `ns-foe-kits-z3-10`
-adds the z3-10 monsters, their Captains and the two Champions as fight data from `enemies-c22-hollow-final.md`, switched on by
+fight the procedural type rigs, and the code that applies named monsters skips bosses and elites (`zoneFoeSkin`,
+`59l-zone-foes.js:51`; no `ZONE_FOES[z].captain` exists, `55-story.js:6`). Without Captains in the data, z1-2 could never pass
+the whole-screen rule. Card `ns-foe-kits-z1-10` adds the z3-10 monsters, the Captains of all ten zones (z1-2 included) and the
+two Champions as fight data from `enemies-c22-hollow-final.md`, switched on by
 their area's wire card. That is fight design, so it runs as its own card with its own checks, not inside an art card.
 
 **Imp and Gloomjaw.** A1 replaces Codex's 55- and 67-frame packs with 8-frame Scenario packs in the new style, so z1-2 match
@@ -191,7 +193,9 @@ when **every** piece it would draw has a wired new-style version: its scenery, e
 the picked kind and tier, the hero in play and any ally on it, and the hero's critter. Otherwise the whole screen draws today's
 art. The choice holds for that visit: if the loader has not fetched the screen's set when it opens, the screen opens classic
 and the next visit opens new, so a screen never changes style while you look at it. The first screen's set is in the boot set,
-so a new player never sees that.
+so a new player never sees that. Once the first fight starts, the loader prefetches the G-woods set (about 0.6 MB, outside the
+boot line), so the cold Hearth at the Pine Grove opens in the new art on its first visit; `ns-gwoods-wire` checks this on a
+fresh save.
 
 So z11 stays classic until A3 lands; a tier 3 woods scene stays classic until pack 14; a Tobin player sees classic scenery
 until Tobin's route S pack is wired. No screen mixes styles, and no pack waits for another. The one mix left is #328's ruled
@@ -244,17 +248,17 @@ most 64 colours, 1-bit alpha.
 | G-mine, G-glade (each): set 400 + 2 nodes | 440 KB |
 | G-meadow: set 400 + 4 nodes | 480 KB |
 | G-hunt: 3 beasts | 180 KB |
-| Camp: set 400 + 9 stations + wall + about 18 gatherers | about 1,100 KB |
-| **First hour (packs 1-8)** | **about 5.3 MB** |
+| Camp: set 400 + 9 stations + 4 wall stages + about 18 gatherers | about 1,175 KB |
+| **First hour (packs 1-8)** | **about 5.4 MB** |
 | A3-A7, node tiers 3-5, Deepwell | about 5.9 MB |
-| **Chapter 1 environment** | **about 11.2 MB** |
+| **Chapter 1 environment** | **about 11.3 MB** |
 
 **Against the page.** The one-file page is 8.36 MB today. Wren's fight set takes it to about 10.4 MB and her gather set to
 about 10.73 MB (#328). Tobin and Pip at up to 2.0 MB each would pass the 14 MB fail line on their own, so #328 already holds a
 third hero for the hosting split. **No environment pack fits the one-file page.** Every wire card depends on the split build
 (`asset-build`) and the art loader (`art-loader`).
 
-**Against the hosting plan** (`hosting.md` 6). Loading everything before play (B1) cannot hold three hero packs plus 5.3 MB of
+**Against the hosting plan** (`hosting.md` 6). Loading everything before play (B1) cannot hold three hero packs plus 5.4 MB of
 first-hour environment under the 8.0 MB first-load fail line, so these packs need B2, which loads by area. Its lines:
 
 | B2 line (provisional, `hosting.md` 6) | Today | With A1 wired (estimate, on the wire) |
@@ -269,7 +273,7 @@ loader keeps 4.0 MB, A1's boot share drops to its scenery and the zone 1 monster
 worst area 1 foe), and the rest of the set loads after the first fight starts.
 
 Gather scenes, the hunt and the camp load as their own sets when first opened. The whole web build is about 3.5 MB code and
-CSS, 6 MB of heroes and 11.2 MB of environment: about 21 MB, under the 25 MB report line. Classic art costs no wire bytes
+CSS, 6 MB of heroes and 11.3 MB of environment: about 21 MB, under the 25 MB report line. Classic art costs no wire bytes
 under B2 because its files load only when the switch is on.
 
 ### 5.2 Scenario credits per pack
@@ -341,8 +345,9 @@ overlap gate holds for the new packs too. Monster ratios stay as designed per mo
    calibration cannot pass J2 on phones. Answer: the ground pool and zoom-1 rim light (game-drawn light), more haze, and the
    kit's report before any credit is spent on A1; the A1 judge sets the phone line with reasons if it must.
 6. **The 16 Nov first hour and the 20 Nov public post.** The chain is long: `actor-scale`, `asset-build`, `art-loader`,
-   `ns-scenery-engine`, `ns-foe-kits-z3-10`, the kit, Codex concepts, D2, then make, judge and wire per pack, with wire cards one
-   at a time. Realistically **A1 and G-woods** make the first-hour build, and the other first-hour packs land after it. Shows
+   `ns-scenery-engine`, `ns-foe-kits-z1-10`, the kit, Codex concepts, D2, then make, judge and wire per pack, with wire cards one
+   at a time. Allies stand on screen from z5, so z5-10 switch to the new art only once Tobin's and Pip's route S packs are wired
+   (the whole-screen rule). Realistically **A1 and G-woods** make the first-hour build, and the other first-hour packs land after it. Shows
    as: A1 not judged by 30 Oct. Answer: the packs are in first-screen order, and the whole-screen rule lets anything that misses
    stay classic. The public post shows whatever is wired; it never shows a half pack.
 7. **The tier cut.** If the first hour reaches tier 3 nodes, a tier 3 scene stays classic. The G make cards check it first.
@@ -351,7 +356,7 @@ overlap gate holds for the new packs too. Monster ratios stay as designed per mo
 
 ## 7. Cal: one assumption he can veto, and three decisions
 
-- **A1 Scenario for scenery, nodes, monsters, beasts and the camp (assumed; veto "Keep monsters and scenery Codex-only").**
+- **S1 Scenario for scenery, nodes, monsters, beasts and the camp (assumed; veto "Keep monsters and scenery Codex-only").**
   Cal's 01:09 message asks for the restyle and names monsters, and the zone 1 test (scenery, nodes and the Imp, through Scenario)
   ran on his OK. So the plan treats it as asked. The 00:40 rule line covers hero poses and effect sprites; the plan's judge
   records the wider reach in `DECISIONS.md` (Art) with this veto. Codex keeps concepts and icons. If Cal vetoes, the make
@@ -364,13 +369,13 @@ overlap gate holds for the new packs too. Monster ratios stay as designed per mo
   on Scenario's billing page; the API cannot.
 - **D4 The style-model retrain** (1,500 credits, existing card): optional. Recommended only if A1's judge reports drift.
 
-Other vetoes: "Keep Codex's Imp and Gloomjaw" (section 4.1); "Heroes back to 95 px" and "Heroes only, not foes" stand from
+Other vetoes: "Keep Codex's Imp and Gloomjaw" (section 4.1); "Phones need the full contrast line" (section 3.2); "Heroes back to 95 px" and "Heroes only, not foes" stand from
 #328 and would change J3's numbers.
 
 ## 8. Cards
 
 Each pack has three cards: **make** (Scenario sheets in scratch, `/mnt/project-files/art-new-style/<pack>/`; spends credits
-only after D2, and not at all if Cal vetoes A1), **judge** (red team, then the Opus art judge rules with gates J1-J7) and **wire** (converts the pack as
+only after D2, and not at all if Cal vetoes S1), **judge** (red team, then the Opus art judge rules with gates J1-J7) and **wire** (converts the pack as
 drawn and wires it behind Classic art under the whole-screen rule). The judge never grades its own pack; the make card never
 wires.
 
@@ -386,11 +391,11 @@ gate option, so the status is what holds it. Soft dependencies go in `--soft` wh
 |---|---|---|---|---|---|---|
 | ns-kit | New-style kit in the shared folder: prompts, references, cutter, anchor page, J1 and J2 runners, byte measure; calibrates J2 on game shots of the zone 1 sample (no credits) | none | docs | M | 1 | claude / opus-medium |
 | ns-codex-foe-concepts-z1-10 | Codex concepts: 8 monsters (z3-10) and 2 Champions, with Captain swatches | none | docs | M | 1 | codex / codex |
-| ns-foe-kits-z3-10 | z3-10 monsters, Captains and the two Champions as fight data, off until their area's wire card | none | foes, fight-turn | L | 1 | claude / opus-high |
+| ns-foe-kits-z1-10 | z3-10 monsters, z1-10 Captains and the two Champions as fight data, off until their area's wire card | none | foes, fight-turn | L | 1 | claude / opus-high |
 | ns-scenery-engine | Layered painted scenery, sprite foes, nodes, beasts and stations at actor scale, anchors, the whole-screen rule, Classic art for all of it | actor-scale | fight-turn, regions-data, gather-ui, camp-ui | L | 1 | claude / opus-high |
 | ns-a1-make | Mossy Hollow pack sheets | ns-kit, ns-codex-foe-concepts-z1-10 | docs | M | 1 | claude / opus-medium |
 | ns-a1-judge | Mossy Hollow pack ruling | ns-a1-make | docs | M | 1 | claude / opus-high |
-| ns-a1-wire | Wire Mossy Hollow and the critters | ns-a1-judge, ns-scenery-engine, ns-foe-kits-z3-10, art-loader | art | M | 1 | claude / opus-medium |
+| ns-a1-wire | Wire Mossy Hollow and the critters | ns-a1-judge, ns-scenery-engine, ns-foe-kits-z1-10, art-loader | art | M | 1 | claude / opus-medium |
 | ns-gwoods-make | Woods scene, wood t1-2, grove props and Hesketh sheets | ns-kit | docs | S | 1 | claude / opus-medium |
 | ns-gwoods-judge | Woods pack ruling | ns-gwoods-make | docs | S | 1 | claude / opus-high |
 | ns-gwoods-wire | Wire the woods pack | ns-gwoods-judge, ns-scenery-engine, art-loader, route-s-wren-gather | art | M | 1 | claude / opus-medium |
@@ -432,7 +437,7 @@ the Fenmother), `ns-nodes-t3-5-*`, `ns-deepwell-*`.
   hour needs them merged first. `art-loader`'s card holds one input line; it needs its spec from `hosting.md` 9 card 6.
 - **Hold `first-hour-art`** (Codex: 3 stills and a Hesketh bust in the B1 pixel style) until its brief names the zone 1
   sample and Wren's concept as style references, so it doesn't land in the old style first.
-- Ruling #328 kept Codex's zone 3-10 foe briefs at today's scale. Under A1 those briefs become `ns-codex-foe-concepts-z1-10`
+- Ruling #328 kept Codex's zone 3-10 foe briefs at today's scale. Under S1 those briefs become `ns-codex-foe-concepts-z1-10`
   (concepts, not animated packs).
 - `one-background-an-area` (one flat 960x540 picture an area) is superseded for every area that gets a new-style pack.
 
@@ -444,10 +449,27 @@ the inventory sources above. Measured on scratch copies: the 4 layers' bytes in 
 111 art px; the pine and copper nodes; the J2 contrast score on three grades.
 
 Red team: `experiments/new-style-plan/redteam.md` (adopt with changes). This version takes its changes: the boot-set row, J2
-on game shots at both views, J1 found automatically, the card areas and blocked make cards, `ns-foe-kits-z3-10`, the grove in
+on game shots at both views, J1 found automatically, the card areas and blocked make cards, `ns-foe-kits-z1-10`, the grove in
 the woods pack, critters and gatherers, the whole-screen rule on load, honest reroll factors and balance, A1 as an assumption,
 and the lamp-post line no longer put in Cal's mouth.
 
 Not checked: how the lossy q90 layers look at 1920x1080 (the judge reads it on A1); the first hour's real node tiers (the G
 make cards); the Champion and Fenmother byte estimates (no sheet exists); 740x360 and 1024x768 composites of the new scenery
 (estimated from the 1280 composite); the real Scenario balance.
+
+## Ruling (Opus judge, 2026-10-10)
+
+**Adopt with changes**; the five changes are applied above (Captains for z1-2 in `ns-foe-kits-z1-10`, the G-woods prefetch,
+the phone contrast limit, S1 and the ally risk, the camp bytes and two citations). Acceptance: all five lines met. Red team:
+10 of 11 points answered; node tiers 3-5 (7 sheets for 15 drawings) are re-priced by their make card before D3. Numbers
+re-added: 2,196 credits for the first hour (3,294 at the 1.5x cap, inside about 4,471), 5,256 for Chapter 1; boot set
+3.79 MB. Nothing spends a credit before D2; nothing is wired or redrawn. Full ruling:
+`/mnt/project-files/experiments/new-style-plan/judge.md`.
+
+**Veto phrases for Cal:** "Hold the new-style plan" stops all of it. Narrower: "Keep monsters and scenery Codex-only",
+"Keep Codex's Imp and Gloomjaw", "Phones need the full contrast line", and from #328 "Heroes back to 95 px" and "Heroes only,
+not foes".
+
+**For Cal:** We redraw the first hour's scenery, monsters, gathering spots and camp to match the new heroes, Mossy Hollow and
+the woods first. Each area ships whole and judged, and keeps the old art until then. Nothing spends your credits until you OK
+about 2,200.
