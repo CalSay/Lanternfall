@@ -1,6 +1,8 @@
 # seed: 1
 # Proof for card defeat-card-guide-tip: the first time a zone boss beats you, the Try again card opens; after you close it and the road
 # is quiet, Hesketh says one line about the card. The early fixture is at the zone 8 boss. The hero attacks and never defends, so the boss wins.
+# hesketh-boss-loss-line: the boss is fought again at once, foe first, so the line comes while the hero is still down and holds the recovery.
+# The Hero tab's points tip never shows at 0 HP (it froze the game with the hero down); after Got it the hero stands and the fight goes on.
 new early
 wait 5
 tap-if "Continue"
@@ -41,3 +43,8 @@ wait 6
 expect "The card showed what beat you"
 expect "No shame in that"
 shot defeat-tip
+tap "Got it"
+wait 8
+expect-no "PAUSED"
+expect-no "No shame in that"
+shot fight-goes-on
