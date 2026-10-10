@@ -218,6 +218,12 @@ overrides the tier and rarity).
 
 Frames: `idle0`, `idle1` (bob 1 art px), `wind`, `strike`, `down` (laid on the ground), `hit`
 (white flash of idle0). Poses are numbers, not drawings (`AK.ANIMS`); a prop follows its hand.
+Bowstrings are the one prop the game draws (Cal, 2026-10-09 23:47, "Game string it is"): hero frames with a bow come
+without a string and mark three points per frame (both bow tips and the drawing hand). Briefs ask the artist for those points,
+not a drawn string. The game also draws motion and light effects (trails, flashes, sparks, rings, smoke, shake,
+hit-stop), with one colour per status (red = bleed). Hero poses and effect sprites can be made through Scenario from the
+approved concept (Cal, 2026-10-10: "Everything we've done with Wren today should be the default"); Codex makes concepts and
+icons. Arrows and bats are sprites; the art judge vets every pack (`DECISIONS.md`, Art).
 Frame timing and movement are in 62-stage.js (wind 0.14 s, strike 0.12 s, recover 0.2 s).
 `prefers-reduced-motion`: idle frames freeze, dashes snap, the flicker is steady.
 
