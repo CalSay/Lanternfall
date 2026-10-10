@@ -3,16 +3,19 @@
 # The orange diamond in the top bar was never Essence: it is the Embers coin, the world raid's currency, which reads 0 until a
 # raid boss falls. Part 2, a fresh game as Wren: the guided first fight runs through its lessons and its first kills; the top bar shows Gold only, and the coin is not on the page
 # (fresh-topbar-*.png). Before this card the 0 diamond sat beside the gold from 0:00, so the expect-no fails on that build.
-# Part 1 (runs first), save-current (zone 20, raid open): the coin is back (current-topbar-*.png), named "Embers, from the world raid"
-# by its title and aria-label. The driver's hover names buttons only, so the label is read by tools/check.mjs
-# "essence-counter-reads-right", which also covers Embers held, a felled raid boss, and kills adding Essence and no Embers.
+# Part 1 (runs first), save-current (zone 20, raid open): the playtest driver runs with no capability host (no window.claude),
+# so since online-off-clean there is no raid and the coin stays out here too (current-topbar-*.png). With a host the coin
+# shows at zone 20, named "Embers, from the world raid" by its title and aria-label: tools/check.mjs
+# "essence-counter-reads-right" stubs a host and checks that, plus Embers held, a felled raid boss, the no-host case, and
+# kills adding Essence and no Embers.
 # At 360x740 the purse is a 2-row grid: the check measures the header at 48 px with and without the coin (no jump).
 new current
 wait 2
 tap-if "Got it"
 tap-if "Continue"
 wait 1
-expect "#emberCoin"
+expect-no "#emberCoin"
+expect "#gold"
 shot current-topbar
 new fresh
 tap-if "Next"
