@@ -185,6 +185,9 @@
   .toasts.side-dock .mm-t-tx, .app.guide-side .toasts.side-dock .mm-t-tx { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .toasts.side-dock .mm-t-eye { line-height: 1; }
   .toasts.side-dock .mm-t-title { font-size: calc(15px * var(--display-k)); line-height: 1.05; overflow-wrap: normal; }
+  /* forge-line-740: the tip stops above the fight buttons, so at 740x360 its Go at 15 px took four lines ("Mine at / the / Copper /
+     Vein") and left the line two, cutting "The Forge needs Copper Ore 0/25" before where to get it. A smaller Go takes two lines */
+  .ob-bub.side .ob-ok { font-size: calc(12px * var(--display-k)); }
 }
 /* tall landscape (tablets, desktop): the mock-up's desktop sizes, a wider rail and a taller top row; key labels on the slots */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (min-height: 600px) {
