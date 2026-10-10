@@ -752,7 +752,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // still: the move's own pose in place (a buff: no dash, no shot or slash; fx-timing-fixes)
   function attack(a, aim, arc, still) {
     if (!a || !a.fr || a.down) return;
-    if (a.st === 1 || a.st === 2) { a.pending = 1; a.pendStill = still ? 1 : 0; return; }
+    if (a.st === 1 || a.st === 2) { a.pending = 1; return; }
     if (a === hero) heroSwings++;
     a.st = 1; a.t = 0; a.dash = 0; a.arc = arc ? 1 : 0; a.aim = aim || null; a.still = still ? 1 : 0;
     if (!still && !a.kind && !a.castTo && target() !== 'node' && foeAlive()) {
@@ -824,7 +824,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     a.t += dt;
     if (a.st === 1 && a.t >= WIND) { a.st = 2; a.t = 0; fire(a); }
     else if (a.st === 2 && a.t >= STRIKE) { a.st = 3; a.t = 0; if (reduced && a.dash) a.flash = Math.max(a.flash, 0.017); }
-    else if (a.st === 3 && a.t >= REC) { a.st = 0; a.t = 0; if (a.pending) { a.pending = 0; attack(a, null, 0, a.pendStill); } }
+    else if (a.st === 3 && a.t >= REC) { a.st = 0; a.t = 0; if (a.pending) { a.pending = 0; attack(a); } }
     let d = 0;
     if (a.dash && a.st) {
       if (reduced) d = a.st === 1 || a.st === 2 ? a.dash : 0;
@@ -1144,9 +1144,10 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   const ownMoves = () => (typeof wrenSOn === 'function' && wrenSOn()) || (typeof tobinSOn === 'function' && tobinSOn());
   on('ability', p => {
     const c = p && p.cls;
-    if (c === 'solo' && buffAb(p.id)) {
-      if (ownMoves()) attack(hero, null, 0, true);
-      else if (stageFx && target() === 'mob' && turnFight()) A.after(WIND, () => { if (!hero.st) stageFx.swing(handX(hero), handY(hero)); });
+    if (c === 'solo' && buffAb(p.id) && target() === 'mob' && turnFight()) {   // a real-time fight's press still swings (59j)
+      // a hero mid-swing takes no queued move: the glow starts at the wind anyway (a queued swing would release a later cast)
+      if (ownMoves() && hero.st !== 1 && hero.st !== 2) attack(hero, null, 0, true);
+      else if (stageFx) A.after(WIND, () => stageFx.swing(handX(hero), handY(hero)));
       return;
     }
     attack(hero);
