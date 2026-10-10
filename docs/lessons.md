@@ -69,7 +69,10 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A hero resource needs an effect of its own and at least one spend besides the finisher; walk one fight's count turn by turn before calling it a choice, and name hand and hip sides in a pose list. Why: Elowen's first draft cut Codex's costs, so Candles only climbed and paid through one passive, and her pose list named no sides (Auriel's third-arm cause); the red team caught both. (elowen-ability-spec, 2026-10-10)
 - A spec that renames or replaces moves relabels the art queue (gallery, sheet map, wire card) in the same pass. Why: on 10 Oct, Auriel's gallery kept the old Pip names after #357 renamed her moves, and Cal caught it. (elowen-ability-spec, 2026-10-10)
 - A hero's "own" move must be a new move (new effect, new pose), never another hero's move with a new name and id. Why: on 10 Oct, Auriel's five style moves were Pip's spark, frost shard, ward, hex and nova renamed; Cal saw "the abilities are the same" and had five new ones made. (oriel-own-abilities, 2026-10-10)
-
+- Decide what the stage does for an ability from its own data (24c `kind`, e.g. 'buff' fires nothing at the foe), never a per-name
+  list, and keep the route S drawers' swing (they start a move on `hero.st` 1): a buff swings in place with `attack(hero, null, 0, true)`.
+  To time a number against its hit in a browser, log both on the stage clock `T` (one value per frame, set before tick and animate).
+  Why: buffs still fired an arrow or bolt at the foe after #333, and a check with `/\\d/` in Node code (not a page string) matched nothing (fx-timing-fixes, 2026-10-10).
 - Code that must see every frame the game is held puts its check first in `GAME_HOLDS` (unshift), never through `holdGame`: `gameHeld()` stops at the first hold that is up, and 55-story's hold loads before the fight files. Why: foe-windup-after-hold's first push missed story scenes; the reviewer caught it (2026-10-10).
 
 ## Economy and skilling

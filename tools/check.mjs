@@ -112,6 +112,7 @@ const WEIGHT = {
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
   'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
+  'fx-timing-fixes': 40,
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
@@ -19099,6 +19100,91 @@ if (section('ability-effects-live')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('ability-effects-live crashed: ' + (e.stack || e)); }
+
+// ==== fx-timing-fixes: a buff fires nothing at the foe, and a hit's number rises when the hit lands (62-stage) ====
+// A buff (24c kind 'buff': Shadow Step, Brace, Arcane Ward) hits no foe, so the press spawns no arrow, bolt or slash: a hero drawn
+// with its own moves (route S) plays the move in place, classic art stands still, and the buff's own effect (62b) still lands.
+// A basic Attack's damage number's first frame comes at or after its hit on the stage: the arrow's or bolt's impact (the stage's
+// projectile), or the melee contact (the swing's strike, 62b swing). Pressed through the turn engine (59k strike) at 1280x720 and 740x360.
+if (section('fx-timing-fixes')) try {
+  const at = 'fx-timing-fixes', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, o = {}) => {
+      const phone = w < 1200;
+      const ctx = await browser.newContext({ ...o, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+      await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+      await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);   // the away card
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360]]) {
+        const v = `${at} ${w}x${h}`;
+        const { ctx, errs, X, page } = await open(w, h, { turns: true });
+        // the log, on the stage's clock T (90-boot: one T per frame, so a number and a hit in the same frame share it): every
+        // projectile the stage or 62b starts and when it lands, every swing's strike (62b swing), every float
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__L = { proj: [], sw: [], fl: [] };
+          { const P = ANIM.proj; ANIM.proj = function (kind, sx, sy, tx, ty, dur, col, arc, hit, delay) { const r = { kind, t: T, hitT: -1 }; __L.proj.push(r);
+            return P.call(this, kind, sx, sy, tx, ty, dur, col, arc, (x, y) => { if (r.hitT < 0) r.hitT = T; if (hit) hit(x, y); }, delay); }; }
+          { const W = stageFx.swing; stageFx.swing = (x, y) => { __L.sw.push(T); return W(x, y); }; }
+          on('float', f => __L.fl.push({ t: T, txt: String(f && f.txt) })); true`);
+        for (const [k, buff, shot] of [['wren', 'shadowstep', 'arrow'], ['tobin', 'brace', ''], ['pip', 'arcaneward', 'bolt']]) {
+          await X(`soloPick("${k}", { now: true }); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true`);
+          for (const id of [buff, 'attack']) {
+            const tag = `${v} ${k} ${id === 'attack' ? 'Attack' : id}`;
+            let ph = '';
+            for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+              ph = await X(`(() => { if (!TURN_LIVE || TURN_LIVE.ended) { S.activity = "fight"; spawn(); return 'off'; } return TURN_LIVE.foe !== mob ? 'other foe' : TURN_LIVE.phase; })()`);
+              if (ph === 'hero') break;
+              await page.waitForTimeout(60);
+            }
+            assert(ph === 'hero', `${tag}: the hero's turn comes (${ph})`);
+            const r = JSON.parse(await X(`(() => { const m = TURN_LIVE;
+              S.abil.unl.${k} = Array.from(new Set((S.abil.unl.${k} || []).concat(["${buff}"]))); S.solo.eq.${k} = ["${buff}", null, null]; turnSyncEquip();
+              m.cds["${buff}"] = 0; m.cds.attack = 0; m.h.blind = 0; m.foe.hp = m.foe.max = Math.max(m.foe.max, 1e7);   // no hit ends the fight
+              const why = "${id}" === "attack" ? "" : turnUsable(m, "${buff}"); if (why) return JSON.stringify({ why });
+              __L.proj.length = 0; __L.sw.length = 0; __L.fl.length = 0;
+              const s0 = stageFx.stats(), n0 = stageStats().heroSwings, own = !!((typeof wrenSOn === 'function' && wrenSOn()) || (typeof tobinSOn === 'function' && tobinSOn()));
+              const ok = "${id}" === "attack" ? turnCombatAction('attack') : turnCombatAction('ability', 0);
+              return JSON.stringify({ ok, t0: T, n0, own, c0: s0.casts, i0: s0.impacts }); })()`));
+            if (r.why) { assert(false, `${tag}: the buff can be pressed (${r.why})`); continue; }
+            assert(r.ok, `${tag}: the press goes through the turn engine (${JSON.stringify(r)})`);
+            // wait for the hit on the stage (a slow page falls behind), up to 6 s, then a beat for anything late
+            let s;
+            for (const t0 = Date.now(); ; ) {
+              s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats(), n: stageStats().heroSwings, T })`));
+              const landed = id === 'attack' ? (shot ? s.L.proj.some(p => p.kind === shot && p.hitT >= 0) : s.L.sw.length > 0) && s.L.fl.some(f => /\d/.test(f.txt)) : s.fx.impacts > r.i0;
+              if (landed || Date.now() - t0 > 6000) break;
+              await page.waitForTimeout(50);
+            }
+            await page.waitForTimeout(150); s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats(), n: stageStats().heroSwings, T })`));
+            if (id !== 'attack') {
+              assert(s.L.proj.length === 0 && s.fx.live === 0, `${tag}: a buff spawns no projectile (${s.L.proj.map(p => p.kind).join(', ') || 'none'} from the stage, ${s.fx.live} shots from 62b)`);
+              assert(s.fx.casts === r.c0 + 1 && s.fx.impacts > r.i0, `${tag}: the buff's own effect plays (casts ${s.fx.casts - r.c0}, impacts ${s.fx.impacts - r.i0})`);
+              assert(s.n - r.n0 === (r.own ? 1 : 0), `${tag}: ${r.own ? 'the hero plays its own move in place' : 'the hero swings at nothing'} (${s.n - r.n0} swings, own moves ${r.own})`);
+              assert(!s.L.fl.some(f => /\d/.test(f.txt)), `${tag}: no damage number (${s.L.fl.map(f => f.txt).join(', ') || 'none'})`);
+            } else {
+              const hitT = shot ? (s.L.proj.find(p => p.kind === shot && p.hitT >= 0) || { hitT: -1 }).hitT : s.L.sw.length ? s.L.sw[0] : -1;
+              const f = s.L.fl.find(f => /\d/.test(f.txt));
+              assert(hitT >= 0 && f, `${tag}: the ${shot || 'blow'} lands and its number rises (hit at ${hitT >= 0 ? (hitT - r.t0).toFixed(3) : 'never'}, number ${f ? f.txt : 'none'}; floats ${JSON.stringify(s.L.fl)}; DBG ${await X('JSON.stringify({ph: TURN_LIVE && TURN_LIVE.phase, hp: TURN_LIVE && TURN_LIVE.foe.hp, max: TURN_LIVE && TURN_LIVE.foe.max, ended: TURN_LIVE && TURN_LIVE.ended})')})`);
+              if (hitT >= 0 && f) assert(f.t >= hitT, `${tag}: the number's first frame is at or after the ${shot || 'contact'} (number ${(f.t - r.t0).toFixed(3)} s, hit ${(hitT - r.t0).toFixed(3)} s after the press)`);
+            }
+          }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('fx-timing-fixes crashed: ' + (e.stack || e)); }
 
 // ==== route-s-wren-wire (docs/design/route-s/ruling.md, "Build card spec: route-s-wren-wire"): Wren's route S fight moves ====
 // From the converter's record (art/heroes/wren/route-s/pack.json, tools/art/route-s-wren.py) and the embedded data (21ye): bytes
