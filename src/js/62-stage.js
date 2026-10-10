@@ -20,7 +20,7 @@ let stageDeco = null;
 // Ability effects (62b-fx.js): stageFx.swing(x, y) as the hero's swing fires, stageFx.aim(s) the foe's chest, and
 // stageFx.draw(ctx, phase, v), phase 'back' (before the actors), 'fx' (after the rings and particles) or 'dev' (device px, over the HUD).
 let stageFx = null;
-let resize, animate, draw, stageStats, stageRects, warmScene;
+let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
 {
   const A = ANIM;
   // ================= visual state (driven by core events) =================
@@ -170,9 +170,14 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // soloK: the scale a lone foe's fight takes on this stage; its steps down for a pair too wide for it (pairK), largest first
   const soloK = (w, h) => !LAND_Q.matches ? 1 : ZS === 1 ? zoom1K(w, h) : fits(h, ZS * ACTOR_K) ? ACTOR_K : ACTOR_K_SHORT;
   const stepsK = k0 => k0 === 3 ? [3, 2, 1] : k0 === 2 ? (ZS === 1 ? [2, 1] : [2, ACTOR_K_SHORT]) : [k0];
+  // foe-scale-own (Cal, 10 Oct 12:29: "I didn't say the enemies needed to match the size"): those scales are the hero's (HS).
+  // Foes, nodes and the layout keep their own, smaller scale AK = foeK(HS): 1.5 beside a 2x hero, 2 beside a 3x one. The hero
+  // draws HKS = HS / AK times the actors' scale about its feet (64h, 64l read stageHeroK), so its records are in actor px too.
+  const foeK = k => k >= 3 ? 2 : k >= 2 ? 1.5 : k;
   // pairK: the step a wide pair takes (0: none). The ground (GYS, SCH, tall) follows soloK, not crowd or pairK, so it never
   // moves mid-fight when adds come (judge, bigger-heroes).
-  let ZS = 1, AK = 1, SWS = 0, SHS = 0, GYS = 1, crowd = false, pairK = 0;
+  let ZS = 1, AK = 1, HS = 1, HKS = 1, SWS = 0, SHS = 0, GYS = 1, crowd = false, pairK = 0;
+  stageHeroK = () => HKS;
   const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_WT = 216, ZOOM_H = 196, SOLO_MIN_W = 300;
   // S6-E (combat-2 2.5): the width floor rises x1.4 for a swarm zone or a boss with 3+ adds (zoomX), one step out,
   // chosen per zone or boss fight (sceneReset, a boss's first pack), never between packs of one zone.
@@ -232,7 +237,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     DPR = dpr; CW = w; CH = h;
     ZS = pickZoom(w, h, DPR);
     const k0 = soloK(w, h);
-    AK = LAND_Q.matches && !crowd ? (pairK && pairK < k0 ? pairK : k0) : 1;
+    HS = LAND_Q.matches && !crowd ? (pairK && pairK < k0 ? pairK : k0) : 1;
+    AK = foeK(HS); HKS = HS / AK;
     ZM = ZS * AK;
     SWS = Math.round(w / ZS); SHS = Math.round(h / ZS);
     SW = Math.round(w / ZM); SH = Math.round(h / ZM);
@@ -249,7 +255,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     // clearly even when a narrow stage packs the columns close.
     tall = h - GY * ZM >= 76; stageEl.classList.toggle('tall', tall);
     laneY = Math.max(12, Math.min(tall ? 40 : 26, Math.round(SH * (tall ? 0.1 : 0.085))));
-    const sbox = stageEl.closest('.stagebox'); if (sbox) sbox.classList.toggle('actor-k', AK > 1);
+    const sbox = stageEl.closest('.stagebox'); if (sbox) sbox.classList.toggle('actor-k', HS > 1);
     readHud();
     scene = null; layoutDirty = true; solo.key = ''; packDirty = true;
   };
@@ -360,7 +366,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     // big foe (an elder, the wyrm, a tree node) would stand on it: its right edge stops 8 px into the foe's box.
     // At 2x or more (bigger-heroes) a wide melee hero (Tobin's sword) may stand back to SW * 0.12, so it keeps its 16 px from the foe.
     const hf = hero.fr && hero.fr.idle0, fl = frontLeft(), reach = fl == null ? 1e9 : AK > 1 ? fl - heroReach() : fl + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16);
-    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (AK >= 2 ? 0.12 : AK > 1 ? 0.2 : packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
+    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (HS >= 2 ? 0.12 : AK > 1 ? 0.2 : packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
     const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
     const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
     const laneX = Math.round(Math.max(16, D * 0.46));
@@ -403,17 +409,18 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // heroArtDraw hands back one shared record (hero._f is the same object), so its frame is read, then the record put back
   // as it was; the reach is kept per hero art id once that art has loaded
   const reachOf = new Map();
-  function heroReach(k = AK) {
+  // in actor px: the hero's reach at scale 1 times hk (its own scale over the actors'), and the gap at the actors' scale fs
+  function heroReach(fs = AK, hk = HKS) {
     const id0 = typeof heroArtId === 'function' && heroArtId(), id = id0 && (typeof wrenSOn === 'function' && wrenSOn() ? id0 + ':s' : id0);   // route S Wren reaches as drawn (64l)
     let r = id ? reachOf.get(id) : undefined;
     if (r == null && id && reachC && typeof heroArtDraw === 'function') {
       const h = hero._f, keep = h && { c: h.c, ox: h.ox, oy: h.oy, lights: h.lights && h.lights.slice() };
-      const i = heroArtDraw(reachC.getContext('2d'), id0, 'fightIdle', 0, 0, 0, { frame: 0 }), f = i && i.f;
+      const i = heroArtDraw(reachC.getContext('2d'), id0, 'fightIdle', 0, 0, 0, { frame: 0, k: 1 }), f = i && i.f;
       if (f && f.c) { r = rightEdge(f) - f.ox; reachOf.set(id, r); }
       if (keep && f === h) { h.c = keep.c; h.ox = keep.ox; h.oy = keep.oy; if (keep.lights) { h.lights.length = 0; h.lights.push(...keep.lights); } }
     }
     if (r == null) { const f = hero.fr && hero.fr.idle0; r = f ? rightEdge(f) - f.ox : 16; }
-    return r + Math.ceil(GAP_K / k);
+    return r * hk + Math.ceil(GAP_K / fs);
   }
   // bigger-heroes: a hero and a lone foe that need more than the stage's width at its scale (classic Tobin's sword against the
   // Elder Moss Slime at 1280x720) step down (stepsK: 2 to 1.5; at zoom 1, 3 to 2 to 1), so the hero keeps GAP_K stage px from
@@ -426,9 +433,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     if (!f || !hf) return 0;
     const id = typeof heroArtId === 'function' && heroArtId(), ks = stepsK(soloK(CW, CH)), art = id && typeof heroArtLeft === 'function' ? heroArtLeft(id) : hf.ox - leftEdge(hf) + 2;
     for (let i = 0; i < ks.length; i++) {
-      const k = ks[i], sw = Math.round(CW / (ZS * k)), left = Math.max(Math.round(sw * 0.12), art);
-      const foeL = sw - 6 - f.c.width + leftEdge(f) - (CH - GYS * ZS >= 76 ? 0 : Math.round(50 / (ZS * k)));   // the stage's own floor band, not tall (it rounds with AK)
-      if (left + heroReach(k) <= foeL || i === ks.length - 1) return i ? k : 0;
+      const k = ks[i], fs = foeK(k), hk = k / fs, sw = Math.round(CW / (ZS * fs)), left = Math.max(Math.round(sw * 0.12), art * hk);
+      const foeL = sw - 6 - f.c.width + leftEdge(f) - (CH - GYS * ZS >= 76 ? 0 : Math.round(50 / (ZS * fs)));   // the stage's own floor band, not tall (it rounds with AK)
+      if (left + heroReach(fs, hk) <= foeL || i === ks.length - 1) return i ? k : 0;
     }
     return 0;
   }
@@ -494,7 +501,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   let packList = null, packN = 0, packBoss = false, packDirty = false, colX0 = 0, lastFL = null;
   const foePad = () => (tall || target() === 'node' ? 0 : Math.round(50 / ZM));
   const gSpot = () => target() === 'node' && typeof gatherSpot === 'function' ? gatherSpot(SW, GY) : null;
-  const soloX = () => { const g = gSpot(); return g ? g.x : Math.round(SW * (target() === 'node' ? 0.68 : AK >= 2 && target() === 'mob' ? 0.95 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0))); };   // 2x: as far right as its art allows (bigger-heroes)
+  const soloX = () => { const g = gSpot(); return g ? g.x : Math.round(SW * (target() === 'node' ? 0.68 : HS >= 2 && target() === 'mob' ? 0.95 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0))); };   // 2x: as far right as its art allows (bigger-heroes)
   function refreshFoe() {
     const tg = target();
     if (tg === 'mob') { syncPack(); return; }
@@ -730,12 +737,13 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   const NODE_HIT = { ore: 0.12, crystal: 0.12, wood: 0.4, fibre: 0.2, herb: 0.2, hide: 0.15 };
   const nodeHome = () => {
     // hunting: the spear thrust's tip lands NODE_HIT into the beast (64i huntReach; the hand-drawn hero, not the baked frame)
-    const hr = S.node.kind === 'hide' && typeof huntReach === 'function' ? huntReach() : 0;
+    // (the hero's reaches times HKS: it draws HKS times the actors' scale, foe-scale-own)
+    const hr = S.node.kind === 'hide' && typeof huntReach === 'function' ? huntReach() * HKS : 0;
     if (hr) return Math.max(16, Math.round(foe.left + foe.w * NODE_HIT.hide) - hr);
     const f = hero.fr; if (!f) return foe.left - 18;
-    if (!ART.ready(f, 'strike')) return foe.left - 4 - (f.idle0.c.width - f.idle0.ox);
+    if (!ART.ready(f, 'strike')) return foe.left - 4 - Math.round((f.idle0.c.width - f.idle0.ox) * HKS);
     const ct = foe.fr && foe.fr.contact && foe.fr.contact[typeof heroArtId === 'function' && heroArtId()];   // a new-style node's contact for this hero (64m)
-    return Math.max(16, (ct != null ? foe.x + ct : Math.round(foe.left + foe.w * (NODE_HIT[S.node.kind] ?? 0.15))) - (rightEdge(f.strike) - f.strike.ox));
+    return Math.max(16, (ct != null ? foe.x + ct : Math.round(foe.left + foe.w * (NODE_HIT[S.node.kind] ?? 0.15))) - Math.round((rightEdge(f.strike) - f.strike.ox) * HKS));
   };
   const heroHome = () => target() !== 'node' ? hero.hx : typeof gatherHeroX === 'function' ? gatherHeroX(nodeHome()) : nodeHome();
   // attack(a, aim, arc): a swing (wind, strike, recover). Melee dashes to its foe (aim, else the
@@ -764,7 +772,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   }
   // the shot leaves the hand (route S Wren: her bow on the frame drawn, 64l wrenSHand)
   const sHand = a => (a === hero && typeof wrenSHand === 'function' ? wrenSHand() : null);
-  const handX = a => { const h = sHand(a); return ax(a) + (h ? Math.round(h[0]) : 10); }, handY = a => { const h = sHand(a); return a.hy + (h ? Math.round(h[1]) : -44); };
+  const handX = a => { const h = sHand(a), k = a === hero ? HKS : 1; return ax(a) + (h ? Math.round(h[0]) : Math.round(10 * k)); }, handY = a => { const h = sHand(a), k = a === hero ? HKS : 1; return a.hy + (h ? Math.round(h[1]) : Math.round(-44 * k)); };   // the hero's fallback hand at its own scale (foe-scale-own)
   const sparkW = (x, y) => A.burstPx(x, y, '#FFFFFF', 3, 30);
   function fire(a) {
     const tg = target();
@@ -1364,8 +1372,27 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const c = a.down ? greyOf(f.c) : a.lane === 0 && !a.flash && !(a.upT > 0.2) ? dimOf(f.c) : f.c;
     // a member lying down is longer than it stands: keep the whole body on the stage
     const x0 = a.down ? Math.max(Math.round(hx - f.ox), 2 - leftEdge(f)) : Math.round(hx - f.ox);
+    if (a === hero && HKS !== 1) {   // a baked hero (its art not in yet) at the hero's own scale too, about its feet (foe-scale-own)
+      const y = a.hy + a.dy, k = HKS, sf = bigOf(f, k);
+      ctx.save(); ctx.translate(hx, y); ctx.scale(k, k); ctx.translate(-hx, -y); ctx.drawImage(c, x0, Math.round(y - f.oy)); ctx.restore();
+      a._x = Math.round(hx - sf.ox); a._y = Math.round(y - sf.oy); a._f = a.down ? null : sf;
+      return;
+    }
     ctx.drawImage(c, x0, Math.round(a.hy + a.dy - f.oy));
     a._x = x0; a._y = Math.round(a.hy + a.dy - f.oy); a._f = a.down ? null : f;
+  }
+  // a baked frame at k times its size (nearest-neighbour, cached per frame and k): its record for the bounds and lights
+  const BIG = new WeakMap();
+  function bigOf(f, k) {
+    let m = BIG.get(f); if (!m) BIG.set(f, m = new Map());
+    let r = m.get(k);
+    if (!r) {
+      const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(f.c.width * k)); c.height = Math.max(1, Math.round(f.c.height * k));
+      const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(f.c, 0, 0, c.width, c.height);
+      r = { c, ox: Math.round(f.ox * k), oy: Math.round(f.oy * k), lights: (f.lights || []).map(l => Object.assign({}, l, { x: l.x * k, y: l.y * k, r: (l.r || 0) * k })) };
+      m.set(k, r);
+    }
+    return r;
   }
   // ================= the hero's looks (Deepwell cosmetics, S.deep.eq) =================
   // lantern: the colour of the hero's own light (its brightest glow), the key light over the party
@@ -2181,5 +2208,5 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   stageRects = () => ({ ZM, SW, SH, AK, hero: hero._f && !hero.down ? { x: hero._x, y: hero._y, c: hero._f.c } : null,
     foes: slots.slice(0, packN).filter(s => s.fr && s.dX != null && s.m && !s.m.dead).map(s => ({ key: s.key, boss: !!s.m.boss, x: s.dX, y: s.dY, c: (s.dF || s.fr.idle0).c })),
     floats: floats.filter(f => f.on).map(f => ({ txt: f.txt, big: f.big, crit: f.crit, left: Math.max(0, f.life) })) });
-  stageStats = () => ({ critFloats, heroSt: hero.st, heroPending: hero.pending, heroSwings, critLive: floats.filter(f => f.on && f.crit).map(f => ({ txt: f.txt, color: f.color, life: f.max })), drawMs: Math.round(drawMs * 100) / 100, SW: SWS, SH: SHS, CW, CH, ZM: ZS, DPR, GY: GYS, AK, ZA: ZM, aSW: SW, aSH: SH, aGY: GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0), rightEdge(s.fr.idle0), s.lane] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
+  stageStats = () => ({ critFloats, heroSt: hero.st, heroPending: hero.pending, heroSwings, critLive: floats.filter(f => f.on && f.crit).map(f => ({ txt: f.txt, color: f.color, life: f.max })), drawMs: Math.round(drawMs * 100) / 100, SW: SWS, SH: SHS, CW, CH, ZM: ZS, DPR, GY: GYS, AK, HS, HK: HKS, ZA: ZM, aSW: SW, aSH: SH, aGY: GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0), rightEdge(s.fr.idle0), s.lane] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
 }

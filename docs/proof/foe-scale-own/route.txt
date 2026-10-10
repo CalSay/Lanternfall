@@ -1,0 +1,11 @@
+# Proof for card foe-scale-own (Cal, 10 Oct 12:29: "I didn't say the enemies needed to match the size necessarily"). The hero keeps
+# bigger-heroes' scale (2x at 1280x720 and 1920x1080, 3x at 1024x768); foes, bosses, adds and nodes draw at 1.5x (2x beside a 3x
+# hero). tools/check.mjs "actor-scale (browser)" reads both scales per view and keeps the G2 gates; "wren route S (browser)" reads
+# her draw scale with the hero's own. Shots: /mnt/project-files/bigger-heroes/foes-own-size.png.
+# seed: 1
+new early
+wait 2
+tap-if "Continue"
+tap-if "Got it"
+wait 3
+shot zone-fight
