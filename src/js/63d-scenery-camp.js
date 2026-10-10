@@ -89,10 +89,16 @@ let campPaintFire = null;
     return hes;
   }
   const at = { x: 0, y: 0, SW: 1, SH: 1, on: false };   // the fire on screen, for the button
+  // actor-scale-followups: the fire and the plots are scenery, so they draw at the scenery's scale (1 / v.ak of the actors' px the
+  // stage hands over), about their base on a whole scenery px; Hesketh is an actor and keeps the actors' scale.
+  function asProp(g, k, x, y, paint) {
+    if (k === 1) { paint(x, y); return; }
+    g.save(); g.translate(Math.round(x * k) / k, Math.round(y * k) / k); g.scale(1 / k, 1 / k); paint(0, 0); g.restore();
+  }
 
   stageDeco = (g, phase, v) => {
     if (!showing(v.tg)) { at.on = false; return; }
-    const on = lit(), fx = Math.round(v.SW * FIRE_X) - v.cam, gy = v.GY;
+    const on = lit(), fx = Math.round(v.SW * FIRE_X) - v.cam, gy = v.GY, k = v.ak || 1;
     // new style (64m): the woods pack's stations, stakes, Hesketh and fire, in the same places
     const ns = typeof nsOn === 'function' && nsOn();
     if (phase === 'back') {
@@ -102,7 +108,7 @@ let campPaintFire = null;
         const built = lv(id) >= 1;
         if (!built && !plotOpen(id)) continue;
         const x = Math.min(px, v.SW - 16) - v.cam; px -= PLOT_GAP;
-        if (!(ns && nsDraw(g, built ? 'station' : 'prop', built ? id : 'stake', 'lv' + lv(id), x, gy - 1))) paintPlot(g, id, x, gy - 1, built);
+        if (!(ns && nsDraw(g, built ? 'station' : 'prop', built ? id : 'stake', 'lv' + lv(id), x, gy - 1))) asProp(g, k, x, gy - 1 / k, (X, Y) => paintPlot(g, id, X, Y, built));
       }
       if (ns) {
         nsDraw(g, 'npc', 'hesketh', on ? 'lit' : 'idle', fx + HES_DX, gy, { v: !reduced && Math.floor(v.T * 1.6) % 2 ? 'b' : '' });
@@ -115,15 +121,16 @@ let campPaintFire = null;
         const f = !reduced && H.idle1 && Math.floor(v.T * 1.6) % 2 ? H.idle1 : H.idle0;
         g.drawImage(f.c, Math.round(fx + HES_DX - f.ox), Math.round(gy - f.oy));
       }
-      paintFire(g, fx, gy, on, v.T);
-      at.x = fx + v.cam; at.y = gy - 8; at.SW = v.SW; at.SH = v.SH; at.on = true;
+      asProp(g, k, fx, gy, (X, Y) => paintFire(g, X, Y, on, v.T));
+      at.x = fx + v.cam; at.y = gy - 8 / k; at.SW = v.SW; at.SH = v.SH; at.on = true;
       return;
     }
     // 'light': additive glows (the flame, Hesketh's lamp once the fire burns)
     if (phase !== 'light' || !on) return;
     const fl = reduced ? 0 : Math.sin(v.T * 7) * 0.05 + Math.sin(v.T * 13 + 1) * 0.03;
-    ANIM.lightAt(g, '255,150,70', fx, gy - 12, 78, 0.5 + fl);
-    ANIM.lightAt(g, '255,236,170', fx, gy - 10, 22, 0.55 + fl);
+    const kl = ns ? 1 : k;   // the new-style fire (64m) keeps the actors' scale, so its light does too
+    ANIM.lightAt(g, '255,150,70', fx, gy - 12 / kl, 78 / kl, 0.5 + fl);
+    ANIM.lightAt(g, '255,236,170', fx, gy - 10 / kl, 22 / kl, 0.55 + fl);
     const H = hes;
     if (!ns && H && H.idle0 && H.idle0.lights) for (const l of H.idle0.lights) ANIM.lightAt(g, l.rgb, Math.round(fx + HES_DX - H.idle0.ox) + l.x, Math.round(gy - H.idle0.oy) + l.y, l.r || 14, 0.5);
   };

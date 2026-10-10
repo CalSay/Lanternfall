@@ -3649,6 +3649,16 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
    line drops under the banner. */
 .tc-on .tv-top .tv-n, .tc-on .tv-top .tv-hero { visibility: hidden; }
 .tc-on .tv-top .tv-warn { margin-top: 14px; }
+/* actor-scale-followups: on a desktop stage the heroes' heads reach just under the Grit row, where a foe trick's line (.tv-warn) and the
+   resource tip (.tv-restip, "Aim: ...") used to sit. They dock in the stage's top-left corner instead, just under the hero's plate (--vs-b)
+   and left of the place line and the banner, so they clear every hero's box at 1280x720, 1366x640 and 1920x1080. The right corner is the
+   boss strip's (80-landscape). .tv-top is their box, so the top undoes .tv-top's own (above). A foe trick's line is the one to read: while
+   it shows, the tip steps out of sight. Neither moves when the banner shows. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
+  .stagebox .tv-top .tv-warn, .stagebox .tv-top .tv-restip { position: absolute; left: 0; top: calc(var(--vs-b, 54px) + 6px - max(80px, calc(var(--vs-zb, 0px) + 2px)));
+    margin: 0; max-width: min(400px, calc(50% - 100px)); text-align: left; }
+  .stagebox .tv-top:has(.tv-warn:not([hidden])) .tv-restip { visibility: hidden; }
+}
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
 .tw-scene { display: flex; justify-content: center; width: 100%; min-height: 144px; margin: 0; padding: 0; overflow: hidden; background: #0E0B1E; border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
 .tw-scene:hover, .tw-scene:focus-visible { border-color: var(--gold); }
@@ -30562,9 +30572,10 @@ function statusIcon(id) {
 let T = 0;
 // Extra stage art: stageDeco(ctx, phase, v), phase 'back' (after the scenery, before the actors, pixel
 // pass), 'front' (after the actors, pixel pass) or 'light' (additive lights); ignore other phases.
-// v = { cam, SW, SH, GY, T, tg, nodeR, hx, hy, hl, hd, hf, hX, hY } (reused; nodeR: the gather node's right
+// v = { cam, SW, SH, GY, T, tg, nodeR, hx, hy, hl, hd, hf, hX, hY, ak } (reused; nodeR: the gather node's right
 // edge, camera-free; hx the hero's feet x (camera-free), hy its ground line, hl its lane, hd down, hf the
-// frame drawn last, hX/hY where it was drawn). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
+// frame drawn last, hX/hY where it was drawn; ak the actors' scale against the scenery, so a prop can draw at scenery
+// scale: 1 / ak). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
 let stageDeco = null;
 // Ability effects (62b-fx.js): stageFx.swing(x, y) as the hero's swing fires, stageFx.aim(s) the foe's chest, and
 // stageFx.draw(ctx, phase, v), phase 'back' (before the actors), 'fx' (after the rings and particles) or 'dev' (device px, over the HUD).
@@ -32165,15 +32176,17 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   }
 
   let drawMs = 0, nsSt = 'off';
-  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0, hx: 0, hy: 0, hl: 1, hd: false, hf: null, hX: 0, hY: 0 };
+  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0, hx: 0, hy: 0, hl: 1, hd: false, hf: null, hX: 0, hY: 0, ak: 1 };
   const FXV = { T: 0, cam: 0, SW: 0, SH: 0, GY: 0, K: 1, KS: 1, DPR: 1, sx: 0, sy: 0, fight: false, foe: null, hx: 0, hy: 0, hfX: 0, hfY: 0, hc: null, hX: 0, hY: 0 };   // stageFx's view (reused)
   draw = function () {
     if (!SW) { resize(); if (!SW) return; }
     const t0 = performance.now();
     pickScene();
     const tg = target(), raid = tg === 'world', gath = tg === 'node', fight = tg === 'mob';
-    // camF: the camera sway in stage px (the scenery's); cam: the same in actor px
-    const camF = reduced ? 0 : Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3, cam = Math.round(camF / AK);
+    // camF: the camera sway in stage px (the scenery's); cam: the same in actor px. actor-scale-followups: camF snaps (toward 0) to a
+    // whole step of both views (camSt stage px: 3 at AK 1.5, AK at a whole AK), so the ground and the feet move together, never 1 px apart.
+    // A fixed painting (a battle background, the hunting grounds) does not sway, so there the actors stand still too (cam 0, below).
+    const camSt = AK % 1 ? AK * 2 : AK, camF = reduced ? 0 : Math.trunc((Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3) / camSt) * camSt;
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
     const K = DPR * ZM, tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
     // the scenery's view (stage px, ZS) and the actors' (actor px, ZM); the shake moves both by the same whole device px
@@ -32194,8 +32207,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     const bgArt = nsBg || (fight && !deepOn() && bgArtDraw(ctx, curTheme));
     if (!bgArt) drawScene(ctx, scene, camF, 'back', KS, sxd, syd, '#0B0810');
     const huntBg = !nsBg && gath && S.node.kind === 'hide' && typeof huntBgDraw === 'function' && HUNT_TUNE.interim && huntBgDraw(ctx, SWS, GYS);   // interim Hunting grounds (64i)
+    const cam = (bgArt && !nsBg) || huntBg ? 0 : camF / AK;
     actorView();
-    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; dv.hx = hero.fr ? ax(hero) : null; dv.hy = hero.hy; dv.hl = hero.lane; dv.hd = hero.down; dv.hf = hero._f; dv.hX = hero._x; dv.hY = hero._y; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
+    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; dv.hx = hero.fr ? ax(hero) : null; dv.hy = hero.hy; dv.hl = hero.lane; dv.hd = hero.down; dv.hf = hero._f; dv.hX = hero._x; dv.hY = hero._y; dv.ak = AK; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
     ctx.imageSmoothingEnabled = true;
@@ -35724,10 +35738,16 @@ let campPaintFire = null;
     return hes;
   }
   const at = { x: 0, y: 0, SW: 1, SH: 1, on: false };   // the fire on screen, for the button
+  // actor-scale-followups: the fire and the plots are scenery, so they draw at the scenery's scale (1 / v.ak of the actors' px the
+  // stage hands over), about their base on a whole scenery px; Hesketh is an actor and keeps the actors' scale.
+  function asProp(g, k, x, y, paint) {
+    if (k === 1) { paint(x, y); return; }
+    g.save(); g.translate(Math.round(x * k) / k, Math.round(y * k) / k); g.scale(1 / k, 1 / k); paint(0, 0); g.restore();
+  }
 
   stageDeco = (g, phase, v) => {
     if (!showing(v.tg)) { at.on = false; return; }
-    const on = lit(), fx = Math.round(v.SW * FIRE_X) - v.cam, gy = v.GY;
+    const on = lit(), fx = Math.round(v.SW * FIRE_X) - v.cam, gy = v.GY, k = v.ak || 1;
     // new style (64m): the woods pack's stations, stakes, Hesketh and fire, in the same places
     const ns = typeof nsOn === 'function' && nsOn();
     if (phase === 'back') {
@@ -35737,7 +35757,7 @@ let campPaintFire = null;
         const built = lv(id) >= 1;
         if (!built && !plotOpen(id)) continue;
         const x = Math.min(px, v.SW - 16) - v.cam; px -= PLOT_GAP;
-        if (!(ns && nsDraw(g, built ? 'station' : 'prop', built ? id : 'stake', 'lv' + lv(id), x, gy - 1))) paintPlot(g, id, x, gy - 1, built);
+        if (!(ns && nsDraw(g, built ? 'station' : 'prop', built ? id : 'stake', 'lv' + lv(id), x, gy - 1))) asProp(g, k, x, gy - 1 / k, (X, Y) => paintPlot(g, id, X, Y, built));
       }
       if (ns) {
         nsDraw(g, 'npc', 'hesketh', on ? 'lit' : 'idle', fx + HES_DX, gy, { v: !reduced && Math.floor(v.T * 1.6) % 2 ? 'b' : '' });
@@ -35750,15 +35770,16 @@ let campPaintFire = null;
         const f = !reduced && H.idle1 && Math.floor(v.T * 1.6) % 2 ? H.idle1 : H.idle0;
         g.drawImage(f.c, Math.round(fx + HES_DX - f.ox), Math.round(gy - f.oy));
       }
-      paintFire(g, fx, gy, on, v.T);
-      at.x = fx + v.cam; at.y = gy - 8; at.SW = v.SW; at.SH = v.SH; at.on = true;
+      asProp(g, k, fx, gy, (X, Y) => paintFire(g, X, Y, on, v.T));
+      at.x = fx + v.cam; at.y = gy - 8 / k; at.SW = v.SW; at.SH = v.SH; at.on = true;
       return;
     }
     // 'light': additive glows (the flame, Hesketh's lamp once the fire burns)
     if (phase !== 'light' || !on) return;
     const fl = reduced ? 0 : Math.sin(v.T * 7) * 0.05 + Math.sin(v.T * 13 + 1) * 0.03;
-    ANIM.lightAt(g, '255,150,70', fx, gy - 12, 78, 0.5 + fl);
-    ANIM.lightAt(g, '255,236,170', fx, gy - 10, 22, 0.55 + fl);
+    const kl = ns ? 1 : k;   // the new-style fire (64m) keeps the actors' scale, so its light does too
+    ANIM.lightAt(g, '255,150,70', fx, gy - 12 / kl, 78 / kl, 0.5 + fl);
+    ANIM.lightAt(g, '255,236,170', fx, gy - 10 / kl, 22 / kl, 0.55 + fl);
     const H = hes;
     if (!ns && H && H.idle0 && H.idle0.lights) for (const l of H.idle0.lights) ANIM.lightAt(g, l.rgb, Math.round(fx + HES_DX - H.idle0.ox) + l.x, Math.round(gy - H.idle0.oy) + l.y, l.r || 14, 0.5);
   };
