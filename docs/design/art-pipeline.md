@@ -5,9 +5,10 @@ GPT draws each **key pose as one complete sprite**, so the anatomy is right. We 
 breathing, cloth drift, companions, bow strings, projectiles, swooshes, sound waves and other effects.
 We do not hand-assemble limbs from parts. It failed at this scale: floating heads, lumps on the chest, and hands over faces.
 
-> **Art freeze (owner, 2026-09-30; `CLAUDE.md`):** effects and props (arrows, bow strings, tools, sparks, chips) now come
-> from the artist inside the pack, drawn to match the art. Where this page says "code adds" an effect or a prop, that
-> applies only to the effects already in the game; agents do not draw new art in code. One hero stands on the stage
+> **Art freeze (`CLAUDE.md`; updated by Cal 2026-10-10 00:34, approved 00:40):** props (arrows, bats, tools, chips) come
+> from the artist inside the pack as sprites, drawn to match the art. The game draws two things: bowstrings (through three
+> marked points per frame) and motion and light effects (trails, flashes, sparks, rings, smoke, shake, hit-stop), with one
+> colour per status (section 10). Status icons stay Codex's approved icons. One hero stands on the stage
 > and one enemy at a time (owner, 2026-09-29 and 2026-10-01).
 
 ## 1. The fixed spec (same for every hero)
@@ -118,3 +119,37 @@ rows and columns and breaks outlines. Pip's trial was shrunk this way, so her fi
    its C22 card; poses follow its moves.
 
 Lane combat (enemies walking in) was scrapped on 2026-09-29: enemies need no walk cycle.
+
+## 10. Effects (ability-effects-live, 2026-10-10)
+
+`src/js/62b-fx.js` draws every ability's effect in a turn fight, for all three heroes, from one recipe table (`FX_RECIPES`).
+The engine is the Barbed Arrow test (`experiments/2d-poses-scenario/wren-fx-test/fx3.js`, gallery v7 is the bar) at the
+stage's scale. A hit lands on the foe's chest: Tall foes at 30% of their height from the top, Medium 38%, Short and
+Flying 50%, read from the drawn pixels of the idle frame; odd shapes (Spore, Bones, the Wyrm) are hand-marked (`FX_AIM`).
+A status that lands pops Codex's icon at a native size by the foe's chest and leaves a light in its colour on the foe.
+Reduced motion: no trails, particles, shake or flashes; one still glow per hit, the icon and a steady light.
+
+One colour per status, shared by every hero (`FX_COL`):
+
+| Status | Colour | RGB |
+| --- | --- | --- |
+| Bleed | red | 200,30,60 |
+| Marked | gold | 255,196,60 |
+| Pinned | teal | 80,220,205 |
+| Stunned | yellow | 255,236,90 |
+| Blinded | violet | 130,70,210 |
+| Burning | orange-red | 255,96,24 |
+| Chilled | blue | 100,170,255 |
+| Frozen | ice white | 190,230,255 |
+| Cursed | magenta | 200,40,170 |
+| Exposed | pale gold | 255,244,200 |
+| Sundered | rust | 210,100,40 |
+| Weakened | sickly green | 160,170,120 |
+| Keen (hero) | cyan | 90,205,255 |
+| Guard (hero) | steel blue | 143,184,255 |
+| Ward (hero) | aqua | 110,240,235 |
+| Last Stand (hero) | warm gold | 255,226,150 |
+| Searing (hero) | amber | 255,170,90 |
+| Shadow Step (hero) | deep violet | 70,25,110 |
+
+Aim (Wren's charge) is orange 255,140,50; it is a resource, not a status.

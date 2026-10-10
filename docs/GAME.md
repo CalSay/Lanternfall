@@ -87,6 +87,10 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   it) and is not queued (fight-input-during-banner). **Skills**: each slot's ability and cooldown; tap one to change it. **Foe**: its kind, an elite's trait and
   the moves you have learned (a zone boss shows the ones your lost tries taught you, one more a try; a beaten boss shows all). Parry and Dodge (A, S) sit under the dock on every tab and glow while a
   hit winds up. Short landscape keeps the names under small tiles. The turn order shows on the Versus card only.
+- **Ability effects** (`62b-fx.js`, ability-effects-live): every Attack and ability of every hero has its own effect on the
+  stage (trails, flashes, sparks, rings, shake), aimed at the foe's chest. Each status has one colour for every hero (red = Bleed;
+  the table is in [art-pipeline.md](design/art-pipeline.md) 10), lights the foe while it lasts and pops Codex's icon as it lands.
+  Reduced motion shows a still glow and the icon.
 - **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
   and the rest cost a Scroll of their tier (or a higher one) from zone bosses; a Moss Scroll teaches one move per hero, so spares
   wait for Tobin and Pip, and Abilities' Can learn list says who they are for. "Scroll found." shows only for a Scroll the hero in play
