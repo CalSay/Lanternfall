@@ -93,6 +93,12 @@ button * { pointer-events: none; }
 /* C26 resource icons are painted 48x48 art: scale them smoothly (nearest-neighbour at 16 px muddies them) */
 img[src$="#res"] { image-rendering: auto; }
 img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that does not use nicPut: the big image, smoothly scaled */
+/* The inline page's loading screen (src/shell.html #lfLoad; card loading-screen): the game's name and one line, on the page's
+   background, over everything until 90-boot takes it away. The split build's boot loader draws its own, with a bar. */
+.lf-load { position: fixed; inset: 0; z-index: 2147483646; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 16px; background: var(--bg); color: var(--muted); text-align: center; }
+.lf-load-name { font: 600 min(calc(44px * var(--display-k)), 11vw)/1 var(--display); letter-spacing: .06em; color: var(--gold);
+  text-shadow: 0 0 18px rgba(255, 158, 61, .45); }
 /* stage box: the game's main view. It grows to fill the game column (the canvas reads its size;
    62-stage re-lays out on resize), between a floor and a ceiling so the scene keeps its proportions. */
 .stagebox { position: relative; flex: 1 1 auto; min-height: 180px; margin: 2px var(--gut) 0; border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; }
@@ -3995,6 +4001,9 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .menu, .app:not(.menu-open) .menu { transition: none; }
 }
 </style>
+<!-- The loading screen (card loading-screen): the game's name over the page while the browser reads the game's script. 90-boot
+     takes it away at boot. The split build's boot loader shows its own, with a bar, above this one. No art (art freeze). -->
+<div class="lf-load" id="lfLoad" role="status" aria-live="polite"><b class="lf-load-name">Lanternfall</b><span>Loading the game</span></div>
 
 <div class="app" id="app">
   <header class="top">
@@ -4305,6 +4314,9 @@ useStorage({
   get: key => { try { return localStorage.getItem(key); } catch (e) { return null; } },
   set: (key, value) => { try { localStorage.setItem(key, value); } catch (e) {} }
 });
+// The inline page's loading screen (src/shell.html #lfLoad, card loading-screen) goes at boot (90-boot), or at the first
+// uncaught error before that, so a page that failed to boot never hides behind "Loading the game".
+if (typeof addEventListener === 'function') addEventListener('error', () => { const el = typeof document === 'object' && document.getElementById('lfLoad'); if (el) el.remove(); });
 
 // ---- src/js/10-art.js ----
 // 10-art: pixel maps, palettes and colour maths. Pure data and functions (no DOM),
@@ -49831,6 +49843,7 @@ document.addEventListener('visibilitychange', () => {
 addEventListener('pagehide', () => { bootAwayNow(); save(); });
 
 // ================= boot =================
+{ const el = document.getElementById('lfLoad'); if (el) el.remove(); }   // the inline page's loading screen (src/shell.html)
 resize();
 updatePortrait();
 // The away gains and their card are worked out in a task of their own right after the first frame

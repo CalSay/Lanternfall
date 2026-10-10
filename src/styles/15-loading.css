@@ -1,0 +1,6 @@
+/* The inline page's loading screen (src/shell.html #lfLoad; card loading-screen): the game's name and one line, on the page's
+   background, over everything until 90-boot takes it away. The split build's boot loader draws its own, with a bar. */
+.lf-load { position: fixed; inset: 0; z-index: 2147483646; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 16px; background: var(--bg); color: var(--muted); text-align: center; }
+.lf-load-name { font: 600 min(calc(44px * var(--display-k)), 11vw)/1 var(--display); letter-spacing: .06em; color: var(--gold);
+  text-shadow: 0 0 18px rgba(255, 158, 61, .45); }
