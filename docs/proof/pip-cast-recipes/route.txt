@@ -1,0 +1,20 @@
+# seed: 1
+# Proof for card pip-cast-recipes (ruling-pip.md question 9). With Pip drawn in her own moves (route S, stageFx.pipS.on, filled
+# by route-s-pip-wire) Nova is a ring from her staff butt along the ground, Lantern Flare a flash and a pale cone from her lantern,
+# and Lanternburst a ring centred on the lantern; no bolt flies, and each hit and its number land when the bolt's did. Classic art
+# keeps today's bolts, and no player sees route S Pip until the wire card ships, so this route plays an early fight to show the
+# fight unchanged. tools/check.mjs "pip-cast-recipes" presses all three through the turn engine at 1280x720 and 740x360, with
+# route S stubbed on (ring or flash from the anchor hook's point, no bolt) and off (the bolt). Run at all three views with --frozen.
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+expect "Attack"
+tap-if "Attack"
+burst attack-flight
+wait 3
+shot attack-after
+expect ".hud.vs .mob"

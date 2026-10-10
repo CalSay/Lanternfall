@@ -1,0 +1,1 @@
+Pip's Nova, Lantern Flare and Lanternburst are ready for her new art: Nova sends a ring along the ground from her staff, Lantern Flare flashes from her lantern, and Lanternburst bursts in a ring around the lantern, with no bolt from her hand. You will see it when Pip's new art goes in; with today's art she still fires bolts. Best shot: attack-flight-1.

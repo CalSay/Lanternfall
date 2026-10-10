@@ -113,6 +113,7 @@ const WEIGHT = {
   'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'fx-timing-fixes': 40,
+  'pip-cast-recipes': 40,
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
@@ -19602,6 +19603,75 @@ if (section('fx-timing-fixes')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('fx-timing-fixes crashed: ' + (e.stack || e)); }
+
+// ==== pip-cast-recipes (ruling-pip.md question 9): Pip's Nova, Lantern Flare and Lanternburst start where her art casts them ====
+// With route S Pip (stageFx.pipS.on, filled by route-s-pip-wire; stubbed here) Nova is a ring from the staff butt along the ground,
+// Lantern Flare a flash from the lantern, Lanternburst a ring centred on the lantern: no bolt flies, the anchor hook places them,
+// and the hit and its number still land. Classic art keeps the bolt. Pressed through the turn engine at 1280x720 and 740x360.
+if (section('pip-cast-recipes')) try {
+  const at = 'pip-cast-recipes', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const WANT = { nova: ['ring', 'butt'], flare: ['flash', 'lantern'], lanternburst: ['ring', 'lantern'] };
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__L = { proj: [], fl: [] };
+          { const P = ANIM.proj; ANIM.proj = function (kind, ...a) { __L.proj.push(kind); return P.call(this, kind, ...a); }; }
+          on('float', f => __L.fl.push(String(f && f.txt))); soloPick("pip", { now: true }); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true`);
+        for (const routeS of [true, false]) for (const id of Object.keys(WANT)) {
+          const tag = `${v} ${routeS ? 'route S' : 'Classic'} ${id}`;
+          let ph = '';
+          for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+            ph = await X(`(() => { if (!TURN_LIVE || TURN_LIVE.ended) { S.activity = "fight"; spawn(); return 'off'; } return TURN_LIVE.foe !== mob ? 'other foe' : TURN_LIVE.phase; })()`);
+            if (ph === 'hero') break;
+            await page.waitForTimeout(60);
+          }
+          assert(ph === 'hero', `${tag}: Pip's turn comes (${ph})`);
+          // the anchor hook: Nova's staff butt at a known point (the wire's per-move anchors); the others take today's points
+          const r = JSON.parse(await X(`(() => { const m = TURN_LIVE;
+            stageFx.pipS.on = () => ${routeS}; stageFx.pipS.at = (id, part) => id === 'nova' && part === 'butt' ? [123, 45] : null;
+            S.abil.unl.pip = Array.from(new Set((S.abil.unl.pip || []).concat(["${id}"]))); S.solo.eq.pip = ["${id}", null, null]; turnSyncEquip();
+            m.cds["${id}"] = 0; m.h.blind = 0; m.h.embers = 3; m.heroOps = 3; m.foe.hp = m.foe.max = Math.max(m.foe.max, 1e7);
+            const why = turnUsable(m, "${id}"); if (why) return JSON.stringify({ why });
+            __L.proj.length = 0; __L.fl.length = 0; const s0 = stageFx.stats();
+            return JSON.stringify({ ok: turnCombatAction('ability', 0), i0: s0.impacts, n0: s0.shots, want: [123, 45] }); })()`));
+          if (r.why) { assert(false, `${tag}: the move can be pressed (${r.why})`); continue; }
+          assert(r.ok, `${tag}: the press goes through the turn engine`);
+          let s;
+          for (const t0 = Date.now(); ; ) {
+            s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats() })`));
+            if ((s.fx.impacts > r.i0 && s.L.fl.some(f => /\d/.test(f))) || Date.now() - t0 > 6000) break;
+            await page.waitForTimeout(50);
+          }
+          await page.waitForTimeout(150); s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats() })`));
+          assert(s.fx.last === id && s.fx.impacts > r.i0, `${tag}: its effect lands on the foe (last ${s.fx.last}, impacts ${s.fx.impacts - r.i0})`);
+          assert(s.L.fl.some(f => /\d/.test(f)), `${tag}: its number rises (${s.L.fl.join(', ') || 'none'})`);
+          if (routeS) {
+            assert(!s.L.proj.includes('bolt'), `${tag}: no bolt flies (${s.L.proj.join(', ') || 'none'})`);
+            assert(s.fx.kind === WANT[id][0] && s.fx.from === WANT[id][1], `${tag}: a ${WANT[id][0]} from the ${WANT[id][1]} (${s.fx.kind} from ${s.fx.from})`);
+            if (id === 'nova') assert(JSON.stringify(s.fx.at) === JSON.stringify(r.want), `${tag}: the ring starts at the anchor hook's staff butt (${s.fx.at} vs ${r.want})`);
+          } else assert(s.L.proj.includes('bolt'), `${tag}: Classic art keeps the bolt (${s.L.proj.join(', ') || 'none'})`);
+        }
+        await X(`stageFx.pipS.on = () => false; stageFx.pipS.at = () => null; true`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('pip-cast-recipes crashed: ' + (e.stack || e)); }
 
 // ==== route-s-wren-wire (docs/design/route-s/ruling.md, "Build card spec: route-s-wren-wire"): Wren's route S fight moves ====
 // From the converter's record (art/heroes/wren/route-s/pack.json, tools/art/route-s-wren.py) and the embedded data (21ye): bytes
