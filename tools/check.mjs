@@ -18369,20 +18369,28 @@ if (section('wren route S')) try {
   }
   for (const [m, ms] of [['parry', 660], ['dodge', 660], ['hit', 540], ['defeat', 2080]]) if (F(m, 0) !== 0 || F(m, ms - 1) !== 7 || F(m, ms * 4) !== 7 || F(m, ms / 2) !== 4) tbad.push(`${m}: ${F(m, ms / 2)},${F(m, ms - 1)}`);
   if (F('idle', 1234) !== 0) tbad.push('idle moves');
-  // the timed rings (59k TURN_TUNE.timed: ring 0.9 s, gap 0.55 s; a press up to 0.15 s late or early, or none): each ring's
-  // release frame first shows at a 60 fps frame within 17 ms after its contact time, never before
+  // the timed rings (59k TURN_TUNE.timed: ring 0.9 s, gap 0.55 s; a press up to 0.15 s late or early, or none, graded at the
+  // press or 0.15 s after the contact): each ring's release frame first shows at a 60 fps frame within 17 ms after its contact
+  // or its press, whichever is first, never before. A Perfect press stops the turn clock for 59k's hitstop.perfect (6 frames
+  // at 60 fps): the release must show through that beat, not after it (the judge's gate 12 finding, 133 ms late)
   const late = [];
   for (const [m, n, R] of [['volley', 3, [3, 5, 6]], ['moonlit', 5, [4, 5, 5, 5, 5]], ['powershot', 1, [5]], ['deadeye', 1, [5]]]) for (const press of [-0.06, -0.02, 0, 0.1, null]) for (const ph of [0, 0.004, 0.011, 0.016]) {
     const rings = [{ open: 0, close: 0.9 }], seen = {};
-    for (let k = 0; k < 400; k++) {
-      const t = ph + k / 60, cur = rings[rings.length - 1], at = press == null ? cur.close + 0.15 : cur.close + press;
-      if (t >= at && rings.length < n) rings.push({ open: at, close: at + 0.55 });
+    let t = ph, stop = 0;
+    for (let k = 0; k < 600; k++) {
+      if (stop > 0) stop--; else if (k > 0) t += 1 / 60;   // the turn clock: still through a hit-stop
+      const cur = rings[rings.length - 1], grade = press == null ? cur.close + 0.15 : cur.close + press;
+      if (cur.press == null && t >= grade) {   // 59k grades the ring (timingGrade): 64l notes the press; a Perfect stops the clock
+        cur.press = t;
+        if (press != null && Math.abs(press) <= 0.06) stop = 6;
+        if (rings.length < n) rings.push({ open: t, close: t + 0.55 });
+      }
       const f = ctx.R(m, rings, t);
-      rings.forEach((g, j) => { if (seen[j] == null && f.rel === j && f.i === R[j]) seen[j] = t - g.close; });
+      rings.forEach((g, j) => { if (seen[j] == null && f.rel === j && f.i === R[j]) seen[j] = t - Math.min(g.close, g.press == null ? Infinity : g.press); });
     }
     for (let j = 0; j < n; j++) if (!(seen[j] >= 0 && seen[j] <= 0.017 + 1e-9)) late.push(`${m} ring ${j + 1} press ${press}: ${seen[j] == null ? 'never' : Math.round(seen[j] * 1000) + ' ms'}`);
   }
-  assert(!tbad.length && !late.length, 'wren route S: attack and abilities 900 ms with the release on the shot, parry and dodge 660 ms, hit 540 ms, defeat 2080 ms held; Volley\'s 3 and Moonlit Volley\'s 5 releases each within 17 ms of contact (gate 5)' + (tbad.length || late.length ? ': ' + [...tbad, ...late.slice(0, 4)].join('; ') : ''));
+  assert(!tbad.length && !late.length, 'wren route S: attack and abilities 900 ms with the release on the shot, parry and dodge 660 ms, hit 540 ms, defeat 2080 ms held; Volley\'s 3 and Moonlit Volley\'s 5 releases each within 17 ms of contact or an earlier press, through a Perfect\'s hit-stop (gate 5)' + (tbad.length || late.length ? ': ' + [...tbad, ...late.slice(0, 4)].join('; ') : ''));
   // gate 8: one Settings switch, Hero art, default new art (its own key, not the save; no save-key bump)
   const pu = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-portraits-ui.js'), 'utf8'), pk = fs.readFileSync(path.join(ROOT, 'src', 'js', '64k-portraits.js'), 'utf8');
   assert(/title: 'Hero art'/.test(pu) && /Wren\\'s new fight poses/.test(pu) && /storage\.get\(PREF\) === '1'/.test(pk) && /emit\('classicArt'/.test(pk),

@@ -64,9 +64,11 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     if (MS[mv] != null && !M.s || mv === 'defeat') return Math.min(7, Math.floor(ms / MS[mv] * 8));   // parry, dodge, hit, defeat: 8 even steps
     return frameAt(ms, M.rel[0], o.relMs != null ? o.relMs : WIND * 1000, MS.attack);
   };
-  // A timed ability's frame at `now` from its rings so far: rings = [{ open, close }] on the turn clock (s), as 59k's timingRing
-  // gives them (close: the prompt's contact time). Each ring draws from max(its open, the last release + HOLD) to its contact,
-  // then shows its release frame from the contact on, whenever (or whether) the player pressed, until the next ring draws.
+  // A timed ability's frame at `now` from its rings so far: rings = [{ open, close, press }] on the turn clock (s), as 59k's
+  // timingRing and timingGrade give them (close: the prompt's contact time; press: when the ring was answered, if it was).
+  // Each ring lets go at its contact or at the press, whichever is first: a Perfect press (up to 60 ms early) stops the clock
+  // for a beat (59k hitstop.perfect), and that beat holds the release, not the full draw. Each ring draws from max(its open,
+  // the last release + HOLD) to that moment, then shows its release frame until the next ring draws.
   // -> { i: frame, rel: the ring whose release shows (-1 while drawing) }
   const HOLD = 0.15;   // s: a release stays at least this long before the next ring draws
   wrenSTimed = (mv, rings, now) => {
@@ -74,14 +76,14 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     const R = RINGS[mv] || [[[0, 1, 2, 3, 4].filter(i => i < M.rel[0]), M.rel[0]]], ring = j => R[Math.min(j, R.length - 1)];
     let prevRel = -1, prevClose = -1e9;
     for (let j = 0; j < rings.length; j++) {
-      const g = rings[j], [draw, rel] = ring(j), ds = Math.max(g.open, prevClose + HOLD);
+      const g = rings[j], [draw, rel] = ring(j), ds = Math.max(g.open, prevClose + HOLD), go = g.press != null ? Math.min(g.close, g.press) : g.close;
       if (now < ds && j > 0) return { i: ring(j - 1)[1], rel: j - 1 };   // the last release, held
-      if (now < g.close) {
+      if (now < go) {
         if (!draw.length) return { i: j > 0 ? ring(j - 1)[1] : 0, rel: j - 1 };
-        const u = Math.max(0, Math.min(0.999, (now - ds) / Math.max(0.001, g.close - ds)));
+        const u = Math.max(0, Math.min(0.999, (now - ds) / Math.max(0.001, go - ds)));
         return { i: draw[Math.floor(u * draw.length)], rel: -1 };
       }
-      prevRel = rel; prevClose = g.close;
+      prevRel = rel; prevClose = go;
       if (j === rings.length - 1) return { i: rel, rel: j };
     }
     return { i: prevRel, rel: rings.length - 1 };
@@ -245,7 +247,11 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
         if (!ST.ring) return;   // its first ring went by unseen (a scene change): this ability plays as a swing
         ST.ring.rings[p.i] = { open: p.opensAt, close: p.closesAt }; ST.ring.done = false;
       });
-      on('timingGrade', p => { if (ST.ring && p && p.i === ST.ring.rings.length - 1) ST.ring.done = true; });
+      on('timingGrade', p => {   // answered (a press, or a Miss with none): she lets go now if the contact has not come yet
+        const r = ST.ring, g = r && p && r.rings[p.i], L = typeof TURN_LIVE !== 'undefined' && TURN_LIVE;
+        if (g && L && g.press == null) g.press = L.now;
+        if (r && p && p.i === r.rings.length - 1) r.done = true;
+      });
       on('sceneReset', () => { ST.ring = null; });
     }
     function RINGS_OF(id) { return ABIL[id] && typeof TURN_TIMED === 'object' && TURN_TIMED[id] ? ABIL[id] : null; }
