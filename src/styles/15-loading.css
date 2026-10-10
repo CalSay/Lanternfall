@@ -4,3 +4,4 @@
   gap: 14px; padding: 16px; background: var(--bg); color: var(--muted); text-align: center; }
 .lf-load-name { font: 600 min(calc(44px * var(--display-k)), 11vw)/1 var(--display); letter-spacing: .06em; color: var(--gold);
   text-shadow: 0 0 18px rgba(255, 158, 61, .45); }
+@media (prefers-reduced-motion: reduce) { .lf-load, .lf-load-name { transition: none; animation: none; } }

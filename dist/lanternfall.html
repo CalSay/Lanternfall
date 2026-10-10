@@ -99,6 +99,7 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
   gap: 14px; padding: 16px; background: var(--bg); color: var(--muted); text-align: center; }
 .lf-load-name { font: 600 min(calc(44px * var(--display-k)), 11vw)/1 var(--display); letter-spacing: .06em; color: var(--gold);
   text-shadow: 0 0 18px rgba(255, 158, 61, .45); }
+@media (prefers-reduced-motion: reduce) { .lf-load, .lf-load-name { transition: none; animation: none; } }
 /* stage box: the game's main view. It grows to fill the game column (the canvas reads its size;
    62-stage re-lays out on resize), between a floor and a ceiling so the scene keeps its proportions. */
 .stagebox { position: relative; flex: 1 1 auto; min-height: 180px; margin: 2px var(--gut) 0; border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; }

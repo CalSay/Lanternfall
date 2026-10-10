@@ -20,8 +20,9 @@ The cost that matters is download size: each frame is its own lossless picture, 
 | Wren's core (the idle, at boot) | 0.012 MB |
 | Her art in the inline page (raw) | 1.97 MB (`21ye-data-wren-s.js`) |
 
-Projected at 16 frames (planned at 2x; lossless WebP may share some bytes between near-identical neighbours, so 1.7x to 2x;
-the art thread's real 16-frame test gives the true figure):
+Projected at 16 frames: **2.0x**. The red team measured new in-between drawings at 1.94x to 2.04x over six moves, and the art
+thread's Tobin attack test went from about 120 KB to 240 KB. Delta frames do not help (1.01x to 1.03x); holding each frame twice
+costs only 1.06x:
 
 | | 8 frames | 16 frames |
 |---|---|---|
@@ -54,6 +55,10 @@ the art thread's real 16-frame test gives the true figure):
 
 ## 3. The plan
 
+**As ruled (`loading-screen-judge.md`): the title screen ships now and waits for nothing new.** Steps 2 and 3 below are
+deferred: card hero-queue first reorders and preloads the hero's first-hour moves and measures the holds, and a fight-set wait
+(card fight-set-wait) comes only if holds remain. The rest of this section is the plan as proposed.
+
 **A real loading screen, which waits for the moves the first fight needs, and nothing else.**
 
 1. **The screen.** The plain line becomes a title screen: "Lanternfall" in the game's title font, a progress bar that fills with
@@ -71,6 +76,10 @@ the art thread's real 16-frame test gives the true figure):
    markup, shown while the browser reads the page. No wait changes.
 
 **What it costs a returning player** (projected, 10 Mbps, about 1.25 MB/s on the wire, plus about 2 s to boot):
+
+Counted bytes leave out Mossy Hollow's portrait shape (E1); players download the real bytes: new game 4.14 MB, zone 2 4.60 MB.
+Cold loads at 10 Mbps (median of 3, fonts answered after 3 round trips): new game 4.4 s, zone 2 4.7 s; zone 2 at 1.6 Mbps 24.0 s.
+The table below starts from the counted bytes, so its seconds are low; the measured times above replace them.
 
 | Save | Boot set today | + fight set at 8 frames (about 0.6 MB) | + fight set at 16 frames (about 1.3 MB) |
 |---|---|---|---|
@@ -121,5 +130,5 @@ same load is about 1.5 s; the 10 Mbps line is there for a phone on an average mo
 | 16 frames only where motion shows (the Wren art thread's pick, 10 Oct 09:32: attacks, abilities and Tobin's dashes at 16; idle, hits, defeat and gathering at 8). Tobin's 16-frame attack test: about 120 KB to 240 KB a move | Wren: about 2.8 MB for her 19 moves (14 doubled) against 3.2 MB all-16; her first-fight set about 0.95 MB against 1.3 MB | **Pick** if Cal likes the test: most of the smoothness for about 0.4 MB less a hero |
 | Art as image files instead of basE91 text in JS | Wren's 19 packs: 1.62 MB on the wire as JS, 1.60 MB as WebP files: 1%. Brotli already takes the text overhead back | No: not worth a loader change |
 | Stronger lossless compression (same pixels) | Re-saving Wren's atlases at WebP lossless, method 6, quality 100: byte for byte the same (already at the strongest setting) | No: nothing left |
-| More downloads at once | The boot files already download together; more at once does not add bandwidth | No |
+| More downloads at once | The boot files already download together. After boot, though, hero files load one at a time (75-art-load.js `pump`); at a 150 ms round trip, two or three small files at once save round trips | **Yes, for small hero files**, in hero-queue |
 | Pixel-changing compression (lossy, fewer colours) | Not measured | Off: it changes the art (art freeze) |
