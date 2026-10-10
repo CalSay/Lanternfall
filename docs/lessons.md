@@ -66,6 +66,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   assert keyed to it: the complete-icons list (`COMPLETE`), the Stars' `kit` counts, the loadout-odds Learn order, the counter
   tips in `24d`, and the sim and budget loadouts. Why: hero-themed-kits' first draft retagged three Stars and dropped an icon,
   which would have failed two checks; the red team caught it. (hero-themed-kits, 2026-10-10)
+- A hero resource needs an effect of its own and at least one spend besides the finisher; walk one fight's count turn by turn before calling it a choice, and name hand and hip sides in a pose list. Why: Elowen's first draft cut Codex's costs, so Candles only climbed and paid through one passive, and her pose list named no sides (Oriel's third-arm cause); the red team caught both. (elowen-ability-spec, 2026-10-10)
+- A spec that renames or replaces moves relabels the art queue (gallery, sheet map, wire card) in the same pass. Why: on 10 Oct, Oriel's gallery kept the old Pip names after #357 renamed her moves, and Cal caught it. (elowen-ability-spec, 2026-10-10)
 
 ## Economy and skilling
 
