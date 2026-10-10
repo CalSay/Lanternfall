@@ -104,7 +104,7 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75, 'tips-hold-740': 40,
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75, 'tips-hold-740': 40, 'defend-bar-740': 36,
   'feint-read-clear': 70,   // 64-74 s locally alone (feint-read-clear, 2026-10-09)
   'craft-odds-before-pay': 38,   // 38 s locally (craft-odds-before-pay, 2026-10-09)
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
@@ -16742,6 +16742,66 @@ if (section('tips-hold-740')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('tips-hold-740 crashed: ' + (e.stack || e)); }
+
+// ==== defend-bar-740 (cold leg 10 Oct): on the foe's turn the Dodge/Parry timing bar covered the Thorn Imp's legs at 740x360, so the player
+// could not see the wind-up they were timing. On a phone on its side Dodge and Parry now sit beside the track on one row and the bar starts under
+// the actors' feet (80-landscape.css); 1280x720, 1366x640 and 360x740 keep the bar under the track as before. Checked on a plain foe and a
+// zone boss, with the window open, and the track keeps its width as Dodge and Parry grow ====
+if (section('defend-bar-740')) try {
+  const at = 'defend-bar-740';
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-dipper-z4.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the bar, the hero and every live foe (their drawn pixels, 62-stage stageRects), in CSS px
+    const LOOK = `JSON.stringify((() => {
+      const q = turnCombatSnapshot(), t = document.querySelector('.tv-bot .tv-time'), tr = t && t.querySelector('.tv-track');
+      const R = n => { const r = n.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); };
+      const st = document.getElementById('stage'), sr = st.getBoundingClientRect(), S = stageRects(), z = S.ZM || 1;
+      const op = c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, W = c.width, H = c.height; let l = W, tp = H, r = -1, b = -1;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 40) { if (x < l) l = x; if (x > r) r = x; if (y < tp) tp = y; b = y; }
+        return { l, t: tp, r: r + 1, b: b + 1 }; };
+      const put = s => { const o = op(s.c); return [sr.left + (s.x + o.l) * z, sr.top + (s.y + o.t) * z, sr.left + (s.x + o.r) * z, sr.top + (s.y + o.b) * z].map(Math.round); };
+      const shown = !!t && !t.hidden && getComputedStyle(t).visibility !== 'hidden';
+      return { phase: q && q.phase, open: !!q && q.phase === 'foeWindup' && q.now >= Math.min(q.parryOpensAt || 1e9, q.dodgeOpensAt || 1e9),
+        shown, bar: t ? R(t) : null, track: tr ? Math.round(tr.getBoundingClientRect().width) : 0, stage: R(st),
+        hero: S.hero ? put(S.hero) : null, foes: S.foes.map(f => Object.assign(put(f), { boss: f.boss })), boss: !!(mob && mob.boss) };
+    })())`;
+    const meet = (a, b) => !!a && !!b && a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+    const inside = (a, b) => !!a && !!b && a[0] >= b[0] && a[1] >= b[1] && a[2] <= b[2] && a[3] <= b[3];
+    try {
+      for (const [w, h] of [[740, 360], [1280, 720], [1366, 640], [360, 740]]) for (const boss of [false, true]) {
+        const v = `${at} (browser ${w}x${h}, ${boss ? 'the zone boss' : 'a Thorn Imp'})`, mobile = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`GUIDE_STEPS.forEach(s => { if (!S.onboard.done[s.id]) S.onboard.done[s.id] = 1; }); S.onboard.sayQ = []; S.zone = 1; setActivity('fight'); ${boss ? 'fightBoss = true; spawn(); respawn = 0;' : ''} true`);
+        // attack on each of your turns until the foe winds up with the window open
+        let s = null, wound = null;
+        for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+          s = JSON.parse(await X(LOOK));
+          if (s.phase === 'foeWindup' && s.shown && !wound) wound = s;
+          if (s.phase === 'foeWindup' && s.shown && s.open && s.foes.length && (!boss || s.boss)) break;
+          if (s.phase === 'hero') await X('(() => { const b = document.querySelector("#soloBar .sb-atk"); if (b) b.click(); })(); true');
+          await page.waitForTimeout(30);
+        }
+        assert(s && s.open && s.shown && s.hero && s.foes.length && (!boss || s.boss), `${v}: the foe winds up with the timing bar showing (${JSON.stringify(s)})`);
+        const hit = [s.hero, ...s.foes].filter(a => meet(s.bar, a));
+        assert(!hit.length, `${v}: the timing bar is clear of the hero and every foe (bar ${s.bar}; hit ${JSON.stringify(hit)})`);
+        assert(inside(s.bar, s.stage), `${v}: the timing bar sits inside the stage (bar ${s.bar}, stage ${s.stage})`);
+        assert(!!wound && wound.track === s.track && s.track >= 180, `${v}: the track keeps its width as the window opens (${wound && wound.track} -> ${s.track} px)`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('defend-bar-740 crashed: ' + (e.stack || e)); }
 
 // ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Confirm" for 6 s; Cancel always asks twice ====
 if (section('camp-build-tap-again')) try {
