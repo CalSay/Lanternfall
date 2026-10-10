@@ -55,6 +55,8 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     const waits = [], need = {};   // need: 'hero move' -> [hero, move, when it was last asked for] while the stage waits for it
     artHeroPacks = (hero, move) => Object.keys(P).filter(id => P[id].h === hero && (!move || P[id].m.includes(move)));
     artHeroWait = fn => { if (typeof fn === 'function') waits.push(fn); };
+    // a hero file the Classic art switch turns off (x in the table: Wren's route S, route-s-wren-wire) loads only when asked while it is on
+    const classicOn = () => typeof portraitsClassic === 'function' && portraitsClassic();
     const soon = [];   // packs asked for with artHeroWant, loaded after the ones the stage holds for
     artHeroWant = (hero, move) => { for (const id of artHeroPacks(hero, move)) if (!got[id] && !soon.includes(id)) soon.push(id); pump(); };
     artHeroReady = (hero, move) => artHeroPacks(hero, move).every(id => got[id]) && waits.every(f => { try { return f(hero, move) !== false; } catch (e) { return true; } });
@@ -119,7 +121,7 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
       for (let q = a0; q < a0 + 2 * AREA_ZONES; q++) area.push(q);
       // the save's hero's core (with no hero yet, every hero's core), the zones either side, then the hero's other moves (table
       // order), then the rest of the area and the next one
-      const h = typeof soloHero === 'function' ? soloHero() : null, mine = Object.keys(P).filter(id => P[id].h && (h ? P[id].h === h : P[id].c));
+      const h = typeof soloHero === 'function' ? soloHero() : null, mine = Object.keys(P).filter(id => P[id].h && (h ? P[id].h === h : P[id].c) && !(P[id].x && classicOn()));
       const out = mine.filter(id => P[id].c), add = ids => { for (const id of ids) if (!out.includes(id)) out.push(id); };
       for (const q of near) if (q >= 1) add(artZonePacks(q));
       add(mine);

@@ -18473,9 +18473,9 @@ if (section('wren route S (browser)')) try {
         const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
         const e2 = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, e2) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(e2);
         const assets = pageAssets(s.file, probe, files), pk = id => s.packs.find(p => p.id === id);
-        const open = async (save, hold) => {
+        const open = async (save, hold, pre = '') => {
           const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } });
-          await ctx.addInitScript(s => { try { if (s && !localStorage.getItem('lanternfall.save.v5')) { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} }, save);
+          await ctx.addInitScript(([s, pre]) => { try { if (s && !localStorage.getItem('lanternfall.save.v5')) { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } localStorage.setItem('lanternfall.test.nostory', '1'); if (pre && !sessionStorage.getItem('pre')) { sessionStorage.setItem('pre', '1'); (0, eval)(pre); } } catch (e) {} }, [save, pre]);
           const page = await ctx.newPage(), errs = []; let release; const held = new Promise(r => { release = r; });
           page.on('pageerror', e => errs.push(String(e)));
           await routePage(page, 'http://lf.test/', probe, assets);
@@ -18503,6 +18503,19 @@ if (section('wren route S (browser)')) try {
           const seen = await after;
           assert(/^parry [01]$/.test(seen[seen.length - 1]), `wren route S split: on the first frame after the hold her Parry is in and draws from its start (${seen.join(', ')})`);
           assert(!errs.length, 'wren route S split: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // Classic art on: no route S pack at boot or after; Classic off brings her in (held under "Loading Wren" until her idle is in)
+          const { ctx, page, errs, X } = await open(early, 'hero:WREN_S.wren.attack', `localStorage.setItem('lanternfall.pref.classicPortraits', '1')`);
+          const asked = []; page.on('request', q => { if (/WREN_S/.test(q.url())) asked.push(q.url().split('/').pop()); });
+          await page.waitForFunction(() => window.__t && document.getElementById('cv').width > 0 && !document.getElementById('lfBoot'), null, { timeout: 20000 }).catch(() => {});
+          await page.waitForTimeout(2500);
+          const a = JSON.parse(await X(`JSON.stringify({ boot: lfBoot.boot.filter(id => id.startsWith('hero:')), on: wrenSOn(), c: portraitsClassic() })`)), n0 = asked.length;
+          await X(`portraitsClassic(false); true`);
+          await page.waitForFunction(() => window.__t.x('wrenSOn()'), null, { timeout: 20000 }).catch(() => {});
+          const b = JSON.parse(await X(`JSON.stringify({ on: wrenSOn(), c: ${cover} })`));
+          assert(!a.boot.length && !a.on && a.c && n0 === 0 && b.on && !errs.length,
+            `wren route S split: with Classic art on a Wren save fetches none of her route S packs (boot ${a.boot.join() || 'none'}, after ${n0}); off brings route S in (${JSON.stringify(b)}; ${asked.slice(0, 2).join(', ')})` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         }
         { // a new game, her camp pose held back: the picker's figure stays empty with no hold, then fills

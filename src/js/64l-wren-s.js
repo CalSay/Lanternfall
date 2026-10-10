@@ -302,7 +302,11 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       const base = heroArtStage;
       heroArtStage = function (g, a, x, alpha) {
         if (!routeS()) return base(g, a, x, alpha);
-        if (!IMG.idle) { if (bad.idle) return base(g, a, x, alpha); want('idle'); return true; }   // the idle (in the page in both builds) decoding: a moment at boot, nothing drawn
+        if (!IMG.idle) {   // the idle decoding (a moment at boot, nothing drawn); split build with Classic on at boot: not fetched, so held for
+          if (bad.idle) return base(g, a, x, alpha);
+          if (typeof atlasOf(IDLE[0]) !== 'string') return need(IDLE[0]) ? base(g, a, x, alpha) : true;
+          want(IDLE[0]); return true;
+        }
         // split build: held until the move is in, nothing drawn; the move's clock waits with the game, so it plays from its start
         if (ST.heldT >= 0) { const d = now() - ST.heldT; ST.t0 += d; if (ST.hitT >= 0) ST.hitT += d; ST.heldT = -1; }
         const p = pick(a);
