@@ -35,7 +35,9 @@
 // move). A new game, with no hero yet: every hero's Attack and Hit after the cores, so whichever starter is picked can swing and
 // take a hit at once. Slotting or learning an ability asks for its move (artHeroWant). Hero files are small (one move, about
 // 0.1 MB), so up to three load at once; a zone's pack loads alone, as before. What the stage waits for always has a slot more.
-var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {};
+// New-style packs (n in the table; docs/design/new-style/engine.md) never hold the game: they load by zone after its own packs,
+// or when 64m asks: artNsWant(pieces) (none while Classic art is on).
+var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {}, artNsWant = () => {};
 {
   const LB = typeof lfBoot === 'object' && lfBoot && lfBoot.packs && typeof lfBoot.take === 'function' ? lfBoot : null;
   if (LB && typeof document !== 'undefined') {
@@ -44,7 +46,9 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     const RELOAD_KEY = 'lanternfall.artReloadAt';
     // the build's table (zones 1 to LB.road); past the road the scenery repeats every 35 zones (check.mjs holds it), as in the loader
     const tableZone = z => (z > LB.road ? LB.road - 34 + (z - LB.road - 1) % 35 : z);
-    artZonePacks = z => { const q = tableZone(z); return Object.keys(P).filter(id => P[id].z.some(r => q >= r[0] && q <= r[1])); };
+    const inZone = (id, q) => P[id].z.some(r => q >= r[0] && q <= r[1]);
+    artZonePacks = z => { const q = tableZone(z); return Object.keys(P).filter(id => !P[id].n && inZone(id, q)); };
+    const nsPacks = z => { const q = tableZone(z); return classicOn() ? [] : Object.keys(P).filter(id => P[id].n && inZone(id, q)); };
     // A pack that came after boot is ready once its pictures have decoded, so the first frame after the hold draws them (the
     // packs the boot loader wrote come in before the game runs and are used as the inline page uses its art)
     const framesDone = key => {
@@ -62,8 +66,11 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     artHeroWait = fn => { if (typeof fn === 'function') waits.push(fn); };
     // a hero file the Classic art switch turns off (x in the table: Wren's route S, route-s-wren-wire) loads only when asked while it is on
     const classicOn = () => typeof portraitsClassic === 'function' && portraitsClassic();
-    const soon = [];   // packs asked for with artHeroWant, loaded after the ones the stage holds for
-    artHeroWant = (hero, move) => { for (const id of artHeroPacks(hero, move)) if (!got[id] && !soon.includes(id)) soon.push(id); pump(); };
+    const soon = [];   // packs asked for with artHeroWant or artNsWant, loaded after the ones the stage holds for
+    // (a new-style ask that queues nothing starts nothing: it must not take the slot a hero move needs)
+    const ask = (ids, quiet) => { const n = soon.length; for (const id of ids) if (P[id] && !got[id] && !soon.includes(id)) soon.push(id); if (!quiet || soon.length > n) pump(); };
+    artHeroWant = (hero, move) => ask(artHeroPacks(hero, move));
+    artNsWant = ps => { if (!classicOn()) ask((ps || []).map(p => 'ns:' + p.replace(':', '.')), true); };
     artHeroReady = (hero, move) => artHeroPacks(hero, move).every(id => got[id]) && waits.every(f => { try { return f(hero, move) !== false; } catch (e) { return true; } });
     artHeroNeed = (hero, move) => {
       if (artHeroReady(hero, move)) return true;
@@ -96,6 +103,9 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
         const F = typeof FOE_ART === 'object' && FOE_ART[key]; if (!F) return;
         for (const p of Object.keys(data.atlases || {})) { F.atlases[p] = data.atlases[p]; lazy(F.atlases, p); }
         done();   // 64j cuts the frames as each atlas loads; isReady waits for them
+      } else if (kind === 'ns' && typeof NS_ART === 'object') {   // basE91 pictures (64m decodes them)
+        const i = key.indexOf('.'), G = NS_ART[key.slice(0, i)], e = G && G[key.slice(i + 1)]; if (!e) return;
+        e.img = Object.assign(e.img || {}, data.img); done();
       } else if (kind === 'bg' && typeof BG_ART === 'object') {
         for (const o of ['land', 'port']) if (data[o]) lazy(data[o], 'src');
         if (!late) { BG_ART[key] = data; done(); return; }
@@ -119,7 +129,7 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     // the first hour's moves: with a hero, its Attack, Hit, Parry, Dodge and slots; with none yet, every hero's Attack and Hit
     const firstMoves = h => h ? movePacks(h, FIRST.concat(slots(h).filter(ab => typeof ab === 'string').map(ab => moveOf(h, ab))))
       : [...new Set(Object.keys(P).map(id => P[id].h).filter(Boolean))].flatMap(x => movePacks(x, OPENING));
-    const wantAbility = p => { if (p && p.hero && p.id && p.hero === soloHero()) for (const id of movePacks(p.hero, [moveOf(p.hero, p.id)])) if (!got[id] && !soon.includes(id)) soon.push(id); pump(); };
+    const wantAbility = p => { if (p && p.hero && p.id && p.hero === soloHero()) ask(movePacks(p.hero, [moveOf(p.hero, p.id)])); };
     on('soloEquip', wantAbility);
     on('abilityLearned', wantAbility);
     on('soloHero', () => pump());
@@ -145,18 +155,21 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
       const h = typeof soloHero === 'function' ? soloHero() : null, mine = Object.keys(P).filter(id => P[id].h && (h ? P[id].h === h : P[id].c) && shows(id));
       const out = mine.filter(id => P[id].c), add = ids => { for (const id of ids) if (!out.includes(id)) out.push(id); };
       add(firstMoves(h));
+      add(soon.filter(id => P[id].n));   // what the new-style screens asked for (artNsWant): below the first fights' moves, never urgent
       for (const q of near) if (q >= 1) add(artZonePacks(q));
       add(mine);
-      for (const q of area) add(artZonePacks(q));
+      for (const q of near) if (q >= 1) add(nsPacks(q));
+      for (const q of area) { add(artZonePacks(q)); add(nsPacks(q)); }
       return out;
     };
     const due = id => !got[id] && !busy[id] && !stale[id] && !broken[id] && !(failed[id] && failed[id].at > Date.now());   // a stale file is gone for good
-    // What the stage waits for (and the zone on screen, and artHeroWant) goes first, in its order, while fewer than four files load:
-    // the queue never takes the last slot, and nothing from the queue starts while one of these waits. Then the queue (wanted), in
-    // its order: a hero file while fewer than three load and no zone's pack does, a zone's pack only alone.
+    // What the stage waits for (and the zone on screen, and artHeroWant; not artNsWant, which wanted() queues) goes first, in its
+    // order, while fewer than four files load: the queue never takes the last slot, and nothing from the queue starts while one of
+    // these waits. Then the queue (wanted), in its order: a hero file while fewer than three load and no other pack does, any
+    // other pack only alone.
     const small = id => !!P[id].h;
     function pump() {
-      const now = heroNow().concat(screenZone() >= 1 ? artZonePacks(screenZone()) : [], soon), n = Object.keys(busy).length;
+      const now = heroNow().concat(screenZone() >= 1 ? artZonePacks(screenZone()) : [], soon.filter(id => !P[id].n)), n = Object.keys(busy).length;
       let id = now.find(due);
       if (id) { if (n >= 4) return; }
       else { id = wanted().find(due); if (!id || !(small(id) ? n < 3 && Object.keys(busy).every(small) : n < 1)) return; }

@@ -163,6 +163,7 @@ function fxImpactIn(id) {
       const ax = hand ? hand[0] : cls === 'Short' ? 0.3 : cls === 'Flying' ? 0.45 : 0.4;
       const ay = fy != null ? fy : hand ? hand[1] : cls === 'Tall' ? 0.3 : cls === 'Medium' ? 0.38 : 0.5;
       INFO.cls = hand ? 'Hand' : cls; INFO.x = Math.round(x0 + w * ax); INFO.y = Math.round(y0 + h * ay);
+      if (f.hitPt && fy == null) { INFO.cls = 'Hand'; INFO.x = Math.round(s.x + (s.dx || 0) + f.hitPt[0]); INFO.y = Math.round(s.gy - (s.fr.hover || 0) + f.hitPt[1]); }   // a new-style foe's own hit point (64m)
       INFO.box[0] = x0; INFO.box[1] = y0; INFO.box[2] = x0 + w; INFO.box[3] = y0 + h;
       return INFO;
     }

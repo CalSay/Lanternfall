@@ -93,13 +93,22 @@ let campPaintFire = null;
   stageDeco = (g, phase, v) => {
     if (!showing(v.tg)) { at.on = false; return; }
     const on = lit(), fx = Math.round(v.SW * FIRE_X) - v.cam, gy = v.GY;
+    // new style (64m): the woods pack's stations, stakes, Hesketh and fire, in the same places
+    const ns = typeof nsOn === 'function' && nsOn();
     if (phase === 'back') {
       if (!on) { g.fillStyle = 'rgba(6,5,16,.42)'; g.fillRect(-4, -4, v.SW + 8, v.SH + 8); }   // night until the fire is lit
       let px = Math.min(Math.round(v.SW) - 16, Math.round(v.nodeR) + 14 + 2 * PLOT_GAP);
       for (const id of PLOTS) {
         const built = lv(id) >= 1;
         if (!built && !plotOpen(id)) continue;
-        paintPlot(g, id, Math.min(px, v.SW - 16) - v.cam, gy - 1, built); px -= PLOT_GAP;
+        const x = Math.min(px, v.SW - 16) - v.cam; px -= PLOT_GAP;
+        if (!(ns && nsDraw(g, built ? 'station' : 'prop', built ? id : 'stake', 'lv' + lv(id), x, gy - 1))) paintPlot(g, id, x, gy - 1, built);
+      }
+      if (ns) {
+        nsDraw(g, 'npc', 'hesketh', on ? 'lit' : 'idle', fx + HES_DX, gy, { v: !reduced && Math.floor(v.T * 1.6) % 2 ? 'b' : '' });
+        nsDraw(g, 'prop', 'fire', on ? 'lit' : 'cold', fx, gy, { t: v.T });
+        at.x = fx + v.cam; at.y = gy - 8; at.SW = v.SW; at.SH = v.SH; at.on = true;
+        return;
       }
       const H = hesFrames();
       if (H && H.idle0) {
@@ -116,7 +125,7 @@ let campPaintFire = null;
     ANIM.lightAt(g, '255,150,70', fx, gy - 12, 78, 0.5 + fl);
     ANIM.lightAt(g, '255,236,170', fx, gy - 10, 22, 0.55 + fl);
     const H = hes;
-    if (H && H.idle0 && H.idle0.lights) for (const l of H.idle0.lights) ANIM.lightAt(g, l.rgb, Math.round(fx + HES_DX - H.idle0.ox) + l.x, Math.round(gy - H.idle0.oy) + l.y, l.r || 14, 0.5);
+    if (!ns && H && H.idle0 && H.idle0.lights) for (const l of H.idle0.lights) ANIM.lightAt(g, l.rgb, Math.round(fx + HES_DX - H.idle0.ox) + l.x, Math.round(gy - H.idle0.oy) + l.y, l.r || 14, 0.5);
   };
 
   // ---- the fire button: over the fire while it can be lit ----
@@ -183,12 +192,12 @@ let campSceneLayout, campPaintScene;
     // the whole button inside the panorama even when all ten tents are occupied.
     for (const h of handsList()) {
       const status = handsStatus(h); if (!status) continue;
-      if (status.st === 'out' || status.st === 'back') { view.away.push({ id: h.id, name: h.n, status }); continue; }
+      if (status.st === 'out' || status.st === 'back') { view.away.push({ id: h.id, key: h.key, name: h.n, status }); continue; }
       const want = SPOTS[status.spot] || SPOTS.fire;
       const x = slots.filter(p => !used.has(p)).sort((a, b) => Math.abs(a - want) - Math.abs(b - want) || a - b)[0];
       if (x == null) continue;
       used.add(x);
-      view.actors.push({ id: h.id, name: h.n, x, y: 164, w: 56, h: 96, status,
+      view.actors.push({ id: h.id, key: h.key, name: h.n, x, y: 164, w: 56, h: 96, status,
         spot: status.spot, sk: h.sk, look: hash(h.key || h.id) % 3 });
     }
     return view;
@@ -290,9 +299,23 @@ let campSceneLayout, campPaintScene;
       rect(g, x - 3, y - 33, 6, 11, '#E4CC89');
     }
     g.font = '10px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#E8DDC5';
-    const label = { tavern: 'Tavern', watch: 'Watchtower', bench: 'Workbench', forge: 'Forge', store: 'Storehouse',
-      loom: 'Loom', ench: 'Enchanter', library: 'Library', shrine: 'Shrine' }[b.id];
-    g.fillText(label, x, y + 15);
+    g.fillText(LABEL[b.id], x, y + 15);
+  }
+  const LABEL = { tavern: 'Tavern', watch: 'Watchtower', bench: 'Workbench', forge: 'Forge', store: 'Storehouse',
+    loom: 'Loom', ench: 'Enchanter', library: 'Library', shrine: 'Shrine' };
+  function paintNs(g, view, t) {
+    const any = { any: 1, t }, put = (grp, key, f, x, y) => nsDraw(g, grp, key, f, x, y, any);
+    nsCamp.scenery(g, view.width, view.height, 164, 'back');
+    for (let i = 0; i < Math.min(10, view.tents || 0); i++) put('prop', 'tent', 'idle', 35 + i * 41, 103);
+    g.font = '10px sans-serif'; g.textAlign = 'center';
+    for (const b of view.buildings || []) { put('station', b.id, 'lv' + b.lv, b.x, 120); g.fillStyle = '#E8DDC5'; g.fillText(LABEL[b.id], b.x, 135); }
+    if (view.open) put('prop', 'fire', view.lit ? 'lit' : 'cold', view.homeX, 142);
+    for (const a of view.actors || []) {
+      put('gatherer', a.key || a.id, a.status.st === 'rest' ? 'rest' : 'idle', a.x, a.y);
+      if (a.status.st === 'pack') put('prop', 'pack', 'idle', a.x + 20, a.y - 1);
+      if (a.status.st === 'rest') { g.fillStyle = '#DFD4B6'; g.fillText('Resting', a.x, a.y - 78); }
+    }
+    nsCamp.scenery(g, view.width, view.height, 164, 'fore');
   }
   campPaintScene = (g, view = campSceneLayout(), time = 0) => {
     if (!g || !view) return;
@@ -300,6 +323,10 @@ let campSceneLayout, campPaintScene;
     const night = view.phase === 'night' || view.phase === 'dusk';
     const sky = { dawn: ['#605D75', '#AC867C'], day: ['#617F8E', '#A6B6A0'], dusk: ['#51435E', '#98716E'], night: ['#211E36', '#3D3B51'] }[view.phase] || ['#617F8E', '#A6B6A0'];
     g.save(); g.imageSmoothingEnabled = false;
+    // new style (64m nsCamp: every piece is in)
+    const ns = typeof nsCamp === 'function' ? nsCamp(view) : 'off';
+    if (ns === 'wait') { rect(g, 0, 0, view.width, view.height, '#0B0810'); g.restore(); return; }   // decoding: never a mix
+    if (ns === 'on') { paintNs(g, view, t); g.restore(); return; }
     rect(g, 0, 0, view.width, 65, sky[0]); rect(g, 0, 65, view.width, 54, sky[1]);
     if (night) for (let i = 0; i < 21; i++) rect(g, 15 + (i * 173) % view.width, 8 + (i * 13) % 42, 2, 2, '#A59DAC');
     // Broad pixel silhouettes keep the crew legible at phone size.

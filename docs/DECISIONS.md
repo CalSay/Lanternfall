@@ -1220,6 +1220,11 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   steps only" end; heroes and foes draw 1.5x against unchanged scenery (ACTOR_K = 1.5, card actor-scale; a hero about 142 logical
   px, 285 CSS at 1280x720) from the 190 px art with no new bytes; portrait stays 1x until UX-L1. #320 closed with the spike: foes
   stay 2D. A menu-only phone mode is a separate Cal decision. (`docs/design/route-s/ruling.md`)
+- **Bigger heroes (Cal, 2026-10-10 10:52: "Heroes need to be bigger"; Opus judge approved with conditions; Cal can veto: "Keep
+  heroes at one and a half"):** ACTOR_K 2 at stage zoom 2+ (1280x720, 1920x1080), ground at 86% of the stage there. A stage too short
+  for it (1366x640) keeps 1.5x. A roomy zoom-1 stage (480+ CSS px tall: 1024x768, a narrow window) draws 2x or 3x; G3's x1 now
+  covers only short stages (740x360). A hero and lone foe too wide for the stage step down (2 to 1.5; 3 to 2 to 1). Crowds and
+  portrait keep x1; the ground does not move when a crowd comes. Follow-up: try 1.5x for crowds before 1x (needs its own judge).
 - **Route S Tobin (integrate-route-s-tobin, Opus art judge, 2026-10-10; Cal can veto: "Wire Tobin now", "Pull the new Tobin",
   "Wait for all three heroes", "Keep the first cleave", "Last Stand should be a shield raise"):** wire Tobin's 21 fight moves
   (Scenario key frames from his concept, 190 px at Wren's pack scale, 63 colours seeded with the concept's 14 swatches so his olive
@@ -1406,6 +1411,7 @@ nothing; no economy or save change. A cache with a pick is a big card.
   report for the split build; per-hero packs (core moves at boot) are a follow-up card that the route S wire cards depend on.
   Record: `docs/design/hosting/art-loader-judge.md`.
 - **Loading screen (judge 2026-10-10, docs/design/hosting/loading-screen-judge.md; Cal can veto: "make the screen wait for the hero's moves"):** the split build opens on a title screen with no art (the name, a bar, the line) and waits for no hero moves; card hero-queue first reorders and preloads the hero's first-hour moves and measures holds, and a fight-set wait comes only if holds remain, inside the boot set under E2 (at most 0.45 MB, real boot bytes at most 4.60 MB). The 6.0 s and 4.0 MB lines stand. cold-load.mjs times the font stylesheets. netlify-split-deploy owns long-lived caching on /assets/*.
+- **Engine boot bytes (judge 2026-10-10, ns-scenery-engine #351; Cal can veto: "trim the engine under the warn line"):** the new-style engine's ~7.5 KB on the wire puts the new-game boot set at 3.5007 MB, over the 3.5 warn line, and is accepted as named in the PR: plan.md 5.1 already expects about 3.8 MB with A1, a camp cut would only move the bytes to the camp wire card, and hero cores count once (the heaviest), not stacked. The 3.5 warn and 4.0 fail lines stand; the cold load stays within 6.0 s (4.5 s measured on the PR head).
 
 ## Replaced decisions
 
