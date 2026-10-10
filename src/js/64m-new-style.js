@@ -1,17 +1,12 @@
-// 64m-new-style: the new-style art engine (card ns-scenery-engine). Browser-only. Contract, anchors and rules:
-// docs/design/new-style/engine.md. Draws NS_ART (21zc, from the wire cards; none yet: every screen is classic).
-// Whole-screen rule (plan 4.2): a screen is new style only when every piece it shows (59n, plus hero and critter) is wired,
-// loaded and decoded, decided once per visit; else classic (and the loader fetches what is missing). Classic art: all classic.
-//   nsScreen() -> 'on' | 'off' | 'wait'; nsOn(); nsFoeSet(m), nsNodeSet(kind, t) -> frame set | null; nsBlit(g, rec, x, y, o);
-//   nsDraw(g, group, key, frame, x, y, o) -> bool; nsScenery(g, phase, W, H, GY, cam) -> bool; nsCamp(view); nsHeroArt; nsStats()
+// 64m-new-style: the new-style art engine (card ns-scenery-engine). Browser-only. Draws NS_ART only on a screen with every
+// piece in (the whole-screen rule); the contract, anchors and rules are in docs/design/new-style/engine.md.
 var nsScreen, nsOn, nsFoeSet, nsNodeSet, nsBlit, nsDraw, nsScenery, nsCamp, nsHeroArt, nsStats;
 {
   const D = typeof NS_ART === 'object' && NS_ART ? NS_ART : null;
   const SC = 0.5, MINK = 0.5, WAIT = 1.5, WAIST = 0.55;
   const classic = () => typeof portraitsClassic === 'function' && portraitsClassic();
   nsHeroArt = { fight: {}, gather: {} };
-  // Wren's route S (64l) fights; gathering waits for route-s-wren-gather
-  // (classic: false only while route S ships and Classic art is off)
+  // Wren's route S (64l) fights; gathering waits for route-s-wren-gather. classic is false only while route S ships and is on
   nsHeroArt.fight.wren = () => { const w = typeof wrenSStats === 'function' ? wrenSStats() : {}; return w.ready && wrenSOn() ? true : w.classic === false && !w.ready ? 'wait' : false; };
   const off = () => 'off';
   nsScreen = off; nsOn = () => false; nsFoeSet = nsNodeSet = () => null; nsBlit = () => {}; nsDraw = nsScenery = () => false; nsCamp = off;

@@ -216,7 +216,9 @@ export function buildSplit({ write = true, art = AREA_ART, extra = [] } = {}) {
     .replace('/* @classic */', () => JSON.stringify(classicKey));
   const tags = assets.map(a => `<script src="assets/${attr(a.name)}" onload="lfBoot.done(this)" onerror="lfBoot.fail(this)"></script>`).join('\n');
   const code = frags.filter(x => !isAsset(x.text) || art[x.f]).map(x => keep.find(k => k.f === x.f) || x);
-  const html = page(shell, css, `${loader.replace(/\n*$/, '\n')}${tags}\n${iife(code)}\n<script>lfBoot.end();</script>`);
+  // the loader (its screen and script) right after the styles, before any game markup, so its screen is the first thing painted
+  // (card loading-screen); the boot files' tags and the game's script stay where the inline page has its script
+  const html = page(shell, `${css}</style>\n${loader.replace(/\n*$/, '')}\n<style>`, `${tags}\n${iife(code)}\n<script>lfBoot.end();</script>`).replace('\n<style></style>', '');
   const files = [...assets, ...packs];
   if (write) {
     fs.mkdirSync(ASSET_DIR, { recursive: true });

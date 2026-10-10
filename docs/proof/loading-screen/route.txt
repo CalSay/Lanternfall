@@ -1,0 +1,22 @@
+# seed: 1
+# Proof for card loading-screen (docs/design/hosting/loading-screen.md; ruling loading-screen-judge.md). The split build's plain
+# loading line became a title screen: the game's name (it waits up to 1 s for its font), a bar that fills with the bytes, and the
+# line "Loading the game: x of y MB". It is the first markup in the page, so it paints before the game's markup. The inline page
+# shows the name and "Loading the game" while the browser reads the script; 90-boot takes it away. No art, no new wait.
+# Cold loads (node tools/build.mjs --split && node docs/design/hosting/cold-load.mjs, fonts answered after 3 round trips):
+#   10 Mbps, 150 ms, median of 3: new game ready 4.4 s (4.4, 4.5, 4.2), screen painted 0.7 s; zone 2 ready 4.7 s (4.7, 4.7, 4.7)
+#   1.6 Mbps, zone 2 (reported, no line): ready 24.0 s, screen painted 0.7 s
+# Screenshots of the screen (split build, one boot file held): /mnt/project-files/autopilot/proof/loading-screen/
+# tools/check.mjs "split build (asset-build)" asserts both screens come before the game markup, draw no art, have a
+# reduced-motion rule, and are gone after boot at 1280x720, 740x360 and 360x740. This route proves the inline page gets past
+# its screen into a fight. Run at all three views.
+new early
+wait 6
+expect-no "#lfLoad"
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+expect-no "Loading the game"
+shot fight-after-load

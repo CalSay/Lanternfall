@@ -5,8 +5,22 @@
      Hero packs (card hero-packs) go by hero, not zone: it writes the save's hero's core pack only (a new game has no hero yet),
      and none of a hero file the Classic art switch turns off while it is on (x in the table: Wren's route S), nor such a zone
      pack (the new-style packs, card ns-scenery-engine).
-     Until the game runs this plain text line shows the bytes done: a file counts once its download ends (resource timing) or it runs. -->
-<div id="lfBoot" role="status" aria-live="polite" style="position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;background:var(--bg,#140F1A);color:var(--bone,#EFE6D6);font:16px/1.4 var(--body,sans-serif);text-align:center"><span id="lfBootText">Loading the game</span></div>
+     Until the game runs the loading screen (card loading-screen: the game's name, a bar and a line, no art) shows the bytes done:
+     a file counts once its download ends (resource timing) or it runs. -->
+<style id="lfBootCss">
+#lfBoot{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg,#140F1A);color:var(--bone,#EFE6D6);font:16px/1.4 var(--body,sans-serif);text-align:center}
+#lfLoad{display:none}
+.lf-boot-name.lf-wait{opacity:0}
+.lf-boot-name{transition:opacity .2s}
+.lf-boot-in{display:flex;flex-direction:column;align-items:center;gap:14px;width:min(100%,360px)}
+.lf-boot-name{font:600 min(calc(44px * var(--display-k,1.2)),11vw)/1 var(--display,monospace);letter-spacing:.06em;color:var(--gold,#F2C14E);text-shadow:0 0 18px rgba(255,158,61,.45)}
+.lf-boot-bar{width:100%;height:10px;border:1px solid var(--line-hi,#4E4060);border-radius:5px;background:var(--well,#110D16);overflow:hidden}
+.lf-boot-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ember-deep,#B8621B),var(--ember,#FF9E3D));transition:width .2s}
+#lfBootText{color:var(--muted,#A597B4)}
+@media (max-height:420px){.lf-boot-in{gap:10px}.lf-boot-name{font-size:min(calc(34px * var(--display-k,1.2)),11vw)}}
+@media (prefers-reduced-motion:reduce){.lf-boot-name,.lf-boot-bar i{transition:none}}
+</style>
+<div id="lfBoot" role="status" aria-live="polite"><div class="lf-boot-in"><b class="lf-boot-name lf-wait" id="lfBootName">Lanternfall</b><div class="lf-boot-bar" aria-hidden="true"><i id="lfBootFill"></i></div><span id="lfBootText">Loading the game</span></div></div>
 <script id="lfBootJs">
 var lfBoot = (function () {
   var files = /* @files */, packs = /* @packs */, road = /* @road */, total = 0, got = 0, seen = {}, failed = false, k;
@@ -35,7 +49,9 @@ var lfBoot = (function () {
   var mb = function (n) { return (n / 1e6).toFixed(1); };
   var line = function () {
     var t = document.getElementById('lfBootText');
+    var f = document.getElementById('lfBootFill');
     if (t && !failed) t.textContent = 'Loading the game: ' + mb(got) + ' of ' + mb(total) + ' MB';
+    if (f && !failed && total) f.style.width = Math.min(100, got / total * 100).toFixed(1) + '%';
   };
   var count = function (url) {
     var name = String(url).split('?')[0].split('/').pop();
@@ -45,6 +61,12 @@ var lfBoot = (function () {
     new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { count(e.name); }); }).observe({ type: 'resource', buffered: true });
   } catch (e) { /* no resource timing: each file counts when it runs */ }
   line();
+  // the name waits up to 1 s for its font (Handjet), so a first visit does not show it in a fallback font and then swap; the
+  // bar and the line show at once (loading-screen judge)
+  (function () {
+    var n = document.getElementById('lfBootName'), show = function () { if (n) n.classList.remove('lf-wait'); };
+    try { setTimeout(show, 1000); document.fonts.load('600 48px Handjet').then(show, show); } catch (e) { show(); }
+  })();
   // the save's zone's packs, parser-inserted so they run before the boot files and the game (same origin, so never blocked)
   boot.forEach(function (id) { document.write('<script src="' + packs[id].f + '" onload="lfBoot.done(this)" onerror="lfBoot.fail(this)"><\/script>'); });
   return {
@@ -65,7 +87,7 @@ var lfBoot = (function () {
     },
     fail: function () {
       failed = true;
-      var box = document.getElementById('lfBoot'), t = document.getElementById('lfBootText');
+      var box = document.querySelector('#lfBoot .lf-boot-in'), t = document.getElementById('lfBootText');
       if (!box || !t || box.querySelector('button')) return;
       t.textContent = 'Some game files did not load. Check your connection, then reload.';
       var b = document.createElement('button');
@@ -77,7 +99,7 @@ var lfBoot = (function () {
     // After the game's script: the line goes, and so do the loader's script tags, so the page holds what the inline page holds.
     end: function () {
       if (failed) return;
-      var gone = [document.getElementById('lfBoot'), document.getElementById('lfBootJs'), document.currentScript];
+      var gone = [document.getElementById('lfBoot'), document.getElementById('lfBootJs'), document.getElementById('lfBootCss'), document.currentScript];
       [].forEach.call(document.querySelectorAll('script[src^="assets/"]'), function (s) { gone.push(s); });
       gone.forEach(function (el) { if (el) el.remove(); });
     }
