@@ -1,0 +1,1 @@
+Nothing changes in the game you play today. Saint Elowen now has a plan for 14 abilities of her own: her Attacks light Candles, and she either gives them away as Wards and steady hits or keeps them for one bright blast. She will join after the Fenmother, when you relight her chapel. Best shot: none (a plan; the build comes next).
