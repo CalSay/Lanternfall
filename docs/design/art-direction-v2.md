@@ -1,8 +1,12 @@
 # Art direction v2: should heroes and foes be drawn at a finer pixel scale for desktop?
 
-Status: **pick pending the Codex sample.** Card `art-direction-v2` (browser-first plan, section 3 step 5). Docs only: nothing
-here changes the game. The Opus art judge rules **wire**, **re-brief** or **shelve** once Codex's sample lands, and the
-ruling goes in `docs/DECISIONS.md` (Art) with a veto phrase for Cal.
+Status: **superseded (2026-10-10).** Do not send the Codex sample brief in section 4. The question here was answered by
+a different route: Cal made the Scenario pipeline the default for hero poses (2026-10-10 00:34 and 08:45), and the Opus art
+judge ruled Route S Wren in at 190 px, 2x today's 96 px (`docs/DECISIONS.md`, Art: "Wren's 9 Oct pipeline is the default" and
+"Route S Wren"). The pick below (shelve, keep 96 px) no longer stands. The pixel-grid table in section 2 and the page-bytes
+notes may still help the next hero and foe packs. Kept as a record of the 9 Oct reasoning.
+
+Old status: pick pending the Codex sample. Card `art-direction-v2` (browser-first plan, section 3 step 5). Docs only.
 
 The question: today's heroes are about 96 art px tall. Should Codex redraw every hero and foe at about 1.5x to 2x that, so
 they look finer on a desktop screen?
