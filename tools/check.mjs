@@ -7922,8 +7922,9 @@ if (section('tavern blackjack (browser)')) try {
         const at = s => page.$eval(s, n => { const r = n.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width)]; });
         const deal = await at('#sec-blackjack .bj-mid');
         assert(/^Deal /.test(await page.textContent('#sec-blackjack .bj-mid')) && /Table: 26 to 510 gold/.test(await page.textContent('#sec-blackjack .bj-lim')), `blackjack ${tag}: Deal names the bet and the limits line reads "Table: 26 to 510 gold"`);
-        // a double tap on Deal: the second tap lands on Stand inside the guard and does nothing
-        await X('globalThis.__q = [9, 4, 8]; Math.random = (() => { const r0 = Math.random; return () => { if (!globalThis.__q.length) return r0(); const c = globalThis.__q.shift(), h = S.blackjack.hand, u = {}; for (const x of h.p.concat(h.d)) u[x] = (u[x] || 0) + 1; let n = 0; for (let i = 0; i < c; i++) n += 4 - (u[i] || 0); return (n + 0.5) / (208 - h.p.length - h.d.length); }; })(); true');
+        // a double tap on Deal: the second tap lands on Stand inside the guard and does nothing. The forced cards go only to the
+        // table's draws (the stage's sparks call Math.random every frame too).
+        await X('globalThis.__q = [9, 4, 8]; Math.random = (() => { const r0 = Math.random; return () => { if (!globalThis.__q.length || !/bj(Deal|Hit|Stand|Double)/.test(new Error().stack)) return r0(); const c = globalThis.__q.shift(), h = S.blackjack.hand, u = {}; for (const x of h.p.concat(h.d)) u[x] = (u[x] || 0) + 1; let n = 0; for (let i = 0; i < c; i++) n += 4 - (u[i] || 0); return (n + 0.5) / (208 - h.p.length - h.d.length); }; })(); true');
         await page.click('#sec-blackjack .bj-mid'); await page.click('#sec-blackjack .bj-mid', { delay: 0 });
         const v1 = JSON.parse(await X('JSON.stringify(bjView())'));
         const hit = await at('#sec-blackjack .bj-act:first-child');
