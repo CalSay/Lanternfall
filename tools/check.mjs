@@ -12586,7 +12586,11 @@ if (section('craft-odds-before-pay')) try {
           const nu = await X('JSON.stringify(craftGoalNext())');
           await X(`setTab('forge'); ui(true); true`); await page.waitForTimeout(300);
           await X(`(() => { const b = document.querySelector('.cf-st[data-st="bench"]'); if (b) b.click(); return true; })()`);
+          const lineFirst = await X(`(() => { window.__bowBtn = document.querySelector('[aria-label="Craft Pine Bow"]'); return !!document.querySelector('.cf-rec[data-kind="bow"] .cf-pre'); })()`);
+          assert(!lineFirst, `${v}: the Pine Bow row shows before its boss line comes in (so the in-place check below means something)`);
           const shown = await wait(page, '.cf-rec[data-kind="bow"] .cf-pre');
+          // craft-list-keeps-place: the line goes into the row in place; a rebuilt row hands the guide a new button and upright it scrolled the list
+          if (shown) assert(await X(`!!window.__bowBtn && window.__bowBtn === document.querySelector('[aria-label="Craft Pine Bow"]')`), `${v}: the boss line goes into the Pine Bow row without rebuilding it (same Craft button)`);
           const o = shown ? await fit(page, '.cf-rec[data-kind="bow"] .cf-pre', '.cf-rec') : null;
           assert(/"kind":"bow","t":1/.test(nu) && o && /^Zone 2 boss: about \d+ in 10, now \d+$/.test(o.text), `${v}: Next Up's Pine Bow row shows the boss line before the press (${nu}; ${o ? o.text : 'none after 60 s'})`);
           if (o) {

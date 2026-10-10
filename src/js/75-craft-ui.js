@@ -678,7 +678,7 @@ let craftUI = null;
       const gl = stationTierOpen(k, t) ? gradeTxt(k, t) : ''; if (gl) row.append(el('div', 'cf-odds cf-gline', gl));
       const ch = choiceTxt(k, t); if (ch) row.append(el('div', 'cf-odds cf-choice', ch));
     } else { const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds)); }
-    { const pk = preRecKey(k, t), pl = pk ? preLine(pk) : ''; if (pl) row.append(el('div', 'cf-odds cf-pre', pl)); }   // craft-odds-before-pay
+    row.preAt = row.lastElementChild; prePut(row, k, t);   // craft-odds-before-pay: the boss line goes here (prePut keeps it current)
     const lr = can.ok ? liftRow(k, t) : null; if (lr) row.append(lr);   // craft-strike-infuse: the choice, on a craft you can make
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
@@ -781,7 +781,8 @@ let craftUI = null;
       } else {
         for (const k of ks) {
           const r = rec.rows[k], rs = rowSig(k, t);
-          if (!r || r.sig === rs) continue;
+          if (!r) continue;
+          if (r.sig === rs) { prePut(r.row, k, t); continue; }
           const row = recipeRow(k, t); r.row.replaceWith(row); r.row = row; r.sig = rs;
         }
       }
@@ -789,11 +790,21 @@ let craftUI = null;
       if (!rec.list.querySelector('#forgeBtn')) { const b = rec.list.querySelector('.cf-go'); if (b) b.id = 'forgeBtn'; }
     }
   });
-  // Everything recipeRow(k, t) shows that can change while the list stays the same.
+  // craft-list-keeps-place: the boss line comes in about a second after the row shows, so it is put into the row in place, never
+  // by rebuilding the row. A rebuilt row gave the guide a new Craft button to point at, and upright that scrolled the list off the
+  // result card the player had just made ("Copper Pickaxe on.") down to Pine Bow.
+  function prePut(row, k, t) {
+    const pk = preRecKey(k, t), pl = pk ? preLine(pk) : '', cur = row.querySelector(':scope > .cf-pre');
+    if (!pl) { if (cur) cur.remove(); return; }
+    if (cur) { putText(cur, pl); return; }
+    const n = el('div', 'cf-odds cf-pre', pl);
+    if (row.preAt && row.preAt.parentNode === row) row.preAt.after(n); else row.append(n);
+  }
+  // Everything recipeRow(k, t) shows that can change while the list stays the same (the boss line is kept by prePut).
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), (k => k && preLine(k))(preRecKey(k, t)), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
   }
 
   // ================= Enchanter's Table extras =================
