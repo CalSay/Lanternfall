@@ -1,0 +1,24 @@
+# seed: 1
+# Proof for card first-craft-toast-clip: the mid fixture (Tobin, Zone 20) crafts a Copper Warblade, then closes the Forge. On a phone held
+# sideways (740x360) the craft's notices dock at the foot of the stage, side by side, under the hero and foe: none covers the Next Up chip
+# or the bell, as they did from the side column's short notices row. Upright (360x740) the banner's "Well made" line sits over the name,
+# so "Copper Warblade" reads whole instead of "Copper W…". The boxes (every view, the longest Next Up goal in the chip, a 39-letter name,
+# 1366x640 and 1920x1080 unchanged) are held by tools/check.mjs ("first-craft-toast-clip").
+new mid
+wait 3
+tap-if "Skip this story"
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap "Craft"
+wait 1
+tap-if "Got it"
+tap "Craft Copper Warblade"
+tap "Close menu"
+expect "#nuChip"
+burst first-craft
+shot first-craft-toasts
+expect "#toasts .toast"

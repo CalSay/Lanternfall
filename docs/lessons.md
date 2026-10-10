@@ -57,6 +57,10 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   without holds, scaled to its slot). Why: ns-foe-kits' first push gave every Captain its monster's tuned moves; the review caught it.
 - With a zone monster switched on, the budget's `types` rows throw (the zone sends one type); measure those zones with
   `normals.mjs`-style direct spawns instead. Why: ns-foe-kits z9/z10 normal rows could not run with kits on.
+- Land a live hero action on its impact, not on the press: route new hero moves through `turnHeroDone` (press events at once,
+  the act in the 'strike' phase after `fxImpactIn`), and give a new move a 62b recipe so its impact time is known. A test that
+  presses in a browser and reads the foe's HP at once must tick past the impact first. Why: Cal saw damage land the moment he
+  pressed, before the swing or arrow reached the foe (damage-on-impact, 2026-10-10).
 
 ## Economy and skilling
 
@@ -212,6 +216,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - When actors draw at a different zoom from the scenery (`AK` in `62-stage.js`), grep for every point the scenery hands the actor layer: the gather woodpile sits at `scene.ext.pile`, a spot in stage px, and drawn in actor px it slid 1.5x right and off the stage's bottom. Convert at the hand-off (`pileScene`) and shoot each scene kind (fight, gather, hunt, camp) against the base. Why: the woodpile vanished at 1280x720 and only a side-by-side shot showed it (actor-scale, 2026-10-10).
 - A shared drawing helper that sets the canvas view itself (61-anim `glowAt` ends with `setTransform(vk)`) must be told about every view switch: with the scenery at 2x and the actors at 3x, the first big lamp glow put the rest of the frame in the actors' view, so lamp light, motes and moths drew 1.5x off their lanterns while every box-based check stayed green. Check the transform around such calls (`getTransform().a` before and after). Why: the actor-scale reviewer (2026-10-10).
 - Measure the turn banner by its face and words (`.tv-tc-face`, `.tv-tc-txt`), not its full-width band, and hold the game (`soloPickerOpen`, `turnPaused`) before raising it with `emit("turnCard")`: the band spans the stage, so every hero "met" it, and a live turn moves the hero mid-read. (actor-scale, 2026-10-10)
+- Measure a docked notice against what it can climb over in the tallest state, not the fixture's: the landscape notices row under Next Up is 23 to 77 px at 740x360 and a craft's toast plus banner is about 150 px, so bottom-anchored toasts rose over the chip and the bell (four eyes sightings). On a phone on its side toasts now sit at the stage's foot, two side by side (stacked, two covered the hero to the waist; one at a time cut a plain toast to 1.6 s and failed eyes' moments control). Give a banner's title its own line rather than nowrap and an ellipsis beside the eye. (first-craft-toast-clip, 2026-10-10)
 
 ## Saves and offline parity
 
@@ -330,6 +335,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A browser check that pauses the turn engine (`turnPaused`, `__tp`) and casts through `turnHeroAct` must keep the foe alive: raise its HP so no cast ends the fight, and check `TURN_LIVE.foe === mob` before each cast. A kill under the pause leaves `TURN_LIVE` on the dead foe while the sim spawns the next one onto the stage, so the stage and the fight read different foes. Why: the ability-effects-live check saw Bleed on the fight's foe and none on the stage's at 1280x720 only (2026-10-10).
 - `{ turns: true }` and `{ story: true }` in a browser section's `newContext` options are not stray Playwright options: check.mjs wraps `newContext` and, without `turns`, sets `lanternfall.test.realtime` so the page plays real-time fights (`TURN_TUNE.on = 0`). Keep them when a review calls them unused. Why: ability-effects-live dropped `turns` on a reviewer's nit and no turn fight ever started (2026-10-10).
 - A browser check that fakes game state (`S.maxZone`, levels, flags) for one case also marks what the game derives from it, in the same step, so no moment fires from the fake (`S.lantern.seen = S.maxZone`). Why: the away-limit cases set `S.maxZone = 40` on a fresh hero, the next tick lit the Hollow's Great Lantern, and its card opened in the gap between two away cards and covered More, so C14 timed out on a click under a full 4-job run. (c14-away-card-load-flake, 2026-10-10)
+- A draw hook meant for the hero's own projectiles checks who fired it (`p.own`, set where the hero shoots), not just the projectile kind. Why: route S Wren's arrow hook keyed on `kind === 'arrow'` and drew Wren's arrow sprite for foe and ally arrows too, until the reviewer caught it (route-s-wren-wire, 2026-10-10).
+- An art check that asks "is this anchor on an opaque pixel" reads the raw atlas frame, never a canvas the game has drawn on. Why: route S Wren's string check read the drawn frame, where the game's own bowstring made every anchor opaque, so it could not fail (route-s-wren-wire, 2026-10-10).
+- A timing check for a drawn move runs the clock the game really runs, hit-stops included: a Perfect's 0.1 s hit-stop freezes `TURN_LIVE.now`, so a release frame keyed to the ring's contact on that clock showed 133 ms after the flash. Release at the press or the contact, whichever is first. Why: route S Wren's ring check ran a clean clock and passed while the judge's clips failed gate 12 (route-s-wren-wire, 2026-10-10).
 
 ## Reviews and Codex
 

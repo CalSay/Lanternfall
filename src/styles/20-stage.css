@@ -86,10 +86,11 @@
   .stagebox.vs-on .toasts:not(.over-menu) { top: auto; bottom: 6px; right: 70px; }   /* clear of the sound and battle-bar buttons */
   .stagebox.vs-on:has(.stage.tall) .toasts:not(.over-menu) { right: 108px; }   /* a tall stage has the big ability button at the foot */
   .stagebox.vs-on .toasts:not(.over-menu) .mm-toast { padding-top: 3px; padding-bottom: 3px; min-height: 0; align-items: center; }
-  .stagebox.vs-on .toasts:not(.over-menu) .mm-t-tx { grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0 8px; }
   .stagebox.vs-on .toasts:not(.over-menu) .mm-t-sub, .stagebox.vs-on .toasts:not(.over-menu) .mm-t-title ~ .mm-t-say { display: none; }
-  .stagebox.vs-on .toasts:not(.over-menu) .mm-t-say, .stagebox.vs-on .toasts:not(.over-menu) .mm-t-line { grid-column: 1 / -1; }
-  .stagebox.vs-on .toasts:not(.over-menu) .mm-t-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: calc(15px * var(--display-k)); }   /* a long name wraps to a second row and reaches the hero's feet on a short stage */
+  /* first-craft-toast-clip: the eye sits on its own tight line over the title, so the title has the banner's whole width ("Copper Warblade"
+     took 163 px and got 78 beside the eye) and the banner stays about as tall as one row; a name wider than that wraps between words */
+  .stagebox.vs-on .toasts:not(.over-menu) .mm-t-eye { line-height: 1; }
+  .stagebox.vs-on .toasts:not(.over-menu) .mm-t-title { font-size: calc(15px * var(--display-k)); line-height: 1.05; overflow-wrap: normal; }
 }
 
 /* Portrait top band (top-bar-compact): under the header zone bar, ONE line holds the activity switch (Fight / Gather, the zone arrows)

@@ -1,0 +1,1 @@
+Your hits now land when they connect, not when you press the button. Wren's arrows and Pip's bolts deal their damage as they reach the foe, and Tobin's blows as they strike, so the number and the foe's health bar move with the hit. Best shot: attack-landed.

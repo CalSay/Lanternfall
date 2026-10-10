@@ -1251,6 +1251,13 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   a second lantern). Woodcut v6 passes the impact and loops 1, 2, 5, 6, 7, 8. Hunt v4 (one hand and a short spear again) and the Hex
   sigil v2 (two marks read as a G) wait for Cal's next budget; gathering keeps the camp pose meanwhile. Cal's checks: 0 third hands,
   1 halo pixel (real steel) in 48 frames. Seven sheets, 132 credits; Pip's pack 960 of ~1,000. (`docs/design/route-s/recheck-pip.md`)
+- **Route S Wren wire (route-s-wren-wire, #346, Opus art judge, 2026-10-10; Cal can veto: "Pull the new Wren"):** wire. Gate 11 shots
+  pass at all 9 views. Gate 12 clips pass on the re-shoot: all 8 Volley and Moonlit Volley releases show on the contact frame in both clips
+  (they were 133 ms late before the fix, because a Perfect's hit-stop froze the clock the release waited on; a ring now lets go at the press or
+  the contact, whichever is first). Accepted as drawn: Power Shot's and Barbed's end frames at 186 px (crouched in the source) and Final
+  Echo frame 2 with no string (the bow is hidden, and the frame never shows in turn fights). In the split build only her idle is at boot (new
+  game 3.49 MB, zone 2 3.95 MB, no hero exception). The Foreman's rule: no hero-core judge, since at 10 Mbps her Attack is in about 3 s
+  before a new player's first swing ("Loading Wren" never shows). Goes to Cal as a preview (gate 13).
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
