@@ -1174,6 +1174,15 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   20 Nov post ships 2D. art-scale-ruling and 3d-hero-pipeline are held. Codex's zone 3-10 foe briefs continue, each with a 4-view
   turnaround. The art freeze is unchanged. (`docs/design/live-3d/ruling.md`, red team `redteam.md`;
   `autopilot/rulings/2026-10-09-live-3d-scenes.md`)
+- **Route S Wren (integrate-route-s-wren, Opus art judge, 2026-10-10; Cal can veto: "Pull the new Wren", "Wait for all three
+  heroes", "Ship her gathering now", "Bigger heroes on big screens", "Keep heroes at 96 px"):** wire Wren's 20 fight moves (Scenario
+  key frames, 190 px, 63 colours, 1-bit alpha, lossless WebP, at most 1,650 KB), with arrow and bat sprites (at most 60 KB), a
+  game-drawn string and game-drawn effects, behind Classic art (build card route-s-wren-wire, gated on registration, bytes, shots and
+  a judge clip read). The woodcut axe reads as a sledgehammer: re-brief (Scenario credits, Cal's OK); the 4 gather loops wire later as
+  one set. Any hero's pack is at most 2.0 MB of files. Hero size: the 96 px art spec and "whole steps only" end for finer hero art; a
+  hero stands 95 logical stage px (about a quarter of the fight scene): 190 CSS px at 1280x720, 285 at 1920x1080, 95 at 740x360; the
+  stage, foes, Tobin and Pip keep whole-step zoom. #320 closed with the spike: foes stay 2D at today's scale. A menu-only phone mode
+  is a separate Cal decision. (`docs/design/route-s/ruling.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
