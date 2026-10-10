@@ -8,42 +8,214 @@
 # The no-bow-in-the-bag case ("No weapon yet. Make a Pine Bow at the Workbench first." with a Go) and the fit at every view are
 # held by tools/check.mjs (normal-death-says-so: loss-help-gear-first).
 # seed: 1
+# The loss line (its Wear button, .tv-beat-go; a selector, as its text fades in) stays up until the next fight press or 8 s,
+# so every step of each round runs only while it is not up (a fixed 7 presses
+# raced it: the next fight cleared it). 40 rounds, cheap once the line is up; since hits land on impact (#348) many presses
+# fall on the foe's turn, so she loses later than the old 7 presses.
 new early-z12-nobow
 wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+unless .tv-beat-go tap-if "Continue"
+unless .tv-beat-go tap-if "Got it"
+unless .tv-beat-go tap-if "Dismiss this tip"
+unless .tv-beat-go tap-if "Attack"
+unless .tv-beat-go wait 1
+# the new-hero card can come up over the line as she loses: close it
 tap-if "Continue"
-tap-if "Got it"
-tap-if "Dismiss this tip"
-tap-if "Attack"
-wait 1
-tap-if "Continue"
-tap-if "Got it"
-tap-if "Dismiss this tip"
-tap-if "Attack"
-wait 1
-tap-if "Continue"
-tap-if "Got it"
-tap-if "Dismiss this tip"
-tap-if "Attack"
-wait 1
-tap-if "Continue"
-tap-if "Got it"
-tap-if "Dismiss this tip"
-tap-if "Attack"
-wait 1
-tap-if "Continue"
-tap-if "Got it"
-tap-if "Dismiss this tip"
-tap-if "Attack"
-wait 1
-tap-if "Continue"
-tap-if "Got it"
-tap-if "Dismiss this tip"
-tap-if "Attack"
-wait 1
-tap-if "Continue"
-tap-if "Got it"
-tap-if "Dismiss this tip"
-tap-if "Attack"
 wait 1
 expect ".tv-beat .tv-beat-txt"
 expect ".tv-beat .tv-beat-go"

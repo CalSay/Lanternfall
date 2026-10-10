@@ -1,54 +1,116 @@
 # seed: 1
 # Proof for card cache-ui-zone10-crash (reuses the z10-cantor fixture): the first Champion clear folds its cache into the Champion card and the page throws no error. Was: fixture z10-cantor (tests/proof-fixtures/save-z10-cantor.json) is Tobin on zone 10 with the Hollow Cantor next. The route fights it and checks the Wren meet scene (#159) without playing zones 1 to 9.
 new z10-cantor
-wait 2
+# boot is slower since the title screen (#349): wait for the walk-in card, not a fixed wait
+wait-for "The Hollow Cantor" 10
 tap-if "Got it"
 expect "The Hollow Cantor"
 shot champion-walk-in
 tap-if "Continue"
 wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
-tap-if "Attack"
-tap-if "Shield Bash"
-wait 1
+# Updated 2026-10-10 (routes replay): since rally-gates-live (#261) a Champion holds at each gate until its charged move is parried,
+# so each round attacks, then parries clean up to three times (one call per hit of a move of several hits; a call ends early on the
+# hero's turn), with rounds to spare.
+# Every fight line runs only while no story card (.sty-sheet) is up (`unless`): the rounds stop at the win, so spare ones cost nothing
+# and the win's card (which files itself after 45 s untouched) is read at once. Hesketh's one-time "Press Parry now" holds the
+# swing until Parry is pressed, so each round answers it when it is up (`if`).
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet tap-if "Attack"
+unless .sty-sheet tap-if "Shield Bash"
+if "Press Parry now" tap-if "Parry"
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+unless .sty-sheet parry-clean 3
+expect ".sty-sheet"
 expect "1 of 2"
 shot cantor-falls
 tap "Next"

@@ -1,7 +1,9 @@
 # seed: 1
 # Proof for card staged-guide-followups: Hesketh's first-hour lines land at the right moment, one at a time.
-# Part 1, fixture flow-points (Wren, level 4, zone 2, points to spend, the guide at its upgrade step): one point in Might, and his line about
-# closing the menu (with its Back to the fight button) comes straight away, not after a 15-20 s silence. In portrait it is up 2 s after the
+# Part 1, fixture flow-points (Wren, level 4, zone 2, points to spend, the guide at its upgrade step): one point in Might, then Spread
+# evenly (his spend line comes first since spend-points-before-nextup; this tool's reader misses it docked beside the menu at 740x360,
+# so it is followed, not asserted), and his line about closing the menu (with its Back to the fight button)
+# comes straight away, not after a 15-20 s silence. In portrait it is up 2 s after the
 # point. In landscape the fixture opens Hero in the middle of a fight, which stays in view beside the menu, so he waits for the gap after that
 # kill (the Attack taps play it out). In a real game the first level-up comes with a kill, so both lines land in that gap (check.mjs times it).
 # Part 2, fixture boss1 (Wren on zone 1, the boss next): the boss falls, the "First boss down" card shows on a clean screen with no Scroll line
@@ -12,47 +14,53 @@
 new flow-points
 wait 2
 tap-if "Continue"
+# the Hero tab opens with his upgrade line, a beat later than before #348/#353: wait for it, not a fixed 2 s
+wait-for "The Hero tab is open now" 15
 tap "Hero"
 wait 1
 tap "Build"
 wait 1
 tap "Add 1 point to Might"
+# Updated 2026-10-10 (routes replay): since c5569a02 (spend-points-before-nextup, on purpose) the fixture's pile of points brings his
+# spend line first ("Press Spread evenly to spend them all at once."); the route follows it, and then his back-to-the-fight line is next.
+tap-if "Spread evenly"
+# A press while his line is up answers it, so the presses stop once it shows (the kill took 5 to 7 presses in landscape).
 wait 2
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
-tap-if "Attack"
-tap-if "Echo Shot"
+unless "close the menu and the fight goes on" tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Echo Shot"
 wait 1
 expect "Back to the fight"
 shot one-point-back-line
