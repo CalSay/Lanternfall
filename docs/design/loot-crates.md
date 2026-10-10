@@ -1,6 +1,6 @@
 # Loot crates: five tiers for boss wins
 
-Status: proposed, waiting on Cal's OK (thread "Loot crates", 2026-10-10). Owner of the wire-up: a card written after the OK.
+Status: proposed. The paid version is decided (below); the tiers wait on Cal's OK (thread "Loot crates", 2026-10-10). Owner of the wire-up: a card written after the OK.
 Builds on: Lantern Caches (`55-caches.js`, `75-caches-ui.js`, DECISIONS "Lantern Caches" and "Looks"), the planned
 `cache-art` and `cache-looks` cards, and the monetisation plan (`/mnt/project-files/monetisation/plan.md`, section 5).
 
@@ -74,14 +74,20 @@ store look. The Wardrobe counts these as Cache looks.
 
 ## Out of scope
 
-- Any purchase, store page, price or payment code. Selling crates is Cal's call (see below).
+- Any purchase, store page, price or payment code (see "The paid version" below).
 - The online layer: the world raid pays Embers as today and opens no crate.
 - New currencies, keys, timers or buildings.
 
-## The paid version (Cal decides)
+## The paid version (Cal, 2026-10-10)
 
-A crate with random contents bought for real money breaks two of our own Lantern Rules ("never sell randomness" and
-"caches and keys are never sold"). It also counts as a paid loot box, which is banned in Belgium, regulated in
-Brazil and Australia, and a common cause of bad Steam reviews. The fair version keeps the crate's open moment: a crate
-whose contents are shown before you pay. You buy a set of store looks you can see, and it opens with the same animation.
-Store looks stay a separate catalogue from crate looks, so earned crates keep their value.
+Cal's call: paid crates are standard gacha. A crate shows every look it can hold and the odds, but which one you get
+is random. A pity counter makes the crate's top tier certain after a set number of opens without it. DECISIONS.md
+(Money, and Lantern Rules 1 and 2) records the change.
+
+- Paid crates hold looks only, never power, and they come from the store catalogue. Earned crates keep their own
+  looks, so a free player is never short of an earned crate's best.
+- They use the same five tiers, the same open and the same printed odds and pity line as earned crates.
+- Nothing is built yet. Store code still waits for the early-game milestone, behind its one switch.
+- A legal check per country comes before launch. Belgium bans paid loot boxes, so crates are not sold there. Brazil
+  bars them for minors, and Australia rates games that have them M or higher. Steam requires the odds to be shown,
+  which the design already does.

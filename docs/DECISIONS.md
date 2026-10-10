@@ -421,7 +421,13 @@ payment code, live prices and business and legal set-up stay with Cal.
   the music ships. A supporter mark shown in the Tavern changes room presence and needs online sign-off. (2026-10-06)
 - **Lantern Caches:** the gacha feeling comes only from caches earned in play (boss wins, Contracts with a Dare, first
   clears, Codex milestones). Odds are printed on the cache from the same table the code rolls; a visible pity counter;
-  no duplicate looks; no crafting materials. Caches and keys are never sold, and nothing bought is random. (2026-10-06)
+  no duplicate looks; no crafting materials. Earned caches and their keys are never sold. (2026-10-06; the
+  last clause changed by "Paid loot crates" below)
+- **Paid loot crates (Cal, 2026-10-10, thread "Loot crates"):** crates may later be sold as standard gacha. Each shows
+  every look it can hold and the odds; which one you get is random; a pity counter makes the top tier certain after a set
+  number of opens without it. They hold looks only, from the store catalogue, never an earned crate's looks, and never
+  power. Store code still waits for the early-game milestone, and a legal check per country (Belgium bans paid loot
+  boxes) comes before launch. Design: `docs/design/loot-crates.md`.
 - **Where to sell:** Steam first, as a single-player build (the online layer runs only on the claude.ai page), after a
   landscape mouse-and-keyboard playtest of parry and dodge timing passes. Phones second. No itch or Ko-fi pack.
   (2026-10-06)
@@ -1050,9 +1056,10 @@ ordinary Rattlebones only).
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
 
-1. Never sell power or chance. Time may be sold only up to a ceiling every player reaches in play, and must also be
+1. Never sell power, or a chance at power. Time may be sold only up to a ceiling every player reaches in play, and must also be
    earnable in play.
-2. Never sell anything random. Random rewards come only from play.
+2. Anything random that is sold is a look, never power: it shows every item it can hold with its odds, and a visible
+   pity counter makes its top tier certain after a set number of opens (Cal, 2026-10-10, paid loot crates).
 3. Never take back: nothing free becomes paid, nothing earned is locked, nothing bought expires or lapses.
 4. Never build friction to sell its removal: no energy, no starved bag, no timer added so a purchase can skip it.
 5. Never interrupt: the shop lives in one place; no pop-ups, no offer on opening the game, no sale dots.
@@ -1452,6 +1459,9 @@ nothing; no economy or save change. A cache with a pick is a big card.
 ## Replaced decisions
 
 Kept only to explain current rules. Each line: the old decision, then what replaced it.
+
+- Money: "Never sell anything random", and "nothing bought is random" (Lantern Rule 2, 2026-10-06) -> paid loot crates
+  of looks, with contents, odds and pity shown (Cal, 2026-10-10, thread "Loot crates").
 
 - Guide: "one thing a fight: one paused step a fight; Dodge waits for a later fight than the ability, Parry for a later fight than
   Dodge" (guide-voice, 2026-10-07) -> the staged first-fight lesson, every verb as it first comes up, with the fight held
