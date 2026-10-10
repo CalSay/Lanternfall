@@ -43489,9 +43489,10 @@ let craftUI = null;
   // An item (not a kind): weapon and head uniques fit every class.
   const heroFitsIt = it => { const d = itemKind(it); return !!(d && d.pos && fits(it, d.pos, 'hero')); };
   // bow-slot-wording: an empty Weapon slot still means the hero's own starting weapon (Wren's bow), so the compare names it
+  // (Tobin's "Sword and shield" names the sword: the shield is the Off-hand slot)
   const emptyLine = (pos, tail) => {
     const h = pos === 'weapon' && typeof soloHero === 'function' ? SOLO_HEROES[soloHero()] : null;
-    return h && h.weapon ? `Better than your starting ${h.weapon.toLowerCase()}.` : `You wear nothing as ${posName(pos)}. ${tail}`;
+    return h && h.weapon ? `Better than your starting ${h.weapon.toLowerCase().split(' and ')[0]}.` : `You wear nothing as ${posName(pos)}. ${tail}`;
   };
 
   // Stat line text, and whether it works before party combat.
@@ -44042,7 +44043,7 @@ let craftUI = null;
     st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
     st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
     { const m = S.craft && S.craft.made, n = m && typeof m === 'object' ? Object.values(m).reduce((a, v) => a + (v | 0), 0) : 0, k = itemKind(it);
-      if (n === 1 && k && k.pos && !k.tool) st8.first = it.id; }   // bow-slot-wording: the first piece of gear ever made
+      if (n === 1 && k && k.pos && !k.tool && heroFitsIt(it)) st8.first = it.id; }   // bow-slot-wording: the first piece of gear ever made
     if (e.lift) st8.lift[it.id] = e.lift;   // craft-strike-infuse: the result card names the lift
     if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null, parts: e.on ? safe(() => toolParts(it, e), null) : null };   // tool-speed-adds-up: the old tool and the parts, read now
     else fdStart(it);

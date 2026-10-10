@@ -19636,6 +19636,10 @@ if (section('bow-slot-wording')) try {
         assert(await X(`soloHero() === 'wren' && S.equip.weapon == null && Object.values(S.craft.made || {}).every(n => !n)`), `${at}: the fixture is Wren with no weapon worn and no gear made`);
         await X(`setTab('forge'); true`);
         const card = async () => { await until(`!!document.querySelector('.cf-res')`); return X(`(c => c ? { id: +c.dataset.itemId, txt: c.querySelector('.cf-res-r').innerText, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent) } : null)(document.querySelector('.cf-res'))`); };
+        // 0. a pickaxe first (the guide's order): it goes on by itself and never says "Not equipped yet"
+        const p1 = await X(`(craftItem('pick', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c0 = await card();
+        assert(c0 && c0.id === p1 && !/Not equipped yet/.test(c0.txt), `${at}: a pickaxe's card has no "Not equipped yet" line (${c0 && c0.txt})`);
         // 1. the first bow: the compare names her starting bow, and one line says it is not on yet and why a tool goes on by itself
         const b1 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
         const c1 = await card();
@@ -19656,10 +19660,6 @@ if (section('bow-slot-wording')) try {
         const b3 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
         const c3 = await card();
         assert(c3 && c3.id === b3 && /Against your /.test(c3.txt) && !/starting bow/.test(c3.txt), `${at}: with a bow worn, a new one compares against it (${c3 && c3.txt})`);
-        // 5. a pickaxe goes on by itself and never says "Not equipped yet"
-        const p1 = await X(`(craftItem('pick', 1, { wear: true }) || {}).id`); await X('ui(true); true');
-        const c4 = await card();
-        assert(c4 && c4.id === p1 && !/Not equipped yet/.test(c4.txt), `${at}: a pickaxe's card has no "Not equipped yet" line (${c4 && c4.txt})`);
         assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -19667,6 +19667,7 @@ if (section('bow-slot-wording')) try {
     // the other starters name their own weapon
     const sw = fs.readFileSync(path.join(ROOT, 'src', 'js', '24b-data-solo.js'), 'utf8');
     assert(/tobin:[^\n]*weapon: 'Sword and shield'/.test(sw) && /pip:[^\n]*weapon: 'Staff'/.test(sw), `${at0}: Tobin and Pip have a starting weapon for the line to name`);
+    assert(/\.split\(' and '\)\[0\]/.test(cui), `${at0}: Tobin's line names his sword only (the shield is the Off-hand slot)`);
   }
 } catch (e) { fail('bow-slot-wording crashed: ' + (e.stack || e)); }
 
