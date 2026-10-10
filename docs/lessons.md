@@ -69,11 +69,11 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A hero resource needs an effect of its own and at least one spend besides the finisher; walk one fight's count turn by turn before calling it a choice, and name hand and hip sides in a pose list. Why: Elowen's first draft cut Codex's costs, so Candles only climbed and paid through one passive, and her pose list named no sides (Auriel's third-arm cause); the red team caught both. (elowen-ability-spec, 2026-10-10)
 - A spec that renames or replaces moves relabels the art queue (gallery, sheet map, wire card) in the same pass. Why: on 10 Oct, Auriel's gallery kept the old Pip names after #357 renamed her moves, and Cal caught it. (elowen-ability-spec, 2026-10-10)
 - A hero's "own" move must be a new move (new effect, new pose), never another hero's move with a new name and id. Why: on 10 Oct, Auriel's five style moves were Pip's spark, frost shard, ward, hex and nova renamed; Cal saw "the abilities are the same" and had five new ones made. (oriel-own-abilities, 2026-10-10)
-
 - Decide what the stage does for an ability from its own data (24c `kind`, e.g. 'buff' fires nothing at the foe), never a per-name
   list, and keep the route S drawers' swing (they start a move on `hero.st` 1): a buff swings in place with `attack(hero, null, 0, true)`.
   To time a number against its hit in a browser, log both on the stage clock `T` (one value per frame, set before tick and animate).
   Why: buffs still fired an arrow or bolt at the foe after #333, and a check with `/\\d/` in Node code (not a page string) matched nothing (fx-timing-fixes, 2026-10-10).
+- Code that must see every frame the game is held puts its check first in `GAME_HOLDS` (unshift), never through `holdGame`: `gameHeld()` stops at the first hold that is up, and 55-story's hold loads before the fight files. Why: foe-windup-after-hold's first push missed story scenes; the reviewer caught it (2026-10-10).
 
 ## Economy and skilling
 
@@ -376,6 +376,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A screen whose style holds for a visit lists every piece that can appear during that visit, not just the pieces on screen when it opens: a station that finishes building, a plot that opens, a gatherer coming home with a pack. It also decides at the start of the visit, not whenever the piece list changes. Why: the ns-scenery-engine reviewer found that a Workbench finished mid-visit drew classic on a new-style grove, and the camp switched style while open when a gatherer left or came back. (ns-scenery-engine review, 2026-10-10)
 - In the split build the page keeps each pack entry's data with its pictures stripped (`img: {}`). Code that asks "is this art ready" counts an entry with no pictures as not loaded. It never counts it as ready because nothing is left to decode. Why: 64m's first `pieceSt` read a stripped new-style piece as ready, so a fight whose foe pack was still loading drew new style with that foe classic. Only the split browser check that holds a pack caught it. (ns-scenery-engine, 2026-10-10)
 - A walk that checks every guide hint must wait out the states the guide itself waits out. When a game rule hides hints (none while the hero is down), add the same wait to the walk. Otherwise a hero who happens to fall mid-walk reads as a missing hint. Why: the 740x360 UX-L1 walk went red on the merged head of #370 (hesketh-boss-loss-line, 2026-10-10).
+- A browser loop that presses controls asserts how many it pressed (above zero) and fails on a click error; never `try { click } catch {}`. Press visible controls only, and reopen the view before each press when the press or its Escape can close it. Why: the solo copy scan's hero-sheet loop matched no control at all, Reforge was never read because Salvage armed first, and pressAll swallowed ~1,000 "not visible" errors a run (mostly its own Escape shutting the menu), so all three looked green while pressing almost nothing. (scan-dead-coverage, 2026-10-10)
+- Stop a background job by its exact PID (`kill <pid>`), never `pkill -f` or `pgrep -f`: a pattern like "check.mjs" also matches the calling shell, whose command line contains it, and kills the session's own command. Why: seen twice, live-3d-spike and again at 02:09 (2026-10-10).
 
 ## Reviews and Codex
 
