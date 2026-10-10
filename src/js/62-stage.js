@@ -17,6 +17,9 @@ let T = 0;
 // edge, camera-free; hx the hero's feet x (camera-free), hy its ground line, hl its lane, hd down, hf the
 // frame drawn last, hX/hY where it was drawn). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
 let stageDeco = null;
+// Ability effects (62b-fx.js): stageFx.swing(x, y) as the hero's swing fires, stageFx.aim(s) the foe's chest, and
+// stageFx.draw(ctx, phase, v), phase 'back' (before the actors), 'fx' (after the rings and particles) or 'dev' (device px, over the HUD).
+let stageFx = null;
 let resize, animate, draw, stageStats, stageRects, warmScene;
 {
   const A = ANIM;
@@ -690,9 +693,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       A.proj('mote', handX(a), handY(a) - 6, ax(t), t.hy - 34, 0.32, '#9FE8A0', 10, () => healMotes(t));
       return;
     }
+    if (a === hero && stageFx && tg === 'mob' && turnFight()) stageFx.swing(handX(a), handY(a));
     if (!foeAlive()) return;
     const s = a.aim && (tg !== 'mob' || slotLive(a.aim)) ? a.aim : a.kind ? foe : frontSlot();
-    const tx = s.x + (Math.random() - 0.5) * s.w * 0.3, ty = s.cy + (Math.random() - 0.5) * s.h * 0.3;
+    const fa = a === hero && stageFx && tg === 'mob' && turnFight() ? stageFx.aim(s) : null;   // the hero aims at the chest (62b-fx)
+    const tx = fa ? fa[0] : s.x + (Math.random() - 0.5) * s.w * 0.3, ty = fa ? fa[1] : s.cy + (Math.random() - 0.5) * s.h * 0.3;
     if (!a.kind) { a.slash = 0.16; A.burstPx(s.left + 6, ty, '#FFF3C4', 4, 40); return; }
     const sx = handX(a), sy = handY(a), col = a.pcol;
     if (a.kind === 'arrow') A.proj('arrow', sx, sy, tx, ty, 0.2, col, 6, (x, y) => A.burstPx(x, y, '#E8DCC0', 3, 30));
@@ -1448,6 +1453,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
 
   let drawMs = 0;
   const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0, hx: 0, hy: 0, hl: 1, hd: false, hf: null, hX: 0, hY: 0 };
+  const FXV = { T: 0, cam: 0, SW: 0, SH: 0, GY: 0, K: 1, DPR: 1, sx: 0, sy: 0, fight: false, foe: null, hx: 0, hy: 0, hfX: 0, hfY: 0, hc: null, hX: 0, hY: 0 };   // stageFx's view (reused)
   draw = function () {
     if (!SW) { resize(); if (!SW) return; }
     const t0 = performance.now();
@@ -1482,6 +1488,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       }
     }
     for (const a of order) { const al = actorA(a); if (al > 0.01) shadowAt(ax(a) - cam, a.down ? 16 : a.lane === 0 ? 11 : 13, (a.lane === 0 ? 0.35 : 0.5) * al, a.hy); }
+    if (stageFx) { const v = FXV; v.T = T; v.cam = cam; v.SW = SW; v.SH = SH; v.GY = GY; v.K = K; v.DPR = DPR; v.sx = sx; v.sy = sy;
+      v.fight = fight && turnFight(); v.foe = fight && foe.fr ? foe : null; v.hx = handX(hero); v.hy = handY(hero); v.hfX = ax(hero); v.hfY = hero.hy;
+      v.hc = hero._f && hero._f.c; v.hX = hero._x; v.hY = hero._y; stageFx.draw(ctx, 'back', v); }
     // Shield Wall dome (back half)
     if (wallT > 0 && !gath) drawDome(cam, false);
     ctx.globalAlpha = 1;
@@ -1536,6 +1545,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     A.drawRings(ctx);
     if (hudOn()) drawTeleRing(cam);
     A.drawParts(ctx);
+    if (stageFx) stageFx.draw(ctx, 'fx', FXV);
     // unique beam
     if (beamT > 0) {
       const bx = foe.x - cam, a = Math.min(1, beamT) * 0.8, bw = 12 + Math.sin(T * 20) * 2;
@@ -1558,6 +1568,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     // combat HUD (device px), then back to logical px for the floating text
     const hud = hudOn();
     if (hud) { A.devView(0); drawHud(cam, sx, sy); ctx.setTransform(K, 0, 0, K, sx * K, sy * K); A.devView(K, sx * K, sy * K); ctx.imageSmoothingEnabled = true; }
+    if (stageFx) { ctx.setTransform(1, 0, 0, 1, 0, 0); stageFx.draw(ctx, 'dev', FXV); ctx.setTransform(K, 0, 0, K, sx * K, sy * K); ctx.imageSmoothingEnabled = true; }
 
     // crisp floating text, in the band under the foe header
     ctx.textAlign = 'center'; ctx.lineJoin = 'round';
