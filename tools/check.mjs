@@ -120,7 +120,8 @@ const WEIGHT = {
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
   'hero queue (hero-queue)': 9,   // 8 s locally alone (hero-queue, 2026-10-10)
   'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
-  'new-style screens (browser)': 36   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
+  'new-style screens (browser)': 36,   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
+  'tip-order-and-lateness': 60   // three views of the pickaxe, Power Shot and Forge-ore lines (tip-order-and-lateness, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -16650,6 +16651,107 @@ if (section('forge-line-while-fighting')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('forge-line-while-fighting crashed: ' + (e.stack || e)); }
+
+// ==== tip-order-and-lateness: Hesketh's first-hour tips come when they are true and never contradict the one before ====
+// The cold leg of 10 Oct (reports/panel-2026-10-10, findings 5 and 6): "Mine 4 Copper Ore for a Copper Pickaxe", then with the ore in hand
+// "Make a Copper Pickaxe. You'll need one for the ore"; "The Workbench is up" long after it went up; "Power Shot is next to Echo" two minutes
+// after learning it; "Mine at the Copper Vein" while mining there. save-flow-cold-camp: Wren, cold, the Workbench built, no tool yet. Copper
+// Ore is set to 0 and she gathers Pine Log. The section plays the pickaxe, the Workbench line, the bow, Power Shot, then the Forge's ore, and
+// reads each line on the guide's next look after its condition turns true (a resize runs that look at once: no wait, no timer).
+if (section('tip-order-and-lateness')) try {
+  const at = 'tip-order-and-lateness', raw0 = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-flow-cold-camp.json'), 'utf8');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the line on screen now: its text, its button, the hold
+    const READ = `JSON.stringify((() => { const b = document.querySelector('.ob-bub'), up = !!b && !b.hidden, ok = document.querySelector('.ob-ok');
+      return { want: up ? soloGuideWants() : '', txt: up ? b.querySelector('.ob-txt').textContent : '', ok: up && ok && !ok.hidden ? ok.textContent : '', paused: ONBOARD.paused }; })())`;
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, mobile = w !== 1280, o = JSON.parse(raw0);
+        o.mats.ore[0] = 0; o.activity = 'gather'; o.node = { kind: 'wood', t: 1 };
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: JSON.stringify(o), key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+        const X = s => page.evaluate(s => window.__t.x(s), s), log = [];
+        const note = s => { if (s.txt && log[log.length - 1] !== s.txt) log.push(s.txt); return s; };
+        // change the game, then one look of the guide (its resize handler runs tick() there and then), then read the line
+        const after = async src => note(JSON.parse(await X(`${src}; dispatchEvent(new Event('resize')); ${READ}`)));
+        const until = async (f, ms) => { let s = note(JSON.parse(await X(READ))); for (const t0 = Date.now(); !f(s) && Date.now() - t0 < ms;) { await page.waitForTimeout(150); s = note(JSON.parse(await X(READ))); } return s; };
+        // 1. short of ore: the pickaxe's ore, with a Go to the vein
+        let s = await until(s => s.want === 'stock:tool', 8000);
+        assert(s.txt === 'Mine 4 Copper Ore for a Copper Pickaxe (0/4).' && s.ok === 'Mine at the Copper Vein', `${v}: short of ore, Hesketh asks for 4 Copper Ore with a Go to the Copper Vein (${JSON.stringify(s)})`);
+        // 2. mining there: the line counts, it no longer tells her to mine
+        await page.click('.ob-ok');
+        s = await after('true');
+        assert(await X('S.activity === "gather" && S.node.kind === "ore" && S.node.t === 1') && /^Mining Copper Ore for a Copper Pickaxe \(\d\/4\)\.$/.test(s.txt) && !s.ok,
+          `${v}: mining at the Copper Vein, the line counts the ore and asks for nothing she is already doing (${JSON.stringify(s)})`);
+        // 3. the ore in hand: on the next look, the pickaxe line, and no "The Workbench is up" (it went up long before)
+        s = await after('S.mats.ore[0] = 4');
+        assert(s.want === 'tool' && s.txt === 'You have the Copper Ore and Pine Log for a Copper Pickaxe. Open Craft and make it.', `${v}: with the ore in hand the next look says she has what the pickaxe takes (${JSON.stringify(s)})`);
+        // 4. Craft: make it, with no word that she still needs it for the ore
+        await X('setTab("forge", "make"); true');
+        s = await until(s => /^Make a Copper Pickaxe/.test(s.txt), 4000);
+        assert(s.want === 'tool' && s.txt === 'Make a Copper Pickaxe. It mines faster than your Stone Pick.', `${v}: in Craft he says make it and why, not "You'll need one for the ore" (${JSON.stringify(s)})`);
+        await page.click('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go');
+        await page.waitForFunction(() => window.__t.x('toolMade() && toolWorn()'), null, { timeout: 5000 });
+        // the bow (Wren's first weapon, at the Workbench): made and put on, so the Forge's turn comes after Power Shot
+        await page.waitForTimeout(400);
+        await page.click('#sec-craft-recipes .cf-rec[data-kind="bow"] .cf-go');
+        s = await until(s => s.want === 'wear:weapon', 5000);
+        if (s.want === 'wear:weapon') await page.click('.ob-ok');
+        await page.waitForFunction(() => window.__t.x('weaponMade()'), null, { timeout: 5000 });
+        // 5. Power Shot learned on the Hero menu during her turn, the fight going on: his line says where it went on that look, holding nothing
+        // (the Hero tab's points steps are another card's: answered here, so they do not stand in front)
+        await X('S.mats.ore[0] = 0; closeMenu(); setActivity("fight"); S.abil.scrolls.moss = 1; S.abil.got.moss = 1; for (const id of ["spend", "back"]) onboardDone(id); true');
+        await page.waitForFunction(() => window.__t.x('(q => !!q && q.phase === "hero")(turnCombatSnapshot()) && liveFoe()'), null, { timeout: 15000 });
+        await X('setTab("party", "abilities"); document.querySelectorAll(".ob-x").forEach(b => { if (b.offsetParent) b.click(); }); true');
+        s = await after('abilityLearn("wren", "powershot") && soloEquip(soloEquipped().indexOf(null), "powershot")');
+        assert(s.want === 'say:slot' && s.txt === "Power Shot is next to Echo now. Press it there when it's ready." && !s.paused && await X('liveFoe()'),
+          `${v}: Power Shot learned with a foe on the field: his line says where it went on the very next look, and holds nothing (${JSON.stringify(s)})`);
+        // read and the menu closed: it never comes back to hold the next kill gap
+        await X('closeMenu(); window.__k = 0; on("kill", () => { window.__k++; S.kills = 0; }); dispatchEvent(new Event("resize")); true');
+        const noSlot = async () => { let k0 = await X('window.__k'), seen = '';
+          for (const t0 = Date.now(); Date.now() - t0 < 30000 && await X('window.__k') < k0 + 1;) {
+            const r = note(JSON.parse(await X(READ))); if (r.want === 'say:slot') { seen = r.txt; break; }
+            // (a level 1 hero at zone 2 takes a while: each foe is left 1 HP so the next Attack makes the gap)
+            if (await X('combatFoes().forEach(f => { if (f && !f.dead && f.hp > 1) f.hp = 1; }); (q => !!q && q.phase === "hero")(turnCombatSnapshot()) && !ONBOARD.paused')) await page.keyboard.press('d');
+            await page.waitForTimeout(150);
+          }
+          return { seen, kills: await X('window.__k') - k0, at: JSON.parse(await X('JSON.stringify({ act: S.activity, tab: S.tab, phase: (turnCombatSnapshot() || {}).phase, foe: liveFoe(), held: ONBOARD.paused, step: (onboardStep() || {}).id, want: soloGuideWants() })')) }; };
+        let r = await noSlot();
+        assert(!r.seen && r.kills >= 1, `${v}: once read on the menu, the slot line does not come back in the next kill gap (${JSON.stringify(r)})`);
+        // a move learned and pressed before his line could show: the line is stale and never comes
+        // (Power Shot again: unlearned, its scroll back and the line's mark cleared, as if this were the first time)
+        await X(`S.abil.unl.wren = []; S.solo.eq.wren = ["echo", null, null]; S.abil.scrolls.moss = 1; S.abil.got.moss = 2; delete S.onboard.done["say:slot"];
+          abilityLearn("wren", "powershot") && soloEquip(soloEquipped().indexOf(null), "powershot"); emit("ability", { cls: "solo", id: "powershot", name: "Power Shot", auto: false }); true`);
+        r = await noSlot();
+        assert(!r.seen && r.kills >= 1 && await X('!S.onboard.sayQ.some(e => e.id === "slot")'), `${v}: a move already pressed gets no "next to" line in the next kill gap (${JSON.stringify(r)})`);
+        // 6. the Forge's ore, mining at the vein: the line counts, and nothing says to go and mine there
+        await after('S.mats.ore[0] = 0; setNode("ore", 1) && setActivity("gather")');
+        s = await until(s => s.want === 'stock:forge', 4000);
+        assert(s.want === 'stock:forge' && /^Mining Copper Ore for the Forge \(\d+\/25\)\.$/.test(s.txt) && s.ok !== 'Mine at the Copper Vein', `${v}: short of the Forge's ore while mining at the Copper Vein, the line counts and has no Go (${JSON.stringify(s)})`);
+        // and the fighter's held Forge line, queued, never shows while she mines there
+        await X('delete S.onboard.done["say:stock:forge"]; S.onboard.sayQ = [{ id: "stock:forge" }]; GUIDE_RT.t += 120; true');
+        s = await until(s => /The Forge needs/.test(s.txt), 3000);
+        assert(!/The Forge needs|Mine at the/.test(s.txt + s.ok), `${v}: mining at the Copper Vein, no held "Mine at the Copper Vein" line (${JSON.stringify(s)})`);
+        // the order: each line once its condition held, and none undoes the one before
+        const ORDER = [/^Mine 4 Copper Ore for a Copper Pickaxe/, /^Mining Copper Ore for a Copper Pickaxe/, /^You have the Copper Ore and Pine Log for a Copper Pickaxe/,
+          /^Make a Copper Pickaxe\. It mines faster/, /^Power Shot is next to Echo now/, /^Mining Copper Ore for the Forge/];
+        let i = 0; for (const t of log) if (i < ORDER.length && ORDER[i].test(t)) i++;
+        const bad = log.filter(t => /Workbench is up|You'll need one for the ore/.test(t)), back = log.slice(log.findIndex(t => ORDER[2].test(t))).filter(t => /^Mine \d+ Copper Ore for a Copper Pickaxe/.test(t));
+        assert(i === ORDER.length && !bad.length && !back.length, `${v}: the lines come in order, none stale, none undoing the last (${log.join(' | ')})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tip-order-and-lateness crashed: ' + (e.stack || e)); }
 
 // ==== tips-pause-says-so (Opus high judge, 2026-10-08): a Hesketh news line holds only the gap after a kill, never gathering; any other hold that
 // is not a fight lesson says "Paused" (the stage plate, Gather); a fight press answers a Got it hold and then acts; the bar stays in view, dimmed,
