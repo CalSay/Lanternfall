@@ -520,7 +520,7 @@ if (section('split build (asset-build)')) try {
           const v = JSON.parse(localStorage.getItem(k)); sessionStorage.setItem('t.z', String(v.zone)); v.zone = 1; localStorage.setItem(k, JSON.stringify(v)); } } catch (e) {} };
         const { page, navs } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'gone' }, html: probe, later: after, init });
         await booted(page); await page.waitForTimeout(500);
-        await go2(page);
+        await go2(page).catch(() => {});   // go2 starts the reload this step expects; on a slow runner it can land before evaluate returns
         await page.waitForFunction(() => sessionStorage.getItem('t.z'), null, { timeout: 8000 }).catch(() => {});   // the reload: a new page
         await booted(page); await page.waitForTimeout(800);
         const saved = await page.evaluate(() => sessionStorage.getItem('t.z'));

@@ -15,7 +15,7 @@ document.addEventListener('visibilitychange', () => {
 addEventListener('pagehide', () => { bootAwayNow(); save(); });
 
 // ================= boot =================
-{ const el = document.getElementById('lfLoad'); if (el) el.remove(); }   // the inline page's loading screen (src/shell.html)
+{ const el = typeof document.getElementById === 'function' && document.getElementById('lfLoad'); if (el) el.remove(); }   // the inline page's loading screen (src/shell.html); tools stub document
 resize();
 updatePortrait();
 // The away gains and their card are worked out in a task of their own right after the first frame
