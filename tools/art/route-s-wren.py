@@ -9,14 +9,15 @@
 #      (the 12 shooting moves, no string), each one 2x4 key-frame sheet from Scenario; the string anchors
 #      (string-test/anchors_raw.json in frame px, anchors.json for the Attack in the gallery's strip px); wren-fx-test/arrows.png
 #      (plain, heavy, sonic) and bats.png (6 flaps); Wren's concept sheet (its 13 palette swatches).
-# Out: art/heroes/wren/route-s/<move>.webp (one atlas per move: 8 frames in a row, 2 px apart), arrows.webp, bats.webp and
+# Out: art/heroes/wren/route-s/<move>.webp (one atlas per move: 8 frames in a row, 2 px apart; the idle's held frame alone), arrows.webp, bats.webp and
 #      pack.json (frame boxes, feet anchors, scales, string anchors, release frames, the measurements the checks assert).
 #      Then `node tools/art/embed-wren-s.mjs` writes src/js/21ye-data-wren-s.js from these files.
 #
 # Method (gates 1-4 of the spec):
 # - Cut: cut8.py's cutter (the frames the anchors were marked on, byte for byte), plus each frame's lift above its row's ground
 #   line, so airborne frames keep their height (not the bounding-box crops alone).
-# - Registration: the feet anchor of a frame is its row's ground line and the centre of its lowest band (the boots). One scale
+# - Registration: the feet anchor of a frame is its row's ground line (a standing frame's own lowest row) and the centre of its
+#   lowest band (the boots). One scale
 #   per move: the opening and closing frames' mean hood-top height (the top row in the hood's columns, not a bow tip above
 #   it) lands on 190 art px, within 0.88-1.12 of the pack scale (0.2217, the judge's). Lanczos down, alpha cut at 128 (1-bit).
 # - Palette: one for the whole pack, 63 colours (never fewer): the concept sheet's 13 swatches kept as drawn, a median cut for
@@ -43,6 +44,8 @@ RELEASE = {'attack': [5], 'twinshot': [4], 'powershot': [5], 'barbed': [4], 'pin
            'parry': [3], 'dodge': [3], 'hit': [1], 'idle': [0], 'defeat': [5], 'victory': [3]}
 ARROW_W = {'plain': 64, 'heavy': 72, 'sonic': 64}   # art px, nock to tip (fx3: 110 and 125 test px beside a 300 px Wren)
 BAT_W = 28                                          # art px, the widest flap
+STAND = 2                                           # art px: a frame lifted this little is standing (see scaled)
+HELD = {'idle': [0]}                                # moves embedded as one held frame (the rest of the sheet is not drawn)
 SNAP = 6                                            # art px: how far an anchor may move to reach an opaque pixel
 
 
@@ -146,11 +149,14 @@ def feet_x(al):
 
 
 def scaled(f, lift, k):
-    """a frame at scale k (Lanczos, alpha cut at 128) and its ground line from the crop's top"""
+    """a frame at scale k (Lanczos, alpha cut at 128) and its ground line from the crop's top. A frame whose boots sit at most
+    STAND art px above its row's ground line is standing: its ground line is its own lowest row (the sheets' rows place standing
+    frames a few source px apart, which would make her feet hop); higher frames are airborne and keep their height."""
     w, h = max(1, round(f.size[0] * k)), max(1, round(f.size[1] * k))
     sm = np.array(f.resize((w, h), Image.LANCZOS)); al = sm[..., 3] >= 128
     sm[~al] = 0; sm[al, 3] = 255
-    return sm, round((f.size[1] + lift) * k)
+    gy = round((f.size[1] + lift) * k); lo = int(np.nonzero(al.any(1))[0][-1])
+    return sm, (lo + 1 if gy - 1 - lo <= STAND else gy)
 
 
 HOOD_BAND = (-40, 30)   # art px from the feet centre: the columns the hood stands in (the bow is held further out)
@@ -224,7 +230,8 @@ def main():
                            [a[a[..., 3] == 255][:, :3] for a in list(arrows.values()) + bats])
     mc = Image.fromarray(allpx.reshape(1, -1, 3)).quantize(colors=NC - len(sw), method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     cols = sw + [tuple(mc.getpalette()[i * 3:i * 3 + 3]) for i in range(NC - len(sw))]
-    pal = Image.new('P', (1, 1)); pal.putpalette([v for c in cols for v in c] + [0] * (768 - 3 * len(cols)))
+    # the unused entries repeat the first colour (zeros there would let the quantizer map pixels to a black outside the palette)
+    pal = Image.new('P', (1, 1)); pal.putpalette([v for c in cols + [cols[0]] * (256 - len(cols)) for v in c])
     def quant(px):
         al = px[..., 3] == 255
         q = np.array(Image.fromarray(np.ascontiguousarray(px[..., :3])).quantize(palette=pal, dither=Image.Dither.NONE).convert('RGB'))
@@ -280,7 +287,9 @@ def main():
                         if r[x] and not r[x - 1] and not r[x + 1] and not r[max(0, x - 3):x - 1].any() and not r[x + 2:x + 4].any():
                             c = tuple(int(v) for v in q[y, x, :3]); strcol[c] = strcol.get(c, 0) + 1
             frames.append(fd)
-        data, rects = atlas(qs)
+        # only the frames the game draws go in: the idle is one held frame (gate 3: code breathing), so its other 7 stay out
+        keep = HELD.get(mv, range(len(qs))); frames = [frames[i] for i in keep]
+        data, rects = atlas([qs[i] for i in keep])
         with open(os.path.join(OUT, mv + '.webp'), 'wb') as fh: fh.write(data)
         for fd, r in zip(frames, rects): fd['r'] = r
         pack['moves'][mv] = {'k': round(k, 5), 'kRel': round(k / PACK_K, 4), 'rel': RELEASE[mv], 'f': frames}
@@ -311,9 +320,9 @@ def main():
     pack['strDropped'] = dropped
     pack['snap'] = {'max': max(snaps), 'mean': round(sum(snaps) / len(snaps), 2), 'n': len(snaps)}
     with open(os.path.join(OUT, 'pack.json'), 'w') as fh: json.dump(pack, fh, separators=(',', ':'))
-    print(f'fight atlases {fight / 1024:.1f} KB (ceiling 1,650 KB); arrows and bats {fx / 1024:.1f} KB (ceiling 60 KB)')
+    print(f'fight atlases {fight / 1e3:.1f} KB (ceiling 1,650 KB, 1 KB = 1,000 bytes as tools/lib/page-size.mjs); arrows and bats {fx / 1e3:.1f} KB (ceiling 60 KB)')
     print('scales (x pack):', {m: pack['moves'][m]['kRel'] for m in FIGHT})
-    print('hood tops (opening, closing):', {m: [pack['moves'][m]['f'][e]['hood'] for e in ([0] if m == 'defeat' else [0, 7])] for m in FIGHT})
+    print('hood tops (opening, closing):', {m: [pack['moves'][m]['f'][e]['hood'] for e in ([0] if len(pack['moves'][m]['f']) == 1 or m == 'defeat' else [0, 7])] for m in FIGHT})
     print('string dropped (a marked anchor not on the converted bow):', dropped)
     print('anchor snap', pack['snap'])
     print('string colour', pack['string'], pack['stringSeen'], 'bat at', pack['bats']['at'])

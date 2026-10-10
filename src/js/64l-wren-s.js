@@ -1,5 +1,5 @@
 // 64l-wren-s: Wren's route S fight moves on the stage (ruling #328, docs/design/route-s/ruling.md, card route-s-wren-wire).
-// Data: 21ye-data-wren-s.js (WREN_S, tools/art/embed-wren-s.mjs): 20 moves x 8 key frames, 190 art px tall, one WebP atlas per
+// Data: 21ye-data-wren-s.js (WREN_S, tools/art/embed-wren-s.mjs): 20 moves x 8 key frames (the idle: its held frame), 190 art px tall, one WebP atlas per
 // move, each frame with its feet anchor; the 12 shooting moves carry the string's anchors (top tip, bottom tip, drawing hand).
 // The frames are drawn as converted, stepped (no blending). The game draws the bowstring (1 art px, the painted string's colour,
 // Cal 9 Oct 23:47), the companion bat (6 flaps at one offset from the feet) and the Scenario arrows (plain, heavy, sonic); the
@@ -11,15 +11,15 @@
 // 0.5) it is downscaled once, with smoothing, into a cached canvas and drawn 1:1. Frames land on whole device px.
 // Timing (the spike's): attack and abilities 900 ms, the release frame on the stage's shot (its wind fits the last two frames
 // before the release, 62-stage WIND); parry and dodge 660 ms; hit 540 ms; defeat 2080 ms, the last frame held. A timed ability
-// (59k rings: Power Shot, Volley, Deadeye, Moonlit Volley) draws during each ring and shows a release frame when the ring
-// closes (the prompt's contact time) or is pressed. Idle: one held frame with code breathing (the rows above the waist drop
+// (59k rings: Power Shot, Volley, Deadeye, Moonlit Volley) draws during each ring and shows its release frame at the ring's
+// contact time, early press, late press or none. Idle: one held frame with code breathing (the rows above the waist drop
 // 1 art px), held still under reduced motion. Gathering shows the camp pose (victory frame 4) until route-s-wren-gather.
 //
 // API (the rest of the game asks these; all are no-ops with Classic art or before the atlases decode):
 //   wrenSOn() -> bool              the stage's Wren is route S now (Wren in play or asked for, not Classic, core atlases ready)
 //   wrenSHand(a) -> [dx, dy] | null   where the bow is (actor px from the feet) on the frame last drawn (62-stage handX/handY)
 //   wrenSFrame(move, timing) -> frame index   (pure: the checks) see frameAt below
-//   wrenSTimed(mv, ring, n, open, close, now, done) -> frame index   (pure: the checks) a timed ability's frame during ring `ring`
+//   wrenSTimed(mv, rings, now) -> { i, rel }   (pure: the checks) a timed ability's frame from its rings so far (see below)
 //   wrenSStats() -> { ready, decoded, drawn: { move, frame, k } }    (checks)
 // Hooks it installs: heroArtStage, heroArtDraw and heroArtPreview (64h) for Wren; ANIM.hooks.arrowSprite (61-anim) for her arrows.
 var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
@@ -62,15 +62,27 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     if (MS[mv] != null && !M.s || mv === 'defeat') return Math.min(7, Math.floor(ms / MS[mv] * 8));   // parry, dodge, hit, defeat: 8 even steps
     return frameAt(ms, M.rel[0], o.relMs != null ? o.relMs : WIND * 1000, MS.attack);
   };
-  // ring `ring` of n, open and close on the turn clock (s), now on the same clock; done: the ring was graded (pressed) already
-  wrenSTimed = (mv, ring, n, open, close, now, done) => {
-    const M = D && D.moves[mv]; if (!M) return 0;
-    const R = RINGS[mv] || [[[0, 1, 2, 3, 4].filter(i => i < M.rel[0]), M.rel[0]]];
-    const [draw, rel] = R[Math.min(ring, R.length - 1)];
-    if (done || now >= close) return rel;
-    if (!draw.length) return ring > 0 ? R[Math.min(ring - 1, R.length - 1)][1] : 0;   // nothing to draw: hold the last release
-    const u = Math.max(0, Math.min(0.999, (now - open) / Math.max(0.001, close - open)));
-    return draw[Math.floor(u * draw.length)];
+  // A timed ability's frame at `now` from its rings so far: rings = [{ open, close }] on the turn clock (s), as 59k's timingRing
+  // gives them (close: the prompt's contact time). Each ring draws from max(its open, the last release + HOLD) to its contact,
+  // then shows its release frame from the contact on, whenever (or whether) the player pressed, until the next ring draws.
+  // -> { i: frame, rel: the ring whose release shows (-1 while drawing) }
+  const HOLD = 0.15;   // s: a release stays at least this long before the next ring draws
+  wrenSTimed = (mv, rings, now) => {
+    const M = D && D.moves[mv]; if (!M || !rings || !rings.length) return { i: 0, rel: -1 };
+    const R = RINGS[mv] || [[[0, 1, 2, 3, 4].filter(i => i < M.rel[0]), M.rel[0]]], ring = j => R[Math.min(j, R.length - 1)];
+    let prevRel = -1, prevClose = -1e9;
+    for (let j = 0; j < rings.length; j++) {
+      const g = rings[j], [draw, rel] = ring(j), ds = Math.max(g.open, prevClose + HOLD);
+      if (now < ds && j > 0) return { i: ring(j - 1)[1], rel: j - 1 };   // the last release, held
+      if (now < g.close) {
+        if (!draw.length) return { i: j > 0 ? ring(j - 1)[1] : 0, rel: j - 1 };
+        const u = Math.max(0, Math.min(0.999, (now - ds) / Math.max(0.001, g.close - ds)));
+        return { i: draw[Math.floor(u * draw.length)], rel: -1 };
+      }
+      prevRel = rel; prevClose = g.close;
+      if (j === rings.length - 1) return { i: rel, rel: j };
+    }
+    return { i: prevRel, rel: rings.length - 1 };
   };
 
   if (D && typeof document !== 'undefined') {
@@ -112,7 +124,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     wrenSOn = () => !classic() && ready() && isWren(typeof heroArtId === 'function' ? heroArtId() : null);
     if (typeof idleTask === 'function') idleTask(() => { if (!classic()) start(); });
     else start();
-    if (typeof on === 'function') on('soloHero', () => { if (!classic()) start(); });
+    if (typeof on === 'function') { on('soloHero', () => { if (!classic()) start(); }); on('classicArt', p => { if (p && !p.on) start(); }); }
 
     // ---------------- frames: art-px canvases with the string and the breathing applied (a small LRU) ----------------
     const LRU = new Map(), LMAX = 64;
@@ -165,7 +177,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     }
 
     // ---------------- drawing ----------------
-    const LAST = { move: '', frame: 0, k: 0, x: 0, y: 0 };
+    const LAST = { move: '', frame: 0, k: 0, x: 0, y: 0, br: 0 };
     // draw move frame i with its feet at (x, y) in the context's current units (actor px on the stage)
     function blit(g, mv, i, x, y, o) {
       const br = o && o.br ? 1 : 0, sh = (o && o.sh) || 0;
@@ -177,7 +189,7 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       if (k >= 1) { g.imageSmoothingEnabled = false; g.drawImage(src, fx - Math.round(ax * k), fy - Math.round(ay * k), src.width * k, src.height * k); }
       else { const s = smallCanvas(src, k); g.drawImage(s, fx - Math.round(ax * k), fy - Math.round(ay * k)); }
       g.restore();
-      LAST.move = mv; LAST.frame = i; LAST.k = k; LAST.x = x; LAST.y = y;
+      LAST.move = mv; LAST.frame = i; LAST.k = k; LAST.x = x; LAST.y = y; LAST.br = br;
       return src;
     }
     // the companion bat: 6 flaps, one offset from the feet (never over her head: tools/check.mjs 'wren route S')
@@ -194,24 +206,29 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     // ---------------- the stage's state machine (64h heroArtStage's, for route S) ----------------
     const now = () => (typeof T === 'number' ? T : 0);
     const ST = { s: 'idle', t0: 0, mv: 'idle', hitT: -1, lastSt: 0, lastFl: 0, ab: '', abT: -9, parry: -9, sawParry: -9, dodge: -9, sawDodge: -9,
-      ring: null, relT: -9, arrow: 'plain' };
+      ring: null, relT: -9, relRing: -1, arrow: 'plain' };
     const go = (s, mv) => { ST.s = s; ST.mv = mv || s; ST.t0 = now(); ST.hitT = -1; };
     const twin = () => typeof TURN_LIVE !== 'undefined' && TURN_LIVE && TURN_LIVE.p && TURN_LIVE.p.eq && TURN_LIVE.p.eq.includes('twinshot');
     if (typeof on === 'function') {
       on('ability', p => { if (p && p.cls === 'solo' && ABIL[p.id]) { ST.ab = ABIL[p.id]; ST.abT = now(); } });
       on('soloParry', p => { if (p && p.res === 'parry') ST.parry = now(); });
       on('soloDodge', p => { if (p && p.res === 'dodge') ST.dodge = now(); });
-      // a timed ability's rings (59k turnRingStart): the ring's open time on the turn clock; graded rings show their release
-      on('timingRing', p => { if (!p || !RINGS_OF(p.id)) return; const L = typeof TURN_LIVE !== 'undefined' && TURN_LIVE; ST.ring = { mv: ABIL[p.id], i: p.i, n: p.n, open: L ? L.now : p.opensAt, done: false }; });
-      on('timingGrade', p => { if (ST.ring && p && p.i === ST.ring.i) { ST.ring.done = true; ST.relT = now(); } });
+      // a timed ability's rings (59k turnRingStart): open and contact times on the turn clock; graded: the last one was answered
+      on('timingRing', p => {
+        if (!p || !RINGS_OF(p.id)) return;
+        if (!ST.ring || p.i === 0 || ST.ring.mv !== ABIL[p.id]) { ST.ring = { mv: ABIL[p.id], rings: [], done: false }; ST.relRing = -1; }
+        ST.ring.rings[p.i] = { open: p.opensAt, close: p.closesAt }; ST.ring.done = false;
+      });
+      on('timingGrade', p => { if (ST.ring && p && p.i === ST.ring.rings.length - 1) ST.ring.done = true; });
       on('sceneReset', () => { ST.ring = null; });
     }
     function RINGS_OF(id) { return ABIL[id] && typeof TURN_TIMED === 'object' && TURN_TIMED[id] ? ABIL[id] : null; }
     function timedFrame() {
-      const r = ST.ring, L = typeof TURN_LIVE !== 'undefined' && TURN_LIVE; if (!r || !L || L.ended) return null;
-      if (L.phase !== 'timing' || !L.tm) { if (!r.done) return null; return { mv: r.mv, i: wrenSTimed(r.mv, r.i, r.n, r.open, r.open, 0, true) }; }
-      if (L.tm.i !== r.i) { r.i = L.tm.i; r.open = L.now; r.done = false; }
-      return { mv: r.mv, i: wrenSTimed(r.mv, r.i, r.n, r.open, L.until, L.now, r.done) };
+      const r = ST.ring, L = typeof TURN_LIVE !== 'undefined' && TURN_LIVE; if (!r || !L || L.ended || !r.rings.length) return null;
+      if (L.phase !== 'timing' && (!r.done || L.now > r.rings[r.rings.length - 1].close + 1)) return null;   // answered: held until the shot
+      const f = wrenSTimed(r.mv, r.rings, L.now);
+      if (f.rel > ST.relRing) { ST.relRing = f.rel; ST.relT = now(); }   // a new release: the string shivers
+      return { mv: r.mv, i: f.i };
     }
     // which frame the stage shows now: { mv, i, br, sh }
     function pick(a) {
@@ -291,10 +308,14 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
     if (typeof heroArtPreview === 'function') {
       const base = heroArtPreview;
       heroArtPreview = (cv, id) => {
-        if (!(cv && isWren(id) && !classic())) return base(cv, id);
+        if (!(cv && isWren(id) && !classic())) {   // Classic (or another hero): the canvas back to the size its screen made it
+          if (cv && cv._w0) { cv.width = cv._w0; cv.height = cv._h0; cv.style.width = cv.style.height = ''; cv._w0 = 0; }
+          return base(cv, id);
+        }
         if (!ready()) { start(); PENDING.add(cv); return base(cv, id); }   // drawn again once the atlases are in (wrenArt)
         const [, , w, h, ax, ay] = D.moves[CAMP[0]].f[CAMP[1]];
         const W = Math.ceil(Math.max(ax, w - ax) * SC) * 2 + 4, H = Math.ceil(h * SC) + 6;
+        if (!cv._w0) { cv._w0 = cv.width; cv._h0 = cv.height; }
         if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
         if (cv.style) { cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
         const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
@@ -345,6 +366,14 @@ var wrenSOn, wrenSHand, wrenSFrame, wrenSTimed, wrenSStats;
       for (let p = 0; p < d.length; p += 4) { if (d[p + 3] && d[p + 3] !== 255) alpha++; if (d[p + 3] === 255) seen.add(d[p] << 16 | d[p + 1] << 8 | d[p + 2]); }
       colours = seen.size;
       return { top: top - ay, bot: bot - ay, feet: (c0 + c1 + 1) / 2 - ax, colours, partAlpha: alpha };
+    };
+    wrenSStats.atlases = () => {   // every decoded atlas: the distinct opaque colours across all of them, and pixels neither clear nor opaque
+      const seen = new Set(); let part = 0;
+      for (const im of Object.values(IMG)) {
+        const c = mk(im.width, im.height), g = c.getContext('2d'); g.drawImage(im, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data;
+        for (let p = 0; p < d.length; p += 4) { if (d[p + 3] === 255) seen.add(d[p] << 16 | d[p + 1] << 8 | d[p + 2]); else if (d[p + 3]) part++; }
+      }
+      return { n: Object.keys(IMG).length, colours: seen.size, partAlpha: part };
     };
   } else {
     wrenSOn = () => false; wrenSHand = () => null; wrenSStats = () => ({ ready: false, decoded: 0 });

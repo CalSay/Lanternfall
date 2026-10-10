@@ -144,11 +144,11 @@
 .create-lede { margin: 0; color: var(--muted); font-size: 14px; }
 .create-warn { margin: 0; font-size: 13px; color: #FFB27A; }
 .ccards { display: grid; gap: 8px; }
-.ccard { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: start; text-align: left; padding: 10px; border: 2px solid var(--line); background: var(--panel); color: var(--bone); box-shadow: 0 2px 0 #0B0810; cursor: pointer; font: inherit; }
+.ccard { display: grid; grid-template-columns: minmax(64px, auto) 1fr; gap: 10px; align-items: start; text-align: left; padding: 10px; border: 2px solid var(--line); background: var(--panel); color: var(--bone); box-shadow: 0 2px 0 #0B0810; cursor: pointer; font: inherit; }
 .ccard[aria-checked="true"] { border-color: var(--ember); background: linear-gradient(#2e2030, var(--panel)); box-shadow: 0 2px 0 #0B0810, 0 0 16px rgba(255,158,61,.22); }
 .ccard:focus-visible, .create input:focus-visible, .create button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
-.ccard .fig { width: 64px; height: 104px; background: var(--well); border: 1px solid #0B0810; display: grid; place-items: center; }
-.ccard .fig canvas { width: 56px; height: 100px; image-rendering: pixelated; }
+.ccard .fig { min-width: 64px; height: 104px; background: var(--well); border: 1px solid #0B0810; display: grid; place-items: center; }
+.ccard .fig canvas { width: 56px; height: 100px; image-rendering: pixelated; }   /* a wider figure (Wren's route S camp pose, 64l) sets its own size */
 .ccard .ctxt { display: grid; gap: 3px; min-width: 0; }
 .ccard .ctop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .ccard b { font: 600 calc(18px * var(--display-k))/1.1 var(--display); }
@@ -165,7 +165,7 @@
   .join > :nth-child(3) { animation-delay: .3s; } .join > :nth-child(4) { animation-delay: .9s; } .join > :nth-child(5) { animation-delay: 1.5s; } .join > :nth-child(6) { animation-delay: 1.9s; }
 }
 @keyframes joinIn { from { opacity: 0; transform: translateY(4px); } }
-@media (max-width: 380px) { .create-in { padding-left: 12px; padding-right: 12px; } .ccard { grid-template-columns: 56px 1fr; } .ccard .fig { width: 56px; } }
+@media (max-width: 380px) { .create-in { padding-left: 12px; padding-right: 12px; } .ccard { grid-template-columns: minmax(56px, auto) 1fr; } .ccard .fig { min-width: 56px; } }
 
 /* ---- polish: Codex title, expedition status ---- */
 .pc-who > small.pc-ctitle, .cs-ctitle { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }

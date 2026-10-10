@@ -111,7 +111,8 @@ const WEIGHT = {
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'page size': 2,
-  'split build (asset-build)': 30   // 31 s locally alone (art-loader, 2026-10-10)
+  'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
+  'wren route S (browser)': 12   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -18120,6 +18121,162 @@ if (section('ability-effects-live')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('ability-effects-live crashed: ' + (e.stack || e)); }
+
+// ==== route-s-wren-wire (docs/design/route-s/ruling.md, "Build card spec: route-s-wren-wire"): Wren's route S fight moves ====
+// From the converter's record (art/heroes/wren/route-s/pack.json, tools/art/route-s-wren.py) and the embedded data (21ye): bytes
+// (gate 1), registration (gate 2), release frames and the string's anchors (gates 4 and 5), the timings and the timed rings
+// (gate 5), the bat (gate 9), the Classic switch's default (gate 8). The page's pixels: 'wren route S (browser)'.
+const WREN_FIGHT = ['idle', 'attack', 'twinshot', 'powershot', 'barbed', 'pinning', 'huntmark', 'volley', 'echoshot', 'batswarm', 'deadeye',
+  'sonic', 'shadowstep', 'moonlit', 'finalecho', 'parry', 'dodge', 'hit', 'defeat', 'victory'];
+const WREN_SHOOT = ['attack', 'twinshot', 'powershot', 'barbed', 'pinning', 'huntmark', 'volley', 'echoshot', 'deadeye', 'sonic', 'moonlit', 'finalecho'];
+if (section('wren route S')) try {
+  const { spawnSync } = await import('node:child_process'), { b91Decode } = await import('./lib/b91.mjs');
+  const D = path.join(ROOT, 'art', 'heroes', 'wren', 'route-s'), P = JSON.parse(fs.readFileSync(path.join(D, 'pack.json'), 'utf8'));
+  { const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-wren-s.mjs'), '--check'], { encoding: 'utf8' });
+    assert(r.status === 0, 'wren route S: src/js/21ye-data-wren-s.js is up to date with art/heroes/wren/route-s (node tools/art/embed-wren-s.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
+  const W = artData('21ye-data-wren-s.js', 'WREN_S');
+  assert(JSON.stringify(Object.keys(W.moves)) === JSON.stringify(WREN_FIGHT) && JSON.stringify(Object.keys(P.moves)) === JSON.stringify(WREN_FIGHT),
+    `wren route S: all 20 fight moves are embedded (${Object.keys(W.moves).length})`);
+  // gate 1: bytes (decimal KB and MB, as tools/lib/page-size.mjs); the embedded atlases are the converted files, byte for byte
+  const size = f => fs.statSync(path.join(D, f)).size;
+  const fight = WREN_FIGHT.reduce((s, m) => s + size(m + '.webp'), 0), fx = size('arrows.webp') + size('bats.webp'), page = fs.statSync(distFile).size;
+  console.log(`  wren route S bytes: fight atlases ${(fight / 1e3).toFixed(1)} KB (ceiling 1,650 KB); arrows and bats ${(fx / 1e3).toFixed(1)} KB (ceiling 60 KB); page ${(page / 1e6).toFixed(2)} MB (ceiling 10.6 MB)`);
+  assert(fight <= 1650e3 && fx <= 60e3 && page <= 10.6e6, `wren route S: fight atlases ${(fight / 1e3).toFixed(1)} KB <= 1,650 KB, arrows and bats ${(fx / 1e3).toFixed(1)} KB <= 60 KB, page ${(page / 1e6).toFixed(2)} MB <= 10.6 MB (gate 1)`);
+  const same = [...WREN_FIGHT.map(m => [m, W.moves[m].atlas]), ['arrows', W.arrows.atlas], ['bats', W.bats.atlas]].filter(([n, s]) => !Buffer.from(b91Decode(s)).equals(fs.readFileSync(path.join(D, n + '.webp'))));
+  assert(!same.length, 'wren route S: every embedded atlas is its converted WebP, byte for byte' + (same.length ? ` (not: ${same.map(r => r[0]).join(', ')})` : ''));
+  assert(P.colours >= 63 && P.palette.length >= 63 && P.palette.length <= 64 && P.palette.includes(P.string) && W.string === P.string,
+    `wren route S: one palette of ${P.palette.length} colours (63 or 64), the string's colour ${P.string} in it (gate 1, gate 4)`);
+  // gate 2: one scale per move within 0.88-1.12 of the pack's; each frame's feet anchor as converted; the opening and closing
+  // frames standing on the ground line (feet rows within 1 art px), hood tops 190 +-3 art px. Power Shot and Barbed Shot drop
+  // their head between those frames as drawn (opening and closing 7 and 9 art px apart), so one scale per move holds them
+  // within 4 and 5 (flagged for the art judge in route-s-wren-wire's PR).
+  const DRAWN_DROP = { powershot: 4, barbed: 5 }, reg = [];
+  for (const m of WREN_FIGHT) {
+    const M = P.moves[m], E = W.moves[m], k = M.k / 0.2217, n = m === 'idle' ? 1 : 8;
+    if (!(k >= 0.88 && k <= 1.12)) reg.push(`${m}: scale x${k.toFixed(3)} of the pack's`);
+    if (M.f.length !== n || E.f.length !== n) reg.push(`${m}: ${E.f.length} frames`);
+    if (E.f.some((f, i) => f[4] !== M.f[i].ax || f[5] !== M.f[i].ay)) reg.push(`${m}: a feet anchor differs from the converter's`);
+    const ends = m === 'idle' || m === 'defeat' ? [M.f[0]] : [M.f[0], M.f[7]], tol = DRAWN_DROP[m] || 3;   // Defeat closes lying down
+    for (const f of ends) { if (Math.abs(f.hood - 190) > tol) reg.push(`${m}: hood top ${f.hood}`); if (f.feet > 1) reg.push(`${m}: feet ${f.feet} rows up`); }
+    if (Math.max(...ends.map(f => f.feet)) - Math.min(...ends.map(f => f.feet)) > 1) reg.push(`${m}: standing feet rows ${ends.map(f => f.feet)}`);
+    if (!(M.rel.length && M.rel.every(i => i >= 0 && i < n)) || JSON.stringify(E.rel) !== JSON.stringify(M.rel)) reg.push(`${m}: release frames ${M.rel}`);
+  }
+  assert(!reg.length, 'wren route S: one scale per move (0.88-1.12 of 0.2217); opening and closing frames on the ground, hood tops 190 +-3 art px; a release frame per move (gates 2, 5)' + (reg.length ? ': ' + reg.join('; ') : ''));
+  // gate 4: the 12 shooting moves carry the string's anchors (top tip, bottom tip, drawing hand or none) on each frame, or 0
+  // where no string shows; the 8 others keep their painted string
+  const sbad = [];
+  for (const m of WREN_FIGHT) {
+    const s = W.moves[m].s, shoot = WREN_SHOOT.includes(m);
+    if (!shoot) { if (s) sbad.push(`${m}: has anchors`); continue; }
+    if (!s || s.length !== 8) { sbad.push(`${m}: ${s ? s.length : 0} anchor rows`); continue; }
+    s.forEach((a, i) => { if (a !== 0 && !(Array.isArray(a) && a.length === 3 && a.slice(0, 2).every(p => Array.isArray(p) && p.length === 2) && (a[2] === null || a[2].length === 2))) sbad.push(`${m} ${i + 1}`); });
+  }
+  const noStr = WREN_SHOOT.flatMap(m => W.moves[m].s.map((a, i) => (a === 0 ? `${m} ${i + 1}` : null)).filter(Boolean));
+  console.log(`  wren route S string: drawn on ${WREN_SHOOT.length * 8 - noStr.length} shooting frames, none on ${noStr.length} (${noStr.join(', ')}); dropped anchors ${P.strDropped.join(', ')}`);
+  assert(!sbad.length && noStr.length <= 12, 'wren route S: the 12 shooting moves carry the string\'s three anchors per frame, the other 8 none (gate 4)' + (sbad.length ? ': ' + sbad.join('; ') : ''));
+  // gate 9: the bat's box at its one offset from the feet clears every frame's head box (all moves)
+  { const [bx, by] = W.bats.at, bw = Math.max(...W.bats.f.map(r => r[2])), bh = Math.max(...W.bats.f.map(r => r[3])), over = [];
+    for (const m of WREN_FIGHT) P.moves[m].f.forEach((f, i) => { const h = f.head; if (bx < h[2] && bx + bw > h[0] && by < h[3] && by + bh > h[1]) over.push(`${m} ${i + 1}`); });
+    assert(JSON.stringify(W.bats.at) === JSON.stringify(P.bats.at) && W.bats.f.length === 6 && !over.length, `wren route S: the bat (6 flaps) at [${W.bats.at}] from the feet never covers her head box (gate 9)` + (over.length ? ': ' + over.join(', ') : '')); }
+  // gate 5: the timings, run through 64l's own functions (pure)
+  const ctx = {}; vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'src', 'js', '21ye-data-wren-s.js'), 'utf8') + '\n' + fs.readFileSync(path.join(ROOT, 'src', 'js', '64l-wren-s.js'), 'utf8') + '\nthis.F = wrenSFrame; this.R = wrenSTimed;', ctx);
+  const tbad = [], F = (m, ms) => ctx.F(m, { ms });
+  for (const m of WREN_FIGHT.filter(m => !['idle', 'parry', 'dodge', 'hit', 'defeat', 'victory'].includes(m))) {
+    const rel = W.moves[m].rel[0];
+    if (F(m, 139) === rel || F(m, 140) !== rel || F(m, 899) !== 7) tbad.push(`${m}: ${F(m, 139)},${F(m, 140)},${F(m, 899)}`);   // the release on the shot (62-stage WIND 0.14 s), the end at 900 ms
+  }
+  for (const [m, ms] of [['parry', 660], ['dodge', 660], ['hit', 540], ['defeat', 2080]]) if (F(m, 0) !== 0 || F(m, ms - 1) !== 7 || F(m, ms * 4) !== 7 || F(m, ms / 2) !== 4) tbad.push(`${m}: ${F(m, ms / 2)},${F(m, ms - 1)}`);
+  if (F('idle', 1234) !== 0) tbad.push('idle moves');
+  // the timed rings (59k TURN_TUNE.timed: ring 0.9 s, gap 0.55 s; a press up to 0.15 s late or early, or none): each ring's
+  // release frame first shows at a 60 fps frame within 17 ms after its contact time, never before
+  const late = [];
+  for (const [m, n, R] of [['volley', 3, [3, 5, 6]], ['moonlit', 5, [4, 5, 5, 5, 5]], ['powershot', 1, [5]], ['deadeye', 1, [5]]]) for (const press of [-0.06, -0.02, 0, 0.1, null]) for (const ph of [0, 0.004, 0.011, 0.016]) {
+    const rings = [{ open: 0, close: 0.9 }], seen = {};
+    for (let k = 0; k < 400; k++) {
+      const t = ph + k / 60, cur = rings[rings.length - 1], at = press == null ? cur.close + 0.15 : cur.close + press;
+      if (t >= at && rings.length < n) rings.push({ open: at, close: at + 0.55 });
+      const f = ctx.R(m, rings, t);
+      rings.forEach((g, j) => { if (seen[j] == null && f.rel === j && f.i === R[j]) seen[j] = t - g.close; });
+    }
+    for (let j = 0; j < n; j++) if (!(seen[j] >= 0 && seen[j] <= 0.017 + 1e-9)) late.push(`${m} ring ${j + 1} press ${press}: ${seen[j] == null ? 'never' : Math.round(seen[j] * 1000) + ' ms'}`);
+  }
+  assert(!tbad.length && !late.length, 'wren route S: attack and abilities 900 ms with the release on the shot, parry and dodge 660 ms, hit 540 ms, defeat 2080 ms held; Volley\'s 3 and Moonlit Volley\'s 5 releases each within 17 ms of contact (gate 5)' + (tbad.length || late.length ? ': ' + [...tbad, ...late.slice(0, 4)].join('; ') : ''));
+  // gate 8: one Settings switch, Hero art, default new art (its own key, not the save; no save-key bump)
+  const pu = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-portraits-ui.js'), 'utf8'), pk = fs.readFileSync(path.join(ROOT, 'src', 'js', '64k-portraits.js'), 'utf8');
+  assert(/title: 'Hero art'/.test(pu) && /Wren\\'s new fight poses/.test(pu) && /storage\.get\(PREF\) === '1'/.test(pk) && /emit\('classicArt'/.test(pk),
+    'wren route S: Settings > Hero art has the one Classic art switch for the portraits and Wren\'s fight poses, off (new art) unless chosen (gate 8)');
+} catch (e) { fail('wren route S crashed: ' + (e.stack || e)); }
+
+// The page: every atlas decodes; anchors on opaque pixels; 1-bit alpha, at most 64 colours; feet centres; the draw scale at
+// 1280x720 (nearest-neighbour, x1.5) and 740x360 on a DPR 1 phone (downscaled); the idle breathes, and holds still under reduced
+// motion; Classic art brings the old Wren back and the new one again; the picker's figure holds her camp pose unclipped.
+if (section('wren route S (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('wren route S (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, dpr, red] of [[1280, 720, 1, false], [740, 360, 1, true]]) {
+        const tag = `${w}x${h} DPR ${dpr}${red ? ', reduced motion' : ''}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch, reducedMotion: red ? 'reduce' : 'no-preference' });
+        await ctx.addInitScript(s => { try { if (!localStorage.getItem('lanternfall.save.v5')) { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} }, early);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false, S.onboard.all = true); for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();
+          soloPick('wren', { now: true }); setZone(2); setActivity('fight'); fightBoss = false; true`);
+        const n = await X('wrenSStats.decodeAll()');
+        assert(n === 22 && await X('wrenSOn()'), `wren route S ${tag}: the 20 moves, arrows and bats decode and the stage draws route S Wren (${n} atlases)`);
+        if (w === 1280) {
+          const px = JSON.parse(await X(`JSON.stringify((() => { const D = WREN_S, bad = [], feet = {}, a = wrenSStats.atlases();
+            for (const m in D.moves) D.moves[m].f.forEach((f, i) => { const s = D.moves[m].s && D.moves[m].s[i];
+              if (s) { const pts = [s[0], s[1]].concat(s[2] ? [s[2]] : []), al = wrenSStats.alphaAt(m, i, pts); if (al.some(v => v !== 255)) bad.push(m + ' ' + (i + 1)); }
+              if (i === 0 || i === D.moves[m].f.length - 1) feet[m + ' ' + (i + 1)] = wrenSStats.rows(m, i).feet; });
+            return { bad, feet, a }; })())`));
+          assert(!px.bad.length, `wren route S: every string anchor sits on an opaque pixel of its frame (bow tip or hand) on every shooting frame (gate 4)` + (px.bad.length ? ': ' + px.bad.join(', ') : ''));
+          assert(px.a.partAlpha === 0 && px.a.colours <= 64, `wren route S: the atlases are 1-bit alpha with ${px.a.colours} colours, at most 64 (gate 1; ${px.a.partAlpha} part-clear pixels)`);
+          const f0 = px.feet['idle 1'], off = Object.entries(px.feet).filter(([k, v]) => !k.startsWith('defeat 8') && Math.abs(v - f0) > 3);
+          assert(!off.length, `wren route S: the opening and closing frames' feet centres sit within 3 art px of the idle's held frame (gate 2)` + (off.length ? ': ' + off.map(([k, v]) => `${k} ${v - f0}`).join(', ') : ''));
+        }
+        // the draw scale: 0.5 x ACTOR_K actor px per art px, so 0.5 x DPR x the actors' zoom device px; whole device px
+        await page.waitForTimeout(300);
+        const st = JSON.parse(await X(`JSON.stringify({ s: wrenSStats(), z: stageStats().ZA })`)), k = 0.5 * dpr * st.z;
+        assert(Math.abs(st.s.drawn.k - k) < 1e-6 && (w !== 1280 || k >= 1) && (w !== 740 || k < 1), `wren route S ${tag}: she draws at ${st.s.drawn.k} device px per art px (0.5 x DPR ${dpr} x actor zoom ${st.z}; ${k >= 1 ? 'nearest-neighbour' : 'a cached smoothed downscale'}) (gate 6)`);
+        // the idle breathes (1 art px above the waist, 160 ms steps), and holds still under reduced motion
+        const br = await X(`new Promise(res => { const seen = new Set(), t0 = performance.now(); (function f() { const d = wrenSStats().drawn; if (d.move === 'idle') seen.add(d.br); if (performance.now() - t0 < 1500) requestAnimationFrame(f); else res([...seen].sort().join()); })(); })`);
+        assert(red ? br === '0' : br === '0,1', `wren route S ${tag}: the held idle ${red ? 'holds still' : 'breathes'} (breath steps ${br || 'none'}) (gate 3)`);
+        if (w === 1280) {
+          // Classic art: the old Wren on the stage, and the new one again (the pref has its own key; cleared after)
+          const cl = await X(`new Promise(res => { portraitsClassic(true); const a = wrenSOn(), d0 = wrenSStats().drawn.move;
+            setTimeout(() => { const hero = !!(stageRects().hero); portraitsClassic(false); setTimeout(() => res(JSON.stringify({ a, hero, b: wrenSOn() })), 200); }, 300); })`);
+          const c = JSON.parse(cl);
+          assert(!c.a && c.hero && c.b, `wren route S: Classic art turns the stage's Wren back to today's and off again brings route S back (gate 8; ${cl})`);
+        }
+        assert(!errs.length, `wren route S ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the new-game picker: her camp pose at 0.5 scale, all of it inside the figure's box (gate 7)
+      for (const [w, h] of [[1280, 720], [360, 740]]) {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: w < 1000, hasTouch: w < 1000 });
+        await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+        const page = await ctx.newPage();
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/');
+        await page.waitForFunction(() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'); return c && c.width > 56; }, null, { timeout: 20000 }).catch(() => {});
+        const r = await page.evaluate(() => { const c = document.querySelector('.ccard[data-cls="wren"] .fig canvas'), f = c && c.parentElement; if (!c) return null;
+          const a = c.getBoundingClientRect(), b = f.getBoundingClientRect(); return { cw: c.width, ch: c.height, a: [a.left, a.top, a.right, a.bottom], b: [b.left, b.top, b.right, b.bottom] }; });
+        const inside = r && r.a[0] >= r.b[0] - 0.5 && r.a[1] >= r.b[1] - 0.5 && r.a[2] <= r.b[2] + 0.5 && r.a[3] <= r.b[3] + 0.5;
+        assert(!!(r && r.cw > 56 && inside), `wren route S ${w}x${h}: the picker's figure holds Wren's camp pose (${r ? r.cw + 'x' + r.ch : 'none'}) inside its box (gate 7)`);
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('wren route S (browser) crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
