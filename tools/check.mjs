@@ -717,7 +717,7 @@ if (section('hero packs (hero-packs)')) try {
 } catch (e) { fail('hero packs crashed: ' + (e.stack || e)); }
 
 // ---- hero queue (card hero-queue; src/js/75-art-load.js wanted/pump, 64h heroArtMove; loading-screen-judge.md) ----
-// The shipped hero file's packs (Wren's route S moves) load in the order a new player's first fights need them: her Attack, Hit,
+// The shipped hero files' packs (Wren's and Tobin's route S moves) load in the order a new player's first fights need them: her Attack, Hit,
 // Parry and Dodge and the moves her slots draw before the next zone's pack, up to three hero files at once, a zone's pack alone;
 // a new game fetches every hero's Attack and Hit after the cores; slotting or learning an ability asks for its move at once.
 if (section('hero queue (hero-queue)')) try {
@@ -731,7 +731,7 @@ if (section('hero queue (hero-queue)')) try {
     const end = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(end);
     const KEY = 'lanternfall.save.v5', early = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
     const assets = pageAssets(s.file, s.html, Object.fromEntries(s.files.map(a => [a.name, a.text])));
-    const byName = new Map(s.packs.map(p => [p.name, p])), short = id => id.replace(/^hero:WREN_S\.wren\./, '');
+    const byName = new Map(s.packs.map(p => [p.name, p])), short = id => id.replace(/^hero:(WREN_S\.wren|TOBIN_S\.tobin)\./, m => (m.includes('TOBIN') ? 'tobin ' : ''));
     const until = async (fn, cap = 10000) => { for (const t0 = Date.now(); !(await fn()) && Date.now() - t0 < cap;) await new Promise(r => setTimeout(r, 100)); };
     // every pack in `hold` waits until gate.open(id); asked: the pack ids the page asked for after boot (hero packs but cores, and Gloomjaw), in order
     const open = async ({ save = null, hold = [] } = {}) => {
@@ -780,13 +780,17 @@ if (section('hero queue (hero-queue)')) try {
         const dup = asked.filter((id, i) => asked.indexOf(id) !== i);
         assert(all.every(id => asked.includes(id)) && !dup.length && !errs.length, `hero queue: then all her other moves load, each once (${asked.length} asked${dup.length ? '; twice: ' + dup.map(short).join(', ') : ''})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
-      // 3. a new game (no hero yet): after the cores, every hero's Attack and Hit (only Wren's ship) before zone 2's pack
-      { const { page, errs, asked, release } = await open({ hold: [...wren.map(p => p.id), gloom.id] });
-        await until(() => asked.length >= 2); await page.waitForTimeout(800);
-        const hero = await X(page, 'soloHero()'), a = asked.filter(id => id !== key('wren', 'victory').id);   // the picker's figure may ask for her camp pose
-        assert(hero === null && a.slice(0, 2).join() === ids(['attack', 'hit']).join() && !asked.includes(gloom.id) && !errs.length,
-          `hero queue: a new game, no hero picked yet (${hero}), asks for every hero's Attack and Hit before zone 2's pack (${asked.map(short).join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
-        release(...wren.map(p => p.id), gloom.id);
+      // 3. a new game (no hero yet): after the cores, every hero's Attack and Hit (Wren's, then Tobin's: the route S heroes that
+      //    ship) before zone 2's pack, three at once; the picker's figures may ask for each hero's camp pose (Victory, not held) besides
+      { const both = heroP.filter(p => !p.core).map(p => p.id), camp = ['wren', 'tobin'].map(h => key(h, 'victory').id);
+        const { page, errs, asked, release } = await open({ hold: [...both.filter(id => !camp.includes(id)), gloom.id] }), pick = () => asked.filter(id => !camp.includes(id));
+        await until(() => pick().length >= 3); await page.waitForTimeout(800);
+        const hero = await X(page, 'soloHero()'), a = pick();
+        release(...a); await until(() => pick().length >= 4); await page.waitForTimeout(600);
+        const b = pick(), want = ['wren', 'tobin'].flatMap(h => ['attack', 'hit'].map(m => key(h, m).id));
+        assert(hero === null && a.join() === want.slice(0, 3).join() && b.slice(0, 4).join() === want.join() && !errs.length,
+          `hero queue: a new game, no hero picked yet (${hero}), asks for every hero's Attack and Hit, three at once, before zone 2's pack (${a.map(short).join(', ')}; then ${b.slice(3).map(short).join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
+        release(...both, gloom.id);
         await page.close(); }
     } finally { await browser.close(); }
   }
