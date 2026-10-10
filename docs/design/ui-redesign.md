@@ -1,9 +1,10 @@
 # UI redesign: a sleeker look to match the new hero art
 
-Status: **proposed, waiting on Cal's pick.** Docs and a mockup only; no game file changes.
+Status: **Lantern Brass picked** (Cal, 10 Oct 2026 17:20: "I liked lantern brass best. Let's focus on that one and maximise
+it. The menus are still a little messy."). Night Glass is dropped. Docs and a mockup only; no game file changes.
 Ask: Cal, 10 Oct 2026 16:58: "Can we plan a full UI redesign to match the new hero artwork. I think what we have suits the
 original 16bit vibe but we need something a bit sleeker."
-Mockup page (all four screens at 1280x720, 740x360 and 360x740, both looks): https://claude.ai/artifact/ByLSRghC3o64DRhoraqg7F
+Mockup page (Lantern Brass only, v3: Fight, Abilities, Camp, Craft, Hero gear and Star map at 1280x720, 740x360 and 360x740): https://claude.ai/artifact/ByLSRghC3o64DRhoraqg7F
 
 Builds on, and does not change: the browser-first layout (`docs/design/layout.md`, `docs/design/desktop-layout.md`: the rail,
 top row, stage, side column, the two desktop tiers, docked detail, the number keys) and the new art style plan
@@ -16,13 +17,12 @@ layer those two leave alone: fonts, colours, panels, buttons, the fight HUD and 
   lanterns against night-blue scenes. The screen around them is 16-bit: a pixel display font (Handjet), opaque purple-black
   boxes with 2 px square borders and hard drop shadows, and ember orange on borders, tabs, labels and buttons alike. The
   art reads as a different game from its frame.
-- **The pick: Lantern Brass.** Night-ink glass panels that let the scene show through, 1 px brass hairlines, small brass
+- **The look: Lantern Brass (Cal's pick).** Night-ink glass panels that let the scene show through, 1 px brass hairlines, small brass
   diamonds on the main panels, a carved serif (Cinzel) for titles and names only, Barlow Semi Condensed (already in the game)
   for everything else, and ember kept for the one thing you can act on now. It takes its colours from the art itself: Wren's
   gold trim, the lantern light and the moonlit sky.
-- **The alternative: Night Glass.** The same layout with no ornament: soft white edges, round corners, pill buttons, one
-  sans font and a cool moon-blue accent. Sleeker in a generic way; it reads like many mobile games and loses the lantern
-  identity. Cal can pick it with "Go with Night Glass".
+- **The menus.** Seven rules (section 2.6) take the clutter out of every menu: one gold button, one box, two columns at
+  most, and what you can't use yet folds away.
 - **What stays.** The layout and every size rule above, the status colours, the rarity colours, the 14 px desktop text
   floor, the 3-tap camp, every Codex icon at its native size, and every player-facing word.
 - **What it costs.** CSS only: no images for chrome, no Scenario credits, no page bytes beyond the CSS. One new Google
@@ -30,30 +30,34 @@ layer those two leave alone: fonts, colours, panels, buttons, the fight HUD and 
   frames, so the art judge rules on them; nothing is drawn.
 - **Rollout.** Five stages, each shown in the preview for Cal's OK before it goes to the weekly build (section 4).
 
-## 1. The two directions
+## 1. The look
 
-Both use the same tokens with different values, so either can be built from one stage 1 card.
+One set of tokens, built by the stage 1 card.
 
-| Token | Today (`src/styles/10-base.css`) | Lantern Brass (pick) | Night Glass |
-|---|---|---|---|
-| Ground | `--bg #140F1A` purple-black, a 4 px dot grid | `#080B12` night ink, no grid | `#070A12` |
-| Panel | `--panel #1F1827`, opaque | `rgba(11,15,24,.82)` with `backdrop-filter: blur(10px)` | `rgba(16,21,34,.60)`, same blur |
-| Line | `--line #3A2F47`, 2 px | `rgba(205,163,92,.38)`, 1 px; highlight `#E0BC76` | `rgba(255,255,255,.10)`, 1 px |
-| Accent (chrome) | `--ember #FF9E3D` | brass `#D8B068`, text `#F3DCA4` | moon blue `#A4C0FF` |
-| Action ("ready", Go) | ember | ember `#FF9E3D`, unchanged | ember, unchanged |
-| Corners | 0 | 6 px panels, 4 px buttons | 14 px panels, pill buttons |
-| Titles | Handjet 700, `--display-k 1.2` | Cinzel 600, capitals, letter-spacing .07em | Barlow Semi Condensed 700 |
-| Body and numbers | Barlow Semi Condensed | Barlow Semi Condensed, tabular numbers | same |
-| Primary button | flat ember | brass gradient `#EDCB86` to `#B98F45`, dark text | ember gradient, soft glow |
-| Ornament | none | a 7 px brass diamond at the top corners of main panels (CSS pseudo-elements) | none |
+| Token | Today (`src/styles/10-base.css`) | Lantern Brass |
+|---|---|---|
+| Ground | `--bg #140F1A` purple-black, a 4 px dot grid | `#080B12` night ink, no grid |
+| Panel | `--panel #1F1827`, opaque | `rgba(11,15,24,.82)` with `backdrop-filter: blur(10px)` |
+| Line | `--line #3A2F47`, 2 px | `rgba(205,163,92,.38)`, 1 px; highlight `#E0BC76` |
+| Accent (chrome) | `--ember #FF9E3D` | brass `#D8B068`, text `#F3DCA4` |
+| Action ("ready", Go) | ember | ember `#FF9E3D`, unchanged |
+| Corners | 0 | 6 px panels, 4 px buttons |
+| Titles | Handjet 700, `--display-k 1.2` | Cinzel 600, capitals, letter-spacing .07em |
+| Body and numbers | Barlow Semi Condensed | Barlow Semi Condensed, tabular numbers |
+| Primary button | flat ember | brass gradient `#EDCB86` to `#B98F45`, dark text |
+| Ornament | none | a 7 px brass diamond at the top corners of main panels (CSS pseudo-elements) |
 
-Kept as they are in both: `--hp`, `--xp` roles, the five rarity colours (`--r-common` to `--r-legendary`), the status colours
+Kept as they are: `--hp`, `--xp` roles, the five rarity colours (`--r-common` to `--r-legendary`), the status colours
 (Bleed red, Burning orange, Chilled blue, Marked gold, Cursed magenta, Starlight night blue and pale gold), `--muted`'s role.
 
-**Why Brass over Glass.** Lanternfall's own nouns are lanterns, brass, embers and night; Brass says them, Glass does not.
-The heroes' trim is gold on all four (Wren's bow, Tobin's buckle and shield rim, Pip's staff fittings, Auriel's star staff),
-so a brass line ties every panel to the art next to it. Glass is the safer modern look and would also work; it is the
-fallback if Brass feels too ornate in play.
+**Why Brass.** Lanternfall's own nouns are lanterns, brass, embers and night, and Brass says them. The heroes' trim is gold
+on all four (Wren's bow, Tobin's buckle and shield rim, Pip's staff fittings, Auriel's star staff), so a brass line ties
+every panel to the art next to it. Cal picked it on 10 Oct; Night Glass is not built.
+
+**Pushed further (v3).** Titles get a gold gradient (light at the top, deep brass at the base). Menus sit in a double
+frame: a dark inner edge, then a faint brass line. Menu tabs are spaced Cinzel capitals with a small lit diamond under the
+open one. Section labels start with a brass diamond and end in a fading rule. The one box on a view (section 2.6) has
+brass diamonds on its top corners.
 
 ## 2. What changes, point by point
 
@@ -67,7 +71,7 @@ Numbered to match the mockup page.
   zone label, the turn banner and big card titles. Everything else that uses `--display` today (numbers, buttons, slot
   labels, pills, counts) moves to Barlow Semi Condensed 600-700 with `font-variant-numeric: tabular-nums`. Canvas damage
   numbers move to Barlow 700 with the same dark stroke. `--display-k` goes to 1 for Cinzel (it reads at its px size).
-- **Options:** (a) Cinzel plus Barlow (pick); (b) Barlow alone (Night Glass); (c) keep Handjet for numbers only. (c) keeps
+- **Options:** (a) Cinzel plus Barlow (pick); (b) Barlow alone; (c) keep Handjet for numbers only. (c) keeps
   the 16-bit read on the most-seen text, so no.
 - **Watch:** Cinzel is wider than Handjet and has no lowercase (lowercase draws as small capitals), so it never goes in a
   fixed-width box (slot labels, the zone pill, pills): those use Barlow. The lesson "a name in a fixed-width box must fit the
@@ -110,16 +114,36 @@ Numbered to match the mockup page.
 - **Pick:** as drawn. Same slot sizes as `desktop-layout.md` (116 and 132 at the desktop tiers, 60 on phones).
 
 ### 2.6 Menus
-- **Now:** sub-tabs are boxed buttons; lists are rows of equal grey boxes, so a ready build and a locked one look alike.
-- **We'd do:** underline tabs (the lit one gets a brass line under it), cards only where something stands out (the Hearth,
-  a bounty you can finish, the docked item), plain divided rows elsewhere, and locked rows dimmed. Section labels are small
-  spaced capitals with a fading brass rule.
-- **Hero gear:** the full new hero stands in the middle of the Gear view with the worn slots down the left and the tools
-  down the right (desktop only; phones keep the grid). The art is the reason for the redesign, so the Hero menu should show
-  it. The hero image is the idle frame the stage already loads; no new art.
-- **Star map:** the six constellations on a night-sky panel in Starlight's own colours (night blue, pale gold); learned
-  stars glow, set stars ringed, the selected star's card beside it.
-- **Pick:** underline tabs, and the hero in the Gear view.
+- **Now:** sub-tabs are boxed buttons, and lists are rows of equal grey boxes, so a ready build and a locked one look the
+  same. Every view has several primary-looking buttons and three or more boxed columns. The side column keeps its full
+  Next Up card and notices open beside the menu.
+- **We'd do:** seven rules, applied to every menu:
+  1. **One gold button per view**, for the thing to do next (Craft Pine Bow, Upgrade to +7). Everything else is a plain
+     button or a row you tap.
+  2. **One box per view**, a focus card for what is selected or next (the Hearth, the chosen ability, the best craft).
+     Everything else sits on hairlines with no box.
+  3. **Two columns at most**: a list and its detail.
+  4. **What you can't use yet folds away.** Ability tiers past the next one fold into one line ("Lv 25 and up, 4 more
+     abilities, Show"). Locked buildings are dimmed outlines, not full tiles.
+  5. **One line per row, numbers on the right** (+38, 7 of 12).
+  6. **Explanations move into hover tips** on desktop and a long press on phones. Slot names under the gear doll and the
+     long text under each building go there.
+  7. **A quiet side column while a menu is open.** Next Up shrinks to one line, notices hide, and the action bar stays.
+- **Abilities:** the three paths (True Aim, Blood Trail, Night Wings) side by side on desktop, with the tiers you have
+  opened plus the next one. Phones show one path at a time, with path tabs. The chosen ability is the one box, with its two
+  talents and Move.
+- **Camp:** the Hearth comes first (the Campfire card: its level, what Hearth 2 needs, and the one button). Under it are
+  Hesketh's board as rows, and the buildings as round icons with level diamonds, with the selected building on one line
+  beneath them.
+- **Craft:** you start from what you want to improve. A slot list (Weapon, Off-hand, Head, Body, Charm, Tools) shows the
+  Power gain on the right, and the best craft for the chosen slot is the one box, with costs, odds and the gold Craft
+  button. Other recipes for that slot are rows, and "All recipes and stations" opens the full list.
+- **Hero gear:** the full new hero stands in the middle of the Gear view, with the worn slots down the left and the tools
+  down the right (desktop only; phones keep the grid). The art is the reason for the redesign, so the Hero menu should
+  show it. The hero image is the idle frame the stage already loads, so it needs no new art.
+- **Star map:** the six constellations on a night-sky panel in Starlight's own colours (night blue, pale gold). Learned
+  stars glow, set stars are ringed, and the selected star's card sits beside it.
+- **Pick:** all seven rules, and the hero in the Gear view.
 
 ### 2.7 Portraits
 - **Now:** 64 px portraits cut from the old concept boards (`21yc-data-portraits.js`), in the old style, on the rail and
@@ -166,9 +190,9 @@ Each card's check: `node tools/build.mjs`, `node tools/check.mjs`, shots of its 
 
 ## 5. Open questions for Cal
 
-1. **Lantern Brass or Night Glass?** Pick: Brass.
+1. **The seven menu rules?** Pick: all seven, starting with Camp (stage 4).
 2. **The hero in the Gear view?** Pick: yes, desktop only.
 3. **Start stage 1 now, or after the Sunday release?** Pick: after Sunday, so v8 ships on the look players already have and
    stage 1 lands in the next preview with nothing else changing.
 
-Veto phrases, if Cal says nothing: "Keep the pixel font", "Go with Night Glass", "No hero in the gear view".
+Veto phrases, if Cal says nothing: "Keep the pixel font", "Keep the full side column in menus", "No hero in the gear view".
