@@ -1,0 +1,1 @@
+Docs only: the art judge's ruling on putting the new Wren art in the game. Her 20 fight moves and then her gathering get build cards, and heroes and monsters get a card to draw 1.5x bigger (docs/design/route-s/ruling.md). No player change. (no shot)
