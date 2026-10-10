@@ -419,7 +419,7 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
   }
   const now = () => (typeof T === 'number' ? T : 0);
   const go = s => { ST.s = s; ST.t0 = now(); ST.hitT = -1; };
-  // the leftmost the stage may stand the hero (actor px from the stage's left): its widest pose stays in view (62-stage pairWide)
+  // the leftmost the stage may stand the hero (actor px from the stage's left, at hero scale 1): its widest pose stays in view (62-stage pairStep)
   heroArtLeft = id => D && D.heroes[id] ? set(id).left + 2 : 0;
   heroArtStage = function (g, a, x, alpha) {
     const id = heroArtId(); if (!id || !ANIMS[id]) return false;
@@ -452,16 +452,33 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
       frame = Math.floor((t - ST.t0) * 1000 / an.ms);
       if (frame >= an.f.length) { go(rest); frame = null; }
     }
+    // The hero's own scale on the stage (62-stage stageHeroK, foe-scale-own): k times the actors' scale, about the feet.
+    const k = typeof stageHeroK === 'function' ? stageHeroK() : 1, y = a.hy + a.dy;
     // The art is wider than the baked sprites: on a narrow stage the whole hero (and Wren's bat) stays in view.
-    x = Math.max(x, heroArtLeft(id));
+    x = Math.max(x, heroArtLeft(id) * k);
+    if (k !== 1) { g.save(); g.translate(x, y); g.scale(k, k); g.translate(-x, -y); }
     // noFly: the stage fires its own arrow or bolt at the target (62-stage fire()), so the art's in-flight one is skipped
-    const info = heroArtDraw(g, id, ST.s, t - ST.t0, x, a.hy + a.dy, { frame, flameT: t, alpha, noFly: true });
+    let info;
+    try { info = heroArtDraw(g, id, ST.s, t - ST.t0, x, y, { frame, flameT: t, alpha, noFly: true }); } finally { if (k !== 1) g.restore(); }
     if (!info) return false;
-    a._x = info.x0; a._y = info.y0;
+    a._x = k === 1 ? info.x0 : Math.round(x + (info.x0 - x) * k); a._y = k === 1 ? info.y0 : Math.round(y + (info.y0 - y) * k);
     // a frame record like the baker's (the stage reads c, ox, oy, lights); a fallen hero has none, like a down member
-    a._f = a.down ? null : info.f;
+    a._f = a.down ? null : k === 1 ? info.f : scaledRec(info.f, k);
     return true;
   };
+  // the frame record at k times its size (nearest-neighbour; the bounds, the head's bar, the lights and the eyes hook read it)
+  const SREC = { c: null, ox: 0, oy: 0, lights: [] }, SCANV = new WeakMap();
+  function scaledRec(f, k) {
+    let m = SCANV.get(f.c); if (!m) SCANV.set(f.c, m = new Map());
+    let c = m.get(k);
+    if (!c) {
+      c = document.createElement('canvas'); c.width = Math.max(1, Math.round(f.c.width * k)); c.height = Math.max(1, Math.round(f.c.height * k));
+      const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(f.c, 0, 0, c.width, c.height); m.set(k, c);
+    }
+    SREC.c = c; SREC.ox = Math.round(f.ox * k); SREC.oy = Math.round(f.oy * k);
+    SREC.lights.length = 0; for (const l of f.lights) SREC.lights.push(Object.assign({}, l, { x: l.x * k, y: l.y * k, r: (l.r || 0) * k }));
+    return SREC;
+  }
 
   // decode the playing hero's poses in idle time (about 8 ms), not inside the first stage frame
   if (typeof idleTask === 'function') idleTask(() => { try { const id = heroArtId(); if (id) set(id); } catch (e) { console.error('[lanternfall] hero art', e); } });
