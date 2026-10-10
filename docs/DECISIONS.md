@@ -280,6 +280,9 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Zone 1 is the Thorn Imp, zone 2 Gloomjaw;** zones 1 and 2 send only their own monster. Zones 1-7 use the Mossy
   Hollow scenery. (2026-10-01 to 2026-10-02) Amended 2026-10-07: zones 6 and 7 move to the Batwing Caves painting once it
   is wired; until then they keep the Mossy Hollow painting ("Scenery for zones 6 to 10" below).
+- **The Thorn Imp is the Scenario redraw in the new hero style** (Cal, 2026-10-10 19:27 and 19:44): short (about two-thirds
+  of a hero's height in art), every attack dashes in, strikes and dashes out. Cal OK'd every frame but Briar Jab 2 (missing
+  an arm) and 7 (looking the wrong way), which never play. It replaces Codex's approved-v2 pack (thorn-imp-wire).
 - **Region bosses are agents of the darkness** (the Voice's Shrouds). They are never tied to lanterns or lamps.
   (2026-09-28)
 - **Region 5 is its own place** with its own look, not the Deepwell continued. The Deepwell must still tie into the
