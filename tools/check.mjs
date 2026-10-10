@@ -358,6 +358,16 @@ if (section('split build (asset-build)')) try {
   for (const a of s.assets) want = want.replace(`// ---- src/js/${a.f} ----\n${a.text}\n`, () => '');
   for (const f of Object.keys(AREA_ART)) want = want.replace(`// ---- src/js/${f} ----\n${src(f)}`, () => `// ---- src/js/${f} ----\n${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?\\n)\\n// ---- src`))[1]}`);
   assert(inline && strip(s.html) === want, 'split: apart from the loader, the page is the inline page with the boot files taken out and the area art kept as above');
+  // the loading screens (card loading-screen; loading-screen judge 2026-10-10): each comes before any game markup, draws no art
+  // (art freeze: text, the game's colours and a bar), and has a reduced-motion rule; 90-boot takes the inline one away
+  { const loader = s.html.slice(s.html.indexOf('<!-- Boot loader'), s.html.indexOf('<script id="lfBootJs">')), css = fs.readFileSync(path.join(ROOT, 'src', 'styles', '15-loading.css'), 'utf8');
+    const inl = (inline.match(/<div class="lf-load" id="lfLoad"[^]*?<\/div>/) || [''])[0], art = t => /<(img|canvas|svg|picture)\b|url\(|data:image|background-image/i.test(t);
+    const app = h => h.indexOf('<div class="app" id="app">');
+    assert(s.html.indexOf('<div id="lfBoot"') > 0 && s.html.indexOf('<div id="lfBoot"') < app(s.html) && inline.indexOf('id="lfLoad"') > 0 && inline.indexOf('id="lfLoad"') < app(inline) && app(inline) > 0,
+      'loading screen: the split page\'s screen (#lfBoot) and the inline page\'s (#lfLoad) come before any game markup');
+    assert(inl && loader.includes('id="lfBootFill"') && !art(loader) && !art(inl) && !art(css), 'loading screen: neither screen draws art (no image, canvas, svg, url() or picture data; a bar and text only)');
+    assert(/@media \(prefers-reduced-motion: ?reduce\)/.test(loader) && /@media \(prefers-reduced-motion: ?reduce\)/.test(css), 'loading screen: both screens have a reduced-motion rule');
+    assert(/document\.getElementById\('lfLoad'\); if \(el\) el\.remove\(\);/.test(src('90-boot.js').split('// ================= boot =================')[1] || ''), '90-boot takes the inline page\'s loading screen away at boot'); }
   // the load lines (docs/design/hosting.md 6; art-loader judge 2026-10-10), each fail line with a mutation run
   { const sizes = new Map(), size = x => (sizes.has(x) ? sizes.get(x) : (sizes.set(x, wire(x)), sizes.get(x)));
     const r = loadReport(s, { size }), MBs = n => (n / 1e6).toFixed(2);
@@ -418,8 +428,8 @@ if (section('split build (asset-build)')) try {
       for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
         const { page, errs } = await open({ width: w, height: h });
         await page.waitForLoadState('load'); await booted(page);
-        const r = await page.evaluate(() => ({ line: !!document.getElementById('lfBoot'), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait') }));
-        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && !errs.length, `split: boots at ${w}x${h} with the loading line and its tags gone, no loading cover` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
+        const r = await page.evaluate(() => ({ line: !!(document.getElementById('lfBoot') || document.getElementById('lfBootCss') || document.getElementById('lfLoad')), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait') }));
+        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && !errs.length, `split: boots at ${w}x${h} with both loading screens, their styles and the tags gone, no loading cover` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
         await page.close();
       }
       // 2. while the biggest boot file is still loading, the line shows the bytes done of the total: the boot files and zone 1's packs
@@ -510,7 +520,7 @@ if (section('split build (asset-build)')) try {
           const v = JSON.parse(localStorage.getItem(k)); sessionStorage.setItem('t.z', String(v.zone)); v.zone = 1; localStorage.setItem(k, JSON.stringify(v)); } } catch (e) {} };
         const { page, navs } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'gone' }, html: probe, later: after, init });
         await booted(page); await page.waitForTimeout(500);
-        await go2(page);
+        await go2(page).catch(() => {});   // go2 starts the reload this step expects; on a slow runner it can land before evaluate returns
         await page.waitForFunction(() => sessionStorage.getItem('t.z'), null, { timeout: 8000 }).catch(() => {});   // the reload: a new page
         await booted(page); await page.waitForTimeout(800);
         const saved = await page.evaluate(() => sessionStorage.getItem('t.z'));

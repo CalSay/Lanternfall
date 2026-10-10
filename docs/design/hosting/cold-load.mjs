@@ -7,7 +7,8 @@
 // Serves dist/lanternfall-split.html and dist/assets/ from a local server that answers in Brotli quality 4 (the cautious stand-in
 // for Netlify's, see measure.mjs), opens it in a fresh browser on Lighthouse's "slow 4G" (1.6 Mbps down, 150 ms round trip) and
 // prints when the loading line first shows and is first painted, beside the page's own wire time (its Brotli bytes at that speed).
-// The line must show within that wire time plus 2 s. Google Fonts requests are refused, as in every tool, so they cost nothing.
+// The line must show within that wire time plus 2 s. Google Fonts' stylesheets are answered empty after 3 round trips (card
+// loading-screen), so they cost what the real fetch's wait costs; the font files themselves are never fetched.
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -44,7 +45,14 @@ async function once() {
     await context.addInitScript(v => { try { localStorage.setItem('lanternfall.save.v5', v); } catch (e) {} }, JSON.stringify({ ...save, zone: ZONE, maxZone: Math.max(ZONE, save.maxZone), last: Date.now() }));
   }
   const page = await context.newPage();
-  await page.route('**/*', r => (r.request().url().startsWith(base) ? r.continue() : r.abort()));
+  // Google Fonts' stylesheets hold the page's first paint and the loader's script like a real fetch: answered after 3 round
+  // trips with an empty stylesheet (loading-screen judge), never aborted; every other outside request is refused
+  await page.route('**/*', r => {
+    const u = r.request().url();
+    if (u.startsWith(base)) return r.continue();
+    if (u.startsWith('https://fonts.googleapis.com/')) return new Promise(res => setTimeout(res, 3 * RTT)).then(() => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    return r.abort();
+  });
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Network.enable');
   await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });

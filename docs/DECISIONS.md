@@ -1392,6 +1392,7 @@ nothing; no economy or save change. A cache with a pick is a big card.
   (0.39), Gloomjaw (0.85) and Mossy Hollow (1.45) named exceptions until ns-a1-wire; B1's 6.0/8.0 first-load lines become a
   report for the split build; per-hero packs (core moves at boot) are a follow-up card that the route S wire cards depend on.
   Record: `docs/design/hosting/art-loader-judge.md`.
+- **Loading screen (judge 2026-10-10, docs/design/hosting/loading-screen-judge.md; Cal can veto: "make the screen wait for the hero's moves"):** the split build opens on a title screen with no art (the name, a bar, the line) and waits for no hero moves; card hero-queue first reorders and preloads the hero's first-hour moves and measures holds, and a fight-set wait comes only if holds remain, inside the boot set under E2 (at most 0.45 MB, real boot bytes at most 4.60 MB). The 6.0 s and 4.0 MB lines stand. cold-load.mjs times the font stylesheets. netlify-split-deploy owns long-lived caching on /assets/*.
 
 ## Replaced decisions
 
