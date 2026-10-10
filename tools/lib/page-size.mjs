@@ -180,7 +180,7 @@ export function pageSizeReport({ page = path.join(ROOT, 'dist', 'lanternfall.htm
 // The split build against its budget: s is buildSplit()'s result, everything loadReport(s).everything (bytes on the wire).
 // Each area pack holds the art of one or more of the packs above (check.mjs's split section proves a pack holds its source's
 // art), so each is held to those packs' ceilings. A hero pack has no per-pack ceiling yet (hosting.md 6: set by
-// hero-screen-size-ruling and art-scale-ruling), so it is reported. except, grow and pad are for the mutation runs only: except
+// hero-screen-size-ruling and art-scale-ruling), so it is reported; the card hero-pack-ceiling adds its ceiling here. except, grow and pad are for the mutation runs only: except
 // replaces the known exceptions, grow sets a piece's bytes by id, pad adds bytes to the whole build's total.
 export function splitBudgetReport(s, { everything, jsDir = JS_DIR, except = EXCEPT, grow = {}, pad = 0 } = {}) {
   const lines = [], fails = [], warns = [], all = packs(jsDir).map(p => (grow[p.id] !== undefined ? { ...p, bytes: grow[p.id] } : p));
@@ -191,7 +191,7 @@ export function splitBudgetReport(s, { everything, jsDir = JS_DIR, except = EXCE
     if (!mine.length) { fails.push(`split pack ${sp.id} (${sp.name}): no per-pack ceiling covers it; give its art file's packs a kind in tools/lib/page-size.mjs`); continue; }
     for (const p of mine) { const j = judge(p, except); if (j.fail) fails.push(`split pack ${sp.id}: ${j.fail}`); else lines.push(`  split pack ${sp.id}: ${j.line}`); }
   }
-  if (heroes) lines.push(`  split: ${heroes} hero packs, ${MB(heroBytes)} of files (no per-pack ceiling yet: hero-screen-size-ruling and art-scale-ruling set it)`);
+  if (heroes) lines.push(`  split: ${heroes} hero packs, ${MB(heroBytes)} of files (no per-pack ceiling yet: the card hero-pack-ceiling adds it)`);
   const total = Buffer.byteLength(s.html) + s.files.reduce((n, f) => n + f.bytes, 0) + pad;
   const say = `split build: ${MB(total)} of files (the page, ${s.assets.length} boot files and ${s.packs.length} packs)`;
   if (total > BUILD_WARN) warns.push(`${say}, over the ${MB(BUILD_WARN)} whole-build warn line (docs/design/hosting.md 6)`);
