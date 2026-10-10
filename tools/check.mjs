@@ -114,6 +114,7 @@ const WEIGHT = {
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
+  'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
   'hero queue (hero-queue)': 9,   // 8 s locally alone (hero-queue, 2026-10-10)
   'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
@@ -536,6 +537,96 @@ if (section('split build (asset-build)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('split build crashed: ' + (e.stack || e)); }
+
+// ---- load-hold-progress (card load-hold-progress; src/js/75-art-load.js artHoldTick, 90-boot's frame loop) ----
+// The inline page never holds for a pack, so the split build's hold must not cost what runs on its own. The same scenario runs in
+// both pages: a camp build and a Hand's shift due in a second, an All order at the Forge, then a zone 2 fight. In the split page
+// Gloomjaw's pack is held: the fight holds under the line, the Forge's order runs on the frame clock as in tick (progress = game
+// seconds x speed), and once the pack is in the build and the Hand are back as in the inline page. While gathering the line
+// still covers the stage but the game runs on (a gather keeps its progress).
+if (section('load-hold-progress (browser)')) try {
+  const { pw, exe } = browserTools;
+  const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
+  const inline = fs.existsSync(distFile) ? fs.readFileSync(distFile, 'utf8') : '';
+  if (!pw || !exe || !inline) skipBrowser('load-hold-progress: Playwright, Chromium or dist/lanternfall.html not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const KEY = 'lanternfall.save.v5', mid = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8'));
+    const probe = h => { const end = h.lastIndexOf('})();\n</script>'); return h.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + h.slice(end); };
+    const gj = s.packs.find(p => p.id === 'foe:gloomjaw');
+    const open = async (html, assets, hold) => {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), page = await ctx.newPage(), errs = [];
+      await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+      await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...mid, last: Date.now() })]);
+      page.on('pageerror', e => errs.push(String(e)));
+      let release = () => {}; const held = new Promise(r => { release = r; });
+      await routePage(page, 'http://lf.test/', probe(html), assets);
+      if (hold) await page.route('**/assets/' + hold, async r => { await held; return r.fallback(); });
+      await page.goto('http://lf.test/', { waitUntil: 'commit' });
+      await page.waitForFunction(() => !document.getElementById('lfBoot') && !document.getElementById('lfLoad') && !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+      return { page, errs, release };
+    };
+    const X = (page, js) => page.evaluate(j => window.__t.x(j), js);
+    // the Forge's order: game seconds of work done (units made x a unit's time, plus the one under way)
+    const READ = `(() => { const o = refineOrders('forge')[0], u = REFINE_TUNE.secs[0];
+      return { T, work: o ? o.made * u + (o.at || 0) : -1, speed: refineSpeed('forge'), kills: S.kills, hp: mob && mob.hp, held: gameHeld(), zone: S.zone,
+        built: window.__build && campLevel(window.__build) - window.__lv, build: !!(window.__build && campPending(window.__build)), hand: (() => { const h = handsList().find(x => x.id === window.__hand); return h ? handsStatus(h).st : 'none'; })(),
+        cover: (() => { const c = document.getElementById('artWait'); return !!c && !c.hidden; })() }; })()`;
+    const run = async (html, assets, hold) => {
+      const { page, errs, release } = await open(html, assets, hold);
+      await page.waitForTimeout(500);
+      // the mid save (guide done, a Hand, the Forge built), with plenty of gold and raw materials and no middles (the Forge's piles are empty)
+      await X(page, `onboardTips(false); S.gold = 1e12; for (const k of Object.keys(S.mats)) S.mats[k] = REFINE_PRODUCTS[k] ? [0, 0, 0, 0, 0] : [300, 300, 300, 300, 300]; ui(true)`);
+      const setup = await X(page, `(() => { handsCatchUp(Date.now()); const h = handsList().find(x => !x.job); window.__hand = h && h.id;
+        const why = h ? handsCanSend(h.id, 'ore', 1, { shifts: 1 }).why : 'no Hand free', job = h && handsSend(h.id, 'ore', 1, { shifts: 1 });
+        const id = window.__build = Object.keys(CAMP_B).find(k => k !== 'forge' && !campPending(k) && campCan(k).ok), b = id && campBuild(id) && campPending(id), t = Date.now() + 1200;
+        window.__lv = id && campLevel(id);
+        if (job) { h.job.end = t; h.job.start = t - 1000 * h.job.secs; }
+        if (b) { b.start = t - b.dur; b.end = t; }
+        const r = refineAdd('ingot', 1, 'all');
+        return { job: !!job, why, build: id || null, order: !!(r && r.ok) }; })()`);
+      await X(page, 'S.activity = "fight", setZone(2), ui(true)'); await page.waitForTimeout(300);
+      const a = await X(page, READ);
+      await page.waitForTimeout(2500);
+      const b = await X(page, READ);
+      release();
+      await page.waitForFunction(() => window.__t.x('!gameHeld() && campLevel(window.__build) > window.__lv && handsStatus(handsList().find(x => x.id === window.__hand)).st === "camp"'), null, { timeout: 8000 }).catch(() => {});
+      const c = await X(page, READ);
+      return { page, errs, setup, a, b, c };
+    };
+    try {
+      const sp = await run(s.html, pageAssets(null, s.html, files), gj.name), il = await run(inline, new Map(), null);
+      const dT = r => r.b.T - r.a.T, done = r => r.b.work - r.a.work;
+      const fair = r => Math.abs(done(r) - dT(r) * r.a.speed) < 1e-6 && dT(r) > 1.25;   // every held second of game time, at the Forge's speed
+      assert(sp.setup.job && sp.setup.build && sp.setup.order && il.setup.job && il.setup.build && il.setup.order,
+        `load-hold-progress: both pages start a Hand's shift, a camp build and an All order at the Forge (split ${JSON.stringify(sp.setup)}, inline ${JSON.stringify(il.setup)})`);
+      assert(sp.a.held && sp.b.held && sp.a.cover && sp.a.zone === 2 && sp.a.kills === sp.b.kills && sp.a.hp === sp.b.hp,
+        `load-hold-progress: in the split page zone 2's fight holds under the line while Gloomjaw loads (${JSON.stringify({ a: sp.a, b: sp.b })})`);
+      assert(fair(sp) && fair(il),
+        `load-hold-progress: the Forge's order earns every game second in both pages, held or not (split ${done(sp).toFixed(3)} s of work in ${dT(sp).toFixed(3)} s, inline ${done(il).toFixed(3)} s in ${dT(il).toFixed(3)} s, speed ${sp.a.speed})`);
+      assert(il.b.built === 1 && !il.b.build && il.b.hand === 'camp' && sp.c.built === 1 && !sp.c.build && sp.c.hand === 'camp' && !sp.c.held && !sp.c.cover,
+        `load-hold-progress: the build and the Hand's shift due during the hold are done once the pack is in, as in the inline page (split ${JSON.stringify(sp.c)}, inline ${JSON.stringify(il.b)})`);
+      assert(!sp.errs.length && !il.errs.length, 'load-hold-progress: no page errors' + (sp.errs[0] || il.errs[0] ? ': ' + (sp.errs[0] || il.errs[0]) : ''));
+      await sp.page.close(); await il.page.close();
+      // gathering: a move still loading covers the stage, and the gather keeps its progress
+      { const mv = s.packs.find(p => p.hero === 'wren' && !p.core && p.moves.includes('victory'));
+        const { page, errs } = await open(s.html, pageAssets(null, s.html, files), mv.name);
+        await page.waitForTimeout(500);
+        await X(page, `onboardTips(false); S.activity = 'gather', ui(true)`); await page.waitForTimeout(300);
+        await X(page, `(() => { const f = () => { if (window.__stop) return; artHeroNeed('wren', 'victory'); requestAnimationFrame(f); }; requestAnimationFrame(f); })()`);
+        await page.waitForTimeout(300);
+        const G = `({ held: gameHeld(), T, p: S.gProg, h: S.mats[S.node.kind][S.node.t - 1], tg: target(), in: artHeroReady('wren', 'victory'), cover: (() => { const c = document.getElementById('artWait'); return !!c && !c.hidden; })() })`;
+        const g = await X(page, G); await page.waitForTimeout(1500); const g2 = await X(page, G);
+        // the raid still holds (the online layer is not this card's): its damage feeds the shared raiders doc
+        const raid = await X(page, `(() => { const was = online.ready; online.ready = true; S.activity = 'raid'; const r = { tg: target(), held: gameHeld() }; online.ready = was; S.activity = 'gather'; return r; })()`);
+        await X(page, 'window.__stop = true');
+        assert(raid.tg === 'world' && raid.held, `load-hold-progress: in the raid a move still loading holds the game as before (${JSON.stringify(raid)})`);
+        assert(g.tg === 'node' && !g.in && g.cover && g2.cover && !g.held && !g2.held && (g2.p !== g.p || g2.h !== g.h) && !errs.length,
+          `load-hold-progress: while gathering a move still loading covers the stage but does not hold the game: the gather runs on (${JSON.stringify(g)} then ${JSON.stringify(g2)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('load-hold-progress crashed: ' + (e.stack || e)); }
 
 // ---- hero packs (card hero-packs; tools/build.mjs heroPacks, src/js/75-art-load.js, src/boot-loader.html) ----
 // A hero art file (an AREA_ART entry of kind 'hero') splits by hero: one pack of each hero's core moves, which the boot loader

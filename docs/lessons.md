@@ -258,6 +258,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A core file loaded before `55-stats.js` cannot call `registerAwayLine` at load (`AWAY_LINES` is still in its temporal dead zone and the whole core fails to load); register on the first `awayBegin`. (refine-queues, 2026-10-08)
 
 - Write a new fixture by loading and saving it through the game (twice), never by setting fields: a hand-set raid history had no deeds tiers for its wyrms, so AD3 found first-load lines, and it held values the game cannot make (a retired relic above 0, a raid unique at the wrong tier). Why: the save review of online-off-clean. (online-off-clean, 2026-10-09)
+- A change to when the game holds or ticks also reaches the raid (`target() === 'world'`), whose damage feeds the shared raiders doc: leave the raid as it was unless the card names the online layer. Why: the save review of load-hold-progress found that letting the game run under a loading line off a fight also let raid damage run. (load-hold-progress, 2026-10-10)
 
 ## CI and tooling
 - When one walk routine gives up on a Next Up row, every routine that waits for that row must know it: read the give-up record (`st.calls`), never just the row's Ready class. Why: followNextUp gave up on "Tam is at camp: send again" after 4 presses, but gateStep waited for no row to be Ready, so tier gates went unworked from 31 to 60 min in every walk (walk-ready-rows-hold, 2026-10-10).

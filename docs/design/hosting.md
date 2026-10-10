@@ -205,7 +205,10 @@ first load (one per art file, 0.002 credits), which is small next to the bytes.
 with a mutation run for each fail line in `tools/check.mjs`'s split build section. Today's hero art is all boot files. A route S hero file
 registers in `AREA_ART` as kind `hero` (card hero-packs): one pack of each hero's core moves, which the boot loader writes only for
 the save's hero, and one pack per other move, loaded after boot; both boot lines count the heaviest hero's core, with no hero
-exception, and the game holds while the stage needs a move still loading (`artHeroNeed`, 75-art-load).
+exception, and the game holds while the stage needs a move still loading (`artHeroNeed`, 75-art-load). A hold stops only the fight (card
+load-hold-progress): the Forge, Bench and Loom orders keep the frame clock through it (`artHoldTick`, called by 90-boot's frame
+loop), camp builds and Hands' shifts run on the wall clock and catch up when the pack is in, and while gathering
+the line covers the stage while the game runs on (the raid holds as before), so both builds give the same camp, craft and hands progress for the same wall time.
 
 ## 7. What changes elsewhere
 
