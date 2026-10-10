@@ -191,7 +191,8 @@ const OBS = `(() => {
     built: ['bench', 'forge', 'store'].filter(id => typeof campLevel === 'function' && (campLevel(id) >= 1 || (typeof campPending === 'function' && !!campPending(id))))
       .concat([['hearth2', 'hearth', 2], ['tavern', 'tavern', 1]].filter(([, id, n]) => typeof campLevel === 'function' && (campLevel(id) >= n || (campLevel(id) === n - 1 && typeof campPending === 'function' && !!campPending(id)))).map(x => x[0])),   // walk-follows-gather-go: Hearth 2 and the Tavern from their Build press   // walk-bot-forge-logs: a station counts from its Build press
     looks: typeof deeds === 'object' ? deeds.looks().filter(l => l.got).length : 0, forged: S.deeds && S.deeds.n ? S.deeds.n.forged : 0, up: S.deeds && S.deeds.n ? S.deeds.n.up || 0 : 0, act: S.activity, tab: S.tab,
-    acted: (() => { try { return Object.fromEntries(FEATURES.map(f => [f.id, !!(f.now && f.now())])); } catch (e) { return {}; } })() };
+    acted: (() => { try { return Object.fromEntries(FEATURES.map(f => [f.id, !!(f.now && f.now())])); } catch (e) { return {}; } })(),
+    econ: S.econ ? { spent: Object.assign({}, S.econ.spent), earned: Object.assign({}, S.econ.earned) } : null };   // walk-gold-line: the gold ledger (55-econ), read only
   } catch (e) { s = { err: String(e).slice(0, 80) }; }
   o.s = s;
   // craft-delta: the game's 'choice' and 'firstUse' events, kept in a page array the walk drains each frame (it never assigns to S)
@@ -809,6 +810,7 @@ async function watch(o) {
     st.enter[s.zone] = { t: Math.round(gt), L: s.L, kills: s.kills || 0, gear: await X(`Object.entries(S.equip).filter(([, v]) => v != null && itemById(v)).map(([k, v]) => k + ' t' + itemById(v).t + ' ' + RAR[itemById(v).r].n).join(', ') || 'nothing'`), crafts: s.forged };
   }
   for (const k of Object.keys(s.got || {})) if (!st.got[k]) { st.got[k] = gt; const byAct = !!(s.acted && s.acted[k]); await note(page, 'unlock', k, { tag: 'unlock-' + k, extra: { play: s.got[k], byAct } }); }
+  if (s.econ) { const n = Object.values(s.econ.spent).reduce((x, y) => x + y, 0); if (st.goldSpent !== undefined && n > st.goldSpent) st.lastSpend = gt; st.goldSpent = n; }   // walk-gold-line: a refund lowers the sum, so only a rise is a spend
   if (p && s.gold > p.gold && !st.rewardNoted) { st.rewardNoted = 1; await note(page, 'reward', 'first gold: +' + (s.gold - p.gold), { shot: false }); }
   if (p) {
     if (s.maxZone > p.maxZone) await moment('zone', `zone ${p.maxZone} cleared (maxZone ${s.maxZone})`, { big: true, zone: p.maxZone });
@@ -1095,6 +1097,18 @@ function spoilsLine() {
   return 'Spoils picks (cache move picks): ' + Object.entries(by).map(([h, l]) => `${h} ${l.length} (${l.filter(p => p.taken !== 'keep').length} taken, ${l.filter(p => p.taken === 'keep').length} kept; ${l.filter(p => p.offered >= 2).length} with 2+ moves offered)`).join(', ') + '. '
     + spoils.map(p => `zone ${p.zone} at ${fmtT(p.t)}: ${p.offered} offered, ${p.taken}`).join('; ') + '.';
 }
+// walk-gold-line (W6 point 4): gold earned, gold spent by ledger kind, the share unspent and the minute of the last spend, from S.econ
+function goldLedger(e) {
+  if (!e) return null;
+  const sum = o => Object.values(o).reduce((x, y) => x + y, 0), earned = Math.round(sum(e.earned)), spent = Math.round(sum(e.spent));
+  return { earned, spent, unspent: earned > 0 ? Math.round((earned - spent) / earned * 100) : null, lastSpend: st.lastSpend === undefined ? null : Math.round(st.lastSpend),
+    earnedBy: Object.fromEntries(Object.entries(e.earned).filter(([, n]) => n > 0).map(([k, n]) => [k, Math.round(n)])), spentBy: Object.fromEntries(Object.entries(e.spent).filter(([, n]) => n > 0).map(([k, n]) => [k, Math.round(n)])) };
+}
+function goldLine(e) {
+  const g = goldLedger(e); if (!g) return 'Gold: the game has no gold ledger (S.econ), so earned and spent are not read.';
+  const by = o => Object.entries(o).map(([k, n]) => k + ' ' + n.toLocaleString('en-GB')).join(', ');
+  return `Gold: earned ${g.earned.toLocaleString('en-GB')}${g.earned ? ' (' + by(g.earnedBy) + ')' : ''}, spent ${g.spent.toLocaleString('en-GB')}${g.spent ? ' (' + by(g.spentBy) + ')' : ''}, ${g.unspent === null ? 'unspent share not read' : g.unspent + '% unspent'}, last spend ${g.lastSpend === null ? 'none' : 'at ' + fmtT(g.lastSpend)}.`;
+}
 function report(res) {
   const reached = Math.round(gt), sc = scorecard(reached), beats = readMap(), meas = measureBeats();
   const out = [];
@@ -1104,6 +1118,7 @@ function report(res) {
   const z = st.prev ? st.prev : {};
   if (st.beaten) out.push(`The bot was beaten ${st.beaten} time${st.beaten === 1 ? '' : 's'} by bosses (the "try again" card).`, '');
   out.push(`End state: zone ${z.maxZone}, level ${z.L}, ${z.gold} gold, ${z.kills} kills, ${Object.keys(z.got || {}).length} things unlocked, ${z.found} uniques, ${z.stars} Stars, ${z.heroes} extra heroes, ${z.looks} looks.`, '');
+  out.push(goldLine(z.econ), '');
   out.push('## Gear and boss tries', '', `The bot crafted ${st.gear.crafted} piece(s) from its own gear goal, put on ${st.gear.wornN}${st.gear.firstWear === null ? '' : ' (first at ' + fmtT(st.gear.firstWear) + ')'}, and closed ${st.sheetsClosed || 0} sheet(s) it had left over the bar. Forged in all: ${z.forged || 0}. Camp built: ${['bench', 'forge', 'store', 'hearth2', 'tavern'].map(id => (id === 'hearth2' ? 'Hearth 2' : id) + ' ' + (st.builtAt[id] ? fmtT(st.builtAt[id]) : 'not built')).join(', ')}.${st.nuGathers.length ? ' Next Up sent it to gather ' + st.nuGathers.length + ' time(s): ' + st.nuGathers.map(g => `${fmtT(g.t)} ${g.node} ${g.min} min (${g.end})`).join('; ') + '.' : ''}`, '',
     '| Zone | First stood in at | Level | Boss tries lost | Worn then |', '|---|---|---|---|---|');
   for (const [zn, e] of Object.entries(st.enter || {})) out.push(`| ${zn} | ${fmtT(e.t)} | ${e.L} | ${(st.tries || {})[zn] || 0} | ${e.gear} |`);
@@ -1210,7 +1225,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const base = path.join(OUT, `walk-${DATE}`);
 fs.writeFileSync(base + '.md', rep.md);
 fs.writeFileSync(base + '.json', JSON.stringify({ date: DATE, build: sha(), seed: SEED, hero: HERO, size: SIZE.id, gameSeconds: Math.round(gt), clockSeconds: Math.round(res.clockMs / 1000), stop: res.stop,
-  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, bossTries: { stayed: st.stayed, losses: st.losses, grades: st.grades, odds: st.odds, tricks: st.tricks, read: READ }, normalLosses: st.normalLosses, checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
+  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, bossTries: { stayed: st.stayed, losses: st.losses, grades: st.grades, odds: st.odds, tricks: st.tricks, read: READ }, normalLosses: st.normalLosses, gold: goldLedger(st.prev && st.prev.econ), checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
 if (res.snap && (res.stop || flag('snapshot'))) fs.writeFileSync(path.join(OUT, `snapshot-min${Math.round(gt / 60)}.json`), res.snap);
 if (opt('scorecard', '')) writeScorecard(path.resolve(ROOT, opt('scorecard', '')), rep.sc, Math.round(gt));
 if (opt('reports', '')) {
