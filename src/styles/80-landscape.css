@@ -61,6 +61,14 @@
   /* the open menu leaves a 120 px strip of stage: DPS only there (Hit ran under the menu) */
   .app.menu-open .stat-nums > span + span { display: none; }
   .mob .mob-name { flex: 1 1 auto; min-width: 0; }
+  /* fallback-font-fits: with the fallback faces (Handjet falls back to a monospace about twice as wide) "Copper Vein" beside its skill
+     line shrank to "Cop..." and "120/50,000 stored" ran out of the storage box at 740x360. As upright (20-stage), the place name keeps
+     its width and the skill line drops under it, and the count drops under the name when the two can't share a line */
+  .hud-zone { flex-wrap: wrap; column-gap: 8px; row-gap: 0; }
+  .hud-zone .zname { flex: none; max-width: 100%; }
+  .hud-zone .zsub { flex: 0 1 auto; min-width: 0; white-space: normal; }
+  .mob .mob-line { flex-wrap: wrap; row-gap: 0; }
+  .mob .mob-hp { flex: 0 1 auto; min-width: 0; margin-left: auto; white-space: normal; text-align: right; }   /* "50,000/50,000 · Over the cap" breaks at a space, never past the box */
   .cb-strip { left: auto; right: 8px; width: min(46%, 320px); top: 60px; }
   .mob { position: absolute; top: 6px; right: 8px; width: min(46%, 320px); padding: 4px 6px 5px; background: rgba(14,11,18,.72); border: 1px solid var(--line-hi); box-shadow: 0 2px 0 #0B0810; }
 
@@ -72,7 +80,7 @@
   .nu-chip .nu-ic { width: 22px; height: 22px; grid-row: 1; }
   .nu-chip .nu-ic img { width: 16px; height: 16px; }
   .nu-chip .nu-cbody { display: contents; }
-  .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; }
+  .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; white-space: nowrap; }   /* one line: "NEXT" over "UP" in the fallback face (fallback-font-fits) */
   .nu-chip .nu-cst { grid-column: 3; grid-row: 1; }
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
   /* side-column-fits-740: the whole goal, no clamp. The chip has room: the dock shows only while fighting (75-solo-ui) and the away
@@ -188,6 +196,9 @@
   /* forge-line-740: the tip stops above the fight buttons, so at 740x360 its Go at 15 px took four lines ("Mine at / the / Copper /
      Vein") and left the line two, cutting "The Forge needs Copper Ore 0/25" before where to get it. A smaller Go takes two lines */
   .ob-bub.side .ob-ok { font-size: calc(12px * var(--display-k)); }
+  /* fallback-font-fits: in the fallback faces "Ready" and "+2" are wider and left the eyebrow 64 px, 2 short of "NEXT UP" with its menu
+     icon. The chip's own goal icon sits beside it, so the eyebrow drops its menu icon here, as upright (20-stage) */
+  .nu-chip .nu-eye .menu-nav-ic { display: none; }
 }
 /* defend-bar-740: the timing bar stood 38 px (track, then Dodge and Parry under it), so at 740x360 its top sat about 8 px above the ground
    line, across the foe's legs and the hero's feet on the foe's turn (upright at 360x740 a lunging Thorn Imp's feet met it too). On a phone,
