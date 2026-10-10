@@ -54,3 +54,15 @@ changes how a check waits for the real state; it never loosens, skips, retries o
   (5 s cap) until its button is the element under its own centre and fails naming what covers it ("gl-ov was on top of it"). The fixed
   timers after Begin and the More clicks became waits for the create screen to close and for More's groups to be built. Closing a card
   the next step needs gone fails if there is no card or it stays open, instead of `if (c) c.click()`. Every assert is unchanged.
+
+## normal-death-says-so (browser), normal-death-says-so-flake, 2026-10-10
+
+- **Seen:** "1280x720: the loss line sits inside the stage and no text is cut" in full local 4-job runs (two watch-list sightings, then
+  loadout-odds #309 on 9 Oct; a 360x740 sighting under 4-job load too). Passed alone and on CI.
+- **Read too early:** the loss line (`.tv-beat`) spans the stage (`left: 0; right: 0`) and slides in from 16 px left over 0.35 s
+  (`tv-beat-in`, src/styles/60-turn.css:108-110). The section read its box 400 ms after the lethal hit, and after each faked `wipe`
+  in the gear-first step. Under load the slide started late: with four copies of the section at once, 3 of 8 runs failed (two at
+  1280x720, one at 740x360), and a probe showed the slide still running (167 to 250 ms in) with the line 1.9 to 5.5 px past the
+  stage's left edge. Not a game bug: the line rests inside the stage, and the stage's frame clips the slide.
+- **Fix:** the two fixed 400 ms timers became a wait for the line's own animations to finish (`rest()`: `getAnimations()` and each
+  one's `finished`), then the same reads. Every assert is unchanged. 12 of 12 with four copies at once; 20 of 20 beside shards 0/6 and 1/6.
