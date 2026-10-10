@@ -65,8 +65,10 @@ store look. The Wardrobe counts these as Cache looks.
   - The lantern hangs from the lid's hasp in poses 0 and 1 and sits on the body from pose 2. The lid crest shrinks
     between poses 3 and 5. Both need Codex's cleanup pass, which Codex's own README already calls for.
   - Poses 2 and 3 have a few stray pixels on the bottom row from the sheet cut. The conversion trims them.
-- Claude adds the light burst, motes, floor pulse and sparks in the tier's colour. Codex's effect sprites are the
-  reference.
+- Each tier has its own effects from Codex, in its own colours and growing grander tier by tier, matching Sovereign's
+  two effect sheets (Cal, 2026-10-10 19:47). The game plays and places them, with no recolouring of one tier's effects
+  for another. A Scenario attempt at the four reveals and Hallowed's effects (95 credits) was shelved: Cal said "all of
+  them suck" and left the reveals to Codex.
 - Bytes: each pose is about 330 KB as PNG, so five tiers of eight poses is about 13 MB. The pack must be compressed
   (the Codex byte rule: lossless WebP), checked for banding, and then sized against the art-loader judge's area budget.
 - Crate art stays out of the boot set (zone 1 sits at the 3.50 MB warn line). The loader fetches a tier's crate when its
