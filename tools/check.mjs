@@ -19369,6 +19369,9 @@ if (section('actor-scale-followups (browser)')) try {
             await X(`emit('traitSeen', { first: true, txt: ${JSON.stringify(longest)} }); true`); await page.waitForTimeout(120);
             const a = await read();
             const hitsW = ['hero', 'zone', 'turn', 'row', 'strip'].filter(n => cross(a.warn, a[n]));
+            // the hero's buff chips (Guard, Wall, ...) hang on the canvas from the plate's foot (--vs-b) for about 20 px: the line starts under them
+            const chipsB = await X(`(() => { const b = document.getElementById('stageBox'); return b.getBoundingClientRect().top + parseFloat(getComputedStyle(b).getPropertyValue('--vs-b')) + 24; })()`);
+            assert(!!a.warn && a.warn.y >= chipsB, `${tag} ${k}: the line starts under the hero's buff chips (top ${a.warn && Math.round(a.warn.y)}, chips end by ${Math.round(chipsB)})`);
             assert(!!a.warn && !!a.hero && !hitsW.length, `${tag} ${k}: a foe trick's line ("${longest.slice(0, 24)}...") clears the hero, the place line, the turn line and the Grit row (${hitsW.join(', ') || 'none'}; line ${JSON.stringify(a.warn)}, hero ${JSON.stringify(a.hero)})`);
             await X('emit("turnCard", { who: "foe", secs: 4 }); true'); await page.waitForTimeout(250);
             const b = await read(); await X('emit("turn", {}); true');

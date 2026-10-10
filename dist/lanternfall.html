@@ -3650,12 +3650,13 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tc-on .tv-top .tv-n, .tc-on .tv-top .tv-hero { visibility: hidden; }
 .tc-on .tv-top .tv-warn { margin-top: 14px; }
 /* actor-scale-followups: on a desktop stage the heroes' heads reach just under the Grit row, where a foe trick's line (.tv-warn) and the
-   resource tip (.tv-restip, "Aim: ...") used to sit. They dock in the stage's top-left corner instead, just under the hero's plate (--vs-b)
-   and left of the place line and the banner, so they clear every hero's box at 1280x720, 1366x640 and 1920x1080. The right corner is the
-   boss strip's (80-landscape). .tv-top is their box, so the top undoes .tv-top's own (above). A foe trick's line is the one to read: while
-   it shows, the tip steps out of sight. Neither moves when the banner shows. */
+   resource tip (.tv-restip, "Aim: ...") used to sit. They dock in the stage's top-left corner instead: under the hero's plate (--vs-b) and
+   the buff chips the stage draws from its foot (Guard, Wall: 62-stage drawHud, about 20 px), left of the place line and the banner, so
+   they clear every hero's box at 1280x720, 1366x640 and 1920x1080. The right corner is the boss strip's (80-landscape). .tv-top is their
+   box, so the top undoes .tv-top's own (above). A foe trick's line is the one to read: while it shows, the tip steps out of sight.
+   Neither moves when the banner shows. */
 @media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
-  .stagebox .tv-top .tv-warn, .stagebox .tv-top .tv-restip { position: absolute; left: 0; top: calc(var(--vs-b, 54px) + 6px - max(80px, calc(var(--vs-zb, 0px) + 2px)));
+  .stagebox .tv-top .tv-warn, .stagebox .tv-top .tv-restip { position: absolute; left: 0; top: calc(var(--vs-b, 54px) + 28px - max(80px, calc(var(--vs-zb, 0px) + 2px)));
     margin: 0; max-width: min(400px, calc(50% - 100px)); text-align: left; }
   .stagebox .tv-top:has(.tv-warn:not([hidden])) .tv-restip { visibility: hidden; }
 }
