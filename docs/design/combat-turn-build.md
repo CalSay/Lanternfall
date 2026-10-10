@@ -140,7 +140,7 @@ The full list, by constellation (the star map, below). Kit: whose kit the star p
 | Frostfire | 2 | Pip | zone 53 | Spending Cinders chills the foe: 1 Chill for every 2 you spend. |
 | Riptide | 2 | any | zone 60 | Dodge every hit of an attack and you strike back for half a counter. |
 | Swift Tide | 2 | any | zone 70 (the Coast's boss) | Finishers are ready from your first turn, and come back 2 turns sooner. |
-| **The Wild Hunt** | | | | |
+| **The Prowl** | | | | |
 | Cinder Riposte | 2 | Tobin | elites, zone 15+ | A counter sets the foe alight for 3 turns. |
 | Open Guard | 1 | Tobin | elites, zone 15+ | A counter leaves the foe Exposed: your next payoff hits 25% harder. |
 | Perfect Time | 2 | any | elites, zone 15+ | A Perfect press takes 1 turn off your other cooldowns (once an ability). |
@@ -198,7 +198,7 @@ menus for abilities and stars. I kinda miss the star map too :/ idk how you'd in
   over), `turnStarsHurt` (a landed hit), `turnStarsBreak` (a charge broken), `turnStarsMarkOut` (a Mark wore off), and
   flags it reads (`e.snare`, `e.ring`, `e.burnCrit`, `h.brim`, `m.sf.swifttide`).
 - **The star map is back** as the Stars view: a night sky with six constellations, one for each place stars are found
-  (the Hollow, the Fen, the Coast, the Wild Hunt, the Deepwell, the Provings; `STAR_SKY` in 24f gives each star a fixed
+  (the Hollow, the Fen, the Coast, the Prowl, the Deepwell, the Provings; `STAR_SKY` in 24f gives each star a fixed
   spot and its lines). A star not found is a faint dot, found is bright, set glows gold, lit shines with a four-point
   glint (it twinkles unless the player asks for reduced motion), and lines join learned stars; a complete constellation
   turns gold. It is an SVG of dots, lines and glows: interface, not art (the art freeze). Tap a star (or Enter on it) to
