@@ -65,7 +65,8 @@ node tools/serve.mjs
 (not committed) plus the art data files under content-hashed names in `dist/assets/` (committed; CI checks it): the boot files
 as they are, and the area art (art-loader, B2) as one pack per foe and per battle background, loaded by zone after boot. Walk,
 eyes, playtest and perf take it with `--html dist/lanternfall-split.html`, and `node tools/serve.mjs --split` serves it. The
-build prints the boot set per zone on the wire. `node docs/design/hosting/cold-load.mjs [--mbps 10] [--zone 2]` times its
+build prints the boot set for a new game and the worst zone, the largest zone and area sets, and any section 6 load line
+they break (`LOAD_LINES`; check.mjs asserts them). `node docs/design/hosting/cold-load.mjs [--mbps 10] [--zone 2]` times its
 loading line and the game's ready time on a throttled link.
 
 The save-code tool validates the JSON before loading it and prints an import code. The site tool wraps

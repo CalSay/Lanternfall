@@ -49,7 +49,7 @@ await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
 await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: RTT, downloadThroughput: MBPS * 1e6 / 8, uploadThroughput: 750e3 / 8 });
 const t0 = Date.now();
 const nav = page.goto(base, { waitUntil: 'load', timeout: 300000 });
-let shown = null, lines = [];
+let shown = null, lines = [], readyAt = null;   // ready: the game runs (the loading line gone), not the page's load event
 while (true) {
   const r = await page.evaluate(() => {
     const t = document.getElementById('lfBootText'), fcp = performance.getEntriesByName('first-contentful-paint')[0];
@@ -58,17 +58,18 @@ while (true) {
   const s = (Date.now() - t0) / 1000;
   if (r.t && shown === null) shown = s;
   if (r.t && lines[lines.length - 1] !== r.t) lines.push(r.t);
-  if (r.game || s > 300) break;
+  if (r.game) { readyAt = s; break; }
+  if (s > 300) break;
   await new Promise(res => setTimeout(res, 100));
 }
 await nav;
-const ready = (Date.now() - t0) / 1000;
+const ready = readyAt ?? Infinity, loaded = (Date.now() - t0) / 1000;   // load also waits for the packs fetched after boot (B2)
 const paint = await page.evaluate(() => (performance.getEntriesByName('first-contentful-paint')[0] || {}).startTime || null);
 const pageWire = body.get('/').length, assetWire = [...body.keys()].filter(k => k !== '/').reduce((n, k) => n + body.get(k).length, 0);
 const wireTime = pageWire * 8 / (MBPS * 1e6);
 const zoneNote = ZONE ? `, a save in zone ${ZONE}` : ', a new game';
 console.log(`[cold-load] ${MBPS} Mbps, ${RTT} ms round trip${zoneNote}. Page ${(pageWire / 1e6).toFixed(2)} MB on the wire (${wireTime.toFixed(1)} s at this speed), assets ${(assetWire / 1e6).toFixed(2)} MB`);
-console.log(`[cold-load] loading line in the page at ${shown == null ? 'never' : shown.toFixed(1) + ' s'}; first paint at ${paint == null ? 'none' : (paint / 1000).toFixed(1) + ' s'}; game ready at ${ready.toFixed(1)} s`);
+console.log(`[cold-load] loading line in the page at ${shown == null ? 'never' : shown.toFixed(1) + ' s'}; first paint at ${paint == null ? 'none' : (paint / 1000).toFixed(1) + ' s'}; game ready at ${ready.toFixed(1)} s; page load event (with the packs fetched after boot) at ${loaded.toFixed(1)} s`);
 console.log(`[cold-load] lines seen: ${lines.join(' | ')}`);
 const limit = wireTime + 2, at = Math.max(shown ?? Infinity, paint == null ? Infinity : paint / 1000);
 console.log(`[cold-load] ${at <= limit ? 'PASS' : 'MISS'}: the line shows at ${at.toFixed(1)} s, limit ${limit.toFixed(1)} s (page wire time + 2 s)`);

@@ -1327,6 +1327,13 @@ nothing; no economy or save change. A cache with a pick is a big card.
   per-pack ceilings stay; pack-code is parked until Cal decides the live artifact's future; saves move between addresses only
   by save code. The live artifact's future and what the web build carries versus the paid build stay Cal's (options in
   `docs/design/hosting.md` 7.4 and 7.5). Ruling: project files `autopilot/rulings/2026-10-09-hosting.md`.
+- **Load lines under B2 (art-loader judge 2026-10-10; Cal can veto: "let the boot set go to 4.5"):** the boot set (page + boot
+  files + the zone's packs, Brotli 4) warns above 3.5 and fails above 4.0 MB for a new game and for the worst zone; Mossy Hollow
+  counts at its landscape shape only (portrait share capped at 0.70 MB) until bg-pack-by-shape; a cold load at 10 Mbps is
+  game-ready within 6.0 s (median of 3); a zone's packs at most 0.65 MB and an area's new packs at most 1.0 MB, with area 1's imp
+  (0.39), Gloomjaw (0.85) and Mossy Hollow (1.45) named exceptions until ns-a1-wire; B1's 6.0/8.0 first-load lines become a
+  report for the split build; per-hero packs (core moves at boot) are a follow-up card that the route S wire cards depend on.
+  Record: `docs/design/hosting/art-loader-judge.md`.
 
 ## Replaced decisions
 

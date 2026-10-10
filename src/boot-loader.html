@@ -11,8 +11,8 @@ var lfBoot = (function () {
   // the save's zone (the game's own save key, read the same way 30-state does; no save or a bad one: zone 1)
   var zone = 1;
   try { var sv = JSON.parse(localStorage.getItem(/* @key */) || 'null'); if (sv && sv.zone >= 1) zone = Math.floor(sv.zone); } catch (e) {}
-  var boot = [];
-  for (k in packs) if (packs[k].z.some(function (r) { return zone >= r[0] && zone <= r[1]; })) { boot.push(k); files[packs[k].f.split('/').pop()] = packs[k].b; }
+  var boot = [], q = zone > road ? road - 34 + (zone - road - 1) % 35 : zone;   // past the road the scenery repeats every 35 zones
+  for (k in packs) if (packs[k].z.some(function (r) { return q >= r[0] && q <= r[1]; })) { boot.push(k); files[packs[k].f.split('/').pop()] = packs[k].b; }
   for (k in files) total += files[k];
   var mb = function (n) { return (n / 1e6).toFixed(1); };
   var line = function () {

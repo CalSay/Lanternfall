@@ -13,17 +13,28 @@
 // - when a pack file fails, asks the server for the page: if the page no longer names that file (a new deploy took the old
 //   hashed files away), the game saves and reloads once the zone on screen needs it; otherwise it tries again later.
 //   artZonePacks(z) -> the pack ids zone z shows ([] in the inline page)
-//   artZoneReady(z) -> bool: every pack zone z shows has arrived
+//   artZoneReady(z) -> bool: every pack zone z shows is in (and, for one that came after boot, its pictures have decoded)
 var artZoneReady = () => true, artZonePacks = () => [];
 {
   const LB = typeof lfBoot === 'object' && lfBoot && lfBoot.packs && typeof lfBoot.take === 'function' ? lfBoot : null;
   if (LB && typeof document !== 'undefined') {
-    const P = LB.packs, ready = {}, failed = {}, stale = {}, busy = {};
+    const P = LB.packs, got = {}, ready = {}, failed = {}, stale = {}, busy = {}, keep = [];
+    let booted = false;
     const RELOAD_KEY = 'lanternfall.artReloadAt';
-    // the build's table (zones 1 to LB.road); past the road, the same two functions the build asked (59l, 22)
-    const live = z => { const f = ZONE_FOES[z], t = zoneTheme(z); return [f && 'foe:' + f.key, 'bg:' + t].filter(id => id && P[id]); };
-    artZonePacks = z => (z > LB.road ? live(z) : Object.keys(P).filter(id => P[id].z.some(r => z >= r[0] && z <= r[1])));
-    artZoneReady = z => artZonePacks(z).every(id => ready[id]);
+    // the build's table (zones 1 to LB.road); past the road the scenery repeats every 35 zones (check.mjs holds it), as in the loader
+    const tableZone = z => (z > LB.road ? LB.road - 34 + (z - LB.road - 1) % 35 : z);
+    artZonePacks = z => { const q = tableZone(z); return Object.keys(P).filter(id => P[id].z.some(r => q >= r[0] && q <= r[1])); };
+    // A pack that came after boot is ready once its pictures have decoded, so the first frame after the hold draws them (the
+    // packs the boot loader wrote come in before the game runs and are used as the inline page uses its art)
+    const framesDone = key => {
+      const F = typeof foeArtFrames === 'function' && foeArtFrames(key); if (!F) return true;
+      const pend = x => !!(x && x.c && x.c._pend);
+      for (const A of Object.values(F.acts)) for (const f of A.fr) if (pend(f.body) || pend(f.atk) || pend(f.hit)) return false;
+      for (const X of Object.values(F.fx || {})) for (const f of X.fr) if (pend(f)) return false;
+      return true;
+    };
+    const isReady = id => ready[id] || (got[id] && id.startsWith('foe:') && framesDone(id.slice(4)) && (ready[id] = true));
+    artZoneReady = z => artZonePacks(z).every(isReady);
     // o[k] holds basE91 text; it reads back as base64, decoded on the first read (21zz's getter, for a field that came late)
     const lazy = (o, k) => {
       const s = o[k]; if (typeof s !== 'string') return;
@@ -32,25 +43,31 @@ var artZoneReady = () => true, artZonePacks = () => [];
         set(v) { Object.defineProperty(o, k, { value: v, enumerable: true, configurable: true, writable: true }); } });
     };
     const put = (id, data) => {
-      if (ready[id] || !P[id] || !data) return;
-      const i = id.indexOf(':'), kind = id.slice(0, i), key = id.slice(i + 1);
+      if (got[id] || !P[id] || !data) return;
+      const i = id.indexOf(':'), kind = id.slice(0, i), key = id.slice(i + 1), late = booted;
+      const done = () => { got[id] = true; if (!late || kind !== 'foe') ready[id] = true; delete failed[id]; delete stale[id]; emit('artPack', { id, kind, key }); };
       if (kind === 'foe') {
         const F = typeof FOE_ART === 'object' && FOE_ART[key]; if (!F) return;
         for (const p of Object.keys(data.atlases || {})) { F.atlases[p] = data.atlases[p]; lazy(F.atlases, p); }
+        done();   // 64j cuts the frames as each atlas loads; isReady waits for them
       } else if (kind === 'bg' && typeof BG_ART === 'object') {
         for (const o of ['land', 'port']) if (data[o]) lazy(data[o], 'src');
-        BG_ART[key] = data;
-      } else return;
-      ready[id] = true; delete failed[id]; delete stale[id];
-      emit('artPack', { id, kind, key });
+        if (!late) { BG_ART[key] = data; done(); return; }
+        // decode both shapes first and keep them: 62-stage's own image of the same picture is then complete at once
+        got[id] = 'decoding';
+        Promise.all(['land', 'port'].filter(o => data[o]).map(o => { const im = new Image(); keep.push(im); im.src = 'data:image/webp;base64,' + data[o].src; return im.decode(); }))
+          .then(() => { BG_ART[key] = data; done(); }, () => { delete got[id]; gone(id); });
+      }
     };
     LB.take(put);
+    booted = true;
 
     const deep = () => typeof deepActive === 'function' && deepActive();
     const screenZone = () => (target() === 'mob' && !deep() ? S.zone : 0);   // only a fight on the road draws a zone's art
     // 90-boot asks every frame, before it draws: a zone change that emits nothing (a retreat after a wipe) is covered in time
     let coverKey = '';
     const held = () => { const z = screenZone(), h = z >= 1 && !artZoneReady(z); if (coverKey !== z + ':' + h) cover(); return h; };
+    addEventListener('online', () => { for (const id in failed) failed[id].at = 0; pump(); });   // back online: try again now
     holdGame(held);
 
     // ---- loading ----
@@ -61,14 +78,14 @@ var artZoneReady = () => true, artZonePacks = () => [];
       for (const q of zs) if (q >= 1) for (const id of artZonePacks(q)) if (!out.includes(id)) out.push(id);
       return out;
     };
-    const due = id => !ready[id] && !busy[id] && !(failed[id] && failed[id].at > Date.now());
+    const due = id => !got[id] && !busy[id] && !(failed[id] && failed[id].at > Date.now());
     function pump() {
       const now = screenZone() >= 1 ? artZonePacks(screenZone()) : [], n = Object.keys(busy).length;
       const id = (n < 2 ? now.find(due) : null) || (n < 1 ? wanted().find(due) : null);
       if (!id) return;
       busy[id] = true;
       const s = document.createElement('script');
-      const end = ok => { s.remove(); delete busy[id]; if (!ok || !ready[id]) gone(id); pump(); };
+      const end = ok => { s.remove(); delete busy[id]; if (!ok || !got[id]) gone(id); pump(); };
       s.onload = () => end(true); s.onerror = () => end(false);
       s.src = P[id].f;
       document.body.appendChild(s);
@@ -111,7 +128,7 @@ var artZoneReady = () => true, artZonePacks = () => [];
         for (const ev of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'click']) box.addEventListener(ev, e => e.stopPropagation());   // no strikes through it
       }
       if (!box) return;
-      const ids = artZonePacks(z).filter(id => !ready[id]);
+      const ids = artZonePacks(z).filter(id => !isReady(id));
       let t = `Loading ${zoneAreaName(z)}`, ask = false;
       if (reloading || (ids.some(id => stale[id]) && reload())) t = 'The game was updated. Reloading.';
       else if (ids.some(id => stale[id])) { t = 'The game was updated. Reload the page to go on.'; ask = true; }
