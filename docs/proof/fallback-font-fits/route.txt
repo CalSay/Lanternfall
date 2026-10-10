@@ -1,0 +1,33 @@
+# Proof for card fallback-font-fits: on a phone on its side, with the fallback faces (a player whose Google Fonts fail to load),
+# the Next Up eyebrow stays on one line, and the place caption and storage box show whole ("Copper Vein", "120/50,000 stored");
+# upright, a Next Up list sheet row shows every gate label whole.
+# The save: the seed 1 Wren walk at minute 60 (tests/proof-fixtures/save-min60-tier-gate.json).
+#   ffit-mine.png      mining at the Copper Vein: the place name and skill line top left, the storage box (#mHp) top right, Next Up beside
+#   ffit-list.png      the Next Up list sheet
+# Before, at 740x360 in the fallback faces: "NEXT" over "UP" (the eyebrow had 64 px, 2 short), "Cop..." beside its skill line, and
+# "120/50,000 sto" cut at the box's edge; upright the 4-line clamp cut the longest gate rows (5 lines at 360x740). Routes run with web
+# fonts where the runner has them (this container drew the fallbacks: the shots show the fix), so the full measure lives in tools/check.mjs "side-column-fits-740": the eyebrow fighting and gathering, the longest
+# place name, skill line, material and count the game puts there, and every gate label in a list sheet row at 360x740, in both fonts.
+# seed: 1
+new min60-tier-gate
+wait 3
+tap-if "Skip this story"
+tap-if "Collect"
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+tap "Switch activity"
+wait 1
+tap "Mine"
+wait 2
+tap-if "Got it"
+expect "#zName"
+expect "#mHp"
+expect ".nu-eye"
+shot ffit-mine
+tap "Show all goals"
+wait 1
+expect "Go takes you there"
+shot ffit-list
