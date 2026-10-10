@@ -18083,7 +18083,7 @@ if (section('cache-pick-order-settles')) try {
 if (section('learn-odds-pump-stops')) try {
   const at = 'learn-odds-pump-stops', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-z10-ward.json'), 'utf8');
   const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-abilities-ui.js'), 'utf8'), pw0 = (src.match(/const pumpWanted = [^\n]*/) || [''])[0];
-  assert(pw0 && !/abLearnInfo/.test(pw0) && /learnShown/.test(pw0), `${at}: a move to learn alone does not keep the pump going; Next Up's Learn row on screen does (${pw0})`);
+  assert(pw0 && !/abLearnInfo/.test(pw0) && /learnShown/.test(pw0) && /pickQueued/.test(pw0), `${at}: a move to learn alone does not keep the pump going; Next Up's Learn row on screen, or a move pick shown or queued, does (${pw0})`);
   const { pw, exe } = browserTools;
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
   else {
@@ -18103,7 +18103,8 @@ if (section('learn-odds-pump-stops')) try {
         await X(`window.__n = 0; { const p0 = loadoutPump; loadoutPump = (n = 1) => { if (n > 0) __n += n; return p0(n); }; }
           registerGoal({ id: 'zz-check-goal', sys: 'zz-check', prio: 30, pct: () => 1, label: 'A check goal' }); true`);
         // Next Up keeps its list for 450 ms: wait until it has the test goal on top before the kill
-        try { await page.waitForFunction(() => window.__t.x(`(topGoals(3)[0] || {}).id === 'zz-check-goal'`), null, { timeout: 5000, polling: 50 }); } catch (e) {}
+        try { await page.waitForFunction(() => window.__t.x(`(topGoals(3)[0] || {}).id === 'zz-check-goal'`), null, { timeout: 5000, polling: 50 }); }
+        catch (e) { assert(false, `${vw}: Next Up never put the test goal on top`); await ctx.close(); continue; }
         await X(`MOMENT_Q.length = 0; S.activity = 'fight'; S.zone = 10; S.maxZone = 10; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 0;
           try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } for (const q of MOMENT_Q) if (q.kind === 'champion') q.scene = ''; S.activity = 'gather'; emit('sceneReset'); true`);
         try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov .mm-pick')`), null, { timeout: 8000, polling: 50 }); }
