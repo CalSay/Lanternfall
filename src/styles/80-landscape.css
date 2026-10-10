@@ -193,7 +193,7 @@
    line, across the foe's legs and the hero's feet on the foe's turn (upright at 360x740 a lunging Thorn Imp's feet met it too). On a phone,
    on its side or upright, Dodge and Parry sit beside the track on one row, so the bar is about 22 px and starts under the actors' feet, still
    above the stat line and clear of the stage buttons. The legend keeps the width of its grown words (in-dodge, in-parry), so the track never
-   jumps as the window opens. Desktop and tablet views keep the bar as it was. */
+   jumps as the window opens. Wide views (desktop, a tablet on its side) keep the bar as it was; any upright view gets the one row. */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px), (max-aspect-ratio: 1/1), (max-width: 599px) {
   .tv-bot .tv-time { width: min(330px, 100%); grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 6px; }
   .tv-bot .tv-legend { min-width: calc(92px * var(--display-k, 1)); height: 16px; align-items: center; }   /* the track's height: a grown word never lifts the bar */
