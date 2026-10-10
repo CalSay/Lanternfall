@@ -1,0 +1,33 @@
+# node tools/walk.mjs --seed 1 (1280x720, 60 game minutes) on this branch (base 7a0c69ec, game file unchanged), 2134 s clock.
+# Gate, stall and Tam lines from the log, then each Next Up list the bot saw after 30 min (its rows, as the card text reads them).
+30:00   gate craft row at 30 min: no craft row
+30:14   list ×Next upBoss ready in Zone 13ReadyGoWatchtower Lv 1: ready to buildReadyGo1 more Marsh Wraiths for bestiary page 190%GoDefeat a few foes to see your next goals.
+31:12   list ×Next upBoss ready in Zone 13ReadyGo1 more Marsh Wraiths for bestiary page 190%GoCodex: Bestiary to half (Blade Blessing)68%GoDefeat a few foes to see your next
+31:45   list ×Next upSpend 4 attribute pointsReadyGo1 more Quarry Golems for bestiary page 190%GoCodex: Bestiary to half (Blade Blessing)68%GoDefeat a few foes to see your n
+32:17   list ×Next up1 more Quarry Golems for bestiary page 190%GoCodex: Bestiary to half (Blade Blessing)72%GoMining: 158 XP to level 856%GoDefeat a few foes to see your ne
+32:39   list ×Next upBoss ready in Zone 14ReadyGo1 more Quarry Golems for bestiary page 190%GoCodex: Bestiary to half (Blade Blessing)72%GoDefeat a few foes to see your next
+33:23   list ×Next upBuild the Tavern: 38 more Pine Log at the Pine Grove, 20 Sage Sprig at the Sage BedReadyGo1 more Quarry Golems for bestiary page 190%GoCodex: Bestiary t
+34:00   list ×Next upBuild the Tavern: 20 Sage Sprig at the Sage BedReadyGo1 more Quarry Golems for bestiary page 190%GoCodex: Bestiary to half (Blade Blessing)72%GoDefeat a
+34:41   stall nothing moved for 90 s: phase "idle", tip none, 2 card(s) up, tab ""
+34:44   list ×Next upTavern Lv 1: ready to buildReadyGo1 more Quarry Golems for bestiary page 190%GoCodex: Bestiary to half (Blade Blessing)72%GoDefeat a few foes to see you
+35:19   list ×Next upBoss ready in Zone 15ReadyGo1 more Quarry Golems for bestiary page 190%GoDefeat 15 Moss Slimes (zone 1) (12/15)80%GoDefeat a few foes to see your next g
+35:35   list ×Next upBoss ready in Zone 15ReadyGoTavern Lv 1 finishes in 1s97%Go1 more Quarry Golems for bestiary page 190%GoDefeat a few foes to see your next goals.The goa
+35:41   nextup Tam is at camp: send again -> pressed "Tents 1/2"
+35:48   nextup Tam is at camp: send again -> pressed "Hire for 1.50K gold"
+35:56   list ×Next upTam is at camp: send againReadyGoLearn Pinning Shot: your Barrow Scroll is readyReadyGo1 more Quarry Golems for bestiary page 190%GoDefeat a few foes to
+36:00   nextup Tam is at camp: send again -> pressed "Hire for 1.50K gold"
+36:06   nextup Tam is at camp: send again -> pressed "Hire for 1.50K gold"
+36:18   list ×Next upTam is at camp: send againReadyGo1 more Quarry Golems for bestiary page 190%GoDefeat 15 Moss Slimes (zone 1) (13/15)86%GoDefeat a few foes to see your n
+39:17   list ×Next upTam is at camp: send againReadyGoBoss ready in Zone 16ReadyGo1 more Quarry Golems for bestiary page 190%GoDefeat a few foes to see your next goals.The g
+43:53   list ×Next upTam is at camp: send againReadyGo7 essence to Essence Keeper I93%Go1 more Quarry Golems for bestiary page 190%GoDefeat a few foes to see your next goals
+45:00   gate craft row at 45 min: "Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going.", not in Next Up's 3 rows (rank 9 of 13)
+45:45   stall nothing moved for 90 s: phase "player turn", tip none, 0 card(s) up, tab ""
+46:49   list ×Next upTam is at camp: send againReadyGo6 essence to Essence Keeper I94%Go1 more Quarry Golems for bestiary page 190%GoDefeat a few foes to see your next goals
+47:48   list ×Next upTam is at camp: send againReadyGoThe Zone 18 boss is next99%Go6 essence to Essence Keeper I94%GoDefeat a few foes to see your next goals.The goals close
+48:51   list ×Next upTam is at camp: send againReadyGoThe Deepwell opens at zone 2095%GoDefeat 15 Moss Slimes (zone 1) (13/15)86%GoDefeat a few foes to see your next goals.T
+52:33   stall nothing moved for 90 s: phase "idle", tip none, 0 card(s) up, tab ""
+56:13   list ×Next upTam is at camp: send againReadyGoDefeat 15 Moss Slimes (zone 1) (13/15)86%GoCodex: Bestiary to half (Blade Blessing)76%GoDefeat a few foes to see your n
+59:36   stall nothing moved for 90 s: phase "idle", tip none, 0 card(s) up, tab ""
+60:00   gate craft row at 60 min: "Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going.", not in Next Up's 3 rows (rank 7 of 12)
+60:00   gate gathering at the end: Mining 7 of 14, Woodcutting 9 of 14, Foraging 7 of 14, Hunting 4 of 14
+# ordinary-foe losses after 40 min (time, zone): 40:12 z17, 40:21 z17, 42:17 z17, 42:43 z17, 44:32 z18, 44:41 z18, 45:02 z18, 45:22 z18, 47:07 z18, 47:29 z18, 49:07 z19, 49:28 z19, 50:15 z19, 50:24 z19, 50:34 z19, 51:21 z19, 51:45 z19, 52:08 z19, 52:35 z19, 52:56 z19, 53:16 z19, 53:25 z19, 54:08 z19, 54:36 z19, 54:57 z19, 56:27 z20, 56:37 z20, 56:47 z20, 57:26 z20, 58:11 z20, 59:17 z20, 59:43 z20

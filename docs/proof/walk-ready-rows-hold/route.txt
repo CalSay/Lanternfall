@@ -1,0 +1,4 @@
+# Proof for card walk-ready-rows-hold (tooling and findings only). No player-visible change: nothing in src/ changed and the
+# game file is unchanged, so there is nothing to play and no patch note. findings.md says why Ready rows held the walk and what
+# its "foe wind-up" and idle stalls were. walk-seed1.txt is the seed 1 walk at 1280x720 for 60 game minutes on this branch:
+# its gate, stall and Tam lines and each Next Up list the bot saw after 30 min.
