@@ -50,6 +50,12 @@ const KB = n => (n / 1e3).toFixed(1) + ' KB', MB = n => (n / 1e6).toFixed(2) + '
 const fileBytes = s => b91Decode(s).length;   // an embedded file's bytes (basE91 text since embed-base91)
 const isGen = src => /GENERATED/.test(src.split('\n')[0]);
 
+// The split build (node tools/build.mjs --split; docs/design/hosting.md 6, art-loader judge answer (d)): every pack keeps its
+// per-pack ceiling above, the whole build's files report a total and warn above 25 MB, and B1's first-load lines (6.0 / 8.0 MB
+// on the wire) are only a report of everything. The 14 MB line above still guards the inline page.
+export const BUILD_WARN = 25e6;
+export const FIRST_LOAD = { warn: 6.0e6, fail: 8.0e6 };   // reported, never a line, for the split build
+
 // The page by part: shell and markup, CSS, hand-written code, and each generated data file (as page-parts.mjs splits it).
 export function pageParts(html, jsDir = JS_DIR) {
   const sStart = html.indexOf('<style>'), sEnd = html.indexOf('</style>') + 8, js0 = html.indexOf('<script>');
@@ -70,23 +76,24 @@ function readData(jsDir, f, name) {
   return ctx.__x;
 }
 
-// Every pack the art files embed: { id, label, kind, bytes, zone? }. Unknown kinds come back with kind null.
+// Every pack the art files embed: { id, pack, label, kind, bytes, zone? } (pack: the split build's pack it ships in, null for a
+// boot file). Unknown kinds come back with kind null.
 export function packs(jsDir = JS_DIR) {
   const out = [];
   const foe = readData(jsDir, '21za-data-foeart.js', 'FOE_ART');
   for (const [k, p] of Object.entries(foe)) {
     const t = STAGE[k] || {};
-    out.push({ id: 'foe:' + k, label: `foe pack "${k}"`, kind: String(p.kind || t.kind || '').toLowerCase() || null, zone: p.zone || t.zone,
+    out.push({ id: 'foe:' + k, pack: 'foe:' + k, label: `foe pack "${k}"`, kind: String(p.kind || t.kind || '').toLowerCase() || null, zone: p.zone || t.zone,
       bytes: Object.values(p.atlases || {}).reduce((a, s) => a + fileBytes(s), 0) });
   }
   const bg = readData(jsDir, '21zb-data-bgart.js', 'BG_ART');
   for (const [theme, p] of Object.entries(bg)) for (const o of ['land', 'port']) if (p[o])
-    out.push({ id: `bg:${p.id}:${o}`, label: `background "${p.id}" (${theme}, ${o} ${p[o].w}x${p[o].h})`, kind: p.kind || 'background', bytes: fileBytes(p[o].src) });
+    out.push({ id: `bg:${p.id}:${o}`, pack: 'bg:' + theme, label: `background "${p.id}" (${theme}, ${o} ${p[o].w}x${p[o].h})`, kind: p.kind || 'background', bytes: fileBytes(p[o].src) });
   const hunt = readData(jsDir, '21z-data-huntart.js', 'HUNT_ART');
-  out.push({ id: 'hunt:interim', label: 'interim Hunting art (HUNT_ART)', kind: 'interim', bytes: Buffer.byteLength(JSON.stringify(hunt)) });
+  out.push({ id: 'hunt:interim', pack: null, label: 'interim Hunting art (HUNT_ART)', kind: 'interim', bytes: Buffer.byteLength(JSON.stringify(hunt)) });
   const ns = readData(jsDir, '21zc-data-nsart.js', 'NS_ART'), NSK = { scenery: 'scenery', foe: null, beast: 'beast', node: 'node' };
   for (const [g, G] of Object.entries(ns)) if (G && typeof G === 'object') for (const [k, e] of Object.entries(G))
-    out.push({ id: `ns:${g}.${k}`, label: `new-style ${g} "${k}"`, kind: g === 'foe' ? e.kind || 'monster' : NSK[g] || 'piece', zone: e.zone,
+    out.push({ id: `ns:${g}.${k}`, pack: `ns:${g}.${k}`, label: `new-style ${g} "${k}"`, kind: g === 'foe' ? e.kind || 'monster' : NSK[g] || 'piece', zone: e.zone,
       bytes: Object.values(e.img || {}).reduce((a, s) => a + fileBytes(s), 0) });
   return out;
 }
@@ -113,6 +120,17 @@ function sourceBytesAt(rev, root) {
   return { code, css };
 }
 
+// One pack against its ceiling, or a known exception against its measured size: { line } or { fail }.
+function judge(p, except = EXCEPT) {
+  const ex = except[p.id];
+  if (ex !== undefined) return p.bytes > ex
+    ? { fail: `${p.label}: ${p.bytes} bytes, past its measured ${ex} as a known exception (docs/design/page-bytes.md 6); a shipped pack may not grow` }
+    : { line: `${p.label}: ${KB(p.bytes)} (known exception, measured ${KB(ex)})` };
+  if (!p.kind || !Object.hasOwn(CEIL, p.kind)) return { fail: `${p.label}: no kind; add its stage key to STAGE in tools/lib/page-size.mjs (or a kind field from its embed tool)` };
+  if (p.bytes > CEIL[p.kind]) return { fail: `${p.label}: ${p.bytes} bytes, over the ${p.kind} ceiling of ${KB(CEIL[p.kind])} (docs/design/page-bytes.md 4)` };
+  return { line: `${p.label}: ${KB(p.bytes)} of ${KB(CEIL[p.kind])} (${p.kind})` };
+}
+
 export function pageSizeReport({ page = path.join(ROOT, 'dist', 'lanternfall.html'), jsDir = JS_DIR, cssDir = CSS_DIR, root = ROOT } = {}) {
   const lines = [], fails = [], warns = [];
   // 1. the page
@@ -131,15 +149,8 @@ export function pageSizeReport({ page = path.join(ROOT, 'dist', 'lanternfall.htm
   // 3. each pack against its ceiling, or an exception against its measured size
   const all = packs(jsDir), area = {};
   for (const p of all) {
-    const ex = EXCEPT[p.id];
-    if (ex !== undefined) {
-      if (p.bytes > ex) fails.push(`${p.label}: ${p.bytes} bytes, past its measured ${ex} as a known exception (docs/design/page-bytes.md 6); a shipped pack may not grow`);
-      else lines.push(`  ${p.label}: ${KB(p.bytes)} (known exception, measured ${KB(ex)})`);
-    } else if (!p.kind || !Object.hasOwn(CEIL, p.kind)) {
-      fails.push(`${p.label}: no kind; add its stage key to STAGE in tools/lib/page-size.mjs (or a kind field from its embed tool)`);
-    } else if (p.bytes > CEIL[p.kind]) {
-      fails.push(`${p.label}: ${p.bytes} bytes, over the ${p.kind} ceiling of ${KB(CEIL[p.kind])} (docs/design/page-bytes.md 4)`);
-    } else lines.push(`  ${p.label}: ${KB(p.bytes)} of ${KB(CEIL[p.kind])} (${p.kind})`);
+    const ex = EXCEPT[p.id], j = judge(p);
+    if (j.fail) fails.push(j.fail); else lines.push('  ' + j.line);
     if (p.kind === 'monster') {
       if (!(p.zone > 0)) { fails.push(`${p.label}: a monster with no zone; give it one in STAGE so its area sheet adds up`); continue; }
       const a = Math.ceil(p.zone / ZONES_PER_AREA);
@@ -164,6 +175,29 @@ export function pageSizeReport({ page = path.join(ROOT, 'dist', 'lanternfall.htm
     ? `growth: code ${KB(now.code)} (${d(now.code, base.code)}), CSS ${KB(now.css)} (${d(now.css, base.css)}) against ${base.sha}, the merge base with ${BASE_REF}`
     : `growth: code ${KB(now.code)}, CSS ${KB(now.css)} (${why}; fetch the branch to compare)`);
   return { lines, fails, warns };
+}
+
+// The split build against its budget: s is buildSplit()'s result, everything loadReport(s).everything (bytes on the wire).
+// Each area pack holds the art of one or more of the packs above (check.mjs's split section proves a pack holds its source's
+// art), so each is held to those packs' ceilings. A hero pack has no per-pack ceiling yet (hosting.md 6: set by
+// hero-screen-size-ruling and art-scale-ruling), so it is reported. except, grow and pad are for the mutation runs only: except
+// replaces the known exceptions, grow sets a piece's bytes by id, pad adds bytes to the whole build's total.
+export function splitBudgetReport(s, { everything, jsDir = JS_DIR, except = EXCEPT, grow = {}, pad = 0 } = {}) {
+  const lines = [], fails = [], warns = [], all = packs(jsDir).map(p => (grow[p.id] !== undefined ? { ...p, bytes: grow[p.id] } : p));
+  let heroes = 0, heroBytes = 0;
+  for (const sp of s.packs) {
+    if (sp.hero) { heroes++; heroBytes += sp.bytes; continue; }
+    const mine = all.filter(p => p.pack === sp.id);
+    if (!mine.length) { fails.push(`split pack ${sp.id} (${sp.name}): no per-pack ceiling covers it; give its art file's packs a kind in tools/lib/page-size.mjs`); continue; }
+    for (const p of mine) { const j = judge(p, except); if (j.fail) fails.push(`split pack ${sp.id}: ${j.fail}`); else lines.push(`  split pack ${sp.id}: ${j.line}`); }
+  }
+  if (heroes) lines.push(`  split: ${heroes} hero packs, ${MB(heroBytes)} of files (no per-pack ceiling yet: hero-screen-size-ruling and art-scale-ruling set it)`);
+  const total = Buffer.byteLength(s.html) + s.files.reduce((n, f) => n + f.bytes, 0) + pad;
+  const say = `split build: ${MB(total)} of files (the page, ${s.assets.length} boot files and ${s.packs.length} packs)`;
+  if (total > BUILD_WARN) warns.push(`${say}, over the ${MB(BUILD_WARN)} whole-build warn line (docs/design/hosting.md 6)`);
+  else lines.push(`${say}, warn above ${MB(BUILD_WARN)}`);
+  if (everything !== undefined) lines.push(`split build, everything on the wire: ${MB(everything)} (a report: B1's first-load lines ${MB(FIRST_LOAD.warn)} / ${MB(FIRST_LOAD.fail)} are not lines for the split build)`);
+  return { lines, fails, warns, total };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

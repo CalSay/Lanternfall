@@ -15622,6 +15622,24 @@ if (section('page size')) try {
   for (const w of r.warns) console.log('  WARN ' + w);
   for (const f of r.fails) fail(f);
   if (!r.fails.length) ok('page size: the page is under 14 MB and every art pack is under its ceiling or its measured exception');
+  // load-budget-check (hosting.md 6, art-loader judge (d)): the split build's packs keep their per-pack ceilings, its files report a
+  // total with a 25 MB warn, and B1's 6.0 / 8.0 MB first-load lines are a report only. In memory: nothing is written.
+  const { splitBudgetReport, BUILD_WARN } = await import('./lib/page-size.mjs');
+  const sp = buildSplit({ write: false }), b = splitBudgetReport(sp, { everything: loadReport(sp).everything });
+  for (const l of b.lines) console.log('  ' + l);
+  for (const w of b.warns) console.log('  WARN ' + w);
+  for (const f of b.fails) fail(f);
+  if (!b.fails.length) ok(`page size: every split build pack is under its per-pack ceiling or its measured exception (${sp.packs.length} packs)`);
+  { // mutation runs: Gloomjaw no longer an exception fails the monster ceiling one byte past it and passes at it, and the
+    // whole-build warn fires one byte past 25 MB and not at it
+    const { CEIL, EXCEPT } = await import('./lib/page-size.mjs'), { 'foe:gloomjaw': _, ...except } = EXCEPT, gj = 'split pack foe:gloomjaw: ';
+    const over = splitBudgetReport(sp, { except, grow: { 'foe:gloomjaw': CEIL.monster + 1 } }), atC = splitBudgetReport(sp, { except, grow: { 'foe:gloomjaw': CEIL.monster } });
+    assert(over.fails.some(f => f.startsWith(gj) && f.includes(`over the monster ceiling of ${(CEIL.monster / 1e3).toFixed(1)} KB`)) && !atC.fails.some(f => f.startsWith(gj)),
+      `page size: mutation (Gloomjaw's split pack no longer an exception) fails one byte past the monster ceiling, not at it (${over.fails.join('; ') || 'nothing failed'})`);
+    const at = splitBudgetReport(sp, { pad: BUILD_WARN - b.total }), past = splitBudgetReport(sp, { pad: BUILD_WARN - b.total + 1 });
+    assert(!at.warns.length && past.warns.some(w => /over the 25\.00 MB whole-build warn line/.test(w)),
+      `page size: the whole-build warn fires just past 25 MB, not at it (${past.warns.join('; ') || 'no warn'})`);
+  }
 } catch (e) { fail('page size crashed: ' + (e.stack || e)); }
 
 // ==== embed-base91 (docs/design/page-bytes.md lever 10): every embedded art file is basE91 text, read back by one decoder ====
