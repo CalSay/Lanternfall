@@ -245,3 +245,16 @@ reward (a quest card), Hallowed looks and her subclass.
 
 Veto phrase for Cal: **"Oriel joins at zone 25"**. Red team findings and how each was answered: this card's thread; the changes
 are in sections 3 to 8.
+
+## 11. Design-doc rubric lines
+
+- **Player problem and evidence:** Cal asked to see Oriel with the new art (10 Oct 09:51). Every hero stalls between zones 20 and
+  30 for days (`pacing-turn-era.md`), and the 50-hour run shows a 12-hour wall near zones 24-25 (lessons, Economy: "No hard
+  progress walls"). A new hero at the start of the stall gives the player something new to try there.
+- **Coverage-map areas:** 14 (heroes and build variety), 7 (progression curve), 21 (long-term retention).
+- **Predicted effect:** her casual win rates sit inside the starters' spread on every section 6 row (pass), and swapped in for the
+  hero who leaves, her normal fights stay within 10 points. Missed means any row outside the spread after the tuning order in
+  section 6 is spent; then the wire card stops and a judge re-rules.
+- **Switch off and saves:** the wire card puts her join behind one flag (as `STORY_TUNE.joinOnMeet` is for the starters). Off:
+  she stays roster-only, and a save where she already carries the lamp hands it back to the hero who last carried it. Her state is
+  new fields with defaults in `fresh()`; no save key bump. Nothing here touches the Cal-only list.
