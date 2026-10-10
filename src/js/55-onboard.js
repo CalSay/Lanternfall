@@ -81,7 +81,11 @@ const FEATURES = [
     when: () => { try { return handsOpen(); } catch (e) { return false; } } },
   // starters-join-when-met: switching heroes opens when the first starter joins a new game (56c). Never on a save that began with all three.
   { id: 'switch', name: 'Switch hero', why: 'a starter joins you at a Champion (a new game)', late: true,
-    when: () => typeof heroJoins === 'function' && heroJoins().length > 0, now: () => true }
+    when: () => typeof heroJoins === 'function' && heroJoins().length > 0, now: () => true },
+  // Tavern Blackjack (57t-blackjack.js, tavern-blackjack.md 7): zone 14, the Tavern built, and 10 minutes of play after the Tavern
+  // (and Hands) rows opened. No `now`: it waits its turn behind the spacing governor. BJ_TUNE.on 0 keeps it shut.
+  { id: 'blackjack', tab: 'world', view: 'tav', name: 'Blackjack', late: true, why: 'zone 14, with the Tavern built 10 minutes before',
+    when: () => { try { return bjOpen(); } catch (e) { return false; } } }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 
@@ -109,7 +113,8 @@ const FIRST_USE = {
   stars: { text: 'Each star changes how your fights play.', via: 'notice' },
   deep: { text: 'The Deepwell goes down floor by floor. Pick a boon between floors and earn Marks.' },
   hands: { text: "You can hire gatherers on the Tavern board. They work shifts while you're away." },
-  switch: { text: 'Switch heroes on the Hero tab, for free.', via: 'notice' }   // the join line on the Champion card (56c heroJoinLine)
+  switch: { text: 'Switch heroes on the Hero tab, for free.', via: 'notice' },
+  blackjack: { text: "Bet gold and beat Hesketh's hand without going over 21." }   // the join line on the Champion card (56c heroJoinLine)
 };
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.

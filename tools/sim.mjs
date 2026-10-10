@@ -58,6 +58,8 @@
 //             next class weapon; any is the pre-M6 policy, which often ran for hours with no weapon.
 //   Without --class there is no weapon or head gear (no hero is classless in the game, and the
 //   legacy Sword/Helm are no longer made): only the Charm and tools are forged.
+//   --blackjack 1 (with --days): the casual Tavern Blackjack player (blackjackStep). With --report econ it also runs every profile with
+//             the table on and prints the table's measures BJ-a to BJ-e (tavern-blackjack.md 12).
 // Reports T1 (zones at 30m/1h/2h), T2 (zone at 3h), T10 (roster steps: level caps and drills),
 // T11, T16 (first recruit after the starter, first Rare/Epic/Legendary) and T17 (token pity).
 // Both modes build the Camp like a player (--camp 0 turns it off): any affordable build in
@@ -159,6 +161,8 @@ if (args.report === 'hands') { await runHandsReport(); process.exit(0); }
 if (args.report === 'econ') { await runEconReport(); process.exit(0); }
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
+// --blackjack 1: the table player's books (blackjackStep, below)
+const bjSim = { on: args.blackjack === '1', days: [], hands: 0, ledger: true, first: null, unlocks: [] };
 Object.assign(fn, g.eval('({ craftItem, canCraft, craftStrikeOffered })'));   // 55-crafting.js (K6)
 // Sim clock: the game's Date.now (bounty timers, the Tavern's device day) follows sim time.
 const day0 = args.day !== undefined ? +args.day : 277;
@@ -1090,6 +1094,29 @@ if (E('partyCombatOn()')) {
 // gathers (weaker skill, best node), the others fight at the max zone.
 // "Meaningful upgrades": a new zone, a new gear tier in any slot, a Camp build.
 // --json 1 prints one JSON summary line at the end (used by --targets).
+// --blackjack 1 (tavern-blackjack-build, tavern-blackjack.md 12): the casual table player. Once the Tavern's card table opens
+// (57t bjOpen), the first check-in of each device day plays up to 30 hands at the highest bet, hitting to 17 and never
+// doubling, and stops when the table closes for the day. Records each day's table net (gold and price-hours) and whether
+// any table hand touched the econ ledger or S.totalGold (it must not: the table books nothing).
+function blackjackStep(E, wallH) {
+  if (!bjSim.on || !E('typeof bjOpen === "function" && bjOpen()')) return;
+  const day = E('deviceDay(Date.now())'), row = bjSim.days.find(r => r.day === day) || (bjSim.days.push({ day, hands: 0, net: 0, H: 0, zone: 0 }), bjSim.days[bjSim.days.length - 1]);
+  if (bjSim.first === null) bjSim.first = +(wallH / 24).toFixed(2);
+  // The table draws from its own seeded stream, so the run's other random numbers (fights, drops) stay the same as the run
+  // with the table off and only the table's gold moves the comparison.
+  const r = E(`(() => { const r0 = Math.random; Math.random = globalThis.__bjRng || (globalThis.__bjRng = rng(${seed} * 7919 + 17)); try {
+    const books = JSON.stringify([S.econ.earned, S.econ.spent, S.totalGold]), n0 = S.blackjack.n.hands;
+    bjNext(); bjSetBet(bjLimits().hi);
+    for (let i = ${row.hands}; i < 30; i++) {
+      if (!bjDeal()) break;
+      for (let v = bjView(); v.phase === 'play'; v = bjView()) { if (v.pt.t < 17) bjHit(); else bjStand(); }
+      bjNext();
+    }
+    return { n: S.blackjack.n.hands - n0, net: S.blackjack.net, H: econH(S.maxZone), zone: S.maxZone, same: books === JSON.stringify([S.econ.earned, S.econ.spent, S.totalGold]) };
+    } finally { Math.random = r0; } })()`);
+  row.hands += r.n; row.net = r.net; row.H = r.H; row.zone = r.zone; bjSim.hands += r.n;
+  if (!r.same) bjSim.ledger = false;
+}
 function runDays() {
   const H = 3600, sessMin = +(args.session || 15), firstMin = +(args.first || 60);
   const checkins = String(args.checkins || '8,13,19').split(',').map(Number).sort((a, b) => a - b);
@@ -1102,6 +1129,8 @@ function runDays() {
   fn.on('zoneClear', ({ zone }) => mark('zone', zone + 1));
   // Finished Camp builds count too.
   fn.on('campBuilt', ({ id, lv }) => mark('camp', `${id}${lv}`));
+  // --blackjack 1: every unlock and hero join with the active play seconds and zone, for the table's opening-beat proof (docs/proof/tavern-blackjack-build)
+  if (bjSim.on) { fn.on('unlock', ({ id }) => bjSim.unlocks.push([id, act, E('S.maxZone')])); fn.on('starterJoin', e => bjSim.unlocks.push(['join:' + ((e && e.ids) || []).join('+'), act, E('S.maxZone')])); }
   // GP1 (--report skills): the wall day each skill opens each tier, and gathering time per skill.
   const skTier = {}, skGather = {};
   // GP1: a gathering tier that opens (new nodes) is a meaningful upgrade too, now that tiers take days.
@@ -1176,6 +1205,7 @@ function runDays() {
       // Back in the game: spend what the away time brought, then play.
       withReserve(E, rosterStep(E), () => campStep(E)); forgeWeapon(); withReserve(E, rosterStep(E), forgeGear); checkTiers();
       handsStep();
+      blackjackStep(E, wall / H);
       if (hasDeeds) { const tg = E('topGoals(3, { sticky: false }).map(x => x.sys)'); dd.near.push([tg.filter(x => x === 'deeds').length, tg.length]); }
       for (let sec = 0; sec < len; sec++) {
         playSecond(sec); wall++; act++;
@@ -1260,7 +1290,7 @@ function runDays() {
   if (store) store.away = awayLog;
   console.log('store: away rate by day (Storehouse Lv, units/h before the cap, away hours, tier): ' + awayLog.map((e, i) => e && [1, 2, 3, 5, 7, 10, 14, 21, 30, 45].includes(i + 1) ? `d${i + 1} Lv${e[0]} ${e[1]}/h ${e[2]}h T${e[3]} ${e[9]} (H${e[5]} skill ${e[6]} tool ${e[7]} m${e[8]})` : '').filter(Boolean).join(' | '));
   if (skz) skz.end = skzRow();
-  if (args.json) console.log('JSON ' + JSON.stringify({ skz, store, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk, deeds: r.deeds })), deeds: hasDeeds ? Object.assign(dd, { groups: E('Object.fromEntries(DEED_TRACKS.map(t => [t.id, t.g]))'), live: E('deeds.tracks().map(t => t.id)') }) : null, bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, hands: handsJson(), econ: Object.assign(eco, { top: E('globalThis.__ecoTop || []') }), errors: g.errors.length }));
+  if (args.json) console.log('JSON ' + JSON.stringify({ skz, store, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk, deeds: r.deeds })), deeds: hasDeeds ? Object.assign(dd, { groups: E('Object.fromEntries(DEED_TRACKS.map(t => [t.id, t.g]))'), live: E('deeds.tracks().map(t => t.id)') }) : null, bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, hands: handsJson(), blackjack: bjSim.on ? bjSim : null, econ: Object.assign(eco, { top: E('globalThis.__ecoTop || []') }), errors: g.errors.length }));
 }
 
 // ================= --targets: PASS/FAIL for the balance targets =================
@@ -1800,6 +1830,30 @@ async function runEconReport() {
   res.push(['INFO', 'EC13 named gatherers are worth their fee: needs shift fees and rarity shares (N3a)', '-']);
   for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
   console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.filter(r => r[0] !== 'INFO').length} econ targets pass (${c}, ${nDays} days)`);
+  if (args.blackjack === '1') {
+    // tavern-blackjack.md 12: the same runs with the casual table player on (--blackjack 1 in each profile's run), against these.
+    const onOuts = await Promise.all(profs.map(p => run(['--days', String(nDays), '--class', c, '--profile', p, '--json', '1', '--blackjack', '1', ...pass])));
+    const JB = Object.fromEntries(profs.map((p, i) => [p, JSON.parse(onOuts[i].split('\n').find(l => l.startsWith('JSON ')).slice(5))]));
+    const DB = Object.fromEntries(profs.map(p => [p, perDay(JB[p])]));
+    const incB = Object.fromEntries(profs.map(p => { const r = DB[p].slice(1); return [p, r.reduce((a, d) => a + d.foes, 0) / Math.max(1, r.length)]; }));
+    const B = Object.fromEntries(profs.map(p => [p, JB[p].blackjack || { days: [], hands: 0, ledger: false }]));
+    const H = p => B[p].days.map(d => d.net / d.H), foesOf = d => d.net / X(`foeGoldBase(${d.zone})`);
+    const meanLoss = p => { const r = B[p].days; return r.length ? -r.reduce((a, d) => a + foesOf(d), 0) / r.length / incB[p] : NaN; };
+    const p90 = p => { const l = H(p).map(x => -x).sort((a, b) => a - b); return l.length ? l[Math.min(l.length - 1, Math.floor(0.9 * l.length))] : NaN; };
+    const reach = profs.every(p => B[p].hands >= 100);
+    const bj = [];
+    bj.push([ok(profs.every(p => meanLoss(p) <= 0.02 && p90(p) <= 1.1)), 'BJ-a the table\'s mean net loss a day is at most 2% of EC2 income, and the 90th-percentile losing day at most 1.1 H',
+      profs.map(p => `${p} ${(100 * meanLoss(p)).toFixed(2)}% of ${f0(incB[p])} foes a day, p90 loss ${f2(p90(p))} H`).join('; ')]);
+    bj.push([ok(profs.every(p => Math.abs(bankShare(JB[p]) - bankShare(J[p])) < 0.05)), 'BJ-b the EC5 share moves by less than 5 points',
+      profs.map(p => `${p} ${pc(bankShare(J[p]))} -> ${pc(bankShare(JB[p]))}`).join(', ')]);
+    const zEnd = (j, d) => (d[d.length - 1] || {}).zone;
+    bj.push([ok(profs.every(p => Math.abs(zEnd(JB[p], DB[p]) - zEnd(J[p], D[p])) < 1)), `BJ-c each profile's zone at day ${nDays} moves by less than 1 zone`,
+      profs.map(p => `${p} ${zEnd(J[p], D[p])} -> ${zEnd(JB[p], DB[p])}`).join(', ')]);
+    bj.push([ok(profs.every(p => B[p].ledger)), 'BJ-d S.econ.earned, S.econ.spent and S.totalGold unchanged by every table hand', profs.map(p => `${p} ${B[p].ledger ? 'unchanged' : 'CHANGED'}`).join(', ')]);
+    bj.push([ok(reach), 'BJ-e every profile reaches the table and plays 100 or more hands (else the measures are void)', profs.map(p => `${p} ${B[p].hands} hands from day ${B[p].first === null ? '-' : B[p].first}`).join(', ')]);
+    for (const [r, name, detail] of bj) console.log(`${r}  ${name}\n      ${detail}`);
+    console.log(`blackjack: ${reach ? bj.filter(r => r[0] === 'PASS').length + '/' + bj.length + ' table measures pass' : 'VOID (a profile played under 100 hands)'} (${c}, ${nDays} days)`);
+  }
   for (const p of profs) console.log(`  ${p.padEnd(6)} day ${nDays}: zone ${D[p][D[p].length - 1].zone}, bosses ${Object.entries(J[p].bossAt).map(([z, t]) => `${z} d${(t / 24).toFixed(1)}`).join(' ') || '-'}, gold a day ${D[p].filter(d => [1, 3, 8, 15, 30, 45].includes(d.day)).map(d => `d${d.day} ${f0(d.earn)}`).join(' ')}`);
 }
 
