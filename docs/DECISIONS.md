@@ -152,26 +152,30 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Moss teaches one move per hero, "Scroll found." toasts only when the hero in play can use it, and a full-slot learn detail says "Swap it
   in for:". No drop, trade or save change.
 
-- **Claude decided: Oriel Vess joins at the zone 20 Champion with a falling-star frost kit (oriel-ability-spec, Opus judge
-  2026-10-10; Cal can veto with "Oriel joins at zone 25").** She is the fourth hero to carry the lamp. Her scene plays after
+- **Cal decided: the star mage is called Auriel, not Oriel (Cal, 2026-10-10 14:24: "rename her to Auriel everywhere").**
+  Every name a player or reader sees says Auriel (Auriel Vess, the Starcaller). Ids, save keys and file paths stay `oriel`
+  (the hero id, `heroes/oriel.md`, art and pack paths), so no save or art breaks.
+
+- **Claude decided: Auriel Vess joins at the zone 20 Champion with a falling-star frost kit (oriel-ability-spec, Opus judge
+  2026-10-10; Cal can veto with "Auriel joins at zone 25").** She is the fourth hero to carry the lamp. Her scene plays after
   Maren's on the Sepulchre Engine's card, and she joins at the road's level; the Star Chart becomes her hero quest. Her kit is
   Pip's 6 shared caster moves plus 8 of her own from Codex's list, with Fold the Chart and Someone Looks Up cut. Falling Letter
   calls one star that lands 2 turns later for a frost hit and a Stun, and every bonus is read when it lands. Zone 20, not 25,
   because casual players reach it on day 5 rather than day 15-27, right where the climb stalls. Spec:
   [heroes/oriel.md](design/heroes/oriel.md).
 
-- **Cal decided: Oriel's own abilities get plain star names (Cal, 2026-10-10 11:12: "Can you rename the abilities officially").**
+- **Cal decided: Auriel's own abilities get plain star names (Cal, 2026-10-10 11:12: "Can you rename the abilities officially").**
   Falling Star, Call It Down, Take a Bearing, Starbolt, Ill Omen, Shooting Star, Starfall and News Arrives. Codex's names (Falling
   Letter, Pull the Reading, Clear Night, Bad News, Letters Unsent, Sliver's Hum) read as riddles; players should see what a move
   does. Ids stay as they were, since saves, art and effects key on them. [heroes/oriel.md](design/heroes/oriel.md).
 
 - **Claude decided: every hero has 14 abilities of their own, with no shared moves (hero-themed-kits, Opus judge 2026-10-10;
-  Cal can veto with "Give Oriel her own Starlight damage type").** Each kit is 6 style moves built on a template of mechanics
+  Cal can veto with "Give Auriel her own Starlight damage type").** Each kit is 6 style moves built on a template of mechanics
   plus 8 signature moves; talents follow the hero's theme and Stars stay shared. Pip's Frost Shard becomes Smoke Bolt (fire,
-  Weaken), Arcane Ward becomes Ashen Ward and Nova becomes Ring of Light (still holy), and Oriel gets six starlight moves of her
+  Weaken), Arcane Ward becomes Ashen Ward and Nova becomes Ring of Light (still holy), and Auriel gets six starlight moves of her
   own, with frost as her rules type. Live ids are kept, so no save breaks. Spec: [hero-kits.md](design/hero-kits.md).
 
-- **Cal decided: Oriel deals her own damage type, Starlight (Cal, 2026-10-10 13:07: "Yeah I think Oriel should have her own type
+- **Cal decided: Auriel deals her own damage type, Starlight (Cal, 2026-10-10 13:07: "Yeah I think Auriel should have her own type
   of damage"; this vetoes the frost pick above).** Starlight is a sixth type in night blue with a four-point star icon. Nothing in
   Chapter 1 is weak to it or resists it, so no foe or boss changes and she is the hero to bring where the others are resisted.
   [hero-kits.md](design/hero-kits.md) section 4.
@@ -1298,8 +1302,8 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   Echo frame 2 with no string (the bow is hidden, and the frame never shows in turn fights). In the split build only her idle is at boot (new
   game 3.49 MB, zone 2 3.95 MB, no hero exception). The Foreman's rule: no hero-core judge, since at 10 Mbps her Attack is in about 3 s
   before a new player's first swing ("Loading Wren" never shows). Goes to Cal as a preview (gate 13).
-- **Route S Oriel (route-s-oriel-judge, Opus art judge, 2026-10-10; Cal can veto: "Skip the bad Oriel frames", "Code can draw Oriel's
-  axe", "Short staffs and spears are fine", "Oriel's hunt spear is fine"):** re-brief. The 11:02 redraw still has 6 third hands (spark 3, hex 4, nova 2, pullreading 7, letters 2;
+- **Route S Auriel (route-s-oriel-judge, Opus art judge, 2026-10-10; Cal can veto: "Skip the bad Auriel frames", "Code can draw Auriel's
+  axe", "Short staffs and spears are fine", "Auriel's hunt spear is fine"):** re-brief. The 11:02 redraw still has 6 third hands (spark 3, hex 4, nova 2, pullreading 7, letters 2;
   probably nova 6), 7 body morphs (hex 4, nova 4, clearnight 5, letters 2, mining 3, victory 3, defeat 4) and 0 bendy staffs. A
   pack-wide fault is bigger: the staff shrinks to a third or a half whenever she holds it level, and the hunting spear shrinks mid-thrust: 25 frames,
   release frames included.
