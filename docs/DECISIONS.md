@@ -1200,6 +1200,21 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   steps only" end; heroes and foes draw 1.5x against unchanged scenery (ACTOR_K = 1.5, card actor-scale; a hero about 142 logical
   px, 285 CSS at 1280x720) from the 190 px art with no new bytes; portrait stays 1x until UX-L1. #320 closed with the spike: foes
   stay 2D. A menu-only phone mode is a separate Cal decision. (`docs/design/route-s/ruling.md`)
+- **Route S Tobin (integrate-route-s-tobin, Opus art judge, 2026-10-10; Cal can veto: "Wire Tobin now", "Pull the new Tobin",
+  "Wait for all three heroes", "Keep the first cleave", "Last Stand should be a shield raise"):** wire Tobin's 21 fight moves
+  (Scenario key frames from his concept, 190 px at Wren's pack scale, 63 colours seeded with the concept's 14 swatches so his olive
+  coat survives, 1-bit alpha, lossless WebP, at most 1,550 KB), with the Hammerfall rubble and crack sprites, behind Classic art
+  (build card route-s-tobin-wire, gated like Wren's plus a re-cut from raw, frame skips, air lifts, a dash-chain clip and dash flags
+  checked from data). It waits for the split build (asset-build, art-loader): on the one-file page his fight set makes 12.71-12.80 MB
+  (12.74-12.84 with rubble and crack),
+  past #328's 12 MB second-hero line, and the art-loader loads packs per hero with only the in-play hero's core moves in the boot set.
+  Cal's Wren checks pass: no third arm or wrong hand in 200 frames and no border halo at game size. Of 154 counted defects, 72 are
+  white pockets and punched mouths that a re-cut fixes, 63 are handled by conversion (held idle, skipped frames, hunt drawn at 80%
+  scaled about 1.25) or accepted, and 19 need rerolls: cleave v2 (the sword changes size), woodcut v5 (the back shield is missing),
+  and the thrown-shield views v2 (a steel boss the real shield lacks); about 57-76 credits within the ~1,000 budget. Last Stand stays
+  as drawn (a slash, then a stand) because the live ability hits for 180% since 6 Oct; `ability-art-brief.md` and
+  `hero-abilities.md` still describe a shield-raise. The gather loops wire through route-s-tobin-gather after woodcut v5.
+  (`docs/design/route-s/ruling-tobin.md`)
 - **Route S Pip (integrate-route-s-pip, Opus art judge, 2026-10-10; Cal can veto: "Wire Pip now", "Pull the new Pip", "Wait for
   all three heroes", "Pip as tall as Wren", "Skip the Pip rerolls", "No Hex sigil"):** wire Pip's 19 fight moves (Scenario key frames
   from her concept, 63 colours seeded with the concept's 12 swatches, 1-bit alpha, lossless WebP, at most 1,350 KB), with her fireball,

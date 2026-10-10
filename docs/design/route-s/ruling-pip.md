@@ -2,7 +2,7 @@
 
 Question: should Pip's route S pack (23 moves x 8 Scenario key frames from her approved concept) and her shaped-effect sprites go
 into the 2D game? The judge rules **wire**, **re-brief** or **shelve**, after a red team, on the questions of Wren's ruling
-([ruling.md](ruling.md), #328) and Tobin's parallel ruling. Card: `autopilot/cards/integrate-route-s-pip.md`. Scratch paths below
+([ruling.md](ruling.md), #328) and Tobin's parallel ruling ([ruling-tobin.md](ruling-tobin.md), #336). Card: `autopilot/cards/integrate-route-s-pip.md`. Scratch paths below
 are under `/mnt/project-files/experiments/`: the pack `2d-poses-scenario/pip-moves/`, the effects `2d-poses-scenario/hero-fx-test/`,
 the evidence, audits A-C, red team and judge files `route-s-judge-pip/` (`out/`, `out-seed/`, `audit/`, `redteam/`, `judge/`). The
 audits and the red team are also copied into the repo: [pip-records/](pip-records/) (`audit-a.md`, `audit-b.md`, `audit-c.md`,
@@ -183,6 +183,9 @@ the judge's frame sheet and the clip check it instead.
 
 ## Build card spec: route-s-pip-wire
 
+The card asked to add Pip to the route S wire card. She gets her own card instead, as Tobin did: `route-s-wren-wire` keeps the
+other heroes out of scope, and Pip must also wait for the split build, which Wren does not.
+
 Lane: claude. Model: opus-high. Gate: judge (art). Prio: P1. Base: integration branch.
 Depends on: route-s-wren-wire (its converter and stage drawing); asset-build; art-loader (per-hero loading); pip-cast-recipes;
 actor-scale (soft); the judge passing victory v2, Arcane Ward v2, Lanternburst v2 and Hex v2.
@@ -296,7 +299,7 @@ both byte JSONs; the concept; its own crops at 190 px (`judge/crops/`) of every 
 joins and the cut faults on magenta; a pale-edge scan of all 23 seeded atlases; a registered byte measure
 (`judge/tools/measure_scaled.py`); a height lineup with Wren and Tobin; `fx-sheet.png` and `fx4.js`'s hit table; the live recipes and
 emit point (`62b-fx.js`, `62-stage.js:682`), the abilities, the art brief, `hero-abilities.md` 6.3, `art-pipeline.md` 7,
-`new-style/plan.md` 4.3, `art-loader.md`; Wren's ruling and Tobin's draft.
+`new-style/plan.md` 5.1 and 6, `art-loader.md`; Wren's ruling and Tobin's ruling ([ruling-tobin.md](ruling-tobin.md), #336).
 
 Not checked: the gallery and the fx4 stage test (no network); rendered stage shots and real clips; the ~1,188 enclosed holes frame by
 frame (the auditors' game-size scans were used); bytes after a real build or the rerolls; the gather scale by hat-top.
