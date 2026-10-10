@@ -307,6 +307,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   reaches them: Hero at the first level-up (hero level 2), Gather after the first boss, Bounties at zone 4, Camp at zone 5, Craft and the
   Bestiary around zone 6, the Almanac at 7 minutes, Uniques, the Tavern, the Codex (zone 10), the Raid (zone 12),
   Stars (hero level 10), the Deepwell (zone 20 and Hearth 3) and Hands (Hearth 2 and a Tavern). Once open, a feature stays open.
+  The top bar shows Gold only until the Raid opens: the orange Embers diamond (the raid's coin, named "Embers, from the world
+  raid" on hover and to screen readers) joins it then, or as soon as the player holds Embers or has felled a raid boss (only with a capability host; see below).
   One new thing every 90 s (`ONBOARD_TUNE.gap`, 90 s of play): ready rows queue and open in table order, so after the first
   boss Hero comes first, then Gather, Next Up and the away strip (row `awaynote`), 90 s apart. A row the player's own act
   or a drop opened skips the queue: walking to gather, the fire lit (Camp), the Workbench (Craft), the Tavern built, the first
