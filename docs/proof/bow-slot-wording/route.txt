@@ -1,0 +1,29 @@
+# seed: 1
+# Proof for card bow-slot-wording (cold leg 10 Oct, finding 7). Fixture flow-cold-camp: Wren, zone 2, nothing worn, no gear made yet.
+# Before: the Pine Bow's card said "You wear nothing as Weapon. This is a gain." though Wren is drawn with a bow, and it asked
+# Equip / Keep / Salvage with no word on why the pickaxe went on by itself.
+# After: the card says "Better than your starting bow." (Tobin: "starting sword and shield", Pip: "starting staff"), and the first
+# piece of gear made adds "Not equipped yet. Gear waits for you to choose; tools go on by themselves."
+#   pickaxe-on.png      the Copper Pickaxe goes on by itself; no "Not equipped yet" line
+#   first-bow.png       the first Pine Bow: the first-craft line sits with Equip / Keep / Salvage
+#   starting-bow.png    its comparison: "Better than your starting bow.", not "You wear nothing"
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap "Craft"
+wait 1
+tap "Craft Copper Pickaxe"
+wait 1
+expect "Copper Pickaxe on."
+expect-no "Not equipped yet"
+shot pickaxe-on
+tap "Craft Pine Bow"
+wait 3
+expect "Not equipped yet. Gear waits for you to choose; tools go on by themselves."
+expect "Equip"
+shot first-bow
+# on a short landscape screen the comparison sits below the stats: scroll the card to it
+unless "Better than your starting bow." scroll
+expect "Better than your starting bow."
+expect-no "You wear nothing"
+shot starting-bow
