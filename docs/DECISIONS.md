@@ -250,6 +250,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Region 5 is its own place** with its own look, not the Deepwell continued. The Deepwell must still tie into the
   story. The Voice's reveal speaks of darkness enduring. (2026-09-28)
 - **Random events and secrets** at launch. (2026-09-28)
+- **The first hour's foe kits are fight data, off until each area's wire card** (ns-foe-kits-z1-10, 2026-10-10). The
+  roster's zone 3-10 monsters, zone 1-10 Captains and the Briar Regent and Hollow Cantor are in `59l` behind
+  `ZONE_FOE_TUNE.on` (Mossy Hollow, Batwing Caves). Switched on, each is held to the fight it replaces (today's damage and
+  fight length, then a per-zone fit on the first-hour budget rows), because the roster's raw numbers play much easier
+  (fewer hits a move, more full-parry counters). Open for `ns-a2-wire`: a kept-up hero who never defends beats the zone 8
+  Captain 15-100% (band under 10%). Proof: `docs/proof/ns-foe-kits-z1-10/report.md`. Cal can veto with "Play the roster's
+  raw numbers" (`parity: 0`).
 
 ## Gathering, gatherers and the camp
 

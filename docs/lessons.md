@@ -50,6 +50,13 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Read a gear piece's boss odds over the whole upgrade range, one press at a time, with `almanac.force('none')`, before saying it "barely changes". Why: the boss fight is stepped (whole turns between rally gates), so Pip's staff +0 -> +1 shows no line while +0 -> +5 is +18 points, and on a +15% damage Omen day the same staff shows no line at any press while +4 costs about 5 points (pip-staff-odds-mismatch, 2026-10-09).
 - Quote a loss rate only with the bot build it came from (the commit and how it defends), and re-measure on the current bot before carding a fix. Why: the 5.7 Wren losses per 10 min behind the wren-z9-10-foes card came from a bot that defended only the first hit of a move; on the current bot the same probe read 1.8, and 0 for a Wren who crafts. Also model a foe's live tricks in the sampler before trusting a budget row against it (the Rattlebones get-up was missing until this card). (wren-z9-10-foes, 2026-10-09)
 - When a fight rule reads its io (a gate skip, a heal, a foe's HP), assert it on the live path (`turnCombatTick` with `TURN_LIVE_IO`) as well as through `turnCombatSample`, which builds its own io. Why: the live fight built each fight before it set the new foe, so the rally-gate skip read the last foe's 0 HP and every live boss from #160 to 8 Oct skipped its gates, while the budget and every boss fit had them on. (rally-gates-live, 2026-10-08)
+- Fit a boss swap on the budget rows, not on mean damage a turn: a boss whose moves have fewer hits is parried in full more
+  often, and every full parry earns a counter, so equal damage a turn still played 10-15 casual points easier (ns-foe-kits
+  z7 85 -> 98). Why: the first shared-parity kits widened the hero spread and made every Captain easier.
+- When a boss reuses an ordinary monster's moves, build it from the source data, not the ordinary fight's processed copy (shaped
+  without holds, scaled to its slot). Why: ns-foe-kits' first push gave every Captain its monster's tuned moves; the review caught it.
+- With a zone monster switched on, the budget's `types` rows throw (the zone sends one type); measure those zones with
+  `normals.mjs`-style direct spawns instead. Why: ns-foe-kits z9/z10 normal rows could not run with kits on.
 
 ## Economy and skilling
 
