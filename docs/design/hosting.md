@@ -202,9 +202,10 @@ first load (one per art file, 0.002 credits), which is small next to the bytes.
 **Until the build splits**, nothing changes: the one-file build keeps the 14 MB check exactly as it is.
 
 **Where the B2 lines live:** `tools/build.mjs` `LOAD_LINES` and `loadReport` (printed by `node tools/build.mjs --split`), asserted
-with a mutation run for each fail line in `tools/check.mjs`'s split build section. Hero art is all boot files today; per-hero packs
-(only the save's hero's core moves at boot) are the follow-up card hero-packs, which the route S wire cards need before they add
-art to the split build, since the boot-set lines carry no hero exception.
+with a mutation run for each fail line in `tools/check.mjs`'s split build section. Today's hero art is all boot files. A route S hero file
+registers in `AREA_ART` as kind `hero` (card hero-packs): one pack of each hero's core moves, which the boot loader writes only for
+the save's hero, and one pack per other move, loaded after boot; both boot lines count the heaviest hero's core, with no hero
+exception, and the game holds while the stage needs a move still loading (`artHeroNeed`, 75-art-load).
 
 ## 7. What changes elsewhere
 
