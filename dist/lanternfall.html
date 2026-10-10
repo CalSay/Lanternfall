@@ -31058,6 +31058,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     }
     if (a === hero && stageFx && tg === 'mob' && turnFight()) stageFx.swing(handX(a), handY(a));
     if (a.still) { a.still = 0; return; }   // a buff hits no foe: its own effect plays (62b), nothing flies
+    if (a === hero && stageFx && stageFx.noShot && tg === 'mob' && turnFight() && stageFx.noShot()) return;   // route S Pip's ring or flash: no bolt (62b, pip-cast-recipes)
     if (!foeAlive()) return;
     const s = a.aim && (tg !== 'mob' || slotLive(a.aim)) ? a.aim : a.kind ? foe : frontSlot();
     const fa = a === hero && stageFx && tg === 'mob' && turnFight() ? stageFx.aim(s) : null;   // the hero aims at the chest (62b-fx)
@@ -32582,6 +32583,15 @@ const FX_RECIPES = {
   flare: { d: 'bolt', col: ['blind', 'white'], big: 1.2, nova: 1 },
   lanternburst: { d: 'bolt', col: ['ember', 'burn'], big: 2.2, sc: 1.6, final: 1, flames: 1, charge: 'burn' }
 };
+// pip-cast-recipes (ruling-pip.md question 9): with Pip drawn in her own moves (route S, stageFx.pipS.on) these three start where
+// the art casts them, not as a bolt from her hand. d 'ring': light runs out from the point to the foe (from 'butt': flat along
+// the ground); d 'flash': a flash and a pale cone from the lantern. They reach the foe in the bolt's flight (FX_TUNE.bolt), so the
+// hit lands when it did (fxImpactIn), and the stage flies no bolt (stageFx.noShot). Classic art keeps the bolts above.
+const FX_RECIPES_S = {
+  nova: { d: 'ring', from: 'butt', col: ['white', 'gold'], big: 1.5, nova: 1 },
+  flare: { d: 'flash', from: 'lantern', col: ['blind', 'white'], big: 1.2, nova: 1 },
+  lanternburst: { d: 'ring', from: 'lantern', col: ['ember', 'burn'], big: 2.2, sc: 1.6, final: 1, flames: 1, charge: 'burn' }
+};
 // Hand-marked aim points for odd shapes: foe type -> [x, y] as fractions of the drawn body (0,0 its top left)
 const FX_AIM = { spore: [0.45, 0.62], bones: [0.5, 0.45], wyrm: [0.45, 0.55] };   // the Spore's cap, the Bones' hat, the Wyrm's neck sit over the chest
 const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1.1, rainAt: 0.42, rainFly: 0.17 };
@@ -32601,7 +32611,7 @@ function fxImpactIn(id) {
     const now = () => (typeof T === 'number' ? T : 0);
     const live = () => typeof turnCombatOn === 'function' && turnCombatOn();
     let V = null, lastT = 0, dt = 0;
-    const st = { casts: 0, shots: 0, impacts: 0, popped: 0, popN: 0, last: '', still: 0, shakes: 0 };   // for the checks (stageFx.stats)
+    const st = { casts: 0, shots: 0, impacts: 0, popped: 0, popN: 0, last: '', still: 0, shakes: 0, kind: '', from: '', at: null };   // kind, from, at: the last ring or flash (pip-cast-recipes)   // for the checks (stageFx.stats)
 
     // ---------------- pools ----------------
     const NP = 360, parts = [];
@@ -32639,7 +32649,8 @@ function fxImpactIn(id) {
     for (let i = 0; i < NG; i++) glows.push({ on: false, x: 0, y: 0, t0: 0, life: 1, rgb: '', r: 1, a: 1 });
     let gi = 0;
     function still(x, y, rgb, r, life, a) { const g = glows[gi]; gi = (gi + 1) % NG; g.on = true; g.x = x; g.y = y; g.t0 = now(); g.life = life; g.rgb = rgb; g.r = r; g.a = a; }
-    const charge = { on: false, t0: 0, rel: 0, rgb: '', deep: 0.3, big: 1, cyc: false, sight: false };
+    const heroId = () => (typeof S === 'object' && S && S.solo && S.solo.hero) || 'wren';
+    const charge = { on: false, id: '', from: '', t0: 0, rel: 0, rgb: '', deep: 0.3, big: 1, cyc: false, sight: false };
     const tint = { on: false, t0: 0, life: 1 };
     const ghosts = [{ t0: -9, dx: 0 }, { t0: -9, dx: 0 }, { t0: -9, dx: 0 }];
 
@@ -32689,15 +32700,20 @@ function fxImpactIn(id) {
     // ---------------- casts ----------------
     const Q = [];   // { id, r, t0, go, x, y, crit, miss }
     let critT = -9;   // when the last crit landed (a cast within 0.25 s of it is a crit)
-    const recipe = id => R[id] || null;
+    // route S Pip's hooks, filled by route-s-pip-wire: on() while she is drawn in her own moves; at(id, part) her staff butt
+    // ('butt') or lantern ('lantern') on the frame drawn, camera-free, or null for today's points (the butt under the hand on the
+    // ground, the lantern at the hand); sprite() while the wire's own sprite flies, so 62b draws no head of its own on the trail
+    const pipS = { on: () => false, at: () => null, sprite: () => false };
+    const recipe = id => (heroId() === 'pip' && FX_RECIPES_S[id] && pipS.on() && FX_RECIPES_S[id]) || R[id] || null;
+    const swept = r => r.d === 'ring' || r.d === 'flash';
+    function from(id, part, hx, hy) { const p = pipS.at(id, part); return p ? p : part === 'butt' ? [hx, V ? V.hfY : hy + 44] : [hx, hy]; }
     function cast(id) {
       const r = recipe(id); if (!r || !live()) return;
       if (Q.length >= 4) Q.shift();
       Q.push({ id, r, t0: now(), go: -1, x: 0, y: 0, crit: now() - critT < 0.25 || !!r.crit, miss: false });
       critT = -9; st.casts++; st.last = id;
-      if (r.charge && !reduced) { charge.on = true; charge.t0 = now(); charge.rel = 1e9; charge.rgb = C[r.charge] || C.aim; charge.deep = r.final ? 0.45 : r.laser ? 0.4 : 0.3; charge.big = r.final ? 2 : 1.4; charge.cyc = !!r.final; charge.sight = !!r.laser; }
+      if (r.charge && !reduced) { charge.on = true; charge.id = id; charge.from = r.from || ''; charge.t0 = now(); charge.rel = 1e9; charge.rgb = C[r.charge] || C.aim; charge.deep = r.final ? 0.45 : r.laser ? 0.4 : 0.3; charge.big = r.final ? 2 : 1.4; charge.cyc = !!r.final; charge.sight = !!r.laser; }
     }
-    const heroId = () => (typeof S === 'object' && S && S.solo && S.solo.hero) || 'wren';
     on('ability', p => { if (p && p.cls === 'solo' && p.id) cast(p.id); });
     on('soloAttack', p => { cast(heroId() + ':attack'); if (p && p.kind === 'miss' && Q.length) Q[Q.length - 1].miss = true; });
     on('heroMiss', () => { const c = Q[Q.length - 1]; if (!c) return; c.miss = true; for (const s of shots) if (s.on && !s.hit && s.r === c.r) s.miss = true; });   // the miss lands on impact: its shots in flight miss too
@@ -32705,7 +32721,7 @@ function fxImpactIn(id) {
     // still in flight is the one that crit
     on('crit', p => { if (!live() || (p && p.counter)) return; critT = now(); const c = Q[Q.length - 1]; if (c && now() - c.t0 < 1.2) c.crit = true; });
     // a timed ability's rings: the light gathers on the bow (staff, shield) while the player times it
-    on('timingRing', p => { const r = p && recipe(p.id); if (r && !reduced && !charge.on) { charge.on = true; charge.t0 = now(); charge.rel = 1e9; charge.rgb = C[r.charge || r.col[0]]; charge.deep = 0.2; charge.big = 1; charge.cyc = !!r.final; charge.sight = !!r.laser; } });
+    on('timingRing', p => { const r = p && recipe(p.id); if (r && !reduced && !charge.on) { charge.on = true; charge.t0 = now(); charge.rel = 1e9; charge.rgb = C[r.charge || r.col[0]]; charge.id = p.id; charge.from = r.from || ''; charge.deep = 0.2; charge.big = 1; charge.cyc = !!r.final; charge.sight = !!r.laser; } });
     function clearAll() { Q.length = 0; critT = -9; for (const p of parts) p.on = false; for (const r of rings) r.on = false; for (const s of shots) s.on = false; for (const g of glows) g.on = false; charge.on = false; tint.on = false; resetStatus(); }
     on('sceneReset', clearAll);
     // the hero's swing fires (62-stage fire): the oldest waiting cast goes from the hand at (x, y)
@@ -32720,6 +32736,7 @@ function fxImpactIn(id) {
       const [tx, ty] = target(r.low);
       if (reduced) { still(tx, ty, c1, 14 * (r.big || 1), 0.6, 0.7); st.still++; st.impacts++; return; }   // under reduced motion the hit is this still light
       if (r.d === 'foe') { foeCast(c, r, tx, ty); return; }
+      if (swept(r)) { sweep(c, r, tx, ty); return; }
       if (r.d === 'melee') {
         if (r.dash) for (let k = 0; k < 6; k++) { const y = ty + rnd(-14, 14); part(tx - rnd(30, 60), y, -260, 0, 0.18, C.pale, 1, 0, true, 6); }
         impact(c, tx, ty, r.big || 1);
@@ -32745,6 +32762,25 @@ function fxImpactIn(id) {
         shot(r, c.x, c.y, tx, ty + off, d, fly, n > 1 ? Math.min(r.big, 0.7) : r.big || 1, c.miss);
         if (k) A.proj(r.d === 'bolt' ? 'bolt' : 'arrow', c.x, c.y, tx, ty + off, fly, r.d === 'bolt' ? '#FF9E3D' : '#8FD46A', r.d === 'bolt' ? 0 : 6, null, d);
       }
+    }
+    // route S Pip's Nova, Lantern Flare and Lanternburst (FX_RECIPES_S): the light leaves the staff butt or the lantern and
+    // reaches the chest in the bolt's flight; an unseen shot carries the impact (its miss and crit, as a bolt's)
+    function sweep(c, r, tx, ty) {
+      const [ox, oy] = from(c.id, r.from, c.x, c.y), c1 = C[r.col[0]], c2 = C[r.col[1]], fly = FX_TUNE.bolt, reach = Math.max(40, Math.abs(tx - ox)) / K;
+      st.kind = r.d; st.from = r.from; st.at = [Math.round(ox), Math.round(oy)];
+      if (r.d === 'flash') {   // Lantern Flare: the lantern flares, a pale cone runs to the foe
+        flash(C.white, 0.12); still(ox, oy, C.pale, 34, 0.35, 0.95); still(ox, oy, c1, 60, 0.45, 0.6);
+        ring(ox, oy, 0.3, 6, 90, C.white, 6);
+        burst(ox, oy, 46, Math.atan2(ty - oy, tx - ox), 0.22, 500, 1100, 0.2, 0.36, [C.pale, C.white, c1], 2, 4, 0, true, 2);
+      } else if (r.from === 'butt') {   // Nova: the staff butt strikes the ground and a ring runs out along it
+        ring(ox, oy, fly + 0.15, 8, reach * 1.1, c1, 9, 0, 0.25); ring(ox, oy, fly + 0.3, 6, reach * 0.9, c2, 6, 0.06, 0.25);
+        burst(ox, oy, 28, -Math.PI / 2, 1.3, 120, 380, 0.3, 0.6, [c1, c2, C.pale], 2, 4, 400, true, 2);
+        shake(0.1);
+      } else {   // Lanternburst: a ring centred on the lantern grows past the foe
+        ring(ox, oy, fly + 0.2, 10, reach * 1.15, c1, 12); ring(ox, oy, fly + 0.35, 8, reach * 0.95, c2, 8, 0.06);
+        still(ox, oy, c1, 50, 0.5, 0.9); burst(ox, oy, 50, 0, 3.1, 200, 600, 0.25, 0.5, [c1, c2, C.pale], 2, 4, 0, true, 3);
+      }
+      shot(r, ox, oy, tx, ty, 0, fly, r.big || 1, c.miss);
     }
     const twin = () => typeof TURN_LIVE !== 'undefined' && TURN_LIVE && TURN_LIVE.p && TURN_LIVE.p.eq && TURN_LIVE.p.eq.includes('twinshot');
     function shake(s) { if (!reduced) { st.shakes++; emit('shake', s); } }
@@ -32820,7 +32856,7 @@ function fxImpactIn(id) {
     // the latest time a hit still in flight lands (a status the hit brings shows when it lands)
     function landsAt() {
       let t = now();
-      for (const c of Q) { if (c.go < 0) t = Math.max(t, c.t0 + FX_TUNE.wind + 0.3); else if (c.r.d === 'arrow' || c.r.d === 'bolt') t = Math.max(t, c.go + (c.r.rain ? 1 : c.r.d === 'bolt' ? FX_TUNE.bolt : FX_TUNE.arrow)); }
+      for (const c of Q) { if (c.go < 0) t = Math.max(t, c.t0 + FX_TUNE.wind + 0.3); else if (c.r.d === 'arrow' || c.r.d === 'bolt' || swept(c.r)) t = Math.max(t, c.go + (c.r.rain ? 1 : c.r.d === 'arrow' ? FX_TUNE.arrow : FX_TUNE.bolt)); }
       return t;
     }
     const SEEN = {}, BADGE_ID = { stun: 'stun', frozen: 'frozen' };
@@ -32914,6 +32950,7 @@ function fxImpactIn(id) {
       const reach = s.r.pierce ? D + 900 * K : D, x = Math.min(reach, D * u);
       if (!s.hit && u >= 1) { s.hit = true; if (!s.sky) impact(QC(s), s.x1, s.y1, s.big); if (!s.r.pierce) { s.on = false; return; } }
       if (x >= reach || (s.sky && u >= 1)) { s.on = false; return; }
+      if (swept(s.r)) return;   // a ring's or flash's shot is unseen: it only carries the impact
       const [c1, c2] = [s.c1, s.c2], sc = s.sc, tail = Math.max(0, x - (s.r.laser ? 2000 : 380 * K * sc)), wd = Math.max(1.5, 9 * K * sc);
       ctx.save(); ctx.translate(s.x0 - cam, s.y0); ctx.rotate(ang); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1;
       const g = ctx.createLinearGradient(tail, 0, x, 0); g.addColorStop(0, `rgba(${c2},0)`); g.addColorStop(0.6, `rgba(${c1},.75)`); g.addColorStop(1, `rgba(${C.pale},1)`);
@@ -32925,7 +32962,7 @@ function fxImpactIn(id) {
       ctx.restore();
       const wx = s.x0 + Math.cos(ang) * x, wy = s.y0 + Math.sin(ang) * x;
       ctx.globalCompositeOperation = 'lighter';
-      A.lightAt(ctx, C.pale, wx - cam, wy, 8 * sc, 0.8); A.lightAt(ctx, c1, wx - cam, wy, 15 * sc, 0.4);
+      if (!(s.r.d === 'bolt' && heroId() === 'pip' && pipS.sprite())) { A.lightAt(ctx, C.pale, wx - cam, wy, 8 * sc, 0.8); A.lightAt(ctx, c1, wx - cam, wy, 15 * sc, 0.4); }   // the head (off while route S Pip's sprite flies)
       if (s.r.laser) A.lightAt(ctx, C.gold, wx - cam, wy, 18, 0.6);
       ctx.globalCompositeOperation = 'source-over';
       for (let k = 0; k < 2; k++) part(wx - Math.cos(ang) * rnd(0, 12), wy + rnd(-2, 2), -Math.cos(ang) * rnd(12, 48), rnd(-27, 27), rnd(0.16, 0.32), k ? c1 : c2, 1, 0, true, 2);
@@ -32953,10 +32990,10 @@ function fxImpactIn(id) {
         const d = Math.min(1, (t - charge.t0) / 0.3), fade = t > charge.rel ? Math.max(0, 1 - (t - charge.rel) / 0.15) : 1;
         if (fade <= 0) charge.on = false;
         else {
-          const hx = V.hx - cam, hy = V.hy, pul = 1 + 0.15 * Math.sin(t * 33), cc = charge.cyc ? [C.bleed, C.aim, C.gold][Math.floor(t / 0.09) % 3] : charge.rgb;
+          const o = charge.from ? from(charge.id, charge.from, V.hx, V.hy) : null, hx = (o ? o[0] : V.hx) - cam, hy = o ? o[1] : V.hy, pul = 1 + 0.15 * Math.sin(t * 33), cc = charge.cyc ? [C.bleed, C.aim, C.gold][Math.floor(t / 0.09) % 3] : charge.rgb;
           ctx.globalCompositeOperation = 'lighter';
           A.lightAt(ctx, cc, hx, hy, (5 + 9 * d) * pul * charge.big, 0.6 * d * fade); A.lightAt(ctx, C.pale, hx, hy, (2 + 3 * d) * pul * charge.big, 0.9 * d * fade);
-          if (Math.random() < 0.7 * charge.big) { const a = rnd(0, 6.3), rr = rnd(9, 21) * charge.big; part(V.hx + Math.cos(a) * rr, hy + Math.sin(a) * rr, -Math.cos(a) * rr * 4, -Math.sin(a) * rr * 4, 0.22, cc, 1, 0, true); }
+          if (Math.random() < 0.7 * charge.big) { const a = rnd(0, 6.3), rr = rnd(9, 21) * charge.big; part(hx + cam + Math.cos(a) * rr, hy + Math.sin(a) * rr, -Math.cos(a) * rr * 4, -Math.sin(a) * rr * 4, 0.22, cc, 1, 0, true); }
           if (charge.sight && tgt.ok) { const k2 = 1 - d * 0.8, R0 = 27 * k2 + 5; ctx.strokeStyle = fill(C.gold); ctx.globalAlpha = (0.5 + d * 0.5) * fade; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(tgt.x - cam, tgt.y, R0, 0, 6.2832); ctx.stroke();
             for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { ctx.beginPath(); ctx.moveTo(tgt.x - cam + a * R0 * 0.4, tgt.y + b * R0 * 0.4); ctx.lineTo(tgt.x - cam + a * R0 * 1.5, tgt.y + b * R0 * 1.5); ctx.stroke(); } }
           ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -33019,7 +33056,8 @@ function fxImpactIn(id) {
 
     let idle = true;
     stageFx = {
-      swing, aim, aimInfo,
+      swing, aim, aimInfo, pipS,
+      noShot: () => !!relR && swept(relR),   // the stage flies no bolt for the swing just released (route S Pip's rings and flash)
       draw(ctx, phase, v) {
         V = v;
         if (phase === 'back') { dt = Math.max(0, Math.min(0.1, now() - lastT)); lastT = now(); if (v.fight) drawBack(ctx); return; }

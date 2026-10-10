@@ -85,6 +85,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   (budget, odds, sim) land at once, so balance is unchanged.
   A buff (kind 'buff': Shadow Step, Brace, Iron Will, Arcane Ward, Searing Eye) fires nothing at the foe: its own glow plays, and a
   hero drawn with its own moves plays the move in place (fx-timing-fixes).
+  With Pip drawn in her own moves (route S), Nova is a ring from her staff butt along the ground, Lantern Flare a flash from her
+  lantern and Lanternburst a ring round the lantern, with no bolt; each lands in the bolt's time (pip-cast-recipes, 62b `FX_RECIPES_S`).
 - **The fight screen is Stage and dock** (Cal, 2026-10-05; `75-solo-ui.js`, `75-turn-ui.js`). The stage shows the hero and
   foe, a turn banner and the timing bar along its bottom edge while a hit winds up. Under it, the dock has three tabs.
   **Act**: Attack and the three ability slots as tiles (D, Q, W, E), each with its name and "Ready", turns left or
