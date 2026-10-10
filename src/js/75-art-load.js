@@ -18,7 +18,7 @@ var artZoneReady = () => true, artZonePacks = () => [];
 {
   const LB = typeof lfBoot === 'object' && lfBoot && lfBoot.packs && typeof lfBoot.take === 'function' ? lfBoot : null;
   if (LB && typeof document !== 'undefined') {
-    const P = LB.packs, got = {}, ready = {}, failed = {}, stale = {}, busy = {}, keep = [];
+    const P = LB.packs, got = {}, ready = {}, failed = {}, stale = {}, broken = {}, busy = {}, keep = [];
     let booted = false;
     const RELOAD_KEY = 'lanternfall.artReloadAt';
     // the build's table (zones 1 to LB.road); past the road the scenery repeats every 35 zones (check.mjs holds it), as in the loader
@@ -56,7 +56,7 @@ var artZoneReady = () => true, artZonePacks = () => [];
         // decode both shapes first and keep them: 62-stage's own image of the same picture is then complete at once
         got[id] = 'decoding';
         Promise.all(['land', 'port'].filter(o => data[o]).map(o => { const im = new Image(); keep.push(im); im.src = 'data:image/webp;base64,' + data[o].src; return im.decode(); }))
-          .then(() => { BG_ART[key] = data; done(); }, () => { delete got[id]; gone(id); });
+          .then(() => { BG_ART[key] = data; done(); }, () => { broken[id] = true; cover(); });   // a picture that will not decode: a new download would not help
       }
     };
     LB.take(put);
@@ -64,9 +64,12 @@ var artZoneReady = () => true, artZonePacks = () => [];
 
     const deep = () => typeof deepActive === 'function' && deepActive();
     const screenZone = () => (target() === 'mob' && !deep() ? S.zone : 0);   // only a fight on the road draws a zone's art
-    // 90-boot asks every frame, before it draws: a zone change that emits nothing (a retreat after a wipe) is covered in time
+    // 90-boot asks every frame, before tick and draw. A zone change inside tick that emits nothing (a retreat after a wipe) is
+    // caught by the microtask, which runs after that frame's draw and before the browser paints it: the cover is up in time.
     let coverKey = '';
-    const held = () => { const z = screenZone(), h = z >= 1 && !artZoneReady(z); if (coverKey !== z + ':' + h) cover(); return h; };
+    const key = () => { const z = screenZone(); return z + ':' + (z >= 1 && !artZoneReady(z)); };
+    const recheck = () => { if (coverKey !== key()) cover(); };
+    const held = () => { const z = screenZone(), h = z >= 1 && !artZoneReady(z); if (coverKey !== z + ':' + h) cover(); queueMicrotask(recheck); return h; };
     addEventListener('online', () => { for (const id in failed) failed[id].at = 0; pump(); });   // back online: try again now
     holdGame(held);
 
@@ -78,7 +81,7 @@ var artZoneReady = () => true, artZonePacks = () => [];
       for (const q of zs) if (q >= 1) for (const id of artZonePacks(q)) if (!out.includes(id)) out.push(id);
       return out;
     };
-    const due = id => !got[id] && !busy[id] && !(failed[id] && failed[id].at > Date.now());
+    const due = id => !got[id] && !busy[id] && !stale[id] && !broken[id] && !(failed[id] && failed[id].at > Date.now());   // a stale file is gone for good
     function pump() {
       const now = screenZone() >= 1 ? artZonePacks(screenZone()) : [], n = Object.keys(busy).length;
       const id = (n < 2 ? now.find(due) : null) || (n < 1 ? wanted().find(due) : null);
@@ -91,19 +94,22 @@ var artZoneReady = () => true, artZonePacks = () => [];
       document.body.appendChild(s);
       pump();   // a second file for the zone on screen, if it needs one
     }
-    // A failed file: wait a little longer each time. A new deploy names other files, so ask the server for the page.
+    // A failed file: wait a little longer each time. A new deploy names other files, so ask the server for the page: at most
+    // once every two minutes for all packs together (the page is about 1 MB on the wire), and every failed pack it no longer
+    // names is stale (never fetched again; the zone that needs one reloads the page).
+    let askedAt = -Infinity;
     function gone(id) {
       const f = failed[id] = failed[id] || { n: 0 }; f.n++; f.at = Date.now() + Math.min(30, 2 ** f.n) * 1000;
-      if (typeof fetch !== 'function') return;
+      if (typeof fetch !== 'function' || Date.now() - askedAt < 120000) return;
+      askedAt = Date.now();
       fetch(location.href, { cache: 'no-store' }).then(r => (r.ok ? r.text() : null))
-        .then(t => { if (t && !t.includes(P[id].f)) { stale[id] = true; cover(); } }, () => {});
+        .then(t => { if (t) for (const k in failed) if (!got[k] && !t.includes(P[k].f)) stale[k] = true; cover(); }, () => {});
     }
     let reloading = false;
     function reload() {
       let last = 0;
-      try { last = +sessionStorage.getItem(RELOAD_KEY) || 0; } catch (e) {}
-      if (Date.now() - last < 60000) return false;   // reloaded a minute ago: never loop; the line asks the player instead
-      try { sessionStorage.setItem(RELOAD_KEY, String(Date.now())); } catch (e) {}
+      // reloaded a minute ago, or no session storage to tell: never loop; the line asks the player instead
+      try { last = +sessionStorage.getItem(RELOAD_KEY) || 0; if (Date.now() - last < 60000) return false; sessionStorage.setItem(RELOAD_KEY, String(Date.now())); } catch (e) { return false; }
       reloading = true;
       try { save(); } catch (e) {}
       setTimeout(() => location.reload(), 400);
@@ -132,6 +138,7 @@ var artZoneReady = () => true, artZonePacks = () => [];
       let t = `Loading ${zoneAreaName(z)}`, ask = false;
       if (reloading || (ids.some(id => stale[id]) && reload())) t = 'The game was updated. Reloading.';
       else if (ids.some(id => stale[id])) { t = 'The game was updated. Reload the page to go on.'; ask = true; }
+      else if (ids.some(id => broken[id])) { t = `${zoneAreaName(z)} did not load. Reload the page to go on.`; ask = true; }
       else if (ids.some(id => failed[id])) t = `Waiting for the connection to load ${zoneAreaName(z)}`;
       box.hidden = false;
       if (line.textContent !== t) line.textContent = t;

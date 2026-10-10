@@ -362,17 +362,19 @@ if (section('split build (asset-build)')) try {
     for (const w of r.warns) console.log('  WARN split: ' + w);
     assert(LOAD_LINES.e1.pack === 'bg:forest' && Object.entries(r.packs).every(([id, x]) => id === 'bg:forest' || x.counted === x.real),
       `split: only Mossy Hollow's pack counts at one shape in the boot set (E1, until bg-pack-by-shape)`);
-    const pkT = id => s.packs.find(p => p.id === id).text, big1 = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m)).text;
+    // each mutation goes 10 KB past its line from today's bytes, so a change elsewhere never makes one stop failing
+    const pkT = id => s.packs.find(p => p.id === id).text, big1 = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m)).text, R = id => r.packs[id].real, over = (line, now) => Math.max(0, line - now) + 1e4;
     const plus = (txt, n) => x => size(x) + (x === txt ? n : 0), L = (o = {}) => ({ ...LOAD_LINES, ...o, area1: { ...LOAD_LINES.area1, ...(o.area1 || {}) } });
     const without = (...ids) => ({ ...LOAD_LINES, area1: Object.fromEntries(Object.entries(LOAD_LINES.area1).filter(([k]) => !ids.includes(k))) });
+    const wz = r.worst.z, gj = 'foe:gloomjaw', gjZ = s.packs.find(p => p.id === gj).zones[0][0];
     const mut = [
-      ['a boot file 0.6 MB bigger', { size: plus(big1, 0.6e6) }, /boot set, a new game \(zone 1\).*over 4\.00 MB/],
-      ['Gloomjaw 0.1 MB bigger', { size: plus(pkT('foe:gloomjaw'), 0.1e6) }, /boot set, the worst zone \(2\).*over 4\.00 MB/],
-      ['a portrait share over 0.70 MB', { lines: L({ e1: { pack: 'bg:forest', port: 0.5e6 } }) }, /portrait share .* over 0\.50 MB \(E1\)/],
-      ['Gloomjaw no longer an exception', { lines: without('foe:gloomjaw') }, /zone 2's packs are 0\.8\d MB, over 0\.65 MB/],
-      ['imp and Gloomjaw no longer exceptions', { lines: without('foe:imp', 'foe:gloomjaw') }, /area 1's new packs are 1\.2\d MB, over 1\.00 MB/],
-      ["imp's cap lowered to 0.30", { lines: L({ area1: { 'foe:imp': 0.3e6 } }) }, /foe:imp is 0\.3\d MB, over its area 1 cap of 0\.30 MB/],
-      ['an exception for a pack the build lacks', { lines: L({ area1: { 'foe:nothing': 0.1e6 } }) }, /exception foe:nothing names a pack the build lacks/]
+      ['a boot file past the line', { size: plus(big1, over(LOAD_LINES.bootFail, r.zone1.counted)) }, /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/],
+      [`the worst zone's foe pack past the line`, { size: plus(pkT(s.packs.find(p => p.id.startsWith('foe:') && p.zones.some(([a, b]) => wz >= a && wz <= b)).id), over(LOAD_LINES.bootFail, r.worst.counted)) }, new RegExp(`^boot set, the worst zone \\(${wz}\\): .* over 4\\.00 MB$`)],
+      ['a portrait share past its cap', { lines: L({ e1: { pack: 'bg:forest', port: r.packs['bg:forest'].port - 1e4 } }) }, /^bg:forest's portrait share .* \(E1\)$/],
+      ['Gloomjaw no longer an exception, past the zone line', { lines: without(gj), size: plus(pkT(gj), over(LOAD_LINES.zoneSet, R(gj))) }, new RegExp(`^zone ${gjZ}'s packs are [\\d.]+ MB, over 0\\.65 MB \\(zone set\\)$`)],
+      ['imp and Gloomjaw no longer exceptions, past the area line', { lines: without('foe:imp', gj), size: plus(pkT(gj), over(LOAD_LINES.areaSet, R('foe:imp') + R(gj))) }, /^area 1's new packs are [\d.]+ MB, over 1\.00 MB \(area set\)$/],
+      ["imp over its cap", { lines: L({ area1: { 'foe:imp': R('foe:imp') - 1e4 } }) }, /^foe:imp is [\d.]+ MB, over its area 1 cap of [\d.]+ MB$/],
+      ['an exception for a pack the build lacks', { lines: L({ area1: { 'foe:nothing': 0.1e6 } }) }, /^area 1's exception foe:nothing names a pack the build lacks$/]
     ];
     for (const [what, o, re] of mut) { const m = loadReport(s, { size, ...o }); assert(m.fails.some(f => re.test(f)), `split: mutation (${what}) fails its load line (${m.fails.join('; ') || 'nothing failed'})`); }
   }
@@ -474,6 +476,18 @@ if (section('split build (asset-build)')) try {
         const first = await page.evaluate(() => window.__first), b = await look(page);
         assert(a.cover === 'Loading Batwing Caves' && first === 'decoded' && !b.cover && !errs.length,
           `split: zone 8 waits for Mossy Hollow's painting ("${a.cover}") and the first frame after draws it decoded (${first}, ${JSON.stringify(b)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5c. a zone change inside tick that emits nothing (as a retreat after a wipe sets S.zone): the cover is up before the browser
+      //     paints that frame (75-art-load rechecks in a microtask after the frame's draw)
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+        await booted(page); await page.waitForTimeout(300);
+        await page.evaluate(() => window.__t.x(`(() => { const t0 = tick; tick = dt => { t0(dt); if (!window.__moved && S.activity === 'fight') { window.__moved = 1; S.zone = 8;
+          queueMicrotask(() => { const c = document.getElementById('artWait'); window.__cov = !!c && !c.hidden; }); } }; })()`));
+        await page.waitForFunction(() => window.__moved, null, { timeout: 5000 }).catch(() => {});
+        await page.waitForTimeout(100);
+        const r = await page.evaluate(() => ({ moved: window.__moved, cov: window.__cov })), a = await look(page);
+        release(); await page.waitForTimeout(300);
+        assert(r.moved && r.cov === true && a.cover === 'Loading Batwing Caves' && !errs.length, `split: a zone change inside tick with no event is covered before that frame paints (${JSON.stringify(r)}, ${JSON.stringify(a)})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
       // 6. a pack that fails while the server's page still names it: "Waiting for the connection", then it tries again and loads
       { const { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'fail' }, html: probe });
