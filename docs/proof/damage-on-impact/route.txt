@@ -1,0 +1,25 @@
+# seed: 1
+# Proof for card damage-on-impact (Cal, 2026-10-10: "the damage being calculated the second the button is pressed rather than
+# waiting for the ability or attack to finish"). A turn fight's press now starts the move at once and the hit lands on its
+# impact: the swing (0.14 s), then Wren's arrow (0.2 s) or Pip's bolt (0.28 s); Tobin's blow at the swing. The damage number,
+# the foe's bar, statuses and the cooldown all change then, not on the press. Enemy hits already landed on contact (unchanged).
+# The route plays the early fixture (Wren, zone 8 Champion) into a turn fight, presses Attack and Echo Arrow, and shoots each
+# after its arrow has landed (the number and the bar). A tap runs game time, so a route cannot hold the frame between press and
+# impact: tools/check.mjs "damage-on-impact (core)" times every hero's Attack and an ability of each against the stage's own
+# timing (nothing lands before the impact, everything lands on it). Run at all three views with --frozen.
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+expect "Attack"
+tap-if "Attack"
+wait 0.6
+shot attack-landed
+wait 3
+key q
+wait 0.6
+shot echo-landed
+expect ".hud.vs .mob"

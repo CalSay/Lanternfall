@@ -27491,7 +27491,9 @@ const TURN_TUNE = {
   // normal-death-says-so (judge, 2026-10-08): every zone fight (normal, elite, boss) starts at full HP, win or lose. 0 brings back
   // the carried HP (a kill heals COMBAT_TUNE.packHealF, 15%). The Deepwell and the Provings carry HP either way.
   normalFull: 1,
-  heroRecovery: 0.35, foeRecovery: 0.4, foeWindup: 0.9, introHand: 1.2, introAuto: 0.6,
+  // damage-on-impact (Cal, 2026-10-10): a live hero action plays first and lands on its impact (io.impactIn: the swing, then the
+  // arrow or bolt's flight); after it lands the hero rests heroRecovery less the wait, but at least impactRest
+  heroRecovery: 0.35, impactRest: 0.15, foeRecovery: 0.4, foeWindup: 0.9, introHand: 1.2, introAuto: 0.6,
   turnPause: 0.9,
   // hit feel (owner, 2026-10-02): the fight clock stops for a beat on a big moment (seconds), with a shake and a flash
   hitstop: { crit: 0.06, counter: 0.14, perfect: 0.1, broken: 0.18, big: 0.08 },   // owner (2026-10-02): a pause at every change of turn, while a banner says whose turn it is (turnCard)
@@ -27650,7 +27652,8 @@ const turnDeepZone = (z0, floor) => Math.max(1, Math.round(z0 + TURN_TUNE.deep.f
 function turnWaiting() {
   const m = TURN_LIVE;
   if (!m || m.ended) return false;
-  return m.phase === 'hero' || m.phase === 'handoff' || m.phase === 'intro' || m.stop > 0 || (typeof turnPaused === 'function' && turnPaused());
+  // a strike (damage-on-impact) waits for its hit to show, all but its last `burn` s: the Oil an action burns stays heroRecovery
+  return m.phase === 'hero' || m.phase === 'handoff' || m.phase === 'intro' || m.stop > 0 || (m.phase === 'strike' && m.until - m.now > m.strike.burn) || (typeof turnPaused === 'function' && turnPaused());
 }
 function turnCombatOn() { return turnCombatScope(); }
 // a zone table [[zone, value], ...]: straight lines between the points, flat past the ends (a number is flat everywhere)
@@ -28071,7 +28074,7 @@ const has = (m, id) => m.p.eq.includes(id);
 // the hero's talent for an ability (or '<hero>:attack' / ':parry' / ':dodge'): 'a' | 'b' | '' (24e TALENTS, 56e)
 const turnTal = (m, id) => (m.p.tal && m.p.tal[id]) || '';
 // the hero acts: 'attack' or an ability id. -> true when it happened
-function turnHeroAct(m, io, id, slot, grades) {
+function turnHeroAct(m, io, id, slot, grades, quiet) {   // quiet: { miss } when its press already said so (turnHeroDone)
   const T = TURN_TUNE, p = m.p, h = m.h, e = m.e, k = p.heroKey, uf = m.uf;
   let U = p.U;
   if (turnUsable(m, id)) return false;
@@ -28080,7 +28083,7 @@ function turnHeroAct(m, io, id, slot, grades) {
   let gi = 0;
   const G = grades || [], gNext = () => G[gi++] || 'good', perfects = G.filter(g => g === 'perfect').length;
   // a Blinded hero (a boss rider) may miss a direct action
-  const blindMiss = h.blind > 0 && io.random() < T.heroBlind; if (h.blind > 0) h.blind = 0;
+  const blindMiss = quiet ? !!quiet.miss : h.blind > 0 && io.random() < T.heroBlind; if (h.blind > 0) h.blind = 0;
   const marked = e.mark > 0, burning = e.burn > 0, sundered = e.sunder > 0;
   const t = x => turnTal(m, x);   // this hero's talent for x: 'a' | 'b' | '' (24e TALENTS)
   const o = (x, more) => Object.assign({ dt: x || 'phys', keenOk: true, kind: id }, more || {});
@@ -28131,7 +28134,7 @@ function turnHeroAct(m, io, id, slot, grades) {
       if (glowed && t('afterglow') === 'b' && !h.clearUsed) { h.clearUsed = 1; turnCleanse(h); }
     }
     if (h.keen === 1) h.keen = 0; else if (h.keen === 2) h.keen = 1;   // a Keen from this Attack waits for the next ability
-    io.emit('soloAttack', { kind: blindMiss ? 'miss' : 'hit' });
+    if (!quiet) io.emit('soloAttack', { kind: blindMiss ? 'miss' : 'hit' });
   } else {
     const a = turnAb(id); h.mom = 0;
     const dt = a.dt;
@@ -28252,7 +28255,7 @@ function turnHeroAct(m, io, id, slot, grades) {
     }
     if (spell && has(m, 'afterglow') && !blindMiss) { h.glow = 3; h.glowDt = a.dt; }
     if (h.keen === 1) h.keen = 0; else if (h.keen === 2) h.keen = 1;   // a Keen made by this cast waits for the next one
-    io.emit('ability', { cls: 'solo', id, name: a.name, slot, auto: false });
+    if (!quiet) io.emit('ability', { cls: 'solo', id, name: a.name, slot, auto: false });
   }
   if (blindMiss) io.emit('heroMiss', {});
   m.cds[id] = id === 'attack' ? 1 : (p.cds[id] || turnCdFor(id));
@@ -28498,6 +28501,8 @@ function turnResolve(m, cmd, dt, io) {
     if (m.phase === 'recovery' && m.now >= m.until) turnNextTurn(m, io);
     if (m.phase === 'handoff' && m.now >= m.until) turnBegin(m, m.pending, io);
     if (m.phase === 'foeWindup' && m.now >= m.until) turnContact(m, io);
+    if (m.phase === 'strike' && m.now >= m.until) { const k = m.strike; m.strike = null;   // the move's impact: it lands now
+      if (!turnHeroLand(m, io, k.id, k.slot, k.grades, { miss: k.miss }, k.wait)) m.phase = 'hero'; }
     if (m.phase === 'timing' && m.now > m.until + TURN_TUNE.timed.good) turnRingGrade(m, io, 'miss');   // no press: a Miss
     return true;
   }
@@ -28542,10 +28547,25 @@ function turnRingGrade(m, io, grade) {
   m.tm = null; m.phase = 'hero';
   if (!turnHeroDone(m, io, tm.id, tm.slot, tm.grades)) m.phase = 'hero';
 }
+// The hero acts. In the live fight (io.impactIn) the press starts the move at once (soloAttack / ability: the swing, the shot)
+// and the action itself (damage, statuses, cooldown) lands on its impact, in the 'strike' phase (damage-on-impact, Cal 2026-10-10).
+// Scratch fights have no impactIn and land at once, so the sim, budget and odds are unchanged.
 function turnHeroDone(m, io, id, slot, grades) {
-  if (!turnHeroAct(m, io, id, slot, grades)) return false;
+  const wait = io.impactIn ? io.impactIn(id) : 0;
+  if (!(wait > 0)) return turnHeroLand(m, io, id, slot, grades, false, 0);
+  if (turnUsable(m, id)) return false;
+  const miss = m.h.blind > 0 && io.random() < TURN_TUNE.heroBlind;   // a Blinded hero's miss is rolled as it swings, so the swing shows it
+  if (id === 'attack') io.emit('soloAttack', { kind: miss ? 'miss' : 'hit' });
+  else io.emit('ability', { cls: 'solo', id, name: turnAb(id).name, slot, auto: false });
+  // a hitstop already running (a Perfect ring) holds the fight clock while the swing plays on, so it comes off the wait
+  const T = TURN_TUNE, burn = T.heroRecovery - Math.max(T.impactRest, T.heroRecovery - wait);
+  m.phase = 'strike'; m.strike = { id, slot, grades, wait, miss, burn }; m.until = m.now + Math.max(0, wait - Math.max(0, m.stop || 0));
+  return true;
+}
+function turnHeroLand(m, io, id, slot, grades, quiet, wait) {
+  if (!turnHeroAct(m, io, id, slot, grades, quiet)) return false;
   if (!io.alive().foe) turnEnd(m, 'victory', io);
-  else { m.phase = 'recovery'; m.until = m.now + TURN_TUNE.heroRecovery; }
+  else { m.phase = 'recovery'; m.until = m.now + (wait > 0 ? Math.max(TURN_TUNE.impactRest, TURN_TUNE.heroRecovery - wait) : TURN_TUNE.heroRecovery); }
   return true;
 }
 
@@ -28584,6 +28604,7 @@ const TURN_LIVE_IO = {
   heroHp: () => { const u = cbUnitByKey('hero'); return u ? u.hp : 0; },
   healFoe: d => { const f = TURN_LIVE && TURN_LIVE.foe; if (f && !f.dead && f.hp > 0) { f.hp = Math.min(f.max, f.hp + d); emit('float', { txt: '+' + fmt(d), color: '#6FCB6A', big: false }); } },
   slotId: slot => soloEquipped()[slot] || null,
+  impactIn: id => (typeof fxImpactIn === 'function' && TURN_LIVE ? fxImpactIn(id === 'attack' ? TURN_LIVE.p.heroKey + ':attack' : id) : 0),   // 62b: when the move's hit shows
   damageFoe: (d, kind, crit, dt, n) => {
     const f = TURN_LIVE.foe, H = TURN_TUNE.hitstop, dot = /^(burn|bleed|swarm|curse)$/.test(kind);
     // hit feel: the number's tier, for its size and sting (display only: nothing below reads it)
@@ -32340,7 +32361,15 @@ const FX_RECIPES = {
 };
 // Hand-marked aim points for odd shapes: foe type -> [x, y] as fractions of the drawn body (0,0 its top left)
 const FX_AIM = { spore: [0.45, 0.62], bones: [0.5, 0.45], wyrm: [0.45, 0.55] };   // the Spore's cap, the Bones' hat, the Wyrm's neck sit over the chest
-const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1.1 };
+const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1.1, rainAt: 0.42, rainFly: 0.17 };
+// When a hero move's hit shows, in s from the press (damage-on-impact, Cal 2026-10-10: 59k lands the damage then): the swing's
+// wind (62-stage WIND), then an arrow or bolt's flight; Moonlit Volley's first falling arrow; a melee blow, a buff or a cast on
+// the foe at the strike. Reduced motion shows the hit as a still light at the strike. 0 for a move with no recipe.
+function fxImpactIn(id) {
+  const r = FX_RECIPES[id], F = FX_TUNE; if (!r) return 0;
+  if ((typeof reduced !== 'undefined' && reduced) || (r.d !== 'arrow' && r.d !== 'bolt')) return F.wind;
+  return F.wind + (r.rain ? F.rainAt + F.rainFly : r.d === 'bolt' ? F.bolt : F.arrow);
+}
 {
   if (typeof document !== 'undefined') {
     const A = ANIM, R = FX_RECIPES, C = FX_COL, K = FX_TUNE.k;
@@ -32447,8 +32476,10 @@ const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1
     const heroId = () => (typeof S === 'object' && S && S.solo && S.solo.hero) || 'wren';
     on('ability', p => { if (p && p.cls === 'solo' && p.id) cast(p.id); });
     on('soloAttack', p => { cast(heroId() + ':attack'); if (p && p.kind === 'miss' && Q.length) Q[Q.length - 1].miss = true; });
-    on('heroMiss', () => { if (Q.length) Q[Q.length - 1].miss = true; });
-    on('crit', p => { if (live() && !(p && p.counter)) critT = now(); });   // a parry counter is not the next cast's crit
+    on('heroMiss', () => { const c = Q[Q.length - 1]; if (!c) return; c.miss = true; for (const s of shots) if (s.on && !s.hit && s.r === c.r) s.miss = true; });   // the miss lands on impact: its shots in flight miss too
+    // a parry counter is not the next cast's crit. The hit now lands on impact (59k strike), after its cast: the latest cast
+    // still in flight is the one that crit
+    on('crit', p => { if (!live() || (p && p.counter)) return; critT = now(); const c = Q[Q.length - 1]; if (c && now() - c.t0 < 1.2) c.crit = true; });
     // a timed ability's rings: the light gathers on the bow (staff, shield) while the player times it
     on('timingRing', p => { const r = p && recipe(p.id); if (r && !reduced && !charge.on) { charge.on = true; charge.t0 = now(); charge.rel = 1e9; charge.rgb = C[r.charge || r.col[0]]; charge.deep = 0.2; charge.big = 1; charge.cyc = !!r.final; charge.sight = !!r.laser; } });
     function clearAll() { Q.length = 0; critT = -9; for (const p of parts) p.on = false; for (const r of rings) r.on = false; for (const s of shots) s.on = false; for (const g of glows) g.on = false; charge.on = false; tint.on = false; resetStatus(); }
@@ -32478,9 +32509,9 @@ const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1
         shot(r, c.x, c.y, c.x + 18, -20, 0, 0.16, 0, true, true);
         tint.on = true; tint.t0 = t + 0.3; tint.life = 1.6;
         for (let k = 0; k < (r.n || 1); k++) {
-          const x = tx + rnd(-tgt.w * 0.3, tgt.w * 0.3), y = ty + rnd(-tgt.h * 0.15, tgt.h * 0.2), d = 0.42 + k * 0.12;
-          shot(r, x - 12, -12, x, y, d, 0.17, r.big, c.miss);
-          A.proj('rain', x - 12, -12, x, y, 0.17, '#C8DCFF', 0, null, d);
+          const x = tx + rnd(-tgt.w * 0.3, tgt.w * 0.3), y = ty + rnd(-tgt.h * 0.15, tgt.h * 0.2), d = FX_TUNE.rainAt + k * 0.12;
+          shot(r, x - 12, -12, x, y, d, FX_TUNE.rainFly, r.big, c.miss);
+          A.proj('rain', x - 12, -12, x, y, FX_TUNE.rainFly, '#C8DCFF', 0, null, d);
         }
         return;
       }
@@ -46371,7 +46402,8 @@ let navUI = null;
   const cachePending_ = () => typeof cachePending === 'function' && cachePending();
   // zone10-clear-moment: a Champion's post scene waiting to play (storyBusy needs the scene id); it plays on a game tick, like the cache opens
   const sceneComing = () => { try { return typeof storyBusy === 'function' && MOMENT_Q.some(m => m.kind === 'champion' && m.scene && storyBusy(m.scene)); } catch (e) { return false; } };
-  const tickOwed = () => cachePending_() || sceneComing();   // something only the game tick can finish: no hold may stop the tick now
+  const striking = () => typeof TURN_LIVE !== 'undefined' && !!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'strike';   // a pressed hit on its way (damage-on-impact)
+  const tickOwed = () => cachePending_() || sceneComing() || striking();   // something only the game tick can finish: no hold may stop the tick now
   const cardComing = () => cardUp() || tickOwed();
   function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; if (txt.style.maxHeight) txt.style.maxHeight = ''; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn', 'guide-bar-off'); syncHeld(); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
@@ -46618,7 +46650,9 @@ let navUI = null;
   panels.addEventListener('scroll', () => { panelScrolled = true; tick(); }, { passive: true });
   addEventListener('resize', () => { invalidate(); tick(); });
   on('onboardStep', () => setTimeout(tick, 0));
-  on('telegraphStart', () => setTimeout(tick, 0));   // SOLO1: the Dodge and Parry steps catch the wind-up at its start
+  on('telegraphStart', () => setTimeout(tick, 0));
+  // damage-on-impact: a press now lands its hit after the swing, so a fight lesson's pause lifts on the press, not 250 ms later
+  for (const ev of ['soloAttack', 'ability']) on(ev, () => setTimeout(tick, 0));   // SOLO1: the Dodge and Parry steps catch the wind-up at its start
   // cal-0107-staged-guide: core has just held the fight for a lesson (show its line now), a press may have ended one (let the fight go on now),
   // and a kill opens the gap between fights where a held line can start (it can be shorter than one poll)
   for (const ev of ['guideHold', 'soloAttack', 'soloDodge', 'soloParry', 'ability', 'timingRing', 'kill']) on(ev, () => setTimeout(tick, 0));
