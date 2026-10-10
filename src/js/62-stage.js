@@ -791,6 +791,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     }
     if (a === hero && stageFx && tg === 'mob' && turnFight()) stageFx.swing(handX(a), handY(a));
     if (a.still) { a.still = 0; return; }   // a buff hits no foe: its own effect plays (62b), nothing flies
+    if (a === hero && stageFx && stageFx.noShot && tg === 'mob' && turnFight() && stageFx.noShot()) return;   // route S Pip's ring or flash: no bolt (62b, pip-cast-recipes)
     if (!foeAlive()) return;
     const s = a.aim && (tg !== 'mob' || slotLive(a.aim)) ? a.aim : a.kind ? foe : frontSlot();
     const fa = a === hero && stageFx && tg === 'mob' && turnFight() ? stageFx.aim(s) : null;   // the hero aims at the chest (62b-fx)
