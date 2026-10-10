@@ -1,0 +1,56 @@
+Difficulty budget: 240 scratch turn fights a row, hero and player (each boss fight on its own seed; trash in chains of 5);
+a hero who keeps up (road level, gear at the zone's tier, typical Stars); z7-z15 bosses and the z16-z26 -arrival rows on the arrival footing (arrival level, tier 1 common +0, no mastery stars).
+Bands: docs/design/difficulty-budget.json (Tobin's casual boss band +0.1).
+A "behind" row's casual number is the drop in casual wins against its ref row.
+row              kind         casual w/t/p  mean sprd band            good w/t/p   band     tries w/t/p     turns w/t/p      level  out of band
+z1-normal        normal       100/100/100   100 0     90-100          100/100/100  98-100   1/1/1           2/2.9/1.4            1  in band
+z1-boss          firstBoss    97/100/100    99 3      85-100 t95-100  100/100/100  97-100   1/1/1           4.3/4.5/3.6          1  in band
+  good wins under half HP %   0/0/0
+z3-boss          firstBoss    100/100/100   100 0     85-100 t95-100  100/100/100  97-100   1/1/1           1.6/1.6/1.3          6  in band
+  good wins under half HP %   0/0/0
+z5-boss          firstChampion71/79/90      80 20     60-80 t70-90    100/100/100  97-100   1.4/1.3/1.1     6.2/7.1/5.7          9  pip casual +10
+  good wins under half HP %   0/1/1
+z4-boss          reportCaptain100/100/100   100 0     70-90           100/100/100  97-100   1/1/1           3.7/3.7/3.7          8  wren casual +10, tobin casual +10, pip casual +10
+  good wins under half HP %   0/0/0
+z6-boss          earlyCaptain 80/91/99      90 19     70-90 t80-100   100/100/100  97-100   1.2/1.1/1       5.1/5.4/4.9         11  pip casual +9
+  good wins under half HP %   4/1/0
+z7-boss          earlyCaptain 82/88/85      85 6      70-90 t80-100   100/100/100  97-100   1.2/1.1/1.2     6.2/6.6/4.8         12  in band
+  good wins under half HP %   3/0/2
+z8-normal        normal       100/100/100   100 0     90-100          100/100/100  98-100   1/1/1           1/0.5/1             14  in band
+z8-boss          earlyCaptain 80/81/90      84 10     70-90 t80-100   100/100/100  97-100   1.3/1.2/1.1     6.5/7.2/4.8         13  in band
+  good wins under half HP %   2/1/2
+z9-boss          earlyCaptain 82/88/76      82 12     70-90 t80-100   100/100/100  97-100   1.2/1.1/1.3     5.7/5.1/4.7         14  in band
+  good wins under half HP %   3/0/9
+z10-boss         champion     53/52/48      51 5      40-60 t50-70    100/100/100  90-100   1.9/1.9/2.1     5.5/6.4/5           15  in band
+  good wins under half HP %   11/5/6
+z5-boss-keptup   keptUpChampion72/80/98      83 26     60-85           100/100/100  90-100   1.4/1.3/1       6.1/6.6/4.9          9  pip casual +13
+  none (never defends) w/t/p  0/0/0
+  good wins under half HP %   1/1/1
+z8-boss-keptup   keptUpEarly  97/99/95      97 5      80-97           100/100/100  95-100   1/1/1.1         5.1/4.8/4.8         14  tobin casual +2
+  none (never defends) w/t/p  0/0/0
+  good wins under half HP %   1/0/1
+z10-boss-keptup  keptUpChampion81/68/72      74 14     60-85           100/100/100  90-100   1.2/1.5/1.4     4.8/4.7/4.8         17  in band
+  none (never defends) w/t/p  0/0/0
+  good wins under half HP %   2/4/6
+z10-boss-uncommon2reportGear   75/70/55      67 20     0-100           100/100/100  0-100    1.3/1.4/1.8     5/4.9/4.8           17  in band
+  good wins under half HP %   5/4/8
+z5-boss-bare     floor5       28/64/49      47 37     35-100          100/100/100  95-100   3.6/1.6/2.1     7.1/7.2/6.1          9  wren casual -7
+  good wins under half HP %   9/1/5
+z10-boss-bare    floor        53/55/60      56 7      10-100          100/100/100  95-100   1.9/1.8/1.7     5.6/5.8/4.8         17  in band
+  good wins under half HP %   7/8/8
+
+Tobin's boss turns against the Wren and Pip mean (played well; aim 1.15-1.30): z1-boss x1.14, z3-boss x1.10, z5-boss x1.19, z4-boss x1.00, z6-boss x1.08, z7-boss x1.20, z8-boss x1.27, z9-boss x0.98, z10-boss x1.22, z5-boss-keptup x1.20, z8-boss-keptup x0.97, z10-boss-keptup x0.98, z10-boss-uncommon2 x1.00, z5-boss-bare x1.09, z10-boss-bare x1.12
+
+Boss shape (boss-tier-shape-report, report only; wren/tobin/pip; each zone's boss row and its footing): boss HP over the zone's ordinary foe's,
+casual turns and wins, the heaviest landed hit as % of max HP and what sets it (own line, hpFloor, footing floor or the cap), a Champion against its two Captains.
+zone tier      gates  HP/foe w/t/p        casual turns    win w/t/p   hit % landed w/t/p  own line %        hpFloor %     foot floor %  set by            ordinary foe
+z4   captain   2      0.30/0.28/0.27      3.9/4/4         100/100/100 5/2/5               5/1/5             4/2/4         5/1/5         foot/floor/foot   Barrow Beetle
+z5   champion  3      1.51/1.40/0.89      7.5/8.6/6.3     71/79/90    27/33/24            27/16/24          21/33/23      27/17/24      foot/floor/foot   Spore Cap
+     Champion step: casual 80 against 95 at z4 and z6 (-15 points)
+z6   captain   2      1.21/1.13/1.07      6.2/6.5/5.1     80/91/99    28/28/25            27/14/24          21/28/23      28/14/25      foot/floor/foot   Quarry Golem
+z7   captain   3      3.07/3.07/3.07      7.3/7.8/5.5     82/88/85    21/21/23            19/7/17           21/21/23      15/5/13       floor/floor/floor Marsh Wraith
+z8   captain   3      2.26/2.26/2.26      7/8.3/5         80/81/90    23/23/25            19/8/17           23/23/25      15/6/14       floor/floor/floor Moss Slime
+z9   captain   3      1.29/1.29/1.29      6.3/6.3/5.1     82/88/76    24/20/26            15/5/14           24/20/26      12/4/11       floor/floor/floor Cave Bat
+z10  champion  3      1.42/1.42/1.42      6.2/7.5/5.9     53/52/48    33/39/35            33/15/30          32/39/35      26/11/24      cap/floor/floor   Rattlebones
+
+wrote ../../../tmp/claude-0/sims/off.json (22s)
