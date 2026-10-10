@@ -121,6 +121,7 @@ const WEIGHT = {
   'hero queue (hero-queue)': 9,   // 8 s locally alone (hero-queue, 2026-10-10)
   'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
   'new-style screens (browser)': 36,   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
+  'tavern blackjack (browser)': 20,   // measured below (tavern-blackjack-build, 2026-10-10)
   'tip-order-and-lateness': 60   // three views of the pickaxe, Power Shot and Forge-ore lines (tip-order-and-lateness, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
@@ -208,6 +209,8 @@ else {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
   assert(scripts.length === 1, 'one inline <script>');
   try { new vm.Script(scripts[0], { filename: 'dist-script.js' }); ok('script parses'); } catch (e) { fail('script syntax: ' + e.message); }
+  // tavern-blackjack.md 9: the store-build switch's state, in every full run's summary (Cal confirms it before any rating survey)
+  { const m = /\bon: typeof __BJ === 'number' \? __BJ : (\d)/.exec(fs.readFileSync(path.join(ROOT, 'src', 'js', '57t-blackjack.js'), 'utf8')); ok(`blackjack table (BJ_TUNE.on): ${m ? (m[1] === '1' ? 'ON' : 'OFF') : 'UNKNOWN'}`); }
 }
 
 // ---- 2. smoke test ----
@@ -7783,6 +7786,239 @@ if (section('tavern perks and rumours (C3)')) try {
   const errs = games.flatMap(g => g.errors);
   assert(!errs.length, 'C3: no Tavern perk handler errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('C3 Tavern perks crashed: ' + (e.stack || e)); }
+
+// ---- Tavern Blackjack (tavern-blackjack-build, docs/design/tavern-blackjack.md 16 item 1): rules, limits, the day, saves, the switch ----
+if (section('tavern blackjack')) try {
+  const T0 = new Date(2026, 9, 10, 12).getTime();
+  // A card id is suit * 13 + rank - 1 (rank 1 Ace ... 13 King). force(ids): Math.random hands the table exactly these cards, in order.
+  const C = (r, s = 0) => s * 13 + r - 1;
+  const mk = (o = {}) => {
+    const g = loadCore({ seed: 4411, storage: o.storage, prelude: `Date.__t = ${o.at || T0}; Date.now = () => Date.__t;` + (o.off ? ' const __BJ = 0;' : '') }), E = s => g.eval(s);
+    if (!o.storage) E('S.maxZone = 14; S.zone = 14; S.camp.open = true; S.camp.b.tavern = 1; S.onboard.all = true; S.blackjack.w = 600; S.gold = 100000');
+    E(`globalThis.__q = []; Math.random = (() => { const r0 = Math.random; return () => { if (!globalThis.__q.length) return r0();
+      const c = globalThis.__q.shift(), h = S.blackjack.hand, used = {}; for (const x of h.p.concat(h.d)) used[x] = (used[x] || 0) + 1;
+      let n = 0; for (let i = 0; i < c; i++) n += BJ_TUNE.decks - (used[i] || 0); return (n + 0.5) / (52 * BJ_TUNE.decks - h.p.length - h.d.length); }; })()`);
+    return { g, E, force: ids => E(`globalThis.__q.push(${ids.join(',')})`) };
+  };
+  const view = E => JSON.parse(E('JSON.stringify(bjView())'));
+  // 1. limits by zone, from price-hours, rising only (spec 4 table)
+  {
+    const { E } = mk(), lim = z => JSON.parse(E(`S.maxZone = ${z}; JSON.stringify(bjLimits())`));
+    const want = { 14: [16, 310, 1550], 25: [21, 410, 2050], 50: [55, 1100, 5500], 140: [1100, 21000, 105000] };
+    assert(Object.entries(want).every(([z, [lo, hi, w]]) => { const l = lim(+z); return l.lo === lo && l.hi === hi && l.win === w && l.loss === w; }),
+      'blackjack: the table limits match the spec at zones 14, 25, 50 and 140 (lowest, highest, the day\'s win and loss limits)');
+    let prev = { lo: 0, hi: 0 }, fall = [];
+    for (let z = 1; z <= 175; z++) { const l = lim(z); if (l.lo < prev.lo || l.hi < prev.hi) fall.push(z); prev = l; }
+    assert(!fall.length, 'blackjack: the lowest and highest bets never fall as the zone rises (1 to 175)' + (fall.length ? ': ' + fall.slice(0, 5).join(', ') : ''));
+  }
+  // 2. the gate (spec 7): zone 14, the Tavern built, 600 s after the Tavern and Hands rows, skipped once every tab is open; the switch off
+  {
+    const { E } = mk();
+    E('S.onboard.all = false; S.onboard.t = 5000; S.onboard.got.tavern = 4500; S.onboard.got.hands = 4600');
+    assert(!E('bjOpen()'), 'blackjack: the table waits 600 s of play after the Hands row opened');
+    E('S.onboard.t = 5200'); assert(E('bjOpen()'), 'blackjack: 600 s after the later of the Tavern and Hands rows, the table opens');
+    E('S.maxZone = 13'); assert(!E('bjOpen()'), 'blackjack: not before the zone 13 Captain is beaten (zone 14)');
+    E('S.maxZone = 14; S.camp.b.tavern = 0'); assert(!E('bjOpen()'), 'blackjack: not without the Tavern built');
+    E('S.camp.b.tavern = 1; S.onboard.got.tavern = null; S.onboard.got.hands = null'); assert(!E('bjOpen()'), 'blackjack: not before the Tavern row has opened');
+    E('S.onboard.all = true'); assert(E('bjOpen()'), 'blackjack: once every tab is open the guide\'s stopped clock no longer holds it');
+    E('S.blackjack.w = 0; S.camp.b.tavern = 0'); for (let i = 0; i < 700; i++) E('tick(1)');
+    assert(E('S.blackjack.w') === 0 && !E('bjOpen()'), 'blackjack: the table\'s own wait does not run before the Tavern is built');
+    E('S.camp.b.tavern = 1'); for (let i = 0; i < 590; i++) E('tick(1)');
+    assert(!E('bjOpen()'), 'blackjack: with every tab open, a Tavern built late still waits 600 s of play (the table\'s own clock), so the build, Hands and the table never open at once');
+    for (let i = 0; i < 15; i++) E('tick(1)');
+    assert(E('bjOpen()') && E('S.blackjack.w') === 600, 'blackjack: after 600 s of play with the Tavern built the table opens, and the wait stops counting');
+    const row = E('JSON.stringify(FEATURES.find(f => f.id === "blackjack"))');
+    assert(/"late":true/.test(row) && /"view":"tav"/.test(row) && !/"now"/.test(row) && E('FIRST_USE.blackjack.text') === "Bet gold and beat Hesketh's hand without going over 21.",
+      'blackjack: the FEATURES row is late, lives on Camp > Tavern, has no `now` (the spacing governor holds it) and a first-use line');
+    const off = mk({ off: true });
+    off.E('S.onboard.all = true');
+    assert(!off.E('bjOpen()') && !off.E('bjDeal()') && !off.E('onboardCheck().includes("blackjack")'), 'blackjack: BJ_TUNE.on = 0 keeps the row shut and refuses a deal');
+  }
+  // 3. rules and payouts (spec 3), the ledger and S.totalGold untouched, Gold Fever ignored
+  {
+    const { E, force } = mk();
+    E('bjSetBet(310)');
+    const books = () => E('JSON.stringify([S.econ.earned, S.econ.spent, S.totalGold])'), b0 = books();
+    const play = (cards, moves) => { const g0 = E('S.gold'); force(cards); E('bjNext(); bjDeal()'); for (const m of moves) E(m + '()'); return { d: E('S.gold') - g0, v: view(E) }; };
+    let r = play([C(10), C(9), C(7), C(13)], ['bjStand']);
+    assert(r.d === 310 && r.v.line === '19 beats 17. You win 310 gold.', 'blackjack: 19 beats 17 pays the bet even money: "19 beats 17. You win 310 gold." (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(1), C(13), C(5), C(9)], []);
+    assert(r.d === 465 && r.v.line === 'Blackjack! You win 465 gold.', 'blackjack: a natural pays 3 to 2 at once (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(1), C(12), C(1, 1), C(11)], []);
+    assert(r.d === 0 && r.v.line === 'Both on 21. Your bet comes back.', 'blackjack: your natural against his two-card 21 is a tie (' + r.d + ')');
+    r = play([C(5), C(6), C(1), C(9), C(13)], ['bjDouble']);
+    assert(r.d === -310 && r.v.line === 'Hesketh makes blackjack. You lose 310 gold.' && r.v.p.length === 3, 'blackjack: his two-card 21 takes the first bet only; the Double\'s extra comes back (' + r.d + ')');
+    r = play([C(7), C(5), C(1), C(13), C(12)], ['bjDouble']);
+    assert(r.d === -310 && r.v.line === 'Hesketh makes blackjack. You lose 310 gold.' && r.v.d.length === 2, 'blackjack: a busted Double against his Ace shows his second card, and his blackjack takes the first bet only (' + r.d + ')');
+    r = play([C(7), C(5), C(9), C(13)], ['bjDouble']);
+    assert(r.d === -620 && r.v.line === 'Bust at 22. You lose 620 gold.', 'blackjack: a busted Double against a 9 loses both bets (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(10), C(6), C(9), C(13)], ['bjHit']);
+    assert(r.d === -310 && r.v.line === 'Bust at 26. You lose 310 gold.' && r.v.d.length === 1, 'blackjack: over 21 loses at once and Hesketh draws nothing (' + r.d + ')');
+    r = play([C(10), C(7), C(1), C(6)], ['bjStand']);
+    assert(r.d === 0 && r.v.d.length === 2 && r.v.line === 'Both on 17. Your bet comes back.', 'blackjack: Hesketh stands on a soft 17, and a tie gives the bet back');
+    r = play([C(10), C(8), C(6), C(10), C(13)], ['bjStand']);
+    assert(r.d === 310 && r.v.line === 'Hesketh busts at 26. You win 310 gold.', 'blackjack: Hesketh draws to 17 and can bust (' + r.v.line + ')');
+    r = play([C(5), C(6), C(10), C(10), C(8)], ['bjDouble']);
+    assert(r.d === 620 && r.v.line === '21 beats 18. You win 620 gold.', 'blackjack: a won Double pays twice the bet (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(10), C(9), C(10), C(13)], ['bjStand']);
+    assert(r.d === -310 && r.v.line === '20 beats 19. You lose 310 gold.', 'blackjack: a lower total loses the bet');
+    r = play([C(9), C(2), C(10), C(13)], []);
+    assert(r.v.phase === 'play' && r.v.line === 'You have 11. Hesketh shows a 10.' && r.v.canDouble, 'blackjack: the start of a hand reads "You have 11. Hesketh shows a 10."');
+    force([C(10)]); E('bjHit()');
+    assert(!E('bjDouble()') && view(E).phase === 'done', 'blackjack: 21 stands by itself; Double works on the first two cards only');
+    E('addModifier("gold", () => 1.8)');
+    const fever = E('goldMult()');
+    r = play([C(10), C(9), C(7), C(13)], ['bjStand']);
+    assert(fever > 1.7 && r.d === 310, `blackjack: with Gold Fever (+80%) on, a win still pays exactly the bet (goldMult ${fever.toFixed(2)}, paid ${r.d})`);
+    for (let i = 0; i < 300; i++) { E('bjNext(); bjSetBet(16); bjDeal()'); while (view(E).phase === 'play') E('bjView().pt.t < 17 ? bjHit() : bjStand()'); }
+    assert(books() === b0, 'blackjack: S.econ.earned, S.econ.spent and S.totalGold never move at the table');
+    const n = E('JSON.stringify(S.blackjack.n)'), nn = JSON.parse(n);
+    assert(nn.hands === nn.won + nn.lost + nn.tied && nn.hands >= 300, 'blackjack: every hand is counted once as won, lost or tied ' + n);
+  }
+  // 4. the clamp, Double off at the loss limit and when short of gold, the day's limits and the reset across deviceDay
+  {
+    const { E, force } = mk();
+    E('bjSetBet(1e9)'); assert(view(E).bet === 310, 'blackjack: the bet clamps to the highest bet');
+    E('bjSetBet(1)'); assert(view(E).bet === 16, 'blackjack: the bet clamps to the lowest bet');
+    E('bjSetBet(310); S.gold = 300'); assert(view(E).bet === 300, 'blackjack: the bet clamps to the gold held');
+    E('S.gold = 10'); let v = view(E);
+    assert(v.short && !v.canDeal && v.note === 'You need 16 gold to sit down.' && !E('bjDeal()'), 'blackjack: short of the lowest bet, Deal is off: "You need 16 gold to sit down."');
+    E('S.gold = 100000; S.blackjack.day = deviceDay(Date.now()); S.blackjack.net = -1550 + 200');
+    assert(view(E).bet === 200, 'blackjack: the bet clamps to the room left before the loss limit');
+    force([C(5), C(6), C(9)]); E('bjDeal()');
+    assert(!view(E).canDouble && !E('bjDouble()'), 'blackjack: Double is off when it would pass the day\'s loss limit');
+    E('S.blackjack.hand = null; S.blackjack.net = 0; S.gold = 600'); force([C(5), C(6), C(9)]); E('bjSetBet(310); bjDeal()');
+    assert(E('S.gold') === 290 && !view(E).canDouble, 'blackjack: Double is off when you can\'t cover it');
+    E('S.blackjack.hand = null; S.gold = 100000; S.blackjack.net = -1550 + 10'); v = view(E);
+    assert(v.closed && !v.canDeal && v.note === "The table's closed for today.", 'blackjack: with less room than the lowest bet the table closes: "The table\'s closed for today."');
+    E('S.blackjack.net = 1550'); assert(view(E).closed, 'blackjack: the win limit closes the table');
+    E('S.blackjack.net = 1500'); force([C(1), C(13), C(5), C(9)]); E('bjSetBet(310); bjDeal()');
+    assert(E('S.blackjack.net') === 1500 + 465 && view(E).closed, 'blackjack: a hand that crosses the win limit is paid in full, then the table closes');
+    E('Date.__t += 864e5'); v = view(E);
+    assert(!v.closed && E('S.blackjack.net') === 0 && E('S.blackjack.day') === E('deviceDay(Date.now())'), 'blackjack: a new device day starts the day\'s books again');
+    // a hand in play finishes on the day it was dealt
+    E('bjNext()'); force([C(10), C(6), C(9)]); E('bjDeal()'); const day = E('S.blackjack.day'), net = E('S.blackjack.net');
+    E('Date.__t += 864e5; bjView()');
+    assert(E('S.blackjack.day') === day && E('S.blackjack.net') === net, 'blackjack: the day does not turn over under a hand in play');
+  }
+  // 5. synchronous saves and the reload test: a reload shows the same hand, and no card is drawn early
+  {
+    const a = mk(), E = a.E;
+    a.force([C(10), C(6), C(9)]); E('bjSetBet(310); bjDeal()');
+    const stored = JSON.parse(a.g.storage.get(KEY)).blackjack;
+    assert(JSON.stringify(stored.hand) === E('JSON.stringify(S.blackjack.hand)') && stored.hand.d.length === 1 && stored.net === -310, 'blackjack: the deal is saved at once: the hand, its paid bet and one Hesketh card');
+    a.force([C(2)]); E('bjHit()');
+    assert(JSON.parse(a.g.storage.get(KEY)).blackjack.hand.p.length === 3, 'blackjack: every card drawn is saved before anything renders');
+    const b = mk({ storage: memoryStorage({ [KEY]: a.g.storage.get(KEY) }) }), F = b.E;
+    assert(F('JSON.stringify(S.blackjack.hand)') === E('JSON.stringify(S.blackjack.hand)') && F('S.gold') === E('S.gold'), 'blackjack: a reload shows the same hand and the same gold');
+    b.force([C(13)]); F('bjStand()');
+    assert(F('bjView().line') === '19 beats 18. You lose 310 gold.', 'blackjack: the reloaded hand plays on (' + F('bjView().line') + ')');
+    const st = JSON.parse(b.g.storage.get(KEY)).blackjack;
+    assert(st.hand.done === 1 && st.hand.res, 'blackjack: the result is saved');
+  }
+  // 6. the switch off refunds a hand in play at the next load (spec 9)
+  {
+    const a = mk(); a.force([C(10), C(6), C(9)]); a.E('bjSetBet(310); bjDeal()');
+    const gold = a.E('S.gold'), raw = a.g.storage.get(KEY);
+    const b = mk({ storage: memoryStorage({ [KEY]: raw }), off: true });
+    assert(b.g.storage.get(KEY) === raw, 'blackjack: the switch-off refund does not save at load (a save would stamp S.last before the boot reads the away time)');
+    assert(b.E('S.gold') === gold + 310 && b.E('S.blackjack.hand') === null && b.E('S.blackjack.net') === 0 && b.E('typeof S.blackjack') === 'object', 'blackjack: BJ_TUNE.on = 0 refunds a hand in play at load, and the save field stays');
+  }
+  // 7. save codes (spec 8): a code with a hand exports and imports; the import clears the hand and keeps today's lower net
+  {
+    const { E, force } = mk();
+    E('soloPick("wren"); S.cls.at = 0'); force([C(10), C(6), C(9)]); E('bjSetBet(310); bjDeal()');
+    const code = E('encodeSave(JSON.parse(JSON.stringify(S)))'), dec = JSON.parse(E(`JSON.stringify(decodeSave(${JSON.stringify(code)}))`));
+    assert(dec.ok && dec.data.blackjack.hand.p.length === 2, 'blackjack: a save with a hand in play exports and decodes' + (dec.ok ? '' : ': ' + dec.error));
+    const day = E('deviceDay(Date.now())');
+    E('S.blackjack.net = -2000');
+    let imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day}, net: -100, w: 600, bet: 26, hand: { p: [1, 2], d: [3], bet: 26, dbl: 0, done: 0, res: null }, n: { hands: 4, won: 1, lost: 3, tied: 0, bj: 0 } } })))`));
+    assert(imp.blackjack.hand === null && imp.blackjack.net === -2000 && imp.blackjack.n.hands === 4, 'blackjack: an import clears the hand in play and keeps the lower of today\'s nets (an old code can\'t reopen a table a loss closed)');
+    imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day - 3}, net: -9000, bet: 26, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } } })))`));
+    assert(imp.blackjack.net === -2000 && imp.blackjack.day === day, 'blackjack: an imported net from another day counts as 0');
+    E('S.blackjack.net = 1600; S.blackjack.top = 1600'); imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day}, net: 0, top: 0, bet: 26, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } } })))`));
+    assert(imp.blackjack.net === 0 && imp.blackjack.top === 1600, 'blackjack: an import keeps today\'s highest net, so a morning code can\'t reopen a table a win closed');
+    E('S.blackjack = Object.assign(S.blackjack, { net: 0, top: 1600, hand: null })'); assert(E('bjView().closed'), 'blackjack: the day\'s top at the win limit keeps the table closed');
+    E('S.blackjack.top = 0; S.blackjack.net = 0'); imp = JSON.parse(E(`JSON.stringify(bjImport((({ blackjack, ...rest }) => rest)(JSON.parse(JSON.stringify(S)))))`));
+    assert(imp.blackjack.net === 0 && imp.blackjack.hand === null, 'blackjack: a code from before the table imports with a fresh table');
+    const bad = h => E(`validateSave(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: Object.assign({ v: 1, day: 0, net: 0, bet: 0, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } }, ${JSON.stringify(h)}) })).ok`);
+    assert(!bad({ hand: { p: [1, 1, 1, 1, 1], d: [3], bet: 26, dbl: 0, done: 0 } }) && !bad({ hand: { p: [1, 2], d: [3, 4], bet: 26, dbl: 0, done: 0 } }) && !bad({ hand: { p: [99, 2], d: [3], bet: 26, dbl: 0, done: 0 } })
+      && !bad({ net: 0.5 }) && !bad({ n: { hands: -1 } }) && !bad({ w: 601 }) && bad({ day: -3 }) && bad({ hand: { p: [0, 13, 26, 39, 1, 0, 13, 26, 39, 1, 0, 13], d: [9], bet: 26, dbl: 0, done: 0, res: null } }) && bad({ hand: { p: [1, 2], d: [3], bet: 26, dbl: 0, done: 0, res: null } }),
+      'blackjack: save codes take a 12-card hand and a clock before 2026, and refuse a card held more often than four decks, a second Hesketh card before you stood, an unknown card, a fractional net and a negative count');
+    assert(/candidateRaw = JSON\.stringify\(bjImport\(checked\.data\)\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-savecode-ui.js'), 'utf8')), 'blackjack: the save-code import writes the table through bjImport');
+  }
+  // 8. the art freeze (spec 10) and the copy (spec 11)
+  {
+    const files = ['js/57t-blackjack.js', 'js/75-blackjack-ui.js', 'styles/60-blackjack.css'].map(f => [f, fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')]);
+    const hit = files.filter(([, t]) => /[♠-♧♤♡♢]|\p{Extended_Pictographic}|<svg|data:image\/svg|url\(/u.test(t)).map(([f]) => f);
+    assert(!hit.length, 'blackjack: no suit glyph, emoji, inline SVG or image in the new files (the art freeze)' + (hit.length ? ': ' + hit.join(', ') : ''));
+    const all = files.map(f => f[1]).join('\n'), onb = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
+    assert(all.includes('Hesketh deals. He stands on 17. Blackjack pays 3 to 2.') && all.includes("Hesketh's rule of thumb: stand on 12 to 16 when I show a 2 to 6. Always hit 11 or less.")
+      && onb.includes("blackjack: 'New on the Camp tab: a card table at the Tavern.'") && onb.includes(`blackjack: "I've put a card table in the Tavern. Blackjack, for gold."`)
+      && !/come back tomorrow|the house|resets in/i.test(all), 'blackjack: the copy is the spec\'s (section 11), with no "come back tomorrow", countdown or "the house"');
+  }
+} catch (e) { fail('tavern blackjack crashed: ' + (e.stack || e)); }
+
+// ---- Tavern Blackjack on screen: 1280x720, 740x360 and 360x740 (reduced motion), the 300 ms press guard and the button places ----
+if (section('tavern blackjack (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('tavern blackjack (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [tag, viewport, mobile, rm] of [['1280x720', { width: 1280, height: 720 }, false, 'no-preference'], ['740x360', { width: 740, height: 360 }, true, 'no-preference'], ['360x740 reduced motion', { width: 360, height: 740 }, true, 'reduce']]) {
+        const ctx = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile, reducedMotion: rm });
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+        await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; onboardTips(false); true');
+        await X('S.maxZone = 14; S.zone = 14; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.blackjack.w = 600; S.gold = 1e6; onboardUnlockAll(); for (let i = 0; i < 6; i++) tick(1.2); onboardReveal("blackjack"); true');
+        await X('setTab("tav"); ui(true); true'); await page.waitForTimeout(400);
+        await page.$eval('#sec-blackjack', n => n.scrollIntoView({ block: 'start' })); await page.waitForTimeout(250);
+        const box = () => page.$eval('#sec-blackjack', n => {
+          const r = n.getBoundingClientRect(), btns = [...n.querySelectorAll('button')].filter(b => b.offsetParent && getComputedStyle(b).visibility !== 'hidden');
+          return { shown: !!n.offsetParent && !n.classList.contains('f-off'), left: r.left, right: r.right, vw: innerWidth, sx: document.documentElement.scrollWidth > innerWidth + 1,
+            small: btns.filter(b => b.getBoundingClientRect().height < 43.5).map(b => b.textContent), wide: btns.filter(b => b.getBoundingClientRect().right > innerWidth + 1 || b.scrollWidth > b.clientWidth + 1).map(b => b.textContent),
+            anim: getComputedStyle(n.querySelector('.bj-card') || n).animationName,
+            cut: [...n.querySelectorAll('.bj-card .bj-suit')].filter(x => x.scrollWidth > x.parentNode.clientWidth + 1 || x.getBoundingClientRect().right > x.parentNode.getBoundingClientRect().right + 1).map(x => x.textContent) };
+        });
+        let b = await box();
+        assert(b.shown && b.left >= -1 && b.right <= b.vw + 1 && !b.sx && !b.small.length && !b.wide.length, `blackjack ${tag}: the box shows on Camp > Tavern, fits the screen, and every button is 44 px tall and fits its text (${JSON.stringify(b)})`);
+        const at = s => page.$eval(s, n => { const r = n.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width)]; });
+        const deal = await at('#sec-blackjack .bj-mid');
+        assert(/^Deal /.test(await page.textContent('#sec-blackjack .bj-mid')) && /Table: 16 to 310 gold/.test(await page.textContent('#sec-blackjack .bj-lim')), `blackjack ${tag}: Deal names the bet and the limits line reads "Table: 16 to 310 gold"`);
+        // a double tap on Deal: the second tap lands on Stand inside the guard and does nothing. The forced cards go only to the
+        // table's draws (the stage's sparks call Math.random every frame too).
+        await X('globalThis.__q = [9, 4, 8]; Math.random = (() => { const r0 = Math.random; return () => { if (!globalThis.__q.length || !/bj(Deal|Hit|Stand|Double)/.test(new Error().stack)) return r0(); const c = globalThis.__q.shift(), h = S.blackjack.hand, u = {}; for (const x of h.p.concat(h.d)) u[x] = (u[x] || 0) + 1; let n = 0; for (let i = 0; i < c; i++) n += 4 - (u[i] || 0); return (n + 0.5) / (208 - h.p.length - h.d.length); }; })(); true');
+        await page.click('#sec-blackjack .bj-mid'); await page.click('#sec-blackjack .bj-mid', { delay: 0 });
+        const v1 = JSON.parse(await X('JSON.stringify(bjView())'));
+        const hit = await at('#sec-blackjack .bj-act:first-child');
+        assert(v1.phase === 'play' && v1.p.length === 2, `blackjack ${tag}: a second tap within 300 ms of Deal is ignored (the hand is still in play)`);
+        assert(hit[0] !== deal[0] && Math.abs(hit[0] - deal[0]) >= hit[2] - 1, `blackjack ${tag}: Hit is never where Deal sat (${JSON.stringify([hit, deal])})`);
+        await page.waitForTimeout(350);
+        assert(await page.$$eval('#sec-blackjack .bj-card', ns => ns.length) === 3 && /THORNS|LANTERNS|KEYS|CUPS/i.test(await page.textContent('#sec-blackjack .bj-table')) && /You have 15\. Hesketh shows a 9\./.test(await page.textContent('#sec-blackjack .bj-line')),
+          `blackjack ${tag}: two cards for you and Hesketh's one (no hole card), the suit named in words, "You have 15. Hesketh shows a 9."`);
+        b = await box(); assert(!b.sx && !b.wide.length && !b.small.length && !b.cut.length && (rm !== 'reduce' || b.anim === 'none'), `blackjack ${tag}: the hand in play fits, each suit's name inside its card${rm === 'reduce' ? ', and reduced motion stops the card slide' : ''} (${JSON.stringify(b)})`);
+        await X('globalThis.__q = [12]; true');
+        await page.click('#sec-blackjack .bj-mid'); await page.click('#sec-blackjack .bj-mid', { delay: 0 });
+        const v2 = JSON.parse(await X('JSON.stringify(bjView())'));
+        assert(v2.phase === 'done' && /Next hand/.test(await page.textContent('#sec-blackjack .bj-mid')), `blackjack ${tag}: Stand settles the hand and a second tap inside 300 ms does not press Next hand (${v2.line})`);
+        await page.waitForTimeout(350); await page.click('#sec-blackjack .bj-mid'); await page.waitForTimeout(350);
+        assert(JSON.parse(await X('JSON.stringify(bjView())')).phase === 'bet' && await X('S.blackjack.bet') === 16, `blackjack ${tag}: Next hand clears the table and keeps the bet`);
+        await page.click('#sec-blackjack .bj-coin[data-k="10"]'); await page.waitForTimeout(80); const raised = await X('S.blackjack.bet');
+        await page.click('#sec-blackjack .bj-clear'); await page.waitForTimeout(80);
+        assert(raised > 16 && await X('S.blackjack.bet') === 16, `blackjack ${tag}: the coins raise the bet and Clear goes back to the lowest bet (${raised})`);
+        assert(!errs.length, `blackjack ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tavern blackjack (browser) crashed: ' + (e.stack || e)); }
 // ---- C1: Tents, fixed shifts, queues, recall and named routes (economy-2 4-5) ----
 if (section('gatherer engine gaps (C1)')) try {
   const HOUR = 3600e3, T0 = new Date(2026, 8, 28, 12).getTime(), games = [];
@@ -8178,7 +8414,7 @@ if (section('save import recovery UI (C5)')) try {
     const g = loadCore({ seed: 7505, storage: adapter, prelude: stub, files: coreFiles().concat(['75-savecode-ui.js','90-boot.js']) }); games.push(g);
     g.eval('globalThis.__panel=el("section");__panel.id="log";document.body.append(__panel);__sections.savecode.mount(__panel);S.name="Current game";S.gold=123;');
     if(writeInitial)g.fn.save();
-    g.eval('globalThis.__candidate=JSON.parse(JSON.stringify(S));__candidate.name="Imported game";__candidate.gold=456;globalThis.__code=encodeSave(__candidate);globalThis.__candidateRaw=JSON.stringify(decodeSave(__code).data)');
+    g.eval('globalThis.__candidate=JSON.parse(JSON.stringify(S));__candidate.name="Imported game";__candidate.gold=456;globalThis.__code=encodeSave(__candidate);globalThis.__candidateRaw=JSON.stringify(bjImport(decodeSave(__code).data))');   // tavern-blackjack-build: the import writes the table through bjImport (spec 8)
     return { g, control, store, E: s => g.eval(s) };
   };
   const click = (E,label) => E(`__panel.querySelectorAll("button").find(b=>b.textContent===${JSON.stringify(label)}).click()`);

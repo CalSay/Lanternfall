@@ -1,0 +1,29 @@
+/* 60-blackjack: Tavern Blackjack (75-blackjack-ui.js). Plain UI cards in the game's tokens until the Codex pack (spec 10):
+   a flat panel, the rank as text, the suit's name in small capitals in its colour. */
+#sec-blackjack .bj-sub { margin: 0 0 6px; }
+.bj-table { display: grid; gap: 4px; padding: 8px; background: linear-gradient(180deg, var(--panel-2), var(--well)); border: 1px solid var(--line); }
+.bj-who { font: 600 11px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+.bj-hand { display: flex; flex-wrap: wrap; gap: 6px; font-size: 9px; min-height: 8.4em; }
+.bj-card { position: relative; font-size: 9px; width: 6.2em; height: 8.4em; flex: none; display: grid; place-items: center; background: var(--panel);
+  border: 1px solid var(--line-hi); color: var(--bone); animation: bj-in .18s ease-out; }
+.bj-card .bj-rk { position: absolute; top: 3px; left: 5px; font: 600 calc(14px * var(--display-k)) var(--display); line-height: 1; }
+.bj-card .bj-big { font: 600 calc(22px * var(--display-k)) var(--display); line-height: 1; }
+.bj-card .bj-suit { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font: 600 9px var(--body); letter-spacing: .03em;
+  text-transform: uppercase; white-space: nowrap; }
+.bj-card[data-suit="lanterns"] .bj-suit { color: var(--gold); }
+.bj-card[data-suit="keys"] .bj-suit { color: var(--r-rare); }
+.bj-card[data-suit="cups"] .bj-suit { color: var(--hp); }
+.bj-card[data-suit="thorns"] .bj-suit { color: var(--xp); }
+.bj-line { margin: 4px 0 0; min-height: 1.4em; font-weight: 600; color: var(--bone); }
+.bj-bet { display: grid; gap: 6px; margin-top: 8px; }
+.bj-amt { font-weight: 600; color: var(--gold); }
+.bj-coins { display: flex; flex-wrap: wrap; gap: 6px; }
+.bj-coins .mini { min-height: 44px; min-width: 44px; }
+.bj-coin { display: inline-flex; align-items: center; gap: 4px; color: var(--gold); }
+.bj-coin img { width: 16px; height: 16px; }
+.bj-acts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.bj-acts .mini { min-height: 44px; }
+.bj-note { color: var(--gold); }
+.bj-lim, .bj-tip { margin: 4px 0 0; }
+@keyframes bj-in { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .bj-card { animation: none; } }

@@ -57,7 +57,8 @@
     tavern: 'New on the Camp tab: the Tavern.',
     codex: 'The Codex is open. It tracks what you have found. Find it in the Journal.',   // = FIRST_USE.codex (55-onboard.js)
     raid: 'The World raid is open on the Camp tab.',
-    deep: 'New on the Fight tab: the Deepwell.'
+    deep: 'New on the Fight tab: the Deepwell.',
+    blackjack: 'New on the Camp tab: a card table at the Tavern.'
   };
   // unlock-voice: Old Hesketh announces each new thing in the guide panel, one at a time, once a fight is over (never mid-turn).
   // The toast above still goes to the bell list. One line per row; Next Up (its guide step), the away strip (its own line) and
@@ -77,7 +78,8 @@
     raid: 'The World raid is open at camp. Every player fights the same boss there.',
     // tips-pause-says-so (F24): true for both triggers, the first star and hero level 10 with none found yet
     stars: 'Stars are on the Hero tab now. Bosses drop them, and each one changes how you fight.',
-    deep: 'The Deepwell is open on the Fight tab. You pick a boon between its floors.'
+    deep: 'The Deepwell is open on the Fight tab. You pick a boon between its floors.',
+    blackjack: "I've put a card table in the Tavern. Blackjack, for gold."
   };
   // forge-line-while-fighting: what each materials step is for. A fighter who never opens Camp or Gather hears the step's short gathered
   // materials once, held in the gap after a kill ("The Forge needs Copper Ore 0/25 from the Copper Vein and Pine Log 2/10 from the Pine Grove.").

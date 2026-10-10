@@ -134,7 +134,7 @@
     let backupRaw, candidateRaw, priorRaw, adapter;
     try {
       backupRaw = JSON.stringify(S);
-      candidateRaw = JSON.stringify(checked.data);
+      candidateRaw = JSON.stringify(bjImport(checked.data));   // Tavern Blackjack: the hand in play goes, today's lower net stays (57t)
       if (!backupRaw || !candidateRaw) throw new Error('Snapshot failed.');
       adapter = storage;
       priorRaw = adapter.get(KEY);
