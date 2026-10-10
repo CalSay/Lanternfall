@@ -1,6 +1,6 @@
 # Hero kits: every ability belongs to one hero
 
-Card `hero-themed-kits` (P1 spec). Status: **spec, judge ruled 2026-10-10 (section 9).** No code here: the build cards in
+Card `hero-themed-kits` (P1 spec). Status: **spec, judge ruled 2026-10-10; Oriel's type changed to Starlight by Cal at 13:07 (section 4).** No code here: the build cards in
 section 7 and the wire cards build it.
 
 Cal, 10 Oct 11:10: "I think I want to remove the shared abilities. At least intentionally sharing. I don't mind if abilities do
@@ -85,17 +85,17 @@ Cinder Heart).
 ### Oriel (new ids; she is in no save yet)
 
 Her own 8 stay as oriel.md section 4 has them (names from #352), with one change: Starbolt no longer adds Chill (below). These
-six replace the borrowed Pip moves, with the caster template's mechanics fitted to her. Her type is frost (section 4). Codes
+six replace the borrowed Pip moves, with the caster template's mechanics fitted to her. Her type is Starlight (section 4). Codes
 continue her own.
 
 | Code | Replaces | New id | Name (short) | Kind, tier, power, CD | Type | Status | Effect (desc) | Line | Pose | Icon |
 |---|---|---|---|---|---|---|---|---|---|---|
-| O9 | spark | `pointoflight` | Point of Light (Point) | damage, 1, 1.3, 2 | frost | none | A quick bolt of starlight for 130% power. | A quick bolt. | `spark` (two fingers) | new |
-| O10 | frostshard | `hush` | Hush (Hush) | damage, 2, 1.1, 3, timed | frost | Chill (3 = Freeze) | A hushed bolt of cold starlight for 110% power that adds 2 Chill (it slows). At 3 Chill the foe Freezes: it loses its next turn and is Exposed. | 2 Chill. At 3 the foe Freezes. | `frostshard` (staff star, level; frame 6's breath puff suits the cold) | new |
-| O11 | arcaneward | `duskmantle` | Dusk Mantle (Mantle) | buff, 2, 0, 5 | frost (no hit) | Ward | The dusk sky wraps round you: a Ward worth 20% of your max HP for 3 enemy turns. | A Ward for 20% of your HP. | `arcaneward` (arms spread) | new |
-| O12 | hex | `foretold` | Foretold (Fate) | debuff, 3, 0, 5 | frost (no hit) | Cursed | Tell the foe how it ends: it is Cursed for 3 turns. It stores 20% of the damage it takes and takes it again when the Curse ends. | Curses: stores damage, then it lands again. | `hex` (clawed hand) | new |
-| O13 | afterglow | `oldlight` | Old Light (Old Light) | passive, 3 | frost | none | Passive. After a spell that hits, your next Attack within 2 turns hits 50% harder. | Passive: an Attack after a spell hits harder. | none (passive) | new |
-| O14 | nova | `turningsky` | Turning Sky (Sky) | damage, 4, 1.6, 4 | frost | none | The sky wheels round you: a ring of starlight for 160% power. | A strong blast. | `nova` (staff butt on the ground) | new |
+| O9 | spark | `pointoflight` | Point of Light (Point) | damage, 1, 1.3, 2 | star | none | A quick bolt of starlight for 130% power. | A quick bolt. | `spark` (two fingers) | new |
+| O10 | frostshard | `hush` | Hush (Hush) | damage, 2, 1.1, 3, timed | star | Chill (3 = Freeze) | A hushed bolt of cold starlight for 110% power that adds 2 Chill (it slows). At 3 Chill the foe Freezes: it loses its next turn and is Exposed. | 2 Chill. At 3 the foe Freezes. | `frostshard` (staff star, level; frame 6's breath puff suits the cold) | new |
+| O11 | arcaneward | `duskmantle` | Dusk Mantle (Mantle) | buff, 2, 0, 5 | star (no hit) | Ward | The dusk sky wraps round you: a Ward worth 20% of your max HP for 3 enemy turns. | A Ward for 20% of your HP. | `arcaneward` (arms spread) | new |
+| O12 | hex | `foretold` | Foretold (Fate) | debuff, 3, 0, 5 | star (no hit) | Cursed | Tell the foe how it ends: it is Cursed for 3 turns. It stores 20% of the damage it takes and takes it again when the Curse ends. | Curses: stores damage, then it lands again. | `hex` (clawed hand) | new |
+| O13 | afterglow | `oldlight` | Old Light (Old Light) | passive, 3 | star | none | Passive. After a spell that hits, your next Attack within 2 turns hits 50% harder. | Passive: an Attack after a spell hits harder. | none (passive) | new |
+| O14 | nova | `turningsky` | Turning Sky (Sky) | damage, 4, 1.6, 4 | star | none | The sky wheels round you: a ring of starlight for 160% power. | A strong blast. | `nova` (staff butt on the ground) | new |
 
 - **Point of Light gives no Bearing.** A cooldown-2 Bearing source would keep her at the 4 cap, so the star would always land at
   300%. Her Bearings stay as oriel.md section 2 has them (Attack, Take a Bearing, Starbolt).
@@ -104,7 +104,7 @@ continue her own.
   `'a sure crit'`. Hush is her road to Freeze. `ABILITY_PERFECT.hush = '1 more Chill'`.
 - Her 4 timed moves: Hush, Starbolt, Shooting Star, Starfall. Her passives: Old Light (style) and News Arrives (signature).
 - **The Curse burst takes the type of the move that set it** (today 59k:1021 hard-codes holy). Pip's Hex stays holy;
-  Oriel's Foretold bursts as frost. The rule change is one foe field, `curseDt`, defaulting to `'holy'` in the foe blank
+  Oriel's Foretold bursts as Starlight. The rule change is one foe field, `curseDt`, defaulting to `'holy'` in the foe blank
   (59k:418-419); Hex's Short Sentence 30% hit reads it too. Pip's numbers do not move. (Witchfire keys on the burst's `kind`,
   not its type, `57e-stars.js:370`, so it still fires.)
 - `HERO_PATHS.oriel`: **The Star:** fallingletter, pullreading, letters, newsarrives. **Clear Sky:** clearnight, hush, bearing,
@@ -121,28 +121,37 @@ Foretold, Old Light, Turning Sky, Lamp Spark, Choking Smoke, Kindled Smoke, Fire
 Glint, Halo, Cold Light, Lingering Light, Hearth (gathering, lore, story, class and camp words), "Night" (Wren's: Night Hunter,
 Night Wings), "Chill" in a name (the status word), and "Star" beyond the four #352 names.
 
-## 4. Oriel's damage type: frost (pick), not a new starlight type
+## 4. Oriel's damage type: Starlight, her own
 
-**Pick: her rules type stays frost, and her moves are drawn and named as cold starlight.** Her effects are pale silver-blue light,
-stars and a falling star, never ice shards; her move names say star, dusk and fate, never frost. Her statuses are Chill, Freeze,
-Stun, Weaken and Pin. Her falling-star chip uses the frost colour (Chilled blue, `#56B4E9`), as oriel.md section 3 says. **No new
-status colour is needed.**
+**Cal decided (10 Oct 13:07): "Yeah I think Oriel should have her own type of damage."** The first judge ruling here (frost,
+drawn as cold starlight) is vetoed; section 9 keeps it as history. Oriel deals **Starlight**, a sixth damage type.
 
-What still says frost, plainly: the type icon on each of her damage numbers (the flake, `DT_INFO.frost`), "Resists frost" on a
-frost-resistant foe, and the Chill badge Hush leaves. These are shared rules readouts, as they are for the other frost heroes and
-as "Physical" is for Wren and Tobin. A star mage whose cold light chills is the theme; a star mage casting Frost Shard was not.
+| Part | Starlight (defaults; card `starlight-type` builds them) |
+|---|---|
+| Id and name | `star`, shown as "Starlight". Appended to `DMG_TYPES` (`['phys', 'holy', 'poison', 'fire', 'frost', 'star']`): the five ids never change, a sixth is added. |
+| Colour | `#0072B2` (dark `#003A5C`, light `#FFF6C8`): the Okabe-Ito night blue, so the type colours stay inside the colour-blind-safe set. It sits darker than Frost's sky blue (`#56B4E9`), so the two part on lightness; the light is a warm star-white. |
+| Number icon | A four-point star in the 7x7 map format the other five use (`DT_INFO[id].icon`), so it reads by shape in greyscale as the blade, sun, drop, flame and flake do. Its outline must not look like the flake or the sun. The dark colour goes only on inner pixels, never at an edge (it is too dark on the stage ink). **It is art: Codex draws it** (card `starlight-icon`), and the art judge vets it beside the five as one set. |
+| Who it hits hard, who shrugs it off | **Nothing in Chapter 1 is weak to it or resists it.** Starlight is never resisted, which helps a little where the others are (drowned foes resist fire and frost; spirits resist physical), though the Hollow's resists are only x0.85 (`ST_TUNE.resistHollow`). No foe family changes, so no boss or budget row moves for Wren, Tobin or Pip. A later card may give one Chapter 4 family (the Starscar) a weakness to it, as the lore's hook. |
+| Statuses | None of its own. Her statuses stay Stun, Chill (Hush), Weaken, Pin and Cursed: shared rules words. The star's Stun and Hush's Chill are not "starlight statuses". |
+| Her chip and effects | The falling-star chip ("Falls in 2") and her effects draw their core in the light colour (`#FFF6C8`) with `#0072B2` as the glow, never Chilled blue. Her attack bolt drops the lavender `#C8C0FF` for these. "Resists starlight" can never show in Chapter 1. |
+| The roster | `HERO_DT.oriel = { dt: 'star', sst: 'stun' }`. The 32-hero split moves from 7/7/6/6/6 to 7/7/6/6/5/1 (frost loses her). She is the only Starlight hero for now; "every type on 2+ heroes" (`check.mjs:5142`, comments at `21x-data-types.js:6, 90`) gets a coded exception: every type but `star` on 2 or more heroes, `star` on exactly 1. |
 
-Why not a sixth type, "Starlight":
-- The five types are pinned in the rules and checks: `DMG_TYPES` ("ids never change"), `check.mjs:5098` pins
-  `'phys,holy,poison,fire,frost'`, and `check.mjs:8852` pins the 32-hero roster at 7/7/6/6/6 (Oriel frost, `21x-data-types.js:96`).
-- Every foe family's weakness and resistances are written against those five (`FOE_FAMS`). A sixth type is neutral to every
-  foe, so it adds a word and an icon but no choice; giving it weaknesses means re-fitting every family and the boss budget.
-- The type colours are Okabe-Ito, chosen to read for colour-blind players. The set's two unused colours are a second blue
-  (`#0072B2`) and a second orange (`#E69F00`), which sit beside Frost and Fire; neither gives starlight its own reading.
+Why no weakness in Chapter 1: every foe family already has its one weakness (`FOE_FAMS`, at most 1, `21x-data-types.js:47`), so
+giving starlight one means taking another type's, which weakens a starter there. "Never resisted" is a real role on its own: the
+other three starters each meet a family that shrugs them off.
 
-Holy was weighed again (Codex drew Falling Letter as holy): it fits light, but it is the priests' type (Maren, Hesketh, Elowen),
-and it moves the roster split for no gain in play. If Cal wants starlight as its own type, that is a type-system card
-(`DMG_TYPES`, `FOE_FAMS`, the roster split, icons, colour), not a rename.
+What the type card changes (`starlight-type`, Opus medium, before `route-s-oriel-wire`): `DMG_TYPES`, `DT_INFO.star`,
+`HERO_DT.oriel`, the turn rules' type table (`59a-status.js:52` reads `DMG_TYPES`, so neutral is automatic) and everything else
+that lists the five (`55-boss-try.js`, `75-mastery-ui.js`, `75-turn-ui.js`, `61b-type-icons.js`); the checks that pin the list
+(`check.mjs:5098`) and the split (`check.mjs:8852`) take the new expected values, which is a data change, not a loosened check;
+`docs/GAME.md`. Before building, grep `tools/` for every reader of the five (lessons, Combat). No save field holds a damage type,
+so no save changes. The judge's additions: `check.mjs:5142` and the messages at `5099`, `5142` (the split exception);
+`55-boss-try.js:85` reads `DT_INFO[id].name` but the field is `.n` (today it prints "Resists phys"): fix it here; the gear
+type-power tables (`59a-status.js:273` PW, `59-combat.js:739` RES) have no `star` row, which falls back to 1 and 0: say in GAME.md
+that no gear line boosts Starlight yet; stale comments at `24c:12`, `59k:309`, `59k:520`. No Star needs a change: Afterglow,
+Old Light and the brim inherit the hero's type, and Thermal Shock, Holy Sparks, Witchfire and the cursed trait key on fire, holy
+or `kind`. **The type card waits for `starlight-icon`:** `typeIcon` (`61b-type-icons.js:18`) crashes without an icon, and
+`check.mjs:5098` needs a 7x7 one.
 
 ## 5. Save impact
 
@@ -193,12 +202,13 @@ The Foreman writes them; the wire cards pick them up.
    fire hits and Cinders, `57e-stars.js:338, 359`, so they stay Pip's). Thermal Shock gets weaker for Pip: her Chill now comes
    only from the Cold Steel and Frostfire stars (section 6 says what to measure). Card 2 also owns the section 6 rule test.
    Its patch note says Pip's frost talent picks now point to new talents. Card 1 gates when card 2 ships, not when it is built.
-3. **`route-s-oriel-wire`** (already carded) builds her six from section 3 with new ids, Starbolt without Chill, and packs her
+3. **`starlight-icon` (Codex), then `starlight-type`** (build, Opus medium; section 4), both before the wire card.
+4. **`route-s-oriel-wire`** (already carded) builds her six from section 3 with new ids, Starbolt without Chill, and packs her
    drawn `spark`, `frostshard`, `arcaneward`, `hex` and `nova` frames under `pointoflight`, `hush`, `duskmantle`, `foretold` and
    `turningsky` (a file mapping at pack time, nothing redrawn).
-4. **`oriel-fx-recipes`** (with the wire card or before it): 62b recipes for her 14 moves, `oriel:attack` and `oriel:star`, in
-   cold starlight. The art thread's scratch star effects in the gallery are the reference; no effect is drawn into the art.
-5. **`oriel-icons` (Codex):** icons for her 14 moves. She is not a complete icon hero until all 14 are vetted, so she ships with
+5. **`oriel-fx-recipes`** (with the wire card or before it): 62b recipes for her 14 moves, `oriel:attack` and `oriel:star`, in
+   the Starlight colour. The art thread's scratch star effects in the gallery are the reference; no effect is drawn into the art.
+6. **`oriel-icons` (Codex):** icons for her 14 moves. She is not a complete icon hero until all 14 are vetted, so she ships with
    none of Codex's (the `COMPLETE` rule), as Wren and Tobin do today.
 
 No new poses are needed for any hero: every changed move keeps a drawn pose whose motion fits, and the effects are the game's.
@@ -235,7 +245,7 @@ Red team (Opus, read-only, on the first draft), ten findings, each answered in t
 3. Making Nova fire cost Pip her holy hits and left the counter tips stale: Ring of Light stays holy; 24d tips are in card 2.
 4. Smoke Bolt (Weaken 2 + Pin, cooldown 3) copied Ill Omen and outclassed Tobin's Roar: now Weaken 1 (2 on a burning foe), no
    Pin; the miss threshold is two-sided.
-5. The Curse burst is hard-coded holy: it now takes the setting move's type (Hex holy, Foretold frost).
+5. The Curse burst is hard-coded holy: it now takes the setting move's type (Hex holy, Foretold Starlight).
 6. The type reasoning had wrong refs and a false palette claim, and "cold starlight" hid the flake: refs fixed (the 7/7/6/6/6 is
    the 32-hero roster, `check.mjs:8852`), the palette line corrected, the flake stated plainly, Night Chill renamed Hush.
 7. Point of Light's Bearing kept the star at 300%: it gives none, and her section 6 rows are a pass condition.
@@ -258,3 +268,17 @@ Red team (Opus, read-only, on the first draft), ten findings, each answered in t
 6. **Buildable: yes.** Card 2 owns the rule test, the 24c header and `docs/GAME.md` (D).
 
 Veto phrase for Cal: **"Give Oriel her own Starlight damage type"**.
+
+**Cal used it (10 Oct 13:07):** "Yeah I think Oriel should have her own type of damage." Section 4 now gives her Starlight;
+ruling 4 above is history. The Starlight details (colour, icon, no weakness or resistance in Chapter 1) were ruled by a second
+Opus judge (below).
+
+**Starlight details, second judge (Opus high, 2026-10-10, after Cal's veto; direction not re-ruled):**
+1. **Colour `#0072B2`: kept.** About 2.2:1 luminance from Frost's sky blue, and shape does the rest; the light colour goes in
+   front on chips and effects, and the dark only on inner icon pixels.
+2. **No weakness or resistance in Chapter 1: right.** Every family has its one weakness already; the readers give an unnamed
+   type a neutral 1, and "Resists" only shows when it applies. Don't oversell "never resisted": Hollow resists are x0.85.
+3. **The 7x7 icon is art** (DECISIONS bans code-drawn art): Codex draws it, the art judge vets it with the other five, and the
+   type card waits for it.
+4. **Buildable,** with the split-check exception, the `55-boss-try.js:85` field fix and the stale comments added (section 4).
+

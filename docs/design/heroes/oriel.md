@@ -7,8 +7,8 @@ No code here: `route-s-oriel-wire` builds it, the art thread draws it.
 Starting list: Codex's hero-13 kit in `docs/design/hero-abilities-34.json` (branch `codex/hero-animation-icons`, commit 227bda46;
 copy at `/mnt/project-files/heroes/oriel/hero-abilities-34.json`). It is the older 12-card shape with its own rules (U, H/F
 counts, snapshots, alignment charges). This doc fits it to today's game: 6 style moves + 8 signature moves, all her own
-(`docs/design/hero-kits.md`, Cal 10 Oct 11:10: no shared abilities), her type data (frost damage, Stun status:
-`21x-data-types.js:96`), the 1.0 build (Chapter 1, zones 1-35) and
+(`docs/design/hero-kits.md`, Cal 10 Oct 11:10: no shared abilities), her type data (Stun status, `21x-data-types.js:96`; her damage type
+is Starlight, Cal 10 Oct 13:07, hero-kits.md section 4), the 1.0 build (Chapter 1, zones 1-35) and
 damage-on-impact (#348: a hero action lands in its 'strike' phase after `fxImpactIn(id)`).
 
 Facts checked at `6e534acc`: she exists as roster data only (`56-roster.js:33`, Epic caster, Dusk circle), unlocked by crafting
@@ -19,7 +19,7 @@ Veil) and gated by her story scene at zone 116, Chapter 4 (`56c-unlocks.js:81` `
 ## 1. Her loop, and how she plays differently from Pip
 
 **Call a star, hold out until it lands, and bring it down early when the fight turns.** One star at a time: Falling Star calls
-it, and it lands after her next 2 turns for a big frost hit and a Stun. While it falls she builds Bearings with Attack and
+it, and it lands after her next 2 turns for a big Starlight hit and a Stun. While it falls she builds Bearings with Attack and
 softens the foe with Chill and Weaken. When a boss starts gathering a charged move (which the game shows as it starts, never
 before: "No telegraph", DECISIONS, The hero), she can Call It Down and drop the star on it now.
 
@@ -44,7 +44,7 @@ you hold when it lands. Starfall spends them all for a big blast.' }`
 - **Falling Star** queues one star: `h.fall = 2`. It counts down after each of Oriel's own completed actions (Attack or an
   ability; Parry and Dodge happen in the foe's turn and do not count). After the action that takes it to 0, the star lands.
 - **What the star reads, all at landing, nothing at cast:** ability power (level, Focus, gear) at that moment; base 220%, plus
-  20% for each Bearing held then (added, not multiplied: at most 300%); one crit roll; type frost. **No one-action boost rides
+  20% for each Bearing held then (added, not multiplied: at most 300%); one crit roll; type Starlight. **No one-action boost rides
   it:** not Take a Bearing's +30%, Keen, Old Light, News Arrives, uniques' one-action gains or the Stars' (lessons, Combat: never
   let a one-action boost ride stored damage). A Blind on the hero does not make it miss (it is not her swing).
 - **Then it Stuns** (`turnControl(m, io, 'stun')`): an ordinary foe loses its next turn; a boss Staggers (25) and a gathering
@@ -53,7 +53,7 @@ you hold when it lands. Starfall spends them all for a big blast.' }`
   visible.
 - **One star at a time.** While one falls, Falling Star is not usable ("Your star is still falling."). A star still falling when
   the fight ends is lost.
-- **The chip** on the foe reads "Falls in 2", "Falls in 1" in the frost colour (Chilled blue). Text calls it "your star"; never
+- **The chip** on the foe reads "Falls in 2", "Falls in 1" in the Starlight colour (hero-kits.md section 4). Text calls it "your star"; never
   "Star 2" (it would read as the Stars system, the Star Chart or the Chained Star).
 - **Rally gates:** the landing counts as part of the action it lands after, so the gate that caps one move caps the star too.
 - **Old Light and Foretold:** the landing counts as a spell that hits (Old Light arms for the next Attack; a foe under Foretold, which
@@ -73,7 +73,7 @@ Ids equal the art thread's pose ids, so each move finds its frames by name.
 
 The caster template's mechanics, made hers, with new ids: Point of Light (O9, `pointoflight`), Hush (O10, `hush`, timed),
 Dusk Mantle (O11, `duskmantle`), Foretold (O12, `foretold`), Old Light (O13, `oldlight`, passive), Turning Sky (O14,
-`turningsky`). All frost, drawn as cold starlight. The full rows are in hero-kits.md; they replace Pip's six, which she used to
+`turningsky`). All Starlight. The full rows are in hero-kits.md; they replace Pip's six, which she used to
 borrow.
 
 ### Her own 8
@@ -81,19 +81,19 @@ borrow.
 **Display names (Cal, 10 Oct 11:12, "Can you rename the abilities officially"):** players see star names; the ids stay Codex's
 (they key saves, art and fx). `fallingletter` Falling Star, `pullreading` Call It Down, `bearing` Take a Bearing (kept),
 `clearnight` Starbolt, `badnews` Ill Omen, `letters` Shooting Star, `slivershum` Starfall, `newsarrives` News Arrives (kept).
-Her style six and her damage type (frost, drawn as cold starlight) are in `docs/design/hero-kits.md` (Cal 11:10: no
+Her style six and her damage type (Starlight, her own) are in `docs/design/hero-kits.md` (Cal 11:10: no
 intentionally shared abilities).
 
 | Code | Id | Name | Short | Kind | Tier | Power | CD | Type | Timed | Effect (desc) | Line |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| O1 | `fallingletter` | Falling Star | Star | damage | 0 (starter) | 2.2 | 4 | frost | no | Call down a star. It lands after your next 2 turns for 220% power, plus 20% for each Bearing you hold then, and Stuns the foe. One star at a time. | A star lands in 2 turns and Stuns. |
-| O2 | `pullreading` | Call It Down | Call | damage | 2 | 1.0 | 3 | frost | no | If your star is falling, pull it down now at 80% of its power. It still Stuns. If not, a frost hit for 100% power. | Brings your star down now. |
-| O3 | `bearing` | Take a Bearing | Bearing | buff | 2 | 0 | 4 | frost | no | Gain 2 Bearings. Your next ability that hits directly hits 30% harder (not your star, even when you pull it down). | 2 Bearings. Next hit +30%. |
-| O4 | `clearnight` | Starbolt | Bolt | damage | 3 | 1.4 | 3 | frost | yes | A star bolt for 140% power. If no star is falling, gain 1 Bearing. | A bolt, and a Bearing. |
-| O5 | `badnews` | Ill Omen | Omen | debuff | 3 | 0.8 | 5 | frost | no | Read the foe its fate: 80% power, and it is Weakened for 2 turns (25% less damage). If your star is falling, it is also Pinned: its next attack is easier to read, and it slows. | Weakens. Pins while a star falls. |
-| O6 | `letters` | Shooting Star | Shooting | damage | 4 | 1.5 | 5 | frost | yes | A sweep of force for 150% power. If your star is falling, it falls 1 turn sooner (with 1 turn left, it lands after this). | Hurries your star. |
-| O7 | `newsarrives` | News Arrives | Arrives | passive | 4 | 0 | 0 | frost | no | Passive. While your star is falling, your Attacks hit 25% harder. | Passive: Attacks hit harder while a star falls. |
-| O8 | `slivershum` | Starfall | Starfall | finisher | 5 | 1.6 | 7 | frost | yes | Finisher, from your third turn. 160% power, plus 40% for each Bearing; uses them all. Needs 2 Bearings. | Spends all Bearings for a blast. |
+| O1 | `fallingletter` | Falling Star | Star | damage | 0 (starter) | 2.2 | 4 | star | no | Call down a star. It lands after your next 2 turns for 220% power, plus 20% for each Bearing you hold then, and Stuns the foe. One star at a time. | A star lands in 2 turns and Stuns. |
+| O2 | `pullreading` | Call It Down | Call | damage | 2 | 1.0 | 3 | star | no | If your star is falling, pull it down now at 80% of its power. It still Stuns. If not, a starlight hit for 100% power. | Brings your star down now. |
+| O3 | `bearing` | Take a Bearing | Bearing | buff | 2 | 0 | 4 | star | no | Gain 2 Bearings. Your next ability that hits directly hits 30% harder (not your star, even when you pull it down). | 2 Bearings. Next hit +30%. |
+| O4 | `clearnight` | Starbolt | Bolt | damage | 3 | 1.4 | 3 | star | yes | A star bolt for 140% power. If no star is falling, gain 1 Bearing. | A bolt, and a Bearing. |
+| O5 | `badnews` | Ill Omen | Omen | debuff | 3 | 0.8 | 5 | star | no | Read the foe its fate: 80% power, and it is Weakened for 2 turns (25% less damage). If your star is falling, it is also Pinned: its next attack is easier to read, and it slows. | Weakens. Pins while a star falls. |
+| O6 | `letters` | Shooting Star | Shooting | damage | 4 | 1.5 | 5 | star | yes | A sweep of force for 150% power. If your star is falling, it falls 1 turn sooner (with 1 turn left, it lands after this). | Hurries your star. |
+| O7 | `newsarrives` | News Arrives | Arrives | passive | 4 | 0 | 0 | star | no | Passive. While your star is falling, your Attacks hit 25% harder. | Passive: Attacks hit harder while a star falls. |
+| O8 | `slivershum` | Starfall | Starfall | finisher | 5 | 1.6 | 7 | star | yes | Finisher, from your third turn. 160% power, plus 40% for each Bearing; uses them all. Needs 2 Bearings. | Spends all Bearings for a blast. |
 
 Perfect presses (`ABILITY_PERFECT`): `clearnight: 'a sure crit'`, `letters: '1 Bearing'`, `slivershum: '2 Bearings come back'`
 (the refund lands after the spend, so a star landing after Starfall reads 2). With Hush (`hush: '1 more Chill'`) that is 4
@@ -114,7 +114,7 @@ Abilities screen groups (`HERO_PATHS.oriel`, 4/5/5 like Pip's):
 
 | Codex card | Here | Why |
 |---|---|---|
-| Falling Letter | O1, the starter, now Stuns | Her type data is frost/Stun; the starter carries the identity (as Bash, Fireball, Echo do: W10 found the signature moves win most). Holy becomes frost. |
+| Falling Letter | O1, the starter, now Stuns | Her type data is Stun (and now Starlight); the starter carries the identity (as Bash, Fireball, Echo do: W10 found the signature moves win most). Holy becomes Starlight. |
 | Pull the Reading | O2, kept | The early-landing choice is Codex's core decision, and it is how she meets a charge. |
 | Take a Bearing | O3, kept | "Alignment charge" becomes a plain next-hit boost, kept off the star. |
 | Clear Night | O4, kept | Her Bearing bolt. (#350 gave it 1 Chill; hero-kits.md moved her Chill to Hush so the two bolts read apart.) |
@@ -157,7 +157,7 @@ she joins; the quest card decides what burning it gives.
   card gives the Star Chart its reward; Hallowed looks and her subclass follow the other three's cards. The wire card ships her
   kit and join; she is not "1.0 complete" until those land, and the M1a tracker should say so.
 - **Data the wire card sets:** `SOLO_HEROES.oriel = { key: 'oriel', base: 'mage', kit: 'lanternmage', weapon: 'Staff', role:
-  'Caster', range: 'Ranged, frost', abs: ['fallingletter'], eq: ['fallingletter', null, null] }` (`heroHasKit` needs
+  'Caster', range: 'Ranged, starlight', abs: ['fallingletter'], eq: ['fallingletter', null, null] }` (`heroHasKit` needs
   `CLASS_DEFS[base].kit === kit`, `56-roster.js:68`, and the mage's kit is `lanternmage`); `SOLO_ORDER` gains her; the route in
   `56c-unlocks.js` joins on meet as the starters do. She arrives with Falling Star and spends the lamp's spare Scrolls first, as
   any joining hero does (DECISIONS, hero progression).
@@ -205,10 +205,10 @@ card re-measures on the packed frames. No effect is drawn in the art: bolts, rin
 
 | Move id | Used by | Frames | Impact frame | Emit point (frame: x, y) | Effect the game draws |
 |---|---|---|---|---|---|
-| `attack` | Attack | 8 | 5 | staff star, 5: 0.91, 0.25 | a small frost bolt to the foe (62-stage `oriel: ['bolt', '#C8C0FF']`) |
+| `attack` | Attack | 8 | 5 | staff star, 5: 0.91, 0.25 | a small starlight bolt to the foe (62-stage `oriel: ['bolt', '#C8C0FF']`) |
 | `fallingletter` | O1 | 8 | 5 | raised fingertip, 5: 0.54, 0.03 | a thin light going up; the "Falls in 2" chip appears on the foe |
-| (no pose) `oriel:star` | the star landing | 0 | landing | above the foe's aim point | a bolt of light falling onto the foe, frost burst, Stun |
-| `pullreading` | O2 | 8 | 4 | the star falls from above the foe (fist 4: 0.96, 0.67 only for the no-star frost hit) | the star yanked down, or a frost hit |
+| (no pose) `oriel:star` | the star landing | 0 | landing | above the foe's aim point | a bolt of light falling onto the foe, starlight burst, Stun |
+| `pullreading` | O2 | 8 | 4 | the star falls from above the foe (fist 4: 0.96, 0.67 only for the no-star hit) | the star yanked down, or a starlight hit |
 | `bearing` | O3 | 8 | 5 | staff star, 5: 0.89, 0.06 (a buff, no hit on the foe) | a glint on the staff star; a buff ring on her |
 | `clearnight` | O4 | 8 | 4 | open palm, 4: 0.97, 0.28 | a pale-blue star bolt |
 | `badnews` | O5 | 8 | 5 | staff star, 5: 0.92, 0.08 | a wave from the staff; Weaken (and Pin) marks on the foe |

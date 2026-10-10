@@ -171,6 +171,11 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Weaken), Arcane Ward becomes Ashen Ward and Nova becomes Ring of Light (still holy), and Oriel gets six starlight moves of her
   own, with frost as her rules type. Live ids are kept, so no save breaks. Spec: [hero-kits.md](design/hero-kits.md).
 
+- **Cal decided: Oriel deals her own damage type, Starlight (Cal, 2026-10-10 13:07: "Yeah I think Oriel should have her own type
+  of damage"; this vetoes the frost pick above).** Starlight is a sixth type in night blue with a four-point star icon. Nothing in
+  Chapter 1 is weak to it or resists it, so no foe or boss changes and she is the hero to bring where the others are resisted.
+  [hero-kits.md](design/hero-kits.md) section 4.
+
 ## Combat
 
 - **Turn-based, one enemy at a time.** Enemies are stronger to make up for it. No click-spamming. (2026-09-30)
