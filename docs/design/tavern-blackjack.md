@@ -15,7 +15,13 @@ and the Codex art card `codex-cards-tavern`.
   - The 14-day `sim.mjs --report econ` run.
   - Both are summarised in section 6.
 - **Records**: the red team, [tavern-blackjack/red-team.md](tavern-blackjack/red-team.md), and the judge,
-  [tavern-blackjack/judge.md](tavern-blackjack/judge.md). This version answers the red team, item by item, in section 17.
+  [tavern-blackjack/judge.md](tavern-blackjack/judge.md). Section 17 answers the red team item by item. This version
+  also carries the judge's five edits:
+  - the lower `net` on a save-code import
+  - Hesketh's unlock line
+  - the Rule 8 row
+  - the 600 s wait after the Tavern
+  - the sim's reach check
 
 ## 1. What the player sees
 
@@ -34,8 +40,9 @@ and the Codex art card `codex-cards-tavern`.
 **Never**
 
 - Never sell gold, coins, table access, extra hands, or a reset of the day's limits (Lantern Rules 1 and 2).
-- Never put the table in Next Up, the guide, a reward, a Deed, a Feat, a bounty, a streak or a pop-up. You find it by
-  opening the Tavern. Nothing ever asks you to play.
+- Never put the table in Next Up, a guide step, a reward, a Deed, a Feat, a bounty, a streak or a pop-up. You find it
+  by opening the Tavern. Nothing ever asks you to play. Hesketh's one unlock line (section 11) says what opened and
+  never invites.
 - Never let table gold count as gold earned: not in `S.totalGold`, the econ ledger, Deeds, hoard lines or health metrics.
 - Never let a gold bonus touch a payout. A payout is bet x odds, never x `goldMult()`.
 - Never touch the online layer: the online Tavern boxes, presence, the raid or the shared data.
@@ -178,18 +185,25 @@ active day 14: zone 33, gold a day d1 67,002 d3 79,122 d8 95,314
 
 ## 7. When it opens
 
-- **Gate:** the zone 13 Captain beaten (`S.maxZone >= 14`), with the Tavern built (`campLv('tavern') >= 1`).
+- **Gate:**
+  - The zone 13 Captain beaten (`S.maxZone >= 14`).
+  - The Tavern built (`campLv('tavern') >= 1`).
+  - The Tavern and Hands rows unlocked at least 600 s of `S.onboard.t` ago. This wait is skipped once `S.onboard.all`
+    is set, because that clock stops then (`55-onboard.js`).
+  - Without the wait, a cold save that builds the Tavern after zone 14 would get the Tavern build, the Tavern, Hands
+    and the table within 10 minutes: 4 new things, at the F4 cap.
 - **FEATURES row** (55-onboard.js):
-  `{ id: 'blackjack', tab: 'world', view: 'tav', name: 'Blackjack', late: true, why: 'zone 14, with the Tavern built', when: () => BJ_TUNE.on && S.maxZone >= 14 && campLv('tavern') >= 1 }`.
+  `{ id: 'blackjack', tab: 'world', view: 'tav', name: 'Blackjack', late: true, why: 'zone 14, with the Tavern built 10 minutes before', when: () => BJ_TUNE.on && S.maxZone >= 14 && campLv('tavern') >= 1 && <the 600 s wait above> }`.
   `late: true` keeps "Show every tab now" from opening it at zone 1.
-- **Notice:** an `OPEN_TXT` line, "New on the Camp tab: a card table at the Tavern." A FIRST_USE line carries the hint
-  from section 1.
+- **Notice:** an `OPEN_TXT` line, "New on the Camp tab: a card table at the Tavern." Hesketh's `SAY_TXT` line, which
+  `check.mjs` requires for every row with an unlock toast ("unlock-voice"), is in section 11. A FIRST_USE line carries
+  the hint from section 1.
 - **Why zone 14.** The zone 10 Champion clear already brings a starter join (Wren, for a Tobin or Pip pick), the Codex
   and, in a new game, the Hearth 2 and Tavern build with Hands and Tam. Zone 12 opens the raid. Zone 15 is a Champion
   with its own join. Zone 14 has nothing else, and by then the player holds gold worth risking.
-- **Proof** (a build-card acceptance line): `tools/walk.mjs` for all three starter picks shows the table opening with no
-  other new thing within `ONBOARD_TUNE.gap` (90 s), and no F4 burst (4 in any 10 minutes). If a pick fails, the gate
-  moves to zone 16 (after the Champion's join).
+- **Proof** (a build-card acceptance line): `tools/walk.mjs` for all three starter picks, plus a cold save that builds
+  the Tavern after zone 14. Each shows the table opening with no other new thing within `ONBOARD_TUNE.gap` (90 s), and
+  no F4 burst (4 in any 10 minutes). If a pick fails, the gate moves to zone 16 (after the Champion's join).
 - **How it shows:** the notice, and the Tavern view's dot until the first visit. It is not in Next Up, not on the guide,
   and there is no pop-up.
 
@@ -208,8 +222,9 @@ active day 14: zone 33, gold a day d1 67,002 d3 79,122 d8 95,314
   - `save()` runs synchronously after the deal, after every card drawn, and after the result, before anything renders.
   - A reload shows the same hand. Every card already drawn is saved, and no card is drawn early.
   - So you can't reload your way out of a bad card or a loss.
-- **Save codes.** Importing a code clears `hand` (its bet stays paid) and keeps the larger of the stored and imported
-  `net` for today. You can't reset the day's loss limit by loading an old code on the same day.
+- **Save codes.** Importing a code clears `hand` (its bet stays paid). It keeps the **lower** of the stored and imported
+  `net` for today, and a `net` from another day counts as 0. So loading an old code on the same day can't reopen a
+  table closed by a loss. No import hook exists today (`75-savecode-ui.js` `doImport`), so the build adds one.
 - **No ledger entries.** Table gold changes `S.gold` directly:
   - It does not book into the econ ledger (`S.econ.earned` and `S.econ.spent`) or add to `S.totalGold`.
   - So health metrics, EC2 and EC4, Deeds and hoard lines see only fight, camp and bounty gold.
@@ -250,8 +265,11 @@ active day 14: zone 33, gold a day d1 67,002 d3 79,122 d8 95,314
   - No glyphs, no emoji, no drawn pictures. Emoji are OS art, and no text glyph exists for a lantern or a thorn.
   - The face-down card (shown only while Hesketh draws) is a flat `--panel-2` panel.
   - The coins use the existing `ICON.coin`.
-- The judge rules whether this is UI or art drawn in code under the art freeze (see the judge record). The mockup's SVG
-  suit icons and patterned card back are **not** carried into the build. They wait for Codex.
+- **The judge ruled these plain cards are UI, not art.** Allowed: the flat card, the rank as text, the suit name in a
+  colour token, the flat face-down card, the existing `ICON.coin`, and a plain slide or flip that respects reduced
+  motion. Everything else waits for Codex: suit icons, card frame and back, faces, coin stacks or chips, felt texture,
+  and a Hesketh dealing sprite. The mockup's SVG suit icons and patterned card back are **not** carried into the build.
+  A build acceptance line greps the new files for glyphs, emoji and inline SVG.
 - **The Codex pack** (`codex-cards-tavern`, Codex lane, its own cap):
   - A card frame and a card back, four suit icons, and the Knave, Queen and King.
   - A gold coin stack, and (optionally) Hesketh dealing.
@@ -268,6 +286,7 @@ active day 14: zone 33, gold a day d1 67,002 d3 79,122 d8 95,314
 | Sub line | Hesketh deals. He stands on 17. Blackjack pays 3 to 2. |
 | First-use hint | Bet gold and beat Hesketh's hand without going over 21. |
 | Unlock notice | New on the Camp tab: a card table at the Tavern. |
+| Hesketh's unlock line (`SAY_TXT`, at most 90 characters, no invitation) | I've put a card table in the Tavern. Blackjack, for gold. |
 | Limits line | Table: {lowest} to {highest} gold |
 | Buttons | Deal {bet} · Hit · Stand · Double · Next hand · Clear |
 | Start of hand | You have {n}. Hesketh shows {card}. |
@@ -294,6 +313,8 @@ empty.
   - **(b)** The EC5 share moves by less than 5 points.
   - **(c)** Each profile's zone at day 14 moves by less than 1 zone.
   - **(d)** `S.econ.earned` and `S.econ.spent` are unchanged, because the table books nothing.
+  - **(e)** Every profile reaches the table and plays at least 100 hands in the run. If one doesn't, the measure is void,
+    not passed.
   - **Miss:** any of these fails. The fix then is to cut the highest bet, not to change the edge.
 - **Rating.** Not measured here. Cal decides (section 9).
 
@@ -303,7 +324,7 @@ empty.
   field stays unused. Nothing else reads it.
 - To remove it fully, delete:
   - the two new JS files and the CSS file
-  - the FEATURES row, and the OPEN_TXT and FIRST_USE lines
+  - the FEATURES row, and the OPEN_TXT, SAY_TXT and FIRST_USE lines
   - the systems-map lines
   - the sim policy
 
@@ -320,7 +341,7 @@ empty.
 | 5. Never interrupt | One notice when it opens. No pop-ups, no dots after the first visit |
 | 6. Never sell a core convenience | Not applicable: nothing is sold |
 | 7. Earned prestige stays earned | No Deeds or titles from the table |
-| 8. Show real prices | Every bet and limit is shown in gold before you Deal |
+| 8. Show real prices | Every bet, and the table's lowest and highest bets, are shown in gold before you Deal. The day's limits are not shown. They are not prices: they only close the table, with one plain line ("The table's closed for today."), and never take gold |
 | 9. Same game on every paid build | The switch is per store build, and Cal decides it before any rating. Nothing paid differs |
 | 10. Purchases never lost | Not applicable |
 
@@ -347,7 +368,7 @@ empty.
        It appends below the existing Tavern boxes and doesn't reorder the online Tavern.
      - `src/styles/60-blackjack.css`.
    - **Extension points:**
-     - FEATURES row, OPEN_TXT and FIRST_USE lines (55-onboard, 75-onboard-ui).
+     - FEATURES row, and the OPEN_TXT, SAY_TXT and FIRST_USE lines (55-onboard, 75-onboard-ui).
      - Systems-map registry.
      - Save-code import hook (section 8).
      - A `sim.mjs` table policy.
@@ -365,6 +386,7 @@ empty.
      - A 300 ms press guard after Deal, Next hand and each result, and Hit never placed where Deal sat.
      - The walk proof (section 7) and the economy measures (section 12).
      - Views at 1280x720, 740x360 and 360x740, plus reduced motion.
+     - A grep of the new files finds no suit glyph, emoji or inline SVG (the art freeze).
    - **Out of scope:** art, and the store-build option.
 2. **`codex-cards-tavern`** (Codex lane): the art pack in section 10, unless Cal picks a found deck.
 3. **`integrate: codex-cards-tavern`**, then a wire card if the judge rules "wire".
@@ -385,9 +407,9 @@ empty.
 | 9 | UI hooks | `registerSection('tav')`, `feature`, `late: true`, `when`, OPEN_TXT (sections 7 and 16) |
 | 10 | Art can't be built as written | Suit names in small capitals, no glyphs or emoji, `ICON.coin`, the game's tokens (section 10) |
 | 11 | Found art not asked | Cal asked on a decision card. The Codex default holds until he answers |
-| 12 | Hesketh as the house | Kept, since Cal saw and liked him dealing. He plays for small stakes, with no purse or house framing in the copy. Sent to the judge; veto phrase in the judge record |
+| 12 | Hesketh as the house | The judge ruled that Hesketh deals ("Let Tam deal the cards" vetoes it). The copy never gloats, keeps a purse or says "the house" |
 | 13 | The switch fails open | The `check.mjs` flag line, a ship-checklist line, a DECISIONS line, and sources cited (section 9) |
-| 14 | Honest play only | Claims scoped, and save-code import handled (sections 6 and 8) |
+| 14 | Honest play only | Claims scoped, and save-code import keeps the lower `net` (sections 6 and 8, the judge's edit) |
 | 15 | Double taps | Press guard and button placement in the build acceptance |
 | 16 | Chore-like copy | "The table's closed for today." No "come back", no countdown |
 | 17 | Loop step | "A day, step 3", side content, with the reason (section 2) |
