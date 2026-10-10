@@ -37,7 +37,13 @@
 // 0.1 MB), so up to three load at once; a zone's pack loads alone, as before. What the stage waits for always has a slot more.
 // New-style packs (n in the table; docs/design/new-style/engine.md) never hold the game: they load by zone after its own packs,
 // or when 64m asks: artNsWant(pieces) (none while Classic art is on).
-var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {}, artNsWant = () => {};
+// Time held (card load-hold-progress): the inline page never holds for a pack, so for the same wall time both builds give the
+// same camp, craft and hands progress. A hold stops only the fight (played by hand, under the line). Camp builds and Hands' jobs
+// run on the wall clock and catch up on the first second after it; the Forge, Bench and Loom orders run on the frame clock, so
+// the frame loop hands each held frame here and they run as in tick:
+//   artHoldTick(dt) -> 90-boot, every frame the game is held: runs the orders' dt while this file's hold is the only one up
+// Gathering is not played by hand: under the line the game runs on. The raid holds as before (the online layer is not this card's).
+var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {}, artNsWant = () => {}, artHoldTick = () => {};
 {
   const LB = typeof lfBoot === 'object' && lfBoot && lfBoot.packs && typeof lfBoot.take === 'function' ? lfBoot : null;
   if (LB && typeof document !== 'undefined') {
@@ -142,9 +148,14 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     let coverKey = '';
     const key = () => { const z = screenZone(); return z + ':' + (z >= 1 && !artZoneReady(z)) + ':' + heroWaiting(); };
     function recheck() { if (coverKey !== key()) cover(); }
-    const held = () => { const k = key(); if (coverKey !== k) cover(); queueMicrotask(recheck); return !k.endsWith(':false:false'); };
+    // gathering under the line runs on (load-hold-progress); a fight, and the raid (the online layer: unchanged), hold
+    const runs = () => target() === 'node';
+    const held = () => { const k = key(); if (coverKey !== k) cover(); queueMicrotask(recheck); return !k.endsWith(':false:false') && !runs(); };
     addEventListener('online', () => { for (const id in failed) failed[id].at = 0; pump(); });   // back online: try again now
     holdGame(held);
+    // a held fight or raid: the orders keep the frame clock, unless another hold (a story scene, a card) stops the game as the inline page does
+    const others = () => GAME_HOLDS.some(f => { if (f === held) return false; try { return !!f(); } catch (e) { return false; } });
+    artHoldTick = dt => { if (held() && !others() && typeof refineTick === 'function') refineTick(dt); };
 
     // ---- loading ----
     const wanted = () => {

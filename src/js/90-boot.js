@@ -65,7 +65,9 @@ function frame(now) {
   dt = Math.min(dt, 0.1);
   T += dt;
   // SOLO1: the game waits while a guide step waits for its action, or while the hero is being chosen (or a feature holds it: gameHeld())
-  if (!(ONBOARD.paused || soloPickerOpen() || document.getElementById('createScreen') || gameHeld())) tick(dt);   // gameHeld(): features that hold the game register with holdGame (00-util)
+  const stop = ONBOARD.paused || soloPickerOpen() || document.getElementById('createScreen');
+  if (!(stop || gameHeld())) tick(dt);   // gameHeld(): features that hold the game register with holdGame (00-util)
+  else if (!stop) artHoldTick(dt);   // 75-art-load: a pack still loading holds the fight, not the Forge's orders (load-hold-progress)
   animate(dt); draw();
   uiTimer -= dt; slowTick -= dt;
   if (uiTimer <= 0) { uiTimer = 0.2; ui(false); }
