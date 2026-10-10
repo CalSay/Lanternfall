@@ -1,0 +1,20 @@
+# seed: 1
+# Proof for card space-reopens-next-up: in a boss fight Space dodges, even when Next up was the last button clicked.
+# Before: closing Next up hands focus back to its chip, and the fight bar let Space through to a focused button, so Space at a boss
+# swing reopened the list (75-solo-ui.js, the keydown handler's BUTTON exception). Space at the exact swing, a dodge taken, a second
+# focused button (the Hero tab), Enter still pressing a button and Space outside a fight are held by tools/check.mjs
+# ("space-reopens-next-up"). Run at the default view (1280x720), then with --landscape and --portrait; shots are named by view.
+# Before the fix the one Space below opened the list again (checked on the base); now it stays shut.
+# Fixture pre-z7-boss: Wren at zone 7's boss, which starts by itself.
+new pre-z7-boss
+wait 2
+expect ".nu-chip"
+tap "Next up"
+wait 1
+expect ".bsheet-ov"
+tap "Close"
+wait 1
+expect-no ".bsheet-ov"
+key Space
+expect-no ".bsheet-ov"
+shot space-in-fight

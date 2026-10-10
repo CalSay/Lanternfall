@@ -1,0 +1,22 @@
+{
+ "source": "S.bossOdds.reads in the tester session save at the end of the run",
+ "zone": 10,
+ "maxZone": 10,
+ "level": 16,
+ "reads": {
+  "9": {
+   "feint": 2,
+   "feintPress": 0,
+   "hold": 4,
+   "holdPress": 4,
+   "holdEarly": 1
+  },
+  "10": {
+   "feint": 4,
+   "feintPress": 0,
+   "hold": 7,
+   "holdPress": 3,
+   "holdEarly": 1
+  }
+ }
+}

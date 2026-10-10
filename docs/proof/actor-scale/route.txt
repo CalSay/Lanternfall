@@ -1,0 +1,15 @@
+# Proof for card actor-scale (route S ruling #328). Heroes, foes, bosses and gather nodes draw 1.5x against the same scenery on
+# stages that zoom 2x or more (1280x720 and up); a phone on its side (740x360), portrait and a crowd of 2 or more foes keep today's
+# size. This route plays the early save's Elder Moss Slime fight (zone 8) at 1280x720 and opens the Gather menu. tools/check.mjs section "actor-scale (browser)"
+# carries the gates: no actor meets the plates, place line, turn line, turn banner, Grit row or stage buttons at 1280x720, 1366x640
+# and 1920x1080; the hero 16 stage px or more from the foe; crowds, 740x360 and 360x740 at today's size.
+# seed: 1
+new early
+wait 2
+tap-if "Continue"
+tap-if "Got it"
+wait 3
+shot elder-moss-slime
+tap-if "Gather"
+wait 2
+shot gather-menu

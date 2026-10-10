@@ -1,0 +1,1 @@
+The Lantern Cache's "Learn one now" pick no longer shuffles. The moves stay in the Abilities list's order, and when the odds come in, the move that helps most against the next zone boss gets a gold bar instead of jumping to the front. Best shot: check-card-1280x720.

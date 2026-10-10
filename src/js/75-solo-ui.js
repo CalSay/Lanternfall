@@ -126,7 +126,7 @@ var soloIconURL = () => '';
   // The guide's Dodge and Parry steps pause the game on a heavy hit; the first press there always counts (59j forgive).
   const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
   // cal-0107-staged-guide (Cal's play note 4): an empty slot with nothing to put in it (every move you own already has a slot) is dim and
-  // silent: no "Tap to add", no picker. It stays in place (the six-slot bar), and wakes once a learned move is waiting for a slot.
+  // silent: no "Add a move", no picker. It stays in place (the six-slot bar), and wakes once a learned move is waiting for a slot.
   const slotShut = i => { try { const eq = soloEquipped(); return !eq[i] && !soloAbilities().some(id => !eq.includes(id)); } catch (e) { return false; } };
   const castSlot = i => {
     if (slotShut(i)) return;
@@ -231,7 +231,11 @@ var soloIconURL = () => '';
   const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'dodge' };   // SOLO2: Space dodges
   addEventListener('keydown', e => {
     if (bar.hidden || pick || gameHeld() || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
+    // space-reopens-next-up: a clicked button keeps focus (a sheet hands it back on close) and the browser presses it on Space, so
+    // Space in a fight is the dodge, not a press of that button. The bar's own tiles still take Space and Enter as a click; Enter on
+    // any other focused button still presses it, and so does Space on a button in a sheet or card open over the fight or in the
+    // menu open beside it (wide views: a keyboard player working the Hero or Craft menu).
+    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === 'Enter' || (e.key === ' ' && (bar.contains(t) || t.closest(MODAL_UP) || (S.tab && t.closest('#menu')))))))) return;
     if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
     if (e.key.toLowerCase() === 'f') { if (typeof turnCombatOn === 'function' && turnCombatOn()) return; e.preventDefault(); flipAuto(); return; }   // F: the Auto toggle (no Auto in turn fights)
     const id = KEYS[e.key.toLowerCase()]; if (!id) return;
@@ -268,7 +272,7 @@ var soloIconURL = () => '';
     if (abIc.tagName === 'IMG') nicSet(abIc, 'act', on_ ? 'auto-on' : 'auto-off', 16);
     badge.setAttribute('aria-pressed', String(soloAuto()));
     badge.setAttribute('aria-label', soloAuto() ? 'Auto is on: your hero fights alone. Turn it off' : 'Auto is off: you are fighting. Turn it on');
-    badge.title = soloAuto() ? 'Auto is on: your hero fights alone. Tap to turn it off and fight by hand. (F)' : 'Auto is off: you are fighting. Tap to turn Auto on. (F)';
+    badge.title = soloAuto() ? 'Auto is on: your hero fights alone. Press to turn it off and fight by hand. (F)' : 'Auto is off: you are fighting. Press to turn Auto on. (F)';
   };
   on('soloActive', setBadge);
   // the page hidden or the app in the background: Auto fights while it is hidden; back on screen, your setting returns
@@ -381,7 +385,7 @@ var soloIconURL = () => '';
         b._shut = sk; putStyle(b, 'opacity', shut ? '0.45' : ''); b.setAttribute('aria-disabled', String(shut));
         if (!o.id) b.setAttribute('aria-label', shut ? `Empty ability slot ${i + 1}. Learn another move to use it.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
       }
-      putText(b._sub, !o.id ? (shut ? '' : 'Tap to add') : o.left > 0 ? '' : wait ? 'Wait' : 'Ready');
+      putText(b._sub, !o.id ? (shut ? '' : 'Add a move') : o.left > 0 ? '' : wait ? 'Wait' : 'Ready');
     }
     putText(bAtk._sub, '');
     setCd(bAtk, s.atk.left, s.atk.max, wait);

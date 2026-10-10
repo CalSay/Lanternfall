@@ -6,7 +6,7 @@
 // cold save gathers wood; warm saves never see it.
 //
 // The fire is a button (#hearthFire) over the stage while it can be lit: a tap lights it (the
-// guide's "Tap the fire to light it." points here). Taps on it never reach the stage (no chop).
+// guide's "Click or tap the fire and light it." points here). Taps on it never reach the stage (no chop).
 // Reduced motion: no flicker, no smoke drift, Hesketh stands still.
 //
 // N2 (the camp scene) may share paintFire below with its own panorama: campPaintFire(g, x, y, on, t)

@@ -4,32 +4,61 @@
 // thing inside. The drops this clear already queued as moments (the unique, the first Star, zone 1's boss card) fold into the cache card.
 // This file loads before 75-moments-ui, so the moment layer's names are read inside the handler, never at load.
 // boss-spoils-pick (Opus judge 2026-10-08): a zone 6 to 10 first clear that drops a Scroll asks which move it teaches now, when two or more
-// moves of the hero in play can be learned with that Scroll. Up to three, in the Abilities list's order, never marked best; Keep the
+// moves of the hero in play can be learned with that Scroll. Up to three, in the Abilities list's order, never sorted (the top move is marked: see cache-pick-order-settles below); Keep the
 // Scroll (or any other close) keeps it. A pick learns the move and slots it in a free slot, else opens Abilities on it to swap.
 // Nothing new is paid. Events for the walk: choice 'spoils' and spoilsPick { zone, offered, taken } (taken: a move id or 'keep').
-const SPOILS_TUNE = { from: 6, to: 10, max: 3 };
+// loadout-odds (W10): once the zone boss odds are in (56e learnOdds), each pick says what it does to the line ("Zone 11 boss: about 8 in
+// 10, now 4"), and a pick goes where that line assumed (abilityPlace). The odds start when the card opens and take a moment: until they
+// are in, each move's own line; a sub fills in when its number arrives.
+// cache-pick-order-settles: the picks always keep the Abilities list's order, so a card never moves under the pointer (the kill moves
+// maxZone, so the odds were almost never in at open, and when they were the order differed). The move that lifts the line most is
+// marked in place (.lift) once its number is in. The fill stops when the card closes: no odds work for a pick no one can see.
+const SPOILS_TUNE = { from: 6, to: 10, max: 3, waitMs: 300, tries: 100 };
+const spoilsOdds = k => { try { const lo = typeof learnOdds === 'function' ? learnOdds(k) : null; return lo && lo.rows.length ? lo : null; } catch (e) { return null; } };
+// the sub says where the pick goes when it moves the slots ("In Q, Spark out."), then the line
+const spoilsSub = (lo, id) => { const r = lo && lo.rows.find(x => x.id === id); if (!r || !r.lift) return '';
+  const nm = x => (ABILITIES[x] || {}).name || x;
+  return `In ${'QWE'[r.p]}${r.out ? `, ${nm(r.out)} out` : ''}. Zone ${lo.zone} boss: about ${r.lift.after} in 10, now ${r.lift.before}`; };
 function spoilsMoves(v) {
   try {
     if (!v || !v.scroll || !(v.zone >= SPOILS_TUNE.from && v.zone <= SPOILS_TUNE.to) || typeof abLearnInfo !== 'function') return null;
     const k = soloHero(); if (!k || !HERO_ABILITIES[k]) return null;
-    const ids = HERO_ABILITIES[k].filter(id => { const i = abLearnInfo(k, id); return i.why === '' && i.payWith === v.scroll.id; });
-    return ids.length >= 2 ? { k, ids: ids.slice(0, SPOILS_TUNE.max) } : null;
+    let ids = HERO_ABILITIES[k].filter(id => { const i = abLearnInfo(k, id); return i.why === '' && i.payWith === v.scroll.id; });
+    return ids.length >= 2 ? { k, ids: ids.slice(0, SPOILS_TUNE.max), lo: spoilsOdds(k), closed: false } : null;
   } catch (e) { return null; }
 }
+// the offered move that lifts the line most (learnOdds rows are best first), or '' when none lifts it
+const spoilsTop = (lo, ids) => { const r = lo && lo.rows.find(x => ids.includes(x.id)); return r && r.lift && r.lift.after > r.lift.before ? r.id : ''; };
+// the odds arrive after the card is up: fill each pick's line and mark the top move in place (never reorder under the pointer)
+function spoilsFill(sp, n = 0) {
+  if (sp.closed || n > SPOILS_TUNE.tries) return;
+  const lo = sp.lo || spoilsOdds(sp.k);
+  if (!lo) { setTimeout(() => spoilsFill(sp, n + 1), SPOILS_TUNE.waitMs); return; }
+  const top = spoilsTop(lo, sp.ids);
+  // only this pick's own row (a second pick folded into the card shows no row of its own: it waits for its close)
+  const bs = [...document.querySelectorAll('.mm-ov .mm-pick')], nm = b => (b.querySelector('b') || {}).textContent;
+  const seen = bs.length === sp.ids.length && sp.ids.every((x, i) => ABILITIES[x].name === nm(bs[i]));
+  if (seen) sp.ids.forEach((id, i) => { const sm = bs[i].querySelector('small'), t = spoilsSub(lo, id);
+    if (t && sm) sm.textContent = t;
+    if (id === top) bs[i].classList.add('lift'); });
+  if (!seen) setTimeout(() => spoilsFill(sp, n + 1), SPOILS_TUNE.waitMs);   // the card waits behind another: fill it once it shows
+}
 function spoilsPicks(v, sp) {
-  const sid = v.scroll.id, done = taken => { emit('choice', 'spoils'); emit('spoilsPick', { zone: v.zone, offered: sp.ids.length, taken }); };
+  const sid = v.scroll.id, done = taken => { sp.closed = true; emit('choice', 'spoils'); emit('spoilsPick', { zone: v.zone, offered: sp.ids.length, taken }); };
   const learn = id => {
     const k = sp.k, i = abLearnInfo(k, id);
-    if (soloHero() !== k || i.why || i.payWith !== sid || !abilityLearn(k, id)) { done('keep'); return; }   // the card waited and the move went: the Scroll stays
-    const free = soloEquipped().indexOf(null);
-    if (free >= 0) soloEquip(free, id);
-    else { if (typeof abilityOpenDetail === 'function') abilityOpenDetail(id); setTab('abilities', '#sec-abilities'); }   // all slots full: Abilities, on the move, has "Swap it in for:"
+    if (soloHero() !== k || i.why || i.payWith !== sid) { done('keep'); return; }   // the card waited and the move went: the Scroll stays
+    const lo = spoilsOdds(k), row = lo && lo.rows.find(r => r.id === id && r.lift);   // where it goes, read before it is learned
+    if (!abilityLearn(k, id)) { done('keep'); return; }
+    const free = soloEquipped().indexOf(null), placed = !!row && typeof abilityPlace === 'function' && abilityPlace(k, row);   // in the spot its line said
+    if (!placed && free >= 0) soloEquip(free, id);
+    else if (!placed) { if (typeof abilityOpenDetail === 'function') abilityOpenDetail(id); setTab('abilities', '#sec-abilities'); }   // all slots full: Abilities, on the move, has "Swap it in for:"
     try { save(); } catch (e) {}
     try { ui(true); } catch (e) {}   // the fight bar shows the slotted move now
     done(id);
   };
   return { pickHead: 'Learn one now:', goTxt: 'Keep the Scroll', onKeep: () => done('keep'),
-    picks: sp.ids.map(id => ({ txt: ABILITIES[id].name, sub: ABILITIES[id].line, fn: () => learn(id) })) };
+    picks: sp.ids.map(id => ({ txt: ABILITIES[id].name, sub: spoilsSub(sp.lo, id) || ABILITIES[id].line, fn: () => learn(id) })) };
 }
 on('cacheOpen', v => {
   if (typeof moment !== 'function') return;
@@ -59,7 +88,7 @@ on('cacheOpen', v => {
   // the sub is one short line: the unique's odds (honest, with modifiers); the colour's line says what a look did
   const sub = v.chance !== null && v.chance !== undefined ? `Unique chance on this win: ${v.chance}%.` : 'Here is what the win gave you.';
   const o = { title, sub, col, icon, lines, zone: v.zone };
-  if (sp) Object.assign(o, spoilsPicks(v, sp));
+  if (sp) { Object.assign(o, spoilsPicks(v, sp)); setTimeout(() => spoilsFill(sp), SPOILS_TUNE.waitMs); }
   o.actions = [];
   if (v.unique && typeof momentEquipAction === 'function') { const eq = momentEquipAction(v.unique.item); if (eq) o.actions.push(eq); }   // Cal's play note 9: the unique is one tap from being worn
   if (big && !sp && v.n >= CACHE_TUNE.autoFrom) o.actions.push({ txt: cacheAuto() ? 'Turn off auto-open' : 'Open the next ones automatically', fn: () => cacheSetAuto(!cacheAuto()) });

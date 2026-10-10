@@ -27,7 +27,8 @@
 //   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill, fights })
 // Events: fightStart { heroHaste, foeHaste, first }, turn { who, n }, timingRing { id, i, n, opensAt, closesAt },
 //   timingGrade { id, i, grade }, foeMove { id, name, anim, hits }, parryWindow
-//   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res }, foeCharge { name }, chargeBroken { name },
+//   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res, fooled, flinch, hold, zone, zb,
+//   pressed, early } (trick-read-rate: zb a zone boss; pressed the player's own press; early a held swing pressed before it swung), foeCharge { name }, chargeBroken { name },
 //   foeSkip { why }, turnPhase { name }, fightEnd { reason }, ability { cls: 'solo', id, name, slot }, soloAttack, soloParry,
 //   soloDodge, soloCounter, heroRider { id, foe, key, stacks, boss } (an ordinary foe's or a boss's rider landed on the hero:
 //   chill, venom or weaken; foe-tricks-say-so), turnCard { who, again, secs, chill } (chill: Chill on the hero is why the foe goes
@@ -245,7 +246,7 @@ function turnFoeSetup(f, z, o) {
   o = o || {};
   const T = TURN_TUNE, Z = !f.boss && typeof zoneFoeOf === 'function' ? zoneFoeOf(f) : null;
   const region = !!(f.boss && !o.set && typeof isRegionBoss === 'function' && isRegionBoss(z));
-  let moves, script, spd, hpA;
+  let moves, script, spd, hpA, bk = null;
   if (f.boss) {
     const kit = !o.set && typeof kitOf === 'function' ? kitOf(f) : null, id = o.set || (region ? (regionIdx(z) === 0 ? 'fenmother' : '') : f.type);
     const set = TURN_BOSS_SETS[id] || TURN_BOSS_BASIC;
@@ -253,6 +254,10 @@ function turnFoeSetup(f, z, o) {
     if (T.tricks.on && !o.set && !region && z >= T.tricks.from && z <= T.tricks.to && TURN_BOSS_TRICKS[id]) script = moves = turnTrickScript(TURN_BOSS_TRICKS[id], z);   // the Captain and Champion sets (boss-tiers-pr4)
     spd = region ? TURN_FOE_SPEED.region : TURN_FOE_SPEED.boss; hpA = region ? TURN_FOE_HP.region : TURN_FOE_HP.boss;
     if (kit) f.name = kit.name;
+    // the zone's Captain or Champion (59l ZONE_FOE_KITS, while its area is on): its own moves, Speed, armour and weakness row, held to
+    // today's damage a turn and fight length (ZONE_FOE_TUNE.parity), on the same boss line, gates and floors as the boss it replaces
+    bk = !o.set && !region && typeof zoneFoeBoss === 'function' ? zoneFoeBoss(z, script, spd * 10, f.armoured ? 0.3 : 0) : null;
+    if (bk) { script = moves = bk.script; spd = bk.spd / 10; f.name = bk.name; if (bk.row) f.txRow = bk.row; }
   } else if (Z) {
     moves = Z.moves; script = Z.moves; spd = Z.speed || TURN_FOE_SPEED.normal; hpA = Z.hp || TURN_FOE_HP.zoneFoe;
   } else {
@@ -275,9 +280,9 @@ function turnFoeSetup(f, z, o) {
   const champ = zb && !region && bossTierOf(z) === 'champion';   // a Champion's HP and hits sit on the Captain line x its own table
   const len = zb ? (region ? B.regionHpX : turnZoneLine(B.hpX, z) * (champ ? turnZoneLine(B.champHpX, z) : 1)) : 1;
   const roll = 0.95 + Math.random() * 0.1;   // drawn for every foe so seeded sims keep their sequence
-  const hp = hpA * ease * len * turnRefAtk(z) * (f.boss ? 1 : roll);   // a boss keeps one HP across tries; the roll is for packs
+  const hp = hpA * ease * len * turnRefAtk(z) * (f.boss ? 1 : roll) * (bk ? bk.hpK : 1);   // a boss keeps one HP across tries; the roll is for packs
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
-  f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
+  f.tk = { script, script2: bk && bk.script2 || null, kd: bk ? bk.kd : null, spd: spd * 10, arm: bk ? bk.arm : Z ? Z.armour || 0 : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
     hx: zb ? turnZoneLine(B.hitX, z) * (champ ? turnZoneLine(B.champHitX, z) : 1) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
     zb: zb && !region,   // a zone boss (not a region boss, the Deepwell or a Proving): the hero's own boss-hit share (boss.heroHitX) applies
     hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0, rx: zb && !region && B.riderX ? turnZoneLine(B.riderX, z) : 1, dcap: zb && !region && B.dotCap ? turnZoneLine(B.dotCap, z) : 0, hfl: zb && !region && B.hpFloor ? turnZoneLine(B.hpFloor, z) : 0,
@@ -357,12 +362,13 @@ function turnMakeProfile(f, u) {
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: Math.max(T.foeAtkX * (1 - armRed) * classDr, f.tk.pmin || 0), bossHeroX: f.tk.zb ? turnHeroHitX(key, z) : 1, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
-    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0, bossRiderX: f.tk.rx || 1, bossDotCap: f.tk.dcap || 0,
+    // kd: a boss kit's own damage for this hero (59l ZONE_FOE_TUNE.fit), on its own line and its hpFloor alike, as if its hits were that much bigger
+    bossHitX: (f.tk.hx || 1) * (f.tk.kd && f.tk.kd[key] || 1), bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: (f.tk.hfl || 0) * (f.tk.kd && f.tk.kd[key] || 1), bossRiderX: f.tk.rx || 1, bossDotCap: f.tk.dcap || 0,
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
     gates: f.tk.gates || null, fullHp: !!((f.boss || TURN_TUNE.normalFull) && !f.deep && !f.trial),   // the boss pass; every zone fight is met at full health (normalFull)
     zb: !!f.tk.zb, uq: typeof uniqRulesWorn === 'function' ? uniqRulesWorn() : [],   // uniques-first-four: a zone boss; the worn uniques' rules (none while UNIQ_TUNE.on is 0)
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
-    script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
+    script: f.tk.script, script2: f.tk.script2 || null, skin: !!f.skin, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
     parryWindow: Math.min(T.windowCaps.parry, (SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin') + attrParryMs()) * turnAssistX()),
     dodgeWindow: Math.min(T.windowCaps.dodge, (SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge') + bonus('turnDodgeWin')) * turnAssistX()),
@@ -858,7 +864,8 @@ function turnBegin(m, who, io) {
   let mv;
   if (m.charge) { mv = m.charge.mv; m.charge = null; }
   else {
-    mv = m.p.script[m.si++ % m.p.script.length];
+    const sc = m.phase2 && m.p.script2 ? m.p.script2 : m.p.script;   // a Champion kit's phase two (59l)
+    mv = sc[m.si++ % sc.length];
     if (mv.charge) {   // it gathers its strength: no damage this turn; it lets go on its next turn
       m.charge = { mv, dmg: 0, heroSince: 0 };
       io.emit('turn', { who, n: m.n });
@@ -888,6 +895,7 @@ function turnHitStart(m, io) {
   const T = TURN_TUNE, hit = m.move.hits[m.hitI], wind = hit.wind > 0 ? hit.wind : T.foeWindup, hold = hit.hold > 0 ? hit.hold : 0;
   m.phase = 'foeWindup'; m.until = m.now + wind + hold;
   m.defense = ''; m.usedDefense = !!m.fooled; m.flinch = !!m.fooled; m.fooled = 0;   // a hero fooled by a feint is off balance: this hit cannot be defended
+  m.pressAt = -1;   // trick-read-rate: when the player pressed on this hit (59m counts a held swing pressed before it swung)
   const w = turnWindows(m);
   // a delayed hit (hold) winds up, stalls for `hold` s, then runs the last (dodge window + tell) s to the windows; a feint shows its
   // tell at the same point in its run, then fades. Before that point the bar of a trick looks like any other hit's.
@@ -965,7 +973,11 @@ function turnContact(m, io) {
     m.fin = { id: m.move.id, name: m.move.name, hit: m.move.hits.slice(0, m.hitI).filter(x => !x.feint).length, hits: turnRealHits(m.move), charged: !!m.move.charge, defended: !!m.usedDefense && !m.flinch };
     turnLand(m, io, hit); m.landed++;
   }
-  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res, fooled: !!m.fooled, flinch: !!m.flinch, hold: hit.hold > 0 });
+  // trick-read-rate: what the player did on this hit, for the read count in S.bossOdds.reads (59m): pressed (a press of their own,
+  // not the lost defence after a feint fooled them), early (a held swing pressed while it held: before the bar ran on)
+  const pressed = !!m.usedDefense && !m.flinch;
+  io.emit('foeContact', { id: m.move.id, hit: m.hitI, hits: m.move.hits.length, res, fooled: !!m.fooled, flinch: !!m.flinch, hold: hit.hold > 0,
+    zone: m.p.zone, zb: !!m.p.zb, pressed, early: pressed && hit.hold > 0 && m.pressAt >= 0 && m.pressAt < m.holdTo });
   if (!io.alive().hero) { turnEnd(m, 'defeat', io); return; }
   if (!io.alive().foe) { turnEnd(m, 'victory', io); return; }   // a parried hit can strike back (the Stars' Holy Sparks)
   m.hitI++;
@@ -1052,7 +1064,7 @@ function turnResolve(m, cmd, dt, io) {
     return true;
   }
   if (m.phase === 'foeWindup' && !m.usedDefense && (cmd.kind === 'parry' || cmd.kind === 'dodge')) {
-    m.usedDefense = true;
+    m.usedDefense = true; m.pressAt = m.now;
     const w = turnWindows(m), left = m.until - m.now;
     let ok = left >= 0 && left <= (cmd.kind === 'parry' ? w.parry : w.dodge);
     if (cmd.kind === 'dodge' && !ok && m.h.shadow > 0 && left >= 0) { ok = true; m.shadowUsed = 1; }   // Shadow Step: it cannot fail
@@ -1258,7 +1270,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
   // the Rattlebones get-up, as the live loop's 59b onFoeDeath (wren-z9-10-foes): an ordinary bones foe that falls gets up once a fight
   // at ENEMY_TUNE.reassemble of its HP, unless a Burn tick (or magic) killed it; never a boss (an elite does). A turn fight is its own
   // pack, so the pack's quota of 2 never binds. Draws no random number, so every other roll stays on its stream.
-  const rise = (p.foeType === 'bones' && !p.boss && typeof ENEMY_TUNE === 'object' && ENEMY_TUNE.reassemble) || 0;
+  const rise = (p.foeType === 'bones' && !p.boss && !p.skin && typeof ENEMY_TUNE === 'object' && ENEMY_TUNE.reassemble) || 0;
   const io = { random: roll, emit: () => {}, alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), foeHp: () => Math.max(0, foeHp),
     heroHp: () => heroHp, slotId: i => p.eq[i] || null,
     damageFoe: (d, kind) => { foeHp -= d; out.damageDone += d;

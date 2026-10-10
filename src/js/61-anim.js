@@ -3,7 +3,7 @@
 // All positions are stage logical px (1 logical px = ZM CSS px, the stage zoom in 62-stage.js), which drives and draws these.
 //
 // Exposed: ANIM = { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts,
-//                   drawProj, drawRings, lightAt, glowAt, devView }
+//                   drawProj, drawRings, lightAt, glowAt, devView, glowView }
 
 const ANIM = (() => {
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
@@ -60,6 +60,8 @@ const ANIM = (() => {
   const devSets = new Map();   // src canvas -> Map(size -> { c, used })
   let vk = 0, vox = 0, voy = 0, devPx = 0, devNew = 0, devFrame = 0;
   function devView(k, ox, oy) { vk = k || 0; vox = ox || 0; voy = oy || 0; if (k) { devNew = 0; devFrame++; } }
+  // the same view mid-frame (62-stage's scenery and actor views differ in scale), keeping the frame's copy budget
+  function glowView(k, ox, oy) { if (vk) { vk = k; vox = ox || 0; voy = oy || 0; } }
   function devEvict() {
     while (devPx > DEV_CAP) {
       let old = null, oldSet = null, oldD = 0;
@@ -225,5 +227,5 @@ const ANIM = (() => {
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }
 
-  return { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts, drawProj, drawRings, lightAt, glowAt, devView };
+  return { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts, drawProj, drawRings, lightAt, glowAt, devView, glowView };
 })();

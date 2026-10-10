@@ -8,6 +8,8 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
+import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire, heroPacks } from './build.mjs';
+import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
 // Every game this run loads has no Omen (almanac.force('none')), so a new real-world day never
@@ -86,7 +88,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'turn-banner-clears-plate': 14, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -101,9 +103,16 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75, 'tips-hold-740': 40,
+  'feint-read-clear': 70,   // 64-74 s locally alone (feint-read-clear, 2026-10-09)
+  'craft-odds-before-pay': 38,   // 38 s locally (craft-odds-before-pay, 2026-10-09)
+  'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
-  'page size': 2
+  'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
+  'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
+  'page size': 2,
+  'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
+  'hero packs (hero-packs)': 15   // 14 s locally alone (hero-packs, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -292,6 +301,403 @@ if (section('check fonts')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('check fonts crashed: ' + (e.stack || e)); }
+
+// ---- split build (asset-build, art-loader; docs/design/hosting.md 5, B2): the page, its boot files and the area packs ----
+// Built in memory (nothing written). The boot files are the generated art data files as they are, under hashed names, run before
+// the game. The area art (AREA_ART: foe atlases, battle backgrounds) is one pack per foe and per background; the page keeps the
+// foes' timings. The boot loader writes the save's zone's packs before the game runs; the rest load after boot, one area ahead
+// (75-art-load), and while the zone on screen lacks a pack the game is held under a plain line, never drawn with a stand-in.
+// A pack whose file is gone after a deploy reloads the page once the zone on screen needs it (never twice in a minute).
+if (section('split build (asset-build)')) try {
+  const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
+  const inline = fs.existsSync(distFile) ? fs.readFileSync(distFile, 'utf8') : '';
+  const src = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\n*$/, '\n');
+  assert(s.html.startsWith('<title>') && !/<!doctype|<(html|head|body)[\s>]/i.test(s.html), 'split: the page keeps the Artifact page shape (starts with <title>, no doctype/html/head/body)');
+  const gen = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js')).sort().filter(f => isAsset(src(f)));
+  assert(gen.length >= 10 && s.assets.map(a => a.f).join() === gen.filter(f => !AREA_ART[f]).join() && Object.keys(AREA_ART).every(f => gen.includes(f))
+    && gen.every(f => BOOT_ART.includes(f) !== !!AREA_ART[f]), `split: every generated data file is listed once, as a boot file (${s.assets.length}, in filename order) or as area art`);
+  { let threw = '';   // mutation: an unlisted generated art file stops the build
+    try { placeArt([...gen, '21zx-data-checkonly.js']); } catch (e) { threw = String(e.message); }
+    assert(/21zx-data-checkonly\.js is generated art in neither BOOT_ART nor AREA_ART/.test(threw), `split: a generated art file in neither list stops the build (${threw.slice(0, 80) || 'it built'})`); }
+  assert(s.assets.every(a => a.text === src(a.f) && a.name === assetName(a.f, a.text)), 'split: each boot file is its file as it is, named by its content hash');
+  assert([...s.html.matchAll(/<script src="assets\/([^"]+)"/g)].map(m => m[1]).join() === s.assets.map(a => a.name).join() && s.html.lastIndexOf('<script src="assets/') < s.html.lastIndexOf('})();\n</script>'),
+    'split: the page names every boot file once, in order, before the game\'s script');
+  // the area packs: each entry of FOE_ART and BG_ART is one pack, its data the entry's art exactly; the page keeps the rest
+  const G = loadCore(), data = (f, v) => vm.runInNewContext(`${src(f)}\n;${v}`);
+  const packData = p => { let got = null; vm.runInNewContext(p.text, { lfArt: (kind, key, d) => { got = { id: kind + ':' + key, d }; } }); return got; };
+  for (const [f, A] of Object.entries(AREA_ART)) {
+    if (A.kind === 'hero') { heroPackCheck(s, f, A, data(f, A.v)); continue; }   // section 'hero packs (hero-packs)' says how they split
+    const D = data(f, A.v), mine = s.packs.filter(p => p.f === f);
+    assert(mine.map(p => p.id).join() === Object.keys(D).map(k => A.kind + ':' + k).join(), `split: ${A.v} has one pack per entry (${mine.map(p => p.id).join(', ')})`);
+    for (const p of mine) {
+      const got = packData(p), key = p.id.slice(A.kind.length + 1);
+      assert(got && got.id === p.id && JSON.stringify(got.d) === JSON.stringify(A.load(D[key])) && p.name === `${f.replace(/-data-.*$/, '')}-${A.kind}-${key}.${p.name.split('.').slice(-2, -1)[0]}.js`,
+        `split: ${p.id}'s pack holds its art as the source has it, under a hashed name (${p.name})`);
+    }
+    const kept = vm.runInNewContext(`${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?)\\n// ---- src`))[1]}\n;${A.v}`);
+    assert(JSON.stringify(kept) === JSON.stringify(A.keep ? Object.fromEntries(Object.entries(D).map(([k, e]) => [k, A.keep(e)])) : {}),
+      `split: the page keeps ${A.v} ${A.keep ? 'with every field but the atlases (59l\'s timings)' : 'empty until a pack comes'}`);
+  }
+  // only the readers that know a pack can come late read the art fields (gameplay reads the timings, which the page keeps)
+  const readers = (re, ok) => fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js') && !isAsset(src(f)) && !ok.includes(f)
+    && src(f).split('\n').some(l => !/^\s*\/\//.test(l) && re.test(l)));
+  const foeR = readers(/\.atlases\b/, ['21zz-art-b91.js', '64j-foe-art.js', '75-art-load.js']), bgR = readers(/\bBG_ART\b/, ['22-data-regions.js', '62-stage.js', '75-intro-ui.js', '75-art-load.js', '21zz-art-b91.js']);
+  assert(!foeR.length && !bgR.length, `split: foe atlases and BG_ART are read only where a late pack is handled (${[...foeR, ...bgR].join(', ') || 'none else'})`);
+  // the zone table is the shipped code's own answer, and past the road no zone's scenery depends on a background being in
+  const road = G.eval('ROAD_ZONES'), live = G.eval(`Array.from({ length: ${road} }, (_, i) => [ZONE_FOES[i + 1] ? 'foe:' + ZONE_FOES[i + 1].key : null, 'bg:' + zoneTheme(i + 1)])`);
+  const inZ = (p, z) => p.zones.some(([a, b]) => z >= a && z <= b);
+  const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => p.id === id)).sort().join(), s.packs.filter(p => inZ(p, i + 1)).map(p => p.id).sort().join()]).filter(r => r[1] !== r[2]);
+  const past = G.eval(`Array.from({ length: 2000 }, (_, i) => ${road} + 1 + i).filter(z => zoneTheme(z) !== zoneTheme(z - 35) || ZONE_FOES[z] || regionIdx(z) === 0).length`);
+  assert(!badZ.length && !past && s.packs.every(p => p.hero || p.zones.length), `split: each pack names the zones whose fights show it, from ZONE_FOES and zoneTheme `
+    + `(${badZ.slice(0, 3).map(r => r.join(' ')).join('; ') || 'all ' + road}), every area pack shows somewhere (${s.packs.filter(p => !p.hero && !p.zones.length).map(p => p.id).join(', ') || 'yes'}), `
+    + `and past the road the scenery repeats every 35 zones with no zone monster (2000 zones; ${past} differ)`);
+  const strip = h => h.replace(/<!-- Boot loader[\s\S]*?<\/script>\n/, '').replace(/<script src="assets\/[^"]+"[^>]*><\/script>\n/g, '').replace('\n<script>lfBoot.end();</script>', '');
+  let want = inline;
+  for (const a of s.assets) want = want.replace(`// ---- src/js/${a.f} ----\n${a.text}\n`, () => '');
+  for (const f of Object.keys(AREA_ART)) want = want.replace(`// ---- src/js/${f} ----\n${src(f)}`, () => `// ---- src/js/${f} ----\n${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?\\n)\\n// ---- src`))[1]}`);
+  assert(inline && strip(s.html) === want, 'split: apart from the loader, the page is the inline page with the boot files taken out and the area art kept as above');
+  // the load lines (docs/design/hosting.md 6; art-loader judge 2026-10-10), each fail line with a mutation run
+  { const sizes = new Map(), size = x => (sizes.has(x) ? sizes.get(x) : (sizes.set(x, wire(x)), sizes.get(x)));
+    const r = loadReport(s, { size }), MBs = n => (n / 1e6).toFixed(2);
+    assert(!r.fails.length, `split: the load lines hold: boot set ${MBs(r.zone1.counted)} MB for a new game and ${MBs(r.worst.counted)} MB for the worst zone (${r.worst.z}) of ${MBs(LOAD_LINES.bootFail)}, `
+      + `largest zone set ${MBs(r.zoneMax.b)} of ${MBs(LOAD_LINES.zoneSet)}, area set ${MBs(r.areaMax.b)} of ${MBs(LOAD_LINES.areaSet)}${r.fails.length ? ': ' + r.fails.join('; ') : ''}`);
+    for (const w of r.warns) console.log('  WARN split: ' + w);
+    assert(LOAD_LINES.e1.pack === 'bg:forest' && Object.entries(r.packs).every(([id, x]) => id === 'bg:forest' || x.counted === x.real),
+      `split: only Mossy Hollow's pack counts at one shape in the boot set (E1, until bg-pack-by-shape)`);
+    // each mutation goes 10 KB past its line from today's bytes, so a change elsewhere never makes one stop failing
+    const pkT = id => s.packs.find(p => p.id === id).text, big1 = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m)).text, R = id => r.packs[id].real, over = (line, now) => Math.max(0, line - now) + 1e4;
+    const plus = (txt, n) => x => size(x) + (x === txt ? n : 0), L = (o = {}) => ({ ...LOAD_LINES, ...o, area1: { ...LOAD_LINES.area1, ...(o.area1 || {}) } });
+    const without = (...ids) => ({ ...LOAD_LINES, area1: Object.fromEntries(Object.entries(LOAD_LINES.area1).filter(([k]) => !ids.includes(k))) });
+    const wz = r.worst.z, gj = 'foe:gloomjaw', gjZ = s.packs.find(p => p.id === gj).zones[0][0];
+    const mut = [
+      ['a boot file past the line', { size: plus(big1, over(LOAD_LINES.bootFail, r.zone1.counted)) }, /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/],
+      [`the worst zone's foe pack past the line`, { size: plus(pkT(s.packs.find(p => p.id.startsWith('foe:') && p.zones.some(([a, b]) => wz >= a && wz <= b)).id), over(LOAD_LINES.bootFail, r.worst.counted)) }, new RegExp(`^boot set, the worst zone \\(${wz}\\): .* over 4\\.00 MB$`)],
+      ['a portrait share past its cap', { lines: L({ e1: { pack: 'bg:forest', port: r.packs['bg:forest'].port - 1e4 } }) }, /^bg:forest's portrait share .* \(E1\)$/],
+      ['Gloomjaw no longer an exception, past the zone line', { lines: without(gj), size: plus(pkT(gj), over(LOAD_LINES.zoneSet, R(gj))) }, new RegExp(`^zone ${gjZ}'s packs are [\\d.]+ MB, over 0\\.65 MB \\(zone set\\)$`)],
+      ['imp and Gloomjaw no longer exceptions, past the area line', { lines: without('foe:imp', gj), size: plus(pkT(gj), over(LOAD_LINES.areaSet, R('foe:imp') + R(gj))) }, /^area 1's new packs are [\d.]+ MB, over 1\.00 MB \(area set\)$/],
+      ["imp over its cap", { lines: L({ area1: { 'foe:imp': R('foe:imp') - 1e4 } }) }, /^foe:imp is [\d.]+ MB, over its area 1 cap of [\d.]+ MB$/],
+      ['an exception for a pack the build lacks', { lines: L({ area1: { 'foe:nothing': 0.1e6 } }) }, /^area 1's exception foe:nothing names a pack the build lacks$/]
+    ];
+    for (const [what, o, re] of mut) { const m = loadReport(s, { size, ...o }); assert(m.fails.some(f => re.test(f)), `split: mutation (${what}) fails its load line (${m.fails.join('; ') || 'nothing failed'})`); }
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe) skipBrowser('split: boot, progress, failure, packs and the loading line: Playwright or Chromium not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const end = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(end);
+    const KEY = 'lanternfall.save.v5', early = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
+    try {
+      const assets = pageAssets(s.file, s.html, files), big = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m));
+      const pk = id => s.packs.find(p => p.id === id);
+      // hold: { name: 'hold' | 'fail' } per file (a pack or boot file name); page: what the server's page reads on a later request
+      const open = async ({ hold = {}, width = 1280, height = 720, save = null, html = s.html, later = null, init = null } = {}) => {
+        const ctx = await browser.newContext({ viewport: { width, height } }), page = await ctx.newPage(), errs = [];
+        await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+        if (save) await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...save, last: Date.now() })]);
+        if (init) await ctx.addInitScript(init, KEY);
+        page.on('pageerror', e => errs.push(String(e)));
+        let release; const held = new Promise(r => { release = r; });
+        await routePage(page, 'http://lf.test/', html, assets);
+        let pages = 0;
+        page.on('load', () => pages++);
+        if (later) await page.route('http://lf.test/', r => (r.request().isNavigationRequest() ? r.fallback() : r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: later })));
+        for (const [name, how] of Object.entries(hold)) await page.route('**/assets/' + name, async r => { if (how === 'gone') return r.fulfill({ status: 404, body: '' }); await held; return how === 'fail' ? r.abort() : r.fallback(); });
+        await page.goto('http://lf.test/', { waitUntil: 'commit' });
+        return { page, errs, release, navs: () => pages };
+      };
+      const go2 = page => page.evaluate(() => window.__t.x('S.activity = "fight", setZone(2), ui(true)'));   // as the zone arrows do
+      const booted = page => page.waitForFunction(() => !document.getElementById('lfBoot') && !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+      const look = page => page.evaluate(() => {
+        const c = document.getElementById('artWait'), st = document.getElementById('stage').getBoundingClientRect(), r = c && !c.hidden ? c.getBoundingClientRect() : null;
+        return { cover: r ? c.firstChild.textContent + (c.lastChild.hidden ? '' : ' [' + c.lastChild.textContent + ']') : null, full: !!r && r.left <= st.left && r.top <= st.top && r.right >= st.right && r.bottom >= st.bottom && getComputedStyle(c).backgroundColor === 'rgb(11, 8, 16)',
+          zone: (document.getElementById('zNum') || {}).textContent, hp: (document.getElementById('mHp') || {}).textContent, sub: (document.getElementById('zSub') || {}).textContent };
+      });
+      // 1. a clean boot at each view: the line goes, the game runs (its zone name is set) with no page error and no cover
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const { page, errs } = await open({ width: w, height: h });
+        await page.waitForLoadState('load'); await booted(page);
+        const r = await page.evaluate(() => ({ line: !!document.getElementById('lfBoot'), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait') }));
+        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && !errs.length, `split: boots at ${w}x${h} with the loading line and its tags gone, no loading cover` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
+        await page.close();
+      }
+      // 2. while the biggest boot file is still loading, the line shows the bytes done of the total: the boot files and zone 1's packs
+      { const { page, release } = await open({ hold: { [big.name]: 'hold' } });
+        await page.waitForFunction(() => /^Loading the game: [\d.]+ of [\d.]+ MB$/.test((document.getElementById('lfBootText') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
+        const t = await page.evaluate(() => (document.getElementById('lfBootText') || {}).textContent || '');
+        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = (s.assets.reduce((n, a) => n + a.bytes, 0) + s.packs.filter(p => inZ(p, 1)).reduce((n, p) => n + p.bytes, 0)) / 1e6;
+        assert(m && +m[2] === +total.toFixed(1) && +m[1] < +m[2], `split: while a file loads the line reads the bytes done of the boot files and zone 1's packs ("${t}", ${total.toFixed(1)} MB)`);
+        release(); await booted(page);
+        assert(!(await page.$('#lfBoot')), 'split: the line goes once the held file arrives');
+        await page.close(); }
+      // 3. a file that fails to load says so, with a Reload button (a boot file, and the save's zone's pack)
+      for (const name of [big.name, pk('foe:imp').name]) {
+        const { page, release } = await open({ hold: { [name]: 'fail' } }); release();
+        await page.waitForLoadState('load'); await page.waitForTimeout(300);
+        const r = await page.evaluate(() => ({ t: (document.getElementById('lfBootText') || {}).textContent, b: !!document.querySelector('#lfBoot button') }));
+        assert(/did not load/.test(r.t || '') && r.b, `split: a failed ${name === big.name ? 'boot file' : 'zone 1 pack'} shows "${r.t}" and a Reload button`);
+        await page.close(); }
+      // 4. the save's zone's packs come before the game: a zone 2 save boots with Gloomjaw's frames cut and no cover, and only after
+      //    the boot files does any other pack load
+      { const { page, errs } = await open({ save: { ...early, zone: 2, maxZone: 8 }, html: probe });
+        await page.waitForLoadState('load'); await booted(page); await page.waitForTimeout(400);
+        const r = await page.evaluate(() => window.__t.x(`({ boot: lfBoot.boot.filter(id => !id.startsWith('hero:')).join(), ready: [1, 2, 8].map(z => artZoneReady(z)).join(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })(), bg: !!BG_ART.forest && BG_ART.forest.land.src.length > 1000 })`));
+        const c = await look(page);
+        assert(r.boot === 'foe:gloomjaw,bg:forest' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
+          `split: a zone 2 save boots with its packs in (Gloomjaw cut, Mossy Hollow drawn, no cover) and the rest of the area arrives after (${JSON.stringify(r)}, ${JSON.stringify(c)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5. a zone whose pack is still loading: the game holds under an opaque line covering the stage, the zone reads "loading",
+      //    nothing moves; when it arrives the line goes and the fight runs
+      { const { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'hold' }, html: probe });
+        await booted(page); await page.waitForTimeout(500);
+        await go2(page); await page.waitForTimeout(300);
+        const a = await look(page), held = await page.evaluate(() => window.__t.x('({ t: gameHeld(), z: S.zone, k: S.kills, hp: mob && mob.hp })'));
+        await page.waitForTimeout(1500);
+        const b = await look(page), held2 = await page.evaluate(() => window.__t.x('({ t: gameHeld(), z: S.zone, k: S.kills, hp: mob && mob.hp })'));
+        assert(a.cover === 'Loading Mossy Hollow' && a.full && a.zone === 'Zone 2 · loading' && held.t && held.z === 2 && JSON.stringify(held) === JSON.stringify(held2) && a.hp === b.hp,
+          `split: zone 2 with Gloomjaw still loading: "${a.cover}" covers the stage (${a.full}), the zone reads "${a.zone}", the game holds (${JSON.stringify(held)} then ${JSON.stringify(held2)})`);
+        await page.evaluate(() => window.__t.x(`(() => { const f = () => { if (gameHeld()) return requestAnimationFrame(f);
+          const F = foeArtFrames('gloomjaw'); window.__first = Object.values(F.acts).some(a => a.fr.some(x => x.body.c._pend)) ? 'pending' : 'cut'; };
+          requestAnimationFrame(f); })()`));
+        release(); await page.waitForTimeout(1500);
+        const first = await page.evaluate(() => window.__first);
+        assert(first === 'cut', `split: on the first frame after the hold Gloomjaw's frames are already cut (${first}), so no blank foe shows`);
+        const c = await look(page), run = await page.evaluate(() => window.__t.x(`({ t: gameHeld(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })() })`));
+        assert(!c.cover && c.zone === 'Zone 2' && !run.t && !run.pend && !errs.length, `split: when Gloomjaw arrives the cover goes, its frames are cut and the game runs (${JSON.stringify(c)}, ${JSON.stringify(run)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5b. a background that comes after boot is decoded before the hold lets go: on the first frame after it, 62-stage's own image
+      //     of the picture is complete at once (no procedural scenery in its place)
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+        await booted(page); await page.waitForTimeout(300);
+        await page.evaluate(() => window.__t.x('S.activity = "fight", setZone(8), ui(true)')); await page.waitForTimeout(300);
+        const a = await look(page);
+        await page.evaluate(() => window.__t.x(`(() => { const f = () => { if (gameHeld()) return requestAnimationFrame(f);
+          const B = BG_ART.forest, im = new Image(); im.src = 'data:image/webp;base64,' + (B && B.land.src);
+          window.__first = B && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
+          requestAnimationFrame(f); })()`));
+        release(); await page.waitForTimeout(1500);
+        const first = await page.evaluate(() => window.__first), b = await look(page);
+        assert(a.cover === 'Loading Batwing Caves' && first === 'decoded' && !b.cover && !errs.length,
+          `split: zone 8 waits for Mossy Hollow's painting ("${a.cover}") and the first frame after draws it decoded (${first}, ${JSON.stringify(b)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5c. a zone change inside tick that emits nothing (as a retreat after a wipe sets S.zone): the cover is up before the browser
+      //     paints that frame (75-art-load rechecks in a microtask after the frame's draw)
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+        await booted(page); await page.waitForTimeout(300);
+        await page.evaluate(() => window.__t.x(`(() => { const t0 = tick; tick = dt => { t0(dt); if (!window.__moved && S.activity === 'fight') { window.__moved = 1; S.zone = 8;
+          queueMicrotask(() => { const c = document.getElementById('artWait'); window.__cov = !!c && !c.hidden; }); } }; })()`));
+        await page.waitForFunction(() => window.__moved, null, { timeout: 5000 }).catch(() => {});
+        await page.waitForTimeout(100);
+        const r = await page.evaluate(() => ({ moved: window.__moved, cov: window.__cov })), a = await look(page);
+        release(); await page.waitForTimeout(300);
+        assert(r.moved && r.cov === true && a.cover === 'Loading Batwing Caves' && !errs.length, `split: a zone change inside tick with no event is covered before that frame paints (${JSON.stringify(r)}, ${JSON.stringify(a)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 6. a pack that fails while the server's page still names it: "Waiting for the connection", then it tries again and loads
+      { const { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'fail' }, html: probe });
+        await booted(page); release(); await page.waitForTimeout(300);
+        await go2(page); await page.waitForTimeout(600);
+        const a = await look(page);
+        await page.unroute('**/assets/' + pk('foe:gloomjaw').name); await page.waitForTimeout(4500);
+        const b = await look(page);
+        assert(/^Waiting for the connection to load Mossy Hollow$/.test(a.cover || '') && !b.cover && b.zone === 'Zone 2' && !errs.length, `split: a failed pack waits ("${a.cover}", ${JSON.stringify(a)}) and loads on a later try (${JSON.stringify(b)})`);
+        await page.close(); }
+      // 7. a pack whose file is gone and that the server's page no longer names (a deploy): once the zone on screen needs it, the
+      //    game saves and reloads. If it happens again within a minute it does not loop: the line asks the player to reload.
+      //    (After the reload the check puts the save back in zone 1, so the new page boots and the second time can be seen.)
+      { const after = probe.split(pk('foe:gloomjaw').name).join('21za-foe-gloomjaw.0000000000.js');
+        const init = k => { try { if (sessionStorage.getItem('lanternfall.artReloadAt') && !sessionStorage.getItem('t.z')) {
+          const v = JSON.parse(localStorage.getItem(k)); sessionStorage.setItem('t.z', String(v.zone)); v.zone = 1; localStorage.setItem(k, JSON.stringify(v)); } } catch (e) {} };
+        const { page, navs } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'gone' }, html: probe, later: after, init });
+        await booted(page); await page.waitForTimeout(500);
+        await go2(page);
+        await page.waitForFunction(() => sessionStorage.getItem('t.z'), null, { timeout: 8000 }).catch(() => {});   // the reload: a new page
+        await booted(page); await page.waitForTimeout(800);
+        const saved = await page.evaluate(() => sessionStorage.getItem('t.z'));
+        await go2(page).catch(() => {}); await page.waitForTimeout(1500);
+        const b = await look(page);
+        assert(navs() === 2 && saved === '2' && b.cover === 'The game was updated. Reload the page to go on. [Reload]',
+          `split: a pack gone after a deploy saves (zone ${saved}) and reloads the page (${navs()} loads), and a second time within a minute asks: "${b.cover}"`);
+        await page.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('split build crashed: ' + (e.stack || e)); }
+
+// ---- hero packs (card hero-packs; tools/build.mjs heroPacks, src/js/75-art-load.js, src/boot-loader.html) ----
+// A hero art file (an AREA_ART entry of kind 'hero') splits by hero: one pack of each hero's core moves, which the boot loader
+// writes only for the save's hero, and one pack per other move, loaded after boot. The boot lines count the heaviest hero's
+// core. While the stage needs a move that is not in (artHeroNeed), the game holds under a plain line, never a stand-in.
+// No hero file ships yet (the route S wire cards register theirs), so this section proves the kind with a test hero file built
+// in memory from today's art (21y's HERO_ART, its poses as moves; nothing redrawn, nothing written).
+// heroPackCheck: a hero file's packs, table rows and page part (also run on every real hero entry by the split section).
+// A one-hero file (entry `hero`) is { moves, ... } with `core` a list; otherwise { heroes: { <hero>: { moves, ... } } } with `core` per hero.
+// (a function declaration: the split section above calls it before this line runs)
+function heroPackCheck(s, f, A, D) {
+  const SOLO_IDS = vm.runInNewContext(/const SOLO_ORDER = (\[[^\]]*\])/.exec(fs.readFileSync(path.join(ROOT, 'src', 'js', '24b-data-solo.js'), 'utf8'))[1]);
+  const mine = s.packs.filter(p => p.f === f), tag = f.replace(/-data-.*$/, ''), one = typeof A.hero === 'string';
+  const HS = one ? { [A.hero]: D } : D.heroes, coreOf = h => (one ? A.core : A.core[h]);
+  assert(Object.keys(HS).every(h => SOLO_IDS.includes(h)), `hero packs: ${A.v} names only the game's heroes (${Object.keys(HS).join(', ')} of ${SOLO_IDS.join(', ')}), so the boot loader never loads a hero the game will not draw`);
+  const want = Object.entries(HS).flatMap(([h, H]) => [`${h}.core`, ...Object.keys(H.moves).filter(m => !coreOf(h).includes(m)).map(m => `${h}.${m}`)]).map(k => `hero:${A.v}.${k}`);
+  assert(mine.map(p => p.id).join() === want.join(), `hero packs: ${A.v} has one core pack per hero and one pack per other move (${mine.length} packs: ${mine.slice(0, 4).map(p => p.id).join(', ')}...)`);
+  const table = JSON.parse(s.html.match(/packs = (\{.*?\}), road = /)[1]);
+  const bad = mine.filter(p => {
+    let got = null; vm.runInNewContext(p.text, { lfArt: (kind, key, d) => { got = { id: kind + ':' + key, d }; } });
+    const H = HS[p.hero].moves, t = table[p.id], ms = p.core ? coreOf(p.hero) : [p.id.split('.').pop()];
+    return !got || got.id !== p.id || JSON.stringify(got.d) !== JSON.stringify(Object.fromEntries(ms.map(m => [m, A.load(H[m])])))
+      || !new RegExp(`^${tag}-hero-${p.id.slice(5).replace(/\./g, '\\.')}\\.[0-9a-f]{10}\\.js$`).test(p.name)
+      || !t || t.f !== 'assets/' + p.name || t.b !== p.bytes || t.z.length || t.h !== p.hero || t.c !== (p.core ? 1 : 0) || t.m.join() !== ms.join() || t.v !== A.v;
+  });
+  assert(!bad.length, `hero packs: each ${A.v} pack holds its moves as the source has them, under a hashed name, with its hero, moves and no zones in the loader's table (${bad.map(p => p.id).join(', ') || 'all ' + mine.length})`);
+  const part = s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?)\\n// ---- src`))[1];
+  let reg = null; const kept = vm.runInNewContext(`${part}\n;${A.v}`, { lfBoot: { heroFile: (n, o, h) => { reg = n + (h ? ' ' + h : ''); } } });
+  const keptHero = H => ({ ...H, moves: A.keep ? Object.fromEntries(Object.entries(H.moves).map(([m, M]) => [m, A.keep(M)])) : {} });
+  const keepWant = one ? keptHero(D) : { ...D, heroes: Object.fromEntries(Object.entries(D.heroes).map(([h, H]) => [h, keptHero(H)])) };
+  assert(JSON.stringify(kept) === JSON.stringify(keepWant) && reg === A.v + (one ? ' ' + A.hero : ''), `hero packs: the page keeps ${A.v} with every field but the moves' data, and registers it for 75-art-load (lfBoot.heroFile ${reg})`);
+}
+if (section('hero packs (hero-packs)')) try {
+  const src = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\n*$/, '\n');
+  const HA = vm.runInNewContext(`${src('21y-data-heroart.js')}\n;HERO_ART`);
+  const T = { v: HA.v, w: HA.w, h: HA.h, ax: HA.ax, ay: HA.ay, heroes: Object.fromEntries(Object.entries(HA.heroes).map(([k, H]) => [k, { pal: H.pal, moves: H.poses }])) };
+  const TF = '21zx-data-herotest.js', text = `// 21zx-data-herotest: GENERATED by tools/check.mjs (section hero packs) from 21y-data-heroart.js. Never shipped.\nconst HERO_TEST = ${JSON.stringify(T)};\n`;
+  const REG = { v: 'HERO_TEST', kind: 'hero', keep: null, load: M => M, core: { wren: ['draw', 'release', 'camp', 'hurt', 'fallen'], tobin: ['ready', 'wind', 'strike', 'camp', 'hurt', 'fallen'], pip: ['ready', 'wind', 'cast', 'camp', 'hurt', 'fallen'] } };
+  const art = { ...AREA_ART, [TF]: REG }, s = buildSplit({ write: false, art, extra: [{ f: TF, text }] }), base = buildSplit({ write: false });
+  heroPackCheck(s, TF, REG, T);
+  // a hero file that does not say its core moves, names a core move it lacks, or names a move a file name cannot carry, stops the build
+  for (const [what, A, D, re] of [
+    ['a hero with no core list', { ...REG, core: { wren: REG.core.wren, tobin: REG.core.tobin } }, T, /names no core moves for pip/],
+    ['a core move the hero lacks', { ...REG, core: { ...REG.core, wren: ['draw', 'jump'] } }, T, /wren's core moves jump are not in HERO_TEST\.heroes\.wren\.moves/],
+    ['a move named core', REG, { ...T, heroes: { ...T.heroes, pip: { ...T.heroes.pip, moves: { ...T.heroes.pip.moves, core: [] } } } }, /core cannot name a hero or a move/],
+    ['no heroes table', REG, { v: 1 }, /needs a heroes table/],
+    ['a one-hero file with no moves', { ...REG, hero: 'wren', core: ['draw'] }, { v: 1 }, /needs its moves .* for wren/]
+  ]) { let threw = ''; try { heroPacks({ f: TF, text }, A, D); } catch (e) { threw = String(e.message); } assert(re.test(threw), `hero packs: ${what} stops the build (${threw.slice(0, 100) || 'it built'})`); }
+  // a one-hero file (as Wren's route S file is shaped): the same packs, the page keeps { moves: {} , ... } and registers it with its hero
+  { const W = { v: 1, string: 'kept', moves: T.heroes.wren.moves }, WF = '21zw-data-herotest1.js', WREG = { v: 'HERO_ONE', kind: 'hero', hero: 'wren', core: REG.core.wren, keep: null, load: M => M };
+    const s1 = buildSplit({ write: false, art: { ...AREA_ART, [WF]: WREG }, extra: [{ f: WF, text: `// 21zw-data-herotest1: GENERATED by tools/check.mjs. Never shipped.\nconst HERO_ONE = ${JSON.stringify(W)};\n` }] });
+    heroPackCheck(s1, WF, WREG, W); }
+  // the boot loader puts the save's hero's core in the constant as the file registers (before the next file runs, as inline), merging a
+  // move's pack data into what the page kept of it
+  { const loader = s.html.match(/<script id="lfBootJs">([\s\S]*?)<\/script>/)[1], wrote = [];
+    const ctx = { localStorage: { getItem: () => JSON.stringify({ zone: 1, solo: { hero: 'wren' } }) }, document: { write: t => wrote.push(t), getElementById: () => null } };
+    vm.runInNewContext(loader, ctx);
+    const core = s.packs.find(p => p.id === 'hero:HERO_TEST.wren.core');
+    vm.runInNewContext(core.text, ctx);
+    const part = s.html.match(/\/\/ ---- src\/js\/21zx-data-herotest\.js ----\n([\s\S]*?)\n\/\/ ---- src/)[1];
+    const H = vm.runInNewContext(`${part}\n;HERO_TEST`, ctx), got = Object.keys(H.heroes.wren.moves).join();
+    const k = { heroes: { wren: { moves: { a: { box: 1 }, b: [1] } } } }, kf = 'HERO_K';
+    ctx.lfBoot.packs['hero:HERO_K.wren.core'] = { h: 'wren', v: kf, c: 1, m: ['a', 'b'], z: [] };
+    ctx.lfBoot.heroFile(kf, k); ctx.lfBoot.putHero('hero:HERO_K.wren.core', { a: { atlas: 'x' }, b: [2] });
+    assert(wrote.some(t => t.includes(core.name)) && got === REG.core.wren.join() && JSON.stringify(H.heroes.wren.moves.draw) === JSON.stringify(T.heroes.wren.moves.draw)
+      && JSON.stringify(k.heroes.wren.moves) === '{"a":{"box":1,"atlas":"x"},"b":[2]}',
+      `hero packs: the boot loader writes the save's hero's core and puts it in the constant as the file registers (${got}); a kept move takes its pack's fields (${JSON.stringify(k.heroes.wren.moves)})`); }
+  // the boot lines: a hero's core counts in both (the heaviest hero, also for a new game), a move outside the core counts in neither
+  const sizes = new Map(), size = x => (sizes.has(x) ? sizes.get(x) : (sizes.set(x, wire(x)), sizes.get(x))), MBs = n => (n / 1e6).toFixed(2);
+  const r = loadReport(s, { size }), r0 = loadReport(base, { size }), heroes = Object.keys(T.heroes);
+  // (a hero file that ships counts too: each hero's core is the sum of its core packs over every hero file)
+  const cores = Object.fromEntries(heroes.map(h => [h, s.packs.filter(p => p.hero === h && p.core).reduce((n, p) => n + size(p.text), 0)]));
+  const top = heroes.reduce((m, h) => (cores[h] > cores[m] ? h : m)), extra = s.assets.reduce((n, a) => n + size(a.text), 0) - r0.boot + r.page - r0.page - r0.hero.b;
+  const near = (a, b) => Math.abs(a - b) < 1;
+  assert(r.hero.h === top && near(r.hero.b, cores[top]) && near(r.zone1.counted, r0.zone1.counted + cores[top] + extra) && r.worst.z === r0.worst.z && near(r.worst.counted, r0.worst.counted + cores[top] + extra),
+    `hero packs: both boot lines count the heaviest hero's core (${top}, ${MBs(cores[top])} MB): a new game ${MBs(r0.zone1.counted)} -> ${MBs(r.zone1.counted)} MB, the worst zone ${MBs(r0.worst.counted)} -> ${MBs(r.worst.counted)} MB`);
+  const mineT = s.packs.filter(p => p.f === TF), sumT = ps => ps.reduce((n, p) => n + size(p.text), 0);
+  console.log(`  hero packs: today's hero art as hero packs: cores ${heroes.map(h => `${h} ${MBs(sumT(mineT.filter(p => p.hero === h && p.core)))}`).join(', ')} MB; the other moves ${MBs(sumT(mineT.filter(p => !p.core)))} MB load after boot`);
+  { const core = s.packs.find(p => p.hero === top && p.core), rest = s.packs.find(p => p.hero === top && !p.core), over = n => Math.max(0, LOAD_LINES.bootFail - n) + 1e4;
+    const m1 = loadReport(s, { size: x => size(x) + (x === core.text ? over(r.zone1.counted) : 0) }), m2 = loadReport(s, { size: x => size(x) + (x === rest.text ? 1e6 : 0) });
+    assert(m1.fails.some(f => /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/.test(f)), `hero packs: mutation (a hero's core past the line) fails line 1 (${m1.fails.join('; ') || 'nothing failed'})`);
+    assert(!m2.fails.some(f => /^boot set/.test(f)) && near(m2.zone1.counted, r.zone1.counted), `hero packs: a move outside the core (1 MB more) is not in the boot set (${m2.fails.join('; ') || 'no boot line fails'})`); }
+  // a reader of a shipped hero file's constant asks 75-art-load before it draws (a move may come after boot)
+  const heroV = Object.entries(AREA_ART).filter(([, A]) => A.kind === 'hero').map(([f, A]) => A.v);
+  const code = f => src(f).split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
+  const loose = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js') && !isAsset(src(f)) && !['21zz-art-b91.js', '75-art-load.js'].includes(f))
+    .filter(f => heroV.some(v => new RegExp(`\\b${v}\\b`).test(code(f))) && !/\bartHero(Need|Ready)\(/.test(code(f)));
+  assert(!loose.length, `hero packs: every file that reads a hero file's moves (${heroV.join(', ') || 'none ships yet'}) asks artHeroNeed or artHeroReady (${loose.join(', ') || 'yes'})`);
+  // the inline page: no loader, every move is in
+  { const r = vm.runInNewContext(`${src('75-art-load.js')}\n;[artHeroNeed('wren', 'h1'), artHeroReady('pip', 'cast'), artHeroPacks('wren').length].join()`, {});
+    assert(r === 'true,true,0', `hero packs: with no boot loader (the inline page) every move is in: artHeroNeed and artHeroReady say yes, no packs (${r})`); }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe) skipBrowser('hero packs: boot, the hold and the first frame after it: Playwright or Chromium not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const end = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(end);
+    const KEY = 'lanternfall.save.v5', early = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
+    const assets = pageAssets(s.file, s.html, Object.fromEntries(s.files.map(a => [a.name, a.text])));
+    const heroOf = name => { const p = s.packs.find(q => q.name === name); return p && p.f === TF ? p : null; };   // only the test file's packs (a shipped hero file loads too, unrecorded)
+    // hold: every pack of these ids waits until release(); asked: the hero pack ids the page asked for, in order
+    const open = async ({ save = null, hold = [] } = {}) => {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), page = await ctx.newPage(), errs = [], asked = [];
+      await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+      if (save) await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...save, last: Date.now() })]);
+      page.on('pageerror', e => errs.push(String(e)));
+      page.on('request', q => { const p = heroOf(q.url().split('/').pop()); if (p) asked.push(p.id); });
+      let release; const held = new Promise(r => { release = r; });
+      await routePage(page, 'http://lf.test/', probe, assets);
+      for (const id of hold) await page.route('**/assets/' + s.packs.find(p => p.id === id).name, async q => { await held; return q.fallback(); });
+      await page.goto('http://lf.test/', { waitUntil: 'commit' });
+      await page.waitForFunction(() => !document.getElementById('lfBoot') && !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+      return { page, errs, asked, release };
+    };
+    const X = (page, js) => page.evaluate(j => window.__t.x(j), js);
+    const look = page => page.evaluate(() => {
+      const c = document.getElementById('artWait'), st = document.getElementById('stage').getBoundingClientRect(), r = c && !c.hidden ? c.getBoundingClientRect() : null;
+      return { cover: r ? c.firstChild.textContent : null, full: !!r && r.left <= st.left && r.top <= st.top && r.right >= st.right && r.bottom >= st.bottom };
+    });
+    const later = s.packs.filter(p => p.f === TF && p.hero === 'wren' && !p.core).map(p => p.id), coreOf = h => `hero:HERO_TEST.${h}.core`;
+    const until = async (fn, cap = 10000) => { for (const t0 = Date.now(); !fn() && Date.now() - t0 < cap;) await new Promise(r => setTimeout(r, 100)); };   // files load one at a time
+    try {
+      // 1. a Wren save boots with Wren's core only: her core moves are in as the source has them, her other moves are asked for after
+      //    boot, and Tobin's and Pip's packs are never asked for
+      { const { page, errs, asked, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: later });
+        await page.waitForTimeout(800);
+        const r = await X(page, `({ boot: lfBoot.boot.filter(id => id.startsWith('hero:HERO_TEST.')).join(), hero: lfBoot.hero, moves: Object.keys(HERO_TEST.heroes.wren.moves).join(),
+          same: ${JSON.stringify(REG.core.wren)}.every(m => JSON.stringify(HERO_TEST.heroes.wren.moves[m]) === JSON.stringify(window.__want[m])),
+          others: Object.keys(HERO_TEST.heroes.tobin.moves).length + Object.keys(HERO_TEST.heroes.pip.moves).length,
+          ready: [artHeroReady('wren', 'draw'), artHeroReady('wren', 'h1')].join(), held: gameHeld() })`.replace('window.__want', JSON.stringify(T.heroes.wren.moves)));
+        const c = await look(page);
+        assert(r.boot === coreOf('wren') && r.hero === 'wren' && r.moves === REG.core.wren.join() && r.same && r.others === 0 && r.ready === 'true,false' && !r.held && !c.cover
+          && asked[0] === coreOf('wren') && asked.length <= 2 && asked.every(id => [coreOf('wren'), later[0]].includes(id)) && !errs.length,
+          `hero packs: a Wren save boots with only her core moves in (${JSON.stringify(r)}, cover ${c.cover}), then asks for her other moves one file at a time (${asked.join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
+        // 1b. a move the stage asks for and then stops asking for (another hero, another screen) lets go within a second, still not in
+        await X(page, `S.activity = 'fight', ui(true)`); await page.waitForTimeout(300);
+        await X(page, `(() => { let n = 0; const f = () => { artHeroNeed('wren', 'h2'); if (++n < 10) requestAnimationFrame(f); }; requestAnimationFrame(f); })()`);
+        await page.waitForTimeout(250);
+        const on = { c: (await look(page)).cover, t: await X(page, 'gameHeld()') };
+        await page.waitForTimeout(1200);
+        const off = { c: (await look(page)).cover, t: await X(page, 'gameHeld()'), in: await X(page, `artHeroReady('wren', 'h2')`) };
+        assert(on.c === 'Loading Wren' && on.t && !off.c && !off.t && !off.in, `hero packs: a move asked for and then no longer asked for holds (${JSON.stringify(on)}) and lets go once nothing asks, still not in (${JSON.stringify(off)})`);
+        // 2. the stage needs a move still loading: the game holds under a plain line over the stage and nothing moves; the first frame
+        //    after the hold draws the move (decoded from its pack, not a stand-in)
+        await X(page, `S.activity = 'fight', ui(true)`); await page.waitForTimeout(300);
+        await X(page, `(() => { let n = 0; const f = () => { const held = gameHeld(), ok = artHeroNeed('wren', 'h1');
+          if (!n++) { window.__ask = ok; return requestAnimationFrame(f); }
+          if (held) { window.__heldFrames = (window.__heldFrames || 0) + 1; return requestAnimationFrame(f); }
+          const D = ok && heroArtUnrle(HERO_TEST.heroes.wren.moves.h1); window.__first = { ok, px: D ? D.idx.reduce((a, v) => a + (v ? 1 : 0), 0) : 0 }; };
+          requestAnimationFrame(f); })()`);
+        await page.waitForTimeout(300);
+        const a = await look(page), g1 = await X(page, '({ t: gameHeld(), k: S.kills, hp: mob && mob.hp, ask: window.__ask })');
+        await page.waitForTimeout(1500);
+        const b = await look(page), g2 = await X(page, '({ t: gameHeld(), k: S.kills, hp: mob && mob.hp, ask: window.__ask })');
+        assert(g1.ask === false && a.cover === 'Loading Wren' && a.full && b.cover === 'Loading Wren' && g1.t && JSON.stringify(g1) === JSON.stringify(g2),
+          `hero packs: a move the stage needs that is still loading holds the game under "${a.cover}" over the whole stage (${a.full}); nothing moves (${JSON.stringify(g1)} then ${JSON.stringify(g2)})`);
+        release(); await page.waitForTimeout(1500);
+        const first = await X(page, '({ first: window.__first, frames: window.__heldFrames, t: gameHeld() })'), c2 = await look(page);
+        assert(first.first && first.first.ok === true && first.first.px > 200 && first.frames > 10 && !first.t && !c2.cover && !errs.length,
+          `hero packs: on the first frame after the hold the move is in and draws (${JSON.stringify(first)}), the cover goes and the game runs` + (errs[0] ? ': ' + errs[0] : ''));
+        await until(() => later.every(id => asked.includes(id)));
+        assert(later.every(id => asked.includes(id)) && asked.every(id => id.startsWith('hero:HERO_TEST.wren.')),
+          `hero packs: then all her other moves load, and no other hero's (${asked.length} of ${later.length + 1} asked: ${asked.filter(id => !id.startsWith('hero:HERO_TEST.wren.')).join(', ') || 'only hers'})`);
+        await page.close(); }
+      // 3. a new game has no hero yet: no hero pack boots, and after boot every hero's core loads (the picker shows them all), nothing else
+      { const { page, errs, asked } = await open();
+        await page.waitForTimeout(1500);
+        const r = await X(page, `({ boot: lfBoot.boot.filter(id => id.startsWith('hero:')).length, hero: lfBoot.hero })`);   // no hero pack of any file
+        const cores = Object.keys(T.heroes).map(coreOf);
+        assert(r.boot === 0 && r.hero === null && cores.every(id => asked.includes(id)) && asked.slice(0, 3).sort().join() === cores.sort().join() && !errs.length,
+          `hero packs: a new game boots with no hero pack and then asks for every hero's core first (${asked.slice(0, 5).join(', ')})` + (errs[0] ? ': ' + errs[0] : ''));
+        // 4. once the save has a hero, that hero's other moves load (as when a hero is picked or switched)
+        const tob = s.packs.filter(p => p.f === TF && p.hero === 'tobin' && !p.core).map(p => p.id);
+        await X(page, `S.solo.hero = 'tobin'`); await until(() => tob.every(id => asked.includes(id)));
+        assert(tob.every(id => asked.includes(id)) && !asked.some(id => id.startsWith('hero:HERO_TEST.wren.') && !id.endsWith('.core')), `hero packs: once the hero is Tobin his other moves load, and no other hero's (${asked.length} asked)`);
+        await page.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('hero packs crashed: ' + (e.stack || e)); }
 
 // ---- 3. saves: fresh v5 fixtures, and a foreign or broken save starts a new game (W3-C) ----
 // tests/fixtures/save-{early,mid,late}.json are v5 saves written by the game (tools/sim.mjs --snap / --snapday: Wren 20 min,
@@ -1376,7 +1782,7 @@ if (section('camp')) try {
   assert(E('campBuild("hearth")'), 'Hearth 6 started');
   assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-timer" && /finishes in/.test(x.label))'), 'Next Up: "build finishes in <time>"');
   // first-gold-and-camp-strip: the camp tutorial goal shows until one building is tapped, then never again
-  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap" && /Tap a building/.test(x.label))'), 'Next Up: "Tap a building in your camp" while no building has been tapped');
+  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap" && /Choose a building/.test(x.label))'), 'Next Up: "Choose a building in your camp" while no building has been tapped');
   E('onboardUseDone("use:camp-tap")');
   assert(!E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap")'), 'Next Up: the camp tap goal is gone once a building is tapped');
   // hearth-two-next-up (W6): after the zone 10 clear Next Up names what Hearth 2 still needs and where it comes from; Go sends the
@@ -5504,7 +5910,7 @@ if (section('solo hero')) try {
   assert(!errs.length, 'no solo errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('solo crashed: ' + (e.stack || e)); }
 
-// ---- shared by the browser guide walks (the solo walks below and the landscape walks): animsDone, pressHeld ----
+// ---- shared by the browser guide walks (the solo walks below and the landscape walks): animsDone, pressHeld, TICK_OWED ----
 // animsDone: the browser's own word that an element's transitions have ended (looping ones, like a pulse, are not waited for)
 const animsDone = `(e => { e.getBoundingClientRect(); return e.getAnimations({ subtree: true }).every(a => a.playState !== 'running' && a.playState !== 'pending' || a.effect.getComputedTiming().iterations === Infinity); })`;
 // walk-740-guide-crash: a held line's answer (Got it, or × on a held materials line, say:stock:*, whose button is a Go that would send
@@ -5526,6 +5932,12 @@ const pressHeld = async page => {
     if (!hit || !(hit === b || b.contains(hit))) return 'covered by ' + (hit ? hit.id || hit.className || hit.tagName : 'nothing');
     b.click(); return 'pressed'; }, HELD_BTN);
 };
+// ci-flakes-spend-hover: the walks freeze the frame loop and drive the game clock themselves. A boss killed on the last tick of a walk's
+// batch leaves its cache waiting for the next tick (55-caches opens it a tick after zoneClear), and while it waits the guide hides its hint
+// so the boss's card comes first (cardComing in 75-onboard-ui). With no tick coming the hint stayed hidden, and the walk read the step as
+// unmarked with no hint ("spend" and "gather": cache true, bubOk false, bubs 0 in CI runs 805-832). TICK_OWED is the guide's own tickOwed
+// (cache pending, or a Champion's post scene queued): while it holds, the walk gives the game the tick the frame loop would, then looks again.
+const TICK_OWED = `(cachePending() || (typeof storyBusy === 'function' && MOMENT_Q.some(m => m.kind === 'champion' && m.scene && storyBusy(m.scene))))`;
 
 // ---- W1-A: the guide's pause rules (audit-1 3.1, 3.8): a step that waits for time or materials never pauses the game ----
 if (section('solo guide pause rules')) try {
@@ -5684,12 +6096,15 @@ if (section('solo hero (browser)')) try {
       // freezes the frame loop (it skips tick() while soloPickerOpen() says true) and drives the game a second at a time, unless the game
       // is paused, as the loop would.
       await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
-      const seen = [], heldMiss = [];   // heldMiss: a held line's answer covered or never shown (pressHeld)
+      const seen = [], heldMiss = []; let owed = 0;   // heldMiss: a held line's answer covered or never shown (pressHeld); owed: ticks given in a row for TICK_OWED
       for (let i = 0; i < 80 && (seen.length < 6 || !['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x))); i++) {
         // a Hesketh line (the boss's scroll) holds the game with a Got it ahead of the step: read it and press Got it, as a player does
         if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) { const r = await pressHeld(page); if (!/^(pressed|gone)$/.test(r)) heldMiss.push(r); await page.waitForTimeout(300); continue; }
         const st = await X('(s => s ? s.id : "")(onboardStep())');
         if (!st) { await X('for (let k = 0; k < 20; k++) tick(0.1); true'); await page.waitForTimeout(300); continue; }
+        // a cache or scene that only the next tick opens holds the hint back (TICK_OWED): give it that tick, then read the step again
+        // (at most 20 in a row: a cache or scene that one tick never opens is not waited out, and the step's own line reads what is up)
+        if (await X(TICK_OWED) && owed++ < 20) { await X('tick(0.1); true'); await page.waitForTimeout(300); continue; } owed = 0;
         await page.waitForTimeout(400);
         const chk = await X(`(() => { const sp = onboardSpec(${JSON.stringify(st)}); if (!sp || !sp.node) return { ok: false, why: 'no target' }; const n = sp.node, r = n.getBoundingClientRect(), ring = document.querySelector('.ob-ring').getBoundingClientRect();
           const vis = !!(n.getClientRects().length && n.offsetParent !== null && r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.left < innerWidth && r.right > 0);
@@ -5740,7 +6155,7 @@ if (section('solo hero (browser)')) try {
       const tapS2 = async () => { await page.mouse.move(r2.x + r2.width / 2, r2.y + r2.height / 2); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(250); };
       // cal-0107-staged-guide: with one move (and it in a slot) an empty slot is dim and silent; it opens only once there is a move to put in it
       await tapS2();
-      const shut = await page.$eval('#soloBar .sb-ab1', b => ({ dim: b.style.opacity === '0.45', aria: b.getAttribute('aria-disabled'), add: /Tap to add/.test(b.textContent) }));
+      const shut = await page.$eval('#soloBar .sb-ab1', b => ({ dim: b.style.opacity === '0.45', aria: b.getAttribute('aria-disabled'), add: /Add a move/.test(b.textContent) }));
       assert(shut.dim && shut.aria === 'true' && !shut.add && !(await X('soloPickerOpen()')), `with one move, an empty slot is dim, says nothing and opens no picker (${JSON.stringify(shut)})`);
       await X('scrollCount("x"); S.abil.unl.pip = (S.abil.unl.pip || []).concat("spark"); true'); await page.waitForTimeout(350);
       await tapS2();
@@ -6519,7 +6934,11 @@ if (section('solo copy (browser, W1-C)')) try {
         for (const [id, txt] of sheets) { judge('item sheet ' + id, txt); opened++; if (txt.length < 4) empty++; }
         for (let i = 8; i < made.ids.length; i += 9) {
           const id = made.ids[i]; await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15);
-          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button']) { const b = page.locator(`.cf-sheet ${sel}`).first(); if (await b.count()) { try { await b.click({ timeout: 300, force: true }); await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } catch (e) {} } }
+          // w1f-scan-load-flake: a DOM click on the button itself. A forced pointer click lands on whatever covers the button's spot: the
+          // path choice card the "evolution choice" step leaves open. Under load two such clicks pressed "Become" then "Yes", a path was
+          // taken, and the subclass step below found no tabs. Unloaded, the clicks failed (below the sheet's fold) and were swallowed.
+          // The find and the click are one step in the page, so the sheet cannot redraw between them.
+          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button']) { if (await page.evaluate(q => { const b = document.querySelector(q); if (b) b.click(); return !!b; }, `.cf-sheet ${sel}`)) { await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } }
           await page.keyboard.press('Escape');
         }
         await page.keyboard.press('Escape');
@@ -6529,22 +6948,40 @@ if (section('solo copy (browser, W1-C)')) try {
         await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(200);
         await page.evaluate(() => document.querySelectorAll('.cs-sheet details, .sheet details').forEach(d => { d.open = true; }));
         await scan('hero sheet (all opened)');
-        for (const sel of ['.cl-go', '.cs-act', '.cs-story summary']) { const n = Math.min(await page.locator(`.sheet ${sel}`).count(), 8); for (let i = 0; i < n; i++) { try { await page.locator(`.sheet ${sel}`).nth(i).click({ timeout: 300, force: true }); await page.waitForTimeout(60); await scan(`hero sheet ${sel} #${i}`); } catch (e) {} } }
+        for (const sel of ['.cl-go', '.cs-act', '.cs-story summary']) { const n = Math.min(await page.locator(`.sheet ${sel}`).count(), 8); for (let i = 0; i < n; i++) { if (!(await page.evaluate(([q, i]) => { const b = document.querySelectorAll(q)[i]; if (b) b.click(); return !!b; }, [`.sheet ${sel}`, i]))) continue; await page.waitForTimeout(60); await scan(`hero sheet ${sel} #${i}`); } }
         await page.keyboard.press('Escape');
         await X(`S.party.chosen = true; S.cls.trials = S.cls.trials || {}; S.cls.trials.check = { won: 1, best: 100 }; classEvoUI.openChoice()`); await page.waitForTimeout(250);
         const tabs = await page.locator('.evo-tab').count();
+        if (!tabs) fail(`${hero}: W1-F the subclass choice opened no path tabs (path already taken: ${await X('lbClass().evo')})`);
         for (let i = 0; i < tabs; i++) { await page.locator('.evo-tab').nth(i).click({ force: true }); await page.waitForTimeout(80); await scan(`subclass card ${i}`); await page.locator('.create-go').first().click({ force: true }).catch(() => {}); await page.waitForTimeout(60); await scan(`subclass card ${i} confirm`); }
         await X('classEvoUI.closeAll()');
         await X('classEvoUI.openRespec && classEvoUI.openRespec()'); await page.waitForTimeout(200); await scan('class change'); await X('classEvoUI.closeAll()');
         items.cards += tabs;
         // long-press info on each action-bar slot (Attack, Parry, Dodge: a tip; the three ability slots: the picker)
-        await X('setActivity("fight"); setTab("adv"); closeMenu()'); await page.waitForTimeout(300);
+        // w1f-scan-load-flake: each step waits for the state it reads (capped at 5 s, a miss fails naming the hero and slot) instead of a
+        // fixed timer. Under load the bar was read before it showed, or the 550 ms long press had not fired by a fixed 700 ms hold.
+        const until = async (what, fn, arg, more) => { try { await page.waitForFunction(fn, arg, { timeout: 5000, polling: 50 }); return true; } catch (e) { fail(`${hero}: W1-F ${what} within 5 s` + (more ? ` (${await more().catch(x => String(x))})` : '')); return false; } };
+        // what a missed long press saw: the slot's pointer events
+        await page.evaluate(() => { window.__lp = []; for (const t of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) document.addEventListener(t, e => { const a = e.target && e.target.closest && e.target.closest('[data-act]'); window.__lp.push(t.slice(7) + ':' + (a ? a.dataset.act : (e.target.id || e.target.className || e.target.tagName))); }, true); });
+        await X('setActivity("fight"); setTab("adv"); closeMenu()');
+        await until('the action bar (Attack) never showed', () => { const b = document.querySelector('[data-act="atk"]'); return !!(b && b.offsetParent !== null && b.getBoundingClientRect().width > 0); });
+        // an ability slot with nothing it could hold opens nothing on a long press (75-solo-ui slotShut); every other slot opens a sheet or the picker
+        const shut = JSON.parse(await X('JSON.stringify([0, 1, 2].map(i => { const eq = soloEquipped(); return !eq[i] && !soloAbilities().some(id => !eq.includes(id)); }))'));
+        const sheetUp = () => !!document.querySelector('#abPicker, .tr-card');   // what the count below reads
+        // The press is the slot's own pointerdown and pointerup, sent to the button (the game's long-press code in 75-solo-ui runs as for a
+        // finger). A real mouse resting on the button lost the press under load: Attack acts on the press, the dock's pane redrew, the bar
+        // got shorter, the Fight panels tabs slid under the resting pointer, and the button's pointerleave dropped the long press
+        // (seen twice on Tobin's Attack, the second time with "events: down:atk leave:atk ...; under the pointer: sb-tab").
+        const send = (a, type) => page.evaluate(([a, type]) => { const b = document.querySelector(`[data-act="${a}"]`); b.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0, buttons: type === 'pointerdown' ? 1 : 0 })); }, [a, type]);
         for (const a of ['atk', 'parry', 'dodge', 'ab0', 'ab1', 'ab2']) {
           const b = page.locator(`[data-act="${a}"]`).first();
           if (!(await b.count()) || !(await b.isVisible())) continue;
-          const bb = await b.boundingBox(); await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(700);
+          await until(`long-press ${a}: the last sheet never closed`, () => !document.querySelector('#abPicker, #moveSheet, .tr-card'));
+          await page.evaluate(() => { window.__lp = []; }); await send(a, 'pointerdown');
+          if (a.startsWith('ab') && shut[+a[2]]) await page.waitForTimeout(700);   // a shut slot: hold past the long press; nothing opens
+          else await until(`long-press ${a}: no sheet or picker opened`, sheetUp, undefined, () => page.evaluate(() => `events: ${window.__lp.join(' ') || 'none'}; open: ${[...document.querySelectorAll('[role=dialog],[aria-modal]')].filter(d => !d.hidden && d.offsetParent !== null).map(d => d.id || d.className).join(', ') || 'none'}`));
           const shownTip = await page.evaluate(() => { const t = document.getElementById('soloTip'), p = document.getElementById('abPicker'); return (t && !t.hidden ? 1 : 0) + (p ? 2 : 0) + (document.querySelector('.tr-card') ? 4 : 0); });   // W2-A: a long press opens a Training card (Attack, Parry, Dodge: a sheet; ability slots: the picker with a card)
-          await scan('long-press ' + a); await page.mouse.up(); await page.keyboard.press('Escape'); await X('typeof closePicker === "function" && closePicker()');
+          await scan('long-press ' + a); await send(a, 'pointerup'); await page.keyboard.press('Escape'); await X('typeof closePicker === "function" && closePicker()');
           if (shownTip) items.press++;
         }
         assert(!errs.length, `${hero}: no page errors while reading every screen` + (errs.length ? ': ' + errs[0] : ''));
@@ -7130,7 +7567,7 @@ if (section('gatherers at camp (C2)')) try {
     assert(W('__person.tagName==="BUTTON" && __person.getAttribute("aria-label").includes("Tam")'), 'C2: the scene exposes the gatherer as a named native button');
     // first-gold-and-camp-strip: buildings in the panorama are buttons; a tap opens the card and ticks the camp tutorial goal
     W('S.camp.b.forge = Math.max(1, S.camp.b.forge | 0); delete S.onboard.done["use:camp-tap"]; __sections.camp.update()');
-    assert(W('$("camp-scene-blds").children.length > 0 && $("camp-scene-blds").children.every(b => b.tagName === "BUTTON" && b.getAttribute("aria-label").includes("Tap to see what it does"))'), 'camp strip: each built building is a named native button in its own layer');
+    assert(W('$("camp-scene-blds").children.length > 0 && $("camp-scene-blds").children.every(b => b.tagName === "BUTTON" && b.getAttribute("aria-label").includes("Open it to see what it does"))'), 'camp strip: each built building is a named native button in its own layer');
     W('$("camp-scene-blds").children.find(b => b.dataset.bldId === "forge").click()');
     assert(W('!$("camp-bld-card").hidden && $("camp-bld-card").textContent.includes("Forge") && $("camp-bld-card").textContent.includes("Makes weapons") && S.onboard.done["use:camp-tap"] === 1'), 'camp strip: tapping the Forge shows what it does and ticks the camp tap goal');
     const talk = W('handsGet("tam").talk||0');
@@ -8661,7 +9098,20 @@ if (section('C14 away card (browser)')) try {
         await page.goto('http://lf.test/');
         await page.waitForSelector('#createScreen .ccard[data-state]');
         await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
-        await page.waitForTimeout(350);
+        // c14-away-card-load-flake: each step waits for the state it needs (5 s cap) and fails naming what never came, never a fixed timer
+        const ready = async (fn, arg, what) => { try { await page.waitForFunction(fn, arg, { timeout: 5000 }); } catch (e) { throw new Error(`C14: ${what} never happened within 5 s (${String(e.message || e).split('\n')[0]})`); } };
+        // a click waits until the element is the one under its own centre, so a card over it fails naming that card, not a 30 s timeout
+        const tap = async (sel, what) => {
+          const top = () => page.evaluate(sel => { const e = document.querySelector(sel); if (!e) return 'the button is missing;';
+            e.scrollIntoView({ block: 'nearest' }); const r = e.getBoundingClientRect(), t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+            if (!t) return 'the button is off screen;'; if (e === t || e.contains(t)) return '';
+            const c = t.closest('[role="dialog"]') || t; return (typeof c.className === 'string' && c.className) || c.tagName.toLowerCase(); }, sel);
+          const t0 = Date.now(); let on;
+          while ((on = await top()) && Date.now() - t0 < 5000) await page.waitForTimeout(50);
+          if (on) throw new Error(`C14: ${what} (${sel}) could not be pressed within 5 s: ${/;$/.test(on) ? on.slice(0, -1) : on + ' was on top of it'}`);
+          await page.click(sel);
+        };
+        await ready(() => !document.querySelector('#createScreen'), null, 'the create screen closing after Begin');
         const X = s => page.evaluate(s => window.__t.x(s), s);
         await X(`showAwayReport({secs:1800,t:1800,cap:14400,capped:false,activity:'fight',note:'You held Cinder Road.',gold:300,xp:0,kills:0,
           mats:[],items:[],skills:[],lines:[{txt:'Storehouse full',sub:'The Storehouse kept the extra ore safe.'}],
@@ -8672,7 +9122,8 @@ if (section('C14 away card (browser)')) try {
         assert(title.includes('while you were away') && title.includes('30m') && title.includes('cinder road'), 'C14 browser: a fresh local game opens the away card with its time and hero summary (' + title.replace(/\n/g, ' | ') + ')');
         // away-card-next-up-first: the groups fold under one "More (n)" row; opening it shows every group (folded, never dropped)
         const more0 = await page.locator('.away-ov .away-more').innerText();
-        await page.click('.away-ov .away-more'); await page.waitForTimeout(150);
+        await tap('.away-ov .away-more', 'the first card\'s More row');
+        await ready(() => { const f = document.querySelector('.away-ov .away-fold'); return f && f.open && f.children.length > 1; }, null, 'More opening its groups');
         const opened = (await page.locator('.away-ov').innerText()).toLowerCase();
         assert(/^more \(6\)$/i.test(more0.trim()) && !['gatherers','trade','tavern','well rested'].some(g => title.includes(g)) && ['gathering','gatherers','trade','camp','tavern','well rested'].every(g => opened.includes(g)),
           'C14 browser: the groups fold under "More (6)", and opening it displays the material explanation and each separate source group (' + more0 + ' | ' + opened.replace(/\n/g, ' | ') + ')');
@@ -8681,8 +9132,14 @@ if (section('C14 away card (browser)')) try {
         assert(!errs.length, 'C14 browser: opening and reading the card raises no page errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
         // away-limit-says-next-step (ruling 2026-10-08-first-night-covered, card 2): a capped return gives both numbers and the one next step
         {
+          // closing a card the next step needs gone: a missing card or one that stays open fails, never skipped
+          const closeAway = `{ const c = document.querySelector('.away-ov .away-go'); if (!c) throw new Error('C14: no away card to close');
+            c.click(); if (document.querySelector('.away-ov')) throw new Error('C14: the away card stayed open after Collect'); }`;
+          // S.lantern.seen: the faked zone 40 is past the Hollow's end (35). Left unseen, the next tick lights its Great Lantern
+          // and queues that full-screen card; it waits behind the away card, opens in the gap after the last Collect and covers More
+          // below (the load flake). Every faked zone is marked seen in the same step, so none lights anything.
           const lim = async (setup, h, extra = '') => {
-            await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); ${setup};
+            await X(`${closeAway} ${setup}; S.lantern.seen = S.maxZone;
               showAwayReport({ secs: ${h} * 3600, t: Math.min(${h}, awayCapH()) * 3600, cap: awayCapH() * 3600, capped: ${h} > awayCapH(), activity: S.activity, note: '', empty: false,
                 gold: 0, xp: 0, kills: 0, mats: [], items: [], skills: [], lines: [${extra}], extra: [] }); true`);
             return X(`(() => { const w = document.querySelector('.away-ov .away-limwrap'); return w ? w.textContent + (w.querySelector('.away-cap .away-lgo') ? ' [Go:' + w.querySelector('.away-cap .away-lgo').getAttribute('aria-label') + ']' : '') : ''; })()`);
@@ -8717,12 +9174,12 @@ if (section('C14 away card (browser)')) try {
           assert(tr.includes('hit the raid boss for 4h of your 9h away.') && tr.includes('(6h)') && !tr.includes('8h'), `away limit: a raid return keeps the raid's 4 h, never promising 8 h of raid hits (${tr})`);
           assert(!t0.includes('Hourglass') && tg.includes('Hourglass Lv 1: +2h, for raid Embers.'), `away limit: the Hourglass shows only while the raid is open (${tg})`);
           assert(!/24 hours/.test(all), `away limit: the card never says "24 hours" (${all})`);
-          await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true');
+          await X(`${closeAway} true`);
         }
         // away-card-next-up-first (W8 card 3): results, the limit, Next up, then one folded "More (n)" row. Next up's first row shows
         // above Collect without scrolling, a fold's Go only exists once More is open, and More counts every folded line.
         {
-          await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.activity = 'gather';
+          await X(`if (document.querySelector('.away-ov')) throw new Error('C14: an away card is still open'); S.activity = 'gather';
             showAwayReport({ secs: 11 * 3600, t: 8 * 3600, cap: 8 * 3600, capped: true, activity: 'gather', note: 'You gathered Oak.', empty: false, gold: 0, xp: 0, kills: 0,
               mats: [{ k: 'wood', t: 3, n: 37000 }], items: [], skills: [{ k: 'wood', from: 30, to: 52 }], lines: [{ txt: 'Storehouse full: Oak', sub: 'Woodcutting XP still counted' }],
               extra: [{ group: 'Codex', txt: 'Codex: +1 Lantern Light', go: () => {} }, { group: 'Gatherers', txt: 'Tam finished 1 shift: +754 Oak Log.', go: () => {} },
@@ -8737,16 +9194,19 @@ if (section('C14 away card (browser)')) try {
           assert(o.kids.join(',') === 'Materials,Skills,lim,nu,more' && o.more === 'More (5)' && !o.open && !o.foldGo,
             `away-card-next-up-first: the card reads results, limit, Next up, then a closed "More (5)" with no Go built inside it (${JSON.stringify(o)})`);
           assert(o.shows, `away-card-next-up-first: at 740x360 the first Next up row shows above Collect without scrolling (${JSON.stringify(o)})`);
-          await page.click('.away-ov .away-more'); await page.waitForTimeout(200);
+          await tap('.away-ov .away-more', 'the second card\'s More row');
+          await ready(() => { const f = document.querySelector('.away-ov .away-fold'); return f && f.open && f.children.length > 1; }, null, 'More opening its groups');
           const op = await X(`[document.querySelector('.away-fold').open, [...document.querySelectorAll('.away-fold .away-h')].map(e => e.textContent).join(','), document.querySelectorAll('.away-fold .away-line').length, document.querySelectorAll('.away-fold .away-lgo').length]`);
           assert(op[0] && op[1] === 'Codex,Gatherers,Achievements,Also,Gathering' && op[2] === 5 && op[3] === 2, `away-card-next-up-first: More opens every other group with its lines and Go buttons (${JSON.stringify(op)})`);
           // keys: Tab from More skips a closed fold's Go buttons; Space on More opens it (the fight's Space dodge never takes it)
-          await page.click('.away-ov .away-more'); await page.focus('.away-ov .away-more'); await page.keyboard.press('Tab');
+          await tap('.away-ov .away-more', 'the open More row'); await ready(() => !document.querySelector('.away-ov .away-fold').open, null, 'More closing');
+          await page.focus('.away-ov .away-more'); await page.keyboard.press('Tab');
           const tabTo = await X('document.activeElement.className');
-          await page.focus('.away-ov .away-more'); await page.keyboard.press(' '); await page.waitForTimeout(100);
+          await page.focus('.away-ov .away-more'); await page.keyboard.press(' ');
+          await page.waitForFunction(() => document.querySelector('.away-fold').open, null, { timeout: 5000 }).catch(() => {});   // the assert below names a miss
           const spaceOpen = await X("document.querySelector('.away-fold').open && !!document.querySelector('.away-ov')");
           assert(/away-go/.test(tabTo) && spaceOpen, `away-card-next-up-first: Tab from a closed More goes to Collect, and Space opens More (${tabTo}, ${spaceOpen})`);
-          await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true');
+          await X(`{ const c = document.querySelector('.away-ov .away-go'); if (!c) throw new Error('C14: no away card to close'); c.click(); } true`);
         }
       } finally { await ctx.close(); }
       // ...and on the mid fixture's real 8 h return (fighting, as saved, and gathering), in all three views
@@ -9523,6 +9983,99 @@ if (section('C22 Thorn Imp (zone 1)')) try {
     assert(H('__mv.slice(0,4).join()') === 'jab1,cross2,jab1,cross2' && !h.errors.length, `C22: the live Imp alternates Briar Jab and Crosscut (${H('__mv.join()')})`); }
 } catch (e) { fail('C22 Thorn Imp crashed: ' + (e.stack || e)); }
 
+if (section('ns-foe-kits-z1-10 (zone 1-10 foe kits)')) try {
+  // Card ns-foe-kits-z1-10 (docs/design/new-style/plan.md 4.1, 8.1): the roster's zone 3-10 monsters, the zone 1-10 Captains and the two
+  // Champions as fight data (59l ZONE_FOE_KITS), each area off until its wire card. Off, the game is as before; on, every number is the
+  // roster's (docs/design/enemies-c22-hollow-final.md) before parity, and the fights play.
+  const roster = fs.readFileSync(path.join(ROOT, 'docs', 'design', 'enemies-c22-hollow-final.md'), 'utf8');
+  const DT = { physical: undefined, holy: 'holy', poison: 'poison', frost: 'frost', fire: 'fire' }, NUM = { one: 1, two: 2, three: 3, four: 4 };
+  // "3 x8% physical", "12%+14% physical", "three10% physical hits", "12%+12%+14% holy" -> [{ x, dt }]
+  const hitsOf = t => { let m = /^(\d+) x(\d+)% (\w+)/.exec(t) || /^(one|two|three|four)(\d+)% (\w+)/.exec(t);
+    if (m) return Array(NUM[m[1]] || +m[1]).fill(0).map(() => ({ x: +m[2] / 100, dt: DT[m[3]] }));
+    m = /^((?:\d+%\+)+\d+%) (\w+)/.exec(t); return m ? m[1].split('+').map(p => ({ x: parseInt(p, 10) / 100, dt: DT[m[2]] })) : null; };
+  const statsOf = t => { const m = /HP ?(\d+)(?: actions)?; Speed ?([\d.]+); armour ?(\d+)%; weak (\w+), resists (\w+)/.exec(t); return m && { hp: +m[1], speed: +m[2], armour: +m[3] / 100, weak: m[4], res: m[5] }; };
+  const want = {};
+  for (let z = 1; z <= 10; z++) {
+    const sec = roster.split(`### Zone ${z}: `)[1].split('\n### ')[0].split('\n## ')[0], name = sec.split('\n')[0].trim();
+    const mv = [...sec.matchAll(/\*\*Move \d —\*\* ([^:]+): ([^;]+)/g)].map(m => ({ name: m[1].trim(), hits: hitsOf(m[2]) }));
+    const cap = /\*\*Shadowborn Captain — ([^:]+):\*\* HP \d+ actions; Speed ([\d.]+)[^*]*\*\*Extra move:\*\* ([^:]+): ([^;,]+(?:, [^;]+)?)/.exec(sec);
+    want[z] = { name, stats: statsOf(sec), moves: mv, captain: { name: cap[1], speed: +cap[2], extra: { name: cap[3].trim(), hits: hitsOf(cap[4]) } } };
+  }
+  for (const [z, id] of [[5, 'Mossy Hollow'], [10, 'Batwing Caves']]) {
+    const sec = roster.split(`### ${id} Champion: `)[1].split('\n### ')[0];
+    want[z].champion = { name: sec.split('\n')[0].trim(), stats: statsOf(sec.replace(/HP(\d+);/, 'HP$1 actions;')),
+      moves: [...sec.matchAll(/^\d\. \*\*([^:*(]+?)(?: \(charge\))?:\*\* ?([^;]+)/gm)].map(m => ({ name: m[1].trim(), charge: /\(charge\)/.test(m[0]), hits: hitsOf(m[2].replace(/^.*?then /, '')) })) };
+  }
+  const g = loadCore({ seed: 3 }), E = s => g.eval(s), K = JSON.parse(E('JSON.stringify(ZONE_FOE_KITS)'));
+  const real = mv => mv.hits.filter(h => !h.feint).map(h => ({ x: h.x, dt: h.dt }));
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const bad = [];
+  for (let z = 1; z <= 10; z++) {
+    const W = want[z], k = K[z];
+    if (z >= 3) { const M = k.monster;
+      if (!M || M.name !== W.name || M.hp !== W.stats.hp || M.speed !== W.stats.speed || M.armour !== W.stats.armour) bad.push(`z${z} monster stats`);
+      if (M && !same(M.moves.map(m => m.name), W.moves.map(m => m.name)) || M && !M.moves.every((m, i) => same(real(m), W.moves[i].hits))) bad.push(`z${z} monster moves`);
+      if (M && !(E(`typeXKey(${JSON.stringify(M.row)}, ${JSON.stringify(W.stats.weak)})`) === 1.5 && E(`typeXKey(${JSON.stringify(M.row)}, ${JSON.stringify(W.stats.res)})`) < 1 &&
+        E(`DMG_TYPES.filter(d => typeXKey(${JSON.stringify(M.row)}, d) !== 1).length`) === 2)) bad.push(`z${z} weakness row`); }
+    const C = k.captain;
+    if (!C || C.name !== W.captain.name || C.speed !== W.captain.speed || C.extra.name !== W.captain.extra.name || !same(real(C.extra), W.captain.extra.hits)) bad.push(`z${z} captain`);
+    if (W.champion) { const P = k.champion, S = W.champion.stats;
+      if (!P || P.name !== W.champion.name || P.speed !== S.speed || P.armour !== S.armour || !same(P.moves.map(m => [m.name, !!m.charge]), W.champion.moves.map(m => [m.name, m.charge])) ||
+        !P.moves.every((m, i) => same(real(m), W.champion.moves[i].hits)) || !same(real(P.phase.move), real(P.moves[P.phase.i]))) bad.push(`z${z} champion`);
+      if (P && E(`champStoryName(${z})`) !== P.name) bad.push(`z${z} champion story name`);
+      if (P && !(E(`typeXKey(${JSON.stringify(P.row)}, ${JSON.stringify(S.weak)})`) === 1.5 && E(`typeXKey(${JSON.stringify(P.row)}, ${JSON.stringify(S.res)})`) < 1)) bad.push(`z${z} champion row`); }
+    if (C && E(`STORY_BEATS.captain[${z}].title`) !== C.name) bad.push(`z${z} captain story title`);
+  }
+  assert(!bad.length, 'ns-foe-kits: every zone 1-10 kit is the roster\'s: names, HP, Speed, armour, weakness and resistance, each move\'s hits and damage types, the Captains\' extra moves, the Champions\' four moves, charge and phase (damage unchanged); names match the story' + (bad.length ? ': ' + bad.join(', ') : ''));
+  const rides = E(`JSON.stringify([ZONE_FOE_KITS[5].captain.extra.hits.map(h => h.ride || ''), ZONE_FOE_KITS[9].captain.extra.hits.map(h => h.ride || '')])`);
+  assert(rides === '[["venom"],["","","bleed"]]', `ns-foe-kits: the riders the roster names land: the Hexarch's Dark Germination Venoms, the Prismfang's last Splinter Salute hit Bleeds (${rides})`);
+  const winds = E(`(() => { const L = []; for (const z in ZONE_FOE_KITS) { const k = ZONE_FOE_KITS[z]; const all = [].concat(k.monster ? k.monster.moves : [], k.captain ? [k.captain.extra] : [], k.champion ? k.champion.moves.concat([k.champion.phase.move]) : []);
+    for (const m of all) for (const h of m.hits) if (h.wind < 0.6 || (h.hold && h.hold < 0.4)) L.push(z + ':' + m.id); } return L.join(); })()`);
+  assert(winds === '', 'ns-foe-kits: no kit hit winds up in under 0.6 s and every hold is 0.4 s or more (24d\'s rule)' + (winds ? ': ' + winds : ''));
+  // off (the default): the game as before
+  assert(E('ZONE_FOE_TUNE.on.every(x => !x) && Object.keys(ZONE_FOES).join() === "1,2" && !ZONE_FOES[1].captain && !ZONE_FOES[2].captain') &&
+    E('[1,2,3,4,5,6,7,8,9,10].every(z => zoneFoeBoss(z, TURN_BOSS_BASIC ? [TURN_BOSS_BASIC.a] : [], 10.5, 0) === null)'),
+    'ns-foe-kits: both areas are off: ZONE_FOES holds only the Thorn Imp and Gloomjaw, no Captain or Champion kit plays');
+  E('zoneFoeArea(0, 1); zoneFoeArea(1, 1)');
+  const on = JSON.parse(E(`JSON.stringify(Object.keys(ZONE_FOES).map(z => [z, ZONE_FOES[z].name, ZONE_FOES[z].captain ? ZONE_FOES[z].captain.name : '', ZONE_FOES[z].champion ? ZONE_FOES[z].champion.name : '']))`));
+  assert(on.length === 10 && on.every(([z, n, c, p]) => n === want[z].name && (z === '5' || z === '10' ? !c && p === want[z].champion.name : c === want[z].captain.name && !p)),
+    'ns-foe-kits: on, zones 1-10 each have their monster; zones 1-4 and 6-9 their Captain; zones 5 and 10 their Champion and no Captain (the boss there is the Champion) ' + JSON.stringify(on));
+  // the shaping: ordinary monsters never hold or feint; a Captain holds from tricks.from, feints from tricks.feintFrom
+  const sh = JSON.parse(E(`JSON.stringify({ norm: [3,4,5,6,7,8,9,10].every(z => ZONE_FOES[z].moves.every(m => m.hits.every(h => !h.feint && !h.hold))),
+    z3: zoneFoeShape(ZONE_FOE_KITS[3].captain.extra, 3, true).hits, z5: zoneFoeShape(ZONE_FOE_KITS[3].captain.extra, 5, true).hits, z8: zoneFoeShape(ZONE_FOE_KITS[3].captain.extra, 8, true).hits.map(h => !!h.feint) })`));
+  assert(sh.norm && sh.z3.length === 1 && Math.abs(sh.z3[0].wind - 2.4) < 1e-9 && !sh.z3[0].hold && sh.z5.length === 1 && Math.abs(sh.z5[0].hold - 1.4) < 1e-9 && same(sh.z8, [true, true, false]),
+    `ns-foe-kits: ordinary monsters never hold or feint; Sentence's two harmless pulses are wind at zone 3, a held swing at zone 5, and real feints from zone 7 (${JSON.stringify(sh)})`);
+  // parity: a monster deals its slot type's damage a turn at its Speed
+  const par = E(`(() => { let w = 0; for (const z of [3,4,5,6,7,8,9,10]) { const Z = ZONE_FOES[z], TY = TURN_FOE_TYPES[TYPES[zoneType(z)].key];
+    w = Math.max(w, Math.abs(Z.speed * zoneFoeThreat(Z.moves) / (TY.speed * zoneFoeThreat(TY.moves)) - 1)); } return w; })()`);
+  assert(par < 1e-9, `ns-foe-kits: with parity each monster deals its slot type's damage a second (worst off by ${par})`);
+  // a Captain inherits its monster's two roster moves unchanged (shaped as a boss, so holds and feints), not the ordinary fight's copy
+  const cap = JSON.parse(E(`JSON.stringify([3,4,6,7,8,9].map(z => { const K = ZONE_FOE_KITS[z], b = zoneFoeBoss(z, [TURN_BOSS_BASIC.a], 10.5, 0);
+    const raw = [K.monster.moves[0], K.monster.moves[1], K.captain.extra].map(mv => zoneFoeShape(mv, z, true)), ks = [];
+    const shape = raw.every((mv, i) => mv.id === b.script[i].id && mv.hits.length === b.script[i].hits.length && mv.hits.every((h, j) => { const o = b.script[i].hits[j];
+      if (!h.feint) ks.push(o.x / h.x); return o.wind === h.wind && (o.hold || 0) === (h.hold || 0) && !!o.feint === !!h.feint; }));
+    return [z, shape && Math.max(...ks) - Math.min(...ks) < 1e-9, b.script[0].hits.some(h => h.hold > 0) || b.script[1].hits.some(h => h.hold > 0)]; }))`));
+  assert(cap.every(([z, ok, held]) => ok && held === [4, 6, 8, 9].includes(z)),   // zone 3 is below tricks.from; the Maw Cantor's two moves hold nowhere in the roster
+    'ns-foe-kits: each Captain plays its monster\'s two roster moves as a boss (same winds, holds and feints, one scale with its extra move): the Thornwing, Riftwing, Devourer and Glassfang holds play ' + JSON.stringify(cap));
+  // live: a zone 3 normal is the Ravager in the bones slot (it never gets up), the boss the Headsman with three moves; zone 10 the Hollow Cantor
+  const fight = (z, boss) => E(`(() => { soloPick('tobin', {now:true}); S.activity = 'fight'; TURN_TUNE.on = 1; S.maxZone = ${z}; setZone(${z}); fightBoss = ${boss};
+    for (let i = 0; i < 60; i++) { spawn(); const f = combatFoes()[0]; if (${boss} || f.skin) break; }
+    const f = combatFoes()[0]; return JSON.stringify({ name: f.name, key: f.key, skin: f.skin || '', row: f.txRow || '', arm: f.tk.arm, ids: f.tk.script.map(m => m.id), p2: f.tk.script2 ? f.tk.script2.map(m => m.id) : null, kd: f.tk.kd }); })()`);
+  const n3 = JSON.parse(fight(3, false)), b3 = JSON.parse(fight(3, true)), b10 = JSON.parse(fight(10, true));
+  assert(n3.name === 'Briarbound Ravager' && n3.skin === 'ravager' && /^bones\d+$/.test(n3.key) && n3.row === 'slime' && n3.arm === 0.1 &&
+    b3.name === 'Briarbound Headsman' && same(b3.ids, ['cleaver', 'backhand', 'sentence']) && b3.arm === 0.1 && !b3.p2 &&
+    b10.name === 'The Hollow Cantor' && same(b10.ids, ['tuningfang', 'threefold', 'unmaking', 'vault']) && same(b10.p2, b10.ids) && b10.row === 'zf-holy-frost' && b10.kd.pip === E('ZONE_FOE_TUNE.fit[10][3]'),
+    `ns-foe-kits: live, zone 3 sends the Briarbound Ravager (the bones slot, its slot's look until its pack lands, its own armour and row), its boss is the Briarbound Headsman (Cleaver Drop, Thorn Backhand, Sentence), zone 10's the Hollow Cantor with its phase two (${JSON.stringify([n3, b3, b10])})`);
+  // the Champion's phase two plays live: below half HP, Threefold Hymn holds its second hit, not its third
+  E(`(() => { globalThis.__pw = []; on('parryWindow', x => { const m = TURN_LIVE && TURN_LIVE.move; if (m && m.id === 'threefold' && x.holdTo > 0) __pw.push([TURN_LIVE.phase2 ? 2 : 1, x.hit]); });
+    const f = combatFoes()[0]; f.hp = f.max * 0.4; const u = cbUnitByKey('hero'); u.hp = u.maxHp = 1e12; })()`);
+  for (let i = 0; i < 3000 && !E('__pw.some(p => p[0] === 2)'); i++) { E('(() => { const f = combatFoes()[0]; if (f) f.hp = Math.max(f.hp, f.max * 0.4); if (turnCombatSnapshot().phase === "hero") turnCombatAction("attack"); })()'); g.fn.tick(0.05); }
+  assert(E('__pw.some(p => p[0] === 2 && p[1] === 1) && !__pw.some(p => p[0] === 2 && p[1] === 2)') && !g.errors.length,
+    `ns-foe-kits: live, below half HP the Hollow Cantor's Threefold Hymn holds its second hit (phase two) (${E('JSON.stringify(__pw)')}; ${g.errors.slice(0, 2).join('; ')})`);
+  E('zoneFoeArea(0, 0); zoneFoeArea(1, 0)');
+  assert(E('Object.keys(ZONE_FOES).join() === "1,2" && !ZONE_FOES[1].captain && ZONE_FOES[1].name === "Thorn Imp"'), 'ns-foe-kits: turning both areas off again restores ZONE_FOES as it was');
+} catch (e) { fail('ns-foe-kits-z1-10 crashed: ' + (e.stack || e)); }
+
 if (section('C29 turn fights (core)')) try {
   // Turn fights are the zone fight (owner, 2026-10-02: "actually implement the turn based combat"): active only, Speed
   // gauges, 3 ability slots from 14 per hero, statuses, boss charges, Scrolls that unlock abilities.
@@ -10151,7 +10704,7 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     const s0 = sk();
     assert(Math.abs(s0.parry - 0.25) < 1e-9 && Math.abs(s0.dodge - 0.5) < 1e-9 && Math.abs(s0.perfect - 0.1) < 1e-9 && Math.abs(s0.good - 0.4) < 1e-9, `boss odds: with no record the player is the casual one (${J(s0)})`);
     E('bossOdds({ sync: true })'); const t0 = tally();
-    assert(t0 === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), 'boss odds: the scratch fights add nothing to the record (' + t0 + ')');
+    assert(t0 === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0, reads: {} }), 'boss odds: the scratch fights add nothing to the record (' + t0 + ')');
     E('turnCombatSample({ profile: turnCombatProfile(), seconds: 120, seed: 4 })'); assert(tally() === t0, 'boss odds: neither does a scratch sample');
     E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })'); const s1 = sk();
     assert(s1.parry > s0.parry && E('S.bossOdds.hits') === 1 && E('S.bossOdds.parry') === 1, `boss odds: a parry raises the parry share (${s0.parry.toFixed(3)} to ${s1.parry.toFixed(3)})`);
@@ -10162,7 +10715,7 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
     assert(E('S.bossOdds.rings') > 1.9 && E('S.bossOdds.perfect') > 0.98 && E('S.bossOdds.good') === 0, 'boss odds: rings count Perfect, Good and missed');
     // many parries make a parrying player, and the skill is clamped
     for (let i = 0; i < 400; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "parry" })');
-    const s2 = sk(); assert(s2.parry > 0.9 && s2.dodge >= 0 && s2.dodge <= 1 && E('Object.values(S.bossOdds).every(Number.isFinite)') && E('Object.values(bossOddsSkill()).every(v => Math.abs(v / 0.05 - Math.round(v / 0.05)) < 1e-9)'), `boss odds: a long run of parries gives a parrying player; the skill stays in range and rounds to 0.05 (${J(s2)})`);
+    const s2 = sk(); assert(s2.parry > 0.9 && s2.dodge >= 0 && s2.dodge <= 1 && E('Object.entries(S.bossOdds).every(([k, v]) => k === "reads" ? JSON.stringify(v) === "{}" : Number.isFinite(v))') && E('Object.values(bossOddsSkill()).every(v => Math.abs(v / 0.05 - Math.round(v / 0.05)) < 1e-9)'), `boss odds: a long run of parries gives a parrying player; the skill stays in range and rounds to 0.05 (${J(s2)})`);
     // a player who improves counts as improved: 300 hits of dodging only, then parrying only
     E('S.bossOdds = { hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }');
     for (let i = 0; i < 300; i++) E('emit("foeContact", { id: "x", hit: 0, hits: 1, res: "hit" })');
@@ -10172,7 +10725,7 @@ if (section('boss odds (core, Next Up "Boss ready")')) try {
   // old saves load with the record's defaults
   for (const f of ['early', 'mid', 'late']) {
     const raw = JSON.parse(FX(f)), g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: FX(f) }) });
-    assert(!('bossOdds' in raw) && g.eval('JSON.stringify(S.bossOdds)') === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0 }), `boss odds: the ${f} fixture loads with the record's defaults`);
+    assert(!('bossOdds' in raw) && g.eval('JSON.stringify(S.bossOdds)') === J({ hits: 0, parry: 0, dodge: 0, rings: 0, perfect: 0, good: 0, reads: {} }), `boss odds: the ${f} fixture loads with the record's defaults`);
   }
   // gear changed while gathering counts at once: the estimate reads a scratch hero from the current state (cbEstHero), not the
   // live unit, which only refreshes while fighting (Codex P1 on PR #47)
@@ -11080,7 +11633,8 @@ if (section('guide panel rects (browser, guide-panel)')) try {
         const seen = [];
         await X('globalThis.__os = onboardStep; globalThis.__boss = mob ? !!mob.boss : false; true');
         for (const st of ['attack', 'ability', 'dodge', 'parry', 'boss']) {
-          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; ONBOARD.paused = false; true`);
+          // (tips-hold-740: on a phone on its side the boss tip opens only on your turn, so its panel is measured on your turn)
+          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; if (__fs === 'boss' && innerWidth >= 600 && innerHeight <= 500) { globalThis.__gp = guidePhase; guidePhase = () => 'hero'; } ONBOARD.paused = false; true`);
           await page.waitForTimeout(700);
           const m = await rects();
           if (!m) { assert(false, `guide panel ${at} "${st}": the panel shows`); continue; }
@@ -11088,7 +11642,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
           assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits below or beside the text (never over it) at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
         }
-        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; if (globalThis.__gp) { guidePhase = globalThis.__gp; delete globalThis.__gp; } true');
         // guide-bubble-clear-of-controls: the panel's box (at its pop-in's lowest frame) never meets the tab bar, and over a menu it
         // never meets a Gather row's button (the nightly walk: 5 px on the tabs, its X on a Hunting row's button, Got it on Spread
         // evenly). Over a portrait menu it takes its own row, so the menu's scroll area ends above it and no menu button can sit under it.
@@ -11105,7 +11659,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
             if (menu && mode === 'over-menu' && R(pan).bottom > br.top + .5) hit.push('#panels (the menu runs ' + Math.round(R(pan).bottom - br.top) + ' px under it)');
             pan.scrollTop = 0;
             return { mode, menu, hit: [...new Set(hit)], n, box: [br.left, br.top, br.right, br.bottom].map(Math.round) }; })()`;
-          await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; ONBOARD.paused = false; true`);
+          await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; if (innerWidth >= 600 && innerHeight <= 500) { globalThis.__gp = guidePhase; guidePhase = () => 'hero'; } ONBOARD.paused = false; true`);
           await page.waitForTimeout(700);
           const fight = await X(CLEAR);
           // a long Go label in the short landscape column wraps inside the panel, never cut off ("Mine at…" in the walk)
@@ -11113,7 +11667,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
             const was = k.textContent; k.textContent = 'Gather at the Enraged Boar'; const r = k.getBoundingClientRect(), br = b.getBoundingClientRect(), out = k.scrollWidth > k.clientWidth + 1 || k.scrollHeight > k.clientHeight + 2 || r.bottom > br.bottom + .5 || r.right > br.right + .5;
             k.textContent = was; return out ? 'cut off (' + k.scrollWidth + ' in ' + k.clientWidth + ', bottom ' + Math.round(r.bottom) + ' of ' + Math.round(br.bottom) + ')' : ''; })()`) : '';
           assert(!longGo, `guide panel ${at}: a long Go label wraps inside the side panel (${longGo || 'fits'})`);
-          await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+          await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; if (globalThis.__gp) { guidePhase = globalThis.__gp; delete globalThis.__gp; } true');
           // the grove: gathering hides the Act bar, so the dock sits straight on the tab bar (the walk's 5 px at 2:48)
           const grove = vw < vh ? await X('(() => { const a0 = S.activity; setActivity("gather"); ui(true); return a0; })()') : null;
           const groveBox = vw < vh ? (await page.waitForTimeout(700), await X(CLEAR)) : null;
@@ -11683,6 +12237,145 @@ if (section('craft delta')) try {
   })();
 } catch (e) { fail('craft delta crashed: ' + (e.stack || e)); }
 
+// ==== craft-odds-before-pay: the boss line shows on Next Up's recipe row and the worn piece's Upgrade, before the press ====
+// The same sampler as the result card (55-fight-delta) on a scratch piece (fightDelta(it, { scratch: true })), the same "barely
+// changes" rule. Pip at zone 10 (save-pip-z10-ward): the sampler reads the staff +1 as barely changing, so no line (W10 section 3's
+// "it will honestly say barely"; on screen its Upgrade looks ahead to +2 instead, upgrade-odds-next-step); a worn Hood +1 before the zone 7 boss (save-pre-z7-boss) shows one, and after the press the fight
+// matches it. No Omen (almanac.force('none')): an Omen's fight boons move the sampler's numbers.
+if (section('craft-odds-before-pay')) try {
+  const at = 'craft-odds-before-pay', pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+  const coreOn = f => loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: pfx(f) }) });
+  const up1 = pos => `(w => Object.assign(JSON.parse(JSON.stringify(w)), { id: -1, plus: w.plus + 1 }))(itemById(S.equip.${pos}))`;
+  { const g = coreOn('save-pip-z10-ward.json'), E = s => g.eval(s);
+    const before = E('JSON.stringify([S.items, S.equip])');
+    const st = E(`JSON.stringify(fightDelta(${up1('weapon')}, { scratch: true }))`);
+    assert(E('S.maxZone') === 10 && E('itemById(S.equip.weapon).slot') === 'staff' && st === 'null', `${at}: Pip's staff +1 at zone 10 barely changes the boss fight, so no line (${st})`);
+    const ch = E(`JSON.stringify(fightDelta({ id: -1, slot: 'charm', t: 1, r: 'common', plus: 0 }, { scratch: true }))`);
+    assert(ch === 'null', `${at}: a Charm recipe shows no line (${ch})`);
+    assert(E('JSON.stringify([S.items, S.equip])') === before && E('itemById(-1)') === null, `${at}: the scratch piece leaves the bag and the worn gear as they were`);
+    assert(E(`fightDelta(Object.assign(JSON.parse(JSON.stringify(itemById(S.items[0].id))), { id: S.items[0].id }), { scratch: true })`) === null, `${at}: a scratch piece under a real item's id is refused`);
+  }
+  { const g = coreOn('save-pre-z7-boss.json'), E = s => g.eval(s);
+    const pre = E(`fightDelta(${up1('helm')}, { scratch: true })`);
+    assert(pre && pre.kind === 'hit' && pre.zone === 7 && pre.after < pre.before, `${at}: a worn Hood +1 before the zone 7 boss shows the hit line before the press (${JSON.stringify(pre)})`);
+    const id = E('S.equip.helm'), p0 = E(`itemById(${id}).plus`);
+    E(`S.gold = 1e9; for (const k of Object.keys(S.mats)) S.mats[k] = S.mats[k].map(() => 9999)`);
+    assert(E(`!!upgradeItem(${id})`) && E(`itemById(${id}).plus`) === p0 + 1, `${at}: the upgrade goes through`);
+    // after the press: the old piece against the one now worn, on the same seeds; its "now" is the fight the line promised
+    const post = E(`fightDelta(Object.assign(JSON.parse(JSON.stringify(itemById(${id}))), { id: -1, plus: ${p0} }), { scratch: true })`);
+    assert(post && Math.abs(post.before - pre.after) <= 1 && Math.abs(post.after - pre.before) <= 1, `${at}: after the press the fight matches the line within the sampler's spread (before ${JSON.stringify(pre)}, after ${JSON.stringify(post)})`);
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the line's box: whole, inside its row or box, and its font size
+    const fit = (page, sel, box) => page.evaluate(([sel, box]) => { const l = document.querySelector(sel); if (!l || !l.getClientRects().length) return null; const r = l.closest(box), a = l.getBoundingClientRect(), b = r.getBoundingClientRect();
+      return { text: l.textContent, cut: l.scrollWidth > l.clientWidth + 1, fs: parseFloat(getComputedStyle(l).fontSize), inRow: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1, over: document.documentElement.scrollWidth > innerWidth + 1 }; }, [sel, box]);
+    const wait = async (page, sel, ms = 60000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await page.evaluate(s => { const l = document.querySelector(s); return !!(l && l.getClientRects().length); }, sel)) return true; await page.waitForTimeout(200); } return false; };
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const open = async fx => {
+          const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+          await ctx.addInitScript(([key, raw]) => { if (sessionStorage.getItem('cob-seeded')) return; sessionStorage.setItem('cob-seeded', '1'); const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, [KEY, pfx(fx)]);
+          const page = await ctx.newPage(), errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          await X('typeof almanac === "object" && almanac.force && almanac.force("none"); S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+          return { ctx, page, errs, X };
+        };
+        { // the recipe row Next Up points at: the first Pine Bow, at the Workbench
+          const { ctx, page, errs, X } = await open('save-flow-cold-camp.json');
+          const nu = await X('JSON.stringify(craftGoalNext())');
+          await X(`setTab('forge'); ui(true); true`); await page.waitForTimeout(300);
+          await X(`(() => { const b = document.querySelector('.cf-st[data-st="bench"]'); if (b) b.click(); return true; })()`);
+          const shown = await wait(page, '.cf-rec[data-kind="bow"] .cf-pre');
+          const o = shown ? await fit(page, '.cf-rec[data-kind="bow"] .cf-pre', '.cf-rec') : null;
+          assert(/"kind":"bow","t":1/.test(nu) && o && /^Zone 2 boss: about \d+ in 10, now \d+$/.test(o.text), `${v}: Next Up's Pine Bow row shows the boss line before the press (${nu}; ${o ? o.text : 'none after 60 s'})`);
+          if (o) {
+            assert(!o.cut && o.inRow && !o.over, `${v}: the recipe line shows whole inside its row (${JSON.stringify(o)})`);
+            if (!phone) assert(o.fs >= 14, `${v}: the recipe line keeps the 14 px desktop text floor (${o.fs})`);
+          }
+          const others = await X(`[...document.querySelectorAll('.cf-rec .cf-pre')].map(n => n.closest('.cf-rec').dataset.kind).join()`);
+          assert(others === 'bow', `${v}: only the row Next Up points at has the line (${others})`);
+          // the craft made the way the line's piece is (the likeliest rarity, middle bonus lines): the die reads 0.5 for this press only
+          const t0 = Date.now();
+          const made = await X(`(() => { const r = Math.random; Math.random = () => 0.5; try { document.querySelector('[aria-label="Craft Pine Bow"]').click(); } finally { Math.random = r; } const it = itemById(S.nextId - 1); return it ? it.r : null; })()`);
+          assert(Date.now() - t0 < 5000 && made === 'common', `${v}: the press makes a common Pine Bow and is not held up by the sample (${made})`);
+          let line = '';
+          while (Date.now() - t0 < 60000 && !line) { await page.waitForTimeout(200); line = await X(`(() => { const f = document.querySelector('.cf-res .cf-fight'); return f ? f.textContent : ''; })()`); }
+          const a = o && o.text.match(/about (\d+) in 10, now (\d+)/), b = line.match(/about (\d+) in 10, not (\d+) in 10/);
+          assert(a && b && Math.abs(+a[1] - +b[1]) <= 1 && +a[2] === +b[2], `${v}: the result card's line matches the line before the press within the sampler's spread (${o && o.text} / ${line || 'none'})`);
+          assert(!errs.length, `${v}: no page errors on the camp save` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // the worn Hood's Upgrade before the zone 7 boss
+          const { ctx, page, errs, X } = await open('save-pre-z7-boss.json');
+          await X(`craftUI.openItem(S.equip.helm); true`);
+          const shown = await wait(page, '.cf-up-box .cf-pre');
+          const o = shown ? await fit(page, '.cf-up-box .cf-pre', '.cf-up-box') : null;
+          assert(o && /^Zone 7 boss: a hit takes about \d+% of your health, now \d+%$/.test(o.text), `${v}: the worn Hood's Upgrade shows the boss line before the press (${o ? o.text : 'none after 60 s'})`);
+          if (o) {
+            assert(!o.cut && o.inRow && !o.over, `${v}: the Upgrade line shows whole inside its box (${JSON.stringify(o)})`);
+            if (!phone) assert(o.fs >= 14, `${v}: the Upgrade line keeps the 14 px desktop text floor (${o.fs})`);
+          }
+          assert(!errs.length, `${v}: no page errors on the zone 7 save` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // Pip at zone 10: the staff +1 barely changes the fight, so its Upgrade looks ahead to +2 instead (upgrade-odds-next-step)
+          const { ctx, page, errs, X } = await open('save-pip-z10-ward.json');
+          const lines = () => page.evaluate(() => { const l = document.querySelector('.cf-up-box .cf-pre'); if (!l) return 0; const r = document.createRange(); r.selectNodeContents(l); return new Set([...r.getClientRects()].map(q => Math.round(q.top))).size; });
+          for (const [p0, re] of [[0, /^Zone 10 boss: no change yet\. At \+2: about 5 in 10, now 4$/], [1, /^Zone 10 boss: about 5 in 10, now 4$/]]) {
+            await X(`typeof closeSheet === "function" && closeSheet(); itemById(S.equip.weapon).plus = ${p0}; gsCache = null; craftUI.openItem(S.equip.weapon); true`);
+            const shown = await wait(page, '.cf-up-box .cf-pre');
+            const o = shown ? await fit(page, '.cf-up-box .cf-pre', '.cf-up-box') : null, btn = await X(`!![...document.querySelectorAll('.cf-up-box button')].find(b => /^Upgrade to \\+${p0 + 1}$/.test(b.textContent.trim()))`);
+            assert(btn && o && re.test(o.text), `${v}: Pip's staff +${p0} Upgrade shows ${p0 ? 'the step its press makes' : 'the look-ahead to +2'} (${o ? o.text : 'none after 60 s'})`);
+            if (o) {
+              assert(!o.cut && o.inRow && !o.over, `${v}: the +${p0} line shows whole inside its box (${JSON.stringify(o)})`);
+              if (!phone) { assert(o.fs >= 14, `${v}: the +${p0} line keeps the 14 px desktop text floor (${o.fs})`); const n = await lines(); assert(n === 1, `${v}: the +${p0} line fits on one line (${n})`); }
+            }
+          }
+          assert(!errs.length, `${v}: no page errors on the Pip save` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('craft-odds-before-pay crashed: ' + (e.stack || e)); }
+
+// ==== upgrade-odds-next-step: when one press changes nothing, the Upgrade line looks ahead to the press that does ====
+// Pip's staff at the zone 10 Champion moves the fight only at +2 and +4 (pip-staff-odds-mismatch). With almanac.force('none'), as
+// every game here loads: the +0 and +2 rows look ahead (the next press is flat, the one after is the step), +1 and +3 show the step
+// itself, and the worn Circlet and Charm, which never move, show nothing. The look-ahead is the same fight as the plain line one
+// step on: a +0 row's "At +2" is the +1 row's line.
+if (section('upgrade-odds-next-step')) try {
+  const at = 'upgrade-odds-next-step', pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+  const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: pfx('save-pip-z10-ward.json') }) }), E = s => g.eval(s);
+  E("almanac.force('none')");   // the tool numbers (pip-staff-odds-mismatch) are on a day with no Omen
+  const ups = (pos, p0) => `[1, 2, 3].map(k => Object.assign(JSON.parse(JSON.stringify(itemById(S.equip.${pos}))), { id: -1, plus: ${p0} + k }))`;
+  const ahead = (pos, p0) => E(`(() => { const w = itemById(S.equip.${pos}), keep = w.plus; w.plus = ${p0}; gsCache = null; try { const j = fightDeltaAheadJob(${ups(pos, p0)}); if (!j) return 'nojob'; while (!j.step()); return JSON.stringify(j.res); } finally { w.plus = keep; gsCache = null; } })()`);
+  const rows = {};
+  for (const p0 of [0, 1, 2, 3]) rows[p0] = JSON.parse(ahead('weapon', p0));
+  const R = JSON.stringify(rows);
+  assert(E('S.maxZone') === 10 && E('itemById(S.equip.weapon).slot') === 'staff' && E('itemById(S.equip.weapon).plus') === 0, `${at}: the fixture is Pip's +0 staff at zone 10`);
+  assert(rows[0] && rows[0].ahead === 1 && rows[0].plus === 2 && rows[0].kind === 'wins' && rows[0].after > rows[0].before, `${at}: the +0 row looks ahead to +2 (${R})`);
+  assert(rows[2] && rows[2].ahead === 1 && rows[2].plus === 4 && rows[2].kind === 'wins' && rows[2].after > rows[2].before, `${at}: the +2 row looks ahead to +4 (${R})`);
+  assert(rows[1] && rows[1].ahead === 0 && rows[1].plus === 2 && rows[3] && rows[3].ahead === 0 && rows[3].plus === 4, `${at}: the +1 and +3 rows show the step their press makes (${R})`);
+  assert(rows[0].before === rows[1].before && rows[0].after === rows[1].after && rows[2].before === rows[3].before && rows[2].after === rows[3].after, `${at}: a look-ahead says what the press that makes the step will say (${R})`);
+  assert(rows[0].before === 4 && rows[0].after === 5 && rows[2].before === 5 && rows[2].after === 6, `${at}: the steps match the tool numbers (pip-staff-odds-mismatch: 4 -> 5 at +2, 5 -> 6 at +4) (${R})`);
+  // a look-ahead's first piece is the plain line's piece: the same fight as fightDelta one press on
+  const one = E(`JSON.stringify(fightDelta(Object.assign(JSON.parse(JSON.stringify(itemById(S.equip.weapon))), { id: -1, plus: 1 }), { scratch: true }))`);
+  assert(one === 'null', `${at}: the plain line for the +0 -> +1 press is still empty (${one})`);
+  for (const pos of ['helm', 'charm']) { const r = ahead(pos, 0); assert(r === 'null', `${at}: the worn ${pos === 'helm' ? 'Circlet' : 'Charm'} never moves the fight, so no look-ahead (${r})`); }
+  assert(E('itemById(-1)') === null && E('itemById(S.equip.weapon).plus') === 0, `${at}: the scratch pieces leave the bag as it was`);
+  assert(E(`fightDeltaAheadJob([]) === null && fightDeltaAheadJob([Object.assign(JSON.parse(JSON.stringify(itemById(S.items[0].id))), { id: S.items[0].id })]) === null`), `${at}: no pieces, or a piece under a real item's id, makes no job`);
+} catch (e) { fail('upgrade-odds-next-step crashed: ' + (e.stack || e)); }
+
 // ==== tool-speed-adds-up: a new tool's line says what it is faster than, and the parts multiply to the total ====
 if (section('tool-speed-adds-up')) try {
   await (async () => {
@@ -11754,11 +12447,12 @@ if (section('next tier gate')) try {
   const reset = () => E(`(() => { const o = JSON.parse(${JSON.stringify(snap)}); Object.assign(S.skills, o.skills); Object.assign(S.mats, o.mats); HUNT_TUNE.on = true; })()`);
   // 1. tier-two-named-for-return: the piece with the least XP left over all its gates (Woodcraft 8 of 10, Woodcutting 7 and Mining 5 of 14
   // for the Birch Bow), named by its furthest gate; never Ready; with every tier 1 piece worn it keeps a row in the top three, no boss loss needed
-  const away = '. Gathering keeps going while you\'re away.';
+  // away-line-only-when-true: the fixture fights, so a gathering gate says how to keep the skill rising away
+  const away = sk => `. Gather ${sk} before you leave and it keeps going.`;
   let l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away && !row(l).ready, `next tier gate: the Birch Bow's furthest gate shows (${JSON.stringify(l)})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining') && !row(l).ready, `next tier gate: the Birch Bow's furthest gate shows (${JSON.stringify(l)})`);
   const top3 = E('topGoals(3, { sticky: false }).map(x => x.label)');
-  assert(top3.includes('Birch Bow: Mining 5 of 14 opens Iron Ore' + away), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
+  assert(top3.includes('Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining')), `next tier gate: the gate row is in Next Up's top three (${JSON.stringify(top3)})`);
   let go = goOf('forge');
   assert(go && go.tab === 'gat' && go.view === 'mine', `next tier gate: the material gate's Go opens the Mining view (${JSON.stringify(go)})`);
   assert(/^Mining: /.test((l.find(x => x.id === 'skill') || {}).label || '') && (goOf('skill') || {}).view === 'mine', `next tier gate: the skill row follows the gate to Mining (${JSON.stringify(l.find(x => x.id === 'skill'))})`);
@@ -11778,7 +12472,7 @@ if (section('next tier gate')) try {
   // 3. with the stations open, still the bow's furthest gate (Mining 5, not the nearer Woodcutting 7); Go opens the Mining view
   E('S.skills.bench.lv = 10; S.skills.loom.lv = 10');
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away && !row(l).ready, `next tier gate: with the stations open, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining') && !row(l).ready, `next tier gate: with the stations open, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
   // 4. the Birch Bow's middles in the bag (refine-queues: 5 Birch Plank and 2 Iron Ingot; gear-in-first-25 Step 0, wood + metal): the craft, Ready
   E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2');
   l = goals();
@@ -11786,11 +12480,11 @@ if (section('next tier gate')) try {
   // 5. Birch Log enough for its planks: the bow's gate is Mining for the Iron Ore its Iron Ingots are smelted from (gear-in-first-25: was Hunting for Duskfang Pelt)
   E('S.mats.plank[1] = 0; S.mats.ingot[1] = 0; S.mats.wood[1] = 12; S.skills.forage.lv = 2; S.skills.mine.lv = 5');   // Mining 5 alone: less XP left than the Quiver's Hunting 4 and Foraging 2
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away, `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Mining 5 of 14 opens Iron Ore' + away('Mining'), `next tier gate: with the Birch Log in hand, Mining 5 of 14 opens Iron Ore (${JSON.stringify(row(l))})`);
   // 6. with Hunting hidden, no hide gate shows. The bow is wood + metal now (gear-in-first-25), so the hide gate is set up with the old hide bow
   E('globalThis.__bowRec = CRAFT_KINDS.bow.rec; CRAFT_KINDS.bow.rec = { wood: 6, hide: 2, ess: 2 }; S.skills.mine.lv = 1; S.skills.mine.xp = 0; S.skills.forage.lv = 14; S.mats.wood[1] = 40');   // Hunting is its one gate; Mining 1 puts the tools' Iron Ore further off
   l = goals();
-  assert(row(l) && row(l).label === 'Birch Bow: Hunting 4 of 14 opens Duskfang Pelt' + away, `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
+  assert(row(l) && row(l).label === 'Birch Bow: Hunting 4 of 14 opens Duskfang Pelt' + away('Hunting'), `next tier gate: a hide bow's gate is Hunting 4 of 14 (${JSON.stringify(row(l))})`);
   E('HUNT_TUNE.on = false');
   l = goals();
   assert(!l.some(x => /Hunting \d+ of|Duskfang Pelt$/.test(x.label)), `next tier gate: with Hunting hidden, no hide gate (${JSON.stringify(row(l))})`);
@@ -12014,6 +12708,83 @@ if (section('rally gates live (core)')) try {
     'rally gates: the boss bar marks each gate, the rally line names the mark (the Stun clause only while it charges), and a line says when the rally is over');
 } catch (e) { fail('rally gates live crashed: ' + (e.stack || e)); }
 
+// ---- trick-read-rate (why W2): the game counts how often the player reads a zone boss's tricks (S.bossOdds.reads, 59m), from the
+// live fight (59k foeContact: zone, zb, pressed, early). A fixture fight at the zone 10 Champion presses on a set share of its
+// feints and held swings and the counts must match what was pressed; an ordinary foe, the scratch sampler and the plain tallies
+// add nothing; old saves load with the default; save codes keep good counts and refuse bad ones. Nothing here is shown in the game.
+if (section('trick read counts (core)')) try {
+  const g = loadCore({ seed: 7, turns: true }), E = s => g.eval(s), J = JSON.stringify;
+  E(`soloPick('wren', { now: true }); S.cls.at = 0; TURN_TUNE.on = 1; S.L = 14; S.maxZone = 10; setZone(10); S.activity = 'fight'; arena = null; gearDirty();`);
+  const tally0 = E('JSON.stringify([S.bossOdds.hits, S.bossOdds.parry, S.bossOdds.dodge])');
+  // the player: on the k-th trick hit, a feint is pressed when k is even; a held swing is pressed while it holds when k % 3 is 0,
+  // in its parry window when k % 3 is 1, not at all when 2. Real hits are let through. Both sides stay alive so the fight runs on
+  const play = (boss, secs) => JSON.parse(E(`(() => {
+    fightBoss = ${boss}; spawn();
+    const want = { feint: 0, feintPress: 0, hold: 0, holdPress: 0, holdEarly: 0 };
+    let k = -1, key = '', act = '';
+    for (let t = 0; t < ${secs}; t += 0.05) {
+      const u = cbUnitByKey('hero'); if (u) u.hp = u.maxHp;
+      const m = TURN_LIVE;
+      if (m && !m.ended && m.foe) {
+        m.foe.hp = Math.max(m.foe.hp, 0.9 * m.foe.max);
+        if (m.phase === 'hero') turnCombatAction('attack');
+        if (m.phase === 'foeWindup') {
+          const h = m.move.hits[m.hitI], hk = m.n + ':' + m.move.id + ':' + m.hitI + ':' + m.until.toFixed(3);
+          if (hk !== key) { key = hk; act = '';
+            if (!m.usedDefense && (h.feint || h.hold > 0) && m.foe.boss) { k++; if (h.feint) { want.feint++; if (k % 2 === 0) { act = 'now'; want.feintPress++; } }
+              else { want.hold++; if (k % 3 !== 2) { want.holdPress++; act = k % 3 === 0 ? 'held' : 'win'; if (act === 'held') want.holdEarly++; } } } }
+          if (act && !m.usedDefense) {
+            const w = turnWindows(m), left = m.until - m.now;
+            if (act === 'now' || (act === 'held' && m.now >= m.holdFrom && m.now < m.holdTo) || (act === 'win' && left <= w.parry * 0.5)) { turnCombatAction('parry'); act = ''; }
+          }
+        }
+      }
+      tick(0.05);
+    }
+    return JSON.stringify({ want, boss: !!(TURN_LIVE && TURN_LIVE.foe && TURN_LIVE.foe.boss), name: TURN_LIVE && TURN_LIVE.foe ? TURN_LIVE.foe.name : '' });
+  })()`));
+  // an ordinary zone 10 foe first: no zone boss, so nothing is counted
+  const plain = play(false, 30), r0 = E('JSON.stringify(S.bossOdds.reads)');
+  assert(r0 === '{}', `trick reads: an ordinary foe's fight adds no read counts (${r0})`);
+  const f = play(true, 240), got = JSON.parse(E('JSON.stringify(S.bossOdds.reads)'))[10] || {};
+  console.log(`  trick reads: zone 10 Champion fixture fight (${f.name}): feints ${got.feint} (pressed ${got.feintPress}), held swings ${got.hold} (pressed ${got.holdPress}, ${got.holdEarly} while it held)`);
+  assert(f.boss && f.want.feint >= 4 && f.want.hold >= 6 && f.want.feintPress > 0 && f.want.holdEarly > 0 && f.want.holdPress > f.want.holdEarly,
+    `trick reads: the fixture fight meets the zone 10 Champion's feints and held swings (${J(f.want)}, boss ${f.boss})`);
+  assert(J(got) === J(f.want), `trick reads: the counts match what the player pressed (want ${J(f.want)}, got ${J(got)})`);
+  assert(Object.keys(JSON.parse(E('JSON.stringify(S.bossOdds.reads)'))).join() === '10', 'trick reads: the counts sit under the boss\'s zone');
+  // the decayed tallies the sampler reads still count the fight's plain hits beside the trick counts
+  const hits = E('S.bossOdds.hits');
+  assert(hits > 0 && E('Number.isFinite(S.bossOdds.hits)') && tally0 !== E('JSON.stringify([S.bossOdds.hits, S.bossOdds.parry, S.bossOdds.dodge])'), `trick reads: the plain tallies still count the real hits (${hits.toFixed(2)})`);
+  // the scratch sampler emits nothing to the save
+  const before = E('JSON.stringify(S.bossOdds)');
+  E('turnCombatSample({ profile: turnMakeProfile(bossOddsFoe(10), cbEstHero()), seconds: 120, seed: 4 })');
+  assert(E('JSON.stringify(S.bossOdds)') === before, 'trick reads: a scratch sample of the zone 10 boss adds no counts');
+  // a save code keeps the counts; a bad row is refused
+  E('S.cls.at = 0'); const code = E('encodeSave(S)'), back = E(`JSON.stringify(decodeSave(${J(code)}).data.bossOdds.reads)`);
+  assert(back === E('JSON.stringify(S.bossOdds.reads)'), `trick reads: a save code keeps the counts (${back})`);
+  const refuse = (reads, why) => { const raw = JSON.parse(E('JSON.stringify(S)')); raw.bossOdds.reads = reads;
+    const r = E(`validateSave(JSON.parse(${J(J(raw))}))`); assert(r && r.ok === false, `trick reads: a save code with ${why} is refused (${J(reads)})`); };
+  refuse({ 10: { feint: 2, feintPress: 3 } }, 'more presses than feints');
+  refuse({ 10: { hold: 4, holdPress: 2, holdEarly: 3 } }, 'more early presses than presses');
+  refuse({ 10: { feint: 1.5 } }, 'a part count');
+  refuse({ 10: { feint: -1 } }, 'a count below 0');
+  refuse({ 10: { guess: 1 } }, 'an unknown count');
+  refuse({ x: { feint: 1 } }, 'a key that is not a zone');
+  refuse({ 10: 3 }, 'a row that is not a record');
+  refuse(5, 'counts that are not a record');
+  // old saves (no reads) load with the default and count from there
+  for (const fx of ['early', 'mid', 'late']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-' + fx + '.json'), 'utf8'), o = loadCore({ turns: true, storage: memoryStorage({ [KEY]: raw }) });
+    assert(o.eval('JSON.stringify(S.bossOdds.reads)') === '{}' && !o.errors.length, `trick reads: the ${fx} fixture loads with no counts`);
+  }
+  { const o = loadCore({ turns: true, storage: memoryStorage({ [KEY]: JSON.stringify(Object.assign(JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')), { bossOdds: { hits: 5, parry: 2, dodge: 1, rings: 0, perfect: 0, good: 0 } })) }) });
+    assert(o.eval('JSON.stringify(S.bossOdds)') === J({ hits: 5, parry: 2, dodge: 1, rings: 0, perfect: 0, good: 0, reads: {} }), 'trick reads: a save with the old boss odds record keeps its tallies and gains the empty counts'); }
+  // the player is never shown the counts: no UI file reads them
+  const ui = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(n => parseInt(n, 10) >= 60).filter(n => /bossOdds\.reads|\.reads\[|holdEarly|feintPress/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', n), 'utf8')));
+  assert(!ui.length, `trick reads: no page file reads the counts (${ui.join(', ')})`);
+  assert(!g.errors.length, 'trick reads: no core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('trick read counts crashed: ' + (e.stack || e)); }
+
 // ---- wren-z9-10-foes (judge 2026-10-08): the scratch fight (turnCombatSample, the budget's) gets an ordinary Rattlebones up once a fight, as
 // the live loop does (59b onFoeDeath): at ENEMY_TUNE.reassemble of its HP, never a boss, never after a Burn kill. Asserted on the live path too
 // (lessons: a rule the sampler models is checked where the player meets it).
@@ -12145,7 +12916,7 @@ if (section('staged guide (browser)')) try {
       return { id: up ? soloGuideWants() : '', txt: up ? document.querySelector('.ob-txt').textContent : '', paused: ONBOARD.paused, now: q.now, phase: q.phase,
         d: q.dodgeOpensAt, p: q.parryOpensAt, ops: TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.foeOps : -1, hp: u ? u.hp : 0, fight: window.__fights || 0, L: S.L,
         done: ['attack', 'dodge', 'ability', 'parry'].filter(k => S.onboard.done[k]), own: soloAbilities().length,
-        add: [...document.querySelectorAll('#soloBar .sb-abslot')].some(n => /Tap to add/.test(n.textContent)) }; })())`;
+        add: [...document.querySelectorAll('#soloBar .sb-abslot')].some(n => /Add a move/.test(n.textContent)) }; })())`;
     const KEYS = { attack: 'd', dodge: 's', ability: 'q', parry: 'a' }, WRONG = { attack: 'q', ability: 'd', dodge: 'a', parry: 's' };
     try {
       for (const hero of ['wren', 'tobin', 'pip']) {
@@ -12187,7 +12958,7 @@ if (section('staged guide (browser)')) try {
         assert(!moved.length, `staged guide ${hero}: while a lesson's line is up, the foe's clock, its moves and your HP stand still${moved.length ? ': ' + moved.join('; ') : ''}`);
         assert(!late.length, `staged guide ${hero}: the Dodge and Parry lines first show with the foe's clock at the window's opening, so the held key press lands (both were done by a key press)${late.length ? ': ' + late.join('; ') : ''}`);
         assert(wrong.length === 4 && wrong.every(w => w.endsWith(':ok')), `staged guide ${hero}: while a lesson holds, the other buttons do nothing (${wrong.join(', ')})`);
-        assert(!swap.length && !tapAdd.length, `staged guide ${hero}: with one ability, no line says "swap" and no empty slot says "Tap to add"${swap.length ? ': ' + swap[0] : ''}${tapAdd.length ? '; Tap to add during ' + tapAdd[0] : ''}`);
+        assert(!swap.length && !tapAdd.length, `staged guide ${hero}: with one ability, no line says "swap" and no empty slot says "Add a move"${swap.length ? ': ' + swap[0] : ''}${tapAdd.length ? '; Add a move during ' + tapAdd[0] : ''}`);
         if (hero === 'wren') {
           // the first level-up (level 2): the Hero tab opens and Hesketh's next line says so and points at your points, while the next foe waits
           let lv = null;
@@ -12229,7 +13000,7 @@ if (section('staged guide (browser)')) try {
         assert(sl.id === 'say:slot' && /needs a slot/.test(sl.txt), `staged guide: once the move is learned he says to put it in a slot under the fight ("${sl.txt}")`);
         await page.click('.ob-ok'); await X('closeMenu(); true'); await page.waitForTimeout(500);
         const shut1 = await slotTxt();
-        assert(!/Tap to add/.test(shut0) && /Tap to add/.test(shut1), `staged guide: an empty slot is silent until a learned move waits for it, then says "Tap to add" (${shut0} / ${shut1})`);
+        assert(!/Add a move/.test(shut0) && /Add a move/.test(shut1), `staged guide: an empty slot is silent until a learned move waits for it, then says "Add a move" (${shut0} / ${shut1})`);
         assert(!errs.length, 'staged guide (Scroll, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -12633,7 +13404,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
         try {
           const { ctx, page, errs, X } = await open(w, h);
           const trail = [], bad = [], seen = new Set();
-          let stuck = '', lastKey = '', same = 0, idle = 0, iters = 0; const passes = [];
+          let stuck = '', lastKey = '', same = 0, idle = 0, iters = 0, owed = 0; const passes = [];   // owed: ticks given in a row for TICK_OWED
           const want = ['attack', 'ability', 'dodge', 'parry', 'upgrade', 'gather', 'chop', 'light', 'bench', 'tool', 'forge', 'store', 'nextup'];   // (tab:party: done by the Training step's visit)
           // The Tool step is done by "any tool made" (55-hearth), so a hero who is dropped a pick first (Carapace Pick, a zone 4 boss
           // unique, an item with `u`) never sees it, and does not need to. The walk's idle passes run the game ahead while the guide waits for the screen, so
@@ -12660,6 +13431,9 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
                 if (S.onboard.done.store && S.maxZone < 3) { S.maxZone = 3; S.zone = 3; } true`);
               await page.waitForTimeout(120); continue;
             }
+            // a cache or scene that only the next tick opens holds the hint back (TICK_OWED): give it that tick, then read the step again
+            // (at most 20 in a row: a cache or scene that one tick never opens is not waited out, and the step's own line reads what is up)
+            if (await X(TICK_OWED) && owed++ < 20) { await X('tick(0.1); true'); await page.waitForTimeout(120); continue; } owed = 0;
             if (!trail.includes(st)) trail.push(st);
             // forge-tip-goes-stale: a materials line is hidden over a menu other than Camp or Gather, but its step is still current; the walk reads
             // it as live from onboardNeed (the materials come in) instead of looking for a line that is not drawn there
@@ -13130,6 +13904,10 @@ if (section('desktop tooltips (browser, desktop-tooltips)')) try {
       await page.goto('http://lf.test/'); await page.waitForTimeout(700);
       const X = s => page.evaluate(s => window.__t.x(s), s);
       await X('S.onboard.tips = false; for (const x of document.querySelectorAll(".bsheet-ov .bsheet-x")) x.click(); true');
+      // ci-flakes-spend-hover: the game holds still while the mouse rests (the frame loop skips tick() while soloPickerOpen() says true). The
+      // live fight changed what the Abilities list is drawn from (a level, a Scroll, the power number), the list rebuilt under a resting mouse,
+      // and the row the check hovered was gone before its tip opened ("no tip" under load). The tips run on wall-clock timers, as before.
+      await X('soloPickerOpen = () => true; true');
       return { ctx, page, errs, X };
     };
     const view = async (X, page, v) => {
@@ -13138,7 +13916,15 @@ if (section('desktop tooltips (browser, desktop-tooltips)')) try {
     };
     const TIP = `(() => { const b = document.getElementById('tip'); if (!b || b.hidden) return null; const r = b.getBoundingClientRect();
       return { lines: [...b.children].map(c => c.textContent), ok: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, box: [r.left, r.top, r.right, r.bottom].map(Math.round) }; })()`;
-    const hover = async (page, loc) => { await page.mouse.move(1, 1); await page.waitForTimeout(60); if (!(await loc.hover({ timeout: 5000 }).then(() => true, () => false))) return null; await page.waitForTimeout(350); return page.evaluate(s => window.__t.x(s), TIP); };
+    // ci-flakes-spend-hover: after the hover, wait for the tip itself, not a fixed 350 ms: its 120 ms timer (TIP_DELAY, asserted above)
+    // fired late on a busy CPU and the check read the box before it opened. The wait ends at once on a target whose text is empty (an
+    // empty slot shows no tip), and after 5 s the box is read as it is (a tip that never opens still fails its line).
+    const TIP_UP = (e, cap) => new Promise(done => { const t0 = performance.now(); let n = e; while (n && n !== document && n._tip == null) n = n.parentNode;
+      const f = () => { const b = document.getElementById('tip'), t = n && n !== document ? n._tip : null; let txt = '';
+        try { txt = String((typeof t === 'function' ? t() : t) || '').trim(); } catch (err) {}
+        if ((b && !b.hidden) || !txt || performance.now() - t0 > cap) return done(); requestAnimationFrame(f); }; f(); });
+    const hover = async (page, loc) => { await page.mouse.move(1, 1); await page.waitForTimeout(60); if (!(await loc.hover({ timeout: 5000 }).then(() => true, () => false))) return null;
+      await loc.evaluate(TIP_UP, 5000).catch(() => {}); return page.evaluate(s => window.__t.x(s), TIP); };
     const norm = s => s.replace(/\s+/g, ' ');
     try {
       for (const [w, h] of [[1280, 720], [1920, 1080]]) {
@@ -14129,6 +14915,12 @@ if (section('normal-death-says-so')) try {
           on('fightStart', () => { __ndFS++; const u = cbUnitByKey('hero'); __ndHp = u ? u.hp / u.maxHp : 0; }); true`);
         const live = async () => { for (let i = 0; i < 40 && !(await X('!!(TURN_LIVE && !TURN_LIVE.ended && cbUnitByKey("hero") && !cbUnitByKey("hero").down)')); i++) await page.waitForTimeout(150); };
         await live();
+        // the loss line slides in from 16 px left over 0.35 s (60-turn.css tv-beat-in) and spans the stage, so it reads outside the stage
+        // until the slide ends: measure it at rest, once its own animations finish (the flake: a fixed 400 ms sleep caught it mid-slide under load).
+        // A hidden line cancels its slide (caught: the reads after it say so); a slide still running after 5 s fails by name
+        const rest = async () => assert(await page.evaluate(() => { const b = document.querySelector('.tv-beat'); return !b || Promise.race([
+          Promise.all(b.getAnimations().map(a => a.finished.catch(() => 0))).then(() => true), new Promise(r => setTimeout(() => r(false), 5000))]); }),
+          `${w}x${h}: the loss line's slide-in finished within 5 s`);
         const st = () => page.evaluate(() => {
           const b = document.querySelector('.tv-beat'), box = document.getElementById('stageBox'), r = b && b.getBoundingClientRect(), sb = box.getBoundingClientRect();
           const help = b && b.querySelector('.tv-beat-help'), txt = b && b.querySelector('.tv-beat-txt');
@@ -14139,7 +14931,7 @@ if (section('normal-death-says-so')) try {
               return [...t.children].some(c => c.offsetParent) && +getComputedStyle(t).opacity > 0.05 && r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom; })() };
         });
         // a real normal loss at zone 10 (the lethal hit, then the recovery gap turnCombatTick sets): the float says Beaten, the stage line shows with tc-on (toasts wait), inside the stage and whole
-        await X('cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true'); await page.waitForTimeout(400);
+        await X('cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true'); await rest();
         let s = await st();
         assert(s.on && s.txt === "Beaten. You're back to full HP for the next fight." && s.tc && s.float === 'Beaten', `${w}x${h}: a normal loss shows "Beaten" on the stage with the full-HP line and holds the toasts (${JSON.stringify(s)})`);
         assert(s.inside && !s.cut, `${w}x${h}: the loss line sits inside the stage and no text is cut`);
@@ -14152,7 +14944,7 @@ if (section('normal-death-says-so')) try {
           const gearHelp = async (setup, goal) => {
             await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true'); await page.waitForTimeout(100);
             await X(`window.__gfE = Object.assign({}, S.equip); window.__gfI = S.items.slice(); window.__gfG = craftGoalNext; ${setup}; craftGoalNext = () => (${goal});
-              emit('wipe', { zone: ++__ndZn, to: 10, boss: false, arena: false, stall: false }); craftGoalNext = __gfG; true`); await page.waitForTimeout(400);
+              emit('wipe', { zone: ++__ndZn, to: 10, boss: false, arena: false, stall: false }); craftGoalNext = __gfG; true`); await rest();
             const r = await st(), go = await page.evaluate(() => { const g = document.querySelector('.tv-beat-go'), box = document.getElementById('stageBox'), r = g && g.getBoundingClientRect(), sb = box.getBoundingClientRect();
               return { lbl: g && !g.hidden ? g.textContent : '', inside: !!r && r.width > 0 && r.left >= sb.left - 1 && r.right <= sb.right + 1 && r.top >= sb.top - 1 && r.bottom <= sb.bottom + 1, hit: !!r && document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) === g }; });
             return { ...r, go };
@@ -14351,6 +15143,81 @@ if (section('foe-tricks-say-so')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('foe-tricks-say-so crashed: ' + (e.stack || e)); }
+
+// ==== feint-read-clear (card 9 Oct, from trick-read-rate #307): after a feint the line says the real swing follows; a press on a held
+// swing before its windows says "Too early", once a fight, in the same plate. Never before the trick shows. The foe's next move is
+// set to a feint then a held swing (the live path: its script), at 1280x720, 740x360, 360x740 and 1920x1080. The lines sit whole
+// inside the stage, at the 14 px floor on desktop. Tester notes: players obeyed "A feint! Do not press." and were hit by the real swing.
+if (section('feint-read-clear')) try {
+  const at = 'feint-read-clear', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const FEINT = 'A feint! Press on the real swing next.', HOLD = "It holds the swing. Press at the bar's end.", EARLY = "Too early! Press at the bar's end.";
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, desk = w >= 1280;
+        const ctx = await browser.newContext(desk ? { turns: true, viewport: { width: w, height: h } } : { turns: true, viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, val]) => { try { localStorage.setItem(k, val); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = src => page.evaluate(src => window.__t.x(src), src);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); S.activity !== 'fight' && setActivity('fight'); S.maxZone = Math.max(S.maxZone, 8); setZone(7); ui(true); true`);
+        for (let i = 0; i < 40 && !(await X('!!(TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase !== "intro" && TURN_LIVE.foe && !TURN_LIVE.foe.dead)')); i++) await page.waitForTimeout(150);
+        // the foe's move, started on the live path (turnBegin, its script): a feint, then a swing that holds. Both sides kept alive
+        await X(`(() => { S.turn.seen = {}; delete document.body.dataset.trickTip;
+          window.__keep = setInterval(() => { const u = cbUnitByKey('hero'); if (u) u.hp = u.maxHp; const t = TURN_LIVE; if (t && !t.ended && t.foe) t.foe.hp = Math.max(t.foe.hp, 0.9 * t.foe.max); }, 50);
+          window.__go = () => { const m = TURN_LIVE; m.charge = null; m.e.skip = 0; m.e.recover = 0; m.si = 0;
+            m.p.script = [{ id: 'fx', name: 'Test Swing', hits: [{ wind: 2.5, x: 0, feint: true }, { wind: 2, x: 0.001, hold: 3 }] }];
+            document.querySelector('.tv-warn').hidden = true; turnBegin(m, 'foe', TURN_LIVE_IO); return true; };
+          return __go(); })()`);
+        const warn = () => page.evaluate(() => { const b = document.querySelector('.tv-warn'), box = document.getElementById('stageBox'); if (!b || b.hidden) return { on: false };
+          const r = b.getBoundingClientRect(), sb = box.getBoundingClientRect();
+          return { on: true, txt: b.textContent, px: parseFloat(getComputedStyle(b).fontSize), inside: r.left >= sb.left - 1 && r.right <= sb.right + 1 && r.top >= sb.top - 1 && r.bottom <= sb.bottom + 1, cut: b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1 }; });
+        const hit = () => X('JSON.stringify(TURN_LIVE && TURN_LIVE.move && TURN_LIVE.phase === "foeWindup" ? { id: TURN_LIVE.move.id, i: TURN_LIVE.hitI, feint: !!TURN_LIVE.move.hits[TURN_LIVE.hitI].feint, now: TURN_LIVE.now, tellAt: TURN_LIVE.tellAt, holdFrom: TURN_LIVE.holdFrom, holdTo: TURN_LIVE.holdTo } : null)').then(JSON.parse);
+        const until = async (f, n = 100) => { for (let i = 0; i < n; i++) { const r = await f(); if (r) return r; await page.waitForTimeout(50); } return null; };
+        const holding = async () => { const x = await hit(); return x && x.id === 'fx' && x.i === 1 && x.now >= x.holdFrom && x.now < x.holdTo - 1 ? x : null; };
+        // before the feint's bar breaks, nothing names it (veto "warn before foe tricks")
+        const f0 = await hit();
+        assert(!!f0 && f0.id === 'fx' && f0.feint && f0.now < f0.tellAt, `${v}: the test move's feint winds up (${JSON.stringify(f0)})`);
+        const s0 = await warn(), t0 = await X('document.body.dataset.trickTip || ""');
+        assert(!(s0.on && s0.txt === FEINT) && !t0, `${v}: no feint line before its bar breaks (${JSON.stringify(s0)})`);
+        // the bar breaks: the line says the real swing follows, whole, inside the stage, at the floor on desktop
+        const sF = await until(async () => { const s = await warn(); return s.on && s.txt === FEINT ? s : null; });
+        assert(!!sF && sF.inside && !sF.cut, `${v}: after the feint the line says "${FEINT}" inside the stage (${JSON.stringify(sF)})`);
+        if (sF && desk) assert(sF.px >= 14, `${v}: the feint line is at least 14 px (${sF.px})`);
+        assert(await X('document.body.dataset.trickTip') === 'tfeint', `${v}: the page marks the feint line shown`);
+        // the held swing: the line shows once it holds; a press while it holds says "Too early", in the same plate
+        const h0 = await until(holding);
+        assert(!!h0, `${v}: the held swing stalls`);
+        const sH = await until(async () => { const s = await warn(); return s.on && s.txt === HOLD ? s : null; }, 20);
+        assert(!!sH && sH.inside && !sH.cut, `${v}: the held swing says "${HOLD}" inside the stage (${JSON.stringify(sH)})`);
+        if (sH && desk) assert(sH.px >= 14, `${v}: the held-swing line is at least 14 px (${sH.px})`);
+        await X(`turnCombatAction('parry'); true`); await page.waitForTimeout(60);
+        const sE = await warn();
+        assert(sE.on && sE.txt === EARLY && sE.inside && !sE.cut, `${v}: an early press on a held swing says "${EARLY}" in the same plate (${JSON.stringify(sE)})`);
+        if (desk) assert(sE.px >= 14, `${v}: the early line is at least 14 px (${sE.px})`);
+        assert(await X('document.body.dataset.trickTip') === 'early', `${v}: the page marks the early line shown`);
+        // once a fight: the same move again, its held swing pressed early, says no early line
+        await until(async () => !(await hit()), 200);
+        await X('delete document.body.dataset.trickTip; __go()');
+        const h1 = await until(holding, 200);
+        assert(!!h1, `${v}: the second held swing stalls`);
+        if (h1) { await X(`turnCombatAction('parry'); true`); await page.waitForTimeout(60);
+          const r1 = await X('JSON.stringify({ tip: document.body.dataset.trickTip || "", pressed: !!TURN_LIVE.usedDefense })').then(JSON.parse);
+          assert(r1.pressed && r1.tip !== 'early', `${v}: a second early press in the same fight says no early line (${JSON.stringify(r1)})`); }
+        await X('clearInterval(window.__keep); true');
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('feint-read-clear crashed: ' + (e.stack || e)); }
 
 if (section('foe moves by type')) try {
   const g = loadCore({ seed: 7 }), E = s => g.eval(s), J = s => JSON.parse(E(`JSON.stringify(${s})`));
@@ -15273,8 +16140,8 @@ if (section('tips-pause-says-so')) try {
         assert(s.want === 'say:forage' && s.paused && s.held && s.plate && !s.foe && s2.paused && !s2.foe && s2.kills === k0,
           `${v}: back in the fight the same line holds the kill gap, the app carries the held class, "Paused" is on the stage and the next foe waits (${JSON.stringify(s)} -> ${JSON.stringify(s2)})`);
         assert(meet(s.pr, s.sr) && s.pr[0] >= s.sr[0] && s.pr[2] <= s.sr[2] && !meet(s.pr, s.br), `${v}: the Paused plate sits inside the stage and clear of the tip (plate ${s.pr}, stage ${s.sr}, tip ${s.br})`);
-        if (w === 740) assert(!s.bar, `${v}: the tip covers the fight bar here, so the bar hides as before (${JSON.stringify(s)})`);
-        else assert(s.bar && Math.abs(s.dim - 0.5) < 0.05, `${v}: the fight bar stays in view under the tip, dimmed (opacity ${s.dim}, ${JSON.stringify(s)})`);
+        // (tips-hold-740: at 740x360 too; the tip there ends above the fight buttons)
+        assert(s.bar && Math.abs(s.dim - 0.5) < 0.05, `${v}: the fight bar stays in view under the tip, dimmed (opacity ${s.dim}, ${JSON.stringify(s)})`);
         await X('document.querySelectorAll("#soloBar .sbtn").forEach(b => b.classList.remove("nope", "hit", "refused")); window.__keys = []; true');
         if (w === 1280) {
           // keys that must not answer it: Space on a focused button, a held-down repeat, a key typed in a text box
@@ -15391,6 +16258,115 @@ if (section('tips-pause-says-so')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('tips-pause-says-so crashed: ' + (e.stack || e)); }
+
+// ==== tips-hold-740 (cold leg 10 Oct, finding 1): on a phone on its side a Got it tip used to hide the whole fight bar. Now the tip ends above the
+// fight buttons (only the bar's tab row hides under it), so the five buttons stay pressable and one press answers the tip and acts; the stage says
+// Paused; and a tip never opens on the foe's turn there. 1280x720 and 1366x640 keep the bar whole (75-onboard-ui.js fitBub, 80-landscape.css) ====
+if (section('tips-hold-740')) try {
+  const at = 'tips-hold-740';
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const raw0 = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-dipper-z4.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, edit) => {
+      const mobile = w < 1000;
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true });
+      const o = JSON.parse(raw0); if (edit) edit(o);
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: JSON.stringify(o), key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      return { ctx, page, errs, X };
+    };
+    // the tip, its Got it, the Paused plate and every fight button: where each sits, and what a press at each button's middle would hit
+    const LOOK = `JSON.stringify((() => { const b = document.querySelector('.ob-bub'), up = !!b && !b.hidden, ok = document.querySelector('.ob-ok'), bar = document.querySelector('#soloBar'), pl = document.querySelector('.ob-paused');
+      const vis = n => !!n && n.getClientRects().length > 0 && getComputedStyle(n).visibility !== 'hidden' && getComputedStyle(n).display !== 'none';
+      const R = n => { const r = n.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); };
+      const btns = bar ? [...bar.querySelectorAll('.sb-pane [data-act], .sb-row-act [data-act]')].filter(n => n.getClientRects().length).map(n => { const r = n.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, e = document.elementFromPoint(x, y);
+        return { act: n.dataset.act, r: R(n), hit: !!e && n.contains(e), vis: vis(n) }; }) : [];
+      return { want: soloGuideWants(), up, txt: up ? b.querySelector('.ob-txt').textContent : '', ok: up && ok && !ok.hidden ? ok.textContent : '', okr: up && ok && !ok.hidden ? R(ok) : null, br: up ? R(b) : null,
+        paused: ONBOARD.paused, held: $('app').classList.contains('guide-held'), side: $('app').classList.contains('guide-btn'), plate: vis(pl), pr: vis(pl) ? R(pl) : null,
+        bar: vis(bar), tabs: !!bar && vis(bar.querySelector('.sb-tabs')), btns, foe: liveFoe(), phase: guidePhase(true), vw: innerWidth, vh: innerHeight }; })())`;
+    const look = async X => JSON.parse(await X(LOOK));
+    const meet = (a, b) => !!a && !!b && a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+    const inside = (a, b) => !!a && !!b && a[0] >= b[0] && a[1] >= b[1] && a[2] <= b[2] && a[3] <= b[3];
+    const QUIET = 'GUIDE_STEPS.forEach(s => { if (!S.onboard.done[s.id]) S.onboard.done[s.id] = 1; }); true';
+    const killFoe = X => X('if (TURN_LIVE && TURN_LIVE.foe && !TURN_LIVE.ended) TURN_LIVE.foe.hp = 0; true');
+    const gapLine = async (X, page, id, ms = 20000) => { let s = await look(X); for (const t0 = Date.now(); !(s.want === id && s.paused) && Date.now() - t0 < ms;) { if (s.foe) await killFoe(X); await page.waitForTimeout(150); s = await look(X); } return s; };
+    const LONG = 'The Forge needs Copper Ore 0/25 from the Copper Vein and Pine Log 2/10 from the Pine Grove. Mine at the Copper Vein, then come back and make your first real blade.';
+    try {
+      // 1. a Got it line holds the kill gap: on the phone the six fight buttons stay in view and pressable beside a tip that ends above them,
+      //    even when the tip runs long; the stage says Paused; a tap on Attack answers it and attacks. Desktop views keep the whole bar.
+      for (const [w, h] of [[740, 360], [1280, 720], [1366, 640]]) {
+        const v = `${at} (browser ${w}x${h})`, phone = w === 740, { ctx, page, errs, X } = await open(w, h, o => { o.onboard.sayQ = [{ id: 'forage' }]; delete o.onboard.done['say:forage']; });
+        await X(QUIET); await X('window.__kills = 0; on("kill", () => { S.kills = 0; }); setActivity("fight"); true');
+        let s = await gapLine(X, page, 'say:forage');
+        await page.waitForTimeout(400); s = await look(X);
+        assert(s.want === 'say:forage' && s.paused && s.held && s.plate && s.ok === 'Got it', `${v}: the forage line holds the kill gap with a Got it, and the stage says Paused (${JSON.stringify(s)})`);
+        assert(!meet(s.pr, s.br), `${v}: the Paused plate is clear of the tip (plate ${s.pr}, tip ${s.br})`);
+        const check = (s, how) => {
+          const bad = s.btns.filter(b => !b.vis || !b.hit || meet(b.r, s.br));
+          assert(s.bar && s.btns.length === 6 && !bad.length, `${v}${how}: all six fight buttons are in view, clear of the tip, and a press at each one's middle reaches it (${s.btns.length} buttons; ${JSON.stringify(bad)}; tip ${s.br})`);
+          assert(inside(s.okr, s.br) && s.okr[3] <= s.vh, `${v}${how}: the tip's Got it sits whole inside the tip and on screen (Got it ${s.okr}, tip ${s.br})`);
+          if (phone) assert(s.side && !s.tabs, `${v}${how}: the tip reaches the bar's tab row, which hides under it (${JSON.stringify({ side: s.side, tabs: s.tabs })})`);
+          else assert(!s.side && s.tabs, `${v}${how}: the bar stays whole here, tabs and all (${JSON.stringify({ side: s.side, tabs: s.tabs })})`);
+        };
+        check(s, '');
+        // a long tip: the text scrolls inside the tip, which still ends above the buttons
+        await X(`document.querySelector('.ob-txt').textContent = ${JSON.stringify(LONG)}; true`); await page.waitForTimeout(700);
+        s = await look(X); check(s, ', a long tip');
+        if (phone) {
+          // a tip that starts too low for two lines above the buttons (the Next Up step under a tall chip) keeps the old rule: the whole bar
+          // hides, never a tip half over a button
+          await X('document.querySelector(".ob-bub").style.marginTop = "150px"; true'); await page.waitForTimeout(700);
+          const low = await look(X), half = low.btns.filter(b => b.vis && meet(b.r, low.br));
+          assert(!low.bar && !half.length && await X('$("app").classList.contains("guide-bar-off")'), `${v}, a low tip: the whole bar hides under it, no button half covered (${JSON.stringify({ bar: low.bar, half, tip: low.br })})`);
+          await X('document.querySelector(".ob-bub").style.marginTop = ""; true'); await page.waitForTimeout(700); s = await look(X);
+          assert(s.bar && !await X('$("app").classList.contains("guide-bar-off")'), `${v}: back in its place the tip fits again and the bar returns (${JSON.stringify({ bar: s.bar })})`);
+        }
+        await X('document.querySelectorAll("#soloBar .sbtn").forEach(b => b.classList.remove("nope", "hit", "refused")); true');
+        const a = s.btns.find(b => b.act === 'atk');
+        if (phone) await page.touchscreen.tap((a.r[0] + a.r[2]) / 2, (a.r[1] + a.r[3]) / 2); else await page.mouse.click((a.r[0] + a.r[2]) / 2, (a.r[1] + a.r[3]) / 2);
+        await page.waitForTimeout(80);
+        const acted = await X('(() => { const b = document.querySelector("#soloBar .sb-atk"); return b.classList.contains("nope") || b.classList.contains("hit"); })()');
+        s = await look(X);
+        const done = await X('!!S.onboard.done["say:forage"]');
+        assert(s.want !== 'say:forage' && done && acted, `${v}: one ${phone ? 'tap' : 'click'} on Attack answers the line (done ${done}) and reaches Attack (acted ${acted}) (${JSON.stringify(s)})`);
+        s = await look(X);
+        assert(!s.side && s.tabs && !await X('document.querySelector(".ob-txt").style.maxHeight'), `${v}: with the tip gone the bar is whole and the tip keeps no fitted height (${JSON.stringify({ side: s.side, tabs: s.tabs })})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // 2. the zone boss's tip may start while the boss opens (the foe's side of the turn). On the phone it waits for your turn instead;
+      //    a desktop still shows it at once (the same moment, so the check can see the case it guards)
+      for (const [w, h] of [[740, 360], [1280, 720]]) {
+        const v = `${at} (browser ${w}x${h}, the boss tip)`, phone = w === 740, { ctx, page, errs, X } = await open(w, h, o => { o.zone = 1; o.maxZone = 1; });
+        await X(QUIET); await X('delete S.onboard.done.boss; TURN_TUNE.introHand = TURN_TUNE.introAuto = 6; setActivity("fight"); fightBoss = true; spawn(); respawn = 0; true');
+        // the boss walks in (any other foe in the way ends at once)
+        let s = await look(X), boss = false;
+        for (const t0 = Date.now(); Date.now() - t0 < 20000; ) { boss = await X('!!(mob && mob.boss && !mob.dead) && liveFoe()'); if (boss) break; if (s.foe) await killFoe(X); await page.waitForTimeout(100); s = await look(X); }
+        const seen = [];
+        for (const t0 = Date.now(); Date.now() - t0 < 4000; ) { s = await look(X); seen.push(`${s.phase}:${s.want || '-'}`); if (s.phase !== 'foe') break; if (!phone && s.want === 'boss') break; await page.waitForTimeout(60); }
+        const early = seen.filter(k => /^(foe|windup):boss$/.test(k));
+        assert(boss && seen[0] && seen[0].startsWith('foe:'), `${v}: the boss's opening reads as the foe's side of the turn (boss ${boss}; ${seen.slice(0, 4).join(' ')})`);
+        if (phone) {
+          assert(!early.length, `${v}: no tip opens while it is the foe's side of the turn (${seen.slice(-6).join(' ')})`);
+          await X('TURN_TUNE.introHand = 1.2; TURN_TUNE.introAuto = 0.6; true');
+          s = await look(X); for (const t0 = Date.now(); s.want !== 'boss' && Date.now() - t0 < 12000;) { await page.waitForTimeout(100); s = await look(X); }
+          assert(s.want === 'boss' && s.phase === 'hero' && s.paused, `${v}: on your turn the boss tip opens and holds the fight (${JSON.stringify({ want: s.want, phase: s.phase, paused: s.paused })})`);
+          const bad = s.btns.filter(b => !b.hit);
+          assert(s.btns.length === 6 && !bad.length && s.plate, `${v}: under the boss tip the fight buttons are pressable and the stage says Paused (${JSON.stringify(bad)}, plate ${s.plate})`);
+        } else assert(early.length > 0, `${v}: here the boss tip opens while the boss opens, as before (${seen.slice(-6).join(' ')})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tips-hold-740 crashed: ' + (e.stack || e)); }
 
 // ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Confirm" for 6 s; Cancel always asks twice ====
 if (section('camp-build-tap-again')) try {
@@ -16153,6 +17129,158 @@ if (section('ability-names-fit')) try {
   }
 } catch (e) { fail('ability-names-fit crashed: ' + (e.stack || e)); }
 
+// ==== loadout-odds: Hero > Abilities says the zone boss odds of the three slotted moves, and Learn picks by them (W10) ====
+// save-pip-z10-ward: Pip at the zone 10 Champion on W10's arrival footing (level 15, tier 1 commons +0), Fireball / Spark / Kindle in the
+// slots (where Next Up leads), one Hollow Scroll that can teach Arcane Ward, Frost Shard or Ignite, no Parry or Dodge record (the casual
+// player). Node: the line's number for her own slots (Fireball first) is within 10 points of W10's corrected figure for them: about 48%
+// (Foreman's correction of 9 Oct 16:58 to W10-2026-10-09.md; the first figure, 33%, was Spark first; copied here, the check cannot read
+// the report). Learn names Arcane Ward first (learnPick and
+// Next Up's row, which says the odds), and its spot is one move in and one out, never a new set. Browser, 1280x720 and 740x360 (360x740
+// must not break), with no Almanac day as in W10: the line shows under Q W E, its text fits its box, at or above the desktop floor (--tmin);
+// Arcane Ward's card says where Learn puts it; taking Fireball out of Q shows the new number and "was" the old one (upright, once its
+// sheet closes: the open sheet hides the line).
+if (section('loadout-odds')) try {
+  const at = 'loadout-odds', W10_SET = 0.48;
+  const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-z10-ward.json'), 'utf8');
+  const g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: raw }) }), J = x => JSON.parse(g.eval(`JSON.stringify(${x})`));
+  const st = J(`({ hero: soloHero(), L: S.L, z: S.maxZone, eq: soloEquipped(), on: bossOddsOn() })`);
+  assert(st.hero === 'pip' && st.z === 10 && st.on && st.eq.join() === 'fire,spark,kindle', `${at}: the fixture is Pip at zone 10 with Fireball, Spark, Kindle and a turn fight (${JSON.stringify(st)})`);
+  const base = J(`loadoutOdds([soloEquipped()], { sync: true })`);
+  assert(base && base.zone === 10 && Math.abs(base.wins[0] - W10_SET) <= 0.1, `${at}: her slots (Fireball, Spark, Kindle) win ${base && Math.round(100 * base.wins[0])}% of zone 10 boss fights, within 10 points of W10's corrected ${100 * W10_SET}%`);
+  const lo = J(`learnOdds('pip', true)`), pick = J(`learnPick('pip').id`), row = lo && lo.rows[0];
+  assert(row && row.id === 'arcaneward' && pick === 'arcaneward' && lo.rows.length === 3, `${at}: Learn names Arcane Ward first (${lo && lo.rows.map(r => r.id + ' ' + Math.round(100 * r.win)).join(', ')})`);
+  assert(row && row.lift && row.lift.after > row.lift.before && row.eq.filter(id => !st.eq.includes(id)).join() === 'arcaneward' && row.eq.filter(id => st.eq.includes(id)).length === 2,
+    `${at}: its spot adds Arcane Ward and keeps two of her moves, and lifts the line (${JSON.stringify(row)})`);
+  const lbl = J(`(topGoals(8).find(x => x.id === 'learn-ability') || {}).label`);
+  assert(/^Learn Arcane Ward: zone 10 boss, about \d+ in 10 wins \(now \d+\)$/.test(lbl || ''), `${at}: Next Up's Learn row names Arcane Ward and its odds (${lbl})`);
+  assert(!g.errors.length, `${at}: no handler errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // wait for what a step reads, with a cap that fails naming what never appeared (a fixed timer after a click flakes under 4 jobs)
+        const need = async (sel, what, ms = 15000) => { try { await page.waitForFunction(q => { const e = document.querySelector(q); return !!e && !!e.offsetParent; }, sel, { timeout: ms }); return true; }
+          catch (e) { assert(false, `${v}: ${what} (${sel}) never showed`); return false; } };
+        await X(`almanac.force('none'); gearDirty(); setTab('party'); true`);   // W10's footing has no Almanac day (a day's crits moved her to 6 in 10)
+        if (!(await need('#viewSeg button[data-view="abilities"]', 'the Abilities view button'))) { await ctx.close(); continue; }
+        await page.evaluate(() => document.querySelector('#viewSeg button[data-view="abilities"]').click());
+        const line = async re => { try { await page.waitForFunction(r => { const e = document.querySelector('.ab-odds'); return !!e && new RegExp(r).test(e.textContent); }, re, { timeout: 20000 }); } catch (e) {}
+          return JSON.parse(await X(`(() => { const e = document.querySelector('.ab-odds'); if (!e || !e.offsetParent) return 'null'; const r = document.createRange(); r.selectNodeContents(e);
+            const b = e.getBoundingClientRect(), bar = document.querySelector('.ab-bar').getBoundingClientRect(), q = document.querySelector('.ab-qwe').getBoundingClientRect(), f = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tmin')) || 0;
+            return JSON.stringify({ txt: e.textContent, need: +r.getBoundingClientRect().width.toFixed(2), room: +b.width.toFixed(2), sw: e.scrollWidth, cw: e.clientWidth, under: b.top >= q.bottom - 1, inBar: b.bottom <= bar.bottom + 1 && b.left >= bar.left - 1 && b.right <= bar.right + 1,
+              fs: parseFloat(getComputedStyle(e).fontSize), floor: f, pageW: document.documentElement.scrollWidth, vw: innerWidth }); })()`)); };
+        const fits = l => !!l && l.need <= l.room + 0.01 && l.sw <= l.cw && l.under && l.inBar && l.fs >= l.floor - 0.01 && l.pageW <= l.vw;
+        const l1 = await line('about \\d+ in 10 wins$');
+        assert(l1 && /^Zone 10 boss with these: about \d+ in 10 wins$/.test(l1.txt) && fits(l1), `${v}: the line shows under Q W E and fits its row (${JSON.stringify(l1)})`);
+        // Arcane Ward's card: where Learn puts it (once the Learn order is in)
+        if (!(await need('.ab-row[data-ab="arcaneward"]', "Arcane Ward's row"))) { await ctx.close(); continue; }
+        await page.evaluate(() => document.querySelector('.ab-row[data-ab="arcaneward"]').click());
+        let spot = null; try { await page.waitForFunction(() => !!document.querySelector('.ab-det .ab-spot'), null, { timeout: 30000 }); spot = await X(`document.querySelector('.ab-det .ab-spot').textContent`); } catch (e) {}
+        assert(/^Learn puts it in [QWE]\b.*Zone 10 boss: about \d+ in 10 wins, now \d+\.$/.test(spot || ''), `${v}: Arcane Ward's card says where Learn puts it and the odds (${spot})`);
+        const goal = await X(`(topGoals(8).find(x => x.id === 'learn-ability') || {}).label || ''`);
+        assert(/^Learn Arcane Ward: zone 10 boss/.test(goal), `${v}: Next Up's Learn row names Arcane Ward first (${goal})`);
+        await page.evaluate(() => document.querySelector('.ab-det .ab-x').click());
+        // a slot change: Fireball out of Q (its card's Take out); the line says the new number and what it was
+        if (!(await need('.ab-q[data-slot="0"]', 'slot Q'))) { await ctx.close(); continue; }
+        await page.evaluate(() => document.querySelector('.ab-q[data-slot="0"]').click());
+        if (!(await need('.ab-det[data-ab="fire"] .ab-slotb.on', "Fireball's Take out"))) { await ctx.close(); continue; }
+        await page.evaluate(() => document.querySelector('.ab-det[data-ab="fire"] .ab-slotb.on').click());
+        if (w < h) await page.evaluate(() => document.querySelector('.ab-det .ab-x')?.click());   // upright, the open sheet hides the line (it needs the bar's old height)
+        const l2 = await line(', was \\d+$');
+        const n1 = l1 && (l1.txt.match(/about (\d+) in 10/) || [])[1], n2 = l2 && (l2.txt.match(/about (\d+) in 10/) || [])[1];
+        assert(l2 && n1 && n2 !== n1 && l2.txt === `Zone 10 boss with these: about ${n2} in 10 wins, was ${n1}` && fits(l2), `${v}: after a slot change the line says what it was (${n1}) and still fits (${JSON.stringify(l2)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('loadout-odds crashed: ' + (e.stack || e)); }
+
+// ==== cache-pick-order-settles: the Lantern Cache's move pick keeps one order from its first paint, and its odds stop when it closes ====
+// save-pip-z10-ward (Pip at the zone 10 Champion, one Hollow Scroll, Arcane Ward / Frost Shard / Ignite to learn). Her zone 10 first clear
+// opens the cache on the Champion's card with a pick (75-caches-ui). The kill moves maxZone, so the zone 11 odds start then and arrive
+// after the card is up. Browser, 1280x720, 740x360 and 360x740: every order the pick row ever paints is the first one (a watcher on the
+// card, and two reads 1 s apart once the odds are in), the move that lifts the line most is marked in place, and the card fits; with the
+// odds already in at open (they once sorted it) the order is the same. First of all, a card closed at once (Keep the Scroll) while its
+// odds are pending does no odds work after it closes: no learnOdds call from the pick's fill for 3 s.
+if (section('cache-pick-order-settles')) try {
+  const at = 'cache-pick-order-settles', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-z10-ward.json'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-caches-ui.js'), 'utf8'), mv = (src.match(/function spoilsMoves[\s\S]*?\n}\n/) || [''])[0];
+  assert(mv && !/\.sort\(/.test(mv), `${at}: spoilsMoves offers the moves in the Abilities list's order, never sorted by odds that may or may not be in yet`);
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // a watcher keeps every order (and each pick's sub and mark) the pick row paints; __late counts learnOdds calls from the fill after a close
+        await X(`window.__ord = []; window.__closed = false; window.__late = 0; { let inFill = false; const f0 = spoilsFill, l0 = learnOdds;
+          spoilsFill = (sp, n) => { inFill = true; try { return f0(sp, n); } finally { inFill = false; } };
+          learnOdds = (...a) => { if (inFill && __closed) __late++; return l0(...a); }; }
+          new MutationObserver(() => { const r = document.querySelector('.mm-ov .mm-pick-row'); if (!r) return; const bs = [...r.querySelectorAll('.mm-pick')];
+            const o = bs.map(b => b.querySelector('b').textContent).join(), s = bs.map(b => (b.querySelector('small') || {}).textContent || '').join(' | '), m = bs.filter(b => b.classList.contains('lift')).map(b => b.querySelector('b').textContent).join();
+            const l = __ord[__ord.length - 1]; if (!l || l.o !== o || l.s !== s || l.m !== m) __ord.push({ o, s, m }); }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] }); true`);
+        // the zone 10 boss's kill as the fight makes it (first clear), unique roll missed (its card is spoils-card-fits-with-unique's)
+        const win = async (ready = false) => { await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); } __ord.length = 0;
+          S.activity = 'fight'; S.zone = 10; S.maxZone = 10; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 0;
+          try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } for (const q of MOMENT_Q) if (q.kind === 'champion') q.scene = ''; S.activity = 'gather'; emit('sceneReset');
+          ${ready ? "learnOdds('pip', true);" : ''} true`);   // ready: the zone 11 odds worked out now, before the cache opens on the next tick
+          try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov .mm-pick')`), null, { timeout: 8000, polling: 50 }); return true; }
+          catch (e) { assert(false, `${vw}: the zone 10 clear's card with a pick never showed`); return false; } };
+        // first, before anything has worked out the zone 11 odds: closed at its first paint (Keep the Scroll), then no odds work from the pick
+        if (!(await win())) { await ctx.close(); continue; }
+        const pend = await X(`(() => { const lo = learnOdds('pip'); MOMENT_UI.shownAt = 0; document.querySelector('.mm-ov .mm-go').click(); __closed = true; return !lo; })()`);
+        await page.waitForTimeout(3000);
+        const late = await X(`__late`), up = await X(`!!document.querySelector('.mm-ov .mm-pick')`);
+        assert(pend && !up && late === 0, `${vw}: closed while its odds were still pending (${pend}), the pick's fill asks for no odds after (${late} calls in 3 s)`);
+        await X(`__closed = false; true`);
+        if (!(await win())) { await ctx.close(); continue; }
+        const first = JSON.parse(await X(`JSON.stringify(__ord[0])`));
+        // the odds are in once a pick's sub names the zone 11 boss; then read twice, 1 s apart
+        try { await page.waitForFunction(() => window.__t.x(`[...document.querySelectorAll('.mm-ov .mm-pick small')].some(e => /Zone 11 boss/.test(e.textContent))`), null, { timeout: 30000, polling: 100 }); }
+        catch (e) { assert(false, `${vw}: the pick's odds never arrived`); }
+        const read = () => X(`(() => { const o = document.querySelector('.mm-ov'), bs = [...o.querySelectorAll('.mm-pick')], inView = r => r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1;
+          return JSON.stringify({ o: bs.map(b => b.querySelector('b').textContent).join(), lift: bs.filter(b => b.classList.contains('lift')).map(b => b.querySelector('b').textContent),
+            top: (learnOdds('pip') || { rows: [] }).rows.map(r => r.id)[0], fits: inView(o.querySelector('.mm-card').getBoundingClientRect()) && [...bs, o.querySelector('.mm-go')].every(b => inView(b.getBoundingClientRect())), pageW: document.documentElement.scrollWidth <= innerWidth }); })()`).then(JSON.parse);
+        const r1 = await read(); await page.waitForTimeout(1000); const r2 = await read();
+        const all = JSON.parse(await X(`JSON.stringify(__ord)`));
+        assert(first && first.o === 'Ignite,Frost Shard,Arcane Ward' && r1.o === first.o && r2.o === first.o && all.every(x => x.o === first.o),
+          `${vw}: the pick keeps the Abilities list's order from its first paint, through the odds arriving, and 1 s later (${JSON.stringify({ first, r1: r1.o, r2: r2.o, painted: all.map(x => x.o) })})`);
+        if (w === 1280) await page.screenshot({ path: path.join(ROOT, 'docs', 'proof', 'cache-pick-order-settles', 'check-card-1280x720.png') });
+        assert(r2.top === 'arcaneward' && r2.lift.join() === 'Arcane Ward' && r2.fits && r2.pageW, `${vw}: Arcane Ward, the move that lifts the zone 11 line most, is marked in place, and the card fits (${JSON.stringify(r2)})`);
+        // the odds already in when the card opens (once they sorted it: Arcane Ward first): the same order, marked from the first paint
+        if (!(await win(true))) { await ctx.close(); continue; }
+        await page.waitForTimeout(1000);
+        const r3 = await read(), all3 = JSON.parse(await X(`JSON.stringify(__ord)`));
+        assert(r3.o === first.o && all3.every(x => x.o === first.o) && r3.lift.join() === 'Arcane Ward' && /Zone 11 boss/.test(all3[0].s),
+          `${vw}: with the odds in at open, the pick paints the same order, its lines filled and Arcane Ward marked (${JSON.stringify({ r3, painted: all3 })})`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('cache-pick-order-settles crashed: ' + (e.stack || e)); }
+
 // ==== turn-banner-clears-plate: the turn line and the whose-turn banner each read on one line and stay off the "Zone boss" line ====
 // save-mid, a zone boss fight, every foe renamed to the longest name the game can give a foe (a boss or its Deepwell "Deep" name, an
 // elite, a Champion, a story boss). At 1280x720, 740x360 and 360x740: the turn line over the stage ("<name>'s turn", .tv-n) on the foe's
@@ -16253,7 +17381,8 @@ if (section('turn-banner-clears-plate')) try {
 // with Hunting and Foraging 43 minutes behind it, and the row sat below the top 8.
 if (section('tier-two-named-for-return')) try {
   const at = 'tier-two-named-for-return', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
-  const want = 'Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you\'re away.';
+  // away-line-only-when-true: the save fights, so the away sentence says how to make it true
+  const want = 'Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going.';
   const load = () => { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1)'); return g; };
   { const g = load(), E = s => g.eval(s);
     const b = JSON.parse(E('JSON.stringify(craftGoalNext())'));
@@ -16327,6 +17456,851 @@ if (section('tier-two-named-for-return')) try {
   }
 } catch (e) { fail('tier-two-named-for-return crashed: ' + (e.stack || e)); }
 
+// ==== nu-chip-gate-label-fits: the always-on Next Up chip shows the whole tier 2 gate label ====
+// save-min60-tier-gate's Birch Bow gate row (~90 characters) is the longest Next Up label a first sitting meets. The chip clamps its
+// label to 3 lines in landscape (80-landscape), and tier-two-named-for-return measures only the opened list's .nu-row. The chip shows
+// topGoals(3)[0], so the section puts the gate row's words in the chip's label and counts the lines they take where the chip draws them.
+// The clamp leaves overflow visible, so scrollHeight misses a cut: the section counts the text's own line boxes. At 740x360 the words
+// take all 3 lines with nothing to spare, so a longer gate wording or a narrower side column fails here.
+if (section('nu-chip-gate-label-fits')) try {
+  const at = 'nu-chip-gate-label-fits', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[740, 360], [1024, 768], [1280, 720], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const want = await X('(topGoals(20, { sticky: false }).find(x => x.id === "forge") || {}).label || ""');
+        assert(/^Birch Bow: Mining 7 of 14 opens Iron Ore\. /.test(want), `${v}: the fixture's gate row is the Birch Bow's (${want})`);
+        const o = await page.evaluate(want => { const c = document.getElementById('nuChip'), l = c && c.querySelector('.nu-lbl'); if (!l || c.offsetParent === null) return null;
+          l.textContent = want;   // renderChip rewrites only when the goals change, so the words stay for the measure
+          const cs = getComputedStyle(l), a = l.getBoundingClientRect(), b = c.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(l);
+          const rs = [...rg.getClientRects()].filter(r => r.width > 0), clamp = parseInt(cs.webkitLineClamp, 10) || 0;
+          return { lines: new Set(rs.map(r => Math.round(r.top))).size, clamp, textBottom: Math.round(Math.max(...rs.map(r => r.bottom))), boxBottom: Math.round(a.bottom),
+            fs: parseFloat(cs.fontSize), ellipsis: cs.textOverflow === 'ellipsis' && l.scrollWidth > l.clientWidth + 1,
+            inChip: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        assert(o, `${v}: the Next Up chip shows`);
+        if (o) {
+          assert((!o.clamp || o.lines <= o.clamp) && o.textBottom <= o.boxBottom + 1 && !o.ellipsis && o.inChip, `${v}: the gate label shows whole inside the chip, no clamp or ellipsis (${JSON.stringify(o)})`);
+          assert(o.fs >= (w >= 1280 ? 14 : 13), `${v}: the chip label keeps its text floor (${o.fs})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('nu-chip-gate-label-fits crashed: ' + (e.stack || e)); }
+
+// ==== side-column-fits-740: every gate label and every away line fit the landscape side column ====
+// The side column holds the Next Up chip (row 2), the away chip (row 3) and the dock (row 4, .sb-tabs at its top). The dock shows
+// only while fighting (75-solo-ui: target() is 'mob') and the away chip only while gathering (71-ui-fight awayChipText), so the
+// height budget is per state: fighting, the chip ends above .sb-tabs; gathering, the chip and the away chip end above the screen's
+// foot and the dock is hidden. The section builds every tier gate label the game can make (gateLabel over each kind, tiers 2 to 5,
+// its station gates and each raw cell its recipe takes, one level short, gathering that skill and not) and every away line
+// (awayChipSay over each gathered material: about N in the longest away, fills up, full), and measures the longest of each, with
+// the players' web fonts and with the fallbacks (display-fallback-font).
+if (section('side-column-fits-740')) try {
+  const at = 'side-column-fits-740', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the chip's label lines and cut, the away chip's words, and the boxes, with the given words put in place (the next pass may
+    // rewrite them, so all of it is read in one task)
+    const measure = (page, label, away) => page.evaluate(([label, away]) => {
+      const c = document.getElementById('nuChip'), l = c && c.querySelector('.nu-lbl'), a = document.querySelector('.away-chip'), tabs = document.querySelector('.sb-tabs');
+      const on = e => !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden';
+      if (!on(c) || !l) return null;
+      const keep = [l.textContent, a && a.lastChild.textContent];
+      l.textContent = label; if (away != null && a) a.lastChild.textContent = away;
+      const lines = n => { const rg = document.createRange(); rg.selectNodeContents(n); return [...rg.getClientRects()].filter(r => r.width > 0); };
+      const lr = lines(l), lb = l.getBoundingClientRect(), cb = c.getBoundingClientRect(), cs = getComputedStyle(l), clamp = parseInt(cs.webkitLineClamp, 10) || 0;
+      const o = { lines: new Set(lr.map(r => Math.round(r.top))).size, clamp, cut: Math.max(...lr.map(r => r.bottom)) > lb.bottom + 1 || lb.bottom > cb.bottom + 1 || Math.max(...lr.map(r => r.right)) > cb.right + 1,
+        fs: parseFloat(cs.fontSize), chipBottom: Math.round(cb.bottom), away: on(a) ? null : false, dock: on(tabs) ? Math.round(tabs.getBoundingClientRect().top) : null, foot: innerHeight };
+      if (on(a)) { const ar = lines(a.lastChild), ab = a.getBoundingClientRect();
+        o.away = { top: Math.round(ab.top), bottom: Math.round(ab.bottom), cut: Math.max(...ar.map(r => r.bottom)) > ab.bottom + 1 || Math.max(...ar.map(r => r.right)) > ab.right + 1, fs: parseFloat(getComputedStyle(a).fontSize) }; }
+      l.textContent = keep[0]; if (a && keep[1] != null) a.lastChild.textContent = keep[1];
+      return o;
+    }, [label, away]);
+    try {
+      for (const webFonts of [true, false]) for (const [w, h] of [[740, 360], [1024, 768], [1280, 720], [1366, 640], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}${webFonts ? '' : ', fallback fonts'}`, phone = w < 1000, desk = w >= 1200;
+        const ctx = await browser.newContext({ turns: true, webFonts, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        // stamped at load, so no away card opens over the column
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const words = await X(`(() => {
+          const labels = new Set(), aways = new Set();
+          for (const kind of Object.keys(CRAFT_KINDS)) { if (CRAFT_KINDS[kind].legacy) continue;
+            for (let t = 2; t <= 5; t++) { const rec = craftRecipe(kind, t); if (!rec) continue;
+              const gs = [], st = stationOf(kind), need = CRAFT_STATION_REQ[t - 1];
+              if (st) for (const sk of new Set([st.skill, 'smith'])) gs.push({ skill: sk, lv: need - 1, need, station: st.key });
+              for (const k of Object.keys(rec)) { if (k === 'gold') continue; const prod = REFINE_PRODUCTS[k];
+                for (const [f, tt] of prod ? prod.inputs(t) : [[k, t]]) { if (f === 'coal' || !CRAFT_NODES[f]) continue;
+                  const sk = skillOf(f), nd = skillReq(sk, tt); if (nd > 1) gs.push({ skill: sk, lv: nd - 1, need: nd, mat: costName(f, tt) }); } }
+              for (const gate of gs) for (const on of [true, false]) labels.add(gateLabel({ kind, t, gate }, on)); } }
+          for (const f of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) { const nm = matName(f, t);
+            for (const n of ['spill', 0, 99999]) aways.add(awayChipSay(nm, n, CAMP_TUNE.awayMax)); }
+          const by = s => [...s].sort((a, b) => b.length - a.length);
+          return { labels: by(labels), aways: by(aways) }; })()`);
+        assert(words.labels.length > 100 && words.aways.length > 30, `${v}: the game makes gate labels and away lines (${words.labels.length}, ${words.aways.length})`);
+        // line breaks, not only length, decide the height: the 12 longest of each are measured
+        const L = words.labels.slice(0, 12), A = words.aways.slice(0, 12);
+        // fighting: the dock shows and the away chip does not; every label shows whole and the chip ends 4 px or more above .sb-tabs
+        let worst = null, bad = null, floor = true;
+        for (const lt of L) { const o = await measure(page, lt, null); if (!o) { bad = 'no chip'; break; }
+          if (o.away !== false || o.dock == null) { bad = `fighting shows the away chip or no dock (${JSON.stringify(o)})`; break; }
+          if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `cut: ${lt} (${o.lines} lines, clamp ${o.clamp})`; break; }
+          if (o.fs < (desk ? 14 : 13)) floor = false;
+          if (!worst || o.chipBottom - o.dock > worst.chipBottom - worst.dock) worst = { ...o, lt }; }
+        assert(!bad, `${v}: fighting, every gate label shows whole in the Next Up chip${bad ? ' (' + bad + ')' : ''}`);
+        if (worst) {
+          console.log(`  ${v}: fighting, the longest label takes ${worst.lines} lines and the chip ends ${worst.dock - worst.chipBottom} px above the dock`);
+          assert(worst.chipBottom + 4 <= worst.dock, `${v}: fighting, the chip ends above .sb-tabs (${worst.chipBottom} vs ${worst.dock}: ${worst.lt})`);
+        }
+        assert(floor, `${v}: the chip label keeps its ${desk ? 14 : 13} px floor`);
+        // gathering: the away chip shows and the dock does not; every label with every away line fits above the screen's foot
+        await X('navGo({ act: "gather", node: { kind: "ore", t: 1 } }); true');
+        await page.waitForTimeout(600);
+        worst = null; bad = null; floor = true;
+        for (const lt of L) for (const al of A) { const o = await measure(page, lt, al); if (!o) { bad = 'no chip'; break; }
+          if (!o.away || o.dock != null) { bad = `gathering shows no away chip or the dock (${JSON.stringify(o)})`; break; }
+          if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `label cut: ${lt}`; break; }
+          if (o.away.cut) { bad = `away line cut: ${al}`; break; }
+          if (o.away.top < o.chipBottom) { bad = `the away chip starts over the Next Up chip (${lt} / ${al})`; break; }
+          if (o.fs < (desk ? 14 : 13) || o.away.fs < (desk ? 14 : 13)) floor = false;
+          if (!worst || o.away.bottom > worst.away.bottom) worst = { ...o, lt, al }; }
+        assert(!bad, `${v}: gathering, every gate label and away line shows whole, the away chip under the Next Up chip${bad ? ' (' + bad + ')' : ''}`);
+        if (worst) {
+          console.log(`  ${v}: gathering, the longest pair ends ${worst.foot - worst.away.bottom} px above the screen's foot`);
+          assert(worst.away.bottom + 4 <= worst.foot, `${v}: gathering, the away chip ends above the screen's foot (${worst.away.bottom} vs ${worst.foot}: ${worst.lt} / ${worst.al})`);
+        }
+        assert(floor, `${v}: the chip and away text keep the ${desk ? 14 : 13} px floor`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('side-column-fits-740 crashed: ' + (e.stack || e)); }
+
+// ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
+// save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
+// (50-sim awayBase), so the row promises "keeps going" only then; fighting or gathering another skill says how to make it true.
+if (section('away-line-only-when-true')) try {
+  const at = 'away-line-only-when-true', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  const base = 'Birch Bow: Mining 7 of 14 opens Iron Ore. ', on = base + 'Gathering keeps going while you\'re away.', off = base + 'Gather Mining before you leave and it keeps going.';
+  const states = [['fighting', '', off], ['gathering Woodcutting', 'setNode("wood", 1); setActivity("gather")', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather")', on]];
+  for (const [name, set, want] of states) {
+    const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    E('tick(0.1)'); if (set) E(set);
+    const r = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge');
+    assert(r && r.label === want, `${at}: ${name}, the row reads "${want}" (${JSON.stringify(r)})`);
+    // an away run of 1 h from this state: Mining rises only when the row says it keeps going
+    const lv0 = E('S.skills.mine.lv'), xp0 = E('S.skills.mine.xp'), rep = E('(() => { const r = awayGains(3600); return { note: r.note, lines: r.lines.map(l => l.txt) }; })()');
+    const rose = E('S.skills.mine.lv') > lv0 || E('S.skills.mine.xp') > xp0;
+    assert(rose === (want === on), `${at}: ${name}, 1 h away ${want === on ? 'raises' : 'leaves'} Mining (${lv0} -> ${E('S.skills.mine.lv')}; away report: ${JSON.stringify(rep)})`);
+  }
+  // the sentence follows the activity: back to a fight, the row says how to make it true again
+  { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s), lbl = () => (E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge') || {}).label;
+    E('tick(0.1); setNode("ore", 1); setActivity("gather")'); const a = lbl(); E('setActivity("fight")'); const b = lbl();
+    assert(a === on && b === off, `${at}: the sentence changes with the activity (${a} / ${b})`);
+    // a station gate has no away sentence while gathering either
+    E('setActivity("gather"); S.mats.plank[1] = 5; S.mats.ingot[1] = 2; S.skills.bench.lv = 8; gearDirty()');
+    const c = lbl();
+    assert(c === 'Birch Bow: Woodcraft 8 of 10', `${at}: a station gate says nothing about away (${c})`);
+  }
+  // review: a Deepwell run started from Mining fights below, but away resumes the gathering (57d awayBegin), so the row keeps its promise
+  { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s), lbl = () => (E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge') || {}).label;
+    E('tick(0.1); setNode("ore", 1); setActivity("gather"); S.camp.b.hearth = Math.max(3, S.camp.b.hearth || 0)');
+    assert(E('deepUnlocked() && DW.start(false)') && E('S.activity') === 'fight' && E('DW.run().act') === 'gather', `${at}: a Deepwell run starts from Mining`);
+    const a = lbl(), lv0 = E('S.skills.mine.lv'); E('awayGains(3600)');
+    assert(a === on && E('S.skills.mine.lv') > lv0, `${at}: in a Deepwell run started from Mining the row says it keeps going, and 1 h away raises Mining (${a}; ${lv0} -> ${E('S.skills.mine.lv')})`);
+  }
+  // both sentences show whole in the Next Up list at the three views, 14 px or more on the desktop
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800);
+        const measure = want => page.evaluate(want => { const row = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want); if (!row) return null;
+          const l = row.querySelector('.nu-lbl'), a = l.getBoundingClientRect(), b = row.getBoundingClientRect();
+          return { cut: l.scrollHeight > l.clientHeight + 1 || l.scrollWidth > l.clientWidth + 1, fs: parseFloat(getComputedStyle(l).fontSize), inRow: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        for (const [name, set, want] of [['fighting', '', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather"); true', on]]) {
+          if (set) { await X(set); await page.waitForTimeout(800); }   // the open list redraws every 500 ms
+          const o = await measure(want);
+          assert(o, `${v}: ${name}, the Next Up list shows "${want}"`);
+          if (o) {
+            assert(!o.cut && o.inRow, `${v}: ${name}, the row's words show whole inside the row (${JSON.stringify(o)})`);
+            if (!phone) assert(o.fs >= 14, `${v}: ${name}, the row keeps the 14 px desktop text floor (${o.fs})`);
+          }
+        }
+        if (process.env.LF_PROOF_SHOTS) await page.screenshot({ path: path.join(process.env.LF_PROOF_SHOTS, `${at}-${w}x${h}.png`) });
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('away-line-only-when-true crashed: ' + (e.stack || e)); }
+
+// ==== gate-go-starts-gathering: Go on a gathering gate row starts gathering that skill, so the away sentence comes true ====
+// save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Go used to open the Mining view only and the hero kept
+// fighting, so a player who pressed it and left gained nothing away. A station gate's Go is unchanged (Craft at the station, no switch).
+if (section('gate-go-starts-gathering')) try {
+  const at = 'gate-go-starts-gathering', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  const base = 'Birch Bow: Mining 7 of 14 opens Iron Ore. ', on = base + 'Gathering keeps going while you\'re away.', off = base + 'Gather Mining before you leave and it keeps going.';
+  const load = () => { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1)'); return g; };
+  const row = (E, id) => E(`topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))`).find(x => x.id === id) || {};
+  const press = (E, id) => E(`(() => { const r = topGoals(20, { sticky: false }).find(x => x.id === ${JSON.stringify(id)}); const s = typeof r.go === "function" ? r.go() : r.go; if (s.fn) s.fn(); return { tab: s.tab, view: s.view, sel: s.sel || null, act: s.act || null }; })()`);
+  const where = E => E('({ act: S.activity, kind: S.node.kind, t: S.node.t, skill: skillOf(S.node.kind), open: skillTierOpen(skillOf(S.node.kind), S.node.t) && craftNodeVisible(S.node.kind, S.node.t) })');
+  // fighting: Go switches to Mining at the gate's family (ore) at its highest open tier, and the row then promises what away does
+  { const g = load(), E = s => g.eval(s);
+    assert(row(E, 'forge').label === off && E('S.activity') === 'fight', `${at}: the save fights and the row says how to make it true (${row(E, 'forge').label})`);
+    const s = press(E, 'forge'), w = where(E);
+    assert(s.tab === 'gat' && s.view === 'mine' && !s.act, `${at}: Go still opens the Mining view (${JSON.stringify(s)})`);
+    assert(w.act === 'gather' && w.skill === 'mine' && w.open && w.kind === 'ore' && w.t === E('skillTopTier("mine")'), `${at}: Go starts mining ore at its highest open tier (${JSON.stringify(w)})`);
+    assert(row(E, 'forge').label === on, `${at}: after Go the row reads "${on}" (${row(E, 'forge').label})`);
+    const lv0 = E('S.skills.mine.lv'), xp0 = E('S.skills.mine.xp'); E('awayGains(3600)');
+    assert(E('S.skills.mine.lv') > lv0 || E('S.skills.mine.xp') > xp0, `${at}: after Go, 1 h away raises Mining (${lv0} -> ${E('S.skills.mine.lv')})`);
+  }
+  // the skill row mirrors the gate (next-tier-gate-goal: "its Go is the gate row's"), so its Go does the same
+  { const g = load(), E = s => g.eval(s);
+    assert(/^Mining: /.test(row(E, 'skill').label || ''), `${at}: the skill row names Mining (${row(E, 'skill').label})`);
+    press(E, 'skill'); const w = where(E);
+    assert(w.act === 'gather' && w.skill === 'mine', `${at}: the skill row's Go, the gate row's, starts mining too (${JSON.stringify(w)})`);
+  }
+  // gathering Woodcutting: Go moves to Mining; already mining a lower tier: Go keeps the node the player picked
+  { const g = load(), E = s => g.eval(s);
+    E('setNode("wood", 1); setActivity("gather")'); press(E, 'forge'); const w = where(E);
+    assert(w.act === 'gather' && w.skill === 'mine', `${at}: from Woodcutting, Go moves to Mining (${JSON.stringify(w)})`);
+    E('setNode("crystal", 1); setActivity("gather")'); press(E, 'forge'); const w2 = where(E);
+    assert(w2.act === 'gather' && w2.kind === 'crystal' && w2.t === 1, `${at}: already mining, Go keeps the node (${JSON.stringify(w2)})`);
+  }
+  // a station gate (Woodcraft 8 of 10): Go is today's Craft target and the hero keeps fighting
+  { const g = load(), E = s => g.eval(s);
+    E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2; S.skills.bench.lv = 8; gearDirty()');
+    assert(row(E, 'forge').label === 'Birch Bow: Woodcraft 8 of 10' && E('S.activity') === 'fight', `${at}: the station gate row shows while fighting (${row(E, 'forge').label})`);
+    const s = press(E, 'forge');
+    assert(s.tab === 'forge' && s.sel === '.cf-st[data-st="bench"]' && E('S.activity') === 'fight' && E('S.fSlot') === 'bow' && E('S.fTier') === 1, `${at}: a station gate's Go opens Craft at the Workbench and does not switch (${JSON.stringify(s)}, ${E('S.activity')})`);
+  }
+  // a live Deepwell run: no switch (navGo would refuse it with a toast); the Mining view still opens
+  { const g = load(), E = s => g.eval(s);
+    E('S.camp.b.hearth = Math.max(3, S.camp.b.hearth || 0)');
+    assert(E('deepUnlocked() && DW.start(false)') && E('deepActive()'), `${at}: a Deepwell run starts`);
+    const s = press(E, 'forge');
+    assert(s.view === 'mine' && E('S.activity') === 'fight' && E('deepActive()'), `${at}: in a Deepwell run Go switches nothing (${E('S.activity')})`);
+  }
+  // the browser at the three views: a real tap on the row's Go, the Mining view, the hero mining, and the "keeps going" row whole
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const openList = async () => { await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800); };
+        const goOf = want => page.evaluate(want => { const r = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want), g = r && r.querySelector('.nu-go');
+          if (!g) return null; const b = g.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; }, want);
+        const measure = want => page.evaluate(want => { const row = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want); if (!row) return null;
+          const l = row.querySelector('.nu-lbl'), a = l.getBoundingClientRect(), b = row.getBoundingClientRect();
+          return { cut: l.scrollHeight > l.clientHeight + 1 || l.scrollWidth > l.clientWidth + 1, fs: parseFloat(getComputedStyle(l).fontSize), inRow: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        await openList();
+        const xy = await goOf(off);
+        assert(xy, `${v}: the Next Up list shows the Birch Bow row with a Go`);
+        if (xy) {
+          if (phone) await page.touchscreen.tap(xy[0], xy[1]); else await page.mouse.click(xy[0], xy[1]);
+          await page.waitForTimeout(800);
+          const st = await X('({ act: S.activity, skill: skillOf(S.node.kind), tab: S.tab, view: curView(S.tab), sheets: document.querySelectorAll(".bsheet-ov").length })');
+          assert(st.act === 'gather' && st.skill === 'mine', `${v}: after Go the hero mines (${JSON.stringify(st)})`);
+          assert(st.tab === 'gat' && st.view === 'mine', `${v}: after Go the Mining view is open (${JSON.stringify(st)})`);
+          if (process.env.LF_PROOF_SHOTS) await page.screenshot({ path: path.join(process.env.LF_PROOF_SHOTS, `${at}-${w}x${h}.png`) });
+          if (st.sheets) { await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true'); await page.waitForTimeout(300); }
+          await openList();
+          const o = await measure(on);
+          assert(o, `${v}: the list now shows "${on}"`);
+          if (o) { assert(!o.cut && o.inRow, `${v}: the row's words show whole inside the row (${JSON.stringify(o)})`); if (!phone) assert(o.fs >= 14, `${v}: 14 px desktop text floor (${o.fs})`); }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // a station gate in the browser at the three views: Go opens Craft at the Workbench, and the hero keeps fighting
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) { const phone = w < 1200, v = `${at} station ${w}x${h}`;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); S.mats.plank[1] = 5; S.mats.ingot[1] = 2; S.skills.bench.lv = 8; gearDirty(); true');
+        await page.waitForTimeout(300);
+        await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800);
+        const xy = await page.evaluate(() => { const r = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === 'Birch Bow: Woodcraft 8 of 10'), g = r && r.querySelector('.nu-go');
+          if (!g) return null; const b = g.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; });
+        assert(xy, `${v}: the list shows the Woodcraft gate row with a Go`);
+        if (xy) { if (phone) await page.touchscreen.tap(xy[0], xy[1]); else await page.mouse.click(xy[0], xy[1]); await page.waitForTimeout(800);
+          const st = await X('({ act: S.activity, tab: S.tab })');
+          assert(st.act === 'fight' && st.tab === 'forge', `${v}: a station gate's Go opens Craft and the hero keeps fighting (${JSON.stringify(st)})`); }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('gate-go-starts-gathering crashed: ' + (e.stack || e)); }
+
+// ---- space-reopens-next-up: in a turn fight Space dodges, whatever button was last clicked. A clicked button keeps focus (a sheet
+// hands focus back to its opener on close), and the browser presses a focused button on Space; the fight bar used to step aside for it,
+// so Space at a boss swing reopened Next Up. Outside a fight Space on a focused button still presses it. 1280x720. ----
+if (section('space-reopens-next-up')) try {
+  const at = 'space-reopens-next-up', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } }), tag = `${at} 1280x720`;
+      await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);   // an hour in: the Next up chip shows
+      const page = await ctx.newPage(), errors = [];
+      page.on('pageerror', e => errors.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      // the turn engine waits while __tp is set (59j turnPaused), so the foe's swing can be held open for the key press
+      await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); true`); await page.waitForTimeout(400);
+      await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); document.querySelectorAll('.mm-ov').forEach(n => n.remove()); typeof closeSheet === 'function' && closeSheet(); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; true`);
+      const sheets = () => X(`document.querySelectorAll('.bsheet-ov').length`);
+      const swing = async () => { await X('globalThis.__tp = 0; true');
+        for (const t0 = Date.now(); Date.now() - t0 < 60000;) {
+          if (await X(`!!TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'foeWindup' && !TURN_LIVE.usedDefense`)) { await X('globalThis.__tp = 1; true'); await page.waitForTimeout(200); return true; }
+          await X(`TURN_LIVE && !TURN_LIVE.ended && (TURN_LIVE.foe && (TURN_LIVE.foe.hp = Math.max(TURN_LIVE.foe.hp, 1e6)), TURN_LIVE.phase === 'timing' && turnCombatAction('time'), TURN_LIVE.phase === 'hero' && turnCombatAction('attack')); true`);
+          await page.waitForTimeout(40);
+        } return false; };
+      const centre = sel => page.$eval(sel, e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+      // the boss of zone 1
+      await X(`S.kills = ZONE_FIGHTS; fightBoss = false; challenge(); true`); await page.waitForTimeout(400);
+      assert(await X('!!fightBoss'), `${tag}: a boss fight starts`);
+      // click Next up, close it with its ×: focus goes back to the chip
+      let [x, y] = await centre('#nuChip'); await page.mouse.click(x, y); await page.waitForTimeout(400);
+      assert(await sheets() === 1, `${tag}: a click on Next up opens its list`);
+      [x, y] = await centre('.bsheet-x'); await page.mouse.click(x, y); await page.waitForTimeout(400);
+      assert(await sheets() === 0 && await X(`document.activeElement === document.getElementById('nuChip')`), `${tag}: the list closes and the chip keeps focus (the case this section covers)`);
+      // Space at the boss's swing: a dodge, and Next up stays shut
+      assert(await swing(), `${tag}: the boss winds up a swing`);
+      await page.keyboard.press(' '); await page.waitForTimeout(300);
+      assert(await X('!!TURN_LIVE.usedDefense') && await sheets() === 0, `${tag}: Space at the swing with Next up focused dodges (${await X('!!TURN_LIVE.usedDefense')}) and Next up stays shut (${await sheets()} open)`);
+      // a second focused button: the Hero tab on the rail. Space dodges; no menu opens
+      assert(await swing(), `${tag}: the boss winds up another swing`);
+      await X(`document.querySelector('.tabs .tab[data-tab="party"]').focus(); true`);
+      await page.keyboard.press(' '); await page.waitForTimeout(300);
+      assert(await X('!!TURN_LIVE.usedDefense') && await X('!S.tab') && await sheets() === 0, `${tag}: Space at the swing with the Hero tab focused dodges (${await X('!!TURN_LIVE.usedDefense')}) and opens no menu (${await X('S.tab')})`);
+      // Enter on a focused button is not a fight key: it still presses the button in a fight
+      await X(`document.getElementById('nuChip').focus(); true`); await page.keyboard.press('Enter'); await page.waitForTimeout(400);
+      assert(await sheets() === 1, `${tag}: Enter on the focused Next up chip opens its list in a fight`);
+      // Space on a button in a sheet over the fight still presses it: the list's × closes it
+      await X(`document.querySelector('.bsheet-x').focus(); true`); await page.keyboard.press(' '); await page.waitForTimeout(400);
+      assert(await sheets() === 0, `${tag}: Space on the focused × of the Next up list closes it in a fight`);
+      // outside a fight (gathering) Space on a focused button presses it
+      await X('globalThis.__tp = 0; setActivity("gather"); true'); await page.waitForTimeout(600);
+      assert(await X(`document.getElementById('soloBar').hidden`), `${tag}: gathering, the fight bar is away`);
+      await X(`document.getElementById('nuChip').focus(); true`); await page.keyboard.press(' '); await page.waitForTimeout(400);
+      assert(await sheets() === 1, `${tag}: outside a fight Space on the focused Next up chip opens its list`);
+      assert(!errors.length, `${tag}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('space-reopens-next-up crashed: ' + (e.stack || e)); }
+
+// ==== online-off-clean (docs/design/hosting.md section 3, judge amendments 1 and 2): with no capability host there is no raid ====
+// The Netlify build has no `window.claude`, so the world raid, tavern presence and leaderboard cannot work there. Booted with no
+// `window.claude` on two saves past zone 12 (save-raid.json: raid history, with wyrms, raid damage, Embers and relics above 0; save-late.json)
+// and on save-early.json crossing zone 12 (the raid's unlock notice), every tab and view, every Deeds track group, the Codex pages, the
+// Journal, the notices and the away card show no raid words (word boundaries, so "afraid" passes) and no view bar holds Raid. The
+// unlock stays saved. Mutations, so the check cannot pass by hiding it everywhere: a fake `window.claude` with working stubs shows the
+// Raid view, its words and the Embers coin, and one whose user is signed out still shows the Raid view with today's words on how to join.
+if (section('online-off-clean')) try {
+  const at = 'online-off-clean', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const RE = /\b(raid|raids|raider|raiders|war horn|world boss|shared world|claude link)\b/i;
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const fx = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // host: 'none' (no window.claude), 'in' (signed in, working stubs), 'out' (the Artifact with nobody signed in: no user, so no db)
+    const run = async ({ file, host, w, h, cross, slow }) => {
+      const v = `${at} (${file}, ${host === 'none' ? 'no host' : host === 'in' ? 'host, signed in' : 'host, signed out'}, ${w}x${h})`, touch = w < 1000;
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce', turns: true });
+      await ctx.addInitScript(({ raw, key, host, cross }) => {
+        const o = JSON.parse(raw); o.last = Date.now() - 3 * 3600e3; if (cross) { o.onboard.tips = true; } localStorage.setItem(key, JSON.stringify(o));
+        if (host === 'none') return;
+        const doc = { onSnapshot: f => { setTimeout(() => f({ exists: true, data: () => ({ gen: 9, name: 'Ashmaw', maxHp: 9e8, spawnedAt: 0 }) }), 10); return () => {}; },
+          set: async () => {}, get: async () => ({ exists: false }), acquire: async () => ({ acquired: false }) };
+        const caps = { db: { doc: () => doc, collection: () => ({ onSnapshot: f => { f({ docs: [] }); return () => {}; } }) },
+          user: host === 'in' ? { id: async () => 'u1', can: async () => true, profiles: async () => ({}) } : null,
+          room: { onPeers: () => {}, on: () => {}, presence: async () => {}, emit: async () => {} } };
+        window.claude = { use: async n => caps[n] || null };
+      }, { raw: fx(file), key: KEY, host, cross });
+      if (slow) await ctx.addInitScript(() => { const c = window.claude, use = c.use; c.use = n => new Promise(r => setTimeout(r, 1500)).then(() => use(n)); });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const segNow = () => X(`JSON.stringify([...document.querySelectorAll('#viewSeg button')].filter(b => b.offsetParent).map(b => b.dataset.view))`).then(JSON.parse);
+      let during = null, after = null;
+      const shut = `document.querySelectorAll('.bsheet-ov').forEach(o => o.sheetApi && o.sheetApi.close(true, true)); true`;
+      if (slow) { await page.waitForTimeout(300); await X(`setTab('camp'); true`); await page.waitForTimeout(150); during = await segNow(); await page.waitForTimeout(2200); after = await segNow(); await X(shut); }
+      await page.waitForTimeout(1200);
+      const hits = new Map(), bars = [];
+      const scan = async where => { for (const l of (await page.evaluate(() => document.body.innerText)).split('\n')) if (RE.test(l) && !hits.has(l.trim())) hits.set(l.trim(), where); };
+      const away = await X(`!!document.querySelector('.away-ov')`);
+      await scan('the away card');
+      await X(`(() => { const b = [...document.querySelectorAll('.away-ov button')].find(b => /Got it|Collect|Continue|Close/i.test(b.textContent)); if (b) b.click(); return true; })()`);
+      await page.waitForTimeout(300);
+      if (cross) { await X('S.maxZone = Math.max(S.maxZone, 12); true'); await page.waitForTimeout(2500); }
+      for (const t of ['adv', 'party', 'gat', 'forge', 'world', 'deeds']) {
+        const views = JSON.parse(await X(`JSON.stringify(shownViews(${JSON.stringify(t)}).map(v => v.id))`)); bars.push(...views);
+        for (const id of views) {
+          await X(`setTab(${JSON.stringify(id)}); true`); await page.waitForTimeout(200); await scan(`${t} > ${id}`);
+          const bar = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#viewSeg button')].filter(b => b.offsetParent).map(b => b.dataset.view))`));
+          if (bar.includes('raid')) hits.set(`Raid in the ${t} view bar`, `${t} > ${id}`);
+          // every Deeds track group (its chips) and every tab inside a view
+          const n = await X(`document.querySelectorAll('#panels .dd-chips button').length`);
+          for (let i = 0; i < n; i++) { await X(`(() => { const b = document.querySelectorAll('#panels .dd-chips button')[${i}]; if (b && b.offsetParent) b.click(); return true; })()`); await page.waitForTimeout(120); await scan(`${t} > ${id} > group ${i + 1}`); }
+          if (id === 'ach-feats') { await X(`(() => { const b = [...document.querySelectorAll('#panels button')].find(b => /^Show \\d+ finished feat/.test(b.textContent)); if (b) b.click(); return true; })()`); await page.waitForTimeout(150); await scan(`${t} > ${id} > finished feats`); }
+        }
+      }
+      const pages = JSON.parse(await X(`JSON.stringify(codexPages().map(p => p.id))`));
+      for (const p of [null, ...pages]) { await X(shut); await X(`emit('codexOpen', ${JSON.stringify(p ? { page: p } : {})}); true`); await page.waitForTimeout(150); await scan('the Codex' + (p ? ' > ' + p : '')); }
+      // the Codex keeps every tile (its counts and seals are the save's), and an unfound raid unique's hint names no raid
+      const cxHints = JSON.parse(await X(`JSON.stringify(codexPage('uniques').tiles.filter(t => RAID_UNIQ.includes(t.key)).map(t => t.hint + ' ' + t.sub))`));
+      await X(shut); await X(`document.getElementById('nuChip').click(); true`); await page.waitForTimeout(250); await scan('Next Up');   // a followed raid track (the fixture follows Wyrmslayer)
+      await X(shut); await X('openNoticeLog(); true'); await page.waitForTimeout(250); await scan('notices');
+      await X(`(() => { const b = [...document.querySelectorAll('.bsheet button')].find(b => /^Journal$/.test(b.textContent.trim())); if (b) b.click(); return true; })()`); await page.waitForTimeout(400); await scan('the Journal');
+      await X(shut);
+      // near: Next Up's Deeds goal, read with the boss fight paused (the goal rests during one)
+      const st = JSON.parse(await X(`JSON.stringify({ coin: document.getElementById('embers').parentElement.offsetParent !== null, mode: [...document.querySelectorAll('#modeSeg button, [data-act="raid"]')].some(b => b.dataset.act === 'raid' && b.offsetParent),
+        got: isUnlocked('raid'), saved: S.onboard.got.raid != null, z: S.maxZone, wyrm: S.wyrms > 0 || S.raid.gen > 0,
+        stirs: Array.from({ length: 200 }, (_, i) => almanac.omenFor(deviceDay(Date.now()) + i).id).filter(id => id === 'wyrmStirs').length,
+        say: JSON.stringify(S.onboard.sayQ || []), near: (() => { const fb = fightBoss; fightBoss = false; try { return String(GOALS.find(g => g.id === 'deeds-near').label() || ''); } finally { fightBoss = fb; } })(), notes: notes.log.flatMap(n => [n.msg, ...(n.msgs || []), ...(n.list || []).map(l => (l && (l.txt || l.msg)) || String(l))]).filter(t => /World raid/.test(t)).length })`));
+      await ctx.close();
+      return { v, hits, bars, away, cxHints, st, errs, during, after };
+    };
+    try {
+      for (const [file, w, h, cross] of [['save-raid.json', 1280, 720], ['save-raid.json', 740, 360], ['save-raid.json', 360, 740], ['save-late.json', 1280, 720], ['save-early.json', 1280, 720, true]]) {
+        const r = await run({ file, host: 'none', w, h, cross });
+        const list = [...r.hits].map(([l, wh]) => `${wh}: "${l.slice(0, 90)}"`);
+        assert(!list.length && !r.bars.includes('raid'), `${r.v}: no raid words on any tab, view, Deeds group, Codex page, the Journal, the notices or the away card, and no Raid view (${r.bars.length} views opened, away card ${r.away ? 'shown' : 'not shown'})` + (list.length ? ': ' + list.slice(0, 6).join('; ') : ''));
+        assert(!RE.test(r.st.near), `${r.v}: Next Up's Deeds goal never names a raid track, followed or near ("${r.st.near}")`);
+        assert(!r.st.coin && !r.st.mode, `${r.v}: the Embers coin and a Raid mode button are not shown (coin ${r.st.coin}, button ${r.st.mode})`);
+        assert(r.st.got && r.st.saved && r.st.z >= 12, `${r.v}: the raid's unlock is still saved, so the save keeps the raid back in the Artifact (unlocked ${r.st.got}, saved ${r.st.saved}, zone ${r.st.z})`);
+        assert(!r.st.stirs && r.cxHints.every(t => !RE.test(t)), `${r.v}: no day of the next 200 is The Wyrm Stirs and the Codex's raid uniques name no raid (${r.st.stirs} days; ${JSON.stringify(r.cxHints.slice(0, 2))})`);
+        if (cross) assert(r.st.notes === 0 && !/raid/.test(r.st.say), `${r.v}: crossing zone 12 raises no raid notice and queues no raid line (${r.st.notes} notices, queue ${r.st.say})`);
+        assert(!r.errs.length, `${r.v}: no page errors` + (r.errs.length ? ': ' + r.errs[0] : ''));
+      }
+      // mutations: with a host the raid is all there, as today
+      const a = await run({ file: 'save-raid.json', host: 'in', w: 1280, h: 720 });
+      assert(a.bars.includes('raid') && [...a.hits.keys()].some(l => /^March to the raid$/i.test(l)) && a.st.coin && a.st.stirs > 0 && a.cxHints.some(t => RE.test(t)),
+        `${a.v} (mutation): the Raid view, its March button, the Embers coin, The Wyrm Stirs and the Codex's raid hints are all there (views ${a.bars.includes('raid')}, coin ${a.st.coin}, ${a.st.stirs} Wyrm days)`);
+      assert(RE.test(a.st.near), `${a.v} (mutation): Next Up's Deeds goal names the followed raid track ("${a.st.near}")`);
+      // the host check takes 1.5 s: the Camp bar holds no Raid while it runs, then gains it with no tab change (ui() rebuilds the bar)
+      const sl = await run({ file: 'save-raid.json', host: 'in', w: 740, h: 360, slow: true });
+      assert(sl.during && !sl.during.includes('raid') && sl.during.includes('camp') && sl.after.includes('raid'), `${sl.v} (mutation, slow host): no Raid view while the host check runs, then it joins the open bar (${JSON.stringify(sl.during)} then ${JSON.stringify(sl.after)})`);
+      const o = await run({ file: 'save-raid.json', host: 'out', w: 1280, h: 720 });
+      const words = [...o.hits.keys()];
+      assert(o.bars.includes('raid') && words.includes('The shared world is out of reach') && words.some(l => /opened from its Claude link while signed in/.test(l)),
+        `${o.v} (mutation): the Raid view stays, with today's words on how to join (${words.filter(l => /shared world|Claude link/i.test(l)).join(' | ').slice(0, 200)})`);
+      const c = await run({ file: 'save-early.json', host: 'in', w: 1280, h: 720, cross: true });
+      assert(c.st.got && (c.st.notes > 0 || /raid/.test(c.st.say)), `${c.v} (mutation): with a host, crossing zone 12 still announces the raid (${c.st.notes} notices, queue ${c.st.say})`);
+      assert(!a.errs.length && !o.errs.length && !c.errs.length, `${at} (mutations): no page errors` + ([...a.errs, ...o.errs, ...c.errs].length ? ': ' + [...a.errs, ...o.errs, ...c.errs][0] : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('online-off-clean crashed: ' + (e.stack || e)); }
+
+// ==== stage-no-swarm-shrink (hero size ruling 2026-10-09, docs/design/desktop-layout/hero-size/ruling.md "Build card implied"): a turn fight
+// stands one foe, so a swarm zone (9) and a boss whose kit calls adds (the Elder Cave Bat's Call the Colony) draw at the zone's normal
+// whole-step zoom: the same as zone 10, x2 at 1280x720 and x3 at 1920x1080. Mouse contexts, device pixel ratio 1, save-early.json.
+if (section('stage-no-swarm-shrink (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('stage-no-swarm-shrink (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8')); save.last = Date.now();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, zm] of [[1280, 720, 2], [1920, 1080, 3]]) {
+        const tag = `${w}x${h}`, ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: false, hasTouch: false, reducedMotion: 'reduce' });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false); true`); await page.waitForTimeout(300);
+        const turn0 = await page.waitForFunction(() => window.__t.x('turnCombatOn()'), null, { timeout: 8000 }).then(() => true, () => false);
+        assert(turn0, `${tag}: the fight is a turn fight (${await X(`JSON.stringify([S.activity, target(), S.solo && S.solo.hero, partyCombatOn(), turnArenaOk(), TURN_TUNE.on, S.combat])`)})`);
+        const at = async src => { await X(src + '; true'); await page.waitForTimeout(700);
+          return X('(() => { const s = stageStats(); return { ZM: s.ZM, turn: turnCombatOn(), boss: !!fightBoss, foes: s.foes.filter(Boolean).length, kit: !!(mob && kitOf(mob) && kitOf(mob).mech.some(x => x.adds && x.adds[1] >= 3)) }; })()'); };
+        const z10 = await at('fightBoss = false; setZone(10)'), z9 = await at('fightBoss = false; setZone(9)'), b9 = await at('S.kills = ZONE_FIGHTS; fightBoss = false; challenge()');
+        assert(z10.ZM === zm && z9.ZM === z10.ZM && z9.turn && z9.foes === 1, `${tag}: swarm zone 9 draws at zone 10's zoom, x${zm} (zone 10 ${JSON.stringify(z10)}, zone 9 ${JSON.stringify(z9)})`);
+        assert(b9.boss && b9.kit && b9.turn && b9.foes === 1 && b9.ZM === zm, `${tag}: the zone 9 boss (its kit calls the colony; a turn fight stands it alone) draws at x${zm} (${JSON.stringify(b9)})`);
+        assert(!errs.length, `${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the real-time fight (turns off: the old rule, a swarm zone steps out by its type) keeps today's step at 1280x720
+      {
+        const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false, reducedMotion: 'reduce' });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage();
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); fightBoss = false; setZone(9); true`); await page.waitForTimeout(700);
+        const p9 = await X('(() => { const s = stageStats(); return { ZM: s.ZM, turn: turnCombatOn(), foes: s.foes.filter(Boolean).length }; })()');
+        assert(!p9.turn && p9.ZM === 1, `1280x720, real-time fight: zone 9 keeps today's swarm step, x1 (${JSON.stringify(p9)})`);
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('stage-no-swarm-shrink crashed: ' + (e.stack || e)); }
+
+// ==== actor-scale (ruling #328, docs/design/route-s/ruling.md "Build card spec: actor-scale"): heroes, foes, bosses, adds, gather nodes
+// and beasts draw ACTOR_K = 1.5 times bigger against unchanged scenery on landscape stages at a whole-step zoom of 2 or more (G1). There
+// no actor's drawn box meets the HP plates, the place line, the turn line, the whose-turn banner, the Grit row, the boss strip or the
+// stage buttons, and the hero stands 16 stage px or more from the foe (G2). A crowd of foes (a pack, a boss with adds), a zoom-1 stage
+// (740x360) and portrait keep today's size (G2, G3, G4). save-late.json; the game held (ticks off, the turn engine paused) while each
+// scene is read; the banner is raised by its own event.
+if (section('actor-scale (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('actor-scale (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8')); save.last = Date.now();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the UI the actors must clear (G2): plates, place line, turn line and banner, Grit row, boss strip, stage buttons
+    const UI = '.hero-plate, .mob, .hud-zone, .tv-n, .tv-tc-face, .tv-tc-txt, .tv-hero, .cb-strip, .hud-btn, .sfx-btn';
+    const READ = `(() => { const R = LF_EYES.rects(), st = stageStats(), ui = [];
+      for (const e of document.querySelectorAll(${JSON.stringify(UI)})) { const b = e.getBoundingClientRect(), cs = getComputedStyle(e);
+        if (!b.width || !b.height || cs.visibility === 'hidden' || e.closest('[hidden]')) continue;
+        ui.push({ n: String(e.className).split(' ')[0], x: b.left, y: b.top, w: b.width, h: b.height }); }
+      return { R, ui, st: { ZM: st.ZM, AK: st.AK, ZA: st.ZA, foes: st.foes }, heroSt: st.heroSt, mob: mob && mob.key }; })()`;
+    const cross = (a, b) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
+    try {
+      for (const [w, h, dpr, ak] of [[1280, 720, 1, 1.5], [1366, 640, 1, 1.5], [1920, 1080, 1, 1.5], [740, 360, 2, 1], [360, 740, 2, 1]]) {
+        const tag = `${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false); for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();
+          globalThis.__spo = soloPickerOpen; globalThis.__hold = 0; soloPickerOpen = () => !!globalThis.__hold || __spo(); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; UNIQ_TUNE.first = UNIQ_TUNE.again = 0; true`);
+        // set a scene up, let it settle, hold the game, then read it (the frames two reads apart must agree: the stage redraws a frame late)
+        const scene = async (src, settle) => {
+          await X(`globalThis.__hold = 0; globalThis.__tp = 0; ${src}; true`); await page.waitForTimeout(settle);
+          await X('globalThis.__hold = 1; globalThis.__tp = 1; true');
+          let r = null;
+          for (let i = 0, t0 = Date.now(); Date.now() - t0 < 8000; i++) {
+            await page.waitForTimeout(200); const a = await X(READ); await page.waitForTimeout(100); const b = await X(READ);
+            if (JSON.stringify(a.R.hero) === JSON.stringify(b.R.hero) && JSON.stringify(a.R.foes) === JSON.stringify(b.R.foes) && a.heroSt === 0) { r = b; break; }
+          }
+          return r;
+        };
+        const st0 = await X('JSON.stringify(stageStats())').then(JSON.parse);
+        assert(st0.AK === ak && st0.ZA === st0.ZM * ak, `${tag}: actors draw at x${ak} against the scenery (G1, G3, G4; AK ${st0.AK}, stage x${st0.ZM}, actors x${st0.ZA})`);
+        const fights = [
+          ['Wren, zone 1', 'soloPick("wren"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1)'],
+          ['Wren, Gloomjaw', 'soloPick("wren"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(2)'],
+          ['Tobin, Elder Moss Slime', 'soloPick("tobin"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(8); S.kills = ZONE_FIGHTS; challenge()'],
+          ['Tobin, zone 1', 'soloPick("tobin"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1)'],
+          ['Pip, zone 2', 'soloPick("pip"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(2)'],
+        ];
+        for (const [name, src] of fights) {
+          const r = await scene(src, 1200);
+          assert(!!(r && r.R.hero && r.R.foes.length === 1), `${tag} ${name}: the turn fight settles with the hero and one foe on the stage (${r ? JSON.stringify({ hero: !!r.R.hero, foes: r.R.foes.length }) : 'never settled'})`);
+          if (!r || !r.R.hero || !r.R.foes.length || ak === 1) continue;
+          const hero = r.R.hero, foe = r.R.foes[0], z = r.st.ZM;
+          assert(hero.h / r.st.ZA >= 85, `${tag} ${name}: the hero draws 1.5x (${Math.round(hero.h)} CSS px tall, ${Math.round(hero.h / r.st.ZA)} actor px)`);
+          const gap = (foe.x - hero.x - hero.w) / z;
+          assert(gap >= 16, `${tag} ${name}: the hero stands ${Math.round(gap)} stage px from the foe, 16 or more (G2)`);
+          // the banner, raised as a turn starts (the game is held, so it stays up)
+          await X('emit("turnCard", { who: "foe", secs: 4 }); true'); await page.waitForTimeout(250);
+          const b = await X(READ); await X('emit("turn", {}); true');
+          const hits = [];
+          for (const a of [Object.assign({ n: 'hero' }, b.R.hero), ...b.R.foes.map(f => Object.assign({ n: f.key }, f))]) for (const u of [...r.ui, ...b.ui]) if (cross(a, u)) hits.push(a.n + ' ~ ' + u.n);
+          assert(!hits.length, `${tag} ${name}: no hero or foe meets the plates, place line, turn line, turn banner, Grit row, boss strip or stage buttons (G2; ${[...new Set(hits)].join(', ') || 'none'})`);
+        }
+        // gathering: the hero and the node stay clear of the stage's UI
+        {
+          const r = await scene('setActivity("gather"); setNode("wood", 1)', 1200);
+          assert(!!(r && r.R.hero), `${tag} gathering: the hero stands at the Pine Grove`);
+          if (r && r.R.hero && ak > 1) { const hits = r.ui.filter(u => cross(r.R.hero, u)).map(u => u.n); assert(!hits.length, `${tag} gathering: the hero meets no stage UI (${hits.join(', ') || 'none'})`); }
+        }
+        // the scenery's lamp glows draw in the scenery's view: no glow leaves the canvas at another scale (61-anim glowAt's
+        // device copies set the view they were given; at 1.5 a lamp's light once switched the rest of the frame to the actors')
+        if (ak > 1) for (const [name, src] of [['the Pine Grove', null], ['zone 9', 'setActivity("fight"); fightBoss = false; setZone(9)']]) {
+          if (src) await scene(src, 1200);
+          const g = await X(`new Promise(res => { const o = ANIM.glowAt, seen = { n: 0, moved: 0 };
+            ANIM.glowAt = function (c, ...a) { const k0 = c.getTransform().a; o.call(this, c, ...a); seen.n++; if (Math.abs(c.getTransform().a - k0) > 1e-6) seen.moved++; };
+            setTimeout(() => { ANIM.glowAt = o; res(seen); }, 600); })`);
+          assert(g.n > 0 && g.moved === 0, `${tag} ${name}: the scenery's glows keep the scenery's scale (${g.moved} of ${g.n} changed it)`);
+        }
+        // a crowd (2 or more foes: a pack, a boss and its adds) keeps today's size, so its spacing is today's (G2: at 1.5 a pack of
+        // wide foes left no room for both a 15% overlap and the hero's 16 px). The real-time fight (turns off) stands them here.
+        if (ak > 1) for (const [name, src] of [
+          ['a pack of 3', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; COMBAT_TUNE.sizes = 0; COMBAT_TUNE.packSize = 3; setActivity("fight"); fightBoss = false; setZone(3)'],
+          // the Elder Moss Slime splits into two adds below half its HP (59b)
+          ['a boss with adds', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; setActivity("fight"); fightBoss = false; setZone(8); S.kills = ZONE_FIGHTS; challenge(); mob.max = 1e15; mob.hp = mob.max * 0.3; setTimeout(() => { for (const f of combatFoes()) f.hp = f.max = 1e15; }, 400)'],
+        ]) {
+          await X(`globalThis.__hold = 0; globalThis.__tp = 0; ${src}; true`); await page.waitForTimeout(2500);
+          const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, ZA: s.ZA, ZM: s.ZM }; })()');
+          assert(c.n >= 2 && c.AK === 1 && c.ZA === c.ZM, `${tag} ${name}: a crowd of foes draws at today's size (${JSON.stringify(c)})`);
+          await X('TURN_TUNE.on = true; COMBAT_TUNE.single = 1; COMBAT_TUNE.sizes = 1; COMBAT_TUNE.packSize = 3; fightBoss = false; setZone(1); true'); await page.waitForTimeout(1500);
+          const one = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK }; })()');
+          assert(one.n === 1 && one.AK === ak, `${tag} ${name}: the next one-foe fight is drawn 1.5x again (${JSON.stringify(one)})`);
+        }
+        assert(!errs.length, `${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('actor-scale crashed: ' + (e.stack || e)); }
+
+// ==== basic-attack-swings: in a turn fight a basic Attack plays the hero's swing (62-stage on 'soloAttack') ====
+// 59k emits only soloAttack for a basic Attack (no lunge or classTap), and the stage swung only on those, so the hero stood still.
+// Every hero, at the three views (360x740 with reduced motion): one press (a hit, then a Blinded miss) starts exactly one swing at
+// once (hero.st 1 in the same task as the press), and the swing ends with no second one queued. Outside a turn fight a press's
+// classTap swings and soloAttack follows it: still one swing per press.
+if (section('basic-attack-swings')) try {
+  const at = 'basic-attack-swings', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, o) => {
+      const phone = w < 1200;
+      const ctx = await browser.newContext({ ...o, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+      await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+      await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);   // the away card
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    try {
+      for (const [w, h, red] of [[1280, 720, false], [740, 360, false], [360, 740, true]]) {
+        const v = `${at} ${w}x${h}${red ? ' (reduced motion)' : ''}`;
+        const { ctx, errs, X, page } = await open(w, h, { turns: true, ...(red ? { reducedMotion: 'reduce' } : {}) });
+        // the turn engine waits while __tp is set (59j turnPaused), so nothing else moves the hero while a swing plays
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; true');
+        for (const k of ['wren', 'tobin', 'pip']) {
+          await X(`globalThis.__tp = 0; soloPick("${k}", { now: true }); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true`);
+          for (const kind of ['hit', 'miss']) {
+            // play on (pressing Attack, taking the foe's hits) until it is the hero's turn again
+            let ph = '';
+            for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+              ph = await X(`(() => { if (!TURN_LIVE || TURN_LIVE.ended) { S.activity = "fight"; spawn(); return 'off'; } return TURN_LIVE.phase; })()`);
+              if (ph === 'hero') { await page.waitForTimeout(500); ph = await X('TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.phase : "off"'); if (ph === 'hero') break; }
+              await page.waitForTimeout(50);
+            }
+            assert(ph === 'hero', `${v} ${k}: the hero's turn comes (${ph})`);
+            const r = JSON.parse(await X(`(() => { const s0 = stageStats(), st0 = s0.heroSt, n0 = s0.heroSwings, seen = [];
+              const off = on('soloAttack', p => seen.push(p && p.kind));
+              if (${kind === 'miss'}) { TURN_LIVE.h.blind = 1; globalThis.__hb = TURN_TUNE.heroBlind; TURN_TUNE.heroBlind = 1; }
+              let got; try { got = soloAttack(); } finally { if (${kind === 'miss'}) TURN_TUNE.heroBlind = globalThis.__hb; }
+              typeof off === 'function' && off(); globalThis.__tp = 1;
+              const s1 = stageStats(); return JSON.stringify({ got, st0, n0, st1: s1.heroSt, q: s1.heroPending, d: s1.heroSwings - n0, seen }); })()`));
+            assert(r.got === 'hit' && r.seen.join() === kind && r.st0 === 0, `${v} ${k}: the ${kind} is pressed from a still hero (${JSON.stringify(r)})`);
+            assert(r.st1 === 1 && r.d === 1 && !r.q, `${v} ${k}: a basic Attack (${kind}) starts the hero's swing at once, one swing and none queued (stage state ${r.st1}, ${r.d} swing, queued ${r.q})`);
+            await page.waitForTimeout(800);
+            const s2 = JSON.parse(await X(`JSON.stringify((s => ({ st: s.heroSt, n: s.heroSwings }))(stageStats()))`));
+            assert(s2.st === 0, `${v} ${k}: the ${kind}'s swing plays out and the hero settles (stage state ${s2.st})`);
+            assert(s2.n - r.n0 === 1, `${v} ${k}: no second swing follows the ${kind} (${s2.n - r.n0} swings from the press)`);
+            await X('globalThis.__tp = 0; true');
+          }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the real-time fight (the test key): a press swings on its classTap; the soloAttack that follows adds none
+      {
+        const v = `${at} real-time 1280x720`;
+        const { ctx, errs, X, page } = await open(1280, 720, {});
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true');
+        // the press waits for a foe on the stage and a still hero (a loaded machine spawns late); a press that lands nothing emits nothing
+        let r = null;
+        for (const t0 = Date.now(); Date.now() - t0 < 15000 && !(r && r.got === 'hit');) {
+          await page.waitForTimeout(200);
+          r = JSON.parse(await X(`(() => { if (stageStats().heroSt !== 0) return '{}'; if (typeof soloActive === 'function' && !soloActive() && typeof soloSetActive === 'function') soloSetActive(true);
+          const turn = typeof turnCombatOn === 'function' && turnCombatOn(), s0 = stageStats(), seen = [];
+          const off = on('soloAttack', p => seen.push(p && p.kind)); const got = soloAttack(); typeof off === 'function' && off();
+          const s1 = stageStats(); return JSON.stringify({ turn, got, st0: s0.heroSt, q0: s0.heroPending, st1: s1.heroSt, q1: s1.heroPending, d: s1.heroSwings - s0.heroSwings, seen }); })()`));
+        }
+        assert(!r.turn && r.got === 'hit' && (r.seen || []).join() === 'hit', `${v}: a press lands outside a turn fight (${JSON.stringify(r)})`);
+        assert(r.d + (r.q1 - r.q0) === 1, `${v}: one press makes one swing, started or queued behind the one playing (${r.d} started, queued ${r.q0} -> ${r.q1}, stage state ${r.st0} -> ${r.st1})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('basic-attack-swings crashed: ' + (e.stack || e)); }
+
+// ==== ability-effects-live: every ability's effect in a turn fight, one colour per status (62b-fx.js) ====
+// The game draws the motion and the light (CLAUDE.md "Art freeze", Cal 2026-10-10). Every non-passive ability of every hero has a
+// recipe, every status the turn fight shows has a colour and a name (and Codex's icon where the pack has one), and each foe's
+// aim point is on its drawn body. In a real turn fight at 1280x720, 740x360 and 360x740 (reduced motion) each cast lands: an
+// impact, a Barbed Arrow's Bleed pops its icon at a native size, and reduced motion draws no particles and no shake.
+if (section('ability-effects-live')) try {
+  const at = 'ability-effects-live', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, o = {}) => {
+      const phone = w < 1200;
+      const ctx = await browser.newContext({ ...o, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+      await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+      await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);   // the away card
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    try {
+      // the tables and the aim, in the page (the frames need a canvas)
+      {
+        const { ctx, errs, X } = await open(1280, 720, { turns: true });
+        const t = JSON.parse(await X(`JSON.stringify((() => {
+          const miss = [], cols = [], aims = [];
+          for (const k in HERO_ABILITIES) for (const id of ['attack'].concat(HERO_ABILITIES[k])) { const a = ABILITIES[id];
+            if (a && a.kind === 'passive') { if (FX_RECIPES[id]) miss.push(id + ' (a passive with a recipe)'); continue; }
+            const r = FX_RECIPES[id === 'attack' ? k + ':attack' : id]; if (!r) { miss.push(k + ':' + id); continue; }
+            for (const c of r.col) if (!FX_COL[c]) cols.push(id + ' ' + c); }
+          // every status the turn fight's chips and the hero's side can show
+          const st = ['stun', 'frozen', 'burn', 'bleed', 'chill', 'mark', 'exposed', 'sunder', 'pinned', 'weaken', 'blind', 'curse', 'guard', 'ward', 'keen'];
+          const noCol = st.filter(id => !FX_COL[id] || !FX_NAME[id]), noIcon = st.filter(id => !STATUS_ICONS[id]);
+          const keys = Object.keys(ENEMY_RIGS).filter(k => !k.startsWith('node') && k !== 'wyrm').flatMap(k => [[k, false], [k, true]]).concat(Object.keys(FOE_ART).map(k => [k, false]));
+          for (const [k, el] of keys) { const fr = enemyFrames(k, { elder: el }); if (!fr || !fr.idle0) { aims.push(k + ': no frame'); continue; }
+            const i = stageFx.aimInfo({ fr, x: 100, gy: 200, dx: 0, hover: !!(ENEMY_RIGS[k] && ENEMY_RIGS[k].hover), m: { key: k } }), b = i.box, h = b[3] - b[1];
+            if (!(i.x > b[0] && i.x < b[2] && i.y > b[1] + 0.15 * h && i.y < b[1] + 0.75 * h)) aims.push(k + (el ? ' elder' : '') + ' ' + i.cls + ' at ' + i.x + ',' + i.y + ' box ' + b.join(',')); }
+          return { miss, cols, noCol, noIcon, aims, n: keys.length };
+        })())`));
+        assert(!t.miss.length, `${at}: every non-passive ability of every hero has an effect, and no passive has one (${t.miss.join(', ') || 'all'})`);
+        assert(!t.cols.length && !t.noCol.length, `${at}: every recipe's colours and every status's colour and name are in the tables (${t.cols.concat(t.noCol).join(', ') || 'all'})`);
+        assert(!t.noIcon.length, `${at}: every status that pops has Codex's approved icon (${t.noIcon.join(', ') || 'all 15'})`);
+        assert(!t.aims.length && t.n >= 14, `${at}: each of ${t.n} foe frames is aimed at its chest, on its drawn body (${t.aims.join('; ') || 'all'})`);
+        assert(!errs.length, `${at} tables: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      for (const [w, h, red, all] of [[1280, 720, false, true], [740, 360, false, false], [360, 740, true, false]]) {
+        const v = `${at} ${w}x${h}${red ? ' (reduced motion)' : ''}`;
+        const { ctx, errs, X, page } = await open(w, h, { turns: true, ...(red ? { reducedMotion: 'reduce' } : {}) });   // turns: the game's turn fights (check.mjs newContext)
+        // the turn engine waits while __tp is set (59j turnPaused): the casts below are the only actions
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; true');
+        const bad = [], quiet = [];
+        for (const k of ['wren', 'tobin', 'pip']) {
+          await X(`globalThis.__tp = 0; soloPick("${k}", { now: true }); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true`);
+          // the hero's turn in a live fight with the foe on the stage (a foe killed while the engine waits is replaced first)
+          const ready = async () => {
+            let ph = '';
+            await X('globalThis.__tp = 0; true');
+            for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+              ph = await X(`(() => { if (!TURN_LIVE || TURN_LIVE.ended) { S.activity = "fight"; spawn(); return 'off'; } return TURN_LIVE.foe !== mob ? 'other foe' : TURN_LIVE.phase; })()`);
+              if (ph === 'hero') break;
+              await page.waitForTimeout(60);
+            }
+            return ph;
+          };
+          const ph = await ready();
+          assert(ph === 'hero', `${v} ${k}: the hero's turn comes (${ph})`);
+          const ids = all ? JSON.parse(await X(`JSON.stringify(['attack'].concat(HERO_ABILITIES["${k}"].filter(i => ABILITIES[i].kind !== 'passive')))`))
+            : { wren: ['attack', 'barbed', 'moonvolley'], tobin: ['bash', 'brace'], pip: ['fire', 'hex'] }[k];
+          for (const id of ids) {
+            // each ability made usable (cooldowns, resources, a Burn, a parry, the third turn), cast through the turn engine
+            if (await X('!TURN_LIVE || TURN_LIVE.ended || TURN_LIVE.foe !== mob')) { const p2 = await ready(); if (p2 !== 'hero') { bad.push(`${k} ${id}: no hero turn (${p2})`); continue; } }
+            const r = JSON.parse(await X(`(() => { const m = TURN_LIVE; if (!m || m.ended) return '{"why":"no fight"}'; globalThis.__tp = 1;
+              for (const c in m.cds) m.cds[c] = 0; m.heroOps = 5; m.h.aim = 3; m.h.grit = 6; m.h.embers = 5; m.h.ripo = 1; m.h.lastUsed = 0; m.h.blind = 0;
+              if (!m.e.burn) { m.e.burn = 2; m.e.burnDmg = 1; } if (m.foe) m.foe.hp = m.foe.max = Math.max(m.foe.max, 1e7);   // no cast ends the fight
+              if ("${id}" !== "attack" && !m.p.eq.includes("${id}")) m.p.eq = ["${id}"].concat(m.p.eq.slice(0, 2));
+              const why = "${id}" === "attack" ? "" : turnUsable(m, "${id}"); if (why) return JSON.stringify({ why });
+              const s0 = stageFx.stats(); turnHeroAct(m, TURN_LIVE_IO, "${id}", 0); return JSON.stringify({ c0: s0.casts, i0: s0.impacts, p0: s0.popped }); })()`));
+            if (r.why) { bad.push(`${k} ${id}: ${r.why}`); continue; }
+            // the hit lands on the stage's clock (a slow page falls behind): wait for it, up to 6 s, then a beat for the status
+            let s;
+            for (const t0 = Date.now(); ; ) {
+              s = JSON.parse(await X('JSON.stringify(stageFx.stats())'));
+              if ((s.impacts > r.i0 && (id !== 'barbed' || (s.popped > r.p0 && s.popN))) || Date.now() - t0 > 6000) break;
+              await page.waitForTimeout(100);
+            }
+            if (id === 'barbed') { await page.waitForTimeout(300); s = JSON.parse(await X('JSON.stringify(stageFx.stats())')); }
+            if (s.casts !== r.c0 + 1 || s.impacts <= r.i0) bad.push(`${k} ${id}: cast ${s.casts - r.c0}, impacts ${s.impacts - r.i0}, last ${s.last}`);
+            if (id === 'barbed' && !(s.popped > r.p0 && s.status.includes('bleed') && [16, 24, 36, 48].includes(s.popN))) bad.push(`barbed: no Bleed icon drawn at a native size (${JSON.stringify(s.status)}, ${s.popN} px, the stage ${s.view})`);
+            if (red && (s.parts || s.rings || s.live || s.shakes)) quiet.push(`${k} ${id}: ${s.parts} particles, ${s.rings} rings, ${s.live} shots, ${s.shakes} shakes`);
+            await X(`(() => { const m = TURN_LIVE; if (m && m.foe) m.foe.hp = m.foe.max; return true; })()`);
+          }
+          await X('globalThis.__tp = 0; true');
+        }
+        assert(!bad.length, `${v}: each cast lands its effect (${bad.join('; ') || 'all'})`);
+        if (red) assert(!quiet.length, `${v}: reduced motion draws no particles, rings, trails or shake, only still light and the icons (${quiet.join('; ') || 'none'})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('ability-effects-live crashed: ' + (e.stack || e)); }
+
 // ==== essence-counter-reads-right: the top bar's orange diamond is the Embers raid coin; it stays out until the raid opens or Embers are held ====
 if (section('essence-counter-reads-right')) try {
   const at = 'essence-counter-reads-right', LABEL = 'Embers, from the world raid';
@@ -16347,6 +18321,7 @@ if (section('essence-counter-reads-right')) try {
     try {
       for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
         const ctx = await browser.newContext({ viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(() => { window.claude = { use: async () => null }; });   // a capability host, so onlineOff() is false (online-off-clean hides the coin without one)
         page.on('pageerror', e => errors.push(String(e)));
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
         await page.goto('http://lf.test/'); await page.waitForTimeout(600);
@@ -16367,6 +18342,8 @@ if (section('essence-counter-reads-right')) try {
         assert(wy.shown, `${at} ${w}x${h}: a felled raid boss shows the coin (${JSON.stringify(wy)})`);
         const back = await step('S.wyrms = 0');
         assert(back.hidden && !back.shown, `${at} ${w}x${h}: no raid, Embers or raid kills again: the coin hides (${JSON.stringify(back)})`);
+        const off = await step('S.onboard.got.raid = 1; S.embers = 5; window.claude = undefined');
+        assert(off.hidden, `${at} ${w}x${h}: with no capability host the coin stays out even with the raid open and Embers held (online-off-clean) (${JSON.stringify(off)})`);
         if (w === 360) console.log(`  ${at} 360x740 header height: ${fresh.head} px without the coin, ${raid.head} px with it`);
         assert(!errors.length, `${at} ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
         await ctx.close();

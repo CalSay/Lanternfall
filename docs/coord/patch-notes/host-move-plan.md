@@ -1,0 +1,1 @@
+Docs only: a plan for moving off the Artifact (docs/design/hosting.md). Netlify carries the full game, previews become Netlify links, the build splits into a page plus art files loaded before play, and a first-load budget replaces the 14 MB page ceiling. No player change. (no shot)

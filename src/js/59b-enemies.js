@@ -203,7 +203,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     return false;
   };
   onFoeDeath = (f, src, kind) => {
-    if (E.reassemble > 0 && f.type === 'bones' && !f.again && !f.boss && kind !== 'magic' && kind !== 'burn' && !(quotas() && PK.rise >= q('bones', 'rise', 2))) {
+    if (E.reassemble > 0 && f.type === 'bones' && !f.again && !f.boss && !f.skin && kind !== 'magic' && kind !== 'burn' && !(quotas() && PK.rise >= q('bones', 'rise', 2))) {
       f.again = true; f.hp = f.max * E.reassemble; f.hit = 0.2; PK.rise++;   // S6-A: the first 2 that fall get up
       emit('foeGetUp', { name: f.name, hp: f.hp, key: f.type });   // foe-tricks-say-so: the stage and the Foe tab say so (75-turn-ui, 55-mastery)
       return true;

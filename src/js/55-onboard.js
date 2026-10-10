@@ -93,7 +93,7 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same window as a view's "new" mark)
 const FIRST_USE = {
   party: { text: 'This is where you grow. Your level, build and abilities are all here.' },
-  nextup: { text: 'That chip is Next Up. It shows the best thing to do next, so tap it.', via: 'guide' },
+  nextup: { text: 'That chip is Next Up. It shows the best thing to do next, so press it.', via: 'guide' },
   awaynote: { text: "While you're away, gathering goes on but fighting stops.", via: 'strip' },   // the strip is its own line (71-ui-fight)
   gather: { text: "Pick a place to work and you'll keep chopping or mining it, even while you're away." },
   bounties: { text: 'Folk post three short jobs here. They pay in gold, materials and Renown.' },
@@ -254,7 +254,7 @@ const GUIDE_STEPS = [
   { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu and get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
   // Cal's play notes 9 and 13: a weapon found or made sits in the bag until it is worn. The tip names it and wears it in one tap.
   { id: 'wear:weapon', ph: ['between'], pause: 1, tip: 'Your new weapon is in your bag. Put it on.', when: () => coldH() && !!wearPiece('weapon'), done: () => weaponMade() },
-  { id: 'gather', ph: ['between'], tip: 'Tap Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
+  { id: 'gather', ph: ['between'], tip: 'Press Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
   { id: 'stock:bench', ph: ['between'], needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },

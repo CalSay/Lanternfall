@@ -87,12 +87,18 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   it) and is not queued (fight-input-during-banner). **Skills**: each slot's ability and cooldown; tap one to change it. **Foe**: its kind, an elite's trait and
   the moves you have learned (a zone boss shows the ones your lost tries taught you, one more a try; a beaten boss shows all). Parry and Dodge (A, S) sit under the dock on every tab and glow while a
   hit winds up. Short landscape keeps the names under small tiles. The turn order shows on the Versus card only.
+- **Ability effects** (`62b-fx.js`, ability-effects-live): every Attack and ability of every hero has its own effect on the
+  stage (trails, flashes, sparks, rings, shake), aimed at the foe's chest. Each status has one colour for every hero (red = Bleed;
+  the table is in [art-pipeline.md](design/art-pipeline.md) 10), lights the foe while it lasts and pops Codex's icon as it lands.
+  Reduced motion shows a still glow and the icon.
 - **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
   and the rest cost a Scroll of their tier (or a higher one) from zone bosses; a Moss Scroll teaches one move per hero, so spares
   wait for Tobin and Pip, and Abilities' Can learn list says who they are for. "Scroll found." shows only for a Scroll the hero in play
   can use now. On a zone 6 to 10 boss's first clear, the Lantern Cache card asks "Learn one now:" with up to three moves the dropped
   Scroll can teach the hero in play (only when two or more can be learned): a pick learns it and fills a free slot, or opens Abilities on
-  it when the slots are full; "Keep the Scroll" keeps it (`75-caches-ui.js`, boss-spoils-pick). **Talents** (`24e-data-talents.js`): two choices for each
+  it when the slots are full; "Keep the Scroll" keeps it (`75-caches-ui.js`, boss-spoils-pick). The moves keep the Abilities list's
+  order; once the zone boss odds are in, each says what it does to the line and the one that lifts it most gets a gold bar, in place
+  (cache-pick-order-settles). **Talents** (`24e-data-talents.js`): two choices for each
   ability and for Attack, Parry and Dodge. **Ability icons** (Codex's drawings, `art/abilities/`, converted by
   `tools/art/abilityicons.py`, embedded by `tools/art/embed-icons.mjs` under the live ability id): Pip's 14 are drawn on
   the bar, the picker and the Abilities list. Wren and Tobin keep lettered tiles until all 14 of theirs are drawn (whole
@@ -298,7 +304,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   Bestiary around zone 6, the Almanac at 7 minutes, Uniques, the Tavern, the Codex (zone 10), the Raid (zone 12),
   Stars (hero level 10), the Deepwell (zone 20 and Hearth 3) and Hands (Hearth 2 and a Tavern). Once open, a feature stays open.
   The top bar shows Gold only until the Raid opens: the orange Embers diamond (the raid's coin, named "Embers, from the world
-  raid" on hover and to screen readers) joins it then, or as soon as the player holds Embers or has felled a raid boss.
+  raid" on hover and to screen readers) joins it then, or as soon as the player holds Embers or has felled a raid boss (only with a capability host; see below).
   One new thing every 90 s (`ONBOARD_TUNE.gap`, 90 s of play): ready rows queue and open in table order, so after the first
   boss Hero comes first, then Gather, Next Up and the away strip (row `awaynote`), 90 s apart. A row the player's own act
   or a drop opened skips the queue: walking to gather, the fire lit (Camp), the Workbench (Craft), the Tavern built, the first
@@ -347,6 +353,14 @@ Every currency, material and token, with its sources and sinks, is in [design/sy
 
 The world raid (`52-raid.js`, `74-ui-raid.js`), the Tavern's online parts (`74-ui-tavern.js`) and presence
 (`80-online.js`). Shapes are frozen in `CLAUDE.md`.
+
+With no capability host (no `window.claude`: the Netlify build, a page opened from disk) none of it can work, so the UI leaves
+it out (`onlineOff()` in `70-ui.js`; online-off-clean, `docs/design/hosting.md` section 3): no Raid view, no Embers coin, no
+Tavern "In the tavern now" or Hall of heroes box (its perks and the rename stay), no raid group in Stats, no raid group, tracks,
+Wyrmfall or Shoulder to Shoulder in Deeds (nor a raid track in Next Up), no raid uniques on the Craft tab's wall or in its counts, no raid words in the Codex's
+unique hints, no zone 12 raid notice, and The Wyrm Stirs never comes up (its day falls back to another Omen). The raid's unlock and
+everything earned stay in the save. Inside the Artifact nothing changes; the Raid view shows once the host check ends, and a
+signed-out viewer still sees how to join.
 
 ## Not in the game
 

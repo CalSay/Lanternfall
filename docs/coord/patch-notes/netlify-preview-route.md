@@ -1,0 +1,1 @@
+Docs only: the Netlify preview procedure (docs/design/hosting.md 7.2). The connector cannot make a draft deploy, so previews will be a branch deploy at one fixed address once Cal allows it. No player change. (no shot)

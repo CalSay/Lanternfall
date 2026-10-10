@@ -489,7 +489,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   // first-gold-and-camp-strip: the camp tutorial goal. Tap any building in the panorama (75-camp-ui) and it ticks off for good.
   registerGoal({
     id: 'camp-tap', sys: 'camp-look', prio: -1, icon: icFor,
-    label: () => 'Tap a building in your camp',
+    label: () => 'Choose a building in your camp',
     pct: () => campOpen() && S.onboard && S.onboard.tips && S.onboard.done && !S.onboard.done['use:camp-tap'] && CAMP_IDS.some(id => id !== 'hearth' && id !== 'tent' && lv(id) > 0) ? 0.4 : 0,
     go: { tab: 'world', view: 'camp', sel: '#camp-scene-scroll' }
   });

@@ -1,0 +1,33 @@
+# Proof for card side-column-fits-740: in the landscape side column the Next Up chip shows a whole goal, however long, and the
+# away line under it fits; neither reaches the dock.
+# The save: the seed 1 Wren walk at minute 60 (tests/proof-fixtures/save-min60-tier-gate.json).
+#   sidecol-fight-*.png    fighting: the chip, then the dock (Act, Skills, Foe and the slots); no away line
+#   sidecol-gather-*.png   gathering: the chip, then the away line ("Leave now: ..."); no dock
+# The dock shows only while fighting (75-solo-ui: the bar needs target() 'mob') and the away line only while gathering
+# (71-ui-fight awayChipText), so the two never share the column. The chip's label had a 3 line clamp in landscape, which cut
+# later tier gate rows (up to 124 characters: 5 lines at 740x360). The clamp is gone; the away line is 13 px at 740x360.
+# The measure of every gate label (tiers 2 to 5) and every away line, with web fonts and fallback fonts, at 740x360, 1024x768,
+# 1280x720, 1366x640 and 1920x1080, is tools/check.mjs "side-column-fits-740". Measured 10 Oct at 740x360: the longest label
+# (5 lines) ends 23 px above the dock in fallback fonts (28 px with web fonts); gathering, the longest pair ends 105 px above
+# the screen's foot.
+# seed: 1
+new min60-tier-gate
+wait 3
+tap-if "Skip this story"
+tap-if "Collect"
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+expect ".nu-chip"
+expect ".sb-tabs"
+expect-no "Leave now"
+shot sidecol-fight
+tap "Wood"
+wait 2
+tap-if "Got it"
+expect ".nu-chip"
+expect "Leave now"
+expect-no ".sb-tabs"
+shot sidecol-gather

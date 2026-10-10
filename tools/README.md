@@ -61,6 +61,14 @@ node tools/site.mjs
 node tools/serve.mjs
 ```
 
+`node tools/build.mjs --split` also writes the split build (asset-build, `docs/design/hosting.md` 5): `dist/lanternfall-split.html`
+(not committed) plus the art data files under content-hashed names in `dist/assets/` (committed; CI checks it): the boot files
+as they are, and the area art (art-loader, B2) as one pack per foe and per battle background, loaded by zone after boot. Walk,
+eyes, playtest and perf take it with `--html dist/lanternfall-split.html`, and `node tools/serve.mjs --split` serves it. The
+build prints the boot set for a new game and the worst zone, the largest zone and area sets, and any section 6 load line
+they break (`LOAD_LINES`; check.mjs asserts them). `node docs/design/hosting/cold-load.mjs [--mbps 10] [--zone 2]` times its
+loading line and the game's ready time on a throttled link.
+
 The save-code tool validates the JSON before loading it and prints an import code. The site tool wraps
 the built artifact in a local `site/` folder; it does not upload or publish it. The server exposes the
 built game for local testing. Keep real player saves out of commits and test with disposable fixtures.
@@ -111,6 +119,6 @@ guide tip and Next Up, presses moment cards, parries and dodges at set rates) on
 plus shots: the scorecard values F1 to F6, F10 and P4, each beat of `docs/design/first-hour.md` against the minute it
 happened (over 50% off is listed), the stretches with nothing new, and every eyes finding (tip over the fighters, off-phase
 tip, clipped text, a covered button, a marker that leads nowhere, a stall). It never sets game state. Options: `--size <view>` (`d` 1280x720 with a mouse, the default; `l` 740x360; `p` 360x740; `laptop`, `tablet`, `hd` or WxH: `tools/lib/views.mjs`),
-`--hero`, `--minutes`, `--clock-budget <min>` (default 30; the walk stops there and saves a snapshot), `--parry`, `--dodge`,
+`--hero`, `--minutes`, `--clock-budget <min>` (default 30; the walk stops there and saves a snapshot), `--parry`, `--dodge`, `--read <0-1>` (how often the bot reads a boss trick it meant to defend; default 0.77),
 `--scorecard <file>` (adds one row), `--reports <dir>`, `--snapshot`. Report only. The nightly run is `.github/workflows/walk.yml`
 (03:00 UK on the integration head at `d,l,p`; a manual run takes `seeds` and `sizes`). About 15 clock minutes for 60 game minutes.

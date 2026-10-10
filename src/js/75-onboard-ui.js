@@ -101,7 +101,7 @@
       const eq = soloEquipped(), nm = (ABILITIES[slotAb] || {}).name || 'Your new move', at = eq.indexOf(slotAb);
       const left = at > 0 ? eq[at - 1] : null, leftNm = at === 0 ? 'Attack' : left ? (SOLO_ABILITIES[left] || {}).short || (ABILITIES[left] || {}).name : '';
       if (at >= 0) return leftNm ? `${nm} is next to ${leftNm} now. Press it there when it's ready.` : `${nm} is in slot ${'QWE'[at]} now. Press it there when it's ready.`;
-      return eq.includes(null) ? `${nm} needs a slot. Tap an empty slot next to Attack and pick it.` : `${nm} needs a slot. Hold one of your moves next to Attack to swap it in.`;
+      return eq.includes(null) ? `${nm} needs a slot. Press an empty slot next to Attack and pick it.` : `${nm} needs a slot. Hold one of your moves next to Attack to swap it in.`;
     },
     ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => stockSay(id)]))
   };
@@ -139,6 +139,7 @@
   on('unlock', ({ id, quiet }) => {
     applyFeatures();
     if (quiet || id === '*') return;
+    if (id === 'raid' && onlineOff()) return;   // online-off-clean: no capability host, no raid to announce; the unlock itself is kept (70-ui.js)
     if (saidBySteps(id)) onboardUseDone('say:' + id); else sayQueue(id);
     if (!OPEN_TXT[id]) return;
     const tab = TAB_FEATURE[id];
@@ -303,9 +304,9 @@
     gather: () => {
       if (!onCtrl()) return null;
       const b = q('#modeSeg button[data-act="gather"]');
-      return b && !b.hidden ? { node: b, text: 'Tap Gather and chop some Pine Log for the fire.' } : null;
+      return b && !b.hidden ? { node: b, text: 'Press Gather and chop some Pine Log for the fire.' } : null;
     },
-    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'Your level and moves are kept on the Hero tab. Tap it and have a look.' }
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'Your level and moves are kept on the Hero tab. Open it and have a look.' }
   };
   // Cal's play notes 9 and 13: a piece in the bag does nothing until it is on. The tip names it and the Equip button wears it in one tap;
   // the ring sits on the craft card's own Equip button when that card is up.
@@ -318,7 +319,7 @@
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays over Camp and Gather and points at the lit tab
     // (forge-tip-goes-stale: stockSpec draws no materials line over any other menu)
-    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree yourself and it goes faster.') : null,
+    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Click or tap the tree yourself and it goes faster.') : null,
     back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: "When you're done here, close the menu and the fight goes on.", go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
     'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is still in your bag. A tool only helps once you wear it.`),
     'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is still in your bag. Put it on and fight with it.`),
@@ -328,10 +329,10 @@
     'stock:store': () => stockSpec('stock:store', STOCK_WHAT['stock:store']),
     'stock:weapon': () => stockSpec('stock:weapon', STOCK_WHAT['stock:weapon'], '', true),
     light: () => {
-      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire to light it.' } : null;
+      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then click or tap the fire to light it.' } : null;
       const f = $('hearthFire');
-      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Tap the fire and light it. I've missed the warmth." };
-      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, and then you can light the fire.' : 'Tap Gather and chop some Pine Log. It burns well.' };
+      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Click or tap the fire and light it. I've missed the warmth." };
+      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Press Gather, and then you can light the fire.' : 'Press Gather and chop some Pine Log. It burns well.' };
       return null;
     },
     bench: () => campPath('bench', ["The fire's burning now. Open Camp and we'll build.", 'Open Camp.', "Build a Workbench. That's where your tools are made."]),
@@ -339,10 +340,10 @@
       if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is up. Open Craft and make your first tool.' };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="bench"]');
-      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Choose the Workbench.' };
       // the list can open on a higher tier (the highest the Workbench has opened, or a Next Up pick): the Copper Pickaxe is Tier 1
       const t1 = q('#sec-craft-recipes .cf-tiers button[data-t="1"]');
-      if (t1 && t1.getAttribute('aria-pressed') !== 'true') return { node: t1, text: 'Tap Tier 1.' };
+      if (t1 && t1.getAttribute('aria-pressed') !== 'true') return { node: t1, text: 'Choose Tier 1.' };
       // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
       return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll need one for the ore." };
     },
@@ -355,7 +356,7 @@
       if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'You have enough for your first weapon. Open Craft.' };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="' + CRAFT_KINDS[k].st + '"]');
-      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Choose the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
       return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon, then put it on.' };
     },
     // Cal's play note 15: only say the packs are near full when they are (the Storehouse plot also opens once the Forge is built)
@@ -370,9 +371,9 @@
     // spend-points-before-nextup: the pile, named from the data, then Spread evenly spends it all at once (spent: back's line, the menu still open)
     spend: () => { const n = attrPoints(soloHero()).free; if (n < 2 * HERO_TUNE.perLevel) return STEP_UI.back(); return Object.assign(path('party', 'attributes', '#attrRows ~ .at-acts .at-spread',
       [`You have ${n} attribute points waiting. Open Hero and spend them.`, 'Open Build.', 'Press Spread evenly to spend them all at once.']), { side: S.tab === 'party' ? 'up' : '' }); },
-    'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Tap it and see what you can mine." },
-    'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Tap Camp and build." },
-    'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Tap it and make gear." },
+    'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Open it and see what you can mine." },
+    'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Open Camp and build." },
+    'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Open it and make gear." },
     nextup: () => onCtrl() ? { node: chip, text: FIRST_USE.nextup.text } : null
   };
 
@@ -391,7 +392,7 @@
   const sceneComing = () => { try { return typeof storyBusy === 'function' && MOMENT_Q.some(m => m.kind === 'champion' && m.scene && storyBusy(m.scene)); } catch (e) { return false; } };
   const tickOwed = () => cachePending_() || sceneComing();   // something only the game tick can finish: no hold may stop the tick now
   const cardComing = () => cardUp() || tickOwed();
-  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); syncHeld(); }
+  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; if (txt.style.maxHeight) txt.style.maxHeight = ''; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn', 'guide-bar-off'); syncHeld(); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -399,6 +400,7 @@
   // brings it into sight. The band itself (60-onboard.css .ob-bub) stays CSS-docked.
   const panels = $('panels');
   let dirty = true, reveal = true, panelScrolled = false, lastTab = S.tab;
+  const shortSide = matchMedia('(min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px)');   // a phone on its side (80-landscape.css)
   function invalidate() { dirty = true; }
   function tick() {
     const dg = lastGT === null ? 0 : Math.max(0, GUIDE_RT.t - lastGT); lastGT = GUIDE_RT.t;   // game seconds since the last look
@@ -433,6 +435,9 @@
     // (staged-guide-followups: a landscape menu leaves the fight beside it, and the line spoke over it)
     if (!step && S.tab && (!fightInView() || guidePhase(true) === 'between')) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
+    // tips-hold-740: on a phone on its side a tip that is not up yet never opens on the foe's turn (its wind-up, or the wait for it); it waits
+    // for the turn to end. The fight lessons are exempt: Dodge and Parry are taught in that very window.
+    if (shortSide.matches && !LESSON_IDS.includes(step.id) && !(cur && cur.id === step.id && !layer.hidden) && /^(windup|foe)$/.test(guidePhase(!guideMenuCovers()))) return hide();
     const use = /^(use|say):/.test(step.id);
     // staged-guide-followups: a line that starts in the gap after a kill, with the fight in view, would show for under half a second before the
     // next foe walks in and hides it. A line you read (a Got it note, a first-use line) holds that gap until you tap it; a live-progress line
@@ -451,7 +456,7 @@
     // a first-use line has no target: it docks over the open menu with no ring, and pauses only to hold a gap between foes (gapHeld)
     try { spec = use ? { node: S.tab || step.id.startsWith('use:') ? panels : stageBox, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     // forge-line-while-fighting: the held materials line carries the live line's Go; beside a running fight the live line has none (a side
-    // button hides the fight buttons, 80-landscape.css .guide-btn)
+    // button would take the fight bar's tab row, 80-landscape.css .guide-btn)
     if (spec && use && STOCK_WHAT[step.id.slice(4)]) spec.go = stockGo(step.id.slice(4));
     if (spec && stockSide && fightingNow()) spec.go = null;
     if (!spec || !vis(spec.node)) return hide();
@@ -533,8 +538,30 @@
     const a = bub.getBoundingClientRect();
     return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
   };
+  // tips-hold-740: a side tip with a button ends above the bar's first row of fight buttons, so on a 740x360 phone it can only reach the
+  // bar's tab row (which hides under it, 80-landscape.css .guide-btn); its text scrolls if it runs longer. The five buttons stay in view
+  // and pressable, and a press there answers the tip and acts (the capture listeners above).
+  const BTN_GAP = 5;
+  // -> true: the tip fits above the buttons. A tip that starts too low for two lines there (the Next Up step, under a tall chip) keeps the
+  // old rule: the whole bar hides under it (.guide-bar-off), and a fight key still answers it.
+  function fitBub() {
+    const soloBar = solo(), side = bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden;
+    const row = side && soloBar && !soloBar.hidden ? soloBar.querySelector('.sb-pane') : null, rr = row && row.getBoundingClientRect();
+    let want = '', fits = true;
+    if (rr && rr.height) {
+      // the text's room: down to the buttons, less the rest of the tip (face, name, its button), in whole lines (scrollHeight: the tip's
+      // own height limit may already clip it)
+      const a = bub.getBoundingClientRect(), t = txt.getBoundingClientRect(), lh = parseFloat(getComputedStyle(txt).lineHeight) || 16;
+      const room = rr.top - BTN_GAP - a.top - (Math.max(a.height, bub.scrollHeight) - t.height);
+      if (room < 2 * lh) fits = false;
+      // (once fitted it stays fitted while the bar is there, so it never flips between the two heights)
+      else if (room < t.height + 1 || txt.style.maxHeight) want = Math.floor(room / lh) * lh + 'px';
+    }
+    if (txt.style.maxHeight !== want) txt.style.maxHeight = want;
+    return fits;
+  }
   // (every look, not only on a layout change: the bar shows under an unchanged tip when the hero goes from gathering to the fight)
-  const syncBtn = () => putToggle($('app'), 'guide-btn', bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden && meetsBar());
+  const syncBtn = () => { const fits = fitBub(), on = bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden && meetsBar(); putToggle($('app'), 'guide-btn', on); putToggle($('app'), 'guide-bar-off', on && !fits); };
   const resKept = new WeakSet();   // craft result cards the guide has already left in view once
   function place(spec) {
     const key = spec.text, newTarget = spec.node !== lastNode;

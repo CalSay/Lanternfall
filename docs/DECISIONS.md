@@ -250,6 +250,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Region 5 is its own place** with its own look, not the Deepwell continued. The Deepwell must still tie into the
   story. The Voice's reveal speaks of darkness enduring. (2026-09-28)
 - **Random events and secrets** at launch. (2026-09-28)
+- **The first hour's foe kits are fight data, off until each area's wire card** (ns-foe-kits-z1-10, 2026-10-10). The
+  roster's zone 3-10 monsters, zone 1-10 Captains and the Briar Regent and Hollow Cantor are in `59l` behind
+  `ZONE_FOE_TUNE.on` (Mossy Hollow, Batwing Caves). Switched on, each is held to the fight it replaces (today's damage and
+  fight length, then a per-zone fit on the first-hour budget rows), because the roster's raw numbers play much easier
+  (fewer hits a move, more full-parry counters). Open for `ns-a2-wire`: a kept-up hero who never defends beats the zone 8
+  Captain 15-100% (band under 10%). Proof: `docs/proof/ns-foe-kits-z1-10/report.md`. Cal can veto with "Play the roster's
+  raw numbers" (`parity: 0`).
 
 ## Gathering, gatherers and the camp
 
@@ -1156,6 +1163,94 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   background per area; fewer frames and lossy backgrounds are reserve only; shipped packs are re-encoded only via the art judge.
   (`docs/design/page-bytes.md`; ruling `autopilot/rulings/2026-10-09-page-bytes.md`; the size check is `tools/lib/page-size.mjs`, run by
   `tools/check.mjs` as "page size")
+- **Hero screen size (hero-screen-size-ruling, Opus art judge, 2026-10-09; Cal can veto: "x4 on big screens", "Keep the swarm zoom"):**
+  Heroes keep today's whole-step stage zoom (x2 at 1280x720, x3 at 1920x1080, x1 on 740x360 phones). In turn fights the stage no longer
+  zooms out for swarm zones (2, 9, 16, 23, 30) or 3+-add bosses, which drew the hero at 101 px at 1280x720 (build card
+  `stage-no-swarm-shrink`). Turned down: x3 at 1280 (the boss's crown sits under the turn banner and the sword cuts through the boss),
+  x4 at 1920 (a maximized 1080p window stays x3; in full screen the foes crowd and code-drawn foes become 8 px blocks), and a zoom that
+  changes fight by fight (the hero changes size between fights). Bigger heroes on big screens come with finer art (art-scale-ruling),
+  shown at x2 on 1920x1080. Changing the stage zoom is layout, not art retuning under the freeze; whole steps only.
+  (`docs/design/desktop-layout.md`, "Hero size ruling"; mockups, red team and ruling in `docs/design/desktop-layout/hero-size/`)
+- **Live 3D scenes (live-3d-scenes-ruling, Opus judge, 2026-10-09; Cal can veto: "Skip the spike, go 3D", "Stay pixel"):** A 5-day
+  scratch spike (`live-3d-spike`, 12-16 Oct, never in a Monday build) builds Wren and Gloomjaw from one rig both as live three.js and as
+  pre-rendered toon sprites, and measures bytes (foe ≤135 KB, hero ≤600 KB, engine ≤200 KB, first load ≤6.0 MB wire), hours (≤4 h for
+  the foe), parry timing (≤17 ms), frame rate on Cal's phone and a 2019 laptop (median ≥55 fps, p95 ≤33 ms), 30-minute battery (≤1.5x
+  2D) and the look (art judge, then Cal on unlabelled clips). Live passes all: B (live 3D fights). Toon only: pre-rendered sprites.
+  Neither: A with Codex paintover. The estimated live first load with Wren plus one foe is about 9.3-9.9 MB wire, past the 8.0 fail
+  line. Cal said enemies would be 3D too (21:21), so who models and keys, and any paid generator, go to Cal (`3d-art-maker-decision`). The
+  20 Nov post ships 2D. art-scale-ruling and 3d-hero-pipeline are held. Codex's zone 3-10 foe briefs continue, each with a 4-view
+  turnaround. The art freeze is unchanged. (`docs/design/live-3d/ruling.md`, red team `redteam.md`;
+  `autopilot/rulings/2026-10-09-live-3d-scenes.md`)
+- **Bowstrings are drawn by the game (Cal, 2026-10-09 23:47, "Game string it is"; message cmsg_01AYPNgUeMrmxpJNQMppEbk9724gd8vJMaERQKdWYKBgkP):**
+  hero frames are made without a string. Each frame marks three points (both bow tips and the drawing hand), and the game draws the
+  string as a thin line through them. The string meets the arrow tail, is never drawn twice, and wobbles after release. This is an
+  exception to "props come from the artist" in the `CLAUDE.md` art freeze (motion and light effects are the other, below); arrows and
+  every other prop still come from the artist. Nothing is wired until a route is ruled; the art judge checks the plain string suits the art. Demo: "Bowstring
+  test" in https://claude.ai/artifact/R3245P8ApnrWnfn4JRGNsr. (`autopilot/rulings/2026-10-09-game-drawn-bowstring.md`)
+- **Wren's 9 Oct pipeline is the default (Cal, 2026-10-10 00:34, "Update the rules. Everything we've done with Wren today should be
+  the default. Please proceed with putting this pack in the game", cmsg_01AYPNgUeMrmxpJNQMppEbk9FeV2GnaDuxPhjnLcjHQDHs; approved 00:40,
+  "Yes I aprove", cmsg_01AYPNgUeMrmxpJNQMppEbk98qa1YiK9hg7dGmQFkb5L6M):** hero poses and effect sprites may be made through Scenario
+  from the approved concept, which amends "Art should only be made by Codex" (6 Oct); Codex still makes concepts and icons. The game
+  draws bowstrings and motion and light effects (trails, flashes, sparks, rings, smoke, shake, hit-stop), with one colour per status
+  (red = bleed); status icons are Codex's approved icons. Arrows and bats are sprites. The Opus art judge still checks every pack
+  (for Wren: the pack, her size next to the other heroes, and the bytes) before anything is wired; the "Classic art" switch, the byte
+  rules and the walk and cold-leg gates still stand. (`autopilot/rulings/2026-10-10-wren-pipeline-default.md`)
+- **Live 3D spike (#320) closed early by Cal, 2026-10-10 00:37:** "Scenario has made 2D the best option we have"
+  (cmsg_01AYPNgUeMrmxpJNQMppEbk94veePoKTgXG8AL6PW7VNHM). The spike is cancelled.
+- **Route S Wren (integrate-route-s-wren, Opus art judge, 2026-10-10; Cal can veto: "Pull the new Wren", "Wait for all three
+  heroes", "Turn the axe edge into the tree", "Heroes back to 95 px", "Heroes only, not foes"):** wire Wren's 20 fight moves
+  (Scenario key frames, 190 px, 63 colours, 1-bit alpha, lossless WebP, at most 1,650 KB), with arrow and bat sprites (at most
+  60 KB), a game-drawn string and game-drawn effects, behind Classic art (build card route-s-wren-wire, gated on registration,
+  bytes, shots and a judge clip read). The woodcut axe failed as a sledgehammer (v2) and a pick (v3) and passed on v4; the 4 gather
+  loops (277.6 KB, at most 300 KB) wire next through route-s-wren-gather, the axe head drawn over the trunk on impact. Any hero's
+  pack is at most 2.0 MB of files. Hero size (Cal 00:43, 01:23 "She looks like a little kid"): the 96 px art spec and "whole
+  steps only" end; heroes and foes draw 1.5x against unchanged scenery (ACTOR_K = 1.5, card actor-scale; a hero about 142 logical
+  px, 285 CSS at 1280x720) from the 190 px art with no new bytes; portrait stays 1x until UX-L1. #320 closed with the spike: foes
+  stay 2D. A menu-only phone mode is a separate Cal decision. (`docs/design/route-s/ruling.md`)
+- **Route S Tobin (integrate-route-s-tobin, Opus art judge, 2026-10-10; Cal can veto: "Wire Tobin now", "Pull the new Tobin",
+  "Wait for all three heroes", "Keep the first cleave", "Last Stand should be a shield raise"):** wire Tobin's 21 fight moves
+  (Scenario key frames from his concept, 190 px at Wren's pack scale, 63 colours seeded with the concept's 14 swatches so his olive
+  coat survives, 1-bit alpha, lossless WebP, at most 1,550 KB), with the Hammerfall rubble and crack sprites, behind Classic art
+  (build card route-s-tobin-wire, gated like Wren's plus a re-cut from raw, frame skips, air lifts, a dash-chain clip and dash flags
+  checked from data). It waits for the split build (asset-build, art-loader): on the one-file page his fight set makes 12.71-12.80 MB
+  (12.74-12.84 with rubble and crack),
+  past #328's 12 MB second-hero line, and the art-loader loads packs per hero with only the in-play hero's core moves in the boot set.
+  Cal's Wren checks pass: no third arm or wrong hand in 200 frames and no border halo at game size. Of 154 counted defects, 72 are
+  white pockets and punched mouths that a re-cut fixes, 63 are handled by conversion (held idle, skipped frames, hunt drawn at 80%
+  scaled about 1.25) or accepted, and 19 need rerolls: cleave v2 (the sword changes size), woodcut v5 (the back shield is missing),
+  and the thrown-shield views v2 (a steel boss the real shield lacks); about 57-76 credits within the ~1,000 budget. Last Stand stays
+  as drawn (a slash, then a stand) because the live ability hits for 180% since 6 Oct; `ability-art-brief.md` and
+  `hero-abilities.md` still describe a shield-raise. The gather loops wire through route-s-tobin-gather after woodcut v5.
+  (`docs/design/route-s/ruling-tobin.md`)
+- **Route S Tobin re-brief recheck (route-s-tobin-rebrief, Opus art judge, 2026-10-10; Cal can veto: "Keep the first cleave",
+  "Roll the cleave again"):** both of Tobin's sets now clear the re-brief hold and still wait on the split build. The thrown-shield views
+  v2 pass: no boss, the held shield's red, 3.0 KB at 62 px. No cleave roll kept the sword one size (v2 0.70-1.20 of idle-1, v3 0.63-1.39),
+  so the wire card plays cleave v2 frames 1, 2, 4, 6, 7, 8 (0.70-0.97, one +35% step) and the gate 12 clip judges it. Woodcut v6 passes
+  the impact (axe head at 0.68 of his height, edge into the trunk) and plays 1, 2, 3, 5, 6, 7, 8; the back shield hides behind his raised
+  arms in 2-3, accepted. Cal's checks pass on every new frame. Five sheets, 94 credits; Tobin's pack 740 of ~1,000.
+  (`docs/design/route-s/recheck-tobin.md`)
+- **Route S Pip (integrate-route-s-pip, Opus art judge, 2026-10-10; Cal can veto: "Wire Pip now", "Pull the new Pip", "Wait for
+  all three heroes", "Pip as tall as Wren", "Skip the Pip rerolls", "No Hex sigil"):** wire Pip's 19 fight moves (Scenario key frames
+  from her concept, 63 colours seeded with the concept's 12 swatches, 1-bit alpha, lossless WebP, at most 1,350 KB), with her fireball,
+  frost, spark, kindle, burning-ground and cinder sprites (at most 40 KB; a sprite replaces the live bolt head, never both), behind
+  Classic art (build card route-s-pip-wire, gated like Wren's and Tobin's plus a re-cut from raw, frame skips, per-move emit anchors
+  and a hand count on every shipped frame). Pip stands shorter, as Cal's 2026-09-29 heights rule says: hat-top 171 art px, 0.9 of Wren's
+  190, at the same pack scale. It waits for the split build (asset-build, art-loader): with Wren's sets, her fight set makes the one-file page
+  12.4-12.7 MB, and with Tobin too 14.3-14.6 MB. Cal's checks: no border halo at game size and no fused fingers, but 6 third-hand frames
+  (the README said 0): fire 4, spark 3, frost shard 6 and Searing Eye 7 are skipped; victory 5 and 7 are rerolled. Of 100 counted
+  defects, 24 are white pockets and punched lantern glass or mouths that a re-cut fixes, 52 are handled by conversion or accepted, and 24 need
+  rerolls: victory v2, Arcane Ward v2 (the staff ping-pongs between hands; v2 is the brief's lantern raise), Lanternburst v2 (the staff shrinks
+  to 25-49% and the lantern is never used), the Hex sigil v2 (an opaque disc in the Blind and Mark colours with an eye), woodcut v6 (the
+  edge-on head reads as a T-bar, Wren's v3 failure) and hunt v4 (the spear shrinks mid-thrust); 6 sheets, about 108 credits, the pack
+  at about 936 of ~1,000. Live Nova, Lantern Flare and Lanternburst fire a bolt from her hand against the art; card pip-cast-recipes
+  re-recipes them for route S art. The gather loops wire through route-s-pip-gather after woodcut v6 and hunt v4. (`docs/design/route-s/ruling-pip.md`)
+- **Route S Pip re-brief recheck (route-s-pip-rebrief, Opus art judge, 2026-10-10; Cal can veto: "No Hex sigil", "Skip the Pip rerolls"):**
+  Pip's fight set clears the re-brief hold except the Hex sigil, and still waits on the split build. Victory v2 plays 1-7 and holds 6,
+  the camp pose (8 swaps the staff hand). Arcane Ward v2 plays 1, 2, 3, 6, 7, 8 (4-5 show a second lantern). Lanternburst v3, the one
+  retry, keeps the full staff in her rear hand and thrusts the lantern; it plays 1, 2, 3, 6, 8 and emits from the lantern (5 and 7 show
+  a second lantern). Woodcut v6 passes the impact and loops 1, 2, 5, 6, 7, 8. Hunt v4 (one hand and a short spear again) and the Hex
+  sigil v2 (two marks read as a G) wait for Cal's next budget; gathering keeps the camp pose meanwhile. Cal's checks: 0 third hands,
+  1 halo pixel (real steel) in 48 frames. Seven sheets, 132 credits; Pip's pack 960 of ~1,000. (`docs/design/route-s/recheck-pip.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
@@ -1271,6 +1366,25 @@ nothing; no economy or save change. A cache with a pick is a big card.
   build is green. Netlify still builds only commits with "[deploy]" in the message. (2026-09-28, 2026-10-05)
 - **Preview:** after each merge wave the owner gets a private preview artifact with its own save key. Preview builds
   never go to the live artifact. (2026-09-27)
+- **Netlify draft previews, standing (Cal, 2026-10-09 16:34, "Yes, standing"):** a Netlify draft preview link goes up for
+  any build that passes the preview gate (walk + cold leg on that one SHA), outside the Monday release. The Monday public
+  deploy stays as it is, and there are no production deploys beyond Monday. How a draft is made and what happens to the
+  preview artifact: `docs/design/hosting.md` 7.2. Record: project files `autopilot/rulings/2026-10-09-netlify-previews.md`.
+- **Hosting (judge 2026-10-09; Cal can veto: "keep the game one file"):** Netlify carries the full game; with no capability
+  host, the online layer is hidden (online-off-clean first, before Monday if possible); previews go to one fixed
+  non-production Netlify address (the connector if it can deploy, else a branch deploy of `lf-preview` once Cal allows it);
+  the build becomes a page plus content-hashed art files, all loaded before play (B1); the art loader (B2) comes only on a
+  trigger; a first-load budget (warn 6.0, fail 8.0 MB at Brotli 4) replaces the 14 MB ceiling once the split ships, and the
+  per-pack ceilings stay; pack-code is parked until Cal decides the live artifact's future; saves move between addresses only
+  by save code. The live artifact's future and what the web build carries versus the paid build stay Cal's (options in
+  `docs/design/hosting.md` 7.4 and 7.5). Ruling: project files `autopilot/rulings/2026-10-09-hosting.md`.
+- **Load lines under B2 (art-loader judge 2026-10-10; Cal can veto: "let the boot set go to 4.5"):** the boot set (page + boot
+  files + the zone's packs, Brotli 4) warns above 3.5 and fails above 4.0 MB for a new game and for the worst zone; Mossy Hollow
+  counts at its landscape shape only (portrait share capped at 0.70 MB) until bg-pack-by-shape; a cold load at 10 Mbps is
+  game-ready within 6.0 s (median of 3); a zone's packs at most 0.65 MB and an area's new packs at most 1.0 MB, with area 1's imp
+  (0.39), Gloomjaw (0.85) and Mossy Hollow (1.45) named exceptions until ns-a1-wire; B1's 6.0/8.0 first-load lines become a
+  report for the split build; per-hero packs (core moves at boot) are a follow-up card that the route S wire cards depend on.
+  Record: `docs/design/hosting/art-loader-judge.md`.
 
 ## Replaced decisions
 

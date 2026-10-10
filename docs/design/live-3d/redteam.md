@@ -1,0 +1,21 @@
+# Red team against "E aimed at B" (Opus high, 9 Oct 2026)
+
+(a) Strongest: the spike tests only the cheap slice (Wren + Thorn Imp, both bipeds the CC0 humanoid library mostly fits), so a pass tells us nothing about B. B's real cost is the 43 Chapter 1 enemies (35 zone monsters, 7 Champions, the Fenmother; enemies-c22-roster.md) and their bespoke attacks.
+- About 17 of the 35 silhouettes (enemies-c22-hollow-final.md) are not bipeds a humanoid library can drive: Thornwing (z4), Riftwing (z6), Cave Devourer (z8, six legs), Pall Reaper, Nightseed Sorcerer, Cryptmaw, Shroudweaver, Gravespine, Sepulchral Acolyte, Mycelial Oracle, Sporefiend, Gillblade Dancer, Hollow Bloom, Seamstalker, Shardfiend, Obsidian Basilisk, Mire Seraph. Three fall in the first hour (z4, z6, z8). Each needs its own rig and hand keys for every move.
+- Each approved pack has 7 actions (21za: imp idle, hop, hurt, stagger, death, jab, crosscut, 55 frames; gloomjaw 67 frames); Captains add a move. About 300-350 clips for Chapter 1; ~140 bespoke attacks with no library match.
+- Hand keys are the weak point: Cal called the hand-keyed walk "super weird"; the strip's bow frame shows an outstretched arm and no bow. One hero took ~5.7 h of thread work (file times 15:24-21:07).
+- Who animates? Mixamo is Cal-only and humanoid-only; Codex does not animate 3D; Claude hand-keying is Claude making art, against "Art should only be made by Codex."
+
+(b1) Bytes: first load 4.92 MB + three.js ~0.6 + Wren GLB 2.74 (measured) + Imp GLB 2.0-2.7 (est.) = ~10.3-11.0 MB raw; ~7.5-8 MB on the wire on an optimistic Brotli guess. Over warn 6.0, near fail 8.0. To pass 6.0 each GLB must be ~0.6 MB. An area set (cap 1.0 MB) in 3D is 12-16 MB; Chapter 1's 43 enemies 86-116 MB vs ~4.0 MB at the 2D ceilings. The B2 boot set (fail 4.0, today 3.75) can't hold one GLB pair.
+(b2) Cal already said "the smooth 3d is the best", so "Cal's look" is not a test. Swiftshader is CPU, so CI cannot measure GPU fps; nobody but Cal owns a test phone. Idle game left running for hours: a constant WebGL loop costs battery and heat; no gate covers that. "Weak GPU" has no device or number.
+(b3) Freezing pixel briefs leaves zones 3-10 on old code-drawn foes for 16 Nov, during the 13 Nov overhaul. Finer 2D: 6-12 Codex hours for three heroes (~0.6 MB); foes 1.5-3 h a pack at 2x (art-direction-v2). Smooth 3D heroes beside 2D backgrounds, portraits, icons and UI is unmeasured clash; AI-mesh 3D risks "asset flip" reviews; pixel is the current brand.
+
+Too-timid side: Cal's latest words reject the pixel look; 2D drift comes from the method; a spike on the easy foe only delays B. Answer: Codex's 2D packs aren't wasted under B, they are the concepts/turnarounds a 3D pipeline needs, which argues for continuing briefs, not freezing them.
+
+Missed option: pre-rendered toon 3D to high-res sprites (Dead Cells method). "Avoid being too pixely" removes the old objection that renders read as shrunk models; gives smooth look and fixed poses without three.js, GPU cost or runtime animation risk; keeps the pack timing contract (59l zoneFoeWinds reads parry windows from contact frames). Bytes not measured. 3D heroes with 2D foes is the worst clash.
+
+(c) Gates: a non-humanoid first-hour foe (Thornwing z4 or Cave Devourer z8) with the full 7-action pack, hours recorded and multiplied by 43; kill line >4 h a foe or the art judge reading hand keys as weird; name the animation owner under "art only by Codex" before the spike; bytes against boot set 4.0 and area set 1.0 MB, Brotli on the wire; numeric fps gate on Cal's phone and a named 2019 laptop (median >=55 fps, p95 frame <=33 ms, in-page overlay) plus a 30-minute idle run for battery and heat.
+
+(d) Pick: E re-aimed, a 5-day spike rendering Thornwing and the Imp both live and as pre-rendered toon sprites from the same model, numeric gates above; Codex's first-hour foe packs keep going meanwhile.
+
+Checked: 21za pack actions/frames/bytes, 21y/21za/21zb sizes, silhouettes and roster, art-direction-v2 cost table and hero bytes, hosting and page-bytes budgets, the evidence file, the strip, file times. Not checked: three.js and GLB Brotli sizes, any fps figure, the prototype artifact, whether a first load needs one hero or three.

@@ -18,12 +18,14 @@ for (const [key, u] of Object.entries(UNIQ)) {
   c.append(tile, tn, ts1, ts2); $('trophies').append(c);
   trophyEls[key] = { c, tile, tn, ts1, ts2 };
 }
-{ const shown = uniqKeys(); for (const k in trophyEls) putHidden(trophyEls[k].c, !shown.includes(k)); }   // a retired unfound unique never shows, even before the first render
+// online-off-clean: with no capability host (onlineOff, 70-ui.js) the world raid's uniques are left out of the wall and its counts
+const trophyKeys = () => onlineOff() ? uniqKeys().filter(k => !RAID_UNIQ.includes(k)) : uniqKeys();
+{ const shown = trophyKeys(); for (const k in trophyEls) putHidden(trophyEls[k].c, !shown.includes(k)); }   // a retired unfound unique never shows, even before the first render
 function renderTrophies() {
   let n = 0;
-  const shown = uniqKeys();
+  const shown = trophyKeys(), off = onlineOff();
   for (const [key, u] of Object.entries(UNIQ)) {
-    const f = S.found[key], e = trophyEls[key], k = trophyKind(key); if (f) n++;
+    const f = S.found[key], e = trophyEls[key], k = trophyKind(key); if (f && !(off && RAID_UNIQ.includes(key))) n++;
     putHidden(e.c, !shown.includes(key)); // a retired unique shows only once found
     putClass(e.c, 'trophy' + (f ? ' found' : ''));
     setIc(e.tile, itemIcon(k, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');

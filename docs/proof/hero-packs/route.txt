@@ -1,0 +1,14 @@
+# seed: 1
+# Proof for card hero-packs. Nothing changes in the game a player sees today: no hero art file ships as hero packs yet (the route S
+# wire cards register theirs), so this route only shows the game opens on the early save's zone 8 fight with no loading line over the
+# stage. The kind itself is proved in tools/check.mjs section "hero packs (hero-packs)": a test hero file built in memory from today's
+# hero art boots a Wren save with only her core moves, never asks for another hero's, holds the game under "Loading Wren" while the
+# stage needs a move still loading, and draws that move on the first frame after the hold.
+new early
+wait 2
+tap-if "Continue"
+tap-if "Got it"
+wait 3
+expect-no "Loading Wren"
+expect-no "#artWait"
+shot fight

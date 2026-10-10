@@ -31,7 +31,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { HEROES as BUDGET_HEROES, loadTargets, BUDGET_FILE, cells as budgetCells, gearHelpFails, cellKey, binomialSd, verdict as budgetVerdict } from './lib/budget-score.mjs';
+import { HEROES as BUDGET_HEROES, loadTargets, BUDGET_FILE, cells as budgetCells, gearHelpFails, cellKey, binomialSd, verdict as budgetVerdict, shapeBlock } from './lib/budget-score.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASELINE = path.join(ROOT, 'docs', 'design', 'health-baseline.json');
@@ -319,8 +319,11 @@ function budgetRun(offset) {
       try { res(JSON.parse(fs.readFileSync(out, 'utf8'))); } catch (x) { rej(new Error(`budget (${hero}): no output (${x.message})`)); }
     });
   });
-  return Promise.all(BUDGET_HEROES.map(one)).then(parts => ({ ...parts[0], heroes: BUDGET_HEROES,
-    rows: parts[0].rows.map(r => ({ ...r, perHero: Object.fromEntries(parts.map(p => { const x = p.rows.find(y => y.id === r.id); return [p.heroes[0], x.perHero[p.heroes[0]]]; })) })) }));
+  // the top-level shape is rebuilt over the merged rows, so it covers every hero and not just the first run's
+  return Promise.all(BUDGET_HEROES.map(one)).then(parts => { const rep = { ...parts[0], heroes: BUDGET_HEROES,
+    rows: parts[0].rows.map(r => ({ ...r, perHero: Object.fromEntries(parts.map(p => { const x = p.rows.find(y => y.id === r.id); return [p.heroes[0], x.perHero[p.heroes[0]]]; })) })) };
+    rep.shape = shapeBlock(rep);
+    return rep; });
 }
 const today = () => new Date().toISOString().slice(0, 10);
 function budgetVerdicts(rep, bb) {

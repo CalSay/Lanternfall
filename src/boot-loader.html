@@ -1,0 +1,84 @@
+<!-- Boot loader for the split build only (tools/build.mjs --split; cards asset-build and art-loader). The inline page never carries it.
+     The boot files follow as plain <script src> tags, so the game boots after every one has run, as the inline page does.
+     Before them it writes the tags of the area packs the save's zone shows (its foe and its background), so the game opens on
+     that zone with its art in; every other pack loads after boot (src/js/75-art-load.js) and reaches the game through lfArt.
+     Hero packs (card hero-packs) go by hero, not zone: it writes the save's hero's core pack only (a new game has no hero yet).
+     Until the game runs this plain text line shows the bytes done: a file counts once its download ends (resource timing) or it runs. -->
+<div id="lfBoot" role="status" aria-live="polite" style="position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;background:var(--bg,#140F1A);color:var(--bone,#EFE6D6);font:16px/1.4 var(--body,sans-serif);text-align:center"><span id="lfBootText">Loading the game</span></div>
+<script id="lfBootJs">
+var lfBoot = (function () {
+  var files = /* @files */, packs = /* @packs */, road = /* @road */, total = 0, got = 0, seen = {}, failed = false, k;
+  var art = {}, listen = null;   // pack id -> its data until the game takes it (lfArt), then the game's own hook
+  // the save's zone (the game's own save key, read the same way 30-state does; no save or a bad one: zone 1)
+  var zone = 1, hero = null;
+  try {
+    var sv = JSON.parse(localStorage.getItem(/* @key */) || 'null'); if (sv && sv.zone >= 1) zone = Math.floor(sv.zone);
+    if (sv && sv.solo && typeof sv.solo.hero === 'string') hero = sv.solo.hero;   // the save's hero (59j's S.solo.hero)
+  } catch (e) {}
+  var boot = [], q = zone > road ? road - 34 + (zone - road - 1) % 35 : zone;   // past the road the scenery repeats every 35 zones
+  for (k in packs) if (packs[k].h ? packs[k].c && packs[k].h === hero : packs[k].z.some(function (r) { return q >= r[0] && q <= r[1]; })) { boot.push(k); files[packs[k].f.split('/').pop()] = packs[k].b; }
+  // Hero art constants by name, each as { <hero>: that hero's table }: each hero file's page part registers its own
+  // (lfBoot.heroFile, as it runs), which puts in the core pack that came before it, so the core is in before the next file runs.
+  var heroFiles = {}, plain = function (o) { return !!o && typeof o === 'object' && !Array.isArray(o); };
+  var putHero = function (id, data) {   // a hero pack's moves into its hero's moves (merged into what the page kept of each)
+    var p = packs[id], H = p && heroFiles[p.v] && heroFiles[p.v][p.h], M, m;
+    if (!H || !plain(data)) return false;
+    M = plain(H.moves) ? H.moves : (H.moves = {});
+    for (m in data) M[m] = plain(M[m]) && plain(data[m]) ? Object.assign(M[m], data[m]) : data[m];
+    return true;
+  };
+  for (k in files) total += files[k];
+  var mb = function (n) { return (n / 1e6).toFixed(1); };
+  var line = function () {
+    var t = document.getElementById('lfBootText');
+    if (t && !failed) t.textContent = 'Loading the game: ' + mb(got) + ' of ' + mb(total) + ' MB';
+  };
+  var count = function (url) {
+    var name = String(url).split('?')[0].split('/').pop();
+    if (files.hasOwnProperty(name) && !seen[name]) { seen[name] = 1; got += files[name]; line(); }
+  };
+  try {
+    new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { count(e.name); }); }).observe({ type: 'resource', buffered: true });
+  } catch (e) { /* no resource timing: each file counts when it runs */ }
+  line();
+  // the save's zone's packs, parser-inserted so they run before the boot files and the game (same origin, so never blocked)
+  boot.forEach(function (id) { document.write('<script src="' + packs[id].f + '" onload="lfBoot.done(this)" onerror="lfBoot.fail(this)"><\/script>'); });
+  return {
+    packs: packs, road: road, boot: boot, zone: zone, hero: hero, heroFiles: heroFiles,   // road: the pack table covers zones 1 to road
+    heroFile: function (name, obj, one) {
+      var t = {}; if (one) t[one] = obj; heroFiles[name] = one ? t : (obj && plain(obj.heroes) ? obj.heroes : {});
+      for (var id in art) if (packs[id] && packs[id].v === name) putHero(id, art[id]);
+    },
+    putHero: putHero,
+    put: function (kind, key, data) { var id = kind + ':' + key; if (listen) listen(id, data); else art[id] = data; },
+    // the game takes the packs that came before it ran, then every later one as it arrives
+    take: function (fn) { listen = fn; var a = art; art = {}; for (var id in a) fn(id, a[id]); },
+    done: function (el) { count(el.src); },
+    // the server's page as it is now (75-art-load asks when a pack file fails: a page that no longer names it means a new deploy)
+    page: function (cb) {
+      if (typeof fetch !== 'function') return;
+      fetch(location.href, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : null; }).then(function (t) { if (t) cb(t); }, function () {});
+    },
+    fail: function () {
+      failed = true;
+      var box = document.getElementById('lfBoot'), t = document.getElementById('lfBootText');
+      if (!box || !t || box.querySelector('button')) return;
+      t.textContent = 'Some game files did not load. Check your connection, then reload.';
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = 'Reload';
+      b.style.cssText = 'padding:8px 16px;border:1px solid var(--line-hi,#4E4060);border-radius:6px;background:var(--panel,#1F1827)';
+      b.onclick = function () { location.reload(); };
+      box.appendChild(b);
+    },
+    // After the game's script: the line goes, and so do the loader's script tags, so the page holds what the inline page holds.
+    end: function () {
+      if (failed) return;
+      var gone = [document.getElementById('lfBoot'), document.getElementById('lfBootJs'), document.currentScript];
+      [].forEach.call(document.querySelectorAll('script[src^="assets/"]'), function (s) { gone.push(s); });
+      gone.forEach(function (el) { if (el) el.remove(); });
+    }
+  };
+})();
+// A pack file is one call: lfArt(kind, key, data) (tools/build.mjs areaPacks).
+var lfArt = function (kind, key, data) { lfBoot.put(kind, key, data); };
+</script>

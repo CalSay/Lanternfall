@@ -73,7 +73,7 @@
     ]],
     ['Materials', [
       ['Rare finds', () => (S.tools ? +S.tools.finds || 0 : null)],
-      ['Glints tapped', () => n('glint'), { since: () => since('glint') }]
+      ['Glints caught', () => n('glint'), { since: () => since('glint') }]
     ], 'mats'],
     ['Crafting', [
       ['Items crafted', () => statsApi.forged()],
@@ -176,6 +176,7 @@
       sec.append(hero);
 
       for (const [gname, list, extra] of G) {
+        if (gname === 'Raid' && onlineOff()) continue;   // online-off-clean: no raid to count with no capability host (70-ui.js)
         const box = el('div', 'sw-group');
         box.append(el('h3', 'sw-h', gname));
         if (extra === 'mats') {
@@ -241,7 +242,7 @@
       const cur = hasDeeds() ? deeds.num() : 'letters';
       for (const b of numBtns) putAttr(b, 'aria-selected', String(b.dataset.v === cur)), putAttr(b, 'aria-checked', String(b.dataset.v === cur));
       const s0 = late() ? dateText(late()) : '';
-      note.textContent = 'Time played counts only while the game is open. Tap a number to see all of it.' + (s0 ? ` Time, taps and gathering were first counted on ${s0}.` : '');
+      note.textContent = 'Time played counts only while the game is open. Choose a number to see all of it.' + (s0 ? ` Time, presses and gathering were first counted on ${s0}.` : '');
     }
   });
   function paintMats() {

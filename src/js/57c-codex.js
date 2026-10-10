@@ -137,12 +137,12 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 3. Uniques: 13 hero uniques ----------------
   page('uniques', {
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
-    tiles: x => uniqKeys().map(k => {
+    tiles: x => { const raidOff = typeof onlineOff === 'function' && onlineOff(); return uniqKeys().map(k => {   // online-off-clean: no raid words with no capability host (70-ui.js); the tiles and their counts stay
       const u = UNIQ[k], got = S.found[k] ? 1 : 0, fl = got && typeof storyItemLine === 'function' ? storyItemLine(k) : '';   // story-systems-hollow: the Champion it came from
       const kind = uniqKindFor(k, heroWho()) || u.slot, kn = kind !== u.slot ? CRAFT_KINDS[kind].noun + ' · ' : '';   // unique-weapons-wall-icon: the hero's own weapon, as the bag
       return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: kind, t: S.found[k] || 1, u: k },
-        sub: got ? kn + u.txt + (fl ? ' ' + fl : '') : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
-    })
+        sub: got ? kn + (raidOff && /\braid\b/i.test(u.txt) ? u.name + '.' : u.txt) + (fl ? ' ' + fl : '') : '', hint: got ? '' : raidOff && RAID_UNIQ.includes(k) ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
+    }); }
   });
   // ---------------- 4. Armoury: 13 affix stats x 5 tiers seen; 7 Masterwork lines ----------------
   const roleOf = a => Object.keys(CRAFT_ROLE_POOL).find(r => CRAFT_ROLE_POOL[r].includes(a)) || 'any';
@@ -220,11 +220,11 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     n: 'Omens', bless: 'road', seal: { key: 'offline', v: 0.03, txt: '+3% away gains' }, title: 'Omenreader', pic: 'rows',
     show: () => !!S.almanac && Array.isArray(OMENS),
     tiles: x => {
-      const out = [];
+      const out = [], raidOff = typeof onlineOff === 'function' && onlineOff();   // online-off-clean: no raid words with no capability host
       for (const o of OMENS) if (omenOk(o)) {
         const seen = S.almanac.seen && o.id in S.almanac.seen ? 1 : 0;
         out.push({ key: o.id, n: o.n, got: seen, max: 1, pts: seen * 2, ptsMax: 2, ic: o.ic, grp: 'Omens seen',
-          sub: seen ? o.fx : '', hint: seen ? '' : x.exact ? 'Its day will come. The Almanac shows today and tomorrow.' : 'Comes on its own day.' });
+          sub: seen ? (raidOff && /\braid\b/i.test(o.fx) ? '' : o.fx) : '', hint: seen ? '' : x.exact ? 'Its day will come. The Almanac shows today and tomorrow.' : 'Comes on its own day.' });
       }
       for (const o of OMENS) if (o.dare && omenOk(o)) {
         const got = R().dare[o.id] ? 1 : 0;

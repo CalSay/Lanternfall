@@ -51,6 +51,8 @@
 .ab-q.empty { color: var(--muted); background: #1B1424; box-shadow: inset 0 0 0 1px #4E4060; }
 .ab-q.passive { box-shadow: inset 0 0 0 1px #5B86C9; }
 .ab-q.sel { box-shadow: inset 0 0 0 2px var(--ember); }
+/* loadout-odds: one line under Q W E, the whole bar wide; it wraps rather than cut a number */
+.ab-odds { grid-column: 1 / -1; margin: 0; font-size: 13px; line-height: 1.25; color: var(--bone); overflow-wrap: anywhere; }
 .ab-infob { display: grid; align-content: center; justify-items: center; gap: 1px; min-width: 64px; min-height: 44px; padding: 2px 6px;
   background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #4E4060; color: var(--bone); cursor: pointer; }
 .ab-infob b { font: 600 calc(13px * var(--display-k, 1))/1.1 var(--display); color: var(--gold); white-space: nowrap; }
@@ -71,6 +73,7 @@
 .ab-gem { display: block; width: 10px; height: 10px; background: var(--scroll); transform: rotate(45deg); box-shadow: 0 0 0 1px #0B0810; opacity: .5; }
 .ab-scroll.has .ab-gem { opacity: 1; }
 .ab-res { margin: 0; font-size: 13px; }
+.ab-spot { margin: 2px 0 0; font-size: 13px; line-height: 1.25; color: var(--bone); }
 
 /* the filters */
 /* menu-tip-room: each button is at least as wide as its label, so "Can learn 2" reads in full at 360 wide (All gives up its room) */
@@ -159,6 +162,7 @@
    the sheet's foot is at 686), so Fireball's card (its text, Slot Q W E and both talents) needs no scroll of its own there. While Hesketh's strip takes a row under the menu
    the old cap stays, so the sheet never rises under the bar. */
 @media (max-aspect-ratio: 1/1), (max-width: 599px) {
+  .ab-root.has-det .ab-odds { display: none; }   /* loadout-odds: the sheet needs the bar's old height; the line is back (with "was") when it closes */
   .ab-det { padding-bottom: 10px; max-height: max(min(56vh, 460px), min(calc(100dvh - 290px), 520px)); }
   .app:has(> .ob-bub.over-menu:not([hidden])) .ab-det { max-height: min(56vh, 460px); }
 }
