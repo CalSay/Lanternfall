@@ -27,7 +27,9 @@
 //   heroArtUnrle([x0, y0, w, h, rle]) -> { w, h, idx }   the decoder, for other HERO_ART-format data (HUNT_ART)
 //   heroArtPreview(cv, id) -> bool   the camp pose, feet at the bottom centre of the canvas (the hero picker and the camp switch; W1-D)
 //   heroArtPortraitURL(id) -> data URL of a 28x28 crop of the camp pose's head (the header portrait; 1 art px = 1 CSS px)
-var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL, heroArtPreview, heroArtUnrle, heroArtLeft;
+//   heroArtMove(id, ability) -> the move a hero file draws for that ability id (the id itself here; a route S drawer chains it
+//        with its own table, 64l). 75-art-load fetches the slotted and learned abilities' moves by it (card hero-queue).
+var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL, heroArtPreview, heroArtUnrle, heroArtLeft, heroArtMove;
 {
   const D = typeof HERO_ART !== 'undefined' ? HERO_ART : null;
   const AX = 96, AY = 132, CUT = 118;
@@ -41,6 +43,7 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     const c = typeof S !== 'undefined' && S && S.party && S.party.cls;
     return (c && CLS_ART[c]) || null;
   };
+  heroArtMove = (id, ab) => ab;
 
   // ================= decoding =================
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';

@@ -1,0 +1,24 @@
+# seed: 1
+# Proof for card hero-queue (docs/design/hosting/loading-screen-judge.md, follow-up 1). The split build's art loader
+# (src/js/75-art-load.js) now fetches the moves a new player's first fights draw before the next zone's art: the hero's Attack,
+# Hit, Parry, Dodge and the moves its slots draw (64h heroArtMove maps an ability to its move), up to three hero files at once, a
+# zone's pack alone, and one slot more for whatever the stage waits for. A new game fetches every hero's Attack and Hit after the
+# cores. Slotting or learning an ability fetches its move at once. tools/check.mjs "hero queue (hero-queue)" proves the order
+# and the concurrency on the real build with each file held; the cold-load numbers are in the PR and in
+# /mnt/project-files/autopilot/proof/hero-queue/. The inline page (this route) loads no packs: it proves Wren still fights from a
+# save with no loading line over the stage. Run at all three views.
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+expect-no "#artWait"
+expect "Attack"
+tap-if "Attack"
+burst wren-attack
+wait 3
+parry-clean 10
+expect-no "Loading Wren"
+shot wren-fights
