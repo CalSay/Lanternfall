@@ -12708,6 +12708,51 @@ if (section('rally gates live (core)')) try {
     'rally gates: the boss bar marks each gate, the rally line names the mark (the Stun clause only while it charges), and a line says when the rally is over');
 } catch (e) { fail('rally gates live crashed: ' + (e.stack || e)); }
 
+// ---- damage-on-impact (Cal, 2026-10-10: "the damage being calculated the second the button is pressed rather than waiting for the
+// ability or attack to finish"). The live fight with the stage's timing (62b fxImpactIn, loaded here): a press starts the move at
+// once (soloAttack / ability, the 'strike' phase) and nothing lands until its impact: the swing (0.14 s), then an arrow (0.2 s) or a
+// bolt (0.28 s); a melee blow at the swing. Its damage, statuses and cooldown all land then; a fight cut off first lands nothing.
+// The scratch fight (no impactIn) lands at once as before.
+if (section('damage-on-impact (core)')) try {
+  const fx = fs.readFileSync(path.join(ROOT, 'src', 'js', '62b-fx.js'), 'utf8');
+  const g = loadCore({ seed: 5, turns: true, extraSource: fx }), E = s => g.eval(s), J = s => JSON.parse(E(s));
+  const until = (cond, n = 600) => E(`(() => { for (let i = 0; i < ${n} && !(${cond}); i++) tick(0.02); return !!(${cond}); })()`);
+  assert(E('fxImpactIn("wren:attack")').toFixed(2) === '0.34' && E('fxImpactIn("pip:attack")').toFixed(2) === '0.42' && E('fxImpactIn("tobin:attack")').toFixed(2) === '0.14'
+    && E('fxImpactIn("moonvolley")').toFixed(2) === '0.73' && E('fxImpactIn("nope")') === 0,
+    `damage-on-impact: the impact times follow the stage (Wren ${E('fxImpactIn("wren:attack")')}, Pip ${E('fxImpactIn("pip:attack")')}, Tobin ${E('fxImpactIn("tobin:attack")')}, Moonlit Volley ${E('fxImpactIn("moonvolley")')})`);
+  E(`globalThis.__ev = []; on('soloAttack', () => __ev.push(['soloAttack', TURN_LIVE.foe.hp])); on('ability', p => __ev.push(['ability', TURN_LIVE.foe.hp]));`);
+  // one press per case: the hero, its ability (null: Attack), and what must land with the hit
+  for (const [k, ab, slots, landed] of [['wren', null, '["echo", null, null]', ''], ['pip', null, '["spark", null, null]', ''], ['tobin', null, '["cleave", null, null]', ''],
+    ['wren', 'echo', '["echo", null, null]', 'TURN_LIVE.e.mark > 0'], ['pip', 'spark', '["spark", null, null]', 'TURN_LIVE.h.embers > 0'], ['tobin', 'cleave', '["cleave", null, null]', 'TURN_LIVE.e.bleed > 0']]) {
+    const tag = `damage-on-impact ${k} ${ab || 'Attack'}`, id = ab || `${k}:attack`;
+    E(`TURN_LIVE = null; soloPick('${k}', { now: true }); S.solo.eq.${k} = ${slots}; TURN_TUNE.on = 1; S.L = 12; S.maxZone = 6; setZone(6); S.activity = 'fight'; arena = null; fightBoss = false; gearDirty(); spawn();`);
+    const met = until(`TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'hero' && TURN_LIVE.cds.attack === 0`, 2000)
+      && E(`S.abil.unl.${k} = ${slots}.filter(Boolean); turnSyncEquip(); TURN_LIVE.cds['${ab || 'attack'}'] === 0`);
+    E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max; TURN_LIVE.p.gates = null; TURN_LIVE.e.bleed = 0; TURN_LIVE.e.mark = 0; TURN_LIVE.h.embers = 0; TURN_LIVE.h.blind = 0; __ev.length = 0;`);
+    const hp0 = E('TURN_LIVE.foe.hp'), wait = E(`fxImpactIn('${id}')`), t0 = E('TURN_LIVE.now');
+    const pressed = E(ab ? `turnCombatAction('ability', 0)` : `turnCombatAction('attack')`);
+    const a = J(`JSON.stringify({ ph: TURN_LIVE.phase, hp: TURN_LIVE.foe.hp, ev: __ev.slice(), cd: TURN_LIVE.cds['${ab || 'attack'}'], landed: !!(${landed || 'false'}) })`);
+    assert(met && pressed && a.ph === 'strike' && a.hp === hp0 && a.ev.length === 1 && a.ev[0][0] === (ab ? 'ability' : 'soloAttack') && a.ev[0][1] === hp0 && a.cd === 0 && !a.landed,
+      `${tag}: the press starts the move at once and lands nothing yet (met ${met}, pressed ${pressed}, ${JSON.stringify(a)}, foe HP ${hp0})`);
+    E(`(() => { for (let t = 0; t < ${wait} - 0.03; t += 0.01) tick(0.01); })()`);
+    const b = J(`JSON.stringify({ ph: TURN_LIVE.phase, hp: TURN_LIVE.foe.hp, dt: TURN_LIVE.now - ${t0} })`);
+    assert(b.ph === 'strike' && b.hp === hp0, `${tag}: still flying ${b.dt.toFixed(2)} s after the press (impact at ${wait.toFixed(2)} s): no damage yet (${JSON.stringify(b)})`);
+    const hit = until(`TURN_LIVE.phase !== 'strike'`, 20);
+    const c = J(`JSON.stringify({ ph: TURN_LIVE.ended ? 'ended' : TURN_LIVE.phase, hp: TURN_LIVE.foe.hp, dt: TURN_LIVE.now - ${t0}, cd: TURN_LIVE.cds['${ab || 'attack'}'], landed: !!(${landed || 'true'}) })`);
+    assert(hit && c.hp < hp0 && c.dt >= wait - 1e-6 && c.dt < wait + 0.05 && c.cd > 0 && c.landed && (c.ph === 'recovery' || c.ph === 'ended'),
+      `${tag}: the damage, its statuses and the cooldown land on the impact (${c.dt.toFixed(2)} s after the press, impact ${wait.toFixed(2)} s; ${JSON.stringify(c)})`);
+  }
+  // a fight cut off between the press and the impact lands nothing
+  E(`TURN_LIVE = null; soloPick('pip', { now: true }); spawn();`);
+  until(`TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'hero' && TURN_LIVE.cds.attack === 0`, 2000);
+  E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max; globalThis.__f = TURN_LIVE.foe; turnCombatAction('attack'); turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); for (let i = 0; i < 40; i++) tick(0.02);`);
+  assert(E('__f.hp === __f.max'), `damage-on-impact: a fight that ends before the bolt lands deals nothing (${E('__f.hp')} of ${E('__f.max')})`);
+  // the scratch fight (budget, odds, sim) has no impactIn: the press lands at once, as before
+  const s = J(`(() => { const p = turnCombatProfile(), io = { ...TURN_LIVE_IO, impactIn: undefined }; let hp = 1e9; io.foeHp = () => hp; io.alive = () => ({ hero: true, foe: hp > 0 });
+    io.damageFoe = d => { hp -= d; return d; }; const m = turnNew(p, io); m.phase = 'hero'; m.cds.attack = 0; const ok = turnResolve(m, { kind: 'attack' }, 0, io); return JSON.stringify({ ok, ph: m.phase, hp }); })()`);
+  assert(s.ok && s.ph === 'recovery' && s.hp < 1e9, `damage-on-impact: a scratch fight with no impact timing still lands on the press (${JSON.stringify(s)})`);
+} catch (e) { fail('damage-on-impact crashed: ' + (e.stack || e)); }
+
 // ---- trick-read-rate (why W2): the game counts how often the player reads a zone boss's tricks (S.bossOdds.reads, 59m), from the
 // live fight (59k foeContact: zone, zb, pressed, early). A fixture fight at the zone 10 Champion presses on a set share of its
 // feints and held swings and the counts must match what was pressed; an ordinary foe, the scratch sampler and the plain tallies

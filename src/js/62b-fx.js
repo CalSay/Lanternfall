@@ -80,7 +80,15 @@ const FX_RECIPES = {
 };
 // Hand-marked aim points for odd shapes: foe type -> [x, y] as fractions of the drawn body (0,0 its top left)
 const FX_AIM = { spore: [0.45, 0.62], bones: [0.5, 0.45], wyrm: [0.45, 0.55] };   // the Spore's cap, the Bones' hat, the Wyrm's neck sit over the chest
-const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1.1 };
+const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1.1, rainAt: 0.42, rainFly: 0.17 };
+// When a hero move's hit shows, in s from the press (damage-on-impact, Cal 2026-10-10: 59k lands the damage then): the swing's
+// wind (62-stage WIND), then an arrow or bolt's flight; Moonlit Volley's first falling arrow; a melee blow, a buff or a cast on
+// the foe at the strike. Reduced motion shows the hit as a still light at the strike. 0 for a move with no recipe.
+function fxImpactIn(id) {
+  const r = FX_RECIPES[id], F = FX_TUNE; if (!r) return 0;
+  if ((typeof reduced !== 'undefined' && reduced) || (r.d !== 'arrow' && r.d !== 'bolt')) return F.wind;
+  return F.wind + (r.rain ? F.rainAt + F.rainFly : r.d === 'bolt' ? F.bolt : F.arrow);
+}
 {
   if (typeof document !== 'undefined') {
     const A = ANIM, R = FX_RECIPES, C = FX_COL, K = FX_TUNE.k;
@@ -187,8 +195,10 @@ const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1
     const heroId = () => (typeof S === 'object' && S && S.solo && S.solo.hero) || 'wren';
     on('ability', p => { if (p && p.cls === 'solo' && p.id) cast(p.id); });
     on('soloAttack', p => { cast(heroId() + ':attack'); if (p && p.kind === 'miss' && Q.length) Q[Q.length - 1].miss = true; });
-    on('heroMiss', () => { if (Q.length) Q[Q.length - 1].miss = true; });
-    on('crit', p => { if (live() && !(p && p.counter)) critT = now(); });   // a parry counter is not the next cast's crit
+    on('heroMiss', () => { const c = Q[Q.length - 1]; if (!c) return; c.miss = true; for (const s of shots) if (s.on && !s.hit && s.r === c.r) s.miss = true; });   // the miss lands on impact: its shots in flight miss too
+    // a parry counter is not the next cast's crit. The hit now lands on impact (59k strike), after its cast: the latest cast
+    // still in flight is the one that crit
+    on('crit', p => { if (!live() || (p && p.counter)) return; critT = now(); const c = Q[Q.length - 1]; if (c && now() - c.t0 < 1.2) c.crit = true; });
     // a timed ability's rings: the light gathers on the bow (staff, shield) while the player times it
     on('timingRing', p => { const r = p && recipe(p.id); if (r && !reduced && !charge.on) { charge.on = true; charge.t0 = now(); charge.rel = 1e9; charge.rgb = C[r.charge || r.col[0]]; charge.deep = 0.2; charge.big = 1; charge.cyc = !!r.final; charge.sight = !!r.laser; } });
     function clearAll() { Q.length = 0; critT = -9; for (const p of parts) p.on = false; for (const r of rings) r.on = false; for (const s of shots) s.on = false; for (const g of glows) g.on = false; charge.on = false; tint.on = false; resetStatus(); }
@@ -218,9 +228,9 @@ const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1
         shot(r, c.x, c.y, c.x + 18, -20, 0, 0.16, 0, true, true);
         tint.on = true; tint.t0 = t + 0.3; tint.life = 1.6;
         for (let k = 0; k < (r.n || 1); k++) {
-          const x = tx + rnd(-tgt.w * 0.3, tgt.w * 0.3), y = ty + rnd(-tgt.h * 0.15, tgt.h * 0.2), d = 0.42 + k * 0.12;
-          shot(r, x - 12, -12, x, y, d, 0.17, r.big, c.miss);
-          A.proj('rain', x - 12, -12, x, y, 0.17, '#C8DCFF', 0, null, d);
+          const x = tx + rnd(-tgt.w * 0.3, tgt.w * 0.3), y = ty + rnd(-tgt.h * 0.15, tgt.h * 0.2), d = FX_TUNE.rainAt + k * 0.12;
+          shot(r, x - 12, -12, x, y, d, FX_TUNE.rainFly, r.big, c.miss);
+          A.proj('rain', x - 12, -12, x, y, FX_TUNE.rainFly, '#C8DCFF', 0, null, d);
         }
         return;
       }

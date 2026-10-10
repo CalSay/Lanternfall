@@ -57,6 +57,10 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   without holds, scaled to its slot). Why: ns-foe-kits' first push gave every Captain its monster's tuned moves; the review caught it.
 - With a zone monster switched on, the budget's `types` rows throw (the zone sends one type); measure those zones with
   `normals.mjs`-style direct spawns instead. Why: ns-foe-kits z9/z10 normal rows could not run with kits on.
+- Land a live hero action on its impact, not on the press: route new hero moves through `turnHeroDone` (press events at once,
+  the act in the 'strike' phase after `fxImpactIn`), and give a new move a 62b recipe so its impact time is known. A test that
+  presses in a browser and reads the foe's HP at once must tick past the impact first. Why: Cal saw damage land the moment he
+  pressed, before the swing or arrow reached the foe (damage-on-impact, 2026-10-10).
 
 ## Economy and skilling
 
