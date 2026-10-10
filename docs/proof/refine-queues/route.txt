@@ -11,6 +11,8 @@
 #   store-first-*.png   Gather, Store: the first view has the Coal stack (the 8th) and "Silver Ingot 10" beside Silver Ore in
 #                       the ore stack (the grade comes from the raw stacks; at most 8 stacks).
 # The rules are held by tools/check.mjs ("refine-queues" sections). Numbers are provisional for the balance pass.
+# Updated 2026-10-10 (routes replay on base): since 9a68c5b8 (#283, away-card-next-up-first) the away card shows results
+# and Next up first and folds the other blocks, the Camp block among them, under More, so the route taps More before reading it.
 # seed: 1
 new refine
 wait 3
@@ -20,6 +22,18 @@ wait 2
 tap-if "Continue"
 wait 2
 tap-if "Continue"
+wait 1
+# the new-hero card ("A new hero will take up the lamp") comes a beat later on the current base: wait for it and close it before
+# the first menu, or it covers the menu taps (routes replay, 2026-10-10)
+wait-for "A new hero will take up the lamp" 10
+# its Continue can bring a second moment card: close moment cards (.mm-card) while one is up
+if .mm-card tap-if "Continue"
+wait 1
+if .mm-card tap-if "Continue"
+wait 1
+if .mm-card tap-if "Continue"
+wait 1
+if .mm-card tap-if "Continue"
 wait 1
 tap "Camp"
 wait 1
@@ -42,6 +56,9 @@ expect "Waits its turn"
 shot forge-orders
 away 4
 wait 3
+# since away-card-next-up-first the Camp block folds under More: open it
+tap "More"
+wait 1
 expect "The Forge smelted"
 expect "stopped: kept its reserve of coal"
 shot away-report

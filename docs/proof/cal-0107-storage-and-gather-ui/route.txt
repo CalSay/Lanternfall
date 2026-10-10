@@ -5,6 +5,8 @@
 # the grade you use, sorted and filtered, with "Show all grades" for the rest.
 # The grade rule itself (mid fibre shows grade 1, early ore shows Copper Ore, no empty stack while a family holds
 # stock, no hide stack before Hunting) is asserted in tools/check.mjs, section "store shelf".
+# The toggle read "Show all grades" / "Show one grade" until 0520499a (craft-shortfall-offer) renamed the player-facing
+# "grade" to "tier" on purpose; the expects below follow that rename.
 new mid
 wait 3
 tap-if "Skip this story"
@@ -25,11 +27,11 @@ tap "Forage"
 expect "an hour"
 shot gather-forage
 tap "Store"
-expect "Show all grades"
+expect "Show all tiers"
 expect ".sh-shelf .sh-stack"
 shot store-first
-tap "Show all grades"
-expect "Show one grade"
+tap "Show all tiers"
+expect "Show one tier"
 shot store-all
 new early
 wait 3

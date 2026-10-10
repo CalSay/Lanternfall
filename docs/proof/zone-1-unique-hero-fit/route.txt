@@ -5,6 +5,8 @@
 # name); the total is 14 here and 13 on a new save, which never shows the retired Sproutblade. A route cannot force a drop, so the Equip on Wren's first-unique
 # card, the fit for all three starters, the zones and the save codes are held by tools/check.mjs (solo hero 9b, hero voice).
 # Updated 2026-10-08 (proof-routes-rot): close the Refining tip (#209) that now opens over Craft on the late save.
+# Updated 2026-10-10 (routes replay): online-off-clean (#312, 0038328d) leaves the world raid's 6 uniques off the wall and its
+# counts with no capability host, as in the playtest browser, on purpose, so the late save's wall reads 3 / 8 here (3 / 14 in the Artifact).
 new late
 wait 6
 tap-if "Continue"
@@ -23,7 +25,7 @@ wait 2
 tap "Uniques"
 wait 1
 expect "Sproutblade"
-expect "3 / 14 uniques"
+expect "3 / 8 uniques"
 shot trophies-old-and-new
 tap-if "Dismiss this tip"
 scroll

@@ -15,6 +15,11 @@
 # (3 minutes away mining for coal, then 6 minutes away while the order runs), then clears the order and goes back to the fight
 # so the sheets hold still;
 # the Refining tip over Craft is closed. Gold, Trophy and salvage lines are unchanged.
+# Updated 2026-10-10 (routes replay on base): the new-hero card can come up just after the second Continue (its tap lock
+# ignores that tap), so one more wait + tap-if "Continue" clears it before Gather; and the gold-cover row (dca4960a,
+# upgrade-gold-covers-short) pushed the +8 button and the Trophy and salvage lines below the fold, so the route taps the
+# greyed "Upgrade to +8" (after a Reforge line tap that scrolls past, for 740x360) to bring them on screen before the
+# expects and the upgrade-plus7 shot.
 # seed: 1
 new gold-upgrades
 wait 1
@@ -23,6 +28,20 @@ wait 2
 tap-if "Continue"
 wait 2
 tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+# the new-hero card ("A new hero will take up the lamp") comes a beat later on the current base: wait for it and close it before
+# the first menu, or it covers the menu taps (routes replay, 2026-10-10)
+wait-for "A new hero will take up the lamp" 10
+# its Continue can bring a second moment card: close moment cards (.mm-card) while one is up
+if .mm-card tap-if "Continue"
+wait 1
+if .mm-card tap-if "Continue"
+wait 1
+if .mm-card tap-if "Continue"
+wait 1
+if .mm-card tap-if "Continue"
 wait 1
 tap "Gather"
 wait 1
@@ -68,6 +87,13 @@ shot upgrade-sheet
 tap "Upgrade to +7"
 wait 0.5
 expect "Silver Warblade +7"
+# the gold-cover row pushes the sheet's lower rows below the fold: tap a Reforge line (it only marks the line; nothing is spent)
+# to scroll past them (tap-if: the line was not on screen in one loaded run), then the greyed +8 button (4 of 6 ingots, it does
+# nothing) to bring the +8 button, Trophy and salvage lines into view
+tap-if "+4.9 armour"
+wait 0.5
+tap "Upgrade to +8"
+wait 0.5
 expect "half what its upgrades cost"
 expect "From +8, each upgrade also takes a Trophy. Champions drop them."
 expect "Upgrade to +8"
