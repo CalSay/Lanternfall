@@ -1,0 +1,20 @@
+# seed: 1
+# Proof for card basic-attack-swings. In a turn fight the basic Attack hit the foe but the hero stood still: the stage swung the
+# hero only on the old real-time events, never on a turn fight's Attack. Now each Attack plays the hero's attack swing.
+# The route plays the early fixture (Wren, zone 8) into a turn fight and presses Attack: the "attack-swing" burst shows the swing.
+# tools/check.mjs "basic-attack-swings" proves it for Wren, Tobin and Pip at 1280x720, 740x360 and 360x740 (reduced motion):
+# one press (a hit or a Blinded miss) starts exactly one swing at once. Run at all three views.
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+expect "Attack"
+tap-if "Attack"
+burst attack-swing
+wait 3
+tap-if "Attack"
+shot attack-again
+expect ".hud.vs .mob"
