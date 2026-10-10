@@ -11204,7 +11204,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
         await X('globalThis.__os = onboardStep; globalThis.__boss = mob ? !!mob.boss : false; true');
         for (const st of ['attack', 'ability', 'dodge', 'parry', 'boss']) {
           // (tips-hold-740: on a phone on its side the boss tip opens only on your turn, so its panel is measured on your turn)
-          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; if (__fs === 'boss') { globalThis.__gp = guidePhase; guidePhase = () => 'hero'; } ONBOARD.paused = false; true`);
+          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; if (__fs === 'boss' && innerWidth >= 600 && innerHeight <= 500) { globalThis.__gp = guidePhase; guidePhase = () => 'hero'; } ONBOARD.paused = false; true`);
           await page.waitForTimeout(700);
           const m = await rects();
           if (!m) { assert(false, `guide panel ${at} "${st}": the panel shows`); continue; }
@@ -11212,7 +11212,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
           assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits below or beside the text (never over it) at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
         }
-        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; if (globalThis.__gp) guidePhase = globalThis.__gp; true');
+        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; if (globalThis.__gp) { guidePhase = globalThis.__gp; delete globalThis.__gp; } true');
         // guide-bubble-clear-of-controls: the panel's box (at its pop-in's lowest frame) never meets the tab bar, and over a menu it
         // never meets a Gather row's button (the nightly walk: 5 px on the tabs, its X on a Hunting row's button, Got it on Spread
         // evenly). Over a portrait menu it takes its own row, so the menu's scroll area ends above it and no menu button can sit under it.
@@ -11229,7 +11229,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
             if (menu && mode === 'over-menu' && R(pan).bottom > br.top + .5) hit.push('#panels (the menu runs ' + Math.round(R(pan).bottom - br.top) + ' px under it)');
             pan.scrollTop = 0;
             return { mode, menu, hit: [...new Set(hit)], n, box: [br.left, br.top, br.right, br.bottom].map(Math.round) }; })()`;
-          await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; guidePhase = () => 'hero'; ONBOARD.paused = false; true`);
+          await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; if (innerWidth >= 600 && innerHeight <= 500) { globalThis.__gp = guidePhase; guidePhase = () => 'hero'; } ONBOARD.paused = false; true`);
           await page.waitForTimeout(700);
           const fight = await X(CLEAR);
           // a long Go label in the short landscape column wraps inside the panel, never cut off ("Mine at…" in the walk)
@@ -11237,7 +11237,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
             const was = k.textContent; k.textContent = 'Gather at the Enraged Boar'; const r = k.getBoundingClientRect(), br = b.getBoundingClientRect(), out = k.scrollWidth > k.clientWidth + 1 || k.scrollHeight > k.clientHeight + 2 || r.bottom > br.bottom + .5 || r.right > br.right + .5;
             k.textContent = was; return out ? 'cut off (' + k.scrollWidth + ' in ' + k.clientWidth + ', bottom ' + Math.round(r.bottom) + ' of ' + Math.round(br.bottom) + ')' : ''; })()`) : '';
           assert(!longGo, `guide panel ${at}: a long Go label wraps inside the side panel (${longGo || 'fits'})`);
-          await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; guidePhase = globalThis.__gp; true');
+          await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; if (globalThis.__gp) { guidePhase = globalThis.__gp; delete globalThis.__gp; } true');
           // the grove: gathering hides the Act bar, so the dock sits straight on the tab bar (the walk's 5 px at 2:48)
           const grove = vw < vh ? await X('(() => { const a0 = S.activity; setActivity("gather"); ui(true); return a0; })()') : null;
           const groveBox = vw < vh ? (await page.waitForTimeout(700), await X(CLEAR)) : null;
@@ -15889,6 +15889,15 @@ if (section('tips-hold-740')) try {
         // a long tip: the text scrolls inside the tip, which still ends above the buttons
         await X(`document.querySelector('.ob-txt').textContent = ${JSON.stringify(LONG)}; true`); await page.waitForTimeout(700);
         s = await look(X); check(s, ', a long tip');
+        if (phone) {
+          // a tip that starts too low for two lines above the buttons (the Next Up step under a tall chip) keeps the old rule: the whole bar
+          // hides, never a tip half over a button
+          await X('document.querySelector(".ob-bub").style.marginTop = "150px"; true'); await page.waitForTimeout(700);
+          const low = await look(X), half = low.btns.filter(b => b.vis && meet(b.r, low.br));
+          assert(!low.bar && !half.length && await X('$("app").classList.contains("guide-bar-off")'), `${v}, a low tip: the whole bar hides under it, no button half covered (${JSON.stringify({ bar: low.bar, half, tip: low.br })})`);
+          await X('document.querySelector(".ob-bub").style.marginTop = ""; true'); await page.waitForTimeout(700); s = await look(X);
+          assert(s.bar && !await X('$("app").classList.contains("guide-bar-off")'), `${v}: back in its place the tip fits again and the bar returns (${JSON.stringify({ bar: s.bar })})`);
+        }
         await X('document.querySelectorAll("#soloBar .sbtn").forEach(b => b.classList.remove("nope", "hit", "refused")); true');
         const a = s.btns.find(b => b.act === 'atk');
         if (phone) await page.touchscreen.tap((a.r[0] + a.r[2]) / 2, (a.r[1] + a.r[3]) / 2); else await page.mouse.click((a.r[0] + a.r[2]) / 2, (a.r[1] + a.r[3]) / 2);

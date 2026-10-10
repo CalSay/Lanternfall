@@ -392,7 +392,7 @@
   const sceneComing = () => { try { return typeof storyBusy === 'function' && MOMENT_Q.some(m => m.kind === 'champion' && m.scene && storyBusy(m.scene)); } catch (e) { return false; } };
   const tickOwed = () => cachePending_() || sceneComing();   // something only the game tick can finish: no hold may stop the tick now
   const cardComing = () => cardUp() || tickOwed();
-  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; if (txt.style.maxHeight) txt.style.maxHeight = ''; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); syncHeld(); }
+  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; if (txt.style.maxHeight) txt.style.maxHeight = ''; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn', 'guide-bar-off'); syncHeld(); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -542,21 +542,26 @@
   // bar's tab row (which hides under it, 80-landscape.css .guide-btn); its text scrolls if it runs longer. The five buttons stay in view
   // and pressable, and a press there answers the tip and acts (the capture listeners above).
   const BTN_GAP = 5;
+  // -> true: the tip fits above the buttons. A tip that starts too low for two lines there (the Next Up step, under a tall chip) keeps the
+  // old rule: the whole bar hides under it (.guide-bar-off), and a fight key still answers it.
   function fitBub() {
     const soloBar = solo(), side = bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden;
     const row = side && soloBar && !soloBar.hidden ? soloBar.querySelector('.sb-pane') : null, rr = row && row.getBoundingClientRect();
-    let want = '';
+    let want = '', fits = true;
     if (rr && rr.height) {
-      // the text's room: down to the buttons, less the rest of the tip (face, name, its button), in whole lines
+      // the text's room: down to the buttons, less the rest of the tip (face, name, its button), in whole lines (scrollHeight: the tip's
+      // own height limit may already clip it)
       const a = bub.getBoundingClientRect(), t = txt.getBoundingClientRect(), lh = parseFloat(getComputedStyle(txt).lineHeight) || 16;
-      const room = rr.top - BTN_GAP - a.top - (a.height - t.height);
+      const room = rr.top - BTN_GAP - a.top - (Math.max(a.height, bub.scrollHeight) - t.height);
+      if (room < 2 * lh) fits = false;
       // (once fitted it stays fitted while the bar is there, so it never flips between the two heights)
-      if (room < t.height + 1 || txt.style.maxHeight) want = Math.max(lh, Math.floor(room / lh) * lh) + 'px';
+      else if (room < t.height + 1 || txt.style.maxHeight) want = Math.floor(room / lh) * lh + 'px';
     }
     if (txt.style.maxHeight !== want) txt.style.maxHeight = want;
+    return fits;
   }
   // (every look, not only on a layout change: the bar shows under an unchanged tip when the hero goes from gathering to the fight)
-  const syncBtn = () => { fitBub(); putToggle($('app'), 'guide-btn', bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden && meetsBar()); };
+  const syncBtn = () => { const fits = fitBub(), on = bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden && meetsBar(); putToggle($('app'), 'guide-btn', on); putToggle($('app'), 'guide-bar-off', on && !fits); };
   const resKept = new WeakSet();   // craft result cards the guide has already left in view once
   function place(spec) {
     const key = spec.text, newTarget = spec.node !== lastNode;
