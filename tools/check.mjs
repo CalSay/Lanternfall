@@ -734,17 +734,18 @@ if (section('hero queue (hero-queue)')) try {
     const until = async (fn, cap = 10000) => { for (const t0 = Date.now(); !(await fn()) && Date.now() - t0 < cap;) await new Promise(r => setTimeout(r, 100)); };
     // every pack in `hold` waits until gate.open(id); asked: the pack ids the page asked for after boot (hero packs but cores, and Gloomjaw), in order
     const open = async ({ save = null, hold = [] } = {}) => {
-      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), page = await ctx.newPage(), errs = [], asked = [], gates = {};
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), page = await ctx.newPage(), errs = [], asked = [], gates = {}, where = [];
       await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
       if (save) await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...save, last: Date.now() })]);
       page.on('pageerror', e => errs.push(String(e)));
-      page.on('request', q => { const p = byName.get(q.url().split('/').pop()); if (p && ((p.hero && !p.core) || p.id === gloom.id)) asked.push(p.id); });
+      page.on('request', q => { const p = byName.get(q.url().split('/').pop()); if (p && ((p.hero && !p.core) || p.id === gloom.id)) asked.push(p.id);
+        if (p && p.id === gloom.id) page.evaluate(() => window.__t.x(`S.zone + ' ' + S.kills + ' ' + target()`)).then(v => where.push(v), () => {}); });   // where the game was when it asked for Gloomjaw
       await routePage(page, 'http://lf.test/', probe, assets);
       for (const id of hold) { let go; const g = new Promise(r => { go = r; }); gates[id] = go;
         await page.route('**/assets/' + s.packs.find(p => p.id === id).name, async q => { await g; return q.fallback(); }); }
       await page.goto('http://lf.test/', { waitUntil: 'commit' });
       await page.waitForFunction(() => !document.getElementById('lfBoot') && !!(document.getElementById('zName') || {}).textContent && !!window.__t, null, { timeout: 15000 }).catch(() => {});
-      return { page, errs, asked, release: (...ids) => { for (const id of ids) if (gates[id]) gates[id](); } };
+      return { page, errs, asked, where, release: (...ids) => { for (const id of ids) if (gates[id]) gates[id](); } };
     };
     const X = (page, js) => page.evaluate(j => window.__t.x(j), js);
     const ids = ms => ms.map(m => key('wren', m).id);
@@ -752,12 +753,12 @@ if (section('hero queue (hero-queue)')) try {
       // 1. a Wren save in zone 1 (Echo Shot in her first slot): her Attack, Hit and Parry go first, three at once; Dodge and the slot's
       //    Echo Shot next; Gloomjaw (zone 2) only once no hero file loads, and alone; her other moves after it
       { const first = ids(['attack', 'hit', 'parry', 'dodge', 'echoshot']), all = wren.map(p => p.id);
-        const { page, errs, asked, release } = await open({ save: { ...early, zone: 1, maxZone: 1 }, hold: [...all, gloom.id] });
+        const { page, errs, asked, where, release } = await open({ save: { ...early, zone: 1, maxZone: 1, kills: 0 }, hold: [...all, gloom.id] });   // kills 0: the fixture's 10 would call zone 1's boss
         const map = await X(page, `['echo', 'moonvolley', 'powershot', 'twinshot'].map(a => heroArtMove('wren', a)).concat(heroArtMove('tobin', 'bash')).join()`);
         assert(map === 'echoshot,moonlit,powershot,twinshot,bash', `hero queue: heroArtMove maps an ability to the move its hero file draws (Wren's echo -> echoshot, moonvolley -> moonlit; another hero's id as it is): ${map}`);
         await until(() => asked.length >= 3); await page.waitForTimeout(600);
-        const a1 = asked.slice();
-        assert(a1.join() === first.slice(0, 3).join(), `hero queue: a Wren save asks first for her Attack, Hit and Parry, three files at once, and nothing else while they load (${a1.map(short).join(', ')})`);
+        const a1 = asked.slice(), at = await X(page, `S.zone + ' ' + S.kills + ' ' + target()`);
+        assert(a1.join() === first.slice(0, 3).join(), `hero queue: a Wren save asks first for her Attack, Hit and Parry, three files at once, and nothing else while they load (${a1.map(short).join(', ')}; zone, kills and target ${at}${where.length ? '; at Gloomjaw ' + where.join() : ''})`);
         // what the stage waits for has a slot more: a move it needs now starts while the queue's three still load
         const dft = key('wren', 'defeat').id;
         await X(page, `artHeroNeed('wren', 'defeat')`); await until(() => asked.length >= 4); await page.waitForTimeout(300);
