@@ -371,6 +371,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 
 ## Reviews and Codex
 
+- For character concepts and animation, face enemies left and heroes right, and carry explicit owner selections into the next brief. Why: Cal corrected the Ravager facing and kept Riftwing’s glowing eyes over the old eyeless brief. (enemy-concepts-zones-2-6, 2026-10-10)
+
 - "@codex review" must be commented by hand after opening the PR; auto review does not fire. Why: seen on fix-bounty-kind. Codex drips one P1 per round, so close the whole class of a finding at once. (fix-bounty-kind, 2026-10-05)
 - Re-review after fixing reviewer findings, before merging. Why: the last two fix commits of f-fun-library merged unreviewed; PR #48's final hook change also went in unreviewed at the round cap. If a fix must merge unreviewed, say so in the PR and keep it to one line. (f-fun-library, away-pre-leave-notice)
 - Expect P1s every round: budget 3 Codex rounds, then Opus high reviews. Fix-bounty took 6; f-health, playtest-bots, f-health-long and systems-map took 3. (several)

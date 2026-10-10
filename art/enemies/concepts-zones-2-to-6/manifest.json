@@ -1,0 +1,85 @@
+{
+  "title": "Accepted enemy concept sheets: zones 2-6",
+  "accepted_date": "2026-10-10",
+  "status": "owner-accepted concept art",
+  "generator": "built-in imagegen",
+  "integration_base": "3937d6c5b6f142ae0cf74e9542b72180b672ac57",
+  "direction": {
+    "enemies": "left",
+    "heroes": "right"
+  },
+  "riftwing": "Keep the glowing eyes in riftwing.png. This explicit owner selection supersedes the old eyeless brief.",
+  "scope": "Five normal enemy concept boards, with anatomy details and palettes. No Captain variants or animation frames.",
+  "images": [
+    {
+      "id": "gloomjaw",
+      "name": "Gloomjaw",
+      "zone": 2,
+      "version": 1,
+      "source": "gloomjaw-concept-v1.png",
+      "notes": "Three interlocking jaw plates; dark violet void bolt.",
+      "file": "gloomjaw.png",
+      "sha256": "28a49d6d705f97ab7ec167c601a2d3ec5f8c61d454deb136e111a772279c732b",
+      "bytes": 2072943,
+      "width": 1536,
+      "height": 1024,
+      "facing": "left"
+    },
+    {
+      "id": "briarbound-ravager",
+      "name": "Briarbound Ravager",
+      "zone": 3,
+      "version": 2,
+      "source": "briarbound-ravager-concept-v2.png",
+      "notes": "Accepted left-facing revision; cleaver-shaped right arm.",
+      "file": "briarbound-ravager.png",
+      "sha256": "8c17d82c0b583cc61602380291be2e26cff7c0915fc4e44ff2781cc8dd9e0c86",
+      "bytes": 2507404,
+      "width": 1536,
+      "height": 1024,
+      "facing": "left"
+    },
+    {
+      "id": "thornwing",
+      "name": "Thornwing",
+      "zone": 4,
+      "version": 1,
+      "source": "thornwing-concept-v1.png",
+      "notes": "Small torso, paired crescent thorn wings and hooked feet.",
+      "file": "thornwing.png",
+      "sha256": "bc4b11d808f102eacdbfd1bbee51f4f89cc43b282a4d37fa0653d129a24acc11",
+      "bytes": 2100018,
+      "width": 1536,
+      "height": 1024,
+      "facing": "left"
+    },
+    {
+      "id": "nightseed-sorcerer",
+      "name": "Nightseed Sorcerer",
+      "zone": 5,
+      "version": 1,
+      "source": "nightseed-sorcerer-concept-v1.png",
+      "notes": "Floating seed-shaped heart between three root claws.",
+      "file": "nightseed-sorcerer.png",
+      "sha256": "edf4b637690cd4f5693556ad6f8bfcd7d1bfbfbb53c16549ab74fd4680870310",
+      "bytes": 2207654,
+      "width": 1536,
+      "height": 1024,
+      "facing": "left"
+    },
+    {
+      "id": "riftwing",
+      "name": "Riftwing",
+      "zone": 6,
+      "version": 1,
+      "source": "riftwing-concept-v1.png",
+      "notes": "Accepted version WITH glowing eyes; eyeless revision rejected.",
+      "file": "riftwing.png",
+      "sha256": "586d0983d3c817d26c77f4ded7112a503c7eb285331655797cd4a3e6a36a9bf1",
+      "bytes": 2382784,
+      "width": 1536,
+      "height": 1024,
+      "facing": "left"
+    }
+  ]
+}
