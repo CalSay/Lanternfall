@@ -14,6 +14,8 @@
 new flow-points
 wait 2
 tap-if "Continue"
+# the Hero tab opens with his upgrade line, a beat later than before #348/#353: wait for it, not a fixed 2 s
+wait-for "The Hero tab is open now" 15
 tap "Hero"
 wait 1
 tap "Build"

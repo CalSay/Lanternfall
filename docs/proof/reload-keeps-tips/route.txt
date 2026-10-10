@@ -31,7 +31,8 @@ tap "Equip Golemfist"
 wait 1
 expect-no "Put it on and fight with it"
 new join-z5
-wait 1
+# boot is slower since the title screen (#349): wait for the walk-in card, not a fixed wait
+wait-for "The Briar Regent" 10
 tap "Continue"
 # Updated 2026-10-10 (routes replay): since rally-gates-live (#261) a Champion holds at each gate until its charged move is parried,
 # so each round attacks, then parries clean up to three times (one call per hit of a move of several hits; a call ends early on the

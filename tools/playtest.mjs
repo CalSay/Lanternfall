@@ -8,6 +8,8 @@
 //   node tools/playtest.mjs unless "<text|css>" <command ...>   run the command only while that text (or CSS selector) is NOT on
 //                                                 screen: a fight loop that stops pressing once the line or card it waits for is up
 //                                                 (`unless "No weapon on" tap-if "Attack"`; a fight press answers a held guide line)
+//   node tools/playtest.mjs wait-for "<text|css>" <secs>         run game time until that text (or CSS selector) is on screen, at most
+//                                                 <secs> of game time; never fails by itself (an `expect` after it does)
 //   node tools/playtest.mjs if "<text|css>" <command ...>       the same, but only while it IS on screen (`if "Press Parry now" tap-if "Parry"`)
 //   node tools/playtest.mjs hover "<label>"       (mouse views; skipped in touch views) rest the pointer on that button, then look; names its title tooltip
 //   node tools/playtest.mjs key <name>            press a key: Escape, Enter, Space, a letter (Playwright key names)
@@ -451,6 +453,14 @@ async function exec(cmd, args, ctx) {
       if (flags.quiet) return { text: head, data: { waited: secs } };
       const l = await look(session, page, 'wait'); return { text: head + '\n' + l.text, data: { waited: secs, look: l.data } };
     }
+    case 'wait-for': {   // wait on game state: run game time in 0.5 s steps until that text (or CSS selector) is on screen, at most <secs>.
+      // It never fails by itself: the `expect` after it says whether the moment came.
+      if (args.length < 2) die('wait-for needs text (or a CSS selector) and the most game seconds to wait: wait-for "The Briar Regent" 10');
+      const want = args[0], most = num(args[1], 'wait-for'); let ran = 0;
+      while (!(await onScreen(page, want)) && ran < most) { await run(page, 0.5); ran += 0.5; }
+      session.time = await page.evaluate(() => Date.now());
+      return { text: `wait-for: "${want}" ${await onScreen(page, want) ? 'on screen' : 'not on screen'} after ${fmtDur(ran)} of game time`, data: { waited: ran } };
+    }
     case 'state': {
       session.time = await page.evaluate(() => Date.now());
       const o = summary(session, await readSave(page));
@@ -459,7 +469,7 @@ async function exec(cmd, args, ctx) {
     case 'unless': case 'if': {   // wait on game state: run a play command only while that text (or CSS selector) is NOT on screen (unless) or IS (if)
       if (args.length < 2) die(`${cmd} needs text (or a CSS selector) and a command: ${cmd} "No weapon on" tap-if "Attack"`);
       const [want, sub, ...rest] = args;
-      if (!['tap', 'tap-if', 'wait', 'parry-clean', 'key', 'scroll', 'hover'].includes(sub)) die(`${cmd} runs a play command (tap, tap-if, wait, parry-clean, key, scroll, hover), not ${sub}: a check or shot never depends on the screen`);
+      if (!['tap', 'tap-if', 'wait', 'wait-for', 'parry-clean', 'key', 'scroll', 'hover'].includes(sub)) die(`${cmd} runs a play command (tap, tap-if, wait, parry-clean, key, scroll, hover), not ${sub}: a check or shot never depends on the screen`);
       if (await onScreen(page, want) === (cmd === 'unless')) return { text: `${cmd}: "${want}" is ${cmd === 'unless' ? '' : 'not '}on screen, skipped ${sub}`, data: { ok: true, skipped: true } };
       return exec(sub, rest, ctx);
     }
@@ -543,7 +553,7 @@ async function exec(cmd, args, ctx) {
       for (let i = 1; i <= 6; i++) { fs6.push(await namedShot(page, `${args[0]}-${i}`)); if (i < 6) await run(page, 0.3); }
       return { text: `burst ${fs6.length} frames: ${fs6[0]} .. ${fs6[5]}`, data: { burst: fs6 } };
     }
-    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, unless, if, hover, key, wait, parry-clean, away, state, new, expect, expect-no, expect-save, scroll, shot, burst, stub-site, type, tab, batch`);
+    default: die(`unknown command "${cmd}". Commands: look, tap, tap-if, unless, if, wait-for, hover, key, wait, parry-clean, away, state, new, expect, expect-no, expect-save, scroll, shot, burst, stub-site, type, tab, batch`);
   }
 }
 

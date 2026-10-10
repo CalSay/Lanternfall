@@ -3,7 +3,8 @@
 # next, so the route reaches the first Champion clear and the Tobin meet scene (#159) without playing zones 1 to 4.
 # Updated 2026-10-08 (proof-routes-rot): the staged-guide lesson holds the Regent's first swing until Dodge is pressed, so each attack round taps Dodge (tap-if) first.
 new pre-champion
-wait 2
+# boot is slower since the title screen (#349): wait for the walk-in card, not a fixed wait
+wait-for "The Briar Regent" 10
 tap-if "Got it"
 expect "The Briar Regent"
 shot champion-walk-in

@@ -4,7 +4,8 @@
 # tips off and Auto off, so the Briar Regent waits while the Hero tab is checked. Fixture join-z10 is save-z10-cantor with startedAs "tobin".
 # Run: grep -v '^#' docs/proof/starters-join-when-met/route.txt | node tools/playtest.mjs batch --seed 1 [--landscape]
 new join-z5
-wait 2
+# boot is slower since the title screen (#349): wait for the walk-in card, not a fixed wait
+wait-for "The Briar Regent" 10
 expect "The Briar Regent"
 tap "Continue"
 wait 1
@@ -141,7 +142,8 @@ wait 1
 expect "Lv 11 · Playing"
 shot tobin-takes-lamp
 new pre-champion
-wait 2
+# boot is slower since the title screen (#349): wait for the walk-in card, not a fixed wait
+wait-for "The Briar Regent" 10
 tap "Continue"
 wait 1
 tap "Hero"
@@ -154,7 +156,8 @@ expect "#sec-solo-hero .sp-chip[data-hero=tobin]"
 expect "#sec-solo-hero .sp-chip[data-hero=pip]"
 shot old-save-all-three
 new join-z10
-wait 2
+# boot is slower since the title screen (#349): wait for the walk-in card, not a fixed wait
+wait-for "The Hollow Cantor" 10
 expect "The Hollow Cantor"
 tap "Continue"
 wait 1

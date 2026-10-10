@@ -14,6 +14,9 @@ Two new runner pieces:
   the win's story card. Spare rounds cost nothing, so a route can carry a wide margin without running long.
   `if "<text|css>" <command>` is the same the other way round: `if "Press Parry now" tap-if "Parry"` answers a guide prompt that holds a
   boss's swing. Both run play commands only, never an `expect` or a `shot`.
+- `wait-for "<text|css>" <secs>` runs game time until that text or selector is on screen (at most that long) and never fails by
+  itself; the `expect` after it does. Added when the base moved under this card (#348 hits on impact, #349 title screen, #351, #353
+  bigger heroes): cards, lines and the Hero tab now come a beat later than a fixed `wait 2`, so PR 1's eight routes wait for them.
 
 ## Failures and what was done
 
