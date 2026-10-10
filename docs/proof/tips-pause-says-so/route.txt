@@ -5,8 +5,8 @@
 #   guide-step-paused.png     chopping at the Pine Grove, his weapon step ("Open Craft") holds the game: the stage says PAUSED.
 #   line-while-gathering.png  his Almanac news comes while she chops: Gather still says Working, no PAUSED, the wood keeps coming.
 #   fight-1 .. fight-12.png   back at zone 1, a press on Attack every few seconds: the kill gap brings the same line back, now holding
-#                             the gap, PAUSED on the stage, the fight bar dimmed (hidden on a phone on its side, where the tip covers
-#                             it). The next Attack press answers the line and the fight goes on; on a phone on its side, Got it does.
+#                             the gap, PAUSED on the stage, the fight bar dimmed (on a phone on its side the tip ends above the fight
+#                             buttons since tips-hold-740). The next Attack press answers the line and the fight goes on.
 # The rest (presses that must not answer, the lessons, the Stars and boss-loss lines, no line while the hero is down) is held by
 # tools/check.mjs ("tips-pause-says-so").
 new dipper-z4

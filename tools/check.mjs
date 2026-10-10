@@ -103,7 +103,7 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75, 'tips-hold-740': 40,
   'feint-read-clear': 70,   // 64-74 s locally alone (feint-read-clear, 2026-10-09)
   'craft-odds-before-pay': 38,   // 38 s locally (craft-odds-before-pay, 2026-10-09)
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
@@ -11296,7 +11296,8 @@ if (section('guide panel rects (browser, guide-panel)')) try {
         const seen = [];
         await X('globalThis.__os = onboardStep; globalThis.__boss = mob ? !!mob.boss : false; true');
         for (const st of ['attack', 'ability', 'dodge', 'parry', 'boss']) {
-          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; ONBOARD.paused = false; true`);
+          // (tips-hold-740: on a phone on its side the boss tip opens only on your turn, so its panel is measured on your turn)
+          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; if (__fs === 'boss' && innerWidth >= 600 && innerHeight <= 500) { globalThis.__gp = guidePhase; guidePhase = () => 'hero'; } ONBOARD.paused = false; true`);
           await page.waitForTimeout(700);
           const m = await rects();
           if (!m) { assert(false, `guide panel ${at} "${st}": the panel shows`); continue; }
@@ -11304,7 +11305,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
           assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits below or beside the text (never over it) at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
         }
-        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; if (globalThis.__gp) { guidePhase = globalThis.__gp; delete globalThis.__gp; } true');
         // guide-bubble-clear-of-controls: the panel's box (at its pop-in's lowest frame) never meets the tab bar, and over a menu it
         // never meets a Gather row's button (the nightly walk: 5 px on the tabs, its X on a Hunting row's button, Got it on Spread
         // evenly). Over a portrait menu it takes its own row, so the menu's scroll area ends above it and no menu button can sit under it.
@@ -11321,7 +11322,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
             if (menu && mode === 'over-menu' && R(pan).bottom > br.top + .5) hit.push('#panels (the menu runs ' + Math.round(R(pan).bottom - br.top) + ' px under it)');
             pan.scrollTop = 0;
             return { mode, menu, hit: [...new Set(hit)], n, box: [br.left, br.top, br.right, br.bottom].map(Math.round) }; })()`;
-          await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; ONBOARD.paused = false; true`);
+          await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; if (innerWidth >= 600 && innerHeight <= 500) { globalThis.__gp = guidePhase; guidePhase = () => 'hero'; } ONBOARD.paused = false; true`);
           await page.waitForTimeout(700);
           const fight = await X(CLEAR);
           // a long Go label in the short landscape column wraps inside the panel, never cut off ("Mine at…" in the walk)
@@ -11329,7 +11330,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
             const was = k.textContent; k.textContent = 'Gather at the Enraged Boar'; const r = k.getBoundingClientRect(), br = b.getBoundingClientRect(), out = k.scrollWidth > k.clientWidth + 1 || k.scrollHeight > k.clientHeight + 2 || r.bottom > br.bottom + .5 || r.right > br.right + .5;
             k.textContent = was; return out ? 'cut off (' + k.scrollWidth + ' in ' + k.clientWidth + ', bottom ' + Math.round(r.bottom) + ' of ' + Math.round(br.bottom) + ')' : ''; })()`) : '';
           assert(!longGo, `guide panel ${at}: a long Go label wraps inside the side panel (${longGo || 'fits'})`);
-          await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+          await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; if (globalThis.__gp) { guidePhase = globalThis.__gp; delete globalThis.__gp; } true');
           // the grove: gathering hides the Act bar, so the dock sits straight on the tab bar (the walk's 5 px at 2:48)
           const grove = vw < vh ? await X('(() => { const a0 = S.activity; setActivity("gather"); ui(true); return a0; })()') : null;
           const groveBox = vw < vh ? (await page.waitForTimeout(700), await X(CLEAR)) : null;
@@ -15802,8 +15803,8 @@ if (section('tips-pause-says-so')) try {
         assert(s.want === 'say:forage' && s.paused && s.held && s.plate && !s.foe && s2.paused && !s2.foe && s2.kills === k0,
           `${v}: back in the fight the same line holds the kill gap, the app carries the held class, "Paused" is on the stage and the next foe waits (${JSON.stringify(s)} -> ${JSON.stringify(s2)})`);
         assert(meet(s.pr, s.sr) && s.pr[0] >= s.sr[0] && s.pr[2] <= s.sr[2] && !meet(s.pr, s.br), `${v}: the Paused plate sits inside the stage and clear of the tip (plate ${s.pr}, stage ${s.sr}, tip ${s.br})`);
-        if (w === 740) assert(!s.bar, `${v}: the tip covers the fight bar here, so the bar hides as before (${JSON.stringify(s)})`);
-        else assert(s.bar && Math.abs(s.dim - 0.5) < 0.05, `${v}: the fight bar stays in view under the tip, dimmed (opacity ${s.dim}, ${JSON.stringify(s)})`);
+        // (tips-hold-740: at 740x360 too; the tip there ends above the fight buttons)
+        assert(s.bar && Math.abs(s.dim - 0.5) < 0.05, `${v}: the fight bar stays in view under the tip, dimmed (opacity ${s.dim}, ${JSON.stringify(s)})`);
         await X('document.querySelectorAll("#soloBar .sbtn").forEach(b => b.classList.remove("nope", "hit", "refused")); window.__keys = []; true');
         if (w === 1280) {
           // keys that must not answer it: Space on a focused button, a held-down repeat, a key typed in a text box
@@ -15920,6 +15921,115 @@ if (section('tips-pause-says-so')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('tips-pause-says-so crashed: ' + (e.stack || e)); }
+
+// ==== tips-hold-740 (cold leg 10 Oct, finding 1): on a phone on its side a Got it tip used to hide the whole fight bar. Now the tip ends above the
+// fight buttons (only the bar's tab row hides under it), so the five buttons stay pressable and one press answers the tip and acts; the stage says
+// Paused; and a tip never opens on the foe's turn there. 1280x720 and 1366x640 keep the bar whole (75-onboard-ui.js fitBub, 80-landscape.css) ====
+if (section('tips-hold-740')) try {
+  const at = 'tips-hold-740';
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const raw0 = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-dipper-z4.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, edit) => {
+      const mobile = w < 1000;
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true });
+      const o = JSON.parse(raw0); if (edit) edit(o);
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: JSON.stringify(o), key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      return { ctx, page, errs, X };
+    };
+    // the tip, its Got it, the Paused plate and every fight button: where each sits, and what a press at each button's middle would hit
+    const LOOK = `JSON.stringify((() => { const b = document.querySelector('.ob-bub'), up = !!b && !b.hidden, ok = document.querySelector('.ob-ok'), bar = document.querySelector('#soloBar'), pl = document.querySelector('.ob-paused');
+      const vis = n => !!n && n.getClientRects().length > 0 && getComputedStyle(n).visibility !== 'hidden' && getComputedStyle(n).display !== 'none';
+      const R = n => { const r = n.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); };
+      const btns = bar ? [...bar.querySelectorAll('.sb-pane [data-act], .sb-row-act [data-act]')].filter(n => n.getClientRects().length).map(n => { const r = n.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, e = document.elementFromPoint(x, y);
+        return { act: n.dataset.act, r: R(n), hit: !!e && n.contains(e), vis: vis(n) }; }) : [];
+      return { want: soloGuideWants(), up, txt: up ? b.querySelector('.ob-txt').textContent : '', ok: up && ok && !ok.hidden ? ok.textContent : '', okr: up && ok && !ok.hidden ? R(ok) : null, br: up ? R(b) : null,
+        paused: ONBOARD.paused, held: $('app').classList.contains('guide-held'), side: $('app').classList.contains('guide-btn'), plate: vis(pl), pr: vis(pl) ? R(pl) : null,
+        bar: vis(bar), tabs: !!bar && vis(bar.querySelector('.sb-tabs')), btns, foe: liveFoe(), phase: guidePhase(true), vw: innerWidth, vh: innerHeight }; })())`;
+    const look = async X => JSON.parse(await X(LOOK));
+    const meet = (a, b) => !!a && !!b && a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+    const inside = (a, b) => !!a && !!b && a[0] >= b[0] && a[1] >= b[1] && a[2] <= b[2] && a[3] <= b[3];
+    const QUIET = 'GUIDE_STEPS.forEach(s => { if (!S.onboard.done[s.id]) S.onboard.done[s.id] = 1; }); true';
+    const killFoe = X => X('if (TURN_LIVE && TURN_LIVE.foe && !TURN_LIVE.ended) TURN_LIVE.foe.hp = 0; true');
+    const gapLine = async (X, page, id, ms = 20000) => { let s = await look(X); for (const t0 = Date.now(); !(s.want === id && s.paused) && Date.now() - t0 < ms;) { if (s.foe) await killFoe(X); await page.waitForTimeout(150); s = await look(X); } return s; };
+    const LONG = 'The Forge needs Copper Ore 0/25 from the Copper Vein and Pine Log 2/10 from the Pine Grove. Mine at the Copper Vein, then come back and make your first real blade.';
+    try {
+      // 1. a Got it line holds the kill gap: on the phone the six fight buttons stay in view and pressable beside a tip that ends above them,
+      //    even when the tip runs long; the stage says Paused; a tap on Attack answers it and attacks. Desktop views keep the whole bar.
+      for (const [w, h] of [[740, 360], [1280, 720], [1366, 640]]) {
+        const v = `${at} (browser ${w}x${h})`, phone = w === 740, { ctx, page, errs, X } = await open(w, h, o => { o.onboard.sayQ = [{ id: 'forage' }]; delete o.onboard.done['say:forage']; });
+        await X(QUIET); await X('window.__kills = 0; on("kill", () => { S.kills = 0; }); setActivity("fight"); true');
+        let s = await gapLine(X, page, 'say:forage');
+        await page.waitForTimeout(400); s = await look(X);
+        assert(s.want === 'say:forage' && s.paused && s.held && s.plate && s.ok === 'Got it', `${v}: the forage line holds the kill gap with a Got it, and the stage says Paused (${JSON.stringify(s)})`);
+        assert(!meet(s.pr, s.br), `${v}: the Paused plate is clear of the tip (plate ${s.pr}, tip ${s.br})`);
+        const check = (s, how) => {
+          const bad = s.btns.filter(b => !b.vis || !b.hit || meet(b.r, s.br));
+          assert(s.bar && s.btns.length === 6 && !bad.length, `${v}${how}: all six fight buttons are in view, clear of the tip, and a press at each one's middle reaches it (${s.btns.length} buttons; ${JSON.stringify(bad)}; tip ${s.br})`);
+          assert(inside(s.okr, s.br) && s.okr[3] <= s.vh, `${v}${how}: the tip's Got it sits whole inside the tip and on screen (Got it ${s.okr}, tip ${s.br})`);
+          if (phone) assert(s.side && !s.tabs, `${v}${how}: the tip reaches the bar's tab row, which hides under it (${JSON.stringify({ side: s.side, tabs: s.tabs })})`);
+          else assert(!s.side && s.tabs, `${v}${how}: the bar stays whole here, tabs and all (${JSON.stringify({ side: s.side, tabs: s.tabs })})`);
+        };
+        check(s, '');
+        // a long tip: the text scrolls inside the tip, which still ends above the buttons
+        await X(`document.querySelector('.ob-txt').textContent = ${JSON.stringify(LONG)}; true`); await page.waitForTimeout(700);
+        s = await look(X); check(s, ', a long tip');
+        if (phone) {
+          // a tip that starts too low for two lines above the buttons (the Next Up step under a tall chip) keeps the old rule: the whole bar
+          // hides, never a tip half over a button
+          await X('document.querySelector(".ob-bub").style.marginTop = "150px"; true'); await page.waitForTimeout(700);
+          const low = await look(X), half = low.btns.filter(b => b.vis && meet(b.r, low.br));
+          assert(!low.bar && !half.length && await X('$("app").classList.contains("guide-bar-off")'), `${v}, a low tip: the whole bar hides under it, no button half covered (${JSON.stringify({ bar: low.bar, half, tip: low.br })})`);
+          await X('document.querySelector(".ob-bub").style.marginTop = ""; true'); await page.waitForTimeout(700); s = await look(X);
+          assert(s.bar && !await X('$("app").classList.contains("guide-bar-off")'), `${v}: back in its place the tip fits again and the bar returns (${JSON.stringify({ bar: s.bar })})`);
+        }
+        await X('document.querySelectorAll("#soloBar .sbtn").forEach(b => b.classList.remove("nope", "hit", "refused")); true');
+        const a = s.btns.find(b => b.act === 'atk');
+        if (phone) await page.touchscreen.tap((a.r[0] + a.r[2]) / 2, (a.r[1] + a.r[3]) / 2); else await page.mouse.click((a.r[0] + a.r[2]) / 2, (a.r[1] + a.r[3]) / 2);
+        await page.waitForTimeout(80);
+        const acted = await X('(() => { const b = document.querySelector("#soloBar .sb-atk"); return b.classList.contains("nope") || b.classList.contains("hit"); })()');
+        s = await look(X);
+        const done = await X('!!S.onboard.done["say:forage"]');
+        assert(s.want !== 'say:forage' && done && acted, `${v}: one ${phone ? 'tap' : 'click'} on Attack answers the line (done ${done}) and reaches Attack (acted ${acted}) (${JSON.stringify(s)})`);
+        s = await look(X);
+        assert(!s.side && s.tabs && !await X('document.querySelector(".ob-txt").style.maxHeight'), `${v}: with the tip gone the bar is whole and the tip keeps no fitted height (${JSON.stringify({ side: s.side, tabs: s.tabs })})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // 2. the zone boss's tip may start while the boss opens (the foe's side of the turn). On the phone it waits for your turn instead;
+      //    a desktop still shows it at once (the same moment, so the check can see the case it guards)
+      for (const [w, h] of [[740, 360], [1280, 720]]) {
+        const v = `${at} (browser ${w}x${h}, the boss tip)`, phone = w === 740, { ctx, page, errs, X } = await open(w, h, o => { o.zone = 1; o.maxZone = 1; });
+        await X(QUIET); await X('delete S.onboard.done.boss; TURN_TUNE.introHand = TURN_TUNE.introAuto = 6; setActivity("fight"); fightBoss = true; spawn(); respawn = 0; true');
+        // the boss walks in (any other foe in the way ends at once)
+        let s = await look(X), boss = false;
+        for (const t0 = Date.now(); Date.now() - t0 < 20000; ) { boss = await X('!!(mob && mob.boss && !mob.dead) && liveFoe()'); if (boss) break; if (s.foe) await killFoe(X); await page.waitForTimeout(100); s = await look(X); }
+        const seen = [];
+        for (const t0 = Date.now(); Date.now() - t0 < 4000; ) { s = await look(X); seen.push(`${s.phase}:${s.want || '-'}`); if (s.phase !== 'foe') break; if (!phone && s.want === 'boss') break; await page.waitForTimeout(60); }
+        const early = seen.filter(k => /^(foe|windup):boss$/.test(k));
+        assert(boss && seen[0] && seen[0].startsWith('foe:'), `${v}: the boss's opening reads as the foe's side of the turn (boss ${boss}; ${seen.slice(0, 4).join(' ')})`);
+        if (phone) {
+          assert(!early.length, `${v}: no tip opens while it is the foe's side of the turn (${seen.slice(-6).join(' ')})`);
+          await X('TURN_TUNE.introHand = 1.2; TURN_TUNE.introAuto = 0.6; true');
+          s = await look(X); for (const t0 = Date.now(); s.want !== 'boss' && Date.now() - t0 < 12000;) { await page.waitForTimeout(100); s = await look(X); }
+          assert(s.want === 'boss' && s.phase === 'hero' && s.paused, `${v}: on your turn the boss tip opens and holds the fight (${JSON.stringify({ want: s.want, phase: s.phase, paused: s.paused })})`);
+          const bad = s.btns.filter(b => !b.hit);
+          assert(s.btns.length === 6 && !bad.length && s.plate, `${v}: under the boss tip the fight buttons are pressable and the stage says Paused (${JSON.stringify(bad)}, plate ${s.plate})`);
+        } else assert(early.length > 0, `${v}: here the boss tip opens while the boss opens, as before (${seen.slice(-6).join(' ')})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tips-hold-740 crashed: ' + (e.stack || e)); }
 
 // ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Confirm" for 6 s; Cancel always asks twice ====
 if (section('camp-build-tap-again')) try {
