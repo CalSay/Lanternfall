@@ -3764,7 +3764,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .mob { position: absolute; top: 6px; right: 8px; width: min(46%, 320px); padding: 4px 6px 5px; background: rgba(14,11,18,.72); border: 1px solid var(--line-hi); box-shadow: 0 2px 0 #0B0810; }
 
   /* ---- the side column: Next Up at the top, notices under it, the action bar in the bottom-right corner ---- */
-  .game > .gate-rule { grid-column: 4 / -1; grid-row: 3; align-self: start; margin: 6px 6px 0 7px; z-index: 2; }
+  .game > .gate-rule { grid-column: 4 / -1; grid-row: 3; align-self: start; margin: 6px 6px 0 7px; z-index: 2; font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); }   /* the 13 px floor at 740x360 */
   .nu-slot, .game.solo-game > .nu-slot { grid-column: 4 / -1; grid-row: 2; padding: 6px 6px 0 7px; min-width: 0; }
   /* Next Up: the eyebrow, status and "+N" on one line, the goal under it at the column's full width */
   .nu-chip { min-height: 44px; grid-template-columns: 22px minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 2px 6px; padding: 4px 6px 6px 6px; }
@@ -3774,7 +3774,10 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; }
   .nu-chip .nu-cst { grid-column: 3; grid-row: 1; }
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
-  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); line-height: 1.2; }
+  /* side-column-fits-740: the whole goal, no clamp. The chip has room: the dock shows only while fighting (75-solo-ui) and the away
+     chip only while gathering (71-ui-fight), so the longest gate label (5 lines at 740x360 in fallback fonts) still ends 23 px
+     above the dock, and with the away chip under it 105 px above the screen's foot (check.mjs side-column-fits-740) */
+  .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: block; -webkit-line-clamp: none; font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
   /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
   .sbar, .game.solo-game > .sbar { --sb-tile: 58px; --sb-ic: 24px; grid-column: 4 / -1; grid-row: 4; align-self: end; padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 7px; gap: 5px; }
@@ -14704,6 +14707,12 @@ function registerGoal(g) {
 let topGoals;
 // next-tier-gate-goal: the craft goal's pick, read-only (tools/walk.mjs reads it): forgeNext() below.
 let craftGoalNext = () => null;
+// a tier gate row's words, from forgeNext's { kind, t, gate }; on: the hero gathers the gate's skill, so it rises while away
+function gateLabel(b, on) {
+  const sk = SKILL[b.gate.skill];
+  return `${kindName(b.kind, b.t)}: ${sk} ${b.gate.lv} of ${b.gate.need}` + (b.gate.station ? '' : (b.gate.mat ? ` opens ${b.gate.mat}` : '') +
+    (on ? '. Gathering keeps going while you\'re away.' : `. Gather ${sk} before you leave and it keeps going.`));
+}
 // Counts Next Up craft picks, so the Craft tab refocuses the recipe even when it is the same one.
 var forgeGoalPicks = 0;
 
@@ -15111,10 +15120,9 @@ var forgeGoalPicks = 0;
       // tier-two-named-for-return: a gate row names the piece and its furthest gate, not a boss (it is often a later sitting's piece); a
       // gathering gate says the skill rises while you're away ("Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away.")
       // away-line-only-when-true: only while the hero gathers that skill (awayBase raises nothing else away); else how to make it true
-      if (b.gate) { const sk = SKILL[b.gate.skill], dw = typeof DW === 'object' && DW && DW.run(),
+      if (b.gate) { const dw = typeof DW === 'object' && DW && DW.run(),
           on = (dw && !dw.paused ? dw.act : S.activity) === 'gather' && skillOf(S.node.kind) === b.gate.skill;   // a live Deepwell run holds the activity away resumes (57d awayBegin)
-        return `${kindName(b.kind, b.t)}: ${sk} ${b.gate.lv} of ${b.gate.need}` + (b.gate.station ? '' : (b.gate.mat ? ` opens ${b.gate.mat}` : '') +
-          (on ? '. Gathering keeps going while you\'re away.' : `. Gather ${sk} before you leave and it keeps going.`)); }
+        return gateLabel(b, on); }
       const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
@@ -36819,9 +36827,13 @@ function awayChipText() {
   let n = Math.floor(3600 / nodeTime(kind, tier) * boost * nodeYieldAvg(kind) * mod('yield:' + kind) * hrs);
   // A pile that fills mid-away: Spillover moves on to the next node (amounts then differ), otherwise the rest is lost.
   const room = stashRoom(kind, tier);
-  if (n > room && storeSpillOn()) return `Leave now: ${matName(kind, tier)} fills up, then Spillover moves your hero on.`;
-  n = Math.min(n, room);
-  return n > 0 ? `Leave now: about ${fmt(n)} ${matName(kind, tier)} in ${hrs} hours.` : `Leave now: ${matName(kind, tier)} is full, you earn nothing. Spend it or pick another node.`;
+  return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs);
+}
+// the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full
+// (side-column-fits-740 measures every variant for every material)
+function awayChipSay(nm, n, hrs) {
+  if (n === 'spill') return `Leave now: ${nm} fills up, then Spillover moves your hero on.`;
+  return n > 0 ? `Leave now: about ${fmt(n)} ${nm} in ${hrs} hours.` : `Leave now: ${nm} is full, you earn nothing. Spend it or pick another node.`;
 }
 function uiAwayChip() {
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
