@@ -1,0 +1,73 @@
+# seed: 1
+# Proof for card tips-hold-740: on a phone on its side (740x360) Old Hesketh's Got it tip no longer hides the fight bar. The tip ends
+# above the fight buttons (only the bar's tab row sits under it), the stage says PAUSED, and a tap on Attack answers the tip and attacks.
+# Fixture dipper-z4: Wren at zone 4, the guide's weapon and Storehouse steps still to come, the Almanac due once enough play has passed.
+#   fight-1 .. fight-12.png   back at zone 1, each frame shot before a press on Attack: the kill gap brings his Almanac line, which holds
+#                             the gap with PAUSED on the stage while Attack, Echo, the empty slots, Parry and Dodge stay in view under it.
+#                             The next Attack press answers the line and the fight goes on.
+#   line-answered.png         the line is gone, the bar is whole again (its tabs back).
+# The rest (every button hit-testable, a long tip, 1280x720 and 1366x640 unchanged, no tip opening on the foe's turn) is held by
+# tools/check.mjs ("tips-hold-740").
+new dipper-z4
+wait 1
+tap "Gather"
+tap "Wood"
+tap "Chop at the Pine Grove"
+wait 1
+tap-if "Dismiss this tip"
+wait 1
+tap-if "Dismiss this tip"
+wait 1
+tap-if "Dismiss this tip"
+wait 200
+tap "Gather"
+tap "Wood"
+expect "There's an Almanac at camp now"
+tap "Close menu"
+tap "Fight"
+wait 2
+tap "Previous zone"
+tap "Previous zone"
+tap "Previous zone"
+wait 2
+shot fight-1
+tap-if "Attack"
+wait 2
+shot fight-2
+tap-if "Attack"
+wait 2
+shot fight-3
+tap-if "Attack"
+wait 2
+shot fight-4
+tap-if "Attack"
+wait 2
+shot fight-5
+tap-if "Attack"
+wait 2
+shot fight-6
+tap-if "Attack"
+wait 2
+shot fight-7
+tap-if "Attack"
+wait 2
+shot fight-8
+tap-if "Attack"
+wait 2
+shot fight-9
+tap-if "Attack"
+wait 2
+shot fight-10
+tap-if "Attack"
+wait 2
+shot fight-11
+tap-if "Attack"
+wait 2
+shot fight-12
+tap-if "Attack"
+wait 2
+tap-if "Got it"
+wait 1
+expect-no ".ob-paused"
+expect-no "There's an Almanac at camp now"
+shot line-answered

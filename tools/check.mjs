@@ -8,7 +8,7 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
-import { buildSplit, isAsset, assetName } from './build.mjs';
+import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire } from './build.mjs';
 import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
@@ -103,7 +103,7 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75,
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75, 'tips-hold-740': 40,
   'feint-read-clear': 70,   // 64-74 s locally alone (feint-read-clear, 2026-10-09)
   'craft-odds-before-pay': 38,   // 38 s locally (craft-odds-before-pay, 2026-10-09)
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
@@ -111,7 +111,7 @@ const WEIGHT = {
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'page size': 2,
-  'split build (asset-build)': 12   // 11 s locally alone (asset-build, 2026-10-10)
+  'split build (asset-build)': 30   // 31 s locally alone (art-loader, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -301,62 +301,219 @@ if (section('check fonts')) try {
   }
 } catch (e) { fail('check fonts crashed: ' + (e.stack || e)); }
 
-// ---- split build (asset-build; docs/design/hosting.md 5, B1): page plus content-hashed art files, all run before the game ----
-// Built in memory (nothing written). The split page must hold the inline page's code with only the generated art data files
-// moved out, as they are, under hashed names; it boots with the loader line gone, the line counts bytes while a file is still
-// loading, and a file that fails to load says so with a Reload button.
+// ---- split build (asset-build, art-loader; docs/design/hosting.md 5, B2): the page, its boot files and the area packs ----
+// Built in memory (nothing written). The boot files are the generated art data files as they are, under hashed names, run before
+// the game. The area art (AREA_ART: foe atlases, battle backgrounds) is one pack per foe and per background; the page keeps the
+// foes' timings. The boot loader writes the save's zone's packs before the game runs; the rest load after boot, one area ahead
+// (75-art-load), and while the zone on screen lacks a pack the game is held under a plain line, never drawn with a stand-in.
+// A pack whose file is gone after a deploy reloads the page once the zone on screen needs it (never twice in a minute).
 if (section('split build (asset-build)')) try {
-  const s = buildSplit({ write: false }), files = Object.fromEntries(s.assets.map(a => [a.name, a.text]));
+  const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
   const inline = fs.existsSync(distFile) ? fs.readFileSync(distFile, 'utf8') : '';
+  const src = f => fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\n*$/, '\n');
   assert(s.html.startsWith('<title>') && !/<!doctype|<(html|head|body)[\s>]/i.test(s.html), 'split: the page keeps the Artifact page shape (starts with <title>, no doctype/html/head/body)');
-  const gen = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js')).sort().filter(f => isAsset(fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8')));
-  assert(gen.length >= 10 && s.assets.map(a => a.f).join() === gen.join(), `split: every generated data file is an asset (${s.assets.length}), in filename order`);
-  assert(s.assets.every(a => a.text === fs.readFileSync(path.join(ROOT, 'src', 'js', a.f), 'utf8').replace(/\n*$/, '\n') && a.name === assetName(a.f, a.text)),
-    'split: each asset is its file as it is, named by its content hash');
+  const gen = fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js')).sort().filter(f => isAsset(src(f)));
+  assert(gen.length >= 10 && s.assets.map(a => a.f).join() === gen.filter(f => !AREA_ART[f]).join() && Object.keys(AREA_ART).every(f => gen.includes(f))
+    && gen.every(f => BOOT_ART.includes(f) !== !!AREA_ART[f]), `split: every generated data file is listed once, as a boot file (${s.assets.length}, in filename order) or as area art`);
+  { let threw = '';   // mutation: an unlisted generated art file stops the build
+    try { placeArt([...gen, '21zx-data-checkonly.js']); } catch (e) { threw = String(e.message); }
+    assert(/21zx-data-checkonly\.js is generated art in neither BOOT_ART nor AREA_ART/.test(threw), `split: a generated art file in neither list stops the build (${threw.slice(0, 80) || 'it built'})`); }
+  assert(s.assets.every(a => a.text === src(a.f) && a.name === assetName(a.f, a.text)), 'split: each boot file is its file as it is, named by its content hash');
   assert([...s.html.matchAll(/<script src="assets\/([^"]+)"/g)].map(m => m[1]).join() === s.assets.map(a => a.name).join() && s.html.lastIndexOf('<script src="assets/') < s.html.lastIndexOf('})();\n</script>'),
-    'split: the page names every asset once, in order, before the game\'s script');
+    'split: the page names every boot file once, in order, before the game\'s script');
+  // the area packs: each entry of FOE_ART and BG_ART is one pack, its data the entry's art exactly; the page keeps the rest
+  const G = loadCore(), data = (f, v) => vm.runInNewContext(`${src(f)}\n;${v}`);
+  const packData = p => { let got = null; vm.runInNewContext(p.text, { lfArt: (kind, key, d) => { got = { id: kind + ':' + key, d }; } }); return got; };
+  for (const [f, A] of Object.entries(AREA_ART)) {
+    const D = data(f, A.v), mine = s.packs.filter(p => p.f === f);
+    assert(mine.map(p => p.id).join() === Object.keys(D).map(k => A.kind + ':' + k).join(), `split: ${A.v} has one pack per entry (${mine.map(p => p.id).join(', ')})`);
+    for (const p of mine) {
+      const got = packData(p), key = p.id.slice(A.kind.length + 1);
+      assert(got && got.id === p.id && JSON.stringify(got.d) === JSON.stringify(A.load(D[key])) && p.name === `${f.replace(/-data-.*$/, '')}-${A.kind}-${key}.${p.name.split('.').slice(-2, -1)[0]}.js`,
+        `split: ${p.id}'s pack holds its art as the source has it, under a hashed name (${p.name})`);
+    }
+    const kept = vm.runInNewContext(`${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?)\\n// ---- src`))[1]}\n;${A.v}`);
+    assert(JSON.stringify(kept) === JSON.stringify(A.keep ? Object.fromEntries(Object.entries(D).map(([k, e]) => [k, A.keep(e)])) : {}),
+      `split: the page keeps ${A.v} ${A.keep ? 'with every field but the atlases (59l\'s timings)' : 'empty until a pack comes'}`);
+  }
+  // only the readers that know a pack can come late read the art fields (gameplay reads the timings, which the page keeps)
+  const readers = (re, ok) => fs.readdirSync(path.join(ROOT, 'src', 'js')).filter(f => f.endsWith('.js') && !isAsset(src(f)) && !ok.includes(f)
+    && src(f).split('\n').some(l => !/^\s*\/\//.test(l) && re.test(l)));
+  const foeR = readers(/\.atlases\b/, ['21zz-art-b91.js', '64j-foe-art.js', '75-art-load.js']), bgR = readers(/\bBG_ART\b/, ['22-data-regions.js', '62-stage.js', '75-intro-ui.js', '75-art-load.js', '21zz-art-b91.js']);
+  assert(!foeR.length && !bgR.length, `split: foe atlases and BG_ART are read only where a late pack is handled (${[...foeR, ...bgR].join(', ') || 'none else'})`);
+  // the zone table is the shipped code's own answer, and past the road no zone's scenery depends on a background being in
+  const road = G.eval('ROAD_ZONES'), live = G.eval(`Array.from({ length: ${road} }, (_, i) => [ZONE_FOES[i + 1] ? 'foe:' + ZONE_FOES[i + 1].key : null, 'bg:' + zoneTheme(i + 1)])`);
+  const inZ = (p, z) => p.zones.some(([a, b]) => z >= a && z <= b);
+  const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => p.id === id)).sort().join(), s.packs.filter(p => inZ(p, i + 1)).map(p => p.id).sort().join()]).filter(r => r[1] !== r[2]);
+  const past = G.eval(`Array.from({ length: 2000 }, (_, i) => ${road} + 1 + i).filter(z => zoneTheme(z) !== zoneTheme(z - 35) || ZONE_FOES[z] || regionIdx(z) === 0).length`);
+  assert(!badZ.length && !past && s.packs.every(p => p.zones.length), `split: each pack names the zones whose fights show it, from ZONE_FOES and zoneTheme `
+    + `(${badZ.slice(0, 3).map(r => r.join(' ')).join('; ') || 'all ' + road}), every pack shows somewhere (${s.packs.filter(p => !p.zones.length).map(p => p.id).join(', ') || 'yes'}), `
+    + `and past the road the scenery repeats every 35 zones with no zone monster (2000 zones; ${past} differ)`);
   const strip = h => h.replace(/<!-- Boot loader[\s\S]*?<\/script>\n/, '').replace(/<script src="assets\/[^"]+"[^>]*><\/script>\n/g, '').replace('\n<script>lfBoot.end();</script>', '');
   let want = inline;
   for (const a of s.assets) want = want.replace(`// ---- src/js/${a.f} ----\n${a.text}\n`, () => '');
-  assert(inline && strip(s.html) === want, 'split: apart from the loader, the page is the inline page with only the asset files taken out');
+  for (const f of Object.keys(AREA_ART)) want = want.replace(`// ---- src/js/${f} ----\n${src(f)}`, () => `// ---- src/js/${f} ----\n${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?\\n)\\n// ---- src`))[1]}`);
+  assert(inline && strip(s.html) === want, 'split: apart from the loader, the page is the inline page with the boot files taken out and the area art kept as above');
+  // the load lines (docs/design/hosting.md 6; art-loader judge 2026-10-10), each fail line with a mutation run
+  { const sizes = new Map(), size = x => (sizes.has(x) ? sizes.get(x) : (sizes.set(x, wire(x)), sizes.get(x)));
+    const r = loadReport(s, { size }), MBs = n => (n / 1e6).toFixed(2);
+    assert(!r.fails.length, `split: the load lines hold: boot set ${MBs(r.zone1.counted)} MB for a new game and ${MBs(r.worst.counted)} MB for the worst zone (${r.worst.z}) of ${MBs(LOAD_LINES.bootFail)}, `
+      + `largest zone set ${MBs(r.zoneMax.b)} of ${MBs(LOAD_LINES.zoneSet)}, area set ${MBs(r.areaMax.b)} of ${MBs(LOAD_LINES.areaSet)}${r.fails.length ? ': ' + r.fails.join('; ') : ''}`);
+    for (const w of r.warns) console.log('  WARN split: ' + w);
+    assert(LOAD_LINES.e1.pack === 'bg:forest' && Object.entries(r.packs).every(([id, x]) => id === 'bg:forest' || x.counted === x.real),
+      `split: only Mossy Hollow's pack counts at one shape in the boot set (E1, until bg-pack-by-shape)`);
+    // each mutation goes 10 KB past its line from today's bytes, so a change elsewhere never makes one stop failing
+    const pkT = id => s.packs.find(p => p.id === id).text, big1 = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m)).text, R = id => r.packs[id].real, over = (line, now) => Math.max(0, line - now) + 1e4;
+    const plus = (txt, n) => x => size(x) + (x === txt ? n : 0), L = (o = {}) => ({ ...LOAD_LINES, ...o, area1: { ...LOAD_LINES.area1, ...(o.area1 || {}) } });
+    const without = (...ids) => ({ ...LOAD_LINES, area1: Object.fromEntries(Object.entries(LOAD_LINES.area1).filter(([k]) => !ids.includes(k))) });
+    const wz = r.worst.z, gj = 'foe:gloomjaw', gjZ = s.packs.find(p => p.id === gj).zones[0][0];
+    const mut = [
+      ['a boot file past the line', { size: plus(big1, over(LOAD_LINES.bootFail, r.zone1.counted)) }, /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/],
+      [`the worst zone's foe pack past the line`, { size: plus(pkT(s.packs.find(p => p.id.startsWith('foe:') && p.zones.some(([a, b]) => wz >= a && wz <= b)).id), over(LOAD_LINES.bootFail, r.worst.counted)) }, new RegExp(`^boot set, the worst zone \\(${wz}\\): .* over 4\\.00 MB$`)],
+      ['a portrait share past its cap', { lines: L({ e1: { pack: 'bg:forest', port: r.packs['bg:forest'].port - 1e4 } }) }, /^bg:forest's portrait share .* \(E1\)$/],
+      ['Gloomjaw no longer an exception, past the zone line', { lines: without(gj), size: plus(pkT(gj), over(LOAD_LINES.zoneSet, R(gj))) }, new RegExp(`^zone ${gjZ}'s packs are [\\d.]+ MB, over 0\\.65 MB \\(zone set\\)$`)],
+      ['imp and Gloomjaw no longer exceptions, past the area line', { lines: without('foe:imp', gj), size: plus(pkT(gj), over(LOAD_LINES.areaSet, R('foe:imp') + R(gj))) }, /^area 1's new packs are [\d.]+ MB, over 1\.00 MB \(area set\)$/],
+      ["imp over its cap", { lines: L({ area1: { 'foe:imp': R('foe:imp') - 1e4 } }) }, /^foe:imp is [\d.]+ MB, over its area 1 cap of [\d.]+ MB$/],
+      ['an exception for a pack the build lacks', { lines: L({ area1: { 'foe:nothing': 0.1e6 } }) }, /^area 1's exception foe:nothing names a pack the build lacks$/]
+    ];
+    for (const [what, o, re] of mut) { const m = loadReport(s, { size, ...o }); assert(m.fails.some(f => re.test(f)), `split: mutation (${what}) fails its load line (${m.fails.join('; ') || 'nothing failed'})`); }
+  }
   const { pw, exe } = browserTools;
-  if (!pw || !exe) skipBrowser('split: boot, progress and failure lines: Playwright or Chromium not here, skipped');
+  if (!pw || !exe) skipBrowser('split: boot, progress, failure, packs and the loading line: Playwright or Chromium not here, skipped');
   else {
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const end = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(end);
+    const KEY = 'lanternfall.save.v5', early = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
     try {
       const assets = pageAssets(s.file, s.html, files), big = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m));
-      const open = async (hold, width = 1280, height = 720) => {
-        const page = await browser.newPage({ viewport: { width, height } }), errs = [];
+      const pk = id => s.packs.find(p => p.id === id);
+      // hold: { name: 'hold' | 'fail' } per file (a pack or boot file name); page: what the server's page reads on a later request
+      const open = async ({ hold = {}, width = 1280, height = 720, save = null, html = s.html, later = null, init = null } = {}) => {
+        const ctx = await browser.newContext({ viewport: { width, height } }), page = await ctx.newPage(), errs = [];
+        await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+        if (save) await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...save, last: Date.now() })]);
+        if (init) await ctx.addInitScript(init, KEY);
         page.on('pageerror', e => errs.push(String(e)));
         let release; const held = new Promise(r => { release = r; });
-        await routePage(page, 'http://lf.test/', s.html, assets);
-        if (hold) await page.route('**/assets/' + big.name, async r => { await held; return hold === 'fail' ? r.abort() : r.fallback(); });
+        await routePage(page, 'http://lf.test/', html, assets);
+        let pages = 0;
+        page.on('load', () => pages++);
+        if (later) await page.route('http://lf.test/', r => (r.request().isNavigationRequest() ? r.fallback() : r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: later })));
+        for (const [name, how] of Object.entries(hold)) await page.route('**/assets/' + name, async r => { if (how === 'gone') return r.fulfill({ status: 404, body: '' }); await held; return how === 'fail' ? r.abort() : r.fallback(); });
         await page.goto('http://lf.test/', { waitUntil: 'commit' });
-        return { page, errs, release };
+        return { page, errs, release, navs: () => pages };
       };
-      // 1. a clean boot at each view: the line goes, the game runs (its zone name is set) with no page error
+      const go2 = page => page.evaluate(() => window.__t.x('S.activity = "fight", setZone(2), ui(true)'));   // as the zone arrows do
+      const booted = page => page.waitForFunction(() => !document.getElementById('lfBoot') && !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+      const look = page => page.evaluate(() => {
+        const c = document.getElementById('artWait'), st = document.getElementById('stage').getBoundingClientRect(), r = c && !c.hidden ? c.getBoundingClientRect() : null;
+        return { cover: r ? c.firstChild.textContent + (c.lastChild.hidden ? '' : ' [' + c.lastChild.textContent + ']') : null, full: !!r && r.left <= st.left && r.top <= st.top && r.right >= st.right && r.bottom >= st.bottom && getComputedStyle(c).backgroundColor === 'rgb(11, 8, 16)',
+          zone: (document.getElementById('zNum') || {}).textContent, hp: (document.getElementById('mHp') || {}).textContent, sub: (document.getElementById('zSub') || {}).textContent };
+      });
+      // 1. a clean boot at each view: the line goes, the game runs (its zone name is set) with no page error and no cover
       for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
-        const { page, errs } = await open(null, w, h);
-        await page.waitForLoadState('load');
-        await page.waitForFunction(() => !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
-        const r = await page.evaluate(() => ({ line: !!document.getElementById('lfBoot'), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width }));
-        assert(!r.line && !r.tags && r.zone && r.w > 0 && !errs.length, `split: boots at ${w}x${h} with the loading line and its tags gone` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
+        const { page, errs } = await open({ width: w, height: h });
+        await page.waitForLoadState('load'); await booted(page);
+        const r = await page.evaluate(() => ({ line: !!document.getElementById('lfBoot'), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait') }));
+        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && !errs.length, `split: boots at ${w}x${h} with the loading line and its tags gone, no loading cover` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
         await page.close();
       }
-      // 2. while the biggest file is still loading, the line shows the bytes done of the total
-      { const { page, release } = await open('hold');
+      // 2. while the biggest boot file is still loading, the line shows the bytes done of the total: the boot files and zone 1's packs
+      { const { page, release } = await open({ hold: { [big.name]: 'hold' } });
         await page.waitForFunction(() => /^Loading the game: [\d.]+ of [\d.]+ MB$/.test((document.getElementById('lfBootText') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
         const t = await page.evaluate(() => (document.getElementById('lfBootText') || {}).textContent || '');
-        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = s.assets.reduce((n, a) => n + a.bytes, 0) / 1e6;
-        assert(m && +m[2] === +total.toFixed(1) && +m[1] < +m[2], `split: while a file loads the line reads the bytes done ("${t}")`);
-        release(); await page.waitForLoadState('load');
+        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = (s.assets.reduce((n, a) => n + a.bytes, 0) + s.packs.filter(p => inZ(p, 1)).reduce((n, p) => n + p.bytes, 0)) / 1e6;
+        assert(m && +m[2] === +total.toFixed(1) && +m[1] < +m[2], `split: while a file loads the line reads the bytes done of the boot files and zone 1's packs ("${t}", ${total.toFixed(1)} MB)`);
+        release(); await booted(page);
         assert(!(await page.$('#lfBoot')), 'split: the line goes once the held file arrives');
         await page.close(); }
-      // 3. a file that fails to load says so, with a Reload button
-      { const { page, release } = await open('fail'); release();
+      // 3. a file that fails to load says so, with a Reload button (a boot file, and the save's zone's pack)
+      for (const name of [big.name, pk('foe:imp').name]) {
+        const { page, release } = await open({ hold: { [name]: 'fail' } }); release();
         await page.waitForLoadState('load'); await page.waitForTimeout(300);
         const r = await page.evaluate(() => ({ t: (document.getElementById('lfBootText') || {}).textContent, b: !!document.querySelector('#lfBoot button') }));
-        assert(/did not load/.test(r.t || '') && r.b, `split: a failed file shows "${r.t}" and a Reload button`);
+        assert(/did not load/.test(r.t || '') && r.b, `split: a failed ${name === big.name ? 'boot file' : 'zone 1 pack'} shows "${r.t}" and a Reload button`);
+        await page.close(); }
+      // 4. the save's zone's packs come before the game: a zone 2 save boots with Gloomjaw's frames cut and no cover, and only after
+      //    the boot files does any other pack load
+      { const { page, errs } = await open({ save: { ...early, zone: 2, maxZone: 8 }, html: probe });
+        await page.waitForLoadState('load'); await booted(page); await page.waitForTimeout(400);
+        const r = await page.evaluate(() => window.__t.x(`({ boot: lfBoot.boot.join(), ready: [1, 2, 8].map(z => artZoneReady(z)).join(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })(), bg: !!BG_ART.forest && BG_ART.forest.land.src.length > 1000 })`));
+        const c = await look(page);
+        assert(r.boot === 'foe:gloomjaw,bg:forest' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
+          `split: a zone 2 save boots with its packs in (Gloomjaw cut, Mossy Hollow drawn, no cover) and the rest of the area arrives after (${JSON.stringify(r)}, ${JSON.stringify(c)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5. a zone whose pack is still loading: the game holds under an opaque line covering the stage, the zone reads "loading",
+      //    nothing moves; when it arrives the line goes and the fight runs
+      { const { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'hold' }, html: probe });
+        await booted(page); await page.waitForTimeout(500);
+        await go2(page); await page.waitForTimeout(300);
+        const a = await look(page), held = await page.evaluate(() => window.__t.x('({ t: gameHeld(), z: S.zone, k: S.kills, hp: mob && mob.hp })'));
+        await page.waitForTimeout(1500);
+        const b = await look(page), held2 = await page.evaluate(() => window.__t.x('({ t: gameHeld(), z: S.zone, k: S.kills, hp: mob && mob.hp })'));
+        assert(a.cover === 'Loading Mossy Hollow' && a.full && a.zone === 'Zone 2 · loading' && held.t && held.z === 2 && JSON.stringify(held) === JSON.stringify(held2) && a.hp === b.hp,
+          `split: zone 2 with Gloomjaw still loading: "${a.cover}" covers the stage (${a.full}), the zone reads "${a.zone}", the game holds (${JSON.stringify(held)} then ${JSON.stringify(held2)})`);
+        await page.evaluate(() => window.__t.x(`(() => { const f = () => { if (gameHeld()) return requestAnimationFrame(f);
+          const F = foeArtFrames('gloomjaw'); window.__first = Object.values(F.acts).some(a => a.fr.some(x => x.body.c._pend)) ? 'pending' : 'cut'; };
+          requestAnimationFrame(f); })()`));
+        release(); await page.waitForTimeout(1500);
+        const first = await page.evaluate(() => window.__first);
+        assert(first === 'cut', `split: on the first frame after the hold Gloomjaw's frames are already cut (${first}), so no blank foe shows`);
+        const c = await look(page), run = await page.evaluate(() => window.__t.x(`({ t: gameHeld(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })() })`));
+        assert(!c.cover && c.zone === 'Zone 2' && !run.t && !run.pend && !errs.length, `split: when Gloomjaw arrives the cover goes, its frames are cut and the game runs (${JSON.stringify(c)}, ${JSON.stringify(run)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5b. a background that comes after boot is decoded before the hold lets go: on the first frame after it, 62-stage's own image
+      //     of the picture is complete at once (no procedural scenery in its place)
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+        await booted(page); await page.waitForTimeout(300);
+        await page.evaluate(() => window.__t.x('S.activity = "fight", setZone(8), ui(true)')); await page.waitForTimeout(300);
+        const a = await look(page);
+        await page.evaluate(() => window.__t.x(`(() => { const f = () => { if (gameHeld()) return requestAnimationFrame(f);
+          const B = BG_ART.forest, im = new Image(); im.src = 'data:image/webp;base64,' + (B && B.land.src);
+          window.__first = B && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
+          requestAnimationFrame(f); })()`));
+        release(); await page.waitForTimeout(1500);
+        const first = await page.evaluate(() => window.__first), b = await look(page);
+        assert(a.cover === 'Loading Batwing Caves' && first === 'decoded' && !b.cover && !errs.length,
+          `split: zone 8 waits for Mossy Hollow's painting ("${a.cover}") and the first frame after draws it decoded (${first}, ${JSON.stringify(b)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5c. a zone change inside tick that emits nothing (as a retreat after a wipe sets S.zone): the cover is up before the browser
+      //     paints that frame (75-art-load rechecks in a microtask after the frame's draw)
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+        await booted(page); await page.waitForTimeout(300);
+        await page.evaluate(() => window.__t.x(`(() => { const t0 = tick; tick = dt => { t0(dt); if (!window.__moved && S.activity === 'fight') { window.__moved = 1; S.zone = 8;
+          queueMicrotask(() => { const c = document.getElementById('artWait'); window.__cov = !!c && !c.hidden; }); } }; })()`));
+        await page.waitForFunction(() => window.__moved, null, { timeout: 5000 }).catch(() => {});
+        await page.waitForTimeout(100);
+        const r = await page.evaluate(() => ({ moved: window.__moved, cov: window.__cov })), a = await look(page);
+        release(); await page.waitForTimeout(300);
+        assert(r.moved && r.cov === true && a.cover === 'Loading Batwing Caves' && !errs.length, `split: a zone change inside tick with no event is covered before that frame paints (${JSON.stringify(r)}, ${JSON.stringify(a)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 6. a pack that fails while the server's page still names it: "Waiting for the connection", then it tries again and loads
+      { const { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'fail' }, html: probe });
+        await booted(page); release(); await page.waitForTimeout(300);
+        await go2(page); await page.waitForTimeout(600);
+        const a = await look(page);
+        await page.unroute('**/assets/' + pk('foe:gloomjaw').name); await page.waitForTimeout(4500);
+        const b = await look(page);
+        assert(/^Waiting for the connection to load Mossy Hollow$/.test(a.cover || '') && !b.cover && b.zone === 'Zone 2' && !errs.length, `split: a failed pack waits ("${a.cover}", ${JSON.stringify(a)}) and loads on a later try (${JSON.stringify(b)})`);
+        await page.close(); }
+      // 7. a pack whose file is gone and that the server's page no longer names (a deploy): once the zone on screen needs it, the
+      //    game saves and reloads. If it happens again within a minute it does not loop: the line asks the player to reload.
+      //    (After the reload the check puts the save back in zone 1, so the new page boots and the second time can be seen.)
+      { const after = probe.split(pk('foe:gloomjaw').name).join('21za-foe-gloomjaw.0000000000.js');
+        const init = k => { try { if (sessionStorage.getItem('lanternfall.artReloadAt') && !sessionStorage.getItem('t.z')) {
+          const v = JSON.parse(localStorage.getItem(k)); sessionStorage.setItem('t.z', String(v.zone)); v.zone = 1; localStorage.setItem(k, JSON.stringify(v)); } } catch (e) {} };
+        const { page, navs } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'gone' }, html: probe, later: after, init });
+        await booted(page); await page.waitForTimeout(500);
+        await go2(page);
+        await page.waitForFunction(() => sessionStorage.getItem('t.z'), null, { timeout: 8000 }).catch(() => {});   // the reload: a new page
+        await booted(page); await page.waitForTimeout(800);
+        const saved = await page.evaluate(() => sessionStorage.getItem('t.z'));
+        await go2(page).catch(() => {}); await page.waitForTimeout(1500);
+        const b = await look(page);
+        assert(navs() === 2 && saved === '2' && b.cover === 'The game was updated. Reload the page to go on. [Reload]',
+          `split: a pack gone after a deploy saves (zone ${saved}) and reloads the page (${navs()} loads), and a second time within a minute asks: "${b.cover}"`);
         await page.close(); }
     } finally { await browser.close(); }
   }
@@ -11296,7 +11453,8 @@ if (section('guide panel rects (browser, guide-panel)')) try {
         const seen = [];
         await X('globalThis.__os = onboardStep; globalThis.__boss = mob ? !!mob.boss : false; true');
         for (const st of ['attack', 'ability', 'dodge', 'parry', 'boss']) {
-          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; ONBOARD.paused = false; true`);
+          // (tips-hold-740: on a phone on its side the boss tip opens only on your turn, so its panel is measured on your turn)
+          await X(`globalThis.__fs = ${JSON.stringify(st)}; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (__fs === 'boss' && mob) mob.boss = true; if (__fs === 'boss' && innerWidth >= 600 && innerHeight <= 500) { globalThis.__gp = guidePhase; guidePhase = () => 'hero'; } ONBOARD.paused = false; true`);
           await page.waitForTimeout(700);
           const m = await rects();
           if (!m) { assert(false, `guide panel ${at} "${st}": the panel shows`); continue; }
@@ -11304,7 +11462,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
           assert(!m.hit.length && m.inView && !m.scrollX, `guide panel ${at} "${st}": in view and clear of ${m.hit.length ? m.hit.join(', ') : 'both HP bars, the foe plate, the boss timer, the hero plate and the stage'} (${m.mode}, ${m.panel.join(',')})`);
           assert(m.textChars >= 12 && m.faceOk && !m.clipped && (m.btnBelow === null || (m.btnBelow && m.btnH >= 44 && m.btnIn)), `guide panel ${at} "${st}": text at least 12 characters wide (${m.textChars}) and not clipped, Hesketh's face shows, the button sits below or beside the text (never over it) at 44 px or more, inside the panel and tappable (${JSON.stringify([m.faceOk, m.clipped, m.btnBelow, m.btnH, m.btnIn])})`);
         }
-        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+        await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; if (globalThis.__gp) { guidePhase = globalThis.__gp; delete globalThis.__gp; } true');
         // guide-bubble-clear-of-controls: the panel's box (at its pop-in's lowest frame) never meets the tab bar, and over a menu it
         // never meets a Gather row's button (the nightly walk: 5 px on the tabs, its X on a Hunting row's button, Got it on Spread
         // evenly). Over a portrait menu it takes its own row, so the menu's scroll area ends above it and no menu button can sit under it.
@@ -11321,7 +11479,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
             if (menu && mode === 'over-menu' && R(pan).bottom > br.top + .5) hit.push('#panels (the menu runs ' + Math.round(R(pan).bottom - br.top) + ' px under it)');
             pan.scrollTop = 0;
             return { mode, menu, hit: [...new Set(hit)], n, box: [br.left, br.top, br.right, br.bottom].map(Math.round) }; })()`;
-          await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; ONBOARD.paused = false; true`);
+          await X(`globalThis.__fs = 'boss'; onboardStep = () => GUIDE_STEPS.find(g => g.id === __fs); if (mob) mob.boss = true; if (innerWidth >= 600 && innerHeight <= 500) { globalThis.__gp = guidePhase; guidePhase = () => 'hero'; } ONBOARD.paused = false; true`);
           await page.waitForTimeout(700);
           const fight = await X(CLEAR);
           // a long Go label in the short landscape column wraps inside the panel, never cut off ("Mine at…" in the walk)
@@ -11329,7 +11487,7 @@ if (section('guide panel rects (browser, guide-panel)')) try {
             const was = k.textContent; k.textContent = 'Gather at the Enraged Boar'; const r = k.getBoundingClientRect(), br = b.getBoundingClientRect(), out = k.scrollWidth > k.clientWidth + 1 || k.scrollHeight > k.clientHeight + 2 || r.bottom > br.bottom + .5 || r.right > br.right + .5;
             k.textContent = was; return out ? 'cut off (' + k.scrollWidth + ' in ' + k.clientWidth + ', bottom ' + Math.round(r.bottom) + ' of ' + Math.round(br.bottom) + ')' : ''; })()`) : '';
           assert(!longGo, `guide panel ${at}: a long Go label wraps inside the side panel (${longGo || 'fits'})`);
-          await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; true');
+          await X('onboardStep = globalThis.__os; if (mob) mob.boss = globalThis.__boss; if (globalThis.__gp) { guidePhase = globalThis.__gp; delete globalThis.__gp; } true');
           // the grove: gathering hides the Act bar, so the dock sits straight on the tab bar (the walk's 5 px at 2:48)
           const grove = vw < vh ? await X('(() => { const a0 = S.activity; setActivity("gather"); ui(true); return a0; })()') : null;
           const groveBox = vw < vh ? (await page.waitForTimeout(700), await X(CLEAR)) : null;
@@ -15802,8 +15960,8 @@ if (section('tips-pause-says-so')) try {
         assert(s.want === 'say:forage' && s.paused && s.held && s.plate && !s.foe && s2.paused && !s2.foe && s2.kills === k0,
           `${v}: back in the fight the same line holds the kill gap, the app carries the held class, "Paused" is on the stage and the next foe waits (${JSON.stringify(s)} -> ${JSON.stringify(s2)})`);
         assert(meet(s.pr, s.sr) && s.pr[0] >= s.sr[0] && s.pr[2] <= s.sr[2] && !meet(s.pr, s.br), `${v}: the Paused plate sits inside the stage and clear of the tip (plate ${s.pr}, stage ${s.sr}, tip ${s.br})`);
-        if (w === 740) assert(!s.bar, `${v}: the tip covers the fight bar here, so the bar hides as before (${JSON.stringify(s)})`);
-        else assert(s.bar && Math.abs(s.dim - 0.5) < 0.05, `${v}: the fight bar stays in view under the tip, dimmed (opacity ${s.dim}, ${JSON.stringify(s)})`);
+        // (tips-hold-740: at 740x360 too; the tip there ends above the fight buttons)
+        assert(s.bar && Math.abs(s.dim - 0.5) < 0.05, `${v}: the fight bar stays in view under the tip, dimmed (opacity ${s.dim}, ${JSON.stringify(s)})`);
         await X('document.querySelectorAll("#soloBar .sbtn").forEach(b => b.classList.remove("nope", "hit", "refused")); window.__keys = []; true');
         if (w === 1280) {
           // keys that must not answer it: Space on a focused button, a held-down repeat, a key typed in a text box
@@ -15920,6 +16078,115 @@ if (section('tips-pause-says-so')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('tips-pause-says-so crashed: ' + (e.stack || e)); }
+
+// ==== tips-hold-740 (cold leg 10 Oct, finding 1): on a phone on its side a Got it tip used to hide the whole fight bar. Now the tip ends above the
+// fight buttons (only the bar's tab row hides under it), so the five buttons stay pressable and one press answers the tip and acts; the stage says
+// Paused; and a tip never opens on the foe's turn there. 1280x720 and 1366x640 keep the bar whole (75-onboard-ui.js fitBub, 80-landscape.css) ====
+if (section('tips-hold-740')) try {
+  const at = 'tips-hold-740';
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const raw0 = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-dipper-z4.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, edit) => {
+      const mobile = w < 1000;
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true });
+      const o = JSON.parse(raw0); if (edit) edit(o);
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: JSON.stringify(o), key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      return { ctx, page, errs, X };
+    };
+    // the tip, its Got it, the Paused plate and every fight button: where each sits, and what a press at each button's middle would hit
+    const LOOK = `JSON.stringify((() => { const b = document.querySelector('.ob-bub'), up = !!b && !b.hidden, ok = document.querySelector('.ob-ok'), bar = document.querySelector('#soloBar'), pl = document.querySelector('.ob-paused');
+      const vis = n => !!n && n.getClientRects().length > 0 && getComputedStyle(n).visibility !== 'hidden' && getComputedStyle(n).display !== 'none';
+      const R = n => { const r = n.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); };
+      const btns = bar ? [...bar.querySelectorAll('.sb-pane [data-act], .sb-row-act [data-act]')].filter(n => n.getClientRects().length).map(n => { const r = n.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, e = document.elementFromPoint(x, y);
+        return { act: n.dataset.act, r: R(n), hit: !!e && n.contains(e), vis: vis(n) }; }) : [];
+      return { want: soloGuideWants(), up, txt: up ? b.querySelector('.ob-txt').textContent : '', ok: up && ok && !ok.hidden ? ok.textContent : '', okr: up && ok && !ok.hidden ? R(ok) : null, br: up ? R(b) : null,
+        paused: ONBOARD.paused, held: $('app').classList.contains('guide-held'), side: $('app').classList.contains('guide-btn'), plate: vis(pl), pr: vis(pl) ? R(pl) : null,
+        bar: vis(bar), tabs: !!bar && vis(bar.querySelector('.sb-tabs')), btns, foe: liveFoe(), phase: guidePhase(true), vw: innerWidth, vh: innerHeight }; })())`;
+    const look = async X => JSON.parse(await X(LOOK));
+    const meet = (a, b) => !!a && !!b && a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+    const inside = (a, b) => !!a && !!b && a[0] >= b[0] && a[1] >= b[1] && a[2] <= b[2] && a[3] <= b[3];
+    const QUIET = 'GUIDE_STEPS.forEach(s => { if (!S.onboard.done[s.id]) S.onboard.done[s.id] = 1; }); true';
+    const killFoe = X => X('if (TURN_LIVE && TURN_LIVE.foe && !TURN_LIVE.ended) TURN_LIVE.foe.hp = 0; true');
+    const gapLine = async (X, page, id, ms = 20000) => { let s = await look(X); for (const t0 = Date.now(); !(s.want === id && s.paused) && Date.now() - t0 < ms;) { if (s.foe) await killFoe(X); await page.waitForTimeout(150); s = await look(X); } return s; };
+    const LONG = 'The Forge needs Copper Ore 0/25 from the Copper Vein and Pine Log 2/10 from the Pine Grove. Mine at the Copper Vein, then come back and make your first real blade.';
+    try {
+      // 1. a Got it line holds the kill gap: on the phone the six fight buttons stay in view and pressable beside a tip that ends above them,
+      //    even when the tip runs long; the stage says Paused; a tap on Attack answers it and attacks. Desktop views keep the whole bar.
+      for (const [w, h] of [[740, 360], [1280, 720], [1366, 640]]) {
+        const v = `${at} (browser ${w}x${h})`, phone = w === 740, { ctx, page, errs, X } = await open(w, h, o => { o.onboard.sayQ = [{ id: 'forage' }]; delete o.onboard.done['say:forage']; });
+        await X(QUIET); await X('window.__kills = 0; on("kill", () => { S.kills = 0; }); setActivity("fight"); true');
+        let s = await gapLine(X, page, 'say:forage');
+        await page.waitForTimeout(400); s = await look(X);
+        assert(s.want === 'say:forage' && s.paused && s.held && s.plate && s.ok === 'Got it', `${v}: the forage line holds the kill gap with a Got it, and the stage says Paused (${JSON.stringify(s)})`);
+        assert(!meet(s.pr, s.br), `${v}: the Paused plate is clear of the tip (plate ${s.pr}, tip ${s.br})`);
+        const check = (s, how) => {
+          const bad = s.btns.filter(b => !b.vis || !b.hit || meet(b.r, s.br));
+          assert(s.bar && s.btns.length === 6 && !bad.length, `${v}${how}: all six fight buttons are in view, clear of the tip, and a press at each one's middle reaches it (${s.btns.length} buttons; ${JSON.stringify(bad)}; tip ${s.br})`);
+          assert(inside(s.okr, s.br) && s.okr[3] <= s.vh, `${v}${how}: the tip's Got it sits whole inside the tip and on screen (Got it ${s.okr}, tip ${s.br})`);
+          if (phone) assert(s.side && !s.tabs, `${v}${how}: the tip reaches the bar's tab row, which hides under it (${JSON.stringify({ side: s.side, tabs: s.tabs })})`);
+          else assert(!s.side && s.tabs, `${v}${how}: the bar stays whole here, tabs and all (${JSON.stringify({ side: s.side, tabs: s.tabs })})`);
+        };
+        check(s, '');
+        // a long tip: the text scrolls inside the tip, which still ends above the buttons
+        await X(`document.querySelector('.ob-txt').textContent = ${JSON.stringify(LONG)}; true`); await page.waitForTimeout(700);
+        s = await look(X); check(s, ', a long tip');
+        if (phone) {
+          // a tip that starts too low for two lines above the buttons (the Next Up step under a tall chip) keeps the old rule: the whole bar
+          // hides, never a tip half over a button
+          await X('document.querySelector(".ob-bub").style.marginTop = "150px"; true'); await page.waitForTimeout(700);
+          const low = await look(X), half = low.btns.filter(b => b.vis && meet(b.r, low.br));
+          assert(!low.bar && !half.length && await X('$("app").classList.contains("guide-bar-off")'), `${v}, a low tip: the whole bar hides under it, no button half covered (${JSON.stringify({ bar: low.bar, half, tip: low.br })})`);
+          await X('document.querySelector(".ob-bub").style.marginTop = ""; true'); await page.waitForTimeout(700); s = await look(X);
+          assert(s.bar && !await X('$("app").classList.contains("guide-bar-off")'), `${v}: back in its place the tip fits again and the bar returns (${JSON.stringify({ bar: s.bar })})`);
+        }
+        await X('document.querySelectorAll("#soloBar .sbtn").forEach(b => b.classList.remove("nope", "hit", "refused")); true');
+        const a = s.btns.find(b => b.act === 'atk');
+        if (phone) await page.touchscreen.tap((a.r[0] + a.r[2]) / 2, (a.r[1] + a.r[3]) / 2); else await page.mouse.click((a.r[0] + a.r[2]) / 2, (a.r[1] + a.r[3]) / 2);
+        await page.waitForTimeout(80);
+        const acted = await X('(() => { const b = document.querySelector("#soloBar .sb-atk"); return b.classList.contains("nope") || b.classList.contains("hit"); })()');
+        s = await look(X);
+        const done = await X('!!S.onboard.done["say:forage"]');
+        assert(s.want !== 'say:forage' && done && acted, `${v}: one ${phone ? 'tap' : 'click'} on Attack answers the line (done ${done}) and reaches Attack (acted ${acted}) (${JSON.stringify(s)})`);
+        s = await look(X);
+        assert(!s.side && s.tabs && !await X('document.querySelector(".ob-txt").style.maxHeight'), `${v}: with the tip gone the bar is whole and the tip keeps no fitted height (${JSON.stringify({ side: s.side, tabs: s.tabs })})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // 2. the zone boss's tip may start while the boss opens (the foe's side of the turn). On the phone it waits for your turn instead;
+      //    a desktop still shows it at once (the same moment, so the check can see the case it guards)
+      for (const [w, h] of [[740, 360], [1280, 720]]) {
+        const v = `${at} (browser ${w}x${h}, the boss tip)`, phone = w === 740, { ctx, page, errs, X } = await open(w, h, o => { o.zone = 1; o.maxZone = 1; });
+        await X(QUIET); await X('delete S.onboard.done.boss; TURN_TUNE.introHand = TURN_TUNE.introAuto = 6; setActivity("fight"); fightBoss = true; spawn(); respawn = 0; true');
+        // the boss walks in (any other foe in the way ends at once)
+        let s = await look(X), boss = false;
+        for (const t0 = Date.now(); Date.now() - t0 < 20000; ) { boss = await X('!!(mob && mob.boss && !mob.dead) && liveFoe()'); if (boss) break; if (s.foe) await killFoe(X); await page.waitForTimeout(100); s = await look(X); }
+        const seen = [];
+        for (const t0 = Date.now(); Date.now() - t0 < 4000; ) { s = await look(X); seen.push(`${s.phase}:${s.want || '-'}`); if (s.phase !== 'foe') break; if (!phone && s.want === 'boss') break; await page.waitForTimeout(60); }
+        const early = seen.filter(k => /^(foe|windup):boss$/.test(k));
+        assert(boss && seen[0] && seen[0].startsWith('foe:'), `${v}: the boss's opening reads as the foe's side of the turn (boss ${boss}; ${seen.slice(0, 4).join(' ')})`);
+        if (phone) {
+          assert(!early.length, `${v}: no tip opens while it is the foe's side of the turn (${seen.slice(-6).join(' ')})`);
+          await X('TURN_TUNE.introHand = 1.2; TURN_TUNE.introAuto = 0.6; true');
+          s = await look(X); for (const t0 = Date.now(); s.want !== 'boss' && Date.now() - t0 < 12000;) { await page.waitForTimeout(100); s = await look(X); }
+          assert(s.want === 'boss' && s.phase === 'hero' && s.paused, `${v}: on your turn the boss tip opens and holds the fight (${JSON.stringify({ want: s.want, phase: s.phase, paused: s.paused })})`);
+          const bad = s.btns.filter(b => !b.hit);
+          assert(s.btns.length === 6 && !bad.length && s.plate, `${v}: under the boss tip the fight buttons are pressable and the stage says Paused (${JSON.stringify(bad)}, plate ${s.plate})`);
+        } else assert(early.length > 0, `${v}: here the boss tip opens while the boss opens, as before (${seen.slice(-6).join(' ')})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tips-hold-740 crashed: ' + (e.stack || e)); }
 
 // ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Confirm" for 6 s; Cancel always asks twice ====
 if (section('camp-build-tap-again')) try {

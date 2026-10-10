@@ -5,7 +5,7 @@
 // (always shown) and the landed-hit spark (only on a hit that landed; never on a parry, dodge or miss).
 // The atlases keep their approved PNG bytes, so they decode asynchronously: every frame's canvas exists at once (blank,
 // c._pend) and is filled when its atlas loads (at boot, well before a fight; 62-stage does not cache measurements of a
-// frame still pending).
+// frame still pending). In the split build a pack's atlases can come after boot (75-art-load): the frames fill then.
 //   foeArtFrames(key) -> the enemyFrames set (60b): { v2, key, idle0, idle1, wind, strike, hit, acts }
 //        acts[action] = { loop, start, end, rel, con (one-based frames, as FOE_ART), fr: [{ ms, body, atk, hit }] }
 //        body = { c, ox, oy, x0, lights, art } (ox, oy: the body origin, the grounded rear foot; x0: its leftmost opaque
@@ -17,7 +17,8 @@
 //   foeArtHas(key) -> bool
 var foeArtFrames, foeArtHas;
 {
-  const cache = {};
+  const cache = {}, later = {};   // later: key -> its frames' fill, while its pack's atlases are still loading
+  if (typeof on === 'function') on('artPack', e => { const f = e && e.kind === 'foe' && later[e.key]; if (f) f(); });
   foeArtHas = key => typeof FOE_ART === 'object' && !!FOE_ART[key];
   foeArtFrames = key => {
     if (!foeArtHas(key) || typeof document === 'undefined') return null;
@@ -40,12 +41,16 @@ var foeArtFrames, foeArtHas;
     const fx = {};
     for (const [id, X] of Object.entries(P.fx || {}))
       fx[id] = { loop: X.loop, fr: X.f.map(([ms, x, y]) => ({ ms, c: cut(X.atlas, x, y, fw, fh), ox: P.fxOrigin[0], oy: P.fxOrigin[1] })) };
-    for (const [path, list] of Object.entries(wait)) {   // every body and effect cut above
+    // every body and effect cut above; an atlas still on its way (the split build's area pack, 75-art-load) is cut when it arrives
+    const fill = () => { for (const [path, list] of Object.entries(wait)) {
+      if (!(path in P.atlases)) continue;
+      delete wait[path];
       const img = new Image();
       img.onload = () => { for (const [c, x, y] of list) { const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
         g.clearRect(0, 0, c.width, c.height); g.drawImage(img, x, y, c.width, c.height, 0, 0, c.width, c.height); c._pend = false; } };
       img.src = 'data:image/png;base64,' + P.atlases[path];
-    }
+    } if (Object.keys(wait).length) later[key] = fill; else delete later[key]; };
+    fill();
     const at = (id, i) => acts[id] && acts[id].fr[Math.min(i, acts[id].fr.length - 1)].body;
     return (cache[key] = { v2: true, key, acts, fx, mouth: P.mouth, idle0: at('idle', 0), idle1: at('idle', 2), wind: at('idle', 0), strike: at('idle', 0),
       hit: at('hurt', 1), art: key });

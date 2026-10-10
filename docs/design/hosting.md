@@ -165,15 +165,28 @@ files [measure]).
 (section 8). Then each area's art loads one area ahead, the boot set is the page, every icon, hero and portrait file, and the
 current zone's foe and area picture, and the zone picker shows a zone as loading for the moment it takes.
 
+**B2 as built (art-loader, 2026-10-10; the split build only, the inline page unchanged).** Icons, heroes, portraits and the
+hunting art stay boot files. Each foe's atlases and each battle background become a pack (`tools/build.mjs` `AREA_ART`; foe:imp
+0.38, foe:gloomjaw 0.84, bg:forest 1.44 MB on the wire, both shapes). The boot loader writes the save's zone's packs before the
+game; `src/js/75-art-load.js` loads the rest (the zone on screen, the zones either side, its area and the next) and holds the game
+under a plain "Loading <area>" line, with the zone number reading "loading", while the zone on screen lacks a pack or its pictures
+have not decoded. A pack file gone after a deploy reloads the page once (never twice in a minute; then the line asks). Measured:
+boot set 4.13 MB for a new game and 4.59 MB for zone 2 (3.45 and 3.91 counted under section 6's E1), against 4.97 MB for
+everything; a cold load at 10 Mbps is game-ready in 5.1 to 5.8 s. Record: `hosting/art-loader-red-team.md`,
+`hosting/art-loader-judge.md`.
+
 ## 6. The load budget (replaces the 14 MB page ceiling once the build splits)
 
 In the page-bytes doc's terms, decimal units. Wire for text (Brotli 4); file bytes for WebP and PNG.
 
 | Line | Budget | Today [measure] | Why |
 |---|---|---|---|
-| **First load** (everything before play, B1) | **warn above 6.0 MB on the wire (0.12 credits a load; B2's trigger), fail above 8.0 MB (0.16 credits)** | 4.92 MB (0.099 credits) | 6.0 MB is 4.8 s at 10 Mbps. Code grows about 30 KB a day on the wire [measure, growth], so code alone takes about 35 days to reach the warn line; owed art reaches it sooner, which is what B2 is for |
-| **Boot set** (B2 only; provisional, re-set by the art-loader card's own red team and judge) | **warn above 3.5 MB on the wire, fail above 4.0 MB** | 3.75 MB, with Mossy Hollow (759 KB) and Gloomjaw (841 KB), both known exceptions | A new area under the ceilings needs at most 0.19 MB for its picture and 0.12 MB for its largest pack, so later areas boot near 2.5 MB |
-| **Area set** (B2 only, provisional as above: an area's five monsters with Captains, its Champion, its picture, its stills) | **at most 1.0 MB of files** | Area 1: 1.99 MB, all three pieces known exceptions (Imp 0.39, Gloomjaw 0.84, Mossy Hollow landscape 0.76) | The ceilings add up to 0.43 + 0.12 + 0.19 + stills, about 0.8 MB; 1.0 MB leaves room for the Fenmother's area |
+| **First load** (everything before play, B1; under B2 a report of everything, no longer a line, art-loader judge 2026-10-10) | **warn above 6.0 MB on the wire (0.12 credits a load; B2's trigger), fail above 8.0 MB (0.16 credits)** | 4.92 MB (0.099 credits) | 6.0 MB is 4.8 s at 10 Mbps. Code grows about 30 KB a day on the wire [measure, growth], so code alone takes about 35 days to reach the warn line; owed art reaches it sooner, which is what B2 is for |
+| **Boot set** (B2: the page, every boot file and one zone's packs; art-loader judge 2026-10-10) | **warn above 3.5 MB on the wire, fail above 4.0 MB, for a new game (zone 1) and for the worst zone (zones 1 to 2000)**. E1: while Mossy Hollow's pack holds both shapes it counts at its landscape shape; the portrait share left out is at most 0.70 MB, and no other pack may use E1. E1 ends when bg-pack-by-shape lands | 3.45 MB new game, 3.91 MB zone 2 (warns: Gloomjaw); 4.13 and 4.59 with both shapes | 4.0 MB is about 3.2 s on the wire at 10 Mbps plus about 2 s to boot, inside the 6 s cold-load line with room for code growth. The real bytes print beside the counted ones, so E1 cannot hide growth |
+| **Cold load** (B2; a tool line, not `check.mjs`) | **game ready within 6.0 s at 10 Mbps, 150 ms round trip, median of 3**, for a new game and for the worst zone (`hosting/cold-load.mjs --mbps 10 --zone N --runs 3`). Slow 4G (1.6 Mbps) reported, no line | median of 3: 4.4 s new game, 4.9 s zone 2 (5.1-5.8 s with other runs sharing the CPU) | Runs in art-loader's check and netlify-split-deploy's |
+| **Zone set** (B2: the packs one zone's fights show, each at its larger shape) | **at most 0.65 MB** | 0.00 MB once area 1's exceptions are left out | The new-style ceilings at a Champion zone: scenery 0.40 + monster with Captain 0.085 + Champion 0.16 |
+| **Area set** (B2: the packs an area shows first, each at its larger shape) | **at most 1.0 MB** | 0.00 MB once area 1's exceptions are left out | New-style A1 forecasts 0.985 MB |
+| **Area 1's exceptions** (zone set and area set) | **named, left out of both sums, each held to a cap: foe:imp 0.39, foe:gloomjaw 0.85, bg:forest 1.45 MB (both shapes)**. The list empties at ns-a1-wire; bg-pack-by-shape may re-list bg:forest as its shape packs at measured bytes rounded up to 0.01 MB; any other exception needs a judge ruling named beside it | 0.38, 0.84, 1.44 MB | Area 1's art predates the ceilings; a new area ships one landscape picture |
 | **Per-pack ceilings** | **unchanged**: monster with Captain 85 KB, area sheet 425 KB, Champion 120 KB, Fenmother 200 KB, beast 60 KB, background 190 KB, still 25 KB | as in `page-size.mjs` | They keep Chapter 1's download small and the sprite style consistent; hosting changes neither reason |
 | **Hero pack** | set by `hero-screen-size-ruling` and `art-scale-ruling` (section 8) | Wren, Tobin, Pip: 0.11 MB on the wire together | |
 | **Whole web build** | report the total; warn above 25 MB of files | not built yet; `page-bytes.md` step F forecasts 14.72 MB in-page for Chapter 1 | A player who plays all of Chapter 1 downloads it once: 25 MB is 0.5 credits |
@@ -187,6 +200,11 @@ first load (one per art file, 0.002 credits), which is small next to the bytes.
 6.0 MB once merged, so the loader exists before the 8.0 MB line blocks an art merge.
 
 **Until the build splits**, nothing changes: the one-file build keeps the 14 MB check exactly as it is.
+
+**Where the B2 lines live:** `tools/build.mjs` `LOAD_LINES` and `loadReport` (printed by `node tools/build.mjs --split`), asserted
+with a mutation run for each fail line in `tools/check.mjs`'s split build section. Hero art is all boot files today; per-hero packs
+(only the save's hero's core moves at boot) are the follow-up card hero-packs, which the route S wire cards need before they add
+art to the split build, since the boot-set lines carry no hero exception.
 
 ## 7. What changes elsewhere
 
@@ -363,6 +381,9 @@ Each is one thread, small and checkable. Art-touching cards follow the art freez
    boot-set and area lines in section 6. It keeps old hashed files fetchable after a new deploy (an open tab still asks for
    them), or reloads the page when one is gone. Check: walk and eyes give the same runs in both modes; a cold load throttled to 10 Mbps is ready for input
    within 6 s.
+   **Done (art-loader, 2026-10-10):** B2 as built in section 5; the judge re-set section 6's lines (veto: "let the boot set go to
+   4.5"). Follow-ups: hero-packs, bg-pack-by-shape (after actor-scale; it must hold the game when a turned phone needs the other
+   shape), and load-budget-check re-carded to the per-pack ceilings plus the 25 MB report.
 7. **pack-code: parked** (Foreman, board only) until Cal answers section 7.4.
 8. **local-fonts** (P3, before Steam; claude, Opus medium): Handjet and Barlow Semi Condensed as local files under their open font
    licences, Google Fonts as a fallback.
