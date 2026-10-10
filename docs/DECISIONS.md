@@ -1301,6 +1301,14 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   game-placed axe counts as a minor detail only when the axe is an artist-drawn sprite that the game places and turns; it fixes the
   axe, not her woodcut fists, which are re-briefed. Her whole pack is 1.40-1.67 MB at Wren's pack scale; only her idle boots, and only
   when she is the save's hero. (`docs/design/route-s/ruling-oriel.md`)
+- **Route S Oriel recheck (oriel-rejudge, Opus art judge, 2026-10-10; Cal signs off when he is here, 13:35; Cal can veto: "Redraw
+  Oriel's thin moves"):** all 23 moves wire, with bad frames skipped, and no more credits. The two rerolls (156 credits) fixed most
+  first-ruling faults, but the art thread's "152 of 152 pass" missed 29 frames: 4 third hands (Turning Sky 4, Letters Unsent 3, Pull
+  a Reading 7, Woodcutting 3), 1 bendy staff (Take a Bearing 5), 1 extra leg (dodge 4) and short props. Per Cal's 13:44 "the best you
+  can with the least resources", every move skips its bad frames; idle, Victory and Foretold play all 8. Attack, Turning Sky,
+  Starfall and Woodcutting are thin (part of the swing skipped). Their impact frames move for Take a Bearing (4), Turning Sky (5) and
+  Woodcutting (7, the game-placed axe biting at 0.74 of her height). A paid redraw goes frame by frame, only on Cal's yes.
+  (`docs/design/route-s/recheck-oriel.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 

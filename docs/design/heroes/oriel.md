@@ -203,26 +203,26 @@ effect from, as a fraction of that cut frame's box (x from her back edge, y from
 card re-measures on the packed frames. No effect is drawn in the art: bolts, rings, wards and the falling star are the game's
 (62b recipes).
 
-| Move id | Used by | Frames | Impact frame | Emit point (frame: x, y) | Effect the game draws |
-|---|---|---|---|---|---|
-| `attack` | Attack | 8 | 5 | staff star, 5: 0.91, 0.25 | a small starlight bolt to the foe (62-stage `oriel: ['bolt', '#C8C0FF']`) |
-| `fallingletter` | O1 | 8 | 5 | raised fingertip, 5: 0.54, 0.03 | a thin light going up; the "Falls in 2" chip appears on the foe |
-| (no pose) `oriel:star` | the star landing | 0 | landing | above the foe's aim point | a bolt of light falling onto the foe, starlight burst, Stun |
-| `pullreading` | O2 | 8 | 4 | the star falls from above the foe (fist 4: 0.96, 0.67 only for the no-star hit) | the star yanked down, or a starlight hit |
-| `bearing` | O3 | 8 | 5 | staff star, 5: 0.89, 0.06 (a buff, no hit on the foe) | a glint on the staff star; a buff ring on her |
-| `clearnight` | O4 | 8 | 4 | open palm, 4: 0.97, 0.28 | a pale-blue star bolt |
-| `badnews` | O5 | 8 | 5 | staff star, 5: 0.92, 0.08 | a wave from the staff; Weaken (and Pin) marks on the foe |
-| `letters` | O6 | 8 | 5 | open book, 5: 0.91, 0.27 | a sweep of force from the pages; the chip ticks down |
-| `slivershum` | O8 | 8 | 5 | staff star, 5: 0.92, 0.24 | the big charged blast (finisher) |
-| `spark` | O9 Point of Light (`pointoflight`) | 8 | 4 | two fingers, 4: 0.99, 0.27 | a small bolt of starlight |
-| `frostshard` | O10 Hush (`hush`) | 8 | 4 | staff star, 4: 0.91, 0.21 | a bolt of cold starlight, Chill on hit (no ice shards) |
-| `arcaneward` | O11 Dusk Mantle (`duskmantle`) | 8 | 6 | her body centre, 6: 0.45, 0.55 (book 0.90, 0.23) | a mantle of dusk sky and small stars round her |
-| `hex` | O12 Foretold (`foretold`) | 8 | 5 | clawed hand, 5: 0.92, 0.19 | a pale sign settles on the foe (the Cursed status colour) |
-| `nova` | O14 Turning Sky (`turningsky`) | 8 | 4 | staff butt on the ground, 4: 0.87, 0.99 | a ring of starlight wheeling out from the ground |
-| `parry` | Parry | 8 | 3 (the block) | staff middle | parry flash |
-| `dodge` | Dodge | 8 | 3 (in the air) | none | none |
-| `hit`, `idle`, `defeat`, `victory` | | 8 each | none | none | none |
-| `mining`, `woodcut`, `forage`, `hunt` | gathering | 8 each | mining 5, woodcut 5, forage 4, hunt 5 | tool head | the game-placed axe on `woodcut` (empty fists) |
+| Move id | Used by | Frames | Impact frame | Emit point (frame: x, y) | Effect the game draws | Art (recheck-oriel.md) |
+|---|---|---|---|---|---|---|
+| `attack` | Attack | 8 | 5 | staff star, 5: 0.91, 0.25 | a small starlight bolt to the foe (62-stage `oriel: ['bolt', '#C8C0FF']`) | wire, skip 2-4 (thin) |
+| `fallingletter` | O1 | 8 | 5 | raised fingertip, 5: 0.54, 0.03 | a thin light going up; the "Falls in 2" chip appears on the foe | wire, skip 3-4 |
+| (no pose) `oriel:star` | the star landing | 0 | landing | above the foe's aim point | a bolt of light falling onto the foe, starlight burst, Stun | - |
+| `pullreading` | O2 | 8 | 4 | the star falls from above the foe (fist 4: 0.96, 0.67 only for the no-star hit) | the star yanked down, or a starlight hit | wire, skip 7 |
+| `bearing` | O3 | 8 | 5 | staff star, 5: 0.89, 0.06 (a buff, no hit on the foe) | a glint on the staff star; a buff ring on her | wire, skip 5; impact moves to 4 |
+| `clearnight` | O4 | 8 | 4 | open palm, 4: 0.97, 0.28 | a pale-blue star bolt | wire, skip 5 |
+| `badnews` | O5 | 8 | 5 | staff star, 5: 0.92, 0.08 | a wave from the staff; Weaken (and Pin) marks on the foe | wire, skip 3 |
+| `letters` | O6 | 8 | 5 | open book, 5: 0.91, 0.27 | a sweep of force from the pages; the chip ticks down | wire, skip 3 and 8 |
+| `slivershum` | O8 | 8 | 5 | staff star, 5: 0.92, 0.24 | the big charged blast (finisher) | wire, skip 3, 4, 7 (thin) |
+| `spark` | O9 Point of Light (`pointoflight`) | 8 | 4 | two fingers, 4: 0.99, 0.27 | a small bolt of starlight | wire, skip 3 |
+| `frostshard` | O10 Hush (`hush`) | 8 | 4 | staff star, 4: 0.91, 0.21 | a bolt of cold starlight, Chill on hit (no ice shards) | wire, skip 6 |
+| `arcaneward` | O11 Dusk Mantle (`duskmantle`) | 8 | 6 | her body centre, 6: 0.45, 0.55 (book 0.90, 0.23) | a mantle of dusk sky and small stars round her | wire (#359) |
+| `hex` | O12 Foretold (`foretold`) | 8 | 5 | clawed hand, 5: 0.92, 0.19 | a pale sign settles on the foe (the Cursed status colour) | wire |
+| `nova` | O14 Turning Sky (`turningsky`) | 8 | 4 | staff butt on the ground, 4: 0.87, 0.99 | a ring of starlight wheeling out from the ground | wire, skip 3, 4, 6 (thin); impact moves to 5 |
+| `parry` | Parry | 8 | 3 (the block) | staff middle | parry flash | wire, skip 5 (#359) |
+| `dodge` | Dodge | 8 | 3 (in the air) | none | none | wire, skip 4 |
+| `hit`, `idle`, `defeat`, `victory` | | 8 each | none | none | none | hit: wire, skip 5 (#359); idle, victory: wire; defeat: wire, skip 4 |
+| `mining`, `woodcut`, `forage`, `hunt` | gathering | 8 each | mining 5, woodcut 5, forage 4, hunt 5 | tool head | the game-placed axe on `woodcut` (empty fists) | forage: wire (#359); hunt: wire, skip 3-4; mining: wire, skip 6; woodcut: wire, skip 3 and 5 (thin), the axe bites on 7 |
 
 Passives (Old Light, News Arrives) have no pose. The pack's `spark`, `frostshard`, `arcaneward`, `hex` and `nova` files are
 packed under her new ids (a file mapping, nothing redrawn). **Cut, not used:** `foldchart`, `looksup` (drawn, kept on file, not wired).
