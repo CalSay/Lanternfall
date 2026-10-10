@@ -12734,13 +12734,16 @@ if (section('damage-on-impact (core)')) try {
     const a = J(`JSON.stringify({ ph: TURN_LIVE.phase, hp: TURN_LIVE.foe.hp, ev: __ev.slice(), cd: TURN_LIVE.cds['${ab || 'attack'}'], landed: !!(${landed || 'false'}) })`);
     assert(met && pressed && a.ph === 'strike' && a.hp === hp0 && a.ev.length === 1 && a.ev[0][0] === (ab ? 'ability' : 'soloAttack') && a.ev[0][1] === hp0 && a.cd === 0 && !a.landed,
       `${tag}: the press starts the move at once and lands nothing yet (met ${met}, pressed ${pressed}, ${JSON.stringify(a)}, foe HP ${hp0})`);
-    E(`(() => { for (let t = 0; t < ${wait} - 0.03; t += 0.01) tick(0.01); })()`);
+    E(`globalThis.__burn = 0; (() => { for (let t = 0; t < ${wait} - 0.03; t += 0.01) { if (!turnWaiting()) __burn += 0.01; tick(0.01); } })()`);
     const b = J(`JSON.stringify({ ph: TURN_LIVE.phase, hp: TURN_LIVE.foe.hp, dt: TURN_LIVE.now - ${t0} })`);
     assert(b.ph === 'strike' && b.hp === hp0, `${tag}: still flying ${b.dt.toFixed(2)} s after the press (impact at ${wait.toFixed(2)} s): no damage yet (${JSON.stringify(b)})`);
-    const hit = until(`TURN_LIVE.phase !== 'strike'`, 20);
+    const hit = E(`(() => { for (let i = 0; i < 20 && TURN_LIVE.phase === 'strike'; i++) { if (!turnWaiting()) __burn += 0.01; tick(0.01); } return TURN_LIVE.phase !== 'strike'; })()`);
     const c = J(`JSON.stringify({ ph: TURN_LIVE.ended ? 'ended' : TURN_LIVE.phase, hp: TURN_LIVE.foe.hp, dt: TURN_LIVE.now - ${t0}, cd: TURN_LIVE.cds['${ab || 'attack'}'], landed: !!(${landed || 'true'}) })`);
     assert(hit && c.hp < hp0 && c.dt >= wait - 1e-6 && c.dt < wait + 0.05 && c.cd > 0 && c.landed && (c.ph === 'recovery' || c.ph === 'ended'),
       `${tag}: the damage, its statuses and the cooldown land on the impact (${c.dt.toFixed(2)} s after the press, impact ${wait.toFixed(2)} s; ${JSON.stringify(c)})`);
+    // the Deepwell's Oil burns while the fight does not wait (57d): an action still burns heroRecovery, whatever its flight
+    const burn = c.ph === 'ended' ? null : E(`(() => { while (!TURN_LIVE.ended && TURN_LIVE.phase === 'recovery') { if (!turnWaiting()) __burn += 0.01; tick(0.01); } return __burn; })()`);
+    assert(burn === null || Math.abs(burn - E('TURN_TUNE.heroRecovery')) < 0.025, `${tag}: the action burns ${burn && burn.toFixed(2)} s of Deepwell Oil, as before (${E('TURN_TUNE.heroRecovery')} s)`);
   }
   // a fight cut off between the press and the impact lands nothing
   E(`TURN_LIVE = null; soloPick('pip', { now: true }); spawn();`);

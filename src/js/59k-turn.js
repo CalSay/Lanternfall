@@ -199,7 +199,8 @@ const turnDeepZone = (z0, floor) => Math.max(1, Math.round(z0 + TURN_TUNE.deep.f
 function turnWaiting() {
   const m = TURN_LIVE;
   if (!m || m.ended) return false;
-  return m.phase === 'hero' || m.phase === 'handoff' || m.phase === 'intro' || m.stop > 0 || (typeof turnPaused === 'function' && turnPaused());
+  // a strike (damage-on-impact) waits for its hit to show, all but its last `burn` s: the Oil an action burns stays heroRecovery
+  return m.phase === 'hero' || m.phase === 'handoff' || m.phase === 'intro' || m.stop > 0 || (m.phase === 'strike' && m.until - m.now > m.strike.burn) || (typeof turnPaused === 'function' && turnPaused());
 }
 function turnCombatOn() { return turnCombatScope(); }
 // a zone table [[zone, value], ...]: straight lines between the points, flat past the ends (a number is flat everywhere)
@@ -1104,7 +1105,8 @@ function turnHeroDone(m, io, id, slot, grades) {
   if (id === 'attack') io.emit('soloAttack', { kind: miss ? 'miss' : 'hit' });
   else io.emit('ability', { cls: 'solo', id, name: turnAb(id).name, slot, auto: false });
   // a hitstop already running (a Perfect ring) holds the fight clock while the swing plays on, so it comes off the wait
-  m.phase = 'strike'; m.strike = { id, slot, grades, wait, miss }; m.until = m.now + Math.max(0, wait - (m.stop || 0));
+  const T = TURN_TUNE, burn = T.heroRecovery - Math.max(T.impactRest, T.heroRecovery - wait);
+  m.phase = 'strike'; m.strike = { id, slot, grades, wait, miss, burn }; m.until = m.now + Math.max(0, wait - Math.max(0, m.stop || 0));
   return true;
 }
 function turnHeroLand(m, io, id, slot, grades, quiet, wait) {
