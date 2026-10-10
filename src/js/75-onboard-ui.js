@@ -105,13 +105,15 @@
     },
     ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => stockSay(id)]))
   };
-  let slotAb = '', scrollId = 'moss';   // the move just learned (the slot line); the first Scroll found (the Scroll line)
+  let slotAb = '', scrollId = 'moss', slotUsed = false, slotSeen = false;   // the move just learned (the slot line), whether it has been pressed since and its line seen on the Hero menu; the first Scroll found (the Scroll line)
   const sayText = id => { const t = SAY_TXT[id] || SAY_MORE[id]; try { return typeof t === 'function' ? t() : t; } catch (e) { return ''; } };
   // a line that no longer matches the game when its turn comes is dropped, never said (the Scroll already spent)
   const SAY_STILL = {
     gather: () => typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit(),   // his promise is for the cold fire only
     scroll: () => { try { return SCROLL_ORDER.some(id => scrollCount(id) > 0); } catch (e) { return false; } },
-    slot: () => { try { return !!slotAb && soloAbilities().includes(slotAb); } catch (e) { return false; } },
+    // tip-order-and-lateness: and not once you have pressed the move (you found it; the line came 2 min late and told you where it was)
+    // and not after you leave the Hero menu it was read on (it would come back to hold the next kill gap)
+    slot: () => { try { return !!slotAb && !slotUsed && !(slotSeen && S.tab !== 'party') && soloAbilities().includes(slotAb); } catch (e) { return false; } },
     // forge-line-while-fighting: dropped once the live line was seen (it marks the say key), the step is over, nothing gathered is short, or the hero gathers
     ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => !O().done['say:' + id] && onboardWants(id) && stockGathered(id).length > 0 && fightingNow()]))
   };
@@ -152,7 +154,9 @@
   on('wipe', e => { if (e && e.boss && !e.arena) { defeatZone = e.zone || S.zone; sayQueue('defeat'); } });
   const defeatStale = () => { const i = sayQ.indexOf('defeat'); if (i >= 0 && S.maxZone > defeatZone) { sayQ.splice(i, 1); if (sayCur === 'defeat') sayCur = ''; } };
   on('scrollDrop', e => { if (e && e.firstEver) { scrollId = e.id || 'moss'; sayQueue('scroll'); } });
-  on('abilityLearned', e => { if (e && e.hero === soloHero() && soloAbilities().length > 1) { slotAb = e.id; sayQueue('slot'); sayKeep(); } });
+  on('abilityLearned', e => { if (e && e.hero === soloHero() && soloAbilities().length > 1) { slotAb = e.id; slotUsed = slotSeen = false; sayQueue('slot'); sayKeep(); } });
+  // (the queue is in the save, so the line leaves it at once: a reload never brings it back)
+  on('ability', e => { if (e && !e.auto && slotAb && e.id === slotAb) { slotUsed = true; if (sayQ.includes('slot')) { const c = sayCur; sayDone('say:slot', false); if (c !== 'slot') sayCur = c; } } });
   // guide-goal-after-reload: his Pine Log line carries the first job, and the queue lives in memory only, so a reload before it was read
   // (Got it or ×) would lose it. Queue it again once a boot while the fire is still cold. Not an unlock, so the unlock spacing is untouched.
   // reload-keeps-tips: the lines queued and unread when the game closed, in order (each still checked by SAY_STILL when its turn comes)
@@ -256,7 +260,7 @@
   // W1-A: a step that waits for materials shows live progress and never pauses the game.
   // "Chop 12 Pine Log for the Workbench (5/12)". When the hero is not at the node that yields the
   // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
-  const VERB = { wood: 'Chop', ore: 'Mine', crystal: 'Mine', hide: 'Hunt' };
+  const VERB = { wood: 'Chop', ore: 'Mine', crystal: 'Mine', hide: 'Hunt' }, GERUND = { Chop: 'Chopping', Mine: 'Mining', Hunt: 'Hunting', Gather: 'Gathering' };
   let weaponOpened = false;   // the Craft tab has opened itself on the first weapon this visit (the 'weapon' step)
   // forge-tip-goes-stale: a materials line shows on Camp, on Gather and on the game screen, never over another menu (it followed a fighter
   // onto every menu for 15 minutes and never moved). The step itself stays current (onboardStep), so nothing behind it starts and nothing is done.
@@ -275,7 +279,8 @@
       : `${verb} ${x.n} ${x.name}${at && x.kind ? ` at the ${NODE_NAMES[x.kind][x.t - 1]}` : ''} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
     if (x.fam === 'gold') return { text, live: 1, node: onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: onGame() ? [0.74, 0.62] : null, side: 'up' };
     const there = S.activity === 'gather' && x.kind && S.node.kind === x.kind && S.node.t === x.t;
-    const spec = { text, live: 1 };
+    // tip-order-and-lateness: mining at the vein it names, the line counts instead of telling you to mine (the chop lesson keeps its words)
+    const spec = { text: there && need.length === 1 && id !== 'chop' ? `${GERUND[verb] || 'Gathering'} ${x.name} for ${what} (${x.have}/${x.n}).` : text, live: 1 };
     if (there) {
       spec.node = onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`); spec.at = onGame() ? [0.74, 0.62] : null; spec.side = 'up';
     } else {
@@ -316,6 +321,7 @@
     return { text: text(nm), node: card ? btn : onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`), at: !card && onGame() ? [0.74, 0.62] : null, side: 'up',
       go: { label: `Equip ${nm}`, fn: () => { equipItem(w.it.id, w.pos); } } };
   };
+  const toolHave = () => { const m = toolMats().filter(([f]) => f !== 'gold').map(([f, t]) => costName(f, t)); return m.length > 1 ? m.slice(0, -1).join(', ') + ' and ' + m[m.length - 1] : m[0] || 'materials'; };
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays over Camp and Gather and points at the lit tab
     // (forge-tip-goes-stale: stockSpec draws no materials line over any other menu)
@@ -336,8 +342,10 @@
       return null;
     },
     bench: () => campPath('bench', ["The fire's burning now. Open Camp and we'll build.", 'Open Camp.', "Build a Workbench. That's where your tools are made."]),
+    // tip-order-and-lateness: the step shows once the materials are in hand, which can be long after the Workbench went up (the stock:tool line
+    // asked for the ore first), so it names what you have, never "The Workbench is up" or "You'll need one for the ore"
     tool: () => {
-      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is up. Open Craft and make your first tool.' };
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: `You have the ${toolHave()} for a Copper Pickaxe. Open Craft and make it.` };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="bench"]');
       if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Choose the Workbench.' };
@@ -345,7 +353,7 @@
       const t1 = q('#sec-craft-recipes .cf-tiers button[data-t="1"]');
       if (t1 && t1.getAttribute('aria-pressed') !== 'true') return { node: t1, text: 'Choose Tier 1.' };
       // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
-      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll need one for the ore." };
+      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: 'Make a Copper Pickaxe. It mines faster than your Stone Pick.' };
     },
     // gear-in-first-25: a bow or staff is made at the Workbench, so for Wren and Pip the Forge is for ingots and metal gear
     forge: () => weaponAtBench() ? campPath('forge', ['Next, the Forge. Open Camp.', 'Open Camp.', 'Build the Forge. It makes ingots and metal gear.'])
@@ -420,18 +428,23 @@
     // hesketh-boss-loss-line: except the boss-loss line, whose moment is the loss itself. A boss you lose to is fought again at once, foe first,
     // so a hero back up never gets a gap: it comes once the Try again card is shut, while the hero is still down, and holds the recovery
     const downOk = i => i === 'defeat';
-    if (sayQ.length && O().tips && !document.hidden && (heroUp() || sayQ.some(downOk)) && guidePhase(!guideMenuCovers()) === 'between') {
+    // tip-order-and-lateness: the slot line is said on the Hero menu where the move was learned, at once. On a wide view the fight runs beside
+    // that menu, so it would wait for the next kill gap (2 min in the dipper's run); there it shows beside the fight and holds nothing (sideSay)
+    const sayGap = guidePhase(!guideMenuCovers()) === 'between', menuSay = i => i === 'slot' && S.tab === 'party' && isWide() && fightInView();
+    if (sayQ.length && O().tips && !document.hidden && (heroUp() || sayQ.some(downOk)) && (sayGap || sayQ.some(menuSay))) {
       // forge-line-while-fighting: a materials line that waits (SAY_WAIT) lets the lines behind it go first; a stale one is dropped at once
       for (const i of sayQ.slice()) if (STOCK_WHAT[i] && !SAY_STILL[i]()) { const c = sayCur; sayDone('say:' + i, false); if (c !== i) sayCur = c; }
-      const ready = i => (heroUp() || downOk(i)) && !(SAY_WAIT[i] && SAY_WAIT[i]());
+      const ready = i => (sayGap || menuSay(i)) && (heroUp() || downOk(i)) && !(SAY_WAIT[i] && SAY_WAIT[i]());
       const id = sayCur && sayQ.includes(sayCur) && ready(sayCur) ? sayCur : sayQ.find(ready) || '';
       if (sayCur && sayCur !== id) sayCur = '';
       if (!id) {}
       else if (SAY_STILL[id] && !SAY_STILL[id]()) sayDone('say:' + id, false);
-      else if (sayCur === id || !step || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && ONBOARD.paused))) {
+      // (tip-order-and-lateness: on the Hero menu the slot line goes before a step already up there, which comes back after its Got it)
+      else if (sayCur === id || !step || (id === 'slot' && S.tab === 'party' && !LESSON_IDS.includes(step.id)) || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && ONBOARD.paused))) {
         // the card first: he waits, and the gap after the kill waits with him (the card holds the game too), so after Continue he speaks before the next foe
         // zone10-clear-moment: a line already chosen (sayCur) waits too; it stays queued and speaks after the card
-        if (cardComing()) { hide(); ONBOARD.paused = fightInView() && cardUp() && !tickOwed(); return; }
+        // (a line beside the running fight holds nothing, so only a card waits it: a hit on its way is no reason to hide it)
+        if (menuSay(id) ? cardUp() : cardComing()) { hide(); ONBOARD.paused = fightInView() && cardUp() && !tickOwed(); return; }
         sayCur = id; step = sayStep(id);
       }
     }
@@ -448,11 +461,12 @@
     // (materials, gold) waits for a calm screen instead (no fight, or a menu over it)
     // forge-line-while-fighting: on a wide view a materials line on Camp or Gather stays beside the fight, steady, holding nothing (keyed on the menu only)
     const stockSide = !!STOCK_WHAT[step.id] && isWide() && STOCK_TABS.includes(S.tab);
+    const sideSay = step.id === 'say:slot' && menuSay('slot');
     // tips-pause-says-so: nothing shows or holds in the gap after a wipe (the hero is down), and a news line's hold ends once the fight leaves view
     // (Gather, an upright menu)
     // hesketh-boss-loss-line: that holds for a step that pauses too (the Hero tab's points): shown at 0 HP it froze the game with the hero down,
     // so he never got up and the boss-loss line waiting on him never came
-    const between = !stockSide && fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:'));
+    const between = !stockSide && !sideSay && fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:'));
     const downSay = step.id.startsWith('say:') && downOk(step.id.slice(4));
     if (between && !heroUp() && !downSay) return hide();
     const gap = between && !onboardPaused(step) && !(cur && cur.id === step.id && gapHeld);
@@ -478,6 +492,7 @@
       if (R[step.id] >= GUIDE_QUIET && guideRetire(step.id)) return hide();
     }
     cur = step; curGo = spec.go || null;
+    if (step.id === 'say:slot' && S.tab === 'party') slotSeen = true;
     putHidden(okb, !(step.ok || curGo || gapHeld));
     putText(okb, curGo ? curGo.label : 'Got it');
     putToggle(bub, 'ok-row', !!(step.ok || gapHeld) && !curGo);   // a plain Got it sits beside the tip, so a short portrait stage keeps its height
