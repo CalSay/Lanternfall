@@ -139,15 +139,27 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
 
   // ================= canvas and scene =================
   const stageEl = $('stage'), cv = $('cv'), ctx = cv.getContext('2d');
-  // Zoom: the stage is laid out in LOGICAL px (SW x SH) and drawn at ZM CSS px per logical px, so
-  // one art px (2 logical px) is 2 * ZM CSS px: 2, 3, 4, 5 or 6 (whole pixels). ZM is the largest
-  // that keeps the logical stage at least minW x ZOOM_H (room for the party, the foe and the HUD);
+  // Zoom: the stage is laid out in STAGE px (SWS x SHS) and drawn at ZS CSS px per stage px, so
+  // one art px (2 stage px) is 2 * ZS CSS px: 2, 3, 4, 5 or 6 (whole pixels). ZS is the largest
+  // that keeps the stage at least minW x ZOOM_H stage px (room for the party, the foe and the HUD);
   // on a whole-number device pixel ratio only zooms that land on whole device pixels are used.
   // The width floor depends on the shape: ZOOM_W on square or wide stages, easing down to ZOOM_WT
   // on tall portrait stages (height 1.3x the width or more), where height is spare and the sprites
   // would otherwise stay small under a tall empty sky. ZOOM_WT still fits 3 columns and the foe.
   // CW x CH: the container in CSS px, re-read on every resize.
   let SW = 0, SH = 0, SCH = 0, CW = 0, CH = 0, ZM = 1, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1, hudB = 0;
+  // Actor scale (actor-scale, ruling #328, docs/design/route-s/ruling.md): heroes, foes, bosses, adds, gather nodes and beasts
+  // draw ACTOR_K times bigger against unchanged scenery. The stage zoom ZS (pickZoom, whole steps) sets the scenery:
+  // SWS x SHS stage px, built SCH tall with its ground on GYS. Everything else on the stage (actors, effects, lights, the
+  // layout) lives in actor px: SW x SH, ground GY, drawn at ZM = ZS * AK CSS px per actor px. AK is ACTOR_K on landscape
+  // stages and 1 in portrait until UX-L1. Nearest-neighbour: an art px of a 96 px hero is 1.5 x ZS CSS px (3 at 1280x720).
+  // ACTOR_K1, a stage at zoom 1 (a phone on its side, 740x360): 1 (gate G3). At 1.5 the heroes' heads ran under the turn
+  // line, the Grit row and a foe trick's line, and the timing bar crossed their feet. A crowd (2 or more foes on the stage:
+  // a Deepwell pack, boss adds, the raid-only real-time packs) keeps today's size too, as the zoom steps out for it (zoomStep):
+  // at 1.5 a pack of wide foes left no room for the hero's 16 px and 15% overlap (G2). syncPack resizes when it changes.
+  // While AK > 1 the stage box carries .actor-k (20-stage.css: the whose-turn banner takes the turn line's spot, over the heads).
+  const ACTOR_K = 1.5, ACTOR_K1 = 1;
+  let ZS = 1, AK = 1, SWS = 0, SHS = 0, GYS = 1, crowd = false;
   const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_WT = 216, ZOOM_H = 196, SOLO_MIN_W = 300;
   // S6-E (combat-2 2.5): the width floor rises x1.4 for a swarm zone or a boss with 3+ adds (zoomX), one step out,
   // chosen per zone or boss fight (sceneReset, a boss's first pack), never between packs of one zone.
@@ -205,20 +217,25 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     if (!w || !h) return;
     if (w === CW && h === CH && dpr === DPR && cv.width === Math.round(w * DPR)) return;
     DPR = dpr; CW = w; CH = h;
-    ZM = pickZoom(w, h, DPR);
+    ZS = pickZoom(w, h, DPR);
+    AK = LAND_Q.matches && !crowd ? (ZS === 1 ? ACTOR_K1 : ACTOR_K) : 1;
+    ZM = ZS * AK;
+    SWS = Math.round(w / ZS); SHS = Math.round(h / ZS);
     SW = Math.round(w / ZM); SH = Math.round(h / ZM);
     cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
     // Ground line 80% down (the compact-strip CSS assumes it). On a short strip the ground drops
     // nearer the bottom so the party stays under the HUD; the scenery is then built taller (SCH, its
-    // own ground at 80%) and simply runs off the bottom edge.
-    GY = SH >= 210 ? Math.round(SH * 0.8) : Math.round(Math.max(SH * 0.8, SH - 14));
-    SCH = SH >= 210 ? SH : Math.round(GY / 0.8);
+    // own ground at 80%) and simply runs off the bottom edge. The actors' ground is the scenery's, to the nearest actor px.
+    GYS = SHS >= 210 ? Math.round(SHS * 0.8) : Math.round(Math.max(SHS * 0.8, SHS - 14));
+    SCH = SHS >= 210 ? SHS : Math.round(GYS / 0.8);
+    GY = Math.round(GYS / AK);
     // Tall stages keep a floor band of 76 CSS px or more under the ground line: the ability button
     // and the small stage buttons move down into it (20-stage.css, .stage.tall). There the upper
     // lane also stands higher (10% of the height, up to 40 px), so both ranks and their HP bars read
     // clearly even when a narrow stage packs the columns close.
     tall = h - GY * ZM >= 76; stageEl.classList.toggle('tall', tall);
     laneY = Math.max(12, Math.min(tall ? 40 : 26, Math.round(SH * (tall ? 0.1 : 0.085))));
+    const sbox = stageEl.closest('.stagebox'); if (sbox) sbox.classList.toggle('actor-k', AK > 1);
     readHud();
     scene = null; layoutDirty = true; solo.key = ''; packDirty = true;
   };
@@ -233,7 +250,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     else if (deepOn()) th = 'well';
     else if (tg === 'node') th = typeof gatherTheme === 'function' ? gatherTheme(S.node.kind) : skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
     else { th = zoneTheme(S.zone); hue = zoneHue(S.zone); }
-    if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
+    if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SWS, SCH, hue); curTheme = th; curHue = hue; }
   }
   // The well's scene (a Deepwell run) is built when the player opens the Deepwell view (or has a
   // paused run), in idle time and small steps like warmScene, so a dive does not build it inside a
@@ -241,21 +258,21 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // the zone on screen and the next zone keep theirs).
   let wellWarm = '';
   function warmWell() {
-    const key = SW + 'x' + SCH;
+    const key = SWS + 'x' + SCH;
     if (!SW || wellWarm === key || typeof idleTask !== 'function' || typeof sceneSteps !== 'function') return;
     if (!(S.deep && S.deep.run) && !(typeof viewOpen === 'function' && viewOpen('adv', 'deep'))) return;
     wellWarm = key;
-    const step = sceneSteps('well', SW, SCH, 0), run = () => { if (wellWarm === key && !step()) idleTask(run); };
+    const step = sceneSteps('well', SWS, SCH, 0), run = () => { if (wellWarm === key && !step()) idleTask(run); };
     idleTask(run);
   }
   // Build the scene for zone z at the stage's size, then its device-size plates and atmosphere copies,
   // in idle time and in small steps (each well under a long task at x4: sceneSteps, scenePlates
   // 'queue' in 63-scenery), so entering that zone draws from caches. sceneFor keys on the stage's
-  // logical size (SW x SCH), not the element's CSS size. Returns false before the first resize.
+  // size in stage px (SWS x SCH), not the element's CSS size. Returns false before the first resize.
   warmScene = function (z) {
     if (!SW || typeof idleTask !== 'function' || typeof sceneSteps !== 'function') return false;
-    const th = zoneTheme(z), hue = zoneHue(z), w = SW, h = SCH, k = DPR * ZM;
-    const same = () => w === SW && h === SCH && k === DPR * ZM, step = sceneSteps(th, w, h, hue);
+    const th = zoneTheme(z), hue = zoneHue(z), w = SWS, h = SCH, k = DPR * ZS;
+    const same = () => w === SWS && h === SCH && k === DPR * ZS, step = sceneSteps(th, w, h, hue);
     // soon (front of the queue): one build step per task, then the plates and atmosphere steps
     const run = () => { if (!same()) return; const sc = step(); if (sc) scenePlates(sc, k, w, h, 'queue'); else idleTask(run, true); };
     idleTask(run, true);
@@ -326,8 +343,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     // (the upper lane's half-column step counts toward the room, so nobody leaves the left edge)
     // The front column stands at PARTY_X1 (a little less on narrow stages), and further back when a
     // big foe (an elder, the wyrm, a tree node) would stand on it: its right edge stops 8 px into the foe's box.
-    const hf = hero.fr && hero.fr.idle0, fl = frontLeft(), reach = fl != null ? fl + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16) : 1e9;
-    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
+    const hf = hero.fr && hero.fr.idle0, fl = frontLeft(), reach = fl == null ? 1e9 : AK > 1 ? fl - heroReach() : fl + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16);
+    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (AK > 1 ? 0.2 : packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
     const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
     const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
     const laneX = Math.round(Math.max(16, D * 0.46));
@@ -353,6 +370,26 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     order.sort((a, b) => a.lane - b.lane || a.col - b.col);
     front = hero;
     for (const a of order) if (a.alpha === 1 && (a.col > front.col || (a.col === front.col && a.lane > front.lane))) front = a;
+  }
+  // actor-scale G2: with big actors (AK > 1) the hero stands clear of the foe: its idle reach (the hand-drawn art's idle
+  // frame, 64h, else the baked one) ends GAP_K stage px before the front foe's first opaque column (frontLeft).
+  // the gathered load (63c: the cart, woodpile, basket or crate) stands at a spot of the scene, in stage px; the gather layer
+  // draws in actor px, so at AK > 1 it gets the spot in actor px (the load itself draws 1.5x, beside the 1.5x nodes)
+  const pileV = { ext: { pile: null } };
+  function pileScene() {
+    const pl = scene && scene.ext && scene.ext.pile;
+    if (AK === 1 || !pl) return scene;
+    pileV.ext.pile = { kind: pl.kind, x: pl.x / AK, y: Math.round(pl.y / AK), w: pl.w };
+    return pileV;
+  }
+  const GAP_K = 16;
+  const reachC = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+  function heroReach() {
+    let f = null;
+    const id = typeof heroArtId === 'function' && heroArtId();
+    if (id && reachC && typeof heroArtDraw === 'function') { const i = heroArtDraw(reachC.getContext('2d'), id, 'fightIdle', 0, 0, 0, { frame: 0 }); f = i && i.f; }
+    f = f && f.c ? f : hero.fr && hero.fr.idle0;
+    return (f ? rightEdge(f) - f.ox : 16) + Math.ceil(GAP_K / AK);
   }
   // First opaque column of a baked frame (cached per canvas): the sprite's real left edge.
   const leftEdges = new WeakMap();
@@ -421,6 +458,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const tg = target();
     if (tg === 'mob') { syncPack(); return; }
     if (packN) { packN = 0; packList = null; for (const s of slots) bindSlot(s, null); }
+    if (crowd) { crowd = false; CW = 0; resize(); }   // gathering and the raid: no crowd (actor scale)
     foe = solo;
     let key, fr = null;
     if (tg === 'world') {
@@ -448,6 +486,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       const n = Math.min(NSLOT, L.length), all = L !== packList;
       for (let i = 0; i < NSLOT; i++) if (all || i >= packN) bindSlot(slots[i], i < n ? L[i] : null);
       packList = L; packN = n; packDirty = true;
+      if ((n > 1) !== crowd) { crowd = n > 1; CW = 0; resize(); }   // a crowd draws at today's size (actor scale)
     }
     if (packDirty) placePack();
     let s = slots[0];
@@ -554,7 +593,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const s = target() === 'mob' ? (packN ? slots[drawOrd[0]] : null) : solo;
     if (!s || !s.fr) return null;
     const f = s.fr.idle0;
-    return Math.min(s.hx || soloX(), SW - 6 - (f.c.width - f.ox) - foePad()) - f.ox;
+    return Math.min(s.hx || soloX(), SW - 6 - (f.c.width - f.ox) - foePad()) - f.ox + (AK > 1 ? leftEdge(f) : 0);
   }
   // Well foes (mob.deep) wear a cold palette: every hue is folded into a 70-degree band of teal to
   // indigo (so neighbouring pieces keep different hues), colours are muted, the ink turns blue-black
@@ -1422,18 +1461,18 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     if (s.ifx) { const X = F.fx[s.ifx.id], f = X && X.fr[clipFrame(X, 1, X.fr.length, s.ifx.t) - 1]; if (f) ctx.drawImage(f.c, Math.round(s.ifx.x - cam - f.ox), Math.round(s.ifx.y - f.oy)); }
   }
   // A fixed battle background (BG_ART, 21zb): the landscape export on a wide stage, the portrait one on a tall stage,
-  // scaled (smooth) to cover the stage with its painted road on the ground line GY, centred. False until it has loaded.
+  // scaled (smooth) to cover the stage with its painted road on the ground line GYS, centred (stage px, the scenery's view). False until it has loaded.
   const bgImgs = {};
   function bgArtDraw(g, theme) {
     const B = typeof BG_ART === 'object' && BG_ART[theme]; if (!B) return false;
-    const o = SW >= SH ? 'land' : 'port', E = B[o], k0 = theme + o;
+    const o = SWS >= SHS ? 'land' : 'port', E = B[o], k0 = theme + o;
     let img = bgImgs[k0];
     if (!img) { img = bgImgs[k0] = new Image(); img.src = 'data:image/webp;base64,' + E.src; }
     if (!img.complete || !img.naturalWidth) return false;
-    const k = Math.max(SW / E.w, GY / (E.road * E.h), (SH - GY) / ((1 - E.road) * E.h));
+    const k = Math.max(SWS / E.w, GYS / (E.road * E.h), (SHS - GYS) / ((1 - E.road) * E.h));
     const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true;
-    g.fillStyle = '#0B0810'; g.fillRect(0, 0, SW, SH);
-    g.drawImage(img, (SW - E.w * k) / 2, GY - E.road * E.h * k, E.w * k, E.h * k);
+    g.fillStyle = '#0B0810'; g.fillRect(0, 0, SWS, SHS);
+    g.drawImage(img, (SWS - E.w * k) / 2, GYS - E.road * E.h * k, E.w * k, E.h * k);
     g.imageSmoothingEnabled = sm;
     return true;
   }
@@ -1459,19 +1498,24 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const t0 = performance.now();
     pickScene();
     const tg = target(), raid = tg === 'world', gath = tg === 'node', fight = tg === 'mob';
-    const camF = reduced ? 0 : Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3, cam = Math.round(camF);
+    // camF: the camera sway in stage px (the scenery's); cam: the same in actor px
+    const camF = reduced ? 0 : Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3, cam = Math.round(camF / AK);
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
     const K = DPR * ZM, tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
-    ctx.setTransform(K, 0, 0, K, sx * K, sy * K);
-    A.devView(K, sx * K, sy * K);
+    // the scenery's view (stage px, ZS) and the actors' (actor px, ZM); the shake moves both by the same whole device px
+    const KS = DPR * ZS, sxd = Math.round(sx * K), syd = Math.round(sy * K);
+    const sceneView = () => ctx.setTransform(KS, 0, 0, KS, sxd, syd), actorView = () => ctx.setTransform(K, 0, 0, K, sxd, syd);
+    sceneView();
+    A.devView(K, sxd, syd);
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
     // an approved fixed battle background (21zb, Mossy Hollow): one painted scene with its light baked in, in place of
     // the procedural layers, their fog, glows and vignette
     const bgArt = fight && !deepOn() && bgArtDraw(ctx, curTheme);
-    if (!bgArt) drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
-    const huntBg = gath && S.node.kind === 'hide' && typeof huntBgDraw === 'function' && HUNT_TUNE.interim && huntBgDraw(ctx, SW, GY);   // interim Hunting grounds (64i)
+    if (!bgArt) drawScene(ctx, scene, camF, 'back', KS, sxd, syd, '#0B0810');
+    const huntBg = gath && S.node.kind === 'hide' && typeof huntBgDraw === 'function' && HUNT_TUNE.interim && huntBgDraw(ctx, SWS, GYS);   // interim Hunting grounds (64i)
+    actorView();
     const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; dv.hx = hero.fr ? ax(hero) : null; dv.hy = hero.hy; dv.hl = hero.lane; dv.hd = hero.down; dv.hf = hero._f; dv.hX = hero._x; dv.hY = hero._y; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
@@ -1488,7 +1532,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       }
     }
     for (const a of order) { const al = actorA(a); if (al > 0.01) shadowAt(ax(a) - cam, a.down ? 16 : a.lane === 0 ? 11 : 13, (a.lane === 0 ? 0.35 : 0.5) * al, a.hy); }
-    if (stageFx) { const v = FXV; v.T = T; v.cam = cam; v.SW = SW; v.SH = SH; v.GY = GY; v.K = K; v.DPR = DPR; v.sx = sx; v.sy = sy;
+    if (stageFx) { const v = FXV; v.T = T; v.cam = cam; v.SW = SW; v.SH = SH; v.GY = GY; v.K = K; v.DPR = DPR; v.sx = sxd / K; v.sy = syd / K;
       v.fight = fight && turnFight(); v.foe = fight && foe.fr ? foe : null; v.hx = handX(hero); v.hy = handY(hero); v.hfX = ax(hero); v.hfY = hero.hy;
       v.hc = hero._f && hero._f.c; v.hX = hero._x; v.hY = hero._y; stageFx.draw(ctx, 'back', v); }
     // Shield Wall dome (back half)
@@ -1504,7 +1548,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       const pw = Math.round(foe.w * 0.7), px0 = Math.round(foe.x - cam - pw / 2);
       ctx.fillStyle = '#0B0810'; ctx.fillRect(px0 - 1, foe.gy + 5, pw + 2, 3);
       ctx.fillStyle = nodeColor(); ctx.fillRect(px0, foe.gy + 6, Math.round(pw * Math.min(1, S.gProg)), 1);
-      if (typeof gatherDraw === 'function') gatherDraw(ctx, scene, cam, 'front', solo);
+      if (typeof gatherDraw === 'function') gatherDraw(ctx, pileScene(), cam, 'front', solo);
     }
     for (const a of order) drawActor(a, cam);
     if (fight) for (let i = 0; i < packN; i++) drawFoeFx(slots[i], cam);   // a pack foe's attack effects, over the hero
@@ -1517,7 +1561,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       for (let i = 0; i < guardN; i++) { const x = hero._x + hero._f.ox - guardN * 3 + i * 6; ctx.fillStyle = '#0B0810'; ctx.fillRect(x - 1, top - 1, 5, 5); ctx.fillStyle = i % 2 ? '#8FB8FF' : '#C8DCFF'; ctx.fillRect(x, top, 3, 3); }
     }
     A.drawProj(ctx);
-    if (!huntBg && !bgArt) drawScene(ctx, scene, camF, 'fg', K, sx * K, sy * K);   // the hunting grounds bring their own foreground
+    if (!huntBg && !bgArt) { sceneView(); drawScene(ctx, scene, camF, 'fg', KS, sxd, syd); actorView(); }   // the hunting grounds bring their own foreground
 
     // smooth pass: slashes, character and effect lights
     ctx.imageSmoothingEnabled = true;
@@ -1528,7 +1572,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     for (const a of order) lightsOf(a);
     if (fight) { for (let i = 0; i < packN; i++) foeLights(slots[i], tele); } else foeLights(solo, null);
     ctx.globalCompositeOperation = 'source-over';
-    if (!bgArt) drawAtmosphere(ctx, scene, T, SW, SCH, camF);
+    if (!bgArt) { sceneView(); drawAtmosphere(ctx, scene, T, SWS, SCH, camF); actorView(); }
 
     // class and ability effects, on top of the atmosphere so they read
     ctx.imageSmoothingEnabled = true;
@@ -1567,15 +1611,15 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
 
     // combat HUD (device px), then back to logical px for the floating text
     const hud = hudOn();
-    if (hud) { A.devView(0); drawHud(cam, sx, sy); ctx.setTransform(K, 0, 0, K, sx * K, sy * K); A.devView(K, sx * K, sy * K); ctx.imageSmoothingEnabled = true; }
-    if (stageFx) { ctx.setTransform(1, 0, 0, 1, 0, 0); stageFx.draw(ctx, 'dev', FXV); ctx.setTransform(K, 0, 0, K, sx * K, sy * K); ctx.imageSmoothingEnabled = true; }
+    if (hud) { A.devView(0); drawHud(cam, sxd / K, syd / K); actorView(); A.devView(K, sxd, syd); ctx.imageSmoothingEnabled = true; }
+    if (stageFx) { ctx.setTransform(1, 0, 0, 1, 0, 0); stageFx.draw(ctx, 'dev', FXV); actorView(); ctx.imageSmoothingEnabled = true; }
 
     // crisp floating text, in the band under the foe header
     ctx.textAlign = 'center'; ctx.lineJoin = 'round';
     // Text keeps about the same CSS size at every zoom (a little larger on big stages). It starts
     // under the foe header (or lower, near the foe's head), never higher than 16% down the stage,
     // rises, and fades out before it reaches the header; the right edge keeps clear of the ability button.
-    const tz = Math.min(ZM, 1.35) / ZM, top = Math.max(hudB + 4, SH * 0.16), band = Math.max(20, GY - 6 - top);
+    const tz = Math.min(ZS, 1.35) / ZM, top = Math.max(hudB + 4, SH * 0.16), band = Math.max(20, GY - 6 - top);
     const xr = SW - (target() === 'node' || tall ? 4 : 60 / ZM), fTop = hud ? Math.min(foe.top, hudFoeTop) : foe.top;
     for (const f of floats) {
       if (!f.on) continue;
@@ -1687,7 +1731,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // Small HP bars over every party member and foe, an ability gauge under each bar, status chips
   // (Guard, Blessing, Shield Wall, Rally Hymn, haste on the hero; Focus and Embers on the foe), the
   // boss "!" telegraph and the Glint on a gather node. Drawn after everything but the floating text,
-  // in DEVICE px on a grid of U device px (a HUD pixel: about 0.5 + ZM CSS px, 1.5 at zoom 1 up
+  // in DEVICE px on a grid of U device px (a HUD pixel: about 0.5 + ZS CSS px, 1.5 at zoom 1 up
   // to 3 on big stages), so it stays crisp and readable at every zoom. It stacks upward from the top of each head,
   // so it never covers a face. Per frame: a few fillRects and cached 3x5 glyph and 5x5 icon sprites;
   // no text, gradients or DOM. Data: the 55-party hooks unitHp / unitCd (polled at 10 Hz into each
@@ -1696,7 +1740,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   let U = 3, hudPoll = 0, glintT = 0, hudFoeTop = 0;
   const hudOn = () => !(S.settings && S.settings.hud === false);
   const HK = '#0B0810', HBG = '#2B2033', BONE = '#F4ECDC';
-  const hudPx = () => Math.max(2, Math.round(DPR * Math.min(3, 0.5 + ZM)));
+  const hudPx = () => Math.max(2, Math.round(DPR * Math.min(3, 0.5 + ZS)));   // the stage zoom: bigger actors keep today's HUD
   // 3x5 digits, baked once per colour into a strip of 4 px cells.
   const GLM = ['111101101101111', '010110010010111', '111001111100111', '111001011001111', '101101111001001', '111100111001111', '111100111101111', '111001010010010', '111101111101111', '111101111001111'];
   const glyphSets = new Map();
@@ -2057,10 +2101,13 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
   new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
-  // The eyes hook (89-eyes-hook.js, tools/eyes.mjs): where the hero and the foes were last drawn, in stage px (times ZM = CSS px
+  // stageStats reports the stage zoom (ZM), its size and ground in stage px (SW, SH, GY: the scenery's), the actor scale AK,
+  // and the actor view (ZA CSS px per actor px; aSW, aSH, aGY); its foes, front and hudB are in actor px. A foe:
+  // [key, x, gy, w, h, ox, first and last opaque column + 1 of its idle frame, lane].
+  // The eyes hook (89-eyes-hook.js, tools/eyes.mjs): where the hero and the foes were last drawn, in actor px (times ZM = CSS px
   // from the canvas's top-left), the frame canvas each was drawn from and the big floating texts alive. Read only.
-  stageRects = () => ({ ZM, SW, SH, hero: hero._f && !hero.down ? { x: hero._x, y: hero._y, c: hero._f.c } : null,
+  stageRects = () => ({ ZM, SW, SH, AK, hero: hero._f && !hero.down ? { x: hero._x, y: hero._y, c: hero._f.c } : null,
     foes: slots.slice(0, packN).filter(s => s.fr && s.dX != null && s.m && !s.m.dead).map(s => ({ key: s.key, boss: !!s.m.boss, x: s.dX, y: s.dY, c: (s.dF || s.fr.idle0).c })),
     floats: floats.filter(f => f.on).map(f => ({ txt: f.txt, big: f.big, crit: f.crit, left: Math.max(0, f.life) })) });
-  stageStats = () => ({ critFloats, heroSt: hero.st, heroPending: hero.pending, heroSwings, critLive: floats.filter(f => f.on && f.crit).map(f => ({ txt: f.txt, color: f.color, life: f.max })), drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0)] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
+  stageStats = () => ({ critFloats, heroSt: hero.st, heroPending: hero.pending, heroSwings, critLive: floats.filter(f => f.on && f.crit).map(f => ({ txt: f.txt, color: f.color, life: f.max })), drawMs: Math.round(drawMs * 100) / 100, SW: SWS, SH: SHS, CW, CH, ZM: ZS, DPR, GY: GYS, AK, ZA: ZM, aSW: SW, aSH: SH, aGY: GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0), rightEdge(s.fr.idle0), s.lane] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
 }
