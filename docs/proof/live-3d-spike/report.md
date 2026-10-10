@@ -3,6 +3,11 @@
 Card `live-3d-spike`, from the ruling in `docs/design/live-3d/ruling.md` (#320). Scratch work, 9 Oct 2026 (the card's window is
 12-16 Oct; it started early). Nothing here is in the game or any build. This report is the only file that merges.
 
+**Cancelled (Cal, 10 Oct 2026 00:37):** "We can probably cancel this now. Scenario has made 2D the best option we have." The
+spike stops here: no frame rate, battery or blind-pick runs follow, and the gates below are a record, not a verdict. Wren's look
+moves to the judge card `integrate-route-s-wren`; its route S clips are `experiments/live-3d-spike/clips/clip-4.mp4` (blind key in
+`clips/key.md`) and the stills `experiments/live-3d-spike/shots/s-{1280x720,740x360,1024x768}.png`, under `/mnt/project-files/`.
+
 ## The short answer
 
 Live 3D clears every gate Claude can measure: bytes, Gloomjaw's hours, parry timing and reduced motion. The smooth-pictures
