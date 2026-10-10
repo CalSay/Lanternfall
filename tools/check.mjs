@@ -89,7 +89,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 120, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'side-column-fits-740': 52, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -18315,6 +18315,10 @@ if (section('nu-chip-gate-label-fits')) try {
 // its station gates and each raw cell its recipe takes, one level short, gathering that skill and not) and every away line
 // (awayChipSay over each gathered material: about N in the longest away, fills up, full), and measures the longest of each, with
 // the players' web fonts and with the fallbacks (display-fallback-font).
+// fallback-font-fits: in both fonts the Next Up eyebrow stays on one line, clear of the status, fighting and gathering; while gathering
+// the place name, its skill line, the material and its count show whole with the longest words the game puts there (each node's name,
+// skill line at Lv 120, material and an over-the-cap count), the count inside the storage box and the caption clear of it; and at 360x740
+// every gate label shows whole in a Next Up list sheet row (a 4-line clamp cut the longest in the fallback face).
 if (section('side-column-fits-740')) try {
   const at = 'side-column-fits-740', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
@@ -18339,6 +18343,32 @@ if (section('side-column-fits-740')) try {
       l.textContent = keep[0]; if (a && keep[1] != null) a.lastChild.textContent = keep[1];
       return o;
     }, [label, away]);
+    // the eyebrow: one line, ending left of the status
+    const eyebrow = page => page.evaluate(() => {
+      const e = document.querySelector('#nuChip .nu-eye'), st = document.querySelector('#nuChip .nu-cst');
+      const rs = [...e.childNodes].filter(n => n.nodeType === 3).flatMap(n => { const rg = document.createRange(); rg.selectNodeContents(n); return [...rg.getClientRects()]; }).filter(r => r.width > 0);   // the words, not the menu icon beside them
+      return { lines: new Set(rs.map(r => Math.round(r.top))).size, right: Math.round(Math.max(...rs.map(r => r.right))), st: st && st.offsetParent ? Math.round(st.getBoundingClientRect().left) : 1e9 };
+    });
+    // the place caption and storage box while gathering, with the longest words in place (read and put back in one task)
+    const caption = page => page.evaluate(src => window.__t.x(src), `(() => {
+  const by = a => [...new Set(a)].sort((x, y) => y.length - x.length);
+  const kinds = Object.keys(CRAFT_NODES), names = [], mats = [], subs = [];
+  for (const k of kinds) for (let t = 1; t <= 5; t++) { if (NODE_NAMES[k] && NODE_NAMES[k][t - 1]) names.push(NODE_NAMES[k][t - 1]); mats.push(matName(k, t));
+    subs.push(\`\${SKILL[skillOf(k)]} Lv 120 · \${nodeTime(k, t).toFixed(1)}s per swing\`); }
+  const holds = ['50,000/50,000 · Over the cap', '50,000/50,000 stored', '120/50,000 stored'];
+  const N = by(names).slice(0, 3), M = by(mats).slice(0, 3), U = by(subs).slice(0, 2);
+  const zn = document.getElementById('zName'), zs = document.getElementById('zSub'), mn = document.getElementById('mName'), mh = document.getElementById('mHp');
+  const keep = [zn, zs, mn, mh].map(e => e.textContent), box = document.querySelector('.hud .mob');
+  const clip = e => e.scrollWidth > e.clientWidth + 1;
+  const out = []; 
+  for (const n of N) for (const u of U) for (const m of M) for (const h of holds) {
+    zn.textContent = n; zs.textContent = u; mn.textContent = m; mh.textContent = h;
+    const zb = zn.getBoundingClientRect(), ub = zs.getBoundingClientRect(), mb = box.getBoundingClientRect(), hb = mh.getBoundingClientRect(), nb = mn.getBoundingClientRect();
+    const bad = [clip(zn) && 'name clipped', clip(zs) && 'skill line clipped', clip(mn) && 'material clipped', clip(mh) && 'count clipped',
+      hb.right > mb.right + 1 && 'count past the box', nb.right > mb.right + 1 && 'material past the box', Math.max(zb.right, ub.right) > mb.left - 2 && 'caption under the box'].filter(Boolean);
+    if (bad.length) out.push(bad.join(', ') + \` (\${n} / \${u} / \${m} / \${h})\`); }
+  [zn, zs, mn, mh].forEach((e, i) => e.textContent = keep[i]);
+  return { N, M, U, bad: out.length, first: out.slice(0, 3) }; })()`);
     try {
       for (const webFonts of [true, false]) for (const [w, h] of [[740, 360], [1024, 768], [1280, 720], [1366, 640], [1920, 1080]]) {
         const v = `${at} ${w}x${h}${webFonts ? '' : ', fallback fonts'}`, phone = w < 1000, desk = w >= 1200;
@@ -18382,9 +18412,15 @@ if (section('side-column-fits-740')) try {
           assert(worst.chipBottom + 4 <= worst.dock, `${v}: fighting, the chip ends above .sb-tabs (${worst.chipBottom} vs ${worst.dock}: ${worst.lt})`);
         }
         assert(floor, `${v}: the chip label keeps its ${desk ? 14 : 13} px floor`);
+        let eb = await eyebrow(page);
+        assert(eb.lines === 1 && eb.right <= eb.st, `${v}: fighting, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
         // gathering: the away chip shows and the dock does not; every label with every away line fits above the screen's foot
         await X('navGo({ act: "gather", node: { kind: "ore", t: 1 } }); true');
         await page.waitForTimeout(600);
+        eb = await eyebrow(page);
+        assert(eb.lines === 1 && eb.right <= eb.st, `${v}: gathering, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
+        const cp = await caption(page);
+        assert(cp.bad === 0, `${v}: gathering, the place name, skill line, material and count show whole (${cp.bad} cut${cp.bad ? ': ' + cp.first[0] : ''})`);
         worst = null; bad = null; floor = true;
         for (const lt of L) for (const al of A) { const o = await measure(page, lt, al); if (!o) { bad = 'no chip'; break; }
           if (!o.away || o.dock != null) { bad = `gathering shows no away chip or the dock (${JSON.stringify(o)})`; break; }
@@ -18399,6 +18435,42 @@ if (section('side-column-fits-740')) try {
           assert(worst.away.bottom + 4 <= worst.foot, `${v}: gathering, the away chip ends above the screen's foot (${worst.away.bottom} vs ${worst.foot}: ${worst.lt} / ${worst.al})`);
         }
         assert(floor, `${v}: the chip and away text keep the ${desk ? 14 : 13} px floor`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // upright at 360x740 a list sheet row's words get about 203 px: every gate label shows whole there, in both fonts
+      for (const webFonts of [true, false]) {
+        const v = `${at} 360x740${webFonts ? '' : ', fallback fonts'}`;
+        const ctx = await browser.newContext({ turns: true, webFonts, viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        await page.click('#nuChip'); await page.waitForTimeout(400);
+        const o = await X(`(() => {
+          const labels = new Set();
+          for (const kind of Object.keys(CRAFT_KINDS)) { if (CRAFT_KINDS[kind].legacy) continue;
+            for (let t = 2; t <= 5; t++) { const rec = craftRecipe(kind, t); if (!rec) continue;
+              const gs = [], st = stationOf(kind), need = CRAFT_STATION_REQ[t - 1];
+              if (st) for (const sk of new Set([st.skill, 'smith'])) gs.push({ skill: sk, lv: need - 1, need, station: st.key });
+              for (const k of Object.keys(rec)) { if (k === 'gold') continue; const prod = REFINE_PRODUCTS[k];
+                for (const [f, tt] of prod ? prod.inputs(t) : [[k, t]]) { if (f === 'coal' || !CRAFT_NODES[f]) continue;
+                  const sk = skillOf(f), nd = skillReq(sk, tt); if (nd > 1) gs.push({ skill: sk, lv: nd - 1, need: nd, mat: costName(f, tt) }); } }
+              for (const gate of gs) for (const on of [true, false]) labels.add(gateLabel({ kind, t, gate }, on)); } }
+          const l = document.querySelector('.nu-list .nu-row:not([hidden]) .nu-lbl'); if (!l) return null;
+          const keep = l.textContent, r = { n: labels.size, most: 0, cut: [] };
+          for (const lt of labels) { l.textContent = lt;
+            const rg = document.createRange(); rg.selectNodeContents(l); const rs = [...rg.getClientRects()].filter(q => q.width > 0), lb = l.getBoundingClientRect();
+            r.most = Math.max(r.most, new Set(rs.map(q => Math.round(q.top))).size);
+            if (Math.max(...rs.map(q => q.bottom)) > lb.bottom + 1 || Math.max(...rs.map(q => q.right)) > lb.right + 1) r.cut.push(lt); }
+          l.textContent = keep; return r; })()`);
+        assert(o && o.n > 100, `${v}: the Next Up list sheet opens with a row and the game makes gate labels (${o && o.n})`);
+        if (o) { console.log(`  ${v}: the longest gate label takes ${o.most} lines in a list sheet row`);
+          assert(!o.cut.length, `${v}: every gate label shows whole in a list sheet row (${o.cut.length} cut${o.cut.length ? ': ' + o.cut[0] : ''})`); }
         assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
