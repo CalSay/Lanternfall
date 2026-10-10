@@ -39,3 +39,18 @@ changes how a check waits for the real state; it never loosens, skips, retries o
   still did not stop it. The press is now the slot's own `pointerdown` and `pointerup` sent to the button, so the game's long-press
   code runs as for a finger and a redraw cannot move the pointer off it. A missed press names the slot's pointer events. A
   subclass choice with no tabs fails saying which path was taken. Thresholds (100, 4, 12) unchanged.
+
+## C14 away card (browser), c14-away-card-load-flake, 2026-10-10
+
+- **Seen:** "C14 away card browser crashed: page.click: Timeout 30000ms exceeded" in full local 4-job runs (#304's run on 9 Oct, then
+  craft-reveal-flake-2's ten runs on bd5b361e). Passed alone. Reproduced with 3 copies of the section beside all four shards: 4 of 24
+  timed out, every one on the second card's More click (`page.click('.away-ov .away-more')`, the next-up-first block).
+- **Clicked too early / covered:** Playwright's log said the Great Lantern card (`.gl-ov`) "intercepts pointer events". The away-limit
+  cases fake `S.maxZone = 30` and `40` on a fresh hero. Zone 40 is past the Hollow's end (zone 35), so the next game tick lit its Great
+  Lantern and queued the full-screen card. The card waits while an away card is up (75-lantern-ui `blocked`), polling every 600 ms.
+  The section closed the last limit card in one step and opened the next card in another; under load that gap was long enough for the
+  lantern card to open over it. A 1.2 s pause in that gap failed every run alone. Not a game bug: a fresh hero never reaches zone 40.
+- **Fix:** each faked zone is marked seen (`S.lantern.seen = S.maxZone`) in the same step, so it lights nothing. Every More click now waits
+  (5 s cap) until its button is the element under its own centre and fails naming what covers it ("gl-ov was on top of it"). The fixed
+  timers after Begin and the More clicks became waits for the create screen to close and for More's groups to be built. Closing a card
+  the next step needs gone fails if there is no card or it stays open, instead of `if (c) c.click()`. Every assert is unchanged.

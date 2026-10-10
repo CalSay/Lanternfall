@@ -1,0 +1,23 @@
+# seed: 1
+# Proof for card ability-effects-live. Abilities in a turn fight had no effect of their own: the hero swung and a number
+# rose. Now every ability of every hero has an effect from 62b-fx.js (trails, flashes, sparks, rings, shake) in its
+# status colour, aimed at the foe's chest, and a status that lands pops its icon by the foe.
+# The route plays the early fixture (Wren, zone 8) into a turn fight, presses Attack, then Wren's first ability (Echo Arrow, key Q).
+# tools/check.mjs "ability-effects-live" proves every ability of Wren, Tobin and Pip at 1280x720, a sample at 740x360,
+# and reduced motion at 360x740 (still glows and icons, no particles or shake). Run at all three views.
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+expect "Attack"
+tap-if "Attack"
+burst attack-trail
+wait 3
+key q
+burst echo-arrow
+wait 2
+shot echo-after
+expect ".hud.vs .mob"

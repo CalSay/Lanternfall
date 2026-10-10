@@ -87,12 +87,18 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   it) and is not queued (fight-input-during-banner). **Skills**: each slot's ability and cooldown; tap one to change it. **Foe**: its kind, an elite's trait and
   the moves you have learned (a zone boss shows the ones your lost tries taught you, one more a try; a beaten boss shows all). Parry and Dodge (A, S) sit under the dock on every tab and glow while a
   hit winds up. Short landscape keeps the names under small tiles. The turn order shows on the Versus card only.
+- **Ability effects** (`62b-fx.js`, ability-effects-live): every Attack and ability of every hero has its own effect on the
+  stage (trails, flashes, sparks, rings, shake), aimed at the foe's chest. Each status has one colour for every hero (red = Bleed;
+  the table is in [art-pipeline.md](design/art-pipeline.md) 10), lights the foe while it lasts and pops Codex's icon as it lands.
+  Reduced motion shows a still glow and the icon.
 - **Abilities** (`24c-data-abilities.js`, `56e-abilities.js`, `75-abilities-ui.js`): 14 a hero; the signature is free
   and the rest cost a Scroll of their tier (or a higher one) from zone bosses; a Moss Scroll teaches one move per hero, so spares
   wait for Tobin and Pip, and Abilities' Can learn list says who they are for. "Scroll found." shows only for a Scroll the hero in play
   can use now. On a zone 6 to 10 boss's first clear, the Lantern Cache card asks "Learn one now:" with up to three moves the dropped
   Scroll can teach the hero in play (only when two or more can be learned): a pick learns it and fills a free slot, or opens Abilities on
-  it when the slots are full; "Keep the Scroll" keeps it (`75-caches-ui.js`, boss-spoils-pick). **Talents** (`24e-data-talents.js`): two choices for each
+  it when the slots are full; "Keep the Scroll" keeps it (`75-caches-ui.js`, boss-spoils-pick). The moves keep the Abilities list's
+  order; once the zone boss odds are in, each says what it does to the line and the one that lifts it most gets a gold bar, in place
+  (cache-pick-order-settles). **Talents** (`24e-data-talents.js`): two choices for each
   ability and for Attack, Parry and Dodge. **Ability icons** (Codex's drawings, `art/abilities/`, converted by
   `tools/art/abilityicons.py`, embedded by `tools/art/embed-icons.mjs` under the live ability id): Pip's 14 are drawn on
   the bar, the picker and the Abilities list. Wren and Tobin keep lettered tiles until all 14 of theirs are drawn (whole
