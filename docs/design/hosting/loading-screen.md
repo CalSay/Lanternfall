@@ -102,7 +102,10 @@ the boot set by design. That is the question for the judge.
   online layer; hosting or Netlify; moving hunting art out of the boot set (a later card).
 - **Check:** `node tools/build.mjs --split && node tools/check.mjs --only <sections>`; cold load median of 3 at 10 Mbps for a new
   game and zone 2; screenshots at 1280x720, 740x360 and 360x740.
-- **Moving the hero packs to 16 frames** is a later step, after Cal has seen the art thread's side-by-side test.
+- **Moving the hero packs to 16 frames** is not decided. Cal saw the art thread's 16-frame test (Tobin's attack) on 10 Oct
+  09:36: "The 16 frame one looks too jittery ... I don't think the stages or frames were layed out well enough". The art thread
+  keeps working on it. So this card is sized and judged at today's 8 frames (first-fight set about 0.6 MB); the 16-frame rows
+  above are what a later change would cost, not part of this card.
 
 ## 6. Tricks to speed it up (Cal, 09:29: "Downloading a few MB shouldn't really take that long")
 
