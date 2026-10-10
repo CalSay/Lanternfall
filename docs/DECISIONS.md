@@ -152,6 +152,19 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Moss teaches one move per hero, "Scroll found." toasts only when the hero in play can use it, and a full-slot learn detail says "Swap it
   in for:". No drop, trade or save change.
 
+- **Claude decided: Oriel Vess joins at the zone 20 Champion with a falling-star frost kit (oriel-ability-spec, Opus judge
+  2026-10-10; Cal can veto with "Oriel joins at zone 25").** She is the fourth hero to carry the lamp. Her scene plays after
+  Maren's on the Sepulchre Engine's card, and she joins at the road's level; the Star Chart becomes her hero quest. Her kit is
+  Pip's 6 shared caster moves plus 8 of her own from Codex's list, with Fold the Chart and Someone Looks Up cut. Falling Letter
+  calls one star that lands 2 turns later for a frost hit and a Stun, and every bonus is read when it lands. Zone 20, not 25,
+  because casual players reach it on day 5 rather than day 15-27, right where the climb stalls. Spec:
+  [heroes/oriel.md](design/heroes/oriel.md).
+
+- **Cal decided: Oriel's own abilities get plain star names (Cal, 2026-10-10 11:12: "Can you rename the abilities officially").**
+  Falling Star, Call It Down, Take a Bearing, Starbolt, Ill Omen, Shooting Star, Starfall and News Arrives. Codex's names (Falling
+  Letter, Pull the Reading, Clear Night, Bad News, Letters Unsent, Sliver's Hum) read as riddles; players should see what a move
+  does. Ids stay as they were, since saves, art and effects key on them. [heroes/oriel.md](design/heroes/oriel.md).
+
 ## Combat
 
 - **Turn-based, one enemy at a time.** Enemies are stronger to make up for it. No click-spamming. (2026-09-30)
