@@ -200,7 +200,8 @@ draw, the fault is in the art, not the timing.
 In a turn fight, Wren's Attack lands (about 4.9K off Gloomjaw at once) but plays no swing in any look, today's 2D included: the
 hero's swing state never leaves 0. The likely cause, read from the code and not tested: `59k-turn.js:676` emits only
 `soloAttack`, while `62-stage.js` swings the hero only on `classTap`, `ability` or `lunge` (lines 988, 1026, 1035). This is outside
-the spike and has gone to the Foreman. The final clips call the stage's own swing at each press, the same way in all four looks.
+the spike and has gone to the Foreman. The final clips call the stage's own swing at each press, the same way in all four looks. The
+test page does the same on every Attack, so Cal sees her shoot.
 That swing also adds hits of its own, so the final clips end on 14,835 Gloomjaw HP, all four alike.
 
 ## Known gaps
@@ -213,7 +214,8 @@ That swing also adds hits of its own, so the final clips end on 14,835 Gloomjaw 
 
 ## What happens next
 
-1. Cal runs frame rate (phone at 740x360, a 2019-or-older laptop) and battery on the test page, by 18 Oct.
+1. Cal runs frame rate (phone at 740x360, a 2019-or-older laptop) and battery on the test page, by 18 Oct. Steps:
+   `/mnt/project-files/experiments/live-3d-spike/howto/fps-and-battery.md`.
 2. Cal picks his favourite of clips 1-4 without opening the key.
 3. The judge applies the ruling's decision rule to this report plus those results, by 20 Oct.
 
