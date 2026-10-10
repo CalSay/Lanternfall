@@ -1,0 +1,16 @@
+# seed: 1
+# Proof for card foe-windup-after-hold. In the split build, if "Loading ..." covers a fight while a foe winds up a hit, the foe
+# starts that wind-up again from the start once the line lifts (59k turnWindupAgain), so the player sees the whole tell before
+# the parry and dodge windows. Wind-ups keep their length. A hit the player already pressed for, and the guide's own pause (a
+# lesson waits for the press in its window), carry on as before. tools/check.mjs "foe wind-up after a hold (browser)" lands a
+# hold mid wind-up in a zone 1 fight and checks all three. The inline page (this route) never holds: it proves a fight still
+# plays through its foe's turns with no loading line. Run at all three views.
+new early
+wait 2
+tap-if "Continue"
+tap-if "Got it"
+wait 4
+expect-no "#artWait"
+shot fight
+wait 3
+shot foe-turn

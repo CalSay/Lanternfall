@@ -115,6 +115,7 @@ const WEIGHT = {
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
+  'foe wind-up after a hold (browser)': 18,   // 18 s locally alone (foe-windup-after-hold, 2026-10-10)
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
   'hero queue (hero-queue)': 9,   // 8 s locally alone (hero-queue, 2026-10-10)
   'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
@@ -627,6 +628,73 @@ if (section('load-hold-progress (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('load-hold-progress crashed: ' + (e.stack || e)); }
+
+// ---- foe wind-up after a hold (card foe-windup-after-hold; src/js/59k-turn.js turnWindupAgain) ----
+// A hold over the fight (a pack still loading, a card) stops the tick but not the frame clock: a foe mid wind-up then starts that
+// hit's wind-up again from the start (and the move's clip, on its first hit), so the player sees the whole tell. Wind-ups keep
+// their length. Not restarted: a hit the player already pressed for, and the guide's pause (a lesson waits for the press there).
+// The inline page at the three views, a zone 1 fight: a test hold (holdGame, as 75-art-load registers its own) lands mid wind-up.
+if (section('foe wind-up after a hold (browser)')) try {
+  const { pw, exe } = browserTools;
+  const inline = fs.existsSync(distFile) ? fs.readFileSync(distFile, 'utf8') : '';
+  if (!pw || !exe || !inline) skipBrowser('foe wind-up after a hold: Playwright, Chromium or dist/lanternfall.html not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const KEY = 'lanternfall.save.v5', mid = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8'));
+      const probe = h => { const end = h.lastIndexOf('})();\n</script>'); return h.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + h.slice(end); };
+      for (const [vw, vh] of [[1280, 720], [740, 360], [360, 740]]) {
+      const view = vw + 'x' + vh, ctx = await browser.newContext({ viewport: { width: vw, height: vh }, turns: true }), page = await ctx.newPage(), errs = [];
+      await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...mid, last: Date.now() })]);
+      page.on('pageerror', e => errs.push(String(e)));
+      await routePage(page, 'http://lf.test/', probe(inline), new Map());
+      await page.goto('http://lf.test/', { waitUntil: 'commit' });
+      await page.waitForFunction(() => !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+      await page.waitForTimeout(500);
+      const X = js => page.evaluate(j => window.__t.x(j), js);
+      // the hero's turns go to the foe (lessons.md: drive the foe with turnBegin, not its own turns), so every turn is a wind-up and
+      // nothing dies; events counted; a test hold and a test guide pause to switch
+      await X(`(() => { onboardTips(false); S.activity = 'fight'; setZone(1); ui(true);
+        window.__ev = { move: 0, win: 0 }; on('foeMove', () => window.__ev.move++); on('parryWindow', () => window.__ev.win++);
+        window.__hold = false; holdGame(() => window.__hold);
+        let gp = false; Object.defineProperty(ONBOARD, 'paused', { get: () => gp || window.__gp, set: v => { gp = v; }, configurable: true });
+        const f = () => { if (S.zone !== 1 || S.activity !== 'fight') { S.activity = 'fight'; setZone(1); }   // the save's own zone may come back as it settles
+          const m = TURN_LIVE; if (m && !m.ended && m.phase === 'hero' && !window.__hold && !window.__gp) turnBegin(m, 'foe', TURN_LIVE_IO); requestAnimationFrame(f); }; requestAnimationFrame(f); })()`);
+      const R = `(() => { const m = TURN_LIVE; return m && !m.ended ? { ph: m.phase, hit: m.hitI, left: m.until - m.now, now: m.now, used: !!m.usedDefense, flinch: !!m.flinch,
+        len: m.phase === 'foeWindup' ? (m.move.hits[m.hitI].wind > 0 ? m.move.hits[m.hitI].wind : TURN_TUNE.foeWindup) + (m.move.hits[m.hitI].hold > 0 ? m.move.hits[m.hitI].hold : 0) : 0,
+        ev: { ...window.__ev }, held: gameHeld() } : null; })()`;
+      // wait for a foe's first hit, a third into its wind-up, with no press yet
+      const midWind = async press => {
+        await page.waitForFunction(r => { const x = window.__t.x(r); return !!x && x.ph === 'foeWindup' && x.hit === 0 && !x.used && x.left < x.len * 0.66 && x.left > x.len * 0.25; }, R, { timeout: 20000, polling: 'raf' }).catch(async e => { throw new Error('no foe wind-up came: ' + JSON.stringify(await X(R)) + ' ' + JSON.stringify(await X(`({ tg: target(), act: S.activity, zone: S.zone, scope: turnCombatScope(), on: TURN_TUNE.on })`))); });
+        if (press) await X(`turnCombatAction('dodge')`);
+        return X(R);
+      };
+      const across = async (flag, press) => {
+        await midWind(press);
+        const a = await X(`(() => { const r = ${R}; window.${flag} = true; return r; })()`); await page.waitForTimeout(600);
+        const b = await X(R);
+        await X(`window.${flag} = false`);
+        await page.waitForFunction(n => window.__t.x(`TURN_LIVE.now`) > n + 0.02, a.now + (b.now - a.now), { timeout: 3000, polling: 'raf' }).catch(() => {});
+        const c = await X(R);
+        return { a, b, c };
+      };
+      const h = await across('__hold', false);
+      assert(h.b && h.b.held && h.b.now === h.a.now && h.b.left === h.a.left,
+        `foe wind-up after a hold ${view}: the test hold stops the fight mid wind-up (${JSON.stringify(h)})`);
+      assert(h.c && h.c.ph === 'foeWindup' && h.c.hit === 0 && h.c.len === h.a.len && h.c.left > h.a.len - 0.15 && h.c.left <= h.a.len && h.c.ev.move === h.a.ev.move + 1 && h.c.ev.win === h.a.ev.win + 1,
+        `foe wind-up after a hold ${view}: once the hold lifts the wind-up starts again at its full length, and the move's clip with it (${JSON.stringify(h)})`);
+      const g = await across('__gp', false);
+      assert(g.c && g.c.ph === 'foeWindup' && g.c.left < g.a.left && g.c.left > g.a.left - 0.2 && g.c.ev.move === g.a.ev.move && g.c.ev.win === g.a.ev.win,
+        `foe wind-up after a hold ${view}: the guide's pause does not restart a wind-up (a lesson waits for the press) (${JSON.stringify(g)})`);
+      const p = await across('__hold', true);
+      assert(p.a.used && p.c && p.c.ph === 'foeWindup' && p.c.left < p.a.left && p.c.left > p.a.left - 0.2 && p.c.ev.win === p.a.ev.win,
+        `foe wind-up after a hold ${view}: a hit the player already pressed for is not restarted (${JSON.stringify(p)})`);
+      assert(!errs.length, `foe wind-up after a hold ${view}: no page errors` + (errs[0] ? ': ' + errs[0] : ''));
+      await page.close(); await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('foe wind-up after a hold crashed: ' + (e.stack || e)); }
 
 // ---- hero packs (card hero-packs; tools/build.mjs heroPacks, src/js/75-art-load.js, src/boot-loader.html) ----
 // A hero art file (an AREA_ART entry of kind 'hero') splits by hero: one pack of each hero's core moves, which the boot loader

@@ -25,6 +25,7 @@
 //   turnMakeProfile(f, u), turnNew(p, io), turnResolve(m, cmd, dt, io), turnPreview(m, n), turnUsable(m, id)
 //   turnCombatSnapshot(), turnCombatProfile(), turnCombatAction(kind, slot), turnCombatTick(dt), turnBadgesFor(f),
 //   turnHeroChips(), turnChoose(m), turnCombatSample({ profile, seconds, seed, skill, fights })
+//   turnWindupAgain(m, io) (a foe mid wind-up across a hold over the fight starts it again: foe-windup-after-hold)
 // Events: fightStart { heroHaste, foeHaste, first }, turn { who, n }, timingRing { id, i, n, opensAt, closesAt },
 //   timingGrade { id, i, grade }, foeMove { id, name, anim, hits }, parryWindow
 //   { opensAt, closesAt, hit, hits }, foeContact { id, hit, hits, res, fooled, flinch, hold, zone, zb,
@@ -1195,11 +1196,30 @@ function turnSyncEquip() {
   m.p.eq = soloEquipped().filter(Boolean);   // passives follow the slots: a swapped-out one stops, so they never stack
 }
 on('soloEquip', turnSyncEquip);
+// A wind-up across a hold (card foe-windup-after-hold): a loading hold (75-art-load) or a card over the fight stops the tick,
+// not the frame clock (62's T), and the player could not watch the tell under it. So a foe mid wind-up, before any press, starts
+// that hit's wind-up again from the start (the move's clip too, on its first hit), at its own length. This file's hold check
+// never holds: it notes the frames the frame loop asks about while a wind-up is up. The guide's pause (ONBOARD.paused: a lesson
+// waits for the press in its window) skips that ask in 90-boot, and here, so a lesson is never restarted.
+// TURN_HOLD: tick, the frame clock at the last tick; at, at the last ask; miss, a frame was asked about and not ticked.
+const TURN_HOLD = { tick: -1, at: -1, miss: 0 };
+const turnFrameT = () => { try { return T; } catch (e) { return -1; } };   // the Node tools have no frame clock: nothing restarts
+holdGame(() => {
+  const H = TURN_HOLD, t = turnFrameT();
+  if (t >= 0 && TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'foeWindup' && !ONBOARD.paused) { if (H.at > H.tick && H.at < t) H.miss = 1; H.at = t; }
+  return false;
+});
+function turnWindupAgain(m, io) {
+  if (!m.hitI) io.emit('foeMove', { id: m.move.id, name: m.move.name, anim: m.move.anim || '', hits: m.move.hits.length, real: turnRealHits(m.move), charged: !!m.move.charge });
+  turnHitStart(m, io);
+}
 function turnCombatTick(dt) {
+  const H = TURN_HOLD, ft = turnFrameT(), held = ft >= 0 && (H.miss || (H.at > H.tick && H.at < ft)); H.miss = 0; H.tick = ft;
   if (!turnCombatScope()) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
     TURN_LIVE = null; TURN_RECOVER = 0; return;
   }
+  if (held && TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'foeWindup' && !TURN_LIVE.usedDefense) turnWindupAgain(TURN_LIVE, TURN_LIVE_IO);
   if (typeof turnPaused === 'function' && turnPaused()) return;   // a hidden page (59j): the fight waits (active only, owner 2026-10-01)
   if (TURN_LIVE && TURN_LIVE.stop > 0) { TURN_LIVE.stop -= dt; return; }   // a hitstop: the beat after a big hit
   if (TURN_RECOVER > 0) { TURN_RECOVER -= dt; if (TURN_RECOVER <= 0) { cbRestore(true); spawn(); } return; }
