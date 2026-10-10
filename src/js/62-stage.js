@@ -24,6 +24,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   let shake = 0, beamT = 0, ringT = 0, nodeShake = 0, wyrmHit = 0, flashA = 0, flashRgb = '255,210,122';
   let wallT = 0, hymnT = 0, volleyT = 0, volleyNext = 0, partyN = 0;
   let restF = 0, guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, lastEmbers = 0;
+  let heroSwings = 0;   // swings the hero started (read by stageStats for the checks)
   // Floating numbers and loot text. x is a stage fraction from the core (y is ignored: rows decide
   // the height); they are drawn in the band between the foe header and the ground, one row per
   // text near the same spot (stacked upward from the foe's head), and they fade out before they reach the header.
@@ -657,6 +658,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   function attack(a, aim, arc) {
     if (!a || !a.fr || a.down) return;
     if (a.st === 1 || a.st === 2) { a.pending = 1; return; }
+    if (a === hero) heroSwings++;
     a.st = 1; a.t = 0; a.dash = 0; a.arc = arc ? 1 : 0; a.aim = aim || null;
     if (!a.kind && !a.castTo && target() !== 'node' && foeAlive()) {
       const t = aim && aim.fr ? aim : frontSlot(), f = a.fr.idle0, reach = t.left + (target() === 'world' ? 30 : 4) - (f.c.width - f.ox);
@@ -986,6 +988,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // C29 hit feel: a screen flash in a colour (a counter, a Perfect, a broken charge); reduced motion keeps a soft one
   on('hitFlash', p => { if (!p) return; flashA = Math.max(flashA, (reduced ? 0.4 : 1) * (p.a || 0.3)); flashRgb = p.rgb || '255,210,122'; });
   on('lunge', () => { if (!(target() === 'node' && typeof gatherWalking === 'function' && gatherWalking())) attack(hero); });
+  // basic-attack-swings: a turn fight's basic Attack emits only soloAttack (59k, no lunge or classTap), so the hero swings on it here.
+  // Outside a turn fight a press's classTap has already swung (59j soloAttack), so this one stays still there.
+  on('soloAttack', () => { if (turnFight()) attack(hero); });
   on('nodeHit', () => { nodeShake = 0.12; });
   on('wyrmHit', () => { wyrmHit = 0.1; });
   on('levelup', () => { ringT = 0.8; });
@@ -2046,5 +2051,5 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   stageRects = () => ({ ZM, SW, SH, hero: hero._f && !hero.down ? { x: hero._x, y: hero._y, c: hero._f.c } : null,
     foes: slots.slice(0, packN).filter(s => s.fr && s.dX != null && s.m && !s.m.dead).map(s => ({ key: s.key, boss: !!s.m.boss, x: s.dX, y: s.dY, c: (s.dF || s.fr.idle0).c })),
     floats: floats.filter(f => f.on).map(f => ({ txt: f.txt, big: f.big, crit: f.crit, left: Math.max(0, f.life) })) });
-  stageStats = () => ({ critFloats, critLive: floats.filter(f => f.on && f.crit).map(f => ({ txt: f.txt, color: f.color, life: f.max })), drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0)] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
+  stageStats = () => ({ critFloats, heroSt: hero.st, heroPending: hero.pending, heroSwings, critLive: floats.filter(f => f.on && f.crit).map(f => ({ txt: f.txt, color: f.color, life: f.max })), drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0)] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
 }

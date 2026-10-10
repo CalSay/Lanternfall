@@ -106,6 +106,7 @@ const WEIGHT = {
   'craft-odds-before-pay': 38,   // 38 s locally (craft-odds-before-pay, 2026-10-09)
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
+  'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
   'page size': 2
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
@@ -17198,6 +17199,88 @@ if (section('stage-no-swarm-shrink (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('stage-no-swarm-shrink crashed: ' + (e.stack || e)); }
+
+// ==== basic-attack-swings: in a turn fight a basic Attack plays the hero's swing (62-stage on 'soloAttack') ====
+// 59k emits only soloAttack for a basic Attack (no lunge or classTap), and the stage swung only on those, so the hero stood still.
+// Every hero, at the three views (360x740 with reduced motion): one press (a hit, then a Blinded miss) starts exactly one swing at
+// once (hero.st 1 in the same task as the press), and the swing ends with no second one queued. Outside a turn fight a press's
+// classTap swings and soloAttack follows it: still one swing per press.
+if (section('basic-attack-swings')) try {
+  const at = 'basic-attack-swings', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, o) => {
+      const phone = w < 1200;
+      const ctx = await browser.newContext({ ...o, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+      await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+      await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);   // the away card
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    try {
+      for (const [w, h, red] of [[1280, 720, false], [740, 360, false], [360, 740, true]]) {
+        const v = `${at} ${w}x${h}${red ? ' (reduced motion)' : ''}`;
+        const { ctx, errs, X, page } = await open(w, h, { turns: true, ...(red ? { reducedMotion: 'reduce' } : {}) });
+        // the turn engine waits while __tp is set (59j turnPaused), so nothing else moves the hero while a swing plays
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; true');
+        for (const k of ['wren', 'tobin', 'pip']) {
+          await X(`globalThis.__tp = 0; soloPick("${k}", { now: true }); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true`);
+          for (const kind of ['hit', 'miss']) {
+            // play on (pressing Attack, taking the foe's hits) until it is the hero's turn again
+            let ph = '';
+            for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+              ph = await X(`(() => { if (!TURN_LIVE || TURN_LIVE.ended) { S.activity = "fight"; spawn(); return 'off'; } return TURN_LIVE.phase; })()`);
+              if (ph === 'hero') { await page.waitForTimeout(500); ph = await X('TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.phase : "off"'); if (ph === 'hero') break; }
+              await page.waitForTimeout(50);
+            }
+            assert(ph === 'hero', `${v} ${k}: the hero's turn comes (${ph})`);
+            const r = JSON.parse(await X(`(() => { const s0 = stageStats(), st0 = s0.heroSt, n0 = s0.heroSwings, seen = [];
+              const off = on('soloAttack', p => seen.push(p && p.kind));
+              if (${kind === 'miss'}) { TURN_LIVE.h.blind = 1; globalThis.__hb = TURN_TUNE.heroBlind; TURN_TUNE.heroBlind = 1; }
+              let got; try { got = soloAttack(); } finally { if (${kind === 'miss'}) TURN_TUNE.heroBlind = globalThis.__hb; }
+              typeof off === 'function' && off(); globalThis.__tp = 1;
+              const s1 = stageStats(); return JSON.stringify({ got, st0, n0, st1: s1.heroSt, q: s1.heroPending, d: s1.heroSwings - n0, seen }); })()`));
+            assert(r.got === 'hit' && r.seen.join() === kind && r.st0 === 0, `${v} ${k}: the ${kind} is pressed from a still hero (${JSON.stringify(r)})`);
+            assert(r.st1 === 1 && r.d === 1 && !r.q, `${v} ${k}: a basic Attack (${kind}) starts the hero's swing at once, one swing and none queued (stage state ${r.st1}, ${r.d} swing, queued ${r.q})`);
+            await page.waitForTimeout(800);
+            const s2 = JSON.parse(await X(`JSON.stringify((s => ({ st: s.heroSt, n: s.heroSwings }))(stageStats()))`));
+            assert(s2.st === 0, `${v} ${k}: the ${kind}'s swing plays out and the hero settles (stage state ${s2.st})`);
+            assert(s2.n - r.n0 === 1, `${v} ${k}: no second swing follows the ${kind} (${s2.n - r.n0} swings from the press)`);
+            await X('globalThis.__tp = 0; true');
+          }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the real-time fight (the test key): a press swings on its classTap; the soloAttack that follows adds none
+      {
+        const v = `${at} real-time 1280x720`;
+        const { ctx, errs, X, page } = await open(1280, 720, {});
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true');
+        // the press waits for a foe on the stage and a still hero (a loaded machine spawns late); a press that lands nothing emits nothing
+        let r = null;
+        for (const t0 = Date.now(); Date.now() - t0 < 15000 && !(r && r.got === 'hit');) {
+          await page.waitForTimeout(200);
+          r = JSON.parse(await X(`(() => { if (stageStats().heroSt !== 0) return '{}'; if (typeof soloActive === 'function' && !soloActive() && typeof soloSetActive === 'function') soloSetActive(true);
+          const turn = typeof turnCombatOn === 'function' && turnCombatOn(), s0 = stageStats(), seen = [];
+          const off = on('soloAttack', p => seen.push(p && p.kind)); const got = soloAttack(); typeof off === 'function' && off();
+          const s1 = stageStats(); return JSON.stringify({ turn, got, st0: s0.heroSt, q0: s0.heroPending, st1: s1.heroSt, q1: s1.heroPending, d: s1.heroSwings - s0.heroSwings, seen }); })()`));
+        }
+        assert(!r.turn && r.got === 'hit' && (r.seen || []).join() === 'hit', `${v}: a press lands outside a turn fight (${JSON.stringify(r)})`);
+        assert(r.d + (r.q1 - r.q0) === 1, `${v}: one press makes one swing, started or queued behind the one playing (${r.d} started, queued ${r.q0} -> ${r.q1}, stage state ${r.st0} -> ${r.st1})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('basic-attack-swings crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

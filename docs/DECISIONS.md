@@ -1174,6 +1174,22 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   20 Nov post ships 2D. art-scale-ruling and 3d-hero-pipeline are held. Codex's zone 3-10 foe briefs continue, each with a 4-view
   turnaround. The art freeze is unchanged. (`docs/design/live-3d/ruling.md`, red team `redteam.md`;
   `autopilot/rulings/2026-10-09-live-3d-scenes.md`)
+- **Bowstrings are drawn by the game (Cal, 2026-10-09 23:47, "Game string it is"; message cmsg_01AYPNgUeMrmxpJNQMppEbk9724gd8vJMaERQKdWYKBgkP):**
+  hero frames are made without a string. Each frame marks three points (both bow tips and the drawing hand), and the game draws the
+  string as a thin line through them. The string meets the arrow tail, is never drawn twice, and wobbles after release. This is an
+  exception to "props come from the artist" in the `CLAUDE.md` art freeze (motion and light effects are the other, below); arrows and
+  every other prop still come from the artist. Nothing is wired until a route is ruled; the art judge checks the plain string suits the art. Demo: "Bowstring
+  test" in https://claude.ai/artifact/R3245P8ApnrWnfn4JRGNsr. (`autopilot/rulings/2026-10-09-game-drawn-bowstring.md`)
+- **Wren's 9 Oct pipeline is the default (Cal, 2026-10-10 00:34, "Update the rules. Everything we've done with Wren today should be
+  the default. Please proceed with putting this pack in the game", cmsg_01AYPNgUeMrmxpJNQMppEbk9FeV2GnaDuxPhjnLcjHQDHs; approved 00:40,
+  "Yes I aprove", cmsg_01AYPNgUeMrmxpJNQMppEbk98qa1YiK9hg7dGmQFkb5L6M):** hero poses and effect sprites may be made through Scenario
+  from the approved concept, which amends "Art should only be made by Codex" (6 Oct); Codex still makes concepts and icons. The game
+  draws bowstrings and motion and light effects (trails, flashes, sparks, rings, smoke, shake, hit-stop), with one colour per status
+  (red = bleed); status icons are Codex's approved icons. Arrows and bats are sprites. The Opus art judge still checks every pack
+  (for Wren: the pack, her size next to the other heroes, and the bytes) before anything is wired; the "Classic art" switch, the byte
+  rules and the walk and cold-leg gates still stand. (`autopilot/rulings/2026-10-10-wren-pipeline-default.md`)
+- **Live 3D spike (#320) closed early by Cal, 2026-10-10 00:37:** "Scenario has made 2D the best option we have"
+  (cmsg_01AYPNgUeMrmxpJNQMppEbk94veePoKTgXG8AL6PW7VNHM). The spike is cancelled.
 - **Route S Wren (integrate-route-s-wren, Opus art judge, 2026-10-10; Cal can veto: "Pull the new Wren", "Wait for all three
   heroes", "Turn the axe edge into the tree", "Heroes back to 95 px", "Heroes only, not foes"):** wire Wren's 20 fight moves
   (Scenario key frames, 190 px, 63 colours, 1-bit alpha, lossless WebP, at most 1,650 KB), with arrow and bat sprites (at most
