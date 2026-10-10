@@ -62,6 +62,11 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   presses in a browser and reads the foe's HP at once must tick past the impact first. Why: Cal saw damage land the moment he
   pressed, before the swing or arrow reached the foe (damage-on-impact, 2026-10-10).
 
+- Before a spec renames, retypes or re-themes a live ability, grep `tools/check.mjs` and the tools for its id and read every
+  assert keyed to it: the complete-icons list (`COMPLETE`), the Stars' `kit` counts, the loadout-odds Learn order, the counter
+  tips in `24d`, and the sim and budget loadouts. Why: hero-themed-kits' first draft retagged three Stars and dropped an icon,
+  which would have failed two checks; the red team caught it. (hero-themed-kits, 2026-10-10)
+
 ## Economy and skilling
 
 - Ask Cal before `node tools/health.mjs --write-baseline`, naming each moved metric, which way it moved and the judge's ruling. Why: rewriting the bar CI scores against was blocked as a CI bypass until Cal said yes (gold-without-training, 2026-10-07).
