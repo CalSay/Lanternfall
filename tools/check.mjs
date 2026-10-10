@@ -6531,7 +6531,11 @@ if (section('solo copy (browser, W1-C)')) try {
         for (const [id, txt] of sheets) { judge('item sheet ' + id, txt); opened++; if (txt.length < 4) empty++; }
         for (let i = 8; i < made.ids.length; i += 9) {
           const id = made.ids[i]; await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15);
-          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button']) { const b = page.locator(`.cf-sheet ${sel}`).first(); if (await b.count()) { try { await b.click({ timeout: 300, force: true }); await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } catch (e) {} } }
+          // w1f-scan-load-flake: a DOM click on the button itself. A forced pointer click lands on whatever covers the button's spot: the
+          // path choice card the "evolution choice" step leaves open. Under load two such clicks pressed "Become" then "Yes", a path was
+          // taken, and the subclass step below found no tabs. Unloaded, the clicks failed (below the sheet's fold) and were swallowed.
+          // The find and the click are one step in the page, so the sheet cannot redraw between them.
+          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button']) { if (await page.evaluate(q => { const b = document.querySelector(q); if (b) b.click(); return !!b; }, `.cf-sheet ${sel}`)) { await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } }
           await page.keyboard.press('Escape');
         }
         await page.keyboard.press('Escape');
@@ -6541,22 +6545,40 @@ if (section('solo copy (browser, W1-C)')) try {
         await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(200);
         await page.evaluate(() => document.querySelectorAll('.cs-sheet details, .sheet details').forEach(d => { d.open = true; }));
         await scan('hero sheet (all opened)');
-        for (const sel of ['.cl-go', '.cs-act', '.cs-story summary']) { const n = Math.min(await page.locator(`.sheet ${sel}`).count(), 8); for (let i = 0; i < n; i++) { try { await page.locator(`.sheet ${sel}`).nth(i).click({ timeout: 300, force: true }); await page.waitForTimeout(60); await scan(`hero sheet ${sel} #${i}`); } catch (e) {} } }
+        for (const sel of ['.cl-go', '.cs-act', '.cs-story summary']) { const n = Math.min(await page.locator(`.sheet ${sel}`).count(), 8); for (let i = 0; i < n; i++) { if (!(await page.evaluate(([q, i]) => { const b = document.querySelectorAll(q)[i]; if (b) b.click(); return !!b; }, [`.sheet ${sel}`, i]))) continue; await page.waitForTimeout(60); await scan(`hero sheet ${sel} #${i}`); } }
         await page.keyboard.press('Escape');
         await X(`S.party.chosen = true; S.cls.trials = S.cls.trials || {}; S.cls.trials.check = { won: 1, best: 100 }; classEvoUI.openChoice()`); await page.waitForTimeout(250);
         const tabs = await page.locator('.evo-tab').count();
+        if (!tabs) fail(`${hero}: W1-F the subclass choice opened no path tabs (path already taken: ${await X('lbClass().evo')})`);
         for (let i = 0; i < tabs; i++) { await page.locator('.evo-tab').nth(i).click({ force: true }); await page.waitForTimeout(80); await scan(`subclass card ${i}`); await page.locator('.create-go').first().click({ force: true }).catch(() => {}); await page.waitForTimeout(60); await scan(`subclass card ${i} confirm`); }
         await X('classEvoUI.closeAll()');
         await X('classEvoUI.openRespec && classEvoUI.openRespec()'); await page.waitForTimeout(200); await scan('class change'); await X('classEvoUI.closeAll()');
         items.cards += tabs;
         // long-press info on each action-bar slot (Attack, Parry, Dodge: a tip; the three ability slots: the picker)
-        await X('setActivity("fight"); setTab("adv"); closeMenu()'); await page.waitForTimeout(300);
+        // w1f-scan-load-flake: each step waits for the state it reads (capped at 5 s, a miss fails naming the hero and slot) instead of a
+        // fixed timer. Under load the bar was read before it showed, or the 550 ms long press had not fired by a fixed 700 ms hold.
+        const until = async (what, fn, arg, more) => { try { await page.waitForFunction(fn, arg, { timeout: 5000, polling: 50 }); return true; } catch (e) { fail(`${hero}: W1-F ${what} within 5 s` + (more ? ` (${await more().catch(x => String(x))})` : '')); return false; } };
+        // what a missed long press saw: the slot's pointer events
+        await page.evaluate(() => { window.__lp = []; for (const t of ['pointerdown', 'pointerup', 'pointerleave', 'pointercancel']) document.addEventListener(t, e => { const a = e.target && e.target.closest && e.target.closest('[data-act]'); window.__lp.push(t.slice(7) + ':' + (a ? a.dataset.act : (e.target.id || e.target.className || e.target.tagName))); }, true); });
+        await X('setActivity("fight"); setTab("adv"); closeMenu()');
+        await until('the action bar (Attack) never showed', () => { const b = document.querySelector('[data-act="atk"]'); return !!(b && b.offsetParent !== null && b.getBoundingClientRect().width > 0); });
+        // an ability slot with nothing it could hold opens nothing on a long press (75-solo-ui slotShut); every other slot opens a sheet or the picker
+        const shut = JSON.parse(await X('JSON.stringify([0, 1, 2].map(i => { const eq = soloEquipped(); return !eq[i] && !soloAbilities().some(id => !eq.includes(id)); }))'));
+        const sheetUp = () => !!document.querySelector('#abPicker, .tr-card');   // what the count below reads
+        // The press is the slot's own pointerdown and pointerup, sent to the button (the game's long-press code in 75-solo-ui runs as for a
+        // finger). A real mouse resting on the button lost the press under load: Attack acts on the press, the dock's pane redrew, the bar
+        // got shorter, the Fight panels tabs slid under the resting pointer, and the button's pointerleave dropped the long press
+        // (seen twice on Tobin's Attack, the second time with "events: down:atk leave:atk ...; under the pointer: sb-tab").
+        const send = (a, type) => page.evaluate(([a, type]) => { const b = document.querySelector(`[data-act="${a}"]`); b.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0, buttons: type === 'pointerdown' ? 1 : 0 })); }, [a, type]);
         for (const a of ['atk', 'parry', 'dodge', 'ab0', 'ab1', 'ab2']) {
           const b = page.locator(`[data-act="${a}"]`).first();
           if (!(await b.count()) || !(await b.isVisible())) continue;
-          const bb = await b.boundingBox(); await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(700);
+          await until(`long-press ${a}: the last sheet never closed`, () => !document.querySelector('#abPicker, #moveSheet, .tr-card'));
+          await page.evaluate(() => { window.__lp = []; }); await send(a, 'pointerdown');
+          if (a.startsWith('ab') && shut[+a[2]]) await page.waitForTimeout(700);   // a shut slot: hold past the long press; nothing opens
+          else await until(`long-press ${a}: no sheet or picker opened`, sheetUp, undefined, () => page.evaluate(() => `events: ${window.__lp.join(' ') || 'none'}; open: ${[...document.querySelectorAll('[role=dialog],[aria-modal]')].filter(d => !d.hidden && d.offsetParent !== null).map(d => d.id || d.className).join(', ') || 'none'}`));
           const shownTip = await page.evaluate(() => { const t = document.getElementById('soloTip'), p = document.getElementById('abPicker'); return (t && !t.hidden ? 1 : 0) + (p ? 2 : 0) + (document.querySelector('.tr-card') ? 4 : 0); });   // W2-A: a long press opens a Training card (Attack, Parry, Dodge: a sheet; ability slots: the picker with a card)
-          await scan('long-press ' + a); await page.mouse.up(); await page.keyboard.press('Escape'); await X('typeof closePicker === "function" && closePicker()');
+          await scan('long-press ' + a); await send(a, 'pointerup'); await page.keyboard.press('Escape'); await X('typeof closePicker === "function" && closePicker()');
           if (shownTip) items.press++;
         }
         assert(!errs.length, `${hero}: no page errors while reading every screen` + (errs.length ? ': ' + errs[0] : ''));
@@ -16724,6 +16746,52 @@ if (section('tier-two-named-for-return')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('tier-two-named-for-return crashed: ' + (e.stack || e)); }
+
+// ==== nu-chip-gate-label-fits: the always-on Next Up chip shows the whole tier 2 gate label ====
+// save-min60-tier-gate's Birch Bow gate row (~90 characters) is the longest Next Up label a first sitting meets. The chip clamps its
+// label to 3 lines in landscape (80-landscape), and tier-two-named-for-return measures only the opened list's .nu-row. The chip shows
+// topGoals(3)[0], so the section puts the gate row's words in the chip's label and counts the lines they take where the chip draws them.
+// The clamp leaves overflow visible, so scrollHeight misses a cut: the section counts the text's own line boxes. At 740x360 the words
+// take all 3 lines with nothing to spare, so a longer gate wording or a narrower side column fails here.
+if (section('nu-chip-gate-label-fits')) try {
+  const at = 'nu-chip-gate-label-fits', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[740, 360], [1024, 768], [1280, 720], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const want = await X('(topGoals(20, { sticky: false }).find(x => x.id === "forge") || {}).label || ""');
+        assert(/^Birch Bow: Mining 7 of 14 opens Iron Ore\. /.test(want), `${v}: the fixture's gate row is the Birch Bow's (${want})`);
+        const o = await page.evaluate(want => { const c = document.getElementById('nuChip'), l = c && c.querySelector('.nu-lbl'); if (!l || c.offsetParent === null) return null;
+          l.textContent = want;   // renderChip rewrites only when the goals change, so the words stay for the measure
+          const cs = getComputedStyle(l), a = l.getBoundingClientRect(), b = c.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(l);
+          const rs = [...rg.getClientRects()].filter(r => r.width > 0), clamp = parseInt(cs.webkitLineClamp, 10) || 0;
+          return { lines: new Set(rs.map(r => Math.round(r.top))).size, clamp, textBottom: Math.round(Math.max(...rs.map(r => r.bottom))), boxBottom: Math.round(a.bottom),
+            fs: parseFloat(cs.fontSize), ellipsis: cs.textOverflow === 'ellipsis' && l.scrollWidth > l.clientWidth + 1,
+            inChip: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        assert(o, `${v}: the Next Up chip shows`);
+        if (o) {
+          assert((!o.clamp || o.lines <= o.clamp) && o.textBottom <= o.boxBottom + 1 && !o.ellipsis && o.inChip, `${v}: the gate label shows whole inside the chip, no clamp or ellipsis (${JSON.stringify(o)})`);
+          assert(o.fs >= (w >= 1280 ? 14 : 13), `${v}: the chip label keeps its text floor (${o.fs})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('nu-chip-gate-label-fits crashed: ' + (e.stack || e)); }
 
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
