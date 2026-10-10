@@ -1,0 +1,22 @@
+# seed: 1
+# Proof for card fx-timing-fixes. (1) A buff (24c kind 'buff': Shadow Step, Brace, Iron Will, Arcane Ward, Searing Eye) hits
+# no foe, so its press fires no arrow, bolt or slash: route S Wren plays the move in place, classic art stands still, and the
+# buff's own glow (62b) plays at the swing's wind, when 59k lands it. (2) A hit's number rises on its impact (#348 landed the
+# damage there; this card proves the number's first frame against the stage's own arrow, bolt and blow).
+# No fixture has a buff learned (and none has a Scroll to learn one), so the route shows the Attack: Wren's arrow flies, then
+# its number rises as it lands (the burst's frames). tools/check.mjs "fx-timing-fixes" presses Shadow Step, Brace and Arcane
+# Ward through the turn engine at 1280x720 and 740x360 (no projectile, the buff's effect, no number) and times every hero's
+# Attack number against its arrow, bolt or contact on the stage clock. Run at all three views with --frozen.
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+expect "Attack"
+tap-if "Attack"
+burst attack-flight
+wait 3
+shot attack-after
+expect ".hud.vs .mob"

@@ -30994,12 +30994,13 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // attack(a, aim, arc): a swing (wind, strike, recover). Melee dashes to its foe (aim, else the
   // front-most foe: melee reaches the enemy Front) and back; arc: a leap with a 16 px apex (Kestrel).
   // Reduced motion: the dash is an instant swap with a one-frame flash.
-  function attack(a, aim, arc) {
+  // still: the move's own pose in place (a buff: no dash, no shot or slash; fx-timing-fixes)
+  function attack(a, aim, arc, still) {
     if (!a || !a.fr || a.down) return;
-    if (a.st === 1 || a.st === 2) { a.pending = 1; return; }
+    if (a.st === 1 || a.st === 2) { a.pending = 1; a.pendStill = still ? 1 : 0; return; }
     if (a === hero) heroSwings++;
-    a.st = 1; a.t = 0; a.dash = 0; a.arc = arc ? 1 : 0; a.aim = aim || null;
-    if (!a.kind && !a.castTo && target() !== 'node' && foeAlive()) {
+    a.st = 1; a.t = 0; a.dash = 0; a.arc = arc ? 1 : 0; a.aim = aim || null; a.still = still ? 1 : 0;
+    if (!still && !a.kind && !a.castTo && target() !== 'node' && foeAlive()) {
       const t = aim && aim.fr ? aim : frontSlot(), f = a.fr.idle0, reach = t.left + (target() === 'world' ? 30 : 4) - (f.c.width - f.ox);
       a.dash = Math.max(0, reach - a.hx - Math.round(a.mv));
       if (reduced && a.dash) a.flash = Math.max(a.flash, 0.017);
@@ -31032,6 +31033,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
       return;
     }
     if (a === hero && stageFx && tg === 'mob' && turnFight()) stageFx.swing(handX(a), handY(a));
+    if (a.still) { a.still = 0; return; }   // a buff hits no foe: its own effect plays (62b), nothing flies
     if (!foeAlive()) return;
     const s = a.aim && (tg !== 'mob' || slotLive(a.aim)) ? a.aim : a.kind ? foe : frontSlot();
     const fa = a === hero && stageFx && tg === 'mob' && turnFight() ? stageFx.aim(s) : null;   // the hero aims at the chest (62b-fx)
@@ -31067,7 +31069,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     a.t += dt;
     if (a.st === 1 && a.t >= WIND) { a.st = 2; a.t = 0; fire(a); }
     else if (a.st === 2 && a.t >= STRIKE) { a.st = 3; a.t = 0; if (reduced && a.dash) a.flash = Math.max(a.flash, 0.017); }
-    else if (a.st === 3 && a.t >= REC) { a.st = 0; a.t = 0; if (a.pending) { a.pending = 0; attack(a); } }
+    else if (a.st === 3 && a.t >= REC) { a.st = 0; a.t = 0; if (a.pending) { a.pending = 0; attack(a, null, 0, a.pendStill); } }
     let d = 0;
     if (a.dash && a.st) {
       if (reduced) d = a.st === 1 || a.st === 2 ? a.dash : 0;
@@ -31380,9 +31382,19 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     else if (p.kind === 'ember') { A.after(WIND + 0.2, () => A.burstPx(foe.x, foe.cy, '#FF9E3D', 5, 35, 40, 4)); }
     else if (p.kind === 'mark') { markLeft = 8; A.ring(foe.x, foe.cy, foe.w * 0.9, foe.w * 0.45, 0.35, '#9CE06A', 1, 1.5); }
   });
+  // fx-timing-fixes: a turn fight's buff (24c kind 'buff': Brace, Iron Will, Shadow Step, Arcane Ward, Searing Eye) hits no foe, so
+  // the hero fires nothing at it: a hero drawn with its own moves (route S) plays the move in place, classic art stands still,
+  // and either way 62b's effect starts at the swing's wind, when 59k lands the buff (fxImpactIn)
+  const buffAb = id => { const a = typeof ABILITIES === 'object' && ABILITIES[id]; return !!a && a.kind === 'buff'; };
+  const ownMoves = () => (typeof wrenSOn === 'function' && wrenSOn()) || (typeof tobinSOn === 'function' && tobinSOn());
   on('ability', p => {
-    attack(hero);
     const c = p && p.cls;
+    if (c === 'solo' && buffAb(p.id)) {
+      if (ownMoves()) attack(hero, null, 0, true);
+      else if (stageFx && target() === 'mob' && turnFight()) A.after(WIND, () => { if (!hero.st) stageFx.swing(handX(hero), handY(hero)); });
+      return;
+    }
+    attack(hero);
     if (c === 'warden') { wallT = 6; A.ring(partyMid(), GY - 2, 10, 90, 0.5, '#F2C14E', 0.3, 2); }
     else if (c === 'lanternmage') {
       flashA = reduced ? 0.15 : 0.38; flashRgb = '255,190,110';

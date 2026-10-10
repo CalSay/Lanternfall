@@ -70,6 +70,11 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A spec that renames or replaces moves relabels the art queue (gallery, sheet map, wire card) in the same pass. Why: on 10 Oct, Auriel's gallery kept the old Pip names after #357 renamed her moves, and Cal caught it. (elowen-ability-spec, 2026-10-10)
 - A hero's "own" move must be a new move (new effect, new pose), never another hero's move with a new name and id. Why: on 10 Oct, Auriel's five style moves were Pip's spark, frost shard, ward, hex and nova renamed; Cal saw "the abilities are the same" and had five new ones made. (oriel-own-abilities, 2026-10-10)
 
+- Decide what the stage does for an ability from its own data (24c `kind`, e.g. 'buff' fires nothing at the foe), never a per-name
+  list, and keep the route S drawers' swing (they start a move on `hero.st` 1): a buff swings in place with `attack(hero, null, 0, true)`.
+  To time a number against its hit in a browser, log both on the stage clock `T` (one value per frame, set before tick and animate).
+  Why: buffs still fired an arrow or bolt at the foe after #333, and a check with `/\\d/` in Node code (not a page string) matched nothing (fx-timing-fixes, 2026-10-10).
+
 ## Economy and skilling
 
 - Ask Cal before `node tools/health.mjs --write-baseline`, naming each moved metric, which way it moved and the judge's ruling. Why: rewriting the bar CI scores against was blocked as a CI bypass until Cal said yes (gold-without-training, 2026-10-07).
