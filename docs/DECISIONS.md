@@ -1147,6 +1147,17 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   name. Only Codex makes art; Claude vets it and answers for anything broken or ugly in a Monday build; anything
   doubtful stays out. (Cal 2026-10-05 gates; 2026-10-06 18:30, 18:41 and 19:35: "Art should only be made by Codex.
   ... If it gets into a Monday build and it's broken or looks bad, you will be held responsible".)
+- **Cal's word signs off art he reviews (Cal 2026-10-10 13:34, cmsg_01AYPNgUeMrmxpJNQMppEbk95Zeo18dgBK24DXVmyc6HUT: "If I'm
+  here reviewing the fframes, just take my word for it."; 13:35, cmsg_01AYPNgUeMrmxpJNQMppEbk9SB3XwfwTNy38bsuwLK6YqR: "My word
+  signs off. If I'm not here, pass it to judges."):** when Cal is present and reviews art, his OK (as a message id) signs it off and
+  the work goes straight to a wire card with CI checks only: no red team, judge or re-judge. The Opus art judge signs only when he
+  is away. The whole-pack rule stays. This replaces the 2026-10-06 "Claude vets it" line for any art Cal has reviewed himself.
+- **Art pipeline default (Cal 2026-10-10 08:45, cmsg_01AYPNgUeMrmxpJNQMppEbk9685xoS72WuF7Xhjy666wjN: "this is by far the best
+  art work we've managed so far. This is the new default for all art. Codex does concepts, scenario builds, Claude wores in
+  effects and other minor details (like the bow string for example) where necessary."):** Codex draws concepts, Scenario builds
+  the packs from them, and Claude adds effects and minor details such as bowstrings. Every whole pack is still signed off as
+  above. Scenario quality (medium drafts, high finals; Cal 09:22: "Yeah I think medium is absolutely fine.") is not settled yet
+  after Oriel's medium pack (Cal 10:31) and gets its own line once Cal decides.
 - **Art unblock: one trial pack, result: dropped (Cal's ruling 2026-10-07 19:28 "Trial one pack"; judge ruling 2026-10-07):** Claude
   could draw ONE whole area pack alongside Codex (area 1, Mossy Hollow: its battle background and five zone monsters), if the Opus
   art judge passed it within 2 rounds and `@codex review` found no style mismatch, behind the Classic art switch. Round 1: re-brief
@@ -1400,6 +1411,12 @@ nothing; no economy or save change. A cache with a pick is a big card.
   free to slate Claude's work where it needs to; it reviews from PR #1
   (`docs/handoff/claude-to-codex/reviewer/README.md`). Codex still draws new raster art when a card needs it.
   (2026-10-05)
+- **Process cuts A to D (Cal 2026-10-10 13:39, cmsg_01AYPNgUeMrmxpJNQMppEbk9PbLv48daeexwg1zaqx3ECj: "Happy for you to proceed
+  on that basis", answering the coordinator's list cmsg_01AYPNgUeMrmxpJNQMppEbk9HEy4c83nUy1fhNy9xH3PLb):** A. Work Cal asks for
+  directly skips the red team, and gets one judge only if it touches saves, the economy, balance or money. B. Previews publish
+  once CI and the first-hour walk pass; the load-time check (cold leg) runs only when loading changes, plus nightly. C. Art Cal
+  hasn't seen gets one judge pass with no red team, and a recheck covers only the frames that changed. D. A dropped step stops
+  blocking work automatically (`plan.mjs` counts a dropped dependency as met).
 - **Cal delegates design calls to Claude** (an Opus judge after a red team); Cal keeps shipping, the online layer, money
   and outside contact, and can veto any recorded call later. (2026-10-05)
 - **Autopilot:** Claude plans, builds and merges into the integration branch on its own from the backlog, with a daily
