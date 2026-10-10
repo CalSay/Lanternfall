@@ -116,6 +116,7 @@ const WEIGHT = {
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
   'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
+  'tobin route S (browser)': 14,   // estimate, as Wren's plus the dash check (route-s-tobin-wire, 2026-10-10)
   'new-style screens (browser)': 36   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
@@ -18808,7 +18809,7 @@ if (section('wren route S')) try {
   assert(!tbad.length && !late.length, 'wren route S: attack and abilities 900 ms with the release on the shot, parry and dodge 660 ms, hit 540 ms, defeat 2080 ms held; Volley\'s 3 and Moonlit Volley\'s 5 releases each within 17 ms of contact or an earlier press, through a Perfect\'s hit-stop (gate 5)' + (tbad.length || late.length ? ': ' + [...tbad, ...late.slice(0, 4)].join('; ') : ''));
   // gate 8: one Settings switch, Hero art, default new art (its own key, not the save; no save-key bump)
   const pu = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-portraits-ui.js'), 'utf8'), pk = fs.readFileSync(path.join(ROOT, 'src', 'js', '64k-portraits.js'), 'utf8');
-  assert(/title: 'Hero art'/.test(pu) && /Wren\\'s new fight poses/.test(pu) && /storage\.get\(PREF\) === '1'/.test(pk) && /emit\('classicArt'/.test(pk),
+  assert(/title: 'Hero art'/.test(pu) && /new fight poses for Wren and Tobin/.test(pu) && /storage\.get\(PREF\) === '1'/.test(pk) && /emit\('classicArt'/.test(pk),
     'wren route S: Settings > Hero art has the one Classic art switch for the portraits and Wren\'s fight poses, off (new art) unless chosen (gate 8)');
 } catch (e) { fail('wren route S crashed: ' + (e.stack || e)); }
 
@@ -18957,6 +18958,236 @@ if (section('wren route S (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('wren route S (browser) crashed: ' + (e.stack || e)); }
+
+
+// ==== route-s-tobin-wire (docs/design/route-s/ruling-tobin.md, "Build card spec: route-s-tobin-wire"): Tobin's route S fight moves ====
+// From the converter's record (art/heroes/tobin/route-s/pack.json, tools/art/route-s-tobin.py) and the embedded data (21yf): bytes
+// (gate 1), registration (gate 3), air (gate 7), play lists and hits (gate 5), dash flags (gate 6, ruling question 9), the shield's
+// size (gate 8), the timings and the dash chain (gates 5-6). The page's pixels: 'tobin route S (browser)'.
+const TOBIN_FIGHT = ['idle', 'attack', 'dash', 'dashback', 'bash', 'heavystrike', 'cleave', 'riposte', 'ironwill', 'sundering', 'brace', 'roar',
+  'hammerfall', 'lunge', 'shieldthrow', 'laststand', 'parry', 'dodge', 'hit', 'defeat', 'victory'];
+if (section('tobin route S')) try {
+  const { spawnSync } = await import('node:child_process'), { b91Decode } = await import('./lib/b91.mjs');
+  const D = path.join(ROOT, 'art', 'heroes', 'tobin', 'route-s'), P = JSON.parse(fs.readFileSync(path.join(D, 'pack.json'), 'utf8'));
+  { const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-tobin-s.mjs'), '--check'], { encoding: 'utf8' });
+    assert(r.status === 0, 'tobin route S: src/js/21yf-data-tobin-s.js is up to date with art/heroes/tobin/route-s (node tools/art/embed-tobin-s.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
+  const W = artData('21yf-data-tobin-s.js', 'TOBIN_S');
+  const sorted = o => JSON.stringify(Object.keys(o).sort()), want21 = JSON.stringify([...TOBIN_FIGHT].sort());
+  assert(sorted(W.moves) === want21 && sorted(P.moves) === want21 && Object.keys(W.moves)[0] === 'idle',
+    `tobin route S: all 21 fight moves are embedded (${Object.keys(W.moves).length})`);
+  // gate 1: bytes (the ruling's KB are KiB); the embedded atlases are the converted files, byte for byte
+  const size = f => fs.statSync(path.join(D, f)).size;
+  const fight = TOBIN_FIGHT.reduce((s, m) => s + size(m + '.webp'), 0), sh = size('shield.webp'), rb = size('rubble.webp');
+  console.log(`  tobin route S bytes: fight atlases ${(fight / 1024).toFixed(1)} KB (ceiling 1,550 KB); shield views ${(sh / 1024).toFixed(1)} KB (ceiling 15 KB); rubble and crack ${(rb / 1024).toFixed(1)} KB (ceiling 20 KB)`);
+  assert(fight <= 1550 * 1024 && sh <= 15 * 1024 && rb <= 20 * 1024, `tobin route S: fight atlases ${(fight / 1024).toFixed(1)} KB <= 1,550, shield views ${(sh / 1024).toFixed(1)} KB <= 15, rubble and crack ${(rb / 1024).toFixed(1)} KB <= 20 (gate 1)`);
+  const same = [...TOBIN_FIGHT.map(m => [m, W.moves[m].atlas]), ['shield', W.moves.shieldthrow.xa], ['rubble', W.moves.hammerfall.xa]].filter(([n, s]) => !Buffer.from(b91Decode(s)).equals(fs.readFileSync(path.join(D, n + '.webp'))));
+  assert(!same.length, 'tobin route S: every embedded atlas is its converted WebP, byte for byte' + (same.length ? ` (not: ${same.map(r => r[0]).join(', ')})` : ''));
+  assert(P.colours === 63 && P.palette.length === 63 && P.swatches === 14, `tobin route S: one seeded palette of ${P.palette.length} colours, ${P.swatches} of them the concept's swatches (gate 1)`);
+  // gate 5: the play lists (1-based frames; 0 = idle-1 reused at an end) and each move's hit
+  const PLAY = { idle: [1], attack: [1, 2, 3, 4, 5, 6, 8], cleave: [1, 2, 4, 6, 7, 8], roar: [1, 2, 5, 6, 8], shieldthrow: [0, 2, 4, 5, 6, 7, 8],
+    ironwill: [1, 2, 3, 4, 5, 6, 7, 0], laststand: [0, 2, 3, 4, 5, 6, 7, 8], brace: [1, 2, 3, 4, 5, 6, 7, 8, 0], defeat: [1, 2, 4, 6, 7, 8] };
+  const reg = [];
+  for (const m of TOBIN_FIGHT) {
+    const M = P.moves[m], E = W.moves[m], k = M.k / P.packScale, want = PLAY[m] || [1, 2, 3, 4, 5, 6, 7, 8];
+    const got = M.play.map(s => (s < 0 ? 0 : M.f[s].n));
+    if (JSON.stringify(got) !== JSON.stringify(want) || JSON.stringify(E.play) !== JSON.stringify(M.play)) reg.push(`${m}: plays ${got}`);
+    if (!(M.hit >= 0 && M.hit < M.play.length && M.play[M.hit] >= 0) || E.hit !== M.hit) reg.push(`${m}: hit at ${M.hit}`);
+    // gate 3: one scale per move in 0.88-1.12 of the pack's; the kept opening and closing standing frames: hair-top 180 +-4, on the ground
+    if (!(k >= 0.88 && k <= 1.12)) reg.push(`${m}: scale x${k.toFixed(3)} of the pack's`);
+    if (E.f.length !== M.f.length || E.f.some((f, i) => f[4] !== M.f[i].ax || f[5] !== M.f[i].ay)) reg.push(`${m}: a feet anchor differs from the converter's`);
+    // (an end played as idle-1 is the idle itself; Defeat closes lying down)
+    const ends = [M.play[0], ...(m === 'defeat' ? [] : [M.play[M.play.length - 1]])].filter(s => s >= 0).map(s => M.f[s]);
+    for (const f of ends) { if (Math.abs(f.hair - 180) > 4) reg.push(`${m} ${f.n}: hair top ${f.hair}`); if (f.feet > 1) reg.push(`${m} ${f.n}: feet ${f.feet} rows up`); }
+  }
+  assert(!reg.length, 'tobin route S: the ruled play lists and a hit per move; one scale per move (0.88-1.12); opening and closing frames on the ground, hair tops 180 +-4 art px (gates 3, 5)' + (reg.length ? ': ' + reg.join('; ') : ''));
+  // gate 6, question 9: the dash moves, from the data
+  const DASH = ['attack', 'bash', 'heavystrike', 'cleave', 'sundering', 'hammerfall', 'lunge', 'riposte', 'laststand'];
+  const dashOn = TOBIN_FIGHT.filter(m => W.moves[m].dash);
+  assert(JSON.stringify(dashOn) === JSON.stringify(TOBIN_FIGHT.filter(m => DASH.includes(m))), `tobin route S: the moves that dash in are the ruling's nine, and dash and dashback carry no flag (${dashOn.join(', ')})`);
+  // gate 7: the airborne frames stand off the ground (drawn, or the set arc); Hammerfall's apex at least 24 art px
+  const AIR = { hammerfall: [3, 4, 5], dashback: [3, 4, 6], dodge: [3, 4], dash: [5] }, air = [];
+  for (const [m, ns] of Object.entries(AIR)) for (const n of ns) { const f = P.moves[m].f.find(f => f.n === n); if (!f || f.feet < 6) air.push(`${m} ${n}: ${f ? f.feet : 'missing'}`); }
+  if (P.moves.hammerfall.f.find(f => f.n === 4).feet < 24) air.push('hammerfall 4 under 24 px');
+  for (const m of TOBIN_FIGHT) for (const f of P.moves[m].f) if (f.feet && !(AIR[m] || []).includes(f.n)) air.push(`${m} ${f.n}: ${f.feet} px up`);
+  assert(!air.length, 'tobin route S: Hammerfall 3-5, dash 5, dashback 3, 4, 6 and dodge 3-4 are off the ground, and every other frame stands on it (gate 7)' + (air.length ? ': ' + air.join('; ') : ''));
+  // gate 8: the shield leaves on 5 and comes back on 8; frames 6-7 show none in his hand; the flight sprite is the held shield's size
+  // (276 source px at shieldthrow's scale) within 10%
+  { const S0 = P.moves.shieldthrow, E = W.moves.shieldthrow, pos = n => S0.play.findIndex(s => s >= 0 && S0.f[s].n === n);
+    const held = 276 * S0.k, fly = E.xf[0][3], shs = E.sh;
+    assert(S0.f[S0.play[S0.hit]].n === 5 && E.catch === S0.play.length - 1 && S0.f[S0.play[E.catch]].n === 8 && shs.every((v, j) => (j === pos(5) || j === pos(8) ? v && v[0] > 0 : v === 0)) && [6, 7].every(n => pos(n) > pos(5) && pos(n) < pos(8)) && E.xf.length === 4 && Math.abs(fly / held - 1) <= 0.1,
+      `tobin route S: Shield Throw releases on 5 and catches on 8, frames 6-7 (his empty hand) between; the shield in front of him at both; the flying shield (4 views) is ${fly} art px against the held ${held.toFixed(1)} (gate 8)`); }
+  assert(W.moves.hammerfall.xf.length === 6 && Array.isArray(W.moves.hammerfall.tip) && W.moves.hammerfall.tip[0] > 0 && Math.abs(W.moves.hammerfall.tip[1]) <= 4,
+    `tobin route S: Hammerfall carries its 5 rocks and the crack, and its sword tip on the ground line in front of him (${W.moves.hammerfall.tip}) (gate 10)`);
+  // gates 5-6: the timings, through 64n's own functions (pure)
+  const ctx = {}; vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'src', 'js', '21yf-data-tobin-s.js'), 'utf8') + '\n' + fs.readFileSync(path.join(ROOT, 'src', 'js', '64n-tobin-s.js'), 'utf8') + '\nthis.F = tobinSPlan;', ctx);
+  const tbad = [], F = (m, ms, o) => ctx.F(m, ms, o);
+  for (const m of TOBIN_FIGHT.filter(m => !['idle', 'dash', 'dashback', 'parry', 'dodge', 'hit', 'defeat', 'victory', 'shieldthrow'].includes(m))) {
+    const E = W.moves[m], hit = E.hit;
+    // the hit shows on the stage's strike (62-stage WIND 0.14 s) and not a frame before it; a dash move travels in by then and is home by 900 ms
+    const a = F(m, 139), b = F(m, 140), z = F(m, 899);
+    if ((a.mv === m && a.p === hit) || b.mv !== m || b.p !== hit) tbad.push(`${m}: ${JSON.stringify([a, b])}`);
+    if (E.dash) {
+      if (F(m, 0).mv !== 'dash' || F(m, 0).u !== 0 || b.u !== 1 || z.mv !== 'dashback' || z.u !== 0) tbad.push(`${m} chain: ${JSON.stringify([F(m, 0), b, z])}`);
+      // dashback: his feet never slide, he moves only on its airborne frames
+      let prev = null;
+      for (let ms = 520; ms < 900; ms += 4) { const q = F(m, ms); if (q.mv !== 'dashback') continue; if (prev && q.u !== prev.u && !AIR.dashback.includes(q.p + 1)) tbad.push(`${m}: slides on dashback ${q.p + 1}`); prev = q; }
+      const t = F(m, 60, { timed: true, hitMs: 140 });   // after a ring: at the foe, the held wind-up
+      if (t.mv !== m || t.u !== 1 || t.p >= hit) tbad.push(`${m} timed: ${JSON.stringify(t)}`);
+    } else if (z.mv !== m || z.p !== E.play.length - 1 || b.u !== 0) tbad.push(`${m} in place: ${JSON.stringify(z)}`);
+  }
+  for (const [m, ms] of [['parry', 660], ['dodge', 660], ['hit', 540], ['defeat', 2080]]) { const n = W.moves[m].play.length; if (F(m, 0).p !== 0 || F(m, ms - 1).p !== n - 1 || F(m, ms * 4).p !== n - 1) tbad.push(`${m}: ${F(m, ms - 1).p}`); }
+  if (F('idle', 1234).p !== 0) tbad.push('idle moves');
+  assert(!tbad.length, 'tobin route S: each blow lands its hit frame on the strike (140 ms) and runs out in 900 ms; a dash move dashes in by the hit and hops home on dashback\'s airborne frames only; parry and dodge 660 ms, hit 540 ms, defeat 2080 ms held (gates 5, 6)' + (tbad.length ? ': ' + tbad.slice(0, 6).join('; ') : ''));
+} catch (e) { fail('tobin route S crashed: ' + (e.stack || e)); }
+
+// The page: every atlas decodes; 1-bit alpha, at most 64 colours; feet centres of the kept ends; the draw scale at 1280x720 and
+// 740x360; the idle breathes, and holds still under reduced motion; a dash move travels to the foe and home; Classic art brings the
+// old Tobin back and the new one again; gathering shows his camp pose; the picker's figure holds it unclipped; the split build.
+if (section('tobin route S (browser)')) try {
+  // the picker's Tobin figure: how many of its canvas's pixels are drawn (0: empty or not there)
+  const TOBIN_FIG = `() => { const c = document.querySelector('.ccard[data-cls="tobin"] .fig canvas'); if (!c || !c.width) return 0;
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; }`;
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('tobin route S (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const earlyTobin = (() => { const o = JSON.parse(early); o.solo.hero = 'tobin'; o.cls.base = 'warrior'; return JSON.stringify(o); })();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, dpr, red] of [[1280, 720, 1, false], [740, 360, 1, true]]) {
+        const tag = `${w}x${h} DPR ${dpr}${red ? ', reduced motion' : ''}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch, reducedMotion: red ? 'reduce' : 'no-preference' });
+        await ctx.addInitScript(s => { try { if (!localStorage.getItem('lanternfall.save.v5')) { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} }, early);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false, S.onboard.all = true); for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();
+          soloPick('tobin', { now: true }); setZone(2); setActivity('fight'); fightBoss = false; true`);
+        const n = await X('tobinSStats.decodeAll()');
+        assert(n === 23 && await X('tobinSOn()'), `tobin route S ${tag}: the 21 moves, the shield and the rubble decode and the stage draws route S Tobin (${n} atlases)`);
+        if (w === 1280) {
+          // gate 1: 1-bit alpha, one palette; gate 3: the kept opening and closing standing frames' feet centres within 3 art px of idle-1
+          const px = JSON.parse(await X(`JSON.stringify((() => { const D = TOBIN_S, feet = {}, a = tobinSStats.colours();
+            for (const m in D.moves) { const M = D.moves[m], ends = [M.play[0], ...(m === 'defeat' ? [] : [M.play[M.play.length - 1]])].filter(s => s >= 0);
+              for (const s of ends) feet[m + ' ' + (s + 1)] = tobinSStats.rows(m, s).feet; }
+            return { feet, a }; })())`));
+          assert(px.a.partAlpha === 0 && px.a.colours <= 64, `tobin route S: the atlases are 1-bit alpha with ${px.a.colours} colours, at most 64 (gate 1; ${px.a.partAlpha} part-clear pixels)`);
+          const f0 = px.feet['idle 1'], off = Object.entries(px.feet).filter(([, v]) => Math.abs(v - f0) > 3);
+          assert(!off.length, `tobin route S: the opening and closing standing frames' feet centres sit within 3 art px of idle-1 (gate 3)` + (off.length ? ': ' + off.map(([k, v]) => `${k} ${(v - f0).toFixed(1)}`).join(', ') : ''));
+        }
+        // the draw scale: 0.5 x ACTOR_K actor px per art px x the hero's own scale, so 0.5 x DPR x the actors' zoom x hero device px
+        await page.waitForTimeout(300);
+        const st = JSON.parse(await X(`JSON.stringify({ s: tobinSStats(), z: stageStats().ZA, hk: stageStats().HK })`)), k = 0.5 * dpr * st.z * st.hk;
+        assert(Math.abs(st.s.drawn.k - k) < 1e-6 && (w !== 1280 || k >= 1) && (w !== 740 || k < 1), `tobin route S ${tag}: he draws at ${st.s.drawn.k} device px per art px (0.5 x DPR ${dpr} x actor zoom ${st.z} x hero ${st.hk}; ${k >= 1 ? 'nearest-neighbour' : 'a cached smoothed downscale'}) (gate 9)`);
+        // gate 4: the idle breathes (1 art px above the waist, 160 ms steps), and holds still under reduced motion
+        const br = await X(`new Promise(res => { const seen = new Set(), t0 = performance.now(); (function f() { const d = tobinSStats().drawn; if (d.move === 'idle') seen.add(d.br); if (performance.now() - t0 < 1500) requestAnimationFrame(f); else res([...seen].sort().join()); })(); })`);
+        assert(red ? br === '0' : br === '0,1', `tobin route S ${tag}: the held idle ${red ? 'holds still' : 'breathes'} (breath steps ${br || 'none'}) (gate 4)`);
+        // gate 6: an Attack dashes him to the foe and home again (reduced motion: an instant swap, no travel between)
+        const da = JSON.parse(await X(`new Promise(res => { const seen = []; let n = 0; emit('lunge');
+          (function f() { const d = tobinSStats().drawn; seen.push(d.move + ':' + d.u); if (++n < 90) requestAnimationFrame(f); else res(JSON.stringify({ seen: [...new Set(seen)], gap: tobinSStats().gap })); })(); })`));
+        const us = da.seen.map(s => +s.split(':')[1]), mid = us.filter(u => u > 0 && u < 1);
+        assert(da.gap > 0 && us.includes(1) && da.seen.some(s => s.startsWith('dash:')) && da.seen.some(s => s.startsWith('dashback:')) && us[us.length - 1] === 0 && (red ? !mid.length : true),
+          `tobin route S ${tag}: an Attack dashes him ${da.gap} actor px to the foe, and dashback brings him home${red ? ', with no travel between' : ''} (gate 6; ${da.seen.join(' ')})`);
+        if (w === 1280) {
+          // Classic art: the old Tobin on the stage, and the new one again (the pref has its own key; cleared after)
+          const cl = await X(`new Promise(res => { portraitsClassic(true); const a = tobinSOn();
+            setTimeout(() => { const n0 = tobinSStats().drawn.n; setTimeout(() => { const still = tobinSStats().drawn.n === n0, hero = !!(stageRects().hero); portraitsClassic(false);
+              setTimeout(() => res(JSON.stringify({ a, still, hero, b: tobinSOn(), moved: tobinSStats().drawn.n > n0 })), 300); }, 300); }, 100); })`);
+          const c = JSON.parse(cl);
+          assert(!c.a && c.still && c.hero && c.b && c.moved, `tobin route S: Classic art turns the stage's Tobin back to today's and off again brings route S back (gate 9; ${cl})`);
+          // gathering: the camp pose (victory-7) until route-s-tobin-gather; hunting keeps Codex's interim spear poses (64h)
+          const ga = JSON.parse(await X(`new Promise(res => { setActivity('gather'); setNode('wood', 1); setTimeout(() => { const d = tobinSStats().drawn, wood = { on: tobinSOn(), mv: d.move, i: d.slot };
+            const n0 = S.node; S.node = { kind: 'hide', t: 1 }; setTimeout(() => { const hunt = { on: tobinSOn(), tg: target() }; S.node = n0; setActivity('fight'); res(JSON.stringify({ wood, hunt })); }, 300); }, 600); })`));
+          assert(ga.wood.on && ga.wood.mv === 'victory' && ga.wood.i === 6 && !ga.hunt.on && ga.hunt.tg === 'node', `tobin route S: gathering shows his camp pose (victory-7); hunting keeps the interim spear poses (gate 9; ${JSON.stringify(ga)})`);
+        }
+        assert(!errs.length, `tobin route S ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // the new-game picker: his camp pose at 0.5 scale, all of it inside the figure's box (gate 9)
+      for (const [w, h] of [[1280, 720], [360, 740]]) {
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: w < 1000, hasTouch: w < 1000 });
+        await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+        const page = await ctx.newPage();
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/');
+        await page.waitForFunction(`(${TOBIN_FIG})() > 0`, null, { timeout: 20000 }).catch(() => {});
+        const r = await page.evaluate(`(() => { const c = document.querySelector('.ccard[data-cls="tobin"] .fig canvas'), f = c && c.parentElement; if (!c) return null;
+          const a = c.getBoundingClientRect(), b = f.getBoundingClientRect(); return { cw: c.width, ch: c.height, a: [a.left, a.top, a.right, a.bottom], b: [b.left, b.top, b.right, b.bottom], px: (${TOBIN_FIG})() }; })()`);
+        const inside = r && r.a[0] >= r.b[0] + 0.5 && r.a[1] >= r.b[1] + 0.5 && r.a[2] <= r.b[2] - 0.5 && r.a[3] <= r.b[3] - 0.5;
+        assert(!!(r && r.cw > 112 && r.px && inside), `tobin route S ${w}x${h}: the picker's figure holds Tobin's camp pose (${r ? r.cw + 'x' + r.ch : 'none'} at DPR 2, ${r && r.px} px drawn) inside its box (gate 9)`);
+        await ctx.close();
+      }
+      // the split build (tools/build.mjs hero packs): only his idle comes at boot; a move still loading holds the game under
+      // "Loading Tobin" with nothing drawn for him, and the first frame after it is in draws it; Classic art fetches none of his packs
+      {
+        const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
+        const e2 = s.html.lastIndexOf('})();\n</script>'), probe = s.html.slice(0, e2) + '\n;window.__t = { x: src => eval(src) };\n' + s.html.slice(e2);
+        const assets = pageAssets(s.file, probe, files), pk = id => s.packs.find(p => p.id === id);
+        const open = async (save, hold, pre = '') => {
+          const ctx = await browser.newContext({ turns: true, viewport: { width: 1280, height: 720 } });
+          await ctx.addInitScript(([s, pre]) => { try { if (s && !localStorage.getItem('lanternfall.save.v5')) { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem('lanternfall.save.v5', JSON.stringify(o)); } localStorage.setItem('lanternfall.test.nostory', '1'); if (pre && !sessionStorage.getItem('pre')) { sessionStorage.setItem('pre', '1'); (0, eval)(pre); } } catch (e) {} }, [save, pre]);
+          const page = await ctx.newPage(), errs = []; let release; const held = new Promise(r => { release = r; });
+          page.on('pageerror', e => errs.push(String(e)));
+          await routePage(page, 'http://lf.test/', probe, assets);
+          await page.route('**/assets/' + pk(hold).name, async r => { await held; return r.fallback(); });
+          await page.goto('http://lf.test/', { waitUntil: 'commit' });
+          return { ctx, page, errs, release, X: src => page.evaluate(src => window.__t.x(src), src) };
+        };
+        const cover = `(() => { const c = document.getElementById('artWait'); return c && !c.hidden ? c.firstChild.textContent : null; })()`;
+        { // a Tobin save, his Parry held back
+          const { ctx, page, errs, release, X } = await open(earlyTobin, 'hero:TOBIN_S.tobin.parry');
+          await page.waitForFunction(() => window.__t && window.__t.x('tobinSOn()'), null, { timeout: 20000 }).catch(() => {});
+          const boot = await X(`lfBoot.boot.filter(id => id.startsWith('hero:')).join()`);
+          await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); setActivity('fight'); true`);
+          await page.waitForFunction(() => window.__t.x("target() === 'mob'"), null, { timeout: 20000 }).catch(() => {});
+          await page.waitForTimeout(400);
+          await X(`emit('soloParry', { res: 'parry' }); true`);
+          await page.waitForTimeout(300);
+          const a = JSON.parse(await X(`JSON.stringify({ c: ${cover}, n: tobinSStats().drawn.n, mv: tobinSStats().drawn.move })`));
+          await page.waitForTimeout(300);
+          const b = JSON.parse(await X(`JSON.stringify({ c: ${cover}, n: tobinSStats().drawn.n, mv: tobinSStats().drawn.move })`));
+          assert(boot === 'hero:TOBIN_S.tobin.core' && a.c === 'Loading Tobin' && b.c === 'Loading Tobin' && a.n === b.n && b.mv !== 'parry',
+            `tobin route S split: a Tobin save boots with his idle pack only (${boot}); a Parry still loading holds the game under "Loading Tobin" and nothing is drawn for him (${JSON.stringify([a, b])})`);
+          const after = page.evaluate(() => new Promise(res => { const seen = []; const f = () => { const c = document.getElementById('artWait'), d = window.__t.x('tobinSStats().drawn');
+            seen.push((c && !c.hidden ? 'held ' : '') + d.move + ' ' + d.p); if (!(c && !c.hidden) || seen.length > 600) return res(seen.slice(-2)); requestAnimationFrame(f); }; requestAnimationFrame(f); }));
+          release();
+          const seen = await after;
+          assert(/^parry [01]$/.test(seen[seen.length - 1]), `tobin route S split: on the first frame after the hold his Parry is in and draws from its start (${seen.join(', ')})`);
+          assert(!errs.length, 'tobin route S split: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // Classic art on: no route S pack at boot or after; Classic off brings him in
+          const { ctx, page, errs, X } = await open(earlyTobin, 'hero:TOBIN_S.tobin.attack', `localStorage.setItem('lanternfall.pref.classicPortraits', '1')`);
+          const asked = []; page.on('request', q => { if (/TOBIN_S/.test(q.url())) asked.push(q.url().split('/').pop()); });
+          await page.waitForFunction(() => window.__t && document.getElementById('cv').width > 0 && !document.getElementById('lfBoot'), null, { timeout: 20000 }).catch(() => {});
+          await page.waitForTimeout(2500);
+          const a = JSON.parse(await X(`JSON.stringify({ boot: lfBoot.boot.filter(id => id.startsWith('hero:')), on: tobinSOn(), c: portraitsClassic() })`)), n0 = asked.length;
+          await X(`portraitsClassic(false); true`);
+          await page.waitForFunction(() => window.__t.x('tobinSOn()'), null, { timeout: 20000 }).catch(() => {});
+          const b = JSON.parse(await X(`JSON.stringify({ on: tobinSOn(), c: ${cover} })`));
+          assert(!a.boot.length && !a.on && a.c && n0 === 0 && b.on && !errs.length,
+            `tobin route S split: with Classic art on a Tobin save fetches none of his route S packs (boot ${a.boot.join() || 'none'}, after ${n0}); off brings route S in (${JSON.stringify(b)}; ${asked.slice(0, 2).join(', ')})` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // a new game, his camp pose held back: the picker's figure stays empty with no hold, then fills
+          const { ctx, page, errs, release } = await open(null, 'hero:TOBIN_S.tobin.victory');
+          await page.waitForSelector('.ccard[data-cls="tobin"] .fig canvas', { timeout: 20000 }).catch(() => {});
+          await page.waitForTimeout(800);
+          const a = await page.evaluate(`({ px: (${TOBIN_FIG})(), c: ${cover} })`);
+          release();
+          await page.waitForFunction(`(${TOBIN_FIG})() > 0`, null, { timeout: 20000 }).catch(() => {});
+          const b = await page.evaluate(`({ px: (${TOBIN_FIG})(), c: ${cover} })`);
+          assert(!a.px && !a.c && b.px > 0 && !b.c && !errs.length, `tobin route S split: a new game's picker leaves Tobin's figure empty while his camp pose loads, with no hold, and draws it when it is in (${JSON.stringify([a, b])})` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tobin route S (browser) crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));

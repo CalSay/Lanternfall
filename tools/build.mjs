@@ -107,12 +107,16 @@ export function placeArt(files, art = AREA_ART) {
 // Hero ids are SOLO_ORDER's (check.mjs). The page keeps everything but the moves' data and registers the constant
 // (lfBoot.heroFile), which puts in the save's hero's core at once, so the core is in the constant before the next file runs, as inline.
 const CORE_WREN = ['idle'];   // only the idle fits the boot set (the next lightest core, idle + victory, puts zone 2 at 4.03 MB)
+const CORE_TOBIN = ['idle'];  // as Wren's: his held idle alone (route-s-tobin-wire; the boot lines count the heaviest hero's core)
 export const AREA_ART = {
   '21za-data-foeart.js': { v: 'FOE_ART', kind: 'foe', keep: P => Object.assign({}, P, { atlases: {} }), load: P => ({ atlases: P.atlases }) },
   '21zb-data-bgart.js': { v: 'BG_ART', kind: 'bg', keep: null, load: B => B },
   // Wren's route S fight moves (route-s-wren-wire): the page keeps each move's frame table, its atlas comes in the move's pack
   // classic: the Classic art switch (64k) turns this art off, so the loaders leave its packs out while it is on (x in the table)
   '21ye-data-wren-s.js': { v: 'WREN_S', kind: 'hero', hero: 'wren', core: CORE_WREN, classic: true, keep: ({ atlas, ...M }) => M, load: M => ({ atlas: M.atlas }) },
+  // Tobin's route S fight moves (route-s-tobin-wire), the same way; a move's effect atlas (xa: Shield Throw's shield, Hammerfall's
+  // rubble) comes in that move's pack too
+  '21yf-data-tobin-s.js': { v: 'TOBIN_S', kind: 'hero', hero: 'tobin', core: CORE_TOBIN, classic: true, keep: ({ atlas, xa, ...M }) => M, load: M => (M.xa ? { atlas: M.atlas, xa: M.xa } : { atlas: M.atlas }) },
   // the new-style packs (card ns-scenery-engine; the wire cards write the file): one pack per piece, NS_ART.<group>.<key>; the
   // page keeps each entry's frame tables and anchors, its pictures (img) come in its pack (nsPacks below)
   '21zc-data-nsart.js': { v: 'NS_ART', kind: 'ns', classic: true, keep: E => ({ ...E, img: {} }), load: E => ({ img: E.img || {} }) }

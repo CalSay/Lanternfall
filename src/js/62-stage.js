@@ -20,7 +20,7 @@ let stageDeco = null;
 // Ability effects (62b-fx.js): stageFx.swing(x, y) as the hero's swing fires, stageFx.aim(s) the foe's chest, and
 // stageFx.draw(ctx, phase, v), phase 'back' (before the actors), 'fx' (after the rings and particles) or 'dev' (device px, over the HUD).
 let stageFx = null;
-let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
+let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK, stageMeleeGap;
 {
   const A = ANIM;
   // ================= visual state (driven by core events) =================
@@ -178,6 +178,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // moves mid-fight when adds come (judge, bigger-heroes).
   let ZS = 1, AK = 1, HS = 1, HKS = 1, SWS = 0, SHS = 0, GYS = 1, crowd = false, pairK = 0;
   stageHeroK = () => HKS;
+  // the gap from the hero's spot to the front foe's box (actor px; null off a fight): route S Tobin dashes this far (64n)
+  stageMeleeGap = () => { if (target() !== 'mob' || !foeAlive() || !hero.fr) return null; const t = frontSlot(); return t && t.fr ? t.left - heroHome() - Math.round(hero.mv) : null; };
   const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_WT = 216, ZOOM_H = 196, SOLO_MIN_W = 300;
   // S6-E (combat-2 2.5): the width floor rises x1.4 for a swarm zone or a boss with 3+ adds (zoomX), one step out,
   // chosen per zone or boss fight (sceneReset, a boss's first pack), never between packs of one zone.
@@ -411,7 +413,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   const reachOf = new Map();
   // in actor px: the hero's reach at scale 1 times hk (its own scale over the actors'), and the gap at the actors' scale fs
   function heroReach(fs = AK, hk = HKS) {
-    const id0 = typeof heroArtId === 'function' && heroArtId(), id = id0 && (typeof wrenSOn === 'function' && wrenSOn() ? id0 + ':s' : id0);   // route S Wren reaches as drawn (64l)
+    const id0 = typeof heroArtId === 'function' && heroArtId(), id = id0 && ((typeof wrenSOn === 'function' && wrenSOn()) || (typeof tobinSOn === 'function' && tobinSOn()) ? id0 + ':s' : id0);   // route S Wren and Tobin reach as drawn (64l, 64n)
     let r = id ? reachOf.get(id) : undefined;
     if (r == null && id && reachC && typeof heroArtDraw === 'function') {
       const h = hero._f, keep = h && { c: h.c, ox: h.ox, oy: h.oy, lights: h.lights && h.lights.slice() };
@@ -818,7 +820,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     if (a.kb > 0) { a.kb -= dt; const t = 0.35 - Math.max(0, a.kb); kx = reduced ? 0 : -Math.round(6 * (t < 0.15 ? t / 0.15 : Math.max(0, 1 - (t - 0.15) / 0.2))); }
     const base = Math.round(a.mv) + kx + (a.alpha === 1 ? rtX : 0);
     a.dy = 0;
-    if (!a.st) { a.dx = base; return; }
+    if (!a.st) { a.dx = base; a.dd = 0; return; }
     a.t += dt;
     if (a.st === 1 && a.t >= WIND) { a.st = 2; a.t = 0; fire(a); }
     else if (a.st === 2 && a.t >= STRIKE) { a.st = 3; a.t = 0; if (reduced && a.dash) a.flash = Math.max(a.flash, 0.017); }
@@ -832,7 +834,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
         if (a.arc && a.st !== 2) a.dy = -Math.round(64 * u * (1 - u));
       }
     }
-    a.dx = base + d;
+    a.dx = base + d; a.dd = d;   // dd: the swing's dash alone (64n draws route S Tobin's own travel from his home)
   }
   // Raid ghosts swing in a staggered rhythm on every party-damage float.
   function partyPulse() {
@@ -1125,7 +1127,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   on('classChosen', () => { refreshHero(true); refreshParty(); });
   on('mirrorUsed', () => refreshHero(true));
   on('activity', () => { layoutDirty = true; solo.key = ''; packList = null; if (hero.fr) refreshHero(false); });
-  for (const ev of ['classicArt', 'wrenArt']) on(ev, () => { layoutDirty = true; });   // the hero's reach follows the art drawn (64l)
+  for (const ev of ['classicArt', 'wrenArt', 'tobinArt']) on(ev, () => { layoutDirty = true; });   // the hero's reach follows the art drawn (64l, 64n)
 
   on('classTap', p => {
     attack(hero);

@@ -1,0 +1,23 @@
+# seed: 1
+# Proof for card route-s-tobin-wire (docs/design/route-s/ruling-tobin.md "Build card spec: route-s-tobin-wire").
+# Tobin's 21 route S fight moves are converted as drawn and drawn on the stage: he dashes in for each blow and hops home, throws
+# his shield out and catches it, and Hammerfall cracks the ground and throws rocks. Settings > Hero art > Classic art brings the old
+# Tobin back. The route plays the mid fixture (Tobin, zone 20) into a turn fight: his held idle, an Attack (burst: dash in, the
+# blow, dash back), then a clean parry.
+# tools/check.mjs "tobin route S" and "tobin route S (browser)" carry the gates: bytes, registration, air, play lists and timings,
+# the dash chain, the shield, the rubble, the draw scale at 1280x720 and 740x360, breathing and reduced motion, Classic art, picker.
+new mid
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+shot tobin-idle
+expect "Attack"
+tap-if "Attack"
+burst tobin-attack
+wait 3
+parry-clean 10
+shot tobin-parry
+expect ".hud.vs .mob"
