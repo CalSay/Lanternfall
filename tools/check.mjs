@@ -13372,8 +13372,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
           // upright, never over the side column)
           await page.click('.tabs .tab[data-tab="forge"]'); await menuSettled(page, true);
           await X('notes.pops.length = 0; notes.clock += 60; toast("Another notice, over a menu.", "good", null, "high"); true'); await boxSettled(page, '#toasts .toast:last-child');
-          const tm = await page.evaluate(() => { const l = [...document.querySelectorAll('#toasts .toast')].pop(), m = document.getElementById('menu').getBoundingClientRect(); if (!l) return null; const r = l.getBoundingClientRect(), cs = getComputedStyle(l); return { l: r.left, r: r.right, b: r.bottom, mr: m.right, H: innerHeight, vis: cs.visibility !== 'hidden' && +cs.opacity > 0.5, top: (e => !!e && l.contains(e))(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)) }; });
-          if (footDock) assert(tm && tm.r <= tm.mr + 1 && tm.b <= tm.H && tm.vis && tm.top, `${at}: over an open menu, notices stay at the stage's foot, on top of the menu (${JSON.stringify(tm)})`);
+          const tm = await page.evaluate(() => { const l = [...document.querySelectorAll('#toasts .toast')].pop(), m = document.getElementById('menu').getBoundingClientRect(); if (!l) return null; const r = l.getBoundingClientRect(), cs = getComputedStyle(l), sb = document.getElementById('stageBox').getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, stageB: sb.bottom, mr: m.right, H: innerHeight, vis: cs.visibility !== 'hidden' && +cs.opacity > 0.5, top: (e => !!e && l.contains(e))(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)) }; });
+          if (footDock) assert(tm && tm.r <= tm.mr + 1 && tm.b <= tm.stageB && tm.t >= tm.stageB - 90 && tm.vis && tm.top, `${at}: over an open menu, notices stay at the stage's foot, on top of the menu (${JSON.stringify(tm)})`);
           else assert(tm && tm.l >= tm.mr - 1, `${at}: over an open menu, notices stay in the side column (${JSON.stringify(tm)})`);
           // the Training view and the gatherer board fit the panel
           const fit = async (view, sel) => {
@@ -17449,7 +17449,7 @@ if (section('first-craft-toast-clip')) try {
       const box = e => { const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; };
       const ov = (a, b) => ({ w: Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), h: Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) });
       const r = n => `${Math.round(n.x)},${Math.round(n.y)} ${Math.round(n.w)}x${Math.round(n.h)}`;
-      const R = window.LF_EYES ? LF_EYES.rects() : {}, out = { side, n: 0, bad: [], titles: [], dock: getComputedStyle(document.getElementById('toasts')).gridColumnStart };
+      const R = window.LF_EYES ? LF_EYES.rects() : {}, out = { side, hero: !!R.hero, n: 0, bad: [], titles: [], dock: getComputedStyle(document.getElementById('toasts')).gridColumnStart };
       const others = [['#nuChip', document.getElementById('nuChip')], ['the bell', document.querySelector('.bell')], ...[...document.querySelectorAll(side ? '.sfx-btn, .stage-btns button, .stat-nums' : '.sfx-btn, .stage-btns button')].map(n => [n.className.toString().split(' ')[0], n])];   // upright the dock has always sat over the stat line
       for (const t of document.querySelectorAll('#toasts .toast')) { if (!on(t) || t._gone) continue; out.n++; const tb = box(t);
         for (const [k, n] of others) if (on(n)) { const o = ov(tb, box(n)); if (o.w > 0 && o.h > 0) out.bad.push(`toast ${r(tb)} over ${k} ${r(box(n))} by ${Math.round(o.w)}x${Math.round(o.h)}: "${t.innerText.replace(/\n/g, ' | ').slice(0, 60)}"`); }
@@ -17488,11 +17488,11 @@ if (section('first-craft-toast-clip')) try {
         assert(!!kind, `${v}: save-mid can craft something (${kind})`);
         // the banner waits for the fight to end; a check flushes it (75-moments-ui __momentFlush) a moment after the craft's toast
         await page.waitForTimeout(300); await X('window.__momentFlush(); true');
-        let most = 0, bad = null, titles = new Map(), dock = null, longName = null;
+        let most = 0, bad = null, titles = new Map(), dock = null, longName = null, hero = false;
         for (let t0 = Date.now(); Date.now() - t0 < 6000;) {
           await pin();
           const o = await sample(page, side);
-          most = Math.max(most, o.n); dock = dock || (o.n ? o.dock : null);
+          most = Math.max(most, o.n); dock = dock || (o.n ? o.dock : null); hero = hero || o.hero;
           if (!bad && o.bad.length) bad = o.bad[0];
           for (const t of o.titles) if (!titles.has(t.text) || t.cut) titles.set(t.text, t);
           // a name far longer than any item's wraps between words, whole (upright and on a phone on its side, where the banner is short)
@@ -17502,6 +17502,7 @@ if (section('first-craft-toast-clip')) try {
           await page.waitForTimeout(100);
         }
         assert(most >= 1, `${v}: the first craft shows a toast (${most})`);
+        if (side) assert(hero, `${v}: the eyes hook gives the hero's box, so the hero is measured`);
         assert(!bad, `${v}: no toast covers the Next Up chip, the bell or the stage's buttons${side ? ', or the hero past its feet' : ''}${bad ? ' (' + bad + ')' : ''}`);
         const tl = [...titles.values()];
         assert(tl.length >= 1, `${v}: the craft's banner shows a title (${tl.map(t => t.text).join(' | ')})`);
