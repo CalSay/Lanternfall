@@ -89,7 +89,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 120, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 52, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 52, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -110,6 +110,7 @@ const WEIGHT = {
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
+  'bow-slot-wording': 8,   // 8 s locally alone (bow-slot-wording, 2026-10-10)
   'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'fx-timing-fixes': 40,
@@ -18318,6 +18319,63 @@ if (section('cache-pick-order-settles')) try {
   }
 } catch (e) { fail('cache-pick-order-settles crashed: ' + (e.stack || e)); }
 
+// ==== learn-odds-pump-stops: the boss-odds pump (75-abilities-ui) works only while a row that shows the odds is on screen ====
+// save-pip-z10-ward again: her zone 10 first clear opens the cache with a move pick, and its zone 11 odds start. A test goal that is
+// ready and outranks Learn holds the Next Up chip, so Next Up's Learn row is off screen once the pick closes. Browser, 1280x720,
+// 740x360 and 360x740: the pick closed at once (Keep the Scroll) with its odds pending leaves work queued, and the pump does none of
+// it for 3 s (a counter wraps loadoutPump, the checks' own). Opening the Next Up list shows the Learn row, so the pump starts again
+// and the row fills in its zone 11 odds.
+if (section('learn-odds-pump-stops')) try {
+  const at = 'learn-odds-pump-stops', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-z10-ward.json'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-abilities-ui.js'), 'utf8'), pw0 = (src.match(/const pumpWanted = [^\n]*/) || [''])[0];
+  assert(pw0 && !/abLearnInfo/.test(pw0) && /learnShown/.test(pw0) && /pickQueued/.test(pw0), `${at}: a move to learn alone does not keep the pump going; Next Up's Learn row on screen, or a move pick shown or queued, does (${pw0})`);
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // __n counts the chunks of scratch fights the pump runs; the test goal outranks Learn (both ready), so the chip shows it
+        await X(`window.__n = 0; { const p0 = loadoutPump; loadoutPump = (n = 1) => { if (n > 0) __n += n; return p0(n); }; }
+          registerGoal({ id: 'zz-check-goal', sys: 'zz-check', prio: 30, pct: () => 1, label: 'A check goal' }); true`);
+        // Next Up keeps its list for 450 ms: wait until it has the test goal on top before the kill
+        try { await page.waitForFunction(() => window.__t.x(`(topGoals(3)[0] || {}).id === 'zz-check-goal'`), null, { timeout: 5000, polling: 50 }); }
+        catch (e) { assert(false, `${vw}: Next Up never put the test goal on top`); await ctx.close(); continue; }
+        await X(`MOMENT_Q.length = 0; S.activity = 'fight'; S.zone = 10; S.maxZone = 10; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 0;
+          try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } for (const q of MOMENT_Q) if (q.kind === 'champion') q.scene = ''; S.activity = 'gather'; emit('sceneReset'); true`);
+        try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov .mm-pick')`), null, { timeout: 8000, polling: 50 }); }
+        catch (e) { assert(false, `${vw}: the zone 10 clear's card with a pick never showed`); await ctx.close(); continue; }
+        // closed at its first paint, odds pending; any card that follows has no pick
+        const pend = await X(`(() => { const lo = learnOdds('pip'); MOMENT_UI.shownAt = 0; document.querySelector('.mm-ov .mm-go').click(); MOMENT_Q.length = 0; return !lo; })()`);
+        // the count starts once the card has left the page (its fade-out still shows the pick)
+        try { await page.waitForFunction(() => window.__t.x(`!document.querySelector('.mm-ov .mm-pick')`), null, { timeout: 5000, polling: 20 }); } catch (e) {}
+        await X(`__n = 0; true`); await page.waitForTimeout(3000);
+        const off = JSON.parse(await X(`JSON.stringify({ n: __n, left: loadoutPump(0), pending: !learnOdds('pip'), top: topGoals(3).map(g => g.id), chip: document.querySelector('#nuChip .nu-lbl').textContent, pick: !!document.querySelector('.mm-ov .mm-pick') })`));
+        assert(pend && off.top[0] === 'zz-check-goal' && off.top.includes('learn-ability') && off.chip === 'A check goal' && !off.pick,
+          `${vw}: the pick closed with its odds pending and the chip shows another goal, so the Learn row is off screen (${JSON.stringify(off)})`);
+        assert(off.left && off.pending && off.n === 0, `${vw}: with no row on screen that shows the odds, the pump runs none of the queued fights in 3 s (${JSON.stringify(off)})`);
+        // the Next Up list shows the Learn row: the pump starts again and the row fills in
+        await X(`document.getElementById('nuChip').click(); true`);
+        let row = '';
+        try { await page.waitForFunction(() => window.__t.x(`[...document.querySelectorAll('.nu-list .nu-row:not([hidden]) .nu-lbl')].some(e => /^Learn Arcane Ward: zone 11 boss, about \\d+ in 10 wins \\(now \\d+\\)$/.test(e.textContent))`), null, { timeout: 30000, polling: 100 }); row = 'filled'; } catch (e) {}
+        const on = JSON.parse(await X(`JSON.stringify({ n: __n, rows: [...document.querySelectorAll('.nu-list .nu-row:not([hidden]) .nu-lbl')].map(e => e.textContent) })`));
+        assert(row && on.n > 0, `${vw}: with the Next Up list open, the pump runs again and the Learn row fills in its zone 11 odds (${JSON.stringify(on)})`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('learn-odds-pump-stops crashed: ' + (e.stack || e)); }
+
 // ==== turn-banner-clears-plate: the turn line and the whose-turn banner each read on one line and stay off the "Zone boss" line ====
 // save-mid, a zone boss fight, every foe renamed to the longest name the game can give a foe (a boss or its Deepwell "Deep" name, an
 // elite, a Champion, a story boss). At 1280x720, 740x360 and 360x740: the turn line over the stage ("<name>'s turn", .tv-n) on the foe's
@@ -19687,6 +19745,73 @@ if (section('fx-timing-fixes')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('fx-timing-fixes crashed: ' + (e.stack || e)); }
+
+// ==== bow-slot-wording: an empty Weapon slot names the hero's starting weapon, not "You wear nothing"; the first piece of gear
+// made says it is not on yet and why a tool went on by itself (cold leg 10 Oct, finding 7) ====
+if (section('bow-slot-wording')) try {
+  const at0 = 'bow-slot-wording', { pw, exe } = browserTools;
+  const cui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-craft-ui.js'), 'utf8');
+  assert(!/`You wear nothing as \$\{posName\(d\.pos\)\}/.test(cui) && (cui.match(/emptyLine\(d\.pos, /g) || []).length === 2, `${at0}: the result card and the item sheet both build the empty-slot line through emptyLine`);
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at0}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-flow-cold-camp.json'), 'utf8');   // Wren, zone 2, nothing worn, no gear made
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const at = `${at0} ${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch });
+        await ctx.addInitScript(([key, raw]) => {
+          try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {}
+          const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+        }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        for (let i = 0; i < 8; i++) { const b = await page.$('#createScreen .create-go, .bsheet-ov .sty-done, .bsheet-ov .big:has-text("Begin"), .bsheet-ov .big:has-text("Continue"), .away-ov button'); if (!b) break; try { await b.click({ timeout: 800 }); } catch (e) { break; } await page.waitForTimeout(300); }
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        const until = async (expr, ms = 5000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 50 }); return true; } catch (e) { return false; } };
+        await X(`onboardUnlockAll(); S.onboard.tips = false; if (S.refine) S.refine.said = 1; S.gold = 1e9; S.auto = false;
+          for (const k of Object.keys(S.mats)) S.mats[k] = S.mats[k].map(() => 900); ui(true); true`);
+        assert(await X(`soloHero() === 'wren' && S.equip.weapon == null && Object.values(S.craft.made || {}).every(n => !n)`), `${at}: the fixture is Wren with no weapon worn and no gear made`);
+        await X(`setTab('forge'); true`);
+        const card = async () => { await until(`!!document.querySelector('.cf-res')`); return X(`(c => c ? { id: +c.dataset.itemId, txt: c.querySelector('.cf-res-r').innerText, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent) } : null)(document.querySelector('.cf-res'))`); };
+        // 0. a pickaxe first (the guide's order): it goes on by itself and never says "Not equipped yet"
+        const p1 = await X(`(craftItem('pick', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c0 = await card();
+        assert(c0 && c0.id === p1 && !/Not equipped yet/.test(c0.txt), `${at}: a pickaxe's card has no "Not equipped yet" line (${c0 && c0.txt})`);
+        // 1. the first bow: the compare names her starting bow, and one line says it is not on yet and why a tool goes on by itself
+        const b1 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c1 = await card();
+        assert(b1 != null && c1 && c1.id === b1, `${at}: the Pine Bow's result card shows (${JSON.stringify(c1)})`);
+        assert(c1 && /Better than your starting bow\./.test(c1.txt) && !/You wear nothing/.test(c1.txt), `${at}: the bow's card says "Better than your starting bow." and never "You wear nothing" (${c1 && c1.txt})`);
+        assert(c1 && /Not equipped yet\. Gear waits for you to choose; tools go on by themselves\./.test(c1.txt) && c1.btns.includes('Equip'), `${at}: the first piece of gear says it is not on yet, and offers Equip (${c1 && c1.txt})`);
+        // 2. the item sheet's compare says the same
+        await X(`craftUI.openItem(${b1}); true`); await until(`!!document.querySelector('.cf-isheet .cf-cmp')`);
+        const sh = await X(`(n => n ? n.innerText : '')(document.querySelector('.cf-isheet .cf-cmp'))`);
+        assert(/Better than your starting bow\. *$/m.test(sh) && !/You wear nothing/.test(sh), `${at}: the item sheet's compare names the starting bow (${sh})`);
+        await page.keyboard.press('Escape'); await X(`document.querySelectorAll('.bsheet-ov').forEach(o => o.remove()); setTab('forge'); true`);
+        // 3. a second bow: no first-craft line any more
+        const b2 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c2 = await card();
+        assert(c2 && c2.id === b2 && !/Not equipped yet/.test(c2.txt) && /Better than your starting bow\./.test(c2.txt), `${at}: a second bow keeps the compare line but drops the first-craft line (${c2 && c2.txt})`);
+        // 4. once a bow is worn, the next one compares against it
+        await X(`S.equip.weapon = ${b1}; gearDirty(); ui(true); true`);
+        const b3 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c3 = await card();
+        assert(c3 && c3.id === b3 && /Against your /.test(c3.txt) && !/starting bow/.test(c3.txt), `${at}: with a bow worn, a new one compares against it (${c3 && c3.txt})`);
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+    // the other starters name their own weapon
+    const sw = fs.readFileSync(path.join(ROOT, 'src', 'js', '24b-data-solo.js'), 'utf8');
+    assert(/tobin:[^\n]*weapon: 'Sword and shield'/.test(sw) && /pip:[^\n]*weapon: 'Staff'/.test(sw), `${at0}: Tobin and Pip have a starting weapon for the line to name`);
+    assert(/\.split\(' and '\)\[0\]/.test(cui), `${at0}: Tobin's line names his sword only (the shield is the Off-hand slot)`);
+  }
+} catch (e) { fail('bow-slot-wording crashed: ' + (e.stack || e)); }
 
 // ==== pip-cast-recipes (ruling-pip.md question 9): Pip's Nova, Lantern Flare and Lanternburst start where her art casts them ====
 // With route S Pip (stageFx.pipS.on, filled by route-s-pip-wire; stubbed here) Nova is a ring from the staff butt along the ground,
