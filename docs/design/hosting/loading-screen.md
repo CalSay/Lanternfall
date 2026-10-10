@@ -103,3 +103,20 @@ the boot set by design. That is the question for the judge.
 - **Check:** `node tools/build.mjs --split && node tools/check.mjs --only <sections>`; cold load median of 3 at 10 Mbps for a new
   game and zone 2; screenshots at 1280x720, 740x360 and 360x740.
 - **Moving the hero packs to 16 frames** is a later step, after Cal has seen the art thread's side-by-side test.
+
+## 6. Tricks to speed it up (Cal, 09:29: "Downloading a few MB shouldn't really take that long")
+
+Where the time goes (cold-load.mjs, median of 3, new game, today's base): **0.9 s** with no speed limit (starting the game),
+**4.3 s** at 10 Mbps with a 150 ms round trip. So about 3.4 s of the 6 s line is download. On home broadband (50+ Mbps) the
+same load is about 1.5 s; the 10 Mbps line is there for a phone on an average mobile connection.
+
+| Trick | Measured or priced | Verdict |
+|---|---|---|
+| Keep the files on the player's device: the art files already have content-hashed names, so they can be cached for good (`Cache-Control: public, max-age=31536000, immutable` on `/assets/*`). Today `tools/site.mjs` sends `no-cache` on every path | A returning player downloads only files that changed: after a code-only update about 1.08 MB (the page), after nothing changed 0 | **Do it**, in netlify-split-deploy (one `_headers` line in `tools/site.mjs`). Only the first visit waits |
+| Download during the opening and the hero pick | A new player waits for nothing extra (section 3, step 3) | **In the plan** |
+| Wait only for the first fight's moves | about 0.6 MB at 8 frames, about 1.3 MB at 16, against 1.6 and 3.2 MB for the whole hero | **In the plan** |
+| 16 frames only where motion shows (the Wren art thread's pick, 10 Oct 09:32: attacks, abilities and Tobin's dashes at 16; idle, hits, defeat and gathering at 8). Tobin's 16-frame attack test: about 120 KB to 240 KB a move | Wren: about 2.8 MB for her 19 moves (14 doubled) against 3.2 MB all-16; her first-fight set about 0.95 MB against 1.3 MB | **Pick** if Cal likes the test: most of the smoothness for about 0.4 MB less a hero |
+| Art as image files instead of basE91 text in JS | Wren's 19 packs: 1.62 MB on the wire as JS, 1.60 MB as WebP files: 1%. Brotli already takes the text overhead back | No: not worth a loader change |
+| Stronger lossless compression (same pixels) | Re-saving Wren's atlases at WebP lossless, method 6, quality 100: byte for byte the same (already at the strongest setting) | No: nothing left |
+| More downloads at once | The boot files already download together; more at once does not add bandwidth | No |
+| Pixel-changing compression (lossy, fewer colours) | Not measured | Off: it changes the art (art freeze) |
