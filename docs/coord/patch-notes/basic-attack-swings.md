@@ -1,0 +1,1 @@
+Your hero now swings on every Attack in a fight. Before, the hit landed but Wren, Tobin and Pip stood still; now each Attack plays their attack, the same way an ability does. Best shot: attack-swing-2.
