@@ -14485,8 +14485,11 @@ if (section('normal-death-says-so')) try {
         const live = async () => { for (let i = 0; i < 40 && !(await X('!!(TURN_LIVE && !TURN_LIVE.ended && cbUnitByKey("hero") && !cbUnitByKey("hero").down)')); i++) await page.waitForTimeout(150); };
         await live();
         // the loss line slides in from 16 px left over 0.35 s (60-turn.css tv-beat-in) and spans the stage, so it reads outside the stage
-        // until the slide ends: measure it at rest, once its own animations finish (the flake: a fixed 400 ms sleep caught it mid-slide under load)
-        const rest = () => page.evaluate(() => { const b = document.querySelector('.tv-beat'); return b ? Promise.all(b.getAnimations().map(a => a.finished.catch(() => 0))).then(() => true) : true; });
+        // until the slide ends: measure it at rest, once its own animations finish (the flake: a fixed 400 ms sleep caught it mid-slide under load).
+        // A hidden line cancels its slide (caught: the reads after it say so); a slide still running after 5 s fails by name
+        const rest = async () => assert(await page.evaluate(() => { const b = document.querySelector('.tv-beat'); return !b || Promise.race([
+          Promise.all(b.getAnimations().map(a => a.finished.catch(() => 0))).then(() => true), new Promise(r => setTimeout(() => r(false), 5000))]); }),
+          `${w}x${h}: the loss line's slide-in finished within 5 s`);
         const st = () => page.evaluate(() => {
           const b = document.querySelector('.tv-beat'), box = document.getElementById('stageBox'), r = b && b.getBoundingClientRect(), sb = box.getBoundingClientRect();
           const help = b && b.querySelector('.tv-beat-help'), txt = b && b.querySelector('.tv-beat-txt');

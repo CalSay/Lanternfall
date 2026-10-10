@@ -65,4 +65,4 @@ changes how a check waits for the real state; it never loosens, skips, retries o
   1280x720, one at 740x360), and a probe showed the slide still running (167 to 250 ms in) with the line 1.9 to 5.5 px past the
   stage's left edge. Not a game bug: the line rests inside the stage, and the stage's frame clips the slide.
 - **Fix:** the two fixed 400 ms timers became a wait for the line's own animations to finish (`rest()`: `getAnimations()` and each
-  one's `finished`), then the same reads. Every assert is unchanged. 12 of 12 with four copies at once; 20 of 20 beside shards 0/6 and 1/6.
+  one's `finished`, capped at 5 s by an assert that names a slide still running), then the same reads. Every assert is unchanged. 12 of 12 with four copies at once; 20 of 20 beside shards 0/6 and 1/6.
