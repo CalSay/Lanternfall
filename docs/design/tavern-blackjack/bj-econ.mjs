@@ -1,6 +1,6 @@
-// Tavern Blackjack: house edge, swing and the table limits against the gold curve (docs/design/tavern-blackjack.md 5).
+// Tavern Blackjack: house edge, swing and the table limits against the gold curve (docs/design/tavern-blackjack.md 4, 6).
 // Run from the repo root: node docs/design/tavern-blackjack/bj-econ.mjs [hands=2000000] [days=20000]
-// Reads the gold curve from the shipped core (foeGoldBase, earlyGold, ECON.hourFoes); the table rules are the spec's.
+// Reads the gold curve from the shipped core (econH, econSig, ECON.hourFoes); the table rules are the spec's.
 import { loadCore } from '../../../tools/lib/core.mjs';
 
 const HANDS = +(process.argv[2] || 2e6), DAYS = +(process.argv[3] || 2e4);
@@ -31,15 +31,17 @@ function decide(strat, h, up) {
   if (t === 9) return two && u >= 3 && u <= 6 ? 'D' : 'H';
   return 'H';
 }
-// Net result of one hand, in bets (+1.5 blackjack, +2/-2 a won or lost double).
-function hand(strat) {
+// Net result of one hand, in bets (+1.5 blackjack, +2/-2 a won or lost double). Dealer blackjack ends the hand before
+// any double: the same as the spec's no-hole-card rule with "original bet only".
+function hand(strat, canDouble = true) {
   const draw = dealer();
   const p = [draw(), draw()], d = [draw(), draw()];
   const pbj = val(p).t === 21, dbj = val(d).t === 21;
   if (pbj || dbj) return pbj && dbj ? 0 : pbj ? 1.5 : -1;
   let bet = 1;
   for (;;) {
-    const a = decide(strat, p, d[0]);
+    let a = decide(strat, p, d[0]);
+    if (a === 'D' && !canDouble) a = 'H';
     if (a === 'S') break;
     p.push(draw());
     if (a === 'D') { bet = 2; break; }
@@ -59,36 +61,42 @@ for (const s of ['basic', 'mimic', 'nobust']) {
 console.log(`Per hand, in bets (${HANDS.toLocaleString('en-GB')} hands each):`);
 for (const s in per) console.log(`  ${s.padEnd(7)} edge ${(100 * per[s].mean).toFixed(2)}%  sd ${per[s].sd.toFixed(3)}`);
 
-// ---- the table limits by zone (spec 4): min = 2 foes' gold, max = 64 foes, Hesketh's purse and the loss stop = 5 max bets ----
+// ---- the table limits by zone (spec 4), in price-hours: H(z) = econH(z), the unit every price uses ----
+// highest bet = 0.2 H, lowest = highest / 20 (at least 10), the day's limit both ways = 5 highest bets (1 H).
 const g = loadCore({ seed: 1 }), E = s => g.eval(s);
-const sig = x => E(`econSig(${x})`);
-const foe = z => E(`foeGoldBase(${z}) * (${z} >= ECON.early.end ? 1 : ${z} <= ECON.early.full ? ECON.early.x : ECON.early.x - (ECON.early.x - 1) * (${z} - ECON.early.full) / (ECON.early.end - ECON.early.full))`);
-const hourFoes = E('ECON.hourFoes');
-const LIM = { min: 2, max: 64, purse: 320 };   // in foes' gold
-// The 14-day econ report (sim.mjs --report econ, EC2) puts a normal day's income at 6,655 foe-equivalents: about 21 H.
-const DAY_FOES = 6655;
-console.log(`\nTable limits by zone (gold; H = one hour of fighting = ${hourFoes} foes):`);
-console.log('  zone  foe gold   min    max   purse/stop   purse as H');
-for (const z of [11, 15, 20, 25, 35, 36, 50, 70, 71, 105, 140, 175]) {
-  const f = foe(z), mn = Math.max(10, sig(LIM.min * f)), mx = sig(LIM.max * f), pu = 5 * mx;
-  console.log(`  ${String(z).padStart(4)}  ${f.toFixed(1).padStart(8)}  ${String(mn).padStart(5)}  ${String(mx).padStart(5)}  ${String(pu).padStart(10)}   ${(pu / (hourFoes * f)).toFixed(2)}`);
+const sig = x => E(`econSig(${x})`), H = z => E(`econH(${z})`);
+// The 14-day econ report (sim.mjs --report econ, EC2) puts a normal day's income at 6,655 foe-equivalents of the base
+// curve: about 21 H (ECON.hourFoes = 312).
+const DAY_H = 6655 / E('ECON.hourFoes');
+const lim = z => { const hi = sig(0.2 * H(z)); return { H: H(z), lo: Math.max(10, sig(hi / 20)), hi, day: 5 * hi }; };
+console.log('\nTable limits by highest zone (gold):');
+console.log('  zone        H   lowest  highest   day limit');
+let prev = 0;
+for (const z of [11, 14, 15, 20, 25, 30, 35, 36, 50, 70, 71, 105, 140, 175]) {
+  const L = lim(z);
+  console.log(`  ${String(z).padStart(4)}  ${String(Math.round(L.H)).padStart(7)}  ${String(L.lo).padStart(7)}  ${String(L.hi).padStart(7)}  ${String(L.day).padStart(10)}${L.hi < prev ? '  FALLS' : ''}`);
+  prev = L.hi;
 }
+for (let z = 1, last = 0; z <= 175; z++) { const v = lim(z).hi; if (v < last) console.log(`  highest bet falls at zone ${z}: ${last} -> ${v}`); last = v; }
 
-// ---- a day at the table, in max bets: play up to N hands, stop at +5 (purse empty) or -5 (loss stop) ----
+// ---- a day at the table, in highest bets: bets are clamped to the room left before the loss stop, Double is off when
+// it would pass it, and the table closes at +5 (the day's win limit) or when the room left is under the lowest bet ----
 function day(strat, nHands, betFrac) {
-  let net = 0; const cap = 5;
+  let net = 0; const cap = 5, lo = 1 / 20;
   for (let i = 0; i < nHands; i++) {
-    net += betFrac * hand(strat);
-    if (net >= cap || net <= -cap) break;
+    const room = cap + net;
+    if (room < lo || net >= cap) break;
+    const bet = Math.min(betFrac, room);
+    net += bet * hand(strat, room >= 2 * bet);
   }
   return net;
 }
-console.log(`\nA day at the table (${DAYS.toLocaleString('en-GB')} days each), net in max bets; purse and stop at +/-5 (${LIM.purse} foes, ${(LIM.purse / hourFoes).toFixed(2)} H, ${(100 * LIM.purse / DAY_FOES).toFixed(1)}% of a normal day's income):`);
-for (const [s, n, b, who] of [['basic', 60, 1, 'keen: basic chart, max bet, up to 60 hands'], ['mimic', 30, 1, 'casual: hits to 17, max bet, 30 hands'], ['mimic', 30, 0.25, 'careful: hits to 17, quarter bet, 30 hands'], ['nobust', 60, 1, 'timid: stands on 12+, max bet, 60 hands']]) {
-  let m = 0, win = 0, lose = 0; const xs = [];
-  for (let i = 0; i < DAYS; i++) { const r = day(s, n, b); m += r; xs.push(r); if (r >= 5) win++; if (r <= -5) lose++; }
+console.log(`\nA day at the table (${DAYS.toLocaleString('en-GB')} days each), net; the day limit is 1 H, about ${(100 / DAY_H).toFixed(1)}% of a normal day's income:`);
+for (const [s, n, b, who] of [['basic', 60, 1, 'keen: the chart, highest bet, up to 60 hands'], ['mimic', 30, 1, 'casual: hits to 17, highest bet, 30 hands'], ['mimic', 30, 0.25, 'careful: hits to 17, a quarter of the highest bet, 30 hands'], ['nobust', 60, 1, 'timid: stands on 12+, highest bet, 60 hands']]) {
+  let m = 0, win = 0, lose = 0, best = -9, worst = 9; const xs = [];
+  for (let i = 0; i < DAYS; i++) { const r = day(s, n, b); m += r; xs.push(r); if (r >= 5) win++; if (r <= -5 + 1 / 20) lose++; best = Math.max(best, r); worst = Math.min(worst, r); }
   xs.sort((a, b) => a - b);
-  const pct = p => xs[Math.floor(p * (xs.length - 1))].toFixed(2);
-  const mf = LIM.max * m / DAYS;
-  console.log(`  ${who}\n    mean ${(m / DAYS).toFixed(2)} (${mf.toFixed(1)} foes, ${(mf / hourFoes * 100).toFixed(1)}% of H, ${(100 * mf / DAY_FOES).toFixed(2)}% of a day's income)  p10 ${pct(0.1)}  p50 ${pct(0.5)}  p90 ${pct(0.9)}  purse emptied ${(100 * win / DAYS).toFixed(1)}%  stopped ${(100 * lose / DAYS).toFixed(1)}%`);
+  const pct = p => (xs[Math.floor(p * (xs.length - 1))] * 0.2).toFixed(2);
+  const mH = 0.2 * m / DAYS;
+  console.log(`  ${who}\n    mean ${mH.toFixed(3)} H (${(100 * mH / DAY_H).toFixed(2)}% of a day's income)  p10 ${pct(0.1)} H  p50 ${pct(0.5)} H  p90 ${pct(0.9)} H  best ${(0.2 * best).toFixed(2)} H  worst ${(0.2 * worst).toFixed(2)} H  win limit ${(100 * win / DAYS).toFixed(1)}%  loss stop ${(100 * lose / DAYS).toFixed(1)}%`);
 }

@@ -7,272 +7,403 @@ and the Codex art card `codex-cards-tavern`.
   - 18:44: "I want a mini game, something simple with some risk. I was thinking maybe like fantasy themed blackjack."
   - 18:53: "more clearly blackjack. It is in a tavern after all. I think being able to choose your bet would be good too."
   - 19:00: "Yeah that's pretty good... We also need to be able to reduce the bet too."
-- **Mockup v3**, the one Cal saw: https://claude.ai/artifact/4csKr6KFbecvicQdX7NsWy. The rules below are that mockup's, with
-  the table limits, daily purse, save and switch this spec adds.
-- **Numbers**: [tavern-blackjack/bj-econ.mjs](tavern-blackjack/bj-econ.mjs) (house edge and swing against the shipped gold
-  curve) and the 14-day `sim.mjs --report econ` run, both summarised in section 6.
-- **Records**: red team [tavern-blackjack/red-team.md](tavern-blackjack/red-team.md) and judge
-  [tavern-blackjack/judge.md](tavern-blackjack/judge.md).
+- **Mockup v3**, the one Cal saw: https://claude.ai/artifact/4csKr6KFbecvicQdX7NsWy. The rules come from that mockup.
+  This spec adds the table limits, the day's limits, the save, the switch and the opening beat.
+- **Numbers**:
+  - [tavern-blackjack/bj-econ.mjs](tavern-blackjack/bj-econ.mjs): the house edge, the swing, and the table limits from
+    the shipped gold curve.
+  - The 14-day `sim.mjs --report econ` run.
+  - Both are summarised in section 6.
+- **Records**: the red team, [tavern-blackjack/red-team.md](tavern-blackjack/red-team.md), and the judge,
+  [tavern-blackjack/judge.md](tavern-blackjack/judge.md). This version answers the red team, item by item, in section 17.
 
 ## 1. What the player sees
 
-1. After the zone 10 Champion, with the Tavern built, one notice says: "Hesketh has a card table at the Tavern."
-2. Camp > Tavern has a new section at the top called **Blackjack**. Hesketh deals there. A first-use hint says:
-   "Bet gold and beat Hesketh's hand without going over 21."
-3. You set your bet with − and + (one step each), or tap a gold coin to add more. The bet stays between the table's
-   lowest and highest bet, and never goes over the gold you hold. A line under it says
-   "Table: 30 to 960 gold" (the numbers rise with your zone).
-4. Deal takes your bet and deals two cards each. One of Hesketh's cards is face down.
-5. You Hit, Stand or Double. Hesketh then turns his card and draws until he has 17.
-6. You win, lose or tie, and the line says how much: "19 beats 17. You win 960 gold." Next hand keeps the same bet.
-7. Win enough in a day and Hesketh's purse runs dry: "Hesketh is out of coin. He'll deal again tomorrow." Lose enough
-   in a day and he stops you: "That's enough for tonight. Come back tomorrow."
-8. Nothing at the table ever costs real money, and nothing you can buy can be bet.
+1. The zone 13 Captain falls and the Tavern is already built. One notice says: "New on the Camp tab: a card table at
+   the Tavern."
+2. Camp > Tavern has a new section called **Blackjack**. Hesketh deals there. A first-use hint says: "Bet gold and beat
+   Hesketh's hand without going over 21."
+3. You set the bet with − and +, or tap a gold coin to add more. A line says "Table: 26 to 510 gold". The numbers only
+   ever rise, as your road goes further.
+4. Deal takes your bet. You get two cards face up, and Hesketh gets one.
+5. You Hit, Stand or Double. Hesketh then draws his cards until he has 17 or more.
+6. A line says what happened: "19 beats 17. You win 510 gold." The next hand keeps the same bet.
+7. A good or bad run ends for the day: "The table's closed for today." The line doesn't say why, or when it opens again.
+8. Nothing at the table costs real money, and gold is never sold.
 
 **Never**
 
-- Never sell gold, coins, table access, extra hands or a refilled purse. Gold is never sold (Lantern Rules 1 and 2).
-- Never put the table in Next Up, in the guide, in a reward, or in a pop-up. You only find it by opening the Tavern.
-- Never make the table a goal: no Deed, Feat, streak, bounty or daily task asks you to play.
-- Never let table wins count as gold earned for Deeds, the Codex hoard lines or health metrics.
-- Never touch the online layer: the online Tavern board, presence, the raid or the shared data.
+- Never sell gold, coins, table access, extra hands, or a reset of the day's limits (Lantern Rules 1 and 2).
+- Never put the table in Next Up, the guide, a reward, a Deed, a Feat, a bounty, a streak or a pop-up. You find it by
+  opening the Tavern. Nothing ever asks you to play.
+- Never let table gold count as gold earned: not in `S.totalGold`, the econ ledger, Deeds, hoard lines or health metrics.
+- Never let a gold bonus touch a payout. A payout is bet x odds, never x `goldMult()`.
+- Never touch the online layer: the online Tavern boxes, presence, the raid or the shared data.
 
 ## 2. Why, and where it fits
 
-- **Problem.** Cal wants a short, risky break between fights (his words above). Today, every choice in the game is about
-  progress, and nothing lets a player gamble a little of what they won for a thrill. The mockup got a "pretty good" from
-  Cal at 19:00.
+- **Problem.** Cal wants a short, risky break between fights (his words above). Nothing in the game today lets a
+  player risk a little of what they won for a thrill. Cal called the mockup "pretty good" at 19:00.
 - **Evidence.** This comes from Cal's ask and his read of the mockup, plus the review data in
   [monetisation.md](monetisation.md). In IdleOn's money reviews, "paid odds, pets, companions, gambling" drew 10 one-
   and two-star reviews against 4 good ones. The anger is at *paid* chance, so this table sells nothing. No playtest
-  evidence exists yet. The prediction in section 12 is how we get some.
-- **Compass.** Loop step: "A 5-minute visit, step 3" (spend what you won). Pillar 2 (camp and away), coverage-map area
-  9, side content. Goal: Fun.
-- **Ceilings.** It adds no new currency (gold only, so it stays within the 8 core counters), no building and no camp-tour
-  tap (the table sits in the Tavern view, which the tour does not visit). It is one new thing, at a beat with no other
-  new thing (section 7).
+  evidence exists yet. Section 12 is how we get some.
+- **Compass.**
+  - Loop step: "A day, step 3" (fill a collection, or finish a bounty or a Contract). The table is the day's optional
+    side thing, the way Bounties are.
+  - A hand takes about 20 seconds, and a sitting is as long as the player likes. It is never part of the 5-minute
+    visit.
+  - Pillar 2 (camp and away), coverage-map area 9, side content. Goal: Fun.
+- **Pillar 2's "calm, low pressure" (P13).** The table is opt-in and out of the way. Nothing nags you to play, and the
+  day's limits stop a chase both ways.
+- **Ceilings.** No new currency (gold only), no building, and no tap on the camp tour (the tour doesn't visit the
+  Tavern view). It is one new thing on a beat of its own (section 7).
 
 ## 3. The rules
 
-Hesketh deals standard blackjack, the way a player already knows it.
+Hesketh deals standard blackjack, the way most players already know it.
 
 | Rule | Value |
 |---|---|
-| Cards | Four 52-card decks, **shuffled fresh before every hand** (so counting cards does nothing) |
-| Card values | 2 to 10 as shown; Squire, Queen and King count 10; an Ace counts 1 or 11 |
-| Deal | Two cards each. One of Hesketh's is face down |
-| Blackjack | An Ace and a ten-card on the deal. It pays 3 to 2 (rounded down to whole gold). Both blackjack: a tie |
-| Dealer blackjack | With an Ace or ten-card up, Hesketh checks his face-down card before you act. On blackjack the hand ends and you lose only the bet |
-| Your moves | Hit (take a card), Stand (keep your hand), Double (on your first two cards only: double the bet, take exactly one card) |
-| Not offered | Split, insurance, surrender (one hand on screen, three buttons) |
-| Dealer | Draws to 17, and stands on every 17, soft 17 included |
-| Results | Over 21 loses. Higher total wins even money. A tie returns the bet |
-| Suits | Lanterns, Crowns, Blades, Thorns. The Jack is called the Squire |
+| Cards | Four 52-card decks, **shuffled fresh before every hand**, so counting cards does nothing |
+| Card values | 2 to 10 as shown; Knave, Queen and King count 10; an Ace counts 1 or 11 |
+| Deal | You get two cards face up. Hesketh gets **one** face-up card. His second card is drawn only after you stand, so no hidden card sits in the save |
+| Blackjack | An Ace and a ten-card as your first two cards. It pays 3 to 2, rounded down to whole gold. If Hesketh then makes 21 with two cards, it's a tie |
+| Hesketh's blackjack | If his first two cards make 21, you lose **your first bet only**. A Double's extra gold comes back, the same as dealers who check for blackjack |
+| Your moves | Hit takes a card. Stand keeps your hand. Double works on your first two cards only: it doubles the bet and takes exactly one card. Double is off if you can't cover it, or if it would pass the day's loss limit |
+| Not offered | Split, insurance and surrender. One hand on screen, three buttons |
+| Hesketh | Draws to 17 and stands on every 17, soft 17 included |
+| Results | Over 21 loses. A higher total wins even money. A tie gives the bet back |
+| Suits | Lanterns, Keys, Cups and Thorns. The Jack is the **Knave** (Squire, Crowns and Blades are names the game already uses) |
 
-Hesketh's rule of thumb, shown under the table in small print: "Stand on 12 to 16 when I show a 2 to 6. Always hit 11 or
-less." This is a fixed tip, not live advice on each hand.
+The fine print under the table says: "Hesketh's rule of thumb: stand on 12 to 16 when I show a 2 to 6. Always hit 11 or
+less." It's a fixed tip, not advice on each hand.
 
-## 4. Bets, table limits and Hesketh's purse
+The no-hole-card rule with "first bet only" has the same edge as a dealer who peeks. With no hole card, nothing secret
+sits in the save, and a reload shows nothing new.
 
-All amounts are gold. The table unit is one normal foe's gold at the player's highest zone, the same gold a fight pays
-(`foeGoldBase(z) * earlyGold(z)`, before gear gold and Omens), so the table keeps step with the road.
+## 4. Bets and the day's limits
 
-| Limit | Rule | At zone 11 | At zone 50 | At zone 140 |
-|---|---|---|---|---|
-| Lowest bet | 2 foes' gold, at least 10 | 30 | 58 | 1,100 |
-| Highest bet | 64 foes' gold (about 12 minutes of fighting, 0.2 H) | 960 | 1,800 | 36,000 |
-| Hesketh's purse | The table closes for the day once you are up 5 highest bets (320 foes, about one hour of fighting) | 4,800 | 9,000 | 180,000 |
-| Loss stop | The table closes for the day once you are down the same amount | 4,800 | 9,000 | 180,000 |
+Every limit is set in **price-hours**. A price-hour is `econH(z)`, the unit every price in the game uses (312
+base-curve foes, `ECON.hourFoes`), at the player's highest zone `S.maxZone`. `econH` only rises with the zone, so the
+limits only rise. Every amount is rounded with `econSig`, like every price.
 
-- Every amount is rounded to two significant figures with `econSig`, like every price the player reads.
-- The purse and the loss stop count **net** gold for the day: wins minus bets. Both reset at the device day
-  (`deviceDay()`, the same day the Almanac and Tavern use). A hand that crosses a limit is paid in full; the table closes
-  after it.
-- Missing a day costs nothing. The purse does not carry over or grow, so the table is never a daily duty.
-- The limits are read when a hand is dealt, so pushing to a new zone in the middle of a day raises them from the next hand.
-- **Bet controls** come from the mockup. − and + step by one lowest bet. Four gold coins add 1, 2, 5 and 10 lowest bets
-  ("+30", "+60", "+150", "+300" at zone 11). Clear goes back to the lowest bet. The bet is clamped to
-  [lowest, min(highest, gold held, what's left before the loss stop)]. The last bet is remembered.
-- If you hold less than the lowest bet, Deal is off and the line says "You need 30 gold to sit down."
+| Limit | Rule | Zone 14 | Zone 25 | Zone 50 | Zone 140 |
+|---|---|---|---|---|---|
+| Highest bet | 0.2 price-hours | 510 | 690 | 1,800 | 35,000 |
+| Lowest bet | 1/20 of the highest, at least 10 | 26 | 35 | 90 | 1,800 |
+| Day's win limit | Net up 5 highest bets (1 price-hour) | 2,550 | 3,450 | 9,000 | 175,000 |
+| Day's loss limit | Net down 5 highest bets (1 price-hour) | 2,550 | 3,450 | 9,000 | 175,000 |
+
+- **Each limit has one job** (lessons, Economy: one limit per budget):
+  - The **win limit** stops a lucky run from skipping a gold wall.
+  - The **loss limit** stops a bad night from emptying the camp's budget.
+  - The **highest bet** sets how big a single hand feels.
+  - The **lowest bet** and **gold held** are only there so a bet can be placed at all.
+- **The day.** Net is wins minus bets for the device day (`deviceDay()`, the day the Almanac uses). It resets when that
+  day changes. Missing a day costs nothing, and nothing carries over or grows.
+- **When the table closes.** A hand that crosses the win limit is paid in full, then the table closes. The loss limit
+  is never crossed: the bet is clamped to the room left, and Double is off when it would pass it. The table also closes
+  when the room left is under the lowest bet. Either way the line is "The table's closed for today."
+- **Bet controls** (Cal, 19:00: raise and lower):
+  - − and + step by one lowest bet.
+  - Four gold coins add 1, 2, 5 and 10 lowest bets ("+26", "+52", "+130", "+260" at zone 14).
+  - Clear goes back to the lowest bet.
+  - The bet is clamped to [lowest, min(highest, gold held, room left before the loss limit)]. The last bet is
+    remembered.
+- **Short of gold.** With less than the lowest bet, Deal is off and the line says "You need 26 gold to sit down."
+- **Payouts are exact.** Win: the bet back plus the bet. Blackjack: the bet back plus 1.5 x the bet, rounded down. Tie:
+  the bet back. No gear gold, Omen or Dare multiplies any of them. A check runs the table with Gold Fever (+80%) active.
 
 ## 5. Gold or chips
 
-The default is **plain gold**: the coins are gold coins and every amount reads "gold", as in the mockup. This is the
-Foreman's default, picked because it adds nothing to name or count, needs fewer art pieces, and reads less like a
-casino. Cal can veto it with **"Use fantasy chips at the table"**. Chips would then be a picture of gold, never a
-second currency: they appear only at the table and are converted back to gold when the hand ends.
+The default is **plain gold**. The coins are the game's own gold coin (`ICON.coin`, 10-art.js), and every amount reads
+"gold", as in the mockup. This is the Foreman's default. It adds nothing to name or count, needs fewer art pieces, and
+reads less like a casino. Cal can veto it with **"Use fantasy chips at the table"**. Chips would then be a picture of
+gold, never a second currency: they appear only at the table, and gold is what's held.
 
 ## 6. The economy check
 
-Run `node docs/design/tavern-blackjack/bj-econ.mjs`. It uses 2,000,000 hands for each strategy and 20,000 days for each
-player type, and reads the gold curve from the shipped core.
+`node docs/design/tavern-blackjack/bj-econ.mjs` plays 2,000,000 hands for each way of playing and 20,000 days for each
+player type. It reads the gold curve from the shipped core.
 
 **The house edge, per hand:**
 
 | How you play | Edge | Spread (sd, in bets) |
 |---|---|---|
 | By the chart (no split) | −0.93% | 1.11 |
-| Like the dealer: hit to 17, never double | −5.69% | 0.98 |
+| Like Hesketh: hit to 17, never double | −5.69% | 0.98 |
 | Never risk a bust: stand on 12 and up | −7.90% | 0.99 |
 
-**A day at the table, net.** H is one hour of fighting gold. A normal day's income is about 21 H: the 14-day econ report
-below gives 6,655 foe-equivalents a day.
+**A day at the table, net, in price-hours (H).** The table bets are clamped to the room left before the loss limit,
+and Double is off when it would pass it. A normal day's income is about 21 H: the econ report's EC2 gives 6,655
+foe-equivalents a day on the base curve, and 312 foes are 1 H.
 
-| Player | Average a day | As a share of a day's income | Purse emptied | Loss stop hit |
-|---|---|---|---|---|
-| Keen: the chart, highest bet, up to 60 hands | −4.5% of H | −0.2% | 45% of days | 50% |
-| Casual: hits to 17, highest bet, 30 hands | −24% of H | −1.1% | 23% | 45% |
-| Careful: hits to 17, a quarter of the highest bet, 30 hands | −8.6% of H | −0.4% | 0% | 0% |
-| Timid: stands on 12+, highest bet, 60 hands | −40% of H | −1.9% | 28% | 66% |
+| Player | Average | As a share of a day's income | Best day | Worst day | Hit the win limit | Hit the loss limit |
+|---|---|---|---|---|---|---|
+| Keen: the chart, highest bet, up to 60 hands | −0.05 H | −0.2% | +1.35 H | −1.00 H | 44% of days | 52% |
+| Casual: hits to 17, highest bet, 30 hands | −0.23 H | −1.1% | +1.20 H | −1.00 H | 23% | 46% |
+| Careful: hits to 17, a quarter of the highest bet, 30 hands | −0.09 H | −0.4% | +1.03 H | −1.00 H | 0% | 0% |
+| Timid: stands on 12+, highest bet, 60 hands | −0.38 H | −1.8% | +1.25 H | −1.00 H | 27% | 66% |
 
-**What this means for the gold economy:**
-
-- **It cannot mint gold.** Every hand loses on average, and the purse and loss stop are fixed amounts, so no way of
-  betting or stopping comes out ahead over time. That includes doubling up after a loss and leaving while ahead.
-  Fresh shuffles stop card counting. The best day possible is the purse plus one doubled hand: 7 highest bets, about
-  1.4 H, or 7% of a normal day's income.
-- **It cannot wreck a player.** The worst day is the loss stop plus one doubled hand: also about 1.4 H. It scales with
-  the zone, so it never falls to pocket change late. It is real money early, though. Near zone 11 a worst day (about
-  6,700 gold) can be most of what a new player holds, and that is the risk Cal asked for. The loss stop bounds it, and
-  the table opens only after the first hour.
-- **Why the highest bet is 64 foes, not 16.** A bet must feel like something. At zone 25 the normal player banks more
-  than a day of income at 62% of check-ins (EC5 below), so a 16-foe (290 gold) top bet would be pocket change. The
-  first draft used 16 foes and was raised for this reason.
-- **Against a normal day's gold**, a keen player loses about 0.2% of a day's income and a casual one about 1.1%. That
-  makes the table a mild gold sink. Gold is the mid-game choke (systems map), so the sink stays small on purpose, and
-  it is the player's choice.
-
-14-day `node tools/sim.mjs --report econ --days 14` (Warden; idle, normal and active profiles), at 3937d6c5:
+14-day `node tools/sim.mjs --report econ --days 14` (Warden; idle, normal and active profiles) at 3937d6c5, before
+the table exists:
 
 ```text
 EC2 income a day (foe-equivalents, 24 h average, from day 2): idle Hollow 9,377; normal Hollow 6,655; active Hollow 7,032
-EC5 banked gold under 1 day of income at 90% of check-ins: idle 4%, normal 62%, active 15% (FAIL before this card)
+EC4 normal play, spend split: Hollow shifts 14%, camp 30%, upgrades 0%, rest 55% of 877,735
+EC5 banked gold under 1 day of income at 90% of check-ins: idle 4%, normal 62%, active 15%
 idle   day 14: zone 24, gold a day d1 40,452 d3 66,269 d8 81,745
 normal day 14: zone 28, gold a day d1 26,333 d3 65,180 d8 68,979
 active day 14: zone 33, gold a day d1 67,002 d3 79,122 d8 95,314
+3/8 econ targets pass (EC2, EC3, EC5, EC6 and EC9 fail on the integration branch before this card)
 ```
 
-On these numbers the purse (one hour of fighting gold) is about 5% of a normal day's income, and a full day's average
-loss is under 2% of it. EC2, EC3, EC5, EC6 and EC9 fail on the integration branch before this card, since the table is
-not built yet. The build card's acceptance is to change none of these by more than section 12 allows.
+**What this means:**
+
+- **It can't mint gold in honest play.** Every hand loses on average, and the day's limits are fixed. So no way of
+  betting or stopping comes out ahead over time, including doubling after a loss or leaving while ahead. Fresh
+  shuffles stop card counting. The best day possible is the win limit plus one doubled hand that crosses it, about
+  1.4 H, or 7% of a normal day's income.
+- **It can't wreck a player in honest play.** The worst day is exactly the loss limit, 1 H (about 5% of a normal day's
+  income). That's real money early: at zone 14 it is 2,550 gold, and the risk is the point. Late, it never falls to
+  pocket change, because it follows the price curve.
+- **"Honest play" means an honest device clock and no save-code import.** Moving the date resets the day, and a save
+  code can undo a loss (section 8 narrows that). Both are single-player holes that the rest of the game accepts too.
+- **Against prices:** a highest bet at zone 25 (690) is about 2% of the camp builds the normal player buys around zones
+  26 to 28 (26,000 to 57,000 in the econ report). A full day's limit is 6% to 13% of one. So a bet stings, and a
+  great day helps without buying a building.
+- **A mild gold sink, by choice.** Gold is the mid-game choke (systems map). The average loss is 0.2% to 1.8% of a day's
+  income, and only for players who choose to play.
 
 ## 7. When it opens
 
-- **Gate:** the zone 10 Champion beaten (`S.maxZone >= 11`) and the Tavern built (`campLv('tavern') >= 1`). It's a
-  `FEATURES` row: `{ id: 'blackjack', tab: 'world', view: 'tav', name: 'Blackjack', why: 'the zone 10 Champion, with the
-  Tavern built' }`.
-- **Why then:** after the first hour. The first hour belongs to fights, the camp and the first hero build (F3, the
-  one-new-thing rule). The zone 10 Champion is the first-hour finish line. By then the player holds gold worth risking,
-  and the Tavern (open from zone 8 or minute 14) is a place they have already seen. The first Tavern visit is spent on
-  Hands, which keeps the table from landing on the same beat.
-- **How it shows:** one bell notice ("Hesketh has a card table at the Tavern.") and the Tavern view's dot until the first
-  visit. Not in Next Up, not on the guide, no pop-up.
+- **Gate:** the zone 13 Captain beaten (`S.maxZone >= 14`), with the Tavern built (`campLv('tavern') >= 1`).
+- **FEATURES row** (55-onboard.js):
+  `{ id: 'blackjack', tab: 'world', view: 'tav', name: 'Blackjack', late: true, why: 'zone 14, with the Tavern built', when: () => BJ_TUNE.on && S.maxZone >= 14 && campLv('tavern') >= 1 }`.
+  `late: true` keeps "Show every tab now" from opening it at zone 1.
+- **Notice:** an `OPEN_TXT` line, "New on the Camp tab: a card table at the Tavern." A FIRST_USE line carries the hint
+  from section 1.
+- **Why zone 14.** The zone 10 Champion clear already brings a starter join (Wren, for a Tobin or Pip pick), the Codex
+  and, in a new game, the Hearth 2 and Tavern build with Hands and Tam. Zone 12 opens the raid. Zone 15 is a Champion
+  with its own join. Zone 14 has nothing else, and by then the player holds gold worth risking.
+- **Proof** (a build-card acceptance line): `tools/walk.mjs` for all three starter picks shows the table opening with no
+  other new thing within `ONBOARD_TUNE.gap` (90 s), and no F4 burst (4 in any 10 minutes). If a pick fails, the gate
+  moves to zone 16 (after the Champion's join).
+- **How it shows:** the notice, and the Tavern view's dot until the first visit. It is not in Next Up, not on the guide,
+  and there is no pop-up.
 
 ## 8. Save
 
-- New state `registerState('blackjack', { v: 1, day: 0, net: 0, bet: 0, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } })`,
-  with defaults filled by `fresh()` through `registerState`. **The save key stays `lanternfall.save.v5`**: one new field
-  with defaults breaks no old save.
-- `day` and `net` drive the purse and loss stop. `bet` is the last bet. `n` is the counts for a Journal stats line
-  (later, not in the build card).
-- **The bet is paid when the hand is dealt and the save is written at once.** The hand in play is saved in `hand` (cards
-  dealt, the bet, doubled or not). A reload shows the same hand, so you can't reload your way out of a loss. A card is
-  drawn only when it is needed, so a reload cannot reveal a future card.
-- **Gold books.** A bet goes in the econ ledger as spend category `table`, and a payout as earn category `table` (new
-  entries in `ECON.spendCats` and `ECON.earnCats`). Payouts do not add to `S.totalGold` (lifetime gold earned), so Deeds,
-  hoard lines and health metrics see only fight and camp gold. The systems map gets the table as a gold source and a
-  gold sink.
-- **Away:** the table does nothing while you are away, and offline parity is unaffected.
+- **New state**, with defaults filled by `fresh()` through `registerState`:
+  `registerState('blackjack', { v: 1, day: 0, net: 0, bet: 0, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } })`.
+  **The save key stays `lanternfall.save.v5`.** One new field with defaults breaks no old save.
+- **The fields:**
+  - `day` and `net` drive the day's limits.
+  - `bet` is the last bet.
+  - `hand` is the hand in play: your cards, Hesketh's up card, the bet, and whether you doubled.
+  - `n` holds counts for a later Journal stats line. That line is not in the build card.
+- **No reload tricks.**
+  - The bet is paid when the hand is dealt.
+  - `save()` runs synchronously after the deal, after every card drawn, and after the result, before anything renders.
+  - A reload shows the same hand. Every card already drawn is saved, and no card is drawn early.
+  - So you can't reload your way out of a bad card or a loss.
+- **Save codes.** Importing a code clears `hand` (its bet stays paid) and keeps the larger of the stored and imported
+  `net` for today. You can't reset the day's loss limit by loading an old code on the same day.
+- **No ledger entries.** Table gold changes `S.gold` directly:
+  - It does not book into the econ ledger (`S.econ.earned` and `S.econ.spent`) or add to `S.totalGold`.
+  - So health metrics, EC2 and EC4, Deeds and hoard lines see only fight, camp and bounty gold.
+  - The table's own books are `net` and `n` in `S.blackjack`.
+  - The systems map lists the table as a gold source and a gold sink (code probes in `tools/systems-map.mjs`), with
+    `blackjack` as a stat.
+- **Away.** The table does nothing while you're away, and offline parity is unaffected.
 
 ## 9. The store-build switch
 
-- **`BJ_TUNE.on`** (1 = the table exists) sits at the top of the new core file. With it at 0, the `FEATURES` row never
-  opens, the section and notice never show, and a saved hand in play refunds its bet the next time the game loads. The
-  save field stays.
-- **Default: on** for the web build and Steam.
-- **Why it exists.** A clear blackjack table with gold bets is simulated gambling under the age-rating boards' rules. PEGI
-  rated Overboard 18 for one blackjack scene. It brought Balatro down to 12 on appeal because of its fantasy elements,
-  and has announced a 12 category while keeping 18 for casino simulations. On the App Store, simulated gambling is 13+
-  when infrequent and 18+ when frequent. This would set the rating for **the whole game**, not just the table.
-- **Who decides: Cal**, before any rating submission, for each store build. This spec does not decide it. Making the flag
-  a build option (such as `node tools/build.mjs --no-blackjack`) belongs to that later card, not the build card.
+- **`BJ_TUNE.on`** (1 = the table exists) sits at the top of the new core file. At 0:
+  - The FEATURES row never opens.
+  - The section and the notice never show.
+  - A saved hand in play refunds its bet the next time the game loads.
+  - The save field stays.
+- **Default: on**, for the web build (including the free public road to the zone 15 Champion) and for Steam.
+- **Fails safe.** `check.mjs` prints the flag's state in the build summary. Two lines are added:
+  - The ship checklist: "Store builds: Cal confirms the blackjack table's state before any rating survey."
+  - DECISIONS.md (via the Foreman): the same line.
+- **Why it exists.** A clear blackjack table with gold bets is simulated gambling under the rating boards' rules, and
+  it would set the rating for **the whole game**:
+  - PEGI rated Overboard 18 for one blackjack scene
+    ([askaboutgames.com](https://www.askaboutgames.com/news/pegi-rating-for-gambling-is-now-always-18)).
+  - PEGI cut Balatro to 12 on appeal for its fantasy elements, and announced a 12 band while keeping 18 for casino
+    simulations ([gamereactor.eu](https://www.gamereactor.eu/balatro-wins-its-pegi-rating-battle-to-have-its-18-rating-reduced-1503623/)).
+    The final criteria text wasn't found.
+  - On the App Store, simulated gambling is 13+ when infrequent and 18+ when frequent
+    ([newly.app](https://newly.app/how-to/app-store-age-rating), a copy of Apple's table; Apple's own page wasn't read).
+- **Who decides: Cal**, for each store build, before any rating submission. This spec does not decide it. A build
+  option such as `node tools/build.mjs --no-blackjack` belongs to that later card.
 
 ## 10. Art
 
-- **Until `codex-cards-tavern` is vetted**, the table uses plain UI cards. A card is a flat light panel with a 1 px
-  border, the rank in the corner and centre, and the suit as a text glyph in the suit's colour. There are no drawn
-  pictures, no faces, and no suit icons drawn in code. The card back is a flat panel in the Lantern Brass colours. The
-  gold coins are the game's existing gold coin icon, or plain text in a round button if no icon exists.
-- The judge rules whether this counts as UI or as art drawn in code under the art freeze (see the judge record). The
-  mockup's SVG suit icons and patterned card back are **not** carried into the build. They wait for Codex.
-- **The Codex pack** (`codex-cards-tavern`, Codex lane, its own cap): a card frame and back, four suit icons, Squire,
-  Queen and King faces, a gold coin stack, and (optional) Hesketh dealing. It goes through the usual
-  `integrate: <pack>` card, red team and Opus art judge. Found or stock card art is never used. If Cal wants found
-  assets, that goes to him as a question with a licence check.
+- **Until `codex-cards-tavern` is vetted**, the cards are plain UI:
+  - A flat panel in the game's own colour tokens (`--panel`, `--panel-2`, `--gold` in 10-base.css), with a 1 px border.
+  - The rank, large, in the corner and the centre.
+  - The suit as its **name in small capitals** ("THORNS") in that suit's colour.
+  - No glyphs, no emoji, no drawn pictures. Emoji are OS art, and no text glyph exists for a lantern or a thorn.
+  - The face-down card (shown only while Hesketh draws) is a flat `--panel-2` panel.
+  - The coins use the existing `ICON.coin`.
+- The judge rules whether this is UI or art drawn in code under the art freeze (see the judge record). The mockup's SVG
+  suit icons and patterned card back are **not** carried into the build. They wait for Codex.
+- **The Codex pack** (`codex-cards-tavern`, Codex lane, its own cap):
+  - A card frame and a card back, four suit icons, and the Knave, Queen and King.
+  - A gold coin stack, and (optionally) Hesketh dealing.
+  - It goes through the usual `integrate: <pack>` card, red team and Opus art judge.
+- **Found art.** Cal suggested found fantasy card assets at 19:00. He has been asked, on a card in the thread, to choose
+  between Codex and a licensed found deck. The default until he answers is Codex, per his art rule. If he picks a found
+  deck, a licence check (commercial use, Steam) comes before anything is wired.
 
 ## 11. Player-facing copy
 
 | Where | Text |
 |---|---|
 | Section title | Blackjack |
-| Sub line | Hesketh deals. Dealer stands on 17. Blackjack pays 3 to 2. |
+| Sub line | Hesketh deals. He stands on 17. Blackjack pays 3 to 2. |
 | First-use hint | Bet gold and beat Hesketh's hand without going over 21. |
-| Unlock notice | Hesketh has a card table at the Tavern. |
-| Limits line | Table: {min} to {max} gold |
+| Unlock notice | New on the Camp tab: a card table at the Tavern. |
+| Limits line | Table: {lowest} to {highest} gold |
 | Buttons | Deal {bet} · Hit · Stand · Double · Next hand · Clear |
 | Start of hand | You have {n}. Hesketh shows {card}. |
-| Results | {p} beats {d}. You win {x} gold. / {d} beats {p}. You lose {x} gold. / Both on {n}. Your bet comes back. / Blackjack! You win {x} gold. / Bust at {n}. You lose {x} gold. / Hesketh busts at {n}. You win {x} gold. / Hesketh turns over blackjack. You lose {x} gold. |
-| Short of gold | You need {min} gold to sit down. |
-| Purse empty | Hesketh is out of coin. He'll deal again tomorrow. |
-| Loss stop | That's enough for tonight. Come back tomorrow. |
+| Results | {p} beats {d}. You win {x} gold. / {d} beats {p}. You lose {x} gold. / Both on {n}. Your bet comes back. / Blackjack! You win {x} gold. / Bust at {n}. You lose {x} gold. / Hesketh busts at {n}. You win {x} gold. / Hesketh makes blackjack. You lose {x} gold. |
+| Short of gold | You need {lowest} gold to sit down. |
+| Day's limit reached | The table's closed for today. |
 | Rule of thumb | Hesketh's rule of thumb: stand on 12 to 16 when I show a 2 to 6. Always hit 11 or less. |
+
+The copy never says "come back tomorrow", never counts down to the reset, and never frames the limit as something to
+empty.
 
 ## 12. Prediction, and how it's measured
 
-- **Fun.** In the first playtest-lab or tester session after the table opens, at least 2 of 3 testers play 10 or more
-  hands without being asked, and Cal calls it fun. **Missed** if fewer than half play 10 hands. A miss means the table
-  becomes a re-brief card, not more tuning.
-- **Economy.** In the 14-day econ report with a table policy added (a build-card acceptance line: the casual player
-  above, 30 hands a day at the highest bet), gold earned per day moves by **less than 5%** for every profile, and the
-  day each profile reaches zone 35 moves by **less than half a day**. **Missed** if either is broken. The fix then is
-  to cut the highest bet, not the edge.
-- **Rating.** No measure. Cal decides (section 9).
+- **Fun.**
+  - **Test.** Testers start from a staged save at zone 14 with the Tavern built (the build card names the fixture). No
+    one points them at the table.
+  - **Hit:** at least 2 of 3 testers play 10 or more hands.
+  - **Miss:** fewer than 2 of 3.
+  - **Cal's own check:** after his first sitting, Cal says whether it's fun. "Not fun" is a miss whatever the testers did.
+  - A miss sends the table back as a re-brief card, not more tuning.
+- **Economy.** The build card adds a table policy to `sim.mjs`: the casual player, 30 hands a day at the highest bet,
+  from zone 14. With it on, against the same run with it off (14 days, every profile):
+  - **(a)** The table's mean net loss is at most 2% of EC2 income, and the 90th-percentile losing day is at most 1.1 H.
+  - **(b)** The EC5 share moves by less than 5 points.
+  - **(c)** Each profile's zone at day 14 moves by less than 1 zone.
+  - **(d)** `S.econ.earned` and `S.econ.spent` are unchanged, because the table books nothing.
+  - **Miss:** any of these fails. The fix then is to cut the highest bet, not to change the edge.
+- **Rating.** Not measured here. Cal decides (section 9).
 
 ## 13. Switch it off
 
 - `BJ_TUNE.on = 0`. The table, notice and FEATURES row go away, a hand in play refunds its bet, and the `blackjack` save
   field stays unused. Nothing else reads it.
-- To remove it fully, delete the two new files and the CSS file, the FEATURES row, the `ECON` ledger categories and the
-  systems-map lines. Old saves keep a harmless `blackjack` field.
+- To remove it fully, delete:
+  - the two new JS files and the CSS file
+  - the FEATURES row, and the OPEN_TXT and FIRST_USE lines
+  - the systems-map lines
+  - the sim policy
 
-## 14. Alternatives weighed
+  Old saves keep a harmless `blackjack` field.
+
+## 14. The Lantern Rules, all ten
+
+| Rule | How the table stands |
+|---|---|
+| 1. Never sell power or chance | Nothing is sold. Gold is never sold |
+| 2. Never sell anything random | The table's chance comes only from play |
+| 3. Never take back | The day's limits close the table. They never take gold back, and a refund comes if the switch goes off mid-hand |
+| 4. No friction to sell its removal | The day's limits can't be bought off, and no purchase touches them |
+| 5. Never interrupt | One notice when it opens. No pop-ups, no dots after the first visit |
+| 6. Never sell a core convenience | Not applicable: nothing is sold |
+| 7. Earned prestige stays earned | No Deeds or titles from the table |
+| 8. Show real prices | Every bet and limit is shown in gold before you Deal |
+| 9. Same game on every paid build | The switch is per store build, and Cal decides it before any rating. Nothing paid differs |
+| 10. Purchases never lost | Not applicable |
+
+## 15. Alternatives weighed
 
 | Option | Why not |
 |---|---|
-| "Wick": blackjack rules with rune stones in a lantern, five foes, bank or push on (mockup v1) | Cal (18:53) wants it to be clear blackjack, because it's in a tavern |
-| Cellar Doors (push your luck through doors) / Higher or Lower / Liar's dice | Pitched at 18:44. Cal picked blackjack |
-| A fixed 10 to 250 table (mockup v3) | It's worth about 20 foes at zone 5 and nothing in Region 4. The table limits must follow the gold curve |
-| No daily purse or loss stop | The edge alone limits gold only on average. A lucky week could skip a gold wall, and an unlucky night could empty the camp's budget. Fixed daily caps bound both |
-| A shoe dealt down to 20 cards (mockup) | A deep shoe can be counted for a player edge with a bet spread of 1 to 16. A fresh shuffle each hand closes that |
-| Split, insurance and surrender | Each adds a button and a rule to explain. Leaving out split costs the chart player about 0.4% edge, which is fine for a pastime |
+| "Wick": blackjack rules with rune stones in a lantern, five foes, bank or push on (mockup v1) | Cal (18:53) wants clear blackjack: it's a tavern |
+| Cellar Doors / Higher or Lower / Liar's dice | Pitched at 18:44. Cal picked blackjack |
+| A fixed 10 to 250 table (mockup v3) | It's huge early and worthless by Region 4. The limits must follow the price curve |
+| Limits in foe gold (this spec's first draft) | Early foe gold is doubled while prices aren't, so the stakes were off by 2x. The limits also fell from zone 21 to 35, as the early bonus fades. Price-hours fix both |
+| No day's limits | The edge bounds gold only on average. A lucky week could skip a gold wall, and an unlucky night could empty the camp's budget |
+| A shoe dealt down to 20 cards (mockup) | A deep shoe can be counted for a player edge. A fresh shuffle every hand closes that |
+| A hidden dealer card with a peek (mockup) | The hidden card would sit in the save. No hole card, with first bet only, has the same edge |
+| Booking the table in the econ ledger | It would put table wins into the health metrics and dilute EC4's spend shares |
+| Split, insurance, surrender | Each adds a button and a rule to explain. No split costs the chart player about 0.4% edge, which is fine for a pastime |
 
-## 15. Build cards
+## 16. Build cards
 
-1. **`tavern-blackjack-build`** (Claude, Opus medium; the Foreman refines it from this spec):
-   - **Files**: core `src/js/57t-blackjack.js` (rules, limits, purse, save, ledger), UI `src/js/75-blackjack-ui.js`
-     (`registerSection('world', { id: 'blackjack', view: 'tav', ... })` at the top of the Tavern view), and
-     `src/styles/60-blackjack.css`. Extension points: the `FEATURES` row and FIRST_USE line (55-onboard), `ECON`
-     ledger categories (21w), the systems-map registry, and a `sim.mjs` table policy for the econ check.
-   - **Checks**: rules, payouts and dealer play; limits by zone; purse and loss stop across a day change; the bet is
-     paid at the deal and survives a reload; `BJ_TUNE.on = 0` refunds a hand in play; payouts stay out of
-     `S.totalGold`. Views at 1280x720, 740x360 and 360x740, plus reduced motion.
-   - **Out of scope**: art and the store-build option.
-2. **`codex-cards-tavern`** (Codex lane): the art pack in section 10.
+1. **`tavern-blackjack-build`** (Claude, Opus medium; the Foreman refines it from this spec).
+   - **Files:**
+     - `src/js/57t-blackjack.js` (core): rules, limits, the day, save, `BJ_TUNE`.
+     - `src/js/75-blackjack-ui.js`: `registerSection('tav', { id: 'blackjack', title: 'Blackjack', feature: 'blackjack', ... })`.
+       It appends below the existing Tavern boxes and doesn't reorder the online Tavern.
+     - `src/styles/60-blackjack.css`.
+   - **Extension points:**
+     - FEATURES row, OPEN_TXT and FIRST_USE lines (55-onboard, 75-onboard-ui).
+     - Systems-map registry.
+     - Save-code import hook (section 8).
+     - A `sim.mjs` table policy.
+     - The `check.mjs` flag line.
+   - **Acceptance:**
+     - Rules, payouts, and Hesketh's draw and blackjack.
+     - Limits by zone, rising only.
+     - The clamp, and Double off at the loss limit and when short of gold.
+     - The day's reset across `deviceDay`.
+     - Synchronous saves and the reload test.
+     - Save-code import.
+     - `BJ_TUNE.on = 0` refunds a hand in play.
+     - Gold Fever doesn't change payouts.
+     - Ledger and `S.totalGold` unchanged.
+     - A 300 ms press guard after Deal, Next hand and each result, and Hit never placed where Deal sat.
+     - The walk proof (section 7) and the economy measures (section 12).
+     - Views at 1280x720, 740x360 and 360x740, plus reduced motion.
+   - **Out of scope:** art, and the store-build option.
+2. **`codex-cards-tavern`** (Codex lane): the art pack in section 10, unless Cal picks a found deck.
 3. **`integrate: codex-cards-tavern`**, then a wire card if the judge rules "wire".
-4. **Later, if Cal wants them**: a Journal stats line from `n`, chips (the veto), and the store-build option
-   (section 9).
+4. **Later, if Cal wants them:** a Journal stats line from `n`, chips (the veto), and the store-build option.
 
-## 16. Out of scope
+## 17. Red team answers
 
-Any game code (that's the build card), the art pack, the rating submission and the store-build decision (Cal), the
-online Tavern, and paid anything.
+| # | Finding | Answer |
+|---|---|---|
+| 1 | The economy prediction can't be measured | Section 12 now measures the table's net, EC5, the zone at day 14, and the ledger left unchanged |
+| 2 | Ledger booking leaks into health and EC4 | The table books nothing in the ledger (section 8) |
+| 3 | The opening beat is shared | The gate moves to zone 14, with walk proof for all three picks (section 7) |
+| 4 | Reload re-roll and the hidden card in the save | Synchronous saves after every draw, and no hole card (sections 3 and 8) |
+| 5 | Double and the clamp | Double is off when short of gold or past the loss limit. The table closes when the room is under the lowest bet, and the probe models it |
+| 6 | Units | Limits are in price-hours (`econH`). The EC5 reasoning is withdrawn, and prices justify the bet size instead |
+| 7 | The limits fall | `econH` rises with the zone, and the probe prints any fall (none) |
+| 8 | Gold multipliers | Payouts are exact, with a Gold Fever check (section 4) |
+| 9 | UI hooks | `registerSection('tav')`, `feature`, `late: true`, `when`, OPEN_TXT (sections 7 and 16) |
+| 10 | Art can't be built as written | Suit names in small capitals, no glyphs or emoji, `ICON.coin`, the game's tokens (section 10) |
+| 11 | Found art not asked | Cal asked on a decision card. The Codex default holds until he answers |
+| 12 | Hesketh as the house | Kept, since Cal saw and liked him dealing. He plays for small stakes, with no purse or house framing in the copy. Sent to the judge; veto phrase in the judge record |
+| 13 | The switch fails open | The `check.mjs` flag line, a ship-checklist line, a DECISIONS line, and sources cited (section 9) |
+| 14 | Honest play only | Claims scoped, and save-code import handled (sections 6 and 8) |
+| 15 | Double taps | Press guard and button placement in the build acceptance |
+| 16 | Chore-like copy | "The table's closed for today." No "come back", no countdown |
+| 17 | Loop step | "A day, step 3", side content, with the reason (section 2) |
+| 18 | Tavern opening rule | The gate reads `campLv('tavern')`, which covers both cold and warm saves |
+| 19 | Name clashes | Knave, and Lanterns, Keys, Cups and Thorns |
+| 20 | All ten Lantern Rules | Section 14. The wording is now "gold is never sold" |
+| 21 | Fun prediction | Staged save, no pointer, matching hit and miss lines, and Cal's own check (section 12) |
+| 22 | One limit per budget | Each limit's job is named (section 4) |
+| 23 | Systems-map kind | `blackjack` listed as a stat (section 8) |
+
+## 18. Out of scope
+
+Out of scope here:
+
+- Any game code (the build card).
+- The art pack.
+- The rating submission and the store-build decision (Cal).
+- The online Tavern.
+- Anything paid.
