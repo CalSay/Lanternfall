@@ -7,7 +7,7 @@
 // back today's Wren (64h) and today's arrows.
 //
 // Scale: 0.5 x ACTOR_K logical px per art px, that is 0.5 actor px (62-stage draws actors ACTOR_K times bigger). At 1 device px
-// per art px or more (1280x720: 1.5 CSS px, 1920x1080: 2.25) the frame is drawn nearest-neighbour; below 1 (740x360 on DPR 1:
+// per art px or more (1280x720: 2 CSS px, 1920x1080: 3, 1024x768: 1.5) the frame is drawn nearest-neighbour; below 1 (740x360 on DPR 1:
 // 0.5) it is downscaled once, with smoothing, into a cached canvas and drawn 1:1. Frames land on whole device px.
 // Timing (the spike's): attack and abilities 900 ms, the release frame on the stage's shot (its wind fits the last two frames
 // before the release, 62-stage WIND); parry and dodge 660 ms; hit 540 ms; defeat 2080 ms, the last frame held. A timed ability

@@ -1215,6 +1215,11 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   steps only" end; heroes and foes draw 1.5x against unchanged scenery (ACTOR_K = 1.5, card actor-scale; a hero about 142 logical
   px, 285 CSS at 1280x720) from the 190 px art with no new bytes; portrait stays 1x until UX-L1. #320 closed with the spike: foes
   stay 2D. A menu-only phone mode is a separate Cal decision. (`docs/design/route-s/ruling.md`)
+- **Bigger heroes (Cal, 2026-10-10 10:52: "Heroes need to be bigger"; Opus judge approved with conditions; Cal can veto: "Keep
+  heroes at one and a half"):** ACTOR_K 2 at stage zoom 2+ (1280x720, 1920x1080), ground at 86% of the stage there. A stage too short
+  for it (1366x640) keeps 1.5x. A roomy zoom-1 stage (480+ CSS px tall: 1024x768, a narrow window) draws 2x or 3x; G3's x1 now
+  covers only short stages (740x360). A hero and lone foe too wide for the stage step down (2 to 1.5; 3 to 2 to 1). Crowds and
+  portrait keep x1; the ground does not move when a crowd comes. Follow-up: try 1.5x for crowds before 1x (needs its own judge).
 - **Route S Tobin (integrate-route-s-tobin, Opus art judge, 2026-10-10; Cal can veto: "Wire Tobin now", "Pull the new Tobin",
   "Wait for all three heroes", "Keep the first cleave", "Last Stand should be a shield raise"):** wire Tobin's 21 fight moves
   (Scenario key frames from his concept, 190 px at Wren's pack scale, 63 colours seeded with the concept's 14 swatches so his olive

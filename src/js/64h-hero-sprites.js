@@ -27,7 +27,7 @@
 //   heroArtUnrle([x0, y0, w, h, rle]) -> { w, h, idx }   the decoder, for other HERO_ART-format data (HUNT_ART)
 //   heroArtPreview(cv, id) -> bool   the camp pose, feet at the bottom centre of the canvas (the hero picker and the camp switch; W1-D)
 //   heroArtPortraitURL(id) -> data URL of a 28x28 crop of the camp pose's head (the header portrait; 1 art px = 1 CSS px)
-var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL, heroArtPreview, heroArtUnrle;
+var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL, heroArtPreview, heroArtUnrle, heroArtLeft;
 {
   const D = typeof HERO_ART !== 'undefined' ? HERO_ART : null;
   const AX = 96, AY = 132, CUT = 118;
@@ -416,6 +416,8 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
   }
   const now = () => (typeof T === 'number' ? T : 0);
   const go = s => { ST.s = s; ST.t0 = now(); ST.hitT = -1; };
+  // the leftmost the stage may stand the hero (actor px from the stage's left): its widest pose stays in view (62-stage pairWide)
+  heroArtLeft = id => D && D.heroes[id] ? set(id).left + 2 : 0;
   heroArtStage = function (g, a, x, alpha) {
     const id = heroArtId(); if (!id || !ANIMS[id]) return false;
     const t = now(), A = ANIMS[id], tg = typeof target === 'function' ? target() : 'mob';
@@ -448,7 +450,7 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
       if (frame >= an.f.length) { go(rest); frame = null; }
     }
     // The art is wider than the baked sprites: on a narrow stage the whole hero (and Wren's bat) stays in view.
-    x = Math.max(x, set(id).left + 2);
+    x = Math.max(x, heroArtLeft(id));
     // noFly: the stage fires its own arrow or bolt at the target (62-stage fire()), so the art's in-flight one is skipped
     const info = heroArtDraw(g, id, ST.s, t - ST.t0, x, a.hy + a.dy, { frame, flameT: t, alpha, noFly: true });
     if (!info) return false;
