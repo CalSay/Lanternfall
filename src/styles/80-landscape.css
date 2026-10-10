@@ -172,6 +172,19 @@
 /* phones on their side: the stage's sky is short, so the combat info sits in two plates (hero left, foe right) */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
   .hud::before { height: 48px; }
+  /* first-craft-toast-clip: the notices row under Next Up is 23 to 77 px tall here (a 5-line goal leaves 23), and a craft's toast with its
+     banner stands about 150 px, so they climbed over the chip and the bell. On a phone on its side toasts dock at the foot of the stage,
+     under the hero and foe, as they do while the guide speaks (hero-voice-banner-under-guide). Two share the row side by side (stacked
+     they stood 106 px and covered the hero to the waist), so they stay about at the hero's feet, left of the sound and battle-bar buttons
+     (right 68 px; the stat line sits under them). The banner's eye sits on a tight line over
+     the title, so the title has the banner's width (beside the eye "Copper Warblade" got 142 px and broke mid-word) and the banner stays short */
+  .toasts.side-dock, .app.guide-side .toasts.side-dock { grid-column: 2 / 4; grid-row: 3 / -1; left: 8px; right: 68px; bottom: 24px; flex-direction: row; align-items: flex-end; justify-content: center; gap: 6px; }
+  .toasts.side-dock .toast, .app.guide-side .toasts.side-dock .toast { flex: 0 1 320px; width: auto; min-width: 0; }
+  .toasts.side-dock .mm-t-sub, .toasts.side-dock .mm-t-title ~ .mm-t-say { display: none; }   /* as upright (20-stage): name and rarity only */
+  .toasts.side-dock .mm-toast { padding-top: 3px; padding-bottom: 3px; min-height: 0; }
+  .toasts.side-dock .mm-t-tx, .app.guide-side .toasts.side-dock .mm-t-tx { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .toasts.side-dock .mm-t-eye { line-height: 1; }
+  .toasts.side-dock .mm-t-title { font-size: calc(15px * var(--display-k)); line-height: 1.05; overflow-wrap: normal; }
 }
 /* tall landscape (tablets, desktop): the mock-up's desktop sizes, a wider rail and a taller top row; key labels on the slots */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (min-height: 600px) {

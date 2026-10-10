@@ -109,6 +109,7 @@ const WEIGHT = {
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
+  'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
@@ -13518,10 +13519,13 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             `${at}: the dock is Attack and the three abilities over Parry and Dodge, keys of 44 px or more in the bottom-right corner, all on top (${L.slots.map(s => s.act + ' ' + s.w + 'x' + s.h + '@' + s.l + ',' + s.t).join(' ')})`);
           assert(L.nu.l >= L.stage.r - 1 && L.nu.t >= topH - 1 && L.nu.b <= Math.min(...L.slots.map(s => s.t)), `${at}: Next Up sits at the top of the side column, above the bar (${JSON.stringify(L.nu)})`);
           assert(!L.clipped.length && L.scrollX <= 0 && L.appX <= 0, `${at}: no label cut off and no sideways scroll (${L.clipped.join(', ') || 'none'}; page ${L.scrollX}, app ${L.appX})`);
-          // notices dock in the side column above the bar, menu or not
+          // notices dock in the side column above the bar, menu or not; a phone on its side (500 px tall or less) docks them at the stage's
+          // foot instead, where the side column's notices row (23 to 77 px under Next Up) cannot hold them (first-craft-toast-clip)
+          const footDock = h <= 500;
           await X('notes.pops.length = 0; notes.clock += 60; toast("Test notice for the side column.", "good", null, "high"); true'); await boxSettled(page, '#toasts .toast');
-          const ts = await page.evaluate(() => { const t = document.querySelector('#toasts .toast'); if (!t) return null; const r = t.getBoundingClientRect(), a = document.querySelector('#soloBar .sb-ab0').getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(); return { l: r.left, r: r.right, b: r.bottom, barT: a.top, stageR: s.right, W: innerWidth }; });
-          assert(ts && ts.l >= ts.stageR - 1 && ts.r <= ts.W && ts.b <= ts.barT, `${at}: a notice pops in the side column, above the bar and clear of the stage (${JSON.stringify(ts)})`);
+          const ts = await page.evaluate(() => { const t = document.querySelector('#toasts .toast'); if (!t) return null; const r = t.getBoundingClientRect(), a = document.querySelector('#soloBar .sb-ab0').getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), n = document.getElementById('nuChip').getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, barT: a.top, stageL: s.left, stageR: s.right, stageB: s.bottom, nuB: n.bottom, W: innerWidth }; });
+          if (footDock) assert(ts && ts.l >= ts.stageL - 1 && ts.r <= ts.stageR + 1 && ts.b <= ts.stageB && ts.t >= ts.stageB - 90, `${at}: a notice pops at the foot of the stage, clear of the side column (${JSON.stringify(ts)})`);
+          else assert(ts && ts.l >= ts.stageR - 1 && ts.r <= ts.W && ts.b <= ts.barT && ts.t >= ts.nuB, `${at}: a notice pops in the side column, under Next Up, above the bar and clear of the stage (${JSON.stringify(ts)})`);
           // each tab's menu: opens from the rail as a panel beside the bar, which stays usable; closes with its X, the lit tab or Escape
           const menuBad = [];
           const closers = ['x', 'tab', 'esc', 'x', 'tab'];
@@ -13544,11 +13548,13 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             if (closed !== ',hidden') menuBad.push(`${t}: did not close by ${how} (${closed})`);
           }
           assert(!menuBad.length, `${at}: each tab's menu opens as a panel (300 px or wider, the stage's left strip still showing, no sideways scroll), the bar stays on top and Attack still acts, and it closes with its X, the lit tab or Escape` + (menuBad.length ? ': ' + menuBad.slice(0, 2).join(' / ') : ''));
-          // a notice while a menu is open stays in the side column
+          // a notice while a menu is open stays in the side column (on a phone on its side, at the stage's foot, over the menu's foot as
+          // upright, never over the side column)
           await page.click('.tabs .tab[data-tab="forge"]'); await menuSettled(page, true);
           await X('notes.pops.length = 0; notes.clock += 60; toast("Another notice, over a menu.", "good", null, "high"); true'); await boxSettled(page, '#toasts .toast:last-child');
-          const tm = await page.evaluate(() => { const l = [...document.querySelectorAll('#toasts .toast')].pop(), m = document.getElementById('menu').getBoundingClientRect(); if (!l) return null; const r = l.getBoundingClientRect(); return { l: r.left, mr: m.right }; });
-          assert(tm && tm.l >= tm.mr - 1, `${at}: over an open menu, notices stay in the side column (${JSON.stringify(tm)})`);
+          const tm = await page.evaluate(() => { const l = [...document.querySelectorAll('#toasts .toast')].pop(), m = document.getElementById('menu').getBoundingClientRect(); if (!l) return null; const r = l.getBoundingClientRect(), cs = getComputedStyle(l), sb = document.getElementById('stageBox').getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, stageB: sb.bottom, mr: m.right, H: innerHeight, vis: cs.visibility !== 'hidden' && +cs.opacity > 0.5, top: (e => !!e && l.contains(e))(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)) }; });
+          if (footDock) assert(tm && tm.r <= tm.mr + 1 && tm.b <= tm.stageB && tm.t >= tm.stageB - 90 && tm.vis && tm.top, `${at}: over an open menu, notices stay at the stage's foot, on top of the menu (${JSON.stringify(tm)})`);
+          else assert(tm && tm.l >= tm.mr - 1, `${at}: over an open menu, notices stay in the side column (${JSON.stringify(tm)})`);
           // the Training view and the gatherer board fit the panel
           const fit = async (view, sel) => {
             await X(`setTab(${JSON.stringify(view)}); ui(true); true`); await menuSettled(page, true); await page.waitForTimeout(350);
@@ -17600,6 +17606,96 @@ if (section('side-column-fits-740')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('side-column-fits-740 crashed: ' + (e.stack || e)); }
+
+// ==== first-craft-toast-clip: the first craft's toasts keep clear of Next Up and the bell, and the banner's name reads whole ====
+// Eyes "first craft" (four sightings to 10 Oct): at 740x360 the craft's toast and banner, docked in the side column's notices row
+// (23 to 77 px under Next Up), climbed over the chip and the bell; at 360x740 the banner's title sat beside its eye and was cut
+// ("Copper Warblade", 163 px of text in 78). A phone on its side now docks toasts at the stage's foot, two side by side (80-landscape),
+// and the eye sits over the title (20-stage, 80-landscape). The section crafts on save-mid, as eyes does, with the longest Next Up
+// goal the game makes in the chip, and samples the boxes every 100 ms while the toasts come and go: no toast over #nuChip, the
+// bell or the stage's buttons (and on a phone on its side the stat line), every banner title whole, and on a phone on its side no toast above the hero's feet (the lowest quarter of its box; upright
+// the dock already sits there). A name far longer than any item's wraps whole. 1280x720 and up keep the side column's notices row.
+if (section('first-craft-toast-clip')) try {
+  const at = 'first-craft-toast-clip', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const assets = pageAssets(distFile), raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // every visible toast's box against the chip, the bell and the hero; every banner title's text against its own box
+    const sample = (page, side) => page.evaluate(side => {
+      const on = e => !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > 0.05;
+      const box = e => { const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; };
+      const ov = (a, b) => ({ w: Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), h: Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) });
+      const r = n => `${Math.round(n.x)},${Math.round(n.y)} ${Math.round(n.w)}x${Math.round(n.h)}`;
+      const R = window.LF_EYES ? LF_EYES.rects() : {}, out = { side, hero: !!R.hero, n: 0, bad: [], titles: [], dock: getComputedStyle(document.getElementById('toasts')).gridColumnStart };
+      const others = [['#nuChip', document.getElementById('nuChip')], ['the bell', document.querySelector('.bell')], ...[...document.querySelectorAll(side ? '.sfx-btn, .stage-btns button, .stat-nums' : '.sfx-btn, .stage-btns button')].map(n => [n.className.toString().split(' ')[0], n])];   // upright the dock has always sat over the stat line
+      for (const t of document.querySelectorAll('#toasts .toast')) { if (!on(t) || t._gone) continue; out.n++; const tb = box(t);
+        for (const [k, n] of others) if (on(n)) { const o = ov(tb, box(n)); if (o.w > 0 && o.h > 0) out.bad.push(`toast ${r(tb)} over ${k} ${r(box(n))} by ${Math.round(o.w)}x${Math.round(o.h)}: "${t.innerText.replace(/\n/g, ' | ').slice(0, 60)}"`); }
+        if (R.hero && out.side) { const o = ov(tb, R.hero); if (o.w > 4 && o.h > R.hero.h / 4) out.bad.push(`toast ${r(tb)} over the hero ${r(R.hero)} by ${Math.round(o.w)}x${Math.round(o.h)}, past its feet`); } }
+      for (const t of document.querySelectorAll('#toasts .mm-t-title')) { if (!on(t)) continue; const rg = document.createRange(); rg.selectNodeContents(t);
+        const ls = [...rg.getClientRects()].filter(x => x.width > 0), tb = t.getBoundingClientRect(), cs = getComputedStyle(t);
+        out.titles.push({ text: t.textContent, fs: parseFloat(cs.fontSize), lines: new Set(ls.map(x => Math.round(x.top))).size,
+          cut: t.scrollWidth > t.clientWidth + 1 || Math.max(...ls.map(x => x.right)) > tb.right + 1 || Math.max(...ls.map(x => x.bottom)) > tb.bottom + 1 || cs.textOverflow === 'ellipsis' && cs.whiteSpace === 'nowrap' }); }
+      return out;
+    }, side);
+    try {
+      for (const [w, h] of [[740, 360], [360, 740], [1280, 720], [1366, 640], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000, side = w > h && h <= 500, wide = w > h;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        // the moment layer stays on (75-moments-ui MOMENT_OFF): the banner is what is measured
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await routePage(page, 'http://lf.test/', html, assets);
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        for (let i = 0; i < 8; i++) { const b = await page.$('.bsheet-ov .sty-done, .bsheet-ov .big:has-text("Begin"), .bsheet-ov .big:has-text("Continue"), .away-ov button'); if (!b) break; try { await b.click({ timeout: 800 }); } catch (e) { break; } await page.waitForTimeout(400); }
+        await X('onboardUnlockAll(); true');
+        // the tallest chip: the longest gate label the game makes (side-column-fits-740 builds the same list), kept in place while sampling
+        const long = await X(`(() => { let best = '';
+          for (const kind of Object.keys(CRAFT_KINDS)) { if (CRAFT_KINDS[kind].legacy) continue;
+            for (let t = 2; t <= 5; t++) { const rec = craftRecipe(kind, t), st = stationOf(kind), need = CRAFT_STATION_REQ[t - 1]; if (!rec || !st) continue;
+              for (const on of [true, false]) { const l = gateLabel({ kind, t, gate: { skill: st.skill, lv: need - 1, need, station: st.key } }, on); if (l.length > best.length) best = l; } } }
+          return best; })()`);
+        const pin = () => page.evaluate(l => { const n = document.querySelector('#nuChip .nu-lbl'); if (n && n.textContent !== l) n.textContent = l; }, long);
+        await pin();
+        // a Rare or better craft is a moment (75-craft-ui); the grade is a roll, so a plainer one gets the same moment a Rare would
+        const kind = await X(`(() => { const k = Object.keys(CRAFT_KINDS).find(k => { for (const e of Object.keys(S.mats)) S.mats[e] = S.mats[e].map(() => 5000); S.gold = 1e9; return canCraft(k, 1).ok; }); const it = k && craftItem(k, 1);
+          if (it && !MOMENT_Q.some(q => q.kind === 'craft')) moment('craft', { eye: 'Well made · Rare', title: itemName(it), sub: 'Rare item. It is in your bag.', rarity: 'rare', icon: { item: it } });
+          return k; })()`);
+        assert(!!kind, `${v}: save-mid can craft something (${kind})`);
+        // the banner waits for the fight to end; a check flushes it (75-moments-ui __momentFlush) a moment after the craft's toast
+        await page.waitForTimeout(300); await X('window.__momentFlush(); true');
+        let most = 0, bad = null, titles = new Map(), dock = null, longName = null, hero = false;
+        for (let t0 = Date.now(); Date.now() - t0 < 6000;) {
+          await pin();
+          const o = await sample(page, side);
+          most = Math.max(most, o.n); dock = dock || (o.n ? o.dock : null); hero = hero || o.hero;
+          if (!bad && o.bad.length) bad = o.bad[0];
+          for (const t of o.titles) if (!titles.has(t.text) || t.cut) titles.set(t.text, t);
+          // a name far longer than any item's wraps between words, whole (upright and on a phone on its side, where the banner is short)
+          if (!longName && (!wide || side) && o.titles.length) longName = await page.evaluate(() => { const t = document.querySelector('#toasts .mm-toast .mm-t-title'); if (!t) return null;
+            const keep = t.textContent; t.textContent = 'Everflame Warblade of the Hollow Cantor'; const rg = document.createRange(); rg.selectNodeContents(t); const ls = [...rg.getClientRects()].filter(x => x.width > 0), tb = t.getBoundingClientRect();
+            const o = { lines: new Set(ls.map(x => Math.round(x.top))).size, cut: t.scrollWidth > t.clientWidth + 1 || Math.max(...ls.map(x => x.right)) > tb.right + 1 }; t.textContent = keep; return o; });
+          await page.waitForTimeout(100);
+        }
+        assert(most >= 1, `${v}: the first craft shows a toast (${most})`);
+        if (side) assert(hero, `${v}: the eyes hook gives the hero's box, so the hero is measured`);
+        assert(!bad, `${v}: no toast covers the Next Up chip, the bell or the stage's buttons${side ? ', or the hero past its feet' : ''}${bad ? ' (' + bad + ')' : ''}`);
+        const tl = [...titles.values()];
+        assert(tl.length >= 1, `${v}: the craft's banner shows a title (${tl.map(t => t.text).join(' | ')})`);
+        for (const t of tl) assert(!t.cut, `${v}: the banner title "${t.text}" reads whole (${t.lines} lines)`);
+        if (w >= 1200) for (const t of tl) assert(t.fs >= 14, `${v}: the banner title keeps the 14 px desktop floor (${t.fs})`);
+        if (wide) assert(dock === (side ? '2' : '4'), `${v}: the toasts dock ${side ? "at the stage's foot" : "in the side column's notices row"} (grid column ${dock})`);
+        if (!wide || side) assert(longName && !longName.cut && longName.lines <= 2, `${v}: a 39-letter name wraps whole in at most two lines (${JSON.stringify(longName)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('first-craft-toast-clip crashed: ' + (e.stack || e)); }
 
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
