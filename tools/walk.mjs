@@ -756,17 +756,21 @@ async function gateStep(o) {
     return true;
   }
   if (!q || (T.cool[q.key] || 0) > gt) return false;
-  // open Next Up: only when no row is Ready (a Ready row is followNextUp's), press the gate row's Go (with no Ready row, not a real choice)
+  // open Next Up: only when no row is Ready (a Ready row is followNextUp's), press the gate row's Go (with no Ready row, not a real choice).
+  // walk-ready-rows-hold: a Ready row followNextUp gave up on (4 presses that changed nothing, st.calls) is not followNextUp's any more, so
+  // it does not hold the gate: "Tam is at camp: send again" sat Ready from 31 to 60 min (its Go lands on the hire list, not Tam's card)
+  // and the bot never worked a tier gate again.
+  const gaveUp = Object.keys(st.calls).filter(k => st.calls[k] >= 4);
   st.nuReady = 0;
   if (!(await click('#nuChip', 300))) return false;
   await advance(300, 16);
   // first-hour-walk-findings (F5): a moment card that came up as the list opened sits over it, and a person reads the card before
   // pressing anything under it. The bot leaves the list; the card rule closes the card, and the list is closed later with its X.
   if (await page.evaluate(() => !!document.querySelector('.mm-ov'))) return true;   // true: the next pass reads the screen again (no other press under the card)
-  const pick = await page.evaluate(txt => { const rows = [...document.querySelectorAll('.nu-row')].filter(r => r.getClientRects().length);
-    if (rows.some(r => r.classList.contains('ready'))) return '';
+  const pick = await page.evaluate(([txt, gaveUp]) => { const rows = [...document.querySelectorAll('.nu-row')].filter(r => r.getClientRects().length);
+    if (rows.some(r => r.classList.contains('ready') && !gaveUp.includes(((r.querySelector('.nu-lbl') || r).textContent || '').trim().replace(/\d+/g, '#')))) return '';   // goalKey
     const r = rows.find(r => ((r.querySelector('.nu-lbl') || r).textContent || '').includes(txt)), g = r && r.querySelector('.nu-go');
-    if (!g) return ''; g.setAttribute('data-walk', '1'); return (r.querySelector('.nu-lbl') || r).textContent.trim(); }, q.txt);
+    if (!g) return ''; g.setAttribute('data-walk', '1'); return (r.querySelector('.nu-lbl') || r).textContent.trim(); }, [q.txt, gaveUp]);
   const went = pick && await click('[data-walk="1"]', 300);
   await page.evaluate(() => document.querySelectorAll('[data-walk]').forEach(n => n.removeAttribute('data-walk')));
   if (!went) { T.cool[q.key] = gt + 30; await click('.bsheet-ov .bsheet-x', 200); return false; }   // a Ready row, or the gate is not in the list: look again in 30 s
