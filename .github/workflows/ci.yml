@@ -43,12 +43,16 @@ jobs:
         run: |
           git fetch --no-tags --deepen=200 origin +refs/heads/claude/elegant-johnson-m6k00u:refs/remotes/origin/claude/elegant-johnson-m6k00u || echo "growth line: fetch failed, it will print without a base"
       - name: Build
-        run: node tools/build.mjs
+        run: node tools/build.mjs --split
+      # Netlify serves the committed dist, so dist/assets/ (the split build's art files, asset-build) must match it too. The split
+      # page itself is not committed (.gitignore); it is rebuilt from the same sources.
       - name: dist is committed rebuilt
         if: matrix.shard == 0
         run: |
-          if ! git diff --exit-code -- dist/lanternfall.html; then
-            echo "::error::node tools/build.mjs changed dist/lanternfall.html. Commit the rebuilt dist."
+          extra=$(git ls-files --others --exclude-standard -- dist/)
+          if ! git diff --exit-code -- dist/lanternfall.html dist/assets/ || [ -n "$extra" ]; then
+            [ -n "$extra" ] && echo "not committed: $extra"
+            echo "::error::node tools/build.mjs --split changed dist/ (lanternfall.html or assets/). Commit the rebuilt dist."
             exit 1
           fi
       - name: Check shard ${{ matrix.shard }}/6 (no browser section may be skipped)

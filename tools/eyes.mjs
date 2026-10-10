@@ -27,6 +27,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { findBrowser } from './lib/browser.mjs';
 import { ROOT } from './lib/core.mjs';
+import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { view, contextOptions, VIEW_HELP } from './lib/views.mjs';
 
 const argv = process.argv.slice(2);
@@ -65,7 +66,7 @@ function pageHtml() {
   return '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + h.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + h.slice(end);
 }
 let patched = false;
-const HTML = pageHtml();
+const HTML = pageHtml(), ASSETS = pageAssets(htmlFile);
 const KEY = 'lanternfall.save.v5';
 const fixture = name => JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', `save-${name}.json`), 'utf8'));
 
@@ -89,7 +90,7 @@ async function openGame(size, { save } = {}) {
   const page = await ctx.newPage(); const errs = [];
   page.on('pageerror', e => errs.push(String(e)));
   if (save) { const raw = JSON.stringify({ ...save, last: Date.now() }); await page.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) {} }, [KEY, raw]); }
-  await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: HTML, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+  await routePage(page, 'http://lf.test/', HTML, ASSETS);   // the split build's asset files too (tools/lib/page-assets.mjs)
   await page.goto('http://lf.test/'); await page.waitForTimeout(700);
   if (!save) {   // the drawn opening comes first (Skip), then the picker, then Hesketh's fire (Skip)
     if (await page.$('#introScreen .intro-skip')) { await page.click('#introScreen .intro-skip'); await page.waitForSelector('#createScreen .ccard[data-hero="wren"]'); }

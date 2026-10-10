@@ -1,0 +1,44 @@
+<!-- Boot loader for the split build only (tools/build.mjs --split; card asset-build). The inline page never carries it.
+     The art data files follow as plain <script src> tags, so the game boots after every one has run, as the inline page does.
+     Until then this plain text line shows the bytes done: a file counts once its download ends (resource timing) or it runs. -->
+<div id="lfBoot" role="status" aria-live="polite" style="position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;background:var(--bg,#140F1A);color:var(--bone,#EFE6D6);font:16px/1.4 var(--body,sans-serif);text-align:center"><span id="lfBootText">Loading the game</span></div>
+<script id="lfBootJs">
+var lfBoot = (function () {
+  var files = /* @files */, total = 0, got = 0, seen = {}, failed = false, k;
+  for (k in files) total += files[k];
+  var mb = function (n) { return (n / 1e6).toFixed(1); };
+  var line = function () {
+    var t = document.getElementById('lfBootText');
+    if (t && !failed) t.textContent = 'Loading the game: ' + mb(got) + ' of ' + mb(total) + ' MB';
+  };
+  var count = function (url) {
+    var name = String(url).split('?')[0].split('/').pop();
+    if (files.hasOwnProperty(name) && !seen[name]) { seen[name] = 1; got += files[name]; line(); }
+  };
+  try {
+    new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { count(e.name); }); }).observe({ type: 'resource', buffered: true });
+  } catch (e) { /* no resource timing: each file counts when it runs */ }
+  line();
+  return {
+    done: function (el) { count(el.src); },
+    fail: function () {
+      failed = true;
+      var box = document.getElementById('lfBoot'), t = document.getElementById('lfBootText');
+      if (!box || !t || box.querySelector('button')) return;
+      t.textContent = 'Some game files did not load. Check your connection, then reload.';
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = 'Reload';
+      b.style.cssText = 'padding:8px 16px;border:1px solid var(--line-hi,#4E4060);border-radius:6px;background:var(--panel,#1F1827)';
+      b.onclick = function () { location.reload(); };
+      box.appendChild(b);
+    },
+    // After the game's script: the line goes, and so do the loader's script tags, so the page holds what the inline page holds.
+    end: function () {
+      if (failed) return;
+      var gone = [document.getElementById('lfBoot'), document.getElementById('lfBootJs'), document.currentScript];
+      [].forEach.call(document.querySelectorAll('script[src^="assets/"]'), function (s) { gone.push(s); });
+      gone.forEach(function (el) { if (el) el.remove(); });
+    }
+  };
+})();
+</script>
