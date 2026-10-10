@@ -112,6 +112,7 @@ const WEIGHT = {
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
   'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
+  'fx-timing-fixes': 40,
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
@@ -120,7 +121,8 @@ const WEIGHT = {
   'hero queue (hero-queue)': 9,   // 8 s locally alone (hero-queue, 2026-10-10)
   'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
   'new-style screens (browser)': 36,   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
-  'tavern blackjack (browser)': 20   // measured below (tavern-blackjack-build, 2026-10-10)
+  'tavern blackjack (browser)': 20,   // measured below (tavern-blackjack-build, 2026-10-10)
+  'tip-order-and-lateness': 60   // three views of the pickaxe, Power Shot and Forge-ore lines (tip-order-and-lateness, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -16886,6 +16888,107 @@ if (section('forge-line-while-fighting')) try {
   }
 } catch (e) { fail('forge-line-while-fighting crashed: ' + (e.stack || e)); }
 
+// ==== tip-order-and-lateness: Hesketh's first-hour tips come when they are true and never contradict the one before ====
+// The cold leg of 10 Oct (reports/panel-2026-10-10, findings 5 and 6): "Mine 4 Copper Ore for a Copper Pickaxe", then with the ore in hand
+// "Make a Copper Pickaxe. You'll need one for the ore"; "The Workbench is up" long after it went up; "Power Shot is next to Echo" two minutes
+// after learning it; "Mine at the Copper Vein" while mining there. save-flow-cold-camp: Wren, cold, the Workbench built, no tool yet. Copper
+// Ore is set to 0 and she gathers Pine Log. The section plays the pickaxe, the Workbench line, the bow, Power Shot, then the Forge's ore, and
+// reads each line on the guide's next look after its condition turns true (a resize runs that look at once: no wait, no timer).
+if (section('tip-order-and-lateness')) try {
+  const at = 'tip-order-and-lateness', raw0 = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-flow-cold-camp.json'), 'utf8');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the line on screen now: its text, its button, the hold
+    const READ = `JSON.stringify((() => { const b = document.querySelector('.ob-bub'), up = !!b && !b.hidden, ok = document.querySelector('.ob-ok');
+      return { want: up ? soloGuideWants() : '', txt: up ? b.querySelector('.ob-txt').textContent : '', ok: up && ok && !ok.hidden ? ok.textContent : '', paused: ONBOARD.paused }; })())`;
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, mobile = w !== 1280, o = JSON.parse(raw0);
+        o.mats.ore[0] = 0; o.activity = 'gather'; o.node = { kind: 'wood', t: 1 };
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: JSON.stringify(o), key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+        const X = s => page.evaluate(s => window.__t.x(s), s), log = [];
+        const note = s => { if (s.txt && log[log.length - 1] !== s.txt) log.push(s.txt); return s; };
+        // change the game, then one look of the guide (its resize handler runs tick() there and then), then read the line
+        const after = async src => note(JSON.parse(await X(`${src}; dispatchEvent(new Event('resize')); ${READ}`)));
+        const until = async (f, ms) => { let s = note(JSON.parse(await X(READ))); for (const t0 = Date.now(); !f(s) && Date.now() - t0 < ms;) { await page.waitForTimeout(150); s = note(JSON.parse(await X(READ))); } return s; };
+        // 1. short of ore: the pickaxe's ore, with a Go to the vein
+        let s = await until(s => s.want === 'stock:tool', 8000);
+        assert(s.txt === 'Mine 4 Copper Ore for a Copper Pickaxe (0/4).' && s.ok === 'Mine at the Copper Vein', `${v}: short of ore, Hesketh asks for 4 Copper Ore with a Go to the Copper Vein (${JSON.stringify(s)})`);
+        // 2. mining there: the line counts, it no longer tells her to mine
+        await page.click('.ob-ok');
+        s = await after('true');
+        assert(await X('S.activity === "gather" && S.node.kind === "ore" && S.node.t === 1') && /^Mining Copper Ore for a Copper Pickaxe \(\d\/4\)\.$/.test(s.txt) && !s.ok,
+          `${v}: mining at the Copper Vein, the line counts the ore and asks for nothing she is already doing (${JSON.stringify(s)})`);
+        // 3. the ore in hand: on the next look, the pickaxe line, and no "The Workbench is up" (it went up long before)
+        s = await after('S.mats.ore[0] = 4');
+        assert(s.want === 'tool' && s.txt === 'You have the Copper Ore and Pine Log for a Copper Pickaxe. Open Craft and make it.', `${v}: with the ore in hand the next look says she has what the pickaxe takes (${JSON.stringify(s)})`);
+        // 4. Craft: make it, with no word that she still needs it for the ore
+        await X('setTab("forge", "make"); true');
+        s = await until(s => /^Make a Copper Pickaxe/.test(s.txt), 4000);
+        assert(s.want === 'tool' && s.txt === 'Make a Copper Pickaxe. It mines faster than your Stone Pick.', `${v}: in Craft he says make it and why, not "You'll need one for the ore" (${JSON.stringify(s)})`);
+        await page.click('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go');
+        await page.waitForFunction(() => window.__t.x('toolMade() && toolWorn()'), null, { timeout: 5000 });
+        // the bow (Wren's first weapon, at the Workbench): made and put on, so the Forge's turn comes after Power Shot
+        await page.waitForTimeout(400);
+        await page.click('#sec-craft-recipes .cf-rec[data-kind="bow"] .cf-go');
+        s = await until(s => s.want === 'wear:weapon', 5000);
+        if (s.want === 'wear:weapon') await page.click('.ob-ok');
+        await page.waitForFunction(() => window.__t.x('weaponMade()'), null, { timeout: 5000 });
+        // 5. Power Shot learned on the Hero menu during her turn, the fight going on: his line says where it went on that look, holding nothing
+        // (the Hero tab's points steps are another card's: answered here, so they do not stand in front)
+        await X('S.mats.ore[0] = 0; closeMenu(); setActivity("fight"); S.abil.scrolls.moss = 1; S.abil.got.moss = 1; for (const id of ["spend", "back"]) onboardDone(id); true');
+        await page.waitForFunction(() => window.__t.x('(q => !!q && q.phase === "hero")(turnCombatSnapshot()) && liveFoe()'), null, { timeout: 15000 });
+        await X('setTab("party", "abilities"); document.querySelectorAll(".ob-x").forEach(b => { if (b.offsetParent) b.click(); }); true');
+        s = await after('abilityLearn("wren", "powershot") && soloEquip(soloEquipped().indexOf(null), "powershot")');
+        assert(s.want === 'say:slot' && s.txt === "Power Shot is next to Echo now. Press it there when it's ready." && !s.paused && await X('liveFoe()'),
+          `${v}: Power Shot learned with a foe on the field: his line says where it went on the very next look, and holds nothing (${JSON.stringify(s)})`);
+        // read and the menu closed: it never comes back to hold the next kill gap
+        await X('closeMenu(); window.__k = 0; on("kill", () => { window.__k++; S.kills = 0; }); dispatchEvent(new Event("resize")); true');
+        const noSlot = async () => { let k0 = await X('window.__k'), seen = '';
+          for (const t0 = Date.now(); Date.now() - t0 < 30000 && await X('window.__k') < k0 + 1;) {
+            const r = note(JSON.parse(await X(READ))); if (r.want === 'say:slot') { seen = r.txt; break; }
+            // (a level 1 hero at zone 2 takes a while: each foe is left 1 HP so the next Attack makes the gap)
+            if (await X('combatFoes().forEach(f => { if (f && !f.dead && f.hp > 1) f.hp = 1; }); (q => !!q && q.phase === "hero")(turnCombatSnapshot()) && !ONBOARD.paused')) await page.keyboard.press('d');
+            await page.waitForTimeout(150);
+          }
+          return { seen, kills: await X('window.__k') - k0, at: JSON.parse(await X('JSON.stringify({ act: S.activity, tab: S.tab, phase: (turnCombatSnapshot() || {}).phase, foe: liveFoe(), held: ONBOARD.paused, step: (onboardStep() || {}).id, want: soloGuideWants() })')) }; };
+        let r = await noSlot();
+        assert(!r.seen && r.kills >= 1, `${v}: once read on the menu, the slot line does not come back in the next kill gap (${JSON.stringify(r)})`);
+        // a move learned and pressed before his line could show: the line is stale and never comes
+        // (Power Shot again: unlearned, its scroll back and the line's mark cleared, as if this were the first time)
+        await X(`S.abil.unl.wren = []; S.solo.eq.wren = ["echo", null, null]; S.abil.scrolls.moss = 1; S.abil.got.moss = 2; delete S.onboard.done["say:slot"];
+          abilityLearn("wren", "powershot") && soloEquip(soloEquipped().indexOf(null), "powershot"); emit("ability", { cls: "solo", id: "powershot", name: "Power Shot", auto: false }); true`);
+        r = await noSlot();
+        assert(!r.seen && r.kills >= 1 && await X('!S.onboard.sayQ.some(e => e.id === "slot")'), `${v}: a move already pressed gets no "next to" line in the next kill gap (${JSON.stringify(r)})`);
+        // 6. the Forge's ore, mining at the vein: the line counts, and nothing says to go and mine there
+        await after('S.mats.ore[0] = 0; setNode("ore", 1) && setActivity("gather")');
+        s = await until(s => s.want === 'stock:forge', 4000);
+        assert(s.want === 'stock:forge' && /^Mining Copper Ore for the Forge \(\d+\/25\)\.$/.test(s.txt) && s.ok !== 'Mine at the Copper Vein', `${v}: short of the Forge's ore while mining at the Copper Vein, the line counts and has no Go (${JSON.stringify(s)})`);
+        // and the fighter's held Forge line, queued, never shows while she mines there
+        await X('delete S.onboard.done["say:stock:forge"]; S.onboard.sayQ = [{ id: "stock:forge" }]; GUIDE_RT.t += 120; true');
+        s = await until(s => /The Forge needs/.test(s.txt), 3000);
+        assert(!/The Forge needs|Mine at the/.test(s.txt + s.ok), `${v}: mining at the Copper Vein, no held "Mine at the Copper Vein" line (${JSON.stringify(s)})`);
+        // the order: each line once its condition held, and none undoes the one before
+        const ORDER = [/^Mine 4 Copper Ore for a Copper Pickaxe/, /^Mining Copper Ore for a Copper Pickaxe/, /^You have the Copper Ore and Pine Log for a Copper Pickaxe/,
+          /^Make a Copper Pickaxe\. It mines faster/, /^Power Shot is next to Echo now/, /^Mining Copper Ore for the Forge/];
+        let i = 0; for (const t of log) if (i < ORDER.length && ORDER[i].test(t)) i++;
+        const bad = log.filter(t => /Workbench is up|You'll need one for the ore/.test(t)), back = log.slice(log.findIndex(t => ORDER[2].test(t))).filter(t => /^Mine \d+ Copper Ore for a Copper Pickaxe/.test(t));
+        assert(i === ORDER.length && !bad.length && !back.length, `${v}: the lines come in order, none stale, none undoing the last (${log.join(' | ')})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tip-order-and-lateness crashed: ' + (e.stack || e)); }
+
 // ==== tips-pause-says-so (Opus high judge, 2026-10-08): a Hesketh news line holds only the gap after a kill, never gathering; any other hold that
 // is not a fight lesson says "Paused" (the stage plate, Gather); a fight press answers a Got it hold and then acts; the bar stays in view, dimmed,
 // where the tip does not cover it; and his Stars, boss-loss and hero-down lines never come at the wrong moment (75-onboard-ui.js, 72-ui-gather.js) ====
@@ -19335,6 +19438,91 @@ if (section('ability-effects-live')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('ability-effects-live crashed: ' + (e.stack || e)); }
+
+// ==== fx-timing-fixes: a buff fires nothing at the foe, and a hit's number rises when the hit lands (62-stage) ====
+// A buff (24c kind 'buff': Shadow Step, Brace, Arcane Ward) hits no foe, so the press spawns no arrow, bolt or slash: a hero drawn
+// with its own moves (route S) plays the move in place, classic art stands still, and the buff's own effect (62b) still lands.
+// A basic Attack's damage number's first frame comes at or after its hit on the stage: the arrow's or bolt's impact (the stage's
+// projectile), or the melee contact (the swing's strike, 62b swing). Pressed through the turn engine (59k strike) at 1280x720 and 740x360.
+if (section('fx-timing-fixes')) try {
+  const at = 'fx-timing-fixes', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, o = {}) => {
+      const phone = w < 1200;
+      const ctx = await browser.newContext({ ...o, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+      await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+      await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);   // the away card
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360]]) {
+        const v = `${at} ${w}x${h}`;
+        const { ctx, errs, X, page } = await open(w, h, { turns: true });
+        // the log, on the stage's clock T (90-boot: one T per frame, so a number and a hit in the same frame share it): every
+        // projectile the stage or 62b starts and when it lands, every swing's strike (62b swing), every float
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__L = { proj: [], sw: [], fl: [] };
+          { const P = ANIM.proj; ANIM.proj = function (kind, sx, sy, tx, ty, dur, col, arc, hit, delay) { const r = { kind, t: T, hitT: -1 }; __L.proj.push(r);
+            return P.call(this, kind, sx, sy, tx, ty, dur, col, arc, (x, y) => { if (r.hitT < 0) r.hitT = T; if (hit) hit(x, y); }, delay); }; }
+          { const W = stageFx.swing; stageFx.swing = (x, y) => { __L.sw.push(T); return W(x, y); }; }
+          on('float', f => __L.fl.push({ t: T, txt: String(f && f.txt) })); true`);
+        for (const [k, buff, shot] of [['wren', 'shadowstep', 'arrow'], ['tobin', 'brace', ''], ['pip', 'arcaneward', 'bolt']]) {
+          await X(`soloPick("${k}", { now: true }); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true`);
+          for (const id of [buff, 'attack']) {
+            const tag = `${v} ${k} ${id === 'attack' ? 'Attack' : id}`;
+            let ph = '';
+            for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+              ph = await X(`(() => { if (!TURN_LIVE || TURN_LIVE.ended) { S.activity = "fight"; spawn(); return 'off'; } return TURN_LIVE.foe !== mob ? 'other foe' : TURN_LIVE.phase; })()`);
+              if (ph === 'hero') break;
+              await page.waitForTimeout(60);
+            }
+            assert(ph === 'hero', `${tag}: the hero's turn comes (${ph})`);
+            const r = JSON.parse(await X(`(() => { const m = TURN_LIVE;
+              S.abil.unl.${k} = Array.from(new Set((S.abil.unl.${k} || []).concat(["${buff}"]))); S.solo.eq.${k} = ["${buff}", null, null]; turnSyncEquip();
+              m.cds["${buff}"] = 0; m.cds.attack = 0; m.h.blind = 0; m.foe.hp = m.foe.max = Math.max(m.foe.max, 1e7);   // no hit ends the fight
+              const why = "${id}" === "attack" ? "" : turnUsable(m, "${buff}"); if (why) return JSON.stringify({ why });
+              __L.proj.length = 0; __L.sw.length = 0; __L.fl.length = 0;
+              const s0 = stageFx.stats(), n0 = stageStats().heroSwings, own = !!((typeof wrenSOn === 'function' && wrenSOn()) || (typeof tobinSOn === 'function' && tobinSOn()));
+              const ok = "${id}" === "attack" ? turnCombatAction('attack') : turnCombatAction('ability', 0);
+              return JSON.stringify({ ok, t0: T, n0, own, c0: s0.casts, i0: s0.impacts }); })()`));
+            if (r.why) { assert(false, `${tag}: the buff can be pressed (${r.why})`); continue; }
+            assert(r.ok, `${tag}: the press goes through the turn engine (${JSON.stringify(r)})`);
+            // wait for the hit on the stage (a slow page falls behind), up to 6 s, then a beat for anything late
+            let s;
+            for (const t0 = Date.now(); ; ) {
+              s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats(), n: stageStats().heroSwings, T })`));
+              const landed = id === 'attack' ? (shot ? s.L.proj.some(p => p.kind === shot && p.hitT >= 0) : s.L.sw.length > 0) && s.L.fl.some(f => /\d/.test(f.txt)) : s.fx.impacts > r.i0;
+              if (landed || Date.now() - t0 > 6000) break;
+              await page.waitForTimeout(50);
+            }
+            await page.waitForTimeout(150); s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats(), n: stageStats().heroSwings, T })`));
+            if (id !== 'attack') {
+              assert(s.L.proj.length === 0 && s.fx.live === 0, `${tag}: a buff spawns no projectile (${s.L.proj.map(p => p.kind).join(', ') || 'none'} from the stage, ${s.fx.live} shots from 62b)`);
+              assert(s.fx.casts === r.c0 + 1 && s.fx.impacts > r.i0, `${tag}: the buff's own effect plays (casts ${s.fx.casts - r.c0}, impacts ${s.fx.impacts - r.i0})`);
+              assert(s.n - r.n0 === (r.own ? 1 : 0), `${tag}: ${r.own ? 'the hero plays its own move in place' : 'the hero swings at nothing'} (${s.n - r.n0} swings, own moves ${r.own})`);
+              assert(!s.L.fl.some(f => /\d/.test(f.txt)), `${tag}: no damage number (${s.L.fl.map(f => f.txt).join(', ') || 'none'})`);
+            } else {
+              const hitT = shot ? (s.L.proj.find(p => p.kind === shot && p.hitT >= 0) || { hitT: -1 }).hitT : s.L.sw.length ? s.L.sw[0] : -1;
+              const f = s.L.fl.find(f => /\d/.test(f.txt));
+              assert(hitT >= 0 && f, `${tag}: the ${shot || 'blow'} lands and its number rises (hit at ${hitT >= 0 ? (hitT - r.t0).toFixed(3) : 'never'}, number ${f ? f.txt : 'none'}; floats ${JSON.stringify(s.L.fl)}; DBG ${await X('JSON.stringify({ph: TURN_LIVE && TURN_LIVE.phase, hp: TURN_LIVE && TURN_LIVE.foe.hp, max: TURN_LIVE && TURN_LIVE.foe.max, ended: TURN_LIVE && TURN_LIVE.ended})')})`);
+              if (hitT >= 0 && f) assert(f.t >= hitT, `${tag}: the number's first frame is at or after the ${shot || 'contact'} (number ${(f.t - r.t0).toFixed(3)} s, hit ${(hitT - r.t0).toFixed(3)} s after the press)`);
+            }
+          }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('fx-timing-fixes crashed: ' + (e.stack || e)); }
 
 // ==== route-s-wren-wire (docs/design/route-s/ruling.md, "Build card spec: route-s-wren-wire"): Wren's route S fight moves ====
 // From the converter's record (art/heroes/wren/route-s/pack.json, tools/art/route-s-wren.py) and the embedded data (21ye): bytes

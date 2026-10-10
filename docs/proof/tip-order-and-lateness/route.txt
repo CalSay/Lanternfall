@@ -1,0 +1,63 @@
+# seed: 1
+# Proof for card tip-order-and-lateness: Hesketh's first-hour tips come when they are true and never undo the one before.
+# Fixture tip-order: Wren on a cold Hearth, the Workbench built, no tool yet, no Copper Ore, chopping Pine Log; a Moss Scroll in the bag.
+#   ore-asked.png      "Mine 4 Copper Ore for a Copper Pickaxe (0/4)." with a Go to the Copper Vein
+#   ore-counting.png   mining at the vein, the line counts ("Mining Copper Ore for a Copper Pickaxe (1/4).") and asks for nothing she is doing
+#   have-ore.png       the ore in: "You have the Copper Ore and Pine Log for a Copper Pickaxe. Open Craft and make it." (no "The Workbench is up")
+#   make-pickaxe.png   in Craft: "Make a Copper Pickaxe. It mines faster than your Stone Pick." (no "You'll need one for the ore")
+#   slot-line.png      Power Shot learned on the Hero menu: "Power Shot is next to Attack now." at once, in front of the weapon tip
+#   forge-ore-mining.png  the bow made and worn, still mining at the vein: "Mining Copper Ore for the Forge (n/25)." and no "Mine at the Copper Vein"
+# The timing (each line on the guide's next look after its condition holds), the slot line dropped once read or once the move is
+# pressed, and the Forge's ore while mining at the vein are held by tools/check.mjs ("tip-order-and-lateness") at 1280x720, 740x360
+# and 360x740.
+new tip-order
+wait 1
+expect "Mine 4 Copper Ore for a Copper Pickaxe (0/4)."
+shot ore-asked
+tap "Mine at the Copper Vein"
+wait 2
+expect "Mining Copper Ore for a Copper Pickaxe"
+expect-no "Mine 4 Copper Ore"
+shot ore-counting
+wait-for "for a Copper Pickaxe. Open Craft and make it." 60
+expect "You have the Copper Ore and Pine Log for a Copper Pickaxe."
+expect-no "The Workbench is up"
+shot have-ore
+tap "Craft"
+wait 1
+tap-if "Make"
+wait 1
+expect "Make a Copper Pickaxe. It mines faster than your Stone Pick."
+expect-no "You'll need one for the ore"
+shot make-pickaxe
+tap "Craft Copper Pickaxe"
+wait 1
+tap "Hero"
+wait 1
+tap-if "Abilities"
+wait 1
+tap-if "Can learn"
+tap "Power Shot"
+wait 1
+tap "Learn · Moss Scroll"
+wait 1
+tap "Confirm: spend a Moss Scroll"
+wait 1
+expect "Power Shot is next to Attack now."
+shot slot-line
+tap "Got it"
+wait 1
+tap-if "Close"
+tap "Craft"
+wait 1
+tap "Craft Pine Bow"
+wait 1
+tap-if "Equip Pine Bow"
+wait 1
+tap-if "Equip"
+wait 1
+tap "Close menu"
+wait 2
+expect "Mining Copper Ore for the Forge"
+expect-no "Mine at the Copper Vein"
+shot forge-ore-mining

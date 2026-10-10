@@ -83,6 +83,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   cooldown land when the hit shows: the swing (0.14 s), then Wren's arrow (0.2 s), Pip's bolt (0.28 s) or Moonlit Volley's first
   falling arrow; Tobin's blow at the swing (`fxImpactIn`, 62b). A foe's hit already landed on its contact frame. Scratch fights
   (budget, odds, sim) land at once, so balance is unchanged.
+  A buff (kind 'buff': Shadow Step, Brace, Iron Will, Arcane Ward, Searing Eye) fires nothing at the foe: its own glow plays, and a
+  hero drawn with its own moves plays the move in place (fx-timing-fixes).
 - **The fight screen is Stage and dock** (Cal, 2026-10-05; `75-solo-ui.js`, `75-turn-ui.js`). The stage shows the hero and
   foe, a turn banner and the timing bar along its bottom edge while a hit winds up. Under it, the dock has three tabs.
   **Act**: Attack and the three ability slots as tiles (D, Q, W, E), each with its name and "Ready", turns left or
