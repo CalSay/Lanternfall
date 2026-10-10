@@ -380,5 +380,21 @@ tap-if "Dismiss this tip"
 tap-if "Attack"
 expect "body[data-trick-rider]"
 shot rider
+# Updated 2026-10-10 (routes replay): the fixture has auto boss on, so in a real-time replay the loop can run on until the zone 7 boss
+# comes and beats Wren (it did at this route's own commit too, 1 run in 2); its Try again card then covers the fight and the Foe tab is
+# gone, so `tap "Foe"` failed the run. The route stops pressing here, so a boss fight stops on Wren's turn; until then it closes
+# that card whenever it is up (four short rounds, so the rider is most likely still the foe), then opens the Foe tab.
+tap-if "Keep fighting here"
+tap-if "Continue"
+wait 2
+tap-if "Keep fighting here"
+tap-if "Continue"
+wait 2
+tap-if "Keep fighting here"
+tap-if "Continue"
+wait 2
+tap-if "Keep fighting here"
+tap-if "Continue"
+wait 2
 tap "Foe"
 shot rider-foe

@@ -4,6 +4,9 @@
 #                      Before this card the game judged the boss at 0% a try on the same save and left the row out of Next Up, so
 #                      the first expect fails on that build.
 # The win rates behind it are held by tools/budget.mjs (the z16-z18 -arrival boss rows) and tools/health.mjs --compare.
+# Updated 2026-10-10 (routes replay on base): since ebae64bc (#263, hearth-two-next-up) a Ready "Build Hearth 2" row filled
+# the top three with "Spend 32 attribute points" and the Learn row, so the boss row was 4th and never shown. The route takes
+# the Hearth row's Go (gathering, which leaves her power and the boss odds as they are) and reopens Next Up.
 # seed: 1
 new z16-weak
 wait 2
@@ -11,6 +14,16 @@ tap-if "Got it"
 tap-if "Continue"
 tap-if "Skip"
 tap-if "Dismiss this tip"
+wait 1
+tap "Next up"
+wait 1
+# Hearth 2's row (hearth-two-next-up) is Ready while its Pine Log is short and the hero works elsewhere, so it holds the
+# third row; its Go sends Wren to the Pine Grove (no change to her power or the odds), it drops back, and the boss row shows
+tap "Go: Build Hearth 2"
+wait 2
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap-if "Close menu"
 wait 1
 tap "Next up"
 wait 1

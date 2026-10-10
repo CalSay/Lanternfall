@@ -3,13 +3,18 @@
 #   unique-upgrade-*.png  the spare Echo Cowl (a Unique helm, power 18) on the gold-upgrades save
 #                         (tests/proof-fixtures/save-gold-upgrades.json; since proof-routes-rot save-refine.json, the same save plus coal): its upgrade line now reads "+1: power 18 → 20",
 #                         the power it really has at +1 (it used to promise 36).
-#   unique-upgraded-*.png after Upgrade to +1 the sheet says Power 20, as promised, and the next line reads "+2: power 20 → 23".
+#   unique-upgraded-*.png after Upgrade to +1 the sheet says Power 20, as promised, and the next line names what +2 adds ("+2: +0.3% crit chance", since craft-shortfall-offer).
 #   cache-toast-*.png     the first boss on the boss1 save opens a Lantern Cache; the bell's line names the look once:
 #                         "Ember Red lantern", not "Ember Red lantern lantern".
 # Both are also held by tools/check.mjs, section 'playtester code bugs' (unique and non-unique at +0 and +5; the toast text).
 # Updated 2026-10-08 (proof-routes-rot): the boss's first swing waits for Dodge (staged-guide lesson), so the route taps Dodge;
 #   gear moved from Craft to Hero > Gear; a Unique's +1 now costs 1 Copper Ingot (refine-queues, #209), so the route loads
 #   tests/proof-fixtures/save-refine.json (the same gold-upgrades save with 60 coal) and smelts Copper Ingots at the Forge first.
+# Updated 2026-10-10 (routes replay on base): two lines were reworded on purpose by later cards. The cache card's colour line
+#   reads "Your lantern burns Ember Red now." since 64fa91d5 (look-card-says-why; "New lantern colour: X. You own it now." is
+#   for a colour the lantern did not take). The next-upgrade line names the main line's gain, not power, since 0520499a
+#   (craft-shortfall-offer: "+2: +0.3% crit chance. Its other lines grow too."). Power 20 is read after reopening the sheet,
+#   since upright the Upgrade press scrolls the power line out of view.
 # The cache part runs first because a second `new` clears the shots taken before it.
 new boss1
 wait 2
@@ -86,7 +91,7 @@ wait 1
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
-expect "New lantern colour: Ember Red"
+expect "Your lantern burns Ember Red now."
 tap "Continue"
 wait 2
 tap "Notices"
@@ -126,6 +131,11 @@ expect-no "→ 36"
 shot unique-upgrade
 tap "Upgrade to +1"
 wait 1
-expect "Power 20"
-expect "+2: power 20 → 23"
+expect "+2: +0.3% crit chance"
 shot unique-upgraded
+# upright, the press scrolled the sheet past its power line: reopen the Cowl (now +1) to read it at the top
+tap "Close"
+wait 1
+tap "Echo Cowl"
+wait 1
+expect "Power 20"

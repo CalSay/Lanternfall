@@ -1,11 +1,15 @@
 # Proof for card next-tier-gate-goal. The seed 1 walk's minute 23 save (Wren, zone 13, the Golemfist and every tier 1 piece and tool worn,
 # Woodcraft 8, Tailoring 6, Woodcutting 7, Hunting 4; tests/proof-fixtures/save-tier-gate.json), at 360x740 and 740x360:
-#   nextup-gate-*.png  Next Up's list: the craft row says what opens tier 2, "Birch Bow for the zone 13 boss: Woodcraft 8 of
-#                      10" (80%, never Ready), and the skill row names Woodcraft too.
-#   gate-go-*.png      that row's Go: the Craft screen at the Workbench, on tier 1, where a craft levels Woodcraft (the
-#                      one-time Refining note from refine-queues is closed first).
+#   nextup-gate-*.png  Next Up's list: the craft row says what opens tier 2, "Birch Bow: Mining 5 of 14 opens Iron Ore"
+#                      (never Ready).
+#   gate-go-*.png      that row's Go: Gather on Mining, at its tier gate ("Next tier: Lv 14"), the vein working.
 # The rules (Tailoring next, then "Woodcutting 7 of 14 opens Birch Log", a Ready craft or open recipe beats any gate, no hide
 # gate while Hunting is hidden) are held by tools/check.mjs ("next tier gate").
+# Updated 2026-10-10 (routes replay on base): since ab9ca1ec (#304, tier-two-named-for-return) the craft row names the
+# furthest gate of the nearest tier 2 piece. The Birch Bow is wood + metal (9bfde79d, gear-in-first-25), so on this save its
+# row reads "Birch Bow: Mining 5 of 14 opens Iron Ore", not the Woodcraft gate, and its Go (2c79eafa, gate-go-starts-gathering)
+# opens Gather on Mining and starts mining instead of opening Craft. The expects follow: the gate named, then the Mining view
+# with the tier gate ("Next tier: Lv 14") and the vein Working. The old shots (Woodcraft row, Workbench) no longer apply.
 # seed: 1
 new tier-gate
 wait 2
@@ -15,11 +19,13 @@ tap-if "Dismiss this tip"
 wait 1
 tap "Next up"
 wait 1
-expect "Woodcraft 8 of 10"
+expect "Birch Bow: Mining 5 of 14 opens Iron Ore"
 shot nextup-gate
-tap "Go: Birch Bow for the zone 13 boss: Woodcraft 8 of 10"
+tap "Go: Birch Bow: Mining 5 of 14"
 wait 1
 tap-if "Got it"
 wait 1
-expect "For you"
+expect "Mining"
+expect "Next tier: Lv 14"
+expect "Working"
 shot gate-go

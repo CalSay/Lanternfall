@@ -176,6 +176,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Chapter 1 is weak to it or resists it, so no foe or boss changes and she is the hero to bring where the others are resisted.
   [hero-kits.md](design/hero-kits.md) section 4.
 
+- **Claude decided: Saint Elowen joins after the Fenmother through her chapel quest, with a Candles kit (elowen-ability-spec, Opus
+  judge 2026-10-10; Cal can veto with "Elowen joins at the Chained Star").** Her Attacks light Candles, up to 5. Holding 1 to 3
+  makes her Attacks hit harder. Kindly Light, Cupped Flame and Give It Away give Candles away on their own; Swing the Lantern and
+  Full Flame pay off when she holds 4 or 5. She has no heal, no cleanse and no mid-turn choice, and one signature passive (Keep It
+  Low). Her quest opens at zone 36, and her evolution pick stays hidden until her subclass exists. Spec:
+  [heroes/elowen.md](design/heroes/elowen.md).
+
 ## Combat
 
 - **Turn-based, one enemy at a time.** Enemies are stronger to make up for it. No click-spamming. (2026-09-30)

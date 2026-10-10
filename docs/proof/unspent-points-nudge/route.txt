@@ -24,5 +24,11 @@ tap-if "Back to the fight"
 tap-if "Close"
 wait 3
 expect-no "Spend 28 attribute points"
-expect "Learn Power Shot"
+# Updated 2026-10-10 (routes replay): since 9bfde79d (gear-in-first-25, on purpose) Next Up ranks the first weapon, once Ready, above
+# other Ready rows (but under a pile of points), so with the points spent the chip falls back to the Pine Bow, not to Power Shot.
+# The chip is checked for that row, and Power Shot is checked in the open list.
+expect "Craft a Pine Bow"
 shot chip-after-spend
+tap "Next up"
+wait 1
+expect "Learn Power Shot"
