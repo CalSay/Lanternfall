@@ -1,10 +1,12 @@
 # UI redesign: a sleeker look to match the new hero art
 
 Status: **Lantern Brass picked** (Cal, 10 Oct 2026 17:20: "I liked lantern brass best. Let's focus on that one and maximise
-it. The menus are still a little messy."). Night Glass is dropped. Docs and a mockup only; no game file changes.
+it. The menus are still a little messy."). Night Glass is dropped. Menu picks (Cal, 10 Oct 19:12): "On the menu drafts I
+liked: Abilities - C, Camp - A, Craft - A. On the redesign page I like the Hero Gear and Star Map menus. The combat page is
+decent but could be better", then "We need to sort out gathering too". Docs and a mockup only; no game file changes.
 Ask: Cal, 10 Oct 2026 16:58: "Can we plan a full UI redesign to match the new hero artwork. I think what we have suits the
 original 16bit vibe but we need something a bit sleeker."
-Mockup page (Lantern Brass only, v3: Fight, Abilities, Camp, Craft, Hero gear and Star map at 1280x720, 740x360 and 360x740): https://claude.ai/artifact/ByLSRghC3o64DRhoraqg7F
+Mockup page (v4: Fight, Gathering, the Gather menu, Abilities, Camp, Craft, Hero gear and Star map at 1280x720, 740x360 and 360x740): https://claude.ai/artifact/ByLSRghC3o64DRhoraqg7F
 
 Builds on, and does not change: the browser-first layout (`docs/design/layout.md`, `docs/design/desktop-layout.md`: the rail,
 top row, stage, side column, the two desktop tiers, docked detail, the number keys) and the new art style plan
@@ -97,13 +99,29 @@ Numbered to match the mockup page.
 
 ### 2.4 Fight HUD (stage)
 - **Now:** two wide boxed health plates across the top of the stage, a boxed turn label under the place name, and the
-  timing bar in a box (see `desktop-layout/before/fight-1280x720.png`).
-- **We'd do:** the place name and wave diamonds in the sky top left (Cinzel), one compact foe plate top right (name, HP bar,
-  numbers on desktop, status chips with their Codex icons), a slim HP bar over the hero, the turn banner as a ribbon with no
-  box, and the timing bar as a slim track. Statuses keep their colours as the chip's outline and text. This keeps the rule in
-  `layout.md` (combat info in the sky, hero HP over the hero) and gives back about 50 px of sky.
+  timing bar in a box (see `desktop-layout/before/fight-1280x720.png`). Cal on the v3 mock: "decent but could be better".
+- **We'd do (v4):**
+  - **Place:** the place name and wave diamonds stay in the sky top left (Cinzel). The boss wave is a red diamond at the end.
+  - **Foe plate over the foe:** name and level, a 14 px HP bar with the numbers inside it and a pale chip trail that shows
+    the last hit, round status coins (the Codex icon, the stack count in the corner, the status colour as the rim), and the
+    foe's next move ("Next: Jab"). A soft dark halo behind it keeps it readable over the scene. On the upright phone it
+    stays a small panel top right, because the foe stands at the screen's edge there.
+  - **Turn banner with the turn order:** "Your turn" as a brass ribbon, with the next three turns as coins under it (the
+    one acting now ringed). Desktop only; the landscape phone keeps the ribbon alone.
+  - **Party frames bottom left:** one row per hero, with the bust, name, HP bar and their resource pips (Wren's Aim, Tobin's
+    Grit). They replace the bar over each hero's head. Until the busts pass the art judge (stage 5), a frame shows
+    the name without a face.
+  - **Timing bar:** a slim track in a brass-edged capsule under the fight, with the key hints on it ("S Dodge, A Parry").
+  - **Floating numbers** come from the game's own effects: a gold "Crit 1,120", status ticks in the status colour (red 38
+    for Bleed).
+  - **Side column:** notices become a quiet log on hairlines (the newest on top, older ones dimmed), and only ready slots
+    glow ember.
+- **This changes two earlier calls.** `layout.md` puts the foe plate in the sky (top right) and the hero's HP over the hero,
+  and GAME.md shows the turn order on the Versus card only. The Versus card itself does not change.
 - **Watch:** the turn banner and the foe plate must never overlap the place line (the mockup drops the banner at 740x360 and
   360x740, where the slot glow says it is your turn). Lessons: "measure the turn banner by its face and words".
+- **Pick:** as drawn. Veto phrases: "Keep the foe plate in the sky", "Keep HP over the heroes", "Turn order on the Versus
+  card only".
 
 ### 2.5 Action bar
 - **Now:** square tiles with labels cut to "Par..." and "Dod...", and the key letter over the icon.
@@ -120,30 +138,34 @@ Numbered to match the mockup page.
 - **We'd do:** seven rules, applied to every menu:
   1. **One gold button per view**, for the thing to do next (Craft Pine Bow, Upgrade to +7). Everything else is a plain
      button or a row you tap.
-  2. **One box per view**, a focus card for what is selected or next (the Hearth, the chosen ability, the best craft).
-     Everything else sits on hairlines with no box.
+  2. **One focus card per view**, for what is selected or next (the Hearth, the chosen ability, the picked recipe). It
+     gets the brass corner diamonds; tiles and rows around it stay flat and dim.
   3. **Two columns at most**: a list and its detail.
-  4. **What you can't use yet folds away.** Ability tiers past the next one fold into one line ("Lv 25 and up, 4 more
-     abilities, Show"). Locked buildings are dimmed outlines, not full tiles.
+  4. **What you can't use yet folds away or dims.** Locked moves are dim icons, locked buildings and tiers are dim tiles,
+     and further groves fold into one line.
   5. **One line per row, numbers on the right** (+38, 7 of 12).
   6. **Explanations move into hover tips** on desktop and a long press on phones. Slot names under the gear doll and the
      long text under each building go there.
   7. **A quiet side column while a menu is open.** Next Up shrinks to one line, notices hide, and the action bar stays.
-- **Abilities:** the three paths (True Aim, Blood Trail, Night Wings) side by side on desktop, with the tiers you have
-  opened plus the next one. Phones show one path at a time, with path tabs. The chosen ability is the one box, with its two
-  talents and Move.
-- **Camp:** the Hearth comes first (the Campfire card: its level, what Hearth 2 needs, and the one button). Under it are
-  Hesketh's board as rows, and the buildings as round icons with level diamonds, with the selected building on one line
-  beneath them.
-- **Craft:** you start from what you want to improve. A slot list (Weapon, Off-hand, Head, Body, Charm, Tools) shows the
-  Power gain on the right, and the best craft for the chosen slot is the one box, with costs, odds and the gold Craft
-  button. Other recipes for that slot are rows, and "All recipes and stations" opens the full list.
+- **Abilities (Cal's pick: draft C, the spellbook):** every move as a round icon on the left, grouped under its path (True
+  Aim, Blood Trail, Night Wings), with locked moves dimmed. The picked move gets one big page on the right: its icon, path,
+  type and turns, what it does, its two talents and the slot buttons (the slot it is in is the gold one). On desktop, resting
+  on an icon shows its tip (Deadeye: what it does and "Click to learn: 1 Hollow Scroll"). Phones stack the icons above the
+  page.
+- **Camp (Cal's pick: draft A):** the Campfire banner first (Hearth level, what Hearth 2 needs, and its button), then
+  Hesketh's board on the left and the buildings as a grid of tiles with level diamonds on the right, with the selected
+  building's card under the grid. Phones keep the order in one column.
+- **Craft (Cal's pick: draft A):** the stations as tabs with their level bars (Forge, Bench, Loom, Enchant), the tiers
+  under them, recipes as tiles with a green dot when you have what they need, and the picked recipe docked on the right
+  with its costs, odds, Masterwork and the gold Craft button. The landscape phone puts the picked recipe on one line under
+  the tiles, with Craft; the upright phone shows the recipe card under the tiles.
 - **Hero gear:** the full new hero stands in the middle of the Gear view, with the worn slots down the left and the tools
   down the right (desktop only; phones keep the grid). The art is the reason for the redesign, so the Hero menu should
   show it. The hero image is the idle frame the stage already loads, so it needs no new art.
 - **Star map:** the six constellations on a night-sky panel in Starlight's own colours (night blue, pale gold). Learned
   stars glow, set stars are ringed, and the selected star's card sits beside it.
-- **Pick:** all seven rules, and the hero in the Gear view.
+- **Pick:** Cal's picks above, the seven rules on every other menu, and the hero in the Gear view (Cal liked Hero gear and
+  the Star map as drawn).
 
 ### 2.7 Portraits
 - **Now:** 64 px portraits cut from the old concept boards (`21yc-data-portraits.js`), in the old style, on the rail and
@@ -153,7 +175,31 @@ Numbered to match the mockup page.
   before they are wired. The mockup's busts are crops made for the page only.
 - **Pick:** cut busts, judged as a pack. If the judge shelves them, the old portraits stay in the new ring.
 
-### 2.8 What does not change
+### 2.8 Gathering
+- **Now:** the Gather menu is Gather A, the Command ledger Cal picked (`72-ui-gather.js`): a skill head, a Now card and one
+  row per node, all as boxed rows with the pixel font. The stage while you gather has no HUD of its own beyond the hero's HP
+  plate (see `desktop-layout/before/gather-wood-1280x720.png`).
+- **The Gather menu (same content, new look):**
+  - Tabs for Mining, Wood, Forage, Hunting and Store, in the brass menu frame.
+  - A skill banner: the tool you wear in a rarity tile, the skill name and level, the XP bar, the tool's bonus in green
+    ("+25% speed"), and the level the next grove opens at.
+  - Groves as rows on hairlines: the wood icon with a tier tag (T1, T2), the name, held of the Storehouse cap with a bar, and
+    the rate on the right ("11 a min"). "Best" marks the rarest you can work. A locked grove is dim with what it needs,
+    and further groves fold into one line.
+  - The Now card is the focus card: what you do now ("Now: fighting in zone 4"), the picked grove, a minute, an hour, rare
+    finds, the held bar, the "Leave now" line, and the gold Gather here button.
+- **The stage while you gather:**
+  - The skill and grove name in the sky top left.
+  - A haul plate top right: the material, held of the cap, a bar, the rate and when it fills.
+  - "+1" pickups that float up from the work, the game's own effect.
+  - The "Leave now: about N in 8 hours" chip at the bottom centre.
+  - The side column swaps the action bar for a Gathering card: skill level, an hour, rare finds, the XP bar, Well Rested
+    building up, and Back to the fight. Fights stop while you gather, so the bar has nothing to do.
+- **Art:** the grove scenes and the woodcutting pose belong to the art plan and wait on their own OKs. The mockup uses the
+  Mossy Hollow painting and Wren's idle frame as stand-ins and says so.
+- **Pick:** as drawn. Veto phrase: "Keep the action bar while gathering".
+
+### 2.9 What does not change
 Layout and tiers (`layout.md`), the number and bracket keys, docked detail, tooltips, the bell, the guide's docking rules,
 every icon and its native size (the C26 check: boxes grow, icons do not scale; the mockup shows nav icons at 2x for
 legibility, the build keeps 22 px), copy, and the online layer's screens beyond their shared tokens.
@@ -179,9 +225,9 @@ artifact first; Cal's OK on the preview lets it into the weekly build. Card ids 
 | Stage | Card | What | Files (main) | Cal OKs |
 |---|---|---|---|---|
 | 1 | `ui2-look` | Tokens, fonts, panel, button, pill, tab and bar recipes applied everywhere at once; canvas text to Barlow | `src/shell.html` (font link), `10-base.css`, `30-panels.css`, `40-components.css`, `60-tabs.css`, `60-nav.css`, `62-stage.js:40`, `62b-fx.js:509`, `tests/fonts`, `tools/check.mjs` (check fonts) | The fight screen and one menu in the preview |
-| 2 | `ui2-fight` | The sky HUD, foe plate, ribbon, timing track, action bar, Next Up, notices, rail and top row | `20-stage.css`, `60-turn.css`, `60-combat2.css`, `80-landscape.css` (desktop tiers only), `71-ui-fight.js` markup if a class is missing | A fight at 1280x720 and 740x360 |
+| 2 | `ui2-fight` | The fight HUD (place, foe plate over the foe, turn banner and order, party frames, timing track), the gathering HUD (haul plate, Leave now chip, the Gathering card), action bar, Next Up, the log, rail and top row | `20-stage.css`, `60-turn.css`, `60-combat2.css`, `80-landscape.css` (desktop tiers only), `71-ui-fight.js` markup if a class is missing | A fight at 1280x720 and 740x360 |
 | 3 | `ui2-hero` | Hero, Gear with the hero in the middle, Abilities, Build, the star map | `60-party.css`, `60-abilities.css`, `60-attributes.css`, `60-stars.css`, the Gear view's markup | Each view in the preview |
-| 4 | `ui2-menus` | Camp first, then Gather, Craft, the bell (notices, journal, settings), story cards, the guide, the away card, the boss-try and cache cards | `60-camp.css`, `60-gathering.css`, `60-craft.css`, `60-story.css`, `60-tips.css`, `60-away.css`, the rest of `60-*.css` | Camp, then the rest as one pass |
+| 4 | `ui2-menus` | Camp first, then the Gather menu, Craft, the bell (notices, journal, settings), story cards, the guide, the away card, the boss-try and cache cards | `60-camp.css`, `60-gathering.css`, `60-craft.css`, `60-story.css`, `60-tips.css`, `60-away.css`, the rest of `60-*.css` | Camp, then the rest as one pass |
 | 5 | `ui2-busts` | Busts cut from the approved idle frames, judged as a pack, then wired | `tools/portraits.mjs`, `21yc-data-portraits.js` | The art judge rules; Cal can veto |
 | Later | (Cal starts it) | A new-style icon set, if the Codex icons look old beside the new UI | Codex | Cal's call, no date |
 
@@ -190,9 +236,11 @@ Each card's check: `node tools/build.mjs`, `node tools/check.mjs`, shots of its 
 
 ## 5. Open questions for Cal
 
-1. **The seven menu rules?** Pick: all seven, starting with Camp (stage 4).
-2. **The hero in the Gear view?** Pick: yes, desktop only.
+1. **The v4 fight HUD?** It moves the foe plate over the foe and the heroes' HP into party frames, and shows the turn order.
+   Pick: yes.
+2. **The action bar while gathering?** Pick: swap it for the Gathering card, since fights stop.
 3. **Start stage 1 now, or after the Sunday release?** Pick: after Sunday, so v8 ships on the look players already have and
    stage 1 lands in the next preview with nothing else changing.
 
-Veto phrases, if Cal says nothing: "Keep the pixel font", "Keep the full side column in menus", "No hero in the gear view".
+Veto phrases, if Cal says nothing: "Keep the pixel font", "Keep the full side column in menus", "Keep the foe plate in the
+sky", "Keep HP over the heroes", "Turn order on the Versus card only", "Keep the action bar while gathering".
