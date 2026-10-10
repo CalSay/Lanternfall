@@ -338,7 +338,7 @@ async function followTip(o) {
     // an info notice (unlock-voice: "The Hero tab's open…") has a × and no ring: a player reads it and closes it
     if (!tp.target && /^(say|use):/.test(tp.action) && await click('.ob-bub .ob-x', 300)) { st.tipTaps = 0; return true; }
     if (st.tipTaps >= 2 && st.tipTaps % 2 === 0) {
-      const m = /\b(?:[Oo]pen|[Tt]ap|[Pp]ress|[Pp]ick|[Cc]hoose|[Ll]ight|[Bb]uild|[Cc]raft|[Cc]hop|[Mm]ine|[Ss]tart|[Cc]laim|[Ee]quip|[Gg]o to)\s+(?:the\s+|your\s+)?([A-Z]\w*(?:\s[A-Z]\w*)?)/.exec(tp.text);
+      const m = /\b(?:[Oo]pen|[Pp]ress|[Pp]ick|[Cc]hoose|[Ll]ight|[Bb]uild|[Cc]raft|[Cc]hop|[Mm]ine|[Ss]tart|[Cc]laim|[Ee]quip|[Gg]o to)\s+(?:the\s+|your\s+)?([A-Z]\w*(?:\s[A-Z]\w*)?)/.exec(tp.text);
       if (m && await click('button, [role=tab], .tab:text((^|\\W|New)' + m[1] + '\\s*$)', 300)) return true;
       // a first-use line has no marker and never pauses: it clears itself, so there is nothing to tap (guide-target-guard)
       if (st.tipTaps === 4 && !/^use:/.test(tp.action) && !/\d+\s*\/\s*\d+/.test(tp.text)) addCheck('guide', 'a tip\'s marker leads nowhere: "' + tp.text.slice(0, 60) + '"', `tapped the ringed spot twice and the tip stayed; ring at ${tp.target ? Math.round(tp.target.x) + ',' + Math.round(tp.target.y) + ' ' + Math.round(tp.target.w) + 'x' + Math.round(tp.target.h) : 'none'}`);
@@ -748,7 +748,8 @@ async function gateStep(o) {
   await advance(400, 16);
   const where = await X('S.tab');
   T.pressed.push({ t: gt, label: pick });
-  T.sess = { key: q.key, txt: q.txt, st: q.st, mat: q.mat, start: gt, owns: false };
+  // gate-go-starts-gathering: a gathering gate's Go starts the hero gathering itself; the bot owns that switch (it takes the hero back to the fight)
+  T.sess = { key: q.key, txt: q.txt, st: q.st, mat: q.mat, start: gt, owns: q.act !== 'gather' && (await X('S.activity')) === 'gather' };
   await note(page, 'gate', `${pick} -> pressed Go (${where === 'forge' ? 'Craft' : where === 'gat' ? 'its Gather view' : 'tab ' + where})`, { extra: { goal: pick, pressed: 'Go', go: true, tab: where }, tag: 'gate-go' });
   return true;
 }

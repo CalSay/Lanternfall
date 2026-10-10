@@ -2,8 +2,8 @@
 # Proof for card cal-0107-staged-guide: the first fight is a lesson (Cal's play notes 2, 3, 4, 10, 12).
 # Part 1, the unlit-8log fixture (the grove, fire unlit, 8 Pine Log): lighting the fire keeps you at the grove while Hesketh talks, and his
 # next line is the Workbench's wood. Part 2, a fresh save: the fire's last line leads into the fight; the fight stops on Attack, on the foe's
-# first swing for Dodge (its clock stands at the window's opening), on your next turn for the ability (no word about swapping, no "Tap to
-# add"), and on the next swing for Parry. Part 2 runs last because each `new` clears the shots; both parts' shots are in this folder.
+# first swing for Dodge (its clock stands at the window's opening), on your next turn for the ability (no word about swapping, no "Add a
+# move"), and on the next swing for Parry. Part 2 runs last because each `new` clears the shots; both parts' shots are in this folder.
 # The hold, the order and the timing are measured by tools/check.mjs "staged guide (browser)" on all three heroes.
 new unlit-8log
 wait 2
@@ -50,7 +50,7 @@ tap "Dodge"
 wait 3
 expect "is ready now. Press it."
 expect-no "swap"
-expect-no "Tap to add"
+expect-no "Add a move"
 shot lesson-ability
 tap "Echo"
 wait 3

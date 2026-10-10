@@ -1379,7 +1379,7 @@ if (section('camp')) try {
   assert(E('campBuild("hearth")'), 'Hearth 6 started');
   assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-timer" && /finishes in/.test(x.label))'), 'Next Up: "build finishes in <time>"');
   // first-gold-and-camp-strip: the camp tutorial goal shows until one building is tapped, then never again
-  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap" && /Tap a building/.test(x.label))'), 'Next Up: "Tap a building in your camp" while no building has been tapped');
+  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap" && /Choose a building/.test(x.label))'), 'Next Up: "Choose a building in your camp" while no building has been tapped');
   E('onboardUseDone("use:camp-tap")');
   assert(!E('topGoals(60, { sticky: false }).some(x => x.id === "camp-tap")'), 'Next Up: the camp tap goal is gone once a building is tapped');
   // hearth-two-next-up (W6): after the zone 10 clear Next Up names what Hearth 2 still needs and where it comes from; Go sends the
@@ -5752,7 +5752,7 @@ if (section('solo hero (browser)')) try {
       const tapS2 = async () => { await page.mouse.move(r2.x + r2.width / 2, r2.y + r2.height / 2); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(250); };
       // cal-0107-staged-guide: with one move (and it in a slot) an empty slot is dim and silent; it opens only once there is a move to put in it
       await tapS2();
-      const shut = await page.$eval('#soloBar .sb-ab1', b => ({ dim: b.style.opacity === '0.45', aria: b.getAttribute('aria-disabled'), add: /Tap to add/.test(b.textContent) }));
+      const shut = await page.$eval('#soloBar .sb-ab1', b => ({ dim: b.style.opacity === '0.45', aria: b.getAttribute('aria-disabled'), add: /Add a move/.test(b.textContent) }));
       assert(shut.dim && shut.aria === 'true' && !shut.add && !(await X('soloPickerOpen()')), `with one move, an empty slot is dim, says nothing and opens no picker (${JSON.stringify(shut)})`);
       await X('scrollCount("x"); S.abil.unl.pip = (S.abil.unl.pip || []).concat("spark"); true'); await page.waitForTimeout(350);
       await tapS2();
@@ -7164,7 +7164,7 @@ if (section('gatherers at camp (C2)')) try {
     assert(W('__person.tagName==="BUTTON" && __person.getAttribute("aria-label").includes("Tam")'), 'C2: the scene exposes the gatherer as a named native button');
     // first-gold-and-camp-strip: buildings in the panorama are buttons; a tap opens the card and ticks the camp tutorial goal
     W('S.camp.b.forge = Math.max(1, S.camp.b.forge | 0); delete S.onboard.done["use:camp-tap"]; __sections.camp.update()');
-    assert(W('$("camp-scene-blds").children.length > 0 && $("camp-scene-blds").children.every(b => b.tagName === "BUTTON" && b.getAttribute("aria-label").includes("Tap to see what it does"))'), 'camp strip: each built building is a named native button in its own layer');
+    assert(W('$("camp-scene-blds").children.length > 0 && $("camp-scene-blds").children.every(b => b.tagName === "BUTTON" && b.getAttribute("aria-label").includes("Open it to see what it does"))'), 'camp strip: each built building is a named native button in its own layer');
     W('$("camp-scene-blds").children.find(b => b.dataset.bldId === "forge").click()');
     assert(W('!$("camp-bld-card").hidden && $("camp-bld-card").textContent.includes("Forge") && $("camp-bld-card").textContent.includes("Makes weapons") && S.onboard.done["use:camp-tap"] === 1'), 'camp strip: tapping the Forge shows what it does and ticks the camp tap goal');
     const talk = W('handsGet("tam").talk||0');
@@ -11720,7 +11720,7 @@ if (section('craft delta')) try {
 // ==== craft-odds-before-pay: the boss line shows on Next Up's recipe row and the worn piece's Upgrade, before the press ====
 // The same sampler as the result card (55-fight-delta) on a scratch piece (fightDelta(it, { scratch: true })), the same "barely
 // changes" rule. Pip at zone 10 (save-pip-z10-ward): the sampler reads the staff +1 as barely changing, so no line (W10 section 3's
-// "it will honestly say barely"); a worn Hood +1 before the zone 7 boss (save-pre-z7-boss) shows one, and after the press the fight
+// "it will honestly say barely"; on screen its Upgrade looks ahead to +2 instead, upgrade-odds-next-step); a worn Hood +1 before the zone 7 boss (save-pre-z7-boss) shows one, and after the press the fight
 // matches it. No Omen (almanac.force('none')): an Omen's fight boons move the sampler's numbers.
 if (section('craft-odds-before-pay')) try {
   const at = 'craft-odds-before-pay', pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
@@ -11807,12 +11807,19 @@ if (section('craft-odds-before-pay')) try {
           assert(!errs.length, `${v}: no page errors on the zone 7 save` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         }
-        { // Pip at zone 10: the staff +1 barely changes the fight, so its Upgrade shows no line
+        { // Pip at zone 10: the staff +1 barely changes the fight, so its Upgrade looks ahead to +2 instead (upgrade-odds-next-step)
           const { ctx, page, errs, X } = await open('save-pip-z10-ward.json');
-          await X(`craftUI.openItem(S.equip.weapon); true`);
-          await page.waitForTimeout(5000);   // the sample (16 chunks, 30 ms apart) is done well inside this
-          const n = await X(`document.querySelectorAll('.cf-up-box .cf-pre').length`), btn = await X(`!![...document.querySelectorAll('.cf-up-box button')].find(b => /^Upgrade to \\+1$/.test(b.textContent.trim()))`);
-          assert(btn && n === 0, `${v}: Pip's staff Upgrade to +1 shows no boss line (barely changes) (button ${btn}, lines ${n})`);
+          const lines = () => page.evaluate(() => { const l = document.querySelector('.cf-up-box .cf-pre'); if (!l) return 0; const r = document.createRange(); r.selectNodeContents(l); return new Set([...r.getClientRects()].map(q => Math.round(q.top))).size; });
+          for (const [p0, re] of [[0, /^Zone 10 boss: no change yet\. At \+2: about 5 in 10, now 4$/], [1, /^Zone 10 boss: about 5 in 10, now 4$/]]) {
+            await X(`typeof closeSheet === "function" && closeSheet(); itemById(S.equip.weapon).plus = ${p0}; gsCache = null; craftUI.openItem(S.equip.weapon); true`);
+            const shown = await wait(page, '.cf-up-box .cf-pre');
+            const o = shown ? await fit(page, '.cf-up-box .cf-pre', '.cf-up-box') : null, btn = await X(`!![...document.querySelectorAll('.cf-up-box button')].find(b => /^Upgrade to \\+${p0 + 1}$/.test(b.textContent.trim()))`);
+            assert(btn && o && re.test(o.text), `${v}: Pip's staff +${p0} Upgrade shows ${p0 ? 'the step its press makes' : 'the look-ahead to +2'} (${o ? o.text : 'none after 60 s'})`);
+            if (o) {
+              assert(!o.cut && o.inRow && !o.over, `${v}: the +${p0} line shows whole inside its box (${JSON.stringify(o)})`);
+              if (!phone) { assert(o.fs >= 14, `${v}: the +${p0} line keeps the 14 px desktop text floor (${o.fs})`); const n = await lines(); assert(n === 1, `${v}: the +${p0} line fits on one line (${n})`); }
+            }
+          }
           assert(!errs.length, `${v}: no page errors on the Pip save` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         }
@@ -11820,6 +11827,34 @@ if (section('craft-odds-before-pay')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('craft-odds-before-pay crashed: ' + (e.stack || e)); }
+
+// ==== upgrade-odds-next-step: when one press changes nothing, the Upgrade line looks ahead to the press that does ====
+// Pip's staff at the zone 10 Champion moves the fight only at +2 and +4 (pip-staff-odds-mismatch). With almanac.force('none'), as
+// every game here loads: the +0 and +2 rows look ahead (the next press is flat, the one after is the step), +1 and +3 show the step
+// itself, and the worn Circlet and Charm, which never move, show nothing. The look-ahead is the same fight as the plain line one
+// step on: a +0 row's "At +2" is the +1 row's line.
+if (section('upgrade-odds-next-step')) try {
+  const at = 'upgrade-odds-next-step', pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
+  const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: pfx('save-pip-z10-ward.json') }) }), E = s => g.eval(s);
+  E("almanac.force('none')");   // the tool numbers (pip-staff-odds-mismatch) are on a day with no Omen
+  const ups = (pos, p0) => `[1, 2, 3].map(k => Object.assign(JSON.parse(JSON.stringify(itemById(S.equip.${pos}))), { id: -1, plus: ${p0} + k }))`;
+  const ahead = (pos, p0) => E(`(() => { const w = itemById(S.equip.${pos}), keep = w.plus; w.plus = ${p0}; gsCache = null; try { const j = fightDeltaAheadJob(${ups(pos, p0)}); if (!j) return 'nojob'; while (!j.step()); return JSON.stringify(j.res); } finally { w.plus = keep; gsCache = null; } })()`);
+  const rows = {};
+  for (const p0 of [0, 1, 2, 3]) rows[p0] = JSON.parse(ahead('weapon', p0));
+  const R = JSON.stringify(rows);
+  assert(E('S.maxZone') === 10 && E('itemById(S.equip.weapon).slot') === 'staff' && E('itemById(S.equip.weapon).plus') === 0, `${at}: the fixture is Pip's +0 staff at zone 10`);
+  assert(rows[0] && rows[0].ahead === 1 && rows[0].plus === 2 && rows[0].kind === 'wins' && rows[0].after > rows[0].before, `${at}: the +0 row looks ahead to +2 (${R})`);
+  assert(rows[2] && rows[2].ahead === 1 && rows[2].plus === 4 && rows[2].kind === 'wins' && rows[2].after > rows[2].before, `${at}: the +2 row looks ahead to +4 (${R})`);
+  assert(rows[1] && rows[1].ahead === 0 && rows[1].plus === 2 && rows[3] && rows[3].ahead === 0 && rows[3].plus === 4, `${at}: the +1 and +3 rows show the step their press makes (${R})`);
+  assert(rows[0].before === rows[1].before && rows[0].after === rows[1].after && rows[2].before === rows[3].before && rows[2].after === rows[3].after, `${at}: a look-ahead says what the press that makes the step will say (${R})`);
+  assert(rows[0].before === 4 && rows[0].after === 5 && rows[2].before === 5 && rows[2].after === 6, `${at}: the steps match the tool numbers (pip-staff-odds-mismatch: 4 -> 5 at +2, 5 -> 6 at +4) (${R})`);
+  // a look-ahead's first piece is the plain line's piece: the same fight as fightDelta one press on
+  const one = E(`JSON.stringify(fightDelta(Object.assign(JSON.parse(JSON.stringify(itemById(S.equip.weapon))), { id: -1, plus: 1 }), { scratch: true }))`);
+  assert(one === 'null', `${at}: the plain line for the +0 -> +1 press is still empty (${one})`);
+  for (const pos of ['helm', 'charm']) { const r = ahead(pos, 0); assert(r === 'null', `${at}: the worn ${pos === 'helm' ? 'Circlet' : 'Charm'} never moves the fight, so no look-ahead (${r})`); }
+  assert(E('itemById(-1)') === null && E('itemById(S.equip.weapon).plus') === 0, `${at}: the scratch pieces leave the bag as it was`);
+  assert(E(`fightDeltaAheadJob([]) === null && fightDeltaAheadJob([Object.assign(JSON.parse(JSON.stringify(itemById(S.items[0].id))), { id: S.items[0].id })]) === null`), `${at}: no pieces, or a piece under a real item's id, makes no job`);
+} catch (e) { fail('upgrade-odds-next-step crashed: ' + (e.stack || e)); }
 
 // ==== tool-speed-adds-up: a new tool's line says what it is faster than, and the parts multiply to the total ====
 if (section('tool-speed-adds-up')) try {
@@ -12361,7 +12396,7 @@ if (section('staged guide (browser)')) try {
       return { id: up ? soloGuideWants() : '', txt: up ? document.querySelector('.ob-txt').textContent : '', paused: ONBOARD.paused, now: q.now, phase: q.phase,
         d: q.dodgeOpensAt, p: q.parryOpensAt, ops: TURN_LIVE && !TURN_LIVE.ended ? TURN_LIVE.foeOps : -1, hp: u ? u.hp : 0, fight: window.__fights || 0, L: S.L,
         done: ['attack', 'dodge', 'ability', 'parry'].filter(k => S.onboard.done[k]), own: soloAbilities().length,
-        add: [...document.querySelectorAll('#soloBar .sb-abslot')].some(n => /Tap to add/.test(n.textContent)) }; })())`;
+        add: [...document.querySelectorAll('#soloBar .sb-abslot')].some(n => /Add a move/.test(n.textContent)) }; })())`;
     const KEYS = { attack: 'd', dodge: 's', ability: 'q', parry: 'a' }, WRONG = { attack: 'q', ability: 'd', dodge: 'a', parry: 's' };
     try {
       for (const hero of ['wren', 'tobin', 'pip']) {
@@ -12403,7 +12438,7 @@ if (section('staged guide (browser)')) try {
         assert(!moved.length, `staged guide ${hero}: while a lesson's line is up, the foe's clock, its moves and your HP stand still${moved.length ? ': ' + moved.join('; ') : ''}`);
         assert(!late.length, `staged guide ${hero}: the Dodge and Parry lines first show with the foe's clock at the window's opening, so the held key press lands (both were done by a key press)${late.length ? ': ' + late.join('; ') : ''}`);
         assert(wrong.length === 4 && wrong.every(w => w.endsWith(':ok')), `staged guide ${hero}: while a lesson holds, the other buttons do nothing (${wrong.join(', ')})`);
-        assert(!swap.length && !tapAdd.length, `staged guide ${hero}: with one ability, no line says "swap" and no empty slot says "Tap to add"${swap.length ? ': ' + swap[0] : ''}${tapAdd.length ? '; Tap to add during ' + tapAdd[0] : ''}`);
+        assert(!swap.length && !tapAdd.length, `staged guide ${hero}: with one ability, no line says "swap" and no empty slot says "Add a move"${swap.length ? ': ' + swap[0] : ''}${tapAdd.length ? '; Add a move during ' + tapAdd[0] : ''}`);
         if (hero === 'wren') {
           // the first level-up (level 2): the Hero tab opens and Hesketh's next line says so and points at your points, while the next foe waits
           let lv = null;
@@ -12445,7 +12480,7 @@ if (section('staged guide (browser)')) try {
         assert(sl.id === 'say:slot' && /needs a slot/.test(sl.txt), `staged guide: once the move is learned he says to put it in a slot under the fight ("${sl.txt}")`);
         await page.click('.ob-ok'); await X('closeMenu(); true'); await page.waitForTimeout(500);
         const shut1 = await slotTxt();
-        assert(!/Tap to add/.test(shut0) && /Tap to add/.test(shut1), `staged guide: an empty slot is silent until a learned move waits for it, then says "Tap to add" (${shut0} / ${shut1})`);
+        assert(!/Add a move/.test(shut0) && /Add a move/.test(shut1), `staged guide: an empty slot is silent until a learned move waits for it, then says "Add a move" (${shut0} / ${shut1})`);
         assert(!errs.length, 'staged guide (Scroll, slot): no page errors' + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -16712,6 +16747,52 @@ if (section('tier-two-named-for-return')) try {
   }
 } catch (e) { fail('tier-two-named-for-return crashed: ' + (e.stack || e)); }
 
+// ==== nu-chip-gate-label-fits: the always-on Next Up chip shows the whole tier 2 gate label ====
+// save-min60-tier-gate's Birch Bow gate row (~90 characters) is the longest Next Up label a first sitting meets. The chip clamps its
+// label to 3 lines in landscape (80-landscape), and tier-two-named-for-return measures only the opened list's .nu-row. The chip shows
+// topGoals(3)[0], so the section puts the gate row's words in the chip's label and counts the lines they take where the chip draws them.
+// The clamp leaves overflow visible, so scrollHeight misses a cut: the section counts the text's own line boxes. At 740x360 the words
+// take all 3 lines with nothing to spare, so a longer gate wording or a narrower side column fails here.
+if (section('nu-chip-gate-label-fits')) try {
+  const at = 'nu-chip-gate-label-fits', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[740, 360], [1024, 768], [1280, 720], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const want = await X('(topGoals(20, { sticky: false }).find(x => x.id === "forge") || {}).label || ""');
+        assert(/^Birch Bow: Mining 7 of 14 opens Iron Ore\. /.test(want), `${v}: the fixture's gate row is the Birch Bow's (${want})`);
+        const o = await page.evaluate(want => { const c = document.getElementById('nuChip'), l = c && c.querySelector('.nu-lbl'); if (!l || c.offsetParent === null) return null;
+          l.textContent = want;   // renderChip rewrites only when the goals change, so the words stay for the measure
+          const cs = getComputedStyle(l), a = l.getBoundingClientRect(), b = c.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(l);
+          const rs = [...rg.getClientRects()].filter(r => r.width > 0), clamp = parseInt(cs.webkitLineClamp, 10) || 0;
+          return { lines: new Set(rs.map(r => Math.round(r.top))).size, clamp, textBottom: Math.round(Math.max(...rs.map(r => r.bottom))), boxBottom: Math.round(a.bottom),
+            fs: parseFloat(cs.fontSize), ellipsis: cs.textOverflow === 'ellipsis' && l.scrollWidth > l.clientWidth + 1,
+            inChip: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        assert(o, `${v}: the Next Up chip shows`);
+        if (o) {
+          assert((!o.clamp || o.lines <= o.clamp) && o.textBottom <= o.boxBottom + 1 && !o.ellipsis && o.inChip, `${v}: the gate label shows whole inside the chip, no clamp or ellipsis (${JSON.stringify(o)})`);
+          assert(o.fs >= (w >= 1280 ? 14 : 13), `${v}: the chip label keeps its text floor (${o.fs})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('nu-chip-gate-label-fits crashed: ' + (e.stack || e)); }
+
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
 // (50-sim awayBase), so the row promises "keeps going" only then; fighting or gathering another skill says how to make it true.
@@ -16784,6 +16865,122 @@ if (section('away-line-only-when-true')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('away-line-only-when-true crashed: ' + (e.stack || e)); }
+
+// ==== gate-go-starts-gathering: Go on a gathering gate row starts gathering that skill, so the away sentence comes true ====
+// save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Go used to open the Mining view only and the hero kept
+// fighting, so a player who pressed it and left gained nothing away. A station gate's Go is unchanged (Craft at the station, no switch).
+if (section('gate-go-starts-gathering')) try {
+  const at = 'gate-go-starts-gathering', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  const base = 'Birch Bow: Mining 7 of 14 opens Iron Ore. ', on = base + 'Gathering keeps going while you\'re away.', off = base + 'Gather Mining before you leave and it keeps going.';
+  const load = () => { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1)'); return g; };
+  const row = (E, id) => E(`topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))`).find(x => x.id === id) || {};
+  const press = (E, id) => E(`(() => { const r = topGoals(20, { sticky: false }).find(x => x.id === ${JSON.stringify(id)}); const s = typeof r.go === "function" ? r.go() : r.go; if (s.fn) s.fn(); return { tab: s.tab, view: s.view, sel: s.sel || null, act: s.act || null }; })()`);
+  const where = E => E('({ act: S.activity, kind: S.node.kind, t: S.node.t, skill: skillOf(S.node.kind), open: skillTierOpen(skillOf(S.node.kind), S.node.t) && craftNodeVisible(S.node.kind, S.node.t) })');
+  // fighting: Go switches to Mining at the gate's family (ore) at its highest open tier, and the row then promises what away does
+  { const g = load(), E = s => g.eval(s);
+    assert(row(E, 'forge').label === off && E('S.activity') === 'fight', `${at}: the save fights and the row says how to make it true (${row(E, 'forge').label})`);
+    const s = press(E, 'forge'), w = where(E);
+    assert(s.tab === 'gat' && s.view === 'mine' && !s.act, `${at}: Go still opens the Mining view (${JSON.stringify(s)})`);
+    assert(w.act === 'gather' && w.skill === 'mine' && w.open && w.kind === 'ore' && w.t === E('skillTopTier("mine")'), `${at}: Go starts mining ore at its highest open tier (${JSON.stringify(w)})`);
+    assert(row(E, 'forge').label === on, `${at}: after Go the row reads "${on}" (${row(E, 'forge').label})`);
+    const lv0 = E('S.skills.mine.lv'), xp0 = E('S.skills.mine.xp'); E('awayGains(3600)');
+    assert(E('S.skills.mine.lv') > lv0 || E('S.skills.mine.xp') > xp0, `${at}: after Go, 1 h away raises Mining (${lv0} -> ${E('S.skills.mine.lv')})`);
+  }
+  // the skill row mirrors the gate (next-tier-gate-goal: "its Go is the gate row's"), so its Go does the same
+  { const g = load(), E = s => g.eval(s);
+    assert(/^Mining: /.test(row(E, 'skill').label || ''), `${at}: the skill row names Mining (${row(E, 'skill').label})`);
+    press(E, 'skill'); const w = where(E);
+    assert(w.act === 'gather' && w.skill === 'mine', `${at}: the skill row's Go, the gate row's, starts mining too (${JSON.stringify(w)})`);
+  }
+  // gathering Woodcutting: Go moves to Mining; already mining a lower tier: Go keeps the node the player picked
+  { const g = load(), E = s => g.eval(s);
+    E('setNode("wood", 1); setActivity("gather")'); press(E, 'forge'); const w = where(E);
+    assert(w.act === 'gather' && w.skill === 'mine', `${at}: from Woodcutting, Go moves to Mining (${JSON.stringify(w)})`);
+    E('setNode("crystal", 1); setActivity("gather")'); press(E, 'forge'); const w2 = where(E);
+    assert(w2.act === 'gather' && w2.kind === 'crystal' && w2.t === 1, `${at}: already mining, Go keeps the node (${JSON.stringify(w2)})`);
+  }
+  // a station gate (Woodcraft 8 of 10): Go is today's Craft target and the hero keeps fighting
+  { const g = load(), E = s => g.eval(s);
+    E('S.mats.plank[1] = 5; S.mats.ingot[1] = 2; S.skills.bench.lv = 8; gearDirty()');
+    assert(row(E, 'forge').label === 'Birch Bow: Woodcraft 8 of 10' && E('S.activity') === 'fight', `${at}: the station gate row shows while fighting (${row(E, 'forge').label})`);
+    const s = press(E, 'forge');
+    assert(s.tab === 'forge' && s.sel === '.cf-st[data-st="bench"]' && E('S.activity') === 'fight' && E('S.fSlot') === 'bow' && E('S.fTier') === 1, `${at}: a station gate's Go opens Craft at the Workbench and does not switch (${JSON.stringify(s)}, ${E('S.activity')})`);
+  }
+  // a live Deepwell run: no switch (navGo would refuse it with a toast); the Mining view still opens
+  { const g = load(), E = s => g.eval(s);
+    E('S.camp.b.hearth = Math.max(3, S.camp.b.hearth || 0)');
+    assert(E('deepUnlocked() && DW.start(false)') && E('deepActive()'), `${at}: a Deepwell run starts`);
+    const s = press(E, 'forge');
+    assert(s.view === 'mine' && E('S.activity') === 'fight' && E('deepActive()'), `${at}: in a Deepwell run Go switches nothing (${E('S.activity')})`);
+  }
+  // the browser at the three views: a real tap on the row's Go, the Mining view, the hero mining, and the "keeps going" row whole
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const openList = async () => { await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800); };
+        const goOf = want => page.evaluate(want => { const r = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want), g = r && r.querySelector('.nu-go');
+          if (!g) return null; const b = g.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; }, want);
+        const measure = want => page.evaluate(want => { const row = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === want); if (!row) return null;
+          const l = row.querySelector('.nu-lbl'), a = l.getBoundingClientRect(), b = row.getBoundingClientRect();
+          return { cut: l.scrollHeight > l.clientHeight + 1 || l.scrollWidth > l.clientWidth + 1, fs: parseFloat(getComputedStyle(l).fontSize), inRow: a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1 }; }, want);
+        await openList();
+        const xy = await goOf(off);
+        assert(xy, `${v}: the Next Up list shows the Birch Bow row with a Go`);
+        if (xy) {
+          if (phone) await page.touchscreen.tap(xy[0], xy[1]); else await page.mouse.click(xy[0], xy[1]);
+          await page.waitForTimeout(800);
+          const st = await X('({ act: S.activity, skill: skillOf(S.node.kind), tab: S.tab, view: curView(S.tab), sheets: document.querySelectorAll(".bsheet-ov").length })');
+          assert(st.act === 'gather' && st.skill === 'mine', `${v}: after Go the hero mines (${JSON.stringify(st)})`);
+          assert(st.tab === 'gat' && st.view === 'mine', `${v}: after Go the Mining view is open (${JSON.stringify(st)})`);
+          if (process.env.LF_PROOF_SHOTS) await page.screenshot({ path: path.join(process.env.LF_PROOF_SHOTS, `${at}-${w}x${h}.png`) });
+          if (st.sheets) { await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true'); await page.waitForTimeout(300); }
+          await openList();
+          const o = await measure(on);
+          assert(o, `${v}: the list now shows "${on}"`);
+          if (o) { assert(!o.cut && o.inRow, `${v}: the row's words show whole inside the row (${JSON.stringify(o)})`); if (!phone) assert(o.fs >= 14, `${v}: 14 px desktop text floor (${o.fs})`); }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // a station gate in the browser at the three views: Go opens Craft at the Workbench, and the hero keeps fighting
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) { const phone = w < 1200, v = `${at} station ${w}x${h}`;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); S.mats.plank[1] = 5; S.mats.ingot[1] = 2; S.skills.bench.lv = 8; gearDirty(); true');
+        await page.waitForTimeout(300);
+        await X('document.getElementById("nuChip").click(); true'); await page.waitForTimeout(800);
+        const xy = await page.evaluate(() => { const r = [...document.querySelectorAll('.nu-row')].find(r => !r.hidden && r.querySelector('.nu-lbl').textContent === 'Birch Bow: Woodcraft 8 of 10'), g = r && r.querySelector('.nu-go');
+          if (!g) return null; const b = g.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; });
+        assert(xy, `${v}: the list shows the Woodcraft gate row with a Go`);
+        if (xy) { if (phone) await page.touchscreen.tap(xy[0], xy[1]); else await page.mouse.click(xy[0], xy[1]); await page.waitForTimeout(800);
+          const st = await X('({ act: S.activity, tab: S.tab })');
+          assert(st.act === 'fight' && st.tab === 'forge', `${v}: a station gate's Go opens Craft and the hero keeps fighting (${JSON.stringify(st)})`); }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('gate-go-starts-gathering crashed: ' + (e.stack || e)); }
 
 // ---- space-reopens-next-up: in a turn fight Space dodges, whatever button was last clicked. A clicked button keeps focus (a sheet
 // hands focus back to its opener on close), and the browser presses a focused button on Space; the fight bar used to step aside for it,

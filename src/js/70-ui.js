@@ -218,7 +218,7 @@ function newsEntry(lines) {
 function newsToast() {
   NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
   if (S.party && S.party.newGame && !(S.totalKills > 0)) return;   // SOLO1 (playtest): a new game has no "since your last visit"; the lines wait in the bell
-  const msg = `What's new since your last visit. Tap to read.`, d = noticeDecide(msg, 'news');
+  const msg = `What's new since your last visit. Open it to read.`, d = noticeDecide(msg, 'news');
   noteStat(d.rule, d.ch === 'held' ? 'held:bell' : d.ch, msg);
   if (d.ch !== 'pop') return;   // the bell line is there already
   { notes.pops.push(notes.clock); notes.popN++; }

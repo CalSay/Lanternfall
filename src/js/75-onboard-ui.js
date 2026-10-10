@@ -101,7 +101,7 @@
       const eq = soloEquipped(), nm = (ABILITIES[slotAb] || {}).name || 'Your new move', at = eq.indexOf(slotAb);
       const left = at > 0 ? eq[at - 1] : null, leftNm = at === 0 ? 'Attack' : left ? (SOLO_ABILITIES[left] || {}).short || (ABILITIES[left] || {}).name : '';
       if (at >= 0) return leftNm ? `${nm} is next to ${leftNm} now. Press it there when it's ready.` : `${nm} is in slot ${'QWE'[at]} now. Press it there when it's ready.`;
-      return eq.includes(null) ? `${nm} needs a slot. Tap an empty slot next to Attack and pick it.` : `${nm} needs a slot. Hold one of your moves next to Attack to swap it in.`;
+      return eq.includes(null) ? `${nm} needs a slot. Press an empty slot next to Attack and pick it.` : `${nm} needs a slot. Hold one of your moves next to Attack to swap it in.`;
     },
     ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => stockSay(id)]))
   };
@@ -304,9 +304,9 @@
     gather: () => {
       if (!onCtrl()) return null;
       const b = q('#modeSeg button[data-act="gather"]');
-      return b && !b.hidden ? { node: b, text: 'Tap Gather and chop some Pine Log for the fire.' } : null;
+      return b && !b.hidden ? { node: b, text: 'Press Gather and chop some Pine Log for the fire.' } : null;
     },
-    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'Your level and moves are kept on the Hero tab. Tap it and have a look.' }
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'Your level and moves are kept on the Hero tab. Open it and have a look.' }
   };
   // Cal's play notes 9 and 13: a piece in the bag does nothing until it is on. The tip names it and the Equip button wears it in one tap;
   // the ring sits on the craft card's own Equip button when that card is up.
@@ -319,7 +319,7 @@
   const STEP_UI = {
     // UX-L1: in landscape a menu leaves the rail and top row in view, so the hint stays over Camp and Gather and points at the lit tab
     // (forge-tip-goes-stale: stockSpec draws no materials line over any other menu)
-    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree yourself and it goes faster.') : null,
+    chop: () => (onGame() || isWide()) && atGrove() ? stockSpec('chop', 'the camp fire', 'Click or tap the tree yourself and it goes faster.') : null,
     back: () => S.tab === 'party' ? { node: q('#menuX'), side: 'up', text: "When you're done here, close the menu and the fight goes on.", go: { label: 'Back to the fight', fn: () => closeMenu() } } : null,
     'wear:tool': () => wearSpec('tool', nm => `Your ${nm} is still in your bag. A tool only helps once you wear it.`),
     'wear:weapon': () => wearSpec('weapon', nm => `Your ${nm} is still in your bag. Put it on and fight with it.`),
@@ -329,10 +329,10 @@
     'stock:store': () => stockSpec('stock:store', STOCK_WHAT['stock:store']),
     'stock:weapon': () => stockSpec('stock:weapon', STOCK_WHAT['stock:weapon'], '', true),
     light: () => {
-      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then tap the fire to light it.' } : null;
+      if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then click or tap the fire to light it.' } : null;
       const f = $('hearthFire');
-      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Tap the fire and light it. I've missed the warmth." };
-      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, and then you can light the fire.' : 'Tap Gather and chop some Pine Log. It burns well.' };
+      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: "Click or tap the fire and light it. I've missed the warmth." };
+      if (S.activity !== 'gather' && onCtrl()) return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Press Gather, and then you can light the fire.' : 'Press Gather and chop some Pine Log. It burns well.' };
       return null;
     },
     bench: () => campPath('bench', ["The fire's burning now. Open Camp and we'll build.", 'Open Camp.', "Build a Workbench. That's where your tools are made."]),
@@ -340,10 +340,10 @@
       if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is up. Open Craft and make your first tool.' };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="bench"]');
-      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Choose the Workbench.' };
       // the list can open on a higher tier (the highest the Workbench has opened, or a Next Up pick): the Copper Pickaxe is Tier 1
       const t1 = q('#sec-craft-recipes .cf-tiers button[data-t="1"]');
-      if (t1 && t1.getAttribute('aria-pressed') !== 'true') return { node: t1, text: 'Tap Tier 1.' };
+      if (t1 && t1.getAttribute('aria-pressed') !== 'true') return { node: t1, text: 'Choose Tier 1.' };
       // (the recipe list can still be re-rendering right after the station is picked: point at the list, never at nothing)
       return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: "Make a Copper Pickaxe. You'll need one for the ore." };
     },
@@ -356,7 +356,7 @@
       if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'You have enough for your first weapon. Open Craft.' };
       if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]') || q('.tab[data-tab="forge"]'), text: 'Open Make.' };
       const st = q('.cf-st[data-st="' + CRAFT_KINDS[k].st + '"]');
-      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Choose the ' + CRAFT_STATIONS[CRAFT_KINDS[k].st].n + '.' };
       return { node: q(`#sec-craft-recipes .cf-rec[data-kind="${k}"] .cf-go`) || q('#sec-craft-recipes') || st, side: 'up', text: 'Make your first weapon, then put it on.' };
     },
     // Cal's play note 15: only say the packs are near full when they are (the Storehouse plot also opens once the Forge is built)
@@ -371,9 +371,9 @@
     // spend-points-before-nextup: the pile, named from the data, then Spread evenly spends it all at once (spent: back's line, the menu still open)
     spend: () => { const n = attrPoints(soloHero()).free; if (n < 2 * HERO_TUNE.perLevel) return STEP_UI.back(); return Object.assign(path('party', 'attributes', '#attrRows ~ .at-acts .at-spread',
       [`You have ${n} attribute points waiting. Open Hero and spend them.`, 'Open Build.', 'Press Spread evenly to spend them all at once.']), { side: S.tab === 'party' ? 'up' : '' }); },
-    'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Tap it and see what you can mine." },
-    'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Tap Camp and build." },
-    'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Tap it and make gear." },
+    'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: "Gather's open. Open it and see what you can mine." },
+    'tab:world': () => S.tab === 'world' ? null : { node: q('.tab[data-tab="world"]'), text: "You've made camp. Open Camp and build." },
+    'tab:forge': () => S.tab === 'forge' ? null : { node: q('.tab[data-tab="forge"]'), text: "Craft's open. Open it and make gear." },
     nextup: () => onCtrl() ? { node: chip, text: FIRST_USE.nextup.text } : null
   };
 

@@ -129,7 +129,7 @@ on('heroJoin', ({ key } = {}) => {
   const free = attrPoints(key).free; if (a.met[key] || !(free > 0)) return;
   a.met[key] = 1;
   const nm = typeof ROSTER === 'object' && ROSTER[key] ? ROSTER[key].name.split(' ')[0] : 'Your hero';
-  emit('toast', { key: 'attr-join', msg: `${nm} has ${free} attribute point${free === 1 ? '' : 's'}. Spread them evenly in one tap, or build your own.`, kind: 'good', prio: 'normal', go: { view: 'attributes' } });
+  emit('toast', { key: 'attr-join', msg: `${nm} has ${free} attribute point${free === 1 ? '' : 's'}. Spread them evenly in one press, or build your own.`, kind: 'good', prio: 'normal', go: { view: 'attributes' } });
 });
 
 registerState('attr', { v: 1, pts: {}, resets: {}, met: {}, live: 0, xpv: 0 });

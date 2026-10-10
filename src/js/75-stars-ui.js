@@ -57,8 +57,8 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
       // an empty slot takes the open star, when it can
       const can = kind === 'set' ? !!pick && starOwned(pick) && !starSlots(k).includes(pick)
         : !!pick && starLearned(pick) && !starLit(k).includes(pick) && !starWhy(pick, k);
-      b.append(el('span', 'sr-chip-t', '+ ' + label), el('small', null, can ? 'Tap to set' : 'Empty'));
-      b.setAttribute('aria-label', `${label}: empty` + (can ? `. Tap to put ${STARS[pick].name} here.` : ''));
+      b.append(el('span', 'sr-chip-t', '+ ' + label), el('small', null, can ? 'Set it here' : 'Empty'));
+      b.setAttribute('aria-label', `${label}: empty` + (can ? `. Choose it to put ${STARS[pick].name} here.` : ''));
       b.disabled = !can;
       b.addEventListener('click', () => { if (kind === 'set') starSet(i, pick, k); else starLight(pick, k); persist(); });
       c.append(b);
@@ -81,7 +81,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
   function sky(k) {
     const C = STAR_SKY_CELL, W = 3 * C.w, H = 2 * C.h, set = starSlots(k), lit = starLit(k);
     const box = el('div', 'sr-map');
-    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'group', 'aria-label': 'Star map: six constellations. Tap a star to see it.' });
+    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'group', 'aria-label': 'Star map: six constellations. Choose a star to see it.' });
     // the night: faint specks at fixed places (no art: dots)
     let seed = 7;
     const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
@@ -154,7 +154,7 @@ var starsUiPick;   // starsUiPick(id): open the star map on that star's card (57
       else sub.textContent = 'Empty';
       b.append(lb, sub);
       b.setAttribute('aria-pressed', String(where === i));
-      b.setAttribute('aria-label', where === i ? `Slot ${i + 1}: set here. Tap to clear.` : `Set in slot ${i + 1}` + (cur ? `, in place of ${STARS[cur].name}` : ''));
+      b.setAttribute('aria-label', where === i ? `Slot ${i + 1}: set here. Choose again to clear.` : `Set in slot ${i + 1}` + (cur ? `, in place of ${STARS[cur].name}` : ''));
       b.addEventListener('click', () => { if (where === i) starSet(i, null, k); else starSet(i, id, k); persist(); });
       foot.append(b);
     }

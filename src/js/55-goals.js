@@ -403,7 +403,22 @@ var forgeGoalPicks = 0;
     return `${matPlace(k, 1).verb.toLowerCase()} ${n} ${nm} at the ${NODE_NAMES[k][0]}`;
   };
   // a gate row's Go: Craft at the station's tier 1 (a craft there levels it), or the gathering skill's Gather view
-  const gateGo = b => !b.gate.station ? { tab: 'gat', view: b.gate.skill }
+  // gate-go-starts-gathering: a gathering gate also starts gathering that skill (away raises only the skill being gathered, 50-sim
+  // awayBase). It stays at a node of that skill; else the gate's material family at its highest open tier (the walk's pick), else
+  // the skill's best node (55-nav bestNodes), else its last. Nothing switches in a live Deepwell run (navGo would refuse it with a toast).
+  const gateNode = g => {
+    const sk = g.skill;
+    if (S.activity === 'gather' && S.node && skillOf(S.node.kind) === sk) return null;
+    const open = nd => !!nd && craftNodeVisible(nd.kind, nd.t) && skillTierOpen(sk, nd.t) && !(typeof stashFull === 'function' && stashFull(nd.kind, nd.t));
+    const f = g.mat && (NAV_FAMS[sk] || []).find(f => [1, 2, 3, 4, 5].some(t => costName(f, t) === g.mat));
+    let t = Math.min(5, skillTopTier(sk)); while (f && t > 1 && !craftNodeVisible(f, t)) t--;
+    return [f ? { kind: f, t } : null, ...bestNodes(sk), navLast(sk)].find(open) || null;
+  };
+  const gatherGo = g => ({ tab: 'gat', view: g.skill, fn: () => {
+    if (typeof deepActive === 'function' && deepActive()) return;
+    const nd = gateNode(g); if (nd) navGo({ act: 'gather', node: nd });
+  } });
+  const gateGo = b => !b.gate.station ? gatherGo(b.gate)
     : CRAFT_KINDS[b.kind].st === b.gate.station ? { tab: 'forge', sel: stationSel(b.gate.station), fn: () => { S.fSlot = b.kind; S.fTier = 1; forgeGoalPicks++; } }
     : skillGo(b.gate.skill, true);   // a tool's Smithing gate: Craft at the Forge, where a craft levels Smithing
   craftGoalNext = () => forgeNext();
