@@ -56,7 +56,7 @@ function bossTryLost(m) {
   L.left = f.max > 0 ? Math.max(0, f.hp) / f.max : -1;
   if (fin.dot) L.dot = true;
   else if (fin.id) { L.move = fin.name; L.hit = fin.hit + 1; L.hits = fin.hits; L.charged = !!fin.charged; L.defended = !!fin.defended; }
-  const ft = typeof FOE_TYPE === 'object' ? FOE_TYPE[f.txRow || f.type] : null;
+  const ft = (typeof FOE_TYPE === 'object' && FOE_TYPE[f.txRow || f.type]) || (typeof ZONE_FOE_ROWS === 'object' && ZONE_FOE_ROWS[f.txRow]) || null;
   if (ft) { L.weak = ft.weak || ''; L.res = (ft.res || []).slice(); }
   // reveal one more move: the one that beat you, else the next unknown one in its order
   const all = bossTryMoves(f.tk && f.tk.script), have = b.rev[key] || (b.rev[key] = []);

@@ -9803,6 +9803,99 @@ if (section('C22 Thorn Imp (zone 1)')) try {
     assert(H('__mv.slice(0,4).join()') === 'jab1,cross2,jab1,cross2' && !h.errors.length, `C22: the live Imp alternates Briar Jab and Crosscut (${H('__mv.join()')})`); }
 } catch (e) { fail('C22 Thorn Imp crashed: ' + (e.stack || e)); }
 
+if (section('ns-foe-kits-z1-10 (zone 1-10 foe kits)')) try {
+  // Card ns-foe-kits-z1-10 (docs/design/new-style/plan.md 4.1, 8.1): the roster's zone 3-10 monsters, the zone 1-10 Captains and the two
+  // Champions as fight data (59l ZONE_FOE_KITS), each area off until its wire card. Off, the game is as before; on, every number is the
+  // roster's (docs/design/enemies-c22-hollow-final.md) before parity, and the fights play.
+  const roster = fs.readFileSync(path.join(ROOT, 'docs', 'design', 'enemies-c22-hollow-final.md'), 'utf8');
+  const DT = { physical: undefined, holy: 'holy', poison: 'poison', frost: 'frost', fire: 'fire' }, NUM = { one: 1, two: 2, three: 3, four: 4 };
+  // "3 x8% physical", "12%+14% physical", "three10% physical hits", "12%+12%+14% holy" -> [{ x, dt }]
+  const hitsOf = t => { let m = /^(\d+) x(\d+)% (\w+)/.exec(t) || /^(one|two|three|four)(\d+)% (\w+)/.exec(t);
+    if (m) return Array(NUM[m[1]] || +m[1]).fill(0).map(() => ({ x: +m[2] / 100, dt: DT[m[3]] }));
+    m = /^((?:\d+%\+)+\d+%) (\w+)/.exec(t); return m ? m[1].split('+').map(p => ({ x: parseInt(p, 10) / 100, dt: DT[m[2]] })) : null; };
+  const statsOf = t => { const m = /HP ?(\d+)(?: actions)?; Speed ?([\d.]+); armour ?(\d+)%; weak (\w+), resists (\w+)/.exec(t); return m && { hp: +m[1], speed: +m[2], armour: +m[3] / 100, weak: m[4], res: m[5] }; };
+  const want = {};
+  for (let z = 1; z <= 10; z++) {
+    const sec = roster.split(`### Zone ${z}: `)[1].split('\n### ')[0].split('\n## ')[0], name = sec.split('\n')[0].trim();
+    const mv = [...sec.matchAll(/\*\*Move \d —\*\* ([^:]+): ([^;]+)/g)].map(m => ({ name: m[1].trim(), hits: hitsOf(m[2]) }));
+    const cap = /\*\*Shadowborn Captain — ([^:]+):\*\* HP \d+ actions; Speed ([\d.]+)[^*]*\*\*Extra move:\*\* ([^:]+): ([^;,]+(?:, [^;]+)?)/.exec(sec);
+    want[z] = { name, stats: statsOf(sec), moves: mv, captain: { name: cap[1], speed: +cap[2], extra: { name: cap[3].trim(), hits: hitsOf(cap[4]) } } };
+  }
+  for (const [z, id] of [[5, 'Mossy Hollow'], [10, 'Batwing Caves']]) {
+    const sec = roster.split(`### ${id} Champion: `)[1].split('\n### ')[0];
+    want[z].champion = { name: sec.split('\n')[0].trim(), stats: statsOf(sec.replace(/HP(\d+);/, 'HP$1 actions;')),
+      moves: [...sec.matchAll(/^\d\. \*\*([^:*(]+?)(?: \(charge\))?:\*\* ?([^;]+)/gm)].map(m => ({ name: m[1].trim(), charge: /\(charge\)/.test(m[0]), hits: hitsOf(m[2].replace(/^.*?then /, '')) })) };
+  }
+  const g = loadCore({ seed: 3 }), E = s => g.eval(s), K = JSON.parse(E('JSON.stringify(ZONE_FOE_KITS)'));
+  const real = mv => mv.hits.filter(h => !h.feint).map(h => ({ x: h.x, dt: h.dt }));
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const bad = [];
+  for (let z = 1; z <= 10; z++) {
+    const W = want[z], k = K[z];
+    if (z >= 3) { const M = k.monster;
+      if (!M || M.name !== W.name || M.hp !== W.stats.hp || M.speed !== W.stats.speed || M.armour !== W.stats.armour) bad.push(`z${z} monster stats`);
+      if (M && !same(M.moves.map(m => m.name), W.moves.map(m => m.name)) || M && !M.moves.every((m, i) => same(real(m), W.moves[i].hits))) bad.push(`z${z} monster moves`);
+      if (M && !(E(`typeXKey(${JSON.stringify(M.row)}, ${JSON.stringify(W.stats.weak)})`) === 1.5 && E(`typeXKey(${JSON.stringify(M.row)}, ${JSON.stringify(W.stats.res)})`) < 1 &&
+        E(`DMG_TYPES.filter(d => typeXKey(${JSON.stringify(M.row)}, d) !== 1).length`) === 2)) bad.push(`z${z} weakness row`); }
+    const C = k.captain;
+    if (!C || C.name !== W.captain.name || C.speed !== W.captain.speed || C.extra.name !== W.captain.extra.name || !same(real(C.extra), W.captain.extra.hits)) bad.push(`z${z} captain`);
+    if (W.champion) { const P = k.champion, S = W.champion.stats;
+      if (!P || P.name !== W.champion.name || P.speed !== S.speed || P.armour !== S.armour || !same(P.moves.map(m => [m.name, !!m.charge]), W.champion.moves.map(m => [m.name, m.charge])) ||
+        !P.moves.every((m, i) => same(real(m), W.champion.moves[i].hits)) || !same(real(P.phase.move), real(P.moves[P.phase.i]))) bad.push(`z${z} champion`);
+      if (P && E(`champStoryName(${z})`) !== P.name) bad.push(`z${z} champion story name`);
+      if (P && !(E(`typeXKey(${JSON.stringify(P.row)}, ${JSON.stringify(S.weak)})`) === 1.5 && E(`typeXKey(${JSON.stringify(P.row)}, ${JSON.stringify(S.res)})`) < 1)) bad.push(`z${z} champion row`); }
+    if (C && E(`STORY_BEATS.captain[${z}].title`) !== C.name) bad.push(`z${z} captain story title`);
+  }
+  assert(!bad.length, 'ns-foe-kits: every zone 1-10 kit is the roster\'s: names, HP, Speed, armour, weakness and resistance, each move\'s hits and damage types, the Captains\' extra moves, the Champions\' four moves, charge and phase (damage unchanged); names match the story' + (bad.length ? ': ' + bad.join(', ') : ''));
+  const rides = E(`JSON.stringify([ZONE_FOE_KITS[5].captain.extra.hits.map(h => h.ride || ''), ZONE_FOE_KITS[9].captain.extra.hits.map(h => h.ride || '')])`);
+  assert(rides === '[["venom"],["","","bleed"]]', `ns-foe-kits: the riders the roster names land: the Hexarch's Dark Germination Venoms, the Prismfang's last Splinter Salute hit Bleeds (${rides})`);
+  const winds = E(`(() => { const L = []; for (const z in ZONE_FOE_KITS) { const k = ZONE_FOE_KITS[z]; const all = [].concat(k.monster ? k.monster.moves : [], k.captain ? [k.captain.extra] : [], k.champion ? k.champion.moves.concat([k.champion.phase.move]) : []);
+    for (const m of all) for (const h of m.hits) if (h.wind < 0.6 || (h.hold && h.hold < 0.4)) L.push(z + ':' + m.id); } return L.join(); })()`);
+  assert(winds === '', 'ns-foe-kits: no kit hit winds up in under 0.6 s and every hold is 0.4 s or more (24d\'s rule)' + (winds ? ': ' + winds : ''));
+  // off (the default): the game as before
+  assert(E('ZONE_FOE_TUNE.on.every(x => !x) && Object.keys(ZONE_FOES).join() === "1,2" && !ZONE_FOES[1].captain && !ZONE_FOES[2].captain') &&
+    E('[1,2,3,4,5,6,7,8,9,10].every(z => zoneFoeBoss(z, TURN_BOSS_BASIC ? [TURN_BOSS_BASIC.a] : [], 10.5, 0) === null)'),
+    'ns-foe-kits: both areas are off: ZONE_FOES holds only the Thorn Imp and Gloomjaw, no Captain or Champion kit plays');
+  E('zoneFoeArea(0, 1); zoneFoeArea(1, 1)');
+  const on = JSON.parse(E(`JSON.stringify(Object.keys(ZONE_FOES).map(z => [z, ZONE_FOES[z].name, ZONE_FOES[z].captain ? ZONE_FOES[z].captain.name : '', ZONE_FOES[z].champion ? ZONE_FOES[z].champion.name : '']))`));
+  assert(on.length === 10 && on.every(([z, n, c, p]) => n === want[z].name && (z === '5' || z === '10' ? !c && p === want[z].champion.name : c === want[z].captain.name && !p)),
+    'ns-foe-kits: on, zones 1-10 each have their monster; zones 1-4 and 6-9 their Captain; zones 5 and 10 their Champion and no Captain (the boss there is the Champion) ' + JSON.stringify(on));
+  // the shaping: ordinary monsters never hold or feint; a Captain holds from tricks.from, feints from tricks.feintFrom
+  const sh = JSON.parse(E(`JSON.stringify({ norm: [3,4,5,6,7,8,9,10].every(z => ZONE_FOES[z].moves.every(m => m.hits.every(h => !h.feint && !h.hold))),
+    z3: zoneFoeShape(ZONE_FOE_KITS[3].captain.extra, 3, true).hits, z5: zoneFoeShape(ZONE_FOE_KITS[3].captain.extra, 5, true).hits, z8: zoneFoeShape(ZONE_FOE_KITS[3].captain.extra, 8, true).hits.map(h => !!h.feint) })`));
+  assert(sh.norm && sh.z3.length === 1 && Math.abs(sh.z3[0].wind - 2.4) < 1e-9 && !sh.z3[0].hold && sh.z5.length === 1 && Math.abs(sh.z5[0].hold - 1.4) < 1e-9 && same(sh.z8, [true, true, false]),
+    `ns-foe-kits: ordinary monsters never hold or feint; Sentence's two harmless pulses are wind at zone 3, a held swing at zone 5, and real feints from zone 7 (${JSON.stringify(sh)})`);
+  // parity: a monster deals its slot type's damage a turn at its Speed
+  const par = E(`(() => { let w = 0; for (const z of [3,4,5,6,7,8,9,10]) { const Z = ZONE_FOES[z], TY = TURN_FOE_TYPES[TYPES[zoneType(z)].key];
+    w = Math.max(w, Math.abs(Z.speed * zoneFoeThreat(Z.moves) / (TY.speed * zoneFoeThreat(TY.moves)) - 1)); } return w; })()`);
+  assert(par < 1e-9, `ns-foe-kits: with parity each monster deals its slot type's damage a second (worst off by ${par})`);
+  // a Captain inherits its monster's two roster moves unchanged (shaped as a boss, so holds and feints), not the ordinary fight's copy
+  const cap = JSON.parse(E(`JSON.stringify([3,4,6,7,8,9].map(z => { const K = ZONE_FOE_KITS[z], b = zoneFoeBoss(z, [TURN_BOSS_BASIC.a], 10.5, 0);
+    const raw = [K.monster.moves[0], K.monster.moves[1], K.captain.extra].map(mv => zoneFoeShape(mv, z, true)), ks = [];
+    const shape = raw.every((mv, i) => mv.id === b.script[i].id && mv.hits.length === b.script[i].hits.length && mv.hits.every((h, j) => { const o = b.script[i].hits[j];
+      if (!h.feint) ks.push(o.x / h.x); return o.wind === h.wind && (o.hold || 0) === (h.hold || 0) && !!o.feint === !!h.feint; }));
+    return [z, shape && Math.max(...ks) - Math.min(...ks) < 1e-9, b.script[0].hits.some(h => h.hold > 0) || b.script[1].hits.some(h => h.hold > 0)]; }))`));
+  assert(cap.every(([z, ok, held]) => ok && held === [4, 6, 8, 9].includes(z)),   // zone 3 is below tricks.from; the Maw Cantor's two moves hold nowhere in the roster
+    'ns-foe-kits: each Captain plays its monster\'s two roster moves as a boss (same winds, holds and feints, one scale with its extra move): the Thornwing, Riftwing, Devourer and Glassfang holds play ' + JSON.stringify(cap));
+  // live: a zone 3 normal is the Ravager in the bones slot (it never gets up), the boss the Headsman with three moves; zone 10 the Hollow Cantor
+  const fight = (z, boss) => E(`(() => { soloPick('tobin', {now:true}); S.activity = 'fight'; TURN_TUNE.on = 1; S.maxZone = ${z}; setZone(${z}); fightBoss = ${boss};
+    for (let i = 0; i < 60; i++) { spawn(); const f = combatFoes()[0]; if (${boss} || f.skin) break; }
+    const f = combatFoes()[0]; return JSON.stringify({ name: f.name, key: f.key, skin: f.skin || '', row: f.txRow || '', arm: f.tk.arm, ids: f.tk.script.map(m => m.id), p2: f.tk.script2 ? f.tk.script2.map(m => m.id) : null, kd: f.tk.kd }); })()`);
+  const n3 = JSON.parse(fight(3, false)), b3 = JSON.parse(fight(3, true)), b10 = JSON.parse(fight(10, true));
+  assert(n3.name === 'Briarbound Ravager' && n3.skin === 'ravager' && /^bones\d+$/.test(n3.key) && n3.row === 'slime' && n3.arm === 0.1 &&
+    b3.name === 'Briarbound Headsman' && same(b3.ids, ['cleaver', 'backhand', 'sentence']) && b3.arm === 0.1 && !b3.p2 &&
+    b10.name === 'The Hollow Cantor' && same(b10.ids, ['tuningfang', 'threefold', 'unmaking', 'vault']) && same(b10.p2, b10.ids) && b10.row === 'zf-holy-frost' && b10.kd.pip === E('ZONE_FOE_TUNE.fit[10][3]'),
+    `ns-foe-kits: live, zone 3 sends the Briarbound Ravager (the bones slot, its slot's look until its pack lands, its own armour and row), its boss is the Briarbound Headsman (Cleaver Drop, Thorn Backhand, Sentence), zone 10's the Hollow Cantor with its phase two (${JSON.stringify([n3, b3, b10])})`);
+  // the Champion's phase two plays live: below half HP, Threefold Hymn holds its second hit, not its third
+  E(`(() => { globalThis.__pw = []; on('parryWindow', x => { const m = TURN_LIVE && TURN_LIVE.move; if (m && m.id === 'threefold' && x.holdTo > 0) __pw.push([TURN_LIVE.phase2 ? 2 : 1, x.hit]); });
+    const f = combatFoes()[0]; f.hp = f.max * 0.4; const u = cbUnitByKey('hero'); u.hp = u.maxHp = 1e12; })()`);
+  for (let i = 0; i < 3000 && !E('__pw.some(p => p[0] === 2)'); i++) { E('(() => { const f = combatFoes()[0]; if (f) f.hp = Math.max(f.hp, f.max * 0.4); if (turnCombatSnapshot().phase === "hero") turnCombatAction("attack"); })()'); g.fn.tick(0.05); }
+  assert(E('__pw.some(p => p[0] === 2 && p[1] === 1) && !__pw.some(p => p[0] === 2 && p[1] === 2)') && !g.errors.length,
+    `ns-foe-kits: live, below half HP the Hollow Cantor's Threefold Hymn holds its second hit (phase two) (${E('JSON.stringify(__pw)')}; ${g.errors.slice(0, 2).join('; ')})`);
+  E('zoneFoeArea(0, 0); zoneFoeArea(1, 0)');
+  assert(E('Object.keys(ZONE_FOES).join() === "1,2" && !ZONE_FOES[1].captain && ZONE_FOES[1].name === "Thorn Imp"'), 'ns-foe-kits: turning both areas off again restores ZONE_FOES as it was');
+} catch (e) { fail('ns-foe-kits-z1-10 crashed: ' + (e.stack || e)); }
+
 if (section('C29 turn fights (core)')) try {
   // Turn fights are the zone fight (owner, 2026-10-02: "actually implement the turn based combat"): active only, Speed
   // gauges, 3 ability slots from 14 per hero, statuses, boss charges, Scrolls that unlock abilities.
