@@ -35,8 +35,10 @@ physical) and fit them. Pip's include a frost move on a fire mage. Auriel (not i
 
 - **Wren: no change.** Power Shot, Barbed Arrow, Pinning Shot, Hunter's Mark, Volley and Twin Shot are a night archer's
   arrows. Her 20 wired moves (#346) are untouched.
-- **Tobin: no change.** Heavy Strike, Cleave, Sunder, Momentum, Brace and Lunge fit a sword-and-shield guard.
-- **Pip: three style moves renamed, one of them reworked; three kept.** Spark, Hex and Afterglow stay. Frost Shard becomes
+- **Tobin: two moves changed (Cal, 10 Oct 14:42-14:43).** Hammerfall becomes Sky Splitter (he has no hammer) and Shield Throw
+  becomes Shield Charge (no thrown shield). Heavy Strike, Cleave, Sunder, Momentum, Brace and Lunge stay.
+- **Pip: four style moves renamed, two of them reworked; two kept.** Spark and Afterglow stay. Hex becomes Smoulder (fire),
+  Cal 10 Oct 14:42: "Hex: Not a fire mage ability". Frost Shard becomes
   Smoke Bolt (fire). Arcane Ward becomes Ashen Ward and Nova becomes Ring of Light (her lantern's holy light, as Lantern Flare
   is). Three talents lose their frost.
 - **Auriel: six style moves of her own** in place of the six she borrowed from Pip. Five of them are new star moves Cal asked
@@ -52,6 +54,18 @@ Fields as `24c` `A(hero, code, id, name, short, kind, tier, pow, cd, dt, desc, l
 the game** (they key saves, talents, fx recipes, icons, poses and checks); only names, words and, where the table says so, rules
 and types change. Numbers not named stay as they are. New numbers are starting values for the sims in section 6.
 
+### Tobin (ids kept; Cal, 10 Oct 14:42-14:43)
+
+| Code | Old id / name | New name (short) | Change | Pose |
+|---|---|---|---|---|
+| T5 | `hammerfall` Hammerfall | **Sky Splitter** (Splitter) | Name and words only: "Leap and bring your sword down: 140% power, plus 65% for each Grit. Uses all your Grit; needs 2. Hits 25% harder on an Exposed foe." | `hammerfall`, redrawn: the blow lands in front of him |
+| T6 | `shieldthrow` Shield Throw | **Shield Charge** (Charge) | Same numbers and riders, now melee (he dashes in): "Charge behind your shield for 200% power. On a Sundered foe it Stuns and leaves it Exposed." | `shieldcharge` (new); the shield never leaves his arm |
+
+- Why: Cal, 14:42: "He also doesn't have a hammer so the name is weird" and "I would probably not include throwable abilities
+  like this because how would he get his shield back?"
+- Brace (unchanged rule): the live fight holds his braced pose (the last frame) while his Guard lasts, then returns to idle.
+  Cal asked whether he stays in that position; this makes the answer yes.
+
 ### Pip (ids kept)
 
 | Code | Old id / name | New name (short) | Kind, tier, power, CD | Type | Status | Effect (desc) | Line | Pose | Icon |
@@ -59,16 +73,16 @@ and types change. Numbers not named stay as they are. New numbers are starting v
 | C1 | `spark` Spark | Spark (Spark) | damage, 1, 1.3, 2 | fire | none | unchanged | unchanged | `spark`, as drawn | keep |
 | C2 | `frostshard` Frost Shard | **Smoke Bolt** (Smoke) | damage, 2, 1.1, 3, timed | **fire** (was frost) | Weaken | A smoky fire bolt for 110% power. The foe is Weakened for 1 turn (25% less damage), or 2 turns if it is burning. | Weakens. Longer on a burning foe. | `frostshard` (staff orb, level), as drawn | **new** (today's is a frost shard) |
 | C3 | `arcaneward` Arcane Ward | **Ashen Ward** (Ward) | buff, 2, 0, 5 | holy (no hit; unchanged) | Ward | A ring of warm ash and ember guards you: a Ward worth 20% of your max HP for 3 enemy turns. | A Ward for 20% of your HP. | `arcaneward` (arms spread), as drawn | art judge re-checks fit |
-| C4 | `hex` Hex | Hex (Hex) | debuff, 3, 0, 5 | holy (unchanged) | Cursed | unchanged | unchanged | `hex` (clawed hand), as drawn | keep |
+| C4 | `hex` Hex | **Smoulder** (Smoulder) | debuff, 3, 0, 5 | **fire** (was holy) | Cursed (the rule word stays) | Brand the foe with a slow ember for 3 turns. It stores 20% of the damage it takes and it all flares up again when the ember burns out. | Stores damage, then flares. | `smoulder` (new: a finger flick at the foe) | **new** |
 | C5 | `afterglow` Afterglow | Afterglow (Glow) | passive, 3 | fire | none | unchanged | unchanged | none (passive) | keep |
 | C6 | `nova` Nova | **Ring of Light** (Ring) | damage, 4, 1.6, 4 | holy (unchanged) | none | A ring of lantern light bursts from your staff for 160% power. | A strong blast of light. | `nova` (staff butt on the ground; the ring spreads from her feet), as drawn | art judge re-checks fit |
 
 - Smoke Bolt: `ABILITY_PERFECT.frostshard` becomes `'the Weaken lasts 1 turn longer'`. Pip keeps 4 timed moves.
 - Why Ring of Light stays holy: it is Pip's lantern light (her Lantern Keeper side), and it keeps her holy answer to the foes
   weak to holy (undead, spirit, drowned, deep: `21x-data-types.js:48-57`); as fire it would drop from 1.5x to 0.6x on drowned.
-- Why Hex stays: it names no element, Pip is drawn as a hedge witch (pointed hat, spellbook), and the Witchfire and Evil Eye
-  stars already tie Curse to her. Its burst stays holy for her (section 3, Auriel, on the burst's type).
-- Hex, Spark and Afterglow's icons, names and rules do not change.
+- Smoulder keeps Hex's rule (the Cursed state, so the Witchfire and Evil Eye stars still fire) under a fire name; its burst is
+  fire (`curseDt`, section 3). Cal (10 Oct 14:42) ruled Hex "not a fire mage ability"; this replaces the older "Why Hex stays".
+- Spark and Afterglow's icons, names and rules do not change. Smoulder needs a new icon.
 
 Pip's talents that change (same ids and A/B slots, so a saved pick carries to the new talent in its slot):
 
@@ -118,7 +132,7 @@ Starlight (section 4). Codes continue her own.
 - **Starbolt drops its Chill.** Starbolt (`clearnight`) becomes: "A star bolt for 140% power. If no star is falling, gain 1
   Bearing." Its Perfect becomes `'a sure crit'`.
 - Her 4 timed moves: Glimmer, Starbolt, Shooting Star, Starfall. Her passives: Old Light (style) and News Arrives (signature).
-- **The Curse burst takes the type of the move that set it** (today 59k:1021 hard-codes holy). Pip's Hex stays holy. Auriel no
+- **The Curse burst takes the type of the move that set it** (today 59k:1021 hard-codes holy). Pip's Smoulder bursts as fire. Auriel no
   longer sets a Curse herself, so the rule change (one foe field, `curseDt`, defaulting to `'holy'`) only matters for Stars and
   uniques; the type card may drop it.
 - `HERO_PATHS.oriel`: **The Star:** fallingletter, pullreading, letters, newsarrives. **Clear Sky:** clearnight, polaris,
