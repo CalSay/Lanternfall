@@ -62,6 +62,11 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   presses in a browser and reads the foe's HP at once must tick past the impact first. Why: Cal saw damage land the moment he
   pressed, before the swing or arrow reached the foe (damage-on-impact, 2026-10-10).
 
+- Before a spec renames, retypes or re-themes a live ability, grep `tools/check.mjs` and the tools for its id and read every
+  assert keyed to it: the complete-icons list (`COMPLETE`), the Stars' `kit` counts, the loadout-odds Learn order, the counter
+  tips in `24d`, and the sim and budget loadouts. Why: hero-themed-kits' first draft retagged three Stars and dropped an icon,
+  which would have failed two checks; the red team caught it. (hero-themed-kits, 2026-10-10)
+
 ## Economy and skilling
 
 - Ask Cal before `node tools/health.mjs --write-baseline`, naming each moved metric, which way it moved and the judge's ruling. Why: rewriting the bar CI scores against was blocked as a CI bypass until Cal said yes (gold-without-training, 2026-10-07).
@@ -219,6 +224,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A shared drawing helper that sets the canvas view itself (61-anim `glowAt` ends with `setTransform(vk)`) must be told about every view switch: with the scenery at 2x and the actors at 3x, the first big lamp glow put the rest of the frame in the actors' view, so lamp light, motes and moths drew 1.5x off their lanterns while every box-based check stayed green. Check the transform around such calls (`getTransform().a` before and after). Why: the actor-scale reviewer (2026-10-10).
 - Measure the turn banner by its face and words (`.tv-tc-face`, `.tv-tc-txt`), not its full-width band, and hold the game (`soloPickerOpen`, `turnPaused`) before raising it with `emit("turnCard")`: the band spans the stage, so every hero "met" it, and a live turn moves the hero mid-read. (actor-scale, 2026-10-10)
 - Measure a docked notice against what it can climb over in the tallest state, not the fixture's: the landscape notices row under Next Up is 23 to 77 px at 740x360 and a craft's toast plus banner is about 150 px, so bottom-anchored toasts rose over the chip and the bell (four eyes sightings). On a phone on its side toasts now sit at the stage's foot, two side by side (stacked, two covered the hero to the waist; one at a time cut a plain toast to 1.6 s and failed eyes' moments control). Give a banner's title its own line rather than nowrap and an ellipsis beside the eye. (first-craft-toast-clip, 2026-10-10)
+- A playtest's "wrong number" can be the wrong thing read: the top-bar "Essence 0" was the unlabelled Embers raid coin, and Essence itself was fine. Check what the element is (its id, what sets it) before carding a field bug, and give every counter a name on hover and for screen readers. Why: desktop playtest F17 was carded as a field bug (essence-counter-reads-right, 2026-10-08).
+- The playtest driver runs with no capability host (no `window.claude`), so since online-off-clean anything raid-only (the Embers coin, the Raid view) is hidden in a route; prove the with-host case in check.mjs with a stubbed `window.claude`. Why: eyes failed `expect "#emberCoin"` on save-current after the merge (essence-counter-reads-right, 2026-10-10).
 
 ## Saves and offline parity
 

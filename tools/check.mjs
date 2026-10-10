@@ -17043,6 +17043,57 @@ if (section('scroll-spares')) try {
   }
 } catch (e) { fail('scroll-spares crashed: ' + (e.stack || e)); }
 
+// ==== essence-counter-reads-right: the top bar's orange diamond is the Embers raid coin; it stays out until the raid opens or Embers are held ====
+if (section('essence-counter-reads-right')) try {
+  const at = 'essence-counter-reads-right', LABEL = 'Embers, from the world raid';
+  { // core: kills add Essence, never Embers
+    const g = loadCore({ seed: 7 }), E = s => g.eval(s);
+    E('soloPick("wren"); setActivity("fight")');
+    const e0 = E('essHave()');
+    for (let i = 0; i < 400 && E('essHave()') <= e0; i++) E('for (let j = 0; j < 10; j++) tick(0.1); 1');
+    assert(E('essHave()') > e0 && E('S.embers') === 0, `${at}: fighting adds Essence (${e0} -> ${E('essHave()')}) and no Embers (${E('S.embers')})`);
+    assert(!g.errors.length, `${at}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h } }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(() => { window.claude = { use: async () => null }; });   // a capability host, so onlineOff() is false (online-off-clean hides the coin without one)
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        const read = () => X(`(() => { const c = document.getElementById('emberCoin'), p = document.querySelector('.purse'), hd = document.querySelector('header');
+          const r = c.getBoundingClientRect(), pr = p.getBoundingClientRect();
+          return { hidden: c.hidden, shown: !c.hidden && r.width > 0 && r.height > 0, purse: pr.width > 0 && pr.height > 0 && pr.top >= 0 && pr.left >= 0 && pr.right <= innerWidth + 1,
+            head: hd ? Math.round(hd.getBoundingClientRect().height) : 0, role: c.getAttribute('role'), title: c.getAttribute('title'), aria: c.getAttribute('aria-label') }; })()`);
+        const step = js => X(`${js}; ui(true); 1`).then(() => page.waitForTimeout(60)).then(read);
+        const fresh = await step('S.maxZone = 11; S.embers = 0; S.wyrms = 0; delete S.onboard.got.raid; S.onboard.all = false');
+        assert(fresh.hidden && !fresh.shown && fresh.purse, `${at} ${w}x${h}: a fresh game at zone 11 with no Embers hides the coin and keeps the purse on screen (${JSON.stringify(fresh)})`);
+        assert(fresh.role === 'group' && fresh.title === LABEL && fresh.aria === LABEL, `${at} ${w}x${h}: the coin is a named group "${LABEL}" (${JSON.stringify(fresh)})`);
+        const raid = await step('S.onboard.got.raid = 1');
+        assert(raid.shown && !raid.hidden, `${at} ${w}x${h}: with the raid open the whole coin shows (${JSON.stringify(raid)})`);
+        const held = await step('delete S.onboard.got.raid; S.embers = 5');
+        assert(held.shown, `${at} ${w}x${h}: holding Embers shows the coin (${JSON.stringify(held)})`);
+        const wy = await step('S.embers = 0; S.wyrms = 1');
+        assert(wy.shown, `${at} ${w}x${h}: a felled raid boss shows the coin (${JSON.stringify(wy)})`);
+        const back = await step('S.wyrms = 0');
+        assert(back.hidden && !back.shown, `${at} ${w}x${h}: no raid, Embers or raid kills again: the coin hides (${JSON.stringify(back)})`);
+        const off = await step('S.onboard.got.raid = 1; S.embers = 5; window.claude = undefined');
+        assert(off.hidden, `${at} ${w}x${h}: with no capability host the coin stays out even with the raid open and Embers held (online-off-clean) (${JSON.stringify(off)})`);
+        if (w === 360) console.log(`  ${at} 360x740 header height: ${fresh.head} px without the coin, ${raid.head} px with it`);
+        assert(!errors.length, `${at} ${w}x${h}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('essence-counter-reads-right crashed: ' + (e.stack || e)); }
+
 // ---- fight-input-during-banner: while the turn banner or VS card plays, Attack and the abilities dim and say "Wait"; a refused press
 // gets a red outline that reduced motion keeps; nothing is queued (planner 2026-10-08, DECISIONS.md "The banner pause is shown") ----
 if (section('fight-input-during-banner')) try {

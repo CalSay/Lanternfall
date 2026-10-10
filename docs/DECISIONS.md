@@ -136,10 +136,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 
 ## Abilities
 
-- **14 abilities a hero: 6 shared (by play style) + 8 signature.** Equip 3; a 4th slot comes later with a bag button
+- **14 abilities a hero, all their own: 6 style moves (a template of mechanics by play style) + 8 signature.** Equip 3; a 4th slot comes later with a bag button
   (a turn to drink or eat). (2026-10-01)
-- **Passives** take a slot, have no button and are always on: one per shared pool and one per signature set.
-  (2026-10-01)
+- **Passives** take a slot, have no button and are always on: one in the style six and one in the signature eight.
+  (2026-10-01; reworded 2026-10-10, hero-themed-kits)
 - **Timed abilities:** 4 a hero (12 in all). Press again as a ring closes: Perfect adds a bonus, Good is the ability as
   written, a Miss hits weaker. (2026-10-01)
 - **Aim** is Wren's resource. **Base crit damage is x2.5.** (2026-10-01)
@@ -164,6 +164,12 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Falling Star, Call It Down, Take a Bearing, Starbolt, Ill Omen, Shooting Star, Starfall and News Arrives. Codex's names (Falling
   Letter, Pull the Reading, Clear Night, Bad News, Letters Unsent, Sliver's Hum) read as riddles; players should see what a move
   does. Ids stay as they were, since saves, art and effects key on them. [heroes/oriel.md](design/heroes/oriel.md).
+
+- **Claude decided: every hero has 14 abilities of their own, with no shared moves (hero-themed-kits, Opus judge 2026-10-10;
+  Cal can veto with "Give Oriel her own Starlight damage type").** Each kit is 6 style moves built on a template of mechanics
+  plus 8 signature moves; talents follow the hero's theme and Stars stay shared. Pip's Frost Shard becomes Smoke Bolt (fire,
+  Weaken), Arcane Ward becomes Ashen Ward and Nova becomes Ring of Light (still holy), and Oriel gets six starlight moves of her
+  own, with frost as her rules type. Live ids are kept, so no save breaks. Spec: [hero-kits.md](design/hero-kits.md).
 
 ## Combat
 
