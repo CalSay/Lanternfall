@@ -388,11 +388,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   // as it was; the reach is kept per hero art id once that art has loaded
   const reachOf = new Map();
   function heroReach() {
-    const id = typeof heroArtId === 'function' && heroArtId();
+    const id0 = typeof heroArtId === 'function' && heroArtId(), id = id0 && (typeof wrenSOn === 'function' && wrenSOn() ? id0 + ':s' : id0);   // route S Wren reaches as drawn (64l)
     let r = id ? reachOf.get(id) : undefined;
     if (r == null && id && reachC && typeof heroArtDraw === 'function') {
       const h = hero._f, keep = h && { c: h.c, ox: h.ox, oy: h.oy, lights: h.lights && h.lights.slice() };
-      const i = heroArtDraw(reachC.getContext('2d'), id, 'fightIdle', 0, 0, 0, { frame: 0 }), f = i && i.f;
+      const i = heroArtDraw(reachC.getContext('2d'), id0, 'fightIdle', 0, 0, 0, { frame: 0 }), f = i && i.f;
       if (f && f.c) { r = rightEdge(f) - f.ox; reachOf.set(id, r); }
       if (keep && f === h) { h.c = keep.c; h.ox = keep.ox; h.oy = keep.oy; if (keep.lights) { h.lights.length = 0; h.lights.push(...keep.lights); } }
     }
@@ -726,7 +726,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const x = ax(t), y = t.hy;
     for (let i = 0; i < 8; i++) A.part(x + (Math.random() - 0.5) * 16, y - 4 - Math.random() * 34, 0, reduced ? -6 : -16 - Math.random() * 16, 0.7 + Math.random() * 0.3, i % 3 ? '#7EE07A' : '#DFFBD0', 0, 1, 4);
   }
-  const handX = a => ax(a) + 10, handY = a => a.hy - 44;
+  // the shot leaves the hand (route S Wren: her bow on the frame drawn, 64l wrenSHand)
+  const sHand = a => (a === hero && typeof wrenSHand === 'function' ? wrenSHand() : null);
+  const handX = a => { const h = sHand(a); return ax(a) + (h ? Math.round(h[0]) : 10); }, handY = a => { const h = sHand(a); return a.hy + (h ? Math.round(h[1]) : -44); };
   const sparkW = (x, y) => A.burstPx(x, y, '#FFFFFF', 3, 30);
   function fire(a) {
     const tg = target();
@@ -747,7 +749,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const tx = fa ? fa[0] : s.x + (Math.random() - 0.5) * s.w * 0.3, ty = fa ? fa[1] : s.cy + (Math.random() - 0.5) * s.h * 0.3;
     if (!a.kind) { a.slash = 0.16; A.burstPx(s.left + 6, ty, '#FFF3C4', 4, 40); return; }
     const sx = handX(a), sy = handY(a), col = a.pcol;
-    if (a.kind === 'arrow') A.proj('arrow', sx, sy, tx, ty, 0.2, col, 6, (x, y) => A.burstPx(x, y, '#E8DCC0', 3, 30));
+    if (a.kind === 'arrow') A.proj('arrow', sx, sy, tx, ty, 0.2, col, 6, (x, y) => A.burstPx(x, y, '#E8DCC0', 3, 30)).own = a === hero ? 1 : 0;   // the hero's: 64l may draw it
     else if (a.kind === 'bolt') A.proj('bolt', sx, sy - 4, tx, ty, 0.28, col, 0, (x, y) => { A.burstPx(x, y, col, 6, 45, 60, 4); A.ring(x, y, 2, 11, 0.3, col, 1, 1); if (a.role === 'caster') splash(s, col); });
     else A.proj('mote', sx, sy - 6, tx, ty, 0.36, col, 14, (x, y) => A.burstPx(x, y, col, 5, 30, 0, 4));
   }
@@ -1079,6 +1081,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   on('classChosen', () => { refreshHero(true); refreshParty(); });
   on('mirrorUsed', () => refreshHero(true));
   on('activity', () => { layoutDirty = true; solo.key = ''; packList = null; if (hero.fr) refreshHero(false); });
+  for (const ev of ['classicArt', 'wrenArt']) on(ev, () => { layoutDirty = true; });   // the hero's reach follows the art drawn (64l)
 
   on('classTap', p => {
     attack(hero);

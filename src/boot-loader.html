@@ -2,7 +2,8 @@
      The boot files follow as plain <script src> tags, so the game boots after every one has run, as the inline page does.
      Before them it writes the tags of the area packs the save's zone shows (its foe and its background), so the game opens on
      that zone with its art in; every other pack loads after boot (src/js/75-art-load.js) and reaches the game through lfArt.
-     Hero packs (card hero-packs) go by hero, not zone: it writes the save's hero's core pack only (a new game has no hero yet).
+     Hero packs (card hero-packs) go by hero, not zone: it writes the save's hero's core pack only (a new game has no hero yet),
+     and none of a hero file the Classic art switch turns off while it is on (x in the table: Wren's route S).
      Until the game runs this plain text line shows the bytes done: a file counts once its download ends (resource timing) or it runs. -->
 <div id="lfBoot" role="status" aria-live="polite" style="position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;background:var(--bg,#140F1A);color:var(--bone,#EFE6D6);font:16px/1.4 var(--body,sans-serif);text-align:center"><span id="lfBootText">Loading the game</span></div>
 <script id="lfBootJs">
@@ -15,8 +16,10 @@ var lfBoot = (function () {
     var sv = JSON.parse(localStorage.getItem(/* @key */) || 'null'); if (sv && sv.zone >= 1) zone = Math.floor(sv.zone);
     if (sv && sv.solo && typeof sv.solo.hero === 'string') hero = sv.solo.hero;   // the save's hero (59j's S.solo.hero)
   } catch (e) {}
+  var classic = false;   // the Classic art switch (64k's key): a pack of art it turns off (x) is left out while it is on
+  try { classic = localStorage.getItem(/* @classic */) === '1'; } catch (e) {}
   var boot = [], q = zone > road ? road - 34 + (zone - road - 1) % 35 : zone;   // past the road the scenery repeats every 35 zones
-  for (k in packs) if (packs[k].h ? packs[k].c && packs[k].h === hero : packs[k].z.some(function (r) { return q >= r[0] && q <= r[1]; })) { boot.push(k); files[packs[k].f.split('/').pop()] = packs[k].b; }
+  for (k in packs) if (packs[k].h ? packs[k].c && packs[k].h === hero && !(packs[k].x && classic) : packs[k].z.some(function (r) { return q >= r[0] && q <= r[1]; })) { boot.push(k); files[packs[k].f.split('/').pop()] = packs[k].b; }
   // Hero art constants by name, each as { <hero>: that hero's table }: each hero file's page part registers its own
   // (lfBoot.heroFile, as it runs), which puts in the core pack that came before it, so the core is in before the next file runs.
   var heroFiles = {}, plain = function (o) { return !!o && typeof o === 'object' && !Array.isArray(o); };
