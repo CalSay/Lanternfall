@@ -1,0 +1,1 @@
+- Checks: the first-hour walk report now prints a gold line: gold earned, gold spent by ledger kind, the share left unspent and the minute of the last spend (also in the json as `gold`). No change for players. (walk-gold-line)
