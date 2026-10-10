@@ -86,7 +86,7 @@ const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '
 // every section's time and the shard's planned load (CI runs it with --times, so the job log has both).
 const WEIGHT = {
   'forge-line-while-fighting': 133, 'W1-D (browser)': 111, 'staged guide follow-ups (browser)': 90, 'moment layer': 79,
-  'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
+  'solo copy (browser, W1-C)': 120, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
   'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
@@ -7259,7 +7259,7 @@ if (section('solo copy (browser, W1-C)')) try {
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
-      const shown = { n: 0, views: 0 }, bad = new Map(), items = { n: 0, min: 1e9, cards: 0, press: 0 };
+      const shown = { n: 0, views: 0 }, bad = new Map(), items = { n: 0, min: 1e9, cards: 0, press: 0 }, press = { n: 0, short: [], errs: [], by: {} };
       for (const hero of ['wren', 'tobin', 'pip']) {
         const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
         const page = await ctx.newPage(); const errs = [];
@@ -7279,9 +7279,20 @@ if (section('solo copy (browser, W1-C)')) try {
         await page.click(`#createScreen .ccard[data-hero="${hero}"]`); await page.click('#createScreen .create-go'); await page.waitForTimeout(250);
         // a late game: every tab open, plenty of everything, the first Proving won (so its card shows)
         await X(`(() => { try { onboardUnlockAll(); } catch (e) {} S.maxZone = 40; S.zone = 12; S.L = 60; S.gold = 1e12; S.embers = 1e6; for (const k in S.mats) { const m = S.mats[k]; if (Array.isArray(m)) for (let i = 0; i < m.length; i++) m[i] = 5000; } ONBOARD.paused = false; S.cls.trials = S.cls.trials || {}; S.cls.trials.warrior = { won: 1, best: 100 }; return 1; })()`);
-        const pressAll = async (sel, label) => {
-          const n = Math.min(await page.locator(sel).count(), hero === 'wren' ? 50 : 12);   // W2-B: the other two heroes press the first 12 of each view (the tabs and views are read in full)
-          for (let i = 0; i < n; i++) { try { await page.locator(sel).nth(i).click({ timeout: 300, force: true }); await page.waitForTimeout(60); await scan(`${label} #${i}`); await page.keyboard.press('Escape'); } catch (e) {} }
+        // scan-dead-coverage: visible controls only. The broad selector also matched every control in the tab's hidden views, and their
+        // ~1,000 "not visible" click errors a run were swallowed. Now a press that fails is a check failure, naming the view and control.
+        // Most of those errors came from the Escape after each press: it shut the menu, so every later control in the view was hidden.
+        // The tab and view now reopen before each press. A press can still redraw the view with fewer controls (a claimed row); the loop
+        // stops there instead of waiting on a gone one.
+        const pressAll = async (sel, label, reopen) => {
+          const vis = page.locator(sel).filter({ visible: true });
+          const n = Math.min(await vis.count(), hero === 'wren' ? 50 : 12);   // W2-B: the other two heroes press the first 12 of each view (the tabs and views are read in full)
+          for (let i = 0; i < n; i++) {
+            if (i) await X(reopen);
+            if (i >= await vis.count() && !(await vis.nth(i).waitFor({ state: 'visible', timeout: 300 }).then(() => true, () => false))) { press.short.push(`${hero} ${label} #${i}`); break; }
+            try { await vis.nth(i).click({ timeout: 300, force: true }); } catch (e) { press.errs.push(`${hero} ${label} #${i}: ${String(e.message).split('\n')[0]}`); continue; }
+            press.n++; press.by[`${hero} ${label.split('/')[0]}`] = (press.by[`${hero} ${label.split('/')[0]}`] || 0) + 1; await page.waitForTimeout(60); await scan(`${label} #${i}`); await page.keyboard.press('Escape');
+          }
         };
         for (const t of ['adv', 'party', 'gat', 'forge', 'world']) {
           await X(`setTab('${t}')`); await page.waitForTimeout(120);
@@ -7289,7 +7300,7 @@ if (section('solo copy (browser, W1-C)')) try {
           for (const v of views) {
             await X(`setView('${t}', '${v}')`); await page.waitForTimeout(150);
             await scan(`${t}/${v}`);
-            await pressAll(`#p-${t} button:not(:disabled), #p-${t} .card, #p-${t} [role=button]`, `${t}/${v}`);
+            await pressAll(`#p-${t} button:not(:disabled), #p-${t} .card, #p-${t} [role=button]`, `${t}/${v}`, `setTab('${t}'); setView('${t}', '${v}')`);
             await X(`setTab('${t}'); setView('${t}', '${v}')`);
           }
         }
@@ -7319,22 +7330,50 @@ if (section('solo copy (browser, W1-C)')) try {
         let opened = 0, empty = 0;
         for (const [id, txt] of sheets) { judge('item sheet ' + id, txt); opened++; if (txt.length < 4) empty++; }
         for (let i = 8; i < made.ids.length; i += 9) {
-          const id = made.ids[i]; await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15);
+          const id = made.ids[i];
           // w1f-scan-load-flake: a DOM click on the button itself. A forced pointer click lands on whatever covers the button's spot: the
           // path choice card the "evolution choice" step leaves open. Under load two such clicks pressed "Become" then "Yes", a path was
           // taken, and the subclass step below found no tabs. Unloaded, the clicks failed (below the sheet's fold) and were swallowed.
           // The find and the click are one step in the page, so the sheet cannot redraw between them.
-          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button']) { if (await page.evaluate(q => { const b = document.querySelector(q); if (b) b.click(); return !!b; }, `.cf-sheet ${sel}`)) { await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } }
-          await page.keyboard.press('Escape');
+          // scan-dead-coverage: each control on a fresh sheet. Salvage armed first and its confirm was read in place of the rest.
+          for (const sel of ['.cf-svb', '.cf-cmp button']) { await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15); if (await page.evaluate(q => { const b = document.querySelector(q); if (b) b.click(); return !!b; }, `.cf-sheet ${sel}`)) { await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } await page.keyboard.press('Escape'); }
         }
+        // scan-dead-coverage: the Reforge path on its own, on every 9th item that has a bonus line: pick the first line (and the first bonus
+        // to put in, on a graded piece), then press Reforge once, which arms it ("Confirm: reforge"). Nothing is reforged.
+        let rfRead = 0, rfArmed = 0;
+        for (let i = 8; i < made.ids.length; i += 9) {
+          const id = made.ids[i]; await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15);
+          const r = await page.evaluate(() => { const q = s => document.querySelector('.cf-sheet ' + s);
+            const ln = q('.cf-rf .cf-rfl'); if (!ln) return null; ln.click();
+            const pk = q('.cf-rfpick .cf-rfl'); if (pk) pk.click();
+            const go = q('.cf-rf .cf-act'); if (go && !go.disabled) go.click();
+            const now = q('.cf-rf .cf-act'); return now ? now.textContent : ''; });
+          if (r == null) { await page.keyboard.press('Escape'); continue; }
+          rfRead++; if (r === 'Confirm: reforge') rfArmed++;
+          await page.waitForTimeout(30); await scan('item sheet ' + id + ' Reforge', '.cf-sheet'); await page.keyboard.press('Escape');
+        }
+        assert(rfRead > 0 && rfArmed > 0, `${hero}: the Reforge path was read on ${rfRead} item sheets and armed on ${rfArmed} (a line picked, Reforge pressed once)`);
         await page.keyboard.press('Escape');
         assert(empty === 0, `${hero}: every item sheet had text when read (${empty} empty)`);
         items.n += opened; items.min = Math.min(items.min, opened);
         // the hero sheet, its Kit and story lines, and each subclass card (both tabs, the confirm) and the class change
         await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(200);
-        await page.evaluate(() => document.querySelectorAll('.cs-sheet details, .sheet details').forEach(d => { d.open = true; }));
+        await page.evaluate(() => document.querySelectorAll('.csheet details').forEach(d => { d.open = true; }));
         await scan('hero sheet (all opened)');
-        for (const sel of ['.cl-go', '.cs-act', '.cs-story summary']) { const n = Math.min(await page.locator(`.sheet ${sel}`).count(), 8); for (let i = 0; i < n; i++) { if (!(await page.evaluate(([q, i]) => { const b = document.querySelectorAll(q)[i]; if (b) b.click(); return !!b; }, [`.sheet ${sel}`, i]))) continue; await page.waitForTimeout(60); await scan(`hero sheet ${sel} #${i}`); } }
+        // scan-dead-coverage: the hero sheet's own controls (Achievements, Choose your path, Change). The old selectors (.sheet .cl-go,
+        // .cs-act, .cs-story summary) matched nothing: the sheet is .csheet and has no such rows. Each press opens another sheet in its
+        // place, so the hero sheet reopens before each one.
+        const heroCtl = '.csheet .bsheet-body button:not(:disabled), .csheet .bsheet-body summary';
+        const heroN = await page.evaluate(q => [...document.querySelectorAll(q)].filter(b => b.offsetParent !== null).length, heroCtl);
+        let heroPress = 0;
+        for (let i = 0; i < Math.min(heroN, 8); i++) {
+          if (i) { await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(150); }
+          const t = await page.evaluate(([q, i]) => { const b = [...document.querySelectorAll(q)].filter(n => n.offsetParent !== null)[i]; if (!b) return null; const t = b.textContent.trim(); b.click(); return t; }, [heroCtl, i]);
+          if (t == null) { fail(`${hero}: hero sheet control #${i} of ${heroN} was gone when the sheet reopened`); continue; }
+          heroPress++; await page.waitForTimeout(150); await scan(`hero sheet: ${t}`);
+          await X('classEvoUI.closeAll()'); await page.keyboard.press('Escape');
+        }
+        assert(heroPress > 0 && heroPress === Math.min(heroN, 8), `${hero}: the hero sheet loop pressed ${heroPress} of its ${heroN} visible controls`);
         await page.keyboard.press('Escape');
         await X(`S.party.chosen = true; S.cls.trials = S.cls.trials || {}; S.cls.trials.check = { won: 1, best: 100 }; classEvoUI.openChoice()`); await page.waitForTimeout(250);
         const tabs = await page.locator('.evo-tab').count();
@@ -7375,6 +7414,8 @@ if (section('solo copy (browser, W1-C)')) try {
       }
       assert(shown.views > 60 && shown.n > 3000, `the scan read ${shown.n} texts in ${shown.views} screens (three heroes, every tab, sub-view and sheet at 360x740)`);
       assert(items.min >= 100 && items.cards >= 4 && items.press >= 12, `W1-F: the scan opened ${items.n} item sheets (at least ${items.min} per hero: every unique, every kind at four rarities, every Trophy line; the compare box), ${items.cards} subclass cards, the class change, the hero sheet and its story and Kit rows, the hero picker cards and ${items.press} long-presses (Attack, Parry, Dodge, the three ability slots), three heroes`);
+      const noPress = ['wren', 'tobin', 'pip'].flatMap(h => ['adv', 'party', 'gat', 'forge', 'world'].map(t => `${h} ${t}`)).filter(k => !press.by[k]);
+      assert(!noPress.length && !press.errs.length, `pressAll pressed ${press.n} visible controls with ${press.errs.length} click errors, every hero in every tab (${noPress.length ? 'none in: ' + noPress.join(', ') : 'fewest ' + Math.min(...Object.values(press.by))}); ${press.short.length} views ran short after a redraw (${press.short.slice(0, 15).join(', ')})` + (press.errs.length ? ': ' + press.errs.slice(0, 5).join(' | ') : ''));
       assert(!bad.size, 'no party, companion, Bond, formation, roster, recruit, expedition, ally, Bench or partner-advice text on any screen' + (bad.size ? ': ' + [...bad].slice(0, 5).map(([t, w]) => `[${w}] ${t}`).join(' | ') : ''));
     } finally { await browser.close(); }
   }
@@ -10533,22 +10574,26 @@ if (section('fixed battle backgrounds')) try {
 } catch (e) { fail('backgrounds crashed: ' + (e.stack || e)); }
 
 if (section('C22 Thorn Imp (zone 1)')) try {
-  // The owner-approved Thorn Imp (art/enemies/thorn-imp/v1): the art is embedded byte for byte, zone 1's regular foe is the
-  // Imp, and in turn fights it alternates Briar Jab (1 hit) and Crosscut (2 hits, slow then fast), each hit its own parry.
+  // The Thorn Imp (art/enemies/thorn-imp/scenario-v1, Cal signed off 10 Oct 2026 19:44; tools/art/thorn-imp-s.py): the art is
+  // embedded byte for byte, zone 1's regular foe is the Imp, and in turn fights it alternates Briar Jab (1 hit) and Crosscut
+  // (2 hits, slow then fast), each hit its own parry, dashing in before each and out after.
   { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-foes.mjs'), '--check'], { encoding: 'utf8' });
     assert(r.status === 0, 'C22: src/js/21za-data-foeart.js is up to date with the approved packs (node tools/art/embed-foes.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
-  { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'approved-v2'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+  { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'scenario-v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
     const A = artData('21za-data-foeart.js', 'FOE_ART').imp;
     const frames = Object.values(A.acts).reduce((n, a) => n + a.f.length, 0);
     const bytes = Object.entries(A.atlases).every(([p, b64]) => b64 === fs.readFileSync(path.join(dir, p)).toString('base64'));
     const timing = Object.entries(man.actions).every(([id, a]) => A.acts[id] && a.frames.every((f, i) => A.acts[id].f[i][0] === f.duration_ms) &&
       JSON.stringify(A.acts[id].con) === JSON.stringify(a.contacts) && JSON.stringify(A.acts[id].rel) === JSON.stringify(a.release_cues));
-    assert(frames === 55 && Object.keys(A.acts).length === 7 && bytes && timing && A.acts.death.f[8][3] === -1,
-      `C22: the approved Thorn Imp pack (7 actions, ${frames} frames) is embedded with its atlases byte for byte, its timings, releases and contacts; death ends empty`); }
+    const srcs = Object.values(man.actions).flatMap(a => a.frames.map(f => f.source));
+    const webp = Object.values(A.atlases).every(b => { const x = Buffer.from(b, 'base64'); return x.toString('latin1', 0, 4) === 'RIFF' && x.toString('latin1', 8, 15) === 'WEBPVP8' && x[15] === 0x4C; });   // VP8L: lossless
+    assert(frames === 30 && Object.keys(A.acts).length === 8 && bytes && timing && A.fmt === 'webp' && A.k === 0.5 && webp && man.colours <= 64 &&
+      !srcs.includes('jab-2') && !srcs.includes('jab-7') && A.acts.dashIn && A.acts.dashOut && A.acts.death.fade > 0,
+      `C22: the Scenario Thorn Imp pack (8 actions, ${frames} frames, lossless WebP, ${man.colours} colours) is embedded with its atlases byte for byte, its timings and contacts; Briar Jab never shows Cal's rejected frames 2 and 7; it dashes in and out; death fades`); }
   { const g = loadCore({ seed: 1 }), E = s => g.eval(s);
     const w = JSON.parse(E('JSON.stringify(ZONE_FOES[1].moves.map(m => m.hits.map(h => h.wind)))'));
     assert(JSON.stringify(w) === '[[1.61],[1.61,1]]' && E('zoneFoeDeathS({ skin: "imp" })') === 2.31,
-      `C22: the Imp's parry windows close on the art's contact frames (hop 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death (${JSON.stringify(w)})`); }
+      `C22: the Imp's parry windows close on the art's contact frames (dash in 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death (${JSON.stringify(w)})`); }
   { // Gloomjaw (art/enemies/gloomjaw/approved-v1, owner-approved 2026-10-02): zone 2's monster
     const dir = path.join(ROOT, 'art', 'enemies', 'gloomjaw', 'approved-v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
     const G = artData('21za-data-foeart.js', 'FOE_ART').gloomjaw;
@@ -15999,7 +16044,7 @@ if (section('embed-base91')) try {
   for (const [fam, list] of Object.entries(R.icons)) list.forEach((u, i) => rows.push([`RES_ICONS.${fam}.${i + 1}`, u, art('resources', 'game-v1', `${fam}-${i + 1}.png`), PNG]));
   const P = artData('21yc-data-portraits.js', 'HERO_PORTRAITS');
   for (const [id, u] of Object.entries(P)) rows.push([`HERO_PORTRAITS.${id}`, u, art('portraits', id + '.png'), PNG]);
-  const FOE_DIR = { imp: 'enemies/thorn-imp/approved-v2', gloomjaw: 'enemies/gloomjaw/approved-v1' }, F = artData('21za-data-foeart.js', 'FOE_ART');
+  const FOE_DIR = { imp: 'enemies/thorn-imp/scenario-v1', gloomjaw: 'enemies/gloomjaw/approved-v1' }, F = artData('21za-data-foeart.js', 'FOE_ART');
   for (const [k, pk] of Object.entries(F)) for (const [p, u] of Object.entries(pk.atlases))
     rows.push([`FOE_ART.${k}.${p}`, u, FOE_DIR[k] ? art(...FOE_DIR[k].split('/'), p) : null, '']);
   const BG = artData('21zb-data-bgart.js', 'BG_ART'), BGF = { 'mossy-hollow-outlined-night-v1': ['backgrounds/mossy-hollow/outlined-night-v1/runtime/mossy-hollow-night-960x540.webp', 'backgrounds/mossy-hollow/outlined-night-v1/runtime/mossy-hollow-night-portrait-480x900.webp'] };
