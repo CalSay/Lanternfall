@@ -1,0 +1,18 @@
+# seed: 1
+# Proof for card craft-list-keeps-place: after you craft the Copper Pickaxe, the Craft list keeps its place. The boss line comes in
+# on Pine Bow (Next Up's next craft) a moment later; the card for the piece you just made stays on screen through it.
+# Fixture save-flow-cold-camp: a cold new game, fire lit, Workbench built, the Copper Pickaxe is the next job.
+#   pickaxe-card-kept.png   three seconds after the craft, "Copper Pickaxe on." is still on screen (upright it used to scroll to Pine Bow)
+# The in-place line is held by tools/check.mjs ("craft-odds-before-pay": the same Craft Pine Bow button before and after the line).
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap "Craft"
+wait 1
+tap "Craft Copper Pickaxe"
+wait 1
+expect "Copper Pickaxe on."
+wait 3
+expect "Copper Pickaxe on."
+shot pickaxe-card-kept
