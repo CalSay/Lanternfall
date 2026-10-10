@@ -38,7 +38,7 @@ This is the art inventory's name key for all 42 base abilities. A passive is equ
 | Tobin | Shield bash: T1 | New forward shield contact. Existing block is not a bash. |
 | Tobin | Plant: T3 | New rooted Iron Will stance, shield and sword both held. |
 | Tobin | Throw: T6 | New single-shield release and catch keys, a separately authored shield flight, and a defined return before guard resumes. |
-| Tobin | Shield raise: T8 | New high shield protection pose, held for Last Stand without hiding his face or sword. |
+| Tobin | Finisher slash and stand: T8 | New charge, big slash and planted sword for Last Stand's 180% hit, then a held stand for the 1 HP hold, face and sword visible. No shield raise. |
 | Pip | Small cast: C1, C2, P2 | Reuse wind-up and cast if grip and effect origins work; fire, frost and Kindle effects remain distinct. |
 | Pip | Big cast: P1, P5 | Reuse Fireball's broad cast where feasible; author separate fireball and Wildfire shapes. |
 | Pip | Lantern raise: C3, P6 | New offhand lift and lower. The lantern must be physically present in ready, cast and recovery states and in gear looks. Ember Heart (P7) is passive and adds no raise. |
@@ -90,7 +90,7 @@ The following are Hallowed treatments for the eight existing signatures per hero
 | T5 | Hammerfall | A compact falling blade arc and cracked impact mark show the spent Grit. |
 | T6 | Shield Throw | One gold-rimmed shield traces the out-and-back path; return and catch remain visible. |
 | T7 | Bulwark (passive) | No Hallowed combat visual or stance. The loadout icon alone shows the shared Hallowed halo; ordinary parry art stays unchanged. |
-| T8 | Last Stand | A steady white-gold shield edge marks the two-opportunity 1 HP floor. A wider parry cue and one accent on a completed all-parry counter show the reward; no automatic retaliation is pictured. |
+| T8 | Last Stand | A white-gold edge on the finishing slash marks the 180% hit; then a steady white-gold shield edge marks the two-opportunity 1 HP floor. A wider parry cue and one accent on a completed all-parry counter show the reward; no automatic retaliation is pictured. |
 | P1 | Fireball | A white-hot core within Pip's orange flame separates the direct hit from its Burn mark. |
 | P2 | Kindle | Two clear ember motes spiral toward the same flame, with no implied extra resource grant. |
 | P3 | Ignite | The target's existing Burn collapses into one bright contained detonation. |

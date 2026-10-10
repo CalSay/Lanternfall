@@ -532,7 +532,7 @@ His Grit damage reduction, HP, Speed (9) and Guard are unchanged, so his surviva
 at zone 38 he is still x1.4 on normal foes, and 4.4 turns a normal foe played casually (one set over the band of 4; his
 best set, Bash, Hammerfall and Heavy Strike, takes 4.0). Part of it is Last Stand: his finisher does no damage, while
 Wren's and Pip's do, so his late sets trail. A look at Last Stand (a Grit payoff, say) is the next lever, not more
-power across the board.
+power across the board. (Done 6 Oct, 3da451d3: Last Stand now hits for 180% power before its hold.)
 
 ### Boss pass (2 October 2026; owner: "make the bosses take longer and still hit hard")
 
