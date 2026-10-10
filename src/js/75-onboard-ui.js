@@ -417,10 +417,13 @@
     // staged-guide-followups: nor while a big card is up or on its way (the first boss's card came 1 s after the Scroll line and covered it)
     // tips-pause-says-so (F24): never while the hero is down (a wipe clears the foes, so the phase reads "between" at 0 HP); the line waits for
     // the next gap after the hero is back up
-    if (sayQ.length && O().tips && !document.hidden && heroUp() && guidePhase(!guideMenuCovers()) === 'between') {
+    // hesketh-boss-loss-line: except the boss-loss line, whose moment is the loss itself. A boss you lose to is fought again at once, foe first,
+    // so a hero back up never gets a gap: it comes once the Try again card is shut, while the hero is still down, and holds the recovery
+    const downOk = i => i === 'defeat';
+    if (sayQ.length && O().tips && !document.hidden && (heroUp() || sayQ.some(downOk)) && guidePhase(!guideMenuCovers()) === 'between') {
       // forge-line-while-fighting: a materials line that waits (SAY_WAIT) lets the lines behind it go first; a stale one is dropped at once
       for (const i of sayQ.slice()) if (STOCK_WHAT[i] && !SAY_STILL[i]()) { const c = sayCur; sayDone('say:' + i, false); if (c !== i) sayCur = c; }
-      const ready = i => !(SAY_WAIT[i] && SAY_WAIT[i]());
+      const ready = i => (heroUp() || downOk(i)) && !(SAY_WAIT[i] && SAY_WAIT[i]());
       const id = sayCur && sayQ.includes(sayCur) && ready(sayCur) ? sayCur : sayQ.find(ready) || '';
       if (sayCur && sayCur !== id) sayCur = '';
       if (!id) {}
@@ -447,8 +450,13 @@
     const stockSide = !!STOCK_WHAT[step.id] && isWide() && STOCK_TABS.includes(S.tab);
     // tips-pause-says-so: nothing shows or holds in the gap after a wipe (the hero is down), and a news line's hold ends once the fight leaves view
     // (Gather, an upright menu)
-    const gap = !stockSide && fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:')) && !onboardPaused(step) && !(cur && cur.id === step.id && gapHeld);
-    if (gap && (!heroUp() || !(step.ok || step.id.startsWith('use:')))) return hide();
+    // hesketh-boss-loss-line: that holds for a step that pauses too (the Hero tab's points): shown at 0 HP it froze the game with the hero down,
+    // so he never got up and the boss-loss line waiting on him never came
+    const between = !stockSide && fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:'));
+    const downSay = step.id.startsWith('say:') && downOk(step.id.slice(4));
+    if (between && !heroUp() && !downSay) return hide();
+    const gap = between && !onboardPaused(step) && !(cur && cur.id === step.id && gapHeld);
+    if (gap && ((!heroUp() && !downSay) || !(step.ok || step.id.startsWith('use:')))) return hide();
     gapHeld = gap || (gapHeld && !!cur && cur.id === step.id && (!step.id.startsWith('say:') || fightInView()));
     // first-gold-and-camp-strip: the first weapon is ready to make, so Craft opens on it once (only from the game screen, never out of another menu)
     if (step.id === 'weapon' && !weaponOpened && !S.tab) { const k = weaponKind(); if (k) { weaponOpened = true; S.fSlot = k; S.fTier = 1; forgeGoalPicks++; setTab('forge'); } }
