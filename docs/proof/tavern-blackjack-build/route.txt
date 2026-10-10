@@ -4,7 +4,7 @@
 # (browser)" (1280x720, 740x360, 360x740 with reduced motion, the 300 ms press guard) carry the rest.
 # seed: 1
 new mid
-wait 2
+wait 700
 tap-if "Got it"
 tap-if "Continue"
 tap-if "Skip"
