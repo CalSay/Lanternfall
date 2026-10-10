@@ -1,0 +1,1 @@
+The web build now opens on a title screen: the game's name, a bar that fills as the game downloads, and how much is left. It shows straight away, before the rest of the page. Best shot: loading-screen.

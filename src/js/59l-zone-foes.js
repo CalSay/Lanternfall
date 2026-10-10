@@ -93,7 +93,8 @@ function zoneFoeCycle(Z) {
 //                against its 3). key: the art key its pack will carry; until FOE_ART has it, the foe keeps its slot type's look.
 //     captain    { name, speed, look, extra }: the zone's monster, recoloured (look: the roster's marking, for its art card),
 //                its two moves then the extra one (the roster's Captain script 1, 2, 3)
-//     champion   { name, speed, armour, row, moves: [a, b, charge, c], phase: { i, move } }: below TURN_TUNE.bossPhaseAt it
+//     champion   { key, name, speed, armour, row, moves: [a, b, charge, c], phase: { i, move } } (key: its new-style art key,
+//                59n nsFoeKey): below TURN_TUNE.bossPhaseAt it
 //                plays phase.move in place of moves[i] (the roster's phase change; the damage stays)
 //   A hit is { wind, x, dt, ride, hold, feint } as in 24d. The roster's rhythm words: slow 1.1 to 1.2 s, then 1.0; fast and
 //   quick 0.6 (0.8 on a move's first hit); even 0.85; delayed adds a hold of 0.45 to 0.5 s, a long delay 0.6 to 0.7; a harmless
@@ -144,7 +145,7 @@ const ZONE_FOE_KITS = {
         { id: 'seedpulse', name: 'Seed Pulse', hits: [ZFH(0.85, 0.1, { dt: 'poison' }), ZFH(0.85, 0.1, { dt: 'poison' })] }] },
     captain: { name: 'Nightseed Hexarch', speed: 0.95, look: 'gold heart veins and black claw tips',
       extra: { id: 'germinate', name: 'Dark Germination', hits: [ZFH(1.0, 0.26, { dt: 'poison', ride: 'venom', hold: 0.5 })] } },
-    champion: { name: 'The Briar Regent', speed: 0.85, armour: 0.1, row: 'slime',
+    champion: { key: 'regent', name: 'The Briar Regent', speed: 0.85, armour: 0.1, row: 'slime',
       moves: [{ id: 'royalcut', name: 'Royal Cut', hits: [ZFH(1.0, 0.32, { hold: 0.5 })] },
         { id: 'court', name: 'Court of Thorns', hits: [ZFH(1.1, 0.1), ZFH(1.0, 0.1), ZFH(0.6, 0.1)] },
         { id: 'lance', name: 'Sovereign Lance', charge: true, hits: [ZFH(1.2, 0.28), ZFH(0.8, 0.28, { hold: 0.5 })] },
@@ -176,7 +177,7 @@ const ZONE_FOE_KITS = {
         { id: 'echofeint', name: 'Echo Feint', hits: [ZFF(0.8), ZFH(1.1, 0.12, { dt: 'holy' }), ZFH(0.6, 0.12, { dt: 'holy' })] }] },
     captain: { name: 'Echoblade Stillnote', speed: 1.05, look: 'ivory elbow spurs and three chest stripes',
       extra: { id: 'silentthird', name: 'Silent Third', hits: [ZFH(1.1, 0.1, { dt: 'holy' }), ZFH(1.0, 0.1, { dt: 'holy' }), ZFH(0.8, 0.1, { dt: 'holy', hold: 0.5 })] } },
-    champion: { name: 'The Hollow Cantor', speed: 0.95, armour: 0.05, row: 'zf-holy-frost',
+    champion: { key: 'cantor', name: 'The Hollow Cantor', speed: 0.95, armour: 0.05, row: 'zf-holy-frost',
       moves: [{ id: 'tuningfang', name: 'Tuning Fang', hits: [ZFH(1.2, 0.34)] },
         { id: 'threefold', name: 'Threefold Hymn', hits: [ZFH(1.1, 0.12, { dt: 'holy' }), ZFH(0.6, 0.12, { dt: 'holy' }), ZFH(0.8, 0.14, { dt: 'holy', hold: 0.5 })] },
         { id: 'unmaking', name: 'Unmaking Chord', charge: true, hits: [ZFH(1.2, 0.22, { dt: 'holy' }), ZFH(1.0, 0.22, { dt: 'holy' }), ZFH(0.6, 0.22, { dt: 'holy' })] },

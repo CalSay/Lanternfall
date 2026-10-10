@@ -23,11 +23,12 @@ var turnFoeInfo = () => null;   // the dock's Foe tab (75-solo-ui) reads this: {
   const foeFaces = new Map();
   const foeFace = f => {
     if (!f) return '';
-    const type = String(f.key || '').replace(/\d+$/, ''), k = type + '|' + (typeof zoneHue === 'function' ? zoneHue(S.zone) : 0);
+    const ns = typeof nsFoeSet === 'function' ? nsFoeSet(f) : null;   // a new-style screen draws its foe from its pack (64m)
+    const type = String(f.key || '').replace(/\d+$/, ''), k = (ns ? 'N' + ns.k : type) + '|' + (typeof zoneHue === 'function' ? zoneHue(S.zone) : 0);
     if (foeFaces.has(k)) return foeFaces.get(k);
     let url = '', pend = false;
     try {
-      const set = enemyFrames(type, { elder: false, hue: typeof zoneHue === 'function' ? zoneHue(S.zone) : 0 });
+      const set = ns || enemyFrames(type, { elder: false, hue: typeof zoneHue === 'function' ? zoneHue(S.zone) : 0 });
       const fr = set && set.idle0, src = fr && (fr.art || fr);
       pend = !!(src && src._pend);   // a pack frame still decoding (64j): try again next fight
       if (src && src.width) {

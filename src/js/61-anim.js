@@ -3,7 +3,7 @@
 // All positions are stage logical px (1 logical px = ZM CSS px, the stage zoom in 62-stage.js), which drives and draws these.
 //
 // Exposed: ANIM = { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts,
-//                   drawProj, drawRings, lightAt, glowAt, devView, glowView }
+//                   drawProj, drawRings, lightAt, glowAt, devView, glowView, hooks }
 
 const ANIM = (() => {
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
@@ -119,7 +119,7 @@ const ANIM = (() => {
     const p = projs[ji]; ji = (ji + 1) % NJ;
     if (p.on && p.hit) { const h = p.hit; p.hit = null; h(p.tx, p.ty); }
     p.on = true; p.kind = kind; p.sx = p.x = p.px = sx; p.sy = p.y = p.py = sy; p.tx = tx; p.ty = ty;
-    p.t = 0; p.dur = dur; p.col = col; p.rgb = rgbOf(col); p.arc = arc || 0; p.hit = hit || null; p.delay = delay || 0;
+    p.t = 0; p.dur = dur; p.col = col; p.rgb = rgbOf(col); p.arc = arc || 0; p.hit = hit || null; p.delay = delay || 0; p.own = 0;   // own: the hero's (62-stage)
     return p;
   }
 
@@ -192,12 +192,18 @@ const ANIM = (() => {
     }
     ctx.globalAlpha = 1;
   }
+  // hooks.arrowSprite(ctx, p, dx, dy) -> bool: draws an arrow or a falling arrow itself (64l: Wren's route S arrows)
+  const hooks = { arrowSprite: null };
   function drawProj(ctx) {
     for (const p of projs) {
       if (!p.on || p.delay > 0) continue;
       const x = p.x, y = p.y;
       if (p.kind === 'arrow' || p.kind === 'rain') {
         let dx = x - p.px, dy = y - p.py; const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d;
+        if (hooks.arrowSprite) {   // on its first frame the arrow has not moved yet: aim it at its target
+          const n = Math.hypot(p.tx - p.sx, p.ty - p.sy) || 1;
+          if (hooks.arrowSprite(ctx, p, d > 0.01 ? dx : (p.tx - p.sx) / n, d > 0.01 ? dy : (p.ty - p.sy) / n)) { ctx.globalAlpha = 1; continue; }
+        }
         const L = p.kind === 'rain' ? 13 : 8;
         ctx.globalAlpha = 1; ctx.lineWidth = p.kind === 'rain' ? 1.5 : 1; ctx.strokeStyle = '#E8DCC0';
         ctx.beginPath(); ctx.moveTo(x - dx * L, y - dy * L); ctx.lineTo(x, y); ctx.stroke();
@@ -227,5 +233,5 @@ const ANIM = (() => {
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }
 
-  return { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts, drawProj, drawRings, lightAt, glowAt, devView, glowView };
+  return { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts, drawProj, drawRings, lightAt, glowAt, devView, glowView, hooks };
 })();

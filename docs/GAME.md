@@ -79,6 +79,10 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Every zone fight is a turn fight** (`59k-turn.js`, UI `75-turn-ui.js`). The full rules are in
   [combat-turn-build.md](design/combat-turn-build.md). In short: one foe, a Speed timeline, Attack or one of three
   abilities on your turn, a parry or a dodge for every enemy hit, statuses, cooldowns in turns, no Auto.
+  **Hits land on impact** (Cal, 2026-10-10; damage-on-impact): a press starts the move at once and its damage, statuses and
+  cooldown land when the hit shows: the swing (0.14 s), then Wren's arrow (0.2 s), Pip's bolt (0.28 s) or Moonlit Volley's first
+  falling arrow; Tobin's blow at the swing (`fxImpactIn`, 62b). A foe's hit already landed on its contact frame. Scratch fights
+  (budget, odds, sim) land at once, so balance is unchanged.
 - **The fight screen is Stage and dock** (Cal, 2026-10-05; `75-solo-ui.js`, `75-turn-ui.js`). The stage shows the hero and
   foe, a turn banner and the timing bar along its bottom edge while a hit winds up. Under it, the dock has three tabs.
   **Act**: Attack and the three ability slots as tiles (D, Q, W, E), each with its name and "Ready", turns left or

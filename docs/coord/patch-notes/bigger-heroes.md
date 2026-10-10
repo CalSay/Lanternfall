@@ -1,0 +1,1 @@
+Heroes and foes are bigger. In a 1280x720 window Wren now stands more than half the height of the fight scene, drawn with crisp whole pixels. In a smaller browser window, such as 1024x768, she is three times the size she was. Phones on their side keep today's size. Best shot: fight-1280x720.
