@@ -40254,14 +40254,19 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
   for (const ev of ['abilityLearned', 'scrollDrop', 'soloEquip', 'soloHero', 'levelup']) on(ev, () => { sig = ''; try { refresh(); } catch (e) {} });
   // loadout-odds: the pump. The scratch fights for the line and the Learn order run here in slices of a few ms, never on a click;
   // when a batch is done the menus redraw once (the line, Next Up's Learn row, the cache pick). It works only while something that
-  // shows them could be on screen: this card, a moment card (the Lantern Cache pick), or a move to learn (Next Up's Learn row), so a
-  // set queued here does not keep fighting in the background after the menu closes.
+  // shows them is on screen: this card, a moment card's move pick (the Lantern Cache), or Next Up's Learn row, so a set queued here
+  // does not keep fighting in the background after the menu or the pick closes.
+  // learn-odds-pump-stops: the Learn row counts only where Next Up shows it live: the chip's top goal, or one of the three rows of the
+  // open Next Up list (the away card's rows are a snapshot). A move to learn alone no longer keeps the pump going; it starts again
+  // when the row shows (Next Up's label asks learnOdds every half second, which queues the sets).
   const PUMP = { sliceMs: 8, busyMs: 16, idleMs: 400 };
-  const pumpWanted = () => {
-    if (root && root.isConnected && root.getClientRects().length) return true;
-    if (document.querySelector('.mm-ov')) return true;
-    const k = soloHero(); return !!(k && typeof HERO_ABILITIES === 'object' && HERO_ABILITIES[k] && HERO_ABILITIES[k].some(id => !abLearnInfo(k, id).why));
+  const shows = e => !!(e && e.isConnected && e.getClientRects().length);
+  const learnShown = () => {
+    if (typeof topGoals !== 'function') return false;
+    const i = topGoals(3).findIndex(g => g.id === 'learn-ability'); if (i < 0) return false;
+    return (i === 0 && shows(document.getElementById('nuChip'))) || shows(document.querySelector('.nu-list'));
   };
+  const pumpWanted = () => shows(root) || !!document.querySelector('.mm-ov .mm-pick') || learnShown();
   const pump = () => {
     let busy = false, more = false;
     try { if (typeof loadoutPump === 'function' && !document.hidden && loadoutPump(0) && pumpWanted() && (busy = true)) { const t = performance.now(); do more = loadoutPump(1); while (more && performance.now() - t < PUMP.sliceMs); } } catch (e) { more = false; }
