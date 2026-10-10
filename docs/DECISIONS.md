@@ -160,6 +160,11 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   because casual players reach it on day 5 rather than day 15-27, right where the climb stalls. Spec:
   [heroes/oriel.md](design/heroes/oriel.md).
 
+- **Cal decided: Oriel's own abilities get plain star names (Cal, 2026-10-10 11:12: "Can you rename the abilities officially").**
+  Falling Star, Call It Down, Take a Bearing, Starbolt, Ill Omen, Shooting Star, Starfall and News Arrives. Codex's names (Falling
+  Letter, Pull the Reading, Clear Night, Bad News, Letters Unsent, Sliver's Hum) read as riddles; players should see what a move
+  does. Ids stay as they were, since saves, art and effects key on them. [heroes/oriel.md](design/heroes/oriel.md).
+
 ## Combat
 
 - **Turn-based, one enemy at a time.** Enemies are stronger to make up for it. No click-spamming. (2026-09-30)

@@ -17,30 +17,30 @@ Veil) and gated by her story scene at zone 116, Chapter 4 (`56c-unlocks.js:81` `
 
 ## 1. Her loop, and how she plays differently from Pip
 
-**Call a star, hold out until it lands, and bring it down early when the fight turns.** One star at a time: Falling Letter calls
+**Call a star, hold out until it lands, and bring it down early when the fight turns.** One star at a time: Falling Star calls
 it, and it lands after her next 2 turns for a big frost hit and a Stun. While it falls she builds Bearings with Attack and
 softens the foe with Chill and Weaken. When a boss starts gathering a charged move (which the game shows as it starts, never
-before: "No telegraph", DECISIONS, The hero), she can Pull the Reading and drop the star on it now.
+before: "No telegraph", DECISIONS, The hero), she can Call It Down and drop the star on it now.
 
 **Pip burns; Oriel stops.** Pip's damage comes over time: she sets a Burn, feeds it and cashes it in, and her defence is Arcane
 Ward. Oriel's damage comes late and in one piece, and her defence is taking the foe's turns away: the star's Stun, Freeze from
-Chill, Weaken and Pin from Bad News. Pip asks "is the fire still going?"; Oriel asks "is my star still up there, and is now the
+Chill, Weaken and Pin from Ill Omen. Pip asks "is the fire still going?"; Oriel asks "is my star still up there, and is now the
 moment to pull it down?". On a boss a Stun is a Stagger and a charge-breaker rather than a lost turn, so her boss play is
 reactive: keep a star falling, and spend it on the charge you can see.
 
 ## 2. Her resource: Bearings
 
 `HERO_RESOURCE.oriel = { name: 'Bearings', txt: 'Bearings: each Attack gives 1, up to 4. Your falling star hits harder for each one
-you hold when it lands. Sliver’s Hum spends them all for a big blast.' }`
+you hold when it lands. Starfall spends them all for a big blast.' }`
 
-- Attack gives 1 after contact (as Aim, Grit and Cinders). Take a Bearing gives 2. Clear Night gives 1 when no star is falling.
+- Attack gives 1 after contact (as Aim, Grit and Cinders). Take a Bearing gives 2. Starbolt gives 1 when no star is falling.
 - Cap 4 (`turnGain` caps every resource but Aim and Grit at 5 today: the build adds Bearings' cap). Resets every fight. The star
-  reads Bearings and does not spend them; only Sliver's Hum spends them.
+  reads Bearings and does not spend them; only Starfall spends them.
 - Spark keeps Pip's Cinder rider for Pip. For Oriel it gives nothing (no resource hook: Pip's text and numbers do not change).
 
 ## 3. The falling star (the rule the build adds to 59k)
 
-- **Falling Letter** queues one star: `h.fall = 2`. It counts down after each of Oriel's own completed actions (Attack or an
+- **Falling Star** queues one star: `h.fall = 2`. It counts down after each of Oriel's own completed actions (Attack or an
   ability; Parry and Dodge happen in the foe's turn and do not count). After the action that takes it to 0, the star lands.
 - **What the star reads, all at landing, nothing at cast:** ability power (level, Focus, gear) at that moment; base 220%, plus
   20% for each Bearing held then (added, not multiplied: at most 300%); one crit roll; type frost. **No one-action boost rides
@@ -50,7 +50,7 @@ you hold when it lands. Sliver’s Hum spends them all for a big blast.' }`
   charge breaks under the usual rules, rallies included. **When the control lock blocks the Stun** (a Stun or Freeze in the foe's
   last 3 turns), the star adds 1 Chill instead, and the countdown chip says "No Stun yet" while the lock holds, so the trade is
   visible.
-- **One star at a time.** While one falls, Falling Letter is not usable ("Your star is still falling."). A star still falling when
+- **One star at a time.** While one falls, Falling Star is not usable ("Your star is still falling."). A star still falling when
   the fight ends is lost.
 - **The chip** on the foe reads "Falls in 2", "Falls in 1" in the frost colour (Chilled blue). Text calls it "your star"; never
   "Star 2" (it would read as the Stars system, the Star Chart or the Chained Star).
@@ -74,31 +74,36 @@ Afterglow (C5, passive), Nova (C6). Spark stays a fire bolt for her too (the poo
 
 ### Her own 8
 
+**Display names (Cal, 10 Oct 11:12, "Can you rename the abilities officially"):** players see star names; the ids stay Codex's
+(they key saves, art and fx). `fallingletter` Falling Star, `pullreading` Call It Down, `bearing` Take a Bearing (kept),
+`clearnight` Starbolt, `badnews` Ill Omen, `letters` Shooting Star, `slivershum` Starfall, `newsarrives` News Arrives (kept).
+The shared caster moves and her damage type belong to `hero-themed-kits` (Cal 11:10: no intentionally shared abilities).
+
 | Code | Id | Name | Short | Kind | Tier | Power | CD | Type | Timed | Effect (desc) | Line |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| O1 | `fallingletter` | Falling Letter | Letter | damage | 0 (starter) | 2.2 | 4 | frost | no | Call down a star. It lands after your next 2 turns for 220% power, plus 20% for each Bearing you hold then, and Stuns the foe. One star at a time. | A star lands in 2 turns and Stuns. |
-| O2 | `pullreading` | Pull the Reading | Pull | damage | 2 | 1.0 | 3 | frost | no | If your star is falling, pull it down now at 80% of its power. It still Stuns. If not, a frost hit for 100% power. | Brings your star down now. |
+| O1 | `fallingletter` | Falling Star | Star | damage | 0 (starter) | 2.2 | 4 | frost | no | Call down a star. It lands after your next 2 turns for 220% power, plus 20% for each Bearing you hold then, and Stuns the foe. One star at a time. | A star lands in 2 turns and Stuns. |
+| O2 | `pullreading` | Call It Down | Call | damage | 2 | 1.0 | 3 | frost | no | If your star is falling, pull it down now at 80% of its power. It still Stuns. If not, a frost hit for 100% power. | Brings your star down now. |
 | O3 | `bearing` | Take a Bearing | Bearing | buff | 2 | 0 | 4 | frost | no | Gain 2 Bearings. Your next ability that hits directly hits 30% harder (not your star, even when you pull it down). | 2 Bearings. Next hit +30%. |
-| O4 | `clearnight` | Clear Night | Clear | damage | 3 | 1.4 | 3 | frost | yes | A star bolt for 140% power that adds 1 Chill. If no star is falling, gain 1 Bearing. | A bolt. Chill, and a Bearing. |
-| O5 | `badnews` | Bad News | News | debuff | 3 | 0.8 | 5 | frost | no | Read the foe its fate: 80% power, and it is Weakened for 2 turns (25% less damage). If your star is falling, it is also Pinned: its next attack is easier to read, and it slows. | Weakens. Pins while a star falls. |
-| O6 | `letters` | Letters Unsent | Letters | damage | 4 | 1.5 | 5 | frost | yes | A sweep of force for 150% power. If your star is falling, it falls 1 turn sooner (with 1 turn left, it lands after this). | Hurries your star. |
+| O4 | `clearnight` | Starbolt | Bolt | damage | 3 | 1.4 | 3 | frost | yes | A star bolt for 140% power that adds 1 Chill. If no star is falling, gain 1 Bearing. | A bolt. Chill, and a Bearing. |
+| O5 | `badnews` | Ill Omen | Omen | debuff | 3 | 0.8 | 5 | frost | no | Read the foe its fate: 80% power, and it is Weakened for 2 turns (25% less damage). If your star is falling, it is also Pinned: its next attack is easier to read, and it slows. | Weakens. Pins while a star falls. |
+| O6 | `letters` | Shooting Star | Shooting | damage | 4 | 1.5 | 5 | frost | yes | A sweep of force for 150% power. If your star is falling, it falls 1 turn sooner (with 1 turn left, it lands after this). | Hurries your star. |
 | O7 | `newsarrives` | News Arrives | Arrives | passive | 4 | 0 | 0 | frost | no | Passive. While your star is falling, your Attacks hit 25% harder. | Passive: Attacks hit harder while a star falls. |
-| O8 | `slivershum` | Sliver's Hum | Hum | finisher | 5 | 1.6 | 7 | frost | yes | Finisher, from your third turn. 160% power, plus 40% for each Bearing; uses them all. Needs 2 Bearings. | Spends all Bearings for a blast. |
+| O8 | `slivershum` | Starfall | Starfall | finisher | 5 | 1.6 | 7 | frost | yes | Finisher, from your third turn. 160% power, plus 40% for each Bearing; uses them all. Needs 2 Bearings. | Spends all Bearings for a blast. |
 
 Perfect presses (`ABILITY_PERFECT`): `clearnight: '1 more Chill'`, `letters: '1 Bearing'`, `slivershum: '2 Bearings come back'`
-(the refund lands after the spend, so a star landing after the Hum reads 2). With the shared Frost Shard that is 4 timed moves,
+(the refund lands after the spend, so a star landing after Starfall reads 2). With the shared Frost Shard that is 4 timed moves,
 as every hero has (DECISIONS, Abilities).
 
-Order inside one action, for the readers that care: the action's own hit and riders, then its resource gain or spend (Hum's
-spend, then its Perfect refund), then the countdown, then the star if it is due. So Sliver's Hum before a landing leaves the
+Order inside one action, for the readers that care: the action's own hit and riders, then its resource gain or spend (Starfall's
+spend, then its Perfect refund), then the countdown, then the star if it is due. So Starfall before a landing leaves the
 star at 0 to 2 Bearings: spending them first or letting the star read them is the player's call.
 
 Statuses she uses all exist: Stun, Chill (3 = Freeze), Weaken, Pin. Stun and Freeze share the control lock (section 3).
 
 Abilities screen groups (`HERO_PATHS.oriel`, 4/5/5 like Pip's):
-- **Falling Star:** fallingletter, pullreading, letters, newsarrives
+- **The Star:** fallingletter, pullreading, letters, newsarrives
 - **Clear Sky:** clearnight, frostshard, bearing, slivershum, spark
-- **Bad News:** badnews, hex, arcaneward, nova, afterglow
+- **Omens:** badnews, hex, arcaneward, nova, afterglow
 
 ### What changed from Codex's kit, and why
 
@@ -149,7 +154,7 @@ she joins; the quest card decides what burning it gives.
 - **Data the wire card sets:** `SOLO_HEROES.oriel = { key: 'oriel', base: 'mage', kit: 'lanternmage', weapon: 'Staff', role:
   'Caster', range: 'Ranged, frost', abs: ['fallingletter'], eq: ['fallingletter', null, null] }` (`heroHasKit` needs
   `CLASS_DEFS[base].kit === kit`, `56-roster.js:68`, and the mage's kit is `lanternmage`); `SOLO_ORDER` gains her; the route in
-  `56c-unlocks.js` joins on meet as the starters do. She arrives with Falling Letter and spends the lamp's spare Scrolls first, as
+  `56c-unlocks.js` joins on meet as the starters do. She arrives with Falling Star and spends the lamp's spare Scrolls first, as
   any joining hero does (DECISIONS, hero progression).
 - **Money:** she is earned in play. Whether later heroes are ever sold is Cal's call, not this card's.
 
@@ -159,31 +164,31 @@ She must land inside the band the other three set; she is not tuned to beat them
 own head, **with Wren, Tobin and Pip in the same run** (the W10 numbers predate the foe kits, #341, and Pip's corrected figure),
 arrival and kept-up footing (`tools/budget.mjs buildCore`), casual (parries 25%, dodges half the rest), good (60%, 90%) and
 never-defends players, 240 fights a cell, every fight its own seed, `almanac.force('none')`. Her slots on arrival are what a
-joining player has: Falling Letter plus the moves the lamp's spare Scrolls teach, from a walk save at zone 20.
+joining player has: Falling Star plus the moves the lamp's spare Scrolls teach, from a walk save at zone 20.
 
 1. **Where she plays:** the zone 20 Champion (her join fight is the next one), the zone 21-24 Captains, the zone 25 Champion,
    the zone 26-29 Captains, the zone 30 Champion, the zone 31-34 Captains and the Fenmother. Pass: casual inside the three starters' spread on each row, good 95-100, never-defends no
    higher than the highest starter.
 2. **Ordinary and elite fights** at zones 21-34 (bands: normal 90-100, elite 75-97, DECISIONS, Combat), and the **switch row**:
    swapped in for the hero who leaves, her normal fights stay within 10 points of theirs (DECISIONS, hero progression). Short
-   trash fights are where a 2-turn star is weakest: if she is under band there, tune Clear Night and News Arrives, not the star.
+   trash fights are where a 2-turn star is weakest: if she is under band there, tune Starbolt and News Arrives, not the star.
 3. **The W10 loadout table** (`autopilot/reports/why/W10-data/abilities.mjs`, every 3-move set in its best slot order) at the
    zone 20, 25 and 30 Champions: her best / median / worst sets inside the starters' range from the same run.
 4. **Her default slots** against her best set: the gap no wider than Pip's in the same run.
 5. **Gain cap pairs:** every pair of rules one hero can wear in one move stays under the boss-fight damage gain cap (+50%) and
-   never passes a rally gate in one move: Take a Bearing then Sliver's Hum with 4 Bearings; the star with 4 Bearings after Letters
-   Unsent; Pull at 80% after Take a Bearing (the boost must not reach it); Hum with Swift Tide (finisher from turn 1); and the Stars
+   never passes a rally gate in one move: Take a Bearing then Starfall with 4 Bearings; the star with 4 Bearings after Shooting
+   Star; Call It Down at 80% after Take a Bearing (the boost must not reach it); Starfall with Swift Tide (finisher from turn 1); and the Stars
    rules Ringing Blow, Dazed Prey, Snare and Shatterpoint against the star's Stun and Chill (`docs/lessons.md`, Combat).
-6. **The bot's policy** (the sampler casts the first ready move in slot order, which is wrong for her): never Falling Letter while a
-   star falls; Pull the Reading when a boss starts a charge with a star falling, or when the foe would die before the star lands;
-   Letters Unsent when the star has 2 turns left; Sliver's Hum at 4 Bearings or with no star falling. A test asserts each.
+6. **The bot's policy** (the sampler casts the first ready move in slot order, which is wrong for her): never Falling Star while a
+   star falls; Call It Down when a boss starts a charge with a star falling, or when the foe would die before the star lands;
+   Shooting Star when the star has 2 turns left; Starfall at 4 Bearings or with no star falling. A test asserts each.
 7. `node tools/health.mjs --compare` before and after: no change for Wren, Tobin and Pip.
 8. **The sampler matches the live fight:** the same seeded fight through `turnCombatSample` and through the live turn loop lands
    the star on the same turn, for the same damage and Stun. A test asserts it (the odds readouts come from the sampler, and the
    star is the first hit that lands in a second strike phase).
 
-Tuning order if she is out of band: Falling Letter's base power, then the star's per-Bearing bonus, then Sliver's Hum's
-per-Bearing power, then Clear Night and News Arrives for trash fights. Never the Stun, the one-star rule or the shared pool.
+Tuning order if she is out of band: Falling Star's base power, then the star's per-Bearing bonus, then Starfall's
+per-Bearing power, then Starbolt and News Arrives for trash fights. Never the Stun, the one-star rule or the shared pool.
 
 ## 7. Pose list for the art thread
 
@@ -236,7 +241,7 @@ reward (a quest card), Hallowed looks and her subclass.
 
 1. **The kit: approved as written.** Stun, Pin, Weaken and Chill are existing 59k states; 4 timed moves and one signature passive
    match DECISIONS; reading every star value at landing, with no one-action boost riding it, keeps the stored-damage lesson. "Burns
-   vs stops" is a real difference from Pip, and Pull the Reading trades a turn's damage for timing. The cuts are right, and every
+   vs stops" is a real difference from Pip, and Call It Down trades a turn's damage for timing. The cuts are right, and every
    kept move fits a drawn pose. Numbers stay starting values.
 2. **How she joins: (b), at the zone 20 Champion, not 25.** Casual players reach zone 20 on about day 5 and zone 25 on days 15 to
    27, so zone 20 meets them in the stall. The story cost is the same; the Chapter 4 reveal is untouched. (c) is out on Enchanting
