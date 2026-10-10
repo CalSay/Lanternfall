@@ -1,0 +1,1 @@
+Docs only: the art judge's ruling on Tobin's new art. His 21 fight moves go in once two pieces are redone and the game moves to its own hosting; his gathering follows after the woodcutting redo (docs/design/route-s/ruling-tobin.md). No player change. (no shot)
