@@ -1222,6 +1222,13 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   as drawn (a slash, then a stand) because the live ability hits for 180% since 6 Oct; `ability-art-brief.md` and
   `hero-abilities.md` still describe a shield-raise. The gather loops wire through route-s-tobin-gather after woodcut v5.
   (`docs/design/route-s/ruling-tobin.md`)
+- **Route S Tobin re-brief recheck (route-s-tobin-rebrief, Opus art judge, 2026-10-10; Cal can veto: "Keep the first cleave",
+  "Roll the cleave again"):** both of Tobin's sets now clear the re-brief hold and still wait on the split build. The thrown-shield views
+  v2 pass: no boss, the held shield's red, 3.0 KB at 62 px. No cleave roll kept the sword one size (v2 0.70-1.20 of idle-1, v3 0.63-1.39),
+  so the wire card plays cleave v2 frames 1, 2, 4, 6, 7, 8 (0.70-0.97, one +35% step) and the gate 12 clip judges it. Woodcut v6 passes
+  the impact (axe head at 0.68 of his height, edge into the trunk) and plays 1, 2, 3, 5, 6, 7, 8; the back shield hides behind his raised
+  arms in 2-3, accepted. Cal's checks pass on every new frame. Five sheets, 94 credits; Tobin's pack 740 of ~1,000.
+  (`docs/design/route-s/recheck-tobin.md`)
 - **Route S Pip (integrate-route-s-pip, Opus art judge, 2026-10-10; Cal can veto: "Wire Pip now", "Pull the new Pip", "Wait for
   all three heroes", "Pip as tall as Wren", "Skip the Pip rerolls", "No Hex sigil"):** wire Pip's 19 fight moves (Scenario key frames
   from her concept, 63 colours seeded with the concept's 12 swatches, 1-bit alpha, lossless WebP, at most 1,350 KB), with her fireball,
