@@ -88,7 +88,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -17617,6 +17617,111 @@ if (section('stage-no-swarm-shrink (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('stage-no-swarm-shrink crashed: ' + (e.stack || e)); }
+
+// ==== actor-scale (ruling #328, docs/design/route-s/ruling.md "Build card spec: actor-scale"): heroes, foes, bosses, adds, gather nodes
+// and beasts draw ACTOR_K = 1.5 times bigger against unchanged scenery on landscape stages at a whole-step zoom of 2 or more (G1). There
+// no actor's drawn box meets the HP plates, the place line, the turn line, the whose-turn banner, the Grit row, the boss strip or the
+// stage buttons, and the hero stands 16 stage px or more from the foe (G2). A crowd of foes (a pack, a boss with adds), a zoom-1 stage
+// (740x360) and portrait keep today's size (G2, G3, G4). save-late.json; the game held (ticks off, the turn engine paused) while each
+// scene is read; the banner is raised by its own event.
+if (section('actor-scale (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('actor-scale (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8')); save.last = Date.now();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the UI the actors must clear (G2): plates, place line, turn line and banner, Grit row, boss strip, stage buttons
+    const UI = '.hero-plate, .mob, .hud-zone, .tv-n, .tv-tc-face, .tv-tc-txt, .tv-hero, .cb-strip, .hud-btn, .sfx-btn';
+    const READ = `(() => { const R = LF_EYES.rects(), st = stageStats(), ui = [];
+      for (const e of document.querySelectorAll(${JSON.stringify(UI)})) { const b = e.getBoundingClientRect(), cs = getComputedStyle(e);
+        if (!b.width || !b.height || cs.visibility === 'hidden' || e.closest('[hidden]')) continue;
+        ui.push({ n: String(e.className).split(' ')[0], x: b.left, y: b.top, w: b.width, h: b.height }); }
+      return { R, ui, st: { ZM: st.ZM, AK: st.AK, ZA: st.ZA, foes: st.foes }, heroSt: st.heroSt, mob: mob && mob.key }; })()`;
+    const cross = (a, b) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
+    try {
+      for (const [w, h, dpr, ak] of [[1280, 720, 1, 1.5], [1366, 640, 1, 1.5], [1920, 1080, 1, 1.5], [740, 360, 2, 1], [360, 740, 2, 1]]) {
+        const tag = `${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false); for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();
+          globalThis.__spo = soloPickerOpen; globalThis.__hold = 0; soloPickerOpen = () => !!globalThis.__hold || __spo(); globalThis.__tp = 0; turnPaused = () => !!globalThis.__tp; UNIQ_TUNE.first = UNIQ_TUNE.again = 0; true`);
+        // set a scene up, let it settle, hold the game, then read it (the frames two reads apart must agree: the stage redraws a frame late)
+        const scene = async (src, settle) => {
+          await X(`globalThis.__hold = 0; globalThis.__tp = 0; ${src}; true`); await page.waitForTimeout(settle);
+          await X('globalThis.__hold = 1; globalThis.__tp = 1; true');
+          let r = null;
+          for (let i = 0, t0 = Date.now(); Date.now() - t0 < 8000; i++) {
+            await page.waitForTimeout(200); const a = await X(READ); await page.waitForTimeout(100); const b = await X(READ);
+            if (JSON.stringify(a.R.hero) === JSON.stringify(b.R.hero) && JSON.stringify(a.R.foes) === JSON.stringify(b.R.foes) && a.heroSt === 0) { r = b; break; }
+          }
+          return r;
+        };
+        const st0 = await X('JSON.stringify(stageStats())').then(JSON.parse);
+        assert(st0.AK === ak && st0.ZA === st0.ZM * ak, `${tag}: actors draw at x${ak} against the scenery (G1, G3, G4; AK ${st0.AK}, stage x${st0.ZM}, actors x${st0.ZA})`);
+        const fights = [
+          ['Wren, zone 1', 'soloPick("wren"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1)'],
+          ['Wren, Gloomjaw', 'soloPick("wren"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(2)'],
+          ['Tobin, Elder Moss Slime', 'soloPick("tobin"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(8); S.kills = ZONE_FIGHTS; challenge()'],
+          ['Tobin, zone 1', 'soloPick("tobin"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1)'],
+          ['Pip, zone 2', 'soloPick("pip"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(2)'],
+        ];
+        for (const [name, src] of fights) {
+          const r = await scene(src, 1200);
+          assert(!!(r && r.R.hero && r.R.foes.length === 1), `${tag} ${name}: the turn fight settles with the hero and one foe on the stage (${r ? JSON.stringify({ hero: !!r.R.hero, foes: r.R.foes.length }) : 'never settled'})`);
+          if (!r || !r.R.hero || !r.R.foes.length || ak === 1) continue;
+          const hero = r.R.hero, foe = r.R.foes[0], z = r.st.ZM;
+          assert(hero.h / r.st.ZA >= 85, `${tag} ${name}: the hero draws 1.5x (${Math.round(hero.h)} CSS px tall, ${Math.round(hero.h / r.st.ZA)} actor px)`);
+          const gap = (foe.x - hero.x - hero.w) / z;
+          assert(gap >= 16, `${tag} ${name}: the hero stands ${Math.round(gap)} stage px from the foe, 16 or more (G2)`);
+          // the banner, raised as a turn starts (the game is held, so it stays up)
+          await X('emit("turnCard", { who: "foe", secs: 4 }); true'); await page.waitForTimeout(250);
+          const b = await X(READ); await X('emit("turn", {}); true');
+          const hits = [];
+          for (const a of [Object.assign({ n: 'hero' }, b.R.hero), ...b.R.foes.map(f => Object.assign({ n: f.key }, f))]) for (const u of [...r.ui, ...b.ui]) if (cross(a, u)) hits.push(a.n + ' ~ ' + u.n);
+          assert(!hits.length, `${tag} ${name}: no hero or foe meets the plates, place line, turn line, turn banner, Grit row, boss strip or stage buttons (G2; ${[...new Set(hits)].join(', ') || 'none'})`);
+        }
+        // gathering: the hero and the node stay clear of the stage's UI
+        {
+          const r = await scene('setActivity("gather"); setNode("wood", 1)', 1200);
+          assert(!!(r && r.R.hero), `${tag} gathering: the hero stands at the Pine Grove`);
+          if (r && r.R.hero && ak > 1) { const hits = r.ui.filter(u => cross(r.R.hero, u)).map(u => u.n); assert(!hits.length, `${tag} gathering: the hero meets no stage UI (${hits.join(', ') || 'none'})`); }
+        }
+        // the scenery's lamp glows draw in the scenery's view: no glow leaves the canvas at another scale (61-anim glowAt's
+        // device copies set the view they were given; at 1.5 a lamp's light once switched the rest of the frame to the actors')
+        if (ak > 1) for (const [name, src] of [['the Pine Grove', null], ['zone 9', 'setActivity("fight"); fightBoss = false; setZone(9)']]) {
+          if (src) await scene(src, 1200);
+          const g = await X(`new Promise(res => { const o = ANIM.glowAt, seen = { n: 0, moved: 0 };
+            ANIM.glowAt = function (c, ...a) { const k0 = c.getTransform().a; o.call(this, c, ...a); seen.n++; if (Math.abs(c.getTransform().a - k0) > 1e-6) seen.moved++; };
+            setTimeout(() => { ANIM.glowAt = o; res(seen); }, 600); })`);
+          assert(g.n > 0 && g.moved === 0, `${tag} ${name}: the scenery's glows keep the scenery's scale (${g.moved} of ${g.n} changed it)`);
+        }
+        // a crowd (2 or more foes: a pack, a boss and its adds) keeps today's size, so its spacing is today's (G2: at 1.5 a pack of
+        // wide foes left no room for both a 15% overlap and the hero's 16 px). The real-time fight (turns off) stands them here.
+        if (ak > 1) for (const [name, src] of [
+          ['a pack of 3', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; COMBAT_TUNE.sizes = 0; COMBAT_TUNE.packSize = 3; setActivity("fight"); fightBoss = false; setZone(3)'],
+          // the Elder Moss Slime splits into two adds below half its HP (59b)
+          ['a boss with adds', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; setActivity("fight"); fightBoss = false; setZone(8); S.kills = ZONE_FIGHTS; challenge(); mob.max = 1e15; mob.hp = mob.max * 0.3; setTimeout(() => { for (const f of combatFoes()) f.hp = f.max = 1e15; }, 400)'],
+        ]) {
+          await X(`globalThis.__hold = 0; globalThis.__tp = 0; ${src}; true`); await page.waitForTimeout(2500);
+          const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, ZA: s.ZA, ZM: s.ZM }; })()');
+          assert(c.n >= 2 && c.AK === 1 && c.ZA === c.ZM, `${tag} ${name}: a crowd of foes draws at today's size (${JSON.stringify(c)})`);
+          await X('TURN_TUNE.on = true; COMBAT_TUNE.single = 1; COMBAT_TUNE.sizes = 1; COMBAT_TUNE.packSize = 3; fightBoss = false; setZone(1); true'); await page.waitForTimeout(1500);
+          const one = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK }; })()');
+          assert(one.n === 1 && one.AK === ak, `${tag} ${name}: the next one-foe fight is drawn 1.5x again (${JSON.stringify(one)})`);
+        }
+        assert(!errs.length, `${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('actor-scale crashed: ' + (e.stack || e)); }
 
 // ==== basic-attack-swings: in a turn fight a basic Attack plays the hero's swing (62-stage on 'soloAttack') ====
 // 59k emits only soloAttack for a basic Attack (no lunge or classTap), and the stage swung only on those, so the hero stood still.

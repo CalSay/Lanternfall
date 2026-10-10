@@ -482,19 +482,19 @@ const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1
     const ICON = new Map(), SIZES = [16, 24, 36, 48];
     function iconImg(id, n) { const key = id + n; let im = ICON.get(key); if (!im) { im = new Image(); im.src = STATUS_ICONS[id][n]; ICON.set(key, im); } return im.complete && im.naturalWidth ? im : null; }
     function drawDev(ctx) {
-      const t = now(), Kd = V.K, life = FX_TUNE.pops; let fi = 0, hi = 0;
-      const want = 20 * Kd; let n = SIZES[0]; for (const s of SIZES) if (Math.abs(s - want) < Math.abs(n - want)) n = s;
+      const t = now(), Kd = V.K, Ks = V.KS || Kd, life = FX_TUNE.pops; let fi = 0, hi = 0;   // Ks: the stage's scale (sizes stay today's when actors draw 1.5x)
+      const want = 20 * Ks; let n = SIZES[0]; for (const s of SIZES) if (Math.abs(s - want) < Math.abs(n - want)) n = s;
       for (const p of pops) {
         if (!p.on) continue; const d = t - p.at; if (d < 0) continue; if (d >= life) { p.on = false; continue; }
         const im = iconImg(p.id, n); if (!im) continue;
         const row = p.hero ? hi++ : fi++;
         // the foe's: by its chest on the hero's side; the hero's: over its head
         const lx = p.hero ? V.hfX - V.cam : tgt.x - V.cam - tgt.w * 0.5 - 14, ly = p.hero ? V.hfY - 104 : tgt.y - 4;
-        const X = Math.round((lx + V.sx) * Kd - n / 2), Y = Math.round((ly + V.sy) * Kd - n / 2 - row * (n + 14 * V.DPR) - (reduced ? 0 : Math.min(1, d / 0.25) * 6 * Kd));
+        const X = Math.round((lx + V.sx) * Kd - n / 2), Y = Math.round((ly + V.sy) * Kd - n / 2 - row * (n + 14 * V.DPR) - (reduced ? 0 : Math.min(1, d / 0.25) * 6 * Ks));
         const a = Math.min(1, d / 0.08, (life - d) / 0.3);
         if (d < 0.5 && !reduced) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6 * (1 - d / 0.5); const gr = n * 1.2; ctx.drawImage(A.glow(C[p.id] || C.pale), X + n / 2 - gr, Y + n / 2 - gr, gr * 2, gr * 2); ctx.globalCompositeOperation = 'source-over'; }
         ctx.globalAlpha = a; ctx.imageSmoothingEnabled = false; ctx.drawImage(im, X, Y); st.popN = im.naturalWidth; ctx.imageSmoothingEnabled = true;
-        const fz = Math.round(Math.max(11, 10 * Kd * 0.55) * 1.15);
+        const fz = Math.round(Math.max(11, 10 * Ks * 0.55) * 1.15);
         ctx.font = `700 ${fz}px "Handjet", "Arial Narrow", monospace`; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
         ctx.lineWidth = Math.max(2, Math.round(fz / 5)); ctx.strokeStyle = '#1E0A14'; ctx.strokeText(FX_NAME[p.id] || '', X + n / 2, Y + n + fz * 0.85);
         ctx.fillStyle = '#F3E7FF'; ctx.fillText(FX_NAME[p.id] || '', X + n / 2, Y + n + fz * 0.85);
