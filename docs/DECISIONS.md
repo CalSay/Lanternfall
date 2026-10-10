@@ -171,6 +171,11 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Weaken), Arcane Ward becomes Ashen Ward and Nova becomes Ring of Light (still holy), and Oriel gets six starlight moves of her
   own, with frost as her rules type. Live ids are kept, so no save breaks. Spec: [hero-kits.md](design/hero-kits.md).
 
+- **Cal decided: Oriel deals her own damage type, Starlight (Cal, 2026-10-10 13:07: "Yeah I think Oriel should have her own type
+  of damage"; this vetoes the frost pick above).** Starlight is a sixth type in night blue with a four-point star icon. Nothing in
+  Chapter 1 is weak to it or resists it, so no foe or boss changes and she is the hero to bring where the others are resisted.
+  [hero-kits.md](design/hero-kits.md) section 4.
+
 - **Claude decided: Saint Elowen joins after the Fenmother through her chapel quest, with a Candles kit (elowen-ability-spec, Opus
   judge 2026-10-10; Cal can veto with "Elowen joins at the Chained Star").** Her Attacks light Candles, up to 5. Holding 1 to 3
   makes her Attacks hit harder. Kindly Light, Cupped Flame and Give It Away give Candles away on their own; Swing the Lantern and
@@ -1293,6 +1298,16 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   Echo frame 2 with no string (the bow is hidden, and the frame never shows in turn fights). In the split build only her idle is at boot (new
   game 3.49 MB, zone 2 3.95 MB, no hero exception). The Foreman's rule: no hero-core judge, since at 10 Mbps her Attack is in about 3 s
   before a new player's first swing ("Loading Wren" never shows). Goes to Cal as a preview (gate 13).
+- **Route S Oriel (route-s-oriel-judge, Opus art judge, 2026-10-10; Cal can veto: "Skip the bad Oriel frames", "Code can draw Oriel's
+  axe", "Short staffs and spears are fine", "Oriel's hunt spear is fine"):** re-brief. The 11:02 redraw still has 6 third hands (spark 3, hex 4, nova 2, pullreading 7, letters 2;
+  probably nova 6), 7 body morphs (hex 4, nova 4, clearnight 5, letters 2, mining 3, victory 3, defeat 4) and 0 bendy staffs. A
+  pack-wide fault is bigger: the staff shrinks to a third or a half whenever she holds it level, and the hunting spear shrinks mid-thrust: 25 frames,
+  release frames included.
+  Wire as drawn: arcaneward, parry (skip 5), hit (skip 5), forage. Reroll 19 sheets with a prop-length line (about 114 credits,
+  only on Cal's word, through the Wren art thread), then a recheck; route-s-oriel-wire waits on it and on hero-themed-kits. A
+  game-placed axe counts as a minor detail only when the axe is an artist-drawn sprite that the game places and turns; it fixes the
+  axe, not her woodcut fists, which are re-briefed. Her whole pack is 1.40-1.67 MB at Wren's pack scale; only her idle boots, and only
+  when she is the save's hero. (`docs/design/route-s/ruling-oriel.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
