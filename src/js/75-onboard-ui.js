@@ -392,7 +392,7 @@
   const sceneComing = () => { try { return typeof storyBusy === 'function' && MOMENT_Q.some(m => m.kind === 'champion' && m.scene && storyBusy(m.scene)); } catch (e) { return false; } };
   const tickOwed = () => cachePending_() || sceneComing();   // something only the game tick can finish: no hold may stop the tick now
   const cardComing = () => cardUp() || tickOwed();
-  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); syncHeld(); }
+  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; if (txt.style.maxHeight) txt.style.maxHeight = ''; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn', 'guide-bar-off'); syncHeld(); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -400,6 +400,7 @@
   // brings it into sight. The band itself (60-onboard.css .ob-bub) stays CSS-docked.
   const panels = $('panels');
   let dirty = true, reveal = true, panelScrolled = false, lastTab = S.tab;
+  const shortSide = matchMedia('(min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px)');   // a phone on its side (80-landscape.css)
   function invalidate() { dirty = true; }
   function tick() {
     const dg = lastGT === null ? 0 : Math.max(0, GUIDE_RT.t - lastGT); lastGT = GUIDE_RT.t;   // game seconds since the last look
@@ -434,6 +435,9 @@
     // (staged-guide-followups: a landscape menu leaves the fight beside it, and the line spoke over it)
     if (!step && S.tab && (!fightInView() || guidePhase(true) === 'between')) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
+    // tips-hold-740: on a phone on its side a tip that is not up yet never opens on the foe's turn (its wind-up, or the wait for it); it waits
+    // for the turn to end. The fight lessons are exempt: Dodge and Parry are taught in that very window.
+    if (shortSide.matches && !LESSON_IDS.includes(step.id) && !(cur && cur.id === step.id && !layer.hidden) && /^(windup|foe)$/.test(guidePhase(!guideMenuCovers()))) return hide();
     const use = /^(use|say):/.test(step.id);
     // staged-guide-followups: a line that starts in the gap after a kill, with the fight in view, would show for under half a second before the
     // next foe walks in and hides it. A line you read (a Got it note, a first-use line) holds that gap until you tap it; a live-progress line
@@ -452,7 +456,7 @@
     // a first-use line has no target: it docks over the open menu with no ring, and pauses only to hold a gap between foes (gapHeld)
     try { spec = use ? { node: S.tab || step.id.startsWith('use:') ? panels : stageBox, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     // forge-line-while-fighting: the held materials line carries the live line's Go; beside a running fight the live line has none (a side
-    // button hides the fight buttons, 80-landscape.css .guide-btn)
+    // button would take the fight bar's tab row, 80-landscape.css .guide-btn)
     if (spec && use && STOCK_WHAT[step.id.slice(4)]) spec.go = stockGo(step.id.slice(4));
     if (spec && stockSide && fightingNow()) spec.go = null;
     if (!spec || !vis(spec.node)) return hide();
@@ -534,8 +538,30 @@
     const a = bub.getBoundingClientRect();
     return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
   };
+  // tips-hold-740: a side tip with a button ends above the bar's first row of fight buttons, so on a 740x360 phone it can only reach the
+  // bar's tab row (which hides under it, 80-landscape.css .guide-btn); its text scrolls if it runs longer. The five buttons stay in view
+  // and pressable, and a press there answers the tip and acts (the capture listeners above).
+  const BTN_GAP = 5;
+  // -> true: the tip fits above the buttons. A tip that starts too low for two lines there (the Next Up step, under a tall chip) keeps the
+  // old rule: the whole bar hides under it (.guide-bar-off), and a fight key still answers it.
+  function fitBub() {
+    const soloBar = solo(), side = bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden;
+    const row = side && soloBar && !soloBar.hidden ? soloBar.querySelector('.sb-pane') : null, rr = row && row.getBoundingClientRect();
+    let want = '', fits = true;
+    if (rr && rr.height) {
+      // the text's room: down to the buttons, less the rest of the tip (face, name, its button), in whole lines (scrollHeight: the tip's
+      // own height limit may already clip it)
+      const a = bub.getBoundingClientRect(), t = txt.getBoundingClientRect(), lh = parseFloat(getComputedStyle(txt).lineHeight) || 16;
+      const room = rr.top - BTN_GAP - a.top - (Math.max(a.height, bub.scrollHeight) - t.height);
+      if (room < 2 * lh) fits = false;
+      // (once fitted it stays fitted while the bar is there, so it never flips between the two heights)
+      else if (room < t.height + 1 || txt.style.maxHeight) want = Math.floor(room / lh) * lh + 'px';
+    }
+    if (txt.style.maxHeight !== want) txt.style.maxHeight = want;
+    return fits;
+  }
   // (every look, not only on a layout change: the bar shows under an unchanged tip when the hero goes from gathering to the fight)
-  const syncBtn = () => putToggle($('app'), 'guide-btn', bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden && meetsBar());
+  const syncBtn = () => { const fits = fitBub(), on = bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden && meetsBar(); putToggle($('app'), 'guide-btn', on); putToggle($('app'), 'guide-bar-off', on && !fits); };
   const resKept = new WeakSet();   // craft result cards the guide has already left in view once
   function place(spec) {
     const key = spec.text, newTarget = spec.node !== lastNode;

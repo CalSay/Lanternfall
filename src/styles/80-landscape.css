@@ -135,7 +135,8 @@
   .ob-bub.side .ob-ok { grid-column: 1 / 3; grid-row: 3; margin-top: 4px; justify-self: start; max-width: calc(100% - 6px); padding: 4px 12px; line-height: 1.15; text-align: left; overflow-wrap: break-word; }   /* a long Go ("Mine at the Copper Vein") wraps, never cut */
   .ob-bub.side.btn { grid-row: 2 / -1; max-height: calc(100% - 10px); }
   .ob-bub.side.nu.btn { grid-row: 3 / -1; align-self: start; margin-bottom: 0; }
-  .app.guide-btn .sbar { visibility: hidden; }
+  /* tips-hold-740: the tip ends above the fight buttons (75-onboard-ui fitBub), so only the bar's tab row hides under it */
+  .app.guide-btn .sbar .sb-tabs, .app.guide-bar-off .sbar { visibility: hidden; }
   .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .gate-rule { visibility: hidden; }
   /* the notices column is the guide's while it speaks, so a banner (a level, an ability, a craft, the hero's bark) moves to the foot of the
      stage, under the hero and foe, and the guide's marker and panel stay clear of it (hero-voice-banner-under-guide) */

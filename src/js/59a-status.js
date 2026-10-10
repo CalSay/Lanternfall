@@ -42,7 +42,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
   // ---------------- types ----------------
   // TX[key][dt]: the multiplier for each foe type key (from its family row), built once.
   const TX = {};
-  const rowFor = key => (typeof FOE_TYPE === 'object' && FOE_TYPE[key]) || null;
+  const rowFor = key => (typeof FOE_TYPE === 'object' && FOE_TYPE[key]) || (typeof ZONE_FOE_ROWS === 'object' && ZONE_FOE_ROWS[key]) || null;   // a zone monster's own row (59l)
   function txOf(key) {
     let t = TX[key];
     if (t) return t;

@@ -250,6 +250,13 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Region 5 is its own place** with its own look, not the Deepwell continued. The Deepwell must still tie into the
   story. The Voice's reveal speaks of darkness enduring. (2026-09-28)
 - **Random events and secrets** at launch. (2026-09-28)
+- **The first hour's foe kits are fight data, off until each area's wire card** (ns-foe-kits-z1-10, 2026-10-10). The
+  roster's zone 3-10 monsters, zone 1-10 Captains and the Briar Regent and Hollow Cantor are in `59l` behind
+  `ZONE_FOE_TUNE.on` (Mossy Hollow, Batwing Caves). Switched on, each is held to the fight it replaces (today's damage and
+  fight length, then a per-zone fit on the first-hour budget rows), because the roster's raw numbers play much easier
+  (fewer hits a move, more full-parry counters). Open for `ns-a2-wire`: a kept-up hero who never defends beats the zone 8
+  Captain 15-100% (band under 10%). Proof: `docs/proof/ns-foe-kits-z1-10/report.md`. Cal can veto with "Play the roster's
+  raw numbers" (`parity: 0`).
 
 ## Gathering, gatherers and the camp
 
@@ -1371,6 +1378,13 @@ nothing; no economy or save change. A cache with a pick is a big card.
   per-pack ceilings stay; pack-code is parked until Cal decides the live artifact's future; saves move between addresses only
   by save code. The live artifact's future and what the web build carries versus the paid build stay Cal's (options in
   `docs/design/hosting.md` 7.4 and 7.5). Ruling: project files `autopilot/rulings/2026-10-09-hosting.md`.
+- **Load lines under B2 (art-loader judge 2026-10-10; Cal can veto: "let the boot set go to 4.5"):** the boot set (page + boot
+  files + the zone's packs, Brotli 4) warns above 3.5 and fails above 4.0 MB for a new game and for the worst zone; Mossy Hollow
+  counts at its landscape shape only (portrait share capped at 0.70 MB) until bg-pack-by-shape; a cold load at 10 Mbps is
+  game-ready within 6.0 s (median of 3); a zone's packs at most 0.65 MB and an area's new packs at most 1.0 MB, with area 1's imp
+  (0.39), Gloomjaw (0.85) and Mossy Hollow (1.45) named exceptions until ns-a1-wire; B1's 6.0/8.0 first-load lines become a
+  report for the split build; per-hero packs (core moves at boot) are a follow-up card that the route S wire cards depend on.
+  Record: `docs/design/hosting/art-loader-judge.md`.
 
 ## Replaced decisions
 

@@ -1,0 +1,1 @@
+No change to the game. The new monsters, Captains and Champions for zones 1 to 10 are now in the game's data, switched off. Each area turns on when its new art lands, and the fights are tuned to play as hard as today's.

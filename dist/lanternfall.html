@@ -3838,7 +3838,8 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .ob-bub.side .ob-ok { grid-column: 1 / 3; grid-row: 3; margin-top: 4px; justify-self: start; max-width: calc(100% - 6px); padding: 4px 12px; line-height: 1.15; text-align: left; overflow-wrap: break-word; }   /* a long Go ("Mine at the Copper Vein") wraps, never cut */
   .ob-bub.side.btn { grid-row: 2 / -1; max-height: calc(100% - 10px); }
   .ob-bub.side.nu.btn { grid-row: 3 / -1; align-self: start; margin-bottom: 0; }
-  .app.guide-btn .sbar { visibility: hidden; }
+  /* tips-hold-740: the tip ends above the fight buttons (75-onboard-ui fitBub), so only the bar's tab row hides under it */
+  .app.guide-btn .sbar .sb-tabs, .app.guide-bar-off .sbar { visibility: hidden; }
   .app.guide-side:not(.guide-nu) .nu-slot, .app.guide-side .gate-rule { visibility: hidden; }
   /* the notices column is the guide's while it speaks, so a banner (a level, an ability, a craft, the hero's bark) moves to the foot of the
      stage, under the hero and foe, and the guide's marker and panel stay clear of it (hero-voice-banner-under-guide) */
@@ -13038,7 +13039,7 @@ function bossTryLost(m) {
   L.left = f.max > 0 ? Math.max(0, f.hp) / f.max : -1;
   if (fin.dot) L.dot = true;
   else if (fin.id) { L.move = fin.name; L.hit = fin.hit + 1; L.hits = fin.hits; L.charged = !!fin.charged; L.defended = !!fin.defended; }
-  const ft = typeof FOE_TYPE === 'object' ? FOE_TYPE[f.txRow || f.type] : null;
+  const ft = (typeof FOE_TYPE === 'object' && FOE_TYPE[f.txRow || f.type]) || (typeof ZONE_FOE_ROWS === 'object' && ZONE_FOE_ROWS[f.txRow]) || null;
   if (ft) { L.weak = ft.weak || ''; L.res = (ft.res || []).slice(); }
   // reveal one more move: the one that beat you, else the next unknown one in its order
   const all = bossTryMoves(f.tk && f.tk.script), have = b.rev[key] || (b.rev[key] = []);
@@ -24553,7 +24554,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
   // ---------------- types ----------------
   // TX[key][dt]: the multiplier for each foe type key (from its family row), built once.
   const TX = {};
-  const rowFor = key => (typeof FOE_TYPE === 'object' && FOE_TYPE[key]) || null;
+  const rowFor = key => (typeof FOE_TYPE === 'object' && FOE_TYPE[key]) || (typeof ZONE_FOE_ROWS === 'object' && ZONE_FOE_ROWS[key]) || null;   // a zone monster's own row (59l)
   function txOf(key) {
     let t = TX[key];
     if (t) return t;
@@ -25099,7 +25100,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     return false;
   };
   onFoeDeath = (f, src, kind) => {
-    if (E.reassemble > 0 && f.type === 'bones' && !f.again && !f.boss && kind !== 'magic' && kind !== 'burn' && !(quotas() && PK.rise >= q('bones', 'rise', 2))) {
+    if (E.reassemble > 0 && f.type === 'bones' && !f.again && !f.boss && !f.skin && kind !== 'magic' && kind !== 'burn' && !(quotas() && PK.rise >= q('bones', 'rise', 2))) {
       f.again = true; f.hp = f.max * E.reassemble; f.hit = 0.2; PK.rise++;   // S6-A: the first 2 that fall get up
       emit('foeGetUp', { name: f.name, hp: f.hp, key: f.type });   // foe-tricks-say-so: the stage and the Foe tab say so (75-turn-ui, 55-mastery)
       return true;
@@ -27675,7 +27676,7 @@ function turnFoeSetup(f, z, o) {
   o = o || {};
   const T = TURN_TUNE, Z = !f.boss && typeof zoneFoeOf === 'function' ? zoneFoeOf(f) : null;
   const region = !!(f.boss && !o.set && typeof isRegionBoss === 'function' && isRegionBoss(z));
-  let moves, script, spd, hpA;
+  let moves, script, spd, hpA, bk = null;
   if (f.boss) {
     const kit = !o.set && typeof kitOf === 'function' ? kitOf(f) : null, id = o.set || (region ? (regionIdx(z) === 0 ? 'fenmother' : '') : f.type);
     const set = TURN_BOSS_SETS[id] || TURN_BOSS_BASIC;
@@ -27683,6 +27684,10 @@ function turnFoeSetup(f, z, o) {
     if (T.tricks.on && !o.set && !region && z >= T.tricks.from && z <= T.tricks.to && TURN_BOSS_TRICKS[id]) script = moves = turnTrickScript(TURN_BOSS_TRICKS[id], z);   // the Captain and Champion sets (boss-tiers-pr4)
     spd = region ? TURN_FOE_SPEED.region : TURN_FOE_SPEED.boss; hpA = region ? TURN_FOE_HP.region : TURN_FOE_HP.boss;
     if (kit) f.name = kit.name;
+    // the zone's Captain or Champion (59l ZONE_FOE_KITS, while its area is on): its own moves, Speed, armour and weakness row, held to
+    // today's damage a turn and fight length (ZONE_FOE_TUNE.parity), on the same boss line, gates and floors as the boss it replaces
+    bk = !o.set && !region && typeof zoneFoeBoss === 'function' ? zoneFoeBoss(z, script, spd * 10, f.armoured ? 0.3 : 0) : null;
+    if (bk) { script = moves = bk.script; spd = bk.spd / 10; f.name = bk.name; if (bk.row) f.txRow = bk.row; }
   } else if (Z) {
     moves = Z.moves; script = Z.moves; spd = Z.speed || TURN_FOE_SPEED.normal; hpA = Z.hp || TURN_FOE_HP.zoneFoe;
   } else {
@@ -27705,9 +27710,9 @@ function turnFoeSetup(f, z, o) {
   const champ = zb && !region && bossTierOf(z) === 'champion';   // a Champion's HP and hits sit on the Captain line x its own table
   const len = zb ? (region ? B.regionHpX : turnZoneLine(B.hpX, z) * (champ ? turnZoneLine(B.champHpX, z) : 1)) : 1;
   const roll = 0.95 + Math.random() * 0.1;   // drawn for every foe so seeded sims keep their sequence
-  const hp = hpA * ease * len * turnRefAtk(z) * (f.boss ? 1 : roll);   // a boss keeps one HP across tries; the roll is for packs
+  const hp = hpA * ease * len * turnRefAtk(z) * (f.boss ? 1 : roll) * (bk ? bk.hpK : 1);   // a boss keeps one HP across tries; the roll is for packs
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
-  f.tk = { script, spd: spd * 10, arm: Z && Z.armour ? Z.armour : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
+  f.tk = { script, script2: bk && bk.script2 || null, kd: bk ? bk.kd : null, spd: spd * 10, arm: bk ? bk.arm : Z ? Z.armour || 0 : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
     hx: zb ? turnZoneLine(B.hitX, z) * (champ ? turnZoneLine(B.champHitX, z) : 1) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
     zb: zb && !region,   // a zone boss (not a region boss, the Deepwell or a Proving): the hero's own boss-hit share (boss.heroHitX) applies
     hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0, rx: zb && !region && B.riderX ? turnZoneLine(B.riderX, z) : 1, dcap: zb && !region && B.dotCap ? turnZoneLine(B.dotCap, z) : 0, hfl: zb && !region && B.hpFloor ? turnZoneLine(B.hpFloor, z) : 0,
@@ -27787,12 +27792,13 @@ function turnMakeProfile(f, u) {
     critChance: critChance(), critMult: critMult(), nonCrit: mod('nonCrit'), echo: g.echo || 0,
     hitX: Math.max(T.foeAtkX * (1 - armRed) * classDr, f.tk.pmin || 0), bossHeroX: f.tk.zb ? turnHeroHitX(key, z) : 1, blockP: u.blockP || 0, blockC: u.blockC || 0, blockN: u.blockN || 0, blockX: COMBAT_TUNE.blockX,
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
-    bossHitX: f.tk.hx || 1, bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: f.tk.hfl || 0, bossRiderX: f.tk.rx || 1, bossDotCap: f.tk.dcap || 0,
+    // kd: a boss kit's own damage for this hero (59l ZONE_FOE_TUNE.fit), on its own line and its hpFloor alike, as if its hits were that much bigger
+    bossHitX: (f.tk.hx || 1) * (f.tk.kd && f.tk.kd[key] || 1), bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: (f.tk.hfl || 0) * (f.tk.kd && f.tk.kd[key] || 1), bossRiderX: f.tk.rx || 1, bossDotCap: f.tk.dcap || 0,
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
     gates: f.tk.gates || null, fullHp: !!((f.boss || TURN_TUNE.normalFull) && !f.deep && !f.trial),   // the boss pass; every zone fight is met at full health (normalFull)
     zb: !!f.tk.zb, uq: typeof uniqRulesWorn === 'function' ? uniqRulesWorn() : [],   // uniques-first-four: a zone boss; the worn uniques' rules (none while UNIQ_TUNE.on is 0)
     foeName: f.name, foeType: f.txRow || f.type, foeArm: f.tk.arm, boss: f.tk.boss, region: f.tk.region, trait: f.tr && TURN_TRAITS[f.tr[0]] ? f.tr[0] : '',
-    script: f.tk.script, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
+    script: f.tk.script, script2: f.tk.script2 || null, skin: !!f.skin, eq, cds, tal: typeof talentsOf === 'function' ? talentsOf(key) : {},
     stars: typeof starsActive === 'function' ? starsActive(key) : [], starSet: typeof starsSetIds === 'function' ? starsSetIds(key) : [],   // the Stars (57e)
     parryWindow: Math.min(T.windowCaps.parry, (SOLO_TUNE.turnParryWindow + (g.parryWindow || 0) / 1000 + bonus('turnParryWin') + attrParryMs()) * turnAssistX()),
     dodgeWindow: Math.min(T.windowCaps.dodge, (SOLO_TUNE.turnDodgeWindow + (g.dodgeWindow || 0) / 1000 + T.dodgeTrain * trainLv('dodge') + bonus('turnDodgeWin')) * turnAssistX()),
@@ -28288,7 +28294,8 @@ function turnBegin(m, who, io) {
   let mv;
   if (m.charge) { mv = m.charge.mv; m.charge = null; }
   else {
-    mv = m.p.script[m.si++ % m.p.script.length];
+    const sc = m.phase2 && m.p.script2 ? m.p.script2 : m.p.script;   // a Champion kit's phase two (59l)
+    mv = sc[m.si++ % sc.length];
     if (mv.charge) {   // it gathers its strength: no damage this turn; it lets go on its next turn
       m.charge = { mv, dmg: 0, heroSince: 0 };
       io.emit('turn', { who, n: m.n });
@@ -28693,7 +28700,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, skill = { parry: 0.5,
   // the Rattlebones get-up, as the live loop's 59b onFoeDeath (wren-z9-10-foes): an ordinary bones foe that falls gets up once a fight
   // at ENEMY_TUNE.reassemble of its HP, unless a Burn tick (or magic) killed it; never a boss (an elite does). A turn fight is its own
   // pack, so the pack's quota of 2 never binds. Draws no random number, so every other roll stays on its stream.
-  const rise = (p.foeType === 'bones' && !p.boss && typeof ENEMY_TUNE === 'object' && ENEMY_TUNE.reassemble) || 0;
+  const rise = (p.foeType === 'bones' && !p.boss && !p.skin && typeof ENEMY_TUNE === 'object' && ENEMY_TUNE.reassemble) || 0;
   const io = { random: roll, emit: () => {}, alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), foeHp: () => Math.max(0, foeHp),
     heroHp: () => heroHp, slotId: i => p.eq[i] || null,
     damageFoe: (d, kind) => { foeHp -= d; out.damageDone += d;
@@ -28796,8 +28803,10 @@ for (const z in ZONE_FOES) for (const m of ZONE_FOES[z].moves) if (m.anim) zoneF
 function zoneFoeSkin(f, z) {
   const Z = ZONE_FOES[z];
   if (!f || !Z || f.boss || f.elite) return f;
-  f.skin = Z.key; f.key = Z.key + zoneCycle(z); f.name = Z.name;
+  f.skin = Z.key; f.name = Z.name;
+  if (!Z.kit || (typeof FOE_ART === 'object' && FOE_ART[Z.key])) f.key = Z.key + zoneCycle(z);   // a kit with no pack yet keeps its slot type's look
   if (Z.row) f.txRow = Z.row;   // (f.row is its lane)
+  if (Z.kit) f.armoured = Z.armour > 0;   // a kit's own armour, not its slot type's (59-combat, legacy fights)
   const cyc = zoneFoeCycle(Z);
   if (cyc > 0 && f.spd > 0 && 1 / f.spd < cyc) { const k = cyc * f.spd; f.spd /= k; f.atk *= k; }
   return f;
@@ -28828,6 +28837,179 @@ function zoneFoeCycle(Z) {
   for (let i = 0; i < L.length; i++) c = Math.max(c, L[i].tail + L[(i + 1) % L.length].lead);
   return c / 1000;
 }
+
+// ---------------- the first hour's foe kits (card ns-foe-kits-z1-10; docs/design/new-style/plan.md 4.1 and 8.1) ----------------
+// The roster's (enemies-c22-hollow-final.md) zone 3-10 monsters, the zone 1-10 Shadowborn Captains and the two Champions, as
+// fight data. Each area stays off (ZONE_FOE_TUNE.on, by area: 0 Mossy Hollow, zones 1-5; 1 Batwing Caves, zones 6-10) until its
+// wire card brings its art; off, the game plays exactly as before. zoneFoeArea(a, on) turns one on or off at runtime (tests).
+//   ZONE_FOE_KITS[z]   { monster, captain, champion }, any of them
+//     monster    a ZONE_FOES row (above) plus hp: its roster HP in ordinary actions (the game's are hpX longer, the Imp's 4
+//                against its 3). key: the art key its pack will carry; until FOE_ART has it, the foe keeps its slot type's look.
+//     captain    { name, speed, look, extra }: the zone's monster, recoloured (look: the roster's marking, for its art card),
+//                its two moves then the extra one (the roster's Captain script 1, 2, 3)
+//     champion   { name, speed, armour, row, moves: [a, b, charge, c], phase: { i, move } }: below TURN_TUNE.bossPhaseAt it
+//                plays phase.move in place of moves[i] (the roster's phase change; the damage stays)
+//   A hit is { wind, x, dt, ride, hold, feint } as in 24d. The roster's rhythm words: slow 1.1 to 1.2 s, then 1.0; fast and
+//   quick 0.6 (0.8 on a move's first hit); even 0.85; delayed adds a hold of 0.45 to 0.5 s, a long delay 0.6 to 0.7; a harmless
+//   lift or pulse is a feint. A move plays the tricks only where today's zone bosses do (zoneFoeShape): an ordinary monster
+//   never holds or feints (a hold joins its wind); a Captain or Champion holds from TURN_TUNE.tricks.from and feints from
+//   tricks.feintFrom. A feint that is not played adds 0.4 s to the next hit, as a hold where holds play, else as wind (the
+//   lift still shows, it just cannot fool you).
+//   ZONE_FOE_ROWS      weakness rows the foe types lack (59a txOf reads them by txRow): fire / frost, holy / frost
+//   ZONE_FOE_TUNE      on: by area. parity: 1 holds each kit to the damage a turn and the length of the fight it replaces
+//                      (the roster's numbers are "design targets ... need joint calibration"): a monster to its slot type's
+//                      moves, a Captain or Champion to today's zone boss script, so the fitted boss knots and the difficulty
+//                      budget stay where they are; 0 plays the roster's numbers raw. hpX: roster actions -> reference Attacks.
+//   zoneFoeBoss(z, script, spd, arm) -> { name, script, script2, spd, arm, row, tier } or null   (59k turnFoeSetup: a zone
+//                      boss's Captain or Champion kit, given today's script, Speed and armour for parity)
+// A zone whose boss is a Champion (zones 5 and 10, 40-rules bossTierOf) keeps its Captain in ZONE_FOE_KITS only: the game has
+// no Captain fight there yet, so ZONE_FOES[z].captain (and its story banner, 55-story) stays unset.
+const ZONE_FOE_TUNE = { on: [0, 0], parity: 1, hpX: 4 / 3,
+  // fit[z] = [HP, Wren's damage, Tobin's, Pip's] on top of a boss kit's parity, fitted on the budget's first-hour rows (tools/budget.mjs;
+  // docs/proof/ns-foe-kits-z1-10/report.md): HP holds the played-well fight length (a kit's one- to three-hit moves are parried in full
+  // more often than today's trick strings, and a full parry earns a counter), each hero's damage holds that hero's casual win rate, so the
+  // heroes' spread stays as today's. Zones 2 to 4 sit at 100% either way and keep damage parity; zone 2 has no row and takes zone 1's
+  // length; zone 4 is held to its rally gates (no HP brings its turns back) and takes zone 6's length.
+  fit: { 1: [1.13, 0.67, 1, 1], 2: [1.13, 1, 1, 1], 3: [0.92, 1, 1, 1], 4: [2.34, 1, 1, 1], 5: [1, 0.93, 1.33, 0.88], 6: [1.73, 0.66, 0.77, 0.59],
+    7: [1.8, 0.94, 1.17, 0.96], 8: [1.64, 0.8, 0.97, 0.75], 9: [1.79, 0.8, 1.28, 0.95], 10: [1, 1.25, 1.16, 1.38] } };
+const ZONE_FOE_ROWS = {
+  'zf-fire-frost': { region: 'hollow', weak: 'fire', res: ['frost'] },
+  'zf-holy-frost': { region: 'hollow', weak: 'holy', res: ['frost'] }
+};
+const ZFH = (wind, x, o) => Object.assign({ wind, x }, o);
+const ZFF = wind => ({ wind, x: 0, feint: true });
+const ZONE_FOE_KITS = {
+  1: { captain: { name: 'Crownthorn Imp', speed: 0.95, look: 'ivory mask and crimson blade edges',
+    extra: { id: 'royalrip', name: 'Royal Rip', hits: [ZFH(1.1, 0.08), ZFH(1.0, 0.08), ZFH(0.6, 0.08)] } } },
+  2: { captain: { name: 'Gloomjaw Lightgorged', speed: 0.85, look: 'pale jaw plates and a double throat ring',
+    extra: { id: 'volley', name: 'Gorged Volley', ranged: true, hits: [ZFH(1.2, 0.13, { dt: 'holy' }), ZFH(0.8, 0.13, { dt: 'holy', hold: 0.5 })] } } },
+  3: { monster: { key: 'ravager', name: 'Briarbound Ravager', speed: 0.75, armour: 0.1, row: 'slime', hp: 3,
+      moves: [{ id: 'cleaver', name: 'Cleaver Drop', hits: [ZFH(1.0, 0.23, { hold: 0.45 })] },
+        { id: 'backhand', name: 'Thorn Backhand', hits: [ZFH(1.2, 0.1), ZFH(0.6, 0.1)] }] },
+    captain: { name: 'Briarbound Headsman', speed: 0.8, look: 'white armour seams and a red cleaver tip',
+      extra: { id: 'sentence', name: 'Sentence', hits: [ZFF(0.8), ZFF(0.6), ZFH(1.0, 0.28, { hold: 0.6 })] } } },
+  4: { monster: { key: 'thornwing', name: 'Thornwing', speed: 1.1, armour: 0, row: 'zf-fire-frost', hp: 3,
+      moves: [{ id: 'needle', name: 'Wing Needle', hits: [ZFH(1.0, 0.2)] },
+        { id: 'scissor', name: 'Scissor Flight', hits: [ZFH(0.8, 0.1), ZFH(0.6, 0.1, { hold: 0.45 })] }] },
+    captain: { name: 'Thornwing Razorcrown', speed: 1.15, look: 'bone-white wing margins and a split face mark',
+      extra: { id: 'triple', name: 'Triple Scissor', hits: [ZFH(0.8, 0.08), ZFH(1.0, 0.08), ZFH(0.6, 0.08)] } } },
+  5: { monster: { key: 'nightseed', name: 'Nightseed Sorcerer', speed: 0.9, armour: 0, row: 'slime', hp: 3,
+      moves: [{ id: 'rootlance', name: 'Root Lance', hits: [ZFH(1.1, 0.21)] },
+        { id: 'seedpulse', name: 'Seed Pulse', hits: [ZFH(0.85, 0.1, { dt: 'poison' }), ZFH(0.85, 0.1, { dt: 'poison' })] }] },
+    captain: { name: 'Nightseed Hexarch', speed: 0.95, look: 'gold heart veins and black claw tips',
+      extra: { id: 'germinate', name: 'Dark Germination', hits: [ZFH(1.0, 0.26, { dt: 'poison', ride: 'venom', hold: 0.5 })] } },
+    champion: { name: 'The Briar Regent', speed: 0.85, armour: 0.1, row: 'slime',
+      moves: [{ id: 'royalcut', name: 'Royal Cut', hits: [ZFH(1.0, 0.32, { hold: 0.5 })] },
+        { id: 'court', name: 'Court of Thorns', hits: [ZFH(1.1, 0.1), ZFH(1.0, 0.1), ZFH(0.6, 0.1)] },
+        { id: 'lance', name: 'Sovereign Lance', charge: true, hits: [ZFH(1.2, 0.28), ZFH(0.8, 0.28, { hold: 0.5 })] },
+        { id: 'crownfall', name: 'Crownfall', hits: [ZFH(0.8, 0.14), ZFH(0.7, 0.14, { hold: 0.45 })] }],
+      // the shoulder-throne opens: Royal Cut lifts its blade first (a harmless lift), then cuts as before
+      phase: { i: 0, move: { id: 'royalcut', name: 'Royal Cut', hits: [ZFF(0.8), ZFH(1.0, 0.32, { hold: 0.5 })] } } } },
+  6: { monster: { key: 'riftwing', name: 'Riftwing', speed: 1.15, armour: 0, row: 'zf-holy-frost', hp: 4,
+      moves: [{ id: 'crescent', name: 'Crescent Dive', hits: [ZFH(1.2, 0.12), ZFH(0.6, 0.14)] },
+        { id: 'descent', name: 'False Descent', hits: [ZFF(0.8), ZFH(1.0, 0.26)] }] },
+    captain: { name: 'Riftwing Moonsunder', speed: 1.2, look: 'silver wing rims and a split chest ring',
+      extra: { id: 'brokenring', name: 'Broken Ring', hits: [ZFH(1.2, 0.1), ZFH(0.6, 0.1), ZFH(0.8, 0.1, { hold: 0.5 })] } } },
+  7: { monster: { key: 'mawcantor', name: 'Maw Cantor', speed: 0.9, armour: 0, row: 'bones', hp: 4,
+      moves: [{ id: 'ribspear', name: 'Rib Spear', hits: [ZFH(1.2, 0.28)] },
+        { id: 'hymn', name: 'Hollow Hymn', hits: [ZFH(1.1, 0.08, { dt: 'holy' }), ZFH(1.0, 0.08, { dt: 'holy' }), ZFH(0.6, 0.08, { dt: 'holy' })] }] },
+    captain: { name: 'Maw Cantor Throatriven', speed: 0.95, look: 'white teeth and a crimson mouth border',
+      extra: { id: 'rivenhymn', name: 'Riven Hymn', hits: [ZFH(0.8, 0.11, { dt: 'holy' }), ZFH(0.8, 0.11, { dt: 'holy', hold: 0.6 }), ZFH(0.6, 0.11, { dt: 'holy' })] } } },
+  8: { monster: { key: 'devourer', name: 'Cave Devourer', speed: 0.8, armour: 0.1, row: 'bones', hp: 5,
+      moves: [{ id: 'headbite', name: 'Head Bite', hits: [ZFH(1.3, 0.3)] },
+        { id: 'underjaw', name: 'Underjaw', hits: [ZFH(1.2, 0.13), ZFH(0.7, 0.13, { hold: 0.5 })] }] },
+    captain: { name: 'Cave Devourer Deepmaw', speed: 0.85, look: 'a pale head jaw and an amber chest mouth',
+      extra: { id: 'twofold', name: 'Twofold Hunger', hits: [ZFH(1.1, 0.15), ZFH(0.8, 0.18, { hold: 0.6 })] } } },
+  9: { monster: { key: 'glassfang', name: 'Glassfang Fiend', speed: 1.1, armour: 0.05, row: 'golem', hp: 4,
+      moves: [{ id: 'fangthrust', name: 'Fang Thrust', hits: [ZFH(1.1, 0.27)] },
+        { id: 'glasscross', name: 'Glass Cross', hits: [ZFH(0.8, 0.13), ZFH(0.7, 0.13, { hold: 0.5 })] }] },
+    captain: { name: 'Glassfang Prismfang', speed: 1.15, look: 'opal blade edges and a striped face slit',
+      extra: { id: 'splinter', name: 'Splinter Salute', hits: [ZFH(1.0, 0.1), ZFH(0.7, 0.1), ZFH(0.7, 0.1, { ride: 'bleed' })] } } },
+  10: { monster: { key: 'echoblade', name: 'Echoblade', speed: 1, armour: 0, row: 'zf-holy-frost', hp: 4,
+      moves: [{ id: 'resonant', name: 'Resonant Cut', hits: [ZFH(1.2, 0.28)] },
+        { id: 'echofeint', name: 'Echo Feint', hits: [ZFF(0.8), ZFH(1.1, 0.12, { dt: 'holy' }), ZFH(0.6, 0.12, { dt: 'holy' })] }] },
+    captain: { name: 'Echoblade Stillnote', speed: 1.05, look: 'ivory elbow spurs and three chest stripes',
+      extra: { id: 'silentthird', name: 'Silent Third', hits: [ZFH(1.1, 0.1, { dt: 'holy' }), ZFH(1.0, 0.1, { dt: 'holy' }), ZFH(0.8, 0.1, { dt: 'holy', hold: 0.5 })] } },
+    champion: { name: 'The Hollow Cantor', speed: 0.95, armour: 0.05, row: 'zf-holy-frost',
+      moves: [{ id: 'tuningfang', name: 'Tuning Fang', hits: [ZFH(1.2, 0.34)] },
+        { id: 'threefold', name: 'Threefold Hymn', hits: [ZFH(1.1, 0.12, { dt: 'holy' }), ZFH(0.6, 0.12, { dt: 'holy' }), ZFH(0.8, 0.14, { dt: 'holy', hold: 0.5 })] },
+        { id: 'unmaking', name: 'Unmaking Chord', charge: true, hits: [ZFH(1.2, 0.22, { dt: 'holy' }), ZFH(1.0, 0.22, { dt: 'holy' }), ZFH(0.6, 0.22, { dt: 'holy' })] },
+        { id: 'vault', name: 'Shut the Vault', hits: [ZFH(1.1, 0.16), ZFH(0.6, 0.16)] }],
+      // the top jaw grows a light rim: Threefold Hymn turns slow, delayed, fast (same damage and hits)
+      phase: { i: 1, move: { id: 'threefold', name: 'Threefold Hymn', hits: [ZFH(1.1, 0.12, { dt: 'holy' }), ZFH(0.8, 0.12, { dt: 'holy', hold: 0.5 }), ZFH(0.6, 0.14, { dt: 'holy' })] } } } }
+};
+// A kit move as zone z plays it (above): boss, a Captain or Champion; else an ordinary monster. Returns a new move.
+function zoneFoeShape(mv, z, boss) {
+  const T = typeof TURN_TUNE === 'object' ? TURN_TUNE.tricks : { on: 1, from: 4, feintFrom: 7 };
+  const holds = boss && T.on && z >= T.from, feints = boss && T.on && z >= T.feintFrom, out = [];
+  let lift = 0;   // a feint left out: what it adds to the next hit
+  for (const h0 of mv.hits) {
+    if (h0.feint && !feints) { lift += 0.4; continue; }
+    const h = Object.assign({}, h0);
+    if (lift) { if (holds) h.hold = (h.hold || 0) + lift; else h.wind += lift; lift = 0; }
+    if (h.hold > 0 && !holds) { h.wind += h.hold; delete h.hold; }
+    out.push(h);
+  }
+  return Object.assign({}, mv, { hits: out, nreal: null });
+}
+// Damage a foe turn (the parity measure): each move's real hits, a charged move over its two turns at chargeX
+function zoneFoeThreat(script, cx) {
+  let x = 0, n = 0;
+  for (const mv of script) { const s = mv.hits.reduce((a, h) => a + (h.feint ? 0 : h.x || 0), 0); x += mv.charge ? s * (cx || 1) : s; n += mv.charge ? 2 : 1; }
+  return n ? x / n : 0;
+}
+const zoneFoeScaled = (mv, k) => k === 1 ? mv : Object.assign({}, mv, { hits: mv.hits.map(h => h.feint ? h : Object.assign({}, h, { x: h.x * k })), nreal: null });
+// ZONE_FOES as the switches say: the two live monsters, plus every kit of an area that is on
+const ZONE_FOES_BASE = Object.assign({}, ZONE_FOES);
+function zoneFoeApply() {
+  for (const z in ZONE_FOES) if (!ZONE_FOES_BASE[z]) delete ZONE_FOES[z];
+  for (const z in ZONE_FOES_BASE) ZONE_FOES[z] = ZONE_FOES_BASE[z];
+  for (const zs in ZONE_FOE_KITS) {
+    const z = +zs, K = ZONE_FOE_KITS[z];
+    if (!ZONE_FOE_TUNE.on[zoneAreaIdx(z)]) continue;
+    let row = ZONE_FOES[z];
+    if (K.monster && !row) {
+      const M = K.monster, ty = TYPES[zoneType(z)] && TYPES[zoneType(z)].key, TY = TURN_FOE_TYPES[ty], arm0 = FOE_BEH[ty] && FOE_BEH[ty].armoured ? 0.3 : 0;
+      let moves = M.moves.map(mv => zoneFoeShape(mv, z, false)), hp = M.hp * ZONE_FOE_TUNE.hpX;
+      if (ZONE_FOE_TUNE.parity && TY) {   // its slot type's damage a turn at its Speed, and its fight length through armour
+        const k = TY.speed * zoneFoeThreat(TY.moves) / (M.speed * zoneFoeThreat(moves));
+        moves = moves.map(mv => zoneFoeScaled(mv, k));
+        hp = TURN_FOE_HP.normal * (1 - M.armour) / (1 - arm0) * M.hp / ZONE_FOE_KIT_HP[zoneAreaIdx(z)];
+      }
+      row = { key: M.key, name: M.name, speed: M.speed, armour: M.armour, row: M.row, hp, moves, kit: true };
+    }
+    if (!row) continue;
+    const add = {};
+    if (K.captain && typeof bossTierOf === 'function' && bossTierOf(z) === 'captain') add.captain = K.captain;
+    if (K.champion) add.champion = K.champion;
+    ZONE_FOES[z] = Object.keys(add).length ? Object.assign({}, row, add) : row;
+  }
+  for (const k in ZONE_FOE_BOSS_CACHE) delete ZONE_FOE_BOSS_CACHE[k];
+}
+// each area's mean roster HP (parity: a monster lasts as long as its slot type, by its share of its area's HP)
+const ZONE_FOE_KIT_HP = [0, 1].map(a => { const L = Object.keys(ZONE_FOE_KITS).filter(z => zoneAreaIdx(+z) === a && ZONE_FOE_KITS[z].monster).map(z => ZONE_FOE_KITS[z].monster.hp); return L.reduce((s, h) => s + h, 0) / L.length; });
+function zoneFoeArea(a, on) { ZONE_FOE_TUNE.on[a] = on ? 1 : 0; zoneFoeApply(); }
+const ZONE_FOE_BOSS_CACHE = {};
+function zoneFoeBoss(z, script, spd, arm) {
+  const Z = ZONE_FOES[z], C = Z && (Z.champion || Z.captain);
+  if (!C || !script || !script.length) return null;
+  const T = typeof TURN_TUNE === 'object' ? TURN_TUNE : null, champ = !!Z.champion;
+  const ck = [z, champ ? 'c' : 'k', script.map(m => m.id).join(','), spd, arm, ZONE_FOE_TUNE.parity, String(ZONE_FOE_TUNE.fit[z]),
+    T ? [T.tricks.on, T.tricks.from, T.tricks.feintFrom, String(T.boss.chargeX)].join() : ''].join(':');
+  if (ZONE_FOE_BOSS_CACHE[ck]) return ZONE_FOE_BOSS_CACHE[ck];
+  const M = ZONE_FOE_KITS[z] && ZONE_FOE_KITS[z].monster, mm = M ? M.moves : Z.moves;   // the roster's moves, not the ordinary fight's shaped and scaled copy
+  const base = champ ? C.moves : [mm[0], mm[1], C.extra];
+  const cx = T && typeof turnZoneLine === 'function' ? turnZoneLine(T.boss.chargeX, z) : 1;
+  let s1 = base.map(mv => zoneFoeShape(mv, z, true)), s2 = champ && C.phase ? s1.map((mv, i) => i === C.phase.i ? zoneFoeShape(C.phase.move, z, true) : mv) : null;
+  const armK = champ ? C.armour || 0 : Z.armour || 0, sp = C.speed * 10;
+  const fit = (ZONE_FOE_TUNE.parity && ZONE_FOE_TUNE.fit[z]) || [1, 1, 1, 1];
+  let k = 1;
+  if (ZONE_FOE_TUNE.parity) k = spd * zoneFoeThreat(script, cx) / (sp * zoneFoeThreat(s1, cx));
+  s1 = s1.map(mv => zoneFoeScaled(mv, k)); if (s2) s2 = s2.map(mv => zoneFoeScaled(mv, k));
+  return (ZONE_FOE_BOSS_CACHE[ck] = { name: C.name, tier: champ ? 'champion' : 'captain', script: s1, script2: s2, spd: sp, arm: armK,
+    row: champ ? C.row : Z.row, kd: { wren: fit[1], tobin: fit[2], pip: fit[3] }, hpK: ZONE_FOE_TUNE.parity ? fit[0] * (1 - armK) / (1 - (arm || 0)) : 1 });
+}
+zoneFoeApply();
 
 // ---- src/js/59m-boss-odds.js ----
 // 59m-boss-odds: "would you win the zone boss?" (Next Up, 55-goals), judged by the game's own turn fight.
@@ -36243,7 +36425,7 @@ var huntBeastFrames, huntBgDraw, huntReach;
 // (always shown) and the landed-hit spark (only on a hit that landed; never on a parry, dodge or miss).
 // The atlases keep their approved PNG bytes, so they decode asynchronously: every frame's canvas exists at once (blank,
 // c._pend) and is filled when its atlas loads (at boot, well before a fight; 62-stage does not cache measurements of a
-// frame still pending).
+// frame still pending). In the split build a pack's atlases can come after boot (75-art-load): the frames fill then.
 //   foeArtFrames(key) -> the enemyFrames set (60b): { v2, key, idle0, idle1, wind, strike, hit, acts }
 //        acts[action] = { loop, start, end, rel, con (one-based frames, as FOE_ART), fr: [{ ms, body, atk, hit }] }
 //        body = { c, ox, oy, x0, lights, art } (ox, oy: the body origin, the grounded rear foot; x0: its leftmost opaque
@@ -36255,7 +36437,8 @@ var huntBeastFrames, huntBgDraw, huntReach;
 //   foeArtHas(key) -> bool
 var foeArtFrames, foeArtHas;
 {
-  const cache = {};
+  const cache = {}, later = {};   // later: key -> its frames' fill, while its pack's atlases are still loading
+  if (typeof on === 'function') on('artPack', e => { const f = e && e.kind === 'foe' && later[e.key]; if (f) f(); });
   foeArtHas = key => typeof FOE_ART === 'object' && !!FOE_ART[key];
   foeArtFrames = key => {
     if (!foeArtHas(key) || typeof document === 'undefined') return null;
@@ -36278,12 +36461,16 @@ var foeArtFrames, foeArtHas;
     const fx = {};
     for (const [id, X] of Object.entries(P.fx || {}))
       fx[id] = { loop: X.loop, fr: X.f.map(([ms, x, y]) => ({ ms, c: cut(X.atlas, x, y, fw, fh), ox: P.fxOrigin[0], oy: P.fxOrigin[1] })) };
-    for (const [path, list] of Object.entries(wait)) {   // every body and effect cut above
+    // every body and effect cut above; an atlas still on its way (the split build's area pack, 75-art-load) is cut when it arrives
+    const fill = () => { for (const [path, list] of Object.entries(wait)) {
+      if (!(path in P.atlases)) continue;
+      delete wait[path];
       const img = new Image();
       img.onload = () => { for (const [c, x, y] of list) { const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
         g.clearRect(0, 0, c.width, c.height); g.drawImage(img, x, y, c.width, c.height, 0, 0, c.width, c.height); c._pend = false; } };
       img.src = 'data:image/png;base64,' + P.atlases[path];
-    }
+    } if (Object.keys(wait).length) later[key] = fill; else delete later[key]; };
+    fill();
     const at = (id, i) => acts[id] && acts[id].fr[Math.min(i, acts[id].fr.length - 1)].body;
     return (cache[key] = { v2: true, key, acts, fx, mouth: P.mouth, idle0: at('idle', 0), idle1: at('idle', 2), wind: at('idle', 0), strike: at('idle', 0),
       hit: at('hurt', 1), art: key });
@@ -39224,6 +39411,164 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
       setTxt(al.foot, `3 goals earn an Almanac Stamp; all 5 add a bonus crate. Stamps ${A.stamps}. Omens seen ${almanac.seenCount()} of ${OMENS.length}.`);
     }
   });
+}
+
+// ---- src/js/75-art-load.js ----
+// 75-art-load: the split build's area art, loaded one area ahead (card art-loader; docs/design/hosting.md 5, B2). Browser-only.
+// The inline page (the Artifact, and every tool's default) has no boot loader (no lfBoot): every pack is in the page, nothing
+// here runs, and artZoneReady is always true.
+// In the split build (node tools/build.mjs --split) each foe's atlases and each battle background come in a pack file of their
+// own. The boot loader (src/boot-loader.html) wrote the tags of the save's zone's packs before the game ran; lfBoot.take hands
+// those over here, then every later pack as it arrives. This file:
+// - puts a pack's data in FOE_ART (the foe's atlases; its timings are in the page) or BG_ART (the whole background), each image
+//   a basE91 getter as 21zz makes them, then emits 'artPack' { id, kind, key } (64j cuts that foe's frames).
+// - loads the packs the zone on screen shows first, then those of the zones either side, the rest of its area and the next
+//   area: one file at a time, and one more at once for the zone on screen.
+// - holds the game (holdGame) while the zone on screen lacks a pack: a plain line covers the stage and the zone number reads
+//   "loading". A pack still loading is never drawn as a stand-in (art freeze).
+// - when a pack file fails, asks the server for the page (through lfBoot.page: the game's own code makes no network call): if the page no longer names that file (a new deploy took the old
+//   hashed files away), the game saves and reloads once the zone on screen needs it; otherwise it tries again later.
+//   artZonePacks(z) -> the pack ids zone z shows ([] in the inline page)
+//   artZoneReady(z) -> bool: every pack zone z shows is in (and, for one that came after boot, its pictures have decoded)
+var artZoneReady = () => true, artZonePacks = () => [];
+{
+  const LB = typeof lfBoot === 'object' && lfBoot && lfBoot.packs && typeof lfBoot.take === 'function' ? lfBoot : null;
+  if (LB && typeof document !== 'undefined') {
+    const P = LB.packs, got = {}, ready = {}, failed = {}, stale = {}, broken = {}, busy = {}, keep = [];
+    let booted = false;
+    const RELOAD_KEY = 'lanternfall.artReloadAt';
+    // the build's table (zones 1 to LB.road); past the road the scenery repeats every 35 zones (check.mjs holds it), as in the loader
+    const tableZone = z => (z > LB.road ? LB.road - 34 + (z - LB.road - 1) % 35 : z);
+    artZonePacks = z => { const q = tableZone(z); return Object.keys(P).filter(id => P[id].z.some(r => q >= r[0] && q <= r[1])); };
+    // A pack that came after boot is ready once its pictures have decoded, so the first frame after the hold draws them (the
+    // packs the boot loader wrote come in before the game runs and are used as the inline page uses its art)
+    const framesDone = key => {
+      const F = typeof foeArtFrames === 'function' && foeArtFrames(key); if (!F) return true;
+      const pend = x => !!(x && x.c && x.c._pend);
+      for (const A of Object.values(F.acts)) for (const f of A.fr) if (pend(f.body) || pend(f.atk) || pend(f.hit)) return false;
+      for (const X of Object.values(F.fx || {})) for (const f of X.fr) if (pend(f)) return false;
+      return true;
+    };
+    const isReady = id => ready[id] || (got[id] && id.startsWith('foe:') && framesDone(id.slice(4)) && (ready[id] = true));
+    artZoneReady = z => artZonePacks(z).every(isReady);
+    // o[k] holds basE91 text; it reads back as base64, decoded on the first read (21zz's getter, for a field that came late)
+    const lazy = (o, k) => {
+      const s = o[k]; if (typeof s !== 'string') return;
+      Object.defineProperty(o, k, { enumerable: true, configurable: true,
+        get() { const v = b91Base64(s); Object.defineProperty(o, k, { value: v, enumerable: true, configurable: true, writable: true }); return v; },
+        set(v) { Object.defineProperty(o, k, { value: v, enumerable: true, configurable: true, writable: true }); } });
+    };
+    const put = (id, data) => {
+      if (got[id] || !P[id] || !data) return;
+      const i = id.indexOf(':'), kind = id.slice(0, i), key = id.slice(i + 1), late = booted;
+      const done = () => { got[id] = true; if (!late || kind !== 'foe') ready[id] = true; delete failed[id]; delete stale[id]; emit('artPack', { id, kind, key }); };
+      if (kind === 'foe') {
+        const F = typeof FOE_ART === 'object' && FOE_ART[key]; if (!F) return;
+        for (const p of Object.keys(data.atlases || {})) { F.atlases[p] = data.atlases[p]; lazy(F.atlases, p); }
+        done();   // 64j cuts the frames as each atlas loads; isReady waits for them
+      } else if (kind === 'bg' && typeof BG_ART === 'object') {
+        for (const o of ['land', 'port']) if (data[o]) lazy(data[o], 'src');
+        if (!late) { BG_ART[key] = data; done(); return; }
+        // decode both shapes first and keep them: 62-stage's own image of the same picture is then complete at once
+        got[id] = 'decoding';
+        Promise.all(['land', 'port'].filter(o => data[o]).map(o => { const im = new Image(); keep.push(im); im.src = 'data:image/webp;base64,' + data[o].src; return im.decode(); }))
+          .then(() => { BG_ART[key] = data; done(); }, () => { broken[id] = true; cover(); });   // a picture that will not decode: a new download would not help
+      }
+    };
+    LB.take(put);
+    booted = true;
+
+    const deep = () => typeof deepActive === 'function' && deepActive();
+    const screenZone = () => (target() === 'mob' && !deep() ? S.zone : 0);   // only a fight on the road draws a zone's art
+    // 90-boot asks every frame, before tick and draw. A zone change inside tick that emits nothing (a retreat after a wipe) is
+    // caught by the microtask, which runs after that frame's draw and before the browser paints it: the cover is up in time.
+    let coverKey = '';
+    const key = () => { const z = screenZone(); return z + ':' + (z >= 1 && !artZoneReady(z)); };
+    const recheck = () => { if (coverKey !== key()) cover(); };
+    const held = () => { const z = screenZone(), h = z >= 1 && !artZoneReady(z); if (coverKey !== z + ':' + h) cover(); queueMicrotask(recheck); return h; };
+    addEventListener('online', () => { for (const id in failed) failed[id].at = 0; pump(); });   // back online: try again now
+    holdGame(held);
+
+    // ---- loading ----
+    const wanted = () => {
+      const z = Math.max(1, S.zone | 0), a0 = zoneAreaIdx(z) * AREA_ZONES + 1, zs = [z, z + 1, z - 1];
+      for (let q = a0; q < a0 + 2 * AREA_ZONES; q++) zs.push(q);
+      const out = [];
+      for (const q of zs) if (q >= 1) for (const id of artZonePacks(q)) if (!out.includes(id)) out.push(id);
+      return out;
+    };
+    const due = id => !got[id] && !busy[id] && !stale[id] && !broken[id] && !(failed[id] && failed[id].at > Date.now());   // a stale file is gone for good
+    function pump() {
+      const now = screenZone() >= 1 ? artZonePacks(screenZone()) : [], n = Object.keys(busy).length;
+      const id = (n < 2 ? now.find(due) : null) || (n < 1 ? wanted().find(due) : null);
+      if (!id) return;
+      busy[id] = true;
+      const s = document.createElement('script');
+      const end = ok => { s.remove(); delete busy[id]; if (!ok || !got[id]) gone(id); pump(); };
+      s.onload = () => end(true); s.onerror = () => end(false);
+      s.src = P[id].f;
+      document.body.appendChild(s);
+      pump();   // a second file for the zone on screen, if it needs one
+    }
+    // A failed file: wait a little longer each time. A new deploy names other files, so ask the server for the page: at most
+    // once every two minutes for all packs together (the page is about 1 MB on the wire), and every failed pack it no longer
+    // names is stale (never fetched again; the zone that needs one reloads the page).
+    let askedAt = -Infinity;
+    function gone(id) {
+      const f = failed[id] = failed[id] || { n: 0 }; f.n++; f.at = Date.now() + Math.min(30, 2 ** f.n) * 1000;
+      if (typeof LB.page !== 'function' || Date.now() - askedAt < 120000) return;
+      askedAt = Date.now();
+      LB.page(t => { for (const k in failed) if (!got[k] && !t.includes(P[k].f)) stale[k] = true; cover(); });   // the boot loader asks (the game page makes no network call)
+    }
+    let reloading = false;
+    function reload() {
+      let last = 0;
+      // reloaded a minute ago, or no session storage to tell: never loop; the line asks the player instead
+      try { last = +sessionStorage.getItem(RELOAD_KEY) || 0; if (Date.now() - last < 60000) return false; sessionStorage.setItem(RELOAD_KEY, String(Date.now())); } catch (e) { return false; }
+      reloading = true;
+      try { bootAwayNow(); save(); } catch (e) {}   // the away gains first, as pagehide does (90-boot): a save stamps S.last
+      setTimeout(() => location.reload(), 400);
+      return true;
+    }
+
+    // ---- the cover over the stage, and the zone number ----
+    let box = null, line = null, btn = null;
+    function cover() {
+      const z = screenZone(), on = z >= 1 && !artZoneReady(z);
+      coverKey = z + ':' + on;
+      const stage = document.getElementById('stage');
+      if (!on) { if (box) box.hidden = true; return; }
+      if (!box && stage) {
+        box = document.createElement('div'); box.id = 'artWait'; box.setAttribute('role', 'status'); box.setAttribute('aria-live', 'polite');
+        box.style.cssText = 'position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;background:#0B0810;color:var(--bone,#EFE6D6);font:600 16px/1.4 var(--body,sans-serif);text-align:center';
+        line = document.createElement('span'); box.append(line);
+        btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Reload'; btn.hidden = true;
+        btn.style.cssText = 'padding:8px 16px;border:1px solid var(--line-hi,#4E4060);border-radius:6px;background:var(--panel,#1F1827);color:inherit;font:inherit';
+        btn.onclick = () => { try { bootAwayNow(); save(); } catch (e) {} location.reload(); };
+        box.append(btn); stage.append(box);
+        for (const ev of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'click']) box.addEventListener(ev, e => e.stopPropagation());   // no strikes through it
+      }
+      if (!box) return;
+      const ids = artZonePacks(z).filter(id => !isReady(id));
+      let t = `Loading ${zoneAreaName(z)}`, ask = false;
+      if (reloading || (ids.some(id => stale[id]) && reload())) t = 'The game was updated. Reloading.';
+      else if (ids.some(id => stale[id])) { t = 'The game was updated. Reload the page to go on.'; ask = true; }
+      else if (ids.some(id => broken[id])) { t = `${zoneAreaName(z)} did not load. Reload the page to go on.`; ask = true; }
+      else if (ids.some(id => failed[id])) t = `Waiting for the connection to load ${zoneAreaName(z)}`;
+      box.hidden = false;
+      if (line.textContent !== t) line.textContent = t;
+      btn.hidden = !ask;
+    }
+    uiHooks.push(() => {
+      cover();
+      const z = screenZone(), el = document.getElementById('zNum');
+      if (el && z >= 1 && !artZoneReady(z)) putText(el, `Zone ${z} · loading`);   // 70-ui wrote "Zone N" just before
+    });
+    on('artPack', () => { cover(); pump(); });
+    on('sceneReset', () => { cover(); pump(); });
+    setInterval(pump, 1000);
+    pump();
+  }
 }
 
 // ---- src/js/75-attributes-ui.js ----
@@ -45508,7 +45853,7 @@ let navUI = null;
   const sceneComing = () => { try { return typeof storyBusy === 'function' && MOMENT_Q.some(m => m.kind === 'champion' && m.scene && storyBusy(m.scene)); } catch (e) { return false; } };
   const tickOwed = () => cachePending_() || sceneComing();   // something only the game tick can finish: no hold may stop the tick now
   const cardComing = () => cardUp() || tickOwed();
-  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn'); syncHeld(); }
+  function hide() { useT0 = 0; gapHeld = false; if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; lastRect = null; ONBOARD.paused = false; if (txt.style.maxHeight) txt.style.maxHeight = ''; const ap = $('app'); if (ap.classList.contains('guide-side')) ap.classList.remove('guide-side', 'guide-nu', 'guide-btn', 'guide-bar-off'); syncHeld(); }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Stage targets keep that cached placement.
@@ -45516,6 +45861,7 @@ let navUI = null;
   // brings it into sight. The band itself (60-onboard.css .ob-bub) stays CSS-docked.
   const panels = $('panels');
   let dirty = true, reveal = true, panelScrolled = false, lastTab = S.tab;
+  const shortSide = matchMedia('(min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px)');   // a phone on its side (80-landscape.css)
   function invalidate() { dirty = true; }
   function tick() {
     const dg = lastGT === null ? 0 : Math.max(0, GUIDE_RT.t - lastGT); lastGT = GUIDE_RT.t;   // game seconds since the last look
@@ -45550,6 +45896,9 @@ let navUI = null;
     // (staged-guide-followups: a landscape menu leaves the fight beside it, and the line spoke over it)
     if (!step && S.tab && (!fightInView() || guidePhase(true) === 'between')) { try { const cv = curView(S.tab), vw = viewsOf(S.tab).find(v => v.id === cv); step = onboardUse({ tab: S.tab, view: cv, feature: vw && vw.feature }); } catch (e) { step = null; } }
     if (!step || document.hidden || q(BLOCK)) return hide();
+    // tips-hold-740: on a phone on its side a tip that is not up yet never opens on the foe's turn (its wind-up, or the wait for it); it waits
+    // for the turn to end. The fight lessons are exempt: Dodge and Parry are taught in that very window.
+    if (shortSide.matches && !LESSON_IDS.includes(step.id) && !(cur && cur.id === step.id && !layer.hidden) && /^(windup|foe)$/.test(guidePhase(!guideMenuCovers()))) return hide();
     const use = /^(use|say):/.test(step.id);
     // staged-guide-followups: a line that starts in the gap after a kill, with the fight in view, would show for under half a second before the
     // next foe walks in and hides it. A line you read (a Got it note, a first-use line) holds that gap until you tap it; a live-progress line
@@ -45568,7 +45917,7 @@ let navUI = null;
     // a first-use line has no target: it docks over the open menu with no ring, and pauses only to hold a gap between foes (gapHeld)
     try { spec = use ? { node: S.tab || step.id.startsWith('use:') ? panels : stageBox, text: step.text, noRing: true } : table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     // forge-line-while-fighting: the held materials line carries the live line's Go; beside a running fight the live line has none (a side
-    // button hides the fight buttons, 80-landscape.css .guide-btn)
+    // button would take the fight bar's tab row, 80-landscape.css .guide-btn)
     if (spec && use && STOCK_WHAT[step.id.slice(4)]) spec.go = stockGo(step.id.slice(4));
     if (spec && stockSide && fightingNow()) spec.go = null;
     if (!spec || !vis(spec.node)) return hide();
@@ -45650,8 +45999,30 @@ let navUI = null;
     const a = bub.getBoundingClientRect();
     return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
   };
+  // tips-hold-740: a side tip with a button ends above the bar's first row of fight buttons, so on a 740x360 phone it can only reach the
+  // bar's tab row (which hides under it, 80-landscape.css .guide-btn); its text scrolls if it runs longer. The five buttons stay in view
+  // and pressable, and a press there answers the tip and acts (the capture listeners above).
+  const BTN_GAP = 5;
+  // -> true: the tip fits above the buttons. A tip that starts too low for two lines there (the Next Up step, under a tall chip) keeps the
+  // old rule: the whole bar hides under it (.guide-bar-off), and a fight key still answers it.
+  function fitBub() {
+    const soloBar = solo(), side = bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden;
+    const row = side && soloBar && !soloBar.hidden ? soloBar.querySelector('.sb-pane') : null, rr = row && row.getBoundingClientRect();
+    let want = '', fits = true;
+    if (rr && rr.height) {
+      // the text's room: down to the buttons, less the rest of the tip (face, name, its button), in whole lines (scrollHeight: the tip's
+      // own height limit may already clip it)
+      const a = bub.getBoundingClientRect(), t = txt.getBoundingClientRect(), lh = parseFloat(getComputedStyle(txt).lineHeight) || 16;
+      const room = rr.top - BTN_GAP - a.top - (Math.max(a.height, bub.scrollHeight) - t.height);
+      if (room < 2 * lh) fits = false;
+      // (once fitted it stays fitted while the bar is there, so it never flips between the two heights)
+      else if (room < t.height + 1 || txt.style.maxHeight) want = Math.floor(room / lh) * lh + 'px';
+    }
+    if (txt.style.maxHeight !== want) txt.style.maxHeight = want;
+    return fits;
+  }
   // (every look, not only on a layout change: the bar shows under an unchanged tip when the hero goes from gathering to the fight)
-  const syncBtn = () => putToggle($('app'), 'guide-btn', bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden && meetsBar());
+  const syncBtn = () => { const fits = fitBub(), on = bub.classList.contains('side') && bub.classList.contains('btn') && !okb.hidden && meetsBar(); putToggle($('app'), 'guide-btn', on); putToggle($('app'), 'guide-bar-off', on && !fits); };
   const resKept = new WeakSet();   // craft result cards the guide has already left in view once
   function place(spec) {
     const key = spec.text, newTarget = spec.node !== lastNode;

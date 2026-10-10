@@ -7,7 +7,8 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 import { pathToFileURL } from 'node:url';
-import { ROOT, JS_DIR, CSS_DIR, listDir } from './lib/core.mjs';
+import vm from 'node:vm';
+import { ROOT, JS_DIR, CSS_DIR, listDir, loadCore } from './lib/core.mjs';
 
 // The joined styles as written (desktop-layout check compares against these, untransformed).
 export const rawCss = () => listDir(CSS_DIR, '.css').map(f => fs.readFileSync(path.join(CSS_DIR, f), 'utf8').replace(/\n*$/, '\n')).join('');
@@ -63,47 +64,155 @@ export function build() {
   return { file, bytes: Buffer.byteLength(out) };
 }
 
-// ---- split mode (asset-build; docs/design/hosting.md 5, B1) ----
-// `node tools/build.mjs --split` also writes dist/lanternfall-split.html plus dist/assets/: every generated art data file
-// (a src/js fragment whose header says GENERATED) as it is, under a content-hashed name. The page names each file in a plain
-// <script src> before the game's script, so the browser fetches them in parallel and runs them in order before the game boots,
-// exactly as the inline page would (each file is one `const X = {...}` with no other code; the game reads it by name). The boot
-// loader (src/boot-loader.html) shows a plain text line with the bytes done until the game's script has run.
-// The inline page stays the default and is written the same way in both modes.
+// ---- split mode (asset-build and art-loader; docs/design/hosting.md 5, B2) ----
+// `node tools/build.mjs --split` also writes dist/lanternfall-split.html plus dist/assets/. Every generated art data file (a
+// src/js fragment whose header says GENERATED) leaves the page:
+// - the boot files (icons, heroes, portraits, the hunting art) as they are, under a content-hashed name, each named in a plain
+//   <script src> before the game's script, so they run in order before the game boots, as the inline page would (each file is
+//   one `const X = {...}`; the game reads it by name);
+// - the area art (AREA_ART: the foe packs and the battle backgrounds) as one pack file per foe and per background, also
+//   content-hashed. A pack file is `lfArt(kind, key, data);`. The boot loader (src/boot-loader.html) reads the save's zone and
+//   writes the tags of that zone's packs before the boot files, so the zone you open in is drawn as in the inline page. Every
+//   other pack loads after boot, one area ahead (src/js/75-art-load.js), and the game waits while the zone on screen lacks one.
+//   What stays in the page: the foes' timings and frame tables (59l reads them in fights, so a fight plays the same whether its
+//   art is in or not); their atlases come with the pack. A background stays out of BG_ART until its pack arrives (only the
+//   stage and the opening read it, and zoneTheme falls back to the scenery rule until then).
+// The boot loader shows a plain text line with the bytes done until the game's script has run. The inline page stays the
+// default and is written the same way in both modes.
 export const ASSET_DIR = path.join(ROOT, 'dist', 'assets');
 export const SPLIT_FILE = path.join(ROOT, 'dist', 'lanternfall-split.html');
 export const isAsset = text => /^\/\/ [^\n]*GENERATED/.test(text.slice(0, 400));
-export const assetName = (f, text) => `${f.replace(/\.js$/, '')}.${crypto.createHash('sha256').update(text).digest('hex').slice(0, 10)}.js`;
+const hash10 = text => crypto.createHash('sha256').update(text).digest('hex').slice(0, 10);
+export const assetName = (f, text) => `${f.replace(/\.js$/, '')}.${hash10(text)}.js`;
 const attr = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+// Every generated art file is one or the other (buildSplit throws on a file in neither, so new art is placed on purpose):
+// BOOT_ART loads before the game, whole; AREA_ART is split into packs that load by zone.
+export const BOOT_ART = ['21r-data-resicons.js', '21s-data-actionicons.js', '21t-data-navicons.js', '21u-data-gearicons.js', '21v-data-statusicons.js',
+  '21y-data-heroart.js', '21yc-data-portraits.js', '21z-data-huntart.js'];
+export function placeArt(files) {
+  const loose = files.filter(f => !BOOT_ART.includes(f) && !AREA_ART[f]);
+  if (loose.length) throw new Error(`split: ${loose.join(', ')} is generated art in neither BOOT_ART nor AREA_ART (tools/build.mjs): say whether it loads before the game or by zone`);
+}
+// file -> { v: the constant, kind: the pack kind, keep: what the page keeps of one entry (null: nothing), load: the pack's data }
+export const AREA_ART = {
+  '21za-data-foeart.js': { v: 'FOE_ART', kind: 'foe', keep: P => Object.assign({}, P, { atlases: {} }), load: P => ({ atlases: P.atlases }) },
+  '21zb-data-bgart.js': { v: 'BG_ART', kind: 'bg', keep: null, load: B => B }
+};
+// A JS literal: JSON, but a string with no quote, backslash or line break goes in single quotes, as the embed tools write basE91.
+const lit = v => typeof v === 'string' ? (/['\\\n\r\u2028\u2029]/.test(v) ? JSON.stringify(v) : `'${v}'`)
+  : Array.isArray(v) ? `[${v.map(lit).join(',')}]`
+  : v && typeof v === 'object' ? `{${Object.entries(v).map(([k, x]) => JSON.stringify(k) + ':' + lit(x)).join(',')}}` : JSON.stringify(v);
+const dataOf = (f, text, v) => vm.runInNewContext(`${text}\n;${v}`, {}, { filename: f });
+// Which zones show each pack, from the shipped code (59l's ZONE_FOES, 22's zoneTheme) over the Lantern Road's zones (ROAD_ZONES):
+// [[from, to], ...] ranges. Past the road the scenery repeats every 35 zones and no zone has a zone monster (check.mjs holds
+// that), so the boot loader and 75-art-load read zone z there as the road's last 35 zones.
+function packZones() {
+  const core = loadCore(), n = core.eval('ROAD_ZONES');
+  const rows = core.eval(`Array.from({ length: ${n} }, (_, i) => [ZONE_FOES[i + 1] ? ZONE_FOES[i + 1].key : null, zoneTheme(i + 1)])`);
+  const out = {}, add = (id, z) => { const r = out[id] = out[id] || [], last = r[r.length - 1]; if (last && last[1] === z - 1) last[1] = z; else r.push([z, z]); };
+  rows.forEach(([foe, theme], i) => { if (foe) add('foe:' + foe, i + 1); add('bg:' + theme, i + 1); });
+  return { out, road: n, area: core.eval(`Array.from({ length: ${n} }, (_, i) => zoneAreaIdx(i + 1))`) };
+}
+export function areaPacks(frags) {
+  const { out: zones, road, area } = packZones(), packs = [], keep = [];
+  for (const x of frags) {
+    const A = AREA_ART[x.f]; if (!A) continue;
+    const data = dataOf(x.f, x.text, A.v), kept = {};
+    for (const [key, entry] of Object.entries(data)) {
+      const id = A.kind + ':' + key, text = `// ${x.f.replace(/\.js$/, '')} ${id}: GENERATED by tools/build.mjs --split from src/js/${x.f} (art-loader). Do not edit.\n`
+        + `lfArt(${JSON.stringify(A.kind)}, ${JSON.stringify(key)}, ${lit(A.load(entry))});\n`;
+      const name = `${x.f.replace(/-data-.*$/, '')}-${A.kind}-${key}.${hash10(text)}.js`;
+      // a background holding both shapes also carries each shape alone (the load lines count it at one shape: loadReport)
+      const both = A.kind === 'bg' && entry.land && entry.port, shapes = both ? Object.fromEntries(['land', 'port'].map(o => [o, `lfArt(${JSON.stringify(A.kind)}, ${JSON.stringify(key)}, ${lit({ [o]: entry[o] })});\n`])) : null;
+      packs.push({ id, f: x.f, name, text, bytes: Buffer.byteLength(text), zones: zones[id] || [], shapes });
+      if (A.keep) kept[key] = A.keep(entry);
+    }
+    keep.push({ f: x.f, text: `// ${x.f.replace(/\.js$/, '')} (split build, art-loader): ${A.v} as the page keeps it; each entry's art comes in its pack (assets/).\nconst ${A.v} = ${lit(kept)};\n` });
+  }
+  return { packs, keep, road, area };
+}
 
 export function buildSplit({ write = true } = {}) {
   const { shell, css, frags } = parts();
-  const assets = frags.filter(x => isAsset(x.text)).map(x => ({ f: x.f, name: assetName(x.f, x.text), text: x.text, bytes: Buffer.byteLength(x.text) }));
+  const gen = frags.filter(x => isAsset(x.text)), { packs, keep, road, area } = areaPacks(gen);
+  placeArt(gen.map(x => x.f));
+  const assets = gen.filter(x => !AREA_ART[x.f]).map(x => ({ f: x.f, name: assetName(x.f, x.text), text: x.text, bytes: Buffer.byteLength(x.text) }));
+  const saveKey = /const KEY = '([^']+)'/.exec(fs.readFileSync(path.join(JS_DIR, '30-state.js'), 'utf8'))[1];
+  const table = Object.fromEntries(packs.map(p => [p.id, { f: 'assets/' + p.name, b: p.bytes, z: p.zones }]));
   const loader = fs.readFileSync(path.join(ROOT, 'src', 'boot-loader.html'), 'utf8')
-    .replace('/* @files */', () => JSON.stringify(Object.fromEntries(assets.map(a => [a.name, a.bytes]))));
+    .replace('/* @files */', () => JSON.stringify(Object.fromEntries(assets.map(a => [a.name, a.bytes]))))
+    .replace('/* @packs */', () => JSON.stringify(table)).replace('/* @road */', () => String(road)).replace('/* @key */', () => JSON.stringify(saveKey));
   const tags = assets.map(a => `<script src="assets/${attr(a.name)}" onload="lfBoot.done(this)" onerror="lfBoot.fail(this)"></script>`).join('\n');
-  const html = page(shell, css, `${loader.replace(/\n*$/, '\n')}${tags}\n${iife(frags.filter(x => !isAsset(x.text)))}\n<script>lfBoot.end();</script>`);
+  const code = frags.filter(x => !isAsset(x.text) || AREA_ART[x.f]).map(x => keep.find(k => k.f === x.f) || x);
+  const html = page(shell, css, `${loader.replace(/\n*$/, '\n')}${tags}\n${iife(code)}\n<script>lfBoot.end();</script>`);
+  const files = [...assets, ...packs];
   if (write) {
     fs.mkdirSync(ASSET_DIR, { recursive: true });
-    const keep = new Set(assets.map(a => a.name));
-    for (const f of fs.readdirSync(ASSET_DIR)) if (!keep.has(f)) fs.rmSync(path.join(ASSET_DIR, f));   // only this build's files stay
-    for (const a of assets) fs.writeFileSync(path.join(ASSET_DIR, a.name), a.text);
+    const names = new Set(files.map(a => a.name));
+    for (const f of fs.readdirSync(ASSET_DIR)) if (!names.has(f)) fs.rmSync(path.join(ASSET_DIR, f));   // only this build's files stay
+    for (const a of files) fs.writeFileSync(path.join(ASSET_DIR, a.name), a.text);
     fs.writeFileSync(SPLIT_FILE, html);
   }
-  return { file: SPLIT_FILE, html, bytes: Buffer.byteLength(html), assets };
+  return { file: SPLIT_FILE, html, bytes: Buffer.byteLength(html), assets, packs, files, road, area };
 }
 
 // Bytes on the wire: Brotli quality 4, the cautious stand-in for Netlify's (docs/design/hosting/measure.mjs).
-const wire = s => zlib.brotliCompressSync(Buffer.from(s), { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }).length;
+export const wire = s => zlib.brotliCompressSync(Buffer.from(s), { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }).length;
 const KB = n => (n / 1024).toFixed(1) + ' KB', MB = n => (n / 1e6).toFixed(2) + ' MB';
+
+// ---- the split build's load lines (docs/design/hosting.md 6; art-loader judge, 2026-10-10). Bytes on the wire, decimal. ----
+// boot: the page + the boot files + the packs of one zone, for a new game (zone 1) and the worst zone (zones 1 to 2000, past the
+//   road read as the road's last 35 zones). E1: while Mossy Hollow's pack holds both shapes it counts at its landscape shape, and
+//   the portrait share left out is capped. zoneSet: one zone's packs; areaSet: the packs an area shows first. Both count a pack at
+//   its larger shape and leave out area 1's named exceptions, each held to its cap until ns-a1-wire empties the list.
+export const LOAD_LINES = {
+  bootWarn: 3.5e6, bootFail: 4.0e6, e1: { pack: 'bg:forest', port: 0.70e6 }, zoneSet: 0.65e6, areaSet: 1.0e6, scan: 2000,
+  area1: { 'foe:imp': 0.39e6, 'foe:gloomjaw': 0.85e6, 'bg:forest': 1.45e6 }
+};
+export function loadReport(s, { size = wire, lines = LOAD_LINES } = {}) {
+  const page = size(s.html), boot = s.assets.reduce((n, a) => n + size(a.text), 0), fails = [], warns = [];
+  const pk = Object.fromEntries(s.packs.map(p => {
+    const real = size(p.text), sh = p.shapes && Object.fromEntries(Object.entries(p.shapes).map(([o, t]) => [o, size(t)]));
+    return [p.id, { real, big: sh ? Math.max(sh.land, sh.port) : real, counted: sh && p.id === lines.e1.pack ? sh.land : real, port: sh ? real - sh.land : 0 }];
+  }));
+  const at = (p, q) => p.zones.some(([a, b]) => q >= a && q <= b), map = z => (z > s.road ? s.road - 34 + (z - s.road - 1) % 35 : z);
+  const zoneBoot = z => { const ps = s.packs.filter(p => at(p, map(z))); return { z, counted: page + boot + ps.reduce((n, p) => n + pk[p.id].counted, 0), real: page + boot + ps.reduce((n, p) => n + pk[p.id].real, 0) }; };
+  const zone1 = zoneBoot(1); let worst = zone1;
+  for (let z = 2; z <= lines.scan; z++) { const b = zoneBoot(z); if (b.counted > worst.counted) worst = b; }
+  for (const [name, b] of [['a new game (zone 1)', zone1], [`the worst zone (${worst.z})`, worst]]) {
+    const say = `boot set, ${name}: ${MB(b.counted)} counted (${MB(b.real)} with both of Mossy Hollow's shapes)`;
+    if (b.counted > lines.bootFail) fails.push(`${say}, over ${MB(lines.bootFail)}`); else if (b.counted > lines.bootWarn) warns.push(`${say}, over the ${MB(lines.bootWarn)} warn line`);
+  }
+  for (const [id, x] of Object.entries(pk)) {
+    if (id === lines.e1.pack && x.port > lines.e1.port) fails.push(`${id}'s portrait share left out of the boot set is ${MB(x.port)}, over ${MB(lines.e1.port)} (E1)`);
+  }
+  const ex = lines.area1;
+  for (const [id, cap] of Object.entries(ex)) {
+    if (!pk[id]) fails.push(`area 1's exception ${id} names a pack the build lacks`);
+    else if (pk[id].real > cap) fails.push(`${id} is ${MB(pk[id].real)}, over its area 1 cap of ${MB(cap)}`);
+  }
+  const counted = p => (ex[p.id] ? 0 : pk[p.id].big);
+  let zoneMax = { z: 1, b: 0 };
+  for (let q = 1; q <= s.road; q++) { const b = s.packs.filter(p => at(p, q)).reduce((n, p) => n + counted(p), 0); if (b > zoneMax.b) zoneMax = { z: q, b }; }
+  if (zoneMax.b > lines.zoneSet) fails.push(`zone ${zoneMax.z}'s packs are ${MB(zoneMax.b)}, over ${MB(lines.zoneSet)} (zone set)`);
+  const areas = {};
+  for (const p of s.packs) if (p.zones.length) { const a = s.area[p.zones[0][0] - 1]; areas[a] = (areas[a] || 0) + counted(p); }
+  const areaMax = Object.entries(areas).reduce((m, [a, b]) => (b > m.b ? { a: +a, b } : m), { a: 0, b: 0 });
+  if (areaMax.b > lines.areaSet) fails.push(`area ${areaMax.a + 1}'s new packs are ${MB(areaMax.b)}, over ${MB(lines.areaSet)} (area set)`);
+  const everything = page + boot + Object.values(pk).reduce((n, x) => n + x.real, 0);
+  return { page, boot, packs: pk, zone1, worst, zoneMax, areaMax, everything, fails, warns };
+}
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { file, bytes } = build();
   console.log(`built ${path.relative(ROOT, file)} (${(bytes / 1024).toFixed(1)} KB)`);
   if (process.argv.includes('--split')) {
-    const s = buildSplit();
-    const pageWire = wire(s.html), raw = s.assets.reduce((n, a) => n + a.bytes, 0), aWire = s.assets.reduce((n, a) => n + wire(a.text), 0);
-    console.log(`built ${path.relative(ROOT, s.file)} (${KB(s.bytes)}; ${MB(pageWire)} on the wire) + ${path.relative(ROOT, ASSET_DIR)}/ (${s.assets.length} files, ${KB(raw)}; ${MB(aWire)} on the wire)`);
-    console.log(`split first load: ${MB(pageWire + aWire)} on the wire; a returning player after a code change: ${MB(pageWire)} (wire = Brotli quality 4)`);
+    const s = buildSplit(), r = loadReport(s), raw = s.assets.reduce((n, a) => n + a.bytes, 0);
+    console.log(`built ${path.relative(ROOT, s.file)} (${KB(s.bytes)}; ${MB(r.page)} on the wire) + ${path.relative(ROOT, ASSET_DIR)}/ (${s.assets.length} boot files, ${KB(raw)}; ${MB(r.boot)} on the wire; ${s.packs.length} area packs)`);
+    console.log(`boot set (B2): zone 1 ${MB(r.zone1.counted)}, worst zone ${r.worst.z} ${MB(r.worst.counted)} counted (with both of Mossy Hollow's shapes ${MB(r.zone1.real)} and ${MB(r.worst.real)}); `
+      + `packs: ${Object.entries(r.packs).map(([id, x]) => `${id} ${MB(x.real)}`).join(', ')}; largest zone set ${MB(r.zoneMax.b)} (zone ${r.zoneMax.z}), area set ${MB(r.areaMax.b)} (area ${r.areaMax.a + 1}), area 1's exceptions left out`);
+    console.log(`everything: ${MB(r.everything)} on the wire (B1's 6.0 / 8.0 MB first-load lines are a report here); a returning player after a code change: ${MB(r.page)} (wire = Brotli quality 4)`);
+    for (const w of r.warns) console.log('warn: ' + w);
+    for (const f of r.fails) console.log('over a load line: ' + f);
   }
 }
