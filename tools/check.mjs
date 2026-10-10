@@ -735,12 +735,13 @@ if (section('new-style screens (ns-scenery-engine)')) try {
       `new-style screens: Mossy Hollow's fights (zones 1-5, monsters on) need the plan's A1 roster: five monsters, the Captains that fight there and the Briar Regent (${r.a1})`);
   }
   { const g = loadCore({ turns: true, storage: memoryStorage({ [KEY]: early }) }), E = s => JSON.stringify(g.eval(s));
-    const got = { f1: E('nsFightPieces(1)[0]'), f6: E('nsFightPieces(6)[0]'), grove: E(`nsGatherPieces('wood', 1, true)`), hunt: E(`nsGatherPieces('hide', 1)`), none: E(`nsGatherPieces('smith', 1)`),
+    const got = { f1: E('nsFightPieces(1)[0]'), f6: E('nsFightPieces(6)[0]'), grove: E(`nsGatherPieces('wood', 1, true)`), hunt: E(`nsGatherPieces('hide', 1)`), road: E('[nsFightPieces(ROAD_ZONES + 1)[0], nsFightPieces(ROAD_ZONES - 34)[0]]'), none: E(`nsGatherPieces('smith', 1)`),
       z: E(`[nsPackZones('scenery:fight.0'), nsPackZones('foe:imp'), nsPackZones('node:wood.1'), nsPackZones('critter:cr_moth')]`) };
-    assert(got.f1 === '"scenery:fight.0"' && got.f6 === '"scenery:fight.1"' && got.hunt === '["scenery:gather.gwoods","beast:enraged-boar"]' && got.none === '[]'
-      && ['scenery:gather.gwoods', 'node:wood.1', 'prop:pile.logs', 'prop:fire', 'npc:hesketh'].every(p => got.grove.includes(p))
+    assert(got.f1 === '"scenery:fight.0"' && got.f6 === '"scenery:fight.1"' && got.hunt === '["scenery:gather.gwoods","beast:enraged-boar","prop:pile.logs"]' && got.none === '[]'
+      && JSON.parse(got.road)[0] === JSON.parse(got.road)[1]
+      && ['scenery:gather.gwoods', 'node:wood.1', 'prop:pile.logs', 'prop:fire', 'npc:hesketh', 'prop:stake', 'station:bench', 'station:forge', 'station:store'].every(p => got.grove.includes(p))
       && got.z === `[[[1,5]],[[1,1]],[],[[1,${g.eval('ROAD_ZONES')}]]]`,
-      `new-style screens: a fight shows its area's scenery, the cold Hearth its grove's props and Hesketh, hunting its beast on the woods; a fight's pieces load by zone, a critter in every zone, a gather spot's when asked (${JSON.stringify(got)})`); }
+      `new-style screens: a fight shows its area's scenery (past the road, the scenery the loaders fetch), the cold Hearth its grove's props, Hesketh and every plot, hunting its beast on the woods with the log pile; a fight's pieces load by zone, a critter in every zone, a gather spot's when asked (${JSON.stringify(got)})`); }
   // the split build: one pack per piece, by zone, never holding the game (n), left out while Classic art is on (x)
   const fx = nsFixture(), NF = '21zc-data-nsart.js', s = buildSplit({ write: false, extra: [{ f: NF, text: fx.text }] });
   const ns = s.packs.filter(p => p.id.startsWith('ns:')), want = Object.entries(fx.data).filter(([, G]) => G && typeof G === 'object').flatMap(([g, G]) => Object.keys(G).map(k => `ns:${g}.${k}`));
@@ -854,6 +855,13 @@ if (section('new-style screens (browser)')) try {
             const px = g.getImageData(2, v.height - 2, 1, 1).data; return { ps, miss, st, stations: (nsStats().drawn.station || 0) - d0, px: [px[0], px[1], px[2]], b: v.buildings.length }; })()`);
           assert(cp.ps[0] === 'scenery:camp' && (cp.miss.length ? cp.st === 'off' : cp.st === 'on' && cp.stations >= cp.b && cp.px[1] > cp.px[0] + 30),
             `new-style screens: the camp panorama is new style when its pieces are in (${cp.ps.join()}; missing ${cp.miss.join() || 'none'}; ${cp.st}, ${cp.stations} stations drawn, corner ${cp.px})`);
+          // a camp visit keeps its style: a gatherer with no new-style art hired mid-visit leaves it new; the next visit is classic
+          const cv = await J(`(() => { const v = campSceneLayout(), c = document.createElement('canvas'); c.width = v.width; c.height = v.height; const g = c.getContext('2d');
+            campPaintScene(g, v, 1); const a = nsCamp(v), w = Object.assign({}, v, { actors: v.actors.concat([{ id: 'x', key: 'nobody', x: 500, y: 164, status: { st: 'idle' } }]) });
+            campPaintScene(g, w, 1); return [a, nsCamp(w)]; })()`);
+          await page.waitForTimeout(1200);
+          const cv2 = await J(`(() => { const v = campSceneLayout(), w = Object.assign({}, v, { actors: v.actors.concat([{ id: 'x', key: 'nobody', x: 500, y: 164, status: { st: 'idle' } }]) }); return nsCamp(w); })()`);
+          assert(cv[0] === 'on' && cv[1] === 'on' && cv2 === 'off', `new-style screens: a gatherer with no new-style art hired while the camp is open leaves it new for the visit (${cv}); the next visit is classic (${cv2})`);
           // a worn critter is a piece of the screen; in the fixture, its frames draw instead of the classic critter's (64-looks reads what is worn every 2 s)
           const cr = await J(`(() => { window.__w0 = wearGet; wearGet = s => s === 'critter' ? 'cr_moth' : window.__w0(s); setActivity('fight'); setZone(1); return null; })()`) || await (async () => {
             await page.waitForTimeout(2600); return J(`(() => { const r = { ns: nsStats() }; wearGet = window.__w0; return r; })()`); })();

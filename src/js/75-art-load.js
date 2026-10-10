@@ -62,9 +62,10 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     // a hero file the Classic art switch turns off (x in the table: Wren's route S, route-s-wren-wire) loads only when asked while it is on
     const classicOn = () => typeof portraitsClassic === 'function' && portraitsClassic();
     const soon = [];   // packs asked for with artHeroWant or artNsWant, loaded after the ones the stage holds for
-    const ask = ids => { for (const id of ids) if (P[id] && !got[id] && !soon.includes(id)) soon.push(id); pump(); };
+    // (a new-style ask that queues nothing starts nothing: it must not take the slot a hero move needs)
+    const ask = (ids, quiet) => { const n = soon.length; for (const id of ids) if (P[id] && !got[id] && !soon.includes(id)) soon.push(id); if (!quiet || soon.length > n) pump(); };
     artHeroWant = (hero, move) => ask(artHeroPacks(hero, move));
-    artNsWant = ps => { if (!classicOn()) ask((ps || []).map(p => 'ns:' + p.replace(':', '.'))); };
+    artNsWant = ps => { if (!classicOn()) ask((ps || []).map(p => 'ns:' + p.replace(':', '.')), true); };
     artHeroReady = (hero, move) => artHeroPacks(hero, move).every(id => got[id]) && waits.every(f => { try { return f(hero, move) !== false; } catch (e) { return true; } });
     artHeroNeed = (hero, move) => {
       if (artHeroReady(hero, move)) return true;

@@ -29231,20 +29231,15 @@ function nsZoneFoes(z) {
   add(nsFoeKey({ boss: true, type: zt, key: zt, z, tz: z, turn: 1 }));
   return out;
 }
-const nsFightPieces = z => ['scenery:fight.' + zoneAreaIdx(z)].concat(nsZoneFoes(z).map(k => 'foe:' + k));
+// past the road the scenery repeats every 35 zones (the loaders' table zone)
+const nsFightPieces = z => ['scenery:fight.' + zoneAreaIdx(z > ROAD_ZONES ? ROAD_ZONES - 34 + (z - ROAD_ZONES - 1) % 35 : z)].concat(nsZoneFoes(z).map(k => 'foe:' + k));
 function nsGatherPieces(kind, t, grove) {
   const set = NS_GATHER_SET[kind]; if (!set) return [];
   const out = ['scenery:gather.' + set];
-  if (kind === 'hide') { const B = typeof HUNT_BEASTS === 'object' && HUNT_BEASTS[(t | 0) - 1]; out.push(B ? 'beast:' + B.key : 'beast:?'); return out; }
+  if (kind === 'hide') { const B = typeof HUNT_BEASTS === 'object' && HUNT_BEASTS[(t | 0) - 1]; out.push(B ? 'beast:' + B.key : 'beast:?', 'prop:pile.logs'); return out; }
   out.push('node:' + kind + '.' + t, 'prop:pile.' + NS_PILE[kind]);
-  if (grove) {
-    out.push('prop:fire', 'npc:hesketh');
-    for (const id of ['bench', 'forge', 'store']) {
-      const lv = S.camp && S.camp.b ? S.camp.b[id] || 0 : 0;
-      if (lv >= 1) out.push('station:' + id);
-      else if (typeof CAMP_B === 'object' && CAMP_B[id] && typeof hearthPlotOpen === 'function' && hearthPlotOpen(id)) out.push('prop:stake');
-    }
-  }
+  // the grove: every plot, since a stake or a station can appear while you chop
+  if (grove) out.push('prop:fire', 'npc:hesketh', 'prop:stake', 'station:bench', 'station:forge', 'station:store');
   return out.filter((p, i, a) => a.indexOf(p) === i);
 }
 function nsCampPieces(view) {
@@ -29253,7 +29248,8 @@ function nsCampPieces(view) {
   if (view.tents > 0) out.push('prop:tent');
   if (view.open) out.push('prop:fire');
   for (const b of view.buildings || []) out.push('station:' + b.id);
-  for (const a of view.actors || []) { out.push('gatherer:' + (a.key || a.id)); if (a.status && a.status.st === 'pack') out.push('prop:pack'); }
+  // every hired gatherer, away ones too, and the pack any of them may carry home: the camp keeps its style for the visit
+  for (const a of (view.actors || []).concat(view.away || [])) out.push('gatherer:' + (a.key || a.id), 'prop:pack');
   return out.filter((p, i, a) => a.indexOf(p) === i);
 }
 function nsPackZones(piece) {
@@ -35185,7 +35181,7 @@ let campSceneLayout, campPaintScene;
     // the whole button inside the panorama even when all ten tents are occupied.
     for (const h of handsList()) {
       const status = handsStatus(h); if (!status) continue;
-      if (status.st === 'out' || status.st === 'back') { view.away.push({ id: h.id, name: h.n, status }); continue; }
+      if (status.st === 'out' || status.st === 'back') { view.away.push({ id: h.id, key: h.key, name: h.n, status }); continue; }
       const want = SPOTS[status.spot] || SPOTS.fire;
       const x = slots.filter(p => !used.has(p)).sort((a, b) => Math.abs(a - want) - Math.abs(b - want) || a - b)[0];
       if (x == null) continue;
@@ -37259,7 +37255,7 @@ var nsScreen, nsOn, nsFoeSet, nsNodeSet, nsBlit, nsDraw, nsScenery, nsCamp, nsHe
       const k = p + '|' + kind; if (SETS.has(k)) return SETS.get(k);
       const R = n => rec(p, pick(p, n)), e = E(p), s = { ns: p, k: p, idle0: R('idle') };
       if (!s.idle0) return null;
-      s.idle1 = breathe(s.idle0);
+      s.idle1 = kind === 'foe' ? breathe(s.idle0) : s.idle0;   // only foes breathe
       if (kind === 'foe') {
         s.mv = [1, 2, 3].filter(i => has(p, 'wind' + i) || has(p, 'strike' + i)).map(i => [R('wind' + i), R('strike' + i)]);
         if (!s.mv.length) s.mv = [[R('wind'), R('strike')]];
@@ -37343,8 +37339,10 @@ var nsScreen, nsOn, nsFoeSet, nsNodeSet, nsBlit, nsDraw, nsScenery, nsCamp, nsHe
     const IM = {};
     function scenery(g, phase, W, H, GY, cam, p) {
       const e = E(p); if (!e) return false;
-      const k = Math.max(MINK, (W + 16) / e.w, GY / e.gy, (H - GY) / Math.max(1, e.h - e.gy));
-      const sx = e.safe ? (e.safe[0] + e.safe[1]) / 2 : e.w / 2, x0 = Math.min(-8, Math.max(W + 8 - e.w * k, W / 2 - sx * k)), y0 = GY - e.gy * k;
+      // m: the most any layer moves with the sway (camF up to 8 stage px, times its par), so no layer leaves an edge bare
+      const m = 8 * Math.max(1, ...(e.layers || []).map(L => Math.abs(L.par != null ? L.par : 1)));
+      const k = Math.max(MINK, (W + 2 * m) / e.w, GY / e.gy, (H - GY) / Math.max(1, e.h - e.gy));
+      const sx = e.safe ? (e.safe[0] + e.safe[1]) / 2 : e.w / 2, x0 = Math.min(-m, Math.max(W + m - e.w * k, W / 2 - sx * k)), y0 = GY - e.gy * k;
       const K = g.getTransform().a, sm = g.imageSmoothingEnabled;
       if (phase === 'light') {
         for (const l of e.lights || []) ANIM.lightAt(g, l[3] || '255,200,120', x0 + l[0] * k - cam, y0 + l[1] * k, l[2] * k, l[4] != null ? l[4] : 0.5);
@@ -37366,11 +37364,15 @@ var nsScreen, nsOn, nsFoeSet, nsNodeSet, nsBlit, nsDraw, nsScenery, nsCamp, nsHe
     nsScenery = (g, phase, W, H, GY, cam) => nsOn() && scenery(g, phase, W, H, GY, cam, SCR.pieces[0]);
 
     // the camp panorama (63d): its own screen
-    const CAMP = { key: '', st: 'off', t0: 0, pieces: [] };
+    // a visit starts when the panorama was not painted for a second; a piece that joins mid-visit (a hire, a building) is
+    // fetched but never changes the visit's style
+    const CAMP = { key: '', st: 'off', t0: 0, at: -9, pieces: [] };
     nsCamp = view => {
       if (classic() || !view) return (CAMP.key = '', CAMP.st = 'off');
-      const ps = nsCampPieces(view), k = ps.join(',');
-      if (k !== CAMP.key) { CAMP.key = k; CAMP.t0 = now(); CAMP.pieces = ps; CAMP.st = 'wait'; }
+      const ps = nsCampPieces(view), k = ps.join(','), t = now(), fresh = t - CAMP.at > 1 || CAMP.key === '\0';
+      CAMP.at = t;
+      if (fresh) { CAMP.t0 = t; CAMP.st = 'wait'; }
+      if (k !== CAMP.key) { CAMP.key = k; CAMP.pieces = ps; if (CAMP.st === 'on' && ps.some(p => pieceSt(p) < 3)) want(ps); }
       if (CAMP.st === 'wait') CAMP.st = judge(ps, CAMP.t0, null);
       return CAMP.st;
     };
@@ -40366,9 +40368,10 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     // a hero file the Classic art switch turns off (x in the table: Wren's route S, route-s-wren-wire) loads only when asked while it is on
     const classicOn = () => typeof portraitsClassic === 'function' && portraitsClassic();
     const soon = [];   // packs asked for with artHeroWant or artNsWant, loaded after the ones the stage holds for
-    const ask = ids => { for (const id of ids) if (P[id] && !got[id] && !soon.includes(id)) soon.push(id); pump(); };
+    // (a new-style ask that queues nothing starts nothing: it must not take the slot a hero move needs)
+    const ask = (ids, quiet) => { const n = soon.length; for (const id of ids) if (P[id] && !got[id] && !soon.includes(id)) soon.push(id); if (!quiet || soon.length > n) pump(); };
     artHeroWant = (hero, move) => ask(artHeroPacks(hero, move));
-    artNsWant = ps => { if (!classicOn()) ask((ps || []).map(p => 'ns:' + p.replace(':', '.'))); };
+    artNsWant = ps => { if (!classicOn()) ask((ps || []).map(p => 'ns:' + p.replace(':', '.')), true); };
     artHeroReady = (hero, move) => artHeroPacks(hero, move).every(id => got[id]) && waits.every(f => { try { return f(hero, move) !== false; } catch (e) { return true; } });
     artHeroNeed = (hero, move) => {
       if (artHeroReady(hero, move)) return true;

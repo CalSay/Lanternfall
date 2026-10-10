@@ -24,20 +24,15 @@ function nsZoneFoes(z) {
   add(nsFoeKey({ boss: true, type: zt, key: zt, z, tz: z, turn: 1 }));
   return out;
 }
-const nsFightPieces = z => ['scenery:fight.' + zoneAreaIdx(z)].concat(nsZoneFoes(z).map(k => 'foe:' + k));
+// past the road the scenery repeats every 35 zones (the loaders' table zone)
+const nsFightPieces = z => ['scenery:fight.' + zoneAreaIdx(z > ROAD_ZONES ? ROAD_ZONES - 34 + (z - ROAD_ZONES - 1) % 35 : z)].concat(nsZoneFoes(z).map(k => 'foe:' + k));
 function nsGatherPieces(kind, t, grove) {
   const set = NS_GATHER_SET[kind]; if (!set) return [];
   const out = ['scenery:gather.' + set];
-  if (kind === 'hide') { const B = typeof HUNT_BEASTS === 'object' && HUNT_BEASTS[(t | 0) - 1]; out.push(B ? 'beast:' + B.key : 'beast:?'); return out; }
+  if (kind === 'hide') { const B = typeof HUNT_BEASTS === 'object' && HUNT_BEASTS[(t | 0) - 1]; out.push(B ? 'beast:' + B.key : 'beast:?', 'prop:pile.logs'); return out; }
   out.push('node:' + kind + '.' + t, 'prop:pile.' + NS_PILE[kind]);
-  if (grove) {
-    out.push('prop:fire', 'npc:hesketh');
-    for (const id of ['bench', 'forge', 'store']) {
-      const lv = S.camp && S.camp.b ? S.camp.b[id] || 0 : 0;
-      if (lv >= 1) out.push('station:' + id);
-      else if (typeof CAMP_B === 'object' && CAMP_B[id] && typeof hearthPlotOpen === 'function' && hearthPlotOpen(id)) out.push('prop:stake');
-    }
-  }
+  // the grove: every plot, since a stake or a station can appear while you chop
+  if (grove) out.push('prop:fire', 'npc:hesketh', 'prop:stake', 'station:bench', 'station:forge', 'station:store');
   return out.filter((p, i, a) => a.indexOf(p) === i);
 }
 function nsCampPieces(view) {
@@ -46,7 +41,8 @@ function nsCampPieces(view) {
   if (view.tents > 0) out.push('prop:tent');
   if (view.open) out.push('prop:fire');
   for (const b of view.buildings || []) out.push('station:' + b.id);
-  for (const a of view.actors || []) { out.push('gatherer:' + (a.key || a.id)); if (a.status && a.status.st === 'pack') out.push('prop:pack'); }
+  // every hired gatherer, away ones too, and the pack any of them may carry home: the camp keeps its style for the visit
+  for (const a of (view.actors || []).concat(view.away || [])) out.push('gatherer:' + (a.key || a.id), 'prop:pack');
   return out.filter((p, i, a) => a.indexOf(p) === i);
 }
 function nsPackZones(piece) {

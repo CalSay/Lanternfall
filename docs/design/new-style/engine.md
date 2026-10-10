@@ -33,7 +33,12 @@ A piece is `group:key`. Its entry is `NS_ART[group][key]`, and its pack id is `n
 | `critter` | the `CRITTER_ART` id | every screen where it is worn |
 | `hero` | the hero id, through `nsHeroArt` (below) | fights and gathering |
 
-`nsFightPieces(z)` is a zone's scenery plus every foe its turn fights put on the stage. The check plays 41 spawns in each
+`nsFightPieces(z)` is a zone's scenery plus every foe its turn fights put on the stage. Past the road (zone 176 on), the scenery is
+the table zone's, as the loaders fetch it. A list holds everything that can appear during the visit:
+- **The grove** needs every plot's station and the stake, since one can finish or open while you chop.
+- **Hunting** needs its beast and the woods' log pile.
+- **The camp** needs every hired gatherer (away ones too) and the pack.
+ The check plays 41 spawns in each
 zone from 1 to 35, with zone monsters off and on, and finds the two lists equal. `nsGatherPieces(kind, t, grove)` and
 `nsCampPieces(view)` do the same for gathering and camp. A wire card that adds a foe to a fight adds it to `nsZoneFoes`
 too, and that check holds it to it.
@@ -85,6 +90,9 @@ loaded and decoded, including `hero:<id>` and a worn critter.
 - **wait**: everything is loaded but still decoding. The stage shows the backdrop alone, for at most 1.5 s.
 - **off**: the screen draws classic for the whole visit. If a piece is wired but not loaded, it asks the loader for it, so
   the next visit opens new.
+
+The camp panorama decides at the start of each visit, which is a paint after more than a second without one. A piece that joins
+mid-visit (a hire, a finished building) is fetched, but it never changes that visit's style.
 
 Some screens stay classic: real-time fights, the Deepwell, Provings, the raid and the Trophy Wall. Classic art (Settings >
 Hero art) turns every screen classic, and the split build then fetches no `ns` pack.

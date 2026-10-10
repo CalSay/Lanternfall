@@ -192,7 +192,7 @@ let campSceneLayout, campPaintScene;
     // the whole button inside the panorama even when all ten tents are occupied.
     for (const h of handsList()) {
       const status = handsStatus(h); if (!status) continue;
-      if (status.st === 'out' || status.st === 'back') { view.away.push({ id: h.id, name: h.n, status }); continue; }
+      if (status.st === 'out' || status.st === 'back') { view.away.push({ id: h.id, key: h.key, name: h.n, status }); continue; }
       const want = SPOTS[status.spot] || SPOTS.fire;
       const x = slots.filter(p => !used.has(p)).sort((a, b) => Math.abs(a - want) - Math.abs(b - want) || a - b)[0];
       if (x == null) continue;
