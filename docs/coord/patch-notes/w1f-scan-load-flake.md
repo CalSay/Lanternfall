@@ -1,0 +1,1 @@
+Tooling only: the solo copy scan presses each item-sheet button itself instead of clicking the spot where it sits, so a slow runner no longer picks a hero's path by accident, and the long-press step waits for each sheet to open. No player change. (no shot)
