@@ -26,7 +26,7 @@
 //   node tools/playtest.mjs parry-clean [secs]    wait (default 8 s of game time) for the foe's swing to reach its last 0.1 s, then tap
 //                                                 Parry: a clean parry, timed from the fight's own clock. Stops early on the hero's turn
 //   tab new [field=n]   (batch only) open the game in a second tab of the same browser (same storage); the open tab goes to the
-//                       background first. field=n edits the stored save just before the new tab loads it (the new tab's progress)
+//                       background first. field=n edits the stored save just before the new tab loads it (the new tab's progress; a dotted field such as blackjack.w=600 edits inside an object)
 //   tab <n>             (batch only) bring tab n (1 = the first) to the front; the one in front goes to the background
 //   tab close [n]       (batch only) close the tab in front (it goes to the background, then pagehide; the last other tab comes to the
 //                       front), or tab n while it stays in the background (pagehide only)
@@ -596,8 +596,8 @@ async function main() {
         const front = ctx.page, tabs = ctx.tabs, open = () => tabs.filter(Boolean), now = async () => Math.max(...await Promise.all(open().map(p => p.evaluate(() => Date.now()))));   // a closed tab keeps its number (null)
         if (a[0] === 'new') {
           await setHidden(front, true);
-          const edits = a.slice(1).map(x => /^([A-Za-z_]\w*)=(-?[\d.]+)$/.exec(x) || die(`tab new takes field=number edits (got "${x}")`));
-          if (edits.length) await front.evaluate(([k, ed]) => { const o = JSON.parse(localStorage.getItem(k)); for (const [f, v] of ed) o[f] = v; localStorage.setItem(k, JSON.stringify(o)); }, [KEY, edits.map(m => [m[1], +m[2]])]);
+          const edits = a.slice(1).map(x => /^([A-Za-z_][\w.]*)=(-?[\d.]+)$/.exec(x) || die(`tab new takes field=number edits (got "${x}")`));
+          if (edits.length) await front.evaluate(([k, ed]) => { const o = JSON.parse(localStorage.getItem(k)); for (const [f, v] of ed) { const ks = f.split('.'), last = ks.pop(); let t = o; for (const k of ks) t = t[k]; t[last] = v; } localStorage.setItem(k, JSON.stringify(o)); }, [KEY, edits.map(m => [m[1], +m[2]])]);
           const t = await openPage(browser, session, false, { ctx: ctx.ctx, errors: ctx.errors, time: await now() });
           tabs.push(t.page); ctx.page = t.page;
           return { text: `opened tab ${tabs.length} (tab ${tabs.indexOf(front) + 1} went to the background)${edits.length ? '; stored save edited first: ' + a.slice(1).join(' ') : ''}`, data: { tab: tabs.length } };
