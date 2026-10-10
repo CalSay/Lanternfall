@@ -1,0 +1,1 @@
+Tooling only. Nothing changes in the game. The check for the "Beaten" line after a normal loss now measures the line once it has finished sliding in, so a busy computer no longer catches it mid-slide and reports it outside the stage. (no shot)

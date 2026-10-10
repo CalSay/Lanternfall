@@ -14641,6 +14641,12 @@ if (section('normal-death-says-so')) try {
           on('fightStart', () => { __ndFS++; const u = cbUnitByKey('hero'); __ndHp = u ? u.hp / u.maxHp : 0; }); true`);
         const live = async () => { for (let i = 0; i < 40 && !(await X('!!(TURN_LIVE && !TURN_LIVE.ended && cbUnitByKey("hero") && !cbUnitByKey("hero").down)')); i++) await page.waitForTimeout(150); };
         await live();
+        // the loss line slides in from 16 px left over 0.35 s (60-turn.css tv-beat-in) and spans the stage, so it reads outside the stage
+        // until the slide ends: measure it at rest, once its own animations finish (the flake: a fixed 400 ms sleep caught it mid-slide under load).
+        // A hidden line cancels its slide (caught: the reads after it say so); a slide still running after 5 s fails by name
+        const rest = async () => assert(await page.evaluate(() => { const b = document.querySelector('.tv-beat'); return !b || Promise.race([
+          Promise.all(b.getAnimations().map(a => a.finished.catch(() => 0))).then(() => true), new Promise(r => setTimeout(() => r(false), 5000))]); }),
+          `${w}x${h}: the loss line's slide-in finished within 5 s`);
         const st = () => page.evaluate(() => {
           const b = document.querySelector('.tv-beat'), box = document.getElementById('stageBox'), r = b && b.getBoundingClientRect(), sb = box.getBoundingClientRect();
           const help = b && b.querySelector('.tv-beat-help'), txt = b && b.querySelector('.tv-beat-txt');
@@ -14651,7 +14657,7 @@ if (section('normal-death-says-so')) try {
               return [...t.children].some(c => c.offsetParent) && +getComputedStyle(t).opacity > 0.05 && r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom; })() };
         });
         // a real normal loss at zone 10 (the lethal hit, then the recovery gap turnCombatTick sets): the float says Beaten, the stage line shows with tc-on (toasts wait), inside the stage and whole
-        await X('cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true'); await page.waitForTimeout(400);
+        await X('cbTurnHitHero(1e15, false, "hit"); TURN_RECOVER = 5; true'); await rest();
         let s = await st();
         assert(s.on && s.txt === "Beaten. You're back to full HP for the next fight." && s.tc && s.float === 'Beaten', `${w}x${h}: a normal loss shows "Beaten" on the stage with the full-HP line and holds the toasts (${JSON.stringify(s)})`);
         assert(s.inside && !s.cut, `${w}x${h}: the loss line sits inside the stage and no text is cut`);
@@ -14664,7 +14670,7 @@ if (section('normal-death-says-so')) try {
           const gearHelp = async (setup, goal) => {
             await X('const c = document.querySelector(".away-ov .away-go"); if (c) c.click(); true'); await page.waitForTimeout(100);
             await X(`window.__gfE = Object.assign({}, S.equip); window.__gfI = S.items.slice(); window.__gfG = craftGoalNext; ${setup}; craftGoalNext = () => (${goal});
-              emit('wipe', { zone: ++__ndZn, to: 10, boss: false, arena: false, stall: false }); craftGoalNext = __gfG; true`); await page.waitForTimeout(400);
+              emit('wipe', { zone: ++__ndZn, to: 10, boss: false, arena: false, stall: false }); craftGoalNext = __gfG; true`); await rest();
             const r = await st(), go = await page.evaluate(() => { const g = document.querySelector('.tv-beat-go'), box = document.getElementById('stageBox'), r = g && g.getBoundingClientRect(), sb = box.getBoundingClientRect();
               return { lbl: g && !g.hidden ? g.textContent : '', inside: !!r && r.width > 0 && r.left >= sb.left - 1 && r.right <= sb.right + 1 && r.top >= sb.top - 1 && r.bottom <= sb.bottom + 1, hit: !!r && document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) === g }; });
             return { ...r, go };
