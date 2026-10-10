@@ -110,7 +110,7 @@ var artZoneReady = () => true, artZonePacks = () => [];
       // reloaded a minute ago, or no session storage to tell: never loop; the line asks the player instead
       try { last = +sessionStorage.getItem(RELOAD_KEY) || 0; if (Date.now() - last < 60000) return false; sessionStorage.setItem(RELOAD_KEY, String(Date.now())); } catch (e) { return false; }
       reloading = true;
-      try { save(); } catch (e) {}
+      try { bootAwayNow(); save(); } catch (e) {}   // the away gains first, as pagehide does (90-boot): a save stamps S.last
       setTimeout(() => location.reload(), 400);
       return true;
     }
@@ -128,7 +128,7 @@ var artZoneReady = () => true, artZonePacks = () => [];
         line = document.createElement('span'); box.append(line);
         btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Reload'; btn.hidden = true;
         btn.style.cssText = 'padding:8px 16px;border:1px solid var(--line-hi,#4E4060);border-radius:6px;background:var(--panel,#1F1827);color:inherit;font:inherit';
-        btn.onclick = () => { try { save(); } catch (e) {} location.reload(); };
+        btn.onclick = () => { try { bootAwayNow(); save(); } catch (e) {} location.reload(); };
         box.append(btn); stage.append(box);
         for (const ev of ['pointerdown', 'pointerup', 'mousedown', 'touchstart', 'click']) box.addEventListener(ev, e => e.stopPropagation());   // no strikes through it
       }
