@@ -384,12 +384,20 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
   }
   const GAP_K = 16;
   const reachC = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+  // heroArtDraw hands back one shared record (hero._f is the same object), so its frame is read, then the record put back
+  // as it was; the reach is kept per hero art id once that art has loaded
+  const reachOf = new Map();
   function heroReach() {
-    let f = null;
     const id = typeof heroArtId === 'function' && heroArtId();
-    if (id && reachC && typeof heroArtDraw === 'function') { const i = heroArtDraw(reachC.getContext('2d'), id, 'fightIdle', 0, 0, 0, { frame: 0 }); f = i && i.f; }
-    f = f && f.c ? f : hero.fr && hero.fr.idle0;
-    return (f ? rightEdge(f) - f.ox : 16) + Math.ceil(GAP_K / AK);
+    let r = id ? reachOf.get(id) : undefined;
+    if (r == null && id && reachC && typeof heroArtDraw === 'function') {
+      const h = hero._f, keep = h && { c: h.c, ox: h.ox, oy: h.oy, lights: h.lights && h.lights.slice() };
+      const i = heroArtDraw(reachC.getContext('2d'), id, 'fightIdle', 0, 0, 0, { frame: 0 }), f = i && i.f;
+      if (f && f.c) { r = rightEdge(f) - f.ox; reachOf.set(id, r); }
+      if (keep && f === h) { h.c = keep.c; h.ox = keep.ox; h.oy = keep.oy; if (keep.lights) { h.lights.length = 0; h.lights.push(...keep.lights); } }
+    }
+    if (r == null) { const f = hero.fr && hero.fr.idle0; r = f ? rightEdge(f) - f.ox : 16; }
+    return r + Math.ceil(GAP_K / AK);
   }
   // First opaque column of a baked frame (cached per canvas): the sprite's real left edge.
   const leftEdges = new WeakMap();
@@ -1492,7 +1500,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
 
   let drawMs = 0;
   const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0, hx: 0, hy: 0, hl: 1, hd: false, hf: null, hX: 0, hY: 0 };
-  const FXV = { T: 0, cam: 0, SW: 0, SH: 0, GY: 0, K: 1, DPR: 1, sx: 0, sy: 0, fight: false, foe: null, hx: 0, hy: 0, hfX: 0, hfY: 0, hc: null, hX: 0, hY: 0 };   // stageFx's view (reused)
+  const FXV = { T: 0, cam: 0, SW: 0, SH: 0, GY: 0, K: 1, KS: 1, DPR: 1, sx: 0, sy: 0, fight: false, foe: null, hx: 0, hy: 0, hfX: 0, hfY: 0, hc: null, hX: 0, hY: 0 };   // stageFx's view (reused)
   draw = function () {
     if (!SW) { resize(); if (!SW) return; }
     const t0 = performance.now();
@@ -1503,10 +1511,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
     const K = DPR * ZM, tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
     // the scenery's view (stage px, ZS) and the actors' (actor px, ZM); the shake moves both by the same whole device px
-    const KS = DPR * ZS, sxd = Math.round(sx * K), syd = Math.round(sy * K);
-    const sceneView = () => ctx.setTransform(KS, 0, 0, KS, sxd, syd), actorView = () => ctx.setTransform(K, 0, 0, K, sxd, syd);
-    sceneView();
+    const KS = DPR * ZS, sxd = Math.round(sx * KS), syd = Math.round(sy * KS);   // the shake at today's strength
+    // (the glows' device copies, 61-anim glowAt, follow the same view: lamp light in the scenery's, effects in the actors')
+    const sceneView = () => { ctx.setTransform(KS, 0, 0, KS, sxd, syd); A.glowView(KS, sxd, syd); }, actorView = () => { ctx.setTransform(K, 0, 0, K, sxd, syd); A.glowView(K, sxd, syd); };
     A.devView(K, sxd, syd);
+    sceneView();
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
@@ -1532,7 +1541,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       }
     }
     for (const a of order) { const al = actorA(a); if (al > 0.01) shadowAt(ax(a) - cam, a.down ? 16 : a.lane === 0 ? 11 : 13, (a.lane === 0 ? 0.35 : 0.5) * al, a.hy); }
-    if (stageFx) { const v = FXV; v.T = T; v.cam = cam; v.SW = SW; v.SH = SH; v.GY = GY; v.K = K; v.DPR = DPR; v.sx = sxd / K; v.sy = syd / K;
+    if (stageFx) { const v = FXV; v.T = T; v.cam = cam; v.SW = SW; v.SH = SH; v.GY = GY; v.K = K; v.KS = DPR * ZS; v.DPR = DPR; v.sx = sxd / K; v.sy = syd / K;
       v.fight = fight && turnFight(); v.foe = fight && foe.fr ? foe : null; v.hx = handX(hero); v.hy = handY(hero); v.hfX = ax(hero); v.hfY = hero.hy;
       v.hc = hero._f && hero._f.c; v.hX = hero._x; v.hY = hero._y; stageFx.draw(ctx, 'back', v); }
     // Shield Wall dome (back half)
@@ -1964,7 +1973,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene;
       return;
     }
     const fight = tg === 'mob', tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
-    const bw = Math.max(10, Math.min(14, Math.round(16 * K / U))) * U;
+    const bw = Math.max(10, Math.min(14, Math.round(16 * DPR * ZS / U))) * U;   // the HUD keeps the stage's size (ZS), not the actors'
     const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0 || restF > 0;
     // party: an HP bar (and ability gauge) over each head; the hero's chips to the right of its bar
     // (toward the foe: above it they would cover the face of an ally in the upper lane). Knocked-out

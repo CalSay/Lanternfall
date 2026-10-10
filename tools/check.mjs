@@ -17536,6 +17536,15 @@ if (section('actor-scale (browser)')) try {
           assert(!!(r && r.R.hero), `${tag} gathering: the hero stands at the Pine Grove`);
           if (r && r.R.hero && ak > 1) { const hits = r.ui.filter(u => cross(r.R.hero, u)).map(u => u.n); assert(!hits.length, `${tag} gathering: the hero meets no stage UI (${hits.join(', ') || 'none'})`); }
         }
+        // the scenery's lamp glows draw in the scenery's view: no glow leaves the canvas at another scale (61-anim glowAt's
+        // device copies set the view they were given; at 1.5 a lamp's light once switched the rest of the frame to the actors')
+        if (ak > 1) for (const [name, src] of [['the Pine Grove', null], ['zone 9', 'setActivity("fight"); fightBoss = false; setZone(9)']]) {
+          if (src) await scene(src, 1200);
+          const g = await X(`new Promise(res => { const o = ANIM.glowAt, seen = { n: 0, moved: 0 };
+            ANIM.glowAt = function (c, ...a) { const k0 = c.getTransform().a; o.call(this, c, ...a); seen.n++; if (Math.abs(c.getTransform().a - k0) > 1e-6) seen.moved++; };
+            setTimeout(() => { ANIM.glowAt = o; res(seen); }, 600); })`);
+          assert(g.n > 0 && g.moved === 0, `${tag} ${name}: the scenery's glows keep the scenery's scale (${g.moved} of ${g.n} changed it)`);
+        }
         // a crowd (2 or more foes: a pack, a boss and its adds) keeps today's size, so its spacing is today's (G2: at 1.5 a pack of
         // wide foes left no room for both a 15% overlap and the hero's 16 px). The real-time fight (turns off) stands them here.
         if (ak > 1) for (const [name, src] of [
