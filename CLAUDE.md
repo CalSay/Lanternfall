@@ -36,8 +36,13 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
 
 - No art goes into the game until the Opus art judge under the Autopilot gates has vetted the **whole pack** for that character or scene, and every piece
   matches the others and suits the game. No partial packs, no stopgaps.
-- Effects and props (arrows, bow strings, tools, sparks, chips) come from the artist in the pack, drawn to match the
-  art. Agents do not draw art assets in code and do not tell the owner that code will add them.
+- Props (arrows, bats, tools, chips) come from the artist in the pack as sprites, drawn to match the art. Agents do not
+  draw art assets in code and do not tell the owner that code will add them. Two exceptions, drawn by the game:
+  - Bowstrings (Cal, 2026-10-09 23:47: "Game string it is"): hero frames carry no string; each frame marks three points
+    (both bow tips and the drawing hand) and the game draws the string through them.
+  - Motion and light effects (trails, flashes, sparks, rings, smoke, shake, hit-stop), with one colour per status (red =
+    bleed) (Cal, 2026-10-10 00:34: "Everything we've done with Wren today should be the default", approved 00:40: "Yes I
+    aprove"). Status icons stay Codex's approved icons.
 - Until then, agents do not wire, convert, retune or redraw existing art. Art tooling and art data files stay as they are.
 - Exception (owner, 2026-09-30): **Codex may create new art for a new item or scene it builds** (for example the
   Hunting scene and its beasts), since those cannot reuse existing assets. Match the style of the three heroes (Wren,
@@ -49,8 +54,10 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
   `64i-hunt-art.js`) and Codex's native spear-thrust poses (`art/heroes/<id>/hunt`, packed by `tools/heroart.mjs`).
   `HUNT_TUNE.interim` turns it on; `borrowArt` (the woods art) is the older stopgap, now off. Codex's vetted pack
   replaces the interim files.
-- Who signs (Cal, 2026-10-06 19:35): "Art should only be made by Codex." Claude vets it and answers for anything broken
-  or ugly that reaches a Monday build. Every Codex pack gets an `integrate: <pack>` card the day it lands. A red team
+- Who signs (Cal, 2026-10-06 19:35): "Art should only be made by Codex." Amended (Cal, 2026-10-10 00:34 and 00:40, above):
+  hero poses and effect sprites may be made through Scenario from the approved concept; Codex still makes concepts and
+  icons. Claude vets every pack and answers for anything broken or ugly that reaches a Monday build. Every Codex or
+  Scenario pack gets an `integrate: <pack>` card the day it lands. A red team
   argues against it, then the Opus art judge rules **wire**, **re-brief** or **shelve** against
   `docs/design/art-direction.md` and the live game's look, records the reason in `docs/DECISIONS.md` (Art) and reports
   it in the digest; Cal may veto later. A "wire" verdict becomes a build card that converts and embeds the pack as
