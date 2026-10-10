@@ -1178,8 +1178,8 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   heroes", "Ship her gathering now", "Bigger heroes on big screens", "Keep heroes at 96 px"):** wire Wren's 20 fight moves (Scenario
   key frames, 190 px, 63 colours, 1-bit alpha, lossless WebP, at most 1,650 KB), with arrow and bat sprites (at most 60 KB), a
   game-drawn string and game-drawn effects, behind Classic art (build card route-s-wren-wire, gated on registration, bytes, shots and
-  a judge clip read). The woodcut axe reads as a sledgehammer: re-brief (Scenario credits, Cal's OK); the 4 gather loops wire later as
-  one set. Any hero's pack is at most 2.0 MB of files. Hero size: the 96 px art spec and "whole steps only" end for finer hero art; a
+  a judge clip read). The woodcut axe reads as a sledgehammer (v2) and v3's edge-on head as a pick: re-brief a profile-view felling axe
+  on v2's chop (v4; Scenario credits, Cal's OK); the 4 gather loops wire later as one set. Any hero's pack is at most 2.0 MB of files. Hero size: the 96 px art spec and "whole steps only" end for finer hero art; a
   hero stands 95 logical stage px (about a quarter of the fight scene): 190 CSS px at 1280x720, 285 at 1920x1080, 95 at 740x360; the
   stage, foes, Tobin and Pip keep whole-step zoom. #320 closed with the spike: foes stay 2D at today's scale. A menu-only phone mode
   is a separate Cal decision. (`docs/design/route-s/ruling.md`)

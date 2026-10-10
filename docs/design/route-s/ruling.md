@@ -45,6 +45,9 @@ nothing from the gathering set ships half-done.
   The build's clip read (gate 12) decides whether that is enough.
 - **Woodcut axe.** At 190 px it reads as a sledgehammer (`out/woodcut-190.png`), so it fails "fits the item's meaning". Mining,
   foraging and hunting read as their tools (`crops/gather-mining-forage-hunt.png`).
+- **Woodcut v3 (2026-10-10 follow-up): fails.** At 190 px the edge-on head is a 4-5 x 16-22 px sliver on a long haft. It
+  reads as a pick or T-bar, and its level jab matches the Hunting spear loop (`crops/woodcut-v3-190.png`,
+  `crops/woodcut-v3-f4-6-x3.png`). The v3 prompt hid the broad face, against re-brief 1.
 - **Mixed style is limited.** One hero stands on the stage at a time. The clash with Tobin and Pip shows only in the picker and
   the hero sheet (`76-create.js:58`, `75-solo-ui.js:469`), where she is drawn at their height.
 
@@ -213,8 +216,10 @@ or Pip's art; change the stage zoom or the online layer; spend Scenario credits.
 
 ## Re-brief list
 
-1. **Woodcut axe** (Scenario credits; needs Cal's OK): a felling axe seen side-on, its blade edge toward the tree, with a clear
-   bit and haft. 8 frames on the same ground line and scale as the other gather loops, bow slung on her back as in v2.
+1. **Woodcut axe, v4** (Scenario credits; needs Cal's OK): v2's raise-and-chop motion, with a single-bit felling axe whose
+   broad face shows in full profile in every frame, a flared curved edge toward the tree, a short poll and an arm-length haft.
+   Never a block, sliver, T-bar, pick or pole. Pass: at 190 px the head is at least 10 x 8 px and a cold reader names it
+   "axe". v3 failed (edge-on head). Draft text for the prompt: `experiments/route-s-judge/woodcut-v4-brief.md`.
 2. **Then wire the gather set** (mining, woodcut, forage, hunt) as one set, at most 300 KB. It replaces the camp pose while she
    gathers, and Codex's interim hunt poses for Wren. The judge vets the set.
 3. **Only if gate 12 fails** (credits; Cal's OK): one shared ready-stance frame that every move opens and closes on.
@@ -246,5 +251,5 @@ sprite bytes at game scale; the red team's 79% outline and silhouette-area figur
 Yes, two height rules were still in place: hero art drawn 96 px tall, and heroes growing only in whole zoom steps. Both go for
 the new finer art. Heroes now fill about a quarter of the fight scene on any screen: 190 px tall at 1280x720, 285 at 1920x1080,
 95 on a phone, so bosses still tower over them. Wren's 20 fight moves go in behind the Classic art switch. Her gathering waits
-for one redrawn axe, because hers reads as a sledgehammer. To overrule, say "Pull the new Wren", "Wait for all three heroes",
+for one redrawn axe: the first try read as a sledgehammer and the second as a pick on a pole. To overrule, say "Pull the new Wren", "Wait for all three heroes",
 "Ship her gathering now", "Bigger heroes on big screens" or "Keep heroes at 96 px".
