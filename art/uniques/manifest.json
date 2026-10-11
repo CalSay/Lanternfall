@@ -1,0 +1,4130 @@
+{
+  "status": "draft-review",
+  "generator": "built-in image_gen",
+  "exporter": "tools/art/gearicons.py bake",
+  "exporterSha256": "0973cf4b2ef8a7a0e157fd3ae29403e37b7492e24c6aaab3f62d30cb5c323587",
+  "sizes": [
+    16,
+    18,
+    20,
+    24,
+    32,
+    48
+  ],
+  "icons": [
+    {
+      "id": "moss-sword",
+      "oldName": "Moss Sword",
+      "name": "Oath of the Hollow",
+      "kind": "warblade",
+      "grade": 1,
+      "concept": "broad copper sword, leaf-shaped blade and moss wrapped antler guard",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Oath of the Hollow': broad copper sword, leaf-shaped blade and moss wrapped antler guard. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\moss-sword.png",
+      "sourceSha256": "c103424a63d4ac7fdacb87b631602f70052ee5631dde9616453593ba58fa5997",
+      "cropRect": [
+        48,
+        48,
+        1206,
+        1208
+      ],
+      "files": {
+        "16": {
+          "path": "moss-sword-16.png",
+          "sha256": "de8bdf277071c7cc8988245f6031ed4c6f079835e055c3472cf2d1020aa8a7c4",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            15,
+            15
+          ]
+        },
+        "18": {
+          "path": "moss-sword-18.png",
+          "sha256": "a5cc0e8df98e247c4abc6196b64034d61b64ae055883bd40b5747ccf455e98d1",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            17,
+            17
+          ]
+        },
+        "20": {
+          "path": "moss-sword-20.png",
+          "sha256": "8f1bde43c8d95399dc0fbc19ca2fdb3d9e2c555a89952e983f33fffae1fd019f",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            19,
+            19
+          ]
+        },
+        "24": {
+          "path": "moss-sword-24.png",
+          "sha256": "bc81d991c907e2aea8b39b9bd8b56a9e19d2ebc5f341f9d1e7a090d8ba967c6e",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            23,
+            23
+          ]
+        },
+        "32": {
+          "path": "moss-sword-32.png",
+          "sha256": "2caef22b91c5ecb1e8b625db26157a54eb0502e272e2256f6656b9f05f8de318",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            30,
+            30
+          ]
+        },
+        "48": {
+          "path": "moss-sword-48.png",
+          "sha256": "8dad21935a6267c5a8be3edac992152525a43546a5d96ef8d4c9b3a9908c84fd",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            46,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-9fe5c7ab-fab7-48b3-b153-54f10a3b9845.png"
+      },
+      "reference": "warblade-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "a3054eee95d372a6fb394f2bd0d40badd84d6c50b2713e561f66749e679a0e24",
+        "48": "e08ea7a9b0f836b386befa9b101ac9a061534db3d19061d042c01d4e8e1b9448"
+      }
+    },
+    {
+      "id": "bat-bow",
+      "oldName": "Bat Bow",
+      "name": "Vesper's Reach",
+      "kind": "bow",
+      "grade": 1,
+      "concept": "pine recurve bow, swept bat wing tips and amber string fittings",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Vesper's Reach': pine recurve bow, swept bat wing tips and amber string fittings. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels. Revision: very broad thick sculpted bat-wing bow limbs, each wing a large continuous mass, not thin twigs. Strong pine amber highlights. Bold chunky silhouette legible at 16px. No tiny decorative wire. Keep recognisable bowstring.",
+      "source": "sources\\bat-bow.png",
+      "sourceSha256": "bff1a426ecb9a0870c91f72646b8959292b738c080b3f5fe1e0e65d04d51e534",
+      "cropRect": [
+        34,
+        19,
+        1229,
+        1227
+      ],
+      "files": {
+        "16": {
+          "path": "bat-bow-16.png",
+          "sha256": "7725aa7d60db919407f1ed51323b16e8ae9148352e156a939ae5352c4b0e8234",
+          "visibleColours": 22,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            15,
+            14
+          ]
+        },
+        "18": {
+          "path": "bat-bow-18.png",
+          "sha256": "e1310a5d49dffdb0bcba90efd5b8d809e96eae714c0cd0f4f6683010a22c502e",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            17,
+            17
+          ]
+        },
+        "20": {
+          "path": "bat-bow-20.png",
+          "sha256": "75e7c339a9113e04bfd1545d8e1941fba373c8246ad0e8a672b6367e7bb22faf",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            19,
+            19
+          ]
+        },
+        "24": {
+          "path": "bat-bow-24.png",
+          "sha256": "8437064cc09c6635e2ade6b967ca0679d72252b7992af6a3efbd1bb9eccfef60",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            23,
+            23
+          ]
+        },
+        "32": {
+          "path": "bat-bow-32.png",
+          "sha256": "018cf785447a0700995b1b756eb140b53e9b3392c449b3ce741f49b7f6bf07f7",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            30,
+            30
+          ]
+        },
+        "48": {
+          "path": "bat-bow-48.png",
+          "sha256": "8e97d6db9911b3d180017b3c337fb190c6d35586b19c39c7e1b810be95e43d4f",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            46,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-5213e9a1-3c35-49c1-8176-e5426f836250.png"
+      },
+      "reference": "bow-g1",
+      "referenceMaterial": "Pine",
+      "referenceHashes": {
+        "32": "c5be13cdd7f759688f0f007598ee7c123e6a38f0f7b22771ae6f0932edc3ccc5",
+        "48": "fe55d12fc1e96820601128e03b65375092f6437b187dda40b63e710ef2f50406"
+      }
+    },
+    {
+      "id": "wisp-staff",
+      "oldName": "Wisp Staff",
+      "name": "The Wandering Light",
+      "kind": "staff",
+      "grade": 2,
+      "concept": "birch staff curled around a sealed pale green spirit bead",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'The Wandering Light': birch staff curled around a sealed pale green spirit bead. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\wisp-staff.png",
+      "sourceSha256": "cae086bd5b04c10f970bb5c72911f329657e8f4fa218f14691785dbe5ebae3b8",
+      "cropRect": [
+        28,
+        20,
+        1228,
+        1234
+      ],
+      "files": {
+        "16": {
+          "path": "wisp-staff-16.png",
+          "sha256": "84c1112be94e44a24299350cb7654c313d37bc490932302f999714c0af9d5f73",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            15,
+            15
+          ]
+        },
+        "18": {
+          "path": "wisp-staff-18.png",
+          "sha256": "34575248688bc3867dcc8f1cf9efb4919b0a8bb4ac647a26c9b1aec95fa8b52a",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            17,
+            17
+          ]
+        },
+        "20": {
+          "path": "wisp-staff-20.png",
+          "sha256": "f6b17efc53028750bddebfdd38b4beda165c66ec3a883a15bc77030f9ab27edc",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            19,
+            19
+          ]
+        },
+        "24": {
+          "path": "wisp-staff-24.png",
+          "sha256": "b936c415b9c7c04c06d71cb30e966bbcc213cd65e75710f236021354631d0a91",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            23,
+            23
+          ]
+        },
+        "32": {
+          "path": "wisp-staff-32.png",
+          "sha256": "b22320c5ba3a3a24693c4585cc329f092cbf9cd5cc467c7e3d2596f8dc9b37be",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            30,
+            30
+          ]
+        },
+        "48": {
+          "path": "wisp-staff-48.png",
+          "sha256": "42505cfcf2bc8c0dfd2970353d593173a7c7f20ca043fa2b65596a75beb4a687",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            45,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-505a98e3-4cd7-4c69-84c6-04cdd538a401.png"
+      },
+      "reference": "staff-g2",
+      "referenceMaterial": "Birch",
+      "referenceHashes": {
+        "32": "66f28761b67e86f5c11d22cd59d74595d7444c10ce2cc2e841a325e63d66fea1",
+        "48": "1c41bbc8679198399654f868a02bf1b078724663e888052fbd2d91202d178355"
+      }
+    },
+    {
+      "id": "bone-censer",
+      "oldName": "Bone Censer",
+      "name": "Requiem Bell",
+      "kind": "censer",
+      "grade": 1,
+      "concept": "copper hanging censer inside an ivory rib cage with a heavy bell silhouette",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Requiem Bell': copper hanging censer inside an ivory rib cage with a heavy bell silhouette. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\bone-censer.png",
+      "sourceSha256": "4db2e368b08383d4683a33b939787cc2600c79ba24bf4a3ebacbff87eefe77a9",
+      "cropRect": [
+        298,
+        12,
+        943,
+        1234
+      ],
+      "files": {
+        "16": {
+          "path": "bone-censer-16.png",
+          "sha256": "da456b248eb6137577ff14e6140c7204975bd286e80fd3e8c64cf636f61524d0",
+          "visibleColours": 22,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            11,
+            14
+          ]
+        },
+        "18": {
+          "path": "bone-censer-18.png",
+          "sha256": "4273c64f87bb1db18cf63ab7750c54c69eaba3ea0f5bb9e6a87c347dd8f744ed",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            1,
+            13,
+            16
+          ]
+        },
+        "20": {
+          "path": "bone-censer-20.png",
+          "sha256": "6c2450ccd558ed62f5400138fe46c94d578af171ab409e0f30f3dc01047349a7",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            1,
+            15,
+            18
+          ]
+        },
+        "24": {
+          "path": "bone-censer-24.png",
+          "sha256": "d09242f0c60d8c68fe76227a568cbe9ff6f9f5e07f8d2d4b0f1d40c4c6247c39",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            6,
+            1,
+            18,
+            22
+          ]
+        },
+        "32": {
+          "path": "bone-censer-32.png",
+          "sha256": "b9b3dd63e21e707575e6372c8d41a37a4d937d70abe2864ba2e425cc0de282a6",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            8,
+            2,
+            23,
+            30
+          ]
+        },
+        "48": {
+          "path": "bone-censer-48.png",
+          "sha256": "80d20d0cf3c353b5ef6aab347b69aaaaddfaabb468520d138827d2960d21e37d",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            12,
+            2,
+            35,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-a3102b4f-c233-48f8-8565-6c6bd1d5ff4e.png"
+      },
+      "reference": "censer-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "ed833c788f4b61ee27cdfc4d9a613e8e4aeb2d6b03cece08d1e60a9319d01c6b",
+        "48": "67d0604bff422e2dad53ae64aa07bd0aafd5805e2f736a1f83dfb234b85adb51"
+      }
+    },
+    {
+      "id": "quarry-shield",
+      "oldName": "Quarry Shield",
+      "name": "Gate of the Deep",
+      "kind": "shield",
+      "grade": 1,
+      "concept": "massive angular copper shield, dark stone central boss with a glowing fault line",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Gate of the Deep': massive angular copper shield, dark stone central boss with a glowing fault line. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\quarry-shield.png",
+      "sourceSha256": "983688a5ff536f2cec763c571b053e658f9c4e313486b67b3112847956da8677",
+      "cropRect": [
+        187,
+        27,
+        1053,
+        1227
+      ],
+      "files": {
+        "16": {
+          "path": "quarry-shield-16.png",
+          "sha256": "cfa3acdb7ecd0170a32b08c2939f72e6eda3f9d32d97a2cac2a4f96b56faaa6d",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            13,
+            14
+          ]
+        },
+        "18": {
+          "path": "quarry-shield-18.png",
+          "sha256": "77537319f057e469f8459bef8b0e93cf94a30b6b2e84c7cb9d789784d941254c",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            15,
+            17
+          ]
+        },
+        "20": {
+          "path": "quarry-shield-20.png",
+          "sha256": "fdd3e2774c9abb326ab008bcbfe5c2df0305ecae9ff9b5747396417b4a38bdac",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            16,
+            19
+          ]
+        },
+        "24": {
+          "path": "quarry-shield-24.png",
+          "sha256": "93b97cd1da6fe230b4b75fad6fc5fa4f1aa6f71f1b1475d8ab8b919dc0dde9d7",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            20,
+            23
+          ]
+        },
+        "32": {
+          "path": "quarry-shield-32.png",
+          "sha256": "d397513c2e55c0d5782453934eedf84d018b1793f9be56c955d1b77a9014f559",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            6,
+            2,
+            26,
+            30
+          ]
+        },
+        "48": {
+          "path": "quarry-shield-48.png",
+          "sha256": "a3ac4e9af3ca21e9d0d89d048ca03e739a29465323c82a771bf609cb37208090",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            8,
+            2,
+            40,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-f272920d-0446-43c0-8d82-6ec0683e6bd0.png"
+      },
+      "reference": "shield-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "163f6ae11208757fad816c84424723e3e1b083c479f19889e0d975f4df187d55",
+        "48": "70513c8679e9f7e4c7baf2601fa1eb8b25fe49ae4386a1bd2ba551844f66044d"
+      }
+    },
+    {
+      "id": "bat-quiver",
+      "oldName": "Bat Quiver",
+      "name": "Night's Reserve",
+      "kind": "quiver",
+      "grade": 2,
+      "concept": "iron trimmed leather quiver with scalloped bat wing mouth and three broad arrow heads",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Night's Reserve': iron trimmed leather quiver with scalloped bat wing mouth and three broad arrow heads. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\bat-quiver.png",
+      "sourceSha256": "f16e23094190b7f51327d7decd72d188a3bcc239e476bfb80c97baed1a3e660d",
+      "cropRect": [
+        206,
+        63,
+        819,
+        1473
+      ],
+      "files": {
+        "16": {
+          "path": "bat-quiver-16.png",
+          "sha256": "a12740bd854d000c6f5089770cb8dff1bfae9a4097bf8a4af99180adabbb190d",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            2,
+            11,
+            14
+          ]
+        },
+        "18": {
+          "path": "bat-quiver-18.png",
+          "sha256": "984d7e254d826e4a08ea5a5bf01c93334450ca15d245b9decebdf86e07ff099c",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            1,
+            12,
+            17
+          ]
+        },
+        "20": {
+          "path": "bat-quiver-20.png",
+          "sha256": "678f8190c81007896c256de842dbecd42ee880352c98c01b24a5cd99f96b48af",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            6,
+            2,
+            14,
+            18
+          ]
+        },
+        "24": {
+          "path": "bat-quiver-24.png",
+          "sha256": "a44c1eb95ee5832dd4b210d209df1457b8de23c0d12d15d815e51e9ef6742fdc",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            7,
+            2,
+            17,
+            22
+          ]
+        },
+        "32": {
+          "path": "bat-quiver-32.png",
+          "sha256": "5bb41fdafc33ee27c16d6e34c91736c4e58f3c0e7ae49709ebcbee93f8ffc61b",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            10,
+            3,
+            22,
+            29
+          ]
+        },
+        "48": {
+          "path": "bat-quiver-48.png",
+          "sha256": "f7ba4c7e4900cfb0dd710c93896d46619e654873575611b70e7e717d80ab8363",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            14,
+            2,
+            33,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-36428ccb-0188-40e5-b060-c0a6fddac255.png"
+      },
+      "reference": "quiver-g2",
+      "referenceMaterial": "Duskfang Pelt",
+      "referenceHashes": {
+        "32": "8aebb6f7863205c7a571f54287ff2a9f9d7dd42c3da5b5e9b990e7f1235b0534",
+        "48": "28c925cd98172c9d5e99a393d22493d0a3aa8836f2b1ca741fe4145bc7e8c77e"
+      }
+    },
+    {
+      "id": "wisp-lantern",
+      "oldName": "Wisp Lantern",
+      "name": "Mercy of the Fen",
+      "kind": "lantern",
+      "grade": 3,
+      "concept": "silver lantern, amethyst glass, bent marsh reed handle and trapped pale spirit flame",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Mercy of the Fen': silver lantern, amethyst glass, bent marsh reed handle and trapped pale spirit flame. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\wisp-lantern.png",
+      "sourceSha256": "abdda727f233433c86550fbf3d4267d00d3d5829300d766fabcef4f86153118c",
+      "cropRect": [
+        361,
+        33,
+        1029,
+        1219
+      ],
+      "files": {
+        "16": {
+          "path": "wisp-lantern-16.png",
+          "sha256": "d93505bf625ad7077373d2e7f47c12309e7a7f8880104a35a6ed904e24a2bb19",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            11,
+            14
+          ]
+        },
+        "18": {
+          "path": "wisp-lantern-18.png",
+          "sha256": "db0ed3a1642f31f20ec19c566c599d298256aa988b100892e9fd13160fd7705e",
+          "visibleColours": 22,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            12,
+            17
+          ]
+        },
+        "20": {
+          "path": "wisp-lantern-20.png",
+          "sha256": "561d0c6f88c3088f6761aacdba9cdcda6a3faf63bdeb50c5be42af2eea3f2e1f",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            1,
+            14,
+            18
+          ]
+        },
+        "24": {
+          "path": "wisp-lantern-24.png",
+          "sha256": "87b93a73ffc84456df411304bba6382cb94092a658df98b399f077749f2b7004",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            6,
+            1,
+            18,
+            22
+          ]
+        },
+        "32": {
+          "path": "wisp-lantern-32.png",
+          "sha256": "0018b6fe6f1f1cbe4a67ceef77ba476cc05245f9b0115f99d640a92d6f73d9da",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            8,
+            2,
+            24,
+            30
+          ]
+        },
+        "48": {
+          "path": "wisp-lantern-48.png",
+          "sha256": "cf4b0dc2953ef764544903ff7220adf1f1ed16d703b5052dc1b864425be117ab",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            11,
+            2,
+            36,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-fb02fe17-78e5-4996-b08a-0f3c052e4dc3.png"
+      },
+      "reference": "lantern-g3",
+      "referenceMaterial": "Amethyst",
+      "referenceHashes": {
+        "32": "001c596943e9748bf2d1b572c795182d0a67e337912a252629ad9f51a0ae1906",
+        "48": "474219ed5b3a1712bf6e59a9ac66ebb42081fdc541a19064d27e63beb6c1a0fd"
+      }
+    },
+    {
+      "id": "bone-tome",
+      "oldName": "Bone Tome",
+      "name": "The Unfinished Prayer",
+      "kind": "tome",
+      "grade": 2,
+      "concept": "iron bound dark tome with broad ivory jaw clasp and parchment page edges",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'The Unfinished Prayer': iron bound dark tome with broad ivory jaw clasp and parchment page edges. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\bone-tome.png",
+      "sourceSha256": "a92b8fad22eaf4438c736f0ba97e52dfc78736d7c87a5b0d1eec3c2971543b37",
+      "cropRect": [
+        195,
+        61,
+        1069,
+        1216
+      ],
+      "files": {
+        "16": {
+          "path": "bone-tome-16.png",
+          "sha256": "4244103ec7d18edb3c4d8743e46fa5758e7dcb3266d5a4ab38aa11e73334755b",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            13,
+            15
+          ]
+        },
+        "18": {
+          "path": "bone-tome-18.png",
+          "sha256": "4207d5a93852de6f2f5f98017e2a0fcfb713208254f1f5bed8696c62f2080050",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            15,
+            17
+          ]
+        },
+        "20": {
+          "path": "bone-tome-20.png",
+          "sha256": "9e3a67a30d65e8c46d1c31ce9250783d40c70618b53755c679a8566613df346c",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            17,
+            19
+          ]
+        },
+        "24": {
+          "path": "bone-tome-24.png",
+          "sha256": "c4b1f9063e4ddf97daa2fdd28800b7c4c9b12fcd09f879d3318c788749143ad3",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            20,
+            23
+          ]
+        },
+        "32": {
+          "path": "bone-tome-32.png",
+          "sha256": "5e33845732d0746fd189382fe845b7a3bb4a3274a832f665f1c59e53d8701ea5",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            2,
+            26,
+            30
+          ]
+        },
+        "48": {
+          "path": "bone-tome-48.png",
+          "sha256": "aacc00f39300921213f89efcf944c2a4a2e376eea5d22a828e91e08e03528584",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            7,
+            2,
+            40,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-0dfc31a9-43a4-410e-806a-e9a629946bdf.png"
+      },
+      "reference": "tome-g2",
+      "referenceMaterial": "Flax Fibre",
+      "referenceHashes": {
+        "32": "ea2f1da11da06e74eb93bbe1e436ea4774524770adb4b5a7914e138219c0fa90",
+        "48": "6fb00f526f97a646cef8ad4bf871bbd1ae09b9b7be840acb87a7fb0c1a7b7cc0"
+      }
+    },
+    {
+      "id": "beetle-helm",
+      "oldName": "Beetle Helm",
+      "name": "Crown of the Burrow",
+      "kind": "greathelm",
+      "grade": 1,
+      "concept": "copper closed helmet with oversized beetle shell crest and short mandible cheek guards",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Crown of the Burrow': copper closed helmet with oversized beetle shell crest and short mandible cheek guards. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\beetle-helm.png",
+      "sourceSha256": "506f8cccfd8490b5987f8e486b895fefa06d7e359ce646b249fdeb2f2ec4b61a",
+      "cropRect": [
+        299,
+        109,
+        969,
+        1154
+      ],
+      "files": {
+        "16": {
+          "path": "beetle-helm-16.png",
+          "sha256": "4dcc4e78c9c90c7f785ba7ed52a1fc201e3b4a7a8eb6b3e54e3bbd049b5ae777",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            12,
+            15
+          ]
+        },
+        "18": {
+          "path": "beetle-helm-18.png",
+          "sha256": "4b940d6594c808bffa5941fab711780b2804e00b6881b8bcfef27b7c5c6c8afd",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            14,
+            17
+          ]
+        },
+        "20": {
+          "path": "beetle-helm-20.png",
+          "sha256": "af51fd79fcd05a39b54d1e56ed0b6c54f38c2adbea15cc306400829ffda9b1f5",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            16,
+            19
+          ]
+        },
+        "24": {
+          "path": "beetle-helm-24.png",
+          "sha256": "85b62543fbb877f71797edaaa4fed376f4daa0553fef628dbe113e8c3d729a9d",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            1,
+            19,
+            23
+          ]
+        },
+        "32": {
+          "path": "beetle-helm-32.png",
+          "sha256": "4713d9f781bdd23bea342a4d4e094c65c44244cd487af6ced6e83c96ab8c66b8",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            7,
+            2,
+            25,
+            30
+          ]
+        },
+        "48": {
+          "path": "beetle-helm-48.png",
+          "sha256": "11c028fd7124875621a82866ef3023b1ec40d6291cb3a7cd7e314f66c876133a",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            10,
+            2,
+            38,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-96824375-f110-4d0b-aa2c-4ed3e455a3b5.png"
+      },
+      "reference": "greathelm-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "5fdf105a7609daebe37f13817dbaef2bf79e9ce2deef20cea8cf703c2b2c2f3c",
+        "48": "0693c187a17373ab0513ec581756b449c8691a54d89b44353d10799e4c9e238d"
+      }
+    },
+    {
+      "id": "echo-cowl",
+      "oldName": "Echo Cowl",
+      "name": "Veil of the Unheard",
+      "kind": "hood",
+      "grade": 1,
+      "concept": "dark hide hood with swept bat ear crown and copper crescent brow",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Veil of the Unheard': dark hide hood with swept bat ear crown and copper crescent brow. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\echo-cowl.png",
+      "sourceSha256": "0e8771dbe315a076be0be3abef2308eafae892a603eb7985db8e8a221fb5cbfa",
+      "cropRect": [
+        229,
+        48,
+        990,
+        1247
+      ],
+      "files": {
+        "16": {
+          "path": "echo-cowl-16.png",
+          "sha256": "53a7cd3885eaca1b3b61241be61a1bad67dfa2e7099d3b90249828787d2d03d4",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            2,
+            12,
+            15
+          ]
+        },
+        "18": {
+          "path": "echo-cowl-18.png",
+          "sha256": "fd47afd46c4f8632c6c85dd974a2e1f309c1a9270dc3da5d22f93668a48c5571",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            2,
+            14,
+            17
+          ]
+        },
+        "20": {
+          "path": "echo-cowl-20.png",
+          "sha256": "a0ec997724f487c33f7eb5af8a2898ada493aae2ddb06e62a60a5503d6a820fa",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            2,
+            15,
+            19
+          ]
+        },
+        "24": {
+          "path": "echo-cowl-24.png",
+          "sha256": "8c53d442118d6c26c017876f4918edb51b06b562d9f5b1384496e9e100b7ee46",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            2,
+            19,
+            23
+          ]
+        },
+        "32": {
+          "path": "echo-cowl-32.png",
+          "sha256": "89ca123e433c1512e42ed1bffe23e507b319b63aaa7bea80b0e1c868af605e68",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            7,
+            2,
+            25,
+            30
+          ]
+        },
+        "48": {
+          "path": "echo-cowl-48.png",
+          "sha256": "615c9ba6ef02721beab609a689ea61628029de774a61ccfcdfd777d3a434c5b7",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            10,
+            2,
+            38,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-085d696e-9915-49a4-9516-9915f49f27ea.png"
+      },
+      "reference": "hood-g1",
+      "referenceMaterial": "Bristlehide",
+      "referenceHashes": {
+        "32": "07e7f974ac93b548e33bd2226b458caf88ed5553b55d206c0d1d6f11077a9c3a",
+        "48": "fe13bdb21c399ed5ccc349c247db2b72c465cf7b2829a422543fc6300c7cd283"
+      }
+    },
+    {
+      "id": "spore-circlet",
+      "oldName": "Spore Circlet",
+      "name": "The Scarlet Vigil",
+      "kind": "circlet",
+      "grade": 1,
+      "concept": "pale quartz circlet with scarlet mushroom cabochon and branching crystal prongs",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'The Scarlet Vigil': a circlet sculpted from pale milky QUARTZ crystal, with one scarlet mushroom cabochon and branching quartz fungal prongs; tiny copper fittings only, crystal is dominant. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\spore-circlet.png",
+      "sourceSha256": "a36e75f6951fdf3f05bc6765bfd9693d161b5a0d636b419c67fc7ad2bdee94d8",
+      "cropRect": [
+        61,
+        114,
+        1193,
+        1109
+      ],
+      "files": {
+        "16": {
+          "path": "spore-circlet-16.png",
+          "sha256": "e28e12a6de320dd8aba3cfde9f6a8229254ffca4fecc275f1c9589f320fb76b2",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            15,
+            14
+          ]
+        },
+        "18": {
+          "path": "spore-circlet-18.png",
+          "sha256": "47f4c46890df63373bf80a88e0f643503984e4844b6e3e73b477fc2f661e24a0",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            17,
+            16
+          ]
+        },
+        "20": {
+          "path": "spore-circlet-20.png",
+          "sha256": "6e120fbeacf7534966a5338ee0f0065c1ceaf346e8c29044666b8d1869e95b7a",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            19,
+            18
+          ]
+        },
+        "24": {
+          "path": "spore-circlet-24.png",
+          "sha256": "f28ab9106cb1a41848b19789945b21213e089f8e373c2ee79cb30048dfd7725c",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            23,
+            21
+          ]
+        },
+        "32": {
+          "path": "spore-circlet-32.png",
+          "sha256": "edb9ca4f85f57202a282619b6c6261583167c42b0f5f57e57b2820a070d186c9",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            3,
+            30,
+            28
+          ]
+        },
+        "48": {
+          "path": "spore-circlet-48.png",
+          "sha256": "a2f86c55e876bbd214e46eee9496cfc29700032d42f045d4855fc8102b7f7646",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            4,
+            46,
+            43
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-1d6e065b-d6d5-42e1-8fe4-07faeddc7259.png"
+      },
+      "reference": "circlet-g1",
+      "referenceMaterial": "Quartz",
+      "referenceHashes": {
+        "32": "4e9895bc8e79c4bc717454645a7baa12ddfe9e466a0c35d829287fe052c280dc",
+        "48": "bda049806be2a82ee41afe86258b2addb6be9c8f622a138d7a30a5d26b66d6ba"
+      }
+    },
+    {
+      "id": "bone-mitre",
+      "oldName": "Bone Mitre",
+      "name": "Last Rites",
+      "kind": "mitre",
+      "grade": 3,
+      "concept": "tall silver trimmed ceremonial mitre, ivory rib seam and dark amethyst inset",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Last Rites': tall silver trimmed ceremonial mitre, ivory rib seam and dark amethyst inset. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\bone-mitre.png",
+      "sourceSha256": "5ac5a180e84a2ddf232fc7f6170ad8be597aa36e419134e3904680e237b3374d",
+      "cropRect": [
+        312,
+        16,
+        942,
+        1218
+      ],
+      "files": {
+        "16": {
+          "path": "bone-mitre-16.png",
+          "sha256": "7b43e3df7eb087b37d330a0bb996a077a61d7582ee9d8c903b66a152693df497",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            11,
+            15
+          ]
+        },
+        "18": {
+          "path": "bone-mitre-18.png",
+          "sha256": "aaeeb5dbd897ca65c76b658025ab6f2602db87aae2db1540775db6b06e6e81eb",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            2,
+            13,
+            17
+          ]
+        },
+        "20": {
+          "path": "bone-mitre-20.png",
+          "sha256": "445c68a1777d2cfa060ef370d037002a0c69873ec9cf8b329d4cff7f01191429",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            1,
+            14,
+            19
+          ]
+        },
+        "24": {
+          "path": "bone-mitre-24.png",
+          "sha256": "314441d178773ced6f975cfacb0f4e354e746e29cbd734648873ebd17dd9f6db",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            6,
+            2,
+            18,
+            23
+          ]
+        },
+        "32": {
+          "path": "bone-mitre-32.png",
+          "sha256": "9475fd3964d1200a6a8df340fd2f4ac1efeeca9ac46714d3ecad7da6c27865b2",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            8,
+            2,
+            23,
+            30
+          ]
+        },
+        "48": {
+          "path": "bone-mitre-48.png",
+          "sha256": "325b93d2f07fc9806070a5d3f8bb626834c42f4d1252bbf1aa9339b693964d0f",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            12,
+            2,
+            35,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-aba05005-75aa-41f8-b0c1-5be366de0b62.png"
+      },
+      "reference": "mitre-g3",
+      "referenceMaterial": "Briarthread",
+      "referenceHashes": {
+        "32": "786a29d91680627c1b9e8a820133f08822971ff16ad8b42e0895ca7013ee19c7",
+        "48": "a4ecd7a7c7012a116b9da06947ee0f1c78abcef0b1a85b399fb28e2c50a6ecd7"
+      }
+    },
+    {
+      "id": "quarry-plate",
+      "oldName": "Quarry Plate",
+      "name": "Mountain's Covenant",
+      "kind": "plate",
+      "grade": 3,
+      "concept": "silver plate torso with broad layered shoulders and one cracked stone shoulder inset",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Mountain's Covenant': silver plate torso with broad layered shoulders and one cracked stone shoulder inset. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\quarry-plate.png",
+      "sourceSha256": "81c700bf3b283dcc0ae7cea2fdf48e7e7e58e6f90a100285e13007e6e83eca55",
+      "cropRect": [
+        44,
+        80,
+        1203,
+        1176
+      ],
+      "files": {
+        "16": {
+          "path": "quarry-plate-16.png",
+          "sha256": "1b1192d7e9f066d695f86bd2de738d78dfa65ba473776d39cfbdd0d43a32c0d7",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            15,
+            14
+          ]
+        },
+        "18": {
+          "path": "quarry-plate-18.png",
+          "sha256": "5eae02b24ca81b757316539ec4532cbf2ced5256e7a37cbe2137ca8c74e501c0",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            17,
+            16
+          ]
+        },
+        "20": {
+          "path": "quarry-plate-20.png",
+          "sha256": "0b461e41bf611bdf44d3c1c1045b871d21a4ccc4adec30fbd19b68aa49198a72",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            19,
+            18
+          ]
+        },
+        "24": {
+          "path": "quarry-plate-24.png",
+          "sha256": "c84b71d82f285f6448efc056f5e4c9b1eb1105684d082c3ae765f889106af19c",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            23,
+            22
+          ]
+        },
+        "32": {
+          "path": "quarry-plate-32.png",
+          "sha256": "b7b7ca1f559b65458e5b782bc43aced7a220125cb9fb24c6b3e6ba0ed7c36521",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            3,
+            30,
+            29
+          ]
+        },
+        "48": {
+          "path": "quarry-plate-48.png",
+          "sha256": "95237da4be9fac7b494b82edc3600d9b1c201cc4f38be351a943cfd9a8cea346",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            3,
+            46,
+            45
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-13b7e1c7-8f50-43dd-b839-cbc642b13693.png"
+      },
+      "reference": "plate-g3",
+      "referenceMaterial": "Silver",
+      "referenceHashes": {
+        "32": "b9dfb30f0da20509c8a65d9f0273e33aac6ccded0c4dbd652c1cee7a92318a16",
+        "48": "1929f825245511de54cec88d01542c5432596385b8f5dc4554b2428b0cf91ff3"
+      }
+    },
+    {
+      "id": "marsh-leathers",
+      "oldName": "Marsh Leathers",
+      "name": "The Drowned Huntsman",
+      "kind": "leathers",
+      "grade": 2,
+      "concept": "dark leather torso armour, iron clasps and asymmetric pale reed collar",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'The Drowned Huntsman': dark leather torso armour, iron clasps and asymmetric pale reed collar. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\marsh-leathers.png",
+      "sourceSha256": "5ae8b8aae12754d917f8daa73fda31f74fcd7f5867cbdb3b26d76cb17338fdfc",
+      "cropRect": [
+        87,
+        91,
+        1174,
+        1235
+      ],
+      "files": {
+        "16": {
+          "path": "marsh-leathers-16.png",
+          "sha256": "b566756b7e1ed88045cdeaf84b6ef83fc428f1bb0dadfab8b7b1ab2168377d40",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            14,
+            15
+          ]
+        },
+        "18": {
+          "path": "marsh-leathers-18.png",
+          "sha256": "a9188a95f9c95671474e4b03b71b98e9256845a7088e484d6e150382b9ec2dd9",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            16,
+            17
+          ]
+        },
+        "20": {
+          "path": "marsh-leathers-20.png",
+          "sha256": "284153bf0eec90e8482408f63ccb5560227c32cdae8b96ef3b41177d08d47e89",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            18,
+            19
+          ]
+        },
+        "24": {
+          "path": "marsh-leathers-24.png",
+          "sha256": "4233f9e511d62342cc90bfb32070f363f5e12e2bb29c7639920ddf8722d27420",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            22,
+            23
+          ]
+        },
+        "32": {
+          "path": "marsh-leathers-32.png",
+          "sha256": "d6381e4f1f33224297c4cef817233ae84d1f1dc4772fc60a5781148ed4400cb5",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            29,
+            30
+          ]
+        },
+        "48": {
+          "path": "marsh-leathers-48.png",
+          "sha256": "b904999b2d8c6c6b80baa08c3e3cc1affe1f8ba0018fe2c4de0993df2427af00",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            2,
+            45,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-f6d34694-7a2d-4814-8a5b-ff5e4c181ae3.png"
+      },
+      "reference": "leathers-g2",
+      "referenceMaterial": "Duskfang Pelt",
+      "referenceHashes": {
+        "32": "74098a3cfc417041e3fe056602bc9754c89a018dd68259788f4500e8d5c1905d",
+        "48": "cfeff3031dfc9727a4781ee5b998efa0c009925247ce288dbecf0948d53217c3"
+      }
+    },
+    {
+      "id": "spore-robe",
+      "oldName": "Spore Robe",
+      "name": "Mantle of the Red Moon",
+      "kind": "robe",
+      "grade": 2,
+      "concept": "dark woven robe with iron trim, broad scarlet mushroom cap shoulder and pale hem",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Mantle of the Red Moon': dark woven robe with iron trim, broad scarlet mushroom cap shoulder and pale hem. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\spore-robe.png",
+      "sourceSha256": "4ed2c6fc9b44120212b91aa6e478017335a602b8ea9379111372dbdbc0b8f909",
+      "cropRect": [
+        75,
+        31,
+        1139,
+        1255
+      ],
+      "files": {
+        "16": {
+          "path": "spore-robe-16.png",
+          "sha256": "2aba10cb9df578716fd96e17c9af18f20874b61fb41a2bfe4bc203721b023d0f",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            14,
+            15
+          ]
+        },
+        "18": {
+          "path": "spore-robe-18.png",
+          "sha256": "63d71b4e5cfda0588953b501e4e3517289decdaf6c0ed9cfb8ac0280459cb3e2",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            16,
+            17
+          ]
+        },
+        "20": {
+          "path": "spore-robe-20.png",
+          "sha256": "264954538c6a64ea4020a8490a6b2b9606b8107766d0cffd069752f8f4aec035",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            18,
+            19
+          ]
+        },
+        "24": {
+          "path": "spore-robe-24.png",
+          "sha256": "1112b2116cbce902c8061db56d373cc294c7bbb66e3fefd845594674611d6248",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            21,
+            23
+          ]
+        },
+        "32": {
+          "path": "spore-robe-32.png",
+          "sha256": "3801179f609fe7664e9eb6c680daa529417cc0eafb5d0feb7d7e577d9dafffa5",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            2,
+            28,
+            30
+          ]
+        },
+        "48": {
+          "path": "spore-robe-48.png",
+          "sha256": "4b8175b09b03ac32b0b7a31c50b67c78c24825891c45f256078e7100bd51ab17",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            2,
+            43,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-e097dbeb-9eb8-44a7-94cb-2111c4dee88c.png"
+      },
+      "reference": "robe-g2",
+      "referenceMaterial": "Flax Fibre",
+      "referenceHashes": {
+        "32": "2fafd773a001d2f942908916ee1aff82c0d4b99201b3ba16ce0016f8f2851d0f",
+        "48": "cae72ddff361cee003a3d01a977f115fe388e27064042927a1a09e9a47994c91"
+      }
+    },
+    {
+      "id": "bone-vestments",
+      "oldName": "Bone Vestments",
+      "name": "Vestments of the Last Dawn",
+      "kind": "vestments",
+      "grade": 4,
+      "concept": "blue cobalt trimmed ceremonial vestments with ivory rib clasp and pale pearl centre",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Vestments of the Last Dawn': blue cobalt trimmed ceremonial vestments with ivory rib clasp and pale pearl centre. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\bone-vestments.png",
+      "sourceSha256": "d94e604eb179eb81ee40c60b61c31bc7a4826a464c571cb4dda2b45cfbb3f24b",
+      "cropRect": [
+        161,
+        72,
+        1094,
+        1189
+      ],
+      "files": {
+        "16": {
+          "path": "bone-vestments-16.png",
+          "sha256": "d5eea39b4c3798b36e6a7a556a7f4d1dd775ce3a25f745768f6bd0f843b04c49",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            14,
+            15
+          ]
+        },
+        "18": {
+          "path": "bone-vestments-18.png",
+          "sha256": "e3878f90ec91dd58658d3bfa4de4d5f5e91527909332e61f7f8c26d4395e63ed",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            15,
+            17
+          ]
+        },
+        "20": {
+          "path": "bone-vestments-20.png",
+          "sha256": "ccae7d50d819d8ded6c8f010252ecdcd37148187a88de2f1e5067ff1f3f7c855",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            17,
+            19
+          ]
+        },
+        "24": {
+          "path": "bone-vestments-24.png",
+          "sha256": "d221abf6ba1418e872011185faab8af361c5913e4ee8384efa95ef9a80e044c3",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            21,
+            23
+          ]
+        },
+        "32": {
+          "path": "bone-vestments-32.png",
+          "sha256": "ab21bdf6f0aa537087f1c85f34460da0079c0ecd380d5d4f53a50d264876e113",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            2,
+            27,
+            30
+          ]
+        },
+        "48": {
+          "path": "bone-vestments-48.png",
+          "sha256": "9f54218afe1908fb34c0d460feddd46498d80a6337c1812665b1112830483dfc",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            2,
+            42,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-e398da5b-a56f-4abf-86a9-e3357c3849cc.png"
+      },
+      "reference": "vestments-g4",
+      "referenceMaterial": "Kelp Fibre",
+      "referenceHashes": {
+        "32": "85e2984adfbb1a80a2814f4c55b60fe77dabe52392512f1e1eab7f2a499a8088",
+        "48": "f4804fa02e7fa5acf57a483ea35bf1037828e17b10a8a751583923bb4c093e17"
+      }
+    },
+    {
+      "id": "rattlebone-charm",
+      "oldName": "Rattlebone Charm",
+      "name": "The Final Answer",
+      "kind": "charm",
+      "grade": 1,
+      "concept": "ivory jaw pendant cradling a dim amber soul bead, copper chain",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'The Final Answer': ivory jaw pendant cradling a dim amber soul bead, copper chain. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\rattlebone-charm.png",
+      "sourceSha256": "cfe229c302abe88f0ba8dde93a55b985219f9ccaae22f2cef644076b98b2e8cf",
+      "cropRect": [
+        269,
+        25,
+        973,
+        1235
+      ],
+      "files": {
+        "16": {
+          "path": "rattlebone-charm-16.png",
+          "sha256": "c6eac4db3f982269475caad4c054be9a444a4571fe1fa627376398746a6faee6",
+          "visibleColours": 22,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            12,
+            15
+          ]
+        },
+        "18": {
+          "path": "rattlebone-charm-18.png",
+          "sha256": "6fa827691968fb34614e654d13f7d6e9fa55ebba25c0cc973acf12a772546c3d",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            13,
+            17
+          ]
+        },
+        "20": {
+          "path": "rattlebone-charm-20.png",
+          "sha256": "3b53b6c07ac78d4a206faf79d81df8d19720b7314c0561f733f3d9919c5e486b",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            1,
+            15,
+            19
+          ]
+        },
+        "24": {
+          "path": "rattlebone-charm-24.png",
+          "sha256": "69eed957668d2fc7e3d2f9be1c71a0a1e149a63b7acc3b8a384adcc13678fac7",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            1,
+            18,
+            23
+          ]
+        },
+        "32": {
+          "path": "rattlebone-charm-32.png",
+          "sha256": "bbf12e5541508d084475bcaf9f567f0973260e88eac76f772251feaadf7f29a2",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            8,
+            2,
+            24,
+            30
+          ]
+        },
+        "48": {
+          "path": "rattlebone-charm-48.png",
+          "sha256": "3f1e7b4b89742b7b49db144b8db3df49dc22c74897023e8a39ac19c0731cca2c",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            11,
+            2,
+            37,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-4c64ab1f-ddb5-4c23-b6b8-b253910c01d7.png"
+      },
+      "reference": "charm-g1",
+      "referenceMaterial": "Dim",
+      "referenceHashes": {
+        "32": "807ee2578690cfde8ee963134a77e94b9f50aea941bfedbb5ec46d5ec2c5dee3",
+        "48": "b39dc1c11b3ca2c4fec9aa4c827b73865f607f7b2590231ba77c51fcb34118d4"
+      }
+    },
+    {
+      "id": "carapace-pick",
+      "oldName": "Carapace Pick",
+      "name": "Burrower's Promise",
+      "kind": "pick",
+      "grade": 1,
+      "concept": "copper pickaxe with a beetle shell socket and hooked mandible pick ends",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Burrower's Promise': copper pickaxe with a beetle shell socket and hooked mandible pick ends. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\carapace-pick.png",
+      "sourceSha256": "8703c546ad8ff425ee2b40dcc6ac1850a831b0d42215746e9fe9a1d8f37aa964",
+      "cropRect": [
+        172,
+        110,
+        1161,
+        1152
+      ],
+      "files": {
+        "16": {
+          "path": "carapace-pick-16.png",
+          "sha256": "6d20a9ae50adecf2d623fc561250d173b577f5f6f7e9f59ae83dc95d60008e31",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            14,
+            15
+          ]
+        },
+        "18": {
+          "path": "carapace-pick-18.png",
+          "sha256": "5ee20818424a158ebf18b6eed7e97af4fc12b301bec0081a2adaaa589d18fb44",
+          "visibleColours": 22,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            16,
+            17
+          ]
+        },
+        "20": {
+          "path": "carapace-pick-20.png",
+          "sha256": "c591ee709c9089335683e62c0fdbbdfadbaa282209b6eae7cd6d1a5c29c1e71c",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            18,
+            19
+          ]
+        },
+        "24": {
+          "path": "carapace-pick-24.png",
+          "sha256": "00b7596ae44d067aa1eb590cab785125cc4e4fbbe6f28969148e9b5a0ba3dd14",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            22,
+            23
+          ]
+        },
+        "32": {
+          "path": "carapace-pick-32.png",
+          "sha256": "16dfa12d1c735a636a05e670fbc3019a65ef356e8a5a0cd2710cd3a8f202c709",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            29,
+            30
+          ]
+        },
+        "48": {
+          "path": "carapace-pick-48.png",
+          "sha256": "60f1f24ec22404601f9d03d97253ac88296ba4b2ed323ff50368d62fcd873e64",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            2,
+            45,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-5e1a7f11-5fd2-4b62-8c7e-dddb7de01b73.png"
+      },
+      "reference": "pick-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "1e2bd671a176ef504e2f5ae116f2677206903937e1dc6176dab9efe59d0e3a9a",
+        "48": "3ee536db661a22f2b5faca424c47b955318cab48c45ec03d521d1eb97846d33b"
+      }
+    },
+    {
+      "id": "wisp-axe",
+      "oldName": "Wisp Axe",
+      "name": "Reed of Remembrance",
+      "kind": "axe",
+      "grade": 2,
+      "concept": "iron wood axe, birch handle, broad crescent blade with reed shaped eye and pale spirit inset",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Reed of Remembrance': iron wood axe, birch handle, broad crescent blade with reed shaped eye and pale spirit inset. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\wisp-axe.png",
+      "sourceSha256": "ea910ca9ef7037f6175205f6d7ed868c4cf38c54dccb7323b5978ca206b4b60b",
+      "cropRect": [
+        57,
+        32,
+        1220,
+        1223
+      ],
+      "files": {
+        "16": {
+          "path": "wisp-axe-16.png",
+          "sha256": "1ede2b21ddae886ab34f64b2ec34840d053a4f37fe69f70d7db99f2918ec8277",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            15,
+            15
+          ]
+        },
+        "18": {
+          "path": "wisp-axe-18.png",
+          "sha256": "d69421e0394fc246846db99a63bea45f92c0804c2822cf70936ee737459aaa33",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            17,
+            17
+          ]
+        },
+        "20": {
+          "path": "wisp-axe-20.png",
+          "sha256": "0862b26d3b382a264ed27fa51fc8c8769a18ad967ed2970c4266c3c1bed3e13b",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            19,
+            19
+          ]
+        },
+        "24": {
+          "path": "wisp-axe-24.png",
+          "sha256": "d4139ad06dc15ea9e0b964c6dec2b6feedb8c1c8590f38083d03f03907a55cbe",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            22,
+            23
+          ]
+        },
+        "32": {
+          "path": "wisp-axe-32.png",
+          "sha256": "5784e05767a8100a79f9e2a049c477b39ed5a8b12d5bbe2bba82105ebbbe7ef4",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            29,
+            30
+          ]
+        },
+        "48": {
+          "path": "wisp-axe-48.png",
+          "sha256": "4f9bc81294ae91f884b6adea78efd0b48b0d0fb1595eeb93fa04ba1154267499",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            45,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-623ed0f2-2915-4988-a95e-3ec4ecd99d9d.png"
+      },
+      "reference": "axe-g2",
+      "referenceMaterial": "Iron",
+      "referenceHashes": {
+        "32": "7a3dd224163fe43c4a4a794b047b075001d3b989ebd3c08a1318fafc8f822fa3",
+        "48": "a2caca05fb8466f805f2302502f19ecfa492d7b49cd3ed336887296ffac1cd7b"
+      }
+    },
+    {
+      "id": "spore-sickle",
+      "oldName": "Spore Sickle",
+      "name": "Harvest of Whispers",
+      "kind": "sickle",
+      "grade": 1,
+      "concept": "copper crescent sickle, pine handle, scarlet mushroom cap pommel",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Harvest of Whispers': copper crescent sickle, pine handle, scarlet mushroom cap pommel. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\spore-sickle.png",
+      "sourceSha256": "5b67d022c3da71ea6566da885260b07d8669fcff2329041c6a01b734ac76707d",
+      "cropRect": [
+        97,
+        97,
+        1190,
+        1163
+      ],
+      "files": {
+        "16": {
+          "path": "spore-sickle-16.png",
+          "sha256": "caa6372c4adabdac0b3ff1a100d2a2b2fa29cde00a92c32f05c2b41eae710c44",
+          "visibleColours": 20,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            15,
+            15
+          ]
+        },
+        "18": {
+          "path": "spore-sickle-18.png",
+          "sha256": "7fb8ad4929e8c207d9d3e6151d9ff4f7f8129f44b7611214e038156b2ea5078d",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            17,
+            17
+          ]
+        },
+        "20": {
+          "path": "spore-sickle-20.png",
+          "sha256": "a0355b3d0d3ac8e8405bed6802834a3e4f74a0dc63ab8c2cd49a5088d5259b70",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            19,
+            19
+          ]
+        },
+        "24": {
+          "path": "spore-sickle-24.png",
+          "sha256": "a7cced13b173c81670d0c69469fe6639e4f998ff07865fc2bc39075dcd9d2de3",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            23,
+            22
+          ]
+        },
+        "32": {
+          "path": "spore-sickle-32.png",
+          "sha256": "ff47f2b50e4ddaa485115d97da23b5e96d99b8911332dee27c0f30dc3dd40622",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            30,
+            29
+          ]
+        },
+        "48": {
+          "path": "spore-sickle-48.png",
+          "sha256": "1920e5e2185d36b290fed6170bf100bd38b39ee0235b173b67e4a065b4655d6c",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            46,
+            45
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-7e0ea6d4-572a-471d-b7bb-530ec12f59d1.png"
+      },
+      "reference": "sickle-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "12452d4bab0162b3a366d1973b010af567c925196f90cd7ca51a419d948bbcf9",
+        "48": "18db5203df1c3a8725cf1f38687dc94011959a2d51ec2a3275c43841a8cdf241"
+      }
+    },
+    {
+      "id": "moss-spear",
+      "oldName": "Moss Spear",
+      "name": "Thorn of the First Grove",
+      "kind": "spear",
+      "grade": 2,
+      "concept": "iron spear with broad leaf head, birch shaft and moss frond collar",
+      "legacy": false,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Thorn of the First Grove': iron spear with broad leaf head, birch shaft and moss frond collar. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\moss-spear.png",
+      "sourceSha256": "bb7f0c6872ce962ebbe75f27bc26fc398f3d1608ff48fe7078c4d9141b0453b9",
+      "cropRect": [
+        162,
+        16,
+        1221,
+        1229
+      ],
+      "files": {
+        "16": {
+          "path": "moss-spear-16.png",
+          "sha256": "d2f37d4e8123fa5e0df7640de2244f320cefabbaf538a17e66b5ef8fc1f2ce01",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            14,
+            15
+          ]
+        },
+        "18": {
+          "path": "moss-spear-18.png",
+          "sha256": "8416b758fce45d0d84a276a3a4fec39071c68d9a0ae6a7fb690bdc031e39947b",
+          "visibleColours": 22,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            16,
+            17
+          ]
+        },
+        "20": {
+          "path": "moss-spear-20.png",
+          "sha256": "3597e5182906956befbcd30cd27059333b59bea2e64bcffe8b2efa892aaa7ea4",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            18,
+            19
+          ]
+        },
+        "24": {
+          "path": "moss-spear-24.png",
+          "sha256": "7ac87751d0b953eb7787507210d0ff11de6a3cbebb057109ce7b45b1f8df378a",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            21,
+            23
+          ]
+        },
+        "32": {
+          "path": "moss-spear-32.png",
+          "sha256": "c9456ada23a17a5452588e949a7575a27d906ce352128e08f3df274d377382bc",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            2,
+            28,
+            30
+          ]
+        },
+        "48": {
+          "path": "moss-spear-48.png",
+          "sha256": "10ea49b5ccd3b54a89fb3e3b7a7a99c16bd6bed449dab77ac020029fac16dbb1",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            2,
+            43,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-d90f2e59-48ce-4d97-aa70-294cdb3221bc.png"
+      },
+      "reference": "spear-g2",
+      "referenceMaterial": "Iron",
+      "referenceHashes": {
+        "32": "91aef300f29c8c8954f69ed8714401ea2c8319c611fe850222b1739db3e2b7e5",
+        "48": "71ed0df66aff073db097d007a44a56d196da7123bb2dd8ba0fb42852fa4f0305"
+      }
+    },
+    {
+      "id": "sproutblade",
+      "oldName": "Sproutblade",
+      "name": "The Green Promise",
+      "kind": "warblade",
+      "grade": 1,
+      "concept": "copper short sword with living green shoot curled around the blade base",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'The Green Promise': copper short sword with living green shoot curled around the blade base. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\sproutblade.png",
+      "sourceSha256": "98e72467ac4d111b83749bea1ac11217c53f9e0751d9064c3fbb29141724d6d9",
+      "cropRect": [
+        89,
+        97,
+        1169,
+        1167
+      ],
+      "files": {
+        "16": {
+          "path": "sproutblade-16.png",
+          "sha256": "79d3cecd15360971d820be45e3c4d897dc759a7df112fc6f9a5faaf28d829173",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            15,
+            15
+          ]
+        },
+        "18": {
+          "path": "sproutblade-18.png",
+          "sha256": "765e9f9c69ab6391b04b2bff4660b1e76965f682a4bd854b5577f4abe90f64b1",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            17,
+            17
+          ]
+        },
+        "20": {
+          "path": "sproutblade-20.png",
+          "sha256": "8f4bd758920cf2f38a5c375008abcb58acc7f6504d3087aae8e03877680fab4b",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            19,
+            19
+          ]
+        },
+        "24": {
+          "path": "sproutblade-24.png",
+          "sha256": "2e2ee0d0bf8e0545253292e23a799187b375350d49d8e18b537ce1f33973def4",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            23,
+            23
+          ]
+        },
+        "32": {
+          "path": "sproutblade-32.png",
+          "sha256": "62d123a3724b25542de5ce9f7652679616e91b2543004fb98b7ec4d9c1f04259",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            30,
+            30
+          ]
+        },
+        "48": {
+          "path": "sproutblade-48.png",
+          "sha256": "d6739c257f9f3c9293971cb8437dd66a17eef154c0b3ee2f5330dc4853f87dd5",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            46,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-678d2699-5b49-463b-950d-14257eb9cde8.png"
+      },
+      "reference": "warblade-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "a3054eee95d372a6fb394f2bd0d40badd84d6c50b2713e561f66749e679a0e24",
+        "48": "e08ea7a9b0f836b386befa9b101ac9a061534db3d19061d042c01d4e8e1b9448"
+      }
+    },
+    {
+      "id": "echocowl",
+      "oldName": "Echo Cowl",
+      "name": "Vesper's Shroud",
+      "kind": "greathelm",
+      "grade": 1,
+      "concept": "copper helmet with shadowed face and broad bat wing cheek flares",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Vesper's Shroud': copper helmet with shadowed face and broad bat wing cheek flares. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\echocowl.png",
+      "sourceSha256": "28221595f0fd090aa836feb2dd5500dc2cc0698bcd21b15f4804b775fe3dd343",
+      "cropRect": [
+        54,
+        49,
+        1200,
+        1191
+      ],
+      "files": {
+        "16": {
+          "path": "echocowl-16.png",
+          "sha256": "0554ece236f277fa16be1902c256cba77e6700dbfa08179f9c59ae8102d91d86",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            15,
+            14
+          ]
+        },
+        "18": {
+          "path": "echocowl-18.png",
+          "sha256": "510cf6cb5f98956638d4f85b8876f752b9f4f5405c8919a893feef802924a537",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            17,
+            16
+          ]
+        },
+        "20": {
+          "path": "echocowl-20.png",
+          "sha256": "fb34479defdcabdaaf08ab874e954fcb83a24ae647e5ad5aeba037a8f528ed72",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            19,
+            18
+          ]
+        },
+        "24": {
+          "path": "echocowl-24.png",
+          "sha256": "527a7621acc115031522b8bd5876bd000fd9b8a7b8e431123a692cbd84ec2487",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            23,
+            22
+          ]
+        },
+        "32": {
+          "path": "echocowl-32.png",
+          "sha256": "6c7fb9f8c5f7166e38e89ae1ab0315ae0a64df9189cf91ceabfe809351066b1b",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            3,
+            30,
+            29
+          ]
+        },
+        "48": {
+          "path": "echocowl-48.png",
+          "sha256": "f2db3577aa5478bc122d2f1c86311b6c50ff0b306c12f0bcfcb6bb197e469407",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            3,
+            46,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-fc11bd51-21b5-4cb7-8477-f9fea71ed86d.png"
+      },
+      "reference": "greathelm-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "5fdf105a7609daebe37f13817dbaef2bf79e9ce2deef20cea8cf703c2b2c2f3c",
+        "48": "0693c187a17373ab0513ec581756b449c8691a54d89b44353d10799e4c9e238d"
+      }
+    },
+    {
+      "id": "rattlecharm",
+      "oldName": "Rattlebone Charm",
+      "name": "Saint's Last Tooth",
+      "kind": "charm",
+      "grade": 1,
+      "concept": "single large ivory fang relic in a copper cage, amber bead at crown",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Saint's Last Tooth': single large ivory fang relic in a copper cage, amber bead at crown. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\rattlecharm.png",
+      "sourceSha256": "b4273ad0d984b41a10d33fa4558de0888aa1d2d5de4b3b862137631923260159",
+      "cropRect": [
+        407,
+        11,
+        848,
+        1216
+      ],
+      "files": {
+        "16": {
+          "path": "rattlecharm-16.png",
+          "sha256": "bf1362562ba3d7868cabda72b6410b8135ccb4d3f2e975b83bed8862542300ba",
+          "visibleColours": 22,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            1,
+            10,
+            15
+          ]
+        },
+        "18": {
+          "path": "rattlecharm-18.png",
+          "sha256": "e8b1b3bdc448e5d4acf0bed412ba267ca59cbbc1a4ffc95f06efe319c8089aec",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            6,
+            1,
+            12,
+            17
+          ]
+        },
+        "20": {
+          "path": "rattlecharm-20.png",
+          "sha256": "f34f755ef06328abfb2455dd059b90f15ce6f44df99398535b29af76e82ec746",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            6,
+            1,
+            13,
+            19
+          ]
+        },
+        "24": {
+          "path": "rattlecharm-24.png",
+          "sha256": "baf582373b51ea6ce90008c38a7874adbf475d2713c8c7bda86a001e7c5e5866",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            8,
+            1,
+            16,
+            23
+          ]
+        },
+        "32": {
+          "path": "rattlecharm-32.png",
+          "sha256": "c96f48af6e69a4d77a3a6e836319254b072968347a6b7b36b8cb25db2c79233f",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            11,
+            2,
+            21,
+            30
+          ]
+        },
+        "48": {
+          "path": "rattlecharm-48.png",
+          "sha256": "361441cc7407ac955bca2673cbc6838e2284c53c40a1a5f90a527d958bc01d23",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            16,
+            2,
+            32,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-6bcd1c3b-ccec-4335-8155-9122a9d0bdf5.png"
+      },
+      "reference": "charm-g1",
+      "referenceMaterial": "Dim",
+      "referenceHashes": {
+        "32": "807ee2578690cfde8ee963134a77e94b9f50aea941bfedbb5ec46d5ec2c5dee3",
+        "48": "b39dc1c11b3ca2c4fec9aa4c827b73865f607f7b2590231ba77c51fcb34118d4"
+      }
+    },
+    {
+      "id": "carapacepick",
+      "oldName": "Carapace Pick",
+      "name": "Mandible of the Barrow",
+      "kind": "pick",
+      "grade": 1,
+      "concept": "copper pickaxe with asymmetrical beetle mandible head and dark shell binding",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Mandible of the Barrow': copper pickaxe with asymmetrical beetle mandible head and dark shell binding. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\carapacepick.png",
+      "sourceSha256": "bbc35e35f5091c23084bc2a8249451c6835013e932c3e1e6dbe77852fbf0c151",
+      "cropRect": [
+        107,
+        85,
+        1209,
+        1179
+      ],
+      "files": {
+        "16": {
+          "path": "carapacepick-16.png",
+          "sha256": "6ef4ae262996c467c79d54985ad0ff3fe10d37cc506dfa5881e23506b5d13a00",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            15,
+            15
+          ]
+        },
+        "18": {
+          "path": "carapacepick-18.png",
+          "sha256": "15fad7d744d83b5d01e6d20c2c703ba26666ff1ce886d8c1524e9d89d22a2f4a",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            17,
+            17
+          ]
+        },
+        "20": {
+          "path": "carapacepick-20.png",
+          "sha256": "0837660162d5e1927968bd496b0e2ee1304e6f00000a1b91b679cba417767ea1",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            19,
+            19
+          ]
+        },
+        "24": {
+          "path": "carapacepick-24.png",
+          "sha256": "479a9724bca78f19663b6cc98f18909690640986f505ba6e6c77b593e7c3b272",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            23,
+            23
+          ]
+        },
+        "32": {
+          "path": "carapacepick-32.png",
+          "sha256": "f1f1c4c39d064686c525831e7451a7a160875be4b91076a18140cdd9fb18cee7",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            30,
+            30
+          ]
+        },
+        "48": {
+          "path": "carapacepick-48.png",
+          "sha256": "eb7c3f6145a35e14e5b9915bef323f502e30c7a0f66439eabffc8b48067055dd",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            46,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-663cfbbf-6a4d-492b-989a-73f837f42c3f.png"
+      },
+      "reference": "pick-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "1e2bd671a176ef504e2f5ae116f2677206903937e1dc6176dab9efe59d0e3a9a",
+        "48": "3ee536db661a22f2b5faca424c47b955318cab48c45ec03d521d1eb97846d33b"
+      }
+    },
+    {
+      "id": "sporeheart",
+      "oldName": "Sporeheart",
+      "name": "Heart of the Sleeping Grove",
+      "kind": "charm",
+      "grade": 1,
+      "concept": "scarlet heart shaped mushroom relic nested in copper roots and pale gills",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Heart of the Sleeping Grove': scarlet heart shaped mushroom relic nested in copper roots and pale gills. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\sporeheart.png",
+      "sourceSha256": "59a8eda1a5b77ca1b8c4bd35c69614d81e23912637d703a3e9bfb7d1aafa2fb5",
+      "cropRect": [
+        194,
+        63,
+        1067,
+        1189
+      ],
+      "files": {
+        "16": {
+          "path": "sporeheart-16.png",
+          "sha256": "0fc2f1683cd496ab9b2ee405165a4366d88ccbec2962406bbb36c05224cca843",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            13,
+            15
+          ]
+        },
+        "18": {
+          "path": "sporeheart-18.png",
+          "sha256": "23cd23f92e70880dc4ad4af6a109615f0f55ee1156a4a2717fb9e2398cf574ac",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            15,
+            17
+          ]
+        },
+        "20": {
+          "path": "sporeheart-20.png",
+          "sha256": "657c9011faf3199a0f9063c8df02b0cc69be082ed840ebafbda43aa9321eeed8",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            17,
+            19
+          ]
+        },
+        "24": {
+          "path": "sporeheart-24.png",
+          "sha256": "532d4c0c55f449c62c7aa654a0e7ae7c3f66335d846c25ac6490553dd7a72bd9",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            20,
+            23
+          ]
+        },
+        "32": {
+          "path": "sporeheart-32.png",
+          "sha256": "0ae000de083a6f535f1717a74cda5660fa83422dd4878e124cd147ac2d867950",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            2,
+            27,
+            30
+          ]
+        },
+        "48": {
+          "path": "sporeheart-48.png",
+          "sha256": "15f4687d7423831544826f2daba3318c5d43183944c3530d73b746d741e2e494",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            7,
+            2,
+            41,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-6c0e53ea-aee1-46b5-8b2c-93f8841c2b88.png"
+      },
+      "reference": "charm-g1",
+      "referenceMaterial": "Dim",
+      "referenceHashes": {
+        "32": "807ee2578690cfde8ee963134a77e94b9f50aea941bfedbb5ec46d5ec2c5dee3",
+        "48": "b39dc1c11b3ca2c4fec9aa4c827b73865f607f7b2590231ba77c51fcb34118d4"
+      }
+    },
+    {
+      "id": "golemfist",
+      "oldName": "Golemfist",
+      "name": "The Quarry's Verdict",
+      "kind": "warblade",
+      "grade": 1,
+      "concept": "heavy copper stone edged cleaver sword with blocky golem fist guard",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'The Quarry's Verdict': heavy copper stone edged cleaver sword with blocky golem fist guard. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\golemfist.png",
+      "sourceSha256": "80aa520ef72705188031fdf91f62faaa3a4d8176cda2591e6552a85fc1d4ee42",
+      "cropRect": [
+        31,
+        26,
+        1238,
+        1232
+      ],
+      "files": {
+        "16": {
+          "path": "golemfist-16.png",
+          "sha256": "3d9cfae82df554ba901a218b2896bbf1ec82e0a97039f657d47b942c826e664b",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            15,
+            15
+          ]
+        },
+        "18": {
+          "path": "golemfist-18.png",
+          "sha256": "fdc592704868244d4fcebdac58041d73aacde87c8a2da50e5bd833b4a9407214",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            17,
+            17
+          ]
+        },
+        "20": {
+          "path": "golemfist-20.png",
+          "sha256": "ddf2344d8b06047811e693b701f7e590d4e95b2b547e1a3b9a39acadcf31b4f1",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            19,
+            19
+          ]
+        },
+        "24": {
+          "path": "golemfist-24.png",
+          "sha256": "1bc6cd618ceddffe4cfa36ed8811cf7cbb179fc18e9850be40a470f020bd2160",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            23,
+            23
+          ]
+        },
+        "32": {
+          "path": "golemfist-32.png",
+          "sha256": "fa6a69388a00317d4b8ebd60b0043d6b8bbeed92a46294d32b0510d47db854b9",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            30,
+            30
+          ]
+        },
+        "48": {
+          "path": "golemfist-48.png",
+          "sha256": "b7f0e0d96eddfe180cc0b303179d7101dec2e35af8669467b92a929c33990bd3",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            46,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-57e3da81-fac6-4442-a1e4-7487ad3cc3dc.png"
+      },
+      "reference": "warblade-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "a3054eee95d372a6fb394f2bd0d40badd84d6c50b2713e561f66749e679a0e24",
+        "48": "e08ea7a9b0f836b386befa9b101ac9a061534db3d19061d042c01d4e8e1b9448"
+      }
+    },
+    {
+      "id": "wispaxe",
+      "oldName": "Wisp Axe",
+      "name": "The Mourning Bough",
+      "kind": "axe",
+      "grade": 2,
+      "concept": "iron axe on twisted birch branch, broad pale spirit shaped blade inset",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'The Mourning Bough': iron axe on twisted birch branch, broad pale spirit shaped blade inset. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\wispaxe.png",
+      "sourceSha256": "4ae565bea6a1c8a25ff6a28c674d00069f02e374c4ceb8eaf45bd0e0930e2ffa",
+      "cropRect": [
+        56,
+        32,
+        1238,
+        1215
+      ],
+      "files": {
+        "16": {
+          "path": "wispaxe-16.png",
+          "sha256": "93dfd8fad6a378b25ccfb50ecdc33e7749b85ae10073b5418a7fdc8bc123ffec",
+          "visibleColours": 22,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            15,
+            15
+          ]
+        },
+        "18": {
+          "path": "wispaxe-18.png",
+          "sha256": "ad4216c64e4dc08df75cd5c0c07dd4a361114686bd8d4cdcb239f3ae4dff384f",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            17,
+            17
+          ]
+        },
+        "20": {
+          "path": "wispaxe-20.png",
+          "sha256": "a854295b795923bfd6f3e0146ff568ccef53dd1d5cbceac4093111bc93c7e70c",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            19,
+            19
+          ]
+        },
+        "24": {
+          "path": "wispaxe-24.png",
+          "sha256": "3a9c9764bdf1ea372539caacbbad98ff5a6ab64e4da101ab57c9b9a72273f21e",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            23,
+            23
+          ]
+        },
+        "32": {
+          "path": "wispaxe-32.png",
+          "sha256": "689ed1c6761422718dfb1f7209d9ba2dc75c5f45288b81ffd593b86c51605eb8",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            30,
+            30
+          ]
+        },
+        "48": {
+          "path": "wispaxe-48.png",
+          "sha256": "40ef7b378d8de1119febc3462eb4a1121431103870e17b094b56ea02b8f7e6c6",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            46,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-3c93c7ff-9177-4bf3-b2ce-b1d5234195a3.png"
+      },
+      "reference": "axe-g2",
+      "referenceMaterial": "Iron",
+      "referenceHashes": {
+        "32": "7a3dd224163fe43c4a4a794b047b075001d3b989ebd3c08a1318fafc8f822fa3",
+        "48": "a2caca05fb8466f805f2302502f19ecfa492d7b49cd3ed336887296ffac1cd7b"
+      }
+    },
+    {
+      "id": "wyrmscale",
+      "oldName": "Wyrmscale Helm",
+      "name": "Crown of the Cinder Wyrm",
+      "kind": "greathelm",
+      "grade": 1,
+      "concept": "copper helm with dark dragon scale crown, swept horns and ember inset",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Crown of the Cinder Wyrm': copper helm with dark dragon scale crown, swept horns and ember inset. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\wyrmscale.png",
+      "sourceSha256": "7a7b5ceff627abffbb3d57414ed880974049889269f027842229c0009e7d5ad5",
+      "cropRect": [
+        127,
+        52,
+        1121,
+        1232
+      ],
+      "files": {
+        "16": {
+          "path": "wyrmscale-16.png",
+          "sha256": "8f8d54ae222b124f0216b037b416316b001177dbe474fb276cd9d79e2751e9d7",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            14,
+            15
+          ]
+        },
+        "18": {
+          "path": "wyrmscale-18.png",
+          "sha256": "59c8112feebf0b8d2be3dbf2ae4283e1d6164599e35bbafecb149cce9d64db4b",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            15,
+            17
+          ]
+        },
+        "20": {
+          "path": "wyrmscale-20.png",
+          "sha256": "d346f25288096c00af5e6ffc65215ca5cc2ec78aaf2fe72ba9a72533d570f1b0",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            2,
+            17,
+            19
+          ]
+        },
+        "24": {
+          "path": "wyrmscale-24.png",
+          "sha256": "ee80485b90baeafb7938a5a6c790cd6fe0e1a84347db05e9f4a49621a5a727dc",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            21,
+            23
+          ]
+        },
+        "32": {
+          "path": "wyrmscale-32.png",
+          "sha256": "7e6e4b666d0779e7ef0ad25738ce38a2b75a620fcc036da5991b5df1b1f50ddf",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            2,
+            28,
+            30
+          ]
+        },
+        "48": {
+          "path": "wyrmscale-48.png",
+          "sha256": "cb95c7d82bfd8c206becbd37b6c0a7701337232627b9597e0d4736299015863e",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            2,
+            42,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-74603ce6-23b2-46cc-932f-e754f18e1577.png"
+      },
+      "reference": "greathelm-g1",
+      "referenceMaterial": "Copper",
+      "referenceHashes": {
+        "32": "5fdf105a7609daebe37f13817dbaef2bf79e9ce2deef20cea8cf703c2b2c2f3c",
+        "48": "0693c187a17373ab0513ec581756b449c8691a54d89b44353d10799e4c9e238d"
+      }
+    },
+    {
+      "id": "hollowcrown",
+      "oldName": "Crown of Hollows",
+      "name": "The Vacant Throne",
+      "kind": "greathelm",
+      "grade": 2,
+      "concept": "iron royal helmet crowned by tall broken prongs, hollow black centre and amber eye slit",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'The Vacant Throne': iron royal helmet crowned by tall broken prongs, hollow black centre and amber eye slit. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\hollowcrown.png",
+      "sourceSha256": "4e56e28026001f794bcd28d0c3dc1bf2d1099587a2a90c199888f2e85959d495",
+      "cropRect": [
+        288,
+        16,
+        968,
+        1223
+      ],
+      "files": {
+        "16": {
+          "path": "hollowcrown-16.png",
+          "sha256": "941a2bd912aa99ec8d5bfda82cf48cbf6df729f46e1325dbaafc71a5b5bc7a80",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            2,
+            12,
+            14
+          ]
+        },
+        "18": {
+          "path": "hollowcrown-18.png",
+          "sha256": "3069c7a2f09465a83ec279cbc58d6b08489c60e9073368338ebfa94242859bbf",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            2,
+            13,
+            17
+          ]
+        },
+        "20": {
+          "path": "hollowcrown-20.png",
+          "sha256": "58bab0650fabfe572da08db6047f5bac144d80b1165eca462419741f37379c1b",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            5,
+            2,
+            15,
+            18
+          ]
+        },
+        "24": {
+          "path": "hollowcrown-24.png",
+          "sha256": "cfdca1633f2cfd3aad52a029339126482f5d971de0433778da03f16e74cdb707",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            6,
+            1,
+            18,
+            22
+          ]
+        },
+        "32": {
+          "path": "hollowcrown-32.png",
+          "sha256": "0ac90a20390a8f759e9768937546497634798de43ebf7c991972cdca91bab858",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            8,
+            2,
+            24,
+            30
+          ]
+        },
+        "48": {
+          "path": "hollowcrown-48.png",
+          "sha256": "ad23a2e7e2084ce4007b276120bf05e472dc733cb08cd136990a4187502f11c2",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            11,
+            2,
+            36,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-74ebe5d9-b355-41ed-ba1b-c4a7d645bcbb.png"
+      },
+      "reference": "greathelm-g2",
+      "referenceMaterial": "Iron",
+      "referenceHashes": {
+        "32": "f7dd5b6a1cf6a3d09594165da3b322170082a8a7cdd68724fc587257d6aec165",
+        "48": "35b6d989cbd31d3c0c71e8f7ebd36e6836c2d7e98413d8850b844074fa954f22"
+      }
+    },
+    {
+      "id": "colossuspick",
+      "oldName": "Colossus Pick",
+      "name": "Worldroot Breaker",
+      "kind": "pick",
+      "grade": 3,
+      "concept": "huge silver pickaxe with gnarled oak handle and mossy stone root socket",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Worldroot Breaker': huge silver pickaxe with gnarled oak handle and mossy stone root socket. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\colossuspick.png",
+      "sourceSha256": "d5df70a9b69bebf8e8b0cfe507b78e8aa9999cf217a4b7bd0d6facc5ed16ade9",
+      "cropRect": [
+        132,
+        49,
+        1223,
+        1209
+      ],
+      "files": {
+        "16": {
+          "path": "colossuspick-16.png",
+          "sha256": "d61c8f69bec3be56b590cbcb4940899cc4166fc73e68ee3071a919ae5f422044",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            14,
+            15
+          ]
+        },
+        "18": {
+          "path": "colossuspick-18.png",
+          "sha256": "f8614f0412eda00c1b7c430c6f34d75990f1ac086ffb3ba43025567090ff49da",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            16,
+            17
+          ]
+        },
+        "20": {
+          "path": "colossuspick-20.png",
+          "sha256": "0185a4373da9512dd74082b4eb2f93671a12bf49c8e4cb84a76bc222272a3190",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            18,
+            19
+          ]
+        },
+        "24": {
+          "path": "colossuspick-24.png",
+          "sha256": "7310490f83ee42f478b5a348d6774437cdb3f3366572193c3170b6cd3ff371c8",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            22,
+            23
+          ]
+        },
+        "32": {
+          "path": "colossuspick-32.png",
+          "sha256": "d1cf03c6cbff599b862cffac50e413dc104a39a4959afdc8408d4bb68257ffb8",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            2,
+            29,
+            30
+          ]
+        },
+        "48": {
+          "path": "colossuspick-48.png",
+          "sha256": "b31afbb410e7c3625746cd7f034bcb625493024fba9ce278bc07da55b508f941",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            2,
+            44,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-c19baf44-d84c-4fde-b13f-6aa12c99b89a.png"
+      },
+      "reference": "pick-g3",
+      "referenceMaterial": "Silver",
+      "referenceHashes": {
+        "32": "0f458596b6ff00260978de8d95ba2233e1c688573539e3696355510843198824",
+        "48": "21b7ce0e32956e1436e5a16c3d8784a7cc19d9fef96140d3dfe47ae76503777b"
+      }
+    },
+    {
+      "id": "hydraglass",
+      "oldName": "Hydra Glass",
+      "name": "Prism of the Seven Hungers",
+      "kind": "charm",
+      "grade": 4,
+      "concept": "cobalt framed pale glass prism with three serpentine neck silhouettes and pearl core",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Prism of the Seven Hungers': cobalt framed pale glass prism with three serpentine neck silhouettes and pearl core. Upright inventory presentation. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\hydraglass.png",
+      "sourceSha256": "d67a4fba0208684c3084ac5cdb81fbc7589bc62f3b9362e40d752194c6c30005",
+      "cropRect": [
+        204,
+        8,
+        1036,
+        1244
+      ],
+      "files": {
+        "16": {
+          "path": "hydraglass-16.png",
+          "sha256": "4002c1ad180406cc46563cdbcf6c33ec58378a915afc76c5925252230de86f2b",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            12,
+            14
+          ]
+        },
+        "18": {
+          "path": "hydraglass-18.png",
+          "sha256": "2ad0bdd1bcb3ae65af19c139cf4cd63a331fc1c2cde8b1727097d6683f7fa828",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            1,
+            14,
+            17
+          ]
+        },
+        "20": {
+          "path": "hydraglass-20.png",
+          "sha256": "41ee6a60fe4908b175e4c97f67e427552b9f6cfb108cb3f0986439c531c05329",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            16,
+            18
+          ]
+        },
+        "24": {
+          "path": "hydraglass-24.png",
+          "sha256": "ce35f6878a7ca20beda202a53e1c6d8a4b829d465adb66607719960dbd96cf59",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            4,
+            1,
+            19,
+            23
+          ]
+        },
+        "32": {
+          "path": "hydraglass-32.png",
+          "sha256": "c9b8f864ff2c9efd238338810cbdee93060baa3be4d67651a6f0ce497b23a959",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            6,
+            2,
+            25,
+            30
+          ]
+        },
+        "48": {
+          "path": "hydraglass-48.png",
+          "sha256": "f23458a5119ef92823b2e939c4e268baffef8b06fe55d82f5d2b930f48bf7b92",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            9,
+            2,
+            39,
+            45
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-f93c6518-d6be-4e8a-95b7-13fd22a44928.png"
+      },
+      "reference": "charm-g4",
+      "referenceMaterial": "Tidelit",
+      "referenceHashes": {
+        "32": "86b951a08fdd0e0cd559e5dec583039def45b02318da7be436669418d12ce214",
+        "48": "71ab9aa7978a45fd28ad179ec49339a1f14953e4cddd4cc8f06d4b685a682c2c"
+      }
+    },
+    {
+      "id": "eaterfang",
+      "oldName": "Lantern Eater's Fang",
+      "name": "Light's Last Refuge",
+      "kind": "warblade",
+      "grade": 5,
+      "concept": "mithril fang sword with lantern shaped guard, dark beast tooth edge and pale blue trapped light",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'Light's Last Refuge': mithril fang sword with lantern shaped guard, dark beast tooth edge and pale blue trapped light. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\eaterfang.png",
+      "sourceSha256": "6036f5eb9975fda6d46f99bb0cc37c971731a2a35a8fae6766fc5b6bd343136b",
+      "cropRect": [
+        41,
+        31,
+        1240,
+        1230
+      ],
+      "files": {
+        "16": {
+          "path": "eaterfang-16.png",
+          "sha256": "e75979eb73b6d776794acb464e831853e5009f1142449017ef618dbf167ac141",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            15,
+            15
+          ]
+        },
+        "18": {
+          "path": "eaterfang-18.png",
+          "sha256": "514c70320dec201da1307614e630a3780f02d3b4d1d1f6a6579d5a9c4506e27f",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            17,
+            17
+          ]
+        },
+        "20": {
+          "path": "eaterfang-20.png",
+          "sha256": "32218d159818d2ec7e970b066f02b51f8a0d5c0d37f7bb00379e0b6feea1b0c7",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            19,
+            19
+          ]
+        },
+        "24": {
+          "path": "eaterfang-24.png",
+          "sha256": "556875bc88ec13e17f7f04ca76af4e457612f18f962812fecd8791b7f3f9e873",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            2,
+            23,
+            23
+          ]
+        },
+        "32": {
+          "path": "eaterfang-32.png",
+          "sha256": "573b22f710919378dd448eec66b98724488cc51c9f042231746d0f92f870318e",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            3,
+            30,
+            30
+          ]
+        },
+        "48": {
+          "path": "eaterfang-48.png",
+          "sha256": "9208a87ba32d7ba5bf071fa98433c6363aa0f711770182f771db00a5966a3859",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            3,
+            46,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-e6a87559-d10e-4613-b8a0-b1c2e7b89e1b.png"
+      },
+      "reference": "warblade-g5",
+      "referenceMaterial": "Mithril",
+      "referenceHashes": {
+        "32": "579620a2d029a8780368388c513d13b83e0890d3149f245ef9f7ec30ff05c858",
+        "48": "b14c7f3ccc8e43ce4929031ce56975667b5012d85a5b9ab782219e2f07b7861c"
+      }
+    },
+    {
+      "id": "tyrantaxe",
+      "oldName": "Pale Tyrant's Axe",
+      "name": "The King's Silence",
+      "kind": "axe",
+      "grade": 5,
+      "concept": "mithril double crescent axe, tideash handle and ivory crowned skull socket",
+      "legacy": true,
+      "prompt": "Create ONE isolated Lanternfall unique equipment inventory icon, transparent background, no text, no border, no pedestal, no particles or exterior glow. Authored rich pixel art matching current equipment: broad readable pixel clusters, dark crisp outline, deep cool internal shadows, warm upper-left metal edge highlights, forged material texture, layered construction. Designed to remain legible at native 32px, not a smooth painting. One special fantasy heirloom with a strong silhouette and restrained boss signature. Centre entire object with generous transparent margin. Item 'The King's Silence': mithril double crescent axe, tideash handle and ivory crowned skull socket. Long axis diagonal from lower left to upper right. Preserve physical material colours; limited palette. No generic purple colouring, unless amethyst is explicitly specified. No letters, numbers or labels.",
+      "source": "sources\\tyrantaxe.png",
+      "sourceSha256": "7eae260d03eb921f45f3732b4719037f90806a8a6f4d94389957d27daa72ac94",
+      "cropRect": [
+        153,
+        59,
+        1213,
+        1197
+      ],
+      "files": {
+        "16": {
+          "path": "tyrantaxe-16.png",
+          "sha256": "450d45e59b325cb2c8c10541c0d682294686397f6dcaca31f51dc54932111703",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            14,
+            15
+          ]
+        },
+        "18": {
+          "path": "tyrantaxe-18.png",
+          "sha256": "32a76f901b5770fcee2a7a71efb9bdd425a0dd53a10127e3f0429b8732a4a59c",
+          "visibleColours": 23,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            16,
+            17
+          ]
+        },
+        "20": {
+          "path": "tyrantaxe-20.png",
+          "sha256": "537332949b48096042adf229c1aa7fea531a254d84de65d76cabb9b75a0806d6",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            1,
+            1,
+            18,
+            19
+          ]
+        },
+        "24": {
+          "path": "tyrantaxe-24.png",
+          "sha256": "6ed9ee377e07dcde779c141063db7fcda247fc296bf011f13d4ba8e3a2dcdd1e",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            2,
+            1,
+            22,
+            23
+          ]
+        },
+        "32": {
+          "path": "tyrantaxe-32.png",
+          "sha256": "7bf92b5a18a745614483eb47e6df4505ac0a60e06b527a66fbec7550e4849536",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            2,
+            29,
+            30
+          ]
+        },
+        "48": {
+          "path": "tyrantaxe-48.png",
+          "sha256": "e38351bf049779a7de6375759c23e0aa941c22fb4e3169abb89d3eaaf3f238e2",
+          "visibleColours": 24,
+          "alpha": [
+            0,
+            255
+          ],
+          "bbox": [
+            3,
+            2,
+            44,
+            46
+          ]
+        }
+      },
+      "generation": {
+        "tool": "built-in image_gen",
+        "transparent_background": true,
+        "originalFile": "exec-46b56370-7c22-4c06-90b5-1a296c444780.png"
+      },
+      "reference": "axe-g5",
+      "referenceMaterial": "Mithril",
+      "referenceHashes": {
+        "32": "aa8000cfca0ad033cdf01330ceeae38b19d386b34c31bb23d2881800f2755452",
+        "48": "f160ded73a34d3fe8d6a5bfeca2336ef016cc0acf8d5e5a5e4da236786646098"
+      }
+    }
+  ]
+}
