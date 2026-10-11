@@ -1,0 +1,20 @@
+# Proof for card walk-gear-wisp-axe (tooling only). No player-visible change: nothing in src/ changed and the game file is
+# unchanged, so there is nothing to play. The walk was at fault, not the game.
+#
+# Cause: at 38:45 the zone 14 boss falls and its Lantern Cache card ("Wisp Axe. A unique.") comes up while the bot is mid-way
+# through Hero > Gear. With WALK_DEBUG=1 the base walk logs the Gear view tap landing on the card:
+#   tap #viewSeg button[data-view="gear"] {"covered":".mm-card","sheet":false,"modal":true,"what":"Lantern CacheZone 14 cleared..."}
+# click() returns false under a moment card by design (first-hour-walk-findings F5), and wearGear filed that as a gear finding.
+# A player closes the card first; the card rule does that on the next pass. coverStep already treated this case the same way.
+#
+# Acceptance 1 (seed 1 at the base, no gear finding for the Wisp Axe):
+#   node tools/walk.mjs --seed 1 --quiet --minutes 45 --clock-budget 120
+#   Before (base dd5723c6 walk.mjs): "gear at 38:47: ... Wisp Axe for axe: the Gear view button could not be tapped",
+#     then "38:55 gear wore Wisp Axe (axe)".
+#   After (this branch): no gear finding. The press log matches the base entry for entry, less the 38:47 "could not wear" line;
+#     38:55 "wore Wisp Axe (axe)"; the gear table shows axe t3 Unique from zone 16.
+# Shots: the walk's 90-shot budget is spent by minute 7, so the shot of the moment is taken from the same walk's saved game
+#   (--minutes 39 --snapshot, loaded as a throwaway proof fixture, not committed) at Hero > Gear in all three views:
+#   hero-gear-wisp-axe-desktop.png (1280x720), -landscape.png (740x360), -portrait.png (360x740): the Woodaxe slot holds the
+#   unique (orange frame) and the page names the Wisp Axe.
+# Acceptance 2 (game at fault): not the case, so no game change and no browser tap check.
