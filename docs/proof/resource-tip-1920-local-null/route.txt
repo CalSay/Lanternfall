@@ -13,7 +13,10 @@ wait 4
 expect ".hud.vs .hero-plate"
 tap-if "Attack"
 wait 3
-unless "Fireball uses all" tap-if "Cinders"
-wait 1
-expect "Fireball uses all for +10% Burn each"
+# the fight holds on the hero's turn, and the timing bar never hides the tip then
+wait-for "Your turn" 10
+# the tip may already be open on its own (first Cinder): close it, then open it fresh
+if ".tv-restip" tap-if "Cinders"
+tap "Cinders"
+expect ".tv-restip"
 shot pip-tip-three-lines

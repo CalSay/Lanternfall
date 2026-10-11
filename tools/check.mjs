@@ -20445,7 +20445,12 @@ if (section('actor-scale-followups (browser)')) try {
           const longest = await X(`Object.values(TURN_TRAITS).map(t => t.first || '').concat(['Rally! It holds at the mark. Only a Stun breaks its charge.']).sort((a, b) => b.length - a.length)[0]`);
           for (const k of ['wren', 'tobin', 'pip']) {
             // the last hero's tip (opened below, a 5 s line) must not carry into this hero's run: close it first, so each hero starts clean
-            await X(`globalThis.__tp = 0; const t0 = document.querySelector('.tv-restip'); if (t0 && !t0.hidden) t0.hidden = true; soloPick("${k}"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1); true`); await page.waitForTimeout(1500);
+            await X(`globalThis.__tp = 0; const t0 = document.querySelector('.tv-restip'); if (t0 && !t0.hidden) t0.hidden = true; soloPick("${k}"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1); true`);
+            // wait on the game, not a timer: this hero's turn fight is live and the stage has laid the plates out (--vs-b, read below)
+            const live = await page.waitForFunction(k => window.__t.x(`(() => { const b = document.getElementById('stageBox'), q = turnCombatSnapshot();
+              return soloHero() === '${k}' && q.phase !== 'off' && !!LF_EYES.rects().hero && parseFloat(getComputedStyle(b).getPropertyValue('--vs-b')) > 0; })()`), k, { timeout: 15000 }).then(() => true, () => false);
+            assert(live, `${tag} ${k}: the fight starts and the stage lays out its plates (hero ${k}, a turn fight, --vs-b set)`);
+            await page.waitForTimeout(1500);
             await X('globalThis.__tp = 1; true'); await page.waitForTimeout(300);
             const read = async () => JSON.parse(await X(`JSON.stringify({ hero: LF_EYES.rects().hero, zone: ${BOX('.hud-zone')}, turn: ${BOX('.tv-n')}, row: ${BOX('.tv-hero')}, warn: ${BOX('.tv-warn')}, tip: ${BOX('.tv-restip')}, banner: ${BOX('.tv-tc-txt')}, strip: ${BOX('.cb-strip')} })`));
             await X(`emit('traitSeen', { first: true, txt: ${JSON.stringify(longest)} }); true`); await page.waitForTimeout(120);
