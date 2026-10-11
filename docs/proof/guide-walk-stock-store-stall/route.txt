@@ -20,3 +20,5 @@
 # at 6x (the ring had not glided onto Gather yet); it now looks again for up to 3 s, as the walk does. Find, not fixed here (other UX-L1
 # asserts are out of scope): 2 of the 10 throttled runs failed the mid-game layout part ("the ability picker and the Attack sheet ...":
 # the picker or the Attack sheet "not open"), as #418 also saw at 740x360.
+# Reviewer (independent subagent): no blocking findings. Its low find, applied: the forced state opens the Camp view itself
+# (setTab('camp')) and the assert fails if the state was not forced, instead of trusting World's remembered view.

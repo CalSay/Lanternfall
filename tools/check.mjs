@@ -14507,10 +14507,11 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             // (#38130866868: the walk ran out of passes there). Pressing what the guide points at (its ring; over the stage, its Go) gets the hero
             // gathering something the Storehouse needs within 3 presses, and every press changes the screen or what the hero does
             if (st === 'stock:store' && !storeWalk) {
-              await X(`setActivity('fight'); setTab('world'); true`); await page.waitForTimeout(600);
+              await X(`setActivity('fight'); setTab('camp'); true`); await page.waitForTimeout(600);
               const now = () => X(`JSON.stringify([S.tab, S.tab ? curView(S.tab) : '', S.activity, S.node.kind + S.node.t])`);
               const there = () => X(`S.activity === 'gather' && onboardNeed('stock:store').some(m => m.kind === S.node.kind && m.t === S.node.t)`);
-              const presses = [];
+              const presses = [], start = await now();
+              if (!/^\["world","camp","fight"/.test(start)) presses.push('(not forced: ' + start + ')');
               for (let k = 0; k < 3 && !await there(); k++) {
                 let c = await X(TARGET(st)); const was = await now();
                 for (let w8 = 0; !c.ok && w8 < 15; w8++) { await page.waitForTimeout(200); c = await X(TARGET(st)); }   // (the ring glides there; the hint places itself every 250 ms)
