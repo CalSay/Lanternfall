@@ -540,8 +540,8 @@ if (section('split build (asset-build)')) try {
         page.on('pageerror', e => errs.push(String(e)));
         let release; const held = new Promise(r => { release = r; });
         await routePage(page, 'http://lf.test/', html, assets);
-        let pages = 0;
-        page.on('load', () => pages++);
+        let pages = 0;   // documents the tab asked for (a 'load' count missed the first page when the reload began before its load event)
+        page.on('request', q => { if (q.isNavigationRequest() && q.frame() === page.mainFrame()) pages++; });
         if (later) await page.route('http://lf.test/', r => (r.request().isNavigationRequest() ? r.fallback() : r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: later })));
         for (const [name, how] of Object.entries(hold)) await page.route('**/assets/' + name, async r => { if (how === 'gone') return r.fulfill({ status: 404, body: '' }); await held; return how === 'fail' ? r.abort() : r.fallback(); });
         await page.goto('http://lf.test/', { waitUntil: 'commit' });
@@ -634,8 +634,10 @@ if (section('split build (asset-build)')) try {
         assert(r.moved && r.cov === true && a.cover === 'Loading Batwing Caves' && !errs.length, `split: a zone change inside tick with no event is covered before that frame paints (${JSON.stringify(r)}, ${JSON.stringify(a)})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
       // 5d. bg-pack-by-shape: a phone turned mid-fight to the shape it did not boot with holds the game under the line until that
-      //     background's pack is in and decoded, and the first frame after the hold draws it decoded; the boot never asked for it
-      { const port = pk('bg:forest:port'), { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 1 }, hold: { [port.name]: 'hold' }, html: probe }), asked = [];
+      //     background's pack is in and decoded, and the first frame after the hold draws it decoded; the boot never asked for it.
+      //     The save holds zone 1's boss (as after a loss, no Try again card) with Auto off, so no fight before the turn can move
+      //     the zone: the fixture's 10 kills left the boss due, and a fast runner beat it and read the hold in zone 2.
+      { const port = pk('bg:forest:port'), { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 1, auto: false, bossTry: { hold: 1, fail: 0, tries: {}, rev: {}, last: null } }, hold: { [port.name]: 'hold' }, html: probe }), asked = [];
         page.on('request', q => { if (q.url().endsWith(port.name)) asked.push(Date.now()); });
         await booted(page); await page.evaluate(() => window.__t.x('S.activity = "fight", ui(true)')); await page.waitForTimeout(600);
         const before = asked.length;

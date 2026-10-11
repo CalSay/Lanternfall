@@ -1,0 +1,20 @@
+# Proof for card split-portrait-boss-race. No player-visible change: only the setup of tools/check.mjs split step 5d moved.
+# The step's save left zone 1's boss due (the fixture's 10 kills), so a runner that won that fight in the ~1.2 s before the
+# viewport turn read the hold in zone 2 (CI run 38153553008, shard 1: {"z":2,"k":0}). The save now holds zone 1's boss, as
+# after a loss with no Try again card, and turns Auto off, so no fight can move the zone before the turn.
+#   race-a.txt   before the fix, with every fight won at once before the turn (killPack, race-probe.diff): the zone moves on
+#                and the step fails
+#   race-b.txt   after the fix, the same instant wins: kills stop at 5, no boss comes, the step reads zone 1 and passes
+#   runs-20.txt  the split section 20 times with both fixes, all passing
+# Step 7 (a pack gone after a deploy reloads the page) also failed about 1 run in 4, on the base too, with "(1 loads)": it
+# counted 'load' events, and the reload could start before the first page's load event fired. It now counts the documents
+# the tab asks for (main-frame navigation requests), so the same two pages read 2.
+# This route is today's screen: a zone 1 fight on the cold-camp save.
+# seed: 1
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 2
+shot zone1-fight

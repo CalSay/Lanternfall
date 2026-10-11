@@ -1,0 +1,17 @@
+# node tools/check.mjs --only="split", runs 1-6 and 7-20 with both fixes (step 5d's held boss, step 7's page count). Runs 1-6 printed 0 fails each.
+run 7: 0 fails; {"t":true,"z":1,"k":10,"hp":97.28063816098857,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 8: 0 fails; {"t":true,"z":1,"k":10,"hp":103.90036261945241,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 9: 0 fails; {"t":true,"z":1,"k":10,"hp":88.82680073137519,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 10: 0 fails; {"t":true,"z":1,"k":10,"hp":94.64183464380423,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 11: 0 fails; {"t":true,"z":1,"k":10,"hp":98.05120853138396,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 12: 0 fails; {"t":true,"z":1,"k":10,"hp":96.93194714644241,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 13: 0 fails; {"t":true,"z":1,"k":10,"hp":89.91673021148488,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 14: 0 fails; {"t":true,"z":1,"k":10,"hp":90.02909380518592,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 15: 0 fails; {"t":true,"z":1,"k":10,"hp":87.87844901736815,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 16: 0 fails; {"t":true,"z":1,"k":10,"hp":97.83528103752158,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 17: 0 fails; {"t":true,"z":1,"k":10,"hp":103.39274122949016,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 18: 0 fails; {"t":true,"z":1,"k":10,"hp":97.59599796706232,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 19: 0 fails; {"t":true,"z":1,"k":10,"hp":99.06288862963555,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+run 20: 0 fails; {"t":true,"z":1,"k":10,"hp":97.10437849684354,"o":"foe:imp,bg:forest:port"}; nav page (2 loads)
+
+# before step 7's fix (5d fixed): split runs failed only step 7 with "(1 loads)" in 2 of 10, then 3 of 6; on the unchanged base 1 of 6.
