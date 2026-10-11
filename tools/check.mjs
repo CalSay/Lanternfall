@@ -110,6 +110,7 @@ const WEIGHT = {
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
+  'realtime-press-swings': 45,   // 41 s locally alone (realtime-press-swings, 2026-10-11)
   'bow-slot-wording': 8,   // 8 s locally alone (bow-slot-wording, 2026-10-10)
   'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
   'toast-over-menu-foot': 55,   // 55 s locally alone (toast-guide-side-menu, 2026-10-11)
@@ -19154,6 +19155,14 @@ if (section('toast-over-menu-foot')) try {
         await X('onboardUnlockAll(); true');
         await X('setTab("forge"); true');
         for (let i = 0; i < 4; i++) { const b = page.getByRole('button', { name: 'Got it' }); if (!(await b.count())) break; await b.first().click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); }
+        // the first Craft view on this old save opens the Refining card a tick after menuView (75-refine-ui); on a slow machine that came after the
+        // loop above, so the card hid the guide tip and the menu box was measured with no tip, then with one. Wait on the game's state: the card
+        // said (S.refine.said) and shut, and, where the tip shows on the Craft menu (upright over it, desktop beside it), the tip up.
+        const ready = async tipWanted => { for (let i = 0; i < 60; i++) {
+          const s = await page.evaluate(() => { const sh = document.querySelector('.bsheet-ov:not(.docked)'); if (sh) { const d = sh.querySelector('.sty-done'); if (d) d.click(); return 'sheet'; }
+            const b = document.querySelector('.ob-bub'); return b && !b.hidden ? 'tip' : 'none'; });
+          if (s !== 'sheet' && await X('!!(S.refine && S.refine.said)') && (s === 'tip' || !tipWanted)) return true; await page.waitForTimeout(100); } return false; };
+        assert(await ready(h > w || !phone), `${v}: the Refining card is shut and the guide tip is placed before the menu is measured`);
         // settled: the menu's slide and every toast are done
         const settle = async () => { for (let i = 0; i < 40; i++) { if (await page.evaluate(() => !document.querySelector('#toasts .toast') && !document.getElementById('menu').getAnimations({ subtree: true }).some(a => a.playState === 'running'))) return true; await X('for (const t of [...$("toasts").children]) dropToast(t); true'); await page.waitForTimeout(100); } return false; };
         assert(await settle(), `${v}: the Craft menu opens with no notices up`);
@@ -19881,6 +19890,60 @@ if (section('basic-attack-swings')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('basic-attack-swings crashed: ' + (e.stack || e)); }
+
+// ==== realtime-press-swings: in a real-time fight a press that fires a Finisher or stops a heal plays the hero's swing ====
+// 59j's Attack answers a Finisher or an interrupt first and emits only soloAttack { kind } (no classTap, no lunge), so the
+// stage swung only on a plain hit. Every hero, at the three views (360x740 with reduced motion): one press makes one swing.
+if (section('realtime-press-swings')) try {
+  const at = 'realtime-press-swings', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, red] of [[1280, 720, false], [740, 360, false], [360, 740, true]]) {
+        const v = `${at} ${w}x${h}${red ? ' (reduced motion)' : ''}`, phone = w < 1200;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}), ...(red ? { reducedMotion: 'reduce' } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // the player at the buttons with auto off: no auto swing (50-sim) and no auto Finisher (59g) while the press is read
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); soloSetAuto(false); true');
+        for (const k of ['wren', 'tobin', 'pip']) {
+          for (const kind of ['finisher', 'interrupt']) {
+            // a boss for the Finisher (only a boss or an elite staggers), a plain foe channelling a heal for the interrupt
+            await X(`soloPick("${k}", { now: true }); setZone(2); S.activity = "fight"; fightBoss = ${kind === 'finisher'}; spawn(); true`);
+            let r = null;
+            for (const t0 = Date.now(); Date.now() - t0 < 15000 && !(r && r.got === kind);) {
+              await page.waitForTimeout(200);
+              r = JSON.parse(await X(`(() => { const f = combatFoes().find(f => f && !f.dead && f.hp > 0 && !f.gone); if (!f || stageStats().heroSt !== 0) return '{}';
+                soloTouch();
+                if ("${kind}" === 'finisher' && !cbState().fin.on) { actStag(f, 1e6, 0); return '{}'; }   // the stagger lands on the next tick
+                if ("${kind}" === 'interrupt') f.chanT = 3;
+                const s0 = stageStats(), seen = [], off = on('soloAttack', p => seen.push(p && p.kind));
+                const got = soloAttack(); typeof off === 'function' && off();
+                const s1 = stageStats(); return JSON.stringify({ got, seen, st0: s0.heroSt, st1: s1.heroSt, q0: s0.heroPending, q1: s1.heroPending, d: s1.heroSwings - s0.heroSwings, n0: s0.heroSwings }); })()`));
+            }
+            assert(r && r.got === kind && (r.seen || []).join() === kind, `${v} ${k}: a real-time press fires the ${kind} (${JSON.stringify(r)})`);
+            if (!r || r.got !== kind) continue;
+            assert(r.st1 === 1 && r.d === 1 && !r.q1, `${v} ${k}: the ${kind} press starts one swing at once, none queued (stage state ${r.st0} -> ${r.st1}, ${r.d} swing, queued ${r.q1})`);
+            await page.waitForTimeout(150);
+            const n = await X('stageStats().heroSwings + (stageStats().heroPending ? 1 : 0)');
+            assert(n - r.n0 === 1, `${v} ${k}: no second swing follows the ${kind} press (${n - r.n0} swings)`);
+          }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('realtime-press-swings crashed: ' + (e.stack || e)); }
 
 // ==== ability-effects-live: every ability's effect in a turn fight, one colour per status (62b-fx.js) ====
 // The game draws the motion and the light (CLAUDE.md "Art freeze", Cal 2026-10-10). Every non-passive ability of every hero has a
