@@ -11273,16 +11273,16 @@ if (section('C29 boss pass (core)')) try {
     // a zone boss's HP in reference Attacks: 16 x the zone's hpX (x bossEase in zones 1-3); the Fenmother 30 x regionHpX; normal foes unchanged
     const at = (z, boss) => E(`(() => { S.maxZone = Math.max(S.maxZone, ${z}); setZone(${z}); fightBoss = ${boss}; spawn(); const f = combatFoes()[0];
       return { a: f.max / turnRefAtk(${z}), hx: f.tk.hx, cx: f.tk.cx, region: f.tk.region, gold: f.gold, full: turnCombatProfile().fullHp }; })()`);
-    const want = { 1: 16 * 0.65, 2: 16 * 0.8, 3: 16 * 0.9, 10: 16 * 0.35 * 1.25, 15: 16 * 0.12, 20: 16 * 0.01625, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
+    const want = { 1: 16 * 0.65, 2: 16 * 0.8 * 3.5, 3: 16 * 0.9 * 2.4, 10: 16 * 0.35 * 1.25, 15: 16 * 0.12, 20: 16 * 0.01625, 30: 16 * 1.55, 35: 30 * 1.4, 38: 16 * 1.85 }, bad = [];
     for (const z of Object.keys(want)) { const r = at(+z, true); if (!(r.a > want[z] * 0.94 && r.a < want[z] * 1.06)) bad.push(`${z}: ${r.a.toFixed(1)} (want ${want[z].toFixed(1)})`); }
-    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zones 13-15 cut for the hero who first gets there by z13-unstick, zone 15 16 x 0.12, was 1.7; zones 20-24 by z20-wall, zone 20 16 x 0.01625, was 2.8; zones 7-12 by rally-gates-live for the hero who first gets there with the gates on, zone 10 16 x 0.35 x 1.25, was 0.725; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
+    assert(!bad.length, `boss pass: a boss lasts longer as the game goes on: its HP in reference Attacks is 16 x the zone's hpX (zones 1-3 keep their onboarding ease; zone-1-3-foe-curve: zones 2 and 3 x3.5 and x2.4 for the hero who arrives there), the Fenmother 30 x 1.4 (the gear pass: was 1.25; zones 15-20 x1.1, 25-34 retuned by mid-zone-wall, zones 4-12 and 13-24 by boss-tiers (2026-10-07), zones 4-15 refit by boss-tiers-pr4 for the tricks; zones 13-15 cut for the hero who first gets there by z13-unstick, zone 15 16 x 0.12, was 1.7; zones 20-24 by z20-wall, zone 20 16 x 0.01625, was 2.8; zones 7-12 by rally-gates-live for the hero who first gets there with the gates on, zone 10 16 x 0.35 x 1.25, was 0.725; zone 38 16 x 1.85, was 1.5) (${bad.join('; ') || 'ok'})`);
     const n20 = at(20, false), b20 = at(20, true), b3 = at(3, true), b8 = at(8, true), b38 = at(38, true);
     // the mid-game HP pass: a normal foe's hits x0.7 from zone 8 to 34 (normHitX) against the higher reference HP
     const n3 = at(3, false), n38 = at(38, false);
-    assert(n20.a > 4.7 && n20.a < 5.3 && Math.abs(n20.hx - 0.7) < 1e-9 && n3.hx === 1 && n38.hx === 1 && n20.cx === 1 && n20.full === !!E('TURN_TUNE.normalFull'),
-      `boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), as written in zones 1-3 and 35+ (${JSON.stringify([n3, n20, n38].map(r => [+r.a.toFixed(2), r.hx]))})`);
+    assert(n20.a > 4.7 && n20.a < 5.3 && Math.abs(n20.hx - 0.7) < 1e-9 && Math.abs(n3.hx - 3.5) < 1e-9 && n38.hx === 1 && n20.cx === 1 && n20.full === !!E('TURN_TUNE.normalFull'),
+      `boss pass: a normal foe keeps 5 reference Attacks; its hits x0.7 in zones 8-34 (the mid-game HP pass), x3.5 in zone 3 (zone-1-3-foe-curve: the health of the hero who arrives there), as written in zone 1 and 35+ (${JSON.stringify([n3, n20, n38].map(r => [+r.a.toFixed(2), r.hx]))})`);
     assert(b3.hx === 1 && b3.cx === 1 && Math.abs(b8.hx - 0.5) < 1e-9 && Math.abs(b8.cx - 1.3) < 1e-9 && Math.abs(b38.hx - 1.9) < 1e-9 && Math.abs(b38.cx - 1.35) < 1e-9 && b20.full,
-      `boss pass: boss hits x0.5 at zone 8 (rally-gates-live: was 1.055, the pr4 refit; charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 as before; a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
+      `boss pass: boss hits x0.5 at zone 8 (rally-gates-live: was 1.055, the pr4 refit; charges x1.3 more), x1.9 (x1.35) from zone 35; zones 1-3 x1 (their hits come from boss.hpFloor, a share of the hero's health: zone-1-3-foe-curve); a zone boss is met at full health (${JSON.stringify([b3, b8, b38].map(r => [r.hx, r.cx]))})`);
     assert(Math.abs(b20.gold / n20.gold - 5 * (1 + 1.4 * 0.5)) < 1e-6, `boss pass: a longer boss pays more: 5 x (1 + half its extra length) a normal foe's gold (${(b20.gold / n20.gold).toFixed(2)})`);
     // the Deepwell's Elders and the Provings' bosses keep their own numbers (they pass a move set and their HP in Attacks)
     const deep = E(`(() => { const f = { boss: true, type: 'bones', name: 'Elder' }; turnFoeSetup(f, 30, { set: 'bones', hpA: TURN_TUNE.deep.hpA.boss }); return { a: f.max / turnRefAtk(30), hx: f.tk.hx, cx: f.tk.cx }; })()`);
@@ -11304,6 +11304,51 @@ if (section('C29 boss pass (core)')) try {
     assert(lo.b.hit > 0.5 && lo.casual.win < 0.2 && lo.good.turns > k.good.turns * 1.3 && hi.good.turns < k.good.turns * 0.8 && hi.casual.win >= k.casual.win && hi.b.hit < 0.15,
       `boss pass: gear matters: a gear tier behind, a boss hit costs half your health and casual play loses; a tier ahead, bosses go quicker and barely hurt (turns ${[lo, k, hi].map(r => r.good.turns.toFixed(1)).join(' / ')}, casual win ${[lo, k, hi].map(r => (100 * r.casual.win).toFixed(0) + '%').join(' / ')}, a boss hit ${[lo, k, hi].map(r => (100 * r.b.hit).toFixed(0) + '%').join(' / ')})`); }
 } catch (e) { fail('C29 boss pass crashed: ' + (e.stack || e)); }
+
+if (section('zone-1-3-foe-curve (core)')) try {
+  // zone-1-3-foe-curve (judge 2026-10-11, docs/DECISIONS.md "Zones 1-3 foe curve"): each hero at the levels the walk and the road reach
+  // zones 1-3 with (zone 1's boss at 3, zone 2 at 4 then its boss at 5, zone 3 at 6 then its boss at 7), in the starter kit. A zone's
+  // foes, its boss's HP and its pay rise with the zone; a boss outlasts the foes before it; a zone 2-3 foe's HP is the zone's, not the
+  // hero's (a level shortens the fight, down to the early floor); and a landed zone 2-3 hit costs the arriving hero a real share of their health.
+  const at = (hero, L, z, boss) => { const g = loadCore({ seed: 7, turns: true }), E = s => g.eval(s);
+    E(`soloPick(${JSON.stringify(hero)}, { now: true }); S.L = ${L}; S.solo.tr[${JSON.stringify(hero)}].atk = ${L - 1}; gearDirty(); S.maxZone = ${z}; setZone(${z});
+      S.activity = 'fight'; arena = null; fightBoss = ${boss}; spawn()`);
+    const r = E(`(() => { const f = combatFoes().find(x => x && !x.dead), p = turnCombatProfile(); let x = 0, n = 0;
+      for (const mv of p.script) { x += mv.hits.reduce((a, h) => a + (h.feint ? 0 : h.x || 0.2), 0); n++; }
+      const hit = (x / n) * Math.max(p.refHp * (p.bossHitX || 1), (p.bossHitFloor || 0) * p.heroMaxHp) * p.hitX;
+      return { hp: f.max, gold: f.gold, xp: f.xp, boss: !!p.boss, A: p.A, hx: f.tk.hx, arm: f.tk.arm || 0, move: hit / p.heroMaxHp, pay0: mobGold(S.zone) * COMBAT_TUNE.packGold * TURN_TUNE.goldX }; })()`);
+    assert(!g.errors.length, `zone-1-3-foe-curve: no errors (${hero} L${L} zone ${z}): ` + g.errors.slice(0, 2).join(' | '));
+    return r; };
+  const r2 = x => Math.round(100 * x) / 100;
+  for (const hero of ['wren', 'tobin', 'pip']) {
+    const n1 = at(hero, 3, 1, false), b1 = at(hero, 3, 1, true), n2 = at(hero, 4, 2, false), n2b = at(hero, 5, 2, false), b2 = at(hero, 5, 2, true),
+      n3 = at(hero, 6, 3, false), b3 = at(hero, 7, 3, true), n4 = at(hero, 8, 4, false), b2hi = at(hero, 20, 2, true), b3hi = at(hero, 20, 3, true);
+    const rows = [n1, b1, n2, b2, n3, b3].map(r => [Math.round(r.hp), Math.round(r.gold), r2(r.hp / r.A), r2(r.move)]);
+    assert(n1.hp < n2.hp && n2.hp < n3.hp && b1.hp < b2.hp && b2.hp < b3.hp && n1.gold < n2.gold && n2.gold < n3.gold && b1.gold < b2.gold && b2.gold < b3.gold,
+      `zone-1-3-foe-curve: against ${hero} the foes', the bosses' HP and the pay rise zone by zone from 1 to 3 (hp, gold, plain Attacks, a move / max HP: ${JSON.stringify(rows)})`);
+    assert(b1.hp > n1.hp && b2.hp > n2b.hp && b3.hp > n3.hp && b2.gold >= 4.5 * n2.gold,
+      `zone-1-3-foe-curve: against ${hero} a zone 1-3 boss outlasts the foes before it, met a level later, and pays 5 of them or more (${JSON.stringify(rows)})`);
+    assert(n2b.hp / n2b.A < 0.85 * n2.hp / n2.A && n2.hp / n2.A > 4 && n2.hp / n2.A < 8 && n3.hp / n3.A > 4.5 && n3.hp / n3.A < 9,
+      `zone-1-3-foe-curve: against ${hero} a zone 2 foe takes about 5 plain Attacks of the hero who arrives (level 4) and fewer a level later (its HP is the zone's, down to the early floor); a zone 3 foe about 7 at level 6 (${r2(n2.hp / n2.A)}, ${r2(n2b.hp / n2b.A)}, ${r2(n3.hp / n3.A)})`);
+    if (hero !== 'tobin') assert(n2.move > 0.15 && n3.move > 0.15 && b2.move > 0.15 && b3.move > 0.15 && n1.move < n2.move,
+      `zone-1-3-foe-curve: a landed zone 2-3 move costs ${hero} on arrival more than 15% of their health (zone 1 at level 3 less) (${JSON.stringify(rows)})`);
+    // zones 4+ are as before (the floor, the pay and the hits come back to the zone 4 numbers)
+    // an over-levelled hero still meets a zone 2-3 boss of 5 landed plain Attacks or more (TURN_TUNE.early.bossHits)
+    const landed = r => r.hp / (r.A * (1 - r.arm));   // plain Attacks after the boss's armour
+    assert(landed(b2hi) >= 4.95 && landed(b3hi) >= 4.95,
+      `zone-1-3-foe-curve: against ${hero} at level 20 a zone 2 and a zone 3 boss still take 5 plain Attacks or more after armour (${r2(landed(b2hi))}, ${r2(landed(b3hi))})`);
+    assert(Math.abs(n4.gold - n4.pay0) < 1e-6 && n4.hp / n4.A >= 7.95 && Math.abs(n4.hx - 0.94) < 1e-9,
+      `zone-1-3-foe-curve: zone 4 keeps its pay, its early floor of 8 plain Attacks and its hits x0.94 (${Math.round(n4.gold)}, ${r2(n4.hp / n4.A)}, ${n4.hx})`);
+  }
+  // the Deepwell (and a Proving, which pass hpA) keep their numbers in zones 1-3: the zone tables off changes nothing there
+  { const g = loadCore({ seed: 7, turns: true }), E = s => g.eval(s);
+    const dw = E(`(() => { const one = (boss) => { const f = { boss, deep: true, type: 'bones', name: 'Elder' }; turnFoeSetup(f, 2, { set: 'bones', hpA: boss ? TURN_TUNE.deep.hpA.boss : 5 }); return [f.max, f.gold]; };
+      const a = [one(true), one(false)], keep = TURN_TUNE.early; TURN_TUNE.early = { hpX: [[1, 1]], bossHpX: [[1, 1]], bossHits: [0, 0, 0], payX: [[1, 1]] };
+      const b = [one(true), one(false)]; TURN_TUNE.early = keep; return { a, b }; })()`);
+    const near = (x, y, t) => Math.abs(x / y - 1) <= t;
+    assert(near(dw.a[0][0], dw.b[0][0], 1e-9) && near(dw.a[0][1], dw.b[0][1], 1e-9) && near(dw.a[1][0], dw.b[1][0], 0.12) && near(dw.a[1][1], dw.b[1][1], 1e-9) && !g.errors.length,
+      `zone-1-3-foe-curve: a Deepwell foe and boss at zone 2 keep their HP and pay (the zone tables are for zone fights only) (${JSON.stringify(dw)})`); }
+} catch (e) { fail('zone-1-3-foe-curve crashed: ' + (e.stack || e)); }
 
 if (section('C29 mid-game HP and Wren (core)')) try {
   // the mid-game HP pass (2026-10-02, combat-turn-build.md "Mid-game HP and Wren"): the reference HP of zones 4-34 follows
@@ -13074,6 +13119,7 @@ if (section('craft strike infuse (browser)')) try {
 if (section('craft delta')) try {
   const pfx = f => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', f), 'utf8');
   const coreOn = (f, turns = true) => loadCore({ seed: 7, turns, storage: memoryStorage({ [KEY]: pfx(f) }) });
+  // save-flow-cold-camp's Wren is level 2, under the road's level 4 at zone 2: the one level where a Pine Bow still moves the zone 2 boss odds
   { const g = coreOn('save-flow-cold-camp.json'), E = s => g.eval(s);
     E('globalThis.__cdEv = []; on("crafted", e => globalThis.__cdEv.push({ on: e.on, was: e.was, speed: e.speed }))');
     const a = E('(craftItem("pick", 1, { wear: true }) || {}).id'), ev = E('globalThis.__cdEv[0]');

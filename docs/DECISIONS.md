@@ -1080,6 +1080,35 @@ Ruled A by an independent Opus high judge (`autopilot/rulings/2026-10-08-wren-z9
 Veto phrase for Cal: **"Make the zone 10 skeletons easier for Wren"**: opens B as its own judge-gated card (the get-up restores 10%,
 ordinary Rattlebones only).
 
+### Zones 1-3 foe curve (zone-1-3-foe-curve) (2026-10-11)
+
+Ruled "ship as tuned" by an independent Opus high judge; Cal can veto.
+
+- **Zones 1-3 foe curve (zone-1-3-foe-curve, judge 2026-10-11; Cal can veto).** Zones 2-3 sit on the hero who arrives there
+  (about level 4 and level 6), in `TURN_TUNE.early` (59k): foe HP x5 and x5.2, fixed by zone, with the early floor down to 3 plain
+  Attacks (24d `TURN_EARLY_FOE_HITS`, was 8); boss HP x3.5 and x2.4 with boss floors of 4/5/5 plain Attacks; gold x1.6 and x1.8, XP as
+  before; foe hits x3.25 and x3.5 (`normHitX`); boss hits use `boss.hpFloor` 0.7/0.8/0.9 of the hero's health. HP, pay and hits rise
+  zone by zone, a boss outlasts the foes before it, and levels shorten zone 2-3 fights instead of growing the foes. Away gold and
+  bounties still use plain `mobGold`. Veto: "put zones 1 to 3 back".
+- **Zone 1 is the exception, set by floors** (judge 2026-10-11, on the reviewer's note): its foes are always 3 and its boss always 4
+  plain Attacks of the hero who meets them, whatever their level or gear, so the boss outlasts its foes in the same terms. The first
+  boss is met once, at about level 3 (walks: it falls at 1:01-1:14). Veto: "let levels shorten the first boss" (then card zone 1's
+  foes and boss together).
+- **The cold-camp fixture's Wren is level 2** (was 1, which the road cannot reach at zone 2). Level 2 is the one level where the Pine
+  Bow still moves the zone 2 boss odds (5 to 7 in 10), so `craft delta` and `craft-odds-before-pay` test the same claim; no bound moved.
+- **What it measured:** health casual/active ok (casual.firstGoalSec 78 s, limit 82.6); budget z3-boss casual 100/100/100, z5
+  never-defends 0/0/0 (non-parriers still lose at the zone 5 Champion); three 60-min walks keep F3 (longest gap before the zone 10
+  Champion 6:55; Champion by 25:27, base 27:35). Proof: `docs/proof/zone-1-3-foe-curve/`.
+- **Zone 4 steps back** to the old numbers (foe pay 71 to 41, hits about 18% to 8%, its 8-Attack floor grows with the hero) until a
+  P1 zones 4-6 curve card, due before the 2026-10-18 release check. If a first-hour change trips
+  casual.firstGoalSec (4.5 s headroom), drop zone 1's `bossHits` from 4 to 3 first.
+- **Attributes (recommendation, no change):** a Focus point is worth too little; all-in Focus is slower than all-in Might on every
+  early boss, even for Pip. A separate card should give Focus Might's split (base 0.01, per 0.03 in `ATTRS`, 24g), so the 2026-10-06
+  farm build ("Focus kills normal foes faster") comes true. The half rule stays.
+
+Veto phrase for Cal: **"put zones 1 to 3 back"**: sets `TURN_TUNE.early` to 1 everywhere (zone 1's boss floor off), `TURN_EARLY_FOE_HITS` zones 2-3 to 8
+and the zone 1-3 `normHitX` and `boss.hpFloor` knots to their old values.
+
 ### The Lantern Rules
 
 Every card that adds a price, a currency, a timer or a gate passes all ten. (2026-10-06)
