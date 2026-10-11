@@ -707,7 +707,7 @@ async function coverStep(o) {
   const all = await X(COVER_READ), want = all.filter(c => coverWants(COVER, c) && (C.tries[c.id + '+' + c.plus] || 0) < 3).sort((a, b) => a.gold - b.gold);
   for (const c of all) if (c.ok && !c.plain) { if (!coverWants(COVER, c)) C.skipped.add(c.id + '+' + c.plus); if (C.maxMins === null || c.mins > C.maxMins) C.maxMins = c.mins; }   // offers it could pay: the ones it left, and the longest free route among them
   const c = want[0]; if (!c) return false;
-  const key = c.id + '+' + c.plus; C.tries[key] = (C.tries[key] || 0) + 1;
+  const key = c.id + '+' + c.plus; C.tries[key] = (C.tries[key] || 0) + 1; C.skipped.delete(key);   // a step left alone earlier and covered now is not left alone
   const i = await X(`CRAFT_HERO_POS.filter(craftKindVisible).indexOf(${JSON.stringify(c.pos)})`);
   const n0 = C.ups.length;
   await openHeroGear();
@@ -1165,7 +1165,7 @@ function coverLines() {
   const a = coverSummary(), pc = (n, d) => d ? Math.round(n / d * 100) + '%' : 'n/a';
   let b = null, why = '';
   if (COVER_BASE) { try { const j = JSON.parse(fs.readFileSync(path.resolve(ROOT, COVER_BASE), 'utf8')); b = j.cover || null; if (!b) why = 'it has no cover block'; else if (j.seed !== SEED || j.hero !== HERO || j.size !== SIZE.id) why = `it is seed ${j.seed} ${j.hero} ${j.size}, not this walk's seed ${SEED} ${HERO} ${SIZE.id}`; } catch (e) { why = 'it could not be read'; } }
-  const row = x => [x.mode, `${x.unspent ?? 'n/a'}%`, x.lastSpend === null ? 'none' : fmtT(x.lastSpend), `${x.coveredUnits} of ${x.allUnits} (${pc(x.coveredUnits, x.allUnits)})`, `${x.coveredUps} of ${x.ups}`, x.coverGold.toLocaleString('en-GB'), x.refineOrders,
+  const row = x => [x.mode, x.unspent === null ? 'not read' : x.unspent + '%', x.lastSpend === null ? 'none' : fmtT(x.lastSpend), `${x.coveredUnits} of ${x.allUnits} (${pc(x.coveredUnits, x.allUnits)})`, `${x.coveredUps} of ${x.ups}`, x.coverGold.toLocaleString('en-GB'), x.refineOrders,
     x.gather ? ['Mining', 'Woodcutting', 'Foraging'].map(k => `${k} ${x.gather[k] ?? '-'}`).join(', ') : 'not read', x.stations ? Object.entries(x.stations).map(([k, v]) => `${k} ${v}`).join(', ') : 'not read'].join(' | ');
   const out = ['## Gold cover', '', `The bot's cover: ${a.mode}${COVER ? `. It pressed the cover ${a.presses} time${a.presses === 1 ? '' : 's'}${a.failed ? ` (${a.failed} did not upgrade)` : ''}${COVER.min ? `; it left ${a.skipped} cover offer${a.skipped === 1 ? '' : 's'} it could pay alone (free route ${COVER.min} min or less)` : ''}${a.maxMins === null ? '' : `; the longest free route among the offers it could pay was ${Number.isFinite(a.maxMins) ? a.maxMins + ' min' : 'not gatherable'}`}` : ' (pass --cover all or --cover <min> to press it)'}. Read at game minute ${a.minutes}.`, '',
     '| Run | Unspent gold | Last spend | Covered units | Covered upgrades | Cover gold | Refine orders | Gathering | Stations |', '|---|---|---|---|---|---|---|---|---|', `| ${row(a)} |`];
