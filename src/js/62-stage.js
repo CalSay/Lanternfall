@@ -1623,7 +1623,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     const t0 = performance.now();
     pickScene();
     const tg = target(), raid = tg === 'world', gath = tg === 'node', fight = tg === 'mob';
-    // camF: the camera sway in stage px, snapped to a step both views share (feet never slide); cam: in actor px, 0 on a fixed painting
+    // camF: the camera sway in stage px (the scenery's); cam: the same in actor px
     const camSt = AK % 1 ? AK * 2 : AK, camF = reduced ? 0 : Math.trunc((Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3) / camSt) * camSt;
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
     const K = DPR * ZM, tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;

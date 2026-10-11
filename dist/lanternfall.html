@@ -3650,12 +3650,10 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
    line drops under the banner. */
 .tc-on .tv-top .tv-n, .tc-on .tv-top .tv-hero { visibility: hidden; }
 .tc-on .tv-top .tv-warn { margin-top: 14px; }
-/* actor-scale-followups: desktop: a trick's line and the resource tip dock top left, clear of the heroes */
 @media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
   .stagebox .tv-top .tv-warn, .stagebox .tv-top .tv-restip { position: absolute; left: 0; top: calc(var(--vs-b, 54px) + 28px - max(80px, calc(var(--vs-zb, 0px) + 2px)));
     margin: 0; max-width: min(400px, calc(50% - 100px)); text-align: left; }
   .stagebox .tv-top:has(.tv-warn:not([hidden])) .tv-restip { visibility: hidden; }
-  /* under the banner (a full-width band) the line rises above it */
   .stagebox.tc-on .tv-top .tv-warn { top: calc(var(--vs-b, 54px) + 2px - max(80px, calc(var(--vs-zb, 0px) + 2px))); font-size: max(var(--tmin, 0px), calc(14px * var(--tk, 1))); }
 }
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
@@ -32181,7 +32179,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     const t0 = performance.now();
     pickScene();
     const tg = target(), raid = tg === 'world', gath = tg === 'node', fight = tg === 'mob';
-    // camF: the camera sway in stage px, snapped to a step both views share (feet never slide); cam: in actor px, 0 on a fixed painting
+    // camF: the camera sway in stage px (the scenery's); cam: the same in actor px
     const camSt = AK % 1 ? AK * 2 : AK, camF = reduced ? 0 : Math.trunc((Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3) / camSt) * camSt;
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
     const K = DPR * ZM, tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
@@ -35734,7 +35732,6 @@ let campPaintFire = null;
     return hes;
   }
   const at = { x: 0, y: 0, SW: 1, SH: 1, on: false };   // the fire on screen, for the button
-  // the fire and plots are scenery: drawn at 1 / v.ak of the actors' scale (Hesketh keeps it)
   function asProp(g, k, x, y, paint) {
     if (k === 1) { paint(x, y); return; }
     g.save(); g.translate(Math.round(x * k) / k, Math.round(y * k) / k); g.scale(1 / k, 1 / k); paint(0, 0); g.restore();
@@ -35772,7 +35769,7 @@ let campPaintFire = null;
     // 'light': additive glows (the flame, Hesketh's lamp once the fire burns)
     if (phase !== 'light' || !on) return;
     const fl = reduced ? 0 : Math.sin(v.T * 7) * 0.05 + Math.sin(v.T * 13 + 1) * 0.03;
-    const kl = ns ? 1 : k;   // the new-style fire keeps the actors' scale
+    const kl = ns ? 1 : k;
     ANIM.lightAt(g, '255,150,70', fx, gy - 12 / kl, 78 / kl, 0.5 + fl);
     ANIM.lightAt(g, '255,236,170', fx, gy - 10 / kl, 22 / kl, 0.55 + fl);
     const H = hes;

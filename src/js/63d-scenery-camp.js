@@ -89,7 +89,6 @@ let campPaintFire = null;
     return hes;
   }
   const at = { x: 0, y: 0, SW: 1, SH: 1, on: false };   // the fire on screen, for the button
-  // the fire and plots are scenery: drawn at 1 / v.ak of the actors' scale (Hesketh keeps it)
   function asProp(g, k, x, y, paint) {
     if (k === 1) { paint(x, y); return; }
     g.save(); g.translate(Math.round(x * k) / k, Math.round(y * k) / k); g.scale(1 / k, 1 / k); paint(0, 0); g.restore();
@@ -127,7 +126,7 @@ let campPaintFire = null;
     // 'light': additive glows (the flame, Hesketh's lamp once the fire burns)
     if (phase !== 'light' || !on) return;
     const fl = reduced ? 0 : Math.sin(v.T * 7) * 0.05 + Math.sin(v.T * 13 + 1) * 0.03;
-    const kl = ns ? 1 : k;   // the new-style fire keeps the actors' scale
+    const kl = ns ? 1 : k;
     ANIM.lightAt(g, '255,150,70', fx, gy - 12 / kl, 78 / kl, 0.5 + fl);
     ANIM.lightAt(g, '255,236,170', fx, gy - 10 / kl, 22 / kl, 0.55 + fl);
     const H = hes;
