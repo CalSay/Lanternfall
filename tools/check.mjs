@@ -94,7 +94,7 @@ const WEIGHT = {
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
   'training (W2-A, browser)': 23, 'story-opening (browser)': 22, 'fight-input-during-banner': 22, 'hero voice': 20, 'tell us form': 18,
-  'action and menu icons (C26, browser)': 18, 'story-hollow-script (browser)': 17, 'foe-tricks-say-so': 16, 'hero attributes (browser)': 16,
+  'action and menu icons (C26, browser)': 18, 'story-hollow-script (browser)': 17, 'foe-tricks-say-so': 16, 'hero attributes (browser)': 16, 'attr-half-rule-before': 8,
   'camp trade and import (C4, browser)': 15, 'scroll-spares': 14, 'craft-shortfall-offer': 14, 'intro-and-picker': 13, 'gathering': 12,
   'wire-menu-icons (browser)': 11, 'starters join when met': 11, 'stars (browser)': 10, 'craft reveal': 10, 'forge-tip-goes-stale': 9,
   'fight HUD fit': 9, 'Next Up Go targets (browser)': 8, 'refine icons (browser)': 8, 'C9 hero registry (browser)': 8,
@@ -12461,6 +12461,45 @@ if (section('hero attributes (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('hero attributes (browser) crashed: ' + (e.stack || e)); }
+
+// ---- attr-half-rule-before: Build says what the next point gives, and names the half rule before the point that crosses it ----
+if (section('attr-half-rule-before')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('attr-half-rule-before: Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+      await X('for (const s of GUIDE_STEPS) onboardDone(s.id); S.maxZone = 4; S.zone = 4; S.L = 4; S.gold = 0; S.attr.pts = {}; ui(true); true');
+      await X('setTab("attributes"); true'); await page.waitForTimeout(700);
+      const h = await X('HERO_TUNE.softAt * attrPoints().total'), bad = [];
+      for (const a of await X('ATTRS.map(a => ({ id: a.id, kind: a.kind, per: a.per, ms: !!a.parryMs }))')) {
+        for (const n of [h - 1, h]) {
+          await X(`S.attr.pts.wren = ATTR0(); S.attr.pts.wren.${a.id} = ${n}; ui(true); true`); await page.waitForTimeout(120);
+          const fx = await X(`document.querySelector('#attrRows .at-row[data-at="${a.id}"] .at-fx').textContent`);
+          const m = /^Next point: \+([\d.]+)%(?:, \+([\d.]+) ms)?(, half rule)?\./.exec(fx);
+          const x0 = await X(`attrX("${a.kind}")`), p0 = await X('attrParryMs()');
+          await page.click(`#attrRows .at-row[data-at="${a.id}"] .at-add[data-n="1"]`); await page.waitForTimeout(120);
+          const dx = +((await X(`attrX("${a.kind}")`) - x0) * 100).toFixed(2), dms = +((await X('attrParryMs()') - p0) * 1000).toFixed(2);
+          const half = n >= h, want = +(a.per * (half ? 0.5 : 1) * 100).toFixed(2);
+          if (!m || +m[1] !== dx || dx !== want || !!m[3] !== half || half !== /Past half your points, a point counts half/.test(fx) || (a.ms && +m[2] !== dms))
+            bad.push(`${a.id} at ${n} of ${2 * h}: "${fx}" vs applied +${dx}%${a.ms ? `, +${dms} ms` : ''}`);
+        }
+      }
+      assert(h >= 2 && !bad.length, `attr-half-rule-before: at half - 1 each attribute says its full next point, at half it says "half rule" before the spend, and the shown value equals the applied change (${bad.join('; ')})`);
+      assert(!errs.length, 'attr-half-rule-before: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+      await ctx.close();
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('attr-half-rule-before crashed: ' + (e.stack || e)); }
 
 // ==== intro-and-picker: this card's own checks (the drawn opening, the picker's words, the first fight inside 45 s) ====
 if (section('intro-and-picker')) try {
