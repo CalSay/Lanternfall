@@ -1,0 +1,1 @@
+No change you can see. We checked Tavern Blackjack over 12 game runs instead of 3: at the top bet the table costs a casual player under 2% of their gold, and it does not change how fast they climb or how much gold they keep.
