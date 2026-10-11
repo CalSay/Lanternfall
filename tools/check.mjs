@@ -19065,7 +19065,7 @@ if (section('tobin route S')) try {
   assert(!same.length, 'tobin route S: every embedded atlas is its converted WebP, byte for byte' + (same.length ? ` (not: ${same.map(r => r[0]).join(', ')})` : ''));
   assert(P.colours === 63 && P.palette.length === 63 && P.swatches === 14, `tobin route S: one seeded palette of ${P.palette.length} colours, ${P.swatches} of them the concept's swatches (gate 1)`);
   // gate 5: the play lists (1-based frames; 0 = idle-1 reused at an end) and each move's hit
-  const PLAY = { idle: [1], attack: [1, 2, 3, 4, 5, 6, 8], cleave: [1, 2, 4, 6, 7, 8], roar: [1, 2, 5, 6, 8], shieldthrow: [0, 2, 4, 5, 6, 7, 8],
+  const PLAY = { idle: [1], attack: [1, 2, 3, 4, 5, 6, 8], cleave: [1, 2, 4, 7, 8], roar: [1, 2, 5, 6, 8], shieldthrow: [0, 2, 4, 5, 6, 7, 8],
     ironwill: [1, 2, 3, 4, 5, 6, 7, 0], laststand: [0, 2, 3, 4, 5, 6, 7, 8], brace: [1, 2, 3, 4, 5, 6, 7, 8, 0], defeat: [1, 2, 4, 6, 7, 8] };
   const reg = [];
   for (const m of TOBIN_FIGHT) {

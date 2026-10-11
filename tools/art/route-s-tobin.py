@@ -7,7 +7,8 @@
 #
 # In:  the pack in the shared folder (default /mnt/project-files/experiments/2d-poses-scenario):
 #      tobin-moves/raw/<move>.png, one 2x4 key-frame sheet per move from Scenario (brace, hit and victory: the -v2 rerolls);
-#      Cleave from tobin-moves/rebrief/raw/cleave-v2.png (the judge's fallback, played 1, 2, 4, 6, 7, 8);
+#      Cleave from tobin-moves/raw-h3/cleave-h3.png, "Free Cleave" (ruling 2026-10-11-cal-hands-off item 3: its 5 clean frames,
+#      1, 2, 4, 7, 8, with the game's own slash, 62b-fx; frames 3, 5 and 6 swing the sword back);
 #      the thrown-shield views v2 (tobin-moves/rebrief/fx/shield0-3-full.png: front, three-quarter, edge-on, back);
 #      Hammerfall's rubble and crack (hero-fx-test/fx/rock0-4.png, crack0.png, cut at a third of their sheet);
 #      Tobin's concept sheet (its palette swatches).
@@ -38,11 +39,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 OUT = os.path.join(ROOT, 'art', 'heroes', 'tobin', 'route-s')
 FIGHT = ['idle', 'attack', 'dash', 'dashback', 'bash', 'heavystrike', 'cleave', 'riposte', 'ironwill', 'sundering', 'brace', 'roar',
          'hammerfall', 'lunge', 'shieldthrow', 'laststand', 'parry', 'dodge', 'hit', 'defeat', 'victory']
-SRC = {'brace': 'raw/brace-v2.png', 'hit': 'raw/hit-v2.png', 'victory': 'raw/victory-v2.png', 'cleave': 'rebrief/raw/cleave-v2.png'}
+SRC = {'brace': 'raw/brace-v2.png', 'hit': 'raw/hit-v2.png', 'victory': 'raw/victory-v2.png', 'cleave': 'raw-h3/cleave-h3.png'}
 PACK_K, HAIR, NC = 0.223, 180, 63
 # The frames the game plays (gate 5, 1-based as the ruling numbers them): attack skips 7; defeat plays 1,2,4,6,7,8; roar 1,2,5,6,8;
-# shieldthrow skips 3 (and holds 5 on release); cleave v2 1,2,4,6,7,8 (recheck); the idle is idle-1 held. 0 = idle-1 (reused).
-PLAY = {'idle': [1], 'attack': [1, 2, 3, 4, 5, 6, 8], 'cleave': [1, 2, 4, 6, 7, 8], 'roar': [1, 2, 5, 6, 8],
+# shieldthrow skips 3 (and holds 5 on release); cleave (Free Cleave) 1,2,4,7,8; the idle is idle-1 held. 0 = idle-1 (reused).
+PLAY = {'idle': [1], 'attack': [1, 2, 3, 4, 5, 6, 8], 'cleave': [1, 2, 4, 7, 8], 'roar': [1, 2, 5, 6, 8],
         'shieldthrow': [0, 2, 4, 5, 6, 7, 8], 'ironwill': [1, 2, 3, 4, 5, 6, 7, 0], 'laststand': [0, 2, 3, 4, 5, 6, 7, 8],
         'brace': [1, 2, 3, 4, 5, 6, 7, 8, 0], 'defeat': [1, 2, 4, 6, 7, 8]}
 OPEN_IDLE = {'shieldthrow', 'laststand'}     # scaled on the closing frame; the play list opens on idle-1
@@ -186,9 +187,10 @@ def shield_colours(views, empty):
 
 
 def shield_centre(q, fd, spec, nd):
-    """the shield's centre on a Shield Throw frame: the largest blob of its own colours (closed over 2 px), as [dx, dy] from the
-    feet anchor; 0 under 120 px (no shield in his hand)"""
+    """the shield's centre on a Shield Throw frame: the largest blob of its own colours (closed over 2 px) over 20 art px in front of
+    his feet, as [dx, dy] from the feet anchor; 0 under 120 px (no shield in his hand)"""
     m = np.isin(key_of(q), spec) & (q[..., 3] == 255)
+    m[:, :fd['ax'] + 20] = False   # held out in front of him at the release and the catch: his hair shares the shield's rim colours
     m = nd.binary_erosion(nd.binary_dilation(m, iterations=2), iterations=2)
     lab, n = nd.label(m)
     if not n: return 0
