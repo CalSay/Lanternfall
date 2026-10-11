@@ -6,8 +6,8 @@
 :root {
   color-scheme: dark;
   --bg: #080B12;
-  --panel: rgba(11,15,24,.82);
-  --panel-2: rgba(24,30,44,.92);
+  --panel: #0B0F18;
+  --panel-2: #181E2C;
   --well: rgba(3,5,10,.55);
   --line: rgba(205,163,92,.38);
   --line-lo: rgba(205,163,92,.18);
@@ -29,7 +29,7 @@
   --r-rare: #5FA8FF;
   --r-epic: #B58CFF;
   --r-legendary: #FF8A3D;   /* one legendary orange: LEG_COL, LEG_FRAME (legendaries.md 1) */
-  /* fonts (see docs/design/ui-redesign.md 2.1) */
+  /* fonts (ui-redesign 2.1) */
   --title: "Cinzel", Georgia, serif;
   --display: "Barlow Semi Condensed", "Arial Narrow", monospace;
   --display-k: 1;
@@ -252,7 +252,7 @@ html :is(.cf-go, .gx-go, .cb-go) { background: var(--pri); color: #1D1509; borde
 
 /* menus (70-ui.js, docs/design/layout.md): upright, the open menu fills the game cell and slides up */
 .menu { grid-area: main; z-index: 5; min-height: 0; display: flex; flex-direction: column;
-  background: #0B0F18;   /* opaque, no blur: it cost frames */
+  background: var(--panel);   /* opaque, no blur: it cost frames */
   border-top: 1px solid var(--line); box-shadow: 0 -6px 28px rgba(0,0,0,.45);
   transform: translateY(0); visibility: visible; transition: transform .26s cubic-bezier(.2,.85,.25,1), visibility 0s; }
 .app:not(.menu-open) .menu { transform: translateY(calc(100% + 8px)); visibility: hidden; transition: transform .2s ease-in, visibility 0s .2s; }

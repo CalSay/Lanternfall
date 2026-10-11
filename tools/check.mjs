@@ -326,7 +326,7 @@ if (section('check fonts')) try {
 // text; the open nav tab and sub-view tab are lit brass; the place name and the foe's name draw in Cinzel (--title), the gold count in
 // Barlow with tabular numbers. On the desktop tiers no text on the fight or the open menu is under 14 px. With no web fonts (Cinzel falls
 // back to Georgia, then serif) every name in the title face shows whole in its box: not cut, no word broken across lines. Contrast (section 3): body text and muted text on the
-// see-through panel colour (--panel, the cards) over the brightest pixel of the Mossy Hollow fight (zone 1, its lantern pools) are 4.5:1 or more, with no blur to help.
+// panel colour (--panel, opaque since a blur cost frames; any see-through part counts) over the brightest pixel of the Mossy Hollow fight (zone 1, its lantern pools) are 4.5:1 or more, with no blur to help.
 if (section('ui2-look (browser)')) try {
   const at = 'ui2-look', { pw, exe } = browserTools;
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
@@ -398,17 +398,18 @@ if (section('ui2-look (browser)')) try {
         assert(!cut.length, `${v}, fallback fonts: every name in the title face shows whole (${JSON.stringify(cut.slice(0, 4))})`);
         await fb.ctx.close();
       }
-      // contrast: the glass over the brightest pixel of the Mossy Hollow fight (zone 1's lantern pools), with no blur to soften it
+      // contrast: the panel over the brightest pixel of the Mossy Hollow fight (zone 1's lantern pools), with no blur to soften it
       { const v = `${at} (browser 1280x720, Mossy Hollow)`, { ctx, page, X } = await open(1280, 720, fixture('save-early.json'), true, 1);
         await page.waitForTimeout(800);
         const c = await X(`JSON.stringify((() => { const cv = document.getElementById('cv'), d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data, lin = v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
             const L = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b); let best = [0, 0, 0], bl = -1;
             for (let i = 0; i < d.length; i += 4) { const l = L(d[i], d[i + 1], d[i + 2]); if (l > bl) { bl = l; best = [d[i], d[i + 1], d[i + 2]]; } }
             const root = getComputedStyle(document.documentElement), rgb = s => { const x = document.createElement('i'); x.style.color = s; document.body.appendChild(x); const m = getComputedStyle(x).color.match(/[\\d.]+/g).map(Number); x.remove(); return m; };
-            const p = rgb(root.getPropertyValue('--panel')), a = p[3], under = p.slice(0, 3).map((v, i) => v * a + best[i] * (1 - a)), lu = L(...under);
+            const p = rgb(root.getPropertyValue('--panel')), a = p.length > 3 ? p[3] : 1, under = p.slice(0, 3).map((v, i) => v * a + best[i] * (1 - a)), lu = L(...under);
             const ratio = s => { const l = L(...rgb(root.getPropertyValue(s)).slice(0, 3)); return (Math.max(l, lu) + 0.05) / (Math.min(l, lu) + 0.05); };
-            return { place: document.getElementById('zName').textContent, pool: best, glass: under.map(Math.round), bone: +ratio('--bone').toFixed(2), muted: +ratio('--muted').toFixed(2) }; })())`).then(JSON.parse);
+            return { place: document.getElementById('zName').textContent, alpha: a, pool: best, glass: under.map(Math.round), bone: +ratio('--bone').toFixed(2), muted: +ratio('--muted').toFixed(2) }; })())`).then(JSON.parse);
         console.log(`  ${v}: brightest scene pixel ${c.pool} under the glass reads ${c.glass}; body text ${c.bone}:1, muted text ${c.muted}:1`);
+        assert(c.alpha === 1, `${v}: the panel colour is opaque, so a sheet over the fight never shows the fight through its text (alpha ${c.alpha})`);
         assert(c.place === 'Mossy Hollow' && c.bone >= 4.5 && c.muted >= 4.5, `${v}: body and muted text on the glass over the brightest lantern pool are 4.5:1 or more (${JSON.stringify(c)})`);
         await ctx.close(); }
     } finally { await browser.close(); }

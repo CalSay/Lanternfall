@@ -15,7 +15,7 @@ Mid save (zone 20), reduced motion, the players' fonts.
 
 - Fonts: Cinzel 600 for names and titles (a new `--title` role: place name, foe name, menu and card titles, loading name),
   Barlow Semi Condensed for everything else (`--display` for numbers and buttons, `--body`). Handjet is gone; `--display-k` is 1.
-- Colours: night ink ground `#080B12`, see-through panel colour for cards (`--panel` rgba(11,15,24,.82)), 1 px brass lines,
+- Colours: night ink ground `#080B12`, opaque night panels (`--panel` #0B0F18, `--panel-2` #181E2C), 1 px brass lines,
   brass gradient for primary buttons (Craft, Gather go, Camp build, the pressed Fight toggle), lit brass for the open tab and
   sub-view, `--fire` (the old ember) kept for act-now items: ready Next Up, armed moves, news dots.
 - Chrome: the menu head carries brass corner diamonds; section heads get a diamond and a fading rule; rows, chips and
@@ -41,18 +41,19 @@ budgets. So a direct A/B: the late save with Craft open, `requestAnimationFrame`
 | 1280x720 | 169, 167, 174 frames (gap p95 50 ms) | 300, 298, 301 frames (gap p95 16.7 ms) |
 
 The blur halves the frame rate at 1280x720, so per the card the menu is opaque night ink (`#0B0F18`, the glass colour at
-full strength) with no blur. With it opaque, 1280x720 runs 301, 301, 301 frames.
+full strength) with no blur. With it opaque, 1280x720 runs 301, 301, 301 frames. The panel colours went opaque too: the
+independent tester saw the fight show through the Settings, Notices and Switch sheets with an unblurred 82% panel.
 
 ## Contrast (doc section 3)
 
 Measured on the game's own frame: Mossy Hollow (zone 1), 1280x720. The brightest scene pixel is 255,255,255 (a lantern
-core); the see-through panel colour over it reads 55,58,66. Body text 9.17:1, muted text 4.81:1. Both pass 4.5:1 with no
-blur to help. The `ui2-look (browser)` check measures this on every run.
+core). With the 82% glass first tried, the panel over it read 55,58,66: body text 9.17:1, muted 4.81:1. With the panels
+opaque it reads 11,15,24: body 15.48:1, muted 8.11:1. The `ui2-look (browser)` check measures this on every run and
+asserts the panel colour is opaque.
 
 ## Boot bytes
 
-Brotli boot set, worst zone: plain 3,983,804 B (base 3,983,274, +530, within Brotli jitter; 16 KB under the fail line),
-hero-packs build 3,998,518 B (base 3,999,109, -591). Paid for by deleting the Handjet-era rules: the dot-grid ground,
+Brotli boot set, worst zone: plain 3,983,283 B (base 3,983,274, +9), hero-packs build 3,999,052 B (base 3,999,109, -57). Paid for by deleting the Handjet-era rules: the dot-grid ground,
 `--display-k` multipliers in the files touched, and old comments.
 
 ## Checks
