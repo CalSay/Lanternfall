@@ -20,7 +20,8 @@ Worst-zone boot set, bytes. "Line" is the shipped count (whole-page q4); "steady
 | 4abb5140 | 3,983,279 | 3,983,211 | -68 | 4,150,190 | 4,150,464 | +274 |
 | dd5723c6 | 3,983,672 | 3,984,092 | +420 | 4,150,138 | 4,150,412 | +274 |
 
-Zone 1 moves by the same deltas. Before: 488 B of swing. After: 0 B.
+96d492c1 and 4abb5140 build the same page (#412 changed only check.mjs), so they are one base in practice; dd5723c6 adds
+#410 and #411's code. Zone 1 moves by the same deltas. Before: 488 B of swing. After: 0 B.
 
 The check runs the same test every time: a change to 71-ui-fight.js measured with and without a change to 30-state.js gives
 36 B and 36 B steady, against -14 B and -167 B on the line's count.
