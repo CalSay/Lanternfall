@@ -3660,6 +3660,9 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .stagebox .tv-top .tv-warn, .stagebox .tv-top .tv-restip { position: absolute; left: 0; top: calc(var(--vs-b, 54px) + 28px - max(80px, calc(var(--vs-zb, 0px) + 2px)));
     margin: 0; max-width: min(400px, calc(50% - 100px)); text-align: left; }
   .stagebox .tv-top:has(.tv-warn:not([hidden])) .tv-restip { visibility: hidden; }
+  /* while the whose-turn banner crosses the stage (a full-width band under the place line) the line must end above it: it rises to
+     the plate's foot, over the buff chips for the banner's moment, at the 14 px desktop floor (turn-banner-clears-plate) */
+  .stagebox.tc-on .tv-top .tv-warn { top: calc(var(--vs-b, 54px) + 2px - max(80px, calc(var(--vs-zb, 0px) + 2px))); font-size: max(var(--tmin, 0px), calc(14px * var(--tk, 1))); }
 }
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
 .tw-scene { display: flex; justify-content: center; width: 100%; min-height: 144px; margin: 0; padding: 0; overflow: hidden; background: #0E0B1E; border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
