@@ -1,0 +1,53 @@
+# seed: 1
+# Proof for card multi-hit-impacts: Volley, Twin Shot and Moonlit Volley land each arrow's share of the damage, and its on-hit
+# effects, as that arrow reaches the foe, not all at the first arrow (damage-on-impact, #348, landed them all at once). The total
+# is unchanged. The route plays Wren at zone 8 with Echo Arrow, Volley and Moonlit Volley (proof fixture wren-volleys), presses
+# Volley, then Attack until the finisher opens (parrying the boss), then Moonlit Volley in a turn fight (timing each ring), and shoots each after its last arrow (the numbers and the bar).
+# A key or tap runs game time, so a route cannot hold the frame between two arrows: tools/check.mjs "damage-on-impact multi-hit
+# (core)" times every arrow against the stage (62b fxImpactIn), checks the total against one landing, a Bleed per
+# arrow, a kill on the first arrow, a fight cut off mid-volley and a hitstop between arrows. Run at all three views with --frozen.
+new wren-volleys
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+wait-for "Volley" 8
+tap-if "Volley"
+wait 0.9
+key w
+wait 0.55
+key w
+wait 0.55
+key w
+wait 0.8
+shot volley-landed
+parry-clean 8
+parry-clean 8
+parry-clean 8
+parry-clean 8
+tap-if "Attack"
+parry-clean 8
+parry-clean 8
+parry-clean 8
+parry-clean 8
+tap-if "Attack"
+parry-clean 8
+parry-clean 8
+parry-clean 8
+parry-clean 8
+tap-if "Moonlit"
+wait 0.9
+key e
+wait 0.55
+key e
+wait 0.55
+key e
+wait 0.55
+key e
+wait 0.55
+key e
+wait 1.5
+shot moonlit-landed
+expect ".hud.vs .mob"
