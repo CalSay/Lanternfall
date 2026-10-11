@@ -2,7 +2,8 @@
 # move with no entry in SOLO_ABILITIES, so tile() in src/js/75-abilities-ui.js had no name to take letters from). It now
 # shows "At", like the other lettered tiles (Po, Ma, De...). Same opening as #396's Eyes route (Wren at zone 4, Power Shot
 # learned: tests/proof-fixtures/save-wren-spare-moss.json). Run at 1280x720, 740x360 and 360x740.
-#   list.png      Hero > Abilities, the picker list: the Attack row near the bottom reads "At", no tile reads "?"
+#   attack.png    Hero > Abilities with the Attack row tapped (it sits below the fold at every view): its tile and its
+#                 card's tile read "At", and no tile on screen reads "?"
 # seed: 1
 new wren-spare-moss
 wait 2
@@ -16,6 +17,8 @@ wait 1
 tap "Abilities"
 wait 1
 expect "Power Shot"
-expect ".ab-basic[data-mv=attack] .ab-mono"
+tap "At"
+wait 1
+expect "Your plain hit"
 expect-no "?"
-shot list
+shot attack
