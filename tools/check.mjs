@@ -112,6 +112,7 @@ const WEIGHT = {
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
   'bow-slot-wording': 8,   // 8 s locally alone (bow-slot-wording, 2026-10-10)
   'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
+  'toast-over-menu-foot': 42,   // 41 s locally alone (toast-over-menu-foot, 2026-10-11)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'fx-timing-fixes': 40,
   'pip-cast-recipes': 40,
@@ -19012,6 +19013,95 @@ if (section('first-craft-toast-clip')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('first-craft-toast-clip crashed: ' + (e.stack || e)); }
+
+// ==== toast-over-menu-foot: a notice never sits over an open menu or takes a tap meant for it ====
+// Cal's first-craft notes (first-craft-toast-clip finds, 10 Oct): with a menu open, notices sat over the menu's foot for a few seconds,
+// sideways (the stage-foot dock, 80-landscape) and upright (over the menu, above the tab bar, 50-overlays), and caught taps meant for
+// it. While notices show, the open menu now stops above them, as it already did above a guide tip (60-onboard). The section crafts on
+// save-mid with the Craft menu open, with the guide tip up and then dismissed, and samples every 100 ms: no toast box meets the menu's,
+// and a tap at the centre of every visible menu button lands in the menu (elementFromPoint), the foot's included. Once the notices
+// go, the menu takes its full height back. Desktop (1280x720, 1366x640) keeps its menu box whatever the notices do.
+if (section('toast-over-menu-foot')) try {
+  const at = 'toast-over-menu-foot', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const assets = pageAssets(distFile), raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const sample = page => page.evaluate(() => {
+      const on = e => !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > 0.05;
+      const r = b => `${Math.round(b.left)},${Math.round(b.top)} ${Math.round(b.width)}x${Math.round(b.height)}`;
+      // the menu follows --toast-h (70-ui), which a ResizeObserver sets before the frame paints: a sample taken between a new toast and
+      // that frame is not a picture the player sees, so it is skipped
+      const tb0 = document.getElementById('toasts'), th = getComputedStyle(document.documentElement).getPropertyValue('--toast-h').trim();
+      if (th !== (tb0.children.length ? (tb0.offsetHeight + 6) + 'px' : '0px')) return { skip: true, n: 0, bad: [] };
+      const menu = document.getElementById('menu'), mb = menu.getBoundingClientRect(), out = { menu: r(mb), n: 0, bad: [], taps: 0, foot: 0 };
+      for (const t of document.querySelectorAll('#toasts .toast')) { if (!on(t) || t._gone) continue; out.n++; const tb = t.getBoundingClientRect();
+        const w = Math.min(tb.right, mb.right) - Math.max(tb.left, mb.left), h = Math.min(tb.bottom, mb.bottom) - Math.max(tb.top, mb.top);
+        if (w > 0 && h > 0) out.bad.push(`toast ${r(tb)} over the menu ${r(mb)} by ${Math.round(w)}x${Math.round(h)}: "${t.innerText.replace(/\n/g, ' ').slice(0, 50)}"`); }
+      if (!out.n) return out;
+      const pnl = document.getElementById('panels'), bot = Math.min(mb.bottom, innerHeight);
+      // scroll the list so a button sits at the menu's foot, where the notices were
+      const low = [...pnl.querySelectorAll('button')].find(b => on(b) && b.getBoundingClientRect().bottom > pnl.getBoundingClientRect().bottom - 8);
+      if (low) pnl.scrollTop += low.getBoundingClientRect().bottom - pnl.getBoundingClientRect().bottom + 6;
+      const pn = pnl.getBoundingClientRect();
+      for (const b of menu.querySelectorAll('button, [role="button"], [role="tab"]')) { if (!on(b)) continue; const bb = b.getBoundingClientRect();
+        const x = bb.left + bb.width / 2, y = bb.top + bb.height / 2;
+        if (!bb.width || !bb.height || x < mb.left || x > mb.right || y < mb.top || y > bot || (pn.height && b.closest('#panels') && (y < pn.top || y > pn.bottom))) continue;
+        out.taps++; if (y > bot - 80) out.foot++;
+        const hit = document.elementFromPoint(x, y);
+        if (!hit || !menu.contains(hit)) out.bad.push(`a tap on "${(b.innerText || b.getAttribute('aria-label') || '').replace(/\n/g, ' ').slice(0, 30)}" at ${Math.round(x)},${Math.round(y)} lands on ${hit ? hit.className || hit.tagName : 'nothing'}`); }
+      return out;
+    });
+    try {
+      for (const [w, h] of [[740, 360], [360, 740], [1280, 720], [1366, 640]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await routePage(page, 'http://lf.test/', html, assets);
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        for (let i = 0; i < 8; i++) { const b = await page.$('.bsheet-ov .sty-done, .bsheet-ov .big:has-text("Begin"), .bsheet-ov .big:has-text("Continue"), .away-ov button'); if (!b) break; try { await b.click({ timeout: 800 }); } catch (e) { break; } await page.waitForTimeout(400); }
+        await X('onboardUnlockAll(); true');
+        await X('setTab("forge"); true');
+        for (let i = 0; i < 4; i++) { const b = page.getByRole('button', { name: 'Got it' }); if (!(await b.count())) break; await b.first().click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); }
+        // settled: the menu's slide and every toast are done
+        const settle = async () => { for (let i = 0; i < 40; i++) { if (await page.evaluate(() => !document.querySelector('#toasts .toast') && !document.getElementById('menu').getAnimations({ subtree: true }).some(a => a.playState === 'running'))) return true; await X('for (const t of [...$("toasts").children]) dropToast(t); true'); await page.waitForTimeout(100); } return false; };
+        assert(await settle(), `${v}: the Craft menu opens with no notices up`);
+        const box = async () => { for (let i = 0; i < 40; i++) { const o = await sample(page); if (!o.skip) return o.menu; await page.waitForTimeout(50); } return 'never settled'; };
+        for (const tip of ['the guide tip up', 'no tip']) {
+          if (tip === 'no tip') { const x = await page.$('.ob-bub:not([hidden]) .ob-x'); if (x) { await x.click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); } }
+          await settle(); const m0 = await box();
+          // a craft (its toast and, for a Rare or better, its banner) and two plain notices, with the menu open
+          const kind = await X(`(() => { const k = Object.keys(CRAFT_KINDS).find(k => { for (const e of Object.keys(S.mats)) S.mats[e] = S.mats[e].map(() => 5000); S.gold = 1e9; return canCraft(k, 1).ok; }); const it = k && craftItem(k, 1);
+            if (it) moment('craft', { eye: 'Well made · Rare', title: itemName(it), sub: 'Rare item. It is in your bag.', rarity: 'rare', icon: { item: it } });
+            popToast('You found a Copper Ore cache. It went to your bag.', 'good', null, 1); popToast('Level 21. Your hero hits harder now.', 'good', null, 2); return k; })()`);
+          assert(!!kind, `${v}, ${tip}: save-mid can craft something`);
+          await page.waitForTimeout(300); await X('window.__momentFlush(); true');
+          let most = 0, bad = null, taps = 0, foot = 0, menus = new Set();
+          for (let t0 = Date.now(); Date.now() - t0 < 2500;) {
+            const o = await sample(page); most = Math.max(most, o.n); if (o.skip) { await page.waitForTimeout(30); continue; } if (o.n) { taps = Math.max(taps, o.taps); foot = Math.max(foot, o.foot); menus.add(o.menu); }
+            if (phone && !bad && o.bad.length) bad = o.bad[0];
+            await page.waitForTimeout(100);
+          }
+          assert(most >= 1, `${v}, ${tip}: notices show with the menu open (${most})`);
+          if (phone) {
+            assert(!bad, `${v}, ${tip}: no notice sits over the open menu or takes a tap meant for it${bad ? ' (' + bad + ')' : ''}`);
+            assert(taps >= 3 && foot >= 1, `${v}, ${tip}: the menu's buttons are tapped, the foot's included (${taps} buttons, ${foot} in the foot)`);
+          } else assert(menus.size === 1 && menus.has(m0), `${v}, ${tip}: the desktop menu keeps its box while notices show (${[...menus].join(' / ')}, ${m0} without)`);
+          assert(await settle(), `${v}, ${tip}: the notices go`);
+          const m1 = await box();
+          assert(m1 === m0, `${v}, ${tip}: with the notices gone the menu takes its full box back (${m1}, ${m0} before)`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('toast-over-menu-foot crashed: ' + (e.stack || e)); }
 
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
