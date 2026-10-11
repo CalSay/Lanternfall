@@ -8485,6 +8485,65 @@ if (section('save import recovery UI (C5)')) try {
   assert(!games.some(g=>g.errors.length), 'C5 UI: save recovery and real lifecycle callbacks produce no handler errors');
 } catch (e) { fail('C5 save import recovery UI crashed: ' + (e.stack || e)); }
 
+// ---- save-export-in-viewer: inside the claude.ai viewer (window.claude, or any frame) the second export button shows the code to
+// copy by hand, since the viewer grants no downloads; outside it, the same button still downloads a .txt file of the code ----
+if (section('save export in viewer')) try {
+  const { coreFiles } = await import('./lib/core.mjs');
+  const games = [];
+  const run = (where) => {
+    const stub = `
+      class SaveNode {
+        constructor(t='div',c='',s=''){this.tagName=t.toUpperCase();this.className=c||'';this.children=[];this.events={};this.attrs={};this.style={};this._text=s||'';this.value='';this.disabled=false;}
+        append(...ns){for(const n of ns){n.remove?.();this.children.push(n);n.parentNode=this;}} appendChild(n){this.append(n);return n;}
+        remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}
+        after(n){n.remove?.();const p=this.parentNode,i=p.children.indexOf(this);p.children.splice(i+1,0,n);n.parentNode=p;}
+        contains(n){return this===n||this.children.some(c=>c.contains(n));}
+        set textContent(s){this._text=String(s);for(const n of this.children)n.parentNode=null;this.children=[];} get textContent(){return this._text+this.children.map(n=>n.textContent).join('');}
+        setAttribute(k,v){this.attrs[k]=String(v);} getAttribute(k){return this.attrs[k]??null;}
+        addEventListener(k,f){(this.events[k]||(this.events[k]=[])).push(f);} fire(k){for(const f of this.events[k]||[])f({target:this});} click(){if(this.tagName==='A')__clicked.push(this);if(!this.disabled)this.fire('click');} focus(){document.activeElement=this;} select(){this.selected=true;}
+        querySelectorAll(s){const a=[],match=n=>s[0]==='.'?n.className.split(' ').includes(s.slice(1)):s[0]==='#'?n.id===s.slice(1):n.tagName===s.toUpperCase();const walk=n=>{for(const c of n.children){if(match(c))a.push(c);walk(c);}};walk(this);return a;}
+        querySelector(s){return this.querySelectorAll(s)[0]||null;}
+      }
+      const __sections={},__clicked=[],__blobs=[];
+      const document={body:new SaveNode('body'),activeElement:null,hidden:false,createElement:t=>new SaveNode(t),execCommand:()=>false,addEventListener:()=>{}};
+      const window={};window.self=window;window.top=${where==='frame'?'{}':'window'};${where==='claude'?'window.claude={use:()=>Promise.resolve(null)};':''}
+      const navigator={},location={reload(){}};
+      const Blob=class{constructor(parts,o){this.text=parts.join('');this.type=o&&o.type;__blobs.push(this);}};
+      const URL={createObjectURL:b=>'blob:'+__blobs.indexOf(b),revokeObjectURL(){}};
+      const el=(t,c,s)=>new SaveNode(t,c,s),$=id=>document.body.querySelector('#'+id),registerSection=(t,s)=>{__sections[s.id]=s;};
+      const performance={now:()=>0},resize=()=>{},updatePortrait=()=>{},initMenus=()=>{},connect=()=>{},flush=()=>{},maintainBoss=()=>{},pushPresence=()=>{},showAwayReport=()=>{};
+      const addEventListener=()=>{},requestAnimationFrame=()=>{},queueMicrotask=f=>f(),setTimeout=()=>0,setInterval=()=>0;
+    `;
+    const g = loadCore({ seed: 7511, storage: memoryStorage(), prelude: stub, files: coreFiles().concat(['75-savecode-ui.js','90-boot.js']) }); games.push(g);
+    g.eval('globalThis.__panel=el("section");__panel.id="log";document.body.append(__panel);__sections.savecode.mount(__panel);S.name="Export test";S.gold=321;');
+    return s => g.eval(s);
+  };
+  const buttons = E => E('__panel.querySelectorAll("button").map(b=>b.textContent)');
+  const press = (E, label) => E(`__panel.querySelectorAll("button").find(b=>b.textContent===${JSON.stringify(label)}).click()`);
+  for (const where of ['frame', 'claude']) {
+    const E = run(where);
+    assert(!buttons(E).includes('Download file') && buttons(E).includes('Show save code') && buttons(E).includes('Copy save code'), `save export (${where}): the viewer offers Copy save code and Show save code, never Download file (got ${buttons(E).join(', ')})`);
+    press(E, 'Show save code'); press(E, 'Show save code');
+    assert(E('__clicked.length===0 && __blobs.length===0'), `save export (${where}): Show save code never starts a file download`);
+    assert(E('__panel.querySelectorAll(".savecode-fallback").length===1 && __panel.querySelector(".savecode-fallback").selected && __panel.querySelector(".savecode-fallback").readOnly'), `save export (${where}): Show save code puts one selected, read-only code box on the panel`);
+    assert(E('(()=>{const r=decodeSave(__panel.querySelector(".savecode-fallback").value);return r.ok&&r.data.gold===321&&r.data.name==="Export test";})()'), `save export (${where}): the shown code is the current game and decodes`);
+    E('S.gold=654'); press(E, 'Show save code');
+    assert(E('decodeSave(__panel.querySelector(".savecode-fallback").value).data.gold===654'), `save export (${where}): showing again gives the game as it is now, not a stale code`);
+    assert(E('__panel.textContent.includes("Select it all and copy it") && __panel.textContent.includes("Tip: copy the code")'), `save export (${where}): the panel tells the player to copy the code`);
+  }
+  {
+    const E = run('page');
+    assert(buttons(E).includes('Download file') && !buttons(E).includes('Show save code'), `save export (page): outside the viewer the panel keeps Download file (got ${buttons(E).join(', ')})`);
+    press(E, 'Download file');
+    assert(E('__clicked.length===1 && /^lanternfall-save-\\d{8}\\.txt$/.test(__clicked[0].download) && __clicked[0].href===\"blob:0\"'), 'save export (page): Download file clicks one link that saves lanternfall-save-<date>.txt');
+    assert(E('__blobs.length===1 && __blobs[0].type==="text/plain" && decodeSave(__blobs[0].text).data.gold===321'), 'save export (page): the downloaded file holds a valid code of the current game');
+    assert(E('__panel.querySelectorAll(".savecode-fallback").length===0 && !__panel.textContent.includes("Tip: copy the code")'), 'save export (page): a download shows no copy box or viewer tip');
+  }
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-savecode-ui.js'), 'utf8');
+  assert(!/claude\.use\(\s*['"]downloads['"]/.test(src), 'save export: the page does not call the downloads capability (declaring it is Cal\'s call)');
+  assert(!games.some(g => g.errors.length), 'save export: no handler errors');
+} catch (e) { fail('save export in viewer crashed: ' + (e.stack || e)); }
+
 // ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
 // ---- C5: strict save codec; untrusted data is validated before any load-time migration ----
