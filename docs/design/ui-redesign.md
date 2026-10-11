@@ -3,7 +3,10 @@
 Status: **Lantern Brass picked** (Cal, 10 Oct 2026 17:20: "I liked lantern brass best. Let's focus on that one and maximise
 it. The menus are still a little messy."). Night Glass is dropped. Menu picks (Cal, 10 Oct 19:12): "On the menu drafts I
 liked: Abilities - C, Camp - A, Craft - A. On the redesign page I like the Hero Gear and Star Map menus. The combat page is
-decent but could be better", then "We need to sort out gathering too". Docs and a mockup only; no game file changes.
+decent but could be better", then "We need to sort out gathering too". **Approved as written** (judge ruling 11 Oct 2026, under Cal's 09:19 rule that
+design picks go to the judge: `autopilot/rulings/2026-10-11-cal-hands-off.md`): the menu rules, every pick below and the
+rollout stand. Stage 1 (`ui2-look`) starts when a build slot frees; the Foreman schedules it. Veto phrase: "Hold the UI
+redesign". Docs and a mockup only; no game file changes.
 Ask: Cal, 10 Oct 2026 16:58: "Can we plan a full UI redesign to match the new hero artwork. I think what we have suits the
 original 16bit vibe but we need something a bit sleeker."
 Mockup page (v4: Fight, Gathering, the Gather menu, Abilities, Camp, Craft, Hero gear and Star map at 1280x720, 740x360 and 360x740): https://claude.ai/artifact/ByLSRghC3o64DRhoraqg7F
@@ -234,13 +237,13 @@ artifact first; Cal's OK on the preview lets it into the weekly build. Card ids 
 Each card's check: `node tools/build.mjs`, `node tools/check.mjs`, shots of its screens at 1280x720, 740x360, 360x740 and
 1920x1080 beside the mockup, and the independent tester on the first-hour route for stages 1 and 2.
 
-## 5. Open questions for Cal
+## 5. Decided (11 Oct 2026)
 
-1. **The v4 fight HUD?** It moves the foe plate over the foe and the heroes' HP into party frames, and shows the turn order.
-   Pick: yes.
-2. **The action bar while gathering?** Pick: swap it for the Gathering card, since fights stop.
-3. **Start stage 1 now, or after the Sunday release?** Pick: after Sunday, so v8 ships on the look players already have and
-   stage 1 lands in the next preview with nothing else changing.
+The judge approved the plan as written, so each pick below stands; Cal can still veto with the phrase given.
 
-Veto phrases, if Cal says nothing: "Keep the pixel font", "Keep the full side column in menus", "Keep the foe plate in the
+1. **The v4 fight HUD:** yes. The foe plate sits over the foe, the heroes' HP moves into party frames, and the turn order shows.
+2. **The action bar while gathering:** swapped for the Gathering card, since fights stop.
+3. **When stage 1 starts:** when a build slot frees, with no hold for the Sunday release. The Foreman schedules it.
+
+Veto phrases: "Hold the UI redesign", "Keep the pixel font", "Keep the full side column in menus", "Keep the foe plate in the
 sky", "Keep HP over the heroes", "Turn order on the Versus card only", "Keep the action bar while gathering".
