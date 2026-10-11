@@ -1,0 +1,16 @@
+# The section on the base (fix undone, throttle hook applied), 6x throttle, three at a time: 1 of 9 failed.
+base-thr-1: 0 fails
+base-thr-2: 0 fails
+base-thr-3: 1 fails; FAIL toast-over-menu-foot 1366x640, no tip: the menu's buttons are tapped, the foot's included (9 buttons, 0 in the foot)
+basethr-1: 0 fails
+basethr-2: 0 fails
+basethr-3: 0 fails
+basethr-4: 0 fails
+basethr-5: 0 fails
+basethr-6: 0 fails
+# The first fix (tip state only; the box still read with a game notice up), same loop (10 throttled, 20 plain): 5 of 30 failed.
+first-fix plain-15: FAIL toast-over-menu-foot 740x360, no tip: with the notices gone the menu takes its full box back (172,44 360x316, 172,44 360x254 before)
+first-fix thr-1: FAIL toast-over-menu-foot 360x740, no tip: with the notices gone the menu takes its full box back (0,48 360x586, 0,48 360x638 before)
+first-fix thr-2: FAIL toast-over-menu-foot 360x740, no tip: with the notices gone the menu takes its full box back (0,48 360x638, 0,48 360x586 before)
+first-fix thr-4: FAIL toast-over-menu-foot 360x740, no tip: with the notices gone the menu takes its full box back (0,48 360x638, 0,48 360x586 before)
+first-fix thr-6: FAIL toast-over-menu-foot 360x740, no tip: with the notices gone the menu takes its full box back (0,48 360x638, 0,48 360x586 before)

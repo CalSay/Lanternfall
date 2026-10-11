@@ -19560,7 +19560,10 @@ if (section('toast-over-menu-foot')) try {
       // that frame is not a picture the player sees, so it is skipped
       const tb0 = document.getElementById('toasts'), th = getComputedStyle(document.documentElement).getPropertyValue('--toast-h').trim();
       if (th !== (tb0.children.length ? (tb0.offsetHeight + 6) + 'px' : '0px')) return { skip: true, n: 0, bad: [] };
-      const menu = document.getElementById('menu'), mb = menu.getBoundingClientRect(), out = { menu: r(mb), n: 0, bad: [], taps: 0, foot: 0 };
+      // the guide tip's state as the game has placed it: up (upright over the menu, wide beside it with .app.guide-side), off, or between the two
+      const ob = document.querySelector('.ob-bub'), up = !!ob && !ob.hidden, side = document.getElementById('app').classList.contains('guide-side');
+      const tip = up && (innerWidth < 1000 || side) ? 'up' : !up && !side ? 'off' : 'mid';
+      const menu = document.getElementById('menu'), mb = menu.getBoundingClientRect(), out = { menu: r(mb), tip, side, toasts: tb0.children.length, n: 0, bad: [], taps: 0, foot: 0 };
       for (const t of document.querySelectorAll('#toasts .toast')) { if (!on(t) || t._gone) continue; out.n++; const tb = t.getBoundingClientRect();
         const w = Math.min(tb.right, mb.right) - Math.max(tb.left, mb.left), h = Math.min(tb.bottom, mb.bottom) - Math.max(tb.top, mb.top);
         if (w > 0 && h > 0) out.bad.push(`toast ${r(tb)} over the menu ${r(mb)} by ${Math.round(w)}x${Math.round(h)}: "${t.innerText.replace(/\n/g, ' ').slice(0, 50)}"`);
@@ -19586,6 +19589,8 @@ if (section('toast-over-menu-foot')) try {
         const v = `${at} ${w}x${h}`, phone = w < 1000;
         const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
         await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} }, [KEY, raw]);
+        // the Refining card (75-refine-ui) as the page shows it: '' never shown, 'open', then 'shut' once its sheet leaves the page
+        await ctx.addInitScript(() => { window.__rfOld = ''; const mo = new MutationObserver(() => { if (document.querySelector('.bsheet.rf-old')) window.__rfOld = 'open'; else if (window.__rfOld === 'open') { window.__rfOld = 'shut'; mo.disconnect(); } }); mo.observe(document, { childList: true, subtree: true }); });
         const page = await ctx.newPage(), errs = [];
         page.on('pageerror', e => errs.push(String(e)));
         await routePage(page, 'http://lf.test/', html, assets);
@@ -19596,23 +19601,39 @@ if (section('toast-over-menu-foot')) try {
         await X('setTab("forge"); true');
         for (let i = 0; i < 4; i++) { const b = page.getByRole('button', { name: 'Got it' }); if (!(await b.count())) break; await b.first().click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); }
         // the first Craft view on this old save opens the Refining card a tick after menuView (75-refine-ui); on a slow machine that came after the
-        // loop above, so the card hid the guide tip and the menu box was measured with no tip, then with one. Wait on the game's state: the card
-        // said (S.refine.said) and shut, and, where the tip shows on the Craft menu (upright over it, desktop beside it), the tip up.
+        // loop above, so the card hid the guide tip and the menu box was measured with no tip, then with one. S.refine.said alone does not
+        // prove the card has gone: it is set in menuView, before the card opens (setTimeout 0). So wait on what the page showed: the card
+        // opened and its sheet left the page (window.__rfOld), no other sheet is up, and, where the tip shows on the Craft menu (upright
+        // over it, desktop beside it), the tip up. ready() presses only the card's own Got it (the loop above presses any Got it).
+        let saw = '';
         const ready = async tipWanted => { for (let i = 0; i < 60; i++) {
-          const s = await page.evaluate(() => { const sh = document.querySelector('.bsheet-ov:not(.docked)'); if (sh) { const d = sh.querySelector('.sty-done'); if (d) d.click(); return 'sheet'; }
+          const s = await page.evaluate(() => { const d = document.querySelector('.bsheet-ov:not(.docked) .rf-old .sty-done'); if (d) { d.click(); return 'card'; }
+            const sh = document.querySelector('.bsheet-ov:not(.docked) .bsheet');
+            if (window.__rfOld !== 'shut' || !window.__t.x('!!(S.refine && S.refine.said)') || sh) return `card ${window.__rfOld || 'never shown'}, said ${window.__t.x('S.refine && S.refine.said')}, sheet ${sh ? sh.getAttribute('aria-label') || sh.className : 'none'}`;
             const b = document.querySelector('.ob-bub'); return b && !b.hidden ? 'tip' : 'none'; });
-          if (s !== 'sheet' && await X('!!(S.refine && S.refine.said)') && (s === 'tip' || !tipWanted)) return true; await page.waitForTimeout(100); } return false; };
-        assert(await ready(h > w || !phone), `${v}: the Refining card is shut and the guide tip is placed before the menu is measured`);
+          saw = s; if (s === 'tip' || (s === 'none' && !tipWanted)) return true; await page.waitForTimeout(100); } return false; };
+        assert(await ready(h > w || !phone), `${v}: the Refining card is shut and the guide tip is placed before the menu is measured (${saw})`);
         // settled: the menu's slide and every toast are done
         const settle = async () => { for (let i = 0; i < 40; i++) { if (await page.evaluate(() => !document.querySelector('#toasts .toast') && !document.getElementById('menu').getAnimations({ subtree: true }).some(a => a.playState === 'running'))) return true; await X('for (const t of [...$("toasts").children]) dropToast(t); true'); await page.waitForTimeout(100); } return false; };
         assert(await settle(), `${v}: the Craft menu opens with no notices up`);
-        const box = async () => { for (let i = 0; i < 40; i++) { const o = await sample(page); if (!o.skip) return o.menu; await page.waitForTimeout(50); } return 'never settled'; };
+        // a menu box is read only from a picture with no notice up and the tip as the branch wants it (want: 'up', 'off', or null where the
+        // tip may come and go). The game keeps running, so a notice of its own can pop up after settle(): it goes the same way, and the box
+        // waits for it (a 360x740 box read with one up measured 586 against 638)
+        const box = async want => { for (let i = 0; i < 40; i++) { const o = await sample(page); if (!o.skip && !o.toasts && (!want || o.tip === want)) return o.menu;
+          if (o.toasts) await X('for (const t of [...$("toasts").children]) dropToast(t); true'); await page.waitForTimeout(50); } return 'never settled'; };
         for (const tip of ['the guide tip up', 'no tip']) {
-          if (tip === 'no tip') { const x = await page.$('.ob-bub:not([hidden]) .ob-x'); if (x) { await x.click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); } }
-          await settle(); const m0 = await box();
+          // sideways the tip comes and goes with the fight between foes (a 'between' step), and the menu does not move for it
+          const want = tip === 'no tip' ? 'off' : h > w || !phone ? 'up' : null;
+          // × hides the tip in the click (75-onboard-ui), but a real click on the tip's pop-in could time out on a slow runner and be swallowed,
+          // and the branch then measured with the tip up (#412 finds). Press it in the page, then wait for the game to show it gone.
+          if (tip === 'no tip') { await page.evaluate(() => { const x = document.querySelector('.ob-bub:not([hidden]) .ob-x'); if (x) x.click(); });
+            let off = false; for (let i = 0; i < 60 && !off; i++) { off = (await sample(page)).tip === 'off'; if (!off) await page.waitForTimeout(100); }
+            assert(off, `${v}, ${tip}: the guide tip is dismissed before the menu is measured`); }
+          await settle(); const m0 = await box(want);
+          assert(m0 !== 'never settled', `${v}, ${tip}: the menu box is read with no notice up and the tip ${want || 'either way'}`);
           // upright the tip has its own row over the menu (60-onboard), so the menu's own margin is off: that branch is measured here
           if (h > w && tip !== 'no tip') assert(!!(await page.$('.ob-bub.over-menu:not([hidden])')), `${v}: the guide tip is up over the menu`);
-          const side = !phone && await page.evaluate(() => document.getElementById('app').classList.contains('guide-side')), strict = phone || side;
+          const side = !phone && await page.evaluate(() => document.getElementById('app').classList.contains('guide-side')), strict = phone || want === 'up';
           if (!phone && tip !== 'no tip') assert(side, `${v}: the guide panel speaks beside the menu (.app.guide-side)`);
           // a craft (its toast and, for a Rare or better, its banner) and two plain notices, with the menu open
           const kind = await X(`(() => { const k = Object.keys(CRAFT_KINDS).find(k => { for (const e of Object.keys(S.mats)) S.mats[e] = S.mats[e].map(() => 5000); S.gold = 1e9; return canCraft(k, 1).ok; }); const it = k && craftItem(k, 1);
@@ -19622,8 +19643,12 @@ if (section('toast-over-menu-foot')) try {
           await page.waitForTimeout(300); await X('window.__momentFlush(); true');
           let most = 0, bad = null, taps = 0, foot = 0, menus = new Set(), shot = null;
           for (let t0 = Date.now(); Date.now() - t0 < 2500;) {
-            const o = await sample(page); most = Math.max(most, o.n); if (o.skip) { await page.waitForTimeout(30); continue; } if (o.n) { taps = Math.max(taps, o.taps); foot = Math.max(foot, o.foot); menus.add(o.menu); }
-            if (strict && !bad && o.bad.length) bad = o.bad[0];
+            // a picture with the tip in another state than the branch's is not this branch's picture
+            // the overlap and tap test still runs on every strict picture (a phone's, or one with the tip up); only the counts and the
+            // desktop box come from the branch's own pictures
+            const o = await sample(page); if (o.skip) { await page.waitForTimeout(30); continue; }
+            if ((phone || (strict && o.tip === 'up')) && !bad && o.bad.length) bad = o.bad[0];
+            if (want && o.tip !== want) { await page.waitForTimeout(30); continue; } most = Math.max(most, o.n); if (o.n) { taps = Math.max(taps, o.taps); foot = Math.max(foot, o.foot); menus.add(o.menu); }
             if (process.env.LF_SHOTS && o.n && !shot) shot = await page.screenshot({ path: path.join(process.env.LF_SHOTS, `${w}x${h}-${tip.replace(/ /g, '-')}.png`) });
             await page.waitForTimeout(100);
           }
@@ -19635,7 +19660,7 @@ if (section('toast-over-menu-foot')) try {
           }
           if (!phone) assert(menus.size === 1 && menus.has(m0), `${v}, ${tip}: the desktop menu keeps its box while notices show (${[...menus].join(' / ')}, ${m0} without)`);
           assert(await settle(), `${v}, ${tip}: the notices go`);
-          const m1 = await box();
+          const m1 = await box(want);
           assert(m1 === m0, `${v}, ${tip}: with the notices gone the menu takes its full box back (${m1}, ${m0} before)`);
         }
         assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
