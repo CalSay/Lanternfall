@@ -3,7 +3,7 @@
 # panel speaking in the side column, and crafts a Copper Warblade with the menu still open. The craft's notices used to dock at the
 # stage's foot, over the menu's recipe rows; they now sit at the side column's foot, under the guide panel and above the fight
 # buttons, so they never cover the menu or catch a tap meant for it. The boxes and a tap on every menu button at 1280x720, 1366x640
-# and 1920x1080 are held by tools/check.mjs ("toast-over-menu-foot").
+# and 1920x1080 are held by tools/check.mjs ("toast-over-menu-foot"). CI replays it upright and sideways too, where the guide has no side panel.
 new mid
 # the zone 20 boss's story card and the fight's opening card come and go first: either one closes an open sheet
 wait-for "Skip" 15
@@ -21,6 +21,5 @@ tap-if "Keep"
 tap "Craft Copper Warblade"
 wait 0.3
 expect "#toasts .toast"
-expect ".app.guide-side.menu-open"
 shot craft-notices-beside-menu
 expect "#menu"
