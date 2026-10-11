@@ -1359,9 +1359,9 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   full sets are made in PixelLab, and the whole cast is judged and wired as one. Conditions: a 3-move bow pilot first; Pip keeps her
   lantern, book, one staff and a plain orb (the game draws the fire) and stands 0.9 of Wren's height; the same cleaner, check and
   63-colour cut as Tobin; faces read at 1280 and 1920; effects stay drawn by the game; route S stays live (route-s-tobin-wire
-  included) until the cast passes; about 300 generations per hero at most. Tobin's re-brief stands. Amended by Cal, 12:50 ("PixelLab
-  draws it"): Wren's PixelLab frames keep PixelLab's own bowstring and arrow, the game stops drawing her string for the PixelLab set,
-  and only the arrow in flight stays a sprite. (Evidence: project `experiments/pixellab-tobin/three-heroes-1280.gif`, `check-final.md`)
+  included) until the cast passes; about 300 generations per hero at most; the bow holds its shape. Tobin's re-brief stands. Cal
+  13:02: PixelLab designs each pose on the sheet, but Wren's bowstring and arrows are removed from its frames and drawn by the game's
+  code as before. (Evidence: project `experiments/pixellab-tobin/three-heroes-1280.gif`, `check-final.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
