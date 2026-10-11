@@ -1,0 +1,41 @@
+PASS  EC1 foeGold(z) matches economy-2 2.2 at every region start and boss
+      exact
+FAIL  EC2 income a day (foe-equivalents, 24 h average, from day 2): idle 5,000-7,000; normal 6,500-8,500; active 9,000-12,000
+      idle Hollow 9,490; normal Hollow 6,972; active Hollow 7,013
+FAIL  EC3 crew pressure (full crew, 6 shifts a day, over idle fighting income): Region 1 0.45-0.80; Regions 2-5 first zones 1.05-1.40, last zones 0.50-0.75
+      Hollow 0.69 / 0.41, Coast 1.10 / 0.66 (income assumed 6,000), Emberwaste 1.06 / 0.67 (income assumed 6,000), Pale Reach 1.09 / 0.66 (income assumed 6,000), Gloamvale 1.09 / 0.63 (income assumed 6,000)
+INFO  EC4 normal play, spend split per region: shifts 25-45%, camp 25-40%, Blade/Swiftness/Precision 15-30%, the rest 5-20% (INFO: no shift fees until N3a)
+      Hollow shifts 13%, camp 36%, upgrades 0%, rest 51% of 942,590
+FAIL  EC5 gold always has a use: banked gold under 1 day of income at 90% of check-ins
+      idle 4%, normal 69%, active 16%
+FAIL  EC6 camp pacing (normal): Hearth 2 in hours 2-6 after install; the whole camp not before day 30
+      Hearth 2 at 0.5 h; camp full not by day 14
+INFO  EC7 crit damage (normal): Region 1 boss 6-14%, Region 2 boss 14-24%, Region 3 boss 22-32%; cap not before Region 5
+      zone 35 -, zone 70 -, zone 105 - | day 14: +5%
+INFO  EC8 gear gold never above +30% (static: gearGold() caps it; check.mjs "econ"); the Fortune charm's damage cost needs the charm line sets (S4)
+      cap 30%
+FAIL  EC9 pace unchanged: max zone (normal) at days 1, 3, 8 within 10% of before ECON-A
+      d1 17 (was 17), d3 23 (was 27), d8 28 (was 37) | Blade 40.5, upgrades 0% of all spend
+PASS  EC10 no inflation: S.gold and every price under 1e8
+      most gold held 1,136,052; biggest buys (normal): camp 57,000 (zone 28), camp 38,000 (zone 28), camp 29,000 (zone 28), camp 26,000 (zone 28), camp 25,000 (zone 28)
+PASS  EC11 levelling pays: units per gold at Lv 20 over Lv 1 (share x1.57 over the fee), same job and grade: 1.12 or more
+      1.14
+INFO  EC12 the choice is real (--crew 0 vs full crew): needs shift fees (N3a)
+      -
+INFO  EC13 named gatherers are worth their fee: needs shift fees and rarity shares (N3a)
+      -
+3/8 econ targets pass (warden, 14 days)
+PASS  BJ-a the table's mean net loss a day is at most 2% of EC2 income, and the 90th-percentile losing day at most 1.1 H
+      idle 0.59% of 9,490 foes a day, p90 loss 0.60 H; normal 0.89% of 6,741 foes a day, p90 loss 0.60 H; active 1.01% of 7,104 foes a day, p90 loss 0.60 H
+FAIL  BJ-b the EC5 share moves by less than 5 points
+      idle 4% -> 4%, normal 69% -> 92%, active 16% -> 18%
+FAIL  BJ-c each profile's zone at day 14 moves by less than 1 zone
+      idle 25 -> 25, normal 28 -> 32, active 35 -> 28
+PASS  BJ-d S.econ.earned, S.econ.spent and S.totalGold unchanged by every table hand
+      idle unchanged, normal unchanged, active unchanged
+PASS  BJ-e every profile reaches the table and plays 100 or more hands (else the measures are void)
+      idle 273 hands from day 0.83, normal 249 hands from day 0.54, active 278 hands from day 0.42
+blackjack: 3/5 table measures pass (warden, 14 days)
+  idle   day 14: zone 25, bosses -, gold a day d1 35,800 d3 63,626 d8 81,934
+  normal day 14: zone 28, bosses -, gold a day d1 24,132 d3 87,830 d8 61,843
+  active day 14: zone 35, bosses -, gold a day d1 51,109 d3 77,206 d8 89,688
