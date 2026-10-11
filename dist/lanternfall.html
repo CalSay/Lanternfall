@@ -41192,7 +41192,7 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     holdGame(held);
     // a held fight or raid: the orders, tonics and Rested keep the frame clock, unless another hold (a story scene, a card) stops the game as the inline page does
     const others = () => GAME_HOLDS.some(f => { if (f === held) return false; try { return !!f(); } catch (e) { return false; } });
-    artHoldTick = dt => { if (held() && !others()) for (const f of [refineTick, tonicBurn, restTick]) f(dt); };   // the Forge, tonic time and Rested keep wall time (hold-tonic-rested-clock)
+    artHoldTick = dt => { if (held() && !others()) for (const f of [refineTick, tonicBurn, restTick]) try { f(dt); } catch (e) { console.error('[lanternfall] hold tick failed', e); } };   // the Forge, tonic time and Rested keep wall time (hold-tonic-rested-clock)
 
     // ---- loading ----
     const wanted = () => {
