@@ -1,5 +1,4 @@
-/* 60-deepwell: the Deepwell (75-deepwell-ui.js): run HUD over the stage, the boon strip in place of
-   the control row, the full-screen choice sheet, the run-end card, and the Fight tab's Deepwell view. */
+/* 60-deepwell (75-deepwell-ui.js): the run HUD under the plates, the boon strip, the sheets, the run-end card, the Deepwell view. */
 :root { --deep: #7FB2FF; --deep-dim: #3F6FA8; --deep-bg: #0E1624; --oil: #FF9E3D; }
 
 /* ---- in a run: the control row swaps for the boon strip (62-stage hides the zone line and boss timer) ---- */
@@ -8,7 +7,7 @@
 .app.deep-run .dw-row { display: flex; }
 .app.deep-run .dw-hud { display: flex; }
 
-.dw-hud { position: absolute; left: 0; right: 0; top: 0; z-index: 4; pointer-events: none; align-items: center; gap: 10px; padding: 4px 8px 0; height: 23px; }
+.dw-hud { position: absolute; left: 0; right: 0; top: var(--vs-b, 0); z-index: 4; pointer-events: none; align-items: center; justify-content: center; gap: 10px; padding: 4px 8px 0; height: 23px; }
 .dw-oil { display: flex; align-items: center; gap: 5px; flex: none; }
 .dw-oilic { width: 16px; height: 16px; image-rendering: pixelated; filter: drop-shadow(0 0 4px rgba(255,158,61,.7)); }
 .dw-oilbar { position: relative; width: 120px; height: 10px; background: #0B0810; border: 2px solid #0B0810; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
@@ -17,7 +16,7 @@
 .dw-oil.low .dw-oilbar > i { background: var(--hp); animation: dw-pulse .8s ease-in-out infinite; }
 .dw-oil.low .dw-oiltxt { color: #FF8A80; }
 @keyframes dw-pulse { 50% { opacity: .55; } }
-.dw-floor { display: flex; align-items: baseline; gap: 6px; min-width: 0; margin-left: auto; }
+.dw-floor { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
 .dw-fn { font: 600 calc(14px * var(--display-k))/1.2 var(--display); color: #DFF0FF; text-shadow: 0 2px 0 #000, 0 0 6px rgba(127,178,255,.6); white-space: nowrap; }
 .dw-fk { font: 600 10.5px/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 #000; }
 

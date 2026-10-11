@@ -121,6 +121,7 @@ const WEIGHT = {
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'leave-mid-fight-gathers (browser)': 15,
   'deepwell-spillover-keeps-fight': 12,   // 12 s locally alone (deepwell-spillover-keeps-fight, 2026-10-11)
+  'deepwell-floor-label-clear': 20,   // 20 s locally alone (deepwell-floor-label-clear, 2026-10-11)
   'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
   'foe wind-up after a hold (browser)': 18,   // 18 s locally alone (foe-windup-after-hold, 2026-10-10)
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
@@ -19445,6 +19446,56 @@ if (section('deepwell-spillover-keeps-fight')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('deepwell-spillover-keeps-fight crashed: ' + (e.stack || e)); }
+
+// ==== deepwell-floor-label-clear: the Deepwell's "Floor N" label and Oil bar never sit over the hero or foe plate ====
+// (deepwell-spillover-keeps-fight proof, 11 Oct: the run HUD sat on the stage's top edge, so "Floor 1" crossed the foe's name and the
+// Oil count crossed the hero's HP. It now sits under the plates, where the place line goes in other fights.) The section resumes the
+// paused run on save-deep-spill and measures the boxes at four views: no HUD box meets a plate, both labels are inside the viewport,
+// and "Floor N" reads at 14 px or more on desktop.
+if (section('deepwell-floor-label-clear')) try {
+  const at = 'deepwell-floor-label-clear', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const assets = pageAssets(distFile), raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-deep-spill.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await routePage(page, 'http://lf.test/', html, assets);
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov, .away-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true');
+        assert(await X('DW.resume()'), `${v}: the paused run resumes`);
+        const up = await page.waitForFunction(() => window.__t.x('document.getElementById("app").classList.contains("deep-run") && !!TURN_LIVE && !TURN_LIVE.ended && mob && mob.deep && !mob.dead && /Floor \\d/.test(document.querySelector(".dw-fn").textContent)'), null, { timeout: 5000 }).then(() => true, () => false);
+        assert(up, `${v}: the run's fight and its HUD are up`);
+        await page.waitForTimeout(600);
+        const m = await page.evaluate(() => {
+          const r = e => { if (!e || e.offsetParent === null) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, s: `${Math.round(b.left)},${Math.round(b.top)} ${Math.round(b.width)}x${Math.round(b.height)}` }; };
+          const meet = (a, b) => !!a && !!b && Math.min(a.r, b.r) > Math.max(a.l, b.l) && Math.min(a.b, b.b) > Math.max(a.t, b.t);
+          const inView = a => !!a && a.l >= 0 && a.t >= 0 && a.r <= innerWidth && a.b <= innerHeight;
+          const floor = r(document.querySelector('.dw-floor')), oil = r(document.querySelector('.dw-oil'));
+          const foe = r(document.querySelector('.hud.vs .mob')), name = r(document.querySelector('.hud.vs .mob .mob-name')), hero = r(document.querySelector('.hud.vs .hero-plate'));
+          const bad = [];
+          for (const [a, an] of [[floor, '"Floor N"'], [oil, 'the Oil bar']]) for (const [b, bn] of [[foe, 'the foe plate'], [hero, 'the hero plate']]) if (meet(a, b)) bad.push(`${an} ${a.s} meets ${bn} ${b.s}`);
+          return { bad, floor: floor && floor.s, oil: oil && oil.s, foe: foe && foe.s, name: name && name.s, hero: hero && hero.s, fin: inView(floor), oin: inView(oil), nin: inView(name),
+            px: parseFloat(getComputedStyle(document.querySelector('.dw-fn')).fontSize), txt: document.querySelector('.dw-fn').textContent };
+        });
+        assert(m.floor && m.foe && m.name && m.hero && m.oil, `${v}: the floor label, the Oil bar and both plates show (${JSON.stringify(m)})`);
+        assert(!m.bad.length, `${v}: the Deepwell HUD stays clear of the plates: ${m.bad.join('; ')}`);
+        assert(m.fin && m.oin && m.nin, `${v}: "${m.txt}", the Oil bar and the foe's name are inside the ${w}x${h} view (${JSON.stringify(m)})`);
+        if (!phone) assert(m.px >= 14, `${v}: "${m.txt}" reads at 14 px or more (${m.px} px)`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('deepwell-floor-label-clear crashed: ' + (e.stack || e)); }
 
 // ==== toast-over-menu-foot: a notice never sits over an open menu or takes a tap meant for it ====
 // Cal's first-craft notes (first-craft-toast-clip finds, 10 Oct): with a menu open, notices sat over the menu's foot for a few seconds,
