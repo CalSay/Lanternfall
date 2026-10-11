@@ -19490,6 +19490,21 @@ if (section('deepwell-floor-label-clear')) try {
         assert(!m.bad.length, `${v}: the Deepwell HUD stays clear of the plates: ${m.bad.join('; ')}`);
         assert(m.fin && m.oin && m.nin, `${v}: "${m.txt}", the Oil bar and the foe's name are inside the ${w}x${h} view (${JSON.stringify(m)})`);
         if (!phone) assert(m.px >= 14, `${v}: "${m.txt}" reads at 14 px or more (${m.px} px)`);
+        // the turn line, the whose-turn banner and a foe trick's line (it moves up beside the place line while the banner shows,
+        // 60-turn) stay clear of the HUD too: the banner is put up and a long trick line shown, as 75-turn-ui's say() does
+        const t = await page.evaluate(() => {
+          const box = document.getElementById('stageBox'), wn = box.querySelector('.tv-warn'), tc = box.querySelector('.tv-turncard');
+          box.classList.add('tc-on'); tc.hidden = false; tc.querySelector('.tv-tc-txt').textContent = 'Your turn'; wn.className = 'tv-warn'; wn.textContent = 'The Deep Spore Cap gathers its spores for a heavy blow!'; wn.hidden = false;
+          const r = e => { if (!e || e.offsetParent === null || getComputedStyle(e).visibility === 'hidden') return null; const b = e.getBoundingClientRect(); return b.width && b.height ? { l: b.left, t: b.top, r: b.right, b: b.bottom, s: `${Math.round(b.left)},${Math.round(b.top)} ${Math.round(b.width)}x${Math.round(b.height)}` } : null; };
+          const meet = (a, b) => !!a && !!b && Math.min(a.r, b.r) > Math.max(a.l, b.l) && Math.min(a.b, b.b) > Math.max(a.t, b.t);
+          const hud = [[r(box.querySelector('.dw-floor')), '"Floor N"'], [r(box.querySelector('.dw-oil')), 'the Oil bar']], bad = [];
+          const other = [[r(wn), 'the trick line'], [r(box.querySelector('.tv-tc-txt')), 'the whose-turn banner']];
+          box.classList.remove('tc-on'); const n = r(box.querySelector('.tv-top .tv-n')); other.push([n, 'the turn line']);
+          for (const [a, an] of hud) for (const [b, bn] of other) if (meet(a, b)) bad.push(`${an} ${a.s} meets ${bn} ${b.s}`);
+          wn.hidden = true; tc.hidden = true;
+          return { bad, seen: other.filter(o => o[0]).map(o => o[1]) };
+        });
+        assert(t.seen.includes('the trick line') && !t.bad.length, `${v}: the Deepwell HUD stays clear of the turn line, the banner and a trick line (${t.bad.join('; ') || 'shown: ' + t.seen.join(', ')})`);
         assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }

@@ -16,6 +16,7 @@
 .dw-oil.low .dw-oilbar > i { background: var(--hp); animation: dw-pulse .8s ease-in-out infinite; }
 .dw-oil.low .dw-oiltxt { color: #FF8A80; }
 @keyframes dw-pulse { 50% { opacity: .55; } }
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) { .deep-run .tc-on .tv-top .tv-warn { max-width: calc(50% - 160px); } }
 .dw-floor { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
 .dw-fn { font: 600 calc(14px * var(--display-k))/1.2 var(--display); color: #DFF0FF; text-shadow: 0 2px 0 #000, 0 0 6px rgba(127,178,255,.6); white-space: nowrap; }
 .dw-fk { font: 600 10.5px/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 #000; }
@@ -28,8 +29,8 @@
 .dw-sic.epic { filter: drop-shadow(0 0 3px var(--r-epic)); }
 .dw-more { font: 600 calc(11px * var(--display-k)) var(--display); color: var(--muted); padding-left: 2px; }
 .dw-strip-txt { min-width: 0; font: 600 calc(12px * var(--display-k)) var(--display); color: #CFE2FF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dw-rowmarks, .dw-emarks, .dw-marks { display: inline-flex; align-items: center; gap: 4px; flex: none; font: 600 calc(15px * var(--display-k)) var(--display); font-variant-numeric: tabular-nums; color: #DFF0FF; }
-.dw-rowmarks img, .dw-emarks img, .dw-marks img { width: 18px; height: 18px; image-rendering: pixelated; }
+.dw-rowmarks, .dw-emarks { display: inline-flex; align-items: center; gap: 4px; flex: none; font: 600 calc(15px * var(--display-k)) var(--display); font-variant-numeric: tabular-nums; color: #DFF0FF; }
+.dw-rowmarks img, .dw-emarks img { width: 18px; height: 18px; image-rendering: pixelated; }
 .dw-emarks span { font: 600 10.5px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 
 /* ---- the full-screen sheets ---- */
