@@ -725,13 +725,18 @@ async function coverStep(o) {
   await click('.bsheet-ov .bsheet-x', 200); await advance(300, 16);
   await click('#menuX', 200); await advance(300, 16);
   await watch(await X(OBS));   // the upgrade's event, read now so the press is counted against it
-  const up = C.ups.length > n0 && C.ups[C.ups.length - 1].cover > 0;
+  // walk-cover-stale-press: since #410 a cover pressed after the material is in hand (gathered between the offer and the press) makes
+  // the plain upgrade, so the step went through with nothing covered. Read the piece's own plus: covered, plain, or truly refused.
+  const went = await X(`((itemById(${JSON.stringify(c.id)}) || {}).plus || 0) > ${c.plus}`);
+  const up = went && C.ups.length > n0 && C.ups[C.ups.length - 1].cover > 0, plain = went && !up;
   // a moment card that came up during the taps (a boss win's cache) sits over the slot, as it would for a player: the card rule closes
   // it on the next pass and the bot tries again, so that press is neither a try nor a finding
-  if (!up && await page.evaluate(() => !!document.querySelector('.mm-ov'))) { C.tries[key]--; return true; }
-  C.presses.push({ t: Math.round(gt), nm: c.nm, plus: c.plus + 1, units: c.units, fam: c.fam, mins: c.mins, ok: up });
-  await note(page, 'cover', `${up ? 'covered' : 'could not cover'} ${c.units} ${c.fam} t${c.t} to take ${c.nm} to +${c.plus + 1} (free route ${Number.isFinite(c.mins) ? c.mins + ' min' : 'not gatherable'})`, { shot: false, extra: { units: c.units, ok: up } });
-  if (!up) addCheck('cover', 'the bot could not press an upgrade\'s gold cover the game says it can pay', `${c.nm} to +${c.plus + 1}: ${!opened ? 'the worn slot in Hero > Gear could not be tapped' : !did ? 'no cover button to press on its sheet' : 'the press did not upgrade it'}`);
+  if (!went && await page.evaluate(() => !!document.querySelector('.mm-ov'))) { C.tries[key]--; return true; }
+  // the material came in before the sheet drew its row, so the sheet offered only the plain upgrade: no press, and not a refusal
+  if (!went && opened && !did && await X(`!!canUpgrade(${JSON.stringify(c.id)}).ok`)) { C.tries[key]--; await note(page, 'cover', `no cover needed for ${c.nm} to +${c.plus + 1}: the ${c.units} ${c.fam} t${c.t} were in hand before the sheet opened`, { shot: false }); return true; }
+  C.presses.push({ t: Math.round(gt), nm: c.nm, plus: c.plus + 1, units: c.units, fam: c.fam, mins: c.mins, ok: went, plain });
+  await note(page, 'cover', `${up ? 'covered' : plain ? 'plain upgrade (the material was in hand by the press)' : 'could not cover'} ${c.units} ${c.fam} t${c.t} to take ${c.nm} to +${c.plus + 1} (free route ${Number.isFinite(c.mins) ? c.mins + ' min' : 'not gatherable'})`, { shot: false, extra: { units: c.units, ok: went, plain } });
+  if (!went) addCheck('cover', 'the bot could not press an upgrade\'s gold cover the game says it can pay', `${c.nm} to +${c.plus + 1}: ${!opened ? 'the worn slot in Hero > Gear could not be tapped' : !did ? 'no cover button to press on its sheet' : 'the press did not upgrade it'}`);
   return true;
 }
 
@@ -1201,7 +1206,7 @@ function coverSummary() {
   return { mode: coverName(COVER), minutes: Math.round(gt / 60), unspent: g.unspent ?? null, lastSpend: g.lastSpend ?? null, earned: g.earned ?? null,
     ups: C.ups.length, coveredUps: C.ups.filter(u => u.cover > 0).length, allUnits: sum('all'), coveredUnits: sum('cover'), coverGold: Math.round(sum('gold')),
     refineOrders: C.orders.length, gather: st.gate.gatherLv ? Object.fromEntries(st.gate.gatherLv.map(x => [x.nm, x.lv])) : null, stations: C.stations ? Object.fromEntries(C.stations.map(x => [x.nm, x.lv])) : null,   // null: the walk stopped before its end read
-    presses: C.presses.length, failed: C.presses.filter(p => !p.ok).length, skipped: C.skipped.size, maxMins: C.maxMins };
+    presses: C.presses.length, failed: C.presses.filter(p => !p.ok).length, plain: C.presses.filter(p => p.plain).length, skipped: C.skipped.size, maxMins: C.maxMins };
 }
 function coverLines() {
   const a = coverSummary(), pc = (n, d) => d ? Math.round(n / d * 100) + '%' : 'n/a';
@@ -1209,7 +1214,7 @@ function coverLines() {
   if (COVER_BASE) { try { const j = JSON.parse(fs.readFileSync(path.resolve(ROOT, COVER_BASE), 'utf8')); b = j.cover || null; if (!b) why = 'it has no cover block'; else if (j.seed !== SEED || j.hero !== HERO || j.size !== SIZE.id) why = `it is seed ${j.seed} ${j.hero} ${j.size}, not this walk's seed ${SEED} ${HERO} ${SIZE.id}`; } catch (e) { why = 'it could not be read'; } }
   const row = x => [x.mode, x.unspent === null ? 'not read' : x.unspent + '%', x.lastSpend === null ? 'none' : fmtT(x.lastSpend), `${x.coveredUnits} of ${x.allUnits} (${pc(x.coveredUnits, x.allUnits)})`, `${x.coveredUps} of ${x.ups}`, x.coverGold.toLocaleString('en-GB'), x.refineOrders,
     x.gather ? ['Mining', 'Woodcutting', 'Foraging'].map(k => `${k} ${x.gather[k] ?? '-'}`).join(', ') : 'not read', x.stations ? Object.entries(x.stations).map(([k, v]) => `${k} ${v}`).join(', ') : 'not read'].join(' | ');
-  const out = ['## Gold cover', '', `The bot's cover: ${a.mode}${COVER ? `. It pressed the cover ${a.presses} time${a.presses === 1 ? '' : 's'}${a.failed ? ` (${a.failed} did not upgrade)` : ''}${COVER.min ? `; it left ${a.skipped} cover offer${a.skipped === 1 ? '' : 's'} it could pay alone (free route ${COVER.min} min or less)` : ''}${a.maxMins === null ? '' : `; the longest free route among the offers it could pay was ${Number.isFinite(a.maxMins) ? a.maxMins + ' min' : 'not gatherable'}`}` : ' (pass --cover all or --cover <min> to press it)'}. Read at game minute ${a.minutes}.`, '',
+  const out = ['## Gold cover', '', `The bot's cover: ${a.mode}${COVER ? `. It pressed the cover ${a.presses} time${a.presses === 1 ? '' : 's'}${a.failed ? ` (${a.failed} did not upgrade)` : ''}${a.plain ? `; ${a.plain} made the plain upgrade, the material in hand by the press` : ''}${COVER.min ? `; it left ${a.skipped} cover offer${a.skipped === 1 ? '' : 's'} it could pay alone (free route ${COVER.min} min or less)` : ''}${a.maxMins === null ? '' : `; the longest free route among the offers it could pay was ${Number.isFinite(a.maxMins) ? a.maxMins + ' min' : 'not gatherable'}`}` : ' (pass --cover all or --cover <min> to press it)'}. Read at game minute ${a.minutes}.`, '',
     '| Run | Unspent gold | Last spend | Covered units | Covered upgrades | Cover gold | Refine orders | Gathering | Stations |', '|---|---|---|---|---|---|---|---|---|', `| ${row(a)} |`];
   if (b) out.push(`| ${row(b)} (\`${path.basename(COVER_BASE)}\`) |`);
   if (b && b.minutes !== a.minutes) out.push('', `The base walk was read at game minute ${b.minutes}, this one at ${a.minutes}: the rows are not the same hour.`);

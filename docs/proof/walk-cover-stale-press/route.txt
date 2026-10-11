@@ -1,0 +1,22 @@
+# Proof for card walk-cover-stale-press (tooling only). No player-visible change: nothing in src/ changed and the game file is
+# unchanged, so there is nothing to play. walks.md has the numbers.
+#
+# The walk's cover branch (tools/walk.mjs coverStep) now reads the piece's own plus after a press and tells three cases apart:
+#   covered        the piece went up and the upgrade event says gold covered units
+#   plain upgrade  the piece went up with nothing covered: the material was in hand by the press (since #410 the game then makes
+#                  the plain upgrade). Logged, not a finding.
+#   could not cover  the piece did not go up. Still a finding (check "cover"), unchanged.
+# A fourth, quiet case: the material came in before the sheet drew its row, so the sheet showed no cover button. That is logged
+# as "no cover needed" and is not a try or a finding (before, it was a "no cover button" finding).
+#
+# Acceptance 1 (seeds 1-3, covers-all): no "could not cover" line where the upgrade went through.
+#   node tools/walk.mjs --seed <1|2|3> --cover all --quiet --out <dir>     (base 90dca517 and this branch)
+#   -> base 0, this branch 0 "could not cover" lines and 0 cover findings on all three seeds; shares in walks.md.
+# Acceptance 2 (forced stale press): the walk never writes game state (tools/check.mjs "the walk never assigns to game state"),
+# so the forced case ran with a local, unshipped hook added just before the press in coverStep:
+#   if (opened) await X(`(S.mats[${JSON.stringify(c.fam)}][${c.t - 1}] += ${c.units}, 0)`);
+# It hands the hero the short units once the sheet is open, as gathering would. Then:
+#   node tools/walk.mjs --seed 1 --cover all --quiet --minutes 12 --out <dir>
+#   -> this branch: 11 presses, 11 "plain upgrade (the material was in hand by the press)", 0 cover findings.
+#   -> base walk.mjs with only the same hook added: 11 presses, all 11 "could not cover", one cover finding x11
+#      ("Copper Pickaxe to +1: the press did not upgrade it").
