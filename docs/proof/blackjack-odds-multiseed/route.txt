@@ -1,6 +1,6 @@
 # seed: 1
 # Proof for card blackjack-odds-multiseed (measure only; no game code or number changes). Nothing a player sees changes.
-# The proof is evidence.md: BJ-a to BJ-e over seeds 1 to 12 at the 0.12 H top bet, plus 20 more active-player seeds,
+# The proof is evidence.md: BJ-a to BJ-e over seeds 1 to 12 at the 0.12 H top bet, plus 52 more active-player seeds,
 # rebuilt with tally.mjs from raw/. This route only boots a new game to show it runs.
 new fresh
 wait 3

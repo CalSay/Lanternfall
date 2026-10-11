@@ -4,7 +4,8 @@ Method: the #387 evidence method (`docs/proof/tavern-blackjack-build/evidence.md
 (`BJ_TUNE.hiH: 0.12` in `src/js/57t-blackjack.js`), on integration head ca8254d2:
 `node tools/sim.mjs --report econ --days 14 --seed N --blackjack 1` for seeds 1 to 12 (Warden; idle, normal and active
 profiles; the casual player plays 30 hands a day at the top bet, hits to 17, never doubles, from the table's own seeded
-stream). Raw outputs: `raw/s<N>.txt`. Table and stats: `node docs/proof/blackjack-odds-multiseed/tally.mjs docs/proof/blackjack-odds-multiseed/raw`.
+stream). Raw outputs: `raw/s<N>.txt`. The by-seed and totals tables: `node docs/proof/blackjack-odds-multiseed/tally.mjs docs/proof/blackjack-odds-multiseed/raw`
+(BJ-d read from the raw files; the extra active seeds are summed from `raw/active-extra.txt`).
 Seeds 1, 2 and 3 reproduce #387's 0.12 rows exactly. No game number changed.
 
 ## By seed
@@ -40,7 +41,7 @@ seed 1 rechecked, 33 -> 28 again): seeds 13 to 32 here, then seeds 33 to 64 by t
 
 | Active seeds | Zone change, mean ± s.e. | Down / up / same |
 |---|---|---|
-| 1 to 12 (the report runs) | -2.17 ± 1.30 | 5 / 1 / 6 |
+| 1 to 12 (the report runs) | -2.17 ± 1.27 | 5 / 1 / 6 |
 | 1 to 32 | -1.25 ± 0.72 | 9 / 3 / 20 |
 | 33 to 64 (fresh) | +0.09 ± 0.80 | 8 / 8 / 16 |
 | **1 to 64** | **-0.58 ± 0.54** | 17 / 11 / 36 |
