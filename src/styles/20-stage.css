@@ -122,14 +122,17 @@
   .top.nav-pill .act-pill .ap-chev { display: none; }
   .top #zPrev { order: -1; }
   .top #zNext { order: 2; }
-  .app .game .nu-chip { min-height: 44px; grid-template-columns: max-content minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 2px 6px; padding: 4px 6px 6px 6px; }
+  /* nextup-chip-360: a wrapping row, not a grid. Gathering, the switch beside the chip ("Fight · Z21", "Mining") leaves it about 130 px,
+     and in the fallback face "NEXT UP", "Ready" and "+2" need more, so the grid squeezed the status column and "+2" covered "Rea". Now
+     the status and "+2" drop under NEXT UP when they can't share its line; with room (fighting) the chip looks as before */
+  .app .game .nu-chip { min-height: 44px; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; padding: 4px 6px 6px 6px; }
   .app .game .nu-chip .nu-ic { display: none; }   /* the width goes to the goal's words */
   .app .game .nu-chip .nu-cbody { display: contents; }
-  .app .game .nu-chip .nu-eye { grid-column: 1; grid-row: 1; align-self: center; white-space: nowrap; min-width: 0; overflow: visible; font-size: 12px; letter-spacing: .04em; }
+  .app .game .nu-chip .nu-eye { white-space: nowrap; overflow: visible; font-size: 12px; letter-spacing: .04em; }
   .app .game .nu-chip .nu-eye .menu-nav-ic { display: none; }
-  .app .game .nu-chip .nu-cst { grid-column: 2; grid-row: 1; justify-self: start; min-width: 0; }
-  .app .game .nu-chip .nu-more { grid-column: 3; grid-row: 1; }
-  .app .game .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; font-size: 12.5px; }
+  .app .game .nu-chip .nu-cst { order: 1; white-space: nowrap; }
+  .app .game .nu-chip .nu-more { order: 2; margin-left: auto; }
+  .app .game .nu-chip .nu-lbl { order: 3; flex: 1 0 100%; min-width: 0; font-size: 12.5px; }
   .app .game .nu-chip .nu-chev { display: none; }
   @media (max-width: 340px) { .top.nav-pill .act-pill .ap-ic { display: none; } }
 }

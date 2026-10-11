@@ -1,53 +1,22 @@
 // 75-art-load: the split build's area art, loaded one area ahead (card art-loader; docs/design/hosting.md 5, B2). Browser-only.
-// The inline page (the Artifact, and every tool's default) has no boot loader (no lfBoot): every pack is in the page, nothing
-// here runs, and artZoneReady is always true.
-// In the split build (node tools/build.mjs --split) each foe's atlases and each battle background come in a pack file of their
-// own. The boot loader (src/boot-loader.html) wrote the tags of the save's zone's packs before the game ran; lfBoot.take hands
-// those over here, then every later pack as it arrives. This file:
-// - puts a pack's data in FOE_ART (the foe's atlases; its timings are in the page) or BG_ART (the whole background), each image
-//   a basE91 getter as 21zz makes them, then emits 'artPack' { id, kind, key } (64j cuts that foe's frames).
-// - loads the packs the zone on screen shows first, then those of the zones either side, the rest of its area and the next
-//   area: a zone's pack alone, hero files up to three at once (the queue below), and one more for what the stage waits for.
-// - holds the game (holdGame) while the zone on screen lacks a pack: a plain line covers the stage and the zone number reads
-//   "loading". A pack still loading is never drawn as a stand-in (art freeze).
-// - when a pack file fails, asks the server for the page (through lfBoot.page: the game's own code makes no network call): if the page no longer names that file (a new deploy took the old
-//   hashed files away), the game saves and reloads once the zone on screen needs it; otherwise it tries again later.
-//   artZonePacks(z) -> the pack ids zone z shows ([] in the inline page)
-//   artZoneReady(z) -> bool: every pack zone z shows is in (and, for one that came after boot, its pictures have decoded)
-// Hero packs (card hero-packs; tools/build.mjs heroPacks): a hero file's moves come by hero. The boot loader wrote the save's
-// hero's core pack; after boot that hero's first-hour moves come first (the queue below), its other moves after the zones either
-// side, and another hero's when the save has that hero (a new game, with no hero yet, loads every hero's core). Each move goes in its hero's moves (lfBoot.putHero: <file's constant>.moves, or
-// .heroes.<hero>.moves, merged into what the page kept of it). The save's hero's core is in the constant as soon as its file runs,
-// as in the inline page; a move that comes later emits 'artPack' { id, kind: 'hero', key, hero, moves }, and a drawer that must
-// prepare its data (basE91 text, cutting frames) does it there (the boot packs emit it too, when this file runs).
-// The code that draws a hero asks before it draws a move, every frame it draws it:
-//   artHeroNeed(hero, move) -> bool: true when the move is in (draw it); false: draw nothing for it (never a stand-in): the game
-//                              holds under a plain line over the stage, and the move loads before anything else, until it is in
-//                              or nothing has asked for it for half a second (the stage moved on: another hero, another screen)
-//   artHeroReady(hero, move) -> bool: the same answer, with no hold (true in the inline page, and for a move no pack holds)
-//   artHeroWait(fn)          -> fn(hero, move) returns false while a move that is in is not ready to draw yet (pictures decoding);
-//                              it must turn true once it gives up (a picture that never decodes), or the hold never ends
-//   artHeroPacks(hero, move) -> the hero's pack ids (those holding that move, when named)
-//   artHeroWant(hero, move)  -> load the move's pack soon, with no hold (a screen off the stage that can wait for it: the hero
-//                              picker's figure; route-s-wren-wire); its 'artPack' says when it is in
-// The queue (card hero-queue; loading-screen-judge.md): the moves a new player's first fights draw come before the next zones.
-// With a hero: its Attack, Hit, Parry and Dodge, then the moves its three slots draw (64h heroArtMove maps an ability to its
-// move). A new game, with no hero yet: every hero's Attack and Hit after the cores, so whichever starter is picked can swing and
-// take a hit at once. Slotting or learning an ability asks for its move (artHeroWant). Hero files are small (one move, about
-// 0.1 MB), so up to three load at once; a zone's pack loads alone, as before. What the stage waits for always has a slot more.
-// New-style packs (n in the table; docs/design/new-style/engine.md) never hold the game: they load by zone after its own packs,
-// or when 64m asks: artNsWant(pieces) (none while Classic art is on).
-var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {}, artNsWant = () => {};
+// Nothing here runs in the inline page (no lfBoot). What it does and its calls: docs/design/hosting/art-load.md.
+var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {}, artNsWant = () => {}, artHoldTick = () => {}, artBgImg = () => null;
 {
   const LB = typeof lfBoot === 'object' && lfBoot && lfBoot.packs && typeof lfBoot.take === 'function' ? lfBoot : null;
   if (LB && typeof document !== 'undefined') {
-    const P = LB.packs, got = {}, ready = {}, failed = {}, stale = {}, broken = {}, busy = {}, keep = [];
+    const P = LB.packs, got = {}, ready = {}, failed = {}, stale = {}, broken = {}, busy = {}, imgs = {};
     let booted = false;
     const RELOAD_KEY = 'lanternfall.artReloadAt';
     // the build's table (zones 1 to LB.road); past the road the scenery repeats every 35 zones (check.mjs holds it), as in the loader
     const tableZone = z => (z > LB.road ? LB.road - 34 + (z - LB.road - 1) % 35 : z);
     const inZone = (id, q) => P[id].z.some(r => q >= r[0] && q <= r[1]);
-    artZonePacks = z => { const q = tableZone(z); return Object.keys(P).filter(id => !P[id].n && inZone(id, q)); };
+    let lastO = LB.boot.map(id => P[id].o).find(Boolean) || 'land';   // a hidden stage keeps the last shape seen
+    const shape = () => { const e = document.getElementById('stage'); if (e && e.clientWidth) lastO = e.clientWidth < e.clientHeight ? 'port' : 'land'; return lastO; };
+    // the boot loader's next guess: the stage's shape by the window's (a phone's tab sheet can make an upright stage wide)
+    const keepShape = () => { try { const e = document.getElementById('stage'), k = 'lanternfall.bgShape', v = JSON.parse(localStorage.getItem(k)) || {}, w = innerWidth >= innerHeight * 1.35 ? 1 : 0;
+      if (e && e.clientWidth && v[w] !== shape()) { v[w] = shape(); localStorage.setItem(k, JSON.stringify(v)); } } catch (e) {} };
+    artZonePacks = z => { const q = tableZone(z), o = shape(); return Object.keys(P).filter(id => !P[id].n && inZone(id, q) && (!P[id].o || P[id].o === o)); };
+    artBgImg = k => imgs[k] || null;
     const nsPacks = z => { const q = tableZone(z); return classicOn() ? [] : Object.keys(P).filter(id => P[id].n && inZone(id, q)); };
     // A pack that came after boot is ready once its pictures have decoded, so the first frame after the hold draws them (the
     // packs the boot loader wrote come in before the game runs and are used as the inline page uses its art)
@@ -106,13 +75,15 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
       } else if (kind === 'ns' && typeof NS_ART === 'object') {   // basE91 pictures (64m decodes them)
         const i = key.indexOf('.'), G = NS_ART[key.slice(0, i)], e = G && G[key.slice(i + 1)]; if (!e) return;
         e.img = Object.assign(e.img || {}, data.img); done();
-      } else if (kind === 'bg' && typeof BG_ART === 'object') {
-        for (const o of ['land', 'port']) if (data[o]) lazy(data[o], 'src');
-        if (!late) { BG_ART[key] = data; done(); return; }
-        // decode both shapes first and keep them: 62-stage's own image of the same picture is then complete at once
+      } else if (kind === 'bg' && typeof BG_ART === 'object') {   // key '<theme>:<shape>'
+        const [th, o] = key.split(':'), E = data[o]; if (!E) return;
+        lazy(E, 'src');
+        const add = () => { (BG_ART[th] = BG_ART[th] || {})[o] = E; done(); };
+        if (!late) return add();
+        // decoded before the hold lifts; 62-stage draws this image (artBgImg)
         got[id] = 'decoding';
-        Promise.all(['land', 'port'].filter(o => data[o]).map(o => { const im = new Image(); keep.push(im); im.src = 'data:image/webp;base64,' + data[o].src; return im.decode(); }))
-          .then(() => { BG_ART[key] = data; done(); }, () => { broken[id] = true; cover(); });   // a picture that will not decode: a new download would not help
+        const im = imgs[th + o] = new Image(); im.src = 'data:image/webp;base64,' + E.src;
+        im.decode().then(add, () => { broken[id] = true; cover(); });   // a picture that will not decode: a new download would not help
       }
     };
     LB.take(put);
@@ -142,9 +113,15 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     let coverKey = '';
     const key = () => { const z = screenZone(); return z + ':' + (z >= 1 && !artZoneReady(z)) + ':' + heroWaiting(); };
     function recheck() { if (coverKey !== key()) cover(); }
-    const held = () => { const k = key(); if (coverKey !== k) cover(); queueMicrotask(recheck); return !k.endsWith(':false:false'); };
+    // gathering under the line runs on (load-hold-progress); a fight, and the raid (the online layer: unchanged), hold
+    const runs = () => target() === 'node';
+    const held = () => { const k = key(); if (coverKey !== k) cover(); queueMicrotask(recheck); return !k.endsWith(':false:false') && !runs(); };
     addEventListener('online', () => { for (const id in failed) failed[id].at = 0; pump(); });   // back online: try again now
+    addEventListener('resize', () => pump());   // a turn may want a background's other shape
     holdGame(held);
+    // a held fight or raid: the orders keep the frame clock, unless another hold (a story scene, a card) stops the game as the inline page does
+    const others = () => GAME_HOLDS.some(f => { if (f === held) return false; try { return !!f(); } catch (e) { return false; } });
+    artHoldTick = dt => { if (held() && !others() && typeof refineTick === 'function') refineTick(dt); };
 
     // ---- loading ----
     const wanted = () => {
@@ -238,7 +215,7 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     });
     on('artPack', () => { cover(); pump(); });
     on('sceneReset', () => { cover(); pump(); });
-    setInterval(pump, 1000);
+    setInterval(() => { pump(); keepShape(); }, 1000);
     pump();
   }
 }

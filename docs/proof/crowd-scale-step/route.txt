@@ -1,0 +1,14 @@
+# seed: 1
+# Proof for card crowd-scale-step. A crowd (2 or more foes: a pack, a boss and its adds) used to drop the hero from 2x straight to
+# 1x. Now the crowd's foes keep today's 1x size and the hero steps down to 1.5x when its reach still clears the front foe by 16 stage
+# px; only a crowd that leaves no room for that keeps the hero at 1x. The ground line does not move. A route cannot spawn adds on
+# demand, so this one plays the late save's fight; tools/check.mjs "actor-scale (browser)" stands a pack of 3 and a boss with adds
+# in every view and reads the hero's scale, its gap to the pack and the stage UI. Run with --view desktop, laptop, hd and landscape.
+new late
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Fight"
+wait 4
+expect ".hud.vs .hero-plate"
+shot crowd-fight

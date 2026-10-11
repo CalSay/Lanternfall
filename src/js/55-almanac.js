@@ -420,7 +420,7 @@ let OMENS, WEEKLY_GOALS;
   on('awayEnd', () => { inAway = false; awayDay = null; actCache.k = ''; lastPlus = null; lastStars = null; });
   // Modifier keys that touch away gains for the current activity.
   function awayKeys() {
-    if (S.activity === 'gather') return ['offline', 'gatherSpeed', 'yield:' + S.node.kind, 'skillXp:' + skillOf(S.node.kind)];
+    if (awayNode()) return ['offline', 'gatherSpeed', 'yield:' + S.node.kind, 'skillXp:' + skillOf(S.node.kind)];
     if (S.activity === 'raid') return ['offline', 'raid', 'crit'];
     return ['offline', 'gold', 'xp', 'essence', 'crit'];
   }

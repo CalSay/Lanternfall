@@ -1,0 +1,1 @@
+If the game stops to load art while a foe is winding up a hit, the foe now starts that wind-up again once the art is in, so you always see the whole warning before you parry or dodge. (route: foe-windup-after-hold)

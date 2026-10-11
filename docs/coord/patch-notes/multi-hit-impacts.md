@@ -1,0 +1,1 @@
+Volley, Twin Shot and Moonlit Volley now hit arrow by arrow. Each arrow's damage and its Bleed land as that arrow reaches the foe, so the numbers and the foe's health bar step with the arrows. The total damage is the same. Best shot: volley-landed.

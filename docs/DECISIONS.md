@@ -60,6 +60,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   business and legal set-up; anything irreversible) are asked, not guessed. Money design and art direction are
   Claude's judge calls, within the Lantern Rules. (2026-09-27, narrowed 2026-10-06, 2026-10-07)
 - **Combat is active only.** No Auto, no idle fighting, no away combat earnings. Gathering stays idle. (2026-10-01)
+- **Leaving mid-fight gathers.** Once Gather is open, a turn fighter who leaves goes back to its last gathering node
+  (an open tier) while away, exactly as a gatherer would: same rate, Storehouse limit, Spillover, away limit, Well
+  Rested and Rook lead. Fights still earn nothing away. Opus judge: keeps "Combat is active only". Veto: "Keep
+  fights-left returns empty"; Rested only: "Fighters don't rest away". (leave-mid-fight-gathers, 2026-10-11)
 - **Version 1.0 is a complete Season 1:** five regions, the story to the first fight with the Voice, 32 heroes, two
   named gatherers per resource job. The story continues in Season 2. (2026-09-28)
 - **1.0 also includes:** a polished first hour, save safety (export and import at least), an in-game guide and
@@ -280,6 +284,12 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Zone 1 is the Thorn Imp, zone 2 Gloomjaw;** zones 1 and 2 send only their own monster. Zones 1-7 use the Mossy
   Hollow scenery. (2026-10-01 to 2026-10-02) Amended 2026-10-07: zones 6 and 7 move to the Batwing Caves painting once it
   is wired; until then they keep the Mossy Hollow painting ("Scenery for zones 6 to 10" below).
+- **The Thorn Imp is the Scenario redraw in the new hero style** (Cal, 2026-10-10 19:27 and 19:44): short (about two-thirds
+  of a hero's height in art), every attack dashes in, strikes and dashes out. Cal OK'd every frame but Briar Jab 2 (missing
+  an arm) and 7 (looking the wrong way), which never play. It replaces Codex's approved-v2 pack (thorn-imp-wire).
+- **The Thorn Imp's effects are game-drawn** (Cal, 2026-10-10 21:34: "Very happy with all effects"): dust, purple
+  after-images and speed lines on its dashes, a blade glint, the thrust streak, Crosscut crescents, hit sparks and ring,
+  hurt splinters, stagger motes, and death wisps over a 1.4 s fade. Reduced motion drops only the hit-stop and shake (thorn-imp-fx).
 - **Region bosses are agents of the darkness** (the Voice's Shrouds). They are never tied to lanterns or lamps.
   (2026-09-28)
 - **Region 5 is its own place** with its own look, not the Deepwell continued. The Deepwell must still tie into the
@@ -372,9 +382,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   station runs up to 3 orders in turn (a shortfall amount or All, which keeps 20% of each input), while you fight and
   while you are away. From grade 2 every craft's ore, wood, fibre and hide count becomes the middle at half, rounded up,
   and every upgrade's material converts the same way at every grade (Copper Warblade +1 = 1 Copper Ingot). On an upgrade
-  only, gold may cover the material a hero is short, at 9 foes of the tier's foe gold for each raw unit (a Plank is 2), once
+  only, gold may cover the material a hero is short, at 27 foes of the tier's foe gold for each raw unit (a Plank is 2), once
   its gathering tier is open and its station built; covered units give no skill XP (gold-covers-material ruling,
-  2026-10-08). Crafts always take their materials. Tools, charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
+  2026-10-08; the price rose from 9 to 27 in gold-cover-share, 2026-10-11, so gold covers at most half and still binds: a
+  per-step half cap left Tobin's gold idle after minute 32). Crafts always take their materials. Tools, charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
   is never for sale (Lantern Rule 4).
   - **Names** (planner's, kept by the build): Ingot: Copper, Iron, Silver, Cobalt, Mithril Ingot. Plank: Pine, Birch,
     Oak, Mangrove, Tideash Plank. Cloth: Hemp Cloth, Linen, Briar Cloth, Kelp Cloth, Stormgrass Cloth. Leather: Bristle,

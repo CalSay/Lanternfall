@@ -1,0 +1,17 @@
+# seed: 11
+# Proof for card neutral-wording-hold-lines: the three move-swap lines no longer say only "Hold" (a long press a mouse or key player
+# won't guess). They now name the way every player can take: "open Hero, then Abilities".
+# Fixture pip-abilities: Pip owns more moves than her three slots hold. Each slot's spoken label (aria-label, read by screen readers
+# and keyboard players) says "To change the slot, open Hero, then Abilities." instead of "Hold to change the slot."
+#   slots-*.png  the fight bar with the three full slots.
+# The two Hesketh lines ("... needs a slot. Open Hero, then Abilities, and swap it in for one of your moves." and the ability tip's
+# " To swap in another move, open Hero, then Abilities.") are listed in the PR. Copy only: no button does anything new; the long press
+# still swaps a move.
+new pip-abilities
+wait 2
+tap-if "Got it"
+wait 1
+expect "#soloBar .sb-ab0[aria-label*='To change the slot, open Hero, then Abilities.']"
+expect "#soloBar .sb-ab2[aria-label*='To change the slot, open Hero, then Abilities.']"
+expect-no "#soloBar [aria-label*='Hold to change']"
+shot slots

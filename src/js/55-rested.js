@@ -60,14 +60,14 @@ let wellRested, restParty, restNote;
   });
   on('away', r => {
     const t = r && r.t > 0 ? r.t : 0, before = R().left;
-    if (S.activity === 'gather') { if (restParty()) R().left = clamp(R().left + t * REST_TUNE.rate); }
+    if (awayNode()) { if (restParty()) R().left = clamp(R().left + t * REST_TUNE.rate); }
     else if (S.activity === 'fight' && !arena) R().left = clamp(R().left - t);
     awayGain = R().left - before;
   });
   on('awayEnd', () => { inAway = false; });
   function awayLine() {
     const g = awayGain; awayGain = 0;
-    if (!(g >= 1) || S.activity !== 'gather') return null;
+    if (!(g >= 1) || !awayNode()) return null;
     return { icon: { ic: ['mug', '#F2C14E'] }, txt: `Well Rested: +${pct()}% damage for ${dur(R().left)}`, sub: 'You rested while you gathered' };
   }
 }

@@ -1,0 +1,1 @@
+When adds join a fight, your hero no longer shrinks to half size. Heroes now drop only to 1.5x in a crowd, and only go down to 1x when the pack is too wide to fit. Best shot: 1280x720, a boss with two adds.

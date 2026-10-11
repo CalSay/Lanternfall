@@ -86,10 +86,10 @@ const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '
 // every section's time and the shard's planned load (CI runs it with --times, so the job log has both).
 const WEIGHT = {
   'forge-line-while-fighting': 133, 'W1-D (browser)': 111, 'staged guide follow-ups (browser)': 90, 'moment layer': 79,
-  'solo copy (browser, W1-C)': 75, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
+  'solo copy (browser, W1-C)': 120, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 75, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 44,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -104,20 +104,30 @@ const WEIGHT = {
   'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
   'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
   'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75, 'tips-hold-740': 40,
+  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75, 'tips-hold-740': 40, 'defend-bar-740': 36,
   'feint-read-clear': 70,   // 64-74 s locally alone (feint-read-clear, 2026-10-09)
   'craft-odds-before-pay': 38,   // 38 s locally (craft-odds-before-pay, 2026-10-09)
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
+  'realtime-press-swings': 45,   // 41 s locally alone (realtime-press-swings, 2026-10-11)
+  'bow-slot-wording': 8,   // 8 s locally alone (bow-slot-wording, 2026-10-10)
   'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
+  'toast-over-menu-foot': 55,   // 55 s locally alone (toast-guide-side-menu, 2026-10-11)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
+  'fx-timing-fixes': 40,
+  'pip-cast-recipes': 40,
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
+  'leave-mid-fight-gathers (browser)': 15,
+  'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
+  'foe wind-up after a hold (browser)': 18,   // 18 s locally alone (foe-windup-after-hold, 2026-10-10)
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
   'hero queue (hero-queue)': 9,   // 8 s locally alone (hero-queue, 2026-10-10)
   'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
-  'new-style screens (browser)': 36   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
+  'new-style screens (browser)': 36,   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
+  'tavern blackjack (browser)': 20,   // measured below (tavern-blackjack-build, 2026-10-10)
+  'tip-order-and-lateness': 60   // three views of the pickaxe, Power Shot and Forge-ore lines (tip-order-and-lateness, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
@@ -204,6 +214,8 @@ else {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
   assert(scripts.length === 1, 'one inline <script>');
   try { new vm.Script(scripts[0], { filename: 'dist-script.js' }); ok('script parses'); } catch (e) { fail('script syntax: ' + e.message); }
+  // tavern-blackjack.md 9: the store-build switch's state, in every full run's summary (Cal confirms it before any rating survey)
+  { const m = /\bon: typeof __BJ === 'number' \? __BJ : (\d)/.exec(fs.readFileSync(path.join(ROOT, 'src', 'js', '57t-blackjack.js'), 'utf8')); ok(`blackjack table (BJ_TUNE.on): ${m ? (m[1] === '1' ? 'ON' : 'OFF') : 'UNKNOWN'}`); }
 }
 
 // ---- 2. smoke test ----
@@ -333,11 +345,13 @@ if (section('split build (asset-build)')) try {
   for (const [f, A] of Object.entries(AREA_ART)) {
     if (A.kind === 'hero') { heroPackCheck(s, f, A, data(f, A.v)); continue; }   // section 'hero packs (hero-packs)' says how they split
     if (A.kind === 'ns') continue;   // one pack per piece: section 'new-style screens (ns-scenery-engine)' builds a test NS_ART
-    const D = data(f, A.v), mine = s.packs.filter(p => p.f === f);
-    assert(mine.map(p => p.id).join() === Object.keys(D).map(k => A.kind + ':' + k).join(), `split: ${A.v} has one pack per entry (${mine.map(p => p.id).join(', ')})`);
+    // a background: one pack per shape it has (bg-pack-by-shape), id bg:<theme>:<o>, holding { <o>: that shape }
+    const D = data(f, A.v), mine = s.packs.filter(p => p.f === f), sh = k => (A.kind === 'bg' ? ['land', 'port'].filter(o => D[k][o]) : [null]);
+    assert(mine.map(p => p.id).join() === Object.keys(D).flatMap(k => sh(k).map(o => A.kind + ':' + k + (o ? ':' + o : ''))).join() && mine.every(p => (p.o || null) === (A.kind === 'bg' ? p.id.split(':')[2] : null)),
+      `split: ${A.v} has one pack per entry${A.kind === 'bg' ? ' and shape' : ''} (${mine.map(p => p.id).join(', ')})`);
     for (const p of mine) {
-      const got = packData(p), key = p.id.slice(A.kind.length + 1);
-      assert(got && got.id === p.id && JSON.stringify(got.d) === JSON.stringify(A.load(D[key])) && p.name === `${f.replace(/-data-.*$/, '')}-${A.kind}-${key}.${p.name.split('.').slice(-2, -1)[0]}.js`,
+      const got = packData(p), key = p.id.slice(A.kind.length + 1).split(':')[0];
+      assert(got && got.id === p.id && JSON.stringify(got.d) === JSON.stringify(p.o ? { [p.o]: D[key][p.o] } : A.load(D[key])) && p.name === `${f.replace(/-data-.*$/, '')}-${A.kind}-${key}${p.o ? '-' + p.o : ''}.${p.name.split('.').slice(-2, -1)[0]}.js`,
         `split: ${p.id}'s pack holds its art as the source has it, under a hashed name (${p.name})`);
     }
     const kept = vm.runInNewContext(`${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?)\\n// ---- src`))[1]}\n;${A.v}`);
@@ -352,7 +366,8 @@ if (section('split build (asset-build)')) try {
   // the zone table is the shipped code's own answer, and past the road no zone's scenery depends on a background being in
   const road = G.eval('ROAD_ZONES'), live = G.eval(`Array.from({ length: ${road} }, (_, i) => [ZONE_FOES[i + 1] ? 'foe:' + ZONE_FOES[i + 1].key : null, 'bg:' + zoneTheme(i + 1)])`);
   const inZ = (p, z) => p.zones.some(([a, b]) => z >= a && z <= b);
-  const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => p.id === id)).sort().join(), s.packs.filter(p => inZ(p, i + 1)).map(p => p.id).sort().join()]).filter(r => r[1] !== r[2]);
+  const unshaped = p => (p.o ? p.id.slice(0, -p.o.length - 1) : p.id);   // a background's shape packs share its zones
+  const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => unshaped(p) === id)).sort().join(), [...new Set(s.packs.filter(p => inZ(p, i + 1)).map(unshaped))].sort().join()]).filter(r => r[1] !== r[2]);
   const past = G.eval(`Array.from({ length: 2000 }, (_, i) => ${road} + 1 + i).filter(z => zoneTheme(z) !== zoneTheme(z - 35) || ZONE_FOES[z] || regionIdx(z) === 0).length`);
   assert(!badZ.length && !past && s.packs.every(p => p.hero || p.zones.length), `split: each pack names the zones whose fights show it, from ZONE_FOES and zoneTheme `
     + `(${badZ.slice(0, 3).map(r => r.join(' ')).join('; ') || 'all ' + road}), every area pack shows somewhere (${s.packs.filter(p => !p.hero && !p.zones.length).map(p => p.id).join(', ') || 'yes'}), `
@@ -378,8 +393,11 @@ if (section('split build (asset-build)')) try {
     assert(!r.fails.length, `split: the load lines hold: boot set ${MBs(r.zone1.counted)} MB for a new game and ${MBs(r.worst.counted)} MB for the worst zone (${r.worst.z}) of ${MBs(LOAD_LINES.bootFail)}, `
       + `largest zone set ${MBs(r.zoneMax.b)} of ${MBs(LOAD_LINES.zoneSet)}, area set ${MBs(r.areaMax.b)} of ${MBs(LOAD_LINES.areaSet)}${r.fails.length ? ': ' + r.fails.join('; ') : ''}`);
     for (const w of r.warns) console.log('  WARN split: ' + w);
-    assert(LOAD_LINES.e1.pack === 'bg:forest' && Object.entries(r.packs).every(([id, x]) => id === 'bg:forest' || x.counted === x.real),
-      `split: only Mossy Hollow's pack counts at one shape in the boot set (E1, until bg-pack-by-shape)`);
+    // E1 ended (bg-pack-by-shape): no pack holds two shapes, so none counts at one; a zone's backgrounds count at the larger shape
+    const bgs = s.packs.filter(p => p.id.startsWith('bg:')), z1 = s.packs.filter(p => inZ(p, 1)), bySh = o => z1.filter(p => p.o === o).reduce((n, p) => n + r.packs[p.id].real, 0);
+    assert(!('e1' in LOAD_LINES) && bgs.length && bgs.every(p => p.o && p.id.endsWith(':' + p.o)) && z1.some(p => p.o === 'land') && z1.some(p => p.o === 'port')
+      && r.zone1.counted === r.page + r.boot + r.hero.b + z1.filter(p => !p.o).reduce((n, p) => n + r.packs[p.id].real, 0) + Math.max(bySh('land'), bySh('port')),
+      `split: every background ships one pack per shape (${bgs.map(p => p.id).join(', ')}) and the boot set counts zone 1's at the larger shape (E1 ended)`);
     // each mutation goes 10 KB past its line from today's bytes, so a change elsewhere never makes one stop failing
     const pkT = id => s.packs.find(p => p.id === id).text, big1 = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m)).text, R = id => r.packs[id].real, over = (line, now) => Math.max(0, line - now) + 1e4;
     const plus = (txt, n) => x => size(x) + (x === txt ? n : 0), L = (o = {}) => ({ ...LOAD_LINES, ...o, area1: { ...LOAD_LINES.area1, ...(o.area1 || {}) } });
@@ -388,7 +406,8 @@ if (section('split build (asset-build)')) try {
     const mut = [
       ['a boot file past the line', { size: plus(big1, over(LOAD_LINES.bootFail, r.zone1.counted)) }, /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/],
       [`the worst zone's foe pack past the line`, { size: plus(pkT(s.packs.find(p => p.id.startsWith('foe:') && p.zones.some(([a, b]) => wz >= a && wz <= b)).id), over(LOAD_LINES.bootFail, r.worst.counted)) }, new RegExp(`^boot set, the worst zone \\(${wz}\\): .* over 4\\.00 MB$`)],
-      ['a portrait share past its cap', { lines: L({ e1: { pack: 'bg:forest', port: r.packs['bg:forest'].port - 1e4 } }) }, /^bg:forest's portrait share .* \(E1\)$/],
+      ['the portrait background past the line, so the larger shape', { size: plus(pkT('bg:forest:port'), R('bg:forest:land') - R('bg:forest:port') + over(LOAD_LINES.bootFail, r.zone1.counted)) }, /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/],
+      ['the portrait background over its cap', { lines: L({ area1: { 'bg:forest:port': R('bg:forest:port') - 1e4 } }) }, /^bg:forest:port is [\d.]+ MB, over its area 1 cap of [\d.]+ MB$/],
       ['Gloomjaw no longer an exception, past the zone line', { lines: without(gj), size: plus(pkT(gj), over(LOAD_LINES.zoneSet, R(gj))) }, new RegExp(`^zone ${gjZ}'s packs are [\\d.]+ MB, over 0\\.65 MB \\(zone set\\)$`)],
       ['imp and Gloomjaw no longer exceptions, past the area line', { lines: without('foe:imp', gj), size: plus(pkT(gj), over(LOAD_LINES.areaSet, R('foe:imp') + R(gj))) }, /^area 1's new packs are [\d.]+ MB, over 1\.00 MB \(area set\)$/],
       ["imp over its cap", { lines: L({ area1: { 'foe:imp': R('foe:imp') - 1e4 } }) }, /^foe:imp is [\d.]+ MB, over its area 1 cap of [\d.]+ MB$/],
@@ -432,15 +451,15 @@ if (section('split build (asset-build)')) try {
       for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
         const { page, errs } = await open({ width: w, height: h });
         await page.waitForLoadState('load'); await booted(page);
-        const r = await page.evaluate(() => ({ line: !!(document.getElementById('lfBoot') || document.getElementById('lfBootCss') || document.getElementById('lfLoad')), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait') }));
-        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && !errs.length, `split: boots at ${w}x${h} with both loading screens, their styles and the tags gone, no loading cover` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
+        const r = await page.evaluate(() => ({ line: !!(document.getElementById('lfBoot') || document.getElementById('lfBootCss') || document.getElementById('lfLoad')), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait'), bg: lfBoot.boot.filter(id => id.startsWith('bg:')).join() }));
+        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && r.bg === 'bg:forest:' + (w > h ? 'land' : 'port') && !errs.length, `split: boots at ${w}x${h} with both loading screens, their styles and the tags gone, no loading cover, Mossy Hollow's ${w > h ? 'landscape' : 'portrait'} pack only` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
         await page.close();
       }
       // 2. while the biggest boot file is still loading, the line shows the bytes done of the total: the boot files and zone 1's packs
       { const { page, release } = await open({ hold: { [big.name]: 'hold' } });
         await page.waitForFunction(() => /^Loading the game: [\d.]+ of [\d.]+ MB$/.test((document.getElementById('lfBootText') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
         const t = await page.evaluate(() => (document.getElementById('lfBootText') || {}).textContent || '');
-        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = (s.assets.reduce((n, a) => n + a.bytes, 0) + s.packs.filter(p => inZ(p, 1)).reduce((n, p) => n + p.bytes, 0)) / 1e6;
+        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = (s.assets.reduce((n, a) => n + a.bytes, 0) + s.packs.filter(p => inZ(p, 1) && p.o !== 'port').reduce((n, p) => n + p.bytes, 0)) / 1e6;
         assert(m && +m[2] === +total.toFixed(1) && +m[1] < +m[2], `split: while a file loads the line reads the bytes done of the boot files and zone 1's packs ("${t}", ${total.toFixed(1)} MB)`);
         release(); await booted(page);
         assert(!(await page.$('#lfBoot')), 'split: the line goes once the held file arrives');
@@ -458,7 +477,7 @@ if (section('split build (asset-build)')) try {
         await page.waitForLoadState('load'); await booted(page); await page.waitForTimeout(400);
         const r = await page.evaluate(() => window.__t.x(`({ boot: lfBoot.boot.filter(id => !id.startsWith('hero:')).join(), ready: [1, 2, 8].map(z => artZoneReady(z)).join(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })(), bg: !!BG_ART.forest && BG_ART.forest.land.src.length > 1000 })`));
         const c = await look(page);
-        assert(r.boot === 'foe:gloomjaw,bg:forest' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
+        assert(r.boot === 'foe:gloomjaw,bg:forest:land' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
           `split: a zone 2 save boots with its packs in (Gloomjaw cut, Mossy Hollow drawn, no cover) and the rest of the area arrives after (${JSON.stringify(r)}, ${JSON.stringify(c)})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
       // 5. a zone whose pack is still loading: the game holds under an opaque line covering the stage, the zone reads "loading",
@@ -480,15 +499,15 @@ if (section('split build (asset-build)')) try {
         const c = await look(page), run = await page.evaluate(() => window.__t.x(`({ t: gameHeld(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })() })`));
         assert(!c.cover && c.zone === 'Zone 2' && !run.t && !run.pend && !errs.length, `split: when Gloomjaw arrives the cover goes, its frames are cut and the game runs (${JSON.stringify(c)}, ${JSON.stringify(run)})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
-      // 5b. a background that comes after boot is decoded before the hold lets go: on the first frame after it, 62-stage's own image
-      //     of the picture is complete at once (no procedural scenery in its place)
-      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+      // 5b. a background that comes after boot is decoded before the hold lets go: on the first frame after it, the image 62-stage
+      //     takes from 75-art-load (artBgImg) is complete (no procedural scenery in its place)
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest:land').name]: 'hold' }, html: probe });
         await booted(page); await page.waitForTimeout(300);
         await page.evaluate(() => window.__t.x('S.activity = "fight", setZone(8), ui(true)')); await page.waitForTimeout(300);
         const a = await look(page);
         await page.evaluate(() => window.__t.x(`(() => { const f = () => { if (gameHeld()) return requestAnimationFrame(f);
-          const B = BG_ART.forest, im = new Image(); im.src = 'data:image/webp;base64,' + (B && B.land.src);
-          window.__first = B && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
+          const B = BG_ART.forest, im = artBgImg('forestland');
+          window.__first = B && B.land && im && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
           requestAnimationFrame(f); })()`));
         release(); await page.waitForTimeout(1500);
         const first = await page.evaluate(() => window.__first), b = await look(page);
@@ -497,7 +516,7 @@ if (section('split build (asset-build)')) try {
         await page.close(); }
       // 5c. a zone change inside tick that emits nothing (as a retreat after a wipe sets S.zone): the cover is up before the browser
       //     paints that frame (75-art-load rechecks in a microtask after the frame's draw)
-      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest:land').name]: 'hold' }, html: probe });
         await booted(page); await page.waitForTimeout(300);
         await page.evaluate(() => window.__t.x(`(() => { const t0 = tick; tick = dt => { t0(dt); if (!window.__moved && S.activity === 'fight') { window.__moved = 1; S.zone = 8;
           queueMicrotask(() => { const c = document.getElementById('artWait'); window.__cov = !!c && !c.hidden; }); } }; })()`));
@@ -506,6 +525,24 @@ if (section('split build (asset-build)')) try {
         const r = await page.evaluate(() => ({ moved: window.__moved, cov: window.__cov })), a = await look(page);
         release(); await page.waitForTimeout(300);
         assert(r.moved && r.cov === true && a.cover === 'Loading Batwing Caves' && !errs.length, `split: a zone change inside tick with no event is covered before that frame paints (${JSON.stringify(r)}, ${JSON.stringify(a)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5d. bg-pack-by-shape: a phone turned mid-fight to the shape it did not boot with holds the game under the line until that
+      //     background's pack is in and decoded, and the first frame after the hold draws it decoded; the boot never asked for it
+      { const port = pk('bg:forest:port'), { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 1 }, hold: { [port.name]: 'hold' }, html: probe }), asked = [];
+        page.on('request', q => { if (q.url().endsWith(port.name)) asked.push(Date.now()); });
+        await booted(page); await page.evaluate(() => window.__t.x('S.activity = "fight", ui(true)')); await page.waitForTimeout(600);
+        const before = asked.length;
+        await page.setViewportSize({ width: 360, height: 900 }); await page.waitForTimeout(600);
+        const G = () => page.evaluate(() => window.__t.x('({ t: gameHeld(), z: S.zone, k: S.kills, hp: mob && mob.hp, o: artZonePacks(1).join() })'));
+        const a = await look(page), g1 = await G(); await page.waitForTimeout(800); const g2 = await G();
+        assert(!before && asked.length === 1 && /^Loading /.test(a.cover || '') && a.full && g1.t && g1.z === 1 && g1.o.includes('bg:forest:port') && JSON.stringify(g1) === JSON.stringify(g2),
+          `split: turned to portrait mid-fight, the game holds under "${a.cover}" (${a.full}) while Mossy Hollow's portrait pack loads (asked ${before} times before the turn, ${asked.length} after; ${JSON.stringify(g1)} then ${JSON.stringify(g2)})`);
+        await page.evaluate(() => window.__t.x(`(() => { const f = () => { if (gameHeld()) return requestAnimationFrame(f);
+          const im = artBgImg('forestport'); window.__first = BG_ART.forest.port && im && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
+          requestAnimationFrame(f); })()`));
+        release(); await page.waitForTimeout(1500);
+        const first = await page.evaluate(() => window.__first), b = await look(page), kept = await page.evaluate(() => localStorage.getItem('lanternfall.bgShape'));
+        assert(first === 'decoded' && !b.cover && JSON.parse(kept || '{}')[0] === 'port' && !errs.length, `split: once the portrait pack is in, the first frame after the hold draws it decoded (${first}), the cover goes (${JSON.stringify(b)}), and the next boot's guess for an upright window is the portrait pack (${kept})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
       // 6. a pack that fails while the server's page still names it: "Waiting for the connection", then it tries again and loads
       { const { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'fail' }, html: probe });
@@ -536,6 +573,163 @@ if (section('split build (asset-build)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('split build crashed: ' + (e.stack || e)); }
+
+// ---- load-hold-progress (card load-hold-progress; src/js/75-art-load.js artHoldTick, 90-boot's frame loop) ----
+// The inline page never holds for a pack, so the split build's hold must not cost what runs on its own. The same scenario runs in
+// both pages: a camp build and a Hand's shift due in a second, an All order at the Forge, then a zone 2 fight. In the split page
+// Gloomjaw's pack is held: the fight holds under the line, the Forge's order runs on the frame clock as in tick (progress = game
+// seconds x speed), and once the pack is in the build and the Hand are back as in the inline page. While gathering the line
+// still covers the stage but the game runs on (a gather keeps its progress).
+if (section('load-hold-progress (browser)')) try {
+  const { pw, exe } = browserTools;
+  const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
+  const inline = fs.existsSync(distFile) ? fs.readFileSync(distFile, 'utf8') : '';
+  if (!pw || !exe || !inline) skipBrowser('load-hold-progress: Playwright, Chromium or dist/lanternfall.html not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const KEY = 'lanternfall.save.v5', mid = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8'));
+    const probe = h => { const end = h.lastIndexOf('})();\n</script>'); return h.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + h.slice(end); };
+    const gj = s.packs.find(p => p.id === 'foe:gloomjaw');
+    const open = async (html, assets, hold) => {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), page = await ctx.newPage(), errs = [];
+      await ctx.addInitScript(() => { try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {} });
+      await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...mid, last: Date.now() })]);
+      page.on('pageerror', e => errs.push(String(e)));
+      let release = () => {}; const held = new Promise(r => { release = r; });
+      await routePage(page, 'http://lf.test/', probe(html), assets);
+      if (hold) await page.route('**/assets/' + hold, async r => { await held; return r.fallback(); });
+      await page.goto('http://lf.test/', { waitUntil: 'commit' });
+      await page.waitForFunction(() => !document.getElementById('lfBoot') && !document.getElementById('lfLoad') && !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+      return { page, errs, release };
+    };
+    const X = (page, js) => page.evaluate(j => window.__t.x(j), js);
+    // the Forge's order: game seconds of work done (units made x a unit's time, plus the one under way)
+    const READ = `(() => { const o = refineOrders('forge')[0], u = REFINE_TUNE.secs[0];
+      return { T, work: o ? o.made * u + (o.at || 0) : -1, speed: refineSpeed('forge'), kills: S.kills, hp: mob && mob.hp, held: gameHeld(), zone: S.zone,
+        built: window.__build && campLevel(window.__build) - window.__lv, build: !!(window.__build && campPending(window.__build)), hand: (() => { const h = handsList().find(x => x.id === window.__hand); return h ? handsStatus(h).st : 'none'; })(),
+        cover: (() => { const c = document.getElementById('artWait'); return !!c && !c.hidden; })() }; })()`;
+    const run = async (html, assets, hold) => {
+      const { page, errs, release } = await open(html, assets, hold);
+      await page.waitForTimeout(500);
+      // the mid save (guide done, a Hand, the Forge built), with plenty of gold and raw materials and no middles (the Forge's piles are empty)
+      await X(page, `onboardTips(false); S.gold = 1e12; for (const k of Object.keys(S.mats)) S.mats[k] = REFINE_PRODUCTS[k] ? [0, 0, 0, 0, 0] : [300, 300, 300, 300, 300]; ui(true)`);
+      const setup = await X(page, `(() => { handsCatchUp(Date.now()); const h = handsList().find(x => !x.job); window.__hand = h && h.id;
+        const why = h ? handsCanSend(h.id, 'ore', 1, { shifts: 1 }).why : 'no Hand free', job = h && handsSend(h.id, 'ore', 1, { shifts: 1 });
+        const id = window.__build = Object.keys(CAMP_B).find(k => k !== 'forge' && !campPending(k) && campCan(k).ok), b = id && campBuild(id) && campPending(id), t = Date.now() + 1200;
+        window.__lv = id && campLevel(id);
+        if (job) { h.job.end = t; h.job.start = t - 1000 * h.job.secs; }
+        if (b) { b.start = t - b.dur; b.end = t; }
+        const r = refineAdd('ingot', 1, 'all');
+        return { job: !!job, why, build: id || null, order: !!(r && r.ok) }; })()`);
+      await X(page, 'S.activity = "fight", setZone(2), ui(true)'); await page.waitForTimeout(300);
+      const a = await X(page, READ);
+      await page.waitForTimeout(2500);
+      const b = await X(page, READ);
+      release();
+      await page.waitForFunction(() => window.__t.x('!gameHeld() && campLevel(window.__build) > window.__lv && handsStatus(handsList().find(x => x.id === window.__hand)).st === "camp"'), null, { timeout: 8000 }).catch(() => {});
+      const c = await X(page, READ);
+      return { page, errs, setup, a, b, c };
+    };
+    try {
+      const sp = await run(s.html, pageAssets(null, s.html, files), gj.name), il = await run(inline, new Map(), null);
+      const dT = r => r.b.T - r.a.T, done = r => r.b.work - r.a.work;
+      const fair = r => Math.abs(done(r) - dT(r) * r.a.speed) < 1e-6 && dT(r) > 1.25;   // every held second of game time, at the Forge's speed
+      assert(sp.setup.job && sp.setup.build && sp.setup.order && il.setup.job && il.setup.build && il.setup.order,
+        `load-hold-progress: both pages start a Hand's shift, a camp build and an All order at the Forge (split ${JSON.stringify(sp.setup)}, inline ${JSON.stringify(il.setup)})`);
+      assert(sp.a.held && sp.b.held && sp.a.cover && sp.a.zone === 2 && sp.a.kills === sp.b.kills && sp.a.hp === sp.b.hp,
+        `load-hold-progress: in the split page zone 2's fight holds under the line while Gloomjaw loads (${JSON.stringify({ a: sp.a, b: sp.b })})`);
+      assert(fair(sp) && fair(il),
+        `load-hold-progress: the Forge's order earns every game second in both pages, held or not (split ${done(sp).toFixed(3)} s of work in ${dT(sp).toFixed(3)} s, inline ${done(il).toFixed(3)} s in ${dT(il).toFixed(3)} s, speed ${sp.a.speed})`);
+      assert(il.b.built === 1 && !il.b.build && il.b.hand === 'camp' && sp.c.built === 1 && !sp.c.build && sp.c.hand === 'camp' && !sp.c.held && !sp.c.cover,
+        `load-hold-progress: the build and the Hand's shift due during the hold are done once the pack is in, as in the inline page (split ${JSON.stringify(sp.c)}, inline ${JSON.stringify(il.b)})`);
+      assert(!sp.errs.length && !il.errs.length, 'load-hold-progress: no page errors' + (sp.errs[0] || il.errs[0] ? ': ' + (sp.errs[0] || il.errs[0]) : ''));
+      await sp.page.close(); await il.page.close();
+      // gathering: a move still loading covers the stage, and the gather keeps its progress
+      { const mv = s.packs.find(p => p.hero === 'wren' && !p.core && p.moves.includes('victory'));
+        const { page, errs } = await open(s.html, pageAssets(null, s.html, files), mv.name);
+        await page.waitForTimeout(500);
+        await X(page, `onboardTips(false); S.activity = 'gather', ui(true)`); await page.waitForTimeout(300);
+        await X(page, `(() => { const f = () => { if (window.__stop) return; artHeroNeed('wren', 'victory'); requestAnimationFrame(f); }; requestAnimationFrame(f); })()`);
+        await page.waitForTimeout(300);
+        const G = `({ held: gameHeld(), T, p: S.gProg, h: S.mats[S.node.kind][S.node.t - 1], tg: target(), in: artHeroReady('wren', 'victory'), cover: (() => { const c = document.getElementById('artWait'); return !!c && !c.hidden; })() })`;
+        const g = await X(page, G); await page.waitForTimeout(1500); const g2 = await X(page, G);
+        // the raid still holds (the online layer is not this card's): its damage feeds the shared raiders doc
+        const raid = await X(page, `(() => { const was = online.ready; online.ready = true; S.activity = 'raid'; const r = { tg: target(), held: gameHeld() }; online.ready = was; S.activity = 'gather'; return r; })()`);
+        await X(page, 'window.__stop = true');
+        assert(raid.tg === 'world' && raid.held, `load-hold-progress: in the raid a move still loading holds the game as before (${JSON.stringify(raid)})`);
+        assert(g.tg === 'node' && !g.in && g.cover && g2.cover && !g.held && !g2.held && (g2.p !== g.p || g2.h !== g.h) && !errs.length,
+          `load-hold-progress: while gathering a move still loading covers the stage but does not hold the game: the gather runs on (${JSON.stringify(g)} then ${JSON.stringify(g2)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('load-hold-progress crashed: ' + (e.stack || e)); }
+
+// ---- foe wind-up after a hold (card foe-windup-after-hold; src/js/59k-turn.js turnWindupAgain) ----
+// A hold over the fight (a pack still loading, a card) stops the tick but not the frame clock: a foe mid wind-up then starts that
+// hit's wind-up again from the start (and the move's clip, on its first hit), so the player sees the whole tell. Wind-ups keep
+// their length. Not restarted: a hit the player already pressed for, and the guide's pause (a lesson waits for the press there).
+// The inline page at the three views, a zone 1 fight: a test hold (holdGame, as 75-art-load registers its own) lands mid wind-up.
+if (section('foe wind-up after a hold (browser)')) try {
+  const { pw, exe } = browserTools;
+  const inline = fs.existsSync(distFile) ? fs.readFileSync(distFile, 'utf8') : '';
+  if (!pw || !exe || !inline) skipBrowser('foe wind-up after a hold: Playwright, Chromium or dist/lanternfall.html not here, skipped');
+  else {
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const KEY = 'lanternfall.save.v5', mid = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8'));
+      const probe = h => { const end = h.lastIndexOf('})();\n</script>'); return h.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + h.slice(end); };
+      for (const [vw, vh] of [[1280, 720], [740, 360], [360, 740]]) {
+      const view = vw + 'x' + vh, ctx = await browser.newContext({ viewport: { width: vw, height: vh }, turns: true }), page = await ctx.newPage(), errs = [];
+      await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch (e) {} }, [KEY, JSON.stringify({ ...mid, last: Date.now() })]);
+      page.on('pageerror', e => errs.push(String(e)));
+      await routePage(page, 'http://lf.test/', probe(inline), new Map());
+      await page.goto('http://lf.test/', { waitUntil: 'commit' });
+      await page.waitForFunction(() => !!(document.getElementById('zName') || {}).textContent && document.getElementById('cv').width > 0, null, { timeout: 15000 }).catch(() => {});
+      await page.waitForTimeout(500);
+      const X = js => page.evaluate(j => window.__t.x(j), js);
+      // the hero's turns go to the foe (lessons.md: drive the foe with turnBegin, not its own turns), so every turn is a wind-up and
+      // nothing dies; events counted; a test hold and a test guide pause to switch
+      await X(`(() => { onboardTips(false); S.activity = 'fight'; setZone(1); ui(true);
+        window.__ev = { move: 0, win: 0 }; on('foeMove', () => window.__ev.move++); on('parryWindow', () => { window.__ev.win++; window.__ev.pw = TURN_LIVE.until - TURN_LIVE.now; });
+        window.__hold = false; holdGame(() => window.__hold);
+        let gp = false; Object.defineProperty(ONBOARD, 'paused', { get: () => gp || window.__gp, set: v => { gp = v; }, configurable: true });
+        const f = () => { if (S.zone !== 1 || S.activity !== 'fight') { S.activity = 'fight'; setZone(1); }   // the save's own zone may come back as it settles
+          const m = TURN_LIVE; if (m && !m.ended && m.phase === 'hero' && !window.__hold && !window.__gp) turnBegin(m, 'foe', TURN_LIVE_IO); requestAnimationFrame(f); }; requestAnimationFrame(f); })()`);
+      const R = `(() => { const m = TURN_LIVE; return m && !m.ended ? { ph: m.phase, hit: m.hitI, left: m.until - m.now, now: m.now, used: !!m.usedDefense, flinch: !!m.flinch,
+        len: m.phase === 'foeWindup' ? (m.move.hits[m.hitI].wind > 0 ? m.move.hits[m.hitI].wind : TURN_TUNE.foeWindup) + (m.move.hits[m.hitI].hold > 0 ? m.move.hits[m.hitI].hold : 0) : 0,
+        ev: { ...window.__ev }, held: gameHeld() } : null; })()`;
+      // wait for a foe's first hit, a third into its wind-up, with no press yet
+      const midWind = async press => {
+        await page.waitForFunction(r => { const x = window.__t.x(r); return !!x && x.ph === 'foeWindup' && x.hit === 0 && !x.used && x.left < x.len * 0.66 && x.left > x.len * 0.25; }, R, { timeout: 20000, polling: 'raf' }).catch(async e => { throw new Error('no foe wind-up came: ' + JSON.stringify(await X(R)) + ' ' + JSON.stringify(await X(`({ tg: target(), act: S.activity, zone: S.zone, scope: turnCombatScope(), on: TURN_TUNE.on })`))); });
+        if (press) await X(`turnCombatAction('dodge')`);
+        return X(R);
+      };
+      const across = async (flag, press) => {
+        await midWind(press);
+        const a = await X(`(() => { const r = ${R}; window.${flag} = true; return r; })()`); await page.waitForTimeout(600);
+        const b = await X(R);
+        await X(`window.${flag} = false`);
+        await page.waitForFunction(n => window.__t.x(`TURN_LIVE.now`) > n + 0.02, a.now + (b.now - a.now), { timeout: 3000, polling: 'raf' }).catch(() => {});
+        const c = await X(R);
+        return { a, b, c };
+      };
+      const h = await across('__hold', false);
+      assert(h.b && h.b.held && h.b.now === h.a.now && h.b.left === h.a.left,
+        `foe wind-up after a hold ${view}: the test hold stops the fight mid wind-up (${JSON.stringify(h)})`);
+      assert(h.c && h.c.ph === 'foeWindup' && h.c.hit === 0 && h.c.len === h.a.len && Math.abs(h.c.ev.pw - h.a.len) < 1e-9 && h.c.left <= h.a.len && h.c.ev.move === h.a.ev.move + 1 && h.c.ev.win === h.a.ev.win + 1,
+        `foe wind-up after a hold ${view}: once the hold lifts the wind-up starts again at its full length, and the move's clip with it (${JSON.stringify(h)})`);
+      const g = await across('__gp', false);
+      assert(g.c && g.c.ph === 'foeWindup' && g.c.left < g.a.left && g.c.ev.move === g.a.ev.move && g.c.ev.win === g.a.ev.win,
+        `foe wind-up after a hold ${view}: the guide's pause does not restart a wind-up (a lesson waits for the press) (${JSON.stringify(g)})`);
+      const p = await across('__hold', true);
+      assert(p.a.used && p.c && p.c.ph === 'foeWindup' && p.c.left < p.a.left && p.c.ev.win === p.a.ev.win,
+        `foe wind-up after a hold ${view}: a hit the player already pressed for is not restarted (${JSON.stringify(p)})`);
+      assert(!errs.length, `foe wind-up after a hold ${view}: no page errors` + (errs[0] ? ': ' + errs[0] : ''));
+      await page.close(); await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('foe wind-up after a hold crashed: ' + (e.stack || e)); }
 
 // ---- hero packs (card hero-packs; tools/build.mjs heroPacks, src/js/75-art-load.js, src/boot-loader.html) ----
 // A hero art file (an AREA_ART entry of kind 'hero') splits by hero: one pack of each hero's core moves, which the boot loader
@@ -7165,7 +7359,7 @@ if (section('solo copy (browser, W1-C)')) try {
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
-      const shown = { n: 0, views: 0 }, bad = new Map(), items = { n: 0, min: 1e9, cards: 0, press: 0 };
+      const shown = { n: 0, views: 0 }, bad = new Map(), items = { n: 0, min: 1e9, cards: 0, press: 0 }, press = { n: 0, short: [], errs: [], by: {} };
       for (const hero of ['wren', 'tobin', 'pip']) {
         const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
         const page = await ctx.newPage(); const errs = [];
@@ -7185,9 +7379,20 @@ if (section('solo copy (browser, W1-C)')) try {
         await page.click(`#createScreen .ccard[data-hero="${hero}"]`); await page.click('#createScreen .create-go'); await page.waitForTimeout(250);
         // a late game: every tab open, plenty of everything, the first Proving won (so its card shows)
         await X(`(() => { try { onboardUnlockAll(); } catch (e) {} S.maxZone = 40; S.zone = 12; S.L = 60; S.gold = 1e12; S.embers = 1e6; for (const k in S.mats) { const m = S.mats[k]; if (Array.isArray(m)) for (let i = 0; i < m.length; i++) m[i] = 5000; } ONBOARD.paused = false; S.cls.trials = S.cls.trials || {}; S.cls.trials.warrior = { won: 1, best: 100 }; return 1; })()`);
-        const pressAll = async (sel, label) => {
-          const n = Math.min(await page.locator(sel).count(), hero === 'wren' ? 50 : 12);   // W2-B: the other two heroes press the first 12 of each view (the tabs and views are read in full)
-          for (let i = 0; i < n; i++) { try { await page.locator(sel).nth(i).click({ timeout: 300, force: true }); await page.waitForTimeout(60); await scan(`${label} #${i}`); await page.keyboard.press('Escape'); } catch (e) {} }
+        // scan-dead-coverage: visible controls only. The broad selector also matched every control in the tab's hidden views, and their
+        // ~1,000 "not visible" click errors a run were swallowed. Now a press that fails is a check failure, naming the view and control.
+        // Most of those errors came from the Escape after each press: it shut the menu, so every later control in the view was hidden.
+        // The tab and view now reopen before each press. A press can still redraw the view with fewer controls (a claimed row); the loop
+        // stops there instead of waiting on a gone one.
+        const pressAll = async (sel, label, reopen) => {
+          const vis = page.locator(sel).filter({ visible: true });
+          const n = Math.min(await vis.count(), hero === 'wren' ? 50 : 12);   // W2-B: the other two heroes press the first 12 of each view (the tabs and views are read in full)
+          for (let i = 0; i < n; i++) {
+            if (i) await X(reopen);
+            if (i >= await vis.count() && !(await vis.nth(i).waitFor({ state: 'visible', timeout: 300 }).then(() => true, () => false))) { press.short.push(`${hero} ${label} #${i}`); break; }
+            try { await vis.nth(i).click({ timeout: 300, force: true }); } catch (e) { press.errs.push(`${hero} ${label} #${i}: ${String(e.message).split('\n')[0]}`); continue; }
+            press.n++; press.by[`${hero} ${label.split('/')[0]}`] = (press.by[`${hero} ${label.split('/')[0]}`] || 0) + 1; await page.waitForTimeout(60); await scan(`${label} #${i}`); await page.keyboard.press('Escape');
+          }
         };
         for (const t of ['adv', 'party', 'gat', 'forge', 'world']) {
           await X(`setTab('${t}')`); await page.waitForTimeout(120);
@@ -7195,7 +7400,7 @@ if (section('solo copy (browser, W1-C)')) try {
           for (const v of views) {
             await X(`setView('${t}', '${v}')`); await page.waitForTimeout(150);
             await scan(`${t}/${v}`);
-            await pressAll(`#p-${t} button:not(:disabled), #p-${t} .card, #p-${t} [role=button]`, `${t}/${v}`);
+            await pressAll(`#p-${t} button:not(:disabled), #p-${t} .card, #p-${t} [role=button]`, `${t}/${v}`, `setTab('${t}'); setView('${t}', '${v}')`);
             await X(`setTab('${t}'); setView('${t}', '${v}')`);
           }
         }
@@ -7225,22 +7430,50 @@ if (section('solo copy (browser, W1-C)')) try {
         let opened = 0, empty = 0;
         for (const [id, txt] of sheets) { judge('item sheet ' + id, txt); opened++; if (txt.length < 4) empty++; }
         for (let i = 8; i < made.ids.length; i += 9) {
-          const id = made.ids[i]; await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15);
+          const id = made.ids[i];
           // w1f-scan-load-flake: a DOM click on the button itself. A forced pointer click lands on whatever covers the button's spot: the
           // path choice card the "evolution choice" step leaves open. Under load two such clicks pressed "Become" then "Yes", a path was
           // taken, and the subclass step below found no tabs. Unloaded, the clicks failed (below the sheet's fold) and were swallowed.
           // The find and the click are one step in the page, so the sheet cannot redraw between them.
-          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button']) { if (await page.evaluate(q => { const b = document.querySelector(q); if (b) b.click(); return !!b; }, `.cf-sheet ${sel}`)) { await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } }
-          await page.keyboard.press('Escape');
+          // scan-dead-coverage: each control on a fresh sheet. Salvage armed first and its confirm was read in place of the rest.
+          for (const sel of ['.cf-svb', '.cf-cmp button']) { await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15); if (await page.evaluate(q => { const b = document.querySelector(q); if (b) b.click(); return !!b; }, `.cf-sheet ${sel}`)) { await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } await page.keyboard.press('Escape'); }
         }
+        // scan-dead-coverage: the Reforge path on its own, on every 9th item that has a bonus line: pick the first line (and the first bonus
+        // to put in, on a graded piece), then press Reforge once, which arms it ("Confirm: reforge"). Nothing is reforged.
+        let rfRead = 0, rfArmed = 0;
+        for (let i = 8; i < made.ids.length; i += 9) {
+          const id = made.ids[i]; await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15);
+          const r = await page.evaluate(() => { const q = s => document.querySelector('.cf-sheet ' + s);
+            const ln = q('.cf-rf .cf-rfl'); if (!ln) return null; ln.click();
+            const pk = q('.cf-rfpick .cf-rfl'); if (pk) pk.click();
+            const go = q('.cf-rf .cf-act'); if (go && !go.disabled) go.click();
+            const now = q('.cf-rf .cf-act'); return now ? now.textContent : ''; });
+          if (r == null) { await page.keyboard.press('Escape'); continue; }
+          rfRead++; if (r === 'Confirm: reforge') rfArmed++;
+          await page.waitForTimeout(30); await scan('item sheet ' + id + ' Reforge', '.cf-sheet'); await page.keyboard.press('Escape');
+        }
+        assert(rfRead > 0 && rfArmed > 0, `${hero}: the Reforge path was read on ${rfRead} item sheets and armed on ${rfArmed} (a line picked, Reforge pressed once)`);
         await page.keyboard.press('Escape');
         assert(empty === 0, `${hero}: every item sheet had text when read (${empty} empty)`);
         items.n += opened; items.min = Math.min(items.min, opened);
         // the hero sheet, its Kit and story lines, and each subclass card (both tabs, the confirm) and the class change
         await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(200);
-        await page.evaluate(() => document.querySelectorAll('.cs-sheet details, .sheet details').forEach(d => { d.open = true; }));
+        await page.evaluate(() => document.querySelectorAll('.csheet details').forEach(d => { d.open = true; }));
         await scan('hero sheet (all opened)');
-        for (const sel of ['.cl-go', '.cs-act', '.cs-story summary']) { const n = Math.min(await page.locator(`.sheet ${sel}`).count(), 8); for (let i = 0; i < n; i++) { if (!(await page.evaluate(([q, i]) => { const b = document.querySelectorAll(q)[i]; if (b) b.click(); return !!b; }, [`.sheet ${sel}`, i]))) continue; await page.waitForTimeout(60); await scan(`hero sheet ${sel} #${i}`); } }
+        // scan-dead-coverage: the hero sheet's own controls (Achievements, Choose your path, Change). The old selectors (.sheet .cl-go,
+        // .cs-act, .cs-story summary) matched nothing: the sheet is .csheet and has no such rows. Each press opens another sheet in its
+        // place, so the hero sheet reopens before each one.
+        const heroCtl = '.csheet .bsheet-body button:not(:disabled), .csheet .bsheet-body summary';
+        const heroN = await page.evaluate(q => [...document.querySelectorAll(q)].filter(b => b.offsetParent !== null).length, heroCtl);
+        let heroPress = 0;
+        for (let i = 0; i < Math.min(heroN, 8); i++) {
+          if (i) { await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(150); }
+          const t = await page.evaluate(([q, i]) => { const b = [...document.querySelectorAll(q)].filter(n => n.offsetParent !== null)[i]; if (!b) return null; const t = b.textContent.trim(); b.click(); return t; }, [heroCtl, i]);
+          if (t == null) { fail(`${hero}: hero sheet control #${i} of ${heroN} was gone when the sheet reopened`); continue; }
+          heroPress++; await page.waitForTimeout(150); await scan(`hero sheet: ${t}`);
+          await X('classEvoUI.closeAll()'); await page.keyboard.press('Escape');
+        }
+        assert(heroPress > 0 && heroPress === Math.min(heroN, 8), `${hero}: the hero sheet loop pressed ${heroPress} of its ${heroN} visible controls`);
         await page.keyboard.press('Escape');
         await X(`S.party.chosen = true; S.cls.trials = S.cls.trials || {}; S.cls.trials.check = { won: 1, best: 100 }; classEvoUI.openChoice()`); await page.waitForTimeout(250);
         const tabs = await page.locator('.evo-tab').count();
@@ -7281,6 +7514,8 @@ if (section('solo copy (browser, W1-C)')) try {
       }
       assert(shown.views > 60 && shown.n > 3000, `the scan read ${shown.n} texts in ${shown.views} screens (three heroes, every tab, sub-view and sheet at 360x740)`);
       assert(items.min >= 100 && items.cards >= 4 && items.press >= 12, `W1-F: the scan opened ${items.n} item sheets (at least ${items.min} per hero: every unique, every kind at four rarities, every Trophy line; the compare box), ${items.cards} subclass cards, the class change, the hero sheet and its story and Kit rows, the hero picker cards and ${items.press} long-presses (Attack, Parry, Dodge, the three ability slots), three heroes`);
+      const noPress = ['wren', 'tobin', 'pip'].flatMap(h => ['adv', 'party', 'gat', 'forge', 'world'].map(t => `${h} ${t}`)).filter(k => !press.by[k]);
+      assert(!noPress.length && !press.errs.length, `pressAll pressed ${press.n} visible controls with ${press.errs.length} click errors, every hero in every tab (${noPress.length ? 'none in: ' + noPress.join(', ') : 'fewest ' + Math.min(...Object.values(press.by))}); ${press.short.length} views ran short after a redraw (${press.short.slice(0, 15).join(', ')})` + (press.errs.length ? ': ' + press.errs.slice(0, 5).join(' | ') : ''));
       assert(!bad.size, 'no party, companion, Bond, formation, roster, recruit, expedition, ally, Bench or partner-advice text on any screen' + (bad.size ? ': ' + [...bad].slice(0, 5).map(([t, w]) => `[${w}] ${t}`).join(' | ') : ''));
     } finally { await browser.close(); }
   }
@@ -7581,6 +7816,239 @@ if (section('tavern perks and rumours (C3)')) try {
   const errs = games.flatMap(g => g.errors);
   assert(!errs.length, 'C3: no Tavern perk handler errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('C3 Tavern perks crashed: ' + (e.stack || e)); }
+
+// ---- Tavern Blackjack (tavern-blackjack-build, docs/design/tavern-blackjack.md 16 item 1): rules, limits, the day, saves, the switch ----
+if (section('tavern blackjack')) try {
+  const T0 = new Date(2026, 9, 10, 12).getTime();
+  // A card id is suit * 13 + rank - 1 (rank 1 Ace ... 13 King). force(ids): Math.random hands the table exactly these cards, in order.
+  const C = (r, s = 0) => s * 13 + r - 1;
+  const mk = (o = {}) => {
+    const g = loadCore({ seed: 4411, storage: o.storage, prelude: `Date.__t = ${o.at || T0}; Date.now = () => Date.__t;` + (o.off ? ' const __BJ = 0;' : '') }), E = s => g.eval(s);
+    if (!o.storage) E('S.maxZone = 14; S.zone = 14; S.camp.open = true; S.camp.b.tavern = 1; S.onboard.all = true; S.blackjack.w = 600; S.gold = 100000');
+    E(`globalThis.__q = []; Math.random = (() => { const r0 = Math.random; return () => { if (!globalThis.__q.length) return r0();
+      const c = globalThis.__q.shift(), h = S.blackjack.hand, used = {}; for (const x of h.p.concat(h.d)) used[x] = (used[x] || 0) + 1;
+      let n = 0; for (let i = 0; i < c; i++) n += BJ_TUNE.decks - (used[i] || 0); return (n + 0.5) / (52 * BJ_TUNE.decks - h.p.length - h.d.length); }; })()`);
+    return { g, E, force: ids => E(`globalThis.__q.push(${ids.join(',')})`) };
+  };
+  const view = E => JSON.parse(E('JSON.stringify(bjView())'));
+  // 1. limits by zone, from price-hours, rising only (spec 4 table)
+  {
+    const { E } = mk(), lim = z => JSON.parse(E(`S.maxZone = ${z}; JSON.stringify(bjLimits())`));
+    const want = { 14: [16, 310, 1550], 25: [21, 410, 2050], 50: [55, 1100, 5500], 140: [1100, 21000, 105000] };
+    assert(Object.entries(want).every(([z, [lo, hi, w]]) => { const l = lim(+z); return l.lo === lo && l.hi === hi && l.win === w && l.loss === w; }),
+      'blackjack: the table limits match the spec at zones 14, 25, 50 and 140 (lowest, highest, the day\'s win and loss limits)');
+    let prev = { lo: 0, hi: 0 }, fall = [];
+    for (let z = 1; z <= 175; z++) { const l = lim(z); if (l.lo < prev.lo || l.hi < prev.hi) fall.push(z); prev = l; }
+    assert(!fall.length, 'blackjack: the lowest and highest bets never fall as the zone rises (1 to 175)' + (fall.length ? ': ' + fall.slice(0, 5).join(', ') : ''));
+  }
+  // 2. the gate (spec 7): zone 14, the Tavern built, 600 s after the Tavern and Hands rows, skipped once every tab is open; the switch off
+  {
+    const { E } = mk();
+    E('S.onboard.all = false; S.onboard.t = 5000; S.onboard.got.tavern = 4500; S.onboard.got.hands = 4600');
+    assert(!E('bjOpen()'), 'blackjack: the table waits 600 s of play after the Hands row opened');
+    E('S.onboard.t = 5200'); assert(E('bjOpen()'), 'blackjack: 600 s after the later of the Tavern and Hands rows, the table opens');
+    E('S.maxZone = 13'); assert(!E('bjOpen()'), 'blackjack: not before the zone 13 Captain is beaten (zone 14)');
+    E('S.maxZone = 14; S.camp.b.tavern = 0'); assert(!E('bjOpen()'), 'blackjack: not without the Tavern built');
+    E('S.camp.b.tavern = 1; S.onboard.got.tavern = null; S.onboard.got.hands = null'); assert(!E('bjOpen()'), 'blackjack: not before the Tavern row has opened');
+    E('S.onboard.all = true'); assert(E('bjOpen()'), 'blackjack: once every tab is open the guide\'s stopped clock no longer holds it');
+    E('S.blackjack.w = 0; S.camp.b.tavern = 0'); for (let i = 0; i < 700; i++) E('tick(1)');
+    assert(E('S.blackjack.w') === 0 && !E('bjOpen()'), 'blackjack: the table\'s own wait does not run before the Tavern is built');
+    E('S.camp.b.tavern = 1'); for (let i = 0; i < 590; i++) E('tick(1)');
+    assert(!E('bjOpen()'), 'blackjack: with every tab open, a Tavern built late still waits 600 s of play (the table\'s own clock), so the build, Hands and the table never open at once');
+    for (let i = 0; i < 15; i++) E('tick(1)');
+    assert(E('bjOpen()') && E('S.blackjack.w') === 600, 'blackjack: after 600 s of play with the Tavern built the table opens, and the wait stops counting');
+    const row = E('JSON.stringify(FEATURES.find(f => f.id === "blackjack"))');
+    assert(/"late":true/.test(row) && /"view":"tav"/.test(row) && !/"now"/.test(row) && E('FIRST_USE.blackjack.text') === "Bet gold and beat Hesketh's hand without going over 21.",
+      'blackjack: the FEATURES row is late, lives on Camp > Tavern, has no `now` (the spacing governor holds it) and a first-use line');
+    const off = mk({ off: true });
+    off.E('S.onboard.all = true');
+    assert(!off.E('bjOpen()') && !off.E('bjDeal()') && !off.E('onboardCheck().includes("blackjack")'), 'blackjack: BJ_TUNE.on = 0 keeps the row shut and refuses a deal');
+  }
+  // 3. rules and payouts (spec 3), the ledger and S.totalGold untouched, Gold Fever ignored
+  {
+    const { E, force } = mk();
+    E('bjSetBet(310)');
+    const books = () => E('JSON.stringify([S.econ.earned, S.econ.spent, S.totalGold])'), b0 = books();
+    const play = (cards, moves) => { const g0 = E('S.gold'); force(cards); E('bjNext(); bjDeal()'); for (const m of moves) E(m + '()'); return { d: E('S.gold') - g0, v: view(E) }; };
+    let r = play([C(10), C(9), C(7), C(13)], ['bjStand']);
+    assert(r.d === 310 && r.v.line === '19 beats 17. You win 310 gold.', 'blackjack: 19 beats 17 pays the bet even money: "19 beats 17. You win 310 gold." (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(1), C(13), C(5), C(9)], []);
+    assert(r.d === 465 && r.v.line === 'Blackjack! You win 465 gold.', 'blackjack: a natural pays 3 to 2 at once (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(1), C(12), C(1, 1), C(11)], []);
+    assert(r.d === 0 && r.v.line === 'Both on 21. Your bet comes back.', 'blackjack: your natural against his two-card 21 is a tie (' + r.d + ')');
+    r = play([C(5), C(6), C(1), C(9), C(13)], ['bjDouble']);
+    assert(r.d === -310 && r.v.line === 'Hesketh makes blackjack. You lose 310 gold.' && r.v.p.length === 3, 'blackjack: his two-card 21 takes the first bet only; the Double\'s extra comes back (' + r.d + ')');
+    r = play([C(7), C(5), C(1), C(13), C(12)], ['bjDouble']);
+    assert(r.d === -310 && r.v.line === 'Hesketh makes blackjack. You lose 310 gold.' && r.v.d.length === 2, 'blackjack: a busted Double against his Ace shows his second card, and his blackjack takes the first bet only (' + r.d + ')');
+    r = play([C(7), C(5), C(9), C(13)], ['bjDouble']);
+    assert(r.d === -620 && r.v.line === 'Bust at 22. You lose 620 gold.', 'blackjack: a busted Double against a 9 loses both bets (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(10), C(6), C(9), C(13)], ['bjHit']);
+    assert(r.d === -310 && r.v.line === 'Bust at 26. You lose 310 gold.' && r.v.d.length === 1, 'blackjack: over 21 loses at once and Hesketh draws nothing (' + r.d + ')');
+    r = play([C(10), C(7), C(1), C(6)], ['bjStand']);
+    assert(r.d === 0 && r.v.d.length === 2 && r.v.line === 'Both on 17. Your bet comes back.', 'blackjack: Hesketh stands on a soft 17, and a tie gives the bet back');
+    r = play([C(10), C(8), C(6), C(10), C(13)], ['bjStand']);
+    assert(r.d === 310 && r.v.line === 'Hesketh busts at 26. You win 310 gold.', 'blackjack: Hesketh draws to 17 and can bust (' + r.v.line + ')');
+    r = play([C(5), C(6), C(10), C(10), C(8)], ['bjDouble']);
+    assert(r.d === 620 && r.v.line === '21 beats 18. You win 620 gold.', 'blackjack: a won Double pays twice the bet (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(10), C(9), C(10), C(13)], ['bjStand']);
+    assert(r.d === -310 && r.v.line === '20 beats 19. You lose 310 gold.', 'blackjack: a lower total loses the bet');
+    r = play([C(9), C(2), C(10), C(13)], []);
+    assert(r.v.phase === 'play' && r.v.line === 'You have 11. Hesketh shows a 10.' && r.v.canDouble, 'blackjack: the start of a hand reads "You have 11. Hesketh shows a 10."');
+    force([C(10)]); E('bjHit()');
+    assert(!E('bjDouble()') && view(E).phase === 'done', 'blackjack: 21 stands by itself; Double works on the first two cards only');
+    E('addModifier("gold", () => 1.8)');
+    const fever = E('goldMult()');
+    r = play([C(10), C(9), C(7), C(13)], ['bjStand']);
+    assert(fever > 1.7 && r.d === 310, `blackjack: with Gold Fever (+80%) on, a win still pays exactly the bet (goldMult ${fever.toFixed(2)}, paid ${r.d})`);
+    for (let i = 0; i < 300; i++) { E('bjNext(); bjSetBet(16); bjDeal()'); while (view(E).phase === 'play') E('bjView().pt.t < 17 ? bjHit() : bjStand()'); }
+    assert(books() === b0, 'blackjack: S.econ.earned, S.econ.spent and S.totalGold never move at the table');
+    const n = E('JSON.stringify(S.blackjack.n)'), nn = JSON.parse(n);
+    assert(nn.hands === nn.won + nn.lost + nn.tied && nn.hands >= 300, 'blackjack: every hand is counted once as won, lost or tied ' + n);
+  }
+  // 4. the clamp, Double off at the loss limit and when short of gold, the day's limits and the reset across deviceDay
+  {
+    const { E, force } = mk();
+    E('bjSetBet(1e9)'); assert(view(E).bet === 310, 'blackjack: the bet clamps to the highest bet');
+    E('bjSetBet(1)'); assert(view(E).bet === 16, 'blackjack: the bet clamps to the lowest bet');
+    E('bjSetBet(310); S.gold = 300'); assert(view(E).bet === 300, 'blackjack: the bet clamps to the gold held');
+    E('S.gold = 10'); let v = view(E);
+    assert(v.short && !v.canDeal && v.note === 'You need 16 gold to sit down.' && !E('bjDeal()'), 'blackjack: short of the lowest bet, Deal is off: "You need 16 gold to sit down."');
+    E('S.gold = 100000; S.blackjack.day = deviceDay(Date.now()); S.blackjack.net = -1550 + 200');
+    assert(view(E).bet === 200, 'blackjack: the bet clamps to the room left before the loss limit');
+    force([C(5), C(6), C(9)]); E('bjDeal()');
+    assert(!view(E).canDouble && !E('bjDouble()'), 'blackjack: Double is off when it would pass the day\'s loss limit');
+    E('S.blackjack.hand = null; S.blackjack.net = 0; S.gold = 600'); force([C(5), C(6), C(9)]); E('bjSetBet(310); bjDeal()');
+    assert(E('S.gold') === 290 && !view(E).canDouble, 'blackjack: Double is off when you can\'t cover it');
+    E('S.blackjack.hand = null; S.gold = 100000; S.blackjack.net = -1550 + 10'); v = view(E);
+    assert(v.closed && !v.canDeal && v.note === "The table's closed for today.", 'blackjack: with less room than the lowest bet the table closes: "The table\'s closed for today."');
+    E('S.blackjack.net = 1550'); assert(view(E).closed, 'blackjack: the win limit closes the table');
+    E('S.blackjack.net = 1500'); force([C(1), C(13), C(5), C(9)]); E('bjSetBet(310); bjDeal()');
+    assert(E('S.blackjack.net') === 1500 + 465 && view(E).closed, 'blackjack: a hand that crosses the win limit is paid in full, then the table closes');
+    E('Date.__t += 864e5'); v = view(E);
+    assert(!v.closed && E('S.blackjack.net') === 0 && E('S.blackjack.day') === E('deviceDay(Date.now())'), 'blackjack: a new device day starts the day\'s books again');
+    // a hand in play finishes on the day it was dealt
+    E('bjNext()'); force([C(10), C(6), C(9)]); E('bjDeal()'); const day = E('S.blackjack.day'), net = E('S.blackjack.net');
+    E('Date.__t += 864e5; bjView()');
+    assert(E('S.blackjack.day') === day && E('S.blackjack.net') === net, 'blackjack: the day does not turn over under a hand in play');
+  }
+  // 5. synchronous saves and the reload test: a reload shows the same hand, and no card is drawn early
+  {
+    const a = mk(), E = a.E;
+    a.force([C(10), C(6), C(9)]); E('bjSetBet(310); bjDeal()');
+    const stored = JSON.parse(a.g.storage.get(KEY)).blackjack;
+    assert(JSON.stringify(stored.hand) === E('JSON.stringify(S.blackjack.hand)') && stored.hand.d.length === 1 && stored.net === -310, 'blackjack: the deal is saved at once: the hand, its paid bet and one Hesketh card');
+    a.force([C(2)]); E('bjHit()');
+    assert(JSON.parse(a.g.storage.get(KEY)).blackjack.hand.p.length === 3, 'blackjack: every card drawn is saved before anything renders');
+    const b = mk({ storage: memoryStorage({ [KEY]: a.g.storage.get(KEY) }) }), F = b.E;
+    assert(F('JSON.stringify(S.blackjack.hand)') === E('JSON.stringify(S.blackjack.hand)') && F('S.gold') === E('S.gold'), 'blackjack: a reload shows the same hand and the same gold');
+    b.force([C(13)]); F('bjStand()');
+    assert(F('bjView().line') === '19 beats 18. You lose 310 gold.', 'blackjack: the reloaded hand plays on (' + F('bjView().line') + ')');
+    const st = JSON.parse(b.g.storage.get(KEY)).blackjack;
+    assert(st.hand.done === 1 && st.hand.res, 'blackjack: the result is saved');
+  }
+  // 6. the switch off refunds a hand in play at the next load (spec 9)
+  {
+    const a = mk(); a.force([C(10), C(6), C(9)]); a.E('bjSetBet(310); bjDeal()');
+    const gold = a.E('S.gold'), raw = a.g.storage.get(KEY);
+    const b = mk({ storage: memoryStorage({ [KEY]: raw }), off: true });
+    assert(b.g.storage.get(KEY) === raw, 'blackjack: the switch-off refund does not save at load (a save would stamp S.last before the boot reads the away time)');
+    assert(b.E('S.gold') === gold + 310 && b.E('S.blackjack.hand') === null && b.E('S.blackjack.net') === 0 && b.E('typeof S.blackjack') === 'object', 'blackjack: BJ_TUNE.on = 0 refunds a hand in play at load, and the save field stays');
+  }
+  // 7. save codes (spec 8): a code with a hand exports and imports; the import clears the hand and keeps today's lower net
+  {
+    const { E, force } = mk();
+    E('soloPick("wren"); S.cls.at = 0'); force([C(10), C(6), C(9)]); E('bjSetBet(310); bjDeal()');
+    const code = E('encodeSave(JSON.parse(JSON.stringify(S)))'), dec = JSON.parse(E(`JSON.stringify(decodeSave(${JSON.stringify(code)}))`));
+    assert(dec.ok && dec.data.blackjack.hand.p.length === 2, 'blackjack: a save with a hand in play exports and decodes' + (dec.ok ? '' : ': ' + dec.error));
+    const day = E('deviceDay(Date.now())');
+    E('S.blackjack.net = -2000');
+    let imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day}, net: -100, w: 600, bet: 26, hand: { p: [1, 2], d: [3], bet: 26, dbl: 0, done: 0, res: null }, n: { hands: 4, won: 1, lost: 3, tied: 0, bj: 0 } } })))`));
+    assert(imp.blackjack.hand === null && imp.blackjack.net === -2000 && imp.blackjack.n.hands === 4, 'blackjack: an import clears the hand in play and keeps the lower of today\'s nets (an old code can\'t reopen a table a loss closed)');
+    imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day - 3}, net: -9000, bet: 26, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } } })))`));
+    assert(imp.blackjack.net === -2000 && imp.blackjack.day === day, 'blackjack: an imported net from another day counts as 0');
+    E('S.blackjack.net = 1600; S.blackjack.top = 1600'); imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day}, net: 0, top: 0, bet: 26, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } } })))`));
+    assert(imp.blackjack.net === 0 && imp.blackjack.top === 1600, 'blackjack: an import keeps today\'s highest net, so a morning code can\'t reopen a table a win closed');
+    E('S.blackjack = Object.assign(S.blackjack, { net: 0, top: 1600, hand: null })'); assert(E('bjView().closed'), 'blackjack: the day\'s top at the win limit keeps the table closed');
+    E('S.blackjack.top = 0; S.blackjack.net = 0'); imp = JSON.parse(E(`JSON.stringify(bjImport((({ blackjack, ...rest }) => rest)(JSON.parse(JSON.stringify(S)))))`));
+    assert(imp.blackjack.net === 0 && imp.blackjack.hand === null, 'blackjack: a code from before the table imports with a fresh table');
+    const bad = h => E(`validateSave(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: Object.assign({ v: 1, day: 0, net: 0, bet: 0, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } }, ${JSON.stringify(h)}) })).ok`);
+    assert(!bad({ hand: { p: [1, 1, 1, 1, 1], d: [3], bet: 26, dbl: 0, done: 0 } }) && !bad({ hand: { p: [1, 2], d: [3, 4], bet: 26, dbl: 0, done: 0 } }) && !bad({ hand: { p: [99, 2], d: [3], bet: 26, dbl: 0, done: 0 } })
+      && !bad({ net: 0.5 }) && !bad({ n: { hands: -1 } }) && !bad({ w: 601 }) && bad({ day: -3 }) && bad({ hand: { p: [0, 13, 26, 39, 1, 0, 13, 26, 39, 1, 0, 13], d: [9], bet: 26, dbl: 0, done: 0, res: null } }) && bad({ hand: { p: [1, 2], d: [3], bet: 26, dbl: 0, done: 0, res: null } }),
+      'blackjack: save codes take a 12-card hand and a clock before 2026, and refuse a card held more often than four decks, a second Hesketh card before you stood, an unknown card, a fractional net and a negative count');
+    assert(/candidateRaw = JSON\.stringify\(bjImport\(checked\.data\)\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-savecode-ui.js'), 'utf8')), 'blackjack: the save-code import writes the table through bjImport');
+  }
+  // 8. the art freeze (spec 10) and the copy (spec 11)
+  {
+    const files = ['js/57t-blackjack.js', 'js/75-blackjack-ui.js', 'styles/60-blackjack.css'].map(f => [f, fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')]);
+    const hit = files.filter(([, t]) => /[♠-♧♤♡♢]|\p{Extended_Pictographic}|<svg|data:image\/svg|url\(/u.test(t)).map(([f]) => f);
+    assert(!hit.length, 'blackjack: no suit glyph, emoji, inline SVG or image in the new files (the art freeze)' + (hit.length ? ': ' + hit.join(', ') : ''));
+    const all = files.map(f => f[1]).join('\n'), onb = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
+    assert(all.includes('Hesketh deals. He stands on 17. Blackjack pays 3 to 2.') && all.includes("Hesketh's rule of thumb: stand on 12 to 16 when I show a 2 to 6. Always hit 11 or less.")
+      && onb.includes("blackjack: 'New on the Camp tab: a card table at the Tavern.'") && onb.includes(`blackjack: "I've put a card table in the Tavern. Blackjack, for gold."`)
+      && !/come back tomorrow|the house|resets in/i.test(all), 'blackjack: the copy is the spec\'s (section 11), with no "come back tomorrow", countdown or "the house"');
+  }
+} catch (e) { fail('tavern blackjack crashed: ' + (e.stack || e)); }
+
+// ---- Tavern Blackjack on screen: 1280x720, 740x360 and 360x740 (reduced motion), the 300 ms press guard and the button places ----
+if (section('tavern blackjack (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('tavern blackjack (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [tag, viewport, mobile, rm] of [['1280x720', { width: 1280, height: 720 }, false, 'no-preference'], ['740x360', { width: 740, height: 360 }, true, 'no-preference'], ['360x740 reduced motion', { width: 360, height: 740 }, true, 'reduce']]) {
+        const ctx = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile, reducedMotion: rm });
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+        await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; onboardTips(false); true');
+        await X('S.maxZone = 14; S.zone = 14; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.blackjack.w = 600; S.gold = 1e6; onboardUnlockAll(); for (let i = 0; i < 6; i++) tick(1.2); onboardReveal("blackjack"); true');
+        await X('setTab("tav"); ui(true); true'); await page.waitForTimeout(400);
+        await page.$eval('#sec-blackjack', n => n.scrollIntoView({ block: 'start' })); await page.waitForTimeout(250);
+        const box = () => page.$eval('#sec-blackjack', n => {
+          const r = n.getBoundingClientRect(), btns = [...n.querySelectorAll('button')].filter(b => b.offsetParent && getComputedStyle(b).visibility !== 'hidden');
+          return { shown: !!n.offsetParent && !n.classList.contains('f-off'), left: r.left, right: r.right, vw: innerWidth, sx: document.documentElement.scrollWidth > innerWidth + 1,
+            small: btns.filter(b => b.getBoundingClientRect().height < 43.5).map(b => b.textContent), wide: btns.filter(b => b.getBoundingClientRect().right > innerWidth + 1 || b.scrollWidth > b.clientWidth + 1).map(b => b.textContent),
+            anim: getComputedStyle(n.querySelector('.bj-card') || n).animationName,
+            cut: [...n.querySelectorAll('.bj-card .bj-suit')].filter(x => x.scrollWidth > x.parentNode.clientWidth + 1 || x.getBoundingClientRect().right > x.parentNode.getBoundingClientRect().right + 1).map(x => x.textContent) };
+        });
+        let b = await box();
+        assert(b.shown && b.left >= -1 && b.right <= b.vw + 1 && !b.sx && !b.small.length && !b.wide.length, `blackjack ${tag}: the box shows on Camp > Tavern, fits the screen, and every button is 44 px tall and fits its text (${JSON.stringify(b)})`);
+        const at = s => page.$eval(s, n => { const r = n.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width)]; });
+        const deal = await at('#sec-blackjack .bj-mid');
+        assert(/^Deal /.test(await page.textContent('#sec-blackjack .bj-mid')) && /Table: 16 to 310 gold/.test(await page.textContent('#sec-blackjack .bj-lim')), `blackjack ${tag}: Deal names the bet and the limits line reads "Table: 16 to 310 gold"`);
+        // a double tap on Deal: the second tap lands on Stand inside the guard and does nothing. The forced cards go only to the
+        // table's draws (the stage's sparks call Math.random every frame too).
+        await X('globalThis.__q = [9, 4, 8]; Math.random = (() => { const r0 = Math.random; return () => { if (!globalThis.__q.length || !/bj(Deal|Hit|Stand|Double)/.test(new Error().stack)) return r0(); const c = globalThis.__q.shift(), h = S.blackjack.hand, u = {}; for (const x of h.p.concat(h.d)) u[x] = (u[x] || 0) + 1; let n = 0; for (let i = 0; i < c; i++) n += 4 - (u[i] || 0); return (n + 0.5) / (208 - h.p.length - h.d.length); }; })(); true');
+        await page.click('#sec-blackjack .bj-mid'); await page.click('#sec-blackjack .bj-mid', { delay: 0 });
+        const v1 = JSON.parse(await X('JSON.stringify(bjView())'));
+        const hit = await at('#sec-blackjack .bj-act:first-child');
+        assert(v1.phase === 'play' && v1.p.length === 2, `blackjack ${tag}: a second tap within 300 ms of Deal is ignored (the hand is still in play)`);
+        assert(hit[0] !== deal[0] && Math.abs(hit[0] - deal[0]) >= hit[2] - 1, `blackjack ${tag}: Hit is never where Deal sat (${JSON.stringify([hit, deal])})`);
+        await page.waitForTimeout(350);
+        assert(await page.$$eval('#sec-blackjack .bj-card', ns => ns.length) === 3 && /THORNS|LANTERNS|KEYS|CUPS/i.test(await page.textContent('#sec-blackjack .bj-table')) && /You have 15\. Hesketh shows a 9\./.test(await page.textContent('#sec-blackjack .bj-line')),
+          `blackjack ${tag}: two cards for you and Hesketh's one (no hole card), the suit named in words, "You have 15. Hesketh shows a 9."`);
+        b = await box(); assert(!b.sx && !b.wide.length && !b.small.length && !b.cut.length && (rm !== 'reduce' || b.anim === 'none'), `blackjack ${tag}: the hand in play fits, each suit's name inside its card${rm === 'reduce' ? ', and reduced motion stops the card slide' : ''} (${JSON.stringify(b)})`);
+        await X('globalThis.__q = [12]; true');
+        await page.click('#sec-blackjack .bj-mid'); await page.click('#sec-blackjack .bj-mid', { delay: 0 });
+        const v2 = JSON.parse(await X('JSON.stringify(bjView())'));
+        assert(v2.phase === 'done' && /Next hand/.test(await page.textContent('#sec-blackjack .bj-mid')), `blackjack ${tag}: Stand settles the hand and a second tap inside 300 ms does not press Next hand (${v2.line})`);
+        await page.waitForTimeout(350); await page.click('#sec-blackjack .bj-mid'); await page.waitForTimeout(350);
+        assert(JSON.parse(await X('JSON.stringify(bjView())')).phase === 'bet' && await X('S.blackjack.bet') === 16, `blackjack ${tag}: Next hand clears the table and keeps the bet`);
+        await page.click('#sec-blackjack .bj-coin[data-k="10"]'); await page.waitForTimeout(80); const raised = await X('S.blackjack.bet');
+        await page.click('#sec-blackjack .bj-clear'); await page.waitForTimeout(80);
+        assert(raised > 16 && await X('S.blackjack.bet') === 16, `blackjack ${tag}: the coins raise the bet and Clear goes back to the lowest bet (${raised})`);
+        assert(!errs.length, `blackjack ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tavern blackjack (browser) crashed: ' + (e.stack || e)); }
 // ---- C1: Tents, fixed shifts, queues, recall and named routes (economy-2 4-5) ----
 if (section('gatherer engine gaps (C1)')) try {
   const HOUR = 3600e3, T0 = new Date(2026, 8, 28, 12).getTime(), games = [];
@@ -7976,7 +8444,7 @@ if (section('save import recovery UI (C5)')) try {
     const g = loadCore({ seed: 7505, storage: adapter, prelude: stub, files: coreFiles().concat(['75-savecode-ui.js','90-boot.js']) }); games.push(g);
     g.eval('globalThis.__panel=el("section");__panel.id="log";document.body.append(__panel);__sections.savecode.mount(__panel);S.name="Current game";S.gold=123;');
     if(writeInitial)g.fn.save();
-    g.eval('globalThis.__candidate=JSON.parse(JSON.stringify(S));__candidate.name="Imported game";__candidate.gold=456;globalThis.__code=encodeSave(__candidate);globalThis.__candidateRaw=JSON.stringify(decodeSave(__code).data)');
+    g.eval('globalThis.__candidate=JSON.parse(JSON.stringify(S));__candidate.name="Imported game";__candidate.gold=456;globalThis.__code=encodeSave(__candidate);globalThis.__candidateRaw=JSON.stringify(bjImport(decodeSave(__code).data))');   // tavern-blackjack-build: the import writes the table through bjImport (spec 8)
     return { g, control, store, E: s => g.eval(s) };
   };
   const click = (E,label) => E(`__panel.querySelectorAll("button").find(b=>b.textContent===${JSON.stringify(label)}).click()`);
@@ -8044,6 +8512,65 @@ if (section('save import recovery UI (C5)')) try {
   }
   assert(!games.some(g=>g.errors.length), 'C5 UI: save recovery and real lifecycle callbacks produce no handler errors');
 } catch (e) { fail('C5 save import recovery UI crashed: ' + (e.stack || e)); }
+
+// ---- save-export-in-viewer: inside the claude.ai viewer (window.claude, or any frame) the second export button shows the code to
+// copy by hand, since the viewer grants no downloads; outside it, the same button still downloads a .txt file of the code ----
+if (section('save export in viewer')) try {
+  const { coreFiles } = await import('./lib/core.mjs');
+  const games = [];
+  const run = (where) => {
+    const stub = `
+      class SaveNode {
+        constructor(t='div',c='',s=''){this.tagName=t.toUpperCase();this.className=c||'';this.children=[];this.events={};this.attrs={};this.style={};this._text=s||'';this.value='';this.disabled=false;}
+        append(...ns){for(const n of ns){n.remove?.();this.children.push(n);n.parentNode=this;}} appendChild(n){this.append(n);return n;}
+        remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}
+        after(n){n.remove?.();const p=this.parentNode,i=p.children.indexOf(this);p.children.splice(i+1,0,n);n.parentNode=p;}
+        contains(n){return this===n||this.children.some(c=>c.contains(n));}
+        set textContent(s){this._text=String(s);for(const n of this.children)n.parentNode=null;this.children=[];} get textContent(){return this._text+this.children.map(n=>n.textContent).join('');}
+        setAttribute(k,v){this.attrs[k]=String(v);} getAttribute(k){return this.attrs[k]??null;}
+        addEventListener(k,f){(this.events[k]||(this.events[k]=[])).push(f);} fire(k){for(const f of this.events[k]||[])f({target:this});} click(){if(this.tagName==='A')__clicked.push(this);if(!this.disabled)this.fire('click');} focus(){document.activeElement=this;} select(){this.selected=true;}
+        querySelectorAll(s){const a=[],match=n=>s[0]==='.'?n.className.split(' ').includes(s.slice(1)):s[0]==='#'?n.id===s.slice(1):n.tagName===s.toUpperCase();const walk=n=>{for(const c of n.children){if(match(c))a.push(c);walk(c);}};walk(this);return a;}
+        querySelector(s){return this.querySelectorAll(s)[0]||null;}
+      }
+      const __sections={},__clicked=[],__blobs=[];
+      const document={body:new SaveNode('body'),activeElement:null,hidden:false,createElement:t=>new SaveNode(t),execCommand:()=>false,addEventListener:()=>{}};
+      const window={};window.self=window;window.top=${where==='frame'?'{}':'window'};${where==='claude'?'window.claude={use:()=>Promise.resolve(null)};':''}
+      const navigator={},location={reload(){}};
+      const Blob=class{constructor(parts,o){this.text=parts.join('');this.type=o&&o.type;__blobs.push(this);}};
+      const URL={createObjectURL:b=>'blob:'+__blobs.indexOf(b),revokeObjectURL(){}};
+      const el=(t,c,s)=>new SaveNode(t,c,s),$=id=>document.body.querySelector('#'+id),registerSection=(t,s)=>{__sections[s.id]=s;};
+      const performance={now:()=>0},resize=()=>{},updatePortrait=()=>{},initMenus=()=>{},connect=()=>{},flush=()=>{},maintainBoss=()=>{},pushPresence=()=>{},showAwayReport=()=>{};
+      const addEventListener=()=>{},requestAnimationFrame=()=>{},queueMicrotask=f=>f(),setTimeout=()=>0,setInterval=()=>0;
+    `;
+    const g = loadCore({ seed: 7511, storage: memoryStorage(), prelude: stub, files: coreFiles().concat(['75-savecode-ui.js','90-boot.js']) }); games.push(g);
+    g.eval('globalThis.__panel=el("section");__panel.id="log";document.body.append(__panel);__sections.savecode.mount(__panel);S.name="Export test";S.gold=321;');
+    return s => g.eval(s);
+  };
+  const buttons = E => E('__panel.querySelectorAll("button").map(b=>b.textContent)');
+  const press = (E, label) => E(`__panel.querySelectorAll("button").find(b=>b.textContent===${JSON.stringify(label)}).click()`);
+  for (const where of ['frame', 'claude']) {
+    const E = run(where);
+    assert(!buttons(E).includes('Download file') && buttons(E).includes('Show save code') && buttons(E).includes('Copy save code'), `save export (${where}): the viewer offers Copy save code and Show save code, never Download file (got ${buttons(E).join(', ')})`);
+    press(E, 'Show save code'); press(E, 'Show save code');
+    assert(E('__clicked.length===0 && __blobs.length===0'), `save export (${where}): Show save code never starts a file download`);
+    assert(E('__panel.querySelectorAll(".savecode-fallback").length===1 && __panel.querySelector(".savecode-fallback").selected && __panel.querySelector(".savecode-fallback").readOnly'), `save export (${where}): Show save code puts one selected, read-only code box on the panel`);
+    assert(E('(()=>{const r=decodeSave(__panel.querySelector(".savecode-fallback").value);return r.ok&&r.data.gold===321&&r.data.name==="Export test";})()'), `save export (${where}): the shown code is the current game and decodes`);
+    E('S.gold=654'); press(E, 'Show save code');
+    assert(E('decodeSave(__panel.querySelector(".savecode-fallback").value).data.gold===654'), `save export (${where}): showing again gives the game as it is now, not a stale code`);
+    assert(E('__panel.textContent.includes("Select it all and copy it") && __panel.textContent.includes("Tip: copy the code")'), `save export (${where}): the panel tells the player to copy the code`);
+  }
+  {
+    const E = run('page');
+    assert(buttons(E).includes('Download file') && !buttons(E).includes('Show save code'), `save export (page): outside the viewer the panel keeps Download file (got ${buttons(E).join(', ')})`);
+    press(E, 'Download file');
+    assert(E('__clicked.length===1 && /^lanternfall-save-\\d{8}\\.txt$/.test(__clicked[0].download) && __clicked[0].href===\"blob:0\"'), 'save export (page): Download file clicks one link that saves lanternfall-save-<date>.txt');
+    assert(E('__blobs.length===1 && __blobs[0].type==="text/plain" && decodeSave(__blobs[0].text).data.gold===321'), 'save export (page): the downloaded file holds a valid code of the current game');
+    assert(E('__panel.querySelectorAll(".savecode-fallback").length===0 && !__panel.textContent.includes("Tip: copy the code")'), 'save export (page): a download shows no copy box or viewer tip');
+  }
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-savecode-ui.js'), 'utf8');
+  assert(!/claude\.use\(\s*['"]downloads['"]/.test(src), 'save export: the page does not call the downloads capability (declaring it is Cal\'s call)');
+  assert(!games.some(g => g.errors.length), 'save export: no handler errors');
+} catch (e) { fail('save export in viewer crashed: ' + (e.stack || e)); }
 
 // ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
@@ -9345,6 +9872,11 @@ if (section('offline accounting and schedules (C14)')) try {
   assert(workerLines.length === 1 && /2 shifts/.test(workerLines[0].txt) && /3,396/.test(workerLines[0].txt), 'C14: two completed shifts merge into one truthful worker line');
   assert(lines.filter(l => l.group === 'Camp').length === 1 && /Workbench.*Forge/.test(lines.find(l => l.group === 'Camp').txt), 'C14: completed camp builds merge into one source line');
   assert(first.report.extra.some(l => l.group === 'Tavern' && /new applicant/.test(l.txt)), 'C14: the named Rook arrival appears in the away report even before a random applicant is due');
+  // leave-mid-fight-gathers: the same hero left mid-fight (Gather open) mines that node away, as live gathering does; fights earn nothing
+  { const lraw = offlineFixture('gather-left-fight'), ll = offlineGame(lraw); ll.eval("setActivity('gather')"); games.push(ll); offlineLiveUntil(ll, 0, 7200);
+    const l = offlineSnapshot(ll), a = offlineRun(lraw, 7200), g = offlineRun(raw, 7200), pct = (a.state.heroUnits / a.state.boost / Math.max(1, l.heroUnits) - 1) * 100;
+    assert(Math.abs(pct) <= 5 && a.state.heroUnits === g.state.heroUnits && a.state.rook === g.state.rook && a.state.rest === g.state.rest && a.state.gold - g.state.gold === 0 && a.state.kills === g.state.kills && a.report.leftFight && !a.errors.length,
+      `C14: a hero left mid-fight gathers its node away like a gatherer (${a.state.heroUnits} units, live ${l.heroUnits}: ${pct.toFixed(2)}%; Rook ${a.state.rook}s, Rested ${a.state.rest}s; no fight gold or kills)`); }
   const refund = offlineGame(raw); games.push(refund);
   refund.eval('handsRecall("tam"); S.mats.wood[0]=storeCap("wood",1); handsRecall("trade-worker"); S.mats.wood[0]-=1000; setActivity("fight"); globalThis.__beforeGathered=S.stats.gathered;');
   const rr = refund.eval(`Date.__t=${AUDIT_START + 1800000};awayGains(1800)`);
@@ -10207,22 +10739,33 @@ if (section('fixed battle backgrounds')) try {
 } catch (e) { fail('backgrounds crashed: ' + (e.stack || e)); }
 
 if (section('C22 Thorn Imp (zone 1)')) try {
-  // The owner-approved Thorn Imp (art/enemies/thorn-imp/v1): the art is embedded byte for byte, zone 1's regular foe is the
-  // Imp, and in turn fights it alternates Briar Jab (1 hit) and Crosscut (2 hits, slow then fast), each hit its own parry.
+  // The Thorn Imp (art/enemies/thorn-imp/scenario-v1, Cal signed off 10 Oct 2026 19:44; tools/art/thorn-imp-s.py): the art is
+  // embedded byte for byte, zone 1's regular foe is the Imp, and in turn fights it alternates Briar Jab (1 hit) and Crosscut
+  // (2 hits, slow then fast), each hit its own parry, dashing in before each and out after.
   { const { spawnSync } = await import('node:child_process'), r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'art', 'embed-foes.mjs'), '--check'], { encoding: 'utf8' });
     assert(r.status === 0, 'C22: src/js/21za-data-foeart.js is up to date with the approved packs (node tools/art/embed-foes.mjs)' + (r.status ? ': ' + (r.stderr || r.stdout) : '')); }
-  { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'approved-v2'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+  { const dir = path.join(ROOT, 'art', 'enemies', 'thorn-imp', 'scenario-v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
     const A = artData('21za-data-foeart.js', 'FOE_ART').imp;
     const frames = Object.values(A.acts).reduce((n, a) => n + a.f.length, 0);
     const bytes = Object.entries(A.atlases).every(([p, b64]) => b64 === fs.readFileSync(path.join(dir, p)).toString('base64'));
     const timing = Object.entries(man.actions).every(([id, a]) => A.acts[id] && a.frames.every((f, i) => A.acts[id].f[i][0] === f.duration_ms) &&
       JSON.stringify(A.acts[id].con) === JSON.stringify(a.contacts) && JSON.stringify(A.acts[id].rel) === JSON.stringify(a.release_cues));
-    assert(frames === 55 && Object.keys(A.acts).length === 7 && bytes && timing && A.acts.death.f[8][3] === -1,
-      `C22: the approved Thorn Imp pack (7 actions, ${frames} frames) is embedded with its atlases byte for byte, its timings, releases and contacts; death ends empty`); }
+    const srcs = Object.values(man.actions).flatMap(a => a.frames.map(f => f.source));
+    const webp = Object.values(A.atlases).every(b => { const x = Buffer.from(b, 'base64'); return x.toString('latin1', 0, 4) === 'RIFF' && x.toString('latin1', 8, 15) === 'WEBPVP8' && x[15] === 0x4C; });   // VP8L: lossless
+    assert(frames === 30 && Object.keys(A.acts).length === 8 && bytes && timing && A.fmt === 'webp' && A.k === 0.5 && webp && man.colours <= 64 &&
+      !srcs.includes('jab-2') && !srcs.includes('jab-7') && A.acts.dashIn && A.acts.dashOut && A.acts.death.fade > 0,
+      `C22: the Scenario Thorn Imp pack (8 actions, ${frames} frames, lossless WebP, ${man.colours} colours) is embedded with its atlases byte for byte, its timings and contacts; Briar Jab never shows Cal's rejected frames 2 and 7; it dashes in and out; death fades`); }
+  { // its effects (62c-foefx, thorn-imp-fx: Cal 21:34 "Very happy with all effects"): each hangs on a frame the pack has; death fades over 1.4 s
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '62c-foefx.js'), 'utf8'), m = src.match(/const FOE_FX = (\{[\s\S]*?\n\});/);
+    const X = m && new Function('return ' + m[1])().imp, A = artData('21za-data-foeart.js', 'FOE_ART').imp;
+    const bad = X ? Object.entries(X.ev).flatMap(([act, ev]) => Object.keys(ev).filter(i => !A.acts[act] || !(i >= 1 && i <= A.acts[act].f.length)).map(i => act + ':' + i)) : ['no FOE_FX'];
+    assert(X && !bad.length && A.acts.death.fade === 1400 && X.ev.jab[4] === 'thrust' && A.acts.jab.con[0] === 4 && X.ev.crosscut[3] === 'arcDown' && X.ev.crosscut[5] === 'arcUp' &&
+      JSON.stringify(A.acts.crosscut.con) === '[3,5]' && /if \(reduced\) return;\s*if \(turnOn\(\) && typeof turnHitstop/.test(src),
+      `C22: the Imp's effects hang on its own frames (the thrust on the Jab's contact, the crescents on the Crosscut's two), death fades over 1.4 s, and reduced motion drops the hit-stop and shake (${bad.join(', ') || 'ok'})`); }
   { const g = loadCore({ seed: 1 }), E = s => g.eval(s);
     const w = JSON.parse(E('JSON.stringify(ZONE_FOES[1].moves.map(m => m.hits.map(h => h.wind)))'));
     assert(JSON.stringify(w) === '[[1.61],[1.61,1]]' && E('zoneFoeDeathS({ skin: "imp" })') === 2.31,
-      `C22: the Imp's parry windows close on the art's contact frames (hop 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death (${JSON.stringify(w)})`); }
+      `C22: the Imp's parry windows close on the art's contact frames (dash in 0.73 s + 0.88 s to the first contact; 1.0 s between the Crosscut's two) and the next foe waits for its 2.31 s death (${JSON.stringify(w)})`); }
   { // Gloomjaw (art/enemies/gloomjaw/approved-v1, owner-approved 2026-10-02): zone 2's monster
     const dir = path.join(ROOT, 'art', 'enemies', 'gloomjaw', 'approved-v1'), man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
     const G = artData('21za-data-foeart.js', 'FOE_ART').gloomjaw;
@@ -12586,7 +13129,11 @@ if (section('craft-odds-before-pay')) try {
           const nu = await X('JSON.stringify(craftGoalNext())');
           await X(`setTab('forge'); ui(true); true`); await page.waitForTimeout(300);
           await X(`(() => { const b = document.querySelector('.cf-st[data-st="bench"]'); if (b) b.click(); return true; })()`);
+          const lineFirst = await X(`(() => { window.__bowBtn = document.querySelector('[aria-label="Craft Pine Bow"]'); return !!document.querySelector('.cf-rec[data-kind="bow"] .cf-pre'); })()`);
+          assert(!lineFirst, `${v}: the Pine Bow row shows before its boss line comes in (so the in-place check below means something)`);
           const shown = await wait(page, '.cf-rec[data-kind="bow"] .cf-pre');
+          // craft-list-keeps-place: the line goes into the row in place; a rebuilt row hands the guide a new button and upright it scrolled the list
+          if (shown) assert(await X(`!!window.__bowBtn && window.__bowBtn === document.querySelector('[aria-label="Craft Pine Bow"]')`), `${v}: the boss line goes into the Pine Bow row without rebuilding it (same Craft button)`);
           const o = shown ? await fit(page, '.cf-rec[data-kind="bow"] .cf-pre', '.cf-rec') : null;
           assert(/"kind":"bow","t":1/.test(nu) && o && /^Zone 2 boss: about \d+ in 10, now \d+$/.test(o.text), `${v}: Next Up's Pine Bow row shows the boss line before the press (${nu}; ${o ? o.text : 'none after 60 s'})`);
           if (o) {
@@ -13047,6 +13594,61 @@ if (section('damage-on-impact (core)')) try {
     io.damageFoe = d => { hp -= d; return d; }; const m = turnNew(p, io); m.phase = 'hero'; m.cds.attack = 0; const ok = turnResolve(m, { kind: 'attack' }, 0, io); return JSON.stringify({ ok, ph: m.phase, hp }); })()`);
   assert(s.ok && s.ph === 'recovery' && s.hp < 1e9, `damage-on-impact: a scratch fight with no impact timing still lands on the press (${JSON.stringify(s)})`);
 } catch (e) { fail('damage-on-impact crashed: ' + (e.stack || e)); }
+// ---- damage-on-impact, multi-hit (card multi-hit-impacts): Volley, Twin Shot and Moonlit Volley land each arrow's share and its
+// on-hit effects when that arrow arrives (62b fxImpactIn(id, i)), not all at the first. The total is what one landing dealt
+// (the same press with every arrow at the first's time), a kill lands the rest at once, and a fight cut off mid-volley lands no more.
+if (section('damage-on-impact multi-hit (core)')) try {
+  const fx = fs.readFileSync(path.join(ROOT, 'src', 'js', '62b-fx.js'), 'utf8');
+  const g = loadCore({ seed: 7, turns: true, extraSource: fx }), E = s => g.eval(s), J = s => JSON.parse(E(s));
+  const until = (cond, n = 600) => E(`(() => { for (let i = 0; i < ${n} && !(${cond}); i++) tick(0.02); return !!(${cond}); })()`);
+  E(`globalThis.__io = TURN_LIVE_IO.impactIn;`);
+  // a fresh Wren fight, ready to press; crits off (no Aim, no crit chance) so two presses deal the same
+  const ready = (slots, ab) => {
+    E(`TURN_LIVE_IO.impactIn = __io; TURN_LIVE = null; soloPick('wren', { now: true }); S.solo.eq.wren = ${slots}; S.abil.unl.wren = ${slots}.filter(Boolean); TURN_TUNE.on = 1; S.L = 12; S.maxZone = 6; setZone(6); S.activity = 'fight'; arena = null; fightBoss = false; gearDirty(); spawn();`);
+    const met = until(`TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'hero' && TURN_LIVE.cds.attack === 0`, 2000)
+      && E(`turnSyncEquip(); TURN_LIVE.cds['${ab || 'attack'}'] = 0; TURN_LIVE.p.eq.includes(${slots}[0])`);
+    E(`TURN_LIVE.noTiming = true; TURN_LIVE.p.critChance = 0; TURN_LIVE.p.gates = null; Object.assign(TURN_LIVE.e, { bleed: 0, bleedT: 0, mark: 0, markV: 0, sunder: 0, exposed: 0 }); Object.assign(TURN_LIVE.h, { aim: 0, keen: 0, blind: 0, sear: 0, weaken: 0, mom: 0 });`);
+    return met;
+  };
+  for (const [name, slots, ab, n, marked] of [['Volley', '["volley", null, null]', 'volley', 3, false], ['Twin Shot', '["twinshot", null, null]', null, 2, false],
+    ['Moonlit Volley', '["moonvolley", null, null]', 'moonvolley', 5, true]]) {
+    const id = ab || 'wren:attack', press = ab ? `turnCombatAction('ability', 0)` : `turnCombatAction('attack')`;
+    const met = ready(slots, ab), times = J(`JSON.stringify([0, 1, 2, 3, 4].map(i => fxImpactIn('${id}', i)))`);
+    E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; ${marked ? 'TURN_LIVE.e.mark = 3; TURN_LIVE.e.markV = 0.1;' : ''}`);
+    const t0 = E('TURN_LIVE.now'), ok = E(press);
+    // each step's HP and Bleed: the arrows land one by one at their impacts
+    const steps = J(`(() => { const out = []; let hp = TURN_LIVE.foe.hp, b = TURN_LIVE.e.bleed; for (let i = 0; i < 400 && TURN_LIVE.phase !== 'recovery'; i++) { tick(0.005);
+      if (TURN_LIVE.foe.hp !== hp || TURN_LIVE.e.bleed !== b) out.push({ t: TURN_LIVE.now - ${t0}, hp: hp - TURN_LIVE.foe.hp, b: TURN_LIVE.e.bleed - b, ph: TURN_LIVE.phase }); hp = TURN_LIVE.foe.hp; b = TURN_LIVE.e.bleed; }
+      return JSON.stringify(out); })()`);
+    const hits = steps.filter(s => s.hp > 0), total = steps.reduce((a, s) => a + s.hp, 0);
+    const timed = hits.length === n && hits.every((s, i) => Math.abs(s.t - times[i]) < 0.02) && new Set(times.slice(0, n)).size === n;
+    assert(met && ok && timed && hits.slice(0, -1).every(s => s.ph === 'strike'),
+      `multi-hit-impacts ${name}: ${n} arrows land one by one at ${times.slice(0, n).map(t => t.toFixed(2)).join(', ')} s (met ${met}, pressed ${ok}; ${hits.map(s => `${s.hp.toFixed(0)} at ${s.t.toFixed(2)} ${s.ph}`).join(', ')})`);
+    if (marked) assert(hits.length === n && hits.every(s => s.b === 1), `multi-hit-impacts ${name}: each arrow adds its Bleed as it lands on a Marked foe (${JSON.stringify(steps.map(s => s.b))})`);
+    // the same press with every arrow at the first's time (one landing, as #348 shipped): the same total
+    ready(slots, ab);
+    E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; ${marked ? 'TURN_LIVE.e.mark = 3; TURN_LIVE.e.markV = 0.1;' : ''} TURN_LIVE_IO.impactIn = (id, i) => __io(id, 0);`);
+    const hp1 = E('TURN_LIVE.foe.hp'); E(press); until(`TURN_LIVE.phase === 'recovery'`, 200); const once = hp1 - E('TURN_LIVE.foe.hp');
+    assert(total > 0 && Math.abs(total - once) < 1e-6 * once, `multi-hit-impacts ${name}: the total is unchanged (${total.toFixed(2)} arrow by arrow, ${once.toFixed(2)} in one landing)`);
+  }
+  // a kill on the first arrow lands the rest at once (nothing), so the fight ends there
+  ready('["volley", null, null]', 'volley');
+  E(`TURN_LIVE.foe.hp = 1; globalThis.__m = TURN_LIVE;`); const t1 = E('TURN_LIVE.now'); E(`turnCombatAction('ability', 0)`);
+  until(`__m.ended`, 60);
+  assert(E('__m.ended && __m.strike === null') && E('__m.now') - t1 < E(`fxImpactIn('volley', 0)`) + 0.03, `multi-hit-impacts: a first arrow that kills ends the fight on its impact (${(E('__m.now') - t1).toFixed(2)} s)`);
+  // a fight cut off between the arrows lands no more of them
+  ready('["volley", null, null]', 'volley');
+  E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; globalThis.__f = TURN_LIVE.foe; turnCombatAction('ability', 0);`);
+  until(`__f.hp < 1e7`, 100);
+  E(`globalThis.__hp = __f.hp; turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); for (let i = 0; i < 40; i++) tick(0.02);`);
+  assert(E('__f.hp === __hp && __hp < 1e7'), `multi-hit-impacts: a fight cut off after the first arrow lands no more (${E('__hp')} then ${E('__f.hp')})`);
+  // a hitstop between arrows holds the fight clock, not the arrows: the next lands on time
+  ready('["volley", null, null]', 'volley');
+  E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; globalThis.__f = TURN_LIVE.foe; turnCombatAction('ability', 0);`);
+  E(`for (let i = 0; i < 400 && __f.hp >= 1e7; i++) tick(0.005);`);   // land the first arrow on a fine step, so the gap below is measured from it
+  const hs = J(`(() => { turnHitstop(0.05); let hp = __f.hp, n = 0; while (__f.hp === hp && n < 50) { tick(0.005); n++; } return JSON.stringify({ n, gap: n * 0.005 }); })()`);
+  assert(Math.abs(hs.gap - E(`fxImpactIn('volley', 1) - fxImpactIn('volley', 0)`)) < 0.015, `multi-hit-impacts: a hitstop between arrows does not hold the next one back (${hs.gap.toFixed(3)} s after the first)`);
+} catch (e) { fail('damage-on-impact multi-hit crashed: ' + (e.stack || e)); }
 
 // ---- trick-read-rate (why W2): the game counts how often the player reads a zone boss's tricks (S.bossOdds.reads, 59m), from the
 // live fight (59k foeContact: zone, zb, pressed, early). A fixture fight at the zone 10 Champion presses on a set share of its
@@ -13798,6 +14400,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             }
             // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk
             if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
+            // hesketh-boss-loss-line: no step shows while the hero is down (a fight lost in the walk); the guide waits for the hero to stand, and so does the walk
+            if (!c.ok && !await X('typeof cbHeroUp !== "function" || cbHeroUp()')) { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
             // a step that ended while the walk looked (Next Up opening ends spend-points-before-nextup's line unseen) is not a miss
             if (!c.ok && await X('(s => s ? s.id : "")(onboardStep())') !== st) continue;
             // (a miss also says what the guide was doing: the line it wants, its say queue, a pending cache, the pause)
@@ -14893,6 +15497,8 @@ if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
   const { spawnSync } = await import('node:child_process'), walk = path.join(ROOT, 'tools', 'walk.mjs');
   const bad = spawnSync(process.execPath, [walk, '--bogus'], { encoding: 'utf8' });
   assert(bad.status === 2 && /unknown option/.test(bad.stderr), 'walk.mjs refuses an option it does not know (exit 2)');
+  const badCover = spawnSync(process.execPath, [walk, '--cover', 'lots'], { encoding: 'utf8' });   // walk-presses-cover: all or a number of minutes
+  assert(badCover.status === 2 && /--cover/.test(badCover.stderr), 'walk.mjs refuses a --cover that is not all or a number of minutes (exit 2)');
   const src = fs.readFileSync(walk, 'utf8').replace(/^\s*\/\/.*$/gm, '');
   assert(!/\bS(\.\w+|\[[^\]]+\])+\s*(=(?![=>])|\+=|-=|\+\+|--)/.test(src), 'the walk never assigns to game state (S.x = ...)');
   const { pw, exe } = browserTools;
@@ -15616,6 +16222,24 @@ if (section('page size')) try {
   for (const w of r.warns) console.log('  WARN ' + w);
   for (const f of r.fails) fail(f);
   if (!r.fails.length) ok('page size: the page is under 14 MB and every art pack is under its ceiling or its measured exception');
+  // load-budget-check (hosting.md 6, art-loader judge (d)): the split build's packs keep their per-pack ceilings, its files report a
+  // total with a 25 MB warn, and B1's 6.0 / 8.0 MB first-load lines are a report only. In memory: nothing is written.
+  const { splitBudgetReport, BUILD_WARN } = await import('./lib/page-size.mjs');
+  const sp = buildSplit({ write: false }), b = splitBudgetReport(sp, { everything: loadReport(sp).everything });
+  for (const l of b.lines) console.log('  ' + l);
+  for (const w of b.warns) console.log('  WARN ' + w);
+  for (const f of b.fails) fail(f);
+  if (!b.fails.length) ok(`page size: every split build pack is under its per-pack ceiling or its measured exception (${sp.packs.length} packs)`);
+  { // mutation runs: Gloomjaw no longer an exception fails the monster ceiling one byte past it and passes at it, and the
+    // whole-build warn fires one byte past 25 MB and not at it
+    const { CEIL, EXCEPT } = await import('./lib/page-size.mjs'), { 'foe:gloomjaw': _, ...except } = EXCEPT, gj = 'split pack foe:gloomjaw: ';
+    const over = splitBudgetReport(sp, { except, grow: { 'foe:gloomjaw': CEIL.monster + 1 } }), atC = splitBudgetReport(sp, { except, grow: { 'foe:gloomjaw': CEIL.monster } });
+    assert(over.fails.some(f => f.startsWith(gj) && f.includes(`over the monster ceiling of ${(CEIL.monster / 1e3).toFixed(1)} KB`)) && !atC.fails.some(f => f.startsWith(gj)),
+      `page size: mutation (Gloomjaw's split pack no longer an exception) fails one byte past the monster ceiling, not at it (${over.fails.join('; ') || 'nothing failed'})`);
+    const at = splitBudgetReport(sp, { pad: BUILD_WARN - b.total }), past = splitBudgetReport(sp, { pad: BUILD_WARN - b.total + 1 });
+    assert(!at.warns.length && past.warns.some(w => /over the 25\.00 MB whole-build warn line/.test(w)),
+      `page size: the whole-build warn fires just past 25 MB, not at it (${past.warns.join('; ') || 'no warn'})`);
+  }
 } catch (e) { fail('page size crashed: ' + (e.stack || e)); }
 
 // ==== embed-base91 (docs/design/page-bytes.md lever 10): every embedded art file is basE91 text, read back by one decoder ====
@@ -15649,7 +16273,7 @@ if (section('embed-base91')) try {
   for (const [fam, list] of Object.entries(R.icons)) list.forEach((u, i) => rows.push([`RES_ICONS.${fam}.${i + 1}`, u, art('resources', 'game-v1', `${fam}-${i + 1}.png`), PNG]));
   const P = artData('21yc-data-portraits.js', 'HERO_PORTRAITS');
   for (const [id, u] of Object.entries(P)) rows.push([`HERO_PORTRAITS.${id}`, u, art('portraits', id + '.png'), PNG]);
-  const FOE_DIR = { imp: 'enemies/thorn-imp/approved-v2', gloomjaw: 'enemies/gloomjaw/approved-v1' }, F = artData('21za-data-foeart.js', 'FOE_ART');
+  const FOE_DIR = { imp: 'enemies/thorn-imp/scenario-v1', gloomjaw: 'enemies/gloomjaw/approved-v1' }, F = artData('21za-data-foeart.js', 'FOE_ART');
   for (const [k, pk] of Object.entries(F)) for (const [p, u] of Object.entries(pk.atlases))
     rows.push([`FOE_ART.${k}.${p}`, u, FOE_DIR[k] ? art(...FOE_DIR[k].split('/'), p) : null, '']);
   const BG = artData('21zb-data-bgart.js', 'BG_ART'), BGF = { 'mossy-hollow-outlined-night-v1': ['backgrounds/mossy-hollow/outlined-night-v1/runtime/mossy-hollow-night-960x540.webp', 'backgrounds/mossy-hollow/outlined-night-v1/runtime/mossy-hollow-night-portrait-480x900.webp'] };
@@ -16422,6 +17046,107 @@ if (section('forge-line-while-fighting')) try {
   }
 } catch (e) { fail('forge-line-while-fighting crashed: ' + (e.stack || e)); }
 
+// ==== tip-order-and-lateness: Hesketh's first-hour tips come when they are true and never contradict the one before ====
+// The cold leg of 10 Oct (reports/panel-2026-10-10, findings 5 and 6): "Mine 4 Copper Ore for a Copper Pickaxe", then with the ore in hand
+// "Make a Copper Pickaxe. You'll need one for the ore"; "The Workbench is up" long after it went up; "Power Shot is next to Echo" two minutes
+// after learning it; "Mine at the Copper Vein" while mining there. save-flow-cold-camp: Wren, cold, the Workbench built, no tool yet. Copper
+// Ore is set to 0 and she gathers Pine Log. The section plays the pickaxe, the Workbench line, the bow, Power Shot, then the Forge's ore, and
+// reads each line on the guide's next look after its condition turns true (a resize runs that look at once: no wait, no timer).
+if (section('tip-order-and-lateness')) try {
+  const at = 'tip-order-and-lateness', raw0 = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-flow-cold-camp.json'), 'utf8');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the line on screen now: its text, its button, the hold
+    const READ = `JSON.stringify((() => { const b = document.querySelector('.ob-bub'), up = !!b && !b.hidden, ok = document.querySelector('.ob-ok');
+      return { want: up ? soloGuideWants() : '', txt: up ? b.querySelector('.ob-txt').textContent : '', ok: up && ok && !ok.hidden ? ok.textContent : '', paused: ONBOARD.paused }; })())`;
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, mobile = w !== 1280, o = JSON.parse(raw0);
+        o.mats.ore[0] = 0; o.activity = 'gather'; o.node = { kind: 'wood', t: 1 };
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: JSON.stringify(o), key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+        const X = s => page.evaluate(s => window.__t.x(s), s), log = [];
+        const note = s => { if (s.txt && log[log.length - 1] !== s.txt) log.push(s.txt); return s; };
+        // change the game, then one look of the guide (its resize handler runs tick() there and then), then read the line
+        const after = async src => note(JSON.parse(await X(`${src}; dispatchEvent(new Event('resize')); ${READ}`)));
+        const until = async (f, ms) => { let s = note(JSON.parse(await X(READ))); for (const t0 = Date.now(); !f(s) && Date.now() - t0 < ms;) { await page.waitForTimeout(150); s = note(JSON.parse(await X(READ))); } return s; };
+        // 1. short of ore: the pickaxe's ore, with a Go to the vein
+        let s = await until(s => s.want === 'stock:tool', 8000);
+        assert(s.txt === 'Mine 4 Copper Ore for a Copper Pickaxe (0/4).' && s.ok === 'Mine at the Copper Vein', `${v}: short of ore, Hesketh asks for 4 Copper Ore with a Go to the Copper Vein (${JSON.stringify(s)})`);
+        // 2. mining there: the line counts, it no longer tells her to mine
+        await page.click('.ob-ok');
+        s = await after('true');
+        assert(await X('S.activity === "gather" && S.node.kind === "ore" && S.node.t === 1') && /^Mining Copper Ore for a Copper Pickaxe \(\d\/4\)\.$/.test(s.txt) && !s.ok,
+          `${v}: mining at the Copper Vein, the line counts the ore and asks for nothing she is already doing (${JSON.stringify(s)})`);
+        // 3. the ore in hand: on the next look, the pickaxe line, and no "The Workbench is up" (it went up long before)
+        s = await after('S.mats.ore[0] = 4');
+        assert(s.want === 'tool' && s.txt === 'You have the Copper Ore and Pine Log for a Copper Pickaxe. Open Craft and make it.', `${v}: with the ore in hand the next look says she has what the pickaxe takes (${JSON.stringify(s)})`);
+        // 4. Craft: make it, with no word that she still needs it for the ore
+        await X('setTab("forge", "make"); true');
+        s = await until(s => /^Make a Copper Pickaxe/.test(s.txt), 4000);
+        assert(s.want === 'tool' && s.txt === 'Make a Copper Pickaxe. It mines faster than your Stone Pick.', `${v}: in Craft he says make it and why, not "You'll need one for the ore" (${JSON.stringify(s)})`);
+        await page.click('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go');
+        await page.waitForFunction(() => window.__t.x('toolMade() && toolWorn()'), null, { timeout: 5000 });
+        // the bow (Wren's first weapon, at the Workbench): made and put on, so the Forge's turn comes after Power Shot
+        await page.waitForTimeout(400);
+        await page.click('#sec-craft-recipes .cf-rec[data-kind="bow"] .cf-go');
+        s = await until(s => s.want === 'wear:weapon', 5000);
+        if (s.want === 'wear:weapon') await page.click('.ob-ok');
+        await page.waitForFunction(() => window.__t.x('weaponMade()'), null, { timeout: 5000 });
+        // 5. Power Shot learned on the Hero menu during her turn, the fight going on: his line says where it went on that look, holding nothing
+        // (the Hero tab's points steps are another card's: answered here, so they do not stand in front)
+        await X('S.mats.ore[0] = 0; closeMenu(); setActivity("fight"); S.abil.scrolls.moss = 1; S.abil.got.moss = 1; for (const id of ["spend", "back"]) onboardDone(id); true');
+        await page.waitForFunction(() => window.__t.x('(q => !!q && q.phase === "hero")(turnCombatSnapshot()) && liveFoe()'), null, { timeout: 15000 });
+        await X('setTab("party", "abilities"); document.querySelectorAll(".ob-x").forEach(b => { if (b.offsetParent) b.click(); }); true');
+        s = await after('abilityLearn("wren", "powershot") && soloEquip(soloEquipped().indexOf(null), "powershot")');
+        assert(s.want === 'say:slot' && s.txt === "Power Shot is next to Echo now. Press it there when it's ready." && !s.paused && await X('liveFoe()'),
+          `${v}: Power Shot learned with a foe on the field: his line says where it went on the very next look, and holds nothing (${JSON.stringify(s)})`);
+        // read and the menu closed: it never comes back to hold the next kill gap
+        await X('closeMenu(); window.__k = 0; on("kill", () => { window.__k++; S.kills = 0; }); dispatchEvent(new Event("resize")); true');
+        const noSlot = async () => { let k0 = await X('window.__k'), seen = '';
+          for (const t0 = Date.now(); Date.now() - t0 < 30000 && await X('window.__k') < k0 + 1;) {
+            const r = note(JSON.parse(await X(READ))); if (r.want === 'say:slot') { seen = r.txt; break; }
+            // (a level 1 hero at zone 2 takes a while: each foe is left 1 HP so the next Attack makes the gap)
+            if (await X('combatFoes().forEach(f => { if (f && !f.dead && f.hp > 1) f.hp = 1; }); (q => !!q && q.phase === "hero")(turnCombatSnapshot()) && !ONBOARD.paused')) await page.keyboard.press('d');
+            await page.waitForTimeout(150);
+          }
+          return { seen, kills: await X('window.__k') - k0, at: JSON.parse(await X('JSON.stringify({ act: S.activity, tab: S.tab, phase: (turnCombatSnapshot() || {}).phase, foe: liveFoe(), held: ONBOARD.paused, step: (onboardStep() || {}).id, want: soloGuideWants() })')) }; };
+        let r = await noSlot();
+        assert(!r.seen && r.kills >= 1, `${v}: once read on the menu, the slot line does not come back in the next kill gap (${JSON.stringify(r)})`);
+        // a move learned and pressed before his line could show: the line is stale and never comes
+        // (Power Shot again: unlearned, its scroll back and the line's mark cleared, as if this were the first time)
+        await X(`S.abil.unl.wren = []; S.solo.eq.wren = ["echo", null, null]; S.abil.scrolls.moss = 1; S.abil.got.moss = 2; delete S.onboard.done["say:slot"];
+          abilityLearn("wren", "powershot") && soloEquip(soloEquipped().indexOf(null), "powershot"); emit("ability", { cls: "solo", id: "powershot", name: "Power Shot", auto: false }); true`);
+        r = await noSlot();
+        assert(!r.seen && r.kills >= 1 && await X('!S.onboard.sayQ.some(e => e.id === "slot")'), `${v}: a move already pressed gets no "next to" line in the next kill gap (${JSON.stringify(r)})`);
+        // 6. the Forge's ore, mining at the vein: the line counts, and nothing says to go and mine there
+        await after('S.mats.ore[0] = 0; setNode("ore", 1) && setActivity("gather")');
+        s = await until(s => s.want === 'stock:forge', 4000);
+        assert(s.want === 'stock:forge' && /^Mining Copper Ore for the Forge \(\d+\/25\)\.$/.test(s.txt) && s.ok !== 'Mine at the Copper Vein', `${v}: short of the Forge's ore while mining at the Copper Vein, the line counts and has no Go (${JSON.stringify(s)})`);
+        // and the fighter's held Forge line, queued, never shows while she mines there
+        await X('delete S.onboard.done["say:stock:forge"]; S.onboard.sayQ = [{ id: "stock:forge" }]; GUIDE_RT.t += 120; true');
+        s = await until(s => /The Forge needs/.test(s.txt), 3000);
+        assert(!/The Forge needs|Mine at the/.test(s.txt + s.ok), `${v}: mining at the Copper Vein, no held "Mine at the Copper Vein" line (${JSON.stringify(s)})`);
+        // the order: each line once its condition held, and none undoes the one before
+        const ORDER = [/^Mine 4 Copper Ore for a Copper Pickaxe/, /^Mining Copper Ore for a Copper Pickaxe/, /^You have the Copper Ore and Pine Log for a Copper Pickaxe/,
+          /^Make a Copper Pickaxe\. It mines faster/, /^Power Shot is next to Echo now/, /^Mining Copper Ore for the Forge/];
+        let i = 0; for (const t of log) if (i < ORDER.length && ORDER[i].test(t)) i++;
+        const bad = log.filter(t => /Workbench is up|You'll need one for the ore/.test(t)), back = log.slice(log.findIndex(t => ORDER[2].test(t))).filter(t => /^Mine \d+ Copper Ore for a Copper Pickaxe/.test(t));
+        assert(i === ORDER.length && !bad.length && !back.length, `${v}: the lines come in order, none stale, none undoing the last (${log.join(' | ')})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tip-order-and-lateness crashed: ' + (e.stack || e)); }
+
 // ==== tips-pause-says-so (Opus high judge, 2026-10-08): a Hesketh news line holds only the gap after a kill, never gathering; any other hold that
 // is not a fight lesson says "Paused" (the stage plate, Gather); a fight press answers a Got it hold and then acts; the bar stays in view, dimmed,
 // where the tip does not cover it; and his Stars, boss-loss and hero-down lines never come at the wrong moment (75-onboard-ui.js, 72-ui-gather.js) ====
@@ -16718,6 +17443,66 @@ if (section('tips-hold-740')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('tips-hold-740 crashed: ' + (e.stack || e)); }
+
+// ==== defend-bar-740 (cold leg 10 Oct): on the foe's turn the Dodge/Parry timing bar covered the Thorn Imp's legs at 740x360, so the player
+// could not see the wind-up they were timing. On a phone on its side Dodge and Parry now sit beside the track on one row and the bar starts under
+// the actors' feet (80-landscape.css); 1280x720, 1366x640 and 360x740 keep the bar under the track as before. Checked on a plain foe and a
+// zone boss, with the window open, and the track keeps its width as Dodge and Parry grow ====
+if (section('defend-bar-740')) try {
+  const at = 'defend-bar-740';
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-dipper-z4.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    // the bar, the hero and every live foe (their drawn pixels, 62-stage stageRects), in CSS px
+    const LOOK = `JSON.stringify((() => {
+      const q = turnCombatSnapshot(), t = document.querySelector('.tv-bot .tv-time'), tr = t && t.querySelector('.tv-track');
+      const R = n => { const r = n.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); };
+      const st = document.getElementById('stage'), sr = st.getBoundingClientRect(), S = stageRects(), z = S.ZM || 1;
+      const op = c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, W = c.width, H = c.height; let l = W, tp = H, r = -1, b = -1;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 40) { if (x < l) l = x; if (x > r) r = x; if (y < tp) tp = y; b = y; }
+        return { l, t: tp, r: r + 1, b: b + 1 }; };
+      const put = s => { const o = op(s.c); return [sr.left + (s.x + o.l) * z, sr.top + (s.y + o.t) * z, sr.left + (s.x + o.r) * z, sr.top + (s.y + o.b) * z].map(Math.round); };
+      const shown = !!t && !t.hidden && getComputedStyle(t).visibility !== 'hidden';
+      return { phase: q && q.phase, open: !!q && q.phase === 'foeWindup' && q.now >= Math.min(q.parryOpensAt || 1e9, q.dodgeOpensAt || 1e9),
+        shown, bar: t ? R(t) : null, track: tr ? Math.round(tr.getBoundingClientRect().width) : 0, stage: R(st),
+        hero: S.hero ? put(S.hero) : null, foes: S.foes.map(f => Object.assign(put(f), { boss: f.boss })), boss: !!(mob && mob.boss) };
+    })())`;
+    const meet = (a, b) => !!a && !!b && a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+    const inside = (a, b) => !!a && !!b && a[0] >= b[0] && a[1] >= b[1] && a[2] <= b[2] && a[3] <= b[3];
+    try {
+      for (const [w, h] of [[740, 360], [1280, 720], [1366, 640], [360, 740]]) for (const boss of [false, true]) {
+        const v = `${at} (browser ${w}x${h}, ${boss ? 'the zone boss' : 'a Thorn Imp'})`, mobile = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`GUIDE_STEPS.forEach(s => { if (!S.onboard.done[s.id]) S.onboard.done[s.id] = 1; }); S.onboard.sayQ = []; S.zone = 1; setActivity('fight'); ${boss ? 'fightBoss = true; spawn(); respawn = 0;' : ''} true`);
+        // attack on each of your turns until the foe winds up with the window open
+        let s = null, wound = null;
+        for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+          s = JSON.parse(await X(LOOK));
+          if (s.phase === 'foeWindup' && s.shown && !wound) wound = s;
+          if (s.phase === 'foeWindup' && s.shown && s.open && s.foes.length && (!boss || s.boss)) break;
+          if (s.phase === 'hero') await X('(() => { const b = document.querySelector("#soloBar .sb-atk"); if (b) b.click(); })(); true');
+          await page.waitForTimeout(30);
+        }
+        assert(s && s.open && s.shown && s.hero && s.foes.length && (!boss || s.boss), `${v}: the foe winds up with the timing bar showing (${JSON.stringify(s)})`);
+        const hit = [s.hero, ...s.foes].filter(a => meet(s.bar, a));
+        assert(!hit.length, `${v}: the timing bar is clear of the hero and every foe (bar ${s.bar}; hit ${JSON.stringify(hit)})`);
+        assert(inside(s.bar, s.stage), `${v}: the timing bar sits inside the stage (bar ${s.bar}, stage ${s.stage})`);
+        assert(!!wound && wound.track === s.track && s.track >= 180, `${v}: the track keeps its width as the window opens (${wound && wound.track} -> ${s.track} px)`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('defend-bar-740 crashed: ' + (e.stack || e)); }
 
 // ==== camp-build-tap-again: Hesketh's own build step builds in one tap; every other camp build arms "Confirm" for 6 s; Cancel always asks twice ====
 if (section('camp-build-tap-again')) try {
@@ -17278,7 +18063,7 @@ if (section('craft-shortfall-offer')) try {
 } catch (e) { fail('craft-shortfall-offer crashed: ' + (e.stack || e)); }
 
 // ---- upgrade-gold-covers-short (ruling autopilot/rulings/2026-10-08-gold-covers-material.md, B): an upgrade short of its one
-// material may pay the units it lacks in gold, ECON.coverFoes (9) foes of the tier's foe gold a raw unit (a middle is 2), once
+// material may pay the units it lacks in gold, ECON.coverFoes (27; 9 until gold-cover-share) foes of the tier's foe gold a raw unit (a middle is 2), once
 // the material's gathering tier is open and, for a middle, its station built. Held units go first; covered units give no skill
 // XP; salvage refunds step gold only; never a craft, Essence or a Trophy; coverFoes 0 turns it off; no new state. The item
 // sheet shows it as the second button after the free refine order. On save-refine (Forge and Workbench Lv 2, no middles). ----
@@ -17286,20 +18071,23 @@ if (section('upgrade-gold-covers-short')) try {
   const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-refine.json'), 'utf8');
   const fresh = () => loadCore({ seed: 1, storage: memoryStorage({ [KEY]: raw }) });
   const g = fresh(), E = s => g.eval(s);
-  assert(E('ECON.coverFoes') === 9, 'the cover price is 9 foes of the tier\'s foe gold a raw unit');
-  // the ruling's prices: 90 gold a tier-1 Plank (3 for 270, the card's bow), 45 a tier-1 raw unit, 6 Silver Ingots 860
+  assert(E('ECON.coverFoes') === 27, 'the cover price is 27 foes of the tier\'s foe gold a raw unit (gold-cover-share)');
+  // the prices: 270 gold a tier-1 Plank (3 for 810, the card's bow), 135 a tier-1 raw unit, 6 Silver Ingots 2,600
   const bow = JSON.parse(E(`(() => { const it = { id: 999001, slot: 'bow', t: 1, r: 'common', plus: 2, a: [] }; S.items.push(it); S.mats.plank[0] = 0; return JSON.stringify([upgradeCost(it), upgradeCover(it)]); })()`));
-  assert(bow[0].mats.plank === 3 && bow[0].gold === 230 && JSON.stringify(bow[1]) === '{"fam":"plank","t":1,"units":3,"gold":270}', `a Pine Bow +2 short 3 Pine Planks: 270 gold covers them (${JSON.stringify(bow)})`);
+  assert(bow[0].mats.plank === 3 && bow[0].gold === 230 && JSON.stringify(bow[1]) === '{"fam":"plank","t":1,"units":3,"gold":810}', `a Pine Bow +2 short 3 Pine Planks: 810 gold covers them (${JSON.stringify(bow)})`);
   E('S.mats.plank[0] = 1');
-  assert(E('JSON.stringify(upgradeCover(itemById(999001)))') === '{"fam":"plank","t":1,"units":2,"gold":180}', 'held units go first: with 1 Pine Plank held, gold covers the other 2 for 180');
+  assert(E('JSON.stringify(upgradeCover(itemById(999001)))') === '{"fam":"plank","t":1,"units":2,"gold":540}', 'held units go first: with 1 Pine Plank held, gold covers the other 2 for 540');
   const pick = JSON.parse(E(`(() => { const it = { id: 999002, slot: 'pick', t: 1, r: 'common', plus: 3 }; S.items.push(it); S.mats.ore[0] = 0; return JSON.stringify(upgradeCover(it)); })()`));
-  assert(pick && pick.fam === 'ore' && pick.units === 4 && pick.gold === 180, `a tool stays raw: 4 Copper Ore cost 45 each (${JSON.stringify(pick)})`);
+  assert(pick && pick.fam === 'ore' && pick.units === 4 && pick.gold === 540, `a tool stays raw: 4 Copper Ore cost 135 each (${JSON.stringify(pick)})`);
   const wpn = JSON.parse(E(`JSON.stringify([upgradeCover(equipped('weapon')), canUpgrade(S.equip.weapon).ok, canUpgrade(S.equip.weapon, undefined, { cover: true }).ok])`));
-  assert(JSON.stringify(wpn[0]) === '{"fam":"ingot","t":3,"units":6,"gold":860}' && !wpn[1] && wpn[2], `the Silver Warblade +6 short 6 Silver Ingots: refused without the cover, allowed with it for 860 (${JSON.stringify(wpn)})`);
+  assert(JSON.stringify(wpn[0]) === '{"fam":"ingot","t":3,"units":6,"gold":2600}' && !wpn[1] && wpn[2], `the Silver Warblade +6 short 6 Silver Ingots: refused without the cover, allowed with it for 2,600 (${JSON.stringify(wpn)})`);
   // limits: the gathering tier shut, the station unbuilt, coverFoes 0
   assert(E(`(() => { const lv = S.skills.mine.lv; S.skills.mine.lv = 1; const r = upgradeCover(equipped('weapon')); S.skills.mine.lv = lv; return r === null && canUpgrade(S.equip.weapon, undefined, { cover: true }).ok; })()`), 'no cover while the material\'s gathering tier is shut (Mining 1, Silver Ore)');
   assert(E(`(() => { const b = S.camp.b.forge; S.camp.b.forge = 0; const r = upgradeCover(equipped('weapon')); const c = canUpgrade(S.equip.weapon, undefined, { cover: true }); S.camp.b.forge = b; return r === null && !c.ok && c.why === 'Gold cannot cover this upgrade.'; })()`), 'no cover for an Ingot while the Forge is unbuilt');
-  assert(E(`(() => { ECON.coverFoes = 0; const r = upgradeCover(equipped('weapon')); ECON.coverFoes = 9; return r === null; })()`), 'coverFoes 0 turns the offer off');
+  assert(E(`(() => { ECON.coverFoes = 0; const r = upgradeCover(equipped('weapon')); ECON.coverFoes = 27; return r === null; })()`), 'coverFoes 0 turns the offer off');
+  // gold-cover-share: a cover pressed after the rest was gathered (the sheet still showed it) makes the plain upgrade, not a refusal
+  const stale = E(`(() => { const it = equipped('weapon'); S.mats.ingot[2] = upgradeCost(it).mats.ingot; const r = upgradeCover(it), c = canUpgrade(it.id, undefined, { cover: true }); S.mats.ingot[2] = 0; return JSON.stringify([r, c.ok, c.cover || null, c.pay && c.pay.gold]); })()`);
+  assert(stale === '[null,true,null,1800]', `all 6 Silver Ingots held when the cover is pressed: a plain upgrade for 1,800 gold (${stale})`);
   // never Essence or a Trophy: a unique short only of Essence has nothing to cover; the +8 step still needs its Trophy
   const ess = E(`(() => { const it = { id: 999003, slot: 'warblade', t: 3, r: 'legendary', u: Object.keys(UNIQ)[0], plus: 2, a: [] }; S.items.push(it); const c = upgradeCost(it); S.mats.ingot[2] = c.mats.ingot; const e0 = S.mats.ess.slice(); S.mats.ess = [0, 0, 0, 0, 0]; const r = [upgradeCover(it), canUpgrade(it.id, undefined, { cover: true }).why]; S.mats.ess = e0; S.mats.ingot[2] = 0; return JSON.stringify(r); })()`);
   assert(/^\[null,"Gold cannot cover this upgrade\."\]$/.test(ess), `a unique short only of Essence: gold covers nothing (${ess})`);
@@ -17315,9 +18103,9 @@ if (section('upgrade-gold-covers-short')) try {
     const dxp = Object.fromEntries(Object.keys(S.skills).map(k => [k, [S.skills[k].lv - sk0[k].lv, Math.round((S.skills[k].xp - sk0[k].xp) * 1000) / 1000]]));
     return JSON.stringify({ ok, plus: it.plus, spent: Math.round(g0 - S.gold), led: Math.round(econLedger().spent.craft - l0), ev: ev && { gold: ev.gold, cover: ev.cover }, ingot: S.mats.ingot[2], dxp, refund: craftUpgradeRefund(it) }); })()`));
   const ra = run(a, undefined), rb = run(b, { cover: true });
-  assert(ra.ok && rb.ok && ra.plus === 7 && rb.plus === 7 && ra.spent === 1800 && rb.spent === 2660 && rb.led === 2660 && rb.ingot === 0,
-    `covering 6 Silver Ingots spends 1,800 + 860 gold under the upgrade's ledger kind; the Ingots in hand cost 1,800 (${JSON.stringify([ra.spent, rb.spent, rb.led, rb.ingot])})`);
-  assert(JSON.stringify(ra.ev) === '{"gold":1800,"cover":{"units":0,"gold":0}}' && JSON.stringify(rb.ev) === '{"gold":1800,"cover":{"units":6,"gold":860}}', `the upgraded event carries cover { units, gold } (${JSON.stringify([ra.ev, rb.ev])})`);
+  assert(ra.ok && rb.ok && ra.plus === 7 && rb.plus === 7 && ra.spent === 1800 && rb.spent === 4400 && rb.led === 4400 && rb.ingot === 0,
+    `covering 6 Silver Ingots spends 1,800 + 2,600 gold under the upgrade's ledger kind; the Ingots in hand cost 1,800 (${JSON.stringify([ra.spent, rb.spent, rb.led, rb.ingot])})`);
+  assert(JSON.stringify(ra.ev) === '{"gold":1800,"cover":{"units":0,"gold":0}}' && JSON.stringify(rb.ev) === '{"gold":1800,"cover":{"units":6,"gold":2600}}', `the upgraded event carries cover { units, gold } (${JSON.stringify([ra.ev, rb.ev])})`);
   assert(JSON.stringify(ra.dxp) === JSON.stringify(rb.dxp) && ['mine', 'wood', 'forage', 'hunt'].every(k => !rb.dxp[k] || (rb.dxp[k][0] === 0 && rb.dxp[k][1] === 0)),
     `covered units give no skill XP: only the upgrade's own station XP, the same as with the Ingots in hand (${JSON.stringify(rb.dxp)})`);
   assert(ra.refund === rb.refund, `salvage pays back the same step gold, never the cover (${ra.refund} / ${rb.refund})`);
@@ -17344,16 +18132,16 @@ if (section('upgrade-gold-covers-short')) try {
       await X(`S.activity = 'gather'; for (const st of REFINE_STATIONS) refineOrders(st).length = 0; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(250);
       const r = await X(`(() => { const r = document.querySelector('.cf-up-box .cf-short'); if (!r) return null; const bs = [...r.querySelectorAll('button')]; const c = r.querySelector('.cf-cover'), box = c && c.getBoundingClientRect();
         return { btns: bs.map(b => b.className.replace('mini ', '')), cover: c ? c.textContent : '', dis: c ? c.disabled : null, inView: !!box && box.right <= innerWidth && box.left >= 0 }; })()`);
-      assert(r && JSON.stringify(r.btns) === '["cf-order","cf-cover"]' && r.cover === 'Upgrade: 1,800 + 860 gold for 6 Silver Ingots' && r.dis === false && r.inView,
+      assert(r && JSON.stringify(r.btns) === '["cf-order","cf-cover"]' && r.cover === 'Upgrade: 1,800 + 2,600 gold for 6 Silver Ingots' && r.dis === false && r.inView,
         `the Silver Warblade's upgrade row offers the Smelt order first and the gold cover second, inside a 360 px screen (${JSON.stringify(r)})`);
       const g0 = await X('S.gold');
       await X(`document.querySelector('.cf-up-box .cf-cover').click(); true`); await page.waitForTimeout(250);
       const after = await X(`JSON.stringify([equipped('weapon').plus, Math.round(${g0} - S.gold), REFINE_STATIONS.map(s => refineOrders(s).length)])`);
-      assert(after === '[7,2660,[0,0,0]]', `one press upgrades to +7 for 2,660 gold and queues nothing (${after})`);
+      assert(after === '[7,4400,[0,0,0]]', `one press upgrades to +7 for 4,400 gold and queues nothing (${after})`);
       // short of gold: the button stays, pressed does nothing, and says how much more
       await X(`S.gold = 2000; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(250);
       const poor = await X(`(() => { const c = document.querySelector('.cf-up-box .cf-cover'), w = document.querySelector('.cf-up-box .cf-cover-why'); return c ? [c.disabled, w ? w.textContent : ''] : null; })()`);
-      assert(poor && poor[0] === true && poor[1] === 'To cover them: 1.56K more gold.', `short of gold, the cover button is off and a line says how much more (${JSON.stringify(poor)})`);
+      assert(poor && poor[0] === true && poor[1] === 'To cover them: 3.30K more gold.', `short of gold, the cover button is off and a line says how much more (${JSON.stringify(poor)})`);
       assert(!errs.length, 'upgrade-gold-covers-short: no page errors' + (errs.length ? ': ' + errs[0] : ''));
     } finally { await browser.close(); }
   })();
@@ -17531,6 +18319,38 @@ if (section('ability-names-fit')) try {
   }
 } catch (e) { fail('ability-names-fit crashed: ' + (e.stack || e)); }
 
+// ==== eyes-placeholder abilities tiles: in Hero > Abilities every tile with no drawn icon shows two letters, never "?" ====
+// Card abilities-unnamed-tile: the Attack row (a basic move, not in SOLO_ABILITIES) showed a bare "?"; it now reads "At".
+// Browser, Wren with Power Shot (save-wren-spare-moss), the list as #396's Eyes scenario opens it, at all three views.
+if (section('eyes-placeholder abilities tiles')) try {
+  const at = 'eyes-placeholder abilities tiles', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-wren-spare-moss.json'), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`);
+        await page.waitForFunction(() => document.querySelector('#sec-abilities .ab-basic[data-mv=attack]'), null, { timeout: 8000 }).catch(() => fail(`${v}: the Attack row never appeared in Hero > Abilities`));
+        const t = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#sec-abilities .ab-mono')].map(e => [e.closest('.ab-row') ? (e.closest('.ab-row').dataset.mv || e.closest('.ab-row').querySelector('b').textContent) : '', e.textContent]))`));
+        const bad = t.filter(([, x]) => !/^[A-Z][a-z]$/.test(x)), atk = t.find(([n]) => n === 'attack');
+        assert(t.length >= 12 && !bad.length && atk && atk[1] === 'At' && !errs.length,
+          `${v}: all ${t.length} lettered tiles read two letters, Attack reads "At", none "?" (bad: ${JSON.stringify(bad)}; Attack: ${JSON.stringify(atk)}; errors: ${errs[0] || 'none'})`);
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('eyes-placeholder abilities tiles crashed: ' + (e.stack || e)); }
+
 // ==== loadout-odds: Hero > Abilities says the zone boss odds of the three slotted moves, and Learn picks by them (W10) ====
 // save-pip-z10-ward: Pip at the zone 10 Champion on W10's arrival footing (level 15, tier 1 commons +0), Fireball / Spark / Kindle in the
 // slots (where Next Up leads), one Hollow Scroll that can teach Arcane Ward, Frost Shard or Ignite, no Parry or Dodge record (the casual
@@ -17683,6 +18503,63 @@ if (section('cache-pick-order-settles')) try {
   }
 } catch (e) { fail('cache-pick-order-settles crashed: ' + (e.stack || e)); }
 
+// ==== learn-odds-pump-stops: the boss-odds pump (75-abilities-ui) works only while a row that shows the odds is on screen ====
+// save-pip-z10-ward again: her zone 10 first clear opens the cache with a move pick, and its zone 11 odds start. A test goal that is
+// ready and outranks Learn holds the Next Up chip, so Next Up's Learn row is off screen once the pick closes. Browser, 1280x720,
+// 740x360 and 360x740: the pick closed at once (Keep the Scroll) with its odds pending leaves work queued, and the pump does none of
+// it for 3 s (a counter wraps loadoutPump, the checks' own). Opening the Next Up list shows the Learn row, so the pump starts again
+// and the row fills in its zone 11 odds.
+if (section('learn-odds-pump-stops')) try {
+  const at = 'learn-odds-pump-stops', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-z10-ward.json'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-abilities-ui.js'), 'utf8'), pw0 = (src.match(/const pumpWanted = [^\n]*/) || [''])[0];
+  assert(pw0 && !/abLearnInfo/.test(pw0) && /learnShown/.test(pw0) && /pickQueued/.test(pw0), `${at}: a move to learn alone does not keep the pump going; Next Up's Learn row on screen, or a move pick shown or queued, does (${pw0})`);
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // __n counts the chunks of scratch fights the pump runs; the test goal outranks Learn (both ready), so the chip shows it
+        await X(`window.__n = 0; { const p0 = loadoutPump; loadoutPump = (n = 1) => { if (n > 0) __n += n; return p0(n); }; }
+          registerGoal({ id: 'zz-check-goal', sys: 'zz-check', prio: 30, pct: () => 1, label: 'A check goal' }); true`);
+        // Next Up keeps its list for 450 ms: wait until it has the test goal on top before the kill
+        try { await page.waitForFunction(() => window.__t.x(`(topGoals(3)[0] || {}).id === 'zz-check-goal'`), null, { timeout: 5000, polling: 50 }); }
+        catch (e) { assert(false, `${vw}: Next Up never put the test goal on top`); await ctx.close(); continue; }
+        await X(`MOMENT_Q.length = 0; S.activity = 'fight'; S.zone = 10; S.maxZone = 10; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 0;
+          try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } for (const q of MOMENT_Q) if (q.kind === 'champion') q.scene = ''; S.activity = 'gather'; emit('sceneReset'); true`);
+        try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov .mm-pick')`), null, { timeout: 8000, polling: 50 }); }
+        catch (e) { assert(false, `${vw}: the zone 10 clear's card with a pick never showed`); await ctx.close(); continue; }
+        // closed at its first paint, odds pending; any card that follows has no pick
+        const pend = await X(`(() => { const lo = learnOdds('pip'); MOMENT_UI.shownAt = 0; document.querySelector('.mm-ov .mm-go').click(); MOMENT_Q.length = 0; return !lo; })()`);
+        // the count starts once the card has left the page (its fade-out still shows the pick)
+        try { await page.waitForFunction(() => window.__t.x(`!document.querySelector('.mm-ov .mm-pick')`), null, { timeout: 5000, polling: 20 }); } catch (e) {}
+        await X(`__n = 0; true`); await page.waitForTimeout(3000);
+        const off = JSON.parse(await X(`JSON.stringify({ n: __n, left: loadoutPump(0), pending: !learnOdds('pip'), top: topGoals(3).map(g => g.id), chip: document.querySelector('#nuChip .nu-lbl').textContent, pick: !!document.querySelector('.mm-ov .mm-pick') })`));
+        assert(pend && off.top[0] === 'zz-check-goal' && off.top.includes('learn-ability') && off.chip === 'A check goal' && !off.pick,
+          `${vw}: the pick closed with its odds pending and the chip shows another goal, so the Learn row is off screen (${JSON.stringify(off)})`);
+        assert(off.left && off.pending && off.n === 0, `${vw}: with no row on screen that shows the odds, the pump runs none of the queued fights in 3 s (${JSON.stringify(off)})`);
+        // the Next Up list shows the Learn row: the pump starts again and the row fills in
+        await X(`document.getElementById('nuChip').click(); true`);
+        let row = '';
+        try { await page.waitForFunction(() => window.__t.x(`[...document.querySelectorAll('.nu-list .nu-row:not([hidden]) .nu-lbl')].some(e => /^Learn Arcane Ward: zone 11 boss, about \\d+ in 10 wins \\(now \\d+\\)$/.test(e.textContent))`), null, { timeout: 30000, polling: 100 }); row = 'filled'; } catch (e) {}
+        const on = JSON.parse(await X(`JSON.stringify({ n: __n, rows: [...document.querySelectorAll('.nu-list .nu-row:not([hidden]) .nu-lbl')].map(e => e.textContent) })`));
+        assert(row && on.n > 0, `${vw}: with the Next Up list open, the pump runs again and the Learn row fills in its zone 11 odds (${JSON.stringify(on)})`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('learn-odds-pump-stops crashed: ' + (e.stack || e)); }
+
 // ==== turn-banner-clears-plate: the turn line and the whose-turn banner each read on one line and stay off the "Zone boss" line ====
 // save-mid, a zone boss fight, every foe renamed to the longest name the game can give a foe (a boss or its Deepwell "Deep" name, an
 // elite, a Champion, a story boss). At 1280x720, 740x360 and 360x740: the turn line over the stage ("<name>'s turn", .tv-n) on the foe's
@@ -17786,6 +18663,18 @@ if (section('tier-two-named-for-return')) try {
   // away-line-only-when-true: the save fights, so the away sentence says how to make it true
   const want = 'Birch Bow: Mining 7 of 14 opens Iron Ore. Gather Mining before you leave and it keeps going.';
   const load = () => { const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }); g.eval('tick(0.1)'); return g; };
+  // nextup-z13-boss: the zone 13 walk save (tier 1 done, a Birch Bow tier 2 gate). Two Ready rows shown while the boss's chance was
+  // worked out keep their STICK; once the chance reads Ready the boss row must still show beside the gate row (the gate row took the
+  // lowest Ready row's place, the boss's: z13-unstick's route failed from #304 on)
+  { const z = loadCore({ seed: 1, turns: true, storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-z13-boss-ready.json'), 'utf8') }) }), E = s => z.eval(s);
+    E('loadSave(); tick(0.1); bossOddsReset(); globalThis.__offZ = [1, 2].map(i => registerGoal({ id: "t-ready" + i, sys: "t" + i, prio: 1, pct: () => 1, label: "ready " + i }))');
+    const before = E('topGoals(3, { now: 1 }).map(x => x.id + ":" + x.ready)');
+    E('bossOdds({ sync: true })');
+    const win = E('(bossOdds() || {}).win'), after = E('topGoals(3, { now: 1000 }).map(x => x.id + ":" + x.ready)');
+    E('__offZ.forEach(f => f())');
+    assert(!before.includes('zone-boss:true') && win >= E('BOSS_ODDS.ready') && after.includes('zone-boss:true') && after.some(x => /^forge:/.test(x)),
+      `${at}: at zone 13 a Ready boss keeps its row beside the tier 2 gate row (before ${before.join(', ')}; win ${win}; after ${after.join(', ')})`);
+  }
   { const g = load(), E = s => g.eval(s);
     const b = JSON.parse(E('JSON.stringify(craftGoalNext())'));
     assert(b && b.kind === 'bow' && b.t === 2 && b.gate && b.gate.skill === 'mine' && !b.gate.station, `${at}: the pick is the Birch Bow, by its Mining gate (${JSON.stringify(b)})`);
@@ -17904,14 +18793,71 @@ if (section('nu-chip-gate-label-fits')) try {
   }
 } catch (e) { fail('nu-chip-gate-label-fits crashed: ' + (e.stack || e)); }
 
+// ==== nextup-chip-360 (fallback-font): the Next Up chip's status reads whole on an upright phone ====
+// Upright (20-stage) the chip shares the top row with the activity switch, so "NEXT UP", the status and the "+2" badge get what is
+// left of 360 px. Gathering, in the fallback face (display-fallback-font), the grid squeezed the status column and "+2" drew over
+// "Ready", leaving "Rea". The section puts the widest status ("Ready", and "100%") and the "+2" badge in the chip at 360x740, 740x360 and 1280x720 in
+// both fonts and checks the status's words end inside its box and the chip, left of the badge, with the eyebrow on one line.
+if (section('nextup-chip-360 (browser, fallback-font)')) try {
+  const at = 'nextup-chip-360', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const webFonts of [true, false]) for (const [w, h] of [[360, 740], [740, 360], [1280, 720]]) {
+        const v = `${at} ${w}x${h}${webFonts ? '' : ', fallback fonts'}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, webFonts, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        for (const act of ['fight', 'gather']) for (const st of ['Ready', '100%']) {
+          // gathering, the switch beside the chip says "Fight · Z21" and "Mining", so upright the chip is narrowest there
+          if (act === 'gather' && st === 'Ready') { await X('navGo({ act: "gather", node: { kind: "ore", t: 1 } }); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); true'); await page.waitForTimeout(600); }
+          // renderChip rewrites only when the goals change, so the words stay for the measure (read in the same task)
+          const o = await page.evaluate(st => {
+            const c = document.getElementById('nuChip'); if (!c || c.offsetParent === null) return null;
+            const s = c.querySelector('.nu-cst'), m = c.querySelector('.nu-more'), e = c.querySelector('.nu-eye');
+            const keep = [s.textContent, m.textContent]; s.textContent = st; m.textContent = '+2';
+            const words = n => [...n.childNodes].filter(t => t.nodeType === 3).flatMap(t => { const rg = document.createRange(); rg.selectNodeContents(t); return [...rg.getClientRects()]; }).filter(r => r.width > 0);
+            const sr = words(s), er = words(e), sb = s.getBoundingClientRect(), cb = c.getBoundingClientRect(), mb = m.getBoundingClientRect(), pr = parseFloat(getComputedStyle(c).paddingRight);
+            // moreL: where "+2" starts when it shares the status's line (upright it may drop under it)
+            const o = { st, textR: Math.round(Math.max(...sr.map(r => r.right))), boxR: Math.round(sb.right), clip: s.scrollWidth > s.clientWidth + 1,
+              chipR: Math.round(cb.right - pr), moreL: m.offsetParent && mb.top < Math.max(...sr.map(r => r.bottom)) ? Math.round(mb.left) : 1e9, eyeLines: new Set(er.map(r => Math.round(r.top))).size,
+              eyeR: Math.round(Math.max(...er.map(r => r.right))), stL: Math.round(Math.min(...sr.map(r => r.left))),
+              eyeB: Math.round(Math.max(...er.map(r => r.bottom))), stT: Math.round(Math.min(...sr.map(r => r.top))), fs: parseFloat(getComputedStyle(s).fontSize) };
+            s.textContent = keep[0]; m.textContent = keep[1]; return o; }, st);
+          assert(o, `${v}: the Next Up chip shows`);
+          if (!o) continue;
+          assert(!o.clip && o.textR <= o.boxR + 1 && o.textR <= o.chipR + 1 && o.textR <= o.moreL - 2, `${v}: ${act}ing, the chip's status reads "${st}" whole, inside the chip and left of "+2" (${JSON.stringify(o)})`);
+          assert(o.eyeLines === 1 && (o.eyeR <= o.stL || o.eyeB <= o.stT), `${v}: ${act}ing with "${st}", NEXT UP stays on one line, clear of the status (${JSON.stringify(o)})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('nextup-chip-360 crashed: ' + (e.stack || e)); }
+
 // ==== side-column-fits-740: every gate label and every away line fit the landscape side column ====
 // The side column holds the Next Up chip (row 2), the away chip (row 3) and the dock (row 4, .sb-tabs at its top). The dock shows
-// only while fighting (75-solo-ui: target() is 'mob') and the away chip only while gathering (71-ui-fight awayChipText), so the
-// height budget is per state: fighting, the chip ends above .sb-tabs; gathering, the chip and the away chip end above the screen's
-// foot and the dock is hidden. The section builds every tier gate label the game can make (gateLabel over each kind, tiers 2 to 5,
+// only while fighting (75-solo-ui: target() is 'mob'); the away chip shows while gathering and, once Gather is open, while fighting
+// (leave-mid-fight-gathers: leaving sends the fighter back to the last node, 71-ui-fight awayChipText), so the height budget is per
+// state: fighting, the chip and the away chip end above .sb-tabs; gathering, the chip and the away chip end above the screen's foot
+// and the dock is hidden. The section builds every tier gate label the game can make (gateLabel over each kind, tiers 2 to 5,
 // its station gates and each raw cell its recipe takes, one level short, gathering that skill and not) and every away line
 // (awayChipSay over each gathered material: about N in the longest away, fills up, full), and measures the longest of each, with
 // the players' web fonts and with the fallbacks (display-fallback-font).
+// fallback-font-fits: in both fonts the Next Up eyebrow stays on one line, clear of the status, fighting and gathering; while gathering
+// the place name, its skill line, the material and its count show whole with the longest words the game puts there (each node's name,
+// skill line at Lv 120, material and an over-the-cap count), the count inside the storage box and the caption clear of it; and at 360x740
+// every gate label shows whole in a Next Up list sheet row (a 4-line clamp cut the longest in the fallback face).
 if (section('side-column-fits-740')) try {
   const at = 'side-column-fits-740', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
@@ -17936,6 +18882,32 @@ if (section('side-column-fits-740')) try {
       l.textContent = keep[0]; if (a && keep[1] != null) a.lastChild.textContent = keep[1];
       return o;
     }, [label, away]);
+    // the eyebrow: one line, ending left of the status
+    const eyebrow = page => page.evaluate(() => {
+      const e = document.querySelector('#nuChip .nu-eye'), st = document.querySelector('#nuChip .nu-cst');
+      const rs = [...e.childNodes].filter(n => n.nodeType === 3).flatMap(n => { const rg = document.createRange(); rg.selectNodeContents(n); return [...rg.getClientRects()]; }).filter(r => r.width > 0);   // the words, not the menu icon beside them
+      return { lines: new Set(rs.map(r => Math.round(r.top))).size, right: Math.round(Math.max(...rs.map(r => r.right))), st: st && st.offsetParent ? Math.round(st.getBoundingClientRect().left) : 1e9 };
+    });
+    // the place caption and storage box while gathering, with the longest words in place (read and put back in one task)
+    const caption = page => page.evaluate(src => window.__t.x(src), `(() => {
+  const by = a => [...new Set(a)].sort((x, y) => y.length - x.length);
+  const kinds = Object.keys(CRAFT_NODES), names = [], mats = [], subs = [];
+  for (const k of kinds) for (let t = 1; t <= 5; t++) { if (NODE_NAMES[k] && NODE_NAMES[k][t - 1]) names.push(NODE_NAMES[k][t - 1]); mats.push(matName(k, t));
+    subs.push(\`\${SKILL[skillOf(k)]} Lv 120 · \${nodeTime(k, t).toFixed(1)}s per swing\`); }
+  const holds = ['50,000/50,000 · Over the cap', '50,000/50,000 stored', '120/50,000 stored'];
+  const N = by(names).slice(0, 3), M = by(mats).slice(0, 3), U = by(subs).slice(0, 2);
+  const zn = document.getElementById('zName'), zs = document.getElementById('zSub'), mn = document.getElementById('mName'), mh = document.getElementById('mHp');
+  const keep = [zn, zs, mn, mh].map(e => e.textContent), box = document.querySelector('.hud .mob');
+  const clip = e => e.scrollWidth > e.clientWidth + 1;
+  const out = []; 
+  for (const n of N) for (const u of U) for (const m of M) for (const h of holds) {
+    zn.textContent = n; zs.textContent = u; mn.textContent = m; mh.textContent = h;
+    const zb = zn.getBoundingClientRect(), ub = zs.getBoundingClientRect(), mb = box.getBoundingClientRect(), hb = mh.getBoundingClientRect(), nb = mn.getBoundingClientRect();
+    const bad = [clip(zn) && 'name clipped', clip(zs) && 'skill line clipped', clip(mn) && 'material clipped', clip(mh) && 'count clipped',
+      hb.right > mb.right + 1 && 'count past the box', nb.right > mb.right + 1 && 'material past the box', Math.max(zb.right, ub.right) > mb.left - 2 && 'caption under the box'].filter(Boolean);
+    if (bad.length) out.push(bad.join(', ') + \` (\${n} / \${u} / \${m} / \${h})\`); }
+  [zn, zs, mn, mh].forEach((e, i) => e.textContent = keep[i]);
+  return { N, M, U, bad: out.length, first: out.slice(0, 3) }; })()`);
     try {
       for (const webFonts of [true, false]) for (const [w, h] of [[740, 360], [1024, 768], [1280, 720], [1366, 640], [1920, 1080]]) {
         const v = `${at} ${w}x${h}${webFonts ? '' : ', fallback fonts'}`, phone = w < 1000, desk = w >= 1200;
@@ -17959,30 +18931,50 @@ if (section('side-column-fits-740')) try {
                 for (const [f, tt] of prod ? prod.inputs(t) : [[k, t]]) { if (f === 'coal' || !CRAFT_NODES[f]) continue;
                   const sk = skillOf(f), nd = skillReq(sk, tt); if (nd > 1) gs.push({ skill: sk, lv: nd - 1, need: nd, mat: costName(f, tt) }); } }
               for (const gate of gs) for (const on of [true, false]) labels.add(gateLabel({ kind, t, gate }, on)); } }
-          for (const f of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) { const nm = matName(f, t);
-            for (const n of ['spill', 0, 99999]) aways.add(awayChipSay(nm, n, CAMP_TUNE.awayMax)); }
+          const fights = new Set();   // a fighter's lines name the node leaving sends the hero back to
+          for (const f of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) { const nm = matName(f, t), back = NODE_NAMES[f] && NODE_NAMES[f][t - 1];
+            for (const n of ['spill', 0, 99999]) { aways.add(awayChipSay(nm, n, CAMP_TUNE.awayMax)); if (back) fights.add(awayChipSay(nm, n, CAMP_TUNE.awayMax, back)); } }
           const by = s => [...s].sort((a, b) => b.length - a.length);
-          return { labels: by(labels), aways: by(aways) }; })()`);
-        assert(words.labels.length > 100 && words.aways.length > 30, `${v}: the game makes gate labels and away lines (${words.labels.length}, ${words.aways.length})`);
+          return { labels: by(labels), aways: by(aways), fights: by(fights) }; })()`);
+        assert(words.labels.length > 100 && words.aways.length > 30 && words.fights.length > 30, `${v}: the game makes gate labels and away lines (${words.labels.length}, ${words.aways.length}, fighting ${words.fights.length})`);
         // line breaks, not only length, decide the height: the 12 longest of each are measured
-        const L = words.labels.slice(0, 12), A = words.aways.slice(0, 12);
-        // fighting: the dock shows and the away chip does not; every label shows whole and the chip ends 4 px or more above .sb-tabs
-        let worst = null, bad = null, floor = true;
-        for (const lt of L) { const o = await measure(page, lt, null); if (!o) { bad = 'no chip'; break; }
-          if (o.away !== false || o.dock == null) { bad = `fighting shows the away chip or no dock (${JSON.stringify(o)})`; break; }
+        const L = words.labels.slice(0, 12), A = words.aways.slice(0, 12), F = words.fights.slice(0, 12);
+        // fighting: the dock and the away chip show; every label and away line shows whole. The game picks the away chip's words so
+        // it ends 4 px or more above .sb-tabs (71-ui-fight awayChipFit): the whole line, then the line up to its first comma, then nothing.
+        // Its pick matches the measure for every pair, a shown chip never reaches the dock, only a phone's landscape screen says less,
+        // and with the web fonts the shortest label keeps the whole Pine Grove line there. Labels of every length with that line show each step on a phone.
+        const pick = (lt, al) => X(`(() => { const l = document.querySelector('#nuChip .nu-lbl'), c = document.querySelector('.away-chip'), a = c.lastChild, keep = [l.textContent, a.textContent, c.classList.contains('hide')];
+          l.textContent = ${JSON.stringify(lt)}; const t = awayChipFit(${JSON.stringify(al)}); l.textContent = keep[0]; a.textContent = keep[1]; c.classList.toggle('hide', keep[2]); return t; })()`);
+        const pine = await X('awayChipSay(matName("wood", 1), 99999, CAMP_TUNE.awayMax, NODE_NAMES.wood[0])'), short = words.labels[words.labels.length - 1];
+        const ends = async (lt, al) => { const o = await measure(page, lt, al); return o && o.away ? o.dock - o.away.bottom : -1e9; };
+        let bad = null, floor = true, said = { whole: 0, less: 0, none: 0 }, near = Infinity;
+        const pairs = [[short, pine], ...words.labels.filter((_, i) => i % 20 === 10).map(lt => [lt, pine]), ...L.flatMap(lt => F.map(al => [lt, al]))];
+        for (const [lt, al] of pairs) { const t = await pick(lt, al), o = await measure(page, lt, t || al); if (!o) { bad = 'no chip'; break; }
+          if (!o.away || o.dock == null) { bad = `fighting shows no away chip or no dock (${JSON.stringify(o)})`; break; }
           if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `cut: ${lt} (${o.lines} lines, clamp ${o.clamp})`; break; }
-          if (o.fs < (desk ? 14 : 13)) floor = false;
-          if (!worst || o.chipBottom - o.dock > worst.chipBottom - worst.dock) worst = { ...o, lt }; }
-        assert(!bad, `${v}: fighting, every gate label shows whole in the Next Up chip${bad ? ' (' + bad + ')' : ''}`);
-        if (worst) {
-          console.log(`  ${v}: fighting, the longest label takes ${worst.lines} lines and the chip ends ${worst.dock - worst.chipBottom} px above the dock`);
-          assert(worst.chipBottom + 4 <= worst.dock, `${v}: fighting, the chip ends above .sb-tabs (${worst.chipBottom} vs ${worst.dock}: ${worst.lt})`);
-        }
-        assert(floor, `${v}: the chip label keeps its ${desk ? 14 : 13} px floor`);
+          if (o.away.cut) { bad = `away line cut: ${t || al}`; break; }
+          if (o.away.top < o.chipBottom) { bad = `the away chip starts over the Next Up chip (${lt} / ${al})`; break; }
+          if (o.chipBottom + 4 > o.dock) { bad = `the Next Up chip ends ${o.dock - o.chipBottom} px above .sb-tabs (${lt})`; break; }
+          if (t !== al && (!phone || webFonts && lt === short && al === pine)) { bad = `the away chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
+          if (t && o.dock - o.away.bottom < 4) { bad = `the chip shows "${t}" and ends ${o.dock - o.away.bottom} px above the dock (${lt})`; break; }
+          if (t !== al && await ends(lt, al) >= 4) { bad = `the whole line fits but the chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
+          if (!t && await ends(lt, al.replace(/, .*/, '.')) >= 4) { bad = `the short line fits but the chip hides (${lt} / ${al})`; break; }
+          if (o.fs < (desk ? 14 : 13) || o.away.fs < (desk ? 14 : 13)) floor = false;
+          said[t === al ? 'whole' : t ? 'less' : 'none']++; if (t) near = Math.min(near, o.dock - o.away.bottom); }
+        assert(!bad, `${v}: fighting, every gate label and away line shows whole, and the away chip says what fits above the dock${bad ? ' (' + bad + ')' : ''}`);
+        assert(!phone || said.less > 0, `${v}: fighting, some label lengths get the short away line on a phone (${JSON.stringify(said)})`);
+        console.log(`  ${v}: fighting, of ${pairs.length} pairs the away chip says the whole line ${said.whole}, less ${said.less}, nothing ${said.none}; a shown chip ends ${near} px or more above the dock`);
+        assert(floor, `${v}: the chip and away text keep the ${desk ? 14 : 13} px floor`);
+        let eb = await eyebrow(page);
+        assert(eb.lines === 1 && eb.right <= eb.st, `${v}: fighting, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
         // gathering: the away chip shows and the dock does not; every label with every away line fits above the screen's foot
         await X('navGo({ act: "gather", node: { kind: "ore", t: 1 } }); true');
         await page.waitForTimeout(600);
-        worst = null; bad = null; floor = true;
+        eb = await eyebrow(page);
+        assert(eb.lines === 1 && eb.right <= eb.st, `${v}: gathering, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
+        const cp = await caption(page);
+        assert(cp.bad === 0, `${v}: gathering, the place name, skill line, material and count show whole (${cp.bad} cut${cp.bad ? ': ' + cp.first[0] : ''})`);
+        let worst = null; bad = null; floor = true;
         for (const lt of L) for (const al of A) { const o = await measure(page, lt, al); if (!o) { bad = 'no chip'; break; }
           if (!o.away || o.dock != null) { bad = `gathering shows no away chip or the dock (${JSON.stringify(o)})`; break; }
           if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `label cut: ${lt}`; break; }
@@ -17996,6 +18988,42 @@ if (section('side-column-fits-740')) try {
           assert(worst.away.bottom + 4 <= worst.foot, `${v}: gathering, the away chip ends above the screen's foot (${worst.away.bottom} vs ${worst.foot}: ${worst.lt} / ${worst.al})`);
         }
         assert(floor, `${v}: the chip and away text keep the ${desk ? 14 : 13} px floor`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // upright at 360x740 a list sheet row's words get about 203 px: every gate label shows whole there, in both fonts
+      for (const webFonts of [true, false]) {
+        const v = `${at} 360x740${webFonts ? '' : ', fallback fonts'}`;
+        const ctx = await browser.newContext({ turns: true, webFonts, viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        await page.click('#nuChip'); await page.waitForTimeout(400);
+        const o = await X(`(() => {
+          const labels = new Set();
+          for (const kind of Object.keys(CRAFT_KINDS)) { if (CRAFT_KINDS[kind].legacy) continue;
+            for (let t = 2; t <= 5; t++) { const rec = craftRecipe(kind, t); if (!rec) continue;
+              const gs = [], st = stationOf(kind), need = CRAFT_STATION_REQ[t - 1];
+              if (st) for (const sk of new Set([st.skill, 'smith'])) gs.push({ skill: sk, lv: need - 1, need, station: st.key });
+              for (const k of Object.keys(rec)) { if (k === 'gold') continue; const prod = REFINE_PRODUCTS[k];
+                for (const [f, tt] of prod ? prod.inputs(t) : [[k, t]]) { if (f === 'coal' || !CRAFT_NODES[f]) continue;
+                  const sk = skillOf(f), nd = skillReq(sk, tt); if (nd > 1) gs.push({ skill: sk, lv: nd - 1, need: nd, mat: costName(f, tt) }); } }
+              for (const gate of gs) for (const on of [true, false]) labels.add(gateLabel({ kind, t, gate }, on)); } }
+          const l = document.querySelector('.nu-list .nu-row:not([hidden]) .nu-lbl'); if (!l) return null;
+          const keep = l.textContent, r = { n: labels.size, most: 0, cut: [] };
+          for (const lt of labels) { l.textContent = lt;
+            const rg = document.createRange(); rg.selectNodeContents(l); const rs = [...rg.getClientRects()].filter(q => q.width > 0), lb = l.getBoundingClientRect();
+            r.most = Math.max(r.most, new Set(rs.map(q => Math.round(q.top))).size);
+            if (Math.max(...rs.map(q => q.bottom)) > lb.bottom + 1 || Math.max(...rs.map(q => q.right)) > lb.right + 1) r.cut.push(lt); }
+          l.textContent = keep; return r; })()`);
+        assert(o && o.n > 100, `${v}: the Next Up list sheet opens with a row and the game makes gate labels (${o && o.n})`);
+        if (o) { console.log(`  ${v}: the longest gate label takes ${o.most} lines in a list sheet row`);
+          assert(!o.cut.length, `${v}: every gate label shows whole in a list sheet row (${o.cut.length} cut${o.cut.length ? ': ' + o.cut[0] : ''})`); }
         assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -18093,15 +19121,170 @@ if (section('first-craft-toast-clip')) try {
   }
 } catch (e) { fail('first-craft-toast-clip crashed: ' + (e.stack || e)); }
 
+// ==== leave-mid-fight-gathers: a turn fighter is told before leaving that the hero goes back to its node, and the away card says it did ====
+if (section('leave-mid-fight-gathers (browser)')) try {
+  const at = 'leave-mid-fight-gathers', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  // Spillover while a fighter is away moves the node but never ends the live fight (a fresh fight would heal the hero to full)
+  { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    E("S.camp.b.store = 8; storeSpill(1); S.skills.wood.lv = 20; S.mats.wood[0] = storeCap('wood', 1) - 10; setNode('wood', 1); setActivity('fight'); for (let i = 0; i < 40; i++) tick(0.1); cbUnitByKey('hero').hp = Math.ceil(cbUnitByKey('hero').maxHp * 0.2)");
+    const hp = E("cbUnitByKey('hero').hp"), now = E('TURN_LIVE.now');
+    E('globalThis.__r = awayGains(3600); tick(0.1); tick(0.1)');
+    const after = E("JSON.stringify({ hp: cbUnitByKey('hero').hp, live: !!TURN_LIVE && !TURN_LIVE.ended, now: TURN_LIVE && TURN_LIVE.now, node: S.node, spilled: __r.leftFight && !(S.node.kind === 'wood' && S.node.t === 1) })");
+    const a = JSON.parse(after);
+    assert(a.spilled && a.live && a.hp === hp && a.now > now, `${at}: Spillover while a fighter is away moves the node and keeps the fight and the hero's HP (HP ${hp} -> ${after})`); }
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); setNode("ore", 1); setActivity("fight"); true');
+        await page.waitForFunction(() => { const a = document.querySelector('.away-chip'); return a && !a.classList.contains('hide') && a.textContent.includes('Copper Vein'); }, null, { timeout: 5000 }).catch(() => {});
+        const chip = await X('(() => { const a = document.querySelector(".away-chip"); return a && !a.classList.contains("hide") ? a.textContent : null; })()');
+        // the whole line where it fits (it fits under this one-line Next Up label at every view), naming the node and what leaving earns
+        assert(/^Leave now: Wren goes back to the Copper Vein, about [\d.,K]+ Copper Ore in \d+ hours\.$/.test(chip || ''), `${v}: fighting, the away chip says where leaving sends Wren (${chip})`);
+        const gold = await X('S.gold'), kills = await X('S.totalKills'), mine = await X('S.skills.mine.lv');
+        await X('showAwayReport(awayGains(3600)); true');
+        await page.waitForSelector('.away-ov[role="dialog"]');
+        const card = await page.locator('.away-ov').innerText();
+        assert(card.includes('You left mid-fight, so Wren went back to the Copper Vein.') && /Ore\s*\+[\d.,K]+\s*Copper/.test(card) && !card.includes('fighting stops'),
+          `${v}: the away card says Wren went back to the Copper Vein, shows the Copper Ore, and drops the fighting-stops line (${card.replace(/\n/g, ' | ').slice(0, 300)})`);
+        assert(await X('S.gold') === gold && await X('S.totalKills') === kills && await X('S.skills.mine.lv') > mine, `${v}: an hour away earns no fights and raises Mining`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('leave-mid-fight-gathers crashed: ' + (e.stack || e)); }
+
+// ==== toast-over-menu-foot: a notice never sits over an open menu or takes a tap meant for it ====
+// Cal's first-craft notes (first-craft-toast-clip finds, 10 Oct): with a menu open, notices sat over the menu's foot for a few seconds,
+// sideways (the stage-foot dock, 80-landscape) and upright (over the menu, above the tab bar, 50-overlays), and caught taps meant for
+// it. While notices show, the open menu now stops above them, as it already did above a guide tip (60-onboard). The section crafts on
+// save-mid with the Craft menu open, with the guide tip up and then dismissed, and samples every 100 ms: no toast box meets the menu's,
+// and a tap at the centre of every visible menu button lands in the menu (elementFromPoint), the foot's included. Once the notices
+// go, the menu takes its full height back. Desktop (1280x720, 1366x640, 1920x1080) keeps its menu box whatever the notices do; with the
+// guide panel speaking (.app.guide-side) the notices dock at the stage's foot, so there the box and tap test runs too (toast-guide-side-menu).
+if (section('toast-over-menu-foot')) try {
+  const at = 'toast-over-menu-foot', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const assets = pageAssets(distFile), raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const sample = page => page.evaluate(() => {
+      const on = e => !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > 0.05;
+      const r = b => `${Math.round(b.left)},${Math.round(b.top)} ${Math.round(b.width)}x${Math.round(b.height)}`;
+      // the menu follows --toast-h (70-ui), which a ResizeObserver sets before the frame paints: a sample taken between a new toast and
+      // that frame is not a picture the player sees, so it is skipped
+      const tb0 = document.getElementById('toasts'), th = getComputedStyle(document.documentElement).getPropertyValue('--toast-h').trim();
+      if (th !== (tb0.children.length ? (tb0.offsetHeight + 6) + 'px' : '0px')) return { skip: true, n: 0, bad: [] };
+      const menu = document.getElementById('menu'), mb = menu.getBoundingClientRect(), out = { menu: r(mb), n: 0, bad: [], taps: 0, foot: 0 };
+      for (const t of document.querySelectorAll('#toasts .toast')) { if (!on(t) || t._gone) continue; out.n++; const tb = t.getBoundingClientRect();
+        const w = Math.min(tb.right, mb.right) - Math.max(tb.left, mb.left), h = Math.min(tb.bottom, mb.bottom) - Math.max(tb.top, mb.top);
+        if (w > 0 && h > 0) out.bad.push(`toast ${r(tb)} over the menu ${r(mb)} by ${Math.round(w)}x${Math.round(h)}: "${t.innerText.replace(/\n/g, ' ').slice(0, 50)}"`);
+        // the guide panel and, sideways (upright the menu covers it), the fight bar stay clear too
+        for (const [e, nm] of [[document.querySelector('.ob-bub.side:not([hidden])'), 'the guide panel'], [innerWidth > innerHeight && document.querySelector('.sbar'), 'the fight bar']]) { const gb = on(e) && e.getBoundingClientRect();
+          if (gb && Math.min(tb.right, gb.right) > Math.max(tb.left, gb.left) && Math.min(tb.bottom, gb.bottom) > Math.max(tb.top, gb.top)) out.bad.push(`toast ${r(tb)} over ${nm} ${r(gb)}`); } }
+      if (!out.n) return out;
+      const pnl = document.getElementById('panels'), bot = Math.min(mb.bottom, innerHeight);
+      // scroll the list so a button sits at the menu's foot, where the notices were
+      const low = [...pnl.querySelectorAll('button')].find(b => on(b) && b.getBoundingClientRect().bottom > pnl.getBoundingClientRect().bottom - 8);
+      if (low) pnl.scrollTop += low.getBoundingClientRect().bottom - pnl.getBoundingClientRect().bottom + 6;
+      const pn = pnl.getBoundingClientRect();
+      for (const b of menu.querySelectorAll('button, [role="button"], [role="tab"]')) { if (!on(b)) continue; const bb = b.getBoundingClientRect();
+        const x = bb.left + bb.width / 2, y = bb.top + bb.height / 2;
+        if (!bb.width || !bb.height || x < mb.left || x > mb.right || y < mb.top || y > bot || (pn.height && b.closest('#panels') && (y < pn.top || y > pn.bottom))) continue;
+        out.taps++; if (y > bot - 80) out.foot++;
+        const hit = document.elementFromPoint(x, y);
+        if (!hit || !menu.contains(hit)) out.bad.push(`a tap on "${(b.innerText || b.getAttribute('aria-label') || '').replace(/\n/g, ' ').slice(0, 30)}" at ${Math.round(x)},${Math.round(y)} lands on ${hit ? hit.className || hit.tagName : 'nothing'}`); }
+      return out;
+    });
+    try {
+      for (const [w, h] of [[740, 360], [360, 740], [1280, 720], [1366, 640], [1920, 1080]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await routePage(page, 'http://lf.test/', html, assets);
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        for (let i = 0; i < 8; i++) { const b = await page.$('.bsheet-ov .sty-done, .bsheet-ov .big:has-text("Begin"), .bsheet-ov .big:has-text("Continue"), .away-ov button'); if (!b) break; try { await b.click({ timeout: 800 }); } catch (e) { break; } await page.waitForTimeout(400); }
+        await X('onboardUnlockAll(); true');
+        await X('setTab("forge"); true');
+        for (let i = 0; i < 4; i++) { const b = page.getByRole('button', { name: 'Got it' }); if (!(await b.count())) break; await b.first().click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); }
+        // the first Craft view on this old save opens the Refining card a tick after menuView (75-refine-ui); on a slow machine that came after the
+        // loop above, so the card hid the guide tip and the menu box was measured with no tip, then with one. Wait on the game's state: the card
+        // said (S.refine.said) and shut, and, where the tip shows on the Craft menu (upright over it, desktop beside it), the tip up.
+        const ready = async tipWanted => { for (let i = 0; i < 60; i++) {
+          const s = await page.evaluate(() => { const sh = document.querySelector('.bsheet-ov:not(.docked)'); if (sh) { const d = sh.querySelector('.sty-done'); if (d) d.click(); return 'sheet'; }
+            const b = document.querySelector('.ob-bub'); return b && !b.hidden ? 'tip' : 'none'; });
+          if (s !== 'sheet' && await X('!!(S.refine && S.refine.said)') && (s === 'tip' || !tipWanted)) return true; await page.waitForTimeout(100); } return false; };
+        assert(await ready(h > w || !phone), `${v}: the Refining card is shut and the guide tip is placed before the menu is measured`);
+        // settled: the menu's slide and every toast are done
+        const settle = async () => { for (let i = 0; i < 40; i++) { if (await page.evaluate(() => !document.querySelector('#toasts .toast') && !document.getElementById('menu').getAnimations({ subtree: true }).some(a => a.playState === 'running'))) return true; await X('for (const t of [...$("toasts").children]) dropToast(t); true'); await page.waitForTimeout(100); } return false; };
+        assert(await settle(), `${v}: the Craft menu opens with no notices up`);
+        const box = async () => { for (let i = 0; i < 40; i++) { const o = await sample(page); if (!o.skip) return o.menu; await page.waitForTimeout(50); } return 'never settled'; };
+        for (const tip of ['the guide tip up', 'no tip']) {
+          if (tip === 'no tip') { const x = await page.$('.ob-bub:not([hidden]) .ob-x'); if (x) { await x.click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); } }
+          await settle(); const m0 = await box();
+          // upright the tip has its own row over the menu (60-onboard), so the menu's own margin is off: that branch is measured here
+          if (h > w && tip !== 'no tip') assert(!!(await page.$('.ob-bub.over-menu:not([hidden])')), `${v}: the guide tip is up over the menu`);
+          const side = !phone && await page.evaluate(() => document.getElementById('app').classList.contains('guide-side')), strict = phone || side;
+          if (!phone && tip !== 'no tip') assert(side, `${v}: the guide panel speaks beside the menu (.app.guide-side)`);
+          // a craft (its toast and, for a Rare or better, its banner) and two plain notices, with the menu open
+          const kind = await X(`(() => { const k = Object.keys(CRAFT_KINDS).find(k => { for (const e of Object.keys(S.mats)) S.mats[e] = S.mats[e].map(() => 5000); S.gold = 1e9; return canCraft(k, 1).ok; }); const it = k && craftItem(k, 1);
+            if (it) moment('craft', { eye: 'Well made · Rare', title: itemName(it), sub: 'Rare item. It is in your bag.', rarity: 'rare', icon: { item: it } });
+            popToast('You found a Copper Ore cache. It went to your bag.', 'good', null, 1); popToast('Level 21. Your hero hits harder now.', 'good', null, 2); return k; })()`);
+          assert(!!kind, `${v}, ${tip}: save-mid can craft something`);
+          await page.waitForTimeout(300); await X('window.__momentFlush(); true');
+          let most = 0, bad = null, taps = 0, foot = 0, menus = new Set(), shot = null;
+          for (let t0 = Date.now(); Date.now() - t0 < 2500;) {
+            const o = await sample(page); most = Math.max(most, o.n); if (o.skip) { await page.waitForTimeout(30); continue; } if (o.n) { taps = Math.max(taps, o.taps); foot = Math.max(foot, o.foot); menus.add(o.menu); }
+            if (strict && !bad && o.bad.length) bad = o.bad[0];
+            if (process.env.LF_SHOTS && o.n && !shot) shot = await page.screenshot({ path: path.join(process.env.LF_SHOTS, `${w}x${h}-${tip.replace(/ /g, '-')}.png`) });
+            await page.waitForTimeout(100);
+          }
+          assert(most >= 1, `${v}, ${tip}: notices show with the menu open (${most})`);
+          if (strict) {
+            assert(!bad, `${v}, ${tip}: no notice sits over the open menu or takes a tap meant for it${bad ? ' (' + bad + ')' : ''}`);
+            // at 1920x1080 the Craft list ends above the menu's foot, so no button can sit there
+            assert(taps >= 3 && (foot >= 1 || h > 1000), `${v}, ${tip}: the menu's buttons are tapped, the foot's included (${taps} buttons, ${foot} in the foot)`);
+          }
+          if (!phone) assert(menus.size === 1 && menus.has(m0), `${v}, ${tip}: the desktop menu keeps its box while notices show (${[...menus].join(' / ')}, ${m0} without)`);
+          assert(await settle(), `${v}, ${tip}: the notices go`);
+          const m1 = await box();
+          assert(m1 === m0, `${v}, ${tip}: with the notices gone the menu takes its full box back (${m1}, ${m0} before)`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('toast-over-menu-foot crashed: ' + (e.stack || e)); }
+
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
 // (50-sim awayBase), so the row promises "keeps going" only then; fighting or gathering another skill says how to make it true.
 if (section('away-line-only-when-true')) try {
   const at = 'away-line-only-when-true', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
   const base = 'Birch Bow: Mining 7 of 14 opens Iron Ore. ', on = base + 'Gathering keeps going while you\'re away.', off = base + 'Gather Mining before you leave and it keeps going.';
-  const states = [['fighting', '', off], ['gathering Woodcutting', 'setNode("wood", 1); setActivity("gather")', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather")', on]];
-  for (const [name, set, want] of states) {
-    const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+  const states = [['fighting', '', off], ['gathering Woodcutting', 'setNode("wood", 1); setActivity("gather")', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather")', on],
+    ['turn fighting after Mining (leave-mid-fight-gathers: away goes back to the node)', 'setNode("ore", 1); setActivity("fight")', on, true],
+    ['turn fighting after Woodcutting', 'setNode("wood", 1); setActivity("fight")', off, true]];
+  for (const [name, set, want, turns] of states) {
+    const g = loadCore({ seed: 7, turns, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
     E('tick(0.1)'); if (set) E(set);
     const r = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge');
     assert(r && r.label === want, `${at}: ${name}, the row reads "${want}" (${JSON.stringify(r)})`);
@@ -18590,14 +19773,16 @@ if (section('actor-scale (browser)')) try {
         }
         // a crowd (2 or more foes: a pack, a boss and its adds) keeps today's size, so its spacing is today's (G2: at 1.5 a pack of
         // wide foes left no room for both a 15% overlap and the hero's 16 px). The real-time fight (turns off) stands them here.
+        // crowd-scale-step: the hero steps to 1.5x, not 1x, when its reach clears the pack (Pip does at 1280x720 and 1920x1080).
         if (ak > 1) for (const [name, src] of [
           ['a pack of 3', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; COMBAT_TUNE.sizes = 0; COMBAT_TUNE.packSize = 3; setActivity("fight"); fightBoss = false; setZone(3)'],
           // the Elder Moss Slime splits into two adds below half its HP (59b)
           ['a boss with adds', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; setActivity("fight"); fightBoss = false; setZone(8); S.kills = ZONE_FIGHTS; challenge(); mob.max = 1e15; mob.hp = mob.max * 0.3; setTimeout(() => { for (const f of combatFoes()) f.hp = f.max = 1e15; }, 400)'],
         ]) {
           await X(`globalThis.__hold = 0; globalThis.__tp = 0; ${src}; true`); await page.waitForTimeout(2500);
-          const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, ZA: s.ZA, ZM: s.ZM, GY: s.GY }; })()');
+          const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, HS: s.HS, ZA: s.ZA, ZM: s.ZM, GY: s.GY }; })()');
           assert(c.n >= 2 && c.AK === 1 && c.ZA === c.ZM, `${tag} ${name}: a crowd of foes draws at today's size (${JSON.stringify(c)})`);
+          assert(c.HS === 1.5 || (c.HS === 1 && w !== 1280 && w !== 1920), `${tag} ${name}: the hero steps down to 1.5x in a crowd that fits, not 1x (hero x${c.HS})`);
           await X('TURN_TUNE.on = true; COMBAT_TUNE.single = 1; COMBAT_TUNE.sizes = 1; COMBAT_TUNE.packSize = 3; fightBoss = false; setZone(1); true'); await page.waitForTimeout(1500);
           const one = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, GY: s.GY }; })()');
           // bigger-heroes (judge C1): the ground stays put when a crowd comes and goes (the scenery's ground line, stage px)
@@ -18610,6 +19795,90 @@ if (section('actor-scale (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('actor-scale crashed: ' + (e.stack || e)); }
+
+// ==== actor-scale-followups: what the bigger actors (actor-scale, bigger-heroes) left behind. (1) On a desktop stage a foe trick's line
+// (.tv-warn) and the resource tip (.tv-restip, "Aim: ...") dock top left (60-turn.css), clear of every hero's box, the place line, the turn
+// line and the banner, at 1280x720, 1366x640 and 1920x1080, with the longest lines the game says. (2) The camera sway moves the ground
+// (the scenery's ground layer, parallax 1) and the actors by the same whole stage px, so feet never slide (62-stage camSt), at every view.
+// (3) The cold Hearth's fire and plot stakes draw at the scenery's scale, not the actors' (63d asProp). save-late.json.
+if (section('actor-scale-followups (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('actor-scale-followups (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8')); save.last = Date.now();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const cross = (a, b) => !!(a && b) && Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
+    const BOX = sel => `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e || e.hidden || e.closest('[hidden]') || getComputedStyle(e).visibility === 'hidden') return null;
+      const b = e.getBoundingClientRect(); return b.width && b.height ? { x: b.left, y: b.top, w: b.width, h: b.height } : null; })()`;
+    try {
+      for (const [w, h, dpr] of [[1280, 720, 1], [1366, 640, 1], [1920, 1080, 1], [740, 360, 2]]) {
+        const tag = `${w}x${h}`, touch = w < 1000, desk = w >= 1200;
+        // motion on (the sway), so the hero's idle is read from a held frame below
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false); for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();
+          globalThis.__tp = 0; globalThis.__tpo = turnPaused; turnPaused = () => !!globalThis.__tp || __tpo(); UNIQ_TUNE.first = UNIQ_TUNE.again = 0; true`);
+        // (1) the docked lines, with each hero. The longest foe-trick line (an elite's first-meeting line) and each hero's own tip.
+        if (desk) {
+          const longest = await X(`Object.values(TURN_TRAITS).map(t => t.first || '').concat(['Rally! It holds at the mark. Only a Stun breaks its charge.']).sort((a, b) => b.length - a.length)[0]`);
+          for (const k of ['wren', 'tobin', 'pip']) {
+            await X(`globalThis.__tp = 0; soloPick("${k}"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1); true`); await page.waitForTimeout(1500);
+            await X('globalThis.__tp = 1; true'); await page.waitForTimeout(300);
+            const read = async () => JSON.parse(await X(`JSON.stringify({ hero: LF_EYES.rects().hero, zone: ${BOX('.hud-zone')}, turn: ${BOX('.tv-n')}, row: ${BOX('.tv-hero')}, warn: ${BOX('.tv-warn')}, tip: ${BOX('.tv-restip')}, banner: ${BOX('.tv-tc-txt')}, strip: ${BOX('.cb-strip')} })`));
+            await X(`emit('traitSeen', { first: true, txt: ${JSON.stringify(longest)} }); true`); await page.waitForTimeout(120);
+            const a = await read();
+            const hitsW = ['hero', 'zone', 'turn', 'row', 'strip'].filter(n => cross(a.warn, a[n]));
+            // the hero's buff chips (Guard, Wall, ...) hang on the canvas from the plate's foot (--vs-b) for about 20 px: the line starts under them
+            const chipsB = await X(`(() => { const b = document.getElementById('stageBox'); return b.getBoundingClientRect().top + parseFloat(getComputedStyle(b).getPropertyValue('--vs-b')) + 24; })()`);
+            assert(!!a.warn && a.warn.y >= chipsB, `${tag} ${k}: the line starts under the hero's buff chips (top ${a.warn && Math.round(a.warn.y)}, chips end by ${Math.round(chipsB)})`);
+            assert(!!a.warn && !!a.hero && !hitsW.length, `${tag} ${k}: a foe trick's line ("${longest.slice(0, 24)}...") clears the hero, the place line, the turn line and the Grit row (${hitsW.join(', ') || 'none'}; line ${JSON.stringify(a.warn)}, hero ${JSON.stringify(a.hero)})`);
+            await X('emit("turnCard", { who: "foe", secs: 4 }); true'); await page.waitForTimeout(250);
+            const b = await read(); await X('emit("turn", {}); true');
+            assert(!!b.warn && !cross(b.warn, b.banner) && !cross(b.warn, b.hero), `${tag} ${k}: with the banner up the line stays clear of it and the hero (${JSON.stringify({ warn: b.warn, banner: b.banner })})`);
+            // the tip: the hero's own resource line (the longest is Pip's), with no trick line up
+            await X(`document.querySelector('.tv-warn').hidden = true; const t = document.querySelector('.tv-restip'); if (t.hidden) document.querySelector('.tv-resbtn').click(); true`); await page.waitForTimeout(120);
+            const c = await read();
+            const hitsT = ['hero', 'zone', 'turn', 'row', 'strip'].filter(n => cross(c.tip, c[n]));
+            assert(!!c.tip && !hitsT.length, `${tag} ${k}: the resource tip clears the hero, the place line, the turn line and the Grit row (${hitsT.join(', ') || 'none'}; tip ${JSON.stringify(c.tip)}, hero ${JSON.stringify(c.hero)})`);
+          }
+        }
+        // (2) the sway, across a minute of the camera's path. Zone 9 (layered scenery): the ground layer's whole-px offset equals the
+        // actors' (cam x AK) on every frame. Zone 1 (a fixed painting, Mossy Hollow): nothing sways, so the actors stand still too.
+        const sway = async z => {
+          await X(`globalThis.__tp = 0; soloPick("wren"); setActivity("fight"); fightBoss = false; setZone(${z}); true`); await page.waitForTimeout(1200);
+          return JSON.parse(await X(`JSON.stringify((() => { const ds = drawScene, sd = stageDeco, T0 = T, out = { n: 0, layered: 0, bad: [], seen: new Set(), cams: new Set(), ak: 0, red: reduced, max: 0 }; let gx = null;
+            drawScene = function (c, sc, camX, which, ...r) { if (which === 'back') gx = camX; return ds.call(this, c, sc, camX, which, ...r); };
+            stageDeco = (g, ph, v) => { if (ph === 'back') { out.n++; out.ak = v.ak; out.cams.add(v.cam); if (gx !== null) { out.layered++; out.seen.add(gx); out.max = Math.max(out.max, Math.abs(gx));
+              if (!Number.isInteger(gx) || !Number.isInteger(v.cam) || gx !== v.cam * v.ak) out.bad.push([T.toFixed(2), gx, v.cam, v.ak]); } } return sd(g, ph, v); };
+            try { for (let t = 0; t < 60; t += 0.25) { T = t; gx = null; draw(); } } finally { drawScene = ds; stageDeco = sd; T = T0; }
+            out.seen = out.seen.size; out.cams = [...out.cams]; return out; })())`));
+        };
+        const sL = await sway(9);
+        assert(!sL.red && sL.n >= 200 && sL.layered === sL.n && sL.seen >= 4 && sL.max <= 8 && !sL.bad.length, `${tag} zone 9: the camera sway moves the ground and the actors together, by the same whole stage px on every frame (${sL.layered} of ${sL.n} frames layered, actors x${sL.ak}, ${sL.seen} offsets up to ${sL.max} px; ${sL.bad.length} apart${sL.bad.length ? ': ' + JSON.stringify(sL.bad.slice(0, 3)) : ''})`);
+        const sP = await sway(1);
+        assert(sP.n >= 200 && sP.layered === 0 && sP.cams.length === 1 && sP.cams[0] === 0, `${tag} zone 1: on the fixed painting the actors never sway (${sP.n} frames, ${sP.layered} layered, offsets ${JSON.stringify(sP.cams.slice(0, 5))})`);
+        // (3) the cold Hearth: its fire and the plot stakes draw at the scenery's scale (the device px per stage px), Hesketh at the actors'
+        if (desk) {
+          await X(`S.hearth = Object.assign(S.hearth || {}, { cold: 1, lit: 0 }); setActivity('gather'); setNode('wood', 1); true`); await page.waitForTimeout(1200);
+          const pr = JSON.parse(await X(`JSON.stringify((() => { const st = stageStats(), g = document.getElementById('cv').getContext('2d'), fr = g.fillRect, sd = stageDeco, ks = new Set(), PAL = new Set(['#8c8494', '#6b6275', '#3a3444', '#2a2230', '#7a5434', '#4a3220', '#8c6a43', '#efe6d6']);
+            let n = 0; g.fillRect = function (...a) { if (PAL.has(String(this.fillStyle).toLowerCase())) { n++; ks.add(+this.getTransform().a.toFixed(4)); } return fr.apply(this, a); };
+            try { draw(); } finally { delete g.fillRect; }
+            return { scene: !!hearthScene(), n, ks: [...ks], KS: st.DPR * st.ZM, KA: st.DPR * st.ZA, AK: st.AK }; })())`));
+          assert(pr.scene && pr.AK > 1 && pr.n > 0 && pr.ks.length === 1 && Math.abs(pr.ks[0] - pr.KS) < 1e-6, `${tag}: the cold Hearth's fire and plots draw at the scenery's ${pr.KS} device px per px, not the actors' ${pr.KA} (${JSON.stringify(pr)})`);
+        }
+        assert(!errs.length, `${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('actor-scale-followups crashed: ' + (e.stack || e)); }
 
 // ==== basic-attack-swings: in a turn fight a basic Attack plays the hero's swing (62-stage on 'soloAttack') ====
 // 59k emits only soloAttack for a basic Attack (no lunge or classTap), and the stage swung only on those, so the hero stood still.
@@ -18692,6 +19961,60 @@ if (section('basic-attack-swings')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('basic-attack-swings crashed: ' + (e.stack || e)); }
+
+// ==== realtime-press-swings: in a real-time fight a press that fires a Finisher or stops a heal plays the hero's swing ====
+// 59j's Attack answers a Finisher or an interrupt first and emits only soloAttack { kind } (no classTap, no lunge), so the
+// stage swung only on a plain hit. Every hero, at the three views (360x740 with reduced motion): one press makes one swing.
+if (section('realtime-press-swings')) try {
+  const at = 'realtime-press-swings', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, red] of [[1280, 720, false], [740, 360, false], [360, 740, true]]) {
+        const v = `${at} ${w}x${h}${red ? ' (reduced motion)' : ''}`, phone = w < 1200;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}), ...(red ? { reducedMotion: 'reduce' } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // the player at the buttons with auto off: no auto swing (50-sim) and no auto Finisher (59g) while the press is read
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); soloSetAuto(false); true');
+        for (const k of ['wren', 'tobin', 'pip']) {
+          for (const kind of ['finisher', 'interrupt']) {
+            // a boss for the Finisher (only a boss or an elite staggers), a plain foe channelling a heal for the interrupt
+            await X(`soloPick("${k}", { now: true }); setZone(2); S.activity = "fight"; fightBoss = ${kind === 'finisher'}; spawn(); true`);
+            let r = null;
+            for (const t0 = Date.now(); Date.now() - t0 < 15000 && !(r && r.got === kind);) {
+              await page.waitForTimeout(200);
+              r = JSON.parse(await X(`(() => { const f = combatFoes().find(f => f && !f.dead && f.hp > 0 && !f.gone); if (!f || stageStats().heroSt !== 0) return '{}';
+                soloTouch();
+                if ("${kind}" === 'finisher' && !cbState().fin.on) { actStag(f, 1e6, 0); return '{}'; }   // the stagger lands on the next tick
+                if ("${kind}" === 'interrupt') f.chanT = 3;
+                const s0 = stageStats(), seen = [], off = on('soloAttack', p => seen.push(p && p.kind));
+                const got = soloAttack(); typeof off === 'function' && off();
+                const s1 = stageStats(); return JSON.stringify({ got, seen, st0: s0.heroSt, st1: s1.heroSt, q0: s0.heroPending, q1: s1.heroPending, d: s1.heroSwings - s0.heroSwings, n0: s0.heroSwings }); })()`));
+            }
+            assert(r && r.got === kind && (r.seen || []).join() === kind, `${v} ${k}: a real-time press fires the ${kind} (${JSON.stringify(r)})`);
+            if (!r || r.got !== kind) continue;
+            assert(r.st1 === 1 && r.d === 1 && !r.q1, `${v} ${k}: the ${kind} press starts one swing at once, none queued (stage state ${r.st0} -> ${r.st1}, ${r.d} swing, queued ${r.q1})`);
+            await page.waitForTimeout(150);
+            const n = await X('stageStats().heroSwings + (stageStats().heroPending ? 1 : 0)');
+            assert(n - r.n0 === 1, `${v} ${k}: no second swing follows the ${kind} press (${n - r.n0} swings)`);
+          }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('realtime-press-swings crashed: ' + (e.stack || e)); }
 
 // ==== ability-effects-live: every ability's effect in a turn fight, one colour per status (62b-fx.js) ====
 // The game draws the motion and the light (CLAUDE.md "Art freeze", Cal 2026-10-10). Every non-passive ability of every hero has a
@@ -18799,6 +20122,227 @@ if (section('ability-effects-live')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('ability-effects-live crashed: ' + (e.stack || e)); }
+
+// ==== fx-timing-fixes: a buff fires nothing at the foe, and a hit's number rises when the hit lands (62-stage) ====
+// A buff (24c kind 'buff': Shadow Step, Brace, Arcane Ward) hits no foe, so the press spawns no arrow, bolt or slash: a hero drawn
+// with its own moves (route S) plays the move in place, classic art stands still, and the buff's own effect (62b) still lands.
+// A basic Attack's damage number's first frame comes at or after its hit on the stage: the arrow's or bolt's impact (the stage's
+// projectile), or the melee contact (the swing's strike, 62b swing). Pressed through the turn engine (59k strike) at 1280x720 and 740x360.
+if (section('fx-timing-fixes')) try {
+  const at = 'fx-timing-fixes', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, o = {}) => {
+      const phone = w < 1200;
+      const ctx = await browser.newContext({ ...o, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+      await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+      await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);   // the away card
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360]]) {
+        const v = `${at} ${w}x${h}`;
+        const { ctx, errs, X, page } = await open(w, h, { turns: true });
+        // the log, on the stage's clock T (90-boot: one T per frame, so a number and a hit in the same frame share it): every
+        // projectile the stage or 62b starts and when it lands, every swing's strike (62b swing), every float
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__L = { proj: [], sw: [], fl: [] };
+          { const P = ANIM.proj; ANIM.proj = function (kind, sx, sy, tx, ty, dur, col, arc, hit, delay) { const r = { kind, t: T, hitT: -1 }; __L.proj.push(r);
+            return P.call(this, kind, sx, sy, tx, ty, dur, col, arc, (x, y) => { if (r.hitT < 0) r.hitT = T; if (hit) hit(x, y); }, delay); }; }
+          { const W = stageFx.swing; stageFx.swing = (x, y) => { __L.sw.push(T); return W(x, y); }; }
+          on('float', f => __L.fl.push({ t: T, txt: String(f && f.txt) })); true`);
+        for (const [k, buff, shot] of [['wren', 'shadowstep', 'arrow'], ['tobin', 'brace', ''], ['pip', 'arcaneward', 'bolt']]) {
+          await X(`soloPick("${k}", { now: true }); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true`);
+          for (const id of [buff, 'attack']) {
+            const tag = `${v} ${k} ${id === 'attack' ? 'Attack' : id}`;
+            let ph = '';
+            for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+              ph = await X(`(() => { if (!TURN_LIVE || TURN_LIVE.ended) { S.activity = "fight"; spawn(); return 'off'; } return TURN_LIVE.foe !== mob ? 'other foe' : TURN_LIVE.phase; })()`);
+              if (ph === 'hero') break;
+              await page.waitForTimeout(60);
+            }
+            assert(ph === 'hero', `${tag}: the hero's turn comes (${ph})`);
+            const r = JSON.parse(await X(`(() => { const m = TURN_LIVE;
+              S.abil.unl.${k} = Array.from(new Set((S.abil.unl.${k} || []).concat(["${buff}"]))); S.solo.eq.${k} = ["${buff}", null, null]; turnSyncEquip();
+              m.cds["${buff}"] = 0; m.cds.attack = 0; m.h.blind = 0; m.foe.hp = m.foe.max = Math.max(m.foe.max, 1e7);   // no hit ends the fight
+              const why = "${id}" === "attack" ? "" : turnUsable(m, "${buff}"); if (why) return JSON.stringify({ why });
+              __L.proj.length = 0; __L.sw.length = 0; __L.fl.length = 0;
+              const s0 = stageFx.stats(), n0 = stageStats().heroSwings, own = !!((typeof wrenSOn === 'function' && wrenSOn()) || (typeof tobinSOn === 'function' && tobinSOn()));
+              const ok = "${id}" === "attack" ? turnCombatAction('attack') : turnCombatAction('ability', 0);
+              return JSON.stringify({ ok, t0: T, n0, own, c0: s0.casts, i0: s0.impacts }); })()`));
+            if (r.why) { assert(false, `${tag}: the buff can be pressed (${r.why})`); continue; }
+            assert(r.ok, `${tag}: the press goes through the turn engine (${JSON.stringify(r)})`);
+            // wait for the hit on the stage (a slow page falls behind), up to 6 s, then a beat for anything late
+            let s;
+            for (const t0 = Date.now(); ; ) {
+              s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats(), n: stageStats().heroSwings, T })`));
+              const landed = id === 'attack' ? (shot ? s.L.proj.some(p => p.kind === shot && p.hitT >= 0) : s.L.sw.length > 0) && s.L.fl.some(f => /\d/.test(f.txt)) : s.fx.impacts > r.i0;
+              if (landed || Date.now() - t0 > 6000) break;
+              await page.waitForTimeout(50);
+            }
+            await page.waitForTimeout(150); s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats(), n: stageStats().heroSwings, T })`));
+            if (id !== 'attack') {
+              assert(s.L.proj.length === 0 && s.fx.live === 0, `${tag}: a buff spawns no projectile (${s.L.proj.map(p => p.kind).join(', ') || 'none'} from the stage, ${s.fx.live} shots from 62b)`);
+              assert(s.fx.casts === r.c0 + 1 && s.fx.impacts > r.i0, `${tag}: the buff's own effect plays (casts ${s.fx.casts - r.c0}, impacts ${s.fx.impacts - r.i0})`);
+              assert(s.n - r.n0 === (r.own ? 1 : 0), `${tag}: ${r.own ? 'the hero plays its own move in place' : 'the hero swings at nothing'} (${s.n - r.n0} swings, own moves ${r.own})`);
+              assert(!s.L.fl.some(f => /\d/.test(f.txt)), `${tag}: no damage number (${s.L.fl.map(f => f.txt).join(', ') || 'none'})`);
+            } else {
+              const hitT = shot ? (s.L.proj.find(p => p.kind === shot && p.hitT >= 0) || { hitT: -1 }).hitT : s.L.sw.length ? s.L.sw[0] : -1;
+              const f = s.L.fl.find(f => /\d/.test(f.txt));
+              assert(hitT >= 0 && f, `${tag}: the ${shot || 'blow'} lands and its number rises (hit at ${hitT >= 0 ? (hitT - r.t0).toFixed(3) : 'never'}, number ${f ? f.txt : 'none'}; floats ${JSON.stringify(s.L.fl)}; DBG ${await X('JSON.stringify({ph: TURN_LIVE && TURN_LIVE.phase, hp: TURN_LIVE && TURN_LIVE.foe.hp, max: TURN_LIVE && TURN_LIVE.foe.max, ended: TURN_LIVE && TURN_LIVE.ended})')})`);
+              if (hitT >= 0 && f) assert(f.t >= hitT, `${tag}: the number's first frame is at or after the ${shot || 'contact'} (number ${(f.t - r.t0).toFixed(3)} s, hit ${(hitT - r.t0).toFixed(3)} s after the press)`);
+            }
+          }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('fx-timing-fixes crashed: ' + (e.stack || e)); }
+
+// ==== bow-slot-wording: an empty Weapon slot names the hero's starting weapon, not "You wear nothing"; the first piece of gear
+// made says it is not on yet and why a tool went on by itself (cold leg 10 Oct, finding 7) ====
+if (section('bow-slot-wording')) try {
+  const at0 = 'bow-slot-wording', { pw, exe } = browserTools;
+  const cui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-craft-ui.js'), 'utf8');
+  assert(!/`You wear nothing as \$\{posName\(d\.pos\)\}/.test(cui) && (cui.match(/emptyLine\(d\.pos, /g) || []).length === 2, `${at0}: the result card and the item sheet both build the empty-slot line through emptyLine`);
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at0}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-flow-cold-camp.json'), 'utf8');   // Wren, zone 2, nothing worn, no gear made
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const at = `${at0} ${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch });
+        await ctx.addInitScript(([key, raw]) => {
+          try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {}
+          const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+        }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        for (let i = 0; i < 8; i++) { const b = await page.$('#createScreen .create-go, .bsheet-ov .sty-done, .bsheet-ov .big:has-text("Begin"), .bsheet-ov .big:has-text("Continue"), .away-ov button'); if (!b) break; try { await b.click({ timeout: 800 }); } catch (e) { break; } await page.waitForTimeout(300); }
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        const until = async (expr, ms = 5000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 50 }); return true; } catch (e) { return false; } };
+        await X(`onboardUnlockAll(); S.onboard.tips = false; if (S.refine) S.refine.said = 1; S.gold = 1e9; S.auto = false;
+          for (const k of Object.keys(S.mats)) S.mats[k] = S.mats[k].map(() => 900); ui(true); true`);
+        assert(await X(`soloHero() === 'wren' && S.equip.weapon == null && Object.values(S.craft.made || {}).every(n => !n)`), `${at}: the fixture is Wren with no weapon worn and no gear made`);
+        await X(`setTab('forge'); true`);
+        const card = async () => { await until(`!!document.querySelector('.cf-res')`); return X(`(c => c ? { id: +c.dataset.itemId, txt: c.querySelector('.cf-res-r').innerText, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent) } : null)(document.querySelector('.cf-res'))`); };
+        // 0. a pickaxe first (the guide's order): it goes on by itself and never says "Not equipped yet"
+        const p1 = await X(`(craftItem('pick', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c0 = await card();
+        assert(c0 && c0.id === p1 && !/Not equipped yet/.test(c0.txt), `${at}: a pickaxe's card has no "Not equipped yet" line (${c0 && c0.txt})`);
+        // 1. the first bow: the compare names her starting bow, and one line says it is not on yet and why a tool goes on by itself
+        const b1 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c1 = await card();
+        assert(b1 != null && c1 && c1.id === b1, `${at}: the Pine Bow's result card shows (${JSON.stringify(c1)})`);
+        assert(c1 && /Better than your starting bow\./.test(c1.txt) && !/You wear nothing/.test(c1.txt), `${at}: the bow's card says "Better than your starting bow." and never "You wear nothing" (${c1 && c1.txt})`);
+        assert(c1 && /Not equipped yet\. Gear waits for you to choose; tools go on by themselves\./.test(c1.txt) && c1.btns.includes('Equip'), `${at}: the first piece of gear says it is not on yet, and offers Equip (${c1 && c1.txt})`);
+        // 2. the item sheet's compare says the same
+        await X(`craftUI.openItem(${b1}); true`); await until(`!!document.querySelector('.cf-isheet .cf-cmp')`);
+        const sh = await X(`(n => n ? n.innerText : '')(document.querySelector('.cf-isheet .cf-cmp'))`);
+        assert(/Better than your starting bow\. *$/m.test(sh) && !/You wear nothing/.test(sh), `${at}: the item sheet's compare names the starting bow (${sh})`);
+        await page.keyboard.press('Escape'); await X(`document.querySelectorAll('.bsheet-ov').forEach(o => o.remove()); setTab('forge'); true`);
+        // 3. a second bow: no first-craft line any more
+        const b2 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c2 = await card();
+        assert(c2 && c2.id === b2 && !/Not equipped yet/.test(c2.txt) && /Better than your starting bow\./.test(c2.txt), `${at}: a second bow keeps the compare line but drops the first-craft line (${c2 && c2.txt})`);
+        // 4. once a bow is worn, the next one compares against it
+        await X(`S.equip.weapon = ${b1}; gearDirty(); ui(true); true`);
+        const b3 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c3 = await card();
+        assert(c3 && c3.id === b3 && /Against your /.test(c3.txt) && !/starting bow/.test(c3.txt), `${at}: with a bow worn, a new one compares against it (${c3 && c3.txt})`);
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+    // the other starters name their own weapon
+    const sw = fs.readFileSync(path.join(ROOT, 'src', 'js', '24b-data-solo.js'), 'utf8');
+    assert(/tobin:[^\n]*weapon: 'Sword and shield'/.test(sw) && /pip:[^\n]*weapon: 'Staff'/.test(sw), `${at0}: Tobin and Pip have a starting weapon for the line to name`);
+    assert(/\.split\(' and '\)\[0\]/.test(cui), `${at0}: Tobin's line names his sword only (the shield is the Off-hand slot)`);
+  }
+} catch (e) { fail('bow-slot-wording crashed: ' + (e.stack || e)); }
+
+// ==== pip-cast-recipes (ruling-pip.md question 9): Pip's Nova, Lantern Flare and Lanternburst start where her art casts them ====
+// With route S Pip (stageFx.pipS.on, filled by route-s-pip-wire; stubbed here) Nova is a ring from the staff butt along the ground,
+// Lantern Flare a flash from the lantern, Lanternburst a ring centred on the lantern: no bolt flies, the anchor hook places them,
+// and the hit and its number still land. Classic art keeps the bolt. Pressed through the turn engine at 1280x720 and 740x360.
+if (section('pip-cast-recipes')) try {
+  const at = 'pip-cast-recipes', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const WANT = { nova: ['ring', 'butt'], flare: ['flash', 'lantern'], lanternburst: ['ring', 'lantern'] };
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__L = { proj: [], fl: [] };
+          { const P = ANIM.proj; ANIM.proj = function (kind, ...a) { __L.proj.push(kind); return P.call(this, kind, ...a); }; }
+          on('float', f => __L.fl.push(String(f && f.txt))); soloPick("pip", { now: true }); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true`);
+        for (const routeS of [true, false]) for (const id of Object.keys(WANT)) {
+          const tag = `${v} ${routeS ? 'route S' : 'Classic'} ${id}`;
+          let ph = '';
+          for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+            ph = await X(`(() => { if (!TURN_LIVE || TURN_LIVE.ended) { S.activity = "fight"; spawn(); return 'off'; } return TURN_LIVE.foe !== mob ? 'other foe' : TURN_LIVE.phase; })()`);
+            if (ph === 'hero') break;
+            await page.waitForTimeout(60);
+          }
+          assert(ph === 'hero', `${tag}: Pip's turn comes (${ph})`);
+          // the anchor hook: Nova's staff butt at a known point (the wire's per-move anchors); the others take today's points
+          const r = JSON.parse(await X(`(() => { const m = TURN_LIVE;
+            stageFx.pipS.on = () => ${routeS}; stageFx.pipS.at = (id, part) => id === 'nova' && part === 'butt' ? [123, 45] : null;
+            S.abil.unl.pip = Array.from(new Set((S.abil.unl.pip || []).concat(["${id}"]))); S.solo.eq.pip = ["${id}", null, null]; turnSyncEquip();
+            m.cds["${id}"] = 0; m.h.blind = 0; m.h.embers = 3; m.heroOps = 3; m.foe.hp = m.foe.max = Math.max(m.foe.max, 1e7);
+            const why = turnUsable(m, "${id}"); if (why) return JSON.stringify({ why });
+            __L.proj.length = 0; __L.fl.length = 0; const s0 = stageFx.stats();
+            return JSON.stringify({ ok: turnCombatAction('ability', 0), i0: s0.impacts, n0: s0.shots, want: [123, 45] }); })()`));
+          if (r.why) { assert(false, `${tag}: the move can be pressed (${r.why})`); continue; }
+          assert(r.ok, `${tag}: the press goes through the turn engine`);
+          let s;
+          for (const t0 = Date.now(); ; ) {
+            s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats() })`));
+            if ((s.fx.impacts > r.i0 && s.L.fl.some(f => /\d/.test(f))) || Date.now() - t0 > 6000) break;
+            await page.waitForTimeout(50);
+          }
+          await page.waitForTimeout(150); s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats() })`));
+          assert(s.fx.last === id && s.fx.impacts > r.i0, `${tag}: its effect lands on the foe (last ${s.fx.last}, impacts ${s.fx.impacts - r.i0})`);
+          assert(s.L.fl.some(f => /\d/.test(f)), `${tag}: its number rises (${s.L.fl.join(', ') || 'none'})`);
+          if (routeS) {
+            assert(!s.L.proj.includes('bolt'), `${tag}: no bolt flies (${s.L.proj.join(', ') || 'none'})`);
+            assert(s.fx.kind === WANT[id][0] && s.fx.from === WANT[id][1], `${tag}: a ${WANT[id][0]} from the ${WANT[id][1]} (${s.fx.kind} from ${s.fx.from})`);
+            if (id === 'nova') assert(JSON.stringify(s.fx.at) === JSON.stringify(r.want), `${tag}: the ring starts at the anchor hook's staff butt (${s.fx.at} vs ${r.want})`);
+          } else assert(s.L.proj.includes('bolt'), `${tag}: Classic art keeps the bolt (${s.L.proj.join(', ') || 'none'})`);
+        }
+        await X(`stageFx.pipS.on = () => false; stageFx.pipS.at = () => null; true`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('pip-cast-recipes crashed: ' + (e.stack || e)); }
 
 // ==== route-s-wren-wire (docs/design/route-s/ruling.md, "Build card spec: route-s-wren-wire"): Wren's route S fight moves ====
 // From the converter's record (art/heroes/wren/route-s/pack.json, tools/art/route-s-wren.py) and the embedded data (21ye): bytes

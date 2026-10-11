@@ -1,0 +1,1 @@
+Paying gold for the materials an upgrade is short of now costs three times as much (270 gold a Pine Plank, was 90), so gathering stays the cheap way. A gold press made just after you gathered the rest now upgrades the piece instead of saying gold cannot cover it. Best shot: priced-360x740.

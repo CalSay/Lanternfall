@@ -1,0 +1,1 @@
+On a phone held upright, the Craft list no longer jumps away from the piece you just made. After you craft the Copper Pickaxe, its card ("Copper Pickaxe on.") stays in view when the boss line comes in on the Pine Bow below. (route: craft-delta)

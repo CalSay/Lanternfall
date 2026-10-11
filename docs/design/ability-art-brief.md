@@ -2,13 +2,15 @@
 
 Status: design and production brief for owner and Claude review, 1 October 2026. It accompanies [Hero ability trees](hero-abilities.md); it does not authorise integration or replace that document's gameplay tables. The owner has set six shared and eight signature abilities per hero (42 base abilities), and a 2.5× base critical hit. This brief covers their art, including the eight possible Hallowed looks per hero. A hero can select only one Hallowed signature at a time; these looks are variants, not 24 more abilities. Subclass abilities from C21 will need their own art budget.
 
+Names follow #366 ([Hero kits](hero-kits.md), Cal 10 Oct): Tobin's T5 is Sky Splitter (renamed from Hammerfall) and T6 is Shield Charge (renamed from Shield Throw, now melee: the shield never leaves his arm). Pip's C2 is Smoke Bolt (renamed from Frost Shard, now fire with a Weaken), C3 Ashen Ward (renamed from Arcane Ward), C4 Smoulder (renamed from Hex, now fire) and C6 Ring of Light (renamed from Nova). Ids stay as they were.
+
 ## What an ability pack contains
 
-Each of the 23 active pose families below needs a readable wind-up, release or held action, and recovery. That is a **minimum planning envelope of 23 × 3 = 69 keyed moments before validated reuse**, not a claim that 69 new PNGs are needed or that any new art is ready. Six of the 42 abilities are always-on passives and need no activation pose: A6 Twin Shot, M4 Momentum, C5 Afterglow, W7 Night Hunter, T7 Bulwark and P7 Ember Heart. Each takes a loadout slot, has no button, and never chooses a combat action. Reuse a current key only when its anatomy, prop grip, contact direction and timing visibly fit the action. In particular, Wren's existing full draw is already a held draw; her hurt kneel cannot be used as a combat shot. Tobin's overhead wind-up exists but an overhead impact does not. His block is not a shield-bash impact. The shield throw also needs departure, travel and catch or a clearly single-action return.
+Each of the 23 active pose families below needs a readable wind-up, release or held action, and recovery. That is a **minimum planning envelope of 23 × 3 = 69 keyed moments before validated reuse**, not a claim that 69 new PNGs are needed or that any new art is ready. Six of the 42 abilities are always-on passives and need no activation pose: A6 Twin Shot, M4 Momentum, C5 Afterglow, W7 Night Hunter, T7 Bulwark and P7 Ember Heart. Each takes a loadout slot, has no button, and never chooses a combat action. Reuse a current key only when its anatomy, prop grip, contact direction and timing visibly fit the action. In particular, Wren's existing full draw is already a held draw; her hurt kneel cannot be used as a combat shot. Tobin's overhead wind-up exists but an overhead impact does not. His block is not a shield-bash impact. Shield Charge needs a dash in behind the shield and one contact; the shield stays on his arm.
 
 Draw on the established transparent 224 × 192 canvas, facing right, with feet at (96, 132), the current hero scale, a strict pixel grid, compact colour ramps and a one-pixel dark outline. Preserve the approved face, silhouette and signature clothing. For each keyed moment, supply a clean body base, front-hand grip layer, outfit composite and compatible removable gear layers. Equipment follows [Equipment art](equipment-art.md): weapon, offhand, head and body use named anchors, angle and front/behind order per pose. The approved starting outfit may show its complete pose, but equipped gear must still line up. Include a keyed rig record for the weapon grip, offhand grip, head, back/quiver, projectile origin, hit/contact and effect origin; flag hidden slots. Author each required weapon angle rather than rotating an existing sprite in code. Keep the shield and lantern on a single offhand, with no duplicate prop or third hand.
 
-**Author the effects and moving props in the art pack.** Deliver matched bowstrings, arrows and arrowheads, shield flight, sparks, flame, frost, sound rings, bat silhouettes, status marks, ward shapes, impact arcs and other listed effects as transparent pixel assets with attachment and timing metadata. Code may place, tint within approved ramps and animate these assets; it must not invent or draw the pixels. This follows the newer owner art rule in CLAUDE.md, which supersedes the older procedural-effect wording in art-pipeline.md. Each asset needs a restrained peak frame for reduced motion. At small combat scale, distinguish effects by shape and timing as well as colour.
+**Author the effects and moving props in the art pack.** Deliver matched bowstrings, arrows and arrowheads, sparks, flame, smoke, sound rings, bat silhouettes, status marks, ward shapes, impact arcs and other listed effects as transparent pixel assets with attachment and timing metadata. Code may place, tint within approved ramps and animate these assets; it must not invent or draw the pixels. This follows the newer owner art rule in CLAUDE.md, which supersedes the older procedural-effect wording in art-pipeline.md. Each asset needs a restrained peak frame for reduced motion. At small combat scale, distinguish effects by shape and timing as well as colour.
 
 ## Name and activity cross-check
 
@@ -17,8 +19,8 @@ This is the art inventory's name key for all 42 base abilities. A passive is equ
 | Hero | Six shared abilities | Eight signature abilities |
 |---|---|---|
 | Wren | A1 Power Shot; A2 Barbed Arrow; A3 Pinning Shot; A4 Hunter's Mark; A5 Volley; A6 Twin Shot (passive) | W1 Echo Shot; W2 Bat Swarm; W3 Deadeye; W4 Sonic Arrow; W5 Shadow Step; W6 Moonlit Volley; W7 Night Hunter (passive); W8 Final Echo |
-| Tobin | M1 Heavy Strike; M2 Cleave; M3 Sunder; M4 Momentum (passive); M5 Brace; M6 Lunge | T1 Shield Bash; T2 Riposte; T3 Iron Will; T4 Taunting Roar; T5 Hammerfall; T6 Shield Throw; T7 Bulwark (passive); T8 Last Stand |
-| Pip | C1 Spark; C2 Frost Shard; C3 Arcane Ward; C4 Hex; C5 Afterglow (passive); C6 Nova | P1 Fireball; P2 Kindle; P3 Ignite; P4 Searing Eye; P5 Wildfire; P6 Lantern Flare; P7 Ember Heart (passive); P8 Lanternburst |
+| Tobin | M1 Heavy Strike; M2 Cleave; M3 Sunder; M4 Momentum (passive); M5 Brace; M6 Lunge | T1 Shield Bash; T2 Riposte; T3 Iron Will; T4 Taunting Roar; T5 Sky Splitter; T6 Shield Charge; T7 Bulwark (passive); T8 Last Stand |
+| Pip | C1 Spark; C2 Smoke Bolt; C3 Ashen Ward; C4 Smoulder; C5 Afterglow (passive); C6 Ring of Light | P1 Fireball; P2 Kindle; P3 Ignite; P4 Searing Eye; P5 Wildfire; P6 Lantern Flare; P7 Ember Heart (passive); P8 Lanternburst |
 ## Pose-family inventory
 
 | Hero | Family and ability IDs | Existing key or art to make |
@@ -37,21 +39,21 @@ This is the art inventory's name key for all 42 base abilities. A passive is equ
 | Tobin | Lunge: M6, T2 | New forward step, blade contact and retreat. |
 | Tobin | Shield bash: T1 | New forward shield contact. Existing block is not a bash. |
 | Tobin | Plant: T3 | New rooted Iron Will stance, shield and sword both held. |
-| Tobin | Throw: T6 | New single-shield release and catch keys, a separately authored shield flight, and a defined return before guard resumes. |
-| Tobin | Shield raise: T8 | New high shield protection pose, held for Last Stand without hiding his face or sword. |
-| Pip | Small cast: C1, C2, P2 | Reuse wind-up and cast if grip and effect origins work; fire, frost and Kindle effects remain distinct. |
+| Tobin | Charge: T6 | New dash in behind the raised shield and one forward shield contact. The shield never leaves his arm. |
+| Tobin | Finisher slash and stand: T8 | New charge, big slash and planted sword for Last Stand's 180% hit, then a held stand for the 1 HP hold, face and sword visible. No shield raise. |
+| Pip | Small cast: C1, C2, P2 | Reuse wind-up and cast if grip and effect origins work; fire, smoke and Kindle effects remain distinct. |
 | Pip | Big cast: P1, P5 | Reuse Fireball's broad cast where feasible; author separate fireball and Wildfire shapes. |
-| Pip | Lantern raise: C3, P6 | New offhand lift and lower. The lantern must be physically present in ready, cast and recovery states and in gear looks. Ember Heart (P7) is passive and adds no raise. |
-| Pip | Point: C4 | New Hex targeting gesture with staff and lantern accounted for. |
+| Pip | Lantern raise: P6 | New offhand lift and lower. Ashen Ward (C3) keeps its drawn arms-spread pose (#366). The lantern must be physically present in ready, cast and recovery states and in gear looks. Ember Heart (P7) is passive and adds no raise. |
+| Pip | Point: C4 | New Smoulder finger flick at the foe, with staff and lantern accounted for. |
 | Pip | Channel: P4 | New sustained stance for Searing Eye, with staff, lantern, hands and held effect consistent through recovery. Afterglow (C5) is passive and uses the ordinary Attack pose and damage-type assets when it triggers. |
 | Pip | Snap: P3 | New close hand release for Ignite, with a distinct Burn-consumption effect. |
-| Pip | Burst: C6, P8 | New centred release or validated cast reuse; author Nova's force ring and Lanternburst's ember/lantern burst separately. |
+| Pip | Burst: C6, P8 | Ring of Light (C6) keeps its drawn pose, staff butt on the ground with the ring spreading from her feet (#366). Lanternburst needs a new centred release or validated cast reuse. Author Ring of Light's lantern-light ring and Lanternburst's ember/lantern burst separately. |
 
-Pip's physical staff **and** lantern are the approved C27 equipment direction. Today's Pip sprite shows the staff but no lantern; adding one only on lantern-raise would make it appear from nowhere. The art pack must establish her offhand lantern across idle, cast, hurt and relevant new poses, with a matching starter outfit and the gear layers. If that full package proves unworkable, a staff-raise with a lantern-shaped magical effect is a **fallback proposal requiring owner review**, not a silent change. Wren's current arrow art also needs to be checked against the approved v4 bow before reuse. Tobin's shield must not remain on his arm while an identical one flies; shield flight and guard timing need one coherent visual contract.
+Pip's physical staff **and** lantern are the approved C27 equipment direction. Today's Pip sprite shows the staff but no lantern; adding one only on lantern-raise would make it appear from nowhere. The art pack must establish her offhand lantern across idle, cast, hurt and relevant new poses, with a matching starter outfit and the gear layers. If that full package proves unworkable, a staff-raise with a lantern-shaped magical effect is a **fallback proposal requiring owner review**, not a silent change. Wren's current arrow art also needs to be checked against the approved v4 bow before reuse. Tobin's shield stays on his arm through Shield Charge; there is no shield flight.
 
 ## Timed action keys and contact
 
-Binding §2a names **12 timed abilities**, four per hero. For each, author a stable wind-up/hold key and a release key, with the timing ring aligned to the decisive contact. Shield Throw is the exception: its single ring closes on the catch after release. Supply the ring artwork, reduced-motion still, contact/catch frame and a metadata timestamp or frame marker. Perfect (about 0.12 seconds) may add an accent only when earned; Good (about 0.3 seconds) is the written effect; Miss uses the same action with reduced power, not a false successful hit flourish. Combat is active-only; no automatic Good timing is shown. The ring is checked only on the hero's own turn. For multi-hit shots, give every arrow its own authored travel/contact cue and timing check; do not turn one volley into a single timing press. A branch that splits a cast into hits also needs one prompt per hit.
+Binding §2a names **12 timed abilities**, four per hero. For each, author a stable wind-up/hold key and a release key, with the timing ring aligned to the decisive contact. Supply the ring artwork, reduced-motion still, contact frame and a metadata timestamp or frame marker. Perfect (about 0.12 seconds) may add an accent only when earned; Good (about 0.3 seconds) is the written effect; Miss uses the same action with reduced power, not a false successful hit flourish. Combat is active-only; no automatic Good timing is shown. The ring is checked only on the hero's own turn. For multi-hit shots, give every arrow its own authored travel/contact cue and timing check; do not turn one volley into a single timing press. A branch that splits a cast into hits also needs one prompt per hit.
 
 | Timed ID | Hold, release and contact requirement |
 |---|---|
@@ -61,9 +63,9 @@ Binding §2a names **12 timed abilities**, four per hero. For each, author a sta
 | W6 Moonlit Volley | Hold sky draw, then release five separately readable descending arrows and five timing/contact markers; Perfect Bleed cues occur only for those arrows earned. |
 | M1 Heavy Strike | Hold the one-handed overhead wind-up with shield retained; show overhead impact on the closing ring, not a two-handed grip. |
 | T1 Shield Bash | Hold shield forward, then key one forward shield contact. A Perfect extra Guard duration is shown by the status UI, not another bash. |
-| T5 Hammerfall | Hold the overhead blade while Grit is visible in the UI; release into the new overhead impact. Perfect retains half Grit without inventing another swing. |
-| T6 Shield Throw | Show the shield leaving the hand, one authored flight path, and a distinct return/catch key for its **single** ring prompt. There is no release prompt: hold the hit value until the catch grade resolves. Perfect's cooldown reduction is shown in UI. The same shield returns before guard art resumes. |
-| C2 Frost Shard | Hold a contained shard at the staff tip; release one projectile/contact at ring close. Perfect's extra Chill uses the existing status icon. |
+| T5 Sky Splitter | Leap and hold the overhead blade while Grit is visible in the UI; release into the new overhead impact in front of him. Perfect retains half Grit without inventing another swing. |
+| T6 Shield Charge | Hold the shield forward, then dash in and key one shield contact at ring close. The shield never leaves his arm. Perfect's cooldown reduction is shown in UI. |
+| C2 Smoke Bolt | Hold a contained smoky fire bolt at the staff tip; release one projectile/contact at ring close. Perfect's longer Weaken uses the existing status icon. |
 | P1 Fireball | Hold a growing but bounded fireball, then release one shot at ring close. Scattered Cinders splits that release into three authored hits with one timing prompt each; if any hit is Perfect, extend Burn only once. Ember spending and Burn application remain once per cast. |
 | P3 Ignite | Hold a small compression of the target's existing Burn, then snap and resolve one detonation. Perfect changes the stored-Burn coefficient from 1.25 to 2.0 while the direct 0.8 U stays unchanged; show one stronger contained peak, not a second explosion. |
 | P8 Lanternburst | Hold the physical offhand lantern and gathering Embers, then key a single centred release at ring close. Perfect's retained Embers remain in the UI; the lantern does not leave her hand. |
@@ -87,10 +89,10 @@ The following are Hallowed treatments for the eight existing signatures per hero
 | T2 | Riposte | A narrow gold blade glint follows the parry into one decisive lunge. |
 | T3 | Iron Will | Linked shield and boot-edge highlights root Tobin in place around the Ward. |
 | T4 | Taunting Roar | A firm forward call arc and shield sigil mark Weaken and Pinned without making him feral. |
-| T5 | Hammerfall | A compact falling blade arc and cracked impact mark show the spent Grit. |
-| T6 | Shield Throw | One gold-rimmed shield traces the out-and-back path; return and catch remain visible. |
+| T5 | Sky Splitter | A compact falling blade arc and cracked impact mark show the spent Grit. |
+| T6 | Shield Charge | A gold rim runs along the shield's leading edge through the dash and flares once on contact. |
 | T7 | Bulwark (passive) | No Hallowed combat visual or stance. The loadout icon alone shows the shared Hallowed halo; ordinary parry art stays unchanged. |
-| T8 | Last Stand | A steady white-gold shield edge marks the two-opportunity 1 HP floor. A wider parry cue and one accent on a completed all-parry counter show the reward; no automatic retaliation is pictured. |
+| T8 | Last Stand | A white-gold edge on the finishing slash marks the 180% hit; then a steady white-gold shield edge marks the two-opportunity 1 HP floor. A wider parry cue and one accent on a completed all-parry counter show the reward; no automatic retaliation is pictured. |
 | P1 | Fireball | A white-hot core within Pip's orange flame separates the direct hit from its Burn mark. |
 | P2 | Kindle | Two clear ember motes spiral toward the same flame, with no implied extra resource grant. |
 | P3 | Ignite | The target's existing Burn collapses into one bright contained detonation. |

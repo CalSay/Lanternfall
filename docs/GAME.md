@@ -82,7 +82,14 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   **Hits land on impact** (Cal, 2026-10-10; damage-on-impact): a press starts the move at once and its damage, statuses and
   cooldown land when the hit shows: the swing (0.14 s), then Wren's arrow (0.2 s), Pip's bolt (0.28 s) or Moonlit Volley's first
   falling arrow; Tobin's blow at the swing (`fxImpactIn`, 62b). A foe's hit already landed on its contact frame. Scratch fights
-  (budget, odds, sim) land at once, so balance is unchanged.
+  (budget, odds, sim) land at once, so balance is unchanged. Volley, Twin Shot and Moonlit Volley land each arrow's share and its
+  on-hit effects as that arrow arrives (`fxImpactIn(id, i)`; multi-hit-impacts); what follows the move lands with the last arrow,
+  a kill lands the rest at once, and a fight cut off mid-volley lands no more. The total is unchanged; the hero's
+  rest starts after the last arrow, so these turns run 0.05-0.5 s longer (the Deepwell Oil burned is the same).
+  A buff (kind 'buff': Shadow Step, Brace, Iron Will, Arcane Ward, Searing Eye) fires nothing at the foe: its own glow plays, and a
+  hero drawn with its own moves plays the move in place (fx-timing-fixes).
+  With Pip drawn in her own moves (route S), Nova is a ring from her staff butt along the ground, Lantern Flare a flash from her
+  lantern and Lanternburst a ring round the lantern, with no bolt; each lands in the bolt's time (pip-cast-recipes, 62b `FX_RECIPES_S`).
 - **The fight screen is Stage and dock** (Cal, 2026-10-05; `75-solo-ui.js`, `75-turn-ui.js`). The stage shows the hero and
   foe, a turn banner and the timing bar along its bottom edge while a hit winds up. Under it, the dock has three tabs.
   **Act**: Attack and the three ability slots as tiles (D, Q, W, E), each with its name and "Ready", turns left or
@@ -155,8 +162,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   `TRIAL_TUNE.turn`) are turn fights too: one foe at a time, limits counted in turns, no clock
   ([combat-turn-build.md](design/combat-turn-build.md) "The Deepwell and the Provings"). Only the world raid keeps its
   real-time fight (`59-combat.js`, `59g-active.js`, `59h-bosses.js`, `59i-elites.js`).
-- **Away:** gathering (and a raid hit) keeps earning; fights stop and earn nothing (`50-sim.js` `awayGains`). The away cap is 8 hours with no building, so a
-  first night is covered; each Watchtower level and each Hourglass level adds 2 hours, never past 24 (`awayCapH()` in `40-rules.js`; 16 hours is the most in Chapter 1 without the raid). Gatherer shifts stay 4 hours, and a raid hit away keeps the old 4-hour base (`awayRaidCapH()`). When the hero hits the limit, the away card's bar gives both numbers ("Your hero worked 8h of your 11h away.") and the box under it names the one next step with a Go: the next Watchtower level and its hours, or the Hearth level that opens it; "the most your camp can do" at the top (Watchtower 4 in Chapter 1, Watchtower 5 after it); the Storehouse instead when a pile filled first; and the Hourglass only while the raid is open. A raid return counts the raid's own limit (`awayLimitStep` in `75-away.js`). The card reads results (what the hero did, the tiles, Materials, Items, Skills), the limit, Next up, then one folded "More (n)" row that holds every other `registerAwayLine` group; on a landscape or desktop screen results sit on the left and the limit and Next up on the right, so Next up's first row shows without scrolling. While you gather, a chip under the Fight / Gather row says "Leave now: about N <material> in 8 hours" (a floor: it ignores level-ups, and it caps at the Storehouse room and says so when it fills and Spillover moves on). A fighter sees the notice instead.
+- **Away:** gathering (and a raid hit) keeps earning; fights stop and earn nothing (`50-sim.js` `awayGains`). A hero who leaves mid-fight goes back to the last place they gathered (`S.node`) once Gather is open, at the gatherer's rate, Storehouse limit, Spillover and away limit, and banks Well Rested as a gatherer does (`awayNode()`, leave-mid-fight-gathers). The away cap is 8 hours with no building, so a
+  first night is covered; each Watchtower level and each Hourglass level adds 2 hours, never past 24 (`awayCapH()` in `40-rules.js`; 16 hours is the most in Chapter 1 without the raid). Gatherer shifts stay 4 hours, and a raid hit away keeps the old 4-hour base (`awayRaidCapH()`). When the hero hits the limit, the away card's bar gives both numbers ("Your hero worked 8h of your 11h away.") and the box under it names the one next step with a Go: the next Watchtower level and its hours, or the Hearth level that opens it; "the most your camp can do" at the top (Watchtower 4 in Chapter 1, Watchtower 5 after it); the Storehouse instead when a pile filled first; and the Hourglass only while the raid is open. A raid return counts the raid's own limit (`awayLimitStep` in `75-away.js`). The card reads results (what the hero did, the tiles, Materials, Items, Skills), the limit, Next up, then one folded "More (n)" row that holds every other `registerAwayLine` group; on a landscape or desktop screen results sit on the left and the limit and Next up on the right, so Next up's first row shows without scrolling. While you gather, a chip under the Fight / Gather row says "Leave now: about N <material> in 8 hours" (a floor: it ignores level-ups, and it caps at the Storehouse room and says so when it fills and Spillover moves on). While you fight it names the place too ("Leave now: Wren goes back to the Pine Grove, about N Pine Log in 8 hours"); where it would reach the fight dock (740x360 under a long Next Up label) it says only "Leave now: Wren goes back to the Pine Grove." or hides (`awayChipFit` in `71-ui-fight.js`).
 
 ## Gathering and gatherers
 
@@ -214,12 +221,14 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   its next +1 adds to the piece's main line in that line's unit ("+7: +8.5% damage."); a line at its cap says so and shows
   the power change (`75-craft-ui.js` `shortOffer`, `nextPlusTxt`; card craft-shortfall-offer).
   An upgrade short of its material also offers to cover it for gold, as the row's second button after the free order
-  ("Upgrade: 340 + 270 gold for 3 Pine Planks"): `ECON.coverFoes` (9) foes of the tier's foe gold a raw unit, a middle
-  counting 2 (90 gold a Pine Plank, 45 a Copper Ore). Held units go first. Only on an upgrade (never a craft, Essence or a
+  ("Upgrade: 340 + 810 gold for 3 Pine Planks"): `ECON.coverFoes` (27; 9 until gold-cover-share) foes of the tier's foe gold
+  a raw unit, a middle counting 2 (270 gold a Pine Plank, 135 a Copper Ore), so gold covers at most about half of what a
+  hero who covers everything uses. Held units go first. Only on an upgrade (never a craft, Essence or a
   Trophy), and only once the material's gathering tier is open and, for a middle, its station built. Covered units give no
   gathering or refining XP, salvage pays back step gold only, and `coverFoes` 0 turns it off (`55-crafting.js`
   `upgradeCover`, `canUpgrade`/`upgradeItem` with `{ cover: true }`; the `upgraded` event carries `cover`; card
-  upgrade-gold-covers-short, ruling `autopilot/rulings/2026-10-08-gold-covers-material.md`).
+  upgrade-gold-covers-short, ruling `autopilot/rulings/2026-10-08-gold-covers-material.md`). A cover pressed after the rest was
+  gathered makes the plain upgrade.
   The result card after a craft (`craft-delta`): a tool that beats the worn one (or fills an empty slot) goes on by itself
   and the card says how much faster you gather; gear always asks. A weapon, off-hand or charm the hero can wear gets one
   line on how often you'd beat the boss at your furthest zone with it (or, when you win nearly every time, how many turns a
@@ -287,6 +296,12 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Deepwell** (`57d-deepwell.js`, `59c-deepwell-combat.js`, `75-deepwell-ui.js`): from zone 20 and Hearth 3. Each
   floor is a turn fight. Runs floor by floor on Oil, with boons, Depth Marks and a weekly Trial. A run never changes main progress. Its Deep Lore pages follow the story's rule that the dark copies shapes.
 - **Bounties** (`55-bounties.js`): three short goals that pay gold, materials or Essence, and Renown.
+- **Tavern Blackjack** (`57t-blackjack.js`, `75-blackjack-ui.js`, `docs/design/tavern-blackjack.md`): from zone 14, after 10
+  minutes of play with the Tavern built, Camp > Tavern has a Blackjack box where Hesketh deals.
+  Four decks shuffled fresh every hand, no hole card, he stands on 17, blackjack pays 3 to 2; Hit, Stand or Double, no
+  split. You pick the bet in gold with − and +, four coins and Clear. The bets and the day's win and loss limits (5
+  highest bets each way) follow the price curve (`econH`; the highest bet is 0.12 price-hours). Table gold never counts as gold earned (`S.totalGold`, the
+  econ ledger). The cards are plain text UI until the Codex card pack. `BJ_TUNE.on` switches it off per store build.
 - **Mastery and the Bestiary** (`55-mastery.js`): zone stars and per-foe perks from kills. The Codex Bestiary also shows one line for each Hollow monster you have reached that is in the game, saying what shape it copied (`LORE_FOES` in `21h-lore-hollow.js`). Foe tells use solo wording.
 - **Almanac** (`55-almanac.js`): a daily Omen, optional Dares and a weekly board. Each Omen's "Best today" line has a Go button; on Cheap Reforge and Salvager's Luck days it opens Hero, Gear (Craft until the Hero tab opens). Omen lines name no person or place you have not met; Auriel's line comes after Chapter 4.
 - **Codex** (`57c-codex.js`, `75-codex-ui.js`): the collection book. Lantern Light gives titles, cosmetics and small
@@ -349,9 +364,9 @@ Every currency, material and token, with its sources and sinks, is in [design/sy
 
 - **Save:** `localStorage` key `lanternfall.save.v5` (`30-state.js`, `05-platform.js`).
 - **Two tabs** (save-two-tabs): the newest open tab holds the save. A tab whose save another tab has since written stops saving and shows "Lanternfall is open in another tab. Reload to keep playing here." with Reload, so it never writes over newer progress (`30-state.js` `saveCheck`, `75-tabs-ui.js`).
-- **Save codes** (`55-savecode.js`, `75-savecode-ui.js`): export and import, with a strict check and an in-page confirm.
+- **Save codes** (`55-savecode.js`, `75-savecode-ui.js`): export and import, with a strict check and an in-page confirm. Settings > Save code offers Copy save code and Download file; inside the claude.ai viewer (it grants no downloads) the second button is Show save code, a selected box to copy by hand (save-export-in-viewer).
 - **Feedback** (`55-errors.js`, `75-feedback-ui.js`): local error capture and a Send feedback button.
-- **Away report** (`75-away.js`) and the stats wall (`55-stats.js`, `75-stats-ui.js`). The report leads with what happened; a fighter sees "gathering continues, fighting stops" first, and the work-limit bar sits after the results.
+- **Away report** (`75-away.js`) and the stats wall (`55-stats.js`, `75-stats-ui.js`). The report leads with what happened; a hero who left mid-fight sees "You left mid-fight, so Wren went back to the Pine Grove." (a fighter who can't gather yet sees "Fights only happen while you play."), and the work-limit bar sits after the results.
 
 ## Online (do not change without a task that says so)
 
