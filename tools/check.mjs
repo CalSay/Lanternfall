@@ -14463,6 +14463,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
           // unique, an item with `u`) never sees it, and does not need to. The walk's idle passes run the game ahead while the guide waits for the screen, so
           // on a slow runner that drop can come before the Workbench; the step then counts as walked once the game itself calls it done.
           let toolGiven = false;
+          let storeWalk = '';   // guide-walk-stock-store-stall: the Storehouse materials line, forced onto the Camp view of an open World tab (the presses it took)
           let lossDone = '', lossAt = 0, gatherAt = 0;   // ux-l1-gather-tip-after-loss: the forced boss loss as the Gather tip comes due ('lost', or 'missed' if it did not take; lossAt, gatherAt: the play clock at the loss and when the tip is on screen again)
           // a held line's answer (pressHeld): a press that found it covered or never shown is a miss, said once per line
           const heldMiss = new Set(), held = async () => { const r = await pressHeld(page); if (/^(pressed|gone)$/.test(r)) return; const line = await X('soloGuideWants()') || 'a held line'; if (!heldMiss.has(line)) { heldMiss.add(line); bad.push(`${line}: its answer ${r}`); } };
@@ -14501,6 +14502,27 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
                 const tries = () => Object.values(S.bossTry.tries).reduce((a, b) => a + b, 0), n0 = tries();   /* (Auto may try again at once, so the hold can be gone) */
                 const was = !!(mob && mob.boss && !mob.dead); cbTurnHitHero(1e15, false, "hit"); for (let k = 0; k < 5; k++) tick(0.1);
                 was && !cbHeroUp() && tries() === n0 + 1 ? 'lost' : 'missed ' + JSON.stringify({ was, up: cbHeroUp(), hold: S.bossTry.hold, zone: S.zone, mob: mob && { boss: !!mob.boss, dead: mob.dead }, tl: !!TURN_LIVE })`);
+              continue;
+            }
+            // guide-walk-stock-store-stall: the first time the Storehouse materials line is due, the hero fights with the World tab open on Camp
+            // (#38130866868: the walk ran out of passes there). Pressing what the guide points at (its ring; over the stage, its Go) gets the hero
+            // gathering something the Storehouse needs within 3 presses, and every press changes the screen or what the hero does
+            if (st === 'stock:store' && !storeWalk) {
+              await X(`setActivity('fight'); setTab('camp'); true`); await page.waitForTimeout(600);
+              const now = () => X(`JSON.stringify([S.tab, S.tab ? curView(S.tab) : '', S.activity, S.node.kind + S.node.t])`);
+              const there = () => X(`S.activity === 'gather' && onboardNeed('stock:store').some(m => m.kind === S.node.kind && m.t === S.node.t)`);
+              const presses = [], start = await now();
+              if (!/^\["world","camp","fight"/.test(start)) presses.push('(not forced: ' + start + ')');
+              for (let k = 0; k < 3 && !await there(); k++) {
+                let c = await X(TARGET(st)); const was = await now();
+                for (let w8 = 0; !c.ok && w8 < 15; w8++) { await page.waitForTimeout(200); c = await X(TARGET(st)); }   // (the ring glides there; the hint places itself every 250 ms)
+                if (c.ok && c.sel !== 'stage') await page.mouse.click(c.px, c.py);
+                else if (await X('(b => !!b && !b.hidden)(document.querySelector(".ob-ok"))')) await page.click('.ob-ok');
+                else { presses.push('nothing to press ' + JSON.stringify(c)); break; }
+                await page.waitForTimeout(500);
+                const is = await now(); presses.push((c.ok && c.sel !== 'stage' ? c.sel || c.hit : 'Go') + (is === was ? ' (no change)' : ''));
+              }
+              storeWalk = (await there() ? 'gathering' : 'not gathering') + ' after ' + (presses.join(', ') || 'no press');
               continue;
             }
             // forge-tip-goes-stale: a materials line is hidden over a menu other than Camp or Gather, but its step is still current; the walk reads
@@ -14551,11 +14573,12 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && (GUIDE_RT.fight++, actWarn({ kind: "heavy", id: "l" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} })); true');
             if (st === 'nextup') await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x => x.click()); true');
           }
-          const why = want.every(walked) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) + ' last passes ' + passes.slice(-8).join(' ; ') 
+          const why = want.every(walked) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(`(s => s ? ${TARGET('__ID__').replace('"__ID__"', 's.id')} : null)(onboardStep())`)) + ' last passes ' + passes.slice(-8).join(' ; ') 
           assert(!stuck && want.every(walked), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${toolGiven && !trail.includes('tool') ? ' [Tool step: a dropped unique tool did it]' : ''}${stuck ? '; stuck on ' + stuck : ''}${why}; ${iters} of 320 passes, ${idle} idle)`);
           assert(!bad.length && seen.size >= (toolGiven && !trail.includes('tool') ? 16 : 20), `${at}: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (${seen.size} states${bad.length ? '; ' + bad.slice(0, 3).join(' / ') : ''})`);
           // (the boss comes back on its own and that fight runs about half a minute with no gap; before the fix the tip stayed away for 150+ passes, 300 s and more)
           assert(lossDone === 'lost' && gatherAt > 0 && gatherAt - lossAt <= 120, `${at}: the walk lost to the zone boss as the Gather tip came due, and the tip was back within 120 s of play (${lossDone || 'the tip never came'}; back after ${gatherAt ? Math.round(gatherAt - lossAt) + ' s' : 'never'})`);
+          assert(/^gathering after [^(]*$/.test(storeWalk), `${at}: the Storehouse materials line over an open World tab gets the hero gathering what it needs within 3 presses of what the guide points at, each press changing something (${storeWalk || 'the line never came'})`);
           assert(!errs.length, `${at}: no page errors in the guide walk` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         } catch (e) { fail(`${at} guide walk crashed: ` + (e.stack || e)); }
