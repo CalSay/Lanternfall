@@ -1,0 +1,1 @@
+Tooling only, no change in the game. The test walk no longer reports a gold cover press as "could not cover" when the piece upgraded anyway because the material was already in hand; it logs it as a plain upgrade. Real refusals are still reported.
