@@ -27821,15 +27821,12 @@ const TURN_TUNE = {
   turnPause: 0.9,
   // hit feel (owner, 2026-10-02): the fight clock stops for a beat on a big moment (seconds), with a shake and a flash
   hitstop: { crit: 0.06, counter: 0.14, perfect: 0.1, broken: 0.18, big: 0.08 },   // owner (2026-10-02): a pause at every change of turn, while a banner says whose turn it is (turnCard)
-  // the reference hero at zone z (measured from the balance sim's saves at each hero's frontier, 2026-10-02): one Attack
-  // action and max HP, as shares of the zone's legacy foe HP (mobHp, 40-rules). Attack falls behind mobHp as zones climb
-  // (gear tiers come slower than foe HP), so refAtk is a table over zones, straight lines between the points, flat past
-  // the last. Late-zone pass (2026-10-02, combat-turn-build.md "Numbers"): mobHp steps x1.7 at zone 35 (the region step)
-  // and grows x1.22 a zone after, while a hero who keeps up (epic tier-4 +10, Training at their level, about a level
-  // every 2 zones there) barely grows until Starlit gear at 42. So from zone 35 both the Attack and the HP shares fall.
-  // Mid-game HP pass (2026-10-02, combat-turn-build.md "Mid-game HP and Wren"): refHpX follows the max HP of a hero who
-  // keeps up (gear at the zone's tier, rare +5, Attack at refAtk), the Wren and Pip middle: HP grows with Attack, and
-  // gear's HP lines grow with each tier, so it rises to zone 20 and falls with refAtk after. Zones 1-3 keep 1.2.
+  // the reference hero at zone z (from the balance sim's saves at each hero's frontier, 2026-10-02): one Attack and max HP as shares
+  // of the zone's legacy foe HP (mobHp, 40-rules), straight lines between the points, flat past the last. Attack falls behind mobHp
+  // (gear tiers come slower). Late-zone pass (combat-turn-build.md "Numbers"): mobHp steps x1.7 at 35 and x1.22 a zone after while a
+  // kept-up hero barely grows until Starlit gear at 42, so both shares fall from 35. Mid-game HP pass ("Mid-game HP and Wren"): refHpX
+  // follows a kept-up hero's max HP (zone-tier rare +5 gear, Attack at refAtk; Wren and Pip's middle): it rises to zone 20 and falls
+  // with refAtk after. Zones 1-3 keep 1.2.
   refAtk: [[1, 0.7], [10, 0.7], [15, 0.55], [22, 0.42], [30, 0.3], [34, 0.22], [35, 0.12], [38, 0.09], [42, 0.065]],
   refHpX: [[1, 1.2], [3, 1.2], [8, 2.5], [15, 3], [20, 4], [30, 2.9], [34, 1.85], [35, 0.95], [38, 0.6], [42, 0.4]],
   // a normal foe's (and an elite's) hits x this, so a landed hit costs a hero who keeps up about 8-15% of their health
@@ -27879,12 +27876,10 @@ const TURN_TUNE = {
     // heroHitX: a zone boss's hits x this on the hero (tobin-safety-margin: the safest hero still feels a boss; 1 = the zone table's hit)
     heroHitX: { wren: 1, tobin: [[4, 1], [5, 2.4], [6, 2], [7, 1.5], [8, 1.5], [9, 1.25], [10, 1.8], [11, 1.5], [12, 1.6], [13, 1.6], [14, 1.7], [15, 2.55], [16, 2.75], [17, 2.75], [18, 2.6], [19, 2.4], [20, 2.75], [21, 2.75], [22, 2.4], [23, 2.4], [24, 2.75], [25, 6.81], [27, 7.45], [30, 8.32], [34, 6.85], [36, 7], [38, 7]], pip: [[1, 1], [19, 1], [20, 0.9], [21, 1], [22, 0.9], [23, 0.9], [24, 1]] },
     hitX: [[3, 1], [4, 0.96], [5, 1.618], [6, 1.807], [7, 0.9], [8, 0.5], [9, 0.3], [10, 0.25], [11, 0.2], [12, 0.12], [13, 0.1], [14, 0.085], [15, 0.05], [16, 0.03], [17, 0.03], [18, 0.03], [19, 0.015], [20, 0.023], [21, 0.0161], [22, 0.01067], [23, 0.0067], [24, 0.00611], [25, 0.215], [27, 0.131], [30, 0.165], [34, 0.203], [35, 1.9]], chargeX: [[3, 1], [6, 1.3], [34, 1.3], [35, 1.35]], payX: 0.5,
-    // rally-gates-live (judge 2026-10-08, docs/DECISIONS.md "Rally gates are live"): the zone 7-12 hitX, hpX, hpFloor and Tobin heroHitX knots are
-    // fitted with the rally gates on to the hero who first gets there (the arrival footing: level 12-17, tier 1 common +0). Landed hits sit on
-    // or near the hpFloor, which holds the kept-up never-defends player under 10%; hpX sets how many turns the arrival hero needs between gates.
-    // z13-unstick (judge 2026-10-08, docs/DECISIONS.md "Zone 13 unstick"): the zone 13-15 hitX, hpX and hpFloor knots are fitted to the hero who
-    // first gets there (level 18-19, tier 1 common +0). hitX there is dormant (every landed hit sits on the hpFloor), and hpX sits under zone 12's
-    // in reference Attacks until the balance pass restores the length ramp.
+    // rally-gates-live and z13-unstick (judge 2026-10-08, DECISIONS.md "Rally gates are live", "Zone 13 unstick"): the zone 7-15 hitX, hpX,
+    // hpFloor and Tobin heroHitX knots are fitted, gates on, to the hero who first gets there (level 12-19, tier 1 common +0). Landed hits
+    // sit on or near the hpFloor (under 10% for the kept-up never-defends player); hpX sets the turns between gates (13-15 under zone 12's
+    // until the balance pass restores the length ramp).
     // hitCap: one boss hit never takes more than this share of the hero's max HP, so a missed parry cannot kill a full-health hero
     // (zone bosses: 0.4 to zone 15, 0.75 for zones 16-34; judge 2026-10-07, docs/DECISIONS.md "Boss tiers"). Taken before armour, Guard and the rest; each hit of a charged move on its own.
     hitCap: [[1, 0.4], [15, 0.4], [16, 0.75], [34, 0.75], [35, 0]],
@@ -27897,15 +27892,11 @@ const TURN_TUNE = {
     // above the first-hour set stops shrinking the hit; armour, Guard, Ward and good timing still do. Zones 4-34; r by zone (zone table; [[1, 0]] is off).
     // passiveMin: armour x class reduction cuts a zone boss's hit (zones passiveZones) to no less than this share of itself (0 off).
     footFloor: [[1, 0], [3, 0], [4, 1], [34, 1], [35, 0]], footRare: 16, passiveMin: 0.55, passiveZones: [4, 15],
-    // z16-wall (judge 2026-10-08, docs/DECISIONS.md "Zone 16 wall"): the zone 16-18 knots are fitted to the hero who first gets there (level 20-22,
-    // tier 1 common +0), as z13-unstick did at 13-15. riderX: a zone table of the zone boss's Bleed, Burn and Venom ticks on the hero (heroDot is a
-    // share of the reference HP, which a first-time hero at zone 16 has a sixteenth of, so one Bleed tick took a third of their health); 1 elsewhere.
-    // z19-wall (judge 2026-10-08, docs/DECISIONS.md "Zone 19 wall"): the zone 19 knots too (level 22, tier 1 common +0, about a fiftieth of the
-    // reference HP), and its Venom ticks x0.07 (about 7% of a first-time hero's health a tick, as z16's Bleed).
-    // z20-wall (judge 2026-10-08, docs/DECISIONS.md "Zone 20 wall"): zones 20-24 fitted the same way in one pass (level 23-24, tier 1 common +0):
-    // hpFloor 1.3, hitX just over the floor for Wren, Tobin's heroHitX 2.4-2.75, Pip's 0.9 at 20, 22 and 23. dotCap: from zone 20 a boss's Bleed,
-    // Burn or Venom tick costs at most this share of the hero's own max HP (0.07, as the z16 and z19 riderX rows give), so no riderX row is needed
-    // there. Zone 25 on keeps the kept-up knots, where the gear-matters checks live (z25-boss-behind; C29 at zone 26).
+    // z16/z19/z20-wall (judge 2026-10-08, DECISIONS.md "Zone 16/19/20 wall"): zones 16-24 are fitted to the hero who first gets there (level
+    // 20-24, tier 1 common +0). riderX: zone table of a zone boss's Bleed, Burn and Venom ticks on the hero (heroDot is a share of the
+    // reference HP, far above that hero's, so z16's Bleed got x riderX, z19's Venom x0.07: about 7% of their health a tick); 1 elsewhere.
+    // z20-24: hpFloor 1.3, hitX just over the floor for Wren, Tobin's heroHitX 2.4-2.75, Pip's 0.9 at 20, 22, 23. dotCap: from zone 20
+    // a boss DoT tick costs at most this share of the hero's max HP. Zone 25 on keeps the kept-up knots (z25-boss-behind; C29 at 26).
     riderX: [[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 0.07], [20, 1]],
     dotCap: [[1, 0], [19, 0], [20, 0.07], [24, 0.07], [25, 0]],
     // hpFloor: see turnLand (zone table of multiples; 0 off). gate: rally gates (see TURN_TUNE.gateNote)
@@ -27977,7 +27968,7 @@ function turnWaiting() {
   const m = TURN_LIVE;
   if (!m || m.ended) return false;
   // a strike (damage-on-impact) waits for its hit to show, all but its last `burn` s: the Oil an action burns stays heroRecovery
-  return m.phase === 'hero' || m.phase === 'handoff' || m.phase === 'intro' || m.stop > 0 || (m.phase === 'strike' && m.until - m.now > m.strike.burn) || (typeof turnPaused === 'function' && turnPaused());
+  return m.phase === 'hero' || m.phase === 'handoff' || m.phase === 'intro' || m.stop > 0 || (m.phase === 'strike' && m.strike.end - m.now > m.strike.burn) || (typeof turnPaused === 'function' && turnPaused());
 }
 function turnCombatOn() { return turnCombatScope(); }
 // a zone table [[zone, value], ...]: straight lines between the points, flat past the ends (a number is flat everywhere)
@@ -28418,6 +28409,9 @@ function turnHeroAct(m, io, id, slot, grades, quiet) {   // quiet: { miss } when
     if (more) more.critted = oo.critted;   // Power Shot reads whether it crit
     return got;
   };
+  // multi-hit-impacts: live, a later arrow lands on its own impact, and what follows the move after the last (then)
+  const Q = quiet && io.impactIn ? [] : null, w0 = Q && io.impactIn(id, 0), arrow = (i, f) => Q && io.impactIn(id, i) > w0 ? Q.push([io.impactIn(id, i), f]) : f(),
+    then = f => Q && Q.length ? Q.push([Q[Q.length - 1][0], f]) : f();
   const spendMark = () => { e.mark = 0; e.markV = 0; if (has(m, 'huntmark') && t('huntmark') === 'b') turnMark(e, 1); };   // Lasting Trail
   let spell = false;
   if (id === 'attack') {
@@ -28430,10 +28424,11 @@ function turnHeroAct(m, io, id, slot, grades, quiet) {   // quiet: { miss } when
     const more = { dt, kind: 'attack', armX: h.pierce ? 0 : 1, payoff: k === 'tobin' }; h.pierce = 0;   // Read the Blow: this Attack ignores armour; Tobin's Attack takes an opening (Exposed)
     // the twin uniques: the Attack strikes twice at `cut` a hit (one action); with Twin Shot, three arrows at that cut
     const tw = uf && uf.twin, cut = tw ? (turnUniqBand(m, tw) ? Math.min(tw.hit, tw.boss) : tw.hit) : 1;
-    if (k === 'wren' && has(m, 'twinshot')) { const a1 = hit(p.A * 0.55 * cut * x, { ...more }), a2 = hit(p.A * 0.55 * cut * x, { ...more }); if (tw) hit(p.A * 0.55 * cut * x, { ...more });
-      if (t('twinshot') === 'a' && a1 > 0 && a2 > 0) turnGain(h, 'aim', 1); if (t('twinshot') === 'b') h.escape = 1; }
+    if (k === 'wren' && has(m, 'twinshot')) { const a = []; for (let i = 0; i < (tw ? 3 : 2); i++) arrow(i, () => { a[i] = hit(p.A * 0.55 * cut * x, { ...more }); });
+      then(() => { if (t('twinshot') === 'a' && a[0] > 0 && a[1] > 0) turnGain(h, 'aim', 1); if (t('twinshot') === 'b') h.escape = 1; }); }
     else if (tw) { hit(p.A * cut * x, { ...more }); hit(p.A * cut * (tw.noGrit ? x / gx : x), { ...more }); }   // Twice-Sworn: the second hit gets no Grit bonus
     else hit(p.A * x, more);
+    then(() => {
     const first = !h.attacked; h.attacked = 1;
     const dodged = h.postDodge; h.postDodge = 0;
     if (k === 'wren') {
@@ -28459,6 +28454,7 @@ function turnHeroAct(m, io, id, slot, grades, quiet) {   // quiet: { miss } when
     }
     if (h.keen === 1) h.keen = 0; else if (h.keen === 2) h.keen = 1;   // a Keen from this Attack waits for the next ability
     if (!quiet) io.emit('soloAttack', { kind: blindMiss ? 'miss' : 'hit' });
+    });
   } else {
     const a = turnAb(id); h.mom = 0;
     const dt = a.dt;
@@ -28481,9 +28477,8 @@ function turnHeroAct(m, io, id, slot, grades, quiet) {   // quiet: { miss } when
       case 'pinning': hit(U * a.pow, { dt }); e.pin = 1; e.pinSlow = 2; if (t('pinning') === 'a') turnMark(e, 2); else if (t('pinning') === 'b') e.weaken = Math.max(e.weaken, 1); break;
       case 'huntmark': hit(U * a.pow, { dt }); turnMark(e, 4); if (t('huntmark') === 'a') turnGain(h, 'aim', 1); break;
       case 'volley':
-        for (let i = 0; i < 3; i++) hit(U * a.pow, { dt, armX: i === 2 && marked && t('volley') === 'b' ? 0 : 1 });
-        if (t('volley') === 'a') turnBleedAdd(m, 2);
-        if (perfects) turnGain(h, 'aim', perfects); break;
+        for (let i = 0; i < 3; i++) arrow(i, () => hit(U * a.pow, { dt, armX: i === 2 && marked && t('volley') === 'b' ? 0 : 1 }));
+        then(() => { if (t('volley') === 'a') turnBleedAdd(m, 2); if (perfects) turnGain(h, 'aim', perfects); }); break;
       case 'batswarm': e.swarm = 3; e.swarmDmg = t('batswarm') === 'b' ? 0 : U * a.pow; e.swarmBite = t('batswarm') === 'a' ? 1 : 0; e.blind = Math.max(e.blind, 3);
         if (t('batswarm') === 'b') e.weaken = Math.max(e.weaken, 2); break;
       case 'deadeye': {
@@ -28503,10 +28498,10 @@ function turnHeroAct(m, io, id, slot, grades, quiet) {   // quiet: { miss } when
         break;
       }
       case 'shadowstep': h.shadow = 2; if (t('shadowstep') === 'a') turnCleanse(h); break;
-      case 'moonvolley': for (let i = 0; i < 5; i++) {
+      case 'moonvolley': for (let i = 0; i < 5; i++) arrow(i, () => {
         let pf = false; hit(U * a.pow, { dt, armX: t('moonvolley') === 'b' ? 0.8 : 1, perfect: () => { pf = true; } });
         if (i === 0 && t('moonvolley') === 'a' && e.mark > 0) e.mark = Math.max(e.mark, 2);
-        if (marked || pf) turnBleedAdd(m, marked && pf ? 2 : 1); } break;
+        if (marked || pf) turnBleedAdd(m, marked && pf ? 2 : 1); }); break;
       case 'finalecho': {
         const keepB = t('finalecho') === 'a' ? Math.min(2, e.bleed) : 0, keepA = t('finalecho') === 'b' ? Math.min(1, h.aim) : 0;
         const nb = m.uf && m.uf.crimson ? Math.min(e.bleed, e.bleedMax || T.bleedMax) : e.bleed;   // the Crimson Thread's extra stacks tick, they do not feed Final Echo (boss gains stay within +50%)
@@ -28577,10 +28572,13 @@ function turnHeroAct(m, io, id, slot, grades, quiet) {   // quiet: { miss } when
         spell = true; break; }
       default: hit(U * a.pow, { dt }); break;
     }
+    then(() => {
     if (spell && has(m, 'afterglow') && !blindMiss) { h.glow = 3; h.glowDt = a.dt; }
     if (h.keen === 1) h.keen = 0; else if (h.keen === 2) h.keen = 1;   // a Keen made by this cast waits for the next one
     if (!quiet) io.emit('ability', { cls: 'solo', id, name: a.name, slot, auto: false });
+    });
   }
+  then(() => {
   if (blindMiss) io.emit('heroMiss', {});
   m.cds[id] = id === 'attack' ? 1 : (p.cds[id] || turnCdFor(id));
   if (m.cdCut) { m.cds[id] = Math.max(1, m.cds[id] - m.cdCut); m.cdCut = 0; }   // Shield Throw caught Perfect
@@ -28591,6 +28589,8 @@ function turnHeroAct(m, io, id, slot, grades, quiet) {   // quiet: { miss } when
   if (h.opening > 0) h.opening--;
   if (h.sear > 0) h.sear--;
   if (h.weaken > 0) h.weaken--;
+  });
+  m.later = Q && Q.length ? Q : null;
   return true;
 }
 // clears one damage-over-time effect from the hero (Bleed, then Burn, then Venom) -> bool
@@ -28825,8 +28825,7 @@ function turnResolve(m, cmd, dt, io) {
     if (m.phase === 'recovery' && m.now >= m.until) turnNextTurn(m, io);
     if (m.phase === 'handoff' && m.now >= m.until) turnBegin(m, m.pending, io);
     if (m.phase === 'foeWindup' && m.now >= m.until) turnContact(m, io);
-    if (m.phase === 'strike' && m.now >= m.until) { const k = m.strike; m.strike = null;   // the move's impact: it lands now
-      if (!turnHeroLand(m, io, k.id, k.slot, k.grades, { miss: k.miss }, k.wait)) m.phase = 'hero'; }
+    if (m.phase === 'strike' && m.now >= m.until) turnStrikeLand(m, io);
     if (m.phase === 'timing' && m.now > m.until + TURN_TUNE.timed.good) turnRingGrade(m, io, 'miss');   // no press: a Miss
     return true;
   }
@@ -28882,12 +28881,23 @@ function turnHeroDone(m, io, id, slot, grades) {
   if (id === 'attack') io.emit('soloAttack', { kind: miss ? 'miss' : 'hit' });
   else io.emit('ability', { cls: 'solo', id, name: turnAb(id).name, slot, auto: false });
   // a hitstop already running (a Perfect ring) holds the fight clock while the swing plays on, so it comes off the wait
-  const T = TURN_TUNE, burn = T.heroRecovery - Math.max(T.impactRest, T.heroRecovery - wait);
-  m.phase = 'strike'; m.strike = { id, slot, grades, wait, miss, burn }; m.until = m.now + Math.max(0, wait - Math.max(0, m.stop || 0));
+  const T = TURN_TUNE, last = io.impactIn(id, 9), burn = T.heroRecovery - Math.max(T.impactRest, T.heroRecovery - last);
+  m.phase = 'strike'; m.until = m.now + Math.max(0, wait - Math.max(0, m.stop || 0)); m.strike = { id, slot, grades, wait, miss, burn, end: m.until + last - wait };
   return true;
 }
+// the move's impact lands, then each later arrow on its own (multi-hit-impacts); a kill lands the rest at once, as before
+function turnStrikeLand(m, io) {
+  const k = m.strike;
+  if (!k.q) { if (!turnHeroAct(m, io, k.id, k.slot, k.grades, { miss: k.miss })) { m.strike = null; m.phase = 'hero'; return; } k.q = m.later || []; k.t = k.wait; }
+  else for (k.t = k.q[0][0]; k.q.length && k.q[0][0] === k.t;) k.q.shift()[1]();
+  if (!io.alive().foe) while (k.q.length) k.q.shift()[1]();
+  if (k.q.length) { m.until += k.q[0][0] - k.t; return; }
+  m.strike = null; turnHeroRest(m, io, k.t);
+}
 function turnHeroLand(m, io, id, slot, grades, quiet, wait) {
-  if (!turnHeroAct(m, io, id, slot, grades, quiet)) return false;
+  return turnHeroAct(m, io, id, slot, grades, quiet) && turnHeroRest(m, io, wait);
+}
+function turnHeroRest(m, io, wait) {
   if (!io.alive().foe) turnEnd(m, 'victory', io);
   else { m.phase = 'recovery'; m.until = m.now + (wait > 0 ? Math.max(TURN_TUNE.impactRest, TURN_TUNE.heroRecovery - wait) : TURN_TUNE.heroRecovery); }
   return true;
@@ -28928,7 +28938,7 @@ const TURN_LIVE_IO = {
   heroHp: () => { const u = cbUnitByKey('hero'); return u ? u.hp : 0; },
   healFoe: d => { const f = TURN_LIVE && TURN_LIVE.foe; if (f && !f.dead && f.hp > 0) { f.hp = Math.min(f.max, f.hp + d); emit('float', { txt: '+' + fmt(d), color: '#6FCB6A', big: false }); } },
   slotId: slot => soloEquipped()[slot] || null,
-  impactIn: id => (typeof fxImpactIn === 'function' && TURN_LIVE ? fxImpactIn(id === 'attack' ? TURN_LIVE.p.heroKey + ':attack' : id) : 0),   // 62b: when the move's hit shows
+  impactIn: (id, i) => (typeof fxImpactIn === 'function' && TURN_LIVE ? fxImpactIn(id === 'attack' ? TURN_LIVE.p.heroKey + ':attack' : id, i) : 0),   // 62b: when arrow i hits
   damageFoe: (d, kind, crit, dt, n) => {
     const f = TURN_LIVE.foe, H = TURN_TUNE.hitstop, dot = /^(burn|bleed|swarm|curse)$/.test(kind);
     // hit feel: the number's tier, for its size and sting (display only: nothing below reads it)
@@ -28997,7 +29007,7 @@ function turnCombatTick(dt) {
   }
   if (held && TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'foeWindup' && !TURN_LIVE.usedDefense) turnWindupAgain(TURN_LIVE, TURN_LIVE_IO);
   if (typeof turnPaused === 'function' && turnPaused()) return;   // a hidden page (59j): the fight waits (active only, owner 2026-10-01)
-  if (TURN_LIVE && TURN_LIVE.stop > 0) { TURN_LIVE.stop -= dt; return; }   // a hitstop: the beat after a big hit
+  if (TURN_LIVE && TURN_LIVE.stop > 0) { const s = TURN_LIVE.strike; if (s && s.q) { TURN_LIVE.until -= dt; s.end -= dt; } TURN_LIVE.stop -= dt; return; }   // a hitstop: the beat after a big hit; arrows fly on
   if (TURN_RECOVER > 0) { TURN_RECOVER -= dt; if (TURN_RECOVER <= 0) { cbRestore(true); spawn(); } return; }
   const f = combatFoes().find(x => x && !x.dead && x.hp > 0 && !x.gone);
   if (!f) { if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'victory', TURN_LIVE_IO); return; }
@@ -32805,8 +32815,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
 // (FX_COL), shared by every hero; a status that lands pops Codex's approved icon (21v STATUS_ICONS, at a native size, never
 // scaled) by the foe's chest and leaves a light on the foe while it lasts. Shaped things stay sprites: the arrows and bolts
 // are the stage's own (62-stage fire, 61-anim proj); the Scenario arrows and bats wait for the integrate-route-s-wren verdict.
-// The engine is the Barbed Arrow test (experiments/2d-poses-scenario/wren-fx-test/fx3.js) at the stage's scale: FX_TUNE.k
-// logical px per test px (the test's Wren stood about 330 px tall, the stage's hero about 96).
+// The engine is the Barbed Arrow test (experiments/2d-poses-scenario/wren-fx-test/fx3.js) at FX_TUNE.k px a test px.
 // Aim: each foe's chest by size class (Tall, Medium, Short (low, or long and low), Flying), read from the drawn pixels of its idle frame;
 // FX_AIM holds hand-marked points for odd shapes.
 // Hooks: 62-stage calls stageFx.swing(x, y) as the hero's swing fires, stageFx.aim(s) for its arrow's target, and
@@ -32891,15 +32900,16 @@ const FX_RECIPES_S = {
 };
 // Hand-marked aim points for odd shapes: foe type -> [x, y] as fractions of the drawn body (0,0 its top left)
 const FX_AIM = { spore: [0.45, 0.62], bones: [0.5, 0.45], wyrm: [0.45, 0.55] };   // the Spore's cap, the Bones' hat, the Wyrm's neck sit over the chest
-const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1.1, rainAt: 0.42, rainFly: 0.17 };
-// When a hero move's hit shows, in s from the press (damage-on-impact, Cal 2026-10-10: 59k lands the damage then): the swing's
-// wind (62-stage WIND), then an arrow or bolt's flight; Moonlit Volley's first falling arrow; a melee blow, a buff or a cast on
-// the foe at the strike. Reduced motion shows the hit as a still light at the strike. 0 for a move with no recipe.
-function fxImpactIn(id) {
+const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1.1, rainAt: 0.42, rainFly: 0.17, gap: 0.07, gap2: 0.045, rainGap: 0.12 };
+// When arrow i (past the last: the last) of a hero move hits, s from the press (59k lands it then): the swing's wind (62-stage
+// WIND), then the shot's flight and gap; a blow, buff, foe cast or reduced motion's still light at the strike. 0: no recipe.
+function fxImpactIn(id, i) {
   const r = FX_RECIPES[id], F = FX_TUNE; if (!r) return 0;
   if ((typeof reduced !== 'undefined' && reduced) || (r.d !== 'arrow' && r.d !== 'bolt')) return F.wind;
-  return F.wind + (r.rain ? F.rainAt + F.rainFly : r.d === 'bolt' ? F.bolt : F.arrow);
+  const n = r.n || (id === 'wren:attack' && fxTwin() ? 2 : 1), k = Math.min(i || 0, n - 1);
+  return F.wind + (r.rain ? F.rainAt + F.rainFly + k * F.rainGap : (r.d === 'bolt' ? F.bolt : F.arrow) + k * (n === 2 ? F.gap2 : F.gap));
 }
+const fxTwin = () => typeof TURN_LIVE !== 'undefined' && TURN_LIVE && TURN_LIVE.p && TURN_LIVE.p.eq && TURN_LIVE.p.eq.includes('twinshot');
 {
   if (typeof document !== 'undefined') {
     const A = ANIM, R = FX_RECIPES, C = FX_COL, K = FX_TUNE.k;
@@ -33047,15 +33057,15 @@ function fxImpactIn(id) {
         shot(r, c.x, c.y, c.x + 18, -20, 0, 0.16, 0, true, true);
         tint.on = true; tint.t0 = t + 0.3; tint.life = 1.6;
         for (let k = 0; k < (r.n || 1); k++) {
-          const x = tx + rnd(-tgt.w * 0.3, tgt.w * 0.3), y = ty + rnd(-tgt.h * 0.15, tgt.h * 0.2), d = FX_TUNE.rainAt + k * 0.12;
+          const x = tx + rnd(-tgt.w * 0.3, tgt.w * 0.3), y = ty + rnd(-tgt.h * 0.15, tgt.h * 0.2), d = FX_TUNE.rainAt + k * FX_TUNE.rainGap;
           shot(r, x - 12, -12, x, y, d, FX_TUNE.rainFly, r.big, c.miss);
           A.proj('rain', x - 12, -12, x, y, FX_TUNE.rainFly, '#C8DCFF', 0, null, d);
         }
         return;
       }
-      const n = r.n || (c.id === 'wren:attack' && twin() ? 2 : 1);
+      const n = r.n || (c.id === 'wren:attack' && fxTwin() ? 2 : 1);
       for (let k = 0; k < n; k++) {
-        const off = n === 1 ? 0 : (k - (n - 1) / 2) * (n === 2 ? 9 : 8), d = k * (n === 2 ? 0.045 : 0.07);
+        const off = n === 1 ? 0 : (k - (n - 1) / 2) * (n === 2 ? 9 : 8), d = k * (n === 2 ? FX_TUNE.gap2 : FX_TUNE.gap);
         shot(r, c.x, c.y, tx, ty + off, d, fly, n > 1 ? Math.min(r.big, 0.7) : r.big || 1, c.miss);
         if (k) A.proj(r.d === 'bolt' ? 'bolt' : 'arrow', c.x, c.y, tx, ty + off, fly, r.d === 'bolt' ? '#FF9E3D' : '#8FD46A', r.d === 'bolt' ? 0 : 6, null, d);
       }
@@ -33079,7 +33089,6 @@ function fxImpactIn(id) {
       }
       shot(r, ox, oy, tx, ty, 0, fly, r.big || 1, c.miss);
     }
-    const twin = () => typeof TURN_LIVE !== 'undefined' && TURN_LIVE && TURN_LIVE.p && TURN_LIVE.p.eq && TURN_LIVE.p.eq.includes('twinshot');
     function shake(s) { if (!reduced) { st.shakes++; emit('shake', s); } }
     function flash(rgb, a) { if (!reduced) emit('hitFlash', { rgb, a }); }
 
