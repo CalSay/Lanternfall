@@ -165,7 +165,8 @@ casual.zoneEnd (the zone a casual player reaches after 3 days of 3 short visits)
 | base | 10 | 12 | 11.67 | 11 | 12 | 11.33 |
 | this card | 13.33 | 11.33 | 12 | 12 | 11.67 | 12.07 |
 
-The mean moves +0.74 zones. Offset 0's jump is the casual Wren (11 -> 15): in the base she spends day 2 farming zones 6 and 7 for
-tier-1 materials, because zone 6 foes grew with her (8 of her Attacks at any level); with zone HP fixed she farms them faster and gets
-back to the zone 10 boss. The baseline is re-written from the five-offset mean (`--write-baseline`, tolerances kept), as the zone 16-21
-cards did.
+The mean moves +0.74 zones. Over five offsets the shift is Pip's (11.8 -> 14.2; Wren 11.4 -> 11.6, Tobin 10.8 -> 10.4): her zone 5
+foes were 12 of her plain Attacks before and are about 5 now. Offset 0's jump is the casual Wren (11 -> 15): in the base she spends
+day 2 farming zones 6 and 7 for tier-1 materials while zone 6 foes grew with her; with zone HP fixed she farms them faster and gets
+back to the zone 10 boss. The judge ruled to re-centre casual.zoneEnd only (10.8 -> 12.07, perHero 11.6/10.4/14.2, abs 2 kept; offset 0
+then passes at +1.26) and to leave every other metric, firstGoalSec included, as it is. That edit waits for Cal's yes.
