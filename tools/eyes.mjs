@@ -21,7 +21,8 @@
 //   3 moments       each big moment (first boss win, unique drop, rare craft, a plain craft's grade, level up, new ability, new
 //                   Star, new hero, new look) is forced while a guide step and a level up compete for the screen: a card, toast
 //                   or stage text with its name (and rarity where it has one) must stay up for 2 s, and a sound must be asked for.
-//   4 placeholders  visible two-letter tiles where an icon should be (`.mono`, `.sp-mono`, `.ab-mono`).
+//   4 placeholders  visible two-letter tiles where an icon should be (`.mono`, `.sp-mono`, `.ab-mono`): after the first fight,
+//                   and in Hero > Abilities (the list, a learned move's detail, a move to learn's Learn card).
 // Needs LF_EYES (src/js/89-eyes-hook.js). Method and findings format: docs/review/eyes.md. Not a CI gate yet: report only.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -185,6 +186,27 @@ async function firstUnique(size) {
   await watch(page, { scenario: 'first unique', size: size.id, ms: QUICK ? 5000 : 8000 });
   await ctx.close();
 }
+// Hero > Abilities (check 4): the picker list, a learned move's detail and a move to learn's card (Learn button), each read
+// for two-letter tiles where an icon should be. One finding per place, naming each tile not already listed.
+async function abilityPicker(size) {
+  const { ctx, page, X } = await openGame(size);
+  await dismissCards(page);
+  await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`); await page.waitForTimeout(400);
+  const seen = new Set();   // a tile already listed (the list stays up beside a detail) is not listed again
+  const scan = async where => { const l = [...new Set(await page.evaluate(PLACEHOLDERS))].filter(p => !seen.has(p)); l.forEach(p => seen.add(p)); if (l.length) await note(page, { check: 'placeholders', scenario: 'ability picker', size: size.id, what: `${l.length} placeholder tile${l.length === 1 ? '' : 's'} with ${where}`, detail: l.join('; ') }); };
+  await scan('the list open');
+  // the row's own click, in the page: the list redraws and the panel scroll moves under a pointer tap in short landscape
+  const tap = sel => page.evaluate(sel => { const b = document.querySelector(sel); if (!b) return false; b.scrollIntoView({ block: 'center' }); b.click(); return true; }, sel);
+  const open = async (sel, where) => {
+    if (!await tap(sel)) return;
+    try { await page.waitForSelector('#sec-abilities .ab-det', { timeout: 2000 }); } catch (e) { return; }
+    await page.waitForTimeout(250); await scan(where);
+    await tap('#sec-abilities .ab-det .ab-x'); await page.waitForTimeout(250);
+  };
+  await open('#sec-abilities .ab-row.owned:not(.ab-basic)', 'a learned move\'s detail open');
+  await open('#sec-abilities .ab-row.ready', 'a move to learn open (the Learn card)');
+  await ctx.close();
+}
 async function firstCraft(size) {
   const { ctx, page, X } = await openGame(size, { save: fixture('mid') });
   await dismissCards(page);
@@ -272,6 +294,7 @@ try {
   for (const size of SIZES) {
     const steps = [];
     if (ONLY.has('layout') || ONLY.has('tipphase') || ONLY.has('placeholders')) steps.push(['first fight', firstFight], ['foe opens', foeOpens], ['first boss', firstBoss], ['first unique', firstUnique], ['first craft', firstCraft]);
+    if (ONLY.has('placeholders')) steps.push(['ability picker', abilityPicker]);
     if (ONLY.has('moments')) steps.push(['moments', moments]);
     for (const [name, fn] of steps) {
       if (QUICK && name === 'first craft' && SIZES.length > 1) continue;
