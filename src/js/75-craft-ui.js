@@ -14,12 +14,6 @@
 //
 // Exposed: craftUI { openItem(id), pick(who, pos) }   who: 'hero'; pos: a hero position.
 //
-// K6 (55-crafting.js) actions are probed with typeof at call time, so this file works before
-// K6 merges: craftItem(kind, t, {role, mw}), canCraft(kind, t) -> {ok, why}, upgradeItem(id),
-// reforgeItem(id, idx), transmute(fam, fromT, fam, toT), salvageItem(id),
-// S.craft.troph[7].
-// Without K6: crafting falls back to forgeItem, upgrades to upgradeEquipped (hero gear only),
-// and Reforge and Transmute show as not ready yet.
 
 let craftUI = null;
 {
@@ -98,8 +92,7 @@ let craftUI = null;
     }
     return out;
   }
-  // desktop-tooltips: an item's hover tip, from the item sheet's own head and lines (renderItem): name, grade, tier, kind, power,
-  // its stat lines and who wears it. The sheet stays the full view (upgrade, salvage, compare).
+  // desktop-tooltips: an item's hover tip from the sheet's head and lines
   tipHook.item = it => {
     const d = itemKind(it), wr = wornBy(it.id);
     const out = [itemName(it), [itemQual(it), `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun) : ''].filter(Boolean).join(' · '), `Power ${fmt(itemPower(it))}`];
@@ -112,9 +105,7 @@ let craftUI = null;
     const a = Math.abs(v), n = s.dp == null ? fmt(a) : a.toFixed(s.dp);
     return `${v > 0 ? '+' : '-'}${n}${unit}`;
   }
-  // craft-shortfall-offer: what the next +1 adds to the piece's main line, in that line's own unit ("+3: +3% damage."). A
-  // line at its cap (a Quiver's crit, a Lantern's spell) says so and shows the power change instead. Copy only: itemPower
-  // and the upgrade cost are unchanged.
+  // craft-shortfall-offer: what the next +1 adds to the main line ("+3: +3% damage."); a capped line shows the power change
   function nextPlusTxt(it) {
     const nx = Object.assign({}, it, { plus: it.plus + 1 }), a = itemLines(it), b = itemLines(nx);
     const head = `+${it.plus + 1}: `, more = a.length > 1 ? ' Its other lines grow too.' : '';
@@ -125,10 +116,8 @@ let craftUI = null;
     const pw = `power ${fmt(itemPower(it))} → ${fmt(nextP)}`;
     return s ? `${head}${s.n} is at its cap. ${pw[0].toUpperCase() + pw.slice(1)}.${more}` : `${head}${pw}.`;
   }
-  // craft-shortfall-offer: a cost short of a middle (Ingot, Plank, Cloth, Leather) at tier t, read from refineOffer (55-refine).
-  // -> { txt, btn, add } | null. btn (the one-tap order) only when every order's inputs are in hand together and the stations
-  // have room; else txt names what is short. Orders already queued read "Smelting at the Forge." Nothing is queued until the
-  // player presses the button. upgrade-gold-covers-short adds its gold choice to this same row.
+  // craft-shortfall-offer: a cost short of a middle at tier t (refineOffer) -> { txt, btn, add } | null. btn only when every
+  // order can start now; nothing is queued before the press.
   const midName = (f, t, n) => f === 'coal' ? 'coal' : matName(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || MAT[f].unit === 'Log') ? 's' : '');
   const andList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
   function shortOffer(cost, t) {
@@ -177,6 +166,34 @@ let craftUI = null;
     return r;
   }
 
+  // craft-costs-up-front: what a recipe lacks, and the goal a craft would leave short (a camp build, unbuilt stations first, or Next
+  // Up's recipe): held enough now and the craft drops below it; an unbuilt station on any drop (forgeHold, 55-goals)
+  const matWord = (f, t, n) => f === 'ess' ? 'Essence' : midName(f, t, n);
+  function missTxt(can, t) {
+    const m = can && Array.isArray(can.miss) ? can.miss.filter(x => x[1] > 0) : [];
+    return m.length ? `Needs ${andList(m.map(([f, n]) => `${storeNum(n)} more ${matWord(f, t, n)}`))}.` : '';
+  }
+  function clashTxt(k, t) {
+    const nu = st8.nu; if (nu && nu.kind === k && nu.t === t) return '';   // never against the craft Next Up asks for
+    const use = kindCost(k, t), goals = [], ids = typeof campOpen === 'function' && campOpen() ? campList() : [];
+    const next = CRAFT_KINDS[k].pos === 'weapon' ? '' : HEARTH_CHAIN.find(id => ids.includes(id) && campLevel(id) < 1 && !campPending(id));   // forgeHold: weapons never held
+    for (const id of ids) {
+      const c = campCan(id); if (!c.cost || c.max || c.need || campPending(id)) continue;
+      const fresh = id === next;
+      goals.push({ id, name: id === 'hearth' ? `Hearth ${c.to}` : campLevel(id) < 1 ? `the ${CAMP_B[id].n}` : `${CAMP_B[id].n} Lv ${c.to}`, fresh, mats: c.cost.mats });
+    }
+    const chain = g => { const i = HEARTH_CHAIN.indexOf(g.id); return g.fresh ? (i < 0 ? 50 : i) : 99; };
+    goals.sort((a, b) => chain(a) - chain(b));
+    if (nu && nu.cost && !nu.gate && nu.t === t) goals.push({ name: `the ${tierName(nu.kind, nu.t)}`, fresh: false, mats: Object.entries(nu.cost).map(([f, n]) => [f, t, n]) });
+    for (const g of goals) {
+      const hit = g.mats.filter(([f, tt, need]) => { const u = use[f] || 0, h = matOwn(f, t); return u > 0 && (f === 'ess' || tt === t) && h - u < need && (g.fresh || h >= need); });
+      if (hit.length) return `Uses ${andList(hit.map(([f]) => matWord(f, t, 2)))} you need for ${g.name}.`;
+    }
+    return '';
+  }
+  const heroFirst = () => { const c = S.party && S.party.cls, h = (c && SOLO_BY_BASE[c]) || (typeof soloHero === 'function' ? soloHero() : null); return h && ROSTER[h] ? ROSTER[h].name.split(' ')[0] : 'your hero'; };
+  const stationVerb = st => st === 'forge' ? 'to forge' : `to make at the ${CRAFT_STATIONS[st].n}`;
+
   // ---------------- UI state (memory only) ----------------
   const st8 = { lift: {}, st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'spare', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 }, recent: [], result: null, resArm: false, reveal: false,
     tool: {}, fd: {}, pre: {}, nu: null, crafted: false };   // craft-delta: tool: id -> { on, speed } from the crafted event; fd: id -> { sig, job, res } the fight line
@@ -187,8 +204,7 @@ let craftUI = null;
     if (st8.st) return;
     const cls = S.party && S.party.cls;
     st8.st = { warden: 'forge', lanternmage: 'bench', ranger: 'bench', lightkeeper: 'loom' }[cls] || 'forge';
-    // menu audit: open on the highest tier where something for your hero can be made now (Tier 5 with every recipe
-    // short of materials was the first thing a late player saw); else the highest open tier, as before
+    // menu audit: open on the highest tier with something your hero can make now, else the highest open tier
     const makeable = (s, t) => { try { return Object.keys(CRAFT_KINDS).some(k => CRAFT_KINDS[k].st === s && !CRAFT_KINDS[k].legacy && (typeof heroFits !== 'function' || heroFits(k)) && canCraft(k, t).ok); } catch (e) { return false; } };
     for (const s of STATION_KEYS) { const top = openTier(s); let t = top; while (t > 1 && !makeable(s, t)) t--; st8.tier[s] = makeable(s, t) ? t : top; }
     st8.pick = S.fSlot + ':' + S.fTier + ':0';
@@ -223,8 +239,7 @@ let craftUI = null;
   const roleFor = k => st8.role[k] || 'striker';
   // craft-delta: how many recipes you could make right now (a craft made with two or more on offer is a choice)
   const affordable = () => { let n = 0; for (const s of STATION_KEYS) for (const k of listFor(s, 'you')) for (let t = 1; t <= 5 && n < 2; t++) if (skillTierOpen(skillOfSt(s), t) && safe(() => canDo(k, t).ok, false)) n++; return n; };
-  // craft-strike-infuse: how = 'infuse' pays Essence for the lift. Otherwise, when the timing bar is offered (craftStrikeOffered), the bar
-  // shows first and the craft is made (and paid) only when it resolves, so a miss, no press or a hidden tab never loses materials.
+  // craft-strike-infuse: 'infuse' pays Essence for the lift; with the Strike offered the bar shows first and the craft pays only when it resolves
   function doCraft(k, t, how) {
     if (!canDo(k, t).ok || strike.on) return;
     const d = CRAFT_KINDS[k], opts = { wear: true };   // craft-delta: a better tool goes on by itself (55-crafting craftItem)
@@ -245,10 +260,8 @@ let craftUI = null;
     }
     return it;
   }
-  // ---- the Strike (craft-strike-infuse): the parry bar's look (.tv-time, 60-turn.css) with its own clock; it holds the game ----
-  // The head fills the track in STRIKE_FILL seconds; the gold window is its last stretch, the fight's parry window (59k: SOLO_TUNE.turnParryWindow
-  // x turnAssistX, capped at TURN_TUNE.windowCaps.parry). A press in it lifts one grade; an early press, no press or a hidden tab makes the
-  // piece at the level's grade. Reduced motion: the bar is the same as the fight's, which only fills.
+  // ---- the Strike (craft-strike-infuse): the parry bar's look with its own clock; it holds the game. A press in the gold window
+  // (the fight's parry window) lifts one grade; else the piece is made at the level's grade ----
   const STRIKE_WORD = { forge: 'Strike', bench: 'Carve', loom: 'Stitch', ench: 'Etch' };
   const STRIKE_FILL = 1.1, STRIKE_LATE = 0.25;
   const strike = { on: null, ov: null };
@@ -304,9 +317,7 @@ let craftUI = null;
     else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); strikeEnd(false, false); }   // the menu stays open: made at the level's grade
   }, true);
   document.addEventListener('visibilitychange', () => { if (document.hidden && strike.on) strikeEnd(false, false); });   // a hidden tab: the level's grade
-  // ---- the fight line (craft-delta): what the piece changes against the boss at your furthest zone (55-fight-delta) ----
-  // Sampled a chunk at a time after the card opens, so the card never waits; the line joins it when the sample is done, or is
-  // left out. Keyed by what the fight depends on now, so a card seen again after a gear change samples again.
+  // ---- the fight line (craft-delta): what the piece changes against the boss at your furthest zone, sampled after the card opens ----
   const fdSig = () => [S.maxZone, S.L, JSON.stringify(S.equip), JSON.stringify(S.attr || null), JSON.stringify(S.stars || null), JSON.stringify(S.abil || null), JSON.stringify(S.turn || null)].join('|');   // what the fight reads
   function fdStart(it) {
     if (typeof fightDeltaJob !== 'function' || !it || it.id == null) return;
@@ -328,14 +339,10 @@ let craftUI = null;
     if (r.kind === 'turns') return `Zone ${r.zone} boss: about ${r.after} turns a win, not ${r.before}.`;
     return `Zone ${r.zone} boss: a hit takes about ${r.after}% of your health, not ${r.before}%.`;
   }
-  // ---- craft-odds-before-pay: the same line before the press, on the recipe row Next Up's craft pick names and under the worn
-  // piece's Upgrade button. The piece is a scratch copy under an id no item has (55-fight-delta { scratch }): the worn piece one
-  // upgrade on, or the recipe's piece at its grade (or likeliest rarity) with middle bonus lines. Sampled a chunk at a time after the
-  // row shows, never on the click path; the same "barely changes" rule leaves the line out. st8.pre: key -> { sig, job, res }.
+  // ---- craft-odds-before-pay: the same line before the press (Next Up's recipe row, the Upgrade button), on a scratch copy, sampled
+  // after the row shows. st8.pre: key -> { sig, job, res }.
   const PRE_ID = -1;
-  // the worn piece one upgrade on, then up to PRE_AHEAD more, never past +max (upgrade-odds-next-step). When the next press changes
-  // nothing, the line names the first of these that moves the fight up (55-fight-delta fightDeltaAheadJob), so a press that sets up
-  // a step says so; a press that is the step shows the plain line.
+  // one upgrade on, then up to PRE_AHEAD more (upgrade-odds-next-step): a press that sets up a step says so
   const PRE_AHEAD = 2;
   const preUps = it => { const out = []; for (let k = 1; it && k <= 1 + PRE_AHEAD && it.plus + k <= CRAFT_TROPHY_GATE.max; k++) out.push(Object.assign(JSON.parse(JSON.stringify(it)), { id: PRE_ID, plus: it.plus + k })); return out.length ? out : null; };
   // an ungraded recipe's piece is shown at the likeliest rarity at the station's level
@@ -348,10 +355,9 @@ let craftUI = null;
     if (d.role) { it.a = rollAffixes(k, r, t, roleFor(k), () => 0.5, g); if (d.role === 'any') it.ro = roleFor(k); }
     return it;
   };
-  // what the line depends on: the fight's signature and the worn pieces themselves (an upgrade or reforge keeps their ids)
+  // the fight's signature and the worn pieces
   const preSig = () => fdSig() + '|' + JSON.stringify(CRAFT_HERO_POS.map(p => { const w = itemById(S.equip[p]); return w ? [w.slot, w.t, w.r, w.plus, w.g, w.u, w.mw, w.a] : 0; }));
-  // live(): the row or sheet is still on screen; once it is not, the sample stops and is dropped (it starts again when the row shows),
-  // so no chunk runs under a fight or another menu
+  // live(): still on screen; else the sample stops and is dropped
   function preStart(key, mk, done, live) {
     if (typeof fightDeltaJob !== 'function') return;
     const sig = preSig(), cur = st8.pre[key];
@@ -385,22 +391,17 @@ let craftUI = null;
     if (r.kind === 'turns') return `Zone ${r.zone} boss: about ${r.after} turns a win, now ${r.before}`;
     return `Zone ${r.zone} boss: a hit takes about ${r.after}% of your health, now ${r.before}%`;
   }
-  // the recipe row Next Up's craft pick names (st8.nu, read once an update): its key (with the rarity or grade the piece is shown at),
-  // or '' on any other row
+  // Next Up's recipe row key (st8.nu), or ''
   const preRecKey = (k, t) => {
     const n = st8.nu; if (!(n && n.kind === k && n.t === t && !CRAFT_KINDS[k].tool)) return '';
     const g = gradedKind(k) ? gradeFor(k, t) : null;
     return `rec:${k}:${t}:${CRAFT_KINDS[k].role === 'any' ? roleFor(k) : ''}:${g != null ? 'g' + g : preRar(k)}`;
   };
-  // the tool line: "Copper Pickaxe on. Mining is 35% faster than with your Stone Pick: +25% for a tier 1 tool on a tier 1 vein,
-  // and +8.1% from its mining speed line." (or why it went in the bag). tool-speed-adds-up: the parts come from the crafted record
-  // (toolParts); when they do not multiply to the total within 1 point, or one rounds to 0, only the total and the old tool show.
+  // the tool line: "Copper Pickaxe on. Mining is 35% faster than with your Stone Pick: ..." (tool-speed-adds-up: parts only when they add up)
   const TOOL_NODE = { mine: 'vein', wood: 'tree', forage: 'patch', hunt: 'hunting ground' };
   const pctTxt = x => { const v = Math.round(x * 10) / 10; return (v % 1 ? v.toFixed(1) : String(v)); };
   const spdSum = (st, s) => (s[st] || 0) + (s.gather || 0);
-  // At craft time (the 'crafted' listener): what the new tool is faster than, the measured tier, the right-tool bonus before and
-  // after, and the summed speed stat (the tool's own line plus Gathering speed) before and after. Mastery and the skill level are
-  // read at the same instant on both sides, so they are not parts.
+  // at craft time: what the new tool beats, the tier and the speed stat before and after
   function toolParts(it, e) {
     const d = itemKind(it), kind = Object.keys(TOOL_KINDS).find(k => TOOL_KINDS[k].pos === d.pos), tk = TOOL_KINDS[kind];
     const fam = Object.keys(CRAFT_NODES).find(k => CRAFT_NODES[k].tool === it.slot); if (!tk || !fam) return null;
@@ -502,9 +503,7 @@ let craftUI = null;
     if (!d.pos && !d.comp) bits.push('Special');
     return bits.join(' · ');
   }
-  // craft-attribute-grades: with CRAFT_TUNE.grades on, a graded recipe shows the grade it will be made at and the level of the next
-  // grade ("Grade B · A at Woodcraft 11"), and, when another tier is open, the choice between them ("Pine Bow grade A, or Birch Bow
-  // grade D"). Tools keep the odds line.
+  // craft-attribute-grades: a graded recipe's grade and the next ("Grade B · A at Woodcraft 11"); tools keep the odds line
   const gradeTxt = (k, t) => safe(() => {
     if (!gradedKind(k)) return '';
     // the skill that sets the level: a Charm grades on the better of Enchanting and Smithing (stationLevel), so name the one in use
@@ -523,8 +522,7 @@ let craftUI = null;
     const pc = v => { const p = v / tot * 100; return (p < 10 ? p.toFixed(1) : String(Math.round(p))) + '%'; };
     return 'Odds: ' + ['common', 'uncommon', 'rare', 'epic'].map(r => `${RAR[r].n} ${pc(w[r])}`).join(' · ');
   }, '');
-  // short quality word for a bag tile (the full word sits on the item sheet and in the label): itemQualShort (40-rules), "Rare" or
-  // a graded item's letter ("B")
+  // a bag tile's short quality word (itemQualShort)
   // stat changes against what the hero wears in that slot: [{ label, v, txt }]
   function diffRows(it) {
     const d = itemKind(it), cur = d && d.pos ? itemById(S.equip[d.pos]) : null;
@@ -633,8 +631,7 @@ let craftUI = null;
     if ((itemGraded(it) ? GRADE[it.g].moment : it.r === 'rare' || it.r === 'epic' || it.r === 'legendary') && typeof moment === 'function')
       moment('craft', { eye: `Well made · ${itemQual(it)}`, title: itemName(it), sub: `${itemQual(it)} ${itemKind(it) ? itemKind(it).noun : 'item'}. ${e.on ? "It's on." : 'It is in your bag.'}`, rarity: it.r, icon: { item: it } });
   });
-  // craft-strike-infuse: the lift a craft can take ({ to, sk, inf, ok, why, word }) or null: the Strike (the bar after Craft) and Infuse
-  // (Essence, the button on the row), each one grade, never above A. Names the choice: "Grade A: Strike, or Infuse for 6 Essence".
+  // craft-strike-infuse: the lift a craft can take ({ to, sk, inf, ok, why, word }) or null, one grade, never above A
   const liftInfo = (k, t) => safe(() => {
     if (typeof craftLiftTo !== 'function' || !stationTierOpen(k, t)) return null;
     const to = craftLiftTo(k, t); if (to == null) return null;
@@ -670,7 +667,9 @@ let craftUI = null;
     body.append(nm, sub);
     const btn = el('button', 'cf-go', 'Craft'); btn.type = 'button'; btn.disabled = !can.ok;
     if (st8.focus === k) btn.id = 'forgeBtn';
-    btn.setAttribute('aria-label', `Craft ${tierName(k, t)}`);
+    const clash = can.ok ? safe(() => clashTxt(k, t), '') : '';
+    btn.setAttribute('aria-label', `Craft ${tierName(k, t)}` + (clash ? `. ${clash}` : ''));
+    if (clash) { btn.title = clash; btn.classList.add('cf-go-clash'); }
     btn.addEventListener('click', () => doCraft(k, t));
     const costs = el('div', 'costs cf-rec-c');
     costChips(costs, kindCost(k, t), t);
@@ -680,8 +679,8 @@ let craftUI = null;
       c.append(img(troIcon(mw)), el('span', null, `${have}/1 ${CRAFT_TROPHIES[mw].n}`)); setTip(c, () => tipCost(CRAFT_TROPHIES[mw].n, troph()[mw] || 0, 1)); costs.append(c);
     }
     row.append(tile, body, btn, costs);
-    // gear-in-first-25: where each short gathered material comes from ("Bristlehide: from Hunting, which opens at zone 5."); none for
-    // essence, gold, a middle (Planks, Ingots) or a material in hand
+    if (clash) row.append(el('div', 'cf-why cf-clash', clash));
+    // gear-in-first-25: where each short gathered material comes from
     for (const [f, n] of Object.entries(kindCost(k, t))) { if (matOwn(f, t) >= n) continue; const ln = matSourceLine(f, t); if (ln) row.append(el('div', 'cf-src', ln)); }
     if (skillTierOpen(skillOfSt(d.st), t)) { const sr = shortRow(kindCost(k, t), t); if (sr) row.append(sr); }   // craft-shortfall-offer: only on a tier you can make
     if (gradedKind(k)) {   // craft-attribute-grades: the grade line and the choice in place of the odds
@@ -700,7 +699,7 @@ let craftUI = null;
       }
       rs.append(seg); row.append(rs);
     }
-    if (!can.ok) row.append(el('div', 'cf-why', can.why || 'Not ready yet.'));
+    if (!can.ok) row.append(el('div', 'cf-why', missTxt(can, t) || can.why || 'Not ready yet.'));
     return row;
   }
   registerSection('forge', {
@@ -784,7 +783,7 @@ let craftUI = null;
       if (sig !== rec.sig) {
         rec.sig = sig; rec.rows = {};
         rec.list.textContent = '';
-        if (noFit) rec.list.append(el('p', 'note cf-nofit', `Nothing at the ${CRAFT_STATIONS[st].n} is made for your class, so this shows everything here.`));
+        if (noFit) rec.list.append(el('p', 'note cf-nofit', `Nothing ${stationVerb(st)} for ${heroFirst()} yet. These are for other classes.`));
         else if (!ks.length) rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} yet.`));
         for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
         if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes. Choose All to see them.`));
@@ -800,9 +799,7 @@ let craftUI = null;
       if (!rec.list.querySelector('#forgeBtn')) { const b = rec.list.querySelector('.cf-go'); if (b) b.id = 'forgeBtn'; }
     }
   });
-  // craft-list-keeps-place: the boss line comes in about a second after the row shows, so it is put into the row in place, never
-  // by rebuilding the row. A rebuilt row gave the guide a new Craft button to point at, and upright that scrolled the list off the
-  // result card the player had just made ("Copper Pickaxe on.") down to Pine Bow.
+  // craft-list-keeps-place: the boss line is put into the row in place, never by a rebuild (the guide would point at a new button)
   function prePut(row, k, t) {
     const pk = preRecKey(k, t), pl = pk ? preLine(pk) : '', cur = row.querySelector(':scope > .cf-pre');
     if (!pl) { if (cur) cur.remove(); return; }
@@ -814,7 +811,7 @@ let craftUI = null;
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
+    return JSON.stringify([can.ok, can.why || '', can.ok ? safe(() => clashTxt(k, t), '') : '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
   }
 
   // ================= Enchanter's Table extras =================

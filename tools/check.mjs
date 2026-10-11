@@ -21074,6 +21074,76 @@ if (section('wren route S (browser)')) try {
   }
 } catch (e) { fail('wren route S (browser) crashed: ' + (e.stack || e)); }
 
+// craft-costs-up-front (release check 11 Oct, Still rough 5): a build row says its full cost before the tap and what is missing; a craft
+// row names what it is short of and warns when it would use materials an unbuilt station needs; the Forge says when it has nothing for Pip.
+if (section('craft-costs-up-front')) try {
+  const at0 = 'craft-costs-up-front', { pw, exe } = browserTools;
+  const cam = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-camp-ui.js'), 'utf8');
+  assert(!/costs ready|of \$\{n\.all\} ready/.test(cam), `${at0}: no Camp line counts "1 of 2 costs ready"; it names what is missing`);
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at0}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (fx, w, h) => {
+      const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', fx), 'utf8'), touch = w < 1000;
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch });
+      await ctx.addInitScript(([key, raw]) => {
+        try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {}
+        if (sessionStorage.getItem('ccuf-seeded')) return; sessionStorage.setItem('ccuf-seeded', '1');
+        const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+      }, [KEY, raw]);
+      const page = await ctx.newPage(), errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      for (let i = 0; i < 8; i++) { const b = await page.$('#createScreen .create-go, .bsheet-ov .sty-done, .bsheet-ov .big:has-text("Begin"), .bsheet-ov .big:has-text("Continue"), .away-ov button'); if (!b) break; try { await b.click({ timeout: 800 }); } catch (e) { break; } await page.waitForTimeout(300); }
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const until = async (expr, ms = 5000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 50 }); return true; } catch (e) { return false; } };
+      return { ctx, errs, X, until };
+    };
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const at = `${at0} ${w}x${h}`;
+        { // the Camp: a cold Hearth just lit, the Workbench not built (Lv 1 costs 300 gold and 12 Pine Logs)
+          const { ctx, errs, X, until } = await open('save-unlit-8log.json', w, h);
+          await X(`hearthLight(); S.onboard.tips = false; S.gold = 300; S.mats.wood[0] = 12; setTab('world'); ui(true); true`);
+          const line = `(e => e ? e.textContent : null)(document.querySelector('#camp-b-bench .cb-line'))`;
+          const a = await until(`${line} === 'Build for 300 gold and 12 Pine Logs'`) , la = await X(line);
+          const lab = await X(`document.querySelector('#camp-b-bench .cb-quick').getAttribute('aria-label')`);
+          assert(a && / for 300 gold and 12 Pine Logs$/.test(lab), `${at}: the Workbench row shows its gold and log cost before the tap, on the row and the button (${la}; ${lab})`);
+          await X(`S.gold = 100; S.mats.wood[0] = 8; ui(true); true`);
+          const b = await until(`${line} === 'Lv 1 needs 200 more gold and 4 more Pine Logs'`);
+          assert(b, `${at}: a Workbench short of gold and logs names both ("${await X(line)}")`);
+          const vis = await X(`(r => r.width > 0 && r.right <= innerWidth + 1)(document.querySelector('#camp-b-bench .cb-line').getBoundingClientRect())`);
+          assert(vis, `${at}: the cost line fits the screen`);
+          assert(!errs.length, `${at}: no page errors on the Camp` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+        { // the Craft tab: Pip, the Workbench built, no Forge, Pine Log 10 and Copper Ore 5 (the Forge's first build wants 10 and 25)
+          const { ctx, errs, X, until } = await open('save-pip-tool-made.json', w, h);
+          await X(`S.onboard.tips = false; setTab('forge'); ui(true); true`);
+          const rows = `JSON.stringify([...document.querySelectorAll('.cf-rec')].map(r => [r.dataset.kind, (r.querySelector('.cf-why') || {}).textContent || '', r.querySelector('.cf-go').getAttribute('aria-label')]))`;
+          await until(`!!document.querySelector('.cf-rec[data-kind=axe]')`);
+          const r1 = JSON.parse(await X(rows)), get = (r, k) => r.find(x => x[0] === k) || [];
+          assert(get(r1, 'staff')[1] === 'Needs 3 more Quartz.', `${at}: a recipe short of a material names it and how many ("${get(r1, 'staff')[1]}")`);
+          const clash = 'Uses Copper Ore and Pine Logs you need for the Forge.';
+          assert(get(r1, 'axe')[1] === clash && get(r1, 'axe')[2] === `Craft Copper Woodaxe. ${clash}`, `${at}: the Woodaxe says it would eat the Forge's ore and logs, on the row and the button (${JSON.stringify(get(r1, 'axe'))})`);
+          await X(`S.mats.ore[0] = 30; S.mats.wood[0] = 30; ui(true); true`);
+          await until(`!(document.querySelector('.cf-rec[data-kind=axe] .cf-why'))`);
+          const r2 = JSON.parse(await X(rows));
+          assert(get(r2, 'axe')[1] === '' && get(r2, 'axe')[2] === 'Craft Copper Woodaxe', `${at}: with enough for both, the Woodaxe warns of nothing (${JSON.stringify(get(r2, 'axe'))})`);
+          await X(`document.querySelector('.cf-st[data-st=forge]').click(); true`);
+          const nf = await until(`(e => e && e.textContent === 'Nothing to forge for Pip yet. These are for other classes.')(document.querySelector('.cf-nofit'))`);
+          assert(nf, `${at}: the Forge says it has nothing for Pip ("${await X(`(document.querySelector('.cf-nofit') || {}).textContent`)}")`);
+          assert(!errs.length, `${at}: no page errors on the Craft tab` + (errs.length ? ': ' + errs[0] : ''));
+          await ctx.close();
+        }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('craft-costs-up-front crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);
