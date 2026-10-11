@@ -1,0 +1,29 @@
+# seed: 1
+# Proof for card craft-costs-up-front (release check 11 Oct, Still rough 5): the early fixture opens Camp. The Hearth's cost line names
+# what is missing ("Needs 20 more Pine Logs and 12 more Copper Ore", not "1 of 2 ready") and every building row says its full cost or
+# what it lacks before the tap. Then Craft: a recipe short of a material names it and how many. The Workbench's 300 gold, the Woodaxe
+# that would eat the Forge's logs and the Forge's "Nothing to forge for Pip yet." are held at 1280x720, 740x360 and 360x740 by
+# tools/check.mjs ("craft-costs-up-front"), on cold-Hearth fixtures.
+new early
+wait 3
+tap-if "Skip this story"
+wait 2
+tap-if "Continue"
+tap-if "Continue"
+tap-if "Got it"
+tap-if "Dismiss this tip"
+tap "Camp"
+wait 1
+expect ".ch-cost-t"
+expect-no "costs ready"
+expect "#camp-b-forge .cb-line"
+scroll down
+scroll down
+scroll down
+shot camp-costs
+tap "Craft"
+wait 1
+tap-if "Got it"
+expect ".cf-rec"
+expect ".cf-why"
+shot craft-costs
