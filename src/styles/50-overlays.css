@@ -2,8 +2,9 @@
    At most 2; only the toast itself takes taps (tap or swipe it away). The right edge stays clear
    for the ability button. */
 .toasts { position: absolute; left: 6px; right: 62px; top: 62px; z-index: 6; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
-/* over an open full-screen menu (portrait): above the tab bar, full width */
+/* over an open menu (portrait): above the tab bar; the menu stops above them (toast-over-menu-foot) */
 .toasts.over-menu { top: auto; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px); left: var(--gut); right: var(--gut); z-index: 7; }
+.app:has(>.toasts.over-menu>.toast):not(:has(>.ob-bub.over-menu:not([hidden]))) .menu { margin-bottom: calc(var(--toast-h) + 10px); }
 .toasts.over-menu .toast { min-height: 36px; box-shadow: 0 3px 0 #0B0810, 0 6px 18px rgba(0,0,0,.5); }
 .toast { pointer-events: auto; touch-action: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 30px; background: #0E0B12E8; border: 1px solid var(--line-hi); border-left: 3px solid var(--ember); padding: 4px 8px 4px 6px; font: 500 12.5px/1.25 var(--body); box-shadow: 0 2px 0 #0B0810; animation: tin .2s ease-out; transition: transform .16s ease-out, opacity .16s ease-out; }
 .toast .tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
