@@ -2243,6 +2243,7 @@ span.cf-d { font-weight: 600; }
   .nu-cbar { transition: none; }
   .nu-flash { animation: none; outline: 2px solid var(--gold); outline-offset: 1px; }
 }
+.nu-chip .nu-lbl.nu-cut { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }   /* 71-ui-fight nuCut */
 /* 60-hands: the hiring board and your gatherers (74-ui-hands.js; W1-E) */
 #sec-hands, #sec-hands-crew { display: grid; gap: 10px; }
 .hd-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font: 600 max(var(--tmin, 0px), calc((15px * var(--display-k)) * var(--tk, 1))) var(--display); }
@@ -3834,9 +3835,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; white-space: nowrap; }   /* one line: "NEXT" over "UP" in the fallback face (fallback-font-fits) */
   .nu-chip .nu-cst { grid-column: 3; grid-row: 1; }
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
-  /* side-column-fits-740: the whole goal, no clamp. The chip has room: the dock shows only while fighting (75-solo-ui) and the away
-     chip only while gathering (71-ui-fight), so the longest gate label (5 lines at 740x360 in fallback fonts) still ends 23 px
-     above the dock, and with the away chip under it 105 px above the screen's foot (check.mjs side-column-fits-740) */
+  /* the whole goal; nuCut (71-ui-fight) cuts it for the away chip (side-column-fits-740) */
   .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: block; -webkit-line-clamp: none; font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
   /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
@@ -39236,13 +39235,11 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
   wideMQ.addEventListener('change', placeStepper);
 }
 
-// Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
-// second, and an unchanged value must not make the browser lay the page out again.
+// Static nodes, looked up once. Writes go through the put* guards (70-ui.js): an unchanged value must not relayout.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
 // the away card's line for a fighter who can't gather yet
 const AWAY_RULE_TXT = 'Fights only happen while you play.';
-// Away chip: what leaving now earns, on the away note's beat, from awayBase's rates (50-sim), held to the Storehouse room
-// unless Spillover moves on; a fighter is told where the hero goes back to.
+// Away chip: what leaving now earns (awayBase rates, 50-sim), held to the Storehouse room unless Spillover moves on
 let awayChip = null;
 function awayChipText() {
   const node = awayNode(); if (!node) return '';
@@ -39253,8 +39250,7 @@ function awayChipText() {
   const room = stashRoom(kind, tier);
   return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs, S.activity == 'fight' && NODE_NAMES[kind][tier - 1]);
 }
-// the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full;
-// back: a fighter's node. side-column-fits-740 measures every variant for every material
+// n: what leaving earns, 'spill' or 0 (full); back: a fighter's node (side-column-fits-740)
 function awayChipSay(nm, n, hrs, back) {
   const go = back ? `Leave now: ${heroFirst()} goes back to the ${back}${n > 0 ? ',' : '.'} ` : 'Leave now: ';
   if (n === 'spill') return `${go}${nm} fills up, then Spillover moves your hero on.`;
@@ -39268,17 +39264,27 @@ function uiAwayChip() {
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
     $('modeSeg').parentElement.after(awayChip);
   }
-  if (txt && S.activity === 'fight') txt = awayChipFit(txt);
+  if (txt && S.activity === 'fight') txt = awayChipFit(txt); else nuCut(0);
   if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
 let fitKey, fitTxt;
+// n > 0: the goal shows n lines (its aria-label has it all)
+function nuCut(n) {
+  const l = document.querySelector('#nuChip .nu-lbl'); if (!l || !n && !l.classList.contains('nu-cut')) return;
+  l.classList.toggle('nu-cut', n > 0); l.style.webkitLineClamp = n || '';
+  if (!n) fitKey = null;
+}
 function awayChipFit(txt) {
   // only measured again when the words or the screen change
-  const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + ($('nuChip') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
+  const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + (document.querySelector('#nuChip .nu-lbl') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
   if (k === fitKey) return fitTxt;
-  fitKey = k; awayChip.classList.remove('hide');
-  for (const t of [txt, txt.replace(/,.*/, '.')]) { awayChip.lastChild.textContent = t; if (!on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top) return fitTxt = t; }
+  nuCut(0); fitKey = k; awayChip.classList.remove('hide');
+  const fits = () => !on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top, l = document.querySelector('#nuChip .nu-lbl');
+  for (const t of [txt, txt = txt.replace(/,.*/, '.')]) { awayChip.lastChild.textContent = t; if (fits()) return fitTxt = t; }
+  // then the goal gives up lines
+  for (let n = l ? Math.round(l.offsetHeight / parseFloat(getComputedStyle(l).lineHeight)) : 0; --n > 0;) { nuCut(n); if (fits()) return fitTxt = txt; }
+  nuCut(0); fitKey = k;
   return fitTxt = '';
 }
 uiHooks.push(uiAwayChip);

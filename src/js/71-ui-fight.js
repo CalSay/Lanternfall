@@ -52,13 +52,11 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
   wideMQ.addEventListener('change', placeStepper);
 }
 
-// Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
-// second, and an unchanged value must not make the browser lay the page out again.
+// Static nodes, looked up once. Writes go through the put* guards (70-ui.js): an unchanged value must not relayout.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
 // the away card's line for a fighter who can't gather yet
 const AWAY_RULE_TXT = 'Fights only happen while you play.';
-// Away chip: what leaving now earns, on the away note's beat, from awayBase's rates (50-sim), held to the Storehouse room
-// unless Spillover moves on; a fighter is told where the hero goes back to.
+// Away chip: what leaving now earns (awayBase rates, 50-sim), held to the Storehouse room unless Spillover moves on
 let awayChip = null;
 function awayChipText() {
   const node = awayNode(); if (!node) return '';
@@ -69,8 +67,7 @@ function awayChipText() {
   const room = stashRoom(kind, tier);
   return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs, S.activity == 'fight' && NODE_NAMES[kind][tier - 1]);
 }
-// the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full;
-// back: a fighter's node. side-column-fits-740 measures every variant for every material
+// n: what leaving earns, 'spill' or 0 (full); back: a fighter's node (side-column-fits-740)
 function awayChipSay(nm, n, hrs, back) {
   const go = back ? `Leave now: ${heroFirst()} goes back to the ${back}${n > 0 ? ',' : '.'} ` : 'Leave now: ';
   if (n === 'spill') return `${go}${nm} fills up, then Spillover moves your hero on.`;
@@ -84,17 +81,27 @@ function uiAwayChip() {
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
     $('modeSeg').parentElement.after(awayChip);
   }
-  if (txt && S.activity === 'fight') txt = awayChipFit(txt);
+  if (txt && S.activity === 'fight') txt = awayChipFit(txt); else nuCut(0);
   if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
 let fitKey, fitTxt;
+// n > 0: the goal shows n lines (its aria-label has it all)
+function nuCut(n) {
+  const l = document.querySelector('#nuChip .nu-lbl'); if (!l || !n && !l.classList.contains('nu-cut')) return;
+  l.classList.toggle('nu-cut', n > 0); l.style.webkitLineClamp = n || '';
+  if (!n) fitKey = null;
+}
 function awayChipFit(txt) {
   // only measured again when the words or the screen change
-  const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + ($('nuChip') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
+  const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + (document.querySelector('#nuChip .nu-lbl') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
   if (k === fitKey) return fitTxt;
-  fitKey = k; awayChip.classList.remove('hide');
-  for (const t of [txt, txt.replace(/,.*/, '.')]) { awayChip.lastChild.textContent = t; if (!on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top) return fitTxt = t; }
+  nuCut(0); fitKey = k; awayChip.classList.remove('hide');
+  const fits = () => !on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top, l = document.querySelector('#nuChip .nu-lbl');
+  for (const t of [txt, txt = txt.replace(/,.*/, '.')]) { awayChip.lastChild.textContent = t; if (fits()) return fitTxt = t; }
+  // then the goal gives up lines
+  for (let n = l ? Math.round(l.offsetHeight / parseFloat(getComputedStyle(l).lineHeight)) : 0; --n > 0;) { nuCut(n); if (fits()) return fitTxt = txt; }
+  nuCut(0); fitKey = k;
   return fitTxt = '';
 }
 uiHooks.push(uiAwayChip);

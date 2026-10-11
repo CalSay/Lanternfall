@@ -89,7 +89,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 120, 'ui2-look (browser)': 60, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 75, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 44,
+  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 75, 'fight-chip-beside-nextup': 16, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 44,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -18995,21 +18995,25 @@ if (section('side-column-fits-740')) try {
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     // the chip's label lines and cut, the away chip's words, and the boxes, with the given words put in place (the next pass may
     // rewrite them, so all of it is read in one task)
-    const measure = (page, label, away) => page.evaluate(([label, away]) => {
+    // cut: the goal cut to that many lines (71-ui-fight nuCut, as the game picked it; 0 or free: the whole goal); cutTo is the cut
+    // measured, shown the lines the goal's box shows. The game's next pass may cut it again, so the cut is put in place here.
+    const measure = (page, label, away, free, cut) => page.evaluate(([label, away, free, cut]) => {
       const c = document.getElementById('nuChip'), l = c && c.querySelector('.nu-lbl'), a = document.querySelector('.away-chip'), tabs = document.querySelector('.sb-tabs');
       const on = e => !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden';
       if (!on(c) || !l) return null;
-      const keep = [l.textContent, a && a.lastChild.textContent];
+      const keep = [l.textContent, a && a.lastChild.textContent, l.className, l.style.webkitLineClamp], cutTo = free ? 0 : cut || 0;
+      l.classList.toggle('nu-cut', cutTo > 0); l.style.webkitLineClamp = cutTo > 0 ? String(cutTo) : '';
       l.textContent = label; if (away != null && a) a.lastChild.textContent = away;
       const lines = n => { const rg = document.createRange(); rg.selectNodeContents(n); return [...rg.getClientRects()].filter(r => r.width > 0); };
       const lr = lines(l), lb = l.getBoundingClientRect(), cb = c.getBoundingClientRect(), cs = getComputedStyle(l), clamp = parseInt(cs.webkitLineClamp, 10) || 0;
       const o = { lines: new Set(lr.map(r => Math.round(r.top))).size, clamp, cut: Math.max(...lr.map(r => r.bottom)) > lb.bottom + 1 || lb.bottom > cb.bottom + 1 || Math.max(...lr.map(r => r.right)) > cb.right + 1,
-        fs: parseFloat(cs.fontSize), chipBottom: Math.round(cb.bottom), away: on(a) ? null : false, dock: on(tabs) ? Math.round(tabs.getBoundingClientRect().top) : null, foot: innerHeight };
+        fs: parseFloat(cs.fontSize), chipBottom: Math.round(cb.bottom), away: on(a) ? null : false, dock: on(tabs) ? Math.round(tabs.getBoundingClientRect().top) : null, foot: innerHeight,
+        cutTo, shown: Math.round(lb.height / parseFloat(cs.lineHeight)), out: lb.bottom > cb.bottom + 1 || Math.max(...lr.map(r => r.right)) > cb.right + 1 };
       if (on(a)) { const ar = lines(a.lastChild), ab = a.getBoundingClientRect();
         o.away = { top: Math.round(ab.top), bottom: Math.round(ab.bottom), cut: Math.max(...ar.map(r => r.bottom)) > ab.bottom + 1 || Math.max(...ar.map(r => r.right)) > ab.right + 1, fs: parseFloat(getComputedStyle(a).fontSize) }; }
-      l.textContent = keep[0]; if (a && keep[1] != null) a.lastChild.textContent = keep[1];
+      l.textContent = keep[0]; if (a && keep[1] != null) a.lastChild.textContent = keep[1]; l.className = keep[2]; l.style.webkitLineClamp = keep[3];
       return o;
-    }, [label, away]);
+    }, [label, away, !!free, cut || 0]);
     // the eyebrow: one line, ending left of the status
     const eyebrow = page => page.evaluate(() => {
       const e = document.querySelector('#nuChip .nu-eye'), st = document.querySelector('#nuChip .nu-cst');
@@ -19071,27 +19075,31 @@ if (section('side-column-fits-740')) try {
         // it ends 4 px or more above .sb-tabs (71-ui-fight awayChipFit): the whole line, then the line up to its first comma, then nothing.
         // Its pick matches the measure for every pair, a shown chip never reaches the dock, only a phone's landscape screen says less,
         // and with the web fonts the shortest label keeps the whole Pine Grove line there. Labels of every length with that line show each step on a phone.
+        // fight-chip-beside-nextup: on a phone, where the short line doesn't fit under the whole goal, the goal keeps the lines that
+        // leave it room (cut with "...") and the away chip never says nothing; ends() measures with the whole goal
         const pick = (lt, al) => X(`(() => { const l = document.querySelector('#nuChip .nu-lbl'), c = document.querySelector('.away-chip'), a = c.lastChild, keep = [l.textContent, a.textContent, c.classList.contains('hide')];
-          l.textContent = ${JSON.stringify(lt)}; const t = awayChipFit(${JSON.stringify(al)}); l.textContent = keep[0]; a.textContent = keep[1]; c.classList.toggle('hide', keep[2]); return t; })()`);
+          l.textContent = ${JSON.stringify(lt)}; const t = awayChipFit(${JSON.stringify(al)}), cut = l.classList.contains('nu-cut') ? parseInt(l.style.webkitLineClamp, 10) : 0;
+          l.textContent = keep[0]; a.textContent = keep[1]; c.classList.toggle('hide', keep[2]); fitKey = null; return { t, cut }; })()`);
         const pine = await X('awayChipSay(matName("wood", 1), 99999, CAMP_TUNE.awayMax, NODE_NAMES.wood[0])'), short = words.labels[words.labels.length - 1];
-        const ends = async (lt, al) => { const o = await measure(page, lt, al); return o && o.away ? o.dock - o.away.bottom : -1e9; };
-        let bad = null, floor = true, said = { whole: 0, less: 0, none: 0 }, near = Infinity;
+        const ends = async (lt, al) => { const o = await measure(page, lt, al, true); return o && o.away ? o.dock - o.away.bottom : -1e9; };
+        let bad = null, floor = true, said = { whole: 0, less: 0, none: 0, cut: 0 }, near = Infinity;
         const pairs = [[short, pine], ...words.labels.filter((_, i) => i % 20 === 10).map(lt => [lt, pine]), ...L.flatMap(lt => F.map(al => [lt, al]))];
-        for (const [lt, al] of pairs) { const t = await pick(lt, al), o = await measure(page, lt, t || al); if (!o) { bad = 'no chip'; break; }
+        for (const [lt, al] of pairs) { const { t, cut } = await pick(lt, al), o = await measure(page, lt, t || al, false, cut); if (!o) { bad = 'no chip'; break; }
           if (!o.away || o.dock == null) { bad = `fighting shows no away chip or no dock (${JSON.stringify(o)})`; break; }
-          if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `cut: ${lt} (${o.lines} lines, clamp ${o.clamp})`; break; }
+          if (o.cutTo ? !phone || o.cutTo < 1 || o.shown !== o.cutTo || o.out : o.cut || (o.clamp && o.lines > o.clamp)) { bad = `cut: ${lt} (${o.lines} lines, clamp ${o.clamp}, the game's cut ${o.cutTo}, ${o.shown} shown)`; break; }
+          if (!t) { bad = `the away chip says nothing (${lt} / ${al})`; break; }
+          if (o.cutTo && await ends(lt, al.replace(/, .*/, '.')) >= 4) { bad = `the goal is cut but the whole goal fits with the short line (${lt} / ${al})`; break; }
           if (o.away.cut) { bad = `away line cut: ${t || al}`; break; }
           if (o.away.top < o.chipBottom) { bad = `the away chip starts over the Next Up chip (${lt} / ${al})`; break; }
           if (o.chipBottom + 4 > o.dock) { bad = `the Next Up chip ends ${o.dock - o.chipBottom} px above .sb-tabs (${lt})`; break; }
           if (t !== al && (!phone || webFonts && lt === short && al === pine)) { bad = `the away chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
           if (t && o.dock - o.away.bottom < 4) { bad = `the chip shows "${t}" and ends ${o.dock - o.away.bottom} px above the dock (${lt})`; break; }
           if (t !== al && await ends(lt, al) >= 4) { bad = `the whole line fits but the chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
-          if (!t && await ends(lt, al.replace(/, .*/, '.')) >= 4) { bad = `the short line fits but the chip hides (${lt} / ${al})`; break; }
           if (o.fs < (desk ? 14 : 13) || o.away.fs < (desk ? 14 : 13)) floor = false;
-          said[t === al ? 'whole' : t ? 'less' : 'none']++; if (t) near = Math.min(near, o.dock - o.away.bottom); }
-        assert(!bad, `${v}: fighting, every gate label and away line shows whole, and the away chip says what fits above the dock${bad ? ' (' + bad + ')' : ''}`);
+          said[t === al ? 'whole' : t ? 'less' : 'none']++; if (o.cutTo) said.cut++; if (t) near = Math.min(near, o.dock - o.away.bottom); }
+        assert(!bad, `${v}: fighting, every gate label shows whole (on a phone, or cut only to leave the short away line room), the away line shows whole, and the away chip says what fits above the dock${bad ? ' (' + bad + ')' : ''}`);
         assert(!phone || said.less > 0, `${v}: fighting, some label lengths get the short away line on a phone (${JSON.stringify(said)})`);
-        console.log(`  ${v}: fighting, of ${pairs.length} pairs the away chip says the whole line ${said.whole}, less ${said.less}, nothing ${said.none}; a shown chip ends ${near} px or more above the dock`);
+        console.log(`  ${v}: fighting, of ${pairs.length} pairs the away chip says the whole line ${said.whole}, less ${said.less}, nothing ${said.none}; the goal is cut in ${said.cut}; a shown chip ends ${near} px or more above the dock`);
         assert(floor, `${v}: the chip and away text keep the ${desk ? 14 : 13} px floor`);
         let eb = await eyebrow(page);
         assert(eb.lines === 1 && eb.right <= eb.st, `${v}: fighting, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
@@ -19158,6 +19166,93 @@ if (section('side-column-fits-740')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('side-column-fits-740 crashed: ' + (e.stack || e)); }
+
+// ==== fight-chip-beside-nextup: at 740x360 and 844x390, fighting, the away chip shows beside every Next Up goal ====
+// The 174 label pairs side-column-fits-740 walks (the shortest gate label and every 20th with the Pine Grove line, the 12 longest
+// labels with the 12 longest fighting lines), with the web fonts and the fallbacks. For each the game picks the words (71-ui-fight
+// awayChipFit) and: the away chip shows (before this card it said nothing for 157 of them at 740x360); its box never meets the
+// Next Up chip's or the goal's box; the chip, the goal and the away chip sit inside the screen and end 4 px above the dock; the
+// goal keeps its words and at least one line; a goal is cut only when the short line can't fit under the whole goal, and then
+// keeps every line that still fits (one more line would push the chip into the dock).
+if (section('fight-chip-beside-nextup')) try {
+  const at = 'fight-chip-beside-nextup', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const webFonts of [true, false]) for (const [w, h] of [[740, 360], [844, 390]]) {
+        const v = `${at} ${w}x${h}${webFonts ? '' : ', fallback fonts'}`;
+        const ctx = await browser.newContext({ turns: true, webFonts, viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        const r = await X(`(() => {
+          const labels = new Set(), fights = new Set();
+          for (const kind of Object.keys(CRAFT_KINDS)) { if (CRAFT_KINDS[kind].legacy) continue;
+            for (let t = 2; t <= 5; t++) { const rec = craftRecipe(kind, t); if (!rec) continue;
+              const gs = [], st = stationOf(kind), need = CRAFT_STATION_REQ[t - 1];
+              if (st) for (const sk of new Set([st.skill, 'smith'])) gs.push({ skill: sk, lv: need - 1, need, station: st.key });
+              for (const k of Object.keys(rec)) { if (k === 'gold') continue; const prod = REFINE_PRODUCTS[k];
+                for (const [f, tt] of prod ? prod.inputs(t) : [[k, t]]) { if (f === 'coal' || !CRAFT_NODES[f]) continue;
+                  const sk = skillOf(f), nd = skillReq(sk, tt); if (nd > 1) gs.push({ skill: sk, lv: nd - 1, need: nd, mat: costName(f, tt) }); } }
+              for (const gate of gs) for (const on of [true, false]) labels.add(gateLabel({ kind, t, gate }, on)); } }
+          for (const f of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) { const nm = matName(f, t), back = NODE_NAMES[f] && NODE_NAMES[f][t - 1];
+            if (back) for (const n of ['spill', 0, 99999]) fights.add(awayChipSay(nm, n, CAMP_TUNE.awayMax, back)); }
+          const by = s => [...s].sort((a, b) => b.length - a.length), L = by(labels), F = by(fights);
+          const pine = awayChipSay(matName('wood', 1), 99999, CAMP_TUNE.awayMax, NODE_NAMES.wood[0]);
+          const pairs = [[L[L.length - 1], pine], ...L.filter((_, i) => i % 20 === 10).map(lt => [lt, pine]), ...L.slice(0, 12).flatMap(lt => F.slice(0, 12).map(al => [lt, al]))];
+          const l = document.querySelector('#nuChip .nu-lbl'), c = document.querySelector('.away-chip'), a = c && c.lastChild, nu = document.getElementById('nuChip'), tabs = document.querySelector('.sb-tabs');
+          if (S.activity !== 'fight' || !l || !c || !tabs || !tabs.offsetParent) return { setup: { fight: S.activity, label: !!l, chip: !!c, dock: !!(tabs && tabs.offsetParent) } };
+          const keep = [l.textContent, a.textContent, c.classList.contains('hide'), l.className, l.style.webkitLineClamp];
+          const box = e => e.getBoundingClientRect(), meet = (p, q) => p.left < q.right && q.left < p.right && p.top < q.bottom && q.top < p.bottom;
+          const inside = b => b.left >= 0 && b.top >= 0 && b.right <= innerWidth && b.bottom <= innerHeight;
+          const fitsWith = (n, words) => { nuCut(n); a.textContent = words; return box(c).bottom + 4 <= box(tabs).top; };
+          const out = { n: pairs.length, whole: 0, less: 0, cut: 0, none: 0, bad: [], minLines: 99 };
+          for (const [lt, al] of pairs) {
+            l.textContent = lt; c.classList.remove('hide'); fitKey = null;
+            const t = awayChipFit(al); a.textContent = t; c.classList.toggle('hide', !t);
+            const cut = l.classList.contains('nu-cut') ? parseInt(l.style.webkitLineClamp, 10) : 0;
+            const lb = box(l), cb = box(c), nb = box(nu), dock = box(tabs).top, shown = Math.round(lb.height / parseFloat(getComputedStyle(l).lineHeight));
+            out[!t ? 'none' : t === al ? 'whole' : 'less']++; if (cut) out.cut++; out.minLines = Math.min(out.minLines, shown);
+            const why = [!t && 'the away chip says nothing', t && getComputedStyle(c).display === 'none' && 'the away chip is hidden',
+              t && meet(cb, lb) && 'the away chip meets the goal', t && meet(cb, nb) && 'the away chip meets the Next Up chip',
+              !inside(nb) && 'the Next Up chip leaves the screen', !inside(lb) && 'the goal leaves the screen', t && !inside(cb) && 'the away chip leaves the screen',
+              t && cb.bottom + 4 > dock && 'the away chip reaches the dock', nb.bottom + 4 > dock && 'the Next Up chip reaches the dock',
+              l.textContent !== lt && 'the goal lost its words', shown < 1 && 'the goal shows no line', getComputedStyle(l).display === 'none' && 'the goal is hidden'].filter(Boolean);
+            if (cut) {   // cut only when it must, and to every line that fits
+              const short = al.replace(/, .*/, '.');
+              if (shown !== cut) why.push(\`the goal shows \${shown} lines, cut at \${cut}\`);
+              if (fitsWith(0, short)) why.push('the goal is cut but the whole goal fits with the short line');
+              else if (fitsWith(cut + 1, short)) why.push(\`the goal is cut at \${cut} lines but \${cut + 1} fit\`);
+              nuCut(cut); a.textContent = t;
+            }
+            if (why.length) out.bad.push(why.join(', ') + \` (\${lt} / \${al})\`);
+          }
+          // the cut comes off when the hero stops fighting: cut the longest goal, then the away chip's pass while gathering
+          l.textContent = L[0]; fitKey = null; awayChipFit(F[0]); const cutFight = l.classList.contains('nu-cut'), act = S.activity;
+          S.activity = 'gather'; uiAwayChip(); out.leak = { cutFight, cutGather: l.classList.contains('nu-cut') || !!l.style.webkitLineClamp }; S.activity = act;
+          l.textContent = keep[0]; a.textContent = keep[1]; c.classList.toggle('hide', keep[2]); l.className = keep[3]; l.style.webkitLineClamp = keep[4]; fitKey = null;
+          return out; })()`);
+        assert(!r.setup, `${v}: the save opens fighting with the Next Up chip, the away chip and the dock in the side column (${JSON.stringify(r.setup || {})})`);
+        if (!r.setup) {
+          console.log(`  ${v}: of ${r.n} pairs the away chip says the whole line ${r.whole}, the short line ${r.less}, nothing ${r.none}; the goal is cut in ${r.cut}, to ${r.minLines} line(s) at least`);
+          assert(r.n >= 170, `${v}: the walk covers the label pairs (${r.n})`);
+          assert(!r.bad.length, `${v}: every pair shows the away chip beside the goal, apart, on screen and above the dock, the goal cut only to what fits (${r.bad.length} bad${r.bad.length ? ': ' + r.bad[0] : ''})`);
+          assert(r.leak.cutFight && !r.leak.cutGather, `${v}: the longest goal is cut while fighting and whole again once gathering (${JSON.stringify(r.leak)})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('fight-chip-beside-nextup crashed: ' + (e.stack || e)); }
 
 // ==== first-craft-toast-clip: the first craft's toasts keep clear of Next Up and the bell, and the banner's name reads whole ====
 // Eyes "first craft" (four sightings to 10 Oct): at 740x360 the craft's toast and banner, docked in the side column's notices row

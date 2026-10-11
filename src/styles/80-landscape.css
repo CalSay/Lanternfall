@@ -83,9 +83,7 @@
   .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; white-space: nowrap; }   /* one line: "NEXT" over "UP" in the fallback face (fallback-font-fits) */
   .nu-chip .nu-cst { grid-column: 3; grid-row: 1; }
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
-  /* side-column-fits-740: the whole goal, no clamp. The chip has room: the dock shows only while fighting (75-solo-ui) and the away
-     chip only while gathering (71-ui-fight), so the longest gate label (5 lines at 740x360 in fallback fonts) still ends 23 px
-     above the dock, and with the away chip under it 105 px above the screen's foot (check.mjs side-column-fits-740) */
+  /* the whole goal; nuCut (71-ui-fight) cuts it for the away chip (side-column-fits-740) */
   .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: block; -webkit-line-clamp: none; font-size: 13px; line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
   /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */

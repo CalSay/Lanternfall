@@ -1,0 +1,1 @@
+On a phone held sideways, the "Leave now" chip now shows while you fight, even when the Next Up goal is long. A long goal shows its first lines and ends with "...": tap Next Up to read it all. Before, the chip hid behind long goals almost every time (157 of 174 goal pairs at 740x360); now it never does. Best shot: chip-beside-next-up (landscape).
