@@ -359,8 +359,10 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   notices slot, at least 2.6 s, at most 2 in any 3 minutes of the first 30. All wait for the end of the fight, never show
   in a turn, and are never only a bell line. Several at one fight end fold into one card or banner.
 - **Lantern Caches** (`55-caches.js`, `75-caches-ui.js`): a zone boss's first clear opens a cache with what the win paid and the
-  unique's chance. Zones 1 to 3 and 7 to 9 also give a lantern colour, and its own line says what it did: "Your lantern burns
-  Ember Red now." when the lantern took it, else "New lantern colour: Deep Blue. You own it now." (look-card-says-why).
+  unique result: "No unique this time (15% chance on this win)." or "A unique dropped: <name>." Zones 1 to 3 and 7 to 9 also
+  give a lantern colour, and its own line calls it a look: "New look: your lantern burns Ember Red now." when the lantern took
+  it, else "New look: Deep Blue, a lantern colour. You own it now.", both ending "Looks change nothing in a fight."
+  (look-card-says-why, cache-card-plain).
 
 ## Currencies
 

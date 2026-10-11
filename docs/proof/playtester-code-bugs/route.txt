@@ -16,6 +16,7 @@
 #   (craft-shortfall-offer: "+2: +0.3% crit chance. Its other lines grow too."). Power 20 is read after reopening the sheet,
 #   since upright the Upgrade press scrolls the power line out of view.
 # The cache part runs first because a second `new` clears the shots taken before it.
+# Updated 2026-10-11 (cache-card-plain): the colour line now reads "New look: your lantern burns Ember Red now. Looks change nothing in a fight."
 new boss1
 wait 2
 tap-if "Got it"
@@ -91,7 +92,7 @@ wait 1
 tap-if "Attack"
 tap-if "Echo Shot"
 wait 1
-expect "Your lantern burns Ember Red now."
+expect "New look: your lantern burns Ember Red now."
 tap "Continue"
 wait 2
 tap "Notices"

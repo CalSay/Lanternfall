@@ -18095,11 +18095,11 @@ if (section('look-card-says-why')) try {
         await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
         const X = s => page.evaluate(s => window.__t.x(s), s);
         // a first clear with no lantern colour owned or worn and no unique on the win, then the cache card
-        const win = async z => {
+        const win = async (z, hit) => {
           await X(`MOMENT_Q.length = 0; if (MOMENT_UI.ov) { MOMENT_UI.onKeep = null; MOMENT_UI.shownAt = 0; document.querySelector('.mm-go').click(); }
             ${z === 1 ? `for (const k of Object.keys(S.deep.cos)) if (k.startsWith('l_')) delete S.deep.cos[k]; S.deep.eq.lantern = null; if (S.deeds && S.deeds.wear) delete S.deeds.wear.flame;` : ''}
             S.activity = 'fight'; S.zone = S.maxZone = ${z}; fightBoss = true; spawn();
-            const r0 = Math.random; Math.random = () => 0.999; try { killPack(mob, 40); } finally { Math.random = r0; }   // the unique roll misses, so the odds line shows
+            const r0 = Math.random; Math.random = () => ${hit ? 0 : 0.999}; try { killPack(mob, 40); } finally { Math.random = r0; }   // the unique roll misses, so the odds line shows (hit: it drops)
             S.activity = 'gather'; emit('sceneReset'); true`);
           try { await page.waitForFunction(() => window.__t.x(`[...document.querySelectorAll('.mm-ov')].some(o => /Lantern Cache|First boss/.test(o.textContent))`), null, { timeout: 8000, polling: 100 }); } catch (e) {}
           await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs)
@@ -18110,12 +18110,17 @@ if (section('look-card-says-why')) try {
             return { up: true, text: o.textContent, fits: !!r && inView(r) && r.top >= cr.top && r.bottom <= cr.bottom + 1 }; })()`);
         };
         let c = await win(1);
-        assert(c.up && /Unique chance on this win: \d+(\.\d+)?%/.test(c.text) && /Your lantern burns Ember Red now\./.test(c.text) && !/New lantern colour/.test(c.text) && c.fits && await X('S.deep.eq.lantern === "l_ember"'),
-          `${vw}: zone 1's cache card shows the unique chance and says "Your lantern burns Ember Red now." in a line on screen (${JSON.stringify({ up: c.up, fits: c.fits, text: c.text && c.text.slice(0, 300) })})`);
+        assert(c.up && /No unique this time \(\d+(\.\d+)?% chance on this win\)\./.test(c.text) && !/A unique dropped/.test(c.text) && /New look: your lantern burns Ember Red now\. Looks change nothing in a fight\./.test(c.text) && !/a lantern colour\. You own it now/.test(c.text) && c.fits && await X('S.deep.eq.lantern === "l_ember"'),
+          `${vw}: zone 1's cache card says no unique dropped with its chance, and "New look: your lantern burns Ember Red now. Looks change nothing in a fight." in a line on screen (${JSON.stringify({ up: c.up, fits: c.fits, text: c.text && c.text.slice(0, 300) })})`);
         if (w === 1280) {
           c = await win(2);
-          assert(c.up && /New lantern colour: Deep Blue\. You own it now\./.test(c.text) && !/burns Deep Blue/.test(c.text) && await X('S.deep.eq.lantern === "l_ember"'),
+          assert(c.up && /New look: Deep Blue, a lantern colour\. You own it now\. Looks change nothing in a fight\./.test(c.text) && !/burns Deep Blue/.test(c.text) && await X('S.deep.eq.lantern === "l_ember"'),
             `${vw}: a colour the lantern does not wear says it is owned, not burning (${JSON.stringify({ up: c.up, text: c.text && c.text.slice(0, 300) })})`);
+          // cache-card-plain: a win that drops the unique names it in the sub, with no odds line
+          c = await win(3, true);
+          const un = await X('(UNIQ[zoneUnique(3)] || {}).name');
+          assert(c.up && un && c.text.includes(`A unique dropped: ${un}.`) && !/No unique this time/.test(c.text),
+            `${vw}: a cache whose win dropped the unique says "A unique dropped: ${un}." and no odds (${JSON.stringify({ up: c.up, text: c.text && c.text.slice(0, 300) })})`);
         }
         assert(!/\bTap\b/.test(c.text || ''), `${vw}: neutral wording`);
         assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
