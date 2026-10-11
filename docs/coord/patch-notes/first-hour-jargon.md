@@ -1,0 +1,1 @@
+Docs only: a plan for the new words that pile up in the first hour (docs/design/first-hour-jargon.md). It lists 31 words with when and where a player first meets each one, and decides for each whether to keep it, rename it, explain it in one line, show it later or cut it, checked against the unlock pace. It proposes seven small build cards. No player change. (no shot)
