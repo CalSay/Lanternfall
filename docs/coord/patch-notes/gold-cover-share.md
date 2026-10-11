@@ -1,0 +1,1 @@
+Gold can still finish an upgrade you are short of, but only the last half: hold at least half the Planks, Ingots or ore the step needs, and the Upgrade button offers gold for the rest. Short of more than that, the row offers the free order instead. Best shot: gold-cover-share.

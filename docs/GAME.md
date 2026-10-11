@@ -218,8 +218,9 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   its next +1 adds to the piece's main line in that line's unit ("+7: +8.5% damage."); a line at its cap says so and shows
   the power change (`75-craft-ui.js` `shortOffer`, `nextPlusTxt`; card craft-shortfall-offer).
   An upgrade short of its material also offers to cover it for gold, as the row's second button after the free order
-  ("Upgrade: 340 + 270 gold for 3 Pine Planks"): `ECON.coverFoes` (9) foes of the tier's foe gold a raw unit, a middle
-  counting 2 (90 gold a Pine Plank, 45 a Copper Ore). Held units go first. Only on an upgrade (never a craft, Essence or a
+  ("Upgrade: 340 + 90 gold for 1 Pine Plank"): `ECON.coverFoes` (9) foes of the tier's foe gold a raw unit, a middle
+  counting 2 (90 gold a Pine Plank, 45 a Copper Ore). Held units go first, and gold covers at most half the step: a hero
+  short of more than half sees only the free order (card gold-cover-share). Only on an upgrade (never a craft, Essence or a
   Trophy), and only once the material's gathering tier is open and, for a middle, its station built. Covered units give no
   gathering or refining XP, salvage pays back step gold only, and `coverFoes` 0 turns it off (`55-crafting.js`
   `upgradeCover`, `canUpgrade`/`upgradeItem` with `{ cover: true }`; the `upgraded` event carries `cover`; card
