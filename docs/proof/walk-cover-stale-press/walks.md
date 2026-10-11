@@ -18,7 +18,7 @@ landed after the material came in, so the stale case did not come up on its own.
 up, so the covered shares are counted the same way as before; the share moves above (up to 3 points) are the two walks stopping
 at different game minutes under the clock budget, not the fix. Pip read 49% (base, minute 55) and 52% (fix, minute 50).
 
-## Forced stale press (seed 1, 12 game minutes, WALK_COVER_STALE=1)
+## Forced stale press (seed 1, 12 game minutes, local unshipped hook: see route.txt)
 
 | Run | Presses | Logged | Cover findings |
 |---|---|---|---|

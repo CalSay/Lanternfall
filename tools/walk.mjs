@@ -721,8 +721,6 @@ async function coverStep(o) {
   const n0 = C.ups.length;
   await openHeroGear();
   const opened = i >= 0 && await click(`.cf-gear .cf-gs:nth-child(${i + 1})`, 300); await advance(450, 16);
-  // WALK_COVER_STALE=1 (proof only): hands the hero the units it is short once the sheet is open, as gathering would, so the press is stale
-  if (opened && process.env.WALK_COVER_STALE) await X(`(S.mats[${JSON.stringify(c.fam)}][${c.t - 1}] += ${c.units}, 0)`);
   const did = opened && await click('.bsheet-ov .cf-up-box .cf-cover', 300); await advance(300, 16);
   await click('.bsheet-ov .bsheet-x', 200); await advance(300, 16);
   await click('#menuX', 200); await advance(300, 16);
