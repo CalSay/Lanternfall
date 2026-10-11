@@ -31,4 +31,4 @@ every view).
 1280x720 and 360x740: the same boxes before and after (the cut never triggers there). 740x360: see the route's shot.
 
 ## Boot bytes
-`node tools/build.mjs --split`: this branch -12 B steady (zone 1 and worst zone).
+`node tools/build.mjs --split`: this branch -4 B steady (zone 1 and worst zone).
