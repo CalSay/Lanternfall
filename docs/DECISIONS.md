@@ -1348,6 +1348,20 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   game-placed axe counts as a minor detail only when the axe is an artist-drawn sprite that the game places and turns; it fixes the
   axe, not her woodcut fists, which are re-briefed. Her whole pack is 1.40-1.67 MB at Wren's pack scale; only her idle boots, and only
   when she is the save's hero. (`docs/design/route-s/ruling-oriel.md`)
+- **PixelLab Tobin (integrate-pixellab-tobin, Opus art judge, 2026-10-11; Cal can veto: "Wire the PixelLab Tobin now", "PixelLab
+  effects as sprites"):** re-brief, not wired; route-s-tobin-wire goes ahead. The 96 px set draws at 4 CSS px per art px beside route S
+  Wren's 2, so it goes in only as a matched PixelLab hero set, with Wren and Pip made first and judged side by side. A re-judge first
+  needs a blade-safe re-cut, fixes to shieldthrow, laststand, riposte, forage and victory, a clean check-final.md, and 63 colours. The
+  leftover effect layer stays out; `62b-fx.js` gets restyled after PixelLab's look instead (Cal liked PixelLab's effects, 12:27).
+  (Files: project `experiments/pixellab-tobin/`)
+- **PixelLab cast test (pixellab-cast-go, Opus art judge, 2026-10-11; Cal can veto: "Stay with Scenario heroes"):** go, with
+  conditions. PixelLab Wren, Tobin and Pip at 96 px, drawn 2x, read as one cast and sit near the foes' pixel size. So Wren's and Pip's
+  full sets are made in PixelLab, and the whole cast is judged and wired as one. Conditions: a 3-move bow pilot first; Pip keeps her
+  lantern, book, one staff and a plain orb (the game draws the fire) and stands 0.9 of Wren's height; the same cleaner, check and
+  63-colour cut as Tobin; faces read at 1280 and 1920; effects stay drawn by the game; route S stays live (route-s-tobin-wire
+  included) until the cast passes; about 300 generations per hero at most. Tobin's re-brief stands. Amended by Cal, 12:50 ("PixelLab
+  draws it"): Wren's PixelLab frames keep PixelLab's own bowstring and arrow, the game stops drawing her string for the PixelLab set,
+  and only the arrow in flight stays a sprite. (Evidence: project `experiments/pixellab-tobin/three-heroes-1280.gif`, `check-final.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
