@@ -86,6 +86,7 @@ export function build() {
 export const ASSET_DIR = path.join(ROOT, 'dist', 'assets');
 export const SPLIT_FILE = path.join(ROOT, 'dist', 'lanternfall-split.html');
 export const isAsset = text => /^\/\/ [^\n]*GENERATED/.test(text.slice(0, 400));
+export const bare = text => text.replace(/^[ \t]*\/\/ .*$/gm, '');   // the split page: full-line comments blanked, the line kept
 const hash10 = text => crypto.createHash('sha256').update(text).digest('hex').slice(0, 10);
 export const assetName = (f, text) => `${f.replace(/\.js$/, '')}.${hash10(text)}.js`;
 const attr = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -221,7 +222,9 @@ export function buildSplit({ write = true, art = AREA_ART, extra = [] } = {}) {
     .replace('/* @packs */', () => JSON.stringify(table)).replace('/* @road */', () => String(road)).replace('/* @key */', () => JSON.stringify(saveKey))
     .replace('/* @classic */', () => JSON.stringify(classicKey));
   const tags = assets.map(a => `<script src="assets/${attr(a.name)}" onload="lfBoot.done(this)" onerror="lfBoot.fail(this)"></script>`).join('\n');
-  const code = frags.filter(x => !isAsset(x.text) || art[x.f]).map(x => keep.find(k => k.f === x.f) || x);
+  // hand-written code ships with each full-line comment blanked to an empty line, so a page line number still points at the
+  // same line (55-errors); comments were a quarter of the boot set's wire bytes (judge, route-s-tobin-wire, 11 Oct)
+  const code = frags.filter(x => !isAsset(x.text) || art[x.f]).map(x => keep.find(k => k.f === x.f) || (isAsset(x.text) ? x : { ...x, text: bare(x.text) }));
   // the loader (its screen and script) right after the styles, before any game markup, so its screen is the first thing painted
   // (card loading-screen); the boot files' tags and the game's script stay where the inline page has its script
   const html = page(shell, `${css}</style>\n${loader.replace(/\n*$/, '')}\n<style>`, `${tags}\n${iife(code)}\n<script>lfBoot.end();</script>`).replace('\n<style></style>', '');
