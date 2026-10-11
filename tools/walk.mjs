@@ -610,6 +610,9 @@ async function wearGear(w) {
   await advance(300, 16);
   await click('.bsheet-ov .bsheet-x', 200); await advance(300, 16);
   const ok = await X(`S.equip[${JSON.stringify(w.pos)}] === ${w.id}`);
+  // walk-gear-wisp-axe: a moment card that came up during the taps (a boss win's unique, a new Star) sits over the Gear view, as it would
+  // for a player: the card rule closes it on the next pass and the bot tries again, so that press is neither a try nor a finding
+  if (!ok && await page.evaluate(() => !!document.querySelector('.mm-ov'))) { st.gear.tries['w' + w.id]--; return true; }
   if (ok) { st.gear.wornN++; if (st.gear.firstWear === null) st.gear.firstWear = gt; }
   await note(page, 'gear', `${ok ? 'wore' : 'could not wear'} ${w.nm} (${w.pos})`, { extra: { pos: w.pos, ok }, tag: 'gear-wear' });
   if (!ok) addCheck('gear', 'the bot could not put on a piece from the bag', `${w.nm} for ${w.pos}: ${opened ? 'the Equip button did nothing' : !nav.tab ? 'the Hero tab could not be tapped' : !nav.seg ? 'the Gear view button could not be tapped' : 'no bag tile to tap in Hero > Gear'}`);
