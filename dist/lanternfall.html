@@ -44644,7 +44644,7 @@ let craftUI = null;
       {
         let sr = shortRow(c.mats, it.t, renderItem), coverWhy = '';
         // upgrade-gold-covers-short: gold may pay the material the piece is short, as the row's second button after the free
-        // refine order ("Upgrade: 340 + 270 gold for 3 Pine Planks"). Never on a craft, and only once the material is reachable.
+        // refine order ("Upgrade: 340 + 810 gold for 3 Pine Planks"). Never on a craft, and only once the material is reachable.
         const cv = f && typeof upgradeCover === 'function' ? safe(() => upgradeCover(it), null) : null;
         if (cv) {
           if (!sr) { sr = el('div', 'cf-src cf-short'); sr.append(el('span', null, `Short ${storeNum(cv.units)} ${midName(cv.fam, it.t, cv.units)}. `)); }
