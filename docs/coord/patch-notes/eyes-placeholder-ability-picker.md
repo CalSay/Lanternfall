@@ -1,0 +1,1 @@
+No change in the game. Eyes' placeholder check now opens Hero > Abilities and lists the two-letter tiles in the picker list, a learned move's detail and the Learn card, so it agrees with the walk's F10. Report only.
