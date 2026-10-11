@@ -19155,6 +19155,14 @@ if (section('toast-over-menu-foot')) try {
         await X('onboardUnlockAll(); true');
         await X('setTab("forge"); true');
         for (let i = 0; i < 4; i++) { const b = page.getByRole('button', { name: 'Got it' }); if (!(await b.count())) break; await b.first().click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); }
+        // the first Craft view on this old save opens the Refining card a tick after menuView (75-refine-ui); on a slow machine that came after the
+        // loop above, so the card hid the guide tip and the menu box was measured with no tip, then with one. Wait on the game's state: the card
+        // said (S.refine.said) and shut, and, where the tip shows on the Craft menu (upright over it, desktop beside it), the tip up.
+        const ready = async tipWanted => { for (let i = 0; i < 60; i++) {
+          const s = await page.evaluate(() => { const sh = document.querySelector('.bsheet-ov:not(.docked)'); if (sh) { const d = sh.querySelector('.sty-done'); if (d) d.click(); return 'sheet'; }
+            const b = document.querySelector('.ob-bub'); return b && !b.hidden ? 'tip' : 'none'; });
+          if (s !== 'sheet' && await X('!!(S.refine && S.refine.said)') && (s === 'tip' || !tipWanted)) return true; await page.waitForTimeout(100); } return false; };
+        assert(await ready(h > w || !phone), `${v}: the Refining card is shut and the guide tip is placed before the menu is measured`);
         // settled: the menu's slide and every toast are done
         const settle = async () => { for (let i = 0; i < 40; i++) { if (await page.evaluate(() => !document.querySelector('#toasts .toast') && !document.getElementById('menu').getAnimations({ subtree: true }).some(a => a.playState === 'running'))) return true; await X('for (const t of [...$("toasts").children]) dropToast(t); true'); await page.waitForTimeout(100); } return false; };
         assert(await settle(), `${v}: the Craft menu opens with no notices up`);
