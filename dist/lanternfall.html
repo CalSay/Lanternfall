@@ -9195,10 +9195,10 @@ const ECON = {
   // recipe count x (plus + 1)), so gold, not essence or hide, is what an upgrade waits on. Salvage pays back upRefund
   // of the gold an item's upgrades cost (55-crafting craftUpgradeRefund), so a +7 you outgrow is never wasted.
   upFoes: 20, upGrow: 1.5, upMat: 0.25, upRefund: 0.5,   // upgrade +plus -> +plus+1: 20 x foeGold(gradeZ) x 1.5^plus
-  // upgrade-gold-covers-short (ruling 2026-10-08, B; PROVISIONAL until the one balance pass, which may move it once, never
-  // below 6): an upgrade short of its material may pay the rest in gold, coverFoes x foeGold(gradeZ) a raw unit (a middle is
-  // 2): 45 gold a tier-1 log, 90 a Pine Plank. 0 turns the offer off (no save impact). 55-crafting upgradeCover.
-  coverFoes: 9,
+  // upgrade-gold-covers-short (ruling 2026-10-08, B; never below 6): an upgrade short of its material may pay the rest in
+  // gold, coverFoes x foeGold(gradeZ) a raw unit (a middle is 2): 135 gold a tier-1 log, 270 a Pine Plank. gold-cover-share
+  // (2026-10-11) raised it from 9 so gold covers at most half. 0 turns the offer off (no save impact).
+  coverFoes: 27,
   reforgeFoes: 15, reforgeGrow: 1.5,   // reforge: 15 x foeGold(gradeZ) x 1.5^n
   // ---- trade (3.5, TR1 reads it): a unit's price = foeGold(grade's first zone) x famW ----
   famW: { gathered: 0.06, gem: 0.075, herb: 0.075, hide: 0.09, ess: 0.18, secondary: 0.03, refined: 0.15 },
@@ -13802,7 +13802,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //   craftXpFor(skill, n) -> n with the catch-up multiplier applied (x2 while behind)
 //   upgradeItem(id, trophIdx?, opts?) -> bool    +1 (max +10); +8..+10 each pay 1 Trophy
 //   canUpgrade(id, trophIdx?, opts?) -> { ok, why, cost, cover }   (the most plentiful Trophy unless trophIdx)
-//                                                opts: { cover: true } lets gold pay the material the hero is short
+//                                                opts { cover: true }: gold pays the material short (none short: plain)
 //   upgradeItem(id, trophIdx?, opts?)            the same opts; emits 'upgraded' { item, gold, cover: { units, gold } }
 //   upgradeCover(it) -> { fam, t, units, gold } | null   what gold may cover of its next upgrade (upgrade-gold-covers-short)
 //   craftUpgradeRefund(it) -> gold               what salvaging it pays back: ECON.upRefund of the gold its +N cost
@@ -14005,11 +14005,10 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     let best = -1; tr.forEach((n, i) => { if (n > 0 && (best < 0 || n > tr[best])) best = i; });
     return best;
   };
-  // upgrade-gold-covers-short (ruling autopilot/rulings/2026-10-08-gold-covers-material.md, B): an upgrade short of its one
-  // material (never Essence, a Trophy or coal) may pay the units it lacks in gold, ECON.coverFoes foes of the tier's foe gold
-  // a raw unit (a middle is 2), once that material is reachable: its gathering is open at the item's tier and, for a middle,
-  // the station that makes it is built. Held units go first. Nothing is stored and covered units give no skill XP (only the
-  // upgrade's own station XP, unchanged); salvage refunds step gold only. Upgrades only: crafts always take their materials.
+  // upgrade-gold-covers-short (ruling 2026-10-08): an upgrade short of its one material (not Essence, a Trophy or coal) may
+  // pay the units it lacks in gold, ECON.coverFoes foes of the tier's foe gold a raw unit (a middle is 2), once its gathering
+  // is open at the item's tier and, for a middle, its station built. Held units go first. Nothing is stored; covered units
+  // give no skill XP; salvage refunds step gold only. Crafts always take their materials.
   upgradeCover = it => {
     if (!it || !CRAFT_KINDS[it.slot] || !(ECON.coverFoes > 0) || it.plus >= CRAFT_TROPHY_GATE.max) return null;
     const t = it.t, mats = upgradeCost(it).mats, fam = Object.keys(mats).find(k => k !== 'ess' && k !== 'coal');
@@ -14028,8 +14027,9 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const cost = upgradeCost(it), x = { cost };
     if (cost.troph && pickTrophy(trophIdx) < 0) return no(trophIdx != null ? `Needs 1 ${trophyName(trophIdx)}` : 'Needs 1 Trophy of any kind', x);
     let mats = cost.mats, gold = cost.gold;
-    if (opts && opts.cover) {
-      const cv = upgradeCover(it); if (!cv) return no('Gold cannot cover this upgrade.', x);
+    const cv = opts && opts.cover && upgradeCover(it);
+    if (opts && opts.cover && !cv && missing(mats, it.t).length) return no('Gold cannot cover this upgrade.', x);
+    if (cv) {
       x.cover = cv; mats = Object.assign({}, mats); mats[cv.fam] -= cv.units; if (mats[cv.fam] <= 0) delete mats[cv.fam];
       gold += cv.gold;
     }
@@ -44654,7 +44654,7 @@ let craftUI = null;
       {
         let sr = shortRow(c.mats, it.t, renderItem), coverWhy = '';
         // upgrade-gold-covers-short: gold may pay the material the piece is short, as the row's second button after the free
-        // refine order ("Upgrade: 340 + 270 gold for 3 Pine Planks"). Never on a craft, and only once the material is reachable.
+        // refine order ("Upgrade: 340 + 810 gold for 3 Pine Planks"). Never on a craft, and only once the material is reachable.
         const cv = f && typeof upgradeCover === 'function' ? safe(() => upgradeCover(it), null) : null;
         if (cv) {
           if (!sr) { sr = el('div', 'cf-src cf-short'); sr.append(el('span', null, `Short ${storeNum(cv.units)} ${midName(cv.fam, it.t, cv.units)}. `)); }
