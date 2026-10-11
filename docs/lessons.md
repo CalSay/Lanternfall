@@ -86,6 +86,11 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   read the zone 2 boss odds from save-flow-cold-camp). A proof fixture's level must be one the road can reach at its maxZone (zone 2
   means level 4+); if a check needs an under-levelled hero, say so in its comment. Why: the reviewer caught 12 fails outside
   `sim|health|zone` from a level 1 Wren at zone 2. (zone-1-3-foe-curve, 2026-10-11)
+- A zone 4 boss HP change also runs `--only="boss"`: 'boss tiers first hour' wants the zone 5 Champion at 1.5x zone 4's boss HP in
+  reference Attacks, so zone 4's boss (and the foes under it) has a ceiling. Why: x2.7 on zone 4's boss failed it (zone-4-6-foe-curve, 2026-10-11).
+- Read health's `casual.zoneEnd` over 5 seed offsets before calling it a regression: a casual bot either breaks out of a farm loop
+  (old-zone fights for a material) and reaches zone 13-15, or never comes back to its boss and ends at 10, so one offset moves by 5.
+  Why: offset 0 read +2.5 on zone-4-6-foe-curve while the 5-offset mean moved +0.7 against the base's own 5 offsets (2026-10-11).
 
 ## Economy and skilling
 

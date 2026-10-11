@@ -175,8 +175,8 @@ const TURN_FOE_SPEED = { normal: 0.9, ranged: 0.95, elite: 1.0, boss: 1.05, regi
 // Fight length in the hero's ordinary Attack actions at zone-ready power (the C22 contract's HP budgets)
 const TURN_FOE_HP = { zoneFoe: 4, normal: 5, elite: 9, boss: 16, region: 30 };
 // By zone 1-6, the fewest plain Attacks of the hero who meets it that a normal foe's HP may be (59k turnFoeSetup; Cal's note #18:
-// foes fell to one hit). Zones 1-3 take 3 as their HP is set by zone (TURN_TUNE.early); 8 is 3 or 4 turns with an opener and a counter.
-const TURN_EARLY_FOE_HITS = [3, 3, 3, 8, 8, 8];
+// foes fell to one hit). Zones 2-6 set HP by zone (TURN_TUNE.early).
+const TURN_EARLY_FOE_HITS = [3, 3, 3, 3, 3, 3];
 
 // Elite traits in turn fights (owner, 2026-10-02): one per elite, from zone COMBAT_TUNE.eliteFrom (59k turnFoeSetup).
 // Names and badges are the old traits' (ELITE_TRAITS, 21g); these are their turn rules and the line the first one shows.

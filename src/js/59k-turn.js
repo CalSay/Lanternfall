@@ -52,7 +52,7 @@ const TURN_TUNE = {
   refHpX: [[1, 1.2], [3, 1.2], [8, 2.5], [15, 3], [20, 4], [30, 2.9], [34, 1.85], [35, 0.95], [38, 0.6], [42, 0.4]],
   // a normal foe's (and an elite's) hits x this, so a landed hit costs a hero who keeps up about 8-15% of their health
   // against the higher reference HP above (zone fights and the Deepwell; a Proving's foes hit for shares of your health)
-  normHitX: [[1, 1], [2, 3.25], [3, 3.5], [4, 0.94], [8, 0.7], [34, 0.7], [35, 1]],
+  normHitX: [[1, 1], [2, 3.25], [3, 3.5], [4, 2.3], [5, 3], [6, 1.15], [7, 0.76], [8, 0.7], [34, 0.7], [35, 1]],
   // an elite hits this much harder than a normal foe of its zone (foe-moves-by-type: elites are a threat, not a pat on the head)
   eliteHitX: 1.4,
   eliteHpX: 2.5,   // ... and lasts this much longer
@@ -82,8 +82,9 @@ const TURN_TUNE = {
   burnP: 0.4, burnT: 3, burnMaxT: 4, bleedP: 0.12, bleedT: 3, bleedMax: 5, chillMax: 3, chillT: 4, chillSlow: 0.1,
   markV: 0.2, exposedX: 1.25, sunderX: 0.5, weakenX: 0.75, guardX: 0.6, drCap: 0.75, wardCap: 0.3, keenX: 0.5,
   pinWin: 1.5, pinSlow: 0.1, blindP: 0.3, blindBossP: 0.15, curseP: 0.2, curseCap: 3,
-  // zones 1-3 on the hero who arrives there (docs/proof/zone-1-3-foe-curve/curve.md): HP, boss HP, boss floor in Attacks, pay
-  early: { hpX: [[1, 1], [2, 5], [3, 5.2], [4, 1]], bossHpX: [[1, 1], [2, 3.5], [3, 2.4], [4, 1]], bossHits: [4, 5, 5], payX: [[1, 1], [2, 1.6], [3, 1.8], [4, 1]] },
+  // zones 1-6 on the arriving hero (docs/proof/zone-4-6-foe-curve/): HP, boss HP, boss floor in Attacks, pay
+  early: { to: 6, hpX: [[1, 1], [2, 5], [3, 5.2], [4, 4.2], [5, 4], [6, 2.5]], bossHpX: [[1, 1], [2, 3.5], [3, 2.4], [4, 1.9], [5, 1]], bossHits: [4, 5, 5],
+    payX: [[1, 1], [2, 1.6], [3, 1.8], [4, 1.75], [5, 1.7], [6, 1.65]] },
   stagger: { stun: 25, freeze: 35 }, lock: 3, chargeBreak: 0.06, bossPhaseAt: 0.5, bossPhaseSpd: 1.12, bossEase: [0.65, 0.8, 0.9],
   // Boss pass (owner, 2026-10-02: "make the bosses take longer and still hit hard ... it should always be very bad for
   // us to get hit by a boss"; combat-turn-build.md "Boss pass"). Zone and region bosses only: the Deepwell's Elders and
@@ -123,7 +124,7 @@ const TURN_TUNE = {
     riderX: [[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 0.07], [20, 1]],
     dotCap: [[1, 0], [19, 0], [20, 0.07], [24, 0.07], [25, 0]],
     // hpFloor: see turnLand (zone table of multiples; 0 off). gate: rally gates (see TURN_TUNE.gateNote)
-    hpFloor: [[1, 0.7], [2, 0.8], [3, 0.9], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 1], [9, 1.1], [10, 1.3], [11, 0.95], [12, 1.2], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 1.35], [20, 1.3], [24, 1.3], [25, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
+    hpFloor: [[1, 0.7], [2, 0.8], [3, 0.9], [4, 1], [5, 0.93], [6, 0.85], [7, 1.03], [8, 1], [9, 1.1], [10, 1.3], [11, 0.95], [12, 1.2], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 1.35], [20, 1.3], [24, 1.3], [25, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
   // Boss move tricks (card boss-tiers-pr4; docs/design/foe-moves.md "Boss tricks"): zone bosses from `from` play the Captain and
   // Champion sets in TURN_BOSS_TRICKS (24d): hits that hold their swing (`hold`), fakes (`feint`: no damage, and a press at one
   // fools you: the next hit cannot be defended), longer strings and an uneven rhythm. `on` 0 plays the old sets. `feintFrom`: the
@@ -202,9 +203,9 @@ const turnZoneLine = (P, z) => {
   return P[P.length - 1][1];
 };
 const turnHeroHitX = (k, z) => { const L = TURN_TUNE.boss.heroHitX[k]; return Array.isArray(L) ? turnZoneLine(L, z) : L || 1; };   // a hero's own share of a zone boss's hits (boss.heroHitX)
-// a boss rider's tick on the hero (Bleed, Burn, Venom): a share of the reference HP (heroDot) x the zone's riderX, and at zones 20-24 no
-// more than dotCap of the hero's own max HP (z20-wall: a tick then costs a hero what it says, whatever footing they arrive on)
-const turnDotTick = (p, k) => { const t = TURN_TUNE.heroDot[k] * p.refHp * (p.bossRiderX || 1); return p.bossDotCap > 0 && p.heroMaxHp > 0 ? Math.min(t, p.bossDotCap * p.heroMaxHp) : t; };
+// a boss rider's tick on the hero (Bleed, Burn, Venom): a share of the reference HP (heroDot) x the zone's riderX (zones 1-3: the
+// hero's health, as hits), and at zones 20-24 no more than dotCap of the hero's own max HP (z20-wall: a tick costs what it says)
+const turnDotTick = (p, k) => { const t = TURN_TUNE.heroDot[k] * Math.max(p.refHp * (p.bossRiderX || 1), p.bossDotHp || 0); return p.bossDotCap > 0 && p.heroMaxHp > 0 ? Math.min(t, p.bossDotCap * p.heroMaxHp) : t; };
 const turnLateX = (k, z) => { const L = TURN_TUNE.lateX[k]; return L ? turnZoneLine(L, z) : 1; };   // a hero's late-zone power (TURN_TUNE.lateX)
 const turnRefAtkX = z => turnZoneLine(TURN_TUNE.refAtk, z);
 const turnRefAtk = z => turnRefAtkX(z) * mobHp(z) * mod('foeHp');
@@ -274,7 +275,7 @@ function turnFoeSetup(f, z, o) {
   const champ = zb && !region && bossTierOf(z) === 'champion';   // a Champion's HP and hits sit on the Captain line x its own table
   const len = zb ? (region ? B.regionHpX : turnZoneLine(B.hpX, z) * (champ ? turnZoneLine(B.champHpX, z) : 1)) : 1;
   const roll = 0.95 + Math.random() * 0.1;   // drawn for every foe so seeded sims keep their sequence
-  const ez = z <= 3 && !region && !o.set && !o.hpA && !f.deep && !f.trial, EA = T.early;
+  const ez = z <= T.early.to && !region && !o.set && !o.hpA && !f.deep && !f.trial, EA = T.early;
   const ex = ez ? turnZoneLine(f.boss ? EA.bossHpX : EA.hpX, z) : 1;
   const hp = hpA * ease * len * ex * turnRefAtk(z) * (f.boss ? 1 : roll) * (bk ? bk.hpK : 1);   // a boss keeps one HP across tries; the roll is for packs
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
@@ -282,7 +283,7 @@ function turnFoeSetup(f, z, o) {
     hx: zb ? turnZoneLine(B.hitX, z) * (champ ? turnZoneLine(B.champHitX, z) : 1) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
     zb: zb && !region,   // a zone boss (not a region boss, the Deepwell or a Proving): the hero's own boss-hit share (boss.heroHitX) applies
     hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0, rx: zb && !region && B.riderX ? turnZoneLine(B.riderX, z) : 1, dcap: zb && !region && B.dotCap ? turnZoneLine(B.dotCap, z) : 0, hfl: zb && !region && B.hpFloor ? turnZoneLine(B.hpFloor, z) : 0,
-    ff: zb && !region && B.footFloor ? turnZoneLine(B.footFloor, z) : 0, pmin: zb && !region && z >= B.passiveZones[0] && z <= B.passiveZones[1] ? B.passiveMin : 0,
+    ff: zb && !region && B.footFloor ? turnZoneLine(B.footFloor, z) : 0, dh: zb && ez && z <= 3 ? 1 : 0, pmin: zb && !region && z >= B.passiveZones[0] && z <= B.passiveZones[1] ? B.passiveMin : 0,
     gates: zb && !region && B.gate.on && z >= B.gate.from && z <= B.gate.to ? (champ ? B.gate.champ : z >= B.gate.captainFrom ? B.gate.captain : B.gate.captainEarly) : null };
   // the early floor: TURN_EARLY_FOE_HITS (24d), zone 1-3 bosses early.bossHits
   const E = f.boss ? (ez ? EA.bossHits[z - 1] : 0) : TURN_EARLY_FOE_HITS[z - 1], hu = (f.boss ? ez : !f.elite && !o.set && !o.hpA) && E > 0 && typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null, hp0 = hu ? turnMakeProfile(f, hu) : null;
@@ -360,6 +361,7 @@ function turnMakeProfile(f, u) {
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
     // kd: a boss kit's own damage for this hero (59l ZONE_FOE_TUNE.fit), on its own line and its hpFloor alike, as if its hits were that much bigger
     bossHitX: (f.tk.hx || 1) * (f.tk.kd && f.tk.kd[key] || 1), bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: (f.tk.hfl || 0) * (f.tk.kd && f.tk.kd[key] || 1), bossRiderX: f.tk.rx || 1, bossDotCap: f.tk.dcap || 0,
+    bossDotHp: f.tk.dh ? (f.tk.hfl || 0) * u.maxHp : 0,
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
     gates: f.tk.gates || null, fullHp: !!((f.boss || TURN_TUNE.normalFull) && !f.deep && !f.trial),   // the boss pass; every zone fight is met at full health (normalFull)
     zb: !!f.tk.zb, uq: typeof uniqRulesWorn === 'function' ? uniqRulesWorn() : [],   // uniques-first-four: a zone boss; the worn uniques' rules (none while UNIQ_TUNE.on is 0)
