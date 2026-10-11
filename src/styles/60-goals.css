@@ -54,3 +54,4 @@
   .nu-cbar { transition: none; }
   .nu-flash { animation: none; outline: 2px solid var(--gold); outline-offset: 1px; }
 }
+.nu-chip .nu-lbl.nu-cut { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }   /* 71-ui-fight nuCut */
