@@ -14346,7 +14346,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
           // unique, an item with `u`) never sees it, and does not need to. The walk's idle passes run the game ahead while the guide waits for the screen, so
           // on a slow runner that drop can come before the Workbench; the step then counts as walked once the game itself calls it done.
           let toolGiven = false;
-          let lossDone = '', lossAt = 0, gatherAt = 0;   // ux-l1-gather-tip-after-loss: the forced boss loss as the Gather tip comes due ('lost', or 'missed' if it did not take; lossAt, gatherAt: seconds of play)
+          let lossDone = '', lossAt = 0, gatherAt = 0;   // ux-l1-gather-tip-after-loss: the forced boss loss as the Gather tip comes due ('lost', or 'missed' if it did not take; lossAt, gatherAt: the play clock at the loss and when the tip is on screen again)
           // a held line's answer (pressHeld): a press that found it covered or never shown is a miss, said once per line
           const heldMiss = new Set(), held = async () => { const r = await pressHeld(page); if (/^(pressed|gone)$/.test(r)) return; const line = await X('soloGuideWants()') || 'a held line'; if (!heldMiss.has(line)) { heldMiss.add(line); bad.push(`${line}: its answer ${r}`); } };
           const walked = x => trail.includes(x) || (x === 'tool' && toolGiven);
@@ -14381,11 +14381,11 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             if (st === 'gather' && !lossDone) {
               lossAt = await X('GUIDE_RT.t');
               lossDone = await X(`S.zone = S.maxZone; S.kills = ZONE_FIGHTS; bossTryRelease(S.zone); fightBoss = true; spawn(); respawn = 0;
+                const tries = () => Object.values(S.bossTry.tries).reduce((a, b) => a + b, 0), n0 = tries();   /* (Auto may try again at once, so the hold can be gone) */
                 const was = !!(mob && mob.boss && !mob.dead); cbTurnHitHero(1e15, false, "hit"); for (let k = 0; k < 5; k++) tick(0.1);
-                was && !cbHeroUp() && S.bossTry.hold === S.zone ? 'lost' : 'missed ' + JSON.stringify({ was, up: cbHeroUp(), hold: S.bossTry.hold, zone: S.zone, mob: mob && { boss: !!mob.boss, dead: mob.dead }, tl: !!TURN_LIVE })`);
+                was && !cbHeroUp() && tries() === n0 + 1 ? 'lost' : 'missed ' + JSON.stringify({ was, up: cbHeroUp(), hold: S.bossTry.hold, zone: S.zone, mob: mob && { boss: !!mob.boss, dead: mob.dead }, tl: !!TURN_LIVE })`);
               continue;
             }
-            if (st === 'gather' && lossDone && !gatherAt) gatherAt = await X('GUIDE_RT.t');
             // forge-tip-goes-stale: a materials line is hidden over a menu other than Camp or Gather, but its step is still current; the walk reads
             // it as live from onboardNeed (the materials come in) instead of looking for a line that is not drawn there
             if (await X(`(id => /^stock:|^chop$/.test(id) && !onboardSpec(id) && !!S.tab && !['world', 'gat'].includes(S.tab) && onboardNeed(id).length > 0)(${JSON.stringify(st)})`)) {
@@ -14407,6 +14407,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
               if (await X('(b => String(soloGuideWants() || "").startsWith("say:") && !!(b && !b.hidden))(document.querySelector(".ob-ok"))')) await held();
               await page.waitForTimeout(200); c = await X(TARGET(st));
             }
+            if (st === 'gather' && lossDone && !gatherAt && c.ok) gatherAt = await X('GUIDE_RT.t');   // the tip on screen again, ringed and pressable
             // the hint is not up yet (its target, a tab, opens on the guide's next unlock pass): the guide waits, and so does the walk
             if (!c.ok && !c.inView && !c.bubOk && c.why !== 'no target') { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); continue; }
             // hesketh-boss-loss-line: no step shows while the hero is down (a fight lost in the walk); the guide waits for the hero to stand, and so does the walk
