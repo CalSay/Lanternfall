@@ -201,7 +201,8 @@ const OBS = `(() => {
       .concat([['hearth2', 'hearth', 2], ['tavern', 'tavern', 1]].filter(([, id, n]) => typeof campLevel === 'function' && (campLevel(id) >= n || (campLevel(id) === n - 1 && typeof campPending === 'function' && !!campPending(id)))).map(x => x[0])),   // walk-follows-gather-go: Hearth 2 and the Tavern from their Build press   // walk-bot-forge-logs: a station counts from its Build press
     looks: typeof deeds === 'object' ? deeds.looks().filter(l => l.got).length : 0, forged: S.deeds && S.deeds.n ? S.deeds.n.forged : 0, up: S.deeds && S.deeds.n ? S.deeds.n.up || 0 : 0, act: S.activity, tab: S.tab,
     acted: (() => { try { return Object.fromEntries(FEATURES.map(f => [f.id, !!(f.now && f.now())])); } catch (e) { return {}; } })(),
-    econ: S.econ ? { spent: Object.assign({}, S.econ.spent), earned: Object.assign({}, S.econ.earned) } : null };   // walk-gold-line: the gold ledger (55-econ), read only
+    econ: S.econ ? { spent: Object.assign({}, S.econ.spent), earned: Object.assign({}, S.econ.earned) } : null,   // walk-gold-line: the gold ledger (55-econ), read only
+    skx: (k => k ? k + ':' + ((S.skills || {})[k] || {}).lv + ':' + (+((S.skills || {})[k] || {}).xp || 0).toFixed(2) : '')(S.activity === 'gather' && S.node ? skillOf(S.node.kind) : '') };   // walk-stall-counts-gathering: the gathered skill's level and XP, so gathering is never a stall (refine orders level stations on their own: those do not count)
   } catch (e) { s = { err: String(e).slice(0, 80) }; }
   o.s = s;
   // craft-delta: the game's 'choice' and 'firstUse' events, kept in a page array the walk drains each frame (it never assigns to S)
@@ -418,6 +419,7 @@ async function dismissCards(o) {
 }
 st.grades = {};   // walk-bot-keeps-fighting: the timed rings the game graded, by grade (timingGrade events)
 st.tricks = { feint: { meant: 0, read: 0, let: 0 }, hold: { meant: 0, read: 0, let: 0 } };   // trick-read-rate: the boss tricks the bot met, by what it did
+st.wipes = [];   // walk-stall-counts-gathering: every lost fight (each 'wipe'), so a stall line can say it was a loss
 st.normalLosses = [];   // wren-z9-10-foes: each ordinary-foe loss (a 'wipe' with no boss and no arena) { t, zone }
 st.stayed = []; st.losses = []; st.beatenAt = [];   // walk-bot-keeps-fighting: each Keep fighting here press and each lost boss try { t, zone, kills }
 st.lastCard = -9; st.tabAt = -9; st.phAt = 0; st.phName = ''; st.phStart = 0; st.tipFirst = 0; st.firstPress = null;
@@ -841,7 +843,7 @@ const choices = [], firstUse = {};   // craft-delta: { t, k, real } for each cho
 const spoils = [];   // boss-spoils-pick: { t, hero, zone, offered, taken } for each cache pick card closed
 async function watch(o) {
   for (const s of o.sfx) sfxLog.push({ t: gt, name: s.name });
-  for (const [kind, k] of o.ev || []) { if (kind === 'join') { for (const id of k) st.joinOnCard.add(id); continue; } if (kind === 'spoils') { spoils.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'grade') { st.grades[k] = (st.grades[k] || 0) + 1; continue; } if (kind === 'wipe') { if (!k.boss && !k.arena) st.normalLosses.push({ t: gt, zone: k.zone }); continue; } if (kind === 'upgraded') { st.cover.ups.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'refine') { st.cover.orders.push({ t: gt, prod: k }); continue; } if (kind === 'choice') { choices.push({ t: gt, k, real: k !== 'nextup' || st.nuReady >= 2 }); if (k === 'nextup') st.nuReady = 0; } else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
+  for (const [kind, k] of o.ev || []) { if (kind === 'join') { for (const id of k) st.joinOnCard.add(id); continue; } if (kind === 'spoils') { spoils.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'grade') { st.grades[k] = (st.grades[k] || 0) + 1; continue; } if (kind === 'wipe') { st.wipes.push(Object.assign({ t: gt }, k)); if (!k.boss && !k.arena) st.normalLosses.push({ t: gt, zone: k.zone }); continue; } if (kind === 'upgraded') { st.cover.ups.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'refine') { st.cover.orders.push({ t: gt, prod: k }); continue; } if (kind === 'choice') { choices.push({ t: gt, k, real: k !== 'nextup' || st.nuReady >= 2 }); if (k === 'nextup') st.nuReady = 0; } else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
   for (const t of o.toasts) if (!st.toastSeen.has(t)) { st.toastSeen.add(t); await note(page, 'toast', t, { shot: false }); }
   for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
   const s = o.s, p = st.prev;
@@ -892,6 +894,34 @@ async function moment(id, text, o) {
   for (const f of await page.evaluate(LINT)) { if (f.pair && ALLOW[f.pair]) continue; addCheck('layout', 'at ' + id + ': ' + f.what, f.detail); }
 }
 
+// walk-stall-counts-gathering: why nothing moved for 90 s. A lost fight in the stretch is a fight loss; a fight still running is a long
+// fight. Otherwise the line names what the screen offered (the Next Up chip, the open tab, the hero) and whether a player had a next step:
+// a Ready Next Up row, a guide line that points somewhere or a card left up is a bot gap (the bot did not take it); none is nothing offered, a game gap.
+const STALL_Q = `(() => { const c = document.getElementById('nuChip'), on = !!c && !c.hidden && c.getClientRects().length > 0;
+  const u = typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null, fs = typeof combatFoes === 'function' ? combatFoes().filter(f => f && !f.dead && f.hp > 0) : [];
+  const f = fs.find(f => f.boss) || fs[0];
+  return { nu: on ? ((c.querySelector('.nu-lbl') || c).textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 70) : '', ready: on && c.classList.contains('ready'),
+    act: S.activity || '', node: S.node ? S.node.kind + ' tier ' + S.node.t : '', zone: S.zone,
+    hero: !u ? 'not on the field' : (u.down || u.hp <= 0) ? 'down' : 'up at ' + Math.round(100 * u.hp / (u.max || u.maxHp || u.hp || 1)) + '% health',
+    foe: f ? (f.boss ? 'the boss ' : '') + (f.name || f.key || 'a foe') + ' at ' + Math.round(100 * f.hp / (f.max || f.maxHp || f.hp || 1)) + '%' : '' }; })()`;
+st.stalls = [];
+async function stallCause(o, from) {
+  const q = await X(STALL_Q).catch(() => ({ nu: '', ready: false, act: '', node: '', zone: 0, hero: '?', foe: '' }));
+  const tab = o.s.tab ? `tab "${o.s.tab}"` : 'no menu open', cards = o.cards.length ? `${o.cards.length} card(s) up (${o.cards.map(c => c.cls).join(', ')})` : 'no card up';
+  const screen = `${q.nu ? 'Next Up "' + q.nu + '"' + (q.ready ? ' (Ready)' : ' (not ready)') : 'no Next Up chip'}, ${tab}, ${cards}, hero ${q.hero}, ` +
+    `${q.act === 'gather' ? 'gathering at ' + (q.node || 'no node') + ' with no skill XP' : q.act ? 'activity ' + q.act : 'no activity'}${q.foe ? ', facing ' + q.foe : ''}, phase "${o.phase}"`;
+  const bot = st.nuGather ? `; the bot is gathering for "${st.nuGather.label}"` : st.gear.sess && st.gear.owns ? '; the bot is on a gear session' : st.gate.sess && st.gate.sess.owns ? '; the bot is on a tier gate session' : '';
+  const lost = st.wipes.filter(w => w.t >= from), lostBoss = st.beatenAt.filter(b => b.t >= from);
+  if (lost.length || lostBoss.length) {
+    const n = Math.max(lost.length, lostBoss.length), boss = lost.some(w => w.boss) || lostBoss.length, zs = [...new Set(lost.map(w => w.zone).concat(lostBoss.map(b => b.zone)))].join(', ');
+    return { cause: 'fight loss', why: `${n} lost ${boss ? 'boss ' : ''}fight${n > 1 ? 's' : ''} at zone ${zs}. Screen: ${screen}${bot}` };
+  }
+  if (o.phase !== 'idle' || (q.foe && q.act !== 'gather')) return { cause: 'long fight', why: `a fight still running with no kill, ${q.foe || 'no foe read'}. Screen: ${screen}${bot}` };
+  const step = q.ready ? `Next Up's "${q.nu}" was Ready` : o.tip && (o.tip.action || o.tip.target) ? `the guide's "${o.tip.text.slice(0, 50)}" was up` : o.cards.length ? `a ${o.cards[0].cls} card was up` : '';
+  if (step) return { cause: 'bot gap', why: `a player had a next step (${step}) and the bot did not take it. Screen: ${screen}${bot}` };
+  return { cause: 'nothing offered', why: `the game offered no next step. Screen: ${screen}${bot}` };
+}
+
 // ---------------- the run ----------------
 async function run() {
   browser = await bt.pw.chromium.launch({ executablePath: bt.exe, args: ['--no-sandbox'] });
@@ -928,10 +958,12 @@ async function run() {
       if (process.env.WALK_DEBUG && Math.floor(gt) !== st.dbg) { st.dbg = Math.floor(gt); if (process.env.WALK_DEBUG === '2') console.error('  bar', await page.evaluate(() => [...document.querySelectorAll('#soloBar .sbtn')].map(b => b.className.replace('sbtn ', '') + (b.disabled ? ' DIS' : '') + ' ' + (b.getAttribute('aria-disabled') || '') + '|' + b.textContent.replace(/\s+/g, ' ').trim().slice(0, 30)).join(' ;; ')));
       console.error('  dbg', gt.toFixed(1), o.phase, JSON.stringify(o.tip && { a: o.tip.action, b: o.tip.button }), o.cards.length, JSON.stringify(o.s).slice(0, 120)); }
       if (process.env.WALK_SHOT && gt >= +process.env.WALK_SHOT && !st.dbgShot) { st.dbgShot = 1; await page.screenshot({ path: '/tmp/claude-0/dbg.png' }); console.error('  DBG TIP', JSON.stringify(o.tip), JSON.stringify(o.toasts), JSON.stringify(o.cards)); }
-      // a stall: nothing that counts has changed for 90 s of game time (the fight, a tip, a card and the menus all count as nothing)
-      { const sig = [o.s.kills, o.s.gold, o.s.maxZone, o.s.L, Object.keys(o.s.got || {}).length, o.s.tab].join('|');
+      // a stall: nothing that counts has changed for 90 s of game time (the fight, a tip, a card and the menus all count as nothing).
+      // walk-stall-counts-gathering: skill XP counts, so a gathering stretch is progress; each stall line names its cause (stallCause)
+      { const sig = [o.s.kills, o.s.gold, o.s.maxZone, o.s.L, Object.keys(o.s.got || {}).length, o.s.tab, o.s.skx].join('|');
         if (sig !== st.sig) { st.sig = sig; st.sigAt = gt; st.stallNoted = false; }
-        else if (gt - st.sigAt >= 90 && !st.stallNoted) { st.stallNoted = true; const why = `phase "${o.phase}", tip ${o.tip ? '"' + o.tip.text.slice(0, 60) + '"' : 'none'}, ${o.cards.length} card(s) up, tab "${o.s.tab}"`; await note(page, 'stall', 'nothing moved for 90 s: ' + why, { tag: 'stall' }); addCheck('stall', 'the walk stalled for 90 s', why); } }
+        else if (gt - st.sigAt >= 90 && !st.stallNoted) { st.stallNoted = true; const c = await stallCause(o, st.sigAt); st.stalls.push(Object.assign({ t: Math.round(gt), from: Math.round(st.sigAt) }, c));
+          await note(page, 'stall', `nothing moved for 90 s (${c.cause}): ${c.why}`, { tag: 'stall', extra: { cause: c.cause } }); addCheck('stall', 'the walk stalled for 90 s: ' + c.cause, c.why); } }
       if (gt - st.phAt >= 30) { st.phAt = gt; for (const p of await page.evaluate(PLACEHOLDERS)) placeholders.add(p); }
       for (const c of checks.values()) if (!c.shotTried) { c.shotTried = true; c.shot = await shot(page, 'finding-' + c.check); }   // every finding gets its shot
       let did = false;
@@ -1300,7 +1332,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const base = path.join(OUT, `walk-${DATE}`);
 fs.writeFileSync(base + '.md', rep.md);
 fs.writeFileSync(base + '.json', JSON.stringify({ date: DATE, build: sha(), seed: SEED, hero: HERO, size: SIZE.id, gameSeconds: Math.round(gt), clockSeconds: Math.round(res.clockMs / 1000), stop: res.stop,
-  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, bossTries: { stayed: st.stayed, losses: st.losses, grades: st.grades, odds: st.odds, tricks: st.tricks, read: READ }, normalLosses: st.normalLosses, gold: goldLedger(st.prev && st.prev.econ), cover: Object.assign(coverSummary(), { pressLog: st.cover.presses, upgrades: st.cover.ups, refines: st.cover.orders }), checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
+  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, bossTries: { stayed: st.stayed, losses: st.losses, grades: st.grades, odds: st.odds, tricks: st.tricks, read: READ }, normalLosses: st.normalLosses, stalls: st.stalls, gold: goldLedger(st.prev && st.prev.econ), cover: Object.assign(coverSummary(), { pressLog: st.cover.presses, upgrades: st.cover.ups, refines: st.cover.orders }), checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
 if (res.snap && (res.stop || flag('snapshot'))) fs.writeFileSync(path.join(OUT, `snapshot-min${Math.round(gt / 60)}.json`), res.snap);
 if (opt('scorecard', '')) writeScorecard(path.resolve(ROOT, opt('scorecard', '')), rep.sc, Math.round(gt));
 if (opt('reports', '')) {
