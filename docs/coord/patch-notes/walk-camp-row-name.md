@@ -1,0 +1,1 @@
+Tooling only: the walk bot now finds the Hearth card when a "Hearth 2: ready to build" or "Campfire (Hearth 2): ready to build" Next Up row sends it to Camp without a flash (by the card name "Campfire" or its "Build Hearth 2" button), and "The Tavern" by its card name, so it presses Build on the first try instead of logging "nothing to press". No player change. (no shot)

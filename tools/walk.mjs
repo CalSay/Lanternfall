@@ -476,9 +476,12 @@ async function followNextUp(o) {
     if (await click('.at-spread', 300)) { did = 'Spread evenly'; await advance(250, 16); }
     for (let i = 0; i < 6 && await page.evaluate(() => [...document.querySelectorAll('.at-add[data-n="1"]')].some(b => !b.disabled && b.getClientRects().length)); i++) { if (!(await click('.at-add[data-n="1"]', 200))) break; await advance(150, 16); did = 'Spread evenly, +1'; }
   } else if (/ready to build$/i.test(label)) {   // camp-build: Go opens the station's card in Camp; press its Build button (two taps, as the gear routine does)
-    const nm = label.replace(/:.*$/, '').replace(/\s+Lv\s*\d+$/i, '').trim();
+    // walk-camp-row-name: no flash, so find the card by its own name ("Forge Lv 2" -> Forge, "Campfire (Hearth 2)" -> Campfire, "The Tavern"
+    // -> Tavern) or by what its Build button names (camp-step's "Hearth 2" is the Campfire card, whose button reads "Build Hearth 2")
+    const nm = label.replace(/:.*$/, '').replace(/\s+Lv\s*\d+$/i, '').replace(/\s*\(Hearth \d+\)$/i, '').replace(/^the\s+/i, '').trim();
     const id = await page.evaluate(nm => { const f = document.querySelector('.nu-flash[id^="camp-b-"]'); if (f) return f.id.slice(7);
-      const c = [...document.querySelectorAll('[id^="camp-b-"]')].find(c => c.getClientRects().length && ((c.querySelector('.cb-nm span') || {}).textContent || '').trim() === nm); return c ? c.id.slice(7) : ''; }, nm);
+      const c = [...document.querySelectorAll('[id^="camp-b-"]')].filter(c => c.getClientRects().length).find(c => ((c.querySelector('.cb-nm span, .ch-name') || {}).textContent || '').trim() === nm
+        || [...c.querySelectorAll('button')].some(b => b.getClientRects().length && new RegExp('^Build ' + nm + '\\b').test((b.textContent || '').trim()))); return c ? c.id.slice(7) : ''; }, nm);
     if (id && await pressBuild(id)) did = 'Build';
   } else {
     // the flash lasts 1.6 s; find the panel's one button and press it with a real tap (a covered button is then a finding)
