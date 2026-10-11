@@ -83,7 +83,7 @@ function craftXpMap() {
 
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, upgradeCover, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare, craftStrikeOffered, craftInfusePrice, craftLiftTo;
+  drinkTonic, tonicActive, tonicBurn, craftSalvageBonus, craftUpgradeRefund, craftXpShare, craftStrikeOffered, craftInfusePrice, craftLiftTo;
 
 {
   registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0, made: {} });
@@ -432,7 +432,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     return true;
   };
   const burn = s => { const a = C().tonic; if (!a) return; a.left -= s; if (a.left <= 0) C().tonic = null; };
-  onTick(dt => burn(dt));
+  onTick(tonicBurn = burn);
   on('away', r => burn(r.secs || r.t || 0));
   for (const key of Object.keys(CRAFT_TONICS)) {
     addModifier(CRAFT_TONICS[key].mod, () => { const a = tonicActive(); return a && a.key === key ? 1 + a.v : 1; });

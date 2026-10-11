@@ -579,7 +579,7 @@ if (section('split build (asset-build)')) try {
 // both pages: a camp build and a Hand's shift due in a second, an All order at the Forge, then a zone 2 fight. In the split page
 // Gloomjaw's pack is held: the fight holds under the line, the Forge's order runs on the frame clock as in tick (progress = game
 // seconds x speed), and once the pack is in the build and the Hand are back as in the inline page. While gathering the line
-// still covers the stage but the game runs on (a gather keeps its progress).
+// still covers the stage but the game runs on (a gather keeps its progress). A tonic and Well Rested run down on wall time in both pages.
 if (section('load-hold-progress (browser)')) try {
   const { pw, exe } = browserTools;
   const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
@@ -605,7 +605,7 @@ if (section('load-hold-progress (browser)')) try {
     const X = (page, js) => page.evaluate(j => window.__t.x(j), js);
     // the Forge's order: game seconds of work done (units made x a unit's time, plus the one under way)
     const READ = `(() => { const o = refineOrders('forge')[0], u = REFINE_TUNE.secs[0];
-      return { T, work: o ? o.made * u + (o.at || 0) : -1, speed: refineSpeed('forge'), kills: S.kills, hp: mob && mob.hp, held: gameHeld(), zone: S.zone,
+      return { T, work: o ? o.made * u + (o.at || 0) : -1, tonic: S.craft.tonic ? S.craft.tonic.left : -1, rest: S.rested.left, speed: refineSpeed('forge'), kills: S.kills, hp: mob && mob.hp, held: gameHeld(), zone: S.zone,
         built: window.__build && campLevel(window.__build) - window.__lv, build: !!(window.__build && campPending(window.__build)), hand: (() => { const h = handsList().find(x => x.id === window.__hand); return h ? handsStatus(h).st : 'none'; })(),
         cover: (() => { const c = document.getElementById('artWait'); return !!c && !c.hidden; })() }; })()`;
     const run = async (html, assets, hold) => {
@@ -621,7 +621,7 @@ if (section('load-hold-progress (browser)')) try {
         if (b) { b.start = t - b.dur; b.end = t; }
         const r = refineAdd('ingot', 1, 'all');
         return { job: !!job, why, build: id || null, order: !!(r && r.ok) }; })()`);
-      await X(page, 'S.activity = "fight", setZone(2), ui(true)'); await page.waitForTimeout(300);
+      await X(page, 'S.craft.tonic = { k: Object.keys(CRAFT_TONICS)[0], t: 1, left: 600 }, S.rested.left = 100, S.activity = "fight", setZone(2), ui(true)'); await page.waitForTimeout(300);
       const a = await X(page, READ);
       await page.waitForTimeout(2500);
       const b = await X(page, READ);
@@ -640,6 +640,10 @@ if (section('load-hold-progress (browser)')) try {
         `load-hold-progress: in the split page zone 2's fight holds under the line while Gloomjaw loads (${JSON.stringify({ a: sp.a, b: sp.b })})`);
       assert(fair(sp) && fair(il),
         `load-hold-progress: the Forge's order earns every game second in both pages, held or not (split ${done(sp).toFixed(3)} s of work in ${dT(sp).toFixed(3)} s, inline ${done(il).toFixed(3)} s in ${dT(il).toFixed(3)} s, speed ${sp.a.speed})`);
+      // hold-tonic-rested-clock: a hold freezes only the fight's turn clock, so a tonic and Well Rested run down on wall time as inline
+      const wall = r => Math.abs(r.a.tonic - r.b.tonic - dT(r)) < 1e-6 && Math.abs(r.a.rest - r.b.rest - dT(r)) < 1e-6;
+      assert(wall(sp) && wall(il),
+        `load-hold-progress: a tonic and Well Rested run down every game second in both pages, held or not (split tonic ${(sp.a.tonic - sp.b.tonic).toFixed(3)} s, Rested ${(sp.a.rest - sp.b.rest).toFixed(3)} s in ${dT(sp).toFixed(3)} s; inline ${(il.a.tonic - il.b.tonic).toFixed(3)} s, ${(il.a.rest - il.b.rest).toFixed(3)} s in ${dT(il).toFixed(3)} s)`);
       assert(il.b.built === 1 && !il.b.build && il.b.hand === 'camp' && sp.c.built === 1 && !sp.c.build && sp.c.hand === 'camp' && !sp.c.held && !sp.c.cover,
         `load-hold-progress: the build and the Hand's shift due during the hold are done once the pack is in, as in the inline page (split ${JSON.stringify(sp.c)}, inline ${JSON.stringify(il.b)})`);
       assert(!sp.errs.length && !il.errs.length, 'load-hold-progress: no page errors' + (sp.errs[0] || il.errs[0] ? ': ' + (sp.errs[0] || il.errs[0]) : ''));
