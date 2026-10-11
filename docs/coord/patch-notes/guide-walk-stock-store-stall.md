@@ -1,0 +1,1 @@
+Tooling only. Nothing changes in the game. The landscape check that walks a new player's first session now also opens Camp at the moment Old Hesketh asks for the Storehouse's materials, and checks that pressing what he points at gets the hero gathering them. When the walk fails, its report now shows where the guide was pointing for the step it stopped on. (no shot)

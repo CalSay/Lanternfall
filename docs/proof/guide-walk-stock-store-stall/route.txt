@@ -1,0 +1,22 @@
+# Proof for card guide-walk-stock-store-stall (tooling only). No player-visible change: nothing in src/ changed, so there is nothing
+# to play. The guide was not at fault, and the Storehouse materials line is not a dead end.
+# The red run: push CI on 4d7d0461 (run 38130866868, shard 1), 1280x720 guide walk. The trail ended at forge and the walk ran out of its
+# 320 passes, 279 of them idle (a green walk has 90 to 120). That head is before #418 (ux-l1-gather-tip-after-loss, merged 13:17 11 Oct),
+# which fixed the walk's idle jump: 20 ticks of 0.1 s looked at only at the end, which could line up with the fights and miss the gap
+# after each kill for 100+ passes. Same cause, already fixed on this base; nothing to fix twice.
+# The old walk (4d7d0461, 4 runs at once at a 6x CPU throttle): one run spent 123 idle passes waiting after the spend step (187 idle in
+# all, 221 of 320 passes); the others 93 to 116 idle. A stall that long at the gather step leaves the walk out of passes near the forge.
+# The new walk on this base (same 4 x 6x): 100 to 118 idle, about 40 of them after the Storehouse while Next Up opens.
+# Why the card read "points at the World tab": the walk's failure dump printed the target of the Tool step (TARGET('tool'), left over
+# from an older card), not of the step it stopped on. The Tool step was done, so its line pointed at the open tab. Fixed: the dump now
+# shows the target of the step the guide wants now.
+# Forced state, added to the walk at every landscape size: the first time the Storehouse materials line is due, the hero fights with
+# the World tab open on Camp. The guide rings Gather; one press and the hero gathers the Pine Grove (Pine Log is short). A probe also
+# pressed the ring while already gathering there: the ring is on the World tab, the press closes the menu, and the line counts on the
+# game screen. No press ever left the screen unchanged.
+# Checks: node tools/check.mjs --only="landscape" passed at 740x360, 844x390, 1280x720 and 1920x1080 ("gathering after BUTTON").
+# Loops: 30 runs of the 1280x720 landscape section, 4 at once, 10 of them at a 6x CPU throttle. Guide walk 30 of 30 (99 to 193 idle
+# passes of 320), the forced Storehouse line 30 of 30 ("gathering after BUTTON": one press). A first batch failed the forced check once
+# at 6x (the ring had not glided onto Gather yet); it now looks again for up to 3 s, as the walk does. Find, not fixed here (other UX-L1
+# asserts are out of scope): 2 of the 10 throttled runs failed the mid-game layout part ("the ability picker and the Attack sheet ...":
+# the picker or the Attack sheet "not open"), as #418 also saw at 740x360.
