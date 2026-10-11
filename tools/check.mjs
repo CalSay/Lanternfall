@@ -110,9 +110,10 @@ const WEIGHT = {
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
+  'realtime-press-swings': 45,   // 41 s locally alone (realtime-press-swings, 2026-10-11)
   'bow-slot-wording': 8,   // 8 s locally alone (bow-slot-wording, 2026-10-10)
   'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
-  'toast-over-menu-foot': 42,   // 41 s locally alone (toast-over-menu-foot, 2026-10-11)
+  'toast-over-menu-foot': 55,   // 55 s locally alone (toast-guide-side-menu, 2026-10-11)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'fx-timing-fixes': 40,
   'pip-cast-recipes': 40,
@@ -13587,6 +13588,61 @@ if (section('damage-on-impact (core)')) try {
     io.damageFoe = d => { hp -= d; return d; }; const m = turnNew(p, io); m.phase = 'hero'; m.cds.attack = 0; const ok = turnResolve(m, { kind: 'attack' }, 0, io); return JSON.stringify({ ok, ph: m.phase, hp }); })()`);
   assert(s.ok && s.ph === 'recovery' && s.hp < 1e9, `damage-on-impact: a scratch fight with no impact timing still lands on the press (${JSON.stringify(s)})`);
 } catch (e) { fail('damage-on-impact crashed: ' + (e.stack || e)); }
+// ---- damage-on-impact, multi-hit (card multi-hit-impacts): Volley, Twin Shot and Moonlit Volley land each arrow's share and its
+// on-hit effects when that arrow arrives (62b fxImpactIn(id, i)), not all at the first. The total is what one landing dealt
+// (the same press with every arrow at the first's time), a kill lands the rest at once, and a fight cut off mid-volley lands no more.
+if (section('damage-on-impact multi-hit (core)')) try {
+  const fx = fs.readFileSync(path.join(ROOT, 'src', 'js', '62b-fx.js'), 'utf8');
+  const g = loadCore({ seed: 7, turns: true, extraSource: fx }), E = s => g.eval(s), J = s => JSON.parse(E(s));
+  const until = (cond, n = 600) => E(`(() => { for (let i = 0; i < ${n} && !(${cond}); i++) tick(0.02); return !!(${cond}); })()`);
+  E(`globalThis.__io = TURN_LIVE_IO.impactIn;`);
+  // a fresh Wren fight, ready to press; crits off (no Aim, no crit chance) so two presses deal the same
+  const ready = (slots, ab) => {
+    E(`TURN_LIVE_IO.impactIn = __io; TURN_LIVE = null; soloPick('wren', { now: true }); S.solo.eq.wren = ${slots}; S.abil.unl.wren = ${slots}.filter(Boolean); TURN_TUNE.on = 1; S.L = 12; S.maxZone = 6; setZone(6); S.activity = 'fight'; arena = null; fightBoss = false; gearDirty(); spawn();`);
+    const met = until(`TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'hero' && TURN_LIVE.cds.attack === 0`, 2000)
+      && E(`turnSyncEquip(); TURN_LIVE.cds['${ab || 'attack'}'] = 0; TURN_LIVE.p.eq.includes(${slots}[0])`);
+    E(`TURN_LIVE.noTiming = true; TURN_LIVE.p.critChance = 0; TURN_LIVE.p.gates = null; Object.assign(TURN_LIVE.e, { bleed: 0, bleedT: 0, mark: 0, markV: 0, sunder: 0, exposed: 0 }); Object.assign(TURN_LIVE.h, { aim: 0, keen: 0, blind: 0, sear: 0, weaken: 0, mom: 0 });`);
+    return met;
+  };
+  for (const [name, slots, ab, n, marked] of [['Volley', '["volley", null, null]', 'volley', 3, false], ['Twin Shot', '["twinshot", null, null]', null, 2, false],
+    ['Moonlit Volley', '["moonvolley", null, null]', 'moonvolley', 5, true]]) {
+    const id = ab || 'wren:attack', press = ab ? `turnCombatAction('ability', 0)` : `turnCombatAction('attack')`;
+    const met = ready(slots, ab), times = J(`JSON.stringify([0, 1, 2, 3, 4].map(i => fxImpactIn('${id}', i)))`);
+    E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; ${marked ? 'TURN_LIVE.e.mark = 3; TURN_LIVE.e.markV = 0.1;' : ''}`);
+    const t0 = E('TURN_LIVE.now'), ok = E(press);
+    // each step's HP and Bleed: the arrows land one by one at their impacts
+    const steps = J(`(() => { const out = []; let hp = TURN_LIVE.foe.hp, b = TURN_LIVE.e.bleed; for (let i = 0; i < 400 && TURN_LIVE.phase !== 'recovery'; i++) { tick(0.005);
+      if (TURN_LIVE.foe.hp !== hp || TURN_LIVE.e.bleed !== b) out.push({ t: TURN_LIVE.now - ${t0}, hp: hp - TURN_LIVE.foe.hp, b: TURN_LIVE.e.bleed - b, ph: TURN_LIVE.phase }); hp = TURN_LIVE.foe.hp; b = TURN_LIVE.e.bleed; }
+      return JSON.stringify(out); })()`);
+    const hits = steps.filter(s => s.hp > 0), total = steps.reduce((a, s) => a + s.hp, 0);
+    const timed = hits.length === n && hits.every((s, i) => Math.abs(s.t - times[i]) < 0.02) && new Set(times.slice(0, n)).size === n;
+    assert(met && ok && timed && hits.slice(0, -1).every(s => s.ph === 'strike'),
+      `multi-hit-impacts ${name}: ${n} arrows land one by one at ${times.slice(0, n).map(t => t.toFixed(2)).join(', ')} s (met ${met}, pressed ${ok}; ${hits.map(s => `${s.hp.toFixed(0)} at ${s.t.toFixed(2)} ${s.ph}`).join(', ')})`);
+    if (marked) assert(hits.length === n && hits.every(s => s.b === 1), `multi-hit-impacts ${name}: each arrow adds its Bleed as it lands on a Marked foe (${JSON.stringify(steps.map(s => s.b))})`);
+    // the same press with every arrow at the first's time (one landing, as #348 shipped): the same total
+    ready(slots, ab);
+    E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; ${marked ? 'TURN_LIVE.e.mark = 3; TURN_LIVE.e.markV = 0.1;' : ''} TURN_LIVE_IO.impactIn = (id, i) => __io(id, 0);`);
+    const hp1 = E('TURN_LIVE.foe.hp'); E(press); until(`TURN_LIVE.phase === 'recovery'`, 200); const once = hp1 - E('TURN_LIVE.foe.hp');
+    assert(total > 0 && Math.abs(total - once) < 1e-6 * once, `multi-hit-impacts ${name}: the total is unchanged (${total.toFixed(2)} arrow by arrow, ${once.toFixed(2)} in one landing)`);
+  }
+  // a kill on the first arrow lands the rest at once (nothing), so the fight ends there
+  ready('["volley", null, null]', 'volley');
+  E(`TURN_LIVE.foe.hp = 1; globalThis.__m = TURN_LIVE;`); const t1 = E('TURN_LIVE.now'); E(`turnCombatAction('ability', 0)`);
+  until(`__m.ended`, 60);
+  assert(E('__m.ended && __m.strike === null') && E('__m.now') - t1 < E(`fxImpactIn('volley', 0)`) + 0.03, `multi-hit-impacts: a first arrow that kills ends the fight on its impact (${(E('__m.now') - t1).toFixed(2)} s)`);
+  // a fight cut off between the arrows lands no more of them
+  ready('["volley", null, null]', 'volley');
+  E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; globalThis.__f = TURN_LIVE.foe; turnCombatAction('ability', 0);`);
+  until(`__f.hp < 1e7`, 100);
+  E(`globalThis.__hp = __f.hp; turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); for (let i = 0; i < 40; i++) tick(0.02);`);
+  assert(E('__f.hp === __hp && __hp < 1e7'), `multi-hit-impacts: a fight cut off after the first arrow lands no more (${E('__hp')} then ${E('__f.hp')})`);
+  // a hitstop between arrows holds the fight clock, not the arrows: the next lands on time
+  ready('["volley", null, null]', 'volley');
+  E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; globalThis.__f = TURN_LIVE.foe; turnCombatAction('ability', 0);`);
+  E(`for (let i = 0; i < 400 && __f.hp >= 1e7; i++) tick(0.005);`);   // land the first arrow on a fine step, so the gap below is measured from it
+  const hs = J(`(() => { turnHitstop(0.05); let hp = __f.hp, n = 0; while (__f.hp === hp && n < 50) { tick(0.005); n++; } return JSON.stringify({ n, gap: n * 0.005 }); })()`);
+  assert(Math.abs(hs.gap - E(`fxImpactIn('volley', 1) - fxImpactIn('volley', 0)`)) < 0.015, `multi-hit-impacts: a hitstop between arrows does not hold the next one back (${hs.gap.toFixed(3)} s after the first)`);
+} catch (e) { fail('damage-on-impact multi-hit crashed: ' + (e.stack || e)); }
 
 // ---- trick-read-rate (why W2): the game counts how often the player reads a zone boss's tricks (S.bossOdds.reads, 59m), from the
 // live fight (59k foeContact: zone, zb, pressed, early). A fixture fight at the zone 10 Champion presses on a set share of its
@@ -19050,7 +19106,8 @@ if (section('first-craft-toast-clip')) try {
 // it. While notices show, the open menu now stops above them, as it already did above a guide tip (60-onboard). The section crafts on
 // save-mid with the Craft menu open, with the guide tip up and then dismissed, and samples every 100 ms: no toast box meets the menu's,
 // and a tap at the centre of every visible menu button lands in the menu (elementFromPoint), the foot's included. Once the notices
-// go, the menu takes its full height back. Desktop (1280x720, 1366x640) keeps its menu box whatever the notices do.
+// go, the menu takes its full height back. Desktop (1280x720, 1366x640, 1920x1080) keeps its menu box whatever the notices do; with the
+// guide panel speaking (.app.guide-side) the notices dock at the stage's foot, so there the box and tap test runs too (toast-guide-side-menu).
 if (section('toast-over-menu-foot')) try {
   const at = 'toast-over-menu-foot', { pw, exe } = browserTools;
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
@@ -19069,7 +19126,10 @@ if (section('toast-over-menu-foot')) try {
       const menu = document.getElementById('menu'), mb = menu.getBoundingClientRect(), out = { menu: r(mb), n: 0, bad: [], taps: 0, foot: 0 };
       for (const t of document.querySelectorAll('#toasts .toast')) { if (!on(t) || t._gone) continue; out.n++; const tb = t.getBoundingClientRect();
         const w = Math.min(tb.right, mb.right) - Math.max(tb.left, mb.left), h = Math.min(tb.bottom, mb.bottom) - Math.max(tb.top, mb.top);
-        if (w > 0 && h > 0) out.bad.push(`toast ${r(tb)} over the menu ${r(mb)} by ${Math.round(w)}x${Math.round(h)}: "${t.innerText.replace(/\n/g, ' ').slice(0, 50)}"`); }
+        if (w > 0 && h > 0) out.bad.push(`toast ${r(tb)} over the menu ${r(mb)} by ${Math.round(w)}x${Math.round(h)}: "${t.innerText.replace(/\n/g, ' ').slice(0, 50)}"`);
+        // the guide panel and, sideways (upright the menu covers it), the fight bar stay clear too
+        for (const [e, nm] of [[document.querySelector('.ob-bub.side:not([hidden])'), 'the guide panel'], [innerWidth > innerHeight && document.querySelector('.sbar'), 'the fight bar']]) { const gb = on(e) && e.getBoundingClientRect();
+          if (gb && Math.min(tb.right, gb.right) > Math.max(tb.left, gb.left) && Math.min(tb.bottom, gb.bottom) > Math.max(tb.top, gb.top)) out.bad.push(`toast ${r(tb)} over ${nm} ${r(gb)}`); } }
       if (!out.n) return out;
       const pnl = document.getElementById('panels'), bot = Math.min(mb.bottom, innerHeight);
       // scroll the list so a button sits at the menu's foot, where the notices were
@@ -19085,7 +19145,7 @@ if (section('toast-over-menu-foot')) try {
       return out;
     });
     try {
-      for (const [w, h] of [[740, 360], [360, 740], [1280, 720], [1366, 640]]) {
+      for (const [w, h] of [[740, 360], [360, 740], [1280, 720], [1366, 640], [1920, 1080]]) {
         const v = `${at} ${w}x${h}`, phone = w < 1000;
         const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
         await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} }, [KEY, raw]);
@@ -19098,6 +19158,14 @@ if (section('toast-over-menu-foot')) try {
         await X('onboardUnlockAll(); true');
         await X('setTab("forge"); true');
         for (let i = 0; i < 4; i++) { const b = page.getByRole('button', { name: 'Got it' }); if (!(await b.count())) break; await b.first().click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); }
+        // the first Craft view on this old save opens the Refining card a tick after menuView (75-refine-ui); on a slow machine that came after the
+        // loop above, so the card hid the guide tip and the menu box was measured with no tip, then with one. Wait on the game's state: the card
+        // said (S.refine.said) and shut, and, where the tip shows on the Craft menu (upright over it, desktop beside it), the tip up.
+        const ready = async tipWanted => { for (let i = 0; i < 60; i++) {
+          const s = await page.evaluate(() => { const sh = document.querySelector('.bsheet-ov:not(.docked)'); if (sh) { const d = sh.querySelector('.sty-done'); if (d) d.click(); return 'sheet'; }
+            const b = document.querySelector('.ob-bub'); return b && !b.hidden ? 'tip' : 'none'; });
+          if (s !== 'sheet' && await X('!!(S.refine && S.refine.said)') && (s === 'tip' || !tipWanted)) return true; await page.waitForTimeout(100); } return false; };
+        assert(await ready(h > w || !phone), `${v}: the Refining card is shut and the guide tip is placed before the menu is measured`);
         // settled: the menu's slide and every toast are done
         const settle = async () => { for (let i = 0; i < 40; i++) { if (await page.evaluate(() => !document.querySelector('#toasts .toast') && !document.getElementById('menu').getAnimations({ subtree: true }).some(a => a.playState === 'running'))) return true; await X('for (const t of [...$("toasts").children]) dropToast(t); true'); await page.waitForTimeout(100); } return false; };
         assert(await settle(), `${v}: the Craft menu opens with no notices up`);
@@ -19107,23 +19175,28 @@ if (section('toast-over-menu-foot')) try {
           await settle(); const m0 = await box();
           // upright the tip has its own row over the menu (60-onboard), so the menu's own margin is off: that branch is measured here
           if (h > w && tip !== 'no tip') assert(!!(await page.$('.ob-bub.over-menu:not([hidden])')), `${v}: the guide tip is up over the menu`);
+          const side = !phone && await page.evaluate(() => document.getElementById('app').classList.contains('guide-side')), strict = phone || side;
+          if (!phone && tip !== 'no tip') assert(side, `${v}: the guide panel speaks beside the menu (.app.guide-side)`);
           // a craft (its toast and, for a Rare or better, its banner) and two plain notices, with the menu open
           const kind = await X(`(() => { const k = Object.keys(CRAFT_KINDS).find(k => { for (const e of Object.keys(S.mats)) S.mats[e] = S.mats[e].map(() => 5000); S.gold = 1e9; return canCraft(k, 1).ok; }); const it = k && craftItem(k, 1);
             if (it) moment('craft', { eye: 'Well made · Rare', title: itemName(it), sub: 'Rare item. It is in your bag.', rarity: 'rare', icon: { item: it } });
             popToast('You found a Copper Ore cache. It went to your bag.', 'good', null, 1); popToast('Level 21. Your hero hits harder now.', 'good', null, 2); return k; })()`);
           assert(!!kind, `${v}, ${tip}: save-mid can craft something`);
           await page.waitForTimeout(300); await X('window.__momentFlush(); true');
-          let most = 0, bad = null, taps = 0, foot = 0, menus = new Set();
+          let most = 0, bad = null, taps = 0, foot = 0, menus = new Set(), shot = null;
           for (let t0 = Date.now(); Date.now() - t0 < 2500;) {
             const o = await sample(page); most = Math.max(most, o.n); if (o.skip) { await page.waitForTimeout(30); continue; } if (o.n) { taps = Math.max(taps, o.taps); foot = Math.max(foot, o.foot); menus.add(o.menu); }
-            if (phone && !bad && o.bad.length) bad = o.bad[0];
+            if (strict && !bad && o.bad.length) bad = o.bad[0];
+            if (process.env.LF_SHOTS && o.n && !shot) shot = await page.screenshot({ path: path.join(process.env.LF_SHOTS, `${w}x${h}-${tip.replace(/ /g, '-')}.png`) });
             await page.waitForTimeout(100);
           }
           assert(most >= 1, `${v}, ${tip}: notices show with the menu open (${most})`);
-          if (phone) {
+          if (strict) {
             assert(!bad, `${v}, ${tip}: no notice sits over the open menu or takes a tap meant for it${bad ? ' (' + bad + ')' : ''}`);
-            assert(taps >= 3 && foot >= 1, `${v}, ${tip}: the menu's buttons are tapped, the foot's included (${taps} buttons, ${foot} in the foot)`);
-          } else assert(menus.size === 1 && menus.has(m0), `${v}, ${tip}: the desktop menu keeps its box while notices show (${[...menus].join(' / ')}, ${m0} without)`);
+            // at 1920x1080 the Craft list ends above the menu's foot, so no button can sit there
+            assert(taps >= 3 && (foot >= 1 || h > 1000), `${v}, ${tip}: the menu's buttons are tapped, the foot's included (${taps} buttons, ${foot} in the foot)`);
+          }
+          if (!phone) assert(menus.size === 1 && menus.has(m0), `${v}, ${tip}: the desktop menu keeps its box while notices show (${[...menus].join(' / ')}, ${m0} without)`);
           assert(await settle(), `${v}, ${tip}: the notices go`);
           const m1 = await box();
           assert(m1 === m0, `${v}, ${tip}: with the notices gone the menu takes its full box back (${m1}, ${m0} before)`);
@@ -19820,6 +19893,60 @@ if (section('basic-attack-swings')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('basic-attack-swings crashed: ' + (e.stack || e)); }
+
+// ==== realtime-press-swings: in a real-time fight a press that fires a Finisher or stops a heal plays the hero's swing ====
+// 59j's Attack answers a Finisher or an interrupt first and emits only soloAttack { kind } (no classTap, no lunge), so the
+// stage swung only on a plain hit. Every hero, at the three views (360x740 with reduced motion): one press makes one swing.
+if (section('realtime-press-swings')) try {
+  const at = 'realtime-press-swings', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h, red] of [[1280, 720, false], [740, 360, false], [360, 740, true]]) {
+        const v = `${at} ${w}x${h}${red ? ' (reduced motion)' : ''}`, phone = w < 1200;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}), ...(red ? { reducedMotion: 'reduce' } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // the player at the buttons with auto off: no auto swing (50-sim) and no auto Finisher (59g) while the press is read
+        await X('S.onboard && (S.onboard.tips = false, S.onboard.all = true); soloSetAuto(false); true');
+        for (const k of ['wren', 'tobin', 'pip']) {
+          for (const kind of ['finisher', 'interrupt']) {
+            // a boss for the Finisher (only a boss or an elite staggers), a plain foe channelling a heal for the interrupt
+            await X(`soloPick("${k}", { now: true }); setZone(2); S.activity = "fight"; fightBoss = ${kind === 'finisher'}; spawn(); true`);
+            let r = null;
+            for (const t0 = Date.now(); Date.now() - t0 < 15000 && !(r && r.got === kind);) {
+              await page.waitForTimeout(200);
+              r = JSON.parse(await X(`(() => { const f = combatFoes().find(f => f && !f.dead && f.hp > 0 && !f.gone); if (!f || stageStats().heroSt !== 0) return '{}';
+                soloTouch();
+                if ("${kind}" === 'finisher' && !cbState().fin.on) { actStag(f, 1e6, 0); return '{}'; }   // the stagger lands on the next tick
+                if ("${kind}" === 'interrupt') f.chanT = 3;
+                const s0 = stageStats(), seen = [], off = on('soloAttack', p => seen.push(p && p.kind));
+                const got = soloAttack(); typeof off === 'function' && off();
+                const s1 = stageStats(); return JSON.stringify({ got, seen, st0: s0.heroSt, st1: s1.heroSt, q0: s0.heroPending, q1: s1.heroPending, d: s1.heroSwings - s0.heroSwings, n0: s0.heroSwings }); })()`));
+            }
+            assert(r && r.got === kind && (r.seen || []).join() === kind, `${v} ${k}: a real-time press fires the ${kind} (${JSON.stringify(r)})`);
+            if (!r || r.got !== kind) continue;
+            assert(r.st1 === 1 && r.d === 1 && !r.q1, `${v} ${k}: the ${kind} press starts one swing at once, none queued (stage state ${r.st0} -> ${r.st1}, ${r.d} swing, queued ${r.q1})`);
+            await page.waitForTimeout(150);
+            const n = await X('stageStats().heroSwings + (stageStats().heroPending ? 1 : 0)');
+            assert(n - r.n0 === 1, `${v} ${k}: no second swing follows the ${kind} press (${n - r.n0} swings)`);
+          }
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('realtime-press-swings crashed: ' + (e.stack || e)); }
 
 // ==== ability-effects-live: every ability's effect in a turn fight, one colour per status (62b-fx.js) ====
 // The game draws the motion and the light (CLAUDE.md "Art freeze", Cal 2026-10-10). Every non-passive ability of every hero has a

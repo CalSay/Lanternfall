@@ -3,8 +3,7 @@
 // (FX_COL), shared by every hero; a status that lands pops Codex's approved icon (21v STATUS_ICONS, at a native size, never
 // scaled) by the foe's chest and leaves a light on the foe while it lasts. Shaped things stay sprites: the arrows and bolts
 // are the stage's own (62-stage fire, 61-anim proj); the Scenario arrows and bats wait for the integrate-route-s-wren verdict.
-// The engine is the Barbed Arrow test (experiments/2d-poses-scenario/wren-fx-test/fx3.js) at the stage's scale: FX_TUNE.k
-// logical px per test px (the test's Wren stood about 330 px tall, the stage's hero about 96).
+// The engine is the Barbed Arrow test (experiments/2d-poses-scenario/wren-fx-test/fx3.js) at FX_TUNE.k px a test px.
 // Aim: each foe's chest by size class (Tall, Medium, Short (low, or long and low), Flying), read from the drawn pixels of its idle frame;
 // FX_AIM holds hand-marked points for odd shapes.
 // Hooks: 62-stage calls stageFx.swing(x, y) as the hero's swing fires, stageFx.aim(s) for its arrow's target, and
@@ -89,15 +88,16 @@ const FX_RECIPES_S = {
 };
 // Hand-marked aim points for odd shapes: foe type -> [x, y] as fractions of the drawn body (0,0 its top left)
 const FX_AIM = { spore: [0.45, 0.62], bones: [0.5, 0.45], wyrm: [0.45, 0.55] };   // the Spore's cap, the Bones' hat, the Wyrm's neck sit over the chest
-const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1.1, rainAt: 0.42, rainFly: 0.17 };
-// When a hero move's hit shows, in s from the press (damage-on-impact, Cal 2026-10-10: 59k lands the damage then): the swing's
-// wind (62-stage WIND), then an arrow or bolt's flight; Moonlit Volley's first falling arrow; a melee blow, a buff or a cast on
-// the foe at the strike. Reduced motion shows the hit as a still light at the strike. 0 for a move with no recipe.
-function fxImpactIn(id) {
+const FX_TUNE = { k: 0.3, heroH: 80, wind: 0.14, arrow: 0.2, bolt: 0.28, pops: 1.1, rainAt: 0.42, rainFly: 0.17, gap: 0.07, gap2: 0.045, rainGap: 0.12 };
+// When arrow i (past the last: the last) of a hero move hits, s from the press (59k lands it then): the swing's wind (62-stage
+// WIND), then the shot's flight and gap; a blow, buff, foe cast or reduced motion's still light at the strike. 0: no recipe.
+function fxImpactIn(id, i) {
   const r = FX_RECIPES[id], F = FX_TUNE; if (!r) return 0;
   if ((typeof reduced !== 'undefined' && reduced) || (r.d !== 'arrow' && r.d !== 'bolt')) return F.wind;
-  return F.wind + (r.rain ? F.rainAt + F.rainFly : r.d === 'bolt' ? F.bolt : F.arrow);
+  const n = r.n || (id === 'wren:attack' && fxTwin() ? 2 : 1), k = Math.min(i || 0, n - 1);
+  return F.wind + (r.rain ? F.rainAt + F.rainFly + k * F.rainGap : (r.d === 'bolt' ? F.bolt : F.arrow) + k * (n === 2 ? F.gap2 : F.gap));
 }
+const fxTwin = () => typeof TURN_LIVE !== 'undefined' && TURN_LIVE && TURN_LIVE.p && TURN_LIVE.p.eq && TURN_LIVE.p.eq.includes('twinshot');
 {
   if (typeof document !== 'undefined') {
     const A = ANIM, R = FX_RECIPES, C = FX_COL, K = FX_TUNE.k;
@@ -245,15 +245,15 @@ function fxImpactIn(id) {
         shot(r, c.x, c.y, c.x + 18, -20, 0, 0.16, 0, true, true);
         tint.on = true; tint.t0 = t + 0.3; tint.life = 1.6;
         for (let k = 0; k < (r.n || 1); k++) {
-          const x = tx + rnd(-tgt.w * 0.3, tgt.w * 0.3), y = ty + rnd(-tgt.h * 0.15, tgt.h * 0.2), d = FX_TUNE.rainAt + k * 0.12;
+          const x = tx + rnd(-tgt.w * 0.3, tgt.w * 0.3), y = ty + rnd(-tgt.h * 0.15, tgt.h * 0.2), d = FX_TUNE.rainAt + k * FX_TUNE.rainGap;
           shot(r, x - 12, -12, x, y, d, FX_TUNE.rainFly, r.big, c.miss);
           A.proj('rain', x - 12, -12, x, y, FX_TUNE.rainFly, '#C8DCFF', 0, null, d);
         }
         return;
       }
-      const n = r.n || (c.id === 'wren:attack' && twin() ? 2 : 1);
+      const n = r.n || (c.id === 'wren:attack' && fxTwin() ? 2 : 1);
       for (let k = 0; k < n; k++) {
-        const off = n === 1 ? 0 : (k - (n - 1) / 2) * (n === 2 ? 9 : 8), d = k * (n === 2 ? 0.045 : 0.07);
+        const off = n === 1 ? 0 : (k - (n - 1) / 2) * (n === 2 ? 9 : 8), d = k * (n === 2 ? FX_TUNE.gap2 : FX_TUNE.gap);
         shot(r, c.x, c.y, tx, ty + off, d, fly, n > 1 ? Math.min(r.big, 0.7) : r.big || 1, c.miss);
         if (k) A.proj(r.d === 'bolt' ? 'bolt' : 'arrow', c.x, c.y, tx, ty + off, fly, r.d === 'bolt' ? '#FF9E3D' : '#8FD46A', r.d === 'bolt' ? 0 : 6, null, d);
       }
@@ -277,7 +277,6 @@ function fxImpactIn(id) {
       }
       shot(r, ox, oy, tx, ty, 0, fly, r.big || 1, c.miss);
     }
-    const twin = () => typeof TURN_LIVE !== 'undefined' && TURN_LIVE && TURN_LIVE.p && TURN_LIVE.p.eq && TURN_LIVE.p.eq.includes('twinshot');
     function shake(s) { if (!reduced) { st.shakes++; emit('shake', s); } }
     function flash(rgb, a) { if (!reduced) emit('hitFlash', { rgb, a }); }
 

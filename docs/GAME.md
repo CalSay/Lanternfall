@@ -82,7 +82,10 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   **Hits land on impact** (Cal, 2026-10-10; damage-on-impact): a press starts the move at once and its damage, statuses and
   cooldown land when the hit shows: the swing (0.14 s), then Wren's arrow (0.2 s), Pip's bolt (0.28 s) or Moonlit Volley's first
   falling arrow; Tobin's blow at the swing (`fxImpactIn`, 62b). A foe's hit already landed on its contact frame. Scratch fights
-  (budget, odds, sim) land at once, so balance is unchanged.
+  (budget, odds, sim) land at once, so balance is unchanged. Volley, Twin Shot and Moonlit Volley land each arrow's share and its
+  on-hit effects as that arrow arrives (`fxImpactIn(id, i)`; multi-hit-impacts); what follows the move lands with the last arrow,
+  a kill lands the rest at once, and a fight cut off mid-volley lands no more. The total is unchanged; the hero's
+  rest starts after the last arrow, so these turns run 0.05-0.5 s longer (the Deepwell Oil burned is the same).
   A buff (kind 'buff': Shadow Step, Brace, Iron Will, Arcane Ward, Searing Eye) fires nothing at the foe: its own glow plays, and a
   hero drawn with its own moves plays the move in place (fx-timing-fixes).
   With Pip drawn in her own moves (route S), Nova is a ring from her staff butt along the ground, Lantern Flare a flash from her
