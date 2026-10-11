@@ -60,6 +60,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   business and legal set-up; anything irreversible) are asked, not guessed. Money design and art direction are
   Claude's judge calls, within the Lantern Rules. (2026-09-27, narrowed 2026-10-06, 2026-10-07)
 - **Combat is active only.** No Auto, no idle fighting, no away combat earnings. Gathering stays idle. (2026-10-01)
+- **Leaving mid-fight gathers.** Once Gather is open, a turn fighter who leaves goes back to its last gathering node
+  (an open tier) while away, exactly as a gatherer would: same rate, Storehouse limit, Spillover, away limit, Well
+  Rested and Rook lead. Fights still earn nothing away. Opus judge: keeps "Combat is active only". Veto: "Keep
+  fights-left returns empty"; Rested only: "Fighters don't rest away". (leave-mid-fight-gathers, 2026-10-11)
 - **Version 1.0 is a complete Season 1:** five regions, the story to the first fight with the Voice, 32 heroes, two
   named gatherers per resource job. The story continues in Season 2. (2026-09-28)
 - **1.0 also includes:** a polished first hour, save safety (export and import at least), an in-game guide and
