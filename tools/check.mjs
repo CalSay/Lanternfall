@@ -8,7 +8,7 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
-import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire, heroPacks, nsPacks } from './build.mjs';
+import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire, heroPacks, nsPacks, pagePieces, steadyPage, steadyReport, steadyBase, steadyLine } from './build.mjs';
 import { nsFixture } from './lib/ns-fixture.mjs';
 import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
@@ -394,6 +394,14 @@ if (section('split build (asset-build)')) try {
     assert(!r.fails.length, `split: the load lines hold: boot set ${MBs(r.zone1.counted)} MB for a new game and ${MBs(r.worst.counted)} MB for the worst zone (${r.worst.z}) of ${MBs(LOAD_LINES.bootFail)}, `
       + `largest zone set ${MBs(r.zoneMax.b)} of ${MBs(LOAD_LINES.zoneSet)}, area set ${MBs(r.areaMax.b)} of ${MBs(LOAD_LINES.areaSet)}${r.fails.length ? ': ' + r.fails.join('; ') : ''}`);
     for (const w of r.warns) console.log('  WARN split: ' + w);
+    // steady boot bytes (card boot-bytes-steady-measure): a report, never a line. The page's pieces put back together are the page,
+    // and a change to one file moves the steady count by the same bytes whatever changed in another file (the line's count does not)
+    { const one = f => ({ f, text: src(f) + `// steady check: ${f} ${'a change that only this check makes, '.repeat(12)}\n` });
+      const A = one('71-ui-fight.js'), B = one('30-state.js'), sA = buildSplit({ write: false, extra: [A] }), sB = buildSplit({ write: false, extra: [B] }), sAB = buildSplit({ write: false, extra: [A, B] });
+      const dS = (x, y) => steadyPage(x.html, size) - steadyPage(y.html, size), dW = (x, y) => size(x.html) - size(y.html);
+      assert(pagePieces(s.html).join('\n') === s.html && pagePieces(s.html).length > 100 && dS(sA, s) === dS(sAB, sB) && dS(sA, s) > 0,
+        `split: the steady count gives a file's change the same bytes on any base (${dS(sA, s)} B and ${dS(sAB, sB)} B; the line's whole-page count gives ${dW(sA, s)} B and ${dW(sAB, sB)} B)`);
+      console.log('  ' + steadyLine(steadyReport(s, { size }), await steadyBase())); }
     // E1 ended (bg-pack-by-shape): no pack holds two shapes, so none counts at one; a zone's backgrounds count at the larger shape
     const bgs = s.packs.filter(p => p.id.startsWith('bg:')), z1 = s.packs.filter(p => inZ(p, 1)), bySh = o => z1.filter(p => p.o === o).reduce((n, p) => n + r.packs[p.id].real, 0);
     assert(!('e1' in LOAD_LINES) && bgs.length && bgs.every(p => p.o && p.id.endsWith(':' + p.o)) && z1.some(p => p.o === 'land') && z1.some(p => p.o === 'port')

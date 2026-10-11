@@ -1,0 +1,1 @@
+Tooling only, nothing changes in the game. The build now prints a "steady boot bytes" line next to the boot lines: each code file is compressed on its own, so a branch's +/- against the integration branch reads the same whatever else merged. Use it for "net-zero boot bytes"; the 4.0 MB line still decides pass or fail. Best shot: none (tooling).
