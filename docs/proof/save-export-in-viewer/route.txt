@@ -4,8 +4,11 @@
 # with a window.claude stub at 1280x720, 740x360 and 360x740 (shots/), and check.mjs section "save export in viewer" covers both.
 # seed: 1
 new mid
+# The zone 20 boss's story card opens a moment after load and the fight's opening card follows it; either one closes an
+# open sheet, so let both come and go before opening Settings.
+wait-for "Skip" 15
 tap-if "Skip"
-tap-if "Continue"
+wait 5
 tap "Notices"
 tap "Settings"
 tap "Download file"
