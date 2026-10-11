@@ -3,7 +3,7 @@
 # line ("Your lantern burns Ember Red now."), next to what the win paid. Fixture boss1, the same fight as the cache-core route.
 # A unique may drop on the win (the odds line then gives way to the unique), so the route does not expect the odds line; the
 # odds line next to the colour line is in tools/check.mjs, section 'look-card-says-why'.
-# Updated 2026-10-11 (cache-card-plain): the colour line now reads "New look: your lantern burns Ember Red now. Looks change nothing in a fight."
+# Updated 2026-10-11 (cache-card-plain): the colour line now reads "New look: your lantern burns Ember Red."
 new boss1
 wait 2
 tap-if "Got it"
@@ -100,7 +100,7 @@ wait 1
 wait 3
 expect .mm-card
 expect "Lantern Cache"
-expect "New look: your lantern burns Ember Red now."
+expect "New look: your lantern burns Ember Red."
 expect "gold"
 expect "Moss Scroll"
 expect .mm-head

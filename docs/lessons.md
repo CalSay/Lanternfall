@@ -279,6 +279,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Run `node tools/check.mjs --only="solo copy"` on any new on-screen sentence: its W1C_RE bans "other heroes", "party", "ally" and more on every screen. Why: "These are for other heroes." on the Forge failed shard 2 of #433. (craft-costs-up-front, 2026-10-11)
 
 - The guide panel takes no taps (`.ob-bub` has `pointer-events: none`; only its Got it, Go and × buttons do), so a tip can only take a fight tap when it hides the bar (`.guide-bar-off`) or its button sits over one. To test a tap-through, make the tip too tall to fit above the bar, not its words lie over a button. Why: stale-guide-tips' first check laid the words over Attack and the tap reached Attack on the old build too. (stale-guide-tips, 2026-10-11)
+- Before lengthening a line on a moment card, check the fullest card that shows it at 740x360 (zone 1's cache with a unique, its bark and Equip): the card must fit with Continue in view, so a line that wraps to two rows can push Continue off. Run `--only="hero voice|look-card"`. Why: cache-card-plain's "Looks change nothing in a fight." wrapped the look line and failed hero voice 740x360 in CI (2026-10-11).
 
 ## Saves and offline parity
 

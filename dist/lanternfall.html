@@ -42064,7 +42064,7 @@ on('cacheOpen', v => {
   const lines = [];
   // look-card-says-why, cache-card-plain: the colour's own line says what it did and that it is a look
   if (v.look) { const ln = v.look.n.replace(/ lantern$/, '');
-    lines.push({ txt: `${v.look.worn ? `New look: your lantern burns ${ln} now.` : `New look: ${ln}, a lantern colour. You own it now.`} Looks change nothing in a fight.`, icon: { ic: ['banner', v.look.col] } }); }
+    lines.push({ txt: v.look.worn ? `New look: your lantern burns ${ln}.` : `New look: the ${ln} lantern. You own it now.`, icon: { ic: ['banner', v.look.col] } }); }
   if (v.unique) {
     lines.push({ txt: `${v.unique.name}. A unique.`, icon: { item: v.unique.item } });
     const wn = typeof momentWearNote === 'function' ? momentWearNote(v.unique.item) : null; if (wn) lines.push(wn);   // Cal's play note 9: where a unique you cannot wear went

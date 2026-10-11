@@ -18105,16 +18105,16 @@ if (section('look-card-says-why')) try {
           await page.waitForTimeout(800);   // the tap lock (MOMENT_TUNE.tapLockMs)
           return X(`(() => { const o = document.querySelector('.mm-ov'); if (!o) return { up: false };
             const inView = r => r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1;
-            const ln = [...o.querySelectorAll('.mm-card *')].filter(e => /lantern colour|lantern burns/.test(e.textContent)).pop();   // the colour's own line (the card itself may scroll on a short screen)
+            const ln = [...o.querySelectorAll('.mm-card *')].filter(e => /New look: /.test(e.textContent)).pop();   // the colour's own line (the card itself may scroll on a short screen)
             const cr = o.querySelector('.mm-card').getBoundingClientRect(), r = ln && ln.getBoundingClientRect();
             return { up: true, text: o.textContent, fits: !!r && inView(r) && r.top >= cr.top && r.bottom <= cr.bottom + 1 }; })()`);
         };
         let c = await win(1);
-        assert(c.up && /No unique this time \(\d+(\.\d+)?% chance on this win\)\./.test(c.text) && !/A unique dropped/.test(c.text) && /New look: your lantern burns Ember Red now\. Looks change nothing in a fight\./.test(c.text) && !/a lantern colour\. You own it now/.test(c.text) && c.fits && await X('S.deep.eq.lantern === "l_ember"'),
-          `${vw}: zone 1's cache card says no unique dropped with its chance, and "New look: your lantern burns Ember Red now. Looks change nothing in a fight." in a line on screen (${JSON.stringify({ up: c.up, fits: c.fits, text: c.text && c.text.slice(0, 300) })})`);
+        assert(c.up && /No unique this time \(\d+(\.\d+)?% chance on this win\)\./.test(c.text) && !/A unique dropped/.test(c.text) && /New look: your lantern burns Ember Red\./.test(c.text) && !/lantern\. You own it now/.test(c.text) && c.fits && await X('S.deep.eq.lantern === "l_ember"'),
+          `${vw}: zone 1's cache card says no unique dropped with its chance, and "New look: your lantern burns Ember Red." in a line on screen (${JSON.stringify({ up: c.up, fits: c.fits, text: c.text && c.text.slice(0, 300) })})`);
         if (w === 1280) {
           c = await win(2);
-          assert(c.up && /New look: Deep Blue, a lantern colour\. You own it now\. Looks change nothing in a fight\./.test(c.text) && !/burns Deep Blue/.test(c.text) && await X('S.deep.eq.lantern === "l_ember"'),
+          assert(c.up && /New look: the Deep Blue lantern\. You own it now\./.test(c.text) && !/burns Deep Blue/.test(c.text) && await X('S.deep.eq.lantern === "l_ember"'),
             `${vw}: a colour the lantern does not wear says it is owned, not burning (${JSON.stringify({ up: c.up, text: c.text && c.text.slice(0, 300) })})`);
           // cache-card-plain: a win that drops the unique names it in the sub, with no odds line
           c = await win(3, true);
