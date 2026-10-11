@@ -1,0 +1,1 @@
+Hesketh and the fight bar now say how to swap a move in a way that works with a mouse, keys or a finger: "open Hero, then Abilities", where they only said "Hold". (shot: docs/proof/neutral-wording-hold-lines/slots-landscape.png)

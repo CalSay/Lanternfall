@@ -61,7 +61,7 @@ const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Hero', why: 'the first level-up (hero level 2), or zone 2', when: () => S.L >= 2 || S.maxZone >= 2 },
   { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'after the first boss (zone 2), or once the hero walks to the grove', when: () => S.maxZone >= 2 || S.activity === 'gather', now: () => S.activity === 'gather' },
   { id: 'nextup', name: 'Next Up', why: 'first attribute point or Training level, or zone 2', when: () => upBought() || S.maxZone >= 2 },
-  { id: 'awaynote', name: 'Away note', why: 'Gather is open (the away strip under the Fight / Gather row, 71-ui-fight)', when: () => isUnlocked('gather') },
+  { id: 'awaynote', name: 'Away note', why: 'Gather is open (the away chip under the Fight / Gather row, 71-ui-fight)', when: () => isUnlocked('gather') },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
   { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()), now: () => typeof campOpen === 'function' && campOpen() },
   { id: 'forage', tab: 'gat', view: 'forage', name: 'Foraging', why: 'zone 5', when: () => S.maxZone >= 5 || S.skills.forage.lv > 1 },
@@ -81,7 +81,11 @@ const FEATURES = [
     when: () => { try { return handsOpen(); } catch (e) { return false; } } },
   // starters-join-when-met: switching heroes opens when the first starter joins a new game (56c). Never on a save that began with all three.
   { id: 'switch', name: 'Switch hero', why: 'a starter joins you at a Champion (a new game)', late: true,
-    when: () => typeof heroJoins === 'function' && heroJoins().length > 0, now: () => true }
+    when: () => typeof heroJoins === 'function' && heroJoins().length > 0, now: () => true },
+  // Tavern Blackjack (57t-blackjack.js, tavern-blackjack.md 7): zone 14, the Tavern built, and 10 minutes of play after the Tavern
+  // (and Hands) rows opened. No `now`: it waits its turn behind the spacing governor. BJ_TUNE.on 0 keeps it shut.
+  { id: 'blackjack', tab: 'world', view: 'tav', name: 'Blackjack', late: true, why: 'zone 14, with the Tavern built 10 minutes before',
+    when: () => { try { return bjOpen(); } catch (e) { return false; } } }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 
@@ -94,7 +98,7 @@ const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same wind
 const FIRST_USE = {
   party: { text: 'This is where you grow. Your level, build and abilities are all here.' },
   nextup: { text: 'That chip is Next Up. It shows the best thing to do next, so press it.', via: 'guide' },
-  awaynote: { text: "While you're away, gathering goes on but fighting stops.", via: 'strip' },   // the strip is its own line (71-ui-fight)
+  awaynote: { text: "While you're away, fights stop and your hero goes back to gathering.", via: 'strip' },
   gather: { text: "Pick a place to work and you'll keep chopping or mining it, even while you're away." },
   bounties: { text: 'Folk post three short jobs here. They pay in gold, materials and Renown.' },
   camp: { text: 'This is your camp. Each thing you build here opens a new way to make things.' },
@@ -109,7 +113,8 @@ const FIRST_USE = {
   stars: { text: 'Each star changes how your fights play.', via: 'notice' },
   deep: { text: 'The Deepwell goes down floor by floor. Pick a boon between floors and earn Marks.' },
   hands: { text: "You can hire gatherers on the Tavern board. They work shifts while you're away." },
-  switch: { text: 'Switch heroes on the Hero tab, for free.', via: 'notice' }   // the join line on the Champion card (56c heroJoinLine)
+  switch: { text: 'Switch heroes on the Hero tab, for free.', via: 'notice' },   // the join line on the Champion card (56c heroJoinLine)
+  blackjack: { text: "Bet gold and beat Hesketh's hand without going over 21." }
 };
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.

@@ -281,8 +281,8 @@ const ROSTER = {
   isolde: { name: 'Isolde Marrow', title: 'the Duskblade', role: 'striker', circle: 'Dusk Company', body: 'ranger', weapon: 'dagger', melee: true, lvl: 20, pal: { n: '#2E2836', N: '#16121C', m: '#B0506A', M: '#6E2A40', h: '#16121C', b: '#3A3040', B: '#1E1824' },
     bio: 'Her contract has one word on it, and the word is "finish".', full: 'Isolde\'s contract was signed in the dark, and she has never read it. She says it only has one word on it, and the word is "finish".',
     spec: 'Unfinished Business: a kill with Execute resets its cooldown.', abil: 'Execute', abilTxt: 'Huge hit on any enemy below 30% HP. Reaches any row.', cd: 5, wname: 'Twin Dusk Blades', trinket: 'Torn Contract', next: 'Lv 20: Execute threshold 30% to 40%' },
-  oriel: { name: 'Oriel Vess', title: 'the Starcaller', role: 'caster', circle: 'Dusk Company', body: 'mage', weapon: 'lstaff', lvl: 15, pal: { m: '#3E3A96', M: '#221F5E', H: '#141030', t: '#C8B8F0', T: '#8A7AC0', l: '#C8C0FF', L: '#FFFFFF' },
-    bio: 'Reads the sky the way others read letters. Most of the news is bad.', full: 'Oriel reads the sky the way others read letters, and most of the news is bad. When the stars answer, they answer all at once.',
+  oriel: { name: 'Auriel Vess', title: 'the Starcaller', role: 'caster', circle: 'Dusk Company', body: 'mage', weapon: 'lstaff', lvl: 15, pal: { m: '#3E3A96', M: '#221F5E', H: '#141030', t: '#C8B8F0', T: '#8A7AC0', l: '#C8C0FF', L: '#FFFFFF' },
+    bio: 'Reads the sky the way others read letters. Most of the news is bad.', full: 'Auriel reads the sky the way others read letters, and most of the news is bad. When the stars answer, they answer all at once.',
     spec: 'Night Sight: every ally crit cuts Starfall\'s cooldown.', abil: 'Starfall', abilTxt: 'Three pulses on every enemy; slows, and the last pulse stuns.', cd: 9, wname: 'Hanging Star Staff', trinket: 'Star Chart', next: 'Lv 20: Starfall adds a 4th pulse' }
 };
 const SYNS = [
@@ -290,8 +290,8 @@ const SYNS = [
     test: L => { const t = L.filter(u => u.role === 'tank' && u.col === 2), s = L.filter(u => u.role === 'support' && u.col < 2); return t.some(a => s.some(b => b.lane === a.lane)); }, hint: L => L.some(u => u.role === 'support') && L.some(u => u.role === 'tank') ? 'put the support behind the tank' : 'needs a tank and a support' },
   { name: 'Hedgefolk', needs: 'any 2 Hedgefolk', eff: '+15% attack speed. With 3: Guard shields every Hedgefolk and +10% gold.', test: L => L.filter(u => u.circle === 'Hedgefolk').length >= 2, hint: () => 'needs 2 of Tobin, Wren, Hesketh, Pip', count: L => L.filter(u => u.circle === 'Hedgefolk').length },
   { name: 'Lamp and Ward', needs: 'Maren and Hesketh', eff: 'Hesketh\'s shields on Maren have no cap. Beacon heals 30%.', test: L => has(L, 'maren') && has(L, 'hesketh'), hint: L => has(L, 'maren') ? 'needs Hesketh' : has(L, 'hesketh') ? 'needs Maren' : 'needs Maren and Hesketh' },
-  { name: 'Kindle and Starfall', needs: 'Pip and Oriel', eff: 'Starfall consumes Kindle stacks for +30% each.', test: L => has(L, 'pip') && has(L, 'oriel'), hint: L => has(L, 'pip') ? 'needs Oriel' : has(L, 'oriel') ? 'needs Pip' : 'needs Pip and Oriel' },
-  { name: 'Dusk Company', needs: 'any 2 Dusk Company', eff: '+25% damage to enemies below 50% HP.', test: L => L.filter(u => u.circle === 'Dusk Company').length >= 2, hint: () => 'needs Isolde and Oriel' }
+  { name: 'Kindle and Starfall', needs: 'Pip and Auriel', eff: 'Starfall consumes Kindle stacks for +30% each.', test: L => has(L, 'pip') && has(L, 'oriel'), hint: L => has(L, 'pip') ? 'needs Auriel' : has(L, 'oriel') ? 'needs Pip' : 'needs Pip and Auriel' },
+  { name: 'Dusk Company', needs: 'any 2 Dusk Company', eff: '+25% damage to enemies below 50% HP.', test: L => L.filter(u => u.circle === 'Dusk Company').length >= 2, hint: () => 'needs Isolde and Auriel' }
 ];
 const has = (L, k) => L.some(u => u.key === k);
 

@@ -1,6 +1,6 @@
-# Red team brief: Oriel route S pack (card route-s-oriel-judge)
+# Red team brief: Auriel route S pack (card route-s-oriel-judge)
 
-You are a red team. Argue AGAINST wiring Oriel's pack into the game. Your job is to find every defect, frame by frame. A judge reads your file and checks every frame you flag, so name frames exactly (`move N`) and be specific about where in the frame (e.g. "a third hand at her rear hip, below the book").
+You are a red team. Argue AGAINST wiring Auriel's pack into the game. Your job is to find every defect, frame by frame. A judge reads your file and checks every frame you flag, so name frames exactly (`move N`) and be specific about where in the frame (e.g. "a third hand at her rear hip, below the book").
 
 Cal (owner) on the previous version of this pack, 10:31: "There's so much third arm going on. Her body also morphs in weird ways at times. Also her staff went bendy in one of them. Maybe high quality was worth it. Or you didn't do your checks well enough." The art thread then redrew the fight sheets (book strapped at hip, 6 sheets rerolled). Do not trust that the redraw fixed it: check every frame yourself.
 

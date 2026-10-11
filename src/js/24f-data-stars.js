@@ -68,7 +68,7 @@ const STARS = {};
   T('frostfire', 'Frostfire', 'Ff', 2, { zone: 53 }, 'pip', 'Spending Cinders chills the foe: 1 Chill for every 2 you spend.');
   T('riptide', 'Riptide', 'Rt', 2, { zone: 60 }, 'all', 'Dodge every hit of an attack and you strike back for half a counter.');
   T('swifttide', 'Swift Tide', 'ST', 2, { zone: 70 }, 'all', 'Finishers are ready from your first turn, and come back 2 turns sooner.');
-  // ---- the Wild Hunt: elites, from zone 15 (the last three from zone 36) ----
+  // ---- the Prowl: elites, from zone 15 (the last three from zone 36) ----
   T('cinder', 'Cinder Riposte', 'CR', 2, { elite: 15 }, 'tobin', 'A counter sets the foe alight for 3 turns.');
   T('openguard', 'Open Guard', 'OG', 1, { elite: 15 }, 'tobin', 'A counter leaves the foe Exposed: your next payoff hits 25% harder.');
   T('perfecttime', 'Perfect Time', 'PT', 2, { elite: 15 }, 'all', 'A Perfect press takes 1 turn off your other cooldowns (once an ability).');
@@ -108,7 +108,7 @@ const STAR_SKY = [
   { id: 'coast', name: 'The Coast', from: 'Zone bosses 37 to 70', col: 2, row: 0,
     stars: [['bloodscent', 28, 132], ['spite', 70, 84], ['evileye', 110, 128], ['ringing', 150, 76], ['frostfire', 174, 132], ['riptide', 128, 190], ['swifttide', 58, 194]],
     lines: [['bloodscent', 'spite'], ['spite', 'evileye'], ['evileye', 'ringing'], ['ringing', 'frostfire'], ['evileye', 'riptide'], ['riptide', 'swifttide'], ['swifttide', 'bloodscent']] },
-  { id: 'hunt', name: 'The Wild Hunt', from: 'Elites, from zone 15', col: 0, row: 1,
+  { id: 'hunt', name: 'The Prowl', from: 'Elites, from zone 15', col: 0, row: 1,
     stars: [['cinder', 28, 70], ['openguard', 78, 52], ['perfecttime', 132, 62], ['bankedcoal', 174, 104], ['crushing', 150, 160], ['brimming', 100, 122], ['mending', 46, 158], ['avalanche', 102, 200]],
     lines: [['cinder', 'openguard'], ['openguard', 'perfecttime'], ['perfecttime', 'bankedcoal'], ['bankedcoal', 'crushing'], ['crushing', 'brimming'], ['brimming', 'openguard'], ['brimming', 'mending'], ['mending', 'avalanche'], ['avalanche', 'crushing']] },
   { id: 'deep', name: 'The Deepwell', from: 'Deepwell floors 3 to 15', col: 1, row: 1,

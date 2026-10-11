@@ -27,7 +27,7 @@ const BIOS = {
   anselm: 'Anselm rang the chapel bell every dusk for thirty years. When the chapel fell, he took the bell with him. It is heavier than he is, and he will not put it down.',
   grenna: 'Grenna cut stone until the golems woke and the quarry turned on the town. She broke the first golem with her bare hands. The rest she broke with a hammer.',
   isolde: 'Isolde\'s contract was signed in the dark, and she has never read it. She says it only has one word on it, and the word is "finish".',
-  oriel: 'Oriel reads the sky the way others read letters, and most of the news is bad. When the stars answer, they answer all at once.',
+  oriel: 'Auriel reads the sky the way others read letters, and most of the news is bad. When the stars answer, they answer all at once.',
   morwen: 'Morwen makes candles from things she will not name, and each burns a different colour. She is kind to children and cruel to everything else. The Fungal Deep was her garden before the spores took it.',
   vesper: 'Vesper sings in taverns for a coin and a bed, and fights for free when the song is good. She knows every road song in Lanternfall. She wrote half of them, and changed the endings.',
   elowen: 'The land is called Lanternfall because of what Elowen did the night the lights went out. She will not talk about it. She keeps her flame low.',
@@ -81,7 +81,7 @@ const JOIN_LINES = {
     'Isolde Marrow is already walking toward the next fight.'],
   oriel: ['The Star Chart catches fire in your hand, and the ash drifts upward.',
     '"You called. The sky told me you would. It rarely says anything nice."',
-    'Oriel Vess steps out of the smoke and looks up.'],
+    'Auriel Vess steps out of the smoke and looks up.'],
   morwen: ['A green candle lights itself on the Fungal Deep boss\'s corpse.',
     '"You cleared my garden without a nursemaid. I like that."',
     'Morwen Tallow gathers the wax and walks with you.'],
@@ -182,9 +182,9 @@ const STORIES = {
     { title: 'Finish', text: 'Isolde once finished a job and felt nothing, and the next one only made her tired. Since she met you, she feels something new when a fight is done. She does not have a word for it yet. She says she is working on it.' }
   ],
   oriel: [
-    { title: 'Bad News from the Sky', text: 'Oriel says the stars have been sending bad news since the lights went out. Before that, they mostly gossiped. She still reads them every night. Someone has to, and she is good at it.' },
-    { title: 'The Falling Star', text: 'When Oriel was a girl, a star fell in her village square, and it stayed warm for a week. She sat beside it until it went cold. The staff she carries holds a sliver of it. It still hums on clear nights.' },
-    { title: 'What the Stars Want', text: 'Oriel admits she does not know what the stars want. She thinks they just want someone to look up. She points out a small new star low on the horizon. It appeared, she says, the night you took up the road.' }
+    { title: 'Bad News from the Sky', text: 'Auriel says the stars have been sending bad news since the lights went out. Before that, they mostly gossiped. She still reads them every night. Someone has to, and she is good at it.' },
+    { title: 'The Falling Star', text: 'When Auriel was a girl, a star fell in her village square, and it stayed warm for a week. She sat beside it until it went cold. The staff she carries holds a sliver of it. It still hums on clear nights.' },
+    { title: 'What the Stars Want', text: 'Auriel admits she does not know what the stars want. She thinks they just want someone to look up. She points out a small new star low on the horizon. It appeared, she says, the night you took up the road.' }
   ],
   morwen: [
     { title: 'Colours of Wax', text: 'Morwen\'s candles burn green, violet and a blue that hurts to look at. Each colour means something she will not explain. The children at the Tavern ask for a red one. She makes it for them, and it smells of apples.' },

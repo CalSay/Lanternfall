@@ -70,7 +70,9 @@ export const TIPPHASE = `(() => {
   return { ph, action: a, bad };
 })()`;
 
-export const PLACEHOLDERS = `(() => [...document.querySelectorAll('.mono, .sp-mono, .ab-mono, [data-mono]')].filter(n => n.getClientRects().length && !n.hidden).map(n => (n.dataset.mono || n.textContent || '?').trim().slice(0, 4) + ' in ' + (n.closest('[class]') && n.closest('#soloBar, #panels, .hud, .tabs') ? (n.closest('#soloBar, #panels, .hud, .tabs').id || n.closest('#soloBar, #panels, .hud, .tabs').className.toString().split(' ')[0]) : 'page')))()`;
+export const PLACEHOLDERS = `(() => { const AREAS = [['.ab-det', 'ability detail'], ['.ab-bar', 'Abilities slots'], ['.ab-list', 'Abilities list'], ['#soloBar', 'soloBar'], ['#panels', 'panels'], ['.hud', 'hud'], ['.tabs', 'tabs']];
+  const where = n => { for (const [sel, nm] of AREAS) if (n.closest(sel)) return nm; return 'page'; };
+  return [...document.querySelectorAll('.mono, .sp-mono, .ab-mono, [data-mono]')].filter(n => n.getClientRects().length && !n.hidden).map(n => (n.dataset.mono || n.textContent || '?').trim().slice(0, 4) + ' in ' + where(n)); })()`;
 
 // Page boxes that are meant to overlap (check 1b). Each needs a reason.
 export const ALLOW = {

@@ -1,0 +1,19 @@
+# Proof for card save-export-in-viewer. The claude.ai viewer grants no downloads, so there the save panel's second button is
+# "Show save code": it puts the code in a selected box to copy by hand. Outside the viewer (Netlify, this route's top-level page)
+# the same button is still "Download file". This route walks the outside path; viewer.mjs next to it runs the page inside a frame
+# with a window.claude stub at 1280x720, 740x360 and 360x740 (shots/), and check.mjs section "save export in viewer" covers both.
+# seed: 1
+new mid
+# The zone 20 boss's story card opens a moment after load and the fight's opening card follows it; either one closes an
+# open sheet, so let both come and go before opening Settings.
+wait-for "Skip" 15
+tap-if "Skip"
+wait 5
+tap "Notices"
+tap "Settings"
+tap "Download file"
+expect "Copy save code"
+expect "Download file"
+expect-no "Show save code"
+expect-no "Save code to copy by hand"
+shot save-code-outside-viewer

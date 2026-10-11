@@ -1,0 +1,13 @@
+# Proof for card walk-presses-cover (tooling only). No player-visible change: nothing in src/ changed and the game file is
+# unchanged, so there is nothing to play. walks.md has the numbers: seeds 1-3 (Wren, Tobin, Pip), 1280x720, 60 game minutes,
+# build 58598336, each in three runs: cover off, --cover all, and --cover 1 (covers only when the free route takes over 1 min).
+#
+# Acceptance 1 (switch on, seed 1 covered units > 0, report prints the cover lines next to the cover-off run):
+#   node tools/walk.mjs --seed 1 --out tools/.walk/off --date 2026-10-10
+#   node tools/walk.mjs --seed 1 --cover all --cover-base tools/.walk/off/walk-2026-10-10.json --out tools/.walk/all --date 2026-10-10
+#   -> "## Gold cover": covers everything, 41 of 98 units covered (42%), with the off row under it.
+# Acceptance 2 (switch off: no baseline move):
+#   the seed 1 cover-off walk on this branch and the same walk with the base branch's tools/walk.mjs log the same 556 lines
+#   at the same game times, with the same scorecard and gold ledger (only the new Gold cover section differs);
+#   node tools/health.mjs --compare: "health ok: every metric is inside its tolerance" (the sim's --cover is off by default).
+# Acceptance 3: walks.md, copied into the balance-pass gold cover row.

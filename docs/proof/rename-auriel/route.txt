@@ -1,0 +1,12 @@
+# seed: 1
+# Proof for card rename-auriel: the star mage is called Auriel Vess on the All heroes list, and the old name is gone.
+# Fixture late: Pip at zone 31; Auriel is still locked, so her roster card is where a player sees her name.
+new late
+wait 2
+tap "Hero"
+tap "All heroes"
+tap "Auriel Vess"
+expect "Auriel Vess"
+expect "You meet Auriel in Chapter 4."
+expect-no "Oriel"
+shot all-heroes-auriel

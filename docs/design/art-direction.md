@@ -124,7 +124,7 @@ Files (all DOM-free, they load in Node):
 | `src/js/12b-art-heroes.js` | Warden, Lanternmage, Ranger, Lightkeeper and their gear per slot | hero art agent |
 | `src/js/12c-art-hedgefolk.js` | Tobin, Wren, Hesketh, Pip, Bram | Hedgefolk agent |
 | `src/js/12d-art-oath.js` | Maren, Aldric, Anselm, Elowen, Caedmon | Oath agent |
-| `src/js/12e-art-dusk.js` | Kestrel, Isolde, Oriel, Corvin | Dusk Company agent |
+| `src/js/12e-art-dusk.js` | Kestrel, Isolde, Auriel, Corvin | Dusk Company agent |
 | `src/js/12f-art-wayfarers.js` | Thessaly, Grenna, Morwen, Vesper | Wayfarers agent |
 | `src/js/60b-baker.js` | the renderer, caches, portraits, enemy conversion | art lead |
 

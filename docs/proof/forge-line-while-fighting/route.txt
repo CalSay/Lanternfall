@@ -12,128 +12,130 @@
 # The held line comes first: a player who has seen the live line on Camp never gets it. The rest (never in the first minute, never over
 # Hero or Craft, × ends it for good, a reload brings back an unanswered one, one a minute, none for gold alone or with tips off) is
 # held by tools/check.mjs ("forge-line-while-fighting").
+# Since tips-pause-says-so (#282) a fight press answers Hesketh's held line, so the loop presses Attack only while no guide line
+# (.ob-txt) is up. A selector, not the text, so the loop stops on any guide line; the expects below read the whole Forge line in every view.
 new forge-short
 wait 2
 tap-if "Continue"
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless ".ob-txt" tap-if "Attack"
 wait 2
 expect "The Forge needs"
 expect "from the Copper Vein"

@@ -60,6 +60,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   business and legal set-up; anything irreversible) are asked, not guessed. Money design and art direction are
   Claude's judge calls, within the Lantern Rules. (2026-09-27, narrowed 2026-10-06, 2026-10-07)
 - **Combat is active only.** No Auto, no idle fighting, no away combat earnings. Gathering stays idle. (2026-10-01)
+- **Leaving mid-fight gathers.** Once Gather is open, a turn fighter who leaves goes back to its last gathering node
+  (an open tier) while away, exactly as a gatherer would: same rate, Storehouse limit, Spillover, away limit, Well
+  Rested and Rook lead. Fights still earn nothing away. Opus judge: keeps "Combat is active only". Veto: "Keep
+  fights-left returns empty"; Rested only: "Fighters don't rest away". (leave-mid-fight-gathers, 2026-10-11)
 - **Version 1.0 is a complete Season 1:** five regions, the story to the first fight with the Voice, 32 heroes, two
   named gatherers per resource job. The story continues in Season 2. (2026-09-28)
 - **1.0 also includes:** a polished first hour, save safety (export and import at least), an in-game guide and
@@ -152,26 +156,30 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   Moss teaches one move per hero, "Scroll found." toasts only when the hero in play can use it, and a full-slot learn detail says "Swap it
   in for:". No drop, trade or save change.
 
-- **Claude decided: Oriel Vess joins at the zone 20 Champion with a falling-star frost kit (oriel-ability-spec, Opus judge
-  2026-10-10; Cal can veto with "Oriel joins at zone 25").** She is the fourth hero to carry the lamp. Her scene plays after
+- **Cal decided: the star mage is called Auriel, not Oriel (Cal, 2026-10-10 14:24: "rename her to Auriel everywhere").**
+  Every name a player or reader sees says Auriel (Auriel Vess, the Starcaller). Ids, save keys and file paths stay `oriel`
+  (the hero id, `heroes/oriel.md`, art and pack paths), so no save or art breaks.
+
+- **Claude decided: Auriel Vess joins at the zone 20 Champion with a falling-star frost kit (oriel-ability-spec, Opus judge
+  2026-10-10; Cal can veto with "Auriel joins at zone 25").** She is the fourth hero to carry the lamp. Her scene plays after
   Maren's on the Sepulchre Engine's card, and she joins at the road's level; the Star Chart becomes her hero quest. Her kit is
   Pip's 6 shared caster moves plus 8 of her own from Codex's list, with Fold the Chart and Someone Looks Up cut. Falling Letter
   calls one star that lands 2 turns later for a frost hit and a Stun, and every bonus is read when it lands. Zone 20, not 25,
   because casual players reach it on day 5 rather than day 15-27, right where the climb stalls. Spec:
   [heroes/oriel.md](design/heroes/oriel.md).
 
-- **Cal decided: Oriel's own abilities get plain star names (Cal, 2026-10-10 11:12: "Can you rename the abilities officially").**
+- **Cal decided: Auriel's own abilities get plain star names (Cal, 2026-10-10 11:12: "Can you rename the abilities officially").**
   Falling Star, Call It Down, Take a Bearing, Starbolt, Ill Omen, Shooting Star, Starfall and News Arrives. Codex's names (Falling
   Letter, Pull the Reading, Clear Night, Bad News, Letters Unsent, Sliver's Hum) read as riddles; players should see what a move
   does. Ids stay as they were, since saves, art and effects key on them. [heroes/oriel.md](design/heroes/oriel.md).
 
 - **Claude decided: every hero has 14 abilities of their own, with no shared moves (hero-themed-kits, Opus judge 2026-10-10;
-  Cal can veto with "Give Oriel her own Starlight damage type").** Each kit is 6 style moves built on a template of mechanics
+  Cal can veto with "Give Auriel her own Starlight damage type").** Each kit is 6 style moves built on a template of mechanics
   plus 8 signature moves; talents follow the hero's theme and Stars stay shared. Pip's Frost Shard becomes Smoke Bolt (fire,
-  Weaken), Arcane Ward becomes Ashen Ward and Nova becomes Ring of Light (still holy), and Oriel gets six starlight moves of her
+  Weaken), Arcane Ward becomes Ashen Ward and Nova becomes Ring of Light (still holy), and Auriel gets six starlight moves of her
   own, with frost as her rules type. Live ids are kept, so no save breaks. Spec: [hero-kits.md](design/hero-kits.md).
 
-- **Cal decided: Oriel deals her own damage type, Starlight (Cal, 2026-10-10 13:07: "Yeah I think Oriel should have her own type
+- **Cal decided: Auriel deals her own damage type, Starlight (Cal, 2026-10-10 13:07: "Yeah I think Auriel should have her own type
   of damage"; this vetoes the frost pick above).** Starlight is a sixth type in night blue with a four-point star icon. Nothing in
   Chapter 1 is weak to it or resists it, so no foe or boss changes and she is the hero to bring where the others are resisted.
   [hero-kits.md](design/hero-kits.md) section 4.
@@ -276,6 +284,12 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
 - **Zone 1 is the Thorn Imp, zone 2 Gloomjaw;** zones 1 and 2 send only their own monster. Zones 1-7 use the Mossy
   Hollow scenery. (2026-10-01 to 2026-10-02) Amended 2026-10-07: zones 6 and 7 move to the Batwing Caves painting once it
   is wired; until then they keep the Mossy Hollow painting ("Scenery for zones 6 to 10" below).
+- **The Thorn Imp is the Scenario redraw in the new hero style** (Cal, 2026-10-10 19:27 and 19:44): short (about two-thirds
+  of a hero's height in art), every attack dashes in, strikes and dashes out. Cal OK'd every frame but Briar Jab 2 (missing
+  an arm) and 7 (looking the wrong way), which never play. It replaces Codex's approved-v2 pack (thorn-imp-wire).
+- **The Thorn Imp's effects are game-drawn** (Cal, 2026-10-10 21:34: "Very happy with all effects"): dust, purple
+  after-images and speed lines on its dashes, a blade glint, the thrust streak, Crosscut crescents, hit sparks and ring,
+  hurt splinters, stagger motes, and death wisps over a 1.4 s fade. Reduced motion drops only the hit-stop and shake (thorn-imp-fx).
 - **Region bosses are agents of the darkness** (the Voice's Shrouds). They are never tied to lanterns or lamps.
   (2026-09-28)
 - **Region 5 is its own place** with its own look, not the Deepwell continued. The Deepwell must still tie into the
@@ -368,9 +382,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   station runs up to 3 orders in turn (a shortfall amount or All, which keeps 20% of each input), while you fight and
   while you are away. From grade 2 every craft's ore, wood, fibre and hide count becomes the middle at half, rounded up,
   and every upgrade's material converts the same way at every grade (Copper Warblade +1 = 1 Copper Ingot). On an upgrade
-  only, gold may cover the material a hero is short, at 9 foes of the tier's foe gold for each raw unit (a Plank is 2), once
+  only, gold may cover the material a hero is short, at 27 foes of the tier's foe gold for each raw unit (a Plank is 2), once
   its gathering tier is open and its station built; covered units give no skill XP (gold-covers-material ruling,
-  2026-10-08). Crafts always take their materials. Tools, charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
+  2026-10-08; the price rose from 9 to 27 in gold-cover-share, 2026-10-11, so gold covers at most half and still binds: a
+  per-step half cap left Tobin's gold idle after minute 32). Crafts always take their materials. Tools, charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
   is never for sale (Lantern Rule 4).
   - **Names** (planner's, kept by the build): Ingot: Copper, Iron, Silver, Cobalt, Mithril Ingot. Plank: Pine, Birch,
     Oak, Mangrove, Tideash Plank. Cloth: Hemp Cloth, Linen, Briar Cloth, Kelp Cloth, Stormgrass Cloth. Leather: Bristle,
@@ -1298,8 +1313,8 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   Echo frame 2 with no string (the bow is hidden, and the frame never shows in turn fights). In the split build only her idle is at boot (new
   game 3.49 MB, zone 2 3.95 MB, no hero exception). The Foreman's rule: no hero-core judge, since at 10 Mbps her Attack is in about 3 s
   before a new player's first swing ("Loading Wren" never shows). Goes to Cal as a preview (gate 13).
-- **Route S Oriel (route-s-oriel-judge, Opus art judge, 2026-10-10; Cal can veto: "Skip the bad Oriel frames", "Code can draw Oriel's
-  axe", "Short staffs and spears are fine", "Oriel's hunt spear is fine"):** re-brief. The 11:02 redraw still has 6 third hands (spark 3, hex 4, nova 2, pullreading 7, letters 2;
+- **Route S Auriel (route-s-oriel-judge, Opus art judge, 2026-10-10; Cal can veto: "Skip the bad Auriel frames", "Code can draw Auriel's
+  axe", "Short staffs and spears are fine", "Auriel's hunt spear is fine"):** re-brief. The 11:02 redraw still has 6 third hands (spark 3, hex 4, nova 2, pullreading 7, letters 2;
   probably nova 6), 7 body morphs (hex 4, nova 4, clearnight 5, letters 2, mining 3, victory 3, defeat 4) and 0 bendy staffs. A
   pack-wide fault is bigger: the staff shrinks to a third or a half whenever she holds it level, and the hunting spear shrinks mid-thrust: 25 frames,
   release frames included.

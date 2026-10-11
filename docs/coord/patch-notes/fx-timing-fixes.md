@@ -1,0 +1,1 @@
+Buffs no longer fire a shot. Brace, Iron Will, Shadow Step, Arcane Ward and Searing Eye play their own glow, with no arrow, bolt or swing at the foe, so nothing reads as a wasted attack. Best shot: attack-flight-1.

@@ -71,8 +71,8 @@ const DARE_LINES = {
 };
 
 // Lines that name a person or place the player meets later. Each waits for the zone given (the best zone reached) and then replaces
-// the Omen's plain line. Oriel is met in Chapter 4, so her lines come after it (bible 7, 12).
-const OMEN_LATE = { luckyStar: { zone: 141, hero: 'oriel', line: 'One star is winking. Oriel says it means you.' } };
+// the Omen's plain line. Auriel is met in Chapter 4, so her lines come after it (bible 7, 12).
+const OMEN_LATE = { luckyStar: { zone: 141, hero: 'oriel', line: 'One star is winking. Auriel says it means you.' } };
 
 const omenLine = (id, dare, maxZone, met) => (dare && DARE_LINES[id]) || (OMEN_LATE[id] && maxZone >= OMEN_LATE[id].zone && typeof met === 'function' && met(OMEN_LATE[id].hero) && OMEN_LATE[id].line) || OMEN_LINES[id]
   || (typeof COAST_OMEN_TEXT === 'object' && COAST_OMEN_TEXT[id] && COAST_OMEN_TEXT[id].say) || '';

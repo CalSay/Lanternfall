@@ -11,7 +11,7 @@
 //        player's HP). Every hit is its own parry or dodge.
 //        A move's anim names its action in the approved pack (FOE_ART, 21za); its winds then come from the pack's own
 //        timing (zoneFoeWinds), so each parry window closes on the frame where the blade lands: the first hit adds the
-//        hop in (the foe hops to you, then attacks); a later hit counts from the contact before it.
+//        way in (the foe hops, or dashes, to you, then attacks); a later hit counts from the contact before it.
 //        ranged: a projectile move (no hop): its wind runs to the release frame, then flight seconds to the hero.
 //        row: the foe type whose weakness row it uses when that differs from its zone's slot (59a typeX).
 //   zoneFoeSkin(f, z)   cbSpawn (59-combat): make a regular foe of zone z that zone's monster (no-op elsewhere). In a
@@ -37,12 +37,14 @@ const ZONE_FOES = {
 };
 // ms of frames a..b-1 of an action (one-based)
 const zoneFoeMs = (A, a, b) => { let t = 0; for (let i = a; i < b; i++) t += A.f[i - 1][0]; return t; };
+// ms of the pack's way in (out: home): its dash (dashIn, dashOut: the Scenario imp) or its hop, whole
+const zoneFoeHop = (P, out) => { const H = P && (P.acts[out ? 'dashOut' : 'dashIn'] || P.acts.hop); return H ? zoneFoeMs(H, 1, H.f.length + 1) : null; };
 function zoneFoeWinds(key, move) {
-  const P = typeof FOE_ART === 'object' && FOE_ART[key], A = P && P.acts[move.anim], hop = P && P.acts.hop;
-  if (!A || !hop || (!move.ranged && A.con.length !== move.hits.length)) return;
+  const P = typeof FOE_ART === 'object' && FOE_ART[key], A = P && P.acts[move.anim], hop = zoneFoeHop(P, false);
+  if (!A || hop == null || (!move.ranged && A.con.length !== move.hits.length)) return;
   if (move.ranged) { if (A.rel.length && move.hits.length === 1) move.hits[0].wind = zoneFoeMs(A, A.start, A.rel[0]) / 1000 + (move.flight || 0); return; }
   move.hits.forEach((h, i) => {
-    h.wind = (i ? zoneFoeMs(A, A.con[i - 1], A.con[i]) : zoneFoeMs(hop, 1, hop.f.length + 1) + zoneFoeMs(A, A.start, A.con[0])) / 1000;
+    h.wind = (i ? zoneFoeMs(A, A.con[i - 1], A.con[i]) : hop + zoneFoeMs(A, A.start, A.con[0])) / 1000;
   });
 }
 for (const z in ZONE_FOES) for (const m of ZONE_FOES[z].moves) if (m.anim) zoneFoeWinds(ZONE_FOES[z].key, m);
@@ -73,11 +75,11 @@ function zoneFoeDeathS(f) {
 const ZONE_FOE_REST = 0.6;
 function zoneFoeCycle(Z) {
   const P = Z && typeof FOE_ART === 'object' && FOE_ART[Z.key]; if (!P) return 0;
-  const hop = P.acts.hop ? zoneFoeMs(P.acts.hop, 1, P.acts.hop.f.length + 1) : 0;
+  const hin = zoneFoeHop(P, false) || 0, hout = zoneFoeHop(P, true) || 0;
   const L = Z.moves.filter(m => m.hits.length === 1 && P.acts[m.anim]).map(m => {
-    const A = P.acts[m.anim], all = zoneFoeMs(A, A.start, A.end + 1), h = m.ranged ? 0 : hop;
+    const A = P.acts[m.anim], all = zoneFoeMs(A, A.start, A.end + 1);
     const lead = m.ranged && A.rel.length ? zoneFoeMs(A, A.start, A.rel[0]) + (m.flight || 0) * 1000 : A.con.length ? zoneFoeMs(A, A.start, A.con[0]) : all;
-    return { lead: h + lead, tail: Math.max(0, all - lead) + h + ZONE_FOE_REST * 1000 };
+    return { lead: (m.ranged ? 0 : hin) + lead, tail: Math.max(0, all - lead) + (m.ranged ? 0 : hout) + ZONE_FOE_REST * 1000 };
   });
   let c = 0;
   for (let i = 0; i < L.length; i++) c = Math.max(c, L[i].tail + L[(i + 1) % L.length].lead);

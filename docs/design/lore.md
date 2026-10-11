@@ -385,7 +385,7 @@ Season 1 finale, which is not a Shroud but closes the same table.
 | The Sunken Coast (Silas, the Fogbound) | The sea-fog lifts off Saltreach. For the first time in ten years the drowned streets show clear water at low tide, and the coast keeps its own mornings. | Survivors who never made it off the reef come ashore and raise Enchanting at the camp: buff items can finally be set into gear (plan-4.md 4.5, gated on Region 2). | Enchanting unlocks. |
 | The Emberwaste (The Pyre Knight) | The ash cools. Something green grows on the Lea for the first time since the Fall, and the region gets real daylight instead of ember-red gloom. | Families Caedmon got out of Emberlea, freed once the held lights go home (8.3), come back and raise a proper Forge upgrade at the camp. | Trade routes open between reached regions (plan-4.md 4.12; flagged in the LORE-R45b changes note below for the coordinator to confirm against the build order). |
 | The Pale Reach (The Whitehush) | The Whiteout stops forming. True stars show over the Frostgate for the first time in ten winters, and visibility across the region is never halved again. | A Silent Village survivor who kept one candle lit for the whole village, alone, the whole time (1.9's companion hook) comes to Hollow's Rest and raises the Balefire at the camp. | A new Tactics slot opens (flagged for coordinator confirmation against plan-4.md's order, same as row 3). |
-| The Season 1 finale (the Voice, not a Shroud) | The dark at the Gloamvale's heart thins to plain night. Every lamp in the land brightens at once, and the long dusk that "has not ended" finally does, for now (8.6). | Not one person: everyone the Voice ever held gets to go home. Vesper finishes her verse; Oriel's stars stop sending bad news; Elowen turns her own spark up (8.6). | No new power, stat or currency (kept as originally designed, 8.7): only a title, a lantern colour and the Season 2 hook (the Voice, now under Hollow's Rest). |
+| The Season 1 finale (the Voice, not a Shroud) | The dark at the Gloamvale's heart thins to plain night. Every lamp in the land brightens at once, and the long dusk that "has not ended" finally does, for now (8.6). | Not one person: everyone the Voice ever held gets to go home. Vesper finishes her verse; Auriel's stars stop sending bad news; Elowen turns her own spark up (8.6). | No new power, stat or currency (kept as originally designed, 8.7): only a title, a lantern colour and the Season 2 hook (the Voice, now under Hollow's Rest). |
 
 ### 4.5 The Deepwell
 
@@ -514,7 +514,7 @@ existing three camp stories each stay as written.
 | Brother Anselm | the Oath | The bell called Patience; the last toll | He rang at Elowen's chapel (new canon: it is the same chapel). The last toll rings when the Voice falls (8.6) |
 | Grenna Holt | Wayfarers | The quarry woke; stone remembers you | The Glass Hydra and the Emberwaste's glass flats; she is at the relighting of the Lea |
 | Isolde Marrow | Dusk Company | The unread contract; the shaking hand | Corvin signed it: the only order he ever gave. It says "finish": finish what is behind the curtain. Bond "Finish, Together" after the Hollow King pinnacle |
-| Oriel Vess | Dusk Company | The small new star that appeared the night you took up the road | The star is your lamp, seen from the sky. It brightens with each Great Lantern (Constellations flavour) |
+| Auriel Vess | Dusk Company | The small new star that appeared the night you took up the road | The star is your lamp, seen from the sky. It brightens with each Great Lantern (Constellations flavour) |
 | Morwen Tallow | Wayfarers | The garden; what the candles are made of | She is Maud Tallow's great-niece ("My family always kept the lamps"). The candles stay a secret, forever |
 | Vesper Lark | Wayfarers | Her own song, last verse unfinished | She finishes it after the last fight (8.6) |
 | Saint Elowen | the Oath | The choice; "they did not fall" | 3.1. She knows your lamp's handle. Her Bonds tell it in pieces |
@@ -822,7 +822,7 @@ got, waiting there. What is it waiting for. That is 8.8, not a puzzle Season 1 a
    dusk that has not ended before now. ("He will know the dusk it is for.")
 3. Thessaly's vision was this: the one holding a lantern high on the dark road, with the dark
    stepping back, was you, at the end of it, in the valley the Voice had closed the sky over.
-4. Vesper finishes her verse. Oriel's stars stop sending bad news and go back to gossip. Elowen
+4. Vesper finishes her verse. Auriel's stars stop sending bad news and go back to gossip. Elowen
    turns her spark up, for the first time in ten years.
 5. The last line of Season 1, spoken by Hesketh at the fire: "Every road needs a place to come
    back to." The player has heard it before, and it means more the second time — and darker, once
@@ -920,13 +920,13 @@ number in the tables), and drop "last step" language everywhere it appears.
 | Mechanic | Phases | Telegraph | Effect | Tap answer | Line-up answer | Taught by |
 |---|---|---|---|---|---|---|
 | **Decree** (heavy hit) | 1-4 | PARRY, 1.5s | 4x attack on its target (35% max HP cap) | Parry (+5 Lamp) | Shield Wall, Bash, a ward | Royal Decree |
-| **Kneel** | 1, 5 | INTERRUPT, 2.0s | Party stunned 2.5s (Corvin does not kneel) | Tap the Voice in the channel | A stun that reaches Back (Oriel, the Lanternmage's flash); Crown of No One | Kneel |
+| **Kneel** | 1, 5 | INTERRUPT, 2.0s | Party stunned 2.5s (Corvin does not kneel) | Tap the Voice in the channel | A stun that reaches Back (Auriel, the Lanternmage's flash); Crown of No One | Kneel |
 | **Lure Song** | 2, 5 | INTERRUPT, 2.0s | Charms the companion with the lowest HP% for 4s. **Your hero cannot be charmed**: the lamp was lit for you, and the song fails on it | Tap the lure; late, a Lantern touch frees them | A Back-reaching stun; a cleanse. A companion Sworn to someone in the party is not charmed either (rule 3; a bonus, never needed) | Lure Song |
 | **Cold Water** | 2 | CLEANSE on 2 portraits | 1.5% max HP a second and healing -40%, stacking to 3 | Two Lantern touches | Anselm or Elowen L20, the Hymnal power, a Lightkeeper | Brine Rot |
 | **Held Fire** | 3, 5 | SCATTER, 1.8s, one slot lit | 2.5x attack to that slot and a burn of 3% a second for 5s | Scatter: the lit member steps into the next slot for 4s | Caedmon (burns do nothing); Shield Wall or a ward halves it | Flame Breath |
 | **Hunt the Lamp** | 3, 5 | A blue "!" over your hero, 1.5s | It dives for your lamp: Lamp -25 and 20% of the hero's max HP | Warden tap, Ranger focus and a hit, Lanternmage flash | Any taunt in the wind-up; Cover and Bulwark from a Front or Middle tank | Hunt the Cart |
 | **Snuff** | 4, 5 | INTERRUPT, 2.0s, it reaches for the lamp | Lamp -30 | Tap the Voice | Any stun on its Front (Aldric, Grenna) | Snuff |
-| **Grasping Hands** | 4 | A blue "!" over Middle and Back, 1.5s | 2 Hand adds (3% HP each) hold them for 4s | Tap a Hand | AoE (Pip, Oriel, Morwen, a Lanternmage); peel | Grasping Hands |
+| **Grasping Hands** | 4 | A blue "!" over Middle and Back, 1.5s | 2 Hand adds (3% HP each) hold them for 4s | Tap a Hand | AoE (Pip, Auriel, Morwen, a Lanternmage); peel | Grasping Hands |
 | **Lightless** | 4 | CLEANSE, a black drop on 1 portrait | No heals or shields for 6s, and 2% max HP a second | A Lantern touch | Anselm, Elowen, the Hymnal power, a Lightkeeper | Lightless |
 | **Weight of the Dark** | 5 | SWAP, stack pips on Front | Each heavy hit adds a stack; at 3 the target is Crushed (3s, takes x1.5) | Step back at 2 stacks: Middle holds for 3s | A second taunter in Middle (a tank off-slot, Kestrel's Leap) | Weight of the Crown |
 | **The Long Night** (enrage) | from 125s | - | The Lamp drains 3 a second; the heavy hit comes every 5s | - | - | Each enrage |
@@ -1086,7 +1086,7 @@ Omen lines:
 - Quiet Woods: "The birds are back in the trees today."
 - Deep Veins: "The miners' old bell rang by itself at dawn."
 - Blood Moon: "A red moon. The elders feel it."
-- Lucky Star: "One star is winking. Oriel says it means you."
+- Lucky Star: "One star is winking. Auriel says it means you."
 - Long Night: "A long night. Everyone sleeps close to the fire."
 - The Wyrm Stirs: "The sky over the Emberwaste burns brighter tonight."
 - Hearth Day: "Somebody baked. The whole camp smells of bread."
@@ -1393,7 +1393,7 @@ Facts already in the game or its specs. This bible contradicts none of them.
 - Saltreach drowned that night; the water came up the street "slow and sure"; Hallam rowed the
   children out; his ferry was lost.
 - Since then the tide comes in twice an hour: "It is not the moon pulling it now."
-- Oriel: the stars have sent bad news since the lights went out; before, they gossiped. A new star
+- Auriel: the stars have sent bad news since the lights went out; before, they gossiped. A new star
   appeared the night you took up the road.
 - Anselm: "The dusk has not ended." The chapel fell; he rang until the tower cracked, then carried
   the bell (Patience, cast from a village's melted spoons) away.
@@ -1461,7 +1461,7 @@ can name its two hundred dead. Aldric is the last knight. Kestrel came over a sn
 name on her spear belonged to someone who jumped first. Thessaly was born in a village under the
 Wraithmarsh; the water showed her a lantern held high and the dark stepping back. Anselm rang the
 dusk bell thirty years. Grenna broke the first golem by hand when the quarry woke. Isolde signed a
-contract in the dark with one word, "finish". Oriel has a sliver of a fallen star in her staff.
+contract in the dark with one word, "finish". Auriel has a sliver of a fallen star in her staff.
 Morwen's garden was the Fungal Deep; she is a Tallow. Vesper wrote half the road songs and changed
 their endings. Elowen: see A.2. Caedmon held Emberlea's road for an hour and walked in the fire
 three days. Corvin was the Hollow King's blade for twenty years and did not kneel.

@@ -1,0 +1,1 @@
+Saving a backup now works inside the claude.ai page. Settings > Save code used to offer a file download there that could never start; the second button is now Show save code, which puts your save code in a box, already selected, ready to copy. Copy save code still copies it in one tap. On the Netlify page Download file still saves a .txt file. Best shot: landscape-viewer.

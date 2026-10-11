@@ -1,0 +1,21 @@
+# seed: 1
+# Proof for card realtime-press-swings. In a real-time fight the Attack button fires a Finisher, or stops a foe's heal or summon,
+# before it hits. Those presses emitted only soloAttack { kind: 'finisher' | 'interrupt' } (no classTap, no lunge), and the stage
+# swung the hero only on those two or on a turn fight's soloAttack, so the hero stood still. Now the stage swings on them too.
+# The shipped page fights in turns (C29), so no player route reaches a real-time fight: the proof is tools/check.mjs
+# "realtime-press-swings", which turns the real-time fight back on with the test key and, for Wren, Tobin and Pip at 1280x720,
+# 740x360 and 360x740 (reduced motion), staggers a boss and presses for the Finisher, then sets a foe channelling and presses
+# for the interrupt: each press starts exactly one swing at once and none follows (36 asserts fail with the stage change undone).
+# This route only shows the turn fight is unchanged: the basic Attack still swings once (card basic-attack-swings).
+new early
+wait 6
+tap-if "Continue"
+wait 4
+tap-if "Continue"
+wait 6
+expect ".hud.vs .hero-plate"
+expect "Attack"
+tap-if "Attack"
+burst attack-swing
+wait 3
+expect ".hud.vs .mob"

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // C14: reproducible live/away audit. Runs the real core with a pinned wall clock and seed.
 // node tools/offline-parity.mjs --json=/tmp/lanternfall-offline-parity.json
+// node tools/offline-parity.mjs --left-fight   leave-mid-fight-gathers: the gather fixture left mid-fight, its away harvest against live gathering there
 // node tools/offline-parity.mjs --refine   the station orders (refine-queues): Forge and Loom orders, no Hands, the hero mining Copper Ore (ore and coal arrive while away), Iron Ore and fibre that run out
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -31,6 +32,7 @@ export function offlineFixture(mode = 'gather') {
     g.eval("setActivity('fight');spawn()");
   }
   if (mode === 'gather-mastered') g.eval('S.tools.m.pick=[20,0]');
+  if (mode === 'gather-left-fight') g.eval("onboardReveal('gather');setActivity('fight');spawn()");   // Gather is open and the hero fights; away it goes back to the node
   g.eval('save()');
   return g.storage.get(KEY);
 }
@@ -60,7 +62,7 @@ export function offlineRun(raw, secs, maxCap = false) {
 export function offlineAudit(progress = () => {}, modes = ['gather', 'fight', 'fight-fixed']) {
   const result = { seed: 1414, start: AUDIT_START, step: .1, rows: [] };
   for (const mode of modes) {
-    const raw = offlineFixture(mode), live = offlineGame(raw); live.eval('spawn()');
+    const raw = offlineFixture(mode), live = offlineGame(raw); live.eval(mode === 'gather-left-fight' ? "setActivity('gather');spawn()" : 'spawn()');   // live play gathers that node
     const initial = offlineSnapshot(live), snapshots = new Map([[0, initial]]); let from = 0;
     for (const secs of AUDIT_SPANS) {
       offlineLiveUntil(live, from, secs); from = secs;
@@ -127,7 +129,7 @@ export function offlineAuditTable(audit) {
   return rows.join('\n');
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const audit = offlineAudit((mode, secs) => console.error(`${mode}: ${secs / 3600} hours`), process.argv.includes('--mastered') ? ['gather-mastered'] : process.argv.includes('--refine') ? ['refine'] : undefined);
+  const audit = offlineAudit((mode, secs) => console.error(`${mode}: ${secs / 3600} hours`), process.argv.includes('--mastered') ? ['gather-mastered'] : process.argv.includes('--left-fight') ? ['gather-left-fight'] : process.argv.includes('--refine') ? ['refine'] : undefined);
   const arg = process.argv.find(a => a.startsWith('--json='));
   if (arg) fs.writeFileSync(arg.slice(7), JSON.stringify(audit, null, 2) + '\n');
   console.log(offlineAuditTable(audit));

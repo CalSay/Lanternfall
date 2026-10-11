@@ -30,7 +30,7 @@ returned. How each was answered is in elowen.md section 11.
    contradicts DECISIONS:63. The 150-credit poses work against "early game first". Fix: hold the poses until M1b testers reach the
    Fenmother, or open the quest at the Chained Star's candle flare; the judge's call.
 8. **The pose list cannot be drawn as written.** A chained hip lantern cannot be lifted high without unhooking; "staff in the same
-   hand in every pose" clashes with gathering poses; no hand or hip side named (the root of Oriel's third arm). Fix: name the sides,
+   hand in every pose" clashes with gathering poses; no hand or hip side named (the root of Auriel's third arm). Fix: name the sides,
    hook the lantern, stow the staff for gathering, put move names beside pose ids, add a lessons line.
 9. **Names and theme overlap (moderate).** Daybreak beside the Lightkeeper's Dawnbreak (`24-data-classes.js:141`); "The Last
    Lantern" is her roster title and a Feat title (`23-data-deeds.js:203`); "The Chapel" is her tale title; Daybreak plays like Ring

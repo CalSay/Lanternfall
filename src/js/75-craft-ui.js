@@ -70,6 +70,12 @@ let craftUI = null;
   const heroFits = k => { const d = CRAFT_KINDS[k]; return !!(d && d.pos && fits(k, d.pos, 'hero')); };
   // An item (not a kind): weapon and head uniques fit every class.
   const heroFitsIt = it => { const d = itemKind(it); return !!(d && d.pos && fits(it, d.pos, 'hero')); };
+  // bow-slot-wording: an empty Weapon slot still means the hero's own starting weapon (Wren's bow), so the compare names it
+  // (Tobin's "Sword and shield" names the sword: the shield is the Off-hand slot)
+  const emptyLine = (pos, tail) => {
+    const h = pos === 'weapon' && typeof soloHero === 'function' ? SOLO_HEROES[soloHero()] : null;
+    return h && h.weapon ? `Better than your starting ${h.weapon.toLowerCase().split(' and ')[0]}.` : `You wear nothing as ${posName(pos)}. ${tail}`;
+  };
 
   // Stat line text, and whether it works before party combat.
   const lineTxt = l => l.map(([s, v]) => (CRAFT_STATS[s] ? craftFmtLine(s, v) : `${s} ${fmt(v)}`)).join(', ');
@@ -568,8 +574,10 @@ let craftUI = null;
       for (const r of df.rows) { const x = el('div', 'cf-d ' + (r.v > 0 ? 'up' : 'dn')); x.append(el('span', null, r.label), el('b', null, (r.v > 0 ? '▲ ' : '▼ ') + r.txt)); rows.append(x); }
       if (!df.rows.length) rows.append(el('p', 'note', 'Same stats.'));
       right.append(rows);
-    } else if (d && d.pos && heroFitsIt(it)) right.append(el('p', 'note cf-cmpn', `You wear nothing as ${posName(d.pos)}. This is a gain.`));
+    } else if (d && d.pos && heroFitsIt(it)) right.append(el('p', 'note cf-cmpn', emptyLine(d.pos, 'This is a gain.')));
     else if (d && d.pos) right.append(el('p', 'note cf-cmpn', `A ${posName(d.pos)} for a different class.`));
+    // bow-slot-wording: the first piece of gear made says it is not on yet, and why a tool went on by itself
+    if (st8.first === it.id && !wr && d && d.pos && !d.tool && heroFitsIt(it)) right.append(el('p', 'note cf-cmpn cf-firstn', 'Not equipped yet. Gear waits for you to choose; tools go on by themselves.'));
     const acts = el('div', 'cf-wear cf-resact');
     if (st8.resArm) {
       right.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good.`));
@@ -616,6 +624,8 @@ let craftUI = null;
     const it = e && e.item; if (!it || it.id == null) return;
     st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
     st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    { const m = S.craft && S.craft.made, n = m && typeof m === 'object' ? Object.values(m).reduce((a, v) => a + (v | 0), 0) : 0, k = itemKind(it);
+      if (n === 1 && k && k.pos && !k.tool && heroFitsIt(it)) st8.first = it.id; }   // bow-slot-wording: the first piece of gear ever made
     if (e.lift) st8.lift[it.id] = e.lift;   // craft-strike-infuse: the result card names the lift
     if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null, parts: e.on ? safe(() => toolParts(it, e), null) : null };   // tool-speed-adds-up: the old tool and the parts, read now
     else fdStart(it);
@@ -678,7 +688,7 @@ let craftUI = null;
       const gl = stationTierOpen(k, t) ? gradeTxt(k, t) : ''; if (gl) row.append(el('div', 'cf-odds cf-gline', gl));
       const ch = choiceTxt(k, t); if (ch) row.append(el('div', 'cf-odds cf-choice', ch));
     } else { const odds = oddsTxt(k); if (odds) row.append(el('div', 'cf-odds', odds)); }
-    { const pk = preRecKey(k, t), pl = pk ? preLine(pk) : ''; if (pl) row.append(el('div', 'cf-odds cf-pre', pl)); }   // craft-odds-before-pay
+    row.preAt = row.lastElementChild; prePut(row, k, t);   // craft-odds-before-pay: the boss line goes here (prePut keeps it current)
     const lr = can.ok ? liftRow(k, t) : null; if (lr) row.append(lr);   // craft-strike-infuse: the choice, on a craft you can make
     if (d.role === 'any') {
       const rs = el('div', 'cf-roles'); rs.append(el('span', 'cf-lbl', 'Bonus lines for'));
@@ -781,7 +791,8 @@ let craftUI = null;
       } else {
         for (const k of ks) {
           const r = rec.rows[k], rs = rowSig(k, t);
-          if (!r || r.sig === rs) continue;
+          if (!r) continue;
+          if (r.sig === rs) { prePut(r.row, k, t); continue; }
           const row = recipeRow(k, t); r.row.replaceWith(row); r.row = row; r.sig = rs;
         }
       }
@@ -789,11 +800,21 @@ let craftUI = null;
       if (!rec.list.querySelector('#forgeBtn')) { const b = rec.list.querySelector('.cf-go'); if (b) b.id = 'forgeBtn'; }
     }
   });
-  // Everything recipeRow(k, t) shows that can change while the list stays the same.
+  // craft-list-keeps-place: the boss line comes in about a second after the row shows, so it is put into the row in place, never
+  // by rebuilding the row. A rebuilt row gave the guide a new Craft button to point at, and upright that scrolled the list off the
+  // result card the player had just made ("Copper Pickaxe on.") down to Pine Bow.
+  function prePut(row, k, t) {
+    const pk = preRecKey(k, t), pl = pk ? preLine(pk) : '', cur = row.querySelector(':scope > .cf-pre');
+    if (!pl) { if (cur) cur.remove(); return; }
+    if (cur) { putText(cur, pl); return; }
+    const n = el('div', 'cf-odds cf-pre', pl);
+    if (row.preAt && row.preAt.parentNode === row) row.preAt.after(n); else row.append(n);
+  }
+  // Everything recipeRow(k, t) shows that can change while the list stays the same (the boss line is kept by prePut).
   function rowSig(k, t) {
     const can = canDo(k, t), mw = mwFor(k);
     const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = matOwn(f, t); return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
-    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), (k => k && preLine(k))(preRecKey(k, t)), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '', oddsTxt(k), liftInfo(k, t), safe(() => { const o = skillTierOpen(skillOfSt(CRAFT_KINDS[k].st), t) && shortOffer(kindCost(k, t), t); return o ? o.txt : ''; }, '')]);
   }
 
   // ================= Enchanter's Table extras =================
@@ -861,12 +882,12 @@ let craftUI = null;
       const dn = f && t > 1 && have[t - 1] >= D.take ? canTransmute(fam, t, t - 1) : null;
       ench.dnB.disabled = !f || t <= 1 || have[t - 1] < D.take || !(dn && dn.ok);
       ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : upShut ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
-      // Star Chart (Oriel's recruit route): a recipe when K6 defines it as a kind or an action.
+      // Star Chart (Auriel's recruit route): a recipe when K6 defines it as a kind or an action.
       const sc = K6.starChart(), made = !!(S.craft && S.craft.starChart);
-      ench.star.hidden = true;   // no Oriel to draw yet (she is a hero to unlock later), so no Star Chart recipe
+      ench.star.hidden = true;   // no Auriel to draw yet (she is a hero to unlock later), so no Star Chart recipe
       if (!ench.star.hidden) {
         ench.star.textContent = '';
-        ench.star.append(el('h3', null, 'Star Chart'), el('p', 'note', made ? 'You made the Star Chart. Oriel Vess has seen it.' : "Chart the sky to draw Oriel Vess, the Starcaller, to your camp."));
+        ench.star.append(el('h3', null, 'Star Chart'), el('p', 'note', made ? 'You made the Star Chart. Auriel Vess has seen it.' : "Chart the sky to draw Auriel Vess, the Starcaller, to your camp."));
         if (!made) {
           const b = el('button', 'big forge', 'Craft the Star Chart'); b.type = 'button';
           b.addEventListener('click', () => act(() => sc()));
@@ -1146,7 +1167,7 @@ let craftUI = null;
     if (d && d.pos && heroFitsIt(it) && !(wr && wr.who === 'hero')) {
       const cur = itemById(S.equip[d.pos]);
       const box = el('div', 'cf-cmp');
-      if (!cur) box.append(el('p', 'note', `You wear nothing as ${posName(d.pos)}. Everything above is a gain.`));
+      if (!cur) box.append(el('p', 'note', emptyLine(d.pos, 'Everything above is a gain.')));
       else {
         box.append(el('p', 'note', `Against your ${itemName(cur)}:`));
         const a = itemStats(it), b = itemStats(cur), keys = [...new Set([...Object.keys(a), ...Object.keys(b)])].filter(k => CRAFT_STATS[k]);
@@ -1185,7 +1206,7 @@ let craftUI = null;
       {
         let sr = shortRow(c.mats, it.t, renderItem), coverWhy = '';
         // upgrade-gold-covers-short: gold may pay the material the piece is short, as the row's second button after the free
-        // refine order ("Upgrade: 340 + 270 gold for 3 Pine Planks"). Never on a craft, and only once the material is reachable.
+        // refine order ("Upgrade: 340 + 810 gold for 3 Pine Planks"). Never on a craft, and only once the material is reachable.
         const cv = f && typeof upgradeCover === 'function' ? safe(() => upgradeCover(it), null) : null;
         if (cv) {
           if (!sr) { sr = el('div', 'cf-src cf-short'); sr.append(el('span', null, `Short ${storeNum(cv.units)} ${midName(cv.fam, it.t, cv.units)}. `)); }

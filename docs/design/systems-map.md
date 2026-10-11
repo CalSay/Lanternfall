@@ -16,7 +16,7 @@ A source or sink line names the player-facing system and the file that does it. 
 
 | Currency | Kind | Sources | Sinks | Note |
 |---|---|---|---|---|
-| Gold | core | 6 | 6 |  |
+| Gold | core | 7 | 7 |  |
 | Hero XP | core (Level) | 2 | 0 | No sink: Hero levels are permanent by design. |
 | Skill XP | meter | 4 | 2 |  |
 | Ore | core (Materials) | 9 | 7 |  |
@@ -88,6 +88,7 @@ Sources:
 - Claiming a Bounty (`55-bounties.js`)
 - A gatherer's trade run (`57k-trade.js`)
 - Refund: recalled gatherer shift (`57f-hands.js`)
+- Tavern Blackjack: a won or tied hand (not booked in the econ ledger) (`57t-blackjack.js`)
 
 Sinks:
 - Training (Attack, Parry, Dodge, abilities) (`55-training.js`)
@@ -96,8 +97,11 @@ Sinks:
 - Hiring a gatherer (`57f-hands.js`)
 - Gatherer shift fees (`57f-hands.js`)
 - Hero unlock routes (Renown plus gold) (`56c-unlocks.js`)
+- Tavern Blackjack: a bet or a Double (not booked in the econ ledger) (`57t-blackjack.js`)
 
 Note: Embers (raid) buy relics, not gold
+
+Note: Tavern Blackjack keeps its own books (S.blackjack: net and n, a stat), never S.econ or S.totalGold; the day's limits are 1 price-hour each way
 
 Note: Gold per foe follows ECON.base per region (21w-data-econ.js)
 

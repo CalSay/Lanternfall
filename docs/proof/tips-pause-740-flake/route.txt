@@ -1,0 +1,71 @@
+# seed: 1
+# Proof for card tips-pause-740-flake: the fight bar comes back the moment you go back to the fight, and a tip already up fits around it
+# at once (before, the bar waited for its own next look, up to a quarter second, so his tip could hold the kill gap with the bar away
+# or sit over it unfitted on a phone on its side).
+# Fixture dipper-z4: Wren at zone 4, the guide's weapon and Storehouse steps still to come, the Almanac due once enough play has passed.
+#   bar-back.png              his Almanac news is up in Gather; one tap on Fight and the fight bar is there at once (the news waits for
+#                             the kill gap).
+#   fight-1 .. fight-8.png    back at zone 1, a press on Attack every few seconds: the kill gap brings the same line back, holding the gap
+#                             with PAUSED on the stage and the fight buttons in view, dimmed, under it (fight-5 at seed 1).
+#   line-answered.png         the line is gone and the fight goes on.
+# The same-moment read (the bar and the tip's fit in the task that switches to the fight) is held by tools/check.mjs ("tips-pause-says-so").
+new dipper-z4
+wait 1
+tap "Gather"
+tap "Wood"
+tap "Chop at the Pine Grove"
+wait 1
+tap-if "Dismiss this tip"
+wait 1
+tap-if "Dismiss this tip"
+wait 1
+tap-if "Dismiss this tip"
+wait 200
+tap "Gather"
+tap "Wood"
+expect "There's an Almanac at camp now"
+tap "Close menu"
+tap "Fight"
+expect "Attack"
+shot bar-back
+wait 2
+tap "Previous zone"
+tap "Previous zone"
+tap "Previous zone"
+wait 2
+tap-if "Attack"
+wait 1
+shot fight-1
+wait 2
+tap-if "Attack"
+wait 1
+shot fight-2
+wait 2
+tap-if "Attack"
+wait 1
+shot fight-3
+wait 2
+tap-if "Attack"
+wait 1
+shot fight-4
+wait 2
+tap-if "Attack"
+wait 1
+shot fight-5
+wait 2
+tap-if "Attack"
+wait 1
+shot fight-6
+wait 2
+tap-if "Attack"
+wait 1
+shot fight-7
+wait 2
+tap-if "Attack"
+wait 1
+shot fight-8
+tap-if "Got it"
+wait 1
+expect-no ".ob-paused"
+expect-no "There's an Almanac at camp now"
+shot line-answered

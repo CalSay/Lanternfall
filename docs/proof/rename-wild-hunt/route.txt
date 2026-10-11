@@ -1,0 +1,17 @@
+# seed: 1
+# Proof for rename-wild-hunt (Cal, 2026-10-10 19:25: "The Wild Hunt is already a thing in The Witcher games").
+# Run: grep -v '^#' route.txt | node tools/playtest.mjs batch --seed 1. Fixture save-current: Tobin at zone 20.
+#   stars-prowl-*.png  Hero > Stars, Cinder Riposte picked: the map reads PROWL and the card says "The Prowl"
+#   (on a phone on its side the card's Found line is below the fold, so the route expects "Prowl", which both show).
+#   Only the name changed; the constellation's id stays 'hunt', so saves are untouched.
+new current
+wait 2
+tap-if "Continue"
+tap "Hero"
+tap "Stars"
+wait 1
+tap "Cinder Riposte"
+wait 1
+expect "Prowl"
+expect-no "Wild Hunt"
+shot stars-prowl

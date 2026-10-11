@@ -1,6 +1,6 @@
 # Saint Elowen, the Last Lantern: fight kit, how a player meets her, pose list
 
-Card `elowen-ability-spec` (Cal, 10 Oct 12:10: "Sure", to the art thread's offer of a design pass on Elowen like Oriel's).
+Card `elowen-ability-spec` (Cal, 10 Oct 12:10: "Sure", to the art thread's offer of a design pass on Elowen like Auriel's).
 Status: **spec, judge ruled 2026-10-10 (section 11).** No code here: `route-s-elowen-wire` builds it, the art thread
 draws it.
 
@@ -30,7 +30,7 @@ low-flame bonus, but Swing the Lantern hits half again as hard and Full Flame sp
   costly.** Her own line, "Keep your flame low. It lasts longer." (`21-stories.js:118`), is the low route; the finale, where she
   turns her flame up on purpose (bible 9.2), is the bright one.
 - The choice is made by what she casts, never on a choice screen: every spend is automatic and every bonus reads what she holds.
-- **Wren** marks and crits. **Tobin** parries and counters behind Guard and Grit. **Pip** burns over time. **Oriel** stores one
+- **Wren** marks and crits. **Tobin** parries and counters behind Guard and Grit. **Pip** burns over time. **Auriel** stores one
   star and takes the foe's turns away. **Elowen** decides each turn whether to give or to keep, and her gifts shelter her: Wards,
   a Guard, a Blind and a Weaken. **She never heals and never cleanses.**
 
@@ -149,7 +149,7 @@ when the Fenmother falls; bring gold and Essence to the chapel on Lantern Hill, 
 last candle in the chapel. For a moment, every lamp in the valley flickers.", `21-stories.js:91-93`), and she joins.
 
 - **Why the end of Chapter 1:** she is the answer to Chapter 1's question (bible 4 and 8.1: "I lit that for you. You were very
-  small."). Meeting her earlier spends the chapter's reveal; her candle flaring at the Chained Star (zone 30) is the plant. Oriel
+  small."). Meeting her earlier spends the chapter's reveal; her candle flaring at the Chained Star (zone 30) is the plant. Auriel
   already fills the zone 20-30 stall. Elowen is the reward for finishing the Hollow and the hero for the endgame loop after it.
 - **The other option, for the judge:** open the quest at zone 31, when the Chained Star falls and her candle flares, and keep the
   "I lit that for you" reveal on the Fenmother's post. She would play zones 31-35 and the Fenmother. Cost: a `STORY_MEET` change,
@@ -174,7 +174,7 @@ last candle in the chapel. For a moment, every lamp in the valley flickers.", `2
 ## 6. Numbers: the sims a build card must run
 
 She must land inside the band the other heroes set; she is not tuned to beat them. "Playing a tank or support must not be weaker"
-(DECISIONS, The hero). Measure on the live turn rules at the build's own head, **with Wren, Tobin, Pip and Oriel (if wired) in
+(DECISIONS, The hero). Measure on the live turn rules at the build's own head, **with Wren, Tobin, Pip and Auriel (if wired) in
 the same run**, arrival and kept-up footing (`tools/budget.mjs buildCore`), casual (parries 25%, dodges half the rest), good (60%,
 90%) and never-defends players, 240 fights a cell, every fight its own seed, `almanac.force('none')`. Her slots on arrival are
 what a joining player has: Kindly Light plus the moves the lamp's spare Scrolls teach, from a walk save at the Fenmother clear.
@@ -248,11 +248,11 @@ her attack mote `#F2C14E`, `62-stage.js:307`).
 | `hit`, `idle`, `defeat`, `victory` | | 8 each | none | none | | none |
 | `mining`, `woodcut`, `forage`, `hunt` | gathering | 8 each | mining 5, woodcut 5, forage 4, hunt 5 | tool head | **staff stowed on her back** | the game-placed axe on `woodcut` (empty fists) |
 
-Passives (Keep It Low, Staff Alight) have no pose. 23 poses, 184 frames: about 150 Scenario credits at the Oriel rate, which need
+Passives (Keep It Low, Staff Alight) have no pose. 23 poses, 184 frames: about 150 Scenario credits at the Auriel rate, which need
 Cal's OK (card `route-s-elowen-poses`). She plays only after the Fenmother, so her poses are not needed before M1b testers reach
 zone 35; that timing goes to Cal with the ask.
 
-**Art note for the art thread (from Oriel's third-arm and shrinking-staff problems).** Name the sides once, from the approved
+**Art note for the art thread (from Auriel's third-arm and shrinking-staff problems).** Name the sides once, from the approved
 concept, and keep them in every frame. Before generating, the art thread writes down which hand is near the viewer (facing
 right) from the concept, and uses the move names in the table above (not Codex's old names) to label the gallery and the sheets:
 - **The staff hand** holds the staff in every fight pose, and the staff never changes length. In gathering poses the staff is

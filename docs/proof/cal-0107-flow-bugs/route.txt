@@ -12,35 +12,62 @@
 new flow-points
 wait 2
 tap-if "Continue"
+# the menu bar comes in a moment after the fight starts
+wait-for "Hero" 5
 tap "Hero"
 wait 1
 tap "Build"
 wait 1
 tap "Spread evenly"
 # in landscape the fight stays beside the menu and waits on your turn; the line comes in the gap after the foe falls
-tap-if "Attack"
+# Presses stop once his line is up (a press answers it); 24 rounds so a press lost on the foe's turn under load still ends the fight.
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
-tap-if "Attack"
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
+wait 2
+unless "close the menu and the fight goes on" tap-if "Attack"
 wait 2
 wait 30
 expect "Back to the fight"

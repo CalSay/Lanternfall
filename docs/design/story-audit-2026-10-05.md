@@ -61,5 +61,5 @@ Champion encounters are bigger and belong to Milestone 1's content plan (`m1-def
 | 14 | Deep Lore: Deep Elders are "what the dark makes of things that stay below too long" | `57d-deepwell.js` DEEP_PAGES[6] | Contradicts canon | Rewrite to rule 4; add the Season 2 seed line (`story-systems-hollow`) |
 | 15 | Tam's arrival: "the Lanternbearer's lamp", "gathers for the heroes" | `57f-hands.js` | Retired terms; no setup | Tam is the first villager out of a Mossy Hollow cellar (bible 6) (`story-systems-hollow`) |
 
-Also: Omen lines naming unmet people and places ("Oriel says it means you", "the sky over the Emberwaste"); Tavern
+Also: Omen lines naming unmet people and places ("Auriel says it means you", "the sky over the Emberwaste"); Tavern
 gatherer lines naming unmet heroes; a Bestiary toast's grammar ("the Rattlebones's weakness"). All are in the inventory.

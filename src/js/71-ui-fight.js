@@ -55,42 +55,49 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
-// The away card says the same line (75-away.js): the trade-off is told before you leave, not after.
-const AWAY_RULE_TXT = 'While away, gathering continues and fighting stops. Set your hero to gather before you go.';
-// The permanent "While away" strip on the Fight view is gone (top-bar-compact): the away chip below speaks while gathering, on the away note's beat, and the away card says the rule.
-
-// Away chip: what leaving now would earn, told while you gather (the notice above covers a fighter).
-// Estimate from the same rates awayBase uses (50-sim.js), held to the Storehouse room unless Spillover moves on.
-let awayChip = null, awayChipTxt = '';
+// the away card's line for a fighter who can't gather yet
+const AWAY_RULE_TXT = 'Fights only happen while you play.';
+// Away chip: what leaving now earns, on the away note's beat, from awayBase's rates (50-sim), held to the Storehouse room
+// unless Spillover moves on; a fighter is told where the hero goes back to.
+let awayChip = null;
 function awayChipText() {
-  if (S.activity !== 'gather') return '';
-  const { kind, t: tier } = S.node;
+  const node = awayNode(); if (!node) return '';
+  const { kind, t: tier } = node;
   const boost = (1 + gear().offline / 100) * mod('offline');
   const hrs = awayCapH();
   let n = Math.floor(3600 / nodeTime(kind, tier) * boost * nodeYieldAvg(kind) * mod('yield:' + kind) * hrs);
-  // A pile that fills mid-away: Spillover moves on to the next node (amounts then differ), otherwise the rest is lost.
   const room = stashRoom(kind, tier);
-  return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs);
+  return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs, S.activity == 'fight' && NODE_NAMES[kind][tier - 1]);
 }
-// the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full
-// (side-column-fits-740 measures every variant for every material)
-function awayChipSay(nm, n, hrs) {
-  if (n === 'spill') return `Leave now: ${nm} fills up, then Spillover moves your hero on.`;
-  return n > 0 ? `Leave now: about ${fmt(n)} ${nm} in ${hrs} hours.` : `Leave now: ${nm} is full, you earn nothing. Spend it or pick another node.`;
+// the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full;
+// back: a fighter's node. side-column-fits-740 measures every variant for every material
+function awayChipSay(nm, n, hrs, back) {
+  const go = back ? `Leave now: ${heroFirst()} goes back to the ${back}${n > 0 ? ',' : '.'} ` : 'Leave now: ';
+  if (n === 'spill') return `${go}${nm} fills up, then Spillover moves your hero on.`;
+  return n > 0 ? `${go}about ${fmt(n)} ${nm} in ${hrs} hours.` : `${go}${nm} is full, you earn nothing. Spend it or pick another node.`;
 }
 function uiAwayChip() {
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !isUnlocked('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
+  let txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !isUnlocked('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
   if (!awayChip) {
     if (!txt) return;
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
-    $('modeSeg').parentElement.after(awayChip);   // the notice's own slot: it hides while gathering, so they never show together
+    $('modeSeg').parentElement.after(awayChip);
   }
-  if (txt !== awayChipTxt) { awayChipTxt = txt; awayChip.lastChild.textContent = txt; }
+  if (txt && S.activity === 'fight') txt = awayChipFit(txt);
+  if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
+let fitKey, fitTxt;
+function awayChipFit(txt) {
+  // only measured again when the words or the screen change
+  const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + ($('nuChip') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
+  if (k === fitKey) return fitTxt;
+  fitKey = k; awayChip.classList.remove('hide');
+  for (const t of [txt, txt.replace(/,.*/, '.')]) { awayChip.lastChild.textContent = t; if (!on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top) return fitTxt = t; }
+  return fitTxt = '';
+}
 uiHooks.push(uiAwayChip);
-   // the notice sits on the game view, so it updates every pass (extension point, 70-ui)
 function uiFight() {
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[zoneUnique(S.zone)].name;

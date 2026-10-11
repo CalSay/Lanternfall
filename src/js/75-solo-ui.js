@@ -351,7 +351,10 @@ var soloIconURL = () => '';
   if (typeof deskMQ === 'object') deskMQ.addEventListener('change', () => setTab(dockTab));
 
   let t = 0;
-  function update() {
+  // tips-pause-740-flake: the guide's tip measures the bar to fit around it, so it hears when the bar comes or goes, once the bar is filled
+  // (the bar also comes or goes when a hero is chosen or a raid drops offline; those still reach the tip on its next look)
+  function update() { const was = bar.hidden; try { refresh(); } finally { if (bar.hidden !== was) emit('soloBar', { show: !bar.hidden }); } }
+  function refresh() {
     const show = !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
     if (bar.hidden === show) { bar.hidden = !show; if (!show) closePicker(); }
     const showBadge = show && !(typeof turnCombatOn === 'function' && turnCombatOn());   // turn fights are active only: no Auto
@@ -376,7 +379,7 @@ var soloIconURL = () => '';
         b.classList.toggle('empty', !o.id);
         const a = o.id ? SOLO_ABILITIES[o.id] : null, pa = o.id && typeof ABILITIES === 'object' ? ABILITIES[o.id] : null;
         b.classList.toggle('passive', !!(pa && pa.kind === 'passive'));
-        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.turnDesc || a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
+        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.turnDesc || a.desc} To change the slot, open Hero, then Abilities.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Choose an ability for it.`);
       }
       setCd(b, o.left, o.max, wait); setN(b, secs(o.left));
       b.classList.toggle('ready', !!o.id && o.ready);
@@ -437,6 +440,9 @@ var soloIconURL = () => '';
   onTick(dt => { t += dt; if (t < 0.08) return; t = 0; try { update(); } catch (e) { console.error('[lanternfall] solo bar', e); } });
   // the paused game (the guide, the picker) does not tick: keep the bar fresh anyway
   setInterval(() => { try { update(); } catch (e) {} }, 250);
+  // tips-pause-740-flake: the bar follows the activity at once, not on its next look (a Got it tip could hold the kill gap with the bar
+  // still away, or over it without the 740x360 fit)
+  on('activity', () => { try { update(); } catch (e) { console.error('[lanternfall] solo bar', e); } });
 
   // ---- floats for the answers (the stage draws them; a parry's PARRY is the stage's own, 62-stage) ----
   on('soloParry', ({ res }) => { if (res === 'miss') emit('float', { txt: 'Open!', color: '#E0524F', big: false, x: 0.27, y: 0.42 }); });

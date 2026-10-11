@@ -1,0 +1,20 @@
+# seed: 1
+# Proof for card load-hold-progress. In the split build, a zone or move still loading holds the fight under its line, and now
+# only the fight: the Forge, Bench and Loom orders keep running through the hold (75-art-load artHoldTick, from 90-boot's frame
+# loop), camp builds and Hands' shifts run on the wall clock and come back as soon as the pack is in, and while gathering the line
+# covers the stage while the game runs on (the raid still holds: the online layer is unchanged). So for the same wall time both builds give the same camp, craft and
+# hands progress. tools/check.mjs "load-hold-progress (browser)" runs the same scenario in both pages with Gloomjaw's pack held
+# (a Hand's shift and a camp build due during the hold, an All order at the Forge) and compares them. The inline page (this
+# route) never holds: it proves the fight, the camp and the Forge's orders still run with no loading line. Run at all three views.
+new early
+wait 2
+tap-if "Continue"
+tap-if "Got it"
+wait 3
+expect-no "#artWait"
+expect-no "Loading"
+shot fight
+tap "Camp"
+wait 1
+expect-no "#artWait"
+shot camp

@@ -1,0 +1,22 @@
+# Proof for card walk-stall-counts-gathering (tooling only). No player-visible change: nothing in src/ changed and the game file is
+# unchanged, so there is nothing to play.
+#
+# Acceptance 1 (seed 1 at the base: every stall line names its cause):
+#   node tools/walk.mjs --seed 1 --hero wren --size 1280x720 --minutes 60 --clock-budget 1800 --html dist/lanternfall.html --out <dir>
+#   Before (nightly walk-2026-10-11.md, build 0dca987e): one stall line,
+#     37:42 stall: nothing moved for 90 s: phase "idle", tip none, 0 card(s) up, tab ""
+#     The bot was gathering for "Build the Tavern" from 36:30 (wood to 37:27, then herb to 38:05); the signature had no skill XP.
+#   After (this branch, base bf47fd73): no stall lines. The run logs the same Next Up presses at the same game times
+#     (36:30 Go wood, 37:27 Ready, 37:29 Go herb, 38:05 Ready), and the gathered skill's XP now moves the signature (only while gathering: refine orders level stations on their own and do not count). The run reached 43:46 before
+#     the browser closed (a tool fault on this container, past the 1800 s budget; the report says so).
+#   After the reviewer's fix (only the gathered skill counts), the same walk with --minutes 39 --clock-budget 2400 played 39:00 of
+#     39:00: no stall lines, the same four Next Up lines at the same times.
+# Acceptance 2 (no real stall is hidden): only the gathered skill's XP joined the signature; the 90 s threshold and every other part are unchanged.
+#   To see each cause line, the same walk with the threshold set to 6 s in a throwaway copy (not committed), 8 game minutes:
+#     0:07 stall ... (long fight): a fight still running with no kill, Thorn Imp at 100%. Screen: no Next Up chip, no menu open, ...
+#     1:07 stall ... (bot gap): a player had a next step (the guide's "You have 11 attribute points waiting. ...") and the bot did not take it.
+#     2:40 stall ... (bot gap): a player had a next step (a bsheet-ov card was up) ...
+#     5:15 stall ... (bot gap): a player had a next step (Next Up's "Learn Power Shot: your Moss Scroll is r..." was Ready) ...
+#   A lost fight in the stretch reads "(fight loss): N lost (boss) fight(s) at zone Z"; with no fight, no Ready row, no pointing
+#   guide line and no card, it reads "(nothing offered): the game offered no next step. Screen: <Next Up chip, tab, hero, activity>".
+# Check: node tools/check.mjs --only="qa-first-hour-walk" -> all checks passed.

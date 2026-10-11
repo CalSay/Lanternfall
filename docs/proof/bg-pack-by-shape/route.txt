@@ -1,0 +1,17 @@
+# seed: 1
+# Proof for card bg-pack-by-shape. Mossy Hollow's painting now ships as one pack per shape: the split build boots with the
+# landscape or the portrait picture only (the stage's shape, as last seen with a window that shape, else guessed from the window),
+# and a phone turned mid-fight to the other shape holds the fight under "Loading Mossy Hollow" until that picture is decoded; the
+# first frame after draws it, never the old procedural woods in its place. The robot plays the inline page, where both shapes are
+# in, so this route shows the zone 1 fight drawing the painting the stage's shape picks at each view. tools/check.mjs "split build
+# (asset-build)" step 5d turns the page mid-fight with the portrait pack held, and step 1 reads which pack each view booted with.
+new early
+wait 2
+tab new zone=1 maxZone=1
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Fight"
+wait 3
+expect "#stage"
+shot mossy-hollow-fight

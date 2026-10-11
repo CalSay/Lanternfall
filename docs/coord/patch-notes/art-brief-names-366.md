@@ -1,0 +1,1 @@
+Docs only: the ability art brief now uses Tobin's and Pip's new move names (Sky Splitter, Shield Charge, Smoulder, Smoke Bolt, Ashen Ward, Ring of Light), and asks for a Shield Charge that keeps the shield on Tobin's arm. (no shot)
