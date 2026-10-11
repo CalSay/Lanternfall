@@ -21,5 +21,7 @@ expect "Power Shot"
 shot list
 tap "Slot W: Power Shot. Open it."
 wait 1
-expect "Power Shot"
+# a line only the detail card shows; on a short landscape screen it sits below the fold
+unless "In slot W. Choose Take out to remove it." scroll
+expect "In slot W. Choose Take out to remove it."
 shot detail

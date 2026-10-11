@@ -189,7 +189,7 @@ async function firstUnique(size) {
 // Hero > Abilities (check 4): the picker list, a learned move's detail and a move to learn's card (Learn button), each read
 // for two-letter tiles where an icon should be. One finding per place, naming each tile not already listed.
 async function abilityPicker(size) {
-  const { ctx, page, X } = await openGame(size);
+  const { ctx, page, errs, X } = await openGame(size);
   await dismissCards(page);
   await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`); await page.waitForTimeout(400);
   const seen = new Set();   // a tile already listed (the list stays up beside a detail) is not listed again
@@ -205,6 +205,7 @@ async function abilityPicker(size) {
   };
   await open('#sec-abilities .ab-row.owned:not(.ab-basic)', 'a learned move\'s detail open');
   await open('#sec-abilities .ab-row.ready', 'a move to learn open (the Learn card)');
+  for (const e of errs) await note(page, { check: 'errors', scenario: 'ability picker', size: size.id, what: 'page error', detail: e.slice(0, 160) });
   await ctx.close();
 }
 async function firstCraft(size) {
