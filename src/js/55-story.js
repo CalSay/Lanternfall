@@ -23,7 +23,7 @@
 //   storyOn() -> bool                      scenes may play
 //   storyHeld() -> bool                    a scene is on screen: the frame loop does not tick (90-boot)
 //   storyClaim(id)                         the UI shows scene `id` (so the hold lasts until it ends; without a claim it lapses in 30 s)
-//   storySkip(id)                          Skip: also files the cards queued with it (not choices) as skipped
+//   storySkip(id)                          Skip: also files the same-kind cards queued with it (not choices) as skipped
 //   storyClose(id, how)                    how: 'done' (the last card closed) | 'skipped' (Skip or Close ended it early) | 'auto'
 //                                          (nobody touched the card for 45 s, or it waited behind another overlay for 28 s: 75-story-ui).
 //                                          Files the scene's page, applies unchosen choice defaults, sets S.story.ends[id] ('auto'
@@ -338,7 +338,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
   const push = sc => { if (!sc) return; sc.run = clock; queue.push(sc); if (sc.kind === 'card') ST().open[sc.id] = 0; };
   storySkip = id => {
     if (!cur || cur.id !== id) return;
-    const run = cur.run, rest = run === undefined ? [] : queue.filter(sc => sc.kind === 'card' && sc.run === run && !sc.cards.some(c => c.choice));
+    const run = cur.run, rest = run === undefined ? [] : queue.filter(sc => sc.kind === 'card' && sc.run === run && sc.ch === cur.ch && !sc.cards.some(c => c.choice));
     for (const sc of rest) queue.splice(queue.indexOf(sc), 1);
     storyClose(id, 'skipped');
     for (const sc of rest) { cur = sc; claimed = false; storyClose(sc.id, 'skipped'); }
@@ -359,7 +359,7 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
       const [k, a, b] = id.split(':');
       let sc = null;
       if (storyOn() && REBUILD[k]) try { sc = REBUILD[k](a, b); } catch (e) { sc = null; }
-      if (sc && sc.id === id && sc.cards.length) { sc.at = Math.max(0, Math.min(sc.cards.length - 1, Math.floor(+st.open[id]) || 0)); st.open[id] = sc.at; sc.run = -1; queue.push(sc); continue; }
+      if (sc && sc.id === id && sc.cards.length) { sc.at = Math.max(0, Math.min(sc.cards.length - 1, Math.floor(+st.open[id]) || 0)); st.open[id] = sc.at; queue.push(sc); continue; }
       delete st.open[id];
       if (st.seen[id] > 0) st.seen[id] = -st.seen[id];   // late, unread: "Catch up on the story"
       const post = /^([pe]:[^:]+):post$/.exec(id); if (post) delete st.read[post[1]];

@@ -112,7 +112,7 @@
   // a line that no longer matches the game when its turn comes is dropped, never said (the Scroll already spent)
   const SAY_STILL = {
     // stale-guide-tips: dropped once its place was opened
-    ...Object.fromEntries(Object.keys(SAY_TXT).filter(id => FEATURE_OF[id] && FEATURE_OF[id].view).map(id => [id, () => !O().seen[FEATURE_OF[id].view] && !(id === 'craft' && toolMade())])),
+    ...Object.fromEntries(Object.keys(SAY_TXT).filter(id => FEATURE_OF[id] && FEATURE_OF[id].view && !FEATURE_OF[id].late).map(id => [id, () => !O().seen[FEATURE_OF[id].view] && !(id === 'craft' && toolMade())])),
     gather: () => typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit(),   // his promise is for the cold fire only
     scroll: () => { try { return SCROLL_ORDER.some(id => scrollCount(id) > 0); } catch (e) { return false; } },
     // tip-order-and-lateness: and not once you have pressed the move (you found it; the line came 2 min late and told you where it was)
@@ -444,8 +444,8 @@
       if (!id) {}
       else if (SAY_STILL[id] && !SAY_STILL[id]()) sayDone('say:' + id, false);
       // (tip-order-and-lateness: on the Hero menu the slot line goes before a step already up there, which comes back after its Got it)
-      // (nor over a tip on screen with a button: stale-guide-tips)
-      else if (sayCur === id || !step || (id === 'slot' && S.tab === 'party' && !LESSON_IDS.includes(step.id)) || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && (ONBOARD.paused || (!layer.hidden && !okb.hidden))))) {
+      // (nor over a tip on screen with a Go: stale-guide-tips)
+      else if (sayCur === id || !step || (id === 'slot' && S.tab === 'party' && !LESSON_IDS.includes(step.id)) || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && (ONBOARD.paused || (!layer.hidden && !!curGo))))) {
         // the card first: he waits, and the gap after the kill waits with him (the card holds the game too), so after Continue he speaks before the next foe
         // zone10-clear-moment: a line already chosen (sayCur) waits too; it stays queued and speaks after the card
         // (a line beside the running fight holds nothing, so only a card waits it: a hit on its way is no reason to hide it)
@@ -557,7 +557,7 @@
   const swallowed = () => performance.now() - swallowAt < 700;
   function barUnder(e) {
     const soloBar = solo(); if (!soloBar || soloBar.hidden || layer.hidden || bub.hidden || !$('app').classList.contains('guide-bar-off')) return null;
-    if (e.target && (okb.contains(e.target) || x.contains(e.target))) return null;
+    if (e.button || (e.target && (okb.contains(e.target) || x.contains(e.target) || e.target.closest('.toast')))) return null;
     return [...soloBar.querySelectorAll('[data-act]')].find(n => { const r = n.getBoundingClientRect(); return r.width > 0 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; }) || null;
   }
   document.addEventListener('pointerdown', e => {
