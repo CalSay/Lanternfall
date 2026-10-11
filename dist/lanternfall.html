@@ -438,6 +438,7 @@ html :is(.cf-go, .gx-go, .cb-go) { background: var(--pri); color: #1D1509; borde
 .nlog-row.good { border-left-color: var(--xp); } .nlog-row.ember { border-left-color: var(--arcane); } .nlog-row.raid { border-left-color: var(--hp); }
 .nlog-row.loot, .nlog-row.hi { border-left-color: var(--gold); font-weight: 600; }
 .nlog-row.new { background: #1E1626; }
+.nlog-row.has-go { cursor: pointer; } .nlog-row.has-go:hover, .nlog-row.has-go:focus-visible { border-color: var(--gold); }
 .nlog-row.low { color: #D8CFE3; }
 .nlog-h { margin: 0; font: 600 max(var(--tmin, 0px), calc((20px * var(--display-k)) * var(--tk, 1)))/1.1 var(--display); }
 .nlog-empty { padding: 20px 0; text-align: center; }
@@ -13059,7 +13060,7 @@ on('heroJoin', ({ key } = {}) => {
   const free = attrPoints(key).free; if (a.met[key] || !(free > 0)) return;
   a.met[key] = 1;
   const nm = typeof ROSTER === 'object' && ROSTER[key] ? ROSTER[key].name.split(' ')[0] : 'Your hero';
-  emit('toast', { key: 'attr-join', msg: `${nm} has ${free} attribute point${free === 1 ? '' : 's'}. Spread them evenly in one press, or build your own.`, kind: 'good', prio: 'normal', go: { view: 'attributes' } });
+  emit('toast', { key: 'attr-join', msg: `${nm} has ${free} attribute point${free === 1 ? '' : 's'}. Spread them evenly in one press, or build your own.`, kind: 'good', prio: 'normal', go: { view: 'attributes' }, still: () => attrPoints(key).free > 0 });
 });
 
 registerState('attr', { v: 1, pts: {}, resets: {}, met: {}, live: 0, xpv: 0 });
@@ -13343,7 +13344,8 @@ function bossTryWays(L) {
   }
   on('bountyReady', ({ i, away }) => {
     const b = S.bounties.slots[i]; if (away || !b || !b.k) return;   // away catch-up: the away card tells it
-    emit('toast', { key: 'bounty-ready', msg: "Bounty ready to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { const j = S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need); if (j >= 0) claimBounty(j); } } });   // the first finished one: a merged or stale notice never claims a wrong slot
+    emit('toast', { key: 'bounty-ready', msg: "Bounty ready to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { const j = S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need); if (j >= 0) claimBounty(j); } },
+      still: () => S.bounties.slots.some(x => x && x.k && x.have >= x.need), goLog: { tab: 'adv', sel: '#sec-bounties' } });
   });
   on('kill', ({ mob, zone }) => {
     btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1);
@@ -15946,36 +15948,12 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 }
 
 // ---- src/js/55-onboard.js ----
-// 55-onboard: the guided first ten minutes (docs/design/onboarding.md). Two parts:
-//   1. Progressive unlocks. Tabs, sub-views and a few sections appear as the player reaches them,
-//      so a new game starts with the Fight tab only. The rules are the FEATURES table below.
-//   2. The guide: a short list of contextual hints (GUIDE_STEPS). Each step completes by doing
-//      the thing. The UI (75-onboard-ui.js) draws the marker and the sentence.
-// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
-//
-// isUnlocked(id) -> bool       UI files ask this; views and sections declare `feature: id`.
-//                              Unknown ids and falsy ids are unlocked.
-// onboardReveal(id)            unlock one feature now (the player navigated there some other way).
-// onboardUnlockAll()           every feature now ("Show every tab" in the Journal).
-// onboardStep() -> step | null the guide step to show now: { id, ...GUIDE_STEPS entry }.
-// onboardDone(id)              mark a guide step done (the UI's "x", or a UI-only action).
-// onboardTips(on)              guide on/off ("Skip tips" in the Journal).
-// onboardNeed(id) -> [{ fam, t, kind, have, n, name }]   what step `id` still waits for in materials ([] = nothing).
-// onboardWants(id) -> bool     step `id` is still due (tips on, not done or hidden, its when() true), in any fight phase.
-// onboardPaused(step) -> bool  should the game wait while this step shows (see PAUSE RULES below).
-// goalGate(goal) -> bool       Next Up filter: false while the goal's system is still hidden.
-//                              Only active once the UI turns it on (ONBOARD.gate), so the Node
-//                              tools see every goal.
-// onboardUse({ tab, view, feature }) -> { id, text } | null   the first-use line for the system on screen (FIRST_USE below):
-//                              each system that opens after the first fight explains itself once, in one line. The UI
-//                              asks only while no guide step shows and no fight is in view; it pauses the game only to hold
-//                              the gap between two foes with the fight in view, until Got it (staged-guide-followups).
-// onboardUseDone(id)           the line was read (x, or about 7 s on screen). No event, so guide walks never see it.
-// onboardJoined(id)            a starter joined on the road (56c, starters-join-when-met): the first opens the `switch` row, a later
-//                              one stamps the clock (got['join:<id>']), so no unlock opens within ONBOARD_TUNE.gap of any join.
-// Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
-// State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
-//   tips, t (seconds played while the guide runs), taps, casts, sayQ: [{ id, arg }] (Hesketh's unread lines, 75-onboard-ui; reload-keeps-tips) }.
+// 55-onboard: the guided first ten minutes (docs/design/onboarding.md): progressive unlocks (FEATURES) and the guide (GUIDE_STEPS);
+// 75-onboard-ui.js draws them. CORE FILE: no DOM, window, document, canvas or localStorage.
+// API: isUnlocked(id), onboardReveal(id), onboardUnlockAll(), onboardStep() -> the step to show, onboardDone(id), onboardTips(on),
+// onboardNeed(id) -> short materials, onboardWants(id), onboardPaused(step), goalGate(goal), onboardUse(ctx) -> first-use line,
+// onboardUseDone(id), onboardJoined(id). Events: unlock { id, tab, view, quiet }, onboardStep { id }.
+// State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 }, tips, t, taps, casts, sayQ }.
 let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, guideHide, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardWants, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
 let lessonLast = -1;   // the foe's clock at the last tick (guideLessonHold: a hold starts only on the frame that crosses a window's opening)
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
@@ -16065,33 +16043,14 @@ const FIRST_USE = {
   blackjack: { text: "Bet gold and beat Hesketh's hand without going over 21." }
 };
 
-// GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
-// done() completes a step by doing the thing. Targets and sentences live in 75-onboard-ui.js.
-// Cold-Hearth steps (chop, light, bench, tool, forge, store) show only on a cold save; there tab:gat,
-// tab:world and tab:forge are done from the start (chop, light and tool replace them).
-// SOLO1 (the solo hero's first session): choose a hero (the create screen), Attack, the ability, Dodge, Parry and
-// the counter, the first boss, an upgrade, then Gather (Pine Log for the fire) and camp. cal-0107-staged-guide: in a turn fight the four
-// presses are one staged lesson, taught as each first comes up: Attack, Dodge, the ability, Parry. `pause`: the game waits while
-// the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button;
-// `needs`: the materials a step waits for (no pause, live progress). Build steps complete when the build starts.
+// GUIDE_STEPS, in priority order: the first step not done whose when() holds shows; done() ends it by doing the thing. Cold-Hearth
+// steps show only on a cold save. `pause`: the game waits while it shows; `ok`: a Got it step; `needs`: materials (live progress, no pause).
 const campBusy = id => campLv(id) >= 1 || (typeof campPending === 'function' && !!campPending(id));
 // only while its foe lives: a warning left by a foe that died (auto-play, a burn) cannot be parried, so it must not hold the game paused
 const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15 && (w.foe && !w.foe.dead && w.foe.hp > 0 && !w.foe.gone || !!(w.spec && w.spec.dead))); } catch (e) { return false; } };
 const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen);
-// PAUSE RULES (W1-A; owner: "the game pauses while a tutorial step is open"). A step pauses the game only while it waits
-// for the player to READ or PRESS something right now. A step whose goal needs game time (chop logs, wait for a build,
-// earn gold) never pauses: it has `needs` (the materials it waits for) and shows live progress instead. A press step whose
-// build or recipe is still short of materials has `pauseUnless` (the same list): it does not pause while any is missing,
-// so no step can freeze the clock it needs. tools/check.mjs holds all three rules.
-//   attack, ability, dodge, parry, gather, light, upgrade   pause (press this now)
-//   spend                                                    pause (press this now; spend-points-before-nextup)
-//   boss                                                     pause (Got it)
-// cal-0107-staged-guide: in a fight only the held lessons (attack, dodge, ability, parry, boss) show and pause. Every other step
-// (`ph` 'between') shows only between fights, and its line is hidden while a foe is on the field.
-//   chop, stock:bench, stock:tool, stock:forge, stock:weapon, stock:store  no pause (needs materials: live progress)
-//   bench, tool, forge, weapon, store                        pause only once the materials are in hand (pauseUnless)
-//   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them). staged-guide-followups:
-//                                                            a Got it line that starts in the gap between foes holds that gap (75-onboard-ui)
+// PAUSE RULES (W1-A): a step pauses only while it waits for a read or a press now, never for game time; `pauseUnless`: no pause while
+// short of materials. In a fight only the held lessons show; `ph` 'between' steps wait for the gap. tools/check.mjs holds the rules.
 const stockOf = (fam, t, n) => [fam, t, n];
 // A Lv 1 row's gold rides along as ['gold', 0, n] (the Workbench): needShort reads it from S.gold, so a press step never pauses short of gold either.
 const matsOfBuild = id => { const f = typeof hearthFirst === 'function' ? hearthFirst(id) : null; return f ? f.mats.concat(f.gold > 0 ? [['gold', 0, f.gold]] : []) : []; };
@@ -17957,6 +17916,7 @@ let essCap, storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, s
 //   storyOn() -> bool                      scenes may play
 //   storyHeld() -> bool                    a scene is on screen: the frame loop does not tick (90-boot)
 //   storyClaim(id)                         the UI shows scene `id` (so the hold lasts until it ends; without a claim it lapses in 30 s)
+//   storySkip(id)                          Skip: also files the same-kind cards queued with it (not choices) as skipped
 //   storyClose(id, how)                    how: 'done' (the last card closed) | 'skipped' (Skip or Close ended it early) | 'auto'
 //                                          (nobody touched the card for 45 s, or it waited behind another overlay for 28 s: 75-story-ui).
 //                                          Files the scene's page, applies unchosen choice defaults, sets S.story.ends[id] ('auto'
@@ -18017,7 +17977,7 @@ const STORY_TUNE = { champMoment: true,   // champion-moment: a Champion's first
 
 let storyOn, storyPage, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
-  storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey, storyBusy;
+  storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey, storyBusy, storySkip;
 // zone10-clear-moment: the story name of the Champion that holds zone z ("The Hollow Cantor"), or '' (the fight bar, the loss sheet and the boss odds' scratch boss use it)
 function champStoryName(z) { const C = (typeof STORY_BEATS === 'object' && STORY_BEATS && STORY_BEATS.champ) || {}; const c = Object.values(C).find(v => v && v.zone === z); return (c && c.name) || ''; }
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
@@ -18268,7 +18228,14 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     cur = sc; claimed = false; heldAt = Date.now();
     emit('storyScene', sc);
   }
-  const push = sc => { if (!sc) return; queue.push(sc); if (sc.kind === 'card') ST().open[sc.id] = 0; };
+  const push = sc => { if (!sc) return; sc.run = clock; queue.push(sc); if (sc.kind === 'card') ST().open[sc.id] = 0; };
+  storySkip = id => {
+    if (!cur || cur.id !== id) return;
+    const run = cur.run, rest = run === undefined ? [] : queue.filter(sc => sc.kind === 'card' && sc.run === run && sc.ch === cur.ch && !sc.cards.some(c => c.choice));
+    for (const sc of rest) queue.splice(queue.indexOf(sc), 1);
+    storyClose(id, 'skipped');
+    for (const sc of rest) { cur = sc; claimed = false; storyClose(sc.id, 'skipped'); }
+  };
   storyPage = (id, i) => { if (ST().open[id] !== undefined) ST().open[id] = i; };   // the UI draws page i of that scene
 
   // ---- a reload mid-scene (reload-keeps-tips): what was queued or on screen comes back at its page, at the first gap ----
@@ -38190,7 +38157,12 @@ function dropToast(t, how) {
   if (reduced) { t.remove(); return; }
   t.classList.add(how || 'out'); setTimeout(() => t.remove(), 170);
 }
-function armToast(t) { clearTimeout(t._timer); t._timer = setTimeout(() => dropToast(t), NOTE_MS[t._p] + (t._kind === 'loot' ? 800 : 0)); }
+// a toast with a go stays until tapped or replaced; `still` false drops it
+function armToast(t) {
+  clearTimeout(t._timer);
+  if (t._tap && !t._news) { if (t._still) t._timer = setTimeout(() => { let ok = 1; try { ok = t._still(); } catch (e) {} ok ? armToast(t) : dropToast(t); }, 1000); return; }
+  t._timer = setTimeout(() => dropToast(t), NOTE_MS[t._p] + (t._kind === 'loot' ? 800 : 0));
+}
 function fillToast(t, msg, url) {
   t.textContent = '';
   if (url) t.append(img(url));
@@ -38199,9 +38171,9 @@ function fillToast(t, msg, url) {
   if (t._tap && !t._news) t.append(el('span', 'go', '›'));
   t._msg = msg;
 }
-function makeToast(msg, kind, url, p, go) {
+function makeToast(msg, kind, url, p, go, still) {
   const t = el('div', 'toast ' + (kind || '') + (p === 2 ? ' hi' : '') + (go ? ' has-go' : ''));
-  t._p = p; t._kind = kind; t._more = 0;
+  t._p = p; t._kind = kind; t._more = 0; t._still = typeof still === 'function' ? still : null;
   if (go) t._tap = () => followGo(go);   // UX-A (ux-overhaul.md 4.6): a toast with go follows it on a tap
   t.setAttribute('role', 'status');
   fillToast(t, msg, url);
@@ -38252,16 +38224,16 @@ function noteStat(rule, ch, msg) {
 }
 // A line in the bell. ch 'bell' counts on the badge; 'log' and 'pop' lines are listed only. Unread lines of
 // one rule and channel merge into one (the rule's merge() words it; otherwise the newest line and a count).
-function noteLog(rule, msg, kind, url, ch) {
+function noteLog(rule, msg, kind, url, ch, go) {
   const id = rule ? rule.id : '', counted = ch === 'bell';
   const e = id && ch !== 'pop' ? notes.log.find(n => n.rule === id && n.ch === ch && n.id > notes.seenSeq && n.msgs) : null;
   if (e) {
     e.msgs.push(msg); if (e.msgs.length > 30) e.msgs.shift();
     e.n++; e.msg = rule.merge ? rule.merge(e.msgs) : msg; e.more = rule.merge ? 0 : e.n - 1;
-    e.url = url || e.url; e.at = Date.now(); e.id = ++notes.seq;
+    e.url = url || e.url; e.go = go || null; e.at = Date.now(); e.id = ++notes.seq;
     notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e);
   } else {
-    notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p: ch === 'pop' ? 2 : counted ? 1 : 0, at: Date.now(), rule: id, ch, n: 1, more: 0, msgs: [msg] });
+    notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p: ch === 'pop' ? 2 : counted ? 1 : 0, at: Date.now(), rule: id, ch, n: 1, more: 0, msgs: [msg], go: go || null });
     if (notes.log.length > 50) notes.log.length = 50;
     if (counted) notes.unread++;
   }
@@ -38281,10 +38253,11 @@ function notify(n, when) {
   if (ch === 'none' || ch === 'card') return ch;
   let url = null; try { url = iconOf(n.icon); } catch (e) {}
   if (NEWS.open && (ch === 'pop' || ch === 'bell')) { NEWS.lines.push({ msg, url, kind: kind || '', p: ch === 'pop' ? 2 : 1 }); return ch; }
-  if (ch !== 'pop') { noteLog(rule, msg, kind, url, ch); return ch; }
+  const lineGo = n.goLog || n.go || null;
+  if (ch !== 'pop') { noteLog(rule, msg, kind, url, ch, lineGo); return ch; }
   if (!(rule && rule.reply)) { notes.pops.push(notes.clock); notes.popN++; }
-  noteLog(rule, msg, kind, url, 'pop');
-  popToast(msg, kind, url, Math.max(1, notePrio(n.prio, kind)), n.go);
+  noteLog(rule, msg, kind, url, 'pop', lineGo);
+  popToast(msg, kind, url, Math.max(1, notePrio(n.prio, kind)), n.go, n.still);
   return 'pop';
 }
 // Stage captions and cards ask here before they show. Returns 'pop' (show it now), 'card', 'wait'
@@ -38307,7 +38280,7 @@ function noticeDrop(key, msg) {
   return out;
 }
 // Draw a pop. A repeat of a toast on screen adds "+1"; a full stack retires its oldest toast.
-function popToast(msg, kind, url, p, go) {
+function popToast(msg, kind, url, p, go, still) {
   const box = $('toasts');
   const live = [...box.children].filter(t => !t._gone);
   const same = live.find(t => t._msg === msg);
@@ -38317,7 +38290,7 @@ function popToast(msg, kind, url, p, go) {
   const old = live.filter(t => !(t._hold > Date.now()));   // a moment banner stays its minimum time (75-moments-ui)
   const heldN = live.length - old.length;
   for (let i = 0; i <= old.length - Math.max(1, room - heldN); i++) { const out = old[i]; if (!out) break; out._gone = true; clearTimeout(out._timer); out.remove(); }
-  const t = makeToast(msg, kind, url, p, go);
+  const t = makeToast(msg, kind, url, p, go, still);
   box.appendChild(t);
   armToast(t);
 }
@@ -38438,6 +38411,12 @@ function openNoticeLog() {
         const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
         const tx = el('span', null, n.msg); if (n.more) tx.append(el('span', 'more', ' +' + n.more));   // W1-B: merged lines
         r.append(n.url ? img(n.url) : el('span'), tx, el('span', 'ago', ago(now - n.at)));
+        if (n.go && !n.list) {
+          r.classList.add('has-go'); r.setAttribute('role', 'button'); r.tabIndex = 0;
+          const follow = () => { const g = n.go; api.close(); followGo(g); };
+          r.addEventListener('click', follow);
+          r.addEventListener('keydown', e => { if (/^(Enter| )$/.test(e.key)) { e.preventDefault(); follow(); } });
+        }
         if (n.list) {
           r.firstChild.nextSibling.textContent = "What's new";
           const ul = el('ul', 'nlog-news');
@@ -47429,6 +47408,8 @@ let navUI = null;
   const sayText = id => { const t = SAY_TXT[id] || SAY_MORE[id]; try { return typeof t === 'function' ? t() : t; } catch (e) { return ''; } };
   // a line that no longer matches the game when its turn comes is dropped, never said (the Scroll already spent)
   const SAY_STILL = {
+    // stale-guide-tips: dropped once its place was opened
+    ...Object.fromEntries(Object.keys(SAY_TXT).filter(id => FEATURE_OF[id] && FEATURE_OF[id].view && !FEATURE_OF[id].late).map(id => [id, () => !O().seen[FEATURE_OF[id].view] && !(id === 'craft' && toolMade())])),
     gather: () => typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit(),   // his promise is for the cold fire only
     scroll: () => { try { return SCROLL_ORDER.some(id => scrollCount(id) > 0); } catch (e) { return false; } },
     // tip-order-and-lateness: and not once you have pressed the move (you found it; the line came 2 min late and told you where it was)
@@ -47534,9 +47515,9 @@ let navUI = null;
   const finish = s => s.id.startsWith('say:') ? sayDone(s.id) : s.id.startsWith('use:') ? onboardUseDone(s.id) : guideHide(s.id) || onboardDone(s.id);   // a first-use line is read, not a guide step; a wear tip or the fire tip hides for this session (reload-keeps-tips)
   // Got it is an answer: a guide step it ends is done for good (only × and the retire hide a tip for the session, reload-keeps-tips)
   // forge-line-while-fighting: a held line's Go answers it too
-  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) { curGo.fn(); if (cur && cur.id.startsWith('say:')) finish(cur); } else if (cur) { if (/^(say|use):/.test(cur.id)) finish(cur); else onboardDone(cur.id); } tick(); });
+  okb.addEventListener('click', e => { e.stopPropagation(); if (swallowed()) return; if (curGo) { curGo.fn(); if (cur && cur.id.startsWith('say:')) finish(cur); } else if (cur) { if (/^(say|use):/.test(cur.id)) finish(cur); else onboardDone(cur.id); } tick(); });
   let cur = null;   // the step on screen
-  x.addEventListener('click', e => { e.stopPropagation(); if (cur) finish(cur); tick(); });
+  x.addEventListener('click', e => { e.stopPropagation(); if (swallowed()) return; if (cur) finish(cur); tick(); });
   const chip = $('nuChip');
   if (chip) chip.addEventListener('click', () => onboardDone('nextup'));
 
@@ -47760,7 +47741,8 @@ let navUI = null;
       if (!id) {}
       else if (SAY_STILL[id] && !SAY_STILL[id]()) sayDone('say:' + id, false);
       // (tip-order-and-lateness: on the Hero menu the slot line goes before a step already up there, which comes back after its Got it)
-      else if (sayCur === id || !step || (id === 'slot' && S.tab === 'party' && !LESSON_IDS.includes(step.id)) || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && ONBOARD.paused))) {
+      // (nor over a tip on screen with a Go: stale-guide-tips)
+      else if (sayCur === id || !step || (id === 'slot' && S.tab === 'party' && !LESSON_IDS.includes(step.id)) || ((step.ph || []).includes('between') && !(cur && cur.id === step.id && (ONBOARD.paused || (!layer.hidden && !!curGo))))) {
         // the card first: he waits, and the gap after the kill waits with him (the card holds the game too), so after Continue he speaks before the next foe
         // zone10-clear-moment: a line already chosen (sayCur) waits too; it stays queued and speaks after the card
         // (a line beside the running fight holds nothing, so only a card waits it: a hit on its way is no reason to hide it)
@@ -47866,6 +47848,21 @@ let navUI = null;
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
     if (soloPickerOpen() || gameHeld() || (S.tab && !isWide())) return;
     if (!answerByPress()) refusePress(soloBar.querySelector(`[data-act="${id}"]`));
+  }, true);
+  // stale-guide-tips: a tip that hides the bar passes a tap on a fight button's spot to the button
+  let swallowAt = -1e9;
+  const swallowed = () => performance.now() - swallowAt < 700;
+  function barUnder(e) {
+    const soloBar = solo(); if (!soloBar || soloBar.hidden || layer.hidden || bub.hidden || !$('app').classList.contains('guide-bar-off')) return null;
+    if (e.button || (e.target && (okb.contains(e.target) || x.contains(e.target) || e.target.closest('.toast')))) return null;
+    return [...soloBar.querySelectorAll('[data-act]')].find(n => { const r = n.getBoundingClientRect(); return r.width > 0 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; }) || null;
+  }
+  document.addEventListener('pointerdown', e => {
+    if (soloPickerOpen() || gameHeld()) return;
+    const b = barUnder(e); if (!b) return;
+    e.preventDefault(); e.stopPropagation(); swallowAt = performance.now();
+    if (heldNow() && !answerByPress()) { refusePress(b); return; }
+    b.click();
   }, true);
   document.addEventListener('pointerdown', e => {
     const soloBar = solo();
@@ -50262,7 +50259,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
     // no pointerdown or key anywhere for IDLE_MS: the card files itself (how 'auto'); any input restarts the wait
     const wake = () => { clearTimeout(idleT); idleT = setTimeout(() => end('auto'), IDLE_MS); };
     const stopIdle = () => { clearTimeout(idleT); document.removeEventListener('pointerdown', wake, true); document.removeEventListener('keydown', wake, true); };
-    const end = how => { stopIdle(); if (finished) return; finished = true; storyClose(sc.id, how); if (cardApi) cardApi.close(); };
+    const end = how => { stopIdle(); if (finished) return; finished = true; (how === 'skipped' ? storySkip : storyClose)(sc.id, how); if (cardApi) cardApi.close(); };
     document.addEventListener('pointerdown', wake, true); document.addEventListener('keydown', wake, true); wake();
     openSheet(api => {
       cardApi = api;

@@ -23,6 +23,7 @@
 //   storyOn() -> bool                      scenes may play
 //   storyHeld() -> bool                    a scene is on screen: the frame loop does not tick (90-boot)
 //   storyClaim(id)                         the UI shows scene `id` (so the hold lasts until it ends; without a claim it lapses in 30 s)
+//   storySkip(id)                          Skip: also files the same-kind cards queued with it (not choices) as skipped
 //   storyClose(id, how)                    how: 'done' (the last card closed) | 'skipped' (Skip or Close ended it early) | 'auto'
 //                                          (nobody touched the card for 45 s, or it waited behind another overlay for 28 s: 75-story-ui).
 //                                          Files the scene's page, applies unchosen choice defaults, sets S.story.ends[id] ('auto'
@@ -83,7 +84,7 @@ const STORY_TUNE = { champMoment: true,   // champion-moment: a Champion's first
 
 let storyOn, storyPage, storyHeld, storyInGap, storyChoiceDef, storyChosen, storyClaim, storyClose, storyChoose, storyList, storyEntry, storyRead, storyUnread, storyLate, storyJournalOpened,
   storyRoadLog, storyFile, storyHeroLine, storyHearthLine, storyVerse, storyVerseLatest, storyItemLine, storyRanks, storyEncounter, storyFoes, storySync,
-  storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey, storyBusy;
+  storyIntroClaim, storyIntro, storyIntroDone, storyHeroKey, storyBusy, storySkip;
 // zone10-clear-moment: the story name of the Champion that holds zone z ("The Hollow Cantor"), or '' (the fight bar, the loss sheet and the boss odds' scratch boss use it)
 function champStoryName(z) { const C = (typeof STORY_BEATS === 'object' && STORY_BEATS && STORY_BEATS.champ) || {}; const c = Object.values(C).find(v => v && v.zone === z); return (c && c.name) || ''; }
 const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_ENC.champ.<id> = true (storyEncounter)
@@ -334,7 +335,14 @@ const STORY_ENC = { champ: {}, elder: {} };   // encounters in the game: STORY_E
     cur = sc; claimed = false; heldAt = Date.now();
     emit('storyScene', sc);
   }
-  const push = sc => { if (!sc) return; queue.push(sc); if (sc.kind === 'card') ST().open[sc.id] = 0; };
+  const push = sc => { if (!sc) return; sc.run = clock; queue.push(sc); if (sc.kind === 'card') ST().open[sc.id] = 0; };
+  storySkip = id => {
+    if (!cur || cur.id !== id) return;
+    const run = cur.run, rest = run === undefined ? [] : queue.filter(sc => sc.kind === 'card' && sc.run === run && sc.ch === cur.ch && !sc.cards.some(c => c.choice));
+    for (const sc of rest) queue.splice(queue.indexOf(sc), 1);
+    storyClose(id, 'skipped');
+    for (const sc of rest) { cur = sc; claimed = false; storyClose(sc.id, 'skipped'); }
+  };
   storyPage = (id, i) => { if (ST().open[id] !== undefined) ST().open[id] = i; };   // the UI draws page i of that scene
 
   // ---- a reload mid-scene (reload-keeps-tips): what was queued or on screen comes back at its page, at the first gap ----

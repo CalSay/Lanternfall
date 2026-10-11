@@ -87,7 +87,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
     // no pointerdown or key anywhere for IDLE_MS: the card files itself (how 'auto'); any input restarts the wait
     const wake = () => { clearTimeout(idleT); idleT = setTimeout(() => end('auto'), IDLE_MS); };
     const stopIdle = () => { clearTimeout(idleT); document.removeEventListener('pointerdown', wake, true); document.removeEventListener('keydown', wake, true); };
-    const end = how => { stopIdle(); if (finished) return; finished = true; storyClose(sc.id, how); if (cardApi) cardApi.close(); };
+    const end = how => { stopIdle(); if (finished) return; finished = true; (how === 'skipped' ? storySkip : storyClose)(sc.id, how); if (cardApi) cardApi.close(); };
     document.addEventListener('pointerdown', wake, true); document.addEventListener('keydown', wake, true); wake();
     openSheet(api => {
       cardApi = api;

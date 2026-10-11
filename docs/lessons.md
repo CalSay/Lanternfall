@@ -152,6 +152,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - After a screen that held the game closes, call `storySync()` yourself: the guide can pause the ticks that would have played what waited. Why: the area caption never came when the guide's tip was up. (intro-and-picker, 2026-10-06)
 - Before a ruling moves who is met where, check `STORY_BEATS` (`21k-story-hollow.js`) and bible 4.4: meet scenes are written for their place (Wren's cave, Pip's graves). Why: a judge ruling put Wren and Pip at the wrong Champions; Codex P1 on PR #83. (early-game lead, 2026-10-06)
 
+- A Skip that ends more than the scene on screen must leave queued choice scenes to play: skipping the card before a choice must never take the choice's default. Why: the story UI check (Voice card, then the lamp choice) failed when stale-guide-tips' first cut skipped the whole queue. (stale-guide-tips, 2026-10-11)
+
 ## UI and menus
 - A font swap moves every line stacked under a hidden one: a face with shorter line boxes lifts the line below, so re-run the overlap checks (turn banner vs trick line) at 740x360 before the first push. Why: ui2-look's Barlow made the turn banner's trick line rise 5 px into the banner (`.tc-on .tv-top .tv-warn` margin 14 -> 19 px). (ui2-look, 2026-10-11)
 - Keep a role's old fallback stack when you swap its web font: the fallback-font fit checks (ability names, place names) are tuned to it, and a wider fallback cut "Momentum" at 1280x720. Font sizes set inline in JS skip `scaleText`, so give them a 14 px floor by hand on the desktop tiers. (ui2-look, 2026-10-11)
@@ -274,6 +276,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - A label moved into the band under the fight plates (`--vs-b`) shares it with the turn UI: on desktop a foe trick's line (`.tv-warn`) jumps up to `--vs-b` beside the place line while the whose-turn banner shows (60-turn). Measure a new label against the plates, the turn line, the banner and a shown trick line, not the plates alone. Why: the reviewer caught the Oil bar under a trick line at 1280x720 that a plates-only check passed. (deepwell-floor-label-clear, 2026-10-11)
 - Name the hero a craft list is for by class (`SOLO_BY_BASE[S.party.cls]`, what `fits()` reads), not `soloHero()`: `save-pip-tool-made` is a Pip class with `solo.hero` 'wren', so a soloHero name read "Nothing to forge for Wren" over Pip's list. For a cold-Hearth Camp check with the Workbench unbuilt, use `save-unlit-8log` plus `hearthLight()`: `save-bench-ready` throws a paintFire page error at load. (craft-costs-up-front, 2026-10-11)
 - Run `node tools/check.mjs --only="solo copy"` on any new on-screen sentence: its W1C_RE bans "other heroes", "party", "ally" and more on every screen. Why: "These are for other heroes." on the Forge failed shard 2 of #433. (craft-costs-up-front, 2026-10-11)
+
+- The guide panel takes no taps (`.ob-bub` has `pointer-events: none`; only its Got it, Go and × buttons do), so a tip can only take a fight tap when it hides the bar (`.guide-bar-off`) or its button sits over one. To test a tap-through, make the tip too tall to fit above the bar, not its words lie over a button. Why: stale-guide-tips' first check laid the words over Attack and the tap reached Attack on the old build too. (stale-guide-tips, 2026-10-11)
 
 ## Saves and offline parity
 

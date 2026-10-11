@@ -28,6 +28,7 @@
 .nlog-row.good { border-left-color: var(--xp); } .nlog-row.ember { border-left-color: var(--arcane); } .nlog-row.raid { border-left-color: var(--hp); }
 .nlog-row.loot, .nlog-row.hi { border-left-color: var(--gold); font-weight: 600; }
 .nlog-row.new { background: #1E1626; }
+.nlog-row.has-go { cursor: pointer; } .nlog-row.has-go:hover, .nlog-row.has-go:focus-visible { border-color: var(--gold); }
 .nlog-row.low { color: #D8CFE3; }
 .nlog-h { margin: 0; font: 600 calc(20px * var(--display-k))/1.1 var(--display); }
 .nlog-empty { padding: 20px 0; text-align: center; }
