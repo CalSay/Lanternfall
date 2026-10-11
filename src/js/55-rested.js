@@ -19,7 +19,7 @@
 // Events: 'activity' (toast on the way to a fight), 'awayBegin' / 'away' / 'awayEnd'.
 
 const REST_TUNE = { rate: 0.5, cap: 180, dmg: 0.1, toastMin: 10 };
-let wellRested, restParty, restNote;
+let wellRested, restParty, restNote, restTick;
 {
   registerState('rested', { left: 0 });
   // read each time (a reset or an import replaces S); a damaged field starts over empty
@@ -44,7 +44,7 @@ let wellRested, restParty, restNote;
   };
 
   addModifier('dmg', () => active() ? 1 + REST_TUNE.dmg : 1);
-  onTick(dt => {
+  onTick(restTick = dt => {
     if (S.activity === 'gather') { if (R().left < REST_TUNE.cap && restParty()) R().left = clamp(R().left + dt * REST_TUNE.rate); }
     else if (R().left > 0 && fighting()) R().left = clamp(R().left - dt);
   });

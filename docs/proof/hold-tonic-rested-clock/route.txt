@@ -1,0 +1,19 @@
+# seed: 1
+# Proof for card hold-tonic-rested-clock. In the split build, a zone or move still loading holds the fight under its line, and
+# since load-hold-progress only the fight. Tonic time and Well Rested used to pause with the held fight; now they run down on
+# wall time through the hold too (75-art-load artHoldTick calls 55-crafting tonicBurn and 55-rested restTick), so both builds
+# give the same result for the same wall time. tools/check.mjs "load-hold-progress (browser)" drinks a tonic, banks 100 s of
+# Rested, holds Gloomjaw's pack in zone 2 and checks both run down every game second in the split and the inline page. This
+# route plays the inline page (no loading line): the fight and the Camp still run. Run at all three views.
+new early
+wait 2
+tap-if "Continue"
+tap-if "Got it"
+wait 3
+expect-no "#artWait"
+expect-no "Loading"
+shot fight
+tap "Camp"
+wait 1
+expect-no "#artWait"
+shot camp
