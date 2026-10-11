@@ -1,0 +1,6 @@
+# seed: 1
+# Proof for card ns-s1-decision-line (docs only; docs/DECISIONS.md). Nothing a player sees changes: the built page is byte for
+# byte the same (md5 b961b6853387bfaea02a4444a92935cb before and after). This route only boots a new game to show it runs.
+new fresh
+wait-for "#nuChip" 10
+shot new-game-boots

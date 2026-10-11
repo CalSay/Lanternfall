@@ -33,6 +33,11 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   gathering again" or "Fight keys don't close tips").** A Hesketh news line holds only the gap between fights, never gathering or a fight
   behind a menu. Any other hold that isn't a lesson shows "Paused" on the stage and in Gather. A fight press during a Got it hold counts as
   Got it and then acts. The action bar stays in view, dimmed, wherever the tip doesn't cover it.
+- **The boss-loss line is the one tip allowed at 0 HP (hesketh-boss-loss-line, #370 and #373, 2026-10-10; Cal can veto with "No tips
+  while the hero is down, not even the boss-loss line"):** no between or first-use tip shows while the hero is down, except Hesketh's
+  boss-loss line ("No shame in that", `say:defeat`). It shows after the Try again card is shut and holds recovery until Got it. After a
+  boss wipe the hero sits at 0 HP, so in a rematch the line waited for a gap that never came. (Ruling: project
+  `autopilot/rulings/2026-10-10-boss-loss-line-at-zero-hp.md`)
 - **Claude decided: materials lines show on Camp, on Gather and while gathering, never over other menus (card forge-tip-goes-stale,
   2026-10-08; Cal can veto with "keep the Forge tip on every menu").** This narrows "camp and menu tips stay up" above for Hesketh's
   materials lines only ("You still need these for the Forge: ..."): a fighter saw one on every menu for 15 minutes and it covered the hero
@@ -399,6 +404,14 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
     "wait for the Seam".
   - **Text only (the same ruling):** coal and the four middles show their names, never a borrowed icon, an Essence orb
     or an empty image box, until the art pack `art-refined-materials` passes the art judge.
+- **Tavern Blackjack (judge 2026-10-10, Opus high; Cal can veto):** the spec goes to build after 5 named edits. Hesketh deals
+  ("Let Tam deal the cards"); bets in plain gold ("Use fantasy chips at the table"); plain text cards are UI, all card art waits
+  for Codex; opens at zone 14 with the Tavern; bets and day limits scale by price-hour. (#380, `docs/design/tavern-blackjack.md`)
+- **Store builds: Cal confirms the blackjack table's state before any rating survey.** (Spec section 9, which adds it to the ship checklist.)
+- **Tavern Blackjack top bet (judge 2026-10-10, #387; Cal can veto with "Raise the table's top bet back to 0.2"):** the top bet is
+  0.12 price-hours (16-310 gold at zone 14), cut from 0.2 because the gold-loss bound BJ-a missed on 2 of 3 seeds at 0.2. BJ-b and
+  BJ-c single-seed misses flip direction and are recorded as noise until blackjack-odds-multiseed measures them. Evidence
+  `docs/proof/tavern-blackjack-build/evidence.md`.
 
 ## Achievements
 
@@ -1363,6 +1376,19 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   stays live (route-s-tobin-wire included) until the cast passes; about 300 generations per hero at most. Tobin's re-brief stands.
   Cal 13:02: PixelLab designs each pose on the sheet, but Wren's bowstring and arrows are removed from its frames and drawn by the
   game's code as before. (Evidence: project `experiments/pixellab-tobin/three-heroes-1280.gif`, `check-final.md`)
+- **ability-effects-live (#333, Opus art judge, 2026-10-10): wire after fixes.** The effects match the Barbed Arrow test for
+  grandeur and break no art-freeze rule; full-stage white flashes came down so the lanterns carry the night, and each status shows
+  its own colour. (Fixes listed in PR #333.)
+- **S1, Scenario for scenery, nodes, monsters, beasts and the camp (new-style plan #330, assumed; stands by Claude's ruling
+  2026-10-11 under Cal's 09:19 hands-off rule, item 11; Cal can veto with "Keep monsters and scenery Codex-only"):** Scenario makes
+  the scenery, gather nodes, all 43 Chapter 1 monsters (Captains as recolours), the 3 hunting beasts, the camp and its gatherers,
+  and the looks critters, from the zone 1 sample (plus a Codex concept for each new monster). Codex keeps concepts and icons. Cal's 01:09 message asked for
+  the restyle and named monsters, and the zone 1 test ran on his OK. If he vetoes, the make cards become Codex briefs and their credit
+  lines drop. No make card spends a credit until Cal's monthly Scenario budget exists (D2, D3); no style-model retrain unless A1's
+  judge reports drift, and then inside the monthly budget (D4, veto "Retrain now"). Hero sets are being remade in PixelLab since
+  11 Oct (the PixelLab Tobin and cast-test entries above; route S stays live until the cast passes); this line rules nothing on
+  scenery beyond the plan. (Plan: `docs/design/new-style/plan.md` section 7; evidence: project `experiments/new-style-plan/redteam.md`,
+  `judge.md`; ruling: project `autopilot/rulings/2026-10-11-cal-hands-off.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
