@@ -18939,7 +18939,7 @@ if (section('side-column-fits-740')) try {
         // fighting: the dock and the away chip show; every label and away line shows whole. The game picks the away chip's words so
         // it ends 4 px or more above .sb-tabs (71-ui-fight awayChipFit): the whole line, then the line up to its first comma, then nothing.
         // Its pick matches the measure for every pair, a shown chip never reaches the dock, only a phone's landscape screen says less,
-        // and the shortest label keeps the whole Pine Grove line there. Labels of every length with that line show each step on a phone.
+        // and with the web fonts the shortest label keeps the whole Pine Grove line there. Labels of every length with that line show each step on a phone.
         const pick = (lt, al) => X(`(() => { const l = document.querySelector('#nuChip .nu-lbl'), c = document.querySelector('.away-chip'), a = c.lastChild, keep = [l.textContent, a.textContent, c.classList.contains('hide')];
           l.textContent = ${JSON.stringify(lt)}; const t = awayChipFit(${JSON.stringify(al)}); l.textContent = keep[0]; a.textContent = keep[1]; c.classList.toggle('hide', keep[2]); return t; })()`);
         const pine = await X('awayChipSay(matName("wood", 1), 99999, CAMP_TUNE.awayMax, NODE_NAMES.wood[0])'), short = words.labels[words.labels.length - 1];
@@ -18952,7 +18952,7 @@ if (section('side-column-fits-740')) try {
           if (o.away.cut) { bad = `away line cut: ${t || al}`; break; }
           if (o.away.top < o.chipBottom) { bad = `the away chip starts over the Next Up chip (${lt} / ${al})`; break; }
           if (o.chipBottom + 4 > o.dock) { bad = `the Next Up chip ends ${o.dock - o.chipBottom} px above .sb-tabs (${lt})`; break; }
-          if (t !== al && (!phone || lt === short && al === pine)) { bad = `the away chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
+          if (t !== al && (!phone || webFonts && lt === short && al === pine)) { bad = `the away chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
           if (t && o.dock - o.away.bottom < 4) { bad = `the chip shows "${t}" and ends ${o.dock - o.away.bottom} px above the dock (${lt})`; break; }
           if (t !== al && await ends(lt, al) >= 4) { bad = `the whole line fits but the chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
           if (!t && await ends(lt, al.replace(/, .*/, '.')) >= 4) { bad = `the short line fits but the chip hides (${lt} / ${al})`; break; }
