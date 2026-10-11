@@ -1,0 +1,24 @@
+# Proof for card walk-clock-budget-holds (tooling only). No player-visible change: nothing in src/ changed and the game file is
+# unchanged, so there is nothing to play. All runs on this thread's container (4 cores), base 9af1b638, build dist/lanternfall.html.
+#
+# Cause: a thread runs a command for at most 30 min, and the walk ran past that (its own budget counted only from page load). The
+# runner killed it, so the report said only "the browser closed at game minute 43.8". Most wall time was not the game: page.clock.runFor
+# is two browser calls per step and adds an init script to the context each time (one per step all hour, each step slower), and the
+# clock yields a nested setTimeout after every game timer it fires, which Chrome floors at 4 ms.
+#
+# Acceptance 1 (seeds 1-3 at 60 min inside 1800 s):
+#   node tools/build.mjs && node tools/walk.mjs --seed <n> --quiet --out <dir>        (60 game min, 30 min budget, the defaults)
+#   Before, seed 1: Played 60:00 in 2156 s of clock (2161 s wall, budget raised to 40 for the measure).
+#   After:  seed 1: Played 60:00 of 60:00 in 1485 s (1486 s wall)
+#           seed 2: Played 60:00 of 60:00 in 1591 s (1593 s wall)
+#           seed 3: Played 60:00 of 60:00 in 1297 s (1300 s wall)
+#   Same hour: seed 1's log before and after matches line for line (546 of 546 entries, same game times and text).
+#   No step dropped: every step still runs the same 100 ms / 33 ms frames and the same reads; screenshots and checks unchanged.
+#
+# Acceptance 2 (a forced short budget says where it stopped, and the run does not just close):
+#   node tools/walk.mjs --seed 1 --clock-budget 1 --quiet --out <dir>   -> exit 0, 54 s wall, report and snapshot-min2.json written
+#     walk: stopped at 2:18 of 60:00 game time, budget: the 1-min clock budget ran out after 54 s of clock (a tool limit, not a game fault)
+#   Killed from outside (SIGTERM to the walk, and to its whole process group with Chromium): exit 3, report written:
+#     walk: stopped at 1:39 of 60:00 game time, the walk was stopped from outside (SIGTERM) after 40 s of clock (a tool limit, not a game fault)
+#
+# Check: node tools/check.mjs --only="qa-first-hour-walk" -> all checks passed (two short walks of one seed still log the same).
