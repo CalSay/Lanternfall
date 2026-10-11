@@ -47,7 +47,12 @@ function dropToast(t, how) {
   if (reduced) { t.remove(); return; }
   t.classList.add(how || 'out'); setTimeout(() => t.remove(), 170);
 }
-function armToast(t) { clearTimeout(t._timer); t._timer = setTimeout(() => dropToast(t), NOTE_MS[t._p] + (t._kind === 'loot' ? 800 : 0)); }
+// a toast with a go stays until tapped or replaced; `still` false drops it
+function armToast(t) {
+  clearTimeout(t._timer);
+  if (t._tap && !t._news) { if (t._still) t._timer = setTimeout(() => { let ok = 1; try { ok = t._still(); } catch (e) {} ok ? armToast(t) : dropToast(t); }, 1000); return; }
+  t._timer = setTimeout(() => dropToast(t), NOTE_MS[t._p] + (t._kind === 'loot' ? 800 : 0));
+}
 function fillToast(t, msg, url) {
   t.textContent = '';
   if (url) t.append(img(url));
@@ -56,9 +61,9 @@ function fillToast(t, msg, url) {
   if (t._tap && !t._news) t.append(el('span', 'go', '›'));
   t._msg = msg;
 }
-function makeToast(msg, kind, url, p, go) {
+function makeToast(msg, kind, url, p, go, still) {
   const t = el('div', 'toast ' + (kind || '') + (p === 2 ? ' hi' : '') + (go ? ' has-go' : ''));
-  t._p = p; t._kind = kind; t._more = 0;
+  t._p = p; t._kind = kind; t._more = 0; t._still = typeof still === 'function' ? still : null;
   if (go) t._tap = () => followGo(go);   // UX-A (ux-overhaul.md 4.6): a toast with go follows it on a tap
   t.setAttribute('role', 'status');
   fillToast(t, msg, url);
@@ -109,16 +114,16 @@ function noteStat(rule, ch, msg) {
 }
 // A line in the bell. ch 'bell' counts on the badge; 'log' and 'pop' lines are listed only. Unread lines of
 // one rule and channel merge into one (the rule's merge() words it; otherwise the newest line and a count).
-function noteLog(rule, msg, kind, url, ch) {
+function noteLog(rule, msg, kind, url, ch, go) {
   const id = rule ? rule.id : '', counted = ch === 'bell';
   const e = id && ch !== 'pop' ? notes.log.find(n => n.rule === id && n.ch === ch && n.id > notes.seenSeq && n.msgs) : null;
   if (e) {
     e.msgs.push(msg); if (e.msgs.length > 30) e.msgs.shift();
     e.n++; e.msg = rule.merge ? rule.merge(e.msgs) : msg; e.more = rule.merge ? 0 : e.n - 1;
-    e.url = url || e.url; e.at = Date.now(); e.id = ++notes.seq;
+    e.url = url || e.url; e.go = go || null; e.at = Date.now(); e.id = ++notes.seq;
     notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e);
   } else {
-    notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p: ch === 'pop' ? 2 : counted ? 1 : 0, at: Date.now(), rule: id, ch, n: 1, more: 0, msgs: [msg] });
+    notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p: ch === 'pop' ? 2 : counted ? 1 : 0, at: Date.now(), rule: id, ch, n: 1, more: 0, msgs: [msg], go: go || null });
     if (notes.log.length > 50) notes.log.length = 50;
     if (counted) notes.unread++;
   }
@@ -138,10 +143,11 @@ function notify(n, when) {
   if (ch === 'none' || ch === 'card') return ch;
   let url = null; try { url = iconOf(n.icon); } catch (e) {}
   if (NEWS.open && (ch === 'pop' || ch === 'bell')) { NEWS.lines.push({ msg, url, kind: kind || '', p: ch === 'pop' ? 2 : 1 }); return ch; }
-  if (ch !== 'pop') { noteLog(rule, msg, kind, url, ch); return ch; }
+  const lineGo = n.goLog || n.go || null;
+  if (ch !== 'pop') { noteLog(rule, msg, kind, url, ch, lineGo); return ch; }
   if (!(rule && rule.reply)) { notes.pops.push(notes.clock); notes.popN++; }
-  noteLog(rule, msg, kind, url, 'pop');
-  popToast(msg, kind, url, Math.max(1, notePrio(n.prio, kind)), n.go);
+  noteLog(rule, msg, kind, url, 'pop', lineGo);
+  popToast(msg, kind, url, Math.max(1, notePrio(n.prio, kind)), n.go, n.still);
   return 'pop';
 }
 // Stage captions and cards ask here before they show. Returns 'pop' (show it now), 'card', 'wait'
@@ -164,7 +170,7 @@ function noticeDrop(key, msg) {
   return out;
 }
 // Draw a pop. A repeat of a toast on screen adds "+1"; a full stack retires its oldest toast.
-function popToast(msg, kind, url, p, go) {
+function popToast(msg, kind, url, p, go, still) {
   const box = $('toasts');
   const live = [...box.children].filter(t => !t._gone);
   const same = live.find(t => t._msg === msg);
@@ -174,7 +180,7 @@ function popToast(msg, kind, url, p, go) {
   const old = live.filter(t => !(t._hold > Date.now()));   // a moment banner stays its minimum time (75-moments-ui)
   const heldN = live.length - old.length;
   for (let i = 0; i <= old.length - Math.max(1, room - heldN); i++) { const out = old[i]; if (!out) break; out._gone = true; clearTimeout(out._timer); out.remove(); }
-  const t = makeToast(msg, kind, url, p, go);
+  const t = makeToast(msg, kind, url, p, go, still);
   box.appendChild(t);
   armToast(t);
 }
@@ -295,6 +301,12 @@ function openNoticeLog() {
         const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
         const tx = el('span', null, n.msg); if (n.more) tx.append(el('span', 'more', ' +' + n.more));   // W1-B: merged lines
         r.append(n.url ? img(n.url) : el('span'), tx, el('span', 'ago', ago(now - n.at)));
+        if (n.go && !n.list) {
+          r.classList.add('has-go'); r.setAttribute('role', 'button'); r.tabIndex = 0;
+          const follow = () => { const g = n.go; api.close(); followGo(g); };
+          r.addEventListener('click', follow);
+          r.addEventListener('keydown', e => { if (/^(Enter| )$/.test(e.key)) { e.preventDefault(); follow(); } });
+        }
         if (n.list) {
           r.firstChild.nextSibling.textContent = "What's new";
           const ul = el('ul', 'nlog-news');

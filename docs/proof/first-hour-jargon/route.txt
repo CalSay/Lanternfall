@@ -1,0 +1,14 @@
+# seed: 1
+# Proof for card first-hour-jargon (plan only; no game code changes). Nothing a player sees changes. The plan is
+# docs/design/first-hour-jargon.md, with its red team and judge records beside it. This route boots a new game and shoots
+# the first jargon a player meets: the hero picker's signature lines ("Shield Bash: Stuns, Exposes, Guards, and 2 Grit.").
+new fresh
+wait 3
+expect "every lamp went out"
+tap-if "Next"
+wait 1
+tap-if "Next"
+wait 1
+tap-if "Continue"
+wait 1
+shot picker-signature-lines

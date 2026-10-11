@@ -1,0 +1,16 @@
+# Proof for card stale-guide-tips (Sunday release check 11 Oct, Still rough 6 and Other findings). Lighting the camp fire queues Old
+# Hesketh's two fire talks back to back; one Skip now ends both (each is filed in the Journal as skipped) and the game runs on.
+# The other cases need a moment a route cannot set up on demand (a news line queued while a Go tip is up, a boss tip hiding the bar, a
+# finished bounty): tools/check.mjs section "stale-guide-tips" replays each at 1280x720 and 740x360.
+# seed: 1
+new unlit-8log
+wait 2
+tap "Light the fire (8 Pine Log)"
+wait-for ".sty-sheet .sty-skip" 10
+expect "Every road needs a place to come back to."
+shot fire-talk-skip
+tap "Skip"
+wait 3
+expect-no ".sty-sheet"
+expect-no "Ten years I've lit dead lamps"
+shot after-one-skip

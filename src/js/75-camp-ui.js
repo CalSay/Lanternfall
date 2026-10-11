@@ -73,6 +73,19 @@
     return { have, all };
   }
 
+  // craft-costs-up-front: a cost in words ("300 gold and 12 Pine Logs"), or what is missing ("200 more gold")
+  const andList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  const matWord = (f, t, n) => costName(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || (MAT[f] && MAT[f].unit === 'Log')) ? 's' : '');
+  const trophHave = i => { const tr = S.craft.troph; return i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; };
+  const trophWord = (i, n) => i === 'any' ? (n === 1 ? 'Trophy' : 'Trophies') : CRAFT_TROPHIES[i].n + (n === 1 ? '' : 's');
+  function costWords(c, missing) {
+    const out = [];
+    if (c.gold && (!missing || S.gold < c.gold)) { const n = missing ? c.gold - S.gold : c.gold; out.push(`${storeNum(n)}${missing ? ' more' : ''} gold`); }
+    for (const [f, t, need] of c.mats) { const h = matOwn(f, t); if (missing && h >= need) continue; const n = missing ? need - h : need; out.push(`${storeNum(n)}${missing ? ' more' : ''} ${matWord(f, t, n)}`); }
+    for (const [i, need] of c.troph) { const h = trophHave(i); if (missing && h >= need) continue; const n = missing ? need - h : need; out.push(`${n}${missing ? ' more' : ''} ${trophWord(i, n)}`); }
+    return andList(out);
+  }
+
   // ---------------- confirm buttons (in-page, no confirm()) ----------------
   // First tap arms the button for CONFIRM_MS; the second tap acts (cancel too).
   const CONFIRM_MS = 6000;
@@ -122,7 +135,7 @@
         if (!pend && !done) {
           const verb = c.queue ? 'Queue' : 'Build', armd = isArmed('b:' + id);
           const target = id === 'tent' ? `Tent ${c.to}` : `${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to}`;
-          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Confirm' : verb); putAttr(go, 'aria-label', armd ? `Confirm: ${verb.toLowerCase()} ${target}` : `${verb} ${target}, ${dur(c.dur / 1000)}`); }
+          if (quick) { setTxt(quick.q, `${target} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Confirm' : verb); putAttr(go, 'aria-label', armd ? `Confirm: ${verb.toLowerCase()} ${target} for ${costWords(c.cost)}` : `${verb} ${target}, ${dur(c.dur / 1000)}, for ${costWords(c.cost)}`); }
           else setTxt(go, armd ? `Confirm: ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${target} · ${dur(c.dur / 1000)}`);
           putDisabled(go, !c.ok); putToggle(go, 'armed', armd);
         }
@@ -371,7 +384,7 @@
       putHidden(H.cost, !showCost); putHidden(H.costs, !showCost || !H.dz.open);
       if (showCost) {
         const n = costCount(c.cost);
-        setTxt(H.costT, n.have === n.all ? 'Cost: all ready' : `Cost: ${n.have} of ${n.all} ready`);
+        setTxt(H.costT, n.have === n.all ? (costWords(c.cost) ? `Cost: ${costWords(c.cost)}` : 'Cost: all ready') : `Needs ${costWords(c.cost, true)}`);
         putToggle(H.cost, 'short', n.have < n.all);
         if (H.dz.open) chips(H.costs, c.cost);
       }
@@ -493,8 +506,8 @@
           : c.max ? 'Fully built'
           : !supported ? 'More tents: coming soon.'
           : c.need ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to} needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}`
-          : c.ok ? (c.queue ? 'Ready to queue' : 'Ready to build')
-          : c.miss ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to}: ${(o => `${o.have} of ${o.all} costs ready`)(costCount(c.cost))}` : c.why;
+          : c.ok ? (isArmed('b:' + id) ? `Tap Confirm to pay ${costWords(c.cost)}.` : (costWords(c.cost) ? `${c.queue ? 'Queue' : 'Build'} for ${costWords(c.cost)}` : c.queue ? 'Ready to queue' : 'Ready to build'))
+          : c.miss ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to} needs ${costWords(c.cost, true)}` : c.why;
         setTxt(k.line, line);
         putHidden(k.qb, !!pend || !!c.max || !!c.need || !supported);
         putToggle(k.w, 'locked', !!c.need && !l);

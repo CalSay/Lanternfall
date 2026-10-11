@@ -229,3 +229,4 @@ span.cf-d { font-weight: 600; }
 .cf-sk-t { margin: 0; font: 700 calc(16px * var(--display-k, 1))/1.2 var(--display); color: var(--bone); text-align: center; }
 .cf-sk-s { margin: 0; font-size: 12.5px; color: var(--muted); text-align: center; max-width: 300px; }
 .cf-sk .tv-time { width: min(300px, calc(100vw - 64px)); }
+.cf-go.cf-go-clash:not(:disabled) { outline: 2px solid #FFB27A; outline-offset: 1px; }   /* craft-costs-up-front: this craft uses what another goal needs (the line under it says which) */
