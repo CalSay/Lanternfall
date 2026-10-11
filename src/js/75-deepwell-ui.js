@@ -1,10 +1,8 @@
 // 75-deepwell-ui: the Deepwell's screens (docs/design/deepwell.md 9). Browser-only.
 //   - Fight tab, "Deepwell" view: the entrance card (runs, resume), the weekly Trial, the Marks shop.
-//   - In a run: an Oil bar and the floor over the stage (in place of the zone name), a boon strip in
-//     place of the control row, and a full-screen choice sheet for each draft and Quiet Landing.
+//   - In a run: the Oil bar and floor under the plates (60-deepwell), the boon strip for the control row,
+//     a choice sheet for each draft and Quiet Landing. 62-stage draws the well and hides the zone line.
 //   - Run end: a card with the floor, Marks and what the party earned up top while you were below.
-//   - The stage itself (62-stage) draws the well scene, cold foes and hides the zone line and the
-//     boss timer while a run is live; this file only adds the run HUD over it.
 // Per frame: nothing. The HUD updates 5 times a second, writing only what changed.
 {
   const setTxt = (e, t) => { if (e && e.textContent !== t) e.textContent = t; };
@@ -29,9 +27,8 @@
   const boonIc = c => c.id === 'map' ? iconURL('banner', '#F2C14E') : c.id === 'study' ? iconURL('glass', '#F2E27A') : c.id === 'crown' ? iconURL('coin', '#F2C14E') : c.id === 'lheart' ? iconURL('heart', '#FF9E3D') : c.sets[0] ? SET_IC[c.sets[0].id]() : iconURL('orb', '#7FB2FF');
   const OIL_IC = () => pxURL('lantern', '#FF9E3D', { 5: '#FFF3C4' });
   const MARK_IC = () => iconURL('orb', '#7FB2FF', { 7: '#3F8FA8' });
-  const markChip = n => { const s = el('span', 'dw-marks'); s.append(img(MARK_IC()), el('b', null, fmt(n))); return s; };
 
-  // ---------------- run HUD (over the stage) and the boon strip (in place of the control row) ----------------
+  // ---------------- run HUD (under the plates) and the boon strip (in place of the control row) ----------------
   const app = $('app'), box = $('stageBox');
   const hud = el('div', 'dw-hud'); hud.setAttribute('aria-live', 'off');
   const hudOil = el('div', 'dw-oil'), oilBar = el('div', 'dw-oilbar'), oilFill = el('i'), oilTxt = el('b', 'dw-oiltxt');
