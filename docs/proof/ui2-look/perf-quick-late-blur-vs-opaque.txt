@@ -1,0 +1,51 @@
+exit 1
+run 1/2 phone/late: base ... this ... done
+run 2/2 phone/late: base ... this ... done
+(551 s, Chromium chromium-1194/chrome-linux/chrome, 4 CPUs)
+
+phone/late (medians of 2 runs each; base build vs this build)
+metric                                     base   this  budget  verdict
+----------------------------------------  -----  -----  ------  -------
+load: first frame                          4283   4343    1500    noise
+fight: JS/frame p95                        11.6    9.5       8    noise
+fight: frame gap p95                       44.3   40.1      34    noise
+fight: ui() p95                            16.5   10.5       8    noise
+tab adv: JS/frame p95                      11.2   13.9      12    noise
+tab party: JS/frame p95                    21.1   16.5      12    noise
+tab party: longest task (open + updates)    224    288     150     FAIL
+tab gat: JS/frame p95                      11.6   15.7      12     FAIL
+tab gat: longest task (open + updates)      186    157     150    noise
+tab forge: JS/frame p95                    20.3   12.8      12    noise
+tab world: JS/frame p95                    16.2   17.7      12    noise
+tab world: longest task (open + updates)    126    162     150    noise
+swarm10: JS/frame p95                      13.7   14.3       8    noise
+swarm10: frame gap p95                     44.3   48.7      34    noise
+swarm10: longest task                        86    104      50    noise
+bossKit: frame gap p95                     50.7   44.8      34    noise
+bossKit: longest task                       102     76      50    noise
+boss kill: longest task                     174    217     150    noise
+gather ore: JS/frame p95                    7.4      9       8    noise
+gather ore: frame gap p95                  46.1   55.6      34    noise
+gather ore: long tasks                        0      4       0     FAIL
+gather ore: switch, longest task            243    234     150    noise
+gather wood: frame gap p95                   43   41.7      34    noise
+gather wood: long tasks                       2      2       0    noise
+gather wood: switch, longest task           107    172     150     FAIL
+gather herb: JS/frame p95                   7.7    8.8       8    noise
+gather herb: frame gap p95                 44.6   44.9      34    noise
+gather herb: long tasks                       1      1       0    noise
+gather crystal: JS/frame p95                7.5   11.5       8     FAIL
+gather crystal: frame gap p95              46.3   58.4      34    noise
+gather crystal: long tasks                    1      9       0     FAIL
+tap to paint (median)                     271.8  200.8     150    noise
+phone/late: FAIL (39/45 ok; 26 over budget on both builds)
+  FAIL tab party: longest task (open + updates): 288ms vs base 224ms (budget 150ms)
+  FAIL tab gat: JS/frame p95: 15.7ms vs base 11.6ms (budget 12ms)
+  FAIL gather ore: long tasks: 4 vs base 0 (budget 0)
+  FAIL gather wood: switch, longest task: 172ms vs base 107ms (budget 150ms)
+  FAIL gather crystal: JS/frame p95: 11.5ms vs base 7.5ms (budget 8ms)
+  FAIL gather crystal: long tasks: 9 vs base 1 (budget 0)
+
+FAIL: 6 metric(s) slower than the base build (quick run)
+
+[exited with code 0]

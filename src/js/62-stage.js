@@ -36,10 +36,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // A fixed pool of NF records (C4: no allocation per number); when all are busy the one closest to
   // fading out gives way. ax: the shown foe's x when the text was raised (texts over a pack stay over
   // the foe they belong to while the next one steps up).
-  // Handjet (the display font, --display) reads small for its px size: TXT_K scales stage text up
-  // (about 26 -> 30 CSS px on a crit). Texts baked before the web font arrives are rebaked once it loads.
+  // TXT_K scales stage text up (about 26 -> 30 CSS px on a crit). Texts baked before the web font arrives are rebaked once it loads.
   const FONTS = new Map(), TXT_K = 1.15;
-  const fontPx = s => { let f = FONTS.get(s); if (!f) { f = `700 ${s}px "Handjet", "Arial Narrow", monospace`; FONTS.set(s, f); } return f; };
+  const fontPx = s => { let f = FONTS.get(s); if (!f) { f = `700 ${s}px "Barlow Semi Condensed", "Arial Narrow", sans-serif`; FONTS.set(s, f); } return f; };
   const NF = 24, floats = [], BUSY = [0, 0, 0, 0];
   for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, crit: false, life: 0, max: 0.95, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0, dt: '', rel: 0 });
   // SOLO2 (owner): a crit's number pops (up to x1.35 fast, settling to x1 by CRIT_POP s), rises a little higher and
