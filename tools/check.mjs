@@ -677,7 +677,7 @@ if (section('split build (asset-build)')) try {
         await go2(page).catch(() => {}); await page.waitForTimeout(1500);
         const b = await look(page);
         assert(navs() === 2 && saved === '2' && b.cover === 'The game was updated. Reload the page to go on. [Reload]',
-          `split: a pack gone after a deploy saves (zone ${saved}) and reloads the page (${navs()} loads), and a second time within a minute asks: "${b.cover}"`);
+          `split: a pack gone after a deploy saves (zone ${saved}) and reloads the page (${navs()} pages asked for), and a second time within a minute asks: "${b.cover}"`);
         await page.close(); }
     } finally { await browser.close(); }
   }

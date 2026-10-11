@@ -2,7 +2,7 @@
 # The step's save left zone 1's boss due (the fixture's 10 kills), so a runner that won that fight in the ~1.2 s before the
 # viewport turn read the hold in zone 2 (CI run 38153553008, shard 1: {"z":2,"k":0}). The save now holds zone 1's boss, as
 # after a loss with no Try again card, and turns Auto off, so no fight can move the zone before the turn.
-#   race-a.txt   before the fix, with every fight won at once before the turn (killPack, race-probe.diff): the zone moves on
+#   race-a.txt   before the fix, with every fight won at once before the turn (killPack on every pass, race-probe.diff): the zone moves on (to 17, as each pass wins again)
 #                and the step fails
 #   race-b.txt   after the fix, the same instant wins: kills stop at 5, no boss comes, the step reads zone 1 and passes
 #   runs-20.txt  the split section 20 times with both fixes, all passing
