@@ -18670,8 +18670,8 @@ if (section('nu-chip-gate-label-fits')) try {
 
 // ==== nextup-chip-360 (fallback-font): the Next Up chip's status reads whole on an upright phone ====
 // Upright (20-stage) the chip shares the top row with the activity switch, so "NEXT UP", the status and the "+2" badge get what is
-// left of 360 px. In the fallback face (display-fallback-font) the status column shrank and the chip's own overflow cut "Ready" to
-// "Rea". The section puts the widest status ("Ready", and "100%") and the "+2" badge in the chip at 360x740, 740x360 and 1280x720 in
+// left of 360 px. Gathering, in the fallback face (display-fallback-font), the grid squeezed the status column and "+2" drew over
+// "Ready", leaving "Rea". The section puts the widest status ("Ready", and "100%") and the "+2" badge in the chip at 360x740, 740x360 and 1280x720 in
 // both fonts and checks the status's words end inside its box and the chip, left of the badge, with the eyebrow on one line.
 if (section('nextup-chip-360 (browser, fallback-font)')) try {
   const at = 'nextup-chip-360', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
