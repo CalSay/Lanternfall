@@ -152,10 +152,10 @@ let showAwayReport, awayLimitStep;
     body.append(top);
 
     // ---- what the hero did ----
-    const actIc = r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
+    const actIc = r.activity === 'gather' || r.leftFight ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
     const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
     if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); res.append(n); }
-    if (r.activity === 'fight') {
+    if (r.activity === 'fight' && !r.leftFight) {
       const rule = el('p', 'away-rule');
       rule.append(img(IC.glass()), el('span', null, AWAY_RULE_TXT));
       res.append(rule);
@@ -297,7 +297,7 @@ let showAwayReport, awayLimitStep;
   }
 
   showAwayReport = function (r) {
-    // A fighter who earned nothing still gets the card: it says fighting stops and gathering continues.
+    // A fighter who earned nothing still gets the card.
     const quiet = r && r.turnCombat;
     if (!r || r.secs < 30 || (r.empty && !quiet) || r.empty === undefined && !quiet && !(r.lines && r.lines.length)) return;
     // C14: the report is one card through the notice policy, never a second set of pops.

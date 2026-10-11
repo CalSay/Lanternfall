@@ -89,7 +89,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 120, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 52, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 75, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 44,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -117,6 +117,7 @@ const WEIGHT = {
   'pip-cast-recipes': 40,
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
+  'leave-mid-fight-gathers (browser)': 15,
   'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
   'foe wind-up after a hold (browser)': 18,   // 18 s locally alone (foe-windup-after-hold, 2026-10-10)
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
@@ -9844,6 +9845,11 @@ if (section('offline accounting and schedules (C14)')) try {
   assert(workerLines.length === 1 && /2 shifts/.test(workerLines[0].txt) && /3,396/.test(workerLines[0].txt), 'C14: two completed shifts merge into one truthful worker line');
   assert(lines.filter(l => l.group === 'Camp').length === 1 && /Workbench.*Forge/.test(lines.find(l => l.group === 'Camp').txt), 'C14: completed camp builds merge into one source line');
   assert(first.report.extra.some(l => l.group === 'Tavern' && /new applicant/.test(l.txt)), 'C14: the named Rook arrival appears in the away report even before a random applicant is due');
+  // leave-mid-fight-gathers: the same hero left mid-fight (Gather open) mines that node away, as live gathering does; fights earn nothing
+  { const lraw = offlineFixture('gather-left-fight'), ll = offlineGame(lraw); ll.eval("setActivity('gather')"); games.push(ll); offlineLiveUntil(ll, 0, 7200);
+    const l = offlineSnapshot(ll), a = offlineRun(lraw, 7200), g = offlineRun(raw, 7200), pct = (a.state.heroUnits / a.state.boost / Math.max(1, l.heroUnits) - 1) * 100;
+    assert(Math.abs(pct) <= 5 && a.state.heroUnits === g.state.heroUnits && a.state.rook === g.state.rook && a.state.rest === g.state.rest && a.state.gold - g.state.gold === 0 && a.state.kills === g.state.kills && a.report.leftFight && !a.errors.length,
+      `C14: a hero left mid-fight gathers its node away like a gatherer (${a.state.heroUnits} units, live ${l.heroUnits}: ${pct.toFixed(2)}%; Rook ${a.state.rook}s, Rested ${a.state.rest}s; no fight gold or kills)`); }
   const refund = offlineGame(raw); games.push(refund);
   refund.eval('handsRecall("tam"); S.mats.wood[0]=storeCap("wood",1); handsRecall("trade-worker"); S.mats.wood[0]-=1000; setActivity("fight"); globalThis.__beforeGathered=S.stats.gathered;');
   const rr = refund.eval(`Date.__t=${AUDIT_START + 1800000};awayGains(1800)`);
@@ -18756,9 +18762,10 @@ if (section('nextup-chip-360 (browser, fallback-font)')) try {
 
 // ==== side-column-fits-740: every gate label and every away line fit the landscape side column ====
 // The side column holds the Next Up chip (row 2), the away chip (row 3) and the dock (row 4, .sb-tabs at its top). The dock shows
-// only while fighting (75-solo-ui: target() is 'mob') and the away chip only while gathering (71-ui-fight awayChipText), so the
-// height budget is per state: fighting, the chip ends above .sb-tabs; gathering, the chip and the away chip end above the screen's
-// foot and the dock is hidden. The section builds every tier gate label the game can make (gateLabel over each kind, tiers 2 to 5,
+// only while fighting (75-solo-ui: target() is 'mob'); the away chip shows while gathering and, once Gather is open, while fighting
+// (leave-mid-fight-gathers: leaving sends the fighter back to the last node, 71-ui-fight awayChipText), so the height budget is per
+// state: fighting, the chip and the away chip end above .sb-tabs; gathering, the chip and the away chip end above the screen's foot
+// and the dock is hidden. The section builds every tier gate label the game can make (gateLabel over each kind, tiers 2 to 5,
 // its station gates and each raw cell its recipe takes, one level short, gathering that skill and not) and every away line
 // (awayChipSay over each gathered material: about N in the longest away, fills up, full), and measures the longest of each, with
 // the players' web fonts and with the fallbacks (display-fallback-font).
@@ -18839,26 +18846,39 @@ if (section('side-column-fits-740')) try {
                 for (const [f, tt] of prod ? prod.inputs(t) : [[k, t]]) { if (f === 'coal' || !CRAFT_NODES[f]) continue;
                   const sk = skillOf(f), nd = skillReq(sk, tt); if (nd > 1) gs.push({ skill: sk, lv: nd - 1, need: nd, mat: costName(f, tt) }); } }
               for (const gate of gs) for (const on of [true, false]) labels.add(gateLabel({ kind, t, gate }, on)); } }
-          for (const f of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) { const nm = matName(f, t);
-            for (const n of ['spill', 0, 99999]) aways.add(awayChipSay(nm, n, CAMP_TUNE.awayMax)); }
+          const fights = new Set();   // a fighter's lines name the node leaving sends the hero back to
+          for (const f of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) { const nm = matName(f, t), back = NODE_NAMES[f] && NODE_NAMES[f][t - 1];
+            for (const n of ['spill', 0, 99999]) { aways.add(awayChipSay(nm, n, CAMP_TUNE.awayMax)); if (back) fights.add(awayChipSay(nm, n, CAMP_TUNE.awayMax, back)); } }
           const by = s => [...s].sort((a, b) => b.length - a.length);
-          return { labels: by(labels), aways: by(aways) }; })()`);
-        assert(words.labels.length > 100 && words.aways.length > 30, `${v}: the game makes gate labels and away lines (${words.labels.length}, ${words.aways.length})`);
+          return { labels: by(labels), aways: by(aways), fights: by(fights) }; })()`);
+        assert(words.labels.length > 100 && words.aways.length > 30 && words.fights.length > 30, `${v}: the game makes gate labels and away lines (${words.labels.length}, ${words.aways.length}, fighting ${words.fights.length})`);
         // line breaks, not only length, decide the height: the 12 longest of each are measured
-        const L = words.labels.slice(0, 12), A = words.aways.slice(0, 12);
-        // fighting: the dock shows and the away chip does not; every label shows whole and the chip ends 4 px or more above .sb-tabs
-        let worst = null, bad = null, floor = true;
-        for (const lt of L) { const o = await measure(page, lt, null); if (!o) { bad = 'no chip'; break; }
-          if (o.away !== false || o.dock == null) { bad = `fighting shows the away chip or no dock (${JSON.stringify(o)})`; break; }
+        const L = words.labels.slice(0, 12), A = words.aways.slice(0, 12), F = words.fights.slice(0, 12);
+        // fighting: the dock and the away chip show; every label and away line shows whole. The game picks the away chip's words so
+        // it ends 4 px or more above .sb-tabs (71-ui-fight awayChipFit): the whole line, then only where the hero goes, then nothing.
+        // Its pick matches the measure for every pair, a shown chip never reaches the dock, only a phone's landscape screen says less,
+        // and the shortest label keeps the whole Pine Grove line there. Labels of every length with that line show each step on a phone.
+        const pick = (lt, al) => X(`(() => { const l = document.querySelector('#nuChip .nu-lbl'), a = document.querySelector('.away-chip').lastChild, keep = [l.textContent, a.textContent];
+          l.textContent = ${JSON.stringify(lt)}; const t = awayChipFit(${JSON.stringify(al)}); l.textContent = keep[0]; a.textContent = keep[1]; return t; })()`);
+        const pine = await X('awayChipSay(matName("wood", 1), 99999, CAMP_TUNE.awayMax, NODE_NAMES.wood[0])'), short = words.labels[words.labels.length - 1];
+        const ends = async (lt, al) => { const o = await measure(page, lt, al); return o && o.away ? o.dock - o.away.bottom : -1e9; };
+        let bad = null, floor = true, said = { whole: 0, less: 0, none: 0 }, near = Infinity;
+        const pairs = [[short, pine], ...words.labels.filter((_, i) => i % 20 === 10).map(lt => [lt, pine]), ...L.flatMap(lt => F.map(al => [lt, al]))];
+        for (const [lt, al] of pairs) { const t = await pick(lt, al), o = await measure(page, lt, t || al); if (!o) { bad = 'no chip'; break; }
+          if (!o.away || o.dock == null) { bad = `fighting shows no away chip or no dock (${JSON.stringify(o)})`; break; }
           if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `cut: ${lt} (${o.lines} lines, clamp ${o.clamp})`; break; }
-          if (o.fs < (desk ? 14 : 13)) floor = false;
-          if (!worst || o.chipBottom - o.dock > worst.chipBottom - worst.dock) worst = { ...o, lt }; }
-        assert(!bad, `${v}: fighting, every gate label shows whole in the Next Up chip${bad ? ' (' + bad + ')' : ''}`);
-        if (worst) {
-          console.log(`  ${v}: fighting, the longest label takes ${worst.lines} lines and the chip ends ${worst.dock - worst.chipBottom} px above the dock`);
-          assert(worst.chipBottom + 4 <= worst.dock, `${v}: fighting, the chip ends above .sb-tabs (${worst.chipBottom} vs ${worst.dock}: ${worst.lt})`);
-        }
-        assert(floor, `${v}: the chip label keeps its ${desk ? 14 : 13} px floor`);
+          if (o.away.cut) { bad = `away line cut: ${t || al}`; break; }
+          if (o.away.top < o.chipBottom) { bad = `the away chip starts over the Next Up chip (${lt} / ${al})`; break; }
+          if (t !== al && (!phone || lt === short && al === pine)) { bad = `the away chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
+          if (t && o.dock - o.away.bottom < 4) { bad = `the chip shows "${t}" and ends ${o.dock - o.away.bottom} px above the dock (${lt})`; break; }
+          if (t !== al && await ends(lt, al) >= 4) { bad = `the whole line fits but the chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
+          if (!t && await ends(lt, al.replace(/[,.] .*/, '.')) >= 4) { bad = `the short line fits but the chip hides (${lt} / ${al})`; break; }
+          if (o.fs < (desk ? 14 : 13) || o.away.fs < (desk ? 14 : 13)) floor = false;
+          said[t === al ? 'whole' : t ? 'less' : 'none']++; if (t) near = Math.min(near, o.dock - o.away.bottom); }
+        assert(!bad, `${v}: fighting, every gate label and away line shows whole, and the away chip says what fits above the dock${bad ? ' (' + bad + ')' : ''}`);
+        assert(!phone || said.less > 0, `${v}: fighting, some label lengths get the short away line on a phone (${JSON.stringify(said)})`);
+        console.log(`  ${v}: fighting, of ${pairs.length} pairs the away chip says the whole line ${said.whole}, less ${said.less}, nothing ${said.none}; a shown chip ends ${near} px or more above the dock`);
+        assert(floor, `${v}: the chip and away text keep the ${desk ? 14 : 13} px floor`);
         let eb = await eyebrow(page);
         assert(eb.lines === 1 && eb.right <= eb.st, `${v}: fighting, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
         // gathering: the away chip shows and the dock does not; every label with every away line fits above the screen's foot
@@ -18868,7 +18888,7 @@ if (section('side-column-fits-740')) try {
         assert(eb.lines === 1 && eb.right <= eb.st, `${v}: gathering, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
         const cp = await caption(page);
         assert(cp.bad === 0, `${v}: gathering, the place name, skill line, material and count show whole (${cp.bad} cut${cp.bad ? ': ' + cp.first[0] : ''})`);
-        worst = null; bad = null; floor = true;
+        let worst = null; bad = null; floor = true;
         for (const lt of L) for (const al of A) { const o = await measure(page, lt, al); if (!o) { bad = 'no chip'; break; }
           if (!o.away || o.dock != null) { bad = `gathering shows no away chip or the dock (${JSON.stringify(o)})`; break; }
           if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `label cut: ${lt}`; break; }
@@ -19015,15 +19035,54 @@ if (section('first-craft-toast-clip')) try {
   }
 } catch (e) { fail('first-craft-toast-clip crashed: ' + (e.stack || e)); }
 
+// ==== leave-mid-fight-gathers: a turn fighter is told before leaving that the hero goes back to its node, and the away card says it did ====
+if (section('leave-mid-fight-gathers (browser)')) try {
+  const at = 'leave-mid-fight-gathers', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); setNode("ore", 1); setActivity("fight"); true');
+        await page.waitForFunction(() => { const a = document.querySelector('.away-chip'); return a && !a.classList.contains('hide') && a.textContent.includes('Copper Vein'); }, null, { timeout: 5000 }).catch(() => {});
+        const chip = await X('(() => { const a = document.querySelector(".away-chip"); return a && !a.classList.contains("hide") ? a.textContent : null; })()');
+        // the whole line where it fits (it fits under this one-line Next Up label at every view), naming the node and what leaving earns
+        assert(/^Leave now: Wren goes back to the Copper Vein, about [\d.,K]+ Copper Ore in \d+ hours\.$/.test(chip || ''), `${v}: fighting, the away chip says where leaving sends Wren (${chip})`);
+        const gold = await X('S.gold'), kills = await X('S.totalKills'), mine = await X('S.skills.mine.lv');
+        await X('showAwayReport(awayGains(3600)); true');
+        await page.waitForSelector('.away-ov[role="dialog"]');
+        const card = await page.locator('.away-ov').innerText();
+        assert(card.includes('You left mid-fight, so Wren went back to the Copper Vein.') && /Ore\s*\+[\d.,K]+\s*Copper/.test(card) && !card.includes('fighting stops'),
+          `${v}: the away card says Wren went back to the Copper Vein, shows the Copper Ore, and drops the fighting-stops line (${card.replace(/\n/g, ' | ').slice(0, 300)})`);
+        assert(await X('S.gold') === gold && await X('S.totalKills') === kills && await X('S.skills.mine.lv') > mine, `${v}: an hour away earns no fights and raises Mining`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('leave-mid-fight-gathers crashed: ' + (e.stack || e)); }
+
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away
 // (50-sim awayBase), so the row promises "keeps going" only then; fighting or gathering another skill says how to make it true.
 if (section('away-line-only-when-true')) try {
   const at = 'away-line-only-when-true', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
   const base = 'Birch Bow: Mining 7 of 14 opens Iron Ore. ', on = base + 'Gathering keeps going while you\'re away.', off = base + 'Gather Mining before you leave and it keeps going.';
-  const states = [['fighting', '', off], ['gathering Woodcutting', 'setNode("wood", 1); setActivity("gather")', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather")', on]];
-  for (const [name, set, want] of states) {
-    const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+  const states = [['fighting', '', off], ['gathering Woodcutting', 'setNode("wood", 1); setActivity("gather")', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather")', on],
+    ['turn fighting after Mining (leave-mid-fight-gathers: away goes back to the node)', 'setNode("ore", 1); setActivity("fight")', on, true],
+    ['turn fighting after Woodcutting', 'setNode("wood", 1); setActivity("fight")', off, true]];
+  for (const [name, set, want, turns] of states) {
+    const g = loadCore({ seed: 7, turns, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
     E('tick(0.1)'); if (set) E(set);
     const r = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge');
     assert(r && r.label === want, `${at}: ${name}, the row reads "${want}" (${JSON.stringify(r)})`);

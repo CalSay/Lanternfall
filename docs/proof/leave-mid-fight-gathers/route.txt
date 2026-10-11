@@ -1,0 +1,21 @@
+# seed: 1
+# Proof for card leave-mid-fight-gathers. A hero who leaves mid-fight now goes back to the last place they gathered while away
+# (fights still earn nothing away). Save: Wren at zone 21, fighting, last gathered at the Pine Grove, Gather open.
+# Before leaving, the away chip under Fight / Gather says where she goes. After 8 hours away, the away card says she went back,
+# shows the Pine Log she chopped and drops the old "fighting stops" line. The rates, the Storehouse limit and the away limit are
+# the gatherer's: tools/offline-parity.mjs --left-fight and tools/check.mjs (C14, leave-mid-fight-gathers) hold them.
+new min60-tier-gate
+wait-for "goes back to the Pine Grove" 10
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Dismiss this tip"
+wait 1
+expect "Fight"
+expect "goes back to the Pine Grove"
+shot chip-while-fighting
+away 8
+wait-for "You left mid-fight" 10
+expect "You left mid-fight, so Wren went back to the Pine Grove."
+expect "Pine"
+expect-no "fighting stops"
+shot away-card

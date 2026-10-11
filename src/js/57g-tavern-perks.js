@@ -79,7 +79,7 @@ let tavernPerks, tavernRumours, tavernHearRumour;
     registerHandsRoute('dorrie', () => ready('dorrie'));
     registerHandsRoute('rook', () => ready('rook'));
   }
-  const mining = () => S.activity === 'gather' && S.node && S.node.kind === 'ore' && S.node.t === 2 && skillTierOpen('mine', 2);
+  const mining = (n = S.activity === 'gather' && S.node) => n && n.kind === 'ore' && n.t === 2 && skillTierOpen('mine', 2);
   function advance(seconds) {
     if (!integrated() || !heard('rook') || met('rook') || !(seconds > 0) || !Number.isFinite(seconds)) return;
     const before = worked(); L().rookSecs = Math.min(NEED, before + seconds);
@@ -89,6 +89,6 @@ let tavernPerks, tavernRumours, tavernHearRumour;
     if (mining() && target() === 'node' && !(typeof ONBOARD === 'object' && ONBOARD.paused)) advance(dt);
   });
   on('awayBegin', report => {
-    if (mining() && report) advance(report.t);
+    if (mining(awayNode()) && report) advance(report.t);
   });
 }
