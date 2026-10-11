@@ -174,15 +174,17 @@ let craftUI = null;
     return m.length ? `Needs ${andList(m.map(([f, n]) => `${storeNum(n)} more ${matWord(f, t, n)}`))}.` : '';
   }
   function clashTxt(k, t) {
-    const use = kindCost(k, t), goals = [];
-    if (typeof campOpen === 'function' && campOpen()) for (const id of campList()) {
+    const nu = st8.nu; if (nu && nu.kind === k && nu.t === t) return '';   // never against the craft Next Up asks for
+    const use = kindCost(k, t), goals = [], ids = typeof campOpen === 'function' && campOpen() ? campList() : [];
+    const next = CRAFT_KINDS[k].pos === 'weapon' ? '' : HEARTH_CHAIN.find(id => ids.includes(id) && campLevel(id) < 1 && !campPending(id));   // forgeHold: weapons never held
+    for (const id of ids) {
       const c = campCan(id); if (!c.cost || c.max || c.need || campPending(id)) continue;
-      const fresh = id !== 'hearth' && campLevel(id) < 1;
-      goals.push({ id, name: id === 'hearth' ? `Hearth ${c.to}` : fresh ? `the ${CAMP_B[id].n}` : `${CAMP_B[id].n} Lv ${c.to}`, fresh, mats: c.cost.mats });
+      const fresh = id === next;
+      goals.push({ id, name: id === 'hearth' ? `Hearth ${c.to}` : campLevel(id) < 1 ? `the ${CAMP_B[id].n}` : `${CAMP_B[id].n} Lv ${c.to}`, fresh, mats: c.cost.mats });
     }
     const chain = g => { const i = HEARTH_CHAIN.indexOf(g.id); return g.fresh ? (i < 0 ? 50 : i) : 99; };
     goals.sort((a, b) => chain(a) - chain(b));
-    const nu = st8.nu; if (nu && nu.cost && !nu.gate && nu.kind !== k && nu.t === t) goals.push({ name: `the ${tierName(nu.kind, nu.t)}`, fresh: false, mats: Object.entries(nu.cost).map(([f, n]) => [f, t, n]) });
+    if (nu && nu.cost && !nu.gate && nu.t === t) goals.push({ name: `the ${tierName(nu.kind, nu.t)}`, fresh: false, mats: Object.entries(nu.cost).map(([f, n]) => [f, t, n]) });
     for (const g of goals) {
       const hit = g.mats.filter(([f, tt, need]) => { const u = use[f] || 0, h = matOwn(f, t); return u > 0 && (f === 'ess' || tt === t) && h - u < need && (g.fresh || h >= need); });
       if (hit.length) return `Uses ${andList(hit.map(([f]) => matWord(f, t, 2)))} you need for ${g.name}.`;

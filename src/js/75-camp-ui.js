@@ -77,7 +77,7 @@
   const andList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
   const matWord = (f, t, n) => costName(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || (MAT[f] && MAT[f].unit === 'Log')) ? 's' : '');
   const trophHave = i => { const tr = S.craft.troph; return i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; };
-  const trophWord = (i, n) => i === 'any' ? (n === 1 ? 'Trophy' : 'Trophies') : CRAFT_TROPHIES[i].n;
+  const trophWord = (i, n) => i === 'any' ? (n === 1 ? 'Trophy' : 'Trophies') : CRAFT_TROPHIES[i].n + (n === 1 ? '' : 's');
   function costWords(c, missing) {
     const out = [];
     if (c.gold && (!missing || S.gold < c.gold)) { const n = missing ? c.gold - S.gold : c.gold; out.push(`${storeNum(n)}${missing ? ' more' : ''} gold`); }
@@ -384,7 +384,7 @@
       putHidden(H.cost, !showCost); putHidden(H.costs, !showCost || !H.dz.open);
       if (showCost) {
         const n = costCount(c.cost);
-        setTxt(H.costT, n.have === n.all ? `Cost: ${costWords(c.cost)}` : `Needs ${costWords(c.cost, true)}`);
+        setTxt(H.costT, n.have === n.all ? (costWords(c.cost) ? `Cost: ${costWords(c.cost)}` : 'Cost: all ready') : `Needs ${costWords(c.cost, true)}`);
         putToggle(H.cost, 'short', n.have < n.all);
         if (H.dz.open) chips(H.costs, c.cost);
       }
@@ -506,7 +506,7 @@
           : c.max ? 'Fully built'
           : !supported ? 'More tents: coming soon.'
           : c.need ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to} needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}`
-          : c.ok ? (isArmed('b:' + id) ? `Tap Confirm to pay ${costWords(c.cost)}.` : `${c.queue ? 'Queue' : 'Build'} for ${costWords(c.cost)}`)
+          : c.ok ? (isArmed('b:' + id) ? `Tap Confirm to pay ${costWords(c.cost)}.` : (costWords(c.cost) ? `${c.queue ? 'Queue' : 'Build'} for ${costWords(c.cost)}` : c.queue ? 'Ready to queue' : 'Ready to build'))
           : c.miss ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to} needs ${costWords(c.cost, true)}` : c.why;
         setTxt(k.line, line);
         putHidden(k.qb, !!pend || !!c.max || !!c.need || !supported);

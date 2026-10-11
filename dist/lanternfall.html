@@ -42215,7 +42215,7 @@ on('cacheOpen', v => {
   const andList = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
   const matWord = (f, t, n) => costName(f, t) + (n !== 1 && (f === 'ingot' || f === 'plank' || (MAT[f] && MAT[f].unit === 'Log')) ? 's' : '');
   const trophHave = i => { const tr = S.craft.troph; return i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; };
-  const trophWord = (i, n) => i === 'any' ? (n === 1 ? 'Trophy' : 'Trophies') : CRAFT_TROPHIES[i].n;
+  const trophWord = (i, n) => i === 'any' ? (n === 1 ? 'Trophy' : 'Trophies') : CRAFT_TROPHIES[i].n + (n === 1 ? '' : 's');
   function costWords(c, missing) {
     const out = [];
     if (c.gold && (!missing || S.gold < c.gold)) { const n = missing ? c.gold - S.gold : c.gold; out.push(`${storeNum(n)}${missing ? ' more' : ''} gold`); }
@@ -42522,7 +42522,7 @@ on('cacheOpen', v => {
       putHidden(H.cost, !showCost); putHidden(H.costs, !showCost || !H.dz.open);
       if (showCost) {
         const n = costCount(c.cost);
-        setTxt(H.costT, n.have === n.all ? `Cost: ${costWords(c.cost)}` : `Needs ${costWords(c.cost, true)}`);
+        setTxt(H.costT, n.have === n.all ? (costWords(c.cost) ? `Cost: ${costWords(c.cost)}` : 'Cost: all ready') : `Needs ${costWords(c.cost, true)}`);
         putToggle(H.cost, 'short', n.have < n.all);
         if (H.dz.open) chips(H.costs, c.cost);
       }
@@ -42644,7 +42644,7 @@ on('cacheOpen', v => {
           : c.max ? 'Fully built'
           : !supported ? 'More tents: coming soon.'
           : c.need ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to} needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}`
-          : c.ok ? (isArmed('b:' + id) ? `Tap Confirm to pay ${costWords(c.cost)}.` : `${c.queue ? 'Queue' : 'Build'} for ${costWords(c.cost)}`)
+          : c.ok ? (isArmed('b:' + id) ? `Tap Confirm to pay ${costWords(c.cost)}.` : (costWords(c.cost) ? `${c.queue ? 'Queue' : 'Build'} for ${costWords(c.cost)}` : c.queue ? 'Ready to queue' : 'Ready to build'))
           : c.miss ? `${id === 'tent' ? 'Tent' : 'Lv'} ${c.to} needs ${costWords(c.cost, true)}` : c.why;
         setTxt(k.line, line);
         putHidden(k.qb, !!pend || !!c.max || !!c.need || !supported);
@@ -43655,15 +43655,17 @@ let craftUI = null;
     return m.length ? `Needs ${andList(m.map(([f, n]) => `${storeNum(n)} more ${matWord(f, t, n)}`))}.` : '';
   }
   function clashTxt(k, t) {
-    const use = kindCost(k, t), goals = [];
-    if (typeof campOpen === 'function' && campOpen()) for (const id of campList()) {
+    const nu = st8.nu; if (nu && nu.kind === k && nu.t === t) return '';   // never against the craft Next Up asks for
+    const use = kindCost(k, t), goals = [], ids = typeof campOpen === 'function' && campOpen() ? campList() : [];
+    const next = CRAFT_KINDS[k].pos === 'weapon' ? '' : HEARTH_CHAIN.find(id => ids.includes(id) && campLevel(id) < 1 && !campPending(id));   // forgeHold: weapons never held
+    for (const id of ids) {
       const c = campCan(id); if (!c.cost || c.max || c.need || campPending(id)) continue;
-      const fresh = id !== 'hearth' && campLevel(id) < 1;
-      goals.push({ id, name: id === 'hearth' ? `Hearth ${c.to}` : fresh ? `the ${CAMP_B[id].n}` : `${CAMP_B[id].n} Lv ${c.to}`, fresh, mats: c.cost.mats });
+      const fresh = id === next;
+      goals.push({ id, name: id === 'hearth' ? `Hearth ${c.to}` : campLevel(id) < 1 ? `the ${CAMP_B[id].n}` : `${CAMP_B[id].n} Lv ${c.to}`, fresh, mats: c.cost.mats });
     }
     const chain = g => { const i = HEARTH_CHAIN.indexOf(g.id); return g.fresh ? (i < 0 ? 50 : i) : 99; };
     goals.sort((a, b) => chain(a) - chain(b));
-    const nu = st8.nu; if (nu && nu.cost && !nu.gate && nu.kind !== k && nu.t === t) goals.push({ name: `the ${tierName(nu.kind, nu.t)}`, fresh: false, mats: Object.entries(nu.cost).map(([f, n]) => [f, t, n]) });
+    if (nu && nu.cost && !nu.gate && nu.t === t) goals.push({ name: `the ${tierName(nu.kind, nu.t)}`, fresh: false, mats: Object.entries(nu.cost).map(([f, n]) => [f, t, n]) });
     for (const g of goals) {
       const hit = g.mats.filter(([f, tt, need]) => { const u = use[f] || 0, h = matOwn(f, t); return u > 0 && (f === 'ess' || tt === t) && h - u < need && (g.fresh || h >= need); });
       if (hit.length) return `Uses ${andList(hit.map(([f]) => matWord(f, t, 2)))} you need for ${g.name}.`;
