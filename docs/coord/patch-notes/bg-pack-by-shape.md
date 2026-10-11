@@ -1,0 +1,1 @@
+On the web build the game now downloads only the Mossy Hollow painting your screen needs, landscape or portrait, instead of both: about 0.7 MB less before your first fight. If you turn your phone mid-fight, the fight waits under "Loading Mossy Hollow" for a moment while the other painting arrives, then carries on with it. Best shot: mossy-hollow-fight.
