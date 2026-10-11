@@ -120,6 +120,7 @@ const WEIGHT = {
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'leave-mid-fight-gathers (browser)': 15,
+  'deepwell-spillover-keeps-fight': 12,   // 12 s locally alone (deepwell-spillover-keeps-fight, 2026-10-11)
   'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
   'foe wind-up after a hold (browser)': 18,   // 18 s locally alone (foe-windup-after-hold, 2026-10-10)
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
@@ -19169,6 +19170,63 @@ if (section('leave-mid-fight-gathers (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('leave-mid-fight-gathers crashed: ' + (e.stack || e)); }
+
+// ==== deepwell-spillover-keeps-fight: a Deepwell run started from gathering keeps its fight through an away Spillover ====
+// (57d lends S.activity back to 'gather' for the away phase; setNode's scene reset there ended the run's live turn fight.)
+if (section('deepwell-spillover-keeps-fight')) try {
+  const at = 'deepwell-spillover-keeps-fight', raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8');
+  const SETUP = "S.camp.b.hearth = 3; S.camp.b.store = 8; storeSpill(1); S.skills.wood.lv = 20; S.mats.wood[0] = storeCap('wood', 1) - 10; setNode('wood', 1); setActivity('gather')";
+  const FIGHT = "JSON.stringify({ act: S.activity, held: DW.run() && DW.run().act, live: DW.live(), arena: arena === DEEP_ARENA, run: DW.run() && [DW.run().id, DW.run().floor, DW.run().foeI, DW.run().phase], same: mob === __m && !mob.dead && mob.deep && TURN_LIVE === __tl && !!TURN_LIVE && !TURN_LIVE.ended, hp: mob && mob.hp, node: S.node })";
+  for (const k of ['wren', 'tobin', 'pip']) {
+    const g = loadCore({ seed: 41, turns: true, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    E(`soloPick("${k}", { now: true }); ${SETUP}; for (let i = 0; i < 20; i++) tick(0.1)`);
+    assert(E('DW.start(false)'), `${at} ${k}: a Deepwell run starts from gathering`);
+    E('for (let i = 0; i < 30; i++) tick(0.1); globalThis.__m = mob; globalThis.__tl = TURN_LIVE');
+    const b = JSON.parse(E(FIGHT));
+    E('globalThis.__r = awayGains(3600); tick(0.1); tick(0.1)');
+    const a = JSON.parse(E(FIGHT)), spilled = E('__r.lines.some(l => l.sub === "Spillover moved on")');
+    assert(b.same && b.held === 'gather' && spilled && a.node.t !== 1, `${at} ${k}: the away hour spills over to the next node while a run started from gathering is live (${JSON.stringify(b)} -> ${JSON.stringify(a.node)})`);
+    assert(a.same && a.act === 'fight' && a.held === 'gather' && a.live && a.arena && a.hp === b.hp && JSON.stringify(a.run) === JSON.stringify(b.run),
+      `${at} ${k}: back from away, the run's fight is the same fight (same foe and HP, same turn fight, same floor) (${JSON.stringify(b)} -> ${JSON.stringify(a)})`);
+    assert(!g.errors.length, `${at} ${k}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const hide = (page, h) => page.evaluate(h => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h });
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (h ? 'hidden' : 'visible') }); document.dispatchEvent(new Event('visibilitychange')); }, h);
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); ${SETUP}; true`);
+        await page.waitForTimeout(300);
+        assert(await X('DW.start(false)'), `${v}: a Deepwell run starts from gathering`);
+        await page.waitForFunction(() => window.__t.x('!!TURN_LIVE && !TURN_LIVE.ended && mob && mob.deep && !mob.dead'), null, { timeout: 5000 }).catch(() => {});
+        const b = JSON.parse(await X(`globalThis.__m = mob; globalThis.__tl = TURN_LIVE; ${FIGHT}`));
+        // the tab goes to the background for an hour, then comes back: the boot's visibilitychange runs the away gains
+        await hide(page, true); await X('S.last = Date.now() - 3600e3; true'); await hide(page, false);
+        await page.waitForSelector('.away-ov[role="dialog"]', { timeout: 5000 }).catch(() => {});
+        const card = await page.locator('.away-ov').innerText().catch(() => '');
+        const a = JSON.parse(await X(FIGHT)), hud = await page.waitForFunction(() => document.getElementById('app').classList.contains('deep-run'), null, { timeout: 3000 }).then(() => true, () => false);   // the run's HUD is up (75-deepwell-ui)
+        assert(b.same && b.held === 'gather' && card.includes('You kept working the Pine Grove.') && a.node.t !== 1, `${v}: an hour in the background spills over while the run is live (${JSON.stringify(a.node)}; ${card.replace(/\n/g, ' | ').slice(0, 200)})`);
+        assert(a.same && a.act === 'fight' && a.live && a.arena && JSON.stringify(a.run) === JSON.stringify(b.run) && hud,
+          `${v}: back in front, the Deepwell fight on screen is the same fight (${JSON.stringify(b)} -> ${JSON.stringify(a)}, HUD ${hud})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('deepwell-spillover-keeps-fight crashed: ' + (e.stack || e)); }
 
 // ==== toast-over-menu-foot: a notice never sits over an open menu or takes a tap meant for it ====
 // Cal's first-craft notes (first-craft-toast-clip finds, 10 Oct): with a menu open, notices sat over the menu's foot for a few seconds,
