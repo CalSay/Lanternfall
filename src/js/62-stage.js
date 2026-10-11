@@ -1091,9 +1091,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // C29 hit feel: a screen flash in a colour (a counter, a Perfect, a broken charge); reduced motion keeps a soft one
   on('hitFlash', p => { if (!p) return; flashA = Math.max(flashA, (reduced ? 0.4 : 1) * (p.a || 0.3)); flashRgb = p.rgb || '255,210,122'; });
   on('lunge', () => { if (!(target() === 'node' && typeof gatherWalking === 'function' && gatherWalking())) attack(hero); });
-  // basic-attack-swings: a turn fight's basic Attack emits only soloAttack (59k, no lunge or classTap), so the hero swings on it here.
-  // Outside a turn fight a press's classTap has already swung (59j soloAttack), so this one stays still there.
-  on('soloAttack', () => { if (turnFight()) attack(hero); });
+  // A turn fight's Attack and a real-time Finisher or interrupt press emit only soloAttack (no lunge or classTap): swing here.
+  // A real-time 'hit' already swung on its classTap (59j).
+  on('soloAttack', p => { if (turnFight() || p && p.kind !== 'hit') attack(hero); });
   on('nodeHit', () => { nodeShake = 0.12; });
   on('wyrmHit', () => { wyrmHit = 0.1; });
   on('levelup', () => { ringT = 0.8; });
