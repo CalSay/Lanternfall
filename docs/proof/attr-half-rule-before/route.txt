@@ -1,0 +1,23 @@
+# seed: 1
+# Proof for card attr-half-rule-before. Hero > Build now says what the next point gives at this level, before the spend.
+# Past half your points a point counts half: the line names the half rule from the point that crosses it, not after.
+# The fixture: Wren, level 4, 12 points to spend (half is 6). Might reads "Next point: +3%." up to 5 points, then
+# "Next point: +1.5%, half rule." at 6. The shown value matching the applied change is held by tools/check.mjs (attr-half-rule-before).
+new flow-points
+wait 2
+tap-if "Continue"
+tap "Hero"
+wait 1
+tap "Build"
+wait 1
+expect "Next point: +3%."
+shot build-fresh
+tap "Add 5 points to Might"
+wait 1
+expect "Next point: +3%. Now +15%."
+shot build-might-5
+tap "Add 1 point to Might"
+wait 1
+expect "Next point: +1.5%, half rule. Now +18%."
+expect "Past half your points, a point counts half."
+shot build-might-6-half-rule
