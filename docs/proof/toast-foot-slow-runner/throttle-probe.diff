@@ -1,0 +1,10 @@
+--- a/tools/check.mjs
++++ b/tools/check.mjs
+@@ -19595,6 +19595,7 @@
+         page.on('pageerror', e => errs.push(String(e)));
+         await routePage(page, 'http://lf.test/', html, assets);
+         await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
++        if (process.env.LF_THROTTLE_TMP) await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: +process.env.LF_THROTTLE_TMP });
+         const X = s => page.evaluate(s => window.__t.x(s), s);
+         for (let i = 0; i < 8; i++) { const b = await page.$('.bsheet-ov .sty-done, .bsheet-ov .big:has-text("Begin"), .bsheet-ov .big:has-text("Continue"), .away-ov button'); if (!b) break; try { await b.click({ timeout: 800 }); } catch (e) { break; } await page.waitForTimeout(400); }
+         await X('onboardUnlockAll(); true');

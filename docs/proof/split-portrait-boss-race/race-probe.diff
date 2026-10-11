@@ -1,0 +1,7 @@
+638c638
+<       { const port = pk('bg:forest:port'), { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 1 }, hold: { [port.name]: 'hold' }, html: probe }), asked = [];
+---
+>       { const port = pk('bg:forest:port'), { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 1, auto: false, bossTry: { hold: 1, fail: 0, tries: {}, rev: {}, last: null } }, hold: { [port.name]: 'hold' }, html: probe }), asked = [];
+640a641,642
+>         for (let i = 0; i < 15; i++) { await page.evaluate(() => window.__t.x('i === 0 && mob && killPack(mob, 0)'.replace('i', '0'))); await page.waitForTimeout(200); }
+>         console.log('RACE', JSON.stringify(await page.evaluate(() => window.__t.x('({ z: S.zone, k: S.kills, boss: mob && mob.boss })'))));

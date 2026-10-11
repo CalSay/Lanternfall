@@ -1,0 +1,2 @@
+RACE {"z":17,"k":0,"boss":true,"pl":1201.4606000000003,"dead":1.4510999999999987,"tk":206,"cs":0}
+  FAIL split: turned to portrait mid-fight, the game holds under "null" (false) while Mossy Hollow's portrait pack loads (asked 0 times before the turn, 1 after; {"t":false,"z":17,"k":0,"hp":0,"o":"foe:imp,bg:forest:port"} then {"t":false,"z":17,"k":0,"hp":0,"o":"foe:imp,bg:forest:port"})

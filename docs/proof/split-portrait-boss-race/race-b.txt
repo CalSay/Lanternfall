@@ -1,0 +1,2 @@
+RACE {"z":1,"k":5,"boss":false}
+  ok   split: turned to portrait mid-fight, the game holds under "Loading Mossy Hollow" (true) while Mossy Hollow's portrait pack loads (asked 0 times before the turn, 1 after; {"t":true,"z":1,"k":5,"hp":86.51221765106621,"o":"foe:imp,bg:forest:port"} then {"t":true,"z":1,"k":5,"hp":86.51221765106621,"o":"foe:imp,bg:forest:port"})

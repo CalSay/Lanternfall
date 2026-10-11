@@ -1,0 +1,27 @@
+# Proof for card toast-foot-slow-runner. No player-visible change: only tools/check.mjs's toast-over-menu-foot section changed.
+# Three wall-clock reads are now reads of what the game shows:
+#  1. no-tip branch: × was a real pointer click inside a swallowing catch, then a 400 ms sleep and one read of .app.guide-side. Under a
+#     6x CPU throttle the tip was still up at that read, so 1366x640 ran strict, the tip then went, and the foot read 0 (before.txt,
+#     base-thr-3). × is now pressed in the page and the branch waits for the tip to read 'off'.
+#  2. every picture carries the tip's state (up / off / mid); the sample loop and the menu box use only pictures in the branch's state
+#     (upright and desktop 'up', no tip 'off', sideways tip branch either: there the tip comes and goes between foes and the menu stays put).
+#  3. the menu box is read only with no notice up: the running game pops its own notices after settle(), and the upright box then read
+#     586 against 638 (the #412 find; 4 upright and 1 sideways of 30 runs of the first fix, before.txt). A notice found there goes the way settle() sends them.
+# Reviewer notes from #412: S.refine.said is set in menuView before the card opens (setTimeout 0), so it never proved the card had gone;
+# the check now records the Refining sheet opening and leaving the page (window.__rfOld, a MutationObserver) and presses only
+# .rf-old .sty-done; any other sheet makes it wait. The "use:craft 7 s retire" did not apply: on save-mid the Craft tip is the
+# `upgrade` guide step (it retires after 60 s of game time), and use:craft's window had long closed; point 2 covers any tip change.
+# After review: the overlap and tap test still runs on every strict picture (a phone's, or one with the tip up), the box must be read
+# (not 'never settled'), and the Refining wait's fail names what it saw.
+#   runs-30.txt          30 of 30 pass on the reviewed code, 10 under the 6x throttle; every run reaches both branches at 1366x640 and
+#                        360x740 (the 1366x640 no-tip branch has no guide panel, so it checks the box, not taps, as before)
+#   before.txt           the base under the same throttle (1 of 9 failed), and the first fix's 5 notice-up failures (4 upright, 1 sideways)
+#   throttle-probe.diff  the local-only CPU throttle hook used for both (not committed); it throttles after the boot, not during it
+# This route is today's screen: Craft opened on the mid save.
+# seed: 1
+new flow-cold-camp
+wait 2
+tap-if "Continue"
+tap-if "Skip"
+wait 2
+shot craft-closed
