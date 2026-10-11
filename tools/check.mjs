@@ -19778,13 +19778,21 @@ if (section('actor-scale (browser)')) try {
         // a crowd (2 or more foes: a pack, a boss and its adds) keeps today's size, so its spacing is today's (G2: at 1.5 a pack of
         // wide foes left no room for both a 15% overlap and the hero's 16 px). The real-time fight (turns off) stands them here.
         // crowd-scale-step: the hero steps to 1.5x, not 1x, when its reach clears the pack (Pip does at 1280x720 and 1920x1080).
-        if (ak > 1) for (const [name, src] of [
+        // boss-adds-clear-outline: at every view each add's drawn box (first to last opaque column, top to ground) stays clear of the boss's.
+        for (const [name, src] of [
           ['a pack of 3', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; COMBAT_TUNE.sizes = 0; COMBAT_TUNE.packSize = 3; setActivity("fight"); fightBoss = false; setZone(3)'],
           // the Elder Moss Slime splits into two adds below half its HP (59b)
           ['a boss with adds', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; setActivity("fight"); fightBoss = false; setZone(8); S.kills = ZONE_FIGHTS; challenge(); mob.max = 1e15; mob.hp = mob.max * 0.3; setTimeout(() => { for (const f of combatFoes()) f.hp = f.max = 1e15; }, 400)'],
-        ]) {
+        ].filter(([name]) => ak > 1 || name === 'a boss with adds')) {
           await X(`globalThis.__hold = 0; globalThis.__tp = 0; ${src}; true`); await page.waitForTimeout(2500);
           const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, HS: s.HS, ZA: s.ZA, ZM: s.ZM, GY: s.GY }; })()');
+          if (name === 'a boss with adds') {
+            const o = await X(`(() => { const b = combatFoes().findIndex(f => f.boss), box = a => a && { k: a[0], l: a[1] - a[5] + a[6], r: a[1] - a[5] + a[7], t: a[2] - a[4], g: a[2] }, F = stageStats().foes.map(box);
+              return { boss: F[b], adds: F.filter((a, i) => a && i !== b) }; })()`);
+            const hits = o.boss ? o.adds.filter(a => Math.min(a.r, o.boss.r) > Math.max(a.l, o.boss.l) && Math.min(a.g, o.boss.g) > Math.max(a.t, o.boss.t)) : [];
+            assert(!!o.boss && o.adds.length >= 1 && !hits.length, `${tag} ${name}: each add stands clear of the boss's outline (boss ${JSON.stringify(o.boss)}, adds ${JSON.stringify(o.adds)})`);
+          }
+          if (ak === 1) continue;
           assert(c.n >= 2 && c.AK === 1 && c.ZA === c.ZM, `${tag} ${name}: a crowd of foes draws at today's size (${JSON.stringify(c)})`);
           assert(c.HS === 1.5 || (c.HS === 1 && w !== 1280 && w !== 1920), `${tag} ${name}: the hero steps down to 1.5x in a crowd that fits, not 1x (hero x${c.HS})`);
           await X('TURN_TUNE.on = true; COMBAT_TUNE.single = 1; COMBAT_TUNE.sizes = 1; COMBAT_TUNE.packSize = 3; fightBoss = false; setZone(1); true'); await page.waitForTimeout(1500);

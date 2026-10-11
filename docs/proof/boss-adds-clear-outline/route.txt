@@ -1,0 +1,15 @@
+# Proof for card boss-adds-clear-outline. When the Elder Moss Slime split into two Moss Slime adds, both adds stood inside
+# the boss's outline, so the player could not tell the three apart or see which one was targeted. Now the boss stands at the
+# right of the stage and each add stands clear of it, in front, the two adds staggered (one a lane higher, two HP bars).
+# tools/check.mjs section "actor-scale (browser)" carries the gate: in "a boss with adds" no add's drawn box meets the boss's,
+# at 1280x720, 1366x640, 1920x1080, 1024x768, 1000x768, 740x360 and 360x740 (it failed at all seven before the fix).
+# The turn fight's boss calls no adds, so a route cannot show them; shots of the real-time fight with adds (Pip, Tobin,
+# Wren at 1280x720, 1366x640, 740x360, 360x740, before and after): /mnt/project-files/boss-adds-clear-outline/shots/.
+# This route plays the early save's zone 8 boss at 1280x720: the lone boss stands where it always stood.
+# seed: 1
+new early
+wait 2
+tap-if "Continue"
+tap-if "Got it"
+wait 3
+shot elder-moss-slime
