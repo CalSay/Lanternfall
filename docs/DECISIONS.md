@@ -1354,14 +1354,15 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   needs a blade-safe re-cut, fixes to shieldthrow, laststand, riposte, forage and victory, a clean check-final.md, and 63 colours. The
   leftover effect layer stays out; `62b-fx.js` gets restyled after PixelLab's look instead (Cal liked PixelLab's effects, 12:27).
   (Files: project `experiments/pixellab-tobin/`)
-- **PixelLab cast test (pixellab-cast-go, Opus art judge, 2026-10-11; Cal can veto: "Stay with Scenario heroes"):** go, with
-  conditions. PixelLab Wren, Tobin and Pip at 96 px, drawn 2x, read as one cast and sit near the foes' pixel size. So Wren's and Pip's
-  full sets are made in PixelLab, and the whole cast is judged and wired as one. Conditions: a 3-move bow pilot first; Pip keeps her
-  lantern, book, one staff and a plain orb (the game draws the fire) and stands 0.9 of Wren's height; the same cleaner, check and
-  63-colour cut as Tobin; faces read at 1280 and 1920; effects stay drawn by the game; route S stays live (route-s-tobin-wire
-  included) until the cast passes; about 300 generations per hero at most; the bow holds its shape. Tobin's re-brief stands. Cal
-  13:02: PixelLab designs each pose on the sheet, but Wren's bowstring and arrows are removed from its frames and drawn by the game's
-  code as before. (Evidence: project `experiments/pixellab-tobin/three-heroes-1280.gif`, `check-final.md`)
+- **PixelLab cast test (pixellab-cast-go, Opus art judge, 2026-10-11; Cal can veto: "Stay with Scenario heroes", "Let PixelLab draw
+  the bowstring" (tried 12:50, reversed by Cal 13:02)):** go, with conditions. PixelLab Wren, Tobin and Pip at 96 px, drawn 2x, read
+  as one cast and sit near the foes' pixel size. So Wren's and Pip's full sets are made in PixelLab, and the whole cast is judged
+  and wired as one. Conditions: a 3-move bow pilot first, with no drawn string or arrow, the bow holding its shape, and the game
+  drawing the string, arrow and effects in code; Pip keeps her lantern, book, one staff and one orb colour and stands 0.9 of Wren's
+  height; the same cleaner, check and 63-colour cut as Tobin; faces read at 1280 and 1920; effects stay drawn by the game; route S
+  stays live (route-s-tobin-wire included) until the cast passes; about 300 generations per hero at most. Tobin's re-brief stands.
+  Cal 13:02: PixelLab designs each pose on the sheet, but Wren's bowstring and arrows are removed from its frames and drawn by the
+  game's code as before. (Evidence: project `experiments/pixellab-tobin/three-heroes-1280.gif`, `check-final.md`)
 
 ## Early game (Opus judge on the early-game plan, 2026-10-06; Cal can veto any line)
 
