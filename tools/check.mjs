@@ -18226,6 +18226,38 @@ if (section('ability-names-fit')) try {
   }
 } catch (e) { fail('ability-names-fit crashed: ' + (e.stack || e)); }
 
+// ==== eyes-placeholder abilities tiles: in Hero > Abilities every tile with no drawn icon shows two letters, never "?" ====
+// Card abilities-unnamed-tile: the Attack row (a basic move, not in SOLO_ABILITIES) showed a bare "?"; it now reads "At".
+// Browser, Wren with Power Shot (save-wren-spare-moss), the list as #396's Eyes scenario opens it, at all three views.
+if (section('eyes-placeholder abilities tiles')) try {
+  const at = 'eyes-placeholder abilities tiles', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-wren-spare-moss.json'), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`);
+        await page.waitForFunction(() => document.querySelector('#sec-abilities .ab-basic[data-mv=attack]'), null, { timeout: 8000 }).catch(() => fail(`${v}: the Attack row never appeared in Hero > Abilities`));
+        const t = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#sec-abilities .ab-mono')].map(e => [e.closest('.ab-row') ? (e.closest('.ab-row').dataset.mv || e.closest('.ab-row').querySelector('b').textContent) : '', e.textContent]))`));
+        const bad = t.filter(([, x]) => !/^[A-Z][a-z]$/.test(x)), atk = t.find(([n]) => n === 'attack');
+        assert(t.length >= 12 && !bad.length && atk && atk[1] === 'At' && !errs.length,
+          `${v}: all ${t.length} lettered tiles read two letters, Attack reads "At", none "?" (bad: ${JSON.stringify(bad)}; Attack: ${JSON.stringify(atk)}; errors: ${errs[0] || 'none'})`);
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('eyes-placeholder abilities tiles crashed: ' + (e.stack || e)); }
+
 // ==== loadout-odds: Hero > Abilities says the zone boss odds of the three slotted moves, and Learn picks by them (W10) ====
 // save-pip-z10-ward: Pip at the zone 10 Champion on W10's arrival footing (level 15, tier 1 commons +0), Fireball / Spark / Kindle in the
 // slots (where Next Up leads), one Hollow Scroll that can teach Arcane Ward, Frost Shard or Ignite, no Parry or Dodge record (the casual

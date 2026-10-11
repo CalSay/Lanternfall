@@ -60,11 +60,11 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
   const fitQ = () => { if (root) fitTextWidths(root.querySelectorAll('.ab-q b, .ab-slotb small, .ab-rt b'), 8); };
   const btn = (cls, text) => { const b = el('button', cls, text); b.type = 'button'; return b; };
   function tile(id) {
-    // a drawn icon shows at a native size (nicSet picks it from the box), never a 48 px image squeezed into 28-36 px
+    // drawn icon at native size (nicSet), not 48px shrunk to 28-36; else 2 letters: At
     if (nicHas('act', id)) { const i = el('img', 'ab-ic px'); i.alt = ''; nicSet(i, 'act', id, 32); return i; }
     const u = icon(id);
     if (u) { const i = el('img', 'ab-ic px'); i.alt = ''; i.src = u; return i; }
-    const a = SOLO_ABILITIES[id]; return el('span', 'ab-ic ab-mono', ((a && (a.short || a.name)) || '?').slice(0, 2));
+    const a = SOLO_ABILITIES[id]; return el('span', 'ab-ic ab-mono', ((a && (a.short || a.name)) || id[0].toUpperCase() + id[1]).slice(0, 2));
   }
   const persist = () => { try { save(); } catch (e) {} ui(true); };
   const redraw = () => { sig = ''; refresh(); };
