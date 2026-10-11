@@ -155,9 +155,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // actor px: SW x SH, ground GY, at ZM = ZS * AK CSS px per actor px; portrait keeps 1 until UX-L1. A phone on its side
   // (740x360) keeps ACTOR_K1 (G3: at 1.5 heads ran under the turn line). A crowd (2+ foes) keeps 1x foes (pairStep).
   // While HS > 1 the stage box carries .actor-k (20-stage.css: the banner takes the turn line's spot, over the heads).
-  // bigger-heroes (Cal, 10 Oct): ACTOR_K 2 (an art px is 2 CSS px at 1280x720). A roomy zoom-1 stage (1024x768: ROOMY_H tall or more) takes the
-  // largest ACTOR_KR keeping ACT_MIN_W actor px. At 2x or more the ground drops to GROUND_BIG; a stage too short for that
-  // (1366x640: HERO_BOX actor px would reach above TOP_UI CSS px) keeps ACTOR_K_SHORT.
+  // bigger-heroes: ACTOR_K 2. A roomy zoom-1 stage (1024x768) takes the largest ACTOR_KR keeping ACT_MIN_W actor px. At 2x+
+  // the ground drops to GROUND_BIG; a stage too short (1366x640: HERO_BOX would pass TOP_UI) keeps ACTOR_K_SHORT.
   const ACTOR_K = 2, ACTOR_K_SHORT = 1.5, ACTOR_K1 = 1, ACTOR_KR = [2, 3], ROOMY_H = 480, ACT_MIN_W = 225, GROUND_BIG = 0.86, HERO_BOX = 102, TOP_UI = 156;
   const fits = (h, z) => h * GROUND_BIG - HERO_BOX * z >= TOP_UI;
   const zoom1K = (w, h) => { let k = ACTOR_K1; if (h >= ROOMY_H) for (const c of ACTOR_KR) if (w / c >= ACT_MIN_W && fits(h, c)) k = c; return k; };
