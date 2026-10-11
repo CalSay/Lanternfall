@@ -294,7 +294,7 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 ## Side systems
 
 - **Deepwell** (`57d-deepwell.js`, `59c-deepwell-combat.js`, `75-deepwell-ui.js`): from zone 20 and Hearth 3. Each
-  floor is a turn fight. Runs floor by floor on Oil, with boons, Depth Marks and a weekly Trial. A run never changes main progress. Its Deep Lore pages follow the story's rule that the dark copies shapes.
+  floor is a turn fight. Runs floor by floor on Oil, with boons, Depth Marks and a weekly Trial. A run never changes main progress. A tab left in the background mid-run gathers as before it (Spillover included) and comes back to the same fight; closing the game pauses the run. Its Deep Lore pages follow the story's rule that the dark copies shapes.
 - **Bounties** (`55-bounties.js`): three short goals that pay gold, materials or Essence, and Renown.
 - **Tavern Blackjack** (`57t-blackjack.js`, `75-blackjack-ui.js`, `docs/design/tavern-blackjack.md`): from zone 14, after 10
   minutes of play with the Tavern built, Camp > Tavern has a Blackjack box where Hesketh deals.

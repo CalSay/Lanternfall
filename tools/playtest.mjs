@@ -15,6 +15,7 @@
 //   node tools/playtest.mjs key <name>            press a key: Escape, Enter, Space, a letter (Playwright key names)
 //   node tools/playtest.mjs wait <seconds>        let the game run that many seconds of game time (fast-forwards the clock)
 //   node tools/playtest.mjs away <hours>          close the game for that long, then open it again (the away report appears)
+//   node tools/playtest.mjs background <hours>    put the tab in the background that long, then bring it back (no reload: the open page's away report)
 //   node tools/playtest.mjs state                 short save summary: hero, level, zone, gold, skills, play time
 //   node tools/playtest.mjs new [fresh|early|mid|late]   start a session: a fresh save, or a fixture from tests/fixtures
 //   node tools/playtest.mjs expect "<text|css>"   exit 1 if that text (or CSS selector) is not visible on screen right now
@@ -463,6 +464,13 @@ async function exec(cmd, args, ctx) {
       while (!(await onScreen(page, want)) && ran < most) { await run(page, 0.5); ran += 0.5; }
       session.time = await page.evaluate(() => Date.now());
       return { text: `wait-for: "${want}" ${await onScreen(page, want) ? 'on screen' : 'not on screen'} after ${fmtDur(ran)} of game time`, data: { waited: ran } };
+    }
+    case 'background': {   // the tab goes to the background for <hours> and comes back to the front: no reload, the open page works out the away gains
+      const hours = num(args[0], 'background');
+      await setHidden(page, true); await page.clock.fastForward(hours * 3600e3); await setHidden(page, false); await run(page, 0.5);
+      await setHidden(page, true); await setHidden(page, false);   // hiding saves (90-boot), so a later command's reload starts from after the hour
+      session.time = await page.evaluate(() => Date.now());
+      const l = await look(session, page, 'background'); return { text: `the tab was in the background ${fmtDur(hours * 3600)}\n` + l.text, data: { background: hours, look: l.data } };
     }
     case 'state': {
       session.time = await page.evaluate(() => Date.now());

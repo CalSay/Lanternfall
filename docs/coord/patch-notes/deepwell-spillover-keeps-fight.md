@@ -1,0 +1,1 @@
+Fixed: a Deepwell run you started from gathering no longer loses its fight when you switch away. If your pile filled while the tab was in the background and Spillover moved your hero to the next node, coming back used to end the floor's fight and throw away the foe you were on. Now the run waits for you on the same fight, with the same foe and the same health.
