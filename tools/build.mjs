@@ -8,6 +8,8 @@ import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 import { pathToFileURL } from 'node:url';
 import vm from 'node:vm';
+import os from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { ROOT, JS_DIR, CSS_DIR, listDir, loadCore } from './lib/core.mjs';
 
 // The joined styles as written (desktop-layout check compares against these, untransformed).
@@ -247,8 +249,8 @@ export const LOAD_LINES = {
   bootWarn: 3.5e6, bootFail: 4.0e6, zoneSet: 0.65e6, areaSet: 1.0e6, scan: 2000,
   area1: { 'foe:imp': 0.39e6, 'foe:gloomjaw': 0.85e6, 'bg:forest:land': 0.77e6, 'bg:forest:port': 0.68e6 }
 };
-export function loadReport(s, { size = wire, lines = LOAD_LINES } = {}) {
-  const page = size(s.html), boot = s.assets.reduce((n, a) => n + size(a.text), 0), fails = [], warns = [];
+export function loadReport(s, { size = wire, lines = LOAD_LINES, pageSize = size } = {}) {
+  const page = pageSize(s.html), boot = s.assets.reduce((n, a) => n + size(a.text), 0), fails = [], warns = [];
   const pk = Object.fromEntries(s.packs.map(p => [p.id, { real: size(p.text) }]));
   // ps's bytes (f: a pack's), its backgrounds at the larger shape
   const sh = (ps, f = p => pk[p.id].real) => { const n = { '': 0, land: 0, port: 0 }; for (const p of ps) n[p.o || ''] += f(p); return n[''] + Math.max(n.land, n.port); };
@@ -280,6 +282,41 @@ export function loadReport(s, { size = wire, lines = LOAD_LINES } = {}) {
   return { page, boot, packs: pk, hero, zone1, worst, zoneMax, areaMax, everything, fails, warns };
 }
 
+// ---- steady boot bytes (card boot-bytes-steady-measure): a report beside the boot lines, never a line ----
+// The lines count the page as one Brotli q4 stream, as it ships. The build is deterministic, but q4's small match table makes
+// that count move by up to ~500 B when files a branch never touched change (#407's same diff: -68 B on one base, +420 B on
+// another). The steady count cuts the page at each src/js file's marker and compresses every piece alone, so a file's bytes
+// depend on that file only: a branch's steady delta against its merge base is the same on any base. Use it for "net-zero boot
+// bytes"; it reads higher than the line's count and never decides pass or fail.
+export const STEADY_BASE = 'origin/claude/elegant-johnson-m6k00u';
+export const pagePieces = html => html.split(/\n(?=\/\/ ---- src\/js\/[^\n]* ----\n)/);
+export const steadyPage = (html, size = wire) => pagePieces(html).reduce((n, p) => n + size(p), 0);
+export function steadyReport(s, { size = wire } = {}) {
+  const r = loadReport(s, { size, pageSize: h => steadyPage(h, size) });
+  return { page: r.page, zone1: r.zone1.counted, worst: r.worst.counted, z: r.worst.z };
+}
+// The merge base's steady count: its src and tools from git, built in a scratch folder with its own build.mjs, counted the same
+// way. null (with why) when this checkout has no merge base or the base will not build.
+export async function steadyBase(ref = STEADY_BASE) {
+  let mb, dir;
+  try { mb = execFileSync('git', ['merge-base', 'HEAD', ref], { cwd: ROOT, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim(); }
+  catch (e) { return { why: `no merge base with ${ref} in this checkout` }; }
+  try {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lf-steady-'));
+    const tar = execFileSync('git', ['archive', '--format=tar', mb, 'src', 'tools'], { cwd: ROOT, maxBuffer: 1 << 30, stdio: ['pipe', 'pipe', 'ignore'] });
+    execFileSync('tar', ['-x', '-C', dir], { input: tar, stdio: ['pipe', 'ignore', 'ignore'] });
+    const m = await import(pathToFileURL(path.join(dir, 'tools', 'build.mjs')).href);
+    return { sha: mb.slice(0, 8), ...steadyReport(m.buildSplit({ write: false })) };
+  } catch (e) { return { sha: mb.slice(0, 8), why: `the merge base ${mb.slice(0, 8)} did not build (${String(e.message).split('\n')[0].slice(0, 80)})` }; }
+  finally { if (dir) fs.rmSync(dir, { recursive: true, force: true }); }
+}
+const sign = n => (n > 0 ? '+' : n < 0 ? '-' : '\u00b1') + Math.abs(n).toLocaleString('en-GB') + ' B';
+export function steadyLine(now, base) {
+  const say = `steady boot bytes (a report, not the line; each src/js file Brotli'd alone): zone 1 ${now.zone1.toLocaleString('en-GB')} B, worst zone ${now.z} ${now.worst.toLocaleString('en-GB')} B`;
+  return base && !base.why ? `${say}; this branch ${sign(now.zone1 - base.zone1)} zone 1, ${sign(now.worst - base.worst)} worst zone against ${base.sha}, the merge base with ${STEADY_BASE}`
+    : `${say} (${base ? base.why : 'no base'}; fetch the branch to compare)`;
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { file, bytes } = build();
   console.log(`built ${path.relative(ROOT, file)} (${(bytes / 1024).toFixed(1)} KB)`);
@@ -291,5 +328,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     console.log(`everything: ${MB(r.everything)} on the wire (B1's 6.0 / 8.0 MB first-load lines are a report here); a returning player after a code change: ${MB(r.page)} (wire = Brotli quality 4)`);
     for (const w of r.warns) console.log('warn: ' + w);
     for (const f of r.fails) console.log('over a load line: ' + f);
+    console.log(steadyLine(steadyReport(s), await steadyBase()));
   }
 }

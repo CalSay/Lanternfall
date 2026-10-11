@@ -1,5 +1,5 @@
-// 50-sim: the game loop's rules in motion: activity switching, combat, gathering,
-// kills, harvests, level-ups, boss attempts, taps and away gains.
+// 50-sim: the game loop's rules: activity, combat, gathering, kills, harvests,
+// level-ups, bosses, taps and away gains.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Visual feedback goes out on the event bus (float, burst, shake, lunge, ...).
 
@@ -18,11 +18,12 @@ function setActivity(a) {
 function setZone(z) {
   S.zone = z; S.kills = 0; fightBoss = false; emit('sceneReset'); spawn();   // a zone starts at fight 1 of ZONE_FIGHTS
 }
-// Pick the gathering node. Returns false if the skill level is too low. Does not
-// switch activity; call setActivity('gather') for that.
+// Pick the gathering node (false if the skill is too low). Does not switch activity.
+// A live Deepwell run keeps the stage, even in an away phase (57d).
 function setNode(kind, t) {
   if (!craftNodeVisible(kind, t) || !skillTierOpen(skillOf(kind), t)) return false;
-  S.node = { kind, t }; S.gProg = 0; emit('sceneReset');
+  const dr = typeof DW == 'object' && DW.run();
+  S.node = { kind, t }; S.gProg = 0; if (S.activity === 'gather' && !(dr && !dr.paused)) emit('sceneReset');
   return true;
 }
 
@@ -256,20 +257,27 @@ function harvest() {
 function awayGains(secs) {
   secs = Math.max(0, +secs || 0);   // a save stamped in the future (clock set back) gives nothing, never negative gains
   const r = { t: Math.min(secs, awayCapH() * 3600), secs, lines: [] };
-  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // (55-boss-try keeps the same baseline in the save) BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
+  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // BAL3: back from away, auto-challenge may retry a failed boss, as a reload does (55-boss-try: same baseline)
   emit('awayBegin', r);
   awayBase(r);
   emit('away', r);
   emit('awayEnd', r);
   return r;
 }
+// The node the hero works while away, or null. A turn fighter goes back to its last node once Gather is open.
+function awayNode() {
+  const n = S.node;
+  return S.activity === 'gather' || typeof turnCombatScope == 'function' && turnCombatScope() && isUnlocked('gather') && craftNodeVisible(n.kind, n.t) && skillTierOpen(skillOf(n.kind), n.t) ? n : null;
+}
+// The hero's first name
+const heroFirst = () => { const h = typeof ROSTER === 'object' && S.solo && ROSTER[S.solo.hero]; return h ? h.name.split(' ')[0] : 'your hero';
+};
 function awayBase(r) {
   const t = r.t;
-  const boost = (1 + gear().offline / 100) * mod('offline');
-  if (S.activity === 'gather') {
-    const { kind, t: tier } = S.node;
-    // Batch until the next skill or tool-mastery level, rounded up to the same
-    // whole-second boundary as live play. Gathering speed is constant between them.
+  const boost = (1 + gear().offline / 100) * mod('offline'), nd = awayNode();
+  if (nd) {
+    const { kind, t: tier } = nd;
+    // Batch until the next skill or tool-mastery level, rounded up to the same whole-second boundary as live play.
     const skill = skillOf(kind), tool = typeof toolOf === 'function' ? toolOf(skill) : null;
     let got = 0;
     for (let elapsed = 0; elapsed < t;) {
@@ -289,7 +297,9 @@ function awayBase(r) {
     got = storeAwayGather(kind, tier, got, r);   // H3: up to the cap; Spillover moves on (55-store)
     if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
     if (got > 0) r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
-    r.note = `You kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
+    const at = `the ${NODE_NAMES[kind][tier - 1]}.`;
+    r.leftFight = S.activity === 'fight';   // fights earn nothing away (owner, 2026-10-01)
+    r.note = (r.leftFight ? `You left mid-fight, so ${heroFirst()} went back to ${at}` : `You kept working ${at}`) + ` ${SKILL[skill]} is now level ${S.skills[skill].lv}.`;
     return r;
   }
   const dps = heroDps() * 0.5 * boost;
@@ -300,10 +310,8 @@ function awayBase(r) {
     r.note = 'You kept hammering the raid boss.';
     return r;
   }
-  // Turn fights are active only (owner, 2026-10-01): nothing fights while you are away. Gathering keeps going.
   if (typeof turnCombatScope === 'function' && turnCombatScope()) {
     r.turnCombat = { kills: 0, zone: S.zone };
-    r.note = 'Fights only happen while you play. Set your hero to gather before you go, and they keep working.';
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.

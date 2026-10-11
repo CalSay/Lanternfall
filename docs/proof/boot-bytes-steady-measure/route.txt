@@ -1,0 +1,8 @@
+# seed: 1
+# Proof for card boot-bytes-steady-measure (tooling only; tools/build.mjs and check.mjs's split build section). Nothing a player
+# sees changes: the page, its boot files and its packs are byte for byte the same. The proof is the table in proof.md (the same
+# #407 diff on three bases: the line's count moves -68 / -68 / +420 B, the steady count +274 B on all three) and the check line
+# "split: the steady count gives a file's change the same bytes on any base". This route only boots a new game to show it runs.
+new fresh
+wait-for "#nuChip" 10
+shot new-game-boots

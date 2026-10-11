@@ -8,7 +8,7 @@ import os from 'node:os';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBrowser } from './lib/browser.mjs';
-import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire, heroPacks, nsPacks } from './build.mjs';
+import { buildSplit, isAsset, assetName, AREA_ART, BOOT_ART, placeArt, loadReport, LOAD_LINES, wire, heroPacks, nsPacks, pagePieces, steadyPage, steadyReport, steadyBase, steadyLine } from './build.mjs';
 import { nsFixture } from './lib/ns-fixture.mjs';
 import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { ROOT, coreFiles as coreFilesRaw, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
@@ -89,7 +89,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 120, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 52, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 75, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 44,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -119,6 +119,8 @@ const WEIGHT = {
   'pip-cast-recipes': 40,
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
+  'leave-mid-fight-gathers (browser)': 15,
+  'deepwell-spillover-keeps-fight': 12,   // 12 s locally alone (deepwell-spillover-keeps-fight, 2026-10-11)
   'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
   'foe wind-up after a hold (browser)': 18,   // 18 s locally alone (foe-windup-after-hold, 2026-10-10)
   'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
@@ -392,6 +394,14 @@ if (section('split build (asset-build)')) try {
     assert(!r.fails.length, `split: the load lines hold: boot set ${MBs(r.zone1.counted)} MB for a new game and ${MBs(r.worst.counted)} MB for the worst zone (${r.worst.z}) of ${MBs(LOAD_LINES.bootFail)}, `
       + `largest zone set ${MBs(r.zoneMax.b)} of ${MBs(LOAD_LINES.zoneSet)}, area set ${MBs(r.areaMax.b)} of ${MBs(LOAD_LINES.areaSet)}${r.fails.length ? ': ' + r.fails.join('; ') : ''}`);
     for (const w of r.warns) console.log('  WARN split: ' + w);
+    // steady boot bytes (card boot-bytes-steady-measure): a report, never a line. The page's pieces put back together are the page,
+    // and a change to one file moves the steady count by the same bytes whatever changed in another file (the line's count does not)
+    { const one = f => ({ f, text: src(f) + `// steady check: ${f} ${'a change that only this check makes, '.repeat(12)}\n` });
+      const A = one('71-ui-fight.js'), B = one('30-state.js'), sA = buildSplit({ write: false, extra: [A] }), sB = buildSplit({ write: false, extra: [B] }), sAB = buildSplit({ write: false, extra: [A, B] });
+      const dS = (x, y) => steadyPage(x.html, size) - steadyPage(y.html, size), dW = (x, y) => size(x.html) - size(y.html);
+      assert(pagePieces(s.html).join('\n') === s.html && pagePieces(s.html).length > 100 && dS(sA, s) === dS(sAB, sB) && dS(sA, s) > 0,
+        `split: the steady count gives a file's change the same bytes on any base (${dS(sA, s)} B and ${dS(sAB, sB)} B; the line's whole-page count gives ${dW(sA, s)} B and ${dW(sAB, sB)} B)`);
+      console.log('  ' + steadyLine(steadyReport(s, { size }), await steadyBase())); }
     // E1 ended (bg-pack-by-shape): no pack holds two shapes, so none counts at one; a zone's backgrounds count at the larger shape
     const bgs = s.packs.filter(p => p.id.startsWith('bg:')), z1 = s.packs.filter(p => inZ(p, 1)), bySh = o => z1.filter(p => p.o === o).reduce((n, p) => n + r.packs[p.id].real, 0);
     assert(!('e1' in LOAD_LINES) && bgs.length && bgs.every(p => p.o && p.id.endsWith(':' + p.o)) && z1.some(p => p.o === 'land') && z1.some(p => p.o === 'port')
@@ -578,7 +588,7 @@ if (section('split build (asset-build)')) try {
 // both pages: a camp build and a Hand's shift due in a second, an All order at the Forge, then a zone 2 fight. In the split page
 // Gloomjaw's pack is held: the fight holds under the line, the Forge's order runs on the frame clock as in tick (progress = game
 // seconds x speed), and once the pack is in the build and the Hand are back as in the inline page. While gathering the line
-// still covers the stage but the game runs on (a gather keeps its progress).
+// still covers the stage but the game runs on (a gather keeps its progress). A tonic and Well Rested run down on wall time in both pages.
 if (section('load-hold-progress (browser)')) try {
   const { pw, exe } = browserTools;
   const s = buildSplit({ write: false }), files = Object.fromEntries(s.files.map(a => [a.name, a.text]));
@@ -604,7 +614,7 @@ if (section('load-hold-progress (browser)')) try {
     const X = (page, js) => page.evaluate(j => window.__t.x(j), js);
     // the Forge's order: game seconds of work done (units made x a unit's time, plus the one under way)
     const READ = `(() => { const o = refineOrders('forge')[0], u = REFINE_TUNE.secs[0];
-      return { T, work: o ? o.made * u + (o.at || 0) : -1, speed: refineSpeed('forge'), kills: S.kills, hp: mob && mob.hp, held: gameHeld(), zone: S.zone,
+      return { T, work: o ? o.made * u + (o.at || 0) : -1, tonic: S.craft.tonic ? S.craft.tonic.left : -1, rest: S.rested.left, speed: refineSpeed('forge'), kills: S.kills, hp: mob && mob.hp, held: gameHeld(), zone: S.zone,
         built: window.__build && campLevel(window.__build) - window.__lv, build: !!(window.__build && campPending(window.__build)), hand: (() => { const h = handsList().find(x => x.id === window.__hand); return h ? handsStatus(h).st : 'none'; })(),
         cover: (() => { const c = document.getElementById('artWait'); return !!c && !c.hidden; })() }; })()`;
     const run = async (html, assets, hold) => {
@@ -620,7 +630,7 @@ if (section('load-hold-progress (browser)')) try {
         if (b) { b.start = t - b.dur; b.end = t; }
         const r = refineAdd('ingot', 1, 'all');
         return { job: !!job, why, build: id || null, order: !!(r && r.ok) }; })()`);
-      await X(page, 'S.activity = "fight", setZone(2), ui(true)'); await page.waitForTimeout(300);
+      await X(page, 'S.craft.tonic = { k: Object.keys(CRAFT_TONICS)[0], t: 1, left: 600 }, S.rested.left = 100, S.activity = "fight", setZone(2), ui(true)'); await page.waitForTimeout(300);
       const a = await X(page, READ);
       await page.waitForTimeout(2500);
       const b = await X(page, READ);
@@ -639,6 +649,10 @@ if (section('load-hold-progress (browser)')) try {
         `load-hold-progress: in the split page zone 2's fight holds under the line while Gloomjaw loads (${JSON.stringify({ a: sp.a, b: sp.b })})`);
       assert(fair(sp) && fair(il),
         `load-hold-progress: the Forge's order earns every game second in both pages, held or not (split ${done(sp).toFixed(3)} s of work in ${dT(sp).toFixed(3)} s, inline ${done(il).toFixed(3)} s in ${dT(il).toFixed(3)} s, speed ${sp.a.speed})`);
+      // hold-tonic-rested-clock: a hold freezes only the fight's turn clock, so a tonic and Well Rested run down on wall time as inline
+      const wall = r => Math.abs(r.a.tonic - r.b.tonic - dT(r)) < 1e-6 && Math.abs(r.a.rest - r.b.rest - dT(r)) < 1e-6;
+      assert(wall(sp) && wall(il),
+        `load-hold-progress: a tonic and Well Rested run down every game second in both pages, held or not (split tonic ${(sp.a.tonic - sp.b.tonic).toFixed(3)} s, Rested ${(sp.a.rest - sp.b.rest).toFixed(3)} s in ${dT(sp).toFixed(3)} s; inline ${(il.a.tonic - il.b.tonic).toFixed(3)} s, ${(il.a.rest - il.b.rest).toFixed(3)} s in ${dT(il).toFixed(3)} s)`);
       assert(il.b.built === 1 && !il.b.build && il.b.hand === 'camp' && sp.c.built === 1 && !sp.c.build && sp.c.hand === 'camp' && !sp.c.held && !sp.c.cover,
         `load-hold-progress: the build and the Hand's shift due during the hold are done once the pack is in, as in the inline page (split ${JSON.stringify(sp.c)}, inline ${JSON.stringify(il.b)})`);
       assert(!sp.errs.length && !il.errs.length, 'load-hold-progress: no page errors' + (sp.errs[0] || il.errs[0] ? ': ' + (sp.errs[0] || il.errs[0]) : ''));
@@ -9871,6 +9885,11 @@ if (section('offline accounting and schedules (C14)')) try {
   assert(workerLines.length === 1 && /2 shifts/.test(workerLines[0].txt) && /3,396/.test(workerLines[0].txt), 'C14: two completed shifts merge into one truthful worker line');
   assert(lines.filter(l => l.group === 'Camp').length === 1 && /Workbench.*Forge/.test(lines.find(l => l.group === 'Camp').txt), 'C14: completed camp builds merge into one source line');
   assert(first.report.extra.some(l => l.group === 'Tavern' && /new applicant/.test(l.txt)), 'C14: the named Rook arrival appears in the away report even before a random applicant is due');
+  // leave-mid-fight-gathers: the same hero left mid-fight (Gather open) mines that node away, as live gathering does; fights earn nothing
+  { const lraw = offlineFixture('gather-left-fight'), ll = offlineGame(lraw); ll.eval("setActivity('gather')"); games.push(ll); offlineLiveUntil(ll, 0, 7200);
+    const l = offlineSnapshot(ll), a = offlineRun(lraw, 7200), g = offlineRun(raw, 7200), pct = (a.state.heroUnits / a.state.boost / Math.max(1, l.heroUnits) - 1) * 100;
+    assert(Math.abs(pct) <= 5 && a.state.heroUnits === g.state.heroUnits && a.state.rook === g.state.rook && a.state.rest === g.state.rest && a.state.gold - g.state.gold === 0 && a.state.kills === g.state.kills && a.report.leftFight && !a.errors.length,
+      `C14: a hero left mid-fight gathers its node away like a gatherer (${a.state.heroUnits} units, live ${l.heroUnits}: ${pct.toFixed(2)}%; Rook ${a.state.rook}s, Rested ${a.state.rest}s; no fight gold or kills)`); }
   const refund = offlineGame(raw); games.push(refund);
   refund.eval('handsRecall("tam"); S.mats.wood[0]=storeCap("wood",1); handsRecall("trade-worker"); S.mats.wood[0]-=1000; setActivity("fight"); globalThis.__beforeGathered=S.stats.gathered;');
   const rr = refund.eval(`Date.__t=${AUDIT_START + 1800000};awayGains(1800)`);
@@ -18075,7 +18094,7 @@ if (section('craft-shortfall-offer')) try {
 } catch (e) { fail('craft-shortfall-offer crashed: ' + (e.stack || e)); }
 
 // ---- upgrade-gold-covers-short (ruling autopilot/rulings/2026-10-08-gold-covers-material.md, B): an upgrade short of its one
-// material may pay the units it lacks in gold, ECON.coverFoes (9) foes of the tier's foe gold a raw unit (a middle is 2), once
+// material may pay the units it lacks in gold, ECON.coverFoes (27; 9 until gold-cover-share) foes of the tier's foe gold a raw unit (a middle is 2), once
 // the material's gathering tier is open and, for a middle, its station built. Held units go first; covered units give no skill
 // XP; salvage refunds step gold only; never a craft, Essence or a Trophy; coverFoes 0 turns it off; no new state. The item
 // sheet shows it as the second button after the free refine order. On save-refine (Forge and Workbench Lv 2, no middles). ----
@@ -18083,20 +18102,23 @@ if (section('upgrade-gold-covers-short')) try {
   const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-refine.json'), 'utf8');
   const fresh = () => loadCore({ seed: 1, storage: memoryStorage({ [KEY]: raw }) });
   const g = fresh(), E = s => g.eval(s);
-  assert(E('ECON.coverFoes') === 9, 'the cover price is 9 foes of the tier\'s foe gold a raw unit');
-  // the ruling's prices: 90 gold a tier-1 Plank (3 for 270, the card's bow), 45 a tier-1 raw unit, 6 Silver Ingots 860
+  assert(E('ECON.coverFoes') === 27, 'the cover price is 27 foes of the tier\'s foe gold a raw unit (gold-cover-share)');
+  // the prices: 270 gold a tier-1 Plank (3 for 810, the card's bow), 135 a tier-1 raw unit, 6 Silver Ingots 2,600
   const bow = JSON.parse(E(`(() => { const it = { id: 999001, slot: 'bow', t: 1, r: 'common', plus: 2, a: [] }; S.items.push(it); S.mats.plank[0] = 0; return JSON.stringify([upgradeCost(it), upgradeCover(it)]); })()`));
-  assert(bow[0].mats.plank === 3 && bow[0].gold === 230 && JSON.stringify(bow[1]) === '{"fam":"plank","t":1,"units":3,"gold":270}', `a Pine Bow +2 short 3 Pine Planks: 270 gold covers them (${JSON.stringify(bow)})`);
+  assert(bow[0].mats.plank === 3 && bow[0].gold === 230 && JSON.stringify(bow[1]) === '{"fam":"plank","t":1,"units":3,"gold":810}', `a Pine Bow +2 short 3 Pine Planks: 810 gold covers them (${JSON.stringify(bow)})`);
   E('S.mats.plank[0] = 1');
-  assert(E('JSON.stringify(upgradeCover(itemById(999001)))') === '{"fam":"plank","t":1,"units":2,"gold":180}', 'held units go first: with 1 Pine Plank held, gold covers the other 2 for 180');
+  assert(E('JSON.stringify(upgradeCover(itemById(999001)))') === '{"fam":"plank","t":1,"units":2,"gold":540}', 'held units go first: with 1 Pine Plank held, gold covers the other 2 for 540');
   const pick = JSON.parse(E(`(() => { const it = { id: 999002, slot: 'pick', t: 1, r: 'common', plus: 3 }; S.items.push(it); S.mats.ore[0] = 0; return JSON.stringify(upgradeCover(it)); })()`));
-  assert(pick && pick.fam === 'ore' && pick.units === 4 && pick.gold === 180, `a tool stays raw: 4 Copper Ore cost 45 each (${JSON.stringify(pick)})`);
+  assert(pick && pick.fam === 'ore' && pick.units === 4 && pick.gold === 540, `a tool stays raw: 4 Copper Ore cost 135 each (${JSON.stringify(pick)})`);
   const wpn = JSON.parse(E(`JSON.stringify([upgradeCover(equipped('weapon')), canUpgrade(S.equip.weapon).ok, canUpgrade(S.equip.weapon, undefined, { cover: true }).ok])`));
-  assert(JSON.stringify(wpn[0]) === '{"fam":"ingot","t":3,"units":6,"gold":860}' && !wpn[1] && wpn[2], `the Silver Warblade +6 short 6 Silver Ingots: refused without the cover, allowed with it for 860 (${JSON.stringify(wpn)})`);
+  assert(JSON.stringify(wpn[0]) === '{"fam":"ingot","t":3,"units":6,"gold":2600}' && !wpn[1] && wpn[2], `the Silver Warblade +6 short 6 Silver Ingots: refused without the cover, allowed with it for 2,600 (${JSON.stringify(wpn)})`);
   // limits: the gathering tier shut, the station unbuilt, coverFoes 0
   assert(E(`(() => { const lv = S.skills.mine.lv; S.skills.mine.lv = 1; const r = upgradeCover(equipped('weapon')); S.skills.mine.lv = lv; return r === null && canUpgrade(S.equip.weapon, undefined, { cover: true }).ok; })()`), 'no cover while the material\'s gathering tier is shut (Mining 1, Silver Ore)');
   assert(E(`(() => { const b = S.camp.b.forge; S.camp.b.forge = 0; const r = upgradeCover(equipped('weapon')); const c = canUpgrade(S.equip.weapon, undefined, { cover: true }); S.camp.b.forge = b; return r === null && !c.ok && c.why === 'Gold cannot cover this upgrade.'; })()`), 'no cover for an Ingot while the Forge is unbuilt');
-  assert(E(`(() => { ECON.coverFoes = 0; const r = upgradeCover(equipped('weapon')); ECON.coverFoes = 9; return r === null; })()`), 'coverFoes 0 turns the offer off');
+  assert(E(`(() => { ECON.coverFoes = 0; const r = upgradeCover(equipped('weapon')); ECON.coverFoes = 27; return r === null; })()`), 'coverFoes 0 turns the offer off');
+  // gold-cover-share: a cover pressed after the rest was gathered (the sheet still showed it) makes the plain upgrade, not a refusal
+  const stale = E(`(() => { const it = equipped('weapon'); S.mats.ingot[2] = upgradeCost(it).mats.ingot; const r = upgradeCover(it), c = canUpgrade(it.id, undefined, { cover: true }); S.mats.ingot[2] = 0; return JSON.stringify([r, c.ok, c.cover || null, c.pay && c.pay.gold]); })()`);
+  assert(stale === '[null,true,null,1800]', `all 6 Silver Ingots held when the cover is pressed: a plain upgrade for 1,800 gold (${stale})`);
   // never Essence or a Trophy: a unique short only of Essence has nothing to cover; the +8 step still needs its Trophy
   const ess = E(`(() => { const it = { id: 999003, slot: 'warblade', t: 3, r: 'legendary', u: Object.keys(UNIQ)[0], plus: 2, a: [] }; S.items.push(it); const c = upgradeCost(it); S.mats.ingot[2] = c.mats.ingot; const e0 = S.mats.ess.slice(); S.mats.ess = [0, 0, 0, 0, 0]; const r = [upgradeCover(it), canUpgrade(it.id, undefined, { cover: true }).why]; S.mats.ess = e0; S.mats.ingot[2] = 0; return JSON.stringify(r); })()`);
   assert(/^\[null,"Gold cannot cover this upgrade\."\]$/.test(ess), `a unique short only of Essence: gold covers nothing (${ess})`);
@@ -18112,9 +18134,9 @@ if (section('upgrade-gold-covers-short')) try {
     const dxp = Object.fromEntries(Object.keys(S.skills).map(k => [k, [S.skills[k].lv - sk0[k].lv, Math.round((S.skills[k].xp - sk0[k].xp) * 1000) / 1000]]));
     return JSON.stringify({ ok, plus: it.plus, spent: Math.round(g0 - S.gold), led: Math.round(econLedger().spent.craft - l0), ev: ev && { gold: ev.gold, cover: ev.cover }, ingot: S.mats.ingot[2], dxp, refund: craftUpgradeRefund(it) }); })()`));
   const ra = run(a, undefined), rb = run(b, { cover: true });
-  assert(ra.ok && rb.ok && ra.plus === 7 && rb.plus === 7 && ra.spent === 1800 && rb.spent === 2660 && rb.led === 2660 && rb.ingot === 0,
-    `covering 6 Silver Ingots spends 1,800 + 860 gold under the upgrade's ledger kind; the Ingots in hand cost 1,800 (${JSON.stringify([ra.spent, rb.spent, rb.led, rb.ingot])})`);
-  assert(JSON.stringify(ra.ev) === '{"gold":1800,"cover":{"units":0,"gold":0}}' && JSON.stringify(rb.ev) === '{"gold":1800,"cover":{"units":6,"gold":860}}', `the upgraded event carries cover { units, gold } (${JSON.stringify([ra.ev, rb.ev])})`);
+  assert(ra.ok && rb.ok && ra.plus === 7 && rb.plus === 7 && ra.spent === 1800 && rb.spent === 4400 && rb.led === 4400 && rb.ingot === 0,
+    `covering 6 Silver Ingots spends 1,800 + 2,600 gold under the upgrade's ledger kind; the Ingots in hand cost 1,800 (${JSON.stringify([ra.spent, rb.spent, rb.led, rb.ingot])})`);
+  assert(JSON.stringify(ra.ev) === '{"gold":1800,"cover":{"units":0,"gold":0}}' && JSON.stringify(rb.ev) === '{"gold":1800,"cover":{"units":6,"gold":2600}}', `the upgraded event carries cover { units, gold } (${JSON.stringify([ra.ev, rb.ev])})`);
   assert(JSON.stringify(ra.dxp) === JSON.stringify(rb.dxp) && ['mine', 'wood', 'forage', 'hunt'].every(k => !rb.dxp[k] || (rb.dxp[k][0] === 0 && rb.dxp[k][1] === 0)),
     `covered units give no skill XP: only the upgrade's own station XP, the same as with the Ingots in hand (${JSON.stringify(rb.dxp)})`);
   assert(ra.refund === rb.refund, `salvage pays back the same step gold, never the cover (${ra.refund} / ${rb.refund})`);
@@ -18141,16 +18163,16 @@ if (section('upgrade-gold-covers-short')) try {
       await X(`S.activity = 'gather'; for (const st of REFINE_STATIONS) refineOrders(st).length = 0; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(250);
       const r = await X(`(() => { const r = document.querySelector('.cf-up-box .cf-short'); if (!r) return null; const bs = [...r.querySelectorAll('button')]; const c = r.querySelector('.cf-cover'), box = c && c.getBoundingClientRect();
         return { btns: bs.map(b => b.className.replace('mini ', '')), cover: c ? c.textContent : '', dis: c ? c.disabled : null, inView: !!box && box.right <= innerWidth && box.left >= 0 }; })()`);
-      assert(r && JSON.stringify(r.btns) === '["cf-order","cf-cover"]' && r.cover === 'Upgrade: 1,800 + 860 gold for 6 Silver Ingots' && r.dis === false && r.inView,
+      assert(r && JSON.stringify(r.btns) === '["cf-order","cf-cover"]' && r.cover === 'Upgrade: 1,800 + 2,600 gold for 6 Silver Ingots' && r.dis === false && r.inView,
         `the Silver Warblade's upgrade row offers the Smelt order first and the gold cover second, inside a 360 px screen (${JSON.stringify(r)})`);
       const g0 = await X('S.gold');
       await X(`document.querySelector('.cf-up-box .cf-cover').click(); true`); await page.waitForTimeout(250);
       const after = await X(`JSON.stringify([equipped('weapon').plus, Math.round(${g0} - S.gold), REFINE_STATIONS.map(s => refineOrders(s).length)])`);
-      assert(after === '[7,2660,[0,0,0]]', `one press upgrades to +7 for 2,660 gold and queues nothing (${after})`);
+      assert(after === '[7,4400,[0,0,0]]', `one press upgrades to +7 for 4,400 gold and queues nothing (${after})`);
       // short of gold: the button stays, pressed does nothing, and says how much more
       await X(`S.gold = 2000; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(250);
       const poor = await X(`(() => { const c = document.querySelector('.cf-up-box .cf-cover'), w = document.querySelector('.cf-up-box .cf-cover-why'); return c ? [c.disabled, w ? w.textContent : ''] : null; })()`);
-      assert(poor && poor[0] === true && poor[1] === 'To cover them: 1.56K more gold.', `short of gold, the cover button is off and a line says how much more (${JSON.stringify(poor)})`);
+      assert(poor && poor[0] === true && poor[1] === 'To cover them: 3.30K more gold.', `short of gold, the cover button is off and a line says how much more (${JSON.stringify(poor)})`);
       assert(!errs.length, 'upgrade-gold-covers-short: no page errors' + (errs.length ? ': ' + errs[0] : ''));
     } finally { await browser.close(); }
   })();
@@ -18856,9 +18878,10 @@ if (section('nextup-chip-360 (browser, fallback-font)')) try {
 
 // ==== side-column-fits-740: every gate label and every away line fit the landscape side column ====
 // The side column holds the Next Up chip (row 2), the away chip (row 3) and the dock (row 4, .sb-tabs at its top). The dock shows
-// only while fighting (75-solo-ui: target() is 'mob') and the away chip only while gathering (71-ui-fight awayChipText), so the
-// height budget is per state: fighting, the chip ends above .sb-tabs; gathering, the chip and the away chip end above the screen's
-// foot and the dock is hidden. The section builds every tier gate label the game can make (gateLabel over each kind, tiers 2 to 5,
+// only while fighting (75-solo-ui: target() is 'mob'); the away chip shows while gathering and, once Gather is open, while fighting
+// (leave-mid-fight-gathers: leaving sends the fighter back to the last node, 71-ui-fight awayChipText), so the height budget is per
+// state: fighting, the chip and the away chip end above .sb-tabs; gathering, the chip and the away chip end above the screen's foot
+// and the dock is hidden. The section builds every tier gate label the game can make (gateLabel over each kind, tiers 2 to 5,
 // its station gates and each raw cell its recipe takes, one level short, gathering that skill and not) and every away line
 // (awayChipSay over each gathered material: about N in the longest away, fills up, full), and measures the longest of each, with
 // the players' web fonts and with the fallbacks (display-fallback-font).
@@ -18939,26 +18962,40 @@ if (section('side-column-fits-740')) try {
                 for (const [f, tt] of prod ? prod.inputs(t) : [[k, t]]) { if (f === 'coal' || !CRAFT_NODES[f]) continue;
                   const sk = skillOf(f), nd = skillReq(sk, tt); if (nd > 1) gs.push({ skill: sk, lv: nd - 1, need: nd, mat: costName(f, tt) }); } }
               for (const gate of gs) for (const on of [true, false]) labels.add(gateLabel({ kind, t, gate }, on)); } }
-          for (const f of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) { const nm = matName(f, t);
-            for (const n of ['spill', 0, 99999]) aways.add(awayChipSay(nm, n, CAMP_TUNE.awayMax)); }
+          const fights = new Set();   // a fighter's lines name the node leaving sends the hero back to
+          for (const f of Object.keys(CRAFT_NODES)) for (let t = 1; t <= 5; t++) { const nm = matName(f, t), back = NODE_NAMES[f] && NODE_NAMES[f][t - 1];
+            for (const n of ['spill', 0, 99999]) { aways.add(awayChipSay(nm, n, CAMP_TUNE.awayMax)); if (back) fights.add(awayChipSay(nm, n, CAMP_TUNE.awayMax, back)); } }
           const by = s => [...s].sort((a, b) => b.length - a.length);
-          return { labels: by(labels), aways: by(aways) }; })()`);
-        assert(words.labels.length > 100 && words.aways.length > 30, `${v}: the game makes gate labels and away lines (${words.labels.length}, ${words.aways.length})`);
+          return { labels: by(labels), aways: by(aways), fights: by(fights) }; })()`);
+        assert(words.labels.length > 100 && words.aways.length > 30 && words.fights.length > 30, `${v}: the game makes gate labels and away lines (${words.labels.length}, ${words.aways.length}, fighting ${words.fights.length})`);
         // line breaks, not only length, decide the height: the 12 longest of each are measured
-        const L = words.labels.slice(0, 12), A = words.aways.slice(0, 12);
-        // fighting: the dock shows and the away chip does not; every label shows whole and the chip ends 4 px or more above .sb-tabs
-        let worst = null, bad = null, floor = true;
-        for (const lt of L) { const o = await measure(page, lt, null); if (!o) { bad = 'no chip'; break; }
-          if (o.away !== false || o.dock == null) { bad = `fighting shows the away chip or no dock (${JSON.stringify(o)})`; break; }
+        const L = words.labels.slice(0, 12), A = words.aways.slice(0, 12), F = words.fights.slice(0, 12);
+        // fighting: the dock and the away chip show; every label and away line shows whole. The game picks the away chip's words so
+        // it ends 4 px or more above .sb-tabs (71-ui-fight awayChipFit): the whole line, then the line up to its first comma, then nothing.
+        // Its pick matches the measure for every pair, a shown chip never reaches the dock, only a phone's landscape screen says less,
+        // and with the web fonts the shortest label keeps the whole Pine Grove line there. Labels of every length with that line show each step on a phone.
+        const pick = (lt, al) => X(`(() => { const l = document.querySelector('#nuChip .nu-lbl'), c = document.querySelector('.away-chip'), a = c.lastChild, keep = [l.textContent, a.textContent, c.classList.contains('hide')];
+          l.textContent = ${JSON.stringify(lt)}; const t = awayChipFit(${JSON.stringify(al)}); l.textContent = keep[0]; a.textContent = keep[1]; c.classList.toggle('hide', keep[2]); return t; })()`);
+        const pine = await X('awayChipSay(matName("wood", 1), 99999, CAMP_TUNE.awayMax, NODE_NAMES.wood[0])'), short = words.labels[words.labels.length - 1];
+        const ends = async (lt, al) => { const o = await measure(page, lt, al); return o && o.away ? o.dock - o.away.bottom : -1e9; };
+        let bad = null, floor = true, said = { whole: 0, less: 0, none: 0 }, near = Infinity;
+        const pairs = [[short, pine], ...words.labels.filter((_, i) => i % 20 === 10).map(lt => [lt, pine]), ...L.flatMap(lt => F.map(al => [lt, al]))];
+        for (const [lt, al] of pairs) { const t = await pick(lt, al), o = await measure(page, lt, t || al); if (!o) { bad = 'no chip'; break; }
+          if (!o.away || o.dock == null) { bad = `fighting shows no away chip or no dock (${JSON.stringify(o)})`; break; }
           if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `cut: ${lt} (${o.lines} lines, clamp ${o.clamp})`; break; }
-          if (o.fs < (desk ? 14 : 13)) floor = false;
-          if (!worst || o.chipBottom - o.dock > worst.chipBottom - worst.dock) worst = { ...o, lt }; }
-        assert(!bad, `${v}: fighting, every gate label shows whole in the Next Up chip${bad ? ' (' + bad + ')' : ''}`);
-        if (worst) {
-          console.log(`  ${v}: fighting, the longest label takes ${worst.lines} lines and the chip ends ${worst.dock - worst.chipBottom} px above the dock`);
-          assert(worst.chipBottom + 4 <= worst.dock, `${v}: fighting, the chip ends above .sb-tabs (${worst.chipBottom} vs ${worst.dock}: ${worst.lt})`);
-        }
-        assert(floor, `${v}: the chip label keeps its ${desk ? 14 : 13} px floor`);
+          if (o.away.cut) { bad = `away line cut: ${t || al}`; break; }
+          if (o.away.top < o.chipBottom) { bad = `the away chip starts over the Next Up chip (${lt} / ${al})`; break; }
+          if (o.chipBottom + 4 > o.dock) { bad = `the Next Up chip ends ${o.dock - o.chipBottom} px above .sb-tabs (${lt})`; break; }
+          if (t !== al && (!phone || webFonts && lt === short && al === pine)) { bad = `the away chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
+          if (t && o.dock - o.away.bottom < 4) { bad = `the chip shows "${t}" and ends ${o.dock - o.away.bottom} px above the dock (${lt})`; break; }
+          if (t !== al && await ends(lt, al) >= 4) { bad = `the whole line fits but the chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
+          if (!t && await ends(lt, al.replace(/, .*/, '.')) >= 4) { bad = `the short line fits but the chip hides (${lt} / ${al})`; break; }
+          if (o.fs < (desk ? 14 : 13) || o.away.fs < (desk ? 14 : 13)) floor = false;
+          said[t === al ? 'whole' : t ? 'less' : 'none']++; if (t) near = Math.min(near, o.dock - o.away.bottom); }
+        assert(!bad, `${v}: fighting, every gate label and away line shows whole, and the away chip says what fits above the dock${bad ? ' (' + bad + ')' : ''}`);
+        assert(!phone || said.less > 0, `${v}: fighting, some label lengths get the short away line on a phone (${JSON.stringify(said)})`);
+        console.log(`  ${v}: fighting, of ${pairs.length} pairs the away chip says the whole line ${said.whole}, less ${said.less}, nothing ${said.none}; a shown chip ends ${near} px or more above the dock`);
+        assert(floor, `${v}: the chip and away text keep the ${desk ? 14 : 13} px floor`);
         let eb = await eyebrow(page);
         assert(eb.lines === 1 && eb.right <= eb.st, `${v}: fighting, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
         // gathering: the away chip shows and the dock does not; every label with every away line fits above the screen's foot
@@ -18968,7 +19005,7 @@ if (section('side-column-fits-740')) try {
         assert(eb.lines === 1 && eb.right <= eb.st, `${v}: gathering, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
         const cp = await caption(page);
         assert(cp.bad === 0, `${v}: gathering, the place name, skill line, material and count show whole (${cp.bad} cut${cp.bad ? ': ' + cp.first[0] : ''})`);
-        worst = null; bad = null; floor = true;
+        let worst = null; bad = null; floor = true;
         for (const lt of L) for (const al of A) { const o = await measure(page, lt, al); if (!o) { bad = 'no chip'; break; }
           if (!o.away || o.dock != null) { bad = `gathering shows no away chip or the dock (${JSON.stringify(o)})`; break; }
           if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `label cut: ${lt}`; break; }
@@ -19115,6 +19152,108 @@ if (section('first-craft-toast-clip')) try {
   }
 } catch (e) { fail('first-craft-toast-clip crashed: ' + (e.stack || e)); }
 
+// ==== leave-mid-fight-gathers: a turn fighter is told before leaving that the hero goes back to its node, and the away card says it did ====
+if (section('leave-mid-fight-gathers (browser)')) try {
+  const at = 'leave-mid-fight-gathers', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  // Spillover while a fighter is away moves the node but never ends the live fight (a fresh fight would heal the hero to full)
+  { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    E("S.camp.b.store = 8; storeSpill(1); S.skills.wood.lv = 20; S.mats.wood[0] = storeCap('wood', 1) - 10; setNode('wood', 1); setActivity('fight'); for (let i = 0; i < 40; i++) tick(0.1); cbUnitByKey('hero').hp = Math.ceil(cbUnitByKey('hero').maxHp * 0.2)");
+    const hp = E("cbUnitByKey('hero').hp"), now = E('TURN_LIVE.now');
+    E('globalThis.__r = awayGains(3600); tick(0.1); tick(0.1)');
+    const after = E("JSON.stringify({ hp: cbUnitByKey('hero').hp, live: !!TURN_LIVE && !TURN_LIVE.ended, now: TURN_LIVE && TURN_LIVE.now, node: S.node, spilled: __r.leftFight && !(S.node.kind === 'wood' && S.node.t === 1) })");
+    const a = JSON.parse(after);
+    assert(a.spilled && a.live && a.hp === hp && a.now > now, `${at}: Spillover while a fighter is away moves the node and keeps the fight and the hero's HP (HP ${hp} -> ${after})`); }
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); setNode("ore", 1); setActivity("fight"); true');
+        await page.waitForFunction(() => { const a = document.querySelector('.away-chip'); return a && !a.classList.contains('hide') && a.textContent.includes('Copper Vein'); }, null, { timeout: 5000 }).catch(() => {});
+        const chip = await X('(() => { const a = document.querySelector(".away-chip"); return a && !a.classList.contains("hide") ? a.textContent : null; })()');
+        // the whole line where it fits (it fits under this one-line Next Up label at every view), naming the node and what leaving earns
+        assert(/^Leave now: Wren goes back to the Copper Vein, about [\d.,K]+ Copper Ore in \d+ hours\.$/.test(chip || ''), `${v}: fighting, the away chip says where leaving sends Wren (${chip})`);
+        const gold = await X('S.gold'), kills = await X('S.totalKills'), mine = await X('S.skills.mine.lv');
+        await X('showAwayReport(awayGains(3600)); true');
+        await page.waitForSelector('.away-ov[role="dialog"]');
+        const card = await page.locator('.away-ov').innerText();
+        assert(card.includes('You left mid-fight, so Wren went back to the Copper Vein.') && /Ore\s*\+[\d.,K]+\s*Copper/.test(card) && !card.includes('fighting stops'),
+          `${v}: the away card says Wren went back to the Copper Vein, shows the Copper Ore, and drops the fighting-stops line (${card.replace(/\n/g, ' | ').slice(0, 300)})`);
+        assert(await X('S.gold') === gold && await X('S.totalKills') === kills && await X('S.skills.mine.lv') > mine, `${v}: an hour away earns no fights and raises Mining`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('leave-mid-fight-gathers crashed: ' + (e.stack || e)); }
+
+// ==== deepwell-spillover-keeps-fight: a Deepwell run started from gathering keeps its fight through an away Spillover ====
+// (57d lends S.activity back to 'gather' for the away phase; setNode's scene reset there ended the run's live turn fight.)
+if (section('deepwell-spillover-keeps-fight')) try {
+  const at = 'deepwell-spillover-keeps-fight', raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8');
+  const SETUP = "S.camp.b.hearth = 3; S.camp.b.store = 8; storeSpill(1); S.skills.wood.lv = 20; S.mats.wood[0] = storeCap('wood', 1) - 10; setNode('wood', 1); setActivity('gather')";
+  const FIGHT = "JSON.stringify({ act: S.activity, held: DW.run() && DW.run().act, live: DW.live(), arena: arena === DEEP_ARENA, run: DW.run() && [DW.run().id, DW.run().floor, DW.run().foeI, DW.run().phase], same: mob === __m && !mob.dead && mob.deep && TURN_LIVE === __tl && !!TURN_LIVE && !TURN_LIVE.ended, hp: mob && mob.hp, node: S.node })";
+  for (const k of ['wren', 'tobin', 'pip']) {
+    const g = loadCore({ seed: 41, turns: true, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    E(`soloPick("${k}", { now: true }); ${SETUP}; for (let i = 0; i < 20; i++) tick(0.1)`);
+    assert(E('DW.start(false)'), `${at} ${k}: a Deepwell run starts from gathering`);
+    E('for (let i = 0; i < 30; i++) tick(0.1); globalThis.__m = mob; globalThis.__tl = TURN_LIVE');
+    const b = JSON.parse(E(FIGHT));
+    E('globalThis.__r = awayGains(3600); tick(0.1); tick(0.1)');
+    const a = JSON.parse(E(FIGHT)), spilled = E('__r.lines.some(l => l.sub === "Spillover moved on")');
+    assert(b.same && b.held === 'gather' && spilled && a.node.t !== 1, `${at} ${k}: the away hour spills over to the next node while a run started from gathering is live (${JSON.stringify(b)} -> ${JSON.stringify(a.node)})`);
+    assert(a.same && a.act === 'fight' && a.held === 'gather' && a.live && a.arena && a.hp === b.hp && JSON.stringify(a.run) === JSON.stringify(b.run),
+      `${at} ${k}: back from away, the run's fight is the same fight (same foe and HP, same turn fight, same floor) (${JSON.stringify(b)} -> ${JSON.stringify(a)})`);
+    assert(!g.errors.length, `${at} ${k}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const hide = (page, h) => page.evaluate(h => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h });
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (h ? 'hidden' : 'visible') }); document.dispatchEvent(new Event('visibilitychange')); }, h);
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); ${SETUP}; true`);
+        await page.waitForTimeout(300);
+        assert(await X('DW.start(false)'), `${v}: a Deepwell run starts from gathering`);
+        await page.waitForFunction(() => window.__t.x('!!TURN_LIVE && !TURN_LIVE.ended && mob && mob.deep && !mob.dead'), null, { timeout: 5000 }).catch(() => {});
+        const b = JSON.parse(await X(`globalThis.__m = mob; globalThis.__tl = TURN_LIVE; ${FIGHT}`));
+        // the tab goes to the background for an hour, then comes back: the boot's visibilitychange runs the away gains
+        await hide(page, true); await X('S.last = Date.now() - 3600e3; true'); await hide(page, false);
+        await page.waitForSelector('.away-ov[role="dialog"]', { timeout: 5000 }).catch(() => {});
+        const card = await page.locator('.away-ov').innerText().catch(() => '');
+        const a = JSON.parse(await X(FIGHT)), hud = await page.waitForFunction(() => document.getElementById('app').classList.contains('deep-run'), null, { timeout: 3000 }).then(() => true, () => false);   // the run's HUD is up (75-deepwell-ui)
+        assert(b.same && b.held === 'gather' && card.includes('You kept working the Pine Grove.') && a.node.t !== 1, `${v}: an hour in the background spills over while the run is live (${JSON.stringify(a.node)}; ${card.replace(/\n/g, ' | ').slice(0, 200)})`);
+        assert(a.same && a.act === 'fight' && a.live && a.arena && JSON.stringify(a.run) === JSON.stringify(b.run) && hud,
+          `${v}: back in front, the Deepwell fight on screen is the same fight (${JSON.stringify(b)} -> ${JSON.stringify(a)}, HUD ${hud})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('deepwell-spillover-keeps-fight crashed: ' + (e.stack || e)); }
+
 // ==== toast-over-menu-foot: a notice never sits over an open menu or takes a tap meant for it ====
 // Cal's first-craft notes (first-craft-toast-clip finds, 10 Oct): with a menu open, notices sat over the menu's foot for a few seconds,
 // sideways (the stage-foot dock, 80-landscape) and upright (over the menu, above the tab bar, 50-overlays), and caught taps meant for
@@ -19229,9 +19368,11 @@ if (section('toast-over-menu-foot')) try {
 if (section('away-line-only-when-true')) try {
   const at = 'away-line-only-when-true', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
   const base = 'Birch Bow: Mining 7 of 14 opens Iron Ore. ', on = base + 'Gathering keeps going while you\'re away.', off = base + 'Gather Mining before you leave and it keeps going.';
-  const states = [['fighting', '', off], ['gathering Woodcutting', 'setNode("wood", 1); setActivity("gather")', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather")', on]];
-  for (const [name, set, want] of states) {
-    const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+  const states = [['fighting', '', off], ['gathering Woodcutting', 'setNode("wood", 1); setActivity("gather")', off], ['gathering Mining', 'setNode("ore", 1); setActivity("gather")', on],
+    ['turn fighting after Mining (leave-mid-fight-gathers: away goes back to the node)', 'setNode("ore", 1); setActivity("fight")', on, true],
+    ['turn fighting after Woodcutting', 'setNode("wood", 1); setActivity("fight")', off, true]];
+  for (const [name, set, want, turns] of states) {
+    const g = loadCore({ seed: 7, turns, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
     E('tick(0.1)'); if (set) E(set);
     const r = E('topGoals(20, { sticky: false }).map(x => ({ id: x.id, label: x.label }))').find(x => x.id === 'forge');
     assert(r && r.label === want, `${at}: ${name}, the row reads "${want}" (${JSON.stringify(r)})`);
@@ -19721,13 +19862,21 @@ if (section('actor-scale (browser)')) try {
         // a crowd (2 or more foes: a pack, a boss and its adds) keeps today's size, so its spacing is today's (G2: at 1.5 a pack of
         // wide foes left no room for both a 15% overlap and the hero's 16 px). The real-time fight (turns off) stands them here.
         // crowd-scale-step: the hero steps to 1.5x, not 1x, when its reach clears the pack (Pip does at 1280x720 and 1920x1080).
-        if (ak > 1) for (const [name, src] of [
+        // boss-adds-clear-outline: at every view each add's drawn box (first to last opaque column, top to ground) stays clear of the boss's.
+        for (const [name, src] of [
           ['a pack of 3', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; COMBAT_TUNE.sizes = 0; COMBAT_TUNE.packSize = 3; setActivity("fight"); fightBoss = false; setZone(3)'],
           // the Elder Moss Slime splits into two adds below half its HP (59b)
           ['a boss with adds', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; setActivity("fight"); fightBoss = false; setZone(8); S.kills = ZONE_FIGHTS; challenge(); mob.max = 1e15; mob.hp = mob.max * 0.3; setTimeout(() => { for (const f of combatFoes()) f.hp = f.max = 1e15; }, 400)'],
-        ]) {
+        ].filter(([name]) => ak > 1 || name === 'a boss with adds')) {
           await X(`globalThis.__hold = 0; globalThis.__tp = 0; ${src}; true`); await page.waitForTimeout(2500);
           const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, HS: s.HS, ZA: s.ZA, ZM: s.ZM, GY: s.GY }; })()');
+          if (name === 'a boss with adds') {
+            const o = await X(`(() => { const b = combatFoes().findIndex(f => f.boss), box = a => a && { k: a[0], l: a[1] - a[5] + a[6], r: a[1] - a[5] + a[7], t: a[2] - a[4], g: a[2] }, F = stageStats().foes.map(box);
+              return { boss: F[b], adds: F.filter((a, i) => a && i !== b) }; })()`);
+            const hits = o.boss ? o.adds.filter(a => Math.min(a.r, o.boss.r) > Math.max(a.l, o.boss.l) && Math.min(a.g, o.boss.g) > Math.max(a.t, o.boss.t)) : [];
+            assert(!!o.boss && o.adds.length >= 1 && !hits.length, `${tag} ${name}: each add stands clear of the boss's outline (boss ${JSON.stringify(o.boss)}, adds ${JSON.stringify(o.adds)})`);
+          }
+          if (ak === 1) continue;
           assert(c.n >= 2 && c.AK === 1 && c.ZA === c.ZM, `${tag} ${name}: a crowd of foes draws at today's size (${JSON.stringify(c)})`);
           assert(c.HS === 1.5 || (c.HS === 1 && w !== 1280 && w !== 1920), `${tag} ${name}: the hero steps down to 1.5x in a crowd that fits, not 1x (hero x${c.HS})`);
           await X('TURN_TUNE.on = true; COMBAT_TUNE.single = 1; COMBAT_TUNE.sizes = 1; COMBAT_TUNE.packSize = 3; fightBoss = false; setZone(1); true'); await page.waitForTimeout(1500);

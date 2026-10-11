@@ -23,7 +23,7 @@
 //   craftXpFor(skill, n) -> n with the catch-up multiplier applied (x2 while behind)
 //   upgradeItem(id, trophIdx?, opts?) -> bool    +1 (max +10); +8..+10 each pay 1 Trophy
 //   canUpgrade(id, trophIdx?, opts?) -> { ok, why, cost, cover }   (the most plentiful Trophy unless trophIdx)
-//                                                opts: { cover: true } lets gold pay the material the hero is short
+//                                                opts { cover: true }: gold pays the material short (none short: plain)
 //   upgradeItem(id, trophIdx?, opts?)            the same opts; emits 'upgraded' { item, gold, cover: { units, gold } }
 //   upgradeCover(it) -> { fam, t, units, gold } | null   what gold may cover of its next upgrade (upgrade-gold-covers-short)
 //   craftUpgradeRefund(it) -> gold               what salvaging it pays back: ECON.upRefund of the gold its +N cost
@@ -83,7 +83,7 @@ function craftXpMap() {
 
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, upgradeCover, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare, craftStrikeOffered, craftInfusePrice, craftLiftTo;
+  drinkTonic, tonicActive, tonicBurn, craftSalvageBonus, craftUpgradeRefund, craftXpShare, craftStrikeOffered, craftInfusePrice, craftLiftTo;
 
 {
   registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0, made: {} });
@@ -226,11 +226,10 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     let best = -1; tr.forEach((n, i) => { if (n > 0 && (best < 0 || n > tr[best])) best = i; });
     return best;
   };
-  // upgrade-gold-covers-short (ruling autopilot/rulings/2026-10-08-gold-covers-material.md, B): an upgrade short of its one
-  // material (never Essence, a Trophy or coal) may pay the units it lacks in gold, ECON.coverFoes foes of the tier's foe gold
-  // a raw unit (a middle is 2), once that material is reachable: its gathering is open at the item's tier and, for a middle,
-  // the station that makes it is built. Held units go first. Nothing is stored and covered units give no skill XP (only the
-  // upgrade's own station XP, unchanged); salvage refunds step gold only. Upgrades only: crafts always take their materials.
+  // upgrade-gold-covers-short (ruling 2026-10-08): an upgrade short of its one material (not Essence, a Trophy or coal) may
+  // pay the units it lacks in gold, ECON.coverFoes foes of the tier's foe gold a raw unit (a middle is 2), once its gathering
+  // is open at the item's tier and, for a middle, its station built. Held units go first. Nothing is stored; covered units
+  // give no skill XP; salvage refunds step gold only. Crafts always take their materials.
   upgradeCover = it => {
     if (!it || !CRAFT_KINDS[it.slot] || !(ECON.coverFoes > 0) || it.plus >= CRAFT_TROPHY_GATE.max) return null;
     const t = it.t, mats = upgradeCost(it).mats, fam = Object.keys(mats).find(k => k !== 'ess' && k !== 'coal');
@@ -249,8 +248,9 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const cost = upgradeCost(it), x = { cost };
     if (cost.troph && pickTrophy(trophIdx) < 0) return no(trophIdx != null ? `Needs 1 ${trophyName(trophIdx)}` : 'Needs 1 Trophy of any kind', x);
     let mats = cost.mats, gold = cost.gold;
-    if (opts && opts.cover) {
-      const cv = upgradeCover(it); if (!cv) return no('Gold cannot cover this upgrade.', x);
+    const cv = opts && opts.cover && upgradeCover(it);
+    if (opts && opts.cover && !cv && missing(mats, it.t).length) return no('Gold cannot cover this upgrade.', x);
+    if (cv) {
       x.cover = cv; mats = Object.assign({}, mats); mats[cv.fam] -= cv.units; if (mats[cv.fam] <= 0) delete mats[cv.fam];
       gold += cv.gold;
     }
@@ -432,7 +432,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     return true;
   };
   const burn = s => { const a = C().tonic; if (!a) return; a.left -= s; if (a.left <= 0) C().tonic = null; };
-  onTick(dt => burn(dt));
+  onTick(tonicBurn = burn);
   on('away', r => burn(r.secs || r.t || 0));
   for (const key of Object.keys(CRAFT_TONICS)) {
     addModifier(CRAFT_TONICS[key].mod, () => { const a = tonicActive(); return a && a.key === key ? 1 + a.v : 1; });

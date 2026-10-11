@@ -1,0 +1,1 @@
+Tooling only, no change to the game. Our test walk no longer reports that it could not put on the Wisp Axe after the zone 14 boss. The zone's Lantern Cache card was still up over the Hero menu, as it would be for a player; the walk now closes the card first and then puts the axe on.

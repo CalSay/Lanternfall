@@ -196,11 +196,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     }
     return z;
   }
-  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 logical px tall, 40-50 wide). The
-  // columns in use are spread over the party side (PARTY_X0..PARTY_X1 of the width, front column at
-  // X1), at most COL_MAX px apart, so each member stands clear of the next. The upper lane (0)
-  // stands laneY px higher and about half a column further back: SNES style, each upper member
-  // peeks out between and above the two in front with only a slight overlap. It is drawn first and dimmed.
+  // Formation (3 columns x 2 lanes): columns spread over PARTY_X0..PARTY_X1 of the width, at most COL_MAX px apart; the
+  // upper lane (0) stands laneY px higher and half a column back (SNES style), drawn first and dimmed.
   const PARTY_X0 = 0.06, PARTY_X1 = 0.55, COL_MAX = 84;
   // Foe slots (fractions of the width) for a pack of 1, 2 or 3; one foe today.
   const FOE_X = [[0.78], [0.66, 0.86], [0.62, 0.76, 0.9]];
@@ -477,12 +474,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // ================= the foes (a pack, a boss and its adds, the wyrm or a gather node) =================
   // One record per foe on screen. The wyrm and gather nodes use `solo`; a fight binds a slot to each
   // foe of the pack (combatFoes(), 59-combat) by list position (a pack's list only grows: boss adds).
-  // `foe` is the record of the foe the core shows (`mob`): taps, floats, class effects and the boss
-  // telegraph go there. Geometry (party-and-classes.md 7.4): 3 columns (Front at 0.62 of the width,
-  // Mid, Back at 0.89) x 2 lanes (the upper one a little higher and further back, drawn first). A foe
-  // takes its row's column (Front: slimes, beetles, golems; Mid: bats, bones; Back: spores, wraiths),
-  // then that column's upper lane, then the next column back. A lone foe (the Deepwell, party combat
-  // off) stands where the single foe always stood; a boss too, with its adds in front of it.
+  // `foe` is the record of the foe the core shows (`mob`): taps, floats, class effects, the boss telegraph.
+  // Geometry (party-and-classes.md 7.4, placePack): 3 columns x 2 lanes, a foe in its row's column first.
   // Per-slot motion: a bat's dive (dv 0..1: a leap over the front line to its target and back), a
   // knockback slide (kb) and lunges (dx) toward its target; fl: a one-frame flash (reduced motion).
   const mkFoeV = () => ({ m: null, key: '', fr: null, anim: 'lunge', hover: false, st: 0, t: 0, next: 3, dx: 0, x: 0, gy: 0, cy: 0, left: 0, top: 0, w: 0, h: 0,
@@ -493,7 +486,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   const NSLOT = 12, slots = [], drawOrd = [], ONE = [null];   // S6-E: a swarm of 10, a boss and its adds
   for (let i = 0; i < NSLOT; i++) slots.push(mkFoeV());
   let packList = null, packN = 0, packBoss = false, packDirty = false, colX0 = 0, lastFL = null;
-  const foePad = () => (tall || target() === 'node' ? 0 : Math.round(50 / ZM));
+  const foePad = () => (tall || target() === 'node' || packBoss && packN > 1 && !LAND_Q.matches ? 0 : Math.round(50 / ZM));
   const gSpot = () => target() === 'node' && typeof gatherSpot === 'function' ? gatherSpot(SW, GY) : null;
   const soloX = () => { const g = gSpot(); return g ? g.x : Math.round(SW * (target() === 'node' ? 0.68 : HS >= 2 && target() === 'mob' ? 0.95 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0))); };   // 2x: as far right as its art allows (bigger-heroes)
   function refreshFoe() {
@@ -562,11 +555,17 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     colX0 = x0; drawOrd.length = 0;
     if (n <= 1 || lead) {
       lead = lead || slots[0];
-      lead.hx = soloX(); lead.hy = GY; lead.lane = 1;
-      drawOrd.push(slots.indexOf(lead));
-      const f = lead.fr && lead.fr.idle0, left = Math.min(lead.hx, SW - 6 - (f ? f.c.width - f.ox : 15) - foePad()) - (f ? f.ox : 15);
-      let k = 0;
-      for (let i = 0; i < n; i++) { const s = slots[i]; if (s === lead) continue; s.lane = 1; s.hy = GY; s.hx = Math.round(left + 14 + 17 * k); k++; drawOrd.push(i); }
+      // boss-adds-clear-outline: a boss with adds at the right edge (portrait: no foePad), each add clear of its outline
+      lead.hx = n > 1 ? SW : soloX(); lead.hy = GY; lead.lane = 1;
+      const f = lead.fr && lead.fr.idle0, d = slots[lead === slots[0] ? 1 : 0].fr, g = d && d.idle0, aw = g ? rightEdge(g) - leftEdge(g) : 30;
+      let e = (f ? SW - 6 - rightEdge(f) - foePad() + leftEdge(f) : SW - 60) - 4, k = n - 2;
+      const st = Math.max(8, Math.min(aw >> 1, (e - aw - SW * 0.38) / Math.max(1, k) | 0));
+      for (let i = 0; i < n; i++) {
+        const s = slots[i], a = s.fr && s.fr.idle0;
+        if (s !== lead) { s.lane = k-- & 1 ? 0 : 1; s.hy = GY - (s.lane ? 0 : ly); s.hx = e - (a ? rightEdge(a) - a.ox : 15); e -= st; }
+        drawOrd.push(i);
+      }
+      drawOrd.sort((a, b) => slots[a].lane - slots[b].lane || slots[b].hx - slots[a].hx);
     } else if (n <= 3) {
       // a pack of 2-3 (sorted front row first): one column each, front to back, so every foe reads;
       // the middle one of three stands in the upper lane (a staggered line, bars at two heights).
@@ -634,7 +633,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
       }
       return Math.floor(l / 6) * 6;
     }
-    const s = target() === 'mob' ? (packN ? slots[drawOrd[0]] : null) : solo;
+    let s = target() === 'mob' ? (packN ? slots[0] : null) : solo;
+    if (s !== solo) for (let i = 1; i < packN; i++) if (slots[i].hx < s.hx) s = slots[i];   // the front foe (a boss's adds stand in front)
     if (!s || !s.fr) return null;
     const f = s.fr.idle0;
     return Math.min(s.hx || soloX(), SW - 6 - (f.c.width - f.ox) - foePad()) - f.ox + (AK > 1 ? leftEdge(f) : 0);

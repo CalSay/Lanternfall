@@ -1,0 +1,1 @@
+Tonics and Well Rested now run down on real time while "Loading ..." covers a fight, the same as when nothing is loading. A slow connection no longer stretches your tonic or your Rested bonus. (route: hold-tonic-rested-clock, shot: fight)

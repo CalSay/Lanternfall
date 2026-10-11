@@ -9195,10 +9195,10 @@ const ECON = {
   // recipe count x (plus + 1)), so gold, not essence or hide, is what an upgrade waits on. Salvage pays back upRefund
   // of the gold an item's upgrades cost (55-crafting craftUpgradeRefund), so a +7 you outgrow is never wasted.
   upFoes: 20, upGrow: 1.5, upMat: 0.25, upRefund: 0.5,   // upgrade +plus -> +plus+1: 20 x foeGold(gradeZ) x 1.5^plus
-  // upgrade-gold-covers-short (ruling 2026-10-08, B; PROVISIONAL until the one balance pass, which may move it once, never
-  // below 6): an upgrade short of its material may pay the rest in gold, coverFoes x foeGold(gradeZ) a raw unit (a middle is
-  // 2): 45 gold a tier-1 log, 90 a Pine Plank. 0 turns the offer off (no save impact). 55-crafting upgradeCover.
-  coverFoes: 9,
+  // upgrade-gold-covers-short (ruling 2026-10-08, B; never below 6): an upgrade short of its material may pay the rest in
+  // gold, coverFoes x foeGold(gradeZ) a raw unit (a middle is 2): 135 gold a tier-1 log, 270 a Pine Plank. gold-cover-share
+  // (2026-10-11) raised it from 9 so gold covers at most half. 0 turns the offer off (no save impact).
+  coverFoes: 27,
   reforgeFoes: 15, reforgeGrow: 1.5,   // reforge: 15 x foeGold(gradeZ) x 1.5^n
   // ---- trade (3.5, TR1 reads it): a unit's price = foeGold(grade's first zone) x famW ----
   famW: { gathered: 0.06, gem: 0.075, herb: 0.075, hide: 0.09, ess: 0.18, secondary: 0.03, refined: 0.15 },
@@ -11953,8 +11953,8 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
 }
 
 // ---- src/js/50-sim.js ----
-// 50-sim: the game loop's rules in motion: activity switching, combat, gathering,
-// kills, harvests, level-ups, boss attempts, taps and away gains.
+// 50-sim: the game loop's rules: activity, combat, gathering, kills, harvests,
+// level-ups, bosses, taps and away gains.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Visual feedback goes out on the event bus (float, burst, shake, lunge, ...).
 
@@ -11973,11 +11973,12 @@ function setActivity(a) {
 function setZone(z) {
   S.zone = z; S.kills = 0; fightBoss = false; emit('sceneReset'); spawn();   // a zone starts at fight 1 of ZONE_FIGHTS
 }
-// Pick the gathering node. Returns false if the skill level is too low. Does not
-// switch activity; call setActivity('gather') for that.
+// Pick the gathering node (false if the skill is too low). Does not switch activity.
+// A live Deepwell run keeps the stage, even in an away phase (57d).
 function setNode(kind, t) {
   if (!craftNodeVisible(kind, t) || !skillTierOpen(skillOf(kind), t)) return false;
-  S.node = { kind, t }; S.gProg = 0; emit('sceneReset');
+  const dr = typeof DW == 'object' && DW.run();
+  S.node = { kind, t }; S.gProg = 0; if (S.activity === 'gather' && !(dr && !dr.paused)) emit('sceneReset');
   return true;
 }
 
@@ -12211,20 +12212,27 @@ function harvest() {
 function awayGains(secs) {
   secs = Math.max(0, +secs || 0);   // a save stamped in the future (clock set back) gives nothing, never negative gains
   const r = { t: Math.min(secs, awayCapH() * 3600), secs, lines: [] };
-  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // (55-boss-try keeps the same baseline in the save) BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
+  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // BAL3: back from away, auto-challenge may retry a failed boss, as a reload does (55-boss-try: same baseline)
   emit('awayBegin', r);
   awayBase(r);
   emit('away', r);
   emit('awayEnd', r);
   return r;
 }
+// The node the hero works while away, or null. A turn fighter goes back to its last node once Gather is open.
+function awayNode() {
+  const n = S.node;
+  return S.activity === 'gather' || typeof turnCombatScope == 'function' && turnCombatScope() && isUnlocked('gather') && craftNodeVisible(n.kind, n.t) && skillTierOpen(skillOf(n.kind), n.t) ? n : null;
+}
+// The hero's first name
+const heroFirst = () => { const h = typeof ROSTER === 'object' && S.solo && ROSTER[S.solo.hero]; return h ? h.name.split(' ')[0] : 'your hero';
+};
 function awayBase(r) {
   const t = r.t;
-  const boost = (1 + gear().offline / 100) * mod('offline');
-  if (S.activity === 'gather') {
-    const { kind, t: tier } = S.node;
-    // Batch until the next skill or tool-mastery level, rounded up to the same
-    // whole-second boundary as live play. Gathering speed is constant between them.
+  const boost = (1 + gear().offline / 100) * mod('offline'), nd = awayNode();
+  if (nd) {
+    const { kind, t: tier } = nd;
+    // Batch until the next skill or tool-mastery level, rounded up to the same whole-second boundary as live play.
     const skill = skillOf(kind), tool = typeof toolOf === 'function' ? toolOf(skill) : null;
     let got = 0;
     for (let elapsed = 0; elapsed < t;) {
@@ -12244,7 +12252,9 @@ function awayBase(r) {
     got = storeAwayGather(kind, tier, got, r);   // H3: up to the cap; Spillover moves on (55-store)
     if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
     if (got > 0) r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
-    r.note = `You kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
+    const at = `the ${NODE_NAMES[kind][tier - 1]}.`;
+    r.leftFight = S.activity === 'fight';   // fights earn nothing away (owner, 2026-10-01)
+    r.note = (r.leftFight ? `You left mid-fight, so ${heroFirst()} went back to ${at}` : `You kept working ${at}`) + ` ${SKILL[skill]} is now level ${S.skills[skill].lv}.`;
     return r;
   }
   const dps = heroDps() * 0.5 * boost;
@@ -12255,10 +12265,8 @@ function awayBase(r) {
     r.note = 'You kept hammering the raid boss.';
     return r;
   }
-  // Turn fights are active only (owner, 2026-10-01): nothing fights while you are away. Gathering keeps going.
   if (typeof turnCombatScope === 'function' && turnCombatScope()) {
     r.turnCombat = { kills: 0, zone: S.zone };
-    r.note = 'Fights only happen while you play. Set your hero to gather before you go, and they keep working.';
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
@@ -12846,7 +12854,7 @@ let OMENS, WEEKLY_GOALS;
   on('awayEnd', () => { inAway = false; awayDay = null; actCache.k = ''; lastPlus = null; lastStars = null; });
   // Modifier keys that touch away gains for the current activity.
   function awayKeys() {
-    if (S.activity === 'gather') return ['offline', 'gatherSpeed', 'yield:' + S.node.kind, 'skillXp:' + skillOf(S.node.kind)];
+    if (awayNode()) return ['offline', 'gatherSpeed', 'yield:' + S.node.kind, 'skillXp:' + skillOf(S.node.kind)];
     if (S.activity === 'raid') return ['offline', 'raid', 'crit'];
     return ['offline', 'gold', 'xp', 'essence', 'crit'];
   }
@@ -13802,7 +13810,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 //   craftXpFor(skill, n) -> n with the catch-up multiplier applied (x2 while behind)
 //   upgradeItem(id, trophIdx?, opts?) -> bool    +1 (max +10); +8..+10 each pay 1 Trophy
 //   canUpgrade(id, trophIdx?, opts?) -> { ok, why, cost, cover }   (the most plentiful Trophy unless trophIdx)
-//                                                opts: { cover: true } lets gold pay the material the hero is short
+//                                                opts { cover: true }: gold pays the material short (none short: plain)
 //   upgradeItem(id, trophIdx?, opts?)            the same opts; emits 'upgraded' { item, gold, cover: { units, gold } }
 //   upgradeCover(it) -> { fam, t, units, gold } | null   what gold may cover of its next upgrade (upgrade-gold-covers-short)
 //   craftUpgradeRefund(it) -> gold               what salvaging it pays back: ECON.upRefund of the gold its +N cost
@@ -13862,7 +13870,7 @@ function craftXpMap() {
 
 let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, upgradeCover, reforgeItem,
   canReforge, transmute, canTransmute, trophies, craftStarChart, brewTonic,
-  drinkTonic, tonicActive, craftSalvageBonus, craftUpgradeRefund, craftXpShare, craftStrikeOffered, craftInfusePrice, craftLiftTo;
+  drinkTonic, tonicActive, tonicBurn, craftSalvageBonus, craftUpgradeRefund, craftXpShare, craftStrikeOffered, craftInfusePrice, craftLiftTo;
 
 {
   registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {}, xpv: 0, made: {} });
@@ -14005,11 +14013,10 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     let best = -1; tr.forEach((n, i) => { if (n > 0 && (best < 0 || n > tr[best])) best = i; });
     return best;
   };
-  // upgrade-gold-covers-short (ruling autopilot/rulings/2026-10-08-gold-covers-material.md, B): an upgrade short of its one
-  // material (never Essence, a Trophy or coal) may pay the units it lacks in gold, ECON.coverFoes foes of the tier's foe gold
-  // a raw unit (a middle is 2), once that material is reachable: its gathering is open at the item's tier and, for a middle,
-  // the station that makes it is built. Held units go first. Nothing is stored and covered units give no skill XP (only the
-  // upgrade's own station XP, unchanged); salvage refunds step gold only. Upgrades only: crafts always take their materials.
+  // upgrade-gold-covers-short (ruling 2026-10-08): an upgrade short of its one material (not Essence, a Trophy or coal) may
+  // pay the units it lacks in gold, ECON.coverFoes foes of the tier's foe gold a raw unit (a middle is 2), once its gathering
+  // is open at the item's tier and, for a middle, its station built. Held units go first. Nothing is stored; covered units
+  // give no skill XP; salvage refunds step gold only. Crafts always take their materials.
   upgradeCover = it => {
     if (!it || !CRAFT_KINDS[it.slot] || !(ECON.coverFoes > 0) || it.plus >= CRAFT_TROPHY_GATE.max) return null;
     const t = it.t, mats = upgradeCost(it).mats, fam = Object.keys(mats).find(k => k !== 'ess' && k !== 'coal');
@@ -14028,8 +14035,9 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     const cost = upgradeCost(it), x = { cost };
     if (cost.troph && pickTrophy(trophIdx) < 0) return no(trophIdx != null ? `Needs 1 ${trophyName(trophIdx)}` : 'Needs 1 Trophy of any kind', x);
     let mats = cost.mats, gold = cost.gold;
-    if (opts && opts.cover) {
-      const cv = upgradeCover(it); if (!cv) return no('Gold cannot cover this upgrade.', x);
+    const cv = opts && opts.cover && upgradeCover(it);
+    if (opts && opts.cover && !cv && missing(mats, it.t).length) return no('Gold cannot cover this upgrade.', x);
+    if (cv) {
       x.cover = cv; mats = Object.assign({}, mats); mats[cv.fam] -= cv.units; if (mats[cv.fam] <= 0) delete mats[cv.fam];
       gold += cv.gold;
     }
@@ -14211,7 +14219,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     return true;
   };
   const burn = s => { const a = C().tonic; if (!a) return; a.left -= s; if (a.left <= 0) C().tonic = null; };
-  onTick(dt => burn(dt));
+  onTick(tonicBurn = burn);
   on('away', r => burn(r.secs || r.t || 0));
   for (const key of Object.keys(CRAFT_TONICS)) {
     addModifier(CRAFT_TONICS[key].mod, () => { const a = tonicActive(); return a && a.key === key ? 1 + a.v : 1; });
@@ -14817,7 +14825,7 @@ function registerGoal(g) {
 let topGoals;
 // next-tier-gate-goal: the craft goal's pick, read-only (tools/walk.mjs reads it): forgeNext() below.
 let craftGoalNext = () => null;
-// a tier gate row's words, from forgeNext's { kind, t, gate }; on: the hero gathers the gate's skill, so it rises while away
+// a tier gate row's words, from forgeNext's { kind, t, gate }; on: the hero works the gate's skill away, so it rises
 function gateLabel(b, on) {
   const sk = SKILL[b.gate.skill];
   return `${kindName(b.kind, b.t)}: ${sk} ${b.gate.lv} of ${b.gate.need}` + (b.gate.station ? '' : (b.gate.mat ? ` opens ${b.gate.mat}` : '') +
@@ -15231,9 +15239,9 @@ var forgeGoalPicks = 0;
     label: () => { const b = forgeNext(); if (!b) return '';
       // tier-two-named-for-return: a gate row names the piece and its furthest gate, not a boss (it is often a later sitting's piece); a
       // gathering gate says the skill rises while you're away ("Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away.")
-      // away-line-only-when-true: only while the hero gathers that skill (awayBase raises nothing else away); else how to make it true
+      // away-line-only-when-true: only while the hero works that skill away (50-sim awayNode), else how to make it true
       if (b.gate) { const dw = typeof DW === 'object' && DW && DW.run(),
-          on = (dw && !dw.paused ? dw.act : S.activity) === 'gather' && skillOf(S.node.kind) === b.gate.skill;   // a live Deepwell run holds the activity away resumes (57d awayBegin)
+          on = !!(dw && !dw.paused && dw.act === 'gather' || awayNode()) && skillOf(S.node.kind) === b.gate.skill;   // a live Deepwell run holds the activity away resumes (57d awayBegin)
         return gateLabel(b, on); }
       const nm = kindName(b.kind, b.t) + (CRAFT_KINDS[b.kind].tool ? '' : ` for the zone ${S.maxZone} boss`);   // craft-delta: a weapon or armour names the boss it helps
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
@@ -16003,7 +16011,7 @@ const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Hero', why: 'the first level-up (hero level 2), or zone 2', when: () => S.L >= 2 || S.maxZone >= 2 },
   { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'after the first boss (zone 2), or once the hero walks to the grove', when: () => S.maxZone >= 2 || S.activity === 'gather', now: () => S.activity === 'gather' },
   { id: 'nextup', name: 'Next Up', why: 'first attribute point or Training level, or zone 2', when: () => upBought() || S.maxZone >= 2 },
-  { id: 'awaynote', name: 'Away note', why: 'Gather is open (the away strip under the Fight / Gather row, 71-ui-fight)', when: () => isUnlocked('gather') },
+  { id: 'awaynote', name: 'Away note', why: 'Gather is open (the away chip under the Fight / Gather row, 71-ui-fight)', when: () => isUnlocked('gather') },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
   { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()), now: () => typeof campOpen === 'function' && campOpen() },
   { id: 'forage', tab: 'gat', view: 'forage', name: 'Foraging', why: 'zone 5', when: () => S.maxZone >= 5 || S.skills.forage.lv > 1 },
@@ -16040,7 +16048,7 @@ const FIRST_USE_FOR = 7200;   // seconds of play after the unlock (the same wind
 const FIRST_USE = {
   party: { text: 'This is where you grow. Your level, build and abilities are all here.' },
   nextup: { text: 'That chip is Next Up. It shows the best thing to do next, so press it.', via: 'guide' },
-  awaynote: { text: "While you're away, gathering goes on but fighting stops.", via: 'strip' },   // the strip is its own line (71-ui-fight)
+  awaynote: { text: "While you're away, fights stop and your hero goes back to gathering.", via: 'strip' },
   gather: { text: "Pick a place to work and you'll keep chopping or mining it, even while you're away." },
   bounties: { text: 'Folk post three short jobs here. They pay in gold, materials and Renown.' },
   camp: { text: 'This is your camp. Each thing you build here opens a new way to make things.' },
@@ -17166,7 +17174,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
 // Events: 'activity' (toast on the way to a fight), 'awayBegin' / 'away' / 'awayEnd'.
 
 const REST_TUNE = { rate: 0.5, cap: 180, dmg: 0.1, toastMin: 10 };
-let wellRested, restParty, restNote;
+let wellRested, restParty, restNote, restTick;
 {
   registerState('rested', { left: 0 });
   // read each time (a reset or an import replaces S); a damaged field starts over empty
@@ -17191,7 +17199,7 @@ let wellRested, restParty, restNote;
   };
 
   addModifier('dmg', () => active() ? 1 + REST_TUNE.dmg : 1);
-  onTick(dt => {
+  onTick(restTick = dt => {
     if (S.activity === 'gather') { if (R().left < REST_TUNE.cap && restParty()) R().left = clamp(R().left + dt * REST_TUNE.rate); }
     else if (R().left > 0 && fighting()) R().left = clamp(R().left - dt);
   });
@@ -17207,14 +17215,14 @@ let wellRested, restParty, restNote;
   });
   on('away', r => {
     const t = r && r.t > 0 ? r.t : 0, before = R().left;
-    if (S.activity === 'gather') { if (restParty()) R().left = clamp(R().left + t * REST_TUNE.rate); }
+    if (awayNode()) { if (restParty()) R().left = clamp(R().left + t * REST_TUNE.rate); }
     else if (S.activity === 'fight' && !arena) R().left = clamp(R().left - t);
     awayGain = R().left - before;
   });
   on('awayEnd', () => { inAway = false; });
   function awayLine() {
     const g = awayGain; awayGain = 0;
-    if (!(g >= 1) || S.activity !== 'gather') return null;
+    if (!(g >= 1) || !awayNode()) return null;
     return { icon: { ic: ['mug', '#F2C14E'] }, txt: `Well Rested: +${pct()}% damage for ${dur(R().left)}`, sub: 'You rested while you gathered' };
   }
 }
@@ -22564,7 +22572,7 @@ let tavernPerks, tavernRumours, tavernHearRumour;
     registerHandsRoute('dorrie', () => ready('dorrie'));
     registerHandsRoute('rook', () => ready('rook'));
   }
-  const mining = () => S.activity === 'gather' && S.node && S.node.kind === 'ore' && S.node.t === 2 && skillTierOpen('mine', 2);
+  const mining = (n = S.activity === 'gather' && S.node) => n && n.kind === 'ore' && n.t === 2 && skillTierOpen('mine', 2);
   function advance(seconds) {
     if (!integrated() || !heard('rook') || met('rook') || !(seconds > 0) || !Number.isFinite(seconds)) return;
     const before = worked(); L().rookSecs = Math.min(NEED, before + seconds);
@@ -22574,7 +22582,7 @@ let tavernPerks, tavernRumours, tavernHearRumour;
     if (mining() && target() === 'node' && !(typeof ONBOARD === 'object' && ONBOARD.paused)) advance(dt);
   });
   on('awayBegin', report => {
-    if (mining() && report) advance(report.t);
+    if (mining(awayNode()) && report) advance(report.t);
   });
 }
 
@@ -30766,11 +30774,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     }
     return z;
   }
-  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 logical px tall, 40-50 wide). The
-  // columns in use are spread over the party side (PARTY_X0..PARTY_X1 of the width, front column at
-  // X1), at most COL_MAX px apart, so each member stands clear of the next. The upper lane (0)
-  // stands laneY px higher and about half a column further back: SNES style, each upper member
-  // peeks out between and above the two in front with only a slight overlap. It is drawn first and dimmed.
+  // Formation (3 columns x 2 lanes): columns spread over PARTY_X0..PARTY_X1 of the width, at most COL_MAX px apart; the
+  // upper lane (0) stands laneY px higher and half a column back (SNES style), drawn first and dimmed.
   const PARTY_X0 = 0.06, PARTY_X1 = 0.55, COL_MAX = 84;
   // Foe slots (fractions of the width) for a pack of 1, 2 or 3; one foe today.
   const FOE_X = [[0.78], [0.66, 0.86], [0.62, 0.76, 0.9]];
@@ -31047,12 +31052,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // ================= the foes (a pack, a boss and its adds, the wyrm or a gather node) =================
   // One record per foe on screen. The wyrm and gather nodes use `solo`; a fight binds a slot to each
   // foe of the pack (combatFoes(), 59-combat) by list position (a pack's list only grows: boss adds).
-  // `foe` is the record of the foe the core shows (`mob`): taps, floats, class effects and the boss
-  // telegraph go there. Geometry (party-and-classes.md 7.4): 3 columns (Front at 0.62 of the width,
-  // Mid, Back at 0.89) x 2 lanes (the upper one a little higher and further back, drawn first). A foe
-  // takes its row's column (Front: slimes, beetles, golems; Mid: bats, bones; Back: spores, wraiths),
-  // then that column's upper lane, then the next column back. A lone foe (the Deepwell, party combat
-  // off) stands where the single foe always stood; a boss too, with its adds in front of it.
+  // `foe` is the record of the foe the core shows (`mob`): taps, floats, class effects, the boss telegraph.
+  // Geometry (party-and-classes.md 7.4, placePack): 3 columns x 2 lanes, a foe in its row's column first.
   // Per-slot motion: a bat's dive (dv 0..1: a leap over the front line to its target and back), a
   // knockback slide (kb) and lunges (dx) toward its target; fl: a one-frame flash (reduced motion).
   const mkFoeV = () => ({ m: null, key: '', fr: null, anim: 'lunge', hover: false, st: 0, t: 0, next: 3, dx: 0, x: 0, gy: 0, cy: 0, left: 0, top: 0, w: 0, h: 0,
@@ -31063,7 +31064,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   const NSLOT = 12, slots = [], drawOrd = [], ONE = [null];   // S6-E: a swarm of 10, a boss and its adds
   for (let i = 0; i < NSLOT; i++) slots.push(mkFoeV());
   let packList = null, packN = 0, packBoss = false, packDirty = false, colX0 = 0, lastFL = null;
-  const foePad = () => (tall || target() === 'node' ? 0 : Math.round(50 / ZM));
+  const foePad = () => (tall || target() === 'node' || packBoss && packN > 1 && !LAND_Q.matches ? 0 : Math.round(50 / ZM));
   const gSpot = () => target() === 'node' && typeof gatherSpot === 'function' ? gatherSpot(SW, GY) : null;
   const soloX = () => { const g = gSpot(); return g ? g.x : Math.round(SW * (target() === 'node' ? 0.68 : HS >= 2 && target() === 'mob' ? 0.95 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0))); };   // 2x: as far right as its art allows (bigger-heroes)
   function refreshFoe() {
@@ -31132,11 +31133,17 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     colX0 = x0; drawOrd.length = 0;
     if (n <= 1 || lead) {
       lead = lead || slots[0];
-      lead.hx = soloX(); lead.hy = GY; lead.lane = 1;
-      drawOrd.push(slots.indexOf(lead));
-      const f = lead.fr && lead.fr.idle0, left = Math.min(lead.hx, SW - 6 - (f ? f.c.width - f.ox : 15) - foePad()) - (f ? f.ox : 15);
-      let k = 0;
-      for (let i = 0; i < n; i++) { const s = slots[i]; if (s === lead) continue; s.lane = 1; s.hy = GY; s.hx = Math.round(left + 14 + 17 * k); k++; drawOrd.push(i); }
+      // boss-adds-clear-outline: a boss with adds at the right edge (portrait: no foePad), each add clear of its outline
+      lead.hx = n > 1 ? SW : soloX(); lead.hy = GY; lead.lane = 1;
+      const f = lead.fr && lead.fr.idle0, d = slots[lead === slots[0] ? 1 : 0].fr, g = d && d.idle0, aw = g ? rightEdge(g) - leftEdge(g) : 30;
+      let e = (f ? SW - 6 - rightEdge(f) - foePad() + leftEdge(f) : SW - 60) - 4, k = n - 2;
+      const st = Math.max(8, Math.min(aw >> 1, (e - aw - SW * 0.38) / Math.max(1, k) | 0));
+      for (let i = 0; i < n; i++) {
+        const s = slots[i], a = s.fr && s.fr.idle0;
+        if (s !== lead) { s.lane = k-- & 1 ? 0 : 1; s.hy = GY - (s.lane ? 0 : ly); s.hx = e - (a ? rightEdge(a) - a.ox : 15); e -= st; }
+        drawOrd.push(i);
+      }
+      drawOrd.sort((a, b) => slots[a].lane - slots[b].lane || slots[b].hx - slots[a].hx);
     } else if (n <= 3) {
       // a pack of 2-3 (sorted front row first): one column each, front to back, so every foe reads;
       // the middle one of three stands in the upper lane (a staggered line, bars at two heights).
@@ -31204,7 +31211,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
       }
       return Math.floor(l / 6) * 6;
     }
-    const s = target() === 'mob' ? (packN ? slots[drawOrd[0]] : null) : solo;
+    let s = target() === 'mob' ? (packN ? slots[0] : null) : solo;
+    if (s !== solo) for (let i = 1; i < packN; i++) if (slots[i].hx < s.hx) s = slots[i];   // the front foe (a boss's adds stand in front)
     if (!s || !s.fr) return null;
     const f = s.fr.idle0;
     return Math.min(s.hx || soloX(), SW - 6 - (f.c.width - f.ox) - foePad()) - f.ox + (AK > 1 ? leftEdge(f) : 0);
@@ -39231,42 +39239,49 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
-// The away card says the same line (75-away.js): the trade-off is told before you leave, not after.
-const AWAY_RULE_TXT = 'While away, gathering continues and fighting stops. Set your hero to gather before you go.';
-// The permanent "While away" strip on the Fight view is gone (top-bar-compact): the away chip below speaks while gathering, on the away note's beat, and the away card says the rule.
-
-// Away chip: what leaving now would earn, told while you gather (the notice above covers a fighter).
-// Estimate from the same rates awayBase uses (50-sim.js), held to the Storehouse room unless Spillover moves on.
-let awayChip = null, awayChipTxt = '';
+// the away card's line for a fighter who can't gather yet
+const AWAY_RULE_TXT = 'Fights only happen while you play.';
+// Away chip: what leaving now earns, on the away note's beat, from awayBase's rates (50-sim), held to the Storehouse room
+// unless Spillover moves on; a fighter is told where the hero goes back to.
+let awayChip = null;
 function awayChipText() {
-  if (S.activity !== 'gather') return '';
-  const { kind, t: tier } = S.node;
+  const node = awayNode(); if (!node) return '';
+  const { kind, t: tier } = node;
   const boost = (1 + gear().offline / 100) * mod('offline');
   const hrs = awayCapH();
   let n = Math.floor(3600 / nodeTime(kind, tier) * boost * nodeYieldAvg(kind) * mod('yield:' + kind) * hrs);
-  // A pile that fills mid-away: Spillover moves on to the next node (amounts then differ), otherwise the rest is lost.
   const room = stashRoom(kind, tier);
-  return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs);
+  return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs, S.activity == 'fight' && NODE_NAMES[kind][tier - 1]);
 }
-// the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full
-// (side-column-fits-740 measures every variant for every material)
-function awayChipSay(nm, n, hrs) {
-  if (n === 'spill') return `Leave now: ${nm} fills up, then Spillover moves your hero on.`;
-  return n > 0 ? `Leave now: about ${fmt(n)} ${nm} in ${hrs} hours.` : `Leave now: ${nm} is full, you earn nothing. Spend it or pick another node.`;
+// the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full;
+// back: a fighter's node. side-column-fits-740 measures every variant for every material
+function awayChipSay(nm, n, hrs, back) {
+  const go = back ? `Leave now: ${heroFirst()} goes back to the ${back}${n > 0 ? ',' : '.'} ` : 'Leave now: ';
+  if (n === 'spill') return `${go}${nm} fills up, then Spillover moves your hero on.`;
+  return n > 0 ? `${go}about ${fmt(n)} ${nm} in ${hrs} hours.` : `${go}${nm} is full, you earn nothing. Spend it or pick another node.`;
 }
 function uiAwayChip() {
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  const txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !isUnlocked('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
+  let txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !isUnlocked('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
   if (!awayChip) {
     if (!txt) return;
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
-    $('modeSeg').parentElement.after(awayChip);   // the notice's own slot: it hides while gathering, so they never show together
+    $('modeSeg').parentElement.after(awayChip);
   }
-  if (txt !== awayChipTxt) { awayChipTxt = txt; awayChip.lastChild.textContent = txt; }
+  if (txt && S.activity === 'fight') txt = awayChipFit(txt);
+  if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
+let fitKey, fitTxt;
+function awayChipFit(txt) {
+  // only measured again when the words or the screen change
+  const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + ($('nuChip') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
+  if (k === fitKey) return fitTxt;
+  fitKey = k; awayChip.classList.remove('hide');
+  for (const t of [txt, txt.replace(/,.*/, '.')]) { awayChip.lastChild.textContent = t; if (!on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top) return fitTxt = t; }
+  return fitTxt = '';
+}
 uiHooks.push(uiAwayChip);
-   // the notice sits on the game view, so it updates every pass (extension point, 70-ui)
 function uiFight() {
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[zoneUnique(S.zone)].name;
@@ -41176,9 +41191,9 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     addEventListener('online', () => { for (const id in failed) failed[id].at = 0; pump(); });   // back online: try again now
     addEventListener('resize', () => pump());   // a turn may want a background's other shape
     holdGame(held);
-    // a held fight or raid: the orders keep the frame clock, unless another hold (a story scene, a card) stops the game as the inline page does
+    // a held fight or raid: the orders, tonics and Rested keep the frame clock, unless another hold (a story scene, a card) stops the game as the inline page does
     const others = () => GAME_HOLDS.some(f => { if (f === held) return false; try { return !!f(); } catch (e) { return false; } });
-    artHoldTick = dt => { if (held() && !others() && typeof refineTick === 'function') refineTick(dt); };
+    artHoldTick = dt => { if (held() && !others()) for (const f of [refineTick, tonicBurn, restTick]) try { f(dt); } catch (e) { console.error('[lanternfall] hold tick failed', e); } };   // the Forge, tonic time and Rested keep wall time (hold-tonic-rested-clock)
 
     // ---- loading ----
     const wanted = () => {
@@ -41571,10 +41586,10 @@ let showAwayReport, awayLimitStep;
     body.append(top);
 
     // ---- what the hero did ----
-    const actIc = r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
+    const actIc = r.leftFight || r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
     const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
     if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); res.append(n); }
-    if (r.activity === 'fight') {
+    if (r.activity === 'fight' && !r.leftFight) {
       const rule = el('p', 'away-rule');
       rule.append(img(IC.glass()), el('span', null, AWAY_RULE_TXT));
       res.append(rule);
@@ -41716,7 +41731,6 @@ let showAwayReport, awayLimitStep;
   }
 
   showAwayReport = function (r) {
-    // A fighter who earned nothing still gets the card: it says fighting stops and gathering continues.
     const quiet = r && r.turnCombat;
     if (!r || r.secs < 30 || (r.empty && !quiet) || r.empty === undefined && !quiet && !(r.lines && r.lines.length)) return;
     // C14: the report is one card through the notice policy, never a second set of pops.
@@ -44654,7 +44668,7 @@ let craftUI = null;
       {
         let sr = shortRow(c.mats, it.t, renderItem), coverWhy = '';
         // upgrade-gold-covers-short: gold may pay the material the piece is short, as the row's second button after the free
-        // refine order ("Upgrade: 340 + 270 gold for 3 Pine Planks"). Never on a craft, and only once the material is reachable.
+        // refine order ("Upgrade: 340 + 810 gold for 3 Pine Planks"). Never on a craft, and only once the material is reachable.
         const cv = f && typeof upgradeCover === 'function' ? safe(() => upgradeCover(it), null) : null;
         if (cv) {
           if (!sr) { sr = el('div', 'cf-src cf-short'); sr.append(el('span', null, `Short ${storeNum(cv.units)} ${midName(cv.fam, it.t, cv.units)}. `)); }

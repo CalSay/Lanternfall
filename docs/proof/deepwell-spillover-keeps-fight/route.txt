@@ -1,0 +1,32 @@
+# seed: 1
+# Proof for card deepwell-spillover-keeps-fight. A Deepwell run that was started (or resumed) while gathering keeps its fight when
+# the tab sits in the background and Spillover moves the hero to the next node.
+# The save (tests/proof-fixtures/save-deep-spill.json, made by loading and saving save-late through the game): Pip at zone 38,
+# cutting at the Tideash Grove with its pile 3,000 short of full and Spillover on, and a paused Deepwell run on floor 1 that was
+# started from there.
+#   resumed-*.png   the run resumed from the Switch activity picker: Pip's turn against the Deep Spore Cap
+#   away-*.png      an hour in the background: the card shows Tideash and, after the pile filled, Mangrove from Spillover
+#   back-*.png      back in the Deepwell: the same Deep Spore Cap at full health, Pip's turn, the Act / Skills / Foe dock live
+# Before the fix, the away hour's Spillover reset the scene: the foe was left standing at 0 health, every fight button went grey,
+# the Foe tab went away and the run never moved again.
+# tools/check.mjs ("deepwell-spillover-keeps-fight") holds the same for Wren, Tobin and Pip and at 1280x720, 740x360 and 360x740.
+new deep-spill
+wait 3
+tap-if "Dismiss this tip"
+tap "Switch activity"
+wait 1
+tap "Deepwell · Floor 1"
+wait 4
+tap-if "Got it"
+expect "Your boons this run"
+expect ".sb-tab[data-tab=foe]"
+shot resumed
+background 1
+expect "You kept working the Tideash Grove."
+expect "Mangrove"
+shot away
+tap "Collect"
+wait 3
+expect "Your boons this run"
+expect ".sb-tab[data-tab=foe]"
+shot back
