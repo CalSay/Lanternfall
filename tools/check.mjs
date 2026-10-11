@@ -15409,6 +15409,8 @@ if (section('first-hour walk (browser, qa-first-hour-walk)')) try {
   const { spawnSync } = await import('node:child_process'), walk = path.join(ROOT, 'tools', 'walk.mjs');
   const bad = spawnSync(process.execPath, [walk, '--bogus'], { encoding: 'utf8' });
   assert(bad.status === 2 && /unknown option/.test(bad.stderr), 'walk.mjs refuses an option it does not know (exit 2)');
+  const badCover = spawnSync(process.execPath, [walk, '--cover', 'lots'], { encoding: 'utf8' });   // walk-presses-cover: all or a number of minutes
+  assert(badCover.status === 2 && /--cover/.test(badCover.stderr), 'walk.mjs refuses a --cover that is not all or a number of minutes (exit 2)');
   const src = fs.readFileSync(walk, 'utf8').replace(/^\s*\/\/.*$/gm, '');
   assert(!/\bS(\.\w+|\[[^\]]+\])+\s*(=(?![=>])|\+=|-=|\+\+|--)/.test(src), 'the walk never assigns to game state (S.x = ...)');
   const { pw, exe } = browserTools;

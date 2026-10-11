@@ -16,6 +16,7 @@
 //   --evo reaver|warden|venomstalker|trapper|warlock|priest (S3): with --class of its base, evolve when the
 //             Proving opens (Fenmother + level 35), as a pass and the choice would; --evo none stays base.
 //   --transmute 1: with --class, break higher tiers down (Transmute) to cover a class craft's shortfall.
+//   --cover all|<min>: pay gold for the material a worn piece's next upgrade is short of (the gold cover); off by default.
 //   --active: taps the stage every 0.5s and casts the class ability on cooldown.
 //             Without it, the game's own idle auto-play and auto-cast run.
 //             SOLO1: in solo --class picks the class's starter
@@ -120,6 +121,7 @@ const TURNS_ON = (() => { const i = process.argv.indexOf('--turns'); return i >=
 const loadPrelude = seed => seed === undefined || seed === null ? '' : `{ let a = ${(Number(seed) | 0) ^ 0x9e3779b9}; Math.random = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }`;
 const loadCore = o => loadCoreRaw({ ...(o || {}), prelude: (o && o.prelude) || loadPrelude(o && o.seed), extraSource: ((o && o.extraSource) || '') + `\nTURN_TUNE.on = ${TURNS_ON ? 1 : 0};` });
 import { writeFileSync } from 'node:fs';
+import { COVER_READ, coverMode, coverWants } from './lib/cover.mjs';
 
 const SAVE_KEY = 'lanternfall.save.v5';   // 30-state.js
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
@@ -149,6 +151,11 @@ if (profile) for (const k of ['checkins', 'session', 'first']) if (args[k] === u
 // Declared before the reports below: applyKnobs reads them (craft-curve-skills-report: --report skills crashed here).
 const storeOn = args.store !== '0';
 const storeSw = args.storeswitch !== '0';
+// --cover all|<min> (walk-presses-cover): after the plain upgrades, pay gold for the material a worn piece's next upgrade is short of
+// (upgradeItem with { cover: true }, 55-crafting), cheapest first: all, or only when the free route (gather, then refine) would take
+// over <min> game minutes (tools/lib/cover.mjs). Off by default, so the health baseline does not move.
+const COVER_SIM = coverMode(args.cover);
+if (typeof COVER_SIM === 'string') { console.error('--cover: ' + COVER_SIM); process.exit(1); }
 if (args.report === 'turns') { await runTurnReport(); process.exit(0); }
 if (args.report === 'bossodds') { await runBossOddsReport(); process.exit(0); }
 if (args.report === 'heroes') { await runHeroReport(); process.exit(0); }
@@ -560,6 +567,10 @@ function forgeRest() {
   // Like a player: upgrade equipped gear when affordable, and re-roll equipped-tier gear
   // (forge, keep if better, else salvage) while mats are plentiful. Both train the stations.
   for (const pos of HERO_POS) { for (let k = 0; k < 3 && fn.upgradeEquipped(pos); k++); }
+  if (COVER_SIM) for (let k = 0; k < 3 * HERO_POS.length; k++) {   // --cover: the short upgrades gold may cover, cheapest first
+    const c = E(COVER_READ).filter(x => coverWants(COVER_SIM, x)).sort((a, b) => a.gold - b.gold)[0];
+    if (!c || !E(`upgradeItem(${JSON.stringify(c.id)}, undefined, { cover: true })`)) break;
+  }
   // --reroll 0 (craft-curve-skills-report part C): no re-rolls, as a player who keeps up but does not grind the rarity die.
   if (args.reroll !== '0') for (const pos of HERO_POS) {
     const cur = fn.equipped(pos); if (!cur || cur.u) continue;

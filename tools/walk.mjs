@@ -19,6 +19,10 @@
 //   --scorecard <file>  add this run's F1-F6, F10 and P4 line to that scorecard (created when missing)
 //   --reports <dir>     also copy walk-<date>.md/.json (and the shots) there, e.g. autopilot/reports
 //   --strict            exit 1 when a scorecard target is missed         --quiet   no progress lines
+//   --cover all|<min>   walk-presses-cover: the bot pays gold for the material an upgrade is short of (the item sheet's cover button).
+//                       all: every short upgrade it can pay; a number N: only when the free route (gather, then refine) would take
+//                       over N game minutes. Off by default. The report's Gold cover section reads the ruling's measures either way.
+//   --cover-base <json> a cover-off walk's json (same seed, hero and size): its Gold cover row is printed under this one
 //
 // The player: reads LF_EYES (src/js/89-eyes-hook.js) and presses what a person presses. It reads each guide tip for 1.2 s and then
 // presses what it names; it parries and dodges at the set rates when the foe winds up; it presses the timed ring at the right
@@ -56,12 +60,13 @@ import { ROOT } from './lib/core.mjs';
 import { pageAssets, routePage } from './lib/page-assets.mjs';
 import { LINT, TIPPHASE, PLACEHOLDERS, ALLOW } from './lib/eyes-readers.mjs';
 import { view, contextOptions, VIEW_HELP } from './lib/views.mjs';
+import { COVER_READ, UPGRADED_UNITS, coverMode, coverWants, coverName } from './lib/cover.mjs';
 
 // ---------------- options ----------------
 const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-{ const known = ['snapshot', 'seed', 'hero', 'size', 'minutes', 'html', 'clock-budget', 'parry', 'dodge', 'read', 'out', 'date', 'scorecard', 'reports', 'strict', 'quiet'],
+{ const known = ['snapshot', 'seed', 'hero', 'size', 'minutes', 'html', 'clock-budget', 'parry', 'dodge', 'read', 'out', 'date', 'scorecard', 'reports', 'strict', 'quiet', 'cover', 'cover-base'],
     bad = argv.filter(a => a.startsWith('--') && !known.includes(a.slice(2)));
   if (bad.length) { console.error('walk: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 const num = (n, d) => { const v = Number(opt(n, d)); if (!Number.isFinite(v) || v < 0) { console.error(`walk: --${n} needs a number of zero or more`); process.exit(2); } return v; };
@@ -72,6 +77,10 @@ const HEROES = ['wren', 'tobin', 'pip'], HERO = opt('hero', HEROES[(SEED - 1) % 
 if (!HEROES.includes(HERO)) { console.error('walk: --hero is wren, tobin or pip'); process.exit(2); }
 const SIZE = view(opt('size', 'desktop'));
 if (!SIZE) { console.error('walk: --size is ' + VIEW_HELP); process.exit(2); }
+// walk-presses-cover: the gold cover (upgrade-gold-covers-short) is off unless --cover says how the bot uses it
+const COVER = coverMode(argv.includes('--cover') ? opt('cover', 'all') : null);
+if (typeof COVER === 'string') { console.error('walk: --cover: ' + COVER); process.exit(2); }
+const COVER_BASE = opt('cover-base', '');
 const DATE = opt('date', new Date().toISOString().slice(0, 10));
 const OUT = path.resolve(ROOT, opt('out', 'tools/.walk'));
 const SHOTS = path.join(OUT, 'shots');
@@ -197,7 +206,8 @@ const OBS = `(() => {
   o.s = s;
   // craft-delta: the game's 'choice' and 'firstUse' events, kept in a page array the walk drains each frame (it never assigns to S)
   if (!window.__walkEv) { window.__walkEv = []; try { on('choice', k => window.__walkEv.push(['choice', k])); on('firstUse', k => window.__walkEv.push(['firstUse', k])); on('starterJoin', e => window.__walkEv.push(['join', e && e.ids || []])); on('spoilsPick', e => window.__walkEv.push(['spoils', Object.assign({ hero: soloHero() }, e)])); on('timingGrade', e => window.__walkEv.push(['grade', e && e.grade])); on('storyScene', sc => { if (sc && sc.kind === 'card') window.__walkScene = sc.id; });
-    on('wipe', p => window.__walkEv.push(['wipe', { zone: p.zone, boss: p.boss, arena: p.arena, stall: p.stall }])); } catch (e) {} }   // wren-z9-10-foes: a copy (59-combat reuses WIPE_EV)
+    on('wipe', p => window.__walkEv.push(['wipe', { zone: p.zone, boss: p.boss, arena: p.arena, stall: p.stall }]));
+    on('upgraded', e => window.__walkEv.push(['upgraded', (${UPGRADED_UNITS})(e)])); on('refineOrder', e => window.__walkEv.push(['refine', e && e.prod])); } catch (e) {} }   // walk-presses-cover: each upgrade's units and the units gold covered; refine orders   // wren-z9-10-foes: a copy (59-combat reuses WIPE_EV)
   o.ev = window.__walkEv.splice(0);
   return o;
 })()`;
@@ -683,6 +693,39 @@ async function gearStep(o) {
   return true;
 }
 
+// walk-presses-cover: with --cover, the bot pays gold for the material an upgrade is short of, from the piece's sheet (Hero > Gear >
+// the worn slot > the sheet's "Upgrade: N + M gold for K Planks" button, .cf-up-box .cf-cover), as a player who reads that row would.
+// Next Up offers only upgrades the hero can pay without the cover, so this is the only way the bot presses it. 'all' covers every
+// short upgrade it can pay for, cheapest first; a number N covers only when the free route (gather, then refine) would take over N
+// game minutes (COVER_READ, tools/lib/cover.mjs). It looks every 15 s while nothing else is on, and tries one piece and step 3 times.
+// It closes the menu with its X, so a gathering session the gear or gate routine runs goes on.
+st.cover = { ups: [], orders: [], presses: [], stepAt: -99, tries: {}, skipped: new Set(), maxMins: null };
+async function coverStep(o) {
+  const C = st.cover;
+  if (!COVER || gt - C.stepAt < 15 || o.cards.length || o.tip || o.phase !== 'idle' || !o.s.got || !o.s.got.craft) return false;
+  C.stepAt = gt;
+  const all = await X(COVER_READ), want = all.filter(c => coverWants(COVER, c) && (C.tries[c.id + '+' + c.plus] || 0) < 3).sort((a, b) => a.gold - b.gold);
+  for (const c of all) if (c.ok && !c.plain) { if (!coverWants(COVER, c)) C.skipped.add(c.id + '+' + c.plus); if (C.maxMins === null || c.mins > C.maxMins) C.maxMins = c.mins; }   // offers it could pay: the ones it left, and the longest free route among them
+  const c = want[0]; if (!c) return false;
+  const key = c.id + '+' + c.plus; C.tries[key] = (C.tries[key] || 0) + 1; C.skipped.delete(key);   // a step left alone earlier and covered now is not left alone
+  const i = await X(`CRAFT_HERO_POS.filter(craftKindVisible).indexOf(${JSON.stringify(c.pos)})`);
+  const n0 = C.ups.length;
+  await openHeroGear();
+  const opened = i >= 0 && await click(`.cf-gear .cf-gs:nth-child(${i + 1})`, 300); await advance(450, 16);
+  const did = opened && await click('.bsheet-ov .cf-up-box .cf-cover', 300); await advance(300, 16);
+  await click('.bsheet-ov .bsheet-x', 200); await advance(300, 16);
+  await click('#menuX', 200); await advance(300, 16);
+  await watch(await X(OBS));   // the upgrade's event, read now so the press is counted against it
+  const up = C.ups.length > n0 && C.ups[C.ups.length - 1].cover > 0;
+  // a moment card that came up during the taps (a boss win's cache) sits over the slot, as it would for a player: the card rule closes
+  // it on the next pass and the bot tries again, so that press is neither a try nor a finding
+  if (!up && await page.evaluate(() => !!document.querySelector('.mm-ov'))) { C.tries[key]--; return true; }
+  C.presses.push({ t: Math.round(gt), nm: c.nm, plus: c.plus + 1, units: c.units, fam: c.fam, mins: c.mins, ok: up });
+  await note(page, 'cover', `${up ? 'covered' : 'could not cover'} ${c.units} ${c.fam} t${c.t} to take ${c.nm} to +${c.plus + 1} (free route ${Number.isFinite(c.mins) ? c.mins + ' min' : 'not gatherable'})`, { shot: false, extra: { units: c.units, ok: up } });
+  if (!up) addCheck('cover', 'the bot could not press an upgrade\'s gold cover the game says it can pay', `${c.nm} to +${c.plus + 1}: ${!opened ? 'the worn slot in Hero > Gear could not be tapped' : !did ? 'no cover button to press on its sheet' : 'the press did not upgrade it'}`);
+  return true;
+}
+
 // next-tier-gate-goal: when no Next Up row is Ready and the craft row names a tier gate ("Birch Bow for the zone 13 boss: Woodcraft
 // 8 of 10", or "...: Woodcutting 7 of 14 opens Birch Log"), the bot presses that row's Go and works it the way it works its own gear
 // goal: at a station gate it crafts the cheapest tier 1 piece at that station it can pay for (gathering that piece's missing material
@@ -794,7 +837,7 @@ const choices = [], firstUse = {};   // craft-delta: { t, k, real } for each cho
 const spoils = [];   // boss-spoils-pick: { t, hero, zone, offered, taken } for each cache pick card closed
 async function watch(o) {
   for (const s of o.sfx) sfxLog.push({ t: gt, name: s.name });
-  for (const [kind, k] of o.ev || []) { if (kind === 'join') { for (const id of k) st.joinOnCard.add(id); continue; } if (kind === 'spoils') { spoils.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'grade') { st.grades[k] = (st.grades[k] || 0) + 1; continue; } if (kind === 'wipe') { if (!k.boss && !k.arena) st.normalLosses.push({ t: gt, zone: k.zone }); continue; } if (kind === 'choice') { choices.push({ t: gt, k, real: k !== 'nextup' || st.nuReady >= 2 }); if (k === 'nextup') st.nuReady = 0; } else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
+  for (const [kind, k] of o.ev || []) { if (kind === 'join') { for (const id of k) st.joinOnCard.add(id); continue; } if (kind === 'spoils') { spoils.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'grade') { st.grades[k] = (st.grades[k] || 0) + 1; continue; } if (kind === 'wipe') { if (!k.boss && !k.arena) st.normalLosses.push({ t: gt, zone: k.zone }); continue; } if (kind === 'upgraded') { st.cover.ups.push(Object.assign({ t: gt }, k)); continue; } if (kind === 'refine') { st.cover.orders.push({ t: gt, prod: k }); continue; } if (kind === 'choice') { choices.push({ t: gt, k, real: k !== 'nextup' || st.nuReady >= 2 }); if (k === 'nextup') st.nuReady = 0; } else if (firstUse[k] === undefined) { firstUse[k] = gt; await note(page, 'firstuse', k, { shot: false }); } }
   for (const t of o.toasts) if (!st.toastSeen.has(t)) { st.toastSeen.add(t); await note(page, 'toast', t, { shot: false }); }
   for (const t of o.tabs) if (!st.tabSeen.has(t)) { st.tabSeen.add(t); if (st.tabSeen.size > 1) await note(page, 'tab', t, { tag: 'tab-' + t }); }
   const s = o.s, p = st.prev;
@@ -911,6 +954,7 @@ async function run() {
       if (!did && !st.nuGather && (o.phase === 'idle') && gt - st.nuAt >= 6 && o.cards.length === 0) { st.nuAt = gt; did = await followNextUp(o); }
       if (!did && !st.nuGather) did = await gearStep(o);
       if (!did && !st.nuGather) did = await gateStep(o);
+      if (!did && !st.nuGather) did = await coverStep(o);   // walk-presses-cover: only with --cover
       // the Fight menu (tab "adv") covers the action bar in portrait: a player whose turn is waiting closes it
       if (!did && o.s.tab === 'adv' && o.phase !== 'idle' && !o.tip && o.cards.length === 0 && gt - st.tabAt > 2.5) { st.tabAt = gt; did = await click('#menuX', 300); }
       const fine = o.phase === 'foe wind-up' || o.phase === 'parry or dodge window' || !!st.ringFor;   // the 33 ms step is for the foe's wind-up, the parry window and a timed ring only
@@ -919,6 +963,7 @@ async function run() {
     // walk-gate-reads-right: the 60 min craft row is read as the hour ends, then each gathering level against the tier 2 gate
     while (st.gate.rows.length < CRAFT_ROW_AT.length && gt >= CRAFT_ROW_AT[st.gate.rows.length] * 60) await craftRowAt(CRAFT_ROW_AT[st.gate.rows.length]);
     st.gate.gatherLv = await X(GATHER_LV_Q);
+    st.cover.stations = await X(`SKILL_TUNE.craftSkills.filter(k => S.skills[k] && SKILL[k]).map(k => ({ k, nm: SKILL[k], lv: S.skills[k].lv }))`);   // walk-presses-cover: station levels at the end
     await note(page, 'gate', 'gathering at the end: ' + st.gate.gatherLv.map(g => `${g.nm} ${g.lv} of ${g.need}`).join(', '), { shot: false, extra: { gatherLv: st.gate.gatherLv } });
   
   } catch (e) {   // the browser or page went away (a crash, the container's memory): report the run so far instead of a stack trace
@@ -1109,6 +1154,31 @@ function goldLine(e) {
   const by = o => Object.entries(o).map(([k, n]) => k + ' ' + n.toLocaleString('en-GB')).join(', ');
   return `Gold: earned ${g.earned.toLocaleString('en-GB')}${g.earned ? ' (' + by(g.earnedBy) + ')' : ''}, spent ${g.spent.toLocaleString('en-GB')}${g.spent ? ' (' + by(g.spentBy) + ')' : ''}, ${g.unspent === null ? 'unspent share not read' : g.unspent + '% unspent'}, last spend ${g.lastSpend === null ? 'none' : 'at ' + fmtT(g.lastSpend)}.`;
 }
+// walk-presses-cover: the ruling's measures (autopilot/rulings/2026-10-08-gold-covers-material.md) at the end of the walk: the gold
+// share unspent and the last spend, covered units against all upgrade units (the `upgraded` event), refine orders, the gathering
+// and station levels. The same block is written with the cover off, so --cover-base can set a cover run beside its seed's base.
+function coverSummary() {
+  const C = st.cover, g = goldLedger(st.prev && st.prev.econ) || {}, sum = k => C.ups.reduce((n, u) => n + (u[k] || 0), 0);
+  return { mode: coverName(COVER), minutes: Math.round(gt / 60), unspent: g.unspent ?? null, lastSpend: g.lastSpend ?? null, earned: g.earned ?? null,
+    ups: C.ups.length, coveredUps: C.ups.filter(u => u.cover > 0).length, allUnits: sum('all'), coveredUnits: sum('cover'), coverGold: Math.round(sum('gold')),
+    refineOrders: C.orders.length, gather: st.gate.gatherLv ? Object.fromEntries(st.gate.gatherLv.map(x => [x.nm, x.lv])) : null, stations: C.stations ? Object.fromEntries(C.stations.map(x => [x.nm, x.lv])) : null,   // null: the walk stopped before its end read
+    presses: C.presses.length, failed: C.presses.filter(p => !p.ok).length, skipped: C.skipped.size, maxMins: C.maxMins };
+}
+function coverLines() {
+  const a = coverSummary(), pc = (n, d) => d ? Math.round(n / d * 100) + '%' : 'n/a';
+  let b = null, why = '';
+  if (COVER_BASE) { try { const j = JSON.parse(fs.readFileSync(path.resolve(ROOT, COVER_BASE), 'utf8')); b = j.cover || null; if (!b) why = 'it has no cover block'; else if (j.seed !== SEED || j.hero !== HERO || j.size !== SIZE.id) why = `it is seed ${j.seed} ${j.hero} ${j.size}, not this walk's seed ${SEED} ${HERO} ${SIZE.id}`; } catch (e) { why = 'it could not be read'; } }
+  const row = x => [x.mode, x.unspent === null ? 'not read' : x.unspent + '%', x.lastSpend === null ? 'none' : fmtT(x.lastSpend), `${x.coveredUnits} of ${x.allUnits} (${pc(x.coveredUnits, x.allUnits)})`, `${x.coveredUps} of ${x.ups}`, x.coverGold.toLocaleString('en-GB'), x.refineOrders,
+    x.gather ? ['Mining', 'Woodcutting', 'Foraging'].map(k => `${k} ${x.gather[k] ?? '-'}`).join(', ') : 'not read', x.stations ? Object.entries(x.stations).map(([k, v]) => `${k} ${v}`).join(', ') : 'not read'].join(' | ');
+  const out = ['## Gold cover', '', `The bot's cover: ${a.mode}${COVER ? `. It pressed the cover ${a.presses} time${a.presses === 1 ? '' : 's'}${a.failed ? ` (${a.failed} did not upgrade)` : ''}${COVER.min ? `; it left ${a.skipped} cover offer${a.skipped === 1 ? '' : 's'} it could pay alone (free route ${COVER.min} min or less)` : ''}${a.maxMins === null ? '' : `; the longest free route among the offers it could pay was ${Number.isFinite(a.maxMins) ? a.maxMins + ' min' : 'not gatherable'}`}` : ' (pass --cover all or --cover <min> to press it)'}. Read at game minute ${a.minutes}.`, '',
+    '| Run | Unspent gold | Last spend | Covered units | Covered upgrades | Cover gold | Refine orders | Gathering | Stations |', '|---|---|---|---|---|---|---|---|---|', `| ${row(a)} |`];
+  if (b) out.push(`| ${row(b)} (\`${path.basename(COVER_BASE)}\`) |`);
+  if (b && b.minutes !== a.minutes) out.push('', `The base walk was read at game minute ${b.minutes}, this one at ${a.minutes}: the rows are not the same hour.`);
+  if (COVER_BASE && !b) out.push('', `--cover-base \`${COVER_BASE}\` is not beside this row: ${why}.`);
+  if (b && a.gather && b.gather) { const d = k => (a.gather[k] ?? 0) - (b.gather[k] ?? 0); out.push('', `Against the base: unspent ${a.unspent ?? 'n/a'}% vs ${b.unspent ?? 'n/a'}%, refine orders ${a.refineOrders} vs ${b.refineOrders}, gathering levels ${['Mining', 'Woodcutting', 'Foraging'].map(k => `${k} ${d(k) >= 0 ? '+' : ''}${d(k)}`).join(', ')}.`); }
+  out.push('');
+  return out;
+}
 function report(res) {
   const reached = Math.round(gt), sc = scorecard(reached), beats = readMap(), meas = measureBeats();
   const out = [];
@@ -1119,6 +1189,7 @@ function report(res) {
   if (st.beaten) out.push(`The bot was beaten ${st.beaten} time${st.beaten === 1 ? '' : 's'} by bosses (the "try again" card).`, '');
   out.push(`End state: zone ${z.maxZone}, level ${z.L}, ${z.gold} gold, ${z.kills} kills, ${Object.keys(z.got || {}).length} things unlocked, ${z.found} uniques, ${z.stars} Stars, ${z.heroes} extra heroes, ${z.looks} looks.`, '');
   out.push(goldLine(z.econ), '');
+  out.push(...coverLines());
   out.push('## Gear and boss tries', '', `The bot crafted ${st.gear.crafted} piece(s) from its own gear goal, put on ${st.gear.wornN}${st.gear.firstWear === null ? '' : ' (first at ' + fmtT(st.gear.firstWear) + ')'}, and closed ${st.sheetsClosed || 0} sheet(s) it had left over the bar. Forged in all: ${z.forged || 0}. Camp built: ${['bench', 'forge', 'store', 'hearth2', 'tavern'].map(id => (id === 'hearth2' ? 'Hearth 2' : id) + ' ' + (st.builtAt[id] ? fmtT(st.builtAt[id]) : 'not built')).join(', ')}.${st.nuGathers.length ? ' Next Up sent it to gather ' + st.nuGathers.length + ' time(s): ' + st.nuGathers.map(g => `${fmtT(g.t)} ${g.node} ${g.min} min (${g.end})`).join('; ') + '.' : ''}`, '',
     '| Zone | First stood in at | Level | Boss tries lost | Worn then |', '|---|---|---|---|---|');
   for (const [zn, e] of Object.entries(st.enter || {})) out.push(`| ${zn} | ${fmtT(e.t)} | ${e.L} | ${(st.tries || {})[zn] || 0} | ${e.gear} |`);
@@ -1225,7 +1296,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const base = path.join(OUT, `walk-${DATE}`);
 fs.writeFileSync(base + '.md', rep.md);
 fs.writeFileSync(base + '.json', JSON.stringify({ date: DATE, build: sha(), seed: SEED, hero: HERO, size: SIZE.id, gameSeconds: Math.round(gt), clockSeconds: Math.round(res.clockMs / 1000), stop: res.stop,
-  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, bossTries: { stayed: st.stayed, losses: st.losses, grades: st.grades, odds: st.odds, tricks: st.tricks, read: READ }, normalLosses: st.normalLosses, gold: goldLedger(st.prev && st.prev.econ), checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
+  scorecard: rep.sc, beats: rep.beats, over50: rep.off, moments, spoils, bossTries: { stayed: st.stayed, losses: st.losses, grades: st.grades, odds: st.odds, tricks: st.tricks, read: READ }, normalLosses: st.normalLosses, gold: goldLedger(st.prev && st.prev.econ), cover: Object.assign(coverSummary(), { pressLog: st.cover.presses, upgrades: st.cover.ups, refines: st.cover.orders }), checks: [...checks.values()], errors: [...new Set(res.errs)], log, cards: [...st.cardSeen.values()] }, null, 1) + '\n');
 if (res.snap && (res.stop || flag('snapshot'))) fs.writeFileSync(path.join(OUT, `snapshot-min${Math.round(gt / 60)}.json`), res.snap);
 if (opt('scorecard', '')) writeScorecard(path.resolve(ROOT, opt('scorecard', '')), rep.sc, Math.round(gt));
 if (opt('reports', '')) {
