@@ -118,5 +118,5 @@ for (const id in ABILITIES) {
 const HERO_RESOURCE = {
   wren: { name: 'Aim', txt: 'Aim: each Attack gives 1, up to 3. Each Aim adds 5% crit chance. Final Echo spends it for a bigger hit.' },
   tobin: { name: 'Grit', txt: 'Grit: each Attack and parried hit gives 1, Shield Bash 2, up to 10. Each Grit adds 8% to your Attack and takes 1% off the damage you take. Hammerfall spends it all for a big hit.' },
-  pip: { name: 'Cinders', txt: 'Cinders: each Attack gives 1, up to 5. Each Cinder you hold adds 4% to your fire damage. Fireball spends them all for a hotter Burn (10% more each). Lanternburst needs 3 and spends them for a blast.' }
+  pip: { name: 'Cinders', txt: 'Cinders: each Attack gives 1, up to 5. Each Cinder you hold adds 4% to your fire damage. Fireball uses all for +10% Burn each. Lanternburst needs 3 and uses all.' }
 };

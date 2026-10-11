@@ -20444,7 +20444,8 @@ if (section('actor-scale-followups (browser)')) try {
         if (desk) {
           const longest = await X(`Object.values(TURN_TRAITS).map(t => t.first || '').concat(['Rally! It holds at the mark. Only a Stun breaks its charge.']).sort((a, b) => b.length - a.length)[0]`);
           for (const k of ['wren', 'tobin', 'pip']) {
-            await X(`globalThis.__tp = 0; soloPick("${k}"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1); true`); await page.waitForTimeout(1500);
+            // the last hero's tip (opened below, a 5 s line) must not carry into this hero's run: close it first, so each hero starts clean
+            await X(`globalThis.__tp = 0; const t0 = document.querySelector('.tv-restip'); if (t0 && !t0.hidden) t0.hidden = true; soloPick("${k}"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1); true`); await page.waitForTimeout(1500);
             await X('globalThis.__tp = 1; true'); await page.waitForTimeout(300);
             const read = async () => JSON.parse(await X(`JSON.stringify({ hero: LF_EYES.rects().hero, zone: ${BOX('.hud-zone')}, turn: ${BOX('.tv-n')}, row: ${BOX('.tv-hero')}, warn: ${BOX('.tv-warn')}, tip: ${BOX('.tv-restip')}, banner: ${BOX('.tv-tc-txt')}, strip: ${BOX('.cb-strip')} })`));
             await X(`emit('traitSeen', { first: true, txt: ${JSON.stringify(longest)} }); true`); await page.waitForTimeout(120);
@@ -20458,8 +20459,12 @@ if (section('actor-scale-followups (browser)')) try {
             const b = await read(); await X('emit("turn", {}); true');
             assert(!!b.warn && !cross(b.warn, b.banner) && !cross(b.warn, b.hero), `${tag} ${k}: with the banner up the line stays clear of it and the hero (${JSON.stringify({ warn: b.warn, banner: b.banner })})`);
             // the tip: the hero's own resource line (the longest is Pip's), with no trick line up
-            await X(`document.querySelector('.tv-warn').hidden = true; const t = document.querySelector('.tv-restip'); if (t.hidden) document.querySelector('.tv-resbtn').click(); true`); await page.waitForTimeout(120);
+            // close any open tip, then open it fresh with the button, and wait until it shows this hero's own line (its 5 s clock starts now)
+            await X(`document.querySelector('.tv-warn').hidden = true; const t = document.querySelector('.tv-restip'); if (!t.hidden) t.hidden = true; document.querySelector('.tv-resbtn').click(); true`);
+            await page.waitForFunction(k => { const t = document.querySelector('.tv-restip'); return !!t && !t.hidden && t.textContent.startsWith(window.__t.x(`HERO_RESOURCE.${k}.name`) + ':'); }, k, { timeout: 3000 }).catch(() => {});
             const c = await read();
+            const tipTxt = await X(`(() => { const t = document.querySelector('.tv-restip'); return t.hidden ? '' : t.textContent; })()`), ownTxt = await X(`HERO_RESOURCE.${k}.txt`);
+            assert(tipTxt === ownTxt, `${tag} ${k}: the resource tip shows this hero's own line (${JSON.stringify(tipTxt.slice(0, 30))})`);
             const hitsT = ['hero', 'zone', 'turn', 'row', 'strip'].filter(n => cross(c.tip, c[n]));
             assert(!!c.tip && !hitsT.length, `${tag} ${k}: the resource tip clears the hero, the place line, the turn line and the Grit row (${hitsT.join(', ') || 'none'}; tip ${JSON.stringify(c.tip)}, hero ${JSON.stringify(c.hero)})`);
           }

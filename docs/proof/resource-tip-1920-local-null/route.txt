@@ -1,0 +1,19 @@
+# seed: 1
+# Proof for card resource-tip-1920-local-null. Pip's Cinders tip wrapped to four lines on a 1280x720 or 1366x640 stage and its foot
+# covered the top of Pip. Its line is now three lines ("Fireball uses all for +10% Burn each. Lanternburst needs 3 and uses all."),
+# so it ends above her. tools/check.mjs "actor-scale-followups (browser)" now closes the last hero's tip before each hero and waits for
+# this hero's own line, so the check reads Pip's tip, not Wren's left-over one. This route plays the late save's fight (Pip, zone 31)
+# and opens her Cinders tip. Run with --view desktop and laptop.
+new late
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Fight"
+wait 4
+expect ".hud.vs .hero-plate"
+tap-if "Attack"
+wait 3
+unless "Fireball uses all" tap-if "Cinders"
+wait 1
+expect "Fireball uses all for +10% Burn each"
+shot pip-tip-three-lines
