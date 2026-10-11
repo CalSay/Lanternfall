@@ -86,7 +86,7 @@ const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '
 // every section's time and the shard's planned load (CI runs it with --times, so the job log has both).
 const WEIGHT = {
   'forge-line-while-fighting': 133, 'W1-D (browser)': 111, 'staged guide follow-ups (browser)': 90, 'moment layer': 79,
-  'solo copy (browser, W1-C)': 120, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
+  'solo copy (browser, W1-C)': 120, 'ui2-look (browser)': 60, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
   'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 75, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 44,
@@ -286,9 +286,10 @@ if (section('smoke')) try {
   assert(!g4.errors.length, 'no party handler errors' + (g4.errors.length ? ': ' + g4.errors[0] : ''));
 } catch (e) { fail('smoke crashed: ' + (e.stack || e)); }
 
-// ---- check fonts (display-fallback-font): every browser section measures text in the faces players get ----
-// The newContext wrapper above adds Handjet and Barlow Semi Condensed from tests/fonts/. This section logs the face the page's
-// --display and --body stacks resolve to, so a local run and a CI run can be compared, and fails when it is a fallback.
+// ---- check fonts (display-fallback-font, ui2-look): every browser section measures text in the faces players get ----
+// The newContext wrapper above adds Cinzel and Barlow Semi Condensed from tests/fonts/. This section logs the face the page's
+// --title, --display and --body stacks resolve to, so a local run and a CI run can be compared, and fails when it is a fallback.
+// ui2-look: titles are Cinzel (--title); numbers, buttons and labels (--display) and reading text (--body) are Barlow Semi Condensed.
 if (section('check fonts')) try {
   const { pw, exe } = browserTools;
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('check fonts: Playwright or Chromium not here, skipped');
@@ -300,24 +301,119 @@ if (section('check fonts')) try {
       await page.goto('http://lf.test/'); await page.waitForTimeout(300);
       const m = await page.evaluate(async () => {
         const w = (fam, wt) => { const s = document.createElement('span'); s.style.cssText = `position:absolute;white-space:nowrap;font:${wt} 40px ${fam}`;
-          s.textContent = 'Dodge Lanternburst 0123'; document.body.appendChild(s); const v = s.getBoundingClientRect().width; s.remove(); return v; };
-        await document.fonts.load('600 40px Handjet'); await document.fonts.load('600 40px "Barlow Semi Condensed"'); await document.fonts.ready;
+          s.textContent = 'Dodge Lanternburst 0123 Wren'; document.body.appendChild(s); const v = s.getBoundingClientRect().width; s.remove(); return v; };
+        await document.fonts.load('600 40px Cinzel'); await document.fonts.load('600 40px "Barlow Semi Condensed"'); await document.fonts.load('700 40px "Barlow Semi Condensed"'); await document.fonts.ready;
         const out = {};
-        for (const [k, face, wt] of [['display', 'Handjet', 600], ['body', 'Barlow Semi Condensed', 500]]) {
+        for (const [k, face, wt] of [['title', 'Cinzel', 600], ['display', 'Barlow Semi Condensed', 700], ['body', 'Barlow Semi Condensed', 500]]) {
           const stack = getComputedStyle(document.documentElement).getPropertyValue('--' + k).trim();
-          out[k] = { face, stack, faces: [...document.fonts].filter(x => x.family.replace(/"/g, '') === face && x.status === 'loaded').length, page: w(stack, wt), real: w(`"${face}"`, wt), mono: w('monospace', wt), sans: w('sans-serif', wt) };
+          out[k] = { face, stack, faces: [...document.fonts].filter(x => x.family.replace(/"/g, '') === face && x.status === 'loaded').length, page: w(stack, wt), real: w(`"${face}"`, wt), mono: w('monospace', wt), sans: w('sans-serif', wt), serif: w('serif', wt) };
         }
         return out;
       });
-      for (const k of ['display', 'body']) {
+      for (const k of ['title', 'display', 'body']) {
         const f = m[k];
-        console.log(`  font ${k}: ${f.face} (tests/fonts, ${f.faces} subsets loaded); 40px sample ${f.page.toFixed(1)} px, ${f.face} ${f.real.toFixed(1)}, monospace ${f.mono.toFixed(1)}, sans-serif ${f.sans.toFixed(1)}`);
-        assert(f.faces > 0 && Math.abs(f.page - f.real) < 0.5 && Math.abs(f.page - f.mono) > 2 && Math.abs(f.page - f.sans) > 2,
+        console.log(`  font ${k}: ${f.face} (tests/fonts, ${f.faces} subsets loaded); 40px sample ${f.page.toFixed(1)} px, ${f.face} ${f.real.toFixed(1)}, monospace ${f.mono.toFixed(1)}, sans-serif ${f.sans.toFixed(1)}, serif ${f.serif.toFixed(1)}`);
+        assert(f.faces > 0 && Math.abs(f.page - f.real) < 0.5 && Math.abs(f.page - f.mono) > 2 && Math.abs(f.page - f.sans) > 2 && Math.abs(f.page - f.serif) > 2,
           `check fonts: --${k} (${f.stack}) draws in ${f.face}, the face players get, not a fallback`);
       }
     } finally { await browser.close(); }
   }
 } catch (e) { fail('check fonts crashed: ' + (e.stack || e)); }
+
+// ---- ui2-look (docs/design/ui-redesign.md 1, 2.1-2.3; card ui2-look): the Lantern Brass look on every screen ----
+// The mid fixture at 1280x720, 740x360, 360x740 and 1920x1080, in the fight and then with Craft open. The ground is night ink; the open
+// menu is opaque night ink (#0B0F18, no blur: a 10 px blur halved the frames at 1280x720) edged by a 1 px brass line; the Craft button is the brass gradient with dark
+// text; the open nav tab and sub-view tab are lit brass; the place name and the foe's name draw in Cinzel (--title), the gold count in
+// Barlow with tabular numbers. On the desktop tiers no text on the fight or the open menu is under 14 px. With no web fonts (Cinzel falls
+// back to Georgia, then serif) every name in the title face shows whole in its box: not cut, no word broken across lines. Contrast (section 3): body text and muted text on the
+// see-through panel colour (--panel, the cards) over the brightest pixel of the Mossy Hollow fight (zone 1, its lantern pools) are 4.5:1 or more, with no blur to help.
+if (section('ui2-look (browser)')) try {
+  const at = 'ui2-look', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const fixture = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, raw, webFonts = true, zone = 0) => {
+      const phone = Math.min(w, h) < 600, ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: phone, hasTouch: phone, reducedMotion: 'reduce', turns: true, webFonts });
+      await ctx.addInitScript(({ raw, key, zone }) => { const o = JSON.parse(raw); o.last = Date.now(); o.onboard.tips = false; if (zone) o.zone = zone; localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY, zone });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(1200);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X('document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+      await page.waitForTimeout(300);
+      return { ctx, page, errs, X };
+    };
+    const craft = async X => { await X(`setTab('forge'); ui(true); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true`); await new Promise(r => setTimeout(r, 500)); };
+    // every visible element with its own words: its font size, face and whether its words fit its box
+    const words = page => page.evaluate(() => { const out = [], W = innerWidth, H = innerHeight;
+      for (const e of document.querySelectorAll('.app *')) {
+        if (![...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) continue;
+        const cs = getComputedStyle(e), r = e.getBoundingClientRect();
+        if (!r.width || !r.height || cs.visibility === 'hidden' || r.right <= 0 || r.bottom <= 0 || r.left >= W || r.top >= H) continue;
+        let v = e, off = false; for (; v; v = v.parentElement) { const c = getComputedStyle(v); if (c.display === 'none' || +c.opacity === 0) { off = true; break; } } if (off) continue;
+        const title = /^"?Cinzel/.test(cs.fontFamily); let cut = e.scrollWidth > e.clientWidth + 1 && cs.overflowX !== 'visible';
+        // a title's words: none breaks across two lines, and none runs past its box
+        if (title) for (const n of e.childNodes) if (n.nodeType === 3) for (const m of n.textContent.matchAll(/\S+/g)) {
+          const g = document.createRange(); g.setStart(n, m.index); g.setEnd(n, m.index + m[0].length); const rs = [...g.getClientRects()].filter(x => x.width > 0);
+          if (new Set(rs.map(x => Math.round(x.top))).size > 1 || rs.some(x => x.right > r.right + 1 || x.left < r.left - 1)) cut = true; }
+        out.push({ c: String(e.className || e.tagName), t: e.textContent.trim().slice(0, 30), fs: parseFloat(cs.fontSize), title, cut });
+      }
+      return out; });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740], [1920, 1080]]) {
+        const v = `${at} (browser ${w}x${h})`, desk = w >= 1200, wide = w >= h && w >= 600;
+        const { ctx, page, errs, X } = await open(w, h, fixture('save-mid.json'));
+        const look = await X(`JSON.stringify((() => { const cs = s => { const e = document.querySelector(s); return e ? getComputedStyle(e) : null; }, z = cs('.zname'), m = cs('.mob .mob-name') || cs('.mob-name'), g = cs('#gold');
+          return { ground: getComputedStyle(document.body).backgroundColor, place: z && z.fontFamily, foe: m && m.fontFamily, gold: g && g.fontFamily, num: g && g.fontVariantNumeric }; })())`).then(JSON.parse);
+        assert(look.ground === 'rgb(8, 11, 18)', `${v}: the ground is night ink (${look.ground})`);
+        assert(/^"?Cinzel"?, Georgia, serif$/.test(look.place || '') && /^"?Cinzel/.test(look.foe || ''), `${v}: the place name and the foe's name are titles, in Cinzel (${look.place}; ${look.foe})`);
+        assert(/^"?Barlow Semi Condensed/.test(look.gold || '') && /tabular-nums/.test(look.num || ''), `${v}: the gold count is Barlow with tabular numbers (${look.gold}; ${look.num})`);
+        const fight = await words(page);
+        await craft(X);
+        const menu = await X(`JSON.stringify((() => { const m = getComputedStyle(document.getElementById('menu') || document.querySelector('.menu')), t = document.querySelector('.tab[aria-selected="true"]'),
+            s = document.querySelector('.menu .vseg button[aria-selected="true"]'), b = [...document.querySelectorAll('.cf-go')].find(x => !x.disabled && x.offsetParent), bs = b && getComputedStyle(b), title = document.querySelector('.menu-title');
+          return { bg: m.backgroundColor, blur: m.backdropFilter, edge: ${wide} ? [m.borderLeftWidth, m.borderLeftColor] : [m.borderTopWidth, m.borderTopColor],
+            tab: t && getComputedStyle(t).color, view: s && [getComputedStyle(s).color, getComputedStyle(s).boxShadow], go: bs && [bs.backgroundImage, bs.color, bs.borderRadius],
+            title: title && title.offsetParent ? getComputedStyle(title).fontFamily : null }; })())`).then(JSON.parse);
+        assert(menu.bg === 'rgb(11, 15, 24)' && menu.blur === 'none', `${v}: the open menu is opaque night ink with no blur behind it (${menu.bg}, ${menu.blur})`);
+        assert(menu.edge[0] === '1px' && menu.edge[1] === 'rgba(205, 163, 92, 0.38)', `${v}: the menu's edge is a 1 px brass line (${menu.edge})`);
+        assert(menu.tab === 'rgb(243, 220, 164)', `${v}: the open tab is lit brass (${menu.tab})`);
+        assert(menu.view && menu.view[0] === 'rgb(243, 220, 164)' && /rgb\(216, 176, 104\)/.test(menu.view[1]), `${v}: the open sub-view is lit brass with a brass underline (${menu.view})`);
+        assert(menu.go && menu.go[0] === 'linear-gradient(rgb(237, 203, 134), rgb(185, 143, 69))' && menu.go[1] === 'rgb(29, 21, 9)' && menu.go[2] === '4px', `${v}: the Craft button is the brass gradient with dark text and 4 px corners (${menu.go})`);
+        if (menu.title) assert(/^"?Cinzel/.test(menu.title), `${v}: the menu's title is Cinzel (${menu.title})`);
+        if (desk) {
+          const small = [...fight, ...(await words(page))].filter(o => o.fs < 14);
+          assert(!small.length, `${v}: no text on the fight or the Craft menu is under 14 px (${JSON.stringify(small.slice(0, 6))})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+        // no web fonts: Cinzel falls back (Georgia, then serif); every name in the title face still shows whole in its box
+        const fb = await open(w, h, fixture('save-mid.json'), false), cut = [];
+        for (const o of await words(fb.page)) if (o.title && o.cut) cut.push(o);
+        await craft(fb.X);
+        for (const o of await words(fb.page)) if (o.title && o.cut) cut.push(o);
+        assert(!cut.length, `${v}, fallback fonts: every name in the title face shows whole (${JSON.stringify(cut.slice(0, 4))})`);
+        await fb.ctx.close();
+      }
+      // contrast: the glass over the brightest pixel of the Mossy Hollow fight (zone 1's lantern pools), with no blur to soften it
+      { const v = `${at} (browser 1280x720, Mossy Hollow)`, { ctx, page, X } = await open(1280, 720, fixture('save-early.json'), true, 1);
+        await page.waitForTimeout(800);
+        const c = await X(`JSON.stringify((() => { const cv = document.getElementById('cv'), d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data, lin = v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+            const L = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b); let best = [0, 0, 0], bl = -1;
+            for (let i = 0; i < d.length; i += 4) { const l = L(d[i], d[i + 1], d[i + 2]); if (l > bl) { bl = l; best = [d[i], d[i + 1], d[i + 2]]; } }
+            const root = getComputedStyle(document.documentElement), rgb = s => { const x = document.createElement('i'); x.style.color = s; document.body.appendChild(x); const m = getComputedStyle(x).color.match(/[\\d.]+/g).map(Number); x.remove(); return m; };
+            const p = rgb(root.getPropertyValue('--panel')), a = p[3], under = p.slice(0, 3).map((v, i) => v * a + best[i] * (1 - a)), lu = L(...under);
+            const ratio = s => { const l = L(...rgb(root.getPropertyValue(s)).slice(0, 3)); return (Math.max(l, lu) + 0.05) / (Math.min(l, lu) + 0.05); };
+            return { place: document.getElementById('zName').textContent, pool: best, glass: under.map(Math.round), bone: +ratio('--bone').toFixed(2), muted: +ratio('--muted').toFixed(2) }; })())`).then(JSON.parse);
+        console.log(`  ${v}: brightest scene pixel ${c.pool} under the glass reads ${c.glass}; body text ${c.bone}:1, muted text ${c.muted}:1`);
+        assert(c.place === 'Mossy Hollow' && c.bone >= 4.5 && c.muted >= 4.5, `${v}: body and muted text on the glass over the brightest lantern pool are 4.5:1 or more (${JSON.stringify(c)})`);
+        await ctx.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('ui2-look crashed: ' + (e.stack || e)); }
 
 // ---- split build (asset-build, art-loader; docs/design/hosting.md 5, B2): the page, its boot files and the area packs ----
 // Built in memory (nothing written). The boot files are the generated art data files as they are, under hashed names, run before
@@ -18229,7 +18325,7 @@ if (section('menu-tip-room')) try {
 // save-pip-abilities (Pip, Fireball / Spark / Kindle), tips off. Each hero in turn, every ability that hero can learn goes into the three
 // slots (three at a time, ownership stubbed), and each name must not be cut (its text no wider than its box) on the fight bar's slot names at
 // 1280x720, 740x360 and 360x740, and on the Q W E buttons at the top of Hero > Abilities (and the Slot Q / W / E buttons in a card). The
-// views run twice: in the players' fonts (Handjet, display-fallback-font) and with no web fonts, where the fallback (DejaVu Sans Mono
+// views run twice: in the players' fonts (Barlow, display-fallback-font) and with no web fonts, where the fallback (a wider sans
 // here) needs the names to step their size down (fitTextWidth, 75-abilities-ui). Upright, Fireball's card (its text, the slots, both talents) has no scroll of its own.
 if (section('ability-names-fit')) try {
   const at = 'ability-names-fit', { pw, exe } = browserTools;

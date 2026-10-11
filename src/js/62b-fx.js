@@ -541,7 +541,7 @@ const fxTwin = () => typeof TURN_LIVE !== 'undefined' && TURN_LIVE && TURN_LIVE.
         if (d < 0.5 && !reduced) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6 * (1 - d / 0.5); const gr = n * 1.2; ctx.drawImage(A.glow(C[p.id] || C.pale), X + n / 2 - gr, Y + n / 2 - gr, gr * 2, gr * 2); ctx.globalCompositeOperation = 'source-over'; }
         ctx.globalAlpha = a; ctx.imageSmoothingEnabled = false; ctx.drawImage(im, X, Y); st.popN = im.naturalWidth; ctx.imageSmoothingEnabled = true;
         const fz = Math.round(Math.max(11, 10 * Ks * 0.55) * 1.15);
-        ctx.font = `700 ${fz}px "Handjet", "Arial Narrow", monospace`; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+        ctx.font = `700 ${fz}px "Barlow Semi Condensed", "Arial Narrow", sans-serif`; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
         ctx.lineWidth = Math.max(2, Math.round(fz / 5)); ctx.strokeStyle = '#1E0A14'; ctx.strokeText(FX_NAME[p.id] || '', X + n / 2, Y + n + fz * 0.85);
         ctx.fillStyle = '#F3E7FF'; ctx.fillText(FX_NAME[p.id] || '', X + n / 2, Y + n + fz * 0.85);
       }

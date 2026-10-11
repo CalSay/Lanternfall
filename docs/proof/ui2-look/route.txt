@@ -1,0 +1,18 @@
+# Proof for card ui2-look (UI redesign stage 1, Lantern Brass; docs/design/ui-redesign.md 1, 2.1-2.3). Titles are Cinzel and everything
+# else is Barlow; menus are night glass with 1 px brass lines; the Craft button and the open tabs are brass; ember is kept for what you
+# can act on now. Layout, sizes, icons and copy are unchanged. tools/check.mjs section "ui2-look (browser)" asserts the tokens at four
+# sizes, the 14 px desktop text floor, title names that fit with no web fonts, and the contrast over Mossy Hollow's lantern pools.
+# seed: 1
+new mid
+wait-for "Skip" 15
+tap-if "Skip"
+wait 5
+tap-if "Got it"
+shot fight
+expect ".zname"
+tap "Craft"
+wait 1
+tap-if "Got it"
+expect "Forge"
+expect ".cf-go"
+shot craft-menu
