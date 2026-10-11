@@ -11977,7 +11977,7 @@ function setZone(z) {
 // switch activity; call setActivity('gather') for that.
 function setNode(kind, t) {
   if (!craftNodeVisible(kind, t) || !skillTierOpen(skillOf(kind), t)) return false;
-  S.node = { kind, t }; S.gProg = 0; if (S.activity == 'gather') emit('sceneReset');
+  S.node = { kind, t }; S.gProg = 0; if (S.activity === 'gather') emit('sceneReset');
   return true;
 }
 
@@ -12211,7 +12211,7 @@ function harvest() {
 function awayGains(secs) {
   secs = Math.max(0, +secs || 0);   // a save stamped in the future (clock set back) gives nothing, never negative gains
   const r = { t: Math.min(secs, awayCapH() * 3600), secs, lines: [] };
-  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // BAL3: back from away, auto-challenge may retry a boss it failed (55-boss-try keeps the same baseline in the save)
+  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // (55-boss-try keeps the same baseline in the save) BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
   emit('awayBegin', r);
   awayBase(r);
   emit('away', r);
@@ -12223,7 +12223,7 @@ function awayNode() {
   const n = S.node;
   return S.activity === 'gather' || typeof turnCombatScope == 'function' && turnCombatScope() && isUnlocked('gather') && craftNodeVisible(n.kind, n.t) && skillTierOpen(skillOf(n.kind), n.t) ? n : null;
 }
-// the hero's first name
+// The hero's first name
 const heroFirst = () => { const h = typeof ROSTER === 'object' && S.solo && ROSTER[S.solo.hero]; return h ? h.name.split(' ')[0] : 'your hero';
 };
 function awayBase(r) {
@@ -15238,7 +15238,7 @@ var forgeGoalPicks = 0;
     label: () => { const b = forgeNext(); if (!b) return '';
       // tier-two-named-for-return: a gate row names the piece and its furthest gate, not a boss (it is often a later sitting's piece); a
       // gathering gate says the skill rises while you're away ("Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away.")
-      // away-line-only-when-true: only while the hero works that skill away (50-sim awayNode); else how to make it true
+      // away-line-only-when-true: only while the hero works that skill away (50-sim awayNode), else how to make it true
       if (b.gate) { const dw = typeof DW === 'object' && DW && DW.run(),
           on = !!(dw && !dw.paused && dw.act === 'gather' || awayNode()) && skillOf(S.node.kind) === b.gate.skill;   // a live Deepwell run holds the activity away resumes (57d awayBegin)
         return gateLabel(b, on); }
@@ -39241,7 +39241,7 @@ const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc
 // the away card's line for a fighter who can't gather yet
 const AWAY_RULE_TXT = 'Fights only happen while you play.';
 // Away chip: what leaving now earns, on the away note's beat, from awayBase's rates (50-sim), held to the Storehouse room
-// unless Spillover moves on. A fighter is told where the hero goes back to.
+// unless Spillover moves on; a fighter is told where the hero goes back to.
 let awayChip = null;
 function awayChipText() {
   const node = awayNode(); if (!node) return '';
@@ -39253,7 +39253,7 @@ function awayChipText() {
   return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs, S.activity == 'fight' && NODE_NAMES[kind][tier - 1]);
 }
 // the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full;
-// back: a fighter's node (side-column-fits-740 measures every variant for every material)
+// back: a fighter's node. side-column-fits-740 measures every variant for every material
 function awayChipSay(nm, n, hrs, back) {
   const go = back ? `Leave now: ${heroFirst()} goes back to the ${back}${n > 0 ? ',' : '.'} ` : 'Leave now: ';
   if (n === 'spill') return `${go}${nm} fills up, then Spillover moves your hero on.`;
@@ -39267,14 +39267,13 @@ function uiAwayChip() {
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
     $('modeSeg').parentElement.after(awayChip);
   }
-  if (txt && S.activity == 'fight') txt = awayChipFit(txt);
+  if (txt && S.activity === 'fight') txt = awayChipFit(txt);
   if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
-// A fighter's chip ends 4 px above the dock or says less.
 let fitKey, fitTxt;
 function awayChipFit(txt) {
-  // measured again only when the words or the screen change
+  // only measured again when the words or the screen change
   const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + ($('nuChip') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
   if (k === fitKey) return fitTxt;
   fitKey = k; awayChip.classList.remove('hide');
@@ -39282,7 +39281,6 @@ function awayChipFit(txt) {
   return fitTxt = '';
 }
 uiHooks.push(uiAwayChip);
-   // the notice sits on the game view, so it updates every pass (extension point, 70-ui)
 function uiFight() {
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[zoneUnique(S.zone)].name;
@@ -41732,7 +41730,6 @@ let showAwayReport, awayLimitStep;
   }
 
   showAwayReport = function (r) {
-    // a fighter who can't gather yet still gets the card
     const quiet = r && r.turnCombat;
     if (!r || r.secs < 30 || (r.empty && !quiet) || r.empty === undefined && !quiet && !(r.lines && r.lines.length)) return;
     // C14: the report is one card through the notice policy, never a second set of pops.

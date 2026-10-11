@@ -297,7 +297,6 @@ let showAwayReport, awayLimitStep;
   }
 
   showAwayReport = function (r) {
-    // a fighter who can't gather yet still gets the card
     const quiet = r && r.turnCombat;
     if (!r || r.secs < 30 || (r.empty && !quiet) || r.empty === undefined && !quiet && !(r.lines && r.lines.length)) return;
     // C14: the report is one card through the notice policy, never a second set of pops.

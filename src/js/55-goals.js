@@ -447,7 +447,7 @@ var forgeGoalPicks = 0;
     label: () => { const b = forgeNext(); if (!b) return '';
       // tier-two-named-for-return: a gate row names the piece and its furthest gate, not a boss (it is often a later sitting's piece); a
       // gathering gate says the skill rises while you're away ("Birch Bow: Mining 7 of 14 opens Iron Ore. Gathering keeps going while you're away.")
-      // away-line-only-when-true: only while the hero works that skill away (50-sim awayNode); else how to make it true
+      // away-line-only-when-true: only while the hero works that skill away (50-sim awayNode), else how to make it true
       if (b.gate) { const dw = typeof DW === 'object' && DW && DW.run(),
           on = !!(dw && !dw.paused && dw.act === 'gather' || awayNode()) && skillOf(S.node.kind) === b.gate.skill;   // a live Deepwell run holds the activity away resumes (57d awayBegin)
         return gateLabel(b, on); }

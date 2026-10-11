@@ -36,10 +36,12 @@ away harvest. We report it as a miss on the letter of the bar.
 - active and optimiser: unchanged.
 - No re-baseline.
 
-## Boot bytes (Brotli wire bytes, against the integration branch at 0dca987e)
-- Page: 1130120 -> 1130033 (-87).
-- Worst-zone boot set (the shipped boot line): 3983362 -> 3983275 (-87).
-- The hero packs check's test build (with the never-shipped 21zx test hero file): 3998833 -> 3998821 (-12).
+## Boot bytes (Brotli wire bytes, against the integration branch at 96d492c1)
+- Page: 1130037 -> 1129969 (-68).
+- Worst-zone boot set (the shipped boot line): 3983279 -> 3983211 (-68).
+- The hero packs check's test build (with the never-shipped 21zx test hero file): 3998850 -> 3998938 (+88), 1062 B
+  under its 4.0 MB fail line. Each base merge moved these by up to 440 B with no change on this branch, so the
+  comment wording was re-tuned after each merge; the shipped line is the one held at or under the base.
 
 ## Save review
 The save-reviewer found one blocking bug, now fixed: Spillover during a fighter's away called `setNode`, whose

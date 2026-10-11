@@ -58,7 +58,7 @@ const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc
 // the away card's line for a fighter who can't gather yet
 const AWAY_RULE_TXT = 'Fights only happen while you play.';
 // Away chip: what leaving now earns, on the away note's beat, from awayBase's rates (50-sim), held to the Storehouse room
-// unless Spillover moves on. A fighter is told where the hero goes back to.
+// unless Spillover moves on; a fighter is told where the hero goes back to.
 let awayChip = null;
 function awayChipText() {
   const node = awayNode(); if (!node) return '';
@@ -70,7 +70,7 @@ function awayChipText() {
   return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs, S.activity == 'fight' && NODE_NAMES[kind][tier - 1]);
 }
 // the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full;
-// back: a fighter's node (side-column-fits-740 measures every variant for every material)
+// back: a fighter's node. side-column-fits-740 measures every variant for every material
 function awayChipSay(nm, n, hrs, back) {
   const go = back ? `Leave now: ${heroFirst()} goes back to the ${back}${n > 0 ? ',' : '.'} ` : 'Leave now: ';
   if (n === 'spill') return `${go}${nm} fills up, then Spillover moves your hero on.`;
@@ -84,14 +84,13 @@ function uiAwayChip() {
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
     $('modeSeg').parentElement.after(awayChip);
   }
-  if (txt && S.activity == 'fight') txt = awayChipFit(txt);
+  if (txt && S.activity === 'fight') txt = awayChipFit(txt);
   if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
-// A fighter's chip ends 4 px above the dock or says less.
 let fitKey, fitTxt;
 function awayChipFit(txt) {
-  // measured again only when the words or the screen change
+  // only measured again when the words or the screen change
   const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + ($('nuChip') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
   if (k === fitKey) return fitTxt;
   fitKey = k; awayChip.classList.remove('hide');
@@ -99,7 +98,6 @@ function awayChipFit(txt) {
   return fitTxt = '';
 }
 uiHooks.push(uiAwayChip);
-   // the notice sits on the game view, so it updates every pass (extension point, 70-ui)
 function uiFight() {
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[zoneUnique(S.zone)].name;

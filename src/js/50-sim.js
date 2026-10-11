@@ -22,7 +22,7 @@ function setZone(z) {
 // switch activity; call setActivity('gather') for that.
 function setNode(kind, t) {
   if (!craftNodeVisible(kind, t) || !skillTierOpen(skillOf(kind), t)) return false;
-  S.node = { kind, t }; S.gProg = 0; if (S.activity == 'gather') emit('sceneReset');
+  S.node = { kind, t }; S.gProg = 0; if (S.activity === 'gather') emit('sceneReset');
   return true;
 }
 
@@ -256,7 +256,7 @@ function harvest() {
 function awayGains(secs) {
   secs = Math.max(0, +secs || 0);   // a save stamped in the future (clock set back) gives nothing, never negative gains
   const r = { t: Math.min(secs, awayCapH() * 3600), secs, lines: [] };
-  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // BAL3: back from away, auto-challenge may retry a boss it failed (55-boss-try keeps the same baseline in the save)
+  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // (55-boss-try keeps the same baseline in the save) BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
   emit('awayBegin', r);
   awayBase(r);
   emit('away', r);
@@ -268,7 +268,7 @@ function awayNode() {
   const n = S.node;
   return S.activity === 'gather' || typeof turnCombatScope == 'function' && turnCombatScope() && isUnlocked('gather') && craftNodeVisible(n.kind, n.t) && skillTierOpen(skillOf(n.kind), n.t) ? n : null;
 }
-// the hero's first name
+// The hero's first name
 const heroFirst = () => { const h = typeof ROSTER === 'object' && S.solo && ROSTER[S.solo.hero]; return h ? h.name.split(' ')[0] : 'your hero';
 };
 function awayBase(r) {
