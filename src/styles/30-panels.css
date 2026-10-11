@@ -1,6 +1,6 @@
 /* tab bar: fixed to the bottom of the app, in thumb reach; the lit edge marks the open tab */
 .tabs { grid-area: tabs; display: grid; grid-template-columns: repeat(5, 1fr); padding: 0 6px env(safe-area-inset-bottom, 0px); background: rgba(8,11,18,.97); border-top: 1px solid var(--line-lo); position: relative; z-index: 6; }
-.tab { min-height: 54px; background: none; border: 0; padding: 7px 2px 6px; cursor: pointer; font: 600 12.5px/1.1 var(--display); color: var(--muted); border-top: 3px solid transparent; margin-top: -2px; display: grid; justify-items: center; align-content: center; gap: 3px; position: relative; }
+.tab { min-height: 54px; background: none; border: 0; padding: 7px 2px 6px; cursor: pointer; font: 600 12.5px/1.1 var(--display); color: var(--muted); border-top: 3px solid transparent; margin-top: -1px; display: grid; justify-items: center; align-content: center; gap: 3px; position: relative; }
 .tab img { width: 20px; height: 20px; opacity: .55; }
 .tab[aria-selected="true"] { color: var(--brass-t); border-top-color: var(--brass); background: linear-gradient(rgba(216,176,104,.16), transparent 80%); }
 .tab[aria-selected="true"] img { opacity: 1; filter: drop-shadow(0 0 5px rgba(240,200,120,.5)); }
