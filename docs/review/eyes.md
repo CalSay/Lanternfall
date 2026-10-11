@@ -39,7 +39,7 @@ node tools/eyes.mjs --strict              exit 1 when anything is found
    stage text that has its name (and rarity where it has one) must stay up for 2 s, and a sound must be asked for. The bell does not
    count. A control (a toast drawn straight on screen) must be seen, or the reader itself is flagged. Not yet forced: a story
    card competing (it holds the game).
-4. **Placeholders.** Visible two-letter tiles (`.mono`, `.sp-mono`, `.ab-mono`) where an icon should be.
+4. **Placeholders.** Visible two-letter tiles (`.mono`, `.sp-mono`, `.ab-mono`) where an icon should be: after the first fight, and in Hero > Abilities (the picker list, a learned move's detail, a move to learn's Learn card), one finding per place.
 
 ## Reading a finding
 
