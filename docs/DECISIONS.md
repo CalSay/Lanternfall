@@ -1173,7 +1173,10 @@ Every card that adds a price, a currency, a timer or a gate passes all ten. (202
   here reviewing the fframes, just take my word for it."; 13:35, cmsg_01AYPNgUeMrmxpJNQMppEbk9SB3XwfwTNy38bsuwLK6YqR: "My word
   signs off. If I'm not here, pass it to judges."):** when Cal is present and reviews art, his OK (as a message id) signs it off and
   the work goes straight to a wire card with CI checks only: no red team, judge or re-judge. The Opus art judge signs only when he
-  is away. The whole-pack rule stays. This replaces the 2026-10-06 "Claude vets it" line for any art Cal has reviewed himself.
+  is away. The whole-pack rule stays. This replaces the 2026-10-06 "Claude vets it" line for any art Cal has reviewed himself. No
+  CLAUDE.md edit: its "Who signs" section already names the Opus art judge (ruling 2026-10-11, item 13,
+  `autopilot/rulings/2026-10-11-cal-hands-off.md`). That ruling also proposes treating Cal as away for art by default; until
+  Cal says yes, this rule stands as written.
 - **Art pipeline default (Cal 2026-10-10 08:45, cmsg_01AYPNgUeMrmxpJNQMppEbk9685xoS72WuF7Xhjy666wjN: "this is by far the best
   art work we've managed so far. This is the new default for all art. Codex does concepts, scenario builds, Claude wores in
   effects and other minor details (like the bow string for example) where necessary."):** Codex draws concepts, Scenario builds
