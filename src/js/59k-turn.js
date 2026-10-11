@@ -47,7 +47,7 @@ const TURN_TUNE = {
   hitstop: { crit: 0.06, counter: 0.14, perfect: 0.1, broken: 0.18, big: 0.08 },   // owner (2026-10-02): a pause at every change of turn, while a banner says whose turn it is (turnCard)
   // the reference hero at zone z (balance sim saves at each hero's frontier, 2026-10-02): one Attack and max HP as shares of mobHp
   // (40-rules), straight lines between the points. Both fall from 35 (mobHp steps up; gear waits for Starlit at 42). refHpX follows a
-  // kept-up hero's max HP ("Mid-game HP and Wren"). Zones 1-3 sit on a level 1 hero (TURN_TUNE.early lifts them).
+  // kept-up hero's max HP ("Mid-game HP and Wren"). Zones 1-6 sit on a level 1 hero (TURN_TUNE.early lifts them).
   refAtk: [[1, 0.7], [10, 0.7], [15, 0.55], [22, 0.42], [30, 0.3], [34, 0.22], [35, 0.12], [38, 0.09], [42, 0.065]],
   refHpX: [[1, 1.2], [3, 1.2], [8, 2.5], [15, 3], [20, 4], [30, 2.9], [34, 1.85], [35, 0.95], [38, 0.6], [42, 0.4]],
   // a normal foe's (and an elite's) hits x this, so a landed hit costs a hero who keeps up about 8-15% of their health
@@ -205,7 +205,7 @@ const turnZoneLine = (P, z) => {
 const turnHeroHitX = (k, z) => { const L = TURN_TUNE.boss.heroHitX[k]; return Array.isArray(L) ? turnZoneLine(L, z) : L || 1; };   // a hero's own share of a zone boss's hits (boss.heroHitX)
 // a boss rider's tick on the hero (Bleed, Burn, Venom): a share of the reference HP (heroDot) x the zone's riderX (zones 1-3: the
 // hero's health, as hits), and at zones 20-24 no more than dotCap of the hero's own max HP (z20-wall: a tick costs what it says)
-const turnDotTick = (p, k) => { const t = TURN_TUNE.heroDot[k] * Math.max(p.refHp * (p.bossRiderX || 1), p.bossDotHp || 0); return p.bossDotCap > 0 && p.heroMaxHp > 0 ? Math.min(t, p.bossDotCap * p.heroMaxHp) : t; };
+const turnDotTick = (p, k) => { const t = TURN_TUNE.heroDot[k] * Math.max(p.refHp * (p.bossRiderX || 1), p.bossDotHp); return p.bossDotCap > 0 && p.heroMaxHp > 0 ? Math.min(t, p.bossDotCap * p.heroMaxHp) : t; };
 const turnLateX = (k, z) => { const L = TURN_TUNE.lateX[k]; return L ? turnZoneLine(L, z) : 1; };   // a hero's late-zone power (TURN_TUNE.lateX)
 const turnRefAtkX = z => turnZoneLine(TURN_TUNE.refAtk, z);
 const turnRefAtk = z => turnRefAtkX(z) * mobHp(z) * mod('foeHp');
@@ -361,7 +361,7 @@ function turnMakeProfile(f, u) {
     heroSpd: ((T.heroHaste[key] || 10) + (g.initiative || 0)) * (1 + (g.aspd || 0) / 100), foeSpd: f.tk.spd, foeMaxHp: f.max, foeHp: f.hp,
     // kd: a boss kit's own damage for this hero (59l ZONE_FOE_TUNE.fit), on its own line and its hpFloor alike, as if its hits were that much bigger
     bossHitX: (f.tk.hx || 1) * (f.tk.kd && f.tk.kd[key] || 1), bossChargeX: f.tk.cx || 1, bossHitCap: f.tk.hcap || 0, bossHitFloor: (f.tk.hfl || 0) * (f.tk.kd && f.tk.kd[key] || 1), bossRiderX: f.tk.rx || 1, bossDotCap: f.tk.dcap || 0,
-    bossDotHp: f.tk.dh ? (f.tk.hfl || 0) * u.maxHp : 0,
+    bossDotHp: f.tk.dh * (f.tk.hfl || 0) * (f.tk.kd && f.tk.kd[key] || 1) * u.maxHp || 0,   // zone 1-3 bosses: ticks on the hero's health, as hits
     bossFoot: f.tk.ff || 0, footHp: f.tk.ff > 0 && !f.deep && !f.trial && z >= S.maxZone ? turnFootHp(z, u.maxHp) : 0,   // boss-tiers-pr5: the footing floor, on a boss not beaten yet
     gates: f.tk.gates || null, fullHp: !!((f.boss || TURN_TUNE.normalFull) && !f.deep && !f.trial),   // the boss pass; every zone fight is met at full health (normalFull)
     zb: !!f.tk.zb, uq: typeof uniqRulesWorn === 'function' ? uniqRulesWorn() : [],   // uniques-first-four: a zone boss; the worn uniques' rules (none while UNIQ_TUNE.on is 0)

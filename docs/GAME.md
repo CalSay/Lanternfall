@@ -156,10 +156,11 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   Attacks (zone 1 is set by these floors: its foes are always 3 and its boss always 4 of the hero who meets them). Zone 2 pays x1.6 and zone 3 x1.8 gold (XP as before). A landed zone 2-3 move costs the arriving Wren or Pip about a
   fifth of their health (Tobin's armour takes most of it); a zone 1-3 boss hit is a share of the hero's own health
   (`boss.hpFloor`), and its Venom, Bleed or Burn ticks ride the same share. **Zones 4-6** (zone-4-6-foe-curve) carry the same rule
-  on: a foe's HP is fixed by zone (about 6 to 8 plain Attacks of the level 8, 10 and 11 hero who arrives), the early floor is 3,
-  gold rises to x1.75, x1.7 and x1.65 (72, 73 and 74 a foe, bosses 383, 409 and 435), and a landed foe move costs the arriving Wren
+  on: a foe's HP is fixed by zone (about 5 to 8 plain Attacks of the level 8, 10 and 11 hero who arrives), the early floor is 3,
+  gold is x1.75, x1.7 and x1.65 of the old table, so it keeps rising (72, 73 and 74 a foe, bosses 383, 409 and 435), and a landed foe move costs the arriving Wren
   or Pip about a fifth of their health. The zone 4 Captain has more HP than its foes (about 7.8K, was 4.1K) and hits for its hpFloor
-  (1.0); the zone 5 Champion and zone 6 Captain keep their HP and hits. Zones 7+ are as before.
+  (1.0); the zone 5 Champion and zone 6 Captain keep their HP and hits. Zone 4-6 bosses have no Attack floor, so a hero far past
+  the zone fells them faster than their foes. Zones 7+ are as before.
 - **Foe tricks say what they did** (foe-tricks-say-so): when a foe's rider lands on you, the stage line names it ("Chilled:
   you're slower", "Venom: you take damage for 2 turns", "Weakened: your next move hits softer"), and "Chilled: <foe> goes again"
   when Chill is why it acts twice. Rattlebones getting back up floats "Back up!"; the first resisted or armoured hit of a fight

@@ -11341,8 +11341,8 @@ if (section('zone-1-6-foe-curve (core)')) try {
       `zone-1-6-foe-curve: against ${hero} a zone 2 foe takes about 5 plain Attacks of the hero who arrives (level 4) and fewer a level later (its HP is the zone's, down to the early floor); a zone 3 foe about 7 at level 6 (${pa(n2)}, ${pa(n2b)}, ${pa(n3)})`);
     assert([[n4, n4b], [n5, n5b], [n6, n6b]].every(([a, b]) => b.hp / b.A < 0.85 * a.hp / a.A && a.hp / a.A > 4 && a.hp / a.A < 9),
       `zone-1-6-foe-curve: against ${hero} a zone 4-6 foe takes 4 to 9 plain Attacks of the hero who arrives (levels 8, 10, 11) and fewer a level later, no longer the 8 that grew with every level (${[n4, n4b, n5, n5b, n6, n6b].map(pa).join(', ')})`);
-    if (hero !== 'tobin') assert(N.slice(1).every(r => r.move > 0.15) && up(N.slice(2).map(r => r.move)) && n1.move < n2.move && [b2, b3, b4, b5, b6].every(r => r.move > 0.15) && b4.move > b3.move,
-      `zone-1-6-foe-curve: a landed zone 2-6 move costs ${hero} on arrival more than 15% of their health, a little more each zone from 3 to 6 (zone 1 at level 3 less), and the zone 4 boss's more than zone 3's (${JSON.stringify(rows)})`);
+    if (hero !== 'tobin') assert(N.slice(1).every(r => r.move > 0.15) && up(N.slice(2).map(r => r.move)) && n1.move < n2.move && [b2, b3, b4, b5, b6].every(r => r.move > 0.15),
+      `zone-1-6-foe-curve: a landed zone 2-6 move costs ${hero} on arrival more than 15% of their health, a little more each zone from 3 to 6 (zone 1 at level 3 less) (${JSON.stringify(rows)})`);
     assert(b4.move > b3.move, `zone-1-6-foe-curve: against ${hero} the zone 4 boss's landed move costs more than the zone 3 boss's (${r2(b3.move)}, ${r2(b4.move)})`);
     // an over-levelled hero still meets a zone 2-3 boss of 5 landed plain Attacks or more (TURN_TUNE.early.bossHits)
     const landed = r => r.hp / (r.A * (1 - r.arm));   // plain Attacks after the boss's armour

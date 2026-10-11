@@ -1118,15 +1118,17 @@ Ruled "ship as is" by an independent Opus high judge; Cal can veto.
   `normHitX` 2.3/3/1.15, `TURN_EARLY_FOE_HITS` 3 everywhere, zone 1-3 boss DoT ticks on hpFloor x hero health. z5 Champion
   never-defends 0/0/0; walks F3 met (longest 7:23, z10 Champion by 29:16). A never-defending Pip now loses at the z4 Captain; if
   players call it a wall for Pip, lower the z4 `boss.hpFloor` first. Zone 7 (47 gold, 10.5K HP) steps down: P1 card
-  zone-7-10-foe-curve before the 2026-10-18 release check. Proof: `docs/proof/zone-4-6-foe-curve/`. Veto: "put zones 4 to 6 back".
+  zone-7-10-foe-curve before the 2026-10-18 release check. Zone 4-6 bosses
+  have no Attack floor (`early.bossHits` covers zones 1-3), so a hero well past the zone fells its boss faster than its foes. Proof: `docs/proof/zone-4-6-foe-curve/`. Veto: "Undo the zone 4-6 curve".
 - **Health: casual.zoneEnd re-centre (judge 2026-10-11), waiting on Cal's yes.** Five offsets: base 11.33, this card 12.07 (Pip 11.8
   to 14.2: her zone 5 foes no longer grow to 12 Attacks). The judge ruled to move the baseline from 10.8 to 12.07 (perHero 11.6/10.4/14.2)
   with abs 2 kept (offset 0 then reads 13.33, inside), and nothing else: firstGoalSec stays at 68.8 (limit 82.6). The edit was blocked
   as a CI bypass, so it waits for Cal's typed yes (lessons: ask Cal before rewriting the health baseline). Veto: "put the old zoneEnd
   baseline back".
 
-Veto phrase for Cal: **"Undo the zone 4-6 curve"**: `early.to` 3, `TURN_EARLY_FOE_HITS` 8 for zones 4-6, z4 `normHitX` 0.94, z4
-hpFloor 0.15, no boss DoT on hero HP, and casual.zoneEnd back to 10.8.
+Veto phrase for Cal: **"Undo the zone 4-6 curve"**: `early.to` 3, `TURN_EARLY_FOE_HITS` 8 for zones 4-6, `normHitX` back to
+`[[1, 1], [2, 3.25], [3, 3.5], [4, 0.94], [8, 0.7], [34, 0.7], [35, 1]]` (it is not gated by `early.to`), z4 `boss.hpFloor` 0.15, no
+boss DoT on hero HP (drop `bossDotHp`), and casual.zoneEnd back to 10.8.
 
 ### The Lantern Rules
 

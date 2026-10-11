@@ -25,7 +25,7 @@ The zone 1-3 rule carries on to zone 6 (`early.to`): a zone 2-6 foe's HP is the 
 - **Pay** rises a little each zone (foes 72, 73, 74; bosses 383, 409, 435), the least that still rises from zone 3's 71 and 356. A bigger
   rise (x1.85 to x1.95) paid a zone 6 foe nearly double a zone 9 foe and pushed the casual bots further (below).
 - **Zone 1-3 boss riders** (`turnDotTick`): a Venom, Bleed or Burn tick from a zone 1-3 boss is a share of the hero's health x hpFloor,
-  the footing its hits use (zone 1 Venom 0.6% to 1.4% of Wren's health a tick; zone 2 Bleed 0.4% to 1.6%). Zone 4+ ticks as before.
+  the footing its hits use (zone 1 Venom 0.6% to 1.4% of Wren's health a tick; zone 2 Bleed 0.5% to 1.6%). Zone 4+ ticks as before.
 
 ## The curve, before and after
 

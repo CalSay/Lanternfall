@@ -91,6 +91,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Read health's `casual.zoneEnd` over 5 seed offsets before calling it a regression: a casual bot either breaks out of a farm loop
   (old-zone fights for a material) and reaches zone 13-15, or never comes back to its boss and ends at 10, so one offset moves by 5.
   Why: offset 0 read +2.5 on zone-4-6-foe-curve while the 5-offset mean moved +0.7 against the base's own 5 offsets (2026-10-11).
+- A veto recipe lists every table the card touched, at its old value, and says which ones its gate does not cover. Why: the reviewer found zone-4-6-foe-curve's undo put back only the zone 4 `normHitX` knot; `normHitX` is not gated by `early.to`, so zone 5-6 foes would have kept the new hits on the old HP (2026-10-11).
 - Before writing a player line for a status (Exposed, Guard, Armour, Stun), read what the code does in every case and build the line from the move that landed, not a fixed sentence. Why: the red team on first-hour-jargon found all three drafted lines false: Exposed pays off only on the hero's payoff hits (59k-turn.js:524, 649), a Perfect Bash guards 3 turns not 2 (59k:744), and armour cuts abilities too (59k:521). (first-hour-jargon, 2026-10-11)
 
 ## Economy and skilling
