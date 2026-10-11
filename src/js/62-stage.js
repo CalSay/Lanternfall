@@ -150,22 +150,14 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // would otherwise stay small under a tall empty sky. ZOOM_WT still fits 3 columns and the foe.
   // CW x CH: the container in CSS px, re-read on every resize.
   let SW = 0, SH = 0, SCH = 0, CW = 0, CH = 0, ZM = 1, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1, hudB = 0;
-  // Actor scale (actor-scale, ruling #328, docs/design/route-s/ruling.md): heroes, foes, bosses, adds, gather nodes and beasts
-  // draw ACTOR_K times bigger against unchanged scenery. The stage zoom ZS (pickZoom, whole steps) sets the scenery:
-  // SWS x SHS stage px, built SCH tall with its ground on GYS. Everything else on the stage (actors, effects, lights, the
-  // layout) lives in actor px: SW x SH, ground GY, drawn at ZM = ZS * AK CSS px per actor px. AK is ACTOR_K on landscape
-  // stages and 1 in portrait until UX-L1. Nearest-neighbour: an art px of a 96 px hero is ACTOR_K x ZS CSS px (4 at 1280x720).
-  // ACTOR_K1, a stage at zoom 1 (a phone on its side, 740x360): 1 (gate G3). At 1.5 the heroes' heads ran under the turn
-  // line, the Grit row and a foe trick's line, and the timing bar crossed their feet. A crowd (2 or more foes on the stage:
-  // a Deepwell pack, boss adds, the raid-only real-time packs) keeps today's size too, as the zoom steps out for it (zoomStep):
-  // at 1.5 a pack of wide foes left no room for the hero's 16 px and 15% overlap (G2). syncPack resizes when it changes.
-  // While AK > 1 the stage box carries .actor-k (20-stage.css: the whose-turn banner takes the turn line's spot, over the heads).
-  // bigger-heroes (Cal, 10 Oct: "Heroes need to be bigger"): ACTOR_K 2, so an art px of route S art is a whole 2 CSS px at
-  // 1280x720 (3 at 1920x1080). A roomy stage that still draws at zoom 1 (1024x768, a narrow browser window: ROOMY_H CSS px tall
-  // or more) takes the largest of ACTOR_KR whose actor stage stays at least ACT_MIN_W actor px wide; a phone on its side (740x360)
-  // is shorter and keeps ACTOR_K1. At 2x or more the ground drops to GROUND_BIG of the stage (the scenery is built taller and runs
-  // off the bottom, as on a short strip), so the heads clear the place line, the turn line and the banner. A stage too short for
-  // that (1366x640: the hero's HERO_BOX actor px would reach above TOP_UI CSS px under the stage's top) keeps ACTOR_K_SHORT.
+  // Actor scale (ruling #328, docs/design/route-s/ruling.md): actors (heroes, foes, adds, nodes, beasts) draw bigger than the
+  // scenery. The stage zoom ZS (pickZoom) sets the scenery: SWS x SHS stage px, built SCH tall, ground GYS. The rest lives in
+  // actor px: SW x SH, ground GY, at ZM = ZS * AK CSS px per actor px; portrait keeps 1 until UX-L1. A phone on its side
+  // (740x360) keeps ACTOR_K1 (G3: at 1.5 heads ran under the turn line). A crowd (2+ foes) keeps 1x foes (pairStep).
+  // While HS > 1 the stage box carries .actor-k (20-stage.css: the banner takes the turn line's spot, over the heads).
+  // bigger-heroes (Cal, 10 Oct): ACTOR_K 2 (an art px is 2 CSS px at 1280x720). A roomy zoom-1 stage (1024x768: ROOMY_H tall or more) takes the
+  // largest ACTOR_KR keeping ACT_MIN_W actor px. At 2x or more the ground drops to GROUND_BIG; a stage too short for that
+  // (1366x640: HERO_BOX actor px would reach above TOP_UI CSS px) keeps ACTOR_K_SHORT.
   const ACTOR_K = 2, ACTOR_K_SHORT = 1.5, ACTOR_K1 = 1, ACTOR_KR = [2, 3], ROOMY_H = 480, ACT_MIN_W = 225, GROUND_BIG = 0.86, HERO_BOX = 102, TOP_UI = 156;
   const fits = (h, z) => h * GROUND_BIG - HERO_BOX * z >= TOP_UI;
   const zoom1K = (w, h) => { let k = ACTOR_K1; if (h >= ROOMY_H) for (const c of ACTOR_KR) if (w / c >= ACT_MIN_W && fits(h, c)) k = c; return k; };
@@ -176,8 +168,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // Foes, nodes and the layout keep their own, smaller scale AK = foeK(HS): 1.5 beside a 2x hero, 2 beside a 3x one. The hero
   // draws HKS = HS / AK times the actors' scale about its feet (64h, 64l read stageHeroK), so its records are in actor px too.
   const foeK = k => k >= 3 ? 2 : k >= 2 ? 1.5 : k;
-  // pairK: the step a wide pair takes (0: none). The ground (GYS, SCH, tall) follows soloK, not crowd or pairK, so it never
-  // moves mid-fight when adds come (judge, bigger-heroes).
+  // pairK: the step a wide pair takes (0: none), or a crowd's hero scale. The ground (GYS, SCH, tall) follows soloK, not crowd
+  // or pairK, so it never moves mid-fight when adds come (judge, bigger-heroes).
   let ZS = 1, AK = 1, HS = 1, HKS = 1, SWS = 0, SHS = 0, GYS = 1, crowd = false, pairK = 0;
   stageHeroK = () => HKS;
   const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_WT = 216, ZOOM_H = 196, SOLO_MIN_W = 300;
@@ -239,8 +231,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     DPR = dpr; CW = w; CH = h;
     ZS = pickZoom(w, h, DPR);
     const k0 = soloK(w, h);
-    HS = LAND_Q.matches && !crowd ? (pairK && pairK < k0 ? pairK : k0) : 1;
-    AK = foeK(HS); HKS = HS / AK;
+    HS = !LAND_Q.matches ? 1 : crowd ? Math.min(pairK || 1, ACTOR_K_SHORT) : pairK && pairK < k0 ? pairK : k0;
+    AK = crowd ? 1 : foeK(HS); HKS = HS / AK;
     ZM = ZS * AK;
     SWS = Math.round(w / ZS); SHS = Math.round(h / ZS);
     SW = Math.round(w / ZM); SH = Math.round(h / ZM);
@@ -367,8 +359,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     // The front column stands at PARTY_X1 (a little less on narrow stages), and further back when a
     // big foe (an elder, the wyrm, a tree node) would stand on it: its right edge stops 8 px into the foe's box.
     // At 2x or more (bigger-heroes) a wide melee hero (Tobin's sword) may stand back to SW * 0.12, so it keeps its 16 px from the foe.
-    const hf = hero.fr && hero.fr.idle0, fl = frontLeft(), reach = fl == null ? 1e9 : AK > 1 ? fl - heroReach() : fl + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16);
-    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (HS >= 2 ? 0.12 : AK > 1 ? 0.2 : packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
+    const hf = hero.fr && hero.fr.idle0, fl = frontLeft(), reach = fl == null ? 1e9 : HS > 1 ? fl - heroReach() : fl + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16);
+    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (HKS > 1 ? 0.12 : AK > 1 ? 0.2 : packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
     const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
     const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
     const laneX = Math.round(Math.max(16, D * 0.46));
@@ -426,14 +418,15 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   }
   // bigger-heroes: a hero and a lone foe that need more than the stage's width at its scale (classic Tobin's sword against the
   // Elder Moss Slime at 1280x720) step down (stepsK: 2 to 1.5; at zoom 1, 3 to 2 to 1), so the hero keeps GAP_K stage px from
-  // the foe (G2), as a crowd keeps today's size. Each step is read at its own actor width, so the answer does not change with
-  // the scale it picks: the hero at its leftmost (the stage's floor, or 64h's whole-art margin heroArtLeft) and the foe pushed
-  // to the stage's right edge. 0: no step.
+  // the foe (G2). Each step is read at its own actor width: the hero at its leftmost (the floor, or heroArtLeft) and the foe at
+  // the right edge. 0: no step.
   function pairStep() {
-    if (!LAND_Q.matches || target() !== 'mob' || packN !== 1 || !CW) return 0;
-    const f = slots[0].fr && slots[0].fr.idle0, hf = hero.fr && hero.fr.idle0;
+    if (!LAND_Q.matches || target() !== 'mob' || !packN || !CW) return 0;
+    const f = slots[0].fr && slots[0].fr.idle0, hf = hero.fr && hero.fr.idle0, fl = frontLeft();
     if (!f || !hf) return 0;
     const id = typeof heroArtId === 'function' && heroArtId(), ks = stepsK(soloK(CW, CH)), art = id && typeof heroArtLeft === 'function' ? heroArtLeft(id) : hf.ox - leftEdge(hf) + 2;
+    // crowd-scale-step: a crowd's hero is ACTOR_K_SHORT if its reach clears the front foe, else 1
+    if (packN > 1) return ks[0] >= ACTOR_K_SHORT && fl != null && Math.max(Math.round(SW * 0.12), art * ACTOR_K_SHORT) + heroReach(1, ACTOR_K_SHORT) <= fl ? ACTOR_K_SHORT : 1;
     for (let i = 0; i < ks.length; i++) {
       const k = ks[i], fs = foeK(k), hk = k / fs, sw = Math.round(CW / (ZS * fs)), left = Math.max(Math.round(sw * 0.12), art * hk);
       const foeL = sw - 6 - f.c.width + leftEdge(f) - (CH - GYS * ZS >= 76 ? 0 : Math.round(50 / (ZS * fs)));   // the stage's own floor band, not tall (it rounds with AK)
