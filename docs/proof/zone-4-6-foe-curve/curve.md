@@ -120,7 +120,24 @@ What it says:
 
 ## The standing rulings, measured
 
-WALKS
+Three 60-minute walks on the final build (`node tools/walk.mjs --seed N --clock-budget 60`, reports in `walks/`), against the zone
+1-3 card's walks on the same seeds (`docs/proof/zone-1-3-foe-curve/walks/`). Game time:
+
+| seed | longest gap without progress (limit 8:00) | first boss | zone 4 Captain | zone 5 Champion | zone 10 Champion (limit 60:00) |
+|---|---|---|---|---|---|
+| 1 | 4:14 -> 4:52 (gathering for a goal) | 1:01 -> 1:01 | 9:28 | 11:10 -> 10:30 | 23:40 -> 20:52 |
+| 2 | 4:29 -> 5:19 (a grind at zone 4-5) | 1:14 -> 1:14 | 10:09 | 15:11 -> 15:29 | 24:31 -> 22:46 |
+| 3 | 6:55 -> 7:23 (gathering for a goal) | 1:11 -> 1:11 | 6:30 | 15:16 -> 13:53 | 25:27 -> 29:16 |
+
+- Zones 1-10 never go 8 minutes without progress (F3 met on all three). The longest gap is seed 3's 7:23 from the zone 4 clear to
+  the zone 5 Champion, spent gathering for the Quartz Circlet the walk crafts for that boss; it was 6:55 at the same spot before.
+- The zone 10 Champion falls by 20:52 to 29:16, well inside minute 60. Seed 3 is 4 minutes later than before (it spends longer at
+  zones 6-9); seeds 1 and 2 are 2-3 minutes sooner.
+- The walks' other misses are not this card's: F5 (seed 3, 11 findings, the same count before) and F10 (placeholder ability tiles,
+  missed on seeds 1 and 2 before too).
+- Follow-ups for other cards: zone 7 pays less than zone 6 now (47 against 74 a foe) and its HP steps down too, so the curve has a
+  cliff at 7 that a zone 7-10 card should smooth; a Pip who never defends now loses at the zone 4 Captain, a zone before the
+  Champion (the ruling is about zone 5, so it still holds).
 
 ## Health and the budget
 
