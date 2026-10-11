@@ -18668,6 +18668,58 @@ if (section('nu-chip-gate-label-fits')) try {
   }
 } catch (e) { fail('nu-chip-gate-label-fits crashed: ' + (e.stack || e)); }
 
+// ==== nextup-chip-360 (fallback-font): the Next Up chip's status reads whole on an upright phone ====
+// Upright (20-stage) the chip shares the top row with the activity switch, so "NEXT UP", the status and the "+2" badge get what is
+// left of 360 px. Gathering, in the fallback face (display-fallback-font), the grid squeezed the status column and "+2" drew over
+// "Ready", leaving "Rea". The section puts the widest status ("Ready", and "100%") and the "+2" badge in the chip at 360x740, 740x360 and 1280x720 in
+// both fonts and checks the status's words end inside its box and the chip, left of the badge, with the eyebrow on one line.
+if (section('nextup-chip-360 (browser, fallback-font)')) try {
+  const at = 'nextup-chip-360', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const webFonts of [true, false]) for (const [w, h] of [[360, 740], [740, 360], [1280, 720]]) {
+        const v = `${at} ${w}x${h}${webFonts ? '' : ', fallback fonts'}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, webFonts, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        for (const act of ['fight', 'gather']) for (const st of ['Ready', '100%']) {
+          // gathering, the switch beside the chip says "Fight · Z21" and "Mining", so upright the chip is narrowest there
+          if (act === 'gather' && st === 'Ready') { await X('navGo({ act: "gather", node: { kind: "ore", t: 1 } }); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); true'); await page.waitForTimeout(600); }
+          // renderChip rewrites only when the goals change, so the words stay for the measure (read in the same task)
+          const o = await page.evaluate(st => {
+            const c = document.getElementById('nuChip'); if (!c || c.offsetParent === null) return null;
+            const s = c.querySelector('.nu-cst'), m = c.querySelector('.nu-more'), e = c.querySelector('.nu-eye');
+            const keep = [s.textContent, m.textContent]; s.textContent = st; m.textContent = '+2';
+            const words = n => [...n.childNodes].filter(t => t.nodeType === 3).flatMap(t => { const rg = document.createRange(); rg.selectNodeContents(t); return [...rg.getClientRects()]; }).filter(r => r.width > 0);
+            const sr = words(s), er = words(e), sb = s.getBoundingClientRect(), cb = c.getBoundingClientRect(), mb = m.getBoundingClientRect(), pr = parseFloat(getComputedStyle(c).paddingRight);
+            // moreL: where "+2" starts when it shares the status's line (upright it may drop under it)
+            const o = { st, textR: Math.round(Math.max(...sr.map(r => r.right))), boxR: Math.round(sb.right), clip: s.scrollWidth > s.clientWidth + 1,
+              chipR: Math.round(cb.right - pr), moreL: m.offsetParent && mb.top < Math.max(...sr.map(r => r.bottom)) ? Math.round(mb.left) : 1e9, eyeLines: new Set(er.map(r => Math.round(r.top))).size,
+              eyeR: Math.round(Math.max(...er.map(r => r.right))), stL: Math.round(Math.min(...sr.map(r => r.left))),
+              eyeB: Math.round(Math.max(...er.map(r => r.bottom))), stT: Math.round(Math.min(...sr.map(r => r.top))), fs: parseFloat(getComputedStyle(s).fontSize) };
+            s.textContent = keep[0]; m.textContent = keep[1]; return o; }, st);
+          assert(o, `${v}: the Next Up chip shows`);
+          if (!o) continue;
+          assert(!o.clip && o.textR <= o.boxR + 1 && o.textR <= o.chipR + 1 && o.textR <= o.moreL - 2, `${v}: ${act}ing, the chip's status reads "${st}" whole, inside the chip and left of "+2" (${JSON.stringify(o)})`);
+          assert(o.eyeLines === 1 && (o.eyeR <= o.stL || o.eyeB <= o.stT), `${v}: ${act}ing with "${st}", NEXT UP stays on one line, clear of the status (${JSON.stringify(o)})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('nextup-chip-360 crashed: ' + (e.stack || e)); }
+
 // ==== side-column-fits-740: every gate label and every away line fit the landscape side column ====
 // The side column holds the Next Up chip (row 2), the away chip (row 3) and the dock (row 4, .sb-tabs at its top). The dock shows
 // only while fighting (75-solo-ui: target() is 'mob') and the away chip only while gathering (71-ui-fight awayChipText), so the
