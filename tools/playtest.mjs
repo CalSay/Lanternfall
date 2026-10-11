@@ -468,6 +468,7 @@ async function exec(cmd, args, ctx) {
     case 'background': {   // the tab goes to the background for <hours> and comes back to the front: no reload, the open page works out the away gains
       const hours = num(args[0], 'background');
       await setHidden(page, true); await page.clock.fastForward(hours * 3600e3); await setHidden(page, false); await run(page, 0.5);
+      await setHidden(page, true); await setHidden(page, false);   // hiding saves (90-boot), so a later command's reload starts from after the hour
       session.time = await page.evaluate(() => Date.now());
       const l = await look(session, page, 'background'); return { text: `the tab was in the background ${fmtDur(hours * 3600)}\n` + l.text, data: { background: hours, look: l.data } };
     }
