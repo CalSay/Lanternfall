@@ -78,6 +78,14 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   To time a number against its hit in a browser, log both on the stage clock `T` (one value per frame, set before tick and animate).
   Why: buffs still fired an arrow or bolt at the foe after #333, and a check with `/\\d/` in Node code (not a page string) matched nothing (fx-timing-fixes, 2026-10-10).
 - Code that must see every frame the game is held puts its check first in `GAME_HOLDS` (unshift), never through `holdGame`: `gameHeld()` stops at the first hold that is up, and 55-story's hold loads before the fight files. Why: foe-windup-after-hold's first push missed story scenes; the reviewer caught it (2026-10-10).
+- A zone 1 boss HP or floor change moves health's `casual.firstGoalSec` too: run `node tools/health.mjs --compare --only casual,active`
+  on the base first (it had drifted from 68.8 to 73.3 s), then on yours. A boss floor in plain Attacks of the hero grows with Might, so
+  keep it under the zone's own base at arrival levels (zone 1 is floor-set on purpose) or a Might build gets a longer boss fight than a Focus build. Why: a zone 1 boss
+  floor of 6 failed firstGoalSec (84.3 s, limit 82.6) and a high zone 3 floor made Might slower than Focus. (zone-1-3-foe-curve, 2026-10-11)
+- A foe change runs every check section that loads an early fixture, not just the card's regex (`craft delta` and `craft-odds-before-pay`
+  read the zone 2 boss odds from save-flow-cold-camp). A proof fixture's level must be one the road can reach at its maxZone (zone 2
+  means level 4+); if a check needs an under-levelled hero, say so in its comment. Why: the reviewer caught 12 fails outside
+  `sim|health|zone` from a level 1 Wren at zone 2. (zone-1-3-foe-curve, 2026-10-11)
 
 ## Economy and skilling
 

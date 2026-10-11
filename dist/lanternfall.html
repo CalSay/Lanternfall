@@ -10978,11 +10978,9 @@ const TURN_BOSS_TRICKS = {};
 const TURN_FOE_SPEED = { normal: 0.9, ranged: 0.95, elite: 1.0, boss: 1.05, region: 1.1 };
 // Fight length in the hero's ordinary Attack actions at zone-ready power (the C22 contract's HP budgets)
 const TURN_FOE_HP = { zoneFoe: 4, normal: 5, elite: 9, boss: 16, region: 30 };
-// Early foes take at least 3 hits (card early-foes-three-hits; Cal's play note #18: zone 1-6 foes fell to one hit). By zone 1 to 6, the
-// fewest plain Attacks of the hero who meets it that a normal foe's HP may be (59k turnFoeSetup), whatever level the hero reaches the
-// zone at. Zone 1 stays at 3 so the first boss still comes about a minute in (health firstGoalSec: 58 s to 73 s; 6 made it 107 s).
-// 8 is 3 or 4 hero turns once an opening ability and a parry counter land. Elites, bosses, the Deepwell and the Provings keep their HP.
-const TURN_EARLY_FOE_HITS = [3, 8, 8, 8, 8, 8];
+// By zone 1-6, the fewest plain Attacks of the hero who meets it that a normal foe's HP may be (59k turnFoeSetup; Cal's note #18:
+// foes fell to one hit). Zones 1-3 take 3 as their HP is set by zone (TURN_TUNE.early); 8 is 3 or 4 turns with an opener and a counter.
+const TURN_EARLY_FOE_HITS = [3, 3, 3, 8, 8, 8];
 
 // Elite traits in turn fights (owner, 2026-10-02): one per elite, from zone COMBAT_TUNE.eliteFrom (59k turnFoeSetup).
 // Names and badges are the old traits' (ELITE_TRAITS, 21g); these are their turn rules and the line the first one shows.
@@ -27830,17 +27828,14 @@ const TURN_TUNE = {
   turnPause: 0.9,
   // hit feel (owner, 2026-10-02): the fight clock stops for a beat on a big moment (seconds), with a shake and a flash
   hitstop: { crit: 0.06, counter: 0.14, perfect: 0.1, broken: 0.18, big: 0.08 },   // owner (2026-10-02): a pause at every change of turn, while a banner says whose turn it is (turnCard)
-  // the reference hero at zone z (from the balance sim's saves at each hero's frontier, 2026-10-02): one Attack and max HP as shares
-  // of the zone's legacy foe HP (mobHp, 40-rules), straight lines between the points, flat past the last. Attack falls behind mobHp
-  // (gear tiers come slower). Late-zone pass (combat-turn-build.md "Numbers"): mobHp steps x1.7 at 35 and x1.22 a zone after while a
-  // kept-up hero barely grows until Starlit gear at 42, so both shares fall from 35. Mid-game HP pass ("Mid-game HP and Wren"): refHpX
-  // follows a kept-up hero's max HP (zone-tier rare +5 gear, Attack at refAtk; Wren and Pip's middle): it rises to zone 20 and falls
-  // with refAtk after. Zones 1-3 keep 1.2.
+  // the reference hero at zone z (balance sim saves at each hero's frontier, 2026-10-02): one Attack and max HP as shares of mobHp
+  // (40-rules), straight lines between the points. Both fall from 35 (mobHp steps up; gear waits for Starlit at 42). refHpX follows a
+  // kept-up hero's max HP ("Mid-game HP and Wren"). Zones 1-3 sit on a level 1 hero (TURN_TUNE.early lifts them).
   refAtk: [[1, 0.7], [10, 0.7], [15, 0.55], [22, 0.42], [30, 0.3], [34, 0.22], [35, 0.12], [38, 0.09], [42, 0.065]],
   refHpX: [[1, 1.2], [3, 1.2], [8, 2.5], [15, 3], [20, 4], [30, 2.9], [34, 1.85], [35, 0.95], [38, 0.6], [42, 0.4]],
   // a normal foe's (and an elite's) hits x this, so a landed hit costs a hero who keeps up about 8-15% of their health
   // against the higher reference HP above (zone fights and the Deepwell; a Proving's foes hit for shares of your health)
-  normHitX: [[3, 1], [8, 0.7], [34, 0.7], [35, 1]],
+  normHitX: [[1, 1], [2, 3.25], [3, 3.5], [4, 0.94], [8, 0.7], [34, 0.7], [35, 1]],
   // an elite hits this much harder than a normal foe of its zone (foe-moves-by-type: elites are a threat, not a pat on the head)
   eliteHitX: 1.4,
   eliteHpX: 2.5,   // ... and lasts this much longer
@@ -27870,6 +27865,8 @@ const TURN_TUNE = {
   burnP: 0.4, burnT: 3, burnMaxT: 4, bleedP: 0.12, bleedT: 3, bleedMax: 5, chillMax: 3, chillT: 4, chillSlow: 0.1,
   markV: 0.2, exposedX: 1.25, sunderX: 0.5, weakenX: 0.75, guardX: 0.6, drCap: 0.75, wardCap: 0.3, keenX: 0.5,
   pinWin: 1.5, pinSlow: 0.1, blindP: 0.3, blindBossP: 0.15, curseP: 0.2, curseCap: 3,
+  // zones 1-3 on the hero who arrives there (docs/proof/zone-1-3-foe-curve/curve.md): HP, boss HP, boss floor in Attacks, pay
+  early: { hpX: [[1, 1], [2, 5], [3, 5.2], [4, 1]], bossHpX: [[1, 1], [2, 3.5], [3, 2.4], [4, 1]], bossHits: [4, 5, 5], payX: [[1, 1], [2, 1.6], [3, 1.8], [4, 1]] },
   stagger: { stun: 25, freeze: 35 }, lock: 3, chargeBreak: 0.06, bossPhaseAt: 0.5, bossPhaseSpd: 1.12, bossEase: [0.65, 0.8, 0.9],
   // Boss pass (owner, 2026-10-02: "make the bosses take longer and still hit hard ... it should always be very bad for
   // us to get hit by a boss"; combat-turn-build.md "Boss pass"). Zone and region bosses only: the Deepwell's Elders and
@@ -27909,7 +27906,7 @@ const TURN_TUNE = {
     riderX: [[1, 1], [15, 1], [16, 0.2], [17, 1], [18, 0.2], [19, 0.07], [20, 1]],
     dotCap: [[1, 0], [19, 0], [20, 0.07], [24, 0.07], [25, 0]],
     // hpFloor: see turnLand (zone table of multiples; 0 off). gate: rally gates (see TURN_TUNE.gateNote)
-    hpFloor: [[1, 0], [3, 0], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 1], [9, 1.1], [10, 1.3], [11, 0.95], [12, 1.2], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 1.35], [20, 1.3], [24, 1.3], [25, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
+    hpFloor: [[1, 0.7], [2, 0.8], [3, 0.9], [4, 0.15], [5, 0.93], [6, 0.85], [7, 1.03], [8, 1], [9, 1.1], [10, 1.3], [11, 0.95], [12, 1.2], [13, 1], [14, 1], [15, 0.9], [16, 0.95], [17, 1], [18, 0.95], [19, 1.35], [20, 1.3], [24, 1.3], [25, 0]], gate: { on: 1, from: 4, to: 34, captainEarly: [0.67, 0.33], captain: [0.75, 0.5, 0.25], captainFrom: 7, champ: [0.75, 0.5, 0.25] } },
   // Boss move tricks (card boss-tiers-pr4; docs/design/foe-moves.md "Boss tricks"): zone bosses from `from` play the Captain and
   // Champion sets in TURN_BOSS_TRICKS (24d): hits that hold their swing (`hold`), fakes (`feint`: no damage, and a press at one
   // fools you: the next hit cannot be defended), longer strings and an uneven rhythm. `on` 0 plays the old sets. `feintFrom`: the
@@ -28060,7 +28057,9 @@ function turnFoeSetup(f, z, o) {
   const champ = zb && !region && bossTierOf(z) === 'champion';   // a Champion's HP and hits sit on the Captain line x its own table
   const len = zb ? (region ? B.regionHpX : turnZoneLine(B.hpX, z) * (champ ? turnZoneLine(B.champHpX, z) : 1)) : 1;
   const roll = 0.95 + Math.random() * 0.1;   // drawn for every foe so seeded sims keep their sequence
-  const hp = hpA * ease * len * turnRefAtk(z) * (f.boss ? 1 : roll) * (bk ? bk.hpK : 1);   // a boss keeps one HP across tries; the roll is for packs
+  const ez = z <= 3 && !region && !o.set && !o.hpA && !f.deep && !f.trial, EA = T.early;
+  const ex = ez ? turnZoneLine(f.boss ? EA.bossHpX : EA.hpX, z) : 1;
+  const hp = hpA * ease * len * ex * turnRefAtk(z) * (f.boss ? 1 : roll) * (bk ? bk.hpK : 1);   // a boss keeps one HP across tries; the roll is for packs
   f.hp = f.max = hp; f.turn = 1; f.tz = z;
   f.tk = { script, script2: bk && bk.script2 || null, kd: bk ? bk.kd : null, spd: spd * 10, arm: bk ? bk.arm : Z ? Z.armour || 0 : f.armoured ? 0.3 : 0, boss: !!f.boss, region, elite: !!f.elite,
     hx: zb ? turnZoneLine(B.hitX, z) * (champ ? turnZoneLine(B.champHitX, z) : 1) : f.boss || f.trial || f.deep ? 1 : turnZoneLine(T.normHitX, z) * (f.elite ? T.eliteHitX : 1), cx: zb ? turnZoneLine(B.chargeX, z) : 1,
@@ -28068,15 +28067,15 @@ function turnFoeSetup(f, z, o) {
     hcap: zb && !region ? turnZoneLine(B.hitCap, z) : 0, rx: zb && !region && B.riderX ? turnZoneLine(B.riderX, z) : 1, dcap: zb && !region && B.dotCap ? turnZoneLine(B.dotCap, z) : 0, hfl: zb && !region && B.hpFloor ? turnZoneLine(B.hpFloor, z) : 0,
     ff: zb && !region && B.footFloor ? turnZoneLine(B.footFloor, z) : 0, pmin: zb && !region && z >= B.passiveZones[0] && z <= B.passiveZones[1] ? B.passiveMin : 0,
     gates: zb && !region && B.gate.on && z >= B.gate.from && z <= B.gate.to ? (champ ? B.gate.champ : z >= B.gate.captainFrom ? B.gate.captain : B.gate.captainEarly) : null };
-  // early foes (zones 1-6) never fall in under TURN_EARLY_FOE_HITS[z - 1] plain Attacks of the hero who meets them (24d)
-  const E = TURN_EARLY_FOE_HITS[z - 1], hu = !f.boss && !f.elite && !o.set && !o.hpA && E > 0 && typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null, hp0 = hu ? turnMakeProfile(f, hu) : null;
+  // the early floor: TURN_EARLY_FOE_HITS (24d), zone 1-3 bosses early.bossHits
+  const E = f.boss ? (ez ? EA.bossHits[z - 1] : 0) : TURN_EARLY_FOE_HITS[z - 1], hu = (f.boss ? ez : !f.elite && !o.set && !o.hpA) && E > 0 && typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null, hp0 = hu ? turnMakeProfile(f, hu) : null;
   if (hp0 && hp0.A > 0) { const rel = typeof typeXKey === 'function' ? typeXKey(f.txRow || f.type, hp0.heroType) : 1, per = hp0.A * (1 - f.tk.arm) * Math.max(1, rel || 1); f.hp = f.max = Math.max(f.max, E * per); }
   const C = COMBAT_TUNE;
   // a longer boss pays more (the boss pass: payX of its extra length), so an hour of play pays about as before
   // zones 4-24 pay on the old length (boss-tiers PRs 1 and 3 lengthened those fights; gold and XP stay as they were)
   const payLen = zb && !region && z <= 24 ? turnZoneLine(z <= 12 ? [[3, 1], [10, 1.8], [15, 2.5]] : [[12, 1.8], [15, 2.5], [20, 2.4], [25, 1.0]], z) : len;
   const pay = 1 + (payLen - 1) * B.payX;
-  f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 * pay : f.elite ? C.eliteGold : 1);
+  f.gold = mobGold(z) * C.packGold * T.goldX * (f.boss ? 5 * pay : f.elite ? C.eliteGold : 1) * (ez ? turnZoneLine(EA.payX, z) : 1);
   f.xp = Math.ceil(Math.ceil(1.5 * z) * T.xpX * (f.boss ? 5 * pay : f.elite ? 2 : 1));
   return f;
 }

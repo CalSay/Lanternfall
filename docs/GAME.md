@@ -149,6 +149,13 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Foes:** zone 1 is the Thorn Imp and zone 2 Gloomjaw, from the C22 roster with approved art (`59l-zone-foes.js`,
   `64j-foe-art.js`). Other zones still use the old foe types with turn move sets (`24d-data-turnfoes.js`). From zone
   15 about one fight in five is an elite with one trait.
+- **Zones 1-3 foe curve** (zone-1-3-foe-curve, `TURN_TUNE.early` in `59k-turn.js`): a zone's HP, pay and hits rise together.
+  A zone 2-3 foe's HP is fixed by zone (about 5 plain Attacks of the level 4 hero who arrives in zone 2, 7 of the level 6 hero in
+  zone 3), so levels and gear shorten the fight; it never falls to under 3 plain Attacks (`TURN_EARLY_FOE_HITS`). A zone 1-3 boss
+  outlasts the foes before it: its HP is mostly the zone's (zones 2-3), and it never has fewer than 4, 5 and 5 of the hero's plain
+  Attacks (zone 1 is set by these floors: its foes are always 3 and its boss always 4 of the hero who meets them). Zone 2 pays x1.6 and zone 3 x1.8 gold (XP as before). A landed zone 2-3 move costs the arriving Wren or Pip about a
+  fifth of their health (Tobin's armour takes most of it); a zone 1-3 boss hit is a share of the hero's own health
+  (`boss.hpFloor`). Zones 4+ are as before.
 - **Foe tricks say what they did** (foe-tricks-say-so): when a foe's rider lands on you, the stage line names it ("Chilled:
   you're slower", "Venom: you take damage for 2 turns", "Weakened: your next move hits softer"), and "Chilled: <foe> goes again"
   when Chill is why it acts twice. Rattlebones getting back up floats "Back up!"; the first resisted or armoured hit of a fight
