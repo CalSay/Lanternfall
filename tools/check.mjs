@@ -342,11 +342,13 @@ if (section('split build (asset-build)')) try {
   for (const [f, A] of Object.entries(AREA_ART)) {
     if (A.kind === 'hero') { heroPackCheck(s, f, A, data(f, A.v)); continue; }   // section 'hero packs (hero-packs)' says how they split
     if (A.kind === 'ns') continue;   // one pack per piece: section 'new-style screens (ns-scenery-engine)' builds a test NS_ART
-    const D = data(f, A.v), mine = s.packs.filter(p => p.f === f);
-    assert(mine.map(p => p.id).join() === Object.keys(D).map(k => A.kind + ':' + k).join(), `split: ${A.v} has one pack per entry (${mine.map(p => p.id).join(', ')})`);
+    // a background: one pack per shape it has (bg-pack-by-shape), id bg:<theme>:<o>, holding { <o>: that shape }
+    const D = data(f, A.v), mine = s.packs.filter(p => p.f === f), sh = k => (A.kind === 'bg' ? ['land', 'port'].filter(o => D[k][o]) : [null]);
+    assert(mine.map(p => p.id).join() === Object.keys(D).flatMap(k => sh(k).map(o => A.kind + ':' + k + (o ? ':' + o : ''))).join() && mine.every(p => (p.o || null) === (A.kind === 'bg' ? p.id.split(':')[2] : null)),
+      `split: ${A.v} has one pack per entry${A.kind === 'bg' ? ' and shape' : ''} (${mine.map(p => p.id).join(', ')})`);
     for (const p of mine) {
-      const got = packData(p), key = p.id.slice(A.kind.length + 1);
-      assert(got && got.id === p.id && JSON.stringify(got.d) === JSON.stringify(A.load(D[key])) && p.name === `${f.replace(/-data-.*$/, '')}-${A.kind}-${key}.${p.name.split('.').slice(-2, -1)[0]}.js`,
+      const got = packData(p), key = p.id.slice(A.kind.length + 1).split(':')[0];
+      assert(got && got.id === p.id && JSON.stringify(got.d) === JSON.stringify(p.o ? { [p.o]: D[key][p.o] } : A.load(D[key])) && p.name === `${f.replace(/-data-.*$/, '')}-${A.kind}-${key}${p.o ? '-' + p.o : ''}.${p.name.split('.').slice(-2, -1)[0]}.js`,
         `split: ${p.id}'s pack holds its art as the source has it, under a hashed name (${p.name})`);
     }
     const kept = vm.runInNewContext(`${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?)\\n// ---- src`))[1]}\n;${A.v}`);
@@ -361,7 +363,8 @@ if (section('split build (asset-build)')) try {
   // the zone table is the shipped code's own answer, and past the road no zone's scenery depends on a background being in
   const road = G.eval('ROAD_ZONES'), live = G.eval(`Array.from({ length: ${road} }, (_, i) => [ZONE_FOES[i + 1] ? 'foe:' + ZONE_FOES[i + 1].key : null, 'bg:' + zoneTheme(i + 1)])`);
   const inZ = (p, z) => p.zones.some(([a, b]) => z >= a && z <= b);
-  const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => p.id === id)).sort().join(), s.packs.filter(p => inZ(p, i + 1)).map(p => p.id).sort().join()]).filter(r => r[1] !== r[2]);
+  const unshaped = p => (p.o ? p.id.slice(0, -p.o.length - 1) : p.id);   // a background's shape packs share its zones
+  const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => unshaped(p) === id)).sort().join(), [...new Set(s.packs.filter(p => inZ(p, i + 1)).map(unshaped))].sort().join()]).filter(r => r[1] !== r[2]);
   const past = G.eval(`Array.from({ length: 2000 }, (_, i) => ${road} + 1 + i).filter(z => zoneTheme(z) !== zoneTheme(z - 35) || ZONE_FOES[z] || regionIdx(z) === 0).length`);
   assert(!badZ.length && !past && s.packs.every(p => p.hero || p.zones.length), `split: each pack names the zones whose fights show it, from ZONE_FOES and zoneTheme `
     + `(${badZ.slice(0, 3).map(r => r.join(' ')).join('; ') || 'all ' + road}), every area pack shows somewhere (${s.packs.filter(p => !p.hero && !p.zones.length).map(p => p.id).join(', ') || 'yes'}), `
@@ -387,8 +390,11 @@ if (section('split build (asset-build)')) try {
     assert(!r.fails.length, `split: the load lines hold: boot set ${MBs(r.zone1.counted)} MB for a new game and ${MBs(r.worst.counted)} MB for the worst zone (${r.worst.z}) of ${MBs(LOAD_LINES.bootFail)}, `
       + `largest zone set ${MBs(r.zoneMax.b)} of ${MBs(LOAD_LINES.zoneSet)}, area set ${MBs(r.areaMax.b)} of ${MBs(LOAD_LINES.areaSet)}${r.fails.length ? ': ' + r.fails.join('; ') : ''}`);
     for (const w of r.warns) console.log('  WARN split: ' + w);
-    assert(LOAD_LINES.e1.pack === 'bg:forest' && Object.entries(r.packs).every(([id, x]) => id === 'bg:forest' || x.counted === x.real),
-      `split: only Mossy Hollow's pack counts at one shape in the boot set (E1, until bg-pack-by-shape)`);
+    // E1 ended (bg-pack-by-shape): no pack holds two shapes, so none counts at one; a zone's backgrounds count at the larger shape
+    const bgs = s.packs.filter(p => p.id.startsWith('bg:')), z1 = s.packs.filter(p => inZ(p, 1)), bySh = o => z1.filter(p => p.o === o).reduce((n, p) => n + r.packs[p.id].real, 0);
+    assert(!('e1' in LOAD_LINES) && bgs.length && bgs.every(p => p.o && p.id.endsWith(':' + p.o)) && z1.some(p => p.o === 'land') && z1.some(p => p.o === 'port')
+      && r.zone1.counted === r.page + r.boot + r.hero.b + z1.filter(p => !p.o).reduce((n, p) => n + r.packs[p.id].real, 0) + Math.max(bySh('land'), bySh('port')),
+      `split: every background ships one pack per shape (${bgs.map(p => p.id).join(', ')}) and the boot set counts zone 1's at the larger shape (E1 ended)`);
     // each mutation goes 10 KB past its line from today's bytes, so a change elsewhere never makes one stop failing
     const pkT = id => s.packs.find(p => p.id === id).text, big1 = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m)).text, R = id => r.packs[id].real, over = (line, now) => Math.max(0, line - now) + 1e4;
     const plus = (txt, n) => x => size(x) + (x === txt ? n : 0), L = (o = {}) => ({ ...LOAD_LINES, ...o, area1: { ...LOAD_LINES.area1, ...(o.area1 || {}) } });
@@ -397,7 +403,8 @@ if (section('split build (asset-build)')) try {
     const mut = [
       ['a boot file past the line', { size: plus(big1, over(LOAD_LINES.bootFail, r.zone1.counted)) }, /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/],
       [`the worst zone's foe pack past the line`, { size: plus(pkT(s.packs.find(p => p.id.startsWith('foe:') && p.zones.some(([a, b]) => wz >= a && wz <= b)).id), over(LOAD_LINES.bootFail, r.worst.counted)) }, new RegExp(`^boot set, the worst zone \\(${wz}\\): .* over 4\\.00 MB$`)],
-      ['a portrait share past its cap', { lines: L({ e1: { pack: 'bg:forest', port: r.packs['bg:forest'].port - 1e4 } }) }, /^bg:forest's portrait share .* \(E1\)$/],
+      ['the portrait background past the line, so the larger shape', { size: plus(pkT('bg:forest:port'), R('bg:forest:land') - R('bg:forest:port') + over(LOAD_LINES.bootFail, r.zone1.counted)) }, /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/],
+      ['the portrait background over its cap', { lines: L({ area1: { 'bg:forest:port': R('bg:forest:port') - 1e4 } }) }, /^bg:forest:port is [\d.]+ MB, over its area 1 cap of [\d.]+ MB$/],
       ['Gloomjaw no longer an exception, past the zone line', { lines: without(gj), size: plus(pkT(gj), over(LOAD_LINES.zoneSet, R(gj))) }, new RegExp(`^zone ${gjZ}'s packs are [\\d.]+ MB, over 0\\.65 MB \\(zone set\\)$`)],
       ['imp and Gloomjaw no longer exceptions, past the area line', { lines: without('foe:imp', gj), size: plus(pkT(gj), over(LOAD_LINES.areaSet, R('foe:imp') + R(gj))) }, /^area 1's new packs are [\d.]+ MB, over 1\.00 MB \(area set\)$/],
       ["imp over its cap", { lines: L({ area1: { 'foe:imp': R('foe:imp') - 1e4 } }) }, /^foe:imp is [\d.]+ MB, over its area 1 cap of [\d.]+ MB$/],
@@ -441,15 +448,15 @@ if (section('split build (asset-build)')) try {
       for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
         const { page, errs } = await open({ width: w, height: h });
         await page.waitForLoadState('load'); await booted(page);
-        const r = await page.evaluate(() => ({ line: !!(document.getElementById('lfBoot') || document.getElementById('lfBootCss') || document.getElementById('lfLoad')), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait') }));
-        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && !errs.length, `split: boots at ${w}x${h} with both loading screens, their styles and the tags gone, no loading cover` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
+        const r = await page.evaluate(() => ({ line: !!(document.getElementById('lfBoot') || document.getElementById('lfBootCss') || document.getElementById('lfLoad')), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait'), bg: lfBoot.boot.filter(id => id.startsWith('bg:')).join() }));
+        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && r.bg === 'bg:forest:' + (w > h ? 'land' : 'port') && !errs.length, `split: boots at ${w}x${h} with both loading screens, their styles and the tags gone, no loading cover, Mossy Hollow's ${w > h ? 'landscape' : 'portrait'} pack only` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
         await page.close();
       }
       // 2. while the biggest boot file is still loading, the line shows the bytes done of the total: the boot files and zone 1's packs
       { const { page, release } = await open({ hold: { [big.name]: 'hold' } });
         await page.waitForFunction(() => /^Loading the game: [\d.]+ of [\d.]+ MB$/.test((document.getElementById('lfBootText') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
         const t = await page.evaluate(() => (document.getElementById('lfBootText') || {}).textContent || '');
-        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = (s.assets.reduce((n, a) => n + a.bytes, 0) + s.packs.filter(p => inZ(p, 1)).reduce((n, p) => n + p.bytes, 0)) / 1e6;
+        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = (s.assets.reduce((n, a) => n + a.bytes, 0) + s.packs.filter(p => inZ(p, 1) && p.o !== 'port').reduce((n, p) => n + p.bytes, 0)) / 1e6;
         assert(m && +m[2] === +total.toFixed(1) && +m[1] < +m[2], `split: while a file loads the line reads the bytes done of the boot files and zone 1's packs ("${t}", ${total.toFixed(1)} MB)`);
         release(); await booted(page);
         assert(!(await page.$('#lfBoot')), 'split: the line goes once the held file arrives');
@@ -467,7 +474,7 @@ if (section('split build (asset-build)')) try {
         await page.waitForLoadState('load'); await booted(page); await page.waitForTimeout(400);
         const r = await page.evaluate(() => window.__t.x(`({ boot: lfBoot.boot.filter(id => !id.startsWith('hero:')).join(), ready: [1, 2, 8].map(z => artZoneReady(z)).join(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })(), bg: !!BG_ART.forest && BG_ART.forest.land.src.length > 1000 })`));
         const c = await look(page);
-        assert(r.boot === 'foe:gloomjaw,bg:forest' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
+        assert(r.boot === 'foe:gloomjaw,bg:forest:land' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
           `split: a zone 2 save boots with its packs in (Gloomjaw cut, Mossy Hollow drawn, no cover) and the rest of the area arrives after (${JSON.stringify(r)}, ${JSON.stringify(c)})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
       // 5. a zone whose pack is still loading: the game holds under an opaque line covering the stage, the zone reads "loading",
@@ -489,15 +496,15 @@ if (section('split build (asset-build)')) try {
         const c = await look(page), run = await page.evaluate(() => window.__t.x(`({ t: gameHeld(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })() })`));
         assert(!c.cover && c.zone === 'Zone 2' && !run.t && !run.pend && !errs.length, `split: when Gloomjaw arrives the cover goes, its frames are cut and the game runs (${JSON.stringify(c)}, ${JSON.stringify(run)})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
-      // 5b. a background that comes after boot is decoded before the hold lets go: on the first frame after it, 62-stage's own image
-      //     of the picture is complete at once (no procedural scenery in its place)
-      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+      // 5b. a background that comes after boot is decoded before the hold lets go: on the first frame after it, the image 62-stage
+      //     takes from 75-art-load (artBgImg) is complete (no procedural scenery in its place)
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest:land').name]: 'hold' }, html: probe });
         await booted(page); await page.waitForTimeout(300);
         await page.evaluate(() => window.__t.x('S.activity = "fight", setZone(8), ui(true)')); await page.waitForTimeout(300);
         const a = await look(page);
         await page.evaluate(() => window.__t.x(`(() => { const f = () => { if (gameHeld()) return requestAnimationFrame(f);
-          const B = BG_ART.forest, im = new Image(); im.src = 'data:image/webp;base64,' + (B && B.land.src);
-          window.__first = B && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
+          const B = BG_ART.forest, im = artBgImg('forestland');
+          window.__first = B && B.land && im && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
           requestAnimationFrame(f); })()`));
         release(); await page.waitForTimeout(1500);
         const first = await page.evaluate(() => window.__first), b = await look(page);
@@ -506,7 +513,7 @@ if (section('split build (asset-build)')) try {
         await page.close(); }
       // 5c. a zone change inside tick that emits nothing (as a retreat after a wipe sets S.zone): the cover is up before the browser
       //     paints that frame (75-art-load rechecks in a microtask after the frame's draw)
-      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest:land').name]: 'hold' }, html: probe });
         await booted(page); await page.waitForTimeout(300);
         await page.evaluate(() => window.__t.x(`(() => { const t0 = tick; tick = dt => { t0(dt); if (!window.__moved && S.activity === 'fight') { window.__moved = 1; S.zone = 8;
           queueMicrotask(() => { const c = document.getElementById('artWait'); window.__cov = !!c && !c.hidden; }); } }; })()`));
@@ -515,6 +522,24 @@ if (section('split build (asset-build)')) try {
         const r = await page.evaluate(() => ({ moved: window.__moved, cov: window.__cov })), a = await look(page);
         release(); await page.waitForTimeout(300);
         assert(r.moved && r.cov === true && a.cover === 'Loading Batwing Caves' && !errs.length, `split: a zone change inside tick with no event is covered before that frame paints (${JSON.stringify(r)}, ${JSON.stringify(a)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5d. bg-pack-by-shape: a phone turned mid-fight to the shape it did not boot with holds the game under the line until that
+      //     background's pack is in and decoded, and the first frame after the hold draws it decoded; the boot never asked for it
+      { const port = pk('bg:forest:port'), { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 1 }, hold: { [port.name]: 'hold' }, html: probe }), asked = [];
+        page.on('request', q => { if (q.url().endsWith(port.name)) asked.push(Date.now()); });
+        await booted(page); await page.evaluate(() => window.__t.x('S.activity = "fight", ui(true)')); await page.waitForTimeout(600);
+        const before = asked.length;
+        await page.setViewportSize({ width: 360, height: 900 }); await page.waitForTimeout(600);
+        const G = () => page.evaluate(() => window.__t.x('({ t: gameHeld(), z: S.zone, k: S.kills, hp: mob && mob.hp, o: artZonePacks(1).join() })'));
+        const a = await look(page), g1 = await G(); await page.waitForTimeout(800); const g2 = await G();
+        assert(!before && asked.length === 1 && /^Loading /.test(a.cover || '') && a.full && g1.t && g1.z === 1 && g1.o.includes('bg:forest:port') && JSON.stringify(g1) === JSON.stringify(g2),
+          `split: turned to portrait mid-fight, the game holds under "${a.cover}" (${a.full}) while Mossy Hollow's portrait pack loads (asked ${before} times before the turn, ${asked.length} after; ${JSON.stringify(g1)} then ${JSON.stringify(g2)})`);
+        await page.evaluate(() => window.__t.x(`(() => { const f = () => { if (gameHeld()) return requestAnimationFrame(f);
+          const im = artBgImg('forestport'); window.__first = BG_ART.forest.port && im && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
+          requestAnimationFrame(f); })()`));
+        release(); await page.waitForTimeout(1500);
+        const first = await page.evaluate(() => window.__first), b = await look(page), kept = await page.evaluate(() => localStorage.getItem('lanternfall.bgShape'));
+        assert(first === 'decoded' && !b.cover && JSON.parse(kept || '{}')[0] === 'port' && !errs.length, `split: once the portrait pack is in, the first frame after the hold draws it decoded (${first}), the cover goes (${JSON.stringify(b)}), and the next boot's guess for an upright window is the portrait pack (${kept})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
       // 6. a pack that fails while the server's page still names it: "Waiting for the connection", then it tries again and loads
       { const { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'fail' }, html: probe });

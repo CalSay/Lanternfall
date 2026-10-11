@@ -34,7 +34,10 @@ var lfBoot = (function () {
   var classic = false;   // the Classic art switch (64k's key): a pack of art it turns off (x) is left out while it is on
   try { classic = localStorage.getItem(/* @classic */) === '1'; } catch (e) {}
   var boot = [], q = zone > road ? road - 34 + (zone - road - 1) % 35 : zone;   // past the road the scenery repeats every 35 zones
-  for (k in packs) if (!(packs[k].x && classic) && (packs[k].h ? packs[k].c && packs[k].h === hero : packs[k].z.some(function (r) { return q >= r[0] && q <= r[1]; }))) { boot.push(k); files[packs[k].f.split('/').pop()] = packs[k].b; }
+  // a background's shape: the stage's when last seen with a window this shape (75-art-load keeps it), else a guess
+  var o = 'land';
+  try { k = innerWidth >= innerHeight * 1.35 ? 1 : 0; o = k ? o : 'port'; k = JSON.parse(localStorage.getItem('lanternfall.bgShape'))[k]; if (k === 'land' || k === 'port') o = k; } catch (e) {}
+  for (k in packs) if (!(packs[k].x && classic) && (packs[k].h ? packs[k].c && packs[k].h === hero : packs[k].z.some(function (r) { return q >= r[0] && q <= r[1]; }) && (!packs[k].o || packs[k].o === o))) { boot.push(k); files[packs[k].f.split('/').pop()] = packs[k].b; }
   // Hero art constants by name, each as { <hero>: that hero's table }: each hero file's page part registers its own
   // (lfBoot.heroFile, as it runs), which puts in the core pack that came before it, so the core is in before the next file runs.
   var heroFiles = {}, plain = function (o) { return !!o && typeof o === 'object' && !Array.isArray(o); };
