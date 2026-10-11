@@ -1,0 +1,1 @@
+Tooling only. Nothing changes in the game. The landscape check that walks a new player's first session no longer loses Old Hesketh's Gather tip after a lost boss fight: while it waits for the next step it now stops at the moment one shows, as a player's screen would, instead of skipping time in fixed 2-second jumps that could keep missing the short gap after each kill. (no shot)

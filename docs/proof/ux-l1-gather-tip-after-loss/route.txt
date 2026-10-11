@@ -1,0 +1,16 @@
+# Proof for card ux-l1-gather-tip-after-loss (tooling only). No player-visible change: nothing in src/ changed, so there is nothing
+# to play. The guide was not at fault: a player's game runs on, the guide looks every 250 ms, and the Gather tip shows in the gap
+# after the next kill (about half a second of play) and holds the game there.
+# Cause: the UX-L1 walk drives the clock itself. With no step to press it ran 20 ticks of 0.1 s in one go and looked again only after
+# them. A turn fight takes about 2 s, so the 2 s jump could fall in step with the fights and end mid-fight every time, never in the
+# gap. A lost boss fight (Try again card, the boss held back, the fights restarting) shifted the fights into that step. A probe
+# per tick after a forced loss read the gap (Gather step returned) at ticks 3 to 6 of every jump while every jump ended on the
+# hero's turn, for 150+ passes while the zone climbed 4 to 8 (CI's dump: zone 9, step null after 293 idle passes).
+# The tip did not retire: GUIDE_RT.hid and GUIDE_RT.shown.gather stayed empty in every probe. "step null" in the dump is what
+# onboardStep() returns mid-fight for a started between step (it waits for the gap), so a mid-fight read looked like a dead end.
+# Fix (tools/check.mjs, UX-L1 walk only): the idle jump stops at the first tick onboardStep() returns a step. The walk also loses to
+# the zone boss every run as the Gather tip comes due (before pressing it), and asserts the tip is back within 120 s of play.
+# The new assert on the OLD walk (4 runs at once, 740x360 and 844x390): 4 of 8 views failed (back after 221 s, 259 s and 263 s,
+# and never; two of them also failed the whole walk with "step null" as on CI); 4 passed (back after 17, 36, 55 and 86 s).
+# The new walk: node tools/check.mjs --only="UX-L1" passed at 740x360, 844x390, 1280x720 and 1920x1080 (back after 33, 28, 9, 10 s).
+# Loops: see LOOPS below.

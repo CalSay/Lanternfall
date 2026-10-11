@@ -14346,6 +14346,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
           // unique, an item with `u`) never sees it, and does not need to. The walk's idle passes run the game ahead while the guide waits for the screen, so
           // on a slow runner that drop can come before the Workbench; the step then counts as walked once the game itself calls it done.
           let toolGiven = false;
+          let lossDone = '', lossAt = 0, gatherAt = 0;   // ux-l1-gather-tip-after-loss: the forced boss loss as the Gather tip comes due ('lost', or 'missed' if it did not take; lossAt, gatherAt: seconds of play)
           // a held line's answer (pressHeld): a press that found it covered or never shown is a miss, said once per line
           const heldMiss = new Set(), held = async () => { const r = await pressHeld(page); if (/^(pressed|gone)$/.test(r)) return; const line = await X('soloGuideWants()') || 'a held line'; if (!heldMiss.has(line)) { heldMiss.add(line); bad.push(`${line}: its answer ${r}`); } };
           const walked = x => trail.includes(x) || (x === 'tool' && toolGiven);
@@ -14361,7 +14362,10 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             if (!st) {
               idle++;
               // nothing to press: time passes; builds finish (their timers run on the wall clock); the first boss falls; the road opens
-              await X(`for (let k = 0; k < 20; k++) tick(0.1); campCatchUp(Date.now() + 36e5);
+              // ux-l1-gather-tip-after-loss: the time stops at the first tick a step comes up, as a player's game would show it then. A between
+              // step waits for the gap after a kill (about half a second), and a fight takes about 2 s: a fixed 2 s step could fall in step with the
+              // fights and never end in a gap (a lost boss fight shifted them so, and the Gather tip never came back)
+              await X(`for (let k = 0; k < 20 && !onboardStep(); k++) tick(0.1); campCatchUp(Date.now() + 36e5);
                 if (S.onboard.done.parry && S.maxZone < 2) { S.maxZone = 2; S.zone = 2; }   /* the zone boss now comes on its own after 5 fights: its tip can be done first */
                 if (S.maxZone >= 2 && !S.onboard.done.upgrade && S.gold < 50) S.gold = 50;
                 if (S.onboard.done.store && S.maxZone < 3) { S.maxZone = 3; S.zone = 3; } true`);
@@ -14371,6 +14375,17 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
             // (at most 20 in a row: a cache or scene that one tick never opens is not waited out, and the step's own line reads what is up)
             if (await X(TICK_OWED) && owed++ < 20) { await X('tick(0.1); true'); await page.waitForTimeout(120); continue; } owed = 0;
             if (!trail.includes(st)) trail.push(st);
+            // ux-l1-gather-tip-after-loss: the first time the Gather tip is due, the hero loses to the zone boss before pressing it (as on #412's
+            // shard 4): the boss comes on and fells the hero at once (the tip holds the game, so its turn fight never opens), and the Try again
+            // card, Hesketh's loss line and the boss held back must not lose the tip
+            if (st === 'gather' && !lossDone) {
+              lossAt = await X('GUIDE_RT.t');
+              lossDone = await X(`S.zone = S.maxZone; S.kills = ZONE_FIGHTS; bossTryRelease(S.zone); fightBoss = true; spawn(); respawn = 0;
+                const was = !!(mob && mob.boss && !mob.dead); cbTurnHitHero(1e15, false, "hit"); for (let k = 0; k < 5; k++) tick(0.1);
+                was && !cbHeroUp() && S.bossTry.hold === S.zone ? 'lost' : 'missed ' + JSON.stringify({ was, up: cbHeroUp(), hold: S.bossTry.hold, zone: S.zone, mob: mob && { boss: !!mob.boss, dead: mob.dead }, tl: !!TURN_LIVE })`);
+              continue;
+            }
+            if (st === 'gather' && lossDone && !gatherAt) gatherAt = await X('GUIDE_RT.t');
             // forge-tip-goes-stale: a materials line is hidden over a menu other than Camp or Gather, but its step is still current; the walk reads
             // it as live from onboardNeed (the materials come in) instead of looking for a line that is not drawn there
             if (await X(`(id => /^stock:|^chop$/.test(id) && !onboardSpec(id) && !!S.tab && !['world', 'gat'].includes(S.tab) && onboardNeed(id).length > 0)(${JSON.stringify(st)})`)) {
@@ -14421,6 +14436,8 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720], [1920, 1080]]) if (se
           const why = want.every(walked) ? '' : '; ' + await X('JSON.stringify({ step: (s => s && s.id)(onboardStep()), done: Object.keys(S.onboard.done).join(","), zone: S.maxZone, gold: Math.round(S.gold), builds: (S.camp && S.camp.builds || []).map(b => b.id + ">" + b.to).join(","), tab: S.tab, view: S.tab ? curView(S.tab) : "", recipes: [...document.querySelectorAll("#sec-craft-recipes .cf-rec")].map(r => r.dataset.kind + (r.querySelector(".cf-go") ? (r.querySelector(".cf-go").disabled ? "-off" : "-go") : "")).join(","), tiers: [...document.querySelectorAll("#sec-craft-recipes [aria-pressed=true]")].map(b => b.textContent.trim()).join("/"), mats: JSON.stringify(S.mats && { ore: S.mats.ore, wood: S.mats.wood }) })') + ' target ' + JSON.stringify(await X(TARGET('tool'))) + ' last passes ' + passes.slice(-8).join(' ; ') 
           assert(!stuck && want.every(walked), `${at}: the guide walks the first session by pressing what it points at (${trail.join(' > ')}${toolGiven && !trail.includes('tool') ? ' [Tool step: a dropped unique tool did it]' : ''}${stuck ? '; stuck on ' + stuck : ''}${why}; ${iters} of 320 passes, ${idle} idle)`);
           assert(!bad.length && seen.size >= (toolGiven && !trail.includes('tool') ? 16 : 20), `${at}: every guide step's target is on screen and on top (a click at its centre reaches it), the ring marks it and the hint is on screen (${seen.size} states${bad.length ? '; ' + bad.slice(0, 3).join(' / ') : ''})`);
+          // (the boss comes back on its own and that fight runs about half a minute with no gap; before the fix the tip stayed away for 150+ passes, 300 s and more)
+          assert(lossDone === 'lost' && gatherAt > 0 && gatherAt - lossAt <= 120, `${at}: the walk lost to the zone boss as the Gather tip came due, and the tip was back within 120 s of play (${lossDone || 'the tip never came'}; back after ${gatherAt ? Math.round(gatherAt - lossAt) + ' s' : 'never'})`);
           assert(!errs.length, `${at}: no page errors in the guide walk` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();
         } catch (e) { fail(`${at} guide walk crashed: ` + (e.stack || e)); }
