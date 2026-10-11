@@ -1,0 +1,21 @@
+# seed: 1
+# Proof for card actor-scale-followups. On a desktop stage (1280x720, 1366x640, 1920x1080) a foe trick's line and the resource tip
+# ("Aim: ...") dock in the stage's top-left corner, under the hero's plate, clear of every hero; the camera sway moves the ground and
+# the actors by the same whole px (feet no longer slide), and on a painted background (Mossy Hollow) the actors no longer sway at all;
+# the cold Hearth's fire and plot stakes draw at the scenery's size, not the actors'. A route cannot raise a trick line on demand, so
+# this one plays the late save's fight (Pip, zone 31) and taps her Cinders row to open the tip. tools/check.mjs "actor-scale-followups (browser)" raises
+# the longest trick line with each hero, opens each tip, runs a minute of the sway at zone 9 and zone 1, and reads the fire's scale.
+# Run with --view desktop, laptop and hd, and --view landscape for the sway.
+new late
+wait 4
+tap-if "Continue"
+wait 2
+tap-if "Fight"
+wait 4
+expect ".hud.vs .hero-plate"
+tap-if "Attack"
+wait 3
+burst fight-sway
+tap-if "Cinders"
+wait 1
+shot tip-docked

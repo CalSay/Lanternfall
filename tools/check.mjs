@@ -89,7 +89,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 120, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'side-column-fits-740': 52, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 52, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -19387,6 +19387,90 @@ if (section('actor-scale (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('actor-scale crashed: ' + (e.stack || e)); }
+
+// ==== actor-scale-followups: what the bigger actors (actor-scale, bigger-heroes) left behind. (1) On a desktop stage a foe trick's line
+// (.tv-warn) and the resource tip (.tv-restip, "Aim: ...") dock top left (60-turn.css), clear of every hero's box, the place line, the turn
+// line and the banner, at 1280x720, 1366x640 and 1920x1080, with the longest lines the game says. (2) The camera sway moves the ground
+// (the scenery's ground layer, parallax 1) and the actors by the same whole stage px, so feet never slide (62-stage camSt), at every view.
+// (3) The cold Hearth's fire and plot stakes draw at the scenery's scale, not the actors' (63d asProp). save-late.json.
+if (section('actor-scale-followups (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('actor-scale-followups (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8')); save.last = Date.now();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const cross = (a, b) => !!(a && b) && Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
+    const BOX = sel => `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e || e.hidden || e.closest('[hidden]') || getComputedStyle(e).visibility === 'hidden') return null;
+      const b = e.getBoundingClientRect(); return b.width && b.height ? { x: b.left, y: b.top, w: b.width, h: b.height } : null; })()`;
+    try {
+      for (const [w, h, dpr] of [[1280, 720, 1], [1366, 640, 1], [1920, 1080, 1], [740, 360, 2]]) {
+        const tag = `${w}x${h}`, touch = w < 1000, desk = w >= 1200;
+        // motion on (the sway), so the hero's idle is read from a held frame below
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false); for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();
+          globalThis.__tp = 0; globalThis.__tpo = turnPaused; turnPaused = () => !!globalThis.__tp || __tpo(); UNIQ_TUNE.first = UNIQ_TUNE.again = 0; true`);
+        // (1) the docked lines, with each hero. The longest foe-trick line (an elite's first-meeting line) and each hero's own tip.
+        if (desk) {
+          const longest = await X(`Object.values(TURN_TRAITS).map(t => t.first || '').concat(['Rally! It holds at the mark. Only a Stun breaks its charge.']).sort((a, b) => b.length - a.length)[0]`);
+          for (const k of ['wren', 'tobin', 'pip']) {
+            await X(`globalThis.__tp = 0; soloPick("${k}"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1); true`); await page.waitForTimeout(1500);
+            await X('globalThis.__tp = 1; true'); await page.waitForTimeout(300);
+            const read = async () => JSON.parse(await X(`JSON.stringify({ hero: LF_EYES.rects().hero, zone: ${BOX('.hud-zone')}, turn: ${BOX('.tv-n')}, row: ${BOX('.tv-hero')}, warn: ${BOX('.tv-warn')}, tip: ${BOX('.tv-restip')}, banner: ${BOX('.tv-tc-txt')}, strip: ${BOX('.cb-strip')} })`));
+            await X(`emit('traitSeen', { first: true, txt: ${JSON.stringify(longest)} }); true`); await page.waitForTimeout(120);
+            const a = await read();
+            const hitsW = ['hero', 'zone', 'turn', 'row', 'strip'].filter(n => cross(a.warn, a[n]));
+            // the hero's buff chips (Guard, Wall, ...) hang on the canvas from the plate's foot (--vs-b) for about 20 px: the line starts under them
+            const chipsB = await X(`(() => { const b = document.getElementById('stageBox'); return b.getBoundingClientRect().top + parseFloat(getComputedStyle(b).getPropertyValue('--vs-b')) + 24; })()`);
+            assert(!!a.warn && a.warn.y >= chipsB, `${tag} ${k}: the line starts under the hero's buff chips (top ${a.warn && Math.round(a.warn.y)}, chips end by ${Math.round(chipsB)})`);
+            assert(!!a.warn && !!a.hero && !hitsW.length, `${tag} ${k}: a foe trick's line ("${longest.slice(0, 24)}...") clears the hero, the place line, the turn line and the Grit row (${hitsW.join(', ') || 'none'}; line ${JSON.stringify(a.warn)}, hero ${JSON.stringify(a.hero)})`);
+            await X('emit("turnCard", { who: "foe", secs: 4 }); true'); await page.waitForTimeout(250);
+            const b = await read(); await X('emit("turn", {}); true');
+            assert(!!b.warn && !cross(b.warn, b.banner) && !cross(b.warn, b.hero), `${tag} ${k}: with the banner up the line stays clear of it and the hero (${JSON.stringify({ warn: b.warn, banner: b.banner })})`);
+            // the tip: the hero's own resource line (the longest is Pip's), with no trick line up
+            await X(`document.querySelector('.tv-warn').hidden = true; const t = document.querySelector('.tv-restip'); if (t.hidden) document.querySelector('.tv-resbtn').click(); true`); await page.waitForTimeout(120);
+            const c = await read();
+            const hitsT = ['hero', 'zone', 'turn', 'row', 'strip'].filter(n => cross(c.tip, c[n]));
+            assert(!!c.tip && !hitsT.length, `${tag} ${k}: the resource tip clears the hero, the place line, the turn line and the Grit row (${hitsT.join(', ') || 'none'}; tip ${JSON.stringify(c.tip)}, hero ${JSON.stringify(c.hero)})`);
+          }
+        }
+        // (2) the sway, across a minute of the camera's path. Zone 9 (layered scenery): the ground layer's whole-px offset equals the
+        // actors' (cam x AK) on every frame. Zone 1 (a fixed painting, Mossy Hollow): nothing sways, so the actors stand still too.
+        const sway = async z => {
+          await X(`globalThis.__tp = 0; soloPick("wren"); setActivity("fight"); fightBoss = false; setZone(${z}); true`); await page.waitForTimeout(1200);
+          return JSON.parse(await X(`JSON.stringify((() => { const ds = drawScene, sd = stageDeco, T0 = T, out = { n: 0, layered: 0, bad: [], seen: new Set(), cams: new Set(), ak: 0, red: reduced, max: 0 }; let gx = null;
+            drawScene = function (c, sc, camX, which, ...r) { if (which === 'back') gx = camX; return ds.call(this, c, sc, camX, which, ...r); };
+            stageDeco = (g, ph, v) => { if (ph === 'back') { out.n++; out.ak = v.ak; out.cams.add(v.cam); if (gx !== null) { out.layered++; out.seen.add(gx); out.max = Math.max(out.max, Math.abs(gx));
+              if (!Number.isInteger(gx) || !Number.isInteger(v.cam) || gx !== v.cam * v.ak) out.bad.push([T.toFixed(2), gx, v.cam, v.ak]); } } return sd(g, ph, v); };
+            try { for (let t = 0; t < 60; t += 0.25) { T = t; gx = null; draw(); } } finally { drawScene = ds; stageDeco = sd; T = T0; }
+            out.seen = out.seen.size; out.cams = [...out.cams]; return out; })())`));
+        };
+        const sL = await sway(9);
+        assert(!sL.red && sL.n >= 200 && sL.layered === sL.n && sL.seen >= 4 && sL.max <= 8 && !sL.bad.length, `${tag} zone 9: the camera sway moves the ground and the actors together, by the same whole stage px on every frame (${sL.layered} of ${sL.n} frames layered, actors x${sL.ak}, ${sL.seen} offsets up to ${sL.max} px; ${sL.bad.length} apart${sL.bad.length ? ': ' + JSON.stringify(sL.bad.slice(0, 3)) : ''})`);
+        const sP = await sway(1);
+        assert(sP.n >= 200 && sP.layered === 0 && sP.cams.length === 1 && sP.cams[0] === 0, `${tag} zone 1: on the fixed painting the actors never sway (${sP.n} frames, ${sP.layered} layered, offsets ${JSON.stringify(sP.cams.slice(0, 5))})`);
+        // (3) the cold Hearth: its fire and the plot stakes draw at the scenery's scale (the device px per stage px), Hesketh at the actors'
+        if (desk) {
+          await X(`S.hearth = Object.assign(S.hearth || {}, { cold: 1, lit: 0 }); setActivity('gather'); setNode('wood', 1); true`); await page.waitForTimeout(1200);
+          const pr = JSON.parse(await X(`JSON.stringify((() => { const st = stageStats(), g = document.getElementById('cv').getContext('2d'), fr = g.fillRect, sd = stageDeco, ks = new Set(), PAL = new Set(['#8c8494', '#6b6275', '#3a3444', '#2a2230', '#7a5434', '#4a3220', '#8c6a43', '#efe6d6']);
+            let n = 0; g.fillRect = function (...a) { if (PAL.has(String(this.fillStyle).toLowerCase())) { n++; ks.add(+this.getTransform().a.toFixed(4)); } return fr.apply(this, a); };
+            try { draw(); } finally { delete g.fillRect; }
+            return { scene: !!hearthScene(), n, ks: [...ks], KS: st.DPR * st.ZM, KA: st.DPR * st.ZA, AK: st.AK }; })())`));
+          assert(pr.scene && pr.AK > 1 && pr.n > 0 && pr.ks.length === 1 && Math.abs(pr.ks[0] - pr.KS) < 1e-6, `${tag}: the cold Hearth's fire and plots draw at the scenery's ${pr.KS} device px per px, not the actors' ${pr.KA} (${JSON.stringify(pr)})`);
+        }
+        assert(!errs.length, `${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('actor-scale-followups crashed: ' + (e.stack || e)); }
 
 // ==== basic-attack-swings: in a turn fight a basic Attack plays the hero's swing (62-stage on 'soloAttack') ====
 // 59k emits only soloAttack for a basic Attack (no lunge or classTap), and the stage swung only on those, so the hero stood still.
