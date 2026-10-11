@@ -228,13 +228,13 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   };
   // upgrade-gold-covers-short (ruling 2026-10-08): an upgrade short of its one material (not Essence, a Trophy or coal) may
   // pay the units it lacks in gold, ECON.coverFoes foes of the tier's foe gold a raw unit (a middle is 2), once its gathering
-  // is open at the item's tier and, for a middle, its station built. Gold covers at most half the step (gold-cover-share).
-  // Nothing is stored; covered units give no skill XP; salvage refunds step gold only. Crafts always take their materials.
+  // is open at the item's tier and, for a middle, its station built. Held units go first. Nothing is stored; covered units
+  // give no skill XP; salvage refunds step gold only. Crafts always take their materials.
   upgradeCover = it => {
     if (!it || !CRAFT_KINDS[it.slot] || !(ECON.coverFoes > 0) || it.plus >= CRAFT_TROPHY_GATE.max) return null;
     const t = it.t, mats = upgradeCost(it).mats, fam = Object.keys(mats).find(k => k !== 'ess' && k !== 'coal');
     if (!fam) return null;
-    const units = mats[fam] - matOwn(fam, t); if (!(units > 0) || units * 2 > mats[fam]) return null;
+    const units = mats[fam] - matOwn(fam, t); if (!(units > 0)) return null;
     const mid = !!REFINE_RAW[fam], raw = mid ? REFINE_RAW[fam] : fam, fm = CRAFT_FAMILY[raw];
     if (!fm || fm.src !== 'gather' || !skillTierOpen(skillOf(raw), t)) return null;
     if (typeof navSkillOpen === 'function' && !navSkillOpen(skillOf(raw))) return null;   // Foraging and Hunting open with their feature

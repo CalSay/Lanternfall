@@ -18001,31 +18001,30 @@ if (section('craft-shortfall-offer')) try {
 } catch (e) { fail('craft-shortfall-offer crashed: ' + (e.stack || e)); }
 
 // ---- upgrade-gold-covers-short (ruling autopilot/rulings/2026-10-08-gold-covers-material.md, B): an upgrade short of its one
-// material may pay the units it lacks in gold, ECON.coverFoes (9) foes of the tier's foe gold a raw unit (a middle is 2), once
-// the material's gathering tier is open and, for a middle, its station built. Held units go first, and gold covers at most half
-// the step (gold-cover-share: the hero holds the rest); covered units give no skill XP; salvage refunds step gold only; never a
-// craft, Essence or a Trophy; coverFoes 0 turns it off; no new state. The item sheet shows it as the second button after the
-// free refine order. On save-refine (Forge and Workbench Lv 2, no middles). ----
+// material may pay the units it lacks in gold, ECON.coverFoes (27; 9 until gold-cover-share) foes of the tier's foe gold a raw unit (a middle is 2), once
+// the material's gathering tier is open and, for a middle, its station built. Held units go first; covered units give no skill
+// XP; salvage refunds step gold only; never a craft, Essence or a Trophy; coverFoes 0 turns it off; no new state. The item
+// sheet shows it as the second button after the free refine order. On save-refine (Forge and Workbench Lv 2, no middles). ----
 if (section('upgrade-gold-covers-short')) try {
   const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-refine.json'), 'utf8');
   const fresh = () => loadCore({ seed: 1, storage: memoryStorage({ [KEY]: raw }) });
   const g = fresh(), E = s => g.eval(s);
-  assert(E('ECON.coverFoes') === 9, 'the cover price is 9 foes of the tier\'s foe gold a raw unit');
-  // the ruling's prices: 90 gold a tier-1 Plank, 45 a tier-1 raw unit, 3 Silver Ingots 430; gold covers at most half the step
-  const bow = JSON.parse(E(`(() => { const it = { id: 999001, slot: 'bow', t: 1, r: 'common', plus: 2, a: [] }; S.items.push(it); S.mats.plank[0] = 0; return JSON.stringify([upgradeCost(it), upgradeCover(it), (S.mats.plank[0] = 1, upgradeCover(it))]); })()`));
-  assert(bow[0].mats.plank === 3 && bow[0].gold === 230 && bow[1] === null && bow[2] === null, `a Pine Bow +2 short 3, or 2, of its 3 Pine Planks: over half the step, so gold covers nothing (${JSON.stringify(bow)})`);
-  E('S.mats.plank[0] = 2');
-  assert(E('JSON.stringify(upgradeCover(itemById(999001)))') === '{"fam":"plank","t":1,"units":1,"gold":90}', 'held units go first: with 2 Pine Planks held, gold covers the last one for 90');
-  const pick = JSON.parse(E(`(() => { const it = { id: 999002, slot: 'pick', t: 1, r: 'common', plus: 3 }; S.items.push(it); S.mats.ore[0] = 0; const r = [upgradeCover(it)]; S.mats.ore[0] = 2; r.push(upgradeCover(it)); return JSON.stringify(r); })()`));
-  assert(pick[0] === null && pick[1] && pick[1].fam === 'ore' && pick[1].units === 2 && pick[1].gold === 90, `a tool stays raw: with 2 of its 4 Copper Ore held, gold covers 2 at 45 each; with none, nothing (${JSON.stringify(pick)})`);
-  const wpn = JSON.parse(E(`JSON.stringify([upgradeCover(equipped('weapon')), (S.mats.ingot[2] = 3, upgradeCover(equipped('weapon'))), canUpgrade(S.equip.weapon).ok, canUpgrade(S.equip.weapon, undefined, { cover: true }).ok])`));
-  assert(wpn[0] === null && JSON.stringify(wpn[1]) === '{"fam":"ingot","t":3,"units":3,"gold":430}' && !wpn[2] && wpn[3], `the Silver Warblade +6 takes 6 Silver Ingots: none held, no cover; 3 held, refused without the cover and allowed with it for 430 (${JSON.stringify(wpn)})`);
+  assert(E('ECON.coverFoes') === 27, 'the cover price is 27 foes of the tier\'s foe gold a raw unit (gold-cover-share)');
+  // the prices: 270 gold a tier-1 Plank (3 for 810, the card's bow), 135 a tier-1 raw unit, 6 Silver Ingots 2,600
+  const bow = JSON.parse(E(`(() => { const it = { id: 999001, slot: 'bow', t: 1, r: 'common', plus: 2, a: [] }; S.items.push(it); S.mats.plank[0] = 0; return JSON.stringify([upgradeCost(it), upgradeCover(it)]); })()`));
+  assert(bow[0].mats.plank === 3 && bow[0].gold === 230 && JSON.stringify(bow[1]) === '{"fam":"plank","t":1,"units":3,"gold":810}', `a Pine Bow +2 short 3 Pine Planks: 810 gold covers them (${JSON.stringify(bow)})`);
+  E('S.mats.plank[0] = 1');
+  assert(E('JSON.stringify(upgradeCover(itemById(999001)))') === '{"fam":"plank","t":1,"units":2,"gold":540}', 'held units go first: with 1 Pine Plank held, gold covers the other 2 for 540');
+  const pick = JSON.parse(E(`(() => { const it = { id: 999002, slot: 'pick', t: 1, r: 'common', plus: 3 }; S.items.push(it); S.mats.ore[0] = 0; return JSON.stringify(upgradeCover(it)); })()`));
+  assert(pick && pick.fam === 'ore' && pick.units === 4 && pick.gold === 540, `a tool stays raw: 4 Copper Ore cost 135 each (${JSON.stringify(pick)})`);
+  const wpn = JSON.parse(E(`JSON.stringify([upgradeCover(equipped('weapon')), canUpgrade(S.equip.weapon).ok, canUpgrade(S.equip.weapon, undefined, { cover: true }).ok])`));
+  assert(JSON.stringify(wpn[0]) === '{"fam":"ingot","t":3,"units":6,"gold":2600}' && !wpn[1] && wpn[2], `the Silver Warblade +6 short 6 Silver Ingots: refused without the cover, allowed with it for 2,600 (${JSON.stringify(wpn)})`);
   // limits: the gathering tier shut, the station unbuilt, coverFoes 0
   assert(E(`(() => { const lv = S.skills.mine.lv; S.skills.mine.lv = 1; const r = upgradeCover(equipped('weapon')); S.skills.mine.lv = lv; return r === null && canUpgrade(S.equip.weapon, undefined, { cover: true }).ok; })()`), 'no cover while the material\'s gathering tier is shut (Mining 1, Silver Ore)');
   assert(E(`(() => { const b = S.camp.b.forge; S.camp.b.forge = 0; const r = upgradeCover(equipped('weapon')); const c = canUpgrade(S.equip.weapon, undefined, { cover: true }); S.camp.b.forge = b; return r === null && !c.ok && c.why === 'Gold cannot cover this upgrade.'; })()`), 'no cover for an Ingot while the Forge is unbuilt');
-  assert(E(`(() => { ECON.coverFoes = 0; const r = upgradeCover(equipped('weapon')); ECON.coverFoes = 9; return r === null; })()`), 'coverFoes 0 turns the offer off');
+  assert(E(`(() => { ECON.coverFoes = 0; const r = upgradeCover(equipped('weapon')); ECON.coverFoes = 27; return r === null; })()`), 'coverFoes 0 turns the offer off');
   // gold-cover-share: a cover pressed after the rest was gathered (the sheet still showed it) makes the plain upgrade, not a refusal
-  const stale = E(`(() => { const it = equipped('weapon'), n = upgradeCost(it).mats.ingot; S.mats.ingot[2] = n; const r = upgradeCover(it), c = canUpgrade(it.id, undefined, { cover: true }); S.mats.ingot[2] = 3; return JSON.stringify([r, c.ok, c.cover || null, c.pay && c.pay.gold]); })()`);
+  const stale = E(`(() => { const it = equipped('weapon'); S.mats.ingot[2] = upgradeCost(it).mats.ingot; const r = upgradeCover(it), c = canUpgrade(it.id, undefined, { cover: true }); S.mats.ingot[2] = 0; return JSON.stringify([r, c.ok, c.cover || null, c.pay && c.pay.gold]); })()`);
   assert(stale === '[null,true,null,1800]', `all 6 Silver Ingots held when the cover is pressed: a plain upgrade for 1,800 gold (${stale})`);
   // never Essence or a Trophy: a unique short only of Essence has nothing to cover; the +8 step still needs its Trophy
   const ess = E(`(() => { const it = { id: 999003, slot: 'warblade', t: 3, r: 'legendary', u: Object.keys(UNIQ)[0], plus: 2, a: [] }; S.items.push(it); const c = upgradeCost(it); S.mats.ingot[2] = c.mats.ingot; const e0 = S.mats.ess.slice(); S.mats.ess = [0, 0, 0, 0, 0]; const r = [upgradeCover(it), canUpgrade(it.id, undefined, { cover: true }).why]; S.mats.ess = e0; S.mats.ingot[2] = 0; return JSON.stringify(r); })()`);
@@ -18036,15 +18035,15 @@ if (section('upgrade-gold-covers-short')) try {
   assert(E(`(() => { const c = canCraft('warblade', 3, { cover: true }); return !c.ok && /Silver Ingot/.test(c.why) && craftItem('warblade', 3, { cover: true }) === null; })()`), 'a craft short of Silver Ingots stays refused, cover or not');
   // the upgrade itself: two copies of the save, one with the Ingots in hand, one covering them
   const a = fresh(), b = fresh(), keys0 = JSON.stringify(Object.keys(b.eval('S')).sort());
-  a.eval(`S.mats.ingot[2] = 6; S.mats.ingot[2]`); b.eval(`S.mats.ingot[2] = 3; S.mats.ingot[2]`);
+  a.eval(`S.mats.ingot[2] = 6; S.mats.ingot[2]`);
   const run = (h, opts) => JSON.parse(h.eval(`(() => { let ev = null; on('upgraded', e => { ev = e; }); const it = equipped('weapon'), g0 = S.gold, l0 = econLedger().spent.craft, sk0 = JSON.parse(JSON.stringify(S.skills));
     const ok = upgradeItem(it.id, undefined, ${JSON.stringify(opts)});
     const dxp = Object.fromEntries(Object.keys(S.skills).map(k => [k, [S.skills[k].lv - sk0[k].lv, Math.round((S.skills[k].xp - sk0[k].xp) * 1000) / 1000]]));
     return JSON.stringify({ ok, plus: it.plus, spent: Math.round(g0 - S.gold), led: Math.round(econLedger().spent.craft - l0), ev: ev && { gold: ev.gold, cover: ev.cover }, ingot: S.mats.ingot[2], dxp, refund: craftUpgradeRefund(it) }); })()`));
   const ra = run(a, undefined), rb = run(b, { cover: true });
-  assert(ra.ok && rb.ok && ra.plus === 7 && rb.plus === 7 && ra.spent === 1800 && rb.spent === 2230 && rb.led === 2230 && rb.ingot === 0,
-    `covering 3 of 6 Silver Ingots spends 1,800 + 430 gold under the upgrade's ledger kind; all 6 in hand cost 1,800 (${JSON.stringify([ra.spent, rb.spent, rb.led, rb.ingot])})`);
-  assert(JSON.stringify(ra.ev) === '{"gold":1800,"cover":{"units":0,"gold":0}}' && JSON.stringify(rb.ev) === '{"gold":1800,"cover":{"units":3,"gold":430}}', `the upgraded event carries cover { units, gold } (${JSON.stringify([ra.ev, rb.ev])})`);
+  assert(ra.ok && rb.ok && ra.plus === 7 && rb.plus === 7 && ra.spent === 1800 && rb.spent === 4400 && rb.led === 4400 && rb.ingot === 0,
+    `covering 6 Silver Ingots spends 1,800 + 2,600 gold under the upgrade's ledger kind; the Ingots in hand cost 1,800 (${JSON.stringify([ra.spent, rb.spent, rb.led, rb.ingot])})`);
+  assert(JSON.stringify(ra.ev) === '{"gold":1800,"cover":{"units":0,"gold":0}}' && JSON.stringify(rb.ev) === '{"gold":1800,"cover":{"units":6,"gold":2600}}', `the upgraded event carries cover { units, gold } (${JSON.stringify([ra.ev, rb.ev])})`);
   assert(JSON.stringify(ra.dxp) === JSON.stringify(rb.dxp) && ['mine', 'wood', 'forage', 'hunt'].every(k => !rb.dxp[k] || (rb.dxp[k][0] === 0 && rb.dxp[k][1] === 0)),
     `covered units give no skill XP: only the upgrade's own station XP, the same as with the Ingots in hand (${JSON.stringify(rb.dxp)})`);
   assert(ra.refund === rb.refund, `salvage pays back the same step gold, never the cover (${ra.refund} / ${rb.refund})`);
@@ -18068,19 +18067,19 @@ if (section('upgrade-gold-covers-short')) try {
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
       await page.goto('http://lf.test/'); await page.waitForTimeout(3200);
       const X = s => page.evaluate(s => window.__t.x(s), s);
-      await X(`S.activity = 'gather'; S.mats.ingot[2] = 3; for (const st of REFINE_STATIONS) refineOrders(st).length = 0; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(250);
+      await X(`S.activity = 'gather'; for (const st of REFINE_STATIONS) refineOrders(st).length = 0; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(250);
       const r = await X(`(() => { const r = document.querySelector('.cf-up-box .cf-short'); if (!r) return null; const bs = [...r.querySelectorAll('button')]; const c = r.querySelector('.cf-cover'), box = c && c.getBoundingClientRect();
         return { btns: bs.map(b => b.className.replace('mini ', '')), cover: c ? c.textContent : '', dis: c ? c.disabled : null, inView: !!box && box.right <= innerWidth && box.left >= 0 }; })()`);
-      assert(r && JSON.stringify(r.btns) === '["cf-order","cf-cover"]' && r.cover === 'Upgrade: 1,800 + 430 gold for 3 Silver Ingots' && r.dis === false && r.inView,
+      assert(r && JSON.stringify(r.btns) === '["cf-order","cf-cover"]' && r.cover === 'Upgrade: 1,800 + 2,600 gold for 6 Silver Ingots' && r.dis === false && r.inView,
         `the Silver Warblade's upgrade row offers the Smelt order first and the gold cover second, inside a 360 px screen (${JSON.stringify(r)})`);
       const g0 = await X('S.gold');
       await X(`document.querySelector('.cf-up-box .cf-cover').click(); true`); await page.waitForTimeout(250);
       const after = await X(`JSON.stringify([equipped('weapon').plus, Math.round(${g0} - S.gold), REFINE_STATIONS.map(s => refineOrders(s).length)])`);
-      assert(after === '[7,2230,[0,0,0]]', `one press upgrades to +7 for 2,230 gold and queues nothing (${after})`);
+      assert(after === '[7,4400,[0,0,0]]', `one press upgrades to +7 for 4,400 gold and queues nothing (${after})`);
       // short of gold: the button stays, pressed does nothing, and says how much more
-      await X(`S.gold = 2000; S.mats.ingot[2] = Math.ceil(upgradeCost(equipped('weapon')).mats.ingot / 2); craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(250);
+      await X(`S.gold = 2000; craftUI.openItem(S.equip.weapon); true`); await page.waitForTimeout(250);
       const poor = await X(`(() => { const c = document.querySelector('.cf-up-box .cf-cover'), w = document.querySelector('.cf-up-box .cf-cover-why'); return c ? [c.disabled, w ? w.textContent : ''] : null; })()`);
-      assert(poor && poor[0] === true && poor[1] === 'To cover them: 1.13K more gold.', `short of gold, the cover button is off and a line says how much more (${JSON.stringify(poor)})`);
+      assert(poor && poor[0] === true && poor[1] === 'To cover them: 3.30K more gold.', `short of gold, the cover button is off and a line says how much more (${JSON.stringify(poor)})`);
       assert(!errs.length, 'upgrade-gold-covers-short: no page errors' + (errs.length ? ': ' + errs[0] : ''));
     } finally { await browser.close(); }
   })();

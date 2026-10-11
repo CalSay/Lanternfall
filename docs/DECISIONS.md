@@ -378,9 +378,10 @@ Older design specs were retired on 2026-10-02. Read any of them with `git show 1
   station runs up to 3 orders in turn (a shortfall amount or All, which keeps 20% of each input), while you fight and
   while you are away. From grade 2 every craft's ore, wood, fibre and hide count becomes the middle at half, rounded up,
   and every upgrade's material converts the same way at every grade (Copper Warblade +1 = 1 Copper Ingot). On an upgrade
-  only, gold may cover the material a hero is short, at 9 foes of the tier's foe gold for each raw unit (a Plank is 2), once
+  only, gold may cover the material a hero is short, at 27 foes of the tier's foe gold for each raw unit (a Plank is 2), once
   its gathering tier is open and its station built; covered units give no skill XP (gold-covers-material ruling,
-  2026-10-08). Gold covers at most half of an upgrade's material: the hero holds the rest (gold-cover-share, 2026-10-11). Crafts always take their materials. Tools, charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
+  2026-10-08; the price rose from 9 to 27 in gold-cover-share, 2026-10-11, so gold covers at most half and still binds: a
+  per-step half cap left Tobin's gold idle after minute 32). Crafts always take their materials. Tools, charms and trinkets stay raw. `REFINE_TUNE.on = false` puts every cost back to raw and keeps stored middles. Refining
   is never for sale (Lantern Rule 4).
   - **Names** (planner's, kept by the build): Ingot: Copper, Iron, Silver, Cobalt, Mithril Ingot. Plank: Pine, Birch,
     Oak, Mangrove, Tideash Plank. Cloth: Hemp Cloth, Linen, Briar Cloth, Kelp Cloth, Stormgrass Cloth. Leather: Bristle,
