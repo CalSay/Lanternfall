@@ -21088,7 +21088,7 @@ if (section('craft-costs-up-front')) try {
           const r2 = JSON.parse(await X(rows));
           assert(get(r2, 'axe')[1] === '' && get(r2, 'axe')[2] === 'Craft Copper Woodaxe', `${at}: with enough for both, the Woodaxe warns of nothing (${JSON.stringify(get(r2, 'axe'))})`);
           await X(`document.querySelector('.cf-st[data-st=forge]').click(); true`);
-          const nf = await until(`(e => e && e.textContent === 'Nothing to forge for Pip yet. These are for other heroes.')(document.querySelector('.cf-nofit'))`);
+          const nf = await until(`(e => e && e.textContent === 'Nothing to forge for Pip yet. These are for other classes.')(document.querySelector('.cf-nofit'))`);
           assert(nf, `${at}: the Forge says it has nothing for Pip ("${await X(`(document.querySelector('.cf-nofit') || {}).textContent`)}")`);
           assert(!errs.length, `${at}: no page errors on the Craft tab` + (errs.length ? ': ' + errs[0] : ''));
           await ctx.close();

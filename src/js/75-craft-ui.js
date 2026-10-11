@@ -783,7 +783,7 @@ let craftUI = null;
       if (sig !== rec.sig) {
         rec.sig = sig; rec.rows = {};
         rec.list.textContent = '';
-        if (noFit) rec.list.append(el('p', 'note cf-nofit', `Nothing ${stationVerb(st)} for ${heroFirst()} yet. These are for other heroes.`));
+        if (noFit) rec.list.append(el('p', 'note cf-nofit', `Nothing ${stationVerb(st)} for ${heroFirst()} yet. These are for other classes.`));
         else if (!ks.length) rec.list.append(el('p', 'note', `Nothing at the ${CRAFT_STATIONS[st].n} yet.`));
         for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
         if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes. Choose All to see them.`));
