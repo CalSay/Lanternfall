@@ -62,6 +62,9 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   the act in the 'strike' phase after `fxImpactIn`), and give a new move a 62b recipe so its impact time is known. A test that
   presses in a browser and reads the foe's HP at once must tick past the impact first. Why: Cal saw damage land the moment he
   pressed, before the swing or arrow reached the foe (damage-on-impact, 2026-10-10).
+- A move with several shots lands each through `arrow(i, f)` in 59k `turnHeroAct`, and whatever must follow all its hits goes in
+  `then(f)`; give its 62b recipe `n` so `fxImpactIn(id, i)` knows each shot's time. Why: after #348 Volley, Twin Shot and Moonlit
+  Volley landed every arrow at the first, so later arrows flew in after the damage showed (multi-hit-impacts, 2026-10-11).
 
 - Before a spec renames, retypes or re-themes a live ability, grep `tools/check.mjs` and the tools for its id and read every
   assert keyed to it: the complete-icons list (`COMPLETE`), the Stars' `kit` counts, the loadout-odds Learn order, the counter

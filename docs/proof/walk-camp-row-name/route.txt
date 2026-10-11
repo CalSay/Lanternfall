@@ -1,0 +1,21 @@
+# seed: 1
+# Proof for card walk-camp-row-name (tooling only; the fix is in tools/walk.mjs). What a player sees: Next Up's camp-step row says
+# "Hearth 2: ready to build" and its Go opens Camp on the Hearth card, whose name reads "Campfire" and whose button reads
+# "Build Hearth 2". The walk now finds that card by the flash, by the card's own name ("Campfire" for "Campfire (Hearth 2)") or by
+# what its Build button names ("Hearth 2"), so it presses Build on the first Next Up press. This route sets up the mid save at
+# Hearth 1 with no Tavern and no Store (a cheaper build is camp-build's pick, so the camp-step row shows) and checks the two names.
+# The walk itself (node tools/walk.mjs --seed 1) is the full proof; its press log is in the PR.
+new mid
+tab new camp.b.hearth=1 camp.b.tavern=0 camp.b.store=0
+wait-for "#nuChip" 10
+tap-if "Continue"
+tap-if "Continue"
+tap "Next up"
+wait 1
+expect "Hearth 2: ready to build"
+shot nextup-hearth2-row
+tap "Hearth 2: ready to build"
+wait 1
+expect "Campfire"
+expect "Build Hearth 2"
+shot camp-campfire-card

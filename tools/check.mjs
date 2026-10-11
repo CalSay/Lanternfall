@@ -13593,6 +13593,61 @@ if (section('damage-on-impact (core)')) try {
     io.damageFoe = d => { hp -= d; return d; }; const m = turnNew(p, io); m.phase = 'hero'; m.cds.attack = 0; const ok = turnResolve(m, { kind: 'attack' }, 0, io); return JSON.stringify({ ok, ph: m.phase, hp }); })()`);
   assert(s.ok && s.ph === 'recovery' && s.hp < 1e9, `damage-on-impact: a scratch fight with no impact timing still lands on the press (${JSON.stringify(s)})`);
 } catch (e) { fail('damage-on-impact crashed: ' + (e.stack || e)); }
+// ---- damage-on-impact, multi-hit (card multi-hit-impacts): Volley, Twin Shot and Moonlit Volley land each arrow's share and its
+// on-hit effects when that arrow arrives (62b fxImpactIn(id, i)), not all at the first. The total is what one landing dealt
+// (the same press with every arrow at the first's time), a kill lands the rest at once, and a fight cut off mid-volley lands no more.
+if (section('damage-on-impact multi-hit (core)')) try {
+  const fx = fs.readFileSync(path.join(ROOT, 'src', 'js', '62b-fx.js'), 'utf8');
+  const g = loadCore({ seed: 7, turns: true, extraSource: fx }), E = s => g.eval(s), J = s => JSON.parse(E(s));
+  const until = (cond, n = 600) => E(`(() => { for (let i = 0; i < ${n} && !(${cond}); i++) tick(0.02); return !!(${cond}); })()`);
+  E(`globalThis.__io = TURN_LIVE_IO.impactIn;`);
+  // a fresh Wren fight, ready to press; crits off (no Aim, no crit chance) so two presses deal the same
+  const ready = (slots, ab) => {
+    E(`TURN_LIVE_IO.impactIn = __io; TURN_LIVE = null; soloPick('wren', { now: true }); S.solo.eq.wren = ${slots}; S.abil.unl.wren = ${slots}.filter(Boolean); TURN_TUNE.on = 1; S.L = 12; S.maxZone = 6; setZone(6); S.activity = 'fight'; arena = null; fightBoss = false; gearDirty(); spawn();`);
+    const met = until(`TURN_LIVE && !TURN_LIVE.ended && TURN_LIVE.phase === 'hero' && TURN_LIVE.cds.attack === 0`, 2000)
+      && E(`turnSyncEquip(); TURN_LIVE.cds['${ab || 'attack'}'] = 0; TURN_LIVE.p.eq.includes(${slots}[0])`);
+    E(`TURN_LIVE.noTiming = true; TURN_LIVE.p.critChance = 0; TURN_LIVE.p.gates = null; Object.assign(TURN_LIVE.e, { bleed: 0, bleedT: 0, mark: 0, markV: 0, sunder: 0, exposed: 0 }); Object.assign(TURN_LIVE.h, { aim: 0, keen: 0, blind: 0, sear: 0, weaken: 0, mom: 0 });`);
+    return met;
+  };
+  for (const [name, slots, ab, n, marked] of [['Volley', '["volley", null, null]', 'volley', 3, false], ['Twin Shot', '["twinshot", null, null]', null, 2, false],
+    ['Moonlit Volley', '["moonvolley", null, null]', 'moonvolley', 5, true]]) {
+    const id = ab || 'wren:attack', press = ab ? `turnCombatAction('ability', 0)` : `turnCombatAction('attack')`;
+    const met = ready(slots, ab), times = J(`JSON.stringify([0, 1, 2, 3, 4].map(i => fxImpactIn('${id}', i)))`);
+    E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; ${marked ? 'TURN_LIVE.e.mark = 3; TURN_LIVE.e.markV = 0.1;' : ''}`);
+    const t0 = E('TURN_LIVE.now'), ok = E(press);
+    // each step's HP and Bleed: the arrows land one by one at their impacts
+    const steps = J(`(() => { const out = []; let hp = TURN_LIVE.foe.hp, b = TURN_LIVE.e.bleed; for (let i = 0; i < 400 && TURN_LIVE.phase !== 'recovery'; i++) { tick(0.005);
+      if (TURN_LIVE.foe.hp !== hp || TURN_LIVE.e.bleed !== b) out.push({ t: TURN_LIVE.now - ${t0}, hp: hp - TURN_LIVE.foe.hp, b: TURN_LIVE.e.bleed - b, ph: TURN_LIVE.phase }); hp = TURN_LIVE.foe.hp; b = TURN_LIVE.e.bleed; }
+      return JSON.stringify(out); })()`);
+    const hits = steps.filter(s => s.hp > 0), total = steps.reduce((a, s) => a + s.hp, 0);
+    const timed = hits.length === n && hits.every((s, i) => Math.abs(s.t - times[i]) < 0.02) && new Set(times.slice(0, n)).size === n;
+    assert(met && ok && timed && hits.slice(0, -1).every(s => s.ph === 'strike'),
+      `multi-hit-impacts ${name}: ${n} arrows land one by one at ${times.slice(0, n).map(t => t.toFixed(2)).join(', ')} s (met ${met}, pressed ${ok}; ${hits.map(s => `${s.hp.toFixed(0)} at ${s.t.toFixed(2)} ${s.ph}`).join(', ')})`);
+    if (marked) assert(hits.length === n && hits.every(s => s.b === 1), `multi-hit-impacts ${name}: each arrow adds its Bleed as it lands on a Marked foe (${JSON.stringify(steps.map(s => s.b))})`);
+    // the same press with every arrow at the first's time (one landing, as #348 shipped): the same total
+    ready(slots, ab);
+    E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; ${marked ? 'TURN_LIVE.e.mark = 3; TURN_LIVE.e.markV = 0.1;' : ''} TURN_LIVE_IO.impactIn = (id, i) => __io(id, 0);`);
+    const hp1 = E('TURN_LIVE.foe.hp'); E(press); until(`TURN_LIVE.phase === 'recovery'`, 200); const once = hp1 - E('TURN_LIVE.foe.hp');
+    assert(total > 0 && Math.abs(total - once) < 1e-6 * once, `multi-hit-impacts ${name}: the total is unchanged (${total.toFixed(2)} arrow by arrow, ${once.toFixed(2)} in one landing)`);
+  }
+  // a kill on the first arrow lands the rest at once (nothing), so the fight ends there
+  ready('["volley", null, null]', 'volley');
+  E(`TURN_LIVE.foe.hp = 1; globalThis.__m = TURN_LIVE;`); const t1 = E('TURN_LIVE.now'); E(`turnCombatAction('ability', 0)`);
+  until(`__m.ended`, 60);
+  assert(E('__m.ended && __m.strike === null') && E('__m.now') - t1 < E(`fxImpactIn('volley', 0)`) + 0.03, `multi-hit-impacts: a first arrow that kills ends the fight on its impact (${(E('__m.now') - t1).toFixed(2)} s)`);
+  // a fight cut off between the arrows lands no more of them
+  ready('["volley", null, null]', 'volley');
+  E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; globalThis.__f = TURN_LIVE.foe; turnCombatAction('ability', 0);`);
+  until(`__f.hp < 1e7`, 100);
+  E(`globalThis.__hp = __f.hp; turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); for (let i = 0; i < 40; i++) tick(0.02);`);
+  assert(E('__f.hp === __hp && __hp < 1e7'), `multi-hit-impacts: a fight cut off after the first arrow lands no more (${E('__hp')} then ${E('__f.hp')})`);
+  // a hitstop between arrows holds the fight clock, not the arrows: the next lands on time
+  ready('["volley", null, null]', 'volley');
+  E(`TURN_LIVE.foe.hp = TURN_LIVE.foe.max = 1e7; globalThis.__f = TURN_LIVE.foe; turnCombatAction('ability', 0);`);
+  E(`for (let i = 0; i < 400 && __f.hp >= 1e7; i++) tick(0.005);`);   // land the first arrow on a fine step, so the gap below is measured from it
+  const hs = J(`(() => { turnHitstop(0.05); let hp = __f.hp, n = 0; while (__f.hp === hp && n < 50) { tick(0.005); n++; } return JSON.stringify({ n, gap: n * 0.005 }); })()`);
+  assert(Math.abs(hs.gap - E(`fxImpactIn('volley', 1) - fxImpactIn('volley', 0)`)) < 0.015, `multi-hit-impacts: a hitstop between arrows does not hold the next one back (${hs.gap.toFixed(3)} s after the first)`);
+} catch (e) { fail('damage-on-impact multi-hit crashed: ' + (e.stack || e)); }
 
 // ---- trick-read-rate (why W2): the game counts how often the player reads a zone boss's tricks (S.bossOdds.reads, 59m), from the
 // live fight (59k foeContact: zone, zb, pressed, early). A fixture fight at the zone 10 Champion presses on a set share of its
