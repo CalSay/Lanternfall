@@ -17637,6 +17637,132 @@ if (section('tips-hold-740')) try {
   }
 } catch (e) { fail('tips-hold-740 crashed: ' + (e.stack || e)); }
 
+// ==== stale-guide-tips: a tip never takes a tap meant for the button under it, and a tip whose job is done never shows ====
+// Sunday release check 11 Oct (reports/release-2026-10-11.md, Still rough 6 and Other findings): a boss tip ate an Attack tap; "Craft is open"
+// came back after two crafts and held the kill gap; the "Mine at the Copper Vein" tip vanished under it as the player reached for it; the
+// bounty toast went before a click; the Notices bounty line could not be clicked; lighting the fire queued Hesketh's talks and Skip skipped one.
+// Each case is replayed at 1280x720 and 740x360.
+if (section('stale-guide-tips')) try {
+  const at = 'stale-guide-tips';
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    const fx = n => fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', n), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h, fixture, edit, opts = {}) => {
+      const mobile = !(w === 1280 && h === 720), o = JSON.parse(fx(fixture)); if (edit) edit(o);
+      const ctx = await browser.newContext(Object.assign({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true }, opts));
+      await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o)); }, { raw: JSON.stringify(o), key: KEY });
+      const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await page.evaluate(() => document.querySelectorAll('.away-ov').forEach(n => n.querySelector('button') && n.querySelector('button').click()));
+      return { ctx, page, errs, X };
+    };
+    const LOOK = `JSON.stringify((() => { const b = document.querySelector('.ob-bub'), up = !!b && !b.hidden, ok = document.querySelector('.ob-ok');
+      return { want: soloGuideWants(), up, txt: up ? b.querySelector('.ob-txt').textContent : '', ok: up && ok && !ok.hidden ? ok.textContent : '', paused: ONBOARD.paused,
+        barOff: $('app').classList.contains('guide-bar-off'), sayQ: (S.onboard.sayQ || []).map(e => e.id), said: !!S.onboard.done['say:craft'], act: S.activity, tab: S.tab }; })())`;
+    const look = async X => JSON.parse(await X(LOOK));
+    const until = async (X, page, f, ms) => { let s = await look(X); for (const t0 = Date.now(); !f(s) && Date.now() - t0 < ms;) { await page.waitForTimeout(100); s = await look(X); } return s; };
+    const VIEWS = [[1280, 720], [740, 360]];
+    try {
+      // 1. "Craft is open" never covers a tip that asks for a press, and never shows once Craft has been used
+      // (save-forge-short: cold, the Forge short of Copper Ore and Pine Log; chopping at the Pine Grove, so Hesketh's line offers "Mine at the Copper Vein")
+      // (a news line still due stands in for the queued line: Foraging, whose view the save has not opened; the save's Copper Pickaxe is made, so
+      // "Craft is open" is the stale one)
+      for (const [w, h] of VIEWS) for (const id of ['forage', 'craft']) {
+        const SAY = 'say:' + id, stale = id === 'craft', v = `${at} (browser ${w}x${h}, ${stale ? '"Craft is open" with Craft already used' : 'a news line still due'})`;
+        const { ctx, page, errs, X } = await open(w, h, 'save-forge-short.json', o => { o.onboard.sayQ = []; delete o.onboard.done[SAY]; if (o.onboard.seen) delete o.onboard.seen[id === 'craft' ? 'make' : 'forage']; });
+        await X('closeMenu(); setNode("wood", 1); setActivity("gather"); true');
+        let s = await until(X, page, s => s.want === 'stock:forge' && /Copper Vein/.test(s.ok), 10000);
+        assert(s.want === 'stock:forge' && s.ok === 'Mine at the Copper Vein', `${v}: chopping, the Forge tip offers "Mine at the Copper Vein" (${JSON.stringify(s)})`);
+        // the system opens (its news line queues) while the player reads the tip
+        await X(`emit('unlock', { id: ${JSON.stringify(id)}, tab: null, view: null, quiet: false }); true`);
+        const seen = [];
+        for (const t0 = Date.now(); Date.now() - t0 < 4000;) { s = await look(X); if (s.want !== 'stock:forge' || s.ok !== 'Mine at the Copper Vein') seen.push(JSON.stringify(s)); await page.waitForTimeout(120); }
+        const q = JSON.parse(await X(`JSON.stringify({ q: (S.onboard.sayQ || []).map(e => e.id), done: !!S.onboard.done[${JSON.stringify(SAY)}], tool: S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool) })`));
+        assert(!seen.length && (stale ? !q.q.includes(id) && q.done && q.tool : q.q.includes(id) && !q.done),
+          `${v}: the tip with its Go button stays put for 4 s; ${stale ? 'the stale Craft line is dropped unsaid' : 'the queued line waits behind it'} (${seen[0] || JSON.stringify(q)})`);
+        await page.click('.ob-ok');
+        s = await until(X, page, s => s.want === SAY, stale ? 3000 : 6000);
+        if (stale) assert(s.want !== SAY && !/Craft is open/.test(s.txt), `${v}: with the tip answered, "Craft is open" never shows (${JSON.stringify(s)})`);
+        else assert(s.want === SAY && s.act === 'gather' && /forage/i.test(s.txt), `${v}: once its Go is pressed (mining now), the queued line has its turn (${JSON.stringify(s)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // 2. the zone boss's tip is up as the player taps Attack: the tap still presses Attack, and answers the tip. At 740x360 the tip is made too
+      // tall to end above the fight buttons (as a long line or a big font can), so it hides the bar (.guide-bar-off) and the tap lands where
+      // Attack was.
+      for (const [w, h] of VIEWS) {
+        const v = `${at} (browser ${w}x${h}, the boss tip${w === 740 ? ' over the hidden bar' : ''})`;
+        const { ctx, page, errs, X } = await open(w, h, 'save-dipper-z4.json');
+        await X(`GUIDE_STEPS.forEach(s => { if (s.id !== 'boss' && !S.onboard.done[s.id]) S.onboard.done[s.id] = 1; }); delete S.onboard.done.boss; S.onboard.sayQ = []; S.maxZone = 1; S.zone = 1; closeMenu(); setActivity('fight'); fightBoss = true; spawn(); respawn = 0;
+          window.__atk = 0; on('soloAttack', () => window.__atk++); window.__hits = 0; const b = document.querySelector('#soloBar .sb-atk'); b.addEventListener('pointerdown', () => window.__hits++); b.addEventListener('click', () => window.__hits++); true`);
+        if (w === 740) await page.addStyleTag({ content: '.ob-bub.side.btn { padding-bottom: 240px !important; }' });
+        let s = await until(X, page, s => s.want === 'boss' && (w !== 740 || s.barOff), 15000);
+        // the button's spot as the player last saw it
+        const r = JSON.parse(await X(`JSON.stringify((() => { const r = document.querySelector('#soloBar .sb-atk').getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, h = document.elementFromPoint(x, y);
+          return { x, y, hero: turnCombatSnapshot().phase === 'hero', hidden: getComputedStyle(document.querySelector('#soloBar .sb-atk')).visibility === 'hidden' }; })())`));
+        const before = await look(X);
+        if (w === 1280) await page.mouse.click(r.x, r.y); else await page.touchscreen.tap(r.x, r.y);
+        await page.waitForTimeout(400);
+        s = await look(X);
+        const n = JSON.parse(await X('JSON.stringify({ atk: window.__atk, hits: window.__hits, boss: !!S.onboard.done.boss })'));
+        assert(before.want === 'boss' && (w !== 740 || (before.barOff && r.hidden && r.hero)) && n.boss && n.hits >= 1 && s.want !== 'boss' && (!r.hero || n.atk >= 1), `${v}: a tap on Attack's spot with the boss tip up reaches Attack${r.hero ? ' and attacks' : ''}, and answers the tip (${r.hidden ? 'Attack hidden under the tip' : 'Attack in view'}; ${JSON.stringify(n)}; ${JSON.stringify(s)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // 3. the bounty toast stays until tapped (or claimed elsewhere); its line in Notices opens the bounty board
+      for (const [w, h] of VIEWS) {
+        const v = `${at} (browser ${w}x${h}, the bounty toast)`;
+        const { ctx, page, errs, X } = await open(w, h, 'save-dipper-z4.json');
+        await X(`GUIDE_STEPS.forEach(s => { if (!S.onboard.done[s.id]) S.onboard.done[s.id] = 1; }); S.onboard.sayQ = []; closeMenu();
+          S.bounties.slots.forEach(b => { if (b && b.k) b.have = 0; }); const b = S.bounties.slots.find(x => x && x.k); b.have = b.need; notes.pops.length = 0; notes.popN = 0; notes.clock = 9999; true`);
+        await page.waitForFunction(() => window.__t.x('!NEWS.open'), null, { timeout: 8000 });   // (the boot's "What's new" window has closed)
+        await X('emit("bountyReady", { i: S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need) }); true');
+        const toast = () => X('[...document.querySelectorAll("#toasts .toast")].filter(t => !t._gone && /Bounty ready to claim/.test(t.textContent)).length');
+        let up = 0; for (const t0 = Date.now(); !up && Date.now() - t0 < 3000;) { up = await toast(); if (!up) await page.waitForTimeout(100); }
+        await page.waitForTimeout(8000);
+        const still = await toast();
+        assert(up === 1 && still === 1, `${v}: the toast is still there 8 s on, waiting for a tap (${up} -> ${still})`);
+        await X('BOUNTY_API.claim(S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need)); true');
+        await page.waitForTimeout(1800);
+        assert(await toast() === 0, `${v}: claimed on the board, the toast goes`);
+        // the Notices line
+        await X('openNoticeLog(); true'); await page.waitForTimeout(400);
+        const row = await page.$('.nlog-row.has-go');
+        const txt = row ? await row.textContent() : '';
+        assert(row && /Bounty ready to claim/.test(txt) && await row.getAttribute('role') === 'button', `${v}: the bounty line in Notices is a button (${JSON.stringify(txt)})`);
+        if (row) await row.click();
+        await page.waitForTimeout(600);
+        const g = JSON.parse(await X('JSON.stringify({ tab: S.tab, view: curView("adv"), sheet: !!document.querySelector(".bsheet-ov:not(.docked)") })'));
+        assert(g.tab === 'adv' && g.view === 'bounties' && !g.sheet, `${v}: a tap on it closes Notices and opens the bounty board (${JSON.stringify(g)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // 4. lighting the fire queues Hesketh's talks back to back: one Skip skips the run, and both are filed in the Journal
+      for (const [w, h] of VIEWS) {
+        const v = `${at} (browser ${w}x${h}, story Skip)`;
+        const { ctx, page, errs, X } = await open(w, h, 'save-unlit-8log.json', null, { story: true });
+        await X('window.__sc = []; on("storyScene", sc => window.__sc.push(sc.id)); true');
+        await page.waitForTimeout(500);
+        const lit = await X('hearthLight()');
+        await page.waitForSelector('.sty-sheet .sty-skip', { timeout: 8000 }); await page.waitForTimeout(300);
+        await page.click('.sty-sheet .sty-skip');
+        await page.waitForTimeout(2500);
+        const r = JSON.parse(await X('JSON.stringify({ sc: window.__sc, sheet: !!document.querySelector(".sty-sheet"), ends: S.story.ends, busy: storyBusy("n:heskethTalk") || storyBusy("n:heskethHearth") })'));
+        assert(lit && r.sc.length === 1 && !r.sheet && !r.busy && r.ends['n:heskethHearth'] === 'skipped' && r.ends['n:heskethTalk'] === 'skipped',
+          `${v}: one Skip ends Hesketh's fire talk and the talk queued behind it; both are filed as skipped (${JSON.stringify(r)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('stale-guide-tips crashed: ' + (e.stack || e)); }
+
 // ==== defend-bar-740 (cold leg 10 Oct): on the foe's turn the Dodge/Parry timing bar covered the Thorn Imp's legs at 740x360, so the player
 // could not see the wind-up they were timing. On a phone on its side Dodge and Parry now sit beside the track on one row and the bar starts under
 // the actors' feet (80-landscape.css); 1280x720, 1366x640 and 360x740 keep the bar under the track as before. Checked on a plain foe and a

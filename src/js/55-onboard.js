@@ -1,33 +1,9 @@
-// 55-onboard: the guided first ten minutes (docs/design/onboarding.md). Two parts:
-//   1. Progressive unlocks. Tabs, sub-views and a few sections appear as the player reaches them,
-//      so a new game starts with the Fight tab only. The rules are the FEATURES table below.
-//   2. The guide: a short list of contextual hints (GUIDE_STEPS). Each step completes by doing
-//      the thing. The UI (75-onboard-ui.js) draws the marker and the sentence.
-// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
-//
-// isUnlocked(id) -> bool       UI files ask this; views and sections declare `feature: id`.
-//                              Unknown ids and falsy ids are unlocked.
-// onboardReveal(id)            unlock one feature now (the player navigated there some other way).
-// onboardUnlockAll()           every feature now ("Show every tab" in the Journal).
-// onboardStep() -> step | null the guide step to show now: { id, ...GUIDE_STEPS entry }.
-// onboardDone(id)              mark a guide step done (the UI's "x", or a UI-only action).
-// onboardTips(on)              guide on/off ("Skip tips" in the Journal).
-// onboardNeed(id) -> [{ fam, t, kind, have, n, name }]   what step `id` still waits for in materials ([] = nothing).
-// onboardWants(id) -> bool     step `id` is still due (tips on, not done or hidden, its when() true), in any fight phase.
-// onboardPaused(step) -> bool  should the game wait while this step shows (see PAUSE RULES below).
-// goalGate(goal) -> bool       Next Up filter: false while the goal's system is still hidden.
-//                              Only active once the UI turns it on (ONBOARD.gate), so the Node
-//                              tools see every goal.
-// onboardUse({ tab, view, feature }) -> { id, text } | null   the first-use line for the system on screen (FIRST_USE below):
-//                              each system that opens after the first fight explains itself once, in one line. The UI
-//                              asks only while no guide step shows and no fight is in view; it pauses the game only to hold
-//                              the gap between two foes with the fight in view, until Got it (staged-guide-followups).
-// onboardUseDone(id)           the line was read (x, or about 7 s on screen). No event, so guide walks never see it.
-// onboardJoined(id)            a starter joined on the road (56c, starters-join-when-met): the first opens the `switch` row, a later
-//                              one stamps the clock (got['join:<id>']), so no unlock opens within ONBOARD_TUNE.gap of any join.
-// Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
-// State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
-//   tips, t (seconds played while the guide runs), taps, casts, sayQ: [{ id, arg }] (Hesketh's unread lines, 75-onboard-ui; reload-keeps-tips) }.
+// 55-onboard: the guided first ten minutes (docs/design/onboarding.md): progressive unlocks (FEATURES) and the guide (GUIDE_STEPS);
+// 75-onboard-ui.js draws them. CORE FILE: no DOM, window, document, canvas or localStorage.
+// API: isUnlocked(id), onboardReveal(id), onboardUnlockAll(), onboardStep() -> the step to show, onboardDone(id), onboardTips(on),
+// onboardNeed(id) -> short materials, onboardWants(id), onboardPaused(step), goalGate(goal), onboardUse(ctx) -> first-use line,
+// onboardUseDone(id), onboardJoined(id). Events: unlock { id, tab, view, quiet }, onboardStep { id }.
+// State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 }, tips, t, taps, casts, sayQ }.
 let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, guideHide, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardWants, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
 let lessonLast = -1;   // the foe's clock at the last tick (guideLessonHold: a hold starts only on the frame that crosses a window's opening)
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
@@ -117,33 +93,14 @@ const FIRST_USE = {
   blackjack: { text: "Bet gold and beat Hesketh's hand without going over 21." }
 };
 
-// GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
-// done() completes a step by doing the thing. Targets and sentences live in 75-onboard-ui.js.
-// Cold-Hearth steps (chop, light, bench, tool, forge, store) show only on a cold save; there tab:gat,
-// tab:world and tab:forge are done from the start (chop, light and tool replace them).
-// SOLO1 (the solo hero's first session): choose a hero (the create screen), Attack, the ability, Dodge, Parry and
-// the counter, the first boss, an upgrade, then Gather (Pine Log for the fire) and camp. cal-0107-staged-guide: in a turn fight the four
-// presses are one staged lesson, taught as each first comes up: Attack, Dodge, the ability, Parry. `pause`: the game waits while
-// the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button;
-// `needs`: the materials a step waits for (no pause, live progress). Build steps complete when the build starts.
+// GUIDE_STEPS, in priority order: the first step not done whose when() holds shows; done() ends it by doing the thing. Cold-Hearth
+// steps show only on a cold save. `pause`: the game waits while it shows; `ok`: a Got it step; `needs`: materials (live progress, no pause).
 const campBusy = id => campLv(id) >= 1 || (typeof campPending === 'function' && !!campPending(id));
 // only while its foe lives: a warning left by a foe that died (auto-play, a burn) cannot be parried, so it must not hold the game paused
 const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15 && (w.foe && !w.foe.dead && w.foe.hp > 0 && !w.foe.gone || !!(w.spec && w.spec.dead))); } catch (e) { return false; } };
 const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen);
-// PAUSE RULES (W1-A; owner: "the game pauses while a tutorial step is open"). A step pauses the game only while it waits
-// for the player to READ or PRESS something right now. A step whose goal needs game time (chop logs, wait for a build,
-// earn gold) never pauses: it has `needs` (the materials it waits for) and shows live progress instead. A press step whose
-// build or recipe is still short of materials has `pauseUnless` (the same list): it does not pause while any is missing,
-// so no step can freeze the clock it needs. tools/check.mjs holds all three rules.
-//   attack, ability, dodge, parry, gather, light, upgrade   pause (press this now)
-//   spend                                                    pause (press this now; spend-points-before-nextup)
-//   boss                                                     pause (Got it)
-// cal-0107-staged-guide: in a fight only the held lessons (attack, dodge, ability, parry, boss) show and pause. Every other step
-// (`ph` 'between') shows only between fights, and its line is hidden while a foe is on the field.
-//   chop, stock:bench, stock:tool, stock:forge, stock:weapon, stock:store  no pause (needs materials: live progress)
-//   bench, tool, forge, weapon, store                        pause only once the materials are in hand (pauseUnless)
-//   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them). staged-guide-followups:
-//                                                            a Got it line that starts in the gap between foes holds that gap (75-onboard-ui)
+// PAUSE RULES (W1-A): a step pauses only while it waits for a read or a press now, never for game time; `pauseUnless`: no pause while
+// short of materials. In a fight only the held lessons show; `ph` 'between' steps wait for the gap. tools/check.mjs holds the rules.
 const stockOf = (fam, t, n) => [fam, t, n];
 // A Lv 1 row's gold rides along as ['gold', 0, n] (the Workbench): needShort reads it from S.gold, so a press step never pauses short of gold either.
 const matsOfBuild = id => { const f = typeof hearthFirst === 'function' ? hearthFirst(id) : null; return f ? f.mats.concat(f.gold > 0 ? [['gold', 0, f.gold]] : []) : []; };

@@ -144,6 +144,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - After a screen that held the game closes, call `storySync()` yourself: the guide can pause the ticks that would have played what waited. Why: the area caption never came when the guide's tip was up. (intro-and-picker, 2026-10-06)
 - Before a ruling moves who is met where, check `STORY_BEATS` (`21k-story-hollow.js`) and bible 4.4: meet scenes are written for their place (Wren's cave, Pip's graves). Why: a judge ruling put Wren and Pip at the wrong Champions; Codex P1 on PR #83. (early-game lead, 2026-10-06)
 
+- A Skip that ends more than the scene on screen must leave queued choice scenes to play: skipping the card before a choice must never take the choice's default. Why: the story UI check (Voice card, then the lamp choice) failed when stale-guide-tips' first cut skipped the whole queue. (stale-guide-tips, 2026-10-11)
+
 ## UI and menus
 - A font swap moves every line stacked under a hidden one: a face with shorter line boxes lifts the line below, so re-run the overlap checks (turn banner vs trick line) at 740x360 before the first push. Why: ui2-look's Barlow made the turn banner's trick line rise 5 px into the banner (`.tc-on .tv-top .tv-warn` margin 14 -> 19 px). (ui2-look, 2026-10-11)
 - Keep a role's old fallback stack when you swap its web font: the fallback-font fit checks (ability names, place names) are tuned to it, and a wider fallback cut "Momentum" at 1280x720. Font sizes set inline in JS skip `scaleText`, so give them a 14 px floor by hand on the desktop tiers. (ui2-look, 2026-10-11)
@@ -264,6 +266,8 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - An absolutely placed grid item (the toast dock) needs both grid lines: `grid-row: 3` ends at the grid's padding edge, not after one track, so the dock fell over the fight bar. Write `3 / 4`, and check a moved notice against the fight bar and the guide panel, not only the menu. Why: toast-guide-side-menu's first cut put the notices over Parry and Dodge at 1280x720 while its menu check passed.
 - CI's eyes job replays a route upright and sideways (desktop is report only), so a desktop-only card's route expects only what all three views share; leave the desktop-only state to check.mjs. Why: toast-guide-side-menu's `expect ".app.guide-side.menu-open"` failed upright, where the guide has no side panel (CI eyes, 2026-10-11).
 - A label moved into the band under the fight plates (`--vs-b`) shares it with the turn UI: on desktop a foe trick's line (`.tv-warn`) jumps up to `--vs-b` beside the place line while the whose-turn banner shows (60-turn). Measure a new label against the plates, the turn line, the banner and a shown trick line, not the plates alone. Why: the reviewer caught the Oil bar under a trick line at 1280x720 that a plates-only check passed. (deepwell-floor-label-clear, 2026-10-11)
+
+- The guide panel takes no taps (`.ob-bub` has `pointer-events: none`; only its Got it, Go and × buttons do), so a tip can only take a fight tap when it hides the bar (`.guide-bar-off`) or its button sits over one. To test a tap-through, make the tip too tall to fit above the bar, not its words lie over a button. Why: stale-guide-tips' first check laid the words over Attack and the tap reached Attack on the old build too. (stale-guide-tips, 2026-10-11)
 
 ## Saves and offline parity
 
