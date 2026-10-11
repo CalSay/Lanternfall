@@ -1,0 +1,19 @@
+# seed: 1
+# Proof for card deepwell-floor-label-clear. In a Deepwell fight the Oil bar and "Floor N" sit centred under the hero and foe
+# plates, where the place line goes in other fights, instead of over the hero's HP and the foe's name.
+# The save (tests/proof-fixtures/save-deep-spill.json): Pip at zone 38 with a paused Deepwell run on floor 1.
+#   floor-*.png   the run resumed: Pip's turn against the Deep Spore Cap, the Oil bar and "Floor 1" under the plates
+# Before the fix both sat on the stage's top edge: "Floor 1" over "Deep Spore Cap" and the Oil count over Pip's HP
+# (docs/proof/deepwell-spillover-keeps-fight/back-*.png).
+# tools/check.mjs ("deepwell-floor-label-clear") measures the boxes at 1280x720, 740x360, 360x740 and 1920x1080.
+new deep-spill
+wait 3
+tap-if "Dismiss this tip"
+tap "Switch activity"
+wait 1
+tap "Deepwell · Floor 1"
+wait 4
+tap-if "Got it"
+expect "Your boons this run"
+expect ".app.deep-run .dw-fn"
+shot floor

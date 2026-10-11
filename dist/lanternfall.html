@@ -1884,8 +1884,7 @@ span.cf-d { font-weight: 600; }
 .sw-seg { margin: 0; }
 .sw-seg button { min-height: 44px; }
 .dd-fdone { margin: 10px var(--gut, 12px) 0; }
-/* 60-deepwell: the Deepwell (75-deepwell-ui.js): run HUD over the stage, the boon strip in place of
-   the control row, the full-screen choice sheet, the run-end card, and the Fight tab's Deepwell view. */
+/* 60-deepwell (75-deepwell-ui.js): the run HUD under the plates, the boon strip, the sheets, the run-end card, the Deepwell view. */
 :root { --deep: #7FB2FF; --deep-dim: #3F6FA8; --deep-bg: #0E1624; --oil: #FF9E3D; }
 
 /* ---- in a run: the control row swaps for the boon strip (62-stage hides the zone line and boss timer) ---- */
@@ -1894,7 +1893,7 @@ span.cf-d { font-weight: 600; }
 .app.deep-run .dw-row { display: flex; }
 .app.deep-run .dw-hud { display: flex; }
 
-.dw-hud { position: absolute; left: 0; right: 0; top: 0; z-index: 4; pointer-events: none; align-items: center; gap: 10px; padding: 4px 8px 0; height: 23px; }
+.dw-hud { position: absolute; left: 0; right: 0; top: var(--vs-b, 0); z-index: 4; pointer-events: none; align-items: center; justify-content: center; gap: 10px; padding: 4px 8px 0; height: 23px; }
 .dw-oil { display: flex; align-items: center; gap: 5px; flex: none; }
 .dw-oilic { width: 16px; height: 16px; image-rendering: pixelated; filter: drop-shadow(0 0 4px rgba(255,158,61,.7)); }
 .dw-oilbar { position: relative; width: 120px; height: 10px; background: #0B0810; border: 2px solid #0B0810; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
@@ -1903,7 +1902,8 @@ span.cf-d { font-weight: 600; }
 .dw-oil.low .dw-oilbar > i { background: var(--hp); animation: dw-pulse .8s ease-in-out infinite; }
 .dw-oil.low .dw-oiltxt { color: #FF8A80; }
 @keyframes dw-pulse { 50% { opacity: .55; } }
-.dw-floor { display: flex; align-items: baseline; gap: 6px; min-width: 0; margin-left: auto; }
+@media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) { .deep-run .tc-on .tv-top .tv-warn { max-width: calc(50% - 160px); } }
+.dw-floor { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
 .dw-fn { font: 600 max(var(--tmin, 0px), calc((14px * var(--display-k)) * var(--tk, 1)))/1.2 var(--display); color: #DFF0FF; text-shadow: 0 2px 0 #000, 0 0 6px rgba(127,178,255,.6); white-space: nowrap; }
 .dw-fk { font: 600 max(var(--tmin, 0px), calc(10.5px * var(--tk, 1)))/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 #000; }
 
@@ -1915,8 +1915,8 @@ span.cf-d { font-weight: 600; }
 .dw-sic.epic { filter: drop-shadow(0 0 3px var(--r-epic)); }
 .dw-more { font: 600 max(var(--tmin, 0px), calc((11px * var(--display-k)) * var(--tk, 1))) var(--display); color: var(--muted); padding-left: 2px; }
 .dw-strip-txt { min-width: 0; font: 600 max(var(--tmin, 0px), calc((12px * var(--display-k)) * var(--tk, 1))) var(--display); color: #CFE2FF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dw-rowmarks, .dw-emarks, .dw-marks { display: inline-flex; align-items: center; gap: 4px; flex: none; font: 600 max(var(--tmin, 0px), calc((15px * var(--display-k)) * var(--tk, 1))) var(--display); font-variant-numeric: tabular-nums; color: #DFF0FF; }
-.dw-rowmarks img, .dw-emarks img, .dw-marks img { width: 18px; height: 18px; image-rendering: pixelated; }
+.dw-rowmarks, .dw-emarks { display: inline-flex; align-items: center; gap: 4px; flex: none; font: 600 max(var(--tmin, 0px), calc((15px * var(--display-k)) * var(--tk, 1))) var(--display); font-variant-numeric: tabular-nums; color: #DFF0FF; }
+.dw-rowmarks img, .dw-emarks img { width: 18px; height: 18px; image-rendering: pixelated; }
 .dw-emarks span { font: 600 max(var(--tmin, 0px), calc(10.5px * var(--tk, 1))) var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 
 /* ---- the full-screen sheets ---- */
@@ -2243,6 +2243,7 @@ span.cf-d { font-weight: 600; }
   .nu-cbar { transition: none; }
   .nu-flash { animation: none; outline: 2px solid var(--gold); outline-offset: 1px; }
 }
+.nu-chip .nu-lbl.nu-cut { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }   /* 71-ui-fight nuCut */
 /* 60-hands: the hiring board and your gatherers (74-ui-hands.js; W1-E) */
 #sec-hands, #sec-hands-crew { display: grid; gap: 10px; }
 .hd-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font: 600 max(var(--tmin, 0px), calc((15px * var(--display-k)) * var(--tk, 1))) var(--display); }
@@ -3834,9 +3835,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .nu-chip .nu-eye { grid-column: 2; grid-row: 1; align-self: center; white-space: nowrap; }   /* one line: "NEXT" over "UP" in the fallback face (fallback-font-fits) */
   .nu-chip .nu-cst { grid-column: 3; grid-row: 1; }
   .nu-chip .nu-more { grid-column: 4; grid-row: 1; }
-  /* side-column-fits-740: the whole goal, no clamp. The chip has room: the dock shows only while fighting (75-solo-ui) and the away
-     chip only while gathering (71-ui-fight), so the longest gate label (5 lines at 740x360 in fallback fonts) still ends 23 px
-     above the dock, and with the away chip under it 105 px above the screen's foot (check.mjs side-column-fits-740) */
+  /* the whole goal; nuCut (71-ui-fight) cuts it for the away chip (side-column-fits-740) */
   .nu-chip .nu-lbl { grid-column: 1 / -1; grid-row: 2; white-space: normal; display: block; -webkit-line-clamp: none; font-size: max(var(--tmin, 0px), calc(13px * var(--tk, 1))); line-height: 1.2; }
   .nu-chip .nu-chev { display: none; }
   /* the dock in the side column: tabs, four tiles in a row (icons only; the names show on tall screens), Parry and Dodge under them */
@@ -39236,13 +39235,11 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
   wideMQ.addEventListener('change', placeStepper);
 }
 
-// Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
-// second, and an unchanged value must not make the browser lay the page out again.
+// Static nodes, looked up once. Writes go through the put* guards (70-ui.js): an unchanged value must not relayout.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
 // the away card's line for a fighter who can't gather yet
 const AWAY_RULE_TXT = 'Fights only happen while you play.';
-// Away chip: what leaving now earns, on the away note's beat, from awayBase's rates (50-sim), held to the Storehouse room
-// unless Spillover moves on; a fighter is told where the hero goes back to.
+// Away chip: what leaving now earns (awayBase rates, 50-sim), held to the Storehouse room unless Spillover moves on
 let awayChip = null;
 function awayChipText() {
   const node = awayNode(); if (!node) return '';
@@ -39253,8 +39250,7 @@ function awayChipText() {
   const room = stashRoom(kind, tier);
   return awayChipSay(matName(kind, tier), n > room && storeSpillOn() ? 'spill' : Math.min(n, room), hrs, S.activity == 'fight' && NODE_NAMES[kind][tier - 1]);
 }
-// the chip's words: n is what leaving earns, or 'spill' (the pile fills, Spillover moves on); 0 means the pile is full;
-// back: a fighter's node. side-column-fits-740 measures every variant for every material
+// n: what leaving earns, 'spill' or 0 (full); back: a fighter's node (side-column-fits-740)
 function awayChipSay(nm, n, hrs, back) {
   const go = back ? `Leave now: ${heroFirst()} goes back to the ${back}${n > 0 ? ',' : '.'} ` : 'Leave now: ';
   if (n === 'spill') return `${go}${nm} fills up, then Spillover moves your hero on.`;
@@ -39268,17 +39264,27 @@ function uiAwayChip() {
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));
     $('modeSeg').parentElement.after(awayChip);
   }
-  if (txt && S.activity === 'fight') txt = awayChipFit(txt);
+  if (txt && S.activity === 'fight') txt = awayChipFit(txt); else nuCut(0);
   if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
 let fitKey, fitTxt;
+// n > 0: the goal shows n lines (its aria-label has it all)
+function nuCut(n) {
+  const l = document.querySelector('#nuChip .nu-lbl'); if (!l || !n && !l.classList.contains('nu-cut')) return;
+  l.classList.toggle('nu-cut', n > 0); l.style.webkitLineClamp = n || '';
+  if (!n) fitKey = null;
+}
 function awayChipFit(txt) {
   // only measured again when the words or the screen change
-  const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + ($('nuChip') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
+  const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + (document.querySelector('#nuChip .nu-lbl') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
   if (k === fitKey) return fitTxt;
-  fitKey = k; awayChip.classList.remove('hide');
-  for (const t of [txt, txt.replace(/,.*/, '.')]) { awayChip.lastChild.textContent = t; if (!on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top) return fitTxt = t; }
+  nuCut(0); fitKey = k; awayChip.classList.remove('hide');
+  const fits = () => !on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top, l = document.querySelector('#nuChip .nu-lbl');
+  for (const t of [txt, txt = txt.replace(/,.*/, '.')]) { awayChip.lastChild.textContent = t; if (fits()) return fitTxt = t; }
+  // then the goal gives up lines
+  for (let n = l ? Math.round(l.offsetHeight / parseFloat(getComputedStyle(l).lineHeight)) : 0; --n > 0;) { nuCut(n); if (fits()) return fitTxt = txt; }
+  nuCut(0); fitKey = k;
   return fitTxt = '';
 }
 uiHooks.push(uiAwayChip);
@@ -45603,11 +45609,9 @@ let deedsUI = null;
 // ---- src/js/75-deepwell-ui.js ----
 // 75-deepwell-ui: the Deepwell's screens (docs/design/deepwell.md 9). Browser-only.
 //   - Fight tab, "Deepwell" view: the entrance card (runs, resume), the weekly Trial, the Marks shop.
-//   - In a run: an Oil bar and the floor over the stage (in place of the zone name), a boon strip in
-//     place of the control row, and a full-screen choice sheet for each draft and Quiet Landing.
+//   - In a run: the Oil bar and floor under the plates (60-deepwell), the boon strip for the control row,
+//     a choice sheet for each draft and Quiet Landing. 62-stage draws the well and hides the zone line.
 //   - Run end: a card with the floor, Marks and what the party earned up top while you were below.
-//   - The stage itself (62-stage) draws the well scene, cold foes and hides the zone line and the
-//     boss timer while a run is live; this file only adds the run HUD over it.
 // Per frame: nothing. The HUD updates 5 times a second, writing only what changed.
 {
   const setTxt = (e, t) => { if (e && e.textContent !== t) e.textContent = t; };
@@ -45632,9 +45636,8 @@ let deedsUI = null;
   const boonIc = c => c.id === 'map' ? iconURL('banner', '#F2C14E') : c.id === 'study' ? iconURL('glass', '#F2E27A') : c.id === 'crown' ? iconURL('coin', '#F2C14E') : c.id === 'lheart' ? iconURL('heart', '#FF9E3D') : c.sets[0] ? SET_IC[c.sets[0].id]() : iconURL('orb', '#7FB2FF');
   const OIL_IC = () => pxURL('lantern', '#FF9E3D', { 5: '#FFF3C4' });
   const MARK_IC = () => iconURL('orb', '#7FB2FF', { 7: '#3F8FA8' });
-  const markChip = n => { const s = el('span', 'dw-marks'); s.append(img(MARK_IC()), el('b', null, fmt(n))); return s; };
 
-  // ---------------- run HUD (over the stage) and the boon strip (in place of the control row) ----------------
+  // ---------------- run HUD (under the plates) and the boon strip (in place of the control row) ----------------
   const app = $('app'), box = $('stageBox');
   const hud = el('div', 'dw-hud'); hud.setAttribute('aria-live', 'off');
   const hudOil = el('div', 'dw-oil'), oilBar = el('div', 'dw-oilbar'), oilFill = el('i'), oilTxt = el('b', 'dw-oiltxt');

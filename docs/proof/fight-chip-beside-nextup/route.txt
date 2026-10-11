@@ -1,0 +1,16 @@
+# Proof for card fight-chip-beside-nextup. Fighting at 740x360, the away chip ("Leave now: Wren goes back to ...") sat under the
+# Next Up goal and said nothing whenever the goal ran long (157 of 174 label pairs). Now a long goal gives up its last lines
+# (cut with "...", the whole goal is a tap away) so the chip always shows. Save: Wren at zone 21, fighting, Gather open.
+# Play it in each view (--view landscape, desktop, portrait): the chip shows beside Next Up in all three. The long-goal pairs are
+# held by tools/check.mjs fight-chip-beside-nextup (740x360 and 844x390) and side-column-fits-740.
+# seed: 1
+new min60-tier-gate
+wait-for "goes back to the Pine Grove" 10
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Dismiss this tip"
+wait 1
+expect "Fight"
+expect "Next up"
+expect "goes back to the Pine Grove"
+shot chip-beside-next-up
