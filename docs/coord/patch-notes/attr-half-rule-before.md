@@ -1,0 +1,1 @@
+- Hero > Build: each attribute now says what your next point gives, at your level ("Next point: +3%."). Past half your points a point counts half, and the line says so before you spend the point that crosses ("Next point: +1.5%, half rule."), not after. Percentages show the exact value (+4.5%, not +5%). The rule and the numbers are unchanged. (attr-half-rule-before)
