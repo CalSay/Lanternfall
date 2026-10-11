@@ -439,6 +439,10 @@ payment code, live prices and business and legal set-up stay with Cal.
   number of opens without it. They hold looks only, from the store catalogue, never an earned crate's looks, and never
   power. Store code still waits for the early-game milestone, and a legal check per country (Belgium bans paid loot
   boxes) comes before launch. Design: `docs/design/loot-crates.md`.
+- **Crate tiers (2026-10-11, decided under "No card waits for Cal"; veto "Change the crate tiers"):** a boss's first-clear
+  cache is one of five crates set by its rank and zone: Roadworn (Captains, zones 1-14), Ironbound (Captains, 16-34),
+  Gilded (Champions 5, 10, 15), Sovereign (Champions 20, 25, 30), Hallowed (the Elder, 35). A higher tier rolls rarer
+  looks only, never more power. Odds and pity numbers come from the economy judge.
 - **Where to sell:** Steam first, as a single-player build (the online layer runs only on the claude.ai page), after a
   landscape mouse-and-keyboard playtest of parry and dodge timing passes. Phones second. No itch or Ko-fi pack.
   (2026-10-06)

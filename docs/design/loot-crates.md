@@ -1,6 +1,7 @@
 # Loot crates: five tiers for boss wins
 
-Status: proposed. The paid version is decided (below); the tiers wait on Cal's OK (thread "Loot crates", 2026-10-10). Owner of the wire-up: a card written after the OK.
+Status: decided. The tiers were accepted on 2026-10-11 under "No card waits for Cal" (veto: "Change the crate tiers"), and
+the paid version is Cal's call (below). The wire-up card is written once Codex's full crate pack passes the frame check.
 Builds on: Lantern Caches (`55-caches.js`, `75-caches-ui.js`, DECISIONS "Lantern Caches" and "Looks"), the planned
 `cache-art` and `cache-looks` cards, and the monetisation plan (`/mnt/project-files/monetisation/plan.md`, section 5).
 
@@ -75,7 +76,7 @@ store look. The Wardrobe counts these as Cache looks.
   boss fight starts. If the art is not in yet, the cache card shows as it does today and never waits.
 - Reduced motion shows the open crate and the reward, with no shake and no burst.
 
-## Wire-up, after Cal's OK (one card)
+## Wire-up, after the art passes (one card)
 
 - Files: `55-caches.js` (tier from rank and zone, the look roll, pity per tier), `75-caches-ui.js` (the crate picture and
   its opening), a crate data file from the pack, the art loader's lazy list, and `tools/check.mjs`.
