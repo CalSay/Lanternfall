@@ -717,6 +717,9 @@ async function coverStep(o) {
   await click('#menuX', 200); await advance(300, 16);
   await watch(await X(OBS));   // the upgrade's event, read now so the press is counted against it
   const up = C.ups.length > n0 && C.ups[C.ups.length - 1].cover > 0;
+  // a moment card that came up during the taps (a boss win's cache) sits over the slot, as it would for a player: the card rule closes
+  // it on the next pass and the bot tries again, so that press is neither a try nor a finding
+  if (!up && await page.evaluate(() => !!document.querySelector('.mm-ov'))) { C.tries[key]--; return true; }
   C.presses.push({ t: Math.round(gt), nm: c.nm, plus: c.plus + 1, units: c.units, fam: c.fam, mins: c.mins, ok: up });
   await note(page, 'cover', `${up ? 'covered' : 'could not cover'} ${c.units} ${c.fam} t${c.t} to take ${c.nm} to +${c.plus + 1} (free route ${Number.isFinite(c.mins) ? c.mins + ' min' : 'not gatherable'})`, { shot: false, extra: { units: c.units, ok: up } });
   if (!up) addCheck('cover', 'the bot could not press an upgrade\'s gold cover the game says it can pay', `${c.nm} to +${c.plus + 1}: ${!opened ? 'the worn slot in Hero > Gear could not be tapped' : !did ? 'no cover button to press on its sheet' : 'the press did not upgrade it'}`);
