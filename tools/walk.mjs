@@ -9,8 +9,10 @@
 //   --hero wren|tobin|pip       --size <view>      desktop (d, 1280x720 mouse, the default), landscape (l, 740x360), portrait (p,
 //                       360x740), laptop (1366x640), tablet (1024x768), hd (1920x1080) or WxH (tools/lib/views.mjs)
 //   --minutes <n>       game minutes to play (default 60)      --html <file>   walk another build (default dist/lanternfall.html)
-//   --clock-budget <n>  clock minutes the walk may take (default 30). If the game minutes would not fit it plays on until the
-//                       budget is spent, writes the minute reached as the stop, and saves its save as snapshot-min<N>.json.
+//   --clock-budget <n>  clock minutes the whole run may take, from launch to report (default 30). If the game minutes would not
+//                       fit it plays on until the budget is nearly spent (it keeps 30 s for the report), prints "stopped at mm:ss,
+//                       budget", writes that as the stop, and saves its save as snapshot-min<N>.json. A walk killed from outside
+//                       (SIGTERM, SIGINT, SIGHUP) writes its report the same way, names the signal and exits 3.
 //   --parry <p>  --dodge <p>    the bot's skill: the share of foe hits it parries, and of the rest it dodges (default 0.55, 0.5)
 //   --read <p>          how often the bot reads a boss trick it meant to defend (a feint: it holds; a held swing: it waits for the
 //                       swing), 0 to 1 (default 0.77, the sampler's bot). A misread feint is pressed; a misread held swing is pressed
@@ -71,6 +73,11 @@ const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[
   if (bad.length) { console.error('walk: unknown option ' + bad.join(', ') + '; known: ' + known.map(k => '--' + k).join(' ')); process.exit(2); } }
 const num = (n, d) => { const v = Number(opt(n, d)); if (!Number.isFinite(v) || v < 0) { console.error(`walk: --${n} needs a number of zero or more`); process.exit(2); } return v; };
 const SEED = num('seed', 1) | 0 || 1, MINUTES = num('minutes', 60), BUDGET_MS = num('clock-budget', 30) * 60e3;
+// walk-clock-budget-holds: the budget is the whole run's, counted from the process start (a thread's command limit counts the launch
+// and the report too), and the loop stops with REPORT_MS left so the closing reads and the report fit inside it.
+const REPORT_MS = Math.min(30e3, BUDGET_MS / 10), clockMs = () => performance.now();
+let killedBy = '', signals = 0;   // a SIGTERM, SIGINT or SIGHUP from outside: the loop stops at its next step and the report is written
+for (const sig of ['SIGTERM', 'SIGINT', 'SIGHUP']) process.on(sig, () => { if (++signals >= 3) process.exit(3); killedBy = killedBy || sig; });   // a CI cancel's SIGINT then SIGTERM still writes the report; a third signal exits at once
 const PARRY = num('parry', 0.55), DODGE = num('dodge', 0.5), READ = num('read', 0.77);
 if (READ > 1) { console.error('walk: --read is a share from 0 to 1'); process.exit(2); }   // READ: how often the bot reads a boss trick (a feint, or a held swing); 0.77 is the sampler's bot (0.3 + 0.6 x its 77.5% avoidance)
 const HEROES = ['wren', 'tobin', 'pip'], HERO = opt('hero', HEROES[(SEED - 1) % 3]);
@@ -221,11 +228,35 @@ const X = async s => { for (let i = 0; i < 50; i++) { const r = await page.evalu
 // fights (first-hour-map-two-clocks). The walk stops that timeline (Animation.setPlaybackRate 0) and moves every animation on by the
 // game time it steps (after each runFor chunk of up to 1 s), so a run is the same on any machine. A paused animation stays where the game put it.
 const STEP_ANIM = d => { for (const a of document.getAnimations()) { if (a.playState === 'paused' || a.playState === 'finished') continue; try { a.currentTime = (a.currentTime || 0) + d; } catch (e) { /* an animation with no timeline */ } } if (window.__walkDraw) window.__walkDraw(); };   // then the step's draw (INIT)
+// walk-clock-budget-holds: one page call per step. page.clock.runFor is two calls to the browser and adds one more init script to the
+// context each time (its replay log for a reload), so a 60 min walk carried 40,000 of them and each step slowed as the hour went on.
+// The step runs the same clock controller in the page instead, and keeps its own total for a reload (CLOCK_REPLAY).
+const ADVANCE = `async (ms, step) => { const c = globalThis.__pwClock.controller; window.__ptStep = step;
+  for (let left = ms; left > 0; left -= 1000) { const d = Math.min(left, 1000);
+    try { sessionStorage.setItem('walk.clockRan', String((+sessionStorage.getItem('walk.clockRan') || 0) + d)); } catch (e) { /* no storage: a reload starts at the pause */ }
+    await c.runFor(d); (${STEP_ANIM})(d); } }`;   // the total is written first, as Playwright logs a runFor before it runs: a reload mid-chunk lands at its end
 async function advance(ms, step) {
-  await page.evaluate(c => { window.__ptStep = c; }, step);
-  let left = ms; while (left > 0) { const d = Math.min(left, 1000); await page.clock.runFor(d); await page.evaluate(STEP_ANIM, d); left -= d; }
+  try { await page.evaluate(`(${ADVANCE})(${ms}, ${step})`); }
+  catch (e) {   // the game reloaded inside the step (the art loader's retry, a save code): the new page replays the clock and boots, as before
+    if (page.isClosed() || !/Execution context was destroyed|navigation|Target page/i.test(String(e && e.message))) throw e;
+    await page.waitForLoadState('load');
+  }
   gt += ms / 1000;
 }
+// After each timer it fires, the clock waits for one real setTimeout(f) of the page. Chrome holds a timer set from a timer to 4 ms
+// once five are nested, so every game timer (about 7 per 100 ms of game time) cost at least 4 ms of wall time doing nothing. A message on a
+// channel is the same wait for the next task without the floor. Only the clock's own no-delay call takes it: the game's timers are
+// the clock's, and any call with a delay goes to the browser's setTimeout as before.
+const FAST_YIELD = () => {
+  const real = window.setTimeout, ch = new MessageChannel(), q = [];
+  ch.port1.onmessage = () => { const f = q.shift(); if (f) f(); };
+  window.setTimeout = function (f, d, ...a) { if (d === undefined && !a.length && typeof f === 'function') { q.push(f); ch.port2.postMessage(0); return 0; } return real.call(this, f, d, ...a); };
+};
+// A page that reloads (the art loader's retry, a save code) replays the clock's log to reach the walk's time. The steps no longer write
+// that log, so this puts their total in it: the same time Playwright's own replay of every runFor would reach (paused, it only adds them).
+const CLOCK_REPLAY = () => {
+  try { const t = +sessionStorage.getItem('walk.clockRan') || 0, c = globalThis.__pwClock && globalThis.__pwClock.controller; if (t && c) c.log('runFor', c._embedder.dateNow(), t); } catch (e) { /* no storage */ }
+};
 // A real tap at the centre of the first visible match (no actionability waits: they need animation frames, and the clock is fake).
 // If something else sits on top of the button, the tap lands on that, as it would for a player: it is logged and not pressed.
 const TAP = ([sel, re]) => {
@@ -932,18 +963,20 @@ async function stallCause(o, from) {
 
 // ---------------- the run ----------------
 async function run() {
-  browser = await bt.pw.chromium.launch({ executablePath: bt.exe, args: ['--no-sandbox'] });
+  browser = await bt.pw.chromium.launch({ executablePath: bt.exe, args: ['--no-sandbox'], handleSIGINT: false, handleSIGTERM: false, handleSIGHUP: false });   // the walk's own handlers write the report first
   ctx = await browser.newContext(contextOptions(SIZE));
   page = await ctx.newPage();
   { const cdp = await ctx.newCDPSession(page); await cdp.send('Animation.enable'); await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 }); }   // animations follow game time (STEP_ANIM)
   const errs = []; page.on('pageerror', e => errs.push(String(e)));
   page.on('crash', () => errs.push('the page crashed'));
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
+  await page.addInitScript(FAST_YIELD);   // before the clock, which keeps the page's setTimeout as its own
   await page.clock.install({ time: Date.UTC(2026, 0, 5, 12, 0, 0) });   // a fixed Monday noon: the game's day-keyed content does not move between nights
   // An installed clock still flows with the wall clock between runFor calls, so game time ran ahead of the walk's steps by however long
   // the machine took (1.8 s of steps read 3.2 s on the game's clock): the same seed gave three first fights. Paused, it moves only
   // when the walk steps it (first-hour-map-two-clocks).
   await page.clock.pauseAt(Date.UTC(2026, 0, 5, 12, 0, 1));
+  await page.addInitScript(CLOCK_REPLAY);
   await page.addInitScript(INIT, [KEY, SEED]);
   const HTML = pageHtml();
   await routePage(page, 'http://lf.test/', HTML, pageAssets(htmlFile));   // the split build's asset files too (tools/lib/page-assets.mjs)
@@ -951,18 +984,20 @@ async function run() {
   // different game time each run (0 to 65 ms into the first step), which split two runs of seed 1 from the first tip (walk-repeatable-whole-hour)
   await page.goto('http://lf.test/', { waitUntil: 'load' });
   fs.rmSync(SHOTS, { recursive: true, force: true });
-  const t0 = Date.now(); let stop = '';
+  let stop = '';
+  const cutAt = why => `stopped at ${fmtT(Math.round(gt))} of ${fmtT(END)} game time, ${why} after ${Math.round(clockMs() / 1000)} s of clock (a tool limit, not a game fault)`;
   await advance(1500, 16);
   const END = MINUTES * 60;
   let lastMin = -1, o = null, idle = 0;
   try {
     while (gt < END) {
-      if (Date.now() - t0 > BUDGET_MS) { stop = `clock budget spent at game minute ${(gt / 60).toFixed(1)}`; break; }
+      if (killedBy) { stop = cutAt(`the walk was stopped from outside (${killedBy})`); toolFault = true; break; }
+      if (clockMs() > BUDGET_MS - REPORT_MS) { stop = cutAt(`budget: the ${BUDGET_MS / 60e3}-min clock budget ran out`); break; }
       o = await X(OBS);
       await watch(o);
       if (Math.floor(gt / 60) !== lastMin && st.gate.firstT2 === null && await X('(b => !!b && !b.gate && b.t >= 2 && b.p > 0)(craftGoalNext())')) { st.gate.firstT2 = gt; await note(page, 'gate', 'first tier 2 craft goal on Next Up', { shot: false }); }   // next-tier-gate-goal
       while (st.gate.rows.length < CRAFT_ROW_AT.length && gt >= CRAFT_ROW_AT[st.gate.rows.length] * 60) await craftRowAt(CRAFT_ROW_AT[st.gate.rows.length]);   // walk-gate-reads-right
-      if (Math.floor(gt / 60) !== lastMin) { lastMin = Math.floor(gt / 60); say(`minute ${lastMin}: zone ${o.s.maxZone}, level ${o.s.L}, gold ${o.s.gold} (${Math.round((Date.now() - t0) / 1000)} s clock)`); }
+      if (Math.floor(gt / 60) !== lastMin) { lastMin = Math.floor(gt / 60); say(`minute ${lastMin}: zone ${o.s.maxZone}, level ${o.s.L}, gold ${o.s.gold} (${Math.round(clockMs() / 1000)} s clock)`); }
       if (process.env.WALK_DEBUG && Math.floor(gt) !== st.dbg) { st.dbg = Math.floor(gt); if (process.env.WALK_DEBUG === '2') console.error('  bar', await page.evaluate(() => [...document.querySelectorAll('#soloBar .sbtn')].map(b => b.className.replace('sbtn ', '') + (b.disabled ? ' DIS' : '') + ' ' + (b.getAttribute('aria-disabled') || '') + '|' + b.textContent.replace(/\s+/g, ' ').trim().slice(0, 30)).join(' ;; ')));
       console.error('  dbg', gt.toFixed(1), o.phase, JSON.stringify(o.tip && { a: o.tip.action, b: o.tip.button }), o.cards.length, JSON.stringify(o.s).slice(0, 120)); }
       if (process.env.WALK_SHOT && gt >= +process.env.WALK_SHOT && !st.dbgShot) { st.dbgShot = 1; await page.screenshot({ path: '/tmp/claude-0/dbg.png' }); console.error('  DBG TIP', JSON.stringify(o.tip), JSON.stringify(o.toasts), JSON.stringify(o.cards)); }
@@ -1013,13 +1048,15 @@ async function run() {
   } catch (e) {   // the browser or page went away (a crash, the container's memory): report the run so far instead of a stack trace
     if (!(page.isClosed() || /has been closed|Target crashed|Target page, context or browser|Browser closed|disconnected/i.test(String(e && e.message)))) throw e;
     toolFault = true;
-    stop = `the browser closed at game minute ${(gt / 60).toFixed(1)} (${String(e.message).split('\n')[0].slice(0, 80)}); this is a tool fault, not a game error`;
+    stop = killedBy ? cutAt(`the walk was stopped from outside (${killedBy}; the browser closed with it)`)
+      : `the browser closed at game minute ${(gt / 60).toFixed(1)} (${String(e.message).split('\n')[0].slice(0, 80)}); this is a tool fault, not a game error`;
   }
   if (!stop && gt < END) stop = 'ended early';
+  if (stop) process.stderr.write('walk: ' + stop + '\n');   // even with --quiet: a cut-off walk says where and why
   st.odds = await X('JSON.parse(JSON.stringify(S.bossOdds))').catch(() => null);   // the boss odds record the game keeps of the bot's defence and rings
   const snap = await page.evaluate(k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, KEY).catch(() => null);
   await ctx.close().catch(() => {}); await browser.close().catch(() => {});
-  return { stop, errs, snap, clockMs: Date.now() - t0 };
+  return { stop, errs, snap, clockMs: clockMs() };   // from the process start, as the budget and the stop line count
 }
 // ---------------- the map ----------------
 // docs/design/first-hour.md: one row per beat, `| # | est | walk | On screen | ...`. `est` is a guess for a casual person (a range
@@ -1228,7 +1265,7 @@ function report(res) {
   const out = [];
   out.push(`# First-hour walk, ${DATE}`, '');
   out.push(`Build \`${path.relative(ROOT, htmlFile)}\` at ${sha()}. Seed ${SEED}, ${HERO}, ${SIZE.w}x${SIZE.h}. Bot: parries ${Math.round(PARRY * 100)}% of foe hits, dodges ${Math.round(DODGE * 100)}% of the rest, reads each tip 1.2 s, reads each card 2.4 s.`);
-  out.push(`Played ${fmtT(reached)} of ${MINUTES}:00 game time in ${Math.round(res.clockMs / 1000)} s of clock.${res.stop ? ' **Stopped: ' + res.stop + '.**' : ''} Report only: nothing here blocks a merge.`, '');
+  out.push(`Played ${fmtT(reached)} of ${MINUTES}:00 game time in ${Math.round(res.clockMs / 1000)} s of clock.${res.stop ? ' **' + (/^stopped /.test(res.stop) ? 'S' + res.stop.slice(1) : 'Stopped: ' + res.stop) + '.**' : ''} Report only: nothing here blocks a merge.`, '');
   const z = st.prev ? st.prev : {};
   if (st.beaten) out.push(`The bot was beaten ${st.beaten} time${st.beaten === 1 ? '' : 's'} by bosses (the "try again" card).`, '');
   out.push(`End state: zone ${z.maxZone}, level ${z.L}, ${z.gold} gold, ${z.kills} kills, ${Object.keys(z.got || {}).length} things unlocked, ${z.found} uniques, ${z.stars} Stars, ${z.heroes} extra heroes, ${z.looks} looks.`, '');

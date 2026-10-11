@@ -1,0 +1,1 @@
+No change for players: the check that keeps notices off an open Craft menu now waits for the game to show the guide tip gone (or up) and the Refining card closed before it measures, so a slow machine no longer fails it at random.

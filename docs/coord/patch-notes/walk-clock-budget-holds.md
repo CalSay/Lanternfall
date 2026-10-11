@@ -1,0 +1,1 @@
+Tooling only, no change to the game. Our hour-long test walk now runs about a third faster and plays the same hour as before, so it finishes inside its 30-minute limit. When a walk is cut short, it now says the game minute it reached and why.
