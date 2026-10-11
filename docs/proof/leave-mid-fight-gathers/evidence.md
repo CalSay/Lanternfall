@@ -37,7 +37,12 @@ away harvest. We report it as a miss on the letter of the bar.
 - No re-baseline.
 
 ## Boot bytes (Brotli wire bytes)
-- Page: 1131528 -> 1131476 (-52).
-- Worst-zone boot set (the shipped boot line): 3984708 -> 3984656 (-52).
-- The hero packs check's test build (with the never-shipped 21zx test hero file): 3999471 -> 3999551 (+80), 449 B
-  under its 4.0 MB fail line. Brotli moves this test build by a few hundred bytes for any edit; the shipped line fell.
+- Page: 1131528 -> 1131370 (-158).
+- Worst-zone boot set (the shipped boot line): 3984708 -> 3984550 (-158).
+- The hero packs check's test build (with the never-shipped 21zx test hero file): 3999471 -> 3999463 (-8).
+
+## Save review
+The save-reviewer found one blocking bug, now fixed: Spillover during a fighter's away called `setNode`, whose
+`sceneReset` ended the live turn fight, so the next fight started with the hero at full HP. `setNode` now resets the
+scene only while gathering, and the leave-mid-fight-gathers section asserts that a fighter's away spill keeps the
+fight and the hero's HP (it fails on the old code).

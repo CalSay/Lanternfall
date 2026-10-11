@@ -152,7 +152,7 @@ let showAwayReport, awayLimitStep;
     body.append(top);
 
     // ---- what the hero did ----
-    const actIc = r.activity === 'gather' || r.leftFight ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
+    const actIc = r.leftFight || r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
     const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
     if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); res.append(n); }
     if (r.activity === 'fight' && !r.leftFight) {

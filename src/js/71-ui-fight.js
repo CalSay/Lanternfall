@@ -88,7 +88,7 @@ function uiAwayChip() {
   if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
-// A fighter's chip ends 4 px above the dock or says less (740x360): only where the hero goes, then nothing.
+// A fighter's chip ends 4 px above the dock or says less (740x360).
 let fitKey, fitTxt;
 function awayChipFit(txt) {
   // measured again only when the words or the screen change

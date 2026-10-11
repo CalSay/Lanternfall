@@ -19038,6 +19038,14 @@ if (section('first-craft-toast-clip')) try {
 // ==== leave-mid-fight-gathers: a turn fighter is told before leaving that the hero goes back to its node, and the away card says it did ====
 if (section('leave-mid-fight-gathers (browser)')) try {
   const at = 'leave-mid-fight-gathers', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  // Spillover while a fighter is away moves the node but never ends the live fight (a fresh fight would heal the hero to full)
+  { const g = loadCore({ seed: 7, turns: true, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    E("S.camp.b.store = 8; storeSpill(1); S.skills.wood.lv = 20; S.mats.wood[0] = storeCap('wood', 1) - 10; setNode('wood', 1); setActivity('fight'); for (let i = 0; i < 40; i++) tick(0.1); cbUnitByKey('hero').hp = Math.ceil(cbUnitByKey('hero').maxHp * 0.2)");
+    const hp = E("cbUnitByKey('hero').hp"), now = E('TURN_LIVE.now');
+    E('globalThis.__r = awayGains(3600); tick(0.1); tick(0.1)');
+    const after = E("JSON.stringify({ hp: cbUnitByKey('hero').hp, live: !!TURN_LIVE && !TURN_LIVE.ended, now: TURN_LIVE && TURN_LIVE.now, node: S.node, spilled: __r.leftFight && !(S.node.kind === 'wood' && S.node.t === 1) })");
+    const a = JSON.parse(after);
+    assert(a.spilled && a.live && a.hp === hp && a.now > now, `${at}: Spillover while a fighter is away moves the node and keeps the fight and the hero's HP (HP ${hp} -> ${after})`); }
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');

@@ -11976,7 +11976,7 @@ function setZone(z) {
 // switch activity; call setActivity('gather') for that.
 function setNode(kind, t) {
   if (!craftNodeVisible(kind, t) || !skillTierOpen(skillOf(kind), t)) return false;
-  S.node = { kind, t }; S.gProg = 0; emit('sceneReset');
+  S.node = { kind, t }; S.gProg = 0; if (S.activity == 'gather') emit('sceneReset');
   return true;
 }
 
@@ -12210,7 +12210,7 @@ function harvest() {
 function awayGains(secs) {
   secs = Math.max(0, +secs || 0);   // a save stamped in the future (clock set back) gives nothing, never negative gains
   const r = { t: Math.min(secs, awayCapH() * 3600), secs, lines: [] };
-  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // (55-boss-try keeps the same baseline in the save) BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
+  failDps = 0; if (S.bossTry) S.bossTry.fail = 0;   // BAL3: back from away, auto-challenge may retry a boss it failed (55-boss-try keeps the same baseline in the save)
   emit('awayBegin', r);
   awayBase(r);
   emit('away', r);
@@ -12251,7 +12251,7 @@ function awayBase(r) {
     if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
     if (got > 0) r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
     const at = `the ${NODE_NAMES[kind][tier - 1]}.`;
-    r.leftFight = S.activity == 'fight';   // fights earn nothing away (owner, 2026-10-01)
+    r.leftFight = S.activity === 'fight';   // fights earn nothing away (owner, 2026-10-01)
     r.note = (r.leftFight ? `You left mid-fight, so ${heroFirst()} went back to ${at}` : `You kept working ${at}`) + ` ${SKILL[skill]} is now level ${S.skills[skill].lv}.`;
     return r;
   }
@@ -39259,7 +39259,7 @@ function uiAwayChip() {
   if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
-// A fighter's chip ends 4 px above the dock or says less (740x360): only where the hero goes, then nothing.
+// A fighter's chip ends 4 px above the dock or says less (740x360).
 let fitKey, fitTxt;
 function awayChipFit(txt) {
   // measured again only when the words or the screen change
@@ -41609,7 +41609,7 @@ let showAwayReport, awayLimitStep;
     body.append(top);
 
     // ---- what the hero did ----
-    const actIc = r.activity === 'gather' || r.leftFight ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
+    const actIc = r.leftFight || r.activity === 'gather' ? (SKILL_IC[skillOf(S.node.kind)] || SKILL_IC.mine)() : r.activity === 'raid' ? IC.flame() : IC.sword();
     const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
     if (note && !r.turnCombat) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); res.append(n); }
     if (r.activity === 'fight' && !r.leftFight) {
