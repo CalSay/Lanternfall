@@ -86,7 +86,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
   read the zone 2 boss odds from save-flow-cold-camp). A proof fixture's level must be one the road can reach at its maxZone (zone 2
   means level 4+); if a check needs an under-levelled hero, say so in its comment. Why: the reviewer caught 12 fails outside
   `sim|health|zone` from a level 1 Wren at zone 2. (zone-1-3-foe-curve, 2026-10-11)
-- Before writing a player line for a status (Exposed, Guard, Armour, Stun), read what the code does in every case and build the line from the move that landed, not a fixed sentence. Why: the red team on first-hour-jargon found all three drafted lines false: Exposed pays off only on the hero's payoff hits (59k-turn.js:524, 649), a Perfect Bash guards 3 turns not 2 (59k:744), and armour cuts abilities too (59k:520). (first-hour-jargon, 2026-10-11)
+- Before writing a player line for a status (Exposed, Guard, Armour, Stun), read what the code does in every case and build the line from the move that landed, not a fixed sentence. Why: the red team on first-hour-jargon found all three drafted lines false: Exposed pays off only on the hero's payoff hits (59k-turn.js:524, 649), a Perfect Bash guards 3 turns not 2 (59k:744), and armour cuts abilities too (59k:521). (first-hour-jargon, 2026-10-11)
 
 ## Economy and skilling
 
