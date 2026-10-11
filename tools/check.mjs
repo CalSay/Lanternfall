@@ -112,6 +112,7 @@ const WEIGHT = {
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
   'bow-slot-wording': 8,   // 8 s locally alone (bow-slot-wording, 2026-10-10)
   'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
+  'toast-over-menu-foot': 42,   // 41 s locally alone (toast-over-menu-foot, 2026-10-11)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'fx-timing-fixes': 40,
   'pip-cast-recipes': 40,
@@ -343,11 +344,13 @@ if (section('split build (asset-build)')) try {
   for (const [f, A] of Object.entries(AREA_ART)) {
     if (A.kind === 'hero') { heroPackCheck(s, f, A, data(f, A.v)); continue; }   // section 'hero packs (hero-packs)' says how they split
     if (A.kind === 'ns') continue;   // one pack per piece: section 'new-style screens (ns-scenery-engine)' builds a test NS_ART
-    const D = data(f, A.v), mine = s.packs.filter(p => p.f === f);
-    assert(mine.map(p => p.id).join() === Object.keys(D).map(k => A.kind + ':' + k).join(), `split: ${A.v} has one pack per entry (${mine.map(p => p.id).join(', ')})`);
+    // a background: one pack per shape it has (bg-pack-by-shape), id bg:<theme>:<o>, holding { <o>: that shape }
+    const D = data(f, A.v), mine = s.packs.filter(p => p.f === f), sh = k => (A.kind === 'bg' ? ['land', 'port'].filter(o => D[k][o]) : [null]);
+    assert(mine.map(p => p.id).join() === Object.keys(D).flatMap(k => sh(k).map(o => A.kind + ':' + k + (o ? ':' + o : ''))).join() && mine.every(p => (p.o || null) === (A.kind === 'bg' ? p.id.split(':')[2] : null)),
+      `split: ${A.v} has one pack per entry${A.kind === 'bg' ? ' and shape' : ''} (${mine.map(p => p.id).join(', ')})`);
     for (const p of mine) {
-      const got = packData(p), key = p.id.slice(A.kind.length + 1);
-      assert(got && got.id === p.id && JSON.stringify(got.d) === JSON.stringify(A.load(D[key])) && p.name === `${f.replace(/-data-.*$/, '')}-${A.kind}-${key}.${p.name.split('.').slice(-2, -1)[0]}.js`,
+      const got = packData(p), key = p.id.slice(A.kind.length + 1).split(':')[0];
+      assert(got && got.id === p.id && JSON.stringify(got.d) === JSON.stringify(p.o ? { [p.o]: D[key][p.o] } : A.load(D[key])) && p.name === `${f.replace(/-data-.*$/, '')}-${A.kind}-${key}${p.o ? '-' + p.o : ''}.${p.name.split('.').slice(-2, -1)[0]}.js`,
         `split: ${p.id}'s pack holds its art as the source has it, under a hashed name (${p.name})`);
     }
     const kept = vm.runInNewContext(`${s.html.match(new RegExp(`// ---- src/js/${f.replace('.', '\\.')} ----\\n([\\s\\S]*?)\\n// ---- src`))[1]}\n;${A.v}`);
@@ -362,7 +365,8 @@ if (section('split build (asset-build)')) try {
   // the zone table is the shipped code's own answer, and past the road no zone's scenery depends on a background being in
   const road = G.eval('ROAD_ZONES'), live = G.eval(`Array.from({ length: ${road} }, (_, i) => [ZONE_FOES[i + 1] ? 'foe:' + ZONE_FOES[i + 1].key : null, 'bg:' + zoneTheme(i + 1)])`);
   const inZ = (p, z) => p.zones.some(([a, b]) => z >= a && z <= b);
-  const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => p.id === id)).sort().join(), s.packs.filter(p => inZ(p, i + 1)).map(p => p.id).sort().join()]).filter(r => r[1] !== r[2]);
+  const unshaped = p => (p.o ? p.id.slice(0, -p.o.length - 1) : p.id);   // a background's shape packs share its zones
+  const badZ = live.map((w, i) => [i + 1, w.filter(id => id && s.packs.some(p => unshaped(p) === id)).sort().join(), [...new Set(s.packs.filter(p => inZ(p, i + 1)).map(unshaped))].sort().join()]).filter(r => r[1] !== r[2]);
   const past = G.eval(`Array.from({ length: 2000 }, (_, i) => ${road} + 1 + i).filter(z => zoneTheme(z) !== zoneTheme(z - 35) || ZONE_FOES[z] || regionIdx(z) === 0).length`);
   assert(!badZ.length && !past && s.packs.every(p => p.hero || p.zones.length), `split: each pack names the zones whose fights show it, from ZONE_FOES and zoneTheme `
     + `(${badZ.slice(0, 3).map(r => r.join(' ')).join('; ') || 'all ' + road}), every area pack shows somewhere (${s.packs.filter(p => !p.hero && !p.zones.length).map(p => p.id).join(', ') || 'yes'}), `
@@ -388,8 +392,11 @@ if (section('split build (asset-build)')) try {
     assert(!r.fails.length, `split: the load lines hold: boot set ${MBs(r.zone1.counted)} MB for a new game and ${MBs(r.worst.counted)} MB for the worst zone (${r.worst.z}) of ${MBs(LOAD_LINES.bootFail)}, `
       + `largest zone set ${MBs(r.zoneMax.b)} of ${MBs(LOAD_LINES.zoneSet)}, area set ${MBs(r.areaMax.b)} of ${MBs(LOAD_LINES.areaSet)}${r.fails.length ? ': ' + r.fails.join('; ') : ''}`);
     for (const w of r.warns) console.log('  WARN split: ' + w);
-    assert(LOAD_LINES.e1.pack === 'bg:forest' && Object.entries(r.packs).every(([id, x]) => id === 'bg:forest' || x.counted === x.real),
-      `split: only Mossy Hollow's pack counts at one shape in the boot set (E1, until bg-pack-by-shape)`);
+    // E1 ended (bg-pack-by-shape): no pack holds two shapes, so none counts at one; a zone's backgrounds count at the larger shape
+    const bgs = s.packs.filter(p => p.id.startsWith('bg:')), z1 = s.packs.filter(p => inZ(p, 1)), bySh = o => z1.filter(p => p.o === o).reduce((n, p) => n + r.packs[p.id].real, 0);
+    assert(!('e1' in LOAD_LINES) && bgs.length && bgs.every(p => p.o && p.id.endsWith(':' + p.o)) && z1.some(p => p.o === 'land') && z1.some(p => p.o === 'port')
+      && r.zone1.counted === r.page + r.boot + r.hero.b + z1.filter(p => !p.o).reduce((n, p) => n + r.packs[p.id].real, 0) + Math.max(bySh('land'), bySh('port')),
+      `split: every background ships one pack per shape (${bgs.map(p => p.id).join(', ')}) and the boot set counts zone 1's at the larger shape (E1 ended)`);
     // each mutation goes 10 KB past its line from today's bytes, so a change elsewhere never makes one stop failing
     const pkT = id => s.packs.find(p => p.id === id).text, big1 = s.assets.reduce((m, a) => (a.bytes > m.bytes ? a : m)).text, R = id => r.packs[id].real, over = (line, now) => Math.max(0, line - now) + 1e4;
     const plus = (txt, n) => x => size(x) + (x === txt ? n : 0), L = (o = {}) => ({ ...LOAD_LINES, ...o, area1: { ...LOAD_LINES.area1, ...(o.area1 || {}) } });
@@ -398,7 +405,8 @@ if (section('split build (asset-build)')) try {
     const mut = [
       ['a boot file past the line', { size: plus(big1, over(LOAD_LINES.bootFail, r.zone1.counted)) }, /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/],
       [`the worst zone's foe pack past the line`, { size: plus(pkT(s.packs.find(p => p.id.startsWith('foe:') && p.zones.some(([a, b]) => wz >= a && wz <= b)).id), over(LOAD_LINES.bootFail, r.worst.counted)) }, new RegExp(`^boot set, the worst zone \\(${wz}\\): .* over 4\\.00 MB$`)],
-      ['a portrait share past its cap', { lines: L({ e1: { pack: 'bg:forest', port: r.packs['bg:forest'].port - 1e4 } }) }, /^bg:forest's portrait share .* \(E1\)$/],
+      ['the portrait background past the line, so the larger shape', { size: plus(pkT('bg:forest:port'), R('bg:forest:land') - R('bg:forest:port') + over(LOAD_LINES.bootFail, r.zone1.counted)) }, /^boot set, a new game \(zone 1\): .* over 4\.00 MB$/],
+      ['the portrait background over its cap', { lines: L({ area1: { 'bg:forest:port': R('bg:forest:port') - 1e4 } }) }, /^bg:forest:port is [\d.]+ MB, over its area 1 cap of [\d.]+ MB$/],
       ['Gloomjaw no longer an exception, past the zone line', { lines: without(gj), size: plus(pkT(gj), over(LOAD_LINES.zoneSet, R(gj))) }, new RegExp(`^zone ${gjZ}'s packs are [\\d.]+ MB, over 0\\.65 MB \\(zone set\\)$`)],
       ['imp and Gloomjaw no longer exceptions, past the area line', { lines: without('foe:imp', gj), size: plus(pkT(gj), over(LOAD_LINES.areaSet, R('foe:imp') + R(gj))) }, /^area 1's new packs are [\d.]+ MB, over 1\.00 MB \(area set\)$/],
       ["imp over its cap", { lines: L({ area1: { 'foe:imp': R('foe:imp') - 1e4 } }) }, /^foe:imp is [\d.]+ MB, over its area 1 cap of [\d.]+ MB$/],
@@ -442,15 +450,15 @@ if (section('split build (asset-build)')) try {
       for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
         const { page, errs } = await open({ width: w, height: h });
         await page.waitForLoadState('load'); await booted(page);
-        const r = await page.evaluate(() => ({ line: !!(document.getElementById('lfBoot') || document.getElementById('lfBootCss') || document.getElementById('lfLoad')), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait') }));
-        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && !errs.length, `split: boots at ${w}x${h} with both loading screens, their styles and the tags gone, no loading cover` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
+        const r = await page.evaluate(() => ({ line: !!(document.getElementById('lfBoot') || document.getElementById('lfBootCss') || document.getElementById('lfLoad')), tags: document.querySelectorAll('script[src]').length, zone: (document.getElementById('zName') || {}).textContent, w: document.getElementById('cv').width, cover: !!document.getElementById('artWait'), bg: lfBoot.boot.filter(id => id.startsWith('bg:')).join() }));
+        assert(!r.line && !r.tags && r.zone && r.w > 0 && !r.cover && r.bg === 'bg:forest:' + (w > h ? 'land' : 'port') && !errs.length, `split: boots at ${w}x${h} with both loading screens, their styles and the tags gone, no loading cover, Mossy Hollow's ${w > h ? 'landscape' : 'portrait'} pack only` + (errs.length ? ': ' + errs[0] : ` (${JSON.stringify(r)})`));
         await page.close();
       }
       // 2. while the biggest boot file is still loading, the line shows the bytes done of the total: the boot files and zone 1's packs
       { const { page, release } = await open({ hold: { [big.name]: 'hold' } });
         await page.waitForFunction(() => /^Loading the game: [\d.]+ of [\d.]+ MB$/.test((document.getElementById('lfBootText') || {}).textContent || ''), null, { timeout: 10000 }).catch(() => {});
         const t = await page.evaluate(() => (document.getElementById('lfBootText') || {}).textContent || '');
-        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = (s.assets.reduce((n, a) => n + a.bytes, 0) + s.packs.filter(p => inZ(p, 1)).reduce((n, p) => n + p.bytes, 0)) / 1e6;
+        const m = /^Loading the game: ([\d.]+) of ([\d.]+) MB$/.exec(t), total = (s.assets.reduce((n, a) => n + a.bytes, 0) + s.packs.filter(p => inZ(p, 1) && p.o !== 'port').reduce((n, p) => n + p.bytes, 0)) / 1e6;
         assert(m && +m[2] === +total.toFixed(1) && +m[1] < +m[2], `split: while a file loads the line reads the bytes done of the boot files and zone 1's packs ("${t}", ${total.toFixed(1)} MB)`);
         release(); await booted(page);
         assert(!(await page.$('#lfBoot')), 'split: the line goes once the held file arrives');
@@ -468,7 +476,7 @@ if (section('split build (asset-build)')) try {
         await page.waitForLoadState('load'); await booted(page); await page.waitForTimeout(400);
         const r = await page.evaluate(() => window.__t.x(`({ boot: lfBoot.boot.filter(id => !id.startsWith('hero:')).join(), ready: [1, 2, 8].map(z => artZoneReady(z)).join(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })(), bg: !!BG_ART.forest && BG_ART.forest.land.src.length > 1000 })`));
         const c = await look(page);
-        assert(r.boot === 'foe:gloomjaw,bg:forest' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
+        assert(r.boot === 'foe:gloomjaw,bg:forest:land' && r.ready === 'true,true,true' && !r.pend && r.bg && !c.cover && !errs.length,
           `split: a zone 2 save boots with its packs in (Gloomjaw cut, Mossy Hollow drawn, no cover) and the rest of the area arrives after (${JSON.stringify(r)}, ${JSON.stringify(c)})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
       // 5. a zone whose pack is still loading: the game holds under an opaque line covering the stage, the zone reads "loading",
@@ -490,15 +498,15 @@ if (section('split build (asset-build)')) try {
         const c = await look(page), run = await page.evaluate(() => window.__t.x(`({ t: gameHeld(), pend: (() => { const F = foeArtFrames('gloomjaw'); return Object.values(F.acts).some(a => a.fr.some(f => f.body.c._pend)); })() })`));
         assert(!c.cover && c.zone === 'Zone 2' && !run.t && !run.pend && !errs.length, `split: when Gloomjaw arrives the cover goes, its frames are cut and the game runs (${JSON.stringify(c)}, ${JSON.stringify(run)})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
-      // 5b. a background that comes after boot is decoded before the hold lets go: on the first frame after it, 62-stage's own image
-      //     of the picture is complete at once (no procedural scenery in its place)
-      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+      // 5b. a background that comes after boot is decoded before the hold lets go: on the first frame after it, the image 62-stage
+      //     takes from 75-art-load (artBgImg) is complete (no procedural scenery in its place)
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest:land').name]: 'hold' }, html: probe });
         await booted(page); await page.waitForTimeout(300);
         await page.evaluate(() => window.__t.x('S.activity = "fight", setZone(8), ui(true)')); await page.waitForTimeout(300);
         const a = await look(page);
         await page.evaluate(() => window.__t.x(`(() => { const f = () => { if (gameHeld()) return requestAnimationFrame(f);
-          const B = BG_ART.forest, im = new Image(); im.src = 'data:image/webp;base64,' + (B && B.land.src);
-          window.__first = B && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
+          const B = BG_ART.forest, im = artBgImg('forestland');
+          window.__first = B && B.land && im && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
           requestAnimationFrame(f); })()`));
         release(); await page.waitForTimeout(1500);
         const first = await page.evaluate(() => window.__first), b = await look(page);
@@ -507,7 +515,7 @@ if (section('split build (asset-build)')) try {
         await page.close(); }
       // 5c. a zone change inside tick that emits nothing (as a retreat after a wipe sets S.zone): the cover is up before the browser
       //     paints that frame (75-art-load rechecks in a microtask after the frame's draw)
-      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest').name]: 'hold' }, html: probe });
+      { const { page, errs, release } = await open({ save: { ...early, zone: 9, maxZone: 9 }, hold: { [pk('bg:forest:land').name]: 'hold' }, html: probe });
         await booted(page); await page.waitForTimeout(300);
         await page.evaluate(() => window.__t.x(`(() => { const t0 = tick; tick = dt => { t0(dt); if (!window.__moved && S.activity === 'fight') { window.__moved = 1; S.zone = 8;
           queueMicrotask(() => { const c = document.getElementById('artWait'); window.__cov = !!c && !c.hidden; }); } }; })()`));
@@ -516,6 +524,24 @@ if (section('split build (asset-build)')) try {
         const r = await page.evaluate(() => ({ moved: window.__moved, cov: window.__cov })), a = await look(page);
         release(); await page.waitForTimeout(300);
         assert(r.moved && r.cov === true && a.cover === 'Loading Batwing Caves' && !errs.length, `split: a zone change inside tick with no event is covered before that frame paints (${JSON.stringify(r)}, ${JSON.stringify(a)})` + (errs[0] ? ': ' + errs[0] : ''));
+        await page.close(); }
+      // 5d. bg-pack-by-shape: a phone turned mid-fight to the shape it did not boot with holds the game under the line until that
+      //     background's pack is in and decoded, and the first frame after the hold draws it decoded; the boot never asked for it
+      { const port = pk('bg:forest:port'), { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 1 }, hold: { [port.name]: 'hold' }, html: probe }), asked = [];
+        page.on('request', q => { if (q.url().endsWith(port.name)) asked.push(Date.now()); });
+        await booted(page); await page.evaluate(() => window.__t.x('S.activity = "fight", ui(true)')); await page.waitForTimeout(600);
+        const before = asked.length;
+        await page.setViewportSize({ width: 360, height: 900 }); await page.waitForTimeout(600);
+        const G = () => page.evaluate(() => window.__t.x('({ t: gameHeld(), z: S.zone, k: S.kills, hp: mob && mob.hp, o: artZonePacks(1).join() })'));
+        const a = await look(page), g1 = await G(); await page.waitForTimeout(800); const g2 = await G();
+        assert(!before && asked.length === 1 && /^Loading /.test(a.cover || '') && a.full && g1.t && g1.z === 1 && g1.o.includes('bg:forest:port') && JSON.stringify(g1) === JSON.stringify(g2),
+          `split: turned to portrait mid-fight, the game holds under "${a.cover}" (${a.full}) while Mossy Hollow's portrait pack loads (asked ${before} times before the turn, ${asked.length} after; ${JSON.stringify(g1)} then ${JSON.stringify(g2)})`);
+        await page.evaluate(() => window.__t.x(`(() => { const f = () => { if (gameHeld()) return requestAnimationFrame(f);
+          const im = artBgImg('forestport'); window.__first = BG_ART.forest.port && im && im.complete && im.naturalWidth > 0 ? 'decoded' : 'not yet'; };
+          requestAnimationFrame(f); })()`));
+        release(); await page.waitForTimeout(1500);
+        const first = await page.evaluate(() => window.__first), b = await look(page), kept = await page.evaluate(() => localStorage.getItem('lanternfall.bgShape'));
+        assert(first === 'decoded' && !b.cover && JSON.parse(kept || '{}')[0] === 'port' && !errs.length, `split: once the portrait pack is in, the first frame after the hold draws it decoded (${first}), the cover goes (${JSON.stringify(b)}), and the next boot's guess for an upright window is the portrait pack (${kept})` + (errs[0] ? ': ' + errs[0] : ''));
         await page.close(); }
       // 6. a pack that fails while the server's page still names it: "Waiting for the connection", then it tries again and loads
       { const { page, errs, release } = await open({ save: { ...early, zone: 1, maxZone: 8 }, hold: { [pk('foe:gloomjaw').name]: 'fail' }, html: probe });
@@ -18855,11 +18881,11 @@ if (section('side-column-fits-740')) try {
         // line breaks, not only length, decide the height: the 12 longest of each are measured
         const L = words.labels.slice(0, 12), A = words.aways.slice(0, 12), F = words.fights.slice(0, 12);
         // fighting: the dock and the away chip show; every label and away line shows whole. The game picks the away chip's words so
-        // it ends 4 px or more above .sb-tabs (71-ui-fight awayChipFit): the whole line, then only where the hero goes, then nothing.
+        // it ends 4 px or more above .sb-tabs (71-ui-fight awayChipFit): the whole line, then the line up to its first comma, then nothing.
         // Its pick matches the measure for every pair, a shown chip never reaches the dock, only a phone's landscape screen says less,
         // and the shortest label keeps the whole Pine Grove line there. Labels of every length with that line show each step on a phone.
-        const pick = (lt, al) => X(`(() => { const l = document.querySelector('#nuChip .nu-lbl'), a = document.querySelector('.away-chip').lastChild, keep = [l.textContent, a.textContent];
-          l.textContent = ${JSON.stringify(lt)}; const t = awayChipFit(${JSON.stringify(al)}); l.textContent = keep[0]; a.textContent = keep[1]; return t; })()`);
+        const pick = (lt, al) => X(`(() => { const l = document.querySelector('#nuChip .nu-lbl'), c = document.querySelector('.away-chip'), a = c.lastChild, keep = [l.textContent, a.textContent, c.classList.contains('hide')];
+          l.textContent = ${JSON.stringify(lt)}; const t = awayChipFit(${JSON.stringify(al)}); l.textContent = keep[0]; a.textContent = keep[1]; c.classList.toggle('hide', keep[2]); return t; })()`);
         const pine = await X('awayChipSay(matName("wood", 1), 99999, CAMP_TUNE.awayMax, NODE_NAMES.wood[0])'), short = words.labels[words.labels.length - 1];
         const ends = async (lt, al) => { const o = await measure(page, lt, al); return o && o.away ? o.dock - o.away.bottom : -1e9; };
         let bad = null, floor = true, said = { whole: 0, less: 0, none: 0 }, near = Infinity;
@@ -18869,10 +18895,11 @@ if (section('side-column-fits-740')) try {
           if (o.cut || (o.clamp && o.lines > o.clamp)) { bad = `cut: ${lt} (${o.lines} lines, clamp ${o.clamp})`; break; }
           if (o.away.cut) { bad = `away line cut: ${t || al}`; break; }
           if (o.away.top < o.chipBottom) { bad = `the away chip starts over the Next Up chip (${lt} / ${al})`; break; }
+          if (o.chipBottom + 4 > o.dock) { bad = `the Next Up chip ends ${o.dock - o.chipBottom} px above .sb-tabs (${lt})`; break; }
           if (t !== al && (!phone || lt === short && al === pine)) { bad = `the away chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
           if (t && o.dock - o.away.bottom < 4) { bad = `the chip shows "${t}" and ends ${o.dock - o.away.bottom} px above the dock (${lt})`; break; }
           if (t !== al && await ends(lt, al) >= 4) { bad = `the whole line fits but the chip says ${t ? '"' + t + '"' : 'nothing'} (${lt} / ${al})`; break; }
-          if (!t && await ends(lt, al.replace(/[,.] .*/, '.')) >= 4) { bad = `the short line fits but the chip hides (${lt} / ${al})`; break; }
+          if (!t && await ends(lt, al.replace(/, .*/, '.')) >= 4) { bad = `the short line fits but the chip hides (${lt} / ${al})`; break; }
           if (o.fs < (desk ? 14 : 13) || o.away.fs < (desk ? 14 : 13)) floor = false;
           said[t === al ? 'whole' : t ? 'less' : 'none']++; if (t) near = Math.min(near, o.dock - o.away.bottom); }
         assert(!bad, `${v}: fighting, every gate label and away line shows whole, and the away chip says what fits above the dock${bad ? ' (' + bad + ')' : ''}`);
@@ -19079,6 +19106,97 @@ if (section('leave-mid-fight-gathers (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('leave-mid-fight-gathers crashed: ' + (e.stack || e)); }
+
+// ==== toast-over-menu-foot: a notice never sits over an open menu or takes a tap meant for it ====
+// Cal's first-craft notes (first-craft-toast-clip finds, 10 Oct): with a menu open, notices sat over the menu's foot for a few seconds,
+// sideways (the stage-foot dock, 80-landscape) and upright (over the menu, above the tab bar, 50-overlays), and caught taps meant for
+// it. While notices show, the open menu now stops above them, as it already did above a guide tip (60-onboard). The section crafts on
+// save-mid with the Craft menu open, with the guide tip up and then dismissed, and samples every 100 ms: no toast box meets the menu's,
+// and a tap at the centre of every visible menu button lands in the menu (elementFromPoint), the foot's included. Once the notices
+// go, the menu takes its full height back. Desktop (1280x720, 1366x640) keeps its menu box whatever the notices do.
+if (section('toast-over-menu-foot')) try {
+  const at = 'toast-over-menu-foot', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const assets = pageAssets(distFile), raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const sample = page => page.evaluate(() => {
+      const on = e => !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > 0.05;
+      const r = b => `${Math.round(b.left)},${Math.round(b.top)} ${Math.round(b.width)}x${Math.round(b.height)}`;
+      // the menu follows --toast-h (70-ui), which a ResizeObserver sets before the frame paints: a sample taken between a new toast and
+      // that frame is not a picture the player sees, so it is skipped
+      const tb0 = document.getElementById('toasts'), th = getComputedStyle(document.documentElement).getPropertyValue('--toast-h').trim();
+      if (th !== (tb0.children.length ? (tb0.offsetHeight + 6) + 'px' : '0px')) return { skip: true, n: 0, bad: [] };
+      const menu = document.getElementById('menu'), mb = menu.getBoundingClientRect(), out = { menu: r(mb), n: 0, bad: [], taps: 0, foot: 0 };
+      for (const t of document.querySelectorAll('#toasts .toast')) { if (!on(t) || t._gone) continue; out.n++; const tb = t.getBoundingClientRect();
+        const w = Math.min(tb.right, mb.right) - Math.max(tb.left, mb.left), h = Math.min(tb.bottom, mb.bottom) - Math.max(tb.top, mb.top);
+        if (w > 0 && h > 0) out.bad.push(`toast ${r(tb)} over the menu ${r(mb)} by ${Math.round(w)}x${Math.round(h)}: "${t.innerText.replace(/\n/g, ' ').slice(0, 50)}"`); }
+      if (!out.n) return out;
+      const pnl = document.getElementById('panels'), bot = Math.min(mb.bottom, innerHeight);
+      // scroll the list so a button sits at the menu's foot, where the notices were
+      const low = [...pnl.querySelectorAll('button')].find(b => on(b) && b.getBoundingClientRect().bottom > pnl.getBoundingClientRect().bottom - 8);
+      if (low) pnl.scrollTop += low.getBoundingClientRect().bottom - pnl.getBoundingClientRect().bottom + 6;
+      const pn = pnl.getBoundingClientRect();
+      for (const b of menu.querySelectorAll('button, [role="button"], [role="tab"]')) { if (!on(b)) continue; const bb = b.getBoundingClientRect();
+        const x = bb.left + bb.width / 2, y = bb.top + bb.height / 2;
+        if (!bb.width || !bb.height || x < mb.left || x > mb.right || y < mb.top || y > bot || (pn.height && b.closest('#panels') && (y < pn.top || y > pn.bottom))) continue;
+        out.taps++; if (y > bot - 80) out.foot++;
+        const hit = document.elementFromPoint(x, y);
+        if (!hit || !menu.contains(hit)) out.bad.push(`a tap on "${(b.innerText || b.getAttribute('aria-label') || '').replace(/\n/g, ' ').slice(0, 30)}" at ${Math.round(x)},${Math.round(y)} lands on ${hit ? hit.className || hit.tagName : 'nothing'}`); }
+      return out;
+    });
+    try {
+      for (const [w, h] of [[740, 360], [360, 740], [1280, 720], [1366, 640]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); localStorage.setItem('lanternfall.test.moments', '1'); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await routePage(page, 'http://lf.test/', html, assets);
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        for (let i = 0; i < 8; i++) { const b = await page.$('.bsheet-ov .sty-done, .bsheet-ov .big:has-text("Begin"), .bsheet-ov .big:has-text("Continue"), .away-ov button'); if (!b) break; try { await b.click({ timeout: 800 }); } catch (e) { break; } await page.waitForTimeout(400); }
+        await X('onboardUnlockAll(); true');
+        await X('setTab("forge"); true');
+        for (let i = 0; i < 4; i++) { const b = page.getByRole('button', { name: 'Got it' }); if (!(await b.count())) break; await b.first().click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); }
+        // settled: the menu's slide and every toast are done
+        const settle = async () => { for (let i = 0; i < 40; i++) { if (await page.evaluate(() => !document.querySelector('#toasts .toast') && !document.getElementById('menu').getAnimations({ subtree: true }).some(a => a.playState === 'running'))) return true; await X('for (const t of [...$("toasts").children]) dropToast(t); true'); await page.waitForTimeout(100); } return false; };
+        assert(await settle(), `${v}: the Craft menu opens with no notices up`);
+        const box = async () => { for (let i = 0; i < 40; i++) { const o = await sample(page); if (!o.skip) return o.menu; await page.waitForTimeout(50); } return 'never settled'; };
+        for (const tip of ['the guide tip up', 'no tip']) {
+          if (tip === 'no tip') { const x = await page.$('.ob-bub:not([hidden]) .ob-x'); if (x) { await x.click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); } }
+          await settle(); const m0 = await box();
+          // upright the tip has its own row over the menu (60-onboard), so the menu's own margin is off: that branch is measured here
+          if (h > w && tip !== 'no tip') assert(!!(await page.$('.ob-bub.over-menu:not([hidden])')), `${v}: the guide tip is up over the menu`);
+          // a craft (its toast and, for a Rare or better, its banner) and two plain notices, with the menu open
+          const kind = await X(`(() => { const k = Object.keys(CRAFT_KINDS).find(k => { for (const e of Object.keys(S.mats)) S.mats[e] = S.mats[e].map(() => 5000); S.gold = 1e9; return canCraft(k, 1).ok; }); const it = k && craftItem(k, 1);
+            if (it) moment('craft', { eye: 'Well made · Rare', title: itemName(it), sub: 'Rare item. It is in your bag.', rarity: 'rare', icon: { item: it } });
+            popToast('You found a Copper Ore cache. It went to your bag.', 'good', null, 1); popToast('Level 21. Your hero hits harder now.', 'good', null, 2); return k; })()`);
+          assert(!!kind, `${v}, ${tip}: save-mid can craft something`);
+          await page.waitForTimeout(300); await X('window.__momentFlush(); true');
+          let most = 0, bad = null, taps = 0, foot = 0, menus = new Set();
+          for (let t0 = Date.now(); Date.now() - t0 < 2500;) {
+            const o = await sample(page); most = Math.max(most, o.n); if (o.skip) { await page.waitForTimeout(30); continue; } if (o.n) { taps = Math.max(taps, o.taps); foot = Math.max(foot, o.foot); menus.add(o.menu); }
+            if (phone && !bad && o.bad.length) bad = o.bad[0];
+            await page.waitForTimeout(100);
+          }
+          assert(most >= 1, `${v}, ${tip}: notices show with the menu open (${most})`);
+          if (phone) {
+            assert(!bad, `${v}, ${tip}: no notice sits over the open menu or takes a tap meant for it${bad ? ' (' + bad + ')' : ''}`);
+            assert(taps >= 3 && foot >= 1, `${v}, ${tip}: the menu's buttons are tapped, the foot's included (${taps} buttons, ${foot} in the foot)`);
+          } else assert(menus.size === 1 && menus.has(m0), `${v}, ${tip}: the desktop menu keeps its box while notices show (${[...menus].join(' / ')}, ${m0} without)`);
+          assert(await settle(), `${v}, ${tip}: the notices go`);
+          const m1 = await box();
+          assert(m1 === m0, `${v}, ${tip}: with the notices gone the menu takes its full box back (${m1}, ${m0} before)`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('toast-over-menu-foot crashed: ' + (e.stack || e)); }
 
 // ==== away-line-only-when-true: the tier 2 row's away sentence matches what happens away ====
 // save-min60-tier-gate fights (zone 21) with the Birch Bow's Mining 7 of 14 gate. Only gathering the gate's skill raises it away

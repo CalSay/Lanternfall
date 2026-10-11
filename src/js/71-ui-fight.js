@@ -55,7 +55,7 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
-// the away card's line for a fighter who can't gather yet (75-away.js)
+// the away card's line for a fighter who can't gather yet
 const AWAY_RULE_TXT = 'Fights only happen while you play.';
 // Away chip: what leaving now earns, on the away note's beat, from awayBase's rates (50-sim), held to the Storehouse room
 // unless Spillover moves on. A fighter is told where the hero goes back to.
@@ -88,14 +88,14 @@ function uiAwayChip() {
   if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
-// A fighter's chip ends 4 px above the dock or says less (740x360).
+// A fighter's chip ends 4 px above the dock or says less.
 let fitKey, fitTxt;
 function awayChipFit(txt) {
   // measured again only when the words or the screen change
   const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + ($('nuChip') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
   if (k === fitKey) return fitTxt;
   fitKey = k; awayChip.classList.remove('hide');
-  for (const t of [txt, txt.replace(/[,.] .*/, '.')]) { awayChip.lastChild.textContent = t; if (!on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top) return fitTxt = t; }
+  for (const t of [txt, txt.replace(/,.*/, '.')]) { awayChip.lastChild.textContent = t; if (!on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top) return fitTxt = t; }
   return fitTxt = '';
 }
 uiHooks.push(uiAwayChip);

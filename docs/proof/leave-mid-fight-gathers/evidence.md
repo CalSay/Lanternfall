@@ -36,13 +36,23 @@ away harvest. We report it as a miss on the letter of the bar.
 - active and optimiser: unchanged.
 - No re-baseline.
 
-## Boot bytes (Brotli wire bytes)
-- Page: 1131528 -> 1131370 (-158).
-- Worst-zone boot set (the shipped boot line): 3984708 -> 3984550 (-158).
-- The hero packs check's test build (with the never-shipped 21zx test hero file): 3999471 -> 3999463 (-8).
+## Boot bytes (Brotli wire bytes, against the integration branch at 0dca987e)
+- Page: 1130120 -> 1130033 (-87).
+- Worst-zone boot set (the shipped boot line): 3983362 -> 3983275 (-87).
+- The hero packs check's test build (with the never-shipped 21zx test hero file): 3998833 -> 3998821 (-12).
 
 ## Save review
 The save-reviewer found one blocking bug, now fixed: Spillover during a fighter's away called `setNode`, whose
 `sceneReset` ended the live turn fight, so the next fight started with the hero at full HP. `setNode` now resets the
 scene only while gathering, and the leave-mid-fight-gathers section asserts that a fighter's away spill keeps the
 fight and the hero's HP (it fails on the old code).
+
+## Code review
+The reviewer found that `side-column-fits-740` had stopped checking that the Next Up chip clears the dock while
+fighting (the old bound sat in the loop this change rewrote). It is back for every pair. It also found that the short
+chip line dropped "you earn nothing" when the pile is full; the short line now cuts at the first comma ("Leave now:
+Wren goes back to the Copper Vein. Copper Ore is full.").
+
+At 740x360 the chip's whole line fits under short Next Up labels only. Of the 174 measured pairs (weighted to the
+longest labels) it says the whole line 8 times, the short line 9 times and nothing 157 times. At 1024x768 and wider it
+always says the whole line.

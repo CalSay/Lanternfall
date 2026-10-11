@@ -1578,17 +1578,19 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     if (foeFx && foeFx.has(s)) foeFx.front(ctx, s, cam);
   }
   // A fixed battle background (BG_ART, 21zb): the landscape export on a wide stage, the portrait one on a tall stage,
-  // scaled (smooth) to cover the stage with its painted road on the ground line GYS, centred (stage px, the scenery's view). False until it has loaded.
+  // scaled (smooth) to cover the stage with its painted road on the ground line GYS, centred (stage px, the scenery's view). The backdrop alone
+  // until that shape is in and decoded (75-art-load holds the game for a late pack and decodes it: artBgImg).
   const bgImgs = {};
   function bgArtDraw(g, theme) {
     const B = typeof BG_ART === 'object' && BG_ART[theme]; if (!B) return false;
-    const o = SWS >= SHS ? 'land' : 'port', E = B[o], k0 = theme + o;
-    let img = bgImgs[k0];
-    if (!img) { img = bgImgs[k0] = new Image(); img.src = 'data:image/webp;base64,' + E.src; }
-    if (!img.complete || !img.naturalWidth) return false;
+    const o = CW >= CH ? 'land' : 'port', E = B[o], k0 = theme + o;
+    g.fillStyle = '#0B0810';
+    const img = E && (bgImgs[k0] = bgImgs[k0] || artBgImg(k0) || new Image());
+    if (img && !img.src) img.src = 'data:image/webp;base64,' + E.src;
+    if (!img || !img.complete || !img.naturalWidth) return g.fillRect(0, 0, SWS, SHS), true;
     const k = Math.max(SWS / E.w, GYS / (E.road * E.h), (SHS - GYS) / ((1 - E.road) * E.h));
     const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true;
-    g.fillStyle = '#0B0810'; g.fillRect(0, 0, SWS, SHS);
+    g.fillRect(0, 0, SWS, SHS);
     g.drawImage(img, (SWS - E.w * k) / 2, GYS - E.road * E.h * k, E.w * k, E.h * k);
     g.imageSmoothingEnabled = sm;
     return true;

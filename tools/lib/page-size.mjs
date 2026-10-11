@@ -88,7 +88,7 @@ export function packs(jsDir = JS_DIR) {
   }
   const bg = readData(jsDir, '21zb-data-bgart.js', 'BG_ART');
   for (const [theme, p] of Object.entries(bg)) for (const o of ['land', 'port']) if (p[o])
-    out.push({ id: `bg:${p.id}:${o}`, pack: 'bg:' + theme, label: `background "${p.id}" (${theme}, ${o} ${p[o].w}x${p[o].h})`, kind: p.kind || 'background', bytes: fileBytes(p[o].src) });
+    out.push({ id: `bg:${p.id}:${o}`, pack: `bg:${theme}:${o}`, label: `background "${p.id}" (${theme}, ${o} ${p[o].w}x${p[o].h})`, kind: p.kind || 'background', bytes: fileBytes(p[o].src) });
   const hunt = readData(jsDir, '21z-data-huntart.js', 'HUNT_ART');
   out.push({ id: 'hunt:interim', pack: null, label: 'interim Hunting art (HUNT_ART)', kind: 'interim', bytes: Buffer.byteLength(JSON.stringify(hunt)) });
   const ns = readData(jsDir, '21zc-data-nsart.js', 'NS_ART'), NSK = { scenery: 'scenery', foe: null, beast: 'beast', node: 'node' };

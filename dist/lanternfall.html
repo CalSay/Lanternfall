@@ -406,8 +406,9 @@ img[src*="#nic:"] { image-rendering: auto; }   /* a gear icon set by code that d
    At most 2; only the toast itself takes taps (tap or swipe it away). The right edge stays clear
    for the ability button. */
 .toasts { position: absolute; left: 6px; right: 62px; top: 62px; z-index: 6; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
-/* over an open full-screen menu (portrait): above the tab bar, full width */
+/* over an open menu (portrait): above the tab bar; the menu stops above them (toast-over-menu-foot) */
 .toasts.over-menu { top: auto; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px); left: var(--gut); right: var(--gut); z-index: 7; }
+.app:has(>.toasts.over-menu>.toast):not(:has(>.ob-bub.over-menu:not([hidden]))) .menu { margin-bottom: calc(var(--toast-h) + 10px); }
 .toasts.over-menu .toast { min-height: 36px; box-shadow: 0 3px 0 #0B0810, 0 6px 18px rgba(0,0,0,.5); }
 .toast { pointer-events: auto; touch-action: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 30px; background: #0E0B12E8; border: 1px solid var(--line-hi); border-left: 3px solid var(--ember); padding: 4px 8px 4px 6px; font: 500 max(var(--tmin, 0px), calc(12.5px * var(--tk, 1)))/1.25 var(--body); box-shadow: 0 2px 0 #0B0810; animation: tin .2s ease-out; transition: transform .16s ease-out, opacity .16s ease-out; }
 .toast .tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
@@ -3930,12 +3931,10 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 /* phones on their side: the stage's sky is short, so the combat info sits in two plates (hero left, foe right) */
 @media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
   .hud::before { height: 48px; }
-  /* first-craft-toast-clip: the notices row under Next Up is 23 to 77 px tall here (a 5-line goal leaves 23), and a craft's toast with its
-     banner stands about 150 px, so they climbed over the chip and the bell. On a phone on its side toasts dock at the foot of the stage,
-     under the hero and foe, as they do while the guide speaks (hero-voice-banner-under-guide). Two share the row side by side (stacked
-     they stood 106 px and covered the hero to the waist), so they stay about at the hero's feet, left of the sound and battle-bar buttons
-     (right 68 px; the stat line sits under them). The banner's eye sits on a tight line over
-     the title, so the title has the banner's width (beside the eye "Copper Warblade" got 142 px and broke mid-word) and the banner stays short */
+  /* first-craft-toast-clip: the notices row under Next Up (23 to 77 px) can't hold a craft's toast and banner (about 150 px): they
+     climbed over the chip and the bell. So toasts dock at the stage's foot, two side by side (stacked, they covered the hero to the
+     waist), left of the sound and battle-bar buttons. While they show, an open menu stops above them (toast-over-menu-foot). The
+     banner's eye sits on its own line, so the title has the banner's width ("Copper Warblade" broke mid-word beside it) */
   .toasts.side-dock, .app.guide-side .toasts.side-dock { grid-column: 2 / 4; grid-row: 3 / -1; left: 8px; right: 68px; bottom: 24px; flex-direction: row; align-items: flex-end; justify-content: center; gap: 6px; }
   .toasts.side-dock .toast, .app.guide-side .toasts.side-dock .toast { flex: 0 1 320px; width: auto; min-width: 0; }
   .toasts.side-dock .mm-t-sub, .toasts.side-dock .mm-t-title ~ .mm-t-say { display: none; }   /* as upright (20-stage): name and rarity only */
@@ -3943,6 +3942,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   .toasts.side-dock .mm-t-tx, .app.guide-side .toasts.side-dock .mm-t-tx { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .toasts.side-dock .mm-t-eye { line-height: 1; }
   .toasts.side-dock .mm-t-title { font-size: max(var(--tmin, 0px), calc((15px * var(--display-k)) * var(--tk, 1))); line-height: 1.05; overflow-wrap: normal; }
+  .app.menu-open:has(>.toasts.side-dock>.toast) .menu { margin-bottom: calc(var(--toast-h) + 26px); }
   /* forge-line-740: the tip stops above the fight buttons, so at 740x360 its Go at 15 px took four lines ("Mine at / the / Copper /
      Vein") and left the line two, cutting "The Forge needs Copper Ore 0/25" before where to get it. A smaller Go takes two lines */
   .ob-bub.side .ob-ok { font-size: max(var(--tmin, 0px), calc((12px * var(--display-k)) * var(--tk, 1))); }
@@ -32144,17 +32144,19 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     if (foeFx && foeFx.has(s)) foeFx.front(ctx, s, cam);
   }
   // A fixed battle background (BG_ART, 21zb): the landscape export on a wide stage, the portrait one on a tall stage,
-  // scaled (smooth) to cover the stage with its painted road on the ground line GYS, centred (stage px, the scenery's view). False until it has loaded.
+  // scaled (smooth) to cover the stage with its painted road on the ground line GYS, centred (stage px, the scenery's view). The backdrop alone
+  // until that shape is in and decoded (75-art-load holds the game for a late pack and decodes it: artBgImg).
   const bgImgs = {};
   function bgArtDraw(g, theme) {
     const B = typeof BG_ART === 'object' && BG_ART[theme]; if (!B) return false;
-    const o = SWS >= SHS ? 'land' : 'port', E = B[o], k0 = theme + o;
-    let img = bgImgs[k0];
-    if (!img) { img = bgImgs[k0] = new Image(); img.src = 'data:image/webp;base64,' + E.src; }
-    if (!img.complete || !img.naturalWidth) return false;
+    const o = CW >= CH ? 'land' : 'port', E = B[o], k0 = theme + o;
+    g.fillStyle = '#0B0810';
+    const img = E && (bgImgs[k0] = bgImgs[k0] || artBgImg(k0) || new Image());
+    if (img && !img.src) img.src = 'data:image/webp;base64,' + E.src;
+    if (!img || !img.complete || !img.naturalWidth) return g.fillRect(0, 0, SWS, SHS), true;
     const k = Math.max(SWS / E.w, GYS / (E.road * E.h), (SHS - GYS) / ((1 - E.road) * E.h));
     const sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = true;
-    g.fillStyle = '#0B0810'; g.fillRect(0, 0, SWS, SHS);
+    g.fillRect(0, 0, SWS, SHS);
     g.drawImage(img, (SWS - E.w * k) / 2, GYS - E.road * E.h * k, E.w * k, E.h * k);
     g.imageSmoothingEnabled = sm;
     return true;
@@ -39226,7 +39228,7 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price') };
-// the away card's line for a fighter who can't gather yet (75-away.js)
+// the away card's line for a fighter who can't gather yet
 const AWAY_RULE_TXT = 'Fights only happen while you play.';
 // Away chip: what leaving now earns, on the away note's beat, from awayBase's rates (50-sim), held to the Storehouse room
 // unless Spillover moves on. A fighter is told where the hero goes back to.
@@ -39259,14 +39261,14 @@ function uiAwayChip() {
   if (awayChip.lastChild.textContent !== txt) awayChip.lastChild.textContent = txt;
   putToggle(awayChip, 'hide', !txt);
 }
-// A fighter's chip ends 4 px above the dock or says less (740x360).
+// A fighter's chip ends 4 px above the dock or says less.
 let fitKey, fitTxt;
 function awayChipFit(txt) {
   // measured again only when the words or the screen change
   const tb = document.querySelector('.sb-tabs'), on = !!(tb && tb.offsetParent), k = txt + ($('nuChip') || awayChip).textContent + innerWidth + 'x' + innerHeight + on;
   if (k === fitKey) return fitTxt;
   fitKey = k; awayChip.classList.remove('hide');
-  for (const t of [txt, txt.replace(/[,.] .*/, '.')]) { awayChip.lastChild.textContent = t; if (!on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top) return fitTxt = t; }
+  for (const t of [txt, txt.replace(/,.*/, '.')]) { awayChip.lastChild.textContent = t; if (!on || awayChip.getBoundingClientRect().bottom + 4 <= tb.getBoundingClientRect().top) return fitTxt = t; }
   return fitTxt = '';
 }
 uiHooks.push(uiAwayChip);
@@ -41060,61 +41062,24 @@ function fitTextWidth(e, min = 7, cleared = false, inside = false) {
 
 // ---- src/js/75-art-load.js ----
 // 75-art-load: the split build's area art, loaded one area ahead (card art-loader; docs/design/hosting.md 5, B2). Browser-only.
-// The inline page (the Artifact, and every tool's default) has no boot loader (no lfBoot): every pack is in the page, nothing
-// here runs, and artZoneReady is always true.
-// In the split build (node tools/build.mjs --split) each foe's atlases and each battle background come in a pack file of their
-// own. The boot loader (src/boot-loader.html) wrote the tags of the save's zone's packs before the game ran; lfBoot.take hands
-// those over here, then every later pack as it arrives. This file:
-// - puts a pack's data in FOE_ART (the foe's atlases; its timings are in the page) or BG_ART (the whole background), each image
-//   a basE91 getter as 21zz makes them, then emits 'artPack' { id, kind, key } (64j cuts that foe's frames).
-// - loads the packs the zone on screen shows first, then those of the zones either side, the rest of its area and the next
-//   area: a zone's pack alone, hero files up to three at once (the queue below), and one more for what the stage waits for.
-// - holds the game (holdGame) while the zone on screen lacks a pack: a plain line covers the stage and the zone number reads
-//   "loading". A pack still loading is never drawn as a stand-in (art freeze).
-// - when a pack file fails, asks the server for the page (through lfBoot.page: the game's own code makes no network call): if the page no longer names that file (a new deploy took the old
-//   hashed files away), the game saves and reloads once the zone on screen needs it; otherwise it tries again later.
-//   artZonePacks(z) -> the pack ids zone z shows ([] in the inline page)
-//   artZoneReady(z) -> bool: every pack zone z shows is in (and, for one that came after boot, its pictures have decoded)
-// Hero packs (card hero-packs; tools/build.mjs heroPacks): a hero file's moves come by hero. The boot loader wrote the save's
-// hero's core pack; after boot that hero's first-hour moves come first (the queue below), its other moves after the zones either
-// side, and another hero's when the save has that hero (a new game, with no hero yet, loads every hero's core). Each move goes in its hero's moves (lfBoot.putHero: <file's constant>.moves, or
-// .heroes.<hero>.moves, merged into what the page kept of it). The save's hero's core is in the constant as soon as its file runs,
-// as in the inline page; a move that comes later emits 'artPack' { id, kind: 'hero', key, hero, moves }, and a drawer that must
-// prepare its data (basE91 text, cutting frames) does it there (the boot packs emit it too, when this file runs).
-// The code that draws a hero asks before it draws a move, every frame it draws it:
-//   artHeroNeed(hero, move) -> bool: true when the move is in (draw it); false: draw nothing for it (never a stand-in): the game
-//                              holds under a plain line over the stage, and the move loads before anything else, until it is in
-//                              or nothing has asked for it for half a second (the stage moved on: another hero, another screen)
-//   artHeroReady(hero, move) -> bool: the same answer, with no hold (true in the inline page, and for a move no pack holds)
-//   artHeroWait(fn)          -> fn(hero, move) returns false while a move that is in is not ready to draw yet (pictures decoding);
-//                              it must turn true once it gives up (a picture that never decodes), or the hold never ends
-//   artHeroPacks(hero, move) -> the hero's pack ids (those holding that move, when named)
-//   artHeroWant(hero, move)  -> load the move's pack soon, with no hold (a screen off the stage that can wait for it: the hero
-//                              picker's figure; route-s-wren-wire); its 'artPack' says when it is in
-// The queue (card hero-queue; loading-screen-judge.md): the moves a new player's first fights draw come before the next zones.
-// With a hero: its Attack, Hit, Parry and Dodge, then the moves its three slots draw (64h heroArtMove maps an ability to its
-// move). A new game, with no hero yet: every hero's Attack and Hit after the cores, so whichever starter is picked can swing and
-// take a hit at once. Slotting or learning an ability asks for its move (artHeroWant). Hero files are small (one move, about
-// 0.1 MB), so up to three load at once; a zone's pack loads alone, as before. What the stage waits for always has a slot more.
-// New-style packs (n in the table; docs/design/new-style/engine.md) never hold the game: they load by zone after its own packs,
-// or when 64m asks: artNsWant(pieces) (none while Classic art is on).
-// Time held (card load-hold-progress): the inline page never holds for a pack, so for the same wall time both builds give the
-// same camp, craft and hands progress. A hold stops only the fight (played by hand, under the line). Camp builds and Hands' jobs
-// run on the wall clock and catch up on the first second after it; the Forge, Bench and Loom orders run on the frame clock, so
-// the frame loop hands each held frame here and they run as in tick:
-//   artHoldTick(dt) -> 90-boot, every frame the game is held: runs the orders' dt while this file's hold is the only one up
-// Gathering is not played by hand: under the line the game runs on. The raid holds as before (the online layer is not this card's).
-var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {}, artNsWant = () => {}, artHoldTick = () => {};
+// Nothing here runs in the inline page (no lfBoot). What it does and its calls: docs/design/hosting/art-load.md.
+var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true, artHeroReady = () => true, artHeroWait = () => {}, artHeroPacks = () => [], artHeroWant = () => {}, artNsWant = () => {}, artHoldTick = () => {}, artBgImg = () => null;
 {
   const LB = typeof lfBoot === 'object' && lfBoot && lfBoot.packs && typeof lfBoot.take === 'function' ? lfBoot : null;
   if (LB && typeof document !== 'undefined') {
-    const P = LB.packs, got = {}, ready = {}, failed = {}, stale = {}, broken = {}, busy = {}, keep = [];
+    const P = LB.packs, got = {}, ready = {}, failed = {}, stale = {}, broken = {}, busy = {}, imgs = {};
     let booted = false;
     const RELOAD_KEY = 'lanternfall.artReloadAt';
     // the build's table (zones 1 to LB.road); past the road the scenery repeats every 35 zones (check.mjs holds it), as in the loader
     const tableZone = z => (z > LB.road ? LB.road - 34 + (z - LB.road - 1) % 35 : z);
     const inZone = (id, q) => P[id].z.some(r => q >= r[0] && q <= r[1]);
-    artZonePacks = z => { const q = tableZone(z); return Object.keys(P).filter(id => !P[id].n && inZone(id, q)); };
+    let lastO = LB.boot.map(id => P[id].o).find(Boolean) || 'land';   // a hidden stage keeps the last shape seen
+    const shape = () => { const e = document.getElementById('stage'); if (e && e.clientWidth) lastO = e.clientWidth < e.clientHeight ? 'port' : 'land'; return lastO; };
+    // the boot loader's next guess: the stage's shape by the window's (a phone's tab sheet can make an upright stage wide)
+    const keepShape = () => { try { const e = document.getElementById('stage'), k = 'lanternfall.bgShape', v = JSON.parse(localStorage.getItem(k)) || {}, w = innerWidth >= innerHeight * 1.35 ? 1 : 0;
+      if (e && e.clientWidth && v[w] !== shape()) { v[w] = shape(); localStorage.setItem(k, JSON.stringify(v)); } } catch (e) {} };
+    artZonePacks = z => { const q = tableZone(z), o = shape(); return Object.keys(P).filter(id => !P[id].n && inZone(id, q) && (!P[id].o || P[id].o === o)); };
+    artBgImg = k => imgs[k] || null;
     const nsPacks = z => { const q = tableZone(z); return classicOn() ? [] : Object.keys(P).filter(id => P[id].n && inZone(id, q)); };
     // A pack that came after boot is ready once its pictures have decoded, so the first frame after the hold draws them (the
     // packs the boot loader wrote come in before the game runs and are used as the inline page uses its art)
@@ -41173,13 +41138,15 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
       } else if (kind === 'ns' && typeof NS_ART === 'object') {   // basE91 pictures (64m decodes them)
         const i = key.indexOf('.'), G = NS_ART[key.slice(0, i)], e = G && G[key.slice(i + 1)]; if (!e) return;
         e.img = Object.assign(e.img || {}, data.img); done();
-      } else if (kind === 'bg' && typeof BG_ART === 'object') {
-        for (const o of ['land', 'port']) if (data[o]) lazy(data[o], 'src');
-        if (!late) { BG_ART[key] = data; done(); return; }
-        // decode both shapes first and keep them: 62-stage's own image of the same picture is then complete at once
+      } else if (kind === 'bg' && typeof BG_ART === 'object') {   // key '<theme>:<shape>'
+        const [th, o] = key.split(':'), E = data[o]; if (!E) return;
+        lazy(E, 'src');
+        const add = () => { (BG_ART[th] = BG_ART[th] || {})[o] = E; done(); };
+        if (!late) return add();
+        // decoded before the hold lifts; 62-stage draws this image (artBgImg)
         got[id] = 'decoding';
-        Promise.all(['land', 'port'].filter(o => data[o]).map(o => { const im = new Image(); keep.push(im); im.src = 'data:image/webp;base64,' + data[o].src; return im.decode(); }))
-          .then(() => { BG_ART[key] = data; done(); }, () => { broken[id] = true; cover(); });   // a picture that will not decode: a new download would not help
+        const im = imgs[th + o] = new Image(); im.src = 'data:image/webp;base64,' + E.src;
+        im.decode().then(add, () => { broken[id] = true; cover(); });   // a picture that will not decode: a new download would not help
       }
     };
     LB.take(put);
@@ -41213,6 +41180,7 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     const runs = () => target() === 'node';
     const held = () => { const k = key(); if (coverKey !== k) cover(); queueMicrotask(recheck); return !k.endsWith(':false:false') && !runs(); };
     addEventListener('online', () => { for (const id in failed) failed[id].at = 0; pump(); });   // back online: try again now
+    addEventListener('resize', () => pump());   // a turn may want a background's other shape
     holdGame(held);
     // a held fight or raid: the orders keep the frame clock, unless another hold (a story scene, a card) stops the game as the inline page does
     const others = () => GAME_HOLDS.some(f => { if (f === held) return false; try { return !!f(); } catch (e) { return false; } });
@@ -41310,7 +41278,7 @@ var artZoneReady = () => true, artZonePacks = () => [], artHeroNeed = () => true
     });
     on('artPack', () => { cover(); pump(); });
     on('sceneReset', () => { cover(); pump(); });
-    setInterval(pump, 1000);
+    setInterval(() => { pump(); keepShape(); }, 1000);
     pump();
   }
 }
@@ -41754,7 +41722,7 @@ let showAwayReport, awayLimitStep;
   }
 
   showAwayReport = function (r) {
-    // A fighter who earned nothing still gets the card.
+    // a fighter who can't gather yet still gets the card
     const quiet = r && r.turnCombat;
     if (!r || r.secs < 30 || (r.empty && !quiet) || r.empty === undefined && !quiet && !(r.lines && r.lines.length)) return;
     // C14: the report is one card through the notice policy, never a second set of pops.
