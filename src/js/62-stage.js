@@ -15,8 +15,7 @@ let T = 0;
 // pass), 'front' (after the actors, pixel pass) or 'light' (additive lights); ignore other phases.
 // v = { cam, SW, SH, GY, T, tg, nodeR, hx, hy, hl, hd, hf, hX, hY, ak } (reused; nodeR: the gather node's right
 // edge, camera-free; hx the hero's feet x (camera-free), hy its ground line, hl its lane, hd down, hf the
-// frame drawn last, hX/hY where it was drawn; ak the actors' scale against the scenery, so a prop can draw at scenery
-// scale: 1 / ak). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
+// frame drawn last, hX/hY where it was drawn, ak the actors' scale). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
 let stageDeco = null;
 // Ability effects (62b-fx.js): stageFx.swing(x, y) as the hero's swing fires, stageFx.aim(s) the foe's chest, and
 // stageFx.draw(ctx, phase, v), phase 'back' (before the actors), 'fx' (after the rings and particles) or 'dev' (device px, over the HUD).
@@ -1624,9 +1623,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     const t0 = performance.now();
     pickScene();
     const tg = target(), raid = tg === 'world', gath = tg === 'node', fight = tg === 'mob';
-    // camF: the camera sway in stage px (the scenery's); cam: the same in actor px. actor-scale-followups: camF snaps (toward 0) to a
-    // whole step of both views (camSt stage px: 3 at AK 1.5, AK at a whole AK), so the ground and the feet move together, never 1 px apart.
-    // A fixed painting (a battle background, the hunting grounds) does not sway, so there the actors stand still too (cam 0, below).
+    // camF: the camera sway in stage px, snapped to a step both views share (feet never slide); cam: in actor px, 0 on a fixed painting
     const camSt = AK % 1 ? AK * 2 : AK, camF = reduced ? 0 : Math.trunc((Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3) / camSt) * camSt;
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
     const K = DPR * ZM, tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;

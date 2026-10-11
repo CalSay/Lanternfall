@@ -3650,18 +3650,12 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
    line drops under the banner. */
 .tc-on .tv-top .tv-n, .tc-on .tv-top .tv-hero { visibility: hidden; }
 .tc-on .tv-top .tv-warn { margin-top: 14px; }
-/* actor-scale-followups: on a desktop stage the heroes' heads reach just under the Grit row, where a foe trick's line (.tv-warn) and the
-   resource tip (.tv-restip, "Aim: ...") used to sit. They dock in the stage's top-left corner instead: under the hero's plate (--vs-b) and
-   the buff chips the stage draws from its foot (Guard, Wall: 62-stage drawHud, about 20 px), left of the place line and the banner, so
-   they clear every hero's box at 1280x720, 1366x640 and 1920x1080. The right corner is the boss strip's (80-landscape). .tv-top is their
-   box, so the top undoes .tv-top's own (above). A foe trick's line is the one to read: while it shows, the tip steps out of sight.
-   Neither moves when the banner shows. */
+/* actor-scale-followups: desktop: a trick's line and the resource tip dock top left, clear of the heroes */
 @media (min-aspect-ratio: 1/1) and (min-width: 1200px) and (min-height: 600px) {
   .stagebox .tv-top .tv-warn, .stagebox .tv-top .tv-restip { position: absolute; left: 0; top: calc(var(--vs-b, 54px) + 28px - max(80px, calc(var(--vs-zb, 0px) + 2px)));
     margin: 0; max-width: min(400px, calc(50% - 100px)); text-align: left; }
   .stagebox .tv-top:has(.tv-warn:not([hidden])) .tv-restip { visibility: hidden; }
-  /* while the whose-turn banner crosses the stage (a full-width band under the place line) the line must end above it: it rises to
-     the plate's foot, over the buff chips for the banner's moment, at the 14 px desktop floor (turn-banner-clears-plate) */
+  /* under the banner (a full-width band) the line rises above it */
   .stagebox.tc-on .tv-top .tv-warn { top: calc(var(--vs-b, 54px) + 2px - max(80px, calc(var(--vs-zb, 0px) + 2px))); font-size: max(var(--tmin, 0px), calc(14px * var(--tk, 1))); }
 }
 /* 60-wall: the Trophy Wall card on the Camp view (63e-scenery-wall.js, AC5). */
@@ -30579,8 +30573,7 @@ let T = 0;
 // pass), 'front' (after the actors, pixel pass) or 'light' (additive lights); ignore other phases.
 // v = { cam, SW, SH, GY, T, tg, nodeR, hx, hy, hl, hd, hf, hX, hY, ak } (reused; nodeR: the gather node's right
 // edge, camera-free; hx the hero's feet x (camera-free), hy its ground line, hl its lane, hd down, hf the
-// frame drawn last, hX/hY where it was drawn; ak the actors' scale against the scenery, so a prop can draw at scenery
-// scale: 1 / ak). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
+// frame drawn last, hX/hY where it was drawn, ak the actors' scale). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
 let stageDeco = null;
 // Ability effects (62b-fx.js): stageFx.swing(x, y) as the hero's swing fires, stageFx.aim(s) the foe's chest, and
 // stageFx.draw(ctx, phase, v), phase 'back' (before the actors), 'fx' (after the rings and particles) or 'dev' (device px, over the HUD).
@@ -32188,9 +32181,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     const t0 = performance.now();
     pickScene();
     const tg = target(), raid = tg === 'world', gath = tg === 'node', fight = tg === 'mob';
-    // camF: the camera sway in stage px (the scenery's); cam: the same in actor px. actor-scale-followups: camF snaps (toward 0) to a
-    // whole step of both views (camSt stage px: 3 at AK 1.5, AK at a whole AK), so the ground and the feet move together, never 1 px apart.
-    // A fixed painting (a battle background, the hunting grounds) does not sway, so there the actors stand still too (cam 0, below).
+    // camF: the camera sway in stage px, snapped to a step both views share (feet never slide); cam: in actor px, 0 on a fixed painting
     const camSt = AK % 1 ? AK * 2 : AK, camF = reduced ? 0 : Math.trunc((Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3) / camSt) * camSt;
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
     const K = DPR * ZM, tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
@@ -35743,8 +35734,7 @@ let campPaintFire = null;
     return hes;
   }
   const at = { x: 0, y: 0, SW: 1, SH: 1, on: false };   // the fire on screen, for the button
-  // actor-scale-followups: the fire and the plots are scenery, so they draw at the scenery's scale (1 / v.ak of the actors' px the
-  // stage hands over), about their base on a whole scenery px; Hesketh is an actor and keeps the actors' scale.
+  // the fire and plots are scenery: drawn at 1 / v.ak of the actors' scale (Hesketh keeps it)
   function asProp(g, k, x, y, paint) {
     if (k === 1) { paint(x, y); return; }
     g.save(); g.translate(Math.round(x * k) / k, Math.round(y * k) / k); g.scale(1 / k, 1 / k); paint(0, 0); g.restore();
@@ -35782,7 +35772,7 @@ let campPaintFire = null;
     // 'light': additive glows (the flame, Hesketh's lamp once the fire burns)
     if (phase !== 'light' || !on) return;
     const fl = reduced ? 0 : Math.sin(v.T * 7) * 0.05 + Math.sin(v.T * 13 + 1) * 0.03;
-    const kl = ns ? 1 : k;   // the new-style fire (64m) keeps the actors' scale, so its light does too
+    const kl = ns ? 1 : k;   // the new-style fire keeps the actors' scale
     ANIM.lightAt(g, '255,150,70', fx, gy - 12 / kl, 78 / kl, 0.5 + fl);
     ANIM.lightAt(g, '255,236,170', fx, gy - 10 / kl, 22 / kl, 0.55 + fl);
     const H = hes;
