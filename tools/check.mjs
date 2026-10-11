@@ -19075,6 +19075,8 @@ if (section('toast-over-menu-foot')) try {
         for (const tip of ['the guide tip up', 'no tip']) {
           if (tip === 'no tip') { const x = await page.$('.ob-bub:not([hidden]) .ob-x'); if (x) { await x.click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(400); } }
           await settle(); const m0 = await box();
+          // upright the tip has its own row over the menu (60-onboard), so the menu's own margin is off: that branch is measured here
+          if (h > w && tip !== 'no tip') assert(!!(await page.$('.ob-bub.over-menu:not([hidden])')), `${v}: the guide tip is up over the menu`);
           // a craft (its toast and, for a Rare or better, its banner) and two plain notices, with the menu open
           const kind = await X(`(() => { const k = Object.keys(CRAFT_KINDS).find(k => { for (const e of Object.keys(S.mats)) S.mats[e] = S.mats[e].map(() => 5000); S.gold = 1e9; return canCraft(k, 1).ok; }); const it = k && craftItem(k, 1);
             if (it) moment('craft', { eye: 'Well made · Rare', title: itemName(it), sub: 'Rare item. It is in your bag.', rarity: 'rare', icon: { item: it } });
