@@ -18246,7 +18246,8 @@ if (section('eyes-placeholder abilities tiles')) try {
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
         await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
         const X = s => page.evaluate(s => window.__t.x(s), s);
-        await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`); await page.waitForTimeout(400);
+        await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`);
+        await page.waitForFunction(() => document.querySelector('#sec-abilities .ab-basic[data-mv=attack]'), null, { timeout: 8000 }).catch(() => fail(`${v}: the Attack row never appeared in Hero > Abilities`));
         const t = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#sec-abilities .ab-mono')].map(e => [e.closest('.ab-row') ? (e.closest('.ab-row').dataset.mv || e.closest('.ab-row').querySelector('b').textContent) : '', e.textContent]))`));
         const bad = t.filter(([, x]) => !/^[A-Z][a-z]$/.test(x)), atk = t.find(([n]) => n === 'attack');
         assert(t.length >= 12 && !bad.length && atk && atk[1] === 'At' && !errs.length,
