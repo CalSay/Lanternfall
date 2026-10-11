@@ -1,0 +1,28 @@
+# Proof for card nextup-chip-360: on an upright phone (360x740), with the fallback faces (a player whose Google Fonts fail to load),
+# the Next Up chip shows "Ready" whole while gathering.
+# The save: the seed 1 Wren walk at minute 60 (tests/proof-fixtures/save-min60-tier-gate.json).
+#   nuc-gather.png     mining at the Copper Vein upright: the switch ("Fight · Z21", "Mining") left, Next Up right
+# Before, at 360x740 in the fallback faces: gathering, the switch leaves the chip about 130 px, and "NEXT UP", "Ready" and "+2" need about
+# 145, so the grid squeezed the status column to 19 px and "+2" covered it: "Rea". Now the chip is a wrapping row: "+2" drops under
+# "Ready" only when they can't share a line (fallback faces, gathering), and fighting it looks as before. 740x360 and 1280x720 use
+# their own chip rules (80-landscape) and are unchanged. Routes run with web fonts where the runner has them, so the full measure lives in
+# tools/check.mjs "nextup-chip-360 (browser, fallback-font)": "Ready" and "100%" with "+2", fighting and gathering, at 360x740, 740x360
+# and 1280x720, in both fonts.
+# seed: 1
+new min60-tier-gate
+wait 3
+tap-if "Skip this story"
+tap-if "Collect"
+tap-if "Continue"
+wait 1
+tap-if "Continue"
+wait 1
+tap-if "Got it"
+tap "Switch activity"
+wait 1
+tap "Mine"
+wait 2
+tap-if "Got it"
+expect "#nuChip"
+expect ".nu-cst"
+shot nuc-gather
