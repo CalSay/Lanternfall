@@ -29,11 +29,11 @@ and the Codex art card `codex-cards-tavern`.
    the Tavern."
 2. Camp > Tavern has a new section called **Blackjack**. Hesketh deals there. A first-use hint says: "Bet gold and beat
    Hesketh's hand without going over 21."
-3. You set the bet with − and +, or tap a gold coin to add more. A line says "Table: 26 to 510 gold". The numbers only
+3. You set the bet with − and +, or tap a gold coin to add more. A line says "Table: 16 to 310 gold". The numbers only
    ever rise, as your road goes further.
 4. Deal takes your bet. You get two cards face up, and Hesketh gets one.
 5. You Hit, Stand or Double. Hesketh then draws his cards until he has 17 or more.
-6. A line says what happened: "19 beats 17. You win 510 gold." The next hand keeps the same bet.
+6. A line says what happened: "19 beats 17. You win 310 gold." The next hand keeps the same bet.
 7. A good or bad run ends for the day: "The table's closed for today." The line doesn't say why, or when it opens again.
 8. Nothing at the table costs real money, and gold is never sold.
 
@@ -97,10 +97,15 @@ limits only rise. Every amount is rounded with `econSig`, like every price.
 
 | Limit | Rule | Zone 14 | Zone 25 | Zone 50 | Zone 140 |
 |---|---|---|---|---|---|
-| Highest bet | 0.2 price-hours | 510 | 690 | 1,800 | 35,000 |
-| Lowest bet | 1/20 of the highest, at least 10 | 26 | 35 | 90 | 1,800 |
-| Day's win limit | Net up 5 highest bets (1 price-hour) | 2,550 | 3,450 | 9,000 | 175,000 |
-| Day's loss limit | Net down 5 highest bets (1 price-hour) | 2,550 | 3,450 | 9,000 | 175,000 |
+| Highest bet | 0.12 price-hours | 310 | 410 | 1,100 | 21,000 |
+| Lowest bet | 1/20 of the highest, at least 10 | 16 | 21 | 55 | 1,100 |
+| Day's win limit | Net up 5 highest bets (0.6 price-hours) | 1,550 | 2,050 | 5,500 | 105,000 |
+| Day's loss limit | Net down 5 highest bets (0.6 price-hours) | 1,550 | 2,050 | 5,500 | 105,000 |
+
+**Cut at build (judge, 2026-10-10).** The build's sim missed measure (a) of section 12 at 0.2 price-hours on 2 of 3
+seeds (up to 2.69% of income), so the highest bet was cut to 0.12, as section 12 says. The day tables and price
+comparisons below were worked at 0.2; at 0.12 every amount in them is 0.6 times as big. Evidence:
+`docs/proof/tavern-blackjack-build/evidence.md`.
 
 - **Each limit has one job** (lessons, Economy: one limit per budget):
   - The **win limit** stops a lucky run from skipping a gold wall.
@@ -114,11 +119,11 @@ limits only rise. Every amount is rounded with `econSig`, like every price.
   when the room left is under the lowest bet. Either way the line is "The table's closed for today."
 - **Bet controls** (Cal, 19:00: raise and lower):
   - − and + step by one lowest bet.
-  - Four gold coins add 1, 2, 5 and 10 lowest bets ("+26", "+52", "+130", "+260" at zone 14).
+  - Four gold coins add 1, 2, 5 and 10 lowest bets ("+16", "+32", "+80", "+160" at zone 14).
   - Clear goes back to the lowest bet.
   - The bet is clamped to [lowest, min(highest, gold held, room left before the loss limit)]. The last bet is
     remembered.
-- **Short of gold.** With less than the lowest bet, Deal is off and the line says "You need 26 gold to sit down."
+- **Short of gold.** With less than the lowest bet, Deal is off and the line says "You need 16 gold to sit down."
 - **Payouts are exact.** Win: the bet back plus the bet. Blackjack: the bet back plus 1.5 x the bet, rounded down. Tie:
   the bet back. No gear gold, Omen or Dare multiplies any of them. A check runs the table with Gold Fever (+80%) active.
 

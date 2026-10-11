@@ -1,0 +1,27 @@
+# Proof for card eyes-placeholder-ability-picker (cold leg 10 Oct, finding 2). No change in the game: Eyes
+# (tools/eyes.mjs, check 4) now opens Hero > Abilities and reads the list, a learned move's detail and a move to learn's
+# Learn card for two-letter tiles. Before, it read only the fight screen and reported 0 while this list showed Po, Ma, De,
+# Tw, Ba, Vo... These shots are the screens it now reads (Wren at zone 4, Power Shot learned:
+# tests/proof-fixtures/save-wren-spare-moss.json). Run at all three views.
+#   list.png      Hero > Abilities, the picker list (the moves with no drawn icon show two letters)
+#   detail.png    Power Shot's detail card, opened from its slot W at the top (in portrait the fight bar's Power Shot sits behind the menu)
+# seed: 1
+new wren-spare-moss
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+tap "Hero"
+wait 1
+tap "Abilities"
+wait 1
+expect "Power Shot"
+shot list
+tap "Slot W: Power Shot. Open it."
+wait 1
+# a line only the detail card shows; on a short landscape screen it sits below the fold
+unless "In slot W. Choose Take out to remove it." scroll
+expect "In slot W. Choose Take out to remove it."
+shot detail

@@ -1,0 +1,6 @@
+ok   desktop   viewer buttons [Copy save code, Show save code, Check] pressed "Show save code" -> code box 19159 chars, starts LF1:, decodes to a valid save of Tobin, zone 20, downloads 0, page errors 0  (desktop-viewer.png)
+ok   desktop   page   buttons [Copy save code, Download file, Check] pressed "Download file" -> downloads [lanternfall-save-20261011.txt], code box none, page errors 0  (desktop-page.png)
+ok   landscape viewer buttons [Copy save code, Show save code, Check] pressed "Show save code" -> code box 19160 chars, starts LF1:, decodes to a valid save of Tobin, zone 20, downloads 0, page errors 0  (landscape-viewer.png)
+ok   landscape page   buttons [Copy save code, Download file, Check] pressed "Download file" -> downloads [lanternfall-save-20261011.txt], code box none, page errors 0  (landscape-page.png)
+ok   portrait  viewer buttons [Copy save code, Show save code, Check] pressed "Show save code" -> code box 19171 chars, starts LF1:, decodes to a valid save of Tobin, zone 20, downloads 0, page errors 0  (portrait-viewer.png)
+ok   portrait  page   buttons [Copy save code, Download file, Check] pressed "Download file" -> downloads [lanternfall-save-20261011.txt], code box none, page errors 0  (portrait-page.png)

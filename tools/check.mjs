@@ -89,7 +89,7 @@ const WEIGHT = {
   'solo copy (browser, W1-C)': 120, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
   'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
   'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'side-column-fits-740': 42, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
+  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 52, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 38,
   'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
   'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
   'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
@@ -110,9 +110,11 @@ const WEIGHT = {
   'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
   // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
   'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
+  'bow-slot-wording': 8,   // 8 s locally alone (bow-slot-wording, 2026-10-10)
   'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
   'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
   'fx-timing-fixes': 40,
+  'pip-cast-recipes': 40,
   'page size': 2,
   'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
   'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
@@ -121,6 +123,7 @@ const WEIGHT = {
   'hero queue (hero-queue)': 9,   // 8 s locally alone (hero-queue, 2026-10-10)
   'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
   'new-style screens (browser)': 36,   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
+  'tavern blackjack (browser)': 20,   // measured below (tavern-blackjack-build, 2026-10-10)
   'tip-order-and-lateness': 60   // three views of the pickaxe, Power Shot and Forge-ore lines (tip-order-and-lateness, 2026-10-10)
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
@@ -208,6 +211,8 @@ else {
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
   assert(scripts.length === 1, 'one inline <script>');
   try { new vm.Script(scripts[0], { filename: 'dist-script.js' }); ok('script parses'); } catch (e) { fail('script syntax: ' + e.message); }
+  // tavern-blackjack.md 9: the store-build switch's state, in every full run's summary (Cal confirms it before any rating survey)
+  { const m = /\bon: typeof __BJ === 'number' \? __BJ : (\d)/.exec(fs.readFileSync(path.join(ROOT, 'src', 'js', '57t-blackjack.js'), 'utf8')); ok(`blackjack table (BJ_TUNE.on): ${m ? (m[1] === '1' ? 'ON' : 'OFF') : 'UNKNOWN'}`); }
 }
 
 // ---- 2. smoke test ----
@@ -7783,6 +7788,239 @@ if (section('tavern perks and rumours (C3)')) try {
   const errs = games.flatMap(g => g.errors);
   assert(!errs.length, 'C3: no Tavern perk handler errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('C3 Tavern perks crashed: ' + (e.stack || e)); }
+
+// ---- Tavern Blackjack (tavern-blackjack-build, docs/design/tavern-blackjack.md 16 item 1): rules, limits, the day, saves, the switch ----
+if (section('tavern blackjack')) try {
+  const T0 = new Date(2026, 9, 10, 12).getTime();
+  // A card id is suit * 13 + rank - 1 (rank 1 Ace ... 13 King). force(ids): Math.random hands the table exactly these cards, in order.
+  const C = (r, s = 0) => s * 13 + r - 1;
+  const mk = (o = {}) => {
+    const g = loadCore({ seed: 4411, storage: o.storage, prelude: `Date.__t = ${o.at || T0}; Date.now = () => Date.__t;` + (o.off ? ' const __BJ = 0;' : '') }), E = s => g.eval(s);
+    if (!o.storage) E('S.maxZone = 14; S.zone = 14; S.camp.open = true; S.camp.b.tavern = 1; S.onboard.all = true; S.blackjack.w = 600; S.gold = 100000');
+    E(`globalThis.__q = []; Math.random = (() => { const r0 = Math.random; return () => { if (!globalThis.__q.length) return r0();
+      const c = globalThis.__q.shift(), h = S.blackjack.hand, used = {}; for (const x of h.p.concat(h.d)) used[x] = (used[x] || 0) + 1;
+      let n = 0; for (let i = 0; i < c; i++) n += BJ_TUNE.decks - (used[i] || 0); return (n + 0.5) / (52 * BJ_TUNE.decks - h.p.length - h.d.length); }; })()`);
+    return { g, E, force: ids => E(`globalThis.__q.push(${ids.join(',')})`) };
+  };
+  const view = E => JSON.parse(E('JSON.stringify(bjView())'));
+  // 1. limits by zone, from price-hours, rising only (spec 4 table)
+  {
+    const { E } = mk(), lim = z => JSON.parse(E(`S.maxZone = ${z}; JSON.stringify(bjLimits())`));
+    const want = { 14: [16, 310, 1550], 25: [21, 410, 2050], 50: [55, 1100, 5500], 140: [1100, 21000, 105000] };
+    assert(Object.entries(want).every(([z, [lo, hi, w]]) => { const l = lim(+z); return l.lo === lo && l.hi === hi && l.win === w && l.loss === w; }),
+      'blackjack: the table limits match the spec at zones 14, 25, 50 and 140 (lowest, highest, the day\'s win and loss limits)');
+    let prev = { lo: 0, hi: 0 }, fall = [];
+    for (let z = 1; z <= 175; z++) { const l = lim(z); if (l.lo < prev.lo || l.hi < prev.hi) fall.push(z); prev = l; }
+    assert(!fall.length, 'blackjack: the lowest and highest bets never fall as the zone rises (1 to 175)' + (fall.length ? ': ' + fall.slice(0, 5).join(', ') : ''));
+  }
+  // 2. the gate (spec 7): zone 14, the Tavern built, 600 s after the Tavern and Hands rows, skipped once every tab is open; the switch off
+  {
+    const { E } = mk();
+    E('S.onboard.all = false; S.onboard.t = 5000; S.onboard.got.tavern = 4500; S.onboard.got.hands = 4600');
+    assert(!E('bjOpen()'), 'blackjack: the table waits 600 s of play after the Hands row opened');
+    E('S.onboard.t = 5200'); assert(E('bjOpen()'), 'blackjack: 600 s after the later of the Tavern and Hands rows, the table opens');
+    E('S.maxZone = 13'); assert(!E('bjOpen()'), 'blackjack: not before the zone 13 Captain is beaten (zone 14)');
+    E('S.maxZone = 14; S.camp.b.tavern = 0'); assert(!E('bjOpen()'), 'blackjack: not without the Tavern built');
+    E('S.camp.b.tavern = 1; S.onboard.got.tavern = null; S.onboard.got.hands = null'); assert(!E('bjOpen()'), 'blackjack: not before the Tavern row has opened');
+    E('S.onboard.all = true'); assert(E('bjOpen()'), 'blackjack: once every tab is open the guide\'s stopped clock no longer holds it');
+    E('S.blackjack.w = 0; S.camp.b.tavern = 0'); for (let i = 0; i < 700; i++) E('tick(1)');
+    assert(E('S.blackjack.w') === 0 && !E('bjOpen()'), 'blackjack: the table\'s own wait does not run before the Tavern is built');
+    E('S.camp.b.tavern = 1'); for (let i = 0; i < 590; i++) E('tick(1)');
+    assert(!E('bjOpen()'), 'blackjack: with every tab open, a Tavern built late still waits 600 s of play (the table\'s own clock), so the build, Hands and the table never open at once');
+    for (let i = 0; i < 15; i++) E('tick(1)');
+    assert(E('bjOpen()') && E('S.blackjack.w') === 600, 'blackjack: after 600 s of play with the Tavern built the table opens, and the wait stops counting');
+    const row = E('JSON.stringify(FEATURES.find(f => f.id === "blackjack"))');
+    assert(/"late":true/.test(row) && /"view":"tav"/.test(row) && !/"now"/.test(row) && E('FIRST_USE.blackjack.text') === "Bet gold and beat Hesketh's hand without going over 21.",
+      'blackjack: the FEATURES row is late, lives on Camp > Tavern, has no `now` (the spacing governor holds it) and a first-use line');
+    const off = mk({ off: true });
+    off.E('S.onboard.all = true');
+    assert(!off.E('bjOpen()') && !off.E('bjDeal()') && !off.E('onboardCheck().includes("blackjack")'), 'blackjack: BJ_TUNE.on = 0 keeps the row shut and refuses a deal');
+  }
+  // 3. rules and payouts (spec 3), the ledger and S.totalGold untouched, Gold Fever ignored
+  {
+    const { E, force } = mk();
+    E('bjSetBet(310)');
+    const books = () => E('JSON.stringify([S.econ.earned, S.econ.spent, S.totalGold])'), b0 = books();
+    const play = (cards, moves) => { const g0 = E('S.gold'); force(cards); E('bjNext(); bjDeal()'); for (const m of moves) E(m + '()'); return { d: E('S.gold') - g0, v: view(E) }; };
+    let r = play([C(10), C(9), C(7), C(13)], ['bjStand']);
+    assert(r.d === 310 && r.v.line === '19 beats 17. You win 310 gold.', 'blackjack: 19 beats 17 pays the bet even money: "19 beats 17. You win 310 gold." (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(1), C(13), C(5), C(9)], []);
+    assert(r.d === 465 && r.v.line === 'Blackjack! You win 465 gold.', 'blackjack: a natural pays 3 to 2 at once (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(1), C(12), C(1, 1), C(11)], []);
+    assert(r.d === 0 && r.v.line === 'Both on 21. Your bet comes back.', 'blackjack: your natural against his two-card 21 is a tie (' + r.d + ')');
+    r = play([C(5), C(6), C(1), C(9), C(13)], ['bjDouble']);
+    assert(r.d === -310 && r.v.line === 'Hesketh makes blackjack. You lose 310 gold.' && r.v.p.length === 3, 'blackjack: his two-card 21 takes the first bet only; the Double\'s extra comes back (' + r.d + ')');
+    r = play([C(7), C(5), C(1), C(13), C(12)], ['bjDouble']);
+    assert(r.d === -310 && r.v.line === 'Hesketh makes blackjack. You lose 310 gold.' && r.v.d.length === 2, 'blackjack: a busted Double against his Ace shows his second card, and his blackjack takes the first bet only (' + r.d + ')');
+    r = play([C(7), C(5), C(9), C(13)], ['bjDouble']);
+    assert(r.d === -620 && r.v.line === 'Bust at 22. You lose 620 gold.', 'blackjack: a busted Double against a 9 loses both bets (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(10), C(6), C(9), C(13)], ['bjHit']);
+    assert(r.d === -310 && r.v.line === 'Bust at 26. You lose 310 gold.' && r.v.d.length === 1, 'blackjack: over 21 loses at once and Hesketh draws nothing (' + r.d + ')');
+    r = play([C(10), C(7), C(1), C(6)], ['bjStand']);
+    assert(r.d === 0 && r.v.d.length === 2 && r.v.line === 'Both on 17. Your bet comes back.', 'blackjack: Hesketh stands on a soft 17, and a tie gives the bet back');
+    r = play([C(10), C(8), C(6), C(10), C(13)], ['bjStand']);
+    assert(r.d === 310 && r.v.line === 'Hesketh busts at 26. You win 310 gold.', 'blackjack: Hesketh draws to 17 and can bust (' + r.v.line + ')');
+    r = play([C(5), C(6), C(10), C(10), C(8)], ['bjDouble']);
+    assert(r.d === 620 && r.v.line === '21 beats 18. You win 620 gold.', 'blackjack: a won Double pays twice the bet (' + r.d + ', ' + r.v.line + ')');
+    r = play([C(10), C(9), C(10), C(13)], ['bjStand']);
+    assert(r.d === -310 && r.v.line === '20 beats 19. You lose 310 gold.', 'blackjack: a lower total loses the bet');
+    r = play([C(9), C(2), C(10), C(13)], []);
+    assert(r.v.phase === 'play' && r.v.line === 'You have 11. Hesketh shows a 10.' && r.v.canDouble, 'blackjack: the start of a hand reads "You have 11. Hesketh shows a 10."');
+    force([C(10)]); E('bjHit()');
+    assert(!E('bjDouble()') && view(E).phase === 'done', 'blackjack: 21 stands by itself; Double works on the first two cards only');
+    E('addModifier("gold", () => 1.8)');
+    const fever = E('goldMult()');
+    r = play([C(10), C(9), C(7), C(13)], ['bjStand']);
+    assert(fever > 1.7 && r.d === 310, `blackjack: with Gold Fever (+80%) on, a win still pays exactly the bet (goldMult ${fever.toFixed(2)}, paid ${r.d})`);
+    for (let i = 0; i < 300; i++) { E('bjNext(); bjSetBet(16); bjDeal()'); while (view(E).phase === 'play') E('bjView().pt.t < 17 ? bjHit() : bjStand()'); }
+    assert(books() === b0, 'blackjack: S.econ.earned, S.econ.spent and S.totalGold never move at the table');
+    const n = E('JSON.stringify(S.blackjack.n)'), nn = JSON.parse(n);
+    assert(nn.hands === nn.won + nn.lost + nn.tied && nn.hands >= 300, 'blackjack: every hand is counted once as won, lost or tied ' + n);
+  }
+  // 4. the clamp, Double off at the loss limit and when short of gold, the day's limits and the reset across deviceDay
+  {
+    const { E, force } = mk();
+    E('bjSetBet(1e9)'); assert(view(E).bet === 310, 'blackjack: the bet clamps to the highest bet');
+    E('bjSetBet(1)'); assert(view(E).bet === 16, 'blackjack: the bet clamps to the lowest bet');
+    E('bjSetBet(310); S.gold = 300'); assert(view(E).bet === 300, 'blackjack: the bet clamps to the gold held');
+    E('S.gold = 10'); let v = view(E);
+    assert(v.short && !v.canDeal && v.note === 'You need 16 gold to sit down.' && !E('bjDeal()'), 'blackjack: short of the lowest bet, Deal is off: "You need 16 gold to sit down."');
+    E('S.gold = 100000; S.blackjack.day = deviceDay(Date.now()); S.blackjack.net = -1550 + 200');
+    assert(view(E).bet === 200, 'blackjack: the bet clamps to the room left before the loss limit');
+    force([C(5), C(6), C(9)]); E('bjDeal()');
+    assert(!view(E).canDouble && !E('bjDouble()'), 'blackjack: Double is off when it would pass the day\'s loss limit');
+    E('S.blackjack.hand = null; S.blackjack.net = 0; S.gold = 600'); force([C(5), C(6), C(9)]); E('bjSetBet(310); bjDeal()');
+    assert(E('S.gold') === 290 && !view(E).canDouble, 'blackjack: Double is off when you can\'t cover it');
+    E('S.blackjack.hand = null; S.gold = 100000; S.blackjack.net = -1550 + 10'); v = view(E);
+    assert(v.closed && !v.canDeal && v.note === "The table's closed for today.", 'blackjack: with less room than the lowest bet the table closes: "The table\'s closed for today."');
+    E('S.blackjack.net = 1550'); assert(view(E).closed, 'blackjack: the win limit closes the table');
+    E('S.blackjack.net = 1500'); force([C(1), C(13), C(5), C(9)]); E('bjSetBet(310); bjDeal()');
+    assert(E('S.blackjack.net') === 1500 + 465 && view(E).closed, 'blackjack: a hand that crosses the win limit is paid in full, then the table closes');
+    E('Date.__t += 864e5'); v = view(E);
+    assert(!v.closed && E('S.blackjack.net') === 0 && E('S.blackjack.day') === E('deviceDay(Date.now())'), 'blackjack: a new device day starts the day\'s books again');
+    // a hand in play finishes on the day it was dealt
+    E('bjNext()'); force([C(10), C(6), C(9)]); E('bjDeal()'); const day = E('S.blackjack.day'), net = E('S.blackjack.net');
+    E('Date.__t += 864e5; bjView()');
+    assert(E('S.blackjack.day') === day && E('S.blackjack.net') === net, 'blackjack: the day does not turn over under a hand in play');
+  }
+  // 5. synchronous saves and the reload test: a reload shows the same hand, and no card is drawn early
+  {
+    const a = mk(), E = a.E;
+    a.force([C(10), C(6), C(9)]); E('bjSetBet(310); bjDeal()');
+    const stored = JSON.parse(a.g.storage.get(KEY)).blackjack;
+    assert(JSON.stringify(stored.hand) === E('JSON.stringify(S.blackjack.hand)') && stored.hand.d.length === 1 && stored.net === -310, 'blackjack: the deal is saved at once: the hand, its paid bet and one Hesketh card');
+    a.force([C(2)]); E('bjHit()');
+    assert(JSON.parse(a.g.storage.get(KEY)).blackjack.hand.p.length === 3, 'blackjack: every card drawn is saved before anything renders');
+    const b = mk({ storage: memoryStorage({ [KEY]: a.g.storage.get(KEY) }) }), F = b.E;
+    assert(F('JSON.stringify(S.blackjack.hand)') === E('JSON.stringify(S.blackjack.hand)') && F('S.gold') === E('S.gold'), 'blackjack: a reload shows the same hand and the same gold');
+    b.force([C(13)]); F('bjStand()');
+    assert(F('bjView().line') === '19 beats 18. You lose 310 gold.', 'blackjack: the reloaded hand plays on (' + F('bjView().line') + ')');
+    const st = JSON.parse(b.g.storage.get(KEY)).blackjack;
+    assert(st.hand.done === 1 && st.hand.res, 'blackjack: the result is saved');
+  }
+  // 6. the switch off refunds a hand in play at the next load (spec 9)
+  {
+    const a = mk(); a.force([C(10), C(6), C(9)]); a.E('bjSetBet(310); bjDeal()');
+    const gold = a.E('S.gold'), raw = a.g.storage.get(KEY);
+    const b = mk({ storage: memoryStorage({ [KEY]: raw }), off: true });
+    assert(b.g.storage.get(KEY) === raw, 'blackjack: the switch-off refund does not save at load (a save would stamp S.last before the boot reads the away time)');
+    assert(b.E('S.gold') === gold + 310 && b.E('S.blackjack.hand') === null && b.E('S.blackjack.net') === 0 && b.E('typeof S.blackjack') === 'object', 'blackjack: BJ_TUNE.on = 0 refunds a hand in play at load, and the save field stays');
+  }
+  // 7. save codes (spec 8): a code with a hand exports and imports; the import clears the hand and keeps today's lower net
+  {
+    const { E, force } = mk();
+    E('soloPick("wren"); S.cls.at = 0'); force([C(10), C(6), C(9)]); E('bjSetBet(310); bjDeal()');
+    const code = E('encodeSave(JSON.parse(JSON.stringify(S)))'), dec = JSON.parse(E(`JSON.stringify(decodeSave(${JSON.stringify(code)}))`));
+    assert(dec.ok && dec.data.blackjack.hand.p.length === 2, 'blackjack: a save with a hand in play exports and decodes' + (dec.ok ? '' : ': ' + dec.error));
+    const day = E('deviceDay(Date.now())');
+    E('S.blackjack.net = -2000');
+    let imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day}, net: -100, w: 600, bet: 26, hand: { p: [1, 2], d: [3], bet: 26, dbl: 0, done: 0, res: null }, n: { hands: 4, won: 1, lost: 3, tied: 0, bj: 0 } } })))`));
+    assert(imp.blackjack.hand === null && imp.blackjack.net === -2000 && imp.blackjack.n.hands === 4, 'blackjack: an import clears the hand in play and keeps the lower of today\'s nets (an old code can\'t reopen a table a loss closed)');
+    imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day - 3}, net: -9000, bet: 26, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } } })))`));
+    assert(imp.blackjack.net === -2000 && imp.blackjack.day === day, 'blackjack: an imported net from another day counts as 0');
+    E('S.blackjack.net = 1600; S.blackjack.top = 1600'); imp = JSON.parse(E(`JSON.stringify(bjImport(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: { v: 1, day: ${day}, net: 0, top: 0, bet: 26, hand: null, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } } })))`));
+    assert(imp.blackjack.net === 0 && imp.blackjack.top === 1600, 'blackjack: an import keeps today\'s highest net, so a morning code can\'t reopen a table a win closed');
+    E('S.blackjack = Object.assign(S.blackjack, { net: 0, top: 1600, hand: null })'); assert(E('bjView().closed'), 'blackjack: the day\'s top at the win limit keeps the table closed');
+    E('S.blackjack.top = 0; S.blackjack.net = 0'); imp = JSON.parse(E(`JSON.stringify(bjImport((({ blackjack, ...rest }) => rest)(JSON.parse(JSON.stringify(S)))))`));
+    assert(imp.blackjack.net === 0 && imp.blackjack.hand === null, 'blackjack: a code from before the table imports with a fresh table');
+    const bad = h => E(`validateSave(Object.assign(JSON.parse(JSON.stringify(S)), { blackjack: Object.assign({ v: 1, day: 0, net: 0, bet: 0, n: { hands: 0, won: 0, lost: 0, tied: 0, bj: 0 } }, ${JSON.stringify(h)}) })).ok`);
+    assert(!bad({ hand: { p: [1, 1, 1, 1, 1], d: [3], bet: 26, dbl: 0, done: 0 } }) && !bad({ hand: { p: [1, 2], d: [3, 4], bet: 26, dbl: 0, done: 0 } }) && !bad({ hand: { p: [99, 2], d: [3], bet: 26, dbl: 0, done: 0 } })
+      && !bad({ net: 0.5 }) && !bad({ n: { hands: -1 } }) && !bad({ w: 601 }) && bad({ day: -3 }) && bad({ hand: { p: [0, 13, 26, 39, 1, 0, 13, 26, 39, 1, 0, 13], d: [9], bet: 26, dbl: 0, done: 0, res: null } }) && bad({ hand: { p: [1, 2], d: [3], bet: 26, dbl: 0, done: 0, res: null } }),
+      'blackjack: save codes take a 12-card hand and a clock before 2026, and refuse a card held more often than four decks, a second Hesketh card before you stood, an unknown card, a fractional net and a negative count');
+    assert(/candidateRaw = JSON\.stringify\(bjImport\(checked\.data\)\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '75-savecode-ui.js'), 'utf8')), 'blackjack: the save-code import writes the table through bjImport');
+  }
+  // 8. the art freeze (spec 10) and the copy (spec 11)
+  {
+    const files = ['js/57t-blackjack.js', 'js/75-blackjack-ui.js', 'styles/60-blackjack.css'].map(f => [f, fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')]);
+    const hit = files.filter(([, t]) => /[♠-♧♤♡♢]|\p{Extended_Pictographic}|<svg|data:image\/svg|url\(/u.test(t)).map(([f]) => f);
+    assert(!hit.length, 'blackjack: no suit glyph, emoji, inline SVG or image in the new files (the art freeze)' + (hit.length ? ': ' + hit.join(', ') : ''));
+    const all = files.map(f => f[1]).join('\n'), onb = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
+    assert(all.includes('Hesketh deals. He stands on 17. Blackjack pays 3 to 2.') && all.includes("Hesketh's rule of thumb: stand on 12 to 16 when I show a 2 to 6. Always hit 11 or less.")
+      && onb.includes("blackjack: 'New on the Camp tab: a card table at the Tavern.'") && onb.includes(`blackjack: "I've put a card table in the Tavern. Blackjack, for gold."`)
+      && !/come back tomorrow|the house|resets in/i.test(all), 'blackjack: the copy is the spec\'s (section 11), with no "come back tomorrow", countdown or "the house"');
+  }
+} catch (e) { fail('tavern blackjack crashed: ' + (e.stack || e)); }
+
+// ---- Tavern Blackjack on screen: 1280x720, 740x360 and 360x740 (reduced motion), the 300 ms press guard and the button places ----
+if (section('tavern blackjack (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('tavern blackjack (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [tag, viewport, mobile, rm] of [['1280x720', { width: 1280, height: 720 }, false, 'no-preference'], ['740x360', { width: 740, height: 360 }, true, 'no-preference'], ['360x740 reduced motion', { width: 360, height: 740 }, true, 'reduce']]) {
+        const ctx = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile, reducedMotion: rm });
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+        await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; onboardTips(false); true');
+        await X('S.maxZone = 14; S.zone = 14; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.blackjack.w = 600; S.gold = 1e6; onboardUnlockAll(); for (let i = 0; i < 6; i++) tick(1.2); onboardReveal("blackjack"); true');
+        await X('setTab("tav"); ui(true); true'); await page.waitForTimeout(400);
+        await page.$eval('#sec-blackjack', n => n.scrollIntoView({ block: 'start' })); await page.waitForTimeout(250);
+        const box = () => page.$eval('#sec-blackjack', n => {
+          const r = n.getBoundingClientRect(), btns = [...n.querySelectorAll('button')].filter(b => b.offsetParent && getComputedStyle(b).visibility !== 'hidden');
+          return { shown: !!n.offsetParent && !n.classList.contains('f-off'), left: r.left, right: r.right, vw: innerWidth, sx: document.documentElement.scrollWidth > innerWidth + 1,
+            small: btns.filter(b => b.getBoundingClientRect().height < 43.5).map(b => b.textContent), wide: btns.filter(b => b.getBoundingClientRect().right > innerWidth + 1 || b.scrollWidth > b.clientWidth + 1).map(b => b.textContent),
+            anim: getComputedStyle(n.querySelector('.bj-card') || n).animationName,
+            cut: [...n.querySelectorAll('.bj-card .bj-suit')].filter(x => x.scrollWidth > x.parentNode.clientWidth + 1 || x.getBoundingClientRect().right > x.parentNode.getBoundingClientRect().right + 1).map(x => x.textContent) };
+        });
+        let b = await box();
+        assert(b.shown && b.left >= -1 && b.right <= b.vw + 1 && !b.sx && !b.small.length && !b.wide.length, `blackjack ${tag}: the box shows on Camp > Tavern, fits the screen, and every button is 44 px tall and fits its text (${JSON.stringify(b)})`);
+        const at = s => page.$eval(s, n => { const r = n.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width)]; });
+        const deal = await at('#sec-blackjack .bj-mid');
+        assert(/^Deal /.test(await page.textContent('#sec-blackjack .bj-mid')) && /Table: 16 to 310 gold/.test(await page.textContent('#sec-blackjack .bj-lim')), `blackjack ${tag}: Deal names the bet and the limits line reads "Table: 16 to 310 gold"`);
+        // a double tap on Deal: the second tap lands on Stand inside the guard and does nothing. The forced cards go only to the
+        // table's draws (the stage's sparks call Math.random every frame too).
+        await X('globalThis.__q = [9, 4, 8]; Math.random = (() => { const r0 = Math.random; return () => { if (!globalThis.__q.length || !/bj(Deal|Hit|Stand|Double)/.test(new Error().stack)) return r0(); const c = globalThis.__q.shift(), h = S.blackjack.hand, u = {}; for (const x of h.p.concat(h.d)) u[x] = (u[x] || 0) + 1; let n = 0; for (let i = 0; i < c; i++) n += 4 - (u[i] || 0); return (n + 0.5) / (208 - h.p.length - h.d.length); }; })(); true');
+        await page.click('#sec-blackjack .bj-mid'); await page.click('#sec-blackjack .bj-mid', { delay: 0 });
+        const v1 = JSON.parse(await X('JSON.stringify(bjView())'));
+        const hit = await at('#sec-blackjack .bj-act:first-child');
+        assert(v1.phase === 'play' && v1.p.length === 2, `blackjack ${tag}: a second tap within 300 ms of Deal is ignored (the hand is still in play)`);
+        assert(hit[0] !== deal[0] && Math.abs(hit[0] - deal[0]) >= hit[2] - 1, `blackjack ${tag}: Hit is never where Deal sat (${JSON.stringify([hit, deal])})`);
+        await page.waitForTimeout(350);
+        assert(await page.$$eval('#sec-blackjack .bj-card', ns => ns.length) === 3 && /THORNS|LANTERNS|KEYS|CUPS/i.test(await page.textContent('#sec-blackjack .bj-table')) && /You have 15\. Hesketh shows a 9\./.test(await page.textContent('#sec-blackjack .bj-line')),
+          `blackjack ${tag}: two cards for you and Hesketh's one (no hole card), the suit named in words, "You have 15. Hesketh shows a 9."`);
+        b = await box(); assert(!b.sx && !b.wide.length && !b.small.length && !b.cut.length && (rm !== 'reduce' || b.anim === 'none'), `blackjack ${tag}: the hand in play fits, each suit's name inside its card${rm === 'reduce' ? ', and reduced motion stops the card slide' : ''} (${JSON.stringify(b)})`);
+        await X('globalThis.__q = [12]; true');
+        await page.click('#sec-blackjack .bj-mid'); await page.click('#sec-blackjack .bj-mid', { delay: 0 });
+        const v2 = JSON.parse(await X('JSON.stringify(bjView())'));
+        assert(v2.phase === 'done' && /Next hand/.test(await page.textContent('#sec-blackjack .bj-mid')), `blackjack ${tag}: Stand settles the hand and a second tap inside 300 ms does not press Next hand (${v2.line})`);
+        await page.waitForTimeout(350); await page.click('#sec-blackjack .bj-mid'); await page.waitForTimeout(350);
+        assert(JSON.parse(await X('JSON.stringify(bjView())')).phase === 'bet' && await X('S.blackjack.bet') === 16, `blackjack ${tag}: Next hand clears the table and keeps the bet`);
+        await page.click('#sec-blackjack .bj-coin[data-k="10"]'); await page.waitForTimeout(80); const raised = await X('S.blackjack.bet');
+        await page.click('#sec-blackjack .bj-clear'); await page.waitForTimeout(80);
+        assert(raised > 16 && await X('S.blackjack.bet') === 16, `blackjack ${tag}: the coins raise the bet and Clear goes back to the lowest bet (${raised})`);
+        assert(!errs.length, `blackjack ${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('tavern blackjack (browser) crashed: ' + (e.stack || e)); }
 // ---- C1: Tents, fixed shifts, queues, recall and named routes (economy-2 4-5) ----
 if (section('gatherer engine gaps (C1)')) try {
   const HOUR = 3600e3, T0 = new Date(2026, 8, 28, 12).getTime(), games = [];
@@ -8178,7 +8416,7 @@ if (section('save import recovery UI (C5)')) try {
     const g = loadCore({ seed: 7505, storage: adapter, prelude: stub, files: coreFiles().concat(['75-savecode-ui.js','90-boot.js']) }); games.push(g);
     g.eval('globalThis.__panel=el("section");__panel.id="log";document.body.append(__panel);__sections.savecode.mount(__panel);S.name="Current game";S.gold=123;');
     if(writeInitial)g.fn.save();
-    g.eval('globalThis.__candidate=JSON.parse(JSON.stringify(S));__candidate.name="Imported game";__candidate.gold=456;globalThis.__code=encodeSave(__candidate);globalThis.__candidateRaw=JSON.stringify(decodeSave(__code).data)');
+    g.eval('globalThis.__candidate=JSON.parse(JSON.stringify(S));__candidate.name="Imported game";__candidate.gold=456;globalThis.__code=encodeSave(__candidate);globalThis.__candidateRaw=JSON.stringify(bjImport(decodeSave(__code).data))');   // tavern-blackjack-build: the import writes the table through bjImport (spec 8)
     return { g, control, store, E: s => g.eval(s) };
   };
   const click = (E,label) => E(`__panel.querySelectorAll("button").find(b=>b.textContent===${JSON.stringify(label)}).click()`);
@@ -8246,6 +8484,65 @@ if (section('save import recovery UI (C5)')) try {
   }
   assert(!games.some(g=>g.errors.length), 'C5 UI: save recovery and real lifecycle callbacks produce no handler errors');
 } catch (e) { fail('C5 save import recovery UI crashed: ' + (e.stack || e)); }
+
+// ---- save-export-in-viewer: inside the claude.ai viewer (window.claude, or any frame) the second export button shows the code to
+// copy by hand, since the viewer grants no downloads; outside it, the same button still downloads a .txt file of the code ----
+if (section('save export in viewer')) try {
+  const { coreFiles } = await import('./lib/core.mjs');
+  const games = [];
+  const run = (where) => {
+    const stub = `
+      class SaveNode {
+        constructor(t='div',c='',s=''){this.tagName=t.toUpperCase();this.className=c||'';this.children=[];this.events={};this.attrs={};this.style={};this._text=s||'';this.value='';this.disabled=false;}
+        append(...ns){for(const n of ns){n.remove?.();this.children.push(n);n.parentNode=this;}} appendChild(n){this.append(n);return n;}
+        remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}
+        after(n){n.remove?.();const p=this.parentNode,i=p.children.indexOf(this);p.children.splice(i+1,0,n);n.parentNode=p;}
+        contains(n){return this===n||this.children.some(c=>c.contains(n));}
+        set textContent(s){this._text=String(s);for(const n of this.children)n.parentNode=null;this.children=[];} get textContent(){return this._text+this.children.map(n=>n.textContent).join('');}
+        setAttribute(k,v){this.attrs[k]=String(v);} getAttribute(k){return this.attrs[k]??null;}
+        addEventListener(k,f){(this.events[k]||(this.events[k]=[])).push(f);} fire(k){for(const f of this.events[k]||[])f({target:this});} click(){if(this.tagName==='A')__clicked.push(this);if(!this.disabled)this.fire('click');} focus(){document.activeElement=this;} select(){this.selected=true;}
+        querySelectorAll(s){const a=[],match=n=>s[0]==='.'?n.className.split(' ').includes(s.slice(1)):s[0]==='#'?n.id===s.slice(1):n.tagName===s.toUpperCase();const walk=n=>{for(const c of n.children){if(match(c))a.push(c);walk(c);}};walk(this);return a;}
+        querySelector(s){return this.querySelectorAll(s)[0]||null;}
+      }
+      const __sections={},__clicked=[],__blobs=[];
+      const document={body:new SaveNode('body'),activeElement:null,hidden:false,createElement:t=>new SaveNode(t),execCommand:()=>false,addEventListener:()=>{}};
+      const window={};window.self=window;window.top=${where==='frame'?'{}':'window'};${where==='claude'?'window.claude={use:()=>Promise.resolve(null)};':''}
+      const navigator={},location={reload(){}};
+      const Blob=class{constructor(parts,o){this.text=parts.join('');this.type=o&&o.type;__blobs.push(this);}};
+      const URL={createObjectURL:b=>'blob:'+__blobs.indexOf(b),revokeObjectURL(){}};
+      const el=(t,c,s)=>new SaveNode(t,c,s),$=id=>document.body.querySelector('#'+id),registerSection=(t,s)=>{__sections[s.id]=s;};
+      const performance={now:()=>0},resize=()=>{},updatePortrait=()=>{},initMenus=()=>{},connect=()=>{},flush=()=>{},maintainBoss=()=>{},pushPresence=()=>{},showAwayReport=()=>{};
+      const addEventListener=()=>{},requestAnimationFrame=()=>{},queueMicrotask=f=>f(),setTimeout=()=>0,setInterval=()=>0;
+    `;
+    const g = loadCore({ seed: 7511, storage: memoryStorage(), prelude: stub, files: coreFiles().concat(['75-savecode-ui.js','90-boot.js']) }); games.push(g);
+    g.eval('globalThis.__panel=el("section");__panel.id="log";document.body.append(__panel);__sections.savecode.mount(__panel);S.name="Export test";S.gold=321;');
+    return s => g.eval(s);
+  };
+  const buttons = E => E('__panel.querySelectorAll("button").map(b=>b.textContent)');
+  const press = (E, label) => E(`__panel.querySelectorAll("button").find(b=>b.textContent===${JSON.stringify(label)}).click()`);
+  for (const where of ['frame', 'claude']) {
+    const E = run(where);
+    assert(!buttons(E).includes('Download file') && buttons(E).includes('Show save code') && buttons(E).includes('Copy save code'), `save export (${where}): the viewer offers Copy save code and Show save code, never Download file (got ${buttons(E).join(', ')})`);
+    press(E, 'Show save code'); press(E, 'Show save code');
+    assert(E('__clicked.length===0 && __blobs.length===0'), `save export (${where}): Show save code never starts a file download`);
+    assert(E('__panel.querySelectorAll(".savecode-fallback").length===1 && __panel.querySelector(".savecode-fallback").selected && __panel.querySelector(".savecode-fallback").readOnly'), `save export (${where}): Show save code puts one selected, read-only code box on the panel`);
+    assert(E('(()=>{const r=decodeSave(__panel.querySelector(".savecode-fallback").value);return r.ok&&r.data.gold===321&&r.data.name==="Export test";})()'), `save export (${where}): the shown code is the current game and decodes`);
+    E('S.gold=654'); press(E, 'Show save code');
+    assert(E('decodeSave(__panel.querySelector(".savecode-fallback").value).data.gold===654'), `save export (${where}): showing again gives the game as it is now, not a stale code`);
+    assert(E('__panel.textContent.includes("Select it all and copy it") && __panel.textContent.includes("Tip: copy the code")'), `save export (${where}): the panel tells the player to copy the code`);
+  }
+  {
+    const E = run('page');
+    assert(buttons(E).includes('Download file') && !buttons(E).includes('Show save code'), `save export (page): outside the viewer the panel keeps Download file (got ${buttons(E).join(', ')})`);
+    press(E, 'Download file');
+    assert(E('__clicked.length===1 && /^lanternfall-save-\\d{8}\\.txt$/.test(__clicked[0].download) && __clicked[0].href===\"blob:0\"'), 'save export (page): Download file clicks one link that saves lanternfall-save-<date>.txt');
+    assert(E('__blobs.length===1 && __blobs[0].type==="text/plain" && decodeSave(__blobs[0].text).data.gold===321'), 'save export (page): the downloaded file holds a valid code of the current game');
+    assert(E('__panel.querySelectorAll(".savecode-fallback").length===0 && !__panel.textContent.includes("Tip: copy the code")'), 'save export (page): a download shows no copy box or viewer tip');
+  }
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-savecode-ui.js'), 'utf8');
+  assert(!/claude\.use\(\s*['"]downloads['"]/.test(src), 'save export: the page does not call the downloads capability (declaring it is Cal\'s call)');
+  assert(!games.some(g => g.errors.length), 'save export: no handler errors');
+} catch (e) { fail('save export in viewer crashed: ' + (e.stack || e)); }
 
 // ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
@@ -10425,6 +10722,13 @@ if (section('C22 Thorn Imp (zone 1)')) try {
     assert(frames === 30 && Object.keys(A.acts).length === 8 && bytes && timing && A.fmt === 'webp' && A.k === 0.5 && webp && man.colours <= 64 &&
       !srcs.includes('jab-2') && !srcs.includes('jab-7') && A.acts.dashIn && A.acts.dashOut && A.acts.death.fade > 0,
       `C22: the Scenario Thorn Imp pack (8 actions, ${frames} frames, lossless WebP, ${man.colours} colours) is embedded with its atlases byte for byte, its timings and contacts; Briar Jab never shows Cal's rejected frames 2 and 7; it dashes in and out; death fades`); }
+  { // its effects (62c-foefx, thorn-imp-fx: Cal 21:34 "Very happy with all effects"): each hangs on a frame the pack has; death fades over 1.4 s
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '62c-foefx.js'), 'utf8'), m = src.match(/const FOE_FX = (\{[\s\S]*?\n\});/);
+    const X = m && new Function('return ' + m[1])().imp, A = artData('21za-data-foeart.js', 'FOE_ART').imp;
+    const bad = X ? Object.entries(X.ev).flatMap(([act, ev]) => Object.keys(ev).filter(i => !A.acts[act] || !(i >= 1 && i <= A.acts[act].f.length)).map(i => act + ':' + i)) : ['no FOE_FX'];
+    assert(X && !bad.length && A.acts.death.fade === 1400 && X.ev.jab[4] === 'thrust' && A.acts.jab.con[0] === 4 && X.ev.crosscut[3] === 'arcDown' && X.ev.crosscut[5] === 'arcUp' &&
+      JSON.stringify(A.acts.crosscut.con) === '[3,5]' && /if \(reduced\) return;\s*if \(turnOn\(\) && typeof turnHitstop/.test(src),
+      `C22: the Imp's effects hang on its own frames (the thrust on the Jab's contact, the crescents on the Crosscut's two), death fades over 1.4 s, and reduced motion drops the hit-stop and shake (${bad.join(', ') || 'ok'})`); }
   { const g = loadCore({ seed: 1 }), E = s => g.eval(s);
     const w = JSON.parse(E('JSON.stringify(ZONE_FOES[1].moves.map(m => m.hits.map(h => h.wind)))'));
     assert(JSON.stringify(w) === '[[1.61],[1.61,1]]' && E('zoneFoeDeathS({ skin: "imp" })') === 2.31,
@@ -17924,6 +18228,38 @@ if (section('ability-names-fit')) try {
   }
 } catch (e) { fail('ability-names-fit crashed: ' + (e.stack || e)); }
 
+// ==== eyes-placeholder abilities tiles: in Hero > Abilities every tile with no drawn icon shows two letters, never "?" ====
+// Card abilities-unnamed-tile: the Attack row (a basic move, not in SOLO_ABILITIES) showed a bare "?"; it now reads "At".
+// Browser, Wren with Power Shot (save-wren-spare-moss), the list as #396's Eyes scenario opens it, at all three views.
+if (section('eyes-placeholder abilities tiles')) try {
+  const at = 'eyes-placeholder abilities tiles', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-wren-spare-moss.json'), 'utf8');
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} (browser ${w}x${h})`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch, reducedMotion: 'reduce' });
+        await ctx.addInitScript(({ raw, key }) => { const o = JSON.parse(raw); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(key, JSON.stringify(o)); }, { raw, key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t); await page.waitForTimeout(600);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.L = Math.max(S.L, 10); S.abil.scrolls = { moss: 1, hollow: 1 }; setTab('abilities'); 1`);
+        await page.waitForFunction(() => document.querySelector('#sec-abilities .ab-basic[data-mv=attack]'), null, { timeout: 8000 }).catch(() => fail(`${v}: the Attack row never appeared in Hero > Abilities`));
+        const t = JSON.parse(await X(`JSON.stringify([...document.querySelectorAll('#sec-abilities .ab-mono')].map(e => [e.closest('.ab-row') ? (e.closest('.ab-row').dataset.mv || e.closest('.ab-row').querySelector('b').textContent) : '', e.textContent]))`));
+        const bad = t.filter(([, x]) => !/^[A-Z][a-z]$/.test(x)), atk = t.find(([n]) => n === 'attack');
+        assert(t.length >= 12 && !bad.length && atk && atk[1] === 'At' && !errs.length,
+          `${v}: all ${t.length} lettered tiles read two letters, Attack reads "At", none "?" (bad: ${JSON.stringify(bad)}; Attack: ${JSON.stringify(atk)}; errors: ${errs[0] || 'none'})`);
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('eyes-placeholder abilities tiles crashed: ' + (e.stack || e)); }
+
 // ==== loadout-odds: Hero > Abilities says the zone boss odds of the three slotted moves, and Learn picks by them (W10) ====
 // save-pip-z10-ward: Pip at the zone 10 Champion on W10's arrival footing (level 15, tier 1 commons +0), Fireball / Spark / Kindle in the
 // slots (where Next Up leads), one Hollow Scroll that can teach Arcane Ward, Frost Shard or Ignite, no Parry or Dodge record (the casual
@@ -18075,6 +18411,63 @@ if (section('cache-pick-order-settles')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('cache-pick-order-settles crashed: ' + (e.stack || e)); }
+
+// ==== learn-odds-pump-stops: the boss-odds pump (75-abilities-ui) works only while a row that shows the odds is on screen ====
+// save-pip-z10-ward again: her zone 10 first clear opens the cache with a move pick, and its zone 11 odds start. A test goal that is
+// ready and outranks Learn holds the Next Up chip, so Next Up's Learn row is off screen once the pick closes. Browser, 1280x720,
+// 740x360 and 360x740: the pick closed at once (Keep the Scroll) with its odds pending leaves work queued, and the pump does none of
+// it for 3 s (a counter wraps loadoutPump, the checks' own). Opening the Next Up list shows the Learn row, so the pump starts again
+// and the row fills in its zone 11 odds.
+if (section('learn-odds-pump-stops')) try {
+  const at = 'learn-odds-pump-stops', raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-pip-z10-ward.json'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-abilities-ui.js'), 'utf8'), pw0 = (src.match(/const pumpWanted = [^\n]*/) || [''])[0];
+  assert(pw0 && !/abLearnInfo/.test(pw0) && /learnShown/.test(pw0) && /pickQueued/.test(pw0), `${at}: a move to learn alone does not keep the pump going; Next Up's Learn row on screen, or a move pick shown or queued, does (${pw0})`);
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright, Chromium or dist not available`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const vw = `${at} ${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch }), page = await ctx.newPage(), errors = [];
+        await ctx.addInitScript(([k, v]) => { try { localStorage.setItem('lanternfall.test.moments', '1'); if (!sessionStorage.getItem('sp')) { const o = JSON.parse(v); o.last = Date.now(); o.onboard.tips = false; localStorage.setItem(k, JSON.stringify(o)); sessionStorage.setItem('sp', '1'); } } catch (e) {} }, [KEY, raw]);
+        page.on('pageerror', e => errors.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(4600);   // no moment opens at boot (MOMENT_TUNE.bootS)
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        // __n counts the chunks of scratch fights the pump runs; the test goal outranks Learn (both ready), so the chip shows it
+        await X(`window.__n = 0; { const p0 = loadoutPump; loadoutPump = (n = 1) => { if (n > 0) __n += n; return p0(n); }; }
+          registerGoal({ id: 'zz-check-goal', sys: 'zz-check', prio: 30, pct: () => 1, label: 'A check goal' }); true`);
+        // Next Up keeps its list for 450 ms: wait until it has the test goal on top before the kill
+        try { await page.waitForFunction(() => window.__t.x(`(topGoals(3)[0] || {}).id === 'zz-check-goal'`), null, { timeout: 5000, polling: 50 }); }
+        catch (e) { assert(false, `${vw}: Next Up never put the test goal on top`); await ctx.close(); continue; }
+        await X(`MOMENT_Q.length = 0; S.activity = 'fight'; S.zone = 10; S.maxZone = 10; fightBoss = true; spawn(); const u0 = [UNIQ_TUNE.first, UNIQ_TUNE.again]; UNIQ_TUNE.first = UNIQ_TUNE.again = 0;
+          try { killPack(mob, 40); } finally { [UNIQ_TUNE.first, UNIQ_TUNE.again] = u0; } for (const q of MOMENT_Q) if (q.kind === 'champion') q.scene = ''; S.activity = 'gather'; emit('sceneReset'); true`);
+        try { await page.waitForFunction(() => window.__t.x(`!!document.querySelector('.mm-ov .mm-pick')`), null, { timeout: 8000, polling: 50 }); }
+        catch (e) { assert(false, `${vw}: the zone 10 clear's card with a pick never showed`); await ctx.close(); continue; }
+        // closed at its first paint, odds pending; any card that follows has no pick
+        const pend = await X(`(() => { const lo = learnOdds('pip'); MOMENT_UI.shownAt = 0; document.querySelector('.mm-ov .mm-go').click(); MOMENT_Q.length = 0; return !lo; })()`);
+        // the count starts once the card has left the page (its fade-out still shows the pick)
+        try { await page.waitForFunction(() => window.__t.x(`!document.querySelector('.mm-ov .mm-pick')`), null, { timeout: 5000, polling: 20 }); } catch (e) {}
+        await X(`__n = 0; true`); await page.waitForTimeout(3000);
+        const off = JSON.parse(await X(`JSON.stringify({ n: __n, left: loadoutPump(0), pending: !learnOdds('pip'), top: topGoals(3).map(g => g.id), chip: document.querySelector('#nuChip .nu-lbl').textContent, pick: !!document.querySelector('.mm-ov .mm-pick') })`));
+        assert(pend && off.top[0] === 'zz-check-goal' && off.top.includes('learn-ability') && off.chip === 'A check goal' && !off.pick,
+          `${vw}: the pick closed with its odds pending and the chip shows another goal, so the Learn row is off screen (${JSON.stringify(off)})`);
+        assert(off.left && off.pending && off.n === 0, `${vw}: with no row on screen that shows the odds, the pump runs none of the queued fights in 3 s (${JSON.stringify(off)})`);
+        // the Next Up list shows the Learn row: the pump starts again and the row fills in
+        await X(`document.getElementById('nuChip').click(); true`);
+        let row = '';
+        try { await page.waitForFunction(() => window.__t.x(`[...document.querySelectorAll('.nu-list .nu-row:not([hidden]) .nu-lbl')].some(e => /^Learn Arcane Ward: zone 11 boss, about \\d+ in 10 wins \\(now \\d+\\)$/.test(e.textContent))`), null, { timeout: 30000, polling: 100 }); row = 'filled'; } catch (e) {}
+        const on = JSON.parse(await X(`JSON.stringify({ n: __n, rows: [...document.querySelectorAll('.nu-list .nu-row:not([hidden]) .nu-lbl')].map(e => e.textContent) })`));
+        assert(row && on.n > 0, `${vw}: with the Next Up list open, the pump runs again and the Learn row fills in its zone 11 odds (${JSON.stringify(on)})`);
+        assert(!errors.length, `${vw}: no page errors` + (errors.length ? ': ' + errors[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('learn-odds-pump-stops crashed: ' + (e.stack || e)); }
 
 // ==== turn-banner-clears-plate: the turn line and the whose-turn banner each read on one line and stay off the "Zone boss" line ====
 // save-mid, a zone boss fight, every foe renamed to the longest name the game can give a foe (a boss or its Deepwell "Deep" name, an
@@ -18309,6 +18702,58 @@ if (section('nu-chip-gate-label-fits')) try {
   }
 } catch (e) { fail('nu-chip-gate-label-fits crashed: ' + (e.stack || e)); }
 
+// ==== nextup-chip-360 (fallback-font): the Next Up chip's status reads whole on an upright phone ====
+// Upright (20-stage) the chip shares the top row with the activity switch, so "NEXT UP", the status and the "+2" badge get what is
+// left of 360 px. Gathering, in the fallback face (display-fallback-font), the grid squeezed the status column and "+2" drew over
+// "Ready", leaving "Rea". The section puts the widest status ("Ready", and "100%") and the "+2" badge in the chip at 360x740, 740x360 and 1280x720 in
+// both fonts and checks the status's words end inside its box and the chip, left of the badge, with the eyebrow on one line.
+if (section('nextup-chip-360 (browser, fallback-font)')) try {
+  const at = 'nextup-chip-360', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const webFonts of [true, false]) for (const [w, h] of [[360, 740], [740, 360], [1280, 720]]) {
+        const v = `${at} ${w}x${h}${webFonts ? '' : ', fallback fonts'}`, phone = w < 1000;
+        const ctx = await browser.newContext({ turns: true, webFonts, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        for (const act of ['fight', 'gather']) for (const st of ['Ready', '100%']) {
+          // gathering, the switch beside the chip says "Fight · Z21" and "Mining", so upright the chip is narrowest there
+          if (act === 'gather' && st === 'Ready') { await X('navGo({ act: "gather", node: { kind: "ore", t: 1 } }); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); true'); await page.waitForTimeout(600); }
+          // renderChip rewrites only when the goals change, so the words stay for the measure (read in the same task)
+          const o = await page.evaluate(st => {
+            const c = document.getElementById('nuChip'); if (!c || c.offsetParent === null) return null;
+            const s = c.querySelector('.nu-cst'), m = c.querySelector('.nu-more'), e = c.querySelector('.nu-eye');
+            const keep = [s.textContent, m.textContent]; s.textContent = st; m.textContent = '+2';
+            const words = n => [...n.childNodes].filter(t => t.nodeType === 3).flatMap(t => { const rg = document.createRange(); rg.selectNodeContents(t); return [...rg.getClientRects()]; }).filter(r => r.width > 0);
+            const sr = words(s), er = words(e), sb = s.getBoundingClientRect(), cb = c.getBoundingClientRect(), mb = m.getBoundingClientRect(), pr = parseFloat(getComputedStyle(c).paddingRight);
+            // moreL: where "+2" starts when it shares the status's line (upright it may drop under it)
+            const o = { st, textR: Math.round(Math.max(...sr.map(r => r.right))), boxR: Math.round(sb.right), clip: s.scrollWidth > s.clientWidth + 1,
+              chipR: Math.round(cb.right - pr), moreL: m.offsetParent && mb.top < Math.max(...sr.map(r => r.bottom)) ? Math.round(mb.left) : 1e9, eyeLines: new Set(er.map(r => Math.round(r.top))).size,
+              eyeR: Math.round(Math.max(...er.map(r => r.right))), stL: Math.round(Math.min(...sr.map(r => r.left))),
+              eyeB: Math.round(Math.max(...er.map(r => r.bottom))), stT: Math.round(Math.min(...sr.map(r => r.top))), fs: parseFloat(getComputedStyle(s).fontSize) };
+            s.textContent = keep[0]; m.textContent = keep[1]; return o; }, st);
+          assert(o, `${v}: the Next Up chip shows`);
+          if (!o) continue;
+          assert(!o.clip && o.textR <= o.boxR + 1 && o.textR <= o.chipR + 1 && o.textR <= o.moreL - 2, `${v}: ${act}ing, the chip's status reads "${st}" whole, inside the chip and left of "+2" (${JSON.stringify(o)})`);
+          assert(o.eyeLines === 1 && (o.eyeR <= o.stL || o.eyeB <= o.stT), `${v}: ${act}ing with "${st}", NEXT UP stays on one line, clear of the status (${JSON.stringify(o)})`);
+        }
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('nextup-chip-360 crashed: ' + (e.stack || e)); }
+
 // ==== side-column-fits-740: every gate label and every away line fit the landscape side column ====
 // The side column holds the Next Up chip (row 2), the away chip (row 3) and the dock (row 4, .sb-tabs at its top). The dock shows
 // only while fighting (75-solo-ui: target() is 'mob') and the away chip only while gathering (71-ui-fight awayChipText), so the
@@ -18317,6 +18762,10 @@ if (section('nu-chip-gate-label-fits')) try {
 // its station gates and each raw cell its recipe takes, one level short, gathering that skill and not) and every away line
 // (awayChipSay over each gathered material: about N in the longest away, fills up, full), and measures the longest of each, with
 // the players' web fonts and with the fallbacks (display-fallback-font).
+// fallback-font-fits: in both fonts the Next Up eyebrow stays on one line, clear of the status, fighting and gathering; while gathering
+// the place name, its skill line, the material and its count show whole with the longest words the game puts there (each node's name,
+// skill line at Lv 120, material and an over-the-cap count), the count inside the storage box and the caption clear of it; and at 360x740
+// every gate label shows whole in a Next Up list sheet row (a 4-line clamp cut the longest in the fallback face).
 if (section('side-column-fits-740')) try {
   const at = 'side-column-fits-740', { pw, exe } = browserTools, raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-min60-tier-gate.json'), 'utf8');
   if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
@@ -18341,6 +18790,32 @@ if (section('side-column-fits-740')) try {
       l.textContent = keep[0]; if (a && keep[1] != null) a.lastChild.textContent = keep[1];
       return o;
     }, [label, away]);
+    // the eyebrow: one line, ending left of the status
+    const eyebrow = page => page.evaluate(() => {
+      const e = document.querySelector('#nuChip .nu-eye'), st = document.querySelector('#nuChip .nu-cst');
+      const rs = [...e.childNodes].filter(n => n.nodeType === 3).flatMap(n => { const rg = document.createRange(); rg.selectNodeContents(n); return [...rg.getClientRects()]; }).filter(r => r.width > 0);   // the words, not the menu icon beside them
+      return { lines: new Set(rs.map(r => Math.round(r.top))).size, right: Math.round(Math.max(...rs.map(r => r.right))), st: st && st.offsetParent ? Math.round(st.getBoundingClientRect().left) : 1e9 };
+    });
+    // the place caption and storage box while gathering, with the longest words in place (read and put back in one task)
+    const caption = page => page.evaluate(src => window.__t.x(src), `(() => {
+  const by = a => [...new Set(a)].sort((x, y) => y.length - x.length);
+  const kinds = Object.keys(CRAFT_NODES), names = [], mats = [], subs = [];
+  for (const k of kinds) for (let t = 1; t <= 5; t++) { if (NODE_NAMES[k] && NODE_NAMES[k][t - 1]) names.push(NODE_NAMES[k][t - 1]); mats.push(matName(k, t));
+    subs.push(\`\${SKILL[skillOf(k)]} Lv 120 · \${nodeTime(k, t).toFixed(1)}s per swing\`); }
+  const holds = ['50,000/50,000 · Over the cap', '50,000/50,000 stored', '120/50,000 stored'];
+  const N = by(names).slice(0, 3), M = by(mats).slice(0, 3), U = by(subs).slice(0, 2);
+  const zn = document.getElementById('zName'), zs = document.getElementById('zSub'), mn = document.getElementById('mName'), mh = document.getElementById('mHp');
+  const keep = [zn, zs, mn, mh].map(e => e.textContent), box = document.querySelector('.hud .mob');
+  const clip = e => e.scrollWidth > e.clientWidth + 1;
+  const out = []; 
+  for (const n of N) for (const u of U) for (const m of M) for (const h of holds) {
+    zn.textContent = n; zs.textContent = u; mn.textContent = m; mh.textContent = h;
+    const zb = zn.getBoundingClientRect(), ub = zs.getBoundingClientRect(), mb = box.getBoundingClientRect(), hb = mh.getBoundingClientRect(), nb = mn.getBoundingClientRect();
+    const bad = [clip(zn) && 'name clipped', clip(zs) && 'skill line clipped', clip(mn) && 'material clipped', clip(mh) && 'count clipped',
+      hb.right > mb.right + 1 && 'count past the box', nb.right > mb.right + 1 && 'material past the box', Math.max(zb.right, ub.right) > mb.left - 2 && 'caption under the box'].filter(Boolean);
+    if (bad.length) out.push(bad.join(', ') + \` (\${n} / \${u} / \${m} / \${h})\`); }
+  [zn, zs, mn, mh].forEach((e, i) => e.textContent = keep[i]);
+  return { N, M, U, bad: out.length, first: out.slice(0, 3) }; })()`);
     try {
       for (const webFonts of [true, false]) for (const [w, h] of [[740, 360], [1024, 768], [1280, 720], [1366, 640], [1920, 1080]]) {
         const v = `${at} ${w}x${h}${webFonts ? '' : ', fallback fonts'}`, phone = w < 1000, desk = w >= 1200;
@@ -18384,9 +18859,15 @@ if (section('side-column-fits-740')) try {
           assert(worst.chipBottom + 4 <= worst.dock, `${v}: fighting, the chip ends above .sb-tabs (${worst.chipBottom} vs ${worst.dock}: ${worst.lt})`);
         }
         assert(floor, `${v}: the chip label keeps its ${desk ? 14 : 13} px floor`);
+        let eb = await eyebrow(page);
+        assert(eb.lines === 1 && eb.right <= eb.st, `${v}: fighting, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
         // gathering: the away chip shows and the dock does not; every label with every away line fits above the screen's foot
         await X('navGo({ act: "gather", node: { kind: "ore", t: 1 } }); true');
         await page.waitForTimeout(600);
+        eb = await eyebrow(page);
+        assert(eb.lines === 1 && eb.right <= eb.st, `${v}: gathering, the Next Up eyebrow is one line left of the status (${JSON.stringify(eb)})`);
+        const cp = await caption(page);
+        assert(cp.bad === 0, `${v}: gathering, the place name, skill line, material and count show whole (${cp.bad} cut${cp.bad ? ': ' + cp.first[0] : ''})`);
         worst = null; bad = null; floor = true;
         for (const lt of L) for (const al of A) { const o = await measure(page, lt, al); if (!o) { bad = 'no chip'; break; }
           if (!o.away || o.dock != null) { bad = `gathering shows no away chip or the dock (${JSON.stringify(o)})`; break; }
@@ -18401,6 +18882,42 @@ if (section('side-column-fits-740')) try {
           assert(worst.away.bottom + 4 <= worst.foot, `${v}: gathering, the away chip ends above the screen's foot (${worst.away.bottom} vs ${worst.foot}: ${worst.lt} / ${worst.al})`);
         }
         assert(floor, `${v}: the chip and away text keep the ${desk ? 14 : 13} px floor`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      // upright at 360x740 a list sheet row's words get about 203 px: every gate label shows whole there, in both fonts
+      for (const webFonts of [true, false]) {
+        const v = `${at} 360x740${webFonts ? '' : ', fallback fonts'}`;
+        const ctx = await browser.newContext({ turns: true, webFonts, viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+        await ctx.addInitScript(([k, s]) => { try { const o = JSON.parse(s); o.last = Date.now(); localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X('S.onboard && (S.onboard.tips = false); document.querySelectorAll(".mm-ov").forEach(n => n.remove()); typeof closeSheet === "function" && closeSheet(); true').catch(() => {});
+        await page.waitForTimeout(300);
+        await page.click('#nuChip'); await page.waitForTimeout(400);
+        const o = await X(`(() => {
+          const labels = new Set();
+          for (const kind of Object.keys(CRAFT_KINDS)) { if (CRAFT_KINDS[kind].legacy) continue;
+            for (let t = 2; t <= 5; t++) { const rec = craftRecipe(kind, t); if (!rec) continue;
+              const gs = [], st = stationOf(kind), need = CRAFT_STATION_REQ[t - 1];
+              if (st) for (const sk of new Set([st.skill, 'smith'])) gs.push({ skill: sk, lv: need - 1, need, station: st.key });
+              for (const k of Object.keys(rec)) { if (k === 'gold') continue; const prod = REFINE_PRODUCTS[k];
+                for (const [f, tt] of prod ? prod.inputs(t) : [[k, t]]) { if (f === 'coal' || !CRAFT_NODES[f]) continue;
+                  const sk = skillOf(f), nd = skillReq(sk, tt); if (nd > 1) gs.push({ skill: sk, lv: nd - 1, need: nd, mat: costName(f, tt) }); } }
+              for (const gate of gs) for (const on of [true, false]) labels.add(gateLabel({ kind, t, gate }, on)); } }
+          const l = document.querySelector('.nu-list .nu-row:not([hidden]) .nu-lbl'); if (!l) return null;
+          const keep = l.textContent, r = { n: labels.size, most: 0, cut: [] };
+          for (const lt of labels) { l.textContent = lt;
+            const rg = document.createRange(); rg.selectNodeContents(l); const rs = [...rg.getClientRects()].filter(q => q.width > 0), lb = l.getBoundingClientRect();
+            r.most = Math.max(r.most, new Set(rs.map(q => Math.round(q.top))).size);
+            if (Math.max(...rs.map(q => q.bottom)) > lb.bottom + 1 || Math.max(...rs.map(q => q.right)) > lb.right + 1) r.cut.push(lt); }
+          l.textContent = keep; return r; })()`);
+        assert(o && o.n > 100, `${v}: the Next Up list sheet opens with a row and the game makes gate labels (${o && o.n})`);
+        if (o) { console.log(`  ${v}: the longest gate label takes ${o.most} lines in a list sheet row`);
+          assert(!o.cut.length, `${v}: every gate label shows whole in a list sheet row (${o.cut.length} cut${o.cut.length ? ': ' + o.cut[0] : ''})`); }
         assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
@@ -18995,14 +19512,16 @@ if (section('actor-scale (browser)')) try {
         }
         // a crowd (2 or more foes: a pack, a boss and its adds) keeps today's size, so its spacing is today's (G2: at 1.5 a pack of
         // wide foes left no room for both a 15% overlap and the hero's 16 px). The real-time fight (turns off) stands them here.
+        // crowd-scale-step: the hero steps to 1.5x, not 1x, when its reach clears the pack (Pip does at 1280x720 and 1920x1080).
         if (ak > 1) for (const [name, src] of [
           ['a pack of 3', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; COMBAT_TUNE.sizes = 0; COMBAT_TUNE.packSize = 3; setActivity("fight"); fightBoss = false; setZone(3)'],
           // the Elder Moss Slime splits into two adds below half its HP (59b)
           ['a boss with adds', 'TURN_TUNE.on = false; COMBAT_TUNE.single = false; setActivity("fight"); fightBoss = false; setZone(8); S.kills = ZONE_FIGHTS; challenge(); mob.max = 1e15; mob.hp = mob.max * 0.3; setTimeout(() => { for (const f of combatFoes()) f.hp = f.max = 1e15; }, 400)'],
         ]) {
           await X(`globalThis.__hold = 0; globalThis.__tp = 0; ${src}; true`); await page.waitForTimeout(2500);
-          const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, ZA: s.ZA, ZM: s.ZM, GY: s.GY }; })()');
+          const c = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, HS: s.HS, ZA: s.ZA, ZM: s.ZM, GY: s.GY }; })()');
           assert(c.n >= 2 && c.AK === 1 && c.ZA === c.ZM, `${tag} ${name}: a crowd of foes draws at today's size (${JSON.stringify(c)})`);
+          assert(c.HS === 1.5 || (c.HS === 1 && w !== 1280 && w !== 1920), `${tag} ${name}: the hero steps down to 1.5x in a crowd that fits, not 1x (hero x${c.HS})`);
           await X('TURN_TUNE.on = true; COMBAT_TUNE.single = 1; COMBAT_TUNE.sizes = 1; COMBAT_TUNE.packSize = 3; fightBoss = false; setZone(1); true'); await page.waitForTimeout(1500);
           const one = await X('(() => { const s = stageStats(); return { n: s.foes.filter(Boolean).length, AK: s.AK, GY: s.GY }; })()');
           // bigger-heroes (judge C1): the ground stays put when a crowd comes and goes (the scenery's ground line, stage px)
@@ -19015,6 +19534,90 @@ if (section('actor-scale (browser)')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('actor-scale crashed: ' + (e.stack || e)); }
+
+// ==== actor-scale-followups: what the bigger actors (actor-scale, bigger-heroes) left behind. (1) On a desktop stage a foe trick's line
+// (.tv-warn) and the resource tip (.tv-restip, "Aim: ...") dock top left (60-turn.css), clear of every hero's box, the place line, the turn
+// line and the banner, at 1280x720, 1366x640 and 1920x1080, with the longest lines the game says. (2) The camera sway moves the ground
+// (the scenery's ground layer, parallax 1) and the actors by the same whole stage px, so feet never slide (62-stage camSt), at every view.
+// (3) The cold Hearth's fire and plot stakes draw at the scenery's scale, not the actors' (63d asProp). save-late.json.
+if (section('actor-scale-followups (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('actor-scale-followups (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const save = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8')); save.last = Date.now();
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const cross = (a, b) => !!(a && b) && Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
+    const BOX = sel => `(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e || e.hidden || e.closest('[hidden]') || getComputedStyle(e).visibility === 'hidden') return null;
+      const b = e.getBoundingClientRect(); return b.width && b.height ? { x: b.left, y: b.top, w: b.width, h: b.height } : null; })()`;
+    try {
+      for (const [w, h, dpr] of [[1280, 720, 1], [1366, 640, 1], [1920, 1080, 1], [740, 360, 2]]) {
+        const tag = `${w}x${h}`, touch = w < 1000, desk = w >= 1200;
+        // motion on (the sway), so the hero's idle is read from a held frame below
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: touch, hasTouch: touch });
+        await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v5', s); } catch (e) {} }, JSON.stringify(save));
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1000);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`const c = document.querySelector('.away-ov .away-go'); if (c) c.click(); S.onboard && (S.onboard.tips = false); for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click();
+          globalThis.__tp = 0; globalThis.__tpo = turnPaused; turnPaused = () => !!globalThis.__tp || __tpo(); UNIQ_TUNE.first = UNIQ_TUNE.again = 0; true`);
+        // (1) the docked lines, with each hero. The longest foe-trick line (an elite's first-meeting line) and each hero's own tip.
+        if (desk) {
+          const longest = await X(`Object.values(TURN_TRAITS).map(t => t.first || '').concat(['Rally! It holds at the mark. Only a Stun breaks its charge.']).sort((a, b) => b.length - a.length)[0]`);
+          for (const k of ['wren', 'tobin', 'pip']) {
+            await X(`globalThis.__tp = 0; soloPick("${k}"); TURN_TUNE.on = true; setActivity("fight"); fightBoss = false; setZone(1); true`); await page.waitForTimeout(1500);
+            await X('globalThis.__tp = 1; true'); await page.waitForTimeout(300);
+            const read = async () => JSON.parse(await X(`JSON.stringify({ hero: LF_EYES.rects().hero, zone: ${BOX('.hud-zone')}, turn: ${BOX('.tv-n')}, row: ${BOX('.tv-hero')}, warn: ${BOX('.tv-warn')}, tip: ${BOX('.tv-restip')}, banner: ${BOX('.tv-tc-txt')}, strip: ${BOX('.cb-strip')} })`));
+            await X(`emit('traitSeen', { first: true, txt: ${JSON.stringify(longest)} }); true`); await page.waitForTimeout(120);
+            const a = await read();
+            const hitsW = ['hero', 'zone', 'turn', 'row', 'strip'].filter(n => cross(a.warn, a[n]));
+            // the hero's buff chips (Guard, Wall, ...) hang on the canvas from the plate's foot (--vs-b) for about 20 px: the line starts under them
+            const chipsB = await X(`(() => { const b = document.getElementById('stageBox'); return b.getBoundingClientRect().top + parseFloat(getComputedStyle(b).getPropertyValue('--vs-b')) + 24; })()`);
+            assert(!!a.warn && a.warn.y >= chipsB, `${tag} ${k}: the line starts under the hero's buff chips (top ${a.warn && Math.round(a.warn.y)}, chips end by ${Math.round(chipsB)})`);
+            assert(!!a.warn && !!a.hero && !hitsW.length, `${tag} ${k}: a foe trick's line ("${longest.slice(0, 24)}...") clears the hero, the place line, the turn line and the Grit row (${hitsW.join(', ') || 'none'}; line ${JSON.stringify(a.warn)}, hero ${JSON.stringify(a.hero)})`);
+            await X('emit("turnCard", { who: "foe", secs: 4 }); true'); await page.waitForTimeout(250);
+            const b = await read(); await X('emit("turn", {}); true');
+            assert(!!b.warn && !cross(b.warn, b.banner) && !cross(b.warn, b.hero), `${tag} ${k}: with the banner up the line stays clear of it and the hero (${JSON.stringify({ warn: b.warn, banner: b.banner })})`);
+            // the tip: the hero's own resource line (the longest is Pip's), with no trick line up
+            await X(`document.querySelector('.tv-warn').hidden = true; const t = document.querySelector('.tv-restip'); if (t.hidden) document.querySelector('.tv-resbtn').click(); true`); await page.waitForTimeout(120);
+            const c = await read();
+            const hitsT = ['hero', 'zone', 'turn', 'row', 'strip'].filter(n => cross(c.tip, c[n]));
+            assert(!!c.tip && !hitsT.length, `${tag} ${k}: the resource tip clears the hero, the place line, the turn line and the Grit row (${hitsT.join(', ') || 'none'}; tip ${JSON.stringify(c.tip)}, hero ${JSON.stringify(c.hero)})`);
+          }
+        }
+        // (2) the sway, across a minute of the camera's path. Zone 9 (layered scenery): the ground layer's whole-px offset equals the
+        // actors' (cam x AK) on every frame. Zone 1 (a fixed painting, Mossy Hollow): nothing sways, so the actors stand still too.
+        const sway = async z => {
+          await X(`globalThis.__tp = 0; soloPick("wren"); setActivity("fight"); fightBoss = false; setZone(${z}); true`); await page.waitForTimeout(1200);
+          return JSON.parse(await X(`JSON.stringify((() => { const ds = drawScene, sd = stageDeco, T0 = T, out = { n: 0, layered: 0, bad: [], seen: new Set(), cams: new Set(), ak: 0, red: reduced, max: 0 }; let gx = null;
+            drawScene = function (c, sc, camX, which, ...r) { if (which === 'back') gx = camX; return ds.call(this, c, sc, camX, which, ...r); };
+            stageDeco = (g, ph, v) => { if (ph === 'back') { out.n++; out.ak = v.ak; out.cams.add(v.cam); if (gx !== null) { out.layered++; out.seen.add(gx); out.max = Math.max(out.max, Math.abs(gx));
+              if (!Number.isInteger(gx) || !Number.isInteger(v.cam) || gx !== v.cam * v.ak) out.bad.push([T.toFixed(2), gx, v.cam, v.ak]); } } return sd(g, ph, v); };
+            try { for (let t = 0; t < 60; t += 0.25) { T = t; gx = null; draw(); } } finally { drawScene = ds; stageDeco = sd; T = T0; }
+            out.seen = out.seen.size; out.cams = [...out.cams]; return out; })())`));
+        };
+        const sL = await sway(9);
+        assert(!sL.red && sL.n >= 200 && sL.layered === sL.n && sL.seen >= 4 && sL.max <= 8 && !sL.bad.length, `${tag} zone 9: the camera sway moves the ground and the actors together, by the same whole stage px on every frame (${sL.layered} of ${sL.n} frames layered, actors x${sL.ak}, ${sL.seen} offsets up to ${sL.max} px; ${sL.bad.length} apart${sL.bad.length ? ': ' + JSON.stringify(sL.bad.slice(0, 3)) : ''})`);
+        const sP = await sway(1);
+        assert(sP.n >= 200 && sP.layered === 0 && sP.cams.length === 1 && sP.cams[0] === 0, `${tag} zone 1: on the fixed painting the actors never sway (${sP.n} frames, ${sP.layered} layered, offsets ${JSON.stringify(sP.cams.slice(0, 5))})`);
+        // (3) the cold Hearth: its fire and the plot stakes draw at the scenery's scale (the device px per stage px), Hesketh at the actors'
+        if (desk) {
+          await X(`S.hearth = Object.assign(S.hearth || {}, { cold: 1, lit: 0 }); setActivity('gather'); setNode('wood', 1); true`); await page.waitForTimeout(1200);
+          const pr = JSON.parse(await X(`JSON.stringify((() => { const st = stageStats(), g = document.getElementById('cv').getContext('2d'), fr = g.fillRect, sd = stageDeco, ks = new Set(), PAL = new Set(['#8c8494', '#6b6275', '#3a3444', '#2a2230', '#7a5434', '#4a3220', '#8c6a43', '#efe6d6']);
+            let n = 0; g.fillRect = function (...a) { if (PAL.has(String(this.fillStyle).toLowerCase())) { n++; ks.add(+this.getTransform().a.toFixed(4)); } return fr.apply(this, a); };
+            try { draw(); } finally { delete g.fillRect; }
+            return { scene: !!hearthScene(), n, ks: [...ks], KS: st.DPR * st.ZM, KA: st.DPR * st.ZA, AK: st.AK }; })())`));
+          assert(pr.scene && pr.AK > 1 && pr.n > 0 && pr.ks.length === 1 && Math.abs(pr.ks[0] - pr.KS) < 1e-6, `${tag}: the cold Hearth's fire and plots draw at the scenery's ${pr.KS} device px per px, not the actors' ${pr.KA} (${JSON.stringify(pr)})`);
+        }
+        assert(!errs.length, `${tag}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('actor-scale-followups crashed: ' + (e.stack || e)); }
 
 // ==== basic-attack-swings: in a turn fight a basic Attack plays the hero's swing (62-stage on 'soloAttack') ====
 // 59k emits only soloAttack for a basic Attack (no lunge or classTap), and the stage swung only on those, so the hero stood still.
@@ -19289,6 +19892,142 @@ if (section('fx-timing-fixes')) try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('fx-timing-fixes crashed: ' + (e.stack || e)); }
+
+// ==== bow-slot-wording: an empty Weapon slot names the hero's starting weapon, not "You wear nothing"; the first piece of gear
+// made says it is not on yet and why a tool went on by itself (cold leg 10 Oct, finding 7) ====
+if (section('bow-slot-wording')) try {
+  const at0 = 'bow-slot-wording', { pw, exe } = browserTools;
+  const cui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-craft-ui.js'), 'utf8');
+  assert(!/`You wear nothing as \$\{posName\(d\.pos\)\}/.test(cui) && (cui.match(/emptyLine\(d\.pos, /g) || []).length === 2, `${at0}: the result card and the item sheet both build the empty-slot line through emptyLine`);
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at0}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-flow-cold-camp.json'), 'utf8');   // Wren, zone 2, nothing worn, no gear made
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const at = `${at0} ${w}x${h}`, touch = w < 1000;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: touch, hasTouch: touch });
+        await ctx.addInitScript(([key, raw]) => {
+          try { localStorage.setItem('lanternfall.test.nostory', '1'); } catch (e) {}
+          const o = JSON.parse(raw); o.last = Date.now(); localStorage.setItem(key, JSON.stringify(o));
+        }, [KEY, raw]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        for (let i = 0; i < 8; i++) { const b = await page.$('#createScreen .create-go, .bsheet-ov .sty-done, .bsheet-ov .big:has-text("Begin"), .bsheet-ov .big:has-text("Continue"), .away-ov button'); if (!b) break; try { await b.click({ timeout: 800 }); } catch (e) { break; } await page.waitForTimeout(300); }
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        const until = async (expr, ms = 5000) => { try { await page.waitForFunction(e => window.__t.x(e), expr, { timeout: ms, polling: 50 }); return true; } catch (e) { return false; } };
+        await X(`onboardUnlockAll(); S.onboard.tips = false; if (S.refine) S.refine.said = 1; S.gold = 1e9; S.auto = false;
+          for (const k of Object.keys(S.mats)) S.mats[k] = S.mats[k].map(() => 900); ui(true); true`);
+        assert(await X(`soloHero() === 'wren' && S.equip.weapon == null && Object.values(S.craft.made || {}).every(n => !n)`), `${at}: the fixture is Wren with no weapon worn and no gear made`);
+        await X(`setTab('forge'); true`);
+        const card = async () => { await until(`!!document.querySelector('.cf-res')`); return X(`(c => c ? { id: +c.dataset.itemId, txt: c.querySelector('.cf-res-r').innerText, btns: [...c.querySelectorAll('.cf-resact button')].map(b => b.textContent) } : null)(document.querySelector('.cf-res'))`); };
+        // 0. a pickaxe first (the guide's order): it goes on by itself and never says "Not equipped yet"
+        const p1 = await X(`(craftItem('pick', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c0 = await card();
+        assert(c0 && c0.id === p1 && !/Not equipped yet/.test(c0.txt), `${at}: a pickaxe's card has no "Not equipped yet" line (${c0 && c0.txt})`);
+        // 1. the first bow: the compare names her starting bow, and one line says it is not on yet and why a tool goes on by itself
+        const b1 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c1 = await card();
+        assert(b1 != null && c1 && c1.id === b1, `${at}: the Pine Bow's result card shows (${JSON.stringify(c1)})`);
+        assert(c1 && /Better than your starting bow\./.test(c1.txt) && !/You wear nothing/.test(c1.txt), `${at}: the bow's card says "Better than your starting bow." and never "You wear nothing" (${c1 && c1.txt})`);
+        assert(c1 && /Not equipped yet\. Gear waits for you to choose; tools go on by themselves\./.test(c1.txt) && c1.btns.includes('Equip'), `${at}: the first piece of gear says it is not on yet, and offers Equip (${c1 && c1.txt})`);
+        // 2. the item sheet's compare says the same
+        await X(`craftUI.openItem(${b1}); true`); await until(`!!document.querySelector('.cf-isheet .cf-cmp')`);
+        const sh = await X(`(n => n ? n.innerText : '')(document.querySelector('.cf-isheet .cf-cmp'))`);
+        assert(/Better than your starting bow\. *$/m.test(sh) && !/You wear nothing/.test(sh), `${at}: the item sheet's compare names the starting bow (${sh})`);
+        await page.keyboard.press('Escape'); await X(`document.querySelectorAll('.bsheet-ov').forEach(o => o.remove()); setTab('forge'); true`);
+        // 3. a second bow: no first-craft line any more
+        const b2 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c2 = await card();
+        assert(c2 && c2.id === b2 && !/Not equipped yet/.test(c2.txt) && /Better than your starting bow\./.test(c2.txt), `${at}: a second bow keeps the compare line but drops the first-craft line (${c2 && c2.txt})`);
+        // 4. once a bow is worn, the next one compares against it
+        await X(`S.equip.weapon = ${b1}; gearDirty(); ui(true); true`);
+        const b3 = await X(`(craftItem('bow', 1, { wear: true }) || {}).id`); await X('ui(true); true');
+        const c3 = await card();
+        assert(c3 && c3.id === b3 && /Against your /.test(c3.txt) && !/starting bow/.test(c3.txt), `${at}: with a bow worn, a new one compares against it (${c3 && c3.txt})`);
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+    // the other starters name their own weapon
+    const sw = fs.readFileSync(path.join(ROOT, 'src', 'js', '24b-data-solo.js'), 'utf8');
+    assert(/tobin:[^\n]*weapon: 'Sword and shield'/.test(sw) && /pip:[^\n]*weapon: 'Staff'/.test(sw), `${at0}: Tobin and Pip have a starting weapon for the line to name`);
+    assert(/\.split\(' and '\)\[0\]/.test(cui), `${at0}: Tobin's line names his sword only (the shield is the Off-hand slot)`);
+  }
+} catch (e) { fail('bow-slot-wording crashed: ' + (e.stack || e)); }
+
+// ==== pip-cast-recipes (ruling-pip.md question 9): Pip's Nova, Lantern Flare and Lanternburst start where her art casts them ====
+// With route S Pip (stageFx.pipS.on, filled by route-s-pip-wire; stubbed here) Nova is a ring from the staff butt along the ground,
+// Lantern Flare a flash from the lantern, Lanternburst a ring centred on the lantern: no bolt flies, the anchor hook places them,
+// and the hit and its number still land. Classic art keeps the bolt. Pressed through the turn engine at 1280x720 and 740x360.
+if (section('pip-cast-recipes')) try {
+  const at = 'pip-cast-recipes', { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at} (browser): Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const early = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8');
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const WANT = { nova: ['ring', 'butt'], flare: ['flash', 'lantern'], lanternburst: ['ring', 'lantern'] };
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360]]) {
+        const v = `${at} ${w}x${h}`, phone = w < 1200;
+        const ctx = await browser.newContext({ turns: true, viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+        await ctx.addInitScript(([k, s]) => { try { localStorage.setItem(k, s); } catch (e) {} }, [KEY, early]);
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(1500);
+        await page.getByRole('button', { name: 'Collect' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`S.onboard && (S.onboard.tips = false, S.onboard.all = true); globalThis.__L = { proj: [], fl: [] };
+          { const P = ANIM.proj; ANIM.proj = function (kind, ...a) { __L.proj.push(kind); return P.call(this, kind, ...a); }; }
+          on('float', f => __L.fl.push(String(f && f.txt))); soloPick("pip", { now: true }); setZone(2); S.activity = "fight"; fightBoss = false; spawn(); true`);
+        for (const routeS of [true, false]) for (const id of Object.keys(WANT)) {
+          const tag = `${v} ${routeS ? 'route S' : 'Classic'} ${id}`;
+          let ph = '';
+          for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+            ph = await X(`(() => { if (!TURN_LIVE || TURN_LIVE.ended) { S.activity = "fight"; spawn(); return 'off'; } return TURN_LIVE.foe !== mob ? 'other foe' : TURN_LIVE.phase; })()`);
+            if (ph === 'hero') break;
+            await page.waitForTimeout(60);
+          }
+          assert(ph === 'hero', `${tag}: Pip's turn comes (${ph})`);
+          // the anchor hook: Nova's staff butt at a known point (the wire's per-move anchors); the others take today's points
+          const r = JSON.parse(await X(`(() => { const m = TURN_LIVE;
+            stageFx.pipS.on = () => ${routeS}; stageFx.pipS.at = (id, part) => id === 'nova' && part === 'butt' ? [123, 45] : null;
+            S.abil.unl.pip = Array.from(new Set((S.abil.unl.pip || []).concat(["${id}"]))); S.solo.eq.pip = ["${id}", null, null]; turnSyncEquip();
+            m.cds["${id}"] = 0; m.h.blind = 0; m.h.embers = 3; m.heroOps = 3; m.foe.hp = m.foe.max = Math.max(m.foe.max, 1e7);
+            const why = turnUsable(m, "${id}"); if (why) return JSON.stringify({ why });
+            __L.proj.length = 0; __L.fl.length = 0; const s0 = stageFx.stats();
+            return JSON.stringify({ ok: turnCombatAction('ability', 0), i0: s0.impacts, n0: s0.shots, want: [123, 45] }); })()`));
+          if (r.why) { assert(false, `${tag}: the move can be pressed (${r.why})`); continue; }
+          assert(r.ok, `${tag}: the press goes through the turn engine`);
+          let s;
+          for (const t0 = Date.now(); ; ) {
+            s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats() })`));
+            if ((s.fx.impacts > r.i0 && s.L.fl.some(f => /\d/.test(f))) || Date.now() - t0 > 6000) break;
+            await page.waitForTimeout(50);
+          }
+          await page.waitForTimeout(150); s = JSON.parse(await X(`JSON.stringify({ L: __L, fx: stageFx.stats() })`));
+          assert(s.fx.last === id && s.fx.impacts > r.i0, `${tag}: its effect lands on the foe (last ${s.fx.last}, impacts ${s.fx.impacts - r.i0})`);
+          assert(s.L.fl.some(f => /\d/.test(f)), `${tag}: its number rises (${s.L.fl.join(', ') || 'none'})`);
+          if (routeS) {
+            assert(!s.L.proj.includes('bolt'), `${tag}: no bolt flies (${s.L.proj.join(', ') || 'none'})`);
+            assert(s.fx.kind === WANT[id][0] && s.fx.from === WANT[id][1], `${tag}: a ${WANT[id][0]} from the ${WANT[id][1]} (${s.fx.kind} from ${s.fx.from})`);
+            if (id === 'nova') assert(JSON.stringify(s.fx.at) === JSON.stringify(r.want), `${tag}: the ring starts at the anchor hook's staff butt (${s.fx.at} vs ${r.want})`);
+          } else assert(s.L.proj.includes('bolt'), `${tag}: Classic art keeps the bolt (${s.L.proj.join(', ') || 'none'})`);
+        }
+        await X(`stageFx.pipS.on = () => false; stageFx.pipS.at = () => null; true`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('pip-cast-recipes crashed: ' + (e.stack || e)); }
 
 // ==== route-s-wren-wire (docs/design/route-s/ruling.md, "Build card spec: route-s-wren-wire"): Wren's route S fight moves ====
 // From the converter's record (art/heroes/wren/route-s/pack.json, tools/art/route-s-wren.py) and the embedded data (21ye): bytes

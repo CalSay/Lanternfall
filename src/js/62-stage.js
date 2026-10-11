@@ -13,13 +13,15 @@
 let T = 0;
 // Extra stage art: stageDeco(ctx, phase, v), phase 'back' (after the scenery, before the actors, pixel
 // pass), 'front' (after the actors, pixel pass) or 'light' (additive lights); ignore other phases.
-// v = { cam, SW, SH, GY, T, tg, nodeR, hx, hy, hl, hd, hf, hX, hY } (reused; nodeR: the gather node's right
+// v = { cam, SW, SH, GY, T, tg, nodeR, hx, hy, hl, hd, hf, hX, hY, ak } (reused; nodeR: the gather node's right
 // edge, camera-free; hx the hero's feet x (camera-free), hy its ground line, hl its lane, hd down, hf the
-// frame drawn last, hX/hY where it was drawn). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
+// frame drawn last, hX/hY where it was drawn, ak the actors' scale). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
 let stageDeco = null;
 // Ability effects (62b-fx.js): stageFx.swing(x, y) as the hero's swing fires, stageFx.aim(s) the foe's chest, and
 // stageFx.draw(ctx, phase, v), phase 'back' (before the actors), 'fx' (after the rings and particles) or 'dev' (device px, over the HUD).
 let stageFx = null;
+// A k pack foe's own effects (62c-foefx.js, the Scenario Thorn Imp): foeFx.has(s), back(g, s, f, x, y, cam), front(g, s, cam), hit(s, x, y).
+let foeFx = null;
 let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
 {
   const A = ANIM;
@@ -148,22 +150,13 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // would otherwise stay small under a tall empty sky. ZOOM_WT still fits 3 columns and the foe.
   // CW x CH: the container in CSS px, re-read on every resize.
   let SW = 0, SH = 0, SCH = 0, CW = 0, CH = 0, ZM = 1, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1, hudB = 0;
-  // Actor scale (actor-scale, ruling #328, docs/design/route-s/ruling.md): heroes, foes, bosses, adds, gather nodes and beasts
-  // draw ACTOR_K times bigger against unchanged scenery. The stage zoom ZS (pickZoom, whole steps) sets the scenery:
-  // SWS x SHS stage px, built SCH tall with its ground on GYS. Everything else on the stage (actors, effects, lights, the
-  // layout) lives in actor px: SW x SH, ground GY, drawn at ZM = ZS * AK CSS px per actor px. AK is ACTOR_K on landscape
-  // stages and 1 in portrait until UX-L1. Nearest-neighbour: an art px of a 96 px hero is ACTOR_K x ZS CSS px (4 at 1280x720).
-  // ACTOR_K1, a stage at zoom 1 (a phone on its side, 740x360): 1 (gate G3). At 1.5 the heroes' heads ran under the turn
-  // line, the Grit row and a foe trick's line, and the timing bar crossed their feet. A crowd (2 or more foes on the stage:
-  // a Deepwell pack, boss adds, the raid-only real-time packs) keeps today's size too, as the zoom steps out for it (zoomStep):
-  // at 1.5 a pack of wide foes left no room for the hero's 16 px and 15% overlap (G2). syncPack resizes when it changes.
-  // While AK > 1 the stage box carries .actor-k (20-stage.css: the whose-turn banner takes the turn line's spot, over the heads).
-  // bigger-heroes (Cal, 10 Oct: "Heroes need to be bigger"): ACTOR_K 2, so an art px of route S art is a whole 2 CSS px at
-  // 1280x720 (3 at 1920x1080). A roomy stage that still draws at zoom 1 (1024x768, a narrow browser window: ROOMY_H CSS px tall
-  // or more) takes the largest of ACTOR_KR whose actor stage stays at least ACT_MIN_W actor px wide; a phone on its side (740x360)
-  // is shorter and keeps ACTOR_K1. At 2x or more the ground drops to GROUND_BIG of the stage (the scenery is built taller and runs
-  // off the bottom, as on a short strip), so the heads clear the place line, the turn line and the banner. A stage too short for
-  // that (1366x640: the hero's HERO_BOX actor px would reach above TOP_UI CSS px under the stage's top) keeps ACTOR_K_SHORT.
+  // Actor scale (ruling #328, docs/design/route-s/ruling.md): actors (heroes, foes, adds, nodes, beasts) draw bigger than the
+  // scenery. The stage zoom ZS (pickZoom) sets the scenery: SWS x SHS stage px, built SCH tall, ground GYS. The rest lives in
+  // actor px: SW x SH, ground GY, at ZM = ZS * AK CSS px per actor px; portrait keeps 1 until UX-L1. A phone on its side
+  // (740x360) keeps ACTOR_K1 (G3: at 1.5 heads ran under the turn line). A crowd (2+ foes) keeps 1x foes (pairStep).
+  // While HS > 1 the stage box carries .actor-k (20-stage.css: the banner takes the turn line's spot, over the heads).
+  // bigger-heroes: ACTOR_K 2. A roomy zoom-1 stage (1024x768) takes the largest ACTOR_KR keeping ACT_MIN_W actor px. At 2x+
+  // the ground drops to GROUND_BIG; a stage too short (1366x640: HERO_BOX would pass TOP_UI) keeps ACTOR_K_SHORT.
   const ACTOR_K = 2, ACTOR_K_SHORT = 1.5, ACTOR_K1 = 1, ACTOR_KR = [2, 3], ROOMY_H = 480, ACT_MIN_W = 225, GROUND_BIG = 0.86, HERO_BOX = 102, TOP_UI = 156;
   const fits = (h, z) => h * GROUND_BIG - HERO_BOX * z >= TOP_UI;
   const zoom1K = (w, h) => { let k = ACTOR_K1; if (h >= ROOMY_H) for (const c of ACTOR_KR) if (w / c >= ACT_MIN_W && fits(h, c)) k = c; return k; };
@@ -174,8 +167,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // Foes, nodes and the layout keep their own, smaller scale AK = foeK(HS): 1.5 beside a 2x hero, 2 beside a 3x one. The hero
   // draws HKS = HS / AK times the actors' scale about its feet (64h, 64l read stageHeroK), so its records are in actor px too.
   const foeK = k => k >= 3 ? 2 : k >= 2 ? 1.5 : k;
-  // pairK: the step a wide pair takes (0: none). The ground (GYS, SCH, tall) follows soloK, not crowd or pairK, so it never
-  // moves mid-fight when adds come (judge, bigger-heroes).
+  // pairK: the step a wide pair takes (0: none), or a crowd's hero scale. The ground (GYS, SCH, tall) follows soloK, not crowd
+  // or pairK, so it never moves mid-fight when adds come (judge, bigger-heroes).
   let ZS = 1, AK = 1, HS = 1, HKS = 1, SWS = 0, SHS = 0, GYS = 1, crowd = false, pairK = 0;
   stageHeroK = () => HKS;
   const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_WT = 216, ZOOM_H = 196, SOLO_MIN_W = 300;
@@ -237,8 +230,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     DPR = dpr; CW = w; CH = h;
     ZS = pickZoom(w, h, DPR);
     const k0 = soloK(w, h);
-    HS = LAND_Q.matches && !crowd ? (pairK && pairK < k0 ? pairK : k0) : 1;
-    AK = foeK(HS); HKS = HS / AK;
+    HS = !LAND_Q.matches ? 1 : crowd ? Math.min(pairK || 1, ACTOR_K_SHORT) : pairK && pairK < k0 ? pairK : k0;
+    AK = crowd ? 1 : foeK(HS); HKS = HS / AK;
     ZM = ZS * AK;
     SWS = Math.round(w / ZS); SHS = Math.round(h / ZS);
     SW = Math.round(w / ZM); SH = Math.round(h / ZM);
@@ -365,8 +358,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     // The front column stands at PARTY_X1 (a little less on narrow stages), and further back when a
     // big foe (an elder, the wyrm, a tree node) would stand on it: its right edge stops 8 px into the foe's box.
     // At 2x or more (bigger-heroes) a wide melee hero (Tobin's sword) may stand back to SW * 0.12, so it keeps its 16 px from the foe.
-    const hf = hero.fr && hero.fr.idle0, fl = frontLeft(), reach = fl == null ? 1e9 : AK > 1 ? fl - heroReach() : fl + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16);
-    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (HS >= 2 ? 0.12 : AK > 1 ? 0.2 : packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
+    const hf = hero.fr && hero.fr.idle0, fl = frontLeft(), reach = fl == null ? 1e9 : HS > 1 ? fl - heroReach() : fl + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16);
+    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (HKS > 1 ? 0.12 : AK > 1 ? 0.2 : packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
     const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
     const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
     const laneX = Math.round(Math.max(16, D * 0.46));
@@ -424,14 +417,15 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   }
   // bigger-heroes: a hero and a lone foe that need more than the stage's width at its scale (classic Tobin's sword against the
   // Elder Moss Slime at 1280x720) step down (stepsK: 2 to 1.5; at zoom 1, 3 to 2 to 1), so the hero keeps GAP_K stage px from
-  // the foe (G2), as a crowd keeps today's size. Each step is read at its own actor width, so the answer does not change with
-  // the scale it picks: the hero at its leftmost (the stage's floor, or 64h's whole-art margin heroArtLeft) and the foe pushed
-  // to the stage's right edge. 0: no step.
+  // the foe (G2). Each step is read at its own actor width: the hero at its leftmost (the floor, or heroArtLeft) and the foe at
+  // the right edge. 0: no step.
   function pairStep() {
-    if (!LAND_Q.matches || target() !== 'mob' || packN !== 1 || !CW) return 0;
-    const f = slots[0].fr && slots[0].fr.idle0, hf = hero.fr && hero.fr.idle0;
+    if (!LAND_Q.matches || target() !== 'mob' || !packN || !CW) return 0;
+    const f = slots[0].fr && slots[0].fr.idle0, hf = hero.fr && hero.fr.idle0, fl = frontLeft();
     if (!f || !hf) return 0;
     const id = typeof heroArtId === 'function' && heroArtId(), ks = stepsK(soloK(CW, CH)), art = id && typeof heroArtLeft === 'function' ? heroArtLeft(id) : hf.ox - leftEdge(hf) + 2;
+    // crowd-scale-step: a crowd's hero is ACTOR_K_SHORT if its reach clears the front foe, else 1
+    if (packN > 1) return ks[0] >= ACTOR_K_SHORT && fl != null && Math.max(Math.round(SW * 0.12), art * ACTOR_K_SHORT) + heroReach(1, ACTOR_K_SHORT) <= fl ? ACTOR_K_SHORT : 1;
     for (let i = 0; i < ks.length; i++) {
       const k = ks[i], fs = foeK(k), hk = k / fs, sw = Math.round(CW / (ZS * fs)), left = Math.max(Math.round(sw * 0.12), art * hk);
       const foeL = sw - 6 - f.c.width + leftEdge(f) - (CH - GYS * ZS >= 76 ? 0 : Math.round(50 / (ZS * fs)));   // the stage's own floor band, not tall (it rounds with AK)
@@ -544,7 +538,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   }
   function bindSlot(s, m) {
     s.m = m; s.st = 0; s.t = 0; s.dx = 0; s.jx = 0; s.jy = 0; s.dv = 0; s.dvOn = false; s.dvA = null; s.kb = 0; s.kn = 0; s.fl = 0;
-    s.hm = null; s.hpF = null; s.trail = 1; s.dF = null; s.aq = null; s.at = 0; s.ar = 1; s.ax = 0; s.ae = 0; s.amv = ''; s.amr = null; s.al = null; s.hurtT = 0; s.sgT = 0; s.aCur = null; s.pj = null; s.pjDone = false; s.ifx = null; s.lmI = 0;
+    s.hm = null; s.hpF = null; s.trail = 1; s.dF = null; s.aq = null; s.at = 0; s.ar = 1; s.ax = 0; s.ae = 0; s.amv = ''; s.amr = null; s.al = null; s.hurtT = 0; s.sgT = 0; s.aCur = null; s.pj = null; s.pjDone = false; s.ifx = null; s.lmI = 0; s.aA = ''; s.aI = 0; s.aU = -1; s.fxS = null;
     if (!m) { s.fr = null; s.key = ''; return; }
     const type = m.key.replace(/\d+$/, '');
     let key, fr;
@@ -789,6 +783,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     }
     if (a === hero && stageFx && tg === 'mob' && turnFight()) stageFx.swing(handX(a), handY(a));
     if (a.still) { a.still = 0; return; }   // a buff hits no foe: its own effect plays (62b), nothing flies
+    if (a === hero && stageFx && stageFx.noShot && tg === 'mob' && turnFight() && stageFx.noShot()) return;   // route S Pip's ring or flash: no bolt (62b, pip-cast-recipes)
     if (!foeAlive()) return;
     const s = a.aim && (tg !== 'mob' || slotLive(a.aim)) ? a.aim : a.kind ? foe : frontSlot();
     const fa = a === hero && stageFx && tg === 'mob' && turnFight() ? stageFx.aim(s) : null;   // the hero aims at the chest (62b-fx)
@@ -863,7 +858,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     else if (s.st !== 2) { s.st = 2; s.t = 0; }
     // the white hit flash: every big hit, else at most every 0.6 s (a tank under three foes would strobe)
     const big = kind === 'heavy' || kind === 'slam' || kind === 'dive';
-    if (big || !(a.fcd > 0)) { a.flash = Math.max(a.flash, 0.08); a.fcd = 0.6; }
+    const fresh = big || !(a.fcd > 0);   // a tank under a pack of imps would strobe and shake: their effects keep the flash's pace
+    if (fresh) { a.flash = Math.max(a.flash, 0.08); a.fcd = 0.6; }
+    if (fresh && foeFx && foeFx.has(s) && kind !== 'ranged' && kind !== 'cloud') { a.flash = Math.max(a.flash, 0.18); a.kb = 0.35; foeFx.hit(s, tx, a.hy - 34); }   // the imp's blow (62c)
     if (kind === 'ranged') {
       const spore = s.anim === 'cast' || s.anim === 'heal';
       A.proj(spore ? 'spore' : 'arrow', s.left + 4, s.cy - 6, tx, ty, spore ? 0.4 : 0.3, spore ? '#B6F09A' : '#B8B0A0', spore ? 10 : 6, sparkW);
@@ -954,15 +951,16 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     s.sgT = m && m.stunT > 0 && !m.dead ? (s.sgT || 0) + dt : 0;
     if (m && m.dead) s.aq = null;   // death takes over where it stands
     else if (!turnFight()) artLegacy(s);
-    const q = s.aq;
+    const q = s.aq; s.aU = -1;
     if (q && q.length) {
       s.at += dt * 1000 * (s.ar || 1);
       let c = q[0], d = clipMs(F, c);
       while (c && s.at >= d) { if (c.hop) s.ax = c.hop[1]; s.at -= d; q.shift(); c = q[0]; d = c ? clipMs(F, c) : 0; if (c && c.hop && c.hop[1] === 0) s.ar = 1; }
       if (c && c.hop) {
         const P = FOE_ART[F.key], w = F.acts[c.act].mv || P.hopMove, m0 = w[0], m1 = w[1];
-        const u = reduced ? (s.at >= m0 ? 1 : 0) : Math.max(0, Math.min(1, (s.at - m0) / (m1 - m0)));
-        s.ax = c.hop[0] + (c.hop[1] - c.hop[0]) * u;
+        const u = reduced ? (s.at >= m0 ? 1 : 0) : Math.max(0, Math.min(1, (s.at - m0) / (m1 - m0))), dash = !!F.acts[c.act].mv;
+        s.ax = c.hop[0] + (c.hop[1] - c.hop[0]) * (dash ? 1 - (1 - u) ** 3 : u);   // a dash eases out (thorn-imp-fx)
+        s.aU = dash ? u : -1;
       }
       if (!q.length) s.aq = null;
     }
@@ -981,9 +979,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   // the frames the foe shows now: { body, atk, hit } (hit: the landed-hit spark of the latest contact, if it landed)
   function artCur(s, tele) {
     const F = artOf(s), m = s.m, A = F.acts, c = s.aq && s.aq[0];
-    if (m && m.dead) { const D = A.death; return { body: D.fr[clipFrame(D, 1, D.fr.length, m.dead * 1000) - 1].body }; }
+    s.aA = ''; s.aI = 0;   // the action and frame shown (62c-foefx)
+    if (m && m.dead) { const D = A.death, i = clipFrame(D, 1, D.fr.length, m.dead * 1000); s.aA = 'death'; s.aI = i; return { body: D.fr[i - 1].body }; }
     if (c) {
       const X = A[c.act], i = clipFrame(X, c.a, c.b, s.at), fr = X.fr[i - 1];
+      s.aA = c.act; s.aI = i;
       let k = -1; for (let j = 0; j < X.con.length; j++) if (X.con[j] <= i) k = j;
       let mouth = null;   // a ranged move's throat effect: the charge (frames 1-4) up to the release, then the release (5-6)
       if (s.amr && !c.hop && F.fx['void-fx'] && X.rel.length) {
@@ -992,8 +992,8 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
       }
       return { body: fr.body, atk: c.hop ? null : fr.atk, hit: !c.hop && k >= 0 && s.al && s.al[k] ? fr.hit : null, mouth };
     }
-    if (m && m.stunT > 0) { const G = A.stagger; return { body: G.fr[clipFrame(G, 1, G.fr.length, s.sgT * 1000) - 1].body }; }
-    if (s.hurtT > 0) { const H = A.hurt, tot = actMs(H, 1, H.fr.length); return { body: H.fr[clipFrame(H, 1, H.fr.length, tot - s.hurtT * 1000) - 1].body }; }
+    if (m && m.stunT > 0) { const G = A.stagger, i = clipFrame(G, 1, G.fr.length, s.sgT * 1000); s.aA = 'stagger'; s.aI = i; return { body: G.fr[i - 1].body }; }
+    if (s.hurtT > 0) { const H = A.hurt, tot = actMs(H, 1, H.fr.length), i = clipFrame(H, 1, H.fr.length, tot - s.hurtT * 1000); s.aA = 'hurt'; s.aI = i; return { body: H.fr[i - 1].body }; }
     if (m && tele && tele.foe === m) { const mv = artLegacyMoves(s)[0], J = mv && A[mv.anim]; if (J) return { body: J.fr[F.hk && J.con.length ? Math.max(0, J.con[0] - 2) : J.start + 2].body }; }   // a legacy telegraph: a wind-up (a k pack: the frame before the contact)
     const I = A.idle; return { body: I.fr[clipFrame(I, 1, I.fr.length, reduced ? 0 : (T * 1000 + (s.hx & 7) * 90) % actMs(I, 1, I.fr.length)) - 1].body };
   }
@@ -1538,7 +1538,11 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     const dx = Math.round(x - f.ox), h = f.c.height, c = s.lane === 0 && f !== s.fr.hit ? dimOf(f.c) : f.c;
     ctx.globalAlpha = alpha;
     if (ns) nsBlit(ctx, f, x, y, { a: alpha, d: s.lane === 0, w: m && !m.dead && s.fl > 0.02 ? 0.55 : 0 });   // hit: a white flash
-    else if (f.hk && sy === 1) foeArtBlit(ctx, f, x, y, s.lane === 0);   // a k pack (64j): its art px on whole device px
+    else if (f.hk && sy === 1) {   // a k pack (64j): its art px on whole device px; its own effects (62c) first: behind it, its hop and knock-back
+      const o = foeFx && foeFx.has(s) && m ? foeFx.back(ctx, s, f, x, y, cam) : null;
+      if (o) { x += o[0]; y += o[1]; }
+      foeArtBlit(ctx, f, x, y, s.lane === 0);
+    }
     else if (m && m.dead) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SW, s.gy + 2); ctx.clip(); ctx.drawImage(c, dx, Math.round(y - f.oy)); ctx.restore(); }
     else if (sy < 1) ctx.drawImage(c, dx, Math.round(y - f.oy * sy), f.c.width, Math.round(h * sy));
     else ctx.drawImage(c, dx, Math.round(y - f.oy));
@@ -1547,7 +1551,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     s.fxX = x; s.fxY = y; s.fxOn = !!(artOf(s) && s.aCur && sy === 1);   // its effects draw over the hero (drawFoeFx)
     if (m && !m.dead && s.fl > 0.02 && sy === 1 && !artOf(s) && !ns) { ctx.globalAlpha = 0.55 * alpha; ctx.drawImage(s.fr.hit.c, dx, Math.round(y - f.oy)); }
     // stunned: three sparks circle over its head (still under reduced motion)
-    if (m && !m.dead && m.stunT > 0) {
+    if (m && !m.dead && m.stunT > 0 && !(foeFx && foeFx.has(s))) {   // the imp's own motes: 62c
       const hy = Math.round(y - f.oy + headTop(s.fr.idle0)) - 4, cx = Math.round(x), r = Math.max(6, Math.round(s.w * 0.18));
       for (let i = 0; i < 3; i++) {
         const an = (reduced ? 0 : T * 5) + i * 2.094;
@@ -1571,6 +1575,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
       ctx.drawImage(f.c, Math.round(P.x0 + (t.x - P.x0) * u - cam - f.ox), Math.round(P.y0 + (t.y - P.y0) * u - f.oy));
     }
     if (s.ifx) { const X = F.fx[s.ifx.id], f = X && X.fr[clipFrame(X, 1, X.fr.length, s.ifx.t) - 1]; if (f) ctx.drawImage(f.c, Math.round(s.ifx.x - cam - f.ox), Math.round(s.ifx.y - f.oy)); }
+    if (foeFx && foeFx.has(s)) foeFx.front(ctx, s, cam);
   }
   // A fixed battle background (BG_ART, 21zb): the landscape export on a wide stage, the portrait one on a tall stage,
   // scaled (smooth) to cover the stage with its painted road on the ground line GYS, centred (stage px, the scenery's view). False until it has loaded.
@@ -1603,7 +1608,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
   }
 
   let drawMs = 0, nsSt = 'off';
-  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0, hx: 0, hy: 0, hl: 1, hd: false, hf: null, hX: 0, hY: 0 };
+  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0, hx: 0, hy: 0, hl: 1, hd: false, hf: null, hX: 0, hY: 0, ak: 1 };
   const FXV = { T: 0, cam: 0, SW: 0, SH: 0, GY: 0, K: 1, KS: 1, DPR: 1, sx: 0, sy: 0, fight: false, foe: null, hx: 0, hy: 0, hfX: 0, hfY: 0, hc: null, hX: 0, hY: 0 };   // stageFx's view (reused)
   draw = function () {
     if (!SW) { resize(); if (!SW) return; }
@@ -1611,7 +1616,7 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     pickScene();
     const tg = target(), raid = tg === 'world', gath = tg === 'node', fight = tg === 'mob';
     // camF: the camera sway in stage px (the scenery's); cam: the same in actor px
-    const camF = reduced ? 0 : Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3, cam = Math.round(camF / AK);
+    const camSt = AK % 1 ? AK * 2 : AK, camF = reduced ? 0 : Math.trunc((Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3) / camSt) * camSt;
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
     const K = DPR * ZM, tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
     // the scenery's view (stage px, ZS) and the actors' (actor px, ZM); the shake moves both by the same whole device px
@@ -1632,8 +1637,9 @@ let resize, animate, draw, stageStats, stageRects, warmScene, stageHeroK;
     const bgArt = nsBg || (fight && !deepOn() && bgArtDraw(ctx, curTheme));
     if (!bgArt) drawScene(ctx, scene, camF, 'back', KS, sxd, syd, '#0B0810');
     const huntBg = !nsBg && gath && S.node.kind === 'hide' && typeof huntBgDraw === 'function' && HUNT_TUNE.interim && huntBgDraw(ctx, SWS, GYS);   // interim Hunting grounds (64i)
+    const cam = (bgArt && !nsBg) || huntBg ? 0 : camF / AK;
     actorView();
-    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; dv.hx = hero.fr ? ax(hero) : null; dv.hy = hero.hy; dv.hl = hero.lane; dv.hd = hero.down; dv.hf = hero._f; dv.hX = hero._x; dv.hY = hero._y; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
+    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; dv.hx = hero.fr ? ax(hero) : null; dv.hy = hero.hy; dv.hl = hero.lane; dv.hd = hero.down; dv.hf = hero._f; dv.hX = hero._x; dv.hY = hero._y; dv.ak = AK; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
     ctx.imageSmoothingEnabled = true;

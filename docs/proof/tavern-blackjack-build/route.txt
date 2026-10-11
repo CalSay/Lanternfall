@@ -1,0 +1,32 @@
+# Proof for card tavern-blackjack-build. The mid save (zone 20, the Tavern built, every tab open) reopens with the table's
+# 10-minute wait already played (`tab new blackjack.w=600`), opens Camp > Tavern, finds the
+# new Blackjack box under the Tavern's other boxes (below the fold, so the selector expects), deals one hand at the lowest bet and plays it out with Stand.
+# tools/check.mjs sections "tavern blackjack" (rules, payouts, limits, the day, saves, save codes, the switch) and "tavern blackjack
+# (browser)" (1280x720, 740x360, 360x740 with reduced motion, the 300 ms press guard) carry the rest.
+# seed: 1
+new mid
+wait 2
+tab new blackjack.w=600
+wait 2
+tap-if "Got it"
+tap-if "Continue"
+tap-if "Skip"
+tap-if "Dismiss this tip"
+wait 1
+tap "Camp"
+wait 1
+tap "Tavern"
+wait 1
+expect "#sec-blackjack .bj-sub"
+expect "#sec-blackjack .bj-lim"
+tap "Deal"
+wait 1
+expect "#sec-blackjack .bj-line"
+expect "Stand"
+shot blackjack-hand
+tap "Stand"
+wait 1
+shot blackjack-result
+tap "Next hand"
+wait 1
+expect "#sec-blackjack .bj-coin"

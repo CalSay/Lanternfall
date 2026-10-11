@@ -70,6 +70,12 @@ let craftUI = null;
   const heroFits = k => { const d = CRAFT_KINDS[k]; return !!(d && d.pos && fits(k, d.pos, 'hero')); };
   // An item (not a kind): weapon and head uniques fit every class.
   const heroFitsIt = it => { const d = itemKind(it); return !!(d && d.pos && fits(it, d.pos, 'hero')); };
+  // bow-slot-wording: an empty Weapon slot still means the hero's own starting weapon (Wren's bow), so the compare names it
+  // (Tobin's "Sword and shield" names the sword: the shield is the Off-hand slot)
+  const emptyLine = (pos, tail) => {
+    const h = pos === 'weapon' && typeof soloHero === 'function' ? SOLO_HEROES[soloHero()] : null;
+    return h && h.weapon ? `Better than your starting ${h.weapon.toLowerCase().split(' and ')[0]}.` : `You wear nothing as ${posName(pos)}. ${tail}`;
+  };
 
   // Stat line text, and whether it works before party combat.
   const lineTxt = l => l.map(([s, v]) => (CRAFT_STATS[s] ? craftFmtLine(s, v) : `${s} ${fmt(v)}`)).join(', ');
@@ -568,8 +574,10 @@ let craftUI = null;
       for (const r of df.rows) { const x = el('div', 'cf-d ' + (r.v > 0 ? 'up' : 'dn')); x.append(el('span', null, r.label), el('b', null, (r.v > 0 ? '▲ ' : '▼ ') + r.txt)); rows.append(x); }
       if (!df.rows.length) rows.append(el('p', 'note', 'Same stats.'));
       right.append(rows);
-    } else if (d && d.pos && heroFitsIt(it)) right.append(el('p', 'note cf-cmpn', `You wear nothing as ${posName(d.pos)}. This is a gain.`));
+    } else if (d && d.pos && heroFitsIt(it)) right.append(el('p', 'note cf-cmpn', emptyLine(d.pos, 'This is a gain.')));
     else if (d && d.pos) right.append(el('p', 'note cf-cmpn', `A ${posName(d.pos)} for a different class.`));
+    // bow-slot-wording: the first piece of gear made says it is not on yet, and why a tool went on by itself
+    if (st8.first === it.id && !wr && d && d.pos && !d.tool && heroFitsIt(it)) right.append(el('p', 'note cf-cmpn cf-firstn', 'Not equipped yet. Gear waits for you to choose; tools go on by themselves.'));
     const acts = el('div', 'cf-wear cf-resact');
     if (st8.resArm) {
       right.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good.`));
@@ -616,6 +624,8 @@ let craftUI = null;
     const it = e && e.item; if (!it || it.id == null) return;
     st8.recent = [it.id, ...st8.recent.filter(x => x !== it.id)].slice(0, 5);
     st8.result = it.id; st8.resArm = false; st8.fresh.add(it.id); st8.reveal = true;
+    { const m = S.craft && S.craft.made, n = m && typeof m === 'object' ? Object.values(m).reduce((a, v) => a + (v | 0), 0) : 0, k = itemKind(it);
+      if (n === 1 && k && k.pos && !k.tool && heroFitsIt(it)) st8.first = it.id; }   // bow-slot-wording: the first piece of gear ever made
     if (e.lift) st8.lift[it.id] = e.lift;   // craft-strike-infuse: the result card names the lift
     if (itemKind(it) && itemKind(it).tool) st8.tool[it.id] = { on: !!e.on, speed: e.speed || null, parts: e.on ? safe(() => toolParts(it, e), null) : null };   // tool-speed-adds-up: the old tool and the parts, read now
     else fdStart(it);
@@ -1157,7 +1167,7 @@ let craftUI = null;
     if (d && d.pos && heroFitsIt(it) && !(wr && wr.who === 'hero')) {
       const cur = itemById(S.equip[d.pos]);
       const box = el('div', 'cf-cmp');
-      if (!cur) box.append(el('p', 'note', `You wear nothing as ${posName(d.pos)}. Everything above is a gain.`));
+      if (!cur) box.append(el('p', 'note', emptyLine(d.pos, 'Everything above is a gain.')));
       else {
         box.append(el('p', 'note', `Against your ${itemName(cur)}:`));
         const a = itemStats(it), b = itemStats(cur), keys = [...new Set([...Object.keys(a), ...Object.keys(b)])].filter(k => CRAFT_STATS[k]);

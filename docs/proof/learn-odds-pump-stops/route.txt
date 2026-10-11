@@ -1,0 +1,88 @@
+# seed: 1
+# Proof for card learn-odds-pump-stops: the boss-odds pump (the scratch fights behind the Abilities line, the Learn order and the cache
+# pick) now runs only while a row that shows the odds is on screen: the Abilities card, a move pick, or Next Up's Learn row (the chip's
+# top goal, or a row of the open Next Up list). A move to learn alone no longer keeps it going. The player sees no change: after the pick
+# closes the chip still says Learn, and its odds still fill in when it shows. tools/check.mjs "learn-odds-pump-stops" proves the stop and
+# the restart on the Pip z10 fixture at 1280x720, 740x360 and 360x740 (on the old build the pump ran about 300 chunks, 1,500 scratch
+# fights, in the 3 s after the pick closed with the Learn row off screen; now none). This route plays a real win to the cache pick
+# (fixture pre-z7-boss, as cache-pick-order-settles) and keeps the Scroll. Wren's chip then shows another goal (her Learn row is off
+# screen, the case this card stops), and Hero > Abilities still works out and shows the zone boss line.
+# Run at the default view (1280x720), then with --landscape and --portrait.
+new pre-z7-boss
+wait 2
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+tap-if "Attack"
+parry-clean 3
+expect "Learn one now:"
+expect "Hunter's Mark"
+expect "Deadeye"
+expect "Bat Swarm"
+shot pick-open
+tap "Keep the Scroll"
+wait 3
+expect "#nuChip"
+expect-no "Learn"
+shot learn-off-screen
+tap "Hero"
+wait 1
+tap-if "Abilities"
+wait-for "boss with these" 20
+expect "boss with these"
+shot abilities-odds

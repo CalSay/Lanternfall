@@ -134,7 +134,7 @@
     let backupRaw, candidateRaw, priorRaw, adapter;
     try {
       backupRaw = JSON.stringify(S);
-      candidateRaw = JSON.stringify(checked.data);
+      candidateRaw = JSON.stringify(bjImport(checked.data));   // Tavern Blackjack: the hand in play goes, today's lower net stays (57t)
       if (!backupRaw || !candidateRaw) throw new Error('Snapshot failed.');
       adapter = storage;
       priorRaw = adapter.get(KEY);
@@ -201,8 +201,11 @@
     }
   }
 
-  // Detect if running inside an iframe (e.g., claude.ai artifact viewer)
-  function isInFrame() {
+  // save-export-in-viewer: the claude.ai viewer (it serves window.claude, inside a frame) never grants downloads, since the page
+  // declares no `downloads` capability. There the second export button shows the code to copy by hand instead of a dead download.
+  // Anywhere else (Netlify, a page opened from disk) it still downloads a file.
+  function inViewer() {
+    try { if (window.claude && typeof window.claude.use === 'function') return true; } catch (e) {}
     try { return window.self !== window.top; } catch (e) { return true; }
   }
 
@@ -215,12 +218,10 @@
 
       const exportButtons = el('div', 'feedback-buttons');
       copyBtn = el('button', 'feedback-copy', 'Copy save code'); copyBtn.type = 'button';
-      dlBtn = el('button', 'feedback-clear', 'Download file'); dlBtn.type = 'button';
+      const viewer = inViewer();
+      dlBtn = el('button', 'feedback-clear', viewer ? 'Show save code' : 'Download file'); dlBtn.type = 'button';
       exportNote = el('p', 'note'); exportNote.setAttribute('role', 'status');
       const frameTip = el('p', 'note', 'Tip: copy the code and paste it somewhere safe.');
-
-      const inFrame = isInFrame();
-      if (inFrame) dlBtn.style.display = 'none';
 
       copyBtn.addEventListener('click', () => {
         if (st.pendingReload) return;
@@ -243,12 +244,13 @@
         if (st.pendingReload) return;
         const code = currentCode();
         if (!code) { exportNote.textContent = "Couldn't build a save code."; return; }
+        if (viewer) { exportNote.textContent = 'Here is your save code. Select it all and copy it:'; showManualCopy(code, exportNote); return; }
         if (!downloadCode(code)) exportNote.textContent = "Couldn't download a file here. Use Copy save code instead.";
         else exportNote.textContent = '';
       });
       exportButtons.append(copyBtn, dlBtn);
       panel.append(exportButtons, exportNote);
-      if (inFrame) panel.append(frameTip);
+      if (viewer) panel.append(frameTip);
 
       panel.append(el('div', 'savecode-sep'));
 

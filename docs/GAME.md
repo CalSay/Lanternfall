@@ -85,6 +85,8 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
   (budget, odds, sim) land at once, so balance is unchanged.
   A buff (kind 'buff': Shadow Step, Brace, Iron Will, Arcane Ward, Searing Eye) fires nothing at the foe: its own glow plays, and a
   hero drawn with its own moves plays the move in place (fx-timing-fixes).
+  With Pip drawn in her own moves (route S), Nova is a ring from her staff butt along the ground, Lantern Flare a flash from her
+  lantern and Lanternburst a ring round the lantern, with no bolt; each lands in the bolt's time (pip-cast-recipes, 62b `FX_RECIPES_S`).
 - **The fight screen is Stage and dock** (Cal, 2026-10-05; `75-solo-ui.js`, `75-turn-ui.js`). The stage shows the hero and
   foe, a turn banner and the timing bar along its bottom edge while a hit winds up. Under it, the dock has three tabs.
   **Act**: Attack and the three ability slots as tiles (D, Q, W, E), each with its name and "Ready", turns left or
@@ -289,6 +291,12 @@ Locked or Unavailable badges; the ability picker marks the selected action. Icon
 - **Deepwell** (`57d-deepwell.js`, `59c-deepwell-combat.js`, `75-deepwell-ui.js`): from zone 20 and Hearth 3. Each
   floor is a turn fight. Runs floor by floor on Oil, with boons, Depth Marks and a weekly Trial. A run never changes main progress. Its Deep Lore pages follow the story's rule that the dark copies shapes.
 - **Bounties** (`55-bounties.js`): three short goals that pay gold, materials or Essence, and Renown.
+- **Tavern Blackjack** (`57t-blackjack.js`, `75-blackjack-ui.js`, `docs/design/tavern-blackjack.md`): from zone 14, after 10
+  minutes of play with the Tavern built, Camp > Tavern has a Blackjack box where Hesketh deals.
+  Four decks shuffled fresh every hand, no hole card, he stands on 17, blackjack pays 3 to 2; Hit, Stand or Double, no
+  split. You pick the bet in gold with − and +, four coins and Clear. The bets and the day's win and loss limits (5
+  highest bets each way) follow the price curve (`econH`; the highest bet is 0.12 price-hours). Table gold never counts as gold earned (`S.totalGold`, the
+  econ ledger). The cards are plain text UI until the Codex card pack. `BJ_TUNE.on` switches it off per store build.
 - **Mastery and the Bestiary** (`55-mastery.js`): zone stars and per-foe perks from kills. The Codex Bestiary also shows one line for each Hollow monster you have reached that is in the game, saying what shape it copied (`LORE_FOES` in `21h-lore-hollow.js`). Foe tells use solo wording.
 - **Almanac** (`55-almanac.js`): a daily Omen, optional Dares and a weekly board. Each Omen's "Best today" line has a Go button; on Cheap Reforge and Salvager's Luck days it opens Hero, Gear (Craft until the Hero tab opens). Omen lines name no person or place you have not met; Auriel's line comes after Chapter 4.
 - **Codex** (`57c-codex.js`, `75-codex-ui.js`): the collection book. Lantern Light gives titles, cosmetics and small
@@ -351,7 +359,7 @@ Every currency, material and token, with its sources and sinks, is in [design/sy
 
 - **Save:** `localStorage` key `lanternfall.save.v5` (`30-state.js`, `05-platform.js`).
 - **Two tabs** (save-two-tabs): the newest open tab holds the save. A tab whose save another tab has since written stops saving and shows "Lanternfall is open in another tab. Reload to keep playing here." with Reload, so it never writes over newer progress (`30-state.js` `saveCheck`, `75-tabs-ui.js`).
-- **Save codes** (`55-savecode.js`, `75-savecode-ui.js`): export and import, with a strict check and an in-page confirm.
+- **Save codes** (`55-savecode.js`, `75-savecode-ui.js`): export and import, with a strict check and an in-page confirm. Settings > Save code offers Copy save code and Download file; inside the claude.ai viewer (it grants no downloads) the second button is Show save code, a selected box to copy by hand (save-export-in-viewer).
 - **Feedback** (`55-errors.js`, `75-feedback-ui.js`): local error capture and a Send feedback button.
 - **Away report** (`75-away.js`) and the stats wall (`55-stats.js`, `75-stats-ui.js`). The report leads with what happened; a fighter sees "gathering continues, fighting stops" first, and the work-limit bar sits after the results.
 

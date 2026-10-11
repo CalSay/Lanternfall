@@ -57,7 +57,8 @@
     tavern: 'New on the Camp tab: the Tavern.',
     codex: 'The Codex is open. It tracks what you have found. Find it in the Journal.',   // = FIRST_USE.codex (55-onboard.js)
     raid: 'The World raid is open on the Camp tab.',
-    deep: 'New on the Fight tab: the Deepwell.'
+    deep: 'New on the Fight tab: the Deepwell.',
+    blackjack: 'New on the Camp tab: a card table at the Tavern.'
   };
   // unlock-voice: Old Hesketh announces each new thing in the guide panel, one at a time, once a fight is over (never mid-turn).
   // The toast above still goes to the bell list. One line per row; Next Up (its guide step), the away strip (its own line) and
@@ -77,7 +78,8 @@
     raid: 'The World raid is open at camp. Every player fights the same boss there.',
     // tips-pause-says-so (F24): true for both triggers, the first star and hero level 10 with none found yet
     stars: 'Stars are on the Hero tab now. Bosses drop them, and each one changes how you fight.',
-    deep: 'The Deepwell is open on the Fight tab. You pick a boon between its floors.'
+    deep: 'The Deepwell is open on the Fight tab. You pick a boon between its floors.',
+    blackjack: "I've put a card table in the Tavern. Blackjack, for gold."
   };
   // forge-line-while-fighting: what each materials step is for. A fighter who never opens Camp or Gather hears the step's short gathered
   // materials once, held in the gap after a kill ("The Forge needs Copper Ore 0/25 from the Copper Vein and Pine Log 2/10 from the Pine Grove.").
@@ -101,7 +103,7 @@
       const eq = soloEquipped(), nm = (ABILITIES[slotAb] || {}).name || 'Your new move', at = eq.indexOf(slotAb);
       const left = at > 0 ? eq[at - 1] : null, leftNm = at === 0 ? 'Attack' : left ? (SOLO_ABILITIES[left] || {}).short || (ABILITIES[left] || {}).name : '';
       if (at >= 0) return leftNm ? `${nm} is next to ${leftNm} now. Press it there when it's ready.` : `${nm} is in slot ${'QWE'[at]} now. Press it there when it's ready.`;
-      return eq.includes(null) ? `${nm} needs a slot. Press an empty slot next to Attack and pick it.` : `${nm} needs a slot. Hold one of your moves next to Attack to swap it in.`;
+      return eq.includes(null) ? `${nm} needs a slot. Press an empty slot next to Attack and pick it.` : `${nm} needs a slot. Open Hero, then Abilities, and swap it in for one of your moves.`;
     },
     ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => stockSay(id)]))
   };
@@ -298,7 +300,7 @@
   const turnTxt = () => typeof turnCombatOn === 'function' && turnCombatOn();
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
   // Cal's play note 4: no word about swapping while every move you own already has a slot
-  const swapTail = () => { try { return soloAbilities().length > soloEquipped().length ? ' Hold it to swap in another move.' : ''; } catch (e) { return ''; } };
+  const swapTail = () => { try { return soloAbilities().length > soloEquipped().length ? ' To swap in another move, open Hero, then Abilities.' : ''; } catch (e) { return ''; } };
   const SOLO_UI = {
     attack: () => onCtrl() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'There it is. Press Attack and hit it.' } : null,
     ability: () => onCtrl() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready now. Press it.${swapTail()}` } : null,
