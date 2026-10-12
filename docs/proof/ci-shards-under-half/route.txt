@@ -1,0 +1,18 @@
+# seed: 1
+# Proof for card ci-shards-under-half (tooling only; tools/check.mjs WEIGHT table and the shard runner). Nothing a player sees changes.
+# BEFORE (push run 38219818796 on 75d802bb, each shard one section at a time): check step / whole job, minutes
+#   shard 0: 10.5 / 11.5   shard 1: 9.5 / 10.2   shard 2: 11.0 / 11.8   shard 3: 11.3 / 11.9   shard 4: 12.9 / 13.5   shard 5: 8.9 / 11.1
+#   Sum of section times 3833 s (63.9 min); the WEIGHT plan put 666 s on each shard, the shards really took 534 to 770 s.
+#   Re-weighting alone (from those same times) plans 638-642 s a shard: 10.7 min, still over half the 20-minute job limit.
+# Top 15 sections before (s): actor-scale (browser) 146, forge-line-while-fighting 139, online-off-clean 136, moment layer 131,
+#   W1-D (browser) 109, basic-attack-swings 95, solo copy (browser, W1-C) 87, staged guide follow-ups (browser) 85,
+#   landscape 1280x720 (browser, UX-L1) 82, stale-guide-tips 76, landscape 740x360 (browser, UX-L1) 75,
+#   landscape 844x390 (browser, UX-L1) 72, staged guide (browser) 70, landscape 1920x1080 (browser, UX-L1) 70, champ-retry-scenes 63.
+# Where the time goes (local, sleeps counted by wrapping page.waitForTimeout): actor-scale 150 s of which 129 s fixed waits and
+#   7 page loads (7 s); moment layer 134 s of which 121 s fixed waits and 3 loads (3 s). Run side by side (--jobs=2) they took
+#   151 s and 136 s: two sections at once cost almost nothing extra on a 4-core machine.
+# AFTER: each CI shard runs its slice as two child shards side by side (--shard=i/6 runs --shard=2i/12 and --shard=2i+1/12),
+#   placed by WEIGHT re-measured from run 38219818796. Planned 316-325 s a child.
+new fresh
+wait-for "#nuChip" 10
+shot new-game-boots
