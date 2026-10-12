@@ -12448,13 +12448,7 @@ function syncGen() {
 // and are skipped: that day plays a fallback Omen. They switch on by themselves when the
 // system lands (see AL_NEEDS), as long as it reads the modifier/bonus keys listed here.
 //
-// Exposed: almanac (API object, below), OMENS, WEEKLY_GOALS.
-// Modifier keys read by other files: gold, xp, essence, crit, critDmg, dmg, gatherSpeed,
-// offline, raid, yield:<family>, skillXp:<skill>, uniqueChance (50-sim kill),
-// foeHp / bossHp (50-sim spawn), nonCrit (50-sim heroSwing, 40-rules heroDps),
-// rareW (40-rules rarityWeights), salvage (51-actions), bountyPay (55-bounties).
-// Bonus keys: bestiaryMult / masteryMult (55-mastery), bountyNoWait (55-bounties), gradeLv (40-rules, craft-attribute-grades),
-// (bossTime is gone with the boss timer, owner 2026-10-01.)
+// Exposed: almanac (API object, below), OMENS, WEEKLY_GOALS. Its modifier and bonus keys are read where they apply (grep the key).
 
 const almanac = {};
 let OMENS, WEEKLY_GOALS;
@@ -12827,7 +12821,7 @@ let OMENS, WEEKLY_GOALS;
       g.have = Math.min(g.need, g.have + n);
       if (g.have >= g.need) {
         g.done = true;
-        toast(`Weekly goal done: ${WEEKLY_GOALS[g.k].txt(g.need)}. Claim it in the Almanac.`, 'good', { ic: WEEKLY_GOALS[g.k].ic });
+        if (!sideShut('almanac')) toast(`Weekly goal done: ${WEEKLY_GOALS[g.k].txt(g.need)}. Claim it in the Almanac.`, 'good', { ic: WEEKLY_GOALS[g.k].ic });
         emit('weeklyDone', { k: g.k });
       }
     }
@@ -12906,7 +12900,7 @@ let OMENS, WEEKLY_GOALS;
 
   function awayLine(r) {
     const gains = r.kills || r.gold >= 1 || r.xp >= 1 || (r.mats && r.mats.length) || r.raidDmg >= 1 || (r.skills && r.skills.length) || (r.items && r.items.length);
-    if (!gains) return null;
+    if (!gains || sideShut('almanac')) return null;   // no Almanac or Omen word before its row (no-word-before-its-tab)
     const out = [], t = omenFor(today()), was = r.omen && OMEN_BY[r.omen];
     if (was && r.omenHelped) out.push({ icon: { ic: was.ic }, txt: `${was.n} helped while you were away. ${was.fx}.`, sub: 'The Omen of the day you left covers your whole time away.' });
     out.push({ icon: { ic: t.ic }, txt: `Today: ${t.n}. ${t.fx}.`, sub: t.dare ? `You can take the Dare in the Almanac: ${t.dare.n}.` : 'See the Almanac on the Camp tab.' });
@@ -13347,7 +13341,7 @@ function bossTryWays(L) {
     });
   }
   on('bountyReady', ({ i, away }) => {
-    const b = S.bounties.slots[i]; if (away || !b || !b.k) return;   // away catch-up: the away card tells it
+    const b = S.bounties.slots[i]; if (away || !b || !b.k || sideShut('bounties')) return;   // away catch-up: the away card tells it; before the row opens, its line does
     emit('toast', { key: 'bounty-ready', msg: "Bounty ready to claim.", kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal', go: { fn: () => { const j = S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need); if (j >= 0) claimBounty(j); } },
       still: () => S.bounties.slots.some(x => x && x.k && x.have >= x.need), goLog: { tab: 'adv', sel: '#sec-bounties' } });
   });
@@ -15717,13 +15711,14 @@ const masteryApi = {};
     m.types[key] = (m.types[key] || 0) + 1 + bonus('bestiaryMult');
     if (!mob.boss) m.seen[key] = { z: zone, hp: Math.round(mob.max || 0), atk: Math.round((typeof cbFoeAtk === 'function' ? cbFoeAtk(mob) : mob.atk || 0) * 10) / 10 };
     const pa = PROFILE_TIERS.filter(x => m.types[key] >= x).length;
-    if (pa > pb && pa >= 2) {
+    const shut = sideShut('bestiary');   // no-word-before-its-tab: the Bestiary's open line says what you learned
+    if (pa > pb && pa >= 2 && !shut) {
       const t = TYPES.find(x => x.key === key), nm = t ? t.name : key;
       emit('toast', { key: 'bestiary', msg: pa === 2 ? `Bestiary: you know the ${nm}'s weakness now.` : pa === 3 ? `Bestiary: you know what the ${nm} does now.` : `Bestiary: you know the ${nm} well. +5% damage to it.`, kind: 'good' });
     }
     if (!BESTIARY_PERKS[key]) return;
     const ta = tierFor(m.types[key]);
-    if (ta > tb) {
+    if (ta > tb && !shut) {
       const t = TYPES.find(x => x.key === key);
       emit('toast', { key: 'bestiary', msg: `Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round((BESTIARY_PERKS[key].val || BESTIARY_PERK_VAL)[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, kind: 'good', prio: 'low' });   // W1-B: bell list only
     }
@@ -15986,7 +15981,23 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
 // story-unlock-gates (judge): at most one new row per ONBOARD_TUNE.gap seconds of play, the first ready row in table order; a row's
 // now() skips the wait when the player's own act or a drop opened it (raid: the online layer's timing stays as it was). 0: off.
-const ONBOARD_TUNE = { gap: 90 };
+// sideDoors (no-word-before-its-tab): Bounties, the Bestiary, the Codex and the Almanac send no notice before their row opens; sideNow
+// is the row's open line when something waited there (75-onboard-ui sayText). 0: they speak early, as before.
+const ONBOARD_TUNE = { gap: 90, sideDoors: 1 };
+const sideShut = id => ONBOARD_TUNE.sideDoors > 0 && !isUnlocked(id);
+const btyDone = () => S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need);
+const SIDE_NOW = {
+  bounties: () => { const n = S.bounties.slots.filter(x => x && x.k && x.have >= x.need).length;
+    return n ? `Bounties are short jobs for gold, materials and Renown, on the Fight tab. ${n > 1 ? n + ' are' : 'One is'} done.` : ''; },
+  bestiary: () => { const n = Object.keys(S.mastery.types).filter(k => S.mastery.types[k] >= PROFILE_TIERS[1]).length;
+    return n ? `The Bestiary is on the Fight tab. Five kills of a foe show what hurts it. You know ${n} now.` : ''; },
+  almanac: () => { const n = S.almanac.goals.filter(g => g.done && !g.claimed).length;
+    return n ? `The Almanac at camp names a daily Omen, a small bonus. ${n > 1 ? n + ' weekly goals are' : 'A weekly goal is'} done there.` : ''; },
+  codex: () => { const h = codexPages().filter(p => !p.locked && S.codex.half[p.id]), p = h.find(x => x.bless) || h[0], P = p && CODEX_PAGES[p.id];
+    return P ? `Your Codex is in the Journal. Its ${P.n} page is half full${p.bless ? ': a Shrine Blessing is open' : ''}.`
+      : CODEX_MILESTONES.some(m => S.codex.got[m.at]) ? 'Your Codex in the Journal logs what you find. It has a reward for you already.' : ''; }
+};
+const sideNow = id => { try { return ONBOARD_TUNE.sideDoors > 0 && SIDE_NOW[id] ? SIDE_NOW[id]().trim() : ''; } catch (e) { return ''; } };
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Hero', why: 'the first level-up (hero level 2), or zone 2', when: () => S.L >= 2 || S.maxZone >= 2 },
   { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'after the first boss (zone 2), or once the hero walks to the grove', when: () => S.maxZone >= 2 || S.activity === 'gather', now: () => S.activity === 'gather' },
@@ -16035,7 +16046,7 @@ const FIRST_USE = {
   forage: { text: 'Out here you can forage for fibre and herbs.' },
   craft: { text: 'This is where you make gear. Pick a station first, then a recipe.' },
   bestiary: { text: "Every foe you've met is written here. Kill enough of one and you earn a perk against it." },
-  almanac: { text: "The Almanac tells you today's Omen. It has Dares and a weekly board too." },
+  almanac: { text: "Each day's Omen is a small bonus for the day. The Almanac has Dares and a weekly board." },
   uniques: { text: 'Bosses sometimes drop rare gear. Each piece here has a strong trick of its own.' },
   tavern: { text: "This is the Tavern. You can see who's online, and the hall of heroes." },
   codex: { text: 'The Codex is open. It tracks what you have found. Find it in the Journal.', via: 'notice' },
@@ -16329,7 +16340,7 @@ function craftReady() {
   onboardJoined = id => { if (!unlock('switch', true) && !O().all) O().got['join:' + id] = Math.round(O().t); };
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
-  const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', 'camp-look': 'camp', codex: 'codex', deep: 'deep' };
+  const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', 'camp-look': 'camp', codex: 'codex', deep: 'deep', almanac: 'almanac' };
   onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----
@@ -19916,47 +19927,11 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 // 57c-codex: the Codex and Lantern Light (docs/design/codex.md, Region 1).
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
-// Rules: most entries are READ from state other systems already save (mastery, S.found, the
-// roster, stories, camp levels, the Almanac, achievements). The
-// Codex records only what nothing else keeps: champion kills by type, affix tiers and Masterwork
-// lines seen, synergies switched on, materials held by tier, Dares taken.
-// Lantern Light = sum over visible pages of entries found x Light each, halves rounded down at
-// the end. It is never spent and never goes down (codexLight() is the highest value seen).
-// Light gives no direct power: milestones give titles, cosmetics and quality-of-life perks.
-// Page rewards: at 50% the page's Blessing opens at the Shrine (setBlessingGate); at 100% a Page
-// Seal gives a title and a tiny bonus, capped per stat by CODEX_CAP forever (all regions).
-//
-// Performance: pages are recomputed only when an event marked the Codex dirty, at most every
-// CODEX_TUNE.every seconds (a few hundred cheap reads), plus a slow safety sweep. Nothing here
-// scans the bag or other big collections on a tick.
-//
-// Exposed names:
-//   data   CODEX_PAGES (page defs), CODEX_PAGE_IDS, CODEX_MILESTONES, CODEX_CAP, CODEX_TUNE
-//   read   codexPages() -> [page view], codexPage(id) -> page view | null
-//            page view: { id, n, locked, lockTxt, got, max, pct, light, lightMax, half, seal,
-//                         bless, sealTxt, title, tiles: [{ key, n, got, max, pts, ptsMax, hint, sub, ic, grp }] }
-//          codexLight(), codexNext() -> next milestone | null, codexHas(rewardId) -> bool,
-//          codexBonus(key) (capped Seal bonus, 0..CODEX_CAP[key]), codexTitle() -> title text | '',
-//          codexTitles() -> [{ id, n, src, got }], codexExact() (exact hints unlocked),
-//          codexNews() -> pages with entries the player has not looked at, codexIsNew(pageId, i)
-//   act    codexRefresh(force) -> light, codexSeen(pageId) -> [tile indexes that are new] (and
-//          marks them seen), codexSetTitle(id | null) -> bool, codexMilestonesSeen()
-//
-// Events emitted: codexLight { light, gain }, codexPage { id, kind: 'half' | 'seal' },
-//   codexMilestone { at, rewards }, codexOpen { page } (UI: open the Codex sheet), codexInit { light }.
-// Listens: kill (champions), itemAdded / reforged (affixes, Masterwork), synergyChange, bondLevel, harvest,
-//   trophy, and marks pages dirty on recruit, promote, charLevel, campBuilt, omen,
-//   weeklyClaim, deedFeat, zoneClear, loot, transmuted, crafted.
-// Hooks: setBlessingGate (57-camp), registerGoal (Next Up), registerAwayLine, addModifier for the
-//   Seal keys, addBonus: deepOil, and three
-//   stored-for-later keys nothing reads yet: bag, buildQueue, deepRerolls.
-//
-// Save: registerState('codex', { v, rec, got, title, lightMax, init, half, seal, seen, mSeen }).
-//   rec: champ {typeKey: 1}, aff {affixId: tier bitmask}, mw {trophyIdx: 1},
-//        mat {family: tier bitmask, troph: type bitmask}, dare {omenId: 1}
-//   got: milestone Light -> timestamp. half / seal: pageId -> timestamp (permanent once earned).
-//   seen: pageId -> string, one base-36 char per tile = units the player has looked at (for the
-//   one-time glow). mSeen: highest milestone the player has looked at (the "New" dot).
+// Rules: most entries are read from state other systems save; the Codex records only what nothing else keeps. Lantern Light
+// never goes down and gives no direct power (milestones: titles, cosmetics, quality of life). A page half full opens its Blessing
+// at the Shrine; a full page's Seal gives a title and a tiny bonus capped by CODEX_CAP. Pages recompute only when marked dirty.
+// API: codexPages/Page/Light/Next/Has/Bonus/Title/Titles/Exact/News/IsNew, codexRefresh/Seen/SetTitle/MilestonesSeen.
+// Emits codexLight, codexPage, codexMilestone, codexOpen, codexInit. Save: S.codex (rec, got, half, seal, seen: base-36 per tile).
 
 const CODEX_TUNE = { every: 5, sweep: 60, goalFrom: 0.6 };
 const CODEX_CAP = { dmg: 0.05, critDmg: 0.05, uniqueChance: 0.05, skillXp: 0.05, offline: 0.05,
@@ -20260,19 +20235,21 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     for (const m of CODEX_MILESTONES) if (light >= m.at && !CX().got[m.at]) { CX().got[m.at] = Date.now(); out.miles.push(m); }
     if (out.pages.some(x => x.kind === 'seal')) rebuildSeals();
     if (quiet) return out;
+    const shut = sideShut('codex');   // no-word-before-its-tab: no Codex word before its row; the open line says what is waiting
     for (const x of out.pages) {
       const P = CODEX_PAGES[x.id];
       // W1-B: channels in 23n-data-notices ('codex': the bell; 'codex-small': the bell list only)
-      if (x.kind === 'half' && x.p.bless) emit('toast', { key: 'codex', msg: `Codex: the ${P.n} page is half full. The ${x.p.bless.n} Blessing is open at the Shrine.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal' });
+      if (shut) {}
+      else if (x.kind === 'half' && x.p.bless) emit('toast', { key: 'codex', msg: `Codex: the ${P.n} page is half full. The ${x.p.bless.n} Blessing is open at the Shrine.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal' });
       else if (x.kind === 'half') emit('toast', { key: 'codex-small', msg: `Codex: the ${P.n} page is half full.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'low' });
-      if (x.kind === 'seal') emit('toast', { key: 'codex', msg: `Page Seal: ${P.n}.${P.seal && P.seal.txt ? ' ' + P.seal.txt + '.' : ''} New title: ${P.title}.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'high' });
+      if (x.kind === 'seal' && !shut) emit('toast', { key: 'codex', msg: `Page Seal: ${P.n}.${P.seal && P.seal.txt ? ' ' + P.seal.txt + '.' : ''} New title: ${P.title}.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'high' });
       emit('codexPage', { id: x.id, kind: x.kind });
     }
     for (const m of out.miles) {
-      emit('toast', { key: 'codex', msg: `${m.at} Lantern Light: ${m.rw.map(r => r.n).join(', ')}.`, kind: 'good', icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, prio: 'normal' });
+      if (!shut) emit('toast', { key: 'codex', msg: `${m.at} Lantern Light: ${m.rw.map(r => r.n).join(', ')}.`, kind: 'good', icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, prio: 'normal' });
       emit('codexMilestone', { at: m.at, rewards: m.rw.map(r => r.id) });
     }
-    if (out.gain > 0) emit('codexLight', { light, gain: out.gain });
+    if (out.gain > 0 && !shut) emit('codexLight', { light, gain: out.gain });
     if (out.pages.length || out.miles.length) save();
     return out;
   }
@@ -20381,6 +20358,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     if (!snap) return null;
     codexRefresh(true, true);
     const s = snap; snap = null;
+    if (sideShut('codex')) return null;
     const lines = [];
     for (const id of CODEX_PAGE_IDS) {
       const P = CODEX_PAGES[id];
@@ -47375,12 +47353,12 @@ let navUI = null;
   const SAY_TXT = {
     party: "The Hero tab is open now. Your level, points and moves are kept there.",
     gather: "You can gather now. Bring me Pine Log for a proper fire, and we'll talk once it's lit.",
-    bounties: "Folk have posted bounties on the Fight tab. They pay well for small jobs.",
+    bounties: "Bounties are short jobs, on the Fight tab. They pay gold, materials and Renown.",
     camp: "There. That's a camp. Build on it from the Camp tab.",
     forage: "You can forage now, under Gather. You'll mostly find fibre and herbs.",
     craft: 'You can make your own gear now. Craft is open.',
-    bestiary: "The Bestiary is open on the Fight tab. It remembers every foe you've met.",
-    almanac: "There's an Almanac at camp now. It tells you today's Omen.",
+    bestiary: "The Bestiary is on the Fight tab. Kill five of one foe and you learn what hurts it most.",
+    almanac: "There's an Almanac at camp. Each day it names an Omen, a small bonus such as more gold.",
     uniques: 'Bosses sometimes drop rare gear. Craft keeps it, under Uniques.',
     tavern: "There's a Tavern at camp now. Folk on the road stop in there.",
     codex: "You've a Codex now, in the Journal. It keeps track of what you've found.",
@@ -47417,7 +47395,7 @@ let navUI = null;
     ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => stockSay(id)]))
   };
   let slotAb = '', scrollId = 'moss', slotUsed = false, slotSeen = false;   // the move just learned (the slot line), whether it has been pressed since and its line seen on the Hero menu; the first Scroll found (the Scroll line)
-  const sayText = id => { const t = SAY_TXT[id] || SAY_MORE[id]; try { return typeof t === 'function' ? t() : t; } catch (e) { return ''; } };
+  const sayText = id => { const t = SAY_TXT[id] || SAY_MORE[id]; try { return sideNow(id) || (typeof t === 'function' ? t() : t); } catch (e) { return ''; } };
   // a line that no longer matches the game when its turn comes is dropped, never said (the Scroll already spent)
   const SAY_STILL = {
     // stale-guide-tips: dropped once its place was opened
@@ -47783,6 +47761,7 @@ let navUI = null;
     // button would take the fight bar's tab row, 80-landscape.css .guide-btn)
     if (spec && use && STOCK_WHAT[step.id.slice(4)]) spec.go = stockGo(step.id.slice(4));
     if (spec && stockSide && fightingNow()) spec.go = null;
+    if (spec && step.id === 'say:bounties' && sideNow('bounties')) spec.go = { label: 'Claim it', fn: () => { const j = btyDone(); if (j >= 0) BOUNTY_API.claim(j); } };
     if (!spec || !vis(spec.node)) return hide();
     // a menu step whose button is disabled waits (a build while the builder is busy): no ring, no pause, no tip
     if (table === STEP_UI && !use && !spec.noRing && !pressable(spec.node)) return hide();

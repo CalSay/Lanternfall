@@ -2670,7 +2670,7 @@ if (section('codex')) try {
   B('S.camp.open = true; S.camp.b.shrine = 1');
   assert(!B('blessOpen("blade")') && !B('blessToggle("blade")'), 'Blade Blessing closed while the Bestiary is under 50%');
   const bt = []; b.fn.on('toast', t => bt.push(t.msg));
-  B('for (const t of TYPES) S.mastery.types[t.key] = 1000; S.maxZone = 8; codexRefresh(true)');
+  B('onboardReveal("codex"); for (const t of TYPES) S.mastery.types[t.key] = 1000; S.maxZone = 8; codexRefresh(true)');   // (its row open: no-word-before-its-tab)
   assert(B('codexPage("bestiary").pct') >= 0.5 && B('blessOpen("blade")') && bt.some(t => /Blade Blessing is open/.test(t)), `Bestiary at ${Math.round(B('codexPage("bestiary").pct') * 100)}%: Blade opens, with a toast`);
   B('S.mastery.types = {}; codexRefresh(true)');
   assert(B('blessOpen("blade")') && !B('blessOpen("edge")'), 'an opened Blessing stays open; others stay closed');
@@ -2693,7 +2693,7 @@ if (section('codex')) try {
   assert(Q('codexPages() === globalThis.__pg'), 'no events, no recompute (the page cache is reused)');
   // away: quiet, then a line on the card
   const w = loadCore({ seed: 23 }), W = s => w.eval(s); ticks(w, 25);
-  W('chooseClass("warden"); S.maxZone = S.zone = 12');
+  W('chooseClass("warden"); S.maxZone = S.zone = 12; onboardReveal("codex")');   // (its row open: no-word-before-its-tab)
   const wt = []; w.fn.on('toast', t => wt.push(t.msg));
   W('for (const t of TYPES) S.mastery.types[t.key] = 1000'); const r = w.fn.awayGains(3600);
   assert(!wt.some(t => /Codex|Lantern/.test(t)) && r.extra.some(l => /Codex/.test(l.txt)), 'away: no Codex toasts; the away card lists the Codex news');
@@ -2939,6 +2939,52 @@ if (section('first-use lines (ap-first-use-hints)')) try {
   assert(kept.includes('use:bounties') && E('typeof S.onboard.done === "object"'), 'the line is remembered in the existing onboard.done map (no new save field)');
   assert(!g.errors.length, 'no first-use errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('first-use lines crashed: ' + (e.stack || e)); }
+
+// ---- no-word-before-its-tab (docs/design/first-hour-jargon.md card E): Bounties, the Bestiary, the Almanac and the Codex say nothing
+// before their row opens; the open line says what waited. ONBOARD_TUNE.sideDoors 0 restores the early notices.
+if (section('side doors (no-word-before-its-tab)')) try {
+  const WORD = /Bount|Bestiary|weakness|Codex|Lantern Light|Page Seal|Blessing|Almanac|Omen|Weekly goal/;
+  const run = doors => {
+    const g = loadCore({ seed: 31 }), E = s => g.eval(s), msgs = [];
+    for (let i = 0; i < 25; i++) g.fn.tick(0.1);
+    E(`ONBOARD_TUNE.sideDoors = ${doors}; S.maxZone = 3; S.zone = 3; S.camp.open = true; S.camp.b.shrine = 1`);
+    const shut = E('JSON.stringify(["bounties", "bestiary", "almanac", "codex"].filter(id => isUnlocked(id)))');
+    g.fn.on('toast', t => msgs.push(t.msg));
+    // a bounty done, five of one foe (its weakness), a weekly goal done, a Codex page half full and a milestone
+    E(`BOUNTY_API.refresh(); const b = S.bounties.slots.find(x => x && x.k); b.have = b.need;
+      S.almanac.goals = [{ k: 'wKill', need: 1, have: 0 }];
+      const t = TYPES[0]; for (let i = 0; i < 6; i++) emit('kill', { mob: { key: t.key + '1', type: t.key, max: 10, atk: 1 }, zone: 1 });
+      emit('bountyReady', { i: S.bounties.slots.indexOf(b) }); for (const x of TYPES) S.mastery.types[x.key] = 1000; codexRefresh(true); true`);
+    // the away card and Next Up stay quiet too: an away run's extra lines, and the Almanac's weekly rows
+    const away = E('(() => { emit("awayBegin", {}); const r = { kills: 5, gold: 10, xp: 10, mats: [], skills: [], items: [] }; return JSON.stringify(AWAY_LINES.map(fn => { try { return fn(r); } catch (e) { return null; } }).flat().filter(Boolean).map(l => l.txt + " " + (l.sub || ""))); })()');
+    const weekRow = E('onboardGoalOk({ sys: "almanac" })');
+    const r = { shut, msgs, said: msgs.filter(m => WORD.test(m)).concat(JSON.parse(away).filter(m => WORD.test(m))).concat(weekRow ? ['Next Up: a weekly goal row'] : []), awayN: JSON.parse(away).length, bless: E('blessOpen("blade")'), now: {}, codexGot: E('Object.keys(S.codex.half).length') };
+    for (const id of ['bounties', 'bestiary', 'almanac', 'codex']) { E(`onboardReveal("${id}")`); r.now[id] = E(`sideNow("${id}")`); }
+    r.errors = g.errors; return r;
+  };
+  const on = run(1), off = run(0);
+  assert(on.shut === '[]', `the four rows are shut at zone 3 (${on.shut})`);
+  assert(!on.said.length, `sideDoors on: no Bounty, Bestiary, Almanac or Codex word in any notice, away line or Next Up row before its row opens (${JSON.stringify(on.said)})`);
+  assert(on.bless && on.codexGot > 0, 'the Codex still records a half-full page and opens its Blessing while it stays quiet');
+  assert(/^Bounties are short jobs .*\. One is done\.$/.test(on.now.bounties), `the Bounties line says what a bounty is, and that one is done (${JSON.stringify(on.now.bounties)})`);
+  assert(/what hurts it\. You know \d+ now\.$/.test(on.now.bestiary), `the Bestiary line says what a weakness is, and how many you know (${JSON.stringify(on.now.bestiary)})`);
+  assert(/names a daily Omen, a small bonus\. A weekly goal is done there\.$/.test(on.now.almanac), `the Almanac line says what an Omen is, and that a weekly goal waits (${JSON.stringify(on.now.almanac)})`);
+  assert(/^Your Codex is in the Journal\. Its .+ page is half full(: a Shrine Blessing is open)?\.$/.test(on.now.codex), `the Codex line names the half-full page (${JSON.stringify(on.now.codex)})`);
+  { const long = []; let pages = 0;   // each open line fits the guide panel on a 740x360 phone (90 characters), at its longest
+    const g = loadCore({ seed: 32 }), E = s => g.eval(s);
+    E('BOUNTY_API.refresh(); S.bounties.slots.forEach(b => { if (b && b.k) b.have = b.need; }); S.almanac.goals = [{ k: "wKill", need: 1, have: 1, done: true }, { k: "wKill", need: 1, have: 1, done: true }]; for (const x of TYPES) S.mastery.types[x.key] = 1000');
+    for (const id of ['bounties', 'bestiary', 'almanac']) { const t = E(`sideNow("${id}")`); if (!t || t.length > 90) long.push(t || id); }
+    for (const id of JSON.parse(E('JSON.stringify(Object.keys(CODEX_PAGES))'))) {
+      const t = E(`S.codex.half = { ${JSON.stringify(id)}: 1 }; const p = codexPages().find(p => p.id === ${JSON.stringify(id)}); p && !p.locked ? sideNow("codex") : 'locked'`);
+      if (t !== 'locked') pages++; if (t !== 'locked' && (!t || t.length > 92)) long.push(t || id); }
+    assert(pages >= 5 && !long.length, `every open line with something waiting stays short (90; a Codex page 92; ${pages} pages): ${JSON.stringify(long)}`); }
+  { const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8'), si = src.indexOf('const SAY_TXT = {'), say = src.slice(si, src.indexOf('};', si));
+    assert(/almanac: "[^"]*Omen, a small bonus/.test(say) && /bestiary: "[^"]*Kill five of one foe and you learn what hurts it most\./.test(say) && /bounties: "Bounties are short jobs/.test(say),
+      'the open lines say what each thing is: an Omen is a small bonus, a weakness is learned in five kills, a bounty is a short job'); }
+  assert(['Bounty ready to claim.', 'Weekly goal done', 'Bestiary: you know', 'Codex: the '].every(w => off.msgs.some(m => m.startsWith(w))) && off.said.some(m => /^Today: /.test(m)) && Object.values(off.now).every(t => t === ''),
+    `sideDoors off: the early notices come back as before, and the open lines add nothing (${JSON.stringify(off.said)})`);
+  assert(!on.errors.length && !off.errors.length, 'no side-door errors' + (on.errors[0] || off.errors[0] ? ': ' + (on.errors[0] || off.errors[0]) : ''));
+} catch (e) { fail('side doors crashed: ' + (e.stack || e)); }
 
 // ---- unlock-tip-coverage (Milestone 1a, E5): every system a player meets by zone 15 gets its tip, in order, once ----
 // The first-use section above checks the tables row by row. This one walks a new game to zone 15 and proves the

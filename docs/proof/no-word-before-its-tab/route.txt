@@ -1,0 +1,16 @@
+# seed: 1
+# Proof for card no-word-before-its-tab (first-hour-jargon card E).
+# A zone 7 save with Bounties, the Bestiary, the Almanac and the Codex still shut. While the player fights, kills fill
+# bounties and teach weaknesses, but no Bounty, Bestiary, Almanac or Codex word shows. The open lines (what each thing is,
+# and what finished while it was shut, with Claim it for a done bounty) are held by tools/check.mjs section
+# "side doors (no-word-before-its-tab)": their words, the longest case under 90 characters, the away card, Next Up and the
+# switch-off. This save's hero sits on the zone 2 boss, so the Bounties row's line does not come within a route's minutes.
+new upgrade-skip
+wait 3
+tap-if "Continue"
+wait 60
+expect-no "Bounty ready"
+expect-no "Bestiary:"
+expect-no "Weekly goal done"
+expect-no "Codex:"
+shot no-word-while-shut

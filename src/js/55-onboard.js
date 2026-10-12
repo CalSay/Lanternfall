@@ -32,7 +32,23 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
 // story-unlock-gates (judge): at most one new row per ONBOARD_TUNE.gap seconds of play, the first ready row in table order; a row's
 // now() skips the wait when the player's own act or a drop opened it (raid: the online layer's timing stays as it was). 0: off.
-const ONBOARD_TUNE = { gap: 90 };
+// sideDoors (no-word-before-its-tab): Bounties, the Bestiary, the Codex and the Almanac send no notice before their row opens; sideNow
+// is the row's open line when something waited there (75-onboard-ui sayText). 0: they speak early, as before.
+const ONBOARD_TUNE = { gap: 90, sideDoors: 1 };
+const sideShut = id => ONBOARD_TUNE.sideDoors > 0 && !isUnlocked(id);
+const btyDone = () => S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need);
+const SIDE_NOW = {
+  bounties: () => { const n = S.bounties.slots.filter(x => x && x.k && x.have >= x.need).length;
+    return n ? `Bounties are short jobs for gold, materials and Renown, on the Fight tab. ${n > 1 ? n + ' are' : 'One is'} done.` : ''; },
+  bestiary: () => { const n = Object.keys(S.mastery.types).filter(k => S.mastery.types[k] >= PROFILE_TIERS[1]).length;
+    return n ? `The Bestiary is on the Fight tab. Five kills of a foe show what hurts it. You know ${n} now.` : ''; },
+  almanac: () => { const n = S.almanac.goals.filter(g => g.done && !g.claimed).length;
+    return n ? `The Almanac at camp names a daily Omen, a small bonus. ${n > 1 ? n + ' weekly goals are' : 'A weekly goal is'} done there.` : ''; },
+  codex: () => { const h = codexPages().filter(p => !p.locked && S.codex.half[p.id]), p = h.find(x => x.bless) || h[0], P = p && CODEX_PAGES[p.id];
+    return P ? `Your Codex is in the Journal. Its ${P.n} page is half full${p.bless ? ': a Shrine Blessing is open' : ''}.`
+      : CODEX_MILESTONES.some(m => S.codex.got[m.at]) ? 'Your Codex in the Journal logs what you find. It has a reward for you already.' : ''; }
+};
+const sideNow = id => { try { return ONBOARD_TUNE.sideDoors > 0 && SIDE_NOW[id] ? SIDE_NOW[id]().trim() : ''; } catch (e) { return ''; } };
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Hero', why: 'the first level-up (hero level 2), or zone 2', when: () => S.L >= 2 || S.maxZone >= 2 },
   { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'after the first boss (zone 2), or once the hero walks to the grove', when: () => S.maxZone >= 2 || S.activity === 'gather', now: () => S.activity === 'gather' },
@@ -81,7 +97,7 @@ const FIRST_USE = {
   forage: { text: 'Out here you can forage for fibre and herbs.' },
   craft: { text: 'This is where you make gear. Pick a station first, then a recipe.' },
   bestiary: { text: "Every foe you've met is written here. Kill enough of one and you earn a perk against it." },
-  almanac: { text: "The Almanac tells you today's Omen. It has Dares and a weekly board too." },
+  almanac: { text: "Each day's Omen is a small bonus for the day. The Almanac has Dares and a weekly board." },
   uniques: { text: 'Bosses sometimes drop rare gear. Each piece here has a strong trick of its own.' },
   tavern: { text: "This is the Tavern. You can see who's online, and the hall of heroes." },
   codex: { text: 'The Codex is open. It tracks what you have found. Find it in the Journal.', via: 'notice' },
@@ -375,7 +391,7 @@ function craftReady() {
   onboardJoined = id => { if (!unlock('switch', true) && !O().all) O().got['join:' + id] = Math.round(O().t); };
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
-  const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', 'camp-look': 'camp', codex: 'codex', deep: 'deep' };
+  const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', 'camp-look': 'camp', codex: 'codex', deep: 'deep', almanac: 'almanac' };
   onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----

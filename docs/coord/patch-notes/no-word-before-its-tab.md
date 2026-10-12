@@ -1,0 +1,2 @@
+Fewer strange words in the first hour. Bounties, the Bestiary, the Almanac and the Codex no longer pop up messages before you can open them. When each one opens, Old Hesketh says what it is: bounties are short jobs, the Bestiary learns what hurts a foe after five kills, and an Omen is a small bonus for the day. If something finished while it was shut, he tells you then (a done bounty comes with a Claim it button).
+Best shot: no-word-while-shut
