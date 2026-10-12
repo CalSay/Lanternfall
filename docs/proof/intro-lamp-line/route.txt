@@ -1,0 +1,25 @@
+# seed: 1
+# Proof for card intro-lamp-line. The opening said every lamp went out ten years ago, then that the last lamp went out this winter, and
+# Hesketh's "I could have lit them from hers. I couldn't go up." lost both playtest readers (release check 11 Oct, Still rough 7).
+# Now the opening says a few lamps held and yours was one, then that the last one near home went out this winter; Hesketh says another lamp
+# burns up on the hill and he can't face going up (who lit it stays for the Fenmother, bible 6.1).
+# Part 1, the unlit-8log fixture: Hesketh's talk at the camp fire. Part 2, a fresh save: the first two opening lines. Part 2 runs last
+# because each `new` clears the shots. Run at all three views.
+new unlit-8log
+wait 2
+tap-if "Got it"
+tap "Light the fire"
+wait 3
+expect "Every road needs a place to come back to"
+tap "Continue"
+wait 2
+expect "Another lamp burns, up on the hill. I can't face going up."
+expect-no "lit them from hers"
+shot hesketh-talk
+new fresh
+expect "Ten years ago every lamp went out but a few. Yours held."
+shot open-line1
+tap "Next"
+wait 1
+expect "This winter the last one near home went out. Tonight the dark came for yours."
+shot open-line2
