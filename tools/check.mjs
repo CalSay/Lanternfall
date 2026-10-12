@@ -193,7 +193,8 @@ if ((JOBS > 1 && !SHARD) || PAR > 1) {
   const outs = await Promise.all(kids.map(k => new Promise(res => {
     const c = spawn(process.execPath, [fileURLToPath(import.meta.url), ...argv, k, '--par=1'], { stdio: ['ignore', 'pipe', 'pipe'] });
     let out = ''; c.stdout.on('data', d => (out += d)); c.stderr.on('data', d => (out += d));
-    c.on('close', code => res({ out, code }));
+    // a child killed by a signal (the heap limit's abort, the out-of-memory killer) closes with code null: it fails, never passes
+    c.on('close', (code, sig) => res({ out: code === null ? `${out}\n  FAIL ${k}: killed by ${sig}, its remaining sections did not run\n` : out, code: code === null ? 1 : code }));
   })));
   let bad = 0;
   for (const o of outs) {
