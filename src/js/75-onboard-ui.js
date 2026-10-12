@@ -121,25 +121,21 @@
     // forge-line-while-fighting: dropped once the live line was seen (it marks the say key), the step is over, nothing gathered is short, or the hero gathers
     ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => !O().done['say:' + id] && onboardWants(id) && stockGathered(id).length > 0 && fightingNow()]))
   };
-  // forge-line-while-fighting: a line that waits (stays queued, not shown, not dropped): a materials line waits while any menu is open and for
-  // a quiet minute (60 s of play since the last guide step ended and since the last held line was answered; from boot when either has not happened)
+  // forge-line-while-fighting: a materials line stays queued while a menu is open and until a quiet minute (60 s since the last step or held line)
   let sayEnd = null;
   const since = t => t === null ? GUIDE_RT.t : GUIDE_RT.t - t;
   const stockQuiet = () => since(GUIDE_RT.lastEnd) >= GUIDE_QUIET && since(sayEnd) >= GUIDE_QUIET;
   const heroUp = () => { try { return typeof cbHeroUp !== 'function' || cbHeroUp(); } catch (e) { return true; } };   // the gap after a kill, not after you fell
   const SAY_WAIT = Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => !!S.tab || (sayCur !== id && (!stockQuiet() || !heroUp()))]));
-  // reload-keeps-tips: the queue is also kept in the save (S.onboard.sayQ, [{ id, arg }]; arg: the Scroll for `scroll`, the move for `slot`), so
-  // a reload before a line is read brings it back. The boss-loss line belongs to that loss and is never kept.
+  // reload-keeps-tips: the queue is saved (S.onboard.sayQ, [{ id, arg }]), all but the boss-loss line, so a reload brings an unread line back
   const sayQ = []; let sayCur = '';
   const SAY_ARG = { scroll: () => scrollId, slot: () => slotAb };
   const sayKeep = () => { O().sayQ = sayQ.filter(id => id !== 'defeat').map(id => SAY_ARG[id] ? { id, arg: SAY_ARG[id]() } : { id }); };
   function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) { sayQ.push(id); sayKeep(); } }
   const sayDone = (id, said = true) => { if (said) sayEnd = GUIDE_RT.t; sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); sayKeep(); };
-  // an unlock line with a Got it, only between fights (never two lines at once). tips-pause-says-so: it holds nothing of its own (no `pause`):
-  // with the fight in view it holds the gap after a kill (gapHeld, in tick), and gathering, or a fight behind an upright menu, goes on under it
+  // an unlock line with a Got it, between fights, one at a time; no `pause` of its own: in view it holds the gap after a kill (gapHeld)
   const sayStep = id => ({ id: 'say:' + id, text: sayText(id), ok: 1, ph: ['between'] });
-  // cal-0107-staged-guide: a guide step already says some unlocks, so his unlock line would say it twice. The Hero tab at the first level-up is
-  // the upgrade step's ("The Hero tab is open now..."); a cold Hearth's camp is the fire talk's and the Workbench steps' ("Open Camp and we'll build").
+  // cal-0107-staged-guide: unlocks a guide step already says (the Hero tab at the first level-up; a cold Hearth's camp) get no line of his
   const saidBySteps = id => (id === 'party' && !O().done.upgrade) || (id === 'camp' && typeof hearthCold === 'function' && hearthCold() && !O().done.bench);
   const TAB_FEATURE = { party: 'party', gather: 'gat', camp: 'world', craft: 'forge' };
   on('unlock', ({ id, quiet }) => {
@@ -337,7 +333,7 @@
     'stock:tool': () => stockSpec('stock:tool', STOCK_WHAT['stock:tool']),
     'stock:forge': () => stockSpec('stock:forge', STOCK_WHAT['stock:forge']),
     'stock:store': () => stockSpec('stock:store', STOCK_WHAT['stock:store']),
-    'stock:weapon': () => stockSpec('stock:weapon', STOCK_WHAT['stock:weapon'], '', true),
+    'stock:weapon': () => stockSpec('stock:weapon', STOCK_WHAT['stock:weapon'], REFINE_TUNE.coalAtSmelt && (onboardNeed('stock:weapon')[0] || {}).fam === 'ess' ? 'Foes drop it.' : '', true),
     light: () => {
       if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then click or tap the fire to light it.' } : null;
       const f = $('hearthFire');
@@ -360,7 +356,7 @@
       return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: 'Make a Copper Pickaxe. It mines faster than your Stone Pick.' };
     },
     // gear-in-first-25: a bow or staff is made at the Workbench, so for Wren and Pip the Forge is for ingots and metal gear
-    forge: () => weaponAtBench() ? campPath('forge', ['Next, the Forge. Open Camp.', 'Open Camp.', 'Build the Forge. It makes ingots and metal gear.'])
+    forge: () => weaponAtBench() ? campPath('forge', ['Next, the Forge. Open Camp.', 'Open Camp.', REFINE_TUNE.coalAtSmelt ? 'Build the Forge. It makes metal gear.' : 'Build the Forge. It makes ingots and metal gear.'])
       : campPath('forge', ["You'll want a weapon of your own. Open Camp.", 'Open Camp.', "Build the Forge. That's where weapons are made."]),
     // first-gold-and-camp-strip: the materials are in hand; tick() has opened Craft on the weapon (once a visit), and this tip rings the button
     weapon: () => {
@@ -424,13 +420,8 @@
     // forge-line-while-fighting: a materials step in the gap after a kill, fight in view and no menu, is hidden (below); a fighter who has not seen
     // its live line gets one held line for it instead, after a quiet minute, if something gathered is short
     if (step && STOCK_WHAT[step.id] && !S.tab && fightInView() && heroUp() && stockGathered(step.id).length && stockQuiet()) sayQueue(step.id);
-    // unlock-voice: a new thing is announced only when no fight is in view, and the game waits on its Got it (cal-0107-staged-guide).
-    // It goes before a between step that is not already up and holding (the news, then what to do), never over a fight lesson.
-    // staged-guide-followups: nor while a big card is up or on its way (the first boss's card came 1 s after the Scroll line and covered it)
-    // tips-pause-says-so (F24): never while the hero is down (a wipe clears the foes, so the phase reads "between" at 0 HP); the line waits for
-    // the next gap after the hero is back up
-    // hesketh-boss-loss-line: except the boss-loss line, whose moment is the loss itself. A boss you lose to is fought again at once, foe first,
-    // so a hero back up never gets a gap: it comes once the Try again card is shut, while the hero is still down, and holds the recovery
+    // unlock-voice: an unlock line shows with no fight in view and waits on its Got it, before a between step not yet up, never over a
+    // fight lesson or a card, never while the hero is down (F24), except the boss-loss line, which comes once Try again is shut
     const downOk = i => i === 'defeat';
     // tip-order-and-lateness: the slot line is said on the Hero menu where the move was learned, at once. On a wide view the fight runs beside
     // that menu, so it would wait for the next kill gap (2 min in the dipper's run); there it shows beside the fight and holds nothing (sideSay)
@@ -461,16 +452,12 @@
     // for the turn to end. The fight lessons are exempt: Dodge and Parry are taught in that very window.
     if (shortSide.matches && !LESSON_IDS.includes(step.id) && !(cur && cur.id === step.id && !layer.hidden) && /^(windup|foe)$/.test(guidePhase(!guideMenuCovers()))) return hide();
     const use = /^(use|say):/.test(step.id);
-    // staged-guide-followups: a line that starts in the gap after a kill, with the fight in view, would show for under half a second before the
-    // next foe walks in and hides it. A line you read (a Got it note, a first-use line) holds that gap until you tap it; a live-progress line
-    // (materials, gold) waits for a calm screen instead (no fight, or a menu over it)
-    // forge-line-while-fighting: on a wide view a materials line on Camp or Gather stays beside the fight, steady, holding nothing (keyed on the menu only)
+    // staged-guide-followups: a line you read holds the gap after a kill until tapped; a live-progress line waits for a calm screen. On a
+    // wide view a materials line on Camp or Gather stays beside the fight, holding nothing (forge-line-while-fighting)
     const stockSide = !!STOCK_WHAT[step.id] && isWide() && STOCK_TABS.includes(S.tab);
     const sideSay = step.id === 'say:slot' && menuSay('slot');
-    // tips-pause-says-so: nothing shows or holds in the gap after a wipe (the hero is down), and a news line's hold ends once the fight leaves view
-    // (Gather, an upright menu)
-    // hesketh-boss-loss-line: that holds for a step that pauses too (the Hero tab's points): shown at 0 HP it froze the game with the hero down,
-    // so he never got up and the boss-loss line waiting on him never came
+    // tips-pause-says-so: nothing shows or holds after a wipe, a pausing step included (hesketh-boss-loss-line), and a news line's hold
+    // ends once the fight leaves view
     const between = !stockSide && !sideSay && fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:'));
     const downSay = step.id.startsWith('say:') && downOk(step.id.slice(4));
     if (between && !heroUp() && !downSay) return hide();

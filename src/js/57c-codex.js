@@ -174,7 +174,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       for (const f of CRAFT_FAMILIES) {
         const m = R().mat[f] | 0, got = bits(m), next = [1, 2, 3, 4, 5].find(t => !(m & (1 << (t - 1))));
         out.push({ key: f, n: MAT[f].n, got, max: 5, pts: got, ptsMax: 5, mat: [f, [5, 4, 3, 2, 1].find(t => m & (1 << (t - 1))) || 1], mask: m, grp: 'Families',
-          sub: [1, 2, 3, 4, 5].filter(t => m & (1 << (t - 1))).map(t => MAT[f].short[t - 1]).join(', '),
+          sub: [1, 2, 3, 4, 5].filter(t => m & (1 << (t - 1))).map(t => matGrade(f, t)).filter(Boolean).join(', '),
           hint: !next ? '' : x.exact ? `Hold ${matName(f, next)}.` : `Gather or find better ${MAT[f].n.toLowerCase()}.` });
       }
       const tm = R().mat.troph | 0;

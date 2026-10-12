@@ -39,7 +39,11 @@ const MAT = {
 };
 // matName: most families are `<short> <unit>`. A family may set unit: '' and store full names in
 // `short` when the name is already a complete noun (MAT1: the hide family, see 21-data-craft.js).
-const matName = (k, t) => MAT[k].unit ? `${MAT[k].short[t - 1]} ${MAT[k].unit}` : MAT[k].short[t - 1];
+// essence-and-ingots-when-needed: Essence has no grade word until a higher grade is held (then marked say:ess2)
+const essGraded = () => { try { const d = S.onboard.done;
+  return REFINE_TUNE.coalAtSmelt !== true || !!d['say:ess2'] || (S.mats.ess.some((n, i) => i && n > 0) || S.maxZone > PACE.essTier[1]) && !!(d['say:ess2'] = 1); } catch (e) { return true; } };
+const matGrade = (k, t) => (k === 'ess' && !essGraded() ? '' : MAT[k].short[t - 1]);
+const matName = (k, t) => MAT[k].unit ? `${matGrade(k, t)} ${MAT[k].unit}`.trim() : MAT[k].short[t - 1];
 const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Silver Seam', 'Cobalt Crater', 'Mithril Heart'], wood: ['Pine Grove', 'Birch Thicket', 'Oak Stand', 'Mangrove Hollow', 'Tideash Grove'] };
 // GP1 skill pace (owner 2026-09-28: "the next tier up only being 4 levels away is too fast"), one
 // table for every skill knob; docs/design/pacing.md 12 has the targets and the measured times.

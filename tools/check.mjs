@@ -4816,6 +4816,54 @@ if (section('refine-queues')) try {
   E('REFINE_TUNE.on = true');
   for (const x of [g, n, c, o, o2, nw]) assert(!x.errors.length, 'no refine errors' + (x.errors.length ? ': ' + x.errors[0] : ''));
 } catch (e) { fail('refine-queues crashed: ' + (e.stack || e)); }
+// ---- essence-and-ingots-when-needed (first-hour-jargon card D): Essence has no grade word until a second grade comes in; Coal and
+// Ingots are told at the first Next Up row that needs an Ingot, not when the Forge is built. REFINE_TUNE.coalAtSmelt off restores today. ----
+if (section('essence-and-ingots-when-needed')) try {
+  const g = loadCore({ seed: 7 }), E = s => g.eval(s);
+  assert(E('REFINE_TUNE.coalAtSmelt') === true, 'REFINE_TUNE.coalAtSmelt is on');
+  assert(E('matName("ess", 1)') === 'Essence' && E('matGrade("ess", 1)') === '' && E('matName("ore", 1)') === 'Copper Ore' && E('matName("ingot", 1)') === 'Copper Ingot',
+    `a new game: Essence reads "Essence" (${E('matName("ess", 1)')}); other families keep their grade names`);
+  const fl = []; g.fn.on('float', e => { if (e && /Essence/.test(e.txt)) fl.push(e.txt); });
+  E('S.zone = 1; S.maxZone = 1');
+  for (let i = 0; i < 60 && !fl.length; i++) E('killPack({ xp: 1, boss: true }, 1)');
+  assert(fl.length > 0 && fl.every(t => /^\+\d+ Essence$/.test(t)), `the kill float reads "+1 Essence" before a second grade (${JSON.stringify(fl.slice(0, 3))})`);
+  const rew = E('(() => { try { return BOUNTY_API.reward({ rew: "ess", rewT: 1, rewN: 3 }).txt; } catch (e) { return "err " + e.message; } })()');
+  assert(/^\d+ Essence$/.test(rew), `a bounty's Essence reward has no grade word ("${rew}")`);
+  assert(!E('S.onboard.done["say:ess2"]'), 'no mark yet');
+  E('S.mats.ess[1] = 1');
+  assert(E('matName("ess", 1)') === 'Dim Essence' && E('matName("ess", 2)') === 'Glowing Essence' && E('S.onboard.done["say:ess2"]') === 1,
+    'the first Glowing Essence names every grade and marks it in S.onboard.done (no new save field)');
+  E('S.mats.ess[1] = 0');
+  assert(E('matName("ess", 1)') === 'Dim Essence', 'spending it does not take the names away');
+  const o = loadCore({ seed: 7 }), O = s => o.eval(s);
+  O('S.maxZone = 9');
+  assert(O('matName("ess", 1)') === 'Dim Essence', 'an older game past zone 8 names every grade at once');
+  const f = loadCore({ seed: 7 });
+  f.eval('REFINE_TUNE.coalAtSmelt = false');
+  assert(f.eval('matName("ess", 1)') === 'Dim Essence', 'switch off: "Dim Essence" from the start, as before');
+  // coal: no line when the Forge's first coal comes; the first Next Up row that needs an Ingot says what Ingots are and where coal comes from
+  const coalRun = on => {
+    const c = loadCore({ seed: 23 }), C = s => c.eval(s), msgs = [];
+    c.fn.on('toast', t => { if (t && t.key === 'refine-coal') msgs.push(t.msg); });
+    C(`REFINE_TUNE.coalAtSmelt = ${on}; almanac.force("none"); chooseClass("warden"); S.camp.open = true; S.camp.b.forge = 1; S.camp.b.store = 8; S.skills.mine.lv = 1; setNode("ore", 1); setActivity("gather")`);
+    for (let i = 0; i < 40 && C('S.mats.coal[0]') < 3; i++) C('harvest()');
+    const atCoal = msgs.slice(), coal = C('S.mats.coal[0]');
+    C('S.gold = 1e6; S.maxZone = 4; S.mats.ore = [20, 0, 0, 0, 0]; S.mats.coal = [5, 0, 0, 0, 0]; const it = newItem("warblade", 1); S.items.push(it); S.equip.weapon = it.id; gearDirty()');
+    const label = C('(() => { const x = GOALS.find(x => x.id === "refine"); x.pct(); x.pct(); return x.label(); })()');
+    return { coal, atCoal, after: msgs.slice(atCoal.length), label, mark: C('S.refine.coal') };
+  };
+  const a = coalRun(true);
+  assert(a.coal >= 3 && a.atCoal.length === 0, `switch on: mining with the Forge built brings coal (${a.coal}) and no Coal line (${JSON.stringify(a.atCoal)})`);
+  assert(a.label === 'Smelt 1 Copper Ingot for your Warblade +1' && a.after.length === 1 && a.after[0] === 'Your Warblade +1 needs Copper Ingots. The Forge makes them from Copper Ore and the coal that mining it brings.' && a.mark === 1,
+    `the first Ingot row ("${a.label}") says once where Ingots and coal come from (${JSON.stringify(a.after)})`);
+  const b = coalRun(false);
+  assert(b.atCoal.length === 1 && /^Coal! Copper Ore brings coal now the Forge is built\./.test(b.atCoal[0]) && b.after.length === 0, `switch off: the Coal line comes with the first coal, as before (${JSON.stringify(b)})`);
+  const ob = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
+  assert(/REFINE_TUNE\.coalAtSmelt \? 'Build the Forge\. It makes metal gear\.' : 'Build the Forge\. It makes ingots and metal gear\.'/.test(ob), 'the Forge line names no Ingots while the switch is on');
+  assert(/'stock:weapon': \(\) => stockSpec\('stock:weapon', STOCK_WHAT\['stock:weapon'\], REFINE_TUNE\.coalAtSmelt && \(onboardNeed\('stock:weapon'\)\[0\] \|\| \{\}\)\.fam === 'ess' \? 'Foes drop it\.' : '', true\)/.test(ob),
+    'the first weapon\'s Essence line says foes drop it');
+  assert(!g.errors.length, 'no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('essence-and-ingots-when-needed crashed: ' + (e.stack || e)); }
 // ---- refine-queues on the Storehouse shelf: coal is the 8th stack, middles share their raw family's stack ----
 if (section('refine-queues store shelf')) try {
   const ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-store-ui.js'), 'utf8'), m = ui.match(/\/\/ ---- the shelf rule[\s\S]*?\/\/ ---- end of the shelf rule ----/);
@@ -9888,6 +9936,9 @@ if (section('almanac gear days (almanac-forge-points-to-gear)')) try {
 // ---- C26 resource icons (Claude, 2026-10-01): every family and grade 1-5 has its approved icon and name ----
 if (section('resource icons (C26)')) try {
   const g = loadCore({ seed: 26 });
+  // essence-and-ingots-when-needed: Essence reads plain "Essence" until a higher grade is held; then each grade shows its approved name
+  assert(g.eval('[1, 2, 3, 4, 5].every(t => matName("ess", t) === "Essence")'), 'C26: before a second grade, Essence reads "Essence" at every grade');
+  g.eval('S.onboard.done["say:ess2"] = 1');
   const bad = JSON.parse(g.eval(`JSON.stringify(CRAFT_FAMILIES.flatMap(f => [1, 2, 3, 4, 5].flatMap(t => {
     const u = RES_ICONS.icons[f] && RES_ICONS.icons[f][t - 1], nm = RES_ICONS.names[f][t - 1], shown = matName(f, t);
     const out = [];

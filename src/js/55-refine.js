@@ -174,7 +174,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
     const got = stashAdd('coal', 1, n, 'flow', !!e.away);
     if (e.away) { awayIn('coal', 1, got); return; }
     if (got > 0 && typeof addFloat === 'function') addFloat(`+${got} Coal`, '#9A97B3', false, 0.7, 0.42);
-    if (got > 0 && !R().coal) { R().coal = 1; emit('toast', { key: 'refine-coal', msg: 'Coal! Copper Ore brings coal now the Forge is built. The Forge smelts it with ore into Ingots.', kind: 'good', icon: null, prio: 'normal' }); }
+    if (got > 0 && !R().coal && !T.coalAtSmelt) { R().coal = 1; emit('toast', { key: 'refine-coal', msg: 'Coal! Copper Ore brings coal now the Forge is built. The Forge smelts it with ore into Ingots.', kind: 'good', icon: null, prio: 'normal' }); }
   });
 
   // ---------------- away ----------------
@@ -367,9 +367,17 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
     return null;
   };
   // goalNow() -> { ready, off, label, st } | { ready: false, label, pct, go } | null
-  const goalNow = () => {
-    const need = refineFor(); if (!need) return null;
-    const off = refineOffer(need.mats, need.t), o = off.orders[0]; if (!o) return null;
+  // essence-and-ingots-when-needed: the first Next Up row needing an Ingot says once where Ingots and coal come from (the old coal toast's mark)
+  const ingotSay = (need, off) => {
+    const x = T.coalAtSmelt && !R().coal && built('forge') && off.orders.find(o => o.prod === 'ingot'); if (!x) return;
+    R().coal = 1;
+    const ore = name('ore', x.tier), what = need.what.charAt(0).toUpperCase() + need.what.slice(1);
+    emit('toast', { key: 'refine-coal', msg: `${what} needs ${plural('ingot', x.tier, 2)}. The Forge makes them from ${ore} and ` +
+      (x.tier === 1 ? 'the coal that mining it brings.' : `coal. Mining ${name('ore', 1)} brings coal.`), kind: 'good', icon: null, prio: 'normal' });
+  };
+  const goalNow = () => { const need = refineFor(), off = need && refineOffer(need.mats, need.t), g = need && goalCalc(need, off); if (g) ingotSay(need, off); return g; };
+  const goalCalc = (need, off) => {
+    const o = off.orders[0]; if (!o) return null;
     if (off.orders.every(x => x.full)) return { ready: true, off, st: o.st,
       label: off.orders.map((x, i) => `${i ? REFINE_PRODUCTS[x.prod].verb.toLowerCase() : REFINE_PRODUCTS[x.prod].verb} ${storeNum(x.want)} ${plural(x.prod, x.tier, x.want)}`).join(' and ') + ` for ${need.what}` };
     // the gap is an input: say where to get it (coal comes with Copper Ore), never offer an order that stops at once

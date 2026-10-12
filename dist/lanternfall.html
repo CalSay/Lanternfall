@@ -7314,7 +7314,11 @@ const MAT = {
 };
 // matName: most families are `<short> <unit>`. A family may set unit: '' and store full names in
 // `short` when the name is already a complete noun (MAT1: the hide family, see 21-data-craft.js).
-const matName = (k, t) => MAT[k].unit ? `${MAT[k].short[t - 1]} ${MAT[k].unit}` : MAT[k].short[t - 1];
+// essence-and-ingots-when-needed: Essence has no grade word until a higher grade is held (then marked say:ess2)
+const essGraded = () => { try { const d = S.onboard.done;
+  return REFINE_TUNE.coalAtSmelt !== true || !!d['say:ess2'] || (S.mats.ess.some((n, i) => i && n > 0) || S.maxZone > PACE.essTier[1]) && !!(d['say:ess2'] = 1); } catch (e) { return true; } };
+const matGrade = (k, t) => (k === 'ess' && !essGraded() ? '' : MAT[k].short[t - 1]);
+const matName = (k, t) => MAT[k].unit ? `${matGrade(k, t)} ${MAT[k].unit}`.trim() : MAT[k].short[t - 1];
 const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Silver Seam', 'Cobalt Crater', 'Mithril Heart'], wood: ['Pine Grove', 'Birch Thicket', 'Oak Stand', 'Mangrove Hollow', 'Tideash Grove'] };
 // GP1 skill pace (owner 2026-09-28: "the next tier up only being 4 levels away is too fast"), one
 // table for every skill knob; docs/design/pacing.md 12 has the targets and the measured times.
@@ -7565,7 +7569,7 @@ const REFINE_MID = { ore: 'ingot', wood: 'plank', fibre: 'cloth', hide: 'leather
 //   secs     seconds per unit by grade at a Lv 1 station;  perLevel  +10% speed a station level above 1
 //   xp       station XP a unit = xp x grade;  coal  coal per Ingot by grade;  coalDrop  coal per Copper Ore mined (Forge built)
 //   reserve  an "All" order keeps this share of each input, counted when it is set;  max  orders a station holds
-const REFINE_TUNE = { on: true, reserve: 0.2, secs: [15, 25, 40, 60, 90], perLevel: 0.1, xp: 2, coal: [1, 2, 3, 4, 4], coalDrop: 0.5, max: 3 };
+const REFINE_TUNE = { on: true, reserve: 0.2, secs: [15, 25, 40, 60, 90], perLevel: 0.1, xp: 2, coal: [1, 2, 3, 4, 4], coalDrop: 0.5, max: 3, coalAtSmelt: true };   // coalAtSmelt: essence-and-ingots-when-needed
 // Products: station, skill, the verbs a station row uses, and the inputs of one unit at grade t ([family, grade, n]).
 const REFINE_PRODUCTS = {
   ingot: { st: 'forge', skill: 'smith', verb: 'Smelt', ing: 'Smelting', did: 'smelted', inputs: t => [['ore', t, 2], ['coal', 1, REFINE_TUNE.coal[t - 1]]] },
@@ -12063,7 +12067,7 @@ function killPack(m, g) {
   let ess = m.boss ? 3 : 0;
   const ch = essChance(); ess += Math.floor(ch) + (Math.random() < ch % 1 ? 1 : 0);
   if (Math.random() < gear().essExtra) ess++;
-  if (ess) { const got = stashAdd('ess', tier, ess, 'flow', true); addFloat(got ? `+${got} ${MAT.ess.short[tier - 1]} Essence` : 'Full', MAT.ess.col[tier - 1], false, 0.68, 0.2); }   // H3: capped by the Storehouse
+  if (ess) { const got = stashAdd('ess', tier, ess, 'flow', true); addFloat(got ? `+${got} ${matName('ess', tier)}` : 'Full', MAT.ess.col[tier - 1], false, 0.68, 0.2); }   // H3: capped by the Storehouse
   if (m.boss) {
     const first = z === S.maxZone;
     fightBoss = false; if (!S.bossTry.hold || S.bossTry.hold === z) failDps = 0; bossTryRelease(z);   // an earlier zone's boss leaves the held frontier boss's baseline alone
@@ -13299,7 +13303,7 @@ function bossTryWays(L) {
     const pay = mod('bountyPay') * (b.elite ? 2.5 : 1) * (b.x || 1), g = Math.round(btyGold() * pay), n = Math.round(b.rewN * mod('bountyPay'));
     if (b.rew === 'gold') return { kind: 'gold', n: g, txt: fmt(g) + ' gold' };
     const kind = b.rew;
-    return { kind, t: b.rewT, n, txt: `${n} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
+    return { kind, t: b.rewT, n, txt: `${n} ${matName(kind, b.rewT)}` };
   }
   const bountyText = b => (b.elite ? 'Contract: ' : '') + (BTY_TEXT[b.k] ? BTY_TEXT[b.k](b) : 'A bounty');
   // The fields each kind reads (its text, its progress test, its reward). btyShape(b) returns the first bad field of a
@@ -16886,7 +16890,7 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
     const got = stashAdd('coal', 1, n, 'flow', !!e.away);
     if (e.away) { awayIn('coal', 1, got); return; }
     if (got > 0 && typeof addFloat === 'function') addFloat(`+${got} Coal`, '#9A97B3', false, 0.7, 0.42);
-    if (got > 0 && !R().coal) { R().coal = 1; emit('toast', { key: 'refine-coal', msg: 'Coal! Copper Ore brings coal now the Forge is built. The Forge smelts it with ore into Ingots.', kind: 'good', icon: null, prio: 'normal' }); }
+    if (got > 0 && !R().coal && !T.coalAtSmelt) { R().coal = 1; emit('toast', { key: 'refine-coal', msg: 'Coal! Copper Ore brings coal now the Forge is built. The Forge smelts it with ore into Ingots.', kind: 'good', icon: null, prio: 'normal' }); }
   });
 
   // ---------------- away ----------------
@@ -17079,9 +17083,17 @@ let refineStationOf, refineProducts, refineBuilt, refineSpeed, refineUnitSecs, r
     return null;
   };
   // goalNow() -> { ready, off, label, st } | { ready: false, label, pct, go } | null
-  const goalNow = () => {
-    const need = refineFor(); if (!need) return null;
-    const off = refineOffer(need.mats, need.t), o = off.orders[0]; if (!o) return null;
+  // essence-and-ingots-when-needed: the first Next Up row needing an Ingot says once where Ingots and coal come from (the old coal toast's mark)
+  const ingotSay = (need, off) => {
+    const x = T.coalAtSmelt && !R().coal && built('forge') && off.orders.find(o => o.prod === 'ingot'); if (!x) return;
+    R().coal = 1;
+    const ore = name('ore', x.tier), what = need.what.charAt(0).toUpperCase() + need.what.slice(1);
+    emit('toast', { key: 'refine-coal', msg: `${what} needs ${plural('ingot', x.tier, 2)}. The Forge makes them from ${ore} and ` +
+      (x.tier === 1 ? 'the coal that mining it brings.' : `coal. Mining ${name('ore', 1)} brings coal.`), kind: 'good', icon: null, prio: 'normal' });
+  };
+  const goalNow = () => { const need = refineFor(), off = need && refineOffer(need.mats, need.t), g = need && goalCalc(need, off); if (g) ingotSay(need, off); return g; };
+  const goalCalc = (need, off) => {
+    const o = off.orders[0]; if (!o) return null;
     if (off.orders.every(x => x.full)) return { ready: true, off, st: o.st,
       label: off.orders.map((x, i) => `${i ? REFINE_PRODUCTS[x.prod].verb.toLowerCase() : REFINE_PRODUCTS[x.prod].verb} ${storeNum(x.want)} ${plural(x.prod, x.tier, x.want)}`).join(' and ') + ` for ${need.what}` };
     // the gap is an input: say where to get it (coal comes with Copper Ore), never offer an order that stops at once
@@ -20077,7 +20089,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       for (const f of CRAFT_FAMILIES) {
         const m = R().mat[f] | 0, got = bits(m), next = [1, 2, 3, 4, 5].find(t => !(m & (1 << (t - 1))));
         out.push({ key: f, n: MAT[f].n, got, max: 5, pts: got, ptsMax: 5, mat: [f, [5, 4, 3, 2, 1].find(t => m & (1 << (t - 1))) || 1], mask: m, grp: 'Families',
-          sub: [1, 2, 3, 4, 5].filter(t => m & (1 << (t - 1))).map(t => MAT[f].short[t - 1]).join(', '),
+          sub: [1, 2, 3, 4, 5].filter(t => m & (1 << (t - 1))).map(t => matGrade(f, t)).filter(Boolean).join(', '),
           hint: !next ? '' : x.exact ? `Hold ${matName(f, next)}.` : `Gather or find better ${MAT[f].n.toLowerCase()}.` });
       }
       const tm = R().mat.troph | 0;
@@ -41602,7 +41614,7 @@ let showAwayReport, awayLimitStep;
           const c = el('span', 'away-mat');
           c.title = matName(m.k, m.t);
           const txt = el('span', 'away-mt');
-          txt.append(num('away-mn', m.n, v => '+' + fmt(Math.floor(v))), el('span', 'away-ms', MAT[m.k].short[m.t - 1]));
+          txt.append(num('away-mn', m.n, v => '+' + fmt(Math.floor(v))), el('span', 'away-ms', matGrade(m.k, m.t) || MAT[m.k].n));
           c.append(img(matIcon(m.k, m.t)), txt);
           chips.append(c);
         }
@@ -47418,25 +47430,21 @@ let navUI = null;
     // forge-line-while-fighting: dropped once the live line was seen (it marks the say key), the step is over, nothing gathered is short, or the hero gathers
     ...Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => !O().done['say:' + id] && onboardWants(id) && stockGathered(id).length > 0 && fightingNow()]))
   };
-  // forge-line-while-fighting: a line that waits (stays queued, not shown, not dropped): a materials line waits while any menu is open and for
-  // a quiet minute (60 s of play since the last guide step ended and since the last held line was answered; from boot when either has not happened)
+  // forge-line-while-fighting: a materials line stays queued while a menu is open and until a quiet minute (60 s since the last step or held line)
   let sayEnd = null;
   const since = t => t === null ? GUIDE_RT.t : GUIDE_RT.t - t;
   const stockQuiet = () => since(GUIDE_RT.lastEnd) >= GUIDE_QUIET && since(sayEnd) >= GUIDE_QUIET;
   const heroUp = () => { try { return typeof cbHeroUp !== 'function' || cbHeroUp(); } catch (e) { return true; } };   // the gap after a kill, not after you fell
   const SAY_WAIT = Object.fromEntries(Object.keys(STOCK_WHAT).map(id => [id, () => !!S.tab || (sayCur !== id && (!stockQuiet() || !heroUp()))]));
-  // reload-keeps-tips: the queue is also kept in the save (S.onboard.sayQ, [{ id, arg }]; arg: the Scroll for `scroll`, the move for `slot`), so
-  // a reload before a line is read brings it back. The boss-loss line belongs to that loss and is never kept.
+  // reload-keeps-tips: the queue is saved (S.onboard.sayQ, [{ id, arg }]), all but the boss-loss line, so a reload brings an unread line back
   const sayQ = []; let sayCur = '';
   const SAY_ARG = { scroll: () => scrollId, slot: () => slotAb };
   const sayKeep = () => { O().sayQ = sayQ.filter(id => id !== 'defeat').map(id => SAY_ARG[id] ? { id, arg: SAY_ARG[id]() } : { id }); };
   function sayQueue(id) { if (sayText(id) && O().tips && !O().done['say:' + id] && !sayQ.includes(id)) { sayQ.push(id); sayKeep(); } }
   const sayDone = (id, said = true) => { if (said) sayEnd = GUIDE_RT.t; sayCur = ''; const i = sayQ.indexOf(id.slice(4)); if (i >= 0) sayQ.splice(i, 1); onboardUseDone(id); sayKeep(); };
-  // an unlock line with a Got it, only between fights (never two lines at once). tips-pause-says-so: it holds nothing of its own (no `pause`):
-  // with the fight in view it holds the gap after a kill (gapHeld, in tick), and gathering, or a fight behind an upright menu, goes on under it
+  // an unlock line with a Got it, between fights, one at a time; no `pause` of its own: in view it holds the gap after a kill (gapHeld)
   const sayStep = id => ({ id: 'say:' + id, text: sayText(id), ok: 1, ph: ['between'] });
-  // cal-0107-staged-guide: a guide step already says some unlocks, so his unlock line would say it twice. The Hero tab at the first level-up is
-  // the upgrade step's ("The Hero tab is open now..."); a cold Hearth's camp is the fire talk's and the Workbench steps' ("Open Camp and we'll build").
+  // cal-0107-staged-guide: unlocks a guide step already says (the Hero tab at the first level-up; a cold Hearth's camp) get no line of his
   const saidBySteps = id => (id === 'party' && !O().done.upgrade) || (id === 'camp' && typeof hearthCold === 'function' && hearthCold() && !O().done.bench);
   const TAB_FEATURE = { party: 'party', gather: 'gat', camp: 'world', craft: 'forge' };
   on('unlock', ({ id, quiet }) => {
@@ -47634,7 +47642,7 @@ let navUI = null;
     'stock:tool': () => stockSpec('stock:tool', STOCK_WHAT['stock:tool']),
     'stock:forge': () => stockSpec('stock:forge', STOCK_WHAT['stock:forge']),
     'stock:store': () => stockSpec('stock:store', STOCK_WHAT['stock:store']),
-    'stock:weapon': () => stockSpec('stock:weapon', STOCK_WHAT['stock:weapon'], '', true),
+    'stock:weapon': () => stockSpec('stock:weapon', STOCK_WHAT['stock:weapon'], REFINE_TUNE.coalAtSmelt && (onboardNeed('stock:weapon')[0] || {}).fam === 'ess' ? 'Foes drop it.' : '', true),
     light: () => {
       if (!onGame()) return isWide() ? { node: q(`.tab[data-tab="${S.tab}"]`), text: 'Shut that menu, then click or tap the fire to light it.' } : null;
       const f = $('hearthFire');
@@ -47657,7 +47665,7 @@ let navUI = null;
       return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go') || q('#sec-craft-recipes') || st, side: 'up', text: 'Make a Copper Pickaxe. It mines faster than your Stone Pick.' };
     },
     // gear-in-first-25: a bow or staff is made at the Workbench, so for Wren and Pip the Forge is for ingots and metal gear
-    forge: () => weaponAtBench() ? campPath('forge', ['Next, the Forge. Open Camp.', 'Open Camp.', 'Build the Forge. It makes ingots and metal gear.'])
+    forge: () => weaponAtBench() ? campPath('forge', ['Next, the Forge. Open Camp.', 'Open Camp.', REFINE_TUNE.coalAtSmelt ? 'Build the Forge. It makes metal gear.' : 'Build the Forge. It makes ingots and metal gear.'])
       : campPath('forge', ["You'll want a weapon of your own. Open Camp.", 'Open Camp.', "Build the Forge. That's where weapons are made."]),
     // first-gold-and-camp-strip: the materials are in hand; tick() has opened Craft on the weapon (once a visit), and this tip rings the button
     weapon: () => {
@@ -47721,13 +47729,8 @@ let navUI = null;
     // forge-line-while-fighting: a materials step in the gap after a kill, fight in view and no menu, is hidden (below); a fighter who has not seen
     // its live line gets one held line for it instead, after a quiet minute, if something gathered is short
     if (step && STOCK_WHAT[step.id] && !S.tab && fightInView() && heroUp() && stockGathered(step.id).length && stockQuiet()) sayQueue(step.id);
-    // unlock-voice: a new thing is announced only when no fight is in view, and the game waits on its Got it (cal-0107-staged-guide).
-    // It goes before a between step that is not already up and holding (the news, then what to do), never over a fight lesson.
-    // staged-guide-followups: nor while a big card is up or on its way (the first boss's card came 1 s after the Scroll line and covered it)
-    // tips-pause-says-so (F24): never while the hero is down (a wipe clears the foes, so the phase reads "between" at 0 HP); the line waits for
-    // the next gap after the hero is back up
-    // hesketh-boss-loss-line: except the boss-loss line, whose moment is the loss itself. A boss you lose to is fought again at once, foe first,
-    // so a hero back up never gets a gap: it comes once the Try again card is shut, while the hero is still down, and holds the recovery
+    // unlock-voice: an unlock line shows with no fight in view and waits on its Got it, before a between step not yet up, never over a
+    // fight lesson or a card, never while the hero is down (F24), except the boss-loss line, which comes once Try again is shut
     const downOk = i => i === 'defeat';
     // tip-order-and-lateness: the slot line is said on the Hero menu where the move was learned, at once. On a wide view the fight runs beside
     // that menu, so it would wait for the next kill gap (2 min in the dipper's run); there it shows beside the fight and holds nothing (sideSay)
@@ -47758,16 +47761,12 @@ let navUI = null;
     // for the turn to end. The fight lessons are exempt: Dodge and Parry are taught in that very window.
     if (shortSide.matches && !LESSON_IDS.includes(step.id) && !(cur && cur.id === step.id && !layer.hidden) && /^(windup|foe)$/.test(guidePhase(!guideMenuCovers()))) return hide();
     const use = /^(use|say):/.test(step.id);
-    // staged-guide-followups: a line that starts in the gap after a kill, with the fight in view, would show for under half a second before the
-    // next foe walks in and hides it. A line you read (a Got it note, a first-use line) holds that gap until you tap it; a live-progress line
-    // (materials, gold) waits for a calm screen instead (no fight, or a menu over it)
-    // forge-line-while-fighting: on a wide view a materials line on Camp or Gather stays beside the fight, steady, holding nothing (keyed on the menu only)
+    // staged-guide-followups: a line you read holds the gap after a kill until tapped; a live-progress line waits for a calm screen. On a
+    // wide view a materials line on Camp or Gather stays beside the fight, holding nothing (forge-line-while-fighting)
     const stockSide = !!STOCK_WHAT[step.id] && isWide() && STOCK_TABS.includes(S.tab);
     const sideSay = step.id === 'say:slot' && menuSay('slot');
-    // tips-pause-says-so: nothing shows or holds in the gap after a wipe (the hero is down), and a news line's hold ends once the fight leaves view
-    // (Gather, an upright menu)
-    // hesketh-boss-loss-line: that holds for a step that pauses too (the Hero tab's points): shown at 0 HP it froze the game with the hero down,
-    // so he never got up and the boss-loss line waiting on him never came
+    // tips-pause-says-so: nothing shows or holds after a wipe, a pausing step included (hesketh-boss-loss-line), and a news line's hold
+    // ends once the fight leaves view
     const between = !stockSide && !sideSay && fightInView() && ((step.ph || []).includes('between') || step.id.startsWith('use:'));
     const downSay = step.id.startsWith('say:') && downOk(step.id.slice(4));
     if (between && !heroUp() && !downSay) return hide();
