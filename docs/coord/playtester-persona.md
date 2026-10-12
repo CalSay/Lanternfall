@@ -72,10 +72,15 @@ tester's new issues as real, false alarm, unsure or tool.
 Escapes the tester did not see ("Bot saw: no" in `autopilot/escapes.md`), added by the coordinator at each Monday retro.
 They come from human notes and incidents, so under the holdout rule they never go into `BRIEF` or the blind runs above,
 and a run that used them is never scored for held-out catch. They are a separate **checks run**: after the blind runs, one
-more worker plays the same build (seed 4, desk view, in legs to zone 10 like the 8 Oct run, `--resume` between legs) with
-this list pasted into its own worker prompt, and with this week's patch notes (`docs/coord/patch-notes/`) for check 13. It
-notes each check as pass, fail (with the on-screen text) or not reached. Its notes go to the judge as a pass/fail table,
+more worker plays the same build (seed 4, desk view, `--max-minutes 60`, in legs to zone 15, `--resume` between legs) with
+this list pasted into its own worker prompt. For check 13 it also gets the patch-note lines added since the last Monday
+release (the `Line:` of each `docs/coord/patch-notes/` file added in `git log` since that release). It notes each check as
+pass, fail (with the on-screen text) or not reached. The run folder keeps a `checks.md` with the exact list and patch lines
+the worker was given, since `run.json` records only the tool's own prompt. Its notes go to the judge as a pass/fail table,
 not as catches.
+
+Some rows were tool or merge-gate failures, not game faults a player could see (38 and 40: the game itself was fine). Their
+checks retest the game behaviour those failures touched, so a pass there says the game works, not that the tool caught it.
 
 Added 2026-10-12 (Monday retro):
 
@@ -91,7 +96,7 @@ Added 2026-10-12 (Monday retro):
 | 42 | Press Parry and Dodge a little early on purpose. Does the game tell you that you were early, or that you missed? |
 | 43 | Compare the fight screen numbers (HP, DPS, hit numbers) with the hits you see land. Note any that do not match. |
 
-Check 40 needs two short phone legs (seed 4 again, 60 steps each), since the checks run plays at a desk.
+Check 40 needs two short separate phone runs (seed 4 again, 60 steps each, one per view), since the checks run plays at a desk.
 
 ## Retune against Cal's notes of 2026-10-07
 
