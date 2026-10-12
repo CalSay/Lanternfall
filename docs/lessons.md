@@ -154,6 +154,7 @@ Areas: [Combat and balance](#combat-and-balance) · [Economy and skilling](#econ
 - Before a ruling moves who is met where, check `STORY_BEATS` (`21k-story-hollow.js`) and bible 4.4: meet scenes are written for their place (Wren's cave, Pip's graves). Why: a judge ruling put Wren and Pip at the wrong Champions; Codex P1 on PR #83. (early-game lead, 2026-10-06)
 
 - A Skip that ends more than the scene on screen must leave queued choice scenes to play: skipping the card before a choice must never take the choice's default. Why: the story UI check (Voice card, then the lamp choice) failed when stale-guide-tips' first cut skipped the whole queue. (stale-guide-tips, 2026-10-11)
+- When a line limits where something is ("nearby", "in sight"), read it against every later line that names a place: a lamp "nearby" going out clashed with Hesketh's lamp still burning on the hill. Why: the cold reader caught it on the first rewrite. (intro-lamp-line, 2026-10-12)
 
 ## UI and menus
 - A font swap moves every line stacked under a hidden one: a face with shorter line boxes lifts the line below, so re-run the overlap checks (turn banner vs trick line) at 740x360 before the first push. Why: ui2-look's Barlow made the turn banner's trick line rise 5 px into the banner (`.tc-on .tv-top .tv-warn` margin 14 -> 19 px). (ui2-look, 2026-10-11)

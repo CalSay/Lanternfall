@@ -583,8 +583,8 @@ a family is in it. **Climax:** the Fenmother. **Hook:** a green light at sea.
 
 **The opening** (before zone 1). Three stills, one line each; the first is the lamp on its hook (Elowen's spiral on its
 base):
-1. Ten years ago every lamp went out. The one over your door never did.
-2. This winter the last lamp in sight went out. Tonight the dark came for yours.
+1. Ten years ago every lamp went out but a few. Yours held.
+2. This winter the last one near home went out. Tonight the dark came for yours.
 3. Your village hid. You took the lamp and ran, so the dark would follow you.
 
 Then "Who are you?" (the hero pick). Then on the road, the lamp starts to gutter (the dark is close and you are
@@ -595,7 +595,7 @@ opens: "You can gather now. Bring me Pine Log for a proper fire, and we'll talk 
 
 The talk waits for the camp fire, which the player builds from 8 logs, and plays at the grove where it is lit. When it is lit: "Every road needs a place to come
 back to." Then the talk (one card, four lines): "Ten years I've lit dead lamps. Not one took my fire." /
-"I could have lit them from hers. I couldn't go up." (He looks at the hill and doesn't explain; Ch1 end does.) / "Those
+"Another lamp burns, up on the hill. I can't face going up." (He looks at the hill and doesn't explain; Ch1 end does.) / "Those
 things aren't animals. They climb out of the ground." / "Your village is down there. Go back and shut the holes." The
 roadside fire and the camp fire stay two different fires. This order is the Opus judge's ruling on the early-game plan
 (2026-10-06, DECISIONS "The opening"). It replaces the old order, where the talk played before the first fight (audit
