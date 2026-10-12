@@ -12,7 +12,7 @@
 // The item sheet (bottom sheet from 75-party-sheet's openSheet) shows lines, compare, and
 // Equip, Upgrade, Reforge a line and Salvage (in-page confirms only).
 //
-// Exposed: craftUI { openItem(id), pick(who, pos) }   who: 'hero'; pos: a hero position.
+// Exposed: craftUI { openItem(id), pick(who, pos), kitName(pos), kitIcon(pos) }   who: 'hero'; pos: a hero position.
 //
 
 let craftUI = null;
@@ -92,7 +92,7 @@ let craftUI = null;
     }
     return out;
   }
-  // desktop-tooltips: an item's hover tip from the sheet's head and lines
+  // an item's hover tip from the sheet's head and lines
   tipHook.item = it => {
     const d = itemKind(it), wr = wornBy(it.id);
     const out = [itemName(it), [itemQual(it), `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun) : ''].filter(Boolean).join(' · '), `Power ${fmt(itemPower(it))}`];
@@ -922,7 +922,7 @@ let craftUI = null;
       gearEls.sig = '';
     },
     update(force) {
-      const sig = JSON.stringify(S.equip) + S.items.length + heroWho() + S.items.reduce((a, i) => a + i.plus, 0);
+      const sig = JSON.stringify(S.equip) + S.items.length + heroWho() + soloHero() + S.items.reduce((a, i) => a + i.plus, 0);
       if (!force && sig === gearEls.sig) return;
       gearEls.sig = sig;
       const EMPTY_IC = emptyIcons();
