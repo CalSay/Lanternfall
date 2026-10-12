@@ -125,72 +125,61 @@ const browserSummary = (n, reasons) => `browser sections skipped: ${n} (${[...re
 // Every section starts with `if (section('name')) try {`. `--only=<regex>` runs just the sections whose name matches (dev loop).
 // `--jobs=N` (default 4 when the machine has the cores): the run splits into N child processes, each taking a share of the
 // sections (the sections are independent; the browser ones mostly wait), and the parent prints their output one after the other.
+// `--shard=i/N` (CI's six runners) runs shard i's share the same way, as PAR child processes side by side (`--par=P`, default 2;
+// child j runs `--shard=(i*P+j)/(N*P) --par=1`). ci-shards-under-half: the heaviest browser sections spend most of their time in
+// fixed waits on the game's real time (actor-scale 129 of 150 s, moment layer 121 of 134 s), so two at once on a 4-core runner
+// take about as long as one, and a shard stays under half its 20-minute job limit with room for its one retry.
 const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
+const PAR = SHARD ? +((process.argv.find(a => a.startsWith('--par=')) || '').slice(6)) || 2 : 1;
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
-// Seconds a section takes on one CI-sized runner (measured with --times, ci-shard-hang 2026-10-09): the shards are balanced by these;
-// a section not listed counts 2. Re-measure when a shard nears half the job limit: `node tools/check.mjs --shard=i/N --times` prints
-// every section's time and the shard's planned load (CI runs it with --times, so the job log has both).
+// Seconds a section takes on one CI-sized runner, read from the --times tables of CI run 38219818796 (push of 75d802bb, the six shards
+// one section at a time; ci-shards-under-half 2026-10-12). The shards are balanced by these; a section not listed (all measured
+// under 5 s, 0.85 s on average) counts 1. Re-measure when a shard nears half the job limit: CI runs with --times, so each shard's job
+// log prints every section's time and the planned loads (`node tools/check.mjs --shard=i/N --times` does the same locally).
 const WEIGHT = {
-  'forge-line-while-fighting': 133, 'W1-D (browser)': 111, 'staged guide follow-ups (browser)': 90, 'moment layer': 79,
-  'solo copy (browser, W1-C)': 120, 'ui2-look (browser)': 60, 'landscape 1920x1080 (browser, UX-L1)': 70, 'staged guide (browser)': 70,
-  'desktop tooltips (browser, desktop-tooltips)': 67, 'boss-spoils-pick': 56, 'spoils-card-fits-with-unique': 33, 'landscape 740x360 (browser, UX-L1)': 55,
-  'landscape 1280x720 (browser, UX-L1)': 54, 'solo guide: gathering never freezes (browser)': 54, 'landscape 844x390 (browser, UX-L1)': 52,
-  'turn UI (browser)': 50, 'actor-scale (browser)': 90, 'actor-scale-followups (browser)': 60, 'side-column-fits-740': 75, 'fight-chip-beside-nextup': 16, 'turn-banner-clears-plate': 14, 'loadout-odds': 30, 'cache-pick-order-settles': 48, 'learn-odds-pump-stops': 30, 'champ-retry-scenes': 80, 'zone10-clear-moment': 42, 'champ-retry-scenes 2': 55, 'playtest driver (browser)': 40, 'offline accounting and schedules (C14)': 44,
-  'desktop layout (browser, desktop-layout-v1)': 38, 'solo hero (browser)': 35, 'notices (browser, W1-B)': 35, 'guide goal after reload': 35,
-  'story UI (browser)': 29, 'first-hour walk (browser, qa-first-hour-walk)': 28, 'normal-death-says-so': 27,
-  'guide panel rects (browser, guide-panel)': 25, 'story cards fit at 740x360 (browser)': 25, 'removed systems (W2-C)': 24, 'look-card-says-why': 24,
-  'training (W2-A, browser)': 23, 'story-opening (browser)': 22, 'fight-input-during-banner': 22, 'hero voice': 20, 'tell us form': 18,
-  'action and menu icons (C26, browser)': 18, 'story-hollow-script (browser)': 17, 'foe-tricks-say-so': 16, 'hero attributes (browser)': 16, 'attr-half-rule-before': 8,
-  'camp trade and import (C4, browser)': 15, 'scroll-spares': 14, 'craft-shortfall-offer': 14, 'intro-and-picker': 13, 'gathering': 12,
-  'wire-menu-icons (browser)': 11, 'starters join when met': 11, 'stars (browser)': 10, 'craft reveal': 10, 'forge-tip-goes-stale': 9,
-  'fight HUD fit': 9, 'Next Up Go targets (browser)': 8, 'refine icons (browser)': 8, 'C9 hero registry (browser)': 8,
-  'gear on the Hero tab (cal-0107-gear-and-rates)': 8, 'craft delta': 7, 'cb2': 7, 'gather scene warmup (C12, browser)': 7,
-  'gatherers UI (browser)': 7, 'reload keeps tips': 7, 'LF_EYES hook (browser, qa-player-eyes)': 6, 'nav': 5, 'unique weapons wall icon': 5,
-  'camp guide tracking (C2, browser)': 5, 'onboarding hint placement (HINT1)': 5, 'smelt-done-says-so': 5, 'guide target guard (browser)': 5,
-  'bulk salvage (C23 browser)': 5, 'gear-in-first-25': 4, 'solo hero': 4, 'refine parity': 4, 'small text clips': 4,
-  'almanac gear days (almanac-forge-points-to-gear)': 4, 'milestone feats UI (C11, browser)': 3, 'C29 mid-game HP and Wren (core)': 3,
-  'tool-speed-adds-up': 3, 'C14 away card (browser)': 3, 'desktop views 2 (browser, desktop-views-2)': 25, 'craft-curve-skills-report': 11,
-  'upgrade-gold-covers-short': 8, 'craft attribute grades (browser)': 20, 'craft strike infuse (browser)': 24, 'tips-pause-says-so': 75, 'tips-hold-740': 40, 'defend-bar-740': 36,
-  'feint-read-clear': 70,   // 64-74 s locally alone (feint-read-clear, 2026-10-09)
-  'craft-odds-before-pay': 38,   // 38 s locally (craft-odds-before-pay, 2026-10-09)
-  'online-off-clean': 120,   // 145 s locally at 4 jobs (online-off-clean, 2026-10-09)
-  // listed so its shard is fixed: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check)
-  'basic-attack-swings': 90,   // 90 s locally alone (basic-attack-swings, 2026-10-10)
-  'realtime-press-swings': 45,   // 41 s locally alone (realtime-press-swings, 2026-10-11)
-  'bow-slot-wording': 8,   // 8 s locally alone (bow-slot-wording, 2026-10-10)
-  'first-craft-toast-clip': 48,   // 48 s locally alone (first-craft-toast-clip, 2026-10-10)
-  'toast-over-menu-foot': 55,   // 55 s locally alone (toast-guide-side-menu, 2026-10-11)
-  'ability-effects-live': 65,   // 65 s locally alone (ability-effects-live, 2026-10-10)
-  'fx-timing-fixes': 40,
-  'pip-cast-recipes': 40,
-  'page size': 2,
-  'fixture-clock': 33,   // 33 s locally alone (fixture-clock-audit, 2026-10-12)
-  'split build (asset-build)': 30,   // 31 s locally alone (art-loader, 2026-10-10)
-  'leave-mid-fight-gathers (browser)': 15,
-  'deepwell-spillover-keeps-fight': 12,   // 12 s locally alone (deepwell-spillover-keeps-fight, 2026-10-11)
-  'deepwell-floor-label-clear': 20,   // 20 s locally alone (deepwell-floor-label-clear, 2026-10-11)
-  'load-hold-progress (browser)': 18,   // 18 s locally alone (load-hold-progress, 2026-10-10)
-  'foe wind-up after a hold (browser)': 18,   // 18 s locally alone (foe-windup-after-hold, 2026-10-10)
-  'hero packs (hero-packs)': 15,   // 14 s locally alone (hero-packs, 2026-10-10)
-  'hero queue (hero-queue)': 9,   // 8 s locally alone (hero-queue, 2026-10-10)
-  'wren route S (browser)': 12,   // 11 s locally alone (route-s-wren-wire, 2026-10-10)
-  'new-style screens (browser)': 36,   // 35 s locally at 3 jobs (ns-scenery-engine, 2026-10-10)
-  'tavern blackjack (browser)': 20,   // measured below (tavern-blackjack-build, 2026-10-10)
-  'tip-order-and-lateness': 60   // three views of the pickaxe, Power Shot and Forge-ore lines (tip-order-and-lateness, 2026-10-10)
+  'actor-scale (browser)': 146, 'forge-line-while-fighting': 139, 'online-off-clean': 136, 'moment layer': 131, 'W1-D (browser)': 109,
+  'basic-attack-swings': 95, 'solo copy (browser, W1-C)': 87, 'staged guide follow-ups (browser)': 85, 'landscape 1280x720 (browser, UX-L1)': 82,
+  'stale-guide-tips': 76, 'landscape 740x360 (browser, UX-L1)': 75, 'landscape 844x390 (browser, UX-L1)': 72, 'staged guide (browser)': 70,
+  'landscape 1920x1080 (browser, UX-L1)': 70, 'champ-retry-scenes': 63, 'feint-read-clear': 63, 'side-column-fits-740': 61, 'ability-names-fit': 59,
+  'turn UI (browser)': 58, 'champ-retry-scenes 2': 58, 'boss-spoils-pick': 56, 'solo guide: gathering never freezes (browser)': 55,
+  'desktop tooltips (browser, desktop-tooltips)': 52, 'pip-cast-recipes': 52, 'spoils-card-fits-with-unique': 48, 'toast-over-menu-foot': 48,
+  'first-craft-toast-clip': 45, 'actor-scale-followups (browser)': 44, 'tips-pause-says-so': 43, 'fx-timing-fixes': 43, 'ability-effects-live': 41,
+  'tip-order-and-lateness': 40, 'cache-pick-order-settles': 38, 'split build (asset-build)': 37, 'zone10-clear-moment': 35,
+  'playtest driver (browser)': 35, 'desktop layout (browser, desktop-layout-v1)': 35, 'learn-odds-pump-stops': 34, 'guide goal after reload': 34,
+  'notices (browser, W1-B)': 33, 'gate-go-starts-gathering': 31, 'normal-death-says-so': 30, 'defend-bar-740': 30, 'solo hero (browser)': 30,
+  'story UI (browser)': 28, 'new-style screens (browser)': 27, 'ui2-look (browser)': 27, 'realtime-press-swings': 26, 'craft-odds-before-pay': 25,
+  'story cards fit at 740x360 (browser)': 24, 'training (W2-A, browser)': 23, 'guide panel rects (browser, guide-panel)': 23,
+  'turn-banner-clears-plate': 23, 'look-card-says-why': 22, 'fight-input-during-banner': 22, 'nextup-chip-360 (browser, fallback-font)': 21,
+  'craft strike infuse (browser)': 21, 'story-opening (browser)': 21, 'tips-hold-740': 21, 'desktop views 2 (browser, desktop-views-2)': 21,
+  'hero voice': 20, 'fixture-clock': 20, 'offline accounting and schedules (C14)': 19, 'wren route S (browser)': 19, 'tell us form': 18,
+  'story-hollow-script (browser)': 16, 'foe wind-up after a hold (browser)': 16, 'action and menu icons (C26, browser)': 16, 'foe-tricks-say-so': 15,
+  'away-line-only-when-true': 15, 'craft attribute grades (browser)': 15, 'load-hold-progress (browser)': 14, 'hero attributes (browser)': 14,
+  'first-hour walk (browser, qa-first-hour-walk)': 14, 'C14 away card (browser)': 14, 'craft-shortfall-offer': 14, 'tavern blackjack (browser)': 14,
+  'deepwell-floor-label-clear': 13, 'stage-no-swarm-shrink (browser)': 13, 'scroll-spares': 13, 'tier-two-named-for-return': 13,
+  'fight-chip-beside-nextup': 12, 'hero packs (hero-packs)': 12, 'intro-and-picker': 12, 'space-reopens-next-up': 12, 'craft-costs-up-front': 11,
+  'nu-chip-gate-label-fits': 11, 'gathering': 11, 'craft-curve-skills-report': 11, 'loadout-odds': 11, 'starters join when met': 10,
+  'wire-menu-icons (browser)': 10, 'deepwell-spillover-keeps-fight': 10, 'menu-tip-room': 10, 'camp trade and import (C4, browser)': 10,
+  'stars (browser)': 9, 'removed systems (W2-C)': 9, 'unlocks wait for the gap (browser)': 8, 'fight HUD fit': 8, 'refine icons (browser)': 8,
+  'forge-tip-goes-stale': 8, 'leave-mid-fight-gathers (browser)': 8, 'gatherers UI (browser)': 7, 'Next Up Go targets (browser)': 7,
+  'bow-slot-wording': 7, 'reload keeps tips': 7, 'gear on the Hero tab (cal-0107-gear-and-rates)': 7, 'boss retry reads the odds': 7,
+  'gather scene warmup (C12, browser)': 7, 'C9 hero registry (browser)': 6, 'essence-counter-reads-right': 6, 'hero queue (hero-queue)': 6,
+  'craft delta': 6, 'attr-half-rule-before': 6, 'upgrade-gold-covers-short': 6, 'eyes-placeholder abilities tiles': 5, 'unique weapons wall icon': 5
 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 const lightest = () => { let k = 0; for (let i = 1; i < shardLoad.length; i++) if (shardLoad[i] < shardLoad[k]) k = i; return k; };
 // The measured sections are placed first, heaviest first, each on the lightest shard (ci-shard-hang: placed in file order, a long
 // section near the end landed on a shard that was already full). Every shard computes the same placement.
-const shardOf = {};
+// 'page size' is pinned to shard 0: ci.yml fetches the integration branch on that shard only, for its growth line (page-size-check).
+const shardOf = { 'page size': 0 };
+if (SHARD) shardLoad[0] += 1;
 if (SHARD) for (const [n, w] of Object.entries(WEIGHT).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))) { const k = lightest(); shardOf[n] = k; shardLoad[k] += w; }
 function section(name) {
   if ((ONLY && !new RegExp(ONLY, 'i').test(name))) return false;
   fixtureShift = 0;
   if (SHARD) {   // every shard sees the same sections in the same order, so all of them make the same choice: the lightest shard takes the rest
     let k = shardOf[name];
-    if (k === undefined) { k = lightest(); shardLoad[k] += 2; }
+    if (k === undefined) { k = lightest(); shardLoad[k] += 1; }
     if (k !== SHARD[0]) return false;
   }
   console.log(name);
@@ -198,12 +187,14 @@ function section(name) {
 }
 
 // ---- parent process: run the shards ----
-if (JOBS > 1 && !SHARD) {
-  const argv = process.argv.slice(2).filter(a => !a.startsWith('--jobs='));
-  const outs = await Promise.all(Array.from({ length: JOBS }, (_, i) => new Promise(res => {
-    const c = spawn(process.execPath, [fileURLToPath(import.meta.url), ...argv, `--shard=${i}/${JOBS}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+if ((JOBS > 1 && !SHARD) || PAR > 1) {
+  const argv = process.argv.slice(2).filter(a => !/^--(jobs|shard|par)=/.test(a));
+  const kids = PAR > 1 ? Array.from({ length: PAR }, (_, j) => `--shard=${SHARD[0] * PAR + j}/${SHARD[1] * PAR}`) : Array.from({ length: JOBS }, (_, i) => `--shard=${i}/${JOBS}`);
+  const outs = await Promise.all(kids.map(k => new Promise(res => {
+    const c = spawn(process.execPath, [fileURLToPath(import.meta.url), ...argv, k, '--par=1'], { stdio: ['ignore', 'pipe', 'pipe'] });
     let out = ''; c.stdout.on('data', d => (out += d)); c.stderr.on('data', d => (out += d));
-    c.on('close', code => res({ out, code }));
+    // a child killed by a signal (the heap limit's abort, the out-of-memory killer) closes with code null: it fails, never passes
+    c.on('close', (code, sig) => res({ out: code === null ? `${out}\n  FAIL ${k}: killed by ${sig}, its remaining sections did not run\n` : out, code: code === null ? 1 : code }));
   })));
   let bad = 0;
   for (const o of outs) {
