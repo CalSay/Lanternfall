@@ -171,13 +171,14 @@ let firstTapAt = null;
 // walk-shots-span-session: the 90 shots cover the whole walk, not its first 7 minutes. Key shots (a progress moment, a moment card,
 // the opening's stills, a new tab, a finding) always get one while any are left. Routine shots (tips, Next Up, gear, other cards) are
 // spread over the walk: a few up front, then an allowance that grows with game time (front-loaded, the first minutes matter most),
-// and they never eat the share held back for the key shots still to come. Two notes on the same screen (within 0.5 s) share a shot.
+// and they never eat the share held back for the key shots still to come. Two notes on the same screen (within 0.5 s and no press
+// between: a press changes the screen without moving game time, so the opening's stills each need their own) share a shot.
 const SHOT_BUDGET = 90, SHOT_KEY_EST = 40, SHOT_BURST = 6;
-let shotN = 0, shotsLeft = SHOT_BUDGET, routineShots = 0, lastShot = null;
+let shotN = 0, shotsLeft = SHOT_BUDGET, routineShots = 0, lastShot = null, presses = 0;   // presses: every mouse press the bot makes
 const shotLog = [];              // { t, f, key }
 const fmtT = t => { const m = Math.floor(t / 60), s = Math.floor(t % 60); return m + ':' + String(s).padStart(2, '0'); };
 async function shot(page, tag, key) {
-  if (lastShot && gt - lastShot.t <= 0.5) return lastShot.f;
+  if (lastShot && gt - lastShot.t <= 0.5 && lastShot.presses === presses) return lastShot.f;
   if (shotsLeft <= 0) return '';
   if (!key) {
     const frac = Math.min(1, gt / (MINUTES * 60));
@@ -188,7 +189,7 @@ async function shot(page, tag, key) {
   shotsLeft--;
   const f = `${String(++shotN).padStart(2, '0')}-${tag.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40)}-${fmtT(gt).replace(':', 'm')}.png`;
   try { fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: path.join(SHOTS, f) }); } catch (e) { return ''; }
-  lastShot = { t: gt, f }; shotLog.push({ t: Math.round(gt * 10) / 10, f, key: !!key });
+  lastShot = { t: gt, f, presses }; shotLog.push({ t: Math.round(gt * 10) / 10, f, key: !!key });
   return f;
 }
 async function note(page, kind, text, o = {}) {
@@ -309,7 +310,7 @@ async function click(sel, _to) {
       if (ss === 'still') {
         const x = await page.evaluate(TAP, ['.bsheet-ov .bsheet-x', '']);
         if (process.env.WALK_DEBUG) console.error('  close-sheet', css, JSON.stringify(x));
-        if (x && !x.covered) { await page.mouse.click(x.x, x.y); st.sheetsClosed = (st.sheetsClosed || 0) + 1; }
+        if (x && !x.covered) { presses++; await page.mouse.click(x.x, x.y); st.sheetsClosed = (st.sheetsClosed || 0) + 1; }
       }
     }
     await advance(300, 16);
@@ -317,7 +318,7 @@ async function click(sel, _to) {
     if (!r) return false;
   }
   if (r.covered) { addCheck('covered', `a button the player needs is covered (${css})`, `a tap at ${Math.round(r.x)},${Math.round(r.y)} would land on ${r.covered}${r.sheet ? ' (a sheet: "' + r.what + '")' : ''}`); return false; }
-  await page.mouse.click(r.x, r.y);
+  presses++; await page.mouse.click(r.x, r.y);
   if (firstTapAt === null) firstTapAt = gt;
   if (st.firstPress === null && css.includes('#soloBar')) st.firstPress = gt;   // F1: the player's first fight press
   return true;
@@ -406,7 +407,7 @@ async function followTip(o) {
     }
     if (tp.target) {
       const x = Math.min(SIZE.w - 1, Math.max(1, tp.target.x + tp.target.w / 2)), y = Math.min(SIZE.h - 1, Math.max(1, tp.target.y + tp.target.h / 2));
-      await page.mouse.click(x, y); if (firstTapAt === null) firstTapAt = gt; return true;
+      presses++; await page.mouse.click(x, y); if (firstTapAt === null) firstTapAt = gt; return true;
     }
   }
   return false;

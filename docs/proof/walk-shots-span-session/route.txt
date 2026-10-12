@@ -6,10 +6,11 @@
 # Before (the base): 90 shots, the last at 6:31 game time. Of 13 moment cards (.mm-ov) 11 had no shot, and every progress moment
 #   after 6:31 (zone clears 3 to 16, the uniques, Stars, Tobin, Hesketh and Pip joining, abilities 2 to 9) had none. The walk's one
 #   finding (a stall at 42:13) had no shot. Played 58:28 in 1770 s of clock (stopped by the clock budget).
-# After (this branch): 88 of 90 (40 key: progress moments, moment cards, the opening, new tabs and findings; 48 routine, spread over the walk). By band: 0-10 min 40, 10-20 min 17, 20-30 min 12, 30-40 min 7, 40-50 min 7, 50-60 min 5.
+# After (this branch, with the reviewer's fix: notes share a shot only with no press between): 87 of 90 (42 key: progress moments, moment cards, the opening, new tabs and findings; 45 routine, spread over the walk). By band: 0-10 min 42, 10-20 min 17, 20-30 min 11, 30-40 min 7, 40-50 min 6, 50-60 min 4.
 #   Every moment card (13 of 13), every progress moment (zone clear, ability, Star, hero join, unique: 37 of 37) and the finding
-#   have a shot. Routine shots (tips, Next Up, gear, other cards, level and craft lines) thin out to fit. Played 58:44 in 1770 s
-#   of clock: the same clock, no slower in game time.
+#   have a shot, and the six opening stills have six files. Routine shots (tips, Next Up, gear, other cards, level and craft
+#   lines) thin out to fit. Played 56:25 in 1770 s of clock (the run before the fix, 88 shots: 58:44): the same clock budget,
+#   and game time within 4% of the base, from container speed, not shots (this run took fewer shots than the base's 90).
 # The budget stays 90 (SHOT_BUDGET). The report's new "## Shots" section lists each shot's time and the count per 10-minute band;
 # the json carries the same list as "shots".
 # Local: node tools/check.mjs --only="walk" passes (first-hour walk section, 9 checks).
