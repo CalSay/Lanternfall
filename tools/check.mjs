@@ -3035,6 +3035,123 @@ if (section('side doors (no-word-before-its-tab)')) try {
   assert(!on.errors.length && !off.errors.length, 'no side-door errors' + (on.errors[0] || off.errors[0] ? ': ' + (on.errors[0] || off.errors[0]) : ''));
 } catch (e) { fail('side doors crashed: ' + (e.stack || e)); }
 
+// ---- unlocks-wait-for-the-gap (first-hour-jargon card F): a row the governor releases while a foe is on the stage shows once the stage is clear ----
+// Only the display waits: got (the release clock) is stamped as before. The browser turns the hold on (ONBOARD.hold); here the section turns it on.
+if (section('unlocks wait for the gap (unlocks-wait-for-the-gap)')) try {
+  const at = 'unlocks-wait-for-the-gap';
+  const mk = hold => {
+    const g = loadCore({ seed: 41, turns: true }), E = s => g.eval(s), ev = [];
+    E(`soloPick("tobin"); ONBOARD.hold = true; ONBOARD_TUNE.holdForStage = ${hold}; S.onboard.got.party = 0; S.onboard.t = 300; S.tab = null;
+      setActivity("fight"); for (let i = 0; i < 50 && !liveFoe(); i++) tick(0.1); true`);
+    g.fn.on('unlock', e => ev.push(e.id + (e.held ? ' held' : e.shown ? ' shown' : e.quiet ? ' quiet' : '')));
+    return [g, E, ev];
+  };
+  const clear = 'combatFoes().forEach(f => { f.hp = 0; f.dead = true; }); tick(0.05); true';
+  const foeUp = 'spawn(); for (let i = 0; i < 50 && !liveFoe(); i++) tick(0.1); liveFoe()';
+  const look = E => JSON.parse(E('JSON.stringify({ got: S.onboard.got.gather ?? null, shown: onboardShown("gather"), goal: onboardGoalOk({ sys: "skill" }), go: navSkillOpen("wood"), held: !!S.onboard.done["hold:gather"] })'));
+  {
+    const [g, E, ev] = mk(1);
+    assert(E('fightingNow() && liveFoe() && !isUnlocked("gather")'), `${at}: a fresh game fights a live foe with Gather shut`);
+    E('S.maxZone = 2; onboardCheck(); true');
+    const t0 = E('Math.round(S.onboard.t)'), a = look(E);
+    for (let i = 0; i < 10; i++) E('tick(0.1)');
+    const b = look(E);
+    assert(a.got === t0 && a.held && !a.shown && !a.goal && !a.go && ev.includes('gather held') && !b.shown && E('liveFoe()'),
+      `${at}: Gather released mid-fight keeps its release time and stays off screen, off Next Up and off Go to while the foe stands (${JSON.stringify([a, b, ev])})`);
+    E(clear);
+    const c = look(E);
+    assert(c.shown && c.goal && c.go && !c.held && c.got === t0 && ev.includes('gather shown'), `${at}: on the clear stage it shows, with its notice, and its release time stays (${JSON.stringify([c, ev])})`);
+    // the next release comes on its clock; it waits for a clear stage and a gap after the last one shown (one at a time)
+    E(foeUp); E(`S.onboard.got.nextup = S.onboard.got.awaynote = Math.round(S.onboard.t); S.maxZone = 4; S.onboard.t += ${E('ONBOARD_TUNE.gap') + 1}; onboardCheck(); true`);
+    const bty = () => E('JSON.stringify([isUnlocked("bounties"), onboardShown("bounties")])');
+    const r1 = bty(); E(clear); const r2 = bty();
+    E(`GUIDE_RT.t += ${E('ONBOARD_TUNE.gap')}; tick(0.05); true`); const r3 = bty();
+    assert(r1 === '[true,false]' && r2 === '[true,false]' && r3 === '[true,true]', `${at}: Bounties, released a gap later mid-fight, waits for the stage and for a gap after Gather showed (${r1} ${r2} ${r3})`);
+    // a row the player or a drop opened shows at once, foe or not
+    E(foeUp); E('S.found = Object.assign(S.found || {}, { "moss-crown": 1 }); onboardCheck(); true');
+    assert(E('isUnlocked("uniques") && onboardShown("uniques") && liveFoe()') && ev.includes('uniques'), `${at}: a drop opens its row on screen at once, mid-fight (${JSON.stringify(ev)})`);
+    // the player opening a held row's place shows it at once, with its notice
+    E(`S.onboard.t += ${E('ONBOARD_TUNE.gap') + 1}; S.maxZone = 5; onboardCheck(); true`);
+    const held = E('JSON.stringify(FEATURES.filter(f => S.onboard.done["hold:" + f.id]).map(f => f.id))');
+    const id = JSON.parse(held)[0];
+    E(`onboardReveal(${JSON.stringify(id)}); true`);
+    assert(id && E(`onboardShown(${JSON.stringify(id)}) && liveFoe()`) && ev.includes(id + ' shown'), `${at}: opening a held row's place shows it at once (${held}, ${JSON.stringify(ev)})`);
+    // the Node tools never hold: with ONBOARD.hold off a held mark reads as shown
+    E(`S.onboard.t += ${E('ONBOARD_TUNE.gap') + 1}; S.maxZone = 6; onboardCheck(); true`);
+    const h2 = JSON.parse(E('JSON.stringify(FEATURES.filter(f => S.onboard.done["hold:" + f.id]).map(f => f.id))'));
+    assert(h2.length && E(`ONBOARD.hold = false; const r = onboardShown(${JSON.stringify(h2[0])}); ONBOARD.hold = true; r`), `${at}: with the hold off (the Node tools) a held row reads as shown (${h2})`);
+    assert(!g.errors.length, `${at}: no errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  { // a held row a drop opens later shows at once; "Show every tab" shows the rest, each with its notice
+    const [g, E, ev] = mk(1);
+    E('S.maxZone = 2; onboardCheck(); S.onboard.got.nextup = S.onboard.got.awaynote = S.onboard.got.almanac = Math.round(S.onboard.t); S.onboard.t += 721; onboardCheck(); true');
+    const h = E('JSON.stringify(FEATURES.filter(f => S.onboard.done["hold:" + f.id]).map(f => f.id))');
+    E('S.found = Object.assign(S.found || {}, { "moss-crown": 1 }); tick(0.05); true');
+    const u = E('JSON.stringify([isUnlocked("uniques"), onboardShown("uniques"), liveFoe()])');
+    assert(/uniques/.test(h) && u === '[true,true,true]' && ev.includes('uniques shown'), `${at}: Uniques, held from the 12-minute clock, shows at once mid-fight when a unique drops (${h} ${u} ${JSON.stringify(ev)})`);
+    E('onboardUnlockAll(); true');
+    const left = E('JSON.stringify(FEATURES.filter(f => S.onboard.done["hold:" + f.id]).map(f => f.id))');
+    assert(left === '[]' && JSON.parse(h).filter(id => id !== 'uniques').every(id => ev.includes(id + ' shown')), `${at}: Show every tab shows each held row with its notice (${h} -> ${left}; ${JSON.stringify(ev)})`);
+    assert(!g.errors.length, `${at}: no errors (drops, show all)` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  { // the Node tools never hold: a release mid-fight leaves no mark
+    const g = loadCore({ seed: 41, turns: true }), E = s => g.eval(s);
+    E('soloPick("tobin"); S.onboard.got.party = 0; S.onboard.t = 300; setActivity("fight"); for (let i = 0; i < 50 && !liveFoe(); i++) tick(0.1); S.maxZone = 2; onboardCheck(); true');
+    assert(E('ONBOARD.hold === false && liveFoe() && onboardShown("gather") && !Object.keys(S.onboard.done).some(k => k.startsWith("hold:"))'), `${at}: in the Node tools the hold is off: Gather released mid-fight shows and leaves no mark`);
+  }
+  { // holdForStage 0: today's rule, a released row shows at once
+    const [g, E, ev] = mk(0);
+    E('S.maxZone = 2; onboardCheck(); true');
+    const a = look(E);
+    assert(a.shown && !a.held && E('liveFoe()') && ev.includes('gather'), `${at}: holdForStage 0 shows Gather mid-fight as before (${JSON.stringify([a, ev])})`);
+    assert(!g.errors.length, `${at}: no errors (off)` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+} catch (e) { fail('unlocks wait for the gap crashed: ' + (e.stack || e)); }
+
+// the same on screen, at the three views: the Gather tab and the Fight / Gather row wait for the clear stage, then come with Hesketh's line
+if (section('unlocks wait for the gap (browser)')) try {
+  const at = 'unlocks-wait-for-the-gap (browser)';
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser(`${at}: Playwright or Chromium not here, skipped`);
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t={x:src=>eval(src)};\n' + html0.slice(end);
+    // save-cold-z2-unlit: a cold Tobin game past the first boss; here Gather, Next Up and the away note are not yet released and zone 2 not yet reached
+    const o = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'proof-fixtures', 'save-cold-z2-unlit.json'), 'utf8'));
+    for (const k of ['gather', 'nextup', 'awaynote']) delete o.onboard.got[k];
+    o.onboard.t = 300; o.onboard.sayQ = []; o.maxZone = 1; o.zone = 1;
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const LOOK = `JSON.stringify((() => { const t = document.querySelector('.tabs .tab[data-tab="gat"]'), b = document.querySelector('.ob-bub'), up = !!b && !b.hidden;
+      return { tab: !!t && !t.hidden && !!t.offsetParent, row: getComputedStyle($('modeSeg')).visibility !== 'hidden', got: S.onboard.got.gather ?? null, foe: liveFoe(),
+        txt: up ? b.querySelector('.ob-txt').textContent : '', toast: [...document.querySelectorAll('#toasts .toast')].some(n => /New tab: Gather/.test(n.textContent)) }; })())`;
+    try {
+      for (const [w, h] of [[1280, 720], [740, 360], [360, 740]]) {
+        const v = `${at} ${w}x${h}`, mobile = w !== 1280;
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce', turns: true });
+        await ctx.addInitScript(({ raw, key }) => { const s = JSON.parse(raw); s.last = Date.now(); localStorage.setItem(key, JSON.stringify(s)); }, { raw: JSON.stringify(o), key: KEY });
+        const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForFunction(() => !!window.__t);
+        const X = s => page.evaluate(s => window.__t.x(s), s), look = async () => JSON.parse(await X(LOOK));
+        await page.evaluate(() => document.querySelectorAll('.away-ov').forEach(n => n.querySelector('button') && n.querySelector('button').click()));
+        await X('closeMenu(); setActivity("fight"); true');
+        await page.waitForFunction(() => window.__t.x('liveFoe() && !isUnlocked("gather")'), null, { timeout: 15000 });
+        await X('S.maxZone = 2; onboardCheck(); true');
+        const seen = [];
+        for (let i = 0; i < 8; i++) { await page.waitForTimeout(150); seen.push(await look()); }
+        const bad = seen.filter(s => s.foe && (s.tab || s.row || s.toast || /gather/i.test(s.txt)));
+        assert(seen[0].got !== null && seen.some(s => s.foe) && !bad.length, `${v}: released mid-fight, Gather keeps off the tab bar and the Fight / Gather row, with no notice or line, while the foe stands (${JSON.stringify(bad[0] || seen[0])})`);
+        await X('combatFoes().forEach(f => { f.hp = 0; f.dead = true; }); true');
+        let s = await look();
+        for (const t0 = Date.now(); !(s.tab && s.row && /gather/i.test(s.txt)) && Date.now() - t0 < 6000;) { await page.waitForTimeout(100); s = await look(); }
+        assert(s.tab && s.row && /gather/i.test(s.txt), `${v}: on the clear stage the Gather tab and the Fight / Gather row show, with Hesketh's line (${JSON.stringify(s)})`);
+        assert(!errs.length, `${v}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('unlocks wait for the gap (browser) crashed: ' + (e.stack || e)); }
+
 // ---- unlock-tip-coverage (Milestone 1a, E5): every system a player meets by zone 15 gets its tip, in order, once ----
 // The first-use section above checks the tables row by row. This one walks a new game to zone 15 and proves the
 // whole chain: each unlock opens, is spaced, has a line, has Hesketh's words (or its own guide step or strip), and the
@@ -3059,7 +3176,7 @@ if (section('unlock tip coverage (E5)')) try {
     }
   }
   // the substitutes are real: Next Up has its guide step, the away strip reads its row, the Deepwell (zone 18) still has both lines
-  assert(E('GUIDE_STEPS.some(s => s.id === "nextup")') && /isUnlocked\('awaynote'\)/.test(rd('71-ui-fight.js')) && lines.deep && say.has('deep'), 'the guide step, the away strip and the Deepwell lines the check leans on exist');
+  assert(E('GUIDE_STEPS.some(s => s.id === "nextup")') && /featOk\('awaynote'\)/.test(rd('71-ui-fight.js')) && lines.deep && say.has('deep'), 'the guide step, the away strip and the Deepwell lines the check leans on exist');
   // note: this walk is a warm Hearth (camp, Craft and Tavern open by zone); the cold-Hearth path is held by the guide steps' own checks
   const reached = rows.filter(r => !r.late && got[r.id]).map(r => r.id), missed = rows.filter(r => !r.late && !got[r.id]).map(r => r.id);
   assert(reached.length >= 14 && missed.every(id => id === 'deep'), `zone 15 opens every system except the Deepwell (opens at zone 18); not opened: ${missed.join(', ') || 'none'}`);
@@ -12927,7 +13044,7 @@ if (section('story-unlock-gates')) try {
   O3('S.onboard.got = { party: Math.round(S.onboard.t) - 5 }; handsOpen = () => true');
   assert(JSON.parse(O3('JSON.stringify(onboardCheck())')).includes('hands') && O3('isUnlocked("hands")'), 'story-unlock-gates: after "Show every tab", Hands opens when its rule holds, even within a minute of the last unlock');
   const obUi = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
-  assert(!/^\s*awaynote:/m.test(obUi.slice(obUi.indexOf('const OPEN_TXT = {'), obUi.indexOf('const TAB_FEATURE'))) && /isUnlocked\('awaynote'\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '71-ui-fight.js'), 'utf8')), 'story-unlock-gates: the away strip arrives silently (no unlock notice) and waits for its row');
+  assert(!/^\s*awaynote:/m.test(obUi.slice(obUi.indexOf('const OPEN_TXT = {'), obUi.indexOf('const TAB_FEATURE'))) && /featOk\('awaynote'\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '71-ui-fight.js'), 'utf8')), 'story-unlock-gates: the away strip arrives silently (no unlock notice) and waits for its row');
   // a cold new game, played as the guide asks: the game waits while a step pauses (no play clock), the player does the step
   const cw = loadCore({ seed: 921, cold: true }), C = s => cw.eval(s), got = [];
   C('Date.__t = Date.now(); Date.now = () => Date.__t; soloPick("tobin")');

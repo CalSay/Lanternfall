@@ -185,7 +185,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   // sits under the unspent-points pile by design. Go only sends the hero to the Pine Grove; the player chops and lights.
   const fireNeed = () => HEARTH_TUNE.light[0][2];
   const fireHave = () => Math.floor(matOwn(HEARTH_TUNE.light[0][0], HEARTH_TUNE.light[0][1]));
-  const fireOn = () => hearthCold() && !hearthLit() && typeof isUnlocked === 'function' && isUnlocked('gather');
+  const fireOn = () => hearthCold() && !hearthLit() && typeof isUnlocked === 'function' && onboardShown('gather');
   const choppingPine = () => S.activity === 'gather' && S.node && S.node.kind === 'wood' && S.node.t === 1;
   registerGoal({
     id: 'hearth-fire', sys: 'hearth', prio: 11,

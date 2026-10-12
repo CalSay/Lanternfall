@@ -18,7 +18,7 @@ wait 1
 tap-if "Continue"
 wait 1
 tap-if "Got it"
-tap "Switch activity"
+tap "Go to"
 wait 1
 tap "Mine"
 wait 2

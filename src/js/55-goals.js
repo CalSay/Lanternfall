@@ -301,7 +301,7 @@ var forgeGoalPicks = 0;
   // material you are short of whose node tier is closed for its gathering skill (a refined one by the raw goods it is made from;
   // coal comes with Copper Ore and essence has no tier, so neither gates). The furthest gate of the nearest piece is named.
   // null: nothing gates it; false: only a gate the player cannot raise now (Hunting hidden, Foraging not open yet).
-  const GATHER_OPEN = { hide: () => huntingVisible(), fibre: () => isUnlocked('forage'), herb: () => isUnlocked('forage') };
+  const GATHER_OPEN = { hide: () => huntingVisible(), fibre: () => onboardShown('forage'), herb: () => onboardShown('forage') };
   // a raw cell's gate, or false when its node never opens or its skill is hidden
   const rawGate = (f, tt) => {
     const sk = skillOf(f); if (skillTierOpen(sk, tt)) return null;

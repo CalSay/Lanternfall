@@ -436,7 +436,7 @@ function saveUiPrefs() { try { localStorage.setItem(UI_KEY, JSON.stringify(uiPre
 //   first is the default view). dot() (optional, cheap) -> true puts an attention dot on the button
 //   and on the tab while that view is not open. Sections join a view with registerSection's `view`.
 //   feature (optional): a 55-onboard.js feature id; the view (and a tab with no view left) stays
-//   hidden until isUnlocked(feature).
+//   hidden until onboardShown(feature).
 //   show (optional, UX-A): () -> bool, cheap; false leaves the view out of the switcher for now
 //   (Gather's Mining view on a cold Hearth before the fire, 72-ui-gather.js).
 function registerView(tabId, { id, label, order = 50, dot, feature, show } = {}) {
@@ -453,7 +453,7 @@ function registerView(tabId, { id, label, order = 50, dot, feature, show } = {})
 }
 function safeDot(f) { try { return !!f(); } catch (e) { return false; } }
 // Progressive unlocks (55-onboard.js): a view or section with a feature id shows once it is unlocked.
-const featOk = f => !f || typeof isUnlocked !== 'function' || isUnlocked(f);
+const featOk = f => !f || typeof isUnlocked !== 'function' || onboardShown(f);   // shown: a released row held for a clear stage stays hidden (55-onboard)
 registerView('adv', { id: 'upgrades', label: 'Boss', order: 10 });   // the hero trains on the Hero tab, so this view is the boss gate
 registerView('adv', { id: 'bounties', label: 'Bounties', order: 20, feature: 'bounties',
   dot: () => ((S.bounties && S.bounties.slots) || []).some(b => b && b.k && b.have >= b.need) });

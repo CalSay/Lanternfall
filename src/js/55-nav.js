@@ -53,7 +53,7 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
   const same = (a, b) => !!a && !!b && a.kind === b.kind && a.t === b.t;
   const gathering = () => S.activity === 'gather';
   const coldUnlit = () => typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit();
-  const feat = id => typeof isUnlocked !== 'function' || isUnlocked(id);
+  const feat = id => typeof isUnlocked !== 'function' || onboardShown(id);
 
   navSkillOpen = sk => {
     if (!NAV_FAMS[sk] || (sk === 'hunt' && !huntingVisible())) return false;

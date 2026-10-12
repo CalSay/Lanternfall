@@ -4,7 +4,7 @@
 # The save (tests/proof-fixtures/save-deep-spill.json, made by loading and saving save-late through the game): Pip at zone 38,
 # cutting at the Tideash Grove with its pile 3,000 short of full and Spillover on, and a paused Deepwell run on floor 1 that was
 # started from there.
-#   resumed-*.png   the run resumed from the Switch activity picker: Pip's turn against the Deep Spore Cap
+#   resumed-*.png   the run resumed from the Go to picker: Pip's turn against the Deep Spore Cap
 #   away-*.png      an hour in the background: the card shows Tideash and, after the pile filled, Mangrove from Spillover
 #   back-*.png      back in the Deepwell: the same Deep Spore Cap at full health, Pip's turn, the Act / Skills / Foe dock live
 # Before the fix, the away hour's Spillover reset the scene: the foe was left standing at 0 health, every fight button went grey,
@@ -13,7 +13,7 @@
 new deep-spill
 wait 3
 tap-if "Dismiss this tip"
-tap "Switch activity"
+tap "Go to"
 wait 1
 tap "Deepwell · Floor 1"
 wait 4
