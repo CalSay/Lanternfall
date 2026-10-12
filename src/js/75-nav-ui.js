@@ -9,8 +9,8 @@
 //   - The quick switcher (a small sheet): Fight at your zone, each open skill's last node, up to 3
 //     recent places, "All nodes ›" and "Raid ›" (online only). One tap switches the activity and
 //     closes the sheet and any open menu (UX-L1: in landscape too, so you see the stage).
-//   - The control row (4.3): [Fight · Z37] [Mining] [Switch]. Fight names the zone while you do something
-//     else, the Gather button the skill it resumes, Switch opens the switcher. Raid left the row (approved):
+//   - The control row (4.3): [Fight · Z37] [Mining] [Go to]. Fight names the zone while you do something
+//     else, the Gather button the skill it resumes, Go to opens the switcher. Raid left the row (approved):
 //     the switcher has a Raid row online.
 //   - Swipe sideways on a menu's content: the next or previous view of that tab (56 px, or a flick
 //     over 0.4 px/ms; never from [data-noswipe], sliders, the star map, drag slots or sideways scrollers).
@@ -104,7 +104,7 @@ let navUI = null;
     putText(pTx, narrow ? n.short : n.text);
     if (n.icon !== pIcon) { pIcon = n.icon; setNav(pIc, ICON_OF[n.icon] || NAV_OF[n.icon] ? n.icon : 'fight', 18); }
     putClass(pill, 'act-pill ' + n.act + (n.full ? ' full' : ''));
-    putAttr(pill, 'aria-label', `${n.text}. Switch activity`);
+    putAttr(pill, 'aria-label', `${n.text}. Go to another place`);
   }
   uiHooks.push(updatePill);
   addEventListener('resize', () => { pSig = ''; updatePill(); });
@@ -114,8 +114,9 @@ let navUI = null;
   const gIc = img(ICON_OF.mine(), 'px mode-ic'), gTx = el('span', 'mode-tx', 'Gather');
   gBtn.textContent = ''; gBtn.append(gIc, gTx);
   const sw = btn('ctrl-switch'); sw.id = 'switchBtn';
-  sw.append(el('span', 'nvs-tx', 'Switch'), el('span', 'nvs-chev'));
-  sw.setAttribute('aria-haspopup', 'dialog'); sw.setAttribute('aria-label', 'Switch activity');
+  // first-hour-jargon F: "Switch" also meant Switch hero and a full Storehouse cell, so the place picker is "Go to"
+  sw.append(el('span', 'nvs-tx', 'Go to'), el('span', 'nvs-chev'));
+  sw.setAttribute('aria-haspopup', 'dialog'); sw.setAttribute('aria-label', 'Go to');
   $('modeSeg').after(sw);
   sw.addEventListener('click', () => openSwitcher());
   let gSk = '';
@@ -164,7 +165,7 @@ let navUI = null;
       api.sheet.classList.add('nv-sheet');
       const pickGo = place => { api.close(true); navGo(Object.assign({ close: true }, place)); };
       const head = el('div', 'nv-head');
-      head.append(el('h2', 'nv-title', 'Switch activity'), el('span', 'nv-hint', 'Menus close when you pick'));
+      head.append(el('h2', 'nv-title', 'Go to'), el('span', 'nv-hint', 'Menus close when you pick'));
       const list = el('div', 'dz-list nv-list');
       const now = navNow(), deep = now.act === 'deep';
       if (deep) row(list, { icon: ICON_OF.deep(), title: `Deepwell · Floor ${now.floor}`, meta: 'Now · climb out to switch', here: true });
@@ -218,7 +219,7 @@ let navUI = null;
         links.append(rd);
       }
       if (links.children.length) api.body.append(links);
-    }, { small: true, label: 'Switch activity' });
+    }, { small: true, label: 'Go to' });
   }
 
   // ---------------- swipe between views ----------------

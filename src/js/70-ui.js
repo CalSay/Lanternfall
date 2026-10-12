@@ -453,7 +453,7 @@ function registerView(tabId, { id, label, order = 50, dot, feature, show } = {})
 }
 function safeDot(f) { try { return !!f(); } catch (e) { return false; } }
 // Progressive unlocks (55-onboard.js): a view or section with a feature id shows once it is unlocked.
-const featOk = f => !f || typeof isUnlocked !== 'function' || isUnlocked(f);
+const featOk = f => !f || typeof isUnlocked !== 'function' || onboardShown(f);   // shown: a released row held for a clear stage stays hidden (55-onboard)
 registerView('adv', { id: 'upgrades', label: 'Boss', order: 10 });   // the hero trains on the Hero tab, so this view is the boss gate
 registerView('adv', { id: 'bounties', label: 'Bounties', order: 20, feature: 'bounties',
   dot: () => ((S.bounties && S.bounties.slots) || []).some(b => b && b.k && b.have >= b.need) });

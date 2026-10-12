@@ -2,7 +2,7 @@
 // 75-onboard-ui.js draws them. CORE FILE: no DOM, window, document, canvas or localStorage.
 // API: isUnlocked(id), onboardReveal(id), onboardUnlockAll(), onboardStep() -> the step to show, onboardDone(id), onboardTips(on),
 // onboardNeed(id) -> short materials, onboardWants(id), onboardPaused(step), goalGate(goal), onboardUse(ctx) -> first-use line,
-// onboardUseDone(id), onboardJoined(id). Events: unlock { id, tab, view, quiet }, onboardStep { id }.
+// onboardUseDone(id), onboardJoined(id), onboardShown(id) -> on screen (released and not held). Events: unlock { id, tab, view, quiet, held?, shown? }, onboardStep { id }.
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 }, tips, t, taps, casts, sayQ }.
 let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, guideHide, onboardUse, onboardUseDone, onboardTips, onboardCheck, onboardNeed, onboardWants, onboardPaused, guideRetire, guideLessonHold, onboardJoined;
 let lessonLast = -1;   // the foe's clock at the last tick (guideLessonHold: a hold starts only on the frame that crosses a window's opening)
@@ -13,7 +13,8 @@ let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen 
 // (only gameHeld() blocks them), so a held Dodge can be pressed from the keyboard.
 // lessons: the browser turns on the staged guide's core hold (cal-0107-staged-guide; guideLessonHold below). Off in the Node tools, so the sim
 // and the parity tools never see it.
-const ONBOARD = { gate: false, paused: false, lessons: false };
+// hold: the browser turns on holdForStage (off in the Node tools)
+const ONBOARD = { gate: false, paused: false, lessons: false, hold: false };
 // function declaration: 55-goals.js (loaded earlier) calls it at run time.
 function goalGate(g) { return !ONBOARD.gate || typeof onboardGoalOk !== 'function' || onboardGoalOk(g); }
 let onboardGoalOk;
@@ -34,8 +35,13 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 // now() skips the wait when the player's own act or a drop opened it (raid: the online layer's timing stays as it was). 0: off.
 // sideDoors (no-word-before-its-tab): Bounties, the Bestiary, the Codex and the Almanac send no notice before their row opens; sideNow
 // is the row's open line when something waited there (75-onboard-ui sayText). 0: they speak early, as before.
-const ONBOARD_TUNE = { gap: 90, sideDoors: 1 };
-const sideShut = id => ONBOARD_TUNE.sideDoors > 0 && !isUnlocked(id);
+// holdForStage (unlocks-wait-for-the-gap): a row the governor releases with a foe on the stage waits from view (done['hold:<id>']) for a
+// clear stage, one at a time and a gap after the last shown; got stays. now() rows show at once. 0: rows show on release.
+const ONBOARD_TUNE = { gap: 90, sideDoors: 1, holdForStage: 1 };
+const holdOn = () => ONBOARD.hold && ONBOARD_TUNE.holdForStage > 0;
+// what Next Up, the guide and the tabs read (isUnlocked is the release)
+function onboardShown(id) { return isUnlocked(id) && !(id && holdOn() && !!O().done['hold:' + id]); }
+const sideShut = id => ONBOARD_TUNE.sideDoors > 0 && !onboardShown(id);
 const btyDone = () => S.bounties.slots.findIndex(x => x && x.k && x.have >= x.need);
 const SIDE_NOW = {
   bounties: () => { const n = S.bounties.slots.filter(x => x && x.k && x.have >= x.need).length;
@@ -141,7 +147,7 @@ const matPlace = (fam, t = 1) => {
   if (!fm || fm.src !== 'gather' || !CRAFT_NODES[fam]) return { open: false, skill: null, kind: null, verb: 'Gather', opens: null };
   const sk = fm.skill, seen = typeof navSkillOpen === 'function' && navSkillOpen(sk);
   const open = seen && craftNodeVisible(fam, t) && skillTierOpen(sk, t);
-  const f = !seen && (sk === 'forage' || sk === 'hunt') && (sk !== 'hunt' || huntingVisible()) && !isUnlocked('forage') ? FEATURES.find(x => x.id === 'forage') : null;
+  const f = !seen && (sk === 'forage' || sk === 'hunt') && (sk !== 'hunt' || huntingVisible()) && !onboardShown('forage') ? FEATURES.find(x => x.id === 'forage') : null;
   return { open, skill: sk, kind: open ? fam : null, verb: PLACE_VERB[fam] || 'Gather', opens: f ? f.why : null };
 };
 // The Craft card's line under a recipe short of a gathered material: "Bristlehide: from Hunting, which opens at zone 5." / "Quartz: from Mining geodes."
@@ -171,47 +177,34 @@ const wearPiece = kind => {
   } catch (e) {}
   return null;
 };
-// the points are spent, or a beat after the first one with some left (staged-guide-followups: it waited 20 s, a long silence while the next fight
-// started behind the menu; his line already says "when you're done here", so the rest can still be spent under it): time to point back at the fight
+// the points are spent, or a beat after the first one (staged-guide-followups): time to point back at the fight
 const BACK_WAIT = 1;   // seconds of play after the first point
 const backReady = () => { try { const k = soloHero(); if (obAttrOn() && k && attrPoints(k).free > 0) return GUIDE_RT.lastEnd !== null && GUIDE_RT.t - GUIDE_RT.lastEnd >= BACK_WAIT; } catch (e) {} return true; };
 const spendPile = () => obAttrOn() && attrPoints(soloHero()).free >= 2 * HERO_TUNE.perLevel;
 const spendTail = () => GUIDE_RT.latch === 'spend' && S.tab === 'party' && fightingNow();
-// answered: the latch is runtime only, so the save keeps a mark beside the step marks (as `use:` lines do) once the pile is spent with the line
-// up, and a reload before the menu closes cannot bring the line back
+// answered: a save mark once the pile is spent with the line up, so a reload cannot bring it back
 const spendAnswered = () => { if (GUIDE_RT.latch === 'spend' && !spendPile()) O().done['spend:spent'] = 1; return !!O().done['spend:spent']; };
 const toolWorn = () => { try { return TOOL_POS.some(pos => !!equipped(pos)); } catch (e) { return false; } };
-// W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
-// never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
-// extra condition for the pause. Attack and the ability need a live foe; Dodge and Parry need a wind-up still on its
-// way, and the guide's press ignores a cooldown left by an earlier press (59j: `forgive`), so a paused game never waits on one.
+// W1-D: a combat step pauses only while what it asks for can happen now (`pauseWhen`), so a pause never freezes the clock it needs
 const liveFoe = () => { try { return combatFoes().some(f => f && !f.dead && f.hp > 0 && !f.gone); } catch (e) { return false; } };
-// Turn fights (59k): Attack and the ability wait for your turn; Dodge and Parry pause inside their window, so the
-// paused press lands. In a legacy fight the old conditions stand.
+// Turn fights (59k): Attack and the ability wait for your turn; Dodge and Parry pause inside their window
 const turnSnap = () => { try { return typeof turnCombatOn === 'function' && turnCombatOn() ? turnCombatSnapshot() : null; } catch (e) { return null; } };
 const heroTurnNow = () => { const q = turnSnap(); return !q || q.phase === 'hero'; };
 // (a hit you already dodged or parried is not a new lesson: the next step waits for the next hit)
 const hitComing = () => { const q = turnSnap(); return q ? q.canDefend && q.closesAt > q.now : heavyShowing(); };
 const inWindow = k => { const q = turnSnap(); if (!q) return heavyShowing(); const open = k === 'parry' ? q.parryOpensAt : q.dodgeOpensAt; return q.canDefend && q.now >= open && q.closesAt - q.now > 0.02; };
-// guide-voice: every step names the phases it may START in (`ph`), and a step whose phase is not now waits. 'hero' your turn,
-// 'windup' a hit is on its way (the Dodge and Parry window), 'foe' the foe acts with nothing to answer, 'between' no fight in view
-// (not fighting, no foe alive, or a menu open). Once a 'between' step has started it stays up until done or retired.
+// guide-voice: `ph` names the phases a step may start in: 'hero', 'windup' (a hit on its way), 'foe', 'between' (no fight in view)
 const GUIDE_PHASES = ['hero', 'windup', 'foe', 'between'];
 let guideMenuCovers = () => true;   // 75-onboard-ui.js: a wide screen keeps the fight in view beside an open menu
 let guideLineOk = () => true;       // 75-onboard-ui.js: a guide line can show now (the page is visible, no card or sheet over it)
 function guidePhase(seeThroughMenu) { return !fightingNow() || !liveFoe() || (!seeThroughMenu && !!S.tab && S.tab !== 'adv') ? 'between' : hitComing() ? 'windup' : heroTurnNow() ? 'hero' : 'foe'; }
 // A fight is one foe on the field (59k `fightStart`; the legacy fight: a pack). Runtime only, never saved.
 const GUIDE_RT = { t: 0, fight: 0, doneIn: {}, lastEnd: null, latch: '', shown: {}, hid: {} };
-// reload-keeps-tips: tips whose job is still undone (a piece in the bag, the cold fire). × or the 60 s retire hides one for this session only
-// (GUIDE_RT.hid, no done mark), so a reload brings it back once; its own done rule (the piece worn, the hero gathering) still ends it for good.
+// reload-keeps-tips: × or the retire hides these for this session only (GUIDE_RT.hid), so a reload brings them back once
 const GUIDE_SESSION = ['wear:weapon', 'wear:tool', 'gather'];
 const GUIDE_QUIET = 60;    // seconds of play between two unprompted lines outside fights, and before a live tip retires
-// cal-0107-staged-guide (Cal's play notes 3 and 12): the fight lessons. In a turn fight each press is taught the first time it comes up, with
-// the fight held: Attack on your first turn, Dodge on the foe's first swing, the ability on your next turn, Parry on the next swing (or the
-// next foe's first). Dodge and Parry show only once their window is open (inWindow), and guideLessonHold stops the foe's clock right there.
-// The legacy real-time fight keeps its old steps with no fight-by-fight wait (Dodge may come before the ability there).
-// A save at zone 8 or past never gets these lessons (a mid or late save whose marks predate them): they are marked done unseen.
-// The boss tip may also start while the boss opens (its intro or its own turn), so it comes before the boss's first move.
+// cal-0107-staged-guide: the fight lessons, each press taught the first time it comes up with the fight held (Dodge and Parry inside their
+// window, guideLessonHold). A save at zone 8 or past has them marked done unseen.
 const LESSON_IDS = ['attack', 'ability', 'dodge', 'parry'];
 const turnLesson = () => { try { return typeof turnCombatOn === 'function' && !!turnCombatOn(); } catch (e) { return false; } };
 const GUIDE_STEPS = [
@@ -221,40 +214,34 @@ const GUIDE_STEPS = [
   { id: 'parry', ph: ['windup'], pause: 1, pauseWhen: () => liveFoe() && inWindow('parry'), when: () => stepDone('dodge') && (!turnLesson() || stepDone('ability') && inWindow('parry')) && fightingNow() && hitComing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', ph: ['hero', 'foe'], pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, the first level-up or zone 2)
-  { id: 'upgrade', ph: ['between'], tip: 'You can grow stronger now. Open Hero.', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
-  // spend-points-before-nextup: two levels' points or more piled up before Next Up opens (it ranks them once it does). Once a game: the
-  // latch is set when the line shows, and a spend under two levels' worth with it up is kept in the save ('spend:spent'); × ends it too,
-  // and Next Up opening ends it unseen. Spent with the Hero menu still over the fight, it says what `back` says (Cal's play note 7;
-  // `back` was done long before) until the menu closes.
-  { id: 'spend', ph: ['between'], pause: 1, tip: 'Open Hero, then Build, and spend your attribute points.', when: () => stepDone('upgrade') && !isUnlocked('nextup') && (spendPile() || spendTail()),
-    done: () => isUnlocked('nextup') || (spendAnswered() && !spendTail()) },
+  { id: 'upgrade', ph: ['between'], tip: 'You can grow stronger now. Open Hero.', pause: 1, when: () => stepDone('ability') && onboardShown('party') && S.gold >= cheapestUp(), done: () => upBought() },
+  // spend-points-before-nextup: two levels' points piled up before Next Up opens; once a game ('spend:spent'), Next Up opening ends it
+  { id: 'spend', ph: ['between'], pause: 1, tip: 'Open Hero, then Build, and spend your attribute points.', when: () => stepDone('upgrade') && !onboardShown('nextup') && (spendPile() || spendTail()),
+    done: () => onboardShown('nextup') || (spendAnswered() && !spendTail()) },
   // Cal's play note 7: after the points are spent, say how to get back to the fight (the Hero menu otherwise just sits there)
   { id: 'back', ph: ['between'], pause: 1, tip: 'Close the menu and get back to the fight.', when: () => stepDone('upgrade') && S.tab === 'party' && fightingNow() && backReady(), done: () => stepDone('upgrade') && !S.tab },
   // Cal's play notes 9 and 13: a weapon found or made sits in the bag until it is worn. The tip names it and wears it in one tap.
   { id: 'wear:weapon', ph: ['between'], pause: 1, tip: 'Your new weapon is in your bag. Put it on.', when: () => coldH() && !!wearPiece('weapon'), done: () => weaponMade() },
-  { id: 'gather', ph: ['between'], tip: 'Press Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
+  { id: 'gather', ph: ['between'], tip: 'Press Gather and chop Pine Log for a camp fire.', pause: 1, when: () => S.maxZone >= 2 && onboardShown('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', ph: ['between'], needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', ph: ['between'], pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
   { id: 'stock:bench', ph: ['between'], needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
-  // forge-tip-goes-stale: a press step (bench, tool, weapon, forge, store) waits for its materials in hand, so × on its stock: line never swaps in an
-  // "Open Camp." or "Open Craft." that follows you around while you are still short
+  // forge-tip-goes-stale: a press step waits for its materials in hand
   { id: 'bench', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
   { id: 'stock:tool', ph: ['between'], needs: toolMats, when: () => coldH() && campLv('bench') >= 1 && !!needShort(toolMats()).length, done: () => !coldH() || toolMade() },
-  // only once Craft is unlocked: this step pauses the game, and the unlock pass runs on the game clock, so a pause that
-  // came first held Craft locked for good (the Craft tab opened on Uniques only, with no Make view to point at)
-  { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && isUnlocked('craft') && !needShort(toolMats()).length, done: () => !coldH() || toolMade() },
+  // only once Craft shows: this step pauses the game, and a pause that came first held Craft shut for good
+  { id: 'tool', ph: ['between'], pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1 && onboardShown('craft') && !needShort(toolMats()).length, done: () => !coldH() || toolMade() },
   { id: 'wear:tool', ph: ['between'], pause: 1, tip: 'Put on the tool you made. It only works when you wear it.', when: () => coldH() && stepDone('tool') && !!wearPiece('tool'), done: () => !coldH() || (stepDone('tool') && toolWorn()) },
-  // first-gold-and-camp-strip, gear-in-first-25: the first weapon. A Workbench weapon (bow, staff) comes right after the tool, once every
-  // short material has a place open (weaponNow); until then the Forge steps show. Tobin's Forge weapon waits for the Forge step, as before.
+  // gear-in-first-25: the first weapon; a Workbench one right after the tool (weaponNow), a Forge one after the Forge step
   { id: 'stock:weapon', ph: ['between'], needs: weaponMats, when: () => weaponNow() && !!needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
-  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && isUnlocked('craft') && !needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
+  { id: 'weapon', ph: ['between'], pause: 1, pauseUnless: weaponMats, when: () => weaponNow() && onboardShown('craft') && !needShort(weaponMats()).length, done: () => !coldH() || weaponMade() || (!weaponAtBench() && stepDone('store')) },
   { id: 'stock:forge', ph: ['between'], needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'forge', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
   { id: 'stock:store', ph: ['between'], needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
   { id: 'store', ph: ['between'], pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
+  { id: 'tab:party', ph: ['between'], quiet: 1, tip: 'The Hero tab holds your level, build and abilities.', when: () => onboardShown('party') && S.maxZone >= 3 && !unlit() && !fightingNow(), done: () => !!O().seen.party },
   // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
-  { id: 'nextup', ph: ['between'], quiet: 1, ok: 1, tip: 'Next Up shows the one thing most worth doing now.', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
+  { id: 'nextup', ph: ['between'], quiet: 1, ok: 1, tip: 'Next Up shows the one thing most worth doing now.', when: () => onboardShown('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
 ];
 const toolMade = () => S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool);
 
@@ -270,10 +257,7 @@ function needShort(mats) {
   }
   return out;
 }
-// The guide teaches Training's Attack: the first level's price, and whether any move has been trained.
-// hero-progression-rework: with attributes on (HERO_TUNE.training = 0) the step is the first attribute point: it fires when the
-// playing hero has one free (cheapestUp is 0 then, so `gold >= cheapestUp()` reads "a point to spend"; Infinity: none) and it is
-// done when any hero has spent one (attrSpentAny).
+// The upgrade step: Training's first Attack level, or with attributes on the first point (cheapestUp 0: a point to spend; Infinity: none)
 const obAttrOn = () => typeof attrOn === 'function' && attrOn();
 const cheapestUp = () => {
   if (obAttrOn()) return typeof attrPoints === 'function' && soloHero() && attrPoints(soloHero()).free > 0 ? 0 : Infinity;
@@ -300,16 +284,39 @@ function craftReady() {
   registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, atk: 0, dodges: 0, parries: 0, sayQ: [] });
 
   isUnlocked = id => !id || !FEATURE_OF[id] || O().got[id] != null || (O().all && !FEATURE_OF[id].late);
-  function unlock(id, quiet) {
+  // HOLD.at: when the last released row showed (GUIDE_RT's clock runs on after O().t stops)
+  const HOLD = { at: -Infinity };
+  const stageClear = () => !(fightingNow() && liveFoe());
+  const holdReady = () => stageClear() && GUIDE_RT.t - HOLD.at >= ONBOARD_TUNE.gap;
+  const heldIds = () => FEATURES.filter(f => O().done['hold:' + f.id]).sort((a, b) => O().got[a.id] - O().got[b.id]).map(f => f.id);
+  // act: now() was true, so it shows at once
+  function unlock(id, quiet, act) {
     const f = FEATURE_OF[id]; if (!f || isUnlocked(id)) return false;
     O().got[id] = Math.round(O().t);
-    emit('unlock', { id, tab: f.tab || null, view: f.view || null, quiet: !!quiet });
+    const own = !quiet && !act, held = own && holdOn() && (!holdReady() || heldIds().length > 0);
+    if (held) O().done['hold:' + id] = 1; else if (own) HOLD.at = GUIDE_RT.t;
+    emit('unlock', { id, tab: f.tab || null, view: f.view || null, quiet: !!quiet || held, held });
     return true;
   }
-  onboardReveal = id => unlock(id, true);
+  // a held row shows, with its notice (the release sent none); false when not held
+  const showHeld = id => {
+    const f = FEATURE_OF[id]; if (!f || !O().done['hold:' + id]) return false;
+    delete O().done['hold:' + id]; HOLD.at = GUIDE_RT.t;
+    emit('unlock', { id, tab: f.tab || null, view: f.view || null, quiet: false, shown: true });
+    return true;
+  };
+  const holdTick = () => {
+    if (!ONBOARD.hold) return;
+    const h = heldIds(); if (!h.length) return;
+    if (!holdOn()) { for (const id of h) showHeld(id); return; }   // switched off: all of them now, as before
+    if (holdReady()) showHeld(h[0]);
+  };
+  // the player opened a held row's place: it shows at once
+  onboardReveal = id => showHeld(id) || unlock(id, true);
   onboardUnlockAll = () => {
     if (O().all) return;
     O().all = true;
+    for (const f of FEATURES) delete O().done['hold:' + f.id];
     emit('unlock', { id: '*', tab: null, view: null, quiet: true });
   };
   // Check every rule now; returns the ids that unlocked. The tick hook calls it about once a second.
@@ -320,8 +327,8 @@ function craftReady() {
     for (const f of FEATURES) {
       if (O().all && !f.late) continue;
       if (O().got[f.id] != null) continue;
-      let ok = false; try { ok = !!f.when() && (!wait || (!!f.now && !!f.now())); } catch (e) {}
-      if (ok && unlock(f.id)) { out.push(f.id); wait = gap > 0; }
+      let ok = false, act = false; try { act = !!f.now && !!f.now(); } catch (e) {} try { ok = !!f.when() && (!wait || act); } catch (e) {}
+      if (ok && unlock(f.id, false, act)) { out.push(f.id); wait = gap > 0; }
     }
     if (!O().all && FEATURES.every(f => f.late || O().got[f.id] != null)) O().all = true;
     return out;
@@ -333,9 +340,7 @@ function craftReady() {
   // forge-line-while-fighting: the step is still due (tips on, not done, not hidden this session, its when() true), whatever the fight's phase
   onboardWants = id => { const s = stepById(id); if (!s || !O().tips || O().done[id] || GUIDE_RT.hid[id]) return false; try { return !s.done() && !!s.when(); } catch (e) { return false; } };
   onboardNeed = id => { const s = stepById(id), f = s && (s.needs || s.pauseUnless); try { return f ? needShort(f()) : []; } catch (e) { return []; } };
-  // The pause guard: a step that waits for the player pauses the game, but never while it is also short of
-  // the materials the action costs (the player could not press it and the clock they need would be stopped).
-  // cal-0107-staged-guide: in a fight only the held lessons pause (a between step's line is hidden there; a camp or menu tip never freezes a fight).
+  // The pause guard: never while short of the materials the action costs; in a fight only the held lessons pause
   onboardPaused = step => {
     if (!(step && step.pause && !onboardNeed(step.id).length)) return false;
     let p = true; try { p = !step.pauseWhen || !!step.pauseWhen(); } catch (e) {}
@@ -345,8 +350,7 @@ function craftReady() {
   // done 1: the player did it. done 2: the tip waited 60 s unanswered and retired to the Journal's Tips.
   onboardDone = (id, how) => { if (!O().done[id]) { O().done[id] = how || 1; emit('onboardStep', { id }); } };
   const guideOver = () => GUIDE_STEPS.every(s => O().done[s.id]);
-  // reload-keeps-tips: at boot, a wear tip closed for good by an older build (× or the retire left a done mark) while the piece still sits in
-  // the bag with its slot empty can show once more
+  // reload-keeps-tips: at boot, a wear tip an older build closed for good can show once more while the piece sits in the bag
   let wearBooted = false;
   const wearBoot = () => {
     if (wearBooted) return; wearBooted = true;
@@ -392,7 +396,7 @@ function craftReady() {
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
   const GOAL_FEATURE = { bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', 'camp-look': 'camp', codex: 'codex', deep: 'deep', almanac: 'almanac' };
-  onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
+  onboardGoalOk = g => onboardShown(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----
   // A cold save's chops (taps on the tree) do not count toward "tap a foe".
@@ -444,6 +448,7 @@ function craftReady() {
   const lateOpen = () => FEATURES.every(f => !f.late || O().got[f.id] != null);
   onTick(dt => {
     GUIDE_RT.t += dt;
+    holdTick();
     if (O().all) {   // only late features are left to check (about once a second)
       lateAcc += dt; if (lateAcc < 1) return; lateAcc = 0;
       if (!lateOpen()) onboardCheck();

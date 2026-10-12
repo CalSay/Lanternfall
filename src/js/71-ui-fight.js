@@ -75,7 +75,7 @@ function awayChipSay(nm, n, hrs, back) {
 }
 function uiAwayChip() {
   const seg = $('modeSeg'), gb = seg.querySelector('button[data-act="gather"]');
-  let txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !isUnlocked('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
+  let txt = gb.hidden || seg.style.visibility === 'hidden' || $('game').closest('.app').classList.contains('deep-run') || !featOk('awaynote') ? '' : awayChipText();   // the away note's own beat (55-onboard FEATURES)
   if (!awayChip) {
     if (!txt) return;
     awayChip = el('p', 'away-rule gate-rule away-chip'); awayChip.append(img(iconURL('coin', '#F2C14E')), el('span'));

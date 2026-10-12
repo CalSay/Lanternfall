@@ -7,6 +7,7 @@
   const O = () => S.onboard;
   ONBOARD.gate = true;   // Next Up leaves out goals of systems still hidden
   ONBOARD.lessons = true;   // cal-0107-staged-guide: core holds the fight on the Dodge and Parry lessons (55-onboard guideLessonHold)
+  ONBOARD.hold = true;   // unlocks-wait-for-the-gap: a released tab shows once no foe is on the stage (55-onboard holdForStage)
 
   // ---------------- progressive unlocks ----------------
   const MODE_FEATURE = { gather: 'gather', raid: 'raid' };
@@ -161,7 +162,7 @@
   // (Got it or ×) would lose it. Queue it again once a boot while the fire is still cold. Not an unlock, so the unlock spacing is untouched.
   // reload-keeps-tips: the lines queued and unread when the game closed, in order (each still checked by SAY_STILL when its turn comes)
   try { for (const e of Array.isArray(O().sayQ) ? O().sayQ.slice() : []) { if (!e || typeof e.id !== 'string' || e.id === 'defeat' || !(Object.hasOwn(SAY_TXT, e.id) || Object.hasOwn(SAY_MORE, e.id))) continue; if (e.id === 'scroll' && e.arg) scrollId = e.arg; if (e.id === 'slot' && e.arg) slotAb = e.arg; sayQueue(e.id); } } catch (e) {}
-  try { if (isUnlocked('gather') && SAY_STILL.gather() && !O().done['say:gather']) sayQueue('gather'); } catch (e) {}
+  try { if (onboardShown('gather') && SAY_STILL.gather() && !O().done['say:gather']) sayQueue('gather'); } catch (e) {}
   // the upgrade step already brought you to the Hero tab and said what it is for: its first-use line would introduce it a second time
   on('onboardStep', e => { if (e && e.id === 'upgrade') onboardUseDone('use:party'); });
   on('menuView', ({ tab, view }) => {

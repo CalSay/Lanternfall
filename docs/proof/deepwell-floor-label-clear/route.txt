@@ -9,7 +9,7 @@
 new deep-spill
 wait 3
 tap-if "Dismiss this tip"
-tap "Switch activity"
+tap "Go to"
 wait 1
 tap "Deepwell · Floor 1"
 wait 4

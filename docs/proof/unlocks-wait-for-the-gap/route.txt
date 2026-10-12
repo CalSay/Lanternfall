@@ -1,0 +1,36 @@
+# seed: 1
+# Proof for card unlocks-wait-for-the-gap (first-hour-jargon card F).
+# A cold Wren game past the first boss, Gather not yet open: the unlock clock releases it about 30 s in, while a foe stands.
+# The Gather tab and the Fight / Gather row stay hidden until the foe falls, then come with Old Hesketh's line.
+# The place picker is called "Go to". The hold itself, the one-at-a-time rule, drops that open at once and the switch-off
+# are held by tools/check.mjs sections "unlocks wait for the gap" and "unlocks wait for the gap (browser)".
+new gap-gather
+wait 3
+tap-if "Continue"
+wait 40
+expect-no "You can gather now"
+shot held-while-foe-stands
+unless "You can gather now" tap-if "Attack"
+wait 2
+unless "You can gather now" tap-if "Attack"
+wait 2
+unless "You can gather now" tap-if "Attack"
+wait 2
+unless "You can gather now" tap-if "Attack"
+wait 2
+unless "You can gather now" tap-if "Attack"
+wait 2
+unless "You can gather now" tap-if "Attack"
+wait 2
+unless "You can gather now" tap-if "Attack"
+wait 2
+unless "You can gather now" tap-if "Attack"
+wait 2
+wait-for "You can gather now" 20
+expect "You can gather now"
+shot gather-in-the-gap
+tap-if "Got it"
+wait 1
+tap "Go to"
+expect "Menus close when you pick"
+shot go-to-picker

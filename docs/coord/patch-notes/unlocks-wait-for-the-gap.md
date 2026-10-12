@@ -1,0 +1,2 @@
+New tabs no longer pop up in the middle of a fight. When the game opens something new, such as the Gather tab, it now waits until the foe in front of you falls, then shows it with Old Hesketh's line. Only one new thing shows at a time. Things you open yourself, or that a drop opens, still show at once. The button that takes you to another place is now called "Go to", since "Switch" also meant switching heroes.
+Best shot: gather-in-the-gap
