@@ -101,7 +101,7 @@ if (browserTools.pw) {
           } catch (e) {}
           return d;
         };
-        const at = () => now0() + shift();
+        const at = () => { const s = shift(); return now0() + s; };   // shift first: its own reading of today is never later than the one added to it
         window.Date = class extends R { constructor(...a) { if (a.length) super(...a); else super(at()); } static now() { return at(); } };
       }, { lasts: [...FIXTURE_LASTS], after: FIXTURE_CLOCK_AFTER, wall, pin: fixtureClock });
       // display-fallback-font: the page's Google Fonts link is aborted in checks, so every page gets the players' faces from
@@ -13751,14 +13751,25 @@ if (section('fixture-clock')) try {
     try {
       const run = async (days, fixtureClock) => {
         const ctx = await browser.newContext({ turns: true, fixtureClock, wall: last + days * DAY - Date.now(), viewport: { width: 1280, height: 720 } });
+        // The bag is read at one game moment, never after a real-time sleep (fixture-clock-bag-timing): the page's clock stops at
+        // its first reading (the fixture's own minute, so boot's away time is exactly that minute) and no frame runs, so neither
+        // away pay nor fighting depends on runner speed. Boot's away gains and one tick(0) then run on cue, on one seeded dice stream
+        // (away gathering rolls its fractions and finds), before the read.
+        await ctx.addInitScript(() => {
+          const D = Date; let t0 = null;
+          window.Date = class extends D { constructor(...a) { if (a.length) super(...a); else super(Date.now()); } static now() { return t0 === null ? (t0 = D.now()) : t0; } };
+          window.requestAnimationFrame = () => 0;
+        });
         await ctx.addInitScript(([k, s]) => { try { if (!sessionStorage.getItem('fc.once')) { sessionStorage.setItem('fc.once', '1'); localStorage.setItem(k, s); } } catch (e) {} }, [KEY, raw]);
         const page = await ctx.newPage(), errs = [];
         page.on('pageerror', e => errs.push(String(e)));
+        if (+process.env.LF_CPU_THROTTLE > 1) await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: +process.env.LF_CPU_THROTTLE });
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
-        await page.goto('http://lf.test/'); await page.waitForTimeout(800);
+        await page.goto('http://lf.test/');
         const X = s => page.evaluate(s => window.__t.x(s), s);
-        const o = { at: await X('Date.now()') - last, mats: await X('JSON.stringify(S.mats)') };
-        await X('save(); true'); await page.reload(); await page.waitForTimeout(800);
+        const o = { at: await X('Date.now()') - last, mats: await X(`{ const r = Math.random; let x = 7; Math.random = () => (x = x * 16807 % 2147483647) / 2147483647;
+          try { bootAwayNow(); tick(0); } finally { Math.random = r; } } JSON.stringify(S.mats)`) };
+        await X('save(); true'); await page.reload();
         o.reload = await X('Date.now()') - last; o.errs = errs.length;
         await ctx.close(); return o;
       };

@@ -1,0 +1,10 @@
+# seed: 1
+# Proof for card fixture-clock-bag-timing (tooling only; tools/check.mjs 'fixture-clock' section). Nothing a player sees changes.
+# The proof is the check line "fixture-clock: a page loads save-tier-gate a minute after its save 8 and 32 days on, same bag"
+# run many times: the old code (bag read after page.waitForTimeout(800)) failed 2 of 10 runs under a 6x CPU throttle
+# (LF_CPU_THROTTLE=6); the new code (page clock stopped at its first reading, no frames, boot's away gains and tick(0) on cue on
+# a seeded Math.random, and the page clock shim no longer reads 1 ms short of its pin) passed 30 of 30 alone and 10 of 10 at 6x.
+# This route only loads the same fixture to show it runs.
+new tier-gate
+wait-for "#nuChip" 10
+shot tier-gate-loads

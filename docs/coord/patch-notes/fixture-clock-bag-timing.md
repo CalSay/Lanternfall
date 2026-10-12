@@ -1,0 +1,1 @@
+Tooling only, no change to the game. One of our checks compared a saved game's bag after waiting most of a second while the game kept playing, so a slow test machine could see a different bag and fail with no code change. It now stops the game's clock and reads the bag at one fixed moment, so it gives the same answer on any machine.
