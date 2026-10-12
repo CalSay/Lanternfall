@@ -1,0 +1,1 @@
+Tooling only, no change to the game. Our checks load saved games made on a set day. When a new week started, one of those saves paid out its weekly goals and a check failed with no code change (Monday 12 Oct). Every check that loads a saved game now runs on that save's own clock, and a new check proves the answers stay the same 8 and 32 days later.
